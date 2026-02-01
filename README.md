@@ -1,75 +1,80 @@
-# Nuxt Minimal Starter
+# OpenAPI
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+<p>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-v24.11.1-28CF8D?labelColor=18181B" alt="Node.js"></a>
+  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-v10.15.0-28CF8D?labelColor=18181B" alt="Version"></a>
+  <a href="https://github.com/NuoXianTech/OpenAPI/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NuoXianTech/OpenAPI
+  " alt="License"></a>
+  <a href="https://nuxt.com"><img src="https://img.shields.io/badge/Nuxt%20Docs-18181B?logo=nuxt" alt="Website"></a>
+</p>
 
-## Setup
+一个基于 Nuxt.js 构建的全栈式 API 公共接口服务平台，提供完整的 API 管理、调用监控、版本控制和 API Key 认证系统，帮助开发者快速构建和管理 API 服务。
 
-Make sure to install dependencies:
+## 🌟 项目亮点
+
+- 全栈 Nuxt.js 开发​ - 前后端一体化，高效开发体验
+- 灵活的API密钥管理​ - 多维度权限控制和调用限制
+- 实时统计与分析​ - 深度洞察 API 接口使用情况
+
+## 🚀 核心功能
+
+- 接口发布与管理​ - 可视化界面快速发布和管理 API
+- 多层级密钥管理​ - 支持个人、团队、项目级别的 API Key
+- 安全审计日志​ - 记录所有密钥使用情况，确保安全
+- 语义化版本控制​ - 遵循标准的版本命名规范
+- RESTful Web API 设计​ - 遵循 RESTful API 设计原则
+
+## 🏗️ 技术架构
+
+前端技术栈
+
+- Nuxt.js​ - 现代化全栈框架
+- Tailwind CSS​ - 原子化 CSS 框架
+- Vite​ - 极速构建工具
+
+后端技术栈
+
+- Node.js + Nuxt Server API​ - 服务端渲染和 API 处理
+- PostgreSQL​ - 主数据库，存储结构化数据
+- Redis​ - 缓存、会话和限流管理
+
+## 📦 快速开始
+
+环境要求
+
+- Node.js 24.11.1 或更高版本
+- PostgreSQL 16+ 数据库
+
+安装步骤
 
 ```bash
-# npm
-npm install
+# 1. 克隆项目
+git clone https://github.com/NuoXianTech/OpenAPI.git
+cd OpenAPI
 
-# pnpm
+# 2. 安装依赖
 pnpm install
 
-# yarn
-yarn install
-
-# bun
-bun install
+# 3. 启动开发服务器
+pnpm run dev
 ```
 
-## Development Server
+## 🤝 贡献指南
 
-Start the development server on `http://localhost:3000`:
+1. Fork 项目仓库
+2. 克隆你的Fork到本地：git clone https://github.com/你的用户名/OpenAPI.git
+3. 进入项目目录：cd OpenAPI
+4. 创建功能分支：git checkout -b feature/你的功能名称
+5. 进行代码修改
+6. 提交更改：git commit -m '描述你的修改'
+7. 推送到你的Fork仓库：git push origin feature/你的功能名称
+8. 在GitHub界面发起Pull Request到原始仓库
 
-```bash
-# npm
-npm run dev
+## 📄 开源许可
 
-# pnpm
-pnpm dev
+本项目采用 MIT 许可证
 
-# yarn
-yarn dev
+## 🙌 致谢
 
-# bun
-bun run dev
-```
-
-## Production
-
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- Nuxt.js - 优秀的全栈框架
+- Tailwind CSS - 实用的 CSS 框架
