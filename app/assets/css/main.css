@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #f7f7f8;
+  --color-surface: #ffffff;
+  --color-text: #111113;
+  --color-muted: #666872;
+  --color-border: #e6e6ea;
+  --radius-custom: 14px;
+}
+
+/* 你的自定义 CSS 内容 */
+:root {
+  --bg: #f7f7f8;
+  --surface: #ffffff;
+  --text: #111113;
+  --muted: #666872;
+  --border: #e6e6ea;
+  --primary: #111113;
+  --green: #23c55e;
+  --red: #ef4444;
+  --gray: #94a3b8;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --- 动画关键帧 --- */
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 0.6; }
+  70% { transform: scale(2.3); opacity: 0; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* 骨架屏 */
+.skeleton-bg {
+  background: linear-gradient(90deg, var(--surface) 25%, var(--bg) 37%, var(--surface) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* 卡片进入动画 */
+.card-enter {
+  opacity: 0;
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* 雷达核心点 */
+.radar-core {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  position: relative;
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(35, 197, 94, 0.24), 0 0 10px rgba(35, 197, 94, 0.55);
+}
+
+.radar-core::before, .radar-core::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(35, 197, 94, 0.35);
+  animation: radarPulse 2s ease-out infinite;
+}
+.radar-core::after { animation-delay: 1s; }
+
+.radar-core.status-error {
+  background: var(--red);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.24), 0 0 10px rgba(239, 68, 68, 0.55);
+}
+.radar-core.status-error::before, .radar-core.status-error::after { border-color: rgba(239, 68, 68, 0.38); }
+
+.radar-core.status-unknown {
+  background: var(--gray);
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.24), 0 0 10px rgba(148, 163, 184, 0.55);
+}
+.radar-core.status-unknown::before, .radar-core.status-unknown::after { border-color: rgba(148, 163, 184, 0.38); }
+
+/* FAB 按钮 */
+.fab-btn {
+  position: relative;
+  transition: all 0.2s;
+}
+.fab-btn:active { transform: scale(0.95); }
+
+/* 模态框遮罩 */
+.modal-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 150;
+    transition: opacity 0.3s ease;
+}
+/* 模态框内容 */
+.modal-container {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    z-index: 151;
+    overflow: hidden;
+    max-height: 85vh;
+}

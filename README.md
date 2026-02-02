@@ -3,8 +3,7 @@
 <p>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-v24.11.1-28CF8D?labelColor=18181B" alt="Node.js"></a>
   <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-v10.15.0-28CF8D?labelColor=18181B" alt="Version"></a>
-  <a href="https://github.com/NuoXianTech/OpenAPI/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NuoXianTech/OpenAPI
-  " alt="License"></a>
+  <a href="https://github.com/NuoXianTech/OpenAPI/blob/main/LICENSE"><img src="https://img.shields.io/github/license/NuoXianTech/OpenAPI" alt="License"></a>
   <a href="https://nuxt.com"><img src="https://img.shields.io/badge/Nuxt%20Docs-18181B?logo=nuxt" alt="Website"></a>
 </p>
 
