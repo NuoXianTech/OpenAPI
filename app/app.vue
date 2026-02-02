@@ -1,6 +1,7 @@
 <template>
   <div class="min-h-screen pb-10">
     <!-- 1. 头部组件 -->
+    <!-- 时间组件 -->
     <AppHeader />
     <NuxtPage />
     <!-- 4. 悬浮菜单组件 -->

@@ -3,6 +3,7 @@
     <!-- 2. 状态卡片组件 -->
     <ClientOnly>
       <StatusCard :start-time="useRuntimeConfig().public.startTime" />
+      <ApiItem />
     </ClientOnly>
     <div>
       测试用api: <a class="text-red-300" href="/api/v1/test">点击测试</a>

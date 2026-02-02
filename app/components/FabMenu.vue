@@ -1,7 +1,7 @@
-<script setup>
+<script lang="ts" setup>
 const isOpen = ref(false);
 
-const openLink = (url) => {
+const openLink = (url: string) => {
   window.open(url, "_blank");
   isOpen.value = false;
 };
