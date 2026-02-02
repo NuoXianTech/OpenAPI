@@ -77,3 +77,4 @@ pnpm run dev
 
 - Nuxt.js - 优秀的全栈框架
 - Tailwind CSS - 实用的 CSS 框架
+- Iconify - 图标库
