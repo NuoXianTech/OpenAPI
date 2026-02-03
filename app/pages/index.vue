@@ -4,6 +4,15 @@
     <ClientOnly>
       <StatusCard :start-time="useRuntimeConfig().public.startTime" />
       <ApiItem />
+      <ApiItem
+        name="测试标题"
+        description="这是测试接口的描述信息"
+        docurl="https://test/test"
+        url="https://test/api/v1/test"
+        method="POST"
+        count="5000"
+        :status="1"
+      />
     </ClientOnly>
     <div>
       测试用api: <a class="text-red-300" href="/api/v1/test">点击测试</a>

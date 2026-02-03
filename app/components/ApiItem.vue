@@ -2,77 +2,169 @@
 import { Icon } from "@iconify/vue";
 
 // 定义这个组件接收什么数据
+// const props = defineProps({
+//   data: {
+//     type: Object as () => {
+//       name?: string;
+//       description?: string;
+//       docurl?: string;
+//       url?: string;
+//       method?: string;
+//       count?: string;
+//       status?: number;
+//     },
+//     default: {
+//       name: "这是标题标题标题",
+//       description:
+//         "这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述",
+//       docurl: "https://OpenAPI",
+//       url: "https://OpenAPI/api/v1/Test",
+//       method: "GET",
+//       count: "1.2万",
+//       status: 0,
+//     },
+//   },
+// });
+
 const props = defineProps({
-  data: Object
+  name: {
+    type: String,
+    default: "这是标题标题标题",
+  },
+  description: {
+    type: String,
+    default:
+      "这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述",
+  },
+  docurl: {
+    type: String,
+    default: "https://OpenAPI",
+  },
+  url: {
+    type: String,
+    default: "https://OpenAPI/api/v1/Test",
+  },
+  method: {
+    type: String,
+    default: "GET",
+  },
+  count: {
+    type: String,
+    default: "1.2万",
+  },
+  status: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const isExpanded = ref(false);
 
 const getStatusInfo = (status: any) => {
   switch (parseInt(status)) {
-    case 0: return { class: 'status-error', text: '异常' };
-    case -1: return { class: 'status-unknown', text: '未知' };
-    default: return { class: '', text: '正常' };
+    case 0:
+      return { class: "status-error", text: "异常" };
+    case -1:
+      return { class: "status-unknown", text: "未知" };
+    default:
+      return { class: "", text: "正常" };
   }
 };
 </script>
 
 <template>
-  <article class="col-span-12 sm:col-span-6 lg:col-span-4 bg-surface border border-border rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-4 flex flex-col transition-all duration-300 card-enter">
+  <article
+    class="col-span-12 sm:col-span-6 lg:col-span-4 bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-4 flex flex-col transition-all duration-300 card-enter"
+  >
     <div class="flex items-center justify-between gap-2 shrink-0">
       <h2 class="text-base m-0 ml-1.5 flex-1 font-bold">
-        {{ data?.name || "这是标题标题标题" }}
+        {{ props.name }}
       </h2>
-      <div class="radar-core" :class="getStatusInfo(data?.status).class" :title="getStatusInfo(data?.status).text"></div>
+      <div
+        class="radar-core"
+        :class="getStatusInfo(props.status).class"
+        :title="getStatusInfo(props.status).text"
+      ></div>
     </div>
 
-    <p class="text-muted text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-[1.5] shrink-0">
-      {{ data?.description || "这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述" }} 
+    <p
+      class="text-muted text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-normal shrink-0"
+    >
+      {{ props.description }}
     </p>
 
-    <div class="flex items-center justify-between gap-2.5 bg-grey border border-border rounded-[10px] p-2 mt-2.5 mb-2.5 shrink-0">
+    <div
+      class="flex items-center justify-between gap-2.5 bg-grey border border-border rounded-[10px] p-2 mt-2.5 mb-2.5 shrink-0"
+    >
       <div class="flex items-baseline gap-2 min-w-0 flex-1">
-        <span class="inline-flex items-center gap-1.5 text-xs font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap">
-          <Icon icon="mdi:file-document-multiple-outline" width="16" :ssr="true" />
-          {{ data?.docurl || "https://OpenAPI" }}
+        <span
+          class="inline-flex items-center gap-1.5 text-xs font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap"
+        >
+          <Icon
+            icon="mdi:file-document-multiple-outline"
+            width="16"
+            :ssr="true"
+          />
+          {{ props.docurl }}
         </span>
       </div>
-      <a :href="data?.docurl" target="_blank" class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 flex items-center justify-center">
+      <a
+        :href="props.docurl"
+        target="_blank"
+        class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 flex items-center justify-center"
+      >
         <Icon icon="mdi:external-link" width="16" :ssr="true" />
       </a>
     </div>
 
-    <button class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs ml-auto w-fit shrink-0 hover:brightness-95 transition-colors" @click="isExpanded = !isExpanded">
-      <Icon icon="mdi:chevron-right" width="16" :class="isExpanded ? 'rotate-90' : ''" :ssr="true" />
+    <button
+      class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs ml-auto w-fit shrink-0 hover:brightness-95 transition-colors"
+      @click="isExpanded = !isExpanded"
+    >
+      <Icon
+        icon="mdi:chevron-right"
+        width="16"
+        :class="isExpanded ? 'rotate-90' : ''"
+        :ssr="true"
+      />
       <span>
-        {{ isExpanded ? "收起详情" : "查看详情" }} <!-- TODO: 此处应当有图标的过渡效果 -->
+        {{ isExpanded ? "收起详情" : "查看详情" }}
+        <!-- TODO: 此处应当有图标的过渡效果 -->
       </span>
     </button>
 
-    <div class="overflow-hidden transition-all duration-300 ease-in-out border-t border-dashed"
-          :class="isExpanded ? 'max-h-[500px] opacity-100 mt-3 pt-3 border-border' : 'max-h-0 opacity-0 mt-0 pt-0 border-transparent'">
-          <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
+    <div
+      class="overflow-hidden transition-all duration-300 ease-in-out border-t border-dashed"
+      :class="
+        isExpanded
+          ? 'max-h-125 opacity-100 mt-3 pt-3 border-border'
+          : 'max-h-0 opacity-0 mt-0 pt-0 border-transparent'
+      "
+    >
+      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">接口示例</div>
         <div class="text-[13px] break-all">
-          {{ data?.url || "https://OpenAPI/api/v1/Test" }}
+          {{ props.url }}
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">请求方法</div>
         <div class="text-[13px] font-mono break-all">
-          {{ data?.method || "GET" }} <!-- TODO: 此处应当支持多个请求类型，例如：GET,POST，并以,作为分隔符，类似于Tag标签圆角样式 -->
+          {{ props.method }}
+          <!-- TODO: 此处应当支持多个请求类型，例如：GET,POST，并以,作为分隔符，类似于Tag标签圆角样式 -->
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">调用次数</div>
         <div class="text-[13px] font-mono break-all">
-          {{ data?.count || "1.2万" }} <!-- TODO: 当前接口调用次数，例如：100，1千，1万，10.5万，100万 -->
+          {{ props.count }}
+          <!-- TODO: 当前接口调用次数，例如：100，1千，1万，10.5万，100万 -->
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">接口描述</div>
         <div class="text-[13px] break-all">
-          {{ data?.description || "这是更加完善的接口描述" }}
+          {{ props.description }}
         </div>
       </div>
     </div>
