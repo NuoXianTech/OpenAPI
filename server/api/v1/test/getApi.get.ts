@@ -12,7 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
       docurl: "https://test1/doc",
       url: "https://test1/api/v1/test",
       method: "GET",
-      count: 1000,
+      count: "1000",
       status: 1,
     },
     {
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
       docurl: "https://test2/doc",
       url: "https://test2/api/v1/test",
       method: "POST",
-      count: 2500,
+      count: "2500",
       status: 0,
     },
   ];

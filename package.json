@@ -10,14 +10,20 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.3.15",
     "@iconify/vue": "^5.0.0",
+    "@nuxthub/core": "^0.10.6",
     "@tailwindcss/vite": "^4.1.18",
+    "drizzle-kit": "^0.31.8",
+    "drizzle-orm": "^0.45.1",
     "nuxt": "^4.3.0",
+    "postgres": "^3.4.8",
     "tailwindcss": "^4.1.18",
     "vue": "^3.5.27",
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@types/node": "^24.10.9"
+    "@types/node": "^24.10.9",
+    "typescript": "^5.9.3"
   }
 }

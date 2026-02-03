@@ -11,7 +11,7 @@ export function useGetApi() {
             docurl: string;
             url: string;
             method: string;
-            count: number;
+            count: string;
             status: number;
           },
         ];
@@ -22,7 +22,7 @@ export function useGetApi() {
 
   const getApi = async () => {
     try {
-      const res = await $fetch("/api/v1/test/getApi", {
+      const res = await $fetch("/api/v1/test/getApiDB", {
         method: "GET",
       });
       result.value = res;

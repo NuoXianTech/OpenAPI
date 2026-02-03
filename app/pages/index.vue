@@ -5,6 +5,7 @@
       <StatusCard :start-time="useRuntimeConfig().public.startTime" />
 
       <ApiItem
+        v-for="item in result.data"
         :key="item.id"
         :name="item.name"
         :description="item.description"
@@ -13,7 +14,6 @@
         :method="item.method"
         :count="item.count"
         :status="item.status"
-        v-for="item in result.data"
       />
     </ClientOnly>
     <div>
@@ -26,7 +26,7 @@
 const { result, getApi } = useGetApi();
 
 try {
-  getApi();
+  await getApi();
 } catch (e) {
   console.log("获取api失败", e);
 }
