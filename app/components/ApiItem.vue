@@ -1,31 +1,6 @@
 <script lang="ts" setup>
 import { Icon } from "@iconify/vue";
 
-// 定义这个组件接收什么数据
-// const props = defineProps({
-//   data: {
-//     type: Object as () => {
-//       name?: string;
-//       description?: string;
-//       docurl?: string;
-//       url?: string;
-//       method?: string;
-//       count?: string;
-//       status?: number;
-//     },
-//     default: {
-//       name: "这是标题标题标题",
-//       description:
-//         "这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述这是描述",
-//       docurl: "https://OpenAPI",
-//       url: "https://OpenAPI/api/v1/Test",
-//       method: "GET",
-//       count: "1.2万",
-//       status: 0,
-//     },
-//   },
-// });
-
 const props = defineProps({
   name: {
     type: String,

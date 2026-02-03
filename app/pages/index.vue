@@ -3,15 +3,17 @@
     <!-- 2. 状态卡片组件 -->
     <ClientOnly>
       <StatusCard :start-time="useRuntimeConfig().public.startTime" />
-      <ApiItem />
+
       <ApiItem
-        name="测试标题"
-        description="这是测试接口的描述信息"
-        docurl="https://test/test"
-        url="https://test/api/v1/test"
-        method="POST"
-        count="5000"
-        :status="1"
+        :key="item.id"
+        :name="item.name"
+        :description="item.description"
+        :docurl="item.docurl"
+        :url="item.url"
+        :method="item.method"
+        :count="item.count"
+        :status="item.status"
+        v-for="item in result.data"
       />
     </ClientOnly>
     <div>
@@ -20,6 +22,14 @@
   </main>
 </template>
 
-<script lang="ts" setup></script>
+<script lang="ts" setup>
+const { result, getApi } = useGetApi();
+
+try {
+  getApi();
+} catch (e) {
+  console.log("获取api失败", e);
+}
+</script>
 
 <style></style>
