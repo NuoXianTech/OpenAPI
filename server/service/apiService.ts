@@ -1,11 +1,12 @@
 import { apiDefinitions } from "../db/schema/api_definitions";
 
-export const apiDefinitionService = {
+export const apiService = {
   async getApi() {
     return await db.select().from(apiDefinitions);
   },
   
   async addApi(
+    userid: number,
     code: string,
     name: string,
     status: number,
@@ -32,6 +33,8 @@ export const apiDefinitionService = {
         is_enabled: is_enabled,
         is_api_key: is_api_key,
         is_statistics: is_statistics,
+        created_by: userid,
+        updated_by: userid,
       })
       .returning();
   },

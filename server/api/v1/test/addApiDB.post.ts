@@ -1,10 +1,11 @@
 import { H3Event } from "h3";
-import { apiDefinitionService } from "~~/server/service/apiDefinition.service";
+import { apiService } from "~~/server/service/apiService";
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event);
 
-  const addData = await apiDefinitionService.addApi(
+  const addData = await apiService.addApi(
+    body.userid,
     body.code,
     body.name,
     body.status,

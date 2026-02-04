@@ -1,5 +1,5 @@
 {
-  "id": "549ce1ea-d162-4f61-8548-b0c091e53cb4",
+  "id": "bb6e4afe-2267-4810-9e3b-35a62c2f2bfa",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -84,23 +84,62 @@
           "notNull": true,
           "default": true
         },
+        "created_by": {
+          "name": "created_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         }
       },
       "indexes": {},
-      "foreignKeys": {},
+      "foreignKeys": {
+        "api_definitions_created_by_users_id_fk": {
+          "name": "api_definitions_created_by_users_id_fk",
+          "tableFrom": "api_definitions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "api_definitions_updated_by_users_id_fk": {
+          "name": "api_definitions_updated_by_users_id_fk",
+          "tableFrom": "api_definitions",
+          "tableTo": "users",
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "api_definitions_code_unique": {
@@ -127,56 +166,46 @@
         },
         "username": {
           "name": "username",
-          "type": "varchar",
+          "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'50'"
+          "notNull": true
         },
         "email": {
           "name": "email",
-          "type": "varchar",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "password_hash": {
           "name": "password_hash",
-          "type": "varchar",
+          "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
         },
         "display_name": {
           "name": "display_name",
-          "type": "varchar",
+          "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'100'"
+          "notNull": false
         },
         "avatar_url": {
           "name": "avatar_url",
-          "type": "varchar",
+          "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'200'"
-        },
-        "bio": {
-          "name": "bio",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "role": {
           "name": "role",
-          "type": "varchar",
+          "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'20'"
+          "notNull": true
         },
         "is_active": {
           "name": "is_active",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "is_banned": {
           "name": "is_banned",
@@ -187,24 +216,36 @@
         },
         "last_login_at": {
           "name": "last_login_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "last_login_ip": {
           "name": "last_login_ip",
-          "type": "varchar",
+          "type": "varchar(45)",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'45'"
+          "notNull": true
         },
         "api_key": {
           "name": "api_key",
-          "type": "varchar",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
-          "default": "'100'"
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
         }
       },
       "indexes": {},
