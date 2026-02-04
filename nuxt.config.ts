@@ -19,6 +19,9 @@ export default defineNuxtConfig({
     fonts: false,
   },
   hub: {
-    db: "postgresql",
+    db: {
+      dialect: "postgresql",
+      casing: "snake_case",
+    },
   },
 });

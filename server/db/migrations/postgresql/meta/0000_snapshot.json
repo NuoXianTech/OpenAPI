@@ -1,11 +1,11 @@
 {
-  "id": "2c3ae102-dc78-4d02-82e5-8d214c3c4e7f",
+  "id": "c500c265-ee3e-4ab2-9901-10e50d2b6913",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.api_definitions": {
-      "name": "api_definitions",
+    "public.api_lists": {
+      "name": "api_lists",
       "schema": "",
       "columns": {
         "id": {
@@ -113,9 +113,9 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "api_definitions_created_by_users_id_fk": {
-          "name": "api_definitions_created_by_users_id_fk",
-          "tableFrom": "api_definitions",
+        "api_lists_created_by_users_id_fk": {
+          "name": "api_lists_created_by_users_id_fk",
+          "tableFrom": "api_lists",
           "tableTo": "users",
           "columnsFrom": [
             "created_by"
@@ -126,9 +126,9 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "api_definitions_updated_by_users_id_fk": {
-          "name": "api_definitions_updated_by_users_id_fk",
-          "tableFrom": "api_definitions",
+        "api_lists_updated_by_users_id_fk": {
+          "name": "api_lists_updated_by_users_id_fk",
+          "tableFrom": "api_lists",
           "tableTo": "users",
           "columnsFrom": [
             "updated_by"
@@ -142,8 +142,8 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "api_definitions_code_unique": {
-          "name": "api_definitions_code_unique",
+        "api_lists_code_unique": {
+          "name": "api_lists_code_unique",
           "nullsNotDistinct": false,
           "columns": [
             "code"
@@ -266,8 +266,8 @@
             "email"
           ]
         },
-        "users_api_key_unique": {
-          "name": "users_api_key_unique",
+        "users_apiKey_unique": {
+          "name": "users_apiKey_unique",
           "nullsNotDistinct": false,
           "columns": [
             "api_key"

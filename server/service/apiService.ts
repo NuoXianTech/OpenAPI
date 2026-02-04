@@ -1,8 +1,8 @@
-import { apiDefinitions } from "../db/schema/api_definitions";
+import { api_lists } from "../db/schema/api_lists";
 
 export const apiService = {
   async getApi() {
-    return await db.select().from(apiDefinitions);
+    return await db.select().from(api_lists);
   },
   
   async addApi(
@@ -20,7 +20,7 @@ export const apiService = {
     is_statistics: boolean,
   ) {
     return await db
-      .insert(apiDefinitions)
+      .insert(api_lists)
       .values({
         code: code,
         name: name,
