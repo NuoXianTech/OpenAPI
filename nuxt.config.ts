@@ -1,6 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
   runtimeConfig: {
     public: {
@@ -15,10 +13,10 @@ export default defineNuxtConfig({
   },
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  css: ["./app/assets/css/main.css"],
-  modules: ["@nuxthub/core", "@nuxt/icon"],
-  vite: {
-    plugins: [tailwindcss()],
+  modules: ["@nuxthub/core", "@nuxt/icon", "@nuxt/ui"],
+  css: ["~/assets/css/main.css"],
+  ui: {
+    fonts: false,
   },
   hub: {
     db: "postgresql",
