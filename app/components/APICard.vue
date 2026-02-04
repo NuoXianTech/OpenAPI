@@ -28,6 +28,10 @@ const props = defineProps({
     type: String,
     default: "https://example.com/docs",
   },
+  is_api_key: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const isExpanded = ref(false);
@@ -38,12 +42,14 @@ const getStatusInfo = (status: any) => {
       return { class: "status-unknown", text: "未知" };
     case 0:
       return { class: "status-error", text: "异常" };
+    case 1:
+      return { class: "status-normal", text: "正常" };
     case 2:
       return { class: "status-unknown", text: "维护" };
     case 3:
       return { class: "status-unknown", text: "废弃" };
     default:
-      return { class: "status-normal", text: "正常" };
+      return { class: "status-unknown", text: "未知" };
   }
 };
 </script>
@@ -63,7 +69,7 @@ const getStatusInfo = (status: any) => {
       ></div>
     </div>
 
-    <p class="text-muted text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-normal shrink-0">
+    <p class="text-gray-600 text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-normal shrink-0">
       {{ props.short_desc }}
     </p>
 
@@ -83,16 +89,25 @@ const getStatusInfo = (status: any) => {
       </a>
     </div>
 
-    <button
-      class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs ml-auto w-fit shrink-0 hover:brightness-95 transition-colors"
-      @click="isExpanded = !isExpanded"
-    >
-      <Icon name="mdi:chevron-right" size="16" :class="isExpanded ? 'rotate-90' : ''" :ssr="true"/>
-      <span>
-        {{ isExpanded ? "收起详情" : "查看详情" }}
-        <!-- TODO: 此处应当有图标的过渡效果 -->
+    <div class="flex items-center justify-between w-full">
+      <span
+        class="text-xs text-gray-500 flex items-center gap-1"
+        v-if="props.is_api_key"
+      >
+        <Icon name="mdi:key-variant" size="14"/>
+        APIkey
       </span>
-    </button>
+      
+      <button
+        class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs hover:brightness-95 transition-colors ml-auto"
+        @click="isExpanded = !isExpanded"
+      >
+        <Icon name="mdi:chevron-right" size="16" :class="isExpanded ? 'rotate-90' : ''" :ssr="true"/>
+        <span>
+          {{ isExpanded ? "收起详情" : "查看详情" }}
+        </span>
+      </button>
+    </div>
 
     <div
       class="overflow-hidden transition-all duration-300 ease-in-out border-t border-dashed"
@@ -104,9 +119,13 @@ const getStatusInfo = (status: any) => {
     >
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">接口示例</div>
-        <div class="text-[13px] break-all">
+        <a
+          :href="`${props.api_path}`"
+          target="_blank"
+          class="text-[13px] underline font-mono break-all"
+        >
           {{ props.api_path }}
-        </div>
+        </a>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
         <div class="text-muted text-xs">请求方法</div>

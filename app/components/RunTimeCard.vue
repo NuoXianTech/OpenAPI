@@ -70,7 +70,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="mb-2 text-[13px] text-muted flex flex-col gap-1.5 bg-surface border border-border rounded-xl p-3 relative overflow-hidden select-none">
+  <section class="max-w-275 mx-auto mb-2 text-[13px] text-muted flex flex-col gap-1.5 bg-surface border border-border rounded-xl p-3 relative overflow-hidden select-none">
     <div class="absolute left-0 top-0 bottom-0 w-0.75 bg-text opacity-10"></div>
 
     <div class="flex items-center gap-2">
