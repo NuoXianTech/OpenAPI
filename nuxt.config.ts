@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   },
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
-  modules: ["@nuxthub/core", "@nuxt/icon", "@nuxt/ui"],
+  modules: ["@nuxthub/core", "@nuxt/icon", "@nuxt/ui", "nuxt-auth-utils"],
   css: ["~/assets/css/main.css"],
   ui: {
     fonts: false,
