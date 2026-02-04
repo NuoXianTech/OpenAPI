@@ -70,25 +70,25 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section class="max-w-275 mx-auto mb-2 text-[13px] text-muted flex flex-col gap-1.5 bg-surface border border-border rounded-xl p-3 relative overflow-hidden select-none">
-    <div class="absolute left-0 top-0 bottom-0 w-0.75 bg-text opacity-10"></div>
+  <section class="max-w-275 mx-auto mb-2 text-[13px] flex flex-col gap-1.5 bg-surface border border-border rounded-xl p-3 relative overflow-hidden select-none">
+    <div class="absolute left-0 top-0 bottom-0 w-0.75 bg-black opacity-10"></div>
 
     <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 opacity-75">
-        <Icon name="mdi:clock-outline" :ssr="true" />
+      <span class="inline-flex items-center text-[#666872] gap-1.5 opacity-75">
+        <Icon name="mdi:clock-outline" size="14" :ssr="true" />
         当前时间：
       </span>
-      <span class="font-mono font-bold text-text tracking-wide">
+      <span class="font-mono font-bold tracking-wide">
         {{ nowTime }}
       </span>
     </div>
 
     <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 opacity-75">
-        <Icon name="mdi:server-outline" :ssr="true" />
+      <span class="inline-flex items-center text-[#666872] gap-1.5 opacity-75">
+        <Icon name="mdi:server-outline" size="14" :ssr="true" />
         稳定运行：
       </span>
-      <span class="font-mono font-bold text-text tracking-wide">
+      <span class="font-mono font-bold tracking-wide">
         {{ upTime }}
       </span>
     </div>

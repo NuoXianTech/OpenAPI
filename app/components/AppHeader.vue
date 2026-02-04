@@ -13,7 +13,7 @@
           <h1 class="m-0 text-2xl tracking-wide font-normal">
             {{ useRuntimeConfig().public.apiName }}
           </h1>
-          <p class="m-0 mt-1 text-xs text-muted">
+          <p class="m-0 mt-1 text-xs text-[#666872]">
             {{ useRuntimeConfig().public.apiDescription }}
           </p>
         </div>
