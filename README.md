@@ -53,6 +53,9 @@ cd OpenAPI
 # 2. 安装依赖
 pnpm install
 
+# 3. 生成数据库迁移文件
+npx nuxt db generate
+
 # 3. 启动开发服务器
 pnpm run dev
 ```
