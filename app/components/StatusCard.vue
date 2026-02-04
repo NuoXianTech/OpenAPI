@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { Icon } from "@iconify/vue";
 
 const nowTime = ref("");
 const upTime = ref("");
@@ -76,7 +75,7 @@ onUnmounted(() => {
 
     <div class="flex items-center gap-2">
       <span class="inline-flex items-center gap-1.5 opacity-75">
-        <Icon icon="mdi:clock-outline" width="14" :ssr="true" />
+        <Icon name="mdi:clock-outline" :ssr="true" />
         当前时间：
       </span>
       <span class="font-mono font-bold text-text tracking-wide">
@@ -86,7 +85,7 @@ onUnmounted(() => {
 
     <div class="flex items-center gap-2">
       <span class="inline-flex items-center gap-1.5 opacity-75">
-        <Icon icon="mdi:server-outline" width="14" :ssr="true" />
+        <Icon name="mdi:server-outline" :ssr="true" />
         稳定运行：
       </span>
       <span class="font-mono font-bold text-text tracking-wide">

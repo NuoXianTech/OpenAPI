@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { Icon } from "@iconify/vue";
-
 const props = defineProps({
   name: {
     type: String,
@@ -72,7 +70,7 @@ const getStatusInfo = (status: any) => {
     <div class="flex items-center justify-between gap-2.5 bg-grey border border-border rounded-[10px] p-2 mt-2.5 mb-2.5 shrink-0">
       <div class="flex items-baseline gap-2 min-w-0 flex-1">
         <span class="inline-flex items-center gap-1.5 text-xs font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap">
-          <Icon icon="mdi:file-document-multiple-outline" width="16" :ssr="true"/>
+          <Icon name="mdi:file-document-multiple-outline" size="16" :ssr="true"/>
           {{ props.doc_url }}
         </span>
       </div>
@@ -81,7 +79,7 @@ const getStatusInfo = (status: any) => {
         target="_blank"
         class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 flex items-center justify-center"
       >
-        <Icon icon="mdi:external-link" width="16" :ssr="true" />
+        <Icon name="mdi:external-link" size="16" :ssr="true" />
       </a>
     </div>
 
@@ -89,7 +87,7 @@ const getStatusInfo = (status: any) => {
       class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs ml-auto w-fit shrink-0 hover:brightness-95 transition-colors"
       @click="isExpanded = !isExpanded"
     >
-      <Icon icon="mdi:chevron-right" width="16" :class="isExpanded ? 'rotate-90' : ''" :ssr="true"/>
+      <Icon name="mdi:chevron-right" size="16" :class="isExpanded ? 'rotate-90' : ''" :ssr="true"/>
       <span>
         {{ isExpanded ? "收起详情" : "查看详情" }}
         <!-- TODO: 此处应当有图标的过渡效果 -->
