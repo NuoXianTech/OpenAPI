@@ -1,5 +1,5 @@
 {
-  "id": "c500c265-ee3e-4ab2-9901-10e50d2b6913",
+  "id": "651fffd2-4da7-4d8a-9825-e2401dd07bc8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -90,8 +90,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "created_at": {
-          "name": "created_at",
+        "create_at": {
+          "name": "create_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -266,8 +266,8 @@
             "email"
           ]
         },
-        "users_apiKey_unique": {
-          "name": "users_apiKey_unique",
+        "users_api_key_unique": {
+          "name": "users_api_key_unique",
           "nullsNotDistinct": false,
           "columns": [
             "api_key"

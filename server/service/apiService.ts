@@ -1,10 +1,10 @@
-import { api_lists } from "../db/schema/api_lists";
+import { api_lists } from "hub:db:schema";
 
 export const apiService = {
   async getApi() {
     return await db.select().from(api_lists);
   },
-  
+
   async addApi(
     userid: number,
     code: string,

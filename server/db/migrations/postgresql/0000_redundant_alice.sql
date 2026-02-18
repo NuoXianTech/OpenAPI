@@ -12,7 +12,7 @@ CREATE TABLE "api_lists" (
 	"is_api_key" boolean DEFAULT false NOT NULL,
 	"is_statistics" boolean DEFAULT true NOT NULL,
 	"created_by" integer,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"create_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "api_lists_code_unique" UNIQUE("code")
@@ -35,7 +35,7 @@ CREATE TABLE "users" (
 	"updated_at" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "users_username_unique" UNIQUE("username"),
 	CONSTRAINT "users_email_unique" UNIQUE("email"),
-	CONSTRAINT "users_apiKey_unique" UNIQUE("api_key")
+	CONSTRAINT "users_api_key_unique" UNIQUE("api_key")
 );
 --> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

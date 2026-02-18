@@ -1,15 +1,11 @@
-import { users } from "../db/schema/users";
+import { users } from "hub:db:schema";
 
 export const usersService = {
   async getUser() {
     return await db.select().from(users);
   },
-  
-  async addUser(
-    username: string,
-    email: string,
-    password_hash: string,
-  ) {
+
+  async addUser(username: string, email: string, password_hash: string) {
     return await db
       .insert(users)
       .values({
