@@ -17,9 +17,7 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).notNull(), // 角色，例如 'admin', 'user'
   isActive: boolean("is_active").default(false).notNull(), // 账户是否激活
   isBanned: boolean("is_banned").default(false).notNull(), // 账户是否被封禁
-  lastLoginAt: timestamp("last_login_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(), // 最后登录时间
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }).notNull().defaultNow(), // 最后登录时间
   lastLoginIp: varchar("last_login_ip", { length: 45 }).notNull(), // 最后登录IP
   apiKey: varchar("api_key", { length: 100 }).unique(), // API Key
   createdAt: timestamp("created_at", { withTimezone: true })

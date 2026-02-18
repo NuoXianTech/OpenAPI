@@ -24,7 +24,7 @@ export const api_lists = pgTable("api_lists", {
   isApiKey: boolean("is_api_key").default(false).notNull(), // 是否启用APIKey
   isStatistics: boolean("is_statistics").default(true).notNull(), // 是否启用接口统计
   createdBy: integer("created_by").references(() => users.id), // 创建用户
-  createdAt: timestamp("create_at", { withTimezone: true })
+  createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(), // 创建时间
   updatedBy: integer("updated_by").references(() => users.id), // 更新用户

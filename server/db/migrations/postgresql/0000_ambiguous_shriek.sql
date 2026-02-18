@@ -12,7 +12,7 @@ CREATE TABLE "api_lists" (
 	"is_api_key" boolean DEFAULT false NOT NULL,
 	"is_statistics" boolean DEFAULT true NOT NULL,
 	"created_by" integer,
-	"create_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "api_lists_code_unique" UNIQUE("code")
