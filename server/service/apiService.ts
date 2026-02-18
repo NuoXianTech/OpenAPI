@@ -2,7 +2,18 @@ import { apiLists } from "@nuxthub/db/schema";
 
 export const apiService = {
   async getApi() {
-    return await db.select().from(apiLists);
+    return await db.select({
+      name: apiLists.name,
+      status: apiLists.status,
+      short_desc: apiLists.shortDesc,
+      description: apiLists.description,
+      http_method: apiLists.httpMethod,
+      api_path: apiLists.apiPath,
+      doc_url: apiLists.docUrl,
+      is_enabled: apiLists.isEnabled,
+      is_api_key: apiLists.isApiKey,
+      is_statistics: apiLists.isStatistics,
+    }).from(apiLists);
   },
 
   async addApi(

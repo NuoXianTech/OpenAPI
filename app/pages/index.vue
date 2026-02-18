@@ -1,13 +1,3 @@
-<script lang="ts" setup>
-const { result, getApi } = useGetApi();
-
-try {
-  await getApi();
-} catch (e) {
-  console.log("获取api失败", e);
-}
-</script>
-
 <template>
   <ClientOnly>
     <AppHeader />

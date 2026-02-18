@@ -10,7 +10,6 @@ import {
 import { users } from "./users";
 
 export const apiLists = pgTable("api_lists", {
-  // 统一使用 snake_case 命名数据库表，已经在nuxt.config.ts中配置了自动转换
   id: serial("id").primaryKey(),
   code: varchar("code", { length: 50 }).unique().notNull(),                                                      // 接口编码
   name: varchar("name", { length: 100 }).notNull(),                                                              // 接口名称
