@@ -1,8 +1,8 @@
-import { api_lists } from "hub:db:schema";
+import { apiLists } from "@nuxthub/db/schema";
 
 export const apiService = {
   async getApi() {
-    return await db.select().from(api_lists);
+    return await db.select().from(apiLists);
   },
 
   async addApi(
@@ -20,7 +20,7 @@ export const apiService = {
     is_statistics: boolean,
   ) {
     return await db
-      .insert(api_lists)
+      .insert(apiLists)
       .values({
         code: code,
         name: name,

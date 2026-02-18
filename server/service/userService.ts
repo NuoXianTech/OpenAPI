@@ -1,4 +1,4 @@
-import { users } from "hub:db:schema";
+import { users } from "@nuxthub/db/schema";
 
 export const usersService = {
   async getUser() {
