@@ -16,8 +16,15 @@ interface ApiResponse {
   timestamp: number
 }
 
+const defaultResponse: ApiResponse = {
+  code: 0,
+  msg: '',
+  data: [],
+  timestamp: Date.now(),
+}
+
 export function useGetApi() {
-  const result = ref<ApiResponse | null>(null)
+  const result = ref<ApiResponse>(defaultResponse)
 
   const getApi = async () => {
     try {
@@ -38,7 +45,8 @@ export function useGetApi() {
         `Error fetching data from ${endpoint}${status ? ` (status: ${status})` : ''} in useGetApi:`,
         error,
       )
-      result.value = null
+      // 保持返回值为默认结构，避免上层组件因 null 访问属性时报错
+      result.value = defaultResponse
     }
   }
 

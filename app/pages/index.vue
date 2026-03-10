@@ -1,10 +1,11 @@
 <template>
   <ClientOnly>
-    <AppHeader />
+    <CommonAppHeader />
     <main class="max-w-275 mx-auto px-5 pb-6">
-      <!-- 2. 状态卡片组件 -->
-      <RunTimeCard :start-time="useRuntimeConfig().public.startTime" />
+      <!-- API运行时间卡片组件 -->
+      <ApiRunTimeCard :start-time="useRuntimeConfig().public.startTime" />
       <ApiList />
     </main>
+    <CommonAppFooter />
   </ClientOnly>
 </template>
