@@ -36,7 +36,7 @@ const formatUpTime = (ms: number): string => {
   const days = Math.floor((totalSeconds % (365 * 24 * 60 * 60)) / (24 * 60 * 60))
   const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
+  const _seconds = totalSeconds % 60
 
   const parts: string[] = []
 

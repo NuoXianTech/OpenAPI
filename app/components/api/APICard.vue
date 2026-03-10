@@ -8,7 +8,7 @@ const props = defineProps({
     type: Number,
     default: -1,
   },
-  short_desc: {
+  shortDesc: {
     type: String,
     default: '这是简短描述',
   },
@@ -16,19 +16,19 @@ const props = defineProps({
     type: String,
     default: '这是详细描述详细描述详细描述详细描述',
   },
-  http_method: {
+  httpMethod: {
     type: String,
     default: 'GET',
   },
-  api_path: {
+  apiPath: {
     type: String,
     default: '/api/v1/path',
   },
-  doc_url: {
+  docUrl: {
     type: String,
     default: 'https://example.com/docs',
   },
-  is_api_key: {
+  isApiKey: {
     type: Boolean,
     default: false,
   },
@@ -36,20 +36,23 @@ const props = defineProps({
 
 const isExpanded = ref(false)
 
-const getStatusInfo = (status: any) => {
-  switch (parseInt(status)) {
+// Shared visual style for statuses that are not in normal/error state
+const STATUS_UNKNOWN_CLASS = 'status-unknown'
+
+const getStatusInfo = (status: number) => {
+  switch (status) {
     case -1:
-      return { class: 'status-unknown', text: '未知' }
+      return { class: STATUS_UNKNOWN_CLASS, text: '未知' }
     case 0:
       return { class: 'status-error', text: '异常' }
     case 1:
       return { class: 'status-normal', text: '正常' }
     case 2:
-      return { class: 'status-unknown', text: '维护' }
+      return { class: STATUS_UNKNOWN_CLASS, text: '维护' }
     case 3:
-      return { class: 'status-unknown', text: '废弃' }
+      return { class: STATUS_UNKNOWN_CLASS, text: '废弃' }
     default:
-      return { class: 'status-unknown', text: '未知' }
+      return { class: STATUS_UNKNOWN_CLASS, text: '未知' }
   }
 }
 </script>
@@ -70,7 +73,7 @@ const getStatusInfo = (status: any) => {
     </div>
 
     <p class="text-gray-600 text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-normal shrink-0">
-      {{ props.short_desc }}
+      {{ props.shortDesc }}
     </p>
 
     <div class="flex items-center justify-between gap-2.5 bg-grey border border-border rounded-[10px] p-2 mt-2.5 mb-2.5 shrink-0">
@@ -81,11 +84,11 @@ const getStatusInfo = (status: any) => {
             size="16"
             :ssr="true"
           />
-          {{ props.doc_url }}
+          {{ props.docUrl }}
         </span>
       </div>
       <a
-        :href="props.doc_url"
+        :href="props.docUrl"
         target="_blank"
         class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 flex items-center justify-center"
       >
@@ -99,7 +102,7 @@ const getStatusInfo = (status: any) => {
 
     <div class="flex items-center justify-between w-full">
       <span
-        v-if="props.is_api_key"
+        v-if="props.isApiKey"
         class="text-xs text-gray-500 flex items-center gap-1"
       >
         <Icon
@@ -138,11 +141,11 @@ const getStatusInfo = (status: any) => {
           接口示例
         </div>
         <a
-          :href="`${props.api_path}`"
+          :href="`${props.apiPath}`"
           target="_blank"
           class="text-[13px] underline font-mono break-all"
         >
-          {{ props.api_path }}
+          {{ props.apiPath }}
         </a>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
@@ -150,7 +153,7 @@ const getStatusInfo = (status: any) => {
           请求方法
         </div>
         <div class="text-[13px] font-mono break-all">
-          {{ props.http_method }}
+          {{ props.httpMethod }}
           <!-- TODO: 此处应当支持多个请求类型，例如：GET,POST，并以,作为分隔符，类似于Tag标签圆角样式 -->
         </div>
       </div>

@@ -1,4 +1,3 @@
-import { stat } from 'fs'
 import type { H3Event } from 'h3'
 import { apiService } from '~~/server/service/apiService'
 import { report } from '~~/server/utils/report'
