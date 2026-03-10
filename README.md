@@ -56,7 +56,7 @@ pnpm install
 # 3. 生成数据库迁移文件
 pnpm run db:generate
 
-# 3. 启动开发服务器
+# 4. 启动开发服务器
 pnpm run dev
 ```
 
