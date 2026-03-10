@@ -1,8 +1,8 @@
-import { H3Event } from "h3";
-import { apiService } from "~~/server/service/apiService";
+import type { H3Event } from 'h3'
+import { apiService } from '~~/server/service/apiService'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const body = await readBody(event);
+  const body = await readBody(event)
 
   const addData = await apiService.addApi(
     body.userid,
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
     body.is_enabled,
     body.is_api_key,
     body.is_statistics,
-  );
+  )
 
-  return report(event, 200, "新增接口成功！", addData);
-});
+  return report(event, 200, '新增接口成功！', addData)
+})

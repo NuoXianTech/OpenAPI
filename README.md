@@ -54,7 +54,7 @@ cd OpenAPI
 pnpm install
 
 # 3. 生成数据库迁移文件
-npx nuxt db generate
+pnpm run db:generate
 
 # 3. 启动开发服务器
 pnpm run dev
@@ -67,9 +67,12 @@ pnpm run dev
 3. 进入项目目录：cd OpenAPI
 4. 创建功能分支：git checkout -b feature/你的功能名称
 5. 进行代码修改
-6. 提交更改：git commit -m '描述你的修改'
-7. 推送到你的Fork仓库：git push origin feature/你的功能名称
-8. 在GitHub界面发起Pull Request到原始仓库
+6. 代码规范检查：pnpm run lint
+7. 生成迁移文件：pnpm run db:generate
+8. 测试你的代码：pnpm run dev
+9. 提交更改：git commit -m '描述你的修改'
+10. 推送到你的Fork仓库：git push origin feature/你的功能名称
+11. 在GitHub界面发起Pull Request到原始仓库
 
 ## 📄 开源许可
 

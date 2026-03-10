@@ -1,10 +1,11 @@
+import type { H3Event } from 'h3'
+
 export interface ApiResponse<T = unknown> {
-  code: number;
-  msg: string;
-  data: T;
-  timestamp: number;
+  code: number
+  msg: string
+  data: T
+  timestamp: number
 }
-import type { H3Event } from "h3";
 
 export async function report<T>(
   event: H3Event,
@@ -13,15 +14,16 @@ export async function report<T>(
   data: T,
 ): Promise<ApiResponse<T>> {
   if (code !== null) {
-    setResponseStatus(event, code);
-  } else {
-    setResponseStatus(event, 200);
+    setResponseStatus(event, code)
+  }
+  else {
+    setResponseStatus(event, 200)
   }
 
   return {
     code: code ?? 200,
-    msg: msg ?? "success",
+    msg: msg ?? 'success',
     data,
     timestamp: Date.now(),
-  };
+  }
 }

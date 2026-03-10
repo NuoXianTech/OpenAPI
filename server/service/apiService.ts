@@ -1,4 +1,4 @@
-import { apiLists } from "@nuxthub/db/schema";
+import { apiLists } from '@nuxthub/db/schema'
 
 export const apiService = {
   async getApi() {
@@ -13,7 +13,7 @@ export const apiService = {
       is_enabled: apiLists.isEnabled,
       is_api_key: apiLists.isApiKey,
       is_statistics: apiLists.isStatistics,
-    }).from(apiLists);
+    }).from(apiLists)
   },
 
   async addApi(
@@ -47,6 +47,6 @@ export const apiService = {
         created_by: userid,
         updated_by: userid,
       })
-      .returning();
+      .returning()
   },
-};
+}

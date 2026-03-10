@@ -1,8 +1,8 @@
-import { users } from "@nuxthub/db/schema";
+import { users } from '@nuxthub/db/schema'
 
 export const usersService = {
   async getUser() {
-    return await db.select().from(users);
+    return await db.select().from(users)
   },
 
   async addUser(username: string, email: string, password_hash: string) {
@@ -13,6 +13,6 @@ export const usersService = {
         email: email,
         password_hash: password_hash,
       })
-      .returning();
+      .returning()
   },
-};
+}

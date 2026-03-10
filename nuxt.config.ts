@@ -1,26 +1,37 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  runtimeConfig: {
-    public: {
-      startTime: process.env.START_TIME || "2026-01-01 00:00:00",
-      apiImg:
-        process.env.API_IMG || "https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640",
-      apiName: process.env.API_NAME || "OpenAPI",
-      apiDescription:
-        process.env.API_DESCRIPTION ||
-        "OpenAPI是免费为用户提供网络数据接口调用的服务平台。",
-    },
-  },
-  compatibilityDate: "2025-07-15",
+  modules: [
+    '@nuxthub/core',
+    '@nuxt/icon',
+    '@nuxt/ui',
+    'nuxt-auth-utils',
+    '@nuxt/eslint',
+  ],
   devtools: { enabled: true },
-  modules: ["@nuxthub/core", "@nuxt/icon", "@nuxt/ui", "nuxt-auth-utils"],
-  css: ["~/assets/css/main.css"],
+  css: ['~/assets/css/main.css'],
   ui: {
     fonts: false,
   },
-  hub: {
-    db: {
-      dialect: "postgresql"
+  runtimeConfig: {
+    public: {
+      startTime: process.env.START_TIME || '2026-01-01 00:00:00',
+      apiImg:
+        process.env.API_IMG || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
+      apiName: process.env.API_NAME || 'OpenAPI',
+      apiDescription:
+        process.env.API_DESCRIPTION
+        || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     },
   },
-});
+  compatibilityDate: '2025-07-15',
+  hub: {
+    db: {
+      dialect: 'postgresql',
+    },
+  },
+  eslint: {
+    config: {
+      stylistic: true,
+    },
+  },
+})

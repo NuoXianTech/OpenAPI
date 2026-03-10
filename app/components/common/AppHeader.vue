@@ -7,7 +7,7 @@
             :src="useRuntimeConfig().public.apiImg"
             alt="Avatar"
             class="w-full h-full object-cover block"
-          />
+          >
         </div>
         <div class="flex flex-col justify-center">
           <h1 class="m-0 text-2xl tracking-wide font-normal">
