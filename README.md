@@ -29,6 +29,7 @@
 - Nuxt.js​ - 现代化全栈框架
 - Tailwind CSS​ - 原子化 CSS 框架
 - Vite​ - 极速构建工具
+- Iconify​ - 丰富的图标库
 
 后端技术栈
 
