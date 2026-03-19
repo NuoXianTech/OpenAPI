@@ -1,15 +1,8 @@
 <script lang="ts" setup>
-import { onMounted } from 'vue'
+import { PropType } from 'vue'
 
-const { result, getApi } = useGetApi()
-
-onMounted(async () => {
-  try {
-    await getApi()
-  }
-  catch (e) {
-    console.log('获取api失败', e)
-  }
+const { items } = defineProps({
+  items: { type: Array as PropType<any[]>, default: () => [] },
 })
 </script>
 
@@ -36,7 +29,7 @@ onMounted(async () => {
       :description="'这是接口总览的描述信息，展示接口的总体情况，包括接口数量、异常接口数量等。'"
     />
     <APICard
-      v-for="(item, index) in result.data"
+      v-for="(item, index) in items"
       :key="item.id ?? index"
       :name="item.name"
       :status="item.status"
