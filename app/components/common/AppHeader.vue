@@ -1,3 +1,18 @@
+<script lang="ts" setup>
+const { user, fetchMe, logout } = useAuth()
+
+onMounted(() => {
+  if (!user.value) {
+    fetchMe()
+  }
+})
+
+const handleLogout = async () => {
+  await logout()
+  await navigateTo('/')
+}
+</script>
+
 <template>
   <ClientOnly>
     <header class="max-w-275 mx-auto px-5 py-6 flex items-end justify-between gap-4">
@@ -17,6 +32,17 @@
             {{ useRuntimeConfig().public.apiDescription }}
           </p>
         </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <template v-if="user">
+          <div class="text-sm text-muted">{{ user.username }}</div>
+          <button class="btn" @click="handleLogout">退出</button>
+        </template>
+        <template v-else>
+          <NuxtLink class="btn" to="/login">登录</NuxtLink>
+          <NuxtLink class="btn" to="/register">注册</NuxtLink>
+        </template>
       </div>
     </header>
   </ClientOnly>

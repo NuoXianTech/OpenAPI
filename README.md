@@ -57,8 +57,34 @@ pnpm install
 # 3. 生成数据库迁移文件
 pnpm run db:generate
 
+# 4. 运行数据库迁移
+pnpm run db:migrate
+
 # 4. 启动开发服务器
 pnpm run dev
+```
+
+## 🔐 认证与邮箱配置
+
+新增注册/登录需要配置 JWT 与 SMTP，建议写入 `.env`：
+
+```bash
+# JWT
+JWT_SECRET=please-change-me
+JWT_ISSUER=openapi
+JWT_EXPIRES_IN=604800
+EMAIL_VERIFY_EXPIRES_IN=30
+
+# 站点 URL（用于邮箱验证链接）
+SITE_URL=http://localhost:3000
+
+# SMTP
+SMTP_HOST=smtp.example.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=your_user
+SMTP_PASS=your_password
+SMTP_FROM=no-reply@example.com
 ```
 
 ## 🤝 贡献指南

@@ -1,3 +1,4 @@
+@import "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap";
 @import "tailwindcss";
 @import "@nuxt/ui";
 
@@ -27,6 +28,158 @@ body {
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Auth pages */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: stretch;
+  background: radial-gradient(1200px 600px at 15% 20%, rgba(17, 17, 19, 0.07), transparent 60%),
+    radial-gradient(900px 420px at 85% 30%, rgba(35, 197, 94, 0.12), transparent 55%),
+    linear-gradient(180deg, #fbfbfd 0%, #f3f4f8 100%);
+}
+
+.auth-panel {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 32px 20px;
+}
+
+.auth-card {
+  width: min(520px, 92vw);
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(17, 17, 19, 0.08);
+  border-radius: 22px;
+  padding: 28px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(12px);
+  animation: fadeInUp 0.5s ease-out;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.auth-subtitle {
+  color: #5b5f6a;
+  margin: 0 0 18px;
+  font-size: 14px;
+}
+
+.auth-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-label {
+  font-size: 12px;
+  color: #5b5f6a;
+  margin-bottom: 4px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(17, 17, 19, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: rgba(17, 17, 19, 0.5);
+  box-shadow: 0 0 0 3px rgba(17, 17, 19, 0.12);
+}
+
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.auth-button {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #111113;
+  color: #ffffff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-button:active {
+  transform: scale(0.98);
+}
+
+.auth-ghost {
+  background: transparent;
+  border: 1px solid rgba(17, 17, 19, 0.2);
+  color: #111113;
+}
+
+.auth-note {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #5b5f6a;
+}
+
+.auth-hero {
+  flex: 1;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+.auth-hero-card {
+  max-width: 420px;
+  border: 1px solid rgba(17, 17, 19, 0.1);
+  border-radius: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 22px 60px rgba(17, 17, 19, 0.12);
+}
+
+.auth-hero-card h3 {
+  font-size: 22px;
+  margin: 0 0 8px;
+}
+
+.auth-hero-card p {
+  margin: 0;
+  color: #5b5f6a;
+  font-size: 14px;
+}
+
+.auth-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(17, 17, 19, 0.1);
+  margin-top: 10px;
+  color: #111113;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+@media (min-width: 960px) {
+  .auth-hero {
+    display: flex;
+  }
 }
 
 /* --- 动画关键帧 --- */
