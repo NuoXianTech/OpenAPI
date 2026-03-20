@@ -10,19 +10,21 @@ export default defineEventHandler(async (event: H3Event) => {
   const testApiId = 'test_statistics_demo'
 
   const existingApi = await apiService.getByApiId(testApiId)
-  const createdApi = existingApi ? null : await apiService.addApi(null, {
-    apiId: testApiId,
-    name: '调用统计测试接口',
-    shortDesc: '用于验证调用统计链路',
-    description: '这是一个自动创建的测试接口，用来演示启用统计时的完整写入流程。',
-    httpMethod: 'GET',
-    apiPath: '/api/v1/test',
-    docUrl: '/api/v1/test',
-    isEnabled: true,
-    isApiKey: true,
-    isStatistics: true,
-    rateLimitPerMinute: 0,
-  })
+  const createdApi = existingApi
+    ? null
+    : await apiService.addApi(null, {
+        apiId: testApiId,
+        name: '调用统计测试接口',
+        shortDesc: '用于验证调用统计链路',
+        description: '这是一个自动创建的测试接口，用来演示启用统计时的完整写入流程。',
+        httpMethod: 'GET',
+        apiPath: '/api/v1/test',
+        docUrl: '/api/v1/test',
+        isEnabled: true,
+        isApiKey: true,
+        isStatistics: true,
+        rateLimitPerMinute: 0,
+      })
   const api = existingApi || createdApi?.[0]
 
   if (api && !api.isApiKey) {

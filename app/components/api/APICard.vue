@@ -40,8 +40,15 @@ function formatCallCount(count: number) {
         {{ props.shortDesc }}
       </p>
 
-      <div v-if="categories.length" class="flex flex-wrap gap-1.5 mb-2.5">
-        <span v-for="item in categories" :key="item" class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted">
+      <div
+        v-if="categories.length"
+        class="flex flex-wrap gap-1.5 mb-2.5"
+      >
+        <span
+          v-for="item in categories"
+          :key="item"
+          class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted"
+        >
           {{ item }}
         </span>
       </div>
@@ -100,7 +107,11 @@ function formatCallCount(count: number) {
           请求方法
         </div>
         <div class="flex flex-wrap gap-1">
-          <span v-for="method in methods" :key="method" class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted font-mono">
+          <span
+            v-for="method in methods"
+            :key="method"
+            class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted font-mono"
+          >
             {{ method }}
           </span>
         </div>

@@ -31,12 +31,21 @@ const submit = async () => {
   <div class="auth-shell">
     <div class="auth-panel">
       <div class="auth-card">
-        <h1 class="auth-title">欢迎回来</h1>
-        <p class="auth-subtitle">使用邮箱或用户名登录，继续管理你的 API。</p>
+        <h1 class="auth-title">
+          欢迎回来
+        </h1>
+        <p class="auth-subtitle">
+          使用邮箱或用户名登录，继续管理你的 API。
+        </p>
 
-        <form class="auth-grid" @submit.prevent="submit">
+        <form
+          class="auth-grid"
+          @submit.prevent="submit"
+        >
           <div>
-            <div class="auth-label">邮箱或用户名</div>
+            <div class="auth-label">
+              邮箱或用户名
+            </div>
             <input
               v-model="form.identifier"
               type="text"
@@ -46,7 +55,9 @@ const submit = async () => {
             >
           </div>
           <div>
-            <div class="auth-label">密码</div>
+            <div class="auth-label">
+              密码
+            </div>
             <input
               v-model="form.password"
               type="password"
@@ -56,13 +67,25 @@ const submit = async () => {
             >
           </div>
 
-          <div v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</div>
+          <div
+            v-if="errorMessage"
+            class="text-red-500 text-sm"
+          >
+            {{ errorMessage }}
+          </div>
 
           <div class="auth-actions">
-            <button class="auth-button" type="submit" :disabled="submitting">
+            <button
+              class="auth-button"
+              type="submit"
+              :disabled="submitting"
+            >
               {{ submitting ? '登录中...' : '登录' }}
             </button>
-            <NuxtLink class="auth-button auth-ghost" to="/register">创建账号</NuxtLink>
+            <NuxtLink
+              class="auth-button auth-ghost"
+              to="/register"
+            >创建账号</NuxtLink>
           </div>
         </form>
 
@@ -76,7 +99,9 @@ const submit = async () => {
       <div class="auth-hero-card">
         <h3>OpenAPI 控制台</h3>
         <p>实时掌握接口调用状态、性能与配额使用情况。</p>
-        <div class="auth-chip">API Monitor · Rate Guard · Audit Log</div>
+        <div class="auth-chip">
+          API Monitor · Rate Guard · Audit Log
+        </div>
       </div>
     </div>
   </div>

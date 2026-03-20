@@ -20,7 +20,7 @@ async function loadApiStats() {
 }
 
 export const apiService = {
-  async list(filters: Partial<{ keyword: string; status: number; isEnabled: boolean; isStatistics: boolean }> = {}) {
+  async list(filters: Partial<{ keyword: string, status: number, isEnabled: boolean, isStatistics: boolean }> = {}) {
     const conditions = [] as any[]
     if (filters.keyword) {
       conditions.push(or(
@@ -43,8 +43,8 @@ export const apiService = {
     const query = db.select().from(apiLists)
     const [rows, statsMap] = await Promise.all([
       conditions.length
-      ? await query.where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
-      : await query.orderBy(desc(apiLists.updatedAt)),
+        ? await query.where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
+        : await query.orderBy(desc(apiLists.updatedAt)),
       loadApiStats(),
     ])
 

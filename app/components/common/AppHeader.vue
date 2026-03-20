@@ -36,15 +36,39 @@ const handleLogout = async () => {
 
       <div class="flex items-center gap-2">
         <template v-if="user">
-          <div class="text-sm text-muted">{{ user.username }}</div>
-          <NuxtLink v-if="user.kind === 'admin'" class="btn" to="/admin">管理后台</NuxtLink>
-          <NuxtLink v-if="user.kind === 'user'" class="btn" to="/user/apikeys">用户后台</NuxtLink>
-          <button class="btn" @click="handleLogout">退出</button>
+          <div class="text-sm text-muted">
+            {{ user.username }}
+          </div>
+          <NuxtLink
+            v-if="user.kind === 'admin'"
+            class="btn"
+            to="/admin"
+          >管理后台</NuxtLink>
+          <NuxtLink
+            v-if="user.kind === 'user'"
+            class="btn"
+            to="/user/apikeys"
+          >用户后台</NuxtLink>
+          <button
+            class="btn"
+            @click="handleLogout"
+          >
+            退出
+          </button>
         </template>
         <template v-else>
-          <NuxtLink class="btn" to="/admin/login">管理登录</NuxtLink>
-          <NuxtLink class="btn" to="/login">登录</NuxtLink>
-          <NuxtLink class="btn" to="/register">注册</NuxtLink>
+          <NuxtLink
+            class="btn"
+            to="/admin/login"
+          >管理登录</NuxtLink>
+          <NuxtLink
+            class="btn"
+            to="/login"
+          >登录</NuxtLink>
+          <NuxtLink
+            class="btn"
+            to="/register"
+          >注册</NuxtLink>
         </template>
       </div>
     </header>

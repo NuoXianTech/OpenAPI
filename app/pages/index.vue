@@ -15,31 +15,59 @@ const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } =
 
       <SearchBar v-model="query" />
 
-      <section id="loadingState" v-if="loading" class="py-6">
-        <div class="bg-surface border border-border rounded-custom p-5 text-center">加载中...</div>
+      <section
+        v-if="loading"
+        id="loadingState"
+        class="py-6"
+      >
+        <div class="bg-surface border border-border rounded-custom p-5 text-center">
+          加载中...
+        </div>
       </section>
 
-      <section id="errorState" v-else-if="error">
+      <section
+        v-else-if="error"
+        id="errorState"
+      >
         <div class="bg-surface border border-border rounded-custom p-5 text-center">
-          <div class="font-semibold">加载失败</div>
-          <div class="text-muted text-[13px] mt-1">{{ error }}</div>
+          <div class="font-semibold">
+            加载失败
+          </div>
+          <div class="text-muted text-[13px] mt-1">
+            {{ error }}
+          </div>
           <div class="mt-3">
-            <button class="btn" @click="fetchList">重试</button>
+            <button
+              class="btn"
+              @click="fetchList"
+            >
+              重试
+            </button>
           </div>
         </div>
       </section>
 
-      <section id="emptyState" v-else-if="isEmpty">
+      <section
+        v-else-if="isEmpty"
+        id="emptyState"
+      >
         <div class="bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
-          <div class="font-semibold">未找到匹配的 API</div>
-          <div class="text-muted text-[13px] mt-1">尝试调整搜索关键词或切换筛选标签。</div>
+          <div class="font-semibold">
+            未找到匹配的 API
+          </div>
+          <div class="text-muted text-[13px] mt-1">
+            尝试调整搜索关键词或切换筛选标签。
+          </div>
         </div>
       </section>
 
-      <section id="contentState" v-else class="py-2">
+      <section
+        v-else
+        id="contentState"
+        class="py-2"
+      >
         <ApiList :items="filteredItems" />
       </section>
-
     </main>
     <CommonAppFooter />
   </ClientOnly>

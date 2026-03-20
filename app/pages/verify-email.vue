@@ -17,7 +17,7 @@ watchEffect(async () => {
   message.value = '正在验证，请稍候...'
 
   try {
-    const res = await $fetch<{ code: number; msg: string; data: unknown }>('/api/auth/verify-email', {
+    const res = await $fetch<{ code: number, msg: string, data: unknown }>('/api/auth/verify-email', {
       query: { token: token.value, user: user.value },
     })
     if (res.code === 0) {
@@ -40,16 +40,38 @@ watchEffect(async () => {
   <div class="auth-shell">
     <div class="auth-panel">
       <div class="auth-card">
-        <h1 class="auth-title">邮箱验证</h1>
-        <p class="auth-subtitle">{{ message }}</p>
+        <h1 class="auth-title">
+          邮箱验证
+        </h1>
+        <p class="auth-subtitle">
+          {{ message }}
+        </p>
 
-        <div class="auth-actions" v-if="status === 'success'">
-          <NuxtLink class="auth-button" to="/">返回首页</NuxtLink>
-          <NuxtLink class="auth-button auth-ghost" to="/login">进入登录</NuxtLink>
+        <div
+          v-if="status === 'success'"
+          class="auth-actions"
+        >
+          <NuxtLink
+            class="auth-button"
+            to="/"
+          >返回首页</NuxtLink>
+          <NuxtLink
+            class="auth-button auth-ghost"
+            to="/login"
+          >进入登录</NuxtLink>
         </div>
-        <div class="auth-actions" v-else-if="status === 'error'">
-          <NuxtLink class="auth-button" to="/register">重新注册</NuxtLink>
-          <NuxtLink class="auth-button auth-ghost" to="/login">去登录</NuxtLink>
+        <div
+          v-else-if="status === 'error'"
+          class="auth-actions"
+        >
+          <NuxtLink
+            class="auth-button"
+            to="/register"
+          >重新注册</NuxtLink>
+          <NuxtLink
+            class="auth-button auth-ghost"
+            to="/login"
+          >去登录</NuxtLink>
         </div>
       </div>
     </div>
@@ -58,7 +80,9 @@ watchEffect(async () => {
       <div class="auth-hero-card">
         <h3>Verify Access</h3>
         <p>邮箱验证后才会创建有效用户会话。</p>
-        <div class="auth-chip">Email Verification · Session Auth</div>
+        <div class="auth-chip">
+          Email Verification · Session Auth
+        </div>
       </div>
     </div>
   </div>

@@ -16,7 +16,8 @@ export default defineEventHandler(async (event: H3Event) => {
   let user = null
   if (emailOrUsername.includes('@')) {
     user = await usersService.findByEmail(emailOrUsername.toLowerCase())
-  } else {
+  }
+  else {
     user = await usersService.findByUsername(emailOrUsername)
   }
 

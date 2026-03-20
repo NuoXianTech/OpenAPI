@@ -21,8 +21,8 @@ function onInput(e: Event) {
       type="search"
       :placeholder="props.placeholder"
       :value="props.modelValue"
-      @input="onInput"
       class="appearance-none outline-none rounded-[10px] border border-border bg-white text-[#111113] px-3 py-2.5 min-h-[40px] text-base flex-[1_1_260px] transition-all duration-200 focus:border-[#8ab4ff] focus:shadow-[0_0_0_3px_rgba(138,180,255,0.25)]"
-    />
+      @input="onInput"
+    >
   </section>
 </template>

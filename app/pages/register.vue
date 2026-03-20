@@ -45,12 +45,21 @@ const submit = async () => {
   <div class="auth-shell">
     <div class="auth-panel">
       <div class="auth-card">
-        <h1 class="auth-title">创建账号</h1>
-        <p class="auth-subtitle">注册后需要邮箱验证，验证通过后才可以登录。</p>
+        <h1 class="auth-title">
+          创建账号
+        </h1>
+        <p class="auth-subtitle">
+          注册后需要邮箱验证，验证通过后才可以登录。
+        </p>
 
-        <form class="auth-grid" @submit.prevent="submit">
+        <form
+          class="auth-grid"
+          @submit.prevent="submit"
+        >
           <div>
-            <div class="auth-label">用户名</div>
+            <div class="auth-label">
+              用户名
+            </div>
             <input
               v-model="form.username"
               type="text"
@@ -60,7 +69,9 @@ const submit = async () => {
             >
           </div>
           <div>
-            <div class="auth-label">邮箱</div>
+            <div class="auth-label">
+              邮箱
+            </div>
             <input
               v-model="form.email"
               type="email"
@@ -70,7 +81,9 @@ const submit = async () => {
             >
           </div>
           <div>
-            <div class="auth-label">密码</div>
+            <div class="auth-label">
+              密码
+            </div>
             <input
               v-model="form.password"
               type="password"
@@ -80,7 +93,9 @@ const submit = async () => {
             >
           </div>
           <div>
-            <div class="auth-label">确认密码</div>
+            <div class="auth-label">
+              确认密码
+            </div>
             <input
               v-model="form.confirm"
               type="password"
@@ -90,14 +105,31 @@ const submit = async () => {
             >
           </div>
 
-          <div v-if="errorMessage" class="text-red-500 text-sm">{{ errorMessage }}</div>
-          <div v-if="successMessage" class="text-green-600 text-sm">{{ successMessage }}</div>
+          <div
+            v-if="errorMessage"
+            class="text-red-500 text-sm"
+          >
+            {{ errorMessage }}
+          </div>
+          <div
+            v-if="successMessage"
+            class="text-green-600 text-sm"
+          >
+            {{ successMessage }}
+          </div>
 
           <div class="auth-actions">
-            <button class="auth-button" type="submit" :disabled="submitting">
+            <button
+              class="auth-button"
+              type="submit"
+              :disabled="submitting"
+            >
               {{ submitting ? '提交中...' : '注册' }}
             </button>
-            <NuxtLink class="auth-button auth-ghost" to="/login">已有账号</NuxtLink>
+            <NuxtLink
+              class="auth-button auth-ghost"
+              to="/login"
+            >已有账号</NuxtLink>
           </div>
         </form>
 
@@ -111,7 +143,9 @@ const submit = async () => {
       <div class="auth-hero-card">
         <h3>安全策略可配置</h3>
         <p>验证后即可进入用户后台管理自己的 API Key。</p>
-        <div class="auth-chip">Email Verify · User Console</div>
+        <div class="auth-chip">
+          Email Verify · User Console
+        </div>
       </div>
     </div>
   </div>
