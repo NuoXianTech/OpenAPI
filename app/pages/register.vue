@@ -26,7 +26,9 @@ const submit = async () => {
       email: form.email,
       password: form.password,
     })
-    successMessage.value = '账号创建成功，可以直接登录。'
+    successMessage.value = res.verificationRequired
+      ? '账号已创建，请查收邮箱完成验证。'
+      : '账号创建成功，可以直接登录。'
     form.password = ''
     form.confirm = ''
   }
@@ -44,7 +46,7 @@ const submit = async () => {
     <div class="auth-panel">
       <div class="auth-card">
         <h1 class="auth-title">创建账号</h1>
-        <p class="auth-subtitle">注册后即可登录，账号会直接写入用户表。</p>
+        <p class="auth-subtitle">注册后需要邮箱验证，验证通过后才可以登录。</p>
 
         <form class="auth-grid" @submit.prevent="submit">
           <div>
@@ -108,8 +110,8 @@ const submit = async () => {
     <div class="auth-hero">
       <div class="auth-hero-card">
         <h3>安全策略可配置</h3>
-        <p>用户注册后可在用户后台管理自己的 API Key。</p>
-        <div class="auth-chip">Session Auth · User Console</div>
+        <p>验证后即可进入用户后台管理自己的 API Key。</p>
+        <div class="auth-chip">Email Verify · User Console</div>
       </div>
     </div>
   </div>

@@ -10,6 +10,7 @@ import { users } from './users'
 export const sessions = pgTable('sessions', {
   id: serial('id').primaryKey(),
   sessionId: varchar('session_id', { length: 128 }).notNull().unique(),
+  kind: varchar('kind', { length: 20 }).notNull().default('user'), // user/admin
   userId: integer('user_id').references(() => users.id),
   username: varchar('username', { length: 50 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),

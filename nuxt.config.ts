@@ -28,6 +28,7 @@ export default defineNuxtConfig({
     },
     public: {
       startTime: process.env.START_TIME || '2026-01-01 00:00:00',
+      emailVerifyExpiresInMinutes: Number(process.env.EMAIL_VERIFY_EXPIRES_IN || 30),
       siteUrl: process.env.SITE_URL || 'http://localhost:3000',
       adminUsernameHint: process.env.ADMIN_USERNAME || 'admin',
       apiImg:

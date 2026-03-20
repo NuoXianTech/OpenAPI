@@ -4,7 +4,7 @@ export default defineNuxtRouteMiddleware(async () => {
     await fetchMe()
   }
 
-  if (!user.value || user.value.role !== 'user') {
+  if (!user.value || user.value.kind !== 'user') {
     return navigateTo('/login')
   }
 })

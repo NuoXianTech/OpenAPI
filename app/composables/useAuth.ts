@@ -2,7 +2,7 @@ interface AuthUser {
   id: number
   username: string
   email: string
-  role: string
+  kind: 'user' | 'admin'
 }
 
 interface ApiResponse<T> {
@@ -77,7 +77,7 @@ export function useAuth() {
     if (!user.value) {
       await fetchMe()
     }
-    return user.value?.role === 'admin'
+    return user.value?.kind === 'admin'
   }
 
   return {

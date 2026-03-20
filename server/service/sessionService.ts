@@ -4,7 +4,7 @@ import { sessions } from '@nuxthub/db/schema'
 
 export interface SessionUserPayload {
   userId: number | null
-  role: string
+  kind: 'user' | 'admin'
   username: string
   email: string
 }
@@ -21,7 +21,7 @@ export const sessionService = {
     const res = await db.insert(sessions).values({
       sessionId,
       userId: payload.userId,
-      role: payload.role,
+      kind: payload.kind,
       username: payload.username,
       email: payload.email,
       expiresAt,

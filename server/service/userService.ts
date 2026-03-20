@@ -6,10 +6,6 @@ export const usersService = {
     return await db.select().from(users)
   },
 
-  async listByRole(role: string) {
-    return await db.select().from(users).where(eq(users.role, role))
-  },
-
   async findByEmail(email: string) {
     const res = await db.select().from(users).where(eq(users.email, email)).limit(1)
     return res[0]
@@ -30,7 +26,6 @@ export const usersService = {
     email: string
     displayName: string | null
     avatarUrl: string | null
-    role: string
     isActive: boolean
     isBanned: boolean
     passwordHash: string
@@ -66,8 +61,7 @@ export const usersService = {
         email: data.email,
         passwordHash: data.passwordHash,
         displayName: data.displayName || data.username,
-        role: 'user',
-        isActive: data.isActive ?? true,
+        isActive: data.isActive ?? false,
         isBanned: false,
         lastLoginIp: data.lastLoginIp || '0.0.0.0',
       })

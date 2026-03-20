@@ -41,7 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
     id: user.id,
     username: user.username,
     email: user.email,
-    role: user.role,
+    kind: 'user',
   })
 
   const ip = getRequestIP(event) || '0.0.0.0'
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event: H3Event) => {
   return {
     code: 0,
     msg: 'ok',
-    data: safe,
+    data: { ...safe, kind: 'user' },
   }
 })
 // 登录接口

@@ -13,7 +13,7 @@ const submit = async () => {
   errorMessage.value = ''
   try {
     await adminLogin({ username: form.username, password: form.password })
-    await navigateTo('/admin/auth-policy')
+    await navigateTo('/admin')
   }
   catch (error: any) {
     errorMessage.value = error?.message || '管理员登录失败'

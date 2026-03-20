@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, ilike, or } from 'drizzle-orm'
+import { and, desc, eq, ilike, or } from 'drizzle-orm'
 import { apiLists } from '@nuxthub/db/schema'
 
 export const apiService = {
@@ -65,13 +65,7 @@ export const apiService = {
       category: data.category ?? null,
       shortDesc: data.shortDesc,
       description: data.description,
-      version: data.version ?? 'v1',
       tags: data.tags ?? null,
-      authType: data.authType ?? 'none',
-      requestSchema: data.requestSchema ?? null,
-      responseSchema: data.responseSchema ?? null,
-      requestExample: data.requestExample ?? null,
-      responseExample: data.responseExample ?? null,
       httpMethod: data.httpMethod,
       apiPath: data.apiPath,
       docUrl: data.docUrl,
@@ -79,9 +73,6 @@ export const apiService = {
       isApiKey: data.isApiKey ?? false,
       isStatistics: data.isStatistics ?? true,
       rateLimitPerMinute: data.rateLimitPerMinute ?? 0,
-      totalCalls: data.totalCalls ?? 0,
-      successCalls: data.successCalls ?? 0,
-      failureCalls: data.failureCalls ?? 0,
       createdBy: userid,
       updatedBy: userid,
     }).returning()

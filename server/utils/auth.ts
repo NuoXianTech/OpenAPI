@@ -8,7 +8,7 @@ export interface AuthUserPayload {
   id: number
   username: string
   email: string
-  role: string
+  kind: 'user' | 'admin'
 }
 
 const scrypt = promisify(scryptCallback)
@@ -56,7 +56,7 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload) {
   const maxAgeSeconds = getSessionMaxAgeSeconds()
   const { sessionId } = await sessionService.createSession({
     userId: user.id,
-    role: user.role,
+    kind: 'user',
     username: user.username,
     email: user.email,
   }, maxAgeSeconds)
@@ -71,7 +71,7 @@ export async function createAdminSession(event: H3Event) {
 
   const { sessionId } = await sessionService.createSession({
     userId: null,
-    role: 'admin',
+    kind: 'admin',
     username,
     email,
   }, maxAgeSeconds)
@@ -111,21 +111,21 @@ export async function getAuthUser(event: H3Event) {
     id: session.userId ?? 0,
     username: session.username,
     email: session.email,
-    role: session.role,
+    kind: session.kind as 'user' | 'admin',
   }
 }
 
 export async function requireAuth(event: H3Event) {
   const user = await getAuthUser(event)
-  if (!user) {
+  if (!user || user.kind !== 'user') {
     throw createError({ statusCode: 401, message: 'unauthorized' })
   }
   return user
 }
 
 export async function requireAdmin(event: H3Event) {
-  const user = await requireAuth(event)
-  if (user.role !== 'admin') {
+  const user = await getAuthUser(event)
+  if (!user || user.kind !== 'admin') {
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
   return user
