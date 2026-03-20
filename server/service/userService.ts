@@ -6,6 +6,10 @@ export const usersService = {
     return await db.select().from(users)
   },
 
+  async listByRole(role: string) {
+    return await db.select().from(users).where(eq(users.role, role))
+  },
+
   async findByEmail(email: string) {
     const res = await db.select().from(users).where(eq(users.email, email)).limit(1)
     return res[0]
@@ -19,6 +23,32 @@ export const usersService = {
   async getById(id: number) {
     const res = await db.select().from(users).where(eq(users.id, id)).limit(1)
     return res[0]
+  },
+
+  async updateUser(id: number, data: Partial<{
+    username: string
+    email: string
+    displayName: string | null
+    avatarUrl: string | null
+    role: string
+    isActive: boolean
+    isBanned: boolean
+    passwordHash: string
+  }>) {
+    const res = await db.update(users)
+      .set({
+        ...data,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning()
+
+    return res[0] || null
+  },
+
+  async deleteUser(id: number) {
+    const res = await db.delete(users).where(eq(users.id, id)).returning()
+    return res[0] || null
   },
 
   async addUser(data: {
@@ -37,7 +67,7 @@ export const usersService = {
         passwordHash: data.passwordHash,
         displayName: data.displayName || data.username,
         role: 'user',
-        isActive: data.isActive ?? false,
+        isActive: data.isActive ?? true,
         isBanned: false,
         lastLoginIp: data.lastLoginIp || '0.0.0.0',
       })
@@ -68,5 +98,17 @@ export const usersService = {
       .returning()
 
     return res[0]
+  },
+
+  async banUser(id: number, isBanned: boolean) {
+    const res = await db.update(users)
+      .set({
+        isBanned,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning()
+
+    return res[0] || null
   },
 }

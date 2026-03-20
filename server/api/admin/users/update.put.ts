@@ -12,13 +12,20 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
-  const isBanned = Boolean(body.isBanned)
-  const updated = await usersService.banUser(id, isBanned)
+  const updated = await usersService.updateUser(id, {
+    username: body.username?.toString().trim(),
+    email: body.email?.toString().trim().toLowerCase(),
+    displayName: body.displayName?.toString().trim() || null,
+    avatarUrl: body.avatarUrl?.toString().trim() || null,
+    role: body.role?.toString().trim(),
+    isActive: typeof body.isActive === 'boolean' ? body.isActive : undefined,
+    isBanned: typeof body.isBanned === 'boolean' ? body.isBanned : undefined,
+  })
 
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
+    action: 'admin.user.update',
     resourceType: 'user',
     resourceId: String(id),
     detail: JSON.stringify(updated),

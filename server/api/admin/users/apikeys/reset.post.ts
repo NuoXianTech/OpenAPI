@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { usersService } from '~~/server/service/userService'
+import { apiKeyService } from '~~/server/service/apiKeyService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
 
@@ -12,14 +12,16 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
-  const isBanned = Boolean(body.isBanned)
-  const updated = await usersService.banUser(id, isBanned)
+  const updated = await apiKeyService.resetById(id)
+  if (!updated) {
+    throw createError({ statusCode: 404, message: 'api key not found' })
+  }
 
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
-    resourceType: 'user',
+    action: 'admin.apikey.reset',
+    resourceType: 'apikey',
     resourceId: String(id),
     detail: JSON.stringify(updated),
   })

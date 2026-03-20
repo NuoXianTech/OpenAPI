@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { createError, getRequestIP } from 'h3'
-import { createAuthToken, setAuthCookie, verifyPassword } from '~~/server/utils/auth'
+import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event) as Record<string, any>
@@ -37,14 +37,12 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: 'Email not verified' })
   }
 
-  // 设置 session
-  const { token, expiresInSeconds } = createAuthToken({
+  await createUserSession(event, {
     id: user.id,
     username: user.username,
     email: user.email,
     role: user.role,
   })
-  setAuthCookie(event, token, expiresInSeconds)
 
   const ip = getRequestIP(event) || '0.0.0.0'
   await usersService.updateLastLogin(user.id, ip)

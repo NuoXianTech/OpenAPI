@@ -13,10 +13,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     auth: {
-      jwtSecret: process.env.JWT_SECRET || 'dev-only-change-me',
-      jwtIssuer: process.env.JWT_ISSUER || 'openapi',
-      jwtExpiresInSeconds: Number(process.env.JWT_EXPIRES_IN || 60 * 60 * 24 * 7),
-      emailVerifyExpiresInMinutes: Number(process.env.EMAIL_VERIFY_EXPIRES_IN || 30),
+      sessionMaxAgeSeconds: Number(process.env.SESSION_MAX_AGE || 60 * 60 * 24 * 7),
+      adminUsername: process.env.ADMIN_USERNAME || 'admin',
+      adminPassword: process.env.ADMIN_PASSWORD || '',
+      adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
     },
     smtp: {
       host: process.env.SMTP_HOST || 'smtp.example.com',
@@ -29,6 +29,7 @@ export default defineNuxtConfig({
     public: {
       startTime: process.env.START_TIME || '2026-01-01 00:00:00',
       siteUrl: process.env.SITE_URL || 'http://localhost:3000',
+      adminUsernameHint: process.env.ADMIN_USERNAME || 'admin',
       apiImg:
         process.env.API_IMG || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
       apiName: process.env.API_NAME || 'OpenAPI',

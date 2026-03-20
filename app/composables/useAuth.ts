@@ -45,6 +45,18 @@ export function useAuth() {
     return res.data
   }
 
+  const adminLogin = async (payload: { username: string; password: string }) => {
+    const res = await $fetch<ApiResponse<AuthUser>>('/api/admin/auth/login', {
+      method: 'POST',
+      body: payload,
+    })
+    if (res.code !== 0) {
+      throw new Error(res.msg)
+    }
+    user.value = res.data
+    return res.data
+  }
+
   const register = async (payload: { username: string; email: string; password: string }) => {
     const res = await $fetch<ApiResponse<{ user: AuthUser; verificationRequired: boolean }>>('/api/auth/register', {
       method: 'POST',
@@ -73,6 +85,7 @@ export function useAuth() {
     loading,
     fetchMe,
     login,
+    adminLogin,
     register,
     logout,
     ensureAdmin,

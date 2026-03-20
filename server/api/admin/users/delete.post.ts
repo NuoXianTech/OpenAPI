@@ -12,21 +12,23 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
-  const isBanned = Boolean(body.isBanned)
-  const updated = await usersService.banUser(id, isBanned)
+  const deleted = await usersService.deleteUser(id)
+  if (!deleted) {
+    throw createError({ statusCode: 404, message: 'user not found' })
+  }
 
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
+    action: 'admin.user.delete',
     resourceType: 'user',
     resourceId: String(id),
-    detail: JSON.stringify(updated),
+    detail: JSON.stringify(deleted),
   })
 
   return {
     code: 0,
     msg: 'ok',
-    data: updated,
+    data: deleted,
   }
 })

@@ -1,7 +1,8 @@
-import { createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
 import { createError, getCookie, setCookie } from 'h3'
+import { sessionService } from '~~/server/service/sessionService'
 
 export interface AuthUserPayload {
   id: number
@@ -10,14 +11,8 @@ export interface AuthUserPayload {
   role: string
 }
 
-interface JwtConfig {
-  jwtSecret: string
-  jwtIssuer: string
-  jwtExpiresInSeconds: number
-}
-
 const scrypt = promisify(scryptCallback)
-const COOKIE_NAME = 'auth_token'
+const COOKIE_NAME = 'app_session'
 const SALT_BYTES = 16
 const KEY_LENGTH = 64
 
@@ -33,19 +28,6 @@ function base64UrlDecode(input: string) {
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
   const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
   return Buffer.from(padded, 'base64')
-}
-
-function signHmac(data: string, secret: string) {
-  return base64UrlEncode(createHmac('sha256', secret).update(data).digest())
-}
-
-function getJwtConfig(): JwtConfig {
-  const config = useRuntimeConfig().auth
-  return {
-    jwtSecret: config.jwtSecret,
-    jwtIssuer: config.jwtIssuer,
-    jwtExpiresInSeconds: config.jwtExpiresInSeconds,
-  }
 }
 
 export async function hashPassword(password: string) {
@@ -66,60 +48,38 @@ export async function verifyPassword(stored: string, password: string) {
   return timingSafeEqual(hash, derived)
 }
 
-export function createAuthToken(user: AuthUserPayload) {
-  const config = getJwtConfig()
-  const now = Math.floor(Date.now() / 1000)
-  const payload = {
-    iss: config.jwtIssuer,
-    iat: now,
-    exp: now + config.jwtExpiresInSeconds,
-    user,
-  }
-  const header = { alg: 'HS256', typ: 'JWT' }
-
-  const encodedHeader = base64UrlEncode(JSON.stringify(header))
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
-  const signature = signHmac(`${encodedHeader}.${encodedPayload}`, config.jwtSecret)
-  const token = `${encodedHeader}.${encodedPayload}.${signature}`
-
-  return { token, expiresInSeconds: config.jwtExpiresInSeconds }
+function getSessionMaxAgeSeconds() {
+  return Number(useRuntimeConfig().auth.sessionMaxAgeSeconds)
 }
 
-export function verifyAuthToken(token: string) {
-  const config = getJwtConfig()
-  const parts = token.split('.')
-  if (parts.length !== 3) {
-    return null
-  }
-
-  const [encodedHeader, encodedPayload, signature] = parts
-  const expected = signHmac(`${encodedHeader}.${encodedPayload}`, config.jwtSecret)
-  if (signature.length !== expected.length) {
-    return null
-  }
-  if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-    return null
-  }
-
-  try {
-    const payload = JSON.parse(base64UrlDecode(encodedPayload).toString('utf8'))
-    if (payload.iss !== config.jwtIssuer) {
-      return null
-    }
-
-    if (payload.exp && Date.now() / 1000 > payload.exp) {
-      return null
-    }
-
-    return payload as { user: AuthUserPayload }
-  }
-  catch {
-    return null
-  }
+export async function createUserSession(event: H3Event, user: AuthUserPayload) {
+  const maxAgeSeconds = getSessionMaxAgeSeconds()
+  const { sessionId } = await sessionService.createSession({
+    userId: user.id,
+    role: user.role,
+    username: user.username,
+    email: user.email,
+  }, maxAgeSeconds)
+  setAuthCookie(event, sessionId, maxAgeSeconds)
 }
 
-export function setAuthCookie(event: H3Event, token: string, maxAgeSeconds: number) {
-  setCookie(event, COOKIE_NAME, token, {
+export async function createAdminSession(event: H3Event) {
+  const maxAgeSeconds = getSessionMaxAgeSeconds()
+  const authConfig = useRuntimeConfig().auth
+  const username = authConfig.adminUsername
+  const email = authConfig.adminEmail
+
+  const { sessionId } = await sessionService.createSession({
+    userId: null,
+    role: 'admin',
+    username,
+    email,
+  }, maxAgeSeconds)
+  setAuthCookie(event, sessionId, maxAgeSeconds)
+}
+
+export function setAuthCookie(event: H3Event, sessionId: string, maxAgeSeconds: number) {
+  setCookie(event, COOKIE_NAME, sessionId, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
@@ -137,28 +97,44 @@ export function clearAuthCookie(event: H3Event) {
   })
 }
 
-export function getAuthUser(event: H3Event) {
-  const token = getCookie(event, COOKIE_NAME)
-  if (!token) {
+export async function getAuthUser(event: H3Event) {
+  const sessionId = getCookie(event, COOKIE_NAME)
+  if (!sessionId) {
     return null
   }
 
-  const payload = verifyAuthToken(token)
-  return payload?.user ?? null
+  const session = await sessionService.getSessionById(sessionId)
+  if (!session) {
+    return null
+  }
+  return {
+    id: session.userId ?? 0,
+    username: session.username,
+    email: session.email,
+    role: session.role,
+  }
 }
 
-export function requireAuth(event: H3Event) {
-  const user = getAuthUser(event)
+export async function requireAuth(event: H3Event) {
+  const user = await getAuthUser(event)
   if (!user) {
     throw createError({ statusCode: 401, message: 'unauthorized' })
   }
   return user
 }
 
-export function requireAdmin(event: H3Event) {
-  const user = requireAuth(event)
+export async function requireAdmin(event: H3Event) {
+  const user = await requireAuth(event)
   if (user.role !== 'admin') {
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
   return user
+}
+
+export async function destroyCurrentSession(event: H3Event) {
+  const sessionId = getCookie(event, COOKIE_NAME)
+  if (sessionId) {
+    await sessionService.deleteSession(sessionId)
+  }
+  clearAuthCookie(event)
 }

@@ -66,14 +66,16 @@ pnpm run dev
 
 ## 🔐 认证与邮箱配置
 
-新增注册/登录需要配置 JWT 与 SMTP，建议写入 `.env`：
+当前认证模式为 **Session + Cookie**，管理员后台账号密码来自 `.env`。
 
 ```bash
-# JWT
-JWT_SECRET=please-change-me
-JWT_ISSUER=openapi
-JWT_EXPIRES_IN=604800
-EMAIL_VERIFY_EXPIRES_IN=30
+# Session
+SESSION_MAX_AGE=604800
+
+# 管理员后台账号（用于 /admin/login）
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=please-change-me
+ADMIN_EMAIL=admin@openapi.local
 
 # 站点 URL（用于邮箱验证链接）
 SITE_URL=http://localhost:3000
@@ -86,6 +88,12 @@ SMTP_USER=your_user
 SMTP_PASS=your_password
 SMTP_FROM=no-reply@example.com
 ```
+
+后台入口：
+
+- 管理员后台登录：`/admin/login`
+- 管理员后台页面：`/admin/auth-policy`（管理员控制台入口）
+- 用户后台页面（API Key 增删重置）：`/user/apikeys`
 
 ## 🤝 贡献指南
 

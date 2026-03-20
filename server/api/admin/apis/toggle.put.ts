@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { usersService } from '~~/server/service/userService'
+import { apiService } from '~~/server/service/apiService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
 
@@ -8,25 +8,23 @@ export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const body = await readBody(event) as Record<string, any>
   const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
+  const field = body.field as 'isEnabled' | 'isStatistics'
+  const value = Boolean(body.value)
+
+  if (!id || !['isEnabled', 'isStatistics'].includes(field)) {
+    throw createError({ statusCode: 400, message: 'invalid parameters' })
   }
 
-  const isBanned = Boolean(body.isBanned)
-  const updated = await usersService.banUser(id, isBanned)
+  const updated = await apiService.toggleApiField(id, field, value, admin.id)
 
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
-    resourceType: 'user',
+    action: `admin.api.toggle.${field}`,
+    resourceType: 'api',
     resourceId: String(id),
     detail: JSON.stringify(updated),
   })
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: updated,
-  }
+  return { code: 0, msg: 'ok', data: updated }
 })

@@ -1,13 +1,13 @@
 import type { H3Event } from 'h3'
-import { authPolicyService } from '~~/server/service/authPolicyService'
+import { friendLinkService } from '~~/server/service/friendLinkService'
 import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
-  requireAdmin(event)
-  const policy = await authPolicyService.getPolicy()
+  await requireAdmin(event)
+  const list = await friendLinkService.list()
   return {
     code: 0,
     msg: 'ok',
-    data: policy,
+    data: list,
   }
 })
