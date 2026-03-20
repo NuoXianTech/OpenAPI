@@ -1,56 +1,77 @@
-import { createHash, randomBytes } from 'node:crypto'
-import { and, eq, gt, isNull } from 'drizzle-orm'
-import { emailVerificationTokens } from '../db/schema/emailVerificationTokens'
+import { createHmac, randomBytes } from 'node:crypto'
 
-const TOKEN_BYTES = 32
+interface VerificationPayload {
+  userId: number
+  email: string
+  expiresAt: number
+  nonce: string
+}
+
+function base64UrlEncode(value: string) {
+  return Buffer.from(value, 'utf8').toString('base64url')
+}
+
+function base64UrlDecode(value: string) {
+  return Buffer.from(value, 'base64url').toString('utf8')
+}
+
+function getSecret() {
+  const secret = useRuntimeConfig().auth.emailVerifySecret
+  if (!secret) {
+    throw new Error('email verification secret is missing')
+  }
+  return secret
+}
+
+function sign(content: string) {
+  return createHmac('sha256', getSecret()).update(content).digest('base64url')
+}
 
 export const emailVerificationService = {
   generateToken() {
-    return randomBytes(TOKEN_BYTES).toString('base64url')
+    return randomBytes(32).toString('base64url')
   },
 
-  hashToken(token: string) {
-    return createHash('sha256').update(token).digest('hex')
-  },
-
-  async createToken(userId: number, expiresInMinutes: number) {
-    const token = this.generateToken()
-    const tokenHash = this.hashToken(token)
-    const expiresAt = new Date(Date.now() + expiresInMinutes * 60 * 1000)
-
-    await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.userId, userId))
-    const res = await db.insert(emailVerificationTokens).values({
+  async createToken(userId: number, email: string, expiresInMinutes: number) {
+    const payload: VerificationPayload = {
       userId,
-      tokenHash,
-      expiresAt,
-    }).returning()
+      email,
+      expiresAt: Date.now() + expiresInMinutes * 60 * 1000,
+      nonce: this.generateToken(),
+    }
+    const payloadText = JSON.stringify(payload)
+    const encodedPayload = base64UrlEncode(payloadText)
+    const token = `${encodedPayload}.${sign(encodedPayload)}`
 
-    return { token, expiresAt, record: res[0] }
+    return { token, expiresAt: new Date(payload.expiresAt), record: payload }
   },
 
   async consumeToken(userId: number, token: string) {
-    const tokenHash = this.hashToken(token)
-    const now = new Date()
-
-    const res = await db.select().from(emailVerificationTokens).where(
-      and(
-        eq(emailVerificationTokens.userId, userId),
-        eq(emailVerificationTokens.tokenHash, tokenHash),
-        isNull(emailVerificationTokens.consumedAt),
-        gt(emailVerificationTokens.expiresAt, now),
-      ),
-    ).limit(1)
-
-    const record = res[0]
-    if (!record) {
+    const [encodedPayload, signature] = token.split('.')
+    if (!encodedPayload || !signature) {
       return null
     }
 
-    const updated = await db.update(emailVerificationTokens)
-      .set({ consumedAt: now })
-      .where(eq(emailVerificationTokens.id, record.id))
-      .returning()
+    if (sign(encodedPayload) !== signature) {
+      return null
+    }
 
-    return updated[0] || null
+    let payload: VerificationPayload
+    try {
+      payload = JSON.parse(base64UrlDecode(encodedPayload)) as VerificationPayload
+    }
+    catch {
+      return null
+    }
+
+    if (payload.userId !== userId) {
+      return null
+    }
+
+    if (payload.expiresAt < Date.now()) {
+      return null
+    }
+
+    return payload
   },
 }

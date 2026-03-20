@@ -17,6 +17,7 @@ export default defineNuxtConfig({
       adminUsername: process.env.ADMIN_USERNAME || 'admin',
       adminPassword: process.env.ADMIN_PASSWORD || '',
       adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
+      emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',
     },
     smtp: {
       host: process.env.SMTP_HOST || 'smtp.example.com',
@@ -31,11 +32,11 @@ export default defineNuxtConfig({
       emailVerifyExpiresInMinutes: Number(process.env.EMAIL_VERIFY_EXPIRES_IN || 30),
       siteUrl: process.env.SITE_URL || 'http://localhost:3000',
       adminUsernameHint: process.env.ADMIN_USERNAME || 'admin',
-      apiImg:
-        process.env.API_IMG || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
-      apiName: process.env.API_NAME || 'OpenAPI',
-      apiDescription:
-        process.env.API_DESCRIPTION
+      siteImg:
+        process.env.SITE_IMG || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
+      siteName: process.env.SITE_NAME || 'OpenAPI',
+      siteDescription:
+        process.env.SITE_DESCRIPTION
         || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     },
   },

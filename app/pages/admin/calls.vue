@@ -4,7 +4,7 @@ definePageMeta({ middleware: 'auth-admin' })
 interface CallItem {
   id: number
   apiId: number
-  apiKeyId: number | null
+  apiKey: string | null
   userId: number | null
   path: string
   method: string
@@ -22,9 +22,6 @@ interface StatItem {
   totalCount: number
   successCount: number
   failureCount: number
-  avgLatencyMs: number
-  minLatencyMs: number
-  maxLatencyMs: number
   apiPath: string | null
 }
 
@@ -56,9 +53,7 @@ onMounted(load)
         </div>
 
         <div class="grid gap-3 md:grid-cols-3 mb-4">
-          <div class="p-4 rounded-[14px] border border-border bg-white">总调用：{{ summary.total }}</div>
-          <div class="p-4 rounded-[14px] border border-border bg-white">成功：{{ summary.success }}</div>
-          <div class="p-4 rounded-[14px] border border-border bg-white">失败：{{ summary.failure }}</div>
+          <div class="p-4 rounded-[14px] border border-border bg-white md:col-span-3">总调用：{{ summary.total }}</div>
         </div>
 
         <div class="grid gap-4">
@@ -69,7 +64,7 @@ onMounted(load)
                 <div class="font-semibold">API #{{ item.apiId }}</div>
                 <div class="text-xs text-muted">{{ item.apiPath }}</div>
                 <div class="text-xs text-muted mt-1">{{ item.statDate }}</div>
-                <div class="text-xs text-muted mt-1">总计 {{ item.totalCount }} / 成功 {{ item.successCount }} / 失败 {{ item.failureCount }}</div>
+                <div class="text-xs text-muted mt-1">总计 {{ item.totalCount }}</div>
               </div>
             </div>
           </section>

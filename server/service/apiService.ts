@@ -1,12 +1,30 @@
 import { and, desc, eq, ilike, or } from 'drizzle-orm'
-import { apiLists } from '@nuxthub/db/schema'
+import { apiCallStats, apiLists } from '@nuxthub/db/schema'
+
+function normalizeMethodList(httpMethod: string) {
+  return httpMethod
+    .split(',')
+    .map(method => method.trim())
+    .filter(Boolean)
+    .join(',')
+}
+
+async function loadApiStats() {
+  const rows = await db.select().from(apiCallStats)
+  return rows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
+    const current = accumulator[row.apiId] || { totalCalls: 0 }
+    current.totalCalls += row.totalCount
+    accumulator[row.apiId] = current
+    return accumulator
+  }, {})
+}
 
 export const apiService = {
   async list(filters: Partial<{ keyword: string; status: number; isEnabled: boolean; isStatistics: boolean }> = {}) {
     const conditions = [] as any[]
     if (filters.keyword) {
       conditions.push(or(
-        ilike(apiLists.code, `%${filters.keyword}%`),
+        ilike(apiLists.apiId, `%${filters.keyword}%`),
         ilike(apiLists.name, `%${filters.keyword}%`),
         ilike(apiLists.shortDesc, `%${filters.keyword}%`),
         ilike(apiLists.apiPath, `%${filters.keyword}%`),
@@ -23,25 +41,38 @@ export const apiService = {
     }
 
     const query = db.select().from(apiLists)
-    const rows = conditions.length
+    const [rows, statsMap] = await Promise.all([
+      conditions.length
       ? await query.where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
-      : await query.orderBy(desc(apiLists.updatedAt))
-    return rows
+      : await query.orderBy(desc(apiLists.updatedAt)),
+      loadApiStats(),
+    ])
+
+    return rows.map(row => ({
+      ...row,
+      totalCalls: statsMap[row.id]?.totalCalls ?? 0,
+    }))
   },
 
   async getApi() {
-    return await db.select({
-      name: apiLists.name,
-      status: apiLists.status,
-      short_desc: apiLists.shortDesc,
-      description: apiLists.description,
-      http_method: apiLists.httpMethod,
-      api_path: apiLists.apiPath,
-      doc_url: apiLists.docUrl,
-      is_enabled: apiLists.isEnabled,
-      is_api_key: apiLists.isApiKey,
-      is_statistics: apiLists.isStatistics,
-    }).from(apiLists)
+    const [rows, statsMap] = await Promise.all([
+      db.select().from(apiLists),
+      loadApiStats(),
+    ])
+
+    return rows.map(row => ({
+      ...row,
+      api_id: row.apiId,
+      apiId: row.apiId,
+      http_method: row.httpMethod,
+      api_path: row.apiPath,
+      doc_url: row.docUrl,
+      is_enabled: row.isEnabled,
+      is_api_key: row.isApiKey,
+      is_statistics: row.isStatistics,
+      total_calls: statsMap[row.id]?.totalCalls ?? 0,
+      totalCalls: statsMap[row.id]?.totalCalls ?? 0,
+    }))
   },
 
   async getById(id: number) {
@@ -49,8 +80,13 @@ export const apiService = {
     return res[0] || null
   },
 
+  async getByApiId(apiId: string) {
+    const res = await db.select().from(apiLists).where(eq(apiLists.apiId, apiId)).limit(1)
+    return res[0] || null
+  },
+
   async addApi(userid: number | null, data: Partial<typeof apiLists.$inferInsert> & {
-    code: string
+    apiId: string
     name: string
     shortDesc: string
     description: string
@@ -59,14 +95,13 @@ export const apiService = {
     docUrl: string
   }) {
     return await db.insert(apiLists).values({
-      code: data.code,
+      apiId: data.apiId,
       name: data.name,
       status: data.status ?? 1,
       category: data.category ?? null,
       shortDesc: data.shortDesc,
       description: data.description,
-      tags: data.tags ?? null,
-      httpMethod: data.httpMethod,
+      httpMethod: normalizeMethodList(data.httpMethod),
       apiPath: data.apiPath,
       docUrl: data.docUrl,
       isEnabled: data.isEnabled ?? true,
@@ -79,9 +114,11 @@ export const apiService = {
   },
 
   async updateApi(id: number, userid: number | null, data: Partial<typeof apiLists.$inferInsert>) {
+    const { apiId: _apiId, ...patch } = data as Partial<typeof apiLists.$inferInsert> & { apiId?: string }
     const res = await db.update(apiLists)
       .set({
-        ...data,
+        ...patch,
+        httpMethod: patch.httpMethod ? normalizeMethodList(patch.httpMethod) : patch.httpMethod,
         updatedBy: userid,
         updatedAt: new Date(),
       })

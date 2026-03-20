@@ -13,13 +13,12 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const updated = await apiService.updateApi(id, admin.id || null, {
-    code: body.code?.toString().trim(),
+    apiId: body.apiId?.toString().trim(),
     name: body.name?.toString().trim(),
     status: body.status !== undefined ? Number(body.status) : undefined,
     category: body.category?.toString().trim() || null,
     shortDesc: body.shortDesc?.toString().trim(),
     description: body.description?.toString().trim(),
-    tags: body.tags?.toString().trim() || null,
     httpMethod: body.httpMethod?.toString().trim(),
     apiPath: body.apiPath?.toString().trim(),
     docUrl: body.docUrl?.toString().trim(),

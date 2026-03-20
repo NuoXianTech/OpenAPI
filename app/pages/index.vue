@@ -19,7 +19,7 @@ const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } =
         <div class="bg-surface border border-border rounded-custom p-5 text-center">加载中...</div>
       </section>
 
-      <section id="errorState" v-else-if="error" class="py-6">
+      <section id="errorState" v-else-if="error">
         <div class="bg-surface border border-border rounded-custom p-5 text-center">
           <div class="font-semibold">加载失败</div>
           <div class="text-muted text-[13px] mt-1">{{ error }}</div>
@@ -29,7 +29,7 @@ const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } =
         </div>
       </section>
 
-      <section id="emptyState" v-else-if="isEmpty" class="py-6">
+      <section id="emptyState" v-else-if="isEmpty">
         <div class="bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
           <div class="font-semibold">未找到匹配的 API</div>
           <div class="text-muted text-[13px] mt-1">尝试调整搜索关键词或切换筛选标签。</div>

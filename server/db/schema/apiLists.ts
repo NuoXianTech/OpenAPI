@@ -10,15 +10,14 @@ import {
 import { users } from './users'
 
 export const apiLists = pgTable('api_lists', {
-  id: serial('id').primaryKey(),
-  code: varchar('code', { length: 50 }).unique().notNull(), // 接口编码
+  id: serial('id').unique().notNull(),
+  apiId: varchar('api_id', { length: 50 }).primaryKey(), // 接口唯一标识
   name: varchar('name', { length: 100 }).notNull(), // 接口名称
   status: integer('status').default(1).notNull(), // 接口状态，-1=未知 0=异常 1=正常 2=维护 3=废弃
   category: varchar('category', { length: 100 }), // 接口分类，用于分组展示
   shortDesc: varchar('short_desc', { length: 30 }).notNull(), // 简短描述
   description: text('description').notNull(), // 完整描述
-  tags: varchar('tags', { length: 255 }), // 标签，逗号分隔
-  httpMethod: varchar('http_method', { length: 10 }).notNull(), // 请求方法
+  httpMethod: varchar('http_method', { length: 50 }).notNull(), // 请求方法，可逗号分隔多个
   apiPath: varchar('api_path', { length: 200 }).notNull(), // 接口路径
   docUrl: varchar('doc_url', { length: 200 }).notNull(), // 接口文档
   isEnabled: boolean('is_enabled').default(true).notNull(), // 是否启用接口

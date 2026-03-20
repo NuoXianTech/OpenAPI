@@ -6,9 +6,6 @@ CREATE TABLE "api_call_stats" (
 	"total_count" integer DEFAULT 0 NOT NULL,
 	"success_count" integer DEFAULT 0 NOT NULL,
 	"failure_count" integer DEFAULT 0 NOT NULL,
-	"avg_latency_ms" integer DEFAULT 0 NOT NULL,
-	"min_latency_ms" integer DEFAULT 0 NOT NULL,
-	"max_latency_ms" integer DEFAULT 0 NOT NULL,
 	"api_path" varchar(200),
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -42,15 +39,14 @@ CREATE TABLE "api_keys" (
 );
 --> statement-breakpoint
 CREATE TABLE "api_lists" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"code" varchar(50) NOT NULL,
+	"id" serial NOT NULL,
+	"api_id" varchar(50) PRIMARY KEY NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"status" integer DEFAULT 1 NOT NULL,
 	"category" varchar(100),
 	"short_desc" varchar(30) NOT NULL,
 	"description" text NOT NULL,
-	"tags" varchar(255),
-	"http_method" varchar(10) NOT NULL,
+	"http_method" varchar(50) NOT NULL,
 	"api_path" varchar(200) NOT NULL,
 	"doc_url" varchar(200) NOT NULL,
 	"is_enabled" boolean DEFAULT true NOT NULL,
@@ -61,17 +57,7 @@ CREATE TABLE "api_lists" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "api_lists_code_unique" UNIQUE("code")
-);
---> statement-breakpoint
-CREATE TABLE "email_verification_tokens" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"token_hash" varchar(128) NOT NULL,
-	"expires_at" timestamp with time zone NOT NULL,
-	"consumed_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "email_verification_tokens_user_id_unique" UNIQUE("user_id")
+	CONSTRAINT "api_lists_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint
 CREATE TABLE "friend_links" (
@@ -86,16 +72,13 @@ CREATE TABLE "friend_links" (
 );
 --> statement-breakpoint
 CREATE TABLE "sessions" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"session_id" varchar(128) NOT NULL,
+	"session_id" varchar(128) PRIMARY KEY NOT NULL,
 	"kind" varchar(20) DEFAULT 'user' NOT NULL,
 	"user_id" integer,
 	"username" varchar(50) NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "sessions_session_id_unique" UNIQUE("session_id")
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -124,6 +107,5 @@ ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "email_verification_tokens" ADD CONSTRAINT "email_verification_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "friend_links" ADD CONSTRAINT "friend_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

@@ -7,6 +7,11 @@ function generateApiKey() {
 }
 
 export const apiKeyService = {
+  async getByApiKey(apiKey: string) {
+    const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, apiKey)).limit(1)
+    return res[0] || null
+  },
+
   async listByUser(userId: number) {
     return db.select().from(apiKeys).where(eq(apiKeys.userId, userId))
   },
@@ -45,10 +50,7 @@ export const apiKeyService = {
   async resetForUser(userId: number, id: number) {
     const nextKey = generateApiKey()
     const res = await db.update(apiKeys)
-      .set({
-        apiKey: nextKey,
-        updatedAt: new Date(),
-      })
+      .set({ apiKey: nextKey })
       .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id)))
       .returning()
     return res[0] || null
@@ -59,7 +61,6 @@ export const apiKeyService = {
     const res = await db.update(apiKeys)
       .set({
         apiKey: nextKey,
-        updatedAt: new Date(),
       })
       .where(eq(apiKeys.id, id))
       .returning()

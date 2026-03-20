@@ -4,7 +4,7 @@ import { usersService } from '~~/server/service/userService'
 import { createError, getRequestIP } from 'h3'
 import { hashPassword } from '~~/server/utils/auth'
 import { validateEmail } from '~~/server/utils/validation'
-import { emailVerificationService } from '~~/server/service/emailVerificationService'
+import { emailVerificationService } from '../../service/emailVerificationService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const runtimeConfig = useRuntimeConfig()
   const expiresInMinutes = Number(runtimeConfig.public.emailVerifyExpiresInMinutes || 30)
-  const { token } = await emailVerificationService.createToken(created.id, expiresInMinutes)
+  const { token } = await emailVerificationService.createToken(created.id, created.email, expiresInMinutes)
   const verifyUrl = `${runtimeConfig.public.siteUrl}/verify-email?user=${created.id}&token=${token}`
   await sendVerificationEmail(email, verifyUrl)
 

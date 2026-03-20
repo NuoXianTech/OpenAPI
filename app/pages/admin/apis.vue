@@ -3,13 +3,12 @@ definePageMeta({ middleware: 'auth-admin' })
 
 interface ApiItem {
   id: number
-  code: string
+  apiId: string
   name: string
   status: number
   category: string | null
   shortDesc: string
   description: string
-  tags: string | null
   httpMethod: string
   apiPath: string
   docUrl: string
@@ -17,21 +16,23 @@ interface ApiItem {
   isApiKey: boolean
   isStatistics: boolean
   rateLimitPerMinute: number
+  totalCalls?: number
 }
+
+const methodOptions = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
 
 const apis = ref<ApiItem[]>([])
 const notice = ref('')
 
 const form = reactive({
   id: 0,
-  code: '',
+  apiId: '',
   name: '',
   status: 1,
   category: '',
   shortDesc: '',
   description: '',
-  tags: '',
-  httpMethod: 'GET',
+  httpMethodList: ['GET'] as string[],
   apiPath: '',
   docUrl: '',
   isEnabled: true,
@@ -40,21 +41,35 @@ const form = reactive({
   rateLimitPerMinute: 0,
 })
 
+function formatCallCount(count: number) {
+  if (count < 10000) {
+    return `${count}次`
+  }
+  return `${Math.floor(count / 10000)}万`
+}
+
 const loadApis = async () => {
   const res = await $fetch<{ code: number; msg: string; data: ApiItem[] }>('/api/admin/apis/list')
   apis.value = res.data || []
 }
 
 const pickApi = (item: ApiItem) => {
-  Object.assign(form, item)
+  Object.assign(form, {
+    ...item,
+    httpMethodList: item.httpMethod.split(',').map(method => method.trim()).filter(Boolean),
+  })
 }
 
 const saveApi = async () => {
+  const payload = {
+    ...form,
+    httpMethod: form.httpMethodList.join(','),
+  }
   if (form.id) {
-    await $fetch('/api/admin/apis/update', { method: 'PUT', body: form })
+    await $fetch('/api/admin/apis/update', { method: 'PUT', body: payload })
   }
   else {
-    await $fetch('/api/admin/apis/add', { method: 'POST', body: form })
+    await $fetch('/api/admin/apis/add', { method: 'POST', body: payload })
   }
   notice.value = '接口已保存'
   await loadApis()
@@ -90,23 +105,22 @@ onMounted(loadApis)
         <div class="grid gap-4">
           <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <input v-model="form.code" class="auth-input" placeholder="code">
+              <input v-model="form.apiId" class="auth-input" placeholder="api_id" :disabled="form.id !== 0">
               <input v-model="form.name" class="auth-input" placeholder="name">
               <input v-model="form.category" class="auth-input" placeholder="category">
               <input v-model="form.shortDesc" class="auth-input" placeholder="shortDesc">
-              <input v-model="form.tags" class="auth-input" placeholder="tags">
               <select v-model.number="form.status" class="auth-input">
                 <option :value="1">正常</option>
                 <option :value="0">异常</option>
                 <option :value="2">维护</option>
                 <option :value="3">废弃</option>
               </select>
-              <select v-model="form.httpMethod" class="auth-input">
-                <option>GET</option>
-                <option>POST</option>
-                <option>PUT</option>
-                <option>DELETE</option>
-              </select>
+              <div class="auth-input h-auto min-h-[44px] flex flex-wrap gap-2 items-center">
+                <label v-for="method in methodOptions" :key="method" class="flex items-center gap-1 text-sm">
+                  <input v-model="form.httpMethodList" type="checkbox" :value="method">
+                  {{ method }}
+                </label>
+              </div>
               <input v-model="form.apiPath" class="auth-input" placeholder="apiPath">
               <input v-model="form.docUrl" class="auth-input" placeholder="docUrl">
               <input v-model.number="form.rateLimitPerMinute" type="number" class="auth-input" placeholder="rate limit">
@@ -124,8 +138,21 @@ onMounted(loadApis)
 
           <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             <div v-for="item in apis" :key="item.id" class="p-3 rounded-[12px] border border-border bg-white">
-              <div class="font-semibold">{{ item.code }} · {{ item.name }}</div>
-              <div class="text-xs text-muted">{{ item.httpMethod }} {{ item.apiPath }}</div>
+              <div class="font-semibold">{{ item.apiId }} · {{ item.name }}</div>
+              <div v-if="item.category" class="flex flex-wrap gap-1 mt-1">
+                <span v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)" :key="`${item.id}-cat-${category}`" class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted">
+                  {{ category }}
+                </span>
+              </div>
+              <div class="flex flex-wrap gap-1 mt-1">
+                <span v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)" :key="`${item.id}-${method}`" class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted">
+                  {{ method }}
+                </span>
+              </div>
+              <div class="text-xs text-muted mt-1">{{ item.apiPath }}</div>
+              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted">
+                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">{{ formatCallCount(item.totalCalls ?? 0) }}</span>
+              </div>
               <div class="auth-actions mt-2">
                 <button class="auth-button auth-ghost" @click="pickApi(item)">编辑</button>
                 <button class="auth-button auth-ghost" @click="toggle(item, 'isEnabled')">{{ item.isEnabled ? '禁用' : '启用' }}</button>

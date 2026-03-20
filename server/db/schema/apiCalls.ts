@@ -3,9 +3,7 @@ import {
   serial,
   integer,
   varchar,
-  boolean,
   timestamp,
-  integer as pgInteger,
   text,
 } from 'drizzle-orm/pg-core'
 import { apiLists } from './apiLists'
@@ -19,11 +17,11 @@ export const apiCalls = pgTable('api_calls', {
   userId: integer('user_id').references(() => users.id),
   path: varchar('path', { length: 1000 }).notNull(),
   method: varchar('method', { length: 10 }).notNull(),
-  statusCode: pgInteger('status_code').notNull(),
-  latencyMs: pgInteger('latency_ms').notNull().default(0),
+  statusCode: integer('status_code').notNull(),
+  latencyMs: integer('latency_ms').notNull().default(0),
   ip: varchar('ip', { length: 45 }),
-  requestSize: pgInteger('request_size'),
-  responseSize: pgInteger('response_size'),
+  requestSize: integer('request_size'),
+  responseSize: integer('response_size'),
   rawRequest: text('raw_request'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

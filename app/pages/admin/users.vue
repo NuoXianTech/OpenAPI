@@ -17,7 +17,6 @@ interface UserItem {
 
 interface ApiKeyItem {
   id: number
-  userId: number
   name: string
   apiKey: string
   isActive: boolean

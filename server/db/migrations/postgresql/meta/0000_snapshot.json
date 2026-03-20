@@ -1,5 +1,5 @@
 {
-  "id": "a1c9adc2-5429-4742-a6a6-8f521835939d",
+  "id": "9c5d5435-4cda-4a57-ae13-9de72e682929",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -48,27 +48,6 @@
         },
         "failure_count": {
           "name": "failure_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "avg_latency_ms": {
-          "name": "avg_latency_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "min_latency_ms": {
-          "name": "min_latency_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "max_latency_ms": {
-          "name": "max_latency_ms",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -350,13 +329,13 @@
         "id": {
           "name": "id",
           "type": "serial",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
         },
-        "code": {
-          "name": "code",
+        "api_id": {
+          "name": "api_id",
           "type": "varchar(50)",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true
         },
         "name": {
@@ -390,15 +369,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "tags": {
-          "name": "tags",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "http_method": {
           "name": "http_method",
-          "type": "varchar(10)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
@@ -500,83 +473,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "api_lists_code_unique": {
-          "name": "api_lists_code_unique",
+        "api_lists_id_unique": {
+          "name": "api_lists_id_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "code"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.email_verification_tokens": {
-      "name": "email_verification_tokens",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "token_hash": {
-          "name": "token_hash",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "consumed_at": {
-          "name": "consumed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "email_verification_tokens_user_id_users_id_fk": {
-          "name": "email_verification_tokens_user_id_users_id_fk",
-          "tableFrom": "email_verification_tokens",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
             "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "email_verification_tokens_user_id_unique": {
-          "name": "email_verification_tokens_user_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "user_id"
           ]
         }
       },
@@ -666,16 +567,10 @@
       "name": "sessions",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
         "session_id": {
           "name": "session_id",
           "type": "varchar(128)",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true
         },
         "kind": {
@@ -715,13 +610,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         }
       },
       "indexes": {},
@@ -741,15 +629,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "sessions_session_id_unique": {
-          "name": "sessions_session_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "session_id"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

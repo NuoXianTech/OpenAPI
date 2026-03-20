@@ -7,7 +7,6 @@ interface ApiKeyItem {
   apiKey: string
   isActive: boolean
   createdAt: string
-  updatedAt: string
 }
 
 const list = ref<ApiKeyItem[]>([])

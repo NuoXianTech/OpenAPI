@@ -4,10 +4,12 @@
 - 为交互式 AI 助手（Copilot Chat / agents）提供快速上手的工程级说明，包含构建/运行命令、约定、关键目录与常见任务指南。
 
 工作流概览
-1. 发现约定：优先检查本文件和根 README.md 获取环境与运行命令。
-2. 探索代码：定位前端（`app/`）、后端接口（`server/api/`）、数据库模式与迁移（`db/`）。
-3. 生成或合并：对需要新增的说明采用最小变更，保持已有文档内容并补充缺失信息。
-4. 迭代：提出示例交互提示并建议进一步的 agent 自定义（如针对后端、前端、数据库的 applyTo 规则）。
+1. 先读约定：优先检查本文件和根 README.md，确认环境变量、运行命令和数据库流程。
+2. 再看代码：优先定位 `app/`、`server/api/`、`server/service/`、`server/db/schema/`。
+3. 小步修改：尽量做最小变更，保持现有命名、目录结构和页面风格一致。
+4. 联动检查：凡是改了 API、schema 或字段名，都要同步检查服务层、接口路由、前端页面、测试入口和文档。
+5. 数据库变更：不要直接修改或新增 `server/db/migrations/` 下的文件，所有数据库结构调整都先在 `server/db/schema/` 中完成，然后使用 `pnpm run db:migrate` 生成并执行迁移。
+6. 进一步自定义：需要更细的规则时，再考虑针对后端、前端、数据库分别创建 applyTo 规则。
 
 关键命令（在仓库根目录执行）
 - 安装依赖：`pnpm install`
@@ -25,13 +27,14 @@
 重要目录（快速导航）
 - 前端（Nuxt）应用：`app/`（页面、组件、assets、composables）
 - 服务端 API：`server/api/`（按路由组织的 server handlers，例如 `server/api/v1/`）
-- 数据库模式与迁移：`db/schema.ts`、`db/migrations/`、`db/schema/`（包含 `apiKeys.ts`、`apiLists.ts` 等）
+- 数据库模式与迁移：`server/db/schema.ts`、`server/db/schema/`、`server/db/migrations/`（包含 `apiKeys.ts`、`apiLists.ts` 等）
 - 后端服务实现：`server/service/`（`apiService.ts`、`userService.ts`）
 - 工具与脚本：`utils/`（如 `report.ts`）
 
 开发建议
-- 本地开发流程：安装依赖 → 生成 DB 文件（`db:generate`）→ 启动开发（`pnpm run dev`）。
-- 变更数据库模式时，使用 `pnpm run db:generate` 生成或更新迁移/DDL。
+- 本地开发流程：安装依赖 → 修改 `server/db/schema/` → 执行 `pnpm run db:migrate` → 启动开发（`pnpm run dev`）。
+- 变更数据库模式时，只改 `server/db/schema/`，不要手工编辑 `server/db/migrations/`；迁移文件应由 `pnpm run db:migrate` 生成或更新。
+- 当修改了环境变量、命令、目录约定或数据库字段时，优先同步更新 README 和相关说明文件。
 - 提交前运行 `pnpm run lint` 并在需要时 `pnpm run lint:fix`。
 
 Agent/助理使用示例提示（示例）

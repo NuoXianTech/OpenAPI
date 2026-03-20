@@ -69,15 +69,15 @@ pnpm run dev
 当前认证模式为 **Session + Cookie**，管理员后台账号密码来自 `.env`。
 
 ```bash
-# Session
+# Session会话过期时间（默认 7 天）
 SESSION_MAX_AGE=604800
 
-# 管理员后台账号（用于 /admin/login）
+# 管理员后台账号
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=please-change-me
 ADMIN_EMAIL=admin@openapi.local
 
-# 站点 URL（用于邮箱验证链接）
+# 站点 URL
 SITE_URL=http://localhost:3000
 
 # SMTP
