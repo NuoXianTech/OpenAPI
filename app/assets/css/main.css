@@ -212,6 +212,44 @@ body {
   transition: transform 180ms ease;
 }
 
+.fab-btn {
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
+}
+
+.fab-btn:active {
+  transform: scale(0.96);
+}
+
+.fab-menu-row {
+  transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.fab-menu-row:hover {
+  transform: translateX(-1px);
+}
+
+.fab-mask-enter-active,
+.fab-mask-leave-active,
+.fab-panel-enter-active,
+.fab-panel-leave-active,
+.fab-modal-enter-active,
+.fab-modal-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.fab-mask-enter-from,
+.fab-mask-leave-to,
+.fab-modal-enter-from,
+.fab-modal-leave-to {
+  opacity: 0;
+}
+
+.fab-panel-enter-from,
+.fab-panel-leave-to {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+
 .state-fade-enter-active,
 .state-fade-leave-active {
   transition: opacity 220ms ease, transform 220ms ease;

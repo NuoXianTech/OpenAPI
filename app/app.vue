@@ -1,3 +1,4 @@
 <template>
+  <CommonFabMenu />
   <NuxtPage />
 </template>

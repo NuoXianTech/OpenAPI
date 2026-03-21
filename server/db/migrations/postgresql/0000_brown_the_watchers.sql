@@ -60,6 +60,23 @@ CREATE TABLE "api_lists" (
 	CONSTRAINT "api_lists_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint
+CREATE TABLE "fab_menu_items" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" varchar(140) NOT NULL,
+	"subtitle" varchar(240),
+	"icon" varchar(120) DEFAULT 'mdi:link-variant' NOT NULL,
+	"action_type" varchar(20) DEFAULT 'link' NOT NULL,
+	"action_value" varchar(1000) NOT NULL,
+	"action_label" varchar(60) DEFAULT '打开' NOT NULL,
+	"target" varchar(20) DEFAULT '_blank' NOT NULL,
+	"sort" integer DEFAULT 0 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_by" integer,
+	"updated_by" integer,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "friend_links" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"title" varchar(140) NOT NULL,
@@ -105,5 +122,7 @@ ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "friend_links" ADD CONSTRAINT "friend_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

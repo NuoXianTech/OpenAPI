@@ -40,6 +40,13 @@ definePageMeta({ middleware: 'auth-admin' })
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
+            to="/admin/fab-menu"
+          >
+            <div class="font-semibold">FAB 菜单</div>
+            <div class="text-sm text-muted mt-1">管理首页右下角的快速导航菜单。</div>
+          </NuxtLink>
+          <NuxtLink
+            class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/admin/calls"
           >
             <div class="font-semibold">调用统计</div>
