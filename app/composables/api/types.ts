@@ -1,12 +1,15 @@
 export interface ApiCatalogItem {
   id: number
   name: string
-  description: string
-  docurl: string
-  url: string
-  method: string
-  count: string
   status: number
+  category: string | null
+  shortDesc: string
+  description: string
+  httpMethod: string
+  apiPath: string
+  docUrl: string
+  isApiKey: boolean
+  totalCalls: number
 }
 
 export interface ApiCatalogResponse {

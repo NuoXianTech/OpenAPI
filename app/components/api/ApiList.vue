@@ -13,14 +13,14 @@ const { items } = defineProps({
       :key="item.id ?? index"
       :name="item.name"
       :status="item.status"
-      :short-desc="item.short_desc || item.shortDesc"
+      :short-desc="item.shortDesc"
       :description="item.description"
       :category="item.category || ''"
-      :http-method="item.http_method || item.method || item.httpMethod"
-      :api-path="item.api_path || item.url || item.apiPath"
-      :doc-url="item.doc_url || item.docurl || item.docUrl"
-      :is-api-key="item.is_api_key || item.isApiKey || false"
-      :total-calls="item.total_calls || item.totalCalls || 0"
+      :http-method="item.httpMethod"
+      :api-path="item.apiPath"
+      :doc-url="item.docUrl"
+      :is-api-key="item.isApiKey"
+      :total-calls="item.totalCalls"
     />
   </main>
 </template>

@@ -19,6 +19,20 @@ async function loadApiStats() {
   }, {})
 }
 
+type PublicApiItem = {
+  id: number
+  name: string
+  status: number
+  category: string | null
+  shortDesc: string
+  description: string
+  httpMethod: string
+  apiPath: string
+  docUrl: string
+  isApiKey: boolean
+  totalCalls: number
+}
+
 export const apiService = {
   async list(filters: Partial<{ keyword: string, status: number, isEnabled: boolean, isStatistics: boolean }> = {}) {
     const conditions = [] as any[]
@@ -60,16 +74,17 @@ export const apiService = {
       loadApiStats(),
     ])
 
-    return (rows as Array<typeof apiLists.$inferSelect>).map(row => ({
-      ...row,
-      code: row.code,
-      http_method: row.httpMethod,
-      api_path: row.apiPath,
-      doc_url: row.docUrl,
-      is_enabled: row.isEnabled,
-      is_api_key: row.isApiKey,
-      is_statistics: row.isStatistics,
-      total_calls: statsMap[row.id]?.totalCalls ?? 0,
+    return (rows as Array<typeof apiLists.$inferSelect>).map((row): PublicApiItem => ({
+      id: row.id,
+      name: row.name,
+      status: row.status,
+      category: row.category,
+      shortDesc: row.shortDesc,
+      description: row.description,
+      httpMethod: row.httpMethod,
+      apiPath: row.apiPath,
+      docUrl: row.docUrl,
+      isApiKey: row.isApiKey,
       totalCalls: statsMap[row.id]?.totalCalls ?? 0,
     }))
   },
