@@ -71,6 +71,10 @@ export const sessionService = {
     await db.delete(sessions).where(eq(sessions.sessionId, sessionId))
   },
 
+  async deleteSessionsByUserId(userId: number) {
+    await db.delete(sessions).where(eq(sessions.userId, userId))
+  },
+
   async deleteExpiredSessions() {
     const now = new Date()
     await db.delete(sessions).where(lt(sessions.expiresAt, now))

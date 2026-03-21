@@ -3,6 +3,7 @@ import { createError } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { sessionService } from '~~/server/service/sessionService'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
@@ -14,6 +15,10 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const isBanned = Boolean(body.isBanned)
   const updated = await usersService.banUser(id, isBanned)
+
+  if (isBanned) {
+    await sessionService.deleteSessionsByUserId(id)
+  }
 
   await operationLogService.addLog({
     userId: admin.id || null,

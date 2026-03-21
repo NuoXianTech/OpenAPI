@@ -118,6 +118,12 @@ export async function getAuthUser(event: H3Event) {
     return null
   }
 
+  if (user.isBanned) {
+    await sessionService.deleteSession(sessionId)
+    clearAuthCookie(event)
+    throw createError({ statusCode: 403, message: 'Account is banned' })
+  }
+
   return {
     id: user.id,
     username: user.username,
