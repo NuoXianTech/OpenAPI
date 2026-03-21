@@ -7,7 +7,12 @@ const { items } = defineProps({
 </script>
 
 <template>
-  <main class="grid grid-cols-12 gap-4 items-start">
+  <TransitionGroup
+    name="api-card"
+    tag="main"
+    class="grid grid-cols-12 gap-4 items-start api-card-grid"
+    appear
+  >
     <APICard
       v-for="(item, index) in items"
       :key="item.id ?? index"
@@ -21,6 +26,7 @@ const { items } = defineProps({
       :doc-url="item.docUrl"
       :is-api-key="item.isApiKey"
       :total-calls="item.totalCalls"
+      class="api-card-item"
     />
-  </main>
+  </TransitionGroup>
 </template>

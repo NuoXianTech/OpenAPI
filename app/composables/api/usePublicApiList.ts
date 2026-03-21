@@ -1,4 +1,4 @@
-import type { ApiCatalogResponse } from './types'
+import type { ApiCatalogResponse, ApiTabOption } from './types'
 
 const defaultResponse: ApiCatalogResponse = {
   code: 0,
@@ -9,6 +9,7 @@ const defaultResponse: ApiCatalogResponse = {
 
 export function usePublicApiList() {
   const result = ref<ApiCatalogResponse>(defaultResponse)
+  const catalogItems = ref(result.value.data)
 
   const fetchPublicApiList = async () => {
     try {
@@ -16,6 +17,8 @@ export function usePublicApiList() {
         method: 'GET',
       })
       result.value = res
+      catalogItems.value = res.data || []
+      return res
     }
     catch (error: unknown) {
       const endpoint = '/api/list'
@@ -30,11 +33,22 @@ export function usePublicApiList() {
         error,
       )
       result.value = defaultResponse
+      throw error
     }
   }
 
+  const statusTabs: ApiTabOption[] = [
+    { label: '全部', value: 'all' },
+    { label: '正常', value: 1 },
+    { label: '异常', value: 0 },
+    { label: '维护', value: 2 },
+    { label: '废弃', value: 3 },
+  ]
+
   return {
     result,
+    catalogItems,
+    statusTabs,
     fetchPublicApiList,
   }
 }

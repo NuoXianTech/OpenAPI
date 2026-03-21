@@ -8,7 +8,8 @@ export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event)
   const list = await apiService.list({
     keyword: (query.keyword || '').toString().trim(),
-    status: query.status !== undefined ? Number(query.status) : undefined,
+    status: query.status !== undefined && query.status !== '' ? Number(query.status) : undefined,
+    category: (query.category || '').toString().trim(),
     isEnabled: query.isEnabled !== undefined ? query.isEnabled === 'true' : undefined,
     isStatistics: query.isStatistics !== undefined ? query.isStatistics === 'true' : undefined,
   })

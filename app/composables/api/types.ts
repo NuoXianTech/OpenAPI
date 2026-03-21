@@ -18,3 +18,14 @@ export interface ApiCatalogResponse {
   data: ApiCatalogItem[]
   timestamp: number
 }
+
+export interface ApiCatalogFilters {
+  keyword?: string
+  status?: number
+  category?: string
+}
+
+export interface ApiTabOption {
+  label: string
+  value: string | number
+}

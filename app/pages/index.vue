@@ -1,9 +1,21 @@
 <script lang="ts" setup>
 import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
+import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
 import { useApiList } from '~/composables/api/useApiList'
 
-const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } = useApiList()
+const {
+  query,
+  currentTab,
+  currentCategory,
+  statusTabs,
+  categoryTabs,
+  loading,
+  error,
+  filteredItems,
+  isEmpty,
+  fetchList,
+} = useApiList()
 </script>
 
 <template>
@@ -15,59 +27,91 @@ const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } =
 
       <SearchBar v-model="query" />
 
-      <section
-        v-if="loading"
-        id="loadingState"
-        class="py-6"
-      >
-        <div class="bg-surface border border-border rounded-custom p-5 text-center">
-          加载中...
+      <div class="mt-4">
+        <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+          状态筛选
         </div>
-      </section>
+        <ApiFilterTabs
+          v-model="currentTab"
+          :tabs="statusTabs"
+          aria-label="API 状态筛选"
+        />
+      </div>
 
-      <section
-        v-else-if="error"
-        id="errorState"
-      >
-        <div class="bg-surface border border-border rounded-custom p-5 text-center">
-          <div class="font-semibold">
-            加载失败
-          </div>
-          <div class="text-muted text-[13px] mt-1">
-            {{ error }}
-          </div>
-          <div class="mt-3">
-            <button
-              class="btn"
-              @click="fetchList"
-            >
-              重试
-            </button>
-          </div>
+      <div class="mt-2">
+        <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+          分类筛选
         </div>
-      </section>
+        <ApiFilterTabs
+          v-model="currentCategory"
+          :tabs="categoryTabs"
+          aria-label="API 分类筛选"
+        />
+      </div>
 
-      <section
-        v-else-if="isEmpty"
-        id="emptyState"
+      <Transition
+        name="state-fade"
+        mode="out-in"
       >
-        <div class="bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
-          <div class="font-semibold">
-            未找到匹配的 API
+        <section
+          v-if="loading"
+          key="loading"
+          id="loadingState"
+          class="py-6"
+        >
+          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
+            加载中...
           </div>
-          <div class="text-muted text-[13px] mt-1">
-            尝试调整搜索关键词或切换筛选标签。
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <section
-        v-else
-        id="contentState"
-        class="py-2"
-      >
-        <ApiList :items="filteredItems" />
-      </section>
+        <section
+          v-else-if="error"
+          key="error"
+          id="errorState"
+        >
+          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
+            <div class="font-semibold">
+              加载失败
+            </div>
+            <div class="text-muted text-[13px] mt-1">
+              {{ error }}
+            </div>
+            <div class="mt-3">
+              <button
+                class="btn"
+                @click="fetchList"
+              >
+                重试
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section
+          v-else-if="isEmpty"
+          key="empty"
+          id="emptyState"
+          class="py-2"
+        >
+          <div class="state-panel empty-state bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
+            <div class="font-semibold">
+              未找到匹配的 API
+            </div>
+            <div class="text-muted text-[13px] mt-1">
+              尝试调整搜索关键词或切换筛选标签。
+            </div>
+          </div>
+        </section>
+
+        <section
+          v-else
+          key="content"
+          id="contentState"
+          class="py-2"
+        >
+          <ApiList :items="filteredItems" />
+        </section>
+      </Transition>
     </main>
     <CommonAppFooter />
   </ClientOnly>

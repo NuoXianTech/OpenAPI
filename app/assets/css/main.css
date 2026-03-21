@@ -176,6 +176,98 @@ body {
   background: rgba(255, 255, 255, 0.75);
 }
 
+.api-filter-tabs {
+  will-change: transform;
+}
+
+.api-filter-tab {
+  transform: translateY(0);
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.api-filter-tab:hover {
+  transform: translateY(-1px);
+}
+
+.api-card-grid {
+  contain: content;
+}
+
+.api-card-item {
+  will-change: transform, opacity;
+}
+
+.api-card-enter-active,
+.api-card-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.api-card-enter-from,
+.api-card-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.985);
+}
+
+.api-card-move {
+  transition: transform 180ms ease;
+}
+
+.state-fade-enter-active,
+.state-fade-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.state-fade-enter-from,
+.state-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.state-panel {
+  will-change: transform, opacity;
+}
+
+.empty-state {
+  position: relative;
+  overflow: hidden;
+}
+
+.empty-state::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top center, rgba(17, 17, 19, 0.05), transparent 42%);
+  pointer-events: none;
+}
+
+.empty-state-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.empty-state-ring,
+.empty-state-dot {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+}
+
+.empty-state-ring {
+  border: 1px solid rgba(17, 17, 19, 0.12);
+  animation: emptyRing 2.2s ease-in-out infinite;
+}
+
+.empty-state-dot {
+  inset: 18px;
+  background: linear-gradient(180deg, rgba(17, 17, 19, 0.88), rgba(17, 17, 19, 0.68));
+  box-shadow: 0 0 0 6px rgba(17, 17, 19, 0.06);
+  animation: emptyDot 2.2s ease-in-out infinite;
+}
+
 @media (min-width: 960px) {
   .auth-hero {
     display: flex;
@@ -197,6 +289,26 @@ body {
   0% { transform: scale(1); opacity: 0.6; }
   70% { transform: scale(2.3); opacity: 0; }
   100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes emptyRing {
+  0%, 100% {
+    transform: scale(0.94);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.12;
+  }
+}
+
+@keyframes emptyDot {
+  0%, 100% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.06);
+  }
 }
 
 /* 骨架屏 */

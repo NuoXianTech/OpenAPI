@@ -19,6 +19,44 @@ async function loadApiStats() {
   }, {})
 }
 
+function buildApiFilters(filters: Partial<{
+  keyword: string
+  status: number
+  category: string
+  isEnabled: boolean
+  isStatistics: boolean
+}>) {
+  const conditions = [] as any[]
+
+  if (filters.keyword) {
+    conditions.push(or(
+      ilike(apiLists.code, `%${filters.keyword}%`),
+      ilike(apiLists.name, `%${filters.keyword}%`),
+      ilike(apiLists.shortDesc, `%${filters.keyword}%`),
+      ilike(apiLists.apiPath, `%${filters.keyword}%`),
+      ilike(apiLists.category, `%${filters.keyword}%`),
+    ))
+  }
+
+  if (typeof filters.status === 'number') {
+    conditions.push(eq(apiLists.status, filters.status))
+  }
+
+  if (filters.category) {
+    conditions.push(ilike(apiLists.category, `%${filters.category}%`))
+  }
+
+  if (typeof filters.isEnabled === 'boolean') {
+    conditions.push(eq(apiLists.isEnabled, filters.isEnabled))
+  }
+
+  if (typeof filters.isStatistics === 'boolean') {
+    conditions.push(eq(apiLists.isStatistics, filters.isStatistics))
+  }
+
+  return conditions
+}
+
 type PublicApiItem = {
   id: number
   name: string
@@ -34,25 +72,8 @@ type PublicApiItem = {
 }
 
 export const apiService = {
-  async list(filters: Partial<{ keyword: string, status: number, isEnabled: boolean, isStatistics: boolean }> = {}) {
-    const conditions = [] as any[]
-    if (filters.keyword) {
-      conditions.push(or(
-        ilike(apiLists.code, `%${filters.keyword}%`),
-        ilike(apiLists.name, `%${filters.keyword}%`),
-        ilike(apiLists.shortDesc, `%${filters.keyword}%`),
-        ilike(apiLists.apiPath, `%${filters.keyword}%`),
-      ))
-    }
-    if (typeof filters.status === 'number') {
-      conditions.push(eq(apiLists.status, filters.status))
-    }
-    if (typeof filters.isEnabled === 'boolean') {
-      conditions.push(eq(apiLists.isEnabled, filters.isEnabled))
-    }
-    if (typeof filters.isStatistics === 'boolean') {
-      conditions.push(eq(apiLists.isStatistics, filters.isStatistics))
-    }
+  async list(filters: Partial<{ keyword: string, status: number, category: string, isEnabled: boolean, isStatistics: boolean }> = {}) {
+    const conditions = buildApiFilters(filters)
 
     const query = db.select().from(apiLists)
     const [rows, statsMap] = await Promise.all([
@@ -68,9 +89,12 @@ export const apiService = {
     }))
   },
 
-  async listPublicApis() {
+  async listPublicApis(filters: Partial<{ keyword: string, status: number, category: string }> = {}) {
+    const conditions = buildApiFilters(filters)
     const [rows, statsMap] = await Promise.all([
-      db.select().from(apiLists),
+      conditions.length
+        ? await db.select().from(apiLists).where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
+        : await db.select().from(apiLists).orderBy(desc(apiLists.updatedAt)),
       loadApiStats(),
     ])
 

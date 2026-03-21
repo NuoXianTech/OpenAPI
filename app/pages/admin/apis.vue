@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 definePageMeta({ middleware: 'auth-admin' })
 
+import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
+
 interface ApiItem {
   id: number
   code: string
@@ -19,10 +21,18 @@ interface ApiItem {
   totalCalls?: number
 }
 
+interface ApiTabOption {
+  label: string
+  value: string | number
+}
+
 const methodOptions = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
 
-const apis = ref<ApiItem[]>([])
+const catalogApis = ref<ApiItem[]>([])
 const notice = ref('')
+const query = ref('')
+const currentStatus = ref<string | number>('all')
+const currentCategory = ref('all')
 
 const form = reactive({
   id: 0,
@@ -41,6 +51,37 @@ const form = reactive({
   rateLimitPerMinute: 0,
 })
 
+const statusTabs: ApiTabOption[] = [
+  { label: '全部', value: 'all' },
+  { label: '正常', value: 1 },
+  { label: '异常', value: 0 },
+  { label: '维护', value: 2 },
+  { label: '废弃', value: 3 },
+]
+
+const categoryTabs = computed<ApiTabOption[]>(() => {
+  const categories = new Set<string>()
+  catalogApis.value.forEach((item) => {
+    (item.category || '')
+      .split(',')
+      .map(part => part.trim())
+      .filter(Boolean)
+      .forEach(category => categories.add(category))
+  })
+
+  return [
+    { label: '全部', value: 'all' },
+    ...Array.from(categories).sort((left, right) => left.localeCompare(right, 'zh-Hans-CN')).map(category => ({
+      label: category,
+      value: category,
+    })),
+  ]
+})
+
+function buildFilters() {
+  return query.value.trim().toLowerCase()
+}
+
 function formatCallCount(count: number) {
   if (count < 10000) {
     return `${count}次`
@@ -48,9 +89,32 @@ function formatCallCount(count: number) {
   return `${Math.floor(count / 10000)}万`
 }
 
+const filteredApis = computed(() => {
+  const keyword = query.value.trim().toLowerCase()
+  return catalogApis.value.filter((api) => {
+    const matchesQuery = !keyword
+      || api.code.toLowerCase().includes(keyword)
+      || api.name.toLowerCase().includes(keyword)
+      || api.description.toLowerCase().includes(keyword)
+      || (api.shortDesc || '').toLowerCase().includes(keyword)
+      || (api.category || '').toLowerCase().includes(keyword)
+
+    const matchesStatus = currentStatus.value === 'all' || api.status === Number(currentStatus.value)
+    const categories = (api.category || '').split(',').map(part => part.trim()).filter(Boolean)
+    const matchesCategory = currentCategory.value === 'all' || categories.includes(String(currentCategory.value))
+
+    return matchesQuery && matchesStatus && matchesCategory
+  })
+})
+
 const loadApis = async () => {
   const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
-  apis.value = res.data || []
+  catalogApis.value = res.data || []
+}
+
+const loadCatalog = async () => {
+  const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
+  catalogApis.value = res.data || []
 }
 
 const pickApi = (item: ApiItem) => {
@@ -72,20 +136,20 @@ const saveApi = async () => {
     await $fetch('/api/admin/apis/add', { method: 'POST', body: payload })
   }
   notice.value = '接口已保存'
-  await loadApis()
+  await loadCatalog()
 }
 
 const deleteApi = async (id: number) => {
   await $fetch('/api/admin/apis/delete', { method: 'POST', body: { id } })
-  await loadApis()
+  await loadCatalog()
 }
 
 const toggle = async (item: ApiItem, field: 'isEnabled' | 'isStatistics') => {
   await $fetch('/api/admin/apis/toggle', { method: 'PUT', body: { id: item.id, field, value: !item[field] } })
-  await loadApis()
+  await loadCatalog()
 }
 
-onMounted(loadApis)
+onMounted(loadCatalog)
 </script>
 
 <template>
@@ -118,6 +182,36 @@ onMounted(loadApis)
         </div>
 
         <div class="grid gap-4">
+          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <input
+                v-model="query"
+                class="auth-input"
+                placeholder="搜索 code / name / description"
+              >
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+                状态筛选
+              </div>
+              <ApiFilterTabs
+                v-model="currentStatus"
+                :tabs="statusTabs"
+                aria-label="API 状态筛选"
+              />
+            </div>
+            <div>
+              <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+                分类筛选
+              </div>
+              <ApiFilterTabs
+                v-model="currentCategory"
+                :tabs="categoryTabs"
+                aria-label="API 分类筛选"
+              />
+            </div>
+          </div>
+
           <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
@@ -218,11 +312,16 @@ onMounted(loadApis)
             </div>
           </div>
 
-          <div class="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          <TransitionGroup
+            tag="div"
+            name="api-card"
+            class="grid gap-2 md:grid-cols-2 xl:grid-cols-3 api-card-grid"
+            appear
+          >
             <div
-              v-for="item in apis"
+              v-for="item in filteredApis"
               :key="item.id"
-              class="p-3 rounded-[12px] border border-border bg-white"
+              class="api-card-item p-3 rounded-[12px] border border-border bg-white"
             >
               <div class="font-semibold">
                 {{ item.code }} · {{ item.name }}
@@ -281,7 +380,7 @@ onMounted(loadApis)
                 </button>
               </div>
             </div>
-          </div>
+          </TransitionGroup>
         </div>
       </div>
     </div>
