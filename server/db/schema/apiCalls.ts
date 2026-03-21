@@ -12,7 +12,7 @@ import { users } from './users'
 
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
-  apiId: integer('api_id').references(() => apiLists.id).notNull(),
+  apiListId: integer('api_id').references(() => apiLists.id).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
   userId: integer('user_id').references(() => users.id),
   path: varchar('path', { length: 1000 }).notNull(),

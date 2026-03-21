@@ -2,12 +2,11 @@ import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:cry
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
 import { createError, getCookie, setCookie } from 'h3'
+import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
 
 export interface AuthUserPayload {
   id: number
-  username: string
-  email: string
   kind: 'user' | 'admin'
 }
 
@@ -37,13 +36,13 @@ export async function hashPassword(password: string) {
 }
 
 export async function verifyPassword(stored: string, password: string) {
-  const parts = stored.split('$')
-  if (parts.length !== 3 || parts[0] !== 'scrypt') {
+  const [scheme, saltPart, hashPart] = stored.split('$')
+  if (scheme !== 'scrypt' || !saltPart || !hashPart) {
     return false
   }
 
-  const salt = base64UrlDecode(parts[1])
-  const hash = base64UrlDecode(parts[2])
+  const salt = base64UrlDecode(saltPart)
+  const hash = base64UrlDecode(hashPart)
   const derived = await scrypt(password, salt, hash.length) as Buffer
   return timingSafeEqual(hash, derived)
 }
@@ -57,23 +56,16 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload) {
   const { sessionId } = await sessionService.createSession({
     userId: user.id,
     kind: 'user',
-    username: user.username,
-    email: user.email,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
 
 export async function createAdminSession(event: H3Event) {
   const maxAgeSeconds = getSessionMaxAgeSeconds()
-  const authConfig = useRuntimeConfig().auth
-  const username = authConfig.adminUsername
-  const email = authConfig.adminEmail
 
   const { sessionId } = await sessionService.createSession({
     userId: null,
     kind: 'admin',
-    username,
-    email,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
@@ -107,11 +99,30 @@ export async function getAuthUser(event: H3Event) {
   if (!session) {
     return null
   }
+  if (session.kind === 'admin') {
+    const authConfig = useRuntimeConfig().auth
+    return {
+      id: 0,
+      username: authConfig.adminUsername,
+      email: authConfig.adminEmail,
+      kind: 'admin' as const,
+    }
+  }
+
+  if (!session.userId) {
+    return null
+  }
+
+  const user = await usersService.getById(session.userId)
+  if (!user) {
+    return null
+  }
+
   return {
-    id: session.userId ?? 0,
-    username: session.username,
-    email: session.email,
-    kind: session.kind as 'user' | 'admin',
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    kind: 'user' as const,
   }
 }
 

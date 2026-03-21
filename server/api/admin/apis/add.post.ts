@@ -7,7 +7,7 @@ import { operationLogService } from '~~/server/service/operationLogService'
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const body = await readBody(event) as Record<string, any>
-  const required = ['apiId', 'name', 'shortDesc', 'description', 'httpMethod', 'apiPath', 'docUrl']
+  const required = ['code', 'name', 'shortDesc', 'description', 'httpMethod', 'apiPath', 'docUrl']
   for (const key of required) {
     if (!(body[key] || '').toString().trim()) {
       throw createError({ statusCode: 400, message: `${key} is required` })
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const created = await apiService.addApi(admin.id || null, {
-    apiId: body.apiId.toString().trim(),
+    code: body.code.toString().trim(),
     name: body.name.toString().trim(),
     status: body.status !== undefined ? Number(body.status) : 1,
     category: body.category?.toString().trim() || null,

@@ -1,5 +1,5 @@
 {
-  "id": "9c5d5435-4cda-4a57-ae13-9de72e682929",
+  "id": "cca55d13-253a-4560-837f-481e728d4048",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -332,8 +332,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "api_id": {
-          "name": "api_id",
+        "code": {
+          "name": "code",
           "type": "varchar(50)",
           "primaryKey": true,
           "notNull": true
@@ -586,18 +586,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "username": {
-          "name": "username",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "email": {
-          "name": "email",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "expires_at": {
           "name": "expires_at",
           "type": "timestamp with time zone",
@@ -692,14 +680,13 @@
           "name": "last_login_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
         },
         "last_login_ip": {
           "name": "last_login_ip",
           "type": "varchar(45)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "email_verified_at": {
           "name": "email_verified_at",

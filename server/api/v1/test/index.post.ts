@@ -7,13 +7,13 @@ import { apiKeyService } from '~~/server/service/apiKeyService'
 
 export default defineEventHandler(async (event: H3Event) => {
   const startedAt = Date.now()
-  const testApiId = 'test_statistics_demo'
+    const testApiCode = 'test_statistics_demo'
 
-  const existingApi = await apiService.getByApiId(testApiId)
+    const existingApi = await apiService.getByCode(testApiCode)
   const createdApi = existingApi
     ? null
     : await apiService.addApi(null, {
-        apiId: testApiId,
+      code: testApiCode,
         name: '调用统计测试接口',
         shortDesc: '用于验证调用统计链路',
         description: '这是一个自动创建的测试接口，用来演示启用统计时的完整写入流程。',
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (api.isStatistics) {
     const call = await apiCallService.addCall({
-      apiId: api.id,
+      apiListId: api.id,
       apiKeyId: null,
       userId: null,
       path: event.path,
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event: H3Event) => {
     callId = call[0]?.id ?? null
 
     await apiCallStatsService.upsertDailyStat({
-      apiId: api.id,
+      apiListId: api.id,
       apiCallId: callId,
       statDate: new Date(),
       totalCount: 1,
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event: H3Event) => {
     msg: 'ok',
     data: {
       message: '测试接口 POST 调用成功！',
-      apiId: api.id,
+      apiListId: api.id,
       statisticsEnabled: api.isStatistics,
       callId,
     },

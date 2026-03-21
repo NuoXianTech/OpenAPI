@@ -10,7 +10,7 @@ interface UserItem {
   isActive: boolean
   isBanned: boolean
   lastLoginAt: string | null
-  lastLoginIp: string
+  lastLoginIp: string | null
   createdAt: string
   updatedAt: string | null
 }

@@ -11,7 +11,7 @@ import { users } from './users'
 
 export const apiLists = pgTable('api_lists', {
   id: serial('id').unique().notNull(),
-  apiId: varchar('api_id', { length: 50 }).primaryKey(), // 接口唯一标识
+  code: varchar('code', { length: 50 }).primaryKey(), // 接口唯一标识
   name: varchar('name', { length: 100 }).notNull(), // 接口名称
   status: integer('status').default(1).notNull(), // 接口状态，-1=未知 0=异常 1=正常 2=维护 3=废弃
   category: varchar('category', { length: 100 }), // 接口分类，用于分组展示

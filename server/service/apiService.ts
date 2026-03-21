@@ -10,11 +10,11 @@ function normalizeMethodList(httpMethod: string) {
 }
 
 async function loadApiStats() {
-  const rows = await db.select().from(apiCallStats)
+  const rows = await db.select().from(apiCallStats) as Array<typeof apiCallStats.$inferSelect>
   return rows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
-    const current = accumulator[row.apiId] || { totalCalls: 0 }
+    const current = accumulator[row.apiListId] || { totalCalls: 0 }
     current.totalCalls += row.totalCount
-    accumulator[row.apiId] = current
+    accumulator[row.apiListId] = current
     return accumulator
   }, {})
 }
@@ -24,7 +24,7 @@ export const apiService = {
     const conditions = [] as any[]
     if (filters.keyword) {
       conditions.push(or(
-        ilike(apiLists.apiId, `%${filters.keyword}%`),
+        ilike(apiLists.code, `%${filters.keyword}%`),
         ilike(apiLists.name, `%${filters.keyword}%`),
         ilike(apiLists.shortDesc, `%${filters.keyword}%`),
         ilike(apiLists.apiPath, `%${filters.keyword}%`),
@@ -48,7 +48,7 @@ export const apiService = {
       loadApiStats(),
     ])
 
-    return rows.map(row => ({
+    return (rows as Array<typeof apiLists.$inferSelect>).map(row => ({
       ...row,
       totalCalls: statsMap[row.id]?.totalCalls ?? 0,
     }))
@@ -60,10 +60,9 @@ export const apiService = {
       loadApiStats(),
     ])
 
-    return rows.map(row => ({
+    return (rows as Array<typeof apiLists.$inferSelect>).map(row => ({
       ...row,
-      api_id: row.apiId,
-      apiId: row.apiId,
+      code: row.code,
       http_method: row.httpMethod,
       api_path: row.apiPath,
       doc_url: row.docUrl,
@@ -80,13 +79,13 @@ export const apiService = {
     return res[0] || null
   },
 
-  async getByApiId(apiId: string) {
-    const res = await db.select().from(apiLists).where(eq(apiLists.apiId, apiId)).limit(1)
+  async getByCode(code: string) {
+    const res = await db.select().from(apiLists).where(eq(apiLists.code, code)).limit(1)
     return res[0] || null
   },
 
   async addApi(userid: number | null, data: Partial<typeof apiLists.$inferInsert> & {
-    apiId: string
+    code: string
     name: string
     shortDesc: string
     description: string
@@ -95,7 +94,7 @@ export const apiService = {
     docUrl: string
   }) {
     return await db.insert(apiLists).values({
-      apiId: data.apiId,
+      code: data.code,
       name: data.name,
       status: data.status ?? 1,
       category: data.category ?? null,
@@ -114,7 +113,7 @@ export const apiService = {
   },
 
   async updateApi(id: number, userid: number | null, data: Partial<typeof apiLists.$inferInsert>) {
-    const { apiId: _apiId, ...patch } = data as Partial<typeof apiLists.$inferInsert> & { apiId?: string }
+    const { code: _code, ...patch } = data as Partial<typeof apiLists.$inferInsert> & { code?: string }
     const res = await db.update(apiLists)
       .set({
         ...patch,

@@ -1,11 +1,21 @@
 <script lang="ts" setup>
-const { login } = useAuth()
+const { fetchMe, user, login } = useAuth()
 const form = reactive({
   identifier: '',
   password: '',
 })
 const errorMessage = ref('')
 const submitting = ref(false)
+const checkingAuth = ref(true)
+
+onMounted(async () => {
+  await fetchMe()
+  if (user.value) {
+    await navigateTo(user.value.kind === 'admin' ? '/admin' : '/')
+    return
+  }
+  checkingAuth.value = false
+})
 
 const submit = async () => {
   errorMessage.value = ''
@@ -30,7 +40,21 @@ const submit = async () => {
 <template>
   <div class="auth-shell">
     <div class="auth-panel">
-      <div class="auth-card">
+      <div
+        v-if="checkingAuth"
+        class="auth-card"
+      >
+        <h1 class="auth-title">
+          检查登录状态
+        </h1>
+        <p class="auth-subtitle">
+          正在确认是否已登录，请稍候...
+        </p>
+      </div>
+      <div
+        v-else
+        class="auth-card"
+      >
         <h1 class="auth-title">
           欢迎回来
         </h1>

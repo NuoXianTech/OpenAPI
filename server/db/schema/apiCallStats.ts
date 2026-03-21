@@ -10,7 +10,7 @@ import { apiCalls } from './apiCalls'
 
 export const apiCallStats = pgTable('api_call_stats', {
   id: serial('id').primaryKey(),
-  apiId: integer('api_id').notNull().references(() => apiLists.id),
+  apiListId: integer('api_id').notNull().references(() => apiLists.id),
   apiCallId: integer('api_call_id').references(() => apiCalls.id),
   statDate: timestamp('stat_date', { withTimezone: true }).notNull(),
   totalCount: integer('total_count').notNull().default(0),

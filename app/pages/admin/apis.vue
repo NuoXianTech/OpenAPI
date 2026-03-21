@@ -3,7 +3,7 @@ definePageMeta({ middleware: 'auth-admin' })
 
 interface ApiItem {
   id: number
-  apiId: string
+  code: string
   name: string
   status: number
   category: string | null
@@ -26,7 +26,7 @@ const notice = ref('')
 
 const form = reactive({
   id: 0,
-  apiId: '',
+  code: '',
   name: '',
   status: 1,
   category: '',
@@ -121,9 +121,9 @@ onMounted(loadApis)
           <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
-                v-model="form.apiId"
+                v-model="form.code"
                 class="auth-input"
-                placeholder="api_id"
+                placeholder="code"
                 :disabled="form.id !== 0"
               >
               <input
@@ -225,7 +225,7 @@ onMounted(loadApis)
               class="p-3 rounded-[12px] border border-border bg-white"
             >
               <div class="font-semibold">
-                {{ item.apiId }} · {{ item.name }}
+                {{ item.code }} · {{ item.name }}
               </div>
               <div
                 v-if="item.category"

@@ -40,7 +40,7 @@ CREATE TABLE "api_keys" (
 --> statement-breakpoint
 CREATE TABLE "api_lists" (
 	"id" serial NOT NULL,
-	"api_id" varchar(50) PRIMARY KEY NOT NULL,
+	"code" varchar(50) PRIMARY KEY NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"status" integer DEFAULT 1 NOT NULL,
 	"category" varchar(100),
@@ -75,8 +75,6 @@ CREATE TABLE "sessions" (
 	"session_id" varchar(128) PRIMARY KEY NOT NULL,
 	"kind" varchar(20) DEFAULT 'user' NOT NULL,
 	"user_id" integer,
-	"username" varchar(50) NOT NULL,
-	"email" varchar(255) NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -90,8 +88,8 @@ CREATE TABLE "users" (
 	"avatar_url" varchar(255),
 	"is_active" boolean DEFAULT false NOT NULL,
 	"is_banned" boolean DEFAULT false NOT NULL,
-	"last_login_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"last_login_ip" varchar(45) NOT NULL,
+	"last_login_at" timestamp with time zone,
+	"last_login_ip" varchar(45),
 	"email_verified_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now(),

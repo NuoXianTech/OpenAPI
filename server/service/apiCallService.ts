@@ -6,12 +6,12 @@ export const apiCallService = {
     return db.select().from(apiCalls)
   },
 
-  async listByApi(apiId: number) {
-    return db.select().from(apiCalls).where(eq(apiCalls.apiId, apiId))
+  async listByApiList(apiListId: number) {
+    return db.select().from(apiCalls).where(eq(apiCalls.apiListId, apiListId))
   },
 
   async addCall(data: {
-    apiId: number
+    apiListId: number
     apiKeyId?: number | null
     userId?: number | null
     path: string
@@ -24,7 +24,7 @@ export const apiCallService = {
     rawRequest?: string | null
   }) {
     return db.insert(apiCalls).values({
-      apiId: data.apiId,
+      apiListId: data.apiListId,
       apiKeyId: data.apiKeyId ?? null,
       userId: data.userId ?? null,
       path: data.path,

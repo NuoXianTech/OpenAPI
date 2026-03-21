@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-const { adminLogin } = useAuth()
+const { adminLogin, fetchMe, user } = useAuth()
 
 const form = reactive({
   username: String(useRuntimeConfig().public.adminUsernameHint || 'admin'),
@@ -7,6 +7,16 @@ const form = reactive({
 })
 const submitting = ref(false)
 const errorMessage = ref('')
+const checkingAuth = ref(true)
+
+onMounted(async () => {
+  await fetchMe()
+  if (user.value?.kind === 'admin') {
+    await navigateTo('/admin')
+    return
+  }
+  checkingAuth.value = false
+})
 
 const submit = async () => {
   submitting.value = true
@@ -27,7 +37,21 @@ const submit = async () => {
 <template>
   <div class="auth-shell">
     <div class="auth-panel">
-      <div class="auth-card">
+      <div
+        v-if="checkingAuth"
+        class="auth-card"
+      >
+        <h1 class="auth-title">
+          检查管理员登录状态
+        </h1>
+        <p class="auth-subtitle">
+          正在确认是否已登录管理员，请稍候...
+        </p>
+      </div>
+      <div
+        v-else
+        class="auth-card"
+      >
         <h1 class="auth-title">
           管理员登录
         </h1>

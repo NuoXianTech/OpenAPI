@@ -1,7 +1,7 @@
 // 注册接口
 import type { H3Event } from 'h3'
 import { usersService } from '~~/server/service/userService'
-import { createError, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { hashPassword } from '~~/server/utils/auth'
 import { validateEmail } from '~~/server/utils/validation'
 import { emailVerificationService } from '../../service/emailVerificationService'
@@ -34,14 +34,11 @@ export default defineEventHandler(async (event: H3Event) => {
   // 哈希密码并保存
   const passwordHash = await hashPassword(password)
 
-  const ip = getRequestIP(event) || '0.0.0.0'
-
   const created = await usersService.addUser({
     username,
     email,
     passwordHash,
     isActive: false,
-    lastLoginIp: ip,
   })
 
   const runtimeConfig = useRuntimeConfig()

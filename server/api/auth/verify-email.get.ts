@@ -21,8 +21,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (user.emailVerifiedAt) {
     await createUserSession(event, {
       id: user.id,
-      username: user.username,
-      email: user.email,
       kind: 'user',
     })
     const { passwordHash: _, ...safe } = user
@@ -41,8 +39,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await createUserSession(event, {
     id: updated.id,
-    username: updated.username,
-    email: updated.email,
     kind: 'user',
   })
 

@@ -40,8 +40,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await createUserSession(event, {
     id: user.id,
-    username: user.username,
-    email: user.email,
     kind: 'user',
   })
 

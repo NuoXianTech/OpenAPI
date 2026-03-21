@@ -12,12 +12,12 @@ export const apiCallStatsService = {
     return db.select().from(apiCallStats)
   },
 
-  async listByApi(apiId: number) {
-    return db.select().from(apiCallStats).where(eq(apiCallStats.apiId, apiId))
+  async listByApiList(apiListId: number) {
+    return db.select().from(apiCallStats).where(eq(apiCallStats.apiListId, apiListId))
   },
 
   async upsertDailyStat(data: {
-    apiId: number
+    apiListId: number
     apiCallId?: number | null
     statDate: Date
     totalCount: number
@@ -28,7 +28,7 @@ export const apiCallStatsService = {
     const statDate = getDayStart(data.statDate)
     const existing = await db.select().from(apiCallStats).where(
       and(
-        eq(apiCallStats.apiId, data.apiId),
+        eq(apiCallStats.apiListId, data.apiListId),
         eq(apiCallStats.statDate, statDate),
       ),
     ).limit(1)
@@ -36,7 +36,7 @@ export const apiCallStatsService = {
     const current = existing[0]
     if (!current) {
       return db.insert(apiCallStats).values({
-        apiId: data.apiId,
+        apiListId: data.apiListId,
         apiCallId: data.apiCallId ?? null,
         statDate,
         totalCount: data.totalCount,

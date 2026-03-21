@@ -3,7 +3,7 @@ definePageMeta({ middleware: 'auth-admin' })
 
 interface CallItem {
   id: number
-  apiId: number
+  apiListId: number
   apiKey: string | null
   userId: number | null
   path: string
@@ -16,7 +16,7 @@ interface CallItem {
 
 interface StatItem {
   id: number
-  apiId: number
+  apiListId: number
   apiCallId: number | null
   statDate: string
   totalCount: number
@@ -80,7 +80,7 @@ onMounted(load)
                 class="p-3 rounded-[12px] border border-border bg-white text-sm"
               >
                 <div class="font-semibold">
-                  API #{{ item.apiId }}
+                  API List ID: {{ item.apiListId }}
                 </div>
                 <div class="text-xs text-muted">
                   {{ item.apiPath }}
@@ -106,7 +106,7 @@ onMounted(load)
                 class="p-3 rounded-[12px] border border-border bg-white text-sm"
               >
                 <div class="font-semibold">
-                  API #{{ item.apiId }} · {{ item.method }}
+                  API List ID: {{ item.apiListId }} · {{ item.method }}
                 </div>
                 <div class="text-xs text-muted break-all">
                   {{ item.path }}

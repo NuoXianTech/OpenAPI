@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const updated = await apiService.updateApi(id, admin.id || null, {
-    apiId: body.apiId?.toString().trim(),
+    code: body.code?.toString().trim(),
     name: body.name?.toString().trim(),
     status: body.status !== undefined ? Number(body.status) : undefined,
     category: body.category?.toString().trim() || null,

@@ -52,7 +52,6 @@ export const usersService = {
     passwordHash: string
     displayName?: string
     isActive?: boolean
-    lastLoginIp?: string
   }) {
     const res = await db
       .insert(users)
@@ -63,7 +62,6 @@ export const usersService = {
         displayName: data.displayName || data.username,
         isActive: data.isActive ?? false,
         isBanned: false,
-        lastLoginIp: data.lastLoginIp || '0.0.0.0',
       })
       .returning()
 

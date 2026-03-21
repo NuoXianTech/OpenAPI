@@ -5,8 +5,14 @@ const user = computed(() => (route.query.user || '').toString())
 
 const status = ref<'pending' | 'success' | 'error'>('pending')
 const message = ref('正在验证，请稍候...')
+const verifying = ref(false)
 
-watchEffect(async () => {
+onMounted(async () => {
+  if (verifying.value) {
+    return
+  }
+  verifying.value = true
+
   if (!token.value || !user.value) {
     status.value = 'error'
     message.value = '验证链接无效'
@@ -22,7 +28,9 @@ watchEffect(async () => {
     })
     if (res.code === 0) {
       status.value = 'success'
-      message.value = '验证成功，已自动登录。'
+      message.value = '验证成功，已自动登录，正在跳转首页...'
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await navigateTo('/')
     }
     else {
       status.value = 'error'
@@ -32,6 +40,9 @@ watchEffect(async () => {
   catch (error: any) {
     status.value = 'error'
     message.value = error?.message || '验证失败'
+  }
+  finally {
+    verifying.value = false
   }
 })
 </script>
@@ -55,10 +66,6 @@ watchEffect(async () => {
             class="auth-button"
             to="/"
           >返回首页</NuxtLink>
-          <NuxtLink
-            class="auth-button auth-ghost"
-            to="/login"
-          >进入登录</NuxtLink>
         </div>
         <div
           v-else-if="status === 'error'"
