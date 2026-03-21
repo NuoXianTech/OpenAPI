@@ -1,21 +1,22 @@
-import { ref, computed, onMounted } from 'vue'
-import { useGetApi } from './useGetApi'
+import { computed, onMounted, ref } from 'vue'
+import { usePublicApiList } from './usePublicApiList'
+import type { ApiCatalogItem } from './types'
 
 export function useApiList() {
-  const { result, getApi } = useGetApi()
+  const { result, fetchPublicApiList } = usePublicApiList()
 
   const query = ref('')
   const currentTab = ref('all')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const allData = computed(() => result.value?.data || [])
+  const allData = computed(() => result.value.data || [])
 
   const fetchList = async () => {
     loading.value = true
     error.value = null
     try {
-      await getApi()
+      await fetchPublicApiList()
     }
     catch (e) {
       error.value = (e && (e as any).message) ? (e as any).message : String(e)
@@ -26,13 +27,12 @@ export function useApiList() {
   }
 
   onMounted(() => {
-    // 尝试首次加载
     void fetchList()
   })
 
   const filteredItems = computed(() => {
     const q = query.value.toLowerCase().trim()
-    return allData.value.filter((api: any) => {
+    return allData.value.filter((api: ApiCatalogItem) => {
       const matchesQuery = q === '' || (api.name || '').toLowerCase().includes(q) || (api.description || '').toLowerCase().includes(q)
       let matchesTab = true
       if (currentTab.value !== 'all') {

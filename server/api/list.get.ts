@@ -3,7 +3,7 @@ import { apiService } from '~~/server/service/apiService'
 import { report } from '~~/server/utils/report'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const data = await apiService.getApi()
+  const data = await apiService.listPublicApis()
 
-  return report(event, 200, '测试接口调用成功！', data)
+  return report(event, 200, '接口列表获取成功！', data)
 })

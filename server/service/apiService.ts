@@ -54,7 +54,7 @@ export const apiService = {
     }))
   },
 
-  async getApi() {
+  async listPublicApis() {
     const [rows, statsMap] = await Promise.all([
       db.select().from(apiLists),
       loadApiStats(),

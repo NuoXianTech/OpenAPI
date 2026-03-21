@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
-import { useApiList } from '~/composables/useApiList'
+import { useApiList } from '~/composables/api/useApiList'
 
 const { query, currentTab, loading, error, filteredItems, isEmpty, fetchList } = useApiList()
 </script>
