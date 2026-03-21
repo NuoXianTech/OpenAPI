@@ -60,40 +60,9 @@ pnpm run db:generate
 # 4. 运行数据库迁移
 pnpm run db:migrate
 
-# 4. 启动开发服务器
+# 5. 启动开发服务器
 pnpm run dev
 ```
-
-## 🔐 认证与邮箱配置
-
-当前认证模式为 **Session + Cookie**，管理员后台账号密码来自 `.env`。
-
-```bash
-# Session会话过期时间（默认 7 天）
-SESSION_MAX_AGE=604800
-
-# 管理员后台账号
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=please-change-me
-ADMIN_EMAIL=admin@openapi.local
-
-# 站点 URL
-SITE_URL=http://localhost:3000
-
-# SMTP
-SMTP_HOST=smtp.example.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=your_user
-SMTP_PASS=your_password
-SMTP_FROM=no-reply@example.com
-```
-
-后台入口：
-
-- 管理员后台登录：`/admin/login`
-- 管理员后台页面：`/admin/auth-policy`（管理员控制台入口）
-- 用户后台页面（API Key 增删重置）：`/user/apikeys`
 
 ## 🤝 贡献指南
 
