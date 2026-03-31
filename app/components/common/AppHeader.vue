@@ -40,6 +40,11 @@ const handleLogout = async () => {
           to="/friend-links"
         >友情链接</NuxtLink>
 
+        <NuxtLink
+          class="btn"
+          to="/stats"
+        >调用统计</NuxtLink>
+
         <template v-if="user">
           <div class="text-sm text-muted">
             {{ user.username }}

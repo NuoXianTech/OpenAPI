@@ -4,6 +4,7 @@ export default defineNuxtConfig({
     '@nuxthub/core',
     '@nuxt/icon',
     '@nuxt/ui',
+    'shadcn-nuxt',
     '@nuxt/eslint',
   ],
   devtools: { enabled: true },
