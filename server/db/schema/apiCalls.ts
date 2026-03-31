@@ -2,6 +2,7 @@ import {
   pgTable,
   serial,
   integer,
+  index,
   varchar,
   timestamp,
   text,
@@ -24,4 +25,7 @@ export const apiCalls = pgTable('api_calls', {
   responseSize: integer('response_size'),
   rawRequest: text('raw_request'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-})
+}, table => [
+  index('api_calls_created_at_idx').on(table.createdAt),
+  index('api_calls_api_id_created_at_idx').on(table.apiListId, table.createdAt),
+])

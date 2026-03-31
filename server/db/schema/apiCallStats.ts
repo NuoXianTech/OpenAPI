@@ -2,7 +2,9 @@ import {
   pgTable,
   serial,
   integer,
+  index,
   timestamp,
+  uniqueIndex,
   varchar,
 } from 'drizzle-orm/pg-core'
 import { apiLists } from './apiLists'
@@ -19,4 +21,7 @@ export const apiCallStats = pgTable('api_call_stats', {
   apiPath: varchar('api_path', { length: 200 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-})
+}, table => [
+  uniqueIndex('api_call_stats_api_id_stat_date_uq').on(table.apiListId, table.statDate),
+  index('api_call_stats_stat_date_idx').on(table.statDate),
+])

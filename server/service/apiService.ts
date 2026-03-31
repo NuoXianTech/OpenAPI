@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, type SQL } from 'drizzle-orm'
+import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { createError } from 'h3'
 import { apiCallStats, apiLists } from '@nuxthub/db/schema'
 import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
@@ -39,11 +39,15 @@ function normalizeCategoryTags(category: string | null | undefined) {
 }
 
 async function loadApiStats() {
-  const rows = await db.select().from(apiCallStats) as Array<typeof apiCallStats.$inferSelect>
-  return rows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
-    const current = accumulator[row.apiListId] || { totalCalls: 0 }
-    current.totalCalls += row.totalCount
-    accumulator[row.apiListId] = current
+  const rows = await db.select({
+    apiListId: apiCallStats.apiListId,
+    totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
+  }).from(apiCallStats).groupBy(apiCallStats.apiListId)
+
+  const statsRows = rows as Array<{ apiListId: number, totalCalls: number | string | null }>
+
+  return statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
+    accumulator[row.apiListId] = { totalCalls: Number(row.totalCalls) || 0 }
     return accumulator
   }, {})
 }
