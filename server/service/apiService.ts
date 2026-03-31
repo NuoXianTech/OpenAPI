@@ -107,6 +107,12 @@ type PublicApiItem = {
   totalCalls: number
 }
 
+export type StatisticsTargetItem = {
+  id: number
+  apiPath: string
+  httpMethod: string
+}
+
 export const apiService = {
   async list(filters: Partial<{ keyword: string, status: number, category: string, isEnabled: boolean, isStatistics: boolean }> = {}) {
     const conditions = buildApiFilters(filters)
@@ -147,6 +153,17 @@ export const apiService = {
       isApiKey: row.isApiKey,
       totalCalls: statsMap[row.id]?.totalCalls ?? 0,
     }))
+  },
+
+  async listStatisticsTargets() {
+    return db.select({
+      id: apiLists.id,
+      apiPath: apiLists.apiPath,
+      httpMethod: apiLists.httpMethod,
+    }).from(apiLists).where(and(
+      eq(apiLists.isEnabled, true),
+      eq(apiLists.isStatistics, true),
+    ))
   },
 
   async getById(id: number) {

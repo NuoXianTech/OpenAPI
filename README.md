@@ -64,6 +64,20 @@ pnpm run db:migrate
 pnpm run dev
 ```
 
+## 🧪 调用统计压测与对账
+
+启动服务后可用以下命令执行压测，并自动输出对账结果（请求总数 vs 日统计增量）：
+
+```bash
+pnpm run bench:stats -- --requests 1000 --concurrency 1000 --base-url http://localhost:3000 --endpoint /api/v1/test
+```
+
+说明：
+
+- 脚本会对 `api_calls` 与 `api_call_stats` 进行前后快照并计算增量。
+- 对账通过条件：请求无网络错误，且 `api_calls` 增量与 `api_call_stats.total_count` 增量均等于请求数。
+- 数据库连接默认读取 `DATABASE_URL`，若进程环境未设置会回退读取项目根目录 `.env`。
+
 ## 🤝 贡献指南
 
 1. Fork 项目仓库
