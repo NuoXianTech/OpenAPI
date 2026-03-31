@@ -37,6 +37,13 @@
 - 当修改了环境变量、命令、目录约定或数据库字段时，优先同步更新 README 和相关说明文件。
 - 提交前运行 `pnpm run lint` 并在需要时 `pnpm run lint:fix`。
 
+前端页面风格约定（AI 协作）
+- 组件体系：优先使用 shadcn-ui（Nuxt 场景为 `shadcn-vue + shadcn-nuxt`）和 `app/components/ui/` 里的基础组件，避免重复造轮子。
+- 样式体系：统一使用 Tailwind CSS v4 原子化类名，优先复用已有设计 token（如 `bg-surface`、`border-border`、`text-muted`）。
+- 视觉语言：页面保持清爽、卡片化、信息分层明确；常用 `rounded-lg/rounded-xl`、轻边框和轻阴影，避免突兀的重色块与过度动效。
+- 布局规范：优先使用响应式网格与弹性布局，桌面端控制内容最大宽度，移动端保证可读性与可点击面积。
+- 交互规范：筛选、搜索、统计图表等模块优先复用现有模式与组件命名，新增页面尽量与现有 `dashboard` 风格一致。
+
 Agent/助理使用示例提示（示例）
 - "如何在本地运行并连接到 PostgreSQL？列出必须的环境变量与示例 .env 配置。"
 - "在 `server/api/v1/` 中添加一个新路由，路径 `/v1/health`，实现一个简单的健康检查返回 JSON。给出实现代码和测试步骤。"
@@ -44,7 +51,7 @@ Agent/助理使用示例提示（示例）
 
 建议的后续自定义（可选）
 - 创建针对 `server/` 的 applyTo 规则：仅当改动涉及 `server/**` 时启用数据库/迁移相关提示与检查。
-- 为前端 `app/` 区域创建一个专用 agent，包含 UI 组件命名约定与样式系统（Tailwind + Nuxt UI）说明。
+- 为前端 `app/` 区域创建一个专用 agent，包含 UI 组件命名约定与样式系统（shadcn-ui + Tailwind CSS v4）说明。
 
 维护说明
 - 当项目主要构建、脚本名或关键目录发生变更时，请同步更新本文件。

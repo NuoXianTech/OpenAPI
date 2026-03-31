@@ -6,7 +6,7 @@
   <a href="https://nuxt.com"><img src="https://img.shields.io/badge/Nuxt%20Docs-18181B?logo=nuxt" alt="Nuxt"></a>
 </p>
 
-一个基于 Nuxt.js 构建的全栈式 API 公共接口服务平台，提供完整的 API 管理、调用监控、版本控制和 API Key 认证系统，帮助开发者快速构建和管理 API 服务。
+一个基于 Nuxt.js 构建的全栈式 API 公共接口服务平台，前端使用 shadcn-ui 组件体系与 Tailwind CSS v4 原子化样式框架，提供完整的 API 管理、调用监控、版本控制和 API Key 认证系统，帮助开发者快速构建和管理 API 服务。
 
 ## 🌟 项目亮点
 
@@ -27,7 +27,8 @@
 前端技术栈
 
 - Nuxt.js​ - 现代化全栈框架
-- Tailwind CSS​ - 原子化 CSS 框架
+- shadcn-ui（Nuxt 场景为 shadcn-vue + shadcn-nuxt）- 统一的可组合 UI 组件体系
+- Tailwind CSS v4​ - 原子化样式框架
 - Vite​ - 极速构建工具
 - Iconify​ - 丰富的图标库
 
