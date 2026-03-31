@@ -1,9 +1,16 @@
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { friendLinks } from '@nuxthub/db/schema'
 
 export const friendLinkService = {
   async list() {
-    return db.select().from(friendLinks)
+    return db.select().from(friendLinks).orderBy(desc(friendLinks.updatedAt))
+  },
+
+  async listPublic() {
+    return db.select()
+      .from(friendLinks)
+      .where(eq(friendLinks.isActive, true))
+      .orderBy(desc(friendLinks.updatedAt))
   },
 
   async getById(id: number) {

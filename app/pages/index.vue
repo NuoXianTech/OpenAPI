@@ -45,6 +45,7 @@ const {
         <ApiFilterTabs
           v-model="currentCategory"
           :tabs="categoryTabs"
+          :max-visible="10"
           aria-label="API 分类筛选"
         />
       </div>
@@ -55,8 +56,8 @@ const {
       >
         <section
           v-if="loading"
-          key="loading"
           id="loadingState"
+          key="loading"
           class="py-6"
         >
           <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
@@ -66,8 +67,8 @@ const {
 
         <section
           v-else-if="error"
-          key="error"
           id="errorState"
+          key="error"
         >
           <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
             <div class="font-semibold">
@@ -89,8 +90,8 @@ const {
 
         <section
           v-else-if="isEmpty"
-          key="empty"
           id="emptyState"
+          key="empty"
           class="py-2"
         >
           <div class="state-panel empty-state bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
@@ -105,8 +106,8 @@ const {
 
         <section
           v-else
-          key="content"
           id="contentState"
+          key="content"
           class="py-2"
         >
           <ApiList :items="filteredItems" />

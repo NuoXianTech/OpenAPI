@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-definePageMeta({ middleware: 'auth-admin' })
-
 import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
+import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
+
+definePageMeta({ middleware: 'auth-admin' })
 
 interface ApiItem {
   id: number
@@ -33,6 +34,7 @@ const notice = ref('')
 const query = ref('')
 const currentStatus = ref<string | number>('all')
 const currentCategory = ref('all')
+const categoryDraft = ref('')
 
 const form = reactive({
   id: 0,
@@ -78,8 +80,61 @@ const categoryTabs = computed<ApiTabOption[]>(() => {
   ]
 })
 
-function buildFilters() {
-  return query.value.trim().toLowerCase()
+function splitCategoryTags(value: string | null | undefined) {
+  if (!value) {
+    return []
+  }
+
+  return Array.from(new Set(
+    value
+      .split(',')
+      .map(part => part.trim())
+      .filter(Boolean),
+  ))
+}
+
+const formCategoryTags = computed(() => splitCategoryTags(form.category))
+
+const categoryTagHint = computed(() => {
+  if (formCategoryTags.value.length >= CATEGORY_TAG_MAX_COUNT) {
+    return `最多 ${CATEGORY_TAG_MAX_COUNT} 个 tag`
+  }
+  return '示例：test1,test2'
+})
+
+function addCategoryTags(raw: string) {
+  const incoming = raw
+    .split(',')
+    .map(part => part.trim())
+    .filter(Boolean)
+
+  if (incoming.length === 0) {
+    return
+  }
+
+  const tags = splitCategoryTags(form.category)
+  for (const tag of incoming) {
+    if (tags.includes(tag)) {
+      continue
+    }
+    if (tags.length >= CATEGORY_TAG_MAX_COUNT) {
+      notice.value = `分类 tag 最多 ${CATEGORY_TAG_MAX_COUNT} 个`
+      break
+    }
+    tags.push(tag)
+  }
+
+  form.category = tags.join(',')
+  categoryDraft.value = ''
+}
+
+function removeCategoryTag(tag: string) {
+  const tags = splitCategoryTags(form.category).filter(item => item !== tag)
+  form.category = tags.join(',')
+}
+
+function commitCategoryDraft() {
+  addCategoryTags(categoryDraft.value)
 }
 
 function formatCallCount(count: number) {
@@ -107,11 +162,6 @@ const filteredApis = computed(() => {
   })
 })
 
-const loadApis = async () => {
-  const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
-  catalogApis.value = res.data || []
-}
-
 const loadCatalog = async () => {
   const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
   catalogApis.value = res.data || []
@@ -125,8 +175,15 @@ const pickApi = (item: ApiItem) => {
 }
 
 const saveApi = async () => {
+  const normalizedCategoryTags = splitCategoryTags(form.category)
+  if (normalizedCategoryTags.length > CATEGORY_TAG_MAX_COUNT) {
+    notice.value = `分类 tag 最多 ${CATEGORY_TAG_MAX_COUNT} 个`
+    return
+  }
+
   const payload = {
     ...form,
+    category: normalizedCategoryTags.join(','),
     httpMethod: form.httpMethodList.join(','),
   }
   if (form.id) {
@@ -207,6 +264,7 @@ onMounted(loadCatalog)
               <ApiFilterTabs
                 v-model="currentCategory"
                 :tabs="categoryTabs"
+                :max-visible="10"
                 aria-label="API 分类筛选"
               />
             </div>
@@ -224,11 +282,6 @@ onMounted(loadCatalog)
                 v-model="form.name"
                 class="auth-input"
                 placeholder="name"
-              >
-              <input
-                v-model="form.category"
-                class="auth-input"
-                placeholder="category"
               >
               <input
                 v-model="form.shortDesc"
@@ -282,6 +335,46 @@ onMounted(loadCatalog)
                 class="auth-input"
                 placeholder="rate limit"
               >
+
+              <div class="md:col-span-2 xl:col-span-3">
+                <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+                  分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
+                </div>
+                <div class="auth-input h-auto min-h-[44px] flex flex-wrap items-center gap-2 py-2">
+                  <span
+                    v-for="tag in formCategoryTags"
+                    :key="`form-tag-${tag}`"
+                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border border-border bg-bg"
+                  >
+                    <span>{{ tag }}</span>
+                    <button
+                      type="button"
+                      class="text-muted hover:text-text"
+                      @click="removeCategoryTag(tag)"
+                    >
+                      ×
+                    </button>
+                  </span>
+                  <input
+                    v-model="categoryDraft"
+                    class="min-w-[140px] flex-1 text-sm bg-transparent outline-none"
+                    placeholder="输入标签后回车，支持 test1,test2"
+                    @keydown.enter.prevent="commitCategoryDraft"
+                    @blur="commitCategoryDraft"
+                  >
+                  <button
+                    type="button"
+                    class="auth-button auth-ghost"
+                    @click="commitCategoryDraft"
+                  >
+                    添加
+                  </button>
+                </div>
+                <div class="text-xs text-muted mt-1 flex items-center justify-between gap-2">
+                  <span>{{ categoryTagHint }}</span>
+                  <span>{{ formCategoryTags.length }}/{{ CATEGORY_TAG_MAX_COUNT }}</span>
+                </div>
+              </div>
             </div>
             <textarea
               v-model="form.description"

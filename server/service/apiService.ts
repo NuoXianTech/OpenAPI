@@ -1,5 +1,10 @@
-import { and, desc, eq, ilike, or } from 'drizzle-orm'
+import { and, desc, eq, ilike, or, type SQL } from 'drizzle-orm'
+import { createError } from 'h3'
 import { apiCallStats, apiLists } from '@nuxthub/db/schema'
+import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
+
+const MAX_CATEGORY_TAGS = CATEGORY_TAG_MAX_COUNT
+const MAX_CATEGORY_LENGTH = 100
 
 function normalizeMethodList(httpMethod: string) {
   return httpMethod
@@ -7,6 +12,30 @@ function normalizeMethodList(httpMethod: string) {
     .map(method => method.trim())
     .filter(Boolean)
     .join(',')
+}
+
+function normalizeCategoryTags(category: string | null | undefined) {
+  if (!category) {
+    return null
+  }
+
+  const tags = Array.from(new Set(
+    category
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean),
+  ))
+
+  if (tags.length > MAX_CATEGORY_TAGS) {
+    throw createError({ statusCode: 400, message: `category tags cannot exceed ${MAX_CATEGORY_TAGS}` })
+  }
+
+  const normalized = tags.join(',')
+  if (normalized.length > MAX_CATEGORY_LENGTH) {
+    throw createError({ statusCode: 400, message: `category is too long, max length is ${MAX_CATEGORY_LENGTH}` })
+  }
+
+  return normalized || null
 }
 
 async function loadApiStats() {
@@ -26,16 +55,19 @@ function buildApiFilters(filters: Partial<{
   isEnabled: boolean
   isStatistics: boolean
 }>) {
-  const conditions = [] as any[]
+  const conditions: SQL[] = []
 
   if (filters.keyword) {
-    conditions.push(or(
+    const keywordCondition = or(
       ilike(apiLists.code, `%${filters.keyword}%`),
       ilike(apiLists.name, `%${filters.keyword}%`),
       ilike(apiLists.shortDesc, `%${filters.keyword}%`),
       ilike(apiLists.apiPath, `%${filters.keyword}%`),
       ilike(apiLists.category, `%${filters.keyword}%`),
-    ))
+    )
+    if (keywordCondition) {
+      conditions.push(keywordCondition)
+    }
   }
 
   if (typeof filters.status === 'number') {
@@ -136,7 +168,7 @@ export const apiService = {
       code: data.code,
       name: data.name,
       status: data.status ?? 1,
-      category: data.category ?? null,
+      category: normalizeCategoryTags(data.category),
       shortDesc: data.shortDesc,
       description: data.description,
       httpMethod: normalizeMethodList(data.httpMethod),
@@ -156,6 +188,7 @@ export const apiService = {
     const res = await db.update(apiLists)
       .set({
         ...patch,
+        category: patch.category !== undefined ? normalizeCategoryTags(patch.category) : patch.category,
         httpMethod: patch.httpMethod ? normalizeMethodList(patch.httpMethod) : patch.httpMethod,
         updatedBy: userid,
         updatedAt: new Date(),
@@ -171,8 +204,16 @@ export const apiService = {
   },
 
   async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number) {
-    const patch: Record<string, any> = { [field]: value, updatedAt: new Date() }
-    if (updatedBy) {
+    const patch: {
+      updatedAt: Date
+      updatedBy?: number
+      isEnabled?: boolean
+      isStatistics?: boolean
+    } = {
+      updatedAt: new Date(),
+      [field]: value,
+    }
+    if (typeof updatedBy !== 'undefined') {
       patch.updatedBy = updatedBy
     }
     const res = await db.update(apiLists).set(patch).where(eq(apiLists.id, id)).returning()
