@@ -15,14 +15,28 @@ function onInput(e: Event) {
 </script>
 
 <template>
-  <section class="flex flex-wrap gap-3 mt-4 mb-3">
-    <input
-      id="searchInput"
-      type="search"
-      :placeholder="props.placeholder"
-      :value="props.modelValue"
-      class="appearance-none outline-none rounded-[10px] border border-border bg-white text-[#111113] px-3 py-2.5 min-h-[40px] text-base flex-[1_1_260px] transition-all duration-200 focus:border-[#8ab4ff] focus:shadow-[0_0_0_3px_rgba(138,180,255,0.25)]"
-      @input="onInput"
-    >
+  <section class="my-4">
+    <label
+      for="searchInput"
+      class="sr-only"
+    >{{ props.placeholder }}</label>
+
+    <div class="relative flex-[1_1_260px]">
+      <Icon
+        name="mdi:magnify"
+        size="16"
+        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+        :ssr="true"
+      />
+
+      <input
+        id="searchInput"
+        type="search"
+        :placeholder="props.placeholder"
+        :value="props.modelValue"
+        class="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 pl-9 text-sm transition-[color,box-shadow] outline-none placeholder:text-muted-foreground/90 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+        @input="onInput"
+      >
+    </div>
   </section>
 </template>

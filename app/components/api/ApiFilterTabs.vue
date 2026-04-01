@@ -70,28 +70,30 @@ function toggleExpanded() {
 <template>
   <section
     :aria-label="props.ariaLabel"
-    class="flex flex-wrap gap-2 mb-4 api-filter-tabs"
+    class="api-filter-tabs mb-4 flex flex-wrap gap-2"
   >
-    <button
+    <UiButton
       v-for="tab in visibleTabs"
       :key="String(tab.value)"
-      type="button"
-      class="api-filter-tab px-3.5 py-1.5 rounded-lg text-sm border transition-all duration-200 cursor-pointer select-none font-medium"
+      :variant="isActive(tab.value) ? 'default' : 'outline'"
+      size="sm"
+      class="api-filter-tab h-8 rounded-full px-3.5 text-xs font-medium sm:text-sm"
       :class="isActive(tab.value)
-        ? 'bg-[#111113] text-white border-[#111113]'
-        : 'bg-surface border-border text-muted hover:text-text hover:border-muted/50'"
+        ? 'shadow-xs'
+        : 'bg-card text-muted-foreground hover:bg-accent/70 hover:text-foreground'"
       @click="selectTab(tab.value)"
     >
       {{ tab.label }}
-    </button>
+    </UiButton>
 
-    <button
+    <UiButton
       v-if="hasOverflow"
-      type="button"
-      class="api-filter-tab px-3 py-1.5 rounded-lg text-sm border border-border bg-surface text-muted hover:text-text hover:border-muted/50"
+      variant="outline"
+      size="sm"
+      class="api-filter-tab h-8 rounded-full px-3 text-xs text-muted-foreground hover:bg-accent/70 hover:text-foreground sm:text-sm"
       @click="toggleExpanded"
     >
       {{ expanded ? '收起' : `更多(${hiddenCount})` }}
-    </button>
+    </UiButton>
   </section>
 </template>

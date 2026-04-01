@@ -147,7 +147,7 @@ const formatMethod = (value: string) => {
 
 <template>
   <div class="min-h-screen bg-bg">
-    <AppHeader />
+    <CommonAppHeader />
 
     <main class="max-w-[1200px] mx-auto px-5 pb-8">
       <section class="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -160,14 +160,14 @@ const formatMethod = (value: string) => {
           </p>
         </div>
 
-        <Button
+        <UiButton
           variant="outline"
           size="sm"
           :disabled="pending"
           @click="refresh"
         >
           {{ pending ? '刷新中...' : '刷新数据' }}
-        </Button>
+        </UiButton>
       </section>
 
       <section
@@ -181,13 +181,13 @@ const formatMethod = (value: string) => {
           请稍后重试。
         </div>
         <div class="mt-3">
-          <Button
+          <UiButton
             variant="outline"
             size="sm"
             @click="refresh"
           >
             重试
-          </Button>
+          </UiButton>
         </div>
       </section>
 
@@ -200,55 +200,55 @@ const formatMethod = (value: string) => {
 
       <template v-else>
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-          <Card class="gap-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardDescription>总调用次数</CardDescription>
-              <CardTitle class="text-2xl">
+          <UiCard class="gap-3 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardDescription>总调用次数</UiCardDescription>
+              <UiCardTitle class="text-2xl">
                 {{ overview.totalCalls.toLocaleString() }}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+              </UiCardTitle>
+            </UiCardHeader>
+          </UiCard>
 
-          <Card class="gap-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardDescription>成功调用</CardDescription>
-              <CardTitle class="text-2xl text-green">
+          <UiCard class="gap-3 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardDescription>成功调用</UiCardDescription>
+              <UiCardTitle class="text-2xl text-green">
                 {{ overview.successCalls.toLocaleString() }}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+              </UiCardTitle>
+            </UiCardHeader>
+          </UiCard>
 
-          <Card class="gap-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardDescription>失败调用</CardDescription>
-              <CardTitle class="text-2xl text-red">
+          <UiCard class="gap-3 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardDescription>失败调用</UiCardDescription>
+              <UiCardTitle class="text-2xl text-red">
                 {{ overview.failureCalls.toLocaleString() }}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+              </UiCardTitle>
+            </UiCardHeader>
+          </UiCard>
 
-          <Card class="gap-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardDescription>成功率 / 覆盖接口</CardDescription>
-              <CardTitle class="text-2xl">
+          <UiCard class="gap-3 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardDescription>成功率 / 覆盖接口</UiCardDescription>
+              <UiCardTitle class="text-2xl">
                 {{ formatRate(overview.successRate) }}
-              </CardTitle>
-              <CardDescription>
+              </UiCardTitle>
+              <UiCardDescription>
                 {{ overview.trackedApiCount }} 个接口
-              </CardDescription>
-            </CardHeader>
-          </Card>
+              </UiCardDescription>
+            </UiCardHeader>
+          </UiCard>
         </section>
 
         <section class="grid gap-6 xl:grid-cols-5">
-          <Card class="xl:col-span-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardTitle>近7日趋势</CardTitle>
-              <CardDescription>按天聚合总调用、成功和失败</CardDescription>
-            </CardHeader>
-            <CardContent class="px-4 pt-2">
+          <UiCard class="xl:col-span-3 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardTitle>近7日趋势</UiCardTitle>
+              <UiCardDescription>按天聚合总调用、成功和失败</UiCardDescription>
+            </UiCardHeader>
+            <UiCardContent class="px-4 pt-2">
               <ClientOnly>
-                <ChartContainer
+                <UiChartContainer
                   :config="chartConfig"
                   class="h-[320px] w-full"
                 >
@@ -274,22 +274,22 @@ const formatMethod = (value: string) => {
                     />
                   </VisXYContainer>
 
-                  <ChartLegendContent class="justify-start pt-4" />
-                </ChartContainer>
+                  <UiChartLegendContent class="justify-start pt-4" />
+                </UiChartContainer>
 
                 <template #fallback>
                   <div class="h-[320px] w-full rounded-lg border border-border bg-muted/20" />
                 </template>
               </ClientOnly>
-            </CardContent>
-          </Card>
+            </UiCardContent>
+          </UiCard>
 
-          <Card class="xl:col-span-2 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardTitle>今日调用排行 TOP 10</CardTitle>
-              <CardDescription>按今日调用总次数排序</CardDescription>
-            </CardHeader>
-            <CardContent class="px-4 pt-2">
+          <UiCard class="xl:col-span-2 py-4">
+            <UiCardHeader class="px-4 pb-0">
+              <UiCardTitle>今日调用排行 TOP 10</UiCardTitle>
+              <UiCardDescription>按今日调用总次数排序</UiCardDescription>
+            </UiCardHeader>
+            <UiCardContent class="px-4 pt-2">
               <div
                 v-if="top10Today.length === 0"
                 class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted"
@@ -297,31 +297,31 @@ const formatMethod = (value: string) => {
                 今日暂无调用数据
               </div>
 
-              <Table v-else>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-12">
+              <UiTable v-else>
+                <UiTableHeader>
+                  <UiTableRow>
+                    <UiTableHead class="w-12">
                       排名
-                    </TableHead>
-                    <TableHead>接口</TableHead>
-                    <TableHead class="text-right">
+                    </UiTableHead>
+                    <UiTableHead>接口</UiTableHead>
+                    <UiTableHead class="text-right">
                       调用
-                    </TableHead>
-                    <TableHead class="text-right">
+                    </UiTableHead>
+                    <UiTableHead class="text-right">
                       成功率
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
+                    </UiTableHead>
+                  </UiTableRow>
+                </UiTableHeader>
 
-                <TableBody>
-                  <TableRow
+                <UiTableBody>
+                  <UiTableRow
                     v-for="item in top10Today"
                     :key="item.apiListId"
                   >
-                    <TableCell class="w-12 font-medium">
+                    <UiTableCell class="w-12 font-medium">
                       {{ item.rank }}
-                    </TableCell>
-                    <TableCell class="max-w-[280px]">
+                    </UiTableCell>
+                    <UiTableCell class="max-w-[280px]">
                       <div
                         class="font-medium truncate"
                         :title="item.name"
@@ -334,24 +334,24 @@ const formatMethod = (value: string) => {
                       >
                         {{ item.apiPath }}
                       </div>
-                      <Badge
+                      <UiBadge
                         variant="secondary"
                         class="mt-1"
                       >
                         {{ formatMethod(item.httpMethod) }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                      </UiBadge>
+                    </UiTableCell>
+                    <UiTableCell class="text-right tabular-nums">
                       {{ item.totalCalls.toLocaleString() }}
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                    </UiTableCell>
+                    <UiTableCell class="text-right tabular-nums">
                       {{ formatRate(item.successRate) }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </UiTableCell>
+                  </UiTableRow>
+                </UiTableBody>
+              </UiTable>
+            </UiCardContent>
+          </UiCard>
         </section>
       </template>
     </main>

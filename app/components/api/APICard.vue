@@ -36,7 +36,7 @@ function formatCallCount(count: number) {
     </template>
 
     <template #summary>
-      <p class="text-gray-600 text-sm my-2 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-normal shrink-0">
+      <p class="my-2 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-normal text-muted-foreground">
         {{ props.shortDesc }}
       </p>
 
@@ -44,18 +44,19 @@ function formatCallCount(count: number) {
         v-if="categories.length"
         class="flex flex-wrap gap-1.5 mb-2.5"
       >
-        <span
+        <UiBadge
           v-for="item in categories"
           :key="item"
-          class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted"
+          variant="secondary"
+          class="rounded-full text-[11px] font-medium"
         >
           {{ item }}
-        </span>
+        </UiBadge>
       </div>
 
-      <div class="flex items-center justify-between gap-2.5 bg-grey border border-border rounded-[10px] p-2 mt-2.5 mb-2.5 shrink-0">
+      <div class="mt-2.5 mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-muted/40 p-2">
         <div class="flex items-baseline gap-2 min-w-0 flex-1">
-          <span class="inline-flex items-center gap-1.5 text-xs font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap">
+          <span class="inline-flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-foreground/90">
             <Icon
               name="mdi:file-document-multiple-outline"
               size="16"
@@ -64,30 +65,44 @@ function formatCallCount(count: number) {
             {{ props.docUrl }}
           </span>
         </div>
-        <a
-          :href="props.docUrl"
-          target="_blank"
-          class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 flex items-center justify-center"
+
+        <UiButton
+          as-child
+          variant="outline"
+          size="icon-sm"
+          class="shrink-0"
         >
-          <Icon
-            name="mdi:external-link"
-            size="16"
-            :ssr="true"
-          />
-        </a>
+          <a
+            :href="props.docUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="打开文档"
+          >
+            <Icon
+              name="mdi:external-link"
+              size="16"
+              :ssr="true"
+            />
+          </a>
+        </UiButton>
       </div>
     </template>
 
     <template #meta>
       <span
         v-if="props.isApiKey"
-        class="text-xs text-gray-500 flex items-center gap-1"
+        class="flex items-center gap-1 text-xs text-muted-foreground"
       >
-        <Icon
-          name="mdi:key-variant"
-          size="14"
-        />
-        APIkey
+        <UiBadge
+          variant="outline"
+          class="rounded-full"
+        >
+          <Icon
+            name="mdi:key-variant"
+            size="14"
+          />
+          APIkey
+        </UiBadge>
       </span>
     </template>
 
@@ -107,13 +122,14 @@ function formatCallCount(count: number) {
           请求方法
         </div>
         <div class="flex flex-wrap gap-1">
-          <span
+          <UiBadge
             v-for="method in methods"
             :key="method"
-            class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted font-mono"
+            variant="outline"
+            class="rounded-full font-mono text-[11px]"
           >
             {{ method }}
-          </span>
+          </UiBadge>
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
@@ -121,7 +137,12 @@ function formatCallCount(count: number) {
           调用次数
         </div>
         <div class="flex flex-wrap gap-2 text-[12px] text-muted">
-          <span class="px-2 py-0.5 rounded-full border border-border bg-bg">{{ formatCallCount(props.totalCalls) }}</span>
+          <UiBadge
+            variant="outline"
+            class="rounded-full"
+          >
+            {{ formatCallCount(props.totalCalls) }}
+          </UiBadge>
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">

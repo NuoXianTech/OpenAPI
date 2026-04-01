@@ -22,35 +22,41 @@ const displayDescription = computed(() => {
   >
     <template #summary>
       <p
-        class="text-muted text-sm my-2 mb-3 line-clamp-3 overflow-hidden text-ellipsis min-h-[1.5em] leading-[1.5] shrink-0"
+        class="my-2 mb-3 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-[1.5] text-muted-foreground"
         :title="displayDescription"
       >
         {{ displayDescription }}
       </p>
 
-      <div class="flex items-center justify-between gap-2.5 bg-bg border border-border rounded-[10px] p-2 mb-2.5 shrink-0">
+      <div class="mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-muted/40 p-2">
         <div class="flex items-baseline gap-2 min-w-0 flex-1">
           <span
-            class="text-xs font-mono text-text overflow-hidden text-ellipsis whitespace-nowrap"
+            class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-foreground/90"
             :title="props.url"
           >
             {{ props.url }}
           </span>
         </div>
 
-        <a
-          :href="props.url"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="bg-surface border border-border text-text rounded-lg p-1.5 cursor-pointer leading-none shrink-0 hover:brightness-95 transition-colors flex items-center justify-center"
-          title="打开链接"
+        <UiButton
+          as-child
+          variant="outline"
+          size="icon-sm"
+          class="shrink-0"
         >
-          <Icon
-            name="mdi:external-link"
-            size="16"
-            :ssr="true"
-          />
-        </a>
+          <a
+            :href="props.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="打开链接"
+          >
+            <Icon
+              name="mdi:external-link"
+              size="16"
+              :ssr="true"
+            />
+          </a>
+        </UiButton>
       </div>
     </template>
 

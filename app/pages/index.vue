@@ -21,14 +21,14 @@ const {
 <template>
   <ClientOnly>
     <CommonAppHeader />
-    <main class="max-w-275 mx-auto px-5 pb-6">
+    <main class="mx-auto max-w-275 px-5 pb-6">
       <!-- API运行时间卡片组件 -->
       <ApiRunTimeCard :start-time="useRuntimeConfig().public.startTime" />
 
       <SearchBar v-model="query" />
 
       <div class="mt-4">
-        <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
           状态筛选
         </div>
         <ApiFilterTabs
@@ -39,7 +39,7 @@ const {
       </div>
 
       <div class="mt-2">
-        <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
           分类筛选
         </div>
         <ApiFilterTabs
@@ -60,9 +60,11 @@ const {
           key="loading"
           class="py-6"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            加载中...
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+              加载中...
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section
@@ -70,22 +72,25 @@ const {
           id="errorState"
           key="error"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            <div class="font-semibold">
-              加载失败
-            </div>
-            <div class="text-muted text-[13px] mt-1">
-              {{ error }}
-            </div>
-            <div class="mt-3">
-              <button
-                class="btn"
-                @click="fetchList"
-              >
-                重试
-              </button>
-            </div>
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center">
+              <div class="font-semibold">
+                加载失败
+              </div>
+              <div class="mt-1 text-[13px] text-muted-foreground">
+                {{ error }}
+              </div>
+              <div class="mt-3">
+                <UiButton
+                  variant="outline"
+                  size="sm"
+                  @click="fetchList"
+                >
+                  重试
+                </UiButton>
+              </div>
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section
@@ -94,14 +99,16 @@ const {
           key="empty"
           class="py-2"
         >
-          <div class="state-panel empty-state bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-5 text-center my-2">
-            <div class="font-semibold">
-              未找到匹配的 API
-            </div>
-            <div class="text-muted text-[13px] mt-1">
-              尝试调整搜索关键词或切换筛选标签。
-            </div>
-          </div>
+          <UiCard class="state-panel empty-state my-2 border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center">
+              <div class="font-semibold">
+                未找到匹配的 API
+              </div>
+              <div class="mt-1 text-[13px] text-muted-foreground">
+                尝试调整搜索关键词或切换筛选标签。
+              </div>
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section

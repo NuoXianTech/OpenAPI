@@ -46,36 +46,40 @@ onMounted(() => {
 
 <template>
   <ClientOnly>
-    <header class="max-w-[1100px] mx-auto px-5 py-6 flex items-end justify-between gap-4">
+    <header class="mx-auto flex max-w-[1100px] items-end justify-between gap-4 px-5 py-6">
       <div class="flex items-stretch gap-3">
         <div
           id="brandTitleCol"
           class="flex flex-col justify-center"
         >
-          <h1 class="m-0 text-2xl tracking-wide font-normal">
+          <h1 class="m-0 text-2xl font-normal tracking-wide">
             友情链接
           </h1>
-          <p class="m-0 mt-1 text-xs text-muted">
+          <p class="m-0 mt-1 text-xs text-muted-foreground">
             每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
           </p>
         </div>
       </div>
 
-      <NuxtLink
-        class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs ml-auto w-fit shrink-0 hover:brightness-95 transition-colors"
-        to="/"
+      <UiButton
+        as-child
+        variant="outline"
+        size="sm"
+        class="ml-auto"
       >
-        <Icon
-          name="mdi:home"
-          size="14"
-          class="transition-transform duration-300 chev"
-          :ssr="true"
-        />
-        <span>返回首页</span>
-      </NuxtLink>
+        <NuxtLink to="/">
+          <Icon
+            name="mdi:home"
+            size="14"
+            class="transition-transform duration-300 chev"
+            :ssr="true"
+          />
+          <span>返回首页</span>
+        </NuxtLink>
+      </UiButton>
     </header>
 
-    <main class="max-w-[1100px] mx-auto px-5 pb-6">
+    <main class="mx-auto max-w-[1100px] px-5 pb-6">
       <SearchBar
         v-model="query"
         placeholder="搜索友情链接名称或描述..."
@@ -96,31 +100,36 @@ onMounted(() => {
           key="loading"
           class="py-6"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            加载中...
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+              加载中...
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section
           v-else-if="error"
           key="error"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            <div class="font-semibold">
-              加载失败
-            </div>
-            <div class="text-muted text-[13px] mt-1">
-              {{ error }}
-            </div>
-            <div class="mt-3">
-              <button
-                class="btn"
-                @click="fetchFriendLinks"
-              >
-                重试
-              </button>
-            </div>
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center">
+              <div class="font-semibold">
+                加载失败
+              </div>
+              <div class="mt-1 text-[13px] text-muted-foreground">
+                {{ error }}
+              </div>
+              <div class="mt-3">
+                <UiButton
+                  variant="outline"
+                  size="sm"
+                  @click="fetchFriendLinks"
+                >
+                  重试
+                </UiButton>
+              </div>
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section
@@ -128,9 +137,11 @@ onMounted(() => {
           key="empty"
           class="py-2"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            暂无可展示的友情链接。
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+              暂无可展示的友情链接。
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section
@@ -138,9 +149,11 @@ onMounted(() => {
           key="filtered-empty"
           class="py-2"
         >
-          <div class="state-panel bg-surface border border-border rounded-custom p-5 text-center">
-            当前筛选条件没有匹配结果，试试其他关键词或状态。
-          </div>
+          <UiCard class="state-panel border-border py-5 shadow-sm">
+            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+              当前筛选条件没有匹配结果，试试其他关键词或状态。
+            </UiCardContent>
+          </UiCard>
         </section>
 
         <section

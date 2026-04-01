@@ -33,33 +33,37 @@ const getStatusInfo = (status: number) => {
 </script>
 
 <template>
-  <article class="col-span-12 sm:col-span-6 lg:col-span-4 bg-surface border border-border rounded-custom shadow-[0_6px_16px_rgba(0,0,0,0.06)] p-4 flex flex-col transition-all duration-300 card-enter">
-    <div class="flex items-center justify-between gap-2 shrink-0">
-      <h2 class="text-base m-0 ml-1.5 flex-1 font-bold">
-        <slot name="header">
-          {{ title }}
-        </slot>
-      </h2>
+  <UiCard class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
+    <UiCardHeader class="px-4 pb-0">
+      <div class="flex items-center justify-between gap-2">
+        <UiCardTitle class="m-0 flex-1 text-base font-semibold tracking-wide">
+          <slot name="header">
+            {{ title }}
+          </slot>
+        </UiCardTitle>
 
-      <div class="flex items-center gap-2">
-        <div
-          class="radar-core"
-          :class="getStatusInfo(props.status).class"
-          :title="getStatusInfo(props.status).text"
-        />
-        <slot name="header-actions" />
+        <div class="flex items-center gap-2">
+          <div
+            class="radar-core"
+            :class="getStatusInfo(props.status).class"
+            :title="getStatusInfo(props.status).text"
+          />
+          <slot name="header-actions" />
+        </div>
       </div>
-    </div>
+    </UiCardHeader>
 
-    <div class="mt-2">
+    <UiCardContent class="px-4 pt-2">
       <slot name="summary" />
-    </div>
+    </UiCardContent>
 
-    <div class="flex items-center justify-between w-full mt-2">
+    <div class="mt-2 flex w-full items-center justify-between gap-2 px-4">
       <slot name="meta" />
 
-      <button
-        class="inline-flex items-center gap-1.5 bg-surface border border-border rounded-lg px-3 py-1.5 cursor-pointer select-none text-xs hover:brightness-95 transition-colors ml-auto"
+      <UiButton
+        variant="outline"
+        size="sm"
+        class="ml-auto h-8 rounded-md px-3 text-xs"
         :aria-expanded="isExpanded"
         @click="toggle"
       >
@@ -72,15 +76,15 @@ const getStatusInfo = (status: number) => {
         <span>
           <slot name="toggle-text">{{ isExpanded ? '收起详情' : '查看详情' }}</slot>
         </span>
-      </button>
+      </UiButton>
     </div>
 
     <div
-      class="overflow-hidden transition-all duration-300 ease-in-out border-t border-dashed"
-      :class="isExpanded ? 'max-h-125 opacity-100 mt-3 pt-3 border-border' : 'max-h-0 opacity-0 mt-0 pt-0 border-transparent'"
+      class="overflow-hidden border-t border-dashed px-4 transition-all duration-300 ease-in-out"
+      :class="isExpanded ? 'mt-3 max-h-125 border-border pt-3 opacity-100' : 'mt-0 max-h-0 border-transparent pt-0 opacity-0'"
     >
       <slot name="details" />
     </div>
-  </article>
+  </UiCard>
 </template>
 <!-- TODO: 通用Card组件 -->
