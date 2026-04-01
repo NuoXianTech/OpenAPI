@@ -10,6 +10,13 @@
     "db:migrate": "nuxt db migrate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "test:e2e": "vitest run tests/e2e",
+    "test:e2e:apis": "vitest run tests/e2e/api-management.test.ts",
+    "test:e2e:friend-links": "vitest run tests/e2e/friend-links.test.ts",
+    "test:e2e:users": "vitest run tests/e2e/users.test.ts",
+    "test:e2e:calls": "vitest run tests/e2e/call-stats.test.ts",
+    "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -38,10 +45,15 @@
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",
+    "@nuxt/test-utils": "^4.0.0",
     "@types/node": "^24.12.0",
+    "@vue/test-utils": "^2.4.6",
+    "happy-dom": "^20.8.9",
+    "playwright-core": "^1.59.0",
     "shadcn-nuxt": "^2.4.3",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.2",
     "vue-tsc": "^3.2.6"
   }
 }

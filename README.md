@@ -65,6 +65,47 @@ pnpm run db:migrate
 pnpm run dev
 ```
 
+## 🧪 Nuxt 4 测试流程（Vitest + Nuxt Test Utils）
+
+项目已按 Nuxt 官方推荐的 `Vitest + @nuxt/test-utils` 方式接入 e2e 接口测试。
+
+执行全部 e2e 测试：
+
+```bash
+pnpm run test:e2e
+```
+
+按模块执行：
+
+```bash
+# API 接口（增加/删除）
+pnpm run test:e2e:apis
+
+# 友情链接（增加/删除）
+pnpm run test:e2e:friend-links
+
+# 用户（增加/删除/封禁/未激活）
+pnpm run test:e2e:users
+
+# 调用统计（增加/修改/删除）
+pnpm run test:e2e:calls
+```
+
+说明：
+
+- 测试入口位于 `tests/e2e/`，通用测试能力（管理员登录、数据工厂、统计清理、统一 setup）在 `tests/e2e/helpers/`。
+- 运行前请确保数据库已完成迁移（`pnpm run db:migrate`）。
+- 用户相关测试通过数据库种子数据覆盖未激活/封禁/删除场景，不依赖外部邮件服务。
+- 如需复用已运行服务（避免本地重复构建），可先启动 Nuxt，再设置 `NUXT_TEST_HOST` 后执行测试：
+
+```bash
+# Linux / macOS
+NUXT_TEST_HOST=http://localhost:3000 pnpm run test:e2e
+
+# Windows PowerShell
+$env:NUXT_TEST_HOST='http://localhost:3000'; pnpm run test:e2e
+```
+
 ## 🧪 调用统计压测与对账
 
 启动服务后可用以下命令执行压测，并自动输出对账结果（请求总数 vs 日统计增量）：
