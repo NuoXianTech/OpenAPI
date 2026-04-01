@@ -19,9 +19,13 @@ function createEmptyDashboard(): PublicCallStatsDashboard {
   return {
     overview: {
       totalCalls: 0,
+      todayCalls: 0,
+      yesterdayCalls: 0,
       successCalls: 0,
       failureCalls: 0,
       successRate: 0,
+      userCount: 0,
+      enabledTrackedApiCount: 0,
       trackedApiCount: 0,
     },
     trend7d: [],
@@ -48,17 +52,13 @@ function toShortDate(value: string) {
 const EMPTY_DASHBOARD = createEmptyDashboard()
 
 const chartConfig: ChartConfig = {
-  totalCalls: {
-    label: '总调用',
-    color: 'var(--chart-1)',
-  },
   successCalls: {
-    label: '成功',
-    color: 'var(--chart-2)',
+    label: '成功调用',
+    color: 'var(--green)',
   },
   failureCalls: {
-    label: '失败',
-    color: 'var(--chart-5)',
+    label: '失败调用',
+    color: 'var(--red)',
   },
 }
 
@@ -101,23 +101,8 @@ const trendChartData = computed<TrendChartRow[]>(() => {
 })
 
 const xAccessor = (item: TrendChartRow) => item.index
-
-const yAccessors = [
-  (item: TrendChartRow) => item.totalCalls,
-  (item: TrendChartRow) => item.successCalls,
-  (item: TrendChartRow) => item.failureCalls,
-]
-
-const lineColor = (_: TrendChartRow[], index: number) => {
-  switch (index) {
-    case 0:
-      return 'var(--color-totalCalls)'
-    case 1:
-      return 'var(--color-successCalls)'
-    default:
-      return 'var(--color-failureCalls)'
-  }
-}
+const successLineAccessor = (item: TrendChartRow) => item.successCalls
+const failureLineAccessor = (item: TrendChartRow) => item.failureCalls
 
 const xTickFormat = (tick: number | Date) => {
   if (typeof tick !== 'number') {
@@ -135,6 +120,7 @@ const yTickFormat = (tick: number | Date) => {
 }
 
 const formatRate = (value: number) => `${value.toFixed(2)}%`
+const formatCount = (value: number) => value.toLocaleString()
 
 const formatMethod = (value: string) => {
   return value
@@ -143,31 +129,105 @@ const formatMethod = (value: string) => {
     .filter(Boolean)
     .join(' / ')
 }
+
+const overviewCards = computed(() => {
+  return [
+    {
+      key: 'total',
+      label: '累计调用',
+      value: formatCount(overview.value.totalCalls),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'today',
+      label: '今日调用',
+      value: formatCount(overview.value.todayCalls),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'yesterday',
+      label: '昨日调用',
+      value: formatCount(overview.value.yesterdayCalls),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'successRate',
+      label: '请求成功率',
+      value: formatRate(overview.value.successRate),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'success',
+      label: '成功调用',
+      value: formatCount(overview.value.successCalls),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'failure',
+      label: '失败调用',
+      value: formatCount(overview.value.failureCalls),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'users',
+      label: '活跃用户',
+      value: formatCount(overview.value.userCount),
+      valueClass: 'text-foreground',
+    },
+    {
+      key: 'enabledStatsApis',
+      label: '统计接口',
+      value: formatCount(overview.value.enabledTrackedApiCount),
+      valueClass: 'text-foreground',
+    },
+  ]
+})
 </script>
 
 <template>
   <div class="min-h-screen bg-bg">
-    <CommonAppHeader />
-
-    <main class="max-w-[1200px] mx-auto px-5 pb-8">
-      <section class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <main class="mx-auto max-w-275 px-5 pb-8">
+      <section class="flex items-end justify-between gap-4 py-6">
         <div>
           <h1 class="text-2xl font-semibold tracking-wide text-text">
             公开调用统计
           </h1>
-          <p class="text-sm text-muted mt-1">
+          <p class="mt-1 text-sm text-muted-foreground">
             包含调用概览、近7日趋势和今日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
           </p>
         </div>
 
-        <UiButton
-          variant="outline"
-          size="sm"
-          :disabled="pending"
-          @click="refresh"
-        >
-          {{ pending ? '刷新中...' : '刷新数据' }}
-        </UiButton>
+        <div class="flex items-center gap-2">
+          <UiButton
+            as-child
+            variant="outline"
+            size="sm"
+          >
+            <NuxtLink to="/">
+              <Icon
+                name="mdi:home"
+                size="14"
+                :ssr="true"
+              />
+              返回首页
+            </NuxtLink>
+          </UiButton>
+
+          <UiButton
+            variant="outline"
+            size="sm"
+            :disabled="pending"
+            @click="refresh"
+          >
+            <Icon
+              name="mdi:refresh"
+              size="14"
+              :class="pending ? 'animate-spin' : ''"
+              :ssr="true"
+            />
+            {{ pending ? '刷新中...' : '刷新数据' }}
+          </UiButton>
+        </div>
       </section>
 
       <section
@@ -199,43 +259,22 @@ const formatMethod = (value: string) => {
       </section>
 
       <template v-else>
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6">
-          <UiCard class="gap-3 py-4">
+        <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <UiCard
+            v-for="item in overviewCards"
+            :key="item.key"
+            class="gap-2 border-border/90 py-4 shadow-sm"
+          >
             <UiCardHeader class="px-4 pb-0">
-              <UiCardDescription>总调用次数</UiCardDescription>
-              <UiCardTitle class="text-2xl">
-                {{ overview.totalCalls.toLocaleString() }}
-              </UiCardTitle>
-            </UiCardHeader>
-          </UiCard>
-
-          <UiCard class="gap-3 py-4">
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardDescription>成功调用</UiCardDescription>
-              <UiCardTitle class="text-2xl text-green">
-                {{ overview.successCalls.toLocaleString() }}
-              </UiCardTitle>
-            </UiCardHeader>
-          </UiCard>
-
-          <UiCard class="gap-3 py-4">
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardDescription>失败调用</UiCardDescription>
-              <UiCardTitle class="text-2xl text-red">
-                {{ overview.failureCalls.toLocaleString() }}
-              </UiCardTitle>
-            </UiCardHeader>
-          </UiCard>
-
-          <UiCard class="gap-3 py-4">
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardDescription>成功率 / 覆盖接口</UiCardDescription>
-              <UiCardTitle class="text-2xl">
-                {{ formatRate(overview.successRate) }}
-              </UiCardTitle>
-              <UiCardDescription>
-                {{ overview.trackedApiCount }} 个接口
+              <UiCardDescription class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
+                {{ item.label }}
               </UiCardDescription>
+              <UiCardTitle
+                class="mt-1 text-2xl tabular-nums"
+                :class="item.valueClass"
+              >
+                {{ item.value }}
+              </UiCardTitle>
             </UiCardHeader>
           </UiCard>
         </section>
@@ -258,9 +297,15 @@ const formatMethod = (value: string) => {
                   >
                     <VisLine
                       :x="xAccessor"
-                      :y="yAccessors"
-                      :color="lineColor"
-                      :line-width="2"
+                      :y="successLineAccessor"
+                      color="var(--green)"
+                      :line-width="2.5"
+                    />
+                    <VisLine
+                      :x="xAccessor"
+                      :y="failureLineAccessor"
+                      color="var(--red)"
+                      :line-width="2.5"
                     />
                     <VisAxis
                       type="y"
@@ -273,9 +318,18 @@ const formatMethod = (value: string) => {
                       :num-ticks="7"
                     />
                   </VisXYContainer>
-
-                  <UiChartLegendContent class="justify-start pt-4" />
                 </UiChartContainer>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
+                    <span class="h-2 w-2 rounded-full bg-[var(--green)]" />
+                    成功调用
+                  </div>
+                  <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
+                    <span class="h-2 w-2 rounded-full bg-[var(--red)]" />
+                    失败调用
+                  </div>
+                </div>
 
                 <template #fallback>
                   <div class="h-[320px] w-full rounded-lg border border-border bg-muted/20" />

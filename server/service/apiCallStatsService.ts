@@ -1,15 +1,17 @@
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apiLists } from '@nuxthub/db/schema'
+import { apiCallStats, apiLists, users } from '@nuxthub/db/schema'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint,
 } from '~~/shared/types/public-stats'
 
+const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000
+
 function getDayStart(value: Date) {
-  const start = new Date(value)
-  start.setUTCHours(0, 0, 0, 0)
-  return start
+  const normalized = new Date(value.getTime() + SHANGHAI_OFFSET_MS)
+  normalized.setUTCHours(0, 0, 0, 0)
+  return new Date(normalized.getTime() - SHANGHAI_OFFSET_MS)
 }
 
 function addUtcDays(value: Date, days: number) {
@@ -57,6 +59,7 @@ export const apiCallStatsService = {
     const topLimit = Math.min(Math.max(Math.trunc(options.topLimit || 10), 1), 50)
 
     const todayStart = getDayStart(new Date())
+    const yesterdayStart = addUtcDays(todayStart, -1)
     const rangeStart = addUtcDays(todayStart, -(days - 1))
     const tomorrowStart = addUtcDays(todayStart, 1)
 
@@ -68,7 +71,7 @@ export const apiCallStatsService = {
       eq(apiLists.isStatistics, true),
     )
 
-    const [summaryRows, trendRows, topRows] = await Promise.all([
+    const [summaryRows, todayRows, yesterdayRows, enabledTrackedApiRows, userRows, trendRows, topRows] = await Promise.all([
       db.select({
         totalCalls: totalExpr,
         successCalls: successExpr,
@@ -77,6 +80,35 @@ export const apiCallStatsService = {
       }).from(apiCallStats)
         .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
         .where(publicApiCondition),
+      db.select({
+        todayCalls: totalExpr,
+      }).from(apiCallStats)
+        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .where(and(
+          publicApiCondition,
+          gte(apiCallStats.statDate, todayStart),
+          lt(apiCallStats.statDate, tomorrowStart),
+        )),
+      db.select({
+        yesterdayCalls: totalExpr,
+      }).from(apiCallStats)
+        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .where(and(
+          publicApiCondition,
+          gte(apiCallStats.statDate, yesterdayStart),
+          lt(apiCallStats.statDate, todayStart),
+        )),
+      db.select({
+        enabledTrackedApiCount: sql<number>`count(*)`,
+      }).from(apiLists)
+        .where(publicApiCondition),
+      db.select({
+        userCount: sql<number>`count(*)`,
+      }).from(users)
+        .where(and(
+          eq(users.isActive, true),
+          eq(users.isBanned, false),
+        )),
       db.select({
         statDate: apiCallStats.statDate,
         totalCalls: totalExpr,
@@ -122,8 +154,14 @@ export const apiCallStatsService = {
       failureCalls: 0,
       trackedApiCount: 0,
     }
+    const todaySummary = todayRows[0] || { todayCalls: 0 }
+    const yesterdaySummary = yesterdayRows[0] || { yesterdayCalls: 0 }
+    const enabledTrackedApiSummary = enabledTrackedApiRows[0] || { enabledTrackedApiCount: 0 }
+    const userSummary = userRows[0] || { userCount: 0 }
 
     const totalCalls = toNumber(summary.totalCalls)
+    const todayCalls = toNumber(todaySummary.todayCalls)
+    const yesterdayCalls = toNumber(yesterdaySummary.yesterdayCalls)
     const successCalls = toNumber(summary.successCalls)
     const failureCalls = toNumber(summary.failureCalls)
 
@@ -169,9 +207,13 @@ export const apiCallStatsService = {
     return {
       overview: {
         totalCalls,
+        todayCalls,
+        yesterdayCalls,
         successCalls,
         failureCalls,
         successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0,
+        userCount: toNumber(userSummary.userCount),
+        enabledTrackedApiCount: toNumber(enabledTrackedApiSummary.enabledTrackedApiCount),
         trackedApiCount: toNumber(summary.trackedApiCount),
       },
       trend7d,

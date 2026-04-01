@@ -1,8 +1,12 @@
 export interface PublicCallStatsOverview {
   totalCalls: number
+  todayCalls: number
+  yesterdayCalls: number
   successCalls: number
   failureCalls: number
   successRate: number
+  userCount: number
+  enabledTrackedApiCount: number
   trackedApiCount: number
 }
 
