@@ -4,7 +4,7 @@ import { apiKeyService } from '~~/server/service/apiKeyService'
 import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+  await requireAdmin(event)
   const body = await readBody(event) as Record<string, any>
   const id = Number(body.id)
   if (!id) {

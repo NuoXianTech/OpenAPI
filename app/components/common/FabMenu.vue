@@ -29,7 +29,7 @@ async function openAction(item: FabMenuItem) {
     return
   }
 
-  if (process.client) {
+  if (import.meta.client) {
     window.open(item.actionValue, item.target || '_blank')
   }
   isOpen.value = false

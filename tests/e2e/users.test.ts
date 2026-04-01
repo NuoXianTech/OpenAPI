@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scrypt as scryptCallback } from 'node:crypto'
+import { randomBytes, scrypt as scryptCallback } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { promisify } from 'node:util'

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
-definePageMeta({ middleware: 'auth-admin' })
-
 import type { FabMenuItem, FabMenuActionType } from '~/composables/fab-menu/types'
+
+definePageMeta({ middleware: 'auth-admin' })
 
 interface FabMenuForm {
   id: number

@@ -6,25 +6,25 @@ export interface ApiResponse<T> {
   data: T
 }
 
-type FetchMethod =
-  | 'GET'
-  | 'HEAD'
-  | 'PATCH'
-  | 'POST'
-  | 'PUT'
-  | 'DELETE'
-  | 'CONNECT'
-  | 'OPTIONS'
-  | 'TRACE'
-  | 'get'
-  | 'head'
-  | 'patch'
-  | 'post'
-  | 'put'
-  | 'delete'
-  | 'connect'
-  | 'options'
-  | 'trace'
+type FetchMethod
+  = | 'GET'
+    | 'HEAD'
+    | 'PATCH'
+    | 'POST'
+    | 'PUT'
+    | 'DELETE'
+    | 'CONNECT'
+    | 'OPTIONS'
+    | 'TRACE'
+    | 'get'
+    | 'head'
+    | 'patch'
+    | 'post'
+    | 'put'
+    | 'delete'
+    | 'connect'
+    | 'options'
+    | 'trace'
 
 function resolveSetCookie(headers: Headers) {
   const setCookieFromHeader = headers.get('set-cookie')
@@ -120,11 +120,11 @@ export function createAdminClient(cookie: string) {
       const query = options.query
       const queryString = query
         ? `?${new URLSearchParams(Object.entries(query).reduce<Record<string, string>>((acc, [key, value]) => {
-            if (value !== undefined && value !== null) {
-              acc[key] = String(value)
-            }
-            return acc
-          }, {})).toString()}`
+          if (value !== undefined && value !== null) {
+            acc[key] = String(value)
+          }
+          return acc
+        }, {})).toString()}`
         : ''
 
       const headers = new Headers(mergeCookieHeader(cookie, options.headers))

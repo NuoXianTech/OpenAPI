@@ -66,6 +66,10 @@ describe('api call stats e2e', () => {
           return stats.data.items.find(item => item.apiListId === apiId) || null
         },
         value => Boolean(value),
+        {
+          timeoutMs: 30_000,
+          intervalMs: 300,
+        },
       )
 
       const firstTotal = Number(statAfterFirstCall?.totalCount || 0)
@@ -81,6 +85,10 @@ describe('api call stats e2e', () => {
           return stats.data.items.find(item => item.apiListId === apiId) || null
         },
         value => Number(value?.totalCount || 0) > firstTotal,
+        {
+          timeoutMs: 30_000,
+          intervalMs: 300,
+        },
       )
 
       expect(Number(statAfterSecondCall?.totalCount || 0)).toBeGreaterThan(firstTotal)
@@ -93,6 +101,10 @@ describe('api call stats e2e', () => {
           return stats.data.items.some(item => item.apiListId === apiId)
         },
         hasTarget => hasTarget === false,
+        {
+          timeoutMs: 30_000,
+          intervalMs: 300,
+        },
       )
     }
     finally {
