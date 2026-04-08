@@ -6,6 +6,7 @@ import { hashPassword } from '~~/server/utils/auth'
 import { validateEmail } from '~~/server/utils/validation'
 import { emailVerificationService } from '../../service/emailVerificationService'
 import { sendVerificationEmail } from '~~/server/utils/email'
+import { siteSettingsService } from '~~/server/service/siteSettingsService'
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event) as Record<string, any>
@@ -41,10 +42,11 @@ export default defineEventHandler(async (event: H3Event) => {
     isActive: false,
   })
 
-  const runtimeConfig = useRuntimeConfig()
-  const expiresInMinutes = Number(runtimeConfig.public.emailVerifyExpiresInMinutes || 30)
+  const settings = await siteSettingsService.getOrCreate()
+  const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
   const { token } = await emailVerificationService.createToken(created.id, created.email, expiresInMinutes)
-  const verifyUrl = `${runtimeConfig.public.siteUrl}/verify-email?user=${created.id}&token=${token}`
+  const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
+  const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
   await sendVerificationEmail(email, verifyUrl)
 
   const { passwordHash: _, ...safe } = created

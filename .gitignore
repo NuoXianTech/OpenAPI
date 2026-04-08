@@ -18,9 +18,6 @@ logs
 .fleet
 .idea
 
-# Local worktrees
-.worktrees/
-
 # Local env files
 .env
 .env.*

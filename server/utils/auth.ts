@@ -4,6 +4,7 @@ import type { H3Event } from 'h3'
 import { createError, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
+import { siteSettingsService } from '~~/server/service/siteSettingsService'
 
 export interface AuthUserPayload {
   id: number
@@ -47,12 +48,13 @@ export async function verifyPassword(stored: string, password: string) {
   return timingSafeEqual(hash, derived)
 }
 
-function getSessionMaxAgeSeconds() {
-  return Number(useRuntimeConfig().auth.sessionMaxAgeSeconds)
+async function getSessionMaxAgeSeconds() {
+  const settings = await siteSettingsService.getOrCreate()
+  return Number(settings.sessionMaxAgeSeconds)
 }
 
 export async function createUserSession(event: H3Event, user: AuthUserPayload) {
-  const maxAgeSeconds = getSessionMaxAgeSeconds()
+  const maxAgeSeconds = await getSessionMaxAgeSeconds()
   const { sessionId } = await sessionService.createSession({
     userId: user.id,
     kind: 'user',
@@ -61,7 +63,7 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload) {
 }
 
 export async function createAdminSession(event: H3Event) {
-  const maxAgeSeconds = getSessionMaxAgeSeconds()
+  const maxAgeSeconds = await getSessionMaxAgeSeconds()
 
   const { sessionId } = await sessionService.createSession({
     userId: null,

@@ -60,6 +60,18 @@ CREATE TABLE "api_lists" (
 	CONSTRAINT "api_lists_id_unique" UNIQUE("id")
 );
 --> statement-breakpoint
+CREATE TABLE "email_verification_tokens" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"email" varchar(255) NOT NULL,
+	"token_hash" varchar(64) NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"consumed_at" timestamp with time zone,
+	"revoked_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "email_verification_tokens_token_hash_unique" UNIQUE("token_hash")
+);
+--> statement-breakpoint
 CREATE TABLE "fab_menu_items" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"title" varchar(140) NOT NULL,
@@ -96,6 +108,27 @@ CREATE TABLE "sessions" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "site_settings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"scope" varchar(32) DEFAULT 'default' NOT NULL,
+	"site_url" varchar(1000) DEFAULT 'http://localhost:3000' NOT NULL,
+	"site_img" varchar(1000) DEFAULT 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640' NOT NULL,
+	"site_name" varchar(140) DEFAULT 'OpenAPI' NOT NULL,
+	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。' NOT NULL,
+	"start_time" varchar(32) DEFAULT '2026-01-01 00:00:00' NOT NULL,
+	"session_max_age_seconds" integer DEFAULT 604800 NOT NULL,
+	"email_verify_expires_in_minutes" integer DEFAULT 30 NOT NULL,
+	"smtp_host" varchar(255) DEFAULT 'smtp.example.com' NOT NULL,
+	"smtp_port" integer DEFAULT 465 NOT NULL,
+	"smtp_secure" boolean DEFAULT true NOT NULL,
+	"smtp_user" varchar(255) DEFAULT '' NOT NULL,
+	"smtp_pass" varchar(255) DEFAULT '' NOT NULL,
+	"smtp_from" varchar(255) DEFAULT 'no-reply@example.com' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "site_settings_scope_unique" UNIQUE("scope")
+);
+--> statement-breakpoint
 CREATE TABLE "users" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"username" varchar(50) NOT NULL,
@@ -122,7 +155,12 @@ ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_user_id_users_id_fk" FOREIGN K
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_lists" ADD CONSTRAINT "api_lists_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "email_verification_tokens" ADD CONSTRAINT "email_verification_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "friend_links" ADD CONSTRAINT "friend_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "api_call_stats_api_id_stat_date_uq" ON "api_call_stats" USING btree ("api_id","stat_date");--> statement-breakpoint
+CREATE INDEX "api_call_stats_stat_date_idx" ON "api_call_stats" USING btree ("stat_date");--> statement-breakpoint
+CREATE INDEX "api_calls_created_at_idx" ON "api_calls" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "api_calls_api_id_created_at_idx" ON "api_calls" USING btree ("api_id","created_at");

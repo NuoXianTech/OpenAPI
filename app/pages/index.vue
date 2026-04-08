@@ -16,6 +16,8 @@ const {
   isEmpty,
   fetchList,
 } = useApiList()
+
+const { settings } = useSiteSettings()
 </script>
 
 <template>
@@ -23,7 +25,7 @@ const {
     <CommonAppHeader />
     <main class="mx-auto max-w-275 px-5 pb-6">
       <!-- API运行时间卡片组件 -->
-      <ApiRunTimeCard :start-time="useRuntimeConfig().public.startTime" />
+      <ApiRunTimeCard :start-time="settings.startTime" />
 
       <SearchBar v-model="query" />
 
