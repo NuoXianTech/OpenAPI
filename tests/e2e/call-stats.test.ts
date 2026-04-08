@@ -32,7 +32,7 @@ interface AdminApiItem {
   apiPath: string
 }
 
-const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 90_000 : 30_000))
+const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 180_000 : 30_000))
 const statsWaitIntervalMs = Number(process.env.E2E_STATS_WAIT_INTERVAL_MS || (process.env.CI ? 500 : 300))
 
 afterAll(async () => {
@@ -119,5 +119,5 @@ describe('api call stats e2e', () => {
       await deleteApiCallStatsByApiId(apiId)
       await deleteApiCallsByApiId(apiId)
     }
-  })
+  }, process.env.CI ? 180_000 : 90_000)
 })

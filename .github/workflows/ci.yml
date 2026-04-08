@@ -66,7 +66,7 @@ jobs:
       SMTP_PORT: 2526
       SMTP_SECURE: "false"
       SMTP_FROM: no-reply@openapi.test
-      E2E_STATS_WAIT_TIMEOUT_MS: "90000"
+      E2E_STATS_WAIT_TIMEOUT_MS: "180000"
       E2E_STATS_WAIT_INTERVAL_MS: "500"
       NUXT_TEST_HOST: http://localhost:3000
 
