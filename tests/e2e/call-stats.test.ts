@@ -32,12 +32,20 @@ interface AdminApiItem {
   apiPath: string
 }
 
+const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 90_000 : 30_000))
+const statsWaitIntervalMs = Number(process.env.E2E_STATS_WAIT_INTERVAL_MS || (process.env.CI ? 500 : 300))
+
 afterAll(async () => {
   await closeDbClient()
 })
 
 describe('api call stats e2e', () => {
   it('adds, updates and deletes call stats records', async () => {
+    // Ensure test_statistics_demo exists before admin APIs warm the middleware target cache.
+    await e2eFetch('/api/v1/test', {
+      method: 'GET',
+    })
+
     const sessionCookie = await loginAsAdmin()
     const adminClient = createAdminClient(sessionCookie)
 
@@ -67,8 +75,8 @@ describe('api call stats e2e', () => {
         },
         value => Boolean(value),
         {
-          timeoutMs: 30_000,
-          intervalMs: 300,
+          timeoutMs: statsWaitTimeoutMs,
+          intervalMs: statsWaitIntervalMs,
         },
       )
 
@@ -86,8 +94,8 @@ describe('api call stats e2e', () => {
         },
         value => Number(value?.totalCount || 0) > firstTotal,
         {
-          timeoutMs: 30_000,
-          intervalMs: 300,
+          timeoutMs: statsWaitTimeoutMs,
+          intervalMs: statsWaitIntervalMs,
         },
       )
 
@@ -102,8 +110,8 @@ describe('api call stats e2e', () => {
         },
         hasTarget => hasTarget === false,
         {
-          timeoutMs: 30_000,
-          intervalMs: 300,
+          timeoutMs: statsWaitTimeoutMs,
+          intervalMs: statsWaitIntervalMs,
         },
       )
     }
