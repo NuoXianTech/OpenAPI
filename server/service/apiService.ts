@@ -6,6 +6,14 @@ import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
 const MAX_CATEGORY_TAGS = CATEGORY_TAG_MAX_COUNT
 const MAX_CATEGORY_LENGTH = 100
 
+function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, '\\$&')
+}
+
+function toContainsPattern(value: string) {
+  return `%${escapeLikePattern(value)}%`
+}
+
 function normalizeMethodList(httpMethod: string) {
   return httpMethod
     .split(',')
@@ -62,12 +70,13 @@ function buildApiFilters(filters: Partial<{
   const conditions: SQL[] = []
 
   if (filters.keyword) {
+    const keywordPattern = toContainsPattern(filters.keyword)
     const keywordCondition = or(
-      ilike(apiLists.code, `%${filters.keyword}%`),
-      ilike(apiLists.name, `%${filters.keyword}%`),
-      ilike(apiLists.shortDesc, `%${filters.keyword}%`),
-      ilike(apiLists.apiPath, `%${filters.keyword}%`),
-      ilike(apiLists.category, `%${filters.keyword}%`),
+      ilike(apiLists.code, keywordPattern),
+      ilike(apiLists.name, keywordPattern),
+      ilike(apiLists.shortDesc, keywordPattern),
+      ilike(apiLists.apiPath, keywordPattern),
+      ilike(apiLists.category, keywordPattern),
     )
     if (keywordCondition) {
       conditions.push(keywordCondition)
@@ -79,7 +88,7 @@ function buildApiFilters(filters: Partial<{
   }
 
   if (filters.category) {
-    conditions.push(ilike(apiLists.category, `%${filters.category}%`))
+    conditions.push(ilike(apiLists.category, toContainsPattern(filters.category)))
   }
 
   if (typeof filters.isEnabled === 'boolean') {

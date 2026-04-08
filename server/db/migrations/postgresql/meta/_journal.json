@@ -15,6 +15,13 @@
       "when": 1774975879527,
       "tag": "0001_rare_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775621594930,
+      "tag": "0002_loud_switch",
+      "breakpoints": true
     }
   ]
 }

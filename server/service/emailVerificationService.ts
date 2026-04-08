@@ -1,30 +1,16 @@
-import { createHmac, randomBytes } from 'node:crypto'
+import { createHash, randomBytes } from 'node:crypto'
+import { and, eq, gt, isNull } from 'drizzle-orm'
+import { emailVerificationTokens } from '@nuxthub/db/schema'
 
 interface VerificationPayload {
+  tokenId: number
   userId: number
   email: string
   expiresAt: number
-  nonce: string
 }
 
-function base64UrlEncode(value: string) {
-  return Buffer.from(value, 'utf8').toString('base64url')
-}
-
-function base64UrlDecode(value: string) {
-  return Buffer.from(value, 'base64url').toString('utf8')
-}
-
-function getSecret() {
-  const secret = useRuntimeConfig().auth.emailVerifySecret
-  if (!secret) {
-    throw new Error('email verification secret is missing')
-  }
-  return secret
-}
-
-function sign(content: string) {
-  return createHmac('sha256', getSecret()).update(content).digest('base64url')
+function hashToken(token: string) {
+  return createHash('sha256').update(token).digest('hex')
 }
 
 export const emailVerificationService = {
@@ -33,45 +19,84 @@ export const emailVerificationService = {
   },
 
   async createToken(userId: number, email: string, expiresInMinutes: number) {
-    const payload: VerificationPayload = {
-      userId,
-      email,
-      expiresAt: Date.now() + expiresInMinutes * 60 * 1000,
-      nonce: this.generateToken(),
-    }
-    const payloadText = JSON.stringify(payload)
-    const encodedPayload = base64UrlEncode(payloadText)
-    const token = `${encodedPayload}.${sign(encodedPayload)}`
+    const now = new Date()
+    const expiresAt = new Date(now.getTime() + expiresInMinutes * 60 * 1000)
+    const token = this.generateToken()
+    const tokenHash = hashToken(token)
 
-    return { token, expiresAt: new Date(payload.expiresAt), record: payload }
+    // 单用户同邮箱仅保留最新一条未消费 token，旧链接会被撤销。
+    await db.update(emailVerificationTokens)
+      .set({ revokedAt: now })
+      .where(and(
+        eq(emailVerificationTokens.userId, userId),
+        eq(emailVerificationTokens.email, email),
+        isNull(emailVerificationTokens.consumedAt),
+        isNull(emailVerificationTokens.revokedAt),
+        gt(emailVerificationTokens.expiresAt, now),
+      ))
+
+    const inserted = await db.insert(emailVerificationTokens)
+      .values({
+        userId,
+        email,
+        tokenHash,
+        expiresAt,
+      })
+      .returning({
+        id: emailVerificationTokens.id,
+        userId: emailVerificationTokens.userId,
+        email: emailVerificationTokens.email,
+        expiresAt: emailVerificationTokens.expiresAt,
+      })
+
+    const record = inserted[0]
+    if (!record) {
+      throw new Error('failed to create verification token')
+    }
+
+    const payload: VerificationPayload = {
+      tokenId: record.id,
+      userId: record.userId,
+      email: record.email,
+      expiresAt: record.expiresAt.getTime(),
+    }
+
+    return { token, expiresAt: record.expiresAt, record: payload }
   },
 
   async consumeToken(userId: number, token: string) {
-    const [encodedPayload, signature] = token.split('.')
-    if (!encodedPayload || !signature) {
+    if (!token) {
       return null
     }
 
-    if (sign(encodedPayload) !== signature) {
+    const now = new Date()
+    const tokenHash = hashToken(token)
+    const consumed = await db.update(emailVerificationTokens)
+      .set({ consumedAt: now })
+      .where(and(
+        eq(emailVerificationTokens.userId, userId),
+        eq(emailVerificationTokens.tokenHash, tokenHash),
+        isNull(emailVerificationTokens.consumedAt),
+        isNull(emailVerificationTokens.revokedAt),
+        gt(emailVerificationTokens.expiresAt, now),
+      ))
+      .returning({
+        id: emailVerificationTokens.id,
+        userId: emailVerificationTokens.userId,
+        email: emailVerificationTokens.email,
+        expiresAt: emailVerificationTokens.expiresAt,
+      })
+
+    const record = consumed[0]
+    if (!record) {
       return null
     }
 
-    let payload: VerificationPayload
-    try {
-      payload = JSON.parse(base64UrlDecode(encodedPayload)) as VerificationPayload
-    }
-    catch {
-      return null
-    }
-
-    if (payload.userId !== userId) {
-      return null
-    }
-
-    if (payload.expiresAt < Date.now()) {
-      return null
-    }
-
-    return payload
+    return {
+      tokenId: record.id,
+      userId: record.userId,
+      email: record.email,
+      expiresAt: record.expiresAt.getTime(),
+    } satisfies VerificationPayload
   },
 }

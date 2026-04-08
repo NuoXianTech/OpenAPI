@@ -18,18 +18,14 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
-  if (user.emailVerifiedAt) {
-    await createUserSession(event, {
-      id: user.id,
-      kind: 'user',
-    })
-    const { passwordHash: _, ...safe } = user
-    return { code: 0, msg: 'ok', data: safe }
-  }
-
   const tokenPayload = await emailVerificationService.consumeToken(userId, token)
   if (!tokenPayload || tokenPayload.email !== user.email) {
     throw createError({ statusCode: 400, message: 'Verification link expired or invalid' })
+  }
+
+  if (user.emailVerifiedAt) {
+    const { passwordHash: _, ...safe } = user
+    return { code: 0, msg: 'Email already verified', data: safe }
   }
 
   const updated = await usersService.activateUser(userId)

@@ -15,7 +15,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     auth: {
       sessionMaxAgeSeconds: Number(process.env.SESSION_MAX_AGE || 60 * 60 * 24 * 7),
-      adminUsername: process.env.ADMIN_USERNAME || 'admin',
+      adminUsername: process.env.ADMIN_USERNAME || '',
+      adminPasswordHash: process.env.ADMIN_PASSWORD_HASH || '',
       adminPassword: process.env.ADMIN_PASSWORD || '',
       adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
       emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',

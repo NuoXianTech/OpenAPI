@@ -1,6 +1,16 @@
 import type { H3Event } from 'h3'
+import { timingSafeEqual } from 'node:crypto'
 import { createError } from 'h3'
-import { createAdminSession } from '~~/server/utils/auth'
+import { createAdminSession, verifyPassword } from '~~/server/utils/auth'
+
+function safeEquals(left: string, right: string) {
+  const leftBuffer = Buffer.from(left)
+  const rightBuffer = Buffer.from(right)
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false
+  }
+  return timingSafeEqual(leftBuffer, rightBuffer)
+}
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event) as Record<string, any>
@@ -8,11 +18,27 @@ export default defineEventHandler(async (event: H3Event) => {
   const password = (body.password || '').toString()
 
   const authConfig = useRuntimeConfig().auth
-  if (!authConfig.adminPassword) {
+  const adminUsername = (authConfig.adminUsername || '').toString()
+  const adminPassword = (authConfig.adminPassword || '').toString()
+  const adminPasswordHash = (authConfig.adminPasswordHash || '').toString()
+
+  if (!adminUsername) {
+    throw createError({ statusCode: 500, message: 'Admin username is not configured' })
+  }
+
+  if (!adminPassword && !adminPasswordHash) {
     throw createError({ statusCode: 500, message: 'Admin password is not configured' })
   }
 
-  if (username !== authConfig.adminUsername || password !== authConfig.adminPassword) {
+  let isPasswordValid = false
+  if (adminPasswordHash) {
+    isPasswordValid = await verifyPassword(adminPasswordHash, password)
+  }
+  else {
+    isPasswordValid = safeEquals(password, adminPassword)
+  }
+
+  if (!safeEquals(username, adminUsername) || !isPasswordValid) {
     throw createError({ statusCode: 401, message: 'Invalid admin credentials' })
   }
 
@@ -24,7 +50,7 @@ export default defineEventHandler(async (event: H3Event) => {
     data: {
       id: 0,
       kind: 'admin',
-      username: authConfig.adminUsername,
+      username: adminUsername,
       email: authConfig.adminEmail,
     },
   }
