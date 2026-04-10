@@ -42,6 +42,7 @@ export default defineNuxtConfig({
         'tailwind-merge',
         '@unovis/vue',
         'reka-ui',
+        '@unovis/ts',
       ],
     },
   },

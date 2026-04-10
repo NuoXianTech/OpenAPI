@@ -1,25 +1,18 @@
 <script setup lang="ts">
-import type { ChartConfig } from '@/components/ui/chart'
+import type { BulletLegendItemInterface } from '@unovis/ts'
 import { VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsResponse,
 } from '~~/shared/types/public-stats'
 import {
-  ChartContainer,
   ChartCrosshair,
-  ChartTooltip,
-  ChartTooltipContent,
-  componentToString,
 } from '@/components/ui/chart'
 
 interface TrendChartRow {
-  index: number
-  date: string
-  shortDate: string
-  totalCalls: number
-  successCalls: number
-  failureCalls: number
+  label: string
+  成功次数: number
+  失败次数: number
 }
 
 function createEmptyDashboard(): PublicCallStatsDashboard {
@@ -58,16 +51,31 @@ function toShortDate(value: string) {
 
 const EMPTY_DASHBOARD = createEmptyDashboard()
 
-const chartConfig: ChartConfig = {
+const SUCCESS_KEY = '成功次数' as const
+const FAILURE_KEY = '失败次数' as const
+
+const chartConfig = {
   successCalls: {
-    label: '成功调用',
+    label: '成功次数',
     color: 'var(--green)',
   },
   failureCalls: {
-    label: '失败调用',
+    label: '失败次数',
     color: 'var(--red)',
   },
-}
+} as const
+
+const crosshairItems: BulletLegendItemInterface[] = [
+  { name: SUCCESS_KEY, color: chartConfig.successCalls.color },
+  { name: FAILURE_KEY, color: chartConfig.failureCalls.color },
+]
+
+const crosshairColors = crosshairItems.map((item) => {
+  if (Array.isArray(item.color)) {
+    return item.color[0] ?? 'transparent'
+  }
+  return item.color ?? 'transparent'
+})
 
 const { data, pending, error, refresh } = await useAsyncData(
   'public-call-stats',
@@ -97,27 +105,29 @@ const generatedAtLabel = computed(() => {
 })
 
 const trendChartData = computed<TrendChartRow[]>(() => {
-  return trend7d.value.map((item, index) => ({
-    index,
-    date: item.date,
-    shortDate: toShortDate(item.date),
-    totalCalls: item.totalCalls,
-    successCalls: item.successCalls,
-    failureCalls: item.failureCalls,
+  return trend7d.value.map(item => ({
+    label: toShortDate(item.date),
+    [SUCCESS_KEY]: item.successCalls,
+    [FAILURE_KEY]: item.failureCalls,
   }))
 })
 
-const xAccessor = (item: TrendChartRow) => item.index
-const successLineAccessor = (item: TrendChartRow) => item.successCalls
-const failureLineAccessor = (item: TrendChartRow) => item.failureCalls
+const xAccessor = (item: TrendChartRow) => item.label
+const successLineAccessor = (item: TrendChartRow) => item[SUCCESS_KEY]
+const failureLineAccessor = (item: TrendChartRow) => item[FAILURE_KEY]
 
-const xTickFormat = (tick: number | Date) => {
-  if (typeof tick !== 'number') {
-    return ''
+const xTickFormat = (tick: number | Date | string) => {
+  if (typeof tick === 'string') {
+    return tick
   }
-  const maxIndex = Math.max(trendChartData.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.floor(tick + Number.EPSILON)))
-  return trendChartData.value[index]?.shortDate || ''
+
+  if (typeof tick === 'number') {
+    const maxIndex = Math.max(trendChartData.value.length - 1, 0)
+    const index = Math.min(maxIndex, Math.max(0, Math.floor(tick + Number.EPSILON)))
+    return trendChartData.value[index]?.label || ''
+  }
+
+  return ''
 }
 
 const yTickFormat = (tick: number | Date) => {
@@ -178,7 +188,7 @@ const overviewCards = computed(() => {
     },
     {
       key: 'users',
-      label: '活跃用户',
+      label: '注册用户',
       value: formatCount(overview.value.userCount),
       valueClass: 'text-foreground',
     },
@@ -295,10 +305,7 @@ const overviewCards = computed(() => {
             </CardHeader>
             <CardContent class="px-4 pt-2">
               <ClientOnly>
-                <ChartContainer
-                  :config="chartConfig"
-                  class="h-[320px] w-full"
-                >
+                <div class="h-[320px] w-full">
                   <VisXYContainer
                     :data="trendChartData"
                     :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
@@ -317,25 +324,37 @@ const overviewCards = computed(() => {
                     />
                     <VisAxis
                       type="y"
+                      :tick-line="false"
+                      :domain-line="false"
+                      :grid-line="true"
                       :tick-format="yTickFormat"
                     />
                     <VisAxis
                       type="x"
                       :x="xAccessor"
+                      :tick-line="false"
+                      :domain-line="false"
+                      :grid-line="false"
                       :tick-format="xTickFormat"
                       :num-ticks="7"
                     />
+
+                    <ChartCrosshair
+                      index="label"
+                      :items="crosshairItems"
+                      :colors="crosshairColors"
+                    />
                   </VisXYContainer>
-                </ChartContainer>
+                </div>
 
                 <div class="mt-4 flex flex-wrap gap-2">
                   <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
                     <span class="h-2 w-2 rounded-full bg-[var(--green)]" />
-                    成功调用
+                    成功次数
                   </div>
                   <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
                     <span class="h-2 w-2 rounded-full bg-[var(--red)]" />
-                    失败调用
+                    失败次数
                   </div>
                 </div>
 
