@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { toast } from 'vue-sonner'
+
 const { adminLogin, fetchMe, user } = useAuth()
 
 const form = reactive({
@@ -8,6 +10,13 @@ const form = reactive({
 const submitting = ref(false)
 const errorMessage = ref('')
 const checkingAuth = ref(true)
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return fallback
+}
 
 onMounted(async () => {
   await fetchMe()
@@ -23,10 +32,12 @@ const submit = async () => {
   errorMessage.value = ''
   try {
     await adminLogin({ username: form.username, password: form.password })
+    toast.success('管理员登录成功')
     await navigateTo('/admin')
   }
-  catch (error: any) {
-    errorMessage.value = error?.message || '管理员登录失败'
+  catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, '管理员登录失败')
+    toast.error(errorMessage.value)
   }
   finally {
     submitting.value = false
@@ -38,76 +49,122 @@ const submit = async () => {
   <div class="auth-shell">
     <div class="auth-panel">
       <div
-        v-if="checkingAuth"
         class="auth-card"
+        style="width:min(560px, 94vw);"
       >
-        <h1 class="auth-title">
-          检查管理员登录状态
-        </h1>
-        <p class="auth-subtitle">
-          正在确认是否已登录管理员，请稍候...
-        </p>
-      </div>
-      <div
-        v-else
-        class="auth-card"
-      >
-        <h1 class="auth-title">
-          管理员登录
-        </h1>
-        <p class="auth-subtitle">
-          使用 .env 中配置的管理员账号密码进入管理后台。
-        </p>
-
-        <form
-          class="auth-grid"
-          @submit.prevent="submit"
+        <div
+          v-if="checkingAuth"
+          class="grid gap-4"
         >
-          <div>
-            <div class="auth-label">
-              管理员用户名
+          <div class="flex items-center gap-2">
+            <Badge variant="outline">
+              Admin
+            </Badge>
+            <Badge variant="secondary">
+              Checking
+            </Badge>
+          </div>
+          <h1 class="auth-title">
+            检查管理员登录状态
+          </h1>
+          <p class="auth-subtitle">
+            正在确认是否已登录管理员，请稍候...
+          </p>
+          <div class="grid gap-2">
+            <Skeleton class="h-10 w-full rounded-md" />
+            <Skeleton class="h-10 w-full rounded-md" />
+            <Skeleton class="h-10 w-1/2 rounded-md" />
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="grid gap-4"
+        >
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h1 class="auth-title">
+                管理员登录
+              </h1>
+              <p class="auth-subtitle">
+                使用 .env 中配置的管理员账号密码进入管理后台。
+              </p>
             </div>
-            <input
-              v-model="form.username"
-              class="auth-input"
-              type="text"
-              autocomplete="username"
-            >
+            <Badge variant="outline">
+              Admin Only
+            </Badge>
           </div>
 
-          <div>
-            <div class="auth-label">
-              管理员密码
-            </div>
-            <input
-              v-model="form.password"
-              class="auth-input"
-              type="password"
-              autocomplete="current-password"
-            >
-          </div>
+          <Card class="border-border/70 bg-card/90 shadow-sm">
+            <CardHeader class="pb-3">
+              <CardTitle class="text-base">
+                管理后台认证
+              </CardTitle>
+              <CardDescription>
+                仅管理员账号可访问控制台。
+              </CardDescription>
+            </CardHeader>
 
-          <div
-            v-if="errorMessage"
-            class="text-red-500 text-sm"
-          >
-            {{ errorMessage }}
-          </div>
+            <CardContent>
+              <form
+                class="grid gap-4"
+                @submit.prevent="submit"
+              >
+                <div class="grid gap-2">
+                  <Label for="admin-username">
+                    管理员用户名
+                  </Label>
+                  <Input
+                    id="admin-username"
+                    v-model="form.username"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="admin"
+                  />
+                </div>
 
-          <div class="auth-actions">
-            <button
-              class="auth-button"
-              type="submit"
-              :disabled="submitting"
-            >
-              {{ submitting ? '登录中...' : '登录管理后台' }}
-            </button>
-            <NuxtLink
-              class="auth-button auth-ghost"
-              to="/"
-            >返回首页</NuxtLink>
-          </div>
-        </form>
+                <div class="grid gap-2">
+                  <Label for="admin-password">
+                    管理员密码
+                  </Label>
+                  <Input
+                    id="admin-password"
+                    v-model="form.password"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="输入管理员密码"
+                  />
+                </div>
+
+                <div v-if="errorMessage">
+                  <Badge
+                    variant="destructive"
+                    class="max-w-full whitespace-normal break-words"
+                  >
+                    {{ errorMessage }}
+                  </Badge>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    type="submit"
+                    :disabled="submitting"
+                  >
+                    {{ submitting ? '登录中...' : '登录管理后台' }}
+                  </Button>
+                  <Button
+                    as-child
+                    variant="outline"
+                  >
+                    <NuxtLink to="/">
+                      返回首页
+                    </NuxtLink>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
 

@@ -42,6 +42,10 @@ const query = ref('')
 const currentStatus = ref<string | number>('all')
 const currentCategory = ref('all')
 const categoryDraft = ref('')
+const pageSize = ref(12)
+const currentPage = ref(1)
+
+const pageSizeOptions = [12, 24, 48]
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
@@ -190,6 +194,50 @@ const filteredApis = computed(() => {
   })
 })
 
+const totalPages = computed(() => {
+  return Math.max(1, Math.ceil(filteredApis.value.length / pageSize.value))
+})
+
+const pagedApis = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredApis.value.slice(start, start + pageSize.value)
+})
+
+const pageRangeText = computed(() => {
+  if (!filteredApis.value.length) {
+    return '0-0'
+  }
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, filteredApis.value.length)
+  return `${start}-${end}`
+})
+
+watch([query, currentStatus, currentCategory, pageSize], () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, (value) => {
+  if (currentPage.value > value) {
+    currentPage.value = value
+  }
+})
+
+const goPrevPage = () => {
+  currentPage.value = Math.max(1, currentPage.value - 1)
+}
+
+const goNextPage = () => {
+  currentPage.value = Math.min(totalPages.value, currentPage.value + 1)
+}
+
+const resetListFilters = () => {
+  query.value = ''
+  currentStatus.value = 'all'
+  currentCategory.value = 'all'
+  pageSize.value = 12
+  currentPage.value = 1
+}
+
 const loadCatalog = async () => {
   try {
     const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
@@ -319,11 +367,36 @@ onMounted(loadCatalog)
               </CardDescription>
             </CardHeader>
             <CardContent class="grid gap-3">
-              <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto]">
                 <Input
                   v-model="query"
                   placeholder="搜索 code / name / description"
                 />
+
+                <Select
+                  :model-value="String(pageSize)"
+                  @update:model-value="(value) => pageSize = Number(value)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="每页条数" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="size in pageSizeOptions"
+                      :key="size"
+                      :value="String(size)"
+                    >
+                      每页 {{ size }} 条
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  variant="ghost"
+                  @click="resetListFilters"
+                >
+                  重置筛选
+                </Button>
               </div>
               <div>
                 <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -345,6 +418,10 @@ onMounted(loadCatalog)
                   :max-visible="10"
                   aria-label="API 分类筛选"
                 />
+              </div>
+
+              <div class="text-xs text-muted-foreground">
+                共 {{ filteredApis.length }} 条，当前显示 {{ pageRangeText }}
               </div>
             </CardContent>
           </Card>
@@ -539,7 +616,7 @@ onMounted(loadCatalog)
             appear
           >
             <Card
-              v-for="item in filteredApis"
+              v-for="item in pagedApis"
               :key="item.id"
               class="api-card-item border-border/70 bg-card/90 shadow-sm"
             >
@@ -644,6 +721,51 @@ onMounted(loadCatalog)
               </CardContent>
             </Card>
           </TransitionGroup>
+
+          <Card
+            v-if="filteredApis.length"
+            class="border-border/70 bg-card/90 shadow-sm"
+          >
+            <CardContent class="py-3 flex items-center justify-between gap-2">
+              <p class="text-xs text-muted-foreground">
+                第 {{ currentPage }} / {{ totalPages }} 页
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  :disabled="currentPage === 1"
+                  @click="currentPage = 1"
+                >
+                  首页
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  :disabled="currentPage === 1"
+                  @click="goPrevPage"
+                >
+                  上一页
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  :disabled="currentPage >= totalPages"
+                  @click="goNextPage"
+                >
+                  下一页
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  :disabled="currentPage >= totalPages"
+                  @click="currentPage = totalPages"
+                >
+                  末页
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

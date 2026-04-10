@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { toast } from 'vue-sonner'
+
 const { fetchMe, user, login } = useAuth()
 const form = reactive({
   identifier: '',
@@ -7,6 +9,13 @@ const form = reactive({
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return fallback
+}
 
 onMounted(async () => {
   await fetchMe()
@@ -26,10 +35,12 @@ const submit = async () => {
       : { username: form.identifier, password: form.password }
 
     await login(payload)
+    toast.success('登录成功')
     await navigateTo('/')
   }
-  catch (error: any) {
-    errorMessage.value = error?.message || '登录失败'
+  catch (error: unknown) {
+    errorMessage.value = getErrorMessage(error, '登录失败')
+    toast.error(errorMessage.value)
   }
   finally {
     submitting.value = false
@@ -41,81 +52,126 @@ const submit = async () => {
   <div class="auth-shell">
     <div class="auth-panel">
       <div
-        v-if="checkingAuth"
         class="auth-card"
+        style="width:min(560px, 94vw);"
       >
-        <h1 class="auth-title">
-          检查登录状态
-        </h1>
-        <p class="auth-subtitle">
-          正在确认是否已登录，请稍候...
-        </p>
-      </div>
-      <div
-        v-else
-        class="auth-card"
-      >
-        <h1 class="auth-title">
-          欢迎回来
-        </h1>
-        <p class="auth-subtitle">
-          使用邮箱或用户名登录，继续管理你的 API。
-        </p>
-
-        <form
-          class="auth-grid"
-          @submit.prevent="submit"
+        <div
+          v-if="checkingAuth"
+          class="grid gap-4"
         >
-          <div>
-            <div class="auth-label">
-              邮箱或用户名
+          <div class="flex items-center gap-2">
+            <Badge variant="secondary">
+              Session
+            </Badge>
+            <Badge variant="outline">
+              Checking
+            </Badge>
+          </div>
+          <h1 class="auth-title">
+            检查登录状态
+          </h1>
+          <p class="auth-subtitle">
+            正在确认是否已登录，请稍候...
+          </p>
+          <div class="grid gap-2">
+            <Skeleton class="h-10 w-full rounded-md" />
+            <Skeleton class="h-10 w-full rounded-md" />
+            <Skeleton class="h-10 w-1/2 rounded-md" />
+          </div>
+        </div>
+
+        <div
+          v-else
+          class="grid gap-4"
+        >
+          <div class="flex items-start justify-between gap-3 flex-wrap">
+            <div>
+              <h1 class="auth-title">
+                欢迎回来
+              </h1>
+              <p class="auth-subtitle">
+                使用邮箱或用户名登录，继续管理你的 API。
+              </p>
             </div>
-            <input
-              v-model="form.identifier"
-              type="text"
-              class="auth-input"
-              autocomplete="username"
-              placeholder="you@example.com"
-            >
-          </div>
-          <div>
-            <div class="auth-label">
-              密码
-            </div>
-            <input
-              v-model="form.password"
-              type="password"
-              class="auth-input"
-              autocomplete="current-password"
-              placeholder="输入你的密码"
-            >
+            <Badge variant="secondary">
+              User Login
+            </Badge>
           </div>
 
-          <div
-            v-if="errorMessage"
-            class="text-red-500 text-sm"
-          >
-            {{ errorMessage }}
-          </div>
+          <Card class="border-border/70 bg-card/90 shadow-sm">
+            <CardHeader class="pb-3">
+              <CardTitle class="text-base">
+                账号登录
+              </CardTitle>
+              <CardDescription>
+                支持邮箱或用户名登录。
+              </CardDescription>
+            </CardHeader>
 
-          <div class="auth-actions">
-            <button
-              class="auth-button"
-              type="submit"
-              :disabled="submitting"
-            >
-              {{ submitting ? '登录中...' : '登录' }}
-            </button>
-            <NuxtLink
-              class="auth-button auth-ghost"
-              to="/register"
-            >创建账号</NuxtLink>
-          </div>
-        </form>
+            <CardContent>
+              <form
+                class="grid gap-4"
+                @submit.prevent="submit"
+              >
+                <div class="grid gap-2">
+                  <Label for="identifier">
+                    邮箱或用户名
+                  </Label>
+                  <Input
+                    id="identifier"
+                    v-model="form.identifier"
+                    type="text"
+                    autocomplete="username"
+                    placeholder="you@example.com"
+                  />
+                </div>
 
-        <p class="auth-note">
-          忘记密码？请联系管理员处理。
-        </p>
+                <div class="grid gap-2">
+                  <Label for="password">
+                    密码
+                  </Label>
+                  <Input
+                    id="password"
+                    v-model="form.password"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="输入你的密码"
+                  />
+                </div>
+
+                <div v-if="errorMessage">
+                  <Badge
+                    variant="destructive"
+                    class="max-w-full whitespace-normal break-words"
+                  >
+                    {{ errorMessage }}
+                  </Badge>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    type="submit"
+                    :disabled="submitting"
+                  >
+                    {{ submitting ? '登录中...' : '登录' }}
+                  </Button>
+                  <Button
+                    as-child
+                    variant="outline"
+                  >
+                    <NuxtLink to="/register">
+                      创建账号
+                    </NuxtLink>
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          <p class="auth-note">
+            忘记密码？请联系管理员处理。
+          </p>
+        </div>
       </div>
     </div>
 

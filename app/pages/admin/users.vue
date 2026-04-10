@@ -30,6 +30,17 @@ const apiKeys = ref<ApiKeyItem[]>([])
 const selectedUserId = ref(0)
 const keyword = ref('')
 const notice = ref('')
+const activeFilter = ref<'all' | 'active' | 'inactive'>('all')
+const banFilter = ref<'all' | 'normal' | 'banned'>('all')
+const userPageSize = ref(10)
+const userCurrentPage = ref(1)
+const apiKeyKeyword = ref('')
+const apiKeyStatusFilter = ref<'all' | 'active' | 'inactive'>('all')
+const apiKeyPageSize = ref(10)
+const apiKeyCurrentPage = ref(1)
+
+const userPageSizeOptions = [10, 20, 50]
+const apiKeyPageSizeOptions = [10, 20, 50]
 
 const form = reactive({
   id: 0,
@@ -63,6 +74,69 @@ const resetForm = () => {
 }
 
 const selectedUser = computed(() => users.value.find(user => user.id === selectedUserId.value) || null)
+
+const filteredUsers = computed(() => {
+  return users.value.filter((user) => {
+    const activeMatched = activeFilter.value === 'all'
+      || (activeFilter.value === 'active' ? user.isActive : !user.isActive)
+
+    const banMatched = banFilter.value === 'all'
+      || (banFilter.value === 'banned' ? user.isBanned : !user.isBanned)
+
+    return activeMatched && banMatched
+  })
+})
+
+const userTotalPages = computed(() => {
+  return Math.max(1, Math.ceil(filteredUsers.value.length / userPageSize.value))
+})
+
+const pagedUsers = computed(() => {
+  const start = (userCurrentPage.value - 1) * userPageSize.value
+  return filteredUsers.value.slice(start, start + userPageSize.value)
+})
+
+const userPageRangeText = computed(() => {
+  if (!filteredUsers.value.length) {
+    return '0-0'
+  }
+  const start = (userCurrentPage.value - 1) * userPageSize.value + 1
+  const end = Math.min(userCurrentPage.value * userPageSize.value, filteredUsers.value.length)
+  return `${start}-${end}`
+})
+
+const filteredApiKeys = computed(() => {
+  const keywordLower = apiKeyKeyword.value.trim().toLowerCase()
+
+  return apiKeys.value.filter((item) => {
+    const statusMatched = apiKeyStatusFilter.value === 'all'
+      || (apiKeyStatusFilter.value === 'active' ? item.isActive : !item.isActive)
+
+    const keywordMatched = !keywordLower
+      || item.name.toLowerCase().includes(keywordLower)
+      || item.apiKey.toLowerCase().includes(keywordLower)
+
+    return statusMatched && keywordMatched
+  })
+})
+
+const apiKeyTotalPages = computed(() => {
+  return Math.max(1, Math.ceil(filteredApiKeys.value.length / apiKeyPageSize.value))
+})
+
+const pagedApiKeys = computed(() => {
+  const start = (apiKeyCurrentPage.value - 1) * apiKeyPageSize.value
+  return filteredApiKeys.value.slice(start, start + apiKeyPageSize.value)
+})
+
+const apiKeyPageRangeText = computed(() => {
+  if (!filteredApiKeys.value.length) {
+    return '0-0'
+  }
+  const start = (apiKeyCurrentPage.value - 1) * apiKeyPageSize.value + 1
+  const end = Math.min(apiKeyCurrentPage.value * apiKeyPageSize.value, filteredApiKeys.value.length)
+  return `${start}-${end}`
+})
 
 const formatDate = (value: string | null) => {
   if (!value) {
@@ -105,6 +179,58 @@ const loadUsers = async () => {
   }
 }
 
+watch([activeFilter, banFilter, userPageSize], () => {
+  userCurrentPage.value = 1
+})
+
+watch(userTotalPages, (value) => {
+  if (userCurrentPage.value > value) {
+    userCurrentPage.value = value
+  }
+})
+
+watch([apiKeyKeyword, apiKeyStatusFilter, apiKeyPageSize], () => {
+  apiKeyCurrentPage.value = 1
+})
+
+watch(apiKeyTotalPages, (value) => {
+  if (apiKeyCurrentPage.value > value) {
+    apiKeyCurrentPage.value = value
+  }
+})
+
+const goPrevUserPage = () => {
+  userCurrentPage.value = Math.max(1, userCurrentPage.value - 1)
+}
+
+const goNextUserPage = () => {
+  userCurrentPage.value = Math.min(userTotalPages.value, userCurrentPage.value + 1)
+}
+
+const resetUserFilters = async () => {
+  keyword.value = ''
+  activeFilter.value = 'all'
+  banFilter.value = 'all'
+  userPageSize.value = 10
+  userCurrentPage.value = 1
+  await loadUsers()
+}
+
+const goPrevApiKeyPage = () => {
+  apiKeyCurrentPage.value = Math.max(1, apiKeyCurrentPage.value - 1)
+}
+
+const goNextApiKeyPage = () => {
+  apiKeyCurrentPage.value = Math.min(apiKeyTotalPages.value, apiKeyCurrentPage.value + 1)
+}
+
+const resetApiKeyFilters = () => {
+  apiKeyKeyword.value = ''
+  apiKeyStatusFilter.value = 'all'
+  apiKeyPageSize.value = 10
+  apiKeyCurrentPage.value = 1
+}
+
 const loadApiKeys = async () => {
   if (!selectedUserId.value) return
   try {
@@ -121,6 +247,10 @@ const loadApiKeys = async () => {
 }
 
 watch(selectedUserId, () => {
+  apiKeyKeyword.value = ''
+  apiKeyStatusFilter.value = 'all'
+  apiKeyPageSize.value = 10
+  apiKeyCurrentPage.value = 1
   void loadApiKeys()
 })
 
@@ -237,6 +367,19 @@ const resetApiKey = async (id: number) => {
   }
 }
 
+const copyApiKey = async (value: string) => {
+  try {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      throw new Error('当前环境不支持复制')
+    }
+    await navigator.clipboard.writeText(value)
+    toast.success('API Key 已复制')
+  }
+  catch (error: unknown) {
+    toast.error(getErrorMessage(error, '复制失败'))
+  }
+}
+
 onMounted(async () => {
   await loadUsers()
 })
@@ -260,7 +403,7 @@ onMounted(async () => {
           </div>
           <div class="flex items-center gap-2">
             <Badge variant="secondary">
-              {{ users.length }} Users
+              {{ filteredUsers.length }} / {{ users.length }} Users
             </Badge>
             <Button
               as-child
@@ -304,8 +447,73 @@ onMounted(async () => {
                 </Button>
               </div>
 
+              <div class="grid gap-2 md:grid-cols-3">
+                <Select v-model="activeFilter">
+                  <SelectTrigger>
+                    <SelectValue placeholder="激活状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      全部激活状态
+                    </SelectItem>
+                    <SelectItem value="active">
+                      已激活
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      未激活
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select v-model="banFilter">
+                  <SelectTrigger>
+                    <SelectValue placeholder="封禁状态" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      全部封禁状态
+                    </SelectItem>
+                    <SelectItem value="normal">
+                      正常
+                    </SelectItem>
+                    <SelectItem value="banned">
+                      已封禁
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select
+                  :model-value="String(userPageSize)"
+                  @update:model-value="(value) => userPageSize = Number(value)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="每页条数" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="size in userPageSizeOptions"
+                      :key="size"
+                      :value="String(size)"
+                    >
+                      每页 {{ size }} 条
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>共 {{ filteredUsers.length }} 条，当前显示 {{ userPageRangeText }}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  @click="resetUserFilters"
+                >
+                  重置筛选
+                </Button>
+              </div>
+
               <Empty
-                v-if="!users.length"
+                v-if="!filteredUsers.length"
                 class="border border-dashed border-border bg-background/60"
               >
                 <EmptyHeader>
@@ -328,7 +536,7 @@ onMounted(async () => {
               >
                 <div class="grid gap-2">
                   <button
-                    v-for="user in users"
+                    v-for="user in pagedUsers"
                     :key="user.id"
                     type="button"
                     class="w-full rounded-[12px] border border-border bg-background/80 p-3 text-left transition-colors hover:bg-accent"
@@ -351,6 +559,47 @@ onMounted(async () => {
                   </button>
                 </div>
               </ScrollArea>
+
+              <div
+                v-if="filteredUsers.length"
+                class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+              >
+                <span>第 {{ userCurrentPage }} / {{ userTotalPages }} 页</span>
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="userCurrentPage === 1"
+                    @click="userCurrentPage = 1"
+                  >
+                    首页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="userCurrentPage === 1"
+                    @click="goPrevUserPage"
+                  >
+                    上一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="userCurrentPage >= userTotalPages"
+                    @click="goNextUserPage"
+                  >
+                    下一页
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    :disabled="userCurrentPage >= userTotalPages"
+                    @click="userCurrentPage = userTotalPages"
+                  >
+                    末页
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
@@ -530,6 +779,67 @@ onMounted(async () => {
                   </Button>
                 </div>
 
+                <div class="grid gap-2 md:grid-cols-3">
+                  <Input
+                    v-model="apiKeyKeyword"
+                    placeholder="搜索密钥名称或 Key"
+                    :disabled="!selectedUserId"
+                  />
+
+                  <Select
+                    v-model="apiKeyStatusFilter"
+                    :disabled="!selectedUserId"
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="密钥状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        全部状态
+                      </SelectItem>
+                      <SelectItem value="active">
+                        已启用
+                      </SelectItem>
+                      <SelectItem value="inactive">
+                        未启用
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    :model-value="String(apiKeyPageSize)"
+                    :disabled="!selectedUserId"
+                    @update:model-value="(value) => apiKeyPageSize = Number(value)"
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="每页条数" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="size in apiKeyPageSizeOptions"
+                        :key="size"
+                        :value="String(size)"
+                      >
+                        每页 {{ size }} 条
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div
+                  v-if="selectedUserId"
+                  class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                >
+                  <span>共 {{ filteredApiKeys.length }} 条，当前显示 {{ apiKeyPageRangeText }}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    @click="resetApiKeyFilters"
+                  >
+                    重置筛选
+                  </Button>
+                </div>
+
                 <Empty
                   v-if="!selectedUserId"
                   class="border border-dashed border-border bg-background/60"
@@ -566,6 +876,24 @@ onMounted(async () => {
                   </EmptyHeader>
                 </Empty>
 
+                <Empty
+                  v-else-if="!filteredApiKeys.length"
+                  class="border border-dashed border-border bg-background/60"
+                >
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Icon
+                        name="mdi:key-chain"
+                        class="size-5"
+                      />
+                    </EmptyMedia>
+                    <EmptyTitle>没有匹配的密钥</EmptyTitle>
+                    <EmptyDescription>
+                      当前筛选条件下没有可展示的 API Key。
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+
                 <div
                   v-else
                   class="rounded-md border"
@@ -573,20 +901,26 @@ onMounted(async () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead class="w-[180px]">
+                        <TableHead class="w-[160px]">
                           名称
                         </TableHead>
                         <TableHead>
                           Key
                         </TableHead>
-                        <TableHead class="w-[220px] text-right">
+                        <TableHead class="w-[90px]">
+                          状态
+                        </TableHead>
+                        <TableHead class="w-[170px]">
+                          创建时间
+                        </TableHead>
+                        <TableHead class="w-[300px] text-right">
                           操作
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       <TableRow
-                        v-for="item in apiKeys"
+                        v-for="item in pagedApiKeys"
                         :key="item.id"
                       >
                         <TableCell class="font-medium">
@@ -596,7 +930,23 @@ onMounted(async () => {
                           {{ item.apiKey }}
                         </TableCell>
                         <TableCell>
+                          <Badge :variant="item.isActive ? 'secondary' : 'outline'">
+                            {{ item.isActive ? '启用' : '停用' }}
+                          </Badge>
+                        </TableCell>
+                        <TableCell class="text-xs text-muted-foreground">
+                          {{ formatDate(item.createdAt) }}
+                        </TableCell>
+                        <TableCell>
                           <div class="flex justify-end gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              @click="copyApiKey(item.apiKey)"
+                            >
+                              复制
+                            </Button>
+
                             <AlertDialog>
                               <AlertDialogTrigger as-child>
                                 <Button
@@ -654,6 +1004,46 @@ onMounted(async () => {
                       </TableRow>
                     </TableBody>
                   </Table>
+
+                  <div class="flex items-center justify-between border-t px-4 py-3">
+                    <p class="text-xs text-muted-foreground">
+                      第 {{ apiKeyCurrentPage }} / {{ apiKeyTotalPages }} 页
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        :disabled="apiKeyCurrentPage === 1"
+                        @click="apiKeyCurrentPage = 1"
+                      >
+                        首页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        :disabled="apiKeyCurrentPage === 1"
+                        @click="goPrevApiKeyPage"
+                      >
+                        上一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        :disabled="apiKeyCurrentPage >= apiKeyTotalPages"
+                        @click="goNextApiKeyPage"
+                      >
+                        下一页
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        :disabled="apiKeyCurrentPage >= apiKeyTotalPages"
+                        @click="apiKeyCurrentPage = apiKeyTotalPages"
+                      >
+                        末页
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
