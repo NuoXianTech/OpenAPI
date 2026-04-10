@@ -22,7 +22,6 @@
   "dependencies": {
     "@electric-sql/pglite": "^0.4.4",
     "@nuxt/icon": "2.2.1",
-    "@nuxt/ui": "^4.6.1",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.4",

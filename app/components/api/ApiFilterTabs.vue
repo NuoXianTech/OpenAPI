@@ -77,7 +77,7 @@ function toggleExpanded() {
       :key="String(tab.value)"
       :variant="isActive(tab.value) ? 'default' : 'outline'"
       size="sm"
-      class="api-filter-tab h-8 rounded-full px-3.5 text-xs font-medium sm:text-sm"
+      class="api-filter-tab cursor-pointer h-8 rounded-full px-3.5 text-xs font-medium sm:text-sm"
       :class="isActive(tab.value)
         ? 'shadow-xs'
         : 'bg-card text-muted-foreground hover:bg-accent/70 hover:text-foreground'"
@@ -90,7 +90,7 @@ function toggleExpanded() {
       v-if="hasOverflow"
       variant="outline"
       size="sm"
-      class="api-filter-tab h-8 rounded-full px-3 text-xs text-muted-foreground hover:bg-accent/70 hover:text-foreground sm:text-sm"
+      class="api-filter-tab cursor-pointer h-8 rounded-full px-3 text-xs text-muted-foreground hover:bg-accent/70 hover:text-foreground sm:text-sm"
       @click="toggleExpanded"
     >
       {{ expanded ? '收起' : `更多(${hiddenCount})` }}

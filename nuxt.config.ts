@@ -3,16 +3,12 @@ export default defineNuxtConfig({
   modules: [
     '@nuxthub/core',
     '@nuxt/icon',
-    '@nuxt/ui',
     'shadcn-nuxt',
     '@nuxtjs/tailwindcss',
     '@nuxt/eslint',
   ],
   devtools: { enabled: true },
   css: ['~/assets/css/tailwind.css'],
-  ui: {
-    fonts: false,
-  },
   runtimeConfig: {
     auth: {
       adminUsername: process.env.ADMIN_USERNAME || '',
@@ -45,6 +41,7 @@ export default defineNuxtConfig({
         'clsx',
         'tailwind-merge',
         '@unovis/vue',
+        'reka-ui',
       ],
     },
   },
