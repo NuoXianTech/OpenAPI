@@ -13,17 +13,14 @@ export default defineNuxtConfig({
   ui: {
     fonts: false,
   },
-  shadcn: {
-    prefix: '',
-    componentDir: '@/components/ui'
-  },
   runtimeConfig: {
     auth: {
       adminUsername: process.env.ADMIN_USERNAME || '',
       adminPasswordHash: process.env.ADMIN_PASSWORD_HASH || '',
       adminPassword: process.env.ADMIN_PASSWORD || '',
       adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
-      emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',
+      emailVerifySecret:
+        process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',
     },
     public: {
       startTime: '2026-01-01 00:00:00',
@@ -47,6 +44,7 @@ export default defineNuxtConfig({
         '@vueuse/core',
         'clsx',
         'tailwind-merge',
+        '@unovis/vue',
       ],
     },
   },
@@ -54,5 +52,9 @@ export default defineNuxtConfig({
     config: {
       stylistic: true,
     },
+  },
+  shadcn: {
+    prefix: '',
+    componentDir: '@/components/ui',
   },
 })
