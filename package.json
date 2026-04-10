@@ -16,14 +16,13 @@
     "test:e2e:friend-links": "vitest run tests/e2e/friend-links.test.ts",
     "test:e2e:users": "vitest run tests/e2e/users.test.ts",
     "test:e2e:calls": "vitest run tests/e2e/call-stats.test.ts",
-    "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.3.16",
+    "@electric-sql/pglite": "^0.4.4",
     "@nuxt/icon": "2.2.1",
-    "@nuxt/ui": "^4.5.1",
+    "@nuxt/ui": "^4.6.1",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.4",
@@ -33,14 +32,12 @@
     "clsx": "^2.1.1",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.1",
-    "lucide-vue-next": "^1.0.0",
     "nuxt": "^4.4.2",
     "postgres": "^3.4.8",
     "reka-ui": "^2.9.2",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.2",
-    "vue": "^3.5.30",
-    "vue-router": "^4.6.4"
+    "vue": "^3.5.30"
   },
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",
@@ -50,11 +47,10 @@
     "@vue/test-utils": "^2.4.6",
     "eslint": "^10.1.0",
     "happy-dom": "^20.8.9",
-    "playwright-core": "^1.59.0",
+    "playwright-core": "^1.59.1",
     "shadcn-nuxt": "^2.4.3",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2",
-    "vue-tsc": "^3.2.6"
+    "vitest": "^4.1.2"
   }
 }
