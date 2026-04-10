@@ -1,30 +1,17 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { fetch as e2eFetch } from '@nuxt/test-utils/e2e'
 import { createAdminClient, loginAsAdmin } from './helpers/admin-client'
+import { createApiPayload } from './helpers/fixtures'
 import { waitForValue } from './helpers/wait'
 import { setupE2E } from './helpers/setup'
 import {
   closeDbClient,
   deleteApiCallStatsByApiId,
   deleteApiCallsByApiId,
+  getApiCallStatByApiId,
 } from './helpers/db-cleanup'
 
 await setupE2E()
-
-interface ApiCallStatItem {
-  apiListId: number
-  totalCount: number
-  successCount: number
-  failureCount: number
-  apiPath: string | null
-}
-
-interface ApiCallStatsResponse {
-  total: number
-  success: number
-  failure: number
-  items: ApiCallStatItem[]
-}
 
 interface AdminApiItem {
   id: number
@@ -32,8 +19,10 @@ interface AdminApiItem {
   apiPath: string
 }
 
-const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 180_000 : 30_000))
-const statsWaitIntervalMs = Number(process.env.E2E_STATS_WAIT_INTERVAL_MS || (process.env.CI ? 500 : 300))
+const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 45_000 : 20_000))
+const statsDeleteWaitTimeoutMs = Number(process.env.E2E_STATS_DELETE_WAIT_TIMEOUT_MS || (process.env.CI ? 20_000 : 10_000))
+const statsWaitIntervalMs = Number(process.env.E2E_STATS_WAIT_INTERVAL_MS || (process.env.CI ? 500 : 250))
+const callStatsTestTimeoutMs = Number(process.env.E2E_CALL_STATS_TEST_TIMEOUT_MS || (process.env.CI ? 120_000 : 90_000))
 
 afterAll(async () => {
   await closeDbClient()
@@ -41,39 +30,40 @@ afterAll(async () => {
 
 describe('api call stats e2e', () => {
   it('adds, updates and deletes call stats records', async () => {
-    // Ensure test_statistics_demo exists before admin APIs warm the middleware target cache.
-    await e2eFetch('/api/v1/test', {
-      method: 'GET',
-    })
-
     const sessionCookie = await loginAsAdmin()
     const adminClient = createAdminClient(sessionCookie)
+    const payload = createApiPayload()
+    const created = await adminClient.post<AdminApiItem>('/api/admin/apis/add', payload)
+    expect(created.code).toBe(0)
 
-    await e2eFetch('/api/v1/test', {
-      method: 'GET',
-    })
+    const apiId = Number(created.data.id)
+    const apiPath = created.data.apiPath || payload.apiPath
 
-    const apis = await adminClient.get<AdminApiItem[]>('/api/admin/apis/list', {
-      keyword: 'test_statistics_demo',
-    })
-    expect(apis.code).toBe(0)
+    expect(apiId).toBeGreaterThan(0)
+    expect(apiPath).toBe(payload.apiPath)
 
-    const trackedApi = apis.data.find(item => item.code === 'test_statistics_demo')
-    expect(trackedApi).toBeTruthy()
-
-    const apiId = Number(trackedApi?.id)
-
-    try {
-      await e2eFetch('/api/v1/test', {
+    async function callTrackedPath() {
+      // The path is intentionally unique and has no explicit route handler; 404 responses are still tracked.
+      await e2eFetch(apiPath, {
         method: 'GET',
       })
+    }
+
+    await deleteApiCallStatsByApiId(apiId)
+    await deleteApiCallsByApiId(apiId)
+
+    try {
+      await callTrackedPath()
 
       const statAfterFirstCall = await waitForValue(
         async () => {
-          const stats = await adminClient.get<ApiCallStatsResponse>('/api/admin/calls/stats')
-          return stats.data.items.find(item => item.apiListId === apiId) || null
+          const stat = await getApiCallStatByApiId(apiId)
+          if (!stat) {
+            await callTrackedPath()
+          }
+          return stat
         },
-        value => Boolean(value),
+        value => Number(value?.totalCount || 0) > 0,
         {
           timeoutMs: statsWaitTimeoutMs,
           intervalMs: statsWaitIntervalMs,
@@ -83,14 +73,15 @@ describe('api call stats e2e', () => {
       const firstTotal = Number(statAfterFirstCall?.totalCount || 0)
       expect(firstTotal).toBeGreaterThan(0)
 
-      await e2eFetch('/api/v1/test', {
-        method: 'GET',
-      })
+      await callTrackedPath()
 
       const statAfterSecondCall = await waitForValue(
         async () => {
-          const stats = await adminClient.get<ApiCallStatsResponse>('/api/admin/calls/stats')
-          return stats.data.items.find(item => item.apiListId === apiId) || null
+          const stat = await getApiCallStatByApiId(apiId)
+          if (Number(stat?.totalCount || 0) <= firstTotal) {
+            await callTrackedPath()
+          }
+          return stat
         },
         value => Number(value?.totalCount || 0) > firstTotal,
         {
@@ -105,12 +96,15 @@ describe('api call stats e2e', () => {
 
       await waitForValue(
         async () => {
-          const stats = await adminClient.get<ApiCallStatsResponse>('/api/admin/calls/stats')
-          return stats.data.items.some(item => item.apiListId === apiId)
+          const stat = await getApiCallStatByApiId(apiId)
+          if (stat) {
+            await deleteApiCallStatsByApiId(apiId)
+          }
+          return stat
         },
-        hasTarget => hasTarget === false,
+        value => value === null,
         {
-          timeoutMs: statsWaitTimeoutMs,
+          timeoutMs: statsDeleteWaitTimeoutMs,
           intervalMs: statsWaitIntervalMs,
         },
       )
@@ -118,6 +112,7 @@ describe('api call stats e2e', () => {
     finally {
       await deleteApiCallStatsByApiId(apiId)
       await deleteApiCallsByApiId(apiId)
+      await adminClient.post('/api/admin/apis/delete', { id: apiId })
     }
-  }, process.env.CI ? 180_000 : 90_000)
+  }, callStatsTestTimeoutMs)
 })

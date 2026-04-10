@@ -66,6 +66,32 @@ export async function deleteApiCallStatsByApiId(apiId: number) {
   await sql`delete from api_call_stats where api_id = ${apiId}`
 }
 
+export interface ApiCallStatRecord {
+  apiId: number
+  totalCount: number
+  successCount: number
+  failureCount: number
+  apiPath: string | null
+}
+
+export async function getApiCallStatByApiId(apiId: number): Promise<ApiCallStatRecord | null> {
+  const sql = getSqlClient()
+  const rows = await sql<ApiCallStatRecord[]>`
+    select
+      api_id as "apiId",
+      total_count as "totalCount",
+      success_count as "successCount",
+      failure_count as "failureCount",
+      api_path as "apiPath"
+    from api_call_stats
+    where api_id = ${apiId}
+    order by updated_at desc
+    limit 1
+  `
+
+  return rows[0] || null
+}
+
 export async function closeDbClient() {
   if (!sqlClient) {
     return
