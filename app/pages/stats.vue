@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import type { ChartConfig } from '~/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import { VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsResponse,
 } from '~~/shared/types/public-stats'
-import { VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
+import {
+  ChartContainer,
+  ChartCrosshair,
+  ChartTooltip,
+  ChartTooltipContent,
+  componentToString,
+} from '@/components/ui/chart'
 
 interface TrendChartRow {
   index: number
