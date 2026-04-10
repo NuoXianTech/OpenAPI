@@ -22,7 +22,8 @@ function addUtcDays(value: Date, days: number) {
 
 function toUtcDateKey(value: Date | string) {
   const date = typeof value === 'string' ? new Date(value) : value
-  return date.toISOString().slice(0, 10)
+  const normalized = new Date(date.getTime() + SHANGHAI_OFFSET_MS)
+  return normalized.toISOString().slice(0, 10)
 }
 
 function toNumber(value: number | string | null | undefined) {
@@ -187,7 +188,15 @@ export const apiCallStatsService = {
       }
     })
 
-    const top10Today: PublicCallStatsTopItem[] = topRows.map((row, index) => {
+    const top10Today: PublicCallStatsTopItem[] = topRows.map((row: {
+      apiListId: number
+      name: string
+      apiPath: string
+      httpMethod: string
+      totalCalls: number | string | null
+      successCalls: number | string | null
+      failureCalls: number | string | null
+    }, index: number) => {
       const rowTotalCalls = toNumber(row.totalCalls)
       const rowSuccessCalls = toNumber(row.successCalls)
       const rowFailureCalls = toNumber(row.failureCalls)

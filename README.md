@@ -111,14 +111,11 @@ $env:NUXT_TEST_HOST='http://localhost:3000'; pnpm run test:e2e
 1. Fork 项目仓库
 2. 克隆你的Fork到本地：git clone https://github.com/你的用户名/OpenAPI.git
 3. 进入项目目录：cd OpenAPI
-4. 创建功能分支：git checkout -b feature/你的功能名称
-5. 进行代码修改
-6. 代码规范检查：pnpm run lint
-7. 生成迁移文件：pnpm run db:generate
-8. 测试你的代码：pnpm run dev
-9. 提交更改：git commit -m '描述你的修改'
-10. 推送到你的Fork仓库：git push origin feature/你的功能名称
-11. 在GitHub界面发起Pull Request到原始仓库
+4. 进行代码修改
+5. 代码规范检查：pnpm run lint
+6. 生成迁移文件：pnpm run db:generate
+7. 测试你的代码：pnpm run dev
+8.  在GitHub界面发起Pull Request到原始仓库
 
 ## 📄 开源许可
 
@@ -126,6 +123,7 @@ $env:NUXT_TEST_HOST='http://localhost:3000'; pnpm run test:e2e
 
 ## 🙌 致谢
 
-- Nuxt.js - 优秀的全栈框架
-- Tailwind CSS - 实用的 CSS 框架
-- Iconify - 图标库
+- Nuxt.js
+- Tailwind CSS
+- Iconify
+- shadcn-nuxt

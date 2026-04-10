@@ -33,14 +33,14 @@ const getStatusInfo = (status: number) => {
 </script>
 
 <template>
-  <UiCard class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
-    <UiCardHeader class="px-4 pb-0">
+  <Card class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
+    <CardHeader class="px-4 pb-0">
       <div class="flex items-center justify-between gap-2">
-        <UiCardTitle class="m-0 flex-1 text-base font-semibold tracking-wide">
+        <CardTitle class="m-0 flex-1 text-base font-semibold tracking-wide">
           <slot name="header">
             {{ title }}
           </slot>
-        </UiCardTitle>
+        </CardTitle>
 
         <div class="flex items-center gap-2">
           <div
@@ -51,16 +51,16 @@ const getStatusInfo = (status: number) => {
           <slot name="header-actions" />
         </div>
       </div>
-    </UiCardHeader>
+    </CardHeader>
 
-    <UiCardContent class="px-4 pt-2">
+    <CardContent class="px-4 pt-2">
       <slot name="summary" />
-    </UiCardContent>
+    </CardContent>
 
     <div class="mt-2 flex w-full items-center justify-between gap-2 px-4">
       <slot name="meta" />
 
-      <UiButton
+      <Button
         variant="outline"
         size="sm"
         class="ml-auto h-8 rounded-md px-3 text-xs"
@@ -76,7 +76,7 @@ const getStatusInfo = (status: number) => {
         <span>
           <slot name="toggle-text">{{ isExpanded ? '收起详情' : '查看详情' }}</slot>
         </span>
-      </UiButton>
+      </Button>
     </div>
 
     <div
@@ -85,6 +85,6 @@ const getStatusInfo = (status: number) => {
     >
       <slot name="details" />
     </div>
-  </UiCard>
+  </Card>
 </template>
 <!-- TODO: 通用Card组件 -->

@@ -61,7 +61,7 @@ onMounted(() => {
         </div>
       </div>
 
-      <UiButton
+      <Button
         as-child
         variant="outline"
         size="sm"
@@ -76,7 +76,7 @@ onMounted(() => {
           />
           <span>返回首页</span>
         </NuxtLink>
-      </UiButton>
+      </Button>
     </header>
 
     <main class="mx-auto max-w-[1100px] px-5 pb-6">
@@ -100,19 +100,19 @@ onMounted(() => {
           key="loading"
           class="py-6"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center text-sm text-muted-foreground">
               加载中...
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section
           v-else-if="error"
           key="error"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center">
               <div class="font-semibold">
                 加载失败
               </div>
@@ -120,16 +120,16 @@ onMounted(() => {
                 {{ error }}
               </div>
               <div class="mt-3">
-                <UiButton
+                <Button
                   variant="outline"
                   size="sm"
                   @click="fetchFriendLinks"
                 >
                   重试
-                </UiButton>
+                </Button>
               </div>
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section
@@ -137,11 +137,11 @@ onMounted(() => {
           key="empty"
           class="py-2"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center text-sm text-muted-foreground">
               暂无可展示的友情链接。
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section
@@ -149,11 +149,11 @@ onMounted(() => {
           key="filtered-empty"
           class="py-2"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center text-sm text-muted-foreground">
               当前筛选条件没有匹配结果，试试其他关键词或状态。
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section

@@ -1,8 +1,4 @@
 @import "tailwindcss";
-@import "@nuxt/ui";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 @theme {
   --color-grey: #f7f7f8;
@@ -12,7 +8,6 @@
   --radius-custom: 14px;
 }
 
-/* 你的自定义 CSS 内容 */
 :root {
   --bg: #f7f7f8;
   --surface: #ffffff;

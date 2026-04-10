@@ -38,7 +38,7 @@ const displayDescription = computed(() => {
           </span>
         </div>
 
-        <UiButton
+        <Button
           as-child
           variant="outline"
           size="icon-sm"
@@ -56,7 +56,7 @@ const displayDescription = computed(() => {
               :ssr="true"
             />
           </a>
-        </UiButton>
+        </Button>
       </div>
     </template>
 

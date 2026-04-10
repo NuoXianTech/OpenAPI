@@ -62,11 +62,11 @@ const { settings } = useSiteSettings()
           key="loading"
           class="py-6"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center text-sm text-muted-foreground">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center text-sm text-muted-foreground">
               加载中...
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section
@@ -74,8 +74,8 @@ const { settings } = useSiteSettings()
           id="errorState"
           key="error"
         >
-          <UiCard class="state-panel border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center">
+          <Card class="state-panel border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center">
               <div class="font-semibold">
                 加载失败
               </div>
@@ -83,16 +83,16 @@ const { settings } = useSiteSettings()
                 {{ error }}
               </div>
               <div class="mt-3">
-                <UiButton
+                <Button
                   variant="outline"
                   size="sm"
                   @click="fetchList"
                 >
                   重试
-                </UiButton>
+                </Button>
               </div>
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section
@@ -101,16 +101,16 @@ const { settings } = useSiteSettings()
           key="empty"
           class="py-2"
         >
-          <UiCard class="state-panel empty-state my-2 border-border py-5 shadow-sm">
-            <UiCardContent class="px-5 text-center">
+          <Card class="state-panel empty-state my-2 border-border py-5 shadow-sm">
+            <CardContent class="px-5 text-center">
               <div class="font-semibold">
                 未找到匹配的 API
               </div>
               <div class="mt-1 text-[13px] text-muted-foreground">
                 尝试调整搜索关键词或切换筛选标签。
               </div>
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
         </section>
 
         <section

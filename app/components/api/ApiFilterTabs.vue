@@ -72,7 +72,7 @@ function toggleExpanded() {
     :aria-label="props.ariaLabel"
     class="api-filter-tabs mb-4 flex flex-wrap gap-2"
   >
-    <UiButton
+    <Button
       v-for="tab in visibleTabs"
       :key="String(tab.value)"
       :variant="isActive(tab.value) ? 'default' : 'outline'"
@@ -84,9 +84,9 @@ function toggleExpanded() {
       @click="selectTab(tab.value)"
     >
       {{ tab.label }}
-    </UiButton>
+    </Button>
 
-    <UiButton
+    <Button
       v-if="hasOverflow"
       variant="outline"
       size="sm"
@@ -94,6 +94,6 @@ function toggleExpanded() {
       @click="toggleExpanded"
     >
       {{ expanded ? '收起' : `更多(${hiddenCount})` }}
-    </UiButton>
+    </Button>
   </section>
 </template>

@@ -70,8 +70,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <UiCard class="mb-3 max-w-275 border-border py-3 shadow-sm">
-    <UiCardContent class="space-y-2 px-4 text-[13px]">
+  <Card class="mb-3 max-w-275 border-border py-3 shadow-sm">
+    <CardContent class="space-y-2 px-4 text-[13px]">
       <div class="flex flex-wrap items-center gap-2">
         <span class="inline-flex items-center gap-1.5 text-muted-foreground">
           <Icon
@@ -81,12 +81,12 @@ onUnmounted(() => {
           />
           当前时间：
         </span>
-        <UiBadge
+        <Badge
           variant="secondary"
           class="font-mono"
         >
           {{ nowTime }}
-        </UiBadge>
+        </Badge>
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
@@ -98,13 +98,13 @@ onUnmounted(() => {
           />
           稳定运行：
         </span>
-        <UiBadge
+        <Badge
           variant="outline"
           class="font-mono"
         >
           {{ upTime }}
-        </UiBadge>
+        </Badge>
       </div>
-    </UiCardContent>
-  </UiCard>
+    </CardContent>
+  </Card>
 </template>

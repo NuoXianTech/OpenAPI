@@ -5,12 +5,17 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/ui',
     'shadcn-nuxt',
+    '@nuxtjs/tailwindcss',
     '@nuxt/eslint',
   ],
   devtools: { enabled: true },
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/tailwind.css'],
   ui: {
     fonts: false,
+  },
+  shadcn: {
+    prefix: '',
+    componentDir: '@/components/ui'
   },
   runtimeConfig: {
     auth: {

@@ -108,7 +108,8 @@ const xTickFormat = (tick: number | Date) => {
   if (typeof tick !== 'number') {
     return ''
   }
-  const index = Math.round(tick)
+  const maxIndex = Math.max(trendChartData.value.length - 1, 0)
+  const index = Math.min(maxIndex, Math.max(0, Math.floor(tick + Number.EPSILON)))
   return trendChartData.value[index]?.shortDate || ''
 }
 
@@ -198,7 +199,7 @@ const overviewCards = computed(() => {
         </div>
 
         <div class="flex items-center gap-2">
-          <UiButton
+          <Button
             as-child
             variant="outline"
             size="sm"
@@ -211,22 +212,21 @@ const overviewCards = computed(() => {
               />
               返回首页
             </NuxtLink>
-          </UiButton>
+          </Button>
 
-          <UiButton
+          <Button
             variant="outline"
             size="sm"
-            :disabled="pending"
+            class="cursor-pointer"
             @click="refresh"
           >
             <Icon
               name="mdi:refresh"
               size="14"
-              :class="pending ? 'animate-spin' : ''"
               :ssr="true"
             />
-            {{ pending ? '刷新中...' : '刷新数据' }}
-          </UiButton>
+            刷新数据
+          </Button>
         </div>
       </section>
 
@@ -241,13 +241,14 @@ const overviewCards = computed(() => {
           请稍后重试。
         </div>
         <div class="mt-3">
-          <UiButton
+          <Button
             variant="outline"
             size="sm"
+            class="cursor-pointer"
             @click="refresh"
           >
             重试
-          </UiButton>
+          </Button>
         </div>
       </section>
 
@@ -260,34 +261,34 @@ const overviewCards = computed(() => {
 
       <template v-else>
         <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <UiCard
+          <Card
             v-for="item in overviewCards"
             :key="item.key"
             class="gap-2 border-border/90 py-4 shadow-sm"
           >
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardDescription class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
+            <CardHeader class="px-4 pb-0">
+              <CardDescription class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
                 {{ item.label }}
-              </UiCardDescription>
-              <UiCardTitle
+              </CardDescription>
+              <CardTitle
                 class="mt-1 text-2xl tabular-nums"
                 :class="item.valueClass"
               >
                 {{ item.value }}
-              </UiCardTitle>
-            </UiCardHeader>
-          </UiCard>
+              </CardTitle>
+            </CardHeader>
+          </Card>
         </section>
 
         <section class="grid gap-6 xl:grid-cols-5">
-          <UiCard class="xl:col-span-3 py-4">
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardTitle>近7日趋势</UiCardTitle>
-              <UiCardDescription>按天聚合总调用、成功和失败</UiCardDescription>
-            </UiCardHeader>
-            <UiCardContent class="px-4 pt-2">
+          <Card class="xl:col-span-3 py-4">
+            <CardHeader class="px-4 pb-0">
+              <CardTitle>近7日趋势</CardTitle>
+              <CardDescription>按天聚合总调用、成功和失败</CardDescription>
+            </CardHeader>
+            <CardContent class="px-4 pt-2">
               <ClientOnly>
-                <UiChartContainer
+                <ChartContainer
                   :config="chartConfig"
                   class="h-[320px] w-full"
                 >
@@ -318,7 +319,7 @@ const overviewCards = computed(() => {
                       :num-ticks="7"
                     />
                   </VisXYContainer>
-                </UiChartContainer>
+                </ChartContainer>
 
                 <div class="mt-4 flex flex-wrap gap-2">
                   <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
@@ -335,15 +336,15 @@ const overviewCards = computed(() => {
                   <div class="h-[320px] w-full rounded-lg border border-border bg-muted/20" />
                 </template>
               </ClientOnly>
-            </UiCardContent>
-          </UiCard>
+            </CardContent>
+          </Card>
 
-          <UiCard class="xl:col-span-2 py-4">
-            <UiCardHeader class="px-4 pb-0">
-              <UiCardTitle>今日调用排行 TOP 10</UiCardTitle>
-              <UiCardDescription>按今日调用总次数排序</UiCardDescription>
-            </UiCardHeader>
-            <UiCardContent class="px-4 pt-2">
+          <Card class="xl:col-span-2 py-4">
+            <CardHeader class="px-4 pb-0">
+              <CardTitle>今日调用排行 TOP 10</CardTitle>
+              <CardDescription>按今日调用总次数排序</CardDescription>
+            </CardHeader>
+            <CardContent class="px-4 pt-2">
               <div
                 v-if="top10Today.length === 0"
                 class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted"
@@ -351,31 +352,31 @@ const overviewCards = computed(() => {
                 今日暂无调用数据
               </div>
 
-              <UiTable v-else>
-                <UiTableHeader>
-                  <UiTableRow>
-                    <UiTableHead class="w-12">
+              <Table v-else>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead class="w-12">
                       排名
-                    </UiTableHead>
-                    <UiTableHead>接口</UiTableHead>
-                    <UiTableHead class="text-right">
+                    </TableHead>
+                    <TableHead>接口</TableHead>
+                    <TableHead class="text-right">
                       调用
-                    </UiTableHead>
-                    <UiTableHead class="text-right">
+                    </TableHead>
+                    <TableHead class="text-right">
                       成功率
-                    </UiTableHead>
-                  </UiTableRow>
-                </UiTableHeader>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
 
-                <UiTableBody>
-                  <UiTableRow
+                <TableBody>
+                  <TableRow
                     v-for="item in top10Today"
                     :key="item.apiListId"
                   >
-                    <UiTableCell class="w-12 font-medium">
+                    <TableCell class="w-12 font-medium">
                       {{ item.rank }}
-                    </UiTableCell>
-                    <UiTableCell class="max-w-[280px]">
+                    </TableCell>
+                    <TableCell class="max-w-[280px]">
                       <div
                         class="font-medium truncate"
                         :title="item.name"
@@ -388,24 +389,24 @@ const overviewCards = computed(() => {
                       >
                         {{ item.apiPath }}
                       </div>
-                      <UiBadge
+                      <Badge
                         variant="secondary"
                         class="mt-1"
                       >
                         {{ formatMethod(item.httpMethod) }}
-                      </UiBadge>
-                    </UiTableCell>
-                    <UiTableCell class="text-right tabular-nums">
+                      </Badge>
+                    </TableCell>
+                    <TableCell class="text-right tabular-nums">
                       {{ item.totalCalls.toLocaleString() }}
-                    </UiTableCell>
-                    <UiTableCell class="text-right tabular-nums">
+                    </TableCell>
+                    <TableCell class="text-right tabular-nums">
                       {{ formatRate(item.successRate) }}
-                    </UiTableCell>
-                  </UiTableRow>
-                </UiTableBody>
-              </UiTable>
-            </UiCardContent>
-          </UiCard>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </section>
       </template>
     </main>
