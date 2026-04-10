@@ -1,5 +1,57 @@
 <script lang="ts" setup>
 definePageMeta({ middleware: 'auth-admin' })
+
+const modules = [
+  {
+    key: 'users',
+    title: '用户管理',
+    description: '查看、编辑、封禁、删除用户，并管理用户 API Key。',
+    to: '/admin/users',
+    icon: 'mdi:account-cog-outline',
+  },
+  {
+    key: 'apis',
+    title: '接口管理',
+    description: '管理 API 元数据、启停状态和统计开关。',
+    to: '/admin/apis',
+    icon: 'mdi:api',
+  },
+  {
+    key: 'links',
+    title: '友情链接',
+    description: '新增、修改、删除友情链接并调整启用状态。',
+    to: '/admin/friend-links',
+    icon: 'mdi:link-variant-plus',
+  },
+  {
+    key: 'fab',
+    title: 'FAB 菜单',
+    description: '管理首页右下角浮动入口和行为类型。',
+    to: '/admin/fab-menu',
+    icon: 'mdi:gesture-tap-button',
+  },
+  {
+    key: 'calls',
+    title: '调用统计',
+    description: '查看调用日志、成功率与聚合统计结果。',
+    to: '/admin/calls',
+    icon: 'mdi:chart-line',
+  },
+  {
+    key: 'user-console',
+    title: '用户后台',
+    description: '切换到用户视角自助管理 API Key。',
+    to: '/user/apikeys',
+    icon: 'mdi:key-outline',
+  },
+  {
+    key: 'home',
+    title: '返回首页',
+    description: '回到公开 API 首页查看前台展示。',
+    to: '/',
+    icon: 'mdi:home-outline',
+  },
+]
 </script>
 
 <template>
@@ -9,63 +61,61 @@ definePageMeta({ middleware: 'auth-admin' })
         class="auth-card"
         style="width:min(980px, 96vw);"
       >
-        <h1 class="auth-title">
-          管理员控制台
-        </h1>
-        <p class="auth-subtitle">
-          按模块拆分的管理后台：用户、API Key、友情链接、接口管理、调用统计。
-        </p>
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 class="auth-title">
+              管理员控制台
+            </h1>
+            <p class="auth-subtitle">
+              模块化后台入口，按运营任务分区管理。
+            </p>
+          </div>
+          <Badge
+            variant="secondary"
+            class="mt-1"
+          >
+            Admin Workspace
+          </Badge>
+        </div>
 
         <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/admin/users"
+          <Card
+            v-for="item in modules"
+            :key="item.key"
+            class="border-border/70 bg-card/90 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-md"
           >
-            <div class="font-semibold">用户管理</div>
-            <div class="text-sm text-muted-foreground mt-1">查看、编辑、封禁、删除用户，以及管理用户 API Key。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/admin/apis"
-          >
-            <div class="font-semibold">接口管理</div>
-            <div class="text-sm text-muted-foreground mt-1">管理 API 信息、启停接口、启用或停用统计。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/admin/friend-links"
-          >
-            <div class="font-semibold">友情链接</div>
-            <div class="text-sm text-muted-foreground mt-1">新增、修改、删除友情链接。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/admin/fab-menu"
-          >
-            <div class="font-semibold">FAB 菜单</div>
-            <div class="text-sm text-muted-foreground mt-1">管理首页右下角的快速导航菜单。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/admin/calls"
-          >
-            <div class="font-semibold">调用统计</div>
-            <div class="text-sm text-muted-foreground mt-1">查看 API 调用日志与调用统计数据。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/user/apikeys"
-          >
-            <div class="font-semibold">用户后台</div>
-            <div class="text-sm text-muted-foreground mt-1">用户自助管理自己的 API Key。</div>
-          </NuxtLink>
-          <NuxtLink
-            class="p-4 rounded-[14px] border border-border bg-card hover:bg-background transition-colors"
-            to="/"
-          >
-            <div class="font-semibold">返回首页</div>
-            <div class="text-sm text-muted-foreground mt-1">回到公开 API 首页。</div>
-          </NuxtLink>
+            <CardHeader class="pb-2">
+              <div class="flex items-center justify-between gap-2">
+                <CardTitle class="text-base">
+                  {{ item.title }}
+                </CardTitle>
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground">
+                  <Icon
+                    :name="item.icon"
+                    size="16"
+                  />
+                </span>
+              </div>
+              <CardDescription>
+                {{ item.description }}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                as-child
+                variant="outline"
+                class="w-full justify-between"
+              >
+                <NuxtLink :to="item.to">
+                  进入模块
+                  <Icon
+                    name="mdi:arrow-right"
+                    size="16"
+                  />
+                </NuxtLink>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

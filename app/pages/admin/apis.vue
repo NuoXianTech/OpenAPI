@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
 import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
+import { toast } from 'vue-sonner'
 
 definePageMeta({ middleware: 'auth-admin' })
 
@@ -28,6 +29,12 @@ interface ApiTabOption {
 }
 
 const methodOptions = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS']
+const statusOptions = [
+  { label: '正常', value: 1 },
+  { label: '异常', value: 0 },
+  { label: '维护', value: 2 },
+  { label: '废弃', value: 3 },
+]
 
 const catalogApis = ref<ApiItem[]>([])
 const notice = ref('')
@@ -35,6 +42,13 @@ const query = ref('')
 const currentStatus = ref<string | number>('all')
 const currentCategory = ref('all')
 const categoryDraft = ref('')
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return fallback
+}
 
 const form = reactive({
   id: 0,
@@ -137,6 +151,20 @@ function commitCategoryDraft() {
   addCategoryTags(categoryDraft.value)
 }
 
+function setMethodChecked(method: string, checked: boolean | 'indeterminate') {
+  if (checked) {
+    if (!form.httpMethodList.includes(method)) {
+      form.httpMethodList.push(method)
+    }
+    return
+  }
+  form.httpMethodList = form.httpMethodList.filter(item => item !== method)
+}
+
+function isMethodChecked(method: string) {
+  return form.httpMethodList.includes(method)
+}
+
 function formatCallCount(count: number) {
   if (count < 10000) {
     return `${count}次`
@@ -163,8 +191,15 @@ const filteredApis = computed(() => {
 })
 
 const loadCatalog = async () => {
-  const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
-  catalogApis.value = res.data || []
+  try {
+    const res = await $fetch<{ code: number, msg: string, data: ApiItem[] }>('/api/admin/apis/list')
+    catalogApis.value = res.data || []
+  }
+  catch (error: unknown) {
+    const message = getErrorMessage(error, '加载接口列表失败')
+    notice.value = message
+    toast.error(message)
+  }
 }
 
 const pickApi = (item: ApiItem) => {
@@ -186,24 +221,48 @@ const saveApi = async () => {
     category: normalizedCategoryTags.join(','),
     httpMethod: form.httpMethodList.join(','),
   }
-  if (form.id) {
-    await $fetch('/api/admin/apis/update', { method: 'PUT', body: payload })
+  try {
+    if (form.id) {
+      await $fetch('/api/admin/apis/update', { method: 'PUT', body: payload })
+    }
+    else {
+      await $fetch('/api/admin/apis/add', { method: 'POST', body: payload })
+    }
+    notice.value = '接口已保存'
+    toast.success(notice.value)
+    await loadCatalog()
   }
-  else {
-    await $fetch('/api/admin/apis/add', { method: 'POST', body: payload })
+  catch (error: unknown) {
+    const message = getErrorMessage(error, '保存接口失败')
+    notice.value = message
+    toast.error(message)
   }
-  notice.value = '接口已保存'
-  await loadCatalog()
 }
 
 const deleteApi = async (id: number) => {
-  await $fetch('/api/admin/apis/delete', { method: 'POST', body: { id } })
-  await loadCatalog()
+  try {
+    await $fetch('/api/admin/apis/delete', { method: 'POST', body: { id } })
+    toast.success('接口已删除')
+    await loadCatalog()
+  }
+  catch (error: unknown) {
+    const message = getErrorMessage(error, '删除接口失败')
+    notice.value = message
+    toast.error(message)
+  }
 }
 
 const toggle = async (item: ApiItem, field: 'isEnabled' | 'isStatistics') => {
-  await $fetch('/api/admin/apis/toggle', { method: 'PUT', body: { id: item.id, field, value: !item[field] } })
-  await loadCatalog()
+  try {
+    await $fetch('/api/admin/apis/toggle', { method: 'PUT', body: { id: item.id, field, value: !item[field] } })
+    toast.success(field === 'isEnabled' ? '启停状态已更新' : '统计开关已更新')
+    await loadCatalog()
+  }
+  catch (error: unknown) {
+    const message = getErrorMessage(error, '切换状态失败')
+    notice.value = message
+    toast.error(message)
+  }
 }
 
 onMounted(loadCatalog)
@@ -225,254 +284,365 @@ onMounted(loadCatalog)
               维护 API 元数据、调用统计开关、启停状态与限流配置。
             </p>
           </div>
-          <NuxtLink
-            class="auth-button auth-ghost"
-            to="/admin"
-          >返回控制台</NuxtLink>
+          <div class="flex items-center gap-2">
+            <Badge variant="secondary">
+              {{ filteredApis.length }} APIs
+            </Badge>
+            <Button
+              as-child
+              variant="outline"
+            >
+              <NuxtLink to="/admin">
+                返回控制台
+              </NuxtLink>
+            </Button>
+          </div>
         </div>
 
         <div
           v-if="notice"
-          class="text-sm text-muted-foreground mb-3"
+          class="mb-3"
         >
-          {{ notice }}
+          <Badge variant="outline">
+            {{ notice }}
+          </Badge>
         </div>
 
         <div class="grid gap-4">
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <input
-                v-model="query"
-                class="auth-input"
-                placeholder="搜索 code / name / description"
-              >
-            </div>
-            <div>
-              <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                状态筛选
+          <Card class="border-border/70 bg-card/90 shadow-sm">
+            <CardHeader class="pb-3">
+              <CardTitle class="text-base">
+                筛选条件
+              </CardTitle>
+              <CardDescription>
+                支持关键词、状态和分类 tag 筛选
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="grid gap-3">
+              <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <Input
+                  v-model="query"
+                  placeholder="搜索 code / name / description"
+                />
               </div>
-              <ApiFilterTabs
-                v-model="currentStatus"
-                :tabs="statusTabs"
-                aria-label="API 状态筛选"
-              />
-            </div>
-            <div>
-              <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                分类筛选
-              </div>
-              <ApiFilterTabs
-                v-model="currentCategory"
-                :tabs="categoryTabs"
-                :max-visible="10"
-                aria-label="API 分类筛选"
-              />
-            </div>
-          </div>
-
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <input
-                v-model="form.code"
-                class="auth-input"
-                placeholder="code"
-                :disabled="form.id !== 0"
-              >
-              <input
-                v-model="form.name"
-                class="auth-input"
-                placeholder="name"
-              >
-              <input
-                v-model="form.shortDesc"
-                class="auth-input"
-                placeholder="shortDesc"
-              >
-              <select
-                v-model.number="form.status"
-                class="auth-input"
-              >
-                <option :value="1">
-                  正常
-                </option>
-                <option :value="0">
-                  异常
-                </option>
-                <option :value="2">
-                  维护
-                </option>
-                <option :value="3">
-                  废弃
-                </option>
-              </select>
-              <div class="auth-input h-auto min-h-[44px] flex flex-wrap gap-2 items-center">
-                <label
-                  v-for="method in methodOptions"
-                  :key="method"
-                  class="flex items-center gap-1 text-sm"
-                >
-                  <input
-                    v-model="form.httpMethodList"
-                    type="checkbox"
-                    :value="method"
-                  >
-                  {{ method }}
-                </label>
-              </div>
-              <input
-                v-model="form.apiPath"
-                class="auth-input"
-                placeholder="apiPath"
-              >
-              <input
-                v-model="form.docUrl"
-                class="auth-input"
-                placeholder="docUrl"
-              >
-              <input
-                v-model.number="form.rateLimitPerMinute"
-                type="number"
-                class="auth-input"
-                placeholder="rate limit"
-              >
-
-              <div class="md:col-span-2 xl:col-span-3">
-                <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
-                  分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
+              <div>
+                <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  状态筛选
                 </div>
-                <div class="auth-input h-auto min-h-[44px] flex flex-wrap items-center gap-2 py-2">
-                  <span
-                    v-for="tag in formCategoryTags"
-                    :key="`form-tag-${tag}`"
-                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border border-border bg-background"
+                <ApiFilterTabs
+                  v-model="currentStatus"
+                  :tabs="statusTabs"
+                  aria-label="API 状态筛选"
+                />
+              </div>
+              <div>
+                <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  分类筛选
+                </div>
+                <ApiFilterTabs
+                  v-model="currentCategory"
+                  :tabs="categoryTabs"
+                  :max-visible="10"
+                  aria-label="API 分类筛选"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card class="border-border/70 bg-card/90 shadow-sm">
+            <CardHeader class="pb-3">
+              <CardTitle class="text-base">
+                {{ form.id ? `编辑接口 #${form.id}` : '新增接口' }}
+              </CardTitle>
+              <CardDescription>
+                填写接口元数据和调用策略
+              </CardDescription>
+            </CardHeader>
+            <CardContent class="grid gap-3">
+              <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <Input
+                  v-model="form.code"
+                  placeholder="code"
+                  :disabled="form.id !== 0"
+                />
+                <Input
+                  v-model="form.name"
+                  placeholder="name"
+                />
+                <Input
+                  v-model="form.shortDesc"
+                  placeholder="shortDesc"
+                />
+
+                <div class="grid gap-2">
+                  <Label>
+                    状态
+                  </Label>
+                  <Select
+                    :model-value="String(form.status)"
+                    @update:model-value="(value) => form.status = Number(value)"
                   >
-                    <span>{{ tag }}</span>
-                    <button
-                      type="button"
-                      class="text-muted-foreground hover:text-foreground"
-                      @click="removeCategoryTag(tag)"
+                    <SelectTrigger>
+                      <SelectValue placeholder="选择状态" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="option in statusOptions"
+                        :key="option.value"
+                        :value="String(option.value)"
+                      >
+                        {{ option.label }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div class="rounded-md border border-input bg-background p-3 md:col-span-2">
+                  <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    HTTP Method
+                  </div>
+                  <div class="flex flex-wrap gap-3">
+                    <label
+                      v-for="method in methodOptions"
+                      :key="method"
+                      class="flex items-center gap-1 text-sm"
                     >
-                      ×
-                    </button>
-                  </span>
-                  <input
-                    v-model="categoryDraft"
-                    class="min-w-[140px] flex-1 text-sm bg-transparent outline-none"
-                    placeholder="输入标签后回车，支持 test1,test2"
-                    @keydown.enter.prevent="commitCategoryDraft"
-                    @blur="commitCategoryDraft"
-                  >
-                  <button
-                    type="button"
-                    class="auth-button auth-ghost"
-                    @click="commitCategoryDraft"
-                  >
-                    添加
-                  </button>
+                      <Checkbox
+                        :model-value="isMethodChecked(method)"
+                        @update:model-value="(checked) => setMethodChecked(method, checked)"
+                      />
+                      {{ method }}
+                    </label>
+                  </div>
                 </div>
-                <div class="text-xs text-muted-foreground mt-1 flex items-center justify-between gap-2">
-                  <span>{{ categoryTagHint }}</span>
-                  <span>{{ formCategoryTags.length }}/{{ CATEGORY_TAG_MAX_COUNT }}</span>
+
+                <Input
+                  v-model="form.apiPath"
+                  placeholder="apiPath"
+                />
+                <Input
+                  v-model="form.docUrl"
+                  placeholder="docUrl"
+                />
+                <Input
+                  v-model.number="form.rateLimitPerMinute"
+                  type="number"
+                  placeholder="rate limit"
+                />
+
+                <div class="md:col-span-2 xl:col-span-3">
+                  <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                    分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
+                  </div>
+                  <div class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-input bg-background p-2">
+                    <Badge
+                      v-for="tag in formCategoryTags"
+                      :key="`form-tag-${tag}`"
+                      variant="outline"
+                      class="gap-1"
+                    >
+                      <span>{{ tag }}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        class="h-4 w-4 p-0"
+                        @click="removeCategoryTag(tag)"
+                      >
+                        <Icon
+                          name="mdi:close"
+                          size="12"
+                        />
+                      </Button>
+                    </Badge>
+                    <Input
+                      v-model="categoryDraft"
+                      class="min-w-[160px] flex-1 border-0 shadow-none focus-visible:ring-0"
+                      placeholder="输入标签后回车，支持 test1,test2"
+                      @keydown.enter.prevent="commitCategoryDraft"
+                      @blur="commitCategoryDraft"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      @click="commitCategoryDraft"
+                    >
+                      添加
+                    </Button>
+                  </div>
+                  <div class="text-xs text-muted-foreground mt-1 flex items-center justify-between gap-2">
+                    <span>{{ categoryTagHint }}</span>
+                    <span>{{ formCategoryTags.length }}/{{ CATEGORY_TAG_MAX_COUNT }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <textarea
-              v-model="form.description"
-              class="auth-input min-h-[96px]"
-              placeholder="description"
-            />
-            <div class="grid gap-2 md:grid-cols-3">
-              <label class="flex items-center gap-2 text-sm"><input
-                v-model="form.isEnabled"
-                type="checkbox"
-              > 启用</label>
-              <label class="flex items-center gap-2 text-sm"><input
-                v-model="form.isApiKey"
-                type="checkbox"
-              > 需要 API Key</label>
-              <label class="flex items-center gap-2 text-sm"><input
-                v-model="form.isStatistics"
-                type="checkbox"
-              > 开启统计</label>
-            </div>
-            <div class="auth-actions">
-              <button
-                class="auth-button"
-                @click="saveApi"
-              >
-                保存接口
-              </button>
-            </div>
-          </div>
+
+              <Textarea
+                v-model="form.description"
+                class="min-h-[96px]"
+                placeholder="description"
+              />
+
+              <div class="grid gap-2 md:grid-cols-3">
+                <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+                  <div class="text-sm">
+                    启用
+                  </div>
+                  <Switch v-model="form.isEnabled" />
+                </div>
+                <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+                  <div class="text-sm">
+                    需要 API Key
+                  </div>
+                  <Switch v-model="form.isApiKey" />
+                </div>
+                <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+                  <div class="text-sm">
+                    开启统计
+                  </div>
+                  <Switch v-model="form.isStatistics" />
+                </div>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <Button @click="saveApi">
+                  保存接口
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Empty
+            v-if="!filteredApis.length"
+            class="border border-dashed border-border bg-background/60"
+          >
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Icon
+                  name="mdi:api-off"
+                  class="size-5"
+                />
+              </EmptyMedia>
+              <EmptyTitle>暂无接口数据</EmptyTitle>
+              <EmptyDescription>
+                调整筛选条件或新增接口后会显示在这里。
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
 
           <TransitionGroup
+            v-else
             tag="div"
             name="api-card"
             class="grid gap-2 md:grid-cols-2 xl:grid-cols-3 api-card-grid"
             appear
           >
-            <div
+            <Card
               v-for="item in filteredApis"
               :key="item.id"
-              class="api-card-item p-3 rounded-[12px] border border-border bg-card"
+              class="api-card-item border-border/70 bg-card/90 shadow-sm"
             >
-              <div class="font-semibold">
-                {{ item.code }} · {{ item.name }}
-              </div>
-              <div
-                v-if="item.category"
-                class="flex flex-wrap gap-1 mt-1"
-              >
-                <span
-                  v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)"
-                  :key="`${item.id}-cat-${category}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-background text-muted-foreground"
+              <CardHeader class="pb-3">
+                <CardTitle class="text-base">
+                  {{ item.code }} · {{ item.name }}
+                </CardTitle>
+                <CardDescription>
+                  {{ item.apiPath }}
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent class="grid gap-3">
+                <div
+                  v-if="item.category"
+                  class="flex flex-wrap gap-1"
                 >
-                  {{ category }}
-                </span>
-              </div>
-              <div class="flex flex-wrap gap-1 mt-1">
-                <span
-                  v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)"
-                  :key="`${item.id}-${method}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-background text-muted-foreground"
-                >
-                  {{ method }}
-                </span>
-              </div>
-              <div class="text-xs text-muted-foreground mt-1">
-                {{ item.apiPath }}
-              </div>
-              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted-foreground">
-                <span class="px-2 py-0.5 rounded-full border border-border bg-background">{{ formatCallCount(item.totalCalls ?? 0) }}</span>
-              </div>
-              <div class="auth-actions mt-2">
-                <button
-                  class="auth-button auth-ghost"
-                  @click="pickApi(item)"
-                >
-                  编辑
-                </button>
-                <button
-                  class="auth-button auth-ghost"
-                  @click="toggle(item, 'isEnabled')"
-                >
-                  {{ item.isEnabled ? '禁用' : '启用' }}
-                </button>
-                <button
-                  class="auth-button auth-ghost"
-                  @click="toggle(item, 'isStatistics')"
-                >
-                  {{ item.isStatistics ? '停用统计' : '启用统计' }}
-                </button>
-                <button
-                  class="auth-button auth-ghost"
-                  @click="deleteApi(item.id)"
-                >
-                  删除
-                </button>
-              </div>
-            </div>
+                  <Badge
+                    v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)"
+                    :key="`${item.id}-cat-${category}`"
+                    variant="outline"
+                  >
+                    {{ category }}
+                  </Badge>
+                </div>
+
+                <div class="flex flex-wrap gap-1">
+                  <Badge
+                    v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)"
+                    :key="`${item.id}-${method}`"
+                    variant="secondary"
+                  >
+                    {{ method }}
+                  </Badge>
+                </div>
+
+                <div class="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                  <span class="rounded-full border border-border bg-background px-2 py-0.5">
+                    {{ formatCallCount(item.totalCalls ?? 0) }}
+                  </span>
+                  <span class="rounded-full border border-border bg-background px-2 py-0.5">
+                    {{ item.isEnabled ? '启用' : '停用' }}
+                  </span>
+                  <span class="rounded-full border border-border bg-background px-2 py-0.5">
+                    {{ item.isStatistics ? '统计开启' : '统计关闭' }}
+                  </span>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    @click="pickApi(item)"
+                  >
+                    编辑
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    @click="toggle(item, 'isEnabled')"
+                  >
+                    {{ item.isEnabled ? '禁用' : '启用' }}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    @click="toggle(item, 'isStatistics')"
+                  >
+                    {{ item.isStatistics ? '停用统计' : '启用统计' }}
+                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger as-child>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                      >
+                        删除
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>确认删除该接口？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          删除后将无法继续调用该 API 元数据记录。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogAction
+                          class="bg-destructive text-white hover:bg-destructive/90"
+                          @click="deleteApi(item.id)"
+                        >
+                          确认删除
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
           </TransitionGroup>
         </div>
       </div>
