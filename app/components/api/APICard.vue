@@ -108,7 +108,7 @@ function formatCallCount(count: number) {
 
     <template #details>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
+        <div class="text-muted-foreground text-xs">
           接口示例
         </div>
         <a
@@ -118,7 +118,7 @@ function formatCallCount(count: number) {
         >{{ props.apiPath }}</a>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
+        <div class="text-muted-foreground text-xs">
           请求方法
         </div>
         <div class="flex flex-wrap gap-1">
@@ -133,10 +133,10 @@ function formatCallCount(count: number) {
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
+        <div class="text-muted-foreground text-xs">
           调用次数
         </div>
-        <div class="flex flex-wrap gap-2 text-[12px] text-muted">
+        <div class="flex flex-wrap gap-2 text-[12px] text-muted-foreground">
           <Badge
             variant="outline"
             class="rounded-full"
@@ -146,7 +146,7 @@ function formatCallCount(count: number) {
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
+        <div class="text-muted-foreground text-xs">
           接口描述
         </div>
         <div class="text-[13px] break-all">

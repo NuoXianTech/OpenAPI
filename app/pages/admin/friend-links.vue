@@ -63,7 +63,7 @@ onMounted(load)
 
         <div
           v-if="notice"
-          class="text-sm text-muted mb-3"
+          class="text-sm text-muted-foreground mb-3"
         >
           {{ notice }}
         </div>
@@ -110,7 +110,7 @@ onMounted(load)
               <div class="font-semibold">
                 {{ item.title }}
               </div>
-              <div class="text-xs text-muted break-all">
+              <div class="text-xs text-muted-foreground break-all">
                 {{ item.url }}
               </div>
               <div class="auth-actions mt-2">

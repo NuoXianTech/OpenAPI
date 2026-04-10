@@ -233,7 +233,7 @@ onMounted(loadCatalog)
 
         <div
           v-if="notice"
-          class="text-sm text-muted mb-3"
+          class="text-sm text-muted-foreground mb-3"
         >
           {{ notice }}
         </div>
@@ -248,7 +248,7 @@ onMounted(loadCatalog)
               >
             </div>
             <div>
-              <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+              <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
                 状态筛选
               </div>
               <ApiFilterTabs
@@ -258,7 +258,7 @@ onMounted(loadCatalog)
               />
             </div>
             <div>
-              <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+              <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
                 分类筛选
               </div>
               <ApiFilterTabs
@@ -337,7 +337,7 @@ onMounted(loadCatalog)
               >
 
               <div class="md:col-span-2 xl:col-span-3">
-                <div class="text-xs uppercase tracking-[0.18em] text-muted mb-2">
+                <div class="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-2">
                   分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
                 </div>
                 <div class="auth-input h-auto min-h-[44px] flex flex-wrap items-center gap-2 py-2">
@@ -349,7 +349,7 @@ onMounted(loadCatalog)
                     <span>{{ tag }}</span>
                     <button
                       type="button"
-                      class="text-muted hover:text-text"
+                      class="text-muted-foreground hover:text-text"
                       @click="removeCategoryTag(tag)"
                     >
                       ×
@@ -370,7 +370,7 @@ onMounted(loadCatalog)
                     添加
                   </button>
                 </div>
-                <div class="text-xs text-muted mt-1 flex items-center justify-between gap-2">
+                <div class="text-xs text-muted-foreground mt-1 flex items-center justify-between gap-2">
                   <span>{{ categoryTagHint }}</span>
                   <span>{{ formCategoryTags.length }}/{{ CATEGORY_TAG_MAX_COUNT }}</span>
                 </div>
@@ -426,7 +426,7 @@ onMounted(loadCatalog)
                 <span
                   v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)"
                   :key="`${item.id}-cat-${category}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted"
+                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted-foreground"
                 >
                   {{ category }}
                 </span>
@@ -435,15 +435,15 @@ onMounted(loadCatalog)
                 <span
                   v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)"
                   :key="`${item.id}-${method}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted"
+                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted-foreground"
                 >
                   {{ method }}
                 </span>
               </div>
-              <div class="text-xs text-muted mt-1">
+              <div class="text-xs text-muted-foreground mt-1">
                 {{ item.apiPath }}
               </div>
-              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted">
+              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted-foreground">
                 <span class="px-2 py-0.5 rounded-full border border-border bg-bg">{{ formatCallCount(item.totalCalls ?? 0) }}</span>
               </div>
               <div class="auth-actions mt-2">

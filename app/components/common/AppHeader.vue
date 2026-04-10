@@ -29,7 +29,7 @@ const handleLogout = async () => {
           <h1 class="m-0 text-2xl tracking-wide font-normal">
             {{ settings.siteName }}
           </h1>
-          <p class="m-0 mt-1 text-xs text-[#666872]">
+          <p class="m-0 mt-1 text-xs text-muted-foreground">
             {{ settings.siteDescription }}
           </p>
         </div>
@@ -47,7 +47,7 @@ const handleLogout = async () => {
         >调用统计</NuxtLink>
 
         <template v-if="user">
-          <div class="text-sm text-muted">
+          <div class="text-sm text-muted-foreground">
             {{ user.username }}
           </div>
           <NuxtLink

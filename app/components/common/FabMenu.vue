@@ -107,11 +107,11 @@ onBeforeUnmount(() => {
                 <div class="font-semibold text-[13px] truncate">
                   {{ item.title }}
                 </div>
-                <div class="text-xs text-muted truncate">
+                <div class="text-xs text-muted-foreground truncate">
                   {{ item.subtitle || item.actionValue }}
                 </div>
               </div>
-              <div class="text-xs text-muted whitespace-nowrap">
+              <div class="text-xs text-muted-foreground whitespace-nowrap">
                 {{ item.actionLabel }}
               </div>
             </button>
@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
                   <div class="font-semibold">
                     {{ iframeItem.title }}
                   </div>
-                  <div class="text-xs text-muted">
+                  <div class="text-xs text-muted-foreground">
                     {{ iframeItem.subtitle || iframeItem.actionValue }}
                   </div>
                 </div>

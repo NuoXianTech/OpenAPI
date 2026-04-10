@@ -237,7 +237,7 @@ const overviewCards = computed(() => {
         <div class="font-semibold">
           统计加载失败
         </div>
-        <div class="text-muted text-[13px] mt-1">
+        <div class="text-muted-foreground text-[13px] mt-1">
           请稍后重试。
         </div>
         <div class="mt-3">
@@ -347,7 +347,7 @@ const overviewCards = computed(() => {
             <CardContent class="px-4 pt-2">
               <div
                 v-if="top10Today.length === 0"
-                class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted"
+                class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted-foreground"
               >
                 今日暂无调用数据
               </div>
@@ -384,7 +384,7 @@ const overviewCards = computed(() => {
                         {{ item.name }}
                       </div>
                       <div
-                        class="text-xs text-muted truncate mt-1"
+                        class="text-xs text-muted-foreground truncate mt-1"
                         :title="item.apiPath"
                       >
                         {{ item.apiPath }}

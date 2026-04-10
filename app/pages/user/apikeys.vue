@@ -110,14 +110,14 @@ await load()
 
           <div
             v-if="status"
-            class="text-sm text-muted"
+            class="text-sm text-muted-foreground"
           >
             {{ status }}
           </div>
 
           <div
             v-if="loading"
-            class="text-sm text-muted"
+            class="text-sm text-muted-foreground"
           >
             加载中...
           </div>
@@ -133,7 +133,7 @@ await load()
               <div class="text-sm font-semibold">
                 {{ item.name }}
               </div>
-              <div class="text-xs text-muted mt-1 break-all">
+              <div class="text-xs text-muted-foreground mt-1 break-all">
                 {{ item.apiKey }}
               </div>
               <div class="auth-actions mt-2">
@@ -153,7 +153,7 @@ await load()
             </div>
             <div
               v-if="!list.length"
-              class="text-sm text-muted"
+              class="text-sm text-muted-foreground"
             >
               暂无 API Key
             </div>

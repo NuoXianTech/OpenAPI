@@ -1,23 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
-  --color-grey: #f7f7f8;
-  --color-surface: #ffffff;
-  --color-muted: #666872;
-  --color-border: #e6e6ea;
-  --radius-custom: 14px;
+  --color-bg: var(--background);
+  --color-grey: var(--background);
+  --color-surface: var(--card);
+  --color-text: var(--foreground);
+  --radius-custom: calc(var(--radius) * 1.4);
 }
 
 :root {
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --text: #111113;
-  --muted: oklch(0.97 0 0);
-  --border: oklch(0.922 0 0);
-  --primary: oklch(0.205 0 0);
-  --green: #23c55e;
-  --red: #ef4444;
-  --gray: #94a3b8;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -25,13 +18,16 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
@@ -47,11 +43,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --bg: var(--background);
+  --surface: var(--card);
+  --text: var(--foreground);
+  --green: var(--chart-2);
+  --red: var(--destructive);
+  --gray: var(--muted-foreground);
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -239,11 +239,12 @@ body {
 }
 
 .fab-btn {
+  position: relative;
   transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease;
 }
 
 .fab-btn:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 .fab-menu-row {
@@ -420,13 +421,6 @@ body {
 }
 .radar-core.status-unknown::before, .radar-core.status-unknown::after { border-color: rgba(148, 163, 184, 0.38); }
 
-/* FAB 按钮 */
-.fab-btn {
-  position: relative;
-  transition: all 0.2s;
-}
-.fab-btn:active { transform: scale(0.95); }
-
 /* 模态框遮罩 */
 .modal-mask {
     position: fixed;
@@ -454,10 +448,17 @@ body {
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-bg: var(--background);
+  --color-grey: var(--background);
+  --color-surface: var(--card);
+  --color-text: var(--foreground);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

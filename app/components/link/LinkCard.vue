@@ -62,7 +62,7 @@ const displayDescription = computed(() => {
 
     <template #details>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
+        <div class="text-muted-foreground text-xs">
           站点描述
         </div>
         <div class="text-[13px] break-all">

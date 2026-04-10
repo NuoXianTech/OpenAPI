@@ -22,49 +22,49 @@ definePageMeta({ middleware: 'auth-admin' })
             to="/admin/users"
           >
             <div class="font-semibold">用户管理</div>
-            <div class="text-sm text-muted mt-1">查看、编辑、封禁、删除用户，以及管理用户 API Key。</div>
+            <div class="text-sm text-muted-foreground mt-1">查看、编辑、封禁、删除用户，以及管理用户 API Key。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/admin/apis"
           >
             <div class="font-semibold">接口管理</div>
-            <div class="text-sm text-muted mt-1">管理 API 信息、启停接口、启用或停用统计。</div>
+            <div class="text-sm text-muted-foreground mt-1">管理 API 信息、启停接口、启用或停用统计。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/admin/friend-links"
           >
             <div class="font-semibold">友情链接</div>
-            <div class="text-sm text-muted mt-1">新增、修改、删除友情链接。</div>
+            <div class="text-sm text-muted-foreground mt-1">新增、修改、删除友情链接。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/admin/fab-menu"
           >
             <div class="font-semibold">FAB 菜单</div>
-            <div class="text-sm text-muted mt-1">管理首页右下角的快速导航菜单。</div>
+            <div class="text-sm text-muted-foreground mt-1">管理首页右下角的快速导航菜单。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/admin/calls"
           >
             <div class="font-semibold">调用统计</div>
-            <div class="text-sm text-muted mt-1">查看 API 调用日志与调用统计数据。</div>
+            <div class="text-sm text-muted-foreground mt-1">查看 API 调用日志与调用统计数据。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/user/apikeys"
           >
             <div class="font-semibold">用户后台</div>
-            <div class="text-sm text-muted mt-1">用户自助管理自己的 API Key。</div>
+            <div class="text-sm text-muted-foreground mt-1">用户自助管理自己的 API Key。</div>
           </NuxtLink>
           <NuxtLink
             class="p-4 rounded-[14px] border border-border bg-white hover:bg-bg transition-colors"
             to="/"
           >
             <div class="font-semibold">返回首页</div>
-            <div class="text-sm text-muted mt-1">回到公开 API 首页。</div>
+            <div class="text-sm text-muted-foreground mt-1">回到公开 API 首页。</div>
           </NuxtLink>
         </div>
       </div>

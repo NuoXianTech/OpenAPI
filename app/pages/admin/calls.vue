@@ -82,13 +82,13 @@ onMounted(load)
                 <div class="font-semibold">
                   API List ID: {{ item.apiListId }}
                 </div>
-                <div class="text-xs text-muted">
+                <div class="text-xs text-muted-foreground">
                   {{ item.apiPath }}
                 </div>
-                <div class="text-xs text-muted mt-1">
+                <div class="text-xs text-muted-foreground mt-1">
                   {{ item.statDate }}
                 </div>
-                <div class="text-xs text-muted mt-1">
+                <div class="text-xs text-muted-foreground mt-1">
                   总计 {{ item.totalCount }}
                 </div>
               </div>
@@ -108,10 +108,10 @@ onMounted(load)
                 <div class="font-semibold">
                   API List ID: {{ item.apiListId }} · {{ item.method }}
                 </div>
-                <div class="text-xs text-muted break-all">
+                <div class="text-xs text-muted-foreground break-all">
                   {{ item.path }}
                 </div>
-                <div class="text-xs text-muted mt-1">
+                <div class="text-xs text-muted-foreground mt-1">
                   状态 {{ item.statusCode }} / 耗时 {{ item.latencyMs }}ms
                 </div>
               </div>

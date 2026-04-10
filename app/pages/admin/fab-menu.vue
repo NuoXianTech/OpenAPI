@@ -125,7 +125,7 @@ onMounted(load)
 
         <div
           v-if="notice"
-          class="text-sm text-muted mb-3"
+          class="text-sm text-muted-foreground mb-3"
         >
           {{ notice }}
         </div>
@@ -223,7 +223,7 @@ onMounted(load)
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-bg text-muted shrink-0">
+                  <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-bg text-muted-foreground shrink-0">
                     <Icon
                       :name="item.icon"
                       size="16"
@@ -233,21 +233,21 @@ onMounted(load)
                     <div class="font-semibold truncate">
                       {{ item.title }}
                     </div>
-                    <div class="text-xs text-muted truncate">
+                    <div class="text-xs text-muted-foreground truncate">
                       {{ item.subtitle || item.actionValue }}
                     </div>
                   </div>
                 </div>
-                <span class="text-[11px] px-2 py-0.5 rounded-full border border-border bg-bg text-muted">
+                <span class="text-[11px] px-2 py-0.5 rounded-full border border-border bg-bg text-muted-foreground">
                   {{ item.actionType }}
                 </span>
               </div>
 
-              <div class="text-xs text-muted mt-2 break-all">
+              <div class="text-xs text-muted-foreground mt-2 break-all">
                 {{ item.actionValue }}
               </div>
 
-              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted">
+              <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted-foreground">
                 <span class="px-2 py-0.5 rounded-full border border-border bg-bg">
                   {{ item.actionLabel }}
                 </span>

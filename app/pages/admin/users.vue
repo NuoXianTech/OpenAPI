@@ -140,7 +140,7 @@ onMounted(async () => {
 
         <div
           v-if="notice"
-          class="text-sm text-muted mb-3"
+          class="text-sm text-muted-foreground mb-3"
         >
           {{ notice }}
         </div>
@@ -168,10 +168,10 @@ onMounted(async () => {
                 <div class="font-semibold">
                   {{ user.username }}
                 </div>
-                <div class="text-xs text-muted">
+                <div class="text-xs text-muted-foreground">
                   {{ user.email }}
                 </div>
-                <div class="text-xs text-muted">
+                <div class="text-xs text-muted-foreground">
                   激活: {{ user.isActive ? '是' : '否' }} / 封禁: {{ user.isBanned ? '是' : '否' }}
                 </div>
               </button>
@@ -263,7 +263,7 @@ onMounted(async () => {
                   <div class="font-semibold">
                     {{ item.name }}
                   </div>
-                  <div class="text-xs text-muted break-all">
+                  <div class="text-xs text-muted-foreground break-all">
                     {{ item.apiKey }}
                   </div>
                   <div class="auth-actions mt-2">
