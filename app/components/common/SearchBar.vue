@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { defineEmits, defineProps } from 'vue'
-
 const props = defineProps({
   modelValue: { type: String, default: '' },
   placeholder: { type: String, default: '搜索 API 名称或描述...' },

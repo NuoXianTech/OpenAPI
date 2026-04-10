@@ -35,6 +35,16 @@ export default defineNuxtConfig({
       dialect: 'postgresql',
     },
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        'class-variance-authority',
+        '@vueuse/core',
+        'clsx',
+        'tailwind-merge',
+      ],
+    },
+  },
   eslint: {
     config: {
       stylistic: true,
