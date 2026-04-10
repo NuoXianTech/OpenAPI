@@ -128,7 +128,7 @@ await load()
             <div
               v-for="item in list"
               :key="item.id"
-              class="p-3 rounded-[12px] border border-border bg-white"
+              class="p-3 rounded-[12px] border border-border bg-card"
             >
               <div class="text-sm font-semibold">
                 {{ item.name }}

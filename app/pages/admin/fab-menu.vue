@@ -131,7 +131,7 @@ onMounted(load)
         </div>
 
         <div class="grid gap-4">
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
                 v-model="form.title"
@@ -219,11 +219,11 @@ onMounted(load)
             <div
               v-for="item in items"
               :key="item.id"
-              class="api-card-item p-3 rounded-[12px] border border-border bg-white"
+              class="api-card-item p-3 rounded-[12px] border border-border bg-card"
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-bg text-muted-foreground shrink-0">
+                  <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-background text-muted-foreground shrink-0">
                     <Icon
                       :name="item.icon"
                       size="16"
@@ -238,7 +238,7 @@ onMounted(load)
                     </div>
                   </div>
                 </div>
-                <span class="text-[11px] px-2 py-0.5 rounded-full border border-border bg-bg text-muted-foreground">
+                <span class="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background text-muted-foreground">
                   {{ item.actionType }}
                 </span>
               </div>
@@ -248,16 +248,16 @@ onMounted(load)
               </div>
 
               <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted-foreground">
-                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">
+                <span class="px-2 py-0.5 rounded-full border border-border bg-background">
                   {{ item.actionLabel }}
                 </span>
-                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">
+                <span class="px-2 py-0.5 rounded-full border border-border bg-background">
                   {{ item.target }}
                 </span>
-                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">
+                <span class="px-2 py-0.5 rounded-full border border-border bg-background">
                   sort: {{ item.sort }}
                 </span>
-                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">
+                <span class="px-2 py-0.5 rounded-full border border-border bg-background">
                   {{ item.isActive ? '启用' : '停用' }}
                 </span>
               </div>

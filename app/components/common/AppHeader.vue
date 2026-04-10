@@ -18,7 +18,7 @@ const handleLogout = async () => {
   <ClientOnly>
     <header class="max-w-275 mx-auto px-5 py-6 flex items-end justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 shrink-0 overflow-hidden rounded-full border border-border bg-bg">
+        <div class="w-12 h-12 shrink-0 overflow-hidden rounded-full border border-border bg-background">
           <img
             :src="settings.siteImg"
             alt="Avatar"

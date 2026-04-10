@@ -162,7 +162,7 @@ onMounted(async () => {
               <button
                 v-for="user in users"
                 :key="user.id"
-                class="text-left p-3 rounded-[12px] border border-border bg-white hover:bg-bg"
+                class="text-left p-3 rounded-[12px] border border-border bg-card hover:bg-background"
                 @click="pickUser(user)"
               >
                 <div class="font-semibold">
@@ -179,7 +179,7 @@ onMounted(async () => {
           </div>
 
           <div class="grid gap-4">
-            <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+            <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
               <div class="font-semibold">
                 编辑用户
               </div>
@@ -237,7 +237,7 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+            <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
               <div class="font-semibold">
                 用户 API Key
               </div>

@@ -186,11 +186,11 @@ const overviewCards = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-bg">
+  <div class="min-h-screen bg-background">
     <main class="mx-auto max-w-275 px-5 pb-8">
       <section class="flex items-end justify-between gap-4 py-6">
         <div>
-          <h1 class="text-2xl font-semibold tracking-wide text-text">
+          <h1 class="text-2xl font-semibold tracking-wide text-foreground">
             公开调用统计
           </h1>
           <p class="mt-1 text-sm text-muted-foreground">
@@ -232,7 +232,7 @@ const overviewCards = computed(() => {
 
       <section
         v-if="error"
-        class="state-panel bg-surface border border-border rounded-custom p-5 text-center mb-6"
+        class="state-panel bg-card border border-border rounded-xl p-5 text-center mb-6"
       >
         <div class="font-semibold">
           统计加载失败
@@ -254,7 +254,7 @@ const overviewCards = computed(() => {
 
       <section
         v-else-if="isInitialLoading"
-        class="state-panel bg-surface border border-border rounded-custom p-5 text-center mb-6"
+        class="state-panel bg-card border border-border rounded-xl p-5 text-center mb-6"
       >
         加载统计中...
       </section>

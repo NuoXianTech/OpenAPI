@@ -63,7 +63,7 @@ onMounted(load)
         </div>
 
         <div class="grid gap-3 md:grid-cols-3 mb-4">
-          <div class="p-4 rounded-[14px] border border-border bg-white md:col-span-3">
+          <div class="p-4 rounded-[14px] border border-border bg-card md:col-span-3">
             总调用：{{ summary.total }}
           </div>
         </div>
@@ -77,7 +77,7 @@ onMounted(load)
               <div
                 v-for="item in stats"
                 :key="item.id"
-                class="p-3 rounded-[12px] border border-border bg-white text-sm"
+                class="p-3 rounded-[12px] border border-border bg-card text-sm"
               >
                 <div class="font-semibold">
                   API List ID: {{ item.apiListId }}
@@ -103,7 +103,7 @@ onMounted(load)
               <div
                 v-for="item in calls"
                 :key="item.id"
-                class="p-3 rounded-[12px] border border-border bg-white text-sm"
+                class="p-3 rounded-[12px] border border-border bg-card text-sm"
               >
                 <div class="font-semibold">
                   API List ID: {{ item.apiListId }} · {{ item.method }}

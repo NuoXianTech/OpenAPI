@@ -69,7 +69,7 @@ onMounted(load)
         </div>
 
         <div class="grid gap-4">
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
             <div class="grid gap-3 md:grid-cols-2">
               <input
                 v-model="form.title"
@@ -105,7 +105,7 @@ onMounted(load)
             <div
               v-for="item in items"
               :key="item.id"
-              class="p-3 rounded-[12px] border border-border bg-white"
+              class="p-3 rounded-[12px] border border-border bg-card"
             >
               <div class="font-semibold">
                 {{ item.title }}

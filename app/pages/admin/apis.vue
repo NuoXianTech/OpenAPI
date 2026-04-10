@@ -239,7 +239,7 @@ onMounted(loadCatalog)
         </div>
 
         <div class="grid gap-4">
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
                 v-model="query"
@@ -270,7 +270,7 @@ onMounted(loadCatalog)
             </div>
           </div>
 
-          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-white">
+          <div class="grid gap-3 border border-border rounded-[14px] p-4 bg-card">
             <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               <input
                 v-model="form.code"
@@ -344,12 +344,12 @@ onMounted(loadCatalog)
                   <span
                     v-for="tag in formCategoryTags"
                     :key="`form-tag-${tag}`"
-                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border border-border bg-bg"
+                    class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border border-border bg-background"
                   >
                     <span>{{ tag }}</span>
                     <button
                       type="button"
-                      class="text-muted-foreground hover:text-text"
+                      class="text-muted-foreground hover:text-foreground"
                       @click="removeCategoryTag(tag)"
                     >
                       ×
@@ -414,7 +414,7 @@ onMounted(loadCatalog)
             <div
               v-for="item in filteredApis"
               :key="item.id"
-              class="api-card-item p-3 rounded-[12px] border border-border bg-white"
+              class="api-card-item p-3 rounded-[12px] border border-border bg-card"
             >
               <div class="font-semibold">
                 {{ item.code }} · {{ item.name }}
@@ -426,7 +426,7 @@ onMounted(loadCatalog)
                 <span
                   v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)"
                   :key="`${item.id}-cat-${category}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted-foreground"
+                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-background text-muted-foreground"
                 >
                   {{ category }}
                 </span>
@@ -435,7 +435,7 @@ onMounted(loadCatalog)
                 <span
                   v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)"
                   :key="`${item.id}-${method}`"
-                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-bg text-muted-foreground"
+                  class="px-2 py-0.5 rounded-full text-[11px] border border-border bg-background text-muted-foreground"
                 >
                   {{ method }}
                 </span>
@@ -444,7 +444,7 @@ onMounted(loadCatalog)
                 {{ item.apiPath }}
               </div>
               <div class="flex flex-wrap gap-2 mt-2 text-[11px] text-muted-foreground">
-                <span class="px-2 py-0.5 rounded-full border border-border bg-bg">{{ formatCallCount(item.totalCalls ?? 0) }}</span>
+                <span class="px-2 py-0.5 rounded-full border border-border bg-background">{{ formatCallCount(item.totalCalls ?? 0) }}</span>
               </div>
               <div class="auth-actions mt-2">
                 <button
