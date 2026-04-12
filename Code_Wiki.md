@@ -2,10 +2,10 @@
 
 ## 1. 项目整体概述
 
-**OpenAPI** 是一个基于 Nuxt.js (Vue 3) 构建的全栈式 API 公共接口服务平台。它提供了完整的 API 管理、调用监控、版本控制和 API Key 认证系统。项目前端采用了现代化的 shadcn-vue 组件体系与 Tailwind CSS v4 原子化样式框架，后端依托 Nuxt 的 Nitro 引擎与 Drizzle ORM 实现了轻量而强大的服务端功能。
+**OpenAPI** 是一个基于 Nuxt 4 (Vue 3) 构建的全栈式 API 公共接口服务平台。它提供了完整的 API 管理、调用监控、版本控制和 API Key 认证系统。项目前端采用了现代化的 shadcn-vue 组件体系与 Tailwind CSS v4 原子化样式框架，后端依托 Nuxt 的 Nitro 引擎与 Drizzle ORM 实现了轻量而强大的服务端功能。
 
 ### 核心亮点
-- **全栈式开发**: 基于 Nuxt 3，前后端同构，开发体验流畅。
+- **全栈式开发**: 基于 Nuxt 4，前后端同构，并采用了最新的 Nuxt 4 目录结构规范，开发体验更流畅。
 - **现代化 UI**: 结合 shadcn-vue 和 Tailwind CSS v4，高度可定制的界面。
 - **完善的权限体系**: 基于 Session 和自定义中间件实现用户鉴权，包含管理员和普通用户角色。
 - **强大的数据层**: Drizzle ORM 配合 PostgreSQL，提供强类型的数据操作与自动化的数据库迁移。
@@ -15,7 +15,7 @@
 
 ## 2. 目录结构与模块职责
 
-项目的目录遵循标准的 Nuxt 3 目录规范，并根据全栈架构进行了清晰的分层。
+项目遵循了 **Nuxt 4 的全新目录结构规范**，将前端页面相关的代码收拢到 `app/` 目录中，而后端 Nitro 服务代码保留在 `server/`，使得全栈架构的前后端分层更加清晰。
 
 ```text
 /workspace
@@ -91,7 +91,7 @@
 ## 5. 依赖关系与技术栈细节
 
 ### 前端依赖
-- **Vue 3 & Nuxt 3**: 核心框架，提供 SSR/CSR 及文件路由能力。
+- **Vue 3 & Nuxt 4**: 核心框架 (`nuxt: ^4.4.2`)，采用了 Nuxt 4 的全新 `app/` 目录结构隔离与 `compatibilityDate: '2025-07-15'` 规范，提供更稳定的 SSR/CSR 及文件路由能力。
 - **shadcn-vue & reka-ui**: 无头组件与可定制 UI 组件体系。
 - **Tailwind CSS v4**: 样式引擎，原子化 CSS 框架。
 - **@vee-validate/zod & zod**: 负责前端表单的数据校验，确保与后端的类型验证一致。
