@@ -10,7 +10,13 @@ const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.data?.message) {
+    return error.data.message
+  }
+  if (error?.response?._data?.message) {
+    return error.response._data.message
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }
@@ -171,16 +177,6 @@ const submit = async () => {
           <p class="auth-note">
             忘记密码？请联系管理员处理。
           </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>OpenAPI 控制台</h3>
-        <p>实时掌握接口调用状态、性能与配额使用情况。</p>
-        <div class="auth-chip">
-          API Monitor · Rate Guard · Audit Log
         </div>
       </div>
     </div>

@@ -9,7 +9,13 @@ const status = ref<'pending' | 'success' | 'error'>('pending')
 const message = ref('正在验证，请稍候...')
 const verifying = ref(false)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.data?.message) {
+    return error.data.message
+  }
+  if (error?.response?._data?.message) {
+    return error.response._data.message
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }
@@ -153,16 +159,6 @@ onMounted(async () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>Verify Access</h3>
-        <p>邮箱验证后才会创建有效用户会话。</p>
-        <div class="auth-chip">
-          Email Verification · Session Auth
         </div>
       </div>
     </div>

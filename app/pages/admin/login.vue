@@ -11,7 +11,13 @@ const submitting = ref(false)
 const errorMessage = ref('')
 const checkingAuth = ref(true)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.data?.message) {
+    return error.data.message
+  }
+  if (error?.response?._data?.message) {
+    return error.response._data.message
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }
@@ -164,16 +170,6 @@ const submit = async () => {
               </form>
             </CardContent>
           </Card>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>Admin Console</h3>
-        <p>系统策略、风险控制、全局配置统一管理。</p>
-        <div class="auth-chip">
-          ENV Credential · Session Auth
         </div>
       </div>
     </div>

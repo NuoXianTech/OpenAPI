@@ -12,7 +12,13 @@ const errorMessage = ref('')
 const successMessage = ref('')
 const submitting = ref(false)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
+const getErrorMessage = (error: any, fallback: string) => {
+  if (error?.data?.message) {
+    return error.data.message
+  }
+  if (error?.response?._data?.message) {
+    return error.response._data.message
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }
@@ -193,16 +199,6 @@ const submit = async () => {
           <p class="auth-note">
             注册即表示你同意平台服务条款与安全规范。
           </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>安全策略可配置</h3>
-        <p>验证后即可进入用户后台管理自己的 API Key。</p>
-        <div class="auth-chip">
-          Email Verify · User Console
         </div>
       </div>
     </div>

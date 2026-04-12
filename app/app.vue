@@ -1,3 +1,10 @@
+<script lang="ts" setup>
+import { Toaster } from '~/components/ui/sonner'
+</script>
+
 <template>
-  <NuxtPage />
+  <div>
+    <NuxtPage />
+    <Toaster />
+  </div>
 </template>
