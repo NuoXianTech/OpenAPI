@@ -1,0 +1,128 @@
+import { defineComponent as y, inject as F, computed as s, ref as m, onMounted as S, nextTick as g, onUnmounted as b, watch as r, createElementBlock as N, openBlock as k } from "vue";
+import { Graph as c } from "@unovis/ts";
+import { useForwardProps as h, arePropsEqual as f } from "../../utils/props.js";
+import { componentAccessorKey as B } from "../../utils/context.js";
+const P = { "data-vis-component": "" }, C = c.selectors, G = /* @__PURE__ */ y({
+  __name: "index",
+  props: {
+    zoomScaleExtent: {},
+    disableZoom: { type: Boolean },
+    zoomEventFilter: { type: Function },
+    disableDrag: { type: Boolean },
+    disableBrush: { type: Boolean },
+    zoomThrottledUpdateNodeThreshold: {},
+    fitViewPadding: {},
+    fitViewAlign: {},
+    layoutType: {},
+    layoutAutofit: { type: Boolean },
+    layoutAutofitTolerance: {},
+    layoutNonConnectedAside: { type: Boolean },
+    layoutNodeGroup: { type: [Function, String, null] },
+    layoutGroupOrder: {},
+    layoutParallelNodesPerColumn: {},
+    layoutParallelNodeSubGroup: { type: [Function, String, null] },
+    layoutParallelSubGroupsPerRow: {},
+    layoutParallelNodeSpacing: {},
+    layoutParallelSubGroupSpacing: {},
+    layoutParallelGroupSpacing: {},
+    layoutParallelSortConnectionsByGroup: {},
+    forceLayoutSettings: {},
+    dagreLayoutSettings: {},
+    layoutElkSettings: { type: [Function, null] },
+    layoutElkNodeGroups: {},
+    layoutElkGetNodeShape: { type: Function },
+    linkWidth: { type: [Function, Number, null] },
+    linkStyle: { type: [Function, null] },
+    linkBandWidth: { type: [Function, Number, null] },
+    linkArrow: { type: [Function, String, Boolean, null] },
+    linkStroke: { type: [Function, String, Array, null] },
+    linkDisabled: { type: [Function, Boolean, null] },
+    linkFlow: { type: [Function, Boolean, null] },
+    linkFlowAnimDuration: { type: [Function, Number, null] },
+    linkFlowParticleSize: { type: [Function, Number, null] },
+    linkFlowParticleSpeed: { type: [Function, Number, null] },
+    linkLabel: { type: [Function, Array, null] },
+    linkLabelShiftFromCenter: { type: [Function, Boolean, null] },
+    linkNeighborSpacing: {},
+    linkCurvature: { type: [Function, Number, null] },
+    linkHighlightOnHover: { type: Boolean },
+    linkSourcePointOffset: { type: [Function, Array, null] },
+    linkTargetPointOffset: { type: [Function, Array, null] },
+    selectedLinkId: {},
+    nodeSize: { type: [Function, Number, null] },
+    nodeStrokeWidth: { type: [Function, Number, null] },
+    nodeShape: { type: [Function, String, null] },
+    nodeGaugeValue: { type: [Function, Number, null] },
+    nodeGaugeFill: { type: [Function, String, Array, null] },
+    nodeGaugeAnimDuration: {},
+    nodeIcon: { type: [Function, String, null] },
+    nodeIconSize: { type: [Function, Number, null] },
+    nodeLabel: { type: [Function, String, null] },
+    nodeLabelTrim: { type: [Function, Boolean, null] },
+    nodeLabelTrimMode: { type: [Function, String, null] },
+    nodeLabelTrimLength: { type: [Function, Number, null] },
+    nodeSubLabel: { type: [Function, String, null] },
+    nodeSubLabelTrim: { type: [Function, Boolean, null] },
+    nodeSubLabelTrimMode: { type: [Function, String, null] },
+    nodeSubLabelTrimLength: { type: [Function, Number, null] },
+    nodeSideLabels: { type: [Function, Array, null] },
+    nodeBottomIcon: { type: [Function, String, null] },
+    nodeDisabled: { type: [Function, Boolean, null] },
+    nodeFill: { type: [Function, String, Array, null] },
+    nodeStroke: { type: [Function, String, Array, null] },
+    nodeSort: { type: Function },
+    nodeEnterPosition: { type: [Function, Array, null] },
+    nodeEnterScale: { type: [Function, Number, null] },
+    nodeExitPosition: { type: [Function, Array, null] },
+    nodeExitScale: { type: [Function, Number, null] },
+    nodeEnterCustomRenderFunction: { type: Function },
+    nodeUpdateCustomRenderFunction: { type: Function },
+    nodePartialUpdateCustomRenderFunction: { type: Function },
+    nodeExitCustomRenderFunction: { type: Function },
+    nodeOnZoomCustomRenderFunction: { type: Function },
+    nodeSelectionHighlightMode: {},
+    selectedNodeId: {},
+    selectedNodeIds: {},
+    panels: {},
+    onNodeDragStart: { type: Function },
+    onNodeDrag: { type: Function },
+    onNodeDragEnd: { type: Function },
+    onZoom: { type: Function },
+    onZoomStart: { type: Function },
+    onZoomEnd: { type: Function },
+    onLayoutCalculated: { type: Function },
+    onNodeSelectionBrush: { type: Function },
+    onNodeSelectionDrag: { type: Function },
+    onRenderComplete: { type: Function },
+    shouldDataUpdate: { type: Function },
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(p, { expose: d }) {
+    const t = F(B), u = p, o = s(() => t.data.value ?? u.data), l = h(u), e = m();
+    return S(() => {
+      g(() => {
+        var n;
+        e.value = new c(l.value), (n = e.value) == null || n.setData(o.value), t.update(e.value);
+      });
+    }), b(() => {
+      var n;
+      (n = e.value) == null || n.destroy(), t.destroy();
+    }), r(l, (n, i) => {
+      var a;
+      f(n, i) || (a = e.value) == null || a.setConfig(l.value);
+    }), r(o, () => {
+      var n;
+      (n = e.value) == null || n.setData(o.value);
+    }), d({
+      component: e
+    }), (n, i) => (k(), N("div", P));
+  }
+});
+export {
+  C as VisGraphSelectors,
+  G as default
+};
+//# sourceMappingURL=index.js.map

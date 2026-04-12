@@ -1,0 +1,66 @@
+import type { Storage } from 'unstorage'
+
+/**
+ * The KV storage instance.
+ *
+ * @example
+ * ```ts
+ * import { kv } from '@nuxthub/kv'
+ *
+ * await kv.set('key', 'value')
+ * const value = await kv.get('key')
+ * ```
+ *
+ * @see https://hub.nuxt.com/docs/kv/usage
+ */
+export const kv: KVStorage
+
+export interface KVStorage extends Storage {
+  /**
+   * Get all keys from the storage.
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#list-all-keys
+   */
+  keys: Storage['getKeys']
+  /**
+   * Get an item from the storage.
+   *
+   * @param key The key to get
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#get-an-item
+   */
+  get: Storage['getItem']
+  /**
+   * Set an item in the storage.
+   *
+   * @param key The key to set
+   * @param value The value to set
+   * @param options The options to set (optional)
+   * @param options.ttl The time to live in seconds (optional)
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#set-an-item
+   */
+  set: Storage['setItem']
+  /**
+   * Check if an item exists in the storage.
+   *
+   * @param key The key to check
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#has-an-item
+   */
+  has: Storage['hasItem']
+  /**
+   * Delete an item from the storage.
+   *
+   * @param key The key to delete
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#delete-an-item
+   */
+  del: Storage['removeItem']
+  /**
+   * Clear the storage.
+   *
+   * @see https://hub.nuxt.com/docs/kv/usage#clear-the-kv-namespace
+   */
+  clear: Storage['clear']
+}

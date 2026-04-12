@@ -1,0 +1,21 @@
+export declare const root: string;
+export declare const variables: {
+    treemapTileStrokeColor: "--vis-treemap-tile-stroke-color";
+    treemapTileStrokeWidth: "--vis-treemap-tile-stroke-width";
+    treemapTileHoverStrokeColor: "--vis-treemap-tile-hover-stroke-color";
+    treemapTileHoverStrokeOpacity: "--vis-treemap-tile-hover-stroke-opacity";
+    treemapLabelOpacity: "--vis-treemap-label-opacity";
+    treemapLabelFontWeight: "--vis-treemap-label-font-weight";
+    treemapLabelTextColor: "--vis-treemap-label-text-color";
+    treemapLabelTextColorLight: "--vis-treemap-label-text-color-light";
+    treemapLabelFontSize: "--vis-treemap-label-font-size";
+};
+export declare const tiles: string;
+export declare const tileGroup: string;
+export declare const tile: string;
+export declare const tileExiting: string;
+export declare const clickableTile: string;
+export declare const tileForeground: string;
+export declare const label: string;
+export declare const internalLabel: string;
+export declare const labelGroup: string;

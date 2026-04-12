@@ -1,0 +1,132 @@
+import { css, injectGlobal } from '@emotion/css';
+
+const root = css `
+  label: timeline-component;
+`;
+const globalStyles = injectGlobal `
+  :root {
+    --vis-timeline-row-even-fill-color: #FFFFFF;
+    --vis-timeline-row-odd-fill-color: #F7FAFC;
+    --vis-timeline-row-background-opacity: 1;
+    --vis-timeline-scrollbar-background-color: #E6E9F3;
+    --vis-timeline-scrollbar-color: #9EA7B8;
+
+    --vis-timeline-label-font-size: 12px;
+    --vis-timeline-label-color: #6C778C;
+
+    --vis-timeline-arrow-color: #6C778C;
+    --vis-timeline-arrow-stroke-width: 1.5;
+
+    --vis-timeline-cursor: default;
+    --vis-timeline-line-color: var(--vis-color-main);
+    --vis-timeline-line-stroke-width: 0;
+    --vis-timeline-line-hover-stroke-width: 0;
+    --vis-timeline-line-hover-stroke-color: #6C778C;
+
+    // The line stroke color variable is not defined by default
+    // to allow it to fallback to the corresponding row background color
+    /* --vis-timeline-line-stroke-color: none; */
+
+    --vis-dark-timeline-row-even-fill-color: #292B34;
+    --vis-dark-timeline-row-odd-fill-color: #333742;
+    --vis-dark-timeline-scrollbar-background-color: #292B34;
+    --vis-dark-timeline-scrollbar-color: #6C778C;
+    --vis-dark-timeline-label-color: #EFF5F8;
+    --vis-dark-timeline-arrow-color: #EFF5F8;
+    --vis-dark-timeline-line-hover-stroke-color: #EFF5F8;
+  }
+
+  body.theme-dark ${`.${root}`} {
+    --vis-timeline-row-even-fill-color: var(--vis-dark-timeline-row-even-fill-color);
+    --vis-timeline-row-odd-fill-color: var(--vis-dark-timeline-row-odd-fill-color);
+    --vis-timeline-scrollbar-background-color: var(--vis-dark-timeline-scrollbar-background-color);
+    --vis-timeline-scrollbar-color: var(--vis-dark-timeline-scrollbar-color);
+    --vis-timeline-label-color: var(--vis-dark-timeline-label-color);
+    --vis-timeline-arrow-color: var(--vis-dark-timeline-arrow-color);
+    --vis-timeline-line-hover-stroke-color: var(--vis-dark-timeline-line-hover-stroke-color);
+  }
+`;
+const background = css `
+  label: background;
+`;
+const lines = css `
+  label: lines;
+`;
+const lineGroup = css `
+  label: line-group;
+`;
+const line = css `
+  label: line;
+  fill: var(--vis-timeline-line-color);
+  cursor: var(--vis-timeline-cursor);
+
+  stroke: var(--vis-timeline-line-stroke-color, var(--vis-timeline-row-even-fill-color));
+  stroke-width: var(--vis-timeline-line-stroke-width);
+
+  &.odd {
+    stroke: var(--vis-timeline-line-stroke-color, var(--vis-timeline-row-odd-fill-color));
+  }
+
+  :hover {
+    stroke-width: var(--vis-timeline-line-hover-stroke-width);
+    stroke: var(--vis-timeline-line-hover-stroke-color);
+  }
+`;
+const lineStartIcon = css `
+  label: line-start-icon;
+`;
+const lineEndIcon = css `
+  label: line-end-icon;
+`;
+const arrows = css `
+  label: arrows;
+`;
+const arrow = css `
+  label: arrow;
+  fill: none;
+  stroke: var(--vis-timeline-arrow-color);
+  stroke-width: var(--vis-timeline-arrow-stroke-width);
+`;
+const rows = css `
+  label: rows;
+`;
+const row = css `
+  label: row;
+  fill: var(--vis-timeline-row-even-fill-color);
+  opacity: var(--vis-timeline-row-background-opacity);
+`;
+const rowOdd = css `
+  label: row-odd;
+  fill: var(--vis-timeline-row-odd-fill-color);
+`;
+const scrollbar = css `
+  label: scroll-bar;
+`;
+const scrollbarHandle = css `
+  label: scroll-bar-handle;
+  fill: var(--vis-timeline-scrollbar-color);
+`;
+const scrollbarBackground = css `
+  label: scroll-bar-background;
+  fill: var(--vis-timeline-scrollbar-background-color);
+`;
+const labels = css `
+  label: labels;
+`;
+const label = css `
+  label: label;
+  dominant-baseline: middle;
+  font-size: var(--vis-timeline-label-font-size);
+  fill: var(--vis-timeline-label-color);
+  text-anchor: end;
+  user-select: none;
+`;
+const rowIcons = css `
+  label: row-icons;
+`;
+const rowIcon = css `
+  label: row-icon;
+`;
+
+export { arrow, arrows, background, globalStyles, label, labels, line, lineEndIcon, lineGroup, lineStartIcon, lines, root, row, rowIcon, rowIcons, rowOdd, rows, scrollbar, scrollbarBackground, scrollbarHandle };
+//# sourceMappingURL=style.js.map

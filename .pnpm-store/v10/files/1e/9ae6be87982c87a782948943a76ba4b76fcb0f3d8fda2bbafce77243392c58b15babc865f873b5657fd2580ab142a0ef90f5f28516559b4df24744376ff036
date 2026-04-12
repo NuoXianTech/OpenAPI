@@ -1,0 +1,10 @@
+{
+  "name": "@nuxthub/core",
+  "configKey": "hub",
+  "version": "0.10.7",
+  "docs": "https://hub.nuxt.com",
+  "builder": {
+    "@nuxt/module-builder": "1.0.2",
+    "unbuild": "3.6.1"
+  }
+}

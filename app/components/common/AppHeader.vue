@@ -58,7 +58,7 @@ const handleLogout = async () => {
           <NuxtLink
             v-if="user.kind === 'user'"
             class="btn"
-            to="/user/apikeys"
+            to="/user"
           >用户后台</NuxtLink>
           <button
             class="btn"

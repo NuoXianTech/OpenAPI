@@ -1,0 +1,7 @@
+import { ComponentDefaultConfig } from '../../core/component/config.js';
+import { FitMode, TrimMode } from '../../types/text.js';
+
+const TreemapDefaultConfig = Object.assign(Object.assign({}, ComponentDefaultConfig), { id: (d, i) => { var _a; return (_a = d.id) !== null && _a !== void 0 ? _a : i; }, value: undefined, tileColor: undefined, layers: [], tilePadding: 2, tilePaddingTop: undefined, tileShowHtmlTooltip: true, labelInternalNodes: false, labelOffsetX: 4, labelOffsetY: 4, labelFit: FitMode.Wrap, labelTrimMode: TrimMode.Middle, tileBorderRadius: 2, tileBorderRadiusFactor: 1 / 8, enableLightnessVariance: false, enableTileLabelFontSizeVariation: true, tileLabelSmallFontSize: 8, tileLabelMediumFontSize: 12, tileLabelLargeFontSize: 22, showTileClickAffordance: false, lightnessVariationAmount: 0.08, minTileSizeForLabel: 20, numberFormat: (value) => `${value}`, tileLabel: function (d) { return `${d.data.key}: ${this.numberFormat(d.value)}`; } });
+
+export { TreemapDefaultConfig };
+//# sourceMappingURL=config.js.map

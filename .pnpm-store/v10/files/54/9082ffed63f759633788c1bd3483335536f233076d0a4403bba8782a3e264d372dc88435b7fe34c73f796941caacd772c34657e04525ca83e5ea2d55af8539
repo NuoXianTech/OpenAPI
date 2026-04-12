@@ -1,0 +1,79 @@
+{
+  "name": "@unovis/vue",
+  "description": "Modular data visualization framework for React, Angular, Svelte, Vue, and vanilla TypeScript or JavaScript",
+  "version": "1.6.4",
+  "packageManager": "pnpm@10.23.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/f5/unovis.git",
+    "directory": "packages/vue"
+  },
+  "homepage": "https://unovis.dev",
+  "bugs": {
+    "url": "https://github.com/f5/unovis/issues"
+  },
+  "keywords": [
+    "vue",
+    "data visualization",
+    "maps",
+    "charts",
+    "graphs"
+  ],
+  "author": "Zernonia Kong <zernonia@gmail.com>",
+  "maintainers": [
+    "Nikita Rokotyan <nikita@f5.com> (https://rokotyan.com)",
+    "Qian Liu <qi.liu@f5.com>",
+    "Surya Hanumandla <s.hanumandla@f5.com>"
+  ],
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./index.cjs",
+      "import": "./index.js"
+    },
+    "./*": {
+      "types": "./*/index.d.ts",
+      "require": "./*/index.cjs",
+      "import": "./*/index.js"
+    }
+  },
+  "license": "Apache-2.0",
+  "main": "./index.cjs",
+  "module": "./index.js",
+  "types": "./index.d.ts",
+  "typings": "./index.d.ts",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "build": "vite build; rm -rf dist/.cache; cp LICENSE README.md package.json ./dist",
+    "check": "vue-tsc --noEmit",
+    "generate": "rollup -c ./autogen/rollup.config.js; node .autogen.cjs; rm .autogen.cjs",
+    "publish:dist": "cd ./dist; npm publish",
+    "build:gallery": "vite build --mode gallery",
+    "gallery": "vite"
+  },
+  "peerDependencies": {
+    "@unovis/ts": "1.6.4",
+    "vue": "^3"
+  },
+  "devDependencies": {
+    "@unovis/shared": "workspace:*",
+    "@antfu/eslint-config": "^3.9.1",
+    "@rollup/plugin-node-resolve": "^13.0.4",
+    "@vitejs/plugin-vue": "^5.2.3",
+    "@vue/tsconfig": "^0.4.0",
+    "buffer-from": "^1.1.2",
+    "de-indent": "^1.0.2",
+    "jju": "^1.4.0",
+    "rollup": "^2.61.1",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-typescript2": "^0.31.1",
+    "tslib": "^2.3.1",
+    "typescript": "~5.6.3",
+    "vite": "^6.2.4",
+    "vite-plugin-css-injected-by-js": "^3.3.0",
+    "vite-plugin-dts": "^3.5.3",
+    "vue": "^3.5.13",
+    "vue-tsc": "^1.8.10"
+  }
+}

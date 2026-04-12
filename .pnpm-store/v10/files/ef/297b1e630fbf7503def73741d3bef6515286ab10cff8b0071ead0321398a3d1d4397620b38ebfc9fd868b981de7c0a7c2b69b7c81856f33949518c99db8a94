@@ -1,0 +1,44 @@
+import { defineComponent as u, computed as m, ref as s, onMounted as p, nextTick as f, onUnmounted as v, watch as w, createElementBlock as _, openBlock as g } from "vue";
+import { FlowLegend as c } from "@unovis/ts";
+import { useForwardProps as C, arePropsEqual as k } from "../../utils/props.js";
+const b = c.selectors, h = /* @__PURE__ */ u({
+  __name: "index",
+  props: {
+    customWidth: {},
+    items: {},
+    lineColor: {},
+    labelColor: {},
+    labelFontSize: {},
+    arrowSymbol: {},
+    arrowColor: {},
+    onLegendItemClick: { type: Function },
+    data: {}
+  },
+  setup(d, { expose: i }) {
+    const r = d;
+    m(() => r.data);
+    const t = C(r), o = s(), n = s();
+    return p(() => {
+      f(() => {
+        n.value && (o.value = new c(n.value, { ...t.value, renderIntoProvidedDomNode: !0 }));
+      });
+    }), v(() => {
+      var e;
+      (e = o.value) == null || e.destroy();
+    }), w(t, (e, l) => {
+      var a;
+      k(e, l) || (a = o.value) == null || a.setConfig(t.value);
+    }), i({
+      component: o
+    }), (e, l) => (g(), _("div", {
+      "data-vis-flow-legend": "",
+      ref_key: "elRef",
+      ref: n
+    }, null, 512));
+  }
+});
+export {
+  b as VisFlowLegendSelectors,
+  h as default
+};
+//# sourceMappingURL=index.js.map

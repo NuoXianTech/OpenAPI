@@ -1,0 +1,912 @@
+import { __awaiter } from 'tslib';
+import { min, max, extent } from 'd3-array';
+import { select, pointer } from 'd3-selection';
+import { brush as brush$1 } from 'd3-brush';
+import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
+import { drag } from 'd3-drag';
+import { interval } from 'd3-timer';
+import { ComponentCore } from '../../core/component/index.js';
+import { GraphDataModel } from '../../data-models/graph.js';
+import { isNumber, isFunction, clamp, getBoolean, getNumber, shallowDiff, isPlainObject, isEqual } from '../../utils/data.js';
+import { smartTransition } from '../../utils/d3.js';
+import { GraphLayoutType, GraphFitViewAlignment, GraphNodeSelectionHighlightMode, GraphLinkArrowStyle } from './types.js';
+import { GraphDefaultConfig } from './config.js';
+import { background, graphGroup, brush, root } from './style.js';
+import * as style from './modules/node/style.js';
+import { nodes, gNode, gNodeExit, brushed, brushable, node, nodeGauge, sideLabelGroup, label, greyedOutNode } from './modules/node/style.js';
+import { links, gLink, gLinkExit, linkSupport, link, linkLabelGroup, greyedOutLink } from './modules/link/style.js';
+import { panels, gPanel, panel, panelSelection, label as label$1, labelText, sideIconGroup, sideIconShape, sideIconSymbol } from './modules/panel/style.js';
+import { createNodes, updateNodes, removeNodes, updateNodesPartial, zoomNodesThrottled, zoomNodes, updateNodePositions } from './modules/node/index.js';
+import { getMaxNodeSize, getX, getY, getNodeSize } from './modules/node/helper.js';
+import { createLinks, updateLinks, removeLinks, updateLinksPartial, animateLinkFlow, zoomLinksThrottled, zoomLinks, updateLinkLines } from './modules/link/index.js';
+import { getArrowPath, getDoubleArrowPath } from './modules/link/helper.js';
+import { removePanels, createPanels, updatePanels } from './modules/panel/index.js';
+import { updatePanelNumNodes, updatePanelBBoxSize, initPanels, setPanelForNodes } from './modules/panel/helper.js';
+import { applyLayoutCircular, applyELKLayout, applyLayoutConcentric, applyLayoutForce, applyLayoutDagre, applyLayoutParallel } from './modules/layout.js';
+
+class Graph extends ComponentCore {
+    constructor(config) {
+        super();
+        this._defaultConfig = GraphDefaultConfig;
+        this.config = this._defaultConfig;
+        this.datamodel = new GraphDataModel();
+        this._isFirstRender = true;
+        this._shouldRecalculateLayout = false;
+        this._shouldSetPanels = false;
+        this._isAutoFitDisabled = false;
+        this._isDragging = false;
+        // A map for storing link total path lengths to optimize rendering performance
+        this._linkPathLengthMap = new Map();
+        this._linkFlowFrameElapsed = 0;
+        this.events = {
+            [Graph.selectors.background]: {
+                click: this._onBackgroundClick.bind(this),
+            },
+            [Graph.selectors.node]: {
+                click: this._onNodeClick.bind(this),
+                mouseover: this._onNodeMouseOver.bind(this),
+                mouseout: this._onNodeMouseOut.bind(this),
+            },
+            [Graph.selectors.link]: {
+                click: this._onLinkClick.bind(this),
+                mouseover: this._onLinkMouseOver.bind(this),
+                mouseout: this._onLinkMouseOut.bind(this),
+            },
+        };
+        if (config)
+            this.setConfig(config);
+        this._backgroundRect = this.g.append('rect').attr('class', background);
+        this._graphGroup = this.g.append('g').attr('class', graphGroup);
+        this._brush = this.g.append('g').attr('class', brush);
+        this._zoomBehavior = zoom()
+            .scaleExtent(this.config.zoomScaleExtent)
+            .on('zoom', (e) => this._onZoom(e.transform, e))
+            .on('start', (e) => this._onZoomStart(e.transform, e))
+            .on('end', (e) => this._onZoomEnd(e.transform, e));
+        this._brushBehavior = brush$1()
+            .on('start brush end', this._onBrush.bind(this))
+            .filter(event => event.shiftKey)
+            .keyModifiers(false);
+        this._panelsGroup = this._graphGroup.append('g').attr('class', panels);
+        this._linksGroup = this._graphGroup.append('g').attr('class', links);
+        this._nodesGroup = this._graphGroup.append('g').attr('class', nodes);
+        this._defs = this._graphGroup.append('defs');
+        this._getLinkArrowDefId = this._getLinkArrowDefId.bind(this);
+    }
+    get selectedNode() {
+        var _a;
+        return (_a = this._selectedNodes) === null || _a === void 0 ? void 0 : _a[0];
+    }
+    get selectedNodes() {
+        return this._selectedNodes;
+    }
+    get selectedLink() {
+        return this._selectedLink;
+    }
+    setData(data) {
+        const { config } = this;
+        if (!config.shouldDataUpdate(this.datamodel.data, data, this.datamodel))
+            return;
+        this.datamodel.nodeSort = config.nodeSort;
+        this.datamodel.data = data;
+        this._shouldRecalculateLayout = true;
+        if (config.layoutAutofit)
+            this._shouldFitLayout = true;
+        this._shouldSetPanels = true;
+        this._addSVGDefs();
+    }
+    setConfig(config) {
+        super.setConfig(config);
+        const hasLayoutConfigurationChanged = this._shouldLayoutRecalculate();
+        // If the data has changed (see above in `setData`) or the layout configuration has changed, we need to recalculate the layout
+        this._shouldRecalculateLayout = this._shouldRecalculateLayout || hasLayoutConfigurationChanged;
+        // If the `config.layoutAutofit` is true and data has changed (see above in `setData`),
+        // or the layout configuration has changed, we need to fit the layout
+        this._shouldFitLayout = this._shouldFitLayout || hasLayoutConfigurationChanged;
+        if (this._shouldFitLayout)
+            this._isAutoFitDisabled = false;
+        this._shouldSetPanels = true;
+    }
+    get bleed() {
+        const padding = this.config.fitViewPadding; // Extra padding to take into account labels and selection outlines
+        return isNumber(padding)
+            ? { top: padding, bottom: padding, left: padding, right: padding }
+            : padding;
+    }
+    _render(customDuration) {
+        const { config: { disableBrush, disableZoom, duration, layoutAutofit, zoomEventFilter }, datamodel } = this;
+        if (!datamodel.nodes && !datamodel.links)
+            return;
+        const animDuration = isNumber(customDuration) ? customDuration : duration;
+        this._backgroundRect
+            .attr('width', this._width)
+            .attr('height', this._height)
+            .attr('opacity', 0);
+        if ((this._prevWidth !== this._width || this._prevHeight !== this._height) && layoutAutofit) {
+            // Fit layout on resize
+            this._shouldFitLayout = true;
+            this._prevWidth = this._width;
+            this._prevHeight = this._height;
+        }
+        // Handle brush behavior
+        if (!disableBrush) {
+            this._brushBehavior.extent([[0, 0], [this._width, this._height]]);
+            this._brush.call(this._brushBehavior);
+            // Activate the brush when the shift key is pressed
+            select(window)
+                .on('keydown.unovis-graph', e => e.key === 'Shift' && this._activateBrush())
+                .on('keyup.unovis-graph', e => e.key === 'Shift' && this._clearBrush());
+            this._zoomBehavior.filter(event => !event.shiftKey);
+        }
+        else {
+            this._brush.on('.brush', null);
+            select(window)
+                .on('keydown.unovis-graph', null)
+                .on('keyup.unovis-graph', null);
+            // Clear brush in case it was disabled in an active state
+            if (this._brush.classed('active'))
+                this._clearBrush();
+        }
+        // Apply layout and render
+        if (this._shouldRecalculateLayout || !this._layoutCalculationPromise) {
+            this._layoutCalculationPromise = this._calculateLayout();
+            // Call `onLayoutCalculated` after the layout calculation is done and the `this._layoutCalculationPromise`
+            // variable is set because the `fitView` function relies on the promise to be initialized
+            this._layoutCalculationPromise.then(() => {
+                var _a, _b;
+                (_b = (_a = this.config).onLayoutCalculated) === null || _b === void 0 ? void 0 : _b.call(_a, datamodel.nodes, datamodel.links);
+            });
+        }
+        // Redefining Zoom Behavior filter to the one specified in the config,
+        // or to the default one supporting `shiftKey` for node brushing
+        // See more: https://d3js.org/d3-zoom#zoom_filter
+        this._zoomBehavior.filter(isFunction(zoomEventFilter)
+            ? zoomEventFilter
+            : (e) => (!e.ctrlKey || e.type === 'wheel') && !e.button && !e.shiftKey); // Default filter
+        this._layoutCalculationPromise.then(() => {
+            var _a, _b, _c;
+            // If the component has been destroyed while the layout calculation
+            // was in progress, we cancel the render
+            if (this.isDestroyed())
+                return;
+            this._initPanelsData();
+            // Fit the view
+            if (this._isFirstRender) {
+                this._fit();
+                this._shouldFitLayout = false;
+            }
+            else if (this._shouldFitLayout && !this._isAutoFitDisabled) {
+                this._fit(duration);
+                this._shouldFitLayout = false;
+            }
+            // Update Nodes and Links Selection State
+            this._resetSelectionGreyoutState();
+            if (this.config.selectedNodeId || this.config.selectedNodeIds) {
+                const selectedIds = (_a = this.config.selectedNodeIds) !== null && _a !== void 0 ? _a : [this.config.selectedNodeId];
+                const selectedNodes = selectedIds.map(id => datamodel.getNodeById(id));
+                this._setNodeSelectionState(selectedNodes);
+            }
+            if (this.config.selectedLinkId) {
+                const selectedLink = datamodel.links.find(link => link.id === this.config.selectedLinkId);
+                this._setLinkSelectionState(selectedLink);
+            }
+            // Draw
+            this._drawNodes(animDuration);
+            this._drawLinks(animDuration);
+            // Link flow animation timer
+            if (!this._timer) {
+                const refreshRateMs = 35;
+                this._timer = interval(this._onLinkFlowTimerFrame.bind(this), refreshRateMs);
+            }
+            // Zoom
+            if (disableZoom)
+                this.g.on('.zoom', null);
+            else
+                this.g.call(this._zoomBehavior).on('dblclick.zoom', null);
+            // We need to set up events and attributes again because the rendering might have been delayed by the layout
+            // calculation and they were not set up properly (see the render function of `ComponentCore`)
+            this._setUpComponentEventsThrottled();
+            this._setCustomAttributesThrottled();
+            // On render complete callback
+            (_c = (_b = this.config).onRenderComplete) === null || _c === void 0 ? void 0 : _c.call(_b, this.g, datamodel.nodes, datamodel.links, this.config, animDuration, this._scale, this._containerWidth, this._containerHeight);
+            this._isFirstRender = false;
+        });
+    }
+    _drawNodes(duration) {
+        const { config, datamodel } = this;
+        const nodes = datamodel.nodes;
+        const nodeGroups = this._nodesGroup
+            .selectAll(`.${gNode}:not(.${gNodeExit})`)
+            .data(nodes, d => String(d._id));
+        const nodeGroupsEnter = nodeGroups.enter().append('g')
+            .attr('class', gNode)
+            .call(createNodes, config, duration, this._scale);
+        const nodeGroupsMerged = nodeGroups.merge(nodeGroupsEnter);
+        const nodeUpdateSelection = updateNodes(nodeGroupsMerged, config, duration, this._scale);
+        this._drawPanels(nodeUpdateSelection, duration);
+        const nodesGroupExit = nodeGroups.exit();
+        nodesGroupExit
+            .classed(gNodeExit, true)
+            .call(removeNodes, config, duration, this._scale);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const thisRef = this;
+        if (!config.disableDrag) {
+            const dragBehaviour = drag()
+                .on('start drag end', function (event, d) {
+                thisRef._handleDrag(d, event, select(this));
+            });
+            nodeGroupsMerged.call(dragBehaviour);
+        }
+        else {
+            nodeGroupsMerged.on('.drag', null);
+        }
+    }
+    _drawLinks(duration) {
+        const { config, datamodel: { links } } = this;
+        const linkGroups = this._linksGroup
+            .selectAll(`.${gLink}:not(.${gLinkExit}`)
+            .data(links, (d) => String(d._id));
+        const linkGroupsEnter = linkGroups.enter().append('g')
+            .attr('class', gLink)
+            .call(createLinks, config, duration);
+        const linkGroupsMerged = linkGroups.merge(linkGroupsEnter);
+        linkGroupsMerged.call(updateLinks, config, duration, this._scale, this._getLinkArrowDefId, this._linkPathLengthMap);
+        const linkGroupsExit = linkGroups.exit();
+        linkGroupsExit
+            .attr('class', gLinkExit)
+            .call(removeLinks, config, duration);
+    }
+    _drawPanels(nodeUpdateSelection, duration) {
+        var _a;
+        const { config } = this;
+        smartTransition(this._panelsGroup, duration / 2)
+            .style('opacity', ((_a = config.panels) === null || _a === void 0 ? void 0 : _a.length) ? 1 : 0);
+        if (!this._panels)
+            return;
+        const selection = (nodeUpdateSelection.duration)
+            ? nodeUpdateSelection.selection()
+            : nodeUpdateSelection;
+        updatePanelNumNodes(selection, this._panels, config);
+        updatePanelBBoxSize(selection, this._panels, config);
+        const panelData = this._panels.filter(p => p._numNodes);
+        const panelGroup = this._panelsGroup
+            .selectAll(`.${gPanel}`)
+            .data(panelData, p => p.label);
+        const panelGroupExit = panelGroup.exit();
+        panelGroupExit.call(removePanels, config, duration);
+        const panelGroupEnter = panelGroup.enter().append('g')
+            .attr('class', gPanel)
+            .call(createPanels, selection);
+        const panelGroupMerged = panelGroup.merge(panelGroupEnter);
+        this._updatePanels(panelGroupMerged, duration);
+    }
+    _updatePanels(panelToUpdate, duration) {
+        const { config } = this;
+        if (!this._panels)
+            return;
+        panelToUpdate.call(updatePanels, config, duration);
+    }
+    _calculateLayout() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { config, datamodel } = this;
+            // If the layout type has changed, we need to reset the node positions if they were fixed before
+            if (this._currentLayoutType !== config.layoutType) {
+                for (const node of datamodel.nodes) {
+                    delete node._state.fx;
+                    delete node._state.fy;
+                }
+            }
+            switch (config.layoutType) {
+                case GraphLayoutType.Precalculated:
+                    break;
+                case GraphLayoutType.Parallel:
+                    applyLayoutParallel(datamodel, config, this._width, this._height);
+                    break;
+                case GraphLayoutType.ParallelHorizontal:
+                    applyLayoutParallel(datamodel, config, this._width, this._height, 'horizontal');
+                    break;
+                case GraphLayoutType.Dagre:
+                    yield applyLayoutDagre(datamodel, config, this._width);
+                    break;
+                case GraphLayoutType.Force:
+                    yield applyLayoutForce(datamodel, config, this._width);
+                    break;
+                case GraphLayoutType.Concentric:
+                    applyLayoutConcentric(datamodel, config, this._width, this._height);
+                    break;
+                case GraphLayoutType.Elk:
+                    yield applyELKLayout(datamodel, config, this._width);
+                    break;
+                case GraphLayoutType.Circular:
+                default:
+                    applyLayoutCircular(datamodel, config, this._width, this._height);
+                    break;
+            }
+            // We need to update the panels data right after the layout calculation
+            // because we want to have the latest coordinates before calling `onLayoutCalculated`
+            this._initPanelsData();
+            this._shouldRecalculateLayout = false;
+            this._currentLayoutType = config.layoutType;
+        });
+    }
+    _initPanelsData() {
+        const { config, datamodel } = this;
+        if (this._shouldSetPanels) {
+            this._panels = initPanels(config.panels);
+            setPanelForNodes(this._panels, datamodel.nodes, this.config);
+            this._shouldSetPanels = false;
+        }
+    }
+    _fit(duration = 0, nodeIds, alignment = this.config.fitViewAlign) {
+        const { datamodel, config: { nodeSize } } = this;
+        const nodes = (nodeIds === null || nodeIds === void 0 ? void 0 : nodeIds.length) ? datamodel.nodes.filter(n => nodeIds.includes(n.id)) : datamodel.nodes;
+        const maxNodeSize = getMaxNodeSize(nodes, nodeSize);
+        const xExtent = [
+            min(nodes, d => getX(d) - maxNodeSize / 2 - (max((d._panels || []).map(p => p._padding.left)) || 0)),
+            max(nodes, d => getX(d) + maxNodeSize / 2 + (max((d._panels || []).map(p => p._padding.right)) || 0)),
+        ];
+        const yExtent = [
+            min(nodes, d => getY(d) - maxNodeSize / 2 - (max((d._panels || []).map(p => p._padding.top)) || 0)),
+            max(nodes, d => getY(d) + maxNodeSize / 2 + (max((d._panels || []).map(p => p._padding.bottom)) || 0)),
+        ];
+        if (xExtent.some(item => item === undefined) || yExtent.some(item => item === undefined)) {
+            console.warn('Unovis | Graph: Some of the node coordinates are undefined. This can happen if you try to fit the graph before the layout has been calculated.');
+            return;
+        }
+        const transform = this._getTransform(xExtent, yExtent, alignment);
+        smartTransition(this.g, duration)
+            .call(this._zoomBehavior.transform, transform);
+        this._onZoom(transform);
+    }
+    _getTransform(xExtent, yExtent, alignment) {
+        const { zoomScaleExtent } = this.config;
+        const { left, top, right, bottom } = this.bleed;
+        const w = this._width;
+        const h = this._height;
+        const xScale = w / (xExtent[1] - xExtent[0] + (left || 0) + (right || 0));
+        const yScale = h / (yExtent[1] - yExtent[0] + (top || 0) + (bottom || 0));
+        const clampedScale = clamp(min([xScale, yScale]), zoomScaleExtent[0], zoomScaleExtent[1]);
+        // Calculate translation based on alignment
+        let translateX;
+        let translateY;
+        switch (alignment) {
+            case GraphFitViewAlignment.Left:
+                translateX = left - xExtent[0] * clampedScale;
+                translateY = this._height / 2 - (yExtent[0] + (yExtent[1] - yExtent[0]) / 2) * clampedScale;
+                break;
+            case GraphFitViewAlignment.Right:
+                translateX = this._width - (xExtent[1] - xExtent[0]) * clampedScale - right;
+                translateY = this._height / 2 - (yExtent[0] + (yExtent[1] - yExtent[0]) / 2) * clampedScale;
+                break;
+            case GraphFitViewAlignment.Top:
+                translateX = this._width / 2 - (xExtent[0] + (xExtent[1] - xExtent[0]) / 2) * clampedScale;
+                translateY = top - yExtent[0] * clampedScale;
+                break;
+            case GraphFitViewAlignment.Bottom:
+                translateX = this._width / 2 - (xExtent[0] + (xExtent[1] - xExtent[0]) / 2) * clampedScale;
+                translateY = this._height - (yExtent[1] - yExtent[0]) * clampedScale - bottom;
+                break;
+            case GraphFitViewAlignment.Center:
+            default:
+                translateX = this._width / 2 - (xExtent[0] + (xExtent[1] - xExtent[0]) / 2) * clampedScale;
+                translateY = this._height / 2 - (yExtent[0] + (yExtent[1] - yExtent[0]) / 2) * clampedScale;
+        }
+        const transform = zoomIdentity
+            .translate(translateX, translateY)
+            .scale(clampedScale);
+        return transform;
+    }
+    _setNodeSelectionState(nodesToSelect) {
+        const { config, datamodel } = this;
+        // Grey out all nodes and set us unselected
+        for (const n of datamodel.nodes) {
+            n._state.selected = false;
+            if (config.nodeSelectionHighlightMode !== GraphNodeSelectionHighlightMode.None) {
+                n._state.greyout = true;
+            }
+        }
+        // Grey out all links and set us unselected
+        for (const l of datamodel.links) {
+            l._state.selected = false;
+            if (config.nodeSelectionHighlightMode !== GraphNodeSelectionHighlightMode.None) {
+                l._state.greyout = true;
+            }
+        }
+        // Filter out non-existing nodes
+        this._selectedNodes = nodesToSelect.filter(n => {
+            const doesNodeExist = Boolean(n);
+            if (!doesNodeExist)
+                console.warn('Unovis | Graph: Select Node: Not found');
+            return doesNodeExist;
+        });
+        //  Set provided nodes as selected and ungreyout
+        for (const n of this._selectedNodes) {
+            n._state.selected = true;
+            n._state.greyout = false;
+        }
+        // Highlight connected links and nodes
+        if (config.nodeSelectionHighlightMode === GraphNodeSelectionHighlightMode.GreyoutNonConnected) {
+            const connectedLinks = datamodel.links.filter(l => this._selectedNodes.includes(l.source) || this._selectedNodes.includes(l.target));
+            connectedLinks.forEach(l => {
+                l.source._state.greyout = false;
+                l.target._state.greyout = false;
+                l._state.greyout = false;
+            });
+        }
+    }
+    _setLinkSelectionState(link) {
+        const { datamodel: { nodes, links } } = this;
+        if (!link)
+            console.warn('Unovis: Graph: Select Link: Not found');
+        this._selectedLink = link;
+        const selectedLinkSource = link === null || link === void 0 ? void 0 : link.source;
+        const selectedLinkTarget = link === null || link === void 0 ? void 0 : link.target;
+        // Apply grey out
+        nodes.forEach(n => {
+            n._state.selected = false;
+            n._state.greyout = true;
+            if ((selectedLinkTarget === null || selectedLinkTarget === void 0 ? void 0 : selectedLinkTarget._id) === n._id || (selectedLinkSource === null || selectedLinkSource === void 0 ? void 0 : selectedLinkSource._id) === n._id) {
+                link._state.greyout = false;
+            }
+        });
+        links.forEach(l => {
+            l._state.greyout = true;
+            const source = l.source;
+            const target = l.target;
+            if ((source._id === (selectedLinkSource === null || selectedLinkSource === void 0 ? void 0 : selectedLinkSource._id)) && (target._id === (selectedLinkTarget === null || selectedLinkTarget === void 0 ? void 0 : selectedLinkTarget._id))) {
+                source._state.greyout = false;
+                target._state.greyout = false;
+                l._state.greyout = false;
+            }
+        });
+        links.forEach(l => {
+            delete l._state.selected;
+        });
+        if (link)
+            link._state.selected = true;
+    }
+    _resetSelectionGreyoutState() {
+        const { datamodel: { nodes, links } } = this;
+        this._selectedNodes = [];
+        this._selectedLink = undefined;
+        // Disable Greyout
+        nodes.forEach(n => {
+            delete n._state.selected;
+            delete n._state.greyout;
+        });
+        links.forEach(l => {
+            delete l._state.greyout;
+            delete l._state.selected;
+        });
+    }
+    _updateNodesLinksPartial() {
+        const { config } = this;
+        const linkElements = this._linksGroup.selectAll(`.${gLink}`);
+        linkElements.call(updateLinksPartial, config, this._scale);
+        const nodeElements = this._nodesGroup.selectAll(`.${gNode}`);
+        nodeElements.call(updateNodesPartial, config, config.duration, this._scale);
+    }
+    _onBackgroundClick() {
+        this._resetSelectionGreyoutState();
+        this._updateNodesLinksPartial();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _onNodeClick(d) {
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _onNodeMouseOut(d) {
+        this._updateNodesLinksPartial();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _onNodeMouseOver(d) {
+        this._updateNodesLinksPartial();
+    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _onLinkClick(d) {
+    }
+    _onLinkMouseOver(d) {
+        if (this._isDragging)
+            return;
+        if (this.config.linkHighlightOnHover)
+            d._state.hovered = true;
+        this._updateNodesLinksPartial();
+    }
+    _onLinkMouseOut(d) {
+        if (this._isDragging)
+            return;
+        delete d._state.hovered;
+        this._updateNodesLinksPartial();
+    }
+    _onLinkFlowTimerFrame(elapsed = 0) {
+        const { config, datamodel: { links } } = this;
+        const hasLinksWithFlow = links.some((d, i) => getBoolean(d, config.linkFlow, i));
+        if (!hasLinksWithFlow)
+            return;
+        const deltaTime = elapsed - this._linkFlowFrameElapsed;
+        const linkGroups = this._linksGroup.selectAll(`.${gLink}`);
+        linkGroups.each((l, i, els) => {
+            var _a;
+            const linkFlowParticleSpeed = getNumber(l, config.linkFlowParticleSpeed, l._indexGlobal);
+            // Get path length
+            const pathElement = els[i].querySelector(`.${linkSupport}`);
+            const pathLength = pathElement ? ((_a = this._linkPathLengthMap.get(pathElement.getAttribute('d'))) !== null && _a !== void 0 ? _a : pathElement.getTotalLength()) : 0;
+            if (pathLength <= 0)
+                return; // Skip if no valid path
+            // Calculate speed: either provided or derived from duration
+            const speed = linkFlowParticleSpeed || (pathLength / getNumber(l, config.linkFlowAnimDuration, l._indexGlobal) * 1000);
+            // Initialize and update distance
+            l._state.flowAnimDistancePx = (l._state.flowAnimDistancePx || 0) + (deltaTime / 1000) * speed;
+            // Convert to relative position
+            l._state.flowAnimDistanceRelative = (l._state.flowAnimDistancePx % pathLength) / pathLength;
+        });
+        this._linkFlowFrameElapsed = elapsed;
+        animateLinkFlow(linkGroups, this.config, this._scale, this._linkPathLengthMap);
+    }
+    _onZoom(t, event) {
+        const { config, datamodel: { nodes } } = this;
+        const transform = t || event.transform;
+        this._scale = transform.k;
+        this._graphGroup.attr('transform', transform.toString());
+        if (isFunction(config.onZoom))
+            config.onZoom(this._scale, config.zoomScaleExtent, event, transform);
+        // console.warn('Unovis | Graph: Zoom: ', transform)
+        if (!this._initialTransform)
+            this._initialTransform = transform;
+        // If the event was triggered by a mouse interaction (pan or zoom) we don't
+        //   refit the layout after recalculation (e.g. on container resize)
+        if (event === null || event === void 0 ? void 0 : event.sourceEvent) {
+            const diff = Object.keys(transform).reduce((acc, prop) => {
+                const propVal = transform[prop];
+                const initialPropVal = this._initialTransform[prop];
+                const dVal = Math.abs(propVal - initialPropVal);
+                const scaledDVal = prop === 'k' ? 20 * dVal : dVal / 15;
+                acc += scaledDVal;
+                return acc;
+            }, 0);
+            if (diff > config.layoutAutofitTolerance)
+                this._isAutoFitDisabled = true;
+            else
+                this._isAutoFitDisabled = false;
+        }
+        this._nodesGroup.selectAll(`.${gNode}`)
+            .call((nodes.length > config.zoomThrottledUpdateNodeThreshold ? zoomNodesThrottled : zoomNodes), config, this._scale);
+        this._linksGroup.selectAll(`.${gLink}`)
+            .call((nodes.length > config.zoomThrottledUpdateNodeThreshold ? zoomLinksThrottled : zoomLinks), config, this._scale, this._getLinkArrowDefId);
+    }
+    _onZoomStart(t, event) {
+        const { config } = this;
+        const transform = t || event.transform;
+        this._scale = transform.k;
+        if (isFunction(config.onZoomStart))
+            config.onZoomStart(this._scale, config.zoomScaleExtent, event, transform);
+    }
+    _onZoomEnd(t, event) {
+        const { config } = this;
+        const transform = t || event.transform;
+        this._scale = transform.k;
+        if (isFunction(config.onZoomEnd))
+            config.onZoomEnd(this._scale, config.zoomScaleExtent, event, transform);
+    }
+    _updateNodePosition(d, x, y) {
+        var _a, _b;
+        const transform = zoomTransform(this.g.node());
+        const scale = transform.k;
+        // Prevent the node from being dragged offscreen or outside its panel
+        const panels = (_b = (_a = this._panels) === null || _a === void 0 ? void 0 : _a.filter(p => p.nodes.includes(d._id))) !== null && _b !== void 0 ? _b : [];
+        const nodeSizeValue = getNodeSize(d, this.config.nodeSize, d._index);
+        const maxY = min([(this._height - transform.y) / scale, ...panels.map(p => p._y + p._height)]) - nodeSizeValue / 2;
+        const maxX = min([(this._width - transform.x) / scale, ...panels.map(p => p._x + p._width)]) - nodeSizeValue / 2;
+        const minY = max([-transform.y / scale, ...panels.map(p => p._y)]) + nodeSizeValue / 2;
+        const minX = max([-transform.x / scale, ...panels.map(p => p._x)]) + nodeSizeValue / 2;
+        if (y < minY)
+            y = minY;
+        else if (y > maxY)
+            y = maxY;
+        if (x < minX)
+            x = minX;
+        else if (x > maxX)
+            x = maxX;
+        // Snap to Layout
+        if (Math.sqrt(Math.pow(x - d.x, 2) + Math.pow(y - d.y, 2)) < 15) {
+            x = d.x;
+            y = d.y;
+        }
+        // Assign coordinates
+        d._state.fx = x;
+        d._state.fy = y;
+        if (d._state.fx === d.x)
+            delete d._state.fx;
+        if (d._state.fy === d.y)
+            delete d._state.fy;
+    }
+    _onBrush(event) {
+        var _a;
+        if (!event.selection || !event.sourceEvent)
+            return;
+        const { config } = this;
+        const transform = zoomTransform(this._graphGroup.node());
+        const [xMin, yMin] = transform.invert(event.selection[0]);
+        const [xMax, yMax] = transform.invert(event.selection[1]);
+        // Update brushed nodes
+        this._nodesGroup.selectAll(`.${gNode}`)
+            .each(n => {
+            const x = getX(n);
+            const y = getY(n);
+            n._state.brushed = x >= xMin && x <= xMax && y >= yMin && y <= yMax;
+        })
+            .classed(brushed, n => n._state.brushed);
+        const brushedNodes = this._nodesGroup.selectAll(`.${brushed}`)
+            .call(updateNodesPartial, config, 0, this._scale);
+        this._brush.classed('active', event.type !== 'end');
+        (_a = config.onNodeSelectionBrush) === null || _a === void 0 ? void 0 : _a.call(config, brushedNodes.data(), event);
+    }
+    _handleDrag(d, event, nodeSelection) {
+        if (event.sourceEvent.shiftKey && d._state.brushed) {
+            this._dragSelectedNodes(event);
+        }
+        else if (!event.sourceEvent.shiftKey) {
+            switch (event.type) {
+                case 'start':
+                    this._onDragStarted(d, event, nodeSelection);
+                    break;
+                case 'drag':
+                    this._onDragged(d, event);
+                    break;
+                case 'end':
+                    this._onDragEnded(d, event, nodeSelection);
+                    break;
+            }
+        }
+    }
+    _onDragStarted(d, event, nodeSelection) {
+        var _a;
+        const { config } = this;
+        this._isDragging = true;
+        d._state.isDragged = true;
+        nodeSelection.call(updateNodes, config, 0, this._scale);
+        (_a = config.onNodeDragStart) === null || _a === void 0 ? void 0 : _a.call(config, d, event);
+    }
+    _onDragged(d, event) {
+        var _a;
+        const { config } = this;
+        const transform = zoomTransform(this.g.node());
+        const scale = transform.k;
+        // Update node position
+        const [x, y] = pointer(event, this._graphGroup.node());
+        this._updateNodePosition(d, x, y);
+        // Update affected DOM elements
+        const nodeSelection = this._nodesGroup.selectAll(`.${gNode}`);
+        const nodeToUpdate = nodeSelection.filter((n) => n._id === d._id);
+        nodeToUpdate.call(updateNodes, config, 0, scale);
+        const linkSelection = this._linksGroup.selectAll(`.${gLink}`);
+        const linksToUpdate = linkSelection.filter((l) => {
+            const source = l.source;
+            const target = l.target;
+            return source._id === d._id || target._id === d._id;
+        });
+        linksToUpdate.call(updateLinks, config, 0, scale, this._getLinkArrowDefId, this._linkPathLengthMap);
+        const linksToAnimate = linksToUpdate.filter(d => d._state.greyout);
+        if (linksToAnimate.size())
+            animateLinkFlow(linksToAnimate, config, this._scale, this._linkPathLengthMap);
+        (_a = config.onNodeDrag) === null || _a === void 0 ? void 0 : _a.call(config, d, event);
+    }
+    _onDragEnded(d, event, nodeSelection) {
+        var _a;
+        const { config } = this;
+        this._isDragging = false;
+        d._state.isDragged = false;
+        nodeSelection.call(updateNodes, config, 0, this._scale);
+        (_a = config.onNodeDragEnd) === null || _a === void 0 ? void 0 : _a.call(config, d, event);
+    }
+    _dragSelectedNodes(event) {
+        var _a, _b;
+        const { config } = this;
+        const curr = pointer(event, this._graphGroup.node());
+        const selectedNodes = smartTransition(this._nodesGroup.selectAll(`.${brushed}`));
+        if (event.type === 'start') {
+            this._groupDragInit = curr;
+            this._isDragging = true;
+            selectedNodes.each(n => {
+                n.x = getX(n);
+                n.y = getY(n);
+                n._state.isDragged = true;
+            });
+        }
+        else if (event.type === 'drag') {
+            const dx = curr[0] - this._groupDragInit[0];
+            const dy = curr[1] - this._groupDragInit[1];
+            selectedNodes.each(n => this._updateNodePosition(n, n.x + dx, n.y + dy));
+            const connectedLinks = smartTransition(this._linksGroup.selectAll(`.${gLink}`)
+                .filter(l => { var _a, _b, _c, _d; return ((_b = (_a = l.source) === null || _a === void 0 ? void 0 : _a._state) === null || _b === void 0 ? void 0 : _b.isDragged) || ((_d = (_c = l.target) === null || _c === void 0 ? void 0 : _c._state) === null || _d === void 0 ? void 0 : _d.isDragged); }));
+            connectedLinks.call(updateLinks, this.config, 0, this._scale, this._getLinkArrowDefId, this._linkPathLengthMap);
+        }
+        else {
+            this._isDragging = false;
+            selectedNodes.each(n => { n._state.isDragged = false; });
+        }
+        selectedNodes.call(updateNodes, config, 0, this._scale);
+        (_b = (_a = this.config).onNodeSelectionDrag) === null || _b === void 0 ? void 0 : _b.call(_a, selectedNodes.data(), event);
+    }
+    _activateBrush() {
+        this._brush.classed('active', true);
+        this._nodesGroup.selectAll(`.${gNode}`)
+            .classed(brushable, true);
+    }
+    _clearBrush() {
+        var _a;
+        this._brush.classed('active', false).call((_a = this._brushBehavior) === null || _a === void 0 ? void 0 : _a.clear);
+        this._nodesGroup.selectAll(`.${gNode}`)
+            .classed(brushable, false)
+            .classed(brushed, false)
+            .each(n => { n._state.brushed = false; })
+            .call(updateNodesPartial, this.config, 0, this._scale);
+    }
+    _shouldLayoutRecalculate() {
+        const { prevConfig, config } = this;
+        if (prevConfig.layoutType !== config.layoutType)
+            return true;
+        if (prevConfig.layoutNonConnectedAside !== config.layoutNonConnectedAside)
+            return true;
+        if (prevConfig.layoutType === GraphLayoutType.Force) {
+            const forceSettingsDiff = shallowDiff(prevConfig.forceLayoutSettings, config.forceLayoutSettings);
+            if (Object.keys(forceSettingsDiff).length)
+                return true;
+        }
+        if (prevConfig.layoutType === GraphLayoutType.Dagre) {
+            const dagreSettingsDiff = shallowDiff(prevConfig.dagreLayoutSettings, config.dagreLayoutSettings);
+            if (Object.keys(dagreSettingsDiff).length)
+                return true;
+        }
+        if (prevConfig.layoutType === GraphLayoutType.Elk) {
+            if (isPlainObject(prevConfig.layoutElkSettings) && isPlainObject(config.layoutElkSettings)) {
+                // Do a deeper comparison if `config.layoutElkSettings` is an object
+                const elkSettingsDiff = shallowDiff(prevConfig.layoutElkSettings, config.layoutElkSettings);
+                return Boolean(Object.keys(elkSettingsDiff).length);
+            }
+            else {
+                // Otherwise, do a simple `===` comparison
+                return prevConfig.layoutElkSettings !== config.layoutElkSettings;
+            }
+        }
+        if (prevConfig.layoutType === GraphLayoutType.Parallel ||
+            prevConfig.layoutType === GraphLayoutType.ParallelHorizontal ||
+            prevConfig.layoutType === GraphLayoutType.Concentric) {
+            if (!isEqual(prevConfig.layoutGroupOrder, config.layoutGroupOrder))
+                return true;
+            if (prevConfig.layoutParallelNodesPerColumn !== config.layoutParallelNodesPerColumn)
+                return true;
+            if (prevConfig.layoutParallelSortConnectionsByGroup !== config.layoutParallelSortConnectionsByGroup)
+                return true;
+        }
+        return false;
+    }
+    _getLinkArrowDefId(arrow) {
+        return arrow ? `${this.uid}-${arrow}` : null;
+    }
+    _addSVGDefs() {
+        // Clean up old defs
+        this._defs.selectAll('*').remove();
+        // Single Arrow
+        this._defs.append('path').attr('d', getArrowPath())
+            .attr('id', this._getLinkArrowDefId(GraphLinkArrowStyle.Single));
+        // Double Arrow
+        this._defs.append('path').attr('d', getDoubleArrowPath())
+            .attr('id', this._getLinkArrowDefId(GraphLinkArrowStyle.Double));
+    }
+    zoomIn(increment = 0.3) {
+        const scaleBy = 1 + increment;
+        smartTransition(this.g, this.config.duration / 2)
+            .call(this._zoomBehavior.scaleBy, scaleBy);
+    }
+    zoomOut(increment = 0.3) {
+        const scaleBy = 1 - increment;
+        smartTransition(this.g, this.config.duration / 2)
+            .call(this._zoomBehavior.scaleBy, scaleBy);
+    }
+    setZoom(zoomLevel) {
+        smartTransition(this.g, this.config.duration / 2)
+            .call(this._zoomBehavior.scaleTo, zoomLevel);
+    }
+    getZoom() {
+        return zoomTransform(this.g.node()).k;
+    }
+    fitView(duration = this.config.duration, nodeIds, alignment) {
+        var _a;
+        (_a = this._layoutCalculationPromise) === null || _a === void 0 ? void 0 : _a.then(() => {
+            this._fit(duration, nodeIds, alignment);
+        });
+    }
+    fitViewToBounds(xExtent, yExtent, duration = this.config.duration, alignment = this.config.fitViewAlign) {
+        const { datamodel: { nodes } } = this;
+        // If no extents provided, return identity
+        if (!xExtent && !yExtent) {
+            console.warn('Unovis | Graph: At least one extent (x or y) must be provided.');
+            return;
+        }
+        const nodesFiltered = nodes.filter(n => {
+            const x = getX(n);
+            const y = getY(n);
+            return (!xExtent || (x !== undefined && x >= xExtent[0] && x <= xExtent[1])) && (!yExtent || (y >= yExtent[0] && y <= yExtent[1]));
+        });
+        if ((!xExtent || !yExtent) && !nodesFiltered.length) {
+            console.warn(`Unovis | Graph: No nodes found within provided extent [${xExtent}], [${yExtent}].`);
+            return;
+        }
+        const transform = this._getTransform(xExtent !== null && xExtent !== void 0 ? xExtent : extent(nodesFiltered, d => getX(d)), yExtent !== null && yExtent !== void 0 ? yExtent : extent(nodesFiltered, d => getY(d)), alignment);
+        smartTransition(this.g, duration)
+            .call(this._zoomBehavior.transform, transform);
+        this._onZoom(transform);
+    }
+    /** Enable automatic fitting to container if it was disabled due to previous zoom / pan interactions */
+    resetAutofitState() {
+        this._isAutoFitDisabled = false;
+    }
+    /** Get current coordinates of the nodes as an array of { id: string; x: number; y: number } objects */
+    getNodesCoordinates() {
+        const { datamodel: { nodes } } = this;
+        return nodes.map(n => ({
+            id: n._id,
+            x: n.x,
+            y: n.y,
+        }));
+    }
+    /** Get node coordinates by id as { id: string; x: number; y: number } */
+    getNodeCoordinatesById(id) {
+        const { datamodel: { nodes } } = this;
+        const node = nodes.find(n => n._id === id);
+        if (!node) {
+            console.warn(`Unovis | Graph: Node ${id} not found`);
+            return undefined;
+        }
+        else {
+            return {
+                id: node._id,
+                x: node.x,
+                y: node.y,
+            };
+        }
+    }
+    /** Set the node state by id */
+    setNodeStateById(nodeId, state) {
+        this.datamodel.setNodeStateById(nodeId, state);
+    }
+    /** Call a partial render to update the positions of the nodes and their links.
+      * This can be useful when you've changed the node positions manually outside
+      * of the component and want to update the graph.
+    */
+    updateNodePositions(duration) {
+        const { config } = this;
+        const animDuration = isNumber(duration) ? duration : config.duration;
+        const linkElements = this._linksGroup.selectAll(`.${gLink}:not(.${gLinkExit}`);
+        updateLinkLines(linkElements, config, animDuration, this._scale, this._getLinkArrowDefId, this._linkPathLengthMap);
+        const nodeElements = this._nodesGroup.selectAll(`.${gNode}:not(.${gNodeExit})`);
+        updateNodePositions(nodeElements, animDuration);
+    }
+}
+Graph.selectors = {
+    root: root,
+    graphGroup: graphGroup,
+    background: background,
+    node: gNode,
+    nodeShape: node,
+    nodeGauge: nodeGauge,
+    nodeSideLabel: sideLabelGroup,
+    nodeLabel: label,
+    dimmedNode: greyedOutNode,
+    link: gLink,
+    linkLine: link,
+    linkLabel: linkLabelGroup,
+    dimmedLink: greyedOutLink,
+    panel: gPanel,
+    panelRect: panel,
+    panelSelection: panelSelection,
+    panelLabel: label$1,
+    panelLabelText: labelText,
+    panelSideIcon: sideIconGroup,
+    panelSideIconShape: sideIconShape,
+    panelSideIconSymbol: sideIconSymbol,
+};
+Graph.nodeSelectors = style;
+
+export { Graph };
+//# sourceMappingURL=index.js.map

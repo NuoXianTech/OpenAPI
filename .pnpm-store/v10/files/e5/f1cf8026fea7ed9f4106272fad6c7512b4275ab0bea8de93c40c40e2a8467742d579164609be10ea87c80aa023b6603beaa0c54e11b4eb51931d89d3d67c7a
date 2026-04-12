@@ -1,0 +1,9 @@
+{
+  "name": "shadcn",
+  "configKey": "shadcn",
+  "version": "2.4.3",
+  "builder": {
+    "@nuxt/module-builder": "1.0.2",
+    "unbuild": "unknown"
+  }
+}

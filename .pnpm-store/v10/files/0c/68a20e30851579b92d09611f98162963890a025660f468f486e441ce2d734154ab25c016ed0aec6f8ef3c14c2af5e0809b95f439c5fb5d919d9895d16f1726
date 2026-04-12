@@ -1,0 +1,52 @@
+import { defineComponent as s, inject as u, ref as p, onMounted as m, nextTick as d, onUnmounted as f, watch as y, createElementBlock as b, openBlock as v } from "vue";
+import { Plotline as c } from "@unovis/ts";
+import { useForwardProps as x, arePropsEqual as _ } from "../../utils/props.js";
+import { componentAccessorKey as F } from "../../utils/context.js";
+const O = { "data-vis-component": "" }, k = c.selectors, w = /* @__PURE__ */ s({
+  __name: "index",
+  props: {
+    color: {},
+    lineWidth: {},
+    axis: {},
+    value: {},
+    duration: {},
+    lineStyle: {},
+    labelText: {},
+    labelPosition: {},
+    labelOffsetX: {},
+    labelOffsetY: {},
+    labelOrientation: {},
+    labelColor: {},
+    labelSize: {},
+    x: { type: [Function, Number, null] },
+    y: { type: [Function, Number, null, Array] },
+    id: { type: Function },
+    xScale: { type: [Object, Function] },
+    yScale: { type: [Object, Function] },
+    excludeFromDomainCalculation: { type: Boolean },
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(r, { expose: i }) {
+    const n = u(F), t = x(r), e = p();
+    return m(() => {
+      d(() => {
+        e.value = new c(t.value), n.update(e.value);
+      });
+    }), f(() => {
+      var o;
+      (o = e.value) == null || o.destroy(), n.destroy();
+    }), y(t, (o, l) => {
+      var a;
+      _(o, l) || (a = e.value) == null || a.setConfig(t.value);
+    }), i({
+      component: e
+    }), (o, l) => (v(), b("div", O));
+  }
+});
+export {
+  k as VisPlotlineSelectors,
+  w as default
+};
+//# sourceMappingURL=index.js.map

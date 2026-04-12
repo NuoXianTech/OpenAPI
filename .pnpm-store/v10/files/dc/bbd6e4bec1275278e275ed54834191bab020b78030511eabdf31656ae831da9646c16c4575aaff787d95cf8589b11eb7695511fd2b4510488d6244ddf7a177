@@ -1,0 +1,10 @@
+import "./context-Dt8gPoCq.mjs";
+import { t as tscEmit } from "./index-DWPGYc3m.mjs";
+
+//#region src/tsc/worker.d.ts
+declare const functions: {
+  tscEmit: typeof tscEmit;
+};
+type TscFunctions = typeof functions;
+//#endregion
+export { TscFunctions };

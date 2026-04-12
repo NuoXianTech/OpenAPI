@@ -1,0 +1,1 @@
+{"version":3,"file":"scale.js","sources":["../../src/utils/scale.ts"],"sourcesContent":["export const DefaultRange = [1, 40]\n"],"names":[],"mappings":"MAAa,YAAY,GAAG,CAAC,CAAC,EAAE,EAAE;;;;"}

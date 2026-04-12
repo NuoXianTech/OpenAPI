@@ -1,0 +1,56 @@
+import { defineComponent as d, inject as m, computed as f, ref as v, onMounted as g, nextTick as y, onUnmounted as b, watch as l, createElementBlock as _, openBlock as h } from "vue";
+import { Donut as u } from "@unovis/ts";
+import { useForwardProps as B, arePropsEqual as F } from "../../utils/props.js";
+import { componentAccessorKey as S } from "../../utils/context.js";
+const k = { "data-vis-component": "" }, D = u.selectors, E = /* @__PURE__ */ d({
+  __name: "index",
+  props: {
+    id: { type: Function },
+    value: { type: [Function, Number, null] },
+    angleRange: {},
+    padAngle: {},
+    sortFunction: { type: Function },
+    cornerRadius: {},
+    color: { type: [Function, String, Array, null] },
+    radius: {},
+    arcWidth: {},
+    centralLabel: {},
+    centralSubLabel: {},
+    centralSubLabelWrap: { type: Boolean },
+    showEmptySegments: { type: Boolean },
+    emptySegmentAngle: {},
+    showBackground: { type: Boolean },
+    backgroundAngleRange: {},
+    centralLabelOffsetX: {},
+    centralLabelOffsetY: {},
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(p, { expose: i }) {
+    const n = m(S), r = p, o = f(() => n.data.value ?? r.data), a = B(r), t = v();
+    return g(() => {
+      y(() => {
+        var e;
+        t.value = new u(a.value), (e = t.value) == null || e.setData(o.value), n.update(t.value);
+      });
+    }), b(() => {
+      var e;
+      (e = t.value) == null || e.destroy(), n.destroy();
+    }), l(a, (e, c) => {
+      var s;
+      F(e, c) || (s = t.value) == null || s.setConfig(a.value);
+    }), l(o, () => {
+      var e;
+      (e = t.value) == null || e.setData(o.value);
+    }), i({
+      component: t
+    }), (e, c) => (h(), _("div", k));
+  }
+});
+export {
+  D as VisDonutSelectors,
+  E as default
+};
+//# sourceMappingURL=index.js.map

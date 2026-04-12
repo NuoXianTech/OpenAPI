@@ -1,0 +1,46 @@
+import { defineComponent as c, computed as p, ref as u, onMounted as m, nextTick as f, onUnmounted as v, watch as b, createElementBlock as g, openBlock as _ } from "vue";
+import { BulletLegend as i } from "@unovis/ts";
+import { useForwardProps as x, arePropsEqual as k } from "../../utils/props.js";
+const h = i.selectors, C = /* @__PURE__ */ c({
+  __name: "index",
+  props: {
+    items: {},
+    labelClassName: {},
+    onLegendItemClick: { type: Function },
+    labelFontSize: {},
+    labelMaxWidth: {},
+    bulletSize: {},
+    bulletSpacing: {},
+    bulletShape: { type: [Function, null] },
+    orientation: {},
+    renderIntoProvidedDomNode: { type: Boolean },
+    data: {}
+  },
+  setup(d, { expose: s }) {
+    const l = d;
+    p(() => l.data);
+    const t = x(l), o = u(), n = u();
+    return m(() => {
+      f(() => {
+        n.value && (o.value = new i(n.value, { ...t.value, renderIntoProvidedDomNode: !0 }));
+      });
+    }), v(() => {
+      var e;
+      (e = o.value) == null || e.destroy();
+    }), b(t, (e, a) => {
+      var r;
+      k(e, a) || (r = o.value) == null || r.setConfig(t.value);
+    }), s({
+      component: o
+    }), (e, a) => (_(), g("div", {
+      "data-vis-bullet-legend": "",
+      ref_key: "elRef",
+      ref: n
+    }, null, 512));
+  }
+});
+export {
+  h as VisBulletLegendSelectors,
+  C as default
+};
+//# sourceMappingURL=index.js.map

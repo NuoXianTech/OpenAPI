@@ -1,0 +1,86 @@
+import { defineComponent as y, computed as m, ref as r, onMounted as f, nextTick as F, onUnmounted as g, watch as p, createElementBlock as v, openBlock as S } from "vue";
+import { LeafletMap as c } from "@unovis/ts";
+import { useForwardProps as M, arePropsEqual as b } from "../../utils/props.js";
+const k = c.selectors, C = /* @__PURE__ */ y({
+  __name: "index",
+  props: {
+    width: {},
+    height: {},
+    flyToDuration: {},
+    fitViewPadding: {},
+    zoomDuration: {},
+    initialBounds: {},
+    fitBoundsOnUpdate: {},
+    fitViewOnInit: { type: Boolean },
+    fitViewOnUpdate: { type: Boolean },
+    style: {},
+    styleDarkTheme: {},
+    accessToken: {},
+    attribution: {},
+    renderer: {},
+    onMapInitialized: { type: Function },
+    onMapMoveZoom: { type: Function },
+    onMapMoveStart: { type: Function },
+    onMapMoveEnd: { type: Function },
+    onMapZoomStart: { type: Function },
+    onMapZoomEnd: { type: Function },
+    onMapClick: { type: Function },
+    pointLongitude: { type: [Function, Number, null] },
+    pointLatitude: { type: [Function, Number, null] },
+    pointId: { type: [Function, String, null] },
+    pointShape: { type: [Function, String, null] },
+    pointColor: { type: [Function, String, Array, null] },
+    pointRadius: { type: [Function, Number, null] },
+    pointLabel: { type: [Function, String, null] },
+    pointLabelColor: { type: [Function, String, null] },
+    pointBottomLabel: { type: [Function, String, null] },
+    pointCursor: { type: [Function, String, null] },
+    pointRingWidth: {},
+    selectedPointId: {},
+    clusterColor: { type: [Function, String, Array, null] },
+    clusterRadius: { type: [Function, Number, null] },
+    clusterLabel: { type: [Function, String, null] },
+    clusterLabelColor: { type: [Function, String, null] },
+    clusterBottomLabel: { type: [Function, String, null] },
+    clusterRingWidth: {},
+    clusterBackground: { type: Boolean },
+    clusterExpandOnClick: { type: Boolean },
+    clusteringDistance: {},
+    colorMap: {},
+    topoJSONLayer: {},
+    tooltip: {},
+    ariaLabel: {},
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(s, { expose: d }) {
+    const l = s, e = m(() => l.data), o = M(l), n = r(), i = r();
+    return f(() => {
+      F(() => {
+        i.value && (n.value = new c(i.value, o.value, e.value));
+      });
+    }), g(() => {
+      var t;
+      (t = n.value) == null || t.destroy();
+    }), p(o, (t, u) => {
+      var a;
+      b(t, u) || (a = n.value) == null || a.setConfig(o.value);
+    }), p(e, () => {
+      var t;
+      (t = n.value) == null || t.setData(e.value);
+    }), d({
+      component: n
+    }), (t, u) => (S(), v("div", {
+      "data-vis-leaflet-map": "",
+      ref_key: "elRef",
+      ref: i
+    }, null, 512));
+  }
+});
+export {
+  k as VisLeafletMapSelectors,
+  C as default
+};
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,33 @@
+{
+    "name": "@types/d3-sankey",
+    "version": "0.12.5",
+    "description": "TypeScript definitions for d3-sankey",
+    "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/d3-sankey",
+    "license": "MIT",
+    "contributors": [
+        {
+            "name": "Tom Wanzek",
+            "githubUsername": "tomwanzek",
+            "url": "https://github.com/tomwanzek"
+        },
+        {
+            "name": "Alex Ford",
+            "githubUsername": "gustavderdrache",
+            "url": "https://github.com/gustavderdrache"
+        }
+    ],
+    "main": "",
+    "types": "index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+        "directory": "types/d3-sankey"
+    },
+    "scripts": {},
+    "dependencies": {
+        "@types/d3-shape": "^1"
+    },
+    "peerDependencies": {},
+    "typesPublisherContentHash": "9ebf7b0898a2b2508762628df82fdf52865b33ebf4a834381eb2f53c2b2dad53",
+    "typeScriptVersion": "5.2"
+}

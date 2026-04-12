@@ -1,0 +1,51 @@
+import { defineComponent as i, inject as u, ref as p, onMounted as m, nextTick as d, onUnmounted as f, watch as b, createElementBlock as y, openBlock as x } from "vue";
+import { Plotband as r } from "@unovis/ts";
+import { useForwardProps as v, arePropsEqual as _ } from "../../utils/props.js";
+import { componentAccessorKey as F } from "../../utils/context.js";
+const O = { "data-vis-component": "" }, k = r.selectors, w = /* @__PURE__ */ i({
+  __name: "index",
+  props: {
+    color: {},
+    axis: {},
+    from: {},
+    to: {},
+    duration: {},
+    labelText: {},
+    labelPosition: {},
+    labelOffsetX: {},
+    labelOffsetY: {},
+    labelOrientation: {},
+    labelColor: {},
+    labelSize: {},
+    x: { type: [Function, Number, null] },
+    y: { type: [Function, Number, null, Array] },
+    id: { type: Function },
+    xScale: { type: [Object, Function] },
+    yScale: { type: [Object, Function] },
+    excludeFromDomainCalculation: { type: Boolean },
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(c, { expose: s }) {
+    const n = u(F), t = v(c), e = p();
+    return m(() => {
+      d(() => {
+        e.value = new r(t.value), n.update(e.value);
+      });
+    }), f(() => {
+      var o;
+      (o = e.value) == null || o.destroy(), n.destroy();
+    }), b(t, (o, a) => {
+      var l;
+      _(o, a) || (l = e.value) == null || l.setConfig(t.value);
+    }), s({
+      component: e
+    }), (o, a) => (x(), y("div", O));
+  }
+});
+export {
+  k as VisPlotbandSelectors,
+  w as default
+};
+//# sourceMappingURL=index.js.map

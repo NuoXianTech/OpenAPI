@@ -1,0 +1,52 @@
+import { defineComponent as d, inject as m, computed as y, ref as v, onMounted as f, nextTick as F, onUnmounted as h, watch as u, createElementBlock as x, openBlock as _ } from "vue";
+import { Line as i } from "@unovis/ts";
+import { useForwardProps as g, arePropsEqual as b } from "../../utils/props.js";
+import { componentAccessorKey as A } from "../../utils/context.js";
+const B = { "data-vis-component": "" }, w = i.selectors, C = /* @__PURE__ */ d({
+  __name: "index",
+  props: {
+    color: { type: [Function, String, Array, null] },
+    curveType: {},
+    lineWidth: {},
+    lineDashArray: { type: [Function, Array, null] },
+    fallbackValue: {},
+    highlightOnHover: { type: Boolean },
+    cursor: { type: [Function, String, null] },
+    interpolateMissingData: { type: Boolean },
+    x: { type: [Function, Number, null] },
+    y: { type: [Function, Number, null, Array] },
+    id: { type: Function },
+    xScale: { type: [Object, Function] },
+    yScale: { type: [Object, Function] },
+    excludeFromDomainCalculation: { type: Boolean },
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(s, { expose: p }) {
+    const n = m(A), r = s, o = y(() => n.data.value ?? r.data), a = g(r), t = v();
+    return f(() => {
+      F(() => {
+        var e;
+        t.value = new i(a.value), (e = t.value) == null || e.setData(o.value), n.update(t.value);
+      });
+    }), h(() => {
+      var e;
+      (e = t.value) == null || e.destroy(), n.destroy();
+    }), u(a, (e, c) => {
+      var l;
+      b(e, c) || (l = t.value) == null || l.setConfig(a.value);
+    }), u(o, () => {
+      var e;
+      (e = t.value) == null || e.setData(o.value);
+    }), p({
+      component: t
+    }), (e, c) => (_(), x("div", B));
+  }
+});
+export {
+  w as VisLineSelectors,
+  C as default
+};
+//# sourceMappingURL=index.js.map

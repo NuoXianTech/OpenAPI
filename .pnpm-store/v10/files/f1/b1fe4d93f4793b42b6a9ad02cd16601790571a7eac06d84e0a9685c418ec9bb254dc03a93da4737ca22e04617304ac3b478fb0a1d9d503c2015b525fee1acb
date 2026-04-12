@@ -1,0 +1,627 @@
+import { pointer, select } from 'd3-selection';
+import { zoom, zoomIdentity } from 'd3-zoom';
+import { sankey } from 'd3-sankey';
+import { max, min, extent, sum } from 'd3-array';
+import { scaleLinear } from 'd3-scale';
+import { ComponentCore } from '../../core/component/index.js';
+import { GraphDataModel } from '../../data-models/graph.js';
+import { Sizing } from '../../types/component.js';
+import { Position } from '../../types/position.js';
+import { VerticalAlign } from '../../types/text.js';
+import { smartTransition } from '../../utils/d3.js';
+import { getString, isNumber, clamp, getNumber, groupBy } from '../../utils/data.js';
+import { SankeyDefaultConfig } from './config.js';
+import * as style from './style.js';
+import { background, links, nodes, link, nodeGroup, nodeExit } from './style.js';
+import { SankeyLayout, SankeyZoomMode } from './types.js';
+import { removeLinks, createLinks, updateLinks } from './modules/link.js';
+import { NODE_SELECTION_RECT_DELTA, removeNodes, createNodes, updateNodes, onNodeMouseOver, onNodeMouseOut } from './modules/node.js';
+import { getLabelFontSize, getSubLabelFontSize, SANKEY_LABEL_BLOCK_PADDING, SANKEY_LABEL_SPACING, getLabelOrientation, estimateRequiredLabelWidth } from './modules/label.js';
+
+class Sankey extends ComponentCore {
+    constructor(config) {
+        var _a;
+        super();
+        this._defaultConfig = SankeyDefaultConfig;
+        this.config = this._defaultConfig;
+        this.datamodel = new GraphDataModel();
+        this._prevWidth = undefined;
+        this._extendedWidth = undefined;
+        this._extendedHeight = undefined;
+        this._extendedHeightIncreased = undefined;
+        this._extendedWidthIncreased = undefined;
+        this._sankey = sankey();
+        this._highlightTimeoutId = null;
+        this._highlightActive = false;
+        // Zoom / Pan
+        this._zoomScale = [1, 1];
+        this._pan = [0, 0];
+        this._prevZoomTransform = { x: 0, y: 0, k: 1 };
+        this._animationFrameId = null;
+        this._bleedCached = null;
+        // Events
+        this.events = {
+            [Sankey.selectors.nodeGroup]: {
+                mouseenter: this._onNodeMouseOver.bind(this),
+                mouseleave: this._onNodeMouseOut.bind(this),
+            },
+            [Sankey.selectors.node]: {
+                mouseenter: this._onNodeRectMouseOver.bind(this),
+                mouseleave: this._onNodeRectMouseOut.bind(this),
+            },
+            [Sankey.selectors.link]: {
+                mouseenter: this._onLinkMouseOver.bind(this),
+                mouseleave: this._onLinkMouseOut.bind(this),
+            },
+        };
+        if (config)
+            this.setConfig(config);
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        this._gNode = this.g.node();
+        this._backgroundRect = this.g.append('rect').attr('class', background).style('pointer-events', 'all');
+        this._linksGroup = this.g.append('g').attr('class', links);
+        this._nodesGroup = this.g.append('g').attr('class', nodes);
+        // Initialize scale values from config
+        this._zoomScale = (_a = this.config.zoomScale) !== null && _a !== void 0 ? _a : [1, 1];
+        // Set up d3-zoom to handle wheel/pinch/drag smoothly
+        this._zoomBehavior = zoom()
+            .scaleExtent(this.config.zoomExtent)
+            .on('zoom', (event) => this._onZoom(event));
+        if (this.config.enableZoom)
+            this.g.call(this._zoomBehavior);
+    }
+    get bleed() {
+        const { config, datamodel: { nodes, links } } = this;
+        let bleed = { top: 0, bottom: 0, left: 0, right: 0 };
+        if (nodes.length) {
+            const labelFontSize = getLabelFontSize(config, this.element);
+            const subLabelFontSize = getSubLabelFontSize(config, this.element);
+            // We pre-calculate sankey layout to get information about node labels placement and calculate bleed properly
+            // Potentially it can be a performance bottleneck for large layouts, but generally rendering of such layouts is much more computationally heavy
+            const sankeyProbeSize = 1000;
+            this._populateLinkAndNodeValues();
+            this._sankey.size([sankeyProbeSize, sankeyProbeSize]);
+            this._sankey({ nodes, links });
+            const requiredLabelHeight = labelFontSize * 2.5 + 2 * SANKEY_LABEL_BLOCK_PADDING; // Assuming 2.5 lines per label
+            const maxLayer = max(nodes, d => d.layer);
+            const zeroLayerNodes = nodes.filter(d => d.layer === 0);
+            const maxLayerNodes = nodes.filter(d => d.layer === maxLayer);
+            const layerSpacing = this._getLayerSpacing(nodes);
+            let left = 0;
+            const fallbackLabelMaxWidth = Math.min(this._width / 6, layerSpacing);
+            const labelMaxWidth = config.labelMaxWidth || fallbackLabelMaxWidth;
+            const labelHorizontalPadding = 2 * SANKEY_LABEL_SPACING + 2 * SANKEY_LABEL_BLOCK_PADDING;
+            const hasLabelsOnTheLeft = zeroLayerNodes.some(d => getLabelOrientation(d, sankeyProbeSize, config.labelPosition) === Position.Left);
+            if (hasLabelsOnTheLeft) {
+                const maxLeftLabelWidth = max(zeroLayerNodes, d => estimateRequiredLabelWidth(d, config, labelFontSize, subLabelFontSize));
+                left = min([labelMaxWidth, maxLeftLabelWidth]) + labelHorizontalPadding;
+            }
+            let right = 0;
+            const hasLabelsOnTheRight = maxLayerNodes.some(d => getLabelOrientation(d, sankeyProbeSize, config.labelPosition) === Position.Right);
+            if (hasLabelsOnTheRight) {
+                const maxRightLabelWidth = max(maxLayerNodes, d => estimateRequiredLabelWidth(d, config, labelFontSize, subLabelFontSize));
+                right = min([labelMaxWidth, maxRightLabelWidth]) + labelHorizontalPadding;
+            }
+            const top = config.labelVerticalAlign === VerticalAlign.Top ? 0
+                : config.labelVerticalAlign === VerticalAlign.Bottom ? requiredLabelHeight
+                    : requiredLabelHeight / 3;
+            const bottom = config.labelVerticalAlign === VerticalAlign.Top ? requiredLabelHeight
+                : config.labelVerticalAlign === VerticalAlign.Bottom ? 0
+                    : requiredLabelHeight / 3;
+            const nodeSelectionRectBleed = config.selectedNodeIds ? 1 + NODE_SELECTION_RECT_DELTA : 0;
+            bleed = {
+                top: nodeSelectionRectBleed + top,
+                bottom: nodeSelectionRectBleed + bottom,
+                left: left + (hasLabelsOnTheLeft ? 0 : nodeSelectionRectBleed),
+                right: right + (hasLabelsOnTheRight ? 0 : nodeSelectionRectBleed),
+            };
+        }
+        // Cache bleed for onZoom
+        this._bleedCached = bleed;
+        return bleed;
+    }
+    setData(data) {
+        super.setData(data);
+        // Pre-calculate component size for Sizing.EXTEND
+        if ((this.sizing !== Sizing.Fit) || !this._hasLinks())
+            this._preCalculateComponentSize();
+        this._bleedCached = null;
+    }
+    setConfig(config) {
+        super.setConfig(config);
+        // Update zoom scale from config
+        if (this.config.zoomScale !== undefined) {
+            this._zoomScale = this.config.zoomScale;
+        }
+        else if (this.prevConfig.zoomScale !== undefined) {
+            this._zoomScale = [1, 1];
+            this._pan = [0, 0];
+        }
+        // Update zoom pan from config
+        if (this.config.zoomPan !== undefined) {
+            this._pan = this.config.zoomPan;
+        }
+        else if (this.prevConfig.zoomPan !== undefined) {
+            this._pan = [0, 0];
+        }
+        // Pre-calculate component size for Sizing.EXTEND
+        if ((this.sizing !== Sizing.Fit) || !this._hasLinks())
+            this._preCalculateComponentSize();
+        const nodeId = ((d, i) => getString(d, this.config.id, i));
+        this._sankey.linkSort(this.config.linkSort);
+        this._sankey
+            .nodeId(nodeId)
+            .nodeWidth(this.config.nodeWidth)
+            .nodePadding(this.config.nodePadding)
+            .nodeAlign(SankeyLayout[this.config.nodeAlign])
+            .nodeSort(this.config.nodeSort)
+            .iterations(this.config.iterations);
+        // Update zoom behavior if already initialized
+        if (this._zoomBehavior) {
+            this._zoomBehavior.scaleExtent(this.config.zoomExtent);
+            if (this.config.enableZoom)
+                this.g.call(this._zoomBehavior);
+            else
+                this.g.on('.zoom', null);
+        }
+        this._bleedCached = null;
+    }
+    _render(customDuration) {
+        var _a;
+        const { config, datamodel: { nodes, links } } = this;
+        const wasResized = this._prevWidth !== this._width;
+        this._prevWidth = this._width;
+        const bleed = wasResized || !this._bleedCached ? this.bleed : this._bleedCached;
+        const duration = isNumber(customDuration) ? customDuration : config.duration;
+        if ((nodes.length === 0) ||
+            (nodes.length === 1 && links.length > 0) ||
+            (nodes.length === 1 && !config.showSingleNode) ||
+            (nodes.length > 1 && links.length === 0)) {
+            this._linksGroup.selectAll(`.${link}`).call(removeLinks, duration);
+            this._nodesGroup.selectAll(`.${nodeGroup}`).call(removeNodes, config, duration);
+        }
+        // Prepare Layout
+        this._prepareLayout();
+        (_a = config.onLayoutCalculated) === null || _a === void 0 ? void 0 : _a.call(config, nodes, links, this.getSankeyDepth(), this.getWidth(), this.getHeight(), bleed);
+        // Links
+        const linkSelection = this._linksGroup.selectAll(`.${link}`)
+            .data(links, (d, i) => { var _a; return (_a = config.id(d, i)) !== null && _a !== void 0 ? _a : `${d.source.id}-${d.target.id}`; });
+        const linkSelectionEnter = linkSelection.enter().append('g').attr('class', link);
+        linkSelectionEnter.call(createLinks);
+        linkSelection.merge(linkSelectionEnter).call(updateLinks, config, duration);
+        linkSelection.exit().call(removeLinks);
+        // Nodes
+        // Sort nodes by x0 for optimize label rendering performance (see `getXDistanceToNextNode` in `modules/node.ts`)
+        nodes.sort((a, b) => a.x0 - b.x0);
+        const nodeSpacing = this._getLayerSpacing(nodes);
+        const nodeSelection = this._nodesGroup.selectAll(`.${nodeGroup}`)
+            .data(nodes, (d, i) => { var _a; return (_a = config.id(d, i)) !== null && _a !== void 0 ? _a : i; });
+        const nodeSelectionEnter = nodeSelection.enter().append('g').attr('class', nodeGroup);
+        const sankeyWidth = (this.sizing === Sizing.Fit ? this._width : this._extendedWidth) * this._zoomScale[0];
+        nodeSelectionEnter.call(createNodes, this.config, sankeyWidth, bleed);
+        nodeSelection.merge(nodeSelectionEnter).call(updateNodes, config, sankeyWidth, bleed, this._hasLinks(), duration, nodeSpacing);
+        nodeSelection.exit()
+            .attr('class', nodeExit)
+            .call(removeNodes, config, duration);
+        // Pan
+        this._applyPanTransform(duration, bleed);
+        // Background
+        this._backgroundRect
+            .attr('width', this.getWidth())
+            .attr('height', this.getHeight())
+            .attr('opacity', 0);
+    }
+    _applyPanTransform(duration, bleed) {
+        var _a;
+        const pan = (_a = this.config.zoomPan) !== null && _a !== void 0 ? _a : this._pan;
+        const tx = bleed.left + pan[0];
+        const ty = bleed.top + pan[1];
+        smartTransition(this._linksGroup, duration).attr('transform', `translate(${tx},${ty})`);
+        smartTransition(this._nodesGroup, duration).attr('transform', `translate(${tx},${ty})`);
+    }
+    _scheduleRender(duration) {
+        if (this._animationFrameId != null)
+            return;
+        this._animationFrameId = requestAnimationFrame(() => {
+            this._render(duration);
+            this._animationFrameId = null;
+        });
+    }
+    _getConstrainedPan(currentPan, zoomScaleChange = [1, 1]) {
+        var _a, _b, _c, _d, _e;
+        const bleed = (_a = this._bleedCached) !== null && _a !== void 0 ? _a : this.bleed;
+        const nodes = this.datamodel.nodes;
+        // We use zoomScaleChange to adjust the max values of the viewport
+        // because the values are scaled (mutated) during the render
+        // but here they are not mutated yet
+        const minX = zoomScaleChange[0] * ((_b = min(nodes, d => d.x0)) !== null && _b !== void 0 ? _b : 0);
+        const minY = zoomScaleChange[1] * ((_c = min(nodes, d => d.y0)) !== null && _c !== void 0 ? _c : 0);
+        const maxX = zoomScaleChange[0] * ((_d = max(nodes, d => d.x1)) !== null && _d !== void 0 ? _d : 0);
+        const maxY = zoomScaleChange[1] * ((_e = max(nodes, d => d.y1)) !== null && _e !== void 0 ? _e : 0);
+        const viewportWidth = this.getWidth() - bleed.left - bleed.right;
+        const viewportHeight = this.getHeight() - bleed.top - bleed.bottom;
+        const constrainedX = clamp(currentPan[0], viewportWidth - maxX, minX);
+        const constrainedY = clamp(currentPan[1], viewportHeight - maxY, minY);
+        return [constrainedX, constrainedY];
+    }
+    setZoomScale(horizontalScale, verticalScale, duration = this.config.duration) {
+        var _a, _b;
+        // If zoomScale is controlled by config, do nothing
+        if (this.config.zoomScale !== undefined)
+            return;
+        const zoomScaleChange = [horizontalScale / this._zoomScale[0], verticalScale / this._zoomScale[1]];
+        const [extMin, extMax] = this.config.zoomExtent;
+        if (isNumber(horizontalScale))
+            this._zoomScale[0] = Math.min(extMax, Math.max(extMin, horizontalScale));
+        if (isNumber(verticalScale))
+            this._zoomScale[1] = Math.min(extMax, Math.max(extMin, verticalScale));
+        // Sync D3's zoom transform to match our scale
+        // Use the geometric mean as a reasonable approximation for D3's single scale
+        const effectiveScale = Math.sqrt(((_a = this._zoomScale[0]) !== null && _a !== void 0 ? _a : 1) * ((_b = this._zoomScale[1]) !== null && _b !== void 0 ? _b : 1));
+        const currentTransform = zoomIdentity.scale(effectiveScale);
+        this._gNode.__zoom = currentTransform;
+        this._prevZoomTransform.k = effectiveScale;
+        // Constrain pan
+        this._pan = this._getConstrainedPan(this._pan, zoomScaleChange);
+        // Reset transform values to avoid jumping when panning
+        this._prevZoomTransform.x = 0;
+        this._prevZoomTransform.y = 0;
+        this._render(duration);
+    }
+    getZoomScale() {
+        // If zoomPan is controlled by config, do nothing
+        if (this.config.zoomPan !== undefined)
+            return;
+        return [this._zoomScale[0] || 1, this._zoomScale[1] || 1];
+    }
+    setPan(x, y, duration = this.config.duration, shouldConstraint = false) {
+        const pan = [x !== null && x !== void 0 ? x : 0, y !== null && y !== void 0 ? y : 0];
+        this._pan = shouldConstraint ? this._getConstrainedPan(pan) : pan;
+        // Reset transform values to avoid jumping when panning
+        this._prevZoomTransform.x = 0;
+        this._prevZoomTransform.y = 0;
+        this._scheduleRender(duration);
+    }
+    getPan() {
+        return this._pan;
+    }
+    fitView(duration = this.config.duration) {
+        var _a, _b;
+        this._zoomScale = (_a = this.config.zoomScale) !== null && _a !== void 0 ? _a : [1, 1];
+        this._pan = (_b = this.config.zoomPan) !== null && _b !== void 0 ? _b : [0, 0];
+        // Sync D3 zoom transform with our scales
+        const effectiveScale = Math.sqrt(this._zoomScale[0] * this._zoomScale[1]);
+        const currentTransform = zoomIdentity.scale(effectiveScale);
+        this._gNode.__zoom = currentTransform;
+        this._prevZoomTransform.k = effectiveScale;
+        this._prevZoomTransform.x = 0;
+        this._prevZoomTransform.y = 0;
+        this._render(duration);
+    }
+    _onZoom(event) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        const { datamodel, config } = this;
+        if (config.zoomScale || config.zoomPan)
+            return;
+        const nodes = datamodel.nodes;
+        const transform = event.transform;
+        const sourceEvent = event.sourceEvent;
+        const zoomMode = config.zoomMode || SankeyZoomMode.XY;
+        const bleed = (_a = this._bleedCached) !== null && _a !== void 0 ? _a : this.bleed;
+        // Zoom pivots
+        const minX = (_b = min(nodes, d => d.x0)) !== null && _b !== void 0 ? _b : 0;
+        const minY = (_c = min(nodes, d => d.y0)) !== null && _c !== void 0 ? _c : 0;
+        // Determine whether this is a zoom (wheel/pinch) or a pan (drag)
+        const isZoomEvent = Math.abs(transform.k - this._prevZoomTransform.k) > 1e-6;
+        if (isZoomEvent) { // Zoom and Pan
+            // Compute delta factor from transform.k.
+            // If Cmd (metaKey) is pressed, only change horizontal scale.
+            // If Alt/Option (altKey) is pressed, only change vertical scale.
+            const deltaK = transform.k / this._prevZoomTransform.k;
+            const isHorizontalOnlyKey = Boolean(sourceEvent === null || sourceEvent === void 0 ? void 0 : sourceEvent.metaKey);
+            const isVerticalOnlyKey = !isHorizontalOnlyKey && Boolean(sourceEvent === null || sourceEvent === void 0 ? void 0 : sourceEvent.altKey);
+            const isHorizontalOnly = isHorizontalOnlyKey || zoomMode === SankeyZoomMode.X;
+            const isVerticalOnly = isVerticalOnlyKey || zoomMode === SankeyZoomMode.Y;
+            // Use our scale state as the source of truth (not config, not D3's k)
+            const [hCurrent, vCurrent] = this._zoomScale;
+            const hNext = isVerticalOnly ? hCurrent : clamp(hCurrent * deltaK, config.zoomExtent[0], config.zoomExtent[1]);
+            const vNext = isHorizontalOnly ? vCurrent : clamp(vCurrent * deltaK, config.zoomExtent[0], config.zoomExtent[1]);
+            this._zoomScale = [hNext, vNext];
+            // Pointer-centric compensation: keep the point under cursor fixed
+            const pos = sourceEvent ? pointer(sourceEvent, this.g.node()) : [this._width / 2, this._height / 2];
+            // Invert current mapping to get layout coordinates under pointer
+            const panX = (_e = (_d = config.zoomPan) === null || _d === void 0 ? void 0 : _d[0]) !== null && _e !== void 0 ? _e : this._pan[0];
+            const panY = (_g = (_f = config.zoomPan) === null || _f === void 0 ? void 0 : _f[1]) !== null && _g !== void 0 ? _g : this._pan[1];
+            const layoutX = minX + (pos[0] - bleed.left - panX - minX) / hCurrent;
+            const layoutY = minY + (pos[1] - bleed.top - panY - minY) / vCurrent;
+            // Solve for new pan to keep pointer fixed after new scales
+            if (!isVerticalOnly && !isFinite((_h = config.zoomPan) === null || _h === void 0 ? void 0 : _h[0]) && zoomMode !== SankeyZoomMode.Y) {
+                this._pan[0] = pos[0] - bleed.left - (minX + (layoutX - minX) * hNext);
+            }
+            if (!isHorizontalOnly && !isFinite((_j = config.zoomPan) === null || _j === void 0 ? void 0 : _j[1]) && zoomMode !== SankeyZoomMode.X) {
+                this._pan[1] = pos[1] - bleed.top - (minY + (layoutY - minY) * vNext);
+            }
+        }
+        else { // Just Pan: apply translation delta directly
+            const dx = transform.x - this._prevZoomTransform.x;
+            const dy = transform.y - this._prevZoomTransform.y;
+            if (zoomMode !== SankeyZoomMode.Y)
+                this._pan[0] += dx;
+            if (zoomMode !== SankeyZoomMode.X)
+                this._pan[1] += dy;
+        }
+        // Pan constraints
+        this._pan = this._getConstrainedPan(this._pan);
+        // Update last zoom state
+        this._prevZoomTransform.k = transform.k;
+        this._prevZoomTransform.x = transform.x;
+        this._prevZoomTransform.y = transform.y;
+        (_k = config.onZoom) === null || _k === void 0 ? void 0 : _k.call(config, this._zoomScale[0], this._zoomScale[1], this._pan[0], this._pan[1], config.zoomExtent, event);
+        this._scheduleRender(0);
+    }
+    _populateLinkAndNodeValues() {
+        const { config, datamodel } = this;
+        const nodes = datamodel.nodes;
+        const links = datamodel.links;
+        // For d3-sankey each link must be an object with the `value` property
+        links.forEach((link, i) => {
+            link.value = getNumber(link, d => getNumber(d, config.linkValue, i));
+        });
+        // Populating node.fixedValue for d3-sankey
+        nodes.forEach((node, i) => {
+            node.fixedValue = getNumber(node, config.nodeFixedValue, i);
+        });
+    }
+    _preCalculateComponentSize() {
+        const { bleed, config, datamodel } = this;
+        const nodes = datamodel.nodes;
+        if (nodes.length) {
+            this._populateLinkAndNodeValues();
+            this._sankey(datamodel);
+        }
+        const scaleExtent = extent(nodes, d => d.value || undefined);
+        const scaleRange = [config.nodeMinHeight, config.nodeMaxHeight];
+        const scale = scaleLinear().domain(scaleExtent).range(scaleRange).clamp(true);
+        nodes.forEach(n => { n._state.precalculatedHeight = scale(n.value) || config.nodeMinHeight; });
+        const groupedByColumn = groupBy(nodes, d => d.layer);
+        const values = Object.values(groupedByColumn)
+            .map((group) => sum(group.map(n => n._state.precalculatedHeight + config.nodePadding)) - config.nodePadding);
+        const height = max(values) || config.nodeMinHeight;
+        this._extendedHeight = height + bleed.top + bleed.bottom;
+        this._extendedWidth = Math.max(0, (config.nodeWidth + config.nodeHorizontalSpacing) * Object.keys(groupedByColumn).length - config.nodeHorizontalSpacing + bleed.left + bleed.right);
+    }
+    _prepareLayout() {
+        var _a, _b, _c;
+        const { config, datamodel } = this;
+        const bleed = (_a = this._bleedCached) !== null && _a !== void 0 ? _a : this.bleed;
+        const isExtendedSize = this.sizing === Sizing.Extend;
+        const sankeyHeight = this.sizing === Sizing.Fit ? this._height : this._extendedHeight;
+        const sankeyWidth = this.sizing === Sizing.Fit ? this._width : this._extendedWidth;
+        this._sankey
+            .size([
+            Math.max(sankeyWidth - bleed.left - bleed.right, 0),
+            Math.max(sankeyHeight - bleed.top - bleed.bottom, 0),
+        ]);
+        const nodes = datamodel.nodes;
+        const links = datamodel.links;
+        // If there are no links we manually calculate the visualization layout
+        if (!this._hasLinks()) {
+            let y = 0;
+            const nodesTotalHeight = sum(nodes, n => n._state.precalculatedHeight || 1);
+            for (const node of nodes) {
+                const sankeyHeight = this.getHeight() - bleed.top - bleed.bottom;
+                const nodeHeight = node._state.precalculatedHeight || 1;
+                const h = isExtendedSize ? nodeHeight : (sankeyHeight - config.nodePadding * (nodes.length - 1)) * nodeHeight / nodesTotalHeight;
+                node.width = Math.max(10, config.nodeWidth);
+                node.x0 = 0;
+                node.x1 = node.width;
+                node.y0 = y;
+                node.y1 = y + Math.max(1, h);
+                node.layer = 0;
+                y = node.y1 + config.nodePadding;
+            }
+            // Apply scaling for manual layout as well
+            this._applyLayoutScaling();
+            if (isExtendedSize) {
+                const height = max(nodes, d => d.y1) || 0;
+                const width = max(nodes, d => d.x1) || 0;
+                this._extendedHeightIncreased = height + bleed.top + bleed.bottom;
+                this._extendedWidthIncreased = width + bleed.left + bleed.right;
+            }
+            else {
+                this._extendedHeightIncreased = undefined;
+                this._extendedWidthIncreased = undefined;
+            }
+            return;
+        }
+        // Calculate sankey
+        this._populateLinkAndNodeValues();
+        this._sankey({ nodes, links });
+        // Setting minimum node height
+        //   Default: 1px
+        //   Extended size nodes that have no links: config.nodeMinHeight
+        for (const node of nodes) {
+            const singleExtendedSize = isExtendedSize && !((_b = node.sourceLinks) === null || _b === void 0 ? void 0 : _b.length) && !((_c = node.targetLinks) === null || _c === void 0 ? void 0 : _c.length);
+            const h = Math.max(singleExtendedSize ? config.nodeMinHeight : 1, node.y1 - node.y0);
+            const y = (node.y0 + node.y1) / 2;
+            node.y0 = y - h / 2;
+            node.y1 = y + h / 2;
+        }
+        // Apply layout scaling (affects spacing only, not node width/height)
+        this._applyLayoutScaling();
+        if (isExtendedSize) {
+            const height = max(nodes, d => d.y1) || 0;
+            const width = max(nodes, d => d.x1) || 0;
+            this._extendedHeightIncreased = height + bleed.top + bleed.bottom;
+            this._extendedWidthIncreased = width + bleed.left + bleed.right;
+        }
+    }
+    _applyLayoutScaling() {
+        var _a, _b;
+        const { datamodel } = this;
+        const nodes = datamodel.nodes;
+        const links = datamodel.links;
+        // Use our scale state as the single source of truth
+        const [hScale, vScale] = this._zoomScale;
+        if ((hScale === 1 || !isFinite(hScale)) && (vScale === 1 || !isFinite(vScale)))
+            return;
+        const minX = (_a = min(nodes, d => d.x0)) !== null && _a !== void 0 ? _a : 0;
+        // Preserve original node positions to realign link anchors after scaling
+        const prevNodePos = new Map(nodes.map(n => [n, { x0: n.x0, x1: n.x1, y0: n.y0, y1: n.y1 }]));
+        const prevLinkY = new Map(links.map(l => [l, { y0: l.y0, y1: l.y1 }]));
+        // Horizontal spacing: scale relative to leftmost x
+        if (isFinite(hScale) && hScale !== 1) {
+            for (const n of nodes) {
+                const nodeWidth = n.width || (n.x1 - n.x0);
+                const relX0 = n.x0 - minX;
+                n.x0 = minX + relX0 * hScale;
+                n.x1 = n.x0 + nodeWidth;
+            }
+        }
+        // Vertical spacing: scale from the topmost node of the graph
+        if (isFinite(vScale) && vScale !== 1) {
+            const minY = (_b = min(nodes, d => d.y0)) !== null && _b !== void 0 ? _b : 0;
+            for (const n of nodes) {
+                const nodeHeight = n.y1 - n.y0;
+                const relY0 = n.y0 - minY;
+                n.y0 = minY + relY0 * vScale;
+                n.y1 = n.y0 + nodeHeight;
+            }
+            // Re-anchor links by maintaining their offset within the source/target nodes
+            for (const l of links) {
+                const prev = prevLinkY.get(l);
+                const prevSrc = prevNodePos.get(l.source);
+                const prevTrg = prevNodePos.get(l.target);
+                const deltaSrc = l.source.y0 - prevSrc.y0;
+                const deltaTrg = l.target.y0 - prevTrg.y0;
+                l.y0 = prev.y0 + deltaSrc;
+                l.y1 = prev.y1 + deltaTrg;
+            }
+        }
+    }
+    getWidth() {
+        return this.sizing === Sizing.Fit ? this._width : Math.max(this._extendedWidthIncreased || 0, this._extendedWidth || 0);
+    }
+    getHeight() {
+        return this.sizing === Sizing.Fit ? this._height : Math.max(this._extendedHeightIncreased || 0, this._extendedHeight || 0);
+    }
+    getLayoutWidth() {
+        return this.sizing === Sizing.Fit ? this._width : (this._extendedWidthIncreased || this._extendedWidth);
+    }
+    getLayoutHeight() {
+        return this.sizing === Sizing.Fit ? this._height : (this._extendedHeightIncreased || this._extendedHeight);
+    }
+    getSankeyDepth() {
+        const { datamodel } = this;
+        return max(datamodel.nodes, d => d.layer);
+    }
+    /** @deprecated Use getLayerXCenters instead */
+    getColumnCenters() {
+        return this.getLayerXCenters();
+    }
+    getLayerXCenters() {
+        const { datamodel } = this;
+        const nodes = datamodel.nodes;
+        const centers = nodes.reduce((pos, node) => {
+            const idx = node.layer;
+            if (!isFinite(pos[idx])) {
+                pos[idx] = (node.x0 + node.x1) / 2;
+            }
+            return pos;
+        }, []);
+        return centers;
+    }
+    getLayerYCenters() {
+        const { datamodel } = this;
+        const nodes = datamodel.nodes;
+        const nodesByLayer = groupBy(nodes, d => d.layer);
+        const layerYCenters = [];
+        Object.values(nodesByLayer).forEach((layerNodes, idx) => {
+            const minY = Math.min(...layerNodes.map(n => n.y0));
+            const maxY = Math.max(...layerNodes.map(n => n.y1));
+            layerYCenters[idx] = (minY + maxY) / 2;
+        });
+        return layerYCenters;
+    }
+    highlightSubtree(node) {
+        const { config, datamodel } = this;
+        clearTimeout(this._highlightTimeoutId);
+        this._highlightTimeoutId = setTimeout(() => {
+            for (const n of datamodel.nodes)
+                n._state.greyout = true;
+            for (const l of datamodel.links)
+                l._state.greyout = true;
+            this.recursiveSetSubtreeState(node, 'sourceLinks', 'target', 'greyout', false);
+            this.recursiveSetSubtreeState(node, 'targetLinks', 'source', 'greyout', false);
+            this._render(config.highlightDuration);
+            this._highlightActive = true;
+        }, config.highlightDelay);
+    }
+    recursiveSetSubtreeState(node, linksKey, nodeKey, key, value) {
+        node._state[key] = value;
+        for (const l of node[linksKey]) {
+            l._state[key] = value;
+            this.recursiveSetSubtreeState(l[nodeKey], linksKey, nodeKey, key, value);
+        }
+    }
+    disableHighlight() {
+        const { config, datamodel } = this;
+        clearTimeout(this._highlightTimeoutId);
+        if (this._highlightActive) {
+            this._highlightActive = false;
+            for (const n of datamodel.nodes)
+                n._state.greyout = false;
+            for (const l of datamodel.links)
+                l._state.greyout = false;
+            this._render(config.highlightDuration);
+        }
+    }
+    _hasLinks() {
+        const { datamodel } = this;
+        return datamodel.links.length > 0;
+    }
+    _getLayerSpacing(nodes) {
+        const { config } = this;
+        if (!(nodes === null || nodes === void 0 ? void 0 : nodes.length))
+            return 0;
+        const firstLayerNode = nodes.find(d => d.layer === 0);
+        const nextLayerNode = nodes.find(d => d.layer === firstLayerNode.layer + 1);
+        return nextLayerNode ? nextLayerNode.x0 - (firstLayerNode.x0 + config.nodeWidth) : this._width - firstLayerNode.x1;
+    }
+    _onNodeMouseOver(d, event) {
+        var _a;
+        const { datamodel } = this;
+        const bleed = (_a = this._bleedCached) !== null && _a !== void 0 ? _a : this.bleed;
+        const nodeSelection = select(event.currentTarget);
+        const sankeyWidth = this.sizing === Sizing.Fit ? this._width : this._extendedWidth;
+        onNodeMouseOver(d, datamodel.nodes, nodeSelection, this.config, sankeyWidth, this._getLayerSpacing(this.datamodel.nodes), bleed);
+    }
+    _onNodeMouseOut(d, event) {
+        var _a;
+        const { datamodel } = this;
+        const bleed = (_a = this._bleedCached) !== null && _a !== void 0 ? _a : this.bleed;
+        const nodeSelection = select(event.currentTarget);
+        const sankeyWidth = this.sizing === Sizing.Fit ? this._width : this._extendedWidth;
+        onNodeMouseOut(d, datamodel.nodes, nodeSelection, this.config, sankeyWidth, this._getLayerSpacing(this.datamodel.nodes), bleed);
+    }
+    _onNodeRectMouseOver(d) {
+        const { config } = this;
+        if (config.highlightSubtreeOnHover)
+            this.highlightSubtree(d);
+    }
+    _onNodeRectMouseOut() {
+        this.disableHighlight();
+    }
+    _onLinkMouseOver(d) {
+        const { config } = this;
+        if (config.highlightSubtreeOnHover)
+            this.highlightSubtree(d.target);
+    }
+    _onLinkMouseOut() {
+        this.disableHighlight();
+    }
+}
+Sankey.selectors = style;
+
+export { Sankey };
+//# sourceMappingURL=index.js.map

@@ -1,0 +1,76 @@
+{
+  "name": "@nuxtjs/tailwindcss",
+  "version": "7.0.0-beta.1",
+  "description": "Tailwind CSS module for Nuxt",
+  "repository": "nuxt-modules/tailwindcss",
+  "license": "MIT",
+  "type": "module",
+  "configKey": "tailwindcss",
+  "compatibility": {
+    "nuxt": ">=3.0.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
+    }
+  },
+  "main": "./dist/module.mjs",
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ]
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@nuxt/kit": "^4.1.0",
+    "@tailwindcss/postcss": "^4.1.12",
+    "@tailwindcss/vite": "^4.1.12",
+    "exsolve": "^1.0.7",
+    "pathe": "^2.0.3",
+    "tailwindcss": "^4.1.12"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "^2.6.3",
+    "@nuxt/eslint": "^1.9.0",
+    "@nuxt/eslint-config": "^1.9.0",
+    "@nuxt/module-builder": "^1.0.2",
+    "@nuxt/test-utils": "^3.19.2",
+    "changelogen": "^0.6.2",
+    "eslint": "^9.34.0",
+    "happy-dom": "^18.0.1",
+    "nuxt": "^4.1.0",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4",
+    "vue-tsc": "^3.0.6"
+  },
+  "resolutions": {
+    "@nuxtjs/tailwindcss": "link:."
+  },
+  "stackblitz": {
+    "startCommand": "pnpm dev:prepare && pnpm dev"
+  },
+  "scripts": {
+    "play": "pnpm dev",
+    "dev": "nuxi dev playground",
+    "dev:build": "nuxi build playground",
+    "dev:generate": "nuxi generate playground",
+    "dev:preview": "nuxi preview playground",
+    "dev:prepare": "nuxt-module-build prepare && pnpm build:stub",
+    "build": "nuxt-module-build build",
+    "build:stub": "pnpm build --stub",
+    "release": "pnpm lint && pnpm test && pnpm prepack && pnpm changelogen --release --push && pnpm publish",
+    "docs:build": "nuxi generate docs",
+    "docs:preview": "nuxi preview docs",
+    "docs:dev": "nuxi dev docs",
+    "lint": "eslint .",
+    "lint:fix": "pnpm lint --fix",
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "test:types": "pnpm dev:prepare && tsc --noEmit && nuxi typecheck playground"
+  }
+}

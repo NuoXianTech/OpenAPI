@@ -1,0 +1,74 @@
+import { defineComponent as d, inject as y, computed as m, ref as x, onMounted as k, nextTick as T, onUnmounted as v, watch as r, createElementBlock as F, openBlock as f } from "vue";
+import { Axis as s } from "@unovis/ts";
+import { useForwardProps as B, arePropsEqual as b } from "../../utils/props.js";
+import { axisAccessorKey as g } from "../../utils/context.js";
+const S = { "data-vis-axis": "" }, O = s.selectors, C = /* @__PURE__ */ d({
+  __name: "index",
+  props: {
+    position: {},
+    type: {},
+    fullSize: { type: Boolean },
+    label: {},
+    labelFontSize: {},
+    labelMargin: {},
+    labelTextFitMode: {},
+    labelTextTrimType: {},
+    labelColor: {},
+    gridLine: { type: Boolean },
+    tickLine: { type: Boolean },
+    domainLine: { type: Boolean },
+    minMaxTicksOnly: { type: Boolean },
+    minMaxTicksOnlyShowGridLines: { type: Boolean },
+    minMaxTicksOnlyWhenWidthIsLess: {},
+    tickFormat: { type: Function },
+    tickValues: {},
+    numTicks: {},
+    tickTextFitMode: {},
+    tickTextWidth: {},
+    tickTextSeparator: {},
+    tickTextForceWordBreak: { type: Boolean },
+    tickTextTrimType: {},
+    tickTextFontSize: {},
+    tickTextAlign: {},
+    tickTextColor: {},
+    tickTextAngle: {},
+    tickTextHideOverlapping: { type: Boolean },
+    tickPadding: {},
+    x: { type: [Function, Number, null] },
+    y: { type: [Function, Number, null, Array] },
+    id: { type: Function },
+    color: { type: [Function, String, Array, null] },
+    xScale: { type: [Object, Function] },
+    yScale: { type: [Object, Function] },
+    excludeFromDomainCalculation: { type: Boolean },
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(p, { expose: u }) {
+    const o = y(g), n = p, i = m(() => o.data.value ?? n.data), a = B(n), t = x();
+    return k(() => {
+      T(() => {
+        var e;
+        t.value = new s(a.value), (e = t.value) == null || e.setData(i.value), o.update(t.value);
+      });
+    }), v(() => {
+      var e;
+      (e = t.value) == null || e.destroy(), o.destroy(n.type);
+    }), r(a, (e, l) => {
+      var c;
+      b(e, l) || (c = t.value) == null || c.setConfig(a.value);
+    }), r(i, () => {
+      var e;
+      (e = t.value) == null || e.setData(i.value);
+    }), u({
+      component: t
+    }), (e, l) => (f(), F("div", S));
+  }
+});
+export {
+  O as VisAxisSelectors,
+  C as default
+};
+//# sourceMappingURL=index.js.map

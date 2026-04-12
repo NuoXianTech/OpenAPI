@@ -1,0 +1,61 @@
+import { defineComponent as d, inject as m, computed as f, ref as b, onMounted as v, nextTick as y, onUnmounted as F, watch as s, createElementBlock as g, openBlock as B } from "vue";
+import { Treemap as c } from "@unovis/ts";
+import { useForwardProps as L, arePropsEqual as S } from "../../utils/props.js";
+import { componentAccessorKey as T } from "../../utils/context.js";
+const _ = { "data-vis-component": "" }, w = c.selectors, A = /* @__PURE__ */ d({
+  __name: "index",
+  props: {
+    id: { type: Function },
+    value: { type: [Function, Number, null] },
+    layers: {},
+    numberFormat: { type: Function },
+    tileLabel: { type: Function },
+    tileColor: { type: [Function, String, Array, null] },
+    tilePadding: {},
+    tilePaddingTop: {},
+    labelInternalNodes: { type: Boolean },
+    labelOffsetX: {},
+    labelOffsetY: {},
+    labelFit: {},
+    labelTrimMode: {},
+    tileBorderRadius: {},
+    tileBorderRadiusFactor: {},
+    enableLightnessVariance: { type: Boolean },
+    enableTileLabelFontSizeVariation: { type: Boolean },
+    tileLabelSmallFontSize: {},
+    tileLabelMediumFontSize: {},
+    tileLabelLargeFontSize: {},
+    showTileClickAffordance: { type: Boolean },
+    lightnessVariationAmount: {},
+    minTileSizeForLabel: {},
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(u, { expose: p }) {
+    const o = m(T), l = u, a = f(() => o.data.value ?? l.data), n = L(l), t = b();
+    return v(() => {
+      y(() => {
+        var e;
+        t.value = new c(n.value), (e = t.value) == null || e.setData(a.value), o.update(t.value);
+      });
+    }), F(() => {
+      var e;
+      (e = t.value) == null || e.destroy(), o.destroy();
+    }), s(n, (e, i) => {
+      var r;
+      S(e, i) || (r = t.value) == null || r.setConfig(n.value);
+    }), s(a, () => {
+      var e;
+      (e = t.value) == null || e.setData(a.value);
+    }), p({
+      component: t
+    }), (e, i) => (B(), g("div", _));
+  }
+});
+export {
+  w as VisTreemapSelectors,
+  A as default
+};
+//# sourceMappingURL=index.js.map

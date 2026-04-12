@@ -1,0 +1,58 @@
+import { defineComponent as y, inject as m, computed as d, ref as F, onMounted as g, nextTick as b, onUnmounted as S, watch as a, createElementBlock as v, openBlock as f } from "vue";
+import { XYLabels as i } from "@unovis/ts";
+import { useForwardProps as x, arePropsEqual as _ } from "../../utils/props.js";
+import { componentAccessorKey as C } from "../../utils/context.js";
+const B = { "data-vis-component": "" }, N = i.selectors, P = /* @__PURE__ */ y({
+  __name: "index",
+  props: {
+    color: { type: [Function, String, Array, null] },
+    y: { type: [Function, Number, null] },
+    xPositioning: { type: [Function, String, null] },
+    yPositioning: { type: [Function, String, null] },
+    labelFontSize: { type: [Function, Number, null] },
+    label: { type: [Function, String, null] },
+    backgroundColor: { type: [Function, String, Array, null] },
+    cursor: { type: [Function, String, null] },
+    labelTextBrightnessRatio: {},
+    clustering: { type: Boolean },
+    clusterLabel: { type: [Function, String, null] },
+    clusterFontSize: { type: [Function, Number, null] },
+    clusterBackgroundColor: { type: [Function, String, Array, null] },
+    clusterCursor: { type: [Function, String, null] },
+    clusterLabelColor: { type: [Function, String, Array, null] },
+    x: { type: [Function, Number, null] },
+    id: { type: Function },
+    xScale: { type: [Object, Function] },
+    yScale: { type: [Object, Function] },
+    excludeFromDomainCalculation: { type: Boolean },
+    duration: {},
+    events: {},
+    attributes: {},
+    data: {}
+  },
+  setup(s, { expose: p }) {
+    const e = m(C), r = s, o = d(() => e.data.value ?? r.data), l = x(r), n = F();
+    return g(() => {
+      b(() => {
+        var t;
+        n.value = new i(l.value), (t = n.value) == null || t.setData(o.value), e.update(n.value);
+      });
+    }), S(() => {
+      var t;
+      (t = n.value) == null || t.destroy(), e.destroy();
+    }), a(l, (t, u) => {
+      var c;
+      _(t, u) || (c = n.value) == null || c.setConfig(l.value);
+    }), a(o, () => {
+      var t;
+      (t = n.value) == null || t.setData(o.value);
+    }), p({
+      component: n
+    }), (t, u) => (f(), v("div", B));
+  }
+});
+export {
+  N as VisXYLabelsSelectors,
+  P as default
+};
+//# sourceMappingURL=index.js.map

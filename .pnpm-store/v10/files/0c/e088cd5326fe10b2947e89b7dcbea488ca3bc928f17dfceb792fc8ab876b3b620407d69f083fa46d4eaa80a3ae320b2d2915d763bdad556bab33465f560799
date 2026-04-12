@@ -1,0 +1,1 @@
+{"version":3,"file":"constants.js","sources":["../../../src/components/timeline/constants.ts"],"sourcesContent":["export const TIMELINE_DEFAULT_ARROW_HEAD_LENGTH = 8\nexport const TIMELINE_DEFAULT_ARROW_HEAD_WIDTH = 6\nexport const TIMELINE_DEFAULT_ARROW_MARGIN = 3\n"],"names":[],"mappings":"AAAO,MAAM,kCAAkC,GAAG,EAAC;AAC5C,MAAM,iCAAiC,GAAG,EAAC;AAC3C,MAAM,6BAA6B,GAAG;;;;"}
