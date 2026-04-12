@@ -37,7 +37,7 @@
 │   └── utils/            # 服务端工具类 (邮件、校验、密码哈希等)
 ├── shared/               # 前后端共享目录 (类型定义、常量)
 ├── tests/                # 测试目录
-│   └── e2e/              # Playwright + Vitest 端到端测试
+│   └── e2e/              # Vitest + @nuxt/test-utils 接口/集成 e2e 测试
 ├── nuxt.config.ts        # Nuxt 配置文件
 └── package.json          # 依赖清单与运行脚本
 ```
@@ -53,7 +53,7 @@
 
 ## 3. 核心数据库模型 (Schema)
 
-所有模型定义在 `server/db/schema/` 目录下。
+以下列出核心/主要模型，均定义在 `server/db/schema/` 目录下（项目还包含 `friendLinks`、`fabMenuItems`、`emailVerificationTokens` 等其他表）。
 
 - **`users` (用户表)**: 存储用户信息（用户名、邮箱、密码哈希、权限状态）。包含账户激活与封禁状态。
 - **`apiLists` (接口列表表)**: 平台提供的 API 服务列表。记录了 API 路径、请求方法、限流规则及状态等信息。
@@ -104,8 +104,8 @@
 - **postgres / @electric-sql/pglite**: PostgreSQL 数据库驱动（本地测试或嵌入式 PG）。
 
 ### 测试依赖
-- **vitest & @nuxt/test-utils**: 核心测试框架与 Nuxt 测试工具链，用于编写 e2e 与集成测试。
-- **playwright-core**: 驱动浏览器进行真实的 E2E 交互测试。
+- **vitest & @nuxt/test-utils**: 核心测试框架与 Nuxt 测试工具链，用于编写当前基于 Node 环境请求后端接口的 e2e 与集成测试。
+- **playwright-core**: 浏览器自动化相关的底层依赖，可用于后续扩展真实浏览器场景的测试能力；当前测试用例未直接使用 Playwright API。
 
 ---
 
