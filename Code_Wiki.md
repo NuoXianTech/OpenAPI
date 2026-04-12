@@ -157,5 +157,16 @@ pnpm run test:e2e:users        # 测试用户管理模块
 pnpm run test:e2e:calls        # 测试统计监控功能
 ```
 
+## 7. 官方开发参考文档
+
+在进行项目二次开发或贡献代码时，可以参考以下核心技术栈的官方文档：
+
+- **Nuxt 4 官方文档**: 框架核心指南与 API 参考
+  [https://nuxt.com/docs/4.x/getting-started/introduction](https://nuxt.com/docs/4.x/getting-started/introduction)
+- **NuxtHub 官方文档**: 了解数据库、缓存与 Serverless 部署能力
+  [https://hub.nuxt.com/docs/getting-started](https://hub.nuxt.com/docs/getting-started)
+- **shadcn-vue 官方文档**: 组件库用法与可定制化 UI 体系
+  [https://www.shadcn-vue.com/docs/introduction](https://www.shadcn-vue.com/docs/introduction)
+
 ---
 *文档生成于：2026年4月12日*
