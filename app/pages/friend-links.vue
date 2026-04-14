@@ -39,8 +39,12 @@ const filteredItems = computed(() => {
 
 const isFilteredEmpty = computed(() => !loading.value && !error.value && filteredItems.value.length === 0 && items.value.length > 0)
 
+const retryFetchFriendLinks = async () => {
+  await fetchFriendLinks()
+}
+
 onMounted(() => {
-  void fetchFriendLinks()
+  void retryFetchFriendLinks()
 })
 </script>
 
@@ -61,22 +65,20 @@ onMounted(() => {
         </div>
       </div>
 
-      <Button
-        as-child
+      <UButton
+        to="/"
         variant="outline"
         size="sm"
         class="ml-auto"
       >
-        <NuxtLink to="/">
-          <Icon
-            name="mdi:home"
-            size="14"
-            class="transition-transform duration-300 chev"
-            :ssr="true"
-          />
-          <span>返回首页</span>
-        </NuxtLink>
-      </Button>
+        <Icon
+          name="mdi:home"
+          size="14"
+          class="transition-transform duration-300 chev"
+          :ssr="true"
+        />
+        <span>返回首页</span>
+      </UButton>
     </header>
 
     <main class="mx-auto max-w-[1100px] px-5 pb-6">
@@ -100,19 +102,19 @@ onMounted(() => {
           key="loading"
           class="py-6"
         >
-          <Card class="state-panel border-border py-5 shadow-sm">
-            <CardContent class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-border py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted-foreground">
               加载中...
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
         </section>
 
         <section
           v-else-if="error"
           key="error"
         >
-          <Card class="state-panel border-border py-5 shadow-sm">
-            <CardContent class="px-5 text-center">
+          <UCard class="state-panel border-border py-5 shadow-sm">
+            <div class="px-5 text-center">
               <div class="font-semibold">
                 加载失败
               </div>
@@ -120,16 +122,16 @@ onMounted(() => {
                 {{ error }}
               </div>
               <div class="mt-3">
-                <Button
+                <UButton
                   variant="outline"
                   size="sm"
-                  @click="fetchFriendLinks"
+                  @click="retryFetchFriendLinks"
                 >
                   重试
-                </Button>
+                </UButton>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
         </section>
 
         <section
@@ -137,11 +139,11 @@ onMounted(() => {
           key="empty"
           class="py-2"
         >
-          <Card class="state-panel border-border py-5 shadow-sm">
-            <CardContent class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-border py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted-foreground">
               暂无可展示的友情链接。
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
         </section>
 
         <section
@@ -149,11 +151,11 @@ onMounted(() => {
           key="filtered-empty"
           class="py-2"
         >
-          <Card class="state-panel border-border py-5 shadow-sm">
-            <CardContent class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-border py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted-foreground">
               当前筛选条件没有匹配结果，试试其他关键词或状态。
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
         </section>
 
         <section

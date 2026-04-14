@@ -1,59 +1,9 @@
 <script lang="ts" setup>
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/components/ui/alert-dialog'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '~/components/ui/empty'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import { ScrollArea } from '~/components/ui/scroll-area'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
-import { Separator } from '~/components/ui/separator'
-import { Switch } from '~/components/ui/switch'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '~/components/ui/table'
-import { toast } from 'vue-sonner'
-
 interface UserItem {
   id: number
   username: string
   email: string
   displayName: string | null
-  avatarUrl: string | null
   isActive: boolean
   isBanned: boolean
   lastLoginAt: string | null
@@ -105,6 +55,10 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
   return fallback
 }
+
+const toast = useToast()
+const notifySuccess = (message: string) => toast.add({ title: message, color: 'success' })
+const notifyError = (message: string) => toast.add({ title: message, color: 'error' })
 
 const resetForm = () => {
   Object.assign(form, {
@@ -224,7 +178,7 @@ const loadUsers = async () => {
   catch (error: unknown) {
     const message = getErrorMessage(error, '加载用户失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -291,7 +245,7 @@ const loadApiKeys = async () => {
   catch (error: unknown) {
     const message = getErrorMessage(error, '加载密钥失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -325,13 +279,13 @@ const saveUser = async () => {
   try {
     await $fetch('/api/admin/users/update', { method: 'PUT', body: form })
     notice.value = '用户已更新'
-    toast.success(notice.value)
+    notifySuccess(notice.value)
     await loadUsers()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '更新用户失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -344,13 +298,22 @@ const deleteUser = async (id: number) => {
   try {
     await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
     notice.value = '用户已删除'
-    toast.success(notice.value)
+    notifySuccess(notice.value)
     await loadUsers()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '删除用户失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
+  }
+}
+
+const confirmDeleteUser = () => {
+  if (!form.id) {
+    return
+  }
+  if (globalThis.confirm('确认删除该用户？删除后关联数据将不可恢复。')) {
+    void deleteUser(form.id)
   }
 }
 
@@ -358,13 +321,13 @@ const toggleBan = async (user: UserItem) => {
   try {
     await $fetch('/api/admin/users/ban', { method: 'POST', body: { id: user.id, isBanned: !user.isBanned } })
     notice.value = user.isBanned ? '用户已解封' : '用户已封禁'
-    toast.success(notice.value)
+    notifySuccess(notice.value)
     await loadUsers()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '切换封禁失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -380,39 +343,51 @@ const createApiKey = async () => {
       body: { userId: selectedUserId.value, name: keyName.value || '默认密钥' },
     })
     keyName.value = ''
-    toast.success('API Key 已新增')
+    notifySuccess('API Key 已新增')
     await loadApiKeys()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '新增密钥失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
 const deleteApiKey = async (id: number) => {
   try {
     await $fetch('/api/admin/users/apikeys/delete', { method: 'POST', body: { id } })
-    toast.success('API Key 已删除')
+    notifySuccess('API Key 已删除')
     await loadApiKeys()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '删除密钥失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
 const resetApiKey = async (id: number) => {
   try {
     await $fetch('/api/admin/users/apikeys/reset', { method: 'POST', body: { id } })
-    toast.success('API Key 已重置')
+    notifySuccess('API Key 已重置')
     await loadApiKeys()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '重置密钥失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
+  }
+}
+
+const confirmResetApiKey = (id: number) => {
+  if (globalThis.confirm('确认重置密钥？重置后旧 Key 将失效。')) {
+    void resetApiKey(id)
+  }
+}
+
+const confirmDeleteApiKey = (id: number) => {
+  if (globalThis.confirm('确认删除密钥？删除后需要重新创建才可使用。')) {
+    void deleteApiKey(id)
   }
 }
 
@@ -422,10 +397,10 @@ const copyApiKey = async (value: string) => {
       throw new Error('当前环境不支持复制')
     }
     await navigator.clipboard.writeText(value)
-    toast.success('API Key 已复制')
+    notifySuccess('API Key 已复制')
   }
   catch (error: unknown) {
-    toast.error(getErrorMessage(error, '复制失败'))
+    notifyError(getErrorMessage(error, '复制失败'))
   }
 }
 
@@ -445,126 +420,120 @@ onMounted(async () => {
           编辑用户、封禁用户，并管理该用户的 API Key。
         </p>
       </div>
-      <Badge variant="secondary">
+      <UBadge
+        color="neutral"
+        variant="soft"
+      >
         {{ filteredUsers.length }} / {{ users.length }} Users
-      </Badge>
+      </UBadge>
     </div>
 
     <div
       v-if="notice"
       class="mb-3"
     >
-      <Badge variant="outline">
+      <UBadge variant="outline">
         {{ notice }}
-      </Badge>
+      </UBadge>
     </div>
 
     <div class="grid gap-3 md:grid-cols-[320px_1fr]">
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-3">
-          <CardTitle class="text-base">
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-3">
+          <h3 class="text-base">
             用户列表
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p>
             按用户名或邮箱搜索
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-3">
+          </p>
+        </div>
+        <div class="grid gap-3">
           <div class="grid grid-cols-[1fr_auto] gap-2">
-            <Input
+            <UInput
               v-model="keyword"
               placeholder="搜索用户名/邮箱"
               @keydown.enter.prevent="loadUsers"
             />
-            <Button @click="loadUsers">
+            <UButton @click="loadUsers">
               搜索
-            </Button>
+            </UButton>
           </div>
 
           <div class="grid gap-2 md:grid-cols-3">
-            <Select v-model="activeFilter">
-              <SelectTrigger>
-                <SelectValue placeholder="激活状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  全部激活状态
-                </SelectItem>
-                <SelectItem value="active">
-                  已激活
-                </SelectItem>
-                <SelectItem value="inactive">
-                  未激活
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select v-model="banFilter">
-              <SelectTrigger>
-                <SelectValue placeholder="封禁状态" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">
-                  全部封禁状态
-                </SelectItem>
-                <SelectItem value="normal">
-                  正常
-                </SelectItem>
-                <SelectItem value="banned">
-                  已封禁
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              :model-value="String(userPageSize)"
-              @update:model-value="(value) => userPageSize = Number(value)"
+            <select
+              v-model="activeFilter"
+              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="每页条数" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="size in userPageSizeOptions"
-                  :key="size"
-                  :value="String(size)"
-                >
-                  每页 {{ size }} 条
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="all">
+                全部激活状态
+              </option>
+              <option value="active">
+                已激活
+              </option>
+              <option value="inactive">
+                未激活
+              </option>
+            </select>
+
+            <select
+              v-model="banFilter"
+              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option value="all">
+                全部封禁状态
+              </option>
+              <option value="normal">
+                正常
+              </option>
+              <option value="banned">
+                已封禁
+              </option>
+            </select>
+
+            <select
+              v-model.number="userPageSize"
+              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+            >
+              <option
+                v-for="size in userPageSizeOptions"
+                :key="size"
+                :value="size"
+              >
+                每页 {{ size }} 条
+              </option>
+            </select>
           </div>
 
           <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
             <span>共 {{ filteredUsers.length }} 条，当前显示 {{ userPageRangeText }}</span>
-            <Button
+            <UButton
               variant="ghost"
               size="sm"
               @click="resetUserFilters"
             >
               重置筛选
-            </Button>
+            </UButton>
           </div>
 
-          <Empty
+          <UEmpty
             v-if="!filteredUsers.length"
             class="border border-dashed border-border bg-background/60"
           >
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
+            <div>
+              <div>
                 <Icon
                   name="mdi:account-search"
                   class="size-5"
                 />
-              </EmptyMedia>
-              <EmptyTitle>暂无用户</EmptyTitle>
-              <EmptyDescription>
+              </div>
+              <h3>暂无用户</h3>
+              <p>
                 当前筛选条件下没有可管理的用户。
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
+              </p>
+            </div>
+          </UEmpty>
 
-          <ScrollArea
+          <UScrollArea
             v-else
             class="max-h-[540px] pr-2"
           >
@@ -586,13 +555,16 @@ onMounted(async () => {
                       {{ user.email }}
                     </div>
                   </div>
-                  <Badge :variant="user.isBanned ? 'destructive' : 'outline'">
+                  <UBadge
+                    variant="outline"
+                    :color="user.isBanned ? 'error' : 'neutral'"
+                  >
                     {{ user.isBanned ? '封禁' : '正常' }}
-                  </Badge>
+                  </UBadge>
                 </div>
               </button>
             </div>
-          </ScrollArea>
+          </UScrollArea>
 
           <div
             v-if="filteredUsers.length"
@@ -600,60 +572,60 @@ onMounted(async () => {
           >
             <span>第 {{ userCurrentPage }} / {{ userTotalPages }} 页</span>
             <div class="flex flex-wrap gap-2">
-              <Button
+              <UButton
                 variant="outline"
                 size="sm"
                 :disabled="userCurrentPage === 1"
                 @click="userCurrentPage = 1"
               >
                 首页
-              </Button>
-              <Button
+              </UButton>
+              <UButton
                 variant="outline"
                 size="sm"
                 :disabled="userCurrentPage === 1"
                 @click="goPrevUserPage"
               >
                 上一页
-              </Button>
-              <Button
+              </UButton>
+              <UButton
                 variant="outline"
                 size="sm"
                 :disabled="userCurrentPage >= userTotalPages"
                 @click="goNextUserPage"
               >
                 下一页
-              </Button>
-              <Button
+              </UButton>
+              <UButton
                 variant="outline"
                 size="sm"
                 :disabled="userCurrentPage >= userTotalPages"
                 @click="userCurrentPage = userTotalPages"
               >
                 末页
-              </Button>
+              </UButton>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </UCard>
 
       <div class="grid gap-4">
-        <Card class="border-border/70 bg-card/90 shadow-sm">
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base">
+        <UCard class="border-border/70 bg-card/90 shadow-sm">
+          <div class="pb-3">
+            <h3 class="text-base">
               编辑用户
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <p>
               {{ selectedUser ? `用户 ID: ${selectedUser.id}` : '请先从左侧选择用户' }}
-            </CardDescription>
-          </CardHeader>
-          <CardContent class="grid gap-4">
+            </p>
+          </div>
+          <div class="grid gap-4">
             <div class="grid gap-3 md:grid-cols-2">
               <div class="grid gap-2">
-                <Label for="username">
+                <label for="username">
                   用户名
-                </Label>
-                <Input
+                </label>
+                <UInput
                   id="username"
                   v-model="form.username"
                   placeholder="用户名"
@@ -662,10 +634,10 @@ onMounted(async () => {
               </div>
 
               <div class="grid gap-2">
-                <Label for="email">
+                <label for="email">
                   邮箱
-                </Label>
-                <Input
+                </label>
+                <UInput
                   id="email"
                   v-model="form.email"
                   placeholder="邮箱"
@@ -674,10 +646,10 @@ onMounted(async () => {
               </div>
 
               <div class="grid gap-2">
-                <Label for="displayName">
+                <label for="displayName">
                   显示名称
-                </Label>
-                <Input
+                </label>
+                <UInput
                   id="displayName"
                   v-model="form.displayName"
                   placeholder="显示名称"
@@ -686,10 +658,10 @@ onMounted(async () => {
               </div>
 
               <div class="grid gap-2">
-                <Label for="avatarUrl">
+                <label for="avatarUrl">
                   头像 URL
-                </Label>
-                <Input
+                </label>
+                <UInput
                   id="avatarUrl"
                   v-model="form.avatarUrl"
                   placeholder="头像 URL"
@@ -708,7 +680,7 @@ onMounted(async () => {
                     未激活用户无法正常登录
                   </div>
                 </div>
-                <Switch
+                <USwitch
                   v-model="form.isActive"
                   :disabled="!form.id"
                 />
@@ -723,7 +695,7 @@ onMounted(async () => {
                     封禁后用户将无法调用 API
                   </div>
                 </div>
-                <Switch
+                <USwitch
                   v-model="form.isBanned"
                   :disabled="!form.id"
                 />
@@ -739,125 +711,96 @@ onMounted(async () => {
               </div>
             </div>
 
-            <Separator />
+            <USeparator />
 
             <div class="flex flex-wrap gap-2">
-              <Button
+              <UButton
                 :disabled="!form.id"
                 @click="saveUser"
               >
                 保存用户
-              </Button>
+              </UButton>
 
-              <Button
+              <UButton
                 variant="outline"
                 :disabled="!form.id"
                 @click="toggleBan(form as UserItem)"
               >
                 {{ form.isBanned ? '解除封禁' : '封禁用户' }}
-              </Button>
+              </UButton>
 
-              <AlertDialog>
-                <AlertDialogTrigger as-child>
-                  <Button
-                    variant="destructive"
-                    :disabled="!form.id"
-                  >
-                    删除用户
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>确认删除该用户？</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      删除后该用户关联数据将不可恢复。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>取消</AlertDialogCancel>
-                    <AlertDialogAction
-                      class="bg-destructive text-white hover:bg-destructive/90"
-                      @click="deleteUser(form.id)"
-                    >
-                      确认删除
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <UButton
+                color="error"
+                :disabled="!form.id"
+                @click="confirmDeleteUser"
+              >
+                删除用户
+              </UButton>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </UCard>
 
-        <Card class="border-border/70 bg-card/90 shadow-sm">
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base">
+        <UCard class="border-border/70 bg-card/90 shadow-sm">
+          <div class="pb-3">
+            <h3 class="text-base">
               用户 API Key
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <p>
               当前用户：{{ selectedUser?.username || '未选择' }}
-            </CardDescription>
-          </CardHeader>
-          <CardContent class="grid gap-3">
+            </p>
+          </div>
+          <div class="grid gap-3">
             <div class="grid gap-2 md:grid-cols-[1fr_auto]">
-              <Input
+              <UInput
                 v-model="keyName"
                 placeholder="新密钥名称"
                 :disabled="!selectedUserId"
                 @keydown.enter.prevent="createApiKey"
               />
-              <Button
+              <UButton
                 :disabled="!selectedUserId"
                 @click="createApiKey"
               >
                 新增密钥
-              </Button>
+              </UButton>
             </div>
 
             <div class="grid gap-2 md:grid-cols-3">
-              <Input
+              <UInput
                 v-model="apiKeyKeyword"
                 placeholder="搜索密钥名称或 Key"
                 :disabled="!selectedUserId"
               />
 
-              <Select
+              <select
                 v-model="apiKeyStatusFilter"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
                 :disabled="!selectedUserId"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="密钥状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    全部状态
-                  </SelectItem>
-                  <SelectItem value="active">
-                    已启用
-                  </SelectItem>
-                  <SelectItem value="inactive">
-                    未启用
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="all">
+                  全部状态
+                </option>
+                <option value="active">
+                  已启用
+                </option>
+                <option value="inactive">
+                  未启用
+                </option>
+              </select>
 
-              <Select
-                :model-value="String(apiKeyPageSize)"
+              <select
+                v-model.number="apiKeyPageSize"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
                 :disabled="!selectedUserId"
-                @update:model-value="(value) => apiKeyPageSize = Number(value)"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="每页条数" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="size in apiKeyPageSizeOptions"
-                    :key="size"
-                    :value="String(size)"
-                  >
-                    每页 {{ size }} 条
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <option
+                  v-for="size in apiKeyPageSizeOptions"
+                  :key="size"
+                  :value="size"
+                >
+                  每页 {{ size }} 条
+                </option>
+              </select>
             </div>
 
             <div
@@ -865,222 +808,188 @@ onMounted(async () => {
               class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
             >
               <span>共 {{ filteredApiKeys.length }} 条，当前显示 {{ apiKeyPageRangeText }}</span>
-              <Button
+              <UButton
                 variant="ghost"
                 size="sm"
                 @click="resetApiKeyFilters"
               >
                 重置筛选
-              </Button>
+              </UButton>
             </div>
 
-            <Empty
+            <UEmpty
               v-if="!selectedUserId"
               class="border border-dashed border-border bg-background/60"
             >
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
+              <div>
+                <div>
                   <Icon
                     name="mdi:account-arrow-left-outline"
                     class="size-5"
                   />
-                </EmptyMedia>
-                <EmptyTitle>请先选择用户</EmptyTitle>
-                <EmptyDescription>
+                </div>
+                <h3>请先选择用户</h3>
+                <p>
                   选择用户后即可管理对应 API Key。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </p>
+              </div>
+            </UEmpty>
 
-            <Empty
+            <UEmpty
               v-else-if="!apiKeys.length"
               class="border border-dashed border-border bg-background/60"
             >
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
+              <div>
+                <div>
                   <Icon
                     name="mdi:key-plus"
                     class="size-5"
                   />
-                </EmptyMedia>
-                <EmptyTitle>暂无 API Key</EmptyTitle>
-                <EmptyDescription>
+                </div>
+                <h3>暂无 API Key</h3>
+                <p>
                   当前用户还没有创建任何密钥。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </p>
+              </div>
+            </UEmpty>
 
-            <Empty
+            <UEmpty
               v-else-if="!filteredApiKeys.length"
               class="border border-dashed border-border bg-background/60"
             >
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
+              <div>
+                <div>
                   <Icon
                     name="mdi:key-chain"
                     class="size-5"
                   />
-                </EmptyMedia>
-                <EmptyTitle>没有匹配的密钥</EmptyTitle>
-                <EmptyDescription>
+                </div>
+                <h3>没有匹配的密钥</h3>
+                <p>
                   当前筛选条件下没有可展示的 API Key。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </p>
+              </div>
+            </UEmpty>
 
             <div
               v-else
               class="rounded-md border"
             >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-[160px]">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="w-[160px]">
                       名称
-                    </TableHead>
-                    <TableHead>
+                    </th>
+                    <th>
                       Key
-                    </TableHead>
-                    <TableHead class="w-[90px]">
+                    </th>
+                    <th class="w-[90px]">
                       状态
-                    </TableHead>
-                    <TableHead class="w-[170px]">
+                    </th>
+                    <th class="w-[170px]">
                       创建时间
-                    </TableHead>
-                    <TableHead class="w-[300px] text-right">
+                    </th>
+                    <th class="w-[300px] text-right">
                       操作
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
                     v-for="item in pagedApiKeys"
                     :key="item.id"
                   >
-                    <TableCell class="font-medium">
+                    <td class="font-medium">
                       {{ item.name }}
-                    </TableCell>
-                    <TableCell class="max-w-[420px] truncate text-xs text-muted-foreground">
+                    </td>
+                    <td class="max-w-[420px] truncate text-xs text-muted-foreground">
                       {{ item.apiKey }}
-                    </TableCell>
-                    <TableCell>
-                      <Badge :variant="item.isActive ? 'secondary' : 'outline'">
+                    </td>
+                    <td>
+                      <UBadge
+                        variant="outline"
+                        :color="item.isActive ? 'success' : 'neutral'"
+                      >
                         {{ item.isActive ? '启用' : '停用' }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="text-xs text-muted-foreground">
+                      </UBadge>
+                    </td>
+                    <td class="text-xs text-muted-foreground">
                       {{ formatDate(item.createdAt) }}
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td>
                       <div class="flex justify-end gap-2">
-                        <Button
+                        <UButton
                           variant="outline"
                           size="sm"
                           @click="copyApiKey(item.apiKey)"
                         >
                           复制
-                        </Button>
+                        </UButton>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger as-child>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                            >
-                              重置
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>确认重置密钥？</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                重置后旧 Key 将失效。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
-                              <AlertDialogAction @click="resetApiKey(item.id)">
-                                确认重置
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <UButton
+                          variant="outline"
+                          size="sm"
+                          @click="confirmResetApiKey(item.id)"
+                        >
+                          重置
+                        </UButton>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger as-child>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                            >
-                              删除
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>确认删除密钥？</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                删除后需要重新创建才可使用。
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>取消</AlertDialogCancel>
-                              <AlertDialogAction
-                                class="bg-destructive text-white hover:bg-destructive/90"
-                                @click="deleteApiKey(item.id)"
-                              >
-                                确认删除
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        <UButton
+                          color="error"
+                          size="sm"
+                          @click="confirmDeleteApiKey(item.id)"
+                        >
+                          删除
+                        </UButton>
                       </div>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               <div class="flex items-center justify-between border-t px-4 py-3">
                 <p class="text-xs text-muted-foreground">
                   第 {{ apiKeyCurrentPage }} / {{ apiKeyTotalPages }} 页
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  <Button
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="apiKeyCurrentPage === 1"
                     @click="apiKeyCurrentPage = 1"
                   >
                     首页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="apiKeyCurrentPage === 1"
                     @click="goPrevApiKeyPage"
                   >
                     上一页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="apiKeyCurrentPage >= apiKeyTotalPages"
                     @click="goNextApiKeyPage"
                   >
                     下一页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="apiKeyCurrentPage >= apiKeyTotalPages"
                     @click="apiKeyCurrentPage = apiKeyTotalPages"
                   >
                     末页
-                  </Button>
+                  </UButton>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </UCard>
       </div>
     </div>
   </div>

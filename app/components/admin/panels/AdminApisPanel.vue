@@ -1,46 +1,5 @@
 <script lang="ts" setup>
 import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/components/ui/alert-dialog'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import { Checkbox } from '~/components/ui/checkbox'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '~/components/ui/empty'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
-import { Switch } from '~/components/ui/switch'
-import { Textarea } from '~/components/ui/textarea'
-import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
-import { toast } from 'vue-sonner'
 
 interface ApiItem {
   id: number
@@ -72,6 +31,7 @@ const statusOptions = [
   { label: '维护', value: 2 },
   { label: '废弃', value: 3 },
 ]
+const CATEGORY_TAG_MAX_COUNT = 5
 
 const catalogApis = ref<ApiItem[]>([])
 const notice = ref('')
@@ -90,6 +50,10 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
   return fallback
 }
+
+const toast = useToast()
+const notifySuccess = (message: string) => toast.add({ title: message, color: 'success' })
+const notifyError = (message: string) => toast.add({ title: message, color: 'error' })
 
 const form = reactive({
   id: 0,
@@ -283,7 +247,7 @@ const loadCatalog = async () => {
   catch (error: unknown) {
     const message = getErrorMessage(error, '加载接口列表失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -314,39 +278,45 @@ const saveApi = async () => {
       await $fetch('/api/admin/apis/add', { method: 'POST', body: payload })
     }
     notice.value = '接口已保存'
-    toast.success(notice.value)
+    notifySuccess(notice.value)
     await loadCatalog()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '保存接口失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
 const deleteApi = async (id: number) => {
   try {
     await $fetch('/api/admin/apis/delete', { method: 'POST', body: { id } })
-    toast.success('接口已删除')
+    notifySuccess('接口已删除')
     await loadCatalog()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '删除接口失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
+  }
+}
+
+const confirmDeleteApi = (id: number) => {
+  if (globalThis.confirm('确认删除该接口？删除后无法恢复。')) {
+    void deleteApi(id)
   }
 }
 
 const toggle = async (item: ApiItem, field: 'isEnabled' | 'isStatistics') => {
   try {
     await $fetch('/api/admin/apis/toggle', { method: 'PUT', body: { id: item.id, field, value: !item[field] } })
-    toast.success(field === 'isEnabled' ? '启停状态已更新' : '统计开关已更新')
+    notifySuccess(field === 'isEnabled' ? '启停状态已更新' : '统计开关已更新')
     await loadCatalog()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '切换状态失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -364,61 +334,59 @@ onMounted(loadCatalog)
           维护 API 元数据、调用统计开关、启停状态与限流配置。
         </p>
       </div>
-      <Badge variant="secondary">
+      <UBadge
+        color="neutral"
+        variant="soft"
+      >
         {{ filteredApis.length }} APIs
-      </Badge>
+      </UBadge>
     </div>
 
     <div
       v-if="notice"
       class="mb-3"
     >
-      <Badge variant="outline">
+      <UBadge variant="outline">
         {{ notice }}
-      </Badge>
+      </UBadge>
     </div>
 
     <div class="grid gap-4">
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-3">
-          <CardTitle class="text-base">
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-3">
+          <h3 class="text-base">
             筛选条件
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p>
             支持关键词、状态和分类 tag 筛选
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-3">
+          </p>
+        </div>
+        <div class="grid gap-3">
           <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto]">
-            <Input
+            <UInput
               v-model="query"
               placeholder="搜索 code / name / description"
             />
 
-            <Select
-              :model-value="String(pageSize)"
-              @update:model-value="(value) => pageSize = Number(value)"
+            <select
+              v-model.number="pageSize"
+              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="每页条数" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem
-                  v-for="size in pageSizeOptions"
-                  :key="size"
-                  :value="String(size)"
-                >
-                  每页 {{ size }} 条
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <option
+                v-for="size in pageSizeOptions"
+                :key="size"
+                :value="size"
+              >
+                每页 {{ size }} 条
+              </option>
+            </select>
 
-            <Button
+            <UButton
               variant="ghost"
               @click="resetListFilters"
             >
               重置筛选
-            </Button>
+            </UButton>
           </div>
           <div>
             <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
@@ -445,55 +413,50 @@ onMounted(loadCatalog)
           <div class="text-xs text-muted-foreground">
             共 {{ filteredApis.length }} 条，当前显示 {{ pageRangeText }}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </UCard>
 
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-3">
-          <CardTitle class="text-base">
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-3">
+          <h3 class="text-base">
             {{ form.id ? `编辑接口 #${form.id}` : '新增接口' }}
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p>
             填写接口元数据和调用策略
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-3">
+          </p>
+        </div>
+        <div class="grid gap-3">
           <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <Input
+            <UInput
               v-model="form.code"
               placeholder="code"
               :disabled="form.id !== 0"
             />
-            <Input
+            <UInput
               v-model="form.name"
               placeholder="name"
             />
-            <Input
+            <UInput
               v-model="form.shortDesc"
               placeholder="shortDesc"
             />
 
             <div class="grid gap-2">
-              <Label>
+              <label>
                 状态
-              </Label>
-              <Select
-                :model-value="String(form.status)"
-                @update:model-value="(value) => form.status = Number(value)"
+              </label>
+              <select
+                v-model.number="form.status"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="option in statusOptions"
-                    :key="option.value"
-                    :value="String(option.value)"
-                  >
-                    {{ option.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <option
+                  v-for="option in statusOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
 
             <div class="rounded-md border border-input bg-background p-3 md:col-span-2">
@@ -506,7 +469,7 @@ onMounted(loadCatalog)
                   :key="method"
                   class="flex items-center gap-1 text-sm"
                 >
-                  <Checkbox
+                  <UCheckbox
                     :model-value="isMethodChecked(method)"
                     @update:model-value="(checked) => setMethodChecked(method, checked)"
                   />
@@ -515,15 +478,15 @@ onMounted(loadCatalog)
               </div>
             </div>
 
-            <Input
+            <UInput
               v-model="form.apiPath"
               placeholder="apiPath"
             />
-            <Input
+            <UInput
               v-model="form.docUrl"
               placeholder="docUrl"
             />
-            <Input
+            <UInput
               v-model.number="form.rateLimitPerMinute"
               type="number"
               placeholder="rate limit"
@@ -534,17 +497,17 @@ onMounted(loadCatalog)
                 分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
               </div>
               <div class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-input bg-background p-2">
-                <Badge
+                <UBadge
                   v-for="tag in formCategoryTags"
                   :key="`form-tag-${tag}`"
                   variant="outline"
                   class="gap-1"
                 >
                   <span>{{ tag }}</span>
-                  <Button
+                  <UButton
                     type="button"
                     variant="ghost"
-                    size="icon-sm"
+                    size="xs"
                     class="h-4 w-4 p-0"
                     @click="removeCategoryTag(tag)"
                   >
@@ -552,23 +515,23 @@ onMounted(loadCatalog)
                       name="mdi:close"
                       size="12"
                     />
-                  </Button>
-                </Badge>
-                <Input
+                  </UButton>
+                </UBadge>
+                <UInput
                   v-model="categoryDraft"
                   class="min-w-[160px] flex-1 border-0 shadow-none focus-visible:ring-0"
                   placeholder="输入标签后回车，支持 test1,test2"
                   @keydown.enter.prevent="commitCategoryDraft"
                   @blur="commitCategoryDraft"
                 />
-                <Button
+                <UButton
                   type="button"
                   variant="outline"
                   size="sm"
                   @click="commitCategoryDraft"
                 >
                   添加
-                </Button>
+                </UButton>
               </div>
               <div class="text-xs text-muted-foreground mt-1 flex items-center justify-between gap-2">
                 <span>{{ categoryTagHint }}</span>
@@ -577,7 +540,7 @@ onMounted(loadCatalog)
             </div>
           </div>
 
-          <Textarea
+          <UTextarea
             v-model="form.description"
             class="min-h-[96px]"
             placeholder="description"
@@ -588,47 +551,47 @@ onMounted(loadCatalog)
               <div class="text-sm">
                 启用
               </div>
-              <Switch v-model="form.isEnabled" />
+              <USwitch v-model="form.isEnabled" />
             </div>
             <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <div class="text-sm">
                 需要 API Key
               </div>
-              <Switch v-model="form.isApiKey" />
+              <USwitch v-model="form.isApiKey" />
             </div>
             <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
               <div class="text-sm">
                 开启统计
               </div>
-              <Switch v-model="form.isStatistics" />
+              <USwitch v-model="form.isStatistics" />
             </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <Button @click="saveApi">
+            <UButton @click="saveApi">
               保存接口
-            </Button>
+            </UButton>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </UCard>
 
-      <Empty
+      <UEmpty
         v-if="!filteredApis.length"
         class="border border-dashed border-border bg-background/60"
       >
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
+        <div>
+          <div>
             <Icon
               name="mdi:api-off"
               class="size-5"
             />
-          </EmptyMedia>
-          <EmptyTitle>暂无接口数据</EmptyTitle>
-          <EmptyDescription>
+          </div>
+          <h3>暂无接口数据</h3>
+          <p>
             调整筛选条件或新增接口后会显示在这里。
-          </EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+          </p>
+        </div>
+      </UEmpty>
 
       <TransitionGroup
         v-else
@@ -637,42 +600,43 @@ onMounted(loadCatalog)
         class="grid gap-2 md:grid-cols-2 xl:grid-cols-3 api-card-grid"
         appear
       >
-        <Card
+        <UCard
           v-for="item in pagedApis"
           :key="item.id"
           class="api-card-item border-border/70 bg-card/90 shadow-sm"
         >
-          <CardHeader class="pb-3">
-            <CardTitle class="text-base">
+          <div class="pb-3">
+            <h3 class="text-base">
               {{ item.code }} · {{ item.name }}
-            </CardTitle>
-            <CardDescription>
+            </h3>
+            <p>
               {{ item.apiPath }}
-            </CardDescription>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent class="grid gap-3">
+          <div class="grid gap-3">
             <div
               v-if="item.category"
               class="flex flex-wrap gap-1"
             >
-              <Badge
+              <UBadge
                 v-for="category in item.category.split(',').map(part => part.trim()).filter(Boolean)"
                 :key="`${item.id}-cat-${category}`"
                 variant="outline"
               >
                 {{ category }}
-              </Badge>
+              </UBadge>
             </div>
 
             <div class="flex flex-wrap gap-1">
-              <Badge
+              <UBadge
                 v-for="method in item.httpMethod.split(',').map(part => part.trim()).filter(Boolean)"
                 :key="`${item.id}-${method}`"
-                variant="secondary"
+                color="neutral"
+                variant="soft"
               >
                 {{ method }}
-              </Badge>
+              </UBadge>
             </div>
 
             <div class="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
@@ -688,106 +652,86 @@ onMounted(loadCatalog)
             </div>
 
             <div class="flex flex-wrap gap-2">
-              <Button
+              <UButton
                 variant="outline"
                 size="sm"
                 @click="pickApi(item)"
               >
                 编辑
-              </Button>
+              </UButton>
 
-              <Button
+              <UButton
                 variant="outline"
                 size="sm"
                 @click="toggle(item, 'isEnabled')"
               >
                 {{ item.isEnabled ? '禁用' : '启用' }}
-              </Button>
+              </UButton>
 
-              <Button
+              <UButton
                 variant="outline"
                 size="sm"
                 @click="toggle(item, 'isStatistics')"
               >
                 {{ item.isStatistics ? '停用统计' : '启用统计' }}
-              </Button>
+              </UButton>
 
-              <AlertDialog>
-                <AlertDialogTrigger as-child>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                  >
-                    删除
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>确认删除该接口？</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      删除后将无法继续调用该 API 元数据记录。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>取消</AlertDialogCancel>
-                    <AlertDialogAction
-                      class="bg-destructive text-white hover:bg-destructive/90"
-                      @click="deleteApi(item.id)"
-                    >
-                      确认删除
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <UButton
+                color="error"
+                size="sm"
+                @click="confirmDeleteApi(item.id)"
+              >
+                删除
+              </UButton>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </UCard>
       </TransitionGroup>
 
-      <Card
+      <UCard
         v-if="filteredApis.length"
         class="border-border/70 bg-card/90 shadow-sm"
       >
-        <CardContent class="py-3 flex items-center justify-between gap-2">
+        <div class="py-3 flex items-center justify-between gap-2">
           <p class="text-xs text-muted-foreground">
             第 {{ currentPage }} / {{ totalPages }} 页
           </p>
           <div class="flex flex-wrap gap-2">
-            <Button
+            <UButton
               variant="outline"
               size="sm"
               :disabled="currentPage === 1"
               @click="currentPage = 1"
             >
               首页
-            </Button>
-            <Button
+            </UButton>
+            <UButton
               variant="outline"
               size="sm"
               :disabled="currentPage === 1"
               @click="goPrevPage"
             >
               上一页
-            </Button>
-            <Button
+            </UButton>
+            <UButton
               variant="outline"
               size="sm"
               :disabled="currentPage >= totalPages"
               @click="goNextPage"
             >
               下一页
-            </Button>
-            <Button
+            </UButton>
+            <UButton
               variant="outline"
               size="sm"
               :disabled="currentPage >= totalPages"
               @click="currentPage = totalPages"
             >
               末页
-            </Button>
+            </UButton>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </UCard>
     </div>
   </div>
 </template>

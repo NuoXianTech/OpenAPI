@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { toast } from 'vue-sonner'
-
 const { fetchMe, user, login } = useAuth()
 const form = reactive({
   identifier: '',
@@ -35,12 +33,10 @@ const submit = async () => {
       : { username: form.identifier, password: form.password }
 
     await login(payload)
-    toast.success('登录成功')
     await navigateTo('/')
   }
   catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '登录失败')
-    toast.error(errorMessage.value)
   }
   finally {
     submitting.value = false
@@ -60,12 +56,15 @@ const submit = async () => {
           class="grid gap-4"
         >
           <div class="flex items-center gap-2">
-            <Badge variant="secondary">
+            <UBadge
+              color="neutral"
+              variant="soft"
+            >
               Session
-            </Badge>
-            <Badge variant="outline">
+            </UBadge>
+            <UBadge variant="outline">
               Checking
-            </Badge>
+            </UBadge>
           </div>
           <h1 class="auth-title">
             检查登录状态
@@ -74,9 +73,9 @@ const submit = async () => {
             正在确认是否已登录，请稍候...
           </p>
           <div class="grid gap-2">
-            <Skeleton class="h-10 w-full rounded-md" />
-            <Skeleton class="h-10 w-full rounded-md" />
-            <Skeleton class="h-10 w-1/2 rounded-md" />
+            <USkeleton class="h-10 w-full rounded-md" />
+            <USkeleton class="h-10 w-full rounded-md" />
+            <USkeleton class="h-10 w-1/2 rounded-md" />
           </div>
         </div>
 
@@ -93,31 +92,34 @@ const submit = async () => {
                 使用邮箱或用户名登录，继续管理你的 API。
               </p>
             </div>
-            <Badge variant="secondary">
+            <UBadge
+              color="neutral"
+              variant="soft"
+            >
               User Login
-            </Badge>
+            </UBadge>
           </div>
 
-          <Card class="border-border/70 bg-card/90 shadow-sm">
-            <CardHeader class="pb-3">
-              <CardTitle class="text-base">
+          <UCard class="border-border/70 bg-card/90 shadow-sm">
+            <div class="pb-3">
+              <h3 class="text-base">
                 账号登录
-              </CardTitle>
-              <CardDescription>
+              </h3>
+              <p>
                 支持邮箱或用户名登录。
-              </CardDescription>
-            </CardHeader>
+              </p>
+            </div>
 
-            <CardContent>
+            <div>
               <form
                 class="grid gap-4"
                 @submit.prevent="submit"
               >
                 <div class="grid gap-2">
-                  <Label for="identifier">
+                  <label for="identifier">
                     邮箱或用户名
-                  </Label>
-                  <Input
+                  </label>
+                  <UInput
                     id="identifier"
                     v-model="form.identifier"
                     type="text"
@@ -127,10 +129,10 @@ const submit = async () => {
                 </div>
 
                 <div class="grid gap-2">
-                  <Label for="password">
+                  <label for="password">
                     密码
-                  </Label>
-                  <Input
+                  </label>
+                  <UInput
                     id="password"
                     v-model="form.password"
                     type="password"
@@ -140,33 +142,31 @@ const submit = async () => {
                 </div>
 
                 <div v-if="errorMessage">
-                  <Badge
-                    variant="destructive"
+                  <UBadge
+                    color="error"
                     class="max-w-full whitespace-normal break-words"
                   >
                     {{ errorMessage }}
-                  </Badge>
+                  </UBadge>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                  <Button
+                  <UButton
                     type="submit"
                     :disabled="submitting"
                   >
                     {{ submitting ? '登录中...' : '登录' }}
-                  </Button>
-                  <Button
-                    as-child
+                  </UButton>
+                  <UButton
+                    to="/register"
                     variant="outline"
                   >
-                    <NuxtLink to="/register">
-                      创建账号
-                    </NuxtLink>
-                  </Button>
+                    创建账号
+                  </UButton>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
 
           <p class="auth-note">
             忘记密码？请联系管理员处理。

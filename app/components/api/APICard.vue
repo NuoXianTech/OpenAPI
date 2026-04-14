@@ -44,14 +44,15 @@ function formatCallCount(count: number) {
         v-if="categories.length"
         class="flex flex-wrap gap-1.5 mb-2.5"
       >
-        <Badge
+        <UBadge
           v-for="item in categories"
           :key="item"
-          variant="secondary"
+          color="neutral"
+          variant="soft"
           class="rounded-full text-[11px] font-medium"
         >
           {{ item }}
-        </Badge>
+        </UBadge>
       </div>
 
       <div class="mt-2.5 mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-muted/40 p-2">
@@ -66,25 +67,20 @@ function formatCallCount(count: number) {
           </span>
         </div>
 
-        <Button
-          as-child
+        <UButton
+          :to="props.docUrl"
+          target="_blank"
           variant="outline"
-          size="icon-sm"
+          size="xs"
           class="shrink-0"
+          aria-label="打开文档"
         >
-          <a
-            :href="props.docUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="打开文档"
-          >
-            <Icon
-              name="mdi:external-link"
-              size="16"
-              :ssr="true"
-            />
-          </a>
-        </Button>
+          <Icon
+            name="mdi:external-link"
+            size="16"
+            :ssr="true"
+          />
+        </UButton>
       </div>
     </template>
 
@@ -93,7 +89,7 @@ function formatCallCount(count: number) {
         v-if="props.isApiKey"
         class="flex items-center gap-1 text-xs text-muted-foreground"
       >
-        <Badge
+        <UBadge
           variant="outline"
           class="rounded-full"
         >
@@ -102,7 +98,7 @@ function formatCallCount(count: number) {
             size="14"
           />
           APIkey
-        </Badge>
+        </UBadge>
       </span>
     </template>
 
@@ -122,14 +118,14 @@ function formatCallCount(count: number) {
           请求方法
         </div>
         <div class="flex flex-wrap gap-1">
-          <Badge
+          <UBadge
             v-for="method in methods"
             :key="method"
             variant="outline"
             class="rounded-full font-mono text-[11px]"
           >
             {{ method }}
-          </Badge>
+          </UBadge>
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
@@ -137,12 +133,12 @@ function formatCallCount(count: number) {
           调用次数
         </div>
         <div class="flex flex-wrap gap-2 text-[12px] text-muted-foreground">
-          <Badge
+          <UBadge
             variant="outline"
             class="rounded-full"
           >
             {{ formatCallCount(props.totalCalls) }}
-          </Badge>
+          </UBadge>
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">

@@ -1,9 +1,8 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { createError } from 'h3'
 import { apiCallStats, apiLists } from '@nuxthub/db/schema'
-import { CATEGORY_TAG_MAX_COUNT } from '~~/shared/constants/api'
 
-const MAX_CATEGORY_TAGS = CATEGORY_TAG_MAX_COUNT
+const MAX_CATEGORY_TAGS = 5
 const MAX_CATEGORY_LENGTH = 100
 
 function escapeLikePattern(value: string) {

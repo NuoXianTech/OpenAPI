@@ -1,36 +1,5 @@
 <script lang="ts" setup>
-import type { FabMenuItem, FabMenuActionType } from '~/composables/fab-menu/types'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '~/components/ui/alert-dialog'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import { Input } from '~/components/ui/input'
-import { Label } from '~/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
-import { Switch } from '~/components/ui/switch'
-import { toast } from 'vue-sonner'
+import type { FabMenuActionType, FabMenuItem } from '~/composables/fab-menu/types'
 
 interface FabMenuForm {
   id: number
@@ -59,6 +28,11 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
   return fallback
 }
+
+const toast = useToast()
+const notifySuccess = (message: string) => toast.add({ title: message, color: 'success' })
+const notifyError = (message: string) => toast.add({ title: message, color: 'error' })
+
 const form = reactive<FabMenuForm>({
   id: 0,
   title: '',
@@ -80,7 +54,7 @@ const load = async () => {
   catch (error: unknown) {
     const message = getErrorMessage(error, '加载 FAB 菜单失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -129,14 +103,14 @@ const save = async () => {
     }
 
     notice.value = 'FAB 菜单已保存'
-    toast.success(notice.value)
+    notifySuccess(notice.value)
     reset()
     await load()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '保存 FAB 菜单失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
 }
 
@@ -146,13 +120,19 @@ const remove = async (id: number) => {
     if (form.id === id) {
       reset()
     }
-    toast.success('FAB 菜单已删除')
+    notifySuccess('FAB 菜单已删除')
     await load()
   }
   catch (error: unknown) {
     const message = getErrorMessage(error, '删除 FAB 菜单失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
+  }
+}
+
+const confirmRemove = (id: number) => {
+  if (globalThis.confirm('确认删除该 FAB 菜单项？删除后前台入口将立即消失。')) {
+    void remove(id)
   }
 }
 
@@ -170,37 +150,40 @@ onMounted(load)
           管理首页右下角的快速导航按钮与弹层内容。
         </p>
       </div>
-      <Badge variant="secondary">
+      <UBadge
+        color="neutral"
+        variant="soft"
+      >
         {{ items.length }} Items
-      </Badge>
+      </UBadge>
     </div>
 
     <div
       v-if="notice"
       class="mb-3"
     >
-      <Badge variant="outline">
+      <UBadge variant="outline">
         {{ notice }}
-      </Badge>
+      </UBadge>
     </div>
 
     <div class="grid gap-4">
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-3">
-          <CardTitle class="text-base">
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-3">
+          <h3 class="text-base">
             {{ form.id ? '编辑 FAB 菜单项' : '新增 FAB 菜单项' }}
-          </CardTitle>
-          <CardDescription>
+          </h3>
+          <p>
             支持外链、站内路由和 iframe 三种动作类型。
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-3">
+          </p>
+        </div>
+        <div class="grid gap-3">
           <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             <div class="grid gap-2">
-              <Label for="fab-title">
+              <label for="fab-title">
                 标题
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-title"
                 v-model="form.title"
                 placeholder="标题"
@@ -208,10 +191,10 @@ onMounted(load)
             </div>
 
             <div class="grid gap-2">
-              <Label for="fab-subtitle">
+              <label for="fab-subtitle">
                 副标题
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-subtitle"
                 v-model="form.subtitle"
                 placeholder="副标题"
@@ -219,10 +202,10 @@ onMounted(load)
             </div>
 
             <div class="grid gap-2">
-              <Label for="fab-icon">
+              <label for="fab-icon">
                 图标
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-icon"
                 v-model="form.icon"
                 placeholder="例如 mdi:clipboard-text-multiple"
@@ -230,30 +213,28 @@ onMounted(load)
             </div>
 
             <div class="grid gap-2">
-              <Label>
+              <label>
                 动作类型
-              </Label>
-              <Select v-model="form.actionType">
-                <SelectTrigger>
-                  <SelectValue placeholder="选择动作类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="option in actionTypeOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              </label>
+              <select
+                v-model="form.actionType"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option
+                  v-for="option in actionTypeOptions"
+                  :key="option.value"
+                  :value="option.value"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
             </div>
 
             <div class="grid gap-2">
-              <Label for="fab-action-value">
+              <label for="fab-action-value">
                 动作地址
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-action-value"
                 v-model="form.actionValue"
                 placeholder="动作地址 / 路由 / iframe 地址"
@@ -261,10 +242,10 @@ onMounted(load)
             </div>
 
             <div class="grid gap-2">
-              <Label for="fab-action-label">
+              <label for="fab-action-label">
                 动作文案
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-action-label"
                 v-model="form.actionLabel"
                 placeholder="例如 打开 / 加群"
@@ -272,29 +253,27 @@ onMounted(load)
             </div>
 
             <div class="grid gap-2">
-              <Label>
+              <label>
                 打开方式
-              </Label>
-              <Select v-model="form.target">
-                <SelectTrigger>
-                  <SelectValue placeholder="选择打开方式" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_blank">
-                    新标签页
-                  </SelectItem>
-                  <SelectItem value="_self">
-                    当前页面
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              </label>
+              <select
+                v-model="form.target"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="_blank">
+                  新标签页
+                </option>
+                <option value="_self">
+                  当前页面
+                </option>
+              </select>
             </div>
 
             <div class="grid gap-2">
-              <Label for="fab-sort">
+              <label for="fab-sort">
                 排序
-              </Label>
-              <Input
+              </label>
+              <UInput
                 id="fab-sort"
                 v-model.number="form.sort"
                 type="number"
@@ -312,22 +291,22 @@ onMounted(load)
                 关闭后前台不会显示该按钮
               </div>
             </div>
-            <Switch v-model="form.isActive" />
+            <USwitch v-model="form.isActive" />
           </div>
 
           <div class="flex flex-wrap gap-2">
-            <Button @click="save">
+            <UButton @click="save">
               {{ form.id ? '更新 FAB 菜单' : '保存 FAB 菜单' }}
-            </Button>
-            <Button
+            </UButton>
+            <UButton
               variant="outline"
               @click="reset"
             >
               重置
-            </Button>
+            </UButton>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </UCard>
 
       <TransitionGroup
         tag="div"
@@ -335,12 +314,12 @@ onMounted(load)
         class="grid gap-2 md:grid-cols-2 xl:grid-cols-3 api-card-grid"
         appear
       >
-        <Card
+        <UCard
           v-for="item in items"
           :key="item.id"
           class="api-card-item border-border/70 bg-card/90 shadow-sm"
         >
-          <CardHeader class="pb-3">
+          <div class="pb-3">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 min-w-0">
                 <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-background text-muted-foreground shrink-0">
@@ -350,21 +329,21 @@ onMounted(load)
                   />
                 </span>
                 <div class="min-w-0">
-                  <CardTitle class="truncate text-base">
+                  <h3 class="truncate text-base">
                     {{ item.title }}
-                  </CardTitle>
-                  <CardDescription class="truncate">
+                  </h3>
+                  <p class="truncate">
                     {{ item.subtitle || item.actionValue }}
-                  </CardDescription>
+                  </p>
                 </div>
               </div>
-              <Badge variant="outline">
+              <UBadge variant="outline">
                 {{ item.actionType }}
-              </Badge>
+              </UBadge>
             </div>
-          </CardHeader>
+          </div>
 
-          <CardContent class="grid gap-3">
+          <div class="grid gap-3">
             <div class="text-xs text-muted-foreground break-all">
               {{ item.actionValue }}
             </div>
@@ -385,44 +364,24 @@ onMounted(load)
             </div>
 
             <div class="flex gap-2">
-              <Button
+              <UButton
                 variant="outline"
                 size="sm"
                 @click="pick(item)"
               >
                 编辑
-              </Button>
+              </UButton>
 
-              <AlertDialog>
-                <AlertDialogTrigger as-child>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                  >
-                    删除
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>确认删除该 FAB 菜单项？</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      删除后前台入口将立即消失。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>取消</AlertDialogCancel>
-                    <AlertDialogAction
-                      class="bg-destructive text-white hover:bg-destructive/90"
-                      @click="remove(item.id)"
-                    >
-                      确认删除
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <UButton
+                color="error"
+                size="sm"
+                @click="confirmRemove(item.id)"
+              >
+                删除
+              </UButton>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </UCard>
       </TransitionGroup>
     </div>
   </div>

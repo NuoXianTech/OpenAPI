@@ -38,25 +38,20 @@ const displayDescription = computed(() => {
           </span>
         </div>
 
-        <Button
-          as-child
+        <UButton
+          :to="props.url"
+          target="_blank"
           variant="outline"
-          size="icon-sm"
+          size="xs"
           class="shrink-0"
+          title="打开链接"
         >
-          <a
-            :href="props.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="打开链接"
-          >
-            <Icon
-              name="mdi:external-link"
-              size="16"
-              :ssr="true"
-            />
-          </a>
-        </Button>
+          <Icon
+            name="mdi:external-link"
+            size="16"
+            :ssr="true"
+          />
+        </UButton>
       </div>
     </template>
 

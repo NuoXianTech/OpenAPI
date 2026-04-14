@@ -33,14 +33,14 @@ const getStatusInfo = (status: number) => {
 </script>
 
 <template>
-  <Card class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
-    <CardHeader class="px-4 pb-0">
+  <UCard class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
+    <div class="px-4 pb-0">
       <div class="flex items-center justify-between gap-2">
-        <CardTitle class="m-0 flex-1 text-base font-semibold tracking-wide">
+        <h3 class="m-0 flex-1 text-base font-semibold tracking-wide">
           <slot name="header">
             {{ title }}
           </slot>
-        </CardTitle>
+        </h3>
 
         <div class="flex items-center gap-2">
           <div
@@ -51,16 +51,16 @@ const getStatusInfo = (status: number) => {
           <slot name="header-actions" />
         </div>
       </div>
-    </CardHeader>
+    </div>
 
-    <CardContent class="px-4 pt-2">
+    <div class="px-4 pt-2">
       <slot name="summary" />
-    </CardContent>
+    </div>
 
     <div class="mt-2 flex w-full items-center justify-between gap-2 px-4">
       <slot name="meta" />
 
-      <Button
+      <UButton
         variant="outline"
         size="sm"
         class="ml-auto h-8 rounded-md px-3 text-xs"
@@ -76,7 +76,7 @@ const getStatusInfo = (status: number) => {
         <span>
           <slot name="toggle-text">{{ isExpanded ? '收起详情' : '查看详情' }}</slot>
         </span>
-      </Button>
+      </UButton>
     </div>
 
     <div
@@ -85,6 +85,6 @@ const getStatusInfo = (status: number) => {
     >
       <slot name="details" />
     </div>
-  </Card>
+  </UCard>
 </template>
 <!-- TODO: 通用Card组件 -->

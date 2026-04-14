@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import type { BulletLegendItemInterface } from '@unovis/ts'
 import { VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsResponse,
 } from '~~/shared/types/public-stats'
-import {
-  ChartCrosshair,
-} from '@/components/ui/chart'
 
 interface TrendChartRow {
   label: string
@@ -54,29 +50,6 @@ const EMPTY_DASHBOARD = createEmptyDashboard()
 const SUCCESS_KEY = '成功次数' as const
 const FAILURE_KEY = '失败次数' as const
 
-const chartConfig = {
-  successCalls: {
-    label: '成功次数',
-    color: 'var(--green)',
-  },
-  failureCalls: {
-    label: '失败次数',
-    color: 'var(--red)',
-  },
-} as const
-
-const crosshairItems: BulletLegendItemInterface[] = [
-  { name: SUCCESS_KEY, color: chartConfig.successCalls.color },
-  { name: FAILURE_KEY, color: chartConfig.failureCalls.color },
-]
-
-const crosshairColors = crosshairItems.map((item) => {
-  if (Array.isArray(item.color)) {
-    return item.color[0] ?? 'transparent'
-  }
-  return item.color ?? 'transparent'
-})
-
 const { data, pending, error, refresh } = await useAsyncData(
   'public-call-stats',
   () => $fetch<PublicCallStatsResponse>('/api/stats/public'),
@@ -89,6 +62,10 @@ const { data, pending, error, refresh } = await useAsyncData(
     }),
   },
 )
+
+const reloadStats = async () => {
+  await refresh()
+}
 
 const dashboard = computed(() => data.value?.data || EMPTY_DASHBOARD)
 const overview = computed(() => dashboard.value.overview)
@@ -216,26 +193,24 @@ const overviewCards = computed(() => {
         </div>
 
         <div class="flex items-center gap-2">
-          <Button
-            as-child
+          <UButton
+            to="/"
             variant="outline"
             size="sm"
           >
-            <NuxtLink to="/">
-              <Icon
-                name="mdi:home"
-                size="14"
-                :ssr="true"
-              />
-              返回首页
-            </NuxtLink>
-          </Button>
+            <Icon
+              name="mdi:home"
+              size="14"
+              :ssr="true"
+            />
+            返回首页
+          </UButton>
 
-          <Button
+          <UButton
             variant="outline"
             size="sm"
             class="cursor-pointer"
-            @click="refresh"
+            @click="reloadStats"
           >
             <Icon
               name="mdi:refresh"
@@ -243,7 +218,7 @@ const overviewCards = computed(() => {
               :ssr="true"
             />
             刷新数据
-          </Button>
+          </UButton>
         </div>
       </section>
 
@@ -258,14 +233,14 @@ const overviewCards = computed(() => {
           请稍后重试。
         </div>
         <div class="mt-3">
-          <Button
+          <UButton
             variant="outline"
             size="sm"
             class="cursor-pointer"
-            @click="refresh"
+            @click="reloadStats"
           >
             重试
-          </Button>
+          </UButton>
         </div>
       </section>
 
@@ -278,32 +253,32 @@ const overviewCards = computed(() => {
 
       <template v-else>
         <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Card
+          <UCard
             v-for="item in overviewCards"
             :key="item.key"
             class="gap-2 border-border/90 py-4 shadow-sm"
           >
-            <CardHeader class="px-4 pb-0">
-              <CardDescription class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
+            <div class="px-4 pb-0">
+              <p class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
                 {{ item.label }}
-              </CardDescription>
-              <CardTitle
+              </p>
+              <h3
                 class="mt-1 text-2xl tabular-nums"
                 :class="item.valueClass"
               >
                 {{ item.value }}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+              </h3>
+            </div>
+          </UCard>
         </section>
 
         <section class="grid gap-6 xl:grid-cols-5">
-          <Card class="xl:col-span-3 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardTitle>近7日趋势</CardTitle>
-              <CardDescription>按天聚合总调用、成功和失败</CardDescription>
-            </CardHeader>
-            <CardContent class="px-4 pt-2">
+          <UCard class="xl:col-span-3 py-4">
+            <div class="px-4 pb-0">
+              <h3>近7日趋势</h3>
+              <p>按天聚合总调用、成功和失败</p>
+            </div>
+            <div class="px-4 pt-2">
               <ClientOnly>
                 <div class="h-[320px] w-full">
                   <VisXYContainer
@@ -338,12 +313,6 @@ const overviewCards = computed(() => {
                       :tick-format="xTickFormat"
                       :num-ticks="7"
                     />
-
-                    <ChartCrosshair
-                      index="label"
-                      :items="crosshairItems"
-                      :colors="crosshairColors"
-                    />
                   </VisXYContainer>
                 </div>
 
@@ -362,15 +331,15 @@ const overviewCards = computed(() => {
                   <div class="h-[320px] w-full rounded-lg border border-border bg-muted/20" />
                 </template>
               </ClientOnly>
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
 
-          <Card class="xl:col-span-2 py-4">
-            <CardHeader class="px-4 pb-0">
-              <CardTitle>今日调用排行 TOP 10</CardTitle>
-              <CardDescription>按今日调用总次数排序</CardDescription>
-            </CardHeader>
-            <CardContent class="px-4 pt-2">
+          <UCard class="xl:col-span-2 py-4">
+            <div class="px-4 pb-0">
+              <h3>今日调用排行 TOP 10</h3>
+              <p>按今日调用总次数排序</p>
+            </div>
+            <div class="px-4 pt-2">
               <div
                 v-if="top10Today.length === 0"
                 class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted-foreground"
@@ -378,31 +347,31 @@ const overviewCards = computed(() => {
                 今日暂无调用数据
               </div>
 
-              <Table v-else>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-12">
+              <table v-else>
+                <thead>
+                  <tr>
+                    <th class="w-12">
                       排名
-                    </TableHead>
-                    <TableHead>接口</TableHead>
-                    <TableHead class="text-right">
+                    </th>
+                    <th>接口</th>
+                    <th class="text-right">
                       调用
-                    </TableHead>
-                    <TableHead class="text-right">
+                    </th>
+                    <th class="text-right">
                       成功率
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
+                    </th>
+                  </tr>
+                </thead>
 
-                <TableBody>
-                  <TableRow
+                <tbody>
+                  <tr
                     v-for="item in top10Today"
                     :key="item.apiListId"
                   >
-                    <TableCell class="w-12 font-medium">
+                    <td class="w-12 font-medium">
                       {{ item.rank }}
-                    </TableCell>
-                    <TableCell class="max-w-[280px]">
+                    </td>
+                    <td class="max-w-[280px]">
                       <div
                         class="font-medium truncate"
                         :title="item.name"
@@ -415,24 +384,25 @@ const overviewCards = computed(() => {
                       >
                         {{ item.apiPath }}
                       </div>
-                      <Badge
-                        variant="secondary"
+                      <UBadge
+                        color="neutral"
+                        variant="soft"
                         class="mt-1"
                       >
                         {{ formatMethod(item.httpMethod) }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                      </UBadge>
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ item.totalCalls.toLocaleString() }}
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ formatRate(item.successRate) }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </UCard>
         </section>
       </template>
     </main>

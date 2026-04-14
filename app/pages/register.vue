@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { toast } from 'vue-sonner'
-
 const { register } = useAuth()
 const form = reactive({
   username: '',
@@ -25,7 +23,6 @@ const submit = async () => {
 
   if (form.password !== form.confirm) {
     errorMessage.value = '两次输入的密码不一致'
-    toast.error(errorMessage.value)
     return
   }
 
@@ -39,13 +36,11 @@ const submit = async () => {
     successMessage.value = res.verificationRequired
       ? '账号已创建，请查收邮箱完成验证。'
       : '账号创建成功，可以直接登录。'
-    toast.success(successMessage.value)
     form.password = ''
     form.confirm = ''
   }
   catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '注册失败')
-    toast.error(errorMessage.value)
   }
   finally {
     submitting.value = false
@@ -70,32 +65,35 @@ const submit = async () => {
                 注册后需要邮箱验证，验证通过后才可以登录。
               </p>
             </div>
-            <Badge variant="secondary">
+            <UBadge
+              color="neutral"
+              variant="soft"
+            >
               Sign Up
-            </Badge>
+            </UBadge>
           </div>
 
-          <Card class="border-border/70 bg-card/90 shadow-sm">
-            <CardHeader class="pb-3">
-              <CardTitle class="text-base">
+          <UCard class="border-border/70 bg-card/90 shadow-sm">
+            <div class="pb-3">
+              <h3 class="text-base">
                 用户注册
-              </CardTitle>
-              <CardDescription>
+              </h3>
+              <p>
                 填写基础信息后创建账号。
-              </CardDescription>
-            </CardHeader>
+              </p>
+            </div>
 
-            <CardContent>
+            <div>
               <form
                 class="grid gap-4"
                 @submit.prevent="submit"
               >
                 <div class="grid gap-2 md:grid-cols-2">
                   <div class="grid gap-2">
-                    <Label for="register-username">
+                    <label for="register-username">
                       用户名
-                    </Label>
-                    <Input
+                    </label>
+                    <UInput
                       id="register-username"
                       v-model="form.username"
                       type="text"
@@ -105,10 +103,10 @@ const submit = async () => {
                   </div>
 
                   <div class="grid gap-2">
-                    <Label for="register-email">
+                    <label for="register-email">
                       邮箱
-                    </Label>
-                    <Input
+                    </label>
+                    <UInput
                       id="register-email"
                       v-model="form.email"
                       type="email"
@@ -120,10 +118,10 @@ const submit = async () => {
 
                 <div class="grid gap-2 md:grid-cols-2">
                   <div class="grid gap-2">
-                    <Label for="register-password">
+                    <label for="register-password">
                       密码
-                    </Label>
-                    <Input
+                    </label>
+                    <UInput
                       id="register-password"
                       v-model="form.password"
                       type="password"
@@ -133,10 +131,10 @@ const submit = async () => {
                   </div>
 
                   <div class="grid gap-2">
-                    <Label for="register-confirm">
+                    <label for="register-confirm">
                       确认密码
-                    </Label>
-                    <Input
+                    </label>
+                    <UInput
                       id="register-confirm"
                       v-model="form.confirm"
                       type="password"
@@ -150,45 +148,44 @@ const submit = async () => {
                   v-if="errorMessage"
                   class="grid"
                 >
-                  <Badge
-                    variant="destructive"
+                  <UBadge
+                    color="error"
                     class="max-w-full whitespace-normal break-words"
                   >
                     {{ errorMessage }}
-                  </Badge>
+                  </UBadge>
                 </div>
 
                 <div
                   v-if="successMessage"
                   class="grid"
                 >
-                  <Badge
-                    variant="secondary"
+                  <UBadge
+                    color="neutral"
+                    variant="soft"
                     class="max-w-full whitespace-normal break-words"
                   >
                     {{ successMessage }}
-                  </Badge>
+                  </UBadge>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
-                  <Button
+                  <UButton
                     type="submit"
                     :disabled="submitting"
                   >
                     {{ submitting ? '提交中...' : '注册' }}
-                  </Button>
-                  <Button
-                    as-child
+                  </UButton>
+                  <UButton
+                    to="/login"
                     variant="outline"
                   >
-                    <NuxtLink to="/login">
-                      已有账号
-                    </NuxtLink>
-                  </Button>
+                    已有账号
+                  </UButton>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </UCard>
 
           <p class="auth-note">
             注册即表示你同意平台服务条款与安全规范。

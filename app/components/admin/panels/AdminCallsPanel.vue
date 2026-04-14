@@ -1,45 +1,4 @@
 <script lang="ts" setup>
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from '~/components/ui/empty'
-import { Input } from '~/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '~/components/ui/select'
-import { Skeleton } from '~/components/ui/skeleton'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '~/components/ui/table'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '~/components/ui/tabs'
-import { toast } from 'vue-sonner'
-
 interface CallItem {
   id: number
   apiListId: number
@@ -74,6 +33,7 @@ const methodFilter = ref('all')
 const statusFilter = ref<'all' | '2xx' | '4xx' | '5xx'>('all')
 const pageSize = ref(10)
 const currentPage = ref(1)
+const activeTab = ref<'stats' | 'calls'>('stats')
 
 const pageSizeOptions = [10, 20, 50]
 
@@ -83,6 +43,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   }
   return fallback
 }
+
+const toast = useToast()
+const notifyError = (message: string) => toast.add({ title: message, color: 'error' })
 
 const successRate = computed(() => {
   if (summary.value.total <= 0) {
@@ -185,14 +148,14 @@ const formatDate = (value: string | null) => {
   })
 }
 
-const statusVariant = (code: number) => {
+const statusColor = (code: number) => {
   if (code >= 500) {
-    return 'destructive'
+    return 'error'
   }
   if (code >= 400) {
-    return 'outline'
+    return 'warning'
   }
-  return 'secondary'
+  return 'neutral'
 }
 
 const load = async () => {
@@ -208,7 +171,7 @@ const load = async () => {
   catch (error: unknown) {
     const message = getErrorMessage(error, '加载调用统计失败')
     notice.value = message
-    toast.error(message)
+    notifyError(message)
   }
   finally {
     loading.value = false
@@ -229,340 +192,341 @@ onMounted(load)
           查看调用日志和统计汇总。
         </p>
       </div>
-      <Button
+      <UButton
         variant="outline"
         @click="load"
       >
         刷新
-      </Button>
+      </UButton>
     </div>
 
     <div
       v-if="notice"
       class="mb-3"
     >
-      <Badge variant="destructive">
+      <UBadge color="error">
         {{ notice }}
-      </Badge>
+      </UBadge>
     </div>
 
     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4 mb-4">
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-2">
-          <CardDescription>总调用</CardDescription>
-          <CardTitle class="text-2xl tabular-nums">
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-2">
+          <p>总调用</p>
+          <h3 class="text-2xl tabular-nums">
             {{ summary.total }}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-2">
-          <CardDescription>成功</CardDescription>
-          <CardTitle class="text-2xl tabular-nums">
+          </h3>
+        </div>
+      </UCard>
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-2">
+          <p>成功</p>
+          <h3 class="text-2xl tabular-nums">
             {{ summary.success }}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-2">
-          <CardDescription>失败</CardDescription>
-          <CardTitle class="text-2xl tabular-nums">
+          </h3>
+        </div>
+      </UCard>
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-2">
+          <p>失败</p>
+          <h3 class="text-2xl tabular-nums">
             {{ summary.failure }}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-      <Card class="border-border/70 bg-card/90 shadow-sm">
-        <CardHeader class="pb-2">
-          <CardDescription>成功率</CardDescription>
-          <CardTitle class="text-2xl tabular-nums">
+          </h3>
+        </div>
+      </UCard>
+      <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <div class="pb-2">
+          <p>成功率</p>
+          <h3 class="text-2xl tabular-nums">
             {{ successRate }}
-          </CardTitle>
-        </CardHeader>
-      </Card>
+          </h3>
+        </div>
+      </UCard>
     </div>
 
-    <Card class="border-border/70 bg-card/90 shadow-sm">
-      <CardContent class="pt-6">
+    <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <div class="pt-6">
         <div
           v-if="loading"
           class="grid gap-2"
         >
-          <Skeleton class="h-12 w-full rounded-md" />
-          <Skeleton class="h-12 w-full rounded-md" />
-          <Skeleton class="h-12 w-full rounded-md" />
+          <USkeleton class="h-12 w-full rounded-md" />
+          <USkeleton class="h-12 w-full rounded-md" />
+          <USkeleton class="h-12 w-full rounded-md" />
         </div>
 
-        <Tabs
+        <div
           v-else
-          default-value="stats"
           class="grid gap-3"
         >
-          <TabsList class="w-fit">
-            <TabsTrigger value="stats">
+          <div class="w-fit rounded-lg border border-border bg-muted/40 p-1">
+            <UButton
+              size="sm"
+              :variant="activeTab === 'stats' ? 'solid' : 'ghost'"
+              @click="activeTab = 'stats'"
+            >
               统计表
-            </TabsTrigger>
-            <TabsTrigger value="calls">
+            </UButton>
+            <UButton
+              size="sm"
+              :variant="activeTab === 'calls' ? 'solid' : 'ghost'"
+              @click="activeTab = 'calls'"
+            >
               调用日志
-            </TabsTrigger>
-          </TabsList>
+            </UButton>
+          </div>
 
-          <TabsContent value="stats">
-            <Empty
+          <section v-if="activeTab === 'stats'">
+            <UEmpty
               v-if="!stats.length"
               class="border border-dashed border-border bg-background/60"
             >
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
+              <div>
+                <div>
                   <Icon
                     name="mdi:chart-timeline-variant"
                     class="size-5"
                   />
-                </EmptyMedia>
-                <EmptyTitle>暂无统计数据</EmptyTitle>
-                <EmptyDescription>
+                </div>
+                <h3>暂无统计数据</h3>
+                <p>
                   当前时间范围内还没有聚合统计记录。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </p>
+              </div>
+            </UEmpty>
 
             <div
               v-else
               class="rounded-md border"
             >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-[140px]">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="w-[140px]">
                       日期
-                    </TableHead>
-                    <TableHead>
+                    </th>
+                    <th>
                       API Path
-                    </TableHead>
-                    <TableHead class="w-[120px] text-right">
+                    </th>
+                    <th class="w-[120px] text-right">
                       总计
-                    </TableHead>
-                    <TableHead class="w-[120px] text-right">
+                    </th>
+                    <th class="w-[120px] text-right">
                       成功
-                    </TableHead>
-                    <TableHead class="w-[120px] text-right">
+                    </th>
+                    <th class="w-[120px] text-right">
                       失败
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
                     v-for="item in stats"
                     :key="item.id"
                   >
-                    <TableCell class="text-xs text-muted-foreground">
+                    <td class="text-xs text-muted-foreground">
                       {{ item.statDate }}
-                    </TableCell>
-                    <TableCell class="max-w-[420px] truncate">
+                    </td>
+                    <td class="max-w-[420px] truncate">
                       {{ item.apiPath || `API List #${item.apiListId}` }}
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ item.totalCount }}
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ item.successCount }}
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ item.failureCount }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </TabsContent>
+          </section>
 
-          <TabsContent value="calls">
+          <section v-else>
             <div class="mb-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_180px_180px_150px]">
-              <Input
+              <UInput
                 v-model="callsKeyword"
                 placeholder="搜索 path / method / status / IP"
               />
 
-              <Select v-model="methodFilter">
-                <SelectTrigger>
-                  <SelectValue placeholder="方法筛选" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    全部方法
-                  </SelectItem>
-                  <SelectItem
-                    v-for="method in methodOptions"
-                    :key="method"
-                    :value="method"
-                  >
-                    {{ method }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select v-model="statusFilter">
-                <SelectTrigger>
-                  <SelectValue placeholder="状态筛选" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">
-                    全部状态
-                  </SelectItem>
-                  <SelectItem value="2xx">
-                    2xx
-                  </SelectItem>
-                  <SelectItem value="4xx">
-                    4xx
-                  </SelectItem>
-                  <SelectItem value="5xx">
-                    5xx
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                :model-value="String(pageSize)"
-                @update:model-value="(value) => pageSize = Number(value)"
+              <select
+                v-model="methodFilter"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="每页条数" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem
-                    v-for="size in pageSizeOptions"
-                    :key="size"
-                    :value="String(size)"
-                  >
-                    每页 {{ size }} 条
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="all">
+                  全部方法
+                </option>
+                <option
+                  v-for="method in methodOptions"
+                  :key="method"
+                  :value="method"
+                >
+                  {{ method }}
+                </option>
+              </select>
+
+              <select
+                v-model="statusFilter"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="all">
+                  全部状态
+                </option>
+                <option value="2xx">
+                  2xx
+                </option>
+                <option value="4xx">
+                  4xx
+                </option>
+                <option value="5xx">
+                  5xx
+                </option>
+              </select>
+
+              <select
+                v-model.number="pageSize"
+                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option
+                  v-for="size in pageSizeOptions"
+                  :key="size"
+                  :value="size"
+                >
+                  每页 {{ size }} 条
+                </option>
+              </select>
             </div>
 
             <div class="mb-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
               <span>共 {{ filteredCalls.length }} 条，当前显示 {{ pageRangeText }}</span>
-              <Button
+              <UButton
                 variant="ghost"
                 size="sm"
                 @click="resetCallFilters"
               >
                 重置筛选
-              </Button>
+              </UButton>
             </div>
 
-            <Empty
+            <UEmpty
               v-if="!filteredCalls.length"
               class="border border-dashed border-border bg-background/60"
             >
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
+              <div>
+                <div>
                   <Icon
                     name="mdi:file-document-outline"
                     class="size-5"
                   />
-                </EmptyMedia>
-                <EmptyTitle>暂无调用日志</EmptyTitle>
-                <EmptyDescription>
+                </div>
+                <h3>暂无调用日志</h3>
+                <p>
                   当有 API 请求后会在此展示日志记录。
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+                </p>
+              </div>
+            </UEmpty>
 
             <div
               v-else
               class="rounded-md border"
             >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-[160px]">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="w-[160px]">
                       时间
-                    </TableHead>
-                    <TableHead class="w-[90px]">
+                    </th>
+                    <th class="w-[90px]">
                       方法
-                    </TableHead>
-                    <TableHead>
+                    </th>
+                    <th>
                       Path
-                    </TableHead>
-                    <TableHead class="w-[110px] text-right">
+                    </th>
+                    <th class="w-[110px] text-right">
                       状态
-                    </TableHead>
-                    <TableHead class="w-[130px] text-right">
+                    </th>
+                    <th class="w-[130px] text-right">
                       耗时
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
                     v-for="item in pagedCalls"
                     :key="item.id"
                   >
-                    <TableCell class="text-xs text-muted-foreground">
+                    <td class="text-xs text-muted-foreground">
                       {{ formatDate(item.createdAt) }}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
+                    </td>
+                    <td>
+                      <UBadge variant="outline">
                         {{ item.method }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="max-w-[520px] truncate text-xs text-muted-foreground">
+                      </UBadge>
+                    </td>
+                    <td class="max-w-[520px] truncate text-xs text-muted-foreground">
                       {{ item.path }}
-                    </TableCell>
-                    <TableCell class="text-right">
-                      <Badge :variant="statusVariant(item.statusCode)">
+                    </td>
+                    <td class="text-right">
+                      <UBadge
+                        variant="outline"
+                        :color="statusColor(item.statusCode)"
+                      >
                         {{ item.statusCode }}
-                      </Badge>
-                    </TableCell>
-                    <TableCell class="text-right tabular-nums">
+                      </UBadge>
+                    </td>
+                    <td class="text-right tabular-nums">
                       {{ item.latencyMs }}ms
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
 
               <div class="flex items-center justify-between border-t px-4 py-3">
                 <p class="text-xs text-muted-foreground">
                   第 {{ currentPage }} / {{ totalPages }} 页
                 </p>
                 <div class="flex gap-2">
-                  <Button
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="currentPage === 1"
                     @click="currentPage = 1"
                   >
                     首页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="currentPage === 1"
                     @click="goPrevPage"
                   >
                     上一页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="currentPage >= totalPages"
                     @click="goNextPage"
                   >
                     下一页
-                  </Button>
-                  <Button
+                  </UButton>
+                  <UButton
                     variant="outline"
                     size="sm"
                     :disabled="currentPage >= totalPages"
                     @click="currentPage = totalPages"
                   >
                     末页
-                  </Button>
+                  </UButton>
                 </div>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+          </section>
+        </div>
+      </div>
+    </UCard>
   </div>
 </template>
