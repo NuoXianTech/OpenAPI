@@ -3,12 +3,13 @@ export default defineNuxtConfig({
   modules: [
     '@nuxthub/core',
     '@nuxt/icon',
-    'shadcn-nuxt',
     '@nuxtjs/tailwindcss',
+    '@nuxt/ui',
     '@nuxt/eslint',
   ],
   devtools: { enabled: true },
   css: ['~/assets/css/tailwind.css'],
+  ui: { fonts: false },
   runtimeConfig: {
     auth: {
       adminUsername: process.env.ADMIN_USERNAME || '',
@@ -33,26 +34,9 @@ export default defineNuxtConfig({
       dialect: 'postgresql',
     },
   },
-  vite: {
-    optimizeDeps: {
-      include: [
-        'class-variance-authority',
-        '@vueuse/core',
-        'clsx',
-        'tailwind-merge',
-        '@unovis/vue',
-        'reka-ui',
-        '@unovis/ts',
-      ],
-    },
-  },
   eslint: {
     config: {
       stylistic: true,
     },
-  },
-  shadcn: {
-    prefix: '',
-    componentDir: '@/components/ui',
   },
 })
