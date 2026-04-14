@@ -22,16 +22,16 @@ const displayDescription = computed(() => {
   >
     <template #summary>
       <p
-        class="my-2 mb-3 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-[1.5] text-muted-foreground"
+        class="my-2 mb-3 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-[1.5] text-muted"
         :title="displayDescription"
       >
         {{ displayDescription }}
       </p>
 
-      <div class="mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-muted/40 p-2">
+      <div class="mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-default bg-muted/40 p-2">
         <div class="flex items-baseline gap-2 min-w-0 flex-1">
           <span
-            class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-foreground/90"
+            class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-default/90"
             :title="props.url"
           >
             {{ props.url }}
@@ -57,7 +57,7 @@ const displayDescription = computed(() => {
 
     <template #details>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted text-xs">
           站点描述
         </div>
         <div class="text-[13px] break-all">

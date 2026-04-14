@@ -59,7 +59,7 @@ onMounted(() => {
           <h1 class="m-0 text-2xl font-normal tracking-wide">
             友情链接
           </h1>
-          <p class="m-0 mt-1 text-xs text-muted-foreground">
+          <p class="m-0 mt-1 text-xs text-muted">
             每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
           </p>
         </div>
@@ -102,8 +102,8 @@ onMounted(() => {
           key="loading"
           class="py-6"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-default py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted">
               加载中...
             </div>
           </UCard>
@@ -113,12 +113,12 @@ onMounted(() => {
           v-else-if="error"
           key="error"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
+          <UCard class="state-panel border-default py-5 shadow-sm">
             <div class="px-5 text-center">
               <div class="font-semibold">
                 加载失败
               </div>
-              <div class="mt-1 text-[13px] text-muted-foreground">
+              <div class="mt-1 text-[13px] text-muted">
                 {{ error }}
               </div>
               <div class="mt-3">
@@ -139,8 +139,8 @@ onMounted(() => {
           key="empty"
           class="py-2"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-default py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted">
               暂无可展示的友情链接。
             </div>
           </UCard>
@@ -151,8 +151,8 @@ onMounted(() => {
           key="filtered-empty"
           class="py-2"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-default py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted">
               当前筛选条件没有匹配结果，试试其他关键词或状态。
             </div>
           </UCard>

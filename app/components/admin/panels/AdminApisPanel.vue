@@ -352,7 +352,7 @@ onMounted(loadCatalog)
     </div>
 
     <div class="grid gap-4">
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-3">
           <h3 class="text-base">
             筛选条件
@@ -370,7 +370,7 @@ onMounted(loadCatalog)
 
             <select
               v-model.number="pageSize"
-              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              class="h-9 rounded-md border border-default bg-default px-3 text-sm"
             >
               <option
                 v-for="size in pageSizeOptions"
@@ -389,7 +389,7 @@ onMounted(loadCatalog)
             </UButton>
           </div>
           <div>
-            <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
               状态筛选
             </div>
             <ApiFilterTabs
@@ -399,7 +399,7 @@ onMounted(loadCatalog)
             />
           </div>
           <div>
-            <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
               分类筛选
             </div>
             <ApiFilterTabs
@@ -410,13 +410,13 @@ onMounted(loadCatalog)
             />
           </div>
 
-          <div class="text-xs text-muted-foreground">
+          <div class="text-xs text-muted">
             共 {{ filteredApis.length }} 条，当前显示 {{ pageRangeText }}
           </div>
         </div>
       </UCard>
 
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-3">
           <h3 class="text-base">
             {{ form.id ? `编辑接口 #${form.id}` : '新增接口' }}
@@ -447,7 +447,7 @@ onMounted(loadCatalog)
               </label>
               <select
                 v-model.number="form.status"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option
                   v-for="option in statusOptions"
@@ -459,8 +459,8 @@ onMounted(loadCatalog)
               </select>
             </div>
 
-            <div class="rounded-md border border-input bg-background p-3 md:col-span-2">
-              <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+            <div class="rounded-md border border-default bg-default p-3 md:col-span-2">
+              <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
                 HTTP Method
               </div>
               <div class="flex flex-wrap gap-3">
@@ -493,10 +493,10 @@ onMounted(loadCatalog)
             />
 
             <div class="md:col-span-2 xl:col-span-3">
-              <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
                 分类标签（最多 {{ CATEGORY_TAG_MAX_COUNT }} 个）
               </div>
-              <div class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-input bg-background p-2">
+              <div class="flex min-h-[44px] flex-wrap items-center gap-2 rounded-md border border-default bg-default p-2">
                 <UBadge
                   v-for="tag in formCategoryTags"
                   :key="`form-tag-${tag}`"
@@ -533,7 +533,7 @@ onMounted(loadCatalog)
                   添加
                 </UButton>
               </div>
-              <div class="text-xs text-muted-foreground mt-1 flex items-center justify-between gap-2">
+              <div class="text-xs text-muted mt-1 flex items-center justify-between gap-2">
                 <span>{{ categoryTagHint }}</span>
                 <span>{{ formCategoryTags.length }}/{{ CATEGORY_TAG_MAX_COUNT }}</span>
               </div>
@@ -547,19 +547,19 @@ onMounted(loadCatalog)
           />
 
           <div class="grid gap-2 md:grid-cols-3">
-            <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+            <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
               <div class="text-sm">
                 启用
               </div>
               <USwitch v-model="form.isEnabled" />
             </div>
-            <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+            <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
               <div class="text-sm">
                 需要 API Key
               </div>
               <USwitch v-model="form.isApiKey" />
             </div>
-            <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+            <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
               <div class="text-sm">
                 开启统计
               </div>
@@ -577,7 +577,7 @@ onMounted(loadCatalog)
 
       <UEmpty
         v-if="!filteredApis.length"
-        class="border border-dashed border-border bg-background/60"
+        class="border border-dashed border-default bg-default/60"
       >
         <div>
           <div>
@@ -603,7 +603,7 @@ onMounted(loadCatalog)
         <UCard
           v-for="item in pagedApis"
           :key="item.id"
-          class="api-card-item border-border/70 bg-card/90 shadow-sm"
+          class="api-card-item border-default/70 bg-elevated/90 shadow-sm"
         >
           <div class="pb-3">
             <h3 class="text-base">
@@ -639,14 +639,14 @@ onMounted(loadCatalog)
               </UBadge>
             </div>
 
-            <div class="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-              <span class="rounded-full border border-border bg-background px-2 py-0.5">
+            <div class="flex flex-wrap gap-2 text-[11px] text-muted">
+              <span class="rounded-full border border-default bg-default px-2 py-0.5">
                 {{ formatCallCount(item.totalCalls ?? 0) }}
               </span>
-              <span class="rounded-full border border-border bg-background px-2 py-0.5">
+              <span class="rounded-full border border-default bg-default px-2 py-0.5">
                 {{ item.isEnabled ? '启用' : '停用' }}
               </span>
-              <span class="rounded-full border border-border bg-background px-2 py-0.5">
+              <span class="rounded-full border border-default bg-default px-2 py-0.5">
                 {{ item.isStatistics ? '统计开启' : '统计关闭' }}
               </span>
             </div>
@@ -690,10 +690,10 @@ onMounted(loadCatalog)
 
       <UCard
         v-if="filteredApis.length"
-        class="border-border/70 bg-card/90 shadow-sm"
+        class="border-default/70 bg-elevated/90 shadow-sm"
       >
         <div class="py-3 flex items-center justify-between gap-2">
-          <p class="text-xs text-muted-foreground">
+          <p class="text-xs text-muted">
             第 {{ currentPage }} / {{ totalPages }} 页
           </p>
           <div class="flex flex-wrap gap-2">

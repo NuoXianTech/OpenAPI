@@ -23,7 +23,7 @@ function onInput(e: Event) {
       <Icon
         name="mdi:magnify"
         size="16"
-        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
+        class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted"
         :ssr="true"
       />
 
@@ -32,7 +32,7 @@ function onInput(e: Event) {
         type="search"
         :placeholder="props.placeholder"
         :value="props.modelValue"
-        class="flex h-10 w-full rounded-lg border border-input bg-card px-3 py-2 pl-9 text-sm transition-[color,box-shadow] outline-none placeholder:text-muted-foreground/90 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+        class="flex h-10 w-full rounded-lg border border-default bg-elevated px-3 py-2 pl-9 text-sm transition-[color,box-shadow] outline-none placeholder:text-muted/90 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
         @input="onInput"
       >
     </div>

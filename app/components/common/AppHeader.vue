@@ -18,7 +18,7 @@ const handleLogout = async () => {
   <ClientOnly>
     <header class="max-w-275 mx-auto px-5 py-6 flex items-end justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 shrink-0 overflow-hidden rounded-full border border-border bg-background">
+        <div class="w-12 h-12 shrink-0 overflow-hidden rounded-full border border-default bg-default">
           <img
             :src="settings.siteImg"
             alt="Avatar"
@@ -29,7 +29,7 @@ const handleLogout = async () => {
           <h1 class="m-0 text-2xl tracking-wide font-normal">
             {{ settings.siteName }}
           </h1>
-          <p class="m-0 mt-1 text-xs text-muted-foreground">
+          <p class="m-0 mt-1 text-xs text-muted">
             {{ settings.siteDescription }}
           </p>
         </div>
@@ -47,7 +47,7 @@ const handleLogout = async () => {
         >调用统计</NuxtLink>
 
         <template v-if="user">
-          <div class="text-sm text-muted-foreground">
+          <div class="text-sm text-muted">
             {{ user.username }}
           </div>
           <NuxtLink

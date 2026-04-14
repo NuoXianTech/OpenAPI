@@ -30,7 +30,7 @@ const { settings } = useSiteSettings()
       <SearchBar v-model="query" />
 
       <div class="mt-4">
-        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
           状态筛选
         </div>
         <ApiFilterTabs
@@ -41,7 +41,7 @@ const { settings } = useSiteSettings()
       </div>
 
       <div class="mt-2">
-        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
           分类筛选
         </div>
         <ApiFilterTabs
@@ -62,8 +62,8 @@ const { settings } = useSiteSettings()
           key="loading"
           class="py-6"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted-foreground">
+          <UCard class="state-panel border-default py-5 shadow-sm">
+            <div class="px-5 text-center text-sm text-muted">
               加载中...
             </div>
           </UCard>
@@ -74,12 +74,12 @@ const { settings } = useSiteSettings()
           id="errorState"
           key="error"
         >
-          <UCard class="state-panel border-border py-5 shadow-sm">
+          <UCard class="state-panel border-default py-5 shadow-sm">
             <div class="px-5 text-center">
               <div class="font-semibold">
                 加载失败
               </div>
-              <div class="mt-1 text-[13px] text-muted-foreground">
+              <div class="mt-1 text-[13px] text-muted">
                 {{ error }}
               </div>
               <div class="mt-3">
@@ -101,12 +101,12 @@ const { settings } = useSiteSettings()
           key="empty"
           class="py-2"
         >
-          <UCard class="state-panel empty-state my-2 border-border py-5 shadow-sm">
+          <UCard class="state-panel empty-state my-2 border-default py-5 shadow-sm">
             <div class="px-5 text-center">
               <div class="font-semibold">
                 未找到匹配的 API
               </div>
-              <div class="mt-1 text-[13px] text-muted-foreground">
+              <div class="mt-1 text-[13px] text-muted">
                 尝试调整搜索关键词或切换筛选标签。
               </div>
             </div>

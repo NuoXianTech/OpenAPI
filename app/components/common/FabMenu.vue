@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
     <div v-if="showFabMenu && visibleItems.length">
       <div class="fixed right-5 bottom-5 z-[120]">
         <button
-          class="fab-btn inline-flex items-center justify-center w-14 h-14 rounded-full bg-card/90 text-foreground border border-border shadow-[0_10px_24px_rgba(0,0,0,0.08)] cursor-pointer backdrop-blur-[6px] transition-transform duration-200 outline-none hover:-translate-y-0.5"
+          class="fab-btn inline-flex items-center justify-center w-14 h-14 rounded-full bg-elevated/90 text-default border border-default shadow-[0_10px_24px_rgba(0,0,0,0.08)] cursor-pointer backdrop-blur-[6px] transition-transform duration-200 outline-none hover:-translate-y-0.5"
           type="button"
           :aria-expanded="isOpen"
           aria-label="打开导航"
@@ -88,7 +88,7 @@ onBeforeUnmount(() => {
       <Transition name="fab-panel">
         <nav
           v-if="isOpen"
-          class="fixed right-5 bottom-[88px] z-[121] w-[300px] max-w-[calc(100vw-2.5rem)] bg-card border border-border rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.06)] overflow-hidden"
+          class="fixed right-5 bottom-[88px] z-[121] w-[300px] max-w-[calc(100vw-2.5rem)] bg-elevated border border-default rounded-[14px] shadow-[0_6px_16px_rgba(0,0,0,0.06)] overflow-hidden"
           aria-hidden="false"
         >
           <div class="p-2.5 grid gap-1.5 max-h-[min(60vh,420px)] overflow-auto">
@@ -96,7 +96,7 @@ onBeforeUnmount(() => {
               v-for="item in visibleItems"
               :key="item.id"
               type="button"
-              class="grid grid-cols-[24px_1fr_auto] gap-2 items-center w-full text-left p-2.5 rounded-[10px] border border-border cursor-pointer transition-colors duration-200 hover:bg-background fab-menu-row"
+              class="grid grid-cols-[24px_1fr_auto] gap-2 items-center w-full text-left p-2.5 rounded-[10px] border border-default cursor-pointer transition-colors duration-200 hover:bg-default fab-menu-row"
               @click="openAction(item)"
             >
               <span
@@ -107,11 +107,11 @@ onBeforeUnmount(() => {
                 <div class="font-semibold text-[13px] truncate">
                   {{ item.title }}
                 </div>
-                <div class="text-xs text-muted-foreground truncate">
+                <div class="text-xs text-muted truncate">
                   {{ item.subtitle || item.actionValue }}
                 </div>
               </div>
-              <div class="text-xs text-muted-foreground whitespace-nowrap">
+              <div class="text-xs text-muted whitespace-nowrap">
                 {{ item.actionLabel }}
               </div>
             </button>
@@ -127,13 +127,13 @@ onBeforeUnmount(() => {
             @click.self="iframeItem = null"
           >
             <div class="absolute inset-0 bg-black/35 backdrop-blur-[2px]" />
-            <div class="relative z-[1] w-full max-w-[960px] h-[min(80vh,760px)] bg-card border border-border rounded-[18px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] overflow-hidden">
-              <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-border bg-background/60">
+            <div class="relative z-[1] w-full max-w-[960px] h-[min(80vh,760px)] bg-elevated border border-default rounded-[18px] shadow-[0_18px_60px_rgba(0,0,0,0.18)] overflow-hidden">
+              <div class="flex items-center justify-between gap-3 px-4 py-3 border-b border-default bg-default/60">
                 <div>
                   <div class="font-semibold">
                     {{ iframeItem.title }}
                   </div>
-                  <div class="text-xs text-muted-foreground">
+                  <div class="text-xs text-muted">
                     {{ iframeItem.subtitle || iframeItem.actionValue }}
                   </div>
                 </div>
@@ -147,7 +147,7 @@ onBeforeUnmount(() => {
               </div>
               <iframe
                 :src="iframeItem.actionValue"
-                class="w-full h-[calc(100%-57px)] border-0 bg-card"
+                class="w-full h-[calc(100%-57px)] border-0 bg-elevated"
                 loading="lazy"
               />
             </div>

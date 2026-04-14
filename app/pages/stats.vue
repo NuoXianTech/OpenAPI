@@ -131,63 +131,63 @@ const overviewCards = computed(() => {
       key: 'total',
       label: '累计调用',
       value: formatCount(overview.value.totalCalls),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'today',
       label: '今日调用',
       value: formatCount(overview.value.todayCalls),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'yesterday',
       label: '昨日调用',
       value: formatCount(overview.value.yesterdayCalls),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'successRate',
       label: '请求成功率',
       value: formatRate(overview.value.successRate),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'success',
       label: '成功调用',
       value: formatCount(overview.value.successCalls),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'failure',
       label: '失败调用',
       value: formatCount(overview.value.failureCalls),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'users',
       label: '注册用户',
       value: formatCount(overview.value.userCount),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
     {
       key: 'enabledStatsApis',
       label: '统计接口',
       value: formatCount(overview.value.enabledTrackedApiCount),
-      valueClass: 'text-foreground',
+      valueClass: 'text-default',
     },
   ]
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-background">
+  <div class="min-h-screen bg-default">
     <main class="mx-auto max-w-275 px-5 pb-8">
       <section class="flex items-end justify-between gap-4 py-6">
         <div>
-          <h1 class="text-2xl font-semibold tracking-wide text-foreground">
+          <h1 class="text-2xl font-semibold tracking-wide text-default">
             公开调用统计
           </h1>
-          <p class="mt-1 text-sm text-muted-foreground">
+          <p class="mt-1 text-sm text-muted">
             包含调用概览、近7日趋势和今日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
           </p>
         </div>
@@ -224,12 +224,12 @@ const overviewCards = computed(() => {
 
       <section
         v-if="error"
-        class="state-panel bg-card border border-border rounded-xl p-5 text-center mb-6"
+        class="state-panel bg-elevated border border-default rounded-xl p-5 text-center mb-6"
       >
         <div class="font-semibold">
           统计加载失败
         </div>
-        <div class="text-muted-foreground text-[13px] mt-1">
+        <div class="text-muted text-[13px] mt-1">
           请稍后重试。
         </div>
         <div class="mt-3">
@@ -246,7 +246,7 @@ const overviewCards = computed(() => {
 
       <section
         v-else-if="isInitialLoading"
-        class="state-panel bg-card border border-border rounded-xl p-5 text-center mb-6"
+        class="state-panel bg-elevated border border-default rounded-xl p-5 text-center mb-6"
       >
         加载统计中...
       </section>
@@ -256,10 +256,10 @@ const overviewCards = computed(() => {
           <UCard
             v-for="item in overviewCards"
             :key="item.key"
-            class="gap-2 border-border/90 py-4 shadow-sm"
+            class="gap-2 border-default/90 py-4 shadow-sm"
           >
             <div class="px-4 pb-0">
-              <p class="text-xs uppercase tracking-[0.14em] text-muted-foreground/90">
+              <p class="text-xs uppercase tracking-[0.14em] text-muted/90">
                 {{ item.label }}
               </p>
               <h3
@@ -317,18 +317,18 @@ const overviewCards = computed(() => {
                 </div>
 
                 <div class="mt-4 flex flex-wrap gap-2">
-                  <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
+                  <div class="inline-flex items-center gap-2 rounded-full border border-default bg-muted/30 px-3 py-1 text-xs text-default/90">
                     <span class="h-2 w-2 rounded-full bg-[var(--green)]" />
                     成功次数
                   </div>
-                  <div class="inline-flex items-center gap-2 rounded-full border border-border bg-muted/30 px-3 py-1 text-xs text-foreground/90">
+                  <div class="inline-flex items-center gap-2 rounded-full border border-default bg-muted/30 px-3 py-1 text-xs text-default/90">
                     <span class="h-2 w-2 rounded-full bg-[var(--red)]" />
                     失败次数
                   </div>
                 </div>
 
                 <template #fallback>
-                  <div class="h-[320px] w-full rounded-lg border border-border bg-muted/20" />
+                  <div class="h-[320px] w-full rounded-lg border border-default bg-muted/20" />
                 </template>
               </ClientOnly>
             </div>
@@ -342,7 +342,7 @@ const overviewCards = computed(() => {
             <div class="px-4 pt-2">
               <div
                 v-if="top10Today.length === 0"
-                class="h-[320px] rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center text-sm text-muted-foreground"
+                class="h-[320px] rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
               >
                 今日暂无调用数据
               </div>
@@ -379,7 +379,7 @@ const overviewCards = computed(() => {
                         {{ item.name }}
                       </div>
                       <div
-                        class="text-xs text-muted-foreground truncate mt-1"
+                        class="text-xs text-muted truncate mt-1"
                         :title="item.apiPath"
                       >
                         {{ item.apiPath }}

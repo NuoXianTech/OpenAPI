@@ -36,7 +36,7 @@ function formatCallCount(count: number) {
     </template>
 
     <template #summary>
-      <p class="my-2 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-normal text-muted-foreground">
+      <p class="my-2 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-normal text-muted">
         {{ props.shortDesc }}
       </p>
 
@@ -55,9 +55,9 @@ function formatCallCount(count: number) {
         </UBadge>
       </div>
 
-      <div class="mt-2.5 mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-border bg-muted/40 p-2">
+      <div class="mt-2.5 mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-default bg-muted/40 p-2">
         <div class="flex items-baseline gap-2 min-w-0 flex-1">
-          <span class="inline-flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-foreground/90">
+          <span class="inline-flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-default/90">
             <Icon
               name="mdi:file-document-multiple-outline"
               size="16"
@@ -87,7 +87,7 @@ function formatCallCount(count: number) {
     <template #meta>
       <span
         v-if="props.isApiKey"
-        class="flex items-center gap-1 text-xs text-muted-foreground"
+        class="flex items-center gap-1 text-xs text-muted"
       >
         <UBadge
           variant="outline"
@@ -104,7 +104,7 @@ function formatCallCount(count: number) {
 
     <template #details>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted text-xs">
           接口示例
         </div>
         <a
@@ -114,7 +114,7 @@ function formatCallCount(count: number) {
         >{{ props.apiPath }}</a>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted text-xs">
           请求方法
         </div>
         <div class="flex flex-wrap gap-1">
@@ -129,10 +129,10 @@ function formatCallCount(count: number) {
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted text-xs">
           调用次数
         </div>
-        <div class="flex flex-wrap gap-2 text-[12px] text-muted-foreground">
+        <div class="flex flex-wrap gap-2 text-[12px] text-muted">
           <UBadge
             variant="outline"
             class="rounded-full"
@@ -142,7 +142,7 @@ function formatCallCount(count: number) {
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted-foreground text-xs">
+        <div class="text-muted text-xs">
           接口描述
         </div>
         <div class="text-[13px] break-all">

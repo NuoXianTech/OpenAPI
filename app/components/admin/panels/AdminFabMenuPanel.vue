@@ -168,7 +168,7 @@ onMounted(load)
     </div>
 
     <div class="grid gap-4">
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-3">
           <h3 class="text-base">
             {{ form.id ? '编辑 FAB 菜单项' : '新增 FAB 菜单项' }}
@@ -218,7 +218,7 @@ onMounted(load)
               </label>
               <select
                 v-model="form.actionType"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option
                   v-for="option in actionTypeOptions"
@@ -258,7 +258,7 @@ onMounted(load)
               </label>
               <select
                 v-model="form.target"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option value="_blank">
                   新标签页
@@ -282,12 +282,12 @@ onMounted(load)
             </div>
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+          <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
             <div>
               <div class="text-sm font-medium">
                 启用状态
               </div>
-              <div class="text-xs text-muted-foreground">
+              <div class="text-xs text-muted">
                 关闭后前台不会显示该按钮
               </div>
             </div>
@@ -317,12 +317,12 @@ onMounted(load)
         <UCard
           v-for="item in items"
           :key="item.id"
-          class="api-card-item border-border/70 bg-card/90 shadow-sm"
+          class="api-card-item border-default/70 bg-elevated/90 shadow-sm"
         >
           <div class="pb-3">
             <div class="flex items-start justify-between gap-2">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="text-sm rounded-full px-2 py-0.5 border border-border bg-background text-muted-foreground shrink-0">
+                <span class="text-sm rounded-full px-2 py-0.5 border border-default bg-default text-muted shrink-0">
                   <Icon
                     :name="item.icon"
                     size="16"
@@ -344,21 +344,21 @@ onMounted(load)
           </div>
 
           <div class="grid gap-3">
-            <div class="text-xs text-muted-foreground break-all">
+            <div class="text-xs text-muted break-all">
               {{ item.actionValue }}
             </div>
 
-            <div class="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-              <span class="px-2 py-0.5 rounded-full border border-border bg-background">
+            <div class="flex flex-wrap gap-2 text-[11px] text-muted">
+              <span class="px-2 py-0.5 rounded-full border border-default bg-default">
                 {{ item.actionLabel }}
               </span>
-              <span class="px-2 py-0.5 rounded-full border border-border bg-background">
+              <span class="px-2 py-0.5 rounded-full border border-default bg-default">
                 {{ item.target }}
               </span>
-              <span class="px-2 py-0.5 rounded-full border border-border bg-background">
+              <span class="px-2 py-0.5 rounded-full border border-default bg-default">
                 sort: {{ item.sort }}
               </span>
-              <span class="px-2 py-0.5 rounded-full border border-border bg-background">
+              <span class="px-2 py-0.5 rounded-full border border-default bg-default">
                 {{ item.isActive ? '启用' : '停用' }}
               </span>
             </div>

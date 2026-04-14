@@ -438,7 +438,7 @@ onMounted(async () => {
     </div>
 
     <div class="grid gap-3 md:grid-cols-[320px_1fr]">
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-3">
           <h3 class="text-base">
             用户列表
@@ -462,7 +462,7 @@ onMounted(async () => {
           <div class="grid gap-2 md:grid-cols-3">
             <select
               v-model="activeFilter"
-              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              class="h-9 rounded-md border border-default bg-default px-3 text-sm"
             >
               <option value="all">
                 全部激活状态
@@ -477,7 +477,7 @@ onMounted(async () => {
 
             <select
               v-model="banFilter"
-              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              class="h-9 rounded-md border border-default bg-default px-3 text-sm"
             >
               <option value="all">
                 全部封禁状态
@@ -492,7 +492,7 @@ onMounted(async () => {
 
             <select
               v-model.number="userPageSize"
-              class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              class="h-9 rounded-md border border-default bg-default px-3 text-sm"
             >
               <option
                 v-for="size in userPageSizeOptions"
@@ -504,7 +504,7 @@ onMounted(async () => {
             </select>
           </div>
 
-          <div class="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+          <div class="flex items-center justify-between gap-2 text-xs text-muted">
             <span>共 {{ filteredUsers.length }} 条，当前显示 {{ userPageRangeText }}</span>
             <UButton
               variant="ghost"
@@ -517,7 +517,7 @@ onMounted(async () => {
 
           <UEmpty
             v-if="!filteredUsers.length"
-            class="border border-dashed border-border bg-background/60"
+            class="border border-dashed border-default bg-default/60"
           >
             <div>
               <div>
@@ -542,8 +542,8 @@ onMounted(async () => {
                 v-for="user in pagedUsers"
                 :key="user.id"
                 type="button"
-                class="w-full rounded-[12px] border border-border bg-background/80 p-3 text-left transition-colors hover:bg-accent"
-                :class="selectedUserId === user.id ? 'border-primary/40 bg-accent' : ''"
+                class="w-full rounded-[12px] border border-default bg-default/80 p-3 text-left transition-colors hover:bg-accented"
+                :class="selectedUserId === user.id ? 'border-primary/40 bg-accented' : ''"
                 @click="pickUser(user)"
               >
                 <div class="flex items-start justify-between gap-2">
@@ -551,7 +551,7 @@ onMounted(async () => {
                     <div class="truncate font-semibold">
                       {{ user.username }}
                     </div>
-                    <div class="truncate text-xs text-muted-foreground">
+                    <div class="truncate text-xs text-muted">
                       {{ user.email }}
                     </div>
                   </div>
@@ -568,7 +568,7 @@ onMounted(async () => {
 
           <div
             v-if="filteredUsers.length"
-            class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+            class="flex items-center justify-between gap-2 text-xs text-muted"
           >
             <span>第 {{ userCurrentPage }} / {{ userTotalPages }} 页</span>
             <div class="flex flex-wrap gap-2">
@@ -610,7 +610,7 @@ onMounted(async () => {
       </UCard>
 
       <div class="grid gap-4">
-        <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <UCard class="border-default/70 bg-elevated/90 shadow-sm">
           <div class="pb-3">
             <h3 class="text-base">
               编辑用户
@@ -671,12 +671,12 @@ onMounted(async () => {
             </div>
 
             <div class="grid gap-3 md:grid-cols-2">
-              <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+              <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
                 <div>
                   <div class="text-sm font-medium">
                     账号激活
                   </div>
-                  <div class="text-xs text-muted-foreground">
+                  <div class="text-xs text-muted">
                     未激活用户无法正常登录
                   </div>
                 </div>
@@ -686,12 +686,12 @@ onMounted(async () => {
                 />
               </div>
 
-              <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+              <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
                 <div>
                   <div class="text-sm font-medium">
                     用户封禁
                   </div>
-                  <div class="text-xs text-muted-foreground">
+                  <div class="text-xs text-muted">
                     封禁后用户将无法调用 API
                   </div>
                 </div>
@@ -702,11 +702,11 @@ onMounted(async () => {
               </div>
             </div>
 
-            <div class="grid gap-2 text-xs text-muted-foreground md:grid-cols-2">
-              <div class="rounded-md border border-border bg-background p-3">
+            <div class="grid gap-2 text-xs text-muted md:grid-cols-2">
+              <div class="rounded-md border border-default bg-default p-3">
                 最后登录时间：{{ formatDate(selectedUser?.lastLoginAt || null) }}
               </div>
-              <div class="rounded-md border border-border bg-background p-3">
+              <div class="rounded-md border border-default bg-default p-3">
                 最后登录 IP：{{ selectedUser?.lastLoginIp || '暂无' }}
               </div>
             </div>
@@ -740,7 +740,7 @@ onMounted(async () => {
           </div>
         </UCard>
 
-        <UCard class="border-border/70 bg-card/90 shadow-sm">
+        <UCard class="border-default/70 bg-elevated/90 shadow-sm">
           <div class="pb-3">
             <h3 class="text-base">
               用户 API Key
@@ -774,7 +774,7 @@ onMounted(async () => {
 
               <select
                 v-model="apiKeyStatusFilter"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
                 :disabled="!selectedUserId"
               >
                 <option value="all">
@@ -790,7 +790,7 @@ onMounted(async () => {
 
               <select
                 v-model.number="apiKeyPageSize"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
                 :disabled="!selectedUserId"
               >
                 <option
@@ -805,7 +805,7 @@ onMounted(async () => {
 
             <div
               v-if="selectedUserId"
-              class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+              class="flex items-center justify-between gap-2 text-xs text-muted"
             >
               <span>共 {{ filteredApiKeys.length }} 条，当前显示 {{ apiKeyPageRangeText }}</span>
               <UButton
@@ -819,7 +819,7 @@ onMounted(async () => {
 
             <UEmpty
               v-if="!selectedUserId"
-              class="border border-dashed border-border bg-background/60"
+              class="border border-dashed border-default bg-default/60"
             >
               <div>
                 <div>
@@ -837,7 +837,7 @@ onMounted(async () => {
 
             <UEmpty
               v-else-if="!apiKeys.length"
-              class="border border-dashed border-border bg-background/60"
+              class="border border-dashed border-default bg-default/60"
             >
               <div>
                 <div>
@@ -855,7 +855,7 @@ onMounted(async () => {
 
             <UEmpty
               v-else-if="!filteredApiKeys.length"
-              class="border border-dashed border-border bg-background/60"
+              class="border border-dashed border-default bg-default/60"
             >
               <div>
                 <div>
@@ -903,7 +903,7 @@ onMounted(async () => {
                     <td class="font-medium">
                       {{ item.name }}
                     </td>
-                    <td class="max-w-[420px] truncate text-xs text-muted-foreground">
+                    <td class="max-w-[420px] truncate text-xs text-muted">
                       {{ item.apiKey }}
                     </td>
                     <td>
@@ -914,7 +914,7 @@ onMounted(async () => {
                         {{ item.isActive ? '启用' : '停用' }}
                       </UBadge>
                     </td>
-                    <td class="text-xs text-muted-foreground">
+                    <td class="text-xs text-muted">
                       {{ formatDate(item.createdAt) }}
                     </td>
                     <td>
@@ -949,7 +949,7 @@ onMounted(async () => {
               </table>
 
               <div class="flex items-center justify-between border-t px-4 py-3">
-                <p class="text-xs text-muted-foreground">
+                <p class="text-xs text-muted">
                   第 {{ apiKeyCurrentPage }} / {{ apiKeyTotalPages }} 页
                 </p>
                 <div class="flex flex-wrap gap-2">

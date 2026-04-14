@@ -33,7 +33,7 @@ const getStatusInfo = (status: number) => {
 </script>
 
 <template>
-  <UCard class="card-enter col-span-12 gap-0 border-border bg-card py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
+  <UCard class="card-enter col-span-12 gap-0 border-default bg-elevated py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
     <div class="px-4 pb-0">
       <div class="flex items-center justify-between gap-2">
         <h3 class="m-0 flex-1 text-base font-semibold tracking-wide">
@@ -81,7 +81,7 @@ const getStatusInfo = (status: number) => {
 
     <div
       class="overflow-hidden border-t border-dashed px-4 transition-all duration-300 ease-in-out"
-      :class="isExpanded ? 'mt-3 max-h-125 border-border pt-3 opacity-100' : 'mt-0 max-h-0 border-transparent pt-0 opacity-0'"
+      :class="isExpanded ? 'mt-3 max-h-125 border-default pt-3 opacity-100' : 'mt-0 max-h-0 border-transparent pt-0 opacity-0'"
     >
       <slot name="details" />
     </div>

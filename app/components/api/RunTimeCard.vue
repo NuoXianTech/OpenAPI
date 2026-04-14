@@ -70,10 +70,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <UCard class="mb-3 max-w-275 border-border py-3 shadow-sm">
+  <UCard class="mb-3 max-w-275 border-default py-3 shadow-sm">
     <div class="space-y-2 px-4 text-[13px]">
       <div class="flex flex-wrap items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+        <span class="inline-flex items-center gap-1.5 text-muted">
           <Icon
             name="mdi:clock-outline"
             size="14"
@@ -91,7 +91,7 @@ onUnmounted(() => {
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+        <span class="inline-flex items-center gap-1.5 text-muted">
           <Icon
             name="mdi:server-outline"
             size="14"

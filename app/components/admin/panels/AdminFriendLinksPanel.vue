@@ -114,7 +114,7 @@ onMounted(load)
     </div>
 
     <div class="grid gap-4">
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-3">
           <h3 class="text-base">
             {{ form.id ? '编辑友情链接' : '新增友情链接' }}
@@ -159,12 +159,12 @@ onMounted(load)
             />
           </div>
 
-          <div class="flex items-center justify-between rounded-md border border-border bg-background p-3">
+          <div class="flex items-center justify-between rounded-md border border-default bg-default p-3">
             <div>
               <div class="text-sm font-medium">
                 启用状态
               </div>
-              <div class="text-xs text-muted-foreground">
+              <div class="text-xs text-muted">
                 关闭后前台不展示该链接
               </div>
             </div>
@@ -187,7 +187,7 @@ onMounted(load)
 
       <UEmpty
         v-if="!items.length"
-        class="border border-dashed border-border bg-background/60"
+        class="border border-dashed border-default bg-default/60"
       >
         <div>
           <div>
@@ -210,7 +210,7 @@ onMounted(load)
         <UCard
           v-for="item in items"
           :key="item.id"
-          class="border-border/70 bg-card/90 shadow-sm"
+          class="border-default/70 bg-elevated/90 shadow-sm"
         >
           <div class="pb-3">
             <div class="flex items-start justify-between gap-2">
@@ -229,7 +229,7 @@ onMounted(load)
             </p>
           </div>
           <div class="grid gap-3">
-            <p class="text-sm text-muted-foreground line-clamp-2">
+            <p class="text-sm text-muted line-clamp-2">
               {{ item.description || '暂无描述' }}
             </p>
             <div class="flex gap-2">

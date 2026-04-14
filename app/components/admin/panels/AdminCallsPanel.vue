@@ -210,7 +210,7 @@ onMounted(load)
     </div>
 
     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4 mb-4">
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-2">
           <p>总调用</p>
           <h3 class="text-2xl tabular-nums">
@@ -218,7 +218,7 @@ onMounted(load)
           </h3>
         </div>
       </UCard>
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-2">
           <p>成功</p>
           <h3 class="text-2xl tabular-nums">
@@ -226,7 +226,7 @@ onMounted(load)
           </h3>
         </div>
       </UCard>
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-2">
           <p>失败</p>
           <h3 class="text-2xl tabular-nums">
@@ -234,7 +234,7 @@ onMounted(load)
           </h3>
         </div>
       </UCard>
-      <UCard class="border-border/70 bg-card/90 shadow-sm">
+      <UCard class="border-default/70 bg-elevated/90 shadow-sm">
         <div class="pb-2">
           <p>成功率</p>
           <h3 class="text-2xl tabular-nums">
@@ -244,7 +244,7 @@ onMounted(load)
       </UCard>
     </div>
 
-    <UCard class="border-border/70 bg-card/90 shadow-sm">
+    <UCard class="border-default/70 bg-elevated/90 shadow-sm">
       <div class="pt-6">
         <div
           v-if="loading"
@@ -259,7 +259,7 @@ onMounted(load)
           v-else
           class="grid gap-3"
         >
-          <div class="w-fit rounded-lg border border-border bg-muted/40 p-1">
+          <div class="w-fit rounded-lg border border-default bg-muted/40 p-1">
             <UButton
               size="sm"
               :variant="activeTab === 'stats' ? 'solid' : 'ghost'"
@@ -279,7 +279,7 @@ onMounted(load)
           <section v-if="activeTab === 'stats'">
             <UEmpty
               v-if="!stats.length"
-              class="border border-dashed border-border bg-background/60"
+              class="border border-dashed border-default bg-default/60"
             >
               <div>
                 <div>
@@ -324,7 +324,7 @@ onMounted(load)
                     v-for="item in stats"
                     :key="item.id"
                   >
-                    <td class="text-xs text-muted-foreground">
+                    <td class="text-xs text-muted">
                       {{ item.statDate }}
                     </td>
                     <td class="max-w-[420px] truncate">
@@ -354,7 +354,7 @@ onMounted(load)
 
               <select
                 v-model="methodFilter"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option value="all">
                   全部方法
@@ -370,7 +370,7 @@ onMounted(load)
 
               <select
                 v-model="statusFilter"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option value="all">
                   全部状态
@@ -388,7 +388,7 @@ onMounted(load)
 
               <select
                 v-model.number="pageSize"
-                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                class="h-9 rounded-md border border-default bg-default px-3 text-sm"
               >
                 <option
                   v-for="size in pageSizeOptions"
@@ -400,7 +400,7 @@ onMounted(load)
               </select>
             </div>
 
-            <div class="mb-3 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+            <div class="mb-3 flex items-center justify-between gap-2 text-xs text-muted">
               <span>共 {{ filteredCalls.length }} 条，当前显示 {{ pageRangeText }}</span>
               <UButton
                 variant="ghost"
@@ -413,7 +413,7 @@ onMounted(load)
 
             <UEmpty
               v-if="!filteredCalls.length"
-              class="border border-dashed border-border bg-background/60"
+              class="border border-dashed border-default bg-default/60"
             >
               <div>
                 <div>
@@ -458,7 +458,7 @@ onMounted(load)
                     v-for="item in pagedCalls"
                     :key="item.id"
                   >
-                    <td class="text-xs text-muted-foreground">
+                    <td class="text-xs text-muted">
                       {{ formatDate(item.createdAt) }}
                     </td>
                     <td>
@@ -466,7 +466,7 @@ onMounted(load)
                         {{ item.method }}
                       </UBadge>
                     </td>
-                    <td class="max-w-[520px] truncate text-xs text-muted-foreground">
+                    <td class="max-w-[520px] truncate text-xs text-muted">
                       {{ item.path }}
                     </td>
                     <td class="text-right">
@@ -485,7 +485,7 @@ onMounted(load)
               </table>
 
               <div class="flex items-center justify-between border-t px-4 py-3">
-                <p class="text-xs text-muted-foreground">
+                <p class="text-xs text-muted">
                   第 {{ currentPage }} / {{ totalPages }} 页
                 </p>
                 <div class="flex gap-2">

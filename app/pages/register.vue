@@ -73,7 +73,7 @@ const submit = async () => {
             </UBadge>
           </div>
 
-          <UCard class="border-border/70 bg-card/90 shadow-sm">
+          <UCard class="border-default/70 bg-elevated/90 shadow-sm">
             <div class="pb-3">
               <h3 class="text-base">
                 用户注册
