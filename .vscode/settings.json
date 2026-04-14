@@ -1,4 +1,9 @@
 {
     "editor.tabSize": 2,
-    "eslint.useFlatConfig": true
+    "eslint.useFlatConfig": true,
+    "github.copilot.chat.reviewSelection.instructions": [
+        {
+            "file": ".github/git-commit-instructions.md"
+        }
+    ]
 }
