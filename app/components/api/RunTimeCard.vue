@@ -70,13 +70,13 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <UCard class="mb-3 max-w-275 border-default py-3 shadow-sm">
-    <div class="space-y-2 px-4 text-[13px]">
-      <div class="flex flex-wrap items-center gap-2">
+  <UCard class="mb-3 max-w-275 border-default py-2 shadow-sm">
+    <div class="space-y-1.5 px-3 text-xs">
+      <div class="flex min-h-6 flex-wrap items-center gap-1.5">
         <span class="inline-flex items-center gap-1.5 text-muted">
           <Icon
             name="mdi:clock-outline"
-            size="14"
+            size="13"
             :ssr="true"
           />
           当前时间：
@@ -84,23 +84,25 @@ onUnmounted(() => {
         <UBadge
           color="neutral"
           variant="soft"
+          size="xs"
           class="font-mono"
         >
           {{ nowTime }}
         </UBadge>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex min-h-6 flex-wrap items-center gap-1.5">
         <span class="inline-flex items-center gap-1.5 text-muted">
           <Icon
             name="mdi:server-outline"
-            size="14"
+            size="13"
             :ssr="true"
           />
           稳定运行：
         </span>
         <UBadge
           variant="outline"
+          size="xs"
           class="font-mono"
         >
           {{ upTime }}

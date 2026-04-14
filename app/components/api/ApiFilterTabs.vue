@@ -76,10 +76,11 @@ function toggleExpanded() {
       v-for="tab in visibleTabs"
       :key="String(tab.value)"
       :variant="isActive(tab.value) ? 'solid' : 'outline'"
+      color="neutral"
       size="sm"
       class="api-filter-tab cursor-pointer h-8 rounded-full px-3.5 text-xs font-medium sm:text-sm"
       :class="isActive(tab.value)
-        ? 'shadow-xs'
+        ? 'text-inverted shadow-xs'
         : 'bg-elevated text-muted hover:bg-accented/70 hover:text-default'"
       @click="selectTab(tab.value)"
     >
@@ -89,6 +90,7 @@ function toggleExpanded() {
     <UButton
       v-if="hasOverflow"
       variant="outline"
+      color="neutral"
       size="sm"
       class="api-filter-tab cursor-pointer h-8 rounded-full px-3 text-xs text-muted hover:bg-accented/70 hover:text-default sm:text-sm"
       @click="toggleExpanded"
