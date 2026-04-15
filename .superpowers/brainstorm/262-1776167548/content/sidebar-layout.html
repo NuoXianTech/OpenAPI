@@ -1,0 +1,64 @@
+<h2>管理后台侧边栏导航结构</h2>
+<p class="subtitle">选择你偏好的导航分组方式</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>按功能分组（推荐）</h3>
+      <p>主导航 + 底部导航，参考 Nuxt UI Dashboard 模板的结构</p>
+      <div style="background:#f8f8f9;border-radius:10px;padding:16px;margin-top:12px;font-size:13px;line-height:2;">
+        <div style="font-weight:600;margin-bottom:4px;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">主导航</div>
+        <div>🏠 仪表盘 <span style="color:#999">/admin</span></div>
+        <div>📡 API 管理 <span style="color:#999">/admin/apis</span></div>
+        <div>👥 用户管理 <span style="color:#999">/admin/users</span></div>
+        <div>🔗 友情链接 <span style="color:#999">/admin/friend-links</span></div>
+        <div>📊 调用统计 <span style="color:#999">/admin/calls</span></div>
+        <div>🎯 FAB 菜单 <span style="color:#999">/admin/fab-menu</span></div>
+        <hr style="border:none;border-top:1px dashed #ddd;margin:8px 0;">
+        <div style="font-weight:600;margin-bottom:4px;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;">底部</div>
+        <div>⚙️ 站点设置 <span style="color:#999">/admin/settings</span></div>
+        <div>↩️ 返回前台 <span style="color:#999">/</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>扁平列表</h3>
+      <p>所有页面平铺在一个导航组里，不区分主次</p>
+      <div style="background:#f8f8f9;border-radius:10px;padding:16px;margin-top:12px;font-size:13px;line-height:2;">
+        <div>🏠 仪表盘</div>
+        <div>📡 API 管理</div>
+        <div>👥 用户管理</div>
+        <div>🔗 友情链接</div>
+        <div>🎯 FAB 菜单</div>
+        <div>📊 调用统计</div>
+        <div>⚙️ 站点设置</div>
+        <div>↩️ 返回前台</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>带子菜单分组</h3>
+      <p>用可展开的分组来组织相关功能</p>
+      <div style="background:#f8f8f9;border-radius:10px;padding:16px;margin-top:12px;font-size:13px;line-height:2;">
+        <div>🏠 仪表盘</div>
+        <div style="font-weight:600;margin-top:4px;">▾ 内容管理</div>
+        <div style="padding-left:16px;">📡 API 管理</div>
+        <div style="padding-left:16px;">🔗 友情链接</div>
+        <div style="padding-left:16px;">🎯 FAB 菜单</div>
+        <div style="font-weight:600;margin-top:4px;">▾ 运营</div>
+        <div style="padding-left:16px;">👥 用户管理</div>
+        <div style="padding-left:16px;">📊 调用统计</div>
+        <hr style="border:none;border-top:1px dashed #ddd;margin:8px 0;">
+        <div>⚙️ 站点设置</div>
+        <div>↩️ 返回前台</div>
+      </div>
+    </div>
+  </div>
+</div>

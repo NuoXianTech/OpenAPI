@@ -1,0 +1,66 @@
+<h2>CRUD 操作交互方式</h2>
+<p class="subtitle">新增/编辑记录时的表单展示方式，影响 API 管理、用户管理、友情链接、FAB 菜单页面</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>模态框 Modal（推荐）</h3>
+      <p>点击新增/编辑后弹出居中对话框，表单字段不多时最简洁</p>
+      <div class="mockup" style="margin-top:12px;">
+        <div class="mockup-header">Modal 效果示意</div>
+        <div class="mockup-body" style="position:relative;min-height:200px;">
+          <div style="opacity:0.3;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:12px;">
+              <span>测试接口</span><span>GET</span><span>正常</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:12px;">
+              <span>天气查询</span><span>GET</span><span>正常</span>
+            </div>
+          </div>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border:1px solid #e6e6ea;border-radius:14px;padding:20px;width:80%;box-shadow:0 20px 40px rgba(0,0,0,0.12);">
+            <div style="font-weight:600;font-size:14px;margin-bottom:12px;">新增 API</div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:8px;"></div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:8px;"></div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:12px;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <div style="background:#f0f0f2;border-radius:8px;padding:6px 16px;font-size:11px;">取消</div>
+              <div style="background:#111;color:#fff;border-radius:8px;padding:6px 16px;font-size:11px;">保存</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>侧滑面板 Slideover</h3>
+      <p>从右侧滑出面板，适合字段较多的表单，不遮挡表格内容</p>
+      <div class="mockup" style="margin-top:12px;">
+        <div class="mockup-header">Slideover 效果示意</div>
+        <div class="mockup-body" style="display:flex;min-height:200px;">
+          <div style="flex:1;opacity:0.3;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:12px;">
+              <span>测试接口</span><span>GET</span><span>正常</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:12px;">
+              <span>天气查询</span><span>GET</span><span>正常</span>
+            </div>
+          </div>
+          <div style="width:45%;border-left:1px solid #e6e6ea;padding:16px;background:white;">
+            <div style="font-weight:600;font-size:14px;margin-bottom:12px;">新增 API</div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:8px;"></div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:8px;"></div>
+            <div style="background:#f7f7f8;border-radius:8px;height:28px;margin-bottom:12px;"></div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+              <div style="background:#f0f0f2;border-radius:8px;padding:6px 16px;font-size:11px;">取消</div>
+              <div style="background:#111;color:#fff;border-radius:8px;padding:6px 16px;font-size:11px;">保存</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
