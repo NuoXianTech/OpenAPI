@@ -33,7 +33,7 @@ const getStatusInfo = (status: number) => {
 </script>
 
 <template>
-  <UCard class="card-enter col-span-12 gap-0 border-default bg-elevated py-4 shadow-sm transition-all duration-300 sm:col-span-6 lg:col-span-4">
+  <UCard class="card-enter col-span-12 gap-0 border-default bg-elevated py-4 shadow-[0_6px_16px_rgba(0,0,0,0.06)] transition-all duration-300 sm:col-span-6 lg:col-span-4">
     <div class="px-4 pb-0">
       <div class="flex items-center justify-between gap-2">
         <h3 class="m-0 flex-1 text-base font-semibold tracking-wide">

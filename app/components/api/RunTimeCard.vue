@@ -70,44 +70,29 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <UCard class="mb-3 max-w-275 border-default py-2 shadow-sm">
-    <div class="space-y-1.5 px-3 text-xs">
-      <div class="flex min-h-6 flex-wrap items-center gap-1.5">
-        <span class="inline-flex items-center gap-1.5 text-muted">
-          <Icon
-            name="mdi:clock-outline"
-            size="13"
-            :ssr="true"
-          />
-          当前时间：
-        </span>
-        <UBadge
-          color="neutral"
-          variant="soft"
-          size="xs"
-          class="font-mono"
-        >
-          {{ nowTime }}
-        </UBadge>
-      </div>
-
-      <div class="flex min-h-6 flex-wrap items-center gap-1.5">
-        <span class="inline-flex items-center gap-1.5 text-muted">
-          <Icon
-            name="mdi:server-outline"
-            size="13"
-            :ssr="true"
-          />
-          稳定运行：
-        </span>
-        <UBadge
-          variant="outline"
-          size="xs"
-          class="font-mono"
-        >
-          {{ upTime }}
-        </UBadge>
-      </div>
+  <section class="relative mb-2 flex flex-col gap-1.5 overflow-hidden rounded-xl border border-default bg-elevated p-3 text-[13px] text-muted select-none">
+    <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-[#111113] opacity-10" />
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 opacity-75">
+        <Icon
+          name="mdi:clock-outline"
+          size="14"
+          :ssr="true"
+        />
+        当前时间：
+      </span>
+      <span class="font-mono font-bold tracking-wide text-default">{{ nowTime }}</span>
     </div>
-  </UCard>
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 opacity-75">
+        <Icon
+          name="mdi:server-outline"
+          size="14"
+          :ssr="true"
+        />
+        稳定运行：
+      </span>
+      <span class="font-mono font-bold tracking-wide text-default">{{ upTime }}</span>
+    </div>
+  </section>
 </template>

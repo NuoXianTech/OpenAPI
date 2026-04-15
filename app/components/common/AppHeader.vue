@@ -35,51 +35,81 @@ const handleLogout = async () => {
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
-        <NuxtLink
-          class="btn"
+      <div class="flex items-center gap-1">
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
           to="/friend-links"
-        >友情链接</NuxtLink>
+        >
+          友情链接
+        </UButton>
 
-        <NuxtLink
-          class="btn"
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
           to="/stats"
-        >调用统计</NuxtLink>
+        >
+          调用统计
+        </UButton>
 
         <template v-if="user">
           <div class="text-sm text-muted">
             {{ user.username }}
           </div>
-          <NuxtLink
+          <UButton
             v-if="user.kind === 'admin'"
-            class="btn"
+            variant="ghost"
+            color="neutral"
+            size="sm"
             to="/admin"
-          >管理后台</NuxtLink>
-          <NuxtLink
+          >
+            管理后台
+          </UButton>
+          <UButton
             v-if="user.kind === 'user'"
-            class="btn"
+            variant="ghost"
+            color="neutral"
+            size="sm"
             to="/user/apikeys"
-          >用户后台</NuxtLink>
-          <button
-            class="btn"
+          >
+            用户后台
+          </UButton>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
             @click="handleLogout"
           >
             退出
-          </button>
+          </UButton>
         </template>
         <template v-else>
-          <NuxtLink
-            class="btn"
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
             to="/admin/login"
-          >管理登录</NuxtLink>
-          <NuxtLink
-            class="btn"
+          >
+            管理登录
+          </UButton>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
             to="/login"
-          >登录</NuxtLink>
-          <NuxtLink
-            class="btn"
+          >
+            登录
+          </UButton>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            size="sm"
             to="/register"
-          >注册</NuxtLink>
+          >
+            注册
+          </UButton>
         </template>
       </div>
     </header>

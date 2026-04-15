@@ -180,47 +180,34 @@ const overviewCards = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default">
-    <main class="mx-auto max-w-275 px-5 pb-8">
-      <section class="flex items-end justify-between gap-4 py-6">
+  <ClientOnly>
+    <CommonAppHeader />
+
+    <main class="mx-auto max-w-275 px-5 pb-6">
+      <div class="mb-4 flex items-end justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-semibold tracking-wide text-default">
+          <h2 class="text-lg font-semibold tracking-wide">
             公开调用统计
-          </h1>
-          <p class="mt-1 text-sm text-muted">
+          </h2>
+          <p class="mt-1 text-xs text-muted">
             包含调用概览、近7日趋势和今日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
-          <UButton
-            to="/"
-            variant="outline"
-            size="sm"
-          >
-            <Icon
-              name="mdi:home"
-              size="14"
-              :ssr="true"
-            />
-            返回首页
-          </UButton>
-
-          <UButton
-            variant="outline"
-            size="sm"
-            class="cursor-pointer"
-            @click="reloadStats"
-          >
-            <Icon
-              name="mdi:refresh"
-              size="14"
-              :ssr="true"
-            />
-            刷新数据
-          </UButton>
-        </div>
-      </section>
+        <UButton
+          variant="outline"
+          size="sm"
+          class="shrink-0 cursor-pointer"
+          @click="reloadStats"
+        >
+          <Icon
+            name="mdi:refresh"
+            size="14"
+            :ssr="true"
+          />
+          刷新数据
+        </UButton>
+      </div>
 
       <section
         v-if="error"
@@ -408,5 +395,5 @@ const overviewCards = computed(() => {
     </main>
 
     <CommonAppFooter />
-  </div>
+  </ClientOnly>
 </template>

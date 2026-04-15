@@ -50,38 +50,18 @@ onMounted(() => {
 
 <template>
   <ClientOnly>
-    <header class="mx-auto flex max-w-[1100px] items-end justify-between gap-4 px-5 py-6">
-      <div class="flex items-stretch gap-3">
-        <div
-          id="brandTitleCol"
-          class="flex flex-col justify-center"
-        >
-          <h1 class="m-0 text-2xl font-normal tracking-wide">
-            友情链接
-          </h1>
-          <p class="m-0 mt-1 text-xs text-muted">
-            每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
-          </p>
-        </div>
+    <CommonAppHeader />
+
+    <main class="mx-auto max-w-275 px-5 pb-6">
+      <div class="mb-4">
+        <h2 class="text-lg font-semibold tracking-wide">
+          友情链接
+        </h2>
+        <p class="mt-1 text-xs text-muted">
+          每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
+        </p>
       </div>
 
-      <UButton
-        to="/"
-        variant="outline"
-        size="sm"
-        class="ml-auto"
-      >
-        <Icon
-          name="mdi:home"
-          size="14"
-          class="transition-transform duration-300 chev"
-          :ssr="true"
-        />
-        <span>返回首页</span>
-      </UButton>
-    </header>
-
-    <main class="mx-auto max-w-[1100px] px-5 pb-6">
       <SearchBar
         v-model="query"
         placeholder="搜索友情链接名称或描述..."
