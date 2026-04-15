@@ -210,18 +210,18 @@ const columns: TableColumn<any>[] = [
           <UDashboardSidebarCollapse />
         </template>
       </UDashboardNavbar>
-    </template>
 
-    <template #body>
-      <div class="mb-4">
+      <UDashboardToolbar>
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
           placeholder="搜索用户名、邮箱..."
-          class="max-w-xs"
+          class="max-w-sm"
         />
-      </div>
+      </UDashboardToolbar>
+    </template>
 
+    <template #body>
       <UTable
         :data="items"
         :columns="columns"

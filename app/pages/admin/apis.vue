@@ -154,18 +154,18 @@ const columns: TableColumn<any>[] = [
           </UButton>
         </template>
       </UDashboardNavbar>
-    </template>
 
-    <template #body>
-      <div class="flex items-center gap-2 mb-4">
+      <UDashboardToolbar>
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
           placeholder="搜索名称、描述..."
-          class="max-w-xs"
+          class="max-w-sm"
         />
-      </div>
+      </UDashboardToolbar>
+    </template>
 
+    <template #body>
       <UTable
         :data="items"
         :columns="columns"

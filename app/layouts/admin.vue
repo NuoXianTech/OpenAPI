@@ -5,53 +5,73 @@ const { user, logout } = useAuth()
 const { settings } = useSiteSettings()
 const router = useRouter()
 
-const mainLinks = [[{
-  label: '仪表盘',
-  icon: 'i-mdi-view-dashboard-outline',
-  to: '/admin'
-}, {
-  label: 'API 管理',
-  icon: 'i-mdi-api',
-  to: '/admin/apis'
-}, {
-  label: '用户管理',
-  icon: 'i-mdi-account-group-outline',
-  to: '/admin/users'
-}, {
-  label: '友情链接',
-  icon: 'i-mdi-link-variant',
-  to: '/admin/friend-links'
-}, {
-  label: '调用统计',
-  icon: 'i-mdi-chart-bar',
-  to: '/admin/calls'
-}, {
-  label: 'FAB 菜单',
-  icon: 'i-mdi-plus-circle-outline',
-  to: '/admin/fab-menu'
-}]] satisfies NavigationMenuItem[][]
+const mainLinks = [[
+  {
+    label: '仪表盘',
+    icon: 'i-mdi-view-dashboard-outline',
+    to: '/admin',
+  },
+  {
+    label: 'API 管理',
+    icon: 'i-mdi-api',
+    to: '/admin/apis',
+  },
+  {
+    label: '用户管理',
+    icon: 'i-mdi-account-group-outline',
+    to: '/admin/users',
+  },
+  {
+    label: '友情链接',
+    icon: 'i-mdi-link-variant',
+    to: '/admin/friend-links',
+  },
+  {
+    label: '调用统计',
+    icon: 'i-mdi-chart-bar',
+    to: '/admin/calls',
+  },
+  {
+    label: 'FAB 菜单',
+    icon: 'i-mdi-plus-circle-outline',
+    to: '/admin/fab-menu',
+  },
+]] satisfies NavigationMenuItem[][]
 
-const bottomLinks = [[{
-  label: '站点设置',
-  icon: 'i-mdi-cog-outline',
-  to: '/admin/settings'
-}, {
-  label: '返回前台',
-  icon: 'i-mdi-arrow-left',
-  to: '/'
-}]] satisfies NavigationMenuItem[][]
+const footerLinks = [[
+  {
+    label: '站点设置',
+    icon: 'i-mdi-cog-outline',
+    to: '/admin/settings',
+  },
+  {
+    label: '返回前台',
+    icon: 'i-mdi-arrow-left',
+    to: '/',
+  },
+]] satisfies NavigationMenuItem[][]
 
-const userMenuItems = computed<DropdownMenuItem[][]>(() => [[{
-  type: 'label',
-  label: user.value?.username || 'Admin'
-}], [{
-  label: '退出登录',
-  icon: 'i-mdi-logout',
-  async onSelect() {
-    await logout()
-    await router.push('/admin/login')
-  }
-}]])
+const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
+  {
+    type: 'label',
+    label: user.value?.email || user.value?.username || 'Admin',
+  },
+], [
+  {
+    label: '站点设置',
+    icon: 'i-mdi-cog-outline',
+    to: '/admin/settings',
+  },
+], [
+  {
+    label: '退出登录',
+    icon: 'i-mdi-logout',
+    async onSelect() {
+      await logout()
+      await router.push('/admin/login')
+    },
+  },
+]])
 </script>
 
 <template>
@@ -61,17 +81,24 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [[{
       collapsible
       resizable
       class="bg-elevated/25"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <div class="flex items-center gap-2 p-2" :class="collapsed ? 'justify-center' : ''">
-          <div class="size-8 shrink-0 rounded-lg bg-default border border-default flex items-center justify-center">
-            <Icon name="mdi:shield-crown-outline" size="18" />
-          </div>
-          <span v-if="!collapsed" class="text-sm font-semibold truncate">
-            {{ settings.siteName }}
-          </span>
-        </div>
+        <UDropdownMenu
+          :items="[[{ label: settings.siteName || 'OpenAPI', icon: 'i-mdi-shield-crown-outline', disabled: true }]]"
+          :content="{ align: 'start' }"
+          :ui="{ content: 'w-48' }"
+        >
+          <UButton
+            :label="collapsed ? undefined : (settings.siteName || 'OpenAPI')"
+            icon="i-mdi-shield-crown-outline"
+            color="neutral"
+            variant="ghost"
+            block
+            :square="collapsed"
+            class="data-[state=open]:bg-elevated"
+            :ui="{ trailingIcon: 'size-5' }"
+          />
+        </UDropdownMenu>
       </template>
 
       <template #default="{ collapsed }">
@@ -83,7 +110,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [[{
 
         <UNavigationMenu
           :collapsed="collapsed"
-          :items="bottomLinks[0]"
+          :items="footerLinks[0]"
           orientation="vertical"
           class="mt-auto"
         />
@@ -92,7 +119,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [[{
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="userMenuItems"
-          :content="{ align: 'center', collisionPadding: 12 }"
+          :content="{ align: 'start', collisionPadding: 12 }"
           :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
         >
           <UButton
