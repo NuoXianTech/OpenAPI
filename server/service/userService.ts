@@ -92,6 +92,29 @@ export const usersService = {
     return res[0]
   },
 
+  async updatePasswordHash(id: number, passwordHash: string) {
+    const res = await db.update(users)
+      .set({
+        passwordHash,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning()
+    return res[0] || null
+  },
+
+  async updateEmail(id: number, email: string) {
+    const res = await db.update(users)
+      .set({
+        email,
+        emailVerifiedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning()
+    return res[0] || null
+  },
+
   async banUser(id: number, isBanned: boolean) {
     const res = await db.update(users)
       .set({

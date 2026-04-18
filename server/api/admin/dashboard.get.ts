@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apiLists, users } from '@nuxthub/db/schema'
+import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 import type {
   AdminDashboardData,
@@ -70,9 +70,9 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
   ] = await Promise.all([
     db.select({ userCount: sql<number>`count(*)` }).from(users),
     db.select({
-      enabledApiCount: sql<number>`coalesce(sum(case when ${apiLists.isEnabled} then 1 else 0 end), 0)`,
+      enabledApiCount: sql<number>`coalesce(sum(case when ${apis.isEnabled} then 1 else 0 end), 0)`,
       totalApiCount: sql<number>`count(*)`,
-    }).from(apiLists),
+    }).from(apis),
     db.select({
       totalCalls: totalExpr,
       successCalls: successExpr,
@@ -100,28 +100,28 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       .orderBy(asc(apiCallStats.statDate)),
     db.select({
       apiId: apiCallStats.apiId,
-      name: apiLists.name,
-      apiPath: apiLists.apiPath,
+      name: apis.name,
+      apiPath: apis.apiPath,
       totalCalls: totalExpr,
     }).from(apiCallStats)
-      .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+      .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         gte(apiCallStats.statDate, rangeStart),
         lt(apiCallStats.statDate, tomorrowStart),
       ))
-      .groupBy(apiCallStats.apiId, apiLists.name, apiLists.apiPath)
-      .orderBy(desc(totalExpr), asc(apiLists.name))
+      .groupBy(apiCallStats.apiId, apis.name, apis.apiPath)
+      .orderBy(desc(totalExpr), asc(apis.name))
       .limit(distributionLimit),
     db.select({
       id: apiCalls.id,
-      apiName: apiLists.name,
+      apiName: apis.name,
       apiPath: apiCalls.path,
       method: apiCalls.method,
       statusCode: apiCalls.statusCode,
       latencyMs: apiCalls.latencyMs,
       createdAt: apiCalls.createdAt,
     }).from(apiCalls)
-      .leftJoin(apiLists, eq(apiCalls.apiId, apiLists.id))
+      .leftJoin(apis, eq(apiCalls.apiId, apis.id))
       .orderBy(desc(apiCalls.createdAt))
       .limit(recentLimit),
   ])

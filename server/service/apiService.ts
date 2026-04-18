@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { createError } from 'h3'
-import { apiCallStats, apiLists } from '@nuxthub/db/schema'
+import { apiCallStats, apis } from '@nuxthub/db/schema'
 
 const MAX_CATEGORY_TAGS = 5
 const MAX_CATEGORY_LENGTH = 100
@@ -71,11 +71,11 @@ function buildApiFilters(filters: Partial<{
   if (filters.keyword) {
     const keywordPattern = toContainsPattern(filters.keyword)
     const keywordCondition = or(
-      ilike(apiLists.code, keywordPattern),
-      ilike(apiLists.name, keywordPattern),
-      ilike(apiLists.shortDesc, keywordPattern),
-      ilike(apiLists.apiPath, keywordPattern),
-      ilike(apiLists.category, keywordPattern),
+      ilike(apis.code, keywordPattern),
+      ilike(apis.name, keywordPattern),
+      ilike(apis.shortDesc, keywordPattern),
+      ilike(apis.apiPath, keywordPattern),
+      ilike(apis.category, keywordPattern),
     )
     if (keywordCondition) {
       conditions.push(keywordCondition)
@@ -83,19 +83,19 @@ function buildApiFilters(filters: Partial<{
   }
 
   if (typeof filters.status === 'number') {
-    conditions.push(eq(apiLists.status, filters.status))
+    conditions.push(eq(apis.status, filters.status))
   }
 
   if (filters.category) {
-    conditions.push(ilike(apiLists.category, toContainsPattern(filters.category)))
+    conditions.push(ilike(apis.category, toContainsPattern(filters.category)))
   }
 
   if (typeof filters.isEnabled === 'boolean') {
-    conditions.push(eq(apiLists.isEnabled, filters.isEnabled))
+    conditions.push(eq(apis.isEnabled, filters.isEnabled))
   }
 
   if (typeof filters.isStatistics === 'boolean') {
-    conditions.push(eq(apiLists.isStatistics, filters.isStatistics))
+    conditions.push(eq(apis.isStatistics, filters.isStatistics))
   }
 
   return conditions
@@ -125,15 +125,15 @@ export const apiService = {
   async list(filters: Partial<{ keyword: string, status: number, category: string, isEnabled: boolean, isStatistics: boolean }> = {}) {
     const conditions = buildApiFilters(filters)
 
-    const query = db.select().from(apiLists)
+    const query = db.select().from(apis)
     const [rows, statsMap] = await Promise.all([
       conditions.length
-        ? await query.where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
-        : await query.orderBy(desc(apiLists.updatedAt)),
+        ? await query.where(and(...conditions)).orderBy(desc(apis.updatedAt))
+        : await query.orderBy(desc(apis.updatedAt)),
       loadApiStats(),
     ])
 
-    return (rows as Array<typeof apiLists.$inferSelect>).map(row => ({
+    return (rows as Array<typeof apis.$inferSelect>).map(row => ({
       ...row,
       totalCalls: statsMap[row.id]?.totalCalls ?? 0,
     }))
@@ -143,12 +143,12 @@ export const apiService = {
     const conditions = buildApiFilters(filters)
     const [rows, statsMap] = await Promise.all([
       conditions.length
-        ? await db.select().from(apiLists).where(and(...conditions)).orderBy(desc(apiLists.updatedAt))
-        : await db.select().from(apiLists).orderBy(desc(apiLists.updatedAt)),
+        ? await db.select().from(apis).where(and(...conditions)).orderBy(desc(apis.updatedAt))
+        : await db.select().from(apis).orderBy(desc(apis.updatedAt)),
       loadApiStats(),
     ])
 
-    return (rows as Array<typeof apiLists.$inferSelect>).map((row): PublicApiItem => ({
+    return (rows as Array<typeof apis.$inferSelect>).map((row): PublicApiItem => ({
       id: row.id,
       name: row.name,
       status: row.status,
@@ -165,26 +165,26 @@ export const apiService = {
 
   async listStatisticsTargets() {
     return db.select({
-      id: apiLists.id,
-      apiPath: apiLists.apiPath,
-      httpMethod: apiLists.httpMethod,
-    }).from(apiLists).where(and(
-      eq(apiLists.isEnabled, true),
-      eq(apiLists.isStatistics, true),
+      id: apis.id,
+      apiPath: apis.apiPath,
+      httpMethod: apis.httpMethod,
+    }).from(apis).where(and(
+      eq(apis.isEnabled, true),
+      eq(apis.isStatistics, true),
     ))
   },
 
   async getById(id: number) {
-    const res = await db.select().from(apiLists).where(eq(apiLists.id, id)).limit(1)
+    const res = await db.select().from(apis).where(eq(apis.id, id)).limit(1)
     return res[0] || null
   },
 
   async getByCode(code: string) {
-    const res = await db.select().from(apiLists).where(eq(apiLists.code, code)).limit(1)
+    const res = await db.select().from(apis).where(eq(apis.code, code)).limit(1)
     return res[0] || null
   },
 
-  async addApi(userid: number | null, data: Partial<typeof apiLists.$inferInsert> & {
+  async addApi(userid: number | null, data: Partial<typeof apis.$inferInsert> & {
     code: string
     name: string
     shortDesc: string
@@ -193,7 +193,7 @@ export const apiService = {
     apiPath: string
     docUrl: string
   }) {
-    return await db.insert(apiLists).values({
+    return await db.insert(apis).values({
       code: data.code,
       name: data.name,
       status: data.status ?? 1,
@@ -212,9 +212,9 @@ export const apiService = {
     }).returning()
   },
 
-  async updateApi(id: number, userid: number | null, data: Partial<typeof apiLists.$inferInsert>) {
-    const { code: _code, ...patch } = data as Partial<typeof apiLists.$inferInsert> & { code?: string }
-    const res = await db.update(apiLists)
+  async updateApi(id: number, userid: number | null, data: Partial<typeof apis.$inferInsert>) {
+    const { code: _code, ...patch } = data as Partial<typeof apis.$inferInsert> & { code?: string }
+    const res = await db.update(apis)
       .set({
         ...patch,
         category: patch.category !== undefined ? normalizeCategoryTags(patch.category) : patch.category,
@@ -222,13 +222,13 @@ export const apiService = {
         updatedBy: userid,
         updatedAt: new Date(),
       })
-      .where(eq(apiLists.id, id))
+      .where(eq(apis.id, id))
       .returning()
     return res[0] || null
   },
 
   async deleteApi(id: number) {
-    const res = await db.delete(apiLists).where(eq(apiLists.id, id)).returning()
+    const res = await db.delete(apis).where(eq(apis.id, id)).returning()
     return res[0] || null
   },
 
@@ -245,7 +245,7 @@ export const apiService = {
     if (typeof updatedBy !== 'undefined') {
       patch.updatedBy = updatedBy
     }
-    const res = await db.update(apiLists).set(patch).where(eq(apiLists.id, id)).returning()
+    const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
     return res[0] || null
   },
 }

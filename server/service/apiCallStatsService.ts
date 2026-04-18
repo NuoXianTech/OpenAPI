@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apiLists, users } from '@nuxthub/db/schema'
+import { apiCallStats, apis, users } from '@nuxthub/db/schema'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsTopItem,
@@ -68,8 +68,8 @@ export const apiCallStatsService = {
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
     const failureExpr = sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
     const publicApiCondition = and(
-      eq(apiLists.isEnabled, true),
-      eq(apiLists.isStatistics, true),
+      eq(apis.isEnabled, true),
+      eq(apis.isStatistics, true),
     )
 
     const [summaryRows, todayRows, yesterdayRows, enabledTrackedApiRows, userRows, trendRows, topRows] = await Promise.all([
@@ -79,12 +79,12 @@ export const apiCallStatsService = {
         failureCalls: failureExpr,
         trackedApiCount: sql<number>`count(distinct ${apiCallStats.apiId})`,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(publicApiCondition),
       db.select({
         todayCalls: totalExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, todayStart),
@@ -93,7 +93,7 @@ export const apiCallStatsService = {
       db.select({
         yesterdayCalls: totalExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, yesterdayStart),
@@ -101,7 +101,7 @@ export const apiCallStatsService = {
         )),
       db.select({
         enabledTrackedApiCount: sql<number>`count(*)`,
-      }).from(apiLists)
+      }).from(apis)
         .where(publicApiCondition),
       db.select({
         userCount: sql<number>`count(*)`,
@@ -116,7 +116,7 @@ export const apiCallStatsService = {
         successCalls: successExpr,
         failureCalls: failureExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, rangeStart),
@@ -126,14 +126,14 @@ export const apiCallStatsService = {
         .orderBy(asc(apiCallStats.statDate)),
       db.select({
         apiId: apiCallStats.apiId,
-        name: apiLists.name,
-        apiPath: apiLists.apiPath,
-        httpMethod: apiLists.httpMethod,
+        name: apis.name,
+        apiPath: apis.apiPath,
+        httpMethod: apis.httpMethod,
         totalCalls: totalExpr,
         successCalls: successExpr,
         failureCalls: failureExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
+        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, todayStart),
@@ -141,11 +141,11 @@ export const apiCallStatsService = {
         ))
         .groupBy(
           apiCallStats.apiId,
-          apiLists.name,
-          apiLists.apiPath,
-          apiLists.httpMethod,
+          apis.name,
+          apis.apiPath,
+          apis.httpMethod,
         )
-        .orderBy(desc(totalExpr), asc(apiLists.name))
+        .orderBy(desc(totalExpr), asc(apis.name))
         .limit(topLimit),
     ])
 

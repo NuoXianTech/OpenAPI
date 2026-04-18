@@ -37,9 +37,9 @@ export const apiCategories = pgTable('api_categories', {
 ])
 
 // ------------------------------------------------------------------
-// API Lists（接口主表）
+// APIs（接口主表）
 // ------------------------------------------------------------------
-export const apiLists = pgTable('api_lists', {
+export const apis = pgTable('apis', {
   id: serial('id').unique().notNull(),
   code: varchar('code', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
@@ -133,7 +133,7 @@ export const apiKeys = pgTable('api_keys', {
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
   requestId: uuid('request_id').defaultRandom(), // 分布式追踪 ID
-  apiId: integer('api_id').references(() => apiLists.id).notNull(),
+  apiId: integer('api_id').references(() => apis.id).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
   userId: integer('user_id').references(() => users.id),
   path: varchar('path', { length: 1000 }).notNull(),
@@ -176,7 +176,7 @@ export const apiCalls = pgTable('api_calls', {
 // ------------------------------------------------------------------
 export const apiCallStats = pgTable('api_call_stats', {
   id: serial('id').primaryKey(),
-  apiId: integer('api_id').notNull().references(() => apiLists.id),
+  apiId: integer('api_id').notNull().references(() => apis.id),
   lastApiCallId: integer('last_api_call_id').references(() => apiCalls.id), // 该统计区间最近一次调用 ID
   statDate: timestamp('stat_date', { withTimezone: true }).notNull(),
   totalCount: integer('total_count').notNull().default(0),

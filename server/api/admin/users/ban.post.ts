@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { createError, getHeader, getRequestIP } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
@@ -21,12 +21,14 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   await operationLogService.addLog({
-    userId: admin.id || null,
     actor: admin.username,
+    actorType: 'admin',
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
     resourceType: 'user',
-    resourceId: String(id),
-    detail: JSON.stringify(updated),
+    resourceId: id,
+    ip: getRequestIP(event) || null,
+    userAgent: getHeader(event, 'user-agent') || null,
+    detail: { isBanned, username: updated?.username },
   })
 
   return {
