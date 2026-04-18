@@ -4,7 +4,7 @@ import { createError, getRequestIP } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { hashPassword } from '~~/server/utils/auth'
 import { validateEmail } from '~~/server/utils/validation'
-import { verificationTokenService } from '../../service/emailVerificationService'
+import { verificationTokenService } from '../../service/verificationTokenService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 

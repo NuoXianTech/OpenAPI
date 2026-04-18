@@ -13,27 +13,9 @@ export interface OperationLogInput {
   resourceId?: string | number | null
   ip?: string | null
   userAgent?: string | null
-  /** 结构化对象优先；为兼容老代码也接受 JSON 字符串，会自动 parse。 */
-  detail?: Record<string, unknown> | string | null
+  detail?: Record<string, unknown> | null
   status?: OperationLogStatus
   errorMessage?: string | null
-}
-
-function normalizeDetail(value: OperationLogInput['detail']): Record<string, unknown> | null {
-  if (value === null || value === undefined) return null
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value)
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, unknown>
-      }
-      return { value: parsed }
-    }
-    catch {
-      return { raw: value }
-    }
-  }
-  return value
 }
 
 export interface OperationLogListFilters {
@@ -60,7 +42,7 @@ export const operationLogService = {
         resourceId: input.resourceId !== null && input.resourceId !== undefined ? String(input.resourceId).slice(0, 120) : null,
         ip: input.ip ?? null,
         userAgent: input.userAgent?.slice(0, 500) ?? null,
-        detail: normalizeDetail(input.detail),
+        detail: input.detail ?? null,
         status: input.status || 'success',
         errorMessage: input.errorMessage?.slice(0, 500) ?? null,
       })

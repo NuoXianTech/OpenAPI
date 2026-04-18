@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const { fetchMe, user, login } = useAuth()
+const route = useRoute()
 const form = reactive({
   identifier: '',
   password: '',
@@ -7,6 +8,31 @@ const form = reactive({
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
+
+const { data: providersData } = await useFetch<{ code: number, data: Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }> }>('/api/auth/providers/list', {
+  default: () => ({ code: 0, msg: '', data: [] }),
+})
+const providers = computed(() => providersData.value?.data || [])
+
+const oauthError = computed(() => {
+  const code = (route.query.oauth_error || '').toString()
+  if (!code) {
+    return ''
+  }
+  const map: Record<string, string> = {
+    state_mismatch: 'OAuth 状态校验失败，请重试',
+    missing_code: '未拿到授权码，请重试',
+    provider_unavailable: 'Provider 不可用',
+    provider_not_implemented: '暂不支持该 Provider',
+    email_required: '该账号未提供邮箱，无法创建',
+    user_banned: '该用户已被封禁',
+    user_unavailable: '用户不可用',
+    secret_decrypt_failed: 'Provider 密钥配置异常',
+    user_create_failed: '用户创建失败',
+    callback_failed: 'OAuth 回调失败，请重试',
+  }
+  return map[code] || `登录失败：${code}`
+})
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
@@ -41,6 +67,11 @@ const submit = async () => {
   finally {
     submitting.value = false
   }
+}
+
+function gotoOAuth(entry: string) {
+  const returnTo = encodeURIComponent(window.location.pathname + window.location.search)
+  window.location.href = `${entry}?returnTo=${returnTo}`
 }
 </script>
 
@@ -150,6 +181,15 @@ const submit = async () => {
                   </UBadge>
                 </div>
 
+                <div v-if="oauthError">
+                  <UBadge
+                    color="error"
+                    class="max-w-full whitespace-normal break-words"
+                  >
+                    {{ oauthError }}
+                  </UBadge>
+                </div>
+
                 <div class="flex flex-wrap gap-2">
                   <UButton
                     type="submit"
@@ -163,6 +203,27 @@ const submit = async () => {
                   >
                     创建账号
                   </UButton>
+                </div>
+
+                <div
+                  v-if="providers.length"
+                  class="grid gap-2 pt-2 border-t border-default/60"
+                >
+                  <p class="text-xs text-muted">
+                    或使用第三方登录
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <UButton
+                      v-for="p in providers"
+                      :key="p.provider"
+                      type="button"
+                      variant="outline"
+                      :icon="p.icon || 'i-mdi-account-circle-outline'"
+                      @click="gotoOAuth(p.authorizeEntry)"
+                    >
+                      {{ p.displayName }}
+                    </UButton>
+                  </div>
                 </div>
               </form>
             </div>

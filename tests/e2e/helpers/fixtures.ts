@@ -9,7 +9,7 @@ export function createApiPayload() {
     code: suffix,
     name: `API ${suffix}`,
     status: 1,
-    category: 'e2e,test',
+    categoryId: null,
     shortDesc: `Short ${suffix}`,
     description: `Description ${suffix}`,
     httpMethod: 'GET',

@@ -23,7 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: `admin.api.toggle.${field}`,
     resourceType: 'api',
     resourceId: String(id),
-    detail: JSON.stringify(updated),
+    detail: { updated },
   })
 
   return { code: 0, msg: 'ok', data: updated }

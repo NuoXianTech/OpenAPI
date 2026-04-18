@@ -10,6 +10,7 @@ const {
   currentCategory,
   statusTabs,
   categoryTabs,
+  categoryMap,
   loading,
   error,
   filteredItems,
@@ -119,7 +120,10 @@ const { settings } = useSiteSettings()
           key="content"
           class="py-2"
         >
-          <ApiList :items="filteredItems" />
+          <ApiList
+            :items="filteredItems"
+            :category-map="categoryMap"
+          />
         </section>
       </Transition>
     </main>

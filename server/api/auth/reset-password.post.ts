@@ -2,7 +2,7 @@
 import type { H3Event } from 'h3'
 import { createError, readBody } from 'h3'
 import { usersService } from '~~/server/service/userService'
-import { verificationTokenService } from '~~/server/service/emailVerificationService'
+import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sessionService } from '~~/server/service/sessionService'
 import { hashPassword } from '~~/server/utils/auth'
 

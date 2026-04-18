@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.friend-link.update',
     resourceType: 'friend-link',
     resourceId: String(id),
-    detail: JSON.stringify(updated),
+    detail: { updated },
   })
 
   return { code: 0, msg: 'ok', data: updated }

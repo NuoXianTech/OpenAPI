@@ -2,7 +2,7 @@ export interface ApiCatalogItem {
   id: number
   name: string
   status: number
-  category: string | null
+  categoryId: number | null
   shortDesc: string
   description: string
   httpMethod: string
@@ -22,10 +22,20 @@ export interface ApiCatalogResponse {
 export interface ApiCatalogFilters {
   keyword?: string
   status?: number
-  category?: string
+  categoryId?: number
 }
 
 export interface ApiTabOption {
   label: string
   value: string | number
+}
+
+export interface ApiCategoryItem {
+  id: number
+  code: string
+  name: string
+  icon?: string | null
+  color?: string | null
+  sortOrder: number
+  isEnabled: boolean
 }

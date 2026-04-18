@@ -23,7 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.fab-menu.delete',
     resourceType: 'fab-menu',
     resourceId: String(id),
-    detail: JSON.stringify(deleted),
+    detail: { deleted },
   })
 
   return { code: 0, msg: 'ok', data: deleted }

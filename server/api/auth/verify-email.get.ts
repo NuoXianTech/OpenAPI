@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
-import { verificationTokenService } from '../../service/emailVerificationService'
+import { verificationTokenService } from '../../service/verificationTokenService'
 import { usersService } from '~~/server/service/userService'
 import { createUserSession } from '~~/server/utils/auth'
 

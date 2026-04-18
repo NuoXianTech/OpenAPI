@@ -30,7 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.fab-menu.update',
     resourceType: 'fab-menu',
     resourceId: String(id),
-    detail: JSON.stringify(updated),
+    detail: { updated },
   })
 
   return { code: 0, msg: 'ok', data: updated }

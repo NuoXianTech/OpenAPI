@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.friend-link.create',
     resourceType: 'friend-link',
     resourceId: String(created.id),
-    detail: JSON.stringify(created),
+    detail: { created },
   })
 
   return { code: 0, msg: 'ok', data: created }

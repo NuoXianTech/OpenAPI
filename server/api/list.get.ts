@@ -8,7 +8,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const data = await apiService.listPublicApis({
     keyword: (query.keyword || '').toString().trim(),
     status: query.status !== undefined && query.status !== '' ? Number(query.status) : undefined,
-    category: (query.category || '').toString().trim(),
+    categoryId: query.categoryId !== undefined && query.categoryId !== '' ? Number(query.categoryId) : undefined,
   })
 
   return report(event, 200, '接口列表获取成功！', data)

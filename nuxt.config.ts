@@ -18,6 +18,7 @@ export default defineNuxtConfig({
       adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
       emailVerifySecret:
         process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',
+      oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
     },
     public: {
       startTime: '2026-01-01 00:00:00',

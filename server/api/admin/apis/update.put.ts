@@ -16,7 +16,9 @@ export default defineEventHandler(async (event: H3Event) => {
     code: body.code?.toString().trim(),
     name: body.name?.toString().trim(),
     status: body.status !== undefined ? Number(body.status) : undefined,
-    category: body.category?.toString().trim() || null,
+    categoryId: body.categoryId !== undefined
+      ? (body.categoryId === null || body.categoryId === '' ? null : Number(body.categoryId))
+      : undefined,
     shortDesc: body.shortDesc?.toString().trim(),
     description: body.description?.toString().trim(),
     httpMethod: body.httpMethod?.toString().trim(),
@@ -34,7 +36,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api.update',
     resourceType: 'api',
     resourceId: String(id),
-    detail: JSON.stringify(updated),
+    detail: { updated },
   })
 
   return { code: 0, msg: 'ok', data: updated }

@@ -87,7 +87,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.settings.update',
     resourceType: 'site-settings',
     resourceId: String(data.id),
-    detail: JSON.stringify(changedEntries.map(([key]) => key)),
+    detail: { changedFields: changedEntries.map(([key]) => key) },
   })
 
   return {

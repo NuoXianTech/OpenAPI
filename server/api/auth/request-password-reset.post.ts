@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { createError, getRequestIP, readBody } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { verificationTokenService } from '~~/server/service/emailVerificationService'
+import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { validateEmail } from '~~/server/utils/validation'
 

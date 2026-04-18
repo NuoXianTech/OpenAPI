@@ -15,6 +15,17 @@ const { data, status, refresh } = await useFetch('/api/admin/apis/list', {
   default: () => ({ code: 0, msg: '', data: [] }),
 })
 
+const { data: categoriesData } = await useFetch('/api/api-categories/list', {
+  default: () => ({ code: 0, msg: '', data: [] }),
+})
+const categoriesMap = computed(() => {
+  const map = new Map<number, string>()
+  for (const cat of (categoriesData.value?.data || [])) {
+    map.set(cat.id, cat.name)
+  }
+  return map
+})
+
 const items = computed(() => data.value?.data || [])
 
 const modalOpen = ref(false)
@@ -98,11 +109,15 @@ const columns: TableColumn<any>[] = [
     accessorKey: 'status',
     header: '状态',
     cell: ({ row }) => {
-      const info = statusMap[row.original.status] || statusMap[-1]
+      const info = statusMap[row.original.status] || statusMap[-1]!
       return h(UBadge, { color: info.color, variant: 'subtle' }, () => info.label)
     },
   },
-  { accessorKey: 'category', header: '分类' },
+  {
+    accessorKey: 'categoryId',
+    header: '分类',
+    cell: ({ row }) => row.original.categoryId ? (categoriesMap.value.get(row.original.categoryId) || `#${row.original.categoryId}`) : '-',
+  },
   {
     accessorKey: 'httpMethod',
     header: '方法',

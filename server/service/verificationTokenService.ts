@@ -111,6 +111,3 @@ export const verificationTokenService = {
     } satisfies VerificationPayload
   },
 }
-
-/** @deprecated use verificationTokenService */
-export const emailVerificationService = verificationTokenService

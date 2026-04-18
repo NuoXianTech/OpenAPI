@@ -32,7 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.fab-menu.create',
     resourceType: 'fab-menu',
     resourceId: String(created?.id || ''),
-    detail: JSON.stringify(created),
+    detail: { created },
   })
 
   return { code: 0, msg: 'ok', data: created }

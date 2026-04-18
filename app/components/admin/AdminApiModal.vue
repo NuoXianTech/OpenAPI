@@ -18,7 +18,7 @@ const schema = z.object({
   apiPath: z.string().min(1, '必填'),
   docUrl: z.string().min(1, '必填'),
   status: z.number().default(1),
-  category: z.string().optional(),
+  categoryId: z.number().nullable().optional(),
   isEnabled: z.boolean().default(false),
   isApiKey: z.boolean().default(false),
   isStatistics: z.boolean().default(false),
@@ -36,7 +36,7 @@ const defaultState: Partial<Schema> = {
   apiPath: '',
   docUrl: '',
   status: 1,
-  category: '',
+  categoryId: null,
   isEnabled: true,
   isApiKey: false,
   isStatistics: true,
@@ -45,6 +45,14 @@ const defaultState: Partial<Schema> = {
 
 const state = reactive<Partial<Schema>>({ ...defaultState })
 const loading = ref(false)
+
+const { data: categoriesData } = await useFetch('/api/api-categories/list', {
+  default: () => ({ code: 0, msg: '', data: [] }),
+})
+const categoryOptions = computed(() => [
+  { label: '未分类', value: null },
+  ...((categoriesData.value?.data || []).map((c: any) => ({ label: c.name, value: c.id }))),
+])
 
 watch(() => props.item, (val) => {
   if (val) {
@@ -57,7 +65,7 @@ watch(() => props.item, (val) => {
       apiPath: val.apiPath || '',
       docUrl: val.docUrl || '',
       status: val.status ?? 1,
-      category: val.category || '',
+      categoryId: val.categoryId ?? null,
       isEnabled: val.isEnabled ?? true,
       isApiKey: val.isApiKey ?? false,
       isStatistics: val.isStatistics ?? true,
@@ -198,11 +206,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <div class="grid grid-cols-2 gap-3">
             <UFormField
               label="分类"
-              name="category"
+              name="categoryId"
             >
-              <UInput
-                v-model="state.category"
-                placeholder="分类标签"
+              <USelect
+                v-model="state.categoryId"
+                :items="categoryOptions"
               />
             </UFormField>
             <UFormField

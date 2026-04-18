@@ -2,7 +2,7 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
 import { usersService } from '~~/server/service/userService'
-import { verificationTokenService } from '~~/server/service/emailVerificationService'
+import { verificationTokenService } from '~~/server/service/verificationTokenService'
 
 export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event)

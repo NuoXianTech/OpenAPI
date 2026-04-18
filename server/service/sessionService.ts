@@ -40,32 +40,11 @@ export const sessionService = {
   async getSessionById(sessionId: string) {
     const now = new Date()
     const sessionHash = hashSessionId(sessionId)
-    const hashedResult = await db.select().from(sessions)
+    const res = await db.select().from(sessions)
       .where(and(eq(sessions.sessionId, sessionHash), gt(sessions.expiresAt, now)))
       .limit(1)
 
-    if (hashedResult[0]) {
-      return hashedResult[0]
-    }
-
-    // 兼容旧明文 sessionId 存法，捞到后自动迁移到哈希存储。
-    const legacyResult = await db.select().from(sessions)
-      .where(and(eq(sessions.sessionId, sessionId), gt(sessions.expiresAt, now)))
-      .limit(1)
-
-    const legacySession = legacyResult[0]
-    if (!legacySession) {
-      return null
-    }
-
-    await db.update(sessions)
-      .set({ sessionId: sessionHash })
-      .where(eq(sessions.sessionId, sessionId))
-
-    return {
-      ...legacySession,
-      sessionId: sessionHash,
-    }
+    return res[0] || null
   },
 
   /**
@@ -88,7 +67,6 @@ export const sessionService = {
   async deleteSession(sessionId: string) {
     const sessionHash = hashSessionId(sessionId)
     await db.delete(sessions).where(eq(sessions.sessionId, sessionHash))
-    await db.delete(sessions).where(eq(sessions.sessionId, sessionId))
   },
 
   async deleteSessionsByUserId(userId: number) {

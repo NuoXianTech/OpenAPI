@@ -1,9 +1,5 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
-import { createError } from 'h3'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
-
-const MAX_CATEGORY_TAGS = 5
-const MAX_CATEGORY_LENGTH = 100
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -21,30 +17,6 @@ function normalizeMethodList(httpMethod: string) {
     .join(',')
 }
 
-function normalizeCategoryTags(category: string | null | undefined) {
-  if (!category) {
-    return null
-  }
-
-  const tags = Array.from(new Set(
-    category
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(Boolean),
-  ))
-
-  if (tags.length > MAX_CATEGORY_TAGS) {
-    throw createError({ statusCode: 400, message: `category tags cannot exceed ${MAX_CATEGORY_TAGS}` })
-  }
-
-  const normalized = tags.join(',')
-  if (normalized.length > MAX_CATEGORY_LENGTH) {
-    throw createError({ statusCode: 400, message: `category is too long, max length is ${MAX_CATEGORY_LENGTH}` })
-  }
-
-  return normalized || null
-}
-
 async function loadApiStats() {
   const rows = await db.select({
     apiId: apiCallStats.apiId,
@@ -59,13 +31,15 @@ async function loadApiStats() {
   }, {})
 }
 
-function buildApiFilters(filters: Partial<{
-  keyword: string
-  status: number
-  category: string
-  isEnabled: boolean
-  isStatistics: boolean
-}>) {
+export interface ApiListFilters {
+  keyword?: string
+  status?: number
+  categoryId?: number
+  isEnabled?: boolean
+  isStatistics?: boolean
+}
+
+function buildApiFilters(filters: ApiListFilters) {
   const conditions: SQL[] = []
 
   if (filters.keyword) {
@@ -75,7 +49,6 @@ function buildApiFilters(filters: Partial<{
       ilike(apis.name, keywordPattern),
       ilike(apis.shortDesc, keywordPattern),
       ilike(apis.apiPath, keywordPattern),
-      ilike(apis.category, keywordPattern),
     )
     if (keywordCondition) {
       conditions.push(keywordCondition)
@@ -86,8 +59,8 @@ function buildApiFilters(filters: Partial<{
     conditions.push(eq(apis.status, filters.status))
   }
 
-  if (filters.category) {
-    conditions.push(ilike(apis.category, toContainsPattern(filters.category)))
+  if (typeof filters.categoryId === 'number' && filters.categoryId > 0) {
+    conditions.push(eq(apis.categoryId, filters.categoryId))
   }
 
   if (typeof filters.isEnabled === 'boolean') {
@@ -105,7 +78,7 @@ type PublicApiItem = {
   id: number
   name: string
   status: number
-  category: string | null
+  categoryId: number | null
   shortDesc: string
   description: string
   httpMethod: string
@@ -122,7 +95,7 @@ export type StatisticsTargetItem = {
 }
 
 export const apiService = {
-  async list(filters: Partial<{ keyword: string, status: number, category: string, isEnabled: boolean, isStatistics: boolean }> = {}) {
+  async list(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
 
     const query = db.select().from(apis)
@@ -139,7 +112,7 @@ export const apiService = {
     }))
   },
 
-  async listPublicApis(filters: Partial<{ keyword: string, status: number, category: string }> = {}) {
+  async listPublicApis(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
     const [rows, statsMap] = await Promise.all([
       conditions.length
@@ -152,7 +125,7 @@ export const apiService = {
       id: row.id,
       name: row.name,
       status: row.status,
-      category: row.category,
+      categoryId: row.categoryId,
       shortDesc: row.shortDesc,
       description: row.description,
       httpMethod: row.httpMethod,
@@ -197,7 +170,7 @@ export const apiService = {
       code: data.code,
       name: data.name,
       status: data.status ?? 1,
-      category: normalizeCategoryTags(data.category),
+      categoryId: data.categoryId ?? null,
       shortDesc: data.shortDesc,
       description: data.description,
       httpMethod: normalizeMethodList(data.httpMethod),
@@ -217,7 +190,6 @@ export const apiService = {
     const res = await db.update(apis)
       .set({
         ...patch,
-        category: patch.category !== undefined ? normalizeCategoryTags(patch.category) : patch.category,
         httpMethod: patch.httpMethod ? normalizeMethodList(patch.httpMethod) : patch.httpMethod,
         updatedBy: userid,
         updatedAt: new Date(),

@@ -38,6 +38,11 @@ const mainLinks = [[
     icon: 'i-mdi-plus-circle-outline',
     to: '/admin/fab-menu',
   },
+  {
+    label: '第三方登录',
+    icon: 'i-mdi-shield-key-outline',
+    to: '/admin/oauth-providers',
+  },
 ]] satisfies NavigationMenuItem[][]
 
 const footerLinks = [[

@@ -1,9 +1,17 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
 
-const { items } = defineProps({
+const { items, categoryMap } = defineProps({
   items: { type: Array as PropType<any[]>, default: () => [] },
+  categoryMap: { type: Object as PropType<Map<number, { name: string }>>, default: () => new Map() },
 })
+
+function resolveCategoryName(id: number | null | undefined) {
+  if (typeof id !== 'number') {
+    return ''
+  }
+  return categoryMap.get(id)?.name || ''
+}
 </script>
 
 <template>
@@ -20,7 +28,7 @@ const { items } = defineProps({
       :status="item.status"
       :short-desc="item.shortDesc"
       :description="item.description"
-      :category="item.category || ''"
+      :category-name="resolveCategoryName(item.categoryId)"
       :http-method="item.httpMethod"
       :api-path="item.apiPath"
       :doc-url="item.docUrl"

@@ -7,7 +7,7 @@ const props = defineProps({
   status: { type: Number, default: -1 },
   shortDesc: { type: String, default: '这是简短描述' },
   description: { type: String, default: '这是详细描述详细描述详细描述详细描述' },
-  category: { type: String, default: '' },
+  categoryName: { type: String, default: '' },
   httpMethod: { type: String, default: 'GET' },
   apiPath: { type: String, default: '/api/v1/path' },
   docUrl: { type: String, default: 'https://example.com/docs' },
@@ -16,7 +16,6 @@ const props = defineProps({
 })
 
 const methods = computed(() => props.httpMethod.split(',').map(method => method.trim()).filter(Boolean))
-const categories = computed(() => props.category.split(',').map(item => item.trim()).filter(Boolean))
 
 function formatCallCount(count: number) {
   if (count < 10000) {
@@ -41,17 +40,15 @@ function formatCallCount(count: number) {
       </p>
 
       <div
-        v-if="categories.length"
+        v-if="props.categoryName"
         class="flex flex-wrap gap-1.5 mb-2.5"
       >
         <UBadge
-          v-for="item in categories"
-          :key="item"
           color="neutral"
           variant="soft"
           class="rounded-full text-[11px] font-medium"
         >
-          {{ item }}
+          {{ props.categoryName }}
         </UBadge>
       </div>
 

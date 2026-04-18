@@ -44,7 +44,6 @@ export const apis = pgTable('apis', {
   code: varchar('code', { length: 50 }).primaryKey(),
   name: varchar('name', { length: 100 }).notNull(),
   status: integer('status').default(1).notNull(), // -1=未知 0=异常 1=正常 2=维护 3=废弃
-  category: varchar('category', { length: 100 }), // 旧版分类（逗号分隔标签，保留兼容）
   categoryId: integer('category_id').references(() => apiCategories.id, { onDelete: 'set null' }),
   shortDesc: varchar('short_desc', { length: 30 }).notNull(),
   description: text('description').notNull(),
