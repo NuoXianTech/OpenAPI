@@ -113,7 +113,7 @@ const columns: TableColumn<any>[] = [
     accessorKey: 'isEnabled',
     header: '启用',
     cell: ({ row }) => h(USwitch, {
-      modelValue: row.original.isEnabled,
+      'modelValue': row.original.isEnabled,
       'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val),
     }),
   },
@@ -121,7 +121,7 @@ const columns: TableColumn<any>[] = [
     accessorKey: 'isStatistics',
     header: '统计',
     cell: ({ row }) => h(USwitch, {
-      modelValue: row.original.isStatistics,
+      'modelValue': row.original.isStatistics,
       'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val),
     }),
   },
@@ -149,9 +149,13 @@ const columns: TableColumn<any>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-mdi-plus" @click="openAdd">
+          <UButton
+            icon="i-mdi-plus"
+            @click="openAdd"
+          >
             新增 API
           </UButton>
+          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
 
@@ -179,13 +183,13 @@ const columns: TableColumn<any>[] = [
         }"
       />
 
-      <AdminAdminApiModal
+      <AdminApiModal
         v-model:open="modalOpen"
         :item="editItem"
         @saved="refresh()"
       />
 
-      <AdminAdminDeleteModal
+      <AdminDeleteModal
         v-model:open="deleteOpen"
         :loading="deleteLoading"
         :title="`删除 API: ${deleteTarget?.name}`"

@@ -1,14 +1,22 @@
 // 注册接口
 import type { H3Event } from 'h3'
+import { createError, getRequestIP } from 'h3'
 import { usersService } from '~~/server/service/userService'
-import { createError } from 'h3'
 import { hashPassword } from '~~/server/utils/auth'
 import { validateEmail } from '~~/server/utils/validation'
-import { emailVerificationService } from '../../service/emailVerificationService'
+import { verificationTokenService } from '../../service/emailVerificationService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 
 export default defineEventHandler(async (event: H3Event) => {
+  const settings = await siteSettingsService.getOrCreate()
+
+  // 注册模式闸门：closed 直接拒绝，invite 要求有邀请码字段（先留 TODO 占位）。
+  const mode = settings.registrationMode || 'open'
+  if (mode === 'closed') {
+    throw createError({ statusCode: 403, message: '注册功能已关闭' })
+  }
+
   const body = await readBody(event) as Record<string, any>
   const username = (body.username || '').toString().trim()
   const email = (body.email || '').toString().trim().toLowerCase()
@@ -22,6 +30,11 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'Invalid email address' })
   }
 
+  if (mode === 'invite') {
+    // TODO: 接入邀请码校验（当前版本未实现，拒绝以保持安全默认）
+    throw createError({ statusCode: 403, message: '仅邀请注册模式下未开放通道' })
+  }
+
   // 检查是否已存在同名或同邮箱用户
   const existEmail = await usersService.findByEmail(email)
   if (existEmail) {
@@ -32,7 +45,6 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 409, message: 'Username already in use' })
   }
 
-  // 哈希密码并保存
   const passwordHash = await hashPassword(password)
 
   const created = await usersService.addUser({
@@ -42,9 +54,9 @@ export default defineEventHandler(async (event: H3Event) => {
     isActive: false,
   })
 
-  const settings = await siteSettingsService.getOrCreate()
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const { token } = await emailVerificationService.createToken(created.id, created.email, expiresInMinutes)
+  const ip = getRequestIP(event) || null
+  const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
   const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
   const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
   await sendVerificationEmail(email, verifyUrl)

@@ -1,7 +1,7 @@
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
-import { createError, getCookie, setCookie } from 'h3'
+import { createError, getCookie, getHeader, getRequestIP, setCookie } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
@@ -53,21 +53,34 @@ async function getSessionMaxAgeSeconds() {
   return Number(settings.sessionMaxAgeSeconds)
 }
 
+function getClientContext(event: H3Event) {
+  return {
+    ip: getRequestIP(event) || null,
+    userAgent: getHeader(event, 'user-agent') || null,
+  }
+}
+
 export async function createUserSession(event: H3Event, user: AuthUserPayload) {
   const maxAgeSeconds = await getSessionMaxAgeSeconds()
+  const { ip, userAgent } = getClientContext(event)
   const { sessionId } = await sessionService.createSession({
     userId: user.id,
     kind: 'user',
+    ip,
+    userAgent,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
 
 export async function createAdminSession(event: H3Event) {
   const maxAgeSeconds = await getSessionMaxAgeSeconds()
+  const { ip, userAgent } = getClientContext(event)
 
   const { sessionId } = await sessionService.createSession({
     userId: null,
     kind: 'admin',
+    ip,
+    userAgent,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
@@ -101,6 +114,10 @@ export async function getAuthUser(event: H3Event) {
   if (!session) {
     return null
   }
+
+  // 非阻塞刷新活跃度；失败不影响鉴权结果。
+  void sessionService.touchSession(sessionId).catch(() => {})
+
   if (session.kind === 'admin') {
     const authConfig = useRuntimeConfig().auth
     return {

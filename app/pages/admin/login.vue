@@ -33,7 +33,10 @@ async function handleLogin() {
       <div class="w-full max-w-sm">
         <div class="text-center mb-6">
           <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
-            <Icon name="mdi:shield-crown-outline" size="24" />
+            <Icon
+              name="mdi:shield-crown-outline"
+              size="24"
+            />
           </div>
           <h1 class="text-xl font-semibold">
             管理员登录
@@ -44,7 +47,10 @@ async function handleLogin() {
         </div>
 
         <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-          <form class="space-y-4 p-1" @submit.prevent="handleLogin">
+          <form
+            class="space-y-4 p-1"
+            @submit.prevent="handleLogin"
+          >
             <UFormField label="用户名">
               <UInput
                 v-model="form.username"
@@ -63,7 +69,10 @@ async function handleLogin() {
               />
             </UFormField>
 
-            <div v-if="errorMsg" class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2">
+            <div
+              v-if="errorMsg"
+              class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
+            >
               {{ errorMsg }}
             </div>
 
@@ -78,7 +87,12 @@ async function handleLogin() {
         </UCard>
 
         <div class="text-center mt-4">
-          <UButton variant="link" size="sm" to="/" class="text-muted">
+          <UButton
+            variant="link"
+            size="sm"
+            to="/"
+            class="text-muted"
+          >
             返回前台
           </UButton>
         </div>

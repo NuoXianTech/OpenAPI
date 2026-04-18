@@ -70,9 +70,17 @@ const columns: TableColumn<any>[] = [
   <UDashboardPanel id="admin-friend-links">
     <template #header>
       <UDashboardNavbar title="友情链接">
-        <template #leading><UDashboardSidebarCollapse /></template>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
         <template #right>
-          <UButton icon="i-mdi-plus" @click="openAdd">新增链接</UButton>
+          <UButton
+            icon="i-mdi-plus"
+            @click="openAdd"
+          >
+            新增链接
+          </UButton>
+          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
@@ -90,8 +98,17 @@ const columns: TableColumn<any>[] = [
         }"
       />
 
-      <AdminAdminLinkModal v-model:open="modalOpen" :item="editItem" @saved="refresh()" />
-      <AdminAdminDeleteModal v-model:open="deleteOpen" :loading="deleteLoading" :title="`删除: ${deleteTarget?.title}`" @confirm="confirmDelete" />
+      <AdminLinkModal
+        v-model:open="modalOpen"
+        :item="editItem"
+        @saved="refresh()"
+      />
+      <AdminDeleteModal
+        v-model:open="deleteOpen"
+        :loading="deleteLoading"
+        :title="`删除: ${deleteTarget?.title}`"
+        @confirm="confirmDelete"
+      />
     </template>
   </UDashboardPanel>
 </template>

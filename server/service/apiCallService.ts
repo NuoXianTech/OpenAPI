@@ -7,55 +7,74 @@ function getDayStartUtc(value: Date) {
   return start
 }
 
+export interface AddCallInput {
+  apiId: number
+  apiKeyId?: number | null
+  userId?: number | null
+  path: string
+  method: string
+  statusCode: number
+  latencyMs: number
+  ip?: string | null
+  userAgent?: string | null
+  referer?: string | null
+  queryString?: string | null
+  apiVersion?: string | null
+  country?: string | null
+  region?: string | null
+  city?: string | null
+  requestSize?: number | null
+  responseSize?: number | null
+  requestSnapshot?: Record<string, unknown> | null
+  upstreamStatusCode?: number | null
+  upstreamLatencyMs?: number | null
+  cacheHit?: boolean
+  errorCode?: string | null
+  errorMessage?: string | null
+}
+
+function normalizeCallRow(data: AddCallInput) {
+  return {
+    apiId: data.apiId,
+    apiKeyId: data.apiKeyId ?? null,
+    userId: data.userId ?? null,
+    path: data.path,
+    method: data.method,
+    statusCode: data.statusCode,
+    latencyMs: data.latencyMs,
+    ip: data.ip ?? null,
+    userAgent: data.userAgent ?? null,
+    referer: data.referer ?? null,
+    queryString: data.queryString ?? null,
+    apiVersion: data.apiVersion ?? null,
+    country: data.country ?? null,
+    region: data.region ?? null,
+    city: data.city ?? null,
+    requestSize: data.requestSize ?? null,
+    responseSize: data.responseSize ?? null,
+    requestSnapshot: data.requestSnapshot ?? null,
+    upstreamStatusCode: data.upstreamStatusCode ?? null,
+    upstreamLatencyMs: data.upstreamLatencyMs ?? null,
+    cacheHit: data.cacheHit ?? false,
+    errorCode: data.errorCode ?? null,
+    errorMessage: data.errorMessage ?? null,
+  }
+}
+
 export const apiCallService = {
   async list() {
     return db.select().from(apiCalls).orderBy(desc(apiCalls.createdAt))
   },
 
-  async listByApiList(apiListId: number) {
-    return db.select().from(apiCalls).where(eq(apiCalls.apiListId, apiListId)).orderBy(desc(apiCalls.createdAt))
+  async listByApi(apiId: number) {
+    return db.select().from(apiCalls).where(eq(apiCalls.apiId, apiId)).orderBy(desc(apiCalls.createdAt))
   },
 
-  async addCall(data: {
-    apiListId: number
-    apiKeyId?: number | null
-    userId?: number | null
-    path: string
-    method: string
-    statusCode: number
-    latencyMs: number
-    ip?: string | null
-    requestSize?: number | null
-    responseSize?: number | null
-    rawRequest?: string | null
-  }) {
-    return db.insert(apiCalls).values({
-      apiListId: data.apiListId,
-      apiKeyId: data.apiKeyId ?? null,
-      userId: data.userId ?? null,
-      path: data.path,
-      method: data.method,
-      statusCode: data.statusCode,
-      latencyMs: data.latencyMs,
-      ip: data.ip ?? null,
-      requestSize: data.requestSize ?? null,
-      responseSize: data.responseSize ?? null,
-      rawRequest: data.rawRequest ?? null,
-    }).returning()
+  async addCall(data: AddCallInput) {
+    return db.insert(apiCalls).values(normalizeCallRow(data)).returning()
   },
 
-  async addCallAndUpsertDailyStat(data: {
-    apiListId: number
-    apiKeyId?: number | null
-    userId?: number | null
-    path: string
-    method: string
-    statusCode: number
-    latencyMs: number
-    ip?: string | null
-    requestSize?: number | null
-    responseSize?: number | null
-    rawRequest?: string | null
+  async addCallAndUpsertDailyStat(data: AddCallInput & {
     statDate?: Date
     statApiPath?: string | null
   }) {
@@ -67,33 +86,25 @@ export const apiCallService = {
 
     return db.transaction(async (tx: typeof db) => {
       const inserted = await tx.insert(apiCalls).values({
-        apiListId: data.apiListId,
-        apiKeyId: data.apiKeyId ?? null,
-        userId: data.userId ?? null,
-        path: data.path,
-        method: data.method,
+        ...normalizeCallRow(data),
         statusCode: normalizedStatusCode,
         latencyMs: normalizedLatencyMs,
-        ip: data.ip ?? null,
-        requestSize: data.requestSize ?? null,
-        responseSize: data.responseSize ?? null,
-        rawRequest: data.rawRequest ?? null,
       }).returning({ id: apiCalls.id })
 
       const callId = inserted[0]?.id ?? null
 
       await tx.insert(apiCallStats).values({
-        apiListId: data.apiListId,
-        apiCallId: callId,
+        apiId: data.apiId,
+        lastApiCallId: callId,
         statDate,
         totalCount: 1,
         successCount: successDelta,
         failureCount: failureDelta,
         apiPath: data.statApiPath ?? data.path,
       }).onConflictDoUpdate({
-        target: [apiCallStats.apiListId, apiCallStats.statDate],
+        target: [apiCallStats.apiId, apiCallStats.statDate],
         set: {
-          apiCallId: callId,
+          lastApiCallId: callId,
           totalCount: sql`${apiCallStats.totalCount} + 1`,
           successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
           failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,

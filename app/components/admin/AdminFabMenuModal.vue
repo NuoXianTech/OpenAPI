@@ -101,42 +101,111 @@ const targetOptions = [
   <UModal v-model:open="open">
     <template #content>
       <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4">{{ isEdit ? '编辑菜单项' : '新增菜单项' }}</h3>
-        <UForm :schema="schema" :state="state" class="space-y-3" @submit="onSubmit">
+        <h3 class="text-lg font-semibold mb-4">
+          {{ isEdit ? '编辑菜单项' : '新增菜单项' }}
+        </h3>
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-3"
+          @submit="onSubmit"
+        >
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="标题" name="title">
-              <UInput v-model="state.title" placeholder="菜单标题" />
+            <UFormField
+              label="标题"
+              name="title"
+            >
+              <UInput
+                v-model="state.title"
+                placeholder="菜单标题"
+              />
             </UFormField>
-            <UFormField label="副标题" name="subtitle">
-              <UInput v-model="state.subtitle" placeholder="可选" />
+            <UFormField
+              label="副标题"
+              name="subtitle"
+            >
+              <UInput
+                v-model="state.subtitle"
+                placeholder="可选"
+              />
             </UFormField>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="图标" name="icon">
-              <UInput v-model="state.icon" placeholder="mdi:link-variant" />
+            <UFormField
+              label="图标"
+              name="icon"
+            >
+              <UInput
+                v-model="state.icon"
+                placeholder="mdi:link-variant"
+              />
             </UFormField>
-            <UFormField label="排序" name="sort">
-              <UInput v-model.number="state.sort" type="number" />
+            <UFormField
+              label="排序"
+              name="sort"
+            >
+              <UInput
+                v-model.number="state.sort"
+                type="number"
+              />
             </UFormField>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="动作类型" name="actionType">
-              <USelect v-model="state.actionType" :items="actionTypeOptions" />
+            <UFormField
+              label="动作类型"
+              name="actionType"
+            >
+              <USelect
+                v-model="state.actionType"
+                :items="actionTypeOptions"
+              />
             </UFormField>
-            <UFormField label="打开方式" name="target">
-              <USelect v-model="state.target" :items="targetOptions" />
+            <UFormField
+              label="打开方式"
+              name="target"
+            >
+              <USelect
+                v-model="state.target"
+                :items="targetOptions"
+              />
             </UFormField>
           </div>
-          <UFormField label="动作值" name="actionValue">
-            <UInput v-model="state.actionValue" placeholder="https://example.com 或 /path" />
+          <UFormField
+            label="动作值"
+            name="actionValue"
+          >
+            <UInput
+              v-model="state.actionValue"
+              placeholder="https://example.com 或 /path"
+            />
           </UFormField>
-          <UFormField label="按钮文本" name="actionLabel">
-            <UInput v-model="state.actionLabel" placeholder="打开" />
+          <UFormField
+            label="按钮文本"
+            name="actionLabel"
+          >
+            <UInput
+              v-model="state.actionLabel"
+              placeholder="打开"
+            />
           </UFormField>
-          <USwitch v-model="state.isActive" label="启用" />
+          <USwitch
+            v-model="state.isActive"
+            label="启用"
+          />
           <div class="flex justify-end gap-2 pt-3">
-            <UButton variant="outline" color="neutral" @click="open = false">取消</UButton>
-            <UButton type="submit" :loading="loading">{{ isEdit ? '保存' : '创建' }}</UButton>
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="open = false"
+            >
+              取消
+            </UButton>
+            <UButton
+              type="submit"
+              :loading="loading"
+            >
+              {{ isEdit ? '保存' : '创建' }}
+            </UButton>
           </div>
         </UForm>
       </div>

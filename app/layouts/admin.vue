@@ -5,6 +5,8 @@ const { user, logout } = useAuth()
 const { settings } = useSiteSettings()
 const router = useRouter()
 
+const open = ref(false)
+
 const mainLinks = [[
   {
     label: '仪表盘',
@@ -75,12 +77,14 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
+  <UDashboardGroup>
     <UDashboardSidebar
       id="admin"
+      v-model:open="open"
       collapsible
       resizable
       class="bg-elevated/25"
+      :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
         <UDropdownMenu

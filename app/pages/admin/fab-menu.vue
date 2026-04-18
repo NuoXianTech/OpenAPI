@@ -91,7 +91,13 @@ const columns: TableColumn<any>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-mdi-plus" @click="openAdd">新增菜单项</UButton>
+          <UButton
+            icon="i-mdi-plus"
+            @click="openAdd"
+          >
+            新增菜单项
+          </UButton>
+          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
@@ -109,8 +115,17 @@ const columns: TableColumn<any>[] = [
         }"
       />
 
-      <AdminAdminFabMenuModal v-model:open="modalOpen" :item="editItem" @saved="refresh()" />
-      <AdminAdminDeleteModal v-model:open="deleteOpen" :loading="deleteLoading" :title="`删除: ${deleteTarget?.title}`" @confirm="confirmDelete" />
+      <AdminFabMenuModal
+        v-model:open="modalOpen"
+        :item="editItem"
+        @saved="refresh()"
+      />
+      <AdminDeleteModal
+        v-model:open="deleteOpen"
+        :loading="deleteLoading"
+        :title="`删除: ${deleteTarget?.title}`"
+        @confirm="confirmDelete"
+      />
     </template>
   </UDashboardPanel>
 </template>

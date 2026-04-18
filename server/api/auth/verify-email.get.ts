@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
-import { emailVerificationService } from '../../service/emailVerificationService'
+import { verificationTokenService } from '../../service/emailVerificationService'
 import { usersService } from '~~/server/service/userService'
 import { createUserSession } from '~~/server/utils/auth'
 
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
-  const tokenPayload = await emailVerificationService.consumeToken(userId, token)
+  const tokenPayload = await verificationTokenService.consumeToken(userId, token, 'verify')
   if (!tokenPayload || tokenPayload.email !== user.email) {
     throw createError({ statusCode: 400, message: 'Verification link expired or invalid' })
   }

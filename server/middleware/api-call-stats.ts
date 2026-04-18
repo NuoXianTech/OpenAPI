@@ -127,7 +127,7 @@ async function resolveStatisticsTarget(pathname: string, method: string) {
   }
 
   return {
-    apiListId: target.id,
+    apiId: target.id,
     apiPath: target.apiPath,
   }
 }
@@ -146,7 +146,8 @@ async function resolveApiKeyId(apiKey: string) {
 }
 
 export default defineEventHandler((event: H3Event) => {
-  const pathname = normalizePathname(getRequestURL(event).pathname)
+  const requestUrl = getRequestURL(event)
+  const pathname = normalizePathname(requestUrl.pathname)
   if (!shouldTrackPath(pathname)) {
     return
   }
@@ -156,6 +157,9 @@ export default defineEventHandler((event: H3Event) => {
   const ip = getRequestIP(event) || null
   const apiKey = getApiKeyFromEvent(event)
   const requestSize = parseOptionalInt(getHeader(event, 'content-length'))
+  const userAgent = (getHeader(event, 'user-agent') || null)?.slice(0, 500) || null
+  const referer = (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null
+  const queryString = requestUrl.search ? requestUrl.search.slice(1, 2001) : null
 
   event.node.res.once('finish', () => {
     const statusCode = Math.trunc(event.node.res.statusCode || 200)
@@ -173,7 +177,7 @@ export default defineEventHandler((event: H3Event) => {
 
         const apiKeyId = await resolveApiKeyId(apiKey)
         await apiCallService.addCallAndUpsertDailyStat({
-          apiListId: target.apiListId,
+          apiId: target.apiId,
           apiKeyId,
           userId: null,
           path: pathname,
@@ -181,12 +185,18 @@ export default defineEventHandler((event: H3Event) => {
           statusCode,
           latencyMs,
           ip,
+          userAgent,
+          referer,
+          queryString,
           requestSize,
           responseSize,
-          rawRequest: null,
           statDate: new Date(),
           statApiPath: target.apiPath,
         })
+
+        if (apiKeyId) {
+          await apiKeyService.recordUsage(apiKeyId, ip)
+        }
       }
       catch (error) {
         console.error('failed to record api call stats from middleware', {

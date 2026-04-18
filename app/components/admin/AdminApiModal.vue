@@ -112,53 +112,135 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <h3 class="text-lg font-semibold mb-4">
           {{ isEdit ? '编辑 API' : '新增 API' }}
         </h3>
-        <UForm :schema="schema" :state="state" class="space-y-3" @submit="onSubmit">
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-3"
+          @submit="onSubmit"
+        >
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="编码" name="code">
-              <UInput v-model="state.code" placeholder="api-code" :disabled="isEdit" />
+            <UFormField
+              label="编码"
+              name="code"
+            >
+              <UInput
+                v-model="state.code"
+                placeholder="api-code"
+                :disabled="isEdit"
+              />
             </UFormField>
-            <UFormField label="名称" name="name">
-              <UInput v-model="state.name" placeholder="API 名称" />
+            <UFormField
+              label="名称"
+              name="name"
+            >
+              <UInput
+                v-model="state.name"
+                placeholder="API 名称"
+              />
             </UFormField>
           </div>
-          <UFormField label="简短描述" name="shortDesc">
-            <UInput v-model="state.shortDesc" placeholder="最多30字" />
+          <UFormField
+            label="简短描述"
+            name="shortDesc"
+          >
+            <UInput
+              v-model="state.shortDesc"
+              placeholder="最多30字"
+            />
           </UFormField>
-          <UFormField label="详细描述" name="description">
-            <UTextarea v-model="state.description" :rows="3" />
+          <UFormField
+            label="详细描述"
+            name="description"
+          >
+            <UTextarea
+              v-model="state.description"
+              :rows="3"
+            />
           </UFormField>
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="请求方法" name="httpMethod">
-              <UInput v-model="state.httpMethod" placeholder="GET,POST" />
+            <UFormField
+              label="请求方法"
+              name="httpMethod"
+            >
+              <UInput
+                v-model="state.httpMethod"
+                placeholder="GET,POST"
+              />
             </UFormField>
-            <UFormField label="状态" name="status">
-              <USelect v-model="state.status" :items="statusOptions" />
+            <UFormField
+              label="状态"
+              name="status"
+            >
+              <USelect
+                v-model="state.status"
+                :items="statusOptions"
+              />
             </UFormField>
           </div>
-          <UFormField label="接口路径" name="apiPath">
-            <UInput v-model="state.apiPath" placeholder="/api/v1/example" />
+          <UFormField
+            label="接口路径"
+            name="apiPath"
+          >
+            <UInput
+              v-model="state.apiPath"
+              placeholder="/api/v1/example"
+            />
           </UFormField>
-          <UFormField label="文档地址" name="docUrl">
-            <UInput v-model="state.docUrl" placeholder="https://docs.example.com" />
+          <UFormField
+            label="文档地址"
+            name="docUrl"
+          >
+            <UInput
+              v-model="state.docUrl"
+              placeholder="https://docs.example.com"
+            />
           </UFormField>
           <div class="grid grid-cols-2 gap-3">
-            <UFormField label="分类" name="category">
-              <UInput v-model="state.category" placeholder="分类标签" />
+            <UFormField
+              label="分类"
+              name="category"
+            >
+              <UInput
+                v-model="state.category"
+                placeholder="分类标签"
+              />
             </UFormField>
-            <UFormField label="限流(次/分)" name="rateLimitPerMinute">
-              <UInput v-model.number="state.rateLimitPerMinute" type="number" />
+            <UFormField
+              label="限流(次/分)"
+              name="rateLimitPerMinute"
+            >
+              <UInput
+                v-model.number="state.rateLimitPerMinute"
+                type="number"
+              />
             </UFormField>
           </div>
           <div class="flex flex-wrap gap-6 pt-1">
-            <USwitch v-model="state.isEnabled" label="启用" />
-            <USwitch v-model="state.isApiKey" label="需要 API Key" />
-            <USwitch v-model="state.isStatistics" label="统计调用" />
+            <USwitch
+              v-model="state.isEnabled"
+              label="启用"
+            />
+            <USwitch
+              v-model="state.isApiKey"
+              label="需要 API Key"
+            />
+            <USwitch
+              v-model="state.isStatistics"
+              label="统计调用"
+            />
           </div>
           <div class="flex justify-end gap-2 pt-3">
-            <UButton variant="outline" color="neutral" @click="open = false">
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="open = false"
+            >
               取消
             </UButton>
-            <UButton type="submit" :loading="loading">
+            <UButton
+              type="submit"
+              :loading="loading"
+            >
               {{ isEdit ? '保存' : '创建' }}
             </UButton>
           </div>

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { apiKeys } from '@nuxthub/db/schema'
 
 function generateApiKey() {
@@ -65,5 +65,19 @@ export const apiKeyService = {
       .where(eq(apiKeys.id, id))
       .returning()
     return res[0] || null
+  },
+
+  /**
+   * 记录一次使用：更新 lastUsedAt/lastUsedIp 并累加 totalCalls。
+   * 调用方（middleware）应 fire-and-forget，失败不影响业务。
+   */
+  async recordUsage(id: number, ip: string | null) {
+    await db.update(apiKeys)
+      .set({
+        lastUsedAt: new Date(),
+        lastUsedIp: ip,
+        totalCalls: sql`${apiKeys.totalCalls} + 1`,
+      })
+      .where(eq(apiKeys.id, id))
   },
 }

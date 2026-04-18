@@ -36,8 +36,8 @@ export const apiCallStatsService = {
     return db.select().from(apiCallStats).orderBy(desc(apiCallStats.statDate), desc(apiCallStats.updatedAt))
   },
 
-  async listByApiList(apiListId: number) {
-    return db.select().from(apiCallStats).where(eq(apiCallStats.apiListId, apiListId)).orderBy(desc(apiCallStats.statDate), desc(apiCallStats.updatedAt))
+  async listByApi(apiId: number) {
+    return db.select().from(apiCallStats).where(eq(apiCallStats.apiId, apiId)).orderBy(desc(apiCallStats.statDate), desc(apiCallStats.updatedAt))
   },
 
   async getSummary() {
@@ -77,14 +77,14 @@ export const apiCallStatsService = {
         totalCalls: totalExpr,
         successCalls: successExpr,
         failureCalls: failureExpr,
-        trackedApiCount: sql<number>`count(distinct ${apiCallStats.apiListId})`,
+        trackedApiCount: sql<number>`count(distinct ${apiCallStats.apiId})`,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
         .where(publicApiCondition),
       db.select({
         todayCalls: totalExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, todayStart),
@@ -93,7 +93,7 @@ export const apiCallStatsService = {
       db.select({
         yesterdayCalls: totalExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, yesterdayStart),
@@ -116,7 +116,7 @@ export const apiCallStatsService = {
         successCalls: successExpr,
         failureCalls: failureExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, rangeStart),
@@ -125,7 +125,7 @@ export const apiCallStatsService = {
         .groupBy(apiCallStats.statDate)
         .orderBy(asc(apiCallStats.statDate)),
       db.select({
-        apiListId: apiCallStats.apiListId,
+        apiId: apiCallStats.apiId,
         name: apiLists.name,
         apiPath: apiLists.apiPath,
         httpMethod: apiLists.httpMethod,
@@ -133,14 +133,14 @@ export const apiCallStatsService = {
         successCalls: successExpr,
         failureCalls: failureExpr,
       }).from(apiCallStats)
-        .innerJoin(apiLists, eq(apiCallStats.apiListId, apiLists.id))
+        .innerJoin(apiLists, eq(apiCallStats.apiId, apiLists.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, todayStart),
           lt(apiCallStats.statDate, tomorrowStart),
         ))
         .groupBy(
-          apiCallStats.apiListId,
+          apiCallStats.apiId,
           apiLists.name,
           apiLists.apiPath,
           apiLists.httpMethod,
@@ -189,7 +189,7 @@ export const apiCallStatsService = {
     })
 
     const top10Today: PublicCallStatsTopItem[] = topRows.map((row: {
-      apiListId: number
+      apiId: number
       name: string
       apiPath: string
       httpMethod: string
@@ -202,7 +202,7 @@ export const apiCallStatsService = {
       const rowFailureCalls = toNumber(row.failureCalls)
       return {
         rank: index + 1,
-        apiListId: row.apiListId,
+        apiId: row.apiId,
         name: row.name,
         apiPath: row.apiPath,
         httpMethod: row.httpMethod,
@@ -232,8 +232,8 @@ export const apiCallStatsService = {
   },
 
   async upsertDailyStat(data: {
-    apiListId: number
-    apiCallId?: number | null
+    apiId: number
+    lastApiCallId?: number | null
     statDate: Date
     totalCount: number
     successCount: number
@@ -250,17 +250,17 @@ export const apiCallStatsService = {
 
     const statDate = getDayStart(data.statDate)
     return db.insert(apiCallStats).values({
-      apiListId: data.apiListId,
-      apiCallId: data.apiCallId ?? null,
+      apiId: data.apiId,
+      lastApiCallId: data.lastApiCallId ?? null,
       statDate,
       totalCount: totalDelta,
       successCount: successDelta,
       failureCount: failureDelta,
       apiPath: data.apiPath ?? null,
     }).onConflictDoUpdate({
-      target: [apiCallStats.apiListId, apiCallStats.statDate],
+      target: [apiCallStats.apiId, apiCallStats.statDate],
       set: {
-        apiCallId: data.apiCallId ?? null,
+        lastApiCallId: data.lastApiCallId ?? null,
         totalCount: sql`${apiCallStats.totalCount} + ${totalDelta}`,
         successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
         failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,

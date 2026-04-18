@@ -47,14 +47,14 @@ function normalizeCategoryTags(category: string | null | undefined) {
 
 async function loadApiStats() {
   const rows = await db.select({
-    apiListId: apiCallStats.apiListId,
+    apiId: apiCallStats.apiId,
     totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
-  }).from(apiCallStats).groupBy(apiCallStats.apiListId)
+  }).from(apiCallStats).groupBy(apiCallStats.apiId)
 
-  const statsRows = rows as Array<{ apiListId: number, totalCalls: number | string | null }>
+  const statsRows = rows as Array<{ apiId: number, totalCalls: number | string | null }>
 
   return statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
-    accumulator[row.apiListId] = { totalCalls: Number(row.totalCalls) || 0 }
+    accumulator[row.apiId] = { totalCalls: Number(row.totalCalls) || 0 }
     return accumulator
   }, {})
 }

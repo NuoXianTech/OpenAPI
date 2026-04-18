@@ -353,7 +353,7 @@ const overviewCards = computed(() => {
                 <tbody>
                   <tr
                     v-for="item in top10Today"
-                    :key="item.apiListId"
+                    :key="item.apiId"
                   >
                     <td class="w-12 font-medium">
                       {{ item.rank }}

@@ -209,6 +209,9 @@ const columns: TableColumn<any>[] = [
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
+        <template #right>
+          <AdminHeaderUser />
+        </template>
       </UDashboardNavbar>
 
       <UDashboardToolbar>
@@ -237,21 +240,43 @@ const columns: TableColumn<any>[] = [
       <UModal v-model:open="editOpen">
         <template #content>
           <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">编辑用户</h3>
-            <form class="space-y-3" @submit.prevent="submitEdit">
+            <h3 class="text-lg font-semibold mb-4">
+              编辑用户
+            </h3>
+            <form
+              class="space-y-3"
+              @submit.prevent="submitEdit"
+            >
               <UFormField label="用户名">
                 <UInput v-model="editForm.username" />
               </UFormField>
               <UFormField label="邮箱">
-                <UInput v-model="editForm.email" type="email" />
+                <UInput
+                  v-model="editForm.email"
+                  type="email"
+                />
               </UFormField>
               <UFormField label="显示名">
                 <UInput v-model="editForm.displayName" />
               </UFormField>
-              <USwitch v-model="editForm.isActive" label="已激活" />
+              <USwitch
+                v-model="editForm.isActive"
+                label="已激活"
+              />
               <div class="flex justify-end gap-2 pt-3">
-                <UButton variant="outline" color="neutral" @click="editOpen = false">取消</UButton>
-                <UButton type="submit" :loading="editLoading">保存</UButton>
+                <UButton
+                  variant="outline"
+                  color="neutral"
+                  @click="editOpen = false"
+                >
+                  取消
+                </UButton>
+                <UButton
+                  type="submit"
+                  :loading="editLoading"
+                >
+                  保存
+                </UButton>
               </div>
             </form>
           </div>
@@ -262,24 +287,63 @@ const columns: TableColumn<any>[] = [
         <template #content>
           <div class="p-6">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold">{{ keysTarget?.username }} 的 API Keys</h3>
-              <UButton size="sm" icon="i-mdi-plus" @click="addKey">新增</UButton>
+              <h3 class="text-lg font-semibold">
+                {{ keysTarget?.username }} 的 API Keys
+              </h3>
+              <UButton
+                size="sm"
+                icon="i-mdi-plus"
+                @click="addKey"
+              >
+                新增
+              </UButton>
             </div>
-            <div v-if="keysLoading" class="text-sm text-muted py-4 text-center">加载中...</div>
-            <div v-else-if="keysData.length === 0" class="text-sm text-muted py-4 text-center">暂无 API Key</div>
-            <div v-else class="space-y-2">
+            <div
+              v-if="keysLoading"
+              class="text-sm text-muted py-4 text-center"
+            >
+              加载中...
+            </div>
+            <div
+              v-else-if="keysData.length === 0"
+              class="text-sm text-muted py-4 text-center"
+            >
+              暂无 API Key
+            </div>
+            <div
+              v-else
+              class="space-y-2"
+            >
               <div
                 v-for="key in keysData"
                 :key="key.id"
                 class="flex items-center justify-between gap-2 rounded-lg border border-default p-3"
               >
                 <div class="min-w-0">
-                  <div class="text-sm font-medium">{{ key.name }}</div>
-                  <div class="text-xs text-muted font-mono truncate">{{ key.apiKey }}</div>
+                  <div class="text-sm font-medium">
+                    {{ key.name }}
+                  </div>
+                  <div class="text-xs text-muted font-mono truncate">
+                    {{ key.apiKey }}
+                  </div>
                 </div>
                 <div class="flex gap-1 shrink-0">
-                  <UButton size="xs" variant="outline" color="neutral" @click="resetKey(key.id)">重置</UButton>
-                  <UButton size="xs" variant="outline" color="error" @click="deleteKey(key.id)">删除</UButton>
+                  <UButton
+                    size="xs"
+                    variant="outline"
+                    color="neutral"
+                    @click="resetKey(key.id)"
+                  >
+                    重置
+                  </UButton>
+                  <UButton
+                    size="xs"
+                    variant="outline"
+                    color="error"
+                    @click="deleteKey(key.id)"
+                  >
+                    删除
+                  </UButton>
                 </div>
               </div>
             </div>
@@ -287,7 +351,7 @@ const columns: TableColumn<any>[] = [
         </template>
       </UModal>
 
-      <AdminAdminDeleteModal
+      <AdminDeleteModal
         v-model:open="deleteOpen"
         :loading="deleteLoading"
         :title="`删除用户: ${deleteTarget?.username}`"

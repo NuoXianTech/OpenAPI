@@ -81,6 +81,7 @@ const columns: TableColumn<any>[] = [
             :loading="status === 'pending'"
             @click="refresh()"
           />
+          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
@@ -88,14 +89,24 @@ const columns: TableColumn<any>[] = [
     <template #body>
       <!-- Overview Stats -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <UCard v-for="card in overviewCards" :key="card.label">
+        <UCard
+          v-for="card in overviewCards"
+          :key="card.label"
+        >
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm text-muted">{{ card.label }}</p>
-              <p class="text-2xl font-semibold tabular-nums mt-1">{{ card.value }}</p>
+              <p class="text-sm text-muted">
+                {{ card.label }}
+              </p>
+              <p class="text-2xl font-semibold tabular-nums mt-1">
+                {{ card.value }}
+              </p>
             </div>
             <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
-              <UIcon :name="card.icon" class="size-5 text-muted" />
+              <UIcon
+                :name="card.icon"
+                class="size-5 text-muted"
+              />
             </div>
           </div>
         </UCard>

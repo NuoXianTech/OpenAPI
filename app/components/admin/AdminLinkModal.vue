@@ -54,21 +54,60 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal v-model:open="open">
     <template #content>
       <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">{{ isEdit ? '编辑链接' : '新增链接' }}</h3>
-        <UForm :schema="schema" :state="state" class="space-y-3" @submit="onSubmit">
-          <UFormField label="标题" name="title">
-            <UInput v-model="state.title" placeholder="站点名称" />
+        <h3 class="text-lg font-semibold mb-4">
+          {{ isEdit ? '编辑链接' : '新增链接' }}
+        </h3>
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-3"
+          @submit="onSubmit"
+        >
+          <UFormField
+            label="标题"
+            name="title"
+          >
+            <UInput
+              v-model="state.title"
+              placeholder="站点名称"
+            />
           </UFormField>
-          <UFormField label="URL" name="url">
-            <UInput v-model="state.url" placeholder="https://example.com" />
+          <UFormField
+            label="URL"
+            name="url"
+          >
+            <UInput
+              v-model="state.url"
+              placeholder="https://example.com"
+            />
           </UFormField>
-          <UFormField label="描述" name="description">
-            <UTextarea v-model="state.description" :rows="3" />
+          <UFormField
+            label="描述"
+            name="description"
+          >
+            <UTextarea
+              v-model="state.description"
+              :rows="3"
+            />
           </UFormField>
-          <USwitch v-model="state.isActive" label="启用" />
+          <USwitch
+            v-model="state.isActive"
+            label="启用"
+          />
           <div class="flex justify-end gap-2 pt-3">
-            <UButton variant="outline" color="neutral" @click="open = false">取消</UButton>
-            <UButton type="submit" :loading="loading">{{ isEdit ? '保存' : '创建' }}</UButton>
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="open = false"
+            >
+              取消
+            </UButton>
+            <UButton
+              type="submit"
+              :loading="loading"
+            >
+              {{ isEdit ? '保存' : '创建' }}
+            </UButton>
           </div>
         </UForm>
       </div>

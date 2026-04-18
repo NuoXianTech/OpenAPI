@@ -19,7 +19,7 @@ export interface PublicCallStatsTrendPoint {
 
 export interface PublicCallStatsTopItem {
   rank: number
-  apiListId: number
+  apiId: number
   name: string
   apiPath: string
   httpMethod: string

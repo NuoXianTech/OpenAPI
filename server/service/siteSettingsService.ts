@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { siteSettings } from '~~/server/db/schema/siteSettings'
+import { siteSettings } from '~~/server/db/schema/system'
 
 const DEFAULT_SCOPE = 'default'
 
@@ -9,6 +9,11 @@ export interface PublicSiteSettings {
   siteName: string
   siteDescription: string
   startTime: string
+  icpBeian: string | null
+  policeBeian: string | null
+  termsUrl: string | null
+  privacyUrl: string | null
+  registrationMode: string
 }
 
 export interface SiteSettingsUpsertInput {
@@ -101,6 +106,11 @@ export const siteSettingsService = {
       siteName: settings.siteName,
       siteDescription: settings.siteDescription,
       startTime: settings.startTime,
+      icpBeian: settings.icpBeian || null,
+      policeBeian: settings.policeBeian || null,
+      termsUrl: settings.termsUrl || null,
+      privacyUrl: settings.privacyUrl || null,
+      registrationMode: settings.registrationMode,
     }
   },
 
