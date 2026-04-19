@@ -79,173 +79,123 @@ function gotoOAuth(entry: string) {
 </script>
 
 <template>
-  <div class="auth-shell">
-    <div class="auth-panel">
-      <div
-        class="auth-card"
-        style="width:min(560px, 94vw);"
-      >
+  <div class="min-h-screen bg-default flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+          <Icon
+            name="mdi:account-circle-outline"
+            size="24"
+          />
+        </div>
+        <h1 class="text-xl font-semibold">
+          欢迎回来
+        </h1>
+        <p class="text-sm text-muted mt-1">
+          使用邮箱或用户名登录你的账号
+        </p>
+      </div>
+
+      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
         <div
           v-if="checkingAuth"
-          class="grid gap-4"
+          class="space-y-3 p-1"
         >
-          <div class="flex items-center gap-2">
-            <UBadge
-              color="neutral"
-              variant="soft"
-            >
-              Session
-            </UBadge>
-            <UBadge variant="outline">
-              Checking
-            </UBadge>
-          </div>
-          <h1 class="auth-title">
-            检查登录状态
-          </h1>
-          <p class="auth-subtitle">
-            正在确认是否已登录，请稍候...
-          </p>
-          <div class="grid gap-2">
-            <USkeleton class="h-10 w-full rounded-md" />
-            <USkeleton class="h-10 w-full rounded-md" />
-            <USkeleton class="h-10 w-1/2 rounded-md" />
-          </div>
+          <USkeleton class="h-10 w-full rounded-md" />
+          <USkeleton class="h-10 w-full rounded-md" />
+          <USkeleton class="h-10 w-full rounded-md" />
         </div>
 
-        <div
+        <form
           v-else
-          class="grid gap-4"
+          class="space-y-4 p-1"
+          @submit.prevent="submit"
         >
-          <div class="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h1 class="auth-title">
-                欢迎回来
-              </h1>
-              <p class="auth-subtitle">
-                使用邮箱或用户名登录，继续管理你的 API。
-              </p>
-            </div>
-            <UBadge
-              color="neutral"
-              variant="soft"
-            >
-              User Login
-            </UBadge>
+          <UFormField label="邮箱或用户名">
+            <UInput
+              v-model="form.identifier"
+              type="text"
+              autocomplete="username"
+              placeholder="you@example.com"
+              icon="i-mdi-account-outline"
+              autofocus
+            />
+          </UFormField>
+
+          <UFormField label="密码">
+            <UInput
+              v-model="form.password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              icon="i-mdi-lock-outline"
+            />
+          </UFormField>
+
+          <div
+            v-if="errorMessage"
+            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
+          >
+            {{ errorMessage }}
           </div>
 
-          <UCard class="border-default/70 bg-elevated/90 shadow-sm">
-            <div class="pb-3">
-              <h3 class="text-base">
-                账号登录
-              </h3>
-              <p>
-                支持邮箱或用户名登录。
-              </p>
-            </div>
+          <div
+            v-if="oauthError"
+            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
+          >
+            {{ oauthError }}
+          </div>
 
-            <div>
-              <form
-                class="grid gap-4"
-                @submit.prevent="submit"
+          <UButton
+            type="submit"
+            block
+            :loading="submitting"
+          >
+            登录
+          </UButton>
+
+          <div
+            v-if="providers.length"
+            class="pt-3 border-t border-default space-y-2"
+          >
+            <p class="text-xs text-muted text-center">
+              或使用第三方登录
+            </p>
+            <div class="grid gap-2">
+              <UButton
+                v-for="p in providers"
+                :key="p.provider"
+                type="button"
+                variant="outline"
+                block
+                :icon="p.icon || 'i-mdi-account-circle-outline'"
+                @click="gotoOAuth(p.authorizeEntry)"
               >
-                <div class="grid gap-2">
-                  <label for="identifier">
-                    邮箱或用户名
-                  </label>
-                  <UInput
-                    id="identifier"
-                    v-model="form.identifier"
-                    type="text"
-                    autocomplete="username"
-                    placeholder="you@example.com"
-                  />
-                </div>
-
-                <div class="grid gap-2">
-                  <label for="password">
-                    密码
-                  </label>
-                  <UInput
-                    id="password"
-                    v-model="form.password"
-                    type="password"
-                    autocomplete="current-password"
-                    placeholder="输入你的密码"
-                  />
-                </div>
-
-                <div v-if="errorMessage">
-                  <UBadge
-                    color="error"
-                    class="max-w-full whitespace-normal break-words"
-                  >
-                    {{ errorMessage }}
-                  </UBadge>
-                </div>
-
-                <div v-if="oauthError">
-                  <UBadge
-                    color="error"
-                    class="max-w-full whitespace-normal break-words"
-                  >
-                    {{ oauthError }}
-                  </UBadge>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                  <UButton
-                    type="submit"
-                    :disabled="submitting"
-                  >
-                    {{ submitting ? '登录中...' : '登录' }}
-                  </UButton>
-                  <UButton
-                    to="/register"
-                    variant="outline"
-                  >
-                    创建账号
-                  </UButton>
-                </div>
-
-                <div
-                  v-if="providers.length"
-                  class="grid gap-2 pt-2 border-t border-default/60"
-                >
-                  <p class="text-xs text-muted">
-                    或使用第三方登录
-                  </p>
-                  <div class="flex flex-wrap gap-2">
-                    <UButton
-                      v-for="p in providers"
-                      :key="p.provider"
-                      type="button"
-                      variant="outline"
-                      :icon="p.icon || 'i-mdi-account-circle-outline'"
-                      @click="gotoOAuth(p.authorizeEntry)"
-                    >
-                      {{ p.displayName }}
-                    </UButton>
-                  </div>
-                </div>
-              </form>
+                {{ p.displayName }}
+              </UButton>
             </div>
-          </UCard>
+          </div>
+        </form>
+      </UCard>
 
-          <p class="auth-note">
-            忘记密码？请联系管理员处理。
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>OpenAPI 控制台</h3>
-        <p>实时掌握接口调用状态、性能与配额使用情况。</p>
-        <div class="auth-chip">
-          API Monitor · Rate Guard · Audit Log
-        </div>
+      <div class="flex items-center justify-center gap-2 mt-4">
+        <UButton
+          variant="link"
+          size="sm"
+          to="/register"
+          class="text-muted"
+        >
+          创建账号
+        </UButton>
+        <span class="text-muted text-xs">·</span>
+        <UButton
+          variant="link"
+          size="sm"
+          to="/"
+          class="text-muted"
+        >
+          返回首页
+        </UButton>
       </div>
     </div>
   </div>

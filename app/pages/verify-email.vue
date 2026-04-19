@@ -14,14 +14,34 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback
 }
 
-const statusLabel = computed(() => {
+const headerIcon = computed(() => {
+  if (status.value === 'success') {
+    return 'mdi:email-check-outline'
+  }
+  if (status.value === 'error') {
+    return 'mdi:email-alert-outline'
+  }
+  return 'mdi:email-sync-outline'
+})
+
+const headerTitle = computed(() => {
   if (status.value === 'success') {
     return '验证成功'
   }
   if (status.value === 'error') {
     return '验证失败'
   }
-  return '验证中'
+  return '邮箱验证'
+})
+
+const headerSubtitle = computed(() => {
+  if (status.value === 'success') {
+    return '已自动登录，正在跳转首页'
+  }
+  if (status.value === 'error') {
+    return '验证链接可能已失效，请重新获取'
+  }
+  return '正在校验验证链接，请稍候'
 })
 
 onMounted(async () => {
@@ -66,96 +86,98 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="auth-shell">
-    <div class="auth-panel">
-      <div
-        class="auth-card"
-        style="width:min(560px, 94vw);"
-      >
-        <div class="grid gap-4">
-          <div class="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h1 class="auth-title">
-                邮箱验证
-              </h1>
-              <p class="auth-subtitle">
-                验证通过后会自动创建有效会话并跳转。
-              </p>
+  <div class="min-h-screen bg-default flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+          <Icon
+            :name="headerIcon"
+            size="24"
+          />
+        </div>
+        <h1 class="text-xl font-semibold">
+          {{ headerTitle }}
+        </h1>
+        <p class="text-sm text-muted mt-1">
+          {{ headerSubtitle }}
+        </p>
+      </div>
+
+      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+        <div class="space-y-4 p-1">
+          <div
+            v-if="status === 'pending'"
+            class="space-y-3"
+          >
+            <div class="flex items-center gap-2 text-sm text-muted">
+              <Icon
+                name="mdi:loading"
+                size="16"
+                class="animate-spin"
+              />
+              <span>{{ message }}</span>
             </div>
-            <UBadge
-              :color="status === 'success' ? 'success' : status === 'error' ? 'error' : 'neutral'"
-              :variant="status === 'pending' ? 'outline' : 'soft'"
-            >
-              {{ statusLabel }}
-            </UBadge>
+            <USkeleton class="h-10 w-full rounded-md" />
+            <USkeleton class="h-10 w-3/4 rounded-md" />
           </div>
 
-          <UCard class="border-default/70 bg-elevated/90 shadow-sm">
-            <div class="pb-3">
-              <h3 class="text-base">
-                邮箱验证状态
-              </h3>
-              <p>
-                {{ message }}
-              </p>
+          <div
+            v-else-if="status === 'success'"
+            class="space-y-3"
+          >
+            <div class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2">
+              {{ message }}
             </div>
+            <UButton
+              to="/"
+              block
+            >
+              返回首页
+            </UButton>
+          </div>
 
-            <div class="grid gap-4">
-              <div
-                v-if="status === 'pending'"
-                class="grid gap-2"
-              >
-                <USkeleton class="h-10 w-full rounded-md" />
-                <USkeleton class="h-10 w-3/4 rounded-md" />
-              </div>
-
-              <div
-                v-else-if="status === 'success'"
-                class="grid gap-3"
-              >
-                <UBadge
-                  color="neutral"
-                  variant="soft"
-                >
-                  验证已通过，正在跳转首页
-                </UBadge>
-                <UButton to="/">
-                  返回首页
-                </UButton>
-              </div>
-
-              <div
-                v-else
-                class="grid gap-3"
-              >
-                <UBadge color="error">
-                  验证失败，请重新获取验证邮件。
-                </UBadge>
-                <div class="flex flex-wrap gap-2">
-                  <UButton to="/register">
-                    重新注册
-                  </UButton>
-                  <UButton
-                    to="/login"
-                    variant="outline"
-                  >
-                    去登录
-                  </UButton>
-                </div>
-              </div>
+          <div
+            v-else
+            class="space-y-3"
+          >
+            <div class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2">
+              {{ message }}
             </div>
-          </UCard>
+            <UButton
+              to="/register"
+              block
+            >
+              重新注册
+            </UButton>
+            <UButton
+              to="/login"
+              variant="outline"
+              block
+            >
+              去登录
+            </UButton>
+          </div>
         </div>
-      </div>
-    </div>
+      </UCard>
 
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>Verify Access</h3>
-        <p>邮箱验证后才会创建有效用户会话。</p>
-        <div class="auth-chip">
-          Email Verification · Session Auth
-        </div>
+      <div class="flex items-center justify-center gap-2 mt-4">
+        <UButton
+          variant="link"
+          size="sm"
+          to="/login"
+          class="text-muted"
+        >
+          去登录
+        </UButton>
+        <span class="text-muted text-xs">·</span>
+        <UButton
+          variant="link"
+          size="sm"
+          to="/"
+          class="text-muted"
+        >
+          返回首页
+        </UButton>
       </div>
     </div>
   </div>

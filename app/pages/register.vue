@@ -49,158 +49,111 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="auth-shell">
-    <div class="auth-panel">
-      <div
-        class="auth-card"
-        style="width:min(600px, 94vw);"
-      >
-        <div class="grid gap-4">
-          <div class="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <h1 class="auth-title">
-                创建账号
-              </h1>
-              <p class="auth-subtitle">
-                注册后需要邮箱验证，验证通过后才可以登录。
-              </p>
-            </div>
-            <UBadge
-              color="neutral"
-              variant="soft"
-            >
-              Sign Up
-            </UBadge>
+  <div class="min-h-screen bg-default flex items-center justify-center p-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+          <Icon
+            name="mdi:account-plus-outline"
+            size="24"
+          />
+        </div>
+        <h1 class="text-xl font-semibold">
+          创建账号
+        </h1>
+        <p class="text-sm text-muted mt-1">
+          注册后需邮箱验证，验证通过才能登录
+        </p>
+      </div>
+
+      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+        <form
+          class="space-y-4 p-1"
+          @submit.prevent="submit"
+        >
+          <UFormField label="用户名">
+            <UInput
+              v-model="form.username"
+              type="text"
+              autocomplete="username"
+              placeholder="openapi_user"
+              icon="i-mdi-account-outline"
+              autofocus
+            />
+          </UFormField>
+
+          <UFormField label="邮箱">
+            <UInput
+              v-model="form.email"
+              type="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              icon="i-mdi-email-outline"
+            />
+          </UFormField>
+
+          <UFormField label="密码">
+            <UInput
+              v-model="form.password"
+              type="password"
+              autocomplete="new-password"
+              placeholder="设置登录密码"
+              icon="i-mdi-lock-outline"
+            />
+          </UFormField>
+
+          <UFormField label="确认密码">
+            <UInput
+              v-model="form.confirm"
+              type="password"
+              autocomplete="new-password"
+              placeholder="再次输入密码"
+              icon="i-mdi-lock-check-outline"
+            />
+          </UFormField>
+
+          <div
+            v-if="errorMessage"
+            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
+          >
+            {{ errorMessage }}
           </div>
 
-          <UCard class="border-default/70 bg-elevated/90 shadow-sm">
-            <div class="pb-3">
-              <h3 class="text-base">
-                用户注册
-              </h3>
-              <p>
-                填写基础信息后创建账号。
-              </p>
-            </div>
+          <div
+            v-if="successMessage"
+            class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2"
+          >
+            {{ successMessage }}
+          </div>
 
-            <div>
-              <form
-                class="grid gap-4"
-                @submit.prevent="submit"
-              >
-                <div class="grid gap-2 md:grid-cols-2">
-                  <div class="grid gap-2">
-                    <label for="register-username">
-                      用户名
-                    </label>
-                    <UInput
-                      id="register-username"
-                      v-model="form.username"
-                      type="text"
-                      autocomplete="username"
-                      placeholder="openapi_user"
-                    />
-                  </div>
+          <UButton
+            type="submit"
+            block
+            :loading="submitting"
+          >
+            注册
+          </UButton>
+        </form>
+      </UCard>
 
-                  <div class="grid gap-2">
-                    <label for="register-email">
-                      邮箱
-                    </label>
-                    <UInput
-                      id="register-email"
-                      v-model="form.email"
-                      type="email"
-                      autocomplete="email"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                </div>
-
-                <div class="grid gap-2 md:grid-cols-2">
-                  <div class="grid gap-2">
-                    <label for="register-password">
-                      密码
-                    </label>
-                    <UInput
-                      id="register-password"
-                      v-model="form.password"
-                      type="password"
-                      autocomplete="new-password"
-                      placeholder="设置登录密码"
-                    />
-                  </div>
-
-                  <div class="grid gap-2">
-                    <label for="register-confirm">
-                      确认密码
-                    </label>
-                    <UInput
-                      id="register-confirm"
-                      v-model="form.confirm"
-                      type="password"
-                      autocomplete="new-password"
-                      placeholder="再次输入密码"
-                    />
-                  </div>
-                </div>
-
-                <div
-                  v-if="errorMessage"
-                  class="grid"
-                >
-                  <UBadge
-                    color="error"
-                    class="max-w-full whitespace-normal break-words"
-                  >
-                    {{ errorMessage }}
-                  </UBadge>
-                </div>
-
-                <div
-                  v-if="successMessage"
-                  class="grid"
-                >
-                  <UBadge
-                    color="neutral"
-                    variant="soft"
-                    class="max-w-full whitespace-normal break-words"
-                  >
-                    {{ successMessage }}
-                  </UBadge>
-                </div>
-
-                <div class="flex flex-wrap gap-2">
-                  <UButton
-                    type="submit"
-                    :disabled="submitting"
-                  >
-                    {{ submitting ? '提交中...' : '注册' }}
-                  </UButton>
-                  <UButton
-                    to="/login"
-                    variant="outline"
-                  >
-                    已有账号
-                  </UButton>
-                </div>
-              </form>
-            </div>
-          </UCard>
-
-          <p class="auth-note">
-            注册即表示你同意平台服务条款与安全规范。
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <div class="auth-hero">
-      <div class="auth-hero-card">
-        <h3>安全策略可配置</h3>
-        <p>验证后即可进入用户后台管理自己的 API Key。</p>
-        <div class="auth-chip">
-          Email Verify · User Console
-        </div>
+      <div class="flex items-center justify-center gap-2 mt-4">
+        <UButton
+          variant="link"
+          size="sm"
+          to="/login"
+          class="text-muted"
+        >
+          已有账号
+        </UButton>
+        <span class="text-muted text-xs">·</span>
+        <UButton
+          variant="link"
+          size="sm"
+          to="/"
+          class="text-muted"
+        >
+          返回首页
+        </UButton>
       </div>
     </div>
   </div>
