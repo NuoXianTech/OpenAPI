@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { randomBytes } from 'node:crypto'
 import { getQuery, getRequestIP, getRouterParam, sendRedirect } from 'h3'
-import { oauthProviderService } from '~~/server/service/oauthProviderService'
+import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { usersService } from '~~/server/service/userService'
@@ -35,10 +35,7 @@ async function pickAvailableUsername(base: string) {
 
 export default defineEventHandler(async (event: H3Event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
-  if (!provider) {
-    return redirectError(event, 'invalid_provider')
-  }
-  if (!isSupportedOauthProvider(provider)) {
+  if (!provider || !isSupportedOauthProvider(provider)) {
     return redirectError(event, 'provider_not_supported')
   }
 
@@ -63,8 +60,8 @@ export default defineEventHandler(async (event: H3Event) => {
     return redirectError(event, 'missing_code')
   }
 
-  const providerRow = await oauthProviderService.getDecryptedByProvider(provider)
-  if (!providerRow || !providerRow.isEnabled) {
+  const providerRow = await oauthProviderService.getByProvider(provider)
+  if (!providerRow || !providerRow.isEnabled || !providerRow.clientId || !providerRow.clientSecret) {
     return redirectError(event, 'provider_unavailable')
   }
 
@@ -77,31 +74,22 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const providerConfig: ProviderConfig = {
-    provider: providerRow.provider,
     clientId: providerRow.clientId,
     clientSecret,
-    scopes: providerRow.scopes || [],
-    callbackUrl: providerRow.callbackUrl,
-    authorizeUrl: providerRow.authorizeUrl,
-    tokenUrl: providerRow.tokenUrl,
-    userInfoUrl: providerRow.userInfoUrl,
+    callbackUrl: buildCallbackUrl(settings.siteUrl, provider),
   }
 
   try {
     let token: TokenResult
     let profile: ProviderProfile
 
-    switch (provider) {
-      case 'github':
-        token = await github.exchangeCode(providerConfig, code)
-        profile = await github.fetchUserInfo(providerConfig, token.accessToken, token)
-        break
-      case 'qq':
-        token = await qq.exchangeCode(providerConfig, code)
-        profile = await qq.fetchUserInfo(providerConfig, token.accessToken, token)
-        break
-      default:
-        return redirectError(event, 'provider_not_implemented')
+    if (provider === 'github') {
+      token = await github.exchangeCode(providerConfig, code)
+      profile = await github.fetchUserInfo(providerConfig, token.accessToken, token)
+    }
+    else {
+      token = await qq.exchangeCode(providerConfig, code)
+      profile = await qq.fetchUserInfo(providerConfig, token.accessToken, token)
     }
 
     const ip = getRequestIP(event) || null

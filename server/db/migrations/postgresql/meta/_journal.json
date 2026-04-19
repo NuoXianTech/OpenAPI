@@ -15,6 +15,13 @@
       "when": 1776585978487,
       "tag": "0001_dusty_thena",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776590692639,
+      "tag": "0002_tidy_pandemic",
+      "breakpoints": true
     }
   ]
 }

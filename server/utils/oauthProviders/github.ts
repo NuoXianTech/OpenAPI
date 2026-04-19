@@ -3,26 +3,23 @@ import type { ProviderConfig, ProviderProfile, TokenResult } from './types'
 
 export type { ProviderConfig, ProviderProfile, TokenResult }
 
-const DEFAULT_AUTHORIZE = 'https://github.com/login/oauth/authorize'
-const DEFAULT_TOKEN = 'https://github.com/login/oauth/access_token'
-const DEFAULT_USERINFO = 'https://api.github.com/user'
+const AUTHORIZE_URL = 'https://github.com/login/oauth/authorize'
+const TOKEN_URL = 'https://github.com/login/oauth/access_token'
+const USERINFO_URL = 'https://api.github.com/user'
 const EMAILS_URL = 'https://api.github.com/user/emails'
+const SCOPES = ['read:user', 'user:email']
 
 export function buildAuthorizeUrl(config: ProviderConfig, state: string): string {
-  const base = config.authorizeUrl || DEFAULT_AUTHORIZE
-  const url = new URL(base)
+  const url = new URL(AUTHORIZE_URL)
   url.searchParams.set('client_id', config.clientId)
   url.searchParams.set('redirect_uri', config.callbackUrl)
   url.searchParams.set('state', state)
-  if (config.scopes.length) {
-    url.searchParams.set('scope', config.scopes.join(' '))
-  }
+  url.searchParams.set('scope', SCOPES.join(' '))
   url.searchParams.set('allow_signup', 'true')
   return url.toString()
 }
 
 export async function exchangeCode(config: ProviderConfig, code: string): Promise<TokenResult> {
-  const tokenUrl = config.tokenUrl || DEFAULT_TOKEN
   const body = new URLSearchParams({
     client_id: config.clientId,
     client_secret: config.clientSecret,
@@ -37,7 +34,7 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
     scope?: string
     error?: string
     error_description?: string
-  }>(tokenUrl, {
+  }>(TOKEN_URL, {
     method: 'POST',
     body,
     headers: { Accept: 'application/json' },
@@ -55,15 +52,14 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
   }
 }
 
-export async function fetchUserInfo(config: ProviderConfig, accessToken: string, token: TokenResult): Promise<ProviderProfile> {
-  const userUrl = config.userInfoUrl || DEFAULT_USERINFO
+export async function fetchUserInfo(_config: ProviderConfig, accessToken: string, token: TokenResult): Promise<ProviderProfile> {
   const headers = {
     'Authorization': `Bearer ${accessToken}`,
     'Accept': 'application/vnd.github+json',
     'User-Agent': 'OpenAPI-Auth',
   }
 
-  const profile = await $fetch<Record<string, unknown>>(userUrl, { headers })
+  const profile = await $fetch<Record<string, unknown>>(USERINFO_URL, { headers })
   if (!profile || typeof profile !== 'object') {
     throw createError({ statusCode: 502, message: 'github userinfo fetch failed' })
   }

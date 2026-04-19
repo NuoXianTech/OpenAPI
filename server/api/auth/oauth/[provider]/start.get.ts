@@ -1,18 +1,16 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery, getRouterParam, sendRedirect } from 'h3'
-import { oauthProviderService } from '~~/server/service/oauthProviderService'
+import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { issueState } from '~~/server/utils/oauthState'
 import { buildAuthorizeUrl as buildGithubAuthorize } from '~~/server/utils/oauthProviders/github'
 import { buildAuthorizeUrl as buildQqAuthorize } from '~~/server/utils/oauthProviders/qq'
+import type { ProviderConfig } from '~~/server/utils/oauthProviders/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
-  if (!provider) {
-    throw createError({ statusCode: 400, message: 'provider is required' })
-  }
-  if (!isSupportedOauthProvider(provider)) {
+  if (!provider || !isSupportedOauthProvider(provider)) {
     throw createError({ statusCode: 404, message: 'provider not supported' })
   }
 
@@ -21,11 +19,8 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: 'oauth login is disabled' })
   }
 
-  const config = await oauthProviderService.getDecryptedByProvider(provider)
-  if (!config) {
-    throw createError({ statusCode: 404, message: 'provider not found' })
-  }
-  if (!config.isEnabled) {
+  const row = await oauthProviderService.getByProvider(provider)
+  if (!row || !row.isEnabled || !row.clientId) {
     throw createError({ statusCode: 403, message: 'provider is disabled' })
   }
 
@@ -35,28 +30,15 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { state } = issueState(event, provider, returnTo)
 
-  const providerConfig = {
-    provider: config.provider,
-    clientId: config.clientId,
+  const providerConfig: ProviderConfig = {
+    clientId: row.clientId,
     clientSecret: '',
-    scopes: config.scopes || [],
-    callbackUrl: config.callbackUrl,
-    authorizeUrl: config.authorizeUrl,
-    tokenUrl: config.tokenUrl,
-    userInfoUrl: config.userInfoUrl,
+    callbackUrl: buildCallbackUrl(settings.siteUrl, provider),
   }
 
-  let authorizeUrl: string
-  switch (provider) {
-    case 'github':
-      authorizeUrl = buildGithubAuthorize(providerConfig, state)
-      break
-    case 'qq':
-      authorizeUrl = buildQqAuthorize(providerConfig, state)
-      break
-    default:
-      throw createError({ statusCode: 501, message: `provider ${provider} is not implemented` })
-  }
+  const authorizeUrl = provider === 'github'
+    ? buildGithubAuthorize(providerConfig, state)
+    : buildQqAuthorize(providerConfig, state)
 
   return sendRedirect(event, authorizeUrl, 302)
 })

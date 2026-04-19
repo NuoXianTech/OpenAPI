@@ -1,12 +1,7 @@
 export interface ProviderConfig {
-  provider: string
   clientId: string
   clientSecret: string
-  scopes: string[]
   callbackUrl: string
-  authorizeUrl: string | null
-  tokenUrl: string | null
-  userInfoUrl: string | null
 }
 
 export interface ProviderProfile {

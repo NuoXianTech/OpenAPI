@@ -3,7 +3,6 @@ import {
   serial,
   integer,
   varchar,
-  text,
   boolean,
   jsonb,
   timestamp,
@@ -53,30 +52,19 @@ export const verificationTokens = pgTable('verification_tokens', {
 ])
 
 // ------------------------------------------------------------------
-// OAuth provider config (QQ / WeChat / GitHub / Google ...)
-// 敏感字段（clientSecret）必须在应用层 AES-GCM 加密后再落库
+// OAuth provider config（仅支持 GitHub / QQ，显示名/图标/scopes/URL 全部硬编码在 shared/types/oauth.ts 的 OAUTH_PROVIDER_PRESETS；callbackUrl 由 siteUrl 运行时拼）
+// clientSecret 应用层 AES-GCM 加密后落库
 // ------------------------------------------------------------------
 export const oauthProviders = pgTable('oauth_providers', {
   id: serial('id').primaryKey(),
   provider: varchar('provider', { length: 32 }).notNull(),
-  displayName: varchar('display_name', { length: 80 }).notNull(),
-  icon: varchar('icon', { length: 120 }),
-  clientId: varchar('client_id', { length: 255 }).notNull(),
-  clientSecret: varchar('client_secret', { length: 1000 }).notNull(),
-  scopes: jsonb('scopes').$type<string[]>().default([]).notNull(),
-  callbackUrl: varchar('callback_url', { length: 1000 }).notNull(),
-  authorizeUrl: varchar('authorize_url', { length: 1000 }),
-  tokenUrl: varchar('token_url', { length: 1000 }),
-  userInfoUrl: varchar('user_info_url', { length: 1000 }),
-  extraConfig: jsonb('extra_config').$type<Record<string, unknown>>(),
+  clientId: varchar('client_id', { length: 255 }).notNull().default(''),
+  clientSecret: varchar('client_secret', { length: 1000 }).notNull().default(''),
   isEnabled: boolean('is_enabled').notNull().default(false),
-  sortOrder: integer('sort_order').notNull().default(0),
-  description: text('description'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [
   uniqueIndex('oauth_providers_provider_uq').on(table.provider),
-  index('oauth_providers_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
 ])
 
 // ------------------------------------------------------------------

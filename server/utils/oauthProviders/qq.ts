@@ -1,25 +1,24 @@
 import { createError } from 'h3'
 import type { ProviderConfig, ProviderProfile, TokenResult } from './types'
 
-const DEFAULT_AUTHORIZE = 'https://graph.qq.com/oauth2.0/authorize'
-const DEFAULT_TOKEN = 'https://graph.qq.com/oauth2.0/token'
-const DEFAULT_USERINFO = 'https://graph.qq.com/user/get_user_info'
+const AUTHORIZE_URL = 'https://graph.qq.com/oauth2.0/authorize'
+const TOKEN_URL = 'https://graph.qq.com/oauth2.0/token'
+const USERINFO_URL = 'https://graph.qq.com/user/get_user_info'
 const OPENID_URL = 'https://graph.qq.com/oauth2.0/me'
+const SCOPE = 'get_user_info'
 
 export function buildAuthorizeUrl(config: ProviderConfig, state: string): string {
-  const base = config.authorizeUrl || DEFAULT_AUTHORIZE
-  const url = new URL(base)
+  const url = new URL(AUTHORIZE_URL)
   url.searchParams.set('response_type', 'code')
   url.searchParams.set('client_id', config.clientId)
   url.searchParams.set('redirect_uri', config.callbackUrl)
   url.searchParams.set('state', state)
-  url.searchParams.set('scope', (config.scopes.length ? config.scopes : ['get_user_info']).join(','))
+  url.searchParams.set('scope', SCOPE)
   return url.toString()
 }
 
 export async function exchangeCode(config: ProviderConfig, code: string): Promise<TokenResult> {
-  const tokenUrl = config.tokenUrl || DEFAULT_TOKEN
-  const url = new URL(tokenUrl)
+  const url = new URL(TOKEN_URL)
   url.searchParams.set('grant_type', 'authorization_code')
   url.searchParams.set('client_id', config.clientId)
   url.searchParams.set('client_secret', config.clientSecret)
@@ -93,8 +92,7 @@ interface QqUserInfoResponse extends Record<string, unknown> {
 export async function fetchUserInfo(config: ProviderConfig, accessToken: string, _token: TokenResult): Promise<ProviderProfile> {
   const { openid, unionid } = await fetchOpenId(accessToken)
 
-  const userUrl = config.userInfoUrl || DEFAULT_USERINFO
-  const url = new URL(userUrl)
+  const url = new URL(USERINFO_URL)
   url.searchParams.set('access_token', accessToken)
   url.searchParams.set('oauth_consumer_key', config.clientId)
   url.searchParams.set('openid', openid)
