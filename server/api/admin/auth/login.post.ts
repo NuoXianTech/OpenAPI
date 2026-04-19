@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { timingSafeEqual } from 'node:crypto'
 import { createError } from 'h3'
-import { createAdminSession, verifyPassword } from '~~/server/utils/auth'
+import { createAdminSession } from '~~/server/utils/auth'
 
 function safeEquals(left: string, right: string) {
   const leftBuffer = Buffer.from(left)
@@ -20,25 +20,16 @@ export default defineEventHandler(async (event: H3Event) => {
   const authConfig = useRuntimeConfig().auth
   const adminUsername = (authConfig.adminUsername || '').toString()
   const adminPassword = (authConfig.adminPassword || '').toString()
-  const adminPasswordHash = (authConfig.adminPasswordHash || '').toString()
 
   if (!adminUsername) {
     throw createError({ statusCode: 500, message: 'Admin username is not configured' })
   }
 
-  if (!adminPassword && !adminPasswordHash) {
+  if (!adminPassword) {
     throw createError({ statusCode: 500, message: 'Admin password is not configured' })
   }
 
-  let isPasswordValid = false
-  if (adminPasswordHash) {
-    isPasswordValid = await verifyPassword(adminPasswordHash, password)
-  }
-  else {
-    isPasswordValid = safeEquals(password, adminPassword)
-  }
-
-  if (!safeEquals(username, adminUsername) || !isPasswordValid) {
+  if (!safeEquals(username, adminUsername) || !safeEquals(password, adminPassword)) {
     throw createError({ statusCode: 401, message: 'Invalid admin credentials' })
   }
 

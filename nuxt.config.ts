@@ -13,11 +13,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     auth: {
       adminUsername: process.env.ADMIN_USERNAME || '',
-      adminPasswordHash: process.env.ADMIN_PASSWORD_HASH || '',
       adminPassword: process.env.ADMIN_PASSWORD || '',
-      adminEmail: process.env.ADMIN_EMAIL || 'admin@openapi.local',
-      emailVerifySecret:
-        process.env.EMAIL_VERIFY_SECRET || 'openapi-email-verify-secret',
+      adminEmail: process.env.ADMIN_EMAIL || '',
+      emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
       oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
     },
     public: {

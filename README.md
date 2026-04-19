@@ -132,7 +132,7 @@ Copy-Item .env.example .env
 | --- | --- | --- |
 | `DATABASE_URL` | 是 | PostgreSQL 连接串 |
 | `ADMIN_USERNAME` | 是 | 管理员用户名 |
-| `ADMIN_PASSWORD` / `ADMIN_PASSWORD_HASH` | 是（二选一） | 管理员密码明文或哈希 |
+| `ADMIN_PASSWORD` | 是 | 管理员密码 |
 | `ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
 | `EMAIL_VERIFY_SECRET` | 建议 | 邮箱验证 / OAuth state 签名密钥 |
 | `OAUTH_SECRET_KEY` | 启用 OAuth 时必需 | AES-256-GCM 主密钥；32 字节 hex / base64url / utf-8 |
