@@ -2,6 +2,7 @@ interface AuthUser {
   id: number
   username: string
   email: string
+  avatarUrl: string
   kind: 'user' | 'admin'
 }
 

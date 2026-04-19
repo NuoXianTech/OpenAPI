@@ -5,6 +5,7 @@ import { createError, getCookie, getHeader, getRequestIP, setCookie } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { getCravatarUrl } from '~~/server/utils/cravatar'
 
 export interface AuthUserPayload {
   id: number
@@ -124,6 +125,7 @@ export async function getAuthUser(event: H3Event) {
       id: 0,
       username: authConfig.adminUsername,
       email: authConfig.adminEmail,
+      avatarUrl: getCravatarUrl(authConfig.adminEmail),
       kind: 'admin' as const,
     }
   }
@@ -147,6 +149,7 @@ export async function getAuthUser(event: H3Event) {
     id: user.id,
     username: user.username,
     email: user.email,
+    avatarUrl: getCravatarUrl(user.email),
     kind: 'user' as const,
   }
 }
