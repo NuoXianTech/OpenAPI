@@ -53,6 +53,11 @@ export const siteSettings = pgTable('site_settings', {
   smtpPass: varchar('smtp_pass', { length: 255 }).notNull().default(''),
   smtpFrom: varchar('smtp_from', { length: 255 }).notNull().default('no-reply@example.com'),
 
+  // 第三方登录总开关
+  oauthLoginEnabled: boolean('oauth_login_enabled').notNull().default(true),
+  // 强制绑定：开启后，OAuth 登录不再自动创建新用户，必须命中已有账号（通过已绑定的 provider_user_id 或同邮箱）
+  oauthForceBinding: boolean('oauth_force_binding').notNull().default(false),
+
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 })

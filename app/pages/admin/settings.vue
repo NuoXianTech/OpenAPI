@@ -21,6 +21,8 @@ const form = reactive({
   smtpUser: '',
   smtpPass: '',
   smtpFrom: '',
+  oauthLoginEnabled: true,
+  oauthForceBinding: false,
 })
 
 watch(() => data.value?.data, (val) => {
@@ -39,6 +41,8 @@ watch(() => data.value?.data, (val) => {
       smtpUser: val.smtpUser || '',
       smtpPass: val.smtpPass || '',
       smtpFrom: val.smtpFrom || '',
+      oauthLoginEnabled: val.oauthLoginEnabled ?? true,
+      oauthForceBinding: val.oauthForceBinding ?? false,
     })
   }
 }, { immediate: true })
@@ -166,6 +170,42 @@ async function handleSave() {
                 type="number"
               />
             </UFormField>
+          </div>
+        </UCard>
+
+        <!-- OAuth -->
+        <UCard class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2 px-1">
+              <UIcon
+                name="i-mdi-shield-key-outline"
+                class="size-5 text-muted"
+              />
+              <h3 class="font-semibold">
+                第三方登录
+              </h3>
+            </div>
+          </template>
+          <div class="space-y-4">
+            <div class="flex flex-col gap-1">
+              <USwitch
+                v-model="form.oauthLoginEnabled"
+                label="启用第三方登录"
+              />
+              <p class="text-xs text-muted">
+                关闭后，登录页不会显示 GitHub/QQ 等第三方入口，回调接口也将拒绝请求。
+              </p>
+            </div>
+            <div class="flex flex-col gap-1">
+              <USwitch
+                v-model="form.oauthForceBinding"
+                :disabled="!form.oauthLoginEnabled"
+                label="强制绑定已有账号"
+              />
+              <p class="text-xs text-muted">
+                开启后，第三方登录不会自动创建新用户；只能通过已绑定或邮箱命中的本站账号登录。
+              </p>
+            </div>
           </div>
         </UCard>
 

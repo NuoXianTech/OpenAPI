@@ -1,31 +1,7 @@
 import { createError } from 'h3'
+import type { ProviderConfig, ProviderProfile, TokenResult } from './types'
 
-export interface ProviderConfig {
-  provider: string
-  clientId: string
-  clientSecret: string
-  scopes: string[]
-  callbackUrl: string
-  authorizeUrl: string | null
-  tokenUrl: string | null
-  userInfoUrl: string | null
-}
-
-export interface ProviderProfile {
-  providerUserId: string
-  email: string | null
-  nickname: string | null
-  avatarUrl: string | null
-  scope: string | null
-  profileRaw: Record<string, unknown>
-}
-
-export interface TokenResult {
-  accessToken: string
-  refreshToken: string | null
-  tokenExpiresAt: Date | null
-  scope: string | null
-}
+export type { ProviderConfig, ProviderProfile, TokenResult }
 
 const DEFAULT_AUTHORIZE = 'https://github.com/login/oauth/authorize'
 const DEFAULT_TOKEN = 'https://github.com/login/oauth/access_token'

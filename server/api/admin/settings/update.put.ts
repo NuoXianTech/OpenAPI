@@ -63,6 +63,8 @@ export default defineEventHandler(async (event: H3Event) => {
     smtpUser: body.smtpUser !== undefined && body.smtpUser !== null ? body.smtpUser.toString().trim() : undefined,
     smtpPass: body.smtpPass !== undefined && body.smtpPass !== null ? body.smtpPass.toString() : undefined,
     smtpFrom: parseOptionalString(body.smtpFrom, 'smtpFrom', 255),
+    oauthLoginEnabled: parseOptionalBoolean(body.oauthLoginEnabled, 'oauthLoginEnabled'),
+    oauthForceBinding: parseOptionalBoolean(body.oauthForceBinding, 'oauthForceBinding'),
   }
 
   const entries = Object.entries(updateInput)

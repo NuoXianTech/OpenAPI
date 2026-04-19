@@ -3,11 +3,15 @@ import { randomBytes } from 'node:crypto'
 import { getQuery, getRequestIP, getRouterParam, sendRedirect } from 'h3'
 import { oauthProviderService } from '~~/server/service/oauthProviderService'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
+import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { usersService } from '~~/server/service/userService'
 import { consumeState } from '~~/server/utils/oauthState'
 import { decryptSecret } from '~~/server/utils/oauthCrypto'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
 import * as github from '~~/server/utils/oauthProviders/github'
+import * as qq from '~~/server/utils/oauthProviders/qq'
+import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
+import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 
 async function redirectError(event: H3Event, code: string) {
   return sendRedirect(event, `/login?oauth_error=${encodeURIComponent(code)}`, 302)
@@ -33,6 +37,14 @@ export default defineEventHandler(async (event: H3Event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
   if (!provider) {
     return redirectError(event, 'invalid_provider')
+  }
+  if (!isSupportedOauthProvider(provider)) {
+    return redirectError(event, 'provider_not_supported')
+  }
+
+  const settings = await siteSettingsService.getOrCreate()
+  if (!settings.oauthLoginEnabled) {
+    return redirectError(event, 'oauth_disabled')
   }
 
   const query = getQuery(event)
@@ -64,7 +76,7 @@ export default defineEventHandler(async (event: H3Event) => {
     return redirectError(event, 'secret_decrypt_failed')
   }
 
-  const providerConfig: github.ProviderConfig = {
+  const providerConfig: ProviderConfig = {
     provider: providerRow.provider,
     clientId: providerRow.clientId,
     clientSecret,
@@ -76,13 +88,17 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   try {
-    let token: github.TokenResult
-    let profile: github.ProviderProfile
+    let token: TokenResult
+    let profile: ProviderProfile
 
     switch (provider) {
       case 'github':
         token = await github.exchangeCode(providerConfig, code)
         profile = await github.fetchUserInfo(providerConfig, token.accessToken, token)
+        break
+      case 'qq':
+        token = await qq.exchangeCode(providerConfig, code)
+        profile = await qq.fetchUserInfo(providerConfig, token.accessToken, token)
         break
       default:
         return redirectError(event, 'provider_not_implemented')
@@ -131,6 +147,9 @@ export default defineEventHandler(async (event: H3Event) => {
 
     // 3) 没命中：新建用户（无密码登录路径 → 密码哈希用随机值，isActive=true 因为 email 经 provider 验证）
     if (targetUserId === null) {
+      if (settings.oauthForceBinding) {
+        return redirectError(event, 'binding_required')
+      }
       if (!profile.email) {
         return redirectError(event, 'email_required')
       }

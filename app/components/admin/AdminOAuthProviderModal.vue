@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { OAUTH_PROVIDER_PRESETS, SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: any }>()
@@ -9,8 +10,13 @@ const toast = useToast()
 
 const isEdit = computed(() => !!props.item)
 
+const providerOptions = SUPPORTED_OAUTH_PROVIDERS.map(p => ({
+  label: OAUTH_PROVIDER_PRESETS[p].displayName,
+  value: p,
+}))
+
 const schema = z.object({
-  provider: z.string().min(1, '必填').max(32),
+  provider: z.enum(SUPPORTED_OAUTH_PROVIDERS),
   displayName: z.string().min(1, '必填').max(80),
   icon: z.string().optional(),
   clientId: z.string().min(1, '必填'),
@@ -28,7 +34,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 const state = reactive<Partial<Schema>>({
-  provider: '',
+  provider: 'github',
   displayName: '',
   icon: '',
   clientId: '',
@@ -44,10 +50,38 @@ const state = reactive<Partial<Schema>>({
 })
 const loading = ref(false)
 
+function applyPreset(provider: SupportedOauthProvider) {
+  const preset = OAUTH_PROVIDER_PRESETS[provider]
+  if (!state.displayName) {
+    state.displayName = preset.displayName
+  }
+  if (!state.icon) {
+    state.icon = preset.icon
+  }
+  if (!state.scopesText) {
+    state.scopesText = preset.scopes.join(',')
+  }
+  if (!state.authorizeUrl) {
+    state.authorizeUrl = preset.authorizeUrl
+  }
+  if (!state.tokenUrl) {
+    state.tokenUrl = preset.tokenUrl
+  }
+  if (!state.userInfoUrl) {
+    state.userInfoUrl = preset.userInfoUrl
+  }
+}
+
+watch(() => state.provider, (val) => {
+  if (!isEdit.value && val) {
+    applyPreset(val as SupportedOauthProvider)
+  }
+})
+
 watch(() => props.item, (val) => {
   if (val) {
     Object.assign(state, {
-      provider: val.provider || '',
+      provider: val.provider || 'github',
       displayName: val.displayName || '',
       icon: val.icon || '',
       clientId: val.clientId || '',
@@ -64,7 +98,7 @@ watch(() => props.item, (val) => {
   }
   else {
     Object.assign(state, {
-      provider: '',
+      provider: 'github',
       displayName: '',
       icon: '',
       clientId: '',
@@ -78,6 +112,7 @@ watch(() => props.item, (val) => {
       sortOrder: 0,
       isEnabled: false,
     })
+    applyPreset('github')
   }
 }, { immediate: true })
 
@@ -161,12 +196,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             <UFormField
               label="Provider 标识"
               name="provider"
-              :description="isEdit ? '不可修改' : '小写字母，如 github / google'"
+              :description="isEdit ? '不可修改' : '仅支持 github / qq'"
             >
-              <UInput
+              <USelect
                 v-model="state.provider"
-                placeholder="github"
+                :items="providerOptions"
                 :disabled="isEdit"
+                placeholder="选择 Provider"
               />
             </UFormField>
             <UFormField

@@ -14,6 +14,7 @@ export interface PublicSiteSettings {
   termsUrl: string | null
   privacyUrl: string | null
   registrationMode: string
+  oauthLoginEnabled: boolean
 }
 
 export interface SiteSettingsUpsertInput {
@@ -30,38 +31,26 @@ export interface SiteSettingsUpsertInput {
   smtpUser?: string
   smtpPass?: string
   smtpFrom?: string
+  oauthLoginEnabled?: boolean
+  oauthForceBinding?: boolean
 }
 
-function parseInteger(value: string | undefined, fallback: number) {
-  const parsed = Number(value)
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : fallback
-}
-
-function parseBoolean(value: string | undefined, fallback: boolean) {
-  if (value === undefined) {
-    return fallback
-  }
-  return value === 'true'
-}
-
-function toDefaultsFromEnv() {
+function buildInitialDefaults() {
   return {
     scope: DEFAULT_SCOPE,
-    siteUrl: process.env.SITE_URL || 'http://localhost:3000',
-    siteImg: process.env.SITE_IMG || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
-    siteName: process.env.SITE_NAME || 'OpenAPI',
-    siteDescription:
-      process.env.SITE_DESCRIPTION
-      || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
-    startTime: process.env.START_TIME || '2026-01-01 00:00:00',
-    sessionMaxAgeSeconds: parseInteger(process.env.SESSION_MAX_AGE, 60 * 60 * 24 * 7),
-    emailVerifyExpiresInMinutes: parseInteger(process.env.EMAIL_VERIFY_EXPIRES_IN, 30),
-    smtpHost: process.env.SMTP_HOST || 'smtp.example.com',
-    smtpPort: parseInteger(process.env.SMTP_PORT, 465),
-    smtpSecure: parseBoolean(process.env.SMTP_SECURE, true),
-    smtpUser: process.env.SMTP_USER || '',
-    smtpPass: process.env.SMTP_PASS || '',
-    smtpFrom: process.env.SMTP_FROM || 'no-reply@example.com',
+    siteUrl: 'http://localhost:3000',
+    siteImg: 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
+    siteName: 'OpenAPI',
+    siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
+    startTime: '2026-01-01 00:00:00',
+    sessionMaxAgeSeconds: 60 * 60 * 24 * 7,
+    emailVerifyExpiresInMinutes: 30,
+    smtpHost: 'smtp.example.com',
+    smtpPort: 465,
+    smtpSecure: true,
+    smtpUser: '',
+    smtpPass: '',
+    smtpFrom: 'no-reply@example.com',
   }
 }
 
@@ -75,7 +64,7 @@ export const siteSettingsService = {
       return exists[0]
     }
 
-    const defaults = toDefaultsFromEnv()
+    const defaults = buildInitialDefaults()
 
     try {
       const inserted = await db.insert(siteSettings).values(defaults).returning()
@@ -111,6 +100,7 @@ export const siteSettingsService = {
       termsUrl: settings.termsUrl || null,
       privacyUrl: settings.privacyUrl || null,
       registrationMode: settings.registrationMode,
+      oauthLoginEnabled: settings.oauthLoginEnabled,
     }
   },
 

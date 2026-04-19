@@ -2,6 +2,7 @@ import { asc, eq } from 'drizzle-orm'
 import { createError } from 'h3'
 import { oauthProviders } from '@nuxthub/db/schema'
 import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
+import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 
 export interface OauthProviderInput {
   provider: string
@@ -75,6 +76,9 @@ export const oauthProviderService = {
     const provider = input.provider.trim().toLowerCase()
     if (!provider) {
       throw createError({ statusCode: 400, message: 'provider is required' })
+    }
+    if (!isSupportedOauthProvider(provider)) {
+      throw createError({ statusCode: 400, message: 'provider not supported, only github and qq are allowed' })
     }
     if (!input.clientId || !input.clientSecret) {
       throw createError({ statusCode: 400, message: 'clientId and clientSecret are required' })
