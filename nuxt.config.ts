@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/ui',
     '@nuxt/eslint',
+    '~~/modules/api-manifest',
   ],
   devtools: { enabled: true },
   css: ['~/assets/css/tailwind.css'],
@@ -17,6 +18,10 @@ export default defineNuxtConfig({
       adminEmail: process.env.ADMIN_EMAIL || '',
       emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
       oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
+    },
+    apiGuard: {
+      // 'memory' | 'postgres' | 'nuxthub-kv'；多实例部署推荐切为 'postgres'
+      rateLimitDriver: process.env.API_GUARD_RATE_LIMIT_DRIVER || 'memory',
     },
     public: {
       startTime: '2026-01-01 00:00:00',

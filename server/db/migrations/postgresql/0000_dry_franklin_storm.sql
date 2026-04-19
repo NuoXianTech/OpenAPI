@@ -93,9 +93,20 @@ CREATE TABLE "api_keys" (
 	CONSTRAINT "api_keys_api_key_unique" UNIQUE("api_key")
 );
 --> statement-breakpoint
+CREATE TABLE "api_rate_limit_buckets" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"bucket_key" varchar(200) NOT NULL,
+	"window_start" timestamp with time zone NOT NULL,
+	"count" integer DEFAULT 0 NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "apis" (
-	"id" serial NOT NULL,
-	"code" varchar(50) PRIMARY KEY NOT NULL,
+	"id" serial PRIMARY KEY NOT NULL,
+	"code" varchar(50) NOT NULL,
+	"path_version" varchar(8) DEFAULT 'v1' NOT NULL,
+	"source_dir" varchar(500),
+	"endpoint_count" integer DEFAULT 0 NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"status" integer DEFAULT 1 NOT NULL,
 	"category_id" integer,
@@ -132,8 +143,7 @@ CREATE TABLE "apis" (
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "apis_id_unique" UNIQUE("id")
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "fab_menu_items" (
@@ -340,10 +350,14 @@ CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree (
 CREATE INDEX "api_keys_user_idx" ON "api_keys" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "api_keys_active_idx" ON "api_keys" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX "api_keys_expires_idx" ON "api_keys" USING btree ("expires_at");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_rate_limit_buckets_key_window_uq" ON "api_rate_limit_buckets" USING btree ("bucket_key","window_start");--> statement-breakpoint
+CREATE INDEX "api_rate_limit_buckets_window_idx" ON "api_rate_limit_buckets" USING btree ("window_start");--> statement-breakpoint
+CREATE UNIQUE INDEX "apis_version_code_uq" ON "apis" USING btree ("path_version","code");--> statement-breakpoint
 CREATE INDEX "api_lists_category_idx" ON "apis" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "api_lists_enabled_sort_idx" ON "apis" USING btree ("is_enabled","sort_order");--> statement-breakpoint
 CREATE INDEX "api_lists_status_idx" ON "apis" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "api_lists_deleted_at_idx" ON "apis" USING btree ("deleted_at");--> statement-breakpoint
+CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_version","is_enabled");--> statement-breakpoint
 CREATE INDEX "fab_menu_items_active_sort_idx" ON "fab_menu_items" USING btree ("is_active","sort");--> statement-breakpoint
 CREATE INDEX "friend_links_active_sort_idx" ON "friend_links" USING btree ("is_active","sort_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "oauth_accounts_provider_pid_uq" ON "oauth_accounts" USING btree ("provider","provider_user_id");--> statement-breakpoint

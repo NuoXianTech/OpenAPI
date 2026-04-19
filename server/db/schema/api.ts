@@ -38,20 +38,27 @@ export const apiCategories = pgTable('api_categories', {
 
 // ------------------------------------------------------------------
 // APIs（接口主表）
+//
+// 治理粒度：一条记录 = 一个 (pathVersion, code) = server/api/v{N}/<code>/ 目录。
+// 该 code 下所有 endpoints（不同 HTTP 方法、子路径、动态路由）共享同一份治理配置。
+// 子路由明细由构建期 manifest 提供，DB 不重复存储。
 // ------------------------------------------------------------------
 export const apis = pgTable('apis', {
-  id: serial('id').unique().notNull(),
-  code: varchar('code', { length: 50 }).primaryKey(),
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 50 }).notNull(), // = server/api/v{N}/<code>/ 目录名
+  pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
+  sourceDir: varchar('source_dir', { length: 500 }), // 源目录相对路径，展示与一致性校验用
+  endpointCount: integer('endpoint_count').notNull().default(0), // 下辖 endpoints 数量，admin 行展示
   name: varchar('name', { length: 100 }).notNull(),
   status: integer('status').default(1).notNull(), // -1=未知 0=异常 1=正常 2=维护 3=废弃
   categoryId: integer('category_id').references(() => apiCategories.id, { onDelete: 'set null' }),
   shortDesc: varchar('short_desc', { length: 30 }).notNull(),
   description: text('description').notNull(),
   httpMethod: varchar('http_method', { length: 50 }).notNull(), // 可逗号分隔
-  apiPath: varchar('api_path', { length: 200 }).notNull(),
+  apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /api/v1/user
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
   thumbnailUrl: varchar('thumbnail_url', { length: 1000 }),
-  version: varchar('version', { length: 32 }).notNull().default('v1'),
+  version: varchar('version', { length: 32 }).notNull().default('v1'), // 文档版本号（与 pathVersion 不同）
   deprecatedAt: timestamp('deprecated_at', { withTimezone: true }),
   replacementCode: varchar('replacement_code', { length: 50 }),
 
@@ -91,10 +98,12 @@ export const apis = pgTable('apis', {
   updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [
+  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
   index('api_lists_category_idx').on(table.categoryId),
   index('api_lists_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
   index('api_lists_status_idx').on(table.status),
   index('api_lists_deleted_at_idx').on(table.deletedAt),
+  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
 ])
 
 // ------------------------------------------------------------------
@@ -187,4 +196,22 @@ export const apiCallStats = pgTable('api_call_stats', {
 }, table => [
   uniqueIndex('api_call_stats_api_id_stat_date_uq').on(table.apiId, table.statDate),
   index('api_call_stats_stat_date_idx').on(table.statDate),
+])
+
+// ------------------------------------------------------------------
+// API Rate Limit Buckets（限流桶，postgres driver 使用）
+//
+// 滑动窗口的"固定桶"近似实现：按 windowStart 对齐时间窗，同一 (bucketKey, windowStart)
+// 用 upsert 原子累加 count。driver 查询当前桶 count 并判断是否超额。
+// 清理由后台定时任务删除过期窗口，避免无限增长。
+// ------------------------------------------------------------------
+export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
+  id: serial('id').primaryKey(),
+  bucketKey: varchar('bucket_key', { length: 200 }).notNull(),
+  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+  count: integer('count').notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, table => [
+  uniqueIndex('api_rate_limit_buckets_key_window_uq').on(table.bucketKey, table.windowStart),
+  index('api_rate_limit_buckets_window_idx').on(table.windowStart),
 ])

@@ -170,16 +170,20 @@ export default defineEventHandler((event: H3Event) => {
 
     void (async () => {
       try {
-        const target = await resolveStatisticsTarget(pathname, method)
+        // 优先用 gate 中间件挂在 context 上的目标（避免重复查 manifest/DB）
+        const target = event.context.apiStatsTarget
+          ? { apiId: event.context.apiStatsTarget.apiId, apiPath: event.context.apiStatsTarget.apiPath }
+          : await resolveStatisticsTarget(pathname, method)
         if (!target) {
           return
         }
 
-        const apiKeyId = await resolveApiKeyId(apiKey)
+        // gate 已解析的 apiKey 直接复用，避免二次查询
+        const apiKeyId = event.context.apiKey?.id ?? await resolveApiKeyId(apiKey)
         await apiCallService.addCallAndUpsertDailyStat({
           apiId: target.apiId,
           apiKeyId,
-          userId: null,
+          userId: event.context.apiKey?.userId ?? null,
           path: pathname,
           method,
           statusCode,

@@ -1,5 +1,5 @@
 {
-  "id": "97333459-53e8-4f20-907f-6dd29734b2c9",
+  "id": "5ecd98d3-7442-4017-a6e1-4c540aa2a32b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -982,6 +982,88 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.api_rate_limit_buckets": {
+      "name": "api_rate_limit_buckets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "bucket_key": {
+          "name": "bucket_key",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "window_start": {
+          "name": "window_start",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "api_rate_limit_buckets_key_window_uq": {
+          "name": "api_rate_limit_buckets_key_window_uq",
+          "columns": [
+            {
+              "expression": "bucket_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "window_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_rate_limit_buckets_window_idx": {
+          "name": "api_rate_limit_buckets_window_idx",
+          "columns": [
+            {
+              "expression": "window_start",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.apis": {
       "name": "apis",
       "schema": "",
@@ -989,14 +1071,34 @@
         "id": {
           "name": "id",
           "type": "serial",
-          "primaryKey": false,
+          "primaryKey": true,
           "notNull": true
         },
         "code": {
           "name": "code",
           "type": "varchar(50)",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
+        },
+        "path_version": {
+          "name": "path_version",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'v1'"
+        },
+        "source_dir": {
+          "name": "source_dir",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "endpoint_count": {
+          "name": "endpoint_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "name": {
           "name": "name",
@@ -1240,6 +1342,27 @@
         }
       },
       "indexes": {
+        "apis_version_code_uq": {
+          "name": "apis_version_code_uq",
+          "columns": [
+            {
+              "expression": "path_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "api_lists_category_idx": {
           "name": "api_lists_category_idx",
           "columns": [
@@ -1305,6 +1428,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "apis_path_version_enabled_idx": {
+          "name": "apis_path_version_enabled_idx",
+          "columns": [
+            {
+              "expression": "path_version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_enabled",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1349,15 +1493,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "apis_id_unique": {
-          "name": "apis_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "id"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

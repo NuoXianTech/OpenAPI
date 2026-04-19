@@ -1,9 +1,14 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
+import { API_META_CACHE_TTL_MS } from '~~/shared/config/apiGuard'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
 }
+
+// Guard 配置 LRU 缓存：热路径上反复命中同一条 apis 记录，用短 TTL 缓存避免查库
+type GuardCacheEntry = { value: typeof apis.$inferSelect | null, expiresAt: number }
+const guardConfigCache = new Map<string, GuardCacheEntry>()
 
 function toContainsPattern(value: string) {
   return `%${escapeLikePattern(value)}%`
@@ -157,6 +162,36 @@ export const apiService = {
     return res[0] || null
   },
 
+  /**
+   * Gate 专用：按 (pathVersion, code) 读取完整治理配置。
+   * 命中 LRU 缓存（TTL 15s）避免热路径反复查库。
+   */
+  async loadGuardConfig(pathVersion: string, code: string) {
+    const cacheKey = `${pathVersion}:${code}`
+    const now = Date.now()
+    const cached = guardConfigCache.get(cacheKey)
+    if (cached && cached.expiresAt > now) return cached.value
+
+    const rows = await db.select().from(apis)
+      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
+      .limit(1)
+    const value = rows[0] || null
+    guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
+    return value
+  },
+
+  /** 使某 code 的 guard 缓存失效（admin 修改后调用） */
+  invalidateGuardConfig(pathVersion: string, code: string) {
+    guardConfigCache.delete(`${pathVersion}:${code}`)
+  },
+
+  /** 按版本列出已登记 APIs，admin 页面分 tab 使用 */
+  async listByVersion(pathVersion: string) {
+    return db.select().from(apis)
+      .where(eq(apis.pathVersion, pathVersion))
+      .orderBy(desc(apis.updatedAt))
+  },
+
   async addApi(userid: number | null, data: Partial<typeof apis.$inferInsert> & {
     code: string
     name: string
@@ -196,12 +231,16 @@ export const apiService = {
       })
       .where(eq(apis.id, id))
       .returning()
-    return res[0] || null
+    const updated = res[0] || null
+    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    return updated
   },
 
   async deleteApi(id: number) {
     const res = await db.delete(apis).where(eq(apis.id, id)).returning()
-    return res[0] || null
+    const deleted = res[0] || null
+    if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
+    return deleted
   },
 
   async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number) {
@@ -218,6 +257,76 @@ export const apiService = {
       patch.updatedBy = updatedBy
     }
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
+    const updated = res[0] || null
+    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    return updated
+  },
+
+  /**
+   * 一键登记：按 (pathVersion, code) 幂等入库。
+   * 已存在则仅刷新 sourceDir/endpointCount/apiPath，其他治理字段不覆盖（admin 已手调）。
+   */
+  async registerFromManifest(data: {
+    pathVersion: string
+    code: string
+    apiPath: string
+    httpMethod: string
+    sourceDir: string
+    endpointCount: number
+    createdBy: number | null
+    defaults: {
+      name: string
+      shortDesc: string
+      description: string
+      docUrl: string
+      isEnabled: boolean
+      isApiKey: boolean
+      isStatistics: boolean
+      requiresAuth: boolean
+      rateLimitPerMinute: number
+      rateLimitPerHour: number
+      dailyQuota: number
+    }
+  }) {
+    const existing = await this.loadGuardConfig(data.pathVersion, data.code)
+    if (existing) {
+      const res = await db.update(apis)
+        .set({
+          apiPath: data.apiPath,
+          httpMethod: normalizeMethodList(data.httpMethod),
+          sourceDir: data.sourceDir,
+          endpointCount: data.endpointCount,
+          updatedBy: data.createdBy,
+          updatedAt: new Date(),
+        })
+        .where(eq(apis.id, existing.id))
+        .returning()
+      const updated = res[0] || null
+      if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+      return updated
+    }
+
+    const res = await db.insert(apis).values({
+      code: data.code,
+      pathVersion: data.pathVersion,
+      sourceDir: data.sourceDir,
+      endpointCount: data.endpointCount,
+      name: data.defaults.name,
+      shortDesc: data.defaults.shortDesc,
+      description: data.defaults.description,
+      httpMethod: normalizeMethodList(data.httpMethod),
+      apiPath: data.apiPath,
+      docUrl: data.defaults.docUrl,
+      isEnabled: data.defaults.isEnabled,
+      isApiKey: data.defaults.isApiKey,
+      isStatistics: data.defaults.isStatistics,
+      requiresAuth: data.defaults.requiresAuth,
+      rateLimitPerMinute: data.defaults.rateLimitPerMinute,
+      rateLimitPerHour: data.defaults.rateLimitPerHour,
+      dailyQuota: data.defaults.dailyQuota,
+      createdBy: data.createdBy,
+      updatedBy: data.createdBy,
+    }).returning()
     return res[0] || null
   },
 }
