@@ -50,28 +50,69 @@ const EMPTY_DASHBOARD = createEmptyDashboard()
 const SUCCESS_KEY = '成功次数' as const
 const FAILURE_KEY = '失败次数' as const
 
-const { data, pending, error, refresh } = await useAsyncData(
-  'public-call-stats',
-  () => $fetch<PublicCallStatsResponse>('/api/stats/public'),
-  {
-    default: () => ({
-      code: 0,
-      msg: '',
-      data: createEmptyDashboard(),
-      timestamp: Date.now(),
-    }),
-  },
-)
+const { turnstile } = useSiteSettings()
+const turnstileRequired = computed(() => turnstile.value.publicStats)
+const turnstileToken = ref('')
+const turnstileWidget = ref<{ reset: () => void } | null>(null)
+
+const data = ref<PublicCallStatsResponse | null>(null)
+const pending = ref(false)
+const error = ref<unknown>(null)
+
+const fetchStats = async () => {
+  pending.value = true
+  error.value = null
+  try {
+    const headers: Record<string, string> = {}
+    if (turnstileRequired.value && turnstileToken.value) {
+      headers['x-turnstile-token'] = turnstileToken.value
+    }
+    data.value = await $fetch<PublicCallStatsResponse>('/api/stats/public', { headers })
+  }
+  catch (err) {
+    error.value = err
+    // token 是一次性的，验证失败后重置重拿
+    if (turnstileRequired.value) {
+      turnstileToken.value = ''
+      turnstileWidget.value?.reset()
+    }
+  }
+  finally {
+    pending.value = false
+  }
+}
 
 const reloadStats = async () => {
-  await refresh()
+  error.value = null
+  if (turnstileRequired.value) {
+    data.value = null
+    turnstileToken.value = ''
+    turnstileWidget.value?.reset()
+    return
+  }
+  await fetchStats()
 }
+
+// token 拿到后自动拉取
+watch(turnstileToken, (val) => {
+  if (val && turnstileRequired.value) {
+    fetchStats()
+  }
+})
+
+onMounted(() => {
+  if (!turnstileRequired.value) {
+    fetchStats()
+  }
+})
 
 const dashboard = computed(() => data.value?.data || EMPTY_DASHBOARD)
 const overview = computed(() => dashboard.value.overview)
 const trend7d = computed(() => dashboard.value.trend7d)
 const top10Today = computed(() => dashboard.value.top10Today)
+const hasData = computed(() => data.value !== null)
 const isInitialLoading = computed(() => pending.value && trend7d.value.length === 0 && top10Today.value.length === 0)
+const showChallenge = computed(() => turnstileRequired.value && !hasData.value && !error.value)
 
 const generatedAtLabel = computed(() => {
   const date = new Date(dashboard.value.generatedAt)
@@ -210,7 +251,26 @@ const overviewCards = computed(() => {
       </div>
 
       <section
-        v-if="error"
+        v-if="showChallenge"
+        class="state-panel bg-elevated border border-default rounded-xl p-6 text-center mb-6"
+      >
+        <div class="font-semibold mb-1">
+          需要完成人机验证
+        </div>
+        <div class="text-muted text-[13px] mb-4">
+          为防止恶意抓取，请先完成人机验证再查看统计数据。
+        </div>
+        <div class="flex justify-center">
+          <CommonTurnstileWidget
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
+        </div>
+      </section>
+
+      <section
+        v-else-if="error"
         class="state-panel bg-elevated border border-default rounded-xl p-5 text-center mb-6"
       >
         <div class="font-semibold">
@@ -238,7 +298,7 @@ const overviewCards = computed(() => {
         加载统计中...
       </section>
 
-      <template v-else>
+      <template v-else-if="hasData">
         <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <UCard
             v-for="item in overviewCards"

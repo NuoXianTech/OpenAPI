@@ -1,2 +1,0 @@
-ALTER TABLE "site_settings" ADD COLUMN "oauth_login_enabled" boolean DEFAULT true NOT NULL;--> statement-breakpoint
-ALTER TABLE "site_settings" ADD COLUMN "oauth_force_binding" boolean DEFAULT false NOT NULL;

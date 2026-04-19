@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const { register } = useAuth()
+const { turnstile } = useSiteSettings()
 const form = reactive({
   username: '',
   email: '',
@@ -9,6 +10,9 @@ const form = reactive({
 const errorMessage = ref('')
 const successMessage = ref('')
 const submitting = ref(false)
+const turnstileToken = ref('')
+const turnstileWidget = ref<{ reset: () => void } | null>(null)
+const turnstileRequired = computed(() => turnstile.value.register)
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
@@ -26,21 +30,29 @@ const submit = async () => {
     return
   }
 
+  if (turnstileRequired.value && !turnstileToken.value) {
+    errorMessage.value = '请先完成人机验证'
+    return
+  }
+
   submitting.value = true
   try {
     const res = await register({
       username: form.username,
       email: form.email,
       password: form.password,
+      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
     })
     successMessage.value = res.verificationRequired
       ? '账号已创建，请查收邮箱完成验证。'
       : '账号创建成功，可以直接登录。'
     form.password = ''
     form.confirm = ''
+    turnstileWidget.value?.reset()
   }
   catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '注册失败')
+    turnstileWidget.value?.reset()
   }
   finally {
     submitting.value = false
@@ -126,10 +138,18 @@ const submit = async () => {
             {{ successMessage }}
           </div>
 
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
+
           <UButton
             type="submit"
             block
             :loading="submitting"
+            :disabled="turnstileRequired && !turnstileToken"
           >
             注册
           </UButton>

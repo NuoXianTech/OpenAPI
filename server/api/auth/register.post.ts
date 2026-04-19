@@ -7,6 +7,7 @@ import { validateEmail } from '~~/server/utils/validation'
 import { verificationTokenService } from '../../service/verificationTokenService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()
@@ -21,10 +22,14 @@ export default defineEventHandler(async (event: H3Event) => {
   const username = (body.username || '').toString().trim()
   const email = (body.email || '').toString().trim().toLowerCase()
   const password = (body.password || '').toString()
+  const turnstileToken = (body.turnstileToken || '').toString()
 
   if (!username || !email || !password) {
     throw createError({ statusCode: 400, message: 'username, email and password are required' })
   }
+
+  const ip = getRequestIP(event) || null
+  await assertTurnstileForPage('register', turnstileToken, ip)
 
   if (!validateEmail(email)) {
     throw createError({ statusCode: 400, message: 'Invalid email address' })
@@ -55,7 +60,6 @@ export default defineEventHandler(async (event: H3Event) => {
   })
 
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const ip = getRequestIP(event) || null
   const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
   const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
   const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`

@@ -45,6 +45,17 @@ function parseOptionalString(value: unknown, field: string, maxLength: number) {
   return text
 }
 
+function parseOptionalPlainString(value: unknown, field: string, maxLength: number) {
+  if (value === undefined || value === null) {
+    return undefined
+  }
+  const text = value.toString()
+  if (text.length > maxLength) {
+    throw createError({ statusCode: 400, message: `${field} is too long` })
+  }
+  return text
+}
+
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const body = await readBody(event) as Record<string, unknown>
@@ -65,6 +76,13 @@ export default defineEventHandler(async (event: H3Event) => {
     smtpFrom: parseOptionalString(body.smtpFrom, 'smtpFrom', 255),
     oauthLoginEnabled: parseOptionalBoolean(body.oauthLoginEnabled, 'oauthLoginEnabled'),
     oauthForceBinding: parseOptionalBoolean(body.oauthForceBinding, 'oauthForceBinding'),
+    turnstileEnabled: parseOptionalBoolean(body.turnstileEnabled, 'turnstileEnabled'),
+    turnstileSiteKey: parseOptionalPlainString(body.turnstileSiteKey, 'turnstileSiteKey', 200),
+    turnstileSecretKey: parseOptionalPlainString(body.turnstileSecretKey, 'turnstileSecretKey', 1000),
+    turnstileLoginEnabled: parseOptionalBoolean(body.turnstileLoginEnabled, 'turnstileLoginEnabled'),
+    turnstileRegisterEnabled: parseOptionalBoolean(body.turnstileRegisterEnabled, 'turnstileRegisterEnabled'),
+    turnstileAdminLoginEnabled: parseOptionalBoolean(body.turnstileAdminLoginEnabled, 'turnstileAdminLoginEnabled'),
+    turnstilePublicStatsEnabled: parseOptionalBoolean(body.turnstilePublicStatsEnabled, 'turnstilePublicStatsEnabled'),
   }
 
   const entries = Object.entries(updateInput)

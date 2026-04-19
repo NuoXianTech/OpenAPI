@@ -2,10 +2,14 @@
 definePageMeta({ layout: false })
 
 const { adminLogin } = useAuth()
+const { turnstile } = useSiteSettings()
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)
 const errorMsg = ref('')
+const turnstileToken = ref('')
+const turnstileWidget = ref<{ reset: () => void } | null>(null)
+const turnstileRequired = computed(() => turnstile.value.adminLogin)
 
 async function handleLogin() {
   errorMsg.value = ''
@@ -13,13 +17,22 @@ async function handleLogin() {
     errorMsg.value = '请输入用户名和密码'
     return
   }
+  if (turnstileRequired.value && !turnstileToken.value) {
+    errorMsg.value = '请先完成人机验证'
+    return
+  }
   loading.value = true
   try {
-    await adminLogin({ username: form.username.trim(), password: form.password })
+    await adminLogin({
+      username: form.username.trim(),
+      password: form.password,
+      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
+    })
     await navigateTo('/admin')
   }
   catch (err: any) {
     errorMsg.value = err?.data?.message || err?.message || '登录失败'
+    turnstileWidget.value?.reset()
   }
   finally {
     loading.value = false
@@ -76,10 +89,18 @@ async function handleLogin() {
               {{ errorMsg }}
             </div>
 
+            <CommonTurnstileWidget
+              v-if="turnstileRequired"
+              ref="turnstileWidget"
+              v-model:token="turnstileToken"
+              :site-key="turnstile.siteKey"
+            />
+
             <UButton
               type="submit"
               block
               :loading="loading"
+              :disabled="turnstileRequired && !turnstileToken"
             >
               登录
             </UButton>

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 const { fetchMe, user, login } = useAuth()
+const { turnstile } = useSiteSettings()
 const route = useRoute()
 const form = reactive({
   identifier: '',
@@ -8,6 +9,9 @@ const form = reactive({
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
+const turnstileToken = ref('')
+const turnstileWidget = ref<{ reset: () => void } | null>(null)
+const turnstileRequired = computed(() => turnstile.value.login)
 
 const { data: providersData } = await useFetch<{ code: number, data: Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }> }>('/api/auth/providers/list', {
   default: () => ({ code: 0, msg: '', data: [] }),
@@ -55,17 +59,27 @@ onMounted(async () => {
 
 const submit = async () => {
   errorMessage.value = ''
+
+  if (turnstileRequired.value && !turnstileToken.value) {
+    errorMessage.value = '请先完成人机验证'
+    return
+  }
+
   submitting.value = true
   try {
-    const payload = form.identifier.includes('@')
+    const base = form.identifier.includes('@')
       ? { email: form.identifier, password: form.password }
       : { username: form.identifier, password: form.password }
+    const payload = turnstileRequired.value
+      ? { ...base, turnstileToken: turnstileToken.value }
+      : base
 
     await login(payload)
     await navigateTo('/')
   }
   catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '登录失败')
+    turnstileWidget.value?.reset()
   }
   finally {
     submitting.value = false
@@ -146,10 +160,18 @@ function gotoOAuth(entry: string) {
             {{ oauthError }}
           </div>
 
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
+
           <UButton
             type="submit"
             block
             :loading="submitting"
+            :disabled="turnstileRequired && !turnstileToken"
           >
             登录
           </UButton>

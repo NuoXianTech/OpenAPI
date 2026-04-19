@@ -23,6 +23,13 @@ const form = reactive({
   smtpFrom: '',
   oauthLoginEnabled: true,
   oauthForceBinding: false,
+  turnstileEnabled: false,
+  turnstileSiteKey: '',
+  turnstileSecretKey: '',
+  turnstileLoginEnabled: true,
+  turnstileRegisterEnabled: true,
+  turnstileAdminLoginEnabled: true,
+  turnstilePublicStatsEnabled: false,
 })
 
 watch(() => data.value?.data, (val) => {
@@ -43,6 +50,13 @@ watch(() => data.value?.data, (val) => {
       smtpFrom: val.smtpFrom || '',
       oauthLoginEnabled: val.oauthLoginEnabled ?? true,
       oauthForceBinding: val.oauthForceBinding ?? false,
+      turnstileEnabled: val.turnstileEnabled ?? false,
+      turnstileSiteKey: val.turnstileSiteKey || '',
+      turnstileSecretKey: val.turnstileSecretKey || '',
+      turnstileLoginEnabled: val.turnstileLoginEnabled ?? true,
+      turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? true,
+      turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? true,
+      turnstilePublicStatsEnabled: val.turnstilePublicStatsEnabled ?? false,
     })
   }
 }, { immediate: true })
@@ -205,6 +219,89 @@ async function handleSave() {
               <p class="text-xs text-muted">
                 开启后，第三方登录不会自动创建新用户；只能通过已绑定或邮箱命中的本站账号登录。
               </p>
+            </div>
+          </div>
+        </UCard>
+
+        <!-- Turnstile -->
+        <UCard class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2 px-1">
+              <UIcon
+                name="i-mdi-robot-outline"
+                class="size-5 text-muted"
+              />
+              <h3 class="font-semibold">
+                Cloudflare Turnstile 人机验证
+              </h3>
+            </div>
+          </template>
+          <div class="space-y-4">
+            <div class="flex flex-col gap-1">
+              <USwitch
+                v-model="form.turnstileEnabled"
+                label="启用 Turnstile"
+              />
+              <p class="text-xs text-muted">
+                总开关。关闭后所有页面均不进行人机验证；未配置 Site Key 或 Secret Key 时也会视为关闭。
+              </p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <UFormField label="Site Key">
+                <UInput
+                  v-model="form.turnstileSiteKey"
+                  placeholder="0x4AAAAAA..."
+                />
+              </UFormField>
+              <UFormField label="Secret Key">
+                <UInput
+                  v-model="form.turnstileSecretKey"
+                  type="password"
+                  placeholder="留空或保持 *** 表示不修改"
+                />
+              </UFormField>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-default">
+              <div class="flex flex-col gap-1">
+                <USwitch
+                  v-model="form.turnstileLoginEnabled"
+                  :disabled="!form.turnstileEnabled"
+                  label="用户登录页"
+                />
+                <p class="text-xs text-muted">
+                  /login 提交时校验。
+                </p>
+              </div>
+              <div class="flex flex-col gap-1">
+                <USwitch
+                  v-model="form.turnstileRegisterEnabled"
+                  :disabled="!form.turnstileEnabled"
+                  label="用户注册页"
+                />
+                <p class="text-xs text-muted">
+                  /register 提交时校验。
+                </p>
+              </div>
+              <div class="flex flex-col gap-1">
+                <USwitch
+                  v-model="form.turnstileAdminLoginEnabled"
+                  :disabled="!form.turnstileEnabled"
+                  label="管理员登录页"
+                />
+                <p class="text-xs text-muted">
+                  /admin/login 提交时校验。
+                </p>
+              </div>
+              <div class="flex flex-col gap-1">
+                <USwitch
+                  v-model="form.turnstilePublicStatsEnabled"
+                  :disabled="!form.turnstileEnabled"
+                  label="公开调用统计页"
+                />
+                <p class="text-xs text-muted">
+                  /stats 加载数据前校验，防止恶意抓取。
+                </p>
+              </div>
             </div>
           </div>
         </UCard>

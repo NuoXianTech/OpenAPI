@@ -192,19 +192,9 @@ CREATE TABLE "oauth_accounts" (
 CREATE TABLE "oauth_providers" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"provider" varchar(32) NOT NULL,
-	"display_name" varchar(80) NOT NULL,
-	"icon" varchar(120),
-	"client_id" varchar(255) NOT NULL,
-	"client_secret" varchar(1000) NOT NULL,
-	"scopes" jsonb DEFAULT '[]'::jsonb NOT NULL,
-	"callback_url" varchar(1000) NOT NULL,
-	"authorize_url" varchar(1000),
-	"token_url" varchar(1000),
-	"user_info_url" varchar(1000),
-	"extra_config" jsonb,
+	"client_id" varchar(255) DEFAULT '' NOT NULL,
+	"client_secret" varchar(1000) DEFAULT '' NOT NULL,
 	"is_enabled" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"description" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -263,6 +253,15 @@ CREATE TABLE "site_settings" (
 	"smtp_user" varchar(255) DEFAULT '' NOT NULL,
 	"smtp_pass" varchar(255) DEFAULT '' NOT NULL,
 	"smtp_from" varchar(255) DEFAULT 'no-reply@example.com' NOT NULL,
+	"oauth_login_enabled" boolean DEFAULT true NOT NULL,
+	"oauth_force_binding" boolean DEFAULT false NOT NULL,
+	"turnstile_enabled" boolean DEFAULT false NOT NULL,
+	"turnstile_site_key" varchar(200) DEFAULT '' NOT NULL,
+	"turnstile_secret_key" varchar(500) DEFAULT '' NOT NULL,
+	"turnstile_login_enabled" boolean DEFAULT true NOT NULL,
+	"turnstile_register_enabled" boolean DEFAULT true NOT NULL,
+	"turnstile_admin_login_enabled" boolean DEFAULT true NOT NULL,
+	"turnstile_public_stats_enabled" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "site_settings_scope_unique" UNIQUE("scope")
@@ -352,7 +351,6 @@ CREATE INDEX "oauth_accounts_user_idx" ON "oauth_accounts" USING btree ("user_id
 CREATE INDEX "oauth_accounts_provider_idx" ON "oauth_accounts" USING btree ("provider");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_union_idx" ON "oauth_accounts" USING btree ("provider","union_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "oauth_providers_provider_uq" ON "oauth_providers" USING btree ("provider");--> statement-breakpoint
-CREATE INDEX "oauth_providers_enabled_sort_idx" ON "oauth_providers" USING btree ("is_enabled","sort_order");--> statement-breakpoint
 CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at");--> statement-breakpoint
 CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint

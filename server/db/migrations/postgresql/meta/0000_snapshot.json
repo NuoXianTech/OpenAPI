@@ -1,5 +1,5 @@
 {
-  "id": "ed76c0d0-b17a-4cfb-9e91-1514425e522a",
+  "id": "97333459-53e8-4f20-907f-6dd29734b2c9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1868,66 +1868,19 @@
           "primaryKey": false,
           "notNull": true
         },
-        "display_name": {
-          "name": "display_name",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "icon": {
-          "name": "icon",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "client_id": {
           "name": "client_id",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "''"
         },
         "client_secret": {
           "name": "client_secret",
           "type": "varchar(1000)",
           "primaryKey": false,
-          "notNull": true
-        },
-        "scopes": {
-          "name": "scopes",
-          "type": "jsonb",
-          "primaryKey": false,
           "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "callback_url": {
-          "name": "callback_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "authorize_url": {
-          "name": "authorize_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "token_url": {
-          "name": "token_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_info_url": {
-          "name": "user_info_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "extra_config": {
-          "name": "extra_config",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
+          "default": "''"
         },
         "is_enabled": {
           "name": "is_enabled",
@@ -1935,19 +1888,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -1976,27 +1916,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "oauth_providers_enabled_sort_idx": {
-          "name": "oauth_providers_enabled_sort_idx",
-          "columns": [
-            {
-              "expression": "is_enabled",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2493,6 +2412,69 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'no-reply@example.com'"
+        },
+        "oauth_login_enabled": {
+          "name": "oauth_login_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "oauth_force_binding": {
+          "name": "oauth_force_binding",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "turnstile_enabled": {
+          "name": "turnstile_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "turnstile_site_key": {
+          "name": "turnstile_site_key",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "turnstile_secret_key": {
+          "name": "turnstile_secret_key",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "turnstile_login_enabled": {
+          "name": "turnstile_login_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "turnstile_register_enabled": {
+          "name": "turnstile_register_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "turnstile_admin_login_enabled": {
+          "name": "turnstile_admin_login_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "turnstile_public_stats_enabled": {
+          "name": "turnstile_public_stats_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

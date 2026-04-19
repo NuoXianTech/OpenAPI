@@ -1,15 +1,34 @@
+interface PublicTurnstileSettings {
+  enabled: boolean
+  siteKey: string
+  login: boolean
+  register: boolean
+  adminLogin: boolean
+  publicStats: boolean
+}
+
 interface PublicSiteSettings {
   siteUrl: string
   siteImg: string
   siteName: string
   siteDescription: string
   startTime: string
+  turnstile: PublicTurnstileSettings
 }
 
 interface PublicSiteSettingsResponse {
   code: number
   msg: string
   data: PublicSiteSettings
+}
+
+const EMPTY_TURNSTILE: PublicTurnstileSettings = {
+  enabled: false,
+  siteKey: '',
+  login: false,
+  register: false,
+  adminLogin: false,
+  publicStats: false,
 }
 
 export function useSiteSettings() {
@@ -23,6 +42,7 @@ export function useSiteSettings() {
       runtimePublic.siteDescription
       || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     startTime: runtimePublic.startTime || '2026-01-01 00:00:00',
+    turnstile: { ...EMPTY_TURNSTILE },
   }
 
   const { data, pending, error, refresh } = useAsyncData(
@@ -38,9 +58,11 @@ export function useSiteSettings() {
   )
 
   const settings = computed(() => data.value?.data || fallback)
+  const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
 
   return {
     settings,
+    turnstile,
     pending,
     error,
     refresh,

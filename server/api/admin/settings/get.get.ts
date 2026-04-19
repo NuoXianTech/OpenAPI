@@ -5,7 +5,7 @@ import { siteSettingsService } from '~~/server/service/siteSettingsService'
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
 
-  const data = await siteSettingsService.getOrCreate()
+  const data = await siteSettingsService.getForAdmin()
 
   return {
     code: 0,

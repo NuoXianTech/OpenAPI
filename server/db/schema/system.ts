@@ -58,6 +58,16 @@ export const siteSettings = pgTable('site_settings', {
   // 强制绑定：开启后，OAuth 登录不再自动创建新用户，必须命中已有账号（通过已绑定的 provider_user_id 或同邮箱）
   oauthForceBinding: boolean('oauth_force_binding').notNull().default(false),
 
+  // Cloudflare Turnstile 人机验证
+  turnstileEnabled: boolean('turnstile_enabled').notNull().default(false),
+  turnstileSiteKey: varchar('turnstile_site_key', { length: 200 }).notNull().default(''),
+  // 密文存储（AES-GCM），复用 oauthCrypto encryptSecret/decryptSecret
+  turnstileSecretKey: varchar('turnstile_secret_key', { length: 500 }).notNull().default(''),
+  turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(true),
+  turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
+  turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(true),
+  turnstilePublicStatsEnabled: boolean('turnstile_public_stats_enabled').notNull().default(false),
+
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 })
