@@ -1,7 +1,6 @@
 import { afterAll, describe, expect, it } from 'vitest'
 import { fetch as e2eFetch } from '@nuxt/test-utils/e2e'
 import { createAdminClient, loginAsAdmin } from './helpers/admin-client'
-import { createApiPayload } from './helpers/fixtures'
 import { waitForValue } from './helpers/wait'
 import { setupE2E } from './helpers/setup'
 import {
@@ -16,7 +15,10 @@ await setupE2E()
 interface AdminApiItem {
   id: number
   code: string
+  pathVersion: string
   apiPath: string
+  isEnabled: boolean
+  isStatistics: boolean
 }
 
 const statsWaitTimeoutMs = Number(process.env.E2E_STATS_WAIT_TIMEOUT_MS || (process.env.CI ? 45_000 : 20_000))
@@ -24,29 +26,38 @@ const statsDeleteWaitTimeoutMs = Number(process.env.E2E_STATS_DELETE_WAIT_TIMEOU
 const statsWaitIntervalMs = Number(process.env.E2E_STATS_WAIT_INTERVAL_MS || (process.env.CI ? 500 : 250))
 const callStatsTestTimeoutMs = Number(process.env.E2E_CALL_STATS_TEST_TIMEOUT_MS || (process.env.CI ? 120_000 : 90_000))
 
+const TEST_PATH_VERSION = 'v1'
+const TEST_CODE = 'test'
+
 afterAll(async () => {
   await closeDbClient()
 })
 
 describe('api call stats e2e', () => {
-  it('adds, updates and deletes call stats records', async () => {
+  it('counts calls to a registered, enabled api', async () => {
     const sessionCookie = await loginAsAdmin()
     const adminClient = createAdminClient(sessionCookie)
-    const payload = createApiPayload()
-    const created = await adminClient.post<AdminApiItem>('/api/admin/apis/add', payload)
-    expect(created.code).toBe(0)
 
-    const apiId = Number(created.data.id)
-    const apiPath = created.data.apiPath || payload.apiPath
-
+    const registered = await adminClient.post<AdminApiItem>('/api/admin/apis/register', {
+      pathVersion: TEST_PATH_VERSION,
+      code: TEST_CODE,
+      overrides: { isEnabled: true, isStatistics: true },
+    })
+    expect(registered.code).toBe(0)
+    const apiId = Number(registered.data.id)
     expect(apiId).toBeGreaterThan(0)
-    expect(apiPath).toBe(payload.apiPath)
+
+    // register 仅在新建时落 overrides；如果已存在，需要再 update 一次确保启用 + 统计
+    await adminClient.put('/api/admin/apis/update', {
+      id: apiId,
+      isEnabled: true,
+      isStatistics: true,
+    })
+
+    const apiPath = `/api/${TEST_PATH_VERSION}/${TEST_CODE}`
 
     async function callTrackedPath() {
-      // The path is intentionally unique and has no explicit route handler; 404 responses are still tracked.
-      await e2eFetch(apiPath, {
-        method: 'GET',
-      })
+      await e2eFetch(apiPath, { method: 'GET' })
     }
 
     await deleteApiCallStatsByApiId(apiId)
@@ -58,16 +69,11 @@ describe('api call stats e2e', () => {
       const statAfterFirstCall = await waitForValue(
         async () => {
           const stat = await getApiCallStatByApiId(apiId)
-          if (!stat) {
-            await callTrackedPath()
-          }
+          if (!stat) await callTrackedPath()
           return stat
         },
         value => Number(value?.totalCount || 0) > 0,
-        {
-          timeoutMs: statsWaitTimeoutMs,
-          intervalMs: statsWaitIntervalMs,
-        },
+        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
       )
 
       const firstTotal = Number(statAfterFirstCall?.totalCount || 0)
@@ -78,16 +84,11 @@ describe('api call stats e2e', () => {
       const statAfterSecondCall = await waitForValue(
         async () => {
           const stat = await getApiCallStatByApiId(apiId)
-          if (Number(stat?.totalCount || 0) <= firstTotal) {
-            await callTrackedPath()
-          }
+          if (Number(stat?.totalCount || 0) <= firstTotal) await callTrackedPath()
           return stat
         },
         value => Number(value?.totalCount || 0) > firstTotal,
-        {
-          timeoutMs: statsWaitTimeoutMs,
-          intervalMs: statsWaitIntervalMs,
-        },
+        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
       )
 
       expect(Number(statAfterSecondCall?.totalCount || 0)).toBeGreaterThan(firstTotal)
@@ -97,16 +98,11 @@ describe('api call stats e2e', () => {
       await waitForValue(
         async () => {
           const stat = await getApiCallStatByApiId(apiId)
-          if (stat) {
-            await deleteApiCallStatsByApiId(apiId)
-          }
+          if (stat) await deleteApiCallStatsByApiId(apiId)
           return stat
         },
         value => value === null,
-        {
-          timeoutMs: statsDeleteWaitTimeoutMs,
-          intervalMs: statsWaitIntervalMs,
-        },
+        { timeoutMs: statsDeleteWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
       )
     }
     finally {

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import { createAdminClient, loginAsAdmin, type ApiResponse } from './helpers/admin-client'
-import { createApiPayload } from './helpers/fixtures'
 import { setupE2E } from './helpers/setup'
 
 await setupE2E()
@@ -8,50 +7,96 @@ await setupE2E()
 interface AdminApiItem {
   id: number
   code: string
+  pathVersion: string
   name: string
+  isEnabled: boolean
+}
+
+interface DiscoverPayload {
+  versions: Array<{
+    pathVersion: string
+    apis: Array<{
+      pathVersion: string
+      code: string
+      registered: AdminApiItem | null
+    }>
+  }>
+}
+
+const TEST_PATH_VERSION = 'v1'
+const TEST_CODE = 'test'
+
+function findDiscovered(payload: DiscoverPayload, pathVersion: string, code: string) {
+  for (const v of payload.versions) {
+    for (const api of v.apis) {
+      if (api.pathVersion === pathVersion && api.code === code) return api
+    }
+  }
+  return null
 }
 
 describe('admin apis e2e', () => {
-  it('adds and deletes an api entry', async () => {
+  it('registers, updates, and deletes registration via discovery', async () => {
     const sessionCookie = await loginAsAdmin()
     const adminClient = createAdminClient(sessionCookie)
-    const payload = createApiPayload()
 
-    const created = await adminClient.post<AdminApiItem>('/api/admin/apis/add', payload)
-    expect(created.code).toBe(0)
-    expect(created.data.code).toBe(payload.code)
+    // 清理：若已登记，先删
+    const before = await adminClient.get<DiscoverPayload>('/api/admin/apis/discover')
+    expect(before.code).toBe(0)
+    const existing = findDiscovered(before.data, TEST_PATH_VERSION, TEST_CODE)
+    expect(existing, `manifest 必须包含 ${TEST_PATH_VERSION}/${TEST_CODE}`).not.toBeNull()
+    if (existing?.registered) {
+      await adminClient.post('/api/admin/apis/delete', { id: existing.registered.id })
+    }
 
-    const listAfterCreate = await adminClient.get<AdminApiItem[]>('/api/admin/apis/list', {
-      keyword: payload.code,
+    // 登记
+    const registered = await adminClient.post<AdminApiItem>('/api/admin/apis/register', {
+      pathVersion: TEST_PATH_VERSION,
+      code: TEST_CODE,
+      overrides: { name: 'E2E Test Endpoint', isEnabled: true },
     })
-    expect(listAfterCreate.code).toBe(0)
-    expect(listAfterCreate.data.some(item => item.id === created.data.id)).toBe(true)
+    expect(registered.code).toBe(0)
+    expect(registered.data.code).toBe(TEST_CODE)
+    const apiId = registered.data.id
+    expect(apiId).toBeGreaterThan(0)
 
-    const deleted = await adminClient.post<AdminApiItem>('/api/admin/apis/delete', {
-      id: created.data.id,
+    // 验证 discover 显示已登记
+    const afterRegister = await adminClient.get<DiscoverPayload>('/api/admin/apis/discover')
+    const afterRow = findDiscovered(afterRegister.data, TEST_PATH_VERSION, TEST_CODE)
+    expect(afterRow?.registered?.id).toBe(apiId)
+    expect(afterRow?.registered?.isEnabled).toBe(true)
+
+    // 编辑（停用）
+    const updated = await adminClient.put<AdminApiItem>('/api/admin/apis/update', {
+      id: apiId,
+      isEnabled: false,
     })
+    expect(updated.code).toBe(0)
+    expect(updated.data.isEnabled).toBe(false)
+
+    // 删除登记
+    const deleted = await adminClient.post<AdminApiItem>('/api/admin/apis/delete', { id: apiId })
     expect(deleted.code).toBe(0)
-    expect(deleted.data.id).toBe(created.data.id)
+    expect(deleted.data.id).toBe(apiId)
 
-    const listAfterDelete = await adminClient.get<AdminApiItem[]>('/api/admin/apis/list', {
-      keyword: payload.code,
-    })
-    expect(listAfterDelete.code).toBe(0)
-    expect(listAfterDelete.data.some(item => item.id === created.data.id)).toBe(false)
+    const afterDelete = await adminClient.get<DiscoverPayload>('/api/admin/apis/discover')
+    const afterDeleteRow = findDiscovered(afterDelete.data, TEST_PATH_VERSION, TEST_CODE)
+    expect(afterDeleteRow?.registered).toBeNull()
   })
 
-  it('rejects add api when required fields are missing', async () => {
+  it('rejects register when manifest does not contain the code', async () => {
     const sessionCookie = await loginAsAdmin()
     const adminClient = createAdminClient(sessionCookie)
 
-    const response = await adminClient.raw<ApiResponse<unknown>>('/api/admin/apis/add', {
+    const response = await adminClient.raw<ApiResponse<unknown>>('/api/admin/apis/register', {
       method: 'POST',
       ignoreResponseError: true,
       body: {
-        code: '',
+        pathVersion: 'v1',
+        code: '__definitely_not_a_real_code__',
       },
     })
 
-    expect(response.status).toBe(400)
+    expect(response.status).toBe(404)
   })
 })

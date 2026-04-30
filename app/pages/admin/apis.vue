@@ -9,10 +9,58 @@ const USwitch = resolveComponent('USwitch')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const keyword = ref('')
-const { data, status, refresh } = await useFetch('/api/admin/apis/list', {
-  query: computed(() => ({ keyword: keyword.value || undefined })),
-  default: () => ({ code: 0, msg: '', data: [] }),
+interface DiscoveredEndpoint {
+  apiPath: string
+  method: string
+  sourceFile: string
+  isDynamic: boolean
+}
+
+interface RegisteredApi {
+  id: number
+  code: string
+  pathVersion: string
+  name: string
+  shortDesc: string
+  description: string
+  apiPath: string
+  httpMethod: string
+  sourceDir: string | null
+  endpointCount: number
+  docUrl: string
+  status: number
+  categoryId: number | null
+  isEnabled: boolean
+  isApiKey: boolean
+  isStatistics: boolean
+  requiresAuth: boolean
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  dailyQuota: number
+  costCredits: number
+  timeoutMs: number
+}
+
+interface DiscoveredApi {
+  pathVersion: string
+  code: string
+  sourceDir: string
+  endpointCount: number
+  endpoints: DiscoveredEndpoint[]
+  registered: RegisteredApi | null
+  orphaned: boolean
+}
+
+interface VersionGroup {
+  pathVersion: string
+  apis: DiscoveredApi[]
+  stats: { total: number, registered: number, unregistered: number, orphaned: number }
+}
+
+const { data, status, refresh } = await useFetch('/api/admin/apis/discover', {
+  default: () => ({ code: 0, msg: '', data: { versions: [] as VersionGroup[] } }),
 })
 
 const { data: categoriesData } = await useFetch('/api/api-categories/list', {
@@ -20,44 +68,77 @@ const { data: categoriesData } = await useFetch('/api/api-categories/list', {
 })
 const categoriesMap = computed(() => {
   const map = new Map<number, string>()
-  for (const cat of (categoriesData.value?.data || [])) {
-    map.set(cat.id, cat.name)
-  }
+  for (const cat of (categoriesData.value?.data || [])) map.set(cat.id, cat.name)
   return map
 })
 
-const items = computed(() => data.value?.data || [])
+const versions = computed<VersionGroup[]>(() => (data.value?.data?.versions || []) as VersionGroup[])
+const activeVersion = ref<string>('')
+watchEffect(() => {
+  if (!activeVersion.value && versions.value.length > 0) {
+    activeVersion.value = versions.value[0]!.pathVersion
+  }
+})
+
+const keyword = ref('')
+const filterMode = ref<'all' | 'registered' | 'unregistered' | 'orphaned'>('all')
+
+const filteredApis = computed<DiscoveredApi[]>(() => {
+  const group = versions.value.find(v => v.pathVersion === activeVersion.value)
+  if (!group) return []
+  const kw = keyword.value.trim().toLowerCase()
+  return group.apis.filter((a) => {
+    if (filterMode.value === 'registered' && !a.registered) return false
+    if (filterMode.value === 'unregistered' && a.registered) return false
+    if (filterMode.value === 'orphaned' && !a.orphaned) return false
+    if (!kw) return true
+    return (
+      a.code.toLowerCase().includes(kw)
+      || (a.registered?.name || '').toLowerCase().includes(kw)
+      || (a.registered?.shortDesc || '').toLowerCase().includes(kw)
+    )
+  })
+})
+
+const versionTabs = computed(() => versions.value.map(v => ({
+  label: `${v.pathVersion} (${v.stats.registered}/${v.stats.total})`,
+  value: v.pathVersion,
+})))
 
 const modalOpen = ref(false)
-const editItem = ref<any>(null)
+const modalMode = ref<'register' | 'edit'>('register')
+const modalTarget = ref<DiscoveredApi | null>(null)
+
+function openRegister(row: DiscoveredApi) {
+  modalMode.value = 'register'
+  modalTarget.value = row
+  modalOpen.value = true
+}
+
+function openEdit(row: DiscoveredApi) {
+  modalMode.value = 'edit'
+  modalTarget.value = row
+  modalOpen.value = true
+}
+
 const deleteOpen = ref(false)
-const deleteTarget = ref<any>(null)
+const deleteTarget = ref<DiscoveredApi | null>(null)
 const deleteLoading = ref(false)
 
-function openAdd() {
-  editItem.value = null
-  modalOpen.value = true
-}
-
-function openEdit(item: any) {
-  editItem.value = item
-  modalOpen.value = true
-}
-
-function openDelete(item: any) {
-  deleteTarget.value = item
+function openDelete(row: DiscoveredApi) {
+  deleteTarget.value = row
   deleteOpen.value = true
 }
 
 async function confirmDelete() {
-  if (!deleteTarget.value) return
+  if (!deleteTarget.value?.registered) return
   deleteLoading.value = true
   try {
     await $fetch('/api/admin/apis/delete', {
       method: 'POST',
-      body: { id: deleteTarget.value.id },
+      body: { id: deleteTarget.value.registered.id },
     })
-    toast.add({ title: '删除成功', color: 'success' })
+    toast.add({ title: '已删除登记', color: 'success' })
     deleteOpen.value = false
     await refresh()
   }
@@ -69,76 +150,153 @@ async function confirmDelete() {
   }
 }
 
-async function handleToggle(item: any, field: 'isEnabled' | 'isStatistics', value: boolean) {
+async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
+  if (!row.registered) return
   try {
     await $fetch('/api/admin/apis/toggle', {
       method: 'PUT',
-      body: { id: item.id, field, value },
+      body: { id: row.registered.id, field, value },
     })
     await refresh()
   }
   catch (err: any) {
-    toast.add({ title: '切换失败', color: 'error' })
+    toast.add({ title: err?.data?.message || '切换失败', color: 'error' })
   }
 }
 
-function getRowItems(row: any): DropdownMenuItem[] {
-  return [{
-    label: '编辑',
-    icon: 'i-mdi-pencil-outline',
-    onSelect: () => openEdit(row),
-  }, {
-    label: '删除',
-    icon: 'i-mdi-delete-outline',
-    color: 'error' as const,
-    onSelect: () => openDelete(row),
-  }]
+async function resyncManifest(row: DiscoveredApi) {
+  try {
+    await $fetch('/api/admin/apis/register', {
+      method: 'POST',
+      body: { pathVersion: row.pathVersion, code: row.code },
+    })
+    toast.add({ title: '已同步 manifest', color: 'success' })
+    await refresh()
+  }
+  catch (err: any) {
+    toast.add({ title: err?.data?.message || '同步失败', color: 'error' })
+  }
 }
 
-const statusMap: Record<number, { label: string, color: string }> = {
-  [-1]: { label: '未知', color: 'neutral' },
-  0: { label: '异常', color: 'error' },
-  1: { label: '正常', color: 'success' },
-  2: { label: '维护', color: 'warning' },
-  3: { label: '废弃', color: 'neutral' },
+function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
+  const items: DropdownMenuItem[] = []
+  if (row.registered && !row.orphaned) {
+    items.push({
+      label: '编辑配置',
+      icon: 'i-mdi-pencil-outline',
+      onSelect: () => openEdit(row),
+    }, {
+      label: '同步路由信息',
+      icon: 'i-mdi-sync',
+      onSelect: () => resyncManifest(row),
+    })
+  }
+  if (!row.registered) {
+    items.push({
+      label: '登记接口',
+      icon: 'i-mdi-plus-circle-outline',
+      onSelect: () => openRegister(row),
+    })
+  }
+  if (row.registered) {
+    items.push({
+      label: row.orphaned ? '清理孤儿登记' : '删除登记',
+      icon: 'i-mdi-delete-outline',
+      color: 'error' as const,
+      onSelect: () => openDelete(row),
+    })
+  }
+  return items
 }
 
-const columns: TableColumn<any>[] = [
-  { accessorKey: 'name', header: '名称' },
+const filterOptions = [
+  { label: '全部', value: 'all' },
+  { label: '已登记', value: 'registered' },
+  { label: '未登记', value: 'unregistered' },
+  { label: '孤儿', value: 'orphaned' },
+]
+
+const columns: TableColumn<DiscoveredApi>[] = [
   {
-    accessorKey: 'status',
-    header: '状态',
+    accessorKey: 'code',
+    header: '编码 / 名称',
+    cell: ({ row }) => h('div', { class: 'flex flex-col gap-0.5' }, [
+      h('div', { class: 'font-mono text-sm' }, row.original.code),
+      h('div', { class: 'text-xs text-muted truncate max-w-[260px]' },
+        row.original.registered?.name || h('span', { class: 'italic opacity-60' }, '未登记')),
+    ]),
+  },
+  {
+    id: 'endpoints',
+    header: '端点',
     cell: ({ row }) => {
-      const info = statusMap[row.original.status] || statusMap[-1]!
-      return h(UBadge, { color: info.color, variant: 'subtle' }, () => info.label)
+      if (row.original.endpoints.length === 0) {
+        return h('span', { class: 'text-xs text-muted italic' }, '代码已删除')
+      }
+      return h('div', { class: 'flex flex-col gap-1' }, row.original.endpoints.map(ep => h('div', {
+        class: 'flex items-center gap-2',
+      }, [
+        h(UBadge, {
+          color: methodColor(ep.method),
+          variant: 'subtle',
+          class: 'font-mono',
+        }, () => ep.method),
+        h('span', {
+          class: 'font-mono text-xs',
+          class2: ep.isDynamic ? 'text-primary' : '',
+        }, ep.apiPath),
+      ])))
     },
   },
   {
-    accessorKey: 'categoryId',
+    accessorKey: 'sourceDir',
+    header: '源目录',
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.sourceDir),
+  },
+  {
+    id: 'category',
     header: '分类',
-    cell: ({ row }) => row.original.categoryId ? (categoriesMap.value.get(row.original.categoryId) || `#${row.original.categoryId}`) : '-',
+    cell: ({ row }) => row.original.registered?.categoryId
+      ? (categoriesMap.value.get(row.original.registered.categoryId) || `#${row.original.registered.categoryId}`)
+      : '-',
   },
   {
-    accessorKey: 'httpMethod',
-    header: '方法',
-    cell: ({ row }) => h(UBadge, { color: 'neutral', variant: 'outline' }, () => row.original.httpMethod),
-  },
-  { accessorKey: 'apiPath', header: '路径' },
-  {
-    accessorKey: 'isEnabled',
+    id: 'isEnabled',
     header: '启用',
-    cell: ({ row }) => h(USwitch, {
-      'modelValue': row.original.isEnabled,
-      'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val),
-    }),
+    cell: ({ row }) => row.original.registered
+      ? h(USwitch, {
+          'modelValue': row.original.registered.isEnabled,
+          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val),
+        })
+      : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '默认停用'),
   },
   {
-    accessorKey: 'isStatistics',
+    id: 'isStatistics',
     header: '统计',
-    cell: ({ row }) => h(USwitch, {
-      'modelValue': row.original.isStatistics,
-      'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val),
-    }),
+    cell: ({ row }) => row.original.registered
+      ? h(USwitch, {
+          'modelValue': row.original.registered.isStatistics,
+          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val),
+        })
+      : h('span', { class: 'text-muted' }, '-'),
+  },
+  {
+    id: 'isApiKey',
+    header: 'ApiKey',
+    cell: ({ row }) => row.original.registered
+      ? (row.original.registered.isApiKey
+          ? h(UBadge, { color: 'warning', variant: 'subtle' }, () => '必需')
+          : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '可选'))
+      : h('span', { class: 'text-muted' }, '-'),
+  },
+  {
+    id: 'state',
+    header: '登记状态',
+    cell: ({ row }) => {
+      if (row.original.orphaned) return h(UBadge, { color: 'error', variant: 'subtle' }, () => '孤儿')
+      if (!row.original.registered) return h(UBadge, { color: 'warning', variant: 'subtle' }, () => '未登记')
+      return h(UBadge, { color: 'success', variant: 'subtle' }, () => '已登记')
+    },
   },
   {
     id: 'actions',
@@ -154,6 +312,17 @@ const columns: TableColumn<any>[] = [
     }))),
   },
 ]
+
+function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+  switch (method) {
+    case 'GET': return 'success'
+    case 'POST': return 'info'
+    case 'PUT':
+    case 'PATCH': return 'warning'
+    case 'DELETE': return 'error'
+    default: return 'neutral'
+  }
+}
 </script>
 
 <template>
@@ -165,28 +334,55 @@ const columns: TableColumn<any>[] = [
         </template>
         <template #right>
           <UButton
-            icon="i-mdi-plus"
-            @click="openAdd"
+            icon="i-mdi-refresh"
+            color="neutral"
+            variant="outline"
+            :loading="status === 'pending'"
+            @click="refresh()"
           >
-            新增 API
+            刷新
           </UButton>
           <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
 
       <UDashboardToolbar>
-        <UInput
-          v-model="keyword"
-          icon="i-mdi-magnify"
-          placeholder="搜索名称、描述..."
-          class="max-w-sm"
-        />
+        <div class="flex items-center gap-2 flex-wrap">
+          <UTabs
+            v-if="versionTabs.length > 0"
+            v-model="activeVersion"
+            :items="versionTabs"
+            size="sm"
+            :ui="{ list: 'bg-transparent' }"
+          />
+          <USelect
+            v-model="filterMode"
+            :items="filterOptions"
+            size="sm"
+            class="w-32"
+          />
+          <UInput
+            v-model="keyword"
+            icon="i-mdi-magnify"
+            placeholder="搜索 code / 名称..."
+            size="sm"
+            class="max-w-sm"
+          />
+        </div>
       </UDashboardToolbar>
     </template>
 
     <template #body>
+      <div
+        v-if="versions.length === 0 && status !== 'pending'"
+        class="text-center py-12 text-muted"
+      >
+        未发现任何 v{N} 版本目录。请在 server/api/v1/ 下创建接口目录后重启 dev 服务。
+      </div>
+
       <UTable
-        :data="items"
+        v-else
+        :data="filteredApis"
         :columns="columns"
         :loading="status === 'pending'"
         class="shrink-0"
@@ -194,21 +390,22 @@ const columns: TableColumn<any>[] = [
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2',
+          td: 'py-2 align-top',
         }"
       />
 
       <AdminApiModal
         v-model:open="modalOpen"
-        :item="editItem"
+        :mode="modalMode"
+        :target="modalTarget"
         @saved="refresh()"
       />
 
       <AdminDeleteModal
         v-model:open="deleteOpen"
         :loading="deleteLoading"
-        :title="`删除 API: ${deleteTarget?.name}`"
-        description="删除后不可恢复，所有相关的调用统计数据将保留。"
+        :title="`删除登记: ${deleteTarget?.code}`"
+        description="删除登记后该接口默认拒绝访问。代码文件不会被删除，可随时重新登记。"
         @confirm="confirmDelete"
       />
     </template>

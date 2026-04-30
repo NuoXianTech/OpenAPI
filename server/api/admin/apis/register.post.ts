@@ -1,12 +1,11 @@
 /**
- * Admin · 一键从 manifest 登记一个 (pathVersion, code)。
+ * Admin · 一键从 manifest 登记 / 重新同步一个 (pathVersion, code)。
  *
- * body: { pathVersion: 'v1', code: 'test', overrides?: Partial<defaults> }
+ * body: { pathVersion, code, overrides?: Partial<governance fields> }
  *
- * 行为：
- * - 从 manifest 查出该 code 的 apiPath / httpMethod（所有方法合并）/ sourceDir / endpointCount
- * - 用 DEFAULT_API_REGISTRATION + overrides 作为治理字段默认
- * - 幂等：已存在则仅刷新 apiPath/sourceDir/endpointCount，其他治理字段保留
+ * - 从 manifest 查 sourceDir / endpointCount / 推断 apiPath / httpMethod
+ * - 已存在则刷新 manifest 投影字段（apiPath/httpMethod/sourceDir/endpointCount），治理字段保留
+ * - 不存在则使用 DEFAULT_API_REGISTRATION + overrides 入库
  */
 
 import type { H3Event } from 'h3'
@@ -26,13 +25,19 @@ interface RegisterBody {
     shortDesc?: string
     description?: string
     docUrl?: string
+    status?: number
+    categoryId?: number | null
     isEnabled?: boolean
     isApiKey?: boolean
     isStatistics?: boolean
     requiresAuth?: boolean
+    rateLimitPerSecond?: number
     rateLimitPerMinute?: number
     rateLimitPerHour?: number
+    rateLimitPerDay?: number
     dailyQuota?: number
+    costCredits?: number
+    timeoutMs?: number
   }
 }
 
@@ -56,23 +61,28 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const methods = Array.from(new Set(manifestApi.endpoints.map(e => e.method))).filter(m => m !== 'ANY')
   const httpMethod = methods.length > 0 ? methods.join(',') : 'GET'
-  // apiPath 展示用：取基础路径（最短的、不含 :param 的）
   const baseEp = manifestApi.endpoints.find(e => e.paramNames.length === 0) || manifestApi.endpoints[0]!
   const apiPath = baseEp.apiPath.replace(/\/:[^/]+$/, '') || `/api/${pathVersion}/${code}`
 
-  const overrides = body.overrides || {}
+  const o = body.overrides || {}
   const defaults = {
-    name: overrides.name || code,
-    shortDesc: overrides.shortDesc || `${pathVersion} ${code}`,
-    description: overrides.description || `自动登记于 ${manifestApi.sourceDir}`,
-    docUrl: overrides.docUrl || '',
-    isEnabled: overrides.isEnabled ?? DEFAULT_API_REGISTRATION.isEnabled,
-    isApiKey: overrides.isApiKey ?? DEFAULT_API_REGISTRATION.isApiKey,
-    isStatistics: overrides.isStatistics ?? DEFAULT_API_REGISTRATION.isStatistics,
-    requiresAuth: overrides.requiresAuth ?? DEFAULT_API_REGISTRATION.requiresAuth,
-    rateLimitPerMinute: overrides.rateLimitPerMinute ?? DEFAULT_API_REGISTRATION.rateLimitPerMinute,
-    rateLimitPerHour: overrides.rateLimitPerHour ?? DEFAULT_API_REGISTRATION.rateLimitPerHour,
-    dailyQuota: overrides.dailyQuota ?? DEFAULT_API_REGISTRATION.dailyQuota,
+    name: o.name || code,
+    shortDesc: o.shortDesc || `${pathVersion} ${code}`,
+    description: o.description || `自动登记于 ${manifestApi.sourceDir}`,
+    docUrl: o.docUrl || '',
+    status: typeof o.status === 'number' ? o.status : 1,
+    categoryId: o.categoryId === undefined ? null : o.categoryId,
+    isEnabled: o.isEnabled ?? DEFAULT_API_REGISTRATION.isEnabled,
+    isApiKey: o.isApiKey ?? DEFAULT_API_REGISTRATION.isApiKey,
+    isStatistics: o.isStatistics ?? DEFAULT_API_REGISTRATION.isStatistics,
+    requiresAuth: o.requiresAuth ?? DEFAULT_API_REGISTRATION.requiresAuth,
+    rateLimitPerSecond: o.rateLimitPerSecond ?? DEFAULT_API_REGISTRATION.rateLimitPerSecond,
+    rateLimitPerMinute: o.rateLimitPerMinute ?? DEFAULT_API_REGISTRATION.rateLimitPerMinute,
+    rateLimitPerHour: o.rateLimitPerHour ?? DEFAULT_API_REGISTRATION.rateLimitPerHour,
+    rateLimitPerDay: o.rateLimitPerDay ?? DEFAULT_API_REGISTRATION.rateLimitPerDay,
+    dailyQuota: o.dailyQuota ?? DEFAULT_API_REGISTRATION.dailyQuota,
+    costCredits: o.costCredits ?? DEFAULT_API_REGISTRATION.costCredits,
+    timeoutMs: o.timeoutMs ?? DEFAULT_API_REGISTRATION.timeoutMs,
   }
 
   const saved = await apiService.registerFromManifest({

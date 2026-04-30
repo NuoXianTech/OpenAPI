@@ -100,23 +100,6 @@ export type StatisticsTargetItem = {
 }
 
 export const apiService = {
-  async list(filters: ApiListFilters = {}) {
-    const conditions = buildApiFilters(filters)
-
-    const query = db.select().from(apis)
-    const [rows, statsMap] = await Promise.all([
-      conditions.length
-        ? await query.where(and(...conditions)).orderBy(desc(apis.updatedAt))
-        : await query.orderBy(desc(apis.updatedAt)),
-      loadApiStats(),
-    ])
-
-    return (rows as Array<typeof apis.$inferSelect>).map(row => ({
-      ...row,
-      totalCalls: statsMap[row.id]?.totalCalls ?? 0,
-    }))
-  },
-
   async listPublicApis(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
     const [rows, statsMap] = await Promise.all([
@@ -192,40 +175,23 @@ export const apiService = {
       .orderBy(desc(apis.updatedAt))
   },
 
-  async addApi(userid: number | null, data: Partial<typeof apis.$inferInsert> & {
-    code: string
-    name: string
-    shortDesc: string
-    description: string
-    httpMethod: string
-    apiPath: string
-    docUrl: string
-  }) {
-    return await db.insert(apis).values({
-      code: data.code,
-      name: data.name,
-      status: data.status ?? 1,
-      categoryId: data.categoryId ?? null,
-      shortDesc: data.shortDesc,
-      description: data.description,
-      httpMethod: normalizeMethodList(data.httpMethod),
-      apiPath: data.apiPath,
-      docUrl: data.docUrl,
-      isEnabled: data.isEnabled ?? true,
-      isApiKey: data.isApiKey ?? false,
-      isStatistics: data.isStatistics ?? true,
-      rateLimitPerMinute: data.rateLimitPerMinute ?? 0,
-      createdBy: userid,
-      updatedBy: userid,
-    }).returning()
-  },
-
+  /**
+   * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/sourceDir/endpointCount 由 manifest 注入，
+   * 不接受外部 patch。
+   */
   async updateApi(id: number, userid: number | null, data: Partial<typeof apis.$inferInsert>) {
-    const { code: _code, ...patch } = data as Partial<typeof apis.$inferInsert> & { code?: string }
+    const {
+      code: _code,
+      pathVersion: _pv,
+      apiPath: _ap,
+      httpMethod: _hm,
+      sourceDir: _sd,
+      endpointCount: _ec,
+      ...patch
+    } = data as Partial<typeof apis.$inferInsert>
     const res = await db.update(apis)
       .set({
         ...patch,
-        httpMethod: patch.httpMethod ? normalizeMethodList(patch.httpMethod) : patch.httpMethod,
         updatedBy: userid,
         updatedAt: new Date(),
       })
@@ -264,7 +230,7 @@ export const apiService = {
 
   /**
    * 一键登记：按 (pathVersion, code) 幂等入库。
-   * 已存在则仅刷新 sourceDir/endpointCount/apiPath，其他治理字段不覆盖（admin 已手调）。
+   * 已存在则刷新 manifest 投影（apiPath/httpMethod/sourceDir/endpointCount），治理字段保留。
    */
   async registerFromManifest(data: {
     pathVersion: string
@@ -279,13 +245,19 @@ export const apiService = {
       shortDesc: string
       description: string
       docUrl: string
+      status: number
+      categoryId: number | null
       isEnabled: boolean
       isApiKey: boolean
       isStatistics: boolean
       requiresAuth: boolean
+      rateLimitPerSecond: number
       rateLimitPerMinute: number
       rateLimitPerHour: number
+      rateLimitPerDay: number
       dailyQuota: number
+      costCredits: number
+      timeoutMs: number
     }
   }) {
     const existing = await this.loadGuardConfig(data.pathVersion, data.code)
@@ -312,6 +284,8 @@ export const apiService = {
       sourceDir: data.sourceDir,
       endpointCount: data.endpointCount,
       name: data.defaults.name,
+      status: data.defaults.status,
+      categoryId: data.defaults.categoryId,
       shortDesc: data.defaults.shortDesc,
       description: data.defaults.description,
       httpMethod: normalizeMethodList(data.httpMethod),
@@ -321,9 +295,13 @@ export const apiService = {
       isApiKey: data.defaults.isApiKey,
       isStatistics: data.defaults.isStatistics,
       requiresAuth: data.defaults.requiresAuth,
+      rateLimitPerSecond: data.defaults.rateLimitPerSecond,
       rateLimitPerMinute: data.defaults.rateLimitPerMinute,
       rateLimitPerHour: data.defaults.rateLimitPerHour,
+      rateLimitPerDay: data.defaults.rateLimitPerDay,
       dailyQuota: data.defaults.dailyQuota,
+      costCredits: data.defaults.costCredits,
+      timeoutMs: data.defaults.timeoutMs,
       createdBy: data.createdBy,
       updatedBy: data.createdBy,
     }).returning()

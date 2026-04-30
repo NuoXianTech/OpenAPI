@@ -2,48 +2,125 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+interface DiscoveredEndpoint {
+  apiPath: string
+  method: string
+  sourceFile: string
+  isDynamic: boolean
+}
+
+interface RegisteredApi {
+  id: number
+  code: string
+  pathVersion: string
+  name: string
+  shortDesc: string
+  description: string
+  apiPath: string
+  httpMethod: string
+  sourceDir: string | null
+  endpointCount: number
+  docUrl: string
+  status: number
+  categoryId: number | null
+  isEnabled: boolean
+  isApiKey: boolean
+  isStatistics: boolean
+  requiresAuth: boolean
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  dailyQuota: number
+  costCredits: number
+  timeoutMs: number
+}
+
+interface DiscoveredApi {
+  pathVersion: string
+  code: string
+  sourceDir: string
+  endpointCount: number
+  endpoints: DiscoveredEndpoint[]
+  registered: RegisteredApi | null
+  orphaned: boolean
+}
+
 const open = defineModel<boolean>('open', { default: false })
-const props = defineProps<{ item?: any }>()
+const props = defineProps<{
+  mode: 'register' | 'edit'
+  target: DiscoveredApi | null
+}>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 
-const isEdit = computed(() => !!props.item)
-
 const schema = z.object({
-  code: z.string().min(1, '必填'),
-  name: z.string().min(1, '必填'),
+  name: z.string().min(1, '必填').max(100),
   shortDesc: z.string().min(1, '必填').max(30, '最多30字'),
   description: z.string().min(1, '必填'),
-  httpMethod: z.string().min(1, '必填'),
-  apiPath: z.string().min(1, '必填'),
-  docUrl: z.string().min(1, '必填'),
+  docUrl: z.string().default(''),
   status: z.number().default(1),
   categoryId: z.number().nullable().optional(),
   isEnabled: z.boolean().default(false),
   isApiKey: z.boolean().default(false),
-  isStatistics: z.boolean().default(false),
-  rateLimitPerMinute: z.number().min(0).default(0),
+  isStatistics: z.boolean().default(true),
+  requiresAuth: z.boolean().default(false),
+  rateLimitPerSecond: z.number().min(0).default(0),
+  rateLimitPerMinute: z.number().min(0).default(60),
+  rateLimitPerHour: z.number().min(0).default(1000),
+  rateLimitPerDay: z.number().min(0).default(0),
+  dailyQuota: z.number().min(0).default(0),
+  costCredits: z.number().min(0).default(0),
+  timeoutMs: z.number().min(0).default(10_000),
 })
 
 type Schema = z.output<typeof schema>
 
-const defaultState: Partial<Schema> = {
-  code: '',
-  name: '',
-  shortDesc: '',
-  description: '',
-  httpMethod: 'GET',
-  apiPath: '',
-  docUrl: '',
-  status: 1,
-  categoryId: null,
-  isEnabled: true,
-  isApiKey: false,
-  isStatistics: true,
-  rateLimitPerMinute: 0,
+function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
+  return {
+    name: target.code,
+    shortDesc: `${target.pathVersion} ${target.code}`,
+    description: `自动登记于 ${target.sourceDir}`,
+    docUrl: '',
+    status: 1,
+    categoryId: null,
+    isEnabled: false,
+    isApiKey: false,
+    isStatistics: true,
+    requiresAuth: false,
+    rateLimitPerSecond: 0,
+    rateLimitPerMinute: 60,
+    rateLimitPerHour: 1000,
+    rateLimitPerDay: 0,
+    dailyQuota: 0,
+    costCredits: 0,
+    timeoutMs: 10_000,
+  }
 }
 
-const state = reactive<Partial<Schema>>({ ...defaultState })
+function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
+  return {
+    name: reg.name,
+    shortDesc: reg.shortDesc,
+    description: reg.description,
+    docUrl: reg.docUrl,
+    status: reg.status,
+    categoryId: reg.categoryId,
+    isEnabled: reg.isEnabled,
+    isApiKey: reg.isApiKey,
+    isStatistics: reg.isStatistics,
+    requiresAuth: reg.requiresAuth,
+    rateLimitPerSecond: reg.rateLimitPerSecond,
+    rateLimitPerMinute: reg.rateLimitPerMinute,
+    rateLimitPerHour: reg.rateLimitPerHour,
+    rateLimitPerDay: reg.rateLimitPerDay,
+    dailyQuota: reg.dailyQuota,
+    costCredits: reg.costCredits,
+    timeoutMs: reg.timeoutMs,
+  }
+}
+
+const state = reactive<Partial<Schema>>({})
 const loading = ref(false)
 
 const { data: categoriesData } = await useFetch('/api/api-categories/list', {
@@ -54,27 +131,12 @@ const categoryOptions = computed(() => [
   ...((categoriesData.value?.data || []).map((c: any) => ({ label: c.name, value: c.id }))),
 ])
 
-watch(() => props.item, (val) => {
-  if (val) {
-    Object.assign(state, {
-      code: val.code || '',
-      name: val.name || '',
-      shortDesc: val.shortDesc || '',
-      description: val.description || '',
-      httpMethod: val.httpMethod || 'GET',
-      apiPath: val.apiPath || '',
-      docUrl: val.docUrl || '',
-      status: val.status ?? 1,
-      categoryId: val.categoryId ?? null,
-      isEnabled: val.isEnabled ?? true,
-      isApiKey: val.isApiKey ?? false,
-      isStatistics: val.isStatistics ?? true,
-      rateLimitPerMinute: val.rateLimitPerMinute ?? 0,
-    })
-  }
-  else {
-    Object.assign(state, defaultState)
-  }
+watch(() => [props.target, props.mode, open.value], () => {
+  if (!open.value || !props.target) return
+  const next = props.mode === 'edit' && props.target.registered
+    ? defaultsForEdit(props.target.registered)
+    : defaultsForRegister(props.target)
+  Object.assign(state, next)
 }, { immediate: true })
 
 const statusOptions = [
@@ -85,22 +147,37 @@ const statusOptions = [
   { label: '废弃', value: 3 },
 ]
 
+const headerLabel = computed(() => {
+  if (!props.target) return ''
+  return props.mode === 'edit'
+    ? `编辑配置：${props.target.pathVersion} / ${props.target.code}`
+    : `登记接口：${props.target.pathVersion} / ${props.target.code}`
+})
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
+  if (!props.target) return
   loading.value = true
   try {
-    if (isEdit.value) {
+    if (props.mode === 'edit' && props.target.registered) {
       await $fetch('/api/admin/apis/update', {
         method: 'PUT',
-        body: { id: props.item.id, ...event.data },
+        body: { id: props.target.registered.id, ...event.data },
       })
     }
     else {
-      await $fetch('/api/admin/apis/add', {
+      await $fetch('/api/admin/apis/register', {
         method: 'POST',
-        body: event.data,
+        body: {
+          pathVersion: props.target.pathVersion,
+          code: props.target.code,
+          overrides: event.data,
+        },
       })
     }
-    toast.add({ title: isEdit.value ? '更新成功' : '创建成功', color: 'success' })
+    toast.add({
+      title: props.mode === 'edit' ? '更新成功' : '登记成功',
+      color: 'success',
+    })
     open.value = false
     emit('saved')
   }
@@ -116,10 +193,45 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 <template>
   <UModal v-model:open="open">
     <template #content>
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-4">
-          {{ isEdit ? '编辑 API' : '新增 API' }}
+      <div class="p-6 max-h-[85vh] overflow-y-auto">
+        <h3 class="text-lg font-semibold mb-1">
+          {{ headerLabel }}
         </h3>
+        <p
+          v-if="target"
+          class="text-xs text-muted mb-4 font-mono"
+        >
+          {{ target.sourceDir }} · {{ target.endpointCount }} 端点
+        </p>
+
+        <div
+          v-if="target?.endpoints.length"
+          class="mb-4 rounded-lg border border-default p-3 bg-elevated/30"
+        >
+          <div class="text-xs text-muted mb-2">
+            发现的端点（路径与方法不可编辑，由文件结构决定）
+          </div>
+          <div class="flex flex-col gap-1">
+            <div
+              v-for="ep in target.endpoints"
+              :key="`${ep.method}-${ep.apiPath}`"
+              class="flex items-center gap-2 text-sm"
+            >
+              <UBadge
+                variant="subtle"
+                class="font-mono"
+              >
+                {{ ep.method }}
+              </UBadge>
+              <span class="font-mono">{{ ep.apiPath }}</span>
+              <span
+                v-if="ep.isDynamic"
+                class="text-xs text-primary"
+              >动态</span>
+            </div>
+          </div>
+        </div>
+
         <UForm
           :schema="schema"
           :state="state"
@@ -128,22 +240,21 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         >
           <div class="grid grid-cols-2 gap-3">
             <UFormField
-              label="编码"
-              name="code"
-            >
-              <UInput
-                v-model="state.code"
-                placeholder="api-code"
-                :disabled="isEdit"
-              />
-            </UFormField>
-            <UFormField
               label="名称"
               name="name"
             >
               <UInput
                 v-model="state.name"
-                placeholder="API 名称"
+                placeholder="对外展示名称"
+              />
+            </UFormField>
+            <UFormField
+              label="状态"
+              name="status"
+            >
+              <USelect
+                v-model="state.status"
+                :items="statusOptions"
               />
             </UFormField>
           </div>
@@ -167,43 +278,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </UFormField>
           <div class="grid grid-cols-2 gap-3">
             <UFormField
-              label="请求方法"
-              name="httpMethod"
+              label="文档地址"
+              name="docUrl"
             >
               <UInput
-                v-model="state.httpMethod"
-                placeholder="GET,POST"
+                v-model="state.docUrl"
+                placeholder="https://docs.example.com"
               />
             </UFormField>
-            <UFormField
-              label="状态"
-              name="status"
-            >
-              <USelect
-                v-model="state.status"
-                :items="statusOptions"
-              />
-            </UFormField>
-          </div>
-          <UFormField
-            label="接口路径"
-            name="apiPath"
-          >
-            <UInput
-              v-model="state.apiPath"
-              placeholder="/api/v1/example"
-            />
-          </UFormField>
-          <UFormField
-            label="文档地址"
-            name="docUrl"
-          >
-            <UInput
-              v-model="state.docUrl"
-              placeholder="https://docs.example.com"
-            />
-          </UFormField>
-          <div class="grid grid-cols-2 gap-3">
             <UFormField
               label="分类"
               name="categoryId"
@@ -213,30 +295,100 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 :items="categoryOptions"
               />
             </UFormField>
-            <UFormField
-              label="限流(次/分)"
-              name="rateLimitPerMinute"
-            >
-              <UInput
-                v-model.number="state.rateLimitPerMinute"
-                type="number"
+          </div>
+
+          <div class="border-t border-default pt-3 mt-3">
+            <div class="text-sm font-medium mb-2">
+              访问控制
+            </div>
+            <div class="flex flex-wrap gap-6">
+              <USwitch
+                v-model="state.isEnabled"
+                label="启用接口"
               />
-            </UFormField>
+              <USwitch
+                v-model="state.isApiKey"
+                label="必需 API Key"
+              />
+              <USwitch
+                v-model="state.requiresAuth"
+                label="需要登录"
+              />
+              <USwitch
+                v-model="state.isStatistics"
+                label="统计调用"
+              />
+            </div>
           </div>
-          <div class="flex flex-wrap gap-6 pt-1">
-            <USwitch
-              v-model="state.isEnabled"
-              label="启用"
-            />
-            <USwitch
-              v-model="state.isApiKey"
-              label="需要 API Key"
-            />
-            <USwitch
-              v-model="state.isStatistics"
-              label="统计调用"
-            />
+
+          <div class="border-t border-default pt-3 mt-3">
+            <div class="text-sm font-medium mb-2">
+              限流（0 = 不限）
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <UFormField
+                label="每秒"
+                name="rateLimitPerSecond"
+              >
+                <UInput
+                  v-model.number="state.rateLimitPerSecond"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+              <UFormField
+                label="每分钟"
+                name="rateLimitPerMinute"
+              >
+                <UInput
+                  v-model.number="state.rateLimitPerMinute"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+              <UFormField
+                label="每小时"
+                name="rateLimitPerHour"
+              >
+                <UInput
+                  v-model.number="state.rateLimitPerHour"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+              <UFormField
+                label="每天"
+                name="rateLimitPerDay"
+              >
+                <UInput
+                  v-model.number="state.rateLimitPerDay"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+              <UFormField
+                label="日配额"
+                name="dailyQuota"
+              >
+                <UInput
+                  v-model.number="state.dailyQuota"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+              <UFormField
+                label="超时(ms)"
+                name="timeoutMs"
+              >
+                <UInput
+                  v-model.number="state.timeoutMs"
+                  type="number"
+                  min="0"
+                />
+              </UFormField>
+            </div>
           </div>
+
           <div class="flex justify-end gap-2 pt-3">
             <UButton
               variant="outline"
@@ -249,7 +401,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               type="submit"
               :loading="loading"
             >
-              {{ isEdit ? '保存' : '创建' }}
+              {{ mode === 'edit' ? '保存' : '登记' }}
             </UButton>
           </div>
         </UForm>
