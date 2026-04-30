@@ -134,6 +134,57 @@ async function deleteKey(id: number) {
   catch (err: any) { toast.add({ title: '删除失败', color: 'error' }) }
 }
 
+// 余额管理
+const creditOpen = ref(false)
+const creditUserIds = ref<number[]>([])
+const creditSelectionLabel = ref('')
+
+function openCreditForOne(item: any) {
+  creditUserIds.value = [item.id]
+  creditSelectionLabel.value = `${item.username} (#${item.id})`
+  creditOpen.value = true
+}
+
+const selectedIds = ref<number[]>([])
+
+function toggleSelect(id: number, checked: boolean) {
+  if (checked) {
+    if (!selectedIds.value.includes(id)) selectedIds.value.push(id)
+  }
+  else {
+    selectedIds.value = selectedIds.value.filter(v => v !== id)
+  }
+}
+
+const allSelected = computed(() =>
+  items.value.length > 0 && selectedIds.value.length === items.value.length,
+)
+
+function toggleSelectAll(checked: boolean) {
+  selectedIds.value = checked ? items.value.map((u: any) => u.id) : []
+}
+
+function openCreditForSelection() {
+  if (selectedIds.value.length === 0) {
+    toast.add({ title: '请先勾选用户', color: 'warning' })
+    return
+  }
+  creditUserIds.value = [...selectedIds.value]
+  creditSelectionLabel.value = `已选 ${selectedIds.value.length} 个用户`
+  creditOpen.value = true
+}
+
+function openCreditForAll() {
+  creditUserIds.value = []
+  creditSelectionLabel.value = '全部未删除用户'
+  creditOpen.value = true
+}
+
+async function onCreditSaved() {
+  selectedIds.value = []
+  await refresh()
+}
+
 function getRowItems(row: any): DropdownMenuItem[] {
   return [{
     label: '编辑',
@@ -147,6 +198,10 @@ function getRowItems(row: any): DropdownMenuItem[] {
     label: 'API Keys',
     icon: 'i-mdi-key-variant',
     onSelect: () => openKeys(row),
+  }, {
+    label: '余额管理',
+    icon: 'i-mdi-cash-multiple',
+    onSelect: () => openCreditForOne(row),
   }, {
     type: 'separator',
   }, {
@@ -163,9 +218,28 @@ function formatDate(val: string) {
 }
 
 const columns: TableColumn<any>[] = [
+  {
+    id: 'select',
+    header: '选',
+    cell: ({ row }) => h('input', {
+      type: 'checkbox',
+      checked: selectedIds.value.includes(row.original.id),
+      class: 'size-4 cursor-pointer',
+      onChange: (e: Event) => toggleSelect(row.original.id, (e.target as HTMLInputElement).checked),
+    }),
+  },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'email', header: '邮箱' },
   { accessorKey: 'displayName', header: '显示名' },
+  {
+    accessorKey: 'credits',
+    header: '余额',
+    cell: ({ row }) => h(UBadge, {
+      color: (row.original.credits ?? 0) > 0 ? 'success' : 'neutral',
+      variant: 'subtle',
+      class: 'tabular-nums font-mono',
+    }, () => Number(row.original.credits ?? 0).toLocaleString()),
+  },
   {
     accessorKey: 'isActive',
     header: '激活',
@@ -221,6 +295,39 @@ const columns: TableColumn<any>[] = [
           placeholder="搜索用户名、邮箱..."
           class="max-w-sm"
         />
+        <div class="ml-auto flex items-center gap-2 flex-wrap">
+          <span class="text-xs text-muted">
+            已选 {{ selectedIds.length }} / {{ items.length }}
+          </span>
+          <UButton
+            size="sm"
+            color="neutral"
+            variant="outline"
+            :icon="allSelected ? 'i-mdi-checkbox-multiple-blank-outline' : 'i-mdi-checkbox-multiple-marked-outline'"
+            @click="toggleSelectAll(!allSelected)"
+          >
+            {{ allSelected ? '清空选择' : '全选当前页' }}
+          </UButton>
+          <UButton
+            size="sm"
+            color="primary"
+            variant="outline"
+            icon="i-mdi-cash-multiple"
+            :disabled="selectedIds.length === 0"
+            @click="openCreditForSelection"
+          >
+            批量调整余额
+          </UButton>
+          <UButton
+            size="sm"
+            color="warning"
+            variant="outline"
+            icon="i-mdi-cash-100"
+            @click="openCreditForAll"
+          >
+            全员余额操作
+          </UButton>
+        </div>
       </UDashboardToolbar>
     </template>
 
@@ -350,6 +457,13 @@ const columns: TableColumn<any>[] = [
           </div>
         </template>
       </UModal>
+
+      <AdminCreditModal
+        v-model:open="creditOpen"
+        :user-ids="creditUserIds"
+        :selection-label="creditSelectionLabel"
+        @saved="onCreditSaved"
+      />
 
       <AdminDeleteModal
         v-model:open="deleteOpen"

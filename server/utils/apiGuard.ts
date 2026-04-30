@@ -7,20 +7,22 @@
  * 规则顺序（短路求值）：
  *   1. isEnabled
  *   2. requiresAuth（session 鉴权）
- *   3. isApiKey 强制 → 校验 key + scope + ip + referer 白名单
+ *   3. isApiKey 强制 / costCredits>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
  *   4. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
  *   5. rateLimit（多窗口，任意一个超限即拒）
  *   6. dailyQuota（API 级）
+ *   7. credits 余额校验（costCredits>0 时，校验 apiKey 持有者余额）
  *
  * 故障降级：
  *   - 鉴权类失败：fail-close（401/403）
  *   - 限流/配额 driver 抛错：fail-open，但 console.error 记日志
+ *   - 余额校验抛错：fail-close（402），避免漏扣
  */
 
 import type { H3Event } from 'h3'
 import { getHeader, getQuery, getRequestIP } from 'h3'
 import { and, eq, gte } from 'drizzle-orm'
-import { apiCallStats, apiKeys } from '@nuxthub/db/schema'
+import { apiCallStats, apiKeys, users } from '@nuxthub/db/schema'
 import type { RateLimitWindow } from '~~/shared/config/apiGuard'
 import { API_GUARD_ERROR } from '~~/shared/config/apiGuard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
@@ -195,7 +197,8 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
       return { passed: false, outcome: 'referer_denied', error: API_GUARD_ERROR.REFERER_DENIED }
     }
   }
-  else if (api.isApiKey) {
+  else if (api.isApiKey || api.costCredits > 0) {
+    // 显式开启 isApiKey 必需，或接口本身有扣费要求 → 必须带 apiKey 才能定位归属用户
     return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY }
   }
 
@@ -227,6 +230,28 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
         error: (err as Error).message,
       })
       // fail-open
+    }
+  }
+
+  // [7] 余额校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [3] 校验为存在）
+  if (api.costCredits > 0 && apiKey) {
+    try {
+      const userRow = await db.select({ credits: users.credits })
+        .from(users)
+        .where(eq(users.id, apiKey.userId))
+        .limit(1)
+      const balance = Number(userRow[0]?.credits || 0)
+      if (balance < api.costCredits) {
+        return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
+      }
+    }
+    catch (err) {
+      console.error('[api-guard] credits check failed', {
+        apiId: api.id,
+        error: (err as Error).message,
+      })
+      // 余额校验异常时 fail-close 更安全：避免漏扣或误调用
+      return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
     }
   }
 

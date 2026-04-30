@@ -3,6 +3,8 @@ import { getHeader, getQuery, getRequestIP, getRequestURL } from 'h3'
 import { apiCallService } from '~~/server/service/apiCallService'
 import { apiKeyService } from '~~/server/service/apiKeyService'
 import { apiService, type StatisticsTargetItem } from '~~/server/service/apiService'
+import { creditService } from '~~/server/service/creditService'
+import { shouldCharge } from '~~/server/utils/apiCallOutcome'
 import { isGuardedPath } from '~~/shared/config/apiGuard'
 
 const STATISTICS_TARGET_CACHE_TTL_MS = 15_000
@@ -181,10 +183,33 @@ export default defineEventHandler((event: H3Event) => {
 
         // gate 已解析的 apiKey 直接复用，避免二次查询
         const apiKeyId = event.context.apiKey?.id ?? await resolveApiKeyId(apiKey)
-        await apiCallService.addCallAndUpsertDailyStat({
+        const apiKeyUserId = event.context.apiKey?.userId ?? null
+        const billing = event.context.apiBilling
+
+        // 计费判定：仅当 gate 通过且具备扣费上下文时执行
+        const willCharge = billing
+          ? shouldCharge({
+              costCredits: billing.costCredits,
+              apiKeyUserId: billing.apiKeyUserId,
+              forcedOutcome: billing.forcedOutcome,
+              statusCode,
+            })
+          : false
+
+        // 业务标记的失败信息，覆盖默认 errorCode/errorMessage
+        const errorCode = billing?.forcedOutcome === 'failed' ? billing.failedCode : null
+        const errorMessage = billing?.forcedOutcome === 'failed' ? billing.failedMessage : null
+
+        // 业务标记 forced=failed 时，statusCode 仍是真实的（200），但要让 stats 视为失败：
+        // 借助传入 addCallAndUpsertDailyStat 一个修正后的 statusCode 给统计逻辑
+        const statStatusCode = billing?.forcedOutcome === 'failed' && statusCode < 400
+          ? 500 // 业务失败但 HTTP 200 → 统计按失败计；apiCalls.statusCode 仍记真实值
+          : statusCode
+
+        const callId = await apiCallService.addCallAndUpsertDailyStat({
           apiId: target.apiId,
           apiKeyId,
-          userId: event.context.apiKey?.userId ?? null,
+          userId: apiKeyUserId,
           path: pathname,
           method,
           statusCode,
@@ -197,7 +222,37 @@ export default defineEventHandler((event: H3Event) => {
           responseSize,
           statDate: new Date(),
           statApiPath: target.apiPath,
+          errorCode,
+          errorMessage,
+          creditsCost: 0, // 占位，扣费成功后再补
+          statusCodeForStats: statStatusCode,
         })
+
+        // 扣费 · 单独事务，与日志写入解耦避免互相阻塞
+        if (willCharge && billing && billing.apiKeyUserId && callId) {
+          try {
+            const r = await creditService.charge({
+              userId: billing.apiKeyUserId,
+              amount: billing.costCredits,
+              apiId: target.apiId,
+              apiCallId: callId,
+              remark: `API 调用扣费 · ${target.apiPath}`,
+            })
+            if (r.charged > 0) {
+              // 把实际扣除的金额回填到 apiCalls.creditsCost
+              await apiCallService.patchCreditsCost(callId, r.charged)
+            }
+          }
+          catch (err) {
+            // 扣费失败不应回滚日志，仅记录错误（极少：余额已被 gate 校验过）
+            console.error('failed to charge credits after api call', {
+              callId,
+              userId: billing.apiKeyUserId,
+              amount: billing.costCredits,
+              error: (err as Error).message,
+            })
+          }
+        }
 
         if (apiKeyId) {
           await apiKeyService.recordUsage(apiKeyId, ip)

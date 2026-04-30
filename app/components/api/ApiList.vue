@@ -33,6 +33,7 @@ function resolveCategoryName(id: number | null | undefined) {
       :api-path="item.apiPath"
       :doc-url="item.docUrl"
       :is-api-key="item.isApiKey"
+      :cost-credits="item.costCredits"
       :total-calls="item.totalCalls"
       class="api-card-item"
     />

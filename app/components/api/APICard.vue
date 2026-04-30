@@ -12,10 +12,13 @@ const props = defineProps({
   apiPath: { type: String, default: '/v1/path' },
   docUrl: { type: String, default: 'https://example.com/docs' },
   isApiKey: { type: Boolean, default: false },
+  costCredits: { type: Number, default: 0 },
   totalCalls: { type: Number, default: 0 },
 })
 
 const methods = computed(() => props.httpMethod.split(',').map(method => method.trim()).filter(Boolean))
+
+const isPaid = computed(() => props.costCredits > 0)
 
 function formatCallCount(count: number) {
   if (count < 10000) {
@@ -82,11 +85,35 @@ function formatCallCount(count: number) {
     </template>
 
     <template #meta>
-      <span
-        v-if="props.isApiKey"
-        class="flex items-center gap-1 text-xs text-muted"
-      >
+      <div class="flex items-center gap-1.5">
         <UBadge
+          v-if="isPaid"
+          color="warning"
+          variant="soft"
+          class="rounded-full"
+        >
+          <Icon
+            name="mdi:cash-multiple"
+            size="14"
+            class="mr-0.5"
+          />
+          收费 {{ props.costCredits }}/次
+        </UBadge>
+        <UBadge
+          v-else
+          color="success"
+          variant="soft"
+          class="rounded-full"
+        >
+          <Icon
+            name="mdi:gift-outline"
+            size="14"
+            class="mr-0.5"
+          />
+          免费
+        </UBadge>
+        <UBadge
+          v-if="props.isApiKey"
           variant="outline"
           class="rounded-full"
         >
@@ -96,7 +123,7 @@ function formatCallCount(count: number) {
           />
           APIkey
         </UBadge>
-      </span>
+      </div>
     </template>
 
     <template #details>
@@ -123,6 +150,47 @@ function formatCallCount(count: number) {
           >
             {{ method }}
           </UBadge>
+        </div>
+      </div>
+      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
+        <div class="text-muted text-xs">
+          调用计费
+        </div>
+        <div class="flex items-center flex-wrap gap-2 text-[13px]">
+          <template v-if="isPaid">
+            <UBadge
+              color="warning"
+              variant="soft"
+              class="rounded-full"
+            >
+              <Icon
+                name="mdi:cash-multiple"
+                size="14"
+                class="mr-0.5"
+              />
+              {{ props.costCredits }} / 次
+            </UBadge>
+            <span class="text-muted text-xs">
+              成功调用扣费，失败不扣；调用前需准备 API Key 与余额
+            </span>
+          </template>
+          <template v-else>
+            <UBadge
+              color="success"
+              variant="soft"
+              class="rounded-full"
+            >
+              <Icon
+                name="mdi:gift-outline"
+                size="14"
+                class="mr-0.5"
+              />
+              免费
+            </UBadge>
+            <span class="text-muted text-xs">
+              当前接口不消耗余额
+            </span>
+          </template>
         </div>
       </div>
       <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">

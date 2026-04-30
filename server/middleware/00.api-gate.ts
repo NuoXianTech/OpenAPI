@@ -115,6 +115,17 @@ export default defineEventHandler(async (event: H3Event) => {
     ? { id: result.apiKey.id, userId: result.apiKey.userId, scopes: result.apiKey.scopes ?? null }
     : null
 
+  // 计费上下文 · 后置中间件根据该状态决定是否扣款。业务 handler 可通过
+  // markApiCallSuccess / markApiCallFailed 显式覆盖判定。
+  event.context.apiBilling = {
+    costCredits: api.costCredits,
+    apiKeyUserId: result.apiKey?.userId ?? null,
+    // 默认按 statusCode 判定，业务可显式标记
+    forcedOutcome: null as 'success' | 'failed' | null,
+    failedCode: null as string | null,
+    failedMessage: null as string | null,
+  }
+
   if (Object.keys(result.rateLimitHeaders).length > 0) {
     setResponseHeaders(event, result.rateLimitHeaders)
   }

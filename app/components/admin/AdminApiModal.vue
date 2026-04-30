@@ -173,6 +173,24 @@ watch(() => [props.target, props.mode, open.value], () => {
   Object.assign(state, next)
 }, { immediate: true })
 
+// 计费与 ApiKey 强一致：关闭 ApiKey 必需时，自动把 costCredits 归 0
+// 反之，若管理员把 costCredits 设为 > 0，自动开启 isApiKey 并提示
+watch(() => state.isApiKey, (val) => {
+  if (!val && (state.costCredits ?? 0) > 0) {
+    state.costCredits = 0
+  }
+})
+watch(() => state.costCredits, (val) => {
+  if ((val ?? 0) > 0 && !state.isApiKey) {
+    state.isApiKey = true
+    toast.add({
+      title: '已自动开启「必需 API Key」',
+      description: '设置扣费后必须通过 API Key 鉴权扣款账户。',
+      color: 'info',
+    })
+  }
+})
+
 const statusOptions = [
   { label: '正常', value: 1 },
   { label: '异常', value: 0 },
@@ -400,6 +418,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 label="统计调用"
               />
             </div>
+            <p
+              v-if="!state.isApiKey && (state.costCredits ?? 0) > 0"
+              class="text-xs text-warning mt-2"
+            >
+              关闭「必需 API Key」会同时把扣费金额归 0（无法定位扣款账户）。
+            </p>
           </div>
 
           <div class="border-t border-default pt-3 mt-3">
@@ -468,6 +492,51 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 />
               </UFormField>
             </div>
+          </div>
+
+          <div class="border-t border-default pt-3 mt-3">
+            <div class="text-sm font-medium mb-2 flex items-center gap-2">
+              <span>计费</span>
+              <UBadge
+                v-if="!state.isApiKey"
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              >
+                需先开启「必需 API Key」
+              </UBadge>
+              <UBadge
+                v-else-if="(state.costCredits ?? 0) > 0"
+                color="warning"
+                variant="subtle"
+                size="sm"
+              >
+                收费接口
+              </UBadge>
+              <UBadge
+                v-else
+                color="success"
+                variant="subtle"
+                size="sm"
+              >
+                免费接口
+              </UBadge>
+            </div>
+            <UFormField
+              label="单次调用消耗余额"
+              name="costCredits"
+            >
+              <UInput
+                v-model.number="state.costCredits"
+                type="number"
+                min="0"
+                :disabled="!state.isApiKey"
+                :placeholder="state.isApiKey ? '设为 0 表示免费' : '请先开启「必需 API Key」'"
+              />
+              <p class="text-xs text-muted mt-1">
+                只有开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
+              </p>
+            </UFormField>
           </div>
 
           <div class="flex justify-end gap-2 pt-3">

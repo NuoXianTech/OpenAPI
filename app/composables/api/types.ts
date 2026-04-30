@@ -9,6 +9,7 @@ export interface ApiCatalogItem {
   apiPath: string
   docUrl: string
   isApiKey: boolean
+  costCredits: number
   totalCalls: number
 }
 

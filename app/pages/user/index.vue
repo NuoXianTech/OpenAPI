@@ -29,11 +29,13 @@ const activeKeys = computed(() => keys.value.filter(k => k.isActive).length)
 const unreadCount = computed(() => unreadData.value?.data?.count || 0)
 const recentNotifs = computed(() => notifData.value?.data || [])
 
+const credits = computed(() => Number((user.value as any)?.credits ?? 0))
+
 const overviewCards = computed(() => [
+  { label: '余额', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success' },
   { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line', color: 'text-primary' },
-  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-success' },
-  { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-info' },
-  { label: '未读通知', value: unreadCount.value.toString(), icon: 'i-mdi-bell-outline', color: 'text-warning' },
+  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-info' },
+  { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-warning' },
 ])
 
 const levelMeta: Record<'info' | 'success' | 'warning' | 'critical', { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {

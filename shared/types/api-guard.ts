@@ -84,6 +84,7 @@ export type GateOutcome
     | 'referer_denied'
     | 'rate_limited'
     | 'quota_exceeded'
+    | 'insufficient_credits'
 
 /**
  * 统计目标 · gate 早期设置，覆盖成功与失败两种情形。

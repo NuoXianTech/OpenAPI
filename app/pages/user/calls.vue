@@ -16,6 +16,7 @@ interface LogRow {
   apiKeyName: string | null
   errorCode: string | null
   errorMessage: string | null
+  creditsCost: number
   createdAt: string
 }
 
@@ -34,7 +35,7 @@ const UBadge = resolveComponent('UBadge')
 const filters = reactive({
   apiId: 0,
   apiKeyId: 0,
-  status: '' as '' | 'success' | 'failure',
+  status: 'all' as 'all' | 'success' | 'failure',
 })
 const page = ref(1)
 const pageSize = ref(50)
@@ -57,7 +58,7 @@ const keySelectItems = computed(() => [
   ...filterOptions.value.apiKeys.map(k => ({ label: k.name || `#${k.id}`, value: k.id })),
 ])
 const statusSelectItems = [
-  { label: '全部状态', value: '' },
+  { label: '全部状态', value: 'all' },
   { label: '成功（2xx/3xx）', value: 'success' },
   { label: '失败（4xx/5xx）', value: 'failure' },
 ]
@@ -74,13 +75,18 @@ async function fetchList() {
       query: {
         apiId: filters.apiId || undefined,
         apiKeyId: filters.apiKeyId || undefined,
-        status: filters.status || undefined,
+        status: filters.status === 'all' ? undefined : filters.status,
         limit: pageSize.value,
         offset: (page.value - 1) * pageSize.value,
       },
     })
-    items.value = res.data?.items || []
-    total.value = res.data?.total || 0
+    items.value = res?.data?.items || []
+    total.value = res?.data?.total || 0
+  }
+  catch (err) {
+    console.error('failed to fetch user calls list', err)
+    items.value = []
+    total.value = 0
   }
   finally {
     loading.value = false
@@ -95,7 +101,7 @@ function applyFilters() {
 function resetFilters() {
   filters.apiId = 0
   filters.apiKeyId = 0
-  filters.status = ''
+  filters.status = 'all'
   page.value = 1
   void fetchList()
 }
@@ -165,6 +171,13 @@ const columns: TableColumn<LogRow>[] = [
         ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
         : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败'),
     ]),
+  },
+  {
+    accessorKey: 'creditsCost',
+    header: '扣除余额',
+    cell: ({ row }) => row.original.creditsCost > 0
+      ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
+      : h('span', { class: 'text-xs text-muted' }, '免费'),
   },
   {
     accessorKey: 'latencyMs',

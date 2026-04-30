@@ -18,6 +18,17 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
+  // 计费一致性校验：costCredits>0 必须搭配 isApiKey=true
+  // 仅对显式给出的字段做校验；未传字段需结合数据库现状（在 service 层兜底）
+  const costCredits = body.costCredits !== undefined ? Number(body.costCredits) : undefined
+  const isApiKey = typeof body.isApiKey === 'boolean' ? body.isApiKey : undefined
+  if (costCredits !== undefined && costCredits > 0 && isApiKey === false) {
+    throw createError({
+      statusCode: 400,
+      message: '设置扣费金额时必须开启「必需 API Key」',
+    })
+  }
+
   const updated = await apiService.updateApi(id, admin.id || null, {
     name: body.name?.toString().trim(),
     status: body.status !== undefined ? Number(body.status) : undefined,
@@ -29,7 +40,7 @@ export default defineEventHandler(async (event: H3Event) => {
     docUrl: body.docUrl?.toString().trim(),
     thumbnailUrl: body.thumbnailUrl?.toString().trim() || undefined,
     isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : undefined,
-    isApiKey: typeof body.isApiKey === 'boolean' ? body.isApiKey : undefined,
+    isApiKey,
     isStatistics: typeof body.isStatistics === 'boolean' ? body.isStatistics : undefined,
     requiresAuth: typeof body.requiresAuth === 'boolean' ? body.requiresAuth : undefined,
     rateLimitPerSecond: body.rateLimitPerSecond !== undefined ? Number(body.rateLimitPerSecond) : undefined,
@@ -37,7 +48,7 @@ export default defineEventHandler(async (event: H3Event) => {
     rateLimitPerHour: body.rateLimitPerHour !== undefined ? Number(body.rateLimitPerHour) : undefined,
     rateLimitPerDay: body.rateLimitPerDay !== undefined ? Number(body.rateLimitPerDay) : undefined,
     dailyQuota: body.dailyQuota !== undefined ? Number(body.dailyQuota) : undefined,
-    costCredits: body.costCredits !== undefined ? Number(body.costCredits) : undefined,
+    costCredits,
     timeoutMs: body.timeoutMs !== undefined ? Number(body.timeoutMs) : undefined,
   })
 

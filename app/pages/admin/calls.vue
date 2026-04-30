@@ -27,7 +27,7 @@ function formatDate(val: string) {
   return new Date(val).toLocaleString('zh-CN', { hour12: false })
 }
 
-const columns: TableColumn<any>[] = [
+const aggregateColumns: TableColumn<any>[] = [
   {
     accessorKey: 'apiPath',
     header: '接口路径',
@@ -62,6 +62,186 @@ const columns: TableColumn<any>[] = [
     accessorKey: 'updatedAt',
     header: '更新时间',
     cell: ({ row }) => formatDate(row.original.updatedAt),
+  },
+]
+
+// ----- 调用明细日志 -----
+interface AdminCallRow {
+  id: number
+  apiId: number
+  apiName: string | null
+  apiPath: string
+  method: string
+  statusCode: number
+  latencyMs: number
+  ip: string | null
+  apiKeyId: number | null
+  apiKeyName: string | null
+  userId: number | null
+  userName: string | null
+  errorCode: string | null
+  errorMessage: string | null
+  creditsCost: number
+  createdAt: string
+}
+
+const logFilters = reactive({
+  userId: '' as number | '',
+  status: 'all' as 'all' | 'success' | 'failure',
+})
+const logPage = ref(1)
+const logPageSize = ref(50)
+const logItems = ref<AdminCallRow[]>([])
+const logTotal = ref(0)
+const logLoading = ref(false)
+
+async function fetchLogs() {
+  logLoading.value = true
+  try {
+    const res = await $fetch<{ code: number, data: { items: AdminCallRow[], total: number } }>('/api/admin/calls/list', {
+      query: {
+        userId: logFilters.userId || undefined,
+        status: logFilters.status === 'all' ? undefined : logFilters.status,
+        limit: logPageSize.value,
+        offset: (logPage.value - 1) * logPageSize.value,
+      },
+    })
+    logItems.value = res?.data?.items || []
+    logTotal.value = res?.data?.total || 0
+  }
+  catch (err) {
+    console.error('failed to fetch admin calls list', err)
+    logItems.value = []
+    logTotal.value = 0
+  }
+  finally {
+    logLoading.value = false
+  }
+}
+
+const logTotalPages = computed(() => Math.max(1, Math.ceil(logTotal.value / logPageSize.value)))
+
+watch(logPage, () => { void fetchLogs() })
+
+onMounted(() => {
+  void fetchLogs()
+})
+
+function applyLogFilters() {
+  logPage.value = 1
+  void fetchLogs()
+}
+
+function resetLogFilters() {
+  logFilters.userId = ''
+  logFilters.status = 'all'
+  logPage.value = 1
+  void fetchLogs()
+}
+
+function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {
+  if (code >= 200 && code < 300) return 'success'
+  if (code >= 300 && code < 400) return 'neutral'
+  if (code >= 400 && code < 500) return 'warning'
+  return 'error'
+}
+
+function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
+  switch (method) {
+    case 'GET': return 'success'
+    case 'POST': return 'info'
+    case 'PUT':
+    case 'PATCH': return 'warning'
+    case 'DELETE': return 'error'
+    default: return 'neutral'
+  }
+}
+
+const statusSelectItems = [
+  { label: '全部状态', value: 'all' },
+  { label: '成功（2xx/3xx）', value: 'success' },
+  { label: '失败（4xx/5xx）', value: 'failure' },
+]
+
+const logColumns: TableColumn<AdminCallRow>[] = [
+  {
+    accessorKey: 'createdAt',
+    header: '时间',
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt)),
+  },
+  {
+    accessorKey: 'method',
+    header: '方法',
+    cell: ({ row }) => h(UBadge, {
+      color: methodColor(row.original.method),
+      variant: 'subtle',
+      class: 'font-mono',
+    }, () => row.original.method),
+  },
+  {
+    accessorKey: 'apiName',
+    header: '服务',
+    cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
+      h('span', { class: 'font-medium text-sm' }, row.original.apiName || '-'),
+      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath),
+    ]),
+  },
+  {
+    accessorKey: 'userName',
+    header: '用户',
+    cell: ({ row }) => row.original.userId
+      ? h('div', { class: 'flex flex-col text-xs' }, [
+          h('span', null, row.original.userName || '-'),
+          h('span', { class: 'text-muted' }, `#${row.original.userId}`),
+        ])
+      : h('span', { class: 'text-xs text-muted italic' }, '匿名'),
+  },
+  {
+    accessorKey: 'statusCode',
+    header: '状态',
+    cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
+      h(UBadge, {
+        color: statusColor(row.original.statusCode),
+        variant: 'subtle',
+      }, () => row.original.statusCode),
+      row.original.statusCode >= 200 && row.original.statusCode < 400
+        ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
+        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败'),
+    ]),
+  },
+  {
+    accessorKey: 'creditsCost',
+    header: '扣除余额',
+    cell: ({ row }) => row.original.creditsCost > 0
+      ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
+      : h('span', { class: 'text-xs text-muted' }, '免费'),
+  },
+  {
+    accessorKey: 'latencyMs',
+    header: '耗时',
+    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`),
+  },
+  {
+    accessorKey: 'apiKeyName',
+    header: 'API Key',
+    cell: ({ row }) => row.original.apiKeyId
+      ? h('span', { class: 'text-xs' }, row.original.apiKeyName || `#${row.original.apiKeyId}`)
+      : h('span', { class: 'text-xs text-muted italic' }, '未携带'),
+  },
+  {
+    accessorKey: 'ip',
+    header: 'IP',
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-'),
+  },
+  {
+    id: 'error',
+    header: '错误信息',
+    cell: ({ row }) => row.original.errorCode || row.original.errorMessage
+      ? h('div', { class: 'flex flex-col text-xs' }, [
+          row.original.errorCode ? h('span', { class: 'font-mono text-error' }, row.original.errorCode) : null,
+          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null,
+        ].filter(Boolean))
+      : h('span', { class: 'text-muted' }, '-'),
   },
 ]
 </script>
@@ -112,18 +292,128 @@ const columns: TableColumn<any>[] = [
         </UCard>
       </div>
 
-      <!-- Stats Table -->
-      <UTable
-        :data="stats.items"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2',
-        }"
-      />
+      <!-- 按 API 聚合的统计表 -->
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-chart-bar"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold">
+              按 API 聚合（按日）
+            </h3>
+          </div>
+        </template>
+        <UTable
+          :data="stats.items"
+          :columns="aggregateColumns"
+          :loading="status === 'pending'"
+          :ui="{
+            base: 'table-fixed',
+            thead: '[&>tr]:bg-elevated/50',
+            th: 'py-2',
+            td: 'py-2',
+          }"
+        />
+      </UCard>
+
+      <!-- 单次调用明细日志 -->
+      <UCard>
+        <template #header>
+          <div class="flex items-center gap-2 flex-wrap">
+            <UIcon
+              name="i-mdi-history"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold">
+              调用明细日志（含扣费）
+            </h3>
+            <span class="ml-auto text-xs text-muted tabular-nums">
+              共 {{ logTotal.toLocaleString() }} 条
+            </span>
+          </div>
+        </template>
+
+        <div class="flex flex-wrap items-end gap-3 mb-4">
+          <UFormField
+            label="用户 ID"
+            class="min-w-[160px]"
+          >
+            <UInput
+              v-model.number="logFilters.userId"
+              type="number"
+              placeholder="留空查全部"
+            />
+          </UFormField>
+          <UFormField
+            label="状态"
+            class="min-w-[160px]"
+          >
+            <USelect
+              v-model="logFilters.status"
+              :items="statusSelectItems"
+            />
+          </UFormField>
+          <div class="flex gap-2">
+            <UButton
+              icon="i-mdi-magnify"
+              @click="applyLogFilters"
+            >
+              查询
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              @click="resetLogFilters"
+            >
+              重置
+            </UButton>
+          </div>
+        </div>
+
+        <UTable
+          :data="logItems"
+          :columns="logColumns"
+          :loading="logLoading"
+          :ui="{
+            base: 'table-fixed',
+            thead: '[&>tr]:bg-elevated/50',
+            th: 'py-2',
+            td: 'py-2 align-middle',
+          }"
+        />
+        <div
+          v-if="logTotal > logPageSize"
+          class="flex items-center justify-between pt-3 border-t border-default mt-3"
+        >
+          <span class="text-xs text-muted">
+            第 {{ logPage }} / {{ logTotalPages }} 页
+          </span>
+          <div class="flex gap-2">
+            <UButton
+              size="sm"
+              color="neutral"
+              variant="outline"
+              icon="i-mdi-chevron-left"
+              :disabled="logPage <= 1"
+              @click="logPage = Math.max(1, logPage - 1)"
+            >
+              上一页
+            </UButton>
+            <UButton
+              size="sm"
+              color="neutral"
+              variant="outline"
+              trailing-icon="i-mdi-chevron-right"
+              :disabled="logPage >= logTotalPages"
+              @click="logPage = Math.min(logTotalPages, logPage + 1)"
+            >
+              下一页
+            </UButton>
+          </div>
+        </div>
+      </UCard>
     </template>
   </UDashboardPanel>
 </template>

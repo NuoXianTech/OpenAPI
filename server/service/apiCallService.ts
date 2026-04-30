@@ -1,5 +1,5 @@
-import { count, desc, eq, sql, and } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
+import { count, desc, eq, sql, and, type SQL } from 'drizzle-orm'
+import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
 
 function getDayStartUtc(value: Date) {
   const start = new Date(value)
@@ -31,6 +31,7 @@ export interface AddCallInput {
   cacheHit?: boolean
   errorCode?: string | null
   errorMessage?: string | null
+  creditsCost?: number
 }
 
 function normalizeCallRow(data: AddCallInput) {
@@ -58,12 +59,77 @@ function normalizeCallRow(data: AddCallInput) {
     cacheHit: data.cacheHit ?? false,
     errorCode: data.errorCode ?? null,
     errorMessage: data.errorMessage ?? null,
+    creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0),
   }
 }
 
 export const apiCallService = {
   async list() {
     return db.select().from(apiCalls).orderBy(desc(apiCalls.createdAt))
+  },
+
+  /**
+   * Admin 视角调用日志：join apis & api_keys & users 携带展示字段。
+   * 支持 userId / apiId / status 过滤 + 分页。
+   */
+  async listForAdmin(opts: {
+    userId?: number
+    apiId?: number
+    apiKeyId?: number
+    status?: 'success' | 'failure'
+    limit?: number
+    offset?: number
+  } = {}) {
+    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
+    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const conds: SQL[] = []
+    if (opts.userId && opts.userId > 0) conds.push(eq(apiCalls.userId, opts.userId))
+    if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
+    if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
+    if (opts.status === 'success') {
+      conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
+    }
+    else if (opts.status === 'failure') {
+      conds.push(sql`${apiCalls.statusCode} >= 400`)
+    }
+
+    const where = conds.length ? and(...conds) : undefined
+    const baseQuery = db.select({
+      id: apiCalls.id,
+      apiId: apiCalls.apiId,
+      apiName: apis.name,
+      apiPath: apiCalls.path,
+      method: apiCalls.method,
+      statusCode: apiCalls.statusCode,
+      latencyMs: apiCalls.latencyMs,
+      ip: apiCalls.ip,
+      apiKeyId: apiCalls.apiKeyId,
+      apiKeyName: apiKeys.name,
+      userId: apiCalls.userId,
+      userName: users.username,
+      errorCode: apiCalls.errorCode,
+      errorMessage: apiCalls.errorMessage,
+      creditsCost: apiCalls.creditsCost,
+      createdAt: apiCalls.createdAt,
+    })
+      .from(apiCalls)
+      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+      .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+      .leftJoin(users, eq(users.id, apiCalls.userId))
+
+    const [items, totalRows] = await Promise.all([
+      where
+        ? baseQuery.where(where).orderBy(desc(apiCalls.createdAt)).limit(limit).offset(offset)
+        : baseQuery.orderBy(desc(apiCalls.createdAt)).limit(limit).offset(offset),
+      where
+        ? db.select({ value: count() }).from(apiCalls).where(where)
+        : db.select({ value: count() }).from(apiCalls),
+    ])
+
+    return {
+      items,
+      total: Number(totalRows[0]?.value || 0),
+    }
   },
 
   async listByApi(apiId: number) {
@@ -123,6 +189,7 @@ export const apiCallService = {
         apiKeyName: apiKeys.name,
         errorCode: apiCalls.errorCode,
         errorMessage: apiCalls.errorMessage,
+        creditsCost: apiCalls.creditsCost,
         createdAt: apiCalls.createdAt,
       })
         .from(apiCalls)
@@ -169,14 +236,20 @@ export const apiCallService = {
     return db.insert(apiCalls).values(normalizeCallRow(data)).returning()
   },
 
+  /**
+   * 统计修正后的 status code（业务标记 forced=failed 时，HTTP 可能仍是 200，
+   * 但要让 daily stats 视为失败）。不传则使用 data.statusCode。
+   */
   async addCallAndUpsertDailyStat(data: AddCallInput & {
     statDate?: Date
     statApiPath?: string | null
+    statusCodeForStats?: number
   }) {
     const normalizedStatusCode = Math.trunc(data.statusCode)
     const normalizedLatencyMs = Math.max(Math.trunc(data.latencyMs), 0)
     const statDate = getDayStartUtc(data.statDate || new Date())
-    const successDelta = normalizedStatusCode >= 200 && normalizedStatusCode < 400 ? 1 : 0
+    const statStatusCode = Math.trunc(data.statusCodeForStats ?? normalizedStatusCode)
+    const successDelta = statStatusCode >= 200 && statStatusCode < 400 ? 1 : 0
     const failureDelta = successDelta ? 0 : 1
 
     return db.transaction(async (tx: typeof db) => {
@@ -210,5 +283,13 @@ export const apiCallService = {
 
       return callId
     })
+  },
+
+  /** 扣费完成后回填 apiCalls.creditsCost */
+  async patchCreditsCost(callId: number, creditsCost: number) {
+    const value = Math.max(Math.trunc(creditsCost), 0)
+    await db.update(apiCalls)
+      .set({ creditsCost: value })
+      .where(eq(apiCalls.id, callId))
   },
 }

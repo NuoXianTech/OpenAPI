@@ -4,6 +4,7 @@ interface AuthUser {
   email: string
   avatarUrl: string
   kind: 'user' | 'admin'
+  credits?: number
 }
 
 interface ApiResponse<T> {

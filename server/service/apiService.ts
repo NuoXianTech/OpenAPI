@@ -90,6 +90,7 @@ type PublicApiItem = {
   apiPath: string
   docUrl: string
   isApiKey: boolean
+  costCredits: number
   totalCalls: number
 }
 
@@ -120,6 +121,7 @@ export const apiService = {
       apiPath: row.apiPath,
       docUrl: row.docUrl,
       isApiKey: row.isApiKey,
+      costCredits: row.costCredits,
       totalCalls: statsMap[row.id]?.totalCalls ?? 0,
     }))
   },
@@ -178,6 +180,9 @@ export const apiService = {
   /**
    * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/sourceDir/endpointCount 由 manifest 注入，
    * 不接受外部 patch。
+   *
+   * 计费一致性：合并请求 patch 与现有记录后，若 costCredits>0 但 isApiKey=false，
+   * 视为非法配置，抛错（兜底 admin 接口的不完整 patch）。
    */
   async updateApi(id: number, userid: number | null, data: Partial<typeof apis.$inferInsert>) {
     const {
@@ -189,6 +194,19 @@ export const apiService = {
       endpointCount: _ec,
       ...patch
     } = data as Partial<typeof apis.$inferInsert>
+
+    // 合并后的 effective costCredits / isApiKey 校验
+    if (patch.costCredits !== undefined || patch.isApiKey !== undefined) {
+      const existing = await this.getById(id)
+      if (existing) {
+        const effectiveCost = patch.costCredits !== undefined ? Number(patch.costCredits) : existing.costCredits
+        const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
+        if (effectiveCost > 0 && !effectiveIsApiKey) {
+          throw new Error('设置扣费金额时必须开启「必需 API Key」')
+        }
+      }
+    }
+
     const res = await db.update(apis)
       .set({
         ...patch,
