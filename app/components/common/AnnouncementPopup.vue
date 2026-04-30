@@ -4,7 +4,10 @@
  * 默认展开第一条（"最新"），其余收起。
  *
  * 弹出时机：组件挂载且存在比 localStorage 记录 lastSeenId 更新的公告时自动 open；
- * 关闭后将当前最新 id 写回，避免重复打扰。点击 "再次查看" 可手动唤起。
+ * 关闭后将当前最新 id 写回，避免重复打扰。
+ *
+ * 注意：本组件挂在 `<ClientOnly>` 内，必须保持 setup 同步，不能用 top-level await
+ * （ClientOnly 没有 Suspense 兜底，async setup 会导致模板不渲染）。所以数据拉取放在 onMounted 中。
  */
 
 interface Announcement {
@@ -37,14 +40,8 @@ const STORAGE_KEY = computed(() => `announcement:lastSeenId:${props.storageScope
 
 const open = ref(false)
 const expandedIds = ref<string[]>([])
+const items = ref<Announcement[]>([])
 
-const { data } = await useAsyncData<ListResponse>(
-  `announcement-list-${props.storageScope}`,
-  () => $fetch<ListResponse>('/api/announcements/list'),
-  { default: () => ({ code: 0, msg: 'ok', data: [] as Announcement[] }) },
-)
-
-const items = computed<Announcement[]>(() => data.value?.data || [])
 const latestId = computed(() => items.value[0]?.id ?? null)
 
 const accordionItems = computed(() => items.value.map(a => ({
@@ -74,11 +71,22 @@ function maybeAutoOpen() {
   open.value = true
 }
 
+async function loadList() {
+  try {
+    const res = await $fetch<ListResponse>('/api/announcements/list')
+    items.value = res?.data || []
+  }
+  catch (err) {
+    console.error('[announcement-popup] failed to load list', err)
+  }
+}
+
 watch(() => open.value, (val) => {
   if (!val && latestId.value !== null) persistLastSeenId(latestId.value)
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await loadList()
   maybeAutoOpen()
 })
 
