@@ -1,5 +1,5 @@
 /**
- * 示例 · POST /api/v1/test1
+ * 示例 · POST /v1/test
  *
  * 演示 body 回显，用于验证限流/统计。
  */

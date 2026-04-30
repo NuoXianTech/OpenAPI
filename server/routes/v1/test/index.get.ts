@@ -1,5 +1,5 @@
 /**
- * 示例公开 API · GET /api/v1/test
+ * 示例公开 API · GET /v1/test
  *
  * 接入说明：
  * - 业务 handler 零模板代码，ApiKey / 限流 / 配额 / 统计由 gate 中间件自动完成

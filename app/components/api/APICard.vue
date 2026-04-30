@@ -9,7 +9,7 @@ const props = defineProps({
   description: { type: String, default: '这是详细描述详细描述详细描述详细描述' },
   categoryName: { type: String, default: '' },
   httpMethod: { type: String, default: 'GET' },
-  apiPath: { type: String, default: '/api/v1/path' },
+  apiPath: { type: String, default: '/v1/path' },
   docUrl: { type: String, default: 'https://example.com/docs' },
   isApiKey: { type: Boolean, default: false },
   totalCalls: { type: Number, default: 0 },

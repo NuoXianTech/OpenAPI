@@ -3,24 +3,19 @@
  *
  * 说明：
  * - 本文件被 shared/types/server/middleware 多处引用，不要引入任何运行时依赖。
- * - 治理范围由 `GUARDED_PATH_PREFIXES` 控制，未来新增版本（v2/v3…）无需改动中间件。
+ * - 治理范围由 `VERSION_CODE_PATTERN` 直接判定（避免误伤 /version、/vault 等无关路径）。
+ * - 公开 API 直接挂在 /v{N}/<code>/...，不再使用 /api/ 前缀（实现位置：server/routes/v{N}/）。
  */
-
-/** 需要治理的 URL 前缀（命中任一前缀即进入 gate 流程） */
-export const GUARDED_PATH_PREFIXES = ['/api/v'] as const
 
 /**
  * 从 pathname 提取 (pathVersion, code)。
- * 例：/api/v1/user/42/posts → { pathVersion: 'v1', code: 'user' }
+ * 例：/v1/user/42/posts → { pathVersion: 'v1', code: 'user' }
  */
-export const VERSION_CODE_PATTERN = /^\/api\/(v\d+)\/([^/?#]+)/
+export const VERSION_CODE_PATTERN = /^\/(v\d+)\/([^/?#]+)/
 
-/** 判断一段 URL 是否处于治理范围 */
+/** 判断一段 URL 是否处于治理范围（命中 /v{N}/<code> 形式即视为治理路径） */
 export function isGuardedPath(pathname: string): boolean {
-  for (const prefix of GUARDED_PATH_PREFIXES) {
-    if (pathname.startsWith(prefix)) return true
-  }
-  return false
+  return VERSION_CODE_PATTERN.test(pathname)
 }
 
 /**

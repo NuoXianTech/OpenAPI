@@ -10,7 +10,7 @@ import type { RateLimitDriverName, RateLimitWindow } from '../config/apiGuard'
 
 /** 单个文件对应的一个 endpoint（method + pattern） */
 export interface ManifestEndpoint {
-  /** 匹配模式，含 :param / :path*，例：/api/v1/user/:id/posts */
+  /** 匹配模式，含 :param / :path*，例：/v1/user/:id/posts */
   apiPath: string
   /** HTTP 方法，'ANY' 表示无方法限定 */
   method: string
@@ -25,7 +25,7 @@ export interface ManifestEndpoint {
 }
 
 /**
- * 一个业务接口组：对应 server/api/v{N}/<code>/ 下所有文件。
+ * 一个业务接口组：对应 server/routes/v{N}/<code>/ 下所有文件。
  * 治理配置以该对象粒度生效（isEnabled / isApiKey / rateLimit …共用）。
  */
 export interface ManifestApi {

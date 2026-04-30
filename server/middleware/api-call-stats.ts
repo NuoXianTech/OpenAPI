@@ -3,6 +3,7 @@ import { getHeader, getQuery, getRequestIP, getRequestURL } from 'h3'
 import { apiCallService } from '~~/server/service/apiCallService'
 import { apiKeyService } from '~~/server/service/apiKeyService'
 import { apiService, type StatisticsTargetItem } from '~~/server/service/apiService'
+import { isGuardedPath } from '~~/shared/config/apiGuard'
 
 const STATISTICS_TARGET_CACHE_TTL_MS = 15_000
 
@@ -51,7 +52,7 @@ function parseOptionalInt(value: string | string[] | number | null | undefined) 
 }
 
 function shouldTrackPath(pathname: string) {
-  return pathname.startsWith('/api/')
+  return isGuardedPath(pathname)
 }
 
 function getApiKeyFromEvent(event: H3Event) {

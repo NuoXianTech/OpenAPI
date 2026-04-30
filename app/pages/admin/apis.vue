@@ -377,7 +377,7 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         v-if="versions.length === 0 && status !== 'pending'"
         class="text-center py-12 text-muted"
       >
-        未发现任何 v{N} 版本目录。请在 server/api/v1/ 下创建接口目录后重启 dev 服务。
+        未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
       </div>
 
       <UTable

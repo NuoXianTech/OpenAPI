@@ -62,7 +62,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const methods = Array.from(new Set(manifestApi.endpoints.map(e => e.method))).filter(m => m !== 'ANY')
   const httpMethod = methods.length > 0 ? methods.join(',') : 'GET'
   const baseEp = manifestApi.endpoints.find(e => e.paramNames.length === 0) || manifestApi.endpoints[0]!
-  const apiPath = baseEp.apiPath.replace(/\/:[^/]+$/, '') || `/api/${pathVersion}/${code}`
+  const apiPath = baseEp.apiPath.replace(/\/:[^/]+$/, '') || `/${pathVersion}/${code}`
 
   const o = body.overrides || {}
   const defaults = {

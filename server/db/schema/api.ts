@@ -39,13 +39,13 @@ export const apiCategories = pgTable('api_categories', {
 // ------------------------------------------------------------------
 // APIs（接口主表）
 //
-// 治理粒度：一条记录 = 一个 (pathVersion, code) = server/api/v{N}/<code>/ 目录。
+// 治理粒度：一条记录 = 一个 (pathVersion, code) = server/routes/v{N}/<code>/ 目录。
 // 该 code 下所有 endpoints（不同 HTTP 方法、子路径、动态路由）共享同一份治理配置。
 // 子路由明细由构建期 manifest 提供，DB 不重复存储。
 // ------------------------------------------------------------------
 export const apis = pgTable('apis', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 50 }).notNull(), // = server/api/v{N}/<code>/ 目录名
+  code: varchar('code', { length: 50 }).notNull(), // = server/routes/v{N}/<code>/ 目录名
   pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
   sourceDir: varchar('source_dir', { length: 500 }), // 源目录相对路径，展示与一致性校验用
   endpointCount: integer('endpoint_count').notNull().default(0), // 下辖 endpoints 数量，admin 行展示
@@ -55,7 +55,7 @@ export const apis = pgTable('apis', {
   shortDesc: varchar('short_desc', { length: 30 }).notNull(),
   description: text('description').notNull(),
   httpMethod: varchar('http_method', { length: 50 }).notNull(), // 可逗号分隔
-  apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /api/v1/user
+  apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /v1/user
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
   thumbnailUrl: varchar('thumbnail_url', { length: 1000 }),
   version: varchar('version', { length: 32 }).notNull().default('v1'), // 文档版本号（与 pathVersion 不同）

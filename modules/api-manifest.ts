@@ -2,10 +2,13 @@
  * API Manifest · 构建期 Nuxt Module
  *
  * 职责：
- * 1. 扫描 `server/api/v{N}/**`，按 Nitro 文件约定解析出所有 endpoints
+ * 1. 扫描 `server/routes/v{N}/**`，按 Nitro 文件约定解析出所有 endpoints
  * 2. 按 `(pathVersion, code)` 聚合为 ManifestApi[]，其中 code = v{N} 下第一层目录/文件名
  * 3. 通过 Nitro virtual module `#api-manifest` 注入运行时
  * 4. 违反约定（v{N} 下第一层是动态段、v{N}/index.* 等）构建期抛错
+ *
+ * 路径约定：endpoints 直接挂在 /v{N}/<code>/...，**不含 /api/ 前缀**。
+ * 用 `server/routes/` 而非 `server/api/`，是为了规避 Nitro 对后者强制添加 /api 前缀的约束。
  *
  * dev 热更新说明：virtual module 以函数形式提供，理论上每次 import 重算。
  * 实践中新增/删除 endpoint 文件建议重启 `pnpm run dev` 以确保 Nitro 路由与 manifest 一致。
@@ -135,7 +138,7 @@ async function scanDirRecursive(dir: string, ctx: ScanContext): Promise<Manifest
 }
 
 export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
-  const apiDir = join(rootDir, 'server', 'api')
+  const apiDir = join(rootDir, 'server', 'routes')
   if (!existsSync(apiDir)) return []
 
   const topLevel = await readdir(apiDir, { withFileTypes: true })
@@ -153,7 +156,7 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
       if (child.isDirectory()) {
         if (DYNAMIC_PARAM_RE.test(child.name) || CATCH_ALL_RE.test(child.name)) {
           throw new Error(
-            `[api-manifest] 违反约定：server/api/${pathVersion}/${child.name} 不允许动态段；`
+            `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 不允许动态段；`
             + `v{N} 下第一层必须是静态目录或文件（该名字 = apis.code）。`,
           )
         }
@@ -161,7 +164,7 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
         const sourceDir = relative(rootDir, join(versionRoot, code)).split(sep).join('/')
         const endpoints = await scanDirRecursive(join(versionRoot, code), {
           rootDir,
-          basePath: `/api/${pathVersion}/${code}`,
+          basePath: `/${pathVersion}/${code}`,
           paramNames: [],
           hasCatchAllUpstream: false,
         })
@@ -174,18 +177,18 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
         if (!parsed) continue
         if (parsed.baseName === 'index') {
           throw new Error(
-            `[api-manifest] 违反约定：server/api/${pathVersion}/${child.name} 不合法；`
+            `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 不合法；`
             + `请改用子目录或 <code>.<method>.ts 命名。`,
           )
         }
         const fileSeg = parseSegment(parsed.baseName)
         if (fileSeg.paramName) {
           throw new Error(
-            `[api-manifest] 违反约定：server/api/${pathVersion}/${child.name} 第一层是动态段。`,
+            `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 第一层是动态段。`,
           )
         }
         const code = fileSeg.literal
-        const apiPath = `/api/${pathVersion}/${code}`
+        const apiPath = `/${pathVersion}/${code}`
         const endpoint: ManifestEndpoint = {
           apiPath,
           method: parsed.method,

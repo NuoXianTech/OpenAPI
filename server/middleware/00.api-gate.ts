@@ -3,7 +3,7 @@
  *
  * 命名前缀 `00.` 保证字母序最早，先于 api-call-stats 执行。
  *
- * 仅对治理范围内路径（/api/v{N}/**）生效：
+ * 仅对治理范围内路径（/v{N}/**）生效：
  *   1. 提取 (pathVersion, code)
  *   2. 从 manifest 查是否为"已知路由"（兜底，正常情况下必在）
  *   3. 从 DB 查 apis 记录（apiService.loadGuardConfig）→ 不存在返回 403
@@ -14,8 +14,8 @@
  * 非治理路径（/api/auth/**、/api/admin/**、/api/user/**、/api/list 等）完全放行，
  * 不影响现有 api-call-stats 中间件的行为。
  *
- * 拒绝路径统一返回 `{ code, msg, data, timestamp }` 标准结构（通过 report 工具），
- * data 中包含 errorCode 用于前端区分（API_DISABLED / RATE_LIMITED / MISSING_API_KEY 等）。
+ * 拒绝路径统一返回 `{ code, msg, data, timestamp }` 标准结构，data 中包含
+ * errorCode 用于前端区分（API_DISABLED / RATE_LIMITED / MISSING_API_KEY 等）。
  */
 
 import type { H3Event } from 'h3'
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!isGuardedPath(pathname)) return
 
   const m = VERSION_CODE_PATTERN.exec(pathname)
-  if (!m) return // /api/v 但格式异常，放行给 Nitro 处理（一般 404）
+  if (!m) return // /v{N}/ 但格式异常，放行给 Nitro 处理（一般 404）
 
   const pathVersion = m[1]!
   const code = m[2]!
