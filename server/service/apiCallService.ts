@@ -1,5 +1,5 @@
-import { desc, eq, sql } from 'drizzle-orm'
-import { apiCallStats, apiCalls } from '@nuxthub/db/schema'
+import { count, desc, eq, sql } from 'drizzle-orm'
+import { apiCallStats, apiCalls, apis } from '@nuxthub/db/schema'
 
 function getDayStartUtc(value: Date) {
   const start = new Date(value)
@@ -68,6 +68,60 @@ export const apiCallService = {
 
   async listByApi(apiId: number) {
     return db.select().from(apiCalls).where(eq(apiCalls.apiId, apiId)).orderBy(desc(apiCalls.createdAt))
+  },
+
+  /** 用户调用汇总（成功/失败/总数），按 apiCalls.userId 过滤 */
+  async getSummaryForUser(userId: number) {
+    const rows = await db.select({
+      total: count(),
+      success: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`,
+      failure: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`,
+    }).from(apiCalls).where(eq(apiCalls.userId, userId))
+    const r = rows[0] || { total: 0, success: 0, failure: 0 }
+    return {
+      total: Number(r.total) || 0,
+      success: Number(r.success) || 0,
+      failure: Number(r.failure) || 0,
+    }
+  },
+
+  /** 用户按 API 聚合的调用列表，便于 /user/calls 展示 */
+  async listAggregatedByUser(userId: number, limit = 100) {
+    return db.select({
+      apiId: apiCalls.apiId,
+      apiPath: apis.apiPath,
+      apiName: apis.name,
+      httpMethod: apis.httpMethod,
+      totalCount: count(),
+      successCount: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`,
+      failureCount: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`,
+      lastCallAt: sql<Date>`max(${apiCalls.createdAt})`,
+      avgLatencyMs: sql<number>`coalesce(avg(${apiCalls.latencyMs}), 0)`,
+    })
+      .from(apiCalls)
+      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+      .where(eq(apiCalls.userId, userId))
+      .groupBy(apiCalls.apiId, apis.apiPath, apis.name, apis.httpMethod)
+      .orderBy(desc(count()))
+      .limit(limit)
+  },
+
+  /** 用户最近的调用明细，便于 /user/calls 展示 */
+  async listRecentForUser(userId: number, limit = 50) {
+    return db.select({
+      id: apiCalls.id,
+      apiId: apiCalls.apiId,
+      apiPath: apiCalls.path,
+      method: apiCalls.method,
+      statusCode: apiCalls.statusCode,
+      latencyMs: apiCalls.latencyMs,
+      ip: apiCalls.ip,
+      createdAt: apiCalls.createdAt,
+    })
+      .from(apiCalls)
+      .where(eq(apiCalls.userId, userId))
+      .orderBy(desc(apiCalls.createdAt))
+      .limit(limit)
   },
 
   async addCall(data: AddCallInput) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ middleware: 'auth-user' })
+definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 interface Notification {
   id: number
@@ -76,37 +76,21 @@ const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'wa
 }
 
 function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
-    return iso
-  }
+  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
+  catch { return iso }
 }
 
 const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)
 </script>
 
 <template>
-  <ClientOnly>
-    <CommonAppHeader />
-    <main class="mx-auto max-w-275 px-5 pb-10">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold flex items-center gap-2">
-          <UIcon
-            name="i-mdi-bell-outline"
-            class="size-5"
-          />
-          消息通知
-          <UBadge
-            v-if="unreadCount > 0"
-            color="error"
-            variant="subtle"
-          >
-            {{ unreadCount }} 未读
-          </UBadge>
-        </h2>
-        <div class="flex items-center gap-2">
+  <UDashboardPanel id="user-notifications">
+    <template #header>
+      <UDashboardNavbar title="消息通知">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+        <template #right>
           <USwitch
             v-model="onlyUnread"
             label="只看未读"
@@ -129,9 +113,12 @@ const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)
             :loading="loading"
             @click="fetchList"
           />
-        </div>
-      </div>
+          <UserHeaderUser />
+        </template>
+      </UDashboardNavbar>
+    </template>
 
+    <template #body>
       <UCard class="shadow-sm">
         <div
           v-if="loading && items.length === 0"
@@ -214,7 +201,6 @@ const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)
           </button>
         </div>
       </UCard>
-    </main>
-    <CommonAppFooter />
-  </ClientOnly>
+    </template>
+  </UDashboardPanel>
 </template>
