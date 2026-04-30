@@ -1,5 +1,5 @@
-import { count, desc, eq, sql } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apis } from '@nuxthub/db/schema'
+import { count, desc, eq, sql, and } from 'drizzle-orm'
+import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
 
 function getDayStartUtc(value: Date) {
   const start = new Date(value)
@@ -85,43 +85,84 @@ export const apiCallService = {
     }
   },
 
-  /** 用户按 API 聚合的调用列表，便于 /user/calls 展示 */
-  async listAggregatedByUser(userId: number, limit = 100) {
-    return db.select({
-      apiId: apiCalls.apiId,
-      apiPath: apis.apiPath,
-      apiName: apis.name,
-      httpMethod: apis.httpMethod,
-      totalCount: count(),
-      successCount: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`,
-      failureCount: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`,
-      lastCallAt: sql<Date>`max(${apiCalls.createdAt})`,
-      avgLatencyMs: sql<number>`coalesce(avg(${apiCalls.latencyMs}), 0)`,
-    })
-      .from(apiCalls)
-      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-      .where(eq(apiCalls.userId, userId))
-      .groupBy(apiCalls.apiId, apis.apiPath, apis.name, apis.httpMethod)
-      .orderBy(desc(count()))
-      .limit(limit)
+  /**
+   * 用户的可筛选调用日志：按 apiId / apiKeyId / 成功失败 过滤；
+   * join apis & api_keys 携带名称给前端展示。
+   */
+  async listLogForUser(userId: number, opts: {
+    apiId?: number
+    apiKeyId?: number
+    /** 'success' | 'failure' */
+    status?: 'success' | 'failure'
+    limit?: number
+    offset?: number
+  } = {}) {
+    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
+    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const conds = [eq(apiCalls.userId, userId)]
+    if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
+    if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
+    if (opts.status === 'success') {
+      conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
+    }
+    else if (opts.status === 'failure') {
+      conds.push(sql`${apiCalls.statusCode} >= 400`)
+    }
+
+    const [items, totalRows] = await Promise.all([
+      db.select({
+        id: apiCalls.id,
+        apiId: apiCalls.apiId,
+        apiName: apis.name,
+        apiPath: apiCalls.path,
+        method: apiCalls.method,
+        statusCode: apiCalls.statusCode,
+        latencyMs: apiCalls.latencyMs,
+        ip: apiCalls.ip,
+        apiKeyId: apiCalls.apiKeyId,
+        apiKeyName: apiKeys.name,
+        errorCode: apiCalls.errorCode,
+        errorMessage: apiCalls.errorMessage,
+        createdAt: apiCalls.createdAt,
+      })
+        .from(apiCalls)
+        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+        .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+        .where(and(...conds))
+        .orderBy(desc(apiCalls.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() }).from(apiCalls).where(and(...conds)),
+    ])
+
+    return {
+      items,
+      total: Number(totalRows[0]?.value || 0),
+    }
   },
 
-  /** 用户最近的调用明细，便于 /user/calls 展示 */
-  async listRecentForUser(userId: number, limit = 50) {
-    return db.select({
-      id: apiCalls.id,
-      apiId: apiCalls.apiId,
-      apiPath: apiCalls.path,
-      method: apiCalls.method,
-      statusCode: apiCalls.statusCode,
-      latencyMs: apiCalls.latencyMs,
-      ip: apiCalls.ip,
-      createdAt: apiCalls.createdAt,
+  /** 用户视角的筛选选项：他用过的 API 列表 + 自己的 Keys */
+  async listFilterOptionsForUser(userId: number) {
+    const apiOptionsRaw = await db.select({
+      id: apis.id,
+      name: apis.name,
+      apiPath: apis.apiPath,
     })
-      .from(apiCalls)
+      .from(apis)
+      .innerJoin(apiCalls, eq(apiCalls.apiId, apis.id))
       .where(eq(apiCalls.userId, userId))
-      .orderBy(desc(apiCalls.createdAt))
-      .limit(limit)
+      .groupBy(apis.id, apis.name, apis.apiPath)
+      .orderBy(apis.name)
+
+    const keyOptionsRaw = await db.select({
+      id: apiKeys.id,
+      name: apiKeys.name,
+    })
+      .from(apiKeys)
+      .where(eq(apiKeys.userId, userId))
+      .orderBy(desc(apiKeys.createdAt))
+
+    return { apis: apiOptionsRaw, apiKeys: keyOptionsRaw }
   },
 
   async addCall(data: AddCallInput) {

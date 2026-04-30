@@ -178,6 +178,29 @@ CREATE TABLE "friend_links" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "notification_deliveries" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"message_id" integer NOT NULL,
+	"recipient_user_id" integer NOT NULL,
+	"is_read" boolean DEFAULT false NOT NULL,
+	"read_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "notification_messages" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" varchar(200) NOT NULL,
+	"content" text NOT NULL,
+	"level" varchar(20) DEFAULT 'info' NOT NULL,
+	"link_url" varchar(1000),
+	"audience" varchar(20) DEFAULT 'specific' NOT NULL,
+	"recipient_count" integer DEFAULT 0 NOT NULL,
+	"sender_user_id" integer,
+	"sender_actor" varchar(140),
+	"deleted_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "oauth_accounts" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -272,6 +295,7 @@ CREATE TABLE "site_settings" (
 	"turnstile_register_enabled" boolean DEFAULT true NOT NULL,
 	"turnstile_admin_login_enabled" boolean DEFAULT true NOT NULL,
 	"turnstile_public_stats_enabled" boolean DEFAULT false NOT NULL,
+	"announcement_show_on_home" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "site_settings_scope_unique" UNIQUE("scope")
@@ -330,6 +354,9 @@ ALTER TABLE "apis" ADD CONSTRAINT "apis_updated_by_users_id_fk" FOREIGN KEY ("up
 ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "fab_menu_items" ADD CONSTRAINT "fab_menu_items_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "friend_links" ADD CONSTRAINT "friend_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_message_id_notification_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_recipient_user_id_users_id_fk" FOREIGN KEY ("recipient_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "notification_messages" ADD CONSTRAINT "notification_messages_sender_user_id_users_id_fk" FOREIGN KEY ("sender_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operation_logs" ADD CONSTRAINT "operation_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -360,6 +387,11 @@ CREATE INDEX "api_lists_deleted_at_idx" ON "apis" USING btree ("deleted_at");-->
 CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_version","is_enabled");--> statement-breakpoint
 CREATE INDEX "fab_menu_items_active_sort_idx" ON "fab_menu_items" USING btree ("is_active","sort");--> statement-breakpoint
 CREATE INDEX "friend_links_active_sort_idx" ON "friend_links" USING btree ("is_active","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint
+CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliveries" USING btree ("recipient_user_id","created_at");--> statement-breakpoint
+CREATE INDEX "notification_deliveries_user_unread_idx" ON "notification_deliveries" USING btree ("recipient_user_id","is_read");--> statement-breakpoint
+CREATE INDEX "notification_messages_audience_idx" ON "notification_messages" USING btree ("audience");--> statement-breakpoint
+CREATE INDEX "notification_messages_created_at_idx" ON "notification_messages" USING btree ("created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "oauth_accounts_provider_pid_uq" ON "oauth_accounts" USING btree ("provider","provider_user_id");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_user_idx" ON "oauth_accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_provider_idx" ON "oauth_accounts" USING btree ("provider");--> statement-breakpoint

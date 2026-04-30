@@ -19,8 +19,8 @@ const mainLinks = [[
     to: '/user/apikeys',
   },
   {
-    label: '调用统计',
-    icon: 'i-mdi-chart-bar',
+    label: '调用日志',
+    icon: 'i-mdi-history',
     to: '/user/calls',
   },
 ]] satisfies NavigationMenuItem[][]

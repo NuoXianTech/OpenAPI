@@ -1,17 +1,15 @@
 import type { H3Event } from 'h3'
 import { createError, readBody } from 'h3'
-import { notificationService, type NotificationLevel } from '~~/server/service/notificationService'
-import { usersService } from '~~/server/service/userService'
+import { notificationService, type NotificationAudience, type NotificationLevel } from '~~/server/service/notificationService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
 
 const VALID_LEVELS: NotificationLevel[] = ['info', 'success', 'warning', 'critical']
+const VALID_AUDIENCES: NotificationAudience[] = ['specific', 'all_current', 'all_with_future']
 
 interface SendBody {
-  /** 收件人列表；与 broadcast=true 互斥 */
+  audience?: NotificationAudience
   recipientUserIds?: number[]
-  /** 群发开关：true 时忽略 recipientUserIds，发送给所有未删除用户 */
-  broadcast?: boolean
   title?: string
   content?: string
   level?: NotificationLevel
@@ -24,38 +22,24 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const title = (body.title || '').toString().trim()
   const content = (body.content || '').toString()
-  if (!title || !content) {
-    throw createError({ statusCode: 400, message: 'title 与 content 必填' })
-  }
-  if (title.length > 200) {
-    throw createError({ statusCode: 400, message: 'title 过长（最多 200 字）' })
-  }
+  if (!title || !content) throw createError({ statusCode: 400, message: 'title 与 content 必填' })
+  if (title.length > 200) throw createError({ statusCode: 400, message: 'title 过长（最多 200 字）' })
+
+  const audience: NotificationAudience = VALID_AUDIENCES.includes(body.audience as NotificationAudience)
+    ? body.audience as NotificationAudience
+    : 'specific'
 
   const level: NotificationLevel = VALID_LEVELS.includes(body.level as NotificationLevel)
     ? body.level as NotificationLevel
     : 'info'
 
-  let recipientIds: number[] = []
-  if (body.broadcast) {
-    const allUsers = await usersService.list()
-    recipientIds = allUsers
-      .filter(u => !u.deletedAt && !u.isBanned)
-      .map(u => u.id)
-  }
-  else {
-    const raw = Array.isArray(body.recipientUserIds) ? body.recipientUserIds : []
-    const cleaned = Array.from(new Set(raw.map(Number).filter(n => Number.isFinite(n) && n > 0)))
-    if (cleaned.length === 0) {
-      throw createError({ statusCode: 400, message: '请选择至少一个收件人或开启广播' })
-    }
-    recipientIds = await notificationService.filterValidUserIds(cleaned)
-    if (recipientIds.length === 0) {
-      throw createError({ statusCode: 400, message: '所选用户均不存在或已删除' })
-    }
+  if (audience === 'specific' && (!Array.isArray(body.recipientUserIds) || body.recipientUserIds.length === 0)) {
+    throw createError({ statusCode: 400, message: '请选择至少一个收件人或改为全员发送' })
   }
 
   const result = await notificationService.send({
-    recipientUserIds: recipientIds,
+    audience,
+    recipientUserIds: body.recipientUserIds,
     title,
     content,
     level,
@@ -68,13 +52,13 @@ export default defineEventHandler(async (event: H3Event) => {
     actor: admin.username,
     actorType: 'admin',
     action: 'admin.notification.send',
-    resourceType: 'notification',
-    resourceId: result.batchId || '',
+    resourceType: 'notification_message',
+    resourceId: String(result.message.id),
     detail: {
       title,
       level,
-      recipientCount: result.inserted,
-      broadcast: !!body.broadcast,
+      audience,
+      deliveredCount: result.deliveredCount,
     },
   })
 

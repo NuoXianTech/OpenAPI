@@ -1,147 +1,215 @@
-import { and, count, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { notifications, users } from '@nuxthub/db/schema'
-import { randomUUID } from 'node:crypto'
+import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
 
 export type NotificationLevel = 'info' | 'success' | 'warning' | 'critical'
+export type NotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
 export interface SendNotificationInput {
-  recipientUserIds: number[]
   title: string
   content: string
   level?: NotificationLevel
   linkUrl?: string | null
+  audience: NotificationAudience
+  /** audience='specific' 时必填；其他值忽略 */
+  recipientUserIds?: number[]
   senderUserId?: number | null
   senderActor?: string | null
 }
 
+async function listActiveUserIds(): Promise<number[]> {
+  const rows = await db.select({ id: users.id }).from(users)
+    .where(and(
+      isNull(users.deletedAt),
+      eq(users.isActive, true),
+      eq(users.isBanned, false),
+    ))
+  return rows.map(r => r.id)
+}
+
 export const notificationService = {
   /**
-   * 群发：按 userIds 展开为多条记录，所有记录共用同一 batchId 便于 admin 聚合查看。
-   * "广播全部活跃用户"由调用方先查 users 列表再传 ids。
+   * 创建一条 message + 立即投递。
+   * 'specific' 仅给传入 ids；'all_current' / 'all_with_future' 立刻 fan-out 到全部活跃用户；
+   * 'all_with_future' 还会被 userService.activateUser 在新用户激活时补发（见下面 fanOutFutureMessagesTo）。
    */
   async send(input: SendNotificationInput) {
-    if (input.recipientUserIds.length === 0) return { batchId: null, inserted: 0 }
-    const batchId = randomUUID()
-    const rows = input.recipientUserIds.map(uid => ({
-      batchId,
-      recipientUserId: uid,
-      senderUserId: input.senderUserId ?? null,
-      senderActor: input.senderActor ?? null,
+    let recipientIds: number[] = []
+    if (input.audience === 'specific') {
+      const ids = Array.from(new Set((input.recipientUserIds || []).map(Number).filter(n => Number.isFinite(n) && n > 0)))
+      if (ids.length === 0) throw new Error('specific audience requires recipientUserIds')
+      // 过滤为存在且未删除的 users
+      const valid = await db.select({ id: users.id }).from(users)
+        .where(and(inArray(users.id, ids), isNull(users.deletedAt)))
+      recipientIds = valid.map(r => r.id)
+    }
+    else {
+      recipientIds = await listActiveUserIds()
+    }
+
+    const inserted = await db.insert(notificationMessages).values({
       title: input.title,
       content: input.content,
       level: input.level || 'info',
       linkUrl: input.linkUrl ?? null,
-    }))
-    const inserted = await db.insert(notifications).values(rows).returning({ id: notifications.id })
-    return { batchId, inserted: inserted.length }
+      audience: input.audience,
+      recipientCount: recipientIds.length,
+      senderUserId: input.senderUserId ?? null,
+      senderActor: input.senderActor ?? null,
+    }).returning()
+    const message = inserted[0]
+    if (!message) throw new Error('failed to insert notification message')
+
+    if (recipientIds.length > 0) {
+      await db.insert(notificationDeliveries).values(
+        recipientIds.map(uid => ({ messageId: message.id, recipientUserId: uid })),
+      ).onConflictDoNothing({
+        target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId],
+      })
+    }
+
+    return { message, deliveredCount: recipientIds.length }
   },
 
+  /**
+   * 在用户激活时补发 audience='all_with_future' 的全部历史消息。
+   * 用 ON CONFLICT DO NOTHING 保证幂等（重复激活不会重复投递）。
+   */
+  async fanOutFutureMessagesTo(userId: number) {
+    const messages = await db.select({ id: notificationMessages.id }).from(notificationMessages)
+      .where(and(
+        eq(notificationMessages.audience, 'all_with_future'),
+        isNull(notificationMessages.deletedAt),
+      ))
+    if (messages.length === 0) return 0
+
+    await db.insert(notificationDeliveries).values(
+      messages.map(m => ({ messageId: m.id, recipientUserId: userId })),
+    ).onConflictDoNothing({
+      target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId],
+    })
+    return messages.length
+  },
+
+  /** 用户视角列表（join message，过滤被管理员删除的 message） */
   async listForUser(userId: number, opts: { limit?: number, offset?: number, onlyUnread?: boolean } = {}) {
     const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
     const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
     const conds = [
-      eq(notifications.recipientUserId, userId),
-      isNull(notifications.deletedAt),
+      eq(notificationDeliveries.recipientUserId, userId),
+      isNull(notificationMessages.deletedAt),
     ]
-    if (opts.onlyUnread) conds.push(eq(notifications.isRead, false))
-    return db.select().from(notifications)
+    if (opts.onlyUnread) conds.push(eq(notificationDeliveries.isRead, false))
+
+    return db.select({
+      id: notificationDeliveries.id,
+      messageId: notificationMessages.id,
+      title: notificationMessages.title,
+      content: notificationMessages.content,
+      level: notificationMessages.level,
+      linkUrl: notificationMessages.linkUrl,
+      senderActor: notificationMessages.senderActor,
+      isRead: notificationDeliveries.isRead,
+      readAt: notificationDeliveries.readAt,
+      createdAt: notificationDeliveries.createdAt,
+    })
+      .from(notificationDeliveries)
+      .innerJoin(notificationMessages, eq(notificationMessages.id, notificationDeliveries.messageId))
       .where(and(...conds))
-      .orderBy(desc(notifications.createdAt))
+      .orderBy(desc(notificationDeliveries.createdAt))
       .limit(limit)
       .offset(offset)
   },
 
   async unreadCountForUser(userId: number) {
-    const rows = await db.select({ value: count() }).from(notifications)
+    const rows = await db.select({ value: count() })
+      .from(notificationDeliveries)
+      .innerJoin(notificationMessages, eq(notificationMessages.id, notificationDeliveries.messageId))
       .where(and(
-        eq(notifications.recipientUserId, userId),
-        eq(notifications.isRead, false),
-        isNull(notifications.deletedAt),
+        eq(notificationDeliveries.recipientUserId, userId),
+        eq(notificationDeliveries.isRead, false),
+        isNull(notificationMessages.deletedAt),
       ))
     return Number(rows[0]?.value || 0)
   },
 
-  async markRead(userId: number, id: number) {
-    const res = await db.update(notifications)
+  async markRead(userId: number, deliveryId: number) {
+    const res = await db.update(notificationDeliveries)
       .set({ isRead: true, readAt: new Date() })
       .where(and(
-        eq(notifications.id, id),
-        eq(notifications.recipientUserId, userId),
-        eq(notifications.isRead, false),
+        eq(notificationDeliveries.id, deliveryId),
+        eq(notificationDeliveries.recipientUserId, userId),
+        eq(notificationDeliveries.isRead, false),
       ))
       .returning()
     return res[0] || null
   },
 
   async markAllRead(userId: number) {
-    const res = await db.update(notifications)
+    const res = await db.update(notificationDeliveries)
       .set({ isRead: true, readAt: new Date() })
       .where(and(
-        eq(notifications.recipientUserId, userId),
-        eq(notifications.isRead, false),
-        isNull(notifications.deletedAt),
+        eq(notificationDeliveries.recipientUserId, userId),
+        eq(notificationDeliveries.isRead, false),
       ))
-      .returning({ id: notifications.id })
+      .returning({ id: notificationDeliveries.id })
     return res.length
   },
 
-  async softDelete(userId: number, id: number) {
-    const res = await db.update(notifications)
-      .set({ deletedAt: new Date() })
-      .where(and(
-        eq(notifications.id, id),
-        eq(notifications.recipientUserId, userId),
-      ))
-      .returning()
-    return res[0] || null
-  },
+  // ---------- Admin ----------
 
-  /**
-   * Admin 聚合视图：按 batchId 分组，便于查看群发批次。
-   * 没有 batchId 的（旧/异常数据）按单条返回。
-   */
-  async listBatchesForAdmin(opts: { limit?: number, offset?: number } = {}) {
+  /** Admin 列表：每条 message + 当前已投递数 + 已读数 */
+  async listMessagesForAdmin(opts: { limit?: number, offset?: number } = {}) {
     const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
     const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
-    // 取每个 batch 的代表行（最早一条）+ 总数 + 已读数
-    const rows = await db.select({
-      batchId: notifications.batchId,
-      title: notifications.title,
-      level: notifications.level,
-      senderActor: notifications.senderActor,
-      createdAt: notifications.createdAt,
-      total: count(notifications.id),
+
+    return db.select({
+      id: notificationMessages.id,
+      title: notificationMessages.title,
+      level: notificationMessages.level,
+      audience: notificationMessages.audience,
+      recipientCount: notificationMessages.recipientCount,
+      senderActor: notificationMessages.senderActor,
+      createdAt: notificationMessages.createdAt,
+      deletedAt: notificationMessages.deletedAt,
+      deliveredCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id})`,
+      readCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id} and ${notificationDeliveries.isRead} = true)`,
     })
-      .from(notifications)
-      .where(isNull(notifications.deletedAt))
-      .groupBy(notifications.batchId, notifications.title, notifications.level, notifications.senderActor, notifications.createdAt)
-      .orderBy(desc(notifications.createdAt))
+      .from(notificationMessages)
+      .where(isNull(notificationMessages.deletedAt))
+      .orderBy(desc(notificationMessages.createdAt))
       .limit(limit)
       .offset(offset)
-    return rows
   },
 
-  async getBatchDetail(batchId: string) {
-    const rows = await db.select({
-      id: notifications.id,
-      recipientUserId: notifications.recipientUserId,
+  async getMessageDetail(messageId: number) {
+    const messageRows = await db.select().from(notificationMessages)
+      .where(eq(notificationMessages.id, messageId))
+      .limit(1)
+    const message = messageRows[0] || null
+    if (!message) return { message: null, deliveries: [] }
+
+    const deliveries = await db.select({
+      id: notificationDeliveries.id,
+      recipientUserId: notificationDeliveries.recipientUserId,
       recipientUsername: users.username,
-      isRead: notifications.isRead,
-      readAt: notifications.readAt,
-      createdAt: notifications.createdAt,
+      isRead: notificationDeliveries.isRead,
+      readAt: notificationDeliveries.readAt,
+      createdAt: notificationDeliveries.createdAt,
     })
-      .from(notifications)
-      .leftJoin(users, eq(users.id, notifications.recipientUserId))
-      .where(and(eq(notifications.batchId, batchId), isNull(notifications.deletedAt)))
-      .orderBy(desc(notifications.createdAt))
-    return rows
+      .from(notificationDeliveries)
+      .leftJoin(users, eq(users.id, notificationDeliveries.recipientUserId))
+      .where(eq(notificationDeliveries.messageId, messageId))
+      .orderBy(desc(notificationDeliveries.createdAt))
+
+    return { message, deliveries }
   },
 
-  /** 给定 userIds 列表，过滤出实际存在且未被软删的用户 id */
-  async filterValidUserIds(userIds: number[]) {
-    if (userIds.length === 0) return []
-    const rows = await db.select({ id: users.id }).from(users)
-      .where(and(inArray(users.id, userIds), isNull(users.deletedAt)))
-    return rows.map(r => r.id)
+  /** Admin 软删除消息：标记 deletedAt → 用户列表自动过滤；保留发送历史可审计 */
+  async softDeleteMessage(messageId: number) {
+    const res = await db.update(notificationMessages)
+      .set({ deletedAt: new Date() })
+      .where(eq(notificationMessages.id, messageId))
+      .returning()
+    return res[0] || null
   },
 }

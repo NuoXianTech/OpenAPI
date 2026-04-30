@@ -34,7 +34,7 @@ const mainLinks = [[
     to: '/admin/announcements',
   },
   {
-    label: '通知中心',
+    label: '通知管理',
     icon: 'i-mdi-bell-outline',
     to: '/admin/notifications',
   },

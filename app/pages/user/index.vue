@@ -3,8 +3,8 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const { user } = useAuth()
 
-const { data: callsData } = await useFetch('/api/user/calls/stats', {
-  default: () => ({ code: 0, msg: '', data: { summary: { total: 0, success: 0, failure: 0 }, byApi: [], recent: [] } }),
+const { data: callsData } = await useFetch('/api/user/calls/summary', {
+  default: () => ({ code: 0, msg: '', data: { total: 0, success: 0, failure: 0 } }),
 })
 const { data: keysData } = await useFetch('/api/user/apikeys/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, isActive: boolean }> }),
@@ -17,7 +17,7 @@ const { data: notifData } = await useFetch('/api/notifications/list', {
   query: { limit: 5 },
 })
 
-const summary = computed(() => callsData.value?.data?.summary || { total: 0, success: 0, failure: 0 })
+const summary = computed(() => callsData.value?.data || { total: 0, success: 0, failure: 0 })
 const successRate = computed(() => {
   if (!summary.value.total) return '0%'
   return `${((summary.value.success / summary.value.total) * 100).toFixed(1)}%`

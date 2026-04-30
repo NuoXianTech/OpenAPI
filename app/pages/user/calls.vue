@@ -3,54 +3,113 @@ import type { TableColumn } from '@nuxt/ui'
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
-interface Summary { total: number, success: number, failure: number }
-interface ByApiRow {
-  apiId: number
-  apiPath: string | null
-  apiName: string | null
-  httpMethod: string | null
-  totalCount: number
-  successCount: number
-  failureCount: number
-  lastCallAt: string | null
-  avgLatencyMs: number | string
-}
-interface RecentRow {
+interface LogRow {
   id: number
   apiId: number
+  apiName: string | null
   apiPath: string
   method: string
   statusCode: number
   latencyMs: number
   ip: string | null
+  apiKeyId: number | null
+  apiKeyName: string | null
+  errorCode: string | null
+  errorMessage: string | null
   createdAt: string
+}
+
+interface ListResp { code: number, msg: string, data: { items: LogRow[], total: number } }
+interface FiltersResp {
+  code: number
+  msg: string
+  data: {
+    apis: Array<{ id: number, name: string, apiPath: string }>
+    apiKeys: Array<{ id: number, name: string }>
+  }
 }
 
 const UBadge = resolveComponent('UBadge')
 
-const { data, status, refresh } = await useFetch('/api/user/calls/stats', {
-  default: () => ({ code: 0, msg: '', data: { summary: { total: 0, success: 0, failure: 0 } as Summary, byApi: [] as ByApiRow[], recent: [] as RecentRow[] } }),
+const filters = reactive({
+  apiId: 0,
+  apiKeyId: 0,
+  status: '' as '' | 'success' | 'failure',
 })
+const page = ref(1)
+const pageSize = ref(50)
 
-const summary = computed<Summary>(() => data.value?.data?.summary || { total: 0, success: 0, failure: 0 })
-const byApi = computed<ByApiRow[]>(() => data.value?.data?.byApi || [])
-const recent = computed<RecentRow[]>(() => data.value?.data?.recent || [])
+const items = ref<LogRow[]>([])
+const total = ref(0)
+const loading = ref(false)
 
-const successRate = computed(() => {
-  if (!summary.value.total) return '0%'
-  return `${((summary.value.success / summary.value.total) * 100).toFixed(1)}%`
-})
+const filterOptions = ref<FiltersResp['data']>({ apis: [], apiKeys: [] })
 
-const overviewCards = computed(() => [
-  { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line' },
-  { label: '成功', value: summary.value.success.toLocaleString(), icon: 'i-mdi-check-circle-outline' },
-  { label: '失败', value: summary.value.failure.toLocaleString(), icon: 'i-mdi-alert-circle-outline' },
-  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent' },
+const apiSelectItems = computed(() => [
+  { label: '全部 API', value: 0 },
+  ...filterOptions.value.apis.map(a => ({
+    label: `${a.name} (${a.apiPath})`,
+    value: a.id,
+  })),
 ])
+const keySelectItems = computed(() => [
+  { label: '全部 Key', value: 0 },
+  ...filterOptions.value.apiKeys.map(k => ({ label: k.name || `#${k.id}`, value: k.id })),
+])
+const statusSelectItems = [
+  { label: '全部状态', value: '' },
+  { label: '成功（2xx/3xx）', value: 'success' },
+  { label: '失败（4xx/5xx）', value: 'failure' },
+]
 
-function formatDate(val: string | null) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+async function loadFilters() {
+  const res = await $fetch<FiltersResp>('/api/user/calls/filters')
+  filterOptions.value = res.data || { apis: [], apiKeys: [] }
+}
+
+async function fetchList() {
+  loading.value = true
+  try {
+    const res = await $fetch<ListResp>('/api/user/calls/list', {
+      query: {
+        apiId: filters.apiId || undefined,
+        apiKeyId: filters.apiKeyId || undefined,
+        status: filters.status || undefined,
+        limit: pageSize.value,
+        offset: (page.value - 1) * pageSize.value,
+      },
+    })
+    items.value = res.data?.items || []
+    total.value = res.data?.total || 0
+  }
+  finally {
+    loading.value = false
+  }
+}
+
+function applyFilters() {
+  page.value = 1
+  void fetchList()
+}
+
+function resetFilters() {
+  filters.apiId = 0
+  filters.apiKeyId = 0
+  filters.status = ''
+  page.value = 1
+  void fetchList()
+}
+
+watch(page, () => { void fetchList() })
+
+onMounted(async () => {
+  await loadFilters()
+  await fetchList()
+})
+
+function formatDate(iso: string) {
+  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
+  catch { return iso }
 }
 
 function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {
@@ -71,52 +130,11 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
   }
 }
 
-const byApiColumns: TableColumn<ByApiRow>[] = [
-  {
-    accessorKey: 'apiName',
-    header: '接口',
-    cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
-      h('span', { class: 'font-medium' }, row.original.apiName || `#${row.original.apiId}`),
-      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath || '-'),
-    ]),
-  },
-  {
-    accessorKey: 'totalCount',
-    header: '总数',
-    cell: ({ row }) => h('span', { class: 'tabular-nums font-medium' }, row.original.totalCount?.toLocaleString()),
-  },
-  {
-    accessorKey: 'successCount',
-    header: '成功',
-    cell: ({ row }) => h(UBadge, { color: 'success', variant: 'subtle' }, () => (row.original.successCount || 0).toLocaleString()),
-  },
-  {
-    accessorKey: 'failureCount',
-    header: '失败',
-    cell: ({ row }) => {
-      const c = row.original.failureCount || 0
-      return c > 0
-        ? h(UBadge, { color: 'error', variant: 'subtle' }, () => c.toLocaleString())
-        : h('span', { class: 'text-muted' }, '0')
-    },
-  },
-  {
-    accessorKey: 'avgLatencyMs',
-    header: '平均耗时',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${Math.round(Number(row.original.avgLatencyMs) || 0)} ms`),
-  },
-  {
-    accessorKey: 'lastCallAt',
-    header: '最近调用',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.lastCallAt)),
-  },
-]
-
-const recentColumns: TableColumn<RecentRow>[] = [
+const columns: TableColumn<LogRow>[] = [
   {
     accessorKey: 'createdAt',
     header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt)),
   },
   {
     accessorKey: 'method',
@@ -128,17 +146,25 @@ const recentColumns: TableColumn<RecentRow>[] = [
     }, () => row.original.method),
   },
   {
-    accessorKey: 'apiPath',
-    header: '路径',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.apiPath),
+    accessorKey: 'apiName',
+    header: '服务',
+    cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
+      h('span', { class: 'font-medium text-sm' }, row.original.apiName || '-'),
+      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath),
+    ]),
   },
   {
     accessorKey: 'statusCode',
     header: '状态',
-    cell: ({ row }) => h(UBadge, {
-      color: statusColor(row.original.statusCode),
-      variant: 'subtle',
-    }, () => row.original.statusCode),
+    cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
+      h(UBadge, {
+        color: statusColor(row.original.statusCode),
+        variant: 'subtle',
+      }, () => row.original.statusCode),
+      row.original.statusCode >= 200 && row.original.statusCode < 400
+        ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
+        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败'),
+    ]),
   },
   {
     accessorKey: 'latencyMs',
@@ -146,17 +172,36 @@ const recentColumns: TableColumn<RecentRow>[] = [
     cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`),
   },
   {
+    accessorKey: 'apiKeyName',
+    header: 'API Key',
+    cell: ({ row }) => row.original.apiKeyId
+      ? h('span', { class: 'text-xs' }, row.original.apiKeyName || `#${row.original.apiKeyId}`)
+      : h('span', { class: 'text-xs text-muted italic' }, '未携带'),
+  },
+  {
     accessorKey: 'ip',
     header: 'IP',
     cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-'),
   },
+  {
+    id: 'error',
+    header: '错误信息',
+    cell: ({ row }) => row.original.errorCode || row.original.errorMessage
+      ? h('div', { class: 'flex flex-col text-xs' }, [
+          row.original.errorCode ? h('span', { class: 'font-mono text-error' }, row.original.errorCode) : null,
+          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null,
+        ].filter(Boolean))
+      : h('span', { class: 'text-muted' }, '-'),
+  },
 ]
+
+const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 </script>
 
 <template>
   <UDashboardPanel id="user-calls">
     <template #header>
-      <UDashboardNavbar title="调用统计">
+      <UDashboardNavbar title="调用日志">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -165,8 +210,8 @@ const recentColumns: TableColumn<RecentRow>[] = [
             variant="ghost"
             color="neutral"
             icon="i-mdi-refresh"
-            :loading="status === 'pending'"
-            @click="refresh()"
+            :loading="loading"
+            @click="fetchList"
           />
           <UserHeaderUser />
         </template>
@@ -174,54 +219,52 @@ const recentColumns: TableColumn<RecentRow>[] = [
     </template>
 
     <template #body>
-      <div class="space-y-6">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <UCard
-            v-for="card in overviewCards"
-            :key="card.label"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted">
-                  {{ card.label }}
-                </p>
-                <p class="text-2xl font-semibold tabular-nums mt-1">
-                  {{ card.value }}
-                </p>
-              </div>
-              <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
-                <UIcon
-                  :name="card.icon"
-                  class="size-5 text-muted"
-                />
-              </div>
-            </div>
-          </UCard>
-        </div>
-
+      <div class="space-y-4">
         <UCard>
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-chart-bar"
-                class="size-5 text-muted"
+          <div class="flex flex-wrap items-end gap-3">
+            <UFormField
+              label="服务（API）"
+              class="min-w-[220px] flex-1"
+            >
+              <USelect
+                v-model="filters.apiId"
+                :items="apiSelectItems"
               />
-              <h3 class="font-semibold">
-                各接口调用汇总
-              </h3>
+            </UFormField>
+            <UFormField
+              label="API Key"
+              class="min-w-[180px]"
+            >
+              <USelect
+                v-model="filters.apiKeyId"
+                :items="keySelectItems"
+              />
+            </UFormField>
+            <UFormField
+              label="状态"
+              class="min-w-[160px]"
+            >
+              <USelect
+                v-model="filters.status"
+                :items="statusSelectItems"
+              />
+            </UFormField>
+            <div class="flex gap-2">
+              <UButton
+                icon="i-mdi-magnify"
+                @click="applyFilters"
+              >
+                查询
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                @click="resetFilters"
+              >
+                重置
+              </UButton>
             </div>
-          </template>
-          <UTable
-            :data="byApi"
-            :columns="byApiColumns"
-            :loading="status === 'pending'"
-            :ui="{
-              base: 'table-fixed',
-              thead: '[&>tr]:bg-elevated/50',
-              th: 'py-2',
-              td: 'py-2',
-            }"
-          />
+          </div>
         </UCard>
 
         <UCard>
@@ -232,24 +275,54 @@ const recentColumns: TableColumn<RecentRow>[] = [
                 class="size-5 text-muted"
               />
               <h3 class="font-semibold">
-                最近调用
+                调用日志
               </h3>
-              <span class="ml-auto text-xs text-muted">
-                显示最近 50 条
+              <span class="ml-auto text-xs text-muted tabular-nums">
+                共 {{ total.toLocaleString() }} 条
               </span>
             </div>
           </template>
           <UTable
-            :data="recent"
-            :columns="recentColumns"
-            :loading="status === 'pending'"
+            :data="items"
+            :columns="columns"
+            :loading="loading"
             :ui="{
               base: 'table-fixed',
               thead: '[&>tr]:bg-elevated/50',
               th: 'py-2',
-              td: 'py-2',
+              td: 'py-2 align-middle',
             }"
           />
+          <div
+            v-if="total > pageSize"
+            class="flex items-center justify-between pt-3 border-t border-default mt-3"
+          >
+            <span class="text-xs text-muted">
+              第 {{ page }} / {{ totalPages }} 页
+            </span>
+            <div class="flex gap-2">
+              <UButton
+                size="sm"
+                color="neutral"
+                variant="outline"
+                icon="i-mdi-chevron-left"
+                :disabled="page <= 1"
+                @click="page = Math.max(1, page - 1)"
+              >
+                上一页
+              </UButton>
+              <UButton
+                size="sm"
+                color="neutral"
+                variant="outline"
+                trailing-icon="i-mdi-chevron-right"
+                :disabled="page >= totalPages"
+                @click="page = Math.min(totalPages, page + 1)"
+              >
+                下一页
+              </UButton>
+            </div>
+          </div>
         </UCard>
       </div>
     </template>

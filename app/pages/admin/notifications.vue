@@ -13,13 +13,16 @@ interface UserItem {
   deletedAt: string | null
 }
 
-interface BatchRow {
-  batchId: string | null
+interface MessageRow {
+  id: number
   title: string
   level: 'info' | 'success' | 'warning' | 'critical'
+  audience: 'specific' | 'all_current' | 'all_with_future'
+  recipientCount: number
   senderActor: string | null
   createdAt: string
-  total: number
+  deliveredCount: number
+  readCount: number
 }
 
 const toast = useToast()
@@ -29,14 +32,14 @@ const { data: usersData } = await useFetch('/api/admin/users/list', {
 })
 const users = computed(() => (usersData.value?.data || []).filter(u => !u.deletedAt && !u.isBanned))
 
-const { data: batchesData, status, refresh } = await useFetch('/api/admin/notifications/list', {
-  default: () => ({ code: 0, msg: '', data: [] as BatchRow[] }),
+const { data: messagesData, status, refresh } = await useFetch('/api/admin/notifications/list', {
+  default: () => ({ code: 0, msg: '', data: [] as MessageRow[] }),
 })
-const batches = computed<BatchRow[]>(() => batchesData.value?.data || [])
+const messages = computed<MessageRow[]>(() => messagesData.value?.data || [])
 
 // ----- 撰写表单 -----
 const form = reactive({
-  broadcast: false,
+  audience: 'specific' as MessageRow['audience'],
   recipientUserIds: [] as number[],
   title: '',
   content: '',
@@ -50,6 +53,12 @@ const userOptions = computed(() => users.value.map(u => ({
   value: u.id,
 })))
 
+const audienceOptions = [
+  { label: '指定用户（仅选中收件人）', value: 'specific' },
+  { label: '当前所有用户（不含未来注册）', value: 'all_current' },
+  { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' },
+]
+
 const levelOptions = [
   { label: '通知 (info)', value: 'info' },
   { label: '成功 (success)', value: 'success' },
@@ -62,8 +71,8 @@ async function submitSend() {
     toast.add({ title: '标题和内容必填', color: 'warning' })
     return
   }
-  if (!form.broadcast && form.recipientUserIds.length === 0) {
-    toast.add({ title: '请选择收件人或开启广播', color: 'warning' })
+  if (form.audience === 'specific' && form.recipientUserIds.length === 0) {
+    toast.add({ title: '请选择收件人或改为全员发送', color: 'warning' })
     return
   }
   sending.value = true
@@ -71,20 +80,20 @@ async function submitSend() {
     const res: any = await $fetch('/api/admin/notifications/send', {
       method: 'POST',
       body: {
-        broadcast: form.broadcast,
-        recipientUserIds: form.broadcast ? [] : form.recipientUserIds,
+        audience: form.audience,
+        recipientUserIds: form.audience === 'specific' ? form.recipientUserIds : [],
         title: form.title.trim(),
         content: form.content,
         level: form.level,
         linkUrl: form.linkUrl.trim() || null,
       },
     })
-    toast.add({ title: `已发送至 ${res?.data?.inserted ?? 0} 位用户`, color: 'success' })
+    toast.add({ title: `已发送（投递 ${res?.data?.deliveredCount ?? 0} 人）`, color: 'success' })
     form.title = ''
     form.content = ''
     form.linkUrl = ''
     form.recipientUserIds = []
-    form.broadcast = false
+    form.audience = 'specific'
     await refresh()
   }
   catch (err: any) {
@@ -95,31 +104,67 @@ async function submitSend() {
   }
 }
 
-// ----- 批次详情 -----
+// ----- 详情 -----
 const detailOpen = ref(false)
 const detailLoading = ref(false)
+const detailMessage = ref<MessageRow | null>(null)
 const detailRows = ref<Array<{ id: number, recipientUserId: number, recipientUsername: string | null, isRead: boolean, readAt: string | null, createdAt: string }>>([])
-const detailBatch = ref<BatchRow | null>(null)
 
-async function openDetail(row: BatchRow) {
-  if (!row.batchId) return
-  detailBatch.value = row
+async function openDetail(row: MessageRow) {
+  detailMessage.value = row
   detailOpen.value = true
   detailLoading.value = true
   try {
-    const res: any = await $fetch('/api/admin/notifications/detail', { query: { batchId: row.batchId } })
-    detailRows.value = res?.data || []
+    const res: any = await $fetch('/api/admin/notifications/detail', { query: { messageId: row.id } })
+    detailRows.value = res?.data?.deliveries || []
   }
   finally {
     detailLoading.value = false
   }
 }
 
-const levelMeta: Record<BatchRow['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
+// ----- 删除 -----
+const deleteOpen = ref(false)
+const deleteTarget = ref<MessageRow | null>(null)
+const deleteLoading = ref(false)
+
+function openDelete(row: MessageRow) {
+  deleteTarget.value = row
+  deleteOpen.value = true
+}
+
+async function confirmDelete() {
+  if (!deleteTarget.value) return
+  deleteLoading.value = true
+  try {
+    await $fetch('/api/admin/notifications/delete', {
+      method: 'POST',
+      body: { messageId: deleteTarget.value.id },
+    })
+    toast.add({ title: '已删除', color: 'success' })
+    deleteOpen.value = false
+    await refresh()
+  }
+  catch (err: any) {
+    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  }
+  finally {
+    deleteLoading.value = false
+  }
+}
+
+// ----- 渲染辅助 -----
+const levelMeta: Record<MessageRow['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
   info: { color: 'info', label: '通知' },
   success: { color: 'success', label: '成功' },
   warning: { color: 'warning', label: '提醒' },
   critical: { color: 'error', label: '紧急' },
+}
+
+const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' | 'warning', label: string }> = {
+  specific: { color: 'neutral', label: '指定' },
+  all_current: { color: 'info', label: '全员' },
+  all_with_future: { color: 'warning', label: '全员+未来' },
 }
 
 function formatDate(iso: string | null) {
@@ -132,29 +177,38 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-function getRowItems(row: BatchRow): DropdownMenuItem[] {
+function getRowItems(row: MessageRow): DropdownMenuItem[] {
   return [
-    { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => openDetail(row), disabled: !row.batchId },
+    { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => openDetail(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
   ]
 }
 
-const columns: TableColumn<BatchRow>[] = [
+const columns: TableColumn<MessageRow>[] = [
   {
     accessorKey: 'title',
-    header: '标题 / 级别',
+    header: '标题',
     cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
       h(UBadge, {
         color: levelMeta[row.original.level].color,
         variant: 'subtle',
         size: 'sm',
       }, () => levelMeta[row.original.level].label),
-      h('span', { class: 'font-medium truncate max-w-[320px]' }, row.original.title),
+      h(UBadge, {
+        color: audienceMeta[row.original.audience].color,
+        variant: 'soft',
+        size: 'sm',
+      }, () => audienceMeta[row.original.audience].label),
+      h('span', { class: 'font-medium truncate max-w-[260px]' }, row.original.title),
     ]),
   },
   {
-    accessorKey: 'total',
-    header: '收件人数',
-    cell: ({ row }) => h('span', { class: 'font-mono text-sm' }, String(row.original.total)),
+    id: 'delivery',
+    header: '投递 / 已读',
+    cell: ({ row }) => h('div', { class: 'flex flex-col text-xs' }, [
+      h('span', { class: 'tabular-nums' }, `投递 ${row.original.deliveredCount} 人`),
+      h('span', { class: 'text-muted tabular-nums' }, `已读 ${row.original.readCount} 人`),
+    ]),
   },
   { accessorKey: 'senderActor', header: '发送人' },
   {
@@ -181,7 +235,7 @@ const columns: TableColumn<BatchRow>[] = [
 <template>
   <UDashboardPanel id="admin-notifications">
     <template #header>
-      <UDashboardNavbar title="通知中心">
+      <UDashboardNavbar title="通知管理">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -216,14 +270,21 @@ const columns: TableColumn<BatchRow>[] = [
             </div>
           </template>
           <div class="space-y-4">
-            <div class="flex items-center gap-2">
-              <USwitch
-                v-model="form.broadcast"
-                label="广播给所有未删除/未封禁用户"
+            <UFormField label="发送范围">
+              <USelect
+                v-model="form.audience"
+                :items="audienceOptions"
               />
-            </div>
+              <p
+                v-if="form.audience === 'all_with_future'"
+                class="text-xs text-muted mt-1.5"
+              >
+                选择此项后，新注册用户首次激活时将自动补发本条通知。
+              </p>
+            </UFormField>
+
             <UFormField
-              v-if="!form.broadcast"
+              v-if="form.audience === 'specific'"
               label="收件人（可多选）"
             >
               <USelectMenu
@@ -281,7 +342,7 @@ const columns: TableColumn<BatchRow>[] = [
           </div>
         </UCard>
 
-        <!-- 历史批次 -->
+        <!-- 历史 -->
         <UCard class="shadow-sm">
           <template #header>
             <div class="flex items-center gap-2">
@@ -292,10 +353,13 @@ const columns: TableColumn<BatchRow>[] = [
               <h3 class="font-semibold">
                 发送历史
               </h3>
+              <span class="ml-auto text-xs text-muted">
+                用户的"已读"或个人删除不会影响此处历史
+              </span>
             </div>
           </template>
           <UTable
-            :data="batches"
+            :data="messages"
             :columns="columns"
             :loading="status === 'pending'"
             :ui="{
@@ -307,6 +371,7 @@ const columns: TableColumn<BatchRow>[] = [
         </UCard>
       </div>
 
+      <!-- 详情 modal -->
       <UModal
         v-model:open="detailOpen"
         :ui="{ content: 'sm:max-w-2xl' }"
@@ -314,19 +379,27 @@ const columns: TableColumn<BatchRow>[] = [
         <template #content>
           <div class="p-6 max-h-[80vh] overflow-y-auto">
             <h3 class="text-lg font-semibold mb-1">
-              批次详情
+              接收详情
             </h3>
             <p
-              v-if="detailBatch"
+              v-if="detailMessage"
               class="text-xs text-muted mb-4"
             >
-              {{ detailBatch.title }} · {{ formatDate(detailBatch.createdAt) }} · 共 {{ detailBatch.total }} 位收件人
+              {{ detailMessage.title }} · {{ formatDate(detailMessage.createdAt) }} ·
+              范围 {{ audienceMeta[detailMessage.audience].label }} ·
+              已投递 {{ detailMessage.deliveredCount }} / 已读 {{ detailMessage.readCount }}
             </p>
             <div
               v-if="detailLoading"
               class="text-center text-sm text-muted py-8"
             >
               加载中...
+            </div>
+            <div
+              v-else-if="detailRows.length === 0"
+              class="text-center text-sm text-muted py-8"
+            >
+              暂无投递记录
             </div>
             <div
               v-else
@@ -353,6 +426,15 @@ const columns: TableColumn<BatchRow>[] = [
           </div>
         </template>
       </UModal>
+
+      <!-- 删除确认 -->
+      <AdminDeleteModal
+        v-model:open="deleteOpen"
+        :loading="deleteLoading"
+        :title="`删除通知: ${deleteTarget?.title || ''}`"
+        description="软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
+        @confirm="confirmDelete"
+      />
     </template>
   </UDashboardPanel>
 </template>

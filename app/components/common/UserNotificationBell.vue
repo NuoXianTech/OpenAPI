@@ -90,16 +90,6 @@ async function markAllRead() {
   catch { /* ignore */ }
 }
 
-async function removeOne(item: Notification, evt: Event) {
-  evt.stopPropagation()
-  try {
-    await $fetch('/api/notifications/delete', { method: 'POST', body: { id: item.id } })
-    items.value = items.value.filter(n => n.id !== item.id)
-    if (!item.isRead) unread.value = Math.max(0, unread.value - 1)
-  }
-  catch { /* ignore */ }
-}
-
 watch(open, (val) => {
   if (val) void fetchList()
 })
@@ -229,13 +219,6 @@ function formatDate(iso: string) {
               <span class="text-sm font-medium truncate flex-1">
                 {{ n.title }}
               </span>
-              <UButton
-                icon="i-mdi-close"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click.stop="removeOne(n, $event)"
-              />
             </div>
             <div class="text-xs text-muted">
               {{ n.senderActor || '系统' }} · {{ formatDate(n.createdAt) }}

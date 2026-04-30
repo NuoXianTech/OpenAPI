@@ -59,12 +59,6 @@ async function markAllRead() {
   })
 }
 
-async function removeOne(n: Notification, evt: Event) {
-  evt.stopPropagation()
-  await $fetch('/api/notifications/delete', { method: 'POST', body: { id: n.id } })
-  items.value = items.value.filter(x => x.id !== n.id)
-}
-
 watch(onlyUnread, () => { void fetchList() })
 onMounted(() => { void fetchList() })
 
@@ -166,13 +160,6 @@ const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)
               <span class="text-xs text-muted shrink-0">
                 {{ formatDate(n.createdAt) }}
               </span>
-              <UButton
-                icon="i-mdi-close"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click.stop="removeOne(n, $event)"
-              />
             </div>
             <div class="text-xs text-muted">
               来自：{{ n.senderActor || '系统' }}

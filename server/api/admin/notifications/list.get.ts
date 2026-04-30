@@ -9,6 +9,6 @@ export default defineEventHandler(async (event: H3Event) => {
   const limit = query.limit ? Number(query.limit) : 50
   const offset = query.offset ? Number(query.offset) : 0
 
-  const data = await notificationService.listBatchesForAdmin({ limit, offset })
+  const data = await notificationService.listMessagesForAdmin({ limit, offset })
   return { code: 0, msg: 'ok', data }
 })

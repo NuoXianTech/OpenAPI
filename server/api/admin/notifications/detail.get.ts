@@ -6,9 +6,9 @@ import { requireAdmin } from '~~/server/utils/auth'
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const query = getQuery(event)
-  const batchId = (query.batchId || '').toString().trim()
-  if (!batchId) throw createError({ statusCode: 400, message: 'batchId is required' })
+  const messageId = Number(query.messageId)
+  if (!messageId) throw createError({ statusCode: 400, message: 'messageId is required' })
 
-  const data = await notificationService.getBatchDetail(batchId)
+  const data = await notificationService.getMessageDetail(messageId)
   return { code: 0, msg: 'ok', data }
 })

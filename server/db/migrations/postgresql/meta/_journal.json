@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1776600395148,
-      "tag": "0000_dry_franklin_storm",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777584997383,
-      "tag": "0001_curly_masked_marvel",
+      "when": 1777588086241,
+      "tag": "0000_familiar_kat_farrell",
       "breakpoints": true
     }
   ]

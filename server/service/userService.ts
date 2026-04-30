@@ -1,5 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { users } from '@nuxthub/db/schema'
+import { notificationService } from './notificationService'
 
 export const usersService = {
   async list() {
@@ -88,6 +89,18 @@ export const usersService = {
       })
       .where(eq(users.id, id))
       .returning()
+
+    // 用户首次激活时补发所有 audience='all_with_future' 的历史消息
+    // ON CONFLICT DO NOTHING 保证幂等：已存在的投递不会重复
+    if (res[0]) {
+      try {
+        await notificationService.fanOutFutureMessagesTo(id)
+      }
+      catch (err) {
+        // 通知补发失败不应阻塞激活流程，仅记录日志
+        console.error('failed to fan out future notifications', { userId: id, err })
+      }
+    }
 
     return res[0]
   },
