@@ -13,6 +13,10 @@ export interface PublicTurnstileSettings {
   publicStats: boolean
 }
 
+export interface PublicAnnouncementSettings {
+  showOnHome: boolean
+}
+
 export interface PublicSiteSettings {
   siteUrl: string
   siteImg: string
@@ -26,6 +30,7 @@ export interface PublicSiteSettings {
   registrationMode: string
   oauthLoginEnabled: boolean
   turnstile: PublicTurnstileSettings
+  announcement: PublicAnnouncementSettings
 }
 
 export interface SiteSettingsUpsertInput {
@@ -52,6 +57,7 @@ export interface SiteSettingsUpsertInput {
   turnstileRegisterEnabled?: boolean
   turnstileAdminLoginEnabled?: boolean
   turnstilePublicStatsEnabled?: boolean
+  announcementShowOnHome?: boolean
 }
 
 function buildInitialDefaults() {
@@ -143,6 +149,9 @@ export const siteSettingsService = {
       registrationMode: settings.registrationMode,
       oauthLoginEnabled: settings.oauthLoginEnabled,
       turnstile: toPublicTurnstile(settings),
+      announcement: {
+        showOnHome: settings.announcementShowOnHome,
+      },
     }
   },
 

@@ -7,6 +7,10 @@ interface PublicTurnstileSettings {
   publicStats: boolean
 }
 
+interface PublicAnnouncementSettings {
+  showOnHome: boolean
+}
+
 interface PublicSiteSettings {
   siteUrl: string
   siteImg: string
@@ -14,6 +18,7 @@ interface PublicSiteSettings {
   siteDescription: string
   startTime: string
   turnstile: PublicTurnstileSettings
+  announcement: PublicAnnouncementSettings
 }
 
 interface PublicSiteSettingsResponse {
@@ -31,6 +36,10 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   publicStats: false,
 }
 
+const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
+  showOnHome: false,
+}
+
 export function useSiteSettings() {
   const runtimePublic = useRuntimeConfig().public
 
@@ -43,6 +52,7 @@ export function useSiteSettings() {
       || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     startTime: runtimePublic.startTime || '2026-01-01 00:00:00',
     turnstile: { ...EMPTY_TURNSTILE },
+    announcement: { ...EMPTY_ANNOUNCEMENT },
   }
 
   const { data, pending, error, refresh } = useAsyncData(
@@ -59,10 +69,12 @@ export function useSiteSettings() {
 
   const settings = computed(() => data.value?.data || fallback)
   const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
+  const announcement = computed<PublicAnnouncementSettings>(() => settings.value.announcement || EMPTY_ANNOUNCEMENT)
 
   return {
     settings,
     turnstile,
+    announcement,
     pending,
     error,
     refresh,

@@ -19,6 +19,7 @@ const {
 } = useApiList()
 
 const { settings } = useSiteSettings()
+const announcementSettings = computed(() => settings.value.announcement)
 </script>
 
 <template>
@@ -128,5 +129,9 @@ const { settings } = useSiteSettings()
       </Transition>
     </main>
     <CommonAppFooter />
+    <CommonAnnouncementPopup
+      v-if="announcementSettings?.showOnHome"
+      storage-scope="home"
+    />
   </ClientOnly>
 </template>

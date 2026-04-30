@@ -29,6 +29,16 @@ const mainLinks = [[
     to: '/admin/friend-links',
   },
   {
+    label: '公告管理',
+    icon: 'i-mdi-bullhorn-outline',
+    to: '/admin/announcements',
+  },
+  {
+    label: '通知中心',
+    icon: 'i-mdi-bell-outline',
+    to: '/admin/notifications',
+  },
+  {
     label: '调用统计',
     icon: 'i-mdi-chart-bar',
     to: '/admin/calls',

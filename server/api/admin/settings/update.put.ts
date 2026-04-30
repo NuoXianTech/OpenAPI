@@ -83,6 +83,7 @@ export default defineEventHandler(async (event: H3Event) => {
     turnstileRegisterEnabled: parseOptionalBoolean(body.turnstileRegisterEnabled, 'turnstileRegisterEnabled'),
     turnstileAdminLoginEnabled: parseOptionalBoolean(body.turnstileAdminLoginEnabled, 'turnstileAdminLoginEnabled'),
     turnstilePublicStatsEnabled: parseOptionalBoolean(body.turnstilePublicStatsEnabled, 'turnstilePublicStatsEnabled'),
+    announcementShowOnHome: parseOptionalBoolean(body.announcementShowOnHome, 'announcementShowOnHome'),
   }
 
   const entries = Object.entries(updateInput)

@@ -68,6 +68,9 @@ export const siteSettings = pgTable('site_settings', {
   turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(true),
   turnstilePublicStatsEnabled: boolean('turnstile_public_stats_enabled').notNull().default(false),
 
+  // 首页公告弹窗开关（默认关闭，避免打扰；后台用通知铃铛常驻入口，无需开关）
+  announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(false),
+
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 })

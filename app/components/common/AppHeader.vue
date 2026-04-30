@@ -55,6 +55,7 @@ const handleLogout = async () => {
         </UButton>
 
         <template v-if="user">
+          <CommonUserNotificationBell v-if="user.kind === 'user'" />
           <div class="text-sm text-muted">
             {{ user.username }}
           </div>

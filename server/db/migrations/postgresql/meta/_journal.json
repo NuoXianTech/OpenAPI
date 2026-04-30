@@ -8,6 +8,13 @@
       "when": 1776600395148,
       "tag": "0000_dry_franklin_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777584997383,
+      "tag": "0001_curly_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

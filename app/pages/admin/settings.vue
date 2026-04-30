@@ -30,6 +30,7 @@ const form = reactive({
   turnstileRegisterEnabled: true,
   turnstileAdminLoginEnabled: true,
   turnstilePublicStatsEnabled: false,
+  announcementShowOnHome: false,
 })
 
 watch(() => data.value?.data, (val) => {
@@ -57,6 +58,7 @@ watch(() => data.value?.data, (val) => {
       turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? true,
       turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? true,
       turnstilePublicStatsEnabled: val.turnstilePublicStatsEnabled ?? false,
+      announcementShowOnHome: val.announcementShowOnHome ?? false,
     })
   }
 }, { immediate: true })
@@ -303,6 +305,39 @@ async function handleSave() {
                 </p>
               </div>
             </div>
+          </div>
+        </UCard>
+
+        <!-- Announcement -->
+        <UCard class="shadow-sm">
+          <template #header>
+            <div class="flex items-center gap-2 px-1">
+              <UIcon
+                name="i-mdi-bullhorn-outline"
+                class="size-5 text-muted"
+              />
+              <h3 class="font-semibold">
+                公告
+              </h3>
+            </div>
+          </template>
+          <div class="space-y-4">
+            <p class="text-xs text-muted">
+              开启后，访客首次进入网站首页会弹出当前生效的公告（最新一条默认展开，旧公告收起）。
+              管理后台已通过顶部铃铛常驻入口展示公告，无需额外开关。
+              公告内容请前往
+              <NuxtLink
+                to="/admin/announcements"
+                class="text-primary underline"
+              >
+                公告管理
+              </NuxtLink>
+              页面维护。
+            </p>
+            <USwitch
+              v-model="form.announcementShowOnHome"
+              label="在网站首页弹出公告"
+            />
           </div>
         </UCard>
 

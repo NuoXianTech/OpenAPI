@@ -75,3 +75,33 @@ export const announcements = pgTable('announcements', {
   index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder),
   index('announcements_window_idx').on(table.startAt, table.endAt),
 ])
+
+// ------------------------------------------------------------------
+// Notifications（管理员定向发送的私信式通知）
+//
+// 与 announcements 不同：
+// - announcements 是面向所有访客的公告（首页弹窗），无收件人维度
+// - notifications 是 1 对 1 的站内信：每条记录绑定一个 recipientUserId
+//   群发由 admin 接口在写入时按 userIds 拆分成多条记录，便于独立追踪已读状态
+// ------------------------------------------------------------------
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  /** 同批群发使用同一 batchId（uuid）便于在 admin 端聚合展示 */
+  batchId: varchar('batch_id', { length: 36 }),
+  recipientUserId: integer('recipient_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  senderUserId: integer('sender_user_id').references(() => users.id, { onDelete: 'set null' }),
+  /** 冗余：admin 伪用户没有 users.id，存用户名兜底 */
+  senderActor: varchar('sender_actor', { length: 140 }),
+  title: varchar('title', { length: 200 }).notNull(),
+  content: text('content').notNull(),
+  level: varchar('level', { length: 20 }).notNull().default('info'), // info / success / warning / critical
+  linkUrl: varchar('link_url', { length: 1000 }),
+  isRead: boolean('is_read').notNull().default(false),
+  readAt: timestamp('read_at', { withTimezone: true }),
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  index('notifications_recipient_created_idx').on(table.recipientUserId, table.createdAt),
+  index('notifications_recipient_unread_idx').on(table.recipientUserId, table.isRead),
+  index('notifications_batch_idx').on(table.batchId),
+])
