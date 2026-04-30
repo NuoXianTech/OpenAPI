@@ -15,7 +15,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: 'invalid parameters' })
   }
 
-  const updated = await apiService.toggleApiField(id, field, value, admin.id)
+  const updated = await apiService.toggleApiField(id, field, value, admin.id || null)
 
   await operationLogService.addLog({
     userId: admin.id || null,

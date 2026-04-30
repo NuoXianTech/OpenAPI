@@ -59,11 +59,11 @@ const schema = z.object({
   shortDesc: z.string().min(1, '必填').max(30, '最多30字'),
   description: z.string().min(1, '必填'),
   docUrl: z.string().default(''),
-  status: z.number().default(1),
+  status: z.number().default(-1),
   categoryId: z.number().nullable().optional(),
   isEnabled: z.boolean().default(false),
   isApiKey: z.boolean().default(false),
-  isStatistics: z.boolean().default(true),
+  isStatistics: z.boolean().default(false),
   requiresAuth: z.boolean().default(false),
   rateLimitPerSecond: z.number().min(0).default(0),
   rateLimitPerMinute: z.number().min(0).default(60),
@@ -82,11 +82,11 @@ function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
     shortDesc: `${target.pathVersion} ${target.code}`,
     description: `自动登记于 ${target.sourceDir}`,
     docUrl: '',
-    status: 1,
+    status: -1,
     categoryId: null,
     isEnabled: false,
     isApiKey: false,
-    isStatistics: true,
+    isStatistics: false,
     requiresAuth: false,
     rateLimitPerSecond: 0,
     rateLimitPerMinute: 60,
@@ -123,13 +123,47 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
 const state = reactive<Partial<Schema>>({})
 const loading = ref(false)
 
-const { data: categoriesData } = await useFetch('/api/api-categories/list', {
-  default: () => ({ code: 0, msg: '', data: [] }),
+const { data: categoriesData, refresh: refreshCategories } = await useFetch('/api/admin/api-categories/list', {
+  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, name: string, code: string }> }),
 })
 const categoryOptions = computed(() => [
   { label: '未分类', value: null },
   ...((categoriesData.value?.data || []).map((c: any) => ({ label: c.name, value: c.id }))),
 ])
+
+// 内联新增分类
+const showAddCategory = ref(false)
+const newCategoryCode = ref('')
+const newCategoryName = ref('')
+const addingCategory = ref(false)
+
+async function submitAddCategory() {
+  const code = newCategoryCode.value.trim()
+  const name = newCategoryName.value.trim()
+  if (!code || !name) {
+    toast.add({ title: 'code 与名称均必填', color: 'warning' })
+    return
+  }
+  addingCategory.value = true
+  try {
+    const res: any = await $fetch('/api/admin/api-categories/add', {
+      method: 'POST',
+      body: { code, name, isEnabled: true },
+    })
+    await refreshCategories()
+    if (res?.data?.id) state.categoryId = res.data.id
+    showAddCategory.value = false
+    newCategoryCode.value = ''
+    newCategoryName.value = ''
+    toast.add({ title: '已新增分类', color: 'success' })
+  }
+  catch (err: any) {
+    toast.add({ title: err?.data?.message || '新增失败', color: 'error' })
+  }
+  finally {
+    addingCategory.value = false
+  }
+}
 
 watch(() => [props.target, props.mode, open.value], () => {
   if (!open.value || !props.target) return
@@ -290,10 +324,57 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               label="分类"
               name="categoryId"
             >
-              <USelect
-                v-model="state.categoryId"
-                :items="categoryOptions"
-              />
+              <div class="flex gap-2">
+                <USelect
+                  v-model="state.categoryId"
+                  :items="categoryOptions"
+                  class="flex-1"
+                />
+                <UButton
+                  icon="i-mdi-plus"
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  @click="showAddCategory = !showAddCategory"
+                />
+              </div>
+              <div
+                v-if="showAddCategory"
+                class="mt-2 p-2 rounded-md border border-default bg-elevated/30 flex flex-col gap-2"
+              >
+                <div class="grid grid-cols-2 gap-2">
+                  <UInput
+                    v-model="newCategoryCode"
+                    placeholder="code（如：weather）"
+                    size="sm"
+                  />
+                  <UInput
+                    v-model="newCategoryName"
+                    placeholder="名称（如：天气类）"
+                    size="sm"
+                  />
+                </div>
+                <div class="flex justify-end gap-2">
+                  <UButton
+                    size="xs"
+                    variant="ghost"
+                    color="neutral"
+                    type="button"
+                    @click="showAddCategory = false"
+                  >
+                    取消
+                  </UButton>
+                  <UButton
+                    size="xs"
+                    :loading="addingCategory"
+                    type="button"
+                    @click="submitAddCategory"
+                  >
+                    新增
+                  </UButton>
+                </div>
+              </div>
             </UFormField>
           </div>
 

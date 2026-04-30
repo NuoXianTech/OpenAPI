@@ -63,8 +63,8 @@ const { data, status, refresh } = await useFetch('/api/admin/apis/discover', {
   default: () => ({ code: 0, msg: '', data: { versions: [] as VersionGroup[] } }),
 })
 
-const { data: categoriesData } = await useFetch('/api/api-categories/list', {
-  default: () => ({ code: 0, msg: '', data: [] }),
+const { data: categoriesData } = await useFetch('/api/admin/api-categories/list', {
+  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, name: string }> }),
 })
 const categoriesMap = computed(() => {
   const map = new Map<number, string>()

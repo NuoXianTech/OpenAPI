@@ -70,7 +70,7 @@ export default defineEventHandler(async (event: H3Event) => {
     shortDesc: o.shortDesc || `${pathVersion} ${code}`,
     description: o.description || `自动登记于 ${manifestApi.sourceDir}`,
     docUrl: o.docUrl || '',
-    status: typeof o.status === 'number' ? o.status : 1,
+    status: typeof o.status === 'number' ? o.status : DEFAULT_API_REGISTRATION.status,
     categoryId: o.categoryId === undefined ? null : o.categoryId,
     isEnabled: o.isEnabled ?? DEFAULT_API_REGISTRATION.isEnabled,
     isApiKey: o.isApiKey ?? DEFAULT_API_REGISTRATION.isApiKey,

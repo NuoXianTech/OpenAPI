@@ -13,10 +13,13 @@
  *
  * 非治理路径（/api/auth/**、/api/admin/**、/api/user/**、/api/list 等）完全放行，
  * 不影响现有 api-call-stats 中间件的行为。
+ *
+ * 拒绝路径统一返回 `{ code, msg, data, timestamp }` 标准结构（通过 report 工具），
+ * data 中包含 errorCode 用于前端区分（API_DISABLED / RATE_LIMITED / MISSING_API_KEY 等）。
  */
 
 import type { H3Event } from 'h3'
-import { createError, getRequestURL, setResponseHeaders } from 'h3'
+import { getRequestURL, send, setResponseHeader, setResponseHeaders, setResponseStatus } from 'h3'
 import { VERSION_CODE_PATTERN, isGuardedPath } from '~~/shared/config/apiGuard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/apiManifest'
 import { runApiGuard } from '~~/server/utils/apiGuard'
@@ -25,6 +28,26 @@ import { apiService } from '~~/server/service/apiService'
 function normalizePathname(pathname: string) {
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
   return pathname
+}
+
+/**
+ * 拒绝请求时统一以 `{ code, msg, data, timestamp }` 标准结构作答。
+ * 直接通过 h3 的 send 写出，保证 middleware 阶段就终止请求，不会继续走到业务 handler。
+ */
+async function rejectWithJson(
+  event: H3Event,
+  status: number,
+  msg: string,
+  data: Record<string, unknown>,
+) {
+  setResponseStatus(event, status)
+  setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
+  await send(event, JSON.stringify({
+    code: status,
+    msg,
+    data,
+    timestamp: Date.now(),
+  }))
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -46,11 +69,10 @@ export default defineEventHandler(async (event: H3Event) => {
   // [2] DB 中未登记
   const api = await apiService.loadGuardConfig(pathVersion, code)
   if (!api) {
-    throw createError({
-      statusCode: 403,
-      statusMessage: 'API_NOT_REGISTERED',
-      message: '接口未登记，请联系管理员',
-      data: { code: 'API_NOT_REGISTERED', pathVersion, apiCode: code },
+    return rejectWithJson(event, 403, '接口未登记，请联系管理员', {
+      errorCode: 'API_NOT_REGISTERED',
+      pathVersion,
+      apiCode: code,
     })
   }
 
@@ -65,11 +87,9 @@ export default defineEventHandler(async (event: H3Event) => {
   // [3] 方法/路径匹配（动态路由在此解析）
   const match = matchEndpoint(pathVersion, code, pathname, method)
   if (!match) {
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'METHOD_NOT_ALLOWED',
-      message: '请求方法不受支持',
-      data: { code: 'METHOD_NOT_ALLOWED', allowed: manifest.endpoints.map(e => e.method) },
+    return rejectWithJson(event, 405, '请求方法不受支持', {
+      errorCode: 'METHOD_NOT_ALLOWED',
+      allowed: manifest.endpoints.map(e => e.method),
     })
   }
 
@@ -77,11 +97,9 @@ export default defineEventHandler(async (event: H3Event) => {
   const result = await runApiGuard({ event, api, match })
   if (!result.passed) {
     if (result.headers) setResponseHeaders(event, result.headers)
-    throw createError({
-      statusCode: result.error.status,
-      statusMessage: result.error.code,
-      message: result.error.msg,
-      data: { code: result.error.code, outcome: result.outcome },
+    return rejectWithJson(event, result.error.status, result.error.msg, {
+      errorCode: result.error.code,
+      outcome: result.outcome,
     })
   }
 

@@ -209,19 +209,18 @@ export const apiService = {
     return deleted
   },
 
-  async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number) {
+  async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number | null) {
     const patch: {
       updatedAt: Date
-      updatedBy?: number
+      updatedBy?: number | null
       isEnabled?: boolean
       isStatistics?: boolean
     } = {
       updatedAt: new Date(),
       [field]: value,
     }
-    if (typeof updatedBy !== 'undefined') {
-      patch.updatedBy = updatedBy
-    }
+    // 0 是 admin 伪用户的占位，users 表无此 id；此处归一为 null 避免触发外键约束
+    patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
     const updated = res[0] || null
     if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
