@@ -12,10 +12,6 @@
     "test": "vitest run",
     "test:e2e": "vitest run tests/e2e",
     "test:e2e:ci": "vitest run tests/e2e --maxWorkers=1",
-    "test:e2e:apis": "vitest run tests/e2e/api-management.test.ts",
-    "test:e2e:friend-links": "vitest run tests/e2e/friend-links.test.ts",
-    "test:e2e:users": "vitest run tests/e2e/users.test.ts",
-    "test:e2e:calls": "vitest run tests/e2e/call-stats.test.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
