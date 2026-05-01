@@ -42,14 +42,10 @@ const isFilteredEmpty = computed(() => !loading.value && !error.value && filtere
 const retryFetchFriendLinks = async () => {
   await fetchFriendLinks()
 }
-
-onMounted(() => {
-  void retryFetchFriendLinks()
-})
 </script>
 
 <template>
-  <ClientOnly>
+  <div>
     <CommonAppHeader />
 
     <main class="mx-auto max-w-275 px-5 pb-6">
@@ -149,5 +145,5 @@ onMounted(() => {
     </main>
 
     <CommonAppFooter />
-  </ClientOnly>
+  </div>
 </template>

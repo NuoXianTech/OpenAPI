@@ -7,7 +7,7 @@ const router = useRouter()
 
 const open = ref(false)
 
-const mainLinks = [[
+const mainLinks = Object.freeze([[
   {
     label: '概览',
     icon: 'i-mdi-view-dashboard-outline',
@@ -33,15 +33,15 @@ const mainLinks = [[
     icon: 'i-mdi-account-cog-outline',
     to: '/user/profile',
   },
-]] satisfies NavigationMenuItem[][]
+]]) as unknown as NavigationMenuItem[][]
 
-const footerLinks = [[
+const footerLinks = Object.freeze([[
   {
     label: '返回前台',
     icon: 'i-mdi-arrow-left',
     to: '/',
   },
-]] satisfies NavigationMenuItem[][]
+]]) as unknown as NavigationMenuItem[][]
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
   {

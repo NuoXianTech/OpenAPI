@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { VisAxis, VisArea, VisCrosshair, VisDonut, VisLine, VisTooltip, VisXYContainer } from '@unovis/vue'
 import type { TableColumn } from '@nuxt/ui'
 import type {
   AdminDashboardData,
@@ -7,6 +6,15 @@ import type {
   AdminDashboardResponse,
   AdminDashboardTrendPoint,
 } from '~~/shared/types/admin-dashboard'
+
+// 图表懒加载，避免一进 admin 就同步下载全部 unovis 代码
+const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
+const VisLine = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisLine))
+const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
+const VisArea = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisArea))
+const VisCrosshair = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisCrosshair))
+const VisDonut = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisDonut))
+const VisTooltip = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisTooltip))
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

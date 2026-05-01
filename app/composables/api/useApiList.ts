@@ -1,18 +1,30 @@
-import { computed, onMounted, ref } from 'vue'
 import { usePublicApiList } from './usePublicApiList'
 import type { ApiCatalogItem, ApiCategoryItem, ApiTabOption } from './types'
 
 export function useApiList() {
-  const { result, statusTabs, fetchPublicApiList } = usePublicApiList()
+  const { result, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()
 
   const query = ref('')
   const currentTab = ref<string | number>('all')
   const currentCategory = ref<string | number>('all')
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const categories = ref<ApiCategoryItem[]>([])
 
+  const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useAsyncData(
+    'public-api-categories',
+    () => $fetch<{ code: number, data: ApiCategoryItem[] }>('/api/api-categories/list'),
+    {
+      default: () => ({ code: 0, data: [] as ApiCategoryItem[] }),
+    },
+  )
+
+  const categories = computed(() => categoriesData.value?.data || [])
   const allData = computed(() => result.value.data || [])
+
+  const loading = computed(() => listPending.value || categoriesPending.value)
+  const error = computed(() => {
+    const err = listError.value || categoriesError.value
+    if (!err) return null
+    return err instanceof Error ? err.message : String(err)
+  })
 
   const categoryMap = computed(() => {
     const map = new Map<number, ApiCategoryItem>()
@@ -36,34 +48,9 @@ export function useApiList() {
     return tabs
   })
 
-  const fetchCategories = async () => {
-    try {
-      const res = await $fetch<{ code: number, data: ApiCategoryItem[] }>('/api/api-categories/list')
-      categories.value = res.data || []
-    }
-    catch {
-      categories.value = []
-    }
-  }
-
   const fetchList = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const [res] = await Promise.all([fetchPublicApiList(), fetchCategories()])
-      result.value = res
-    }
-    catch (e) {
-      error.value = (e && (e as any).message) ? (e as any).message : String(e)
-    }
-    finally {
-      loading.value = false
-    }
+    await Promise.all([fetchPublicApiList(), refreshCategories()])
   }
-
-  onMounted(() => {
-    void fetchList()
-  })
 
   const filteredItems = computed(() => {
     const q = query.value.toLowerCase().trim()

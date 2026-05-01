@@ -4,38 +4,20 @@ const defaultResponse: ApiCatalogResponse = {
   code: 0,
   msg: '',
   data: [],
-  timestamp: Date.now(),
+  timestamp: 0,
 }
 
 export function usePublicApiList() {
-  const result = ref<ApiCatalogResponse>(defaultResponse)
-  const catalogItems = ref(result.value.data)
+  const { data, pending, error, refresh } = useAsyncData<ApiCatalogResponse>(
+    'public-api-list',
+    () => $fetch<ApiCatalogResponse>('/api/list', { method: 'GET' }),
+    {
+      default: () => defaultResponse,
+    },
+  )
 
-  const fetchPublicApiList = async () => {
-    try {
-      const res = await $fetch<ApiCatalogResponse>('/api/list', {
-        method: 'GET',
-      })
-      result.value = res
-      catalogItems.value = res.data || []
-      return res
-    }
-    catch (error: unknown) {
-      const endpoint = '/api/list'
-      let status: number | undefined
-
-      if (typeof error === 'object' && error !== null) {
-        const err = error as { response?: { status?: number }, status?: number }
-        status = err.response?.status ?? err.status
-      }
-      console.error(
-        `Error fetching data from ${endpoint}${status ? ` (status: ${status})` : ''} in usePublicApiList:`,
-        error,
-      )
-      result.value = defaultResponse
-      throw error
-    }
-  }
+  const result = computed(() => data.value || defaultResponse)
+  const catalogItems = computed(() => result.value.data || [])
 
   const statusTabs: ApiTabOption[] = [
     { label: '全部', value: 'all' },
@@ -49,6 +31,8 @@ export function usePublicApiList() {
     result,
     catalogItems,
     statusTabs,
-    fetchPublicApiList,
+    pending,
+    error,
+    fetchPublicApiList: refresh,
   }
 }

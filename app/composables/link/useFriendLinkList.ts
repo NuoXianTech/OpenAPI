@@ -1,29 +1,20 @@
-import type { FriendLinkItem, FriendLinkListResponse } from './types'
+import type { FriendLinkListResponse } from './types'
 
 export function useFriendLinkList() {
-  const items = ref<FriendLinkItem[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
+  const { data, pending, error: rawError, refresh } = useAsyncData<FriendLinkListResponse>(
+    'public-friend-links',
+    () => $fetch<FriendLinkListResponse>('/api/friend-links/list'),
+    {
+      default: () => ({ code: 0, msg: '', data: [] }),
+    },
+  )
 
-  const fetchFriendLinks = async () => {
-    loading.value = true
-    error.value = null
-
-    try {
-      const res = await $fetch<FriendLinkListResponse>('/api/friend-links/list')
-      items.value = res.data || []
-      return res
-    }
-    catch (e) {
-      error.value = (e && (e as Error).message) ? (e as Error).message : String(e)
-      items.value = []
-      return null
-    }
-    finally {
-      loading.value = false
-    }
-  }
-
+  const items = computed(() => data.value?.data || [])
+  const loading = computed(() => pending.value)
+  const error = computed(() => {
+    if (!rawError.value) return null
+    return rawError.value instanceof Error ? rawError.value.message : String(rawError.value)
+  })
   const isEmpty = computed(() => !loading.value && !error.value && items.value.length === 0)
 
   return {
@@ -31,6 +22,6 @@ export function useFriendLinkList() {
     loading,
     error,
     isEmpty,
-    fetchFriendLinks,
+    fetchFriendLinks: refresh,
   }
 }

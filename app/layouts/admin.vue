@@ -7,7 +7,8 @@ const router = useRouter()
 
 const open = ref(false)
 
-const mainLinks = [[
+// 静态导航，冻结避免 Vue 重复创建 reactivity proxy
+const mainLinks = Object.freeze([[
   {
     label: '仪表盘',
     icon: 'i-mdi-view-dashboard-outline',
@@ -58,9 +59,9 @@ const mainLinks = [[
     icon: 'i-mdi-shield-key-outline',
     to: '/admin/oauth-providers',
   },
-]] satisfies NavigationMenuItem[][]
+]]) as unknown as NavigationMenuItem[][]
 
-const footerLinks = [[
+const footerLinks = Object.freeze([[
   {
     label: '站点设置',
     icon: 'i-mdi-cog-outline',
@@ -71,7 +72,7 @@ const footerLinks = [[
     icon: 'i-mdi-arrow-left',
     to: '/',
   },
-]] satisfies NavigationMenuItem[][]
+]]) as unknown as NavigationMenuItem[][]
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
   {

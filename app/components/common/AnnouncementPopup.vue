@@ -5,9 +5,6 @@
  *
  * 弹出时机：组件挂载且存在比 localStorage 记录 lastSeenId 更新的公告时自动 open；
  * 关闭后将当前最新 id 写回，避免重复打扰。
- *
- * 注意：本组件挂在 `<ClientOnly>` 内，必须保持 setup 同步，不能用 top-level await
- * （ClientOnly 没有 Suspense 兜底，async setup 会导致模板不渲染）。所以数据拉取放在 onMounted 中。
  */
 
 interface Announcement {
@@ -40,8 +37,20 @@ const STORAGE_KEY = computed(() => `announcement:lastSeenId:${props.storageScope
 
 const open = ref(false)
 const expandedIds = ref<string[]>([])
-const items = ref<Announcement[]>([])
 
+// useAsyncData 全局唯一 key，多个组件实例共用一份缓存。
+// lazy + server: false：不阻塞 SSR、不影响首屏 LCP，hydrate 后再拉。
+const { data } = useAsyncData<ListResponse>(
+  'public-announcements',
+  () => $fetch<ListResponse>('/api/announcements/list'),
+  {
+    default: () => ({ code: 0, msg: '', data: [] }),
+    lazy: true,
+    server: false,
+  },
+)
+
+const items = computed<Announcement[]>(() => data.value?.data || [])
 const latestId = computed(() => items.value[0]?.id ?? null)
 
 const accordionItems = computed(() => items.value.map(a => ({
@@ -71,24 +80,14 @@ function maybeAutoOpen() {
   open.value = true
 }
 
-async function loadList() {
-  try {
-    const res = await $fetch<ListResponse>('/api/announcements/list')
-    items.value = res?.data || []
-  }
-  catch (err) {
-    console.error('[announcement-popup] failed to load list', err)
-  }
-}
-
 watch(() => open.value, (val) => {
   if (!val && latestId.value !== null) persistLastSeenId(latestId.value)
 })
 
-onMounted(async () => {
-  await loadList()
-  maybeAutoOpen()
-})
+// data 是 lazy 拉取的，等到来后再决定是否打开
+watch(items, () => {
+  if (import.meta.client) maybeAutoOpen()
+}, { immediate: false })
 
 defineExpose({
   /** 外部按钮可重新弹出 */
@@ -189,7 +188,7 @@ function formatDate(iso: string) {
               class="pb-3"
             >
               <UButton
-                :to="(item.raw as Announcement).linkUrl"
+                :to="(item.raw as Announcement).linkUrl || undefined"
                 target="_blank"
                 size="xs"
                 variant="outline"

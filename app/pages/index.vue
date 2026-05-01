@@ -23,10 +23,9 @@ const announcementSettings = computed(() => settings.value.announcement)
 </script>
 
 <template>
-  <ClientOnly>
+  <div>
     <CommonAppHeader />
     <main class="mx-auto max-w-275 px-5 pb-6">
-      <!-- API运行时间卡片组件 -->
       <ApiRunTimeCard :start-time="settings.startTime" />
 
       <SearchBar v-model="query" />
@@ -129,9 +128,9 @@ const announcementSettings = computed(() => settings.value.announcement)
       </Transition>
     </main>
     <CommonAppFooter />
-    <CommonAnnouncementPopup
+    <LazyCommonAnnouncementPopup
       v-if="announcementSettings?.showOnHome"
       storage-scope="home"
     />
-  </ClientOnly>
+  </div>
 </template>

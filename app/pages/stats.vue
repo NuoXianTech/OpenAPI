@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { VisAxis, VisLine, VisXYContainer } from '@unovis/vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsResponse,
 } from '~~/shared/types/public-stats'
+
+// 图表依赖 d3 + DOM，体积较大。改为 lazy + client-only 异步组件，
+// 让 stats 页主体可以 SSR，图表在客户端 hydrate 后再下载/渲染。
+const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
+const VisLine = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisLine))
+const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
 
 interface TrendChartRow {
   label: string
@@ -221,7 +226,7 @@ const overviewCards = computed(() => {
 </script>
 
 <template>
-  <ClientOnly>
+  <div>
     <CommonAppHeader />
 
     <main class="mx-auto max-w-275 px-5 pb-6">
@@ -455,5 +460,5 @@ const overviewCards = computed(() => {
     </main>
 
     <CommonAppFooter />
-  </ClientOnly>
+  </div>
 </template>

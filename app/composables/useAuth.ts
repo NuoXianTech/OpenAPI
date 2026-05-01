@@ -16,28 +16,38 @@ interface ApiResponse<T> {
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState<boolean>('auth-loading', () => false)
+  // 同一次导航中并发的 fetchMe 调用合并为同一个 Promise，避免重复请求 /api/auth/me
+  const inflight = useState<Promise<AuthUser | null> | null>('auth-inflight', () => null)
+  // 标记本会话是否已拉过；后续可以走 user.value 短路
+  const fetched = useState<boolean>('auth-fetched', () => false)
 
-  const fetchMe = async () => {
+  const runFetch = async () => {
     loading.value = true
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
       const res = await $fetch<ApiResponse<AuthUser | null>>('/api/auth/me', { headers })
-      if (res?.code === 0) {
-        user.value = res.data ?? null
-      }
-      else {
-        user.value = null
-      }
+      user.value = res?.code === 0 ? (res.data ?? null) : null
     }
     catch (err) {
-      // 任何 /api/auth/me 异常都不应让上层页面崩溃；登录态置空，让中间件按未登录处理
+      // /api/auth/me 异常一律视为未登录，让中间件去重定向
       console.error('[useAuth] fetchMe failed', err)
       user.value = null
     }
     finally {
       loading.value = false
+      fetched.value = true
     }
     return user.value
+  }
+
+  const fetchMe = async (force = false) => {
+    if (!force && fetched.value) return user.value
+    if (inflight.value) return inflight.value
+    const promise = runFetch().finally(() => {
+      inflight.value = null
+    })
+    inflight.value = promise
+    return promise
   }
 
   const login = async (payload: { email?: string, username?: string, password: string, turnstileToken?: string }) => {
@@ -49,6 +59,7 @@ export function useAuth() {
       throw new Error(res.msg)
     }
     user.value = res.data
+    fetched.value = true
     return res.data
   }
 
@@ -61,6 +72,7 @@ export function useAuth() {
       throw new Error(res.msg)
     }
     user.value = res.data
+    fetched.value = true
     return res.data
   }
 
@@ -78,10 +90,11 @@ export function useAuth() {
   const logout = async () => {
     await $fetch<ApiResponse<null>>('/api/auth/logout', { method: 'POST' })
     user.value = null
+    fetched.value = true
   }
 
   const ensureAdmin = async () => {
-    if (!user.value) {
+    if (!fetched.value) {
       await fetchMe()
     }
     return user.value?.kind === 'admin'

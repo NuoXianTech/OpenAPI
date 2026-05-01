@@ -1,9 +1,6 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const nowTime = ref('')
-const upTime = ref('')
-
 interface Props {
   startTime?: string
 }
@@ -23,9 +20,8 @@ const startTimestamp = computed(() => {
 
 const padZero = (n: number): string => String(n).padStart(2, '0')
 
-const formatNowTime = (): string => {
-  const now = new Date()
-  return `${now.getFullYear()}-${padZero(now.getMonth() + 1)}-${padZero(now.getDate())} ${padZero(now.getHours())}:${padZero(now.getMinutes())}:${padZero(now.getSeconds())}`
+const formatNowTime = (date = new Date()): string => {
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`
 }
 
 // 格式化运行时间（支持年、天、时、分、秒）
@@ -44,10 +40,13 @@ const formatUpTime = (ms: number): string => {
   if (days > 0 || years > 0) parts.push(`${days} 天`)
   if (hours > 0 || days > 0 || years > 0) parts.push(`${hours} 小时`)
   if (minutes > 0 || hours > 0 || days > 0 || years > 0) parts.push(`${minutes} 分`)
-  // parts.push(`${seconds} 秒`);
 
   return parts.join(' ')
 }
+
+// SSR 友好：直接用初始值，避免首屏空白；客户端 onMounted 后再走 1s 定时刷新
+const nowTime = ref(formatNowTime())
+const upTime = ref(formatUpTime(Date.now() - startTimestamp.value))
 
 let timer: number | undefined
 

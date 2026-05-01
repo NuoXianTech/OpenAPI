@@ -42,7 +42,7 @@ const initial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 
 <template>
   <div class="flex items-center gap-1">
-    <CommonUserNotificationBell />
+    <LazyCommonUserNotificationBell />
     <UDropdownMenu
       :items="items"
       :content="{ align: 'end', collisionPadding: 12 }"
