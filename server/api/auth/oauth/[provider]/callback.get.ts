@@ -8,8 +8,8 @@ import { usersService } from '~~/server/service/userService'
 import { consumeState } from '~~/server/utils/oauthState'
 import { decryptSecret } from '~~/server/utils/oauthCrypto'
 import { createUserSession, getAuthUser, hashPassword } from '~~/server/utils/auth'
-import * as github from '~~/server/utils/oauthProviders/github'
-import * as qq from '~~/server/utils/oauthProviders/qq'
+import { githubProvider } from '~~/server/utils/oauthProviders/github'
+import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 
@@ -87,12 +87,12 @@ export default defineEventHandler(async (event: H3Event) => {
     let profile: ProviderProfile
 
     if (provider === 'github') {
-      token = await github.exchangeCode(providerConfig, code)
-      profile = await github.fetchUserInfo(providerConfig, token.accessToken, token)
+      token = await githubProvider.exchangeCode(providerConfig, code)
+      profile = await githubProvider.fetchUserInfo(providerConfig, token.accessToken, token)
     }
     else {
-      token = await qq.exchangeCode(providerConfig, code)
-      profile = await qq.fetchUserInfo(providerConfig, token.accessToken, token)
+      token = await qqProvider.exchangeCode(providerConfig, code)
+      profile = await qqProvider.fetchUserInfo(providerConfig, token.accessToken, token)
     }
 
     const ip = getRequestIP(event) || null

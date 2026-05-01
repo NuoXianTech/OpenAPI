@@ -36,5 +36,3 @@ function resolveDriver(name: RateLimitDriverName): RateLimiter {
       return memoryRateLimiter
   }
 }
-
-export { memoryRateLimiter, postgresRateLimiter }

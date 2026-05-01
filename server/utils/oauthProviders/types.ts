@@ -20,3 +20,14 @@ export interface ProviderProfile {
 export interface TokenResult {
   accessToken: string
 }
+
+/**
+ * 单个 OAuth provider 的实现契约。
+ * 每个具体 provider 模块导出一个 OauthProviderModule 实例（如 githubProvider / qqProvider），
+ * 用对象命名空间避免顶层同名 export 触发 nitro auto-import 冲突警告。
+ */
+export interface OauthProviderModule {
+  buildAuthorizeUrl(config: ProviderConfig, state: string): string
+  exchangeCode(config: ProviderConfig, code: string): Promise<TokenResult>
+  fetchUserInfo(config: ProviderConfig, accessToken: string, token: TokenResult): Promise<ProviderProfile>
+}

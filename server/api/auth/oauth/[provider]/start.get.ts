@@ -3,8 +3,8 @@ import { createError, getQuery, getRouterParam, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { issueState, type OauthFlowMode } from '~~/server/utils/oauthState'
-import { buildAuthorizeUrl as buildGithubAuthorize } from '~~/server/utils/oauthProviders/github'
-import { buildAuthorizeUrl as buildQqAuthorize } from '~~/server/utils/oauthProviders/qq'
+import { githubProvider } from '~~/server/utils/oauthProviders/github'
+import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig } from '~~/server/utils/oauthProviders/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { getAuthUser } from '~~/server/utils/auth'
@@ -48,8 +48,8 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const authorizeUrl = provider === 'github'
-    ? buildGithubAuthorize(providerConfig, state)
-    : buildQqAuthorize(providerConfig, state)
+    ? githubProvider.buildAuthorizeUrl(providerConfig, state)
+    : qqProvider.buildAuthorizeUrl(providerConfig, state)
 
   return sendRedirect(event, authorizeUrl, 302)
 })
