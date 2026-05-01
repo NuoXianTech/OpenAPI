@@ -32,10 +32,10 @@ const recentNotifs = computed(() => notifData.value?.data || [])
 const credits = computed(() => Number((user.value as any)?.credits ?? 0))
 
 const overviewCards = computed(() => [
-  { label: '余额', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success' },
-  { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line', color: 'text-primary' },
-  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-info' },
-  { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-warning' },
+  { label: '余额', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success', to: '/user/wallet' },
+  { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line', color: 'text-primary', to: '/user/calls' },
+  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-info', to: '/user/calls' },
+  { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-warning', to: '/user/apikeys' },
 ])
 
 const levelMeta: Record<'info' | 'success' | 'warning' | 'critical', { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
@@ -86,28 +86,32 @@ function formatDate(iso: string) {
         </UCard>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <UCard
+          <NuxtLink
             v-for="card in overviewCards"
             :key="card.label"
+            :to="card.to"
+            class="block"
           >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted">
-                  {{ card.label }}
-                </p>
-                <p class="text-2xl font-semibold tabular-nums mt-1">
-                  {{ card.value }}
-                </p>
+            <UCard class="hover:border-primary/40 hover:shadow transition-all">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-sm text-muted">
+                    {{ card.label }}
+                  </p>
+                  <p class="text-2xl font-semibold tabular-nums mt-1">
+                    {{ card.value }}
+                  </p>
+                </div>
+                <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
+                  <UIcon
+                    :name="card.icon"
+                    :class="card.color"
+                    class="size-5"
+                  />
+                </div>
               </div>
-              <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
-                <UIcon
-                  :name="card.icon"
-                  :class="card.color"
-                  class="size-5"
-                />
-              </div>
-            </div>
-          </UCard>
+            </UCard>
+          </NuxtLink>
         </div>
 
         <UCard>

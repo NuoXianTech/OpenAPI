@@ -49,6 +49,7 @@ export const users = pgTable('users', {
 //   - API 调用扣费：reason='api_charge'，apiCallId 关联具体调用
 //   - 调用失败退款：reason='api_refund'
 //   - 注册赠送：reason='signup_bonus'
+//   - 兑换码兑换：reason='redemption_code'，meta.codeId 关联兑换码
 //
 // amount 正负表示进出（正=加余额，负=扣余额）。
 // balanceAfter 为快照值，便于审计与对账。
@@ -70,4 +71,51 @@ export const creditTransactions = pgTable('credit_transactions', {
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt),
   index('credit_transactions_reason_idx').on(table.reason),
   index('credit_transactions_api_call_idx').on(table.apiCallId),
+])
+
+// ------------------------------------------------------------------
+// Redemption Codes（兑换码）
+//
+// 管理员生成兑换码后，用户在钱包页输入兑换。一个兑换码可以是单次性
+// （maxUses=1，用完即失效），也可以是多次性（maxUses>1，被多个用户共享一次）。
+// 同一用户对同一兑换码只能兑换一次，由 redemptionRecords 唯一索引保证。
+//
+// 并发安全：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING
+// 做条件递增，避免超额兑换。
+// ------------------------------------------------------------------
+export const redemptionCodes = pgTable('redemption_codes', {
+  id: serial('id').primaryKey(),
+  code: varchar('code', { length: 64 }).notNull().unique(),
+  amount: integer('amount').notNull(), // 兑换得到的余额，> 0
+  batchId: varchar('batch_id', { length: 64 }), // 同一批次共享，便于管理员后台分组
+  note: varchar('note', { length: 500 }), // 批次备注（活动名等）
+  maxUses: integer('max_uses').notNull().default(1), // 总可兑换次数（不同用户共享）
+  usedCount: integer('used_count').notNull().default(0), // 已被兑换次数
+  expiresAt: timestamp('expires_at', { withTimezone: true }), // null = 永不过期
+  isEnabled: boolean('is_enabled').notNull().default(true),
+  createdBy: integer('created_by'), // admin id（admin 伪用户为 null）
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, table => [
+  index('redemption_codes_batch_idx').on(table.batchId),
+  index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt),
+])
+
+// ------------------------------------------------------------------
+// Redemption Records（兑换记录）
+//
+// (codeId, userId) 唯一索引保证同一用户对同一码只能兑换一次。
+// transactionId 指向写入的 credit_transactions 行，便于追溯。
+// ------------------------------------------------------------------
+export const redemptionRecords = pgTable('redemption_records', {
+  id: serial('id').primaryKey(),
+  codeId: integer('code_id').notNull().references(() => redemptionCodes.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(),
+  transactionId: integer('transaction_id'), // 关联 credit_transactions.id
+  ip: varchar('ip', { length: 45 }),
+  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [
+  uniqueIndex('redemption_records_code_user_uq').on(table.codeId, table.userId),
+  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt),
 ])

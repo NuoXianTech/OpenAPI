@@ -14,6 +14,11 @@ const mainLinks = [[
     to: '/user',
   },
   {
+    label: '钱包',
+    icon: 'i-mdi-wallet-outline',
+    to: '/user/wallet',
+  },
+  {
     label: 'API Key',
     icon: 'i-mdi-key-outline',
     to: '/user/apikeys',

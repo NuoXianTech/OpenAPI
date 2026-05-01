@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm'
-import { creditTransactions, users } from '@nuxthub/db/schema'
+import { apis, creditTransactions, users } from '@nuxthub/db/schema'
 
 /**
  * 余额服务 · 单源真理
@@ -17,6 +17,7 @@ export type CreditReason
     | 'api_charge' // API 调用扣费
     | 'api_refund' // API 调用退款
     | 'signup_bonus' // 注册赠送
+    | 'redemption_code' // 兑换码兑换
 
 export interface ChargeInput {
   userId: number
@@ -326,6 +327,93 @@ export const creditService = {
     return {
       items,
       total: Number(totalRows[0]?.value || 0),
+    }
+  },
+
+  /**
+   * 用户钱包流水（带 api 名称）·  按 userId 过滤 + 按 reason / 收支方向 筛选 + 分页。
+   * direction: 'in' = amount > 0；'out' = amount < 0。
+   */
+  async listUserTransactions(userId: number, filters: {
+    reason?: CreditReason
+    direction?: 'in' | 'out'
+    limit?: number
+    offset?: number
+  } = {}) {
+    const conditions: SQL[] = [eq(creditTransactions.userId, userId)]
+    if (filters.reason) conditions.push(eq(creditTransactions.reason, filters.reason))
+    if (filters.direction === 'in') conditions.push(sql`${creditTransactions.amount} > 0`)
+    else if (filters.direction === 'out') conditions.push(sql`${creditTransactions.amount} < 0`)
+
+    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
+    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const where = and(...conditions)
+
+    const [items, totalRows] = await Promise.all([
+      db.select({
+        id: creditTransactions.id,
+        amount: creditTransactions.amount,
+        balanceAfter: creditTransactions.balanceAfter,
+        reason: creditTransactions.reason,
+        apiId: creditTransactions.apiId,
+        apiName: apis.name,
+        apiPath: apis.apiPath,
+        apiCallId: creditTransactions.apiCallId,
+        operatorName: creditTransactions.operatorName,
+        remark: creditTransactions.remark,
+        createdAt: creditTransactions.createdAt,
+      })
+        .from(creditTransactions)
+        .leftJoin(apis, eq(apis.id, creditTransactions.apiId))
+        .where(where)
+        .orderBy(desc(creditTransactions.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() }).from(creditTransactions).where(where),
+    ])
+
+    return {
+      items,
+      total: Number(totalRows[0]?.value || 0),
+    }
+  },
+
+  /**
+   * 用户钱包汇总：当前余额 + 累计收入/支出 + 按 reason 分桶。
+   * 用于钱包页顶部的统计卡片。
+   */
+  async getUserWalletSummary(userId: number) {
+    const [balanceRow, aggRows, reasonRows] = await Promise.all([
+      db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1),
+      db.select({
+        totalIn: sql<number>`coalesce(sum(case when ${creditTransactions.amount} > 0 then ${creditTransactions.amount} else 0 end), 0)`,
+        totalOut: sql<number>`coalesce(sum(case when ${creditTransactions.amount} < 0 then -${creditTransactions.amount} else 0 end), 0)`,
+        totalCount: sql<number>`count(*)`,
+      }).from(creditTransactions).where(eq(creditTransactions.userId, userId)),
+      db.select({
+        reason: creditTransactions.reason,
+        count: sql<number>`count(*)`,
+        sum: sql<number>`coalesce(sum(${creditTransactions.amount}), 0)`,
+      })
+        .from(creditTransactions)
+        .where(eq(creditTransactions.userId, userId))
+        .groupBy(creditTransactions.reason),
+    ])
+
+    const balance = Number(balanceRow[0]?.credits || 0)
+    const agg = aggRows[0] || { totalIn: 0, totalOut: 0, totalCount: 0 }
+    const byReason = reasonRows.map((r: { reason: string, count: number | string, sum: number | string }) => ({
+      reason: r.reason,
+      count: Number(r.count) || 0,
+      sum: Number(r.sum) || 0,
+    }))
+
+    return {
+      balance,
+      totalIn: Number(agg.totalIn) || 0,
+      totalOut: Number(agg.totalOut) || 0,
+      totalCount: Number(agg.totalCount) || 0,
+      byReason,
     }
   },
 }

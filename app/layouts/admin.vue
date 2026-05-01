@@ -24,6 +24,11 @@ const mainLinks = [[
     to: '/admin/users',
   },
   {
+    label: '兑换码',
+    icon: 'i-mdi-ticket-percent-outline',
+    to: '/admin/redemption-codes',
+  },
+  {
     label: '友情链接',
     icon: 'i-mdi-link-variant',
     to: '/admin/friend-links',
