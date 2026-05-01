@@ -23,7 +23,7 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = await useFetch('/api/admin/announcements/list', {
+const { data, status, refresh } = useLazyFetch('/api/admin/announcements/list', {
   default: () => ({ code: 0, msg: '', data: [] as Announcement[] }),
 })
 const items = computed<Announcement[]>(() => data.value?.data || [])

@@ -27,7 +27,7 @@ interface ProviderForm {
 
 const toast = useToast()
 
-const { data, status, refresh } = await useFetch<{ code: number, msg: string, data: ProviderItem[] }>('/api/admin/oauth-providers/list', {
+const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: ProviderItem[] }>('/api/admin/oauth-providers/list', {
   default: () => ({ code: 0, msg: '', data: [] as ProviderItem[] }),
 })
 

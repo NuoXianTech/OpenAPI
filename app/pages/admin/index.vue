@@ -48,7 +48,7 @@ const rangeOptions = [
 ]
 const selectedRange = ref<number>(7)
 
-const { data, status, refresh } = await useFetch<AdminDashboardResponse>('/api/admin/dashboard', {
+const { data, status, refresh } = useLazyFetch<AdminDashboardResponse>('/api/admin/dashboard', {
   query: computed(() => ({ days: selectedRange.value })),
   default: () => ({
     code: 0,

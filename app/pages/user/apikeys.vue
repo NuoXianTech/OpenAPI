@@ -20,7 +20,7 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = await useFetch('/api/user/apikeys/list', {
+const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
   default: () => ({ code: 0, msg: '', data: [] as ApiKey[] }),
 })
 const items = computed<ApiKey[]>(() => data.value?.data || [])

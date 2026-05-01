@@ -5,7 +5,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')
 
-const { data, status, refresh } = await useFetch('/api/admin/calls/stats', {
+const { data, status, refresh } = useLazyFetch('/api/admin/calls/stats', {
   default: () => ({ code: 0, msg: '', data: { total: 0, success: 0, failure: 0, items: [] } }),
 })
 

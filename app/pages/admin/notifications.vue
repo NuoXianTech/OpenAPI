@@ -27,12 +27,12 @@ interface MessageRow {
 
 const toast = useToast()
 
-const { data: usersData } = await useFetch('/api/admin/users/list', {
+const { data: usersData } = useLazyFetch('/api/admin/users/list', {
   default: () => ({ code: 0, msg: '', data: [] as UserItem[] }),
 })
 const users = computed(() => (usersData.value?.data || []).filter(u => !u.deletedAt && !u.isBanned))
 
-const { data: messagesData, status, refresh } = await useFetch('/api/admin/notifications/list', {
+const { data: messagesData, status, refresh } = useLazyFetch('/api/admin/notifications/list', {
   default: () => ({ code: 0, msg: '', data: [] as MessageRow[] }),
 })
 const messages = computed<MessageRow[]>(() => messagesData.value?.data || [])

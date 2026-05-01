@@ -3,16 +3,16 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const { user } = useAuth()
 
-const { data: callsData } = await useFetch('/api/user/calls/summary', {
+const { data: callsData } = useLazyFetch('/api/user/calls/summary', {
   default: () => ({ code: 0, msg: '', data: { total: 0, success: 0, failure: 0 } }),
 })
-const { data: keysData } = await useFetch('/api/user/apikeys/list', {
+const { data: keysData } = useLazyFetch('/api/user/apikeys/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, isActive: boolean }> }),
 })
-const { data: unreadData } = await useFetch('/api/notifications/unread-count', {
+const { data: unreadData } = useLazyFetch('/api/notifications/unread-count', {
   default: () => ({ code: 0, msg: '', data: { count: 0 } }),
 })
-const { data: notifData } = await useFetch('/api/notifications/list', {
+const { data: notifData } = useLazyFetch('/api/notifications/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }> }),
   query: { limit: 5 },
 })

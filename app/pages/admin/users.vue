@@ -9,7 +9,7 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const keyword = ref('')
-const { data, status, refresh } = await useFetch('/api/admin/users/list', {
+const { data, status, refresh } = useLazyFetch('/api/admin/users/list', {
   query: computed(() => ({ keyword: keyword.value || undefined })),
   default: () => ({ code: 0, msg: '', data: [] }),
 })

@@ -8,7 +8,7 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = await useFetch('/api/admin/friend-links/list', {
+const { data, status, refresh } = useLazyFetch('/api/admin/friend-links/list', {
   default: () => ({ code: 0, msg: '', data: [] }),
 })
 const items = computed(() => data.value?.data || [])

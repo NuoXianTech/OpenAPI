@@ -3,7 +3,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const toast = useToast()
 
-const { data, status, refresh } = await useFetch('/api/admin/settings/get', {
+const { data, status, refresh } = useLazyFetch('/api/admin/settings/get', {
   default: () => ({ code: 0, msg: '', data: null }),
 })
 

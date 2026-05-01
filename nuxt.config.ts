@@ -45,8 +45,8 @@ export default defineNuxtConfig({
     '/api/settings/public': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
   },
   experimental: {
-    // 减小 SSR HTML，二次访问从 _payload.json 取
-    payloadExtraction: true,
+    // 减小 SSR HTML，二次访问从 _payload.json 取；dev 下 Windows unstorage fs driver 偶发把 payload 路径当文件写导致 ENOENT，故仅生产启用
+    payloadExtraction: process.env.NODE_ENV === 'production',
     // 路由切换走视图过渡，更顺滑
     viewTransition: true,
     // 浏览器空闲时预热相邻路由
@@ -98,7 +98,7 @@ export default defineNuxtConfig({
     },
   },
   icon: {
-    // 服务端按需打包 mdi 图标，避免客户端逐个 fetch /api/_nuxt_icon/*
-    serverBundle: { collections: ['mdi'] },
+    // 服务端按需打包 mdi/lucide 图标，避免客户端逐个 fetch /api/_nuxt_icon/*
+    serverBundle: { collections: ['mdi', 'lucide'] },
   },
 })

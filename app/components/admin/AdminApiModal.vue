@@ -123,7 +123,7 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
 const state = reactive<Partial<Schema>>({})
 const loading = ref(false)
 
-const { data: categoriesData, refresh: refreshCategories } = await useFetch('/api/admin/api-categories/list', {
+const { data: categoriesData, refresh: refreshCategories } = useLazyFetch('/api/admin/api-categories/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, name: string, code: string }> }),
 })
 const categoryOptions = computed(() => [

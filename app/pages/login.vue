@@ -13,7 +13,7 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
 
-const { data: providersData } = await useFetch<{ code: number, data: Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }> }>('/api/auth/providers/list', {
+const { data: providersData } = useLazyFetch<{ code: number, data: Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }> }>('/api/auth/providers/list', {
   default: () => ({ code: 0, msg: '', data: [] }),
 })
 const providers = computed(() => providersData.value?.data || [])
