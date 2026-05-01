@@ -2,8 +2,6 @@
 export default defineNuxtConfig({
   modules: [
     '@nuxthub/core',
-    '@nuxt/icon',
-    '@nuxtjs/tailwindcss',
     '@nuxt/ui',
     '@nuxt/eslint',
     '~~/modules/api-manifest',
@@ -78,7 +76,7 @@ export default defineNuxtConfig({
           manualChunks: {
             unovis: ['@unovis/vue', '@unovis/ts'],
             tanstack: ['@tanstack/vue-table'],
-            zod: ['zod', '@vee-validate/zod', 'vee-validate'],
+            zod: ['zod'],
           },
         },
       },
