@@ -1,16 +1,10 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { oauthAccounts } from '@nuxthub/db/schema'
-import { encryptSecret } from '~~/server/utils/oauthCrypto'
 
 export interface OauthAccountUpsertInput {
   userId: number
   provider: string
   providerUserId: string
-  unionId?: string | null
-  accessToken?: string | null
-  refreshToken?: string | null
-  tokenExpiresAt?: Date | null
-  scope?: string | null
   nickname?: string | null
   avatarUrl?: string | null
   email?: string | null
@@ -32,7 +26,7 @@ export const oauthAccountService = {
       .orderBy(desc(oauthAccounts.linkedAt))
   },
 
-  /** 用户视角：列出该用户绑定的所有第三方账号，仅返回展示用字段（不含 token 密文） */
+  /** 用户视角：列出该用户绑定的所有第三方账号，仅返回展示用字段 */
   async listSafeByUserId(userId: number) {
     const rows = await db.select({
       id: oauthAccounts.id,
@@ -62,19 +56,10 @@ export const oauthAccountService = {
     const existing = await this.findByProviderUserId(input.provider, input.providerUserId)
     const now = new Date()
 
-    const tokenFields = {
-      accessToken: input.accessToken ? encryptSecret(input.accessToken) : null,
-      refreshToken: input.refreshToken ? encryptSecret(input.refreshToken) : null,
-      tokenExpiresAt: input.tokenExpiresAt ?? null,
-      scope: input.scope ?? null,
-    }
-
     if (existing) {
       const res = await db.update(oauthAccounts)
         .set({
           userId: input.userId,
-          unionId: input.unionId ?? existing.unionId,
-          ...tokenFields,
           nickname: input.nickname ?? existing.nickname,
           avatarUrl: input.avatarUrl ?? existing.avatarUrl,
           email: input.email ?? existing.email,
@@ -92,8 +77,6 @@ export const oauthAccountService = {
       userId: input.userId,
       provider: input.provider,
       providerUserId: input.providerUserId,
-      unionId: input.unionId ?? null,
-      ...tokenFields,
       nickname: input.nickname ?? null,
       avatarUrl: input.avatarUrl ?? null,
       email: input.email ?? null,

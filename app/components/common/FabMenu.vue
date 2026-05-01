@@ -9,7 +9,7 @@ const iframeItem = ref<FabMenuItem | null>(null)
 
 const hiddenRoutes = ['/admin/login', '/login', '/register', '/verify-email']
 const showFabMenu = computed(() => !route.path.startsWith('/admin') && !route.path.startsWith('/user') && !hiddenRoutes.includes(route.path))
-const visibleItems = computed(() => items.value.filter(item => item.isActive).slice().sort((left, right) => left.sort - right.sort))
+const visibleItems = computed(() => items.value.filter(item => item.isActive).slice().sort((left, right) => left.sortOrder - right.sortOrder))
 
 function closeAll() {
   isOpen.value = false

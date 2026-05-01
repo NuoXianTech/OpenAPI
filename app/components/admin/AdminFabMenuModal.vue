@@ -17,7 +17,7 @@ const schema = z.object({
   actionValue: z.string().min(1, '必填'),
   actionLabel: z.string().min(1, '必填'),
   target: z.string().min(1, '必填'),
-  sort: z.coerce.number().int().default(0),
+  sortOrder: z.coerce.number().int().default(0),
   isActive: z.boolean().default(true),
 })
 
@@ -31,7 +31,7 @@ const state = reactive<Partial<Schema>>({
   actionValue: '',
   actionLabel: '打开',
   target: '_blank',
-  sort: 0,
+  sortOrder: 0,
   isActive: true,
 })
 
@@ -47,7 +47,7 @@ watch(() => props.item, (val) => {
       actionValue: val.actionValue || '',
       actionLabel: val.actionLabel || '打开',
       target: val.target || '_blank',
-      sort: val.sort ?? 0,
+      sortOrder: val.sortOrder ?? 0,
       isActive: val.isActive ?? true,
     })
   }
@@ -60,7 +60,7 @@ watch(() => props.item, (val) => {
       actionValue: '',
       actionLabel: '打开',
       target: '_blank',
-      sort: 0,
+      sortOrder: 0,
       isActive: true,
     })
   }
@@ -142,10 +142,10 @@ const targetOptions = [
             </UFormField>
             <UFormField
               label="排序"
-              name="sort"
+              name="sortOrder"
             >
               <UInput
-                v-model.number="state.sort"
+                v-model.number="state.sortOrder"
                 type="number"
               />
             </UFormField>

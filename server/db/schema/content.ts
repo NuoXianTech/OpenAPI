@@ -42,7 +42,7 @@ export const fabMenuItems = pgTable('fab_menu_items', {
   actionValue: varchar('action_value', { length: 1000 }).notNull(),
   actionLabel: varchar('action_label', { length: 60 }).notNull().default('打开'),
   target: varchar('target', { length: 20 }).notNull().default('_blank'),
-  sort: integer('sort').notNull().default(0),
+  sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
@@ -50,7 +50,7 @@ export const fabMenuItems = pgTable('fab_menu_items', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [
-  index('fab_menu_items_active_sort_idx').on(table.isActive, table.sort),
+  index('fab_menu_items_active_sort_idx').on(table.isActive, table.sortOrder),
 ])
 
 // ------------------------------------------------------------------

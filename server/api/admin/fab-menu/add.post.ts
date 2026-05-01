@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
     actionValue,
     actionLabel: body.actionLabel?.toString().trim() || '打开',
     target: body.target?.toString().trim() || '_blank',
-    sort: body.sort !== undefined ? Number(body.sort) : 0,
+    sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
     isActive: typeof body.isActive === 'boolean' ? body.isActive : true,
   })
 

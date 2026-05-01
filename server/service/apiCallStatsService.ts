@@ -216,12 +216,10 @@ export const apiCallStatsService = {
 
   async upsertDailyStat(data: {
     apiId: number
-    lastApiCallId?: number | null
     statDate: Date
     totalCount: number
     successCount: number
     failureCount: number
-    apiPath?: string | null
   }) {
     const totalDelta = Math.max(Math.trunc(data.totalCount), 0)
     const successDelta = Math.max(Math.trunc(data.successCount), 0)
@@ -234,20 +232,16 @@ export const apiCallStatsService = {
     const statDate = getLocalDayStart(data.statDate)
     return db.insert(apiCallStats).values({
       apiId: data.apiId,
-      lastApiCallId: data.lastApiCallId ?? null,
       statDate,
       totalCount: totalDelta,
       successCount: successDelta,
       failureCount: failureDelta,
-      apiPath: data.apiPath ?? null,
     }).onConflictDoUpdate({
       target: [apiCallStats.apiId, apiCallStats.statDate],
       set: {
-        lastApiCallId: data.lastApiCallId ?? null,
         totalCount: sql`${apiCallStats.totalCount} + ${totalDelta}`,
         successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
         failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,
-        apiPath: data.apiPath ?? null,
         updatedAt: new Date(),
       },
     })

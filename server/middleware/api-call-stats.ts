@@ -221,7 +221,6 @@ export default defineEventHandler((event: H3Event) => {
           requestSize,
           responseSize,
           statDate: new Date(),
-          statApiPath: target.apiPath,
           errorCode,
           errorMessage,
           creditsCost: 0, // 占位，扣费成功后再补

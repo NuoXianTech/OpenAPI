@@ -12,8 +12,6 @@ interface ProfileData {
   username: string
   email: string
   displayName: string | null
-  bio: string | null
-  avatarUrl: string | null
   emailVerifiedAt: string | null
   createdAt: string
 }
@@ -46,7 +44,6 @@ async function loadProfile() {
     const res = await $fetch<{ data: ProfileData }>('/api/user/profile')
     profile.value = res.data
     profileForm.displayName = res.data.displayName || ''
-    profileForm.bio = res.data.bio || ''
   }
   catch (err) {
     console.error('failed to load profile', err)
@@ -56,8 +53,8 @@ async function loadProfile() {
   }
 }
 
-// ========== 资料编辑（displayName / bio） ==========
-const profileForm = reactive({ displayName: '', bio: '' })
+// ========== 资料编辑（displayName） ==========
+const profileForm = reactive({ displayName: '' })
 const profileSaving = ref(false)
 
 async function submitProfile() {
@@ -67,7 +64,6 @@ async function submitProfile() {
       method: 'PUT',
       body: {
         displayName: profileForm.displayName.trim(),
-        bio: profileForm.bio.trim(),
       },
     })
     toast.add({ title: '资料已更新', color: 'success' })
@@ -306,18 +302,6 @@ function formatDate(iso: string | null) {
                 v-model="profileForm.displayName"
                 :maxlength="100"
                 placeholder="对外展示的名字"
-              />
-            </UFormField>
-
-            <UFormField
-              label="个人简介"
-              :hint="`${profileForm.bio.length} / 500`"
-            >
-              <UTextarea
-                v-model="profileForm.bio"
-                :rows="3"
-                :maxlength="500"
-                placeholder="介绍一下你自己..."
               />
             </UFormField>
 

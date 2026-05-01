@@ -57,8 +57,7 @@ export const apis = pgTable('apis', {
   httpMethod: varchar('http_method', { length: 50 }).notNull(), // 可逗号分隔
   apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /v1/user
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
-  thumbnailUrl: varchar('thumbnail_url', { length: 1000 }),
-  version: varchar('version', { length: 32 }).notNull().default('v1'), // 文档版本号（与 pathVersion 不同）
+  docVersion: varchar('doc_version', { length: 32 }).notNull().default('v1'), // 文档语义版本号（与 pathVersion 不同）
   deprecatedAt: timestamp('deprecated_at', { withTimezone: true }),
   replacementCode: varchar('replacement_code', { length: 50 }),
 
@@ -77,17 +76,8 @@ export const apis = pgTable('apis', {
   costCredits: integer('cost_credits').default(0).notNull(),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
+  // 缓存 TTL（秒）：>0 时启用响应缓存（缓存层待实现）
   cacheTtlSeconds: integer('cache_ttl_seconds').default(0).notNull(),
-
-  // 上游代理
-  upstreamUrl: varchar('upstream_url', { length: 1000 }),
-  upstreamTimeoutMs: integer('upstream_timeout_ms'),
-
-  // 文档 schema 与示例
-  paramsSchema: jsonb('params_schema').$type<Record<string, unknown>>(),
-  responseSchema: jsonb('response_schema').$type<Record<string, unknown>>(),
-  exampleRequest: jsonb('example_request').$type<Record<string, unknown>>(),
-  exampleResponse: jsonb('example_response').$type<Record<string, unknown>>(),
 
   totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
   sortOrder: integer('sort_order').notNull().default(0),
@@ -99,10 +89,10 @@ export const apis = pgTable('apis', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [
   uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
-  index('api_lists_category_idx').on(table.categoryId),
-  index('api_lists_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
-  index('api_lists_status_idx').on(table.status),
-  index('api_lists_deleted_at_idx').on(table.deletedAt),
+  index('apis_category_idx').on(table.categoryId),
+  index('apis_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
+  index('apis_status_idx').on(table.status),
+  index('apis_deleted_at_idx').on(table.deletedAt),
   index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
 ])
 
@@ -147,15 +137,13 @@ export const apiCalls = pgTable('api_calls', {
   path: varchar('path', { length: 1000 }).notNull(),
   method: varchar('method', { length: 10 }).notNull(),
   queryString: varchar('query_string', { length: 2000 }),
-  apiVersion: varchar('api_version', { length: 32 }),
 
   statusCode: integer('status_code').notNull(),
   latencyMs: integer('latency_ms').notNull().default(0),
-  upstreamStatusCode: integer('upstream_status_code'),
-  upstreamLatencyMs: integer('upstream_latency_ms'),
-  cacheHit: boolean('cache_hit').notNull().default(false),
+  cacheHit: boolean('cache_hit').notNull().default(false), // 缓存命中标记，配合 apis.cacheTtlSeconds
 
   ip: varchar('ip', { length: 45 }),
+  // GeoIP 反查字段（待接入 GeoIP 数据源后写入）
   country: varchar('country', { length: 2 }),
   region: varchar('region', { length: 100 }),
   city: varchar('city', { length: 100 }),
@@ -188,12 +176,10 @@ export const apiCalls = pgTable('api_calls', {
 export const apiCallStats = pgTable('api_call_stats', {
   id: serial('id').primaryKey(),
   apiId: integer('api_id').notNull().references(() => apis.id),
-  lastApiCallId: integer('last_api_call_id').references(() => apiCalls.id), // 该统计区间最近一次调用 ID
   statDate: timestamp('stat_date', { withTimezone: true }).notNull(),
   totalCount: integer('total_count').notNull().default(0),
   successCount: integer('success_count').notNull().default(0),
   failureCount: integer('failure_count').notNull().default(0),
-  apiPath: varchar('api_path', { length: 200 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [

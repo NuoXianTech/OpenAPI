@@ -69,18 +69,15 @@ export const oauthProviders = pgTable('oauth_providers', {
 
 // ------------------------------------------------------------------
 // User third-party account binding
-// 一个用户可绑定多个第三方账号；token 须加密后存储
+// 一个用户可绑定多个第三方账号；本应用 OAuth 仅用于登录身份识别，
+// 不调用上游 API，因此不持久化 access_token / refresh_token / scope。
+// providerUserId 已经是稳定身份标识；profile_raw 留作排错时的原样备份。
 // ------------------------------------------------------------------
 export const oauthAccounts = pgTable('oauth_accounts', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   provider: varchar('provider', { length: 32 }).notNull(),
   providerUserId: varchar('provider_user_id', { length: 255 }).notNull(), // openId / uid
-  unionId: varchar('union_id', { length: 255 }), // 微信 unionId 等跨应用身份
-  accessToken: varchar('access_token', { length: 2000 }),
-  refreshToken: varchar('refresh_token', { length: 2000 }),
-  tokenExpiresAt: timestamp('token_expires_at', { withTimezone: true }),
-  scope: varchar('scope', { length: 500 }),
   nickname: varchar('nickname', { length: 140 }),
   avatarUrl: varchar('avatar_url', { length: 1000 }),
   email: varchar('email', { length: 255 }),
@@ -94,5 +91,4 @@ export const oauthAccounts = pgTable('oauth_accounts', {
   uniqueIndex('oauth_accounts_provider_pid_uq').on(table.provider, table.providerUserId),
   index('oauth_accounts_user_idx').on(table.userId),
   index('oauth_accounts_provider_idx').on(table.provider),
-  index('oauth_accounts_union_idx').on(table.provider, table.unionId),
 ])

@@ -60,9 +60,9 @@ const columns: TableColumn<any>[] = [
   },
   { accessorKey: 'actionValue', header: '动作值' },
   {
-    accessorKey: 'sort',
+    accessorKey: 'sortOrder',
     header: '排序',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, row.original.sort),
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, row.original.sortOrder),
   },
   {
     accessorKey: 'isActive',

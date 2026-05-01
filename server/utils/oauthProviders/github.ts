@@ -29,9 +29,6 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
 
   const response = await $fetch<{
     access_token?: string
-    refresh_token?: string
-    expires_in?: number
-    scope?: string
     error?: string
     error_description?: string
   }>(TOKEN_URL, {
@@ -46,13 +43,10 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
 
   return {
     accessToken: response.access_token,
-    refreshToken: response.refresh_token || null,
-    tokenExpiresAt: response.expires_in ? new Date(Date.now() + response.expires_in * 1000) : null,
-    scope: response.scope || null,
   }
 }
 
-export async function fetchUserInfo(_config: ProviderConfig, accessToken: string, token: TokenResult): Promise<ProviderProfile> {
+export async function fetchUserInfo(_config: ProviderConfig, accessToken: string, _token: TokenResult): Promise<ProviderProfile> {
   const headers = {
     'Authorization': `Bearer ${accessToken}`,
     'Accept': 'application/vnd.github+json',
@@ -86,7 +80,6 @@ export async function fetchUserInfo(_config: ProviderConfig, accessToken: string
     email,
     nickname: (typeof profile.name === 'string' && profile.name) || (typeof profile.login === 'string' ? profile.login : null),
     avatarUrl: typeof profile.avatar_url === 'string' ? profile.avatar_url : null,
-    scope: token.scope,
     profileRaw: profile,
   }
 }

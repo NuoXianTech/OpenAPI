@@ -20,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
     actionValue: body.actionValue?.toString().trim(),
     actionLabel: body.actionLabel?.toString().trim(),
     target: body.target?.toString().trim(),
-    sort: body.sort !== undefined ? Number(body.sort) : undefined,
+    sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : undefined,
     isActive: typeof body.isActive === 'boolean' ? body.isActive : undefined,
   })
 

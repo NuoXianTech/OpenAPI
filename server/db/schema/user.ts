@@ -4,7 +4,6 @@ import {
   varchar,
   boolean,
   timestamp,
-  text,
   bigint,
   integer,
   jsonb,
@@ -16,12 +15,12 @@ import { sql } from 'drizzle-orm'
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 50 }).unique().notNull(),
+  // 显示名：用于导航栏展示，不参与登录；为空时回退 username
   displayName: varchar('display_name', { length: 100 }),
   // email 以原大小写存储，通过 lower(email) 唯一索引做不区分大小写去重
   email: varchar('email', { length: 255 }).unique().notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  avatarUrl: varchar('avatar_url', { length: 255 }),
-  bio: text('bio'),
+  // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
   credits: bigint('credits', { mode: 'number' }).notNull().default(0), // API 配额余额
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),

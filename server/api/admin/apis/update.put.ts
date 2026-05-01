@@ -38,7 +38,6 @@ export default defineEventHandler(async (event: H3Event) => {
     shortDesc: body.shortDesc?.toString().trim(),
     description: body.description?.toString().trim(),
     docUrl: body.docUrl?.toString().trim(),
-    thumbnailUrl: body.thumbnailUrl?.toString().trim() || undefined,
     isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : undefined,
     isApiKey,
     isStatistics: typeof body.isStatistics === 'boolean' ? body.isStatistics : undefined,

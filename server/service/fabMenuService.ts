@@ -15,8 +15,8 @@ export const fabMenuService = {
   async list(activeOnly = false) {
     const query = db.select().from(fabMenuItems)
     const rows = activeOnly
-      ? await query.where(eq(fabMenuItems.isActive, true)).orderBy(asc(fabMenuItems.sort), desc(fabMenuItems.updatedAt))
-      : await query.orderBy(asc(fabMenuItems.sort), desc(fabMenuItems.updatedAt))
+      ? await query.where(eq(fabMenuItems.isActive, true)).orderBy(asc(fabMenuItems.sortOrder), desc(fabMenuItems.updatedAt))
+      : await query.orderBy(asc(fabMenuItems.sortOrder), desc(fabMenuItems.updatedAt))
 
     return rows
   },
@@ -38,7 +38,7 @@ export const fabMenuService = {
       actionValue: data.actionValue,
       actionLabel: data.actionLabel?.toString().trim() || '打开',
       target: normalizeTarget(data.target),
-      sort: typeof data.sort === 'number' ? data.sort : Number(data.sort ?? 0),
+      sortOrder: typeof data.sortOrder === 'number' ? data.sortOrder : Number(data.sortOrder ?? 0),
       isActive: data.isActive ?? true,
       createdBy: userid,
       updatedBy: userid,
@@ -57,7 +57,7 @@ export const fabMenuService = {
         actionValue: data.actionValue?.toString().trim() || undefined,
         actionLabel: data.actionLabel?.toString().trim() || undefined,
         target: data.target ? normalizeTarget(data.target) : undefined,
-        sort: data.sort !== undefined ? Number(data.sort) : undefined,
+        sortOrder: data.sortOrder !== undefined ? Number(data.sortOrder) : undefined,
         updatedBy: userid,
         updatedAt: new Date(),
       })

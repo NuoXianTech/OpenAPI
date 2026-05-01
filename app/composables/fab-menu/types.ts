@@ -9,7 +9,7 @@ export interface FabMenuItem {
   actionValue: string
   actionLabel: string
   target: string
-  sort: number
+  sortOrder: number
   isActive: boolean
   createdAt?: string
   updatedAt?: string

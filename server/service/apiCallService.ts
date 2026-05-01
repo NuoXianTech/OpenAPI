@@ -14,15 +14,12 @@ export interface AddCallInput {
   userAgent?: string | null
   referer?: string | null
   queryString?: string | null
-  apiVersion?: string | null
   country?: string | null
   region?: string | null
   city?: string | null
   requestSize?: number | null
   responseSize?: number | null
   requestSnapshot?: Record<string, unknown> | null
-  upstreamStatusCode?: number | null
-  upstreamLatencyMs?: number | null
   cacheHit?: boolean
   errorCode?: string | null
   errorMessage?: string | null
@@ -42,15 +39,12 @@ function normalizeCallRow(data: AddCallInput) {
     userAgent: data.userAgent ?? null,
     referer: data.referer ?? null,
     queryString: data.queryString ?? null,
-    apiVersion: data.apiVersion ?? null,
     country: data.country ?? null,
     region: data.region ?? null,
     city: data.city ?? null,
     requestSize: data.requestSize ?? null,
     responseSize: data.responseSize ?? null,
     requestSnapshot: data.requestSnapshot ?? null,
-    upstreamStatusCode: data.upstreamStatusCode ?? null,
-    upstreamLatencyMs: data.upstreamLatencyMs ?? null,
     cacheHit: data.cacheHit ?? false,
     errorCode: data.errorCode ?? null,
     errorMessage: data.errorMessage ?? null,
@@ -237,7 +231,6 @@ export const apiCallService = {
    */
   async addCallAndUpsertDailyStat(data: AddCallInput & {
     statDate?: Date
-    statApiPath?: string | null
     statusCodeForStats?: number
   }) {
     const normalizedStatusCode = Math.trunc(data.statusCode)
@@ -258,20 +251,16 @@ export const apiCallService = {
 
       await tx.insert(apiCallStats).values({
         apiId: data.apiId,
-        lastApiCallId: callId,
         statDate,
         totalCount: 1,
         successCount: successDelta,
         failureCount: failureDelta,
-        apiPath: data.statApiPath ?? data.path,
       }).onConflictDoUpdate({
         target: [apiCallStats.apiId, apiCallStats.statDate],
         set: {
-          lastApiCallId: callId,
           totalCount: sql`${apiCallStats.totalCount} + 1`,
           successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
           failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,
-          apiPath: data.statApiPath ?? data.path,
           updatedAt: new Date(),
         },
       })

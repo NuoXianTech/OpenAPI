@@ -28,8 +28,6 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
 
   const response = await $fetch<{
     access_token?: string
-    refresh_token?: string
-    expires_in?: number | string
     error?: number | string
     error_description?: string
   }>(url.toString(), { method: 'GET' })
@@ -41,12 +39,8 @@ export async function exchangeCode(config: ProviderConfig, code: string): Promis
     })
   }
 
-  const expiresIn = Number(response.expires_in) || 0
   return {
     accessToken: response.access_token,
-    refreshToken: response.refresh_token || null,
-    tokenExpiresAt: expiresIn > 0 ? new Date(Date.now() + expiresIn * 1000) : null,
-    scope: null,
   }
 }
 
@@ -119,7 +113,6 @@ export async function fetchUserInfo(config: ProviderConfig, accessToken: string,
     email: null,
     nickname: typeof profile.nickname === 'string' && profile.nickname ? profile.nickname : null,
     avatarUrl,
-    scope: null,
     profileRaw: { ...profile, openid, unionid },
   }
 }

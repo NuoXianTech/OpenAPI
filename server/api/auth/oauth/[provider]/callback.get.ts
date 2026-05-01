@@ -114,10 +114,6 @@ export default defineEventHandler(async (event: H3Event) => {
         userId: authUser.id,
         provider,
         providerUserId: profile.providerUserId,
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken,
-        tokenExpiresAt: token.tokenExpiresAt,
-        scope: token.scope,
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
@@ -141,10 +137,6 @@ export default defineEventHandler(async (event: H3Event) => {
         userId: existingAccount.userId,
         provider,
         providerUserId: profile.providerUserId,
-        accessToken: token.accessToken,
-        refreshToken: token.refreshToken,
-        tokenExpiresAt: token.tokenExpiresAt,
-        scope: token.scope,
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
@@ -194,9 +186,7 @@ export default defineEventHandler(async (event: H3Event) => {
         return redirectError(event, 'user_create_failed')
       }
       await usersService.activateUser(created.id)
-      if (profile.avatarUrl) {
-        await usersService.updateUser(created.id, { avatarUrl: profile.avatarUrl })
-      }
+      // 头像统一通过 cravatar 由 email 派生（server/utils/cravatar.ts），不写 users 表
       targetUserId = created.id
     }
 
@@ -210,10 +200,6 @@ export default defineEventHandler(async (event: H3Event) => {
       userId: finalUserId,
       provider,
       providerUserId: profile.providerUserId,
-      accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
-      tokenExpiresAt: token.tokenExpiresAt,
-      scope: token.scope,
       nickname: profile.nickname,
       avatarUrl: profile.avatarUrl,
       email: profile.email,

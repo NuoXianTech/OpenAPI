@@ -15,7 +15,6 @@ export default defineEventHandler(async (event: H3Event) => {
     username: body.username?.toString().trim(),
     email: body.email?.toString().trim().toLowerCase(),
     displayName: body.displayName?.toString().trim() || null,
-    avatarUrl: body.avatarUrl?.toString().trim() || null,
     isActive: typeof body.isActive === 'boolean' ? body.isActive : undefined,
     isBanned: typeof body.isBanned === 'boolean' ? body.isBanned : undefined,
   })

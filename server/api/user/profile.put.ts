@@ -1,17 +1,16 @@
-// 用户更新自己的非敏感资料：displayName / bio
+// 用户更新自己的非敏感资料：displayName
 import type { H3Event } from 'h3'
 import { createError, readBody } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { requireAuth } from '~~/server/utils/auth'
 
 const DISPLAY_NAME_MAX = 100
-const BIO_MAX = 500
 
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
   const body = await readBody(event) as Record<string, any>
 
-  const update: { displayName?: string | null, bio?: string | null } = {}
+  const update: { displayName?: string | null } = {}
 
   if (Object.prototype.hasOwnProperty.call(body, 'displayName')) {
     const v = (body.displayName ?? '').toString().trim()
@@ -19,14 +18,6 @@ export default defineEventHandler(async (event: H3Event) => {
       throw createError({ statusCode: 400, message: `显示名最多 ${DISPLAY_NAME_MAX} 字` })
     }
     update.displayName = v || null
-  }
-
-  if (Object.prototype.hasOwnProperty.call(body, 'bio')) {
-    const v = (body.bio ?? '').toString().trim()
-    if (v.length > BIO_MAX) {
-      throw createError({ statusCode: 400, message: `个人简介最多 ${BIO_MAX} 字` })
-    }
-    update.bio = v || null
   }
 
   if (Object.keys(update).length === 0) {
