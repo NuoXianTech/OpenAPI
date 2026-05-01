@@ -28,6 +28,7 @@ import { API_GUARD_ERROR } from '~~/shared/config/apiGuard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
 import { getAuthUser } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
+import { getLocalDayStart } from '~~/server/utils/localTime'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
@@ -96,8 +97,7 @@ async function getTodayQuotaUsage(apiId: number): Promise<number> {
   const now = Date.now()
   if (cached && cached.expiresAt > now) return cached.value
 
-  const todayStart = new Date()
-  todayStart.setUTCHours(0, 0, 0, 0)
+  const todayStart = getLocalDayStart()
   const rows = await db.select({ total: apiCallStats.totalCount })
     .from(apiCallStats)
     .where(and(eq(apiCallStats.apiId, apiId), gte(apiCallStats.statDate, todayStart)))

@@ -40,8 +40,8 @@ function toShortDate(value: string) {
     return value
   }
 
-  const month = `${date.getUTCMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getUTCDate()}`.padStart(2, '0')
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
   return `${month}-${day}`
 }
 

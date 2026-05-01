@@ -22,12 +22,17 @@ export function useAuth() {
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
       const res = await $fetch<ApiResponse<AuthUser | null>>('/api/auth/me', { headers })
-      if (res.code === 0) {
-        user.value = res.data
+      if (res?.code === 0) {
+        user.value = res.data ?? null
       }
       else {
         user.value = null
       }
+    }
+    catch (err) {
+      // 任何 /api/auth/me 异常都不应让上层页面崩溃；登录态置空，让中间件按未登录处理
+      console.error('[useAuth] fetchMe failed', err)
+      user.value = null
     }
     finally {
       loading.value = false

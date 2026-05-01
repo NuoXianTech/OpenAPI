@@ -32,6 +32,32 @@ export const oauthAccountService = {
       .orderBy(desc(oauthAccounts.linkedAt))
   },
 
+  /** 用户视角：列出该用户绑定的所有第三方账号，仅返回展示用字段（不含 token 密文） */
+  async listSafeByUserId(userId: number) {
+    const rows = await db.select({
+      id: oauthAccounts.id,
+      provider: oauthAccounts.provider,
+      providerUserId: oauthAccounts.providerUserId,
+      nickname: oauthAccounts.nickname,
+      avatarUrl: oauthAccounts.avatarUrl,
+      email: oauthAccounts.email,
+      linkedAt: oauthAccounts.linkedAt,
+      lastLoginAt: oauthAccounts.lastLoginAt,
+    })
+      .from(oauthAccounts)
+      .where(eq(oauthAccounts.userId, userId))
+      .orderBy(desc(oauthAccounts.linkedAt))
+    return rows
+  },
+
+  /** 解绑：要求 (userId, provider) 命中，避免误删别人的绑定 */
+  async unbind(userId: number, provider: string) {
+    const res = await db.delete(oauthAccounts)
+      .where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)))
+      .returning()
+    return res[0] || null
+  },
+
   async upsertAccount(input: OauthAccountUpsertInput) {
     const existing = await this.findByProviderUserId(input.provider, input.providerUserId)
     const now = new Date()

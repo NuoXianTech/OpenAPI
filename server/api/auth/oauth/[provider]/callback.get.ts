@@ -7,14 +7,17 @@ import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { usersService } from '~~/server/service/userService'
 import { consumeState } from '~~/server/utils/oauthState'
 import { decryptSecret } from '~~/server/utils/oauthCrypto'
-import { createUserSession, hashPassword } from '~~/server/utils/auth'
+import { createUserSession, getAuthUser, hashPassword } from '~~/server/utils/auth'
 import * as github from '~~/server/utils/oauthProviders/github'
 import * as qq from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 
-async function redirectError(event: H3Event, code: string) {
-  return sendRedirect(event, `/login?oauth_error=${encodeURIComponent(code)}`, 302)
+async function redirectError(event: H3Event, code: string, mode: 'login' | 'bind' = 'login') {
+  const target = mode === 'bind'
+    ? `/user/profile?oauth_error=${encodeURIComponent(code)}`
+    : `/login?oauth_error=${encodeURIComponent(code)}`
+  return sendRedirect(event, target, 302)
 }
 
 function sanitizeUsername(base: string) {
@@ -52,17 +55,17 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (typeof query.error === 'string' && query.error) {
-    return redirectError(event, String(query.error))
+    return redirectError(event, String(query.error), consumed.mode)
   }
 
   const code = typeof query.code === 'string' ? query.code : null
   if (!code) {
-    return redirectError(event, 'missing_code')
+    return redirectError(event, 'missing_code', consumed.mode)
   }
 
   const providerRow = await oauthProviderService.getByProvider(provider)
   if (!providerRow || !providerRow.isEnabled || !providerRow.clientId || !providerRow.clientSecret) {
-    return redirectError(event, 'provider_unavailable')
+    return redirectError(event, 'provider_unavailable', consumed.mode)
   }
 
   let clientSecret = ''
@@ -70,7 +73,7 @@ export default defineEventHandler(async (event: H3Event) => {
     clientSecret = decryptSecret(providerRow.clientSecret)
   }
   catch {
-    return redirectError(event, 'secret_decrypt_failed')
+    return redirectError(event, 'secret_decrypt_failed', consumed.mode)
   }
 
   const providerConfig: ProviderConfig = {
@@ -93,6 +96,43 @@ export default defineEventHandler(async (event: H3Event) => {
     }
 
     const ip = getRequestIP(event) || null
+
+    // ============ bind 模式：当前已登录用户主动绑定 ============
+    if (consumed.mode === 'bind') {
+      const authUser = await getAuthUser(event)
+      if (!authUser || authUser.kind !== 'user') {
+        return redirectError(event, 'login_required', 'bind')
+      }
+
+      // 该 provider 的此 OAuth 身份是否已被别人占用
+      const existing = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
+      if (existing && existing.userId !== authUser.id) {
+        return redirectError(event, 'already_bound_by_other', 'bind')
+      }
+
+      await oauthAccountService.upsertAccount({
+        userId: authUser.id,
+        provider,
+        providerUserId: profile.providerUserId,
+        accessToken: token.accessToken,
+        refreshToken: token.refreshToken,
+        tokenExpiresAt: token.tokenExpiresAt,
+        scope: token.scope,
+        nickname: profile.nickname,
+        avatarUrl: profile.avatarUrl,
+        email: profile.email,
+        profileRaw: profile.profileRaw,
+        lastLoginIp: ip,
+      })
+
+      const target = consumed.returnTo && consumed.returnTo.startsWith('/')
+        ? consumed.returnTo
+        : '/user/profile'
+      const sep = target.includes('?') ? '&' : '?'
+      return sendRedirect(event, `${target}${sep}oauth_bound=${provider}`, 302)
+    }
+
+    // ============ login 模式：原有登录/注册逻辑 ============
 
     // 1) 已绑定：直接登录
     const existingAccount = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
@@ -187,6 +227,6 @@ export default defineEventHandler(async (event: H3Event) => {
   }
   catch (err: unknown) {
     console.error('[oauth callback] failed', err)
-    return redirectError(event, 'callback_failed')
+    return redirectError(event, 'callback_failed', consumed.mode)
   }
 })

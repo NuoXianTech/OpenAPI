@@ -1,11 +1,6 @@
 import { count, desc, eq, sql, and, type SQL } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
-
-function getDayStartUtc(value: Date) {
-  const start = new Date(value)
-  start.setUTCHours(0, 0, 0, 0)
-  return start
-}
+import { getLocalDayStart } from '~~/server/utils/localTime'
 
 export interface AddCallInput {
   apiId: number
@@ -247,7 +242,7 @@ export const apiCallService = {
   }) {
     const normalizedStatusCode = Math.trunc(data.statusCode)
     const normalizedLatencyMs = Math.max(Math.trunc(data.latencyMs), 0)
-    const statDate = getDayStartUtc(data.statDate || new Date())
+    const statDate = getLocalDayStart(data.statDate || new Date())
     const statStatusCode = Math.trunc(data.statusCodeForStats ?? normalizedStatusCode)
     const successDelta = statStatusCode >= 200 && statStatusCode < 400 ? 1 : 0
     const failureDelta = successDelta ? 0 : 1

@@ -1,0 +1,16 @@
+// 当前用户的可编辑资料（含 displayName/bio）。me.get.ts 只返回登录态摘要，
+// profile 页需要额外字段
+import type { H3Event } from 'h3'
+import { createError } from 'h3'
+import { usersService } from '~~/server/service/userService'
+import { requireAuth } from '~~/server/utils/auth'
+
+export default defineEventHandler(async (event: H3Event) => {
+  const authUser = await requireAuth(event)
+  const row = await usersService.getById(authUser.id)
+  if (!row) {
+    throw createError({ statusCode: 404, message: '用户不存在' })
+  }
+  const { passwordHash: _ph, ...safe } = row
+  return { code: 0, msg: 'ok', data: safe }
+})

@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { and, eq, gt, lt, desc } from 'drizzle-orm'
+import { and, eq, gt, lt, ne, desc } from 'drizzle-orm'
 import { sessions } from '@nuxthub/db/schema'
 
 export interface SessionUserPayload {
@@ -71,6 +71,15 @@ export const sessionService = {
 
   async deleteSessionsByUserId(userId: number) {
     await db.delete(sessions).where(eq(sessions.userId, userId))
+  },
+
+  /** 删除该用户除当前会话以外的所有会话（用于改密码后的「其他设备下线」） */
+  async deleteOtherSessionsForUser(userId: number, exceptSessionId: string) {
+    const exceptHash = hashSessionId(exceptSessionId)
+    await db.delete(sessions).where(and(
+      eq(sessions.userId, userId),
+      ne(sessions.sessionId, exceptHash),
+    ))
   },
 
   async deleteExpiredSessions() {

@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
+import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
 import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
@@ -9,26 +10,6 @@ import type {
   AdminDashboardResponse,
   AdminDashboardTrendPoint,
 } from '~~/shared/types/admin-dashboard'
-
-const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000
-
-function getDayStart(value: Date) {
-  const normalized = new Date(value.getTime() + SHANGHAI_OFFSET_MS)
-  normalized.setUTCHours(0, 0, 0, 0)
-  return new Date(normalized.getTime() - SHANGHAI_OFFSET_MS)
-}
-
-function addUtcDays(value: Date, days: number) {
-  const next = new Date(value)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next
-}
-
-function toUtcDateKey(value: Date | string) {
-  const date = typeof value === 'string' ? new Date(value) : value
-  const normalized = new Date(date.getTime() + SHANGHAI_OFFSET_MS)
-  return normalized.toISOString().slice(0, 10)
-}
 
 function toNumber(value: number | string | null | undefined) {
   const normalized = Number(value)
@@ -49,10 +30,10 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
   const distributionLimit = Math.min(Math.max(Math.trunc(Number(query.top ?? 6)), 1), 20)
   const recentLimit = Math.min(Math.max(Math.trunc(Number(query.recent ?? 10)), 1), 50)
 
-  const todayStart = getDayStart(new Date())
-  const yesterdayStart = addUtcDays(todayStart, -1)
-  const rangeStart = addUtcDays(todayStart, -(days - 1))
-  const tomorrowStart = addUtcDays(todayStart, 1)
+  const todayStart = getLocalDayStart(new Date())
+  const yesterdayStart = addLocalDays(todayStart, -1)
+  const rangeStart = addLocalDays(todayStart, -(days - 1))
+  const tomorrowStart = addLocalDays(todayStart, 1)
 
   const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
   const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
@@ -138,7 +119,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
 
   const trendMap = new Map<string, AdminDashboardTrendPoint>()
   for (const row of trendRows) {
-    const key = toUtcDateKey(row.statDate)
+    const key = toLocalDateKey(row.statDate)
     trendMap.set(key, {
       date: key,
       totalCalls: toNumber(row.totalCalls),
@@ -148,8 +129,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
   }
 
   const trend: AdminDashboardTrendPoint[] = Array.from({ length: days }, (_, index) => {
-    const date = addUtcDays(rangeStart, index)
-    const key = toUtcDateKey(date)
+    const date = addLocalDays(rangeStart, index)
+    const key = toLocalDateKey(date)
     return trendMap.get(key) || { date: key, totalCalls: 0, successCalls: 0, failureCalls: 0 }
   })
 

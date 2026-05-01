@@ -2,11 +2,12 @@ import type { H3Event } from 'h3'
 import { createError, getQuery, getRouterParam, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { issueState } from '~~/server/utils/oauthState'
+import { issueState, type OauthFlowMode } from '~~/server/utils/oauthState'
 import { buildAuthorizeUrl as buildGithubAuthorize } from '~~/server/utils/oauthProviders/github'
 import { buildAuthorizeUrl as buildQqAuthorize } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig } from '~~/server/utils/oauthProviders/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { getAuthUser } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
@@ -28,7 +29,17 @@ export default defineEventHandler(async (event: H3Event) => {
   const rawReturnTo = (query.returnTo || '/').toString()
   const returnTo = rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/'
 
-  const { state } = issueState(event, provider, returnTo)
+  const mode: OauthFlowMode = (query.mode || '').toString() === 'bind' ? 'bind' : 'login'
+
+  // bind 模式必须已登录为普通用户
+  if (mode === 'bind') {
+    const authUser = await getAuthUser(event)
+    if (!authUser || authUser.kind !== 'user') {
+      throw createError({ statusCode: 401, message: '需要先登录普通用户账号才能绑定第三方' })
+    }
+  }
+
+  const { state } = issueState(event, provider, returnTo, mode)
 
   const providerConfig: ProviderConfig = {
     clientId: row.clientId,

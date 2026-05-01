@@ -5,26 +5,7 @@ import type {
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint,
 } from '~~/shared/types/public-stats'
-
-const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000
-
-function getDayStart(value: Date) {
-  const normalized = new Date(value.getTime() + SHANGHAI_OFFSET_MS)
-  normalized.setUTCHours(0, 0, 0, 0)
-  return new Date(normalized.getTime() - SHANGHAI_OFFSET_MS)
-}
-
-function addUtcDays(value: Date, days: number) {
-  const next = new Date(value)
-  next.setUTCDate(next.getUTCDate() + days)
-  return next
-}
-
-function toUtcDateKey(value: Date | string) {
-  const date = typeof value === 'string' ? new Date(value) : value
-  const normalized = new Date(date.getTime() + SHANGHAI_OFFSET_MS)
-  return normalized.toISOString().slice(0, 10)
-}
+import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
 
 function toNumber(value: number | string | null | undefined) {
   const normalized = Number(value)
@@ -59,10 +40,10 @@ export const apiCallStatsService = {
     const days = Math.min(Math.max(Math.trunc(options.days || 7), 1), 30)
     const topLimit = Math.min(Math.max(Math.trunc(options.topLimit || 10), 1), 50)
 
-    const todayStart = getDayStart(new Date())
-    const yesterdayStart = addUtcDays(todayStart, -1)
-    const rangeStart = addUtcDays(todayStart, -(days - 1))
-    const tomorrowStart = addUtcDays(todayStart, 1)
+    const todayStart = getLocalDayStart(new Date())
+    const yesterdayStart = addLocalDays(todayStart, -1)
+    const rangeStart = addLocalDays(todayStart, -(days - 1))
+    const tomorrowStart = addLocalDays(todayStart, 1)
 
     const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
@@ -168,7 +149,7 @@ export const apiCallStatsService = {
 
     const trendMap = new Map<string, PublicCallStatsTrendPoint>()
     for (const row of trendRows) {
-      const key = toUtcDateKey(row.statDate)
+      const key = toLocalDateKey(row.statDate)
       trendMap.set(key, {
         date: key,
         totalCalls: toNumber(row.totalCalls),
@@ -178,8 +159,8 @@ export const apiCallStatsService = {
     }
 
     const trend7d: PublicCallStatsTrendPoint[] = Array.from({ length: days }, (_, index) => {
-      const date = addUtcDays(rangeStart, index)
-      const key = toUtcDateKey(date)
+      const date = addLocalDays(rangeStart, index)
+      const key = toLocalDateKey(date)
       return trendMap.get(key) || {
         date: key,
         totalCalls: 0,
@@ -248,7 +229,7 @@ export const apiCallStatsService = {
       return []
     }
 
-    const statDate = getDayStart(data.statDate)
+    const statDate = getLocalDayStart(data.statDate)
     return db.insert(apiCallStats).values({
       apiId: data.apiId,
       lastApiCallId: data.lastApiCallId ?? null,

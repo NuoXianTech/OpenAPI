@@ -28,6 +28,11 @@ const mainLinks = [[
     icon: 'i-mdi-history',
     to: '/user/calls',
   },
+  {
+    label: '个人设置',
+    icon: 'i-mdi-account-cog-outline',
+    to: '/user/profile',
+  },
 ]] satisfies NavigationMenuItem[][]
 
 const footerLinks = [[
@@ -44,6 +49,11 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => [[
     label: user.value?.email || user.value?.username || 'User',
   },
 ], [
+  {
+    label: '个人设置',
+    icon: 'i-mdi-account-cog-outline',
+    to: '/user/profile',
+  },
   {
     label: '返回前台',
     icon: 'i-mdi-arrow-left',
