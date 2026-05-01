@@ -2,7 +2,6 @@
 
 <p>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-v24.13.0-28CF8D?labelColor=18181B" alt="Node.js"></a>
-  <a href="https://pnpm.io"><img src="https://img.shields.io/badge/pnpm-v10.15.0-28CF8D?labelColor=18181B" alt="pnpm"></a>
   <a href="https://nuxt.com"><img src="https://img.shields.io/badge/Nuxt-4.x-18181B?logo=nuxt" alt="Nuxt"></a>
 </p>
 
@@ -60,8 +59,7 @@
 ## 环境要求
 
 - Node.js >= 24.13.0
-- pnpm
-- PostgreSQL 16+
+- PostgreSQL >= 16+
 
 ## 快速开始
 
@@ -128,10 +126,6 @@ pnpm run lint:fix
 # 测试
 pnpm run test
 pnpm run test:e2e
-pnpm run test:e2e:apis
-pnpm run test:e2e:friend-links
-pnpm run test:e2e:users
-pnpm run test:e2e:calls
 ```
 
 跑 e2e 前需先执行数据库迁移并在 `.env` 中设置 `OAUTH_SECRET_KEY`。复用已启动的 Nuxt 服务可设置 `NUXT_TEST_HOST=http://localhost:3000`。
