@@ -30,28 +30,45 @@ const announcementSettings = computed(() => settings.value.announcement)
 
       <SearchBar v-model="query" />
 
-      <div class="mt-4">
-        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
-          状态筛选
+      <UCard
+        :ui="{ root: 'mt-4', body: 'p-4 sm:p-5 space-y-4' }"
+        variant="subtle"
+      >
+        <div>
+          <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted">
+            <Icon
+              name="mdi:filter-variant"
+              size="14"
+              :ssr="true"
+            />
+            状态筛选
+          </div>
+          <ApiFilterTabs
+            v-model="currentTab"
+            :tabs="statusTabs"
+            aria-label="API 状态筛选"
+          />
         </div>
-        <ApiFilterTabs
-          v-model="currentTab"
-          :tabs="statusTabs"
-          aria-label="API 状态筛选"
-        />
-      </div>
 
-      <div class="mt-2">
-        <div class="mb-2 text-xs uppercase tracking-[0.18em] text-muted">
-          分类筛选
+        <USeparator />
+
+        <div>
+          <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted">
+            <Icon
+              name="mdi:tag-multiple-outline"
+              size="14"
+              :ssr="true"
+            />
+            分类筛选
+          </div>
+          <ApiFilterTabs
+            v-model="currentCategory"
+            :tabs="categoryTabs"
+            :max-visible="10"
+            aria-label="API 分类筛选"
+          />
         </div>
-        <ApiFilterTabs
-          v-model="currentCategory"
-          :tabs="categoryTabs"
-          :max-visible="10"
-          aria-label="API 分类筛选"
-        />
-      </div>
+      </UCard>
 
       <Transition
         name="state-fade"
@@ -63,37 +80,31 @@ const announcementSettings = computed(() => settings.value.announcement)
           key="loading"
           class="py-6"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted">
-              加载中...
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:loading"
+            color="neutral"
+            variant="subtle"
+            title="加载中..."
+            description="正在拉取最新的 API 列表"
+            class="state-panel"
+          />
         </section>
 
         <section
           v-else-if="error"
           id="errorState"
           key="error"
+          class="py-2"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center">
-              <div class="font-semibold">
-                加载失败
-              </div>
-              <div class="mt-1 text-[13px] text-muted">
-                {{ error }}
-              </div>
-              <div class="mt-3">
-                <UButton
-                  variant="outline"
-                  size="sm"
-                  @click="fetchList"
-                >
-                  重试
-                </UButton>
-              </div>
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:alert-circle-outline"
+            color="error"
+            variant="subtle"
+            title="加载失败"
+            :description="error"
+            class="state-panel"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: fetchList }]"
+          />
         </section>
 
         <section
@@ -102,16 +113,14 @@ const announcementSettings = computed(() => settings.value.announcement)
           key="empty"
           class="py-2"
         >
-          <UCard class="state-panel empty-state my-2 border-default py-5 shadow-sm">
-            <div class="px-5 text-center">
-              <div class="font-semibold">
-                未找到匹配的 API
-              </div>
-              <div class="mt-1 text-[13px] text-muted">
-                尝试调整搜索关键词或切换筛选标签。
-              </div>
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:magnify-close"
+            color="neutral"
+            variant="subtle"
+            title="未找到匹配的 API"
+            description="尝试调整搜索关键词或切换筛选标签。"
+            class="state-panel empty-state"
+          />
         </section>
 
         <section

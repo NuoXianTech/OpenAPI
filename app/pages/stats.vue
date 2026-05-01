@@ -227,32 +227,33 @@ const overviewCards = computed(() => {
 
 <template>
   <div>
-    <CommonAppHeader />
-
-    <main class="mx-auto max-w-275 px-5 pb-6">
-      <div class="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <h2 class="text-lg font-semibold tracking-wide">
-            公开调用统计
-          </h2>
-          <p class="mt-1 text-xs text-muted">
-            包含调用概览、近7日趋势和近30日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
-          </p>
-        </div>
-
+    <main class="mx-auto max-w-275 px-5 pt-6 pb-6">
+      <div class="mb-4 flex items-center justify-end gap-2">
         <UButton
+          icon="mdi:refresh"
           variant="outline"
+          color="neutral"
           size="sm"
-          class="shrink-0 cursor-pointer"
+          class="cursor-pointer"
+          :loading="pending"
           @click="reloadStats"
         >
-          <Icon
-            name="mdi:refresh"
-            size="14"
-            :ssr="true"
-          />
-          刷新数据
+          刷新
         </UButton>
+        <UButton
+          icon="mdi:home-outline"
+          variant="outline"
+          color="neutral"
+          size="sm"
+          class="cursor-pointer"
+          to="/"
+        >
+          返回首页
+        </UButton>
+      </div>
+
+      <div class="mb-4 text-xs text-muted">
+        更新时间：{{ generatedAtLabel }}
       </div>
 
       <section

@@ -44,7 +44,6 @@ export default defineNuxtConfig({
     '/api/api-categories/list': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
     '/api/friend-links/list': { headers: { 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } },
     '/api/announcements/list': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=120' } },
-    '/api/fab-menu/list': { headers: { 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } },
     '/api/settings/public': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
   },
   experimental: {
@@ -60,11 +59,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   nitro: {
     // 启用静态资源压缩（brotli + gzip）
-    compressPublicAssets: { brotli: true, gzip: true },
-    // 路由切换 payload 缓存
-    routeRules: {
-      '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
-    },
+    compressPublicAssets: { brotli: true, gzip: true }
   },
   hub: {
     db: {

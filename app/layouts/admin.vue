@@ -50,11 +50,6 @@ const mainLinks = Object.freeze([[
     to: '/admin/calls',
   },
   {
-    label: 'FAB 菜单',
-    icon: 'i-mdi-plus-circle-outline',
-    to: '/admin/fab-menu',
-  },
-  {
     label: '第三方登录',
     icon: 'i-mdi-shield-key-outline',
     to: '/admin/oauth-providers',

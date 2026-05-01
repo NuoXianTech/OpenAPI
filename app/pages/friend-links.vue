@@ -42,6 +42,9 @@ const isFilteredEmpty = computed(() => !loading.value && !error.value && filtere
 const retryFetchFriendLinks = async () => {
   await fetchFriendLinks()
 }
+
+const totalCount = computed(() => items.value.length)
+const activeCount = computed(() => items.value.filter(item => item.isActive).length)
 </script>
 
 <template>
@@ -49,14 +52,42 @@ const retryFetchFriendLinks = async () => {
     <CommonAppHeader />
 
     <main class="mx-auto max-w-275 px-5 pb-6">
-      <div class="mb-4">
-        <h2 class="text-lg font-semibold tracking-wide">
-          友情链接
-        </h2>
-        <p class="mt-1 text-xs text-muted">
-          每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
-        </p>
-      </div>
+      <UCard
+        :ui="{ root: 'mb-4', body: 'p-4 sm:p-5' }"
+        variant="subtle"
+      >
+        <div class="flex flex-wrap items-end justify-between gap-3">
+          <div class="min-w-0">
+            <h2 class="flex items-center gap-2 text-lg font-semibold tracking-wide">
+              <Icon
+                name="mdi:link-variant"
+                size="20"
+                :ssr="true"
+              />
+              友情链接
+            </h2>
+            <p class="mt-1 text-xs text-muted">
+              每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <UBadge
+              color="neutral"
+              variant="soft"
+              class="rounded-full"
+            >
+              共 {{ totalCount }} 个
+            </UBadge>
+            <UBadge
+              color="success"
+              variant="soft"
+              class="rounded-full"
+            >
+              正常 {{ activeCount }}
+            </UBadge>
+          </div>
+        </div>
+      </UCard>
 
       <SearchBar
         v-model="query"
@@ -78,36 +109,30 @@ const retryFetchFriendLinks = async () => {
           key="loading"
           class="py-6"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted">
-              加载中...
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:loading"
+            color="neutral"
+            variant="subtle"
+            title="加载中..."
+            description="正在拉取友情链接"
+            class="state-panel"
+          />
         </section>
 
         <section
           v-else-if="error"
           key="error"
+          class="py-2"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center">
-              <div class="font-semibold">
-                加载失败
-              </div>
-              <div class="mt-1 text-[13px] text-muted">
-                {{ error }}
-              </div>
-              <div class="mt-3">
-                <UButton
-                  variant="outline"
-                  size="sm"
-                  @click="retryFetchFriendLinks"
-                >
-                  重试
-                </UButton>
-              </div>
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:alert-circle-outline"
+            color="error"
+            variant="subtle"
+            title="加载失败"
+            :description="error"
+            class="state-panel"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: retryFetchFriendLinks }]"
+          />
         </section>
 
         <section
@@ -115,11 +140,14 @@ const retryFetchFriendLinks = async () => {
           key="empty"
           class="py-2"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted">
-              暂无可展示的友情链接。
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:link-off"
+            color="neutral"
+            variant="subtle"
+            title="暂无友情链接"
+            description="暂无可展示的友情链接。"
+            class="state-panel"
+          />
         </section>
 
         <section
@@ -127,11 +155,14 @@ const retryFetchFriendLinks = async () => {
           key="filtered-empty"
           class="py-2"
         >
-          <UCard class="state-panel border-default py-5 shadow-sm">
-            <div class="px-5 text-center text-sm text-muted">
-              当前筛选条件没有匹配结果，试试其他关键词或状态。
-            </div>
-          </UCard>
+          <UAlert
+            icon="mdi:magnify-close"
+            color="neutral"
+            variant="subtle"
+            title="无匹配结果"
+            description="当前筛选条件没有匹配结果，试试其他关键词或状态。"
+            class="state-panel"
+          />
         </section>
 
         <section

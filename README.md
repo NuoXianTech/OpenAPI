@@ -18,7 +18,7 @@
 - **积分钱包**：每用户积分余额，支持兑换码充值、调用按 `costCredits` 扣费、管理员调账。
 - **API Guard**：按接口配置 QPS / 分钟 / 小时 / 日级限流与每日配额，driver 可选 `memory` / `postgres` / `kv`（NuxtHub / Cloudflare 等 serverless 默认自动启用）。
 - **调用监控**：中间件自动记录调用日志并按日聚合，公共统计页展示总览、近 7 日趋势、当日 TOP 接口。
-- **管理后台**：用户、API、API 分类、友情链接、FAB 菜单、公告、通知、兑换码、第三方登录 Provider、调用统计、操作日志、站点设置。
+- **管理后台**：用户、API、API 分类、友情链接、公告、通知、兑换码、第三方登录 Provider、调用统计、操作日志、站点设置。
 - **审计日志**：管理端关键操作写入 `operation_logs`，支持按 actor / action / resource 过滤。
 
 ## 技术栈
@@ -36,7 +36,7 @@
 ├─ app/                     # Nuxt 前端
 │  ├─ pages/                # 页面（含 admin / user 子路由）
 │  ├─ components/           # admin / api / common / link / stats / user
-│  ├─ composables/          # auth / api list / fab-menu / link / settings ...
+│  ├─ composables/          # auth / api list / link / settings ...
 │  ├─ layouts/              # admin 布局
 │  └─ middleware/           # auth-admin / auth-user 路由守卫
 ├─ server/                  # Nuxt 服务端
