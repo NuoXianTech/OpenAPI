@@ -6,20 +6,45 @@ import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { validateEmail } from '~~/server/utils/validation'
+import { assertTurnstileForPage } from '~~/server/utils/turnstile'
+import { getRateLimiter } from '~~/server/utils/rateLimit'
 
 export default defineEventHandler(async (event: H3Event) => {
+  const settings = await siteSettingsService.getOrCreate()
+
+  if (!settings.passwordResetEnabled) {
+    throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
+  }
+
   const body = await readBody(event) as Record<string, any>
   const email = (body.email || '').toString().trim().toLowerCase()
+  const turnstileToken = (body.turnstileToken || '').toString()
+
+  const ip = getRequestIP(event) || null
+
+  // 先校验 Turnstile：失败时直接抛错，与“邮箱是否存在”无关，不会构成枚举信号。
+  await assertTurnstileForPage('passwordReset', turnstileToken, ip)
 
   if (!email || !validateEmail(email)) {
     throw createError({ statusCode: 400, message: 'Invalid email address' })
   }
 
+  // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回 200，不暴露阈值与是否存在）。
+  const limiter = getRateLimiter()
+  const emailLimit = await limiter.consume(`password-reset:email:${email}`, 1, 'minute')
+  if (!emailLimit.allowed) {
+    return { code: 0, msg: 'ok', data: null }
+  }
+  if (ip) {
+    const ipLimit = await limiter.consume(`password-reset:ip:${ip}`, 10, 'hour')
+    if (!ipLimit.allowed) {
+      return { code: 0, msg: 'ok', data: null }
+    }
+  }
+
   const user = await usersService.findByEmail(email)
   if (user && user.isActive && !user.isBanned) {
-    const settings = await siteSettingsService.getOrCreate()
     const expiresInMinutes = Number(settings.passwordResetExpiresInMinutes || 30)
-    const ip = getRequestIP(event) || null
     const { token } = await verificationTokenService.createToken(user.id, user.email, expiresInMinutes, 'reset_password', ip)
     const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
     const resetUrl = `${normalizedSiteUrl}/reset-password?user=${user.id}&token=${token}`

@@ -4,11 +4,17 @@ import { createError, readBody } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sessionService } from '~~/server/service/sessionService'
+import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { hashPassword } from '~~/server/utils/auth'
 
 const MIN_PASSWORD_LENGTH = 8
 
 export default defineEventHandler(async (event: H3Event) => {
+  const settings = await siteSettingsService.getOrCreate()
+  if (!settings.passwordResetEnabled) {
+    throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
+  }
+
   const body = await readBody(event) as Record<string, any>
   const userId = Number(body.userId || 0)
   const token = (body.token || '').toString()

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 const { fetchMe, user, login } = useAuth()
-const { turnstile } = useSiteSettings()
+const { turnstile, passwordResetEnabled } = useSiteSettings()
 const route = useRoute()
 const form = reactive({
   identifier: '',
@@ -145,6 +145,20 @@ function gotoOAuth(entry: string) {
               icon="i-mdi-lock-outline"
             />
           </UFormField>
+
+          <div
+            v-if="passwordResetEnabled"
+            class="-mt-2 flex justify-end"
+          >
+            <UButton
+              variant="link"
+              size="xs"
+              to="/forgot-password"
+              class="text-muted"
+            >
+              忘记密码？
+            </UButton>
+          </div>
 
           <div
             v-if="errorMessage"

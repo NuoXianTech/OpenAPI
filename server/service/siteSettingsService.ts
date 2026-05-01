@@ -11,6 +11,7 @@ export interface PublicTurnstileSettings {
   register: boolean
   adminLogin: boolean
   publicStats: boolean
+  passwordReset: boolean
 }
 
 export interface PublicAnnouncementSettings {
@@ -29,6 +30,7 @@ export interface PublicSiteSettings {
   privacyUrl: string | null
   registrationMode: string
   oauthLoginEnabled: boolean
+  passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
   announcement: PublicAnnouncementSettings
 }
@@ -41,6 +43,8 @@ export interface SiteSettingsUpsertInput {
   startTime?: string
   sessionMaxAgeSeconds?: number
   emailVerifyExpiresInMinutes?: number
+  passwordResetExpiresInMinutes?: number
+  passwordResetEnabled?: boolean
   smtpHost?: string
   smtpPort?: number
   smtpSecure?: boolean
@@ -57,6 +61,7 @@ export interface SiteSettingsUpsertInput {
   turnstileRegisterEnabled?: boolean
   turnstileAdminLoginEnabled?: boolean
   turnstilePublicStatsEnabled?: boolean
+  turnstilePasswordResetEnabled?: boolean
   announcementShowOnHome?: boolean
 }
 
@@ -87,6 +92,7 @@ function toPublicTurnstile(settings: {
   turnstileRegisterEnabled: boolean
   turnstileAdminLoginEnabled: boolean
   turnstilePublicStatsEnabled: boolean
+  turnstilePasswordResetEnabled: boolean
 }): PublicTurnstileSettings {
   // 没配 siteKey / secretKey 时即便 enabled=true 也视为未启用，避免前端白屏。
   const configured = Boolean(settings.turnstileSiteKey) && Boolean(settings.turnstileSecretKey)
@@ -98,6 +104,7 @@ function toPublicTurnstile(settings: {
     register: enabled && settings.turnstileRegisterEnabled,
     adminLogin: enabled && settings.turnstileAdminLoginEnabled,
     publicStats: enabled && settings.turnstilePublicStatsEnabled,
+    passwordReset: enabled && settings.turnstilePasswordResetEnabled,
   }
 }
 
@@ -148,6 +155,7 @@ export const siteSettingsService = {
       privacyUrl: settings.privacyUrl || null,
       registrationMode: settings.registrationMode,
       oauthLoginEnabled: settings.oauthLoginEnabled,
+      passwordResetEnabled: settings.passwordResetEnabled,
       turnstile: toPublicTurnstile(settings),
       announcement: {
         showOnHome: settings.announcementShowOnHome,

@@ -15,6 +15,8 @@ const form = reactive({
   startTime: '',
   sessionMaxAgeSeconds: 604800,
   emailVerifyExpiresInMinutes: 30,
+  passwordResetExpiresInMinutes: 30,
+  passwordResetEnabled: true,
   smtpHost: '',
   smtpPort: 465,
   smtpSecure: true,
@@ -30,6 +32,7 @@ const form = reactive({
   turnstileRegisterEnabled: true,
   turnstileAdminLoginEnabled: true,
   turnstilePublicStatsEnabled: false,
+  turnstilePasswordResetEnabled: true,
   announcementShowOnHome: false,
 })
 
@@ -43,6 +46,8 @@ watch(() => data.value?.data, (val) => {
       startTime: val.startTime || '',
       sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? 604800,
       emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? 30,
+      passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? 30,
+      passwordResetEnabled: val.passwordResetEnabled ?? true,
       smtpHost: val.smtpHost || '',
       smtpPort: val.smtpPort ?? 465,
       smtpSecure: val.smtpSecure ?? true,
@@ -58,6 +63,7 @@ watch(() => data.value?.data, (val) => {
       turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? true,
       turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? true,
       turnstilePublicStatsEnabled: val.turnstilePublicStatsEnabled ?? false,
+      turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? true,
       announcementShowOnHome: val.announcementShowOnHome ?? false,
     })
   }
@@ -186,6 +192,21 @@ async function handleSave() {
                 type="number"
               />
             </UFormField>
+            <UFormField label="密码重置链接过期 (分钟)">
+              <UInput
+                v-model.number="form.passwordResetExpiresInMinutes"
+                type="number"
+              />
+            </UFormField>
+          </div>
+          <div class="flex flex-col gap-1 pt-4 border-t border-default mt-4">
+            <USwitch
+              v-model="form.passwordResetEnabled"
+              label="启用「忘记密码」功能"
+            />
+            <p class="text-xs text-muted">
+              关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。
+            </p>
           </div>
         </UCard>
 
@@ -302,6 +323,16 @@ async function handleSave() {
                 />
                 <p class="text-xs text-muted">
                   /stats 加载数据前校验，防止恶意抓取。
+                </p>
+              </div>
+              <div class="flex flex-col gap-1">
+                <USwitch
+                  v-model="form.turnstilePasswordResetEnabled"
+                  :disabled="!form.turnstileEnabled || !form.passwordResetEnabled"
+                  label="忘记密码页"
+                />
+                <p class="text-xs text-muted">
+                  /forgot-password 申请重置链接时校验，避免邮件接口被刷。
                 </p>
               </div>
             </div>

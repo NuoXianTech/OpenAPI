@@ -3,7 +3,7 @@ import { createError } from 'h3'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { decryptSecret } from './oauthCrypto'
 
-export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'publicStats'
+export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'publicStats' | 'passwordReset'
 
 export interface TurnstileCheck {
   required: boolean
@@ -26,6 +26,7 @@ function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.ge
     case 'register': return settings.turnstileRegisterEnabled
     case 'adminLogin': return settings.turnstileAdminLoginEnabled
     case 'publicStats': return settings.turnstilePublicStatsEnabled
+    case 'passwordReset': return settings.turnstilePasswordResetEnabled
   }
 }
 

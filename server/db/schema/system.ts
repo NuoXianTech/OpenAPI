@@ -34,6 +34,8 @@ export const siteSettings = pgTable('site_settings', {
   sessionMaxAgeSeconds: integer('session_max_age_seconds').notNull().default(60 * 60 * 24 * 7),
   emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(30),
   passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(30),
+  // 忘记密码功能总开关：关闭后，请求重置邮件 / 消费重置 token 都会被拒，登录页也不展示入口
+  passwordResetEnabled: boolean('password_reset_enabled').notNull().default(true),
 
   // 备案与法务
   icpBeian: varchar('icp_beian', { length: 100 }),
@@ -67,6 +69,7 @@ export const siteSettings = pgTable('site_settings', {
   turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
   turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(true),
   turnstilePublicStatsEnabled: boolean('turnstile_public_stats_enabled').notNull().default(false),
+  turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(true),
 
   // 首页公告弹窗开关（默认关闭，避免打扰；后台用通知铃铛常驻入口，无需开关）
   announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(false),

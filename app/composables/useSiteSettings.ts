@@ -5,6 +5,7 @@ interface PublicTurnstileSettings {
   register: boolean
   adminLogin: boolean
   publicStats: boolean
+  passwordReset: boolean
 }
 
 interface PublicAnnouncementSettings {
@@ -17,6 +18,7 @@ interface PublicSiteSettings {
   siteName: string
   siteDescription: string
   startTime: string
+  passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
   announcement: PublicAnnouncementSettings
 }
@@ -34,6 +36,7 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   register: false,
   adminLogin: false,
   publicStats: false,
+  passwordReset: false,
 }
 
 const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
@@ -51,6 +54,7 @@ export function useSiteSettings() {
       runtimePublic.siteDescription
       || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     startTime: runtimePublic.startTime || '2026-01-01 00:00:00',
+    passwordResetEnabled: true,
     turnstile: { ...EMPTY_TURNSTILE },
     announcement: { ...EMPTY_ANNOUNCEMENT },
   }
@@ -70,11 +74,13 @@ export function useSiteSettings() {
   const settings = computed(() => data.value?.data || fallback)
   const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
   const announcement = computed<PublicAnnouncementSettings>(() => settings.value.announcement || EMPTY_ANNOUNCEMENT)
+  const passwordResetEnabled = computed(() => settings.value.passwordResetEnabled !== false)
 
   return {
     settings,
     turnstile,
     announcement,
+    passwordResetEnabled,
     pending,
     error,
     refresh,

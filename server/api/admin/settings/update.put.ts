@@ -68,6 +68,8 @@ export default defineEventHandler(async (event: H3Event) => {
     startTime: parseOptionalString(body.startTime, 'startTime', 32),
     sessionMaxAgeSeconds: parseOptionalInteger(body.sessionMaxAgeSeconds, 'sessionMaxAgeSeconds'),
     emailVerifyExpiresInMinutes: parseOptionalInteger(body.emailVerifyExpiresInMinutes, 'emailVerifyExpiresInMinutes'),
+    passwordResetExpiresInMinutes: parseOptionalInteger(body.passwordResetExpiresInMinutes, 'passwordResetExpiresInMinutes'),
+    passwordResetEnabled: parseOptionalBoolean(body.passwordResetEnabled, 'passwordResetEnabled'),
     smtpHost: parseOptionalString(body.smtpHost, 'smtpHost', 255),
     smtpPort: parseOptionalInteger(body.smtpPort, 'smtpPort'),
     smtpSecure: parseOptionalBoolean(body.smtpSecure, 'smtpSecure'),
@@ -83,6 +85,7 @@ export default defineEventHandler(async (event: H3Event) => {
     turnstileRegisterEnabled: parseOptionalBoolean(body.turnstileRegisterEnabled, 'turnstileRegisterEnabled'),
     turnstileAdminLoginEnabled: parseOptionalBoolean(body.turnstileAdminLoginEnabled, 'turnstileAdminLoginEnabled'),
     turnstilePublicStatsEnabled: parseOptionalBoolean(body.turnstilePublicStatsEnabled, 'turnstilePublicStatsEnabled'),
+    turnstilePasswordResetEnabled: parseOptionalBoolean(body.turnstilePasswordResetEnabled, 'turnstilePasswordResetEnabled'),
     announcementShowOnHome: parseOptionalBoolean(body.announcementShowOnHome, 'announcementShowOnHome'),
   }
 
