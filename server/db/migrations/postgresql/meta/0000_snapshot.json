@@ -1,5 +1,5 @@
 {
-  "id": "09b4a4f8-9018-4595-a858-1599f5064de9",
+  "id": "32f77125-d66b-41a5-a80c-b82718735072",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3023,6 +3023,13 @@
           "notNull": true,
           "default": 30
         },
+        "password_reset_enabled": {
+          "name": "password_reset_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "icp_beian": {
           "name": "icp_beian",
           "type": "varchar(100)",
@@ -3165,6 +3172,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "turnstile_password_reset_enabled": {
+          "name": "turnstile_password_reset_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         },
         "announcement_show_on_home": {
           "name": "announcement_show_on_home",
