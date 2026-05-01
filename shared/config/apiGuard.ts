@@ -63,8 +63,13 @@ export const API_GUARD_ERROR = {
 /** API 元数据缓存 TTL（服务层 LRU） */
 export const API_META_CACHE_TTL_MS = 15_000
 
-/** 限流 driver 可选项 */
-export const RATE_LIMIT_DRIVERS = ['memory', 'postgres', 'nuxthub-kv'] as const
+/**
+ * 限流 driver 可选项。
+ * - memory：进程内（dev / 单实例）
+ * - postgres：基于 api_rate_limit_buckets 表的原子 upsert，多实例 Node 部署用
+ * - kv：基于 Nitro `useStorage('cache')`，NuxtHub / Cloudflare / Vercel 等 serverless 部署用
+ */
+export const RATE_LIMIT_DRIVERS = ['memory', 'postgres', 'kv'] as const
 export type RateLimitDriverName = typeof RATE_LIMIT_DRIVERS[number]
 
 /** 限流窗口维度 */

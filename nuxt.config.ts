@@ -18,8 +18,11 @@ export default defineNuxtConfig({
       oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
     },
     apiGuard: {
-      // 'memory' | 'postgres' | 'nuxthub-kv'；多实例部署推荐切为 'postgres'
-      rateLimitDriver: process.env.API_GUARD_RATE_LIMIT_DRIVER || 'memory',
+      // 'memory' | 'postgres' | 'kv'；留空 → 自动选择：
+      //   NuxtHub 部署（NUXT_HUB_PROJECT_KEY 存在）→ kv，否则 → memory
+      // 多实例 Node + 共享 PG 部署可在此显式置为 'postgres'；
+      // 仍可通过 Nuxt 标准的 NUXT_API_GUARD_RATE_LIMIT_DRIVER 环境变量按部署覆盖。
+      rateLimitDriver: '',
     },
     public: {
       startTime: '2026-01-01 00:00:00',

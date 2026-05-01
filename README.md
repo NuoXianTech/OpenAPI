@@ -16,7 +16,7 @@
 - **第三方登录**：内置 GitHub / QQ adapter，支持 `state` 签名 Cookie 防 CSRF、code exchange、自动绑定 / 创建用户；Provider 在后台动态启用，密钥 AES-256-GCM 加密。
 - **API Key 自助**：用户可在个人中心新增、删除、重置 Key。
 - **积分钱包**：每用户积分余额，支持兑换码充值、调用按 `costCredits` 扣费、管理员调账。
-- **API Guard**：按接口配置 QPS / 分钟 / 小时 / 日级限流与每日配额，driver 可切换 `memory` / `postgres`。
+- **API Guard**：按接口配置 QPS / 分钟 / 小时 / 日级限流与每日配额，driver 可选 `memory` / `postgres` / `kv`（NuxtHub / Cloudflare 等 serverless 默认自动启用）。
 - **调用监控**：中间件自动记录调用日志并按日聚合，公共统计页展示总览、近 7 日趋势、当日 TOP 接口。
 - **管理后台**：用户、API、API 分类、友情链接、FAB 菜单、公告、通知、兑换码、第三方登录 Provider、调用统计、操作日志、站点设置。
 - **审计日志**：管理端关键操作写入 `operation_logs`，支持按 actor / action / resource 过滤。
@@ -94,9 +94,10 @@ pnpm run dev
 | `ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
 | `EMAIL_VERIFY_SECRET` | 建议 | 邮箱验证 / OAuth state 签名密钥 |
 | `OAUTH_SECRET_KEY` | 启用 OAuth 时必需 | AES-256-GCM 主密钥；32 字节 hex / base64url / utf-8 |
-| `API_GUARD_RATE_LIMIT_DRIVER` | 否 | `memory`（默认）/ `postgres`，多实例部署用 `postgres` |
 
 > 站点信息、SMTP、注册策略等运行时配置读自 `site_settings` 表，可在后台「站点设置」实时修改。
+>
+> API Guard 限流 driver 默认按部署环境自动选择（NuxtHub → `kv`，否则 → `memory`）；多实例 Node + 共享 PG 可在 `nuxt.config.ts` 把 `runtimeConfig.apiGuard.rateLimitDriver` 显式设为 `'postgres'`，或通过 Nuxt 标准的 `NUXT_API_GUARD_RATE_LIMIT_DRIVER` 环境变量按部署覆盖。
 
 ## OAuth（GitHub 示例）
 
