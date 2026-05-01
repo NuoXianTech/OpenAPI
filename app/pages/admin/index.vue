@@ -307,16 +307,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
           </template>
 
           <ClientOnly>
-            <div
-              v-if="trendRows.length === 0"
-              class="h-[300px] rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
-            >
-              暂无调用数据
-            </div>
-            <div
-              v-else
-              class="h-[300px]"
-            >
+            <div class="relative h-[300px]">
               <VisXYContainer
                 :data="trendRows"
                 :padding="{ left: 8, right: 16, top: 16, bottom: 24 }"
@@ -358,11 +349,17 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                   :domain-line="false"
                   :grid-line="false"
                   :tick-format="xTickFormat"
-                  :num-ticks="Math.min(trendRows.length, 8)"
+                  :num-ticks="Math.min(Math.max(trendRows.length, 1), 8)"
                 />
                 <VisCrosshair :template="trendTooltipTemplate" />
                 <VisTooltip />
               </VisXYContainer>
+              <div
+                v-if="trendRows.length === 0"
+                class="absolute inset-0 rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
+              >
+                暂无调用数据
+              </div>
             </div>
 
             <div class="mt-3 flex flex-wrap gap-3 text-xs">
@@ -411,16 +408,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
           </template>
 
           <ClientOnly>
-            <div
-              v-if="distribution.length === 0"
-              class="h-[260px] rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
-            >
-              暂无分布数据
-            </div>
-            <div
-              v-else
-              class="flex items-center gap-5"
-            >
+            <div class="relative min-h-[260px] flex items-center gap-5">
               <div class="relative size-44 shrink-0">
                 <VisDonut
                   :data="donutData"
@@ -433,7 +421,10 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                   <span class="text-xl font-semibold tabular-nums">{{ formatNumber(donutTotal) }}</span>
                 </div>
               </div>
-              <ul class="flex-1 space-y-2 min-w-0">
+              <ul
+                v-if="distribution.length > 0"
+                class="flex-1 space-y-2 min-w-0"
+              >
                 <li
                   v-for="(item, i) in distribution"
                   :key="item.apiId"
@@ -450,6 +441,12 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                   <span class="tabular-nums text-muted shrink-0">{{ formatNumber(item.totalCalls) }}</span>
                 </li>
               </ul>
+              <div
+                v-if="distribution.length === 0"
+                class="absolute inset-0 rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
+              >
+                暂无分布数据
+              </div>
             </div>
 
             <template #fallback>
