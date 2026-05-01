@@ -44,6 +44,8 @@ export const apiCallStatsService = {
     const yesterdayStart = addLocalDays(todayStart, -1)
     const rangeStart = addLocalDays(todayStart, -(days - 1))
     const tomorrowStart = addLocalDays(todayStart, 1)
+    // TOP 10 固定按近 30 天聚合，与趋势图的 days 解耦
+    const top30dStart = addLocalDays(todayStart, -29)
 
     const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
@@ -117,7 +119,7 @@ export const apiCallStatsService = {
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
-          gte(apiCallStats.statDate, todayStart),
+          gte(apiCallStats.statDate, top30dStart),
           lt(apiCallStats.statDate, tomorrowStart),
         ))
         .groupBy(
@@ -169,7 +171,7 @@ export const apiCallStatsService = {
       }
     })
 
-    const top10Today: PublicCallStatsTopItem[] = topRows.map((row: {
+    const top10Last30d: PublicCallStatsTopItem[] = topRows.map((row: {
       apiId: number
       name: string
       apiPath: string
@@ -207,7 +209,7 @@ export const apiCallStatsService = {
         trackedApiCount: toNumber(summary.trackedApiCount),
       },
       trend7d,
-      top10Today,
+      top10Last30d,
       generatedAt: new Date().toISOString(),
     }
   },

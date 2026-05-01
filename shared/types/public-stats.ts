@@ -32,7 +32,7 @@ export interface PublicCallStatsTopItem {
 export interface PublicCallStatsDashboard {
   overview: PublicCallStatsOverview
   trend7d: PublicCallStatsTrendPoint[]
-  top10Today: PublicCallStatsTopItem[]
+  top10Last30d: PublicCallStatsTopItem[]
   generatedAt: string
 }
 

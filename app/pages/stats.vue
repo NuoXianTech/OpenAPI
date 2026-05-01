@@ -25,7 +25,7 @@ function createEmptyDashboard(): PublicCallStatsDashboard {
       trackedApiCount: 0,
     },
     trend7d: [],
-    top10Today: [],
+    top10Last30d: [],
     generatedAt: new Date(0).toISOString(),
   }
 }
@@ -109,9 +109,9 @@ onMounted(() => {
 const dashboard = computed(() => data.value?.data || EMPTY_DASHBOARD)
 const overview = computed(() => dashboard.value.overview)
 const trend7d = computed(() => dashboard.value.trend7d)
-const top10Today = computed(() => dashboard.value.top10Today)
+const top10Last30d = computed(() => dashboard.value.top10Last30d)
 const hasData = computed(() => data.value !== null)
-const isInitialLoading = computed(() => pending.value && trend7d.value.length === 0 && top10Today.value.length === 0)
+const isInitialLoading = computed(() => pending.value && trend7d.value.length === 0 && top10Last30d.value.length === 0)
 const showChallenge = computed(() => turnstileRequired.value && !hasData.value && !error.value)
 
 const generatedAtLabel = computed(() => {
@@ -130,7 +130,7 @@ const trendChartData = computed<TrendChartRow[]>(() => {
   }))
 })
 
-const xAccessor = (item: TrendChartRow) => item.label
+const xAccessor = (_item: TrendChartRow, index: number) => index
 const successLineAccessor = (item: TrendChartRow) => item[SUCCESS_KEY]
 const failureLineAccessor = (item: TrendChartRow) => item[FAILURE_KEY]
 
@@ -141,7 +141,7 @@ const xTickFormat = (tick: number | Date | string) => {
 
   if (typeof tick === 'number') {
     const maxIndex = Math.max(trendChartData.value.length - 1, 0)
-    const index = Math.min(maxIndex, Math.max(0, Math.floor(tick + Number.EPSILON)))
+    const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
     return trendChartData.value[index]?.label || ''
   }
 
@@ -231,7 +231,7 @@ const overviewCards = computed(() => {
             公开调用统计
           </h2>
           <p class="mt-1 text-xs text-muted">
-            包含调用概览、近7日趋势和今日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
+            包含调用概览、近7日趋势和近30日调用排行 TOP 10。更新时间：{{ generatedAtLabel }}
           </p>
         </div>
 
@@ -383,15 +383,15 @@ const overviewCards = computed(() => {
 
           <UCard class="xl:col-span-2 py-4">
             <div class="px-4 pb-0">
-              <h3>今日调用排行 TOP 10</h3>
-              <p>按今日调用总次数排序</p>
+              <h3>近30日调用排行 TOP 10</h3>
+              <p>按近 30 天调用总次数排序</p>
             </div>
             <div class="px-4 pt-2">
               <div
-                v-if="top10Today.length === 0"
+                v-if="top10Last30d.length === 0"
                 class="h-[320px] rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
               >
-                今日暂无调用数据
+                近 30 天暂无调用数据
               </div>
 
               <table v-else>
@@ -412,7 +412,7 @@ const overviewCards = computed(() => {
 
                 <tbody>
                   <tr
-                    v-for="item in top10Today"
+                    v-for="item in top10Last30d"
                     :key="item.apiId"
                   >
                     <td class="w-12 font-medium">
