@@ -76,6 +76,8 @@ export function useApiList() {
     statusTabs,
     categoryTabs,
     categoryMap,
+    categories,
+    allItems: allData,
     loading,
     error,
     filteredItems,

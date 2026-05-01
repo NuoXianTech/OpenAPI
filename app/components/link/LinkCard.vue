@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import AppCard from '../AppCard.vue'
 
 const props = defineProps({
   title: { type: String, default: '链接标题' },
@@ -10,60 +9,289 @@ const props = defineProps({
 })
 
 const displayDescription = computed(() => {
-  const value = props.description.trim()
+  const value = props.description?.trim()
   return value || '暂无描述'
 })
+
+const displayHost = computed(() => {
+  try {
+    const url = new URL(props.url)
+    return url.hostname.replace(/^www\./, '')
+  }
+  catch {
+    return props.url
+  }
+})
+
+const displayInitial = computed(() => {
+  const t = props.title.trim()
+  return t ? t[0]?.toUpperCase() : '?'
+})
+
+const isActive = computed(() => props.status === 1)
 </script>
 
 <template>
-  <AppCard
-    :title="props.title"
-    :status="props.status"
+  <a
+    :href="props.url"
+    target="_blank"
+    rel="noopener"
+    class="link-card group"
+    :class="{ 'link-card--inactive': !isActive }"
   >
-    <template #summary>
+    <span
+      class="link-card__spotlight"
+      aria-hidden="true"
+    />
+
+    <div class="link-card__top">
+      <div class="link-card__avatar">
+        <span class="link-card__avatar-text">{{ displayInitial }}</span>
+      </div>
+      <div class="link-card__status">
+        <span
+          class="link-card__dot"
+          :class="isActive ? 'link-card__dot--ok' : 'link-card__dot--err'"
+        />
+        <span class="link-card__status-label">
+          {{ isActive ? '正常' : '异常' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="link-card__body">
+      <h3 class="link-card__title">
+        {{ props.title }}
+      </h3>
       <p
-        class="my-2 mb-3 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-[1.5] text-muted"
+        class="link-card__desc"
         :title="displayDescription"
       >
         {{ displayDescription }}
       </p>
+    </div>
 
-      <div class="mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-default bg-muted/40 p-2">
-        <div class="flex items-baseline gap-2 min-w-0 flex-1">
-          <span
-            class="overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-default/90"
-            :title="props.url"
-          >
-            {{ props.url }}
-          </span>
-        </div>
-
-        <UButton
-          :to="props.url"
-          target="_blank"
-          variant="outline"
-          size="xs"
-          class="shrink-0"
-          title="打开链接"
-        >
-          <Icon
-            name="mdi:external-link"
-            size="16"
-            :ssr="true"
-          />
-        </UButton>
-      </div>
-    </template>
-
-    <template #details>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          站点描述
-        </div>
-        <div class="text-[13px] break-all">
-          {{ displayDescription }}
-        </div>
-      </div>
-    </template>
-  </AppCard>
+    <div class="link-card__footer">
+      <span
+        class="link-card__host"
+        :title="props.url"
+      >
+        <Icon
+          name="i-lucide-globe"
+          size="12"
+          :ssr="true"
+        />
+        {{ displayHost }}
+      </span>
+      <span class="link-card__cta">
+        访问
+        <Icon
+          name="i-lucide-arrow-up-right"
+          size="14"
+          :ssr="true"
+        />
+      </span>
+    </div>
+  </a>
 </template>
+
+<style scoped>
+.link-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-elevated);
+  border-radius: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 168px;
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.link-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--ui-text) 6%, transparent), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.link-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ui-border-accented);
+  box-shadow: 0 10px 24px -10px rgba(17, 17, 19, 0.18);
+}
+
+.dark .link-card:hover {
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.55);
+}
+
+.link-card__spotlight {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ui-text) 14%, transparent), transparent 55%);
+  opacity: 0;
+  transition: opacity 240ms ease;
+  z-index: 0;
+}
+
+.link-card:hover .link-card__spotlight {
+  opacity: 1;
+}
+
+.link-card__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.link-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--ui-text);
+  color: var(--ui-text-inverted);
+  display: grid;
+  place-items: center;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: transform 240ms ease;
+}
+
+.link-card:hover .link-card__avatar {
+  transform: rotate(-4deg);
+}
+
+.link-card__avatar-text {
+  letter-spacing: -0.02em;
+  font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.link-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ui-border);
+  background: color-mix(in srgb, var(--ui-bg) 80%, transparent);
+  font-size: 11px;
+  color: var(--ui-text-muted);
+}
+
+.link-card__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.link-card__dot--ok {
+  background: var(--green);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 28%, transparent);
+}
+
+.link-card__dot--err {
+  background: var(--red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 28%, transparent);
+}
+
+.link-card__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.link-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ui-text);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-card__desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ui-text-muted);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-card__footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--ui-border);
+  font-size: 12px;
+}
+
+.link-card__host {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ui-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.link-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ui-text-muted);
+  font-weight: 500;
+  transition: color 200ms ease, gap 200ms ease;
+  flex-shrink: 0;
+}
+
+.link-card:hover .link-card__cta {
+  color: var(--ui-text);
+  gap: 6px;
+}
+
+.link-card--inactive {
+  background: color-mix(in srgb, var(--ui-bg-elevated) 90%, transparent);
+}
+
+.link-card--inactive .link-card__avatar {
+  background: var(--ui-text-muted);
+}
+
+.link-card--inactive .link-card__title {
+  color: var(--ui-text-muted);
+}
+</style>

@@ -11,6 +11,7 @@ const {
   statusTabs,
   categoryTabs,
   categoryMap,
+  allItems,
   loading,
   error,
   filteredItems,
@@ -20,53 +21,73 @@ const {
 
 const { settings } = useSiteSettings()
 const announcementSettings = computed(() => settings.value.announcement)
+
+const visibleCount = computed(() => filteredItems.value.length)
+
+const heroStats = computed(() => ({
+  total: allItems.value.length,
+  normal: allItems.value.filter((i: { status: number }) => i.status === 1).length,
+  categories: Math.max(0, categoryTabs.value.length - 1),
+}))
 </script>
 
 <template>
   <div>
     <CommonAppHeader />
     <main class="mx-auto max-w-275 px-5 pb-6">
-      <ApiRunTimeCard :start-time="settings.startTime" />
-
-      <SearchBar v-model="query" />
+      <CommonHomeHero
+        :start-time="settings.startTime"
+        :site-name="settings.siteName"
+        :site-description="settings.siteDescription"
+        :total-count="heroStats.total"
+        :normal-count="heroStats.normal"
+        :category-count="heroStats.categories"
+      />
 
       <UCard
-        :ui="{ root: 'mt-4', body: 'p-4 sm:p-5 space-y-4' }"
+        :ui="{ root: 'mb-4 overflow-hidden', body: 'p-0 sm:p-0' }"
         variant="subtle"
       >
-        <div>
-          <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted">
-            <Icon
-              name="mdi:filter-variant"
-              size="14"
-              :ssr="true"
-            />
-            状态筛选
-          </div>
-          <ApiFilterTabs
-            v-model="currentTab"
-            :tabs="statusTabs"
-            aria-label="API 状态筛选"
+        <div class="border-b border-default px-4 py-3 sm:px-5">
+          <SearchBar
+            v-model="query"
+            class="!mt-0 !mb-0"
           />
         </div>
 
-        <USeparator />
-
-        <div>
-          <div class="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted">
-            <Icon
-              name="mdi:tag-multiple-outline"
-              size="14"
-              :ssr="true"
+        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[auto_1fr]">
+          <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
+            <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
+              <Icon
+                name="i-lucide-filter"
+                size="12"
+                :ssr="true"
+              />
+              状态
+            </div>
+            <ApiFilterTabs
+              v-model="currentTab"
+              :tabs="statusTabs"
+              aria-label="API 状态筛选"
             />
-            分类筛选
           </div>
-          <ApiFilterTabs
-            v-model="currentCategory"
-            :tabs="categoryTabs"
-            :max-visible="10"
-            aria-label="API 分类筛选"
-          />
+
+          <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
+            <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
+              <Icon
+                name="i-lucide-tags"
+                size="12"
+                :ssr="true"
+              />
+              分类
+            </div>
+            <ApiFilterTabs
+              v-model="currentCategory"
+              :tabs="categoryTabs"
+              :max-visible="10"
+              aria-label="API 分类筛选"
+            />
+          </div>
         </div>
       </UCard>
 
@@ -78,15 +99,14 @@ const announcementSettings = computed(() => settings.value.announcement)
           v-if="loading"
           id="loadingState"
           key="loading"
-          class="py-6"
+          class="py-8"
         >
-          <UAlert
-            icon="mdi:loading"
-            color="neutral"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-loader"
             title="加载中..."
             description="正在拉取最新的 API 列表"
-            class="state-panel"
+            variant="naked"
+            size="lg"
           />
         </section>
 
@@ -96,14 +116,13 @@ const announcementSettings = computed(() => settings.value.announcement)
           key="error"
           class="py-2"
         >
-          <UAlert
-            icon="mdi:alert-circle-outline"
-            color="error"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-circle-alert"
             title="加载失败"
             :description="error"
-            class="state-panel"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: fetchList }]"
+            variant="naked"
+            size="lg"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: fetchList }]"
           />
         </section>
 
@@ -113,13 +132,12 @@ const announcementSettings = computed(() => settings.value.announcement)
           key="empty"
           class="py-2"
         >
-          <UAlert
-            icon="mdi:magnify-close"
-            color="neutral"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-search-x"
             title="未找到匹配的 API"
-            description="尝试调整搜索关键词或切换筛选标签。"
-            class="state-panel empty-state"
+            description="尝试调整搜索关键词或切换筛选标签"
+            variant="naked"
+            size="lg"
           />
         </section>
 
@@ -129,6 +147,24 @@ const announcementSettings = computed(() => settings.value.announcement)
           key="content"
           class="py-2"
         >
+          <div class="mb-3 flex items-center justify-between text-xs text-muted">
+            <span class="inline-flex items-center gap-1.5">
+              <Icon
+                name="i-lucide-list"
+                size="13"
+                :ssr="true"
+              />
+              当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个接口
+            </span>
+            <span class="hidden items-center gap-1.5 sm:inline-flex">
+              <Icon
+                name="i-lucide-mouse-pointer-click"
+                size="13"
+                :ssr="true"
+              />
+              点击卡片查看详情
+            </span>
+          </div>
           <ApiList
             :items="filteredItems"
             :category-map="categoryMap"

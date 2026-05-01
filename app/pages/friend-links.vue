@@ -45,6 +45,7 @@ const retryFetchFriendLinks = async () => {
 
 const totalCount = computed(() => items.value.length)
 const activeCount = computed(() => items.value.filter(item => item.isActive).length)
+const visibleCount = computed(() => filteredItems.value.length)
 </script>
 
 <template>
@@ -52,53 +53,39 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
     <CommonAppHeader />
 
     <main class="mx-auto max-w-275 px-5 pb-6">
+      <CommonFriendLinksHero
+        :total-count="totalCount"
+        :active-count="activeCount"
+      />
+
       <UCard
-        :ui="{ root: 'mb-4', body: 'p-4 sm:p-5' }"
+        :ui="{ root: 'mb-4 overflow-hidden', body: 'p-0 sm:p-0' }"
         variant="subtle"
       >
-        <div class="flex flex-wrap items-end justify-between gap-3">
-          <div class="min-w-0">
-            <h2 class="flex items-center gap-2 text-lg font-semibold tracking-wide">
-              <Icon
-                name="mdi:link-variant"
-                size="20"
-                :ssr="true"
-              />
-              友情链接
-            </h2>
-            <p class="mt-1 text-xs text-muted">
-              每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
-            </p>
+        <div class="border-b border-default px-4 py-3 sm:px-5">
+          <SearchBar
+            v-model="query"
+            placeholder="搜索友情链接名称或描述..."
+            class="!mt-0 !mb-0"
+          />
+        </div>
+
+        <div class="px-4 py-3.5 sm:px-5 sm:py-4">
+          <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
+            <Icon
+              name="i-lucide-filter"
+              size="12"
+              :ssr="true"
+            />
+            状态筛选
           </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <UBadge
-              color="neutral"
-              variant="soft"
-              class="rounded-full"
-            >
-              共 {{ totalCount }} 个
-            </UBadge>
-            <UBadge
-              color="success"
-              variant="soft"
-              class="rounded-full"
-            >
-              正常 {{ activeCount }}
-            </UBadge>
-          </div>
+          <ApiFilterTabs
+            v-model="currentStatus"
+            :tabs="statusTabs"
+            aria-label="友情链接状态筛选"
+          />
         </div>
       </UCard>
-
-      <SearchBar
-        v-model="query"
-        placeholder="搜索友情链接名称或描述..."
-      />
-
-      <ApiFilterTabs
-        v-model="currentStatus"
-        :tabs="statusTabs"
-        aria-label="友情链接状态筛选"
-      />
 
       <Transition
         name="state-fade"
@@ -107,15 +94,14 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
         <section
           v-if="loading"
           key="loading"
-          class="py-6"
+          class="py-8"
         >
-          <UAlert
-            icon="mdi:loading"
-            color="neutral"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-loader"
             title="加载中..."
             description="正在拉取友情链接"
-            class="state-panel"
+            variant="naked"
+            size="lg"
           />
         </section>
 
@@ -124,14 +110,13 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
           key="error"
           class="py-2"
         >
-          <UAlert
-            icon="mdi:alert-circle-outline"
-            color="error"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-circle-alert"
             title="加载失败"
             :description="error"
-            class="state-panel"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: retryFetchFriendLinks }]"
+            variant="naked"
+            size="lg"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: retryFetchFriendLinks }]"
           />
         </section>
 
@@ -140,13 +125,12 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
           key="empty"
           class="py-2"
         >
-          <UAlert
-            icon="mdi:link-off"
-            color="neutral"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-link-2-off"
             title="暂无友情链接"
-            description="暂无可展示的友情链接。"
-            class="state-panel"
+            description="暂无可展示的友情链接"
+            variant="naked"
+            size="lg"
           />
         </section>
 
@@ -155,13 +139,12 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
           key="filtered-empty"
           class="py-2"
         >
-          <UAlert
-            icon="mdi:magnify-close"
-            color="neutral"
-            variant="subtle"
+          <UEmpty
+            icon="i-lucide-search-x"
             title="无匹配结果"
-            description="当前筛选条件没有匹配结果，试试其他关键词或状态。"
-            class="state-panel"
+            description="当前筛选条件没有匹配结果，试试其他关键词或状态"
+            variant="naked"
+            size="lg"
           />
         </section>
 
@@ -170,6 +153,24 @@ const activeCount = computed(() => items.value.filter(item => item.isActive).len
           key="content"
           class="py-2"
         >
+          <div class="mb-3 flex items-center justify-between text-xs text-muted">
+            <span class="inline-flex items-center gap-1.5">
+              <Icon
+                name="i-lucide-list"
+                size="13"
+                :ssr="true"
+              />
+              当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个站点
+            </span>
+            <span class="hidden items-center gap-1.5 sm:inline-flex">
+              <Icon
+                name="i-lucide-mouse-pointer-click"
+                size="13"
+                :ssr="true"
+              />
+              点击卡片访问站点
+            </span>
+          </div>
           <LinkList :items="filteredItems" />
         </section>
       </Transition>
