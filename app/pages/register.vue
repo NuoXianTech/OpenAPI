@@ -1,18 +1,57 @@
 <script lang="ts" setup>
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+definePageMeta({ layout: false })
+
 const { register } = useAuth()
-const { turnstile } = useSiteSettings()
-const form = reactive({
+const { turnstile, settings } = useSiteSettings()
+
+const schema = z.object({
+  username: z
+    .string()
+    .min(3, '用户名至少 3 位')
+    .max(32, '用户名最多 32 位')
+    .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线'),
+  email: z.string().email('请输入有效的邮箱地址'),
+  password: z.string().min(8, '密码至少 8 位'),
+  confirm: z.string().min(1, '请再次输入密码'),
+}).refine(d => d.password === d.confirm, {
+  path: ['confirm'],
+  message: '两次输入的密码不一致',
+})
+
+type Schema = z.output<typeof schema>
+
+const state = reactive<Schema>({
   username: '',
   email: '',
   password: '',
   confirm: '',
 })
+
 const errorMessage = ref('')
 const successMessage = ref('')
 const submitting = ref(false)
+const passwordVisible = ref(false)
+const confirmVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.register)
+
+const passwordStrength = computed(() => {
+  const v = state.password
+  if (!v) return { label: '', color: 'neutral', value: 0 }
+  let score = 0
+  if (v.length >= 8) score += 1
+  if (v.length >= 12) score += 1
+  if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score += 1
+  if (/\d/.test(v)) score += 1
+  if (/[^A-Za-z0-9]/.test(v)) score += 1
+  if (score <= 2) return { label: '弱', color: 'error' as const, value: 33 }
+  if (score <= 3) return { label: '中', color: 'warning' as const, value: 66 }
+  return { label: '强', color: 'success' as const, value: 100 }
+})
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
@@ -21,14 +60,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback
 }
 
-const submit = async () => {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
   successMessage.value = ''
-
-  if (form.password !== form.confirm) {
-    errorMessage.value = '两次输入的密码不一致'
-    return
-  }
 
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMessage.value = '请先完成人机验证'
@@ -38,16 +72,16 @@ const submit = async () => {
   submitting.value = true
   try {
     const res = await register({
-      username: form.username,
-      email: form.email,
-      password: form.password,
+      username: event.data.username,
+      email: event.data.email,
+      password: event.data.password,
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
     })
     successMessage.value = res.verificationRequired
-      ? '账号已创建，请查收邮箱完成验证。'
+      ? '账号已创建，请查收邮箱完成验证后再登录。'
       : '账号创建成功，可以直接登录。'
-    form.password = ''
-    form.confirm = ''
+    state.password = ''
+    state.confirm = ''
     turnstileWidget.value?.reset()
   }
   catch (error: unknown) {
@@ -61,82 +95,173 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+  <UApp>
+    <CommonAppAuthShell>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
           <Icon
-            name="mdi:account-plus-outline"
-            size="24"
+            name="i-mdi-account-plus-outline"
+            size="26"
           />
         </div>
-        <h1 class="text-xl font-semibold">
-          创建账号
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          注册后需邮箱验证，验证通过才能登录
-        </p>
+        <div>
+          <h1 class="auth-brand__title">
+            创建 {{ settings.siteName }} 账号
+          </h1>
+          <p class="auth-brand__subtitle">
+            注册完成后将通过邮箱进行验证，验证通过即可使用
+          </p>
+        </div>
       </div>
 
-      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-        <form
-          class="space-y-4 p-1"
-          @submit.prevent="submit"
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          action="javascript:void(0)"
+          @submit="onSubmit"
         >
-          <UFormField label="用户名">
+          <UFormField
+            label="用户名"
+            name="username"
+            help="3-32 位，可包含字母、数字、下划线和短横线"
+            required
+          >
             <UInput
-              v-model="form.username"
+              v-model="state.username"
               type="text"
               autocomplete="username"
               placeholder="openapi_user"
               icon="i-mdi-account-outline"
+              size="lg"
+              class="w-full"
               autofocus
             />
           </UFormField>
 
-          <UFormField label="邮箱">
+          <UFormField
+            label="邮箱"
+            name="email"
+            required
+          >
             <UInput
-              v-model="form.email"
+              v-model="state.email"
               type="email"
               autocomplete="email"
               placeholder="you@example.com"
               icon="i-mdi-email-outline"
+              size="lg"
+              class="w-full"
             />
           </UFormField>
 
-          <UFormField label="密码">
+          <UFormField
+            label="密码"
+            name="password"
+            required
+          >
             <UInput
-              v-model="form.password"
-              type="password"
+              v-model="state.password"
+              :type="passwordVisible ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="设置登录密码"
+              placeholder="设置不少于 8 位的登录密码"
               icon="i-mdi-lock-outline"
-            />
+              size="lg"
+              class="w-full"
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                  @click="passwordVisible = !passwordVisible"
+                />
+              </template>
+            </UInput>
+            <Transition name="state-fade">
+              <div
+                v-if="state.password"
+                class="mt-2"
+              >
+                <UProgress
+                  :model-value="passwordStrength.value"
+                  :color="passwordStrength.color"
+                  size="xs"
+                />
+                <p class="mt-1 text-xs text-muted">
+                  密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+                </p>
+              </div>
+            </Transition>
           </UFormField>
 
-          <UFormField label="确认密码">
+          <UFormField
+            label="确认密码"
+            name="confirm"
+            required
+          >
             <UInput
-              v-model="form.confirm"
-              type="password"
+              v-model="state.confirm"
+              :type="confirmVisible ? 'text' : 'password'"
               autocomplete="new-password"
               placeholder="再次输入密码"
               icon="i-mdi-lock-check-outline"
-            />
+              size="lg"
+              class="w-full"
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
+                  @click="confirmVisible = !confirmVisible"
+                />
+              </template>
+            </UInput>
           </UFormField>
 
-          <div
-            v-if="errorMessage"
-            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
-          >
-            {{ errorMessage }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
 
-          <div
-            v-if="successMessage"
-            class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2"
-          >
-            {{ successMessage }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="successMessage"
+              class="auth-message auth-message--success"
+            >
+              <Icon
+                name="i-mdi-check-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ successMessage }}</span>
+            </div>
+          </Transition>
 
           <CommonTurnstileWidget
             v-if="turnstileRequired"
@@ -148,33 +273,35 @@ const submit = async () => {
           <UButton
             type="submit"
             block
+            size="lg"
             :loading="submitting"
             :disabled="turnstileRequired && !turnstileToken"
           >
-            注册
+            创建账号
           </UButton>
-        </form>
+        </UForm>
       </UCard>
 
-      <div class="flex items-center justify-center gap-2 mt-4">
+      <div class="auth-footer-links">
+        <span>已有账号？</span>
         <UButton
           variant="link"
           size="sm"
           to="/login"
-          class="text-muted"
+          class="px-0"
         >
-          已有账号
+          直接登录
         </UButton>
-        <span class="text-muted text-xs">·</span>
+        <span class="text-dimmed">·</span>
         <UButton
           variant="link"
           size="sm"
           to="/"
-          class="text-muted"
+          class="px-0"
         >
           返回首页
         </UButton>
       </div>
-    </div>
-  </div>
+    </CommonAppAuthShell>
+  </UApp>
 </template>

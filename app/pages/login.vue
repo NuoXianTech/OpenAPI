@@ -1,14 +1,28 @@
 <script lang="ts" setup>
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+definePageMeta({ layout: false })
+
 const { fetchMe, user, login } = useAuth()
-const { turnstile, passwordResetEnabled } = useSiteSettings()
+const { turnstile, passwordResetEnabled, settings } = useSiteSettings()
 const route = useRoute()
-const form = reactive({
+
+const schema = z.object({
+  identifier: z.string().min(1, '请输入邮箱或用户名'),
+  password: z.string().min(1, '请输入密码'),
+})
+type Schema = z.output<typeof schema>
+
+const state = reactive<Schema>({
   identifier: '',
   password: '',
 })
+
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
+const passwordVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
@@ -57,7 +71,7 @@ onMounted(async () => {
   checkingAuth.value = false
 })
 
-const submit = async () => {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
@@ -67,9 +81,9 @@ const submit = async () => {
 
   submitting.value = true
   try {
-    const base = form.identifier.includes('@')
-      ? { email: form.identifier, password: form.password }
-      : { username: form.identifier, password: form.password }
+    const base = event.data.identifier.includes('@')
+      ? { email: event.data.identifier, password: event.data.password }
+      : { username: event.data.identifier, password: event.data.password }
     const payload = turnstileRequired.value
       ? { ...base, turnstileToken: turnstileToken.value }
       : base
@@ -93,86 +107,136 @@ function gotoOAuth(entry: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+  <UApp>
+    <CommonAppAuthShell>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
           <Icon
-            name="mdi:account-circle-outline"
-            size="24"
+            name="i-mdi-account-circle-outline"
+            size="26"
           />
         </div>
-        <h1 class="text-xl font-semibold">
-          欢迎回来
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          使用邮箱或用户名登录你的账号
-        </p>
+        <div>
+          <h1 class="auth-brand__title">
+            欢迎回到 {{ settings.siteName }}
+          </h1>
+          <p class="auth-brand__subtitle">
+            使用邮箱或用户名登录，开始调用接口
+          </p>
+        </div>
       </div>
 
-      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
         <div
           v-if="checkingAuth"
-          class="space-y-3 p-1"
+          class="space-y-3"
         >
-          <USkeleton class="h-10 w-full rounded-md" />
-          <USkeleton class="h-10 w-full rounded-md" />
-          <USkeleton class="h-10 w-full rounded-md" />
+          <USkeleton class="h-11 w-full rounded-lg" />
+          <USkeleton class="h-11 w-full rounded-lg" />
+          <USkeleton class="h-11 w-full rounded-lg" />
         </div>
 
-        <form
+        <UForm
           v-else
-          class="space-y-4 p-1"
-          @submit.prevent="submit"
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          action="javascript:void(0)"
+          @submit="onSubmit"
         >
-          <UFormField label="邮箱或用户名">
+          <UFormField
+            label="邮箱或用户名"
+            name="identifier"
+            required
+          >
             <UInput
-              v-model="form.identifier"
+              v-model="state.identifier"
               type="text"
               autocomplete="username"
               placeholder="you@example.com"
               icon="i-mdi-account-outline"
+              size="lg"
+              class="w-full"
               autofocus
             />
           </UFormField>
 
-          <UFormField label="密码">
+          <UFormField
+            label="密码"
+            name="password"
+            required
+          >
             <UInput
-              v-model="form.password"
-              type="password"
+              v-model="state.password"
+              :type="passwordVisible ? 'text' : 'password'"
               autocomplete="current-password"
-              placeholder="••••••••"
+              placeholder="请输入登录密码"
               icon="i-mdi-lock-outline"
-            />
+              size="lg"
+              class="w-full"
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                  @click="passwordVisible = !passwordVisible"
+                />
+              </template>
+            </UInput>
           </UFormField>
 
           <div
             v-if="passwordResetEnabled"
-            class="-mt-2 flex justify-end"
+            class="flex justify-end -mt-1"
           >
             <UButton
+              type="button"
               variant="link"
               size="xs"
               to="/forgot-password"
-              class="text-muted"
+              class="text-muted px-0"
             >
               忘记密码？
             </UButton>
           </div>
 
-          <div
-            v-if="errorMessage"
-            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
-          >
-            {{ errorMessage }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
 
-          <div
-            v-if="oauthError"
-            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
-          >
-            {{ oauthError }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="oauthError"
+              class="auth-message auth-message--error"
+            >
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ oauthError }}</span>
+            </div>
+          </Transition>
 
           <CommonTurnstileWidget
             v-if="turnstileRequired"
@@ -184,55 +248,57 @@ function gotoOAuth(entry: string) {
           <UButton
             type="submit"
             block
+            size="lg"
             :loading="submitting"
             :disabled="turnstileRequired && !turnstileToken"
           >
             登录
           </UButton>
 
-          <div
-            v-if="providers.length"
-            class="pt-3 border-t border-default space-y-2"
-          >
-            <p class="text-xs text-muted text-center">
+          <template v-if="providers.length">
+            <div class="auth-divider">
               或使用第三方登录
-            </p>
+            </div>
+
             <div class="grid gap-2">
               <UButton
                 v-for="p in providers"
                 :key="p.provider"
                 type="button"
                 variant="outline"
+                color="neutral"
+                size="lg"
                 block
                 :icon="p.icon || 'i-mdi-account-circle-outline'"
                 @click="gotoOAuth(p.authorizeEntry)"
               >
-                {{ p.displayName }}
+                使用 {{ p.displayName }} 登录
               </UButton>
             </div>
-          </div>
-        </form>
+          </template>
+        </UForm>
       </UCard>
 
-      <div class="flex items-center justify-center gap-2 mt-4">
+      <div class="auth-footer-links">
+        <span>还没有账号？</span>
         <UButton
           variant="link"
           size="sm"
           to="/register"
-          class="text-muted"
+          class="px-0"
         >
           创建账号
         </UButton>
-        <span class="text-muted text-xs">·</span>
+        <span class="text-dimmed">·</span>
         <UButton
           variant="link"
           size="sm"
           to="/"
-          class="text-muted"
+          class="px-0"
         >
           返回首页
         </UButton>
       </div>
-    </div>
-  </div>
+    </CommonAppAuthShell>
+  </UApp>
 </template>

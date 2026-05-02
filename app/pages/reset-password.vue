@@ -1,4 +1,9 @@
 <script lang="ts" setup>
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const toast = useToast()
 
@@ -6,13 +11,39 @@ const userId = computed(() => Number((route.query.user || '').toString()) || 0)
 const token = computed(() => (route.query.token || '').toString())
 const linkValid = computed(() => userId.value > 0 && token.value.length > 0)
 
-const form = reactive({
+const schema = z.object({
+  password: z.string().min(8, '密码至少 8 位'),
+  confirm: z.string().min(1, '请再次输入密码'),
+}).refine(d => d.password === d.confirm, {
+  path: ['confirm'],
+  message: '两次输入的密码不一致',
+})
+
+type Schema = z.output<typeof schema>
+
+const state = reactive<Schema>({
   password: '',
   confirm: '',
 })
 const errorMessage = ref('')
 const submitting = ref(false)
 const success = ref(false)
+const passwordVisible = ref(false)
+const confirmVisible = ref(false)
+
+const passwordStrength = computed(() => {
+  const v = state.password
+  if (!v) return { label: '', color: 'neutral', value: 0 }
+  let score = 0
+  if (v.length >= 8) score += 1
+  if (v.length >= 12) score += 1
+  if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score += 1
+  if (/\d/.test(v)) score += 1
+  if (/[^A-Za-z0-9]/.test(v)) score += 1
+  if (score <= 2) return { label: '弱', color: 'error' as const, value: 33 }
+  if (score <= 3) return { label: '中', color: 'warning' as const, value: 66 }
+  return { label: '强', color: 'success' as const, value: 100 }
+})
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
@@ -27,17 +58,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback
 }
 
-const submit = async () => {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
-
-  if (form.password.length < 8) {
-    errorMessage.value = '密码至少 8 位'
-    return
-  }
-  if (form.password !== form.confirm) {
-    errorMessage.value = '两次输入的密码不一致'
-    return
-  }
 
   submitting.value = true
   try {
@@ -46,7 +68,7 @@ const submit = async () => {
       body: {
         userId: userId.value,
         token: token.value,
-        newPassword: form.password,
+        newPassword: event.data.password,
       },
     })
     success.value = true
@@ -64,34 +86,47 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+  <UApp>
+    <CommonAppAuthShell>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
           <Icon
-            name="mdi:lock-reset"
-            size="24"
+            name="i-mdi-lock-reset"
+            size="26"
           />
         </div>
-        <h1 class="text-xl font-semibold">
-          重置密码
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          为账号设置新的登录密码
-        </p>
+        <div>
+          <h1 class="auth-brand__title">
+            重置密码
+          </h1>
+          <p class="auth-brand__subtitle">
+            请为账号设置新的登录密码，密码至少 8 位
+          </p>
+        </div>
       </div>
 
-      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
         <div
           v-if="!linkValid"
-          class="space-y-3 p-1"
+          class="space-y-4"
         >
-          <div class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2">
-            重置链接无效或已损坏，请重新申请。
+          <div class="auth-message auth-message--error">
+            <Icon
+              name="i-mdi-link-variant-off"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>重置链接无效或已损坏，请重新申请。</span>
           </div>
           <UButton
             to="/forgot-password"
             block
+            size="lg"
+            icon="i-mdi-refresh"
           >
             重新申请
           </UButton>
@@ -99,78 +134,167 @@ const submit = async () => {
 
         <div
           v-else-if="success"
-          class="space-y-3 p-1"
+          class="space-y-4 text-center"
         >
-          <div class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2">
-            密码已重置，正在跳转到登录页...
+          <div class="auth-success-illustration">
+            <Icon
+              name="i-mdi-check"
+              size="44"
+            />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-highlighted">
+              重置成功
+            </h3>
+            <p class="text-sm text-muted mt-1.5">
+              密码已更新，正在跳转到登录页...
+            </p>
           </div>
         </div>
 
-        <form
+        <UForm
           v-else
-          class="space-y-4 p-1"
-          @submit.prevent="submit"
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          action="javascript:void(0)"
+          @submit="onSubmit"
         >
           <UFormField
             label="新密码"
-            help="至少 8 位"
+            name="password"
+            required
           >
             <UInput
-              v-model="form.password"
-              type="password"
+              v-model="state.password"
+              :type="passwordVisible ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="设置新密码"
+              placeholder="设置新密码（至少 8 位）"
               icon="i-mdi-lock-outline"
+              size="lg"
+              class="w-full"
               autofocus
-            />
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                  @click="passwordVisible = !passwordVisible"
+                />
+              </template>
+            </UInput>
+            <Transition name="state-fade">
+              <div
+                v-if="state.password"
+                class="mt-2"
+              >
+                <UProgress
+                  :model-value="passwordStrength.value"
+                  :color="passwordStrength.color"
+                  size="xs"
+                />
+                <p class="mt-1 text-xs text-muted">
+                  密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+                </p>
+              </div>
+            </Transition>
           </UFormField>
 
-          <UFormField label="确认新密码">
+          <UFormField
+            label="确认新密码"
+            name="confirm"
+            required
+          >
             <UInput
-              v-model="form.confirm"
-              type="password"
+              v-model="state.confirm"
+              :type="confirmVisible ? 'text' : 'password'"
               autocomplete="new-password"
               placeholder="再次输入新密码"
               icon="i-mdi-lock-check-outline"
-            />
+              size="lg"
+              class="w-full"
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
+                  @click="confirmVisible = !confirmVisible"
+                />
+              </template>
+            </UInput>
           </UFormField>
 
-          <div
-            v-if="errorMessage"
-            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
-          >
-            {{ errorMessage }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
 
           <UButton
             type="submit"
             block
+            size="lg"
             :loading="submitting"
           >
             重置密码
           </UButton>
-        </form>
+        </UForm>
       </UCard>
 
-      <div class="flex items-center justify-center gap-2 mt-4">
+      <div class="auth-footer-links">
         <UButton
           variant="link"
           size="sm"
           to="/login"
-          class="text-muted"
+          class="px-0"
         >
           返回登录
         </UButton>
-        <span class="text-muted text-xs">·</span>
+        <span class="text-dimmed">·</span>
         <UButton
           variant="link"
           size="sm"
           to="/"
-          class="text-muted"
+          class="px-0"
         >
           返回首页
         </UButton>
       </div>
-    </div>
-  </div>
+    </CommonAppAuthShell>
+  </UApp>
 </template>
+
+<style scoped>
+.auth-success-illustration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  margin: 0 auto 4px;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+}
+</style>

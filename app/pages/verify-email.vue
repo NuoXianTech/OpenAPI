@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+definePageMeta({ layout: false })
+
 const route = useRoute()
 const token = computed(() => (route.query.token || '').toString())
 const user = computed(() => (route.query.user || '').toString())
@@ -16,12 +18,12 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
 const headerIcon = computed(() => {
   if (status.value === 'success') {
-    return 'mdi:email-check-outline'
+    return 'i-mdi-email-check-outline'
   }
   if (status.value === 'error') {
-    return 'mdi:email-alert-outline'
+    return 'i-mdi-email-alert-outline'
   }
-  return 'mdi:email-sync-outline'
+  return 'i-mdi-email-sync-outline'
 })
 
 const headerTitle = computed(() => {
@@ -86,99 +88,135 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+  <UApp>
+    <CommonAppAuthShell compact>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
           <Icon
             :name="headerIcon"
-            size="24"
+            size="26"
           />
         </div>
-        <h1 class="text-xl font-semibold">
-          {{ headerTitle }}
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          {{ headerSubtitle }}
-        </p>
+        <div>
+          <h1 class="auth-brand__title">
+            {{ headerTitle }}
+          </h1>
+          <p class="auth-brand__subtitle">
+            {{ headerSubtitle }}
+          </p>
+        </div>
       </div>
 
-      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-        <div class="space-y-4 p-1">
-          <div
-            v-if="status === 'pending'"
-            class="space-y-3"
-          >
-            <div class="flex items-center gap-2 text-sm text-muted">
-              <Icon
-                name="mdi:loading"
-                size="16"
-                class="animate-spin"
-              />
-              <span>{{ message }}</span>
-            </div>
-            <USkeleton class="h-10 w-full rounded-md" />
-            <USkeleton class="h-10 w-3/4 rounded-md" />
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
+        <div
+          v-if="status === 'pending'"
+          class="space-y-4"
+        >
+          <div class="flex items-center gap-2 text-sm text-muted">
+            <Icon
+              name="i-mdi-loading"
+              size="16"
+              class="animate-spin"
+            />
+            <span>{{ message }}</span>
           </div>
+          <USkeleton class="h-10 w-full rounded-lg" />
+          <USkeleton class="h-10 w-3/4 rounded-lg" />
+        </div>
 
-          <div
-            v-else-if="status === 'success'"
-            class="space-y-3"
-          >
-            <div class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2">
-              {{ message }}
-            </div>
-            <UButton
-              to="/"
-              block
-            >
-              返回首页
-            </UButton>
+        <div
+          v-else-if="status === 'success'"
+          class="space-y-4 text-center"
+        >
+          <div class="auth-success-illustration">
+            <Icon
+              name="i-mdi-check"
+              size="44"
+            />
           </div>
+          <p class="text-sm text-muted">
+            {{ message }}
+          </p>
+          <UButton
+            to="/"
+            block
+            size="lg"
+          >
+            返回首页
+          </UButton>
+        </div>
 
-          <div
-            v-else
-            class="space-y-3"
-          >
-            <div class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2">
-              {{ message }}
-            </div>
-            <UButton
-              to="/register"
-              block
-            >
-              重新注册
-            </UButton>
-            <UButton
-              to="/login"
-              variant="outline"
-              block
-            >
-              去登录
-            </UButton>
+        <div
+          v-else
+          class="space-y-4"
+        >
+          <div class="auth-message auth-message--error">
+            <Icon
+              name="i-mdi-alert-circle-outline"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>{{ message }}</span>
           </div>
+          <UButton
+            to="/register"
+            block
+            size="lg"
+            icon="i-mdi-account-plus-outline"
+          >
+            重新注册
+          </UButton>
+          <UButton
+            to="/login"
+            variant="outline"
+            color="neutral"
+            block
+            size="lg"
+            icon="i-mdi-login"
+          >
+            去登录
+          </UButton>
         </div>
       </UCard>
 
-      <div class="flex items-center justify-center gap-2 mt-4">
+      <div class="auth-footer-links">
         <UButton
           variant="link"
           size="sm"
           to="/login"
-          class="text-muted"
+          class="px-0"
         >
           去登录
         </UButton>
-        <span class="text-muted text-xs">·</span>
+        <span class="text-dimmed">·</span>
         <UButton
           variant="link"
           size="sm"
           to="/"
-          class="text-muted"
+          class="px-0"
         >
           返回首页
         </UButton>
       </div>
-    </div>
-  </div>
+    </CommonAppAuthShell>
+  </UApp>
 </template>
+
+<style scoped>
+.auth-success-illustration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  margin: 0 auto 4px;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+}
+</style>

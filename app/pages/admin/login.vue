@@ -1,22 +1,32 @@
 <script setup lang="ts">
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
 definePageMeta({ layout: false })
 
 const { adminLogin } = useAuth()
-const { turnstile } = useSiteSettings()
+const { turnstile, settings } = useSiteSettings()
 
-const form = reactive({ username: '', password: '' })
+const schema = z.object({
+  username: z.string().min(1, '请输入用户名'),
+  password: z.string().min(1, '请输入密码'),
+})
+type Schema = z.output<typeof schema>
+
+const state = reactive<Schema>({
+  username: '',
+  password: '',
+})
 const loading = ref(false)
 const errorMsg = ref('')
+const passwordVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.adminLogin)
 
-async function handleLogin() {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMsg.value = ''
-  if (!form.username.trim() || !form.password) {
-    errorMsg.value = '请输入用户名和密码'
-    return
-  }
+
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMsg.value = '请先完成人机验证'
     return
@@ -24,14 +34,20 @@ async function handleLogin() {
   loading.value = true
   try {
     await adminLogin({
-      username: form.username.trim(),
-      password: form.password,
+      username: event.data.username.trim(),
+      password: event.data.password,
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
     })
     await navigateTo('/admin')
   }
-  catch (err: any) {
-    errorMsg.value = err?.data?.message || err?.message || '登录失败'
+  catch (err: unknown) {
+    if (err && typeof err === 'object') {
+      const e = err as { data?: { message?: string }, message?: string }
+      errorMsg.value = e.data?.message || e.message || '登录失败'
+    }
+    else {
+      errorMsg.value = '登录失败'
+    }
     turnstileWidget.value?.reset()
   }
   finally {
@@ -42,82 +58,126 @@ async function handleLogin() {
 
 <template>
   <UApp>
-    <div class="min-h-screen bg-default flex items-center justify-center p-4">
-      <div class="w-full max-w-sm">
-        <div class="text-center mb-6">
-          <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
-            <Icon
-              name="mdi:shield-crown-outline"
-              size="24"
-            />
-          </div>
-          <h1 class="text-xl font-semibold">
+    <CommonAppAuthShell compact>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
+          <Icon
+            name="i-mdi-shield-crown-outline"
+            size="26"
+          />
+        </div>
+        <div>
+          <h1 class="auth-brand__title">
             管理员登录
           </h1>
-          <p class="text-sm text-muted mt-1">
-            请输入管理员凭据以继续
+          <p class="auth-brand__subtitle">
+            {{ settings.siteName }} · 控制台访问入口
           </p>
         </div>
+      </div>
 
-        <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
-          <form
-            class="space-y-4 p-1"
-            @submit.prevent="handleLogin"
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
+        <UForm
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          action="javascript:void(0)"
+          @submit="onSubmit"
+        >
+          <UFormField
+            label="用户名"
+            name="username"
+            required
           >
-            <UFormField label="用户名">
-              <UInput
-                v-model="form.username"
-                placeholder="admin"
-                icon="i-mdi-account-outline"
-                autofocus
-              />
-            </UFormField>
+            <UInput
+              v-model="state.username"
+              type="text"
+              autocomplete="username"
+              placeholder="admin"
+              icon="i-mdi-account-key-outline"
+              size="lg"
+              class="w-full"
+              autofocus
+            />
+          </UFormField>
 
-            <UFormField label="密码">
-              <UInput
-                v-model="form.password"
-                type="password"
-                placeholder="••••••••"
-                icon="i-mdi-lock-outline"
-              />
-            </UFormField>
+          <UFormField
+            label="密码"
+            name="password"
+            required
+          >
+            <UInput
+              v-model="state.password"
+              :type="passwordVisible ? 'text' : 'password'"
+              autocomplete="current-password"
+              placeholder="请输入管理员密码"
+              icon="i-mdi-lock-outline"
+              size="lg"
+              class="w-full"
+              :ui="{ trailing: 'pe-1' }"
+            >
+              <template #trailing>
+                <UButton
+                  type="button"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  square
+                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                  @click="passwordVisible = !passwordVisible"
+                />
+              </template>
+            </UInput>
+          </UFormField>
 
+          <Transition name="state-fade">
             <div
               v-if="errorMsg"
-              class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
+              class="auth-message auth-message--error"
             >
-              {{ errorMsg }}
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ errorMsg }}</span>
             </div>
+          </Transition>
 
-            <CommonTurnstileWidget
-              v-if="turnstileRequired"
-              ref="turnstileWidget"
-              v-model:token="turnstileToken"
-              :site-key="turnstile.siteKey"
-            />
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
 
-            <UButton
-              type="submit"
-              block
-              :loading="loading"
-              :disabled="turnstileRequired && !turnstileToken"
-            >
-              登录
-            </UButton>
-          </form>
-        </UCard>
-
-        <div class="text-center mt-4">
           <UButton
-            variant="link"
-            size="sm"
-            to="/"
-            class="text-muted"
+            type="submit"
+            block
+            size="lg"
+            :loading="loading"
+            :disabled="turnstileRequired && !turnstileToken"
           >
-            返回前台
+            进入管理后台
           </UButton>
-        </div>
+        </UForm>
+      </UCard>
+
+      <div class="auth-footer-links">
+        <UButton
+          variant="link"
+          size="sm"
+          to="/"
+          class="px-0"
+        >
+          返回前台
+        </UButton>
       </div>
-    </div>
+    </CommonAppAuthShell>
   </UApp>
 </template>

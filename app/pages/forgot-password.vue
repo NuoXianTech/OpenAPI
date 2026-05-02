@@ -1,6 +1,17 @@
 <script lang="ts" setup>
+import { z } from 'zod'
+import type { FormSubmitEvent } from '@nuxt/ui'
+
+definePageMeta({ layout: false })
+
 const { turnstile, passwordResetEnabled } = useSiteSettings()
-const form = reactive({
+
+const schema = z.object({
+  email: z.string().email('请输入有效的邮箱地址'),
+})
+type Schema = z.output<typeof schema>
+
+const state = reactive<Schema>({
   email: '',
 })
 const errorMessage = ref('')
@@ -17,7 +28,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback
 }
 
-const submit = async () => {
+async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
@@ -30,7 +41,7 @@ const submit = async () => {
     await $fetch<{ code: number, msg: string }>('/api/auth/request-password-reset', {
       method: 'POST',
       body: {
-        email: form.email,
+        email: event.data.email,
         turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
       },
     })
@@ -47,35 +58,49 @@ const submit = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-default flex items-center justify-center p-4">
-    <div class="w-full max-w-sm">
-      <div class="text-center mb-6">
-        <div class="inline-flex items-center justify-center size-12 rounded-xl bg-elevated border border-default mb-3">
+  <UApp>
+    <CommonAppAuthShell>
+      <div class="auth-brand">
+        <div class="auth-brand__logo">
           <Icon
-            name="mdi:lock-reset"
-            size="24"
+            name="i-mdi-lock-reset"
+            size="26"
           />
         </div>
-        <h1 class="text-xl font-semibold">
-          找回密码
-        </h1>
-        <p class="text-sm text-muted mt-1">
-          输入注册邮箱，我们会发送密码重置链接
-        </p>
+        <div>
+          <h1 class="auth-brand__title">
+            找回密码
+          </h1>
+          <p class="auth-brand__subtitle">
+            输入注册时使用的邮箱，我们会发送重置链接到该邮箱
+          </p>
+        </div>
       </div>
 
-      <UCard class="shadow-[0_6px_16px_rgba(0,0,0,0.06)]">
+      <UCard
+        variant="outline"
+        class="auth-card"
+        :ui="{ body: 'p-6 sm:p-7' }"
+      >
         <div
           v-if="!passwordResetEnabled"
-          class="space-y-3 p-1"
+          class="space-y-4"
         >
-          <div class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2">
-            该功能已被管理员关闭，请联系管理员协助处理。
+          <div class="auth-message auth-message--error">
+            <Icon
+              name="i-mdi-alert-circle-outline"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>该功能已被管理员关闭，请联系管理员协助处理。</span>
           </div>
           <UButton
             to="/login"
             variant="outline"
+            color="neutral"
             block
+            size="lg"
+            icon="i-mdi-arrow-left"
           >
             返回登录
           </UButton>
@@ -83,41 +108,71 @@ const submit = async () => {
 
         <div
           v-else-if="submitted"
-          class="space-y-3 p-1"
+          class="space-y-4 text-center"
         >
-          <div class="text-sm text-[var(--green)] bg-[var(--green)]/5 rounded-lg px-3 py-2">
-            如果该邮箱已注册，我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
+          <div class="auth-success-illustration">
+            <Icon
+              name="i-mdi-email-fast-outline"
+              size="44"
+            />
+          </div>
+          <div>
+            <h3 class="text-base font-semibold text-highlighted">
+              邮件已发送
+            </h3>
+            <p class="text-sm text-muted mt-1.5 leading-relaxed">
+              如果 <span class="font-medium text-default">{{ state.email }}</span> 已注册，<br>
+              我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
+            </p>
           </div>
           <UButton
             to="/login"
             block
+            size="lg"
+            icon="i-mdi-arrow-left"
           >
             返回登录
           </UButton>
         </div>
 
-        <form
+        <UForm
           v-else
-          class="space-y-4 p-1"
-          @submit.prevent="submit"
+          :schema="schema"
+          :state="state"
+          class="space-y-4"
+          action="javascript:void(0)"
+          @submit="onSubmit"
         >
-          <UFormField label="邮箱">
+          <UFormField
+            label="邮箱"
+            name="email"
+            required
+          >
             <UInput
-              v-model="form.email"
+              v-model="state.email"
               type="email"
               autocomplete="email"
               placeholder="you@example.com"
               icon="i-mdi-email-outline"
+              size="lg"
+              class="w-full"
               autofocus
             />
           </UFormField>
 
-          <div
-            v-if="errorMessage"
-            class="text-sm text-[var(--red)] bg-[var(--red)]/5 rounded-lg px-3 py-2"
-          >
-            {{ errorMessage }}
-          </div>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <Icon
+                name="i-mdi-alert-circle-outline"
+                size="16"
+                class="auth-message__icon"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
 
           <CommonTurnstileWidget
             v-if="turnstileRequired"
@@ -129,33 +184,49 @@ const submit = async () => {
           <UButton
             type="submit"
             block
+            size="lg"
             :loading="submitting"
             :disabled="turnstileRequired && !turnstileToken"
           >
             发送重置链接
           </UButton>
-        </form>
+        </UForm>
       </UCard>
 
-      <div class="flex items-center justify-center gap-2 mt-4">
+      <div class="auth-footer-links">
         <UButton
           variant="link"
           size="sm"
           to="/login"
-          class="text-muted"
+          class="px-0"
         >
           返回登录
         </UButton>
-        <span class="text-muted text-xs">·</span>
+        <span class="text-dimmed">·</span>
         <UButton
           variant="link"
           size="sm"
           to="/"
-          class="text-muted"
+          class="px-0"
         >
           返回首页
         </UButton>
       </div>
-    </div>
-  </div>
+    </CommonAppAuthShell>
+  </UApp>
 </template>
+
+<style scoped>
+.auth-success-illustration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  margin: 0 auto 4px;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+}
+</style>
