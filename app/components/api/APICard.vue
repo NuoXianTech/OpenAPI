@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 
+type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+
 const props = defineProps({
   name: { type: String, default: '这是标题' },
   status: { type: Number, default: -1 },
@@ -23,6 +25,17 @@ const methods = computed(() =>
 
 const isPaid = computed(() => props.costCredits > 0)
 
+function methodColor(method: string): BadgeColor {
+  switch (method.trim().toUpperCase()) {
+    case 'GET': return 'success'
+    case 'POST': return 'info'
+    case 'PUT': return 'warning'
+    case 'DELETE': return 'error'
+    case 'PATCH': return 'secondary'
+    default: return 'neutral'
+  }
+}
+
 const radarClass = computed(() => {
   switch (props.status) {
     case 1: return ''
@@ -43,7 +56,7 @@ const radarTitle = computed(() => {
 })
 
 function formatCallCount(count: number) {
-  if (count < 10000) return `${count}次`
+  if (count < 10000) return `${count}`
   return `${Math.floor(count / 10000)}万`
 }
 </script>
@@ -120,8 +133,9 @@ function formatCallCount(count: number) {
         size="sm"
         icon="i-lucide-coins"
         class="rounded-full"
+        :title="`收费 ${props.costCredits} / 次`"
       >
-        {{ props.costCredits }} / 次
+        {{ props.costCredits }}
       </UBadge>
       <UBadge
         v-else
@@ -129,30 +143,29 @@ function formatCallCount(count: number) {
         variant="soft"
         size="sm"
         icon="i-lucide-gift"
-        class="rounded-full"
-      >
-        免费
-      </UBadge>
+        class="api-card__badge-icon rounded-full"
+        title="免费"
+        aria-label="免费"
+      />
       <UBadge
         v-if="props.isApiKey"
         color="neutral"
-        variant="outline"
-        size="sm"
-        icon="i-lucide-key-round"
-        class="rounded-full"
-      >
-        APIKey
-      </UBadge>
-
-      <UBadge
-        color="neutral"
         variant="subtle"
         size="sm"
-        icon="i-lucide-bar-chart-3"
-        class="ml-auto rounded-full font-mono"
-      >
-        {{ formatCallCount(props.totalCalls) }}
-      </UBadge>
+        icon="i-lucide-key-round"
+        class="api-card__badge-icon rounded-full"
+        title="需要 APIKey"
+        aria-label="需要 APIKey"
+      />
+
+      <span class="api-card__calls">
+        <Icon
+          name="i-lucide-bar-chart-3"
+          size="12"
+          :ssr="true"
+        />
+        <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
+      </span>
     </div>
 
     <UCollapsible v-model:open="open">
@@ -186,10 +199,10 @@ function formatCallCount(count: number) {
               <UBadge
                 v-for="method in methods"
                 :key="method"
-                color="neutral"
-                variant="outline"
+                :color="methodColor(method)"
+                variant="soft"
                 size="sm"
-                class="rounded-full font-mono text-[11px]"
+                class="rounded-full"
               >
                 {{ method }}
               </UBadge>
@@ -221,16 +234,42 @@ function formatCallCount(count: number) {
             </div>
           </div>
           <div class="api-card__detail-row">
-            <span class="api-card__detail-label">调用次数</span>
+            <span class="api-card__detail-label">鉴权要求</span>
             <div class="api-card__detail-value api-card__detail-value--row">
               <UBadge
+                v-if="props.isApiKey"
                 color="neutral"
-                variant="outline"
+                variant="subtle"
                 size="sm"
-                class="rounded-full font-mono"
+                icon="i-lucide-key-round"
+                class="rounded-full"
               >
-                {{ formatCallCount(props.totalCalls) }}
+                需要 APIKey
               </UBadge>
+              <UBadge
+                v-else
+                color="neutral"
+                variant="soft"
+                size="sm"
+                icon="i-lucide-unlock"
+                class="rounded-full"
+              >
+                免鉴权
+              </UBadge>
+            </div>
+          </div>
+          <div class="api-card__detail-row">
+            <span class="api-card__detail-label">调用次数</span>
+            <div class="api-card__detail-value api-card__detail-value--row">
+              <span class="api-card__calls">
+                <Icon
+                  name="i-lucide-bar-chart-3"
+                  size="12"
+                  :ssr="true"
+                />
+                <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
+                <span class="api-card__calls-label">次</span>
+              </span>
             </div>
           </div>
           <div

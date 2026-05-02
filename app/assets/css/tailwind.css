@@ -1214,6 +1214,50 @@ body {
   border-color: rgba(148, 163, 184, 0.32);
 }
 
+.api-card__calls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--ui-border);
+  background: color-mix(in srgb, var(--ui-bg-muted) 60%, transparent);
+  color: var(--ui-text-muted);
+  font-size: 11px;
+  line-height: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.api-card__calls-num {
+  font-weight: 600;
+  color: var(--ui-text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.api-card__calls-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.api-card__meta .api-card__calls {
+  margin-left: auto;
+}
+
+.api-card__badge-icon {
+  width: 22px;
+  height: 22px;
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.api-card__badge-icon > span {
+  margin: 0;
+}
+
 /* ==========================================================================
    Search bar — sits inside UCard, leans on UInput slots
    ========================================================================== */
