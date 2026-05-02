@@ -17,6 +17,7 @@ const state = reactive<Schema>({
   username: '',
   password: '',
 })
+const remember = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
 const passwordVisible = ref(false)
@@ -36,6 +37,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await adminLogin({
       username: event.data.username.trim(),
       password: event.data.password,
+      remember: remember.value,
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
     })
     await navigateTo('/admin')
@@ -134,6 +136,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               </template>
             </UInput>
           </UFormField>
+
+          <div class="-mt-1">
+            <UCheckbox
+              v-model="remember"
+              label="记住我"
+            />
+          </div>
 
           <Transition name="state-fade">
             <div

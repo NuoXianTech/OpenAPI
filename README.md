@@ -15,7 +15,7 @@
 - **用户体系**：注册、邮箱验证、登录、忘记密码 / 重置密码、会话管理、邮箱与密码变更、显示名。
 - **第三方登录**：内置 GitHub / QQ adapter，支持 `state` 签名 Cookie 防 CSRF、code exchange、自动绑定 / 创建用户；Provider 在后台动态启用，密钥 AES-256-GCM 加密。
 - **API Key 自助**：用户可在个人中心新增、删除、重置 Key。
-- **积分钱包**：每用户积分余额，支持兑换码充值、调用按 `costCredits` 扣费、管理员调账。
+- **积分余额**：每用户积分余额，支持兑换码充值、调用按 `costCredits` 扣费、管理员调账。
 - **API Guard**：按接口配置 QPS / 分钟 / 小时 / 日级限流与每日配额，driver 可选 `memory` / `postgres` / `kv`（NuxtHub / Cloudflare 等 serverless 默认自动启用）。
 - **调用监控**：中间件自动记录调用日志并按日聚合，公共统计页展示总览、近 7 日趋势、当日 TOP 接口。
 - **管理后台**：用户、API、API 分类、友情链接、公告、通知、兑换码、第三方登录 Provider、调用统计、操作日志、站点设置。

@@ -75,7 +75,7 @@ export const creditTransactions = pgTable('credit_transactions', {
 // ------------------------------------------------------------------
 // Redemption Codes（兑换码）
 //
-// 管理员生成兑换码后，用户在钱包页输入兑换。一个兑换码可以是单次性
+// 管理员生成兑换码后，用户在积分页输入兑换。一个兑换码可以是单次性
 // （maxUses=1，用完即失效），也可以是多次性（maxUses>1，被多个用户共享一次）。
 // 同一用户对同一兑换码只能兑换一次，由 redemptionRecords 唯一索引保证。
 //

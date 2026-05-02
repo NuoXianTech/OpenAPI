@@ -9,7 +9,7 @@ const VALID_REASONS: CreditReason[] = ['admin_grant', 'admin_revoke', 'admin_res
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
   if (!user.id || user.kind !== 'user') {
-    throw createError({ statusCode: 403, message: 'admin 不持有用户钱包' })
+    throw createError({ statusCode: 403, message: 'admin 不持有用户积分' })
   }
 
   const query = getQuery(event)

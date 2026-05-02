@@ -49,9 +49,13 @@ export async function verifyPassword(stored: string, password: string) {
   return timingSafeEqual(hash, derived)
 }
 
-async function getSessionMaxAgeSeconds() {
+async function getSessionMaxAgesSeconds() {
   const settings = await siteSettingsService.getOrCreate()
-  return Number(settings.sessionMaxAgeSeconds)
+  return {
+    defaultMaxAge: Number(settings.sessionMaxAgeSeconds),
+    absoluteMaxAge: Number(settings.sessionAbsoluteMaxAgeSeconds),
+    rememberMaxAge: Number(settings.sessionRememberMaxAgeSeconds),
+  }
 }
 
 function getClientContext(event: H3Event) {
@@ -61,20 +65,25 @@ function getClientContext(event: H3Event) {
   }
 }
 
-export async function createUserSession(event: H3Event, user: AuthUserPayload) {
-  const maxAgeSeconds = await getSessionMaxAgeSeconds()
+export async function createUserSession(event: H3Event, user: AuthUserPayload, options: { remember?: boolean } = {}) {
+  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
+  const remember = Boolean(options.remember)
+  const maxAgeSeconds = remember ? rememberMaxAge : defaultMaxAge
   const { ip, userAgent } = getClientContext(event)
   const { sessionId } = await sessionService.createSession({
     userId: user.id,
     kind: 'user',
     ip,
     userAgent,
+    isRemembered: remember,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
 
-export async function createAdminSession(event: H3Event) {
-  const maxAgeSeconds = await getSessionMaxAgeSeconds()
+export async function createAdminSession(event: H3Event, options: { remember?: boolean } = {}) {
+  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
+  const remember = Boolean(options.remember)
+  const maxAgeSeconds = remember ? rememberMaxAge : defaultMaxAge
   const { ip, userAgent } = getClientContext(event)
 
   const { sessionId } = await sessionService.createSession({
@@ -82,6 +91,7 @@ export async function createAdminSession(event: H3Event) {
     kind: 'admin',
     ip,
     userAgent,
+    isRemembered: remember,
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
@@ -116,8 +126,29 @@ export async function getAuthUser(event: H3Event) {
     return null
   }
 
-  // 非阻塞刷新活跃度；失败不影响鉴权结果。
-  void sessionService.touchSession(sessionId).catch(() => {})
+  // 「记住我」会话保持登录时给定的固定到期时间；普通会话每次活跃都滑动续期，
+  // 但绝不允许跨过 createdAt + sessionAbsoluteMaxAgeSeconds 的硬顶。
+  if (session.isRemembered) {
+    void sessionService.touchSession(sessionId).catch(() => {})
+  }
+  else {
+    const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
+    const nowMs = Date.now()
+    const absoluteExpiryMs = session.createdAt.getTime() + absoluteMaxAge * 1000
+
+    // 已经撞到硬顶 → 立刻清掉会话，等同未登录
+    if (absoluteExpiryMs <= nowMs) {
+      await sessionService.deleteSession(sessionId)
+      clearAuthCookie(event)
+      return null
+    }
+
+    const slidingExpiryMs = nowMs + defaultMaxAge * 1000
+    const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
+    void sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs)).catch(() => {})
+    const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
+    setAuthCookie(event, sessionId, cookieMaxAge)
+  }
 
   if (session.kind === 'admin') {
     const authConfig = useRuntimeConfig().auth

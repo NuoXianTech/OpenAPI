@@ -8,6 +8,7 @@ import { usersService } from '~~/server/service/userService'
 import { consumeState } from '~~/server/utils/oauthState'
 import { decryptSecret } from '~~/server/utils/oauthCrypto'
 import { createUserSession, getAuthUser, hashPassword } from '~~/server/utils/auth'
+import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
 import { githubProvider } from '~~/server/utils/oauthProviders/github'
 import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
@@ -167,6 +168,12 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       }
       if (!profile.email) {
         return redirectError(event, 'email_required')
+      }
+      // 自动注册路径同样受邮箱域名过滤约束
+      const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
+      const domains = parseEmailDomainList(settings.registerEmailWhitelist)
+      if (!isEmailAllowedForRegistration(profile.email.toLowerCase(), filterMode, domains)) {
+        return redirectError(event, 'email_not_allowed')
       }
       const username = await pickAvailableUsername(profile.nickname || `${provider}_${profile.providerUserId}`)
       const randomPasswordHash = await hashPassword(randomBytes(32).toString('base64url'))

@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { hashPassword } from '~~/server/utils/auth'
-import { validateEmail } from '~~/server/utils/validation'
+import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList, validateEmail } from '~~/server/utils/validation'
 import { verificationTokenService } from '../../service/verificationTokenService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
@@ -33,6 +33,14 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!validateEmail(email)) {
     throw createError({ statusCode: 400, message: 'Invalid email address' })
+  }
+
+  // 邮箱域名过滤：off=不过滤；whitelist=仅允许列表内域名；blacklist=拒绝列表内域名
+  const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
+  const domains = parseEmailDomainList(settings.registerEmailWhitelist)
+  if (!isEmailAllowedForRegistration(email, filterMode, domains)) {
+    const msg = filterMode === 'blacklist' ? '该邮箱域名已被禁止注册' : '该邮箱域名不在允许注册的列表内'
+    throw createError({ statusCode: 403, message: msg })
   }
 
   if (mode === 'invite') {

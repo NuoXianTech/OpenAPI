@@ -14,7 +14,7 @@ const mainLinks = Object.freeze([[
     to: '/user',
   },
   {
-    label: '钱包',
+    label: '积分',
     icon: 'i-mdi-wallet-outline',
     to: '/user/wallet',
   },

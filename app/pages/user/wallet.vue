@@ -284,7 +284,7 @@ const columns: TableColumn<TransactionRow>[] = [
 <template>
   <UDashboardPanel id="user-wallet">
     <template #header>
-      <UDashboardNavbar title="钱包">
+      <UDashboardNavbar title="积分">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

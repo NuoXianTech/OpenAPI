@@ -65,30 +65,6 @@ export default defineNuxtConfig({
       dialect: 'postgresql',
     },
   },
-  vite: {
-    build: {
-      // 将大体积依赖单独切包，避免主 bundle 膨胀阻塞首屏
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            unovis: ['@unovis/vue', '@unovis/ts'],
-            tanstack: ['@tanstack/vue-table'],
-            zod: ['zod'],
-          },
-        },
-      },
-    },
-    // dev 阶段预构建，避免首次进入页面时长时间编译
-    optimizeDeps: {
-      include: [
-        '@unovis/vue',
-        '@unovis/ts',
-        '@tanstack/vue-table',
-        '@vueuse/core',
-        'zod',
-      ],
-    },
-  },
   eslint: {
     config: {
       stylistic: true,

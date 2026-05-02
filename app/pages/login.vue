@@ -19,6 +19,7 @@ const state = reactive<Schema>({
   password: '',
 })
 
+const remember = ref(false)
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
@@ -46,6 +47,7 @@ const oauthError = computed(() => {
     oauth_disabled: '第三方登录已关闭',
     binding_required: '请先注册本站账号后再使用第三方登录',
     email_required: '该账号未提供邮箱，无法创建',
+    email_not_allowed: '该邮箱不在允许注册的列表内',
     user_banned: '该用户已被封禁',
     user_unavailable: '用户不可用',
     secret_decrypt_failed: 'Provider 密钥配置异常',
@@ -84,9 +86,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const base = event.data.identifier.includes('@')
       ? { email: event.data.identifier, password: event.data.password }
       : { username: event.data.identifier, password: event.data.password }
+    const withRemember = { ...base, remember: remember.value }
     const payload = turnstileRequired.value
-      ? { ...base, turnstileToken: turnstileToken.value }
-      : base
+      ? { ...withRemember, turnstileToken: turnstileToken.value }
+      : withRemember
 
     await login(payload)
     await navigateTo('/')
@@ -195,11 +198,13 @@ function gotoOAuth(entry: string) {
             </UInput>
           </UFormField>
 
-          <div
-            v-if="passwordResetEnabled"
-            class="flex justify-end -mt-1"
-          >
+          <div class="flex items-center justify-between -mt-1">
+            <UCheckbox
+              v-model="remember"
+              label="记住我"
+            />
             <UButton
+              v-if="passwordResetEnabled"
               type="button"
               variant="link"
               size="xs"

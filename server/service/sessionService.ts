@@ -7,6 +7,7 @@ export interface SessionUserPayload {
   kind: 'user' | 'admin'
   ip?: string | null
   userAgent?: string | null
+  isRemembered?: boolean
 }
 
 function generateSessionId() {
@@ -30,6 +31,7 @@ export const sessionService = {
       kind: payload.kind,
       ip: payload.ip ?? null,
       userAgent: payload.userAgent?.slice(0, 500) ?? null,
+      isRemembered: payload.isRemembered ?? false,
       lastActiveAt: now,
       expiresAt,
     }).returning()
@@ -55,6 +57,18 @@ export const sessionService = {
     const sessionHash = hashSessionId(sessionId)
     await db.update(sessions)
       .set({ lastActiveAt: new Date() })
+      .where(eq(sessions.sessionId, sessionHash))
+  },
+
+  /**
+   * 滑动续期：刷新活跃时间并把 expiresAt 推到调用方计算好的时间点。
+   * 调用方负责取 min(滑动到期, 绝对硬顶) 后传入。
+   * 仅用于未勾选「记住我」的会话；勾选「记住我」的会话保持登录时给定的固定到期时间。
+   */
+  async extendSessionExpiry(sessionId: string, expiresAt: Date) {
+    const sessionHash = hashSessionId(sessionId)
+    await db.update(sessions)
+      .set({ lastActiveAt: new Date(), expiresAt })
       .where(eq(sessions.sessionId, sessionHash))
   },
 

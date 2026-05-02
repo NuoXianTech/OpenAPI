@@ -9,6 +9,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const emailOrUsername = (body.email || body.username || '').toString().trim()
   const password = (body.password || '').toString()
   const turnstileToken = (body.turnstileToken || '').toString()
+  const remember = body.remember === true || body.remember === 'true'
 
   if (!emailOrUsername || !password) {
     throw createError({ statusCode: 400, message: 'email/username and password are required' })
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await createUserSession(event, {
     id: user.id,
     kind: 'user',
-  })
+  }, { remember })
 
   await usersService.updateLastLogin(user.id, ip)
 

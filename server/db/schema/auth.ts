@@ -20,6 +20,8 @@ export const sessions = pgTable('sessions', {
   userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
   ip: varchar('ip', { length: 45 }),
   userAgent: varchar('user_agent', { length: 500 }),
+  // 「记住我」标记：true=登录时勾选，按 sessionRememberMaxAgeSeconds 一次性给定有效期；false=按 sessionMaxAgeSeconds 滑动续期
+  isRemembered: boolean('is_remembered').notNull().default(false),
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),

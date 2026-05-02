@@ -50,7 +50,7 @@ export function useAuth() {
     return promise
   }
 
-  const login = async (payload: { email?: string, username?: string, password: string, turnstileToken?: string }) => {
+  const login = async (payload: { email?: string, username?: string, password: string, remember?: boolean, turnstileToken?: string }) => {
     const res = await $fetch<ApiResponse<AuthUser>>('/api/auth/login', {
       method: 'POST',
       body: payload,
@@ -63,7 +63,7 @@ export function useAuth() {
     return res.data
   }
 
-  const adminLogin = async (payload: { username: string, password: string, turnstileToken?: string }) => {
+  const adminLogin = async (payload: { username: string, password: string, remember?: boolean, turnstileToken?: string }) => {
     const res = await $fetch<ApiResponse<AuthUser>>('/api/admin/auth/login', {
       method: 'POST',
       body: payload,

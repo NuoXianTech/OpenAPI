@@ -42,6 +42,10 @@ export interface SiteSettingsUpsertInput {
   siteDescription?: string
   startTime?: string
   sessionMaxAgeSeconds?: number
+  sessionAbsoluteMaxAgeSeconds?: number
+  sessionRememberMaxAgeSeconds?: number
+  registerEmailWhitelist?: string
+  registerEmailFilterMode?: 'off' | 'whitelist' | 'blacklist'
   emailVerifyExpiresInMinutes?: number
   passwordResetExpiresInMinutes?: number
   passwordResetEnabled?: boolean
@@ -73,7 +77,11 @@ function buildInitialDefaults() {
     siteName: 'OpenAPI',
     siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     startTime: '2026-01-01 00:00:00',
-    sessionMaxAgeSeconds: 60 * 60 * 24 * 7,
+    sessionMaxAgeSeconds: 60 * 60 * 24,
+    sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
+    sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
+    registerEmailFilterMode: 'off',
+    registerEmailWhitelist: '',
     emailVerifyExpiresInMinutes: 30,
     smtpHost: 'smtp.example.com',
     smtpPort: 465,

@@ -29,9 +29,19 @@ export const siteSettings = pgTable('site_settings', {
   registrationMode: varchar('registration_mode', { length: 20 }).notNull().default('open'), // open / invite / closed
   loginAttemptsLimit: integer('login_attempts_limit').notNull().default(5),
   loginLockMinutes: integer('login_lock_minutes').notNull().default(30),
+  // 注册邮箱域名过滤：off=不过滤；whitelist=只允许列表内域名；blacklist=拒绝列表内域名
+  registerEmailFilterMode: varchar('register_email_filter_mode', { length: 20 }).notNull().default('off'),
+  // 注册邮箱域名列表（逗号或换行分隔，例如：163.com,qq.com）。filterMode=off 时此字段被忽略
+  registerEmailWhitelist: text('register_email_whitelist').notNull().default(''),
 
   // 会话 / 验证
-  sessionMaxAgeSeconds: integer('session_max_age_seconds').notNull().default(60 * 60 * 24 * 7),
+  // 默认会话有效期：未勾选「记住我」时使用，按秒；登录后会随活跃滑动续期
+  sessionMaxAgeSeconds: integer('session_max_age_seconds').notNull().default(60 * 60 * 24),
+  // 滑动会话的绝对硬顶：从首次登录算，超过此值无论是否活跃都强制重新登录
+  // 仅约束未勾选「记住我」的会话；勾选后由 sessionRememberMaxAgeSeconds 自身充当上限
+  sessionAbsoluteMaxAgeSeconds: integer('session_absolute_max_age_seconds').notNull().default(60 * 60 * 24 * 7),
+  // 「记住我」会话有效期：勾选后使用，按秒；不滑动续期，到期重新登录
+  sessionRememberMaxAgeSeconds: integer('session_remember_max_age_seconds').notNull().default(60 * 60 * 24 * 30),
   emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(30),
   passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(30),
   // 忘记密码功能总开关：关闭后，请求重置邮件 / 消费重置 token 都会被拒，登录页也不展示入口

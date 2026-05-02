@@ -331,7 +331,7 @@ export const creditService = {
   },
 
   /**
-   * 用户钱包流水（带 api 名称）·  按 userId 过滤 + 按 reason / 收支方向 筛选 + 分页。
+   * 用户积分流水（带 api 名称）·  按 userId 过滤 + 按 reason / 收支方向 筛选 + 分页。
    * direction: 'in' = amount > 0；'out' = amount < 0。
    */
   async listUserTransactions(userId: number, filters: {
@@ -379,8 +379,8 @@ export const creditService = {
   },
 
   /**
-   * 用户钱包汇总：当前余额 + 累计收入/支出 + 按 reason 分桶。
-   * 用于钱包页顶部的统计卡片。
+   * 用户积分汇总：当前余额 + 累计收入/支出 + 按 reason 分桶。
+   * 用于积分页顶部的统计卡片。
    */
   async getUserWalletSummary(userId: number) {
     const [balanceRow, aggRows, reasonRows] = await Promise.all([

@@ -1,5 +1,5 @@
 {
-  "id": "24d83543-8835-48b4-a5f4-e9ba443000b5",
+  "id": "42dc41dd-032d-4dbe-85d1-87aaf28a05c4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2667,6 +2667,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_remembered": {
+          "name": "is_remembered",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "last_active_at": {
           "name": "last_active_at",
           "type": "timestamp with time zone",
@@ -2835,12 +2842,40 @@
           "notNull": true,
           "default": 30
         },
+        "register_email_filter_mode": {
+          "name": "register_email_filter_mode",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'off'"
+        },
+        "register_email_whitelist": {
+          "name": "register_email_whitelist",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
         "session_max_age_seconds": {
           "name": "session_max_age_seconds",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
+          "default": 86400
+        },
+        "session_absolute_max_age_seconds": {
+          "name": "session_absolute_max_age_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
           "default": 604800
+        },
+        "session_remember_max_age_seconds": {
+          "name": "session_remember_max_age_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 2592000
         },
         "email_verify_expires_in_minutes": {
           "name": "email_verify_expires_in_minutes",

@@ -56,6 +56,16 @@ function parseOptionalPlainString(value: unknown, field: string, maxLength: numb
   return text
 }
 
+function parseOptionalEmailFilterMode(value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return undefined
+  }
+  if (value === 'off' || value === 'whitelist' || value === 'blacklist') {
+    return value
+  }
+  throw createError({ statusCode: 400, message: 'registerEmailFilterMode must be off / whitelist / blacklist' })
+}
+
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const body = await readBody(event) as Record<string, unknown>
@@ -67,6 +77,12 @@ export default defineEventHandler(async (event: H3Event) => {
     siteDescription: parseOptionalString(body.siteDescription, 'siteDescription', 5000),
     startTime: parseOptionalString(body.startTime, 'startTime', 32),
     sessionMaxAgeSeconds: parseOptionalInteger(body.sessionMaxAgeSeconds, 'sessionMaxAgeSeconds'),
+    sessionAbsoluteMaxAgeSeconds: parseOptionalInteger(body.sessionAbsoluteMaxAgeSeconds, 'sessionAbsoluteMaxAgeSeconds'),
+    sessionRememberMaxAgeSeconds: parseOptionalInteger(body.sessionRememberMaxAgeSeconds, 'sessionRememberMaxAgeSeconds'),
+    registerEmailFilterMode: parseOptionalEmailFilterMode(body.registerEmailFilterMode),
+    registerEmailWhitelist: body.registerEmailWhitelist !== undefined && body.registerEmailWhitelist !== null
+      ? body.registerEmailWhitelist.toString().slice(0, 5000)
+      : undefined,
     emailVerifyExpiresInMinutes: parseOptionalInteger(body.emailVerifyExpiresInMinutes, 'emailVerifyExpiresInMinutes'),
     passwordResetExpiresInMinutes: parseOptionalInteger(body.passwordResetExpiresInMinutes, 'passwordResetExpiresInMinutes'),
     passwordResetEnabled: parseOptionalBoolean(body.passwordResetEnabled, 'passwordResetEnabled'),

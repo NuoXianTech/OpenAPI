@@ -18,6 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const username = (body.username || '').toString().trim()
   const password = (body.password || '').toString()
   const turnstileToken = (body.turnstileToken || '').toString()
+  const remember = body.remember === true || body.remember === 'true'
 
   const authConfig = useRuntimeConfig().auth
   const adminUsername = (authConfig.adminUsername || '').toString()
@@ -37,7 +38,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 401, message: 'Invalid admin credentials' })
   }
 
-  await createAdminSession(event)
+  await createAdminSession(event, { remember })
 
   return {
     code: 0,
