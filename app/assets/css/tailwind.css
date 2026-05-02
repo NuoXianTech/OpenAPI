@@ -74,23 +74,18 @@ body {
 .auth-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr;
+  place-items: center;
   background:
     radial-gradient(1200px 600px at 15% 20%, rgba(17, 17, 19, 0.06), transparent 60%),
     radial-gradient(900px 420px at 85% 30%, rgba(35, 197, 94, 0.10), transparent 55%),
     linear-gradient(180deg, oklch(0.989 0.003 286.351) 0%, oklch(0.972 0.005 274.966) 100%);
 }
 
-@media (min-width: 1024px) {
-  .auth-shell:not(.auth-shell--compact) {
-    grid-template-columns: minmax(420px, 1fr) minmax(0, 1.1fr);
-  }
-}
-
 .auth-panel {
   display: grid;
   place-items: center;
   padding: 32px 20px;
+  width: 100%;
 }
 
 .auth-form-wrap {
@@ -209,162 +204,6 @@ body {
 .auth-message__icon {
   flex-shrink: 0;
   margin-top: 1px;
-}
-
-.auth-hero {
-  display: none;
-  position: relative;
-  align-items: center;
-  justify-content: center;
-  padding: 48px;
-  overflow: hidden;
-  isolation: isolate;
-}
-
-.auth-hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
-  background-size: 22px 22px;
-  color: var(--ui-text);
-  opacity: 0.045;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
-  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-@media (min-width: 1024px) {
-  .auth-shell:not(.auth-shell--compact) .auth-hero {
-    display: flex;
-  }
-}
-
-.auth-hero-card {
-  position: relative;
-  width: 100%;
-  max-width: 460px;
-  border: 1px solid var(--ui-border);
-  border-radius: 22px;
-  padding: 28px;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 78%, transparent);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 22px 60px -18px rgba(17, 17, 19, 0.16);
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.auth-hero-card__brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.auth-hero-card__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--ui-text);
-  color: var(--ui-text-inverted);
-}
-
-.auth-hero-card__brand-name {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--ui-text);
-}
-
-.auth-hero-card h3 {
-  font-size: 26px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0;
-  color: var(--ui-text-highlighted);
-}
-
-.auth-hero-card p {
-  margin: 0;
-  color: var(--ui-text-muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.auth-hero-card__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.auth-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  border: 1px solid var(--ui-border);
-  color: var(--ui-text-toned);
-  background: color-mix(in srgb, var(--ui-bg-elevated) 70%, transparent);
-}
-
-.auth-chip__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 24%, transparent);
-}
-
-.auth-hero-card__features {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--ui-border);
-  margin-top: 4px;
-  padding-top: 16px;
-}
-
-.auth-hero-feature {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 60%, transparent);
-  transition: background-color 200ms ease, transform 200ms ease;
-}
-
-.auth-hero-feature:hover {
-  background: color-mix(in srgb, var(--ui-bg-accented) 70%, transparent);
-  transform: translateX(2px);
-}
-
-.auth-hero-feature > .iconify {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--ui-text-toned);
-}
-
-.auth-hero-feature__title {
-  font-size: 13px;
-  font-weight: 600;
-  margin: 0 0 2px;
-  color: var(--ui-text);
-}
-
-.auth-hero-feature__desc {
-  font-size: 12px;
-  margin: 0;
-  color: var(--ui-text-muted);
-  line-height: 1.5;
 }
 
 .api-filter-tabs {
@@ -743,17 +582,6 @@ body {
 .dark .auth-card {
   background: color-mix(in srgb, var(--ui-bg-elevated) 82%, transparent);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
-}
-
-.dark .auth-hero-card {
-  background: color-mix(in srgb, var(--ui-bg-elevated) 70%, transparent);
-  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.4);
-}
-
-.dark .auth-hero-card__logo {
-  background: var(--ui-bg-elevated);
-  color: var(--ui-text-highlighted);
-  border: 1px solid var(--ui-border-accented);
 }
 
 @layer base {

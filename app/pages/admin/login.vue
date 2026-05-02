@@ -58,7 +58,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <UApp>
-    <CommonAppAuthShell compact>
+    <CommonAppAuthShell>
       <div class="auth-brand">
         <div class="auth-brand__logo">
           <Icon
