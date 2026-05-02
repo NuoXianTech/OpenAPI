@@ -1,12 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
+    '@nuxt/eslint',
     '@nuxthub/core',
     '@nuxt/ui',
-    '@nuxt/eslint',
+    '@vueuse/nuxt',
     '~~/modules/api-manifest',
   ],
-  devtools: { enabled: true },
+  devtools: {
+    enabled: true,
+  },
   app: {
     head: {
       link: [
@@ -14,7 +17,9 @@ export default defineNuxtConfig({
       ],
     },
   },
-  css: ['~/assets/css/tailwind.css'],
+  css: [
+    '~/assets/css/tailwind.css',
+  ],
   ui: { fonts: false },
   runtimeConfig: {
     auth: {

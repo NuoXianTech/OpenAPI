@@ -102,11 +102,11 @@ pnpm run dev
 ## OAuth（GitHub 示例）
 
 1. 在 GitHub Developer Settings 创建 OAuth App。
-2. Callback URL 填 `http://<SITE_URL>/api/auth/oauth/github/callback`。
+2. Callback URL 填 `http://<SITE_URL>/callback/openid/0`（索引顺序与 `shared/types/oauth.ts` 中 `SUPPORTED_OAUTH_PROVIDERS` 一致：0=github，1=qq）。
 3. 后台 → 「第三方登录」→ 新增 Provider，填入 `clientId` / `clientSecret`（落库时自动加密）、`scopes`、`authorizeUrl` / `tokenUrl` / `userInfoUrl` / `callbackUrl`，开启 `isEnabled`。
 4. 登录页将自动出现对应按钮。
 
-回调流程（`server/api/auth/oauth/[provider]/callback.get.ts`）：校验 state Cookie（5 分钟、HMAC）→ 命中 `(provider, providerUserId)` 则登录 → 否则按 email 自动绑定到既有用户 → 仍未命中则按规则创建新用户。
+回调流程（`server/routes/callback/openid/[index].get.ts` → `server/utils/oauthCallback.ts`）：校验 state Cookie（5 分钟、HMAC）→ 命中 `(provider, providerUserId)` 则登录 → 否则按 email 自动绑定到既有用户 → 仍未命中则按规则创建新用户。
 
 ## 常用命令
 

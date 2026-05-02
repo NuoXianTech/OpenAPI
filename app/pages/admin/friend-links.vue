@@ -80,6 +80,13 @@ const columns: TableColumn<any>[] = [
           >
             新增链接
           </UButton>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            icon="i-mdi-refresh"
+            :loading="status === 'pending'"
+            @click="refresh()"
+          />
           <AdminHeaderUser />
         </template>
       </UDashboardNavbar>

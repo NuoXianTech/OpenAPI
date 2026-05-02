@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { randomBytes } from 'node:crypto'
-import { getQuery, getRequestIP, getRouterParam, sendRedirect } from 'h3'
+import { getQuery, getRequestIP, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
@@ -11,7 +11,7 @@ import { createUserSession, getAuthUser, hashPassword } from '~~/server/utils/au
 import { githubProvider } from '~~/server/utils/oauthProviders/github'
 import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
-import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import type { SupportedOauthProvider } from '~~/shared/types/oauth'
 
 async function redirectError(event: H3Event, code: string, mode: 'login' | 'bind' = 'login') {
   const target = mode === 'bind'
@@ -36,12 +36,11 @@ async function pickAvailableUsername(base: string) {
   return `${sanitized}_${randomBytes(4).toString('hex')}`
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
-  if (!provider || !isSupportedOauthProvider(provider)) {
-    return redirectError(event, 'provider_not_supported')
-  }
-
+/**
+ * OAuth 回调统一处理：交换 code → 拉取 profile → 登录 / 绑定 / 自动注册。
+ * 入参 provider 已由路由层（如 /callback/openid/[index]）解析过。
+ */
+export async function handleOauthCallback(event: H3Event, provider: SupportedOauthProvider) {
   const settings = await siteSettingsService.getOrCreate()
   if (!settings.oauthLoginEnabled) {
     return redirectError(event, 'oauth_disabled')
@@ -104,7 +103,6 @@ export default defineEventHandler(async (event: H3Event) => {
         return redirectError(event, 'login_required', 'bind')
       }
 
-      // 该 provider 的此 OAuth 身份是否已被别人占用
       const existing = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
       if (existing && existing.userId !== authUser.id) {
         return redirectError(event, 'already_bound_by_other', 'bind')
@@ -128,9 +126,8 @@ export default defineEventHandler(async (event: H3Event) => {
       return sendRedirect(event, `${target}${sep}oauth_bound=${provider}`, 302)
     }
 
-    // ============ login 模式：原有登录/注册逻辑 ============
+    // ============ login 模式 ============
 
-    // 1) 已绑定：直接登录
     const existingAccount = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
     if (existingAccount) {
       await oauthAccountService.upsertAccount({
@@ -153,7 +150,6 @@ export default defineEventHandler(async (event: H3Event) => {
       return sendRedirect(event, consumed.returnTo || '/', 302)
     }
 
-    // 2) email 命中既有用户：自动绑定
     let targetUserId: number | null = null
     if (profile.email) {
       const matched = await usersService.findByEmail(profile.email.toLowerCase())
@@ -165,7 +161,6 @@ export default defineEventHandler(async (event: H3Event) => {
       }
     }
 
-    // 3) 没命中：新建用户（无密码登录路径 → 密码哈希用随机值，isActive=true 因为 email 经 provider 验证）
     if (targetUserId === null) {
       if (settings.oauthForceBinding) {
         return redirectError(event, 'binding_required')
@@ -186,7 +181,6 @@ export default defineEventHandler(async (event: H3Event) => {
         return redirectError(event, 'user_create_failed')
       }
       await usersService.activateUser(created.id)
-      // 头像统一通过 cravatar 由 email 派生（server/utils/cravatar.ts），不写 users 表
       targetUserId = created.id
     }
 
@@ -215,4 +209,4 @@ export default defineEventHandler(async (event: H3Event) => {
     console.error('[oauth callback] failed', err)
     return redirectError(event, 'callback_failed', consumed.mode)
   }
-})
+}

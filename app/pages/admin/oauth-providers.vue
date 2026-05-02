@@ -107,6 +107,13 @@ async function copyCallback(item: ProviderItem) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            icon="i-mdi-refresh"
+            :loading="status === 'pending'"
+            @click="refresh()"
+          />
           <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
@@ -114,10 +121,14 @@ async function copyCallback(item: ProviderItem) {
 
     <template #body>
       <div
-        v-if="status === 'pending' && !items.length"
-        class="text-sm text-muted"
+        v-if="status === 'pending' && items.length === 0"
+        class="grid gap-4 md:grid-cols-2"
       >
-        加载中…
+        <USkeleton
+          v-for="i in 2"
+          :key="i"
+          class="h-80 w-full"
+        />
       </div>
       <div
         v-else

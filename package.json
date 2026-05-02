@@ -20,14 +20,15 @@
     "@nuxt/ui": "^4.7.1",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/vue-table": "^8.21.3",
-    "@unovis/ts": "^1.6.4",
-    "@unovis/vue": "^1.6.4",
+    "@unovis/ts": "^1.6.5",
+    "@unovis/vue": "^1.6.5",
     "@vueuse/core": "^14.2.1",
+    "@vueuse/nuxt": "^14.2.1",
     "drizzle-orm": "^0.45.2",
     "nuxt": "^4.4.4",
     "postgres": "^3.4.9",
-    "vue": "^3.5.30",
-    "zod": "^3.24.0"
+    "vue": "^3.5.33",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.105",

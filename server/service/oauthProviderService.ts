@@ -3,7 +3,7 @@ import { createError } from 'h3'
 import { oauthProviders } from '@nuxthub/db/schema'
 import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { isSupportedOauthProvider, SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider, providerIndex, SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
 
 export interface OauthProviderPatch {
   clientId?: string
@@ -20,7 +20,12 @@ function maskRow(row: ProviderRow): ProviderRow {
 
 export function buildCallbackUrl(siteUrl: string, provider: string) {
   const base = siteUrl.replace(/\/+$/, '') || 'http://localhost:3000'
-  return `${base}/api/auth/oauth/${provider}/callback`
+  if (!isSupportedOauthProvider(provider)) {
+    // 仅支持白名单 provider；未识别时返回一个无效但显式的占位，
+    // 调用方会在 oauthProviderService.update 等处校验并抛错，不会真把它发给第三方平台
+    return `${base}/callback/openid/-1`
+  }
+  return `${base}/callback/openid/${providerIndex(provider)}`
 }
 
 async function ensureRow(provider: SupportedOauthProvider): Promise<ProviderRow> {

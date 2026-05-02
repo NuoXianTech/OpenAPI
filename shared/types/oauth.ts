@@ -35,3 +35,18 @@ export const OAUTH_PROVIDER_PRESETS: Record<SupportedOauthProvider, OauthProvide
 export function isSupportedOauthProvider(value: unknown): value is SupportedOauthProvider {
   return typeof value === 'string' && (SUPPORTED_OAUTH_PROVIDERS as readonly string[]).includes(value)
 }
+
+/**
+ * provider 与回调路径中数字索引的映射，索引顺序与 SUPPORTED_OAUTH_PROVIDERS 一致：
+ * 0 → github, 1 → qq
+ *
+ * 回调 URL 形如 `${siteUrl}/callback/openid/{index}`，让多个 OAuth 应用使用统一前缀，
+ * 第三方平台白名单也只需登记一个固定路径前缀。
+ */
+export function providerIndex(provider: SupportedOauthProvider): number {
+  return SUPPORTED_OAUTH_PROVIDERS.indexOf(provider)
+}
+
+export function providerByIndex(index: number): SupportedOauthProvider | null {
+  return SUPPORTED_OAUTH_PROVIDERS[index] ?? null
+}

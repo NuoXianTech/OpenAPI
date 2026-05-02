@@ -174,14 +174,12 @@ const columns: TableColumn<Announcement>[] = [
             新建公告
           </UButton>
           <UButton
-            icon="i-mdi-refresh"
+            variant="ghost"
             color="neutral"
-            variant="outline"
+            icon="i-mdi-refresh"
             :loading="status === 'pending'"
             @click="refresh()"
-          >
-            刷新
-          </UButton>
+          />
           <AdminHeaderUser />
         </template>
       </UDashboardNavbar>

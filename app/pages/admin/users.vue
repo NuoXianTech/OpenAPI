@@ -284,6 +284,13 @@ const columns: TableColumn<any>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            icon="i-mdi-refresh"
+            :loading="status === 'pending'"
+            @click="refresh()"
+          />
           <AdminHeaderUser />
         </template>
       </UDashboardNavbar>

@@ -41,8 +41,6 @@ const items = computed<DropdownMenuItem[][]>(() => [[
     },
   },
 ]])
-
-const initial = computed(() => displayName.value.slice(0, 1).toUpperCase())
 </script>
 
 <template>
@@ -56,18 +54,12 @@ const initial = computed(() => displayName.value.slice(0, 1).toUpperCase())
       color="neutral"
       class="gap-2 pr-2"
     >
-      <span class="inline-flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-inverted text-xs font-semibold">
-        <img
-          v-if="user?.avatarUrl"
-          :src="user.avatarUrl"
-          :alt="displayName"
-          class="w-full h-full object-cover block"
-        >
-        <template v-else>
-          {{ initial }}
-        </template>
-      </span>
-      <span class="hidden sm:inline text-sm font-medium">
+      <UAvatar
+        :src="user?.avatarUrl || undefined"
+        :alt="displayName"
+        size="2xs"
+      />
+      <span class="hidden text-sm font-medium sm:inline">
         {{ displayName }}
       </span>
       <UIcon
