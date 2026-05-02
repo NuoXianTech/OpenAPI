@@ -30,7 +30,6 @@ interface RegisterBody {
     isEnabled?: boolean
     isApiKey?: boolean
     isStatistics?: boolean
-    requiresAuth?: boolean
     rateLimitPerSecond?: number
     rateLimitPerMinute?: number
     rateLimitPerHour?: number
@@ -75,7 +74,6 @@ export default defineEventHandler(async (event: H3Event) => {
     isEnabled: o.isEnabled ?? DEFAULT_API_REGISTRATION.isEnabled,
     isApiKey: o.isApiKey ?? DEFAULT_API_REGISTRATION.isApiKey,
     isStatistics: o.isStatistics ?? DEFAULT_API_REGISTRATION.isStatistics,
-    requiresAuth: o.requiresAuth ?? DEFAULT_API_REGISTRATION.requiresAuth,
     rateLimitPerSecond: o.rateLimitPerSecond ?? DEFAULT_API_REGISTRATION.rateLimitPerSecond,
     rateLimitPerMinute: o.rateLimitPerMinute ?? DEFAULT_API_REGISTRATION.rateLimitPerMinute,
     rateLimitPerHour: o.rateLimitPerHour ?? DEFAULT_API_REGISTRATION.rateLimitPerHour,

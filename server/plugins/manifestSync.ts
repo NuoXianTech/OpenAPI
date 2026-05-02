@@ -102,7 +102,6 @@ async function checkConsistency(): Promise<boolean> {
             isEnabled: DEFAULT_API_REGISTRATION.isEnabled,
             isApiKey: DEFAULT_API_REGISTRATION.isApiKey,
             isStatistics: DEFAULT_API_REGISTRATION.isStatistics,
-            requiresAuth: DEFAULT_API_REGISTRATION.requiresAuth,
             rateLimitPerSecond: DEFAULT_API_REGISTRATION.rateLimitPerSecond,
             rateLimitPerMinute: DEFAULT_API_REGISTRATION.rateLimitPerMinute,
             rateLimitPerHour: DEFAULT_API_REGISTRATION.rateLimitPerHour,

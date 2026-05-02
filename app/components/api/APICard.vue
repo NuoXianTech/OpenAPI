@@ -185,7 +185,7 @@ function formatCallCount(count: number) {
       <template #content>
         <div class="api-card__details">
           <div class="api-card__detail-row">
-            <span class="api-card__detail-label">接口示例</span>
+            <span class="api-card__detail-label">接口地址</span>
             <a
               :href="props.apiPath"
               target="_blank"

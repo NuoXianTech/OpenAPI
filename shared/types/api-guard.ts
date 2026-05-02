@@ -74,7 +74,6 @@ export type GateOutcome
     | 'not_registered'
     | 'disabled'
     | 'method_not_allowed'
-    | 'unauthorized'
     | 'missing_api_key'
     | 'invalid_api_key'
     | 'revoked_api_key'

@@ -41,7 +41,6 @@ export default defineEventHandler(async (event: H3Event) => {
     isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : undefined,
     isApiKey,
     isStatistics: typeof body.isStatistics === 'boolean' ? body.isStatistics : undefined,
-    requiresAuth: typeof body.requiresAuth === 'boolean' ? body.requiresAuth : undefined,
     rateLimitPerSecond: body.rateLimitPerSecond !== undefined ? Number(body.rateLimitPerSecond) : undefined,
     rateLimitPerMinute: body.rateLimitPerMinute !== undefined ? Number(body.rateLimitPerMinute) : undefined,
     rateLimitPerHour: body.rateLimitPerHour !== undefined ? Number(body.rateLimitPerHour) : undefined,

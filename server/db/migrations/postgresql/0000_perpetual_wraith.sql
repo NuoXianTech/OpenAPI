@@ -117,7 +117,6 @@ CREATE TABLE "apis" (
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"is_api_key" boolean DEFAULT false NOT NULL,
 	"is_statistics" boolean DEFAULT true NOT NULL,
-	"requires_auth" boolean DEFAULT false NOT NULL,
 	"rate_limit_per_second" integer DEFAULT 0 NOT NULL,
 	"rate_limit_per_minute" integer DEFAULT 0 NOT NULL,
 	"rate_limit_per_hour" integer DEFAULT 0 NOT NULL,

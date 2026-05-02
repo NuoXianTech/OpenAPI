@@ -64,7 +64,6 @@ export const apis = pgTable('apis', {
   isEnabled: boolean('is_enabled').default(true).notNull(),
   isApiKey: boolean('is_api_key').default(false).notNull(),
   isStatistics: boolean('is_statistics').default(true).notNull(),
-  requiresAuth: boolean('requires_auth').default(false).notNull(),
 
   // 限流（0 表示不限）
   rateLimitPerSecond: integer('rate_limit_per_second').default(0).notNull(),

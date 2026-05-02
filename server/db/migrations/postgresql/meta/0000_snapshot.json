@@ -1,5 +1,5 @@
 {
-  "id": "53bd6752-ac2c-4df2-a942-def634a355f6",
+  "id": "24d83543-8835-48b4-a5f4-e9ba443000b5",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1152,13 +1152,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
-        },
-        "requires_auth": {
-          "name": "requires_auth",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "rate_limit_per_second": {
           "name": "rate_limit_per_second",

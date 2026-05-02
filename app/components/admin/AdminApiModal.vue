@@ -26,7 +26,6 @@ interface RegisteredApi {
   isEnabled: boolean
   isApiKey: boolean
   isStatistics: boolean
-  requiresAuth: boolean
   rateLimitPerSecond: number
   rateLimitPerMinute: number
   rateLimitPerHour: number
@@ -64,7 +63,6 @@ const schema = z.object({
   isEnabled: z.boolean().default(false),
   isApiKey: z.boolean().default(false),
   isStatistics: z.boolean().default(false),
-  requiresAuth: z.boolean().default(false),
   rateLimitPerSecond: z.number().min(0).default(0),
   rateLimitPerMinute: z.number().min(0).default(60),
   rateLimitPerHour: z.number().min(0).default(1000),
@@ -87,7 +85,6 @@ function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
     isEnabled: false,
     isApiKey: false,
     isStatistics: false,
-    requiresAuth: false,
     rateLimitPerSecond: 0,
     rateLimitPerMinute: 60,
     rateLimitPerHour: 1000,
@@ -109,7 +106,6 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
     isEnabled: reg.isEnabled,
     isApiKey: reg.isApiKey,
     isStatistics: reg.isStatistics,
-    requiresAuth: reg.requiresAuth,
     rateLimitPerSecond: reg.rateLimitPerSecond,
     rateLimitPerMinute: reg.rateLimitPerMinute,
     rateLimitPerHour: reg.rateLimitPerHour,
@@ -408,10 +404,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               <USwitch
                 v-model="state.isApiKey"
                 label="必需 API Key"
-              />
-              <USwitch
-                v-model="state.requiresAuth"
-                label="需要登录"
               />
               <USwitch
                 v-model="state.isStatistics"

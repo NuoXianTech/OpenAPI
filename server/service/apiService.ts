@@ -267,7 +267,6 @@ export const apiService = {
       isEnabled: boolean
       isApiKey: boolean
       isStatistics: boolean
-      requiresAuth: boolean
       rateLimitPerSecond: number
       rateLimitPerMinute: number
       rateLimitPerHour: number
@@ -311,7 +310,6 @@ export const apiService = {
       isEnabled: data.defaults.isEnabled,
       isApiKey: data.defaults.isApiKey,
       isStatistics: data.defaults.isStatistics,
-      requiresAuth: data.defaults.requiresAuth,
       rateLimitPerSecond: data.defaults.rateLimitPerSecond,
       rateLimitPerMinute: data.defaults.rateLimitPerMinute,
       rateLimitPerHour: data.defaults.rateLimitPerHour,

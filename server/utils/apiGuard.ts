@@ -6,12 +6,11 @@
  *
  * 规则顺序（短路求值）：
  *   1. isEnabled
- *   2. requiresAuth（session 鉴权）
- *   3. isApiKey 强制 / costCredits>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
- *   4. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
- *   5. rateLimit（多窗口，任意一个超限即拒）
- *   6. dailyQuota（API 级）
- *   7. credits 余额校验（costCredits>0 时，校验 apiKey 持有者余额）
+ *   2. isApiKey 强制 / costCredits>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
+ *   3. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
+ *   4. rateLimit（多窗口，任意一个超限即拒）
+ *   5. dailyQuota（API 级）
+ *   6. credits 余额校验（costCredits>0 时，校验 apiKey 持有者余额）
  *
  * 故障降级：
  *   - 鉴权类失败：fail-close（401/403）
@@ -26,7 +25,6 @@ import { apiCallStats, apiKeys, users } from '@nuxthub/db/schema'
 import type { RateLimitWindow } from '~~/shared/config/apiGuard'
 import { API_GUARD_ERROR } from '~~/shared/config/apiGuard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
-import { getAuthUser } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
 import { getLocalDayStart } from '~~/server/utils/localTime'
 
@@ -162,15 +160,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     return { passed: false, outcome: 'disabled', error: API_GUARD_ERROR.DISABLED }
   }
 
-  // [2] requiresAuth
-  if (api.requiresAuth) {
-    const user = await getAuthUser(event)
-    if (!user || user.kind !== 'user') {
-      return { passed: false, outcome: 'unauthorized', error: API_GUARD_ERROR.UNAUTHORIZED }
-    }
-  }
-
-  // [3] / [4] ApiKey 处理
+  // [2] / [3] ApiKey 处理
   const rawKey = readApiKeyFromEvent(event)
   let apiKey: ApiKeyRecord | null = null
 
@@ -202,7 +192,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY }
   }
 
-  // [5] 限流：带 key 按 key 计，不带按 IP 计
+  // [4] 限流：带 key 按 key 计，不带按 IP 计
   const subjectKey = apiKey
     ? `apikey:${apiKey.id}`
     : `ip:${getRequestIP(event) || 'unknown'}`
@@ -216,7 +206,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     }
   }
 
-  // [6] API 日配额（api.dailyQuota 为 0 表示不限）
+  // [5] API 日配额（api.dailyQuota 为 0 表示不限）
   if (api.dailyQuota > 0) {
     try {
       const used = await getTodayQuotaUsage(api.id)
@@ -233,7 +223,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     }
   }
 
-  // [7] 余额校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [3] 校验为存在）
+  // [6] 余额校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
   if (api.costCredits > 0 && apiKey) {
     try {
       const userRow = await db.select({ credits: users.credits })

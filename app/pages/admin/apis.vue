@@ -33,7 +33,6 @@ interface RegisteredApi {
   isEnabled: boolean
   isApiKey: boolean
   isStatistics: boolean
-  requiresAuth: boolean
   rateLimitPerSecond: number
   rateLimitPerMinute: number
   rateLimitPerHour: number
