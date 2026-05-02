@@ -20,7 +20,7 @@ export const siteSettings = pgTable('site_settings', {
 
   // 基础信息
   siteUrl: varchar('site_url', { length: 1000 }).notNull().default('http://localhost:3000'),
-  siteImg: varchar('site_img', { length: 1000 }).notNull().default('https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640'),
+  siteImg: varchar('site_img', { length: 1000 }).notNull().default('/favicon.ico'),
   siteName: varchar('site_name', { length: 140 }).notNull().default('OpenAPI'),
   siteDescription: text('site_description').notNull().default('OpenAPI是免费为用户提供网络数据接口调用的服务平台。'),
   startTime: varchar('start_time', { length: 32 }).notNull().default('2026-01-01 00:00:00'),

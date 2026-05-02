@@ -271,7 +271,7 @@ CREATE TABLE "site_settings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"scope" varchar(32) DEFAULT 'default' NOT NULL,
 	"site_url" varchar(1000) DEFAULT 'http://localhost:3000' NOT NULL,
-	"site_img" varchar(1000) DEFAULT 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640' NOT NULL,
+	"site_img" varchar(1000) DEFAULT '/favicon.ico' NOT NULL,
 	"site_name" varchar(140) DEFAULT 'OpenAPI' NOT NULL,
 	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。' NOT NULL,
 	"start_time" varchar(32) DEFAULT '2026-01-01 00:00:00' NOT NULL,

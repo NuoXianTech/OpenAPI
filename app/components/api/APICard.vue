@@ -218,9 +218,6 @@ function formatCallCount(count: number) {
               >
                 免费
               </UBadge>
-              <span class="text-[11.5px] text-muted">
-                {{ isPaid ? '成功调用扣费，失败不扣' : '当前接口不消耗余额' }}
-              </span>
             </div>
           </div>
           <div class="api-card__detail-row">

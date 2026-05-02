@@ -7,6 +7,13 @@ export default defineNuxtConfig({
     '~~/modules/api-manifest',
   ],
   devtools: { enabled: true },
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      ],
+    },
+  },
   css: ['~/assets/css/tailwind.css'],
   ui: { fonts: false },
   runtimeConfig: {
@@ -23,14 +30,6 @@ export default defineNuxtConfig({
       // 多实例 Node + 共享 PG 部署可在此显式置为 'postgres'；
       // 仍可通过 Nuxt 标准的 NUXT_API_GUARD_RATE_LIMIT_DRIVER 环境变量按部署覆盖。
       rateLimitDriver: '',
-    },
-    public: {
-      startTime: '2026-01-01 00:00:00',
-      siteUrl: 'http://localhost:3000',
-      adminUsernameHint: process.env.ADMIN_USERNAME || 'admin',
-      siteImg: 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
-      siteName: 'OpenAPI',
-      siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     },
   },
   // 路由级缓存：公共页面用 SWR / 后台页面纯 SPA 不预渲染，避免 SSR 时拉鉴权接口
@@ -59,7 +58,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   nitro: {
     // 启用静态资源压缩（brotli + gzip）
-    compressPublicAssets: { brotli: true, gzip: true }
+    compressPublicAssets: { brotli: true, gzip: true },
   },
   hub: {
     db: {

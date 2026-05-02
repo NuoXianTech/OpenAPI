@@ -43,22 +43,20 @@ const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
   showOnHome: false,
 }
 
+// DB 是唯一权威源；以下兜底仅在 /api/settings/public 请求异常时使用，
+// 字段与 server/db/schema/system.ts 中 siteSettings 表的 default 对齐。
+const FALLBACK_SETTINGS: PublicSiteSettings = {
+  siteUrl: 'http://localhost:3000',
+  siteImg: '/favicon.ico',
+  siteName: 'OpenAPI',
+  siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
+  startTime: '2026-01-01 00:00:00',
+  passwordResetEnabled: true,
+  turnstile: { ...EMPTY_TURNSTILE },
+  announcement: { ...EMPTY_ANNOUNCEMENT },
+}
+
 export function useSiteSettings() {
-  const runtimePublic = useRuntimeConfig().public
-
-  const fallback: PublicSiteSettings = {
-    siteUrl: runtimePublic.siteUrl || 'http://localhost:3000',
-    siteImg: runtimePublic.siteImg || 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
-    siteName: runtimePublic.siteName || 'OpenAPI',
-    siteDescription:
-      runtimePublic.siteDescription
-      || 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
-    startTime: runtimePublic.startTime || '2026-01-01 00:00:00',
-    passwordResetEnabled: true,
-    turnstile: { ...EMPTY_TURNSTILE },
-    announcement: { ...EMPTY_ANNOUNCEMENT },
-  }
-
   const { data, pending, error, refresh } = useAsyncData(
     'public-site-settings',
     () => $fetch<PublicSiteSettingsResponse>('/api/settings/public'),
@@ -66,12 +64,12 @@ export function useSiteSettings() {
       default: () => ({
         code: 0,
         msg: 'ok',
-        data: fallback,
+        data: FALLBACK_SETTINGS,
       }),
     },
   )
 
-  const settings = computed(() => data.value?.data || fallback)
+  const settings = computed(() => data.value?.data || FALLBACK_SETTINGS)
   const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
   const announcement = computed<PublicAnnouncementSettings>(() => settings.value.announcement || EMPTY_ANNOUNCEMENT)
   const passwordResetEnabled = computed(() => settings.value.passwordResetEnabled !== false)

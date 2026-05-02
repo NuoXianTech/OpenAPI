@@ -69,7 +69,7 @@ function buildInitialDefaults() {
   return {
     scope: DEFAULT_SCOPE,
     siteUrl: 'http://localhost:3000',
-    siteImg: 'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640',
+    siteImg: '/favicon.ico',
     siteName: 'OpenAPI',
     siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
     startTime: '2026-01-01 00:00:00',

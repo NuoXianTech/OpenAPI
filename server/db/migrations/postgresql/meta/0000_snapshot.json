@@ -1,5 +1,5 @@
 {
-  "id": "6da1adeb-b6fb-4c39-b7cc-6881b8c9dc0e",
+  "id": "53bd6752-ac2c-4df2-a942-def634a355f6",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2798,7 +2798,7 @@
           "type": "varchar(1000)",
           "primaryKey": false,
           "notNull": true,
-          "default": "'https://q1.qlogo.cn/g?b=qq&nk=1428309052&s=640'"
+          "default": "'/favicon.ico'"
         },
         "site_name": {
           "name": "site_name",
