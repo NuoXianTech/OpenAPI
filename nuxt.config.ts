@@ -32,11 +32,8 @@ export default defineNuxtConfig({
       rateLimitDriver: '',
     },
   },
-  // 路由级缓存：公共页面用 SWR / 后台页面纯 SPA 不预渲染，避免 SSR 时拉鉴权接口
+  // 路由级规则：后台页面纯 SPA 不预渲染，避免 SSR 时拉鉴权接口；公共 API 走 HTTP cache-control 让浏览器/CDN 复用
   routeRules: {
-    '/': { swr: 60 },
-    '/friend-links': { swr: 60 },
-    '/stats': { swr: 30 },
     '/admin/**': { ssr: false },
     '/user/**': { ssr: false },
     '/api/list': { headers: { 'cache-control': 'public, max-age=10, stale-while-revalidate=60' } },
@@ -46,8 +43,6 @@ export default defineNuxtConfig({
     '/api/settings/public': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
   },
   experimental: {
-    // 减小 SSR HTML，二次访问从 _payload.json 取；dev 下 Windows unstorage fs driver 偶发把 payload 路径当文件写导致 ENOENT，故仅生产启用
-    payloadExtraction: process.env.NODE_ENV === 'production',
     // 路由切换走视图过渡，更顺滑
     viewTransition: true,
     // 浏览器空闲时预热相邻路由
