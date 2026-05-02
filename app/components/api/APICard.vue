@@ -1,219 +1,252 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
-import AppCard from '../AppCard.vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
-  name: { type: String, default: '这是标题标题标题' },
+  name: { type: String, default: '这是标题' },
   status: { type: Number, default: -1 },
-  shortDesc: { type: String, default: '这是简短描述' },
-  description: { type: String, default: '这是详细描述详细描述详细描述详细描述' },
+  shortDesc: { type: String, default: '' },
+  description: { type: String, default: '' },
   categoryName: { type: String, default: '' },
   httpMethod: { type: String, default: 'GET' },
   apiPath: { type: String, default: '/v1/path' },
-  docUrl: { type: String, default: 'https://example.com/docs' },
+  docUrl: { type: String, default: '' },
   isApiKey: { type: Boolean, default: false },
   costCredits: { type: Number, default: 0 },
   totalCalls: { type: Number, default: 0 },
 })
 
-const methods = computed(() => props.httpMethod.split(',').map(method => method.trim()).filter(Boolean))
+const open = ref(false)
+
+const methods = computed(() =>
+  props.httpMethod.split(',').map(m => m.trim()).filter(Boolean),
+)
 
 const isPaid = computed(() => props.costCredits > 0)
 
-function formatCallCount(count: number) {
-  if (count < 10000) {
-    return `${count}次`
+const radarClass = computed(() => {
+  switch (props.status) {
+    case 1: return ''
+    case 0: return 'is-error'
+    default: return 'is-unknown'
   }
+})
+
+const radarTitle = computed(() => {
+  switch (props.status) {
+    case -1: return '未知'
+    case 0: return '异常'
+    case 1: return '正常'
+    case 2: return '维护'
+    case 3: return '废弃'
+    default: return '未知'
+  }
+})
+
+function formatCallCount(count: number) {
+  if (count < 10000) return `${count}次`
   return `${Math.floor(count / 10000)}万`
 }
 </script>
 
 <template>
-  <AppCard
-    :title="props.name"
-    :status="props.status"
+  <UCard
+    variant="outline"
+    class="api-card border-default bg-elevated"
+    :ui="{ root: 'gap-0', body: '!p-0' }"
   >
-    <template #header>
-      {{ props.name }}
-    </template>
+    <header class="api-card__head">
+      <h3 class="api-card__title">
+        {{ props.name }}
+      </h3>
+      <span
+        class="api-card__radar"
+        :class="radarClass"
+        :title="radarTitle"
+      />
+    </header>
 
-    <template #summary>
-      <p class="my-2 min-h-[1.5em] shrink-0 line-clamp-3 overflow-hidden text-ellipsis text-sm leading-normal text-muted">
-        {{ props.shortDesc }}
-      </p>
+    <p class="api-card__short">
+      {{ props.shortDesc || '暂无简介' }}
+    </p>
 
-      <div
-        v-if="props.categoryName"
-        class="flex flex-wrap gap-1.5 mb-2.5"
+    <div
+      v-if="props.categoryName"
+      class="relative z-1 mb-2.5 flex flex-wrap gap-1.5 px-4"
+    >
+      <UBadge
+        color="neutral"
+        variant="soft"
+        size="sm"
+        class="rounded-full text-[11px]"
       >
-        <UBadge
-          color="neutral"
-          variant="soft"
-          class="rounded-full text-[11px] font-medium"
-        >
-          {{ props.categoryName }}
-        </UBadge>
-      </div>
+        {{ props.categoryName }}
+      </UBadge>
+    </div>
 
-      <div class="mt-2.5 mb-2.5 flex shrink-0 items-center justify-between gap-2.5 rounded-lg border border-default bg-muted/40 p-2">
-        <div class="flex items-baseline gap-2 min-w-0 flex-1">
-          <span class="inline-flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-default/90">
-            <Icon
-              name="mdi:file-document-multiple-outline"
-              size="16"
-              :ssr="true"
-            />
-            {{ props.docUrl }}
-          </span>
-        </div>
+    <div
+      v-if="props.docUrl"
+      class="api-card__doc"
+    >
+      <span
+        class="api-card__doc-text"
+        :title="props.docUrl"
+      >
+        <Icon
+          name="i-lucide-file-text"
+          size="13"
+          :ssr="true"
+        />
+        {{ props.docUrl }}
+      </span>
+      <UButton
+        :to="props.docUrl"
+        target="_blank"
+        rel="noopener"
+        color="neutral"
+        variant="outline"
+        size="xs"
+        icon="i-lucide-external-link"
+        square
+        class="shrink-0"
+        aria-label="打开文档"
+      />
+    </div>
 
+    <div class="api-card__meta">
+      <UBadge
+        v-if="isPaid"
+        color="warning"
+        variant="soft"
+        size="sm"
+        icon="i-lucide-coins"
+        class="rounded-full"
+      >
+        {{ props.costCredits }} / 次
+      </UBadge>
+      <UBadge
+        v-else
+        color="success"
+        variant="soft"
+        size="sm"
+        icon="i-lucide-gift"
+        class="rounded-full"
+      >
+        免费
+      </UBadge>
+      <UBadge
+        v-if="props.isApiKey"
+        color="neutral"
+        variant="outline"
+        size="sm"
+        icon="i-lucide-key-round"
+        class="rounded-full"
+      >
+        APIKey
+      </UBadge>
+
+      <UBadge
+        color="neutral"
+        variant="subtle"
+        size="sm"
+        icon="i-lucide-bar-chart-3"
+        class="ml-auto rounded-full font-mono"
+      >
+        {{ formatCallCount(props.totalCalls) }}
+      </UBadge>
+    </div>
+
+    <UCollapsible v-model:open="open">
+      <div class="api-card__toggle-row">
         <UButton
-          :to="props.docUrl"
-          target="_blank"
-          variant="outline"
+          color="neutral"
+          variant="ghost"
           size="xs"
-          class="shrink-0"
-          aria-label="打开文档"
+          :trailing-icon="open ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          class="rounded-full"
+          :aria-expanded="open"
         >
-          <Icon
-            name="mdi:external-link"
-            size="16"
-            :ssr="true"
-          />
+          {{ open ? '收起详情' : '查看详情' }}
         </UButton>
       </div>
-    </template>
 
-    <template #meta>
-      <div class="flex items-center gap-1.5">
-        <UBadge
-          v-if="isPaid"
-          color="warning"
-          variant="soft"
-          class="rounded-full"
-        >
-          <Icon
-            name="mdi:cash-multiple"
-            size="14"
-            class="mr-0.5"
-          />
-          收费 {{ props.costCredits }}/次
-        </UBadge>
-        <UBadge
-          v-else
-          color="success"
-          variant="soft"
-          class="rounded-full"
-        >
-          <Icon
-            name="mdi:gift-outline"
-            size="14"
-            class="mr-0.5"
-          />
-          免费
-        </UBadge>
-        <UBadge
-          v-if="props.isApiKey"
-          variant="outline"
-          class="rounded-full"
-        >
-          <Icon
-            name="mdi:key-variant"
-            size="14"
-          />
-          APIkey
-        </UBadge>
-      </div>
-    </template>
-
-    <template #details>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          接口示例
-        </div>
-        <a
-          :href="`${props.apiPath}`"
-          target="_blank"
-          class="text-[13px] underline font-mono break-all"
-        >{{ props.apiPath }}</a>
-      </div>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          请求方法
-        </div>
-        <div class="flex flex-wrap gap-1">
-          <UBadge
-            v-for="method in methods"
-            :key="method"
-            variant="outline"
-            class="rounded-full font-mono text-[11px]"
+      <template #content>
+        <div class="api-card__details">
+          <div class="api-card__detail-row">
+            <span class="api-card__detail-label">接口示例</span>
+            <a
+              :href="props.apiPath"
+              target="_blank"
+              rel="noopener"
+              class="api-card__detail-value font-mono text-[12.5px]"
+            >{{ props.apiPath }}</a>
+          </div>
+          <div class="api-card__detail-row">
+            <span class="api-card__detail-label">请求方法</span>
+            <div class="api-card__detail-value api-card__detail-value--row">
+              <UBadge
+                v-for="method in methods"
+                :key="method"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                class="rounded-full font-mono text-[11px]"
+              >
+                {{ method }}
+              </UBadge>
+            </div>
+          </div>
+          <div class="api-card__detail-row">
+            <span class="api-card__detail-label">调用计费</span>
+            <div class="api-card__detail-value api-card__detail-value--row">
+              <UBadge
+                v-if="isPaid"
+                color="warning"
+                variant="soft"
+                size="sm"
+                icon="i-lucide-coins"
+                class="rounded-full"
+              >
+                {{ props.costCredits }} / 次
+              </UBadge>
+              <UBadge
+                v-else
+                color="success"
+                variant="soft"
+                size="sm"
+                icon="i-lucide-gift"
+                class="rounded-full"
+              >
+                免费
+              </UBadge>
+              <span class="text-[11.5px] text-muted">
+                {{ isPaid ? '成功调用扣费，失败不扣' : '当前接口不消耗余额' }}
+              </span>
+            </div>
+          </div>
+          <div class="api-card__detail-row">
+            <span class="api-card__detail-label">调用次数</span>
+            <div class="api-card__detail-value api-card__detail-value--row">
+              <UBadge
+                color="neutral"
+                variant="outline"
+                size="sm"
+                class="rounded-full font-mono"
+              >
+                {{ formatCallCount(props.totalCalls) }}
+              </UBadge>
+            </div>
+          </div>
+          <div
+            v-if="props.description"
+            class="api-card__detail-row"
           >
-            {{ method }}
-          </UBadge>
+            <span class="api-card__detail-label">接口描述</span>
+            <p class="api-card__detail-value m-0 text-[12.5px] leading-relaxed">
+              {{ props.description }}
+            </p>
+          </div>
         </div>
-      </div>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          调用计费
-        </div>
-        <div class="flex items-center flex-wrap gap-2 text-[13px]">
-          <template v-if="isPaid">
-            <UBadge
-              color="warning"
-              variant="soft"
-              class="rounded-full"
-            >
-              <Icon
-                name="mdi:cash-multiple"
-                size="14"
-                class="mr-0.5"
-              />
-              {{ props.costCredits }} / 次
-            </UBadge>
-            <span class="text-muted text-xs">
-              成功调用扣费，失败不扣；调用前需准备 API Key 与余额
-            </span>
-          </template>
-          <template v-else>
-            <UBadge
-              color="success"
-              variant="soft"
-              class="rounded-full"
-            >
-              <Icon
-                name="mdi:gift-outline"
-                size="14"
-                class="mr-0.5"
-              />
-              免费
-            </UBadge>
-            <span class="text-muted text-xs">
-              当前接口不消耗余额
-            </span>
-          </template>
-        </div>
-      </div>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          调用次数
-        </div>
-        <div class="flex flex-wrap gap-2 text-[12px] text-muted">
-          <UBadge
-            variant="outline"
-            class="rounded-full"
-          >
-            {{ formatCallCount(props.totalCalls) }}
-          </UBadge>
-        </div>
-      </div>
-      <div class="grid grid-cols-[90px_1fr] gap-2.5 items-start py-1">
-        <div class="text-muted text-xs">
-          接口描述
-        </div>
-        <div class="text-[13px] break-all">
-          {{ props.description }}
-        </div>
-      </div>
-    </template>
-  </AppCard>
+      </template>
+    </UCollapsible>
+  </UCard>
 </template>

@@ -1,8 +1,9 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
+import type { ApiCatalogItem } from '~/composables/api/types'
 
 const { items, categoryMap } = defineProps({
-  items: { type: Array as PropType<any[]>, default: () => [] },
+  items: { type: Array as PropType<ApiCatalogItem[]>, default: () => [] },
   categoryMap: { type: Object as PropType<Map<number, { name: string }>>, default: () => new Map() },
 })
 
@@ -17,8 +18,8 @@ function resolveCategoryName(id: number | null | undefined) {
 <template>
   <TransitionGroup
     name="api-card"
-    tag="main"
-    class="grid grid-cols-12 gap-4 items-start api-card-grid"
+    tag="div"
+    class="api-card-grid"
     appear
   >
     <APICard
@@ -36,6 +37,7 @@ function resolveCategoryName(id: number | null | undefined) {
       :cost-credits="item.costCredits"
       :total-calls="item.totalCalls"
       class="api-card-item"
+      :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
     />
   </TransitionGroup>
 </template>
