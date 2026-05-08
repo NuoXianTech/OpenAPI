@@ -80,8 +80,8 @@ export default defineEventHandler(async (event: H3Event) => {
     sessionAbsoluteMaxAgeSeconds: parseOptionalInteger(body.sessionAbsoluteMaxAgeSeconds, 'sessionAbsoluteMaxAgeSeconds'),
     sessionRememberMaxAgeSeconds: parseOptionalInteger(body.sessionRememberMaxAgeSeconds, 'sessionRememberMaxAgeSeconds'),
     registerEmailFilterMode: parseOptionalEmailFilterMode(body.registerEmailFilterMode),
-    registerEmailWhitelist: body.registerEmailWhitelist !== undefined && body.registerEmailWhitelist !== null
-      ? body.registerEmailWhitelist.toString().slice(0, 5000)
+    registerEmailFilterList: body.registerEmailFilterList !== undefined && body.registerEmailFilterList !== null
+      ? body.registerEmailFilterList.toString().slice(0, 5000)
       : undefined,
     emailVerifyExpiresInMinutes: parseOptionalInteger(body.emailVerifyExpiresInMinutes, 'emailVerifyExpiresInMinutes'),
     passwordResetExpiresInMinutes: parseOptionalInteger(body.passwordResetExpiresInMinutes, 'passwordResetExpiresInMinutes'),

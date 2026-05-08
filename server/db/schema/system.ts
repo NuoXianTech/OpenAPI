@@ -27,12 +27,11 @@ export const siteSettings = pgTable('site_settings', {
 
   // 注册
   registrationMode: varchar('registration_mode', { length: 20 }).notNull().default('open'), // open / invite / closed
-  loginAttemptsLimit: integer('login_attempts_limit').notNull().default(5),
-  loginLockMinutes: integer('login_lock_minutes').notNull().default(30),
   // 注册邮箱域名过滤：off=不过滤；whitelist=只允许列表内域名；blacklist=拒绝列表内域名
   registerEmailFilterMode: varchar('register_email_filter_mode', { length: 20 }).notNull().default('off'),
-  // 注册邮箱域名列表（逗号或换行分隔，例如：163.com,qq.com）。filterMode=off 时此字段被忽略
-  registerEmailWhitelist: text('register_email_whitelist').notNull().default(''),
+  // 注册邮箱域名过滤列表（逗号或换行分隔，例如：163.com,qq.com）。filterMode=off 时此字段被忽略；
+  // filterMode=whitelist 时作为白名单使用；filterMode=blacklist 时作为黑名单使用。
+  registerEmailFilterList: text('register_email_filter_list').notNull().default(''),
 
   // 会话 / 验证
   // 默认会话有效期：未勾选「记住我」时使用，按秒；登录后会随活跃滑动续期
@@ -52,10 +51,6 @@ export const siteSettings = pgTable('site_settings', {
   policeBeian: varchar('police_beian', { length: 100 }),
   termsUrl: varchar('terms_url', { length: 1000 }),
   privacyUrl: varchar('privacy_url', { length: 1000 }),
-
-  // API 日志采样与保留
-  apiLogSamplingRate: integer('api_log_sampling_rate').notNull().default(100),
-  apiLogRetentionDays: integer('api_log_retention_days').notNull().default(90),
 
   // SMTP（保留兼容）
   smtpHost: varchar('smtp_host', { length: 255 }).notNull().default('smtp.example.com'),
@@ -103,7 +98,6 @@ export const operationLogs = pgTable('operation_logs', {
   userAgent: varchar('user_agent', { length: 500 }),
   detail: jsonb('detail').$type<Record<string, unknown>>(),
   status: varchar('status', { length: 20 }).notNull().default('success'),
-  errorMessage: varchar('error_message', { length: 500 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [
   index('operation_logs_created_at_idx').on(table.createdAt),

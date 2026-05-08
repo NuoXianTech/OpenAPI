@@ -20,14 +20,12 @@ export const friendLinks = pgTable('friend_links', {
   url: varchar('url', { length: 1000 }).notNull(),
   description: text('description'),
   logoUrl: varchar('logo_url', { length: 1000 }),
-  sortOrder: integer('sort_order').notNull().default(0),
   isActive: boolean('is_active').notNull().default(true),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 }, table => [
-  index('friend_links_active_sort_idx').on(table.isActive, table.sortOrder),
+  index('friend_links_active_idx').on(table.isActive),
 ])
 
 // ------------------------------------------------------------------

@@ -37,7 +37,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   // 邮箱域名过滤：off=不过滤；whitelist=仅允许列表内域名；blacklist=拒绝列表内域名
   const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
-  const domains = parseEmailDomainList(settings.registerEmailWhitelist)
+  const domains = parseEmailDomainList(settings.registerEmailFilterList)
   if (!isEmailAllowedForRegistration(email, filterMode, domains)) {
     const msg = filterMode === 'blacklist' ? '该邮箱域名已被禁止注册' : '该邮箱域名不在允许注册的列表内'
     throw createError({ statusCode: 403, message: msg })

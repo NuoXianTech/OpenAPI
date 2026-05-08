@@ -38,7 +38,6 @@ export const DEFAULT_API_REGISTRATION = {
   dailyQuota: 0,
   costCredits: 0,
   timeoutMs: 10_000,
-  cacheTtlSeconds: 0,
 } as const
 
 /** gate 返回码与默认文案 */

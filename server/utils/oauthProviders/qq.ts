@@ -120,7 +120,6 @@ export const qqProvider: OauthProviderModule = {
       email: null,
       nickname: typeof profile.nickname === 'string' && profile.nickname ? profile.nickname : null,
       avatarUrl,
-      profileRaw: { ...profile, openid, unionid },
     }
   },
 }

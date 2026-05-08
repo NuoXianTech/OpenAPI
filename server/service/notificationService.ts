@@ -19,7 +19,6 @@ export interface SendNotificationInput {
 async function listActiveUserIds(): Promise<number[]> {
   const rows = await db.select({ id: users.id }).from(users)
     .where(and(
-      isNull(users.deletedAt),
       eq(users.isActive, true),
       eq(users.isBanned, false),
     ))
@@ -37,9 +36,9 @@ export const notificationService = {
     if (input.audience === 'specific') {
       const ids = Array.from(new Set((input.recipientUserIds || []).map(Number).filter(n => Number.isFinite(n) && n > 0)))
       if (ids.length === 0) throw new Error('specific audience requires recipientUserIds')
-      // 过滤为存在且未删除的 users
+      // 过滤为存在的 users
       const valid = await db.select({ id: users.id }).from(users)
-        .where(and(inArray(users.id, ids), isNull(users.deletedAt)))
+        .where(inArray(users.id, ids))
       recipientIds = valid.map(r => r.id)
     }
     else {

@@ -10,7 +10,6 @@ interface UserItem {
   displayName: string | null
   isActive: boolean
   isBanned: boolean
-  deletedAt: string | null
 }
 
 interface MessageRow {
@@ -30,7 +29,7 @@ const toast = useToast()
 const { data: usersData } = useLazyFetch('/api/admin/users/list', {
   default: () => ({ code: 0, msg: '', data: [] as UserItem[] }),
 })
-const users = computed(() => (usersData.value?.data || []).filter(u => !u.deletedAt && !u.isBanned))
+const users = computed(() => (usersData.value?.data || []).filter(u => !u.isBanned))
 
 const { data: messagesData, status, refresh } = useLazyFetch('/api/admin/notifications/list', {
   default: () => ({ code: 0, msg: '', data: [] as MessageRow[] }),

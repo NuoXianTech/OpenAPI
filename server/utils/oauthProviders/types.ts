@@ -9,7 +9,6 @@ export interface ProviderProfile {
   email: string | null
   nickname: string | null
   avatarUrl: string | null
-  profileRaw: Record<string, unknown>
 }
 
 /**

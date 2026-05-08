@@ -4,7 +4,6 @@ import {
   integer,
   varchar,
   boolean,
-  jsonb,
   timestamp,
   index,
   uniqueIndex,
@@ -24,7 +23,6 @@ export const sessions = pgTable('sessions', {
   isRemembered: boolean('is_remembered').notNull().default(false),
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [
   index('sessions_user_idx').on(table.userId),
@@ -73,7 +71,7 @@ export const oauthProviders = pgTable('oauth_providers', {
 // User third-party account binding
 // 一个用户可绑定多个第三方账号；本应用 OAuth 仅用于登录身份识别，
 // 不调用上游 API，因此不持久化 access_token / refresh_token / scope。
-// providerUserId 已经是稳定身份标识；profile_raw 留作排错时的原样备份。
+// providerUserId 已经是稳定身份标识。
 // ------------------------------------------------------------------
 export const oauthAccounts = pgTable('oauth_accounts', {
   id: serial('id').primaryKey(),
@@ -83,7 +81,6 @@ export const oauthAccounts = pgTable('oauth_accounts', {
   nickname: varchar('nickname', { length: 140 }),
   avatarUrl: varchar('avatar_url', { length: 1000 }),
   email: varchar('email', { length: 255 }),
-  profileRaw: jsonb('profile_raw').$type<Record<string, unknown>>(),
   linkedAt: timestamp('linked_at', { withTimezone: true }).notNull().defaultNow(),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),

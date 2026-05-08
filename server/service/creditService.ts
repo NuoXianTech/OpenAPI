@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, isNull, lte, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '@nuxthub/db/schema'
 
 /**
@@ -243,7 +243,7 @@ export const creditService = {
   }) {
     let targetIds = input.userIds
     if (!targetIds || targetIds.length === 0) {
-      const allRows = await db.select({ id: users.id }).from(users).where(isNull(users.deletedAt))
+      const allRows = await db.select({ id: users.id }).from(users)
       targetIds = allRows.map((r: { id: number }) => r.id)
     }
 

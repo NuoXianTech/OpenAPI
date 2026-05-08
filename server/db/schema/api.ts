@@ -58,8 +58,6 @@ export const apis = pgTable('apis', {
   apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /v1/user
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
   docVersion: varchar('doc_version', { length: 32 }).notNull().default('v1'), // 文档语义版本号（与 pathVersion 不同）
-  deprecatedAt: timestamp('deprecated_at', { withTimezone: true }),
-  replacementCode: varchar('replacement_code', { length: 50 }),
 
   isEnabled: boolean('is_enabled').default(true).notNull(),
   isApiKey: boolean('is_api_key').default(false).notNull(),
@@ -75,12 +73,8 @@ export const apis = pgTable('apis', {
   costCredits: integer('cost_credits').default(0).notNull(),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
-  // 缓存 TTL（秒）：>0 时启用响应缓存（缓存层待实现）
-  cacheTtlSeconds: integer('cache_ttl_seconds').default(0).notNull(),
 
   totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
-  sortOrder: integer('sort_order').notNull().default(0),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -89,9 +83,8 @@ export const apis = pgTable('apis', {
 }, table => [
   uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
   index('apis_category_idx').on(table.categoryId),
-  index('apis_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
+  index('apis_enabled_idx').on(table.isEnabled),
   index('apis_status_idx').on(table.status),
-  index('apis_deleted_at_idx').on(table.deletedAt),
   index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
 ])
 
@@ -139,7 +132,6 @@ export const apiCalls = pgTable('api_calls', {
 
   statusCode: integer('status_code').notNull(),
   latencyMs: integer('latency_ms').notNull().default(0),
-  cacheHit: boolean('cache_hit').notNull().default(false), // 缓存命中标记，配合 apis.cacheTtlSeconds
 
   ip: varchar('ip', { length: 45 }),
   // GeoIP 反查字段（待接入 GeoIP 数据源后写入）

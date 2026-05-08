@@ -8,7 +8,6 @@ export interface OauthAccountUpsertInput {
   nickname?: string | null
   avatarUrl?: string | null
   email?: string | null
-  profileRaw?: Record<string, unknown> | null
   lastLoginIp?: string | null
 }
 
@@ -63,7 +62,6 @@ export const oauthAccountService = {
           nickname: input.nickname ?? existing.nickname,
           avatarUrl: input.avatarUrl ?? existing.avatarUrl,
           email: input.email ?? existing.email,
-          profileRaw: input.profileRaw ?? existing.profileRaw,
           lastLoginAt: now,
           lastLoginIp: input.lastLoginIp ?? existing.lastLoginIp,
           updatedAt: now,
@@ -80,7 +78,6 @@ export const oauthAccountService = {
       nickname: input.nickname ?? null,
       avatarUrl: input.avatarUrl ?? null,
       email: input.email ?? null,
-      profileRaw: input.profileRaw ?? null,
       linkedAt: now,
       lastLoginAt: now,
       lastLoginIp: input.lastLoginIp ?? null,

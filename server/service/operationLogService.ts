@@ -15,7 +15,6 @@ export interface OperationLogInput {
   userAgent?: string | null
   detail?: Record<string, unknown> | null
   status?: OperationLogStatus
-  errorMessage?: string | null
 }
 
 export interface OperationLogListFilters {
@@ -44,7 +43,6 @@ export const operationLogService = {
         userAgent: input.userAgent?.slice(0, 500) ?? null,
         detail: input.detail ?? null,
         status: input.status || 'success',
-        errorMessage: input.errorMessage?.slice(0, 500) ?? null,
       })
     }
     catch (error) {

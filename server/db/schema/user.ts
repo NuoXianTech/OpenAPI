@@ -26,18 +26,15 @@ export const users = pgTable('users', {
   isBanned: boolean('is_banned').default(false).notNull(),
   bannedReason: varchar('banned_reason', { length: 500 }),
   bannedUntil: timestamp('banned_until', { withTimezone: true }),
-  loginAttemptsCount: bigint('login_attempts_count', { mode: 'number' }).notNull().default(0),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
 }, table => [
   uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`),
   index('users_active_banned_idx').on(table.isActive, table.isBanned),
-  index('users_deleted_at_idx').on(table.deletedAt),
 ])
 
 // ------------------------------------------------------------------

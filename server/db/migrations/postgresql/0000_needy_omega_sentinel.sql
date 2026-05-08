@@ -38,7 +38,6 @@ CREATE TABLE "api_calls" (
 	"query_string" varchar(2000),
 	"status_code" integer NOT NULL,
 	"latency_ms" integer DEFAULT 0 NOT NULL,
-	"cache_hit" boolean DEFAULT false NOT NULL,
 	"ip" varchar(45),
 	"country" varchar(2),
 	"region" varchar(100),
@@ -112,8 +111,6 @@ CREATE TABLE "apis" (
 	"api_path" varchar(200) NOT NULL,
 	"doc_url" varchar(200) NOT NULL,
 	"doc_version" varchar(32) DEFAULT 'v1' NOT NULL,
-	"deprecated_at" timestamp with time zone,
-	"replacement_code" varchar(50),
 	"is_enabled" boolean DEFAULT true NOT NULL,
 	"is_api_key" boolean DEFAULT false NOT NULL,
 	"is_statistics" boolean DEFAULT true NOT NULL,
@@ -124,10 +121,7 @@ CREATE TABLE "apis" (
 	"cost_credits" integer DEFAULT 0 NOT NULL,
 	"daily_quota" integer DEFAULT 0 NOT NULL,
 	"timeout_ms" integer DEFAULT 10000 NOT NULL,
-	"cache_ttl_seconds" integer DEFAULT 0 NOT NULL,
 	"total_calls" bigint DEFAULT 0 NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"deleted_at" timestamp with time zone,
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
@@ -155,9 +149,7 @@ CREATE TABLE "friend_links" (
 	"url" varchar(1000) NOT NULL,
 	"description" text,
 	"logo_url" varchar(1000),
-	"sort_order" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
-	"deleted_at" timestamp with time zone,
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -194,7 +186,6 @@ CREATE TABLE "oauth_accounts" (
 	"nickname" varchar(140),
 	"avatar_url" varchar(1000),
 	"email" varchar(255),
-	"profile_raw" jsonb,
 	"linked_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"last_login_at" timestamp with time zone,
 	"last_login_ip" varchar(45),
@@ -224,7 +215,6 @@ CREATE TABLE "operation_logs" (
 	"user_agent" varchar(500),
 	"detail" jsonb,
 	"status" varchar(20) DEFAULT 'success' NOT NULL,
-	"error_message" varchar(500),
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -263,7 +253,6 @@ CREATE TABLE "sessions" (
 	"is_remembered" boolean DEFAULT false NOT NULL,
 	"last_active_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
-	"revoked_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
@@ -276,10 +265,8 @@ CREATE TABLE "site_settings" (
 	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。' NOT NULL,
 	"start_time" varchar(32) DEFAULT '2026-01-01 00:00:00' NOT NULL,
 	"registration_mode" varchar(20) DEFAULT 'open' NOT NULL,
-	"login_attempts_limit" integer DEFAULT 5 NOT NULL,
-	"login_lock_minutes" integer DEFAULT 30 NOT NULL,
 	"register_email_filter_mode" varchar(20) DEFAULT 'off' NOT NULL,
-	"register_email_whitelist" text DEFAULT '' NOT NULL,
+	"register_email_filter_list" text DEFAULT '' NOT NULL,
 	"session_max_age_seconds" integer DEFAULT 86400 NOT NULL,
 	"session_absolute_max_age_seconds" integer DEFAULT 604800 NOT NULL,
 	"session_remember_max_age_seconds" integer DEFAULT 2592000 NOT NULL,
@@ -290,8 +277,6 @@ CREATE TABLE "site_settings" (
 	"police_beian" varchar(100),
 	"terms_url" varchar(1000),
 	"privacy_url" varchar(1000),
-	"api_log_sampling_rate" integer DEFAULT 100 NOT NULL,
-	"api_log_retention_days" integer DEFAULT 90 NOT NULL,
 	"smtp_host" varchar(255) DEFAULT 'smtp.example.com' NOT NULL,
 	"smtp_port" integer DEFAULT 465 NOT NULL,
 	"smtp_secure" boolean DEFAULT true NOT NULL,
@@ -325,12 +310,10 @@ CREATE TABLE "users" (
 	"is_banned" boolean DEFAULT false NOT NULL,
 	"banned_reason" varchar(500),
 	"banned_until" timestamp with time zone,
-	"login_attempts_count" bigint DEFAULT 0 NOT NULL,
 	"last_login_at" timestamp with time zone,
 	"last_login_ip" varchar(45),
 	"last_login_user_agent" varchar(500),
 	"email_verified_at" timestamp with time zone,
-	"deleted_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now(),
 	CONSTRAINT "users_username_unique" UNIQUE("username"),
@@ -392,14 +375,13 @@ CREATE UNIQUE INDEX "api_rate_limit_buckets_key_window_uq" ON "api_rate_limit_bu
 CREATE INDEX "api_rate_limit_buckets_window_idx" ON "api_rate_limit_buckets" USING btree ("window_start");--> statement-breakpoint
 CREATE UNIQUE INDEX "apis_version_code_uq" ON "apis" USING btree ("path_version","code");--> statement-breakpoint
 CREATE INDEX "apis_category_idx" ON "apis" USING btree ("category_id");--> statement-breakpoint
-CREATE INDEX "apis_enabled_sort_idx" ON "apis" USING btree ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "apis_enabled_idx" ON "apis" USING btree ("is_enabled");--> statement-breakpoint
 CREATE INDEX "apis_status_idx" ON "apis" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "apis_deleted_at_idx" ON "apis" USING btree ("deleted_at");--> statement-breakpoint
 CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_version","is_enabled");--> statement-breakpoint
 CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "credit_transactions_reason_idx" ON "credit_transactions" USING btree ("reason");--> statement-breakpoint
 CREATE INDEX "credit_transactions_api_call_idx" ON "credit_transactions" USING btree ("api_call_id");--> statement-breakpoint
-CREATE INDEX "friend_links_active_sort_idx" ON "friend_links" USING btree ("is_active","sort_order");--> statement-breakpoint
+CREATE INDEX "friend_links_active_idx" ON "friend_links" USING btree ("is_active");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliveries" USING btree ("recipient_user_id","created_at");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_unread_idx" ON "notification_deliveries" USING btree ("recipient_user_id","is_read");--> statement-breakpoint
@@ -422,7 +404,6 @@ CREATE INDEX "sessions_expires_idx" ON "sessions" USING btree ("expires_at");-->
 CREATE INDEX "sessions_last_active_idx" ON "sessions" USING btree ("last_active_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_lower_uq" ON "users" USING btree (lower("email"));--> statement-breakpoint
 CREATE INDEX "users_active_banned_idx" ON "users" USING btree ("is_active","is_banned");--> statement-breakpoint
-CREATE INDEX "users_deleted_at_idx" ON "users" USING btree ("deleted_at");--> statement-breakpoint
 CREATE INDEX "verification_tokens_user_created_idx" ON "verification_tokens" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "verification_tokens_email_idx" ON "verification_tokens" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "verification_tokens_purpose_idx" ON "verification_tokens" USING btree ("purpose");--> statement-breakpoint

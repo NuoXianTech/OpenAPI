@@ -116,7 +116,6 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
-        profileRaw: profile.profileRaw,
         lastLoginIp: ip,
       })
 
@@ -138,7 +137,6 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
-        profileRaw: profile.profileRaw,
         lastLoginIp: ip,
       })
 
@@ -171,7 +169,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       }
       // 自动注册路径同样受邮箱域名过滤约束
       const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
-      const domains = parseEmailDomainList(settings.registerEmailWhitelist)
+      const domains = parseEmailDomainList(settings.registerEmailFilterList)
       if (!isEmailAllowedForRegistration(profile.email.toLowerCase(), filterMode, domains)) {
         return redirectError(event, 'email_not_allowed')
       }
@@ -204,7 +202,6 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       nickname: profile.nickname,
       avatarUrl: profile.avatarUrl,
       email: profile.email,
-      profileRaw: profile.profileRaw,
       lastLoginIp: ip,
     })
 

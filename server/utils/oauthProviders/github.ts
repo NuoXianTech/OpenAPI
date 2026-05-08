@@ -85,7 +85,6 @@ export const githubProvider: OauthProviderModule = {
       email,
       nickname: (typeof profile.name === 'string' && profile.name) || (typeof profile.login === 'string' ? profile.login : null),
       avatarUrl: typeof profile.avatar_url === 'string' ? profile.avatar_url : null,
-      profileRaw: profile,
     }
   },
 }

@@ -1,5 +1,5 @@
 {
-  "id": "42dc41dd-032d-4dbe-85d1-87aaf28a05c4",
+  "id": "5a8d5f6c-da45-4519-a8ff-671c7a02a9a8",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -371,13 +371,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "cache_hit": {
-          "name": "cache_hit",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "ip": {
           "name": "ip",
@@ -1120,18 +1113,6 @@
           "notNull": true,
           "default": "'v1'"
         },
-        "deprecated_at": {
-          "name": "deprecated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "replacement_code": {
-          "name": "replacement_code",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false
-        },
         "is_enabled": {
           "name": "is_enabled",
           "type": "boolean",
@@ -1202,32 +1183,12 @@
           "notNull": true,
           "default": 10000
         },
-        "cache_ttl_seconds": {
-          "name": "cache_ttl_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "total_calls": {
           "name": "total_calls",
           "type": "bigint",
           "primaryKey": false,
           "notNull": true,
           "default": 0
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_by": {
           "name": "created_by",
@@ -1293,17 +1254,11 @@
           "method": "btree",
           "with": {}
         },
-        "apis_enabled_sort_idx": {
-          "name": "apis_enabled_sort_idx",
+        "apis_enabled_idx": {
+          "name": "apis_enabled_idx",
           "columns": [
             {
               "expression": "is_enabled",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort_order",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1319,21 +1274,6 @@
           "columns": [
             {
               "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "apis_deleted_at_idx": {
-          "name": "apis_deleted_at_idx",
-          "columns": [
-            {
-              "expression": "deleted_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1599,25 +1539,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "is_active": {
           "name": "is_active",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": true
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_by": {
           "name": "created_by",
@@ -1641,17 +1568,11 @@
         }
       },
       "indexes": {
-        "friend_links_active_sort_idx": {
-          "name": "friend_links_active_sort_idx",
+        "friend_links_active_idx": {
+          "name": "friend_links_active_idx",
           "columns": [
             {
               "expression": "is_active",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort_order",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2000,12 +1921,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "profile_raw": {
-          "name": "profile_raw",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "linked_at": {
           "name": "linked_at",
           "type": "timestamp with time zone",
@@ -2261,12 +2176,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'success'"
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -2687,12 +2596,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -2828,20 +2731,6 @@
           "notNull": true,
           "default": "'open'"
         },
-        "login_attempts_limit": {
-          "name": "login_attempts_limit",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 5
-        },
-        "login_lock_minutes": {
-          "name": "login_lock_minutes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 30
-        },
         "register_email_filter_mode": {
           "name": "register_email_filter_mode",
           "type": "varchar(20)",
@@ -2849,8 +2738,8 @@
           "notNull": true,
           "default": "'off'"
         },
-        "register_email_whitelist": {
-          "name": "register_email_whitelist",
+        "register_email_filter_list": {
+          "name": "register_email_filter_list",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -2921,20 +2810,6 @@
           "type": "varchar(1000)",
           "primaryKey": false,
           "notNull": false
-        },
-        "api_log_sampling_rate": {
-          "name": "api_log_sampling_rate",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 100
-        },
-        "api_log_retention_days": {
-          "name": "api_log_retention_days",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 90
         },
         "smtp_host": {
           "name": "smtp_host",
@@ -3153,13 +3028,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "login_attempts_count": {
-          "name": "login_attempts_count",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
         "last_login_at": {
           "name": "last_login_at",
           "type": "timestamp with time zone",
@@ -3180,12 +3048,6 @@
         },
         "email_verified_at": {
           "name": "email_verified_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
@@ -3232,21 +3094,6 @@
             },
             {
               "expression": "is_banned",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "users_deleted_at_idx": {
-          "name": "users_deleted_at_idx",
-          "columns": [
-            {
-              "expression": "deleted_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

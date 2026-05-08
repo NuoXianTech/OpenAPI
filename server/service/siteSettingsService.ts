@@ -44,7 +44,7 @@ export interface SiteSettingsUpsertInput {
   sessionMaxAgeSeconds?: number
   sessionAbsoluteMaxAgeSeconds?: number
   sessionRememberMaxAgeSeconds?: number
-  registerEmailWhitelist?: string
+  registerEmailFilterList?: string
   registerEmailFilterMode?: 'off' | 'whitelist' | 'blacklist'
   emailVerifyExpiresInMinutes?: number
   passwordResetExpiresInMinutes?: number
@@ -81,7 +81,7 @@ function buildInitialDefaults() {
     sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
     sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
     registerEmailFilterMode: 'off',
-    registerEmailWhitelist: '',
+    registerEmailFilterList: '',
     emailVerifyExpiresInMinutes: 30,
     smtpHost: 'smtp.example.com',
     smtpPort: 465,

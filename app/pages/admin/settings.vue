@@ -17,7 +17,7 @@ const form = reactive({
   sessionAbsoluteMaxAgeSeconds: 604800,
   sessionRememberMaxAgeSeconds: 2592000,
   registerEmailFilterMode: 'off' as 'off' | 'whitelist' | 'blacklist',
-  registerEmailWhitelist: '',
+  registerEmailFilterList: '',
   emailVerifyExpiresInMinutes: 30,
   passwordResetExpiresInMinutes: 30,
   passwordResetEnabled: true,
@@ -52,7 +52,7 @@ watch(() => data.value?.data, (val) => {
       sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? 604800,
       sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? 2592000,
       registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist') ? val.registerEmailFilterMode : 'off',
-      registerEmailWhitelist: val.registerEmailWhitelist ?? '',
+      registerEmailFilterList: val.registerEmailFilterList ?? '',
       emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? 30,
       passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? 30,
       passwordResetEnabled: val.passwordResetEnabled ?? true,
@@ -259,7 +259,7 @@ async function handleSave() {
                 : '逗号或换行分隔，仅写域名（不带 @）。例如：163.com, qq.com、gmail.com。# 开头为注释。'"
             >
               <UTextarea
-                v-model="form.registerEmailWhitelist"
+                v-model="form.registerEmailFilterList"
                 :rows="4"
                 :disabled="form.registerEmailFilterMode === 'off'"
                 placeholder="163.com, qq.com&#10;gmail.com"
