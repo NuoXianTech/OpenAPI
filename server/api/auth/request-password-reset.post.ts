@@ -16,9 +16,9 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, any>
-  const email = (body.email || '').toString().trim().toLowerCase()
-  const turnstileToken = (body.turnstileToken || '').toString()
+  const body = await readBody(event) as Record<string, unknown>
+  const email = String(body.email ?? '').trim().toLowerCase()
+  const turnstileToken = String(body.turnstileToken ?? '')
 
   const ip = getRequestIP(event) || null
 

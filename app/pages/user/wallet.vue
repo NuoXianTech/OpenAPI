@@ -123,7 +123,9 @@ async function refreshAll() {
   await Promise.all([fetchSummary(), fetchTransactions()])
 }
 
-watch(page, () => { void fetchTransactions() })
+watch(page, () => {
+  void fetchTransactions()
+})
 
 onMounted(() => {
   void refreshAll()
@@ -178,8 +180,9 @@ async function submitRedeem() {
     await refreshAll()
     await fetchRedeemRecords()
   }
-  catch (err: any) {
-    const msg = err?.data?.message || err?.statusMessage || '兑换失败'
+  catch (err: unknown) {
+    const e = err as { data?: { message?: string }, statusMessage?: string }
+    const msg = e?.data?.message || e?.statusMessage || '兑换失败'
     toast.add({ title: msg, color: 'error' })
   }
   finally {
@@ -202,8 +205,12 @@ const overviewCards = computed(() => [
 
 function formatDate(iso: string) {
   if (!iso) return '-'
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 
 function reasonLabel(reason: string) {

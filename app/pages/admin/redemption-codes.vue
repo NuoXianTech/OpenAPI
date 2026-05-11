@@ -81,13 +81,18 @@ async function fetchList() {
 }
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-watch(page, () => { void fetchList() })
+watch(page, () => {
+  void fetchList()
+})
 
 onMounted(async () => {
   await Promise.all([fetchBatches(), fetchList()])
 })
 
-function applyFilters() { page.value = 1; void fetchList() }
+function applyFilters() {
+  page.value = 1
+  void fetchList()
+}
 function resetFilters() {
   filters.status = 'all'
   filters.batchId = 'all'
@@ -113,7 +118,13 @@ const generatedResult = ref<{ batchId: string, codes: Array<{ id: number, code: 
 
 function openGenerate() {
   Object.assign(generateForm, {
-    amount: 100, count: 1, prefix: '', length: 16, maxUses: 1, expiresInDays: 0, note: '',
+    amount: 100,
+    count: 1,
+    prefix: '',
+    length: 16,
+    maxUses: 1,
+    expiresInDays: 0,
+    note: '',
   })
   generatedResult.value = null
   generateOpen.value = true
@@ -148,8 +159,8 @@ async function submitGenerate() {
     toast.add({ title: `已生成 ${res.generated} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '生成失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '生成失败', color: 'error' })
   }
   finally {
     generating.value = false
@@ -180,8 +191,8 @@ async function toggle(item: RedemptionCode) {
     toast.add({ title: item.isEnabled ? '已禁用' : '已启用', color: 'success' })
     await fetchList()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
 }
 
@@ -195,8 +206,8 @@ async function remove(item: RedemptionCode) {
     toast.add({ title: '已删除', color: 'success' })
     await fetchList()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
 }
 
@@ -210,8 +221,8 @@ async function toggleBatch(batchId: string, enabled: boolean) {
     toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
 }
 
@@ -228,8 +239,8 @@ async function deleteBatch(batchId: string, includeUsed: boolean) {
     toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
 }
 
@@ -251,8 +262,12 @@ const batchItems = computed(() => [
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 
 function statusOf(item: RedemptionCode): { label: string, color: 'success' | 'warning' | 'error' | 'neutral' } {

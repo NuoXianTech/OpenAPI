@@ -5,10 +5,10 @@ import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const body = await readBody(event) as Record<string, any>
-  const emailOrUsername = (body.email || body.username || '').toString().trim()
-  const password = (body.password || '').toString()
-  const turnstileToken = (body.turnstileToken || '').toString()
+  const body = await readBody(event) as Record<string, unknown>
+  const emailOrUsername = String(body.email ?? body.username ?? '').trim()
+  const password = String(body.password ?? '')
+  const turnstileToken = String(body.turnstileToken ?? '')
   const remember = body.remember === true || body.remember === 'true'
 
   if (!emailOrUsername || !password) {

@@ -5,7 +5,7 @@ import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
   const id = Number(body.id)
   if (!id) {
     throw createError({ statusCode: 400, message: 'id is required' })

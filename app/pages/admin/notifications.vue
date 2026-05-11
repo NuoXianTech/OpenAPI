@@ -76,7 +76,7 @@ async function submitSend() {
   }
   sending.value = true
   try {
-    const res: any = await $fetch('/api/admin/notifications/send', {
+    const res = await $fetch<{ data?: { deliveredCount?: number } }>('/api/admin/notifications/send', {
       method: 'POST',
       body: {
         audience: form.audience,
@@ -95,8 +95,8 @@ async function submitSend() {
     form.audience = 'specific'
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '发送失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '发送失败', color: 'error' })
   }
   finally {
     sending.value = false
@@ -114,7 +114,7 @@ async function openDetail(row: MessageRow) {
   detailOpen.value = true
   detailLoading.value = true
   try {
-    const res: any = await $fetch('/api/admin/notifications/detail', { query: { messageId: row.id } })
+    const res = await $fetch<{ data?: { deliveries?: typeof detailRows.value } }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
     detailRows.value = res?.data?.deliveries || []
   }
   finally {
@@ -144,8 +144,8 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
   finally {
     deleteLoading.value = false
@@ -168,8 +168,12 @@ const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' |
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 
 const UBadge = resolveComponent('UBadge')

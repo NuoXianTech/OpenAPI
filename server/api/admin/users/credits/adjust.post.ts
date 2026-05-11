@@ -16,14 +16,14 @@ import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
 
   const userIds = Array.isArray(body.userIds)
     ? body.userIds.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)
     : []
   const operation = String(body.operation || '')
   const amount = Math.max(Math.trunc(Number(body.amount) || 0), 0)
-  const remark = (body.remark || '').toString().trim().slice(0, 500) || null
+  const remark = String(body.remark ?? '').trim().slice(0, 500) || null
 
   if (!['grant', 'revoke', 'reset'].includes(operation)) {
     throw createError({ statusCode: 400, message: 'operation 只能是 grant / revoke / reset' })

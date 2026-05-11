@@ -67,8 +67,8 @@ async function submit() {
     open.value = false
     emit('saved')
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
   finally {
     loading.value = false

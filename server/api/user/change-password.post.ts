@@ -13,9 +13,9 @@ const COOKIE_NAME = 'app_session'
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
 
-  const body = await readBody(event) as Record<string, any>
-  const currentPassword = (body.currentPassword || '').toString()
-  const newPassword = (body.newPassword || '').toString()
+  const body = await readBody(event) as Record<string, unknown>
+  const currentPassword = String(body.currentPassword ?? '')
+  const newPassword = String(body.newPassword ?? '')
 
   if (!currentPassword || !newPassword) {
     throw createError({ statusCode: 400, message: '当前密码和新密码均必填' })

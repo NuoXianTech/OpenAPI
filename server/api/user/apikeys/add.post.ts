@@ -9,8 +9,8 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: 'admin cannot access user api keys' })
   }
 
-  const body = await readBody(event) as Record<string, any>
-  const name = (body.name || '').toString().trim() || '默认密钥'
+  const body = await readBody(event) as Record<string, unknown>
+  const name = String(body.name ?? '').trim() || '默认密钥'
 
   const created = await apiKeyService.createForUser(user.id, name)
   return created

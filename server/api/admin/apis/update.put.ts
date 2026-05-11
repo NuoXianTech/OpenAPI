@@ -12,7 +12,7 @@ import { operationLogService } from '~~/server/service/operationLogService'
  */
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
   const id = Number(body.id)
   if (!id) {
     throw createError({ statusCode: 400, message: 'id is required' })
@@ -30,14 +30,14 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const updated = await apiService.updateApi(id, admin.id || null, {
-    name: body.name?.toString().trim(),
+    name: body.name !== undefined ? String(body.name).trim() : undefined,
     status: body.status !== undefined ? Number(body.status) : undefined,
     categoryId: body.categoryId !== undefined
       ? (body.categoryId === null || body.categoryId === '' ? null : Number(body.categoryId))
       : undefined,
-    shortDesc: body.shortDesc?.toString().trim(),
-    description: body.description?.toString().trim(),
-    docUrl: body.docUrl?.toString().trim(),
+    shortDesc: body.shortDesc !== undefined ? String(body.shortDesc).trim() : undefined,
+    description: body.description !== undefined ? String(body.description).trim() : undefined,
+    docUrl: body.docUrl !== undefined ? String(body.docUrl).trim() : undefined,
     isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : undefined,
     isApiKey,
     isStatistics: typeof body.isStatistics === 'boolean' ? body.isStatistics : undefined,

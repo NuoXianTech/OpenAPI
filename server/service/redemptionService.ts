@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, redemptionRecords, users } from '@nuxthub/db/schema'
 
 /**

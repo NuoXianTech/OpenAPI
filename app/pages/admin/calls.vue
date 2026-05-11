@@ -5,7 +5,16 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')
 
-const { data, status, refresh } = useLazyFetch<{ total: number, success: number, failure: number, items: Array<Record<string, unknown>> }>('/api/admin/calls/stats', {
+interface AggregateRow {
+  apiPath?: string | null
+  totalCount?: number | null
+  successCount?: number | null
+  failureCount?: number | null
+  statDate?: string
+  updatedAt?: string
+}
+
+const { data, status, refresh } = useLazyFetch<{ total: number, success: number, failure: number, items: AggregateRow[] }>('/api/admin/calls/stats', {
   default: () => ({ total: 0, success: 0, failure: 0, items: [] }),
 })
 
@@ -27,7 +36,7 @@ function formatDate(val: string) {
   return new Date(val).toLocaleString('zh-CN', { hour12: false })
 }
 
-const aggregateColumns: TableColumn<any>[] = [
+const aggregateColumns: TableColumn<AggregateRow>[] = [
   {
     accessorKey: 'apiPath',
     header: '接口路径',
@@ -56,12 +65,12 @@ const aggregateColumns: TableColumn<any>[] = [
   {
     accessorKey: 'statDate',
     header: '统计日期',
-    cell: ({ row }) => formatDate(row.original.statDate),
+    cell: ({ row }) => formatDate(row.original.statDate || ''),
   },
   {
     accessorKey: 'updatedAt',
     header: '更新时间',
-    cell: ({ row }) => formatDate(row.original.updatedAt),
+    cell: ({ row }) => formatDate(row.original.updatedAt || ''),
   },
 ]
 
@@ -121,7 +130,9 @@ async function fetchLogs() {
 
 const logTotalPages = computed(() => Math.max(1, Math.ceil(logTotal.value / logPageSize.value)))
 
-watch(logPage, () => { void fetchLogs() })
+watch(logPage, () => {
+  void fetchLogs()
+})
 
 onMounted(() => {
   void fetchLogs()

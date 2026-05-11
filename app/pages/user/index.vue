@@ -9,9 +9,6 @@ const { data: callsData } = useLazyFetch('/api/user/calls/summary', {
 const { data: keysData } = useLazyFetch('/api/user/apikeys/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, isActive: boolean }> }),
 })
-const { data: unreadData } = useLazyFetch('/api/notifications/unread-count', {
-  default: () => ({ code: 0, msg: '', data: { count: 0 } }),
-})
 const { data: notifData } = useLazyFetch('/api/notifications/list', {
   default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }> }),
   query: { limit: 5 },
@@ -26,10 +23,9 @@ const successRate = computed(() => {
 const keys = computed(() => keysData.value?.data || [])
 const activeKeys = computed(() => keys.value.filter(k => k.isActive).length)
 
-const unreadCount = computed(() => unreadData.value?.data?.count || 0)
 const recentNotifs = computed(() => notifData.value?.data || [])
 
-const credits = computed(() => Number((user.value as any)?.credits ?? 0))
+const credits = computed(() => Number(user.value?.credits ?? 0))
 
 const overviewCards = computed(() => [
   { label: '余额', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success', to: '/user/wallet' },
@@ -46,8 +42,12 @@ const levelMeta: Record<'info' | 'success' | 'warning' | 'critical', { color: 'i
 }
 
 function formatDate(iso: string) {
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 </script>
 

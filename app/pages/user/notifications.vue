@@ -53,8 +53,12 @@ async function markAllRead() {
   })
 }
 
-watch(onlyUnread, () => { void fetchList() })
-onMounted(() => { void fetchList() })
+watch(onlyUnread, () => {
+  void fetchList()
+})
+onMounted(() => {
+  void fetchList()
+})
 
 const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'warning' | 'error', icon: string, label: string }> = {
   info: { color: 'info', icon: 'i-mdi-information-outline', label: '通知' },
@@ -64,8 +68,12 @@ const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'wa
 }
 
 function formatDate(iso: string) {
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 
 const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)

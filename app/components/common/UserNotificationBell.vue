@@ -85,7 +85,9 @@ watch(open, (val) => {
 onMounted(() => {
   void fetchUnreadCount()
   if (import.meta.client) {
-    const timer = window.setInterval(() => { void fetchUnreadCount() }, POLL_INTERVAL_MS)
+    const timer = window.setInterval(() => {
+      void fetchUnreadCount()
+    }, POLL_INTERVAL_MS)
     onBeforeUnmount(() => window.clearInterval(timer))
   }
 })

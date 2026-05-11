@@ -11,8 +11,8 @@ import { requireAuth } from '~~/server/utils/auth'
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
 
-  const body = await readBody(event) as Record<string, any>
-  const newEmail = (body.newEmail || '').toString().trim().toLowerCase()
+  const body = await readBody(event) as Record<string, unknown>
+  const newEmail = String(body.newEmail ?? '').trim().toLowerCase()
 
   if (!newEmail || !validateEmail(newEmail)) {
     throw createError({ statusCode: 400, message: 'Invalid new email address' })

@@ -6,17 +6,17 @@ import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
   const id = Number(body.id)
   if (!id) {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
   const patch: Record<string, unknown> = {}
-  if (body.name !== undefined) patch.name = body.name.toString().trim()
-  if (body.description !== undefined) patch.description = body.description?.toString() || null
-  if (body.icon !== undefined) patch.icon = body.icon?.toString() || null
-  if (body.color !== undefined) patch.color = body.color?.toString() || null
+  if (body.name !== undefined) patch.name = String(body.name).trim()
+  if (body.description !== undefined) patch.description = String(body.description ?? '') || null
+  if (body.icon !== undefined) patch.icon = String(body.icon ?? '') || null
+  if (body.color !== undefined) patch.color = String(body.color ?? '') || null
   if (body.parentId !== undefined) patch.parentId = body.parentId ? Number(body.parentId) : null
   if (body.sortOrder !== undefined) patch.sortOrder = Number(body.sortOrder)
   if (body.isEnabled !== undefined) patch.isEnabled = Boolean(body.isEnabled)

@@ -14,24 +14,24 @@ function parseDate(value: unknown): Date | null {
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
   const id = Number(body.id)
   if (!id) {
     throw createError({ statusCode: 400, message: 'id is required' })
   }
 
   const patch: Partial<AnnouncementInput> = {}
-  if (body.title !== undefined) patch.title = body.title.toString().trim()
-  if (body.content !== undefined) patch.content = body.content.toString()
+  if (body.title !== undefined) patch.title = String(body.title).trim()
+  if (body.content !== undefined) patch.content = String(body.content)
   if (body.level !== undefined) {
-    const level = body.level.toString()
+    const level = String(body.level)
     patch.level = (VALID_LEVELS as readonly string[]).includes(level) ? level as typeof VALID_LEVELS[number] : 'info'
   }
   if (body.isPinned !== undefined) patch.isPinned = Boolean(body.isPinned)
   if (body.isEnabled !== undefined) patch.isEnabled = Boolean(body.isEnabled)
   if (body.startAt !== undefined) patch.startAt = parseDate(body.startAt)
   if (body.endAt !== undefined) patch.endAt = parseDate(body.endAt)
-  if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl?.toString().trim() || null
+  if (body.linkUrl !== undefined) patch.linkUrl = String(body.linkUrl ?? '').trim() || null
   if (body.sortOrder !== undefined) patch.sortOrder = Number(body.sortOrder)
 
   const updated = await announcementService.update(id, patch, admin.id || null)

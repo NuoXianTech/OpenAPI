@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FriendLinkItem } from '~/composables/link/types'
 
 const open = defineModel<boolean>('open', { default: false })
-const props = defineProps<{ item?: any }>()
+const props = defineProps<{ item?: FriendLinkItem | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 
@@ -34,7 +35,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   loading.value = true
   try {
     if (isEdit.value) {
-      await $fetch('/api/admin/friend-links/update', { method: 'PUT', body: { id: props.item.id, ...event.data } })
+      await $fetch('/api/admin/friend-links/update', { method: 'PUT', body: { id: props.item!.id, ...event.data } })
     }
     else {
       await $fetch('/api/admin/friend-links/add', { method: 'POST', body: event.data })
@@ -43,8 +44,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     open.value = false
     emit('saved')
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
   finally { loading.value = false }
 }

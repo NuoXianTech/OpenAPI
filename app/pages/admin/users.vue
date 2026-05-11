@@ -3,23 +3,40 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
+interface AdminUserItem {
+  id: number
+  username: string
+  email: string | null
+  displayName: string | null
+  isActive: boolean
+  isBanned: boolean
+  credits?: number | string | null
+  createdAt: string
+}
+
+interface AdminApiKeyItem {
+  id: number
+  name: string
+  apiKey: string
+}
+
 const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const keyword = ref('')
-const { data, status, refresh } = useLazyFetch('/api/admin/users/list', {
+const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: AdminUserItem[] }>('/api/admin/users/list', {
   query: computed(() => ({ keyword: keyword.value || undefined })),
   default: () => ({ code: 0, msg: '', data: [] }),
 })
 const items = computed(() => data.value?.data || [])
 
 const deleteOpen = ref(false)
-const deleteTarget = ref<any>(null)
+const deleteTarget = ref<AdminUserItem | null>(null)
 const deleteLoading = ref(false)
 
-function openDelete(item: any) {
+function openDelete(item: AdminUserItem) {
   deleteTarget.value = item
   deleteOpen.value = true
 }
@@ -33,15 +50,15 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
   finally {
     deleteLoading.value = false
   }
 }
 
-async function toggleBan(item: any) {
+async function toggleBan(item: AdminUserItem) {
   try {
     await $fetch('/api/admin/users/ban', {
       method: 'POST',
@@ -50,17 +67,17 @@ async function toggleBan(item: any) {
     toast.add({ title: item.isBanned ? '已解封' : '已封禁', color: 'success' })
     await refresh()
   }
-  catch (err: any) {
+  catch {
     toast.add({ title: '操作失败', color: 'error' })
   }
 }
 
 const editOpen = ref(false)
-const editTarget = ref<any>(null)
+const editTarget = ref<AdminUserItem | null>(null)
 const editForm = reactive({ username: '', email: '', displayName: '', isActive: false })
 const editLoading = ref(false)
 
-function openEdit(item: any) {
+function openEdit(item: AdminUserItem) {
   editTarget.value = item
   Object.assign(editForm, {
     username: item.username || '',
@@ -72,6 +89,7 @@ function openEdit(item: any) {
 }
 
 async function submitEdit() {
+  if (!editTarget.value) return
   editLoading.value = true
   try {
     await $fetch('/api/admin/users/update', {
@@ -82,8 +100,8 @@ async function submitEdit() {
     editOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '更新失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '更新失败', color: 'error' })
   }
   finally {
     editLoading.value = false
@@ -91,16 +109,16 @@ async function submitEdit() {
 }
 
 const keysOpen = ref(false)
-const keysTarget = ref<any>(null)
-const keysData = ref<any[]>([])
+const keysTarget = ref<AdminUserItem | null>(null)
+const keysData = ref<AdminApiKeyItem[]>([])
 const keysLoading = ref(false)
 
-async function openKeys(item: any) {
+async function openKeys(item: AdminUserItem) {
   keysTarget.value = item
   keysOpen.value = true
   keysLoading.value = true
   try {
-    const res = await $fetch<any[]>('/api/admin/users/apikeys', { query: { userId: item.id } })
+    const res = await $fetch<AdminApiKeyItem[]>('/api/admin/users/apikeys', { query: { userId: item.id } })
     keysData.value = res || []
   }
   catch { keysData.value = [] }
@@ -108,30 +126,39 @@ async function openKeys(item: any) {
 }
 
 async function addKey() {
+  if (!keysTarget.value) return
   try {
     await $fetch('/api/admin/users/apikeys/add', { method: 'POST', body: { userId: keysTarget.value.id } })
     toast.add({ title: 'API Key 已创建', color: 'success' })
     await openKeys(keysTarget.value)
   }
-  catch (err: any) { toast.add({ title: '创建失败', color: 'error' }) }
+  catch {
+    toast.add({ title: '创建失败', color: 'error' })
+  }
 }
 
 async function resetKey(id: number) {
+  if (!keysTarget.value) return
   try {
     await $fetch('/api/admin/users/apikeys/reset', { method: 'POST', body: { id } })
     toast.add({ title: 'API Key 已重置', color: 'success' })
     await openKeys(keysTarget.value)
   }
-  catch (err: any) { toast.add({ title: '重置失败', color: 'error' }) }
+  catch {
+    toast.add({ title: '重置失败', color: 'error' })
+  }
 }
 
 async function deleteKey(id: number) {
+  if (!keysTarget.value) return
   try {
     await $fetch('/api/admin/users/apikeys/delete', { method: 'POST', body: { id } })
     toast.add({ title: 'API Key 已删除', color: 'success' })
     await openKeys(keysTarget.value)
   }
-  catch (err: any) { toast.add({ title: '删除失败', color: 'error' }) }
+  catch {
+    toast.add({ title: '删除失败', color: 'error' })
+  }
 }
 
 // 余额管理
@@ -139,7 +166,7 @@ const creditOpen = ref(false)
 const creditUserIds = ref<number[]>([])
 const creditSelectionLabel = ref('')
 
-function openCreditForOne(item: any) {
+function openCreditForOne(item: AdminUserItem) {
   creditUserIds.value = [item.id]
   creditSelectionLabel.value = `${item.username} (#${item.id})`
   creditOpen.value = true
@@ -161,7 +188,7 @@ const allSelected = computed(() =>
 )
 
 function toggleSelectAll(checked: boolean) {
-  selectedIds.value = checked ? items.value.map((u: any) => u.id) : []
+  selectedIds.value = checked ? items.value.map(u => u.id) : []
 }
 
 function openCreditForSelection() {
@@ -185,7 +212,7 @@ async function onCreditSaved() {
   await refresh()
 }
 
-function getRowItems(row: any): DropdownMenuItem[] {
+function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
   return [{
     label: '编辑',
     icon: 'i-mdi-pencil-outline',
@@ -217,7 +244,7 @@ function formatDate(val: string) {
   return new Date(val).toLocaleString('zh-CN', { hour12: false })
 }
 
-const columns: TableColumn<any>[] = [
+const columns: TableColumn<AdminUserItem>[] = [
   {
     id: 'select',
     header: '选',

@@ -18,11 +18,11 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '注册功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, any>
-  const username = (body.username || '').toString().trim()
-  const email = (body.email || '').toString().trim().toLowerCase()
-  const password = (body.password || '').toString()
-  const turnstileToken = (body.turnstileToken || '').toString()
+  const body = await readBody(event) as Record<string, unknown>
+  const username = String(body.username ?? '').trim()
+  const email = String(body.email ?? '').trim().toLowerCase()
+  const password = String(body.password ?? '')
+  const turnstileToken = String(body.turnstileToken ?? '')
 
   if (!username || !email || !password) {
     throw createError({ statusCode: 400, message: 'username, email and password are required' })

@@ -6,10 +6,10 @@ import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
 
-  const code = (body.code || '').toString().trim()
-  const name = (body.name || '').toString().trim()
+  const code = String(body.code ?? '').trim()
+  const name = String(body.name ?? '').trim()
   if (!code || !name) {
     throw createError({ statusCode: 400, message: 'code and name are required' })
   }
@@ -17,9 +17,9 @@ export default defineEventHandler(async (event: H3Event) => {
   const created = await apiCategoryService.create({
     code,
     name,
-    description: body.description?.toString().trim() || null,
-    icon: body.icon?.toString().trim() || null,
-    color: body.color?.toString().trim() || null,
+    description: String(body.description ?? '').trim() || null,
+    icon: String(body.icon ?? '').trim() || null,
+    color: String(body.color ?? '').trim() || null,
     parentId: body.parentId ? Number(body.parentId) : null,
     sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
     isEnabled: body.isEnabled !== undefined ? Boolean(body.isEnabled) : true,

@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   // 示例：body 中带 simulateFailure=true 时，模拟一次"业务失败"
   // 此时即便 HTTP 200 也不会扣费，且 apiCalls.errorCode/errorMessage 会记录
-  if (body && typeof body === 'object' && (body as any).simulateFailure) {
+  if (body && typeof body === 'object' && (body as Record<string, unknown>).simulateFailure) {
     markApiCallFailed(event, 'SIMULATED_FAILURE', '业务侧主动标记失败，不扣费')
     return openApiFail(event, OPEN_API_CODE.BUSINESS_FAILED, '业务失败（演示）')
   }

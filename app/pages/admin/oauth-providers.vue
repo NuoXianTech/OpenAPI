@@ -76,8 +76,8 @@ async function save(item: ProviderItem) {
     form.clientSecret = ''
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '保存失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
   }
   finally {
     form.saving = false

@@ -124,7 +124,7 @@ const { data: categoriesData, refresh: refreshCategories } = useLazyFetch('/api/
 })
 const categoryOptions = computed(() => [
   { label: '未分类', value: null },
-  ...((categoriesData.value?.data || []).map((c: any) => ({ label: c.name, value: c.id }))),
+  ...((categoriesData.value?.data || []).map(c => ({ label: c.name, value: c.id }))),
 ])
 
 // 内联新增分类
@@ -142,7 +142,7 @@ async function submitAddCategory() {
   }
   addingCategory.value = true
   try {
-    const res: any = await $fetch('/api/admin/api-categories/add', {
+    const res = await $fetch<{ id?: number }>('/api/admin/api-categories/add', {
       method: 'POST',
       body: { code, name, isEnabled: true },
     })
@@ -153,8 +153,8 @@ async function submitAddCategory() {
     newCategoryName.value = ''
     toast.add({ title: '已新增分类', color: 'success' })
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '新增失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '新增失败', color: 'error' })
   }
   finally {
     addingCategory.value = false
@@ -229,8 +229,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     open.value = false
     emit('saved')
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
   finally {
     loading.value = false

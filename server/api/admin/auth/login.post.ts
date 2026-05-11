@@ -14,10 +14,10 @@ function safeEquals(left: string, right: string) {
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const body = await readBody(event) as Record<string, any>
-  const username = (body.username || '').toString().trim()
-  const password = (body.password || '').toString()
-  const turnstileToken = (body.turnstileToken || '').toString()
+  const body = await readBody(event) as Record<string, unknown>
+  const username = String(body.username ?? '').trim()
+  const password = String(body.password ?? '')
+  const turnstileToken = String(body.turnstileToken ?? '')
   const remember = body.remember === true || body.remember === 'true'
 
   const authConfig = useRuntimeConfig().auth

@@ -40,16 +40,16 @@ function openCreate() {
 async function submitCreate() {
   creating.value = true
   try {
-    const res: any = await $fetch('/api/user/apikeys/add', {
+    const res = await $fetch<{ data?: ApiKey } | ApiKey>('/api/user/apikeys/add', {
       method: 'POST',
       body: { name: newName.value.trim() || '默认密钥' },
     })
-    createdKey.value = res?.data || null
+    createdKey.value = (res as { data?: ApiKey })?.data || (res as ApiKey) || null
     toast.add({ title: '已生成新 API Key', color: 'success' })
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '创建失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '创建失败', color: 'error' })
   }
   finally {
     creating.value = false
@@ -72,16 +72,16 @@ async function confirmReset() {
   if (!resetTarget.value) return
   resetLoading.value = true
   try {
-    const res: any = await $fetch('/api/user/apikeys/reset', {
+    const res = await $fetch<{ data?: ApiKey } | ApiKey>('/api/user/apikeys/reset', {
       method: 'POST',
       body: { id: resetTarget.value.id },
     })
-    resetResult.value = res?.data || null
+    resetResult.value = (res as { data?: ApiKey })?.data || (res as ApiKey) || null
     toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '重置失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '重置失败', color: 'error' })
   }
   finally {
     resetLoading.value = false
@@ -110,8 +110,8 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
   finally {
     deleteLoading.value = false

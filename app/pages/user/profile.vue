@@ -63,8 +63,8 @@ async function submitProfile() {
     toast.add({ title: '资料已更新', color: 'success' })
     await loadProfile()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '保存失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
   }
   finally {
     profileSaving.value = false
@@ -106,8 +106,8 @@ async function submitPassword() {
     passwordForm.newPassword = ''
     passwordForm.confirmPassword = ''
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '修改失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '修改失败', color: 'error' })
   }
   finally {
     passwordSaving.value = false
@@ -143,8 +143,8 @@ async function submitEmail() {
     })
     emailForm.newEmail = ''
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '发送失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '发送失败', color: 'error' })
   }
   finally {
     emailSaving.value = false
@@ -185,8 +185,8 @@ async function unbind(provider: string) {
     toast.add({ title: '已解绑', color: 'success' })
     await loadOauth()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '解绑失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '解绑失败', color: 'error' })
   }
 }
 
@@ -226,8 +226,12 @@ onMounted(async () => {
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 </script>
 

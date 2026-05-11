@@ -141,8 +141,8 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
   finally {
     deleteLoading.value = false
@@ -158,8 +158,8 @@ async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatisti
     })
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '切换失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '切换失败', color: 'error' })
   }
 }
 
@@ -172,8 +172,8 @@ async function resyncManifest(row: DiscoveredApi) {
     toast.add({ title: '已同步 manifest', color: 'success' })
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '同步失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '同步失败', color: 'error' })
   }
 }
 

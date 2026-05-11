@@ -93,7 +93,7 @@ export function createAdminClient(cookie: string) {
       })
     },
 
-    post<T>(url: string, body?: Record<string, any>) {
+    post<T>(url: string, body?: Record<string, unknown>) {
       return $fetch<ApiResponse<T>>(url, {
         method: 'POST',
         body,
@@ -101,7 +101,7 @@ export function createAdminClient(cookie: string) {
       })
     },
 
-    put<T>(url: string, body?: Record<string, any>) {
+    put<T>(url: string, body?: Record<string, unknown>) {
       return $fetch<ApiResponse<T>>(url, {
         method: 'PUT',
         body,
@@ -112,7 +112,7 @@ export function createAdminClient(cookie: string) {
     raw<T>(url: string, options: {
       method?: FetchMethod
       query?: Record<string, unknown>
-      body?: Record<string, any>
+      body?: Record<string, unknown>
       headers?: HeadersInit
       ignoreResponseError?: boolean
     } = {}) {

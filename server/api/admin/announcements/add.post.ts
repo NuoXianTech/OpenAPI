@@ -14,15 +14,15 @@ function parseDate(value: unknown): Date | null {
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
 
-  const title = (body.title || '').toString().trim()
-  const content = (body.content || '').toString()
+  const title = String(body.title ?? '').trim()
+  const content = String(body.content ?? '')
   if (!title || !content) {
     throw createError({ statusCode: 400, message: 'title and content are required' })
   }
 
-  const levelRaw = (body.level || 'info').toString()
+  const levelRaw = String(body.level ?? 'info')
   const level = (VALID_LEVELS as readonly string[]).includes(levelRaw) ? levelRaw as typeof VALID_LEVELS[number] : 'info'
 
   const created = await announcementService.create({
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event: H3Event) => {
     isEnabled: body.isEnabled !== undefined ? Boolean(body.isEnabled) : true,
     startAt: parseDate(body.startAt),
     endAt: parseDate(body.endAt),
-    linkUrl: body.linkUrl?.toString().trim() || null,
+    linkUrl: String(body.linkUrl ?? '').trim() || null,
     sortOrder: body.sortOrder !== undefined ? Number(body.sortOrder) : 0,
   }, admin.id || null)
 

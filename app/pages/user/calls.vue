@@ -101,7 +101,9 @@ function resetFilters() {
   void fetchList()
 }
 
-watch(page, () => { void fetchList() })
+watch(page, () => {
+  void fetchList()
+})
 
 onMounted(async () => {
   await loadFilters()
@@ -109,8 +111,12 @@ onMounted(async () => {
 })
 
 function formatDate(iso: string) {
-  try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }) }
-  catch { return iso }
+  try {
+    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  }
+  catch {
+    return iso
+  }
 }
 
 function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {

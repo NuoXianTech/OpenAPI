@@ -8,12 +8,12 @@ const DISPLAY_NAME_MAX = 100
 
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
 
   const update: { displayName?: string | null } = {}
 
   if (Object.prototype.hasOwnProperty.call(body, 'displayName')) {
-    const v = (body.displayName ?? '').toString().trim()
+    const v = String(body.displayName ?? '').trim()
     if (v.length > DISPLAY_NAME_MAX) {
       throw createError({ statusCode: 400, message: `显示名最多 ${DISPLAY_NAME_MAX} 字` })
     }

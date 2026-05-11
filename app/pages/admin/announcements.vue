@@ -34,9 +34,18 @@ const deleteOpen = ref(false)
 const deleteTarget = ref<Announcement | null>(null)
 const deleteLoading = ref(false)
 
-function openAdd() { editItem.value = null; modalOpen.value = true }
-function openEdit(item: Announcement) { editItem.value = item; modalOpen.value = true }
-function openDelete(item: Announcement) { deleteTarget.value = item; deleteOpen.value = true }
+function openAdd() {
+  editItem.value = null
+  modalOpen.value = true
+}
+function openEdit(item: Announcement) {
+  editItem.value = item
+  modalOpen.value = true
+}
+function openDelete(item: Announcement) {
+  deleteTarget.value = item
+  deleteOpen.value = true
+}
 
 async function confirmDelete() {
   if (!deleteTarget.value) return
@@ -50,10 +59,12 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '删除失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
   }
-  finally { deleteLoading.value = false }
+  finally {
+    deleteLoading.value = false
+  }
 }
 
 async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', value: boolean) {
@@ -64,8 +75,8 @@ async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', v
     })
     await refresh()
   }
-  catch (err: any) {
-    toast.add({ title: err?.data?.message || '操作失败', color: 'error' })
+  catch (err: unknown) {
+    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
 }
 

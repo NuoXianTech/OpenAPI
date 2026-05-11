@@ -15,10 +15,10 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, any>
+  const body = await readBody(event) as Record<string, unknown>
   const userId = Number(body.userId || 0)
-  const token = (body.token || '').toString()
-  const newPassword = (body.newPassword || '').toString()
+  const token = String(body.token ?? '')
+  const newPassword = String(body.newPassword ?? '')
 
   if (!userId || !token || !newPassword) {
     throw createError({ statusCode: 400, message: 'userId, token and newPassword are required' })

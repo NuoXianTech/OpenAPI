@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../.nuxt/types/api-manifest.d.ts" />
 /**
  * 启动时校验 manifest ↔ DB 一致性。

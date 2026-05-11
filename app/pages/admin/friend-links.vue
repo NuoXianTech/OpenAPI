@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import type { FriendLinkItem } from '~/composables/link/types'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -8,20 +9,29 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = useLazyFetch('/api/admin/friend-links/list', {
+const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: FriendLinkItem[] }>('/api/admin/friend-links/list', {
   default: () => ({ code: 0, msg: '', data: [] }),
 })
 const items = computed(() => data.value?.data || [])
 
 const modalOpen = ref(false)
-const editItem = ref<any>(null)
+const editItem = ref<FriendLinkItem | null>(null)
 const deleteOpen = ref(false)
-const deleteTarget = ref<any>(null)
+const deleteTarget = ref<FriendLinkItem | null>(null)
 const deleteLoading = ref(false)
 
-function openAdd() { editItem.value = null; modalOpen.value = true }
-function openEdit(item: any) { editItem.value = item; modalOpen.value = true }
-function openDelete(item: any) { deleteTarget.value = item; deleteOpen.value = true }
+function openAdd() {
+  editItem.value = null
+  modalOpen.value = true
+}
+function openEdit(item: FriendLinkItem) {
+  editItem.value = item
+  modalOpen.value = true
+}
+function openDelete(item: FriendLinkItem) {
+  deleteTarget.value = item
+  deleteOpen.value = true
+}
 
 async function confirmDelete() {
   if (!deleteTarget.value) return
@@ -32,18 +42,22 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   }
-  catch (err: any) { toast.add({ title: '删除失败', color: 'error' }) }
-  finally { deleteLoading.value = false }
+  catch {
+    toast.add({ title: '删除失败', color: 'error' })
+  }
+  finally {
+    deleteLoading.value = false
+  }
 }
 
-function getRowItems(row: any): DropdownMenuItem[] {
+function getRowItems(row: FriendLinkItem): DropdownMenuItem[] {
   return [
     { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
     { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
   ]
 }
 
-const columns: TableColumn<any>[] = [
+const columns: TableColumn<FriendLinkItem>[] = [
   { accessorKey: 'title', header: '标题' },
   { accessorKey: 'url', header: 'URL' },
   { accessorKey: 'description', header: '描述' },
