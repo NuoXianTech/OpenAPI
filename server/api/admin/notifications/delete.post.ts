@@ -1,14 +1,14 @@
 import type { H3Event } from 'h3'
-import { createError, readBody } from 'h3'
+import { createError } from 'h3'
+import { messageIdSchema } from '#shared/schemas/common'
 import { notificationService } from '~~/server/service/notificationService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const messageId = Number(body.messageId)
-  if (!messageId) throw createError({ statusCode: 400, message: 'messageId is required' })
+  const { messageId } = await readZodBody(event, messageIdSchema)
 
   const removed = await notificationService.softDeleteMessage(messageId)
   if (!removed) throw createError({ statusCode: 404, message: 'message not found' })

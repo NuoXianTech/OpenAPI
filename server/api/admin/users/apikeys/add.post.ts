@@ -1,19 +1,15 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { adminCreateUserApiKeySchema } from '#shared/schemas/admin'
 import { apiKeyService } from '~~/server/service/apiKeyService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const userId = Number(body.userId)
-  if (!userId) {
-    throw createError({ statusCode: 400, message: 'userId is required' })
-  }
+  const { userId, name } = await readZodBody(event, adminCreateUserApiKeySchema)
 
-  const name = String(body.name ?? '').trim() || '默认密钥'
-  const created = await apiKeyService.createForUser(userId, name)
+  const created = await apiKeyService.createForUser(userId, name || '默认密钥')
 
   await operationLogService.addLog({
     userId: admin.id || null,

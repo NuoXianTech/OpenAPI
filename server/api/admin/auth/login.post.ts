@@ -1,8 +1,10 @@
 import type { H3Event } from 'h3'
 import { timingSafeEqual } from 'node:crypto'
 import { createError, getRequestIP } from 'h3'
+import { adminLoginSchema } from '#shared/schemas/admin'
 import { createAdminSession } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
+import { readZodBody } from '~~/server/utils/zod'
 
 function safeEquals(left: string, right: string) {
   const leftBuffer = Buffer.from(left)
@@ -14,11 +16,10 @@ function safeEquals(left: string, right: string) {
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const body = await readBody(event) as Record<string, unknown>
-  const username = String(body.username ?? '').trim()
-  const password = String(body.password ?? '')
-  const turnstileToken = String(body.turnstileToken ?? '')
-  const remember = body.remember === true || body.remember === 'true'
+  const body = await readZodBody(event, adminLoginSchema)
+  const { username, password } = body
+  const turnstileToken = body.turnstileToken ?? ''
+  const remember = body.remember === true
 
   const authConfig = useRuntimeConfig().auth
   const adminUsername = (authConfig.adminUsername || '').toString()

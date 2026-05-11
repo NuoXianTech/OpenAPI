@@ -1,15 +1,13 @@
 <script lang="ts" setup>
-import { z } from 'zod'
+import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
 
 const { turnstile, passwordResetEnabled } = useSiteSettings()
 
-const schema = z.object({
-  email: z.string().email('请输入有效的邮箱地址'),
-})
-type Schema = z.output<typeof schema>
+const schema = requestPasswordResetSchema.omit({ turnstileToken: true })
+type Schema = Omit<RequestPasswordResetInput, 'turnstileToken'>
 
 const state = reactive<Schema>({
   email: '',

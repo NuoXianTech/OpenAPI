@@ -1,13 +1,13 @@
 // 消费 reset_password token 并设置新密码。
 import type { H3Event } from 'h3'
-import { createError, readBody } from 'h3'
+import { createError } from 'h3'
+import { resetPasswordSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { hashPassword } from '~~/server/utils/auth'
-
-const MIN_PASSWORD_LENGTH = 8
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()
@@ -15,18 +15,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, unknown>
-  const userId = Number(body.userId || 0)
-  const token = String(body.token ?? '')
-  const newPassword = String(body.newPassword ?? '')
-
-  if (!userId || !token || !newPassword) {
-    throw createError({ statusCode: 400, message: 'userId, token and newPassword are required' })
-  }
-
-  if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    throw createError({ statusCode: 400, message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` })
-  }
+  const { userId, token, newPassword } = await readZodBody(event, resetPasswordSchema)
 
   const user = await usersService.getById(userId)
   if (!user) {

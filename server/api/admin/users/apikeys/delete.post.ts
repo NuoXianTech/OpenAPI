@@ -1,15 +1,13 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
+import { idSchema } from '#shared/schemas/common'
 import { apiKeyService } from '~~/server/service/apiKeyService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
-  }
+  const { id } = await readZodBody(event, idSchema)
 
   const deleted = await apiKeyService.deleteById(id)
   if (!deleted) {

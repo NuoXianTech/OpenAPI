@@ -1,12 +1,10 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
+import { userRedeemCodeSchema } from '#shared/schemas/user'
 import { isRedeemError, redemptionService } from '~~/server/service/redemptionService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAuth } from '~~/server/utils/auth'
-
-interface RedeemBody {
-  code?: string
-}
+import { readZodBody } from '~~/server/utils/zod'
 
 const REDEEM_ERROR_STATUS: Record<string, number> = {
   INVALID_CODE: 400,
@@ -23,9 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!user.id || user.kind !== 'user') {
     throw createError({ statusCode: 403, message: 'admin 不能兑换' })
   }
-  const body = await readBody<RedeemBody>(event) || {}
-  const code = (body.code || '').trim()
-  if (!code) throw createError({ statusCode: 400, message: '请输入兑换码' })
+  const { code } = await readZodBody(event, userRedeemCodeSchema)
 
   const ip = getRequestIP(event) || null
 

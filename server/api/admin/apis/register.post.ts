@@ -1,8 +1,6 @@
 /**
  * Admin · 一键从 manifest 登记 / 重新同步一个 (pathVersion, code)。
  *
- * body: { pathVersion, code, overrides?: Partial<governance fields> }
- *
  * - 从 manifest 查 sourceDir / endpointCount / 推断 apiPath / httpMethod
  * - 已存在则刷新 manifest 投影字段（apiPath/httpMethod/sourceDir/endpointCount），治理字段保留
  * - 不存在则使用 DEFAULT_API_REGISTRATION + overrides 入库
@@ -10,44 +8,17 @@
 
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
+import { adminRegisterApiSchema } from '#shared/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
 import { DEFAULT_API_REGISTRATION } from '~~/shared/config/apiGuard'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/service/apiService'
 import { operationLogService } from '~~/server/service/operationLogService'
-
-interface RegisterBody {
-  pathVersion?: string
-  code?: string
-  overrides?: {
-    name?: string
-    shortDesc?: string
-    description?: string
-    docUrl?: string
-    status?: number
-    categoryId?: number | null
-    isEnabled?: boolean
-    isApiKey?: boolean
-    isStatistics?: boolean
-    rateLimitPerSecond?: number
-    rateLimitPerMinute?: number
-    rateLimitPerHour?: number
-    rateLimitPerDay?: number
-    dailyQuota?: number
-    costCredits?: number
-    timeoutMs?: number
-  }
-}
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody<RegisterBody>(event)
-
-  const pathVersion = (body.pathVersion || '').trim()
-  const code = (body.code || '').trim()
-  if (!pathVersion || !code) {
-    throw createError({ statusCode: 400, message: 'pathVersion 和 code 均必填' })
-  }
+  const { pathVersion, code, overrides } = await readZodBody(event, adminRegisterApiSchema)
 
   const manifestApi = API_MANIFEST.find(a => a.pathVersion === pathVersion && a.code === code)
   if (!manifestApi) {
@@ -62,7 +33,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const baseEp = manifestApi.endpoints.find(e => e.paramNames.length === 0) || manifestApi.endpoints[0]!
   const apiPath = baseEp.apiPath.replace(/\/:[^/]+$/, '') || `/${pathVersion}/${code}`
 
-  const o = body.overrides || {}
+  const o = overrides || {}
   const defaults = {
     name: o.name || code,
     shortDesc: o.shortDesc || `${pathVersion} ${code}`,

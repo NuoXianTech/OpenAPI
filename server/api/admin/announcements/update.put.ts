@@ -1,38 +1,26 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP, readBody } from 'h3'
+import { createError, getHeader, getRequestIP } from 'h3'
+import { adminUpdateAnnouncementSchema } from '#shared/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/service/announcementService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
-
-const VALID_LEVELS = ['info', 'success', 'warning', 'critical'] as const
-
-function parseDate(value: unknown): Date | null {
-  if (!value) return null
-  const date = new Date(String(value))
-  return Number.isNaN(date.getTime()) ? null : date
-}
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
-  }
+  const body = await readZodBody(event, adminUpdateAnnouncementSchema)
+  const { id } = body
 
   const patch: Partial<AnnouncementInput> = {}
-  if (body.title !== undefined) patch.title = String(body.title).trim()
-  if (body.content !== undefined) patch.content = String(body.content)
-  if (body.level !== undefined) {
-    const level = String(body.level)
-    patch.level = (VALID_LEVELS as readonly string[]).includes(level) ? level as typeof VALID_LEVELS[number] : 'info'
-  }
-  if (body.isPinned !== undefined) patch.isPinned = Boolean(body.isPinned)
-  if (body.isEnabled !== undefined) patch.isEnabled = Boolean(body.isEnabled)
-  if (body.startAt !== undefined) patch.startAt = parseDate(body.startAt)
-  if (body.endAt !== undefined) patch.endAt = parseDate(body.endAt)
-  if (body.linkUrl !== undefined) patch.linkUrl = String(body.linkUrl ?? '').trim() || null
-  if (body.sortOrder !== undefined) patch.sortOrder = Number(body.sortOrder)
+  if (body.title !== undefined) patch.title = body.title
+  if (body.content !== undefined) patch.content = body.content
+  if (body.level !== undefined) patch.level = body.level
+  if (body.isPinned !== undefined) patch.isPinned = body.isPinned
+  if (body.isEnabled !== undefined) patch.isEnabled = body.isEnabled
+  if (body.startAt !== undefined) patch.startAt = body.startAt
+  if (body.endAt !== undefined) patch.endAt = body.endAt
+  if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl.trim() || null
+  if (body.sortOrder !== undefined) patch.sortOrder = body.sortOrder
 
   const updated = await announcementService.update(id, patch, admin.id || null)
   if (!updated) {

@@ -1,33 +1,18 @@
 // 已登录用户修改密码：校验旧密码 → 设新密码 → 强制其他会话下线（保留当前会话）
 import type { H3Event } from 'h3'
-import { createError, getCookie, readBody } from 'h3'
+import { createError, getCookie } from 'h3'
+import { userChangePasswordSchema } from '#shared/schemas/user'
 import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
 import { hashPassword, verifyPassword, requireAuth } from '~~/server/utils/auth'
-
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readZodBody } from '~~/server/utils/zod'
 
-const MIN_PASSWORD_LENGTH = 8
 const COOKIE_NAME = 'app_session'
 
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
-
-  const body = await readBody(event) as Record<string, unknown>
-  const currentPassword = String(body.currentPassword ?? '')
-  const newPassword = String(body.newPassword ?? '')
-
-  if (!currentPassword || !newPassword) {
-    throw createError({ statusCode: 400, message: '当前密码和新密码均必填' })
-  }
-
-  if (newPassword.length < MIN_PASSWORD_LENGTH) {
-    throw createError({ statusCode: 400, message: `新密码至少 ${MIN_PASSWORD_LENGTH} 位` })
-  }
-
-  if (newPassword === currentPassword) {
-    throw createError({ statusCode: 400, message: '新密码与当前密码相同' })
-  }
+  const { currentPassword, newPassword } = await readZodBody(event, userChangePasswordSchema)
 
   // 拉数据库行（不能用 authUser，里面没有 passwordHash）
   const userRow = await usersService.getById(authUser.id)

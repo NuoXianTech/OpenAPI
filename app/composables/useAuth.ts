@@ -1,3 +1,5 @@
+import type { LoginInput, RegisterInput } from '#shared/schemas/auth'
+
 interface AuthUser {
   id: number
   username: string
@@ -44,7 +46,7 @@ export function useAuth() {
     return promise
   }
 
-  const login = async (payload: { email?: string, username?: string, password: string, remember?: boolean, turnstileToken?: string }) => {
+  const login = async (payload: LoginInput) => {
     const res = await $fetch<AuthUser>('/api/auth/login', {
       method: 'POST',
       body: payload,
@@ -64,7 +66,7 @@ export function useAuth() {
     return res
   }
 
-  const register = async (payload: { username: string, email: string, password: string, turnstileToken?: string }) => {
+  const register = async (payload: RegisterInput) => {
     return await $fetch<{ user: AuthUser, verificationRequired: boolean }>('/api/auth/register', {
       method: 'POST',
       body: payload,

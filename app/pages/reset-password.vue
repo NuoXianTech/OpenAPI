@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { z } from 'zod'
+import type { ResetPasswordInput } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
@@ -69,7 +70,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         userId: userId.value,
         token: token.value,
         newPassword: event.data.password,
-      },
+      } satisfies ResetPasswordInput,
     })
     success.value = true
     toast.add({ title: '密码已重置，请使用新密码登录', color: 'success' })

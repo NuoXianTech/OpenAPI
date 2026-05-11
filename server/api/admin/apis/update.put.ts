@@ -1,8 +1,10 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
+import { adminUpdateApiSchema } from '#shared/schemas/admin'
 import { apiService } from '~~/server/service/apiService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readZodBody } from '~~/server/utils/zod'
 
 /**
  * Admin · 编辑已登记 API 的治理字段。
@@ -12,16 +14,11 @@ import { operationLogService } from '~~/server/service/operationLogService'
  */
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
-  }
+  const body = await readZodBody(event, adminUpdateApiSchema)
+  const { id, costCredits, isApiKey } = body
 
   // 计费一致性校验：costCredits>0 必须搭配 isApiKey=true
   // 仅对显式给出的字段做校验；未传字段需结合数据库现状（在 service 层兜底）
-  const costCredits = body.costCredits !== undefined ? Number(body.costCredits) : undefined
-  const isApiKey = typeof body.isApiKey === 'boolean' ? body.isApiKey : undefined
   if (costCredits !== undefined && costCredits > 0 && isApiKey === false) {
     throw createError({
       statusCode: 400,
@@ -30,24 +27,22 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const updated = await apiService.updateApi(id, admin.id || null, {
-    name: body.name !== undefined ? String(body.name).trim() : undefined,
-    status: body.status !== undefined ? Number(body.status) : undefined,
-    categoryId: body.categoryId !== undefined
-      ? (body.categoryId === null || body.categoryId === '' ? null : Number(body.categoryId))
-      : undefined,
-    shortDesc: body.shortDesc !== undefined ? String(body.shortDesc).trim() : undefined,
-    description: body.description !== undefined ? String(body.description).trim() : undefined,
-    docUrl: body.docUrl !== undefined ? String(body.docUrl).trim() : undefined,
-    isEnabled: typeof body.isEnabled === 'boolean' ? body.isEnabled : undefined,
+    name: body.name,
+    status: body.status,
+    categoryId: body.categoryId,
+    shortDesc: body.shortDesc,
+    description: body.description,
+    docUrl: body.docUrl,
+    isEnabled: body.isEnabled,
     isApiKey,
-    isStatistics: typeof body.isStatistics === 'boolean' ? body.isStatistics : undefined,
-    rateLimitPerSecond: body.rateLimitPerSecond !== undefined ? Number(body.rateLimitPerSecond) : undefined,
-    rateLimitPerMinute: body.rateLimitPerMinute !== undefined ? Number(body.rateLimitPerMinute) : undefined,
-    rateLimitPerHour: body.rateLimitPerHour !== undefined ? Number(body.rateLimitPerHour) : undefined,
-    rateLimitPerDay: body.rateLimitPerDay !== undefined ? Number(body.rateLimitPerDay) : undefined,
-    dailyQuota: body.dailyQuota !== undefined ? Number(body.dailyQuota) : undefined,
+    isStatistics: body.isStatistics,
+    rateLimitPerSecond: body.rateLimitPerSecond,
+    rateLimitPerMinute: body.rateLimitPerMinute,
+    rateLimitPerHour: body.rateLimitPerHour,
+    rateLimitPerDay: body.rateLimitPerDay,
+    dailyQuota: body.dailyQuota,
     costCredits,
-    timeoutMs: body.timeoutMs !== undefined ? Number(body.timeoutMs) : undefined,
+    timeoutMs: body.timeoutMs,
   })
 
   await operationLogService.addLog({

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { z } from 'zod'
+import { registerSchema } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 definePageMeta({ layout: false })
@@ -7,19 +8,13 @@ definePageMeta({ layout: false })
 const { register } = useAuth()
 const { turnstile, settings } = useSiteSettings()
 
-const schema = z.object({
-  username: z
-    .string()
-    .min(3, '用户名至少 3 位')
-    .max(32, '用户名最多 32 位')
-    .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线'),
-  email: z.string().email('请输入有效的邮箱地址'),
-  password: z.string().min(8, '密码至少 8 位'),
-  confirm: z.string().min(1, '请再次输入密码'),
-}).refine(d => d.password === d.confirm, {
-  path: ['confirm'],
-  message: '两次输入的密码不一致',
-})
+const schema = registerSchema
+  .omit({ turnstileToken: true })
+  .extend({ confirm: z.string().min(1, '请再次输入密码') })
+  .refine(d => d.password === d.confirm, {
+    path: ['confirm'],
+    message: '两次输入的密码不一致',
+  })
 
 type Schema = z.output<typeof schema>
 

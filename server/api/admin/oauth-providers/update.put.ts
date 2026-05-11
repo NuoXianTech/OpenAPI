@@ -1,22 +1,24 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP, readBody } from 'h3'
+import { createError, getHeader, getRequestIP } from 'h3'
+import { adminUpdateOauthProviderSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { oauthProviderService, type OauthProviderPatch } from '~~/server/service/oauthProviderService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const provider = (body.provider || '').toString().trim().toLowerCase()
-  if (!provider || !isSupportedOauthProvider(provider)) {
+  const body = await readZodBody(event, adminUpdateOauthProviderSchema)
+  const { provider } = body
+  if (!isSupportedOauthProvider(provider)) {
     throw createError({ statusCode: 400, message: 'provider 不合法，仅支持 github / qq' })
   }
 
   const patch: OauthProviderPatch = {}
-  if (body.clientId !== undefined) patch.clientId = String(body.clientId)
-  if (body.clientSecret !== undefined) patch.clientSecret = String(body.clientSecret)
-  if (body.isEnabled !== undefined) patch.isEnabled = Boolean(body.isEnabled)
+  if (body.clientId !== undefined) patch.clientId = body.clientId
+  if (body.clientSecret !== undefined) patch.clientSecret = body.clientSecret
+  if (body.isEnabled !== undefined) patch.isEnabled = body.isEnabled
 
   const updated = await oauthProviderService.update(provider, patch)
   if (!updated) {

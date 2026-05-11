@@ -1,30 +1,17 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { adminGenerateRedemptionCodeSchema } from '#shared/schemas/admin'
 import { redemptionService } from '~~/server/service/redemptionService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
-
-interface GenerateBody {
-  amount?: number
-  count?: number
-  prefix?: string | null
-  length?: number
-  maxUses?: number
-  expiresAt?: string | null
-  note?: string | null
-}
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody<GenerateBody>(event) || {}
+  const body = await readZodBody(event, adminGenerateRedemptionCodeSchema)
 
-  const amount = Number(body.amount)
-  if (!Number.isFinite(amount) || amount <= 0) {
-    throw createError({ statusCode: 400, message: 'amount 必须 > 0' })
-  }
-  const count = Math.min(Math.max(Math.trunc(Number(body.count) || 1), 1), 1000)
-  const maxUses = Math.max(Math.trunc(Number(body.maxUses) || 1), 1)
-  const length = Math.min(Math.max(Math.trunc(Number(body.length) || 16), 8), 48)
+  const count = body.count ?? 1
+  const maxUses = body.maxUses ?? 1
+  const length = body.length ?? 16
 
   let expiresAt: Date | null = null
   if (body.expiresAt) {
@@ -33,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const data = await redemptionService.generate({
-    amount: Math.trunc(amount),
+    amount: body.amount,
     count,
     prefix: body.prefix || null,
     length,

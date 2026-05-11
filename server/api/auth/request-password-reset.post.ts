@@ -1,13 +1,14 @@
 // 申请密码重置：发邮件到注册邮箱。无论邮箱是否存在都返回 200，避免泄露用户存在性。
 import type { H3Event } from 'h3'
-import { createError, getRequestIP, readBody } from 'h3'
+import { createError, getRequestIP } from 'h3'
+import { requestPasswordResetSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
-import { validateEmail } from '~~/server/utils/validation'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()
@@ -16,18 +17,14 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, unknown>
-  const email = String(body.email ?? '').trim().toLowerCase()
-  const turnstileToken = String(body.turnstileToken ?? '')
+  const body = await readZodBody(event, requestPasswordResetSchema)
+  const { email } = body
+  const turnstileToken = body.turnstileToken ?? ''
 
   const ip = getRequestIP(event) || null
 
   // 先校验 Turnstile：失败时直接抛错，与“邮箱是否存在”无关，不会构成枚举信号。
   await assertTurnstileForPage('passwordReset', turnstileToken, ip)
-
-  if (!email || !validateEmail(email)) {
-    throw createError({ statusCode: 400, message: 'Invalid email address' })
-  }
 
   // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回 200，不暴露阈值与是否存在）。
   const limiter = getRateLimiter()

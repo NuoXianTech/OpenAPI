@@ -1,16 +1,14 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP, readBody } from 'h3'
+import { createError, getHeader, getRequestIP } from 'h3'
+import { idSchema } from '#shared/schemas/common'
 import { apiCategoryService } from '~~/server/service/apiCategoryService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
-  }
+  const { id } = await readZodBody(event, idSchema)
 
   const removed = await apiCategoryService.softDelete(id)
   if (!removed) {

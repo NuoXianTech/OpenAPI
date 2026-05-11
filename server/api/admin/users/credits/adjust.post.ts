@@ -10,35 +10,27 @@
 
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
+import { adminAdjustCreditsSchema } from '#shared/schemas/admin'
 import { creditService } from '~~/server/service/creditService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
+  const { userIds, operation, amount, remark } = await readZodBody(event, adminAdjustCreditsSchema)
 
-  const userIds = Array.isArray(body.userIds)
-    ? body.userIds.map(Number).filter((n: number) => Number.isFinite(n) && n > 0)
-    : []
-  const operation = String(body.operation || '')
-  const amount = Math.max(Math.trunc(Number(body.amount) || 0), 0)
-  const remark = String(body.remark ?? '').trim().slice(0, 500) || null
-
-  if (!['grant', 'revoke', 'reset'].includes(operation)) {
-    throw createError({ statusCode: 400, message: 'operation 只能是 grant / revoke / reset' })
-  }
   if (operation !== 'reset' && amount <= 0) {
     throw createError({ statusCode: 400, message: 'amount 必须大于 0' })
   }
 
   const result = await creditService.adminBatchAdjust({
     userIds,
-    operation: operation as 'grant' | 'revoke' | 'reset',
+    operation,
     amount,
     operatorId: admin.id || null,
     operatorName: admin.username,
-    remark,
+    remark: remark || null,
   })
 
   await operationLogService.addLog({

@@ -1,22 +1,17 @@
 // 登录用户请求变更邮箱：发确认链接到"新"邮箱。
 import type { H3Event } from 'h3'
-import { createError, getRequestIP, readBody } from 'h3'
+import { createError, getRequestIP } from 'h3'
+import { userRequestEmailChangeSchema } from '#shared/schemas/user'
 import { usersService } from '~~/server/service/userService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
-import { validateEmail } from '~~/server/utils/validation'
 import { requireAuth } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
-
-  const body = await readBody(event) as Record<string, unknown>
-  const newEmail = String(body.newEmail ?? '').trim().toLowerCase()
-
-  if (!newEmail || !validateEmail(newEmail)) {
-    throw createError({ statusCode: 400, message: 'Invalid new email address' })
-  }
+  const { newEmail } = await readZodBody(event, userRequestEmailChangeSchema)
 
   if (newEmail === authUser.email.toLowerCase()) {
     throw createError({ statusCode: 400, message: 'New email must differ from current email' })

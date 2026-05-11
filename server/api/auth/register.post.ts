@@ -1,9 +1,11 @@
 // 注册接口
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
+import { registerSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { hashPassword } from '~~/server/utils/auth'
-import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList, validateEmail } from '~~/server/utils/validation'
+import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
+import { readZodBody } from '~~/server/utils/zod'
 import { verificationTokenService } from '../../service/verificationTokenService'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
@@ -18,22 +20,12 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '注册功能已关闭' })
   }
 
-  const body = await readBody(event) as Record<string, unknown>
-  const username = String(body.username ?? '').trim()
-  const email = String(body.email ?? '').trim().toLowerCase()
-  const password = String(body.password ?? '')
-  const turnstileToken = String(body.turnstileToken ?? '')
-
-  if (!username || !email || !password) {
-    throw createError({ statusCode: 400, message: 'username, email and password are required' })
-  }
+  const body = await readZodBody(event, registerSchema)
+  const { username, email, password } = body
+  const turnstileToken = body.turnstileToken ?? ''
 
   const ip = getRequestIP(event) || null
   await assertTurnstileForPage('register', turnstileToken, ip)
-
-  if (!validateEmail(email)) {
-    throw createError({ statusCode: 400, message: 'Invalid email address' })
-  }
 
   // 邮箱域名过滤：off=不过滤；whitelist=仅允许列表内域名；blacklist=拒绝列表内域名
   const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)

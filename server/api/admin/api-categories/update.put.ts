@@ -1,25 +1,23 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP, readBody } from 'h3'
+import { createError, getHeader, getRequestIP } from 'h3'
+import { adminUpdateApiCategorySchema } from '#shared/schemas/admin'
 import { apiCategoryService } from '~~/server/service/apiCategoryService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  if (!id) {
-    throw createError({ statusCode: 400, message: 'id is required' })
-  }
+  const { id, name, description, icon, color, parentId, sortOrder, isEnabled } = await readZodBody(event, adminUpdateApiCategorySchema)
 
   const patch: Record<string, unknown> = {}
-  if (body.name !== undefined) patch.name = String(body.name).trim()
-  if (body.description !== undefined) patch.description = String(body.description ?? '') || null
-  if (body.icon !== undefined) patch.icon = String(body.icon ?? '') || null
-  if (body.color !== undefined) patch.color = String(body.color ?? '') || null
-  if (body.parentId !== undefined) patch.parentId = body.parentId ? Number(body.parentId) : null
-  if (body.sortOrder !== undefined) patch.sortOrder = Number(body.sortOrder)
-  if (body.isEnabled !== undefined) patch.isEnabled = Boolean(body.isEnabled)
+  if (name !== undefined) patch.name = name
+  if (description !== undefined) patch.description = description || null
+  if (icon !== undefined) patch.icon = icon || null
+  if (color !== undefined) patch.color = color || null
+  if (parentId !== undefined) patch.parentId = parentId
+  if (sortOrder !== undefined) patch.sortOrder = sortOrder
+  if (isEnabled !== undefined) patch.isEnabled = isEnabled
 
   const updated = await apiCategoryService.update(id, patch)
   if (!updated) {

@@ -1,19 +1,13 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { adminToggleApiSchema } from '#shared/schemas/admin'
 import { apiService } from '~~/server/service/apiService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const body = await readBody(event) as Record<string, unknown>
-  const id = Number(body.id)
-  const field = body.field as 'isEnabled' | 'isStatistics'
-  const value = Boolean(body.value)
-
-  if (!id || !['isEnabled', 'isStatistics'].includes(field)) {
-    throw createError({ statusCode: 400, message: 'invalid parameters' })
-  }
+  const { id, field, value } = await readZodBody(event, adminToggleApiSchema)
 
   const updated = await apiService.toggleApiField(id, field, value, admin.id || null)
 
