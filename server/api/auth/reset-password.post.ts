@@ -44,5 +44,5 @@ export default defineEventHandler(async (event: H3Event) => {
   // 密码改动后，强制所有活动会话下线，避免旧设备继续访问。
   await sessionService.deleteSessionsByUserId(userId)
 
-  return { code: 0, msg: 'ok', data: null }
+  return null
 })

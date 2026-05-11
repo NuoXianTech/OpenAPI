@@ -20,14 +20,9 @@ interface LogRow {
   createdAt: string
 }
 
-interface ListResp { code: number, msg: string, data: { items: LogRow[], total: number } }
-interface FiltersResp {
-  code: number
-  msg: string
-  data: {
-    apis: Array<{ id: number, name: string, apiPath: string }>
-    apiKeys: Array<{ id: number, name: string }>
-  }
+interface FilterOptions {
+  apis: Array<{ id: number, name: string, apiPath: string }>
+  apiKeys: Array<{ id: number, name: string }>
 }
 
 const UBadge = resolveComponent('UBadge')
@@ -44,7 +39,7 @@ const items = ref<LogRow[]>([])
 const total = ref(0)
 const loading = ref(false)
 
-const filterOptions = ref<FiltersResp['data']>({ apis: [], apiKeys: [] })
+const filterOptions = ref<FilterOptions>({ apis: [], apiKeys: [] })
 
 const apiSelectItems = computed(() => [
   { label: '全部 API', value: 0 },
@@ -64,14 +59,14 @@ const statusSelectItems = [
 ]
 
 async function loadFilters() {
-  const res = await $fetch<FiltersResp>('/api/user/calls/filters')
-  filterOptions.value = res.data || { apis: [], apiKeys: [] }
+  const res = await $fetch<FilterOptions>('/api/user/calls/filters')
+  filterOptions.value = res || { apis: [], apiKeys: [] }
 }
 
 async function fetchList() {
   loading.value = true
   try {
-    const res = await $fetch<ListResp>('/api/user/calls/list', {
+    const res = await $fetch<{ items: LogRow[], total: number }>('/api/user/calls/list', {
       query: {
         apiId: filters.apiId || undefined,
         apiKeyId: filters.apiKeyId || undefined,
@@ -80,8 +75,8 @@ async function fetchList() {
         offset: (page.value - 1) * pageSize.value,
       },
     })
-    items.value = res?.data?.items || []
-    total.value = res?.data?.total || 0
+    items.value = res?.items || []
+    total.value = res?.total || 0
   }
   catch (err) {
     console.error('failed to fetch user calls list', err)

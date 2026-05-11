@@ -38,5 +38,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const confirmUrl = `${normalizedSiteUrl}/confirm-email-change?user=${authUser.id}&token=${token}`
   await sendEmailChangeEmail(newEmail, confirmUrl)
 
-  return { code: 0, msg: 'ok', data: { pendingEmail: newEmail } }
+  return { pendingEmail: newEmail }
 })

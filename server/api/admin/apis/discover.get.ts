@@ -11,7 +11,6 @@ import type { H3Event } from 'h3'
 import { API_MANIFEST } from '#api-manifest'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/service/apiService'
-import { report } from '~~/server/utils/report'
 
 interface DiscoveredEndpoint {
   apiPath: string
@@ -116,5 +115,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const result = Array.from(grouped.values()).sort((a, b) => a.pathVersion.localeCompare(b.pathVersion))
   for (const g of result) g.apis.sort((a, b) => a.code.localeCompare(b.code))
 
-  return report(event, 200, 'ok', { versions: result })
+  return { versions: result }
 })

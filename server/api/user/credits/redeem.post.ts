@@ -40,7 +40,7 @@ export default defineEventHandler(async (event: H3Event) => {
       resourceId: String(data.codeId),
       detail: { amount: data.amount, batchId: data.batchId },
     })
-    return { code: 0, msg: 'ok', data }
+    return data
   }
   catch (err) {
     if (isRedeemError(err)) {

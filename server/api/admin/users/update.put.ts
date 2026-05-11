@@ -19,9 +19,5 @@ export default defineEventHandler(async (event: H3Event) => {
     isBanned: typeof body.isBanned === 'boolean' ? body.isBanned : undefined,
   })
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: updated,
-  }
+  return updated
 })

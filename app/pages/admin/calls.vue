@@ -5,11 +5,11 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')
 
-const { data, status, refresh } = useLazyFetch('/api/admin/calls/stats', {
-  default: () => ({ code: 0, msg: '', data: { total: 0, success: 0, failure: 0, items: [] } }),
+const { data, status, refresh } = useLazyFetch<{ total: number, success: number, failure: number, items: Array<Record<string, unknown>> }>('/api/admin/calls/stats', {
+  default: () => ({ total: 0, success: 0, failure: 0, items: [] }),
 })
 
-const stats = computed(() => data.value?.data || { total: 0, success: 0, failure: 0, items: [] })
+const stats = computed(() => data.value || { total: 0, success: 0, failure: 0, items: [] })
 const successRate = computed(() => {
   if (!stats.value.total) return '0%'
   return `${((stats.value.success / stats.value.total) * 100).toFixed(1)}%`
@@ -98,7 +98,7 @@ const logLoading = ref(false)
 async function fetchLogs() {
   logLoading.value = true
   try {
-    const res = await $fetch<{ code: number, data: { items: AdminCallRow[], total: number } }>('/api/admin/calls/list', {
+    const res = await $fetch<{ items: AdminCallRow[], total: number }>('/api/admin/calls/list', {
       query: {
         userId: logFilters.userId || undefined,
         status: logFilters.status === 'all' ? undefined : logFilters.status,
@@ -106,8 +106,8 @@ async function fetchLogs() {
         offset: (logPage.value - 1) * logPageSize.value,
       },
     })
-    logItems.value = res?.data?.items || []
-    logTotal.value = res?.data?.total || 0
+    logItems.value = res?.items || []
+    logTotal.value = res?.total || 0
   }
   catch (err) {
     console.error('failed to fetch admin calls list', err)

@@ -27,11 +27,11 @@ interface ProviderForm {
 
 const toast = useToast()
 
-const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: ProviderItem[] }>('/api/admin/oauth-providers/list', {
-  default: () => ({ code: 0, msg: '', data: [] as ProviderItem[] }),
+const { data, status, refresh } = useLazyFetch<ProviderItem[]>('/api/admin/oauth-providers/list', {
+  default: () => [] as ProviderItem[],
 })
 
-const items = computed<ProviderItem[]>(() => data.value?.data || [])
+const items = computed<ProviderItem[]>(() => data.value || [])
 
 function createForm(): ProviderForm {
   return { clientId: '', clientSecret: '', isEnabled: false, saving: false, copied: false }

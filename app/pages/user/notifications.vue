@@ -13,12 +13,6 @@ interface Notification {
   createdAt: string
 }
 
-interface ListResponse {
-  code: number
-  msg: string
-  data: Notification[]
-}
-
 const items = ref<Notification[]>([])
 const expandedId = ref<number | null>(null)
 const onlyUnread = ref(false)
@@ -27,10 +21,10 @@ const loading = ref(false)
 async function fetchList() {
   loading.value = true
   try {
-    const res = await $fetch<ListResponse>('/api/notifications/list', {
+    const res = await $fetch<Notification[]>('/api/notifications/list', {
       query: { limit: 200, unread: onlyUnread.value ? '1' : '0' },
     })
-    items.value = res.data || []
+    items.value = res || []
   }
   finally {
     loading.value = false

@@ -28,5 +28,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { provider, providerUserId: removed.providerUserId },
   })
 
-  return { code: 0, msg: 'ok', data: { provider, providerUserId: removed.providerUserId } }
+  return { provider, providerUserId: removed.providerUserId }
 })

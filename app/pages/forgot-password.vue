@@ -38,7 +38,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
   submitting.value = true
   try {
-    await $fetch<{ code: number, msg: string }>('/api/auth/request-password-reset', {
+    await $fetch('/api/auth/request-password-reset', {
       method: 'POST',
       body: {
         email: event.data.email,

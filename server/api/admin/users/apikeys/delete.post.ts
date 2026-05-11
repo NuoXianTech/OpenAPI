@@ -16,9 +16,5 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'api key not found' })
   }
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: deleted,
-  }
+  return deleted
 })

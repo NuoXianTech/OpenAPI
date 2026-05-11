@@ -53,10 +53,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { passwordHash: _, ...safe } = user
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: { ...safe, kind: 'user' },
-  }
+  return { ...safe, kind: 'user' }
 })
 // 登录接口

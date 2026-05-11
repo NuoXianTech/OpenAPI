@@ -11,5 +11,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const onlyUnread = query.unread === '1' || query.unread === 'true'
 
   const data = await notificationService.listForUser(user.id, { limit, offset, onlyUnread })
-  return { code: 0, msg: 'ok', data }
+  return data
 })

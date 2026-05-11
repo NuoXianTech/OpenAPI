@@ -24,9 +24,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { created },
   })
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: created,
-  }
+  return created
 })

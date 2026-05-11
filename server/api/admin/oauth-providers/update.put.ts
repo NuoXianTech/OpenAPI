@@ -35,5 +35,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { provider: updated.provider, changedFields: Object.keys(patch) },
   })
 
-  return { code: 0, msg: 'ok', data: updated }
+  return updated
 })

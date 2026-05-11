@@ -3,7 +3,6 @@ import type { TableColumn } from '@nuxt/ui'
 import type {
   AdminDashboardData,
   AdminDashboardRecentCall,
-  AdminDashboardResponse,
 } from '~~/shared/types/admin-dashboard'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -38,17 +37,12 @@ const rangeOptions = [
 ]
 const selectedRange = ref<number>(7)
 
-const { data, status, refresh } = useLazyFetch<AdminDashboardResponse>('/api/admin/dashboard', {
+const { data, status, refresh } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
   query: computed(() => ({ days: selectedRange.value })),
-  default: () => ({
-    code: 0,
-    msg: '',
-    data: createEmptyData(),
-    timestamp: Date.now(),
-  }),
+  default: () => createEmptyData(),
 })
 
-const dashboard = computed(() => data.value?.data || createEmptyData())
+const dashboard = computed(() => data.value || createEmptyData())
 const overview = computed(() => dashboard.value.overview)
 const trend = computed(() => dashboard.value.trend)
 const distribution = computed(() => dashboard.value.distribution)

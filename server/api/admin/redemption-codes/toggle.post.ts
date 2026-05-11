@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event) => {
       resourceType: 'redemption_code',
       resourceId: String(id),
     })
-    return { code: 0, msg: 'ok', data: updated }
+    return updated
   }
 
   if (batchId) {
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
       resourceId: batchId,
       detail: { affected: res.affected },
     })
-    return { code: 0, msg: 'ok', data: res }
+    return res
   }
 
   throw createError({ statusCode: 400, message: 'id 或 batchId 必填一个' })

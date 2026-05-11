@@ -5,5 +5,5 @@ import { requireAuth } from '~~/server/utils/auth'
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
   const updated = await notificationService.markAllRead(user.id)
-  return { code: 0, msg: 'ok', data: { updated } }
+  return { updated }
 })

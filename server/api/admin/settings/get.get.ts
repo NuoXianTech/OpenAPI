@@ -7,9 +7,5 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const data = await siteSettingsService.getForAdmin()
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data,
-  }
+  return data
 })

@@ -22,12 +22,6 @@ interface Announcement {
   updatedAt: string
 }
 
-interface ListResponse {
-  code: number
-  msg: string
-  data: Announcement[]
-}
-
 const props = defineProps<{
   /** localStorage key 区分场景，避免首页和后台共用一个 lastSeenId */
   storageScope: string
@@ -40,17 +34,17 @@ const expandedIds = ref<string[]>([])
 
 // useAsyncData 全局唯一 key，多个组件实例共用一份缓存。
 // lazy + server: false：不阻塞 SSR、不影响首屏 LCP，hydrate 后再拉。
-const { data } = useAsyncData<ListResponse>(
+const { data } = useAsyncData<Announcement[]>(
   'public-announcements',
-  () => $fetch<ListResponse>('/api/announcements/list'),
+  () => $fetch<Announcement[]>('/api/announcements/list'),
   {
-    default: () => ({ code: 0, msg: '', data: [] }),
+    default: () => [],
     lazy: true,
     server: false,
   },
 )
 
-const items = computed<Announcement[]>(() => data.value?.data || [])
+const items = computed<Announcement[]>(() => data.value || [])
 const latestId = computed(() => items.value[0]?.id ?? null)
 
 const accordionItems = computed(() => items.value.map(a => ({

@@ -5,20 +5,16 @@ import { OAUTH_PROVIDER_PRESETS } from '~~/shared/types/oauth'
 export default defineEventHandler(async () => {
   const settings = await siteSettingsService.getOrCreate()
   if (!settings.oauthLoginEnabled) {
-    return { code: 0, msg: 'ok', data: [] }
+    return []
   }
   const enabled = await oauthProviderService.listEnabledProviders()
-  return {
-    code: 0,
-    msg: 'ok',
-    data: enabled.map((provider) => {
-      const preset = OAUTH_PROVIDER_PRESETS[provider]
-      return {
-        provider,
-        displayName: preset.displayName,
-        icon: preset.icon,
-        authorizeEntry: `/api/auth/oauth/${provider}/start`,
-      }
-    }),
-  }
+  return enabled.map((provider) => {
+    const preset = OAUTH_PROVIDER_PRESETS[provider]
+    return {
+      provider,
+      displayName: preset.displayName,
+      icon: preset.icon,
+      authorizeEntry: `/api/auth/oauth/${provider}/start`,
+    }
+  })
 })

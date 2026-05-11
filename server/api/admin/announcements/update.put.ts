@@ -50,5 +50,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { patch },
   })
 
-  return { code: 0, msg: 'ok', data: updated }
+  return updated
 })

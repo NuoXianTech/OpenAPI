@@ -5,11 +5,7 @@ import { creditService } from '~~/server/service/creditService'
 export default defineEventHandler(async (event: H3Event) => {
   const user = await getAuthUser(event)
   if (!user) {
-    return {
-      code: 401,
-      msg: 'unauthorized',
-      data: null,
-    }
+    return null
   }
 
   // 普通用户附带余额，admin 不需要。getBalance 失败时降级为 0，避免阻塞登录态
@@ -23,9 +19,5 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: { ...user, credits },
-  }
+  return { ...user, credits }
 })

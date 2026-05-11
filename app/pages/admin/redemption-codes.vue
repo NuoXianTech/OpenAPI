@@ -21,7 +21,6 @@ interface RedemptionCode {
   createdAt: string
 }
 
-interface ListResp { code: number, msg: string, data: { items: RedemptionCode[], total: number } }
 interface BatchSummary {
   batchId: string
   note: string | null
@@ -31,7 +30,6 @@ interface BatchSummary {
   maxUsesTotal: number
   createdAt: string
 }
-interface BatchesResp { code: number, msg: string, data: BatchSummary[] }
 
 const filters = reactive({
   status: 'all' as 'all' | 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available',
@@ -49,8 +47,8 @@ const batches = ref<BatchSummary[]>([])
 
 async function fetchBatches() {
   try {
-    const res = await $fetch<BatchesResp>('/api/admin/redemption-codes/batches')
-    batches.value = res?.data || []
+    const res = await $fetch<BatchSummary[]>('/api/admin/redemption-codes/batches')
+    batches.value = res || []
   }
   catch (err) {
     console.error('failed to load batches', err)
@@ -60,7 +58,7 @@ async function fetchBatches() {
 async function fetchList() {
   loading.value = true
   try {
-    const res = await $fetch<ListResp>('/api/admin/redemption-codes/list', {
+    const res = await $fetch<{ items: RedemptionCode[], total: number }>('/api/admin/redemption-codes/list', {
       query: {
         status: filters.status === 'all' ? undefined : filters.status,
         batchId: filters.batchId === 'all' ? undefined : filters.batchId,
@@ -69,8 +67,8 @@ async function fetchList() {
         offset: (page.value - 1) * pageSize.value,
       },
     })
-    items.value = res?.data?.items || []
-    total.value = res?.data?.total || 0
+    items.value = res?.items || []
+    total.value = res?.total || 0
   }
   catch (err) {
     console.error('failed to load codes', err)
@@ -134,7 +132,7 @@ async function submitGenerate() {
       d.setDate(d.getDate() + Math.trunc(generateForm.expiresInDays))
       expiresAt = d.toISOString()
     }
-    const res = await $fetch<{ data: { batchId: string, generated: number, requested: number, codes: Array<{ id: number, code: string }> } }>('/api/admin/redemption-codes/generate', {
+    const res = await $fetch<{ batchId: string, generated: number, requested: number, codes: Array<{ id: number, code: string }> }>('/api/admin/redemption-codes/generate', {
       method: 'POST',
       body: {
         amount: Math.trunc(generateForm.amount),
@@ -146,8 +144,8 @@ async function submitGenerate() {
         note: generateForm.note.trim() || null,
       },
     })
-    generatedResult.value = res.data
-    toast.add({ title: `已生成 ${res.data.generated} 张兑换码`, color: 'success' })
+    generatedResult.value = res
+    toast.add({ title: `已生成 ${res.generated} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
   catch (err: any) {
@@ -205,11 +203,11 @@ async function remove(item: RedemptionCode) {
 // ----- 批次操作 -----
 async function toggleBatch(batchId: string, enabled: boolean) {
   try {
-    const res = await $fetch<{ data: { affected: number } }>('/api/admin/redemption-codes/toggle', {
+    const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/toggle', {
       method: 'POST',
       body: { batchId, enabled },
     })
-    toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.data.affected} 张兑换码`, color: 'success' })
+    toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
   catch (err: any) {
@@ -223,11 +221,11 @@ async function deleteBatch(batchId: string, includeUsed: boolean) {
     : `确认删除批次 ${batchId} 中未被使用过的兑换码？`
   if (!confirm(msg)) return
   try {
-    const res = await $fetch<{ data: { affected: number } }>('/api/admin/redemption-codes/delete', {
+    const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/delete', {
       method: 'POST',
       body: { batchId, includeUsed },
     })
-    toast.add({ title: `已删除 ${res.data.affected} 张兑换码`, color: 'success' })
+    toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
   }
   catch (err: any) {

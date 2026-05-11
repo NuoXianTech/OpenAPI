@@ -51,5 +51,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { userIds, operation, amount, remark, affected: result.affected },
   })
 
-  return { code: 0, msg: 'ok', data: result }
+  return result
 })

@@ -27,9 +27,6 @@ interface TransactionRow {
   createdAt: string
 }
 
-interface SummaryResp { code: number, msg: string, data: WalletSummary }
-interface ListResp { code: number, msg: string, data: { items: TransactionRow[], total: number } }
-
 const UBadge = resolveComponent('UBadge')
 
 const summary = ref<WalletSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
@@ -75,8 +72,8 @@ const reasonMeta: Record<string, { label: string, color: 'success' | 'error' | '
 async function fetchSummary() {
   summaryLoading.value = true
   try {
-    const res = await $fetch<SummaryResp>('/api/user/credits/summary')
-    summary.value = res?.data || { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
+    const res = await $fetch<WalletSummary>('/api/user/credits/summary')
+    summary.value = res || { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
   }
   catch (err) {
     console.error('failed to load wallet summary', err)
@@ -89,7 +86,7 @@ async function fetchSummary() {
 async function fetchTransactions() {
   loading.value = true
   try {
-    const res = await $fetch<ListResp>('/api/user/credits/transactions', {
+    const res = await $fetch<{ items: TransactionRow[], total: number }>('/api/user/credits/transactions', {
       query: {
         reason: filters.reason === 'all' ? undefined : filters.reason,
         direction: filters.direction === 'all' ? undefined : filters.direction,
@@ -97,8 +94,8 @@ async function fetchTransactions() {
         offset: (page.value - 1) * pageSize.value,
       },
     })
-    items.value = res?.data?.items || []
-    total.value = res?.data?.total || 0
+    items.value = res?.items || []
+    total.value = res?.total || 0
   }
   catch (err) {
     console.error('failed to load transactions', err)
@@ -149,10 +146,10 @@ const recentRedeemAmount = ref<number | null>(null)
 
 async function fetchRedeemRecords() {
   try {
-    const res = await $fetch<{ data: { items: RedeemRecord[], total: number } }>('/api/user/credits/redemptions', {
+    const res = await $fetch<{ items: RedeemRecord[], total: number }>('/api/user/credits/redemptions', {
       query: { limit: 10 },
     })
-    redeemRecords.value = res?.data?.items || []
+    redeemRecords.value = res?.items || []
   }
   catch (err) {
     console.error('failed to load redemption records', err)
@@ -167,14 +164,14 @@ async function submitRedeem() {
   }
   redeeming.value = true
   try {
-    const res = await $fetch<{ data: { amount: number, balanceAfter: number } }>('/api/user/credits/redeem', {
+    const res = await $fetch<{ amount: number, balanceAfter: number }>('/api/user/credits/redeem', {
       method: 'POST',
       body: { code },
     })
-    recentRedeemAmount.value = res.data.amount
+    recentRedeemAmount.value = res.amount
     toast.add({
-      title: `兑换成功 +${res.data.amount.toLocaleString()}`,
-      description: `当前余额 ${res.data.balanceAfter.toLocaleString()}`,
+      title: `兑换成功 +${res.amount.toLocaleString()}`,
+      description: `当前余额 ${res.balanceAfter.toLocaleString()}`,
       color: 'success',
     })
     redeemCode.value = ''

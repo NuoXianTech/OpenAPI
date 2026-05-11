@@ -15,7 +15,6 @@ import { DEFAULT_API_REGISTRATION } from '~~/shared/config/apiGuard'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/service/apiService'
 import { operationLogService } from '~~/server/service/operationLogService'
-import { report } from '~~/server/utils/report'
 
 interface RegisterBody {
   pathVersion?: string
@@ -111,5 +110,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { pathVersion, code, manifestSource: manifestApi.sourceDir },
   })
 
-  return report(event, 200, 'ok', saved)
+  return saved
 })

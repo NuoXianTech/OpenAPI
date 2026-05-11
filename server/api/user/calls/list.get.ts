@@ -16,5 +16,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const offset = query.offset ? Number(query.offset) : 0
 
   const data = await apiCallService.listLogForUser(user.id, { apiId, apiKeyId, status, limit, offset })
-  return { code: 0, msg: 'ok', data }
+  return data
 })

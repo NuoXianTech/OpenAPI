@@ -13,13 +13,6 @@ export interface ApiCatalogItem {
   totalCalls: number
 }
 
-export interface ApiCatalogResponse {
-  code: number
-  msg: string
-  data: ApiCatalogItem[]
-  timestamp: number
-}
-
 export interface ApiCatalogFilters {
   keyword?: string
   status?: number

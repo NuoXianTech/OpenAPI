@@ -13,7 +13,8 @@
 import type { H3Event } from 'h3'
 import { readBody } from 'h3'
 import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
-import { report } from '~~/server/utils/report'
+import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
+import { OPEN_API_CODE } from '~~/shared/config/openApiCodes'
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readBody(event).catch(() => null)
@@ -22,10 +23,10 @@ export default defineEventHandler(async (event: H3Event) => {
   // 此时即便 HTTP 200 也不会扣费，且 apiCalls.errorCode/errorMessage 会记录
   if (body && typeof body === 'object' && (body as any).simulateFailure) {
     markApiCallFailed(event, 'SIMULATED_FAILURE', '业务侧主动标记失败，不扣费')
-    return report(event, 200, '业务失败（演示）', null)
+    return openApiFail(event, OPEN_API_CODE.BUSINESS_FAILED, '业务失败（演示）')
   }
 
-  return report(event, 200, 'ok', {
+  return openApiOk(event, {
     echo: body ?? null,
     apiKeyId: event.context.apiKey?.id ?? null,
   })

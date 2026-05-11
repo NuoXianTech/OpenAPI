@@ -10,5 +10,5 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!codeId) throw createError({ statusCode: 400, message: 'codeId 必填' })
 
   const data = await redemptionService.listCodeRedemptions(codeId)
-  return { code: 0, msg: 'ok', data }
+  return data
 })

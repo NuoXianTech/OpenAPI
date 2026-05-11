@@ -31,9 +31,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { isBanned, username: updated?.username },
   })
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: updated,
-  }
+  return updated
 })

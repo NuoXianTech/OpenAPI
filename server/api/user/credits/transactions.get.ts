@@ -21,5 +21,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const offset = query.offset ? Number(query.offset) : 0
 
   const data = await creditService.listUserTransactions(user.id, { reason, direction, limit, offset })
-  return { code: 0, msg: 'ok', data }
+  return data
 })

@@ -76,11 +76,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const { passwordHash: _, ...safe } = created
 
   return {
-    code: 0,
-    msg: 'ok',
-    data: {
-      user: safe,
-      verificationRequired: true,
-    },
+    user: safe,
+    verificationRequired: true,
   }
 })

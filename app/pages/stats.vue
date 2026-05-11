@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import type {
-  PublicCallStatsDashboard,
-  PublicCallStatsResponse,
-} from '~~/shared/types/public-stats'
+import type { PublicCallStatsDashboard } from '~~/shared/types/public-stats'
 
 // 图表依赖 d3 + DOM，体积较大。改为 lazy + client-only 异步组件，
 // 让 stats 页主体可以 SSR，图表在客户端 hydrate 后再下载/渲染。
@@ -60,7 +57,7 @@ const turnstileRequired = computed(() => turnstile.value.publicStats)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 
-const data = ref<PublicCallStatsResponse | null>(null)
+const data = ref<PublicCallStatsDashboard | null>(null)
 const pending = ref(false)
 const error = ref<unknown>(null)
 
@@ -72,7 +69,7 @@ const fetchStats = async () => {
     if (turnstileRequired.value && turnstileToken.value) {
       headers['x-turnstile-token'] = turnstileToken.value
     }
-    data.value = await $fetch<PublicCallStatsResponse>('/api/stats/public', { headers })
+    data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public', { headers })
   }
   catch (err) {
     error.value = err
@@ -111,7 +108,7 @@ onMounted(() => {
   }
 })
 
-const dashboard = computed(() => data.value?.data || EMPTY_DASHBOARD)
+const dashboard = computed(() => data.value || EMPTY_DASHBOARD)
 const overview = computed(() => dashboard.value.overview)
 const trend7d = computed(() => dashboard.value.trend7d)
 const top10Last30d = computed(() => dashboard.value.top10Last30d)

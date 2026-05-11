@@ -41,13 +41,9 @@ export default defineEventHandler(async (event: H3Event) => {
   await createAdminSession(event, { remember })
 
   return {
-    code: 0,
-    msg: 'ok',
-    data: {
-      id: 0,
-      kind: 'admin',
-      username: adminUsername,
-      email: authConfig.adminEmail,
-    },
+    id: 0,
+    kind: 'admin',
+    username: adminUsername,
+    email: authConfig.adminEmail,
   }
 })

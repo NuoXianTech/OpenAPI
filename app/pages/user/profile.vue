@@ -29,21 +29,15 @@ interface OauthBinding {
   linkedAt: string | null
 }
 
-interface OauthListResp {
-  code: number
-  msg: string
-  data: { oauthEnabled: boolean, providers: OauthBinding[] }
-}
-
 const profile = ref<ProfileData | null>(null)
 const profileLoading = ref(false)
 
 async function loadProfile() {
   profileLoading.value = true
   try {
-    const res = await $fetch<{ data: ProfileData }>('/api/user/profile')
-    profile.value = res.data
-    profileForm.displayName = res.data.displayName || ''
+    const res = await $fetch<ProfileData>('/api/user/profile')
+    profile.value = res
+    profileForm.displayName = res.displayName || ''
   }
   catch (err) {
     console.error('failed to load profile', err)
@@ -137,14 +131,14 @@ async function submitEmail() {
   }
   emailSaving.value = true
   try {
-    const res = await $fetch<{ data: { pendingEmail: string } }>('/api/user/request-email-change', {
+    const res = await $fetch<{ pendingEmail: string }>('/api/user/request-email-change', {
       method: 'POST',
       body: { newEmail: v },
     })
-    emailPending.value = res.data.pendingEmail
+    emailPending.value = res.pendingEmail
     toast.add({
       title: '验证邮件已发送',
-      description: `请到 ${res.data.pendingEmail} 邮箱点击确认链接完成更改`,
+      description: `请到 ${res.pendingEmail} 邮箱点击确认链接完成更改`,
       color: 'success',
     })
     emailForm.newEmail = ''
@@ -165,9 +159,9 @@ const oauthLoading = ref(false)
 async function loadOauth() {
   oauthLoading.value = true
   try {
-    const res = await $fetch<OauthListResp>('/api/user/oauth/list')
-    oauthEnabled.value = res.data.oauthEnabled
-    oauthList.value = res.data.providers
+    const res = await $fetch<{ oauthEnabled: boolean, providers: OauthBinding[] }>('/api/user/oauth/list')
+    oauthEnabled.value = res.oauthEnabled
+    oauthList.value = res.providers
   }
   catch (err) {
     console.error('failed to load oauth list', err)

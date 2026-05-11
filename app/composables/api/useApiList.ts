@@ -10,13 +10,13 @@ export function useApiList() {
 
   const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useAsyncData(
     'public-api-categories',
-    () => $fetch<{ code: number, data: ApiCategoryItem[] }>('/api/api-categories/list'),
+    () => $fetch<ApiCategoryItem[]>('/api/api-categories/list'),
     {
-      default: () => ({ code: 0, data: [] as ApiCategoryItem[] }),
+      default: () => [] as ApiCategoryItem[],
     },
   )
 
-  const categories = computed(() => categoriesData.value?.data || [])
+  const categories = computed(() => categoriesData.value || [])
   const allData = computed(() => result.value.data || [])
 
   const loading = computed(() => listPending.value || categoriesPending.value)

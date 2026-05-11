@@ -12,9 +12,5 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const list = await apiKeyService.listByUser(userId)
-  return {
-    code: 0,
-    msg: 'ok',
-    data: list,
-  }
+  return list
 })

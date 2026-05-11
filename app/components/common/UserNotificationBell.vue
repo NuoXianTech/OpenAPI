@@ -20,18 +20,6 @@ interface Notification {
   createdAt: string
 }
 
-interface ListResponse {
-  code: number
-  msg: string
-  data: Notification[]
-}
-
-interface CountResponse {
-  code: number
-  msg: string
-  data: { count: number }
-}
-
 const POLL_INTERVAL_MS = 60_000
 
 const open = ref(false)
@@ -42,8 +30,8 @@ const loading = ref(false)
 
 async function fetchUnreadCount() {
   try {
-    const res = await $fetch<CountResponse>('/api/notifications/unread-count')
-    unread.value = res.data.count
+    const res = await $fetch<{ count: number }>('/api/notifications/unread-count')
+    unread.value = res.count
   }
   catch { /* ignore */ }
 }
@@ -51,10 +39,10 @@ async function fetchUnreadCount() {
 async function fetchList() {
   loading.value = true
   try {
-    const res = await $fetch<ListResponse>('/api/notifications/list', {
+    const res = await $fetch<Notification[]>('/api/notifications/list', {
       query: { limit: 20 },
     })
-    items.value = res.data || []
+    items.value = res || []
   }
   finally {
     loading.value = false

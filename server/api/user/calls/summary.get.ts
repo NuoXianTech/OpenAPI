@@ -8,5 +8,5 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!user.id) throw createError({ statusCode: 403, message: 'admin cannot access user call summary' })
 
   const data = await apiCallService.getSummaryForUser(user.id)
-  return { code: 0, msg: 'ok', data }
+  return data
 })

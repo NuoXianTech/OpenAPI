@@ -11,16 +11,18 @@
  * 使用示例：
  * ```ts
  * import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
+ * import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
+ * import { OPEN_API_CODE } from '~~/shared/config/openApiCodes'
  *
  * export default defineEventHandler(async (event) => {
  *   try {
  *     const data = await fetchUpstream()
- *     return report(event, 200, 'ok', data)
+ *     return openApiOk(event, data)
  *   }
  *   catch (err) {
- *     // 上游失败，统一返回 200 + code=1 的业务错；但要避免扣费
+ *     // 上游失败，统一返回 HTTP 200 + 业务失败码；不扣费
  *     markApiCallFailed(event, 'UPSTREAM_ERROR', (err as Error).message)
- *     return report(event, 200, '上游服务异常', null)
+ *     return openApiFail(event, OPEN_API_CODE.UPSTREAM_ERROR, '上游服务异常')
  *   }
  * })
  * ```

@@ -3,8 +3,8 @@ import type { H3Event } from 'h3'
 import { createError, getCookie, readBody } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
-import { hashPassword, verifyPassword } from '~~/server/utils/auth'
-import { requireAuth } from '~~/server/utils/auth'
+import { hashPassword, verifyPassword, requireAuth } from '~~/server/utils/auth'
+
 import { operationLogService } from '~~/server/service/operationLogService'
 
 const MIN_PASSWORD_LENGTH = 8
@@ -61,5 +61,5 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: String(authUser.id),
   })
 
-  return { code: 0, msg: 'ok', data: null }
+  return null
 })

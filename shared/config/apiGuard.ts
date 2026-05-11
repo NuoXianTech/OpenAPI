@@ -40,21 +40,28 @@ export const DEFAULT_API_REGISTRATION = {
   timeoutMs: 10_000,
 } as const
 
-/** gate 返回码与默认文案 */
+/**
+ * gate 返回码与默认文案。
+ *
+ * - `status`：HTTP 状态码
+ * - `bizCode`：开放 API 业务码（5 位数字，详见 shared/config/openApiCodes.ts）
+ * - `code`：保留的字符串标识，用于统计 / 日志 / 调试，业务侧不应依赖
+ * - `msg`：默认面向客户的中文文案
+ */
 export const API_GUARD_ERROR = {
-  NOT_REGISTERED: { status: 403, code: 'API_NOT_REGISTERED', msg: '接口未登记，请联系管理员' },
-  DISABLED: { status: 503, code: 'API_DISABLED', msg: '接口已停用' },
-  METHOD_NOT_ALLOWED: { status: 405, code: 'METHOD_NOT_ALLOWED', msg: '请求方法不受支持' },
-  MISSING_API_KEY: { status: 401, code: 'MISSING_API_KEY', msg: '缺少 x-api-key 请求头' },
-  INVALID_API_KEY: { status: 401, code: 'INVALID_API_KEY', msg: '无效的 API Key' },
-  REVOKED_API_KEY: { status: 401, code: 'REVOKED_API_KEY', msg: 'API Key 已停用或撤销' },
-  EXPIRED_API_KEY: { status: 401, code: 'EXPIRED_API_KEY', msg: 'API Key 已过期' },
-  SCOPE_DENIED: { status: 403, code: 'SCOPE_DENIED', msg: 'API Key 无权调用该接口' },
-  IP_DENIED: { status: 403, code: 'IP_DENIED', msg: '当前 IP 不在白名单内' },
-  REFERER_DENIED: { status: 403, code: 'REFERER_DENIED', msg: '当前来源不在白名单内' },
-  RATE_LIMITED: { status: 429, code: 'RATE_LIMITED', msg: '请求过于频繁，请稍后再试' },
-  QUOTA_EXCEEDED: { status: 429, code: 'QUOTA_EXCEEDED', msg: '已达到当日配额上限' },
-  INSUFFICIENT_CREDITS: { status: 402, code: 'INSUFFICIENT_CREDITS', msg: '余额不足，请充值后再试' },
+  NOT_REGISTERED: { status: 403, bizCode: 40300, code: 'API_NOT_REGISTERED', msg: '接口未登记，请联系管理员' },
+  DISABLED: { status: 503, bizCode: 50300, code: 'API_DISABLED', msg: '接口已停用' },
+  METHOD_NOT_ALLOWED: { status: 405, bizCode: 40500, code: 'METHOD_NOT_ALLOWED', msg: '请求方法不受支持' },
+  MISSING_API_KEY: { status: 401, bizCode: 40100, code: 'MISSING_API_KEY', msg: '缺少 x-api-key 请求头' },
+  INVALID_API_KEY: { status: 401, bizCode: 40101, code: 'INVALID_API_KEY', msg: '无效的 API Key' },
+  REVOKED_API_KEY: { status: 401, bizCode: 40102, code: 'REVOKED_API_KEY', msg: 'API Key 已停用或撤销' },
+  EXPIRED_API_KEY: { status: 401, bizCode: 40103, code: 'EXPIRED_API_KEY', msg: 'API Key 已过期' },
+  SCOPE_DENIED: { status: 403, bizCode: 40301, code: 'SCOPE_DENIED', msg: 'API Key 无权调用该接口' },
+  IP_DENIED: { status: 403, bizCode: 40302, code: 'IP_DENIED', msg: '当前 IP 不在白名单内' },
+  REFERER_DENIED: { status: 403, bizCode: 40303, code: 'REFERER_DENIED', msg: '当前来源不在白名单内' },
+  RATE_LIMITED: { status: 429, bizCode: 42900, code: 'RATE_LIMITED', msg: '请求过于频繁，请稍后再试' },
+  QUOTA_EXCEEDED: { status: 429, bizCode: 42901, code: 'QUOTA_EXCEEDED', msg: '已达到当日配额上限' },
+  INSUFFICIENT_CREDITS: { status: 402, bizCode: 40200, code: 'INSUFFICIENT_CREDITS', msg: '余额不足，请充值后再试' },
 } as const
 
 /** API 元数据缓存 TTL（服务层 LRU） */

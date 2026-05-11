@@ -10,5 +10,5 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!id) throw createError({ statusCode: 400, message: 'id is required' })
 
   const updated = await notificationService.markRead(user.id, id)
-  return { code: 0, msg: 'ok', data: updated }
+  return updated
 })

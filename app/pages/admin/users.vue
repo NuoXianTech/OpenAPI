@@ -100,8 +100,8 @@ async function openKeys(item: any) {
   keysOpen.value = true
   keysLoading.value = true
   try {
-    const res = await $fetch<any>('/api/admin/users/apikeys', { query: { userId: item.id } })
-    keysData.value = res.data || []
+    const res = await $fetch<any[]>('/api/admin/users/apikeys', { query: { userId: item.id } })
+    keysData.value = res || []
   }
   catch { keysData.value = [] }
   finally { keysLoading.value = false }

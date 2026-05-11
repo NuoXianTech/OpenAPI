@@ -36,5 +36,5 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const { passwordHash: _, ...safe } = updated
-  return { code: 0, msg: 'ok', data: safe }
+  return safe
 })

@@ -33,12 +33,12 @@ export default defineEventHandler(async (event: H3Event) => {
   const limiter = getRateLimiter()
   const emailLimit = await limiter.consume(`password-reset:email:${email}`, 1, 'minute')
   if (!emailLimit.allowed) {
-    return { code: 0, msg: 'ok', data: null }
+    return null
   }
   if (ip) {
     const ipLimit = await limiter.consume(`password-reset:ip:${ip}`, 10, 'hour')
     if (!ipLimit.allowed) {
-      return { code: 0, msg: 'ok', data: null }
+      return null
     }
   }
 
@@ -57,5 +57,5 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
 
-  return { code: 0, msg: 'ok', data: null }
+  return null
 })

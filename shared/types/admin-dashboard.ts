@@ -43,11 +43,4 @@ export interface AdminDashboardData {
   generatedAt: string
 }
 
-export interface AdminDashboardResponse {
-  code: number
-  msg: string
-  data: AdminDashboardData
-  timestamp: number
-}
-
 export type AdminDashboardRange = 7 | 14 | 30

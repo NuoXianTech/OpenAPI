@@ -10,6 +10,12 @@ const message = ref('正在验证，请稍候...')
 const verifying = ref(false)
 
 const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object') {
+    const data = (error as { data?: { message?: unknown } }).data
+    if (data && typeof data.message === 'string' && data.message) {
+      return data.message
+    }
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }
@@ -63,19 +69,13 @@ onMounted(async () => {
   message.value = '正在验证，请稍候...'
 
   try {
-    const res = await $fetch<{ code: number, msg: string, data: unknown }>('/api/auth/verify-email', {
+    await $fetch('/api/auth/verify-email', {
       query: { token: token.value, user: user.value },
     })
-    if (res.code === 0) {
-      status.value = 'success'
-      message.value = '验证成功，已自动登录，正在跳转首页...'
-      await new Promise(resolve => setTimeout(resolve, 800))
-      await navigateTo('/')
-    }
-    else {
-      status.value = 'error'
-      message.value = res.msg || '验证失败'
-    }
+    status.value = 'success'
+    message.value = '验证成功，已自动登录，正在跳转首页...'
+    await new Promise(resolve => setTimeout(resolve, 800))
+    await navigateTo('/')
   }
   catch (error: unknown) {
     status.value = 'error'

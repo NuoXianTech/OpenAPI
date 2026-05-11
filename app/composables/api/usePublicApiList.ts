@@ -1,23 +1,17 @@
-import type { ApiCatalogResponse, ApiTabOption } from './types'
-
-const defaultResponse: ApiCatalogResponse = {
-  code: 0,
-  msg: '',
-  data: [],
-  timestamp: 0,
-}
+import type { ApiCatalogItem, ApiTabOption } from './types'
 
 export function usePublicApiList() {
-  const { data, pending, error, refresh } = useAsyncData<ApiCatalogResponse>(
+  const { data, pending, error, refresh } = useAsyncData<ApiCatalogItem[]>(
     'public-api-list',
-    () => $fetch<ApiCatalogResponse>('/api/list', { method: 'GET' }),
+    () => $fetch<ApiCatalogItem[]>('/api/list', { method: 'GET' }),
     {
-      default: () => defaultResponse,
+      default: () => [],
     },
   )
 
-  const result = computed(() => data.value || defaultResponse)
-  const catalogItems = computed(() => result.value.data || [])
+  const catalogItems = computed(() => data.value || [])
+  // 兼容旧调用方 result.value.data：仍提供同形结构
+  const result = computed(() => ({ data: catalogItems.value }))
 
   const statusTabs: ApiTabOption[] = [
     { label: '全部', value: 'all' },

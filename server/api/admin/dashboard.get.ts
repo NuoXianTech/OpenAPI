@@ -7,7 +7,6 @@ import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
   AdminDashboardRecentCall,
-  AdminDashboardResponse,
   AdminDashboardTrendPoint,
 } from '~~/shared/types/admin-dashboard'
 
@@ -22,7 +21,7 @@ function resolveRange(raw: unknown): number {
   return Math.min(Math.max(Math.trunc(parsed), 1), 90)
 }
 
-export default defineEventHandler(async (event: H3Event): Promise<AdminDashboardResponse> => {
+export default defineEventHandler(async (event: H3Event): Promise<AdminDashboardData> => {
   await requireAdmin(event)
 
   const query = getQuery(event)
@@ -187,10 +186,5 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     generatedAt: new Date().toISOString(),
   }
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data,
-    timestamp: Date.now(),
-  }
+  return data
 })

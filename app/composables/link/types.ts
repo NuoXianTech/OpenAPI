@@ -5,9 +5,3 @@ export interface FriendLinkItem {
   description: string | null
   isActive: boolean
 }
-
-export interface FriendLinkListResponse {
-  code: number
-  msg: string
-  data: FriendLinkItem[]
-}

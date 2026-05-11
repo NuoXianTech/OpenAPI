@@ -15,9 +15,5 @@ export default defineEventHandler(async (event: H3Event) => {
     return matchesKeyword
   })
 
-  return {
-    code: 0,
-    msg: 'ok',
-    data: filtered,
-  }
+  return filtered
 })

@@ -31,5 +31,5 @@ export default defineEventHandler(async (event: H3Event) => {
     offset: query.offset ? Number(query.offset) : undefined,
   })
 
-  return { code: 0, msg: 'ok', data: logs }
+  return logs
 })

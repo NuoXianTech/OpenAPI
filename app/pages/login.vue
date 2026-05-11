@@ -28,10 +28,10 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
 
-const { data: providersData } = useLazyFetch<{ code: number, data: Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }> }>('/api/auth/providers/list', {
-  default: () => ({ code: 0, msg: '', data: [] }),
+const { data: providersData } = useLazyFetch<Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }>>('/api/auth/providers/list', {
+  default: () => [],
 })
-const providers = computed(() => providersData.value?.data || [])
+const providers = computed(() => providersData.value || [])
 
 const oauthError = computed(() => {
   const code = (route.query.oauth_error || '').toString()
@@ -58,6 +58,12 @@ const oauthError = computed(() => {
 })
 
 const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object') {
+    const data = (error as { data?: { message?: unknown } }).data
+    if (data && typeof data.message === 'string' && data.message) {
+      return data.message
+    }
+  }
   if (error instanceof Error && error.message) {
     return error.message
   }

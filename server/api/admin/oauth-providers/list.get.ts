@@ -26,5 +26,5 @@ export default defineEventHandler(async (event: H3Event) => {
       userInfoUrl: preset.userInfoUrl,
     }
   })
-  return { code: 0, msg: 'ok', data }
+  return data
 })

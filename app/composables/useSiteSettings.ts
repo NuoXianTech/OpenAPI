@@ -23,12 +23,6 @@ interface PublicSiteSettings {
   announcement: PublicAnnouncementSettings
 }
 
-interface PublicSiteSettingsResponse {
-  code: number
-  msg: string
-  data: PublicSiteSettings
-}
-
 const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   enabled: false,
   siteKey: '',
@@ -59,17 +53,13 @@ const FALLBACK_SETTINGS: PublicSiteSettings = {
 export function useSiteSettings() {
   const { data, pending, error, refresh } = useAsyncData(
     'public-site-settings',
-    () => $fetch<PublicSiteSettingsResponse>('/api/settings/public'),
+    () => $fetch<PublicSiteSettings>('/api/settings/public'),
     {
-      default: () => ({
-        code: 0,
-        msg: 'ok',
-        data: FALLBACK_SETTINGS,
-      }),
+      default: () => FALLBACK_SETTINGS,
     },
   )
 
-  const settings = computed(() => data.value?.data || FALLBACK_SETTINGS)
+  const settings = computed(() => data.value || FALLBACK_SETTINGS)
   const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
   const announcement = computed<PublicAnnouncementSettings>(() => settings.value.announcement || EMPTY_ANNOUNCEMENT)
   const passwordResetEnabled = computed(() => settings.value.passwordResetEnabled !== false)

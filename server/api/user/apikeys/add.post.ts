@@ -13,9 +13,5 @@ export default defineEventHandler(async (event: H3Event) => {
   const name = (body.name || '').toString().trim() || '默认密钥'
 
   const created = await apiKeyService.createForUser(user.id, name)
-  return {
-    code: 0,
-    msg: 'ok',
-    data: created,
-  }
+  return created
 })

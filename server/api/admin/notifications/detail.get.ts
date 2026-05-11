@@ -10,5 +10,5 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!messageId) throw createError({ statusCode: 400, message: 'messageId is required' })
 
   const data = await notificationService.getMessageDetail(messageId)
-  return { code: 0, msg: 'ok', data }
+  return data
 })

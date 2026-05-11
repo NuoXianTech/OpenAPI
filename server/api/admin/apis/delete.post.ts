@@ -26,5 +26,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { deleted },
   })
 
-  return { code: 0, msg: 'ok', data: deleted }
+  return deleted
 })

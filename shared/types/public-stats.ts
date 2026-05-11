@@ -35,10 +35,3 @@ export interface PublicCallStatsDashboard {
   top10Last30d: PublicCallStatsTopItem[]
   generatedAt: string
 }
-
-export interface PublicCallStatsResponse {
-  code: number
-  msg: string
-  data: PublicCallStatsDashboard
-  timestamp: number
-}

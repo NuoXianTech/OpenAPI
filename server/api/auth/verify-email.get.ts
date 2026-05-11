@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (user.emailVerifiedAt) {
     const { passwordHash: _, ...safe } = user
-    return { code: 0, msg: 'Email already verified', data: safe }
+    return safe
   }
 
   const updated = await usersService.activateUser(userId)
@@ -39,5 +39,5 @@ export default defineEventHandler(async (event: H3Event) => {
   })
 
   const { passwordHash: _, ...safe } = updated
-  return { code: 0, msg: 'ok', data: safe }
+  return safe
 })

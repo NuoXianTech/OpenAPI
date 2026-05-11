@@ -147,7 +147,7 @@ async function submitAddCategory() {
       body: { code, name, isEnabled: true },
     })
     await refreshCategories()
-    if (res?.data?.id) state.categoryId = res.data.id
+    if (res?.id) state.categoryId = res.id
     showAddCategory.value = false
     newCategoryCode.value = ''
     newCategoryName.value = ''

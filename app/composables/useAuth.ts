@@ -7,12 +7,6 @@ interface AuthUser {
   credits?: number
 }
 
-interface ApiResponse<T> {
-  code: number
-  msg: string
-  data: T
-}
-
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState<boolean>('auth-loading', () => false)
@@ -25,8 +19,8 @@ export function useAuth() {
     loading.value = true
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-      const res = await $fetch<ApiResponse<AuthUser | null>>('/api/auth/me', { headers })
-      user.value = res?.code === 0 ? (res.data ?? null) : null
+      const res = await $fetch<AuthUser | null>('/api/auth/me', { headers })
+      user.value = res ?? null
     }
     catch (err) {
       // /api/auth/me 异常一律视为未登录，让中间件去重定向
@@ -51,44 +45,34 @@ export function useAuth() {
   }
 
   const login = async (payload: { email?: string, username?: string, password: string, remember?: boolean, turnstileToken?: string }) => {
-    const res = await $fetch<ApiResponse<AuthUser>>('/api/auth/login', {
+    const res = await $fetch<AuthUser>('/api/auth/login', {
       method: 'POST',
       body: payload,
     })
-    if (res.code !== 0) {
-      throw new Error(res.msg)
-    }
-    user.value = res.data
+    user.value = res
     fetched.value = true
-    return res.data
+    return res
   }
 
   const adminLogin = async (payload: { username: string, password: string, remember?: boolean, turnstileToken?: string }) => {
-    const res = await $fetch<ApiResponse<AuthUser>>('/api/admin/auth/login', {
+    const res = await $fetch<AuthUser>('/api/admin/auth/login', {
       method: 'POST',
       body: payload,
     })
-    if (res.code !== 0) {
-      throw new Error(res.msg)
-    }
-    user.value = res.data
+    user.value = res
     fetched.value = true
-    return res.data
+    return res
   }
 
   const register = async (payload: { username: string, email: string, password: string, turnstileToken?: string }) => {
-    const res = await $fetch<ApiResponse<{ user: AuthUser, verificationRequired: boolean }>>('/api/auth/register', {
+    return await $fetch<{ user: AuthUser, verificationRequired: boolean }>('/api/auth/register', {
       method: 'POST',
       body: payload,
     })
-    if (res.code !== 0) {
-      throw new Error(res.msg)
-    }
-    return res.data
   }
 
   const logout = async () => {
-    await $fetch<ApiResponse<null>>('/api/auth/logout', { method: 'POST' })
+    await $fetch('/api/auth/logout', { method: 'POST' })
     user.value = null
     fetched.value = true
   }

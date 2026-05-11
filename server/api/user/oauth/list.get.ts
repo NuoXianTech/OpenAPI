@@ -76,11 +76,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   return {
-    code: 0,
-    msg: 'ok',
-    data: {
-      oauthEnabled,
-      providers: Array.from(map.values()),
-    },
+    oauthEnabled,
+    providers: Array.from(map.values()),
   }
 })
