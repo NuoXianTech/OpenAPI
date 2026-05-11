@@ -59,19 +59,19 @@ interface VersionGroup {
 }
 
 const { data, status, refresh } = useLazyFetch('/api/admin/apis/discover', {
-  default: () => ({ code: 0, msg: '', data: { versions: [] as VersionGroup[] } }),
+  default: () => ({ versions: [] as VersionGroup[] }),
 })
 
-const { data: categoriesData } = useLazyFetch('/api/admin/api-categories/list', {
-  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, name: string }> }),
+const { data: categoriesData } = useLazyFetch<Array<{ id: number, name: string }>>('/api/admin/api-categories/list', {
+  default: () => [],
 })
 const categoriesMap = computed(() => {
   const map = new Map<number, string>()
-  for (const cat of (categoriesData.value?.data || [])) map.set(cat.id, cat.name)
+  for (const cat of (categoriesData.value || [])) map.set(cat.id, cat.name)
   return map
 })
 
-const versions = computed<VersionGroup[]>(() => (data.value?.data?.versions || []) as VersionGroup[])
+const versions = computed<VersionGroup[]>(() => (data.value?.versions || []) as VersionGroup[])
 const activeVersion = ref<string>('')
 watchEffect(() => {
   if (!activeVersion.value && versions.value.length > 0) {

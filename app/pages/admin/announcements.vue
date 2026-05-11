@@ -23,10 +23,10 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = useLazyFetch('/api/admin/announcements/list', {
-  default: () => ({ code: 0, msg: '', data: [] as Announcement[] }),
+const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
+  default: () => [],
 })
-const items = computed<Announcement[]>(() => data.value?.data || [])
+const items = computed<Announcement[]>(() => data.value || [])
 
 const modalOpen = ref(false)
 const editItem = ref<Announcement | null>(null)

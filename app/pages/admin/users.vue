@@ -26,11 +26,11 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const keyword = ref('')
-const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: AdminUserItem[] }>('/api/admin/users/list', {
+const { data, status, refresh } = useLazyFetch<AdminUserItem[]>('/api/admin/users/list', {
   query: computed(() => ({ keyword: keyword.value || undefined })),
-  default: () => ({ code: 0, msg: '', data: [] }),
+  default: () => [],
 })
-const items = computed(() => data.value?.data || [])
+const items = computed(() => data.value || [])
 
 const deleteOpen = ref(false)
 const deleteTarget = ref<AdminUserItem | null>(null)

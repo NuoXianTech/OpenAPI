@@ -9,10 +9,10 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = useLazyFetch<{ code: number, msg: string, data: FriendLinkItem[] }>('/api/admin/friend-links/list', {
-  default: () => ({ code: 0, msg: '', data: [] }),
+const { data, status, refresh } = useLazyFetch<FriendLinkItem[]>('/api/admin/friend-links/list', {
+  default: () => [],
 })
-const items = computed(() => data.value?.data || [])
+const items = computed(() => data.value || [])
 
 const modalOpen = ref(false)
 const editItem = ref<FriendLinkItem | null>(null)

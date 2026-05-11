@@ -119,12 +119,12 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
 const state = reactive<Partial<Schema>>({})
 const loading = ref(false)
 
-const { data: categoriesData, refresh: refreshCategories } = useLazyFetch('/api/admin/api-categories/list', {
-  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, name: string, code: string }> }),
+const { data: categoriesData, refresh: refreshCategories } = useLazyFetch<Array<{ id: number, name: string, code: string }>>('/api/admin/api-categories/list', {
+  default: () => [],
 })
 const categoryOptions = computed(() => [
   { label: '未分类', value: null },
-  ...((categoriesData.value?.data || []).map(c => ({ label: c.name, value: c.id }))),
+  ...((categoriesData.value || []).map(c => ({ label: c.name, value: c.id }))),
 ])
 
 // 内联新增分类

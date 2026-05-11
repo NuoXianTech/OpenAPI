@@ -20,10 +20,10 @@ const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
-const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
-  default: () => ({ code: 0, msg: '', data: [] as ApiKey[] }),
+const { data, status, refresh } = useLazyFetch<ApiKey[]>('/api/user/apikeys/list', {
+  default: () => [],
 })
-const items = computed<ApiKey[]>(() => data.value?.data || [])
+const items = computed<ApiKey[]>(() => data.value || [])
 
 // 创建
 const createOpen = ref(false)
@@ -40,11 +40,11 @@ function openCreate() {
 async function submitCreate() {
   creating.value = true
   try {
-    const res = await $fetch<{ data?: ApiKey } | ApiKey>('/api/user/apikeys/add', {
+    const res = await $fetch<ApiKey>('/api/user/apikeys/add', {
       method: 'POST',
       body: { name: newName.value.trim() || '默认密钥' },
     })
-    createdKey.value = (res as { data?: ApiKey })?.data || (res as ApiKey) || null
+    createdKey.value = res || null
     toast.add({ title: '已生成新 API Key', color: 'success' })
     await refresh()
   }
@@ -72,11 +72,11 @@ async function confirmReset() {
   if (!resetTarget.value) return
   resetLoading.value = true
   try {
-    const res = await $fetch<{ data?: ApiKey } | ApiKey>('/api/user/apikeys/reset', {
+    const res = await $fetch<ApiKey>('/api/user/apikeys/reset', {
       method: 'POST',
       body: { id: resetTarget.value.id },
     })
-    resetResult.value = (res as { data?: ApiKey })?.data || (res as ApiKey) || null
+    resetResult.value = res || null
     toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
     await refresh()
   }

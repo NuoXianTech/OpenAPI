@@ -4,7 +4,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 const toast = useToast()
 
 const { data, status, refresh } = useLazyFetch('/api/admin/settings/get', {
-  default: () => ({ code: 0, msg: '', data: null }),
+  default: () => null,
 })
 
 const form = reactive({
@@ -40,7 +40,7 @@ const form = reactive({
   announcementShowOnHome: false,
 })
 
-watch(() => data.value?.data, (val) => {
+watch(() => data.value, (val) => {
   if (val) {
     Object.assign(form, {
       siteName: val.siteName || '',

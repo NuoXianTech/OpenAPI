@@ -26,15 +26,15 @@ interface MessageRow {
 
 const toast = useToast()
 
-const { data: usersData } = useLazyFetch('/api/admin/users/list', {
-  default: () => ({ code: 0, msg: '', data: [] as UserItem[] }),
+const { data: usersData } = useLazyFetch<UserItem[]>('/api/admin/users/list', {
+  default: () => [],
 })
-const users = computed(() => (usersData.value?.data || []).filter(u => !u.isBanned))
+const users = computed(() => (usersData.value || []).filter(u => !u.isBanned))
 
-const { data: messagesData, status, refresh } = useLazyFetch('/api/admin/notifications/list', {
-  default: () => ({ code: 0, msg: '', data: [] as MessageRow[] }),
+const { data: messagesData, status, refresh } = useLazyFetch<MessageRow[]>('/api/admin/notifications/list', {
+  default: () => [],
 })
-const messages = computed<MessageRow[]>(() => messagesData.value?.data || [])
+const messages = computed<MessageRow[]>(() => messagesData.value || [])
 
 // ----- 撰写表单 -----
 const form = reactive({
@@ -76,7 +76,7 @@ async function submitSend() {
   }
   sending.value = true
   try {
-    const res = await $fetch<{ data?: { deliveredCount?: number } }>('/api/admin/notifications/send', {
+    const res = await $fetch<{ deliveredCount?: number }>('/api/admin/notifications/send', {
       method: 'POST',
       body: {
         audience: form.audience,
@@ -87,7 +87,7 @@ async function submitSend() {
         linkUrl: form.linkUrl.trim() || null,
       },
     })
-    toast.add({ title: `已发送（投递 ${res?.data?.deliveredCount ?? 0} 人）`, color: 'success' })
+    toast.add({ title: `已发送（投递 ${res?.deliveredCount ?? 0} 人）`, color: 'success' })
     form.title = ''
     form.content = ''
     form.linkUrl = ''
@@ -114,8 +114,8 @@ async function openDetail(row: MessageRow) {
   detailOpen.value = true
   detailLoading.value = true
   try {
-    const res = await $fetch<{ data?: { deliveries?: typeof detailRows.value } }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
-    detailRows.value = res?.data?.deliveries || []
+    const res = await $fetch<{ deliveries?: typeof detailRows.value }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
+    detailRows.value = res?.deliveries || []
   }
   finally {
     detailLoading.value = false

@@ -3,27 +3,27 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const { user } = useAuth()
 
-const { data: callsData } = useLazyFetch('/api/user/calls/summary', {
-  default: () => ({ code: 0, msg: '', data: { total: 0, success: 0, failure: 0 } }),
+const { data: callsData } = useLazyFetch<{ total: number, success: number, failure: number }>('/api/user/calls/summary', {
+  default: () => ({ total: 0, success: 0, failure: 0 }),
 })
-const { data: keysData } = useLazyFetch('/api/user/apikeys/list', {
-  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, isActive: boolean }> }),
+const { data: keysData } = useLazyFetch<Array<{ id: number, isActive: boolean }>>('/api/user/apikeys/list', {
+  default: () => [],
 })
-const { data: notifData } = useLazyFetch('/api/notifications/list', {
-  default: () => ({ code: 0, msg: '', data: [] as Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }> }),
+const { data: notifData } = useLazyFetch<Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }>>('/api/notifications/list', {
+  default: () => [],
   query: { limit: 5 },
 })
 
-const summary = computed(() => callsData.value?.data || { total: 0, success: 0, failure: 0 })
+const summary = computed(() => callsData.value || { total: 0, success: 0, failure: 0 })
 const successRate = computed(() => {
   if (!summary.value.total) return '0%'
   return `${((summary.value.success / summary.value.total) * 100).toFixed(1)}%`
 })
 
-const keys = computed(() => keysData.value?.data || [])
+const keys = computed(() => keysData.value || [])
 const activeKeys = computed(() => keys.value.filter(k => k.isActive).length)
 
-const recentNotifs = computed(() => notifData.value?.data || [])
+const recentNotifs = computed(() => notifData.value || [])
 
 const credits = computed(() => Number(user.value?.credits ?? 0))
 
