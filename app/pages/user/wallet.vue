@@ -1,46 +1,32 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useUserWalletPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/useUserWalletPage'
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
-const toast = useToast()
-
-interface WalletSummary {
-  balance: number
-  totalIn: number
-  totalOut: number
-  totalCount: number
-  byReason: Array<{ reason: string, count: number, sum: number }>
-}
-
-interface TransactionRow {
-  id: number
-  amount: number
-  balanceAfter: number
-  reason: string
-  apiId: number | null
-  apiName: string | null
-  apiPath: string | null
-  apiCallId: number | null
-  operatorName: string | null
-  remark: string | null
-  createdAt: string
-}
-
 const UBadge = resolveComponent('UBadge')
 
-const summary = ref<WalletSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
-const summaryLoading = ref(false)
+const {
+  summary,
+  summaryLoading,
+  filters,
+  page,
+  pageSize,
+  items,
+  total,
+  loading,
+  redeemRecords,
+  totalPages,
+  redeem,
+  applyFilters,
+  resetFilters,
+  refreshAll,
+  init,
+} = useUserWalletPage()
 
-const filters = reactive({
-  reason: 'all' as 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code',
-  direction: 'all' as 'all' | 'in' | 'out',
+onMounted(() => {
+  void init()
 })
-const page = ref(1)
-const pageSize = ref(50)
-const items = ref<TransactionRow[]>([])
-const total = ref(0)
-const loading = ref(false)
 
 const reasonItems = [
   { label: '全部类型', value: 'all' },
@@ -59,150 +45,6 @@ const directionItems = [
   { label: '支出（−）', value: 'out' },
 ]
 
-const reasonMeta: Record<string, { label: string, color: 'success' | 'error' | 'warning' | 'info' | 'neutral' }> = {
-  api_charge: { label: 'API 扣费', color: 'error' },
-  api_refund: { label: 'API 退款', color: 'success' },
-  redemption_code: { label: '兑换码', color: 'success' },
-  admin_grant: { label: '管理员加', color: 'success' },
-  admin_revoke: { label: '管理员扣', color: 'error' },
-  admin_reset: { label: '管理员重置', color: 'warning' },
-  signup_bonus: { label: '注册赠送', color: 'info' },
-}
-
-async function fetchSummary() {
-  summaryLoading.value = true
-  try {
-    const res = await $fetch<WalletSummary>('/api/user/credits/summary')
-    summary.value = res || { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
-  }
-  catch (err) {
-    console.error('failed to load wallet summary', err)
-  }
-  finally {
-    summaryLoading.value = false
-  }
-}
-
-async function fetchTransactions() {
-  loading.value = true
-  try {
-    const res = await $fetch<{ items: TransactionRow[], total: number }>('/api/user/credits/transactions', {
-      query: {
-        reason: filters.reason === 'all' ? undefined : filters.reason,
-        direction: filters.direction === 'all' ? undefined : filters.direction,
-        limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value,
-      },
-    })
-    items.value = res?.items || []
-    total.value = res?.total || 0
-  }
-  catch (err) {
-    console.error('failed to load transactions', err)
-    items.value = []
-    total.value = 0
-  }
-  finally {
-    loading.value = false
-  }
-}
-
-function applyFilters() {
-  page.value = 1
-  void fetchTransactions()
-}
-
-function resetFilters() {
-  filters.reason = 'all'
-  filters.direction = 'all'
-  page.value = 1
-  void fetchTransactions()
-}
-
-async function refreshAll() {
-  await Promise.all([fetchSummary(), fetchTransactions()])
-}
-
-watch(page, () => {
-  void fetchTransactions()
-})
-
-onMounted(() => {
-  void refreshAll()
-})
-
-// ----- 兑换码 -----
-interface RedeemRecord {
-  id: number
-  codeId: number
-  code: string | null
-  amount: number
-  redeemedAt: string
-  note: string | null
-}
-
-const redeemCode = ref('')
-const redeeming = ref(false)
-const redeemRecords = ref<RedeemRecord[]>([])
-const recentRedeemAmount = ref<number | null>(null)
-
-async function fetchRedeemRecords() {
-  try {
-    const res = await $fetch<{ items: RedeemRecord[], total: number }>('/api/user/credits/redemptions', {
-      query: { limit: 10 },
-    })
-    redeemRecords.value = res?.items || []
-  }
-  catch (err) {
-    console.error('failed to load redemption records', err)
-  }
-}
-
-async function submitRedeem() {
-  const code = redeemCode.value.trim().toUpperCase()
-  if (!code) {
-    toast.add({ title: '请输入兑换码', color: 'warning' })
-    return
-  }
-  redeeming.value = true
-  try {
-    const res = await $fetch<{ amount: number, balanceAfter: number }>('/api/user/credits/redeem', {
-      method: 'POST',
-      body: { code },
-    })
-    recentRedeemAmount.value = res.amount
-    toast.add({
-      title: `兑换成功 +${res.amount.toLocaleString()}`,
-      description: `当前余额 ${res.balanceAfter.toLocaleString()}`,
-      color: 'success',
-    })
-    redeemCode.value = ''
-    await refreshAll()
-    await fetchRedeemRecords()
-  }
-  catch (err: unknown) {
-    const e = err as { data?: { message?: string }, statusMessage?: string }
-    const msg = e?.data?.message || e?.statusMessage || '兑换失败'
-    toast.add({ title: msg, color: 'error' })
-  }
-  finally {
-    redeeming.value = false
-  }
-}
-
-onMounted(() => {
-  void fetchRedeemRecords()
-})
-
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-
-const overviewCards = computed(() => [
-  { key: 'balance', label: '当前余额', value: summary.value.balance.toLocaleString(), icon: 'i-mdi-wallet-outline', color: 'text-primary' },
-  { key: 'in', label: '累计收入', value: summary.value.totalIn.toLocaleString(), icon: 'i-mdi-arrow-down-bold-circle-outline', color: 'text-success' },
-  { key: 'out', label: '累计支出', value: summary.value.totalOut.toLocaleString(), icon: 'i-mdi-arrow-up-bold-circle-outline', color: 'text-error' },
-  { key: 'count', label: '流水笔数', value: summary.value.totalCount.toLocaleString(), icon: 'i-mdi-format-list-numbered', color: 'text-info' },
-])
-
 function formatDate(iso: string) {
   if (!iso) return '-'
   try {
@@ -211,14 +53,6 @@ function formatDate(iso: string) {
   catch {
     return iso
   }
-}
-
-function reasonLabel(reason: string) {
-  return reasonMeta[reason]?.label || reason
-}
-
-function reasonColor(reason: string) {
-  return reasonMeta[reason]?.color || 'neutral'
 }
 
 const columns: TableColumn<TransactionRow>[] = [
@@ -307,132 +141,15 @@ const columns: TableColumn<TransactionRow>[] = [
 
     <template #body>
       <div class="space-y-6">
-        <!-- 余额概览 -->
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <UCard
-            v-for="card in overviewCards"
-            :key="card.key"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm text-muted">
-                  {{ card.label }}
-                </p>
-                <p class="text-2xl font-semibold tabular-nums mt-1">
-                  {{ card.value }}
-                </p>
-              </div>
-              <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
-                <UIcon
-                  :name="card.icon"
-                  :class="card.color"
-                  class="size-5"
-                />
-              </div>
-            </div>
-          </UCard>
-        </div>
+        <UserWalletOverviewCards :summary="summary" />
 
-        <!-- 兑换码 -->
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-ticket-percent-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                兑换码
-              </h3>
-            </div>
-          </template>
-          <div class="flex flex-wrap items-end gap-3">
-            <UFormField
-              label="输入兑换码"
-              class="flex-1 min-w-[260px]"
-              hint="输入后点「兑换」即可加入余额，不区分大小写"
-            >
-              <UInput
-                v-model="redeemCode"
-                placeholder="例如 WELCOME-XXXXXXXXXXXXXXXX"
-                class="font-mono uppercase"
-                :ui="{ base: 'uppercase' }"
-                @keydown.enter="submitRedeem"
-              />
-            </UFormField>
-            <UButton
-              icon="i-mdi-gift-outline"
-              :loading="redeeming"
-              @click="submitRedeem"
-            >
-              兑换
-            </UButton>
-          </div>
-          <div
-            v-if="redeemRecords.length > 0"
-            class="mt-4 pt-3 border-t border-default"
-          >
-            <div class="text-xs text-muted mb-2">
-              最近兑换
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <div
-                v-for="r in redeemRecords"
-                :key="r.id"
-                class="inline-flex items-center gap-2 rounded-full border border-default bg-elevated/30 px-3 py-1 text-xs"
-              >
-                <span class="font-mono text-muted">{{ r.code || `#${r.codeId}` }}</span>
-                <span class="font-semibold text-success tabular-nums">
-                  +{{ r.amount.toLocaleString() }}
-                </span>
-                <span class="text-muted">{{ formatDate(r.redeemedAt) }}</span>
-              </div>
-            </div>
-          </div>
-        </UCard>
+        <UserWalletRedeemCard
+          :records="redeemRecords"
+          :on-redeem="redeem"
+        />
 
-        <!-- 按类型分布 -->
-        <UCard v-if="summary.byReason.length > 0">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-chart-pie-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                收支分布
-              </h3>
-            </div>
-          </template>
-          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <div
-              v-for="r in summary.byReason"
-              :key="r.reason"
-              class="flex items-center justify-between gap-2 rounded-lg border border-default p-3 bg-elevated/30"
-            >
-              <div class="flex items-center gap-2 min-w-0">
-                <UBadge
-                  :color="reasonColor(r.reason)"
-                  variant="subtle"
-                  size="sm"
-                >
-                  {{ reasonLabel(r.reason) }}
-                </UBadge>
-                <span class="text-xs text-muted">
-                  {{ r.count }} 笔
-                </span>
-              </div>
-              <span
-                class="font-semibold tabular-nums shrink-0"
-                :class="r.sum > 0 ? 'text-success' : r.sum < 0 ? 'text-error' : 'text-muted'"
-              >
-                {{ r.sum > 0 ? '+' : '' }}{{ r.sum.toLocaleString() }}
-              </span>
-            </div>
-          </div>
-        </UCard>
+        <UserWalletByReasonCard :by-reason="summary.byReason" />
 
-        <!-- 筛选 -->
         <UCard>
           <div class="flex flex-wrap items-end gap-3">
             <UFormField
@@ -471,7 +188,6 @@ const columns: TableColumn<TransactionRow>[] = [
           </div>
         </UCard>
 
-        <!-- 流水表格 -->
         <UCard>
           <template #header>
             <div class="flex items-center gap-2">

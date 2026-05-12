@@ -1,96 +1,9 @@
 <script setup lang="ts">
+import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const toast = useToast()
-
-const { data, status, refresh } = useLazyFetch('/api/admin/settings/get', {
-  default: () => null,
-})
-
-const form = reactive({
-  siteName: '',
-  siteUrl: '',
-  siteImg: '',
-  siteDescription: '',
-  startTime: '',
-  sessionMaxAgeSeconds: 86400,
-  sessionAbsoluteMaxAgeSeconds: 604800,
-  sessionRememberMaxAgeSeconds: 2592000,
-  registerEmailFilterMode: 'off' as 'off' | 'whitelist' | 'blacklist',
-  registerEmailFilterList: '',
-  emailVerifyExpiresInMinutes: 30,
-  passwordResetExpiresInMinutes: 30,
-  passwordResetEnabled: true,
-  smtpHost: '',
-  smtpPort: 465,
-  smtpSecure: true,
-  smtpUser: '',
-  smtpPass: '',
-  smtpFrom: '',
-  oauthLoginEnabled: true,
-  oauthForceBinding: false,
-  turnstileEnabled: false,
-  turnstileSiteKey: '',
-  turnstileSecretKey: '',
-  turnstileLoginEnabled: true,
-  turnstileRegisterEnabled: true,
-  turnstileAdminLoginEnabled: true,
-  turnstilePublicStatsEnabled: false,
-  turnstilePasswordResetEnabled: true,
-  announcementShowOnHome: false,
-})
-
-watch(() => data.value, (val) => {
-  if (val) {
-    Object.assign(form, {
-      siteName: val.siteName || '',
-      siteUrl: val.siteUrl || '',
-      siteImg: val.siteImg || '',
-      siteDescription: val.siteDescription || '',
-      startTime: val.startTime || '',
-      sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? 86400,
-      sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? 604800,
-      sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? 2592000,
-      registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist') ? val.registerEmailFilterMode : 'off',
-      registerEmailFilterList: val.registerEmailFilterList ?? '',
-      emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? 30,
-      passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? 30,
-      passwordResetEnabled: val.passwordResetEnabled ?? true,
-      smtpHost: val.smtpHost || '',
-      smtpPort: val.smtpPort ?? 465,
-      smtpSecure: val.smtpSecure ?? true,
-      smtpUser: val.smtpUser || '',
-      smtpPass: val.smtpPass || '',
-      smtpFrom: val.smtpFrom || '',
-      oauthLoginEnabled: val.oauthLoginEnabled ?? true,
-      oauthForceBinding: val.oauthForceBinding ?? false,
-      turnstileEnabled: val.turnstileEnabled ?? false,
-      turnstileSiteKey: val.turnstileSiteKey || '',
-      turnstileSecretKey: val.turnstileSecretKey || '',
-      turnstileLoginEnabled: val.turnstileLoginEnabled ?? true,
-      turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? true,
-      turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? true,
-      turnstilePublicStatsEnabled: val.turnstilePublicStatsEnabled ?? false,
-      turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? true,
-      announcementShowOnHome: val.announcementShowOnHome ?? false,
-    })
-  }
-}, { immediate: true })
-
-const saving = ref(false)
-
-async function handleSave() {
-  saving.value = true
-  try {
-    await $fetch('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
-    toast.add({ title: '保存成功', color: 'success' })
-    await refresh()
-  }
-  catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
-  }
-  finally { saving.value = false }
-}
+const { form, saving, status, save } = useAdminSettingsPage()
 </script>
 
 <template>
@@ -104,7 +17,7 @@ async function handleSave() {
           <UButton
             icon="i-mdi-content-save-outline"
             :loading="saving"
-            @click="handleSave"
+            @click="save"
           >
             保存设置
           </UButton>
@@ -174,99 +87,7 @@ async function handleSave() {
           </div>
         </UCard>
 
-        <!-- Session -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-shield-lock-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                安全设置
-              </h3>
-            </div>
-          </template>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UFormField
-              label="默认会话有效期 (秒)"
-              help="未勾选「记住我」时使用，默认 86400=1 天，期间活跃会自动滑动续期。"
-            >
-              <UInput
-                v-model.number="form.sessionMaxAgeSeconds"
-                type="number"
-              />
-            </UFormField>
-            <UFormField
-              label="会话绝对硬顶 (秒)"
-              help="未勾选「记住我」时滑动续期的绝对上限，从首次登录算，默认 604800=7 天。到顶后无论是否活跃都强制重新登录。"
-            >
-              <UInput
-                v-model.number="form.sessionAbsoluteMaxAgeSeconds"
-                type="number"
-              />
-            </UFormField>
-            <UFormField
-              label="「记住我」会话有效期 (秒)"
-              help="勾选「记住我」时使用，默认 2592000=30 天，到期后必须重新登录。"
-            >
-              <UInput
-                v-model.number="form.sessionRememberMaxAgeSeconds"
-                type="number"
-              />
-            </UFormField>
-            <UFormField label="邮箱验证过期 (分钟)">
-              <UInput
-                v-model.number="form.emailVerifyExpiresInMinutes"
-                type="number"
-              />
-            </UFormField>
-            <UFormField label="密码重置链接过期 (分钟)">
-              <UInput
-                v-model.number="form.passwordResetExpiresInMinutes"
-                type="number"
-              />
-            </UFormField>
-          </div>
-          <div class="flex flex-col gap-1 pt-4 border-t border-default mt-4">
-            <USwitch
-              v-model="form.passwordResetEnabled"
-              label="启用「忘记密码」功能"
-            />
-            <p class="text-xs text-muted">
-              关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。
-            </p>
-          </div>
-          <div class="flex flex-col gap-3 pt-4 border-t border-default mt-4">
-            <UFormField
-              label="注册邮箱过滤模式"
-              help="不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。"
-            >
-              <URadioGroup
-                v-model="form.registerEmailFilterMode"
-                orientation="horizontal"
-                :items="[
-                  { label: '不开启', value: 'off' },
-                  { label: '白名单', value: 'whitelist' },
-                  { label: '黑名单', value: 'blacklist' },
-                ]"
-              />
-            </UFormField>
-            <UFormField
-              label="邮箱域名列表"
-              :help="form.registerEmailFilterMode === 'off'
-                ? '当前模式为「不开启」，此列表不会生效。'
-                : '逗号或换行分隔，仅写域名（不带 @）。例如：163.com, qq.com、gmail.com。# 开头为注释。'"
-            >
-              <UTextarea
-                v-model="form.registerEmailFilterList"
-                :rows="4"
-                :disabled="form.registerEmailFilterMode === 'off'"
-                placeholder="163.com, qq.com&#10;gmail.com"
-              />
-            </UFormField>
-          </div>
-        </UCard>
+        <AdminSettingsSecurityCard />
 
         <!-- OAuth -->
         <UCard class="shadow-sm">
@@ -304,98 +125,7 @@ async function handleSave() {
           </div>
         </UCard>
 
-        <!-- Turnstile -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-robot-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                Cloudflare Turnstile 人机验证
-              </h3>
-            </div>
-          </template>
-          <div class="space-y-4">
-            <div class="flex flex-col gap-1">
-              <USwitch
-                v-model="form.turnstileEnabled"
-                label="启用 Turnstile"
-              />
-              <p class="text-xs text-muted">
-                总开关。关闭后所有页面均不进行人机验证；未配置 Site Key 或 Secret Key 时也会视为关闭。
-              </p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UFormField label="Site Key">
-                <UInput
-                  v-model="form.turnstileSiteKey"
-                  placeholder="0x4AAAAAA..."
-                />
-              </UFormField>
-              <UFormField label="Secret Key">
-                <UInput
-                  v-model="form.turnstileSecretKey"
-                  type="password"
-                  placeholder="留空或保持 *** 表示不修改"
-                />
-              </UFormField>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-default">
-              <div class="flex flex-col gap-1">
-                <USwitch
-                  v-model="form.turnstileLoginEnabled"
-                  :disabled="!form.turnstileEnabled"
-                  label="用户登录页"
-                />
-                <p class="text-xs text-muted">
-                  /login 提交时校验。
-                </p>
-              </div>
-              <div class="flex flex-col gap-1">
-                <USwitch
-                  v-model="form.turnstileRegisterEnabled"
-                  :disabled="!form.turnstileEnabled"
-                  label="用户注册页"
-                />
-                <p class="text-xs text-muted">
-                  /register 提交时校验。
-                </p>
-              </div>
-              <div class="flex flex-col gap-1">
-                <USwitch
-                  v-model="form.turnstileAdminLoginEnabled"
-                  :disabled="!form.turnstileEnabled"
-                  label="管理员登录页"
-                />
-                <p class="text-xs text-muted">
-                  /admin/login 提交时校验。
-                </p>
-              </div>
-              <div class="flex flex-col gap-1">
-                <USwitch
-                  v-model="form.turnstilePublicStatsEnabled"
-                  :disabled="!form.turnstileEnabled"
-                  label="公开调用统计页"
-                />
-                <p class="text-xs text-muted">
-                  /stats 加载数据前校验，防止恶意抓取。
-                </p>
-              </div>
-              <div class="flex flex-col gap-1">
-                <USwitch
-                  v-model="form.turnstilePasswordResetEnabled"
-                  :disabled="!form.turnstileEnabled || !form.passwordResetEnabled"
-                  label="忘记密码页"
-                />
-                <p class="text-xs text-muted">
-                  /forgot-password 申请重置链接时校验，避免邮件接口被刷。
-                </p>
-              </div>
-            </div>
-          </div>
-        </UCard>
+        <AdminSettingsTurnstileCard />
 
         <!-- Announcement -->
         <UCard class="shadow-sm">
@@ -430,62 +160,7 @@ async function handleSave() {
           </div>
         </UCard>
 
-        <!-- SMTP -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-email-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                邮件配置 (SMTP)
-              </h3>
-            </div>
-          </template>
-          <div class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UFormField label="SMTP 主机">
-                <UInput
-                  v-model="form.smtpHost"
-                  placeholder="smtp.example.com"
-                />
-              </UFormField>
-              <UFormField label="SMTP 端口">
-                <UInput
-                  v-model.number="form.smtpPort"
-                  type="number"
-                  placeholder="465"
-                />
-              </UFormField>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <UFormField label="SMTP 用户名">
-                <UInput
-                  v-model="form.smtpUser"
-                  placeholder="user@example.com"
-                />
-              </UFormField>
-              <UFormField label="SMTP 密码">
-                <UInput
-                  v-model="form.smtpPass"
-                  type="password"
-                  placeholder="••••••••"
-                />
-              </UFormField>
-            </div>
-            <UFormField label="发件人地址">
-              <UInput
-                v-model="form.smtpFrom"
-                placeholder="no-reply@example.com"
-              />
-            </UFormField>
-            <USwitch
-              v-model="form.smtpSecure"
-              label="使用 SSL/TLS"
-            />
-          </div>
-        </UCard>
+        <AdminSettingsSmtpCard />
       </div>
     </template>
   </UDashboardPanel>
