@@ -250,9 +250,10 @@ export default defineNuxtModule({
   async setup(_options, nuxt) {
     const rootDir = nuxt.options.rootDir
 
-    // 提前跑一次，构建期就让违规报错显现（build 阶段 fail fast）
+    // 提前跑一次：build 阶段 fail fast，并在 prod 把结果物化为静态字符串
+    let initialManifest: ManifestApi[]
     try {
-      await buildManifest(rootDir)
+      initialManifest = await buildManifest(rootDir)
     }
     catch (err) {
       console.error((err as Error).message)
@@ -261,15 +262,22 @@ export default defineNuxtModule({
 
     nuxt.hook('nitro:config', (nitroConfig) => {
       nitroConfig.virtual = nitroConfig.virtual || {}
-      nitroConfig.virtual['#api-manifest'] = async () => {
-        try {
-          const manifest = await buildManifest(rootDir)
-          return renderManifestModule(manifest)
+      // dev：每次 import 重新扫盘以反映新增/删除的 endpoint 文件
+      // prod：build 阶段已 frozen，固化为静态字符串避免运行时 IO
+      if (nuxt.options.dev) {
+        nitroConfig.virtual['#api-manifest'] = async () => {
+          try {
+            const manifest = await buildManifest(rootDir)
+            return renderManifestModule(manifest)
+          }
+          catch (err) {
+            console.error('[api-manifest] 扫描失败：', (err as Error).message)
+            return renderManifestModule([])
+          }
         }
-        catch (err) {
-          console.error('[api-manifest] 扫描失败：', (err as Error).message)
-          return renderManifestModule([])
-        }
+      }
+      else {
+        nitroConfig.virtual['#api-manifest'] = renderManifestModule(initialManifest)
       }
     })
 

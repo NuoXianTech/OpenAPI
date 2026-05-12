@@ -87,7 +87,7 @@ export type GateOutcome
 
 /**
  * 统计目标 · gate 早期设置，覆盖成功与失败两种情形。
- * 用于 api-call-stats 中间件无需再次查 manifest/DB 即可写日志。
+ * 用于 apiCallStats Nitro plugin 无需再次查 manifest/DB 即可写日志。
  */
 export interface ApiStatsTarget {
   apiId: number

@@ -129,7 +129,10 @@ export async function getAuthUser(event: H3Event) {
   // 「记住我」会话保持登录时给定的固定到期时间；普通会话每次活跃都滑动续期，
   // 但绝不允许跨过 createdAt + sessionAbsoluteMaxAgeSeconds 的硬顶。
   if (session.isRemembered) {
-    void sessionService.touchSession(sessionId).catch(() => {})
+    // fail-open：touch 失败不影响本次鉴权，但需留痕便于排查 DB 写入异常
+    sessionService.touchSession(sessionId).catch((err) => {
+      console.error('[auth] failed to touch remembered session', { sessionId, err })
+    })
   }
   else {
     const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
@@ -145,7 +148,11 @@ export async function getAuthUser(event: H3Event) {
 
     const slidingExpiryMs = nowMs + defaultMaxAge * 1000
     const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
-    void sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs)).catch(() => {})
+    // fail-open：DB 续期失败不阻断请求，cookie 仍按新值下发；
+    // 下次请求若 DB 已恢复会重新续期，否则会随旧 expiresAt 自然过期
+    sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs)).catch((err) => {
+      console.error('[auth] failed to extend session expiry', { sessionId, err })
+    })
     const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
     setAuthCookie(event, sessionId, cookieMaxAge)
   }

@@ -1,7 +1,9 @@
 /**
  * API Gate · 前置守卫中间件。
  *
- * 命名前缀 `00.` 保证字母序最早，先于 api-call-stats 执行。
+ * 命名前缀 `00.` 保证字母序最早，确保 gate 在业务 handler 之前执行；
+ * 调用统计由 `server/plugins/apiCallStats.ts` 通过 Nitro `afterResponse`
+ * hook 在响应发出后异步记录，与本中间件无顺序耦合。
  *
  * 仅对治理范围内路径（/v{N}/**）生效：
  *   1. 提取 (pathVersion, code)
@@ -12,7 +14,7 @@
  *   6. 通过 → 挂 event.context.apiMeta / apiKey，附加 X-RateLimit-* 响应头
  *
  * 非治理路径（/api/auth/**、/api/admin/**、/api/user/**、/api/list 等）完全放行，
- * 不影响现有 api-call-stats 中间件的行为。
+ * 不影响调用统计 plugin 的行为。
  *
  * 拒绝路径输出开放 API 标准响应壳（见 server/utils/openApiResponse.ts），
  * data 中携带 errorCode 字符串便于调用方排查。
@@ -75,7 +77,7 @@ export default defineEventHandler(async (event: H3Event) => {
     return rejectWithOpenApi(event, API_GUARD_ERROR.NOT_REGISTERED, { pathVersion, apiCode: code })
   }
 
-  // 尽早挂 apiStatsTarget，使后续即便被规则链拒绝也能被 api-call-stats 中间件记录
+  // 尽早挂 apiStatsTarget，使后续即便被规则链拒绝也能被调用统计 plugin 记录
   event.context.apiStatsTarget = {
     apiId: api.id,
     apiPath: api.apiPath,

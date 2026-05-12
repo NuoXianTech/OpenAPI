@@ -11,8 +11,52 @@ interface TurnstileOptions {
 
 interface TurnstileWindow extends Window {
   turnstile?: TurnstileOptions
-  __turnstileOnLoadQueue?: Array<() => void>
   __turnstileOnLoad?: () => void
+}
+
+// 模块级 loader：所有 widget 实例共享同一个加载 Promise。
+// 失败时 Promise 一次性 reject，所有等待者同步收到错误而不会卡住；
+// 再次调用会重新发起加载，便于网络恢复后重试。
+let scriptLoadPromise: Promise<void> | null = null
+
+const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__turnstileOnLoad'
+const SCRIPT_SRC_PREFIX = SCRIPT_URL.split('?')[0]!
+
+function loadScript(): Promise<void> {
+  if (typeof window === 'undefined') {
+    return Promise.resolve()
+  }
+  const w = window as TurnstileWindow
+  if (w.turnstile) {
+    return Promise.resolve()
+  }
+  if (scriptLoadPromise) {
+    return scriptLoadPromise
+  }
+
+  scriptLoadPromise = new Promise<void>((resolve, reject) => {
+    w.__turnstileOnLoad = () => {
+      resolve()
+    }
+
+    const existing = document.querySelector<HTMLScriptElement>(`script[src^="${SCRIPT_SRC_PREFIX}"]`)
+    const script = existing ?? document.createElement('script')
+    if (!existing) {
+      script.src = SCRIPT_URL
+      script.async = true
+      script.defer = true
+      document.head.appendChild(script)
+    }
+    script.addEventListener('error', () => {
+      reject(new Error('turnstile script load failed'))
+    }, { once: true })
+  }).catch((err) => {
+    // 失败后清空缓存，允许后续重试
+    scriptLoadPromise = null
+    throw err
+  })
+
+  return scriptLoadPromise
 }
 
 const props = withDefaults(defineProps<{
@@ -37,45 +81,6 @@ const token = defineModel<string>('token', { default: '' })
 const container = ref<HTMLElement | null>(null)
 const widgetId = ref<string | null>(null)
 const loadError = ref('')
-
-const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__turnstileOnLoad'
-
-function loadScript(): Promise<void> {
-  if (typeof window === 'undefined') {
-    return Promise.resolve()
-  }
-  const w = window as TurnstileWindow
-  if (w.turnstile) {
-    return Promise.resolve()
-  }
-  return new Promise((resolve, reject) => {
-    w.__turnstileOnLoadQueue = w.__turnstileOnLoadQueue || []
-    w.__turnstileOnLoadQueue.push(resolve)
-
-    if (!w.__turnstileOnLoad) {
-      w.__turnstileOnLoad = () => {
-        const queue = w.__turnstileOnLoadQueue || []
-        w.__turnstileOnLoadQueue = []
-        queue.forEach(fn => fn())
-      }
-    }
-
-    if (document.querySelector(`script[src^="${SCRIPT_URL.split('?')[0]}"]`)) {
-      // 已有脚本（可能其它实例正在加载），等 onload
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = SCRIPT_URL
-    script.async = true
-    script.defer = true
-    script.onerror = () => {
-      loadError.value = 'Turnstile 脚本加载失败'
-      reject(new Error('turnstile script load failed'))
-    }
-    document.head.appendChild(script)
-  })
-}
 
 function renderWidget() {
   if (!container.value) {
@@ -132,7 +137,7 @@ onMounted(async () => {
     renderWidget()
   }
   catch (err) {
-    loadError.value = err instanceof Error ? err.message : String(err)
+    loadError.value = err instanceof Error ? err.message : 'Turnstile 脚本加载失败'
   }
 })
 

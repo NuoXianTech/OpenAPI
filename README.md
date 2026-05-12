@@ -45,10 +45,10 @@
 │  ├─ db/
 │  │  ├─ schema/            # Drizzle schema（user / auth / api / content / system）
 │  │  └─ migrations/        # drizzle-kit 生成，勿手改
-│  ├─ middleware/           # api-gate / api-call-stats
+│  ├─ middleware/           # api-gate
 │  ├─ service/              # 业务服务层
 │  ├─ utils/                # 鉴权、邮件、AES-GCM、OAuth、限流 driver、manifest ...
-│  └─ plugins/              # manifestSync 等启动钩子
+│  └─ plugins/              # manifestSync / apiCallStats 等启动钩子
 ├─ modules/api-manifest.ts  # 构建期扫描 server/routes/v{N}/ 生成 manifest
 ├─ shared/                  # 前后端共享类型
 ├─ tests/e2e/               # e2e 测试
