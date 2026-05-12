@@ -30,7 +30,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await operationLogService.addLog({
     actor: admin.username,
-    actorType: 'admin',
     action: 'admin.notification.send',
     resourceType: 'notification_message',
     resourceId: String(result.message.id),

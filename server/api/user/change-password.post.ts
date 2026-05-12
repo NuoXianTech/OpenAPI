@@ -40,7 +40,6 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: authUser.id,
     actor: authUser.username,
-    actorType: 'user',
     action: 'user.password.change',
     resourceType: 'user',
     resourceId: String(authUser.id),

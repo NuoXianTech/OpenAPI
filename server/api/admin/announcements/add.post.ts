@@ -24,7 +24,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await operationLogService.addLog({
     actor: admin.username,
-    actorType: 'admin',
     action: 'admin.announcement.create',
     resourceType: 'announcement',
     resourceId: created?.id,

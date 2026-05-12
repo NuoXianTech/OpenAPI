@@ -28,7 +28,6 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    actorType: 'admin',
     action: 'admin.oauth-provider.update',
     resourceType: 'oauth_provider',
     resourceId: String(updated.id),

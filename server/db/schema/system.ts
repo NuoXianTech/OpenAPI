@@ -89,9 +89,8 @@ export const siteSettings = pgTable('site_settings', {
 export const operationLogs = pgTable('operation_logs', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
-  actor: varchar('actor', { length: 140 }), // 冗余字段，用户被删后仍可追溯
-  actorType: varchar('actor_type', { length: 20 }).notNull().default('user'), // user / admin / system
-  action: varchar('action', { length: 80 }).notNull(), // e.g. user.ban / api.update
+  actor: varchar('actor', { length: 140 }), // 冗余字段，用户被删后仍可追溯（admin 操作 userId 为 NULL）
+  action: varchar('action', { length: 80 }).notNull(), // e.g. admin.user.ban / user.password.change
   resourceType: varchar('resource_type', { length: 80 }),
   resourceId: varchar('resource_id', { length: 120 }),
   ip: varchar('ip', { length: 45 }),

@@ -1,13 +1,11 @@
-import { and, desc, eq, gte, like, lte, type SQL } from 'drizzle-orm'
+import { and, desc, eq, gte, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
 import { operationLogs } from '@nuxthub/db/schema'
 
-export type OperationLogActorType = 'user' | 'admin' | 'system'
 export type OperationLogStatus = 'success' | 'failure'
 
 export interface OperationLogInput {
   userId?: number | null
   actor?: string | null
-  actorType?: OperationLogActorType
   action: string
   resourceType?: string | null
   resourceId?: string | number | null
@@ -19,7 +17,8 @@ export interface OperationLogInput {
 
 export interface OperationLogListFilters {
   userId?: number
-  actorType?: OperationLogActorType
+  // admin 操作 userId 为 NULL；filter 通过这一点区分管理端/用户端操作
+  actorKind?: 'admin' | 'user'
   action?: string // 支持前缀匹配，如 "user." 匹配所有用户相关操作
   resourceType?: string
   status?: OperationLogStatus
@@ -35,7 +34,6 @@ export const operationLogService = {
       await db.insert(operationLogs).values({
         userId: input.userId ?? null,
         actor: input.actor?.slice(0, 140) ?? null,
-        actorType: input.actorType || 'user',
         action: input.action,
         resourceType: input.resourceType ?? null,
         resourceId: input.resourceId !== null && input.resourceId !== undefined ? String(input.resourceId).slice(0, 120) : null,
@@ -56,8 +54,11 @@ export const operationLogService = {
     if (typeof filters.userId === 'number') {
       conditions.push(eq(operationLogs.userId, filters.userId))
     }
-    if (filters.actorType) {
-      conditions.push(eq(operationLogs.actorType, filters.actorType))
+    if (filters.actorKind === 'admin') {
+      conditions.push(isNull(operationLogs.userId))
+    }
+    else if (filters.actorKind === 'user') {
+      conditions.push(isNotNull(operationLogs.userId))
     }
     if (filters.action) {
       conditions.push(like(operationLogs.action, `${filters.action}%`))

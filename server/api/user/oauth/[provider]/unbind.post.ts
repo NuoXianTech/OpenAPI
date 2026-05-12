@@ -21,7 +21,6 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: authUser.id,
     actor: authUser.username,
-    actorType: 'user',
     action: 'user.oauth.unbind',
     resourceType: 'oauth_account',
     resourceId: String(removed.id),

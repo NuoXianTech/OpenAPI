@@ -30,7 +30,6 @@ export default defineEventHandler(async (event: H3Event) => {
     await operationLogService.addLog({
       userId: user.id,
       actor: user.username,
-      actorType: 'user',
       action: 'user.redemption_code.redeem',
       resourceType: 'redemption_code',
       resourceId: String(data.codeId),

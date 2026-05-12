@@ -1,5 +1,5 @@
 {
-  "id": "5a8d5f6c-da45-4519-a8ff-671c7a02a9a8",
+  "id": "5668d43b-563d-449f-b630-e38490ed1e38",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2126,13 +2126,6 @@
           "type": "varchar(140)",
           "primaryKey": false,
           "notNull": false
-        },
-        "actor_type": {
-          "name": "actor_type",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'user'"
         },
         "action": {
           "name": "action",

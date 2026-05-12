@@ -36,7 +36,6 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    actorType: 'admin',
     action: `admin.credit.${operation}`,
     resourceType: 'user',
     resourceId: userIds.length === 1 ? String(userIds[0]) : `batch:${result.affected}`,

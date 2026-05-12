@@ -23,7 +23,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await operationLogService.addLog({
     actor: admin.username,
-    actorType: 'admin',
     action: 'admin.api-category.create',
     resourceType: 'api_category',
     resourceId: created?.id,

@@ -207,7 +207,6 @@ CREATE TABLE "operation_logs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
 	"actor" varchar(140),
-	"actor_type" varchar(20) DEFAULT 'user' NOT NULL,
 	"action" varchar(80) NOT NULL,
 	"resource_type" varchar(80),
 	"resource_id" varchar(120),

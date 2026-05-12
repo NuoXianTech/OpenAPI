@@ -1,10 +1,11 @@
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
-import { operationLogService, type OperationLogActorType, type OperationLogStatus } from '~~/server/service/operationLogService'
+import { operationLogService, type OperationLogStatus } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
 
-const ACTOR_TYPES: OperationLogActorType[] = ['user', 'admin', 'system']
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
+const ACTOR_KINDS = ['admin', 'user'] as const
+type ActorKind = typeof ACTOR_KINDS[number]
 
 function parseDate(value: unknown): Date | undefined {
   if (!value) return undefined
@@ -16,12 +17,12 @@ export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const query = getQuery(event)
 
-  const actorTypeRaw = (query.actorType || '').toString()
+  const actorKindRaw = (query.actorKind || '').toString()
   const statusRaw = (query.status || '').toString()
 
   const logs = await operationLogService.list({
     userId: query.userId ? Number(query.userId) : undefined,
-    actorType: ACTOR_TYPES.includes(actorTypeRaw as OperationLogActorType) ? actorTypeRaw as OperationLogActorType : undefined,
+    actorKind: ACTOR_KINDS.includes(actorKindRaw as ActorKind) ? actorKindRaw as ActorKind : undefined,
     action: (query.action || '').toString().trim() || undefined,
     resourceType: (query.resourceType || '').toString().trim() || undefined,
     status: STATUSES.includes(statusRaw as OperationLogStatus) ? statusRaw as OperationLogStatus : undefined,
