@@ -4,6 +4,7 @@ definePageMeta({ layout: false })
 const route = useRoute()
 const token = computed(() => (route.query.token || '').toString())
 const user = computed(() => (route.query.user || '').toString())
+const { fetchMe } = useAuth()
 
 const status = ref<'pending' | 'success' | 'error'>('pending')
 const message = ref('正在验证，请稍候...')
@@ -45,7 +46,7 @@ const headerTitle = computed(() => {
 
 const headerSubtitle = computed(() => {
   if (status.value === 'success') {
-    return alreadyVerified.value ? '邮箱已验证，请前往登录' : '已自动登录，正在跳转首页'
+    return alreadyVerified.value ? '邮箱已验证，请前往登录' : '已自动登录，正在跳转用户中心'
   }
   if (status.value === 'error') {
     return '验证链接可能已失效，请重新获取'
@@ -77,13 +78,14 @@ onMounted(async () => {
     if (result?.alreadyVerified) {
       alreadyVerified.value = true
       message.value = '邮箱已验证，请前往登录'
-      await new Promise(resolve => setTimeout(resolve, 800))
+      await new Promise(resolve => setTimeout(resolve, 3000))
       await navigateTo('/login')
     }
     else {
-      message.value = '验证成功，已自动登录，正在跳转首页...'
-      await new Promise(resolve => setTimeout(resolve, 800))
-      await navigateTo('/')
+      message.value = '验证成功，已自动登录，正在跳转到用户中心...'
+      await fetchMe(true)
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      await navigateTo('/user')
     }
   }
   catch (error: unknown) {
@@ -150,11 +152,11 @@ onMounted(async () => {
           {{ message }}
         </p>
         <UButton
-          :to="alreadyVerified ? '/login' : '/'"
+          :to="alreadyVerified ? '/login' : '/user'"
           block
           size="lg"
         >
-          {{ alreadyVerified ? '去登录' : '返回首页' }}
+          {{ alreadyVerified ? '去登录' : '进入用户中心' }}
         </UButton>
       </div>
 
