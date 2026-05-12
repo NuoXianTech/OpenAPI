@@ -10,6 +10,12 @@ function escapeLikePattern(value: string) {
 type GuardCacheEntry = { value: typeof apis.$inferSelect | null, expiresAt: number }
 const guardConfigCache = new Map<string, GuardCacheEntry>()
 
+// 公共 API 列表的总调用数聚合：listPublicApis 是高频接口，groupBy 全表扫描代价高。
+// apiCallStats 写入频率远高于读取（每次 API 调用都写），按写失效会让缓存形同虚设，
+// 故只用 TTL；最大 15s 陈旧度对展示字段可接受。
+type ApiStatsCacheEntry = { value: Record<number, { totalCalls: number }>, expiresAt: number }
+let apiStatsCache: ApiStatsCacheEntry | null = null
+
 function toContainsPattern(value: string) {
   return `%${escapeLikePattern(value)}%`
 }
@@ -23,6 +29,9 @@ function normalizeMethodList(httpMethod: string) {
 }
 
 async function loadApiStats() {
+  const now = Date.now()
+  if (apiStatsCache && apiStatsCache.expiresAt > now) return apiStatsCache.value
+
   const rows = await db.select({
     apiId: apiCallStats.apiId,
     totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
@@ -30,10 +39,12 @@ async function loadApiStats() {
 
   const statsRows = rows as Array<{ apiId: number, totalCalls: number | string | null }>
 
-  return statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
+  const value = statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
     accumulator[row.apiId] = { totalCalls: Number(row.totalCalls) || 0 }
     return accumulator
   }, {})
+  apiStatsCache = { value, expiresAt: now + API_META_CACHE_TTL_MS }
+  return value
 }
 
 export interface ApiListFilters {
