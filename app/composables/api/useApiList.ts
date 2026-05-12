@@ -27,8 +27,10 @@ export function useApiList() {
   })
 
   const categoryMap = computed(() => {
-    const map = new Map<number, ApiCategoryItem>()
-    categories.value.forEach(cat => map.set(cat.id, cat))
+    const map: Record<number, ApiCategoryItem> = {}
+    categories.value.forEach((cat) => {
+      map[cat.id] = cat
+    })
     return map
   })
 

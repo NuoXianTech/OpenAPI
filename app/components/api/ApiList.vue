@@ -1,17 +1,17 @@
 <script lang="ts" setup>
 import type { PropType } from 'vue'
-import type { ApiCatalogItem } from '~/composables/api/types'
+import type { ApiCatalogItem, ApiCategoryItem } from '~/composables/api/types'
 
 const { items, categoryMap } = defineProps({
   items: { type: Array as PropType<ApiCatalogItem[]>, default: () => [] },
-  categoryMap: { type: Object as PropType<Map<number, { name: string }>>, default: () => new Map() },
+  categoryMap: { type: Object as PropType<Record<number, ApiCategoryItem>>, default: () => ({}) },
 })
 
 function resolveCategoryName(id: number | null | undefined) {
   if (typeof id !== 'number') {
     return ''
   }
-  return categoryMap.get(id)?.name || ''
+  return categoryMap[id]?.name || ''
 }
 </script>
 
