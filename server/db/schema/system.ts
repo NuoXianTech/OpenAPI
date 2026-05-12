@@ -72,7 +72,7 @@ export const siteSettings = pgTable('site_settings', {
   turnstileSecretKey: varchar('turnstile_secret_key', { length: 500 }).notNull().default(''),
   turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(true),
   turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
-  turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(true),
+  turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(false),
   turnstilePublicStatsEnabled: boolean('turnstile_public_stats_enabled').notNull().default(false),
   turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(true),
 

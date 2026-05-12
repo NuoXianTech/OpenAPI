@@ -61,7 +61,7 @@ function defaultForm(): AdminSettingsForm {
     turnstileSecretKey: '',
     turnstileLoginEnabled: true,
     turnstileRegisterEnabled: true,
-    turnstileAdminLoginEnabled: true,
+    turnstileAdminLoginEnabled: false,
     turnstilePublicStatsEnabled: false,
     turnstilePasswordResetEnabled: true,
     announcementShowOnHome: false,

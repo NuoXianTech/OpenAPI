@@ -21,6 +21,7 @@ let scriptLoadPromise: Promise<void> | null = null
 
 const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=__turnstileOnLoad'
 const SCRIPT_SRC_PREFIX = SCRIPT_URL.split('?')[0]!
+const SCRIPT_LOAD_TIMEOUT_MS = 12_000
 
 function loadScript(): Promise<void> {
   if (typeof window === 'undefined') {
@@ -35,8 +36,17 @@ function loadScript(): Promise<void> {
   }
 
   scriptLoadPromise = new Promise<void>((resolve, reject) => {
+    let settled = false
+    const finish = (fn: () => void) => {
+      if (settled) {
+        return
+      }
+      settled = true
+      fn()
+    }
+
     w.__turnstileOnLoad = () => {
-      resolve()
+      finish(() => resolve())
     }
 
     const existing = document.querySelector<HTMLScriptElement>(`script[src^="${SCRIPT_SRC_PREFIX}"]`)
@@ -48,8 +58,18 @@ function loadScript(): Promise<void> {
       document.head.appendChild(script)
     }
     script.addEventListener('error', () => {
-      reject(new Error('turnstile script load failed'))
+      finish(() => reject(new Error('Turnstile 脚本加载失败：无法访问 challenges.cloudflare.com')))
     }, { once: true })
+
+    // 网络被墙/丢包时浏览器既不会触发 onload 也不会触发 error，
+    // 用一个超时兜底，避免 UI 永远空白卡住。
+    setTimeout(() => {
+      if ((window as TurnstileWindow).turnstile) {
+        finish(() => resolve())
+        return
+      }
+      finish(() => reject(new Error(`Turnstile 脚本加载超时（>${SCRIPT_LOAD_TIMEOUT_MS / 1000}s），请检查网络是否能访问 challenges.cloudflare.com`)))
+    }, SCRIPT_LOAD_TIMEOUT_MS)
   }).catch((err) => {
     // 失败后清空缓存，允许后续重试
     scriptLoadPromise = null
@@ -90,6 +110,10 @@ function renderWidget() {
   if (!turnstile) {
     return
   }
+  if (!props.siteKey) {
+    loadError.value = 'Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置'
+    return
+  }
   // 已有 widget 时先移除避免重复
   if (widgetId.value) {
     try {
@@ -112,13 +136,23 @@ function renderWidget() {
     },
     'error-callback': (err: unknown) => {
       token.value = ''
-      emit('error', String(err ?? 'turnstile_error'))
+      const message = String(err ?? 'turnstile_error')
+      // Cloudflare 错误码参考 https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/
+      loadError.value = `Turnstile 校验失败：${message}`
+      emit('error', message)
     },
   }
   if (props.action) {
     opts.action = props.action
   }
-  widgetId.value = turnstile.render(container.value, opts) || null
+  const id = turnstile.render(container.value, opts) || null
+  widgetId.value = id
+  if (!id) {
+    loadError.value = 'Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配'
+  }
+  else {
+    loadError.value = ''
+  }
 }
 
 function resetWidget() {
