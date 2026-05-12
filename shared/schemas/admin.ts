@@ -294,7 +294,6 @@ export const adminUpdateSiteSettingsSchema = z.object({
   turnstileLoginEnabled: z.boolean().optional(),
   turnstileRegisterEnabled: z.boolean().optional(),
   turnstileAdminLoginEnabled: z.boolean().optional(),
-  turnstilePublicStatsEnabled: z.boolean().optional(),
   turnstilePasswordResetEnabled: z.boolean().optional(),
   announcementShowOnHome: z.boolean().optional(),
 }).refine(

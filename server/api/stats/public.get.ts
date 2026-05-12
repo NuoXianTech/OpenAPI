@@ -1,15 +1,10 @@
-import { getQuery, getHeader, getRequestIP } from 'h3'
+import { getQuery } from 'h3'
 import { apiCallStatsService } from '~~/server/service/apiCallStatsService'
-import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const days = Number(query.days || 7)
   const topLimit = Number(query.top || 10)
-
-  // 公开统计页面的人机验证：token 可通过 query 或 header 传递
-  const token = (query.turnstileToken || getHeader(event, 'x-turnstile-token') || '').toString()
-  await assertTurnstileForPage('publicStats', token, getRequestIP(event) || null)
 
   return apiCallStatsService.getPublicDashboard({
     days,

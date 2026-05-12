@@ -10,7 +10,6 @@ export interface PublicTurnstileSettings {
   login: boolean
   register: boolean
   adminLogin: boolean
-  publicStats: boolean
   passwordReset: boolean
 }
 
@@ -64,7 +63,6 @@ export interface SiteSettingsUpsertInput {
   turnstileLoginEnabled?: boolean
   turnstileRegisterEnabled?: boolean
   turnstileAdminLoginEnabled?: boolean
-  turnstilePublicStatsEnabled?: boolean
   turnstilePasswordResetEnabled?: boolean
   announcementShowOnHome?: boolean
 }
@@ -99,7 +97,6 @@ function toPublicTurnstile(settings: {
   turnstileLoginEnabled: boolean
   turnstileRegisterEnabled: boolean
   turnstileAdminLoginEnabled: boolean
-  turnstilePublicStatsEnabled: boolean
   turnstilePasswordResetEnabled: boolean
 }): PublicTurnstileSettings {
   // 没配 siteKey / secretKey 时即便 enabled=true 也视为未启用，避免前端白屏。
@@ -111,7 +108,6 @@ function toPublicTurnstile(settings: {
     login: enabled && settings.turnstileLoginEnabled,
     register: enabled && settings.turnstileRegisterEnabled,
     adminLogin: enabled && settings.turnstileAdminLoginEnabled,
-    publicStats: enabled && settings.turnstilePublicStatsEnabled,
     passwordReset: enabled && settings.turnstilePasswordResetEnabled,
   }
 }

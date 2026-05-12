@@ -75,16 +75,6 @@ const form = useAdminSettingsForm()
         </div>
         <div class="flex flex-col gap-1">
           <USwitch
-            v-model="form.turnstilePublicStatsEnabled"
-            :disabled="!form.turnstileEnabled"
-            label="公开调用统计页"
-          />
-          <p class="text-xs text-muted">
-            /stats 加载数据前校验，防止恶意抓取。
-          </p>
-        </div>
-        <div class="flex flex-col gap-1">
-          <USwitch
             v-model="form.turnstilePasswordResetEnabled"
             :disabled="!form.turnstileEnabled || !form.passwordResetEnabled"
             label="忘记密码页"

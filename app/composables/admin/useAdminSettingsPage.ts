@@ -28,7 +28,6 @@ export interface AdminSettingsForm {
   turnstileLoginEnabled: boolean
   turnstileRegisterEnabled: boolean
   turnstileAdminLoginEnabled: boolean
-  turnstilePublicStatsEnabled: boolean
   turnstilePasswordResetEnabled: boolean
   announcementShowOnHome: boolean
 }
@@ -62,7 +61,6 @@ function defaultForm(): AdminSettingsForm {
     turnstileLoginEnabled: true,
     turnstileRegisterEnabled: true,
     turnstileAdminLoginEnabled: false,
-    turnstilePublicStatsEnabled: false,
     turnstilePasswordResetEnabled: true,
     announcementShowOnHome: false,
   }
@@ -121,7 +119,6 @@ export function useAdminSettingsPage() {
       turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,
       turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
       turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
-      turnstilePublicStatsEnabled: val.turnstilePublicStatsEnabled ?? d.turnstilePublicStatsEnabled,
       turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
       announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome,
     } satisfies AdminSettingsForm)

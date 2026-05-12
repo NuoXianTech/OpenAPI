@@ -4,7 +4,6 @@ interface PublicTurnstileSettings {
   login: boolean
   register: boolean
   adminLogin: boolean
-  publicStats: boolean
   passwordReset: boolean
 }
 
@@ -29,7 +28,6 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   login: false,
   register: false,
   adminLogin: false,
-  publicStats: false,
   passwordReset: false,
 }
 

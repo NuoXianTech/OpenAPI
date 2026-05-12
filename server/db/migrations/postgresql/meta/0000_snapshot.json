@@ -1,5 +1,5 @@
 {
-  "id": "5668d43b-563d-449f-b630-e38490ed1e38",
+  "id": "a224033c-4390-425b-b224-c8a22434d369",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2897,13 +2897,6 @@
         },
         "turnstile_admin_login_enabled": {
           "name": "turnstile_admin_login_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "turnstile_public_stats_enabled": {
-          "name": "turnstile_public_stats_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

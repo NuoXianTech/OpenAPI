@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { PublicCallStatsDashboard } from '~~/shared/types/public-stats'
 
+definePageMeta({ layout: false })
+
 // 图表依赖 d3 + DOM，体积较大。改为 lazy + client-only 异步组件，
 // 让 stats 页主体可以 SSR，图表在客户端 hydrate 后再下载/渲染。
 const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
@@ -11,25 +13,6 @@ interface TrendChartRow {
   label: string
   成功次数: number
   失败次数: number
-}
-
-function createEmptyDashboard(): PublicCallStatsDashboard {
-  return {
-    overview: {
-      totalCalls: 0,
-      todayCalls: 0,
-      yesterdayCalls: 0,
-      successCalls: 0,
-      failureCalls: 0,
-      successRate: 0,
-      userCount: 0,
-      enabledTrackedApiCount: 0,
-      trackedApiCount: 0,
-    },
-    trend7d: [],
-    top10Last30d: [],
-    generatedAt: new Date(0).toISOString(),
-  }
 }
 
 function toShortDate(value: string) {
@@ -47,15 +30,8 @@ function toShortDate(value: string) {
   return `${month}-${day}`
 }
 
-const EMPTY_DASHBOARD = createEmptyDashboard()
-
 const SUCCESS_KEY = '成功次数' as const
 const FAILURE_KEY = '失败次数' as const
-
-const { turnstile } = useSiteSettings()
-const turnstileRequired = computed(() => turnstile.value.publicStats)
-const turnstileToken = ref('')
-const turnstileWidget = ref<{ reset: () => void } | null>(null)
 
 const data = ref<PublicCallStatsDashboard | null>(null)
 const pending = ref(false)
@@ -65,19 +41,10 @@ const fetchStats = async () => {
   pending.value = true
   error.value = null
   try {
-    const headers: Record<string, string> = {}
-    if (turnstileRequired.value && turnstileToken.value) {
-      headers['x-turnstile-token'] = turnstileToken.value
-    }
-    data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public', { headers })
+    data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public')
   }
   catch (err) {
     error.value = err
-    // token 是一次性的，验证失败后重置重拿
-    if (turnstileRequired.value) {
-      turnstileToken.value = ''
-      turnstileWidget.value?.reset()
-    }
   }
   finally {
     pending.value = false
@@ -86,40 +53,27 @@ const fetchStats = async () => {
 
 const reloadStats = async () => {
   error.value = null
-  if (turnstileRequired.value) {
-    data.value = null
-    turnstileToken.value = ''
-    turnstileWidget.value?.reset()
-    return
-  }
   await fetchStats()
 }
 
-// token 拿到后自动拉取
-watch(turnstileToken, (val) => {
-  if (val && turnstileRequired.value) {
-    fetchStats()
-  }
-})
-
 onMounted(() => {
-  if (!turnstileRequired.value) {
-    fetchStats()
-  }
+  fetchStats()
 })
 
-const dashboard = computed(() => data.value || EMPTY_DASHBOARD)
-const overview = computed(() => dashboard.value.overview)
-const trend7d = computed(() => dashboard.value.trend7d)
-const top10Last30d = computed(() => dashboard.value.top10Last30d)
+const overview = computed(() => data.value?.overview ?? null)
+const trend7d = computed(() => data.value?.trend7d ?? [])
+const top10Last30d = computed(() => data.value?.top10Last30d ?? [])
 const hasData = computed(() => data.value !== null)
-const isInitialLoading = computed(() => pending.value && trend7d.value.length === 0 && top10Last30d.value.length === 0)
-const showChallenge = computed(() => turnstileRequired.value && !hasData.value && !error.value)
+const isInitialLoading = computed(() => pending.value && !hasData.value)
 
+// 没数据时不显示"更新时间"，避免 1970-01-01 这种 placeholder 时间被渲染出来
 const generatedAtLabel = computed(() => {
-  const date = new Date(dashboard.value.generatedAt)
+  if (!data.value?.generatedAt) {
+    return ''
+  }
+  const date = new Date(data.value.generatedAt)
   if (Number.isNaN(date.getTime())) {
-    return '-'
+    return ''
   }
   return date.toLocaleString('zh-CN', { hour12: false })
 })
@@ -140,13 +94,11 @@ const xTickFormat = (tick: number | Date | string) => {
   if (typeof tick === 'string') {
     return tick
   }
-
   if (typeof tick === 'number') {
     const maxIndex = Math.max(trendChartData.value.length - 1, 0)
     const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
     return trendChartData.value[index]?.label || ''
   }
-
   return ''
 }
 
@@ -169,294 +121,237 @@ const formatMethod = (value: string) => {
 }
 
 const overviewCards = computed(() => {
+  if (!overview.value) {
+    return []
+  }
   return [
-    {
-      key: 'total',
-      label: '累计调用',
-      value: formatCount(overview.value.totalCalls),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'today',
-      label: '今日调用',
-      value: formatCount(overview.value.todayCalls),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'yesterday',
-      label: '昨日调用',
-      value: formatCount(overview.value.yesterdayCalls),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'successRate',
-      label: '请求成功率',
-      value: formatRate(overview.value.successRate),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'success',
-      label: '成功调用',
-      value: formatCount(overview.value.successCalls),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'failure',
-      label: '失败调用',
-      value: formatCount(overview.value.failureCalls),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'users',
-      label: '注册用户',
-      value: formatCount(overview.value.userCount),
-      valueClass: 'text-default',
-    },
-    {
-      key: 'enabledStatsApis',
-      label: '统计接口',
-      value: formatCount(overview.value.enabledTrackedApiCount),
-      valueClass: 'text-default',
-    },
+    { key: 'total', label: '累计调用', value: formatCount(overview.value.totalCalls), icon: 'i-mdi-counter' },
+    { key: 'today', label: '今日调用', value: formatCount(overview.value.todayCalls), icon: 'i-mdi-calendar-today-outline' },
+    { key: 'yesterday', label: '昨日调用', value: formatCount(overview.value.yesterdayCalls), icon: 'i-mdi-calendar-arrow-left' },
+    { key: 'successRate', label: '请求成功率', value: formatRate(overview.value.successRate), icon: 'i-mdi-chart-donut' },
+    { key: 'success', label: '成功调用', value: formatCount(overview.value.successCalls), icon: 'i-mdi-check-circle-outline' },
+    { key: 'failure', label: '失败调用', value: formatCount(overview.value.failureCalls), icon: 'i-mdi-close-circle-outline' },
+    { key: 'users', label: '注册用户', value: formatCount(overview.value.userCount), icon: 'i-mdi-account-group-outline' },
+    { key: 'enabledStatsApis', label: '统计接口', value: formatCount(overview.value.enabledTrackedApiCount), icon: 'i-mdi-api' },
   ]
 })
 </script>
 
 <template>
-  <div>
-    <main class="mx-auto max-w-275 px-5 pt-6 pb-6">
-      <div class="mb-4 flex items-center justify-end gap-2">
+  <UPage class="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+    <UPageHeader
+      headline="公开数据"
+      title="OpenAPI 调用统计"
+      description="实时聚合的接口调用情况，可作为服务可用性与活跃度的参考"
+    >
+      <template #links>
         <UButton
-          icon="mdi:refresh"
+          icon="i-mdi-refresh"
           variant="outline"
           color="neutral"
           size="sm"
-          class="cursor-pointer"
           :loading="pending"
           @click="reloadStats"
         >
           刷新
         </UButton>
         <UButton
-          icon="mdi:home-outline"
+          icon="i-mdi-home-outline"
           variant="outline"
           color="neutral"
           size="sm"
-          class="cursor-pointer"
           to="/"
         >
           返回首页
         </UButton>
-      </div>
+      </template>
+    </UPageHeader>
 
-      <div class="mb-4 text-xs text-muted">
+    <UPageBody>
+      <p
+        v-if="generatedAtLabel"
+        class="text-xs text-muted -mt-2 mb-4"
+      >
         更新时间：{{ generatedAtLabel }}
-      </div>
+      </p>
 
-      <section
-        v-if="showChallenge"
-        class="state-panel bg-elevated border border-default rounded-xl p-6 text-center mb-6"
-      >
-        <div class="font-semibold mb-1">
-          需要完成人机验证
-        </div>
-        <div class="text-muted text-[13px] mb-4">
-          为防止恶意抓取，请先完成人机验证再查看统计数据。
-        </div>
-        <div class="flex justify-center">
-          <CommonTurnstileWidget
-            ref="turnstileWidget"
-            v-model:token="turnstileToken"
-            :site-key="turnstile.siteKey"
-          />
-        </div>
-      </section>
+      <UAlert
+        v-if="error"
+        color="error"
+        variant="soft"
+        icon="i-mdi-alert-circle-outline"
+        title="统计加载失败"
+        description="请稍后重试，或检查网络连接。"
+        class="mb-6"
+        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: reloadStats }]"
+      />
 
-      <section
-        v-else-if="error"
-        class="state-panel bg-elevated border border-default rounded-xl p-5 text-center mb-6"
-      >
-        <div class="font-semibold">
-          统计加载失败
-        </div>
-        <div class="text-muted text-[13px] mt-1">
-          请稍后重试。
-        </div>
-        <div class="mt-3">
-          <UButton
-            variant="outline"
-            size="sm"
-            class="cursor-pointer"
-            @click="reloadStats"
-          >
-            重试
-          </UButton>
-        </div>
-      </section>
-
-      <section
+      <div
         v-else-if="isInitialLoading"
-        class="state-panel bg-elevated border border-default rounded-xl p-5 text-center mb-6"
+        class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6"
       >
-        加载统计中...
-      </section>
+        <USkeleton
+          v-for="n in 8"
+          :key="n"
+          class="h-24 w-full rounded-lg"
+        />
+      </div>
 
       <template v-else-if="hasData">
-        <section class="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <UCard
+        <UPageGrid class="mb-6 sm:grid-cols-2 lg:grid-cols-4">
+          <UPageCard
             v-for="item in overviewCards"
             :key="item.key"
-            class="gap-2 border-default/90 py-4 shadow-sm"
-          >
-            <div class="px-4 pb-0">
-              <p class="text-xs uppercase tracking-[0.14em] text-muted/90">
-                {{ item.label }}
-              </p>
-              <h3
-                class="mt-1 text-2xl tabular-nums"
-                :class="item.valueClass"
-              >
-                {{ item.value }}
+            :icon="item.icon"
+            :title="item.value"
+            :description="item.label"
+            variant="subtle"
+            class="text-center sm:text-left [&_h3]:tabular-nums"
+          />
+        </UPageGrid>
+
+        <div class="grid gap-6 xl:grid-cols-5">
+          <UCard class="xl:col-span-3">
+            <template #header>
+              <h3 class="text-base font-semibold text-highlighted">
+                近 7 日趋势
               </h3>
-            </div>
-          </UCard>
-        </section>
+              <p class="text-sm text-muted mt-0.5">
+                按天聚合成功与失败调用次数
+              </p>
+            </template>
 
-        <section class="grid gap-6 xl:grid-cols-5">
-          <UCard class="xl:col-span-3 py-4">
-            <div class="px-4 pb-0">
-              <h3>近7日趋势</h3>
-              <p>按天聚合总调用、成功和失败</p>
-            </div>
-            <div class="px-4 pt-2">
-              <ClientOnly>
-                <div class="h-[320px] w-full">
-                  <VisXYContainer
-                    :data="trendChartData"
-                    :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
-                  >
-                    <VisLine
-                      :x="xAccessor"
-                      :y="successLineAccessor"
-                      color="var(--green)"
-                      :line-width="2.5"
-                    />
-                    <VisLine
-                      :x="xAccessor"
-                      :y="failureLineAccessor"
-                      color="var(--red)"
-                      :line-width="2.5"
-                    />
-                    <VisAxis
-                      type="y"
-                      :tick-line="false"
-                      :domain-line="false"
-                      :grid-line="true"
-                      :tick-format="yTickFormat"
-                    />
-                    <VisAxis
-                      type="x"
-                      :x="xAccessor"
-                      :tick-line="false"
-                      :domain-line="false"
-                      :grid-line="false"
-                      :tick-format="xTickFormat"
-                      :num-ticks="7"
-                    />
-                  </VisXYContainer>
-                </div>
-
-                <div class="mt-4 flex flex-wrap gap-2">
-                  <div class="inline-flex items-center gap-2 rounded-full border border-default bg-muted/30 px-3 py-1 text-xs text-default/90">
-                    <span class="h-2 w-2 rounded-full bg-[var(--green)]" />
-                    成功次数
-                  </div>
-                  <div class="inline-flex items-center gap-2 rounded-full border border-default bg-muted/30 px-3 py-1 text-xs text-default/90">
-                    <span class="h-2 w-2 rounded-full bg-[var(--red)]" />
-                    失败次数
-                  </div>
-                </div>
-
-                <template #fallback>
-                  <div class="h-[320px] w-full rounded-lg border border-default bg-muted/20" />
-                </template>
-              </ClientOnly>
-            </div>
-          </UCard>
-
-          <UCard class="xl:col-span-2 py-4">
-            <div class="px-4 pb-0">
-              <h3>近30日调用排行 TOP 10</h3>
-              <p>按近 30 天调用总次数排序</p>
-            </div>
-            <div class="px-4 pt-2">
-              <div
-                v-if="top10Last30d.length === 0"
-                class="h-[320px] rounded-lg border border-dashed border-default bg-muted/20 flex items-center justify-center text-sm text-muted"
-              >
-                近 30 天暂无调用数据
+            <ClientOnly>
+              <div class="h-[320px] w-full">
+                <VisXYContainer
+                  :data="trendChartData"
+                  :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
+                >
+                  <VisLine
+                    :x="xAccessor"
+                    :y="successLineAccessor"
+                    color="var(--green)"
+                    :line-width="2.5"
+                  />
+                  <VisLine
+                    :x="xAccessor"
+                    :y="failureLineAccessor"
+                    color="var(--red)"
+                    :line-width="2.5"
+                  />
+                  <VisAxis
+                    type="y"
+                    :tick-line="false"
+                    :domain-line="false"
+                    :grid-line="true"
+                    :tick-format="yTickFormat"
+                  />
+                  <VisAxis
+                    type="x"
+                    :x="xAccessor"
+                    :tick-line="false"
+                    :domain-line="false"
+                    :grid-line="false"
+                    :tick-format="xTickFormat"
+                    :num-ticks="7"
+                  />
+                </VisXYContainer>
               </div>
 
-              <table v-else>
-                <thead>
-                  <tr>
-                    <th class="w-12">
-                      排名
-                    </th>
-                    <th>接口</th>
-                    <th class="text-right">
-                      调用
-                    </th>
-                    <th class="text-right">
-                      成功率
-                    </th>
-                  </tr>
-                </thead>
+              <div class="mt-4 flex flex-wrap gap-2">
+                <UBadge
+                  variant="soft"
+                  color="success"
+                  icon="i-mdi-circle"
+                >
+                  成功次数
+                </UBadge>
+                <UBadge
+                  variant="soft"
+                  color="error"
+                  icon="i-mdi-circle"
+                >
+                  失败次数
+                </UBadge>
+              </div>
 
-                <tbody>
-                  <tr
-                    v-for="item in top10Last30d"
-                    :key="item.apiId"
-                  >
-                    <td class="w-12 font-medium">
-                      {{ item.rank }}
-                    </td>
-                    <td class="max-w-[280px]">
-                      <div
-                        class="font-medium truncate"
-                        :title="item.name"
-                      >
-                        {{ item.name }}
-                      </div>
-                      <div
-                        class="text-xs text-muted truncate mt-1"
-                        :title="item.apiPath"
-                      >
-                        {{ item.apiPath }}
-                      </div>
-                      <UBadge
-                        color="neutral"
-                        variant="soft"
-                        class="mt-1"
-                      >
-                        {{ formatMethod(item.httpMethod) }}
-                      </UBadge>
-                    </td>
-                    <td class="text-right tabular-nums">
-                      {{ item.totalCalls.toLocaleString() }}
-                    </td>
-                    <td class="text-right tabular-nums">
-                      {{ formatRate(item.successRate) }}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+              <template #fallback>
+                <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
+              </template>
+            </ClientOnly>
           </UCard>
-        </section>
+
+          <UCard class="xl:col-span-2">
+            <template #header>
+              <h3 class="text-base font-semibold text-highlighted">
+                近 30 日调用排行 TOP 10
+              </h3>
+              <p class="text-sm text-muted mt-0.5">
+                按近 30 天调用总次数排序
+              </p>
+            </template>
+
+            <UEmpty
+              v-if="top10Last30d.length === 0"
+              icon="i-mdi-chart-bar"
+              title="暂无调用数据"
+              description="近 30 天还没有任何接口调用记录。"
+              class="h-[320px]"
+            />
+
+            <ol
+              v-else
+              class="divide-y divide-default"
+            >
+              <li
+                v-for="item in top10Last30d"
+                :key="item.apiId"
+                class="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+              >
+                <UBadge
+                  :color="item.rank <= 3 ? 'primary' : 'neutral'"
+                  :variant="item.rank <= 3 ? 'solid' : 'soft'"
+                  class="w-7 justify-center tabular-nums shrink-0"
+                >
+                  {{ item.rank }}
+                </UBadge>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="font-medium truncate"
+                    :title="item.name"
+                  >
+                    {{ item.name }}
+                  </div>
+                  <div
+                    class="text-xs text-muted truncate"
+                    :title="item.apiPath"
+                  >
+                    {{ item.apiPath }}
+                  </div>
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                    class="mt-1"
+                  >
+                    {{ formatMethod(item.httpMethod) }}
+                  </UBadge>
+                </div>
+                <div class="text-right shrink-0">
+                  <div class="text-sm font-semibold tabular-nums">
+                    {{ formatCount(item.totalCalls) }}
+                  </div>
+                  <div class="text-xs text-muted tabular-nums">
+                    {{ formatRate(item.successRate) }}
+                  </div>
+                </div>
+              </li>
+            </ol>
+          </UCard>
+        </div>
       </template>
-    </main>
+    </UPageBody>
 
     <CommonAppFooter />
-  </div>
+  </UPage>
 </template>
