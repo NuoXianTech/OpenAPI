@@ -5,6 +5,8 @@ import type {
   AdminDashboardRecentCall
 } from '~~/shared/types/admin-dashboard'
 
+useHead({ title: '管理中心' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')

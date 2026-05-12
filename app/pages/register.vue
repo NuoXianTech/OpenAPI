@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { registerSchema } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+useHead({ title: '注册' })
+
 definePageMeta({ layout: false })
 
 const { register } = useAuth()

@@ -2,6 +2,8 @@
 import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+useHead({ title: '找回密码' })
+
 definePageMeta({ layout: false })
 
 const { turnstile, passwordResetEnabled } = useSiteSettings()

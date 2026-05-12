@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
 
+useHead({ title: '友链管理' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const toast = useToast()

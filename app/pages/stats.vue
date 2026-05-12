@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { PublicCallStatsDashboard } from '~~/shared/types/public-stats'
 
+useHead({ title: '数据统计' })
+
 definePageMeta({ layout: false })
 
 // 图表依赖 d3 + DOM，体积较大。改为 lazy + client-only 异步组件，

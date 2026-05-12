@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+useHead({ title: '邮箱验证' })
+
 definePageMeta({ layout: false })
 
 const route = useRoute()

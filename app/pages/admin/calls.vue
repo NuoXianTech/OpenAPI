@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 
+useHead({ title: '调用日志' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')

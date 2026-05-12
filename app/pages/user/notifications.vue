@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: '消息通知' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 interface Notification {

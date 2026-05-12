@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useSiteSettings } from '~/composables/useSiteSettings'
 
+useHead({ title: '管理员资料' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const { user } = useAuth()

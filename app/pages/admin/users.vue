@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
 
+useHead({ title: '用户管理' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const toast = useToast()

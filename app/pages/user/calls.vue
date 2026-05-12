@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 
+useHead({ title: '调用记录' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 interface LogRow {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
 
+useHead({ title: '站点设置' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const { form, saving, status, save } = useAdminSettingsPage()

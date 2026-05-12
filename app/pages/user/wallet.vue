@@ -2,6 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useUserWalletPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/useUserWalletPage'
 
+useHead({ title: '我的钱包' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const UBadge = resolveComponent('UBadge')

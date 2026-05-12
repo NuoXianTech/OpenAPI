@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useRedemptionCodesPage, type RedemptionCode } from '~/composables/admin/useRedemptionCodesPage'
 
+useHead({ title: '兑换码' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const UBadge = resolveComponent('UBadge')

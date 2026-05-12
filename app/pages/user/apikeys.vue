@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
+useHead({ title: 'API Keys' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 interface ApiKey {

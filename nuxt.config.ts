@@ -10,13 +10,6 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true
   },
-  app: {
-    head: {
-      link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-      ]
-    }
-  },
   css: [
     '~/assets/css/tailwind.css'
   ],
@@ -57,6 +50,9 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2025-07-15',
   nitro: {
+    // 生产部署目标：独立 Node 进程（Docker / VPS / PM2）。
+    // 显式声明 preset，避免 @nuxthub/core 在检测到 NUXT_HUB_* 环境时自动切到 cloudflare-pages。
+    preset: 'node-server',
     // 启用静态资源压缩（brotli + gzip）
     compressPublicAssets: { brotli: true, gzip: true }
   },

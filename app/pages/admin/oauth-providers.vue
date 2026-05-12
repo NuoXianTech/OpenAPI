@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
 
+useHead({ title: 'OAuth 配置' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 interface ProviderItem {

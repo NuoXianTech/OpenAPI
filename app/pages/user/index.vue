@@ -1,4 +1,6 @@
 <script setup lang="ts">
+useHead({ title: '个人中心' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const { user } = useAuth()

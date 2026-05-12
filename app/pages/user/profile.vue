@@ -2,6 +2,8 @@
 import { useRoute } from 'vue-router'
 import { useUserProfilePage } from '~/composables/user/useUserProfilePage'
 
+useHead({ title: '账号信息' })
+
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const route = useRoute()

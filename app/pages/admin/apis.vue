@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
+useHead({ title: 'API 管理' })
+
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const toast = useToast()

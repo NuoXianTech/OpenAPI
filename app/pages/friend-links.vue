@@ -5,6 +5,8 @@ import LinkList from '~/components/link/LinkList.vue'
 import type { ApiTabOption } from '~/composables/api/types'
 import { useFriendLinkList } from '~/composables/link/useFriendLinkList'
 
+useHead({ title: '友情链接' })
+
 const query = ref('')
 const currentStatus = ref<string | number>('all')
 

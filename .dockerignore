@@ -1,0 +1,39 @@
+# Nuxt / Nitro 产物，build 阶段会重新生成
+.output
+.nuxt
+.nitro
+.cache
+.data
+dist
+
+# 依赖目录，由 deps 阶段重装
+node_modules
+
+# 版本控制 / CI
+.git
+.github
+.gitignore
+
+# IDE
+.vscode
+.idea
+.fleet
+
+# 本地环境变量，构建产物不应携带
+.env
+.env.*
+!.env.example
+
+# 日志 / 临时
+*.log
+logs
+
+# 文档 / 测试不进镜像
+docs
+tests
+README.md
+LICENSE
+
+# 系统文件
+.DS_Store
+Thumbs.db

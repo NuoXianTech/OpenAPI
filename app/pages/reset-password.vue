@@ -3,6 +3,8 @@ import { z } from 'zod'
 import type { ResetPasswordInput } from '#shared/schemas/auth'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+useHead({ title: '重置密码' })
+
 definePageMeta({ layout: false })
 
 const route = useRoute()

@@ -2,6 +2,8 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
+useHead({ title: '管理员登录' })
+
 definePageMeta({ layout: false })
 
 const { adminLogin } = useAuth()
