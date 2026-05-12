@@ -301,3 +301,8 @@ export const adminUpdateSiteSettingsSchema = z.object({
   d => Object.values(d).some(v => v !== undefined),
   { message: 'at least one field is required', path: [] },
 )
+
+/** 测试发信：仅需收件邮箱，使用后台已保存的 SMTP 配置 */
+export const adminTestSmtpSchema = z.object({
+  to: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
+})

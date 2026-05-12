@@ -79,6 +79,24 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   })
 }
 
+export async function sendTestEmail(to: string, actor: string) {
+  const { smtp, siteName } = await getSmtpConfig()
+  const safeSiteName = escapeHtml(siteName)
+  const safeActor = escapeHtml(actor)
+  await sendSmtpMail(smtp, {
+    to,
+    subject: `[${siteName}] SMTP 测试邮件`,
+    html: `
+      <div style="font-family:Arial, sans-serif; line-height:1.6; color:#111113;">
+        <h2 style="margin:0 0 12px;">SMTP 测试邮件</h2>
+        <p>这是来自 ${safeSiteName} 后台 SMTP 配置测试发送的邮件。</p>
+        <p>如果您收到此邮件，说明 SMTP 发信配置正常。</p>
+        <p style="color:#666872;font-size:12px;">操作者：${safeActor}</p>
+      </div>
+    `,
+  })
+}
+
 export async function sendEmailChangeEmail(to: string, confirmUrl: string) {
   const { smtp, siteName } = await getSmtpConfig()
   const safeSiteName = escapeHtml(siteName)
