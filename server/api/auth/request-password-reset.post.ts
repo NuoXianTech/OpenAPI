@@ -48,8 +48,7 @@ export default defineEventHandler(async (event: H3Event) => {
     // 发信失败仅记录日志，不把错误抛给前端以免泄露账号是否存在。
     try {
       await sendPasswordResetEmail(user.email, resetUrl)
-    }
-    catch (error) {
+    } catch (error) {
       console.error('failed to send password reset email', { userId: user.id, error })
     }
   }

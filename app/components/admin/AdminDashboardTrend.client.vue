@@ -25,7 +25,7 @@ const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
   total: item.totalCalls,
   success: item.successCalls,
   failure: item.failureCalls,
-  raw: item,
+  raw: item
 })))
 
 const formatNumber = (val: number) => val.toLocaleString()

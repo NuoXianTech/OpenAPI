@@ -23,18 +23,16 @@ async function submitTest() {
   try {
     await $fetch('/api/admin/settings/test-email', {
       method: 'POST',
-      body: { to },
+      body: { to }
     })
     toast.add({ title: '测试邮件已发送', description: `请到 ${to} 查收`, color: 'success' })
     testOpen.value = false
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({
       title: (err as { data?: { message?: string } })?.data?.message || '发送失败',
-      color: 'error',
+      color: 'error'
     })
-  }
-  finally {
+  } finally {
     sending.value = false
   }
 }

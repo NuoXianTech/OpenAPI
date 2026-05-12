@@ -50,7 +50,7 @@ export function useRedemptionCodesPage() {
   const filters = reactive({
     status: 'all' as RedemptionStatus,
     batchId: 'all' as string,
-    keyword: '',
+    keyword: ''
   })
   const page = ref(1)
   const pageSize = ref(50)
@@ -64,8 +64,7 @@ export function useRedemptionCodesPage() {
     try {
       const res = await $fetch<BatchSummary[]>('/api/admin/redemption-codes/batches')
       batches.value = res || []
-    }
-    catch (err) {
+    } catch (err) {
       console.error('failed to load batches', err)
     }
   }
@@ -79,18 +78,16 @@ export function useRedemptionCodesPage() {
           batchId: filters.batchId === 'all' ? undefined : filters.batchId,
           keyword: filters.keyword || undefined,
           limit: pageSize.value,
-          offset: (page.value - 1) * pageSize.value,
-        },
+          offset: (page.value - 1) * pageSize.value
+        }
       })
       items.value = res?.items || []
       total.value = res?.total || 0
-    }
-    catch (err) {
+    } catch (err) {
       console.error('failed to load codes', err)
       items.value = []
       total.value = 0
-    }
-    finally {
+    } finally {
       loading.value = false
     }
   }
@@ -112,7 +109,7 @@ export function useRedemptionCodesPage() {
   async function generate(payload: GeneratePayload): Promise<GenerateResult> {
     const res = await $fetch<GenerateResult>('/api/admin/redemption-codes/generate', {
       method: 'POST',
-      body: payload,
+      body: payload
     })
     toast.add({ title: `已生成 ${res.generated} 张兑换码`, color: 'success' })
     await Promise.all([fetchBatches(), fetchList()])
@@ -123,12 +120,11 @@ export function useRedemptionCodesPage() {
     try {
       await $fetch('/api/admin/redemption-codes/toggle', {
         method: 'POST',
-        body: { id: item.id, enabled: !item.isEnabled },
+        body: { id: item.id, enabled: !item.isEnabled }
       })
       toast.add({ title: item.isEnabled ? '已禁用' : '已启用', color: 'success' })
       await fetchList()
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
     }
   }
@@ -138,12 +134,11 @@ export function useRedemptionCodesPage() {
     try {
       await $fetch('/api/admin/redemption-codes/delete', {
         method: 'POST',
-        body: { id: item.id },
+        body: { id: item.id }
       })
       toast.add({ title: '已删除', color: 'success' })
       await fetchList()
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
     }
   }
@@ -152,12 +147,11 @@ export function useRedemptionCodesPage() {
     try {
       const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/toggle', {
         method: 'POST',
-        body: { batchId, enabled },
+        body: { batchId, enabled }
       })
       toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
       await Promise.all([fetchBatches(), fetchList()])
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
     }
   }
@@ -170,12 +164,11 @@ export function useRedemptionCodesPage() {
     try {
       const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/delete', {
         method: 'POST',
-        body: { batchId, includeUsed },
+        body: { batchId, includeUsed }
       })
       toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
       await Promise.all([fetchBatches(), fetchList()])
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
     }
   }
@@ -221,6 +214,6 @@ export function useRedemptionCodesPage() {
     toggleBatch,
     deleteBatch,
     copyOne,
-    copyAll,
+    copyAll
   }
 }

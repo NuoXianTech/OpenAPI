@@ -4,14 +4,14 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 const { user } = useAuth()
 
 const { data: callsData, refresh: refreshCalls, status: callsStatus } = useLazyFetch<{ total: number, success: number, failure: number }>('/api/user/calls/summary', {
-  default: () => ({ total: 0, success: 0, failure: 0 }),
+  default: () => ({ total: 0, success: 0, failure: 0 })
 })
 const { data: keysData, refresh: refreshKeys, status: keysStatus } = useLazyFetch<Array<{ id: number, isActive: boolean }>>('/api/user/apikeys/list', {
-  default: () => [],
+  default: () => []
 })
 const { data: notifData, refresh: refreshNotifs, status: notifStatus } = useLazyFetch<Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }>>('/api/notifications/list', {
   default: () => [],
-  query: { limit: 5 },
+  query: { limit: 5 }
 })
 
 const summary = computed(() => callsData.value || { total: 0, success: 0, failure: 0 })
@@ -37,14 +37,13 @@ const levelMeta: Record<'info' | 'success' | 'warning' | 'critical', { color: 'i
   info: { color: 'info', label: '通知' },
   success: { color: 'success', label: '成功' },
   warning: { color: 'warning', label: '提醒' },
-  critical: { color: 'error', label: '紧急' },
+  critical: { color: 'error', label: '紧急' }
 }
 
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }

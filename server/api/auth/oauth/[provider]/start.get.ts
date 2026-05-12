@@ -44,7 +44,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const providerConfig: ProviderConfig = {
     clientId: row.clientId,
     clientSecret: '',
-    callbackUrl: buildCallbackUrl(settings.siteUrl, provider),
+    callbackUrl: buildCallbackUrl(settings.siteUrl, provider)
   }
 
   const authorizeUrl = provider === 'github'

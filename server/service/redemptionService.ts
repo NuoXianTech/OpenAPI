@@ -96,7 +96,7 @@ export const redemptionService = {
       usedCount: 0,
       expiresAt,
       isEnabled: true,
-      createdBy: input.createdBy ?? null,
+      createdBy: input.createdBy ?? null
     }))
 
     // onConflictDoNothing 兜底极小概率重复，再补生成保证总数
@@ -110,7 +110,7 @@ export const redemptionService = {
       amount,
       maxUses,
       expiresAt,
-      note,
+      note
     }
   },
 
@@ -127,15 +127,14 @@ export const redemptionService = {
     else if (filters.status === 'expired') {
       conditions.push(and(
         sql`${redemptionCodes.expiresAt} is not null`,
-        lt(redemptionCodes.expiresAt, now),
+        lt(redemptionCodes.expiresAt, now)
       )!)
-    }
-    else if (filters.status === 'available') {
+    } else if (filters.status === 'available') {
       conditions.push(eq(redemptionCodes.isEnabled, true))
       conditions.push(sql`${redemptionCodes.usedCount} < ${redemptionCodes.maxUses}`)
       conditions.push(or(
         isNull(redemptionCodes.expiresAt),
-        gte(redemptionCodes.expiresAt, now),
+        gte(redemptionCodes.expiresAt, now)
       )!)
     }
 
@@ -143,7 +142,7 @@ export const redemptionService = {
       const kw = `%${filters.keyword.trim().toUpperCase()}%`
       conditions.push(or(
         sql`upper(${redemptionCodes.code}) like ${kw}`,
-        sql`upper(coalesce(${redemptionCodes.note}, '')) like ${kw}`,
+        sql`upper(coalesce(${redemptionCodes.note}, '')) like ${kw}`
       )!)
     }
 
@@ -155,12 +154,12 @@ export const redemptionService = {
         : db.select().from(redemptionCodes).orderBy(desc(redemptionCodes.createdAt)).limit(limit).offset(offset),
       where
         ? db.select({ value: count() }).from(redemptionCodes).where(where)
-        : db.select({ value: count() }).from(redemptionCodes),
+        : db.select({ value: count() }).from(redemptionCodes)
     ])
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0),
+      total: Number(totalRows[0]?.value || 0)
     }
   },
 
@@ -173,7 +172,7 @@ export const redemptionService = {
       total: sql<number>`count(*)`,
       usedTotal: sql<number>`coalesce(sum(${redemptionCodes.usedCount}), 0)`,
       maxUsesTotal: sql<number>`coalesce(sum(${redemptionCodes.maxUses}), 0)`,
-      createdAt: sql<Date>`max(${redemptionCodes.createdAt})`,
+      createdAt: sql<Date>`max(${redemptionCodes.createdAt})`
     })
       .from(redemptionCodes)
       .where(sql`${redemptionCodes.batchId} is not null`)
@@ -188,7 +187,7 @@ export const redemptionService = {
       total: Number(r.total),
       usedTotal: Number(r.usedTotal),
       maxUsesTotal: Number(r.maxUsesTotal),
-      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString(),
+      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
     }))
   },
 
@@ -265,7 +264,7 @@ export const redemptionService = {
           eq(redemptionCodes.id, target.id),
           eq(redemptionCodes.isEnabled, true),
           sql`${redemptionCodes.usedCount} < ${redemptionCodes.maxUses}`,
-          or(isNull(redemptionCodes.expiresAt), gte(redemptionCodes.expiresAt, new Date()))!,
+          or(isNull(redemptionCodes.expiresAt), gte(redemptionCodes.expiresAt, new Date()))!
         ))
         .returning({ id: redemptionCodes.id, amount: redemptionCodes.amount })
       if (!consumed[0]) {
@@ -298,8 +297,8 @@ export const redemptionService = {
         meta: {
           codeId: target.id,
           code: target.code,
-          batchId: target.batchId,
-        },
+          batchId: target.batchId
+        }
       }).returning({ id: creditTransactions.id })
 
       // 写兑换记录（codeId+userId 唯一索引）
@@ -309,10 +308,9 @@ export const redemptionService = {
           userId: input.userId,
           amount: grantAmount,
           transactionId: txInserted[0]?.id ?? null,
-          ip: input.ip ?? null,
+          ip: input.ip ?? null
         })
-      }
-      catch (err) {
+      } catch (err) {
         // 唯一索引冲突 → 让事务回滚（usedCount 与积分都会撤销）
         throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
       }
@@ -322,7 +320,7 @@ export const redemptionService = {
         balanceAfter,
         codeId: target.id,
         code: target.code,
-        batchId: target.batchId,
+        batchId: target.batchId
       }
     })
   },
@@ -339,7 +337,7 @@ export const redemptionService = {
         amount: redemptionRecords.amount,
         transactionId: redemptionRecords.transactionId,
         redeemedAt: redemptionRecords.redeemedAt,
-        note: redemptionCodes.note,
+        note: redemptionCodes.note
       })
         .from(redemptionRecords)
         .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
@@ -347,7 +345,7 @@ export const redemptionService = {
         .orderBy(desc(redemptionRecords.redeemedAt))
         .limit(lim)
         .offset(off),
-      db.select({ value: count() }).from(redemptionRecords).where(eq(redemptionRecords.userId, userId)),
+      db.select({ value: count() }).from(redemptionRecords).where(eq(redemptionRecords.userId, userId))
     ])
     return { items, total: Number(totalRows[0]?.value || 0) }
   },
@@ -360,13 +358,13 @@ export const redemptionService = {
       username: users.username,
       amount: redemptionRecords.amount,
       ip: redemptionRecords.ip,
-      redeemedAt: redemptionRecords.redeemedAt,
+      redeemedAt: redemptionRecords.redeemedAt
     })
       .from(redemptionRecords)
       .leftJoin(users, eq(users.id, redemptionRecords.userId))
       .where(eq(redemptionRecords.codeId, codeId))
       .orderBy(desc(redemptionRecords.redeemedAt))
-  },
+  }
 }
 
 interface RedeemError extends Error {

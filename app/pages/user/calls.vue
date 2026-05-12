@@ -30,7 +30,7 @@ const UBadge = resolveComponent('UBadge')
 const filters = reactive({
   apiId: 0,
   apiKeyId: 0,
-  status: 'all' as 'all' | 'success' | 'failure',
+  status: 'all' as 'all' | 'success' | 'failure'
 })
 const page = ref(1)
 const pageSize = ref(50)
@@ -45,17 +45,17 @@ const apiSelectItems = computed(() => [
   { label: '全部 API', value: 0 },
   ...filterOptions.value.apis.map(a => ({
     label: `${a.name} (${a.apiPath})`,
-    value: a.id,
-  })),
+    value: a.id
+  }))
 ])
 const keySelectItems = computed(() => [
   { label: '全部 Key', value: 0 },
-  ...filterOptions.value.apiKeys.map(k => ({ label: k.name || `#${k.id}`, value: k.id })),
+  ...filterOptions.value.apiKeys.map(k => ({ label: k.name || `#${k.id}`, value: k.id }))
 ])
 const statusSelectItems = [
   { label: '全部状态', value: 'all' },
   { label: '成功（2xx/3xx）', value: 'success' },
-  { label: '失败（4xx/5xx）', value: 'failure' },
+  { label: '失败（4xx/5xx）', value: 'failure' }
 ]
 
 async function loadFilters() {
@@ -72,18 +72,16 @@ async function fetchList() {
         apiKeyId: filters.apiKeyId || undefined,
         status: filters.status === 'all' ? undefined : filters.status,
         limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value,
-      },
+        offset: (page.value - 1) * pageSize.value
+      }
     })
     items.value = res?.items || []
     total.value = res?.total || 0
-  }
-  catch (err) {
+  } catch (err) {
     console.error('failed to fetch user calls list', err)
     items.value = []
     total.value = 0
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -113,8 +111,7 @@ onMounted(async () => {
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -141,7 +138,7 @@ const columns: TableColumn<LogRow>[] = [
   {
     accessorKey: 'createdAt',
     header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
   },
   {
     accessorKey: 'method',
@@ -149,16 +146,16 @@ const columns: TableColumn<LogRow>[] = [
     cell: ({ row }) => h(UBadge, {
       color: methodColor(row.original.method),
       variant: 'subtle',
-      class: 'font-mono',
-    }, () => row.original.method),
+      class: 'font-mono'
+    }, () => row.original.method)
   },
   {
     accessorKey: 'apiName',
     header: '服务',
     cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
       h('span', { class: 'font-medium text-sm' }, row.original.apiName || '-'),
-      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath),
-    ]),
+      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath)
+    ])
   },
   {
     accessorKey: 'statusCode',
@@ -166,36 +163,36 @@ const columns: TableColumn<LogRow>[] = [
     cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
       h(UBadge, {
         color: statusColor(row.original.statusCode),
-        variant: 'subtle',
+        variant: 'subtle'
       }, () => row.original.statusCode),
       row.original.statusCode >= 200 && row.original.statusCode < 400
         ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
-        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败'),
-    ]),
+        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败')
+    ])
   },
   {
     accessorKey: 'creditsCost',
     header: '扣除积分',
     cell: ({ row }) => row.original.creditsCost > 0
       ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
-      : h('span', { class: 'text-xs text-muted' }, '免费'),
+      : h('span', { class: 'text-xs text-muted' }, '免费')
   },
   {
     accessorKey: 'latencyMs',
     header: '耗时',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`),
+    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`)
   },
   {
     accessorKey: 'apiKeyName',
     header: 'API Key',
     cell: ({ row }) => row.original.apiKeyId
       ? h('span', { class: 'text-xs' }, row.original.apiKeyName || `#${row.original.apiKeyId}`)
-      : h('span', { class: 'text-xs text-muted italic' }, '未携带'),
+      : h('span', { class: 'text-xs text-muted italic' }, '未携带')
   },
   {
     accessorKey: 'ip',
     header: 'IP',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-'),
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-')
   },
   {
     id: 'error',
@@ -203,10 +200,10 @@ const columns: TableColumn<LogRow>[] = [
     cell: ({ row }) => row.original.errorCode || row.original.errorMessage
       ? h('div', { class: 'flex flex-col text-xs' }, [
           row.original.errorCode ? h('span', { class: 'font-mono text-error' }, row.original.errorCode) : null,
-          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null,
+          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null
         ].filter(Boolean))
-      : h('span', { class: 'text-muted' }, '-'),
-  },
+      : h('span', { class: 'text-muted' }, '-')
+  }
 ]
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
@@ -300,7 +297,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
               base: 'table-fixed',
               thead: '[&>tr]:bg-elevated/50',
               th: 'py-2',
-              td: 'py-2 align-middle',
+              td: 'py-2 align-middle'
             }"
           />
           <div

@@ -42,14 +42,14 @@ function normalizePathname(pathname: string) {
 async function rejectWithOpenApi(
   event: H3Event,
   errorDef: ErrorDef,
-  extra?: Record<string, unknown>,
+  extra?: Record<string, unknown>
 ) {
   const payload = openApiFail(
     event,
     errorDef.bizCode,
     errorDef.msg,
     { errorCode: errorDef.code, ...(extra || {}) },
-    errorDef.status,
+    errorDef.status
   )
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   await send(event, JSON.stringify(payload))
@@ -82,14 +82,14 @@ export default defineEventHandler(async (event: H3Event) => {
     apiId: api.id,
     apiPath: api.apiPath,
     pathVersion,
-    code,
+    code
   }
 
   // [3] 方法/路径匹配（动态路由在此解析）
   const match = matchEndpoint(pathVersion, code, pathname, method)
   if (!match) {
     return rejectWithOpenApi(event, API_GUARD_ERROR.METHOD_NOT_ALLOWED, {
-      allowed: manifest.endpoints.map(e => e.method),
+      allowed: manifest.endpoints.map(e => e.method)
     })
   }
 
@@ -106,7 +106,7 @@ export default defineEventHandler(async (event: H3Event) => {
     manifest,
     endpoint: match.endpoint,
     params: match.params,
-    startedAt: Date.now(),
+    startedAt: Date.now()
   }
   event.context.apiKey = result.apiKey
     ? { id: result.apiKey.id, userId: result.apiKey.userId, scopes: result.apiKey.scopes ?? null }
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event: H3Event) => {
     // 默认按 statusCode 判定，业务可显式标记
     forcedOutcome: null as 'success' | 'failed' | null,
     failedCode: null as string | null,
-    failedMessage: null as string | null,
+    failedMessage: null as string | null
   }
 
   if (Object.keys(result.rateLimitHeaders).length > 0) {

@@ -78,7 +78,7 @@ const form = useAdminSettingsForm()
           :items="[
             { label: '不开启', value: 'off' },
             { label: '白名单', value: 'whitelist' },
-            { label: '黑名单', value: 'blacklist' },
+            { label: '黑名单', value: 'blacklist' }
           ]"
         />
       </UFormField>

@@ -71,15 +71,14 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
   let clientSecret = ''
   try {
     clientSecret = decryptSecret(providerRow.clientSecret)
-  }
-  catch {
+  } catch {
     return redirectError(event, 'secret_decrypt_failed', consumed.mode)
   }
 
   const providerConfig: ProviderConfig = {
     clientId: providerRow.clientId,
     clientSecret,
-    callbackUrl: buildCallbackUrl(settings.siteUrl, provider),
+    callbackUrl: buildCallbackUrl(settings.siteUrl, provider)
   }
 
   try {
@@ -89,8 +88,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     if (provider === 'github') {
       token = await githubProvider.exchangeCode(providerConfig, code)
       profile = await githubProvider.fetchUserInfo(providerConfig, token.accessToken, token)
-    }
-    else {
+    } else {
       token = await qqProvider.exchangeCode(providerConfig, code)
       profile = await qqProvider.fetchUserInfo(providerConfig, token.accessToken, token)
     }
@@ -116,7 +114,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
-        lastLoginIp: ip,
+        lastLoginIp: ip
       })
 
       const target = consumed.returnTo && consumed.returnTo.startsWith('/')
@@ -137,7 +135,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         nickname: profile.nickname,
         avatarUrl: profile.avatarUrl,
         email: profile.email,
-        lastLoginIp: ip,
+        lastLoginIp: ip
       })
 
       const user = await usersService.getById(existingAccount.userId)
@@ -180,7 +178,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         email: profile.email.toLowerCase(),
         passwordHash: randomPasswordHash,
         displayName: profile.nickname || username,
-        isActive: true,
+        isActive: true
       })
       if (!created) {
         return redirectError(event, 'user_create_failed')
@@ -202,14 +200,13 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       nickname: profile.nickname,
       avatarUrl: profile.avatarUrl,
       email: profile.email,
-      lastLoginIp: ip,
+      lastLoginIp: ip
     })
 
     await createUserSession(event, { id: finalUserId, kind: 'user' })
     await usersService.updateLastLogin(finalUserId, ip || '0.0.0.0')
     return sendRedirect(event, consumed.returnTo || '/', 302)
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     console.error('[oauth callback] failed', err)
     return redirectError(event, 'callback_failed', consumed.mode)
   }

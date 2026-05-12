@@ -3,7 +3,7 @@ import type { PropType } from 'vue'
 import type { FriendLinkItem } from '~/composables/link/types'
 
 const { items } = defineProps({
-  items: { type: Array as PropType<FriendLinkItem[]>, default: () => [] },
+  items: { type: Array as PropType<FriendLinkItem[]>, default: () => [] }
 })
 </script>
 

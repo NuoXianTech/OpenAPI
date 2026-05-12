@@ -11,6 +11,7 @@ export default withNuxt(
         caughtErrorsIgnorePattern: '^_',
       }],
       '@stylistic/max-statements-per-line': 'off',
-    },
-  },
+      '@stylistic/comma-dangle': 'off'
+    }
+  }
 )

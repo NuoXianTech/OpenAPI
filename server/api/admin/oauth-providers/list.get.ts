@@ -8,7 +8,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const [rows, settings] = await Promise.all([
     oauthProviderService.list(),
-    siteSettingsService.getOrCreate(),
+    siteSettingsService.getOrCreate()
   ])
   const data = rows.map((row: OauthProviderRow) => {
     const preset = OAUTH_PROVIDER_PRESETS[row.provider as SupportedOauthProvider]
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
       callbackUrl: buildCallbackUrl(settings.siteUrl, row.provider),
       authorizeUrl: preset.authorizeUrl,
       tokenUrl: preset.tokenUrl,
-      userInfoUrl: preset.userInfoUrl,
+      userInfoUrl: preset.userInfoUrl
     }
   })
   return data

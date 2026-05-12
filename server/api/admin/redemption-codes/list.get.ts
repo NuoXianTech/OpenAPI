@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
     status: status === 'all' ? undefined : status,
     keyword,
     limit,
-    offset,
+    offset
   })
   return data
 })

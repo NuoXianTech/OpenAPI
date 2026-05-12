@@ -7,7 +7,7 @@ import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
   AdminDashboardRecentCall,
-  AdminDashboardTrendPoint,
+  AdminDashboardTrendPoint
 } from '~~/shared/types/admin-dashboard'
 
 function toNumber(value: number | string | null | undefined) {
@@ -46,35 +46,35 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     yesterdayRows,
     trendRows,
     distributionRows,
-    recentRows,
+    recentRows
   ] = await Promise.all([
     db.select({ userCount: sql<number>`count(*)` }).from(users),
     db.select({
       enabledApiCount: sql<number>`coalesce(sum(case when ${apis.isEnabled} then 1 else 0 end), 0)`,
-      totalApiCount: sql<number>`count(*)`,
+      totalApiCount: sql<number>`count(*)`
     }).from(apis),
     db.select({
       totalCalls: totalExpr,
       successCalls: successExpr,
-      failureCalls: failureExpr,
+      failureCalls: failureExpr
     }).from(apiCallStats),
     db.select({ todayCalls: totalExpr }).from(apiCallStats).where(and(
       gte(apiCallStats.statDate, todayStart),
-      lt(apiCallStats.statDate, tomorrowStart),
+      lt(apiCallStats.statDate, tomorrowStart)
     )),
     db.select({ yesterdayCalls: totalExpr }).from(apiCallStats).where(and(
       gte(apiCallStats.statDate, yesterdayStart),
-      lt(apiCallStats.statDate, todayStart),
+      lt(apiCallStats.statDate, todayStart)
     )),
     db.select({
       statDate: apiCallStats.statDate,
       totalCalls: totalExpr,
       successCalls: successExpr,
-      failureCalls: failureExpr,
+      failureCalls: failureExpr
     }).from(apiCallStats)
       .where(and(
         gte(apiCallStats.statDate, rangeStart),
-        lt(apiCallStats.statDate, tomorrowStart),
+        lt(apiCallStats.statDate, tomorrowStart)
       ))
       .groupBy(apiCallStats.statDate)
       .orderBy(asc(apiCallStats.statDate)),
@@ -82,12 +82,12 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       apiId: apiCallStats.apiId,
       name: apis.name,
       apiPath: apis.apiPath,
-      totalCalls: totalExpr,
+      totalCalls: totalExpr
     }).from(apiCallStats)
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         gte(apiCallStats.statDate, rangeStart),
-        lt(apiCallStats.statDate, tomorrowStart),
+        lt(apiCallStats.statDate, tomorrowStart)
       ))
       .groupBy(apiCallStats.apiId, apis.name, apis.apiPath)
       .orderBy(desc(totalExpr), asc(apis.name))
@@ -99,11 +99,11 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       method: apiCalls.method,
       statusCode: apiCalls.statusCode,
       latencyMs: apiCalls.latencyMs,
-      createdAt: apiCalls.createdAt,
+      createdAt: apiCalls.createdAt
     }).from(apiCalls)
       .leftJoin(apis, eq(apiCalls.apiId, apis.id))
       .orderBy(desc(apiCalls.createdAt))
-      .limit(recentLimit),
+      .limit(recentLimit)
   ])
 
   const summary = summaryRows[0] || { totalCalls: 0, successCalls: 0, failureCalls: 0 }
@@ -123,7 +123,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       date: key,
       totalCalls: toNumber(row.totalCalls),
       successCalls: toNumber(row.successCalls),
-      failureCalls: toNumber(row.failureCalls),
+      failureCalls: toNumber(row.failureCalls)
     })
   }
 
@@ -142,7 +142,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     apiId: row.apiId,
     name: row.name || '未命名接口',
     apiPath: row.apiPath || '',
-    totalCalls: toNumber(row.totalCalls),
+    totalCalls: toNumber(row.totalCalls)
   }))
 
   const recentCalls: AdminDashboardRecentCall[] = recentRows.map((row: {
@@ -160,7 +160,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     method: row.method,
     statusCode: row.statusCode,
     latencyMs: row.latencyMs,
-    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : new Date(row.createdAt).toISOString(),
+    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : new Date(row.createdAt).toISOString()
   }))
 
   const todayChangeRate = yesterdayCalls > 0
@@ -178,12 +178,12 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0,
       todayCalls,
       yesterdayCalls,
-      todayChangeRate,
+      todayChangeRate
     },
     trend,
     distribution,
     recentCalls,
-    generatedAt: new Date().toISOString(),
+    generatedAt: new Date().toISOString()
   }
 
   return data

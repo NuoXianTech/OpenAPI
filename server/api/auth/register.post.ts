@@ -56,7 +56,7 @@ export default defineEventHandler(async (event: H3Event) => {
     username,
     email,
     passwordHash,
-    isActive: false,
+    isActive: false
   })
 
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
@@ -69,6 +69,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   return {
     user: safe,
-    verificationRequired: true,
+    verificationRequired: true
   }
 })

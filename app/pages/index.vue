@@ -16,7 +16,7 @@ const {
   error,
   filteredItems,
   isEmpty,
-  fetchList,
+  fetchList
 } = useApiList()
 
 const { settings } = useSiteSettings()
@@ -27,7 +27,7 @@ const visibleCount = computed(() => filteredItems.value.length)
 const heroStats = computed(() => ({
   total: allItems.value.length,
   normal: allItems.value.filter((i: { status: number }) => i.status === 1).length,
-  categories: Math.max(0, categoryTabs.value.length - 1),
+  categories: Math.max(0, categoryTabs.value.length - 1)
 }))
 </script>
 

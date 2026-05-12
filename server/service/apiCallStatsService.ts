@@ -3,7 +3,7 @@ import { apiCallStats, apis, users } from '@nuxthub/db/schema'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsTopItem,
-  PublicCallStatsTrendPoint,
+  PublicCallStatsTrendPoint
 } from '~~/shared/types/public-stats'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
 
@@ -25,14 +25,14 @@ export const apiCallStatsService = {
     const rows = await db.select({
       total: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
       success: sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`,
-      failure: sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`,
+      failure: sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
     }).from(apiCallStats)
 
     const summary = rows[0] || { total: 0, success: 0, failure: 0 }
     return {
       total: Number(summary.total) || 0,
       success: Number(summary.success) || 0,
-      failure: Number(summary.failure) || 0,
+      failure: Number(summary.failure) || 0
     }
   },
 
@@ -52,7 +52,7 @@ export const apiCallStatsService = {
     const failureExpr = sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
     const publicApiCondition = and(
       eq(apis.isEnabled, true),
-      eq(apis.isStatistics, true),
+      eq(apis.isStatistics, true)
     )
 
     const [summaryRows, todayRows, yesterdayRows, enabledTrackedApiRows, userRows, trendRows, topRows] = await Promise.all([
@@ -60,50 +60,50 @@ export const apiCallStatsService = {
         totalCalls: totalExpr,
         successCalls: successExpr,
         failureCalls: failureExpr,
-        trackedApiCount: sql<number>`count(distinct ${apiCallStats.apiId})`,
+        trackedApiCount: sql<number>`count(distinct ${apiCallStats.apiId})`
       }).from(apiCallStats)
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(publicApiCondition),
       db.select({
-        todayCalls: totalExpr,
+        todayCalls: totalExpr
       }).from(apiCallStats)
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, todayStart),
-          lt(apiCallStats.statDate, tomorrowStart),
+          lt(apiCallStats.statDate, tomorrowStart)
         )),
       db.select({
-        yesterdayCalls: totalExpr,
+        yesterdayCalls: totalExpr
       }).from(apiCallStats)
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, yesterdayStart),
-          lt(apiCallStats.statDate, todayStart),
+          lt(apiCallStats.statDate, todayStart)
         )),
       db.select({
-        enabledTrackedApiCount: sql<number>`count(*)`,
+        enabledTrackedApiCount: sql<number>`count(*)`
       }).from(apis)
         .where(publicApiCondition),
       db.select({
-        userCount: sql<number>`count(*)`,
+        userCount: sql<number>`count(*)`
       }).from(users)
         .where(and(
           eq(users.isActive, true),
-          eq(users.isBanned, false),
+          eq(users.isBanned, false)
         )),
       db.select({
         statDate: apiCallStats.statDate,
         totalCalls: totalExpr,
         successCalls: successExpr,
-        failureCalls: failureExpr,
+        failureCalls: failureExpr
       }).from(apiCallStats)
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, rangeStart),
-          lt(apiCallStats.statDate, tomorrowStart),
+          lt(apiCallStats.statDate, tomorrowStart)
         ))
         .groupBy(apiCallStats.statDate)
         .orderBy(asc(apiCallStats.statDate)),
@@ -114,29 +114,29 @@ export const apiCallStatsService = {
         httpMethod: apis.httpMethod,
         totalCalls: totalExpr,
         successCalls: successExpr,
-        failureCalls: failureExpr,
+        failureCalls: failureExpr
       }).from(apiCallStats)
         .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
         .where(and(
           publicApiCondition,
           gte(apiCallStats.statDate, top30dStart),
-          lt(apiCallStats.statDate, tomorrowStart),
+          lt(apiCallStats.statDate, tomorrowStart)
         ))
         .groupBy(
           apiCallStats.apiId,
           apis.name,
           apis.apiPath,
-          apis.httpMethod,
+          apis.httpMethod
         )
         .orderBy(desc(totalExpr), asc(apis.name))
-        .limit(topLimit),
+        .limit(topLimit)
     ])
 
     const summary = summaryRows[0] || {
       totalCalls: 0,
       successCalls: 0,
       failureCalls: 0,
-      trackedApiCount: 0,
+      trackedApiCount: 0
     }
     const todaySummary = todayRows[0] || { todayCalls: 0 }
     const yesterdaySummary = yesterdayRows[0] || { yesterdayCalls: 0 }
@@ -156,7 +156,7 @@ export const apiCallStatsService = {
         date: key,
         totalCalls: toNumber(row.totalCalls),
         successCalls: toNumber(row.successCalls),
-        failureCalls: toNumber(row.failureCalls),
+        failureCalls: toNumber(row.failureCalls)
       })
     }
 
@@ -167,7 +167,7 @@ export const apiCallStatsService = {
         date: key,
         totalCalls: 0,
         successCalls: 0,
-        failureCalls: 0,
+        failureCalls: 0
       }
     })
 
@@ -192,7 +192,7 @@ export const apiCallStatsService = {
         totalCalls: rowTotalCalls,
         successCalls: rowSuccessCalls,
         failureCalls: rowFailureCalls,
-        successRate: rowTotalCalls ? Number(((rowSuccessCalls / rowTotalCalls) * 100).toFixed(2)) : 0,
+        successRate: rowTotalCalls ? Number(((rowSuccessCalls / rowTotalCalls) * 100).toFixed(2)) : 0
       }
     })
 
@@ -206,11 +206,11 @@ export const apiCallStatsService = {
         successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0,
         userCount: toNumber(userSummary.userCount),
         enabledTrackedApiCount: toNumber(enabledTrackedApiSummary.enabledTrackedApiCount),
-        trackedApiCount: toNumber(summary.trackedApiCount),
+        trackedApiCount: toNumber(summary.trackedApiCount)
       },
       trend7d,
       top10Last30d,
-      generatedAt: new Date().toISOString(),
+      generatedAt: new Date().toISOString()
     }
   },
 
@@ -235,16 +235,16 @@ export const apiCallStatsService = {
       statDate,
       totalCount: totalDelta,
       successCount: successDelta,
-      failureCount: failureDelta,
+      failureCount: failureDelta
     }).onConflictDoUpdate({
       target: [apiCallStats.apiId, apiCallStats.statDate],
       set: {
         totalCount: sql`${apiCallStats.totalCount} + ${totalDelta}`,
         successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
         failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,
-        updatedAt: new Date(),
-      },
+        updatedAt: new Date()
+      }
     })
       .returning()
-  },
+  }
 }

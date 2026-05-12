@@ -8,6 +8,6 @@ export default defineEventHandler(async (event) => {
 
   return apiCallStatsService.getPublicDashboard({
     days,
-    topLimit,
+    topLimit
   })
 })

@@ -10,9 +10,9 @@ async function getSmtpConfig() {
       secure: settings.smtpSecure,
       user: settings.smtpUser,
       pass: settings.smtpPass,
-      from: settings.smtpFrom,
+      from: settings.smtpFrom
     },
-    siteName: settings.siteName,
+    siteName: settings.siteName
   }
 }
 
@@ -58,8 +58,8 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
       intro: `感谢注册 ${safeSiteName}，请点击下面的按钮完成邮箱验证：`,
       buttonLabel: '立即验证',
       url: verifyUrl,
-      footer: '该链接有时效，请尽快完成验证。',
-    }),
+      footer: '该链接有时效，请尽快完成验证。'
+    })
   })
 }
 
@@ -74,8 +74,8 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
       intro: `您在 ${safeSiteName} 申请了密码重置，点击下方按钮设置新密码：`,
       buttonLabel: '重置密码',
       url: resetUrl,
-      footer: '如果您没有申请重置密码，请忽略本邮件。链接有时效，请尽快操作。',
-    }),
+      footer: '如果您没有申请重置密码，请忽略本邮件。链接有时效，请尽快操作。'
+    })
   })
 }
 
@@ -93,7 +93,7 @@ export async function sendTestEmail(to: string, actor: string) {
         <p>如果您收到此邮件，说明 SMTP 发信配置正常。</p>
         <p style="color:#666872;font-size:12px;">操作者：${safeActor}</p>
       </div>
-    `,
+    `
   })
 }
 
@@ -108,7 +108,7 @@ export async function sendEmailChangeEmail(to: string, confirmUrl: string) {
       intro: `您正在 ${safeSiteName} 修改账户邮箱到本邮箱，点击下方按钮完成确认：`,
       buttonLabel: '确认变更',
       url: confirmUrl,
-      footer: '如果您没有申请邮箱变更，请忽略本邮件并建议尽快修改密码。链接有时效。',
-    }),
+      footer: '如果您没有申请邮箱变更，请忽略本邮件并建议尽快修改密码。链接有时效。'
+    })
   })
 }

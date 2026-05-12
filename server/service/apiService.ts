@@ -34,7 +34,7 @@ async function loadApiStats() {
 
   const rows = await db.select({
     apiId: apiCallStats.apiId,
-    totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
+    totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
   }).from(apiCallStats).groupBy(apiCallStats.apiId)
 
   const statsRows = rows as Array<{ apiId: number, totalCalls: number | string | null }>
@@ -64,7 +64,7 @@ function buildApiFilters(filters: ApiListFilters) {
       ilike(apis.code, keywordPattern),
       ilike(apis.name, keywordPattern),
       ilike(apis.shortDesc, keywordPattern),
-      ilike(apis.apiPath, keywordPattern),
+      ilike(apis.apiPath, keywordPattern)
     )
     if (keywordCondition) {
       conditions.push(keywordCondition)
@@ -118,7 +118,7 @@ export const apiService = {
       conditions.length
         ? await db.select().from(apis).where(and(...conditions)).orderBy(desc(apis.updatedAt))
         : await db.select().from(apis).orderBy(desc(apis.updatedAt)),
-      loadApiStats(),
+      loadApiStats()
     ])
 
     return (rows as Array<typeof apis.$inferSelect>).map((row): PublicApiItem => ({
@@ -133,7 +133,7 @@ export const apiService = {
       docUrl: row.docUrl,
       isApiKey: row.isApiKey,
       costCredits: row.costCredits,
-      totalCalls: statsMap[row.id]?.totalCalls ?? 0,
+      totalCalls: statsMap[row.id]?.totalCalls ?? 0
     }))
   },
 
@@ -141,10 +141,10 @@ export const apiService = {
     return db.select({
       id: apis.id,
       apiPath: apis.apiPath,
-      httpMethod: apis.httpMethod,
+      httpMethod: apis.httpMethod
     }).from(apis).where(and(
       eq(apis.isEnabled, true),
-      eq(apis.isStatistics, true),
+      eq(apis.isStatistics, true)
     ))
   },
 
@@ -222,7 +222,7 @@ export const apiService = {
       .set({
         ...patch,
         updatedBy: userid,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(apis.id, id))
       .returning()
@@ -246,7 +246,7 @@ export const apiService = {
       isStatistics?: boolean
     } = {
       updatedAt: new Date(),
-      [field]: value,
+      [field]: value
     }
     // 0 是 admin 伪用户的占位，users 表无此 id；此处归一为 null 避免触发外键约束
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
@@ -296,7 +296,7 @@ export const apiService = {
           sourceDir: data.sourceDir,
           endpointCount: data.endpointCount,
           updatedBy: data.createdBy,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(apis.id, existing.id))
         .returning()
@@ -329,8 +329,8 @@ export const apiService = {
       costCredits: data.defaults.costCredits,
       timeoutMs: data.defaults.timeoutMs,
       createdBy: data.createdBy,
-      updatedBy: data.createdBy,
+      updatedBy: data.createdBy
     }).returning()
     return res[0] || null
-  },
+  }
 }

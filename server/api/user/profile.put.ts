@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const { displayName } = await readZodBody(event, userUpdateProfileSchema)
 
   const updated = await usersService.updateUser(authUser.id, {
-    displayName: displayName || null,
+    displayName: displayName || null
   })
   if (!updated) {
     throw createError({ statusCode: 404, message: '用户不存在' })

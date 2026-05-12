@@ -40,8 +40,8 @@ const { data } = useAsyncData<Announcement[]>(
   {
     default: () => [],
     lazy: true,
-    server: false,
-  },
+    server: false
+  }
 )
 
 const items = computed<Announcement[]>(() => data.value || [])
@@ -50,7 +50,7 @@ const latestId = computed(() => items.value[0]?.id ?? null)
 const accordionItems = computed(() => items.value.map(a => ({
   value: String(a.id),
   label: a.title,
-  raw: a,
+  raw: a
 })))
 
 function readLastSeenId(): number | null {
@@ -89,21 +89,20 @@ defineExpose({
     if (latestId.value === null) return
     expandedIds.value = [String(latestId.value)]
     open.value = true
-  },
+  }
 })
 
 const levelMeta: Record<Announcement['level'], { color: 'info' | 'success' | 'warning' | 'error', icon: string, label: string }> = {
   info: { color: 'info', icon: 'i-mdi-information-outline', label: '公告' },
   success: { color: 'success', icon: 'i-mdi-check-circle-outline', label: '通知' },
   warning: { color: 'warning', icon: 'i-mdi-alert-outline', label: '提醒' },
-  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' },
+  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' }
 }
 
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }

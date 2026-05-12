@@ -40,7 +40,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await createUserSession(event, {
     id: user.id,
-    kind: 'user',
+    kind: 'user'
   }, { remember })
 
   await usersService.updateLastLogin(user.id, ip)

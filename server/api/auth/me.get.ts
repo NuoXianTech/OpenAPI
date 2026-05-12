@@ -13,8 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (user.kind === 'user' && user.id) {
     try {
       credits = await creditService.getBalance(user.id)
-    }
-    catch (err) {
+    } catch (err) {
       console.error('failed to load user credits in /api/auth/me', { userId: user.id, err })
     }
   }

@@ -33,7 +33,7 @@ export const sessionService = {
       userAgent: payload.userAgent?.slice(0, 500) ?? null,
       isRemembered: payload.isRemembered ?? false,
       lastActiveAt: now,
-      expiresAt,
+      expiresAt
     }).returning()
 
     return { record: res[0], sessionId, expiresAt }
@@ -92,12 +92,12 @@ export const sessionService = {
     const exceptHash = hashSessionId(exceptSessionId)
     await db.delete(sessions).where(and(
       eq(sessions.userId, userId),
-      ne(sessions.sessionId, exceptHash),
+      ne(sessions.sessionId, exceptHash)
     ))
   },
 
   async deleteExpiredSessions() {
     const now = new Date()
     await db.delete(sessions).where(lt(sessions.expiresAt, now))
-  },
+  }
 }

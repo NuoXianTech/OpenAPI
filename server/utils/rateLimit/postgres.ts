@@ -30,13 +30,13 @@ export const postgresRateLimiter: RateLimiter = {
     const rows = await db.insert(apiRateLimitBuckets).values({
       bucketKey: key,
       windowStart,
-      count: 1,
+      count: 1
     }).onConflictDoUpdate({
       target: [apiRateLimitBuckets.bucketKey, apiRateLimitBuckets.windowStart],
       set: {
         count: sql`${apiRateLimitBuckets.count} + 1`,
-        updatedAt: new Date(),
-      },
+        updatedAt: new Date()
+      }
     }).returning({ count: apiRateLimitBuckets.count })
 
     const nextCount = rows[0]?.count ?? 1
@@ -47,7 +47,7 @@ export const postgresRateLimiter: RateLimiter = {
       remaining: limit <= 0 ? Number.MAX_SAFE_INTEGER : Math.max(limit - nextCount, 0),
       resetAtMs,
       limit,
-      window,
+      window
     } satisfies RateLimitResult
-  },
+  }
 }

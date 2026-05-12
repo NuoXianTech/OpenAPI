@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.friend-link.delete',
     resourceType: 'friend-link',
     resourceId: String(id),
-    detail: { deleted },
+    detail: { deleted }
   })
 
   return deleted

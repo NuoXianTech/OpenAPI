@@ -20,11 +20,9 @@ async function load() {
   try {
     const res = await $fetch<AdminApiKeyItem[]>('/api/admin/users/apikeys', { query: { userId: props.target.id } })
     keys.value = res || []
-  }
-  catch {
+  } catch {
     keys.value = []
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -39,8 +37,7 @@ async function add() {
     await $fetch('/api/admin/users/apikeys/add', { method: 'POST', body: { userId: props.target.id } })
     toast.add({ title: 'API Key 已创建', color: 'success' })
     await load()
-  }
-  catch {
+  } catch {
     toast.add({ title: '创建失败', color: 'error' })
   }
 }
@@ -50,8 +47,7 @@ async function reset(id: number) {
     await $fetch('/api/admin/users/apikeys/reset', { method: 'POST', body: { id } })
     toast.add({ title: 'API Key 已重置', color: 'success' })
     await load()
-  }
-  catch {
+  } catch {
     toast.add({ title: '重置失败', color: 'error' })
   }
 }
@@ -61,8 +57,7 @@ async function remove(id: number) {
     await $fetch('/api/admin/users/apikeys/delete', { method: 'POST', body: { id } })
     toast.add({ title: 'API Key 已删除', color: 'success' })
     await load()
-  }
-  catch {
+  } catch {
     toast.add({ title: '删除失败', color: 'error' })
   }
 }

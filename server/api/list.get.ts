@@ -7,6 +7,6 @@ export default defineEventHandler(async (event: H3Event) => {
   return apiService.listPublicApis({
     keyword: (query.keyword || '').toString().trim(),
     status: query.status !== undefined && query.status !== '' ? Number(query.status) : undefined,
-    categoryId: query.categoryId !== undefined && query.categoryId !== '' ? Number(query.categoryId) : undefined,
+    categoryId: query.categoryId !== undefined && query.categoryId !== '' ? Number(query.categoryId) : undefined
   })
 })

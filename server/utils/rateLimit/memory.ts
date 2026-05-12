@@ -71,7 +71,7 @@ export const memoryRateLimiter: RateLimiter = {
       remaining: limit <= 0 ? Number.MAX_SAFE_INTEGER : Math.max(limit - nextCount, 0),
       resetAtMs,
       limit,
-      window,
+      window
     } satisfies RateLimitResult
-  },
+  }
 }

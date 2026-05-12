@@ -15,7 +15,7 @@ interface AggregateRow {
 }
 
 const { data, status, refresh } = useLazyFetch<{ total: number, success: number, failure: number, items: AggregateRow[] }>('/api/admin/calls/stats', {
-  default: () => ({ total: 0, success: 0, failure: 0, items: [] }),
+  default: () => ({ total: 0, success: 0, failure: 0, items: [] })
 })
 
 const stats = computed(() => data.value || { total: 0, success: 0, failure: 0, items: [] })
@@ -28,7 +28,7 @@ const overviewCards = computed(() => [
   { label: '总调用', value: stats.value.total.toLocaleString(), icon: 'i-mdi-chart-line' },
   { label: '成功', value: stats.value.success.toLocaleString(), icon: 'i-mdi-check-circle-outline' },
   { label: '失败', value: stats.value.failure.toLocaleString(), icon: 'i-mdi-alert-circle-outline' },
-  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent' },
+  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent' }
 ])
 
 function formatDate(val: string) {
@@ -40,17 +40,17 @@ const aggregateColumns: TableColumn<AggregateRow>[] = [
   {
     accessorKey: 'apiPath',
     header: '接口路径',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.apiPath || '-'),
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.apiPath || '-')
   },
   {
     accessorKey: 'totalCount',
     header: '总调用',
-    cell: ({ row }) => h('span', { class: 'tabular-nums font-medium' }, row.original.totalCount?.toLocaleString()),
+    cell: ({ row }) => h('span', { class: 'tabular-nums font-medium' }, row.original.totalCount?.toLocaleString())
   },
   {
     accessorKey: 'successCount',
     header: '成功',
-    cell: ({ row }) => h(UBadge, { color: 'success', variant: 'subtle' }, () => row.original.successCount?.toLocaleString()),
+    cell: ({ row }) => h(UBadge, { color: 'success', variant: 'subtle' }, () => row.original.successCount?.toLocaleString())
   },
   {
     accessorKey: 'failureCount',
@@ -60,18 +60,18 @@ const aggregateColumns: TableColumn<AggregateRow>[] = [
       return count > 0
         ? h(UBadge, { color: 'error', variant: 'subtle' }, () => count.toLocaleString())
         : h('span', { class: 'text-muted' }, '0')
-    },
+    }
   },
   {
     accessorKey: 'statDate',
     header: '统计日期',
-    cell: ({ row }) => formatDate(row.original.statDate || ''),
+    cell: ({ row }) => formatDate(row.original.statDate || '')
   },
   {
     accessorKey: 'updatedAt',
     header: '更新时间',
-    cell: ({ row }) => formatDate(row.original.updatedAt || ''),
-  },
+    cell: ({ row }) => formatDate(row.original.updatedAt || '')
+  }
 ]
 
 // ----- 调用明细日志 -----
@@ -96,7 +96,7 @@ interface AdminCallRow {
 
 const logFilters = reactive({
   userId: '' as number | '',
-  status: 'all' as 'all' | 'success' | 'failure',
+  status: 'all' as 'all' | 'success' | 'failure'
 })
 const logPage = ref(1)
 const logPageSize = ref(50)
@@ -112,18 +112,16 @@ async function fetchLogs() {
         userId: logFilters.userId || undefined,
         status: logFilters.status === 'all' ? undefined : logFilters.status,
         limit: logPageSize.value,
-        offset: (logPage.value - 1) * logPageSize.value,
-      },
+        offset: (logPage.value - 1) * logPageSize.value
+      }
     })
     logItems.value = res?.items || []
     logTotal.value = res?.total || 0
-  }
-  catch (err) {
+  } catch (err) {
     console.error('failed to fetch admin calls list', err)
     logItems.value = []
     logTotal.value = 0
-  }
-  finally {
+  } finally {
     logLoading.value = false
   }
 }
@@ -169,14 +167,14 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
 const statusSelectItems = [
   { label: '全部状态', value: 'all' },
   { label: '成功（2xx/3xx）', value: 'success' },
-  { label: '失败（4xx/5xx）', value: 'failure' },
+  { label: '失败（4xx/5xx）', value: 'failure' }
 ]
 
 const logColumns: TableColumn<AdminCallRow>[] = [
   {
     accessorKey: 'createdAt',
     header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
   },
   {
     accessorKey: 'method',
@@ -184,16 +182,16 @@ const logColumns: TableColumn<AdminCallRow>[] = [
     cell: ({ row }) => h(UBadge, {
       color: methodColor(row.original.method),
       variant: 'subtle',
-      class: 'font-mono',
-    }, () => row.original.method),
+      class: 'font-mono'
+    }, () => row.original.method)
   },
   {
     accessorKey: 'apiName',
     header: '服务',
     cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
       h('span', { class: 'font-medium text-sm' }, row.original.apiName || '-'),
-      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath),
-    ]),
+      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath)
+    ])
   },
   {
     accessorKey: 'userName',
@@ -201,9 +199,9 @@ const logColumns: TableColumn<AdminCallRow>[] = [
     cell: ({ row }) => row.original.userId
       ? h('div', { class: 'flex flex-col text-xs' }, [
           h('span', null, row.original.userName || '-'),
-          h('span', { class: 'text-muted' }, `#${row.original.userId}`),
+          h('span', { class: 'text-muted' }, `#${row.original.userId}`)
         ])
-      : h('span', { class: 'text-xs text-muted italic' }, '匿名'),
+      : h('span', { class: 'text-xs text-muted italic' }, '匿名')
   },
   {
     accessorKey: 'statusCode',
@@ -211,36 +209,36 @@ const logColumns: TableColumn<AdminCallRow>[] = [
     cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
       h(UBadge, {
         color: statusColor(row.original.statusCode),
-        variant: 'subtle',
+        variant: 'subtle'
       }, () => row.original.statusCode),
       row.original.statusCode >= 200 && row.original.statusCode < 400
         ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
-        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败'),
-    ]),
+        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败')
+    ])
   },
   {
     accessorKey: 'creditsCost',
     header: '扣除积分',
     cell: ({ row }) => row.original.creditsCost > 0
       ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
-      : h('span', { class: 'text-xs text-muted' }, '免费'),
+      : h('span', { class: 'text-xs text-muted' }, '免费')
   },
   {
     accessorKey: 'latencyMs',
     header: '耗时',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`),
+    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`)
   },
   {
     accessorKey: 'apiKeyName',
     header: 'API Key',
     cell: ({ row }) => row.original.apiKeyId
       ? h('span', { class: 'text-xs' }, row.original.apiKeyName || `#${row.original.apiKeyId}`)
-      : h('span', { class: 'text-xs text-muted italic' }, '未携带'),
+      : h('span', { class: 'text-xs text-muted italic' }, '未携带')
   },
   {
     accessorKey: 'ip',
     header: 'IP',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-'),
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-')
   },
   {
     id: 'error',
@@ -248,10 +246,10 @@ const logColumns: TableColumn<AdminCallRow>[] = [
     cell: ({ row }) => row.original.errorCode || row.original.errorMessage
       ? h('div', { class: 'flex flex-col text-xs' }, [
           row.original.errorCode ? h('span', { class: 'font-mono text-error' }, row.original.errorCode) : null,
-          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null,
+          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null
         ].filter(Boolean))
-      : h('span', { class: 'text-muted' }, '-'),
-  },
+      : h('span', { class: 'text-muted' }, '-')
+  }
 ]
 </script>
 

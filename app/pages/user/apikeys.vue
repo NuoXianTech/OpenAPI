@@ -21,7 +21,7 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch<ApiKey[]>('/api/user/apikeys/list', {
-  default: () => [],
+  default: () => []
 })
 const items = computed<ApiKey[]>(() => data.value || [])
 
@@ -42,16 +42,14 @@ async function submitCreate() {
   try {
     const res = await $fetch<ApiKey>('/api/user/apikeys/add', {
       method: 'POST',
-      body: { name: newName.value.trim() || '默认密钥' },
+      body: { name: newName.value.trim() || '默认密钥' }
     })
     createdKey.value = res || null
     toast.add({ title: '已生成新 API Key', color: 'success' })
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '创建失败', color: 'error' })
-  }
-  finally {
+  } finally {
     creating.value = false
   }
 }
@@ -74,16 +72,14 @@ async function confirmReset() {
   try {
     const res = await $fetch<ApiKey>('/api/user/apikeys/reset', {
       method: 'POST',
-      body: { id: resetTarget.value.id },
+      body: { id: resetTarget.value.id }
     })
     resetResult.value = res || null
     toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '重置失败', color: 'error' })
-  }
-  finally {
+  } finally {
     resetLoading.value = false
   }
 }
@@ -104,16 +100,14 @@ async function confirmDelete() {
   try {
     await $fetch('/api/user/apikeys/delete', {
       method: 'POST',
-      body: { id: deleteTarget.value.id },
+      body: { id: deleteTarget.value.id }
     })
     toast.add({ title: '已删除', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -123,8 +117,7 @@ async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
     toast.add({ title: '已复制到剪贴板', color: 'success' })
-  }
-  catch {
+  } catch {
     toast.add({ title: '复制失败', color: 'error' })
   }
 }
@@ -143,7 +136,7 @@ function getRowItems(row: ApiKey): DropdownMenuItem[] {
   return [
     { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -156,7 +149,7 @@ const columns: TableColumn<ApiKey>[] = [
   {
     accessorKey: 'name',
     header: '名称',
-    cell: ({ row }) => h('span', { class: 'font-medium' }, row.original.name || '默认密钥'),
+    cell: ({ row }) => h('span', { class: 'font-medium' }, row.original.name || '默认密钥')
   },
   {
     accessorKey: 'apiKey',
@@ -169,21 +162,21 @@ const columns: TableColumn<ApiKey>[] = [
         size: 'xs',
         color: 'neutral',
         variant: 'ghost',
-        onClick: () => toggleReveal(row.original.id),
+        onClick: () => toggleReveal(row.original.id)
       }),
       h(UButton, {
         icon: 'i-mdi-content-copy',
         size: 'xs',
         color: 'neutral',
         variant: 'ghost',
-        onClick: () => copy(row.original.apiKey),
-      }),
-    ]),
+        onClick: () => copy(row.original.apiKey)
+      })
+    ])
   },
   {
     accessorKey: 'totalCalls',
     header: '调用次数',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, (row.original.totalCalls || 0).toLocaleString()),
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, (row.original.totalCalls || 0).toLocaleString())
   },
   {
     accessorKey: 'lastUsedAt',
@@ -192,35 +185,35 @@ const columns: TableColumn<ApiKey>[] = [
       h('span', formatDate(row.original.lastUsedAt)),
       row.original.lastUsedIp
         ? h('span', { class: 'text-muted font-mono' }, row.original.lastUsedIp)
-        : null,
-    ].filter(Boolean)),
+        : null
+    ].filter(Boolean))
   },
   {
     id: 'isActive',
     header: '状态',
     cell: ({ row }) => h(UBadge, {
       color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle',
-    }, () => row.original.isActive ? '启用' : '停用'),
+      variant: 'subtle'
+    }, () => row.original.isActive ? '启用' : '停用')
   },
   {
     accessorKey: 'createdAt',
     header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 </script>
 
@@ -269,7 +262,7 @@ const columns: TableColumn<ApiKey>[] = [
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2 align-middle',
+          td: 'py-2 align-middle'
         }"
       />
 

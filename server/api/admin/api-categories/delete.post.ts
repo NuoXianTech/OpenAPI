@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { code: removed.code, name: removed.name },
+    detail: { code: removed.code, name: removed.name }
   })
 
   return removed

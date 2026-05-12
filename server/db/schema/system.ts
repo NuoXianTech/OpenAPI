@@ -7,7 +7,7 @@ import {
   boolean,
   jsonb,
   timestamp,
-  index,
+  index
 } from 'drizzle-orm/pg-core'
 import { users } from './user'
 
@@ -79,7 +79,7 @@ export const siteSettings = pgTable('site_settings', {
   announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(false),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 })
 
 // ------------------------------------------------------------------
@@ -96,10 +96,10 @@ export const operationLogs = pgTable('operation_logs', {
   userAgent: varchar('user_agent', { length: 500 }),
   detail: jsonb('detail').$type<Record<string, unknown>>(),
   status: varchar('status', { length: 20 }).notNull().default('success'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('operation_logs_created_at_idx').on(table.createdAt),
   index('operation_logs_user_created_idx').on(table.userId, table.createdAt),
   index('operation_logs_action_idx').on(table.action),
-  index('operation_logs_resource_idx').on(table.resourceType, table.resourceId),
+  index('operation_logs_resource_idx').on(table.resourceType, table.resourceId)
 ])

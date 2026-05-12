@@ -14,8 +14,7 @@ function formatDate(iso: string) {
   if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -30,12 +29,10 @@ async function submit() {
   try {
     await props.onRedeem(v)
     code.value = ''
-  }
-  catch (err) {
+  } catch (err) {
     const e = err as { data?: { message?: string }, statusMessage?: string }
     toast.add({ title: e?.data?.message || e?.statusMessage || '兑换失败', color: 'error' })
-  }
-  finally {
+  } finally {
     redeeming.value = false
   }
 }

@@ -19,7 +19,7 @@ export default defineEventHandler(async (event: H3Event) => {
     startAt: body.startAt ?? null,
     endAt: body.endAt ?? null,
     linkUrl: body.linkUrl?.trim() || null,
-    sortOrder: body.sortOrder ?? 0,
+    sortOrder: body.sortOrder ?? 0
   }, admin.id || null)
 
   await operationLogService.addLog({
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: created?.id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { title: body.title, level: body.level ?? 'info' },
+    detail: { title: body.title, level: body.level ?? 'info' }
   })
 
   return created

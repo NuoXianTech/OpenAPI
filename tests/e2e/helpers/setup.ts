@@ -8,7 +8,7 @@ export async function setupE2E() {
       host: targetHost,
       browser: false,
       setupTimeout: 120_000,
-      teardownTimeout: 30_000,
+      teardownTimeout: 30_000
     })
     return
   }
@@ -17,6 +17,6 @@ export async function setupE2E() {
     server: true,
     browser: false,
     setupTimeout: 600_000,
-    teardownTimeout: 60_000,
+    teardownTimeout: 60_000
   })
 }

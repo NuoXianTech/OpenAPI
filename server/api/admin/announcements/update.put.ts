@@ -34,7 +34,7 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { patch },
+    detail: { patch }
   })
 
   return updated

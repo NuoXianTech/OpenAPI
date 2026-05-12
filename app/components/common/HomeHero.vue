@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
   siteDescription: '免费为用户提供网络数据接口调用的服务平台',
   totalCount: 0,
   normalCount: 0,
-  categoryCount: 0,
+  categoryCount: 0
 })
 
 const startTimestamp = computed(() => {

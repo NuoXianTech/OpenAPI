@@ -87,7 +87,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   theme: 'auto',
   size: 'flexible',
-  action: undefined,
+  action: undefined
 })
 
 const emit = defineEmits<{
@@ -118,8 +118,7 @@ function renderWidget() {
   if (widgetId.value) {
     try {
       turnstile.remove(widgetId.value)
-    }
-    catch { /* noop */ }
+    } catch { /* noop */ }
     widgetId.value = null
   }
   const opts: Record<string, unknown> = {
@@ -140,7 +139,7 @@ function renderWidget() {
       // Cloudflare 错误码参考 https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/
       loadError.value = `Turnstile 校验失败：${message}`
       emit('error', message)
-    },
+    }
   }
   if (props.action) {
     opts.action = props.action
@@ -149,8 +148,7 @@ function renderWidget() {
   widgetId.value = id
   if (!id) {
     loadError.value = 'Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配'
-  }
-  else {
+  } else {
     loadError.value = ''
   }
 }
@@ -169,8 +167,7 @@ onMounted(async () => {
   try {
     await loadScript()
     renderWidget()
-  }
-  catch (err) {
+  } catch (err) {
     loadError.value = err instanceof Error ? err.message : 'Turnstile 脚本加载失败'
   }
 })
@@ -180,8 +177,7 @@ onBeforeUnmount(() => {
   if (turnstile && widgetId.value) {
     try {
       turnstile.remove(widgetId.value)
-    }
-    catch { /* noop */ }
+    } catch { /* noop */ }
     widgetId.value = null
   }
 })

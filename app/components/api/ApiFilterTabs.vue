@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   ariaLabel: '筛选标签',
   maxVisible: 8,
-  enableCollapse: true,
+  enableCollapse: true
 })
 
 const emit = defineEmits<{

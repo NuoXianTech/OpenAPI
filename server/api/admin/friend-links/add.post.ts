@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
     url: body.url,
     description: body.description?.trim() || null,
     isActive: body.isActive ?? false,
-    createdBy: admin.id || null,
+    createdBy: admin.id || null
   })
 
   await operationLogService.addLog({
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.friend-link.create',
     resourceType: 'friend-link',
     resourceId: String(created.id),
-    detail: { created },
+    detail: { created }
   })
 
   return created

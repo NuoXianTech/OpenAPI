@@ -20,7 +20,7 @@ const {
   loadOauth,
   startBind,
   unbind,
-  notifyOauthCallback,
+  notifyOauthCallback
 } = useUserProfilePage()
 
 onMounted(async () => {

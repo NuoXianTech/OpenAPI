@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!manifestApi) {
     throw createError({
       statusCode: 404,
-      message: `manifest 中不存在 ${pathVersion}/${code}，请确认对应文件已创建并重启 dev 服务`,
+      message: `manifest 中不存在 ${pathVersion}/${code}，请确认对应文件已创建并重启 dev 服务`
     })
   }
 
@@ -50,14 +50,14 @@ export default defineEventHandler(async (event: H3Event) => {
     rateLimitPerDay: o.rateLimitPerDay ?? DEFAULT_API_REGISTRATION.rateLimitPerDay,
     dailyQuota: o.dailyQuota ?? DEFAULT_API_REGISTRATION.dailyQuota,
     costCredits: o.costCredits ?? DEFAULT_API_REGISTRATION.costCredits,
-    timeoutMs: o.timeoutMs ?? DEFAULT_API_REGISTRATION.timeoutMs,
+    timeoutMs: o.timeoutMs ?? DEFAULT_API_REGISTRATION.timeoutMs
   }
 
   // 计费一致性：costCredits>0 必须搭配 isApiKey=true
   if (defaults.costCredits > 0 && !defaults.isApiKey) {
     throw createError({
       statusCode: 400,
-      message: '设置扣费金额时必须开启「必需 API Key」',
+      message: '设置扣费金额时必须开启「必需 API Key」'
     })
   }
 
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event: H3Event) => {
     sourceDir: manifestApi.sourceDir,
     endpointCount: manifestApi.endpoints.length,
     createdBy: admin.id || null,
-    defaults,
+    defaults
   })
 
   await operationLogService.addLog({
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api.register',
     resourceType: 'api',
     resourceId: String(saved?.id || ''),
-    detail: { pathVersion, code, manifestSource: manifestApi.sourceDir },
+    detail: { pathVersion, code, manifestSource: manifestApi.sourceDir }
   })
 
   return saved

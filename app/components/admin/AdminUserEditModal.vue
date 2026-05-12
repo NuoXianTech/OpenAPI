@@ -21,7 +21,7 @@ watch(() => props.target, (val) => {
     username: val.username || '',
     email: val.email || '',
     displayName: val.displayName || '',
-    isActive: val.isActive ?? false,
+    isActive: val.isActive ?? false
   })
 })
 
@@ -31,11 +31,9 @@ async function submit() {
   try {
     await props.onSubmit(props.target.id, { ...form })
     emit('update:open', false)
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '更新失败', color: 'error' })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

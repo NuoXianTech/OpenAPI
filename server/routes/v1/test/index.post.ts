@@ -28,6 +28,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   return openApiOk(event, {
     echo: body ?? null,
-    apiKeyId: event.context.apiKey?.id ?? null,
+    apiKeyId: event.context.apiKey?.id ?? null
   })
 })

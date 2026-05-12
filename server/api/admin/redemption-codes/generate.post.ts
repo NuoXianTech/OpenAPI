@@ -27,7 +27,7 @@ export default defineEventHandler(async (event: H3Event) => {
     maxUses,
     expiresAt,
     note: body.note || null,
-    createdBy: admin.id || null,
+    createdBy: admin.id || null
   })
 
   await operationLogService.addLog({
@@ -41,8 +41,8 @@ export default defineEventHandler(async (event: H3Event) => {
       generated: data.generated,
       amount: data.amount,
       maxUses: data.maxUses,
-      note: data.note,
-    },
+      note: data.note
+    }
   })
 
   return data

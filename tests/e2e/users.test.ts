@@ -84,7 +84,7 @@ function getDbClient() {
   dbClient = postgres(connectionString, {
     max: 1,
     idle_timeout: 1,
-    connect_timeout: 10,
+    connect_timeout: 10
   })
 
   return dbClient
@@ -123,7 +123,7 @@ async function seedUser(options: { isActive: boolean }) {
 
   return {
     payload,
-    user,
+    user
   }
 }
 
@@ -144,12 +144,12 @@ describe('user lifecycle e2e', () => {
     const loginResponse = await e2eFetch('/api/auth/login', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'application/json'
       },
       body: JSON.stringify({
         email: payload.email,
-        password: payload.password,
-      }),
+        password: payload.password
+      })
     })
 
     expect(loginResponse.status).toBe(403)
@@ -166,7 +166,7 @@ describe('user lifecycle e2e', () => {
 
     const banned = await adminClient.post<UserItem>('/api/admin/users/ban', {
       id: user.id,
-      isBanned: true,
+      isBanned: true
     })
     expect(banned.code).toBe(0)
     expect(banned.data.isBanned).toBe(true)
@@ -174,12 +174,12 @@ describe('user lifecycle e2e', () => {
     const loginResponse = await e2eFetch('/api/auth/login', {
       method: 'POST',
       headers: {
-        'content-type': 'application/json',
+        'content-type': 'application/json'
       },
       body: JSON.stringify({
         email: payload.email,
-        password: payload.password,
-      }),
+        password: payload.password
+      })
     })
 
     expect(loginResponse.status).toBe(403)
@@ -193,7 +193,7 @@ describe('user lifecycle e2e', () => {
     const adminClient = createAdminClient(sessionCookie)
 
     const deleted = await adminClient.post<UserItem>('/api/admin/users/delete', {
-      id: user.id,
+      id: user.id
     })
     expect(deleted.code).toBe(0)
     expect(deleted.data.id).toBe(user.id)

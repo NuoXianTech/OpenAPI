@@ -13,7 +13,7 @@ const schema = registerSchema
   .extend({ confirm: z.string().min(1, '请再次输入密码') })
   .refine(d => d.password === d.confirm, {
     path: ['confirm'],
-    message: '两次输入的密码不一致',
+    message: '两次输入的密码不一致'
   })
 
 type Schema = z.output<typeof schema>
@@ -22,7 +22,7 @@ const state = reactive<Schema>({
   username: '',
   email: '',
   password: '',
-  confirm: '',
+  confirm: ''
 })
 
 const errorMessage = ref('')
@@ -70,7 +70,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       username: event.data.username,
       email: event.data.email,
       password: event.data.password,
-      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
+      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
     })
     successMessage.value = res.verificationRequired
       ? '账号已创建，请查收邮箱完成验证后再登录。'
@@ -78,12 +78,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.password = ''
     state.confirm = ''
     turnstileWidget.value?.reset()
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '注册失败')
     turnstileWidget.value?.reset()
-  }
-  finally {
+  } finally {
     submitting.value = false
   }
 }

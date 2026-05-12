@@ -10,13 +10,13 @@ const route = useRoute()
 
 const schema = z.object({
   identifier: z.string().min(1, '请输入邮箱或用户名'),
-  password: z.string().min(1, '请输入密码'),
+  password: z.string().min(1, '请输入密码')
 })
 type Schema = z.output<typeof schema>
 
 const state = reactive<Schema>({
   identifier: '',
-  password: '',
+  password: ''
 })
 
 const remember = ref(false)
@@ -29,7 +29,7 @@ const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
 
 const { data: providersData } = useLazyFetch<Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }>>('/api/auth/providers/list', {
-  default: () => [],
+  default: () => []
 })
 const providers = computed(() => providersData.value || [])
 
@@ -52,7 +52,7 @@ const oauthError = computed(() => {
     user_unavailable: '用户不可用',
     secret_decrypt_failed: 'Provider 密钥配置异常',
     user_create_failed: '用户创建失败',
-    callback_failed: 'OAuth 回调失败，请重试',
+    callback_failed: 'OAuth 回调失败，请重试'
   }
   return map[code] || `登录失败：${code}`
 })
@@ -99,12 +99,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
     await login(payload)
     await navigateTo('/')
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '登录失败')
     turnstileWidget.value?.reset()
-  }
-  finally {
+  } finally {
     submitting.value = false
   }
 }

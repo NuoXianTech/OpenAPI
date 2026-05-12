@@ -27,7 +27,7 @@ function ensureIndex(): Map<string, CompiledApi> {
   for (const api of API_MANIFEST) {
     const compiled: CompiledEndpoint[] = api.endpoints.map(ep => ({
       endpoint: ep,
-      regex: new RegExp(ep.patternRegex),
+      regex: new RegExp(ep.patternRegex)
     }))
     map.set(`${api.pathVersion}:${api.code}`, { api, endpoints: compiled })
   }
@@ -52,7 +52,7 @@ export function matchEndpoint(
   pathVersion: string,
   code: string,
   pathname: string,
-  method: string,
+  method: string
 ): EndpointMatch | null {
   const compiled = ensureIndex().get(`${pathVersion}:${code}`)
   if (!compiled) return null

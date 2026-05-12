@@ -32,8 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const sessionId = getCookie(event, COOKIE_NAME)
   if (sessionId) {
     await sessionService.deleteOtherSessionsForUser(authUser.id, sessionId)
-  }
-  else {
+  } else {
     await sessionService.deleteSessionsByUserId(authUser.id)
   }
 
@@ -42,7 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
     actor: authUser.username,
     action: 'user.password.change',
     resourceType: 'user',
-    resourceId: String(authUser.id),
+    resourceId: String(authUser.id)
   })
 
   return null

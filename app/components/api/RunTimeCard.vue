@@ -6,7 +6,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  startTime: '2026-02-02 00:00:00', // 未定义时默认的起始时间
+  startTime: '2026-02-02 00:00:00' // 未定义时默认的起始时间
 })
 
 const startTimestamp = computed(() => {

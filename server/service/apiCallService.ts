@@ -46,7 +46,7 @@ function normalizeCallRow(data: AddCallInput) {
     requestSnapshot: data.requestSnapshot ?? null,
     errorCode: data.errorCode ?? null,
     errorMessage: data.errorMessage ?? null,
-    creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0),
+    creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0)
   }
 }
 
@@ -75,8 +75,7 @@ export const apiCallService = {
     if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
     if (opts.status === 'success') {
       conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
-    }
-    else if (opts.status === 'failure') {
+    } else if (opts.status === 'failure') {
       conds.push(sql`${apiCalls.statusCode} >= 400`)
     }
 
@@ -97,7 +96,7 @@ export const apiCallService = {
       errorCode: apiCalls.errorCode,
       errorMessage: apiCalls.errorMessage,
       creditsCost: apiCalls.creditsCost,
-      createdAt: apiCalls.createdAt,
+      createdAt: apiCalls.createdAt
     })
       .from(apiCalls)
       .leftJoin(apis, eq(apis.id, apiCalls.apiId))
@@ -110,12 +109,12 @@ export const apiCallService = {
         : baseQuery.orderBy(desc(apiCalls.createdAt)).limit(limit).offset(offset),
       where
         ? db.select({ value: count() }).from(apiCalls).where(where)
-        : db.select({ value: count() }).from(apiCalls),
+        : db.select({ value: count() }).from(apiCalls)
     ])
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0),
+      total: Number(totalRows[0]?.value || 0)
     }
   },
 
@@ -128,13 +127,13 @@ export const apiCallService = {
     const rows = await db.select({
       total: count(),
       success: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`,
-      failure: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`,
+      failure: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`
     }).from(apiCalls).where(eq(apiCalls.userId, userId))
     const r = rows[0] || { total: 0, success: 0, failure: 0 }
     return {
       total: Number(r.total) || 0,
       success: Number(r.success) || 0,
-      failure: Number(r.failure) || 0,
+      failure: Number(r.failure) || 0
     }
   },
 
@@ -157,8 +156,7 @@ export const apiCallService = {
     if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
     if (opts.status === 'success') {
       conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
-    }
-    else if (opts.status === 'failure') {
+    } else if (opts.status === 'failure') {
       conds.push(sql`${apiCalls.statusCode} >= 400`)
     }
 
@@ -177,7 +175,7 @@ export const apiCallService = {
         errorCode: apiCalls.errorCode,
         errorMessage: apiCalls.errorMessage,
         creditsCost: apiCalls.creditsCost,
-        createdAt: apiCalls.createdAt,
+        createdAt: apiCalls.createdAt
       })
         .from(apiCalls)
         .leftJoin(apis, eq(apis.id, apiCalls.apiId))
@@ -186,12 +184,12 @@ export const apiCallService = {
         .orderBy(desc(apiCalls.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ value: count() }).from(apiCalls).where(and(...conds)),
+      db.select({ value: count() }).from(apiCalls).where(and(...conds))
     ])
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0),
+      total: Number(totalRows[0]?.value || 0)
     }
   },
 
@@ -200,7 +198,7 @@ export const apiCallService = {
     const apiOptionsRaw = await db.select({
       id: apis.id,
       name: apis.name,
-      apiPath: apis.apiPath,
+      apiPath: apis.apiPath
     })
       .from(apis)
       .innerJoin(apiCalls, eq(apiCalls.apiId, apis.id))
@@ -210,7 +208,7 @@ export const apiCallService = {
 
     const keyOptionsRaw = await db.select({
       id: apiKeys.id,
-      name: apiKeys.name,
+      name: apiKeys.name
     })
       .from(apiKeys)
       .where(eq(apiKeys.userId, userId))
@@ -242,7 +240,7 @@ export const apiCallService = {
       const inserted = await tx.insert(apiCalls).values({
         ...normalizeCallRow(data),
         statusCode: normalizedStatusCode,
-        latencyMs: normalizedLatencyMs,
+        latencyMs: normalizedLatencyMs
       }).returning({ id: apiCalls.id })
 
       const callId = inserted[0]?.id ?? null
@@ -252,15 +250,15 @@ export const apiCallService = {
         statDate,
         totalCount: 1,
         successCount: successDelta,
-        failureCount: failureDelta,
+        failureCount: failureDelta
       }).onConflictDoUpdate({
         target: [apiCallStats.apiId, apiCallStats.statDate],
         set: {
           totalCount: sql`${apiCallStats.totalCount} + 1`,
           successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
           failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,
-          updatedAt: new Date(),
-        },
+          updatedAt: new Date()
+        }
       })
 
       return callId
@@ -273,5 +271,5 @@ export const apiCallService = {
     await db.update(apiCalls)
       .set({ creditsCost: value })
       .where(eq(apiCalls.id, callId))
-  },
+  }
 }

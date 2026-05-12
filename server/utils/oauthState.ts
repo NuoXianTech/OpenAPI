@@ -51,7 +51,7 @@ export function issueState(event: H3Event, provider: string, returnTo: string, m
     sameSite: 'lax',
     path: '/',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: STATE_TTL_SECONDS,
+    maxAge: STATE_TTL_SECONDS
   })
 
   return { state: nonce, nonce }
@@ -111,7 +111,7 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
     nonce,
     provider: cookieProvider,
     returnTo: base64UrlDecode(returnToEncoded).toString('utf8') || '/',
-    mode: cookieMode,
+    mode: cookieMode
   }
 }
 
@@ -120,6 +120,6 @@ export function clearStateCookie(event: H3Event) {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    maxAge: 0,
+    maxAge: 0
   })
 }

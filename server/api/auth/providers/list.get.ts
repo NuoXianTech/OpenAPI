@@ -14,7 +14,7 @@ export default defineEventHandler(async () => {
       provider,
       displayName: preset.displayName,
       icon: preset.icon,
-      authorizeEntry: `/api/auth/oauth/${provider}/start`,
+      authorizeEntry: `/api/auth/oauth/${provider}/start`
     }
   })
 })

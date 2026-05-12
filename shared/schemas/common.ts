@@ -2,12 +2,12 @@ import { z } from 'zod'
 
 /** 单个 id 入参，常见于 delete / reset / toggle */
 export const idSchema = z.object({
-  id: z.coerce.number().int().positive('id is required'),
+  id: z.coerce.number().int().positive('id is required')
 })
 
 /** messageId 入参 */
 export const messageIdSchema = z.object({
-  messageId: z.coerce.number().int().positive('messageId is required'),
+  messageId: z.coerce.number().int().positive('messageId is required')
 })
 
 /**
@@ -21,5 +21,5 @@ export const optionalDate = z.preprocess(
     const d = new Date(typeof v === 'string' || typeof v === 'number' || v instanceof Date ? v : String(v))
     return Number.isNaN(d.getTime()) ? null : d
   },
-  z.union([z.date(), z.null()]).optional(),
+  z.union([z.date(), z.null()]).optional()
 )

@@ -7,7 +7,7 @@ import {
   closeDbClient,
   deleteApiCallStatsByApiId,
   deleteApiCallsByApiId,
-  getApiCallStatByApiId,
+  getApiCallStatByApiId
 } from './helpers/db-cleanup'
 
 await setupE2E()
@@ -41,7 +41,7 @@ describe('api call stats e2e', () => {
     const registered = await adminClient.post<AdminApiItem>('/api/admin/apis/register', {
       pathVersion: TEST_PATH_VERSION,
       code: TEST_CODE,
-      overrides: { isEnabled: true, isStatistics: true },
+      overrides: { isEnabled: true, isStatistics: true }
     })
     expect(registered.code).toBe(0)
     const apiId = Number(registered.data.id)
@@ -51,7 +51,7 @@ describe('api call stats e2e', () => {
     await adminClient.put('/api/admin/apis/update', {
       id: apiId,
       isEnabled: true,
-      isStatistics: true,
+      isStatistics: true
     })
 
     const apiPath = `/api/${TEST_PATH_VERSION}/${TEST_CODE}`
@@ -73,7 +73,7 @@ describe('api call stats e2e', () => {
           return stat
         },
         value => Number(value?.totalCount || 0) > 0,
-        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
+        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs }
       )
 
       const firstTotal = Number(statAfterFirstCall?.totalCount || 0)
@@ -88,7 +88,7 @@ describe('api call stats e2e', () => {
           return stat
         },
         value => Number(value?.totalCount || 0) > firstTotal,
-        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
+        { timeoutMs: statsWaitTimeoutMs, intervalMs: statsWaitIntervalMs }
       )
 
       expect(Number(statAfterSecondCall?.totalCount || 0)).toBeGreaterThan(firstTotal)
@@ -102,10 +102,9 @@ describe('api call stats e2e', () => {
           return stat
         },
         value => value === null,
-        { timeoutMs: statsDeleteWaitTimeoutMs, intervalMs: statsWaitIntervalMs },
+        { timeoutMs: statsDeleteWaitTimeoutMs, intervalMs: statsWaitIntervalMs }
       )
-    }
-    finally {
+    } finally {
       await deleteApiCallStatsByApiId(apiId)
       await deleteApiCallsByApiId(apiId)
       await adminClient.post('/api/admin/apis/delete', { id: apiId })

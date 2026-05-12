@@ -22,7 +22,7 @@ interface Notification {
 const props = withDefaults(defineProps<{
   to?: string
 }>(), {
-  to: '/user/notifications',
+  to: '/user/notifications'
 })
 
 const POLL_INTERVAL_MS = 60_000
@@ -37,19 +37,17 @@ async function fetchUnreadCount() {
   try {
     const res = await $fetch<{ count: number }>('/api/notifications/unread-count')
     unread.value = res.count
-  }
-  catch { /* ignore */ }
+  } catch { /* ignore */ }
 }
 
 async function fetchList() {
   loading.value = true
   try {
     const res = await $fetch<Notification[]>('/api/notifications/list', {
-      query: { limit: 20 },
+      query: { limit: 20 }
     })
     items.value = res || []
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -65,8 +63,7 @@ async function markRead(item: Notification) {
     item.readAt = new Date().toISOString()
     unread.value = Math.max(0, unread.value - 1)
     expandedId.value = item.id
-  }
-  catch { /* ignore */ }
+  } catch { /* ignore */ }
 }
 
 async function markAllRead() {
@@ -79,8 +76,7 @@ async function markAllRead() {
       }
     })
     unread.value = 0
-  }
-  catch { /* ignore */ }
+  } catch { /* ignore */ }
 }
 
 watch(open, (val) => {
@@ -101,14 +97,13 @@ const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'wa
   info: { color: 'info', icon: 'i-mdi-information-outline', label: '通知' },
   success: { color: 'success', icon: 'i-mdi-check-circle-outline', label: '成功' },
   warning: { color: 'warning', icon: 'i-mdi-alert-outline', label: '提醒' },
-  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' },
+  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' }
 }
 
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }

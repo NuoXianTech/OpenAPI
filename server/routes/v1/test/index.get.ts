@@ -20,6 +20,6 @@ export default defineEventHandler(async (event: H3Event) => {
   return openApiOk(event, {
     hello: 'world',
     version: event.context.apiMeta?.api.pathVersion ?? 'v1',
-    serverTime: new Date().toISOString(),
+    serverTime: new Date().toISOString()
   })
 })

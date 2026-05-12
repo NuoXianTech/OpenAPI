@@ -42,11 +42,9 @@ const fetchStats = async () => {
   error.value = null
   try {
     data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public')
-  }
-  catch (err) {
+  } catch (err) {
     error.value = err
-  }
-  finally {
+  } finally {
     pending.value = false
   }
 }
@@ -82,7 +80,7 @@ const trendChartData = computed<TrendChartRow[]>(() => {
   return trend7d.value.map(item => ({
     label: toShortDate(item.date),
     [SUCCESS_KEY]: item.successCalls,
-    [FAILURE_KEY]: item.failureCalls,
+    [FAILURE_KEY]: item.failureCalls
   }))
 })
 
@@ -132,7 +130,7 @@ const overviewCards = computed(() => {
     { key: 'success', label: '成功调用', value: formatCount(overview.value.successCalls), icon: 'i-mdi-check-circle-outline' },
     { key: 'failure', label: '失败调用', value: formatCount(overview.value.failureCalls), icon: 'i-mdi-close-circle-outline' },
     { key: 'users', label: '注册用户', value: formatCount(overview.value.userCount), icon: 'i-mdi-account-group-outline' },
-    { key: 'enabledStatsApis', label: '统计接口', value: formatCount(overview.value.enabledTrackedApiCount), icon: 'i-mdi-api' },
+    { key: 'enabledStatsApis', label: '统计接口', value: formatCount(overview.value.enabledTrackedApiCount), icon: 'i-mdi-api' }
   ]
 })
 </script>

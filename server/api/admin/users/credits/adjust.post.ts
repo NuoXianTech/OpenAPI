@@ -30,7 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
     amount,
     operatorId: admin.id || null,
     operatorName: admin.username,
-    remark: remark || null,
+    remark: remark || null
   })
 
   await operationLogService.addLog({
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: `admin.credit.${operation}`,
     resourceType: 'user',
     resourceId: userIds.length === 1 ? String(userIds[0]) : `batch:${result.affected}`,
-    detail: { userIds, operation, amount, remark, affected: result.affected },
+    detail: { userIds, operation, amount, remark, affected: result.affected }
   })
 
   return result

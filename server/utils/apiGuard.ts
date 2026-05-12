@@ -113,7 +113,7 @@ function rateLimitHeaders(results: RateLimitResult[]): GateDeniedHeaders {
     'X-RateLimit-Limit': String(primary.limit),
     'X-RateLimit-Remaining': String(Math.max(primary.remaining, 0)),
     'X-RateLimit-Reset': String(Math.ceil(primary.resetAtMs / 1_000)),
-    'X-RateLimit-Window': primary.window,
+    'X-RateLimit-Window': primary.window
   }
 }
 
@@ -122,7 +122,7 @@ async function checkRateLimit(api: ApiRecord, subjectKey: string): Promise<RateL
     { window: 'second', limit: api.rateLimitPerSecond },
     { window: 'minute', limit: api.rateLimitPerMinute },
     { window: 'hour', limit: api.rateLimitPerHour },
-    { window: 'day', limit: api.rateLimitPerDay },
+    { window: 'day', limit: api.rateLimitPerDay }
   ].filter(w => w.limit > 0)
 
   if (windows.length === 0) return []
@@ -135,13 +135,12 @@ async function checkRateLimit(api: ApiRecord, subjectKey: string): Promise<RateL
       const result = await limiter.consume(key, limit, window)
       results.push(result)
       if (!result.allowed) return { denied: result }
-    }
-    catch (err) {
+    } catch (err) {
       // fail-open：driver 故障不阻断请求，仅日志
       console.error('[api-guard] rateLimit driver error', {
         apiId: api.id,
         window,
-        error: (err as Error).message,
+        error: (err as Error).message
       })
     }
   }
@@ -186,8 +185,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     if (!matchesWhitelist(apiKey.refererWhitelist, referer)) {
       return { passed: false, outcome: 'referer_denied', error: API_GUARD_ERROR.REFERER_DENIED }
     }
-  }
-  else if (api.isApiKey || api.costCredits > 0) {
+  } else if (api.isApiKey || api.costCredits > 0) {
     // 显式开启 isApiKey 必需，或接口本身有扣费要求 → 必须带 apiKey 才能定位归属用户
     return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY }
   }
@@ -202,7 +200,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
       passed: false,
       outcome: 'rate_limited',
       error: API_GUARD_ERROR.RATE_LIMITED,
-      headers: rateLimitHeaders([rateResult.denied]),
+      headers: rateLimitHeaders([rateResult.denied])
     }
   }
 
@@ -213,11 +211,10 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
       if (used >= api.dailyQuota) {
         return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED }
       }
-    }
-    catch (err) {
+    } catch (err) {
       console.error('[api-guard] quota check failed', {
         apiId: api.id,
-        error: (err as Error).message,
+        error: (err as Error).message
       })
       // fail-open
     }
@@ -234,11 +231,10 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
       if (balance < api.costCredits) {
         return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
       }
-    }
-    catch (err) {
+    } catch (err) {
       console.error('[api-guard] credits check failed', {
         apiId: api.id,
-        error: (err as Error).message,
+        error: (err as Error).message
       })
       // 积分校验异常时 fail-close 更安全：避免漏扣或误调用
       return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
@@ -249,6 +245,6 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     passed: true,
     outcome: 'passed',
     apiKey,
-    rateLimitHeaders: rateLimitHeaders(rateResult),
+    rateLimitHeaders: rateLimitHeaders(rateResult)
   }
 }

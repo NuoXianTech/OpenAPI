@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
     level,
     linkUrl: body.linkUrl?.trim() || null,
     senderUserId: admin.id || null,
-    senderActor: admin.username,
+    senderActor: admin.username
   })
 
   await operationLogService.addLog({
@@ -37,8 +37,8 @@ export default defineEventHandler(async (event: H3Event) => {
       title,
       level,
       audience,
-      deliveredCount: result.deliveredCount,
-    },
+      deliveredCount: result.deliveredCount
+    }
   })
 
   return result

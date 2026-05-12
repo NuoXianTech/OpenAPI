@@ -23,7 +23,7 @@ const {
   deleteUser,
   toggleBan,
   updateUser,
-  errMsg,
+  errMsg
 } = useAdminUsersPage()
 
 // ----- Delete modal -----
@@ -42,11 +42,9 @@ async function confirmDelete() {
   try {
     await deleteUser(deleteTarget.value.id)
     deleteOpen.value = false
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -105,26 +103,26 @@ function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
   return [{
     label: '编辑',
     icon: 'i-mdi-pencil-outline',
-    onSelect: () => openEdit(row),
+    onSelect: () => openEdit(row)
   }, {
     label: row.isBanned ? '解封' : '封禁',
     icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
-    onSelect: () => toggleBan(row),
+    onSelect: () => toggleBan(row)
   }, {
     label: 'API Keys',
     icon: 'i-mdi-key-variant',
-    onSelect: () => openKeys(row),
+    onSelect: () => openKeys(row)
   }, {
     label: '积分管理',
     icon: 'i-mdi-cash-multiple',
-    onSelect: () => openCreditForOne(row),
+    onSelect: () => openCreditForOne(row)
   }, {
-    type: 'separator',
+    type: 'separator'
   }, {
     label: '删除',
     icon: 'i-mdi-delete-outline',
     color: 'error' as const,
-    onSelect: () => openDelete(row),
+    onSelect: () => openDelete(row)
   }]
 }
 
@@ -139,8 +137,8 @@ const columns: TableColumn<AdminUserItem>[] = [
     header: '选',
     cell: ({ row }) => h(UCheckbox, {
       'modelValue': selectedIds.value.includes(row.original.id),
-      'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true),
-    }),
+      'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true)
+    })
   },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'email', header: '邮箱' },
@@ -151,42 +149,42 @@ const columns: TableColumn<AdminUserItem>[] = [
     cell: ({ row }) => h(UBadge, {
       color: (row.original.credits ?? 0) > 0 ? 'success' : 'neutral',
       variant: 'subtle',
-      class: 'tabular-nums font-mono',
-    }, () => Number(row.original.credits ?? 0).toLocaleString()),
+      class: 'tabular-nums font-mono'
+    }, () => Number(row.original.credits ?? 0).toLocaleString())
   },
   {
     accessorKey: 'isActive',
     header: '激活',
     cell: ({ row }) => h(UBadge, {
       color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle',
-    }, () => row.original.isActive ? '已激活' : '未激活'),
+      variant: 'subtle'
+    }, () => row.original.isActive ? '已激活' : '未激活')
   },
   {
     accessorKey: 'isBanned',
     header: '封禁',
     cell: ({ row }) => row.original.isBanned
       ? h(UBadge, { color: 'error', variant: 'subtle' }, () => '已封禁')
-      : null,
+      : null
   },
   {
     accessorKey: 'createdAt',
     header: '注册时间',
-    cell: ({ row }) => formatDate(row.original.createdAt),
+    cell: ({ row }) => formatDate(row.original.createdAt)
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 </script>
 
@@ -257,7 +255,7 @@ const columns: TableColumn<AdminUserItem>[] = [
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2',
+          td: 'py-2'
         }"
       />
 

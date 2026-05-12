@@ -5,7 +5,7 @@ function sleep(ms: number) {
 export async function waitForValue<T>(
   getter: () => Promise<T>,
   predicate: (value: T) => boolean,
-  options: { timeoutMs?: number, intervalMs?: number } = {},
+  options: { timeoutMs?: number, intervalMs?: number } = {}
 ) {
   const timeoutMs = options.timeoutMs ?? 8_000
   const intervalMs = options.intervalMs ?? 150

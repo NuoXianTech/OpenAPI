@@ -10,7 +10,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   placeholder: '搜索 API 名称或描述...',
-  size: 'md',
+  size: 'md'
 })
 
 const emit = defineEmits<{

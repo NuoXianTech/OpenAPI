@@ -7,6 +7,6 @@ export default defineConfig({
     setupFiles: ['tests/e2e/setup/env.ts'],
     fileParallelism: false,
     testTimeout: 90_000,
-    hookTimeout: 90_000,
-  },
+    hookTimeout: 90_000
+  }
 })

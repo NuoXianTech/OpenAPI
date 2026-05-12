@@ -30,7 +30,7 @@ export const friendLinkService = {
       url: data.url,
       description: data.description ?? null,
       isActive: data.isActive ?? true,
-      createdBy: data.createdBy ?? null,
+      createdBy: data.createdBy ?? null
     }).returning()
     return res[0]
   },
@@ -44,7 +44,7 @@ export const friendLinkService = {
     const res = await db.update(friendLinks)
       .set({
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(friendLinks.id, id))
       .returning()
@@ -54,5 +54,5 @@ export const friendLinkService = {
   async delete(id: number) {
     const res = await db.delete(friendLinks).where(eq(friendLinks.id, id)).returning()
     return res[0] || null
-  },
+  }
 }

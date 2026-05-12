@@ -5,8 +5,8 @@ export function usePublicApiList() {
     'public-api-list',
     () => $fetch<ApiCatalogItem[]>('/api/list', { method: 'GET' }),
     {
-      default: () => [],
-    },
+      default: () => []
+    }
   )
 
   const catalogItems = computed(() => data.value || [])
@@ -18,7 +18,7 @@ export function usePublicApiList() {
     { label: '正常', value: 1 },
     { label: '异常', value: 0 },
     { label: '维护', value: 2 },
-    { label: '废弃', value: 3 },
+    { label: '废弃', value: 3 }
   ]
 
   return {
@@ -27,6 +27,6 @@ export function usePublicApiList() {
     statusTabs,
     pending,
     error,
-    fetchPublicApiList: refresh,
+    fetchPublicApiList: refresh
   }
 }

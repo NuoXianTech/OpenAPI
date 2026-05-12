@@ -28,13 +28,11 @@ export function useAuth() {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
       const res = await $fetch<AuthUser | null>('/api/auth/me', { headers })
       user.value = res ?? null
-    }
-    catch (err) {
+    } catch (err) {
       // /api/auth/me 异常一律视为未登录，让中间件去重定向
       console.error('[useAuth] fetchMe failed', err)
       user.value = null
-    }
-    finally {
+    } finally {
       loading.value = false
       fetchedAt.value = Date.now()
     }
@@ -55,7 +53,7 @@ export function useAuth() {
   const login = async (payload: LoginInput) => {
     const res = await $fetch<AuthUser>('/api/auth/login', {
       method: 'POST',
-      body: payload,
+      body: payload
     })
     user.value = res
     fetchedAt.value = Date.now()
@@ -65,7 +63,7 @@ export function useAuth() {
   const adminLogin = async (payload: { username: string, password: string, remember?: boolean, turnstileToken?: string }) => {
     const res = await $fetch<AuthUser>('/api/admin/auth/login', {
       method: 'POST',
-      body: payload,
+      body: payload
     })
     user.value = res
     fetchedAt.value = Date.now()
@@ -75,7 +73,7 @@ export function useAuth() {
   const register = async (payload: RegisterInput) => {
     return await $fetch<{ user: AuthUser, verificationRequired: boolean }>('/api/auth/register', {
       method: 'POST',
-      body: payload,
+      body: payload
     })
   }
 
@@ -98,6 +96,6 @@ export function useAuth() {
     adminLogin,
     register,
     logout,
-    ensureAdmin,
+    ensureAdmin
   }
 }

@@ -14,17 +14,17 @@ const linkValid = computed(() => userId.value > 0 && token.value.length > 0)
 
 const schema = z.object({
   password: z.string().min(8, '密码至少 8 位'),
-  confirm: z.string().min(1, '请再次输入密码'),
+  confirm: z.string().min(1, '请再次输入密码')
 }).refine(d => d.password === d.confirm, {
   path: ['confirm'],
-  message: '两次输入的密码不一致',
+  message: '两次输入的密码不一致'
 })
 
 type Schema = z.output<typeof schema>
 
 const state = reactive<Schema>({
   password: '',
-  confirm: '',
+  confirm: ''
 })
 const errorMessage = ref('')
 const submitting = ref(false)
@@ -69,18 +69,16 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       body: {
         userId: userId.value,
         token: token.value,
-        newPassword: event.data.password,
-      } satisfies ResetPasswordInput,
+        newPassword: event.data.password
+      } satisfies ResetPasswordInput
     })
     success.value = true
     toast.add({ title: '密码已重置，请使用新密码登录', color: 'success' })
     await new Promise(resolve => setTimeout(resolve, 800))
     await navigateTo('/login')
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '重置失败，链接可能已失效')
-  }
-  finally {
+  } finally {
     submitting.value = false
   }
 }

@@ -48,7 +48,7 @@ function mergeCookieHeader(cookie: string, headers?: HeadersInit): HeadersInit {
 
   return {
     ...headers,
-    cookie,
+    cookie
   }
 }
 
@@ -59,12 +59,12 @@ export async function loginAsAdmin() {
   const response = await e2eFetch('/api/admin/auth/login', {
     method: 'POST',
     headers: {
-      'content-type': 'application/json',
+      'content-type': 'application/json'
     },
     body: JSON.stringify({
       username: adminUsername,
-      password: adminPassword,
-    }),
+      password: adminPassword
+    })
   })
 
   const data = await response.json() as ApiResponse<{ id: number }>
@@ -89,7 +89,7 @@ export function createAdminClient(cookie: string) {
       return $fetch<ApiResponse<T>>(url, {
         method: 'GET',
         query,
-        headers: mergeCookieHeader(cookie),
+        headers: mergeCookieHeader(cookie)
       })
     },
 
@@ -97,7 +97,7 @@ export function createAdminClient(cookie: string) {
       return $fetch<ApiResponse<T>>(url, {
         method: 'POST',
         body,
-        headers: mergeCookieHeader(cookie),
+        headers: mergeCookieHeader(cookie)
       })
     },
 
@@ -105,7 +105,7 @@ export function createAdminClient(cookie: string) {
       return $fetch<ApiResponse<T>>(url, {
         method: 'PUT',
         body,
-        headers: mergeCookieHeader(cookie),
+        headers: mergeCookieHeader(cookie)
       })
     },
 
@@ -135,8 +135,8 @@ export function createAdminClient(cookie: string) {
       return e2eFetch(`${url}${queryString}`, {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: options.body ? JSON.stringify(options.body) : undefined
       }) as Promise<T extends Response ? T : Response>
-    },
+    }
   }
 }

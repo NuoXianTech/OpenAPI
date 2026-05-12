@@ -6,13 +6,13 @@ export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const [list, summary] = await Promise.all([
     apiCallStatsService.list(),
-    apiCallStatsService.getSummary(),
+    apiCallStatsService.getSummary()
   ])
 
   return {
     total: summary.total,
     success: summary.success,
     failure: summary.failure,
-    items: list,
+    items: list
   }
 })

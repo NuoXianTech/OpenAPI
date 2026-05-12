@@ -21,7 +21,7 @@ const form = reactive({
   length: 16,
   maxUses: 1,
   expiresInDays: 0,
-  note: '',
+  note: ''
 })
 
 const generating = ref(false)
@@ -35,7 +35,7 @@ function resetForm() {
     length: 16,
     maxUses: 1,
     expiresInDays: 0,
-    note: '',
+    note: ''
   })
   result.value = null
 }
@@ -64,13 +64,11 @@ async function submit() {
       length: Math.trunc(form.length),
       maxUses: Math.trunc(form.maxUses),
       expiresAt,
-      note: form.note.trim() || null,
+      note: form.note.trim() || null
     })
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '生成失败', color: 'error' })
-  }
-  finally {
+  } finally {
     generating.value = false
   }
 }

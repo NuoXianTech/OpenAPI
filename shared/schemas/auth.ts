@@ -10,7 +10,7 @@ export const registerSchema = z.object({
     .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线'),
   email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
   password: z.string().min(8, '密码至少 8 位'),
-  turnstileToken: z.string().optional(),
+  turnstileToken: z.string().optional()
 })
 export type RegisterInput = z.output<typeof registerSchema>
 
@@ -21,18 +21,18 @@ export const loginSchema = z
     username: z.string().trim().optional(),
     password: z.string().min(1, '请输入密码'),
     remember: z.boolean().optional(),
-    turnstileToken: z.string().optional(),
+    turnstileToken: z.string().optional()
   })
   .refine(d => Boolean(d.email || d.username), {
     message: 'email or username is required',
-    path: ['email'],
+    path: ['email']
   })
 export type LoginInput = z.output<typeof loginSchema>
 
 /** 申请重置密码：邮箱 + Turnstile */
 export const requestPasswordResetSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
-  turnstileToken: z.string().optional(),
+  turnstileToken: z.string().optional()
 })
 export type RequestPasswordResetInput = z.output<typeof requestPasswordResetSchema>
 
@@ -40,6 +40,6 @@ export type RequestPasswordResetInput = z.output<typeof requestPasswordResetSche
 export const resetPasswordSchema = z.object({
   userId: z.coerce.number().int().positive('Invalid user id'),
   token: z.string().min(1, '缺少重置令牌'),
-  newPassword: z.string().min(8, '密码至少 8 位'),
+  newPassword: z.string().min(8, '密码至少 8 位')
 })
 export type ResetPasswordInput = z.output<typeof resetPasswordSchema>

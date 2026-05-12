@@ -27,7 +27,7 @@ export const apiKeyService = {
         userId,
         name,
         apiKey: key,
-        isActive: true,
+        isActive: true
       })
       .returning()
     return res[0]
@@ -60,7 +60,7 @@ export const apiKeyService = {
     const nextKey = generateApiKey()
     const res = await db.update(apiKeys)
       .set({
-        apiKey: nextKey,
+        apiKey: nextKey
       })
       .where(eq(apiKeys.id, id))
       .returning()
@@ -76,8 +76,8 @@ export const apiKeyService = {
       .set({
         lastUsedAt: new Date(),
         lastUsedIp: ip,
-        totalCalls: sql`${apiKeys.totalCalls} + 1`,
+        totalCalls: sql`${apiKeys.totalCalls} + 1`
       })
       .where(eq(apiKeys.id, id))
-  },
+  }
 }

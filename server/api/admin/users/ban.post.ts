@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { isBanned, username: updated?.username },
+    detail: { isBanned, username: updated?.username }
   })
 
   return updated

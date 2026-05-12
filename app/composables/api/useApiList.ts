@@ -12,8 +12,8 @@ export function useApiList() {
     'public-api-categories',
     () => $fetch<ApiCategoryItem[]>('/api/api-categories/list'),
     {
-      default: () => [] as ApiCategoryItem[],
-    },
+      default: () => [] as ApiCategoryItem[]
+    }
   )
 
   const categories = computed(() => categoriesData.value || [])
@@ -84,6 +84,6 @@ export function useApiList() {
     error,
     filteredItems,
     isEmpty,
-    fetchList,
+    fetchList
   }
 }

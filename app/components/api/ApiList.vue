@@ -4,7 +4,7 @@ import type { ApiCatalogItem, ApiCategoryItem } from '~/composables/api/types'
 
 const { items, categoryMap } = defineProps({
   items: { type: Array as PropType<ApiCatalogItem[]>, default: () => [] },
-  categoryMap: { type: Object as PropType<Record<number, ApiCategoryItem>>, default: () => ({}) },
+  categoryMap: { type: Object as PropType<Record<number, ApiCategoryItem>>, default: () => ({}) }
 })
 
 function resolveCategoryName(id: number | null | undefined) {

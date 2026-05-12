@@ -54,14 +54,14 @@ async function getSessionMaxAgesSeconds() {
   return {
     defaultMaxAge: Number(settings.sessionMaxAgeSeconds),
     absoluteMaxAge: Number(settings.sessionAbsoluteMaxAgeSeconds),
-    rememberMaxAge: Number(settings.sessionRememberMaxAgeSeconds),
+    rememberMaxAge: Number(settings.sessionRememberMaxAgeSeconds)
   }
 }
 
 function getClientContext(event: H3Event) {
   return {
     ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    userAgent: getHeader(event, 'user-agent') || null
   }
 }
 
@@ -75,7 +75,7 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload, o
     kind: 'user',
     ip,
     userAgent,
-    isRemembered: remember,
+    isRemembered: remember
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
@@ -91,7 +91,7 @@ export async function createAdminSession(event: H3Event, options: { remember?: b
     kind: 'admin',
     ip,
     userAgent,
-    isRemembered: remember,
+    isRemembered: remember
   }, maxAgeSeconds)
   setAuthCookie(event, sessionId, maxAgeSeconds)
 }
@@ -102,7 +102,7 @@ export function setAuthCookie(event: H3Event, sessionId: string, maxAgeSeconds: 
     sameSite: 'lax',
     path: '/',
     secure: process.env.NODE_ENV === 'production',
-    maxAge: maxAgeSeconds,
+    maxAge: maxAgeSeconds
   })
 }
 
@@ -111,7 +111,7 @@ export function clearAuthCookie(event: H3Event) {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
-    maxAge: 0,
+    maxAge: 0
   })
 }
 
@@ -133,8 +133,7 @@ export async function getAuthUser(event: H3Event) {
     sessionService.touchSession(sessionId).catch((err) => {
       console.error('[auth] failed to touch remembered session', { sessionId, err })
     })
-  }
-  else {
+  } else {
     const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
     const nowMs = Date.now()
     const absoluteExpiryMs = session.createdAt.getTime() + absoluteMaxAge * 1000
@@ -164,7 +163,7 @@ export async function getAuthUser(event: H3Event) {
       username: authConfig.adminUsername,
       email: authConfig.adminEmail,
       avatarUrl: getCravatarUrl(authConfig.adminEmail),
-      kind: 'admin' as const,
+      kind: 'admin' as const
     }
   }
 
@@ -189,7 +188,7 @@ export async function getAuthUser(event: H3Event) {
     displayName: user.displayName,
     email: user.email,
     avatarUrl: getCravatarUrl(user.email),
-    kind: 'user' as const,
+    kind: 'user' as const
   }
 }
 

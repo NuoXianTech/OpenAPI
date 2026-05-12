@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (costCredits !== undefined && costCredits > 0 && isApiKey === false) {
     throw createError({
       statusCode: 400,
-      message: '设置扣费金额时必须开启「必需 API Key」',
+      message: '设置扣费金额时必须开启「必需 API Key」'
     })
   }
 
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event: H3Event) => {
     rateLimitPerDay: body.rateLimitPerDay,
     dailyQuota: body.dailyQuota,
     costCredits,
-    timeoutMs: body.timeoutMs,
+    timeoutMs: body.timeoutMs
   })
 
   await operationLogService.addLog({
@@ -51,7 +51,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api.update',
     resourceType: 'api',
     resourceId: String(id),
-    detail: { updated },
+    detail: { updated }
   })
 
   return updated

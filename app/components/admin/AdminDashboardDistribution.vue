@@ -16,7 +16,7 @@ const rows = computed(() => {
   return props.distribution.map(item => ({
     ...item,
     percent: (item.totalCalls / totalCalls.value) * 100,
-    width: (item.totalCalls / max) * 100,
+    width: (item.totalCalls / max) * 100
   }))
 })
 

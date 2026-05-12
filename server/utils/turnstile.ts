@@ -32,7 +32,7 @@ function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.ge
 export async function verifyTurnstileForPage(
   page: TurnstilePageKey,
   token: string | undefined | null,
-  remoteIp?: string | null,
+  remoteIp?: string | null
 ): Promise<TurnstileCheck> {
   const settings = await siteSettingsService.getOrCreate()
 
@@ -52,8 +52,7 @@ export async function verifyTurnstileForPage(
   let secret: string
   try {
     secret = decryptSecret(settings.turnstileSecretKey)
-  }
-  catch {
+  } catch {
     return { required: true, valid: false, reason: 'secret_decrypt_failed' }
   }
 
@@ -68,14 +67,13 @@ export async function verifyTurnstileForPage(
     const res = await $fetch<SiteVerifyResponse>(VERIFY_URL, {
       method: 'POST',
       body: form.toString(),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     })
     if (res?.success) {
       return { required: true, valid: true }
     }
     return { required: true, valid: false, reason: res?.['error-codes']?.[0] || 'verify_failed' }
-  }
-  catch {
+  } catch {
     return { required: true, valid: false, reason: 'verify_exception' }
   }
 }
@@ -89,13 +87,13 @@ const FAILURE_MESSAGE: Record<string, string> = {
   'missing-input-response': '请先完成人机验证',
   'timeout-or-duplicate': '人机验证已过期，请刷新重试',
   'verify_failed': '人机验证失败，请重试',
-  'verify_exception': '人机验证服务不可用，请稍后重试',
+  'verify_exception': '人机验证服务不可用，请稍后重试'
 }
 
 export async function assertTurnstileForPage(
   page: TurnstilePageKey,
   token: string | undefined | null,
-  remoteIp?: string | null,
+  remoteIp?: string | null
 ) {
   const result = await verifyTurnstileForPage(page, token, remoteIp)
   if (result.required && !result.valid) {

@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const [bound, enabled] = await Promise.all([
     oauthAccountService.listSafeByUserId(authUser.id),
-    oauthEnabled ? oauthProviderService.listEnabledProviders() : Promise.resolve([] as string[]),
+    oauthEnabled ? oauthProviderService.listEnabledProviders() : Promise.resolve([] as string[])
   ])
 
   // 把已启用的 provider 与已绑定的账号合并成一个统一的列表，前端按 provider 一一渲染
@@ -44,7 +44,7 @@ export default defineEventHandler(async (event: H3Event) => {
       email: null,
       avatarUrl: null,
       providerUserId: null,
-      linkedAt: null,
+      linkedAt: null
     })
   }
 
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event: H3Event) => {
       email: null,
       avatarUrl: null,
       providerUserId: null,
-      linkedAt: null,
+      linkedAt: null
     }
     item.bound = true
     item.nickname = acc.nickname
@@ -77,6 +77,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   return {
     oauthEnabled,
-    providers: Array.from(map.values()),
+    providers: Array.from(map.values())
   }
 })

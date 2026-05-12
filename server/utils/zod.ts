@@ -9,17 +9,16 @@ import type { z } from 'zod'
  */
 export async function readZodBody<S extends z.ZodType>(
   event: H3Event,
-  schema: S,
+  schema: S
 ): Promise<z.output<S>> {
   try {
     return await readValidatedBody(event, body => schema.parse(body))
-  }
-  catch (error) {
+  } catch (error) {
     if (error instanceof ZodError) {
       throw createError({
         statusCode: 400,
         message: error.issues[0]?.message ?? 'Invalid request body',
-        data: { issues: error.issues },
+        data: { issues: error.issues }
       })
     }
     throw error

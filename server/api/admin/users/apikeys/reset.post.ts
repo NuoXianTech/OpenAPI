@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.apikey.reset',
     resourceType: 'apikey',
     resourceId: String(id),
-    detail: { updated },
+    detail: { updated }
   })
 
   return updated

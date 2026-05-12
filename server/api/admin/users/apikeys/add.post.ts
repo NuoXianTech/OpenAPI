@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.apikey.create',
     resourceType: 'apikey',
     resourceId: String(created.id),
-    detail: { created },
+    detail: { created }
   })
 
   return created

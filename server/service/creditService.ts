@@ -61,7 +61,7 @@ export const creditService = {
       const updated = await tx.update(users)
         .set({
           credits: sql`${users.credits} - ${amount}`,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(and(eq(users.id, input.userId), gte(users.credits, amount)))
         .returning({ id: users.id, credits: users.credits })
@@ -79,7 +79,7 @@ export const creditService = {
         apiId: input.apiId ?? null,
         apiCallId: input.apiCallId ?? null,
         remark: input.remark ?? null,
-        meta: input.meta ?? null,
+        meta: input.meta ?? null
       })
 
       return { charged: amount, balanceAfter }
@@ -98,7 +98,7 @@ export const creditService = {
       const updated = await tx.update(users)
         .set({
           credits: sql`${users.credits} + ${amount}`,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(users.id, input.userId))
         .returning({ id: users.id, credits: users.credits })
@@ -114,7 +114,7 @@ export const creditService = {
         apiId: input.apiId ?? null,
         apiCallId: input.apiCallId ?? null,
         remark: input.remark ?? null,
-        meta: input.meta ?? null,
+        meta: input.meta ?? null
       })
 
       return { refunded: amount, balanceAfter }
@@ -130,7 +130,7 @@ export const creditService = {
       const updated = await tx.update(users)
         .set({
           credits: sql`${users.credits} + ${amount}`,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(users.id, input.userId))
         .returning({ id: users.id, credits: users.credits })
@@ -145,7 +145,7 @@ export const creditService = {
         operatorId: input.operatorId ?? null,
         operatorName: input.operatorName ?? null,
         remark: input.remark ?? null,
-        meta: input.meta ?? null,
+        meta: input.meta ?? null
       })
       return { userId: input.userId, balanceAfter }
     })
@@ -170,7 +170,7 @@ export const creditService = {
           operatorId: input.operatorId ?? null,
           operatorName: input.operatorName ?? null,
           remark: input.remark ?? '积分不足，未实际扣减',
-          meta: input.meta ?? null,
+          meta: input.meta ?? null
         })
         return { userId: input.userId, balanceAfter: Number(current[0].credits) }
       }
@@ -178,7 +178,7 @@ export const creditService = {
       const updated = await tx.update(users)
         .set({
           credits: sql`${users.credits} - ${actualDeduct}`,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(users.id, input.userId))
         .returning({ credits: users.credits })
@@ -192,7 +192,7 @@ export const creditService = {
         operatorId: input.operatorId ?? null,
         operatorName: input.operatorName ?? null,
         remark: input.remark ?? null,
-        meta: input.meta ?? null,
+        meta: input.meta ?? null
       })
       return { userId: input.userId, balanceAfter }
     })
@@ -209,7 +209,7 @@ export const creditService = {
       const updated = await tx.update(users)
         .set({
           credits: target,
-          updatedAt: new Date(),
+          updatedAt: new Date()
         })
         .where(eq(users.id, input.userId))
         .returning({ credits: users.credits })
@@ -223,7 +223,7 @@ export const creditService = {
         operatorId: input.operatorId ?? null,
         operatorName: input.operatorName ?? null,
         remark: input.remark ?? `重置为 ${target}`,
-        meta: input.meta ?? null,
+        meta: input.meta ?? null
       })
       return { userId: input.userId, balanceAfter }
     })
@@ -258,20 +258,18 @@ export const creditService = {
             reason: 'admin_grant',
             operatorId: input.operatorId,
             operatorName: input.operatorName,
-            remark: input.remark,
+            remark: input.remark
           })
-        }
-        else if (input.operation === 'revoke') {
+        } else if (input.operation === 'revoke') {
           r = await this.adminRevoke({
             userId,
             amount: input.amount,
             reason: 'admin_revoke',
             operatorId: input.operatorId,
             operatorName: input.operatorName,
-            remark: input.remark,
+            remark: input.remark
           })
-        }
-        else if (input.operation === 'reset') {
+        } else if (input.operation === 'reset') {
           r = await this.adminReset({
             userId,
             amount: input.amount,
@@ -279,12 +277,11 @@ export const creditService = {
             reason: 'admin_reset',
             operatorId: input.operatorId,
             operatorName: input.operatorName,
-            remark: input.remark,
+            remark: input.remark
           })
         }
         if (r) results.push(r)
-      }
-      catch (err) {
+      } catch (err) {
         console.error('credit batch adjust failed', { userId, err })
       }
     }
@@ -321,12 +318,12 @@ export const creditService = {
         : db.select().from(creditTransactions).orderBy(desc(creditTransactions.createdAt)).limit(limit).offset(offset),
       where
         ? db.select({ value: count() }).from(creditTransactions).where(where)
-        : db.select({ value: count() }).from(creditTransactions),
+        : db.select({ value: count() }).from(creditTransactions)
     ])
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0),
+      total: Number(totalRows[0]?.value || 0)
     }
   },
 
@@ -361,7 +358,7 @@ export const creditService = {
         apiCallId: creditTransactions.apiCallId,
         operatorName: creditTransactions.operatorName,
         remark: creditTransactions.remark,
-        createdAt: creditTransactions.createdAt,
+        createdAt: creditTransactions.createdAt
       })
         .from(creditTransactions)
         .leftJoin(apis, eq(apis.id, creditTransactions.apiId))
@@ -369,12 +366,12 @@ export const creditService = {
         .orderBy(desc(creditTransactions.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ value: count() }).from(creditTransactions).where(where),
+      db.select({ value: count() }).from(creditTransactions).where(where)
     ])
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0),
+      total: Number(totalRows[0]?.value || 0)
     }
   },
 
@@ -388,16 +385,16 @@ export const creditService = {
       db.select({
         totalIn: sql<number>`coalesce(sum(case when ${creditTransactions.amount} > 0 then ${creditTransactions.amount} else 0 end), 0)`,
         totalOut: sql<number>`coalesce(sum(case when ${creditTransactions.amount} < 0 then -${creditTransactions.amount} else 0 end), 0)`,
-        totalCount: sql<number>`count(*)`,
+        totalCount: sql<number>`count(*)`
       }).from(creditTransactions).where(eq(creditTransactions.userId, userId)),
       db.select({
         reason: creditTransactions.reason,
         count: sql<number>`count(*)`,
-        sum: sql<number>`coalesce(sum(${creditTransactions.amount}), 0)`,
+        sum: sql<number>`coalesce(sum(${creditTransactions.amount}), 0)`
       })
         .from(creditTransactions)
         .where(eq(creditTransactions.userId, userId))
-        .groupBy(creditTransactions.reason),
+        .groupBy(creditTransactions.reason)
     ])
 
     const balance = Number(balanceRow[0]?.credits || 0)
@@ -405,7 +402,7 @@ export const creditService = {
     const byReason = reasonRows.map((r: { reason: string, count: number | string, sum: number | string }) => ({
       reason: r.reason,
       count: Number(r.count) || 0,
-      sum: Number(r.sum) || 0,
+      sum: Number(r.sum) || 0
     }))
 
     return {
@@ -413,7 +410,7 @@ export const creditService = {
       totalIn: Number(agg.totalIn) || 0,
       totalOut: Number(agg.totalOut) || 0,
       totalCount: Number(agg.totalCount) || 0,
-      byReason,
+      byReason
     }
-  },
+  }
 }

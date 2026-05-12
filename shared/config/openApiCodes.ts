@@ -36,7 +36,7 @@ export const OPEN_API_CODE = {
   API_DISABLED: 50300,
 
   // 6xxxx · 业务失败（HTTP 200，handler 自定义；与 markApiCallFailed 搭配跳过扣费）
-  BUSINESS_FAILED: 60000,
+  BUSINESS_FAILED: 60000
 } as const
 
 export type OpenApiCode = (typeof OPEN_API_CODE)[keyof typeof OPEN_API_CODE]

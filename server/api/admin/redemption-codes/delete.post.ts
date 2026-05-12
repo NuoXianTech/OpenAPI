@@ -18,7 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
       actor: admin.username,
       action: 'admin.redemption_code.delete',
       resourceType: 'redemption_code',
-      resourceId: String(id),
+      resourceId: String(id)
     })
     return removed
   }
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.redemption_code.batch_delete',
     resourceType: 'redemption_code_batch',
     resourceId: batchId,
-    detail: { includeUsed: !!includeUsed, affected: res.affected },
+    detail: { includeUsed: !!includeUsed, affected: res.affected }
   })
   return res
 })

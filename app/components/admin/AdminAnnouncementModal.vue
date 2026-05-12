@@ -26,7 +26,7 @@ const form = reactive({
   startAt: '',
   endAt: '',
   linkUrl: '',
-  sortOrder: 0,
+  sortOrder: 0
 })
 
 const loading = ref(false)
@@ -36,7 +36,7 @@ const levelOptions = [
   { label: '公告 (info)', value: 'info' },
   { label: '通知 (success)', value: 'success' },
   { label: '提醒 (warning)', value: 'warning' },
-  { label: '紧急 (critical)', value: 'critical' },
+  { label: '紧急 (critical)', value: 'critical' }
 ]
 
 function toLocalInput(iso: string | null): string {
@@ -60,10 +60,9 @@ watch(() => [props.item, open.value], () => {
       startAt: toLocalInput(props.item.startAt),
       endAt: toLocalInput(props.item.endAt),
       linkUrl: props.item.linkUrl || '',
-      sortOrder: props.item.sortOrder,
+      sortOrder: props.item.sortOrder
     })
-  }
-  else {
+  } else {
     Object.assign(form, {
       title: '',
       content: '',
@@ -73,7 +72,7 @@ watch(() => [props.item, open.value], () => {
       startAt: '',
       endAt: '',
       linkUrl: '',
-      sortOrder: 0,
+      sortOrder: 0
     })
   }
 }, { immediate: true })
@@ -94,28 +93,25 @@ async function onSubmit() {
       startAt: form.startAt ? new Date(form.startAt).toISOString() : null,
       endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       linkUrl: form.linkUrl.trim() || null,
-      sortOrder: Number(form.sortOrder) || 0,
+      sortOrder: Number(form.sortOrder) || 0
     }
     if (isEdit.value && props.item) {
       await $fetch('/api/admin/announcements/update', {
         method: 'PUT',
-        body: { id: props.item.id, ...body },
+        body: { id: props.item.id, ...body }
       })
-    }
-    else {
+    } else {
       await $fetch('/api/admin/announcements/add', {
         method: 'POST',
-        body,
+        body
       })
     }
     toast.add({ title: isEdit.value ? '已更新' : '已创建', color: 'success' })
     open.value = false
     emit('saved')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

@@ -27,7 +27,7 @@ export async function sendSmtpMail(config: SmtpConfig, input: SendMailInput) {
     auth: config.user && config.pass
       ? { user: config.user, pass: config.pass }
       : undefined,
-    name: ehloName,
+    name: ehloName
   })
 
   try {
@@ -35,10 +35,9 @@ export async function sendSmtpMail(config: SmtpConfig, input: SendMailInput) {
       from: config.from,
       to: input.to,
       subject: input.subject,
-      html: input.html,
+      html: input.html
     })
-  }
-  finally {
+  } finally {
     transport.close()
   }
 }

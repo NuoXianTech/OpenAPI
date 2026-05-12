@@ -25,11 +25,9 @@ async function submit() {
   try {
     pending.value = await props.onRequestChange(v)
     newEmail.value = ''
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '发送失败', color: 'error' })
-  }
-  finally {
+  } finally {
     saving.value = false
   }
 }

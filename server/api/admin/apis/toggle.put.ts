@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: `admin.api.toggle.${field}`,
     resourceType: 'api',
     resourceId: String(id),
-    detail: { updated },
+    detail: { updated }
   })
 
   return updated

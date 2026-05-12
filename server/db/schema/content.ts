@@ -7,7 +7,7 @@ import {
   integer,
   timestamp,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 import { users } from './user'
 
@@ -23,9 +23,9 @@ export const friendLinks = pgTable('friend_links', {
   isActive: boolean('is_active').notNull().default(true),
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  index('friend_links_active_idx').on(table.isActive),
+  index('friend_links_active_idx').on(table.isActive)
 ])
 
 // ------------------------------------------------------------------
@@ -46,10 +46,10 @@ export const announcements = pgTable('announcements', {
   updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder),
-  index('announcements_window_idx').on(table.startAt, table.endAt),
+  index('announcements_window_idx').on(table.startAt, table.endAt)
 ])
 
 // ------------------------------------------------------------------
@@ -80,10 +80,10 @@ export const notificationMessages = pgTable('notification_messages', {
   senderActor: varchar('sender_actor', { length: 140 }),
   /** 管理员软删 → 联级清除投递、用户侧也不再可见 */
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('notification_messages_audience_idx').on(table.audience),
-  index('notification_messages_created_at_idx').on(table.createdAt),
+  index('notification_messages_created_at_idx').on(table.createdAt)
 ])
 
 export const notificationDeliveries = pgTable('notification_deliveries', {
@@ -92,9 +92,9 @@ export const notificationDeliveries = pgTable('notification_deliveries', {
   recipientUserId: integer('recipient_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   isRead: boolean('is_read').notNull().default(false),
   readAt: timestamp('read_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   uniqueIndex('notification_deliveries_msg_user_uq').on(table.messageId, table.recipientUserId),
   index('notification_deliveries_user_created_idx').on(table.recipientUserId, table.createdAt),
-  index('notification_deliveries_user_unread_idx').on(table.recipientUserId, table.isRead),
+  index('notification_deliveries_user_unread_idx').on(table.recipientUserId, table.isRead)
 ])

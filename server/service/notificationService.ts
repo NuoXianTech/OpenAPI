@@ -20,7 +20,7 @@ async function listActiveUserIds(): Promise<number[]> {
   const rows = await db.select({ id: users.id }).from(users)
     .where(and(
       eq(users.isActive, true),
-      eq(users.isBanned, false),
+      eq(users.isBanned, false)
     ))
   return rows.map(r => r.id)
 }
@@ -40,8 +40,7 @@ export const notificationService = {
       const valid = await db.select({ id: users.id }).from(users)
         .where(inArray(users.id, ids))
       recipientIds = valid.map(r => r.id)
-    }
-    else {
+    } else {
       recipientIds = await listActiveUserIds()
     }
 
@@ -53,16 +52,16 @@ export const notificationService = {
       audience: input.audience,
       recipientCount: recipientIds.length,
       senderUserId: input.senderUserId ?? null,
-      senderActor: input.senderActor ?? null,
+      senderActor: input.senderActor ?? null
     }).returning()
     const message = inserted[0]
     if (!message) throw new Error('failed to insert notification message')
 
     if (recipientIds.length > 0) {
       await db.insert(notificationDeliveries).values(
-        recipientIds.map(uid => ({ messageId: message.id, recipientUserId: uid })),
+        recipientIds.map(uid => ({ messageId: message.id, recipientUserId: uid }))
       ).onConflictDoNothing({
-        target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId],
+        target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId]
       })
     }
 
@@ -77,14 +76,14 @@ export const notificationService = {
     const messages = await db.select({ id: notificationMessages.id }).from(notificationMessages)
       .where(and(
         eq(notificationMessages.audience, 'all_with_future'),
-        isNull(notificationMessages.deletedAt),
+        isNull(notificationMessages.deletedAt)
       ))
     if (messages.length === 0) return 0
 
     await db.insert(notificationDeliveries).values(
-      messages.map(m => ({ messageId: m.id, recipientUserId: userId })),
+      messages.map(m => ({ messageId: m.id, recipientUserId: userId }))
     ).onConflictDoNothing({
-      target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId],
+      target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId]
     })
     return messages.length
   },
@@ -95,7 +94,7 @@ export const notificationService = {
     const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
     const conds = [
       eq(notificationDeliveries.recipientUserId, userId),
-      isNull(notificationMessages.deletedAt),
+      isNull(notificationMessages.deletedAt)
     ]
     if (opts.onlyUnread) conds.push(eq(notificationDeliveries.isRead, false))
 
@@ -109,7 +108,7 @@ export const notificationService = {
       senderActor: notificationMessages.senderActor,
       isRead: notificationDeliveries.isRead,
       readAt: notificationDeliveries.readAt,
-      createdAt: notificationDeliveries.createdAt,
+      createdAt: notificationDeliveries.createdAt
     })
       .from(notificationDeliveries)
       .innerJoin(notificationMessages, eq(notificationMessages.id, notificationDeliveries.messageId))
@@ -126,7 +125,7 @@ export const notificationService = {
       .where(and(
         eq(notificationDeliveries.recipientUserId, userId),
         eq(notificationDeliveries.isRead, false),
-        isNull(notificationMessages.deletedAt),
+        isNull(notificationMessages.deletedAt)
       ))
     return Number(rows[0]?.value || 0)
   },
@@ -137,7 +136,7 @@ export const notificationService = {
       .where(and(
         eq(notificationDeliveries.id, deliveryId),
         eq(notificationDeliveries.recipientUserId, userId),
-        eq(notificationDeliveries.isRead, false),
+        eq(notificationDeliveries.isRead, false)
       ))
       .returning()
     return res[0] || null
@@ -148,7 +147,7 @@ export const notificationService = {
       .set({ isRead: true, readAt: new Date() })
       .where(and(
         eq(notificationDeliveries.recipientUserId, userId),
-        eq(notificationDeliveries.isRead, false),
+        eq(notificationDeliveries.isRead, false)
       ))
       .returning({ id: notificationDeliveries.id })
     return res.length
@@ -171,7 +170,7 @@ export const notificationService = {
       createdAt: notificationMessages.createdAt,
       deletedAt: notificationMessages.deletedAt,
       deliveredCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id})`,
-      readCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id} and ${notificationDeliveries.isRead} = true)`,
+      readCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id} and ${notificationDeliveries.isRead} = true)`
     })
       .from(notificationMessages)
       .where(isNull(notificationMessages.deletedAt))
@@ -193,7 +192,7 @@ export const notificationService = {
       recipientUsername: users.username,
       isRead: notificationDeliveries.isRead,
       readAt: notificationDeliveries.readAt,
-      createdAt: notificationDeliveries.createdAt,
+      createdAt: notificationDeliveries.createdAt
     })
       .from(notificationDeliveries)
       .leftJoin(users, eq(users.id, notificationDeliveries.recipientUserId))
@@ -210,5 +209,5 @@ export const notificationService = {
       .where(eq(notificationMessages.id, messageId))
       .returning()
     return res[0] || null
-  },
+  }
 }

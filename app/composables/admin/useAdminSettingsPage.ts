@@ -62,7 +62,7 @@ function defaultForm(): AdminSettingsForm {
     turnstileRegisterEnabled: true,
     turnstileAdminLoginEnabled: false,
     turnstilePasswordResetEnabled: true,
-    announcementShowOnHome: false,
+    announcementShowOnHome: false
   }
 }
 
@@ -83,7 +83,7 @@ export function useAdminSettingsPage() {
   provide(ADMIN_SETTINGS_FORM_KEY, form)
 
   const { data, status, refresh } = useLazyFetch<Partial<AdminSettingsForm> | null>('/api/admin/settings/get', {
-    default: () => null,
+    default: () => null
   })
 
   watch(() => data.value, (val) => {
@@ -120,7 +120,7 @@ export function useAdminSettingsPage() {
       turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
       turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
       turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
-      announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome,
+      announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome
     } satisfies AdminSettingsForm)
   }, { immediate: true })
 
@@ -130,11 +130,9 @@ export function useAdminSettingsPage() {
       await $fetch('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
       toast.add({ title: '保存成功', color: 'success' })
       await refresh()
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
-    }
-    finally {
+    } finally {
       saving.value = false
     }
   }

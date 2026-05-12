@@ -50,7 +50,7 @@ function getSqlClient() {
   sqlClient = postgres(connectionString, {
     max: 1,
     idle_timeout: 1,
-    connect_timeout: 10,
+    connect_timeout: 10
   })
 
   return sqlClient

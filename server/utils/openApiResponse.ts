@@ -44,7 +44,7 @@ export function openApiOk<T>(event: H3Event, data: T, message = 'ok'): OpenApiRe
     message,
     data,
     requestId: ensureRequestId(event),
-    timestamp: Date.now(),
+    timestamp: Date.now()
   }
 }
 
@@ -53,7 +53,7 @@ export function openApiFail(
   code: number,
   message: string,
   data: unknown = null,
-  httpStatus?: number,
+  httpStatus?: number
 ): OpenApiResponse {
   setResponseStatus(event, httpStatus ?? httpStatusForCode(code))
   return {
@@ -61,6 +61,6 @@ export function openApiFail(
     message,
     data,
     requestId: ensureRequestId(event),
-    timestamp: Date.now(),
+    timestamp: Date.now()
   }
 }

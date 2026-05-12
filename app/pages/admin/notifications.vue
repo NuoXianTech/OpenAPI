@@ -27,12 +27,12 @@ interface MessageRow {
 const toast = useToast()
 
 const { data: usersData } = useLazyFetch<UserItem[]>('/api/admin/users/list', {
-  default: () => [],
+  default: () => []
 })
 const users = computed(() => (usersData.value || []).filter(u => !u.isBanned))
 
 const { data: messagesData, status, refresh } = useLazyFetch<MessageRow[]>('/api/admin/notifications/list', {
-  default: () => [],
+  default: () => []
 })
 const messages = computed<MessageRow[]>(() => messagesData.value || [])
 
@@ -43,26 +43,26 @@ const form = reactive({
   title: '',
   content: '',
   level: 'info' as 'info' | 'success' | 'warning' | 'critical',
-  linkUrl: '',
+  linkUrl: ''
 })
 const sending = ref(false)
 
 const userOptions = computed(() => users.value.map(u => ({
   label: `${u.username}${u.email ? ` <${u.email}>` : ''}`,
-  value: u.id,
+  value: u.id
 })))
 
 const audienceOptions = [
   { label: '指定用户（仅选中收件人）', value: 'specific' },
   { label: '当前所有用户（不含未来注册）', value: 'all_current' },
-  { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' },
+  { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' }
 ]
 
 const levelOptions = [
   { label: '通知 (info)', value: 'info' },
   { label: '成功 (success)', value: 'success' },
   { label: '提醒 (warning)', value: 'warning' },
-  { label: '紧急 (critical)', value: 'critical' },
+  { label: '紧急 (critical)', value: 'critical' }
 ]
 
 async function submitSend() {
@@ -84,8 +84,8 @@ async function submitSend() {
         title: form.title.trim(),
         content: form.content,
         level: form.level,
-        linkUrl: form.linkUrl.trim() || null,
-      },
+        linkUrl: form.linkUrl.trim() || null
+      }
     })
     toast.add({ title: `已发送（投递 ${res?.deliveredCount ?? 0} 人）`, color: 'success' })
     form.title = ''
@@ -94,11 +94,9 @@ async function submitSend() {
     form.recipientUserIds = []
     form.audience = 'specific'
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '发送失败', color: 'error' })
-  }
-  finally {
+  } finally {
     sending.value = false
   }
 }
@@ -116,8 +114,7 @@ async function openDetail(row: MessageRow) {
   try {
     const res = await $fetch<{ deliveries?: typeof detailRows.value }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
     detailRows.value = res?.deliveries || []
-  }
-  finally {
+  } finally {
     detailLoading.value = false
   }
 }
@@ -138,16 +135,14 @@ async function confirmDelete() {
   try {
     await $fetch('/api/admin/notifications/delete', {
       method: 'POST',
-      body: { messageId: deleteTarget.value.id },
+      body: { messageId: deleteTarget.value.id }
     })
     toast.add({ title: '已删除', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -157,21 +152,20 @@ const levelMeta: Record<MessageRow['level'], { color: 'info' | 'success' | 'warn
   info: { color: 'info', label: '通知' },
   success: { color: 'success', label: '成功' },
   warning: { color: 'warning', label: '提醒' },
-  critical: { color: 'error', label: '紧急' },
+  critical: { color: 'error', label: '紧急' }
 }
 
 const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' | 'warning', label: string }> = {
   specific: { color: 'neutral', label: '指定' },
   all_current: { color: 'info', label: '全员' },
-  all_with_future: { color: 'warning', label: '全员+未来' },
+  all_with_future: { color: 'warning', label: '全员+未来' }
 }
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -183,7 +177,7 @@ const UDropdownMenu = resolveComponent('UDropdownMenu')
 function getRowItems(row: MessageRow): DropdownMenuItem[] {
   return [
     { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => openDetail(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -195,43 +189,43 @@ const columns: TableColumn<MessageRow>[] = [
       h(UBadge, {
         color: levelMeta[row.original.level].color,
         variant: 'subtle',
-        size: 'sm',
+        size: 'sm'
       }, () => levelMeta[row.original.level].label),
       h(UBadge, {
         color: audienceMeta[row.original.audience].color,
         variant: 'soft',
-        size: 'sm',
+        size: 'sm'
       }, () => audienceMeta[row.original.audience].label),
-      h('span', { class: 'font-medium truncate max-w-[260px]' }, row.original.title),
-    ]),
+      h('span', { class: 'font-medium truncate max-w-[260px]' }, row.original.title)
+    ])
   },
   {
     id: 'delivery',
     header: '投递 / 已读',
     cell: ({ row }) => h('div', { class: 'flex flex-col text-xs' }, [
       h('span', { class: 'tabular-nums' }, `投递 ${row.original.deliveredCount} 人`),
-      h('span', { class: 'text-muted tabular-nums' }, `已读 ${row.original.readCount} 人`),
-    ]),
+      h('span', { class: 'text-muted tabular-nums' }, `已读 ${row.original.readCount} 人`)
+    ])
   },
   { accessorKey: 'senderActor', header: '发送人' },
   {
     accessorKey: 'createdAt',
     header: '发送时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 </script>
 
@@ -362,7 +356,7 @@ const columns: TableColumn<MessageRow>[] = [
             :ui="{
               base: 'table-fixed',
               th: 'py-2',
-              td: 'py-2 align-top',
+              td: 'py-2 align-top'
             }"
           />
         </UCard>

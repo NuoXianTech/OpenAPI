@@ -14,7 +14,7 @@ const schema = z.object({
   title: z.string().min(1, '必填'),
   url: z.string().min(1, '必填'),
   description: z.string().optional(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean().default(true)
 })
 
 type Schema = z.output<typeof schema>
@@ -25,8 +25,7 @@ const loading = ref(false)
 watch(() => props.item, (val) => {
   if (val) {
     Object.assign(state, { title: val.title || '', url: val.url || '', description: val.description || '', isActive: val.isActive ?? true })
-  }
-  else {
+  } else {
     Object.assign(state, { title: '', url: '', description: '', isActive: true })
   }
 }, { immediate: true })
@@ -36,18 +35,15 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   try {
     if (isEdit.value) {
       await $fetch('/api/admin/friend-links/update', { method: 'PUT', body: { id: props.item!.id, ...event.data } })
-    }
-    else {
+    } else {
       await $fetch('/api/admin/friend-links/add', { method: 'POST', body: event.data })
     }
     toast.add({ title: isEdit.value ? '更新成功' : '创建成功', color: 'success' })
     open.value = false
     emit('saved')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
-  }
-  finally { loading.value = false }
+  } finally { loading.value = false }
 }
 </script>
 

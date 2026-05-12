@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api.delete',
     resourceType: 'api',
     resourceId: String(id),
-    detail: { deleted },
+    detail: { deleted }
   })
 
   return deleted

@@ -10,7 +10,7 @@ import {
   timestamp,
   uuid,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 import { users } from './user'
 
@@ -29,11 +29,11 @@ export const apiCategories = pgTable('api_categories', {
   isEnabled: boolean('is_enabled').notNull().default(true),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('api_categories_code_uq').on(table.code),
   index('api_categories_parent_sort_idx').on(table.parentId, table.sortOrder),
-  index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder),
+  index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
 ])
 
 // ------------------------------------------------------------------
@@ -79,13 +79,13 @@ export const apis = pgTable('apis', {
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
   index('apis_category_idx').on(table.categoryId),
   index('apis_enabled_idx').on(table.isEnabled),
   index('apis_status_idx').on(table.status),
-  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
+  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled)
 ])
 
 // ------------------------------------------------------------------
@@ -110,11 +110,11 @@ export const apiKeys = pgTable('api_keys', {
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   index('api_keys_user_idx').on(table.userId),
   index('api_keys_active_idx').on(table.isActive),
-  index('api_keys_expires_idx').on(table.expiresAt),
+  index('api_keys_expires_idx').on(table.expiresAt)
 ])
 
 // ------------------------------------------------------------------
@@ -151,14 +151,14 @@ export const apiCalls = pgTable('api_calls', {
   // 此次调用扣除的积分。0 表示免费 / 失败未扣 / 已退款
   creditsCost: integer('credits_cost').notNull().default(0),
 
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('api_calls_created_at_idx').on(table.createdAt),
   index('api_calls_api_id_created_at_idx').on(table.apiId, table.createdAt),
   index('api_calls_user_created_at_idx').on(table.userId, table.createdAt),
   index('api_calls_api_key_created_at_idx').on(table.apiKeyId, table.createdAt),
   index('api_calls_status_idx').on(table.statusCode),
-  index('api_calls_request_id_idx').on(table.requestId),
+  index('api_calls_request_id_idx').on(table.requestId)
 ])
 
 // ------------------------------------------------------------------
@@ -172,10 +172,10 @@ export const apiCallStats = pgTable('api_call_stats', {
   successCount: integer('success_count').notNull().default(0),
   failureCount: integer('failure_count').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('api_call_stats_api_id_stat_date_uq').on(table.apiId, table.statDate),
-  index('api_call_stats_stat_date_idx').on(table.statDate),
+  index('api_call_stats_stat_date_idx').on(table.statDate)
 ])
 
 // ------------------------------------------------------------------
@@ -190,8 +190,8 @@ export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
   bucketKey: varchar('bucket_key', { length: 200 }).notNull(),
   windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
   count: integer('count').notNull().default(0),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('api_rate_limit_buckets_key_window_uq').on(table.bucketKey, table.windowStart),
-  index('api_rate_limit_buckets_window_idx').on(table.windowStart),
+  index('api_rate_limit_buckets_window_idx').on(table.windowStart)
 ])

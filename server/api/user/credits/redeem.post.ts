@@ -13,7 +13,7 @@ const REDEEM_ERROR_STATUS: Record<string, number> = {
   EXPIRED: 410,
   USED_UP: 410,
   ALREADY_REDEEMED: 409,
-  USER_NOT_FOUND: 404,
+  USER_NOT_FOUND: 404
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -33,18 +33,17 @@ export default defineEventHandler(async (event: H3Event) => {
       action: 'user.redemption_code.redeem',
       resourceType: 'redemption_code',
       resourceId: String(data.codeId),
-      detail: { amount: data.amount, batchId: data.batchId },
+      detail: { amount: data.amount, batchId: data.batchId }
     })
     return data
-  }
-  catch (err) {
+  } catch (err) {
     if (isRedeemError(err)) {
       const status = REDEEM_ERROR_STATUS[err.code] || 400
       throw createError({
         statusCode: status,
         statusMessage: err.message,
         message: err.message,
-        data: { errorCode: err.code },
+        data: { errorCode: err.code }
       })
     }
     console.error('redeem failed', err)

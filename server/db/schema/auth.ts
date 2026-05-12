@@ -6,7 +6,7 @@ import {
   boolean,
   timestamp,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 import { users } from './user'
 
@@ -23,11 +23,11 @@ export const sessions = pgTable('sessions', {
   isRemembered: boolean('is_remembered').notNull().default(false),
   lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('sessions_user_idx').on(table.userId),
   index('sessions_expires_idx').on(table.expiresAt),
-  index('sessions_last_active_idx').on(table.lastActiveAt),
+  index('sessions_last_active_idx').on(table.lastActiveAt)
 ])
 
 // ------------------------------------------------------------------
@@ -43,12 +43,12 @@ export const verificationTokens = pgTable('verification_tokens', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   consumedAt: timestamp('consumed_at', { withTimezone: true }),
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('verification_tokens_user_created_idx').on(table.userId, table.createdAt),
   index('verification_tokens_email_idx').on(table.email),
   index('verification_tokens_purpose_idx').on(table.purpose),
-  index('verification_tokens_expires_idx').on(table.expiresAt),
+  index('verification_tokens_expires_idx').on(table.expiresAt)
 ])
 
 // ------------------------------------------------------------------
@@ -62,9 +62,9 @@ export const oauthProviders = pgTable('oauth_providers', {
   clientSecret: varchar('client_secret', { length: 1000 }).notNull().default(''),
   isEnabled: boolean('is_enabled').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('oauth_providers_provider_uq').on(table.provider),
+  uniqueIndex('oauth_providers_provider_uq').on(table.provider)
 ])
 
 // ------------------------------------------------------------------
@@ -85,9 +85,9 @@ export const oauthAccounts = pgTable('oauth_accounts', {
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('oauth_accounts_provider_pid_uq').on(table.provider, table.providerUserId),
   index('oauth_accounts_user_idx').on(table.userId),
-  index('oauth_accounts_provider_idx').on(table.provider),
+  index('oauth_accounts_provider_idx').on(table.provider)
 ])

@@ -40,10 +40,9 @@ export const operationLogService = {
         ip: input.ip ?? null,
         userAgent: input.userAgent?.slice(0, 500) ?? null,
         detail: input.detail ?? null,
-        status: input.status || 'success',
+        status: input.status || 'success'
       })
-    }
-    catch (error) {
+    } catch (error) {
       // 审计日志落库失败不应阻塞主业务流程，仅记录控制台。
       console.error('failed to write operation log', { input, error })
     }
@@ -56,8 +55,7 @@ export const operationLogService = {
     }
     if (filters.actorKind === 'admin') {
       conditions.push(isNull(operationLogs.userId))
-    }
-    else if (filters.actorKind === 'user') {
+    } else if (filters.actorKind === 'user') {
       conditions.push(isNotNull(operationLogs.userId))
     }
     if (filters.action) {
@@ -85,5 +83,5 @@ export const operationLogService = {
       : await query.orderBy(desc(operationLogs.createdAt)).limit(limit).offset(offset)
 
     return rows
-  },
+  }
 }

@@ -33,7 +33,7 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: String(updated.id),
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { provider: updated.provider, changedFields: Object.keys(patch) },
+    detail: { provider: updated.provider, changedFields: Object.keys(patch) }
   })
 
   return updated

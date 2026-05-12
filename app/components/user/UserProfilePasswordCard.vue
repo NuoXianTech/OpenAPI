@@ -26,11 +26,9 @@ async function submit() {
     form.currentPassword = ''
     form.newPassword = ''
     form.confirmPassword = ''
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '修改失败', color: 'error' })
-  }
-  finally {
+  } finally {
     saving.value = false
   }
 }

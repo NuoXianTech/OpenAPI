@@ -36,7 +36,7 @@ export const verificationTokenService = {
         eq(verificationTokens.purpose, purpose),
         isNull(verificationTokens.consumedAt),
         isNull(verificationTokens.revokedAt),
-        gt(verificationTokens.expiresAt, now),
+        gt(verificationTokens.expiresAt, now)
       ))
 
     const inserted = await db.insert(verificationTokens)
@@ -46,14 +46,14 @@ export const verificationTokenService = {
         purpose,
         tokenHash,
         ip,
-        expiresAt,
+        expiresAt
       })
       .returning({
         id: verificationTokens.id,
         userId: verificationTokens.userId,
         email: verificationTokens.email,
         purpose: verificationTokens.purpose,
-        expiresAt: verificationTokens.expiresAt,
+        expiresAt: verificationTokens.expiresAt
       })
 
     const record = inserted[0]
@@ -66,7 +66,7 @@ export const verificationTokenService = {
       userId: record.userId,
       email: record.email,
       purpose: record.purpose as VerificationPurpose,
-      expiresAt: record.expiresAt.getTime(),
+      expiresAt: record.expiresAt.getTime()
     }
 
     return { token, expiresAt: record.expiresAt, record: payload }
@@ -87,14 +87,14 @@ export const verificationTokenService = {
         eq(verificationTokens.purpose, purpose),
         isNull(verificationTokens.consumedAt),
         isNull(verificationTokens.revokedAt),
-        gt(verificationTokens.expiresAt, now),
+        gt(verificationTokens.expiresAt, now)
       ))
       .returning({
         id: verificationTokens.id,
         userId: verificationTokens.userId,
         email: verificationTokens.email,
         purpose: verificationTokens.purpose,
-        expiresAt: verificationTokens.expiresAt,
+        expiresAt: verificationTokens.expiresAt
       })
 
     const record = consumed[0]
@@ -107,7 +107,7 @@ export const verificationTokenService = {
       userId: record.userId,
       email: record.email,
       purpose: record.purpose as VerificationPurpose,
-      expiresAt: record.expiresAt.getTime(),
+      expiresAt: record.expiresAt.getTime()
     } satisfies VerificationPayload
-  },
+  }
 }

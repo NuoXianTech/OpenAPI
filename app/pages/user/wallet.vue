@@ -21,7 +21,7 @@ const {
   applyFilters,
   resetFilters,
   refreshAll,
-  init,
+  init
 } = useUserWalletPage()
 
 onMounted(() => {
@@ -36,21 +36,20 @@ const reasonItems = [
   { label: '管理员加积分', value: 'admin_grant' },
   { label: '管理员扣积分', value: 'admin_revoke' },
   { label: '管理员重置', value: 'admin_reset' },
-  { label: '注册赠送', value: 'signup_bonus' },
+  { label: '注册赠送', value: 'signup_bonus' }
 ]
 
 const directionItems = [
   { label: '全部方向', value: 'all' },
   { label: '收入（+）', value: 'in' },
-  { label: '支出（−）', value: 'out' },
+  { label: '支出（−）', value: 'out' }
 ]
 
 function formatDate(iso: string) {
   if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -59,7 +58,7 @@ const columns: TableColumn<TransactionRow>[] = [
   {
     accessorKey: 'createdAt',
     header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap tabular-nums' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap tabular-nums' }, formatDate(row.original.createdAt))
   },
   {
     accessorKey: 'reason',
@@ -67,8 +66,8 @@ const columns: TableColumn<TransactionRow>[] = [
     cell: ({ row }) => h(UBadge, {
       color: reasonColor(row.original.reason),
       variant: 'subtle',
-      size: 'sm',
-    }, () => reasonLabel(row.original.reason)),
+      size: 'sm'
+    }, () => reasonLabel(row.original.reason))
   },
   {
     accessorKey: 'amount',
@@ -82,12 +81,12 @@ const columns: TableColumn<TransactionRow>[] = [
           : 'text-muted tabular-nums'
       const sign = amt > 0 ? '+' : ''
       return h('span', { class: cls }, `${sign}${amt.toLocaleString()}`)
-    },
+    }
   },
   {
     accessorKey: 'balanceAfter',
     header: '操作后积分',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, Number(row.original.balanceAfter).toLocaleString()),
+    cell: ({ row }) => h('span', { class: 'tabular-nums' }, Number(row.original.balanceAfter).toLocaleString())
   },
   {
     id: 'detail',
@@ -99,23 +98,23 @@ const columns: TableColumn<TransactionRow>[] = [
           h('span', { class: 'font-mono text-muted' }, row.original.apiPath || ''),
           row.original.apiCallId
             ? h('span', { class: 'text-muted text-[10px]' }, `调用 #${row.original.apiCallId}`)
-            : null,
+            : null
         ].filter(Boolean))
       }
       if (row.original.operatorName) {
         return h('div', { class: 'flex flex-col text-xs' }, [
           h('span', { class: 'text-muted' }, '操作人'),
-          h('span', null, row.original.operatorName),
+          h('span', null, row.original.operatorName)
         ])
       }
       return h('span', { class: 'text-muted text-xs' }, '-')
-    },
+    }
   },
   {
     accessorKey: 'remark',
     header: '备注',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[280px] block' }, row.original.remark || '-'),
-  },
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[280px] block' }, row.original.remark || '-')
+  }
 ]
 </script>
 
@@ -208,7 +207,7 @@ const columns: TableColumn<TransactionRow>[] = [
               base: 'table-fixed',
               thead: '[&>tr]:bg-elevated/50',
               th: 'py-2',
-              td: 'py-2 align-middle',
+              td: 'py-2 align-middle'
             }"
           />
           <div

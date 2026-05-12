@@ -12,8 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   try {
     await sendTestEmail(to, admin.username)
-  }
-  catch (error) {
+  } catch (error) {
     const message = (error as Error)?.message || '发信失败'
     await operationLogService.addLog({
       userId: admin.id || null,
@@ -21,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
       action: 'admin.settings.smtp.test',
       resourceType: 'site-settings',
       detail: { to, error: message },
-      status: 'failed',
+      status: 'failed'
     })
     throw createError({ statusCode: 500, message: `SMTP 发送失败：${message}` })
   }
@@ -31,7 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
     actor: admin.username,
     action: 'admin.settings.smtp.test',
     resourceType: 'site-settings',
-    detail: { to },
+    detail: { to }
   })
 
   return { ok: true }

@@ -11,7 +11,7 @@ const currentStatus = ref<string | number>('all')
 const statusTabs: ApiTabOption[] = [
   { label: '全部', value: 'all' },
   { label: '正常', value: 1 },
-  { label: '异常', value: 0 },
+  { label: '异常', value: 0 }
 ]
 
 const {
@@ -19,7 +19,7 @@ const {
   loading,
   error,
   isEmpty,
-  fetchFriendLinks,
+  fetchFriendLinks
 } = useFriendLinkList()
 
 const filteredItems = computed(() => {

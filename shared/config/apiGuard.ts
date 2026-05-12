@@ -37,7 +37,7 @@ export const DEFAULT_API_REGISTRATION = {
   rateLimitPerDay: 0,
   dailyQuota: 0,
   costCredits: 0,
-  timeoutMs: 10_000,
+  timeoutMs: 10_000
 } as const
 
 /**
@@ -61,7 +61,7 @@ export const API_GUARD_ERROR = {
   REFERER_DENIED: { status: 403, bizCode: 40303, code: 'REFERER_DENIED', msg: '当前来源不在白名单内' },
   RATE_LIMITED: { status: 429, bizCode: 42900, code: 'RATE_LIMITED', msg: '请求过于频繁，请稍后再试' },
   QUOTA_EXCEEDED: { status: 429, bizCode: 42901, code: 'QUOTA_EXCEEDED', msg: '已达到当日配额上限' },
-  INSUFFICIENT_CREDITS: { status: 402, bizCode: 40200, code: 'INSUFFICIENT_CREDITS', msg: '积分不足，请充值后再试' },
+  INSUFFICIENT_CREDITS: { status: 402, bizCode: 40200, code: 'INSUFFICIENT_CREDITS', msg: '积分不足，请充值后再试' }
 } as const
 
 /** API 元数据缓存 TTL（服务层 LRU） */
@@ -84,5 +84,5 @@ export const RATE_LIMIT_WINDOW_SECONDS: Record<RateLimitWindow, number> = {
   second: 1,
   minute: 60,
   hour: 3_600,
-  day: 86_400,
+  day: 86_400
 }

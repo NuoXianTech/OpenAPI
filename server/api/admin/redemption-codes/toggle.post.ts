@@ -20,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
       actor: admin.username,
       action: enabled ? 'admin.redemption_code.enable' : 'admin.redemption_code.disable',
       resourceType: 'redemption_code',
-      resourceId: String(id),
+      resourceId: String(id)
     })
     return updated
   }
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: enabled ? 'admin.redemption_code.batch_enable' : 'admin.redemption_code.batch_disable',
     resourceType: 'redemption_code_batch',
     resourceId: batchId,
-    detail: { affected: res.affected },
+    detail: { affected: res.affected }
   })
   return res
 })

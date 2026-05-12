@@ -10,7 +10,7 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch<FriendLinkItem[]>('/api/admin/friend-links/list', {
-  default: () => [],
+  default: () => []
 })
 const items = computed(() => data.value || [])
 
@@ -41,11 +41,9 @@ async function confirmDelete() {
     toast.add({ title: '删除成功', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  }
-  catch {
+  } catch {
     toast.add({ title: '删除失败', color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -53,7 +51,7 @@ async function confirmDelete() {
 function getRowItems(row: FriendLinkItem): DropdownMenuItem[] {
   return [
     { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -66,17 +64,17 @@ const columns: TableColumn<FriendLinkItem>[] = [
     header: '状态',
     cell: ({ row }) => h(UBadge, {
       color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle',
-    }, () => row.original.isActive ? '正常' : '停用'),
+      variant: 'subtle'
+    }, () => row.original.isActive ? '正常' : '停用')
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
-    }, () => h(UButton, { icon: 'i-mdi-dots-vertical', color: 'neutral', variant: 'ghost', size: 'sm' }))),
-  },
+      content: { align: 'end' }
+    }, () => h(UButton, { icon: 'i-mdi-dots-vertical', color: 'neutral', variant: 'ghost', size: 'sm' })))
+  }
 ]
 </script>
 
@@ -111,7 +109,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2',
+          td: 'py-2'
         }"
       />
 

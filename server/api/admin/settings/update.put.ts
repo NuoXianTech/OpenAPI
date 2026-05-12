@@ -23,7 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.settings.update',
     resourceType: 'site-settings',
     resourceId: String(data.id),
-    detail: { changedFields },
+    detail: { changedFields }
   })
 
   return data

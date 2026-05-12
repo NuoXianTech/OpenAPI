@@ -33,7 +33,7 @@ export const usersService = {
     const res = await db.update(users)
       .set({
         ...data,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(users.id, id))
       .returning()
@@ -61,7 +61,7 @@ export const usersService = {
         passwordHash: data.passwordHash,
         displayName: data.displayName || data.username,
         isActive: data.isActive ?? false,
-        isBanned: false,
+        isBanned: false
       })
       .returning()
 
@@ -72,7 +72,7 @@ export const usersService = {
     const res = await db.update(users)
       .set({
         lastLoginAt: new Date(),
-        lastLoginIp: ip,
+        lastLoginIp: ip
       })
       .where(eq(users.id, id))
       .returning()
@@ -84,7 +84,7 @@ export const usersService = {
     const res = await db.update(users)
       .set({
         isActive: true,
-        emailVerifiedAt: new Date(),
+        emailVerifiedAt: new Date()
       })
       .where(eq(users.id, id))
       .returning()
@@ -94,8 +94,7 @@ export const usersService = {
     if (res[0]) {
       try {
         await notificationService.fanOutFutureMessagesTo(id)
-      }
-      catch (err) {
+      } catch (err) {
         // 通知补发失败不应阻塞激活流程，仅记录日志
         console.error('failed to fan out future notifications', { userId: id, err })
       }
@@ -108,7 +107,7 @@ export const usersService = {
     const res = await db.update(users)
       .set({
         passwordHash,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(users.id, id))
       .returning()
@@ -120,7 +119,7 @@ export const usersService = {
       .set({
         email,
         emailVerifiedAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(users.id, id))
       .returning()
@@ -131,11 +130,11 @@ export const usersService = {
     const res = await db.update(users)
       .set({
         isBanned,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(users.id, id))
       .returning()
 
     return res[0] || null
-  },
+  }
 }

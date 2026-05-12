@@ -22,11 +22,10 @@ async function fetchList() {
   loading.value = true
   try {
     const res = await $fetch<Notification[]>('/api/notifications/list', {
-      query: { limit: 200, unread: onlyUnread.value ? '1' : '0' },
+      query: { limit: 200, unread: onlyUnread.value ? '1' : '0' }
     })
     items.value = res || []
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }
@@ -37,8 +36,7 @@ async function toggleRead(n: Notification) {
       await $fetch('/api/notifications/mark-read', { method: 'POST', body: { id: n.id } })
       n.isRead = true
       n.readAt = new Date().toISOString()
-    }
-    catch { /* ignore */ }
+    } catch { /* ignore */ }
   }
   expandedId.value = expandedId.value === n.id ? null : n.id
 }
@@ -64,14 +62,13 @@ const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'wa
   info: { color: 'info', icon: 'i-mdi-information-outline', label: '通知' },
   success: { color: 'success', icon: 'i-mdi-check-circle-outline', label: '成功' },
   warning: { color: 'warning', icon: 'i-mdi-alert-outline', label: '提醒' },
-  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' },
+  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline', label: '紧急' }
 }
 
 function formatDate(iso: string) {
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }

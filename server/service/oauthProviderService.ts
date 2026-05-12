@@ -37,7 +37,7 @@ async function ensureRow(provider: SupportedOauthProvider): Promise<ProviderRow>
     provider,
     clientId: '',
     clientSecret: '',
-    isEnabled: false,
+    isEnabled: false
   }).returning()
   return inserted[0]!
 }
@@ -98,5 +98,5 @@ export const oauthProviderService = {
   async getSiteCallbackUrl(provider: string) {
     const settings = await siteSettingsService.getOrCreate()
     return buildCallbackUrl(settings.siteUrl, provider)
-  },
+  }
 }

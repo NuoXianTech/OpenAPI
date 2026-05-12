@@ -14,13 +14,13 @@ const props = defineProps({
   docUrl: { type: String, default: '' },
   isApiKey: { type: Boolean, default: false },
   costCredits: { type: Number, default: 0 },
-  totalCalls: { type: Number, default: 0 },
+  totalCalls: { type: Number, default: 0 }
 })
 
 const open = ref(false)
 
 const methods = computed(() =>
-  props.httpMethod.split(',').map(m => m.trim()).filter(Boolean),
+  props.httpMethod.split(',').map(m => m.trim()).filter(Boolean)
 )
 
 const isPaid = computed(() => props.costCredits > 0)

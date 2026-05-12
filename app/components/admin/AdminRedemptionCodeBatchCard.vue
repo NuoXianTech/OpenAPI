@@ -42,10 +42,10 @@ const emit = defineEmits<{
             :items="[[
               { label: '只看本批次', icon: 'i-mdi-filter-variant', onSelect: () => emit('filter', b.batchId) },
               { label: '禁用整批', icon: 'i-mdi-toggle-switch-off-outline', onSelect: () => emit('toggle', b.batchId, false) },
-              { label: '启用整批', icon: 'i-mdi-toggle-switch-outline', onSelect: () => emit('toggle', b.batchId, true) },
+              { label: '启用整批', icon: 'i-mdi-toggle-switch-outline', onSelect: () => emit('toggle', b.batchId, true) }
             ], [
               { label: '删除未使用', icon: 'i-mdi-delete-outline', onSelect: () => emit('delete', b.batchId, false) },
-              { label: '删除全部', icon: 'i-mdi-delete-alert-outline', color: 'error' as const, onSelect: () => emit('delete', b.batchId, true) },
+              { label: '删除全部', icon: 'i-mdi-delete-alert-outline', color: 'error' as const, onSelect: () => emit('delete', b.batchId, true) }
             ]]"
           >
             <UButton

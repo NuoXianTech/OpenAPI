@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<{
   emptyIcon: 'i-mdi-inbox-outline',
   page: 1,
   pageSize: 0,
-  total: 0,
+  total: 0
 })
 
 const emit = defineEmits<{
@@ -32,7 +32,7 @@ const baseUi = {
   base: 'table-fixed',
   thead: '[&>tr]:bg-elevated/50',
   th: 'py-2',
-  td: 'py-2 align-middle',
+  td: 'py-2 align-middle'
 }
 const mergedUi = computed(() => ({ ...baseUi, ...(props.ui || {}) }))
 

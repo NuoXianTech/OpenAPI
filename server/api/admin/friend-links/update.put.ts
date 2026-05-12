@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
     title,
     url,
     description: description?.trim() || null,
-    isActive,
+    isActive
   })
 
   await operationLogService.addLog({
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.friend-link.update',
     resourceType: 'friend-link',
     resourceId: String(id),
-    detail: { updated },
+    detail: { updated }
   })
 
   return updated

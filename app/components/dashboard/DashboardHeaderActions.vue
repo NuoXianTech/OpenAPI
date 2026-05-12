@@ -25,8 +25,8 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => {
       async onSelect() {
         await logout()
         await router.push(config.loginRedirect)
-      },
-    }],
+      }
+    }]
   ]
 })
 

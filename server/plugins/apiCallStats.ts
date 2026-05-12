@@ -67,7 +67,7 @@ function parseMethods(httpMethod: string) {
     httpMethod
       .split(',')
       .map(method => method.trim().toUpperCase())
-      .filter(Boolean),
+      .filter(Boolean)
   )
 }
 
@@ -115,14 +115,14 @@ function buildTargetCache(rows: StatisticsTargetItem[]): StatisticsTargetCache {
     candidates.push({
       id: row.id,
       apiPath: row.apiPath,
-      methods: parseMethods(row.httpMethod),
+      methods: parseMethods(row.httpMethod)
     })
     byPath.set(normalizedPath, candidates)
   }
 
   return {
     expiresAt: Date.now() + STATISTICS_TARGET_CACHE_TTL_MS,
-    byPath,
+    byPath
   }
 }
 
@@ -160,7 +160,7 @@ async function resolveStatisticsTarget(pathname: string, method: string) {
 
   return {
     apiId: target.id,
-    apiPath: target.apiPath,
+    apiPath: target.apiPath
   }
 }
 
@@ -180,7 +180,7 @@ async function resolveApiKeyId(apiKey: string) {
 async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
   const statusCode = Math.trunc(event.node.res.statusCode || 200)
   const responseSize = parseOptionalInt(
-    event.node.res.getHeader('content-length') as string | string[] | number | undefined,
+    event.node.res.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
 
@@ -204,7 +204,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
           costCredits: billing.costCredits,
           apiKeyUserId: billing.apiKeyUserId,
           forcedOutcome: billing.forcedOutcome,
-          statusCode,
+          statusCode
         })
       : false
 
@@ -236,7 +236,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       errorCode,
       errorMessage,
       creditsCost: 0, // 占位，扣费成功后再补
-      statusCodeForStats: statStatusCode,
+      statusCodeForStats: statStatusCode
     })
 
     // 扣费 · 单独事务，与日志写入解耦避免互相阻塞
@@ -247,20 +247,19 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
           amount: billing.costCredits,
           apiId: target.apiId,
           apiCallId: callId,
-          remark: `API 调用扣费 · ${target.apiPath}`,
+          remark: `API 调用扣费 · ${target.apiPath}`
         })
         if (r.charged > 0) {
           // 把实际扣除的金额回填到 apiCalls.creditsCost
           await apiCallService.patchCreditsCost(callId, r.charged)
         }
-      }
-      catch (err) {
+      } catch (err) {
         // 扣费失败不应回滚日志，仅记录错误（极少：积分已被 gate 校验过）
         console.error('failed to charge credits after api call', {
           callId,
           userId: billing.apiKeyUserId,
           amount: billing.costCredits,
-          error: (err as Error).message,
+          error: (err as Error).message
         })
       }
     }
@@ -268,13 +267,12 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     if (apiKeyId) {
       await apiKeyService.recordUsage(apiKeyId, tracked.ip)
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.error('failed to record api call stats from plugin', {
       pathname: tracked.pathname,
       method: tracked.method,
       statusCode,
-      error,
+      error
     })
   }
 }
@@ -297,7 +295,7 @@ export default defineNitroPlugin((nitroApp) => {
       requestSize: parseOptionalInt(getHeader(event, 'content-length')),
       userAgent: (getHeader(event, 'user-agent') || null)?.slice(0, 500) || null,
       referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
-      queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null,
+      queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
     }
   })
 

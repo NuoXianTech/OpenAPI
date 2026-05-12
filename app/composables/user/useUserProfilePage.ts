@@ -28,7 +28,7 @@ const OAUTH_BIND_ERRORS: Record<string, string> = {
   provider_unavailable: 'provider 当前不可用',
   oauth_disabled: '站点已关闭第三方登录',
   secret_decrypt_failed: '密钥解密失败，请联系管理员',
-  missing_code: '未收到授权 code',
+  missing_code: '未收到授权 code'
 }
 
 function errMsg(err: unknown, fallback: string) {
@@ -50,11 +50,9 @@ export function useUserProfilePage() {
     profileLoading.value = true
     try {
       profile.value = await $fetch<ProfileData>('/api/user/profile')
-    }
-    catch (err) {
+    } catch (err) {
       console.error('failed to load profile', err)
-    }
-    finally {
+    } finally {
       profileLoading.value = false
     }
   }
@@ -62,7 +60,7 @@ export function useUserProfilePage() {
   async function updateProfile(displayName: string) {
     await $fetch('/api/user/profile', {
       method: 'PUT',
-      body: { displayName: displayName.trim() },
+      body: { displayName: displayName.trim() }
     })
     toast.add({ title: '资料已更新', color: 'success' })
     await Promise.all([loadProfile(), fetchMe(true)])
@@ -71,24 +69,24 @@ export function useUserProfilePage() {
   async function changePassword(currentPassword: string, newPassword: string) {
     await $fetch('/api/user/change-password', {
       method: 'POST',
-      body: { currentPassword, newPassword },
+      body: { currentPassword, newPassword }
     })
     toast.add({
       title: '密码已更新',
       description: '其他设备的登录已被注销',
-      color: 'success',
+      color: 'success'
     })
   }
 
   async function requestEmailChange(newEmail: string): Promise<string> {
     const res = await $fetch<{ pendingEmail: string }>('/api/user/request-email-change', {
       method: 'POST',
-      body: { newEmail },
+      body: { newEmail }
     })
     toast.add({
       title: '验证邮件已发送',
       description: `请到 ${res.pendingEmail} 邮箱点击确认链接完成更改`,
-      color: 'success',
+      color: 'success'
     })
     return res.pendingEmail
   }
@@ -99,12 +97,10 @@ export function useUserProfilePage() {
       const res = await $fetch<{ oauthEnabled: boolean, providers: OauthBinding[] }>('/api/user/oauth/list')
       oauthEnabled.value = res.oauthEnabled
       oauthList.value = res.providers
-    }
-    catch (err) {
+    } catch (err) {
       console.error('failed to load oauth list', err)
       oauthList.value = []
-    }
-    finally {
+    } finally {
       oauthLoading.value = false
     }
   }
@@ -120,8 +116,7 @@ export function useUserProfilePage() {
       await $fetch(`/api/user/oauth/${provider}/unbind`, { method: 'POST' })
       toast.add({ title: '已解绑', color: 'success' })
       await loadOauth()
-    }
-    catch (err) {
+    } catch (err) {
       toast.add({ title: errMsg(err, '解绑失败'), color: 'error' })
     }
   }
@@ -130,7 +125,7 @@ export function useUserProfilePage() {
     if (query.oauth_bound) {
       toast.add({
         title: `已绑定 ${query.oauth_bound}`,
-        color: 'success',
+        color: 'success'
       })
     }
     if (query.oauth_error) {
@@ -138,7 +133,7 @@ export function useUserProfilePage() {
       toast.add({
         title: '绑定失败',
         description: OAUTH_BIND_ERRORS[code] || code,
-        color: 'error',
+        color: 'error'
       })
     }
   }
@@ -157,6 +152,6 @@ export function useUserProfilePage() {
     startBind,
     unbind,
     notifyOauthCallback,
-    errMsg,
+    errMsg
   }
 }

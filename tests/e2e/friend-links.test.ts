@@ -26,7 +26,7 @@ describe('admin friend links e2e', () => {
     expect(listAfterCreate.data.some(item => item.id === created.data.id)).toBe(true)
 
     const deleted = await adminClient.post<FriendLinkItem>('/api/admin/friend-links/delete', {
-      id: created.data.id,
+      id: created.data.id
     })
     expect(deleted.code).toBe(0)
     expect(deleted.data.id).toBe(created.data.id)
@@ -44,8 +44,8 @@ describe('admin friend links e2e', () => {
       method: 'POST',
       ignoreResponseError: true,
       body: {
-        title: 'missing-url',
-      },
+        title: 'missing-url'
+      }
     })
 
     expect(response.status).toBe(400)

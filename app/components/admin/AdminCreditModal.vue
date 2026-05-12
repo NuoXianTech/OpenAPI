@@ -17,7 +17,7 @@ const loading = ref(false)
 const operationItems = [
   { label: '加积分（grant）', value: 'grant' },
   { label: '减积分（revoke）', value: 'revoke' },
-  { label: '重置积分（reset）', value: 'reset' },
+  { label: '重置积分（reset）', value: 'reset' }
 ]
 
 const operationHelp = computed(() => {
@@ -60,17 +60,15 @@ async function submit() {
         userIds: props.userIds,
         operation: operation.value,
         amount: Math.max(Math.trunc(amount.value), 0),
-        remark: remark.value.trim() || undefined,
-      },
+        remark: remark.value.trim() || undefined
+      }
     })
     toast.add({ title: '积分调整成功', color: 'success' })
     open.value = false
     emit('saved')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

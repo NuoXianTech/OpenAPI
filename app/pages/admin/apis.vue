@@ -59,11 +59,11 @@ interface VersionGroup {
 }
 
 const { data, status, refresh } = useLazyFetch('/api/admin/apis/discover', {
-  default: () => ({ versions: [] as VersionGroup[] }),
+  default: () => ({ versions: [] as VersionGroup[] })
 })
 
 const { data: categoriesData } = useLazyFetch<Array<{ id: number, name: string }>>('/api/admin/api-categories/list', {
-  default: () => [],
+  default: () => []
 })
 const categoriesMap = computed(() => {
   const map = new Map<number, string>()
@@ -101,7 +101,7 @@ const filteredApis = computed<DiscoveredApi[]>(() => {
 
 const versionTabs = computed(() => versions.value.map(v => ({
   label: `${v.pathVersion} (${v.stats.registered}/${v.stats.total})`,
-  value: v.pathVersion,
+  value: v.pathVersion
 })))
 
 const modalOpen = ref(false)
@@ -135,16 +135,14 @@ async function confirmDelete() {
   try {
     await $fetch('/api/admin/apis/delete', {
       method: 'POST',
-      body: { id: deleteTarget.value.registered.id },
+      body: { id: deleteTarget.value.registered.id }
     })
     toast.add({ title: '已删除登记', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -154,11 +152,10 @@ async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatisti
   try {
     await $fetch('/api/admin/apis/toggle', {
       method: 'PUT',
-      body: { id: row.registered.id, field, value },
+      body: { id: row.registered.id, field, value }
     })
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '切换失败', color: 'error' })
   }
 }
@@ -167,12 +164,11 @@ async function resyncManifest(row: DiscoveredApi) {
   try {
     await $fetch('/api/admin/apis/register', {
       method: 'POST',
-      body: { pathVersion: row.pathVersion, code: row.code },
+      body: { pathVersion: row.pathVersion, code: row.code }
     })
     toast.add({ title: '已同步 manifest', color: 'success' })
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '同步失败', color: 'error' })
   }
 }
@@ -183,18 +179,18 @@ function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
     items.push({
       label: '编辑配置',
       icon: 'i-mdi-pencil-outline',
-      onSelect: () => openEdit(row),
+      onSelect: () => openEdit(row)
     }, {
       label: '同步路由信息',
       icon: 'i-mdi-sync',
-      onSelect: () => resyncManifest(row),
+      onSelect: () => resyncManifest(row)
     })
   }
   if (!row.registered) {
     items.push({
       label: '登记接口',
       icon: 'i-mdi-plus-circle-outline',
-      onSelect: () => openRegister(row),
+      onSelect: () => openRegister(row)
     })
   }
   if (row.registered) {
@@ -202,7 +198,7 @@ function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
       label: row.orphaned ? '清理孤儿登记' : '删除登记',
       icon: 'i-mdi-delete-outline',
       color: 'error' as const,
-      onSelect: () => openDelete(row),
+      onSelect: () => openDelete(row)
     })
   }
   return items
@@ -212,7 +208,7 @@ const filterOptions = [
   { label: '全部', value: 'all' },
   { label: '已登记', value: 'registered' },
   { label: '未登记', value: 'unregistered' },
-  { label: '孤儿', value: 'orphaned' },
+  { label: '孤儿', value: 'orphaned' }
 ]
 
 const columns: TableColumn<DiscoveredApi>[] = [
@@ -222,8 +218,8 @@ const columns: TableColumn<DiscoveredApi>[] = [
     cell: ({ row }) => h('div', { class: 'flex flex-col gap-0.5' }, [
       h('div', { class: 'font-mono text-sm' }, row.original.code),
       h('div', { class: 'text-xs text-muted truncate max-w-[260px]' },
-        row.original.registered?.name || h('span', { class: 'italic opacity-60' }, '未登记')),
-    ]),
+        row.original.registered?.name || h('span', { class: 'italic opacity-60' }, '未登记'))
+    ])
   },
   {
     id: 'endpoints',
@@ -233,31 +229,31 @@ const columns: TableColumn<DiscoveredApi>[] = [
         return h('span', { class: 'text-xs text-muted italic' }, '代码已删除')
       }
       return h('div', { class: 'flex flex-col gap-1' }, row.original.endpoints.map(ep => h('div', {
-        class: 'flex items-center gap-2',
+        class: 'flex items-center gap-2'
       }, [
         h(UBadge, {
           color: methodColor(ep.method),
           variant: 'subtle',
-          class: 'font-mono',
+          class: 'font-mono'
         }, () => ep.method),
         h('span', {
           class: 'font-mono text-xs',
-          class2: ep.isDynamic ? 'text-primary' : '',
-        }, ep.apiPath),
+          class2: ep.isDynamic ? 'text-primary' : ''
+        }, ep.apiPath)
       ])))
-    },
+    }
   },
   {
     accessorKey: 'sourceDir',
     header: '源目录',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.sourceDir),
+    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.sourceDir)
   },
   {
     id: 'category',
     header: '分类',
     cell: ({ row }) => row.original.registered?.categoryId
       ? (categoriesMap.value.get(row.original.registered.categoryId) || `#${row.original.registered.categoryId}`)
-      : '-',
+      : '-'
   },
   {
     id: 'isEnabled',
@@ -265,9 +261,9 @@ const columns: TableColumn<DiscoveredApi>[] = [
     cell: ({ row }) => row.original.registered
       ? h(USwitch, {
           'modelValue': row.original.registered.isEnabled,
-          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val),
+          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val)
         })
-      : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '默认停用'),
+      : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '默认停用')
   },
   {
     id: 'isStatistics',
@@ -275,9 +271,9 @@ const columns: TableColumn<DiscoveredApi>[] = [
     cell: ({ row }) => row.original.registered
       ? h(USwitch, {
           'modelValue': row.original.registered.isStatistics,
-          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val),
+          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val)
         })
-      : h('span', { class: 'text-muted' }, '-'),
+      : h('span', { class: 'text-muted' }, '-')
   },
   {
     id: 'isApiKey',
@@ -286,7 +282,7 @@ const columns: TableColumn<DiscoveredApi>[] = [
       ? (row.original.registered.isApiKey
           ? h(UBadge, { color: 'warning', variant: 'subtle' }, () => '必需')
           : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '可选'))
-      : h('span', { class: 'text-muted' }, '-'),
+      : h('span', { class: 'text-muted' }, '-')
   },
   {
     id: 'state',
@@ -295,21 +291,21 @@ const columns: TableColumn<DiscoveredApi>[] = [
       if (row.original.orphaned) return h(UBadge, { color: 'error', variant: 'subtle' }, () => '孤儿')
       if (!row.original.registered) return h(UBadge, { color: 'warning', variant: 'subtle' }, () => '未登记')
       return h(UBadge, { color: 'success', variant: 'subtle' }, () => '已登记')
-    },
+    }
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
@@ -383,7 +379,7 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2 align-top',
+          td: 'py-2 align-top'
         }"
       />
 

@@ -45,6 +45,6 @@ export default defineEventHandler(async (event: H3Event) => {
     id: 0,
     kind: 'admin',
     username: adminUsername,
-    email: authConfig.adminEmail,
+    email: authConfig.adminEmail
   }
 })

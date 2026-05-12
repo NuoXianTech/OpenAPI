@@ -64,10 +64,9 @@ async function checkConsistency(): Promise<boolean> {
       id: apis.id,
       code: apis.code,
       pathVersion: apis.pathVersion,
-      sourceDir: apis.sourceDir,
+      sourceDir: apis.sourceDir
     }).from(apis)
-  }
-  catch {
+  } catch {
     // 表尚未建好或连接未就绪 → 静默重试
     return false
   }
@@ -109,19 +108,18 @@ async function checkConsistency(): Promise<boolean> {
             rateLimitPerDay: DEFAULT_API_REGISTRATION.rateLimitPerDay,
             dailyQuota: DEFAULT_API_REGISTRATION.dailyQuota,
             costCredits: DEFAULT_API_REGISTRATION.costCredits,
-            timeoutMs: DEFAULT_API_REGISTRATION.timeoutMs,
-          },
+            timeoutMs: DEFAULT_API_REGISTRATION.timeoutMs
+          }
         })
         registered.push(`${a.pathVersion}/${a.code}`)
-      }
-      catch (err) {
+      } catch (err) {
         failed.push({ key: `${a.pathVersion}/${a.code}`, err })
       }
     }
     if (registered.length > 0) {
       console.info(
         `[api-manifest] ✓ 自动登记 ${registered.length} 条新 API（默认未启用，请在 admin 后台开启）：`,
-        registered.join(', '),
+        registered.join(', ')
       )
     }
     if (failed.length > 0) {
@@ -132,7 +130,7 @@ async function checkConsistency(): Promise<boolean> {
   if (orphaned.length > 0) {
     console.warn(
       `[api-manifest] ⚠ 以下 ${orphaned.length} 条 DB 记录对应的源文件不存在，`
-      + `可能已删除或重命名，请检查：`,
+      + `可能已删除或重命名，请检查：`
     )
     for (const r of orphaned) {
       console.warn(`  - ${r.pathVersion}/${r.code}  (id=${r.id})  ${r.sourceDir || ''}`)

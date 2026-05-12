@@ -86,7 +86,7 @@ function buildInitialDefaults() {
     smtpSecure: true,
     smtpUser: '',
     smtpPass: '',
-    smtpFrom: 'no-reply@example.com',
+    smtpFrom: 'no-reply@example.com'
   }
 }
 
@@ -108,7 +108,7 @@ function toPublicTurnstile(settings: {
     login: enabled && settings.turnstileLoginEnabled,
     register: enabled && settings.turnstileRegisterEnabled,
     adminLogin: enabled && settings.turnstileAdminLoginEnabled,
-    passwordReset: enabled && settings.turnstilePasswordResetEnabled,
+    passwordReset: enabled && settings.turnstilePasswordResetEnabled
   }
 }
 
@@ -129,8 +129,7 @@ export const siteSettingsService = {
       if (inserted[0]) {
         return inserted[0]
       }
-    }
-    catch {
+    } catch {
       // Ignore duplicate insert races and fallback to a fresh read.
     }
 
@@ -162,8 +161,8 @@ export const siteSettingsService = {
       passwordResetEnabled: settings.passwordResetEnabled,
       turnstile: toPublicTurnstile(settings),
       announcement: {
-        showOnHome: settings.announcementShowOnHome,
-      },
+        showOnHome: settings.announcementShowOnHome
+      }
     }
   },
 
@@ -186,8 +185,7 @@ export const siteSettingsService = {
     if (turnstileSecretKey !== undefined) {
       if (turnstileSecretKey === '') {
         patch.turnstileSecretKey = ''
-      }
-      else if (!isSecretMask(turnstileSecretKey)) {
+      } else if (!isSecretMask(turnstileSecretKey)) {
         patch.turnstileSecretKey = encryptSecret(turnstileSecretKey)
       }
     }
@@ -195,11 +193,11 @@ export const siteSettingsService = {
     const updated = await db.update(siteSettings)
       .set({
         ...patch,
-        updatedAt: new Date(),
+        updatedAt: new Date()
       })
       .where(eq(siteSettings.id, current.id))
       .returning()
 
     return updated[0] || current
-  },
+  }
 }

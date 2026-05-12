@@ -8,7 +8,7 @@ import {
   integer,
   jsonb,
   index,
-  uniqueIndex,
+  uniqueIndex
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -31,10 +31,10 @@ export const users = pgTable('users', {
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`),
-  index('users_active_banned_idx').on(table.isActive, table.isBanned),
+  index('users_active_banned_idx').on(table.isActive, table.isBanned)
 ])
 
 // ------------------------------------------------------------------
@@ -62,11 +62,11 @@ export const creditTransactions = pgTable('credit_transactions', {
   operatorName: varchar('operator_name', { length: 140 }),
   remark: varchar('remark', { length: 500 }),
   meta: jsonb('meta').$type<Record<string, unknown>>(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt),
   index('credit_transactions_reason_idx').on(table.reason),
-  index('credit_transactions_api_call_idx').on(table.apiCallId),
+  index('credit_transactions_api_call_idx').on(table.apiCallId)
 ])
 
 // ------------------------------------------------------------------
@@ -91,10 +91,10 @@ export const redemptionCodes = pgTable('redemption_codes', {
   isEnabled: boolean('is_enabled').notNull().default(true),
   createdBy: integer('created_by'), // admin id（admin 伪用户为 null）
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   index('redemption_codes_batch_idx').on(table.batchId),
-  index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt),
+  index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt)
 ])
 
 // ------------------------------------------------------------------
@@ -110,8 +110,8 @@ export const redemptionRecords = pgTable('redemption_records', {
   amount: integer('amount').notNull(),
   transactionId: integer('transaction_id'), // 关联 credit_transactions.id
   ip: varchar('ip', { length: 45 }),
-  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow(),
+  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   uniqueIndex('redemption_records_code_user_uq').on(table.codeId, table.userId),
-  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt),
+  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt)
 ])

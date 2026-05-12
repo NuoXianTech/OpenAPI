@@ -25,7 +25,7 @@ export function useAdminUsersPage() {
   const keyword = ref('')
   const { data, status, refresh } = useLazyFetch<AdminUserItem[]>('/api/admin/users/list', {
     query: computed(() => ({ keyword: keyword.value || undefined })),
-    default: () => [],
+    default: () => []
   })
   const items = computed(() => data.value || [])
 
@@ -34,14 +34,13 @@ export function useAdminUsersPage() {
   function toggleSelect(id: number, checked: boolean) {
     if (checked) {
       if (!selectedIds.value.includes(id)) selectedIds.value.push(id)
-    }
-    else {
+    } else {
       selectedIds.value = selectedIds.value.filter(v => v !== id)
     }
   }
 
   const allSelected = computed(() =>
-    items.value.length > 0 && selectedIds.value.length === items.value.length,
+    items.value.length > 0 && selectedIds.value.length === items.value.length
   )
 
   function toggleSelectAll(checked: boolean) {
@@ -62,12 +61,11 @@ export function useAdminUsersPage() {
     try {
       await $fetch('/api/admin/users/ban', {
         method: 'POST',
-        body: { id: item.id, isBanned: !item.isBanned },
+        body: { id: item.id, isBanned: !item.isBanned }
       })
       toast.add({ title: item.isBanned ? '已解封' : '已封禁', color: 'success' })
       await refresh()
-    }
-    catch {
+    } catch {
       toast.add({ title: '操作失败', color: 'error' })
     }
   }
@@ -75,7 +73,7 @@ export function useAdminUsersPage() {
   async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }) {
     await $fetch('/api/admin/users/update', {
       method: 'PUT',
-      body: { id, ...payload },
+      body: { id, ...payload }
     })
     toast.add({ title: '更新成功', color: 'success' })
     await refresh()
@@ -94,6 +92,6 @@ export function useAdminUsersPage() {
     deleteUser,
     toggleBan,
     updateUser,
-    errMsg,
+    errMsg
   }
 }

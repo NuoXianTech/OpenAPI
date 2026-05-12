@@ -28,11 +28,11 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   login: false,
   register: false,
   adminLogin: false,
-  passwordReset: false,
+  passwordReset: false
 }
 
 const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
-  showOnHome: false,
+  showOnHome: false
 }
 
 // DB 是唯一权威源；以下兜底仅在 /api/settings/public 请求异常时使用，
@@ -45,7 +45,7 @@ const FALLBACK_SETTINGS: PublicSiteSettings = {
   startTime: '2026-01-01 00:00:00',
   passwordResetEnabled: true,
   turnstile: { ...EMPTY_TURNSTILE },
-  announcement: { ...EMPTY_ANNOUNCEMENT },
+  announcement: { ...EMPTY_ANNOUNCEMENT }
 }
 
 export function useSiteSettings() {
@@ -53,8 +53,8 @@ export function useSiteSettings() {
     'public-site-settings',
     () => $fetch<PublicSiteSettings>('/api/settings/public'),
     {
-      default: () => FALLBACK_SETTINGS,
-    },
+      default: () => FALLBACK_SETTINGS
+    }
   )
 
   const settings = computed(() => data.value || FALLBACK_SETTINGS)
@@ -69,6 +69,6 @@ export function useSiteSettings() {
     passwordResetEnabled,
     pending,
     error,
-    refresh,
+    refresh
   }
 }

@@ -28,7 +28,7 @@ interface ProviderForm {
 const toast = useToast()
 
 const { data, status, refresh } = useLazyFetch<ProviderItem[]>('/api/admin/oauth-providers/list', {
-  default: () => [] as ProviderItem[],
+  default: () => [] as ProviderItem[]
 })
 
 const items = computed<ProviderItem[]>(() => data.value || [])
@@ -38,7 +38,7 @@ function createForm(): ProviderForm {
 }
 
 const forms = reactive<Record<string, ProviderForm>>(
-  Object.fromEntries(SUPPORTED_OAUTH_PROVIDERS.map(p => [p, createForm()])),
+  Object.fromEntries(SUPPORTED_OAUTH_PROVIDERS.map(p => [p, createForm()]))
 )
 
 function getForm(provider: string): ProviderForm {
@@ -66,7 +66,7 @@ async function save(item: ProviderItem) {
     const body: Record<string, unknown> = {
       provider: item.provider,
       clientId: form.clientId,
-      isEnabled: form.isEnabled,
+      isEnabled: form.isEnabled
     }
     if (form.clientSecret) {
       body.clientSecret = form.clientSecret
@@ -75,11 +75,9 @@ async function save(item: ProviderItem) {
     toast.add({ title: `${item.displayName} 保存成功`, color: 'success' })
     form.clientSecret = ''
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
-  }
-  finally {
+  } finally {
     form.saving = false
   }
 }
@@ -92,8 +90,7 @@ async function copyCallback(item: ProviderItem) {
     setTimeout(() => {
       form.copied = false
     }, 1500)
-  }
-  catch {
+  } catch {
     toast.add({ title: '复制失败，请手动选中复制', color: 'error' })
   }
 }

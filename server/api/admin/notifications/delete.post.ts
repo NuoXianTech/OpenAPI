@@ -18,7 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.notification.delete',
     resourceType: 'notification_message',
     resourceId: String(messageId),
-    detail: { title: removed.title },
+    detail: { title: removed.title }
   })
 
   return removed

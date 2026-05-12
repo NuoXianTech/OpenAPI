@@ -53,7 +53,7 @@ describe('admin apis e2e', () => {
     const registered = await adminClient.post<AdminApiItem>('/api/admin/apis/register', {
       pathVersion: TEST_PATH_VERSION,
       code: TEST_CODE,
-      overrides: { name: 'E2E Test Endpoint', isEnabled: true },
+      overrides: { name: 'E2E Test Endpoint', isEnabled: true }
     })
     expect(registered.code).toBe(0)
     expect(registered.data.code).toBe(TEST_CODE)
@@ -69,7 +69,7 @@ describe('admin apis e2e', () => {
     // 编辑（停用）
     const updated = await adminClient.put<AdminApiItem>('/api/admin/apis/update', {
       id: apiId,
-      isEnabled: false,
+      isEnabled: false
     })
     expect(updated.code).toBe(0)
     expect(updated.data.isEnabled).toBe(false)
@@ -93,8 +93,8 @@ describe('admin apis e2e', () => {
       ignoreResponseError: true,
       body: {
         pathVersion: 'v1',
-        code: '__definitely_not_a_real_code__',
-      },
+        code: '__definitely_not_a_real_code__'
+      }
     })
 
     expect(response.status).toBe(404)

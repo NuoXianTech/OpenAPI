@@ -5,8 +5,8 @@ export function useFriendLinkList() {
     'public-friend-links',
     () => $fetch<FriendLinkItem[]>('/api/friend-links/list'),
     {
-      default: () => [],
-    },
+      default: () => []
+    }
   )
 
   const items = computed(() => data.value || [])
@@ -22,6 +22,6 @@ export function useFriendLinkList() {
     loading,
     error,
     isEmpty,
-    fetchFriendLinks: refresh,
+    fetchFriendLinks: refresh
   }
 }

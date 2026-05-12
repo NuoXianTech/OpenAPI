@@ -8,7 +8,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   totalCount: 0,
-  activeCount: 0,
+  activeCount: 0
 })
 
 const inactiveCount = computed(() => Math.max(0, props.totalCount - props.activeCount))

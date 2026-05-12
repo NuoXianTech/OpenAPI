@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
     email,
     displayName: displayName !== undefined ? (displayName || null) : undefined,
     isActive,
-    isBanned,
+    isBanned
   })
 
   return updated

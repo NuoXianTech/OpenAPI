@@ -35,7 +35,7 @@ export const oauthAccountService = {
       avatarUrl: oauthAccounts.avatarUrl,
       email: oauthAccounts.email,
       linkedAt: oauthAccounts.linkedAt,
-      lastLoginAt: oauthAccounts.lastLoginAt,
+      lastLoginAt: oauthAccounts.lastLoginAt
     })
       .from(oauthAccounts)
       .where(eq(oauthAccounts.userId, userId))
@@ -64,7 +64,7 @@ export const oauthAccountService = {
           email: input.email ?? existing.email,
           lastLoginAt: now,
           lastLoginIp: input.lastLoginIp ?? existing.lastLoginIp,
-          updatedAt: now,
+          updatedAt: now
         })
         .where(eq(oauthAccounts.id, existing.id))
         .returning()
@@ -80,8 +80,8 @@ export const oauthAccountService = {
       email: input.email ?? null,
       linkedAt: now,
       lastLoginAt: now,
-      lastLoginIp: input.lastLoginIp ?? null,
+      lastLoginIp: input.lastLoginIp ?? null
     }).returning()
     return res[0]
-  },
+  }
 }

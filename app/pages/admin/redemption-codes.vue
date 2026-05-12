@@ -27,7 +27,7 @@ const {
   toggleBatch,
   deleteBatch,
   copyOne,
-  copyAll,
+  copyAll
 } = useRedemptionCodesPage()
 
 const generateOpen = ref(false)
@@ -41,22 +41,21 @@ const statusItems = [
   { label: '可用', value: 'available' },
   { label: '已禁用', value: 'disabled' },
   { label: '已用完', value: 'used_up' },
-  { label: '已过期', value: 'expired' },
+  { label: '已过期', value: 'expired' }
 ]
 const batchItems = computed(() => [
   { label: '全部批次', value: 'all' },
   ...batches.value.map(b => ({
     label: `${b.batchId} (${b.usedTotal}/${b.maxUsesTotal} 用 · ${b.amount} 积分)`,
-    value: b.batchId,
-  })),
+    value: b.batchId
+  }))
 ])
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -72,18 +71,18 @@ function getRowItems(row: RedemptionCode): DropdownMenuItem[] {
   return [{
     label: row.isEnabled ? '禁用' : '启用',
     icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
-    onSelect: () => toggle(row),
+    onSelect: () => toggle(row)
   }, {
     label: '复制兑换码',
     icon: 'i-mdi-content-copy',
-    onSelect: () => copyOne(row.code),
+    onSelect: () => copyOne(row.code)
   }, {
-    type: 'separator',
+    type: 'separator'
   }, {
     label: '删除',
     icon: 'i-mdi-delete-outline',
     color: 'error' as const,
-    onSelect: () => remove(row),
+    onSelect: () => remove(row)
   }]
 }
 
@@ -100,34 +99,34 @@ const columns: TableColumn<RedemptionCode>[] = [
       h('span', {
         class: 'font-mono text-sm cursor-pointer hover:text-primary',
         onClick: () => copyOne(row.original.code),
-        title: '点击复制',
+        title: '点击复制'
       }, row.original.code),
       row.original.batchId
         ? h('span', { class: 'text-[11px] text-muted font-mono' }, row.original.batchId)
-        : null,
-    ].filter(Boolean)),
+        : null
+    ].filter(Boolean))
   },
   {
     accessorKey: 'amount',
     header: '面额',
-    cell: ({ row }) => h('span', { class: 'tabular-nums font-semibold text-success' }, `+${row.original.amount.toLocaleString()}`),
+    cell: ({ row }) => h('span', { class: 'tabular-nums font-semibold text-success' }, `+${row.original.amount.toLocaleString()}`)
   },
   {
     id: 'usage',
     header: '使用',
     cell: ({ row }) => h('span', { class: 'tabular-nums text-sm' },
-      `${row.original.usedCount} / ${row.original.maxUses}`),
+      `${row.original.usedCount} / ${row.original.maxUses}`)
   },
   {
     accessorKey: 'note',
     header: '备注',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[200px] block' }, row.original.note || '-'),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[200px] block' }, row.original.note || '-')
   },
   {
     accessorKey: 'expiresAt',
     header: '过期时间',
     cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' },
-      row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期'),
+      row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期')
   },
   {
     id: 'status',
@@ -135,26 +134,26 @@ const columns: TableColumn<RedemptionCode>[] = [
     cell: ({ row }) => {
       const s = statusOf(row.original)
       return h(UBadge, { color: s.color, variant: 'subtle' }, () => s.label)
-    },
+    }
   },
   {
     accessorKey: 'createdAt',
     header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 </script>
 
@@ -254,7 +253,7 @@ const columns: TableColumn<RedemptionCode>[] = [
               base: 'table-fixed',
               thead: '[&>tr]:bg-elevated/50',
               th: 'py-2',
-              td: 'py-2 align-middle',
+              td: 'py-2 align-middle'
             }"
           />
           <div

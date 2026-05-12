@@ -24,7 +24,7 @@ const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
-  default: () => [],
+  default: () => []
 })
 const items = computed<Announcement[]>(() => data.value || [])
 
@@ -53,16 +53,14 @@ async function confirmDelete() {
   try {
     await $fetch('/api/admin/announcements/delete', {
       method: 'POST',
-      body: { id: deleteTarget.value.id },
+      body: { id: deleteTarget.value.id }
     })
     toast.add({ title: '删除成功', color: 'success' })
     deleteOpen.value = false
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
-  }
-  finally {
+  } finally {
     deleteLoading.value = false
   }
 }
@@ -71,11 +69,10 @@ async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', v
   try {
     await $fetch('/api/admin/announcements/update', {
       method: 'PUT',
-      body: { id: row.id, [field]: value },
+      body: { id: row.id, [field]: value }
     })
     await refresh()
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
   }
 }
@@ -83,7 +80,7 @@ async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', v
 function getRowItems(row: Announcement): DropdownMenuItem[] {
   return [
     { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -91,15 +88,14 @@ const levelMeta: Record<Announcement['level'], { color: 'info' | 'success' | 'wa
   info: { color: 'info', label: '公告' },
   success: { color: 'success', label: '通知' },
   warning: { color: 'warning', label: '提醒' },
-  critical: { color: 'error', label: '紧急' },
+  critical: { color: 'error', label: '紧急' }
 }
 
 function formatDate(iso: string | null) {
   if (!iso) return '-'
   try {
     return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  }
-  catch {
+  } catch {
     return iso
   }
 }
@@ -113,60 +109,60 @@ const columns: TableColumn<Announcement>[] = [
     cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
       h(UBadge, {
         color: levelMeta[row.original.level].color,
-        variant: 'subtle',
+        variant: 'subtle'
       }, () => levelMeta[row.original.level].label),
       h('span', { class: 'font-medium truncate max-w-[300px]' }, row.original.title),
       row.original.isPinned
         ? h(UBadge, { color: 'warning', variant: 'soft' }, () => '置顶')
-        : null,
-    ].filter(Boolean)),
+        : null
+    ].filter(Boolean))
   },
   {
     id: 'window',
     header: '生效窗口',
     cell: ({ row }) => h('div', { class: 'text-xs text-muted' }, [
       h('div', `开始：${formatDate(row.original.startAt)}`),
-      h('div', `结束：${formatDate(row.original.endAt)}`),
-    ]),
+      h('div', `结束：${formatDate(row.original.endAt)}`)
+    ])
   },
   {
     accessorKey: 'sortOrder',
-    header: '排序',
+    header: '排序'
   },
   {
     id: 'isEnabled',
     header: '启用',
     cell: ({ row }) => h(USwitch, {
       'modelValue': row.original.isEnabled,
-      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isEnabled', val),
-    }),
+      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isEnabled', val)
+    })
   },
   {
     id: 'isPinned',
     header: '置顶',
     cell: ({ row }) => h(USwitch, {
       'modelValue': row.original.isPinned,
-      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isPinned', val),
-    }),
+      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isPinned', val)
+    })
   },
   {
     accessorKey: 'createdAt',
     header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
   },
   {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
       items: getRowItems(row.original),
-      content: { align: 'end' },
+      content: { align: 'end' }
     }, () => h(UButton, {
       icon: 'i-mdi-dots-vertical',
       color: 'neutral',
       variant: 'ghost',
-      size: 'sm',
-    }))),
-  },
+      size: 'sm'
+    })))
+  }
 ]
 </script>
 
@@ -202,7 +198,7 @@ const columns: TableColumn<Announcement>[] = [
           base: 'table-fixed',
           thead: '[&>tr]:bg-elevated/50',
           th: 'py-2',
-          td: 'py-2 align-top',
+          td: 'py-2 align-top'
         }"
       />
 

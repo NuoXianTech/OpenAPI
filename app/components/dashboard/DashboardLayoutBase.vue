@@ -4,7 +4,7 @@ import { useSiteSettings } from '~/composables/useSiteSettings'
 import type { DashboardConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,
-  type ResolvedDashboardConfig,
+  type ResolvedDashboardConfig
 } from '~/composables/dashboard/useDashboardConfig'
 
 type StaticBrandConfig = Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardConfig['brand'] }
@@ -21,7 +21,7 @@ const siteName = computed(() => settings.value?.siteName || 'OpenAPI')
 
 const resolved = computed<ResolvedDashboardConfig>(() => ({
   ...props.config,
-  brand: props.config.brand(siteName.value),
+  brand: props.config.brand(siteName.value)
 }))
 
 provide(dashboardConfigInjectionKey, reactive(resolved.value) as unknown as ResolvedDashboardConfig)
@@ -30,7 +30,7 @@ provide(dashboardConfigInjectionKey, reactive(resolved.value) as unknown as Reso
 const open = ref(false)
 
 const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
-  { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true },
+  { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true }
 ]])
 
 // 命令面板：注入导航分组 + 快捷动作
@@ -46,8 +46,8 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
         label: action.label,
         icon: action.icon,
         to: action.to,
-        kbds: action.kbds,
-      })) as CommandPaletteItem[],
+        kbds: action.kbds
+      })) as CommandPaletteItem[]
     })
   }
 
@@ -60,8 +60,8 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
         items: g.items.map(item => ({
           label: String(item.label || ''),
           icon: typeof item.icon === 'string' ? item.icon : undefined,
-          to: typeof item.to === 'string' ? item.to : undefined,
-        })) as CommandPaletteItem[],
+          to: typeof item.to === 'string' ? item.to : undefined
+        })) as CommandPaletteItem[]
       })
     })
 
@@ -133,7 +133,7 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="[[
-            { type: 'label' as const, label: user?.email || user?.username || resolved.brand.label },
+            { type: 'label' as const, label: user?.email || user?.username || resolved.brand.label }
           ], ...((resolved.userMenuExtra?.({ logout }) || []) as DropdownMenuItem[][]), [
             {
               label: '退出登录',
@@ -142,8 +142,8 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
               async onSelect() {
                 await logout()
                 await router.push(resolved.loginRedirect)
-              },
-            },
+              }
+            }
           ]]"
           :content="{ align: 'start', collisionPadding: 12 }"
           :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"

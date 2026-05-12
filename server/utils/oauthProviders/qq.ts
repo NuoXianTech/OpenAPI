@@ -25,12 +25,12 @@ async function fetchOpenId(accessToken: string): Promise<{ openid: string, union
   if (!response || !response.openid) {
     throw createError({
       statusCode: 502,
-      message: response?.error_description || 'qq openid fetch failed',
+      message: response?.error_description || 'qq openid fetch failed'
     })
   }
   return {
     openid: response.openid,
-    unionid: response.unionid || null,
+    unionid: response.unionid || null
   }
 }
 
@@ -81,12 +81,12 @@ export const qqProvider: OauthProviderModule = {
     if (!response?.access_token) {
       throw createError({
         statusCode: 502,
-        message: response?.error_description || (response?.error ? `qq error ${response.error}` : 'qq token exchange failed'),
+        message: response?.error_description || (response?.error ? `qq error ${response.error}` : 'qq token exchange failed')
       })
     }
 
     return {
-      accessToken: response.access_token,
+      accessToken: response.access_token
     }
   },
 
@@ -119,7 +119,7 @@ export const qqProvider: OauthProviderModule = {
       providerUserId: unionid || openid,
       email: null,
       nickname: typeof profile.nickname === 'string' && profile.nickname ? profile.nickname : null,
-      avatarUrl,
+      avatarUrl
     }
-  },
+  }
 }

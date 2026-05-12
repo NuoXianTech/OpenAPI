@@ -61,7 +61,7 @@ export default defineEventHandler(async (event: H3Event) => {
       group = {
         pathVersion,
         apis: [],
-        stats: { total: 0, registered: 0, unregistered: 0, orphaned: 0 },
+        stats: { total: 0, registered: 0, unregistered: 0, orphaned: 0 }
       }
       grouped.set(pathVersion, group)
     }
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event: H3Event) => {
       apiPath: ep.apiPath,
       method: ep.method,
       sourceFile: ep.sourceFile,
-      isDynamic: ep.paramNames.length > 0 || ep.isCatchAll,
+      isDynamic: ep.paramNames.length > 0 || ep.isCatchAll
     }))
 
     const group = ensureGroup(api.pathVersion)
@@ -86,7 +86,7 @@ export default defineEventHandler(async (event: H3Event) => {
       endpointCount: api.endpoints.length,
       endpoints,
       registered,
-      orphaned: false,
+      orphaned: false
     })
     group.stats.total += 1
     if (registered) group.stats.registered += 1
@@ -105,7 +105,7 @@ export default defineEventHandler(async (event: H3Event) => {
       endpointCount: row.endpointCount,
       endpoints: [],
       registered: row,
-      orphaned: true,
+      orphaned: true
     })
     group.stats.total += 1
     group.stats.registered += 1

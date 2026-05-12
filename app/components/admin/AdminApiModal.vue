@@ -69,7 +69,7 @@ const schema = z.object({
   rateLimitPerDay: z.number().min(0).default(0),
   dailyQuota: z.number().min(0).default(0),
   costCredits: z.number().min(0).default(0),
-  timeoutMs: z.number().min(0).default(10_000),
+  timeoutMs: z.number().min(0).default(10_000)
 })
 
 type Schema = z.output<typeof schema>
@@ -91,7 +91,7 @@ function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
     rateLimitPerDay: 0,
     dailyQuota: 0,
     costCredits: 0,
-    timeoutMs: 10_000,
+    timeoutMs: 10_000
   }
 }
 
@@ -112,7 +112,7 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
     rateLimitPerDay: reg.rateLimitPerDay,
     dailyQuota: reg.dailyQuota,
     costCredits: reg.costCredits,
-    timeoutMs: reg.timeoutMs,
+    timeoutMs: reg.timeoutMs
   }
 }
 
@@ -120,11 +120,11 @@ const state = reactive<Partial<Schema>>({})
 const loading = ref(false)
 
 const { data: categoriesData, refresh: refreshCategories } = useLazyFetch<Array<{ id: number, name: string, code: string }>>('/api/admin/api-categories/list', {
-  default: () => [],
+  default: () => []
 })
 const categoryOptions = computed(() => [
   { label: '未分类', value: null },
-  ...((categoriesData.value || []).map(c => ({ label: c.name, value: c.id }))),
+  ...((categoriesData.value || []).map(c => ({ label: c.name, value: c.id })))
 ])
 
 // 内联新增分类
@@ -144,7 +144,7 @@ async function submitAddCategory() {
   try {
     const res = await $fetch<{ id?: number }>('/api/admin/api-categories/add', {
       method: 'POST',
-      body: { code, name, isEnabled: true },
+      body: { code, name, isEnabled: true }
     })
     await refreshCategories()
     if (res?.id) state.categoryId = res.id
@@ -152,11 +152,9 @@ async function submitAddCategory() {
     newCategoryCode.value = ''
     newCategoryName.value = ''
     toast.add({ title: '已新增分类', color: 'success' })
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '新增失败', color: 'error' })
-  }
-  finally {
+  } finally {
     addingCategory.value = false
   }
 }
@@ -182,7 +180,7 @@ watch(() => state.costCredits, (val) => {
     toast.add({
       title: '已自动开启「必需 API Key」',
       description: '设置扣费后必须通过 API Key 鉴权扣款账户。',
-      color: 'info',
+      color: 'info'
     })
   }
 })
@@ -192,7 +190,7 @@ const statusOptions = [
   { label: '异常', value: 0 },
   { label: '未知', value: -1 },
   { label: '维护', value: 2 },
-  { label: '废弃', value: 3 },
+  { label: '废弃', value: 3 }
 ]
 
 const headerLabel = computed(() => {
@@ -209,30 +207,27 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     if (props.mode === 'edit' && props.target.registered) {
       await $fetch('/api/admin/apis/update', {
         method: 'PUT',
-        body: { id: props.target.registered.id, ...event.data },
+        body: { id: props.target.registered.id, ...event.data }
       })
-    }
-    else {
+    } else {
       await $fetch('/api/admin/apis/register', {
         method: 'POST',
         body: {
           pathVersion: props.target.pathVersion,
           code: props.target.code,
-          overrides: event.data,
-        },
+          overrides: event.data
+        }
       })
     }
     toast.add({
       title: props.mode === 'edit' ? '更新成功' : '登记成功',
-      color: 'success',
+      color: 'success'
     })
     open.value = false
     emit('saved')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

@@ -5,7 +5,7 @@ const props = defineProps({
   title: { type: String, default: '链接标题' },
   description: { type: String, default: '站点描述' },
   url: { type: String, default: '#' },
-  status: { type: Number, default: -1 },
+  status: { type: Number, default: -1 }
 })
 
 const displayDescription = computed(() => {
@@ -17,8 +17,7 @@ const displayHost = computed(() => {
   try {
     const url = new URL(props.url)
     return url.hostname.replace(/^www\./, '')
-  }
-  catch {
+  } catch {
     return props.url
   }
 })

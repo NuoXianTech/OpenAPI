@@ -72,7 +72,7 @@ onMounted(async () => {
 
   try {
     const result = await $fetch<{ alreadyVerified?: boolean }>('/api/auth/verify-email', {
-      query: { token: token.value, user: user.value },
+      query: { token: token.value, user: user.value }
     })
     status.value = 'success'
     if (result?.alreadyVerified) {
@@ -80,19 +80,16 @@ onMounted(async () => {
       message.value = '邮箱已验证，请前往登录'
       await new Promise(resolve => setTimeout(resolve, 3000))
       await navigateTo('/login')
-    }
-    else {
+    } else {
       message.value = '验证成功，已自动登录，正在跳转到用户中心...'
       await fetchMe(true)
       await new Promise(resolve => setTimeout(resolve, 3000))
       await navigateTo('/user')
     }
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     status.value = 'error'
     message.value = getErrorMessage(error, '验证失败')
-  }
-  finally {
+  } finally {
     verifying.value = false
   }
 })

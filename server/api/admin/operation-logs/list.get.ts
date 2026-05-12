@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
     startAt: parseDate(query.startAt),
     endAt: parseDate(query.endAt),
     limit: query.limit ? Number(query.limit) : undefined,
-    offset: query.offset ? Number(query.offset) : undefined,
+    offset: query.offset ? Number(query.offset) : undefined
   })
 
   return logs

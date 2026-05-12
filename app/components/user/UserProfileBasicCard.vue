@@ -20,11 +20,9 @@ async function submit() {
   saving.value = true
   try {
     await props.onSave(displayName.value)
-  }
-  catch (err) {
+  } catch (err) {
     toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
-  }
-  finally {
+  } finally {
     saving.value = false
   }
 }

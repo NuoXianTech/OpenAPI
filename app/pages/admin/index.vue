@@ -2,7 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import type {
   AdminDashboardData,
-  AdminDashboardRecentCall,
+  AdminDashboardRecentCall
 } from '~~/shared/types/admin-dashboard'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -21,25 +21,25 @@ function createEmptyData(): AdminDashboardData {
       successRate: 0,
       todayCalls: 0,
       yesterdayCalls: 0,
-      todayChangeRate: 0,
+      todayChangeRate: 0
     },
     trend: [],
     distribution: [],
     recentCalls: [],
-    generatedAt: new Date(0).toISOString(),
+    generatedAt: new Date(0).toISOString()
   }
 }
 
 const rangeOptions = [
   { label: '近 7 天', value: 7 },
   { label: '近 14 天', value: 14 },
-  { label: '近 30 天', value: 30 },
+  { label: '近 30 天', value: 30 }
 ]
 const selectedRange = ref<number>(7)
 
 const { data, status, refresh } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
   query: computed(() => ({ days: selectedRange.value })),
-  default: () => createEmptyData(),
+  default: () => createEmptyData()
 })
 
 const dashboard = computed(() => data.value || createEmptyData())
@@ -82,7 +82,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
   {
     accessorKey: 'createdAt',
     header: '时间',
-    cell: ({ row }) => h('span', { class: 'whitespace-nowrap text-xs tabular-nums text-muted' }, formatDateTime(row.original.createdAt)),
+    cell: ({ row }) => h('span', { class: 'whitespace-nowrap text-xs tabular-nums text-muted' }, formatDateTime(row.original.createdAt))
   },
   {
     accessorKey: 'method',
@@ -91,16 +91,16 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
       color: methodColor(row.original.method),
       variant: 'subtle',
       size: 'sm',
-      class: 'font-mono',
-    }, () => row.original.method),
+      class: 'font-mono'
+    }, () => row.original.method)
   },
   {
     accessorKey: 'apiName',
     header: 'API',
     cell: ({ row }) => h('div', { class: 'min-w-0' }, [
       h('div', { class: 'truncate text-sm font-medium' }, row.original.apiName),
-      h('div', { class: 'truncate text-xs font-mono text-muted' }, row.original.apiPath),
-    ]),
+      h('div', { class: 'truncate text-xs font-mono text-muted' }, row.original.apiPath)
+    ])
   },
   {
     accessorKey: 'statusCode',
@@ -108,14 +108,14 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
     cell: ({ row }) => h(UBadge, {
       color: statusColor(row.original.statusCode),
       variant: 'subtle',
-      size: 'sm',
-    }, () => String(row.original.statusCode)),
+      size: 'sm'
+    }, () => String(row.original.statusCode))
   },
   {
     accessorKey: 'latencyMs',
     header: '耗时',
-    cell: ({ row }) => h('span', { class: 'whitespace-nowrap tabular-nums text-xs' }, `${row.original.latencyMs} ms`),
-  },
+    cell: ({ row }) => h('span', { class: 'whitespace-nowrap tabular-nums text-xs' }, `${row.original.latencyMs} ms`)
+  }
 ]
 </script>
 

@@ -10,7 +10,7 @@ const schema = requestPasswordResetSchema.omit({ turnstileToken: true })
 type Schema = Omit<RequestPasswordResetInput, 'turnstileToken'>
 
 const state = reactive<Schema>({
-  email: '',
+  email: ''
 })
 const errorMessage = ref('')
 const submitted = ref(false)
@@ -40,16 +40,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       method: 'POST',
       body: {
         email: event.data.email,
-        turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
-      },
+        turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
+      }
     })
     submitted.value = true
-  }
-  catch (error: unknown) {
+  } catch (error: unknown) {
     errorMessage.value = getErrorMessage(error, '提交失败，请稍后重试')
     turnstileWidget.value?.reset()
-  }
-  finally {
+  } finally {
     submitting.value = false
   }
 }

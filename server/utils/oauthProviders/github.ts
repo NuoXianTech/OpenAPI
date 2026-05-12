@@ -29,7 +29,7 @@ export const githubProvider: OauthProviderModule = {
       client_id: config.clientId,
       client_secret: config.clientSecret,
       code,
-      redirect_uri: config.callbackUrl,
+      redirect_uri: config.callbackUrl
     })
 
     const response = await $fetch<{
@@ -39,7 +39,7 @@ export const githubProvider: OauthProviderModule = {
     }>(TOKEN_URL, {
       method: 'POST',
       body,
-      headers: { Accept: 'application/json' },
+      headers: { Accept: 'application/json' }
     })
 
     if (!response?.access_token) {
@@ -47,7 +47,7 @@ export const githubProvider: OauthProviderModule = {
     }
 
     return {
-      accessToken: response.access_token,
+      accessToken: response.access_token
     }
   },
 
@@ -55,7 +55,7 @@ export const githubProvider: OauthProviderModule = {
     const headers = {
       'Authorization': `Bearer ${accessToken}`,
       'Accept': 'application/vnd.github+json',
-      'User-Agent': 'OpenAPI-Auth',
+      'User-Agent': 'OpenAPI-Auth'
     }
 
     const profile = await $fetch<Record<string, unknown>>(USERINFO_URL, { headers })
@@ -69,8 +69,7 @@ export const githubProvider: OauthProviderModule = {
         const emails = await $fetch<Array<{ email: string, primary: boolean, verified: boolean }>>(EMAILS_URL, { headers })
         const primary = emails.find(item => item.primary && item.verified) || emails.find(item => item.verified) || emails[0]
         email = primary?.email || null
-      }
-      catch {
+      } catch {
         email = null
       }
     }
@@ -84,7 +83,7 @@ export const githubProvider: OauthProviderModule = {
       providerUserId,
       email,
       nickname: (typeof profile.name === 'string' && profile.name) || (typeof profile.login === 'string' ? profile.login : null),
-      avatarUrl: typeof profile.avatar_url === 'string' ? profile.avatar_url : null,
+      avatarUrl: typeof profile.avatar_url === 'string' ? profile.avatar_url : null
     }
-  },
+  }
 }

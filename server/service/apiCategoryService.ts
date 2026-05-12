@@ -51,7 +51,7 @@ export const apiCategoryService = {
       color: input.color ?? null,
       parentId: input.parentId ?? null,
       sortOrder: input.sortOrder ?? 0,
-      isEnabled: input.isEnabled ?? true,
+      isEnabled: input.isEnabled ?? true
     }).returning()
 
     return res[0]
@@ -72,5 +72,5 @@ export const apiCategoryService = {
       .where(eq(apiCategories.id, id))
       .returning()
     return res[0] || null
-  },
+  }
 }

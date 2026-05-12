@@ -9,7 +9,7 @@ export function createFriendLinkPayload() {
     title: `Friend ${suffix}`,
     url: `https://${suffix}.example.test`,
     description: `Description ${suffix}`,
-    isActive: true,
+    isActive: true
   }
 }
 
@@ -19,6 +19,6 @@ export function createRegisterPayload() {
   return {
     username: suffix,
     email: `${suffix}@example.test`,
-    password: 'Passw0rd!2026',
+    password: 'Passw0rd!2026'
   }
 }

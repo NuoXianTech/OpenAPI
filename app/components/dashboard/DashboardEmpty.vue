@@ -5,7 +5,7 @@ withDefaults(defineProps<{
   description?: string
 }>(), {
   icon: 'i-mdi-inbox-outline',
-  title: '暂无数据',
+  title: '暂无数据'
 })
 </script>
 

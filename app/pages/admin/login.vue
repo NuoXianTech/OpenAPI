@@ -9,13 +9,13 @@ const { turnstile, settings } = useSiteSettings()
 
 const schema = z.object({
   username: z.string().min(1, '请输入用户名'),
-  password: z.string().min(1, '请输入密码'),
+  password: z.string().min(1, '请输入密码')
 })
 type Schema = z.output<typeof schema>
 
 const state = reactive<Schema>({
   username: '',
-  password: '',
+  password: ''
 })
 const remember = ref(false)
 const loading = ref(false)
@@ -38,21 +38,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       username: event.data.username.trim(),
       password: event.data.password,
       remember: remember.value,
-      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined,
+      turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
     })
     await navigateTo('/admin')
-  }
-  catch (err: unknown) {
+  } catch (err: unknown) {
     if (err && typeof err === 'object') {
       const e = err as { data?: { message?: string }, message?: string }
       errorMsg.value = e.data?.message || e.message || '登录失败'
-    }
-    else {
+    } else {
       errorMsg.value = '登录失败'
     }
     turnstileWidget.value?.reset()
-  }
-  finally {
+  } finally {
     loading.value = false
   }
 }

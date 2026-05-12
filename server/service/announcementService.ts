@@ -28,7 +28,7 @@ export const announcementService = {
         isNull(announcements.deletedAt),
         eq(announcements.isEnabled, true),
         or(isNull(announcements.startAt), lt(announcements.startAt, now)),
-        or(isNull(announcements.endAt), gt(announcements.endAt, now)),
+        or(isNull(announcements.endAt), gt(announcements.endAt, now))
       ))
       .orderBy(desc(announcements.isPinned), asc(announcements.sortOrder), desc(announcements.createdAt))
   },
@@ -50,7 +50,7 @@ export const announcementService = {
       linkUrl: input.linkUrl ?? null,
       sortOrder: input.sortOrder ?? 0,
       createdBy: actorUserId,
-      updatedBy: actorUserId,
+      updatedBy: actorUserId
     }).returning()
     return res[0]
   },
@@ -84,5 +84,5 @@ export const announcementService = {
     await db.update(announcements)
       .set({ sortOrder: sql`${announcements.sortOrder} + ${delta}`, updatedAt: new Date() })
       .where(eq(announcements.id, id))
-  },
+  }
 }
