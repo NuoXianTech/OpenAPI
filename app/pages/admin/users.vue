@@ -7,6 +7,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
+const UCheckbox = resolveComponent('UCheckbox')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const {
@@ -136,11 +137,9 @@ const columns: TableColumn<AdminUserItem>[] = [
   {
     id: 'select',
     header: '选',
-    cell: ({ row }) => h('input', {
-      type: 'checkbox',
-      checked: selectedIds.value.includes(row.original.id),
-      class: 'size-4 cursor-pointer',
-      onChange: (e: Event) => toggleSelect(row.original.id, (e.target as HTMLInputElement).checked),
+    cell: ({ row }) => h(UCheckbox, {
+      modelValue: selectedIds.value.includes(row.original.id),
+      'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true),
     }),
   },
   { accessorKey: 'username', header: '用户名' },
