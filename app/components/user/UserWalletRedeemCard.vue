@@ -58,7 +58,7 @@ async function submit() {
       <UFormField
         label="输入兑换码"
         class="flex-1 min-w-[260px]"
-        hint="输入后点「兑换」即可加入余额，不区分大小写"
+        hint="输入后点「兑换」即可加入积分，不区分大小写"
       >
         <UInput
           v-model="code"

@@ -48,7 +48,7 @@ export const adminCreateUserApiKeySchema = z.object({
 // Admin · User · Credits
 // ============================================================
 
-/** 管理员-用户余额批量调整（grant/revoke/reset） */
+/** 管理员-用户积分批量调整（grant/revoke/reset） */
 export const adminAdjustCreditsSchema = z.object({
   userIds: z.array(z.coerce.number().int().positive()).default([]),
   operation: z.enum(['grant', 'revoke', 'reset'], 'operation 只能是 grant / revoke / reset'),

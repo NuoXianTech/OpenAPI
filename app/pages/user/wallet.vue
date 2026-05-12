@@ -33,8 +33,8 @@ const reasonItems = [
   { label: 'API 扣费', value: 'api_charge' },
   { label: 'API 退款', value: 'api_refund' },
   { label: '兑换码', value: 'redemption_code' },
-  { label: '管理员加余额', value: 'admin_grant' },
-  { label: '管理员扣余额', value: 'admin_revoke' },
+  { label: '管理员加积分', value: 'admin_grant' },
+  { label: '管理员扣积分', value: 'admin_revoke' },
   { label: '管理员重置', value: 'admin_reset' },
   { label: '注册赠送', value: 'signup_bonus' },
 ]
@@ -86,7 +86,7 @@ const columns: TableColumn<TransactionRow>[] = [
   },
   {
     accessorKey: 'balanceAfter',
-    header: '操作后余额',
+    header: '操作后积分',
     cell: ({ row }) => h('span', { class: 'tabular-nums' }, Number(row.original.balanceAfter).toLocaleString()),
   },
   {
@@ -196,7 +196,7 @@ const columns: TableColumn<TransactionRow>[] = [
                 class="size-5 text-muted"
               />
               <h3 class="font-semibold">
-                余额流水
+                积分流水
               </h3>
               <span class="ml-auto text-xs text-muted tabular-nums">
                 共 {{ total.toLocaleString() }} 条

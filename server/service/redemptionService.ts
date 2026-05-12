@@ -8,7 +8,7 @@ import { creditTransactions, redemptionCodes, redemptionRecords, users } from '@
  *   1. 兑换码 code 全局唯一，长度可控；批量生成保证去重。
  *   2. (codeId, userId) 唯一：同一用户对同一码只能兑换一次。
  *   3. usedCount < maxUses：用 UPDATE ... WHERE 条件原子递增防超兑。
- *   4. 兑换发生在事务里：递增 usedCount + 加用户余额 + 写流水 + 写 record。
+ *   4. 兑换发生在事务里：递增 usedCount + 加用户积分 + 写流水 + 写 record。
  */
 
 const DEFAULT_CODE_LENGTH = 16
@@ -274,7 +274,7 @@ export const redemptionService = {
 
       const grantAmount = Math.max(Math.trunc(consumed[0].amount), 0)
 
-      // 加余额
+      // 加积分
       const userUpdated = await tx.update(users)
         .set({ credits: sql`${users.credits} + ${grantAmount}`, updatedAt: new Date() })
         .where(eq(users.id, input.userId))
@@ -313,7 +313,7 @@ export const redemptionService = {
         })
       }
       catch (err) {
-        // 唯一索引冲突 → 让事务回滚（usedCount 与余额都会撤销）
+        // 唯一索引冲突 → 让事务回滚（usedCount 与积分都会撤销）
         throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
       }
 

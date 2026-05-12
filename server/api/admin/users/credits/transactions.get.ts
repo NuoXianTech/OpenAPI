@@ -1,5 +1,5 @@
 /**
- * Admin · 用户余额变动流水查询
+ * Admin · 用户积分变动流水查询
  *
  * Query:
  *   - userId?     : number  指定用户

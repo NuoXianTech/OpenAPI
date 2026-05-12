@@ -15,19 +15,19 @@ const remark = ref<string>('')
 const loading = ref(false)
 
 const operationItems = [
-  { label: '加余额（grant）', value: 'grant' },
-  { label: '减余额（revoke）', value: 'revoke' },
-  { label: '重置余额（reset）', value: 'reset' },
+  { label: '加积分（grant）', value: 'grant' },
+  { label: '减积分（revoke）', value: 'revoke' },
+  { label: '重置积分（reset）', value: 'reset' },
 ]
 
 const operationHelp = computed(() => {
   switch (operation.value) {
     case 'grant':
-      return '将指定金额加到目标用户的余额上。'
+      return '将指定积分加到目标用户的积分上。'
     case 'revoke':
-      return '从目标用户余额中扣除指定金额；不足时扣到 0。'
+      return '从目标用户积分中扣除指定数量；不足时扣到 0。'
     case 'reset':
-      return '将目标用户余额重置为指定金额（默认 0）。'
+      return '将目标用户积分重置为指定数量（默认 0）。'
     default:
       return ''
   }
@@ -49,7 +49,7 @@ watch(open, (val) => {
 
 async function submit() {
   if (operation.value !== 'reset' && amount.value <= 0) {
-    toast.add({ title: '金额必须大于 0', color: 'warning' })
+    toast.add({ title: '积分必须大于 0', color: 'warning' })
     return
   }
   loading.value = true
@@ -63,7 +63,7 @@ async function submit() {
         remark: remark.value.trim() || undefined,
       },
     })
-    toast.add({ title: '余额调整成功', color: 'success' })
+    toast.add({ title: '积分调整成功', color: 'success' })
     open.value = false
     emit('saved')
   }
@@ -82,7 +82,7 @@ async function submit() {
       <div class="p-6 space-y-4">
         <div>
           <h3 class="text-lg font-semibold">
-            余额管理
+            积分管理
           </h3>
           <p class="text-sm text-muted mt-1">
             目标：<span class="font-medium text-default">{{ targetSummary }}</span>
@@ -99,12 +99,12 @@ async function submit() {
           </p>
         </UFormField>
 
-        <UFormField :label="operation === 'reset' ? '目标余额' : '金额'">
+        <UFormField :label="operation === 'reset' ? '目标积分' : '积分'">
           <UInput
             v-model.number="amount"
             type="number"
             min="0"
-            placeholder="请输入金额"
+            placeholder="请输入积分"
           />
         </UFormField>
 

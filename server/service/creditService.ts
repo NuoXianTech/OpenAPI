@@ -2,18 +2,18 @@ import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-
 import { apis, creditTransactions, users } from '@nuxthub/db/schema'
 
 /**
- * 余额服务 · 单源真理
+ * 积分服务 · 单源真理
  *
  * 所有对 users.credits 的写入都必须走本服务，以保证：
- *   1. 余额变动 ↔ credit_transactions 流水 1:1 同时落盘（事务）
- *   2. 余额始终 >= 0（扣款用 row-lock + 余额校验，避免负数）
+ *   1. 积分变动 ↔ credit_transactions 流水 1:1 同时落盘（事务）
+ *   2. 积分始终 >= 0（扣款用 row-lock + 积分校验，避免负数）
  *   3. balanceAfter 快照值正确，便于审计
  */
 
 export type CreditReason
-  = | 'admin_grant' // 管理员加余额
-    | 'admin_revoke' // 管理员扣余额
-    | 'admin_reset' // 管理员重置余额
+  = | 'admin_grant' // 管理员加积分
+    | 'admin_revoke' // 管理员扣积分
+    | 'admin_reset' // 管理员重置积分
     | 'api_charge' // API 调用扣费
     | 'api_refund' // API 调用退款
     | 'signup_bonus' // 注册赠送
@@ -49,8 +49,8 @@ export interface ListTransactionsFilters {
 
 export const creditService = {
   /**
-   * API 调用扣费 · 事务内完成「余额校验 + 扣减 + 流水」。
-   * 余额不足会抛错（应在 gate 阶段已拦截，但兜底）。
+   * API 调用扣费 · 事务内完成「积分校验 + 扣减 + 流水」。
+   * 积分不足会抛错（应在 gate 阶段已拦截，但兜底）。
    */
   async charge(input: ChargeInput) {
     const amount = Math.max(Math.trunc(input.amount), 0)
@@ -121,7 +121,7 @@ export const creditService = {
     })
   },
 
-  /** 管理员加余额：amount > 0 */
+  /** 管理员加积分：amount > 0 */
   async adminGrant(input: AdjustInput) {
     const amount = Math.max(Math.trunc(input.amount), 0)
     if (amount === 0) throw new Error('amount must be > 0')
@@ -151,13 +151,13 @@ export const creditService = {
     })
   },
 
-  /** 管理员扣余额：amount > 0；不足时扣到 0（不抛错，记录实际扣除量） */
+  /** 管理员扣积分：amount > 0；不足时扣到 0（不抛错，记录实际扣除量） */
   async adminRevoke(input: AdjustInput) {
     const amount = Math.max(Math.trunc(input.amount), 0)
     if (amount === 0) throw new Error('amount must be > 0')
 
     return db.transaction(async (tx: typeof db) => {
-      // 先查当前余额，决定实际扣除量
+      // 先查当前积分，决定实际扣除量
       const current = await tx.select({ credits: users.credits }).from(users).where(eq(users.id, input.userId)).limit(1)
       if (!current[0]) return null
       const actualDeduct = Math.min(Number(current[0].credits), amount)
@@ -169,7 +169,7 @@ export const creditService = {
           reason: 'admin_revoke',
           operatorId: input.operatorId ?? null,
           operatorName: input.operatorName ?? null,
-          remark: input.remark ?? '余额不足，未实际扣减',
+          remark: input.remark ?? '积分不足，未实际扣减',
           meta: input.meta ?? null,
         })
         return { userId: input.userId, balanceAfter: Number(current[0].credits) }
@@ -198,7 +198,7 @@ export const creditService = {
     })
   },
 
-  /** 管理员重置余额至指定值（默认 0） */
+  /** 管理员重置积分至指定值（默认 0） */
   async adminReset(input: AdjustInput & { targetValue?: number }) {
     const target = Math.max(Math.trunc(input.targetValue ?? 0), 0)
     return db.transaction(async (tx: typeof db) => {
@@ -379,7 +379,7 @@ export const creditService = {
   },
 
   /**
-   * 用户积分汇总：当前余额 + 累计收入/支出 + 按 reason 分桶。
+   * 用户积分汇总：当前积分 + 累计收入/支出 + 按 reason 分桶。
    * 用于积分页顶部的统计卡片。
    */
   async getUserWalletSummary(userId: number) {

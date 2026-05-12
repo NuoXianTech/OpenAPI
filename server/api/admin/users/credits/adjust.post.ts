@@ -1,5 +1,5 @@
 /**
- * Admin · 余额调整 API
+ * Admin · 积分调整 API
  *
  * Body:
  *   - userIds: number[]                       目标用户。空数组 = 全部未删除用户

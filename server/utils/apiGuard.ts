@@ -10,12 +10,12 @@
  *   3. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
  *   4. rateLimit（多窗口，任意一个超限即拒）
  *   5. dailyQuota（API 级）
- *   6. credits 余额校验（costCredits>0 时，校验 apiKey 持有者余额）
+ *   6. credits 积分校验（costCredits>0 时，校验 apiKey 持有者积分）
  *
  * 故障降级：
  *   - 鉴权类失败：fail-close（401/403）
  *   - 限流/配额 driver 抛错：fail-open，但 console.error 记日志
- *   - 余额校验抛错：fail-close（402），避免漏扣
+ *   - 积分校验抛错：fail-close（402），避免漏扣
  */
 
 import type { H3Event } from 'h3'
@@ -223,7 +223,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     }
   }
 
-  // [6] 余额校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
+  // [6] 积分校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
   if (api.costCredits > 0 && apiKey) {
     try {
       const userRow = await db.select({ credits: users.credits })
@@ -240,7 +240,7 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
         apiId: api.id,
         error: (err as Error).message,
       })
-      // 余额校验异常时 fail-close 更安全：避免漏扣或误调用
+      // 积分校验异常时 fail-close 更安全：避免漏扣或误调用
       return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
     }
   }

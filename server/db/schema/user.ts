@@ -21,7 +21,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).unique().notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
-  credits: bigint('credits', { mode: 'number' }).notNull().default(0), // API 配额余额
+  credits: bigint('credits', { mode: 'number' }).notNull().default(0), // API 配额积分
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   bannedReason: varchar('banned_reason', { length: 500 }),
@@ -38,16 +38,16 @@ export const users = pgTable('users', {
 ])
 
 // ------------------------------------------------------------------
-// Credit Transactions（余额变动流水）
+// Credit Transactions（积分变动流水）
 //
-// 每一次余额变动都落一条流水：
+// 每一次积分变动都落一条流水：
 //   - admin 调整：reason='admin_grant' / 'admin_revoke' / 'admin_reset'
 //   - API 调用扣费：reason='api_charge'，apiCallId 关联具体调用
 //   - 调用失败退款：reason='api_refund'
 //   - 注册赠送：reason='signup_bonus'
 //   - 兑换码兑换：reason='redemption_code'，meta.codeId 关联兑换码
 //
-// amount 正负表示进出（正=加余额，负=扣余额）。
+// amount 正负表示进出（正=加积分，负=扣积分）。
 // balanceAfter 为快照值，便于审计与对账。
 // ------------------------------------------------------------------
 export const creditTransactions = pgTable('credit_transactions', {
@@ -82,7 +82,7 @@ export const creditTransactions = pgTable('credit_transactions', {
 export const redemptionCodes = pgTable('redemption_codes', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 64 }).notNull().unique(),
-  amount: integer('amount').notNull(), // 兑换得到的余额，> 0
+  amount: integer('amount').notNull(), // 兑换得到的积分，> 0
   batchId: varchar('batch_id', { length: 64 }), // 同一批次共享，便于管理员后台分组
   note: varchar('note', { length: 500 }), // 批次备注（活动名等）
   maxUses: integer('max_uses').notNull().default(1), // 总可兑换次数（不同用户共享）

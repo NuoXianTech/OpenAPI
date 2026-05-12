@@ -8,7 +8,7 @@ export default defineEventHandler(async (event: H3Event) => {
     return null
   }
 
-  // 普通用户附带余额，admin 不需要。getBalance 失败时降级为 0，避免阻塞登录态
+  // 普通用户附带积分，admin 不需要。getBalance 失败时降级为 0，避免阻塞登录态
   let credits = 0
   if (user.kind === 'user' && user.id) {
     try {

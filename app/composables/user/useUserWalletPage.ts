@@ -125,7 +125,7 @@ export function useUserWalletPage() {
     })
     toast.add({
       title: `兑换成功 +${res.amount.toLocaleString()}`,
-      description: `当前余额 ${res.balanceAfter.toLocaleString()}`,
+      description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
       color: 'success',
     })
     await Promise.all([fetchSummary(), fetchTransactions(), fetchRedeemRecords()])

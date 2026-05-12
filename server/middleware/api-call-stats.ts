@@ -243,7 +243,7 @@ export default defineEventHandler((event: H3Event) => {
             }
           }
           catch (err) {
-            // 扣费失败不应回滚日志，仅记录错误（极少：余额已被 gate 校验过）
+            // 扣费失败不应回滚日志，仅记录错误（极少：积分已被 gate 校验过）
             console.error('failed to charge credits after api call', {
               callId,
               userId: billing.apiKeyUserId,

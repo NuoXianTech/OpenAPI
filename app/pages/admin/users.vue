@@ -114,7 +114,7 @@ function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
     icon: 'i-mdi-key-variant',
     onSelect: () => openKeys(row),
   }, {
-    label: '余额管理',
+    label: '积分管理',
     icon: 'i-mdi-cash-multiple',
     onSelect: () => openCreditForOne(row),
   }, {
@@ -148,7 +148,7 @@ const columns: TableColumn<AdminUserItem>[] = [
   { accessorKey: 'displayName', header: '显示名' },
   {
     accessorKey: 'credits',
-    header: '余额',
+    header: '积分',
     cell: ({ row }) => h(UBadge, {
       color: (row.original.credits ?? 0) > 0 ? 'success' : 'neutral',
       variant: 'subtle',
@@ -238,7 +238,7 @@ const columns: TableColumn<AdminUserItem>[] = [
             :disabled="selectedIds.length === 0"
             @click="openCreditForSelection"
           >
-            批量调整余额
+            批量调整积分
           </UButton>
           <UButton
             size="sm"
@@ -247,7 +247,7 @@ const columns: TableColumn<AdminUserItem>[] = [
             icon="i-mdi-cash-100"
             @click="openCreditForAll"
           >
-            全员余额操作
+            全员积分操作
           </UButton>
         </div>
       </UDashboardToolbar>

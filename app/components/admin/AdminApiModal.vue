@@ -515,7 +515,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               </UBadge>
             </div>
             <UFormField
-              label="单次调用消耗余额"
+              label="单次调用消耗积分"
               name="costCredits"
             >
               <UInput

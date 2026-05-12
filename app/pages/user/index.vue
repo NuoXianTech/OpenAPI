@@ -28,7 +28,7 @@ const recentNotifs = computed(() => notifData.value || [])
 const credits = computed(() => Number(user.value?.credits ?? 0))
 
 const overviewCards = computed(() => [
-  { label: '余额', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success', to: '/user/wallet' },
+  { label: '积分', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success', to: '/user/wallet' },
   { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line', color: 'text-primary', to: '/user/calls' },
   { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-info', to: '/user/calls' },
   { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-warning', to: '/user/apikeys' },

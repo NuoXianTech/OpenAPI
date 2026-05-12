@@ -46,7 +46,7 @@ const statusItems = [
 const batchItems = computed(() => [
   { label: '全部批次', value: 'all' },
   ...batches.value.map(b => ({
-    label: `${b.batchId} (${b.usedTotal}/${b.maxUsesTotal} 用 · ${b.amount} 余额)`,
+    label: `${b.batchId} (${b.usedTotal}/${b.maxUsesTotal} 用 · ${b.amount} 积分)`,
     value: b.batchId,
   })),
 ])

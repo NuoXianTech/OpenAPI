@@ -175,7 +175,7 @@ const columns: TableColumn<LogRow>[] = [
   },
   {
     accessorKey: 'creditsCost',
-    header: '扣除余额',
+    header: '扣除积分',
     cell: ({ row }) => row.original.creditsCost > 0
       ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
       : h('span', { class: 'text-xs text-muted' }, '免费'),
