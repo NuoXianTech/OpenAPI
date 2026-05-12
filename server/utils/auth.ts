@@ -179,6 +179,7 @@ export async function getAuthUser(event: H3Event) {
   return {
     id: user.id,
     username: user.username,
+    displayName: user.displayName,
     email: user.email,
     avatarUrl: getCravatarUrl(user.email),
     kind: 'user' as const,

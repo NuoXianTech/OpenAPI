@@ -65,7 +65,10 @@ async function submit() {
             />
           </UFormField>
           <UFormField label="显示名">
-            <UInput v-model="form.displayName" />
+            <UInput
+              v-model="form.displayName"
+              :maxlength="32"
+            />
           </UFormField>
           <USwitch
             v-model="form.isActive"

@@ -29,7 +29,7 @@ export const adminUpdateUserSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
   username: z.string().trim().optional(),
   email: z.string().trim().toLowerCase().optional(),
-  displayName: z.string().trim().optional(),
+  displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
   isActive: z.boolean().optional(),
   isBanned: z.boolean().optional(),
 })

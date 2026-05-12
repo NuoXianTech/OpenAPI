@@ -78,7 +78,7 @@ async function submit() {
       <UFormField label="显示名">
         <UInput
           v-model="displayName"
-          :maxlength="100"
+          :maxlength="32"
           placeholder="对外展示的名字"
         />
       </UFormField>

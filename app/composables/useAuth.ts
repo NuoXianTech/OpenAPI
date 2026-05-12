@@ -3,6 +3,7 @@ import type { LoginInput, RegisterInput } from '#shared/schemas/auth'
 interface AuthUser {
   id: number
   username: string
+  displayName?: string | null
   email: string
   avatarUrl: string
   kind: 'user' | 'admin'

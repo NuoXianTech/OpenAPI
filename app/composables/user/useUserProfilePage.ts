@@ -37,6 +37,7 @@ function errMsg(err: unknown, fallback: string) {
 
 export function useUserProfilePage() {
   const toast = useToast()
+  const { fetchMe } = useAuth()
 
   const profile = ref<ProfileData | null>(null)
   const profileLoading = ref(false)
@@ -64,7 +65,7 @@ export function useUserProfilePage() {
       body: { displayName: displayName.trim() },
     })
     toast.add({ title: '资料已更新', color: 'success' })
-    await loadProfile()
+    await Promise.all([loadProfile(), fetchMe(true)])
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {

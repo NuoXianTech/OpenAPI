@@ -5,7 +5,7 @@ const { user, logout } = useAuth()
 const router = useRouter()
 const toast = useToast()
 
-const displayName = computed(() => user.value?.username || 'User')
+const displayName = computed(() => user.value?.displayName || user.value?.username || 'User')
 
 const items = computed<DropdownMenuItem[][]>(() => [[
   {

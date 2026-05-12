@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 /** 用户更新自己的非敏感资料：displayName */
 export const userUpdateProfileSchema = z.object({
-  displayName: z.string().trim().max(100, '显示名最多 100 字'),
+  displayName: z.string().trim().max(32, '显示名最多 32 字'),
 })
 
 /** 已登录用户改密码 */
