@@ -56,162 +56,160 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UApp>
-    <CommonAppAuthShell>
-      <div class="auth-brand">
-        <div class="auth-brand__logo">
+  <CommonAppAuthShell>
+    <div class="auth-brand">
+      <div class="auth-brand__logo">
+        <Icon
+          name="i-mdi-lock-reset"
+          size="26"
+        />
+      </div>
+      <div>
+        <h1 class="auth-brand__title">
+          找回密码
+        </h1>
+        <p class="auth-brand__subtitle">
+          输入注册时使用的邮箱，我们会发送重置链接到该邮箱
+        </p>
+      </div>
+    </div>
+
+    <UCard
+      variant="outline"
+      class="auth-card"
+      :ui="{ body: 'p-6 sm:p-7' }"
+    >
+      <div
+        v-if="!passwordResetEnabled"
+        class="space-y-4"
+      >
+        <div class="auth-message auth-message--error">
           <Icon
-            name="i-mdi-lock-reset"
-            size="26"
+            name="i-mdi-alert-circle-outline"
+            size="16"
+            class="auth-message__icon"
+          />
+          <span>该功能已被管理员关闭，请联系管理员协助处理。</span>
+        </div>
+        <UButton
+          to="/login"
+          variant="outline"
+          color="neutral"
+          block
+          size="lg"
+          icon="i-mdi-arrow-left"
+        >
+          返回登录
+        </UButton>
+      </div>
+
+      <div
+        v-else-if="submitted"
+        class="space-y-4 text-center"
+      >
+        <div class="auth-success-illustration">
+          <Icon
+            name="i-mdi-email-fast-outline"
+            size="44"
           />
         </div>
         <div>
-          <h1 class="auth-brand__title">
-            找回密码
-          </h1>
-          <p class="auth-brand__subtitle">
-            输入注册时使用的邮箱，我们会发送重置链接到该邮箱
+          <h3 class="text-base font-semibold text-highlighted">
+            邮件已发送
+          </h3>
+          <p class="text-sm text-muted mt-1.5 leading-relaxed">
+            如果 <span class="font-medium text-default">{{ state.email }}</span> 已注册，<br>
+            我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
           </p>
         </div>
+        <UButton
+          to="/login"
+          block
+          size="lg"
+          icon="i-mdi-arrow-left"
+        >
+          返回登录
+        </UButton>
       </div>
 
-      <UCard
-        variant="outline"
-        class="auth-card"
-        :ui="{ body: 'p-6 sm:p-7' }"
+      <UForm
+        v-else
+        :schema="schema"
+        :state="state"
+        class="space-y-4"
+        action="javascript:void(0)"
+        @submit="onSubmit"
       >
-        <div
-          v-if="!passwordResetEnabled"
-          class="space-y-4"
+        <UFormField
+          label="邮箱"
+          name="email"
+          required
         >
-          <div class="auth-message auth-message--error">
+          <UInput
+            v-model="state.email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            icon="i-mdi-email-outline"
+            size="lg"
+            class="w-full"
+            autofocus
+          />
+        </UFormField>
+
+        <Transition name="state-fade">
+          <div
+            v-if="errorMessage"
+            class="auth-message auth-message--error"
+          >
             <Icon
               name="i-mdi-alert-circle-outline"
               size="16"
               class="auth-message__icon"
             />
-            <span>该功能已被管理员关闭，请联系管理员协助处理。</span>
+            <span>{{ errorMessage }}</span>
           </div>
-          <UButton
-            to="/login"
-            variant="outline"
-            color="neutral"
-            block
-            size="lg"
-            icon="i-mdi-arrow-left"
-          >
-            返回登录
-          </UButton>
-        </div>
+        </Transition>
 
-        <div
-          v-else-if="submitted"
-          class="space-y-4 text-center"
-        >
-          <div class="auth-success-illustration">
-            <Icon
-              name="i-mdi-email-fast-outline"
-              size="44"
-            />
-          </div>
-          <div>
-            <h3 class="text-base font-semibold text-highlighted">
-              邮件已发送
-            </h3>
-            <p class="text-sm text-muted mt-1.5 leading-relaxed">
-              如果 <span class="font-medium text-default">{{ state.email }}</span> 已注册，<br>
-              我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
-            </p>
-          </div>
-          <UButton
-            to="/login"
-            block
-            size="lg"
-            icon="i-mdi-arrow-left"
-          >
-            返回登录
-          </UButton>
-        </div>
+        <CommonTurnstileWidget
+          v-if="turnstileRequired"
+          ref="turnstileWidget"
+          v-model:token="turnstileToken"
+          :site-key="turnstile.siteKey"
+        />
 
-        <UForm
-          v-else
-          :schema="schema"
-          :state="state"
-          class="space-y-4"
-          action="javascript:void(0)"
-          @submit="onSubmit"
-        >
-          <UFormField
-            label="邮箱"
-            name="email"
-            required
-          >
-            <UInput
-              v-model="state.email"
-              type="email"
-              autocomplete="email"
-              placeholder="you@example.com"
-              icon="i-mdi-email-outline"
-              size="lg"
-              class="w-full"
-              autofocus
-            />
-          </UFormField>
-
-          <Transition name="state-fade">
-            <div
-              v-if="errorMessage"
-              class="auth-message auth-message--error"
-            >
-              <Icon
-                name="i-mdi-alert-circle-outline"
-                size="16"
-                class="auth-message__icon"
-              />
-              <span>{{ errorMessage }}</span>
-            </div>
-          </Transition>
-
-          <CommonTurnstileWidget
-            v-if="turnstileRequired"
-            ref="turnstileWidget"
-            v-model:token="turnstileToken"
-            :site-key="turnstile.siteKey"
-          />
-
-          <UButton
-            type="submit"
-            block
-            size="lg"
-            :loading="submitting"
-            :disabled="turnstileRequired && !turnstileToken"
-          >
-            发送重置链接
-          </UButton>
-        </UForm>
-      </UCard>
-
-      <div class="auth-footer-links">
         <UButton
-          variant="link"
-          size="sm"
-          to="/login"
-          class="px-0"
+          type="submit"
+          block
+          size="lg"
+          :loading="submitting"
+          :disabled="turnstileRequired && !turnstileToken"
         >
-          返回登录
+          发送重置链接
         </UButton>
-        <span class="text-dimmed">·</span>
-        <UButton
-          variant="link"
-          size="sm"
-          to="/"
-          class="px-0"
-        >
-          返回首页
-        </UButton>
-      </div>
-    </CommonAppAuthShell>
-  </UApp>
+      </UForm>
+    </UCard>
+
+    <div class="auth-footer-links">
+      <UButton
+        variant="link"
+        size="sm"
+        to="/login"
+        class="px-0"
+      >
+        返回登录
+      </UButton>
+      <span class="text-dimmed">·</span>
+      <UButton
+        variant="link"
+        size="sm"
+        to="/"
+        class="px-0"
+      >
+        返回首页
+      </UButton>
+    </div>
+  </CommonAppAuthShell>
 </template>
 
 <style scoped>

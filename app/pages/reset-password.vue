@@ -87,202 +87,200 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UApp>
-    <CommonAppAuthShell>
-      <div class="auth-brand">
-        <div class="auth-brand__logo">
+  <CommonAppAuthShell>
+    <div class="auth-brand">
+      <div class="auth-brand__logo">
+        <Icon
+          name="i-mdi-lock-reset"
+          size="26"
+        />
+      </div>
+      <div>
+        <h1 class="auth-brand__title">
+          重置密码
+        </h1>
+        <p class="auth-brand__subtitle">
+          请为账号设置新的登录密码，密码至少 8 位
+        </p>
+      </div>
+    </div>
+
+    <UCard
+      variant="outline"
+      class="auth-card"
+      :ui="{ body: 'p-6 sm:p-7' }"
+    >
+      <div
+        v-if="!linkValid"
+        class="space-y-4"
+      >
+        <div class="auth-message auth-message--error">
           <Icon
-            name="i-mdi-lock-reset"
-            size="26"
+            name="i-mdi-link-variant-off"
+            size="16"
+            class="auth-message__icon"
+          />
+          <span>重置链接无效或已损坏，请重新申请。</span>
+        </div>
+        <UButton
+          to="/forgot-password"
+          block
+          size="lg"
+          icon="i-mdi-refresh"
+        >
+          重新申请
+        </UButton>
+      </div>
+
+      <div
+        v-else-if="success"
+        class="space-y-4 text-center"
+      >
+        <div class="auth-success-illustration">
+          <Icon
+            name="i-mdi-check"
+            size="44"
           />
         </div>
         <div>
-          <h1 class="auth-brand__title">
-            重置密码
-          </h1>
-          <p class="auth-brand__subtitle">
-            请为账号设置新的登录密码，密码至少 8 位
+          <h3 class="text-base font-semibold text-highlighted">
+            重置成功
+          </h3>
+          <p class="text-sm text-muted mt-1.5">
+            密码已更新，正在跳转到登录页...
           </p>
         </div>
       </div>
 
-      <UCard
-        variant="outline"
-        class="auth-card"
-        :ui="{ body: 'p-6 sm:p-7' }"
+      <UForm
+        v-else
+        :schema="schema"
+        :state="state"
+        class="space-y-4"
+        action="javascript:void(0)"
+        @submit="onSubmit"
       >
-        <div
-          v-if="!linkValid"
-          class="space-y-4"
+        <UFormField
+          label="新密码"
+          name="password"
+          required
         >
-          <div class="auth-message auth-message--error">
+          <UInput
+            v-model="state.password"
+            :type="passwordVisible ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="设置新密码（至少 8 位）"
+            icon="i-mdi-lock-outline"
+            size="lg"
+            class="w-full"
+            autofocus
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                square
+                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                @click="passwordVisible = !passwordVisible"
+              />
+            </template>
+          </UInput>
+          <Transition name="state-fade">
+            <div
+              v-if="state.password"
+              class="mt-2"
+            >
+              <UProgress
+                :model-value="passwordStrength.value"
+                :color="passwordStrength.color"
+                size="xs"
+              />
+              <p class="mt-1 text-xs text-muted">
+                密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+              </p>
+            </div>
+          </Transition>
+        </UFormField>
+
+        <UFormField
+          label="确认新密码"
+          name="confirm"
+          required
+        >
+          <UInput
+            v-model="state.confirm"
+            :type="confirmVisible ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="再次输入新密码"
+            icon="i-mdi-lock-check-outline"
+            size="lg"
+            class="w-full"
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                square
+                :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
+                @click="confirmVisible = !confirmVisible"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <Transition name="state-fade">
+          <div
+            v-if="errorMessage"
+            class="auth-message auth-message--error"
+          >
             <Icon
-              name="i-mdi-link-variant-off"
+              name="i-mdi-alert-circle-outline"
               size="16"
               class="auth-message__icon"
             />
-            <span>重置链接无效或已损坏，请重新申请。</span>
+            <span>{{ errorMessage }}</span>
           </div>
-          <UButton
-            to="/forgot-password"
-            block
-            size="lg"
-            icon="i-mdi-refresh"
-          >
-            重新申请
-          </UButton>
-        </div>
+        </Transition>
 
-        <div
-          v-else-if="success"
-          class="space-y-4 text-center"
-        >
-          <div class="auth-success-illustration">
-            <Icon
-              name="i-mdi-check"
-              size="44"
-            />
-          </div>
-          <div>
-            <h3 class="text-base font-semibold text-highlighted">
-              重置成功
-            </h3>
-            <p class="text-sm text-muted mt-1.5">
-              密码已更新，正在跳转到登录页...
-            </p>
-          </div>
-        </div>
-
-        <UForm
-          v-else
-          :schema="schema"
-          :state="state"
-          class="space-y-4"
-          action="javascript:void(0)"
-          @submit="onSubmit"
-        >
-          <UFormField
-            label="新密码"
-            name="password"
-            required
-          >
-            <UInput
-              v-model="state.password"
-              :type="passwordVisible ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="设置新密码（至少 8 位）"
-              icon="i-mdi-lock-outline"
-              size="lg"
-              class="w-full"
-              autofocus
-              :ui="{ trailing: 'pe-1' }"
-            >
-              <template #trailing>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                  @click="passwordVisible = !passwordVisible"
-                />
-              </template>
-            </UInput>
-            <Transition name="state-fade">
-              <div
-                v-if="state.password"
-                class="mt-2"
-              >
-                <UProgress
-                  :model-value="passwordStrength.value"
-                  :color="passwordStrength.color"
-                  size="xs"
-                />
-                <p class="mt-1 text-xs text-muted">
-                  密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
-                </p>
-              </div>
-            </Transition>
-          </UFormField>
-
-          <UFormField
-            label="确认新密码"
-            name="confirm"
-            required
-          >
-            <UInput
-              v-model="state.confirm"
-              :type="confirmVisible ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="再次输入新密码"
-              icon="i-mdi-lock-check-outline"
-              size="lg"
-              class="w-full"
-              :ui="{ trailing: 'pe-1' }"
-            >
-              <template #trailing>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
-                  @click="confirmVisible = !confirmVisible"
-                />
-              </template>
-            </UInput>
-          </UFormField>
-
-          <Transition name="state-fade">
-            <div
-              v-if="errorMessage"
-              class="auth-message auth-message--error"
-            >
-              <Icon
-                name="i-mdi-alert-circle-outline"
-                size="16"
-                class="auth-message__icon"
-              />
-              <span>{{ errorMessage }}</span>
-            </div>
-          </Transition>
-
-          <UButton
-            type="submit"
-            block
-            size="lg"
-            :loading="submitting"
-          >
-            重置密码
-          </UButton>
-        </UForm>
-      </UCard>
-
-      <div class="auth-footer-links">
         <UButton
-          variant="link"
-          size="sm"
-          to="/login"
-          class="px-0"
+          type="submit"
+          block
+          size="lg"
+          :loading="submitting"
         >
-          返回登录
+          重置密码
         </UButton>
-        <span class="text-dimmed">·</span>
-        <UButton
-          variant="link"
-          size="sm"
-          to="/"
-          class="px-0"
-        >
-          返回首页
-        </UButton>
-      </div>
-    </CommonAppAuthShell>
-  </UApp>
+      </UForm>
+    </UCard>
+
+    <div class="auth-footer-links">
+      <UButton
+        variant="link"
+        size="sm"
+        to="/login"
+        class="px-0"
+      >
+        返回登录
+      </UButton>
+      <span class="text-dimmed">·</span>
+      <UButton
+        variant="link"
+        size="sm"
+        to="/"
+        class="px-0"
+      >
+        返回首页
+      </UButton>
+    </div>
+  </CommonAppAuthShell>
 </template>
 
 <style scoped>

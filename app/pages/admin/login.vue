@@ -59,134 +59,132 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UApp>
-    <CommonAppAuthShell>
-      <div class="auth-brand">
-        <div class="auth-brand__logo">
-          <Icon
-            name="i-mdi-shield-crown-outline"
-            size="26"
-          />
-        </div>
-        <div>
-          <h1 class="auth-brand__title">
-            管理员登录
-          </h1>
-          <p class="auth-brand__subtitle">
-            {{ settings.siteName }} · 控制台访问入口
-          </p>
-        </div>
+  <CommonAppAuthShell>
+    <div class="auth-brand">
+      <div class="auth-brand__logo">
+        <Icon
+          name="i-mdi-shield-crown-outline"
+          size="26"
+        />
       </div>
+      <div>
+        <h1 class="auth-brand__title">
+          管理员登录
+        </h1>
+        <p class="auth-brand__subtitle">
+          {{ settings.siteName }} · 控制台访问入口
+        </p>
+      </div>
+    </div>
 
-      <UCard
-        variant="outline"
-        class="auth-card"
-        :ui="{ body: 'p-6 sm:p-7' }"
+    <UCard
+      variant="outline"
+      class="auth-card"
+      :ui="{ body: 'p-6 sm:p-7' }"
+    >
+      <UForm
+        :schema="schema"
+        :state="state"
+        class="space-y-4"
+        action="javascript:void(0)"
+        @submit="onSubmit"
       >
-        <UForm
-          :schema="schema"
-          :state="state"
-          class="space-y-4"
-          action="javascript:void(0)"
-          @submit="onSubmit"
+        <UFormField
+          label="用户名"
+          name="username"
+          required
         >
-          <UFormField
-            label="用户名"
-            name="username"
-            required
-          >
-            <UInput
-              v-model="state.username"
-              type="text"
-              autocomplete="username"
-              placeholder="admin"
-              icon="i-mdi-account-key-outline"
-              size="lg"
-              class="w-full"
-              autofocus
-            />
-          </UFormField>
-
-          <UFormField
-            label="密码"
-            name="password"
-            required
-          >
-            <UInput
-              v-model="state.password"
-              :type="passwordVisible ? 'text' : 'password'"
-              autocomplete="current-password"
-              placeholder="请输入管理员密码"
-              icon="i-mdi-lock-outline"
-              size="lg"
-              class="w-full"
-              :ui="{ trailing: 'pe-1' }"
-            >
-              <template #trailing>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                  @click="passwordVisible = !passwordVisible"
-                />
-              </template>
-            </UInput>
-          </UFormField>
-
-          <div class="-mt-1">
-            <UCheckbox
-              v-model="remember"
-              label="记住我"
-            />
-          </div>
-
-          <Transition name="state-fade">
-            <div
-              v-if="errorMsg"
-              class="auth-message auth-message--error"
-            >
-              <Icon
-                name="i-mdi-alert-circle-outline"
-                size="16"
-                class="auth-message__icon"
-              />
-              <span>{{ errorMsg }}</span>
-            </div>
-          </Transition>
-
-          <CommonTurnstileWidget
-            v-if="turnstileRequired"
-            ref="turnstileWidget"
-            v-model:token="turnstileToken"
-            :site-key="turnstile.siteKey"
-          />
-
-          <UButton
-            type="submit"
-            block
+          <UInput
+            v-model="state.username"
+            type="text"
+            autocomplete="username"
+            placeholder="admin"
+            icon="i-mdi-account-key-outline"
             size="lg"
-            :loading="loading"
-            :disabled="turnstileRequired && !turnstileToken"
-          >
-            进入管理后台
-          </UButton>
-        </UForm>
-      </UCard>
+            class="w-full"
+            autofocus
+          />
+        </UFormField>
 
-      <div class="auth-footer-links">
-        <UButton
-          variant="link"
-          size="sm"
-          to="/"
-          class="px-0"
+        <UFormField
+          label="密码"
+          name="password"
+          required
         >
-          返回前台
+          <UInput
+            v-model="state.password"
+            :type="passwordVisible ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="请输入管理员密码"
+            icon="i-mdi-lock-outline"
+            size="lg"
+            class="w-full"
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                square
+                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                @click="passwordVisible = !passwordVisible"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <div class="-mt-1">
+          <UCheckbox
+            v-model="remember"
+            label="记住我"
+          />
+        </div>
+
+        <Transition name="state-fade">
+          <div
+            v-if="errorMsg"
+            class="auth-message auth-message--error"
+          >
+            <Icon
+              name="i-mdi-alert-circle-outline"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>{{ errorMsg }}</span>
+          </div>
+        </Transition>
+
+        <CommonTurnstileWidget
+          v-if="turnstileRequired"
+          ref="turnstileWidget"
+          v-model:token="turnstileToken"
+          :site-key="turnstile.siteKey"
+        />
+
+        <UButton
+          type="submit"
+          block
+          size="lg"
+          :loading="loading"
+          :disabled="turnstileRequired && !turnstileToken"
+        >
+          进入管理后台
         </UButton>
-      </div>
-    </CommonAppAuthShell>
-  </UApp>
+      </UForm>
+    </UCard>
+
+    <div class="auth-footer-links">
+      <UButton
+        variant="link"
+        size="sm"
+        to="/"
+        class="px-0"
+      >
+        返回前台
+      </UButton>
+    </div>
+  </CommonAppAuthShell>
 </template>

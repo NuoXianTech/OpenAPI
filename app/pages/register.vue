@@ -90,213 +90,211 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UApp>
-    <CommonAppAuthShell>
-      <div class="auth-brand">
-        <div class="auth-brand__logo">
-          <Icon
-            name="i-mdi-account-plus-outline"
-            size="26"
-          />
-        </div>
-        <div>
-          <h1 class="auth-brand__title">
-            创建 {{ settings.siteName }} 账号
-          </h1>
-          <p class="auth-brand__subtitle">
-            注册完成后将通过邮箱进行验证，验证通过即可使用
-          </p>
-        </div>
+  <CommonAppAuthShell>
+    <div class="auth-brand">
+      <div class="auth-brand__logo">
+        <Icon
+          name="i-mdi-account-plus-outline"
+          size="26"
+        />
       </div>
+      <div>
+        <h1 class="auth-brand__title">
+          创建 {{ settings.siteName }} 账号
+        </h1>
+        <p class="auth-brand__subtitle">
+          注册完成后将通过邮箱进行验证，验证通过即可使用
+        </p>
+      </div>
+    </div>
 
-      <UCard
-        variant="outline"
-        class="auth-card"
-        :ui="{ body: 'p-6 sm:p-7' }"
+    <UCard
+      variant="outline"
+      class="auth-card"
+      :ui="{ body: 'p-6 sm:p-7' }"
+    >
+      <UForm
+        :schema="schema"
+        :state="state"
+        class="space-y-4"
+        action="javascript:void(0)"
+        @submit="onSubmit"
       >
-        <UForm
-          :schema="schema"
-          :state="state"
-          class="space-y-4"
-          action="javascript:void(0)"
-          @submit="onSubmit"
+        <UFormField
+          label="用户名"
+          name="username"
+          help="3-32 位，可包含字母、数字、下划线和短横线"
+          required
         >
-          <UFormField
-            label="用户名"
-            name="username"
-            help="3-32 位，可包含字母、数字、下划线和短横线"
-            required
-          >
-            <UInput
-              v-model="state.username"
-              type="text"
-              autocomplete="username"
-              placeholder="openapi_user"
-              icon="i-mdi-account-outline"
-              size="lg"
-              class="w-full"
-              autofocus
-            />
-          </UFormField>
-
-          <UFormField
-            label="邮箱"
-            name="email"
-            required
-          >
-            <UInput
-              v-model="state.email"
-              type="email"
-              autocomplete="email"
-              placeholder="you@example.com"
-              icon="i-mdi-email-outline"
-              size="lg"
-              class="w-full"
-            />
-          </UFormField>
-
-          <UFormField
-            label="密码"
-            name="password"
-            required
-          >
-            <UInput
-              v-model="state.password"
-              :type="passwordVisible ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="设置不少于 8 位的登录密码"
-              icon="i-mdi-lock-outline"
-              size="lg"
-              class="w-full"
-              :ui="{ trailing: 'pe-1' }"
-            >
-              <template #trailing>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                  @click="passwordVisible = !passwordVisible"
-                />
-              </template>
-            </UInput>
-            <Transition name="state-fade">
-              <div
-                v-if="state.password"
-                class="mt-2"
-              >
-                <UProgress
-                  :model-value="passwordStrength.value"
-                  :color="passwordStrength.color"
-                  size="xs"
-                />
-                <p class="mt-1 text-xs text-muted">
-                  密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
-                </p>
-              </div>
-            </Transition>
-          </UFormField>
-
-          <UFormField
-            label="确认密码"
-            name="confirm"
-            required
-          >
-            <UInput
-              v-model="state.confirm"
-              :type="confirmVisible ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="再次输入密码"
-              icon="i-mdi-lock-check-outline"
-              size="lg"
-              class="w-full"
-              :ui="{ trailing: 'pe-1' }"
-            >
-              <template #trailing>
-                <UButton
-                  type="button"
-                  color="neutral"
-                  variant="ghost"
-                  size="xs"
-                  square
-                  :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
-                  @click="confirmVisible = !confirmVisible"
-                />
-              </template>
-            </UInput>
-          </UFormField>
-
-          <Transition name="state-fade">
-            <div
-              v-if="errorMessage"
-              class="auth-message auth-message--error"
-            >
-              <Icon
-                name="i-mdi-alert-circle-outline"
-                size="16"
-                class="auth-message__icon"
-              />
-              <span>{{ errorMessage }}</span>
-            </div>
-          </Transition>
-
-          <Transition name="state-fade">
-            <div
-              v-if="successMessage"
-              class="auth-message auth-message--success"
-            >
-              <Icon
-                name="i-mdi-check-circle-outline"
-                size="16"
-                class="auth-message__icon"
-              />
-              <span>{{ successMessage }}</span>
-            </div>
-          </Transition>
-
-          <CommonTurnstileWidget
-            v-if="turnstileRequired"
-            ref="turnstileWidget"
-            v-model:token="turnstileToken"
-            :site-key="turnstile.siteKey"
-          />
-
-          <UButton
-            type="submit"
-            block
+          <UInput
+            v-model="state.username"
+            type="text"
+            autocomplete="username"
+            placeholder="openapi_user"
+            icon="i-mdi-account-outline"
             size="lg"
-            :loading="submitting"
-            :disabled="turnstileRequired && !turnstileToken"
-          >
-            创建账号
-          </UButton>
-        </UForm>
-      </UCard>
+            class="w-full"
+            autofocus
+          />
+        </UFormField>
 
-      <div class="auth-footer-links">
-        <span>已有账号？</span>
-        <UButton
-          variant="link"
-          size="sm"
-          to="/login"
-          class="px-0"
+        <UFormField
+          label="邮箱"
+          name="email"
+          required
         >
-          直接登录
-        </UButton>
-        <span class="text-dimmed">·</span>
-        <UButton
-          variant="link"
-          size="sm"
-          to="/"
-          class="px-0"
+          <UInput
+            v-model="state.email"
+            type="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            icon="i-mdi-email-outline"
+            size="lg"
+            class="w-full"
+          />
+        </UFormField>
+
+        <UFormField
+          label="密码"
+          name="password"
+          required
         >
-          返回首页
+          <UInput
+            v-model="state.password"
+            :type="passwordVisible ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="设置不少于 8 位的登录密码"
+            icon="i-mdi-lock-outline"
+            size="lg"
+            class="w-full"
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                square
+                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
+                @click="passwordVisible = !passwordVisible"
+              />
+            </template>
+          </UInput>
+          <Transition name="state-fade">
+            <div
+              v-if="state.password"
+              class="mt-2"
+            >
+              <UProgress
+                :model-value="passwordStrength.value"
+                :color="passwordStrength.color"
+                size="xs"
+              />
+              <p class="mt-1 text-xs text-muted">
+                密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+              </p>
+            </div>
+          </Transition>
+        </UFormField>
+
+        <UFormField
+          label="确认密码"
+          name="confirm"
+          required
+        >
+          <UInput
+            v-model="state.confirm"
+            :type="confirmVisible ? 'text' : 'password'"
+            autocomplete="new-password"
+            placeholder="再次输入密码"
+            icon="i-mdi-lock-check-outline"
+            size="lg"
+            class="w-full"
+            :ui="{ trailing: 'pe-1' }"
+          >
+            <template #trailing>
+              <UButton
+                type="button"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                square
+                :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
+                @click="confirmVisible = !confirmVisible"
+              />
+            </template>
+          </UInput>
+        </UFormField>
+
+        <Transition name="state-fade">
+          <div
+            v-if="errorMessage"
+            class="auth-message auth-message--error"
+          >
+            <Icon
+              name="i-mdi-alert-circle-outline"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>{{ errorMessage }}</span>
+          </div>
+        </Transition>
+
+        <Transition name="state-fade">
+          <div
+            v-if="successMessage"
+            class="auth-message auth-message--success"
+          >
+            <Icon
+              name="i-mdi-check-circle-outline"
+              size="16"
+              class="auth-message__icon"
+            />
+            <span>{{ successMessage }}</span>
+          </div>
+        </Transition>
+
+        <CommonTurnstileWidget
+          v-if="turnstileRequired"
+          ref="turnstileWidget"
+          v-model:token="turnstileToken"
+          :site-key="turnstile.siteKey"
+        />
+
+        <UButton
+          type="submit"
+          block
+          size="lg"
+          :loading="submitting"
+          :disabled="turnstileRequired && !turnstileToken"
+        >
+          创建账号
         </UButton>
-      </div>
-    </CommonAppAuthShell>
-  </UApp>
+      </UForm>
+    </UCard>
+
+    <div class="auth-footer-links">
+      <span>已有账号？</span>
+      <UButton
+        variant="link"
+        size="sm"
+        to="/login"
+        class="px-0"
+      >
+        直接登录
+      </UButton>
+      <span class="text-dimmed">·</span>
+      <UButton
+        variant="link"
+        size="sm"
+        to="/"
+        class="px-0"
+      >
+        返回首页
+      </UButton>
+    </div>
+  </CommonAppAuthShell>
 </template>
