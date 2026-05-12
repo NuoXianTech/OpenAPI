@@ -9,13 +9,17 @@ interface AuthUser {
   credits?: number
 }
 
+// 登录态新鲜期：超过这个时长后，下一次 fetchMe()（中间件导航 / 插件定时器）会重新打 /api/auth/me，
+// 用来在长会话里捕获后端封禁、踢人、session 失效等服务端状态变化。
+const AUTH_FRESH_FOR_MS = 5 * 60 * 1000
+
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState<boolean>('auth-loading', () => false)
   // 同一次导航中并发的 fetchMe 调用合并为同一个 Promise，避免重复请求 /api/auth/me
   const inflight = useState<Promise<AuthUser | null> | null>('auth-inflight', () => null)
-  // 标记本会话是否已拉过；后续可以走 user.value 短路
-  const fetched = useState<boolean>('auth-fetched', () => false)
+  // 上次成功拉取 /api/auth/me 的时间戳（毫秒，0 表示尚未拉过）
+  const fetchedAt = useState<number>('auth-fetched-at', () => 0)
 
   const runFetch = async () => {
     loading.value = true
@@ -31,13 +35,14 @@ export function useAuth() {
     }
     finally {
       loading.value = false
-      fetched.value = true
+      fetchedAt.value = Date.now()
     }
     return user.value
   }
 
   const fetchMe = async (force = false) => {
-    if (!force && fetched.value) return user.value
+    const fresh = fetchedAt.value > 0 && Date.now() - fetchedAt.value < AUTH_FRESH_FOR_MS
+    if (!force && fresh) return user.value
     if (inflight.value) return inflight.value
     const promise = runFetch().finally(() => {
       inflight.value = null
@@ -52,7 +57,7 @@ export function useAuth() {
       body: payload,
     })
     user.value = res
-    fetched.value = true
+    fetchedAt.value = Date.now()
     return res
   }
 
@@ -62,7 +67,7 @@ export function useAuth() {
       body: payload,
     })
     user.value = res
-    fetched.value = true
+    fetchedAt.value = Date.now()
     return res
   }
 
@@ -76,13 +81,11 @@ export function useAuth() {
   const logout = async () => {
     await $fetch('/api/auth/logout', { method: 'POST' })
     user.value = null
-    fetched.value = true
+    fetchedAt.value = Date.now()
   }
 
   const ensureAdmin = async () => {
-    if (!fetched.value) {
-      await fetchMe()
-    }
+    await fetchMe()
     return user.value?.kind === 'admin'
   }
 

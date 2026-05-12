@@ -138,7 +138,7 @@ const columns: TableColumn<AdminUserItem>[] = [
     id: 'select',
     header: '选',
     cell: ({ row }) => h(UCheckbox, {
-      modelValue: selectedIds.value.includes(row.original.id),
+      'modelValue': selectedIds.value.includes(row.original.id),
       'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true),
     }),
   },
