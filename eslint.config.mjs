@@ -10,6 +10,7 @@ export default withNuxt(
         varsIgnorePattern: '^_',
         caughtErrorsIgnorePattern: '^_',
       }],
+      'vue/max-attributes-per-line': ['error', { singleline: 3 }],
       '@stylistic/max-statements-per-line': 'off',
       '@stylistic/comma-dangle': 'off'
     }
