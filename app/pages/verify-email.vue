@@ -8,6 +8,7 @@ const user = computed(() => (route.query.user || '').toString())
 const status = ref<'pending' | 'success' | 'error'>('pending')
 const message = ref('正在验证，请稍候...')
 const verifying = ref(false)
+const alreadyVerified = ref(false)
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object') {
@@ -44,7 +45,7 @@ const headerTitle = computed(() => {
 
 const headerSubtitle = computed(() => {
   if (status.value === 'success') {
-    return '已自动登录，正在跳转首页'
+    return alreadyVerified.value ? '邮箱已验证，请前往登录' : '已自动登录，正在跳转首页'
   }
   if (status.value === 'error') {
     return '验证链接可能已失效，请重新获取'
@@ -69,13 +70,21 @@ onMounted(async () => {
   message.value = '正在验证，请稍候...'
 
   try {
-    await $fetch('/api/auth/verify-email', {
+    const result = await $fetch<{ alreadyVerified?: boolean }>('/api/auth/verify-email', {
       query: { token: token.value, user: user.value },
     })
     status.value = 'success'
-    message.value = '验证成功，已自动登录，正在跳转首页...'
-    await new Promise(resolve => setTimeout(resolve, 800))
-    await navigateTo('/')
+    if (result?.alreadyVerified) {
+      alreadyVerified.value = true
+      message.value = '邮箱已验证，请前往登录'
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await navigateTo('/login')
+    }
+    else {
+      message.value = '验证成功，已自动登录，正在跳转首页...'
+      await new Promise(resolve => setTimeout(resolve, 800))
+      await navigateTo('/')
+    }
   }
   catch (error: unknown) {
     status.value = 'error'
@@ -141,11 +150,11 @@ onMounted(async () => {
           {{ message }}
         </p>
         <UButton
-          to="/"
+          :to="alreadyVerified ? '/login' : '/'"
           block
           size="lg"
         >
-          返回首页
+          {{ alreadyVerified ? '去登录' : '返回首页' }}
         </UButton>
       </div>
 
