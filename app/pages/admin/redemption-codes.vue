@@ -173,14 +173,10 @@ const columns: TableColumn<RedemptionCode>[] = [
           >
             生成兑换码
           </UButton>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="loading"
-            @click="fetchList"
+          <DashboardHeaderActions
+            :on-refresh="fetchList"
+            :refreshing="loading"
           />
-          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
 

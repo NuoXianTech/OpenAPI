@@ -238,16 +238,10 @@ const columns: TableColumn<ApiKey>[] = [
           >
             生成新 Key
           </UButton>
-          <UButton
-            icon="i-mdi-refresh"
-            color="neutral"
-            variant="outline"
-            :loading="status === 'pending'"
-            @click="refresh()"
-          >
-            刷新
-          </UButton>
-          <UserHeaderUser />
+          <DashboardHeaderActions
+            :on-refresh="refresh"
+            :refreshing="status === 'pending'"
+          />
         </template>
       </UDashboardNavbar>
     </template>

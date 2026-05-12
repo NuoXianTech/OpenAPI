@@ -21,7 +21,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
           >
             保存设置
           </UButton>
-          <AdminHeaderUser />
+          <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>
@@ -38,19 +38,10 @@ const { form, saving, status, save } = useAdminSettingsPage()
         v-else
         class="max-w-3xl space-y-8"
       >
-        <!-- Site Info -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-web"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                基本信息
-              </h3>
-            </div>
-          </template>
+        <DashboardSettingsSection
+          icon="i-mdi-web"
+          title="基本信息"
+        >
           <div class="space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <UFormField label="站点名称">
@@ -85,23 +76,14 @@ const { form, saving, status, save } = useAdminSettingsPage()
               />
             </UFormField>
           </div>
-        </UCard>
+        </DashboardSettingsSection>
 
         <AdminSettingsSecurityCard />
 
-        <!-- OAuth -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-shield-key-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                第三方登录
-              </h3>
-            </div>
-          </template>
+        <DashboardSettingsSection
+          icon="i-mdi-shield-key-outline"
+          title="第三方登录"
+        >
           <div class="space-y-4">
             <div class="flex flex-col gap-1">
               <USwitch
@@ -123,23 +105,14 @@ const { form, saving, status, save } = useAdminSettingsPage()
               </p>
             </div>
           </div>
-        </UCard>
+        </DashboardSettingsSection>
 
         <AdminSettingsTurnstileCard />
 
-        <!-- Announcement -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2 px-1">
-              <UIcon
-                name="i-mdi-bullhorn-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                公告
-              </h3>
-            </div>
-          </template>
+        <DashboardSettingsSection
+          icon="i-mdi-bullhorn-outline"
+          title="公告"
+        >
           <div class="space-y-4">
             <p class="text-xs text-muted">
               开启后，访客首次进入网站首页会弹出当前生效的公告（最新一条默认展开，旧公告收起）。
@@ -158,7 +131,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
               label="在网站首页弹出公告"
             />
           </div>
-        </UCard>
+        </DashboardSettingsSection>
 
         <AdminSettingsSmtpCard />
       </div>

@@ -127,14 +127,10 @@ const columns: TableColumn<TransactionRow>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="loading || summaryLoading"
-            @click="refreshAll"
+          <DashboardHeaderActions
+            :on-refresh="refreshAll"
+            :refreshing="loading || summaryLoading"
           />
-          <UserHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>

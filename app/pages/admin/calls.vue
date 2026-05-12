@@ -128,8 +128,6 @@ async function fetchLogs() {
   }
 }
 
-const logTotalPages = computed(() => Math.max(1, Math.ceil(logTotal.value / logPageSize.value)))
-
 watch(logPage, () => {
   void fetchLogs()
 })
@@ -265,166 +263,109 @@ const logColumns: TableColumn<AdminCallRow>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="status === 'pending'"
-            @click="refresh()"
+          <DashboardHeaderActions
+            :on-refresh="refresh"
+            :refreshing="status === 'pending'"
           />
-          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
-      <!-- Overview Stats -->
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <UCard
-          v-for="card in overviewCards"
-          :key="card.label"
-        >
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-sm text-muted">
-                {{ card.label }}
-              </p>
-              <p class="text-2xl font-semibold tabular-nums mt-1">
-                {{ card.value }}
-              </p>
-            </div>
-            <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
+      <div class="space-y-6">
+        <DashboardStatGrid>
+          <DashboardStatCard
+            v-for="card in overviewCards"
+            :key="card.label"
+            :label="card.label"
+            :value="card.value"
+            :icon="card.icon"
+          />
+        </DashboardStatGrid>
+
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-2">
               <UIcon
-                :name="card.icon"
+                name="i-mdi-chart-bar"
                 class="size-5 text-muted"
               />
+              <h3 class="font-semibold">
+                按 API 聚合（按日）
+              </h3>
+            </div>
+          </template>
+          <DashboardDataTable
+            :data="stats.items"
+            :columns="aggregateColumns"
+            :loading="status === 'pending'"
+            empty-title="暂无聚合数据"
+            empty-icon="i-mdi-chart-bar"
+          />
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-2 flex-wrap">
+              <UIcon
+                name="i-mdi-history"
+                class="size-5 text-muted"
+              />
+              <h3 class="font-semibold">
+                调用明细日志（含扣费）
+              </h3>
+            </div>
+          </template>
+
+          <div class="flex flex-wrap items-end gap-3 mb-4">
+            <UFormField
+              label="用户 ID"
+              class="min-w-[160px]"
+            >
+              <UInput
+                v-model.number="logFilters.userId"
+                type="number"
+                placeholder="留空查全部"
+              />
+            </UFormField>
+            <UFormField
+              label="状态"
+              class="min-w-[160px]"
+            >
+              <USelect
+                v-model="logFilters.status"
+                :items="statusSelectItems"
+              />
+            </UFormField>
+            <div class="flex gap-2">
+              <UButton
+                icon="i-mdi-magnify"
+                @click="applyLogFilters"
+              >
+                查询
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                @click="resetLogFilters"
+              >
+                重置
+              </UButton>
             </div>
           </div>
+
+          <DashboardDataTable
+            v-model:page="logPage"
+            :data="logItems"
+            :columns="logColumns"
+            :loading="logLoading"
+            :page-size="logPageSize"
+            :total="logTotal"
+            empty-title="暂无调用记录"
+            empty-icon="i-mdi-history"
+          />
         </UCard>
       </div>
-
-      <!-- 按 API 聚合的统计表 -->
-      <UCard>
-        <template #header>
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-chart-bar"
-              class="size-5 text-muted"
-            />
-            <h3 class="font-semibold">
-              按 API 聚合（按日）
-            </h3>
-          </div>
-        </template>
-        <UTable
-          :data="stats.items"
-          :columns="aggregateColumns"
-          :loading="status === 'pending'"
-          :ui="{
-            base: 'table-fixed',
-            thead: '[&>tr]:bg-elevated/50',
-            th: 'py-2',
-            td: 'py-2',
-          }"
-        />
-      </UCard>
-
-      <!-- 单次调用明细日志 -->
-      <UCard>
-        <template #header>
-          <div class="flex items-center gap-2 flex-wrap">
-            <UIcon
-              name="i-mdi-history"
-              class="size-5 text-muted"
-            />
-            <h3 class="font-semibold">
-              调用明细日志（含扣费）
-            </h3>
-            <span class="ml-auto text-xs text-muted tabular-nums">
-              共 {{ logTotal.toLocaleString() }} 条
-            </span>
-          </div>
-        </template>
-
-        <div class="flex flex-wrap items-end gap-3 mb-4">
-          <UFormField
-            label="用户 ID"
-            class="min-w-[160px]"
-          >
-            <UInput
-              v-model.number="logFilters.userId"
-              type="number"
-              placeholder="留空查全部"
-            />
-          </UFormField>
-          <UFormField
-            label="状态"
-            class="min-w-[160px]"
-          >
-            <USelect
-              v-model="logFilters.status"
-              :items="statusSelectItems"
-            />
-          </UFormField>
-          <div class="flex gap-2">
-            <UButton
-              icon="i-mdi-magnify"
-              @click="applyLogFilters"
-            >
-              查询
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              @click="resetLogFilters"
-            >
-              重置
-            </UButton>
-          </div>
-        </div>
-
-        <UTable
-          :data="logItems"
-          :columns="logColumns"
-          :loading="logLoading"
-          :ui="{
-            base: 'table-fixed',
-            thead: '[&>tr]:bg-elevated/50',
-            th: 'py-2',
-            td: 'py-2 align-middle',
-          }"
-        />
-        <div
-          v-if="logTotal > logPageSize"
-          class="flex items-center justify-between pt-3 border-t border-default mt-3"
-        >
-          <span class="text-xs text-muted">
-            第 {{ logPage }} / {{ logTotalPages }} 页
-          </span>
-          <div class="flex gap-2">
-            <UButton
-              size="sm"
-              color="neutral"
-              variant="outline"
-              icon="i-mdi-chevron-left"
-              :disabled="logPage <= 1"
-              @click="logPage = Math.max(1, logPage - 1)"
-            >
-              上一页
-            </UButton>
-            <UButton
-              size="sm"
-              color="neutral"
-              variant="outline"
-              trailing-icon="i-mdi-chevron-right"
-              :disabled="logPage >= logTotalPages"
-              @click="logPage = Math.min(logTotalPages, logPage + 1)"
-            >
-              下一页
-            </UButton>
-          </div>
-        </div>
-      </UCard>
     </template>
   </UDashboardPanel>
 </template>

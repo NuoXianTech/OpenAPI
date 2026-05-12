@@ -101,15 +101,10 @@ const unreadCount = computed(() => items.value.filter(n => !n.isRead).length)
           >
             全部已读
           </UButton>
-          <UButton
-            icon="i-mdi-refresh"
-            size="sm"
-            variant="ghost"
-            color="neutral"
-            :loading="loading"
-            @click="fetchList"
+          <DashboardHeaderActions
+            :on-refresh="fetchList"
+            :refreshing="loading"
           />
-          <UserHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>

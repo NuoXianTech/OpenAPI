@@ -1,11 +1,10 @@
 <script setup lang="ts">
 /**
- * 用户站内信铃铛 · 仅在用户已登录时（kind='user'）由 AppHeader 渲染。
+ * 后台通用站内信铃铛
  *
  * - 角标：未读条数（轮询 60s）
- * - 点击：打开 popover，展示最新若干条；左上"全部已读"，每条右上"删除"
- * - 点击单条：展开内容并标记已读
- * - 底部 "查看全部" 跳转 /user/notifications
+ * - 点击打开 popover，展示最新若干条；左上"全部已读"
+ * - 底部"查看全部"链接由 :to 决定
  */
 
 interface Notification {
@@ -19,6 +18,12 @@ interface Notification {
   senderActor: string | null
   createdAt: string
 }
+
+const props = withDefaults(defineProps<{
+  to?: string
+}>(), {
+  to: '/user/notifications',
+})
 
 const POLL_INTERVAL_MS = 60_000
 
@@ -239,7 +244,7 @@ function formatDate(iso: string) {
 
         <div class="border-t border-default px-3 py-2 text-center">
           <UButton
-            to="/user/notifications"
+            :to="props.to"
             size="xs"
             variant="ghost"
             color="neutral"

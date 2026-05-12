@@ -332,14 +332,10 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="status === 'pending'"
-            @click="refresh()"
+          <DashboardHeaderActions
+            :on-refresh="refresh"
+            :refreshing="status === 'pending'"
           />
-          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
 

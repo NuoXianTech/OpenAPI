@@ -3,13 +3,13 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
 const { user } = useAuth()
 
-const { data: callsData } = useLazyFetch<{ total: number, success: number, failure: number }>('/api/user/calls/summary', {
+const { data: callsData, refresh: refreshCalls, status: callsStatus } = useLazyFetch<{ total: number, success: number, failure: number }>('/api/user/calls/summary', {
   default: () => ({ total: 0, success: 0, failure: 0 }),
 })
-const { data: keysData } = useLazyFetch<Array<{ id: number, isActive: boolean }>>('/api/user/apikeys/list', {
+const { data: keysData, refresh: refreshKeys, status: keysStatus } = useLazyFetch<Array<{ id: number, isActive: boolean }>>('/api/user/apikeys/list', {
   default: () => [],
 })
-const { data: notifData } = useLazyFetch<Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }>>('/api/notifications/list', {
+const { data: notifData, refresh: refreshNotifs, status: notifStatus } = useLazyFetch<Array<{ id: number, title: string, level: 'info' | 'success' | 'warning' | 'critical', isRead: boolean, createdAt: string }>>('/api/notifications/list', {
   default: () => [],
   query: { limit: 5 },
 })
@@ -27,12 +27,11 @@ const recentNotifs = computed(() => notifData.value || [])
 
 const credits = computed(() => Number(user.value?.credits ?? 0))
 
-const overviewCards = computed(() => [
-  { label: '积分', value: credits.value.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-success', to: '/user/wallet' },
-  { label: '总调用', value: summary.value.total.toLocaleString(), icon: 'i-mdi-chart-line', color: 'text-primary', to: '/user/calls' },
-  { label: '成功率', value: successRate.value, icon: 'i-mdi-percent', color: 'text-info', to: '/user/calls' },
-  { label: '活跃 API Key', value: `${activeKeys.value} / ${keys.value.length}`, icon: 'i-mdi-key-outline', color: 'text-warning', to: '/user/apikeys' },
-])
+const refreshing = computed(() => callsStatus.value === 'pending' || keysStatus.value === 'pending' || notifStatus.value === 'pending')
+
+async function refresh() {
+  await Promise.all([refreshCalls(), refreshKeys(), refreshNotifs()])
+}
 
 const levelMeta: Record<'info' | 'success' | 'warning' | 'critical', { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
   info: { color: 'info', label: '通知' },
@@ -59,60 +58,52 @@ function formatDate(iso: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UserHeaderUser />
+          <DashboardHeaderActions
+            :on-refresh="refresh"
+            :refreshing="refreshing"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="space-y-6">
-        <UCard>
-          <div class="flex items-center gap-4">
-            <span class="inline-flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <UIcon
-                name="i-mdi-hand-wave"
-                class="size-6"
-              />
-            </span>
-            <div>
-              <div class="text-lg font-semibold">
-                你好，{{ user?.username }}
-              </div>
-              <div class="text-sm text-muted">
-                这里是你的个人中心，你可以管理 API Key、查看调用统计和处理通知。
-              </div>
-            </div>
-          </div>
-        </UCard>
+        <DashboardPageHeader
+          icon="i-mdi-hand-wave"
+          :title="`你好，${user?.username || ''}`"
+          description="这里是你的个人中心，你可以管理 API Key、查看调用统计和处理通知。"
+        />
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <NuxtLink
-            v-for="card in overviewCards"
-            :key="card.label"
-            :to="card.to"
-            class="block"
-          >
-            <UCard class="hover:border-primary/40 hover:shadow transition-all">
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-sm text-muted">
-                    {{ card.label }}
-                  </p>
-                  <p class="text-2xl font-semibold tabular-nums mt-1">
-                    {{ card.value }}
-                  </p>
-                </div>
-                <div class="flex items-center justify-center size-10 rounded-lg bg-elevated shrink-0">
-                  <UIcon
-                    :name="card.icon"
-                    :class="card.color"
-                    class="size-5"
-                  />
-                </div>
-              </div>
-            </UCard>
-          </NuxtLink>
-        </div>
+        <DashboardStatGrid>
+          <DashboardStatCard
+            label="积分"
+            :value="credits.toLocaleString()"
+            icon="i-mdi-cash-multiple"
+            icon-color="text-success"
+            to="/user/wallet"
+          />
+          <DashboardStatCard
+            label="总调用"
+            :value="summary.total.toLocaleString()"
+            icon="i-mdi-chart-line"
+            icon-color="text-primary"
+            to="/user/calls"
+          />
+          <DashboardStatCard
+            label="成功率"
+            :value="successRate"
+            icon="i-mdi-percent"
+            icon-color="text-info"
+            to="/user/calls"
+          />
+          <DashboardStatCard
+            label="活跃 API Key"
+            :value="`${activeKeys} / ${keys.length}`"
+            icon="i-mdi-key-outline"
+            icon-color="text-warning"
+            to="/user/apikeys"
+          />
+        </DashboardStatGrid>
 
         <UCard>
           <template #header>
@@ -137,12 +128,11 @@ function formatDate(iso: string) {
               </UButton>
             </div>
           </template>
-          <div
+          <DashboardEmpty
             v-if="recentNotifs.length === 0"
-            class="text-center text-sm text-muted py-8"
-          >
-            暂无通知
-          </div>
+            icon="i-mdi-bell-off-outline"
+            title="暂无通知"
+          />
           <div
             v-else
             class="divide-y divide-default -my-3"

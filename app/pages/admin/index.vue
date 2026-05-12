@@ -55,40 +55,6 @@ const generatedAt = computed(() => {
 const formatNumber = (val: number) => val.toLocaleString()
 const formatRate = (val: number) => `${val.toFixed(2)}%`
 
-const overviewCards = computed(() => [
-  {
-    label: '注册用户',
-    value: formatNumber(overview.value.userCount),
-    icon: 'i-mdi-account-group-outline',
-    color: 'text-primary',
-    to: '/admin/users',
-  },
-  {
-    label: '启用 API',
-    value: `${formatNumber(overview.value.enabledApiCount)} / ${formatNumber(overview.value.totalApiCount)}`,
-    icon: 'i-mdi-api',
-    color: 'text-success',
-    to: '/admin/apis',
-  },
-  {
-    label: '总调用',
-    value: formatNumber(overview.value.totalCalls),
-    icon: 'i-mdi-chart-line',
-    color: 'text-info',
-    to: '/admin/calls',
-    trend: overview.value.todayChangeRate,
-    hint: `今日 ${formatNumber(overview.value.todayCalls)}`,
-  },
-  {
-    label: '成功率',
-    value: formatRate(overview.value.successRate),
-    icon: 'i-mdi-shield-check-outline',
-    color: 'text-warning',
-    to: '/admin/calls',
-    hint: `成功 ${formatNumber(overview.value.successCalls)} · 失败 ${formatNumber(overview.value.failureCalls)}`,
-  },
-])
-
 function formatDateTime(value: string) {
   if (!value) return '-'
   const date = new Date(value)
@@ -161,86 +127,55 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="status === 'pending'"
-            @click="refresh()"
+          <DashboardHeaderActions
+            :on-refresh="refresh"
+            :refreshing="status === 'pending'"
           />
-          <AdminHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="space-y-6">
-        <UCard>
-          <div class="flex items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <span class="inline-flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <UIcon
-                  name="i-mdi-shield-crown-outline"
-                  class="size-6"
-                />
-              </span>
-              <div>
-                <div class="text-lg font-semibold">
-                  管理员仪表盘
-                </div>
-                <div class="text-sm text-muted">
-                  数据更新于 {{ generatedAt }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </UCard>
+        <DashboardPageHeader
+          icon="i-mdi-shield-crown-outline"
+          title="管理员仪表盘"
+          :description="`数据更新于 ${generatedAt}`"
+        />
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <NuxtLink
-            v-for="card in overviewCards"
-            :key="card.label"
-            :to="card.to"
-            class="block"
-          >
-            <UCard class="h-full transition-all hover:border-primary/40 hover:shadow">
-              <div class="flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                  <p class="text-sm text-muted">
-                    {{ card.label }}
-                  </p>
-                  <p class="mt-1 truncate text-2xl font-semibold tabular-nums">
-                    {{ card.value }}
-                  </p>
-                  <p
-                    v-if="card.hint"
-                    class="mt-1 truncate text-xs text-muted"
-                  >
-                    <span
-                      v-if="card.trend !== undefined"
-                      :class="card.trend >= 0 ? 'text-success' : 'text-error'"
-                      class="mr-1 inline-flex items-center gap-0.5"
-                    >
-                      <UIcon
-                        :name="card.trend >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
-                        class="size-3.5"
-                      />
-                      {{ card.trend >= 0 ? '+' : '' }}{{ card.trend.toFixed(1) }}%
-                    </span>
-                    {{ card.hint }}
-                  </p>
-                </div>
-                <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-elevated">
-                  <UIcon
-                    :name="card.icon"
-                    :class="card.color"
-                    class="size-5"
-                  />
-                </div>
-              </div>
-            </UCard>
-          </NuxtLink>
-        </div>
+        <DashboardStatGrid>
+          <DashboardStatCard
+            label="注册用户"
+            :value="formatNumber(overview.userCount)"
+            icon="i-mdi-account-group-outline"
+            icon-color="text-primary"
+            to="/admin/users"
+          />
+          <DashboardStatCard
+            label="启用 API"
+            :value="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
+            icon="i-mdi-api"
+            icon-color="text-success"
+            to="/admin/apis"
+          />
+          <DashboardStatCard
+            label="总调用"
+            :value="formatNumber(overview.totalCalls)"
+            icon="i-mdi-chart-line"
+            icon-color="text-info"
+            :trend="overview.todayChangeRate"
+            :hint="`今日 ${formatNumber(overview.todayCalls)}`"
+            to="/admin/calls"
+          />
+          <DashboardStatCard
+            label="成功率"
+            :value="formatRate(overview.successRate)"
+            icon="i-mdi-shield-check-outline"
+            icon-color="text-warning"
+            :hint="`成功 ${formatNumber(overview.successCalls)} · 失败 ${formatNumber(overview.failureCalls)}`"
+            to="/admin/calls"
+          />
+        </DashboardStatGrid>
 
         <div class="grid gap-4 xl:grid-cols-5">
           <UCard class="xl:col-span-3">
@@ -311,17 +246,12 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             </div>
           </template>
 
-          <UTable
+          <DashboardDataTable
             :data="recentCalls"
             :columns="recentColumns"
             :loading="status === 'pending' && recentCalls.length === 0"
-            empty="暂无请求日志"
-            :ui="{
-              base: 'table-auto',
-              thead: '[&>tr]:bg-elevated/50',
-              th: 'py-2 text-xs uppercase tracking-wide',
-              td: 'py-2.5',
-            }"
+            empty-title="暂无请求日志"
+            empty-icon="i-mdi-history"
           />
         </UCard>
       </div>

@@ -220,14 +220,10 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            icon="i-mdi-refresh"
-            :loading="loading"
-            @click="fetchList"
+          <DashboardHeaderActions
+            :on-refresh="fetchList"
+            :refreshing="loading"
           />
-          <UserHeaderUser />
         </template>
       </UDashboardNavbar>
     </template>
