@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RedeemRecord } from '~/composables/user/useUserWalletPage'
+import type { RedeemRecord } from '~/composables/user/useUserCreditsPage'
 
 const props = defineProps<{
   records: RedeemRecord[]

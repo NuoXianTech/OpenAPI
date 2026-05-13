@@ -1,4 +1,4 @@
-export interface WalletSummary {
+export interface CreditSummary {
   balance: number
   totalIn: number
   totalOut: number
@@ -29,8 +29,8 @@ export interface RedeemRecord {
   note: string | null
 }
 
-export type WalletReason = 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
-export type WalletDirection = 'all' | 'in' | 'out'
+export type CreditReason = 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
+export type CreditDirection = 'all' | 'in' | 'out'
 
 export const REASON_META: Record<string, { label: string, color: 'success' | 'error' | 'warning' | 'info' | 'neutral' }> = {
   api_charge: { label: 'API 扣费', color: 'error' },
@@ -50,15 +50,15 @@ export function reasonColor(reason: string) {
   return REASON_META[reason]?.color || 'neutral'
 }
 
-export function useUserWalletPage() {
+export function useUserCreditsPage() {
   const toast = useToast()
 
-  const summary = ref<WalletSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
+  const summary = ref<CreditSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
   const summaryLoading = ref(false)
 
   const filters = reactive({
-    reason: 'all' as WalletReason,
-    direction: 'all' as WalletDirection
+    reason: 'all' as CreditReason,
+    direction: 'all' as CreditDirection
   })
   const page = ref(1)
   const pageSize = ref(50)
@@ -71,10 +71,10 @@ export function useUserWalletPage() {
   async function fetchSummary() {
     summaryLoading.value = true
     try {
-      const res = await $fetch<WalletSummary>('/api/user/credits/summary')
+      const res = await $fetch<CreditSummary>('/api/user/credits/summary')
       summary.value = res || { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
     } catch (err) {
-      console.error('failed to load wallet summary', err)
+      console.error('failed to load credits summary', err)
     } finally {
       summaryLoading.value = false
     }

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useUserWalletPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/useUserWalletPage'
+import { useUserCreditsPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/useUserCreditsPage'
 
-useHead({ title: '我的钱包' })
+useHead({ title: '积分' })
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
@@ -24,7 +24,7 @@ const {
   resetFilters,
   refreshAll,
   init
-} = useUserWalletPage()
+} = useUserCreditsPage()
 
 onMounted(() => {
   void init()
@@ -121,7 +121,7 @@ const columns: TableColumn<TransactionRow>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="user-wallet">
+  <UDashboardPanel id="user-credits">
     <template #header>
       <UDashboardNavbar title="积分">
         <template #leading>
@@ -138,14 +138,14 @@ const columns: TableColumn<TransactionRow>[] = [
 
     <template #body>
       <div class="space-y-6">
-        <UserWalletOverviewCards :summary="summary" />
+        <UserCreditsOverviewCards :summary="summary" />
 
-        <UserWalletRedeemCard
+        <UserCreditsRedeemCard
           :records="redeemRecords"
           :on-redeem="redeem"
         />
 
-        <UserWalletByReasonCard :by-reason="summary.byReason" />
+        <UserCreditsByReasonCard :by-reason="summary.byReason" />
 
         <UCard>
           <div class="flex flex-wrap items-end gap-3">

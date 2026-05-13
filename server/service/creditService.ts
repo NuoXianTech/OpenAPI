@@ -379,7 +379,7 @@ export const creditService = {
    * 用户积分汇总：当前积分 + 累计收入/支出 + 按 reason 分桶。
    * 用于积分页顶部的统计卡片。
    */
-  async getUserWalletSummary(userId: number) {
+  async getUserCreditsSummary(userId: number) {
     const [balanceRow, aggRows, reasonRows] = await Promise.all([
       db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1),
       db.select({

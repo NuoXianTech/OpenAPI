@@ -81,7 +81,7 @@ function formatDate(iso: string) {
             :value="credits.toLocaleString()"
             icon="i-mdi-cash-multiple"
             icon-color="text-success"
-            to="/user/wallet"
+            to="/user/credits"
           />
           <DashboardStatCard
             label="总调用"

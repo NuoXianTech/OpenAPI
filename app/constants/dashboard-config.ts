@@ -118,7 +118,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
     {
       label: '账户',
       items: [
-        { label: '积分钱包', icon: 'i-mdi-wallet-outline', to: '/user/wallet' },
+        { label: '积分', icon: 'i-mdi-cash-multiple', to: '/user/credits' },
         { label: '个人设置', icon: 'i-mdi-account-cog-outline', to: '/user/profile' },
         { label: '通知中心', icon: 'i-mdi-bell-outline', to: '/user/notifications' }
       ]
@@ -129,7 +129,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
   ],
   quickActions: [
     { label: '生成 API Key', icon: 'i-mdi-key-plus', to: '/user/apikeys' },
-    { label: '兑换积分', icon: 'i-mdi-ticket-percent-outline', to: '/user/wallet' },
+    { label: '兑换积分', icon: 'i-mdi-ticket-percent-outline', to: '/user/credits' },
     { label: '查看调用日志', icon: 'i-mdi-history', to: '/user/calls' },
     { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/profile' }
   ],

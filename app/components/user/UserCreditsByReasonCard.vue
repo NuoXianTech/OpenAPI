@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { reasonLabel, reasonColor, type WalletSummary } from '~/composables/user/useUserWalletPage'
+import { reasonLabel, reasonColor, type CreditSummary } from '~/composables/user/useUserCreditsPage'
 
 defineProps<{
-  byReason: WalletSummary['byReason']
+  byReason: CreditSummary['byReason']
 }>()
 </script>
 

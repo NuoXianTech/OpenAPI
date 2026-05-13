@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import type { WalletSummary } from '~/composables/user/useUserWalletPage'
+import type { CreditSummary } from '~/composables/user/useUserCreditsPage'
 
 const props = defineProps<{
-  summary: WalletSummary
+  summary: CreditSummary
 }>()
 
 const cards = computed(() => [
-  { key: 'balance', label: '当前积分', value: props.summary.balance.toLocaleString(), icon: 'i-mdi-wallet-outline', color: 'text-primary' },
+  { key: 'balance', label: '当前积分', value: props.summary.balance.toLocaleString(), icon: 'i-mdi-cash-multiple', color: 'text-primary' },
   { key: 'in', label: '累计收入', value: props.summary.totalIn.toLocaleString(), icon: 'i-mdi-arrow-down-bold-circle-outline', color: 'text-success' },
   { key: 'out', label: '累计支出', value: props.summary.totalOut.toLocaleString(), icon: 'i-mdi-arrow-up-bold-circle-outline', color: 'text-error' },
   { key: 'count', label: '流水笔数', value: props.summary.totalCount.toLocaleString(), icon: 'i-mdi-format-list-numbered', color: 'text-info' }

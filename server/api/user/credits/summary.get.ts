@@ -9,6 +9,6 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: 'admin 不持有用户积分' })
   }
 
-  const data = await creditService.getUserWalletSummary(user.id)
+  const data = await creditService.getUserCreditsSummary(user.id)
   return data
 })
