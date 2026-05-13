@@ -22,20 +22,20 @@ export default defineEventHandler(async (event: H3Event) => {
     : await usersService.findByUsername(emailOrUsername)
 
   if (!user) {
-    throw createError({ statusCode: 401, message: 'Invalid credentials' })
+    throw createError({ statusCode: 401, message: '账号或密码错误' })
   }
 
   const ok = await verifyPassword(user.passwordHash, password)
   if (!ok) {
-    throw createError({ statusCode: 401, message: 'Invalid credentials' })
+    throw createError({ statusCode: 401, message: '账号或密码错误' })
   }
 
   if (user.isBanned) {
-    throw createError({ statusCode: 403, message: 'Account is banned' })
+    throw createError({ statusCode: 403, message: '账号已被封禁，如有疑问请联系管理员' })
   }
 
   if (!user.isActive) {
-    throw createError({ statusCode: 403, message: 'Email not verified' })
+    throw createError({ statusCode: 403, message: '邮箱尚未验证，请先到注册邮箱完成验证' })
   }
 
   await createUserSession(event, {

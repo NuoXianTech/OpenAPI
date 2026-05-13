@@ -61,13 +61,18 @@ const oauthError = computed(() => {
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object') {
-    const data = (error as { data?: { message?: unknown } }).data
+    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
+    const data = e.data
     if (data && typeof data.message === 'string' && data.message) {
       return data.message
     }
-  }
-  if (error instanceof Error && error.message) {
-    return error.message
+    const status = e.statusCode ?? e.status
+    if (typeof status === 'number') {
+      if (status === 401) return '账号或密码错误'
+      if (status === 403) return '当前账号无法登录，请确认账号状态'
+      if (status === 429) return '尝试次数过多，请稍后再试'
+      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
+    }
   }
   return fallback
 }

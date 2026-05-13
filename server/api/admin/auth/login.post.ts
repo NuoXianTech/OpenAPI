@@ -26,17 +26,17 @@ export default defineEventHandler(async (event: H3Event) => {
   const adminPassword = (authConfig.adminPassword || '').toString()
 
   if (!adminUsername) {
-    throw createError({ statusCode: 500, message: 'Admin username is not configured' })
+    throw createError({ statusCode: 500, message: '管理员账号未配置，请联系系统管理员' })
   }
 
   if (!adminPassword) {
-    throw createError({ statusCode: 500, message: 'Admin password is not configured' })
+    throw createError({ statusCode: 500, message: '管理员密码未配置，请联系系统管理员' })
   }
 
   await assertTurnstileForPage('adminLogin', turnstileToken, getRequestIP(event) || null)
 
   if (!safeEquals(username, adminUsername) || !safeEquals(password, adminPassword)) {
-    throw createError({ statusCode: 401, message: 'Invalid admin credentials' })
+    throw createError({ statusCode: 401, message: '管理员账号或密码错误' })
   }
 
   await createAdminSession(event, { remember })

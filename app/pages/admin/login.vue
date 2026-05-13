@@ -27,6 +27,24 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.adminLogin)
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error && typeof error === 'object') {
+    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
+    const data = e.data
+    if (data && typeof data.message === 'string' && data.message) {
+      return data.message
+    }
+    const status = e.statusCode ?? e.status
+    if (typeof status === 'number') {
+      if (status === 401) return '管理员账号或密码错误'
+      if (status === 403) return '没有访问管理后台的权限'
+      if (status === 429) return '尝试次数过多，请稍后再试'
+      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
+    }
+  }
+  return fallback
+}
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMsg.value = ''
 
@@ -44,12 +62,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     await navigateTo('/admin')
   } catch (err: unknown) {
-    if (err && typeof err === 'object') {
-      const e = err as { data?: { message?: string }, message?: string }
-      errorMsg.value = e.data?.message || e.message || '登录失败'
-    } else {
-      errorMsg.value = '登录失败'
-    }
+    errorMsg.value = getErrorMessage(err, '登录失败，请稍后再试')
     turnstileWidget.value?.reset()
   } finally {
     loading.value = false

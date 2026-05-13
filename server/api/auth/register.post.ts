@@ -43,11 +43,11 @@ export default defineEventHandler(async (event: H3Event) => {
   // 检查是否已存在同名或同邮箱用户
   const existEmail = await usersService.findByEmail(email)
   if (existEmail) {
-    throw createError({ statusCode: 409, message: 'Email already in use' })
+    throw createError({ statusCode: 409, message: '该邮箱已被注册，请直接登录或更换邮箱' })
   }
   const existUser = await usersService.findByUsername(username)
   if (existUser) {
-    throw createError({ statusCode: 409, message: 'Username already in use' })
+    throw createError({ statusCode: 409, message: '该用户名已被占用，请更换后重试' })
   }
 
   const passwordHash = await hashPassword(password)
@@ -63,7 +63,22 @@ export default defineEventHandler(async (event: H3Event) => {
   const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
   const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
   const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
-  await sendVerificationEmail(email, verifyUrl)
+  try {
+    await sendVerificationEmail(email, verifyUrl)
+  } catch (error) {
+    // 邮件发不出去就把刚建的账号回滚，否则邮箱/用户名会被占住，用户无法重试。
+    // verification_tokens 通过外键 cascade 一起清掉。
+    console.error('[register] failed to send verification email, rolling back user', { userId: created.id, error })
+    try {
+      await usersService.deleteUser(created.id)
+    } catch (rollbackError) {
+      console.error('[register] failed to rollback user after email failure', { userId: created.id, error: rollbackError })
+    }
+    throw createError({
+      statusCode: 503,
+      message: '验证邮件发送失败，请稍后重试或联系管理员检查邮件服务配置'
+    })
+  }
 
   const { passwordHash: _, ...safe } = created
 

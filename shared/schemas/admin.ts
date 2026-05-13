@@ -7,8 +7,8 @@ import { optionalDate } from './common'
 
 /** 管理员登录 */
 export const adminLoginSchema = z.object({
-  username: z.string().trim().min(1, 'username is required'),
-  password: z.string().min(1, 'password is required'),
+  username: z.string().trim().min(1, '请输入管理员账号'),
+  password: z.string().min(1, '请输入管理员密码'),
   remember: z.boolean().optional(),
   turnstileToken: z.string().optional()
 })

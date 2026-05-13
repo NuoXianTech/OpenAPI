@@ -51,8 +51,20 @@ const passwordStrength = computed(() => {
 })
 
 const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error instanceof Error && error.message) {
-    return error.message
+  if (error && typeof error === 'object') {
+    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
+    const data = e.data
+    if (data && typeof data.message === 'string' && data.message) {
+      return data.message
+    }
+    const status = e.statusCode ?? e.status
+    if (typeof status === 'number') {
+      if (status === 403) return '当前未开放注册或邮箱不被允许'
+      if (status === 409) return '该邮箱或用户名已被占用，请更换后重试'
+      if (status === 429) return '操作过于频繁，请稍后再试'
+      if (status === 503) return '验证邮件服务暂不可用，请稍后再试或联系管理员'
+      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
+    }
   }
   return fallback
 }

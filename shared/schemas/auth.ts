@@ -24,7 +24,7 @@ export const loginSchema = z
     turnstileToken: z.string().optional()
   })
   .refine(d => Boolean(d.email || d.username), {
-    message: 'email or username is required',
+    message: '请输入邮箱或用户名',
     path: ['email']
   })
 export type LoginInput = z.output<typeof loginSchema>
