@@ -6,6 +6,11 @@ import type { ApiTabOption } from '~/composables/api/types'
 import { useFriendLinkList } from '~/composables/link/useFriendLinkList'
 
 useHead({ title: '友情链接' })
+useSeoMeta({
+  description: '友情链接 — 与社区其他独立站点互联，欢迎交换。',
+  ogTitle: '友情链接',
+  ogDescription: '友情链接 — 与社区其他独立站点互联，欢迎交换。'
+})
 
 const query = ref('')
 const currentStatus = ref<string | number>('all')
@@ -74,10 +79,9 @@ const visibleCount = computed(() => filteredItems.value.length)
 
         <div class="px-4 py-3.5 sm:px-5 sm:py-4">
           <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-            <Icon
+            <UIcon
               name="i-lucide-filter"
-              size="12"
-              :ssr="true"
+              class="size-3"
             />
             状态筛选
           </div>
@@ -157,18 +161,16 @@ const visibleCount = computed(() => filteredItems.value.length)
         >
           <div class="mb-3 flex items-center justify-between text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
-              <Icon
+              <UIcon
                 name="i-lucide-list"
-                size="13"
-                :ssr="true"
+                class="size-3.5"
               />
               当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个站点
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
-              <Icon
+              <UIcon
                 name="i-lucide-mouse-pointer-click"
-                size="13"
-                :ssr="true"
+                class="size-3.5"
               />
               点击卡片访问站点
             </span>

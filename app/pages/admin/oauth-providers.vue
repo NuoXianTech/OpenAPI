@@ -25,6 +25,7 @@ interface ProviderForm {
   isEnabled: boolean
   saving: boolean
   copied: boolean
+  secretVisible: boolean
 }
 
 const toast = useToast()
@@ -36,7 +37,7 @@ const { data, status, refresh } = useLazyFetch<ProviderItem[]>('/api/admin/oauth
 const items = computed<ProviderItem[]>(() => data.value || [])
 
 function createForm(): ProviderForm {
-  return { clientId: '', clientSecret: '', isEnabled: false, saving: false, copied: false }
+  return { clientId: '', clientSecret: '', isEnabled: false, saving: false, copied: false, secretVisible: false }
 }
 
 const forms = reactive<Record<string, ProviderForm>>(
@@ -159,6 +160,8 @@ async function copyCallback(item: ProviderItem) {
               <UInput
                 v-model="getForm(item.provider).clientId"
                 placeholder="填写 OAuth App 的 Client ID"
+                icon="i-mdi-identifier"
+                class="w-full"
               />
             </UFormField>
             <UFormField
@@ -167,9 +170,25 @@ async function copyCallback(item: ProviderItem) {
             >
               <UInput
                 v-model="getForm(item.provider).clientSecret"
-                type="password"
+                :type="getForm(item.provider).secretVisible ? 'text' : 'password'"
                 placeholder="••••••••"
-              />
+                icon="i-mdi-key-variant"
+                class="w-full"
+                :ui="{ trailing: 'pe-1' }"
+              >
+                <template #trailing>
+                  <UButton
+                    type="button"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    square
+                    :icon="getForm(item.provider).secretVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                    :aria-label="getForm(item.provider).secretVisible ? '隐藏密钥' : '显示密钥'"
+                    @click="getForm(item.provider).secretVisible = !getForm(item.provider).secretVisible"
+                  />
+                </template>
+              </UInput>
             </UFormField>
             <UFormField
               label="Callback URL"
@@ -179,6 +198,7 @@ async function copyCallback(item: ProviderItem) {
                 <UInput
                   :model-value="item.callbackUrl"
                   readonly
+                  icon="i-mdi-link-variant"
                   class="flex-1"
                 />
                 <UButton
@@ -220,6 +240,7 @@ async function copyCallback(item: ProviderItem) {
           <template #footer>
             <div class="flex justify-end">
               <UButton
+                icon="i-mdi-content-save-outline"
                 :loading="getForm(item.provider).saving"
                 @click="save(item)"
               >

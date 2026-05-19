@@ -10,14 +10,16 @@ const handleLogout = async () => {
 
 <template>
   <header class="max-w-275 mx-auto px-5 py-6 flex items-end justify-between gap-4">
-    <div class="flex items-center gap-3">
-      <div class="w-12 h-12 shrink-0 overflow-hidden rounded-full border border-default bg-default">
-        <img
-          :src="settings.siteImg"
-          alt="Avatar"
-          class="w-full h-full object-cover block"
-        >
-      </div>
+    <NuxtLink
+      to="/"
+      class="flex items-center gap-3 group"
+    >
+      <UAvatar
+        :src="settings.siteImg"
+        :alt="settings.siteName"
+        size="lg"
+        class="shrink-0 ring-1 ring-default transition-transform group-hover:scale-105"
+      />
       <div class="flex flex-col justify-center">
         <h1 class="m-0 text-2xl tracking-wide font-normal">
           {{ settings.siteName }}
@@ -26,7 +28,7 @@ const handleLogout = async () => {
           {{ settings.siteDescription }}
         </p>
       </div>
-    </div>
+    </NuxtLink>
 
     <div class="flex items-center gap-1">
       <UButton

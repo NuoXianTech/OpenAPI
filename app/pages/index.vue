@@ -29,6 +29,14 @@ const heroStats = computed(() => ({
   normal: allItems.value.filter((i: { status: number }) => i.status === 1).length,
   categories: Math.max(0, categoryTabs.value.length - 1)
 }))
+
+useSeoMeta({
+  ogTitle: () => settings.value.siteName,
+  description: () => settings.value.siteDescription,
+  ogDescription: () => settings.value.siteDescription,
+  ogType: 'website',
+  ogImage: () => settings.value.siteImg
+})
 </script>
 
 <template>
@@ -58,10 +66,9 @@ const heroStats = computed(() => ({
         <div class="grid grid-cols-1 gap-0 lg:grid-cols-[auto_1fr]">
           <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
             <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-              <Icon
+              <UIcon
                 name="i-lucide-filter"
-                size="12"
-                :ssr="true"
+                class="size-3"
               />
               状态
             </div>
@@ -74,10 +81,9 @@ const heroStats = computed(() => ({
 
           <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
             <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-              <Icon
+              <UIcon
                 name="i-lucide-tags"
-                size="12"
-                :ssr="true"
+                class="size-3"
               />
               分类
             </div>
@@ -149,18 +155,16 @@ const heroStats = computed(() => ({
         >
           <div class="mb-3 flex items-center justify-between text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
-              <Icon
+              <UIcon
                 name="i-lucide-list"
-                size="13"
-                :ssr="true"
+                class="size-3.5"
               />
               当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个接口
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
-              <Icon
+              <UIcon
                 name="i-lucide-mouse-pointer-click"
-                size="13"
-                :ssr="true"
+                class="size-3.5"
               />
               点击卡片查看详情
             </span>

@@ -80,19 +80,17 @@ const isActive = computed(() => props.status === 1)
         class="link-card__host"
         :title="props.url"
       >
-        <Icon
+        <UIcon
           name="i-lucide-globe"
-          size="12"
-          :ssr="true"
+          class="size-3"
         />
         {{ displayHost }}
       </span>
       <span class="link-card__cta">
         访问
-        <Icon
+        <UIcon
           name="i-lucide-arrow-up-right"
-          size="14"
-          :ssr="true"
+          class="size-3.5"
         />
       </span>
     </div>

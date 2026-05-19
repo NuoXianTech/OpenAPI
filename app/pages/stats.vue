@@ -2,6 +2,11 @@
 import type { PublicCallStatsDashboard } from '~~/shared/types/public-stats'
 
 useHead({ title: '数据统计' })
+useSeoMeta({
+  description: '公开 API 调用统计：累计调用次数、成功率、近 7 日趋势及调用排行。',
+  ogTitle: '调用统计',
+  ogDescription: '公开 API 调用统计：累计调用次数、成功率、近 7 日趋势及调用排行。'
+})
 
 definePageMeta({ layout: false })
 
@@ -230,13 +235,13 @@ const overviewCards = computed(() => {
                   <VisLine
                     :x="xAccessor"
                     :y="successLineAccessor"
-                    color="var(--green)"
+                    color="var(--ui-success)"
                     :line-width="2.5"
                   />
                   <VisLine
                     :x="xAccessor"
                     :y="failureLineAccessor"
-                    color="var(--red)"
+                    color="var(--ui-error)"
                     :line-width="2.5"
                   />
                   <VisAxis
@@ -306,7 +311,7 @@ const overviewCards = computed(() => {
               <li
                 v-for="item in top10Last30d"
                 :key="item.apiId"
-                class="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                class="flex items-center gap-3 py-3 first:pt-0 last:pb-0 transition-colors hover:bg-elevated/40 rounded-md -mx-2 px-2"
               >
                 <UBadge
                   :color="item.rank <= 3 ? 'primary' : 'neutral'"
@@ -317,13 +322,13 @@ const overviewCards = computed(() => {
                 </UBadge>
                 <div class="min-w-0 flex-1">
                   <div
-                    class="font-medium truncate"
+                    class="font-medium truncate text-default"
                     :title="item.name"
                   >
                     {{ item.name }}
                   </div>
                   <div
-                    class="text-xs text-muted truncate"
+                    class="text-xs text-muted truncate font-mono"
                     :title="item.apiPath"
                   >
                     {{ item.apiPath }}
@@ -338,7 +343,7 @@ const overviewCards = computed(() => {
                   </UBadge>
                 </div>
                 <div class="text-right shrink-0">
-                  <div class="text-sm font-semibold tabular-nums">
+                  <div class="text-sm font-semibold tabular-nums text-highlighted">
                     {{ formatCount(item.totalCalls) }}
                   </div>
                   <div class="text-xs text-muted tabular-nums">

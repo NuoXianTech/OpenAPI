@@ -206,6 +206,19 @@ body {
   margin-top: 1px;
 }
 
+.auth-success-illustration {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  margin: 0 auto 4px;
+  color: var(--green);
+  background: color-mix(in srgb, var(--green) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+}
+
 .api-filter-tabs {
   will-change: transform;
 }

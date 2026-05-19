@@ -50,6 +50,15 @@ const passwordStrength = computed(() => {
   return { label: '强', color: 'success' as const, value: 100 }
 })
 
+const passwordStrengthLabelClass = computed(() => {
+  switch (passwordStrength.value.color) {
+    case 'success': return 'text-success font-medium'
+    case 'warning': return 'text-warning font-medium'
+    case 'error': return 'text-error font-medium'
+    default: return 'text-muted'
+  }
+})
+
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error && typeof error === 'object') {
     const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
@@ -105,9 +114,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           name="i-mdi-account-plus-outline"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -205,7 +214,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 size="xs"
               />
               <p class="mt-1 text-xs text-muted">
-                密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+                密码强度：<span :class="passwordStrengthLabelClass">{{ passwordStrength.label }}</span>
               </p>
             </div>
           </Transition>
@@ -246,10 +255,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-if="errorMessage"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ errorMessage }}</span>
           </div>
@@ -260,10 +268,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-if="successMessage"
             class="auth-message auth-message--success"
           >
-            <Icon
+            <UIcon
               name="i-mdi-check-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ successMessage }}</span>
           </div>

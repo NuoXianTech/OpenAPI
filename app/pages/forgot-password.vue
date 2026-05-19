@@ -69,9 +69,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           name="i-mdi-lock-reset"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -94,10 +94,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="space-y-4"
       >
         <div class="auth-message auth-message--error">
-          <Icon
+          <UIcon
             name="i-mdi-alert-circle-outline"
-            size="16"
-            class="auth-message__icon"
+            class="auth-message__icon size-4"
           />
           <span>该功能已被管理员关闭，请联系管理员协助处理。</span>
         </div>
@@ -118,9 +117,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="space-y-4 text-center"
       >
         <div class="auth-success-illustration">
-          <Icon
+          <UIcon
             name="i-mdi-email-fast-outline"
-            size="44"
+            class="size-11"
           />
         </div>
         <div>
@@ -172,10 +171,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-if="errorMessage"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ errorMessage }}</span>
           </div>
@@ -221,18 +219,3 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </div>
   </CommonAppAuthShell>
 </template>
-
-<style scoped>
-.auth-success-illustration {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  margin: 0 auto 4px;
-  color: var(--green);
-  background: color-mix(in srgb, var(--green) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
-}
-</style>

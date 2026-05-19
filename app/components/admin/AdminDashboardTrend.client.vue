@@ -121,26 +121,29 @@ const tooltipTemplate = (d: TrendRow) => {
 
     <div class="mt-3 flex flex-wrap gap-4 text-xs text-muted">
       <span class="inline-flex items-center gap-1.5">
-        <span
-          class="size-2 rounded-full"
-          style="background:var(--ui-primary)"
-        />
+        <span class="trend-legend-dot trend-legend-dot--primary" />
         总调用
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <span
-          class="size-2 rounded-full"
-          style="background:var(--ui-success)"
-        />
+        <span class="trend-legend-dot trend-legend-dot--success" />
         成功
       </span>
       <span class="inline-flex items-center gap-1.5">
-        <span
-          class="size-2 rounded-full"
-          style="background:var(--ui-error)"
-        />
+        <span class="trend-legend-dot trend-legend-dot--error" />
         失败
       </span>
     </div>
   </div>
 </template>
+
+<style scoped>
+.trend-legend-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  display: inline-block;
+}
+.trend-legend-dot--primary { background: var(--ui-primary); }
+.trend-legend-dot--success { background: var(--ui-success); }
+.trend-legend-dot--error { background: var(--ui-error); }
+</style>

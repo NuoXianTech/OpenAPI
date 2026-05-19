@@ -242,19 +242,27 @@ const columns: TableColumn<ApiKey>[] = [
     </template>
 
     <template #body>
-      <UCard class="shadow-sm mb-4">
-        <div class="text-xs text-muted leading-6">
-          <div>
-            • 在请求 OpenAPI 接口时，把 API Key 放在请求头 <code class="font-mono px-1 rounded bg-elevated">x-api-key: &lt;your-key&gt;</code> 或 query 参数 <code class="font-mono px-1 rounded bg-elevated">?apiKey=&lt;your-key&gt;</code> 中。
-          </div>
-          <div>
-            • 出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。
-          </div>
-          <div>
-            • <strong>重置</strong>会立即让旧 Key 失效，请在重置后及时更新调用方代码。<strong>删除</strong>不可恢复。
-          </div>
-        </div>
-      </UCard>
+      <UAlert
+        color="info"
+        variant="subtle"
+        icon="i-mdi-information-outline"
+        title="API Key 使用说明"
+        class="mb-4"
+      >
+        <template #description>
+          <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">
+            <li>
+              请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apiKey=&lt;your-key&gt;</UKbd> 中。
+            </li>
+            <li>
+              出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。
+            </li>
+            <li>
+              <span class="font-medium text-highlighted">重置</span>会立即让旧 Key 失效，请在重置后及时更新调用方代码；<span class="font-medium text-highlighted">删除</span>不可恢复。
+            </li>
+          </ul>
+        </template>
+      </UAlert>
 
       <UTable
         :data="items"

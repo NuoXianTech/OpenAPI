@@ -124,9 +124,9 @@ function gotoOAuth(entry: string) {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           name="i-mdi-account-circle-outline"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -230,10 +230,9 @@ function gotoOAuth(entry: string) {
             v-if="errorMessage"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ errorMessage }}</span>
           </div>
@@ -244,10 +243,9 @@ function gotoOAuth(entry: string) {
             v-if="oauthError"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ oauthError }}</span>
           </div>

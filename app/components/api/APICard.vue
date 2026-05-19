@@ -104,10 +104,9 @@ function formatCallCount(count: number) {
         class="api-card__doc-text"
         :title="props.docUrl"
       >
-        <Icon
+        <UIcon
           name="i-lucide-file-text"
-          size="13"
-          :ssr="true"
+          class="size-3.5"
         />
         {{ props.docUrl }}
       </span>
@@ -159,10 +158,9 @@ function formatCallCount(count: number) {
       />
 
       <span class="api-card__calls">
-        <Icon
+        <UIcon
           name="i-lucide-bar-chart-3"
-          size="12"
-          :ssr="true"
+          class="size-3"
         />
         <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
       </span>
@@ -262,10 +260,9 @@ function formatCallCount(count: number) {
             <span class="api-card__detail-label">调用次数</span>
             <div class="api-card__detail-value api-card__detail-value--row">
               <span class="api-card__calls">
-                <Icon
+                <UIcon
                   name="i-lucide-bar-chart-3"
-                  size="12"
-                  :ssr="true"
+                  class="size-3"
                 />
                 <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
                 <span class="api-card__calls-label">次</span>

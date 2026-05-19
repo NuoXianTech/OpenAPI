@@ -88,10 +88,9 @@ const healthRatio = computed(() => {
           size="sm"
           class="mb-3 w-fit gap-1 rounded-full px-2.5 py-1 text-[11px] tracking-[0.18em] uppercase"
         >
-          <Icon
+          <UIcon
             name="i-lucide-sparkles"
-            size="13"
-            :ssr="true"
+            class="size-3.5"
           />
           Free · Open · Stable
         </UBadge>
@@ -114,10 +113,9 @@ const healthRatio = computed(() => {
             class="h-3"
           />
           <span class="inline-flex items-center gap-1.5">
-            <Icon
+            <UIcon
               name="i-lucide-clock"
-              size="13"
-              :ssr="true"
+              class="size-3.5"
             />
             <span class="font-mono tracking-tight text-default/85">{{ nowTime }}</span>
           </span>
@@ -126,10 +124,9 @@ const healthRatio = computed(() => {
             class="hidden h-3 sm:inline-flex"
           />
           <span class="hidden items-center gap-1.5 sm:inline-flex">
-            <Icon
+            <UIcon
               name="i-lucide-server"
-              size="13"
-              :ssr="true"
+              class="size-3.5"
             />
             <span class="font-mono tracking-tight text-default/85">{{ upTime }}</span>
           </span>
@@ -139,10 +136,9 @@ const healthRatio = computed(() => {
       <div class="grid grid-cols-3 gap-3">
         <div class="hero-stat">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-layers"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">
@@ -155,10 +151,9 @@ const healthRatio = computed(() => {
 
         <div class="hero-stat hero-stat--accent">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-activity"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">
@@ -171,10 +166,9 @@ const healthRatio = computed(() => {
 
         <div class="hero-stat">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-shapes"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">

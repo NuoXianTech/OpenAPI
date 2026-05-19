@@ -48,6 +48,15 @@ const passwordStrength = computed(() => {
   return { label: '强', color: 'success' as const, value: 100 }
 })
 
+const passwordStrengthLabelClass = computed(() => {
+  switch (passwordStrength.value.color) {
+    case 'success': return 'text-success font-medium'
+    case 'warning': return 'text-warning font-medium'
+    case 'error': return 'text-error font-medium'
+    default: return 'text-muted'
+  }
+})
+
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (error instanceof Error && error.message) {
     return error.message
@@ -90,9 +99,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           name="i-mdi-lock-reset"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -115,10 +124,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="space-y-4"
       >
         <div class="auth-message auth-message--error">
-          <Icon
+          <UIcon
             name="i-mdi-link-variant-off"
-            size="16"
-            class="auth-message__icon"
+            class="auth-message__icon size-4"
           />
           <span>重置链接无效或已损坏，请重新申请。</span>
         </div>
@@ -137,9 +145,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         class="space-y-4 text-center"
       >
         <div class="auth-success-illustration">
-          <Icon
+          <UIcon
             name="i-mdi-check"
-            size="44"
+            class="size-11"
           />
         </div>
         <div>
@@ -200,7 +208,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 size="xs"
               />
               <p class="mt-1 text-xs text-muted">
-                密码强度：<span :class="`text-[var(--${passwordStrength.color === 'success' ? 'green' : passwordStrength.color === 'warning' ? 'gray' : 'red'})]`">{{ passwordStrength.label }}</span>
+                密码强度：<span :class="passwordStrengthLabelClass">{{ passwordStrength.label }}</span>
               </p>
             </div>
           </Transition>
@@ -241,10 +249,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-if="errorMessage"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ errorMessage }}</span>
           </div>
@@ -282,18 +289,3 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     </div>
   </CommonAppAuthShell>
 </template>
-
-<style scoped>
-.auth-success-illustration {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  margin: 0 auto 4px;
-  color: var(--green);
-  background: color-mix(in srgb, var(--green) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
-}
-</style>

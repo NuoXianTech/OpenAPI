@@ -33,10 +33,9 @@ const ratio = computed(() => {
           size="sm"
           class="mb-3 w-fit gap-1 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em]"
         >
-          <Icon
+          <UIcon
             name="i-lucide-link"
-            size="13"
-            :ssr="true"
+            class="size-3.5"
           />
           Friend Links
         </UBadge>
@@ -51,10 +50,9 @@ const ratio = computed(() => {
 
         <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
           <span class="inline-flex items-center gap-1.5">
-            <Icon
+            <UIcon
               name="i-lucide-globe"
-              size="13"
-              :ssr="true"
+              class="size-3.5"
             />
             站点互联
           </span>
@@ -63,10 +61,9 @@ const ratio = computed(() => {
             class="h-3"
           />
           <span class="inline-flex items-center gap-1.5">
-            <Icon
+            <UIcon
               name="i-lucide-handshake"
-              size="13"
-              :ssr="true"
+              class="size-3.5"
             />
             欢迎交换
           </span>
@@ -76,10 +73,9 @@ const ratio = computed(() => {
       <div class="grid grid-cols-3 gap-3">
         <div class="hero-stat">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-bookmark"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">
@@ -92,10 +88,9 @@ const ratio = computed(() => {
 
         <div class="hero-stat hero-stat--accent">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-circle-check"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">
@@ -108,10 +103,9 @@ const ratio = computed(() => {
 
         <div class="hero-stat">
           <div class="hero-stat__icon">
-            <Icon
+            <UIcon
               name="i-lucide-circle-x"
-              size="16"
-              :ssr="true"
+              class="size-4"
             />
           </div>
           <div class="hero-stat__value">

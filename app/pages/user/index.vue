@@ -142,8 +142,8 @@ function formatDate(iso: string) {
               v-for="n in recentNotifs"
               :key="n.id"
               to="/user/notifications"
-              class="flex items-center gap-3 py-3 hover:bg-elevated/40 px-1 rounded"
-              :class="{ 'bg-primary/5': !n.isRead }"
+              class="flex items-center gap-3 py-3 px-2 -mx-2 rounded-md transition-colors hover:bg-elevated"
+              :class="{ 'bg-primary/5 hover:bg-primary/10': !n.isRead }"
             >
               <UBadge
                 :color="levelMeta[n.level].color"

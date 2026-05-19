@@ -101,9 +101,9 @@ onMounted(async () => {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           :name="headerIcon"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -126,10 +126,9 @@ onMounted(async () => {
         class="space-y-4"
       >
         <div class="flex items-center gap-2 text-sm text-muted">
-          <Icon
+          <UIcon
             name="i-mdi-loading"
-            size="16"
-            class="animate-spin"
+            class="size-4 animate-spin"
           />
           <span>{{ message }}</span>
         </div>
@@ -142,9 +141,9 @@ onMounted(async () => {
         class="space-y-4 text-center"
       >
         <div class="auth-success-illustration">
-          <Icon
+          <UIcon
             name="i-mdi-check"
-            size="44"
+            class="size-11"
           />
         </div>
         <p class="text-sm text-muted">
@@ -164,10 +163,9 @@ onMounted(async () => {
         class="space-y-4"
       >
         <div class="auth-message auth-message--error">
-          <Icon
+          <UIcon
             name="i-mdi-alert-circle-outline"
-            size="16"
-            class="auth-message__icon"
+            class="auth-message__icon size-4"
           />
           <span>{{ message }}</span>
         </div>
@@ -213,18 +211,3 @@ onMounted(async () => {
     </div>
   </CommonAppAuthShell>
 </template>
-
-<style scoped>
-.auth-success-illustration {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  margin: 0 auto 4px;
-  color: var(--green);
-  background: color-mix(in srgb, var(--green) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
-}
-</style>

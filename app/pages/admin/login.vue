@@ -74,9 +74,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <CommonAppAuthShell>
     <div class="auth-brand">
       <div class="auth-brand__logo">
-        <Icon
+        <UIcon
           name="i-mdi-shield-crown-outline"
-          size="26"
+          class="size-6"
         />
       </div>
       <div>
@@ -160,10 +160,9 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             v-if="errorMsg"
             class="auth-message auth-message--error"
           >
-            <Icon
+            <UIcon
               name="i-mdi-alert-circle-outline"
-              size="16"
-              class="auth-message__icon"
+              class="auth-message__icon size-4"
             />
             <span>{{ errorMsg }}</span>
           </div>
