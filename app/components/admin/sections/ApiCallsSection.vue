@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 
-useHead({ title: '调用日志' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
 const UBadge = resolveComponent('UBadge')
 
 interface AggregateRow {
@@ -76,7 +72,6 @@ const aggregateColumns: TableColumn<AggregateRow>[] = [
   }
 ]
 
-// ----- 调用明细日志 -----
 interface AdminCallRow {
   id: number
   apiId: number
@@ -256,116 +251,110 @@ const logColumns: TableColumn<AdminCallRow>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="admin-calls">
-    <template #header>
-      <UDashboardNavbar title="调用统计">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
+  <div class="space-y-6">
+    <div class="flex items-center justify-end">
+      <UButton
+        color="neutral"
+        variant="outline"
+        icon="i-mdi-refresh"
+        :loading="status === 'pending'"
+        @click="refresh()"
+      >
+        刷新
+      </UButton>
+    </div>
+
+    <DashboardStatGrid>
+      <DashboardStatCard
+        v-for="card in overviewCards"
+        :key="card.label"
+        :label="card.label"
+        :value="card.value"
+        :icon="card.icon"
+      />
+    </DashboardStatGrid>
+
+    <UCard>
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon
+            name="i-mdi-chart-bar"
+            class="size-5 text-muted"
           />
-        </template>
-      </UDashboardNavbar>
-    </template>
+          <h3 class="font-semibold">
+            按 API 聚合（按日）
+          </h3>
+        </div>
+      </template>
+      <DashboardDataTable
+        :data="stats.items"
+        :columns="aggregateColumns"
+        :loading="status === 'pending'"
+        empty-title="暂无聚合数据"
+        empty-icon="i-mdi-chart-bar"
+      />
+    </UCard>
 
-    <template #body>
-      <div class="space-y-6">
-        <DashboardStatGrid>
-          <DashboardStatCard
-            v-for="card in overviewCards"
-            :key="card.label"
-            :label="card.label"
-            :value="card.value"
-            :icon="card.icon"
+    <UCard>
+      <template #header>
+        <div class="flex items-center gap-2 flex-wrap">
+          <UIcon
+            name="i-mdi-history"
+            class="size-5 text-muted"
           />
-        </DashboardStatGrid>
+          <h3 class="font-semibold">
+            调用明细日志（含扣费）
+          </h3>
+        </div>
+      </template>
 
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-chart-bar"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                按 API 聚合（按日）
-              </h3>
-            </div>
-          </template>
-          <DashboardDataTable
-            :data="stats.items"
-            :columns="aggregateColumns"
-            :loading="status === 'pending'"
-            empty-title="暂无聚合数据"
-            empty-icon="i-mdi-chart-bar"
+      <div class="flex flex-wrap items-end gap-3 mb-4">
+        <UFormField
+          label="用户 ID"
+          class="min-w-[160px]"
+        >
+          <UInput
+            v-model.number="logFilters.userId"
+            type="number"
+            placeholder="留空查全部"
           />
-        </UCard>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center gap-2 flex-wrap">
-              <UIcon
-                name="i-mdi-history"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                调用明细日志（含扣费）
-              </h3>
-            </div>
-          </template>
-
-          <div class="flex flex-wrap items-end gap-3 mb-4">
-            <UFormField
-              label="用户 ID"
-              class="min-w-[160px]"
-            >
-              <UInput
-                v-model.number="logFilters.userId"
-                type="number"
-                placeholder="留空查全部"
-              />
-            </UFormField>
-            <UFormField
-              label="状态"
-              class="min-w-[160px]"
-            >
-              <USelect
-                v-model="logFilters.status"
-                :items="statusSelectItems"
-              />
-            </UFormField>
-            <div class="flex gap-2">
-              <UButton
-                icon="i-mdi-magnify"
-                @click="applyLogFilters"
-              >
-                查询
-              </UButton>
-              <UButton
-                color="neutral"
-                variant="outline"
-                @click="resetLogFilters"
-              >
-                重置
-              </UButton>
-            </div>
-          </div>
-
-          <DashboardDataTable
-            v-model:page="logPage"
-            :data="logItems"
-            :columns="logColumns"
-            :loading="logLoading"
-            :page-size="logPageSize"
-            :total="logTotal"
-            empty-title="暂无调用记录"
-            empty-icon="i-mdi-history"
+        </UFormField>
+        <UFormField
+          label="状态"
+          class="min-w-[160px]"
+        >
+          <USelect
+            v-model="logFilters.status"
+            :items="statusSelectItems"
           />
-        </UCard>
+        </UFormField>
+        <div class="flex gap-2">
+          <UButton
+            icon="i-mdi-magnify"
+            @click="applyLogFilters"
+          >
+            查询
+          </UButton>
+          <UButton
+            color="neutral"
+            variant="outline"
+            @click="resetLogFilters"
+          >
+            重置
+          </UButton>
+        </div>
       </div>
-    </template>
-  </UDashboardPanel>
+
+      <DashboardDataTable
+        v-model:page="logPage"
+        :data="logItems"
+        :columns="logColumns"
+        :loading="logLoading"
+        :page-size="logPageSize"
+        :total="logTotal"
+        empty-title="暂无调用记录"
+        empty-icon="i-mdi-history"
+      />
+    </UCard>
+  </div>
 </template>

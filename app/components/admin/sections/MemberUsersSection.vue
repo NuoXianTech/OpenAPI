@@ -2,10 +2,6 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
 
-useHead({ title: '用户管理' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
 const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
@@ -28,7 +24,6 @@ const {
   errMsg
 } = useAdminUsersPage()
 
-// ----- Delete modal -----
 const deleteOpen = ref(false)
 const deleteTarget = ref<AdminUserItem | null>(null)
 const deleteLoading = ref(false)
@@ -51,7 +46,6 @@ async function confirmDelete() {
   }
 }
 
-// ----- Edit modal -----
 const editOpen = ref(false)
 const editTarget = ref<AdminUserItem | null>(null)
 
@@ -60,7 +54,6 @@ function openEdit(item: AdminUserItem) {
   editOpen.value = true
 }
 
-// ----- Keys modal -----
 const keysOpen = ref(false)
 const keysTarget = ref<AdminUserItem | null>(null)
 
@@ -69,7 +62,6 @@ function openKeys(item: AdminUserItem) {
   keysOpen.value = true
 }
 
-// ----- Credit modal -----
 const creditOpen = ref(false)
 const creditUserIds = ref<number[]>([])
 const creditSelectionLabel = ref('')
@@ -191,101 +183,95 @@ const columns: TableColumn<AdminUserItem>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="admin-users">
-    <template #header>
-      <UDashboardNavbar title="用户管理">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
-        </template>
-      </UDashboardNavbar>
-
-      <UDashboardToolbar>
-        <UInput
-          v-model="keyword"
-          icon="i-mdi-magnify"
-          placeholder="搜索用户名、邮箱..."
-          class="max-w-sm"
-        />
-        <div class="ml-auto flex items-center gap-2 flex-wrap">
-          <span class="text-xs text-muted">
-            已选 {{ selectedIds.length }} / {{ items.length }}
-          </span>
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            :icon="allSelected ? 'i-mdi-checkbox-multiple-blank-outline' : 'i-mdi-checkbox-multiple-marked-outline'"
-            @click="toggleSelectAll(!allSelected)"
-          >
-            {{ allSelected ? '清空选择' : '全选当前页' }}
-          </UButton>
-          <UButton
-            size="sm"
-            color="primary"
-            variant="outline"
-            icon="i-mdi-cash-multiple"
-            :disabled="selectedIds.length === 0"
-            @click="openCreditForSelection"
-          >
-            批量调整积分
-          </UButton>
-          <UButton
-            size="sm"
-            color="warning"
-            variant="outline"
-            icon="i-mdi-cash-100"
-            @click="openCreditForAll"
-          >
-            全员积分操作
-          </UButton>
-        </div>
-      </UDashboardToolbar>
-    </template>
-
-    <template #body>
-      <UTable
-        :data="items"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2'
-        }"
+  <div class="space-y-4">
+    <div class="flex items-center gap-2 flex-wrap">
+      <UInput
+        v-model="keyword"
+        icon="i-mdi-magnify"
+        placeholder="搜索用户名、邮箱..."
+        class="max-w-sm"
       />
+      <div class="ml-auto flex items-center gap-2 flex-wrap">
+        <span class="text-xs text-muted">
+          已选 {{ selectedIds.length }} / {{ items.length }}
+        </span>
+        <UButton
+          size="sm"
+          color="neutral"
+          variant="outline"
+          :icon="allSelected ? 'i-mdi-checkbox-multiple-blank-outline' : 'i-mdi-checkbox-multiple-marked-outline'"
+          @click="toggleSelectAll(!allSelected)"
+        >
+          {{ allSelected ? '清空选择' : '全选当前页' }}
+        </UButton>
+        <UButton
+          size="sm"
+          color="primary"
+          variant="outline"
+          icon="i-mdi-cash-multiple"
+          :disabled="selectedIds.length === 0"
+          @click="openCreditForSelection"
+        >
+          批量调整积分
+        </UButton>
+        <UButton
+          size="sm"
+          color="warning"
+          variant="outline"
+          icon="i-mdi-cash-100"
+          @click="openCreditForAll"
+        >
+          全员积分操作
+        </UButton>
+        <UButton
+          size="sm"
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="status === 'pending'"
+          @click="refresh"
+        >
+          刷新
+        </UButton>
+      </div>
+    </div>
 
-      <AdminUserEditModal
-        v-model:open="editOpen"
-        :target="editTarget"
-        :on-submit="updateUser"
-      />
+    <UTable
+      :data="items"
+      :columns="columns"
+      :loading="status === 'pending'"
+      :ui="{
+        base: 'table-fixed',
+        thead: '[&>tr]:bg-elevated/50',
+        th: 'py-2',
+        td: 'py-2'
+      }"
+    />
 
-      <AdminUserKeysModal
-        v-model:open="keysOpen"
-        :target="keysTarget"
-      />
+    <AdminUserEditModal
+      v-model:open="editOpen"
+      :target="editTarget"
+      :on-submit="updateUser"
+    />
 
-      <AdminCreditModal
-        v-model:open="creditOpen"
-        :user-ids="creditUserIds"
-        :selection-label="creditSelectionLabel"
-        @saved="onCreditSaved"
-      />
+    <AdminUserKeysModal
+      v-model:open="keysOpen"
+      :target="keysTarget"
+    />
 
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除用户: ${deleteTarget?.username}`"
-        description="删除用户后，其所有数据（API Keys、会话等）将被永久移除。"
-        @confirm="confirmDelete"
-      />
-    </template>
-  </UDashboardPanel>
+    <AdminCreditModal
+      v-model:open="creditOpen"
+      :user-ids="creditUserIds"
+      :selection-label="creditSelectionLabel"
+      @saved="onCreditSaved"
+    />
+
+    <AdminDeleteModal
+      v-model:open="deleteOpen"
+      :loading="deleteLoading"
+      :title="`删除用户: ${deleteTarget?.username}`"
+      description="删除用户后，其所有数据（API Keys、会话等）将被永久移除。"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

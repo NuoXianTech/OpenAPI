@@ -47,31 +47,15 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     {
       label: '业务',
       items: [
-        { label: 'API 管理', icon: 'i-mdi-api', to: '/admin/apis' },
-        { label: '调用日志', icon: 'i-mdi-chart-bar', to: '/admin/calls' },
-        { label: '第三方登录', icon: 'i-mdi-shield-key-outline', to: '/admin/oauth-providers' }
+        { label: 'API 中心', icon: 'i-mdi-api', to: '/admin/api-hub' },
+        { label: '会员中心', icon: 'i-mdi-account-group-outline', to: '/admin/members' }
       ]
     },
     {
-      label: '用户与积分',
+      label: '运营',
       items: [
-        { label: '用户管理', icon: 'i-mdi-account-group-outline', to: '/admin/users' },
-        { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/redemption-codes' }
-      ]
-    },
-    {
-      label: '内容',
-      items: [
-        { label: '公告', icon: 'i-mdi-bullhorn-outline', to: '/admin/announcements' },
-        { label: '通知', icon: 'i-mdi-bell-outline', to: '/admin/notifications' },
-        { label: '友情链接', icon: 'i-mdi-link-variant', to: '/admin/friend-links' }
-      ]
-    },
-    {
-      label: '系统',
-      items: [
-        { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/settings' },
-        { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: '/admin/profile' }
+        { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: '/admin/content' },
+        { label: '系统', icon: 'i-mdi-cog-outline', to: '/admin/system' }
       ]
     }
   ],
@@ -79,20 +63,21 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ],
   quickActions: [
-    { label: '登记接口', icon: 'i-mdi-plus-circle-outline', to: '/admin/apis' },
-    { label: '发布公告', icon: 'i-mdi-bullhorn-outline', to: '/admin/announcements' },
-    { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/redemption-codes' },
-    { label: '调整用户积分', icon: 'i-mdi-cash-multiple', to: '/admin/users' },
-    { label: '查看调用日志', icon: 'i-mdi-history', to: '/admin/calls' },
-    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/settings' }
+    { label: '登记接口', icon: 'i-mdi-plus-circle-outline', to: '/admin/api-hub#governance' },
+    { label: '发布公告', icon: 'i-mdi-bullhorn-outline', to: '/admin/content#announcements' },
+    { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/members#redemption-codes' },
+    { label: '调整用户积分', icon: 'i-mdi-cash-multiple', to: '/admin/members#users' },
+    { label: '查看调用日志', icon: 'i-mdi-history', to: '/admin/api-hub#calls' },
+    { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: '/admin/system#operation-logs' },
+    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/system#settings' }
   ],
   userMenuExtra: () => [[
-    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: '/admin/profile' },
-    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/settings' },
+    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: '/admin/system#profile' },
+    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/system#settings' },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
   loginRedirect: '/admin/login',
-  notificationLink: '/admin/notifications'
+  notificationLink: '/admin/content#notifications'
 }
 
 export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {

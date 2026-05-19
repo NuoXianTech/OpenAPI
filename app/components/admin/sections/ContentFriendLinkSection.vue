@@ -2,10 +2,6 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
 
-useHead({ title: '友链管理' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
 const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
@@ -81,51 +77,47 @@ const columns: TableColumn<FriendLinkItem>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="admin-friend-links">
-    <template #header>
-      <UDashboardNavbar title="友情链接">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <UButton
-            icon="i-mdi-plus"
-            @click="openAdd"
-          >
-            新增链接
-          </UButton>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
-        </template>
-      </UDashboardNavbar>
-    </template>
-
-    <template #body>
-      <UTable
-        :data="items"
-        :columns="columns"
+  <div class="space-y-4">
+    <div class="flex items-center justify-end gap-2">
+      <UButton
+        icon="i-mdi-plus"
+        @click="openAdd"
+      >
+        新增链接
+      </UButton>
+      <UButton
+        color="neutral"
+        variant="outline"
+        icon="i-mdi-refresh"
         :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2'
-        }"
-      />
+        @click="refresh()"
+      >
+        刷新
+      </UButton>
+    </div>
 
-      <AdminLinkModal
-        v-model:open="modalOpen"
-        :item="editItem"
-        @saved="refresh()"
-      />
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除: ${deleteTarget?.title}`"
-        @confirm="confirmDelete"
-      />
-    </template>
-  </UDashboardPanel>
+    <UTable
+      :data="items"
+      :columns="columns"
+      :loading="status === 'pending'"
+      :ui="{
+        base: 'table-fixed',
+        thead: '[&>tr]:bg-elevated/50',
+        th: 'py-2',
+        td: 'py-2'
+      }"
+    />
+
+    <AdminLinkModal
+      v-model:open="modalOpen"
+      :item="editItem"
+      @saved="refresh()"
+    />
+    <AdminDeleteModal
+      v-model:open="deleteOpen"
+      :loading="deleteLoading"
+      :title="`删除: ${deleteTarget?.title}`"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

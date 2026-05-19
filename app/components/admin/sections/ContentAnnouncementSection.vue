@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
-useHead({ title: '公告管理' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
 interface Announcement {
   id: number
   title: string
@@ -24,6 +20,7 @@ const toast = useToast()
 const UBadge = resolveComponent('UBadge')
 const UButton = resolveComponent('UButton')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
+const USwitch = resolveComponent('USwitch')
 
 const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
   default: () => []
@@ -102,8 +99,6 @@ function formatDate(iso: string | null) {
   }
 }
 
-const USwitch = resolveComponent('USwitch')
-
 const columns: TableColumn<Announcement>[] = [
   {
     accessorKey: 'title',
@@ -169,54 +164,50 @@ const columns: TableColumn<Announcement>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="admin-announcements">
-    <template #header>
-      <UDashboardNavbar title="公告管理">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <UButton
-            icon="i-mdi-plus"
-            @click="openAdd"
-          >
-            新建公告
-          </UButton>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
-        </template>
-      </UDashboardNavbar>
-    </template>
-
-    <template #body>
-      <UTable
-        :data="items"
-        :columns="columns"
+  <div class="space-y-4">
+    <div class="flex items-center justify-end gap-2">
+      <UButton
+        icon="i-mdi-plus"
+        @click="openAdd"
+      >
+        新建公告
+      </UButton>
+      <UButton
+        color="neutral"
+        variant="outline"
+        icon="i-mdi-refresh"
         :loading="status === 'pending'"
-        class="shrink-0"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2 align-top'
-        }"
-      />
+        @click="refresh()"
+      >
+        刷新
+      </UButton>
+    </div>
 
-      <AdminAnnouncementModal
-        v-model:open="modalOpen"
-        :item="editItem"
-        @saved="refresh()"
-      />
+    <UTable
+      :data="items"
+      :columns="columns"
+      :loading="status === 'pending'"
+      class="shrink-0"
+      :ui="{
+        base: 'table-fixed',
+        thead: '[&>tr]:bg-elevated/50',
+        th: 'py-2',
+        td: 'py-2 align-top'
+      }"
+    />
 
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除公告: ${deleteTarget?.title}`"
-        description="删除后该公告不再展示，且不可恢复。"
-        @confirm="confirmDelete"
-      />
-    </template>
-  </UDashboardPanel>
+    <AdminAnnouncementModal
+      v-model:open="modalOpen"
+      :item="editItem"
+      @saved="refresh()"
+    />
+
+    <AdminDeleteModal
+      v-model:open="deleteOpen"
+      :loading="deleteLoading"
+      :title="`删除公告: ${deleteTarget?.title}`"
+      description="删除后该公告不再展示，且不可恢复。"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

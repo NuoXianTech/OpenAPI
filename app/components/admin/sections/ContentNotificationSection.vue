@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
-useHead({ title: '通知管理' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
 interface UserItem {
   id: number
   username: string
@@ -38,7 +34,6 @@ const { data: messagesData, status, refresh } = useLazyFetch<MessageRow[]>('/api
 })
 const messages = computed<MessageRow[]>(() => messagesData.value || [])
 
-// ----- 撰写表单 -----
 const form = reactive({
   audience: 'specific' as MessageRow['audience'],
   recipientUserIds: [] as number[],
@@ -103,7 +98,6 @@ async function submitSend() {
   }
 }
 
-// ----- 详情 -----
 const detailOpen = ref(false)
 const detailLoading = ref(false)
 const detailMessage = ref<MessageRow | null>(null)
@@ -121,7 +115,6 @@ async function openDetail(row: MessageRow) {
   }
 }
 
-// ----- 删除 -----
 const deleteOpen = ref(false)
 const deleteTarget = ref<MessageRow | null>(null)
 const deleteLoading = ref(false)
@@ -149,7 +142,6 @@ async function confirmDelete() {
   }
 }
 
-// ----- 渲染辅助 -----
 const levelMeta: Record<MessageRow['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
   info: { color: 'info', label: '通知' },
   success: { color: 'success', label: '成功' },
@@ -232,202 +224,194 @@ const columns: TableColumn<MessageRow>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="admin-notifications">
-    <template #header>
-      <UDashboardNavbar title="通知管理">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
-        </template>
-      </UDashboardNavbar>
-    </template>
+  <div class="space-y-4">
+    <div class="flex items-center justify-end">
+      <UButton
+        color="neutral"
+        variant="outline"
+        icon="i-mdi-refresh"
+        :loading="status === 'pending'"
+        @click="refresh()"
+      >
+        刷新
+      </UButton>
+    </div>
 
-    <template #body>
-      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <!-- 撰写 -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-email-edit-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                发送新通知
-              </h3>
-            </div>
-          </template>
-          <div class="space-y-4">
-            <UFormField label="发送范围">
-              <USelect
-                v-model="form.audience"
-                :items="audienceOptions"
-              />
-              <p
-                v-if="form.audience === 'all_with_future'"
-                class="text-xs text-muted mt-1.5"
-              >
-                选择此项后，新注册用户首次激活时将自动补发本条通知。
-              </p>
-            </UFormField>
-
-            <UFormField
-              v-if="form.audience === 'specific'"
-              label="收件人（可多选）"
-            >
-              <USelectMenu
-                v-model="form.recipientUserIds"
-                :items="userOptions"
-                multiple
-                searchable
-                value-key="value"
-                placeholder="搜索用户名/邮箱..."
-              />
-            </UFormField>
-
-            <div class="grid grid-cols-3 gap-3">
-              <UFormField
-                label="标题"
-                class="col-span-2"
-              >
-                <UInput
-                  v-model="form.title"
-                  placeholder="最多 200 字"
-                />
-              </UFormField>
-              <UFormField label="级别">
-                <USelect
-                  v-model="form.level"
-                  :items="levelOptions"
-                />
-              </UFormField>
-            </div>
-
-            <UFormField label="内容">
-              <UTextarea
-                v-model="form.content"
-                :rows="6"
-                placeholder="支持纯文本，换行将保留"
-              />
-            </UFormField>
-
-            <UFormField label="附加链接（可选）">
-              <UInput
-                v-model="form.linkUrl"
-                placeholder="https://example.com/post/xx"
-              />
-            </UFormField>
-
-            <div class="flex justify-end">
-              <UButton
-                icon="i-mdi-send"
-                :loading="sending"
-                @click="submitSend"
-              >
-                发送
-              </UButton>
-            </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <UCard class="shadow-sm">
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-email-edit-outline"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold">
+              发送新通知
+            </h3>
           </div>
-        </UCard>
+        </template>
+        <div class="space-y-4">
+          <UFormField label="发送范围">
+            <USelect
+              v-model="form.audience"
+              :items="audienceOptions"
+            />
+            <p
+              v-if="form.audience === 'all_with_future'"
+              class="text-xs text-muted mt-1.5"
+            >
+              选择此项后，新注册用户首次激活时将自动补发本条通知。
+            </p>
+          </UFormField>
 
-        <!-- 历史 -->
-        <UCard class="shadow-sm">
-          <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-history"
-                class="size-5 text-muted"
+          <UFormField
+            v-if="form.audience === 'specific'"
+            label="收件人（可多选）"
+          >
+            <USelectMenu
+              v-model="form.recipientUserIds"
+              :items="userOptions"
+              multiple
+              searchable
+              value-key="value"
+              placeholder="搜索用户名/邮箱..."
+            />
+          </UFormField>
+
+          <div class="grid grid-cols-3 gap-3">
+            <UFormField
+              label="标题"
+              class="col-span-2"
+            >
+              <UInput
+                v-model="form.title"
+                placeholder="最多 200 字"
               />
-              <h3 class="font-semibold">
-                发送历史
-              </h3>
-              <span class="ml-auto text-xs text-muted">
-                用户的"已读"或个人删除不会影响此处历史
+            </UFormField>
+            <UFormField label="级别">
+              <USelect
+                v-model="form.level"
+                :items="levelOptions"
+              />
+            </UFormField>
+          </div>
+
+          <UFormField label="内容">
+            <UTextarea
+              v-model="form.content"
+              :rows="6"
+              placeholder="支持纯文本，换行将保留"
+            />
+          </UFormField>
+
+          <UFormField label="附加链接（可选）">
+            <UInput
+              v-model="form.linkUrl"
+              placeholder="https://example.com/post/xx"
+            />
+          </UFormField>
+
+          <div class="flex justify-end">
+            <UButton
+              icon="i-mdi-send"
+              :loading="sending"
+              @click="submitSend"
+            >
+              发送
+            </UButton>
+          </div>
+        </div>
+      </UCard>
+
+      <UCard class="shadow-sm">
+        <template #header>
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-history"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold">
+              发送历史
+            </h3>
+            <span class="ml-auto text-xs text-muted">
+              用户的"已读"或个人删除不会影响此处历史
+            </span>
+          </div>
+        </template>
+        <UTable
+          :data="messages"
+          :columns="columns"
+          :loading="status === 'pending'"
+          :ui="{
+            base: 'table-fixed',
+            th: 'py-2',
+            td: 'py-2 align-top'
+          }"
+        />
+      </UCard>
+    </div>
+
+    <UModal
+      v-model:open="detailOpen"
+      :ui="{ content: 'sm:max-w-2xl' }"
+    >
+      <template #content>
+        <div class="p-6 max-h-[80vh] overflow-y-auto">
+          <h3 class="text-lg font-semibold mb-1">
+            接收详情
+          </h3>
+          <p
+            v-if="detailMessage"
+            class="text-xs text-muted mb-4"
+          >
+            {{ detailMessage.title }} · {{ formatDate(detailMessage.createdAt) }} ·
+            范围 {{ audienceMeta[detailMessage.audience].label }} ·
+            已投递 {{ detailMessage.deliveredCount }} / 已读 {{ detailMessage.readCount }}
+          </p>
+          <div
+            v-if="detailLoading"
+            class="text-center text-sm text-muted py-8"
+          >
+            加载中...
+          </div>
+          <div
+            v-else-if="detailRows.length === 0"
+            class="text-center text-sm text-muted py-8"
+          >
+            暂无投递记录
+          </div>
+          <div
+            v-else
+            class="divide-y divide-default"
+          >
+            <div
+              v-for="r in detailRows"
+              :key="r.id"
+              class="flex items-center gap-3 py-2 text-sm"
+            >
+              <UIcon
+                :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
+                :class="r.isRead ? 'text-success' : 'text-muted'"
+                class="size-4"
+              />
+              <span class="flex-1 font-medium">
+                {{ r.recipientUsername || `#${r.recipientUserId}` }}
+              </span>
+              <span class="text-xs text-muted">
+                {{ r.isRead ? `已读 · ${formatDate(r.readAt)}` : '未读' }}
               </span>
             </div>
-          </template>
-          <UTable
-            :data="messages"
-            :columns="columns"
-            :loading="status === 'pending'"
-            :ui="{
-              base: 'table-fixed',
-              th: 'py-2',
-              td: 'py-2 align-top'
-            }"
-          />
-        </UCard>
-      </div>
-
-      <!-- 详情 modal -->
-      <UModal
-        v-model:open="detailOpen"
-        :ui="{ content: 'sm:max-w-2xl' }"
-      >
-        <template #content>
-          <div class="p-6 max-h-[80vh] overflow-y-auto">
-            <h3 class="text-lg font-semibold mb-1">
-              接收详情
-            </h3>
-            <p
-              v-if="detailMessage"
-              class="text-xs text-muted mb-4"
-            >
-              {{ detailMessage.title }} · {{ formatDate(detailMessage.createdAt) }} ·
-              范围 {{ audienceMeta[detailMessage.audience].label }} ·
-              已投递 {{ detailMessage.deliveredCount }} / 已读 {{ detailMessage.readCount }}
-            </p>
-            <div
-              v-if="detailLoading"
-              class="text-center text-sm text-muted py-8"
-            >
-              加载中...
-            </div>
-            <div
-              v-else-if="detailRows.length === 0"
-              class="text-center text-sm text-muted py-8"
-            >
-              暂无投递记录
-            </div>
-            <div
-              v-else
-              class="divide-y divide-default"
-            >
-              <div
-                v-for="r in detailRows"
-                :key="r.id"
-                class="flex items-center gap-3 py-2 text-sm"
-              >
-                <UIcon
-                  :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
-                  :class="r.isRead ? 'text-success' : 'text-muted'"
-                  class="size-4"
-                />
-                <span class="flex-1 font-medium">
-                  {{ r.recipientUsername || `#${r.recipientUserId}` }}
-                </span>
-                <span class="text-xs text-muted">
-                  {{ r.isRead ? `已读 · ${formatDate(r.readAt)}` : '未读' }}
-                </span>
-              </div>
-            </div>
           </div>
-        </template>
-      </UModal>
+        </div>
+      </template>
+    </UModal>
 
-      <!-- 删除确认 -->
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除通知: ${deleteTarget?.title || ''}`"
-        description="软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
-        @confirm="confirmDelete"
-      />
-    </template>
-  </UDashboardPanel>
+    <AdminDeleteModal
+      v-model:open="deleteOpen"
+      :loading="deleteLoading"
+      :title="`删除通知: ${deleteTarget?.title || ''}`"
+      description="软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

@@ -1,16 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 
-useHead({ title: 'API 管理' })
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const USwitch = resolveComponent('USwitch')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
 interface DiscoveredEndpoint {
   apiPath: string
   method: string
@@ -60,6 +50,12 @@ interface VersionGroup {
   stats: { total: number, registered: number, unregistered: number, orphaned: number }
 }
 
+const toast = useToast()
+const UBadge = resolveComponent('UBadge')
+const USwitch = resolveComponent('USwitch')
+const UButton = resolveComponent('UButton')
+const UDropdownMenu = resolveComponent('UDropdownMenu')
+
 const { data, status, refresh } = useLazyFetch('/api/admin/apis/discover', {
   default: () => ({ versions: [] as VersionGroup[] })
 })
@@ -101,7 +97,7 @@ const filteredApis = computed<DiscoveredApi[]>(() => {
   })
 })
 
-const versionTabs = computed(() => versions.value.map(v => ({
+const versionItems = computed(() => versions.value.map(v => ({
   label: `${v.pathVersion} (${v.stats.registered}/${v.stats.total})`,
   value: v.pathVersion
 })))
@@ -323,82 +319,74 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
 </script>
 
 <template>
-  <UDashboardPanel id="admin-apis">
-    <template #header>
-      <UDashboardNavbar title="API 管理">
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
-        </template>
-      </UDashboardNavbar>
-
-      <UDashboardToolbar>
-        <div class="flex items-center gap-2 flex-wrap">
-          <UTabs
-            v-if="versionTabs.length > 0"
-            v-model="activeVersion"
-            :items="versionTabs"
-            size="sm"
-            :ui="{ list: 'bg-transparent' }"
-          />
-          <USelect
-            v-model="filterMode"
-            :items="filterOptions"
-            size="sm"
-            class="w-32"
-          />
-          <UInput
-            v-model="keyword"
-            icon="i-mdi-magnify"
-            placeholder="搜索 code / 名称..."
-            size="sm"
-            class="max-w-sm"
-          />
-        </div>
-      </UDashboardToolbar>
-    </template>
-
-    <template #body>
-      <div
-        v-if="versions.length === 0 && status !== 'pending'"
-        class="text-center py-12 text-muted"
-      >
-        未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
-      </div>
-
-      <UTable
-        v-else
-        :data="filteredApis"
-        :columns="columns"
+  <div class="space-y-4">
+    <div class="flex items-center gap-2 flex-wrap">
+      <USelect
+        v-if="versionItems.length > 0"
+        v-model="activeVersion"
+        :items="versionItems"
+        size="sm"
+        class="w-44"
+      />
+      <USelect
+        v-model="filterMode"
+        :items="filterOptions"
+        size="sm"
+        class="w-32"
+      />
+      <UInput
+        v-model="keyword"
+        icon="i-mdi-magnify"
+        placeholder="搜索 code / 名称..."
+        size="sm"
+        class="max-w-sm"
+      />
+      <UButton
+        class="ml-auto"
+        color="neutral"
+        variant="outline"
+        icon="i-mdi-refresh"
         :loading="status === 'pending'"
-        class="shrink-0"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2 align-top'
-        }"
-      />
+        @click="refresh()"
+      >
+        刷新
+      </UButton>
+    </div>
 
-      <AdminApiModal
-        v-model:open="modalOpen"
-        :mode="modalMode"
-        :target="modalTarget"
-        @saved="refresh()"
-      />
+    <div
+      v-if="versions.length === 0 && status !== 'pending'"
+      class="text-center py-12 text-muted"
+    >
+      未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
+    </div>
 
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除登记: ${deleteTarget?.code}`"
-        description="删除登记后该接口默认拒绝访问。代码文件不会被删除，可随时重新登记。"
-        @confirm="confirmDelete"
-      />
-    </template>
-  </UDashboardPanel>
+    <UTable
+      v-else
+      :data="filteredApis"
+      :columns="columns"
+      :loading="status === 'pending'"
+      class="shrink-0"
+      :ui="{
+        base: 'table-fixed',
+        thead: '[&>tr]:bg-elevated/50',
+        th: 'py-2',
+        td: 'py-2 align-top'
+      }"
+    />
+
+    <AdminApiModal
+      v-model:open="modalOpen"
+      :mode="modalMode"
+      :target="modalTarget"
+      @saved="refresh()"
+    />
+
+    <AdminDeleteModal
+      v-model:open="deleteOpen"
+      :loading="deleteLoading"
+      :title="`删除登记: ${deleteTarget?.code}`"
+      description="删除登记后该接口默认拒绝访问。代码文件不会被删除，可随时重新登记。"
+      @confirm="confirmDelete"
+    />
+  </div>
 </template>

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, redemptionRecords, users } from '@nuxthub/db/schema'
 
 /**
@@ -364,6 +364,58 @@ export const redemptionService = {
       .leftJoin(users, eq(users.id, redemptionRecords.userId))
       .where(eq(redemptionRecords.codeId, codeId))
       .orderBy(desc(redemptionRecords.redeemedAt))
+  },
+
+  /** 管理员视角：兑换记录全量查询，支持按 code / batch / user / 时间区间过滤 + 分页。 */
+  async listRedemptions(filters: {
+    codeId?: number
+    userId?: number
+    batchId?: string
+    startAt?: Date
+    endAt?: Date
+    limit?: number
+    offset?: number
+  } = {}) {
+    const conditions: SQL[] = []
+    if (typeof filters.codeId === 'number') conditions.push(eq(redemptionRecords.codeId, filters.codeId))
+    if (typeof filters.userId === 'number') conditions.push(eq(redemptionRecords.userId, filters.userId))
+    if (filters.batchId) conditions.push(eq(redemptionCodes.batchId, filters.batchId))
+    if (filters.startAt) conditions.push(gte(redemptionRecords.redeemedAt, filters.startAt))
+    if (filters.endAt) conditions.push(lte(redemptionRecords.redeemedAt, filters.endAt))
+
+    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
+    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const where = conditions.length ? and(...conditions) : undefined
+
+    const baseQuery = db.select({
+      id: redemptionRecords.id,
+      codeId: redemptionRecords.codeId,
+      code: redemptionCodes.code,
+      batchId: redemptionCodes.batchId,
+      userId: redemptionRecords.userId,
+      username: users.username,
+      amount: redemptionRecords.amount,
+      ip: redemptionRecords.ip,
+      redeemedAt: redemptionRecords.redeemedAt
+    })
+      .from(redemptionRecords)
+      .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
+      .leftJoin(users, eq(users.id, redemptionRecords.userId))
+
+    const countQuery = db.select({ value: count() })
+      .from(redemptionRecords)
+      .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
+
+    const [items, totalRows] = await Promise.all([
+      where
+        ? baseQuery.where(where).orderBy(desc(redemptionRecords.redeemedAt)).limit(limit).offset(offset)
+        : baseQuery.orderBy(desc(redemptionRecords.redeemedAt)).limit(limit).offset(offset),
+      where
+        ? countQuery.where(where)
+        : countQuery
+    ])
+
+    return { items, total: Number(totalRows[0]?.value || 0) }
   }
 }
 
