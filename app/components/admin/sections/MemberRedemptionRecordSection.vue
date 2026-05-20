@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
 interface RedemptionRecordRow {
   id: number
@@ -15,63 +16,36 @@ interface RedemptionRecordRow {
 
 const props = defineProps<{ defaultCodeId?: number, defaultUserId?: number }>()
 
-const filters = reactive({
-  codeId: '' as number | '',
-  userId: '' as number | '',
-  batchId: ''
+const pageSize = 50
+const {
+  filters,
+  page,
+  items,
+  total,
+  status,
+  applyFilters,
+  reset
+} = useAdminPagedList<{ codeId: number | '', userId: number | '', batchId: string }, RedemptionRecordRow>({
+  path: '/api/admin/redemption-codes/redemptions',
+  defaultFilters: { codeId: '', userId: '', batchId: '' },
+  defaultPageSize: pageSize,
+  immediate: false,
+  buildQuery: (f, p) => ({
+    codeId: f.codeId || undefined,
+    userId: f.userId || undefined,
+    batchId: f.batchId.trim() || undefined,
+    limit: p.limit,
+    offset: p.offset
+  })
 })
-const page = ref(1)
-const pageSize = ref(50)
-const items = ref<RedemptionRecordRow[]>([])
-const total = ref(0)
-const loading = ref(false)
+
+const loading = computed(() => status.value === 'pending')
 
 watch(() => [props.defaultCodeId, props.defaultUserId], ([cid, uid]) => {
   if (typeof cid === 'number') filters.codeId = cid
   if (typeof uid === 'number') filters.userId = uid
-  page.value = 1
-  void fetchList()
+  void applyFilters()
 }, { immediate: true })
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await $fetch<{ items: RedemptionRecordRow[], total: number }>('/api/admin/redemption-codes/redemptions', {
-      query: {
-        codeId: filters.codeId || undefined,
-        userId: filters.userId || undefined,
-        batchId: filters.batchId.trim() || undefined,
-        limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value
-      }
-    })
-    items.value = res?.items || []
-    total.value = res?.total || 0
-  } catch (err) {
-    console.error('failed to fetch redemption records', err)
-    items.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(page, () => {
-  void fetchList()
-})
-
-function apply() {
-  page.value = 1
-  void fetchList()
-}
-
-function reset() {
-  filters.codeId = ''
-  filters.userId = ''
-  filters.batchId = ''
-  page.value = 1
-  void fetchList()
-}
 
 function formatDate(val: string) {
   if (!val) return '-'
@@ -164,7 +138,7 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
         <div class="flex gap-2">
           <UButton
             icon="i-mdi-magnify"
-            @click="apply"
+            @click="applyFilters"
           >
             查询
           </UButton>

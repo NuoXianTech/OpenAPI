@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
 interface OperationLogRow {
   id: number
@@ -19,71 +20,51 @@ const props = defineProps<{ defaultUserId?: number }>()
 
 const UBadge = resolveComponent('UBadge')
 
-const filters = reactive({
-  userId: '' as number | '',
-  actorKind: 'all' as 'all' | 'admin' | 'user',
-  action: '',
-  resourceType: '',
-  status: 'all' as 'all' | 'success' | 'failure'
+interface OperationLogFilters {
+  userId: number | ''
+  actorKind: 'all' | 'admin' | 'user'
+  action: string
+  resourceType: string
+  status: 'all' | 'success' | 'failure'
+}
+
+const localPageSize = 50
+const {
+  filters,
+  page,
+  pageSize,
+  items,
+  status,
+  applyFilters,
+  reset
+} = useAdminPagedList<OperationLogFilters, OperationLogRow>({
+  path: '/api/admin/operation-logs/list',
+  defaultFilters: {
+    userId: '',
+    actorKind: 'all',
+    action: '',
+    resourceType: '',
+    status: 'all'
+  },
+  defaultPageSize: localPageSize,
+  immediate: false,
+  buildQuery: (f, p) => ({
+    userId: f.userId || undefined,
+    actorKind: f.actorKind === 'all' ? undefined : f.actorKind,
+    action: f.action.trim() || undefined,
+    resourceType: f.resourceType.trim() || undefined,
+    status: f.status === 'all' ? undefined : f.status,
+    limit: p.limit,
+    offset: p.offset
+  })
 })
-const page = ref(1)
-const pageSize = ref(50)
-const items = ref<OperationLogRow[]>([])
-const loading = ref(false)
+
+const loading = computed(() => status.value === 'pending')
 
 watch(() => props.defaultUserId, (val) => {
-  if (typeof val === 'number') {
-    filters.userId = val
-    page.value = 1
-    void fetchLogs()
-  }
+  if (typeof val === 'number') filters.userId = val
+  void applyFilters()
 }, { immediate: true })
-
-async function fetchLogs() {
-  loading.value = true
-  try {
-    const res = await $fetch<OperationLogRow[]>('/api/admin/operation-logs/list', {
-      query: {
-        userId: filters.userId || undefined,
-        actorKind: filters.actorKind === 'all' ? undefined : filters.actorKind,
-        action: filters.action.trim() || undefined,
-        resourceType: filters.resourceType.trim() || undefined,
-        status: filters.status === 'all' ? undefined : filters.status,
-        limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value
-      }
-    })
-    items.value = res || []
-  } catch (err) {
-    console.error('failed to fetch operation logs', err)
-    items.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(page, () => {
-  void fetchLogs()
-})
-
-onMounted(() => {
-  if (typeof props.defaultUserId !== 'number') void fetchLogs()
-})
-
-function apply() {
-  page.value = 1
-  void fetchLogs()
-}
-
-function reset() {
-  filters.userId = ''
-  filters.actorKind = 'all'
-  filters.action = ''
-  filters.resourceType = ''
-  filters.status = 'all'
-  page.value = 1
-  void fetchLogs()
-}
 
 function formatDate(val: string) {
   if (!val) return '-'
@@ -228,7 +209,7 @@ const columns: TableColumn<OperationLogRow>[] = [
         <div class="flex gap-2">
           <UButton
             icon="i-mdi-magnify"
-            @click="apply"
+            @click="applyFilters"
           >
             查询
           </UButton>

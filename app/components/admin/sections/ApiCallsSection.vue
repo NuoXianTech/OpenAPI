@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
 const UBadge = resolveComponent('UBadge')
 
@@ -91,57 +92,28 @@ interface AdminCallRow {
   createdAt: string
 }
 
-const logFilters = reactive({
-  userId: '' as number | '',
-  status: 'all' as 'all' | 'success' | 'failure'
-})
-const logPage = ref(1)
-const logPageSize = ref(50)
-const logItems = ref<AdminCallRow[]>([])
-const logTotal = ref(0)
-const logLoading = ref(false)
-
-async function fetchLogs() {
-  logLoading.value = true
-  try {
-    const res = await $fetch<{ items: AdminCallRow[], total: number }>('/api/admin/calls/list', {
-      query: {
-        userId: logFilters.userId || undefined,
-        status: logFilters.status === 'all' ? undefined : logFilters.status,
-        limit: logPageSize.value,
-        offset: (logPage.value - 1) * logPageSize.value
-      }
-    })
-    logItems.value = res?.items || []
-    logTotal.value = res?.total || 0
-  } catch (err) {
-    console.error('failed to fetch admin calls list', err)
-    logItems.value = []
-    logTotal.value = 0
-  } finally {
-    logLoading.value = false
-  }
-}
-
-watch(logPage, () => {
-  void fetchLogs()
+const logPageSize = 50
+const {
+  filters: logFilters,
+  page: logPage,
+  items: logItems,
+  total: logTotal,
+  status: logStatus,
+  applyFilters: applyLogFilters,
+  reset: resetLogFilters
+} = useAdminPagedList<{ userId: number | '', status: 'all' | 'success' | 'failure' }, AdminCallRow>({
+  path: '/api/admin/calls/list',
+  defaultFilters: { userId: '', status: 'all' },
+  defaultPageSize: logPageSize,
+  buildQuery: (f, p) => ({
+    userId: f.userId || undefined,
+    status: f.status === 'all' ? undefined : f.status,
+    limit: p.limit,
+    offset: p.offset
+  })
 })
 
-onMounted(() => {
-  void fetchLogs()
-})
-
-function applyLogFilters() {
-  logPage.value = 1
-  void fetchLogs()
-}
-
-function resetLogFilters() {
-  logFilters.userId = ''
-  logFilters.status = 'all'
-  logPage.value = 1
-  void fetchLogs()
-}
+const logLoading = computed(() => logStatus.value === 'pending')
 
 function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {
   if (code >= 200 && code < 300) return 'success'
