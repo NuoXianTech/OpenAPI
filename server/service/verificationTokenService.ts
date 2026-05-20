@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto'
-import { and, eq, gt, isNull } from 'drizzle-orm'
+import { and, eq, gt, isNull, lt } from 'drizzle-orm'
 import { verificationTokens } from '@nuxthub/db/schema'
 
 export type VerificationPurpose = 'verify' | 'reset_password' | 'change_email'
@@ -109,5 +109,10 @@ export const verificationTokenService = {
       purpose: record.purpose as VerificationPurpose,
       expiresAt: record.expiresAt.getTime()
     } satisfies VerificationPayload
+  },
+
+  async deleteExpired() {
+    const now = new Date()
+    await db.delete(verificationTokens).where(lt(verificationTokens.expiresAt, now))
   }
 }

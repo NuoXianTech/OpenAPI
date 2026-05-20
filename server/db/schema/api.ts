@@ -180,7 +180,7 @@ export const apiCallStats = pgTable('api_call_stats', {
 //
 // 滑动窗口的"固定桶"近似实现：按 windowStart 对齐时间窗，同一 (bucketKey, windowStart)
 // 用 upsert 原子累加 count。driver 查询当前桶 count 并判断是否超额。
-// 清理由后台定时任务删除过期窗口，避免无限增长。
+// 过期窗口由 server/plugins/gcExpired.ts 每小时清理，避免无限增长。
 // ------------------------------------------------------------------
 export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
   id: serial('id').primaryKey(),
