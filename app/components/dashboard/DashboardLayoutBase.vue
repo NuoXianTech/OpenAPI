@@ -33,39 +33,24 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
   { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true }
 ]])
 
-// 命令面板：注入导航分组 + 快捷动作
+// 命令面板：直接复用导航分组 + 快捷动作（仅过滤 to 不是字符串的项）
 const searchTerm = ref('')
 const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
-  const groups: CommandPaletteGroup<CommandPaletteItem>[] = []
+  const navGroups = resolved.value.groups.reduce<CommandPaletteGroup<CommandPaletteItem>[]>((acc, g, idx) => {
+    const items = g.items.filter(item => typeof item.to === 'string') as CommandPaletteItem[]
+    if (items.length) acc.push({ id: `nav-${idx}`, label: g.label || '导航', items })
+    return acc
+  }, [])
 
   if (resolved.value.quickActions?.length) {
-    groups.push({
+    navGroups.unshift({
       id: 'quick-actions',
       label: '快捷操作',
-      items: resolved.value.quickActions.map(action => ({
-        label: action.label,
-        icon: action.icon,
-        to: action.to,
-        kbds: action.kbds
-      })) as CommandPaletteItem[]
+      items: resolved.value.quickActions as CommandPaletteItem[]
     })
   }
 
-  resolved.value.groups
-    .filter(g => g.items.length > 0)
-    .forEach((g, idx) => {
-      groups.push({
-        id: `nav-${idx}`,
-        label: g.label || '导航',
-        items: g.items.map(item => ({
-          label: String(item.label || ''),
-          icon: typeof item.icon === 'string' ? item.icon : undefined,
-          to: typeof item.to === 'string' ? item.to : undefined
-        })) as CommandPaletteItem[]
-      })
-    })
-
-  return groups
+  return navGroups
 })
 </script>
 
