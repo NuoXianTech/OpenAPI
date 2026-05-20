@@ -4,18 +4,13 @@ import MemberCreditTransactionSection from '~/components/admin/sections/MemberCr
 import MemberRedemptionCodeSection from '~/components/admin/sections/MemberRedemptionCodeSection.vue'
 import MemberRedemptionRecordSection from '~/components/admin/sections/MemberRedemptionRecordSection.vue'
 import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
+import { adminMembersTabs } from '~/constants/admin-sections/members'
 
 useHead({ title: '会员中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const tabs = [
-  { value: 'users', label: '用户', icon: 'i-mdi-account-group-outline' },
-  { value: 'credit-transactions', label: '积分流水', icon: 'i-mdi-cash-multiple' },
-  { value: 'redemption-codes', label: '兑换码', icon: 'i-mdi-ticket-percent-outline' },
-  { value: 'redemption-records', label: '兑换记录', icon: 'i-mdi-clipboard-check-outline' }
-]
-const active = useTabHashSync({ tabs })
+const active = useTabHashSync({ tabs: adminMembersTabs })
 </script>
 
 <template>
@@ -32,7 +27,7 @@ const active = useTabHashSync({ tabs })
       <div class="px-4 pt-3 border-b border-default">
         <UTabs
           v-model="active"
-          :items="tabs"
+          :items="adminMembersTabs"
           :content="false"
           variant="link"
         />

@@ -4,18 +4,13 @@ import SystemOauthProvidersSection from '~/components/admin/sections/SystemOauth
 import SystemOperationLogSection from '~/components/admin/sections/SystemOperationLogSection.vue'
 import SystemProfileSection from '~/components/admin/sections/SystemProfileSection.vue'
 import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
+import { adminSystemTabs } from '~/constants/admin-sections/system'
 
 useHead({ title: '系统' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const tabs = [
-  { value: 'settings', label: '站点设置', icon: 'i-mdi-cog-outline' },
-  { value: 'oauth-providers', label: '第三方登录', icon: 'i-mdi-shield-key-outline' },
-  { value: 'operation-logs', label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline' },
-  { value: 'profile', label: '个人信息', icon: 'i-mdi-account-circle-outline' }
-]
-const active = useTabHashSync({ tabs })
+const active = useTabHashSync({ tabs: adminSystemTabs })
 </script>
 
 <template>
@@ -32,7 +27,7 @@ const active = useTabHashSync({ tabs })
       <div class="px-4 pt-3 border-b border-default">
         <UTabs
           v-model="active"
-          :items="tabs"
+          :items="adminSystemTabs"
           :content="false"
           variant="link"
         />

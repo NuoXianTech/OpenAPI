@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useSiteSettings } from '~/composables/useSiteSettings'
+import { adminSystemHref } from '~/constants/admin-sections/system'
 
 const { user } = useAuth()
 const { settings } = useSiteSettings()
@@ -64,7 +65,7 @@ const { settings } = useSiteSettings()
       <template #footer>
         <div class="flex gap-2">
           <UButton
-            to="/admin/system#settings"
+            :to="adminSystemHref('settings')"
             size="sm"
             variant="outline"
             color="neutral"

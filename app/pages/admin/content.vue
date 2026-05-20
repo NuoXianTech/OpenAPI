@@ -3,17 +3,13 @@ import ContentAnnouncementSection from '~/components/admin/sections/ContentAnnou
 import ContentNotificationSection from '~/components/admin/sections/ContentNotificationSection.vue'
 import ContentFriendLinkSection from '~/components/admin/sections/ContentFriendLinkSection.vue'
 import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
+import { adminContentTabs } from '~/constants/admin-sections/content'
 
 useHead({ title: '内容管理' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const tabs = [
-  { value: 'announcements', label: '公告', icon: 'i-mdi-bullhorn-outline' },
-  { value: 'notifications', label: '通知', icon: 'i-mdi-bell-outline' },
-  { value: 'friend-links', label: '友情链接', icon: 'i-mdi-link-variant' }
-]
-const active = useTabHashSync({ tabs })
+const active = useTabHashSync({ tabs: adminContentTabs })
 </script>
 
 <template>
@@ -30,7 +26,7 @@ const active = useTabHashSync({ tabs })
       <div class="px-4 pt-3 border-b border-default">
         <UTabs
           v-model="active"
-          :items="tabs"
+          :items="adminContentTabs"
           :content="false"
           variant="link"
         />

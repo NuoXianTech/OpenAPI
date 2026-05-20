@@ -3,17 +3,13 @@ import ApiGovernanceSection from '~/components/admin/sections/ApiGovernanceSecti
 import ApiCategorySection from '~/components/admin/sections/ApiCategorySection.vue'
 import ApiCallsSection from '~/components/admin/sections/ApiCallsSection.vue'
 import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
+import { adminApiHubTabs } from '~/constants/admin-sections/api-hub'
 
 useHead({ title: 'API 中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const tabs = [
-  { value: 'governance', label: '接口治理', icon: 'i-mdi-api' },
-  { value: 'categories', label: '分类管理', icon: 'i-mdi-shape-outline' },
-  { value: 'calls', label: '调用统计', icon: 'i-mdi-chart-bar' }
-]
-const active = useTabHashSync({ tabs })
+const active = useTabHashSync({ tabs: adminApiHubTabs })
 </script>
 
 <template>
@@ -30,7 +26,7 @@ const active = useTabHashSync({ tabs })
       <div class="px-4 pt-3 border-b border-default">
         <UTabs
           v-model="active"
-          :items="tabs"
+          :items="adminApiHubTabs"
           :content="false"
           variant="link"
         />

@@ -4,6 +4,8 @@ import type {
   AdminDashboardData,
   AdminDashboardRecentCall
 } from '~~/shared/types/admin-dashboard'
+import { adminApiHubHref } from '~/constants/admin-sections/api-hub'
+import { adminMembersHref } from '~/constants/admin-sections/members'
 
 useHead({ title: '管理中心' })
 
@@ -151,14 +153,14 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             :value="formatNumber(overview.userCount)"
             icon="i-mdi-account-group-outline"
             icon-color="text-primary"
-            to="/admin/members#users"
+            :to="adminMembersHref('users')"
           />
           <DashboardStatCard
             label="启用 API"
             :value="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
             icon="i-mdi-api"
             icon-color="text-success"
-            to="/admin/api-hub#governance"
+            :to="adminApiHubHref('governance')"
           />
           <DashboardStatCard
             label="总调用"
@@ -167,7 +169,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon-color="text-info"
             :trend="overview.todayChangeRate"
             :hint="`今日 ${formatNumber(overview.todayCalls)}`"
-            to="/admin/api-hub#calls"
+            :to="adminApiHubHref('calls')"
           />
           <DashboardStatCard
             label="成功率"
@@ -175,7 +177,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-shield-check-outline"
             icon-color="text-warning"
             :hint="`成功 ${formatNumber(overview.successCalls)} · 失败 ${formatNumber(overview.failureCalls)}`"
-            to="/admin/api-hub#calls"
+            :to="adminApiHubHref('calls')"
           />
         </DashboardStatGrid>
 
@@ -238,7 +240,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                 </p>
               </div>
               <UButton
-                to="/admin/api-hub#calls"
+                :to="adminApiHubHref('calls')"
                 variant="link"
                 size="sm"
                 trailing-icon="i-mdi-arrow-right"

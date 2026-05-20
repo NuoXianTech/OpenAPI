@@ -1,4 +1,29 @@
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem } from '@nuxt/ui'
+import {
+  ADMIN_API_HUB_PATH,
+  adminApiHubQuickActions
+} from './admin-sections/api-hub'
+import {
+  ADMIN_MEMBERS_PATH,
+  adminMembersQuickActions
+} from './admin-sections/members'
+import {
+  adminContentHref,
+  ADMIN_CONTENT_PATH,
+  adminContentQuickActions
+} from './admin-sections/content'
+import {
+  adminSystemHref,
+  ADMIN_SYSTEM_PATH,
+  adminSystemQuickActions
+} from './admin-sections/system'
+
+function expandQuickActions(
+  path: string,
+  actions: ReadonlyArray<{ tab: string, label: string, icon: string }>
+): DashboardQuickAction[] {
+  return actions.map(a => ({ label: a.label, icon: a.icon, to: `${path}#${a.tab}` }))
+}
 
 export interface DashboardNavGroup {
   label?: string
@@ -47,15 +72,15 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     {
       label: '业务',
       items: [
-        { label: 'API 中心', icon: 'i-mdi-api', to: '/admin/api-hub' },
-        { label: '会员中心', icon: 'i-mdi-account-group-outline', to: '/admin/members' }
+        { label: 'API 中心', icon: 'i-mdi-api', to: ADMIN_API_HUB_PATH },
+        { label: '会员中心', icon: 'i-mdi-account-group-outline', to: ADMIN_MEMBERS_PATH }
       ]
     },
     {
       label: '运营',
       items: [
-        { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: '/admin/content' },
-        { label: '系统', icon: 'i-mdi-cog-outline', to: '/admin/system' }
+        { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH },
+        { label: '系统', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH }
       ]
     }
   ],
@@ -63,21 +88,18 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ],
   quickActions: [
-    { label: '登记接口', icon: 'i-mdi-plus-circle-outline', to: '/admin/api-hub#governance' },
-    { label: '发布公告', icon: 'i-mdi-bullhorn-outline', to: '/admin/content#announcements' },
-    { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/members#redemption-codes' },
-    { label: '调整用户积分', icon: 'i-mdi-cash-multiple', to: '/admin/members#users' },
-    { label: '查看调用日志', icon: 'i-mdi-history', to: '/admin/api-hub#calls' },
-    { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: '/admin/system#operation-logs' },
-    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/system#settings' }
+    ...expandQuickActions(ADMIN_API_HUB_PATH, adminApiHubQuickActions),
+    ...expandQuickActions(ADMIN_CONTENT_PATH, adminContentQuickActions),
+    ...expandQuickActions(ADMIN_MEMBERS_PATH, adminMembersQuickActions),
+    ...expandQuickActions(ADMIN_SYSTEM_PATH, adminSystemQuickActions)
   ],
   userMenuExtra: () => [[
-    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: '/admin/system#profile' },
-    { label: '站点设置', icon: 'i-mdi-cog-outline', to: '/admin/system#settings' },
+    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: adminSystemHref('profile') },
+    { label: '站点设置', icon: 'i-mdi-cog-outline', to: adminSystemHref('settings') },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
   loginRedirect: '/admin/login',
-  notificationLink: '/admin/content#notifications'
+  notificationLink: adminContentHref('notifications')
 }
 
 export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {
