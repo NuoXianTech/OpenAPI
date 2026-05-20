@@ -9,10 +9,8 @@ const {
   status,
   items,
   refresh,
+  rowSelection,
   selectedIds,
-  allSelected,
-  toggleSelect,
-  toggleSelectAll,
   clearSelection,
   deleteUser,
   toggleBan,
@@ -122,7 +120,7 @@ function formatDate(val: string) {
 }
 
 const columns: TableColumn<AdminUserItem>[] = [
-  { id: 'select', header: '选' },
+  { id: 'select' },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'email', header: '邮箱' },
   { accessorKey: 'displayName', header: '显示名' },
@@ -147,15 +145,6 @@ const columns: TableColumn<AdminUserItem>[] = [
         <span class="text-xs text-muted">
           已选 {{ selectedIds.length }} / {{ items.length }}
         </span>
-        <UButton
-          size="sm"
-          color="neutral"
-          variant="outline"
-          :icon="allSelected ? 'i-mdi-checkbox-multiple-blank-outline' : 'i-mdi-checkbox-multiple-marked-outline'"
-          @click="toggleSelectAll(!allSelected)"
-        >
-          {{ allSelected ? '清空选择' : '全选当前页' }}
-        </UButton>
         <UButton
           size="sm"
           color="primary"
@@ -189,9 +178,11 @@ const columns: TableColumn<AdminUserItem>[] = [
     </div>
 
     <UTable
+      v-model:row-selection="rowSelection"
       :data="items"
       :columns="columns"
       :loading="status === 'pending'"
+      :get-row-id="(row: AdminUserItem) => String(row.id)"
       :ui="{
         base: 'table-fixed',
         thead: '[&>tr]:bg-elevated/50',
@@ -199,10 +190,16 @@ const columns: TableColumn<AdminUserItem>[] = [
         td: 'py-2'
       }"
     >
+      <template #select-header="{ table }">
+        <UCheckbox
+          :model-value="table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected()"
+          @update:model-value="(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(value === true)"
+        />
+      </template>
       <template #select-cell="{ row }">
         <UCheckbox
-          :model-value="selectedIds.includes(row.original.id)"
-          @update:model-value="(value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true)"
+          :model-value="row.getIsSelected()"
+          @update:model-value="(value: boolean | 'indeterminate') => row.toggleSelected(value === true)"
         />
       </template>
       <template #credits-cell="{ row }">

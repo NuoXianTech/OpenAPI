@@ -29,26 +29,13 @@ export function useAdminUsersPage() {
   })
   const items = computed(() => data.value || [])
 
-  const selectedIds = ref<number[]>([])
-
-  function toggleSelect(id: number, checked: boolean) {
-    if (checked) {
-      if (!selectedIds.value.includes(id)) selectedIds.value.push(id)
-    } else {
-      selectedIds.value = selectedIds.value.filter(v => v !== id)
-    }
-  }
-
-  const allSelected = computed(() =>
-    items.value.length > 0 && selectedIds.value.length === items.value.length
+  const rowSelection = ref<Record<string, boolean>>({})
+  const selectedIds = computed(() =>
+    Object.keys(rowSelection.value).filter(k => rowSelection.value[k]).map(Number)
   )
 
-  function toggleSelectAll(checked: boolean) {
-    selectedIds.value = checked ? items.value.map(u => u.id) : []
-  }
-
   function clearSelection() {
-    selectedIds.value = []
+    rowSelection.value = {}
   }
 
   async function deleteUser(id: number) {
@@ -84,10 +71,8 @@ export function useAdminUsersPage() {
     status,
     items,
     refresh,
+    rowSelection,
     selectedIds,
-    allSelected,
-    toggleSelect,
-    toggleSelectAll,
     clearSelection,
     deleteUser,
     toggleBan,
