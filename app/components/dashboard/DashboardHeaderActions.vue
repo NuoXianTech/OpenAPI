@@ -11,10 +11,10 @@ const config = useDashboardConfig()
 const { user, logout } = useAuth()
 const router = useRouter()
 
-const displayName = computed(() => user.value?.displayName || user.value?.username || (config.id === 'admin' ? 'Admin' : 'User'))
+const displayName = computed(() => user.value?.displayName || user.value?.username || (config.value.id === 'admin' ? 'Admin' : 'User'))
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => {
-  const extra = config.userMenuExtra?.({ logout }) || []
+  const extra = config.value.userMenuExtra?.({ logout }) || []
   return [
     [{ type: 'label', label: user.value?.email || displayName.value }],
     ...extra,
@@ -24,7 +24,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => {
       color: 'error',
       async onSelect() {
         await logout()
-        await router.push(config.loginRedirect)
+        await router.push(config.value.loginRedirect)
       }
     }]
   ]

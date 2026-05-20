@@ -24,7 +24,7 @@ const resolved = computed<ResolvedDashboardConfig>(() => ({
   brand: props.config.brand(siteName.value)
 }))
 
-provide(dashboardConfigInjectionKey, reactive(resolved.value) as unknown as ResolvedDashboardConfig)
+provide(dashboardConfigInjectionKey, resolved)
 
 // 给 mobile drawer 用
 const open = ref(false)
