@@ -16,8 +16,6 @@ export default defineEventHandler((event: H3Event) => {
     name: algo.name,
     title: algo.title,
     description: algo.description,
-    tags: algo.tags ?? [],
-    source: algo.source ?? null,
     needsKey: algo.needsKey ?? false,
     modes: algo.modes,
     params: algo.params ?? []
