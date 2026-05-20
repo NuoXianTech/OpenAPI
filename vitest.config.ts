@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   test: {
-    environment: 'node',
+    environment: 'nuxt',
     include: ['tests/e2e/**/*.test.ts'],
     setupFiles: ['tests/e2e/setup/env.ts'],
     fileParallelism: false,
