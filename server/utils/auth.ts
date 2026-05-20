@@ -12,10 +12,19 @@ export interface AuthUserPayload {
   kind: 'user' | 'admin'
 }
 
+// admin 伪用户写表时使用的 actor id：所有 operatorId/createdBy/userId 等
+// "操作者 = admin 内置账号" 的场景都必须落 null，0 不是 users.id 的有效值，
+// 误把 0 写进外键列会让审计/关联查询很难排查。
+export const ADMIN_ACTOR_ID = null
+
 const scrypt = promisify(scryptCallback)
 const COOKIE_NAME = 'app_session'
 const SALT_BYTES = 16
 const KEY_LENGTH = 64
+
+// 当前默认 scrypt 参数；调整这里相当于升级新注册用户的强度，
+// 历史哈希仍按其落库时的参数校验（见 verifyPassword）。
+const SCRYPT_DEFAULTS = { N: 16384, r: 8, p: 1 } as const
 
 function base64UrlEncode(input: Buffer | string) {
   const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input)
@@ -31,22 +40,70 @@ function base64UrlDecode(input: string) {
   return Buffer.from(padded, 'base64')
 }
 
+function scryptOptions(params: { N: number, r: number, p: number }) {
+  const { N, r, p } = params
+  // Node 默认 maxmem=32MiB，调大 N/r 会超限；按公式预留两倍头空间
+  const memNeeded = 128 * N * r + 128 * r * p
+  return { N, r, p, maxmem: Math.max(memNeeded * 2, 32 << 20) }
+}
+
+function formatScryptParams(params: { N: number, r: number, p: number }) {
+  return `N=${params.N},r=${params.r},p=${params.p}`
+}
+
+function parseScryptParams(spec: string) {
+  const out: Partial<{ N: number, r: number, p: number }> = {}
+  for (const entry of spec.split(',')) {
+    const [key, value] = entry.split('=')
+    if (!key || !value) return null
+    const num = Number(value)
+    if (!Number.isFinite(num) || num <= 0) return null
+    if (key === 'N') out.N = num
+    else if (key === 'r') out.r = num
+    else if (key === 'p') out.p = num
+    else return null
+  }
+  if (!out.N || !out.r || !out.p) return null
+  return out as { N: number, r: number, p: number }
+}
+
 export async function hashPassword(password: string) {
   const salt = randomBytes(SALT_BYTES)
-  const derived = await scrypt(password, salt, KEY_LENGTH) as Buffer
-  return `scrypt$${base64UrlEncode(salt)}$${base64UrlEncode(derived)}`
+  const derived = await scrypt(password, salt, KEY_LENGTH, scryptOptions(SCRYPT_DEFAULTS)) as Buffer
+  return `scrypt$${formatScryptParams(SCRYPT_DEFAULTS)}$${base64UrlEncode(salt)}$${base64UrlEncode(derived)}`
 }
 
 export async function verifyPassword(stored: string, password: string) {
-  const [scheme, saltPart, hashPart] = stored.split('$')
-  if (scheme !== 'scrypt' || !saltPart || !hashPart) {
+  const parts = stored.split('$')
+  if (parts[0] !== 'scrypt') {
+    return false
+  }
+
+  let params: { N: number, r: number, p: number }
+  let saltPart: string
+  let hashPart: string
+
+  if (parts.length === 4) {
+    // 新格式：scrypt$N=...,r=...,p=...$salt$hash
+    const parsed = parseScryptParams(parts[1] ?? '')
+    if (!parsed || !parts[2] || !parts[3]) return false
+    params = parsed
+    saltPart = parts[2]
+    hashPart = parts[3]
+  } else if (parts.length === 3) {
+    // 旧格式：scrypt$salt$hash，落库时未带参数，沿用 Node scrypt 默认（与 SCRYPT_DEFAULTS 一致）
+    if (!parts[1] || !parts[2]) return false
+    params = SCRYPT_DEFAULTS
+    saltPart = parts[1]
+    hashPart = parts[2]
+  } else {
     return false
   }
 
   const salt = base64UrlDecode(saltPart)
   const hash = base64UrlDecode(hashPart)
-  const derived = await scrypt(password, salt, hash.length) as Buffer
-  return timingSafeEqual(hash, derived)
+  const derived = await scrypt(password, salt, hash.length, scryptOptions(params)) as Buffer
+  return hash.length === derived.length && timingSafeEqual(hash, derived)
 }
 
 async function getSessionMaxAgesSeconds() {
@@ -147,19 +204,24 @@ export async function getAuthUser(event: H3Event) {
 
     const slidingExpiryMs = nowMs + defaultMaxAge * 1000
     const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
-    // fail-open：DB 续期失败不阻断请求，cookie 仍按新值下发；
-    // 下次请求若 DB 已恢复会重新续期，否则会随旧 expiresAt 自然过期
-    sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs)).catch((err) => {
-      console.error('[auth] failed to extend session expiry', { sessionId, err })
-    })
-    const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
-    setAuthCookie(event, sessionId, cookieMaxAge)
+    // 必须先 await DB 续期成功，再下发新的 cookie maxAge；否则 cookie 写了「续期成功」的
+    // maxAge，但库里 expiresAt 仍是旧值，下一次请求会被 getSessionById 判过期踢出，
+    // 形成「明明 cookie 没过期却莫名要重新登录」的不一致状态。
+    try {
+      await sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs))
+      const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
+      setAuthCookie(event, sessionId, cookieMaxAge)
+    } catch (err) {
+      // DB 续期失败：本次请求仍按当前会话通过，但不下发新 cookie maxAge；
+      // 下一次请求若 DB 恢复会自然重新续期，否则随旧 expiresAt 自然过期。
+      console.error('[auth] failed to extend session expiry, cookie maxAge left unchanged', { sessionId, err })
+    }
   }
 
   if (session.kind === 'admin') {
     const authConfig = useRuntimeConfig().auth
     return {
-      id: 0,
+      id: ADMIN_ACTOR_ID,
       username: authConfig.adminUsername,
       email: authConfig.adminEmail,
       avatarUrl: getCravatarUrl(authConfig.adminEmail),

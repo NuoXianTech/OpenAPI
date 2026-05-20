@@ -1,7 +1,8 @@
 import type { LoginInput, RegisterInput } from '#shared/schemas/auth'
 
 interface AuthUser {
-  id: number
+  // admin 内置账号没有 users 表记录，id 为 null；普通用户为 users.id
+  id: number | null
   username: string
   displayName?: string | null
   email: string

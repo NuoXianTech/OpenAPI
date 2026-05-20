@@ -110,7 +110,7 @@ Serverless: NuxtHub / Cloudflare Workers（KV 限流自动启用）
 | 功能模块    | 状态 | 说明                                                              |
 |---------|----|-----------------------------------------------------------------|
 | 会话鉴权    | ✅  | Cookie 仅保存原始 sessionId，库中存 `sha256(sessionId)`                  |
-| 密码存储    | ✅  | Node 内置 `scrypt`，按 `scrypt$<salt>$<hash>` 落库                    |
+| 密码存储    | ✅  | Node 内置 `scrypt`，按 `scrypt$N=...,r=...,p=...$<salt>$<hash>` 落库，参数可升级       |
 | 密钥加密    | ✅  | OAuth `clientSecret` / `accessToken` / `refreshToken` AES-256-GCM |
 | OAuth state | ✅  | 签名 Cookie（`nonce.provider.returnTo.hmac`）+ 5 分钟 TTL              |
 | 审计留痕    | ✅  | 管理端写操作统一经 `operationLogService` 落库                              |

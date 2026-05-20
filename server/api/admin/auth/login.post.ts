@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { timingSafeEqual } from 'node:crypto'
 import { createError, getRequestIP } from 'h3'
 import { adminLoginSchema } from '#shared/schemas/admin'
-import { createAdminSession } from '~~/server/utils/auth'
+import { ADMIN_ACTOR_ID, createAdminSession } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await createAdminSession(event, { remember })
 
   return {
-    id: 0,
+    id: ADMIN_ACTOR_ID,
     kind: 'admin',
     username: adminUsername,
     email: authConfig.adminEmail
