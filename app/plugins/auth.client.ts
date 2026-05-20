@@ -1,6 +1,6 @@
 export default defineNuxtPlugin(async () => {
-  // 客户端 hydrate 后拉一次登录态写进 useState：公共页（无鉴权中间件）首次进入时初始化登录态；
-  // admin/user 走 SSR 时中间件里已经 fetchMe 过并 hydrate 进 useState，这里会命中 TTL 短路不会重复请求。
+  // 客户端 hydrate 后必拉一次 /api/auth/me：SSR 拿到的 user 通过 useState 已 hydrate，但 fetchedAt
+  // 不跨端共享（HTML 可能来自浏览器缓存，SSR 时间戳不可信），这里重新拉一次校准客户端 TTL 起点。
   const { fetchMe } = useAuth()
   await fetchMe()
 

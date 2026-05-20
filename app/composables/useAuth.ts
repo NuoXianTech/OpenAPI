@@ -15,19 +15,21 @@ interface AuthUser {
 // 用来在长会话里捕获后端封禁、踢人、session 失效等服务端状态变化。
 const AUTH_FRESH_FOR_MS = 5 * 60 * 1000
 
+// 客户端模块作用域：dedup 并发的 fetchMe 调用，并记录上次成功拉取时间。
+// 不放进 useState 是因为：Promise 不可序列化、SSR 时间戳 hydrate 到客户端后会被当作"刚拉过"导致跳过首次校验。
+// 服务端不能复用这俩变量（Node 进程内 module-scope 会跨请求串号），中间件本身串行调用一次也不需要 dedup。
+let clientInflight: Promise<AuthUser | null> | null = null
+let clientFetchedAt = 0
+
 export function useAuth() {
   const user = useState<AuthUser | null>('auth-user', () => null)
   const loading = useState<boolean>('auth-loading', () => false)
-  // 同一次导航中并发的 fetchMe 调用合并为同一个 Promise，避免重复请求 /api/auth/me
-  const inflight = useState<Promise<AuthUser | null> | null>('auth-inflight', () => null)
-  // 上次成功拉取 /api/auth/me 的时间戳（毫秒，0 表示尚未拉过）
-  const fetchedAt = useState<number>('auth-fetched-at', () => 0)
 
   const runFetch = async () => {
     loading.value = true
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
-      // 必须用 $fetch 而不是 useAsyncData / useFetch：后者会把响应写进 nuxt payload，
+      // 必须用 $fetch 而不是 useAsyncData / useFetch：后者会把响应写进 nuxt payload,
       // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
       const res = await $fetch<AuthUser | null>('/api/auth/me', { headers })
       user.value = res ?? null
@@ -37,20 +39,21 @@ export function useAuth() {
       user.value = null
     } finally {
       loading.value = false
-      fetchedAt.value = Date.now()
+      if (import.meta.client) clientFetchedAt = Date.now()
     }
     return user.value
   }
 
   const fetchMe = async (force = false) => {
-    const fresh = fetchedAt.value > 0 && Date.now() - fetchedAt.value < AUTH_FRESH_FOR_MS
+    // 服务端：每次请求都重新评估登录态（中间件串行调用一次），dedup/TTL 都靠客户端兜
+    if (import.meta.server) return runFetch()
+    const fresh = clientFetchedAt > 0 && Date.now() - clientFetchedAt < AUTH_FRESH_FOR_MS
     if (!force && fresh) return user.value
-    if (inflight.value) return inflight.value
-    const promise = runFetch().finally(() => {
-      inflight.value = null
+    if (clientInflight) return clientInflight
+    clientInflight = runFetch().finally(() => {
+      clientInflight = null
     })
-    inflight.value = promise
-    return promise
+    return clientInflight
   }
 
   const login = async (payload: LoginInput) => {
@@ -59,7 +62,7 @@ export function useAuth() {
       body: payload
     })
     user.value = res
-    fetchedAt.value = Date.now()
+    if (import.meta.client) clientFetchedAt = Date.now()
     return res
   }
 
@@ -69,7 +72,7 @@ export function useAuth() {
       body: payload
     })
     user.value = res
-    fetchedAt.value = Date.now()
+    if (import.meta.client) clientFetchedAt = Date.now()
     return res
   }
 
@@ -83,7 +86,7 @@ export function useAuth() {
   const logout = async () => {
     await $fetch('/api/auth/logout', { method: 'POST' })
     user.value = null
-    fetchedAt.value = Date.now()
+    if (import.meta.client) clientFetchedAt = Date.now()
   }
 
   const ensureAdmin = async () => {
