@@ -49,10 +49,10 @@ const FALLBACK_SETTINGS: PublicSiteSettings = {
 }
 
 export function useSiteSettings() {
-  const { data, pending, error, refresh } = useAsyncData(
-    'public-site-settings',
-    () => $fetch<PublicSiteSettings>('/api/settings/public'),
+  const { data, pending, error, refresh } = useFetch<PublicSiteSettings>(
+    '/api/settings/public',
     {
+      key: 'public-site-settings',
       default: () => FALLBACK_SETTINGS
     }
   )

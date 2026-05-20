@@ -1,10 +1,11 @@
 import type { ApiCatalogItem, ApiTabOption } from './types'
 
 export function usePublicApiList() {
-  const { data, pending, error, refresh } = useAsyncData<ApiCatalogItem[]>(
-    'public-api-list',
-    () => $fetch<ApiCatalogItem[]>('/api/list', { method: 'GET' }),
+  const { data, pending, error, refresh } = useFetch<ApiCatalogItem[]>(
+    '/api/list',
     {
+      key: 'public-api-list',
+      method: 'GET',
       default: () => []
     }
   )

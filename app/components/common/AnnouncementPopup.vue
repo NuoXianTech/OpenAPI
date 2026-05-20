@@ -32,12 +32,12 @@ const STORAGE_KEY = computed(() => `announcement:lastSeenId:${props.storageScope
 const open = ref(false)
 const expandedIds = ref<string[]>([])
 
-// useAsyncData 全局唯一 key，多个组件实例共用一份缓存。
+// useFetch 全局唯一 key，多个组件实例共用一份缓存。
 // lazy + server: false：不阻塞 SSR、不影响首屏 LCP，hydrate 后再拉。
-const { data } = useAsyncData<Announcement[]>(
-  'public-announcements',
-  () => $fetch<Announcement[]>('/api/announcements/list'),
+const { data } = useFetch<Announcement[]>(
+  '/api/announcements/list',
   {
+    key: 'public-announcements',
     default: () => [],
     lazy: true,
     server: false

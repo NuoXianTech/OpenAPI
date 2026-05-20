@@ -1,10 +1,10 @@
 import type { FriendLinkItem } from './types'
 
 export function useFriendLinkList() {
-  const { data, pending, error: rawError, refresh } = useAsyncData<FriendLinkItem[]>(
-    'public-friend-links',
-    () => $fetch<FriendLinkItem[]>('/api/friend-links/list'),
+  const { data, pending, error: rawError, refresh } = useFetch<FriendLinkItem[]>(
+    '/api/friend-links/list',
     {
+      key: 'public-friend-links',
       default: () => []
     }
   )

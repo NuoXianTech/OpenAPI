@@ -8,10 +8,10 @@ export function useApiList() {
   const currentTab = ref<string | number>('all')
   const currentCategory = ref<string | number>('all')
 
-  const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useAsyncData(
-    'public-api-categories',
-    () => $fetch<ApiCategoryItem[]>('/api/api-categories/list'),
+  const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useFetch<ApiCategoryItem[]>(
+    '/api/api-categories/list',
     {
+      key: 'public-api-categories',
       default: () => [] as ApiCategoryItem[]
     }
   )
