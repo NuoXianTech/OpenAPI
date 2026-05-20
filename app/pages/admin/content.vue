@@ -2,29 +2,18 @@
 import ContentAnnouncementSection from '~/components/admin/sections/ContentAnnouncementSection.vue'
 import ContentNotificationSection from '~/components/admin/sections/ContentNotificationSection.vue'
 import ContentFriendLinkSection from '~/components/admin/sections/ContentFriendLinkSection.vue'
+import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
 
 useHead({ title: '内容管理' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const route = useRoute()
-const router = useRouter()
 
 const tabs = [
   { value: 'announcements', label: '公告', icon: 'i-mdi-bullhorn-outline' },
   { value: 'notifications', label: '通知', icon: 'i-mdi-bell-outline' },
   { value: 'friend-links', label: '友情链接', icon: 'i-mdi-link-variant' }
 ]
-const active = ref(tabs[0]!.value)
-
-onMounted(() => {
-  const h = route.hash.replace('#', '')
-  if (tabs.some(t => t.value === h)) active.value = h
-})
-
-watch(active, (v) => {
-  router.replace({ hash: '#' + v })
-})
+const active = useTabHashSync({ tabs })
 </script>
 
 <template>

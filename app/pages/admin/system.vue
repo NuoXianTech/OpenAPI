@@ -3,13 +3,11 @@ import SystemSettingsSection from '~/components/admin/sections/SystemSettingsSec
 import SystemOauthProvidersSection from '~/components/admin/sections/SystemOauthProvidersSection.vue'
 import SystemOperationLogSection from '~/components/admin/sections/SystemOperationLogSection.vue'
 import SystemProfileSection from '~/components/admin/sections/SystemProfileSection.vue'
+import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
 
 useHead({ title: '系统' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const route = useRoute()
-const router = useRouter()
 
 const tabs = [
   { value: 'settings', label: '站点设置', icon: 'i-mdi-cog-outline' },
@@ -17,16 +15,7 @@ const tabs = [
   { value: 'operation-logs', label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline' },
   { value: 'profile', label: '个人信息', icon: 'i-mdi-account-circle-outline' }
 ]
-const active = ref(tabs[0]!.value)
-
-onMounted(() => {
-  const h = route.hash.replace('#', '')
-  if (tabs.some(t => t.value === h)) active.value = h
-})
-
-watch(active, (v) => {
-  router.replace({ hash: '#' + v })
-})
+const active = useTabHashSync({ tabs })
 </script>
 
 <template>

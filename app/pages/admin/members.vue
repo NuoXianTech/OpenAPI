@@ -3,13 +3,11 @@ import MemberUsersSection from '~/components/admin/sections/MemberUsersSection.v
 import MemberCreditTransactionSection from '~/components/admin/sections/MemberCreditTransactionSection.vue'
 import MemberRedemptionCodeSection from '~/components/admin/sections/MemberRedemptionCodeSection.vue'
 import MemberRedemptionRecordSection from '~/components/admin/sections/MemberRedemptionRecordSection.vue'
+import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
 
 useHead({ title: '会员中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const route = useRoute()
-const router = useRouter()
 
 const tabs = [
   { value: 'users', label: '用户', icon: 'i-mdi-account-group-outline' },
@@ -17,16 +15,7 @@ const tabs = [
   { value: 'redemption-codes', label: '兑换码', icon: 'i-mdi-ticket-percent-outline' },
   { value: 'redemption-records', label: '兑换记录', icon: 'i-mdi-clipboard-check-outline' }
 ]
-const active = ref(tabs[0]!.value)
-
-onMounted(() => {
-  const h = route.hash.replace('#', '')
-  if (tabs.some(t => t.value === h)) active.value = h
-})
-
-watch(active, (v) => {
-  router.replace({ hash: '#' + v })
-})
+const active = useTabHashSync({ tabs })
 </script>
 
 <template>

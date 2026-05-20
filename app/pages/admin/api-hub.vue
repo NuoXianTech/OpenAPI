@@ -2,29 +2,18 @@
 import ApiGovernanceSection from '~/components/admin/sections/ApiGovernanceSection.vue'
 import ApiCategorySection from '~/components/admin/sections/ApiCategorySection.vue'
 import ApiCallsSection from '~/components/admin/sections/ApiCallsSection.vue'
+import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
 
 useHead({ title: 'API 中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const route = useRoute()
-const router = useRouter()
 
 const tabs = [
   { value: 'governance', label: '接口治理', icon: 'i-mdi-api' },
   { value: 'categories', label: '分类管理', icon: 'i-mdi-shape-outline' },
   { value: 'calls', label: '调用统计', icon: 'i-mdi-chart-bar' }
 ]
-const active = ref(tabs[0]!.value)
-
-onMounted(() => {
-  const h = route.hash.replace('#', '')
-  if (tabs.some(t => t.value === h)) active.value = h
-})
-
-watch(active, (v) => {
-  router.replace({ hash: '#' + v })
-})
+const active = useTabHashSync({ tabs })
 </script>
 
 <template>
