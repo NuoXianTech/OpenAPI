@@ -10,7 +10,7 @@
 
 ## 特性
 
-- **接口自动发现** — 构建期扫描 [server/routes/v{N}/](server/routes/), 零配置生成 API manifest
+- **接口自动发现** — 构建期扫描 [server/routes/v{N}/](server/routes/) 零配置生成 API manifest（[接口约定](docs/api-conventions.md)）
 - **完整用户体系** — 邮箱注册/验证/重置、会话鉴权、第三方登录（GitHub / QQ）
 - **API Key 鉴权** — 用户中心自助管理，按 `costCredits` 自动扣费
 - **多级限流** — QPS / 分钟 / 小时 / 日 + 每日配额，driver 自动适配（memory / postgres / kv）
@@ -99,7 +99,7 @@ docker run -d --name openapi --restart unless-stopped \
 │  ├─ layouts/middleware/    后台布局 + auth-admin / auth-user 守卫
 ├─ server/                   Nuxt 服务端
 │  ├─ api/                   内部 API（admin / auth / user / stats / ...）
-│  ├─ routes/v{N}/           对外开放接口，构建期被 manifest 扫描
+│  ├─ routes/v{N}/           对外开放接口，构建期被 manifest 扫描（约定见 docs/api-conventions.md）
 │  ├─ db/schema/             Drizzle schema（user · auth · api · content · system）
 │  ├─ db/migrations/         drizzle-kit 生成，勿手改
 │  ├─ middleware/            api-gate（限流 + 鉴权 + 计费）
