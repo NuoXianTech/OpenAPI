@@ -2,10 +2,6 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useRedemptionCodesPage, type RedemptionCode } from '~/composables/admin/useRedemptionCodesPage'
 
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
 const {
   filters,
   page,
@@ -90,68 +86,14 @@ function onBatchFilter(batchId: string) {
 }
 
 const columns: TableColumn<RedemptionCode>[] = [
-  {
-    accessorKey: 'code',
-    header: '兑换码',
-    cell: ({ row }) => h('div', { class: 'flex flex-col gap-0.5' }, [
-      h('span', {
-        class: 'font-mono text-sm cursor-pointer hover:text-primary',
-        onClick: () => copyOne(row.original.code),
-        title: '点击复制'
-      }, row.original.code),
-      row.original.batchId
-        ? h('span', { class: 'text-[11px] text-muted font-mono' }, row.original.batchId)
-        : null
-    ].filter(Boolean))
-  },
-  {
-    accessorKey: 'amount',
-    header: '面额',
-    cell: ({ row }) => h('span', { class: 'tabular-nums font-semibold text-success' }, `+${row.original.amount.toLocaleString()}`)
-  },
-  {
-    id: 'usage',
-    header: '使用',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-sm' },
-      `${row.original.usedCount} / ${row.original.maxUses}`)
-  },
-  {
-    accessorKey: 'note',
-    header: '备注',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[200px] block' }, row.original.note || '-')
-  },
-  {
-    accessorKey: 'expiresAt',
-    header: '过期时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' },
-      row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期')
-  },
-  {
-    id: 'status',
-    header: '状态',
-    cell: ({ row }) => {
-      const s = statusOf(row.original)
-      return h(UBadge, { color: s.color, variant: 'subtle' }, () => s.label)
-    }
-  },
-  {
-    accessorKey: 'createdAt',
-    header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'code', header: '兑换码' },
+  { accessorKey: 'amount', header: '面额' },
+  { id: 'usage', header: '使用' },
+  { accessorKey: 'note', header: '备注' },
+  { accessorKey: 'expiresAt', header: '过期时间' },
+  { id: 'status', header: '状态' },
+  { accessorKey: 'createdAt', header: '创建时间' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -247,7 +189,65 @@ const columns: TableColumn<RedemptionCode>[] = [
           th: 'py-2',
           td: 'py-2 align-middle'
         }"
-      />
+      >
+        <template #code-cell="{ row }">
+          <div class="flex flex-col gap-0.5">
+            <span
+              class="font-mono text-sm cursor-pointer hover:text-primary"
+              title="点击复制"
+              @click="copyOne(row.original.code)"
+            >
+              {{ row.original.code }}
+            </span>
+            <span
+              v-if="row.original.batchId"
+              class="text-[11px] text-muted font-mono"
+            >
+              {{ row.original.batchId }}
+            </span>
+          </div>
+        </template>
+        <template #amount-cell="{ row }">
+          <span class="tabular-nums font-semibold text-success">+{{ row.original.amount.toLocaleString() }}</span>
+        </template>
+        <template #usage-cell="{ row }">
+          <span class="tabular-nums text-sm">{{ row.original.usedCount }} / {{ row.original.maxUses }}</span>
+        </template>
+        <template #note-cell="{ row }">
+          <span class="text-xs text-muted truncate max-w-[200px] block">{{ row.original.note || '-' }}</span>
+        </template>
+        <template #expiresAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">
+            {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
+          </span>
+        </template>
+        <template #status-cell="{ row }">
+          <UBadge
+            :color="statusOf(row.original).color"
+            variant="subtle"
+          >
+            {{ statusOf(row.original).label }}
+          </UBadge>
+        </template>
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu
+              :items="getRowItems(row.original)"
+              :content="{ align: 'end' }"
+            >
+              <UButton
+                icon="i-mdi-dots-vertical"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
+      </UTable>
       <div
         v-if="total > pageSize"
         class="flex items-center justify-between pt-3 border-t border-default mt-3"

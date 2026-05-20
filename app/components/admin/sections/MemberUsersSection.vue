@@ -3,10 +3,6 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UCheckbox = resolveComponent('UCheckbox')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const {
   keyword,
@@ -126,59 +122,15 @@ function formatDate(val: string) {
 }
 
 const columns: TableColumn<AdminUserItem>[] = [
-  {
-    id: 'select',
-    header: '选',
-    cell: ({ row }) => h(UCheckbox, {
-      'modelValue': selectedIds.value.includes(row.original.id),
-      'onUpdate:modelValue': (value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true)
-    })
-  },
+  { id: 'select', header: '选' },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'email', header: '邮箱' },
   { accessorKey: 'displayName', header: '显示名' },
-  {
-    accessorKey: 'credits',
-    header: '积分',
-    cell: ({ row }) => h(UBadge, {
-      color: (row.original.credits ?? 0) > 0 ? 'success' : 'neutral',
-      variant: 'subtle',
-      class: 'tabular-nums font-mono'
-    }, () => Number(row.original.credits ?? 0).toLocaleString())
-  },
-  {
-    accessorKey: 'isActive',
-    header: '激活',
-    cell: ({ row }) => h(UBadge, {
-      color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle'
-    }, () => row.original.isActive ? '已激活' : '未激活')
-  },
-  {
-    accessorKey: 'isBanned',
-    header: '封禁',
-    cell: ({ row }) => row.original.isBanned
-      ? h(UBadge, { color: 'error', variant: 'subtle' }, () => '已封禁')
-      : null
-  },
-  {
-    accessorKey: 'createdAt',
-    header: '注册时间',
-    cell: ({ row }) => formatDate(row.original.createdAt)
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'credits', header: '积分' },
+  { accessorKey: 'isActive', header: '激活' },
+  { accessorKey: 'isBanned', header: '封禁' },
+  { accessorKey: 'createdAt', header: '注册时间' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -246,7 +198,58 @@ const columns: TableColumn<AdminUserItem>[] = [
         th: 'py-2',
         td: 'py-2'
       }"
-    />
+    >
+      <template #select-cell="{ row }">
+        <UCheckbox
+          :model-value="selectedIds.includes(row.original.id)"
+          @update:model-value="(value: boolean | 'indeterminate') => toggleSelect(row.original.id, value === true)"
+        />
+      </template>
+      <template #credits-cell="{ row }">
+        <UBadge
+          :color="(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
+          variant="subtle"
+          class="tabular-nums font-mono"
+        >
+          {{ Number(row.original.credits ?? 0).toLocaleString() }}
+        </UBadge>
+      </template>
+      <template #isActive-cell="{ row }">
+        <UBadge
+          :color="row.original.isActive ? 'success' : 'neutral'"
+          variant="subtle"
+        >
+          {{ row.original.isActive ? '已激活' : '未激活' }}
+        </UBadge>
+      </template>
+      <template #isBanned-cell="{ row }">
+        <UBadge
+          v-if="row.original.isBanned"
+          color="error"
+          variant="subtle"
+        >
+          已封禁
+        </UBadge>
+      </template>
+      <template #createdAt-cell="{ row }">
+        {{ formatDate(row.original.createdAt) }}
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
+        </div>
+      </template>
+    </UTable>
 
     <AdminUserEditModal
       v-model:open="editOpen"

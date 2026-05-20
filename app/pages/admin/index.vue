@@ -11,8 +11,6 @@ useHead({ title: '管理中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const UBadge = resolveComponent('UBadge')
-
 function createEmptyData(): AdminDashboardData {
   return {
     overview: {
@@ -83,43 +81,11 @@ function methodColor(method: string): 'info' | 'success' | 'warning' | 'error' |
 }
 
 const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
-  {
-    accessorKey: 'createdAt',
-    header: '时间',
-    cell: ({ row }) => h('span', { class: 'whitespace-nowrap text-xs tabular-nums text-muted' }, formatDateTime(row.original.createdAt))
-  },
-  {
-    accessorKey: 'method',
-    header: '方法',
-    cell: ({ row }) => h(UBadge, {
-      color: methodColor(row.original.method),
-      variant: 'subtle',
-      size: 'sm',
-      class: 'font-mono'
-    }, () => row.original.method)
-  },
-  {
-    accessorKey: 'apiName',
-    header: 'API',
-    cell: ({ row }) => h('div', { class: 'min-w-0' }, [
-      h('div', { class: 'truncate text-sm font-medium' }, row.original.apiName),
-      h('div', { class: 'truncate text-xs font-mono text-muted' }, row.original.apiPath)
-    ])
-  },
-  {
-    accessorKey: 'statusCode',
-    header: '状态',
-    cell: ({ row }) => h(UBadge, {
-      color: statusColor(row.original.statusCode),
-      variant: 'subtle',
-      size: 'sm'
-    }, () => String(row.original.statusCode))
-  },
-  {
-    accessorKey: 'latencyMs',
-    header: '耗时',
-    cell: ({ row }) => h('span', { class: 'whitespace-nowrap tabular-nums text-xs' }, `${row.original.latencyMs} ms`)
-  }
+  { accessorKey: 'createdAt', header: '时间' },
+  { accessorKey: 'method', header: '方法' },
+  { accessorKey: 'apiName', header: 'API' },
+  { accessorKey: 'statusCode', header: '状态' },
+  { accessorKey: 'latencyMs', header: '耗时' }
 ]
 </script>
 
@@ -256,7 +222,45 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             :loading="status === 'pending' && recentCalls.length === 0"
             empty-title="暂无请求日志"
             empty-icon="i-mdi-history"
-          />
+          >
+            <template #createdAt-cell="{ row }">
+              <span class="whitespace-nowrap text-xs tabular-nums text-muted">
+                {{ formatDateTime(row.original.createdAt) }}
+              </span>
+            </template>
+            <template #method-cell="{ row }">
+              <UBadge
+                :color="methodColor(row.original.method)"
+                variant="subtle"
+                size="sm"
+                class="font-mono"
+              >
+                {{ row.original.method }}
+              </UBadge>
+            </template>
+            <template #apiName-cell="{ row }">
+              <div class="min-w-0">
+                <div class="truncate text-sm font-medium">
+                  {{ row.original.apiName }}
+                </div>
+                <div class="truncate text-xs font-mono text-muted">
+                  {{ row.original.apiPath }}
+                </div>
+              </div>
+            </template>
+            <template #statusCode-cell="{ row }">
+              <UBadge
+                :color="statusColor(row.original.statusCode)"
+                variant="subtle"
+                size="sm"
+              >
+                {{ row.original.statusCode }}
+              </UBadge>
+            </template>
+            <template #latencyMs-cell="{ row }">
+              <span class="whitespace-nowrap tabular-nums text-xs">{{ row.original.latencyMs }} ms</span>
+            </template>
+          </DashboardDataTable>
         </UCard>
       </div>
     </template>
