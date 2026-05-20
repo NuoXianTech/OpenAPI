@@ -1,3 +1,5 @@
+import { parseFetchError } from '#shared/utils/clientError'
+
 export interface ProfileData {
   id: number
   username: string
@@ -29,10 +31,6 @@ const OAUTH_BIND_ERRORS: Record<string, string> = {
   oauth_disabled: '站点已关闭第三方登录',
   secret_decrypt_failed: '密钥解密失败，请联系管理员',
   missing_code: '未收到授权 code'
-}
-
-function errMsg(err: unknown, fallback: string) {
-  return (err as { data?: { message?: string } })?.data?.message || fallback
 }
 
 export function useUserProfilePage() {
@@ -117,7 +115,7 @@ export function useUserProfilePage() {
       toast.add({ title: '已解绑', color: 'success' })
       await loadOauth()
     } catch (err) {
-      toast.add({ title: errMsg(err, '解绑失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '解绑失败'), color: 'error' })
     }
   }
 
@@ -151,7 +149,6 @@ export function useUserProfilePage() {
     loadOauth,
     startBind,
     unbind,
-    notifyOauthCallback,
-    errMsg
+    notifyOauthCallback
   }
 }

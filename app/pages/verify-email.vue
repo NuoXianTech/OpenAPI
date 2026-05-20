@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { parseFetchError } from '#shared/utils/clientError'
+
 useHead({ title: '邮箱验证' })
 
 definePageMeta({ layout: false })
@@ -12,19 +14,6 @@ const status = ref<'pending' | 'success' | 'error'>('pending')
 const message = ref('正在验证，请稍候...')
 const verifying = ref(false)
 const alreadyVerified = ref(false)
-
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object') {
-    const data = (error as { data?: { message?: unknown } }).data
-    if (data && typeof data.message === 'string' && data.message) {
-      return data.message
-    }
-  }
-  if (error instanceof Error && error.message) {
-    return error.message
-  }
-  return fallback
-}
 
 const headerIcon = computed(() => {
   if (status.value === 'success') {
@@ -90,7 +79,7 @@ onMounted(async () => {
     }
   } catch (error: unknown) {
     status.value = 'error'
-    message.value = getErrorMessage(error, '验证失败')
+    message.value = parseFetchError(error, '验证失败')
   } finally {
     verifying.value = false
   }

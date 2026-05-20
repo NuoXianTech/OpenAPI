@@ -1,3 +1,5 @@
+import { parseFetchError } from '#shared/utils/clientError'
+
 export interface AdminUserItem {
   id: number
   username: string
@@ -13,10 +15,6 @@ export interface AdminApiKeyItem {
   id: number
   name: string
   apiKey: string
-}
-
-function errMsg(err: unknown, fallback: string) {
-  return (err as { data?: { message?: string } })?.data?.message || fallback
 }
 
 export function useAdminUsersPage() {
@@ -53,7 +51,7 @@ export function useAdminUsersPage() {
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
       return false
     }
   }
@@ -67,7 +65,7 @@ export function useAdminUsersPage() {
       toast.add({ title: item.isBanned ? '已解封' : '已封禁', color: 'success' })
       await refresh()
     } catch (err) {
-      toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
     }
   }
 
@@ -81,7 +79,7 @@ export function useAdminUsersPage() {
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: errMsg(err, '更新失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '更新失败'), color: 'error' })
       return false
     }
   }

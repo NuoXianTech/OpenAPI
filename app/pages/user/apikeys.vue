@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 useHead({ title: 'API Keys' })
 
@@ -50,7 +51,7 @@ async function submitCreate() {
     toast.add({ title: '已生成新 API Key', color: 'success' })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '创建失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '创建失败'), color: 'error' })
   } finally {
     creating.value = false
   }
@@ -80,7 +81,7 @@ async function confirmReset() {
     toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '重置失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '重置失败'), color: 'error' })
   } finally {
     resetLoading.value = false
   }
@@ -108,7 +109,7 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
   } finally {
     deleteLoading.value = false
   }

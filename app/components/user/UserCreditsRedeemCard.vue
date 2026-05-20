@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { RedeemRecord } from '~/composables/user/useUserCreditsPage'
+import { parseFetchError } from '#shared/utils/clientError'
 
 const props = defineProps<{
   records: RedeemRecord[]
@@ -30,8 +31,7 @@ async function submit() {
     await props.onRedeem(v)
     code.value = ''
   } catch (err) {
-    const e = err as { data?: { message?: string }, statusMessage?: string }
-    toast.add({ title: e?.data?.message || e?.statusMessage || '兑换失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '兑换失败'), color: 'error' })
   } finally {
     redeeming.value = false
   }

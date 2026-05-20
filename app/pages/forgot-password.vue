@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
+import { parseFetchError } from '#shared/utils/clientError'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '找回密码' })
@@ -21,21 +22,10 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.passwordReset)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object') {
-    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
-    const data = e.data
-    if (data && typeof data.message === 'string' && data.message) {
-      return data.message
-    }
-    const status = e.statusCode ?? e.status
-    if (typeof status === 'number') {
-      if (status === 403) return '该功能已被管理员关闭'
-      if (status === 429) return '操作过于频繁，请稍后再试'
-      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
-    }
-  }
-  return fallback
+const FORGOT_PASSWORD_ERROR_CODES: Record<number, string> = {
+  403: '该功能已被管理员关闭',
+  429: '操作过于频繁，请稍后再试',
+  500: '服务器暂时无法响应，请稍后再试'
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -57,7 +47,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     submitted.value = true
   } catch (error: unknown) {
-    errorMessage.value = getErrorMessage(error, '提交失败，请稍后重试')
+    errorMessage.value = parseFetchError(error, '提交失败，请稍后重试', FORGOT_PASSWORD_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
     submitting.value = false

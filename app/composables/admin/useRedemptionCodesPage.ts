@@ -1,3 +1,5 @@
+import { parseFetchError } from '#shared/utils/clientError'
+
 export interface RedemptionCode {
   id: number
   code: string
@@ -38,10 +40,6 @@ export interface GeneratePayload {
   maxUses: number
   expiresAt: string | null
   note: string | null
-}
-
-function errMsg(err: unknown, fallback: string) {
-  return (err as { data?: { message?: string } })?.data?.message || fallback
 }
 
 export function useRedemptionCodesPage() {
@@ -125,7 +123,7 @@ export function useRedemptionCodesPage() {
       toast.add({ title: item.isEnabled ? '已禁用' : '已启用', color: 'success' })
       await fetchList()
     } catch (err) {
-      toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
     }
   }
 
@@ -139,7 +137,7 @@ export function useRedemptionCodesPage() {
       toast.add({ title: '已删除', color: 'success' })
       await fetchList()
     } catch (err) {
-      toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
     }
   }
 
@@ -152,7 +150,7 @@ export function useRedemptionCodesPage() {
       toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
       await Promise.all([fetchBatches(), fetchList()])
     } catch (err) {
-      toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
     }
   }
 
@@ -169,7 +167,7 @@ export function useRedemptionCodesPage() {
       toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
       await Promise.all([fetchBatches(), fetchList()])
     } catch (err) {
-      toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
     }
   }
 

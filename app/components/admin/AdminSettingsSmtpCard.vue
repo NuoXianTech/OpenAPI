@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAdminSettingsForm } from '~/composables/admin/useAdminSettingsPage'
+import { parseFetchError } from '#shared/utils/clientError'
 
 const form = useAdminSettingsForm()
 const toast = useToast()
@@ -29,7 +30,7 @@ async function submitTest() {
     testOpen.value = false
   } catch (err) {
     toast.add({
-      title: (err as { data?: { message?: string } })?.data?.message || '发送失败',
+      title: parseFetchError(err, '发送失败'),
       color: 'error'
     })
   } finally {

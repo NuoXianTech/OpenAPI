@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { z } from 'zod'
 import type { ResetPasswordInput } from '#shared/schemas/auth'
+import { parseFetchError } from '#shared/utils/clientError'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '重置密码' })
@@ -57,19 +58,6 @@ const passwordStrengthLabelClass = computed(() => {
   }
 })
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error instanceof Error && error.message) {
-    return error.message
-  }
-  if (typeof error === 'object' && error && 'data' in error) {
-    const data = (error as { data?: { message?: string } }).data
-    if (data?.message) {
-      return data.message
-    }
-  }
-  return fallback
-}
-
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
 
@@ -88,7 +76,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await new Promise(resolve => setTimeout(resolve, 800))
     await navigateTo('/login')
   } catch (error: unknown) {
-    errorMessage.value = getErrorMessage(error, '重置失败，链接可能已失效')
+    errorMessage.value = parseFetchError(error, '重置失败，链接可能已失效')
   } finally {
     submitting.value = false
   }

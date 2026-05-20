@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface ApiCategoryItem {
   id: number
@@ -67,7 +68,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
   } finally {
     loading.value = false
   }

@@ -1,3 +1,5 @@
+import { parseFetchError } from '#shared/utils/clientError'
+
 export interface AdminSettingsForm {
   siteName: string
   siteUrl: string
@@ -132,7 +134,7 @@ export function useAdminSettingsPage() {
       toast.add({ title: '保存成功', color: 'success' })
       await refresh()
     } catch (err) {
-      toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
+      toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
     } finally {
       saving.value = false
     }

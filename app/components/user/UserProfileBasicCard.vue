@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { ProfileData } from '~/composables/user/useUserProfilePage'
+import { parseFetchError } from '#shared/utils/clientError'
 
 const props = defineProps<{
   profile: ProfileData | null
@@ -21,7 +22,7 @@ async function submit() {
   try {
     await props.onSave(displayName.value)
   } catch (err) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
   } finally {
     saving.value = false
   }

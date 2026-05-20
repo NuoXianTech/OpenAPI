@@ -1,39 +1,16 @@
 import { eq } from 'drizzle-orm'
+import type {
+  PublicAnnouncementSettings,
+  PublicSiteSettings,
+  PublicTurnstileSettings
+} from '#shared/types/siteSettings'
 import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 import { siteSettings } from '~~/server/db/schema/system'
 import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
 
 const DEFAULT_SCOPE = 'default'
 
-export interface PublicTurnstileSettings {
-  enabled: boolean
-  siteKey: string
-  login: boolean
-  register: boolean
-  adminLogin: boolean
-  passwordReset: boolean
-}
-
-export interface PublicAnnouncementSettings {
-  showOnHome: boolean
-}
-
-export interface PublicSiteSettings {
-  siteUrl: string
-  siteImg: string
-  siteName: string
-  siteDescription: string
-  startTime: string
-  icpBeian: string | null
-  policeBeian: string | null
-  termsUrl: string | null
-  privacyUrl: string | null
-  registrationMode: string
-  oauthLoginEnabled: boolean
-  passwordResetEnabled: boolean
-  turnstile: PublicTurnstileSettings
-  announcement: PublicAnnouncementSettings
-}
+export type { PublicAnnouncementSettings, PublicSiteSettings, PublicTurnstileSettings }
 
 export interface SiteSettingsUpsertInput {
   siteUrl?: string

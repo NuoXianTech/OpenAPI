@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { GeneratePayload, GenerateResult } from '~/composables/admin/useRedemptionCodesPage'
+import { parseFetchError } from '#shared/utils/clientError'
 
 const props = defineProps<{
   open: boolean
@@ -67,7 +68,7 @@ async function submit() {
       note: form.note.trim() || null
     })
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '生成失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '生成失败'), color: 'error' })
   } finally {
     generating.value = false
   }

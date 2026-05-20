@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface DiscoveredEndpoint {
   apiPath: string
@@ -153,7 +154,7 @@ async function submitAddCategory() {
     newCategoryName.value = ''
     toast.add({ title: '已新增分类', color: 'success' })
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '新增失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '新增失败'), color: 'error' })
   } finally {
     addingCategory.value = false
   }
@@ -226,7 +227,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
   } finally {
     loading.value = false
   }

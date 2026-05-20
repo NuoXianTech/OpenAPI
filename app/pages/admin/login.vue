@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 useHead({ title: '管理员登录' })
 
@@ -27,22 +28,11 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.adminLogin)
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object') {
-    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
-    const data = e.data
-    if (data && typeof data.message === 'string' && data.message) {
-      return data.message
-    }
-    const status = e.statusCode ?? e.status
-    if (typeof status === 'number') {
-      if (status === 401) return '管理员账号或密码错误'
-      if (status === 403) return '没有访问管理后台的权限'
-      if (status === 429) return '尝试次数过多，请稍后再试'
-      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
-    }
-  }
-  return fallback
+const ADMIN_LOGIN_ERROR_CODES: Record<number, string> = {
+  401: '管理员账号或密码错误',
+  403: '没有访问管理后台的权限',
+  429: '尝试次数过多，请稍后再试',
+  500: '服务器暂时无法响应，请稍后再试'
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -62,7 +52,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     })
     await navigateTo('/admin')
   } catch (err: unknown) {
-    errorMsg.value = getErrorMessage(err, '登录失败，请稍后再试')
+    errorMsg.value = parseFetchError(err, '登录失败，请稍后再试', ADMIN_LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
     loading.value = false

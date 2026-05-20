@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface UserItem {
   id: number
@@ -92,7 +93,7 @@ async function submitSend() {
     form.audience = 'specific'
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '发送失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
   } finally {
     sending.value = false
   }
@@ -136,7 +137,7 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
   } finally {
     deleteLoading.value = false
   }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface DiscoveredEndpoint {
   apiPath: string
@@ -139,7 +140,7 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
   } finally {
     deleteLoading.value = false
   }
@@ -154,7 +155,7 @@ async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatisti
     })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '切换失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '切换失败'), color: 'error' })
   }
 }
 
@@ -167,7 +168,7 @@ async function resyncManifest(row: DiscoveredApi) {
     toast.add({ title: '已同步 manifest', color: 'success' })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '同步失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '同步失败'), color: 'error' })
   }
 }
 

@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { z } from 'zod'
 import { registerSchema } from '#shared/schemas/auth'
+import { parseFetchError } from '#shared/utils/clientError'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '注册' })
@@ -59,23 +60,12 @@ const passwordStrengthLabelClass = computed(() => {
   }
 })
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object') {
-    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
-    const data = e.data
-    if (data && typeof data.message === 'string' && data.message) {
-      return data.message
-    }
-    const status = e.statusCode ?? e.status
-    if (typeof status === 'number') {
-      if (status === 403) return '当前未开放注册或邮箱不被允许'
-      if (status === 409) return '该邮箱或用户名已被占用，请更换后重试'
-      if (status === 429) return '操作过于频繁，请稍后再试'
-      if (status === 503) return '验证邮件服务暂不可用，请稍后再试或联系管理员'
-      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
-    }
-  }
-  return fallback
+const REGISTER_ERROR_CODES: Record<number, string> = {
+  403: '当前未开放注册或邮箱不被允许',
+  409: '该邮箱或用户名已被占用，请更换后重试',
+  429: '操作过于频繁，请稍后再试',
+  503: '验证邮件服务暂不可用，请稍后再试或联系管理员',
+  500: '服务器暂时无法响应，请稍后再试'
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -102,7 +92,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     state.confirm = ''
     turnstileWidget.value?.reset()
   } catch (error: unknown) {
-    errorMessage.value = getErrorMessage(error, '注册失败')
+    errorMessage.value = parseFetchError(error, '注册失败', REGISTER_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
     submitting.value = false

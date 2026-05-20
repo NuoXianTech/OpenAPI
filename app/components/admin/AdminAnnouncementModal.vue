@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { parseFetchError } from '#shared/utils/clientError'
+
 interface Announcement {
   id: number
   title: string
@@ -110,7 +112,7 @@ async function onSubmit() {
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
   } finally {
     loading.value = false
   }

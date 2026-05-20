@@ -1,30 +1,13 @@
+import type {
+  PublicAnnouncementSettings,
+  PublicSiteSettings,
+  PublicTurnstileSettings
+} from '#shared/types/siteSettings'
 import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 
 export const PUBLIC_SITE_SETTINGS_KEY = 'public-site-settings'
 
-export interface PublicTurnstileSettings {
-  enabled: boolean
-  siteKey: string
-  login: boolean
-  register: boolean
-  adminLogin: boolean
-  passwordReset: boolean
-}
-
-export interface PublicAnnouncementSettings {
-  showOnHome: boolean
-}
-
-export interface PublicSiteSettings {
-  siteUrl: string
-  siteImg: string
-  siteName: string
-  siteDescription: string
-  startTime: string
-  passwordResetEnabled: boolean
-  turnstile: PublicTurnstileSettings
-  announcement: PublicAnnouncementSettings
-}
+export type { PublicAnnouncementSettings, PublicSiteSettings, PublicTurnstileSettings }
 
 const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   enabled: false,
@@ -43,6 +26,12 @@ const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
 // 基础字段（siteUrl/siteName 等）从 shared/config/siteDefaults 取，与 schema 默认值同源。
 const FALLBACK_SETTINGS: PublicSiteSettings = {
   ...PUBLIC_SITE_DEFAULTS,
+  icpBeian: null,
+  policeBeian: null,
+  termsUrl: null,
+  privacyUrl: null,
+  registrationMode: 'open',
+  oauthLoginEnabled: true,
   turnstile: { ...EMPTY_TURNSTILE },
   announcement: { ...EMPTY_ANNOUNCEMENT }
 }

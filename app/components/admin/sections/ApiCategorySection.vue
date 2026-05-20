@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface ApiCategoryItem {
   id: number
@@ -57,7 +58,7 @@ async function confirmDelete() {
     deleteOpen.value = false
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '删除失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
   } finally {
     deleteLoading.value = false
   }
@@ -71,7 +72,7 @@ async function quickToggle(row: ApiCategoryItem, value: boolean) {
     })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
   }
 }
 

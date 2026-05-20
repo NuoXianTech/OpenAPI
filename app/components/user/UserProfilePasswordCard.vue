@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { parseFetchError } from '#shared/utils/clientError'
+
 const props = defineProps<{
   onSubmit: (currentPassword: string, newPassword: string) => Promise<void>
 }>()
@@ -27,7 +29,7 @@ async function submit() {
     form.newPassword = ''
     form.confirmPassword = ''
   } catch (err) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '修改失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '修改失败'), color: 'error' })
   } finally {
     saving.value = false
   }

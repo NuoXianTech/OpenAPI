@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
+import { parseFetchError } from '#shared/utils/clientError'
 
 interface ProviderItem {
   provider: string
@@ -75,7 +76,7 @@ async function save(item: ProviderItem) {
     form.clientSecret = ''
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '保存失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
   } finally {
     form.saving = false
   }

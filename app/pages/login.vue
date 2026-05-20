@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { parseFetchError } from '#shared/utils/clientError'
 
 useHead({ title: '登录' })
 
@@ -59,22 +60,11 @@ const oauthError = computed(() => {
   return map[code] || `登录失败：${code}`
 })
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (error && typeof error === 'object') {
-    const e = error as { data?: { message?: unknown }, statusCode?: number, status?: number }
-    const data = e.data
-    if (data && typeof data.message === 'string' && data.message) {
-      return data.message
-    }
-    const status = e.statusCode ?? e.status
-    if (typeof status === 'number') {
-      if (status === 401) return '账号或密码错误'
-      if (status === 403) return '当前账号无法登录，请确认账号状态'
-      if (status === 429) return '尝试次数过多，请稍后再试'
-      if (status >= 500) return '服务器暂时无法响应，请稍后再试'
-    }
-  }
-  return fallback
+const LOGIN_ERROR_CODES: Record<number, string> = {
+  401: '账号或密码错误',
+  403: '当前账号无法登录，请确认账号状态',
+  429: '尝试次数过多，请稍后再试',
+  500: '服务器暂时无法响应，请稍后再试'
 }
 
 onMounted(async () => {
@@ -107,7 +97,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     await login(payload)
     await navigateTo('/')
   } catch (error: unknown) {
-    errorMessage.value = getErrorMessage(error, '登录失败')
+    errorMessage.value = parseFetchError(error, '登录失败', LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
     submitting.value = false

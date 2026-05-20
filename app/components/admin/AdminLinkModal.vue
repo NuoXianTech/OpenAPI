@@ -2,6 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
+import { parseFetchError } from '#shared/utils/clientError'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: FriendLinkItem | null }>()
@@ -42,7 +43,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '操作失败', color: 'error' })
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
   } finally { loading.value = false }
 }
 </script>
