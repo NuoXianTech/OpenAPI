@@ -30,10 +30,8 @@ export default defineNuxtConfig({
       rateLimitDriver: ''
     }
   },
-  // 路由级规则：后台页面纯 SPA 不预渲染，避免 SSR 时拉鉴权接口；公共 API 走 HTTP cache-control 让浏览器/CDN 复用
+  // 公共 list 接口走 HTTP cache-control 让浏览器/CDN 复用；后台页保持 SSR，鉴权由 server 端 requireAdmin 兜底
   routeRules: {
-    '/admin/**': { ssr: false },
-    '/user/**': { ssr: false },
     '/api/list': { headers: { 'cache-control': 'public, max-age=10, stale-while-revalidate=60' } },
     '/api/api-categories/list': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
     '/api/friend-links/list': { headers: { 'cache-control': 'public, max-age=60, stale-while-revalidate=300' } },
