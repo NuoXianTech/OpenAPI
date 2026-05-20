@@ -1,4 +1,8 @@
-interface PublicTurnstileSettings {
+import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
+
+export const PUBLIC_SITE_SETTINGS_KEY = 'public-site-settings'
+
+export interface PublicTurnstileSettings {
   enabled: boolean
   siteKey: string
   login: boolean
@@ -7,11 +11,11 @@ interface PublicTurnstileSettings {
   passwordReset: boolean
 }
 
-interface PublicAnnouncementSettings {
+export interface PublicAnnouncementSettings {
   showOnHome: boolean
 }
 
-interface PublicSiteSettings {
+export interface PublicSiteSettings {
   siteUrl: string
   siteImg: string
   siteName: string
@@ -35,15 +39,10 @@ const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
   showOnHome: false
 }
 
-// DB 是唯一权威源；以下兜底仅在 /api/settings/public 请求异常时使用，
-// 字段与 server/db/schema/system.ts 中 siteSettings 表的 default 对齐。
+// DB 是唯一权威源；以下兜底仅在 /api/settings/public 请求异常时使用。
+// 基础字段（siteUrl/siteName 等）从 shared/config/siteDefaults 取，与 schema 默认值同源。
 const FALLBACK_SETTINGS: PublicSiteSettings = {
-  siteUrl: 'http://localhost:3000',
-  siteImg: '/favicon.ico',
-  siteName: 'OpenAPI',
-  siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
-  startTime: '2026-01-01 00:00:00',
-  passwordResetEnabled: true,
+  ...PUBLIC_SITE_DEFAULTS,
   turnstile: { ...EMPTY_TURNSTILE },
   announcement: { ...EMPTY_ANNOUNCEMENT }
 }
@@ -52,7 +51,7 @@ export function useSiteSettings() {
   const { data, pending, error, refresh } = useFetch<PublicSiteSettings>(
     '/api/settings/public',
     {
-      key: 'public-site-settings',
+      key: PUBLIC_SITE_SETTINGS_KEY,
       default: () => FALLBACK_SETTINGS
     }
   )

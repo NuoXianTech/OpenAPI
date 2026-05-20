@@ -9,6 +9,7 @@ import {
   timestamp,
   index
 } from 'drizzle-orm/pg-core'
+import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 import { users } from './user'
 
 // ------------------------------------------------------------------
@@ -19,11 +20,11 @@ export const siteSettings = pgTable('site_settings', {
   scope: varchar('scope', { length: 32 }).notNull().default('default').unique(),
 
   // 基础信息
-  siteUrl: varchar('site_url', { length: 1000 }).notNull().default('http://localhost:3000'),
-  siteImg: varchar('site_img', { length: 1000 }).notNull().default('/favicon.ico'),
-  siteName: varchar('site_name', { length: 140 }).notNull().default('OpenAPI'),
-  siteDescription: text('site_description').notNull().default('OpenAPI是免费为用户提供网络数据接口调用的服务平台。'),
-  startTime: varchar('start_time', { length: 32 }).notNull().default('2026-01-01 00:00:00'),
+  siteUrl: varchar('site_url', { length: 1000 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteUrl),
+  siteImg: varchar('site_img', { length: 1000 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteImg),
+  siteName: varchar('site_name', { length: 140 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteName),
+  siteDescription: text('site_description').notNull().default(PUBLIC_SITE_DEFAULTS.siteDescription),
+  startTime: varchar('start_time', { length: 32 }).notNull().default(PUBLIC_SITE_DEFAULTS.startTime),
 
   // 注册
   registrationMode: varchar('registration_mode', { length: 20 }).notNull().default('open'), // open / invite / closed
@@ -44,7 +45,7 @@ export const siteSettings = pgTable('site_settings', {
   emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(30),
   passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(30),
   // 忘记密码功能总开关：关闭后，请求重置邮件 / 消费重置 token 都会被拒，登录页也不展示入口
-  passwordResetEnabled: boolean('password_reset_enabled').notNull().default(true),
+  passwordResetEnabled: boolean('password_reset_enabled').notNull().default(PUBLIC_SITE_DEFAULTS.passwordResetEnabled),
 
   // 备案与法务
   icpBeian: varchar('icp_beian', { length: 100 }),

@@ -26,5 +26,9 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { changedFields }
   })
 
-  return data
+  // 同时返回 public shape：前端用它原地刷新 useFetch('/api/settings/public') 缓存，避免再发一次 GET。
+  return {
+    ...data,
+    public: siteSettingsService.toPublicSettings(data)
+  }
 })

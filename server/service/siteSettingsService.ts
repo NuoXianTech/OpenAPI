@@ -1,4 +1,5 @@
 import { eq } from 'drizzle-orm'
+import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 import { siteSettings } from '~~/server/db/schema/system'
 import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
 
@@ -70,11 +71,7 @@ export interface SiteSettingsUpsertInput {
 function buildInitialDefaults() {
   return {
     scope: DEFAULT_SCOPE,
-    siteUrl: 'http://localhost:3000',
-    siteImg: '/favicon.ico',
-    siteName: 'OpenAPI',
-    siteDescription: 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。',
-    startTime: '2026-01-01 00:00:00',
+    ...PUBLIC_SITE_DEFAULTS,
     sessionMaxAgeSeconds: 60 * 60 * 24,
     sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
     sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
@@ -112,6 +109,8 @@ function toPublicTurnstile(settings: {
   }
 }
 
+type SiteSettingsRow = typeof siteSettings.$inferSelect
+
 export const siteSettingsService = {
   async getOrCreate() {
     const exists = await db.select().from(siteSettings)
@@ -146,6 +145,10 @@ export const siteSettingsService = {
 
   async getPublicSettings(): Promise<PublicSiteSettings> {
     const settings = await this.getOrCreate()
+    return this.toPublicSettings(settings)
+  },
+
+  toPublicSettings(settings: SiteSettingsRow): PublicSiteSettings {
     return {
       siteUrl: settings.siteUrl,
       siteImg: settings.siteImg,

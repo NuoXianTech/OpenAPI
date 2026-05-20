@@ -1,4 +1,5 @@
 import type { InjectionKey } from 'vue'
+import { PUBLIC_SITE_SETTINGS_KEY, type PublicSiteSettings } from '~/composables/useSiteSettings'
 
 export interface AdminSettingsForm {
   siteName: string
@@ -127,7 +128,10 @@ export function useAdminSettingsPage() {
   async function save() {
     saving.value = true
     try {
-      await $fetch('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
+      const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
+      // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
+      const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
+      cached.data.value = res.public
       toast.add({ title: '保存成功', color: 'success' })
       await refresh()
     } catch (err) {
