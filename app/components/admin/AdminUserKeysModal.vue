@@ -66,69 +66,65 @@ async function remove(id: number) {
 <template>
   <UModal
     :open="open"
+    :title="`${target?.username ?? ''} 的 API Keys`"
     @update:open="emit('update:open', $event)"
   >
-    <template #content>
-      <div class="p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">
-            {{ target?.username }} 的 API Keys
-          </h3>
-          <UButton
-            size="sm"
-            icon="i-mdi-plus"
-            @click="add"
-          >
-            新增
-          </UButton>
-        </div>
-        <div
-          v-if="loading"
-          class="text-sm text-muted py-4 text-center"
+    <template #body>
+      <div class="flex justify-end mb-3">
+        <UButton
+          size="sm"
+          icon="i-mdi-plus"
+          @click="add"
         >
-          加载中...
-        </div>
+          新增
+        </UButton>
+      </div>
+      <div
+        v-if="loading"
+        class="text-sm text-muted py-4 text-center"
+      >
+        加载中...
+      </div>
+      <div
+        v-else-if="keys.length === 0"
+        class="text-sm text-muted py-4 text-center"
+      >
+        暂无 API Key
+      </div>
+      <div
+        v-else
+        class="space-y-2"
+      >
         <div
-          v-else-if="keys.length === 0"
-          class="text-sm text-muted py-4 text-center"
+          v-for="key in keys"
+          :key="key.id"
+          class="flex items-center justify-between gap-2 rounded-lg border border-default p-3"
         >
-          暂无 API Key
-        </div>
-        <div
-          v-else
-          class="space-y-2"
-        >
-          <div
-            v-for="key in keys"
-            :key="key.id"
-            class="flex items-center justify-between gap-2 rounded-lg border border-default p-3"
-          >
-            <div class="min-w-0">
-              <div class="text-sm font-medium">
-                {{ key.name }}
-              </div>
-              <div class="text-xs text-muted font-mono truncate">
-                {{ key.apiKey }}
-              </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium">
+              {{ key.name }}
             </div>
-            <div class="flex gap-1 shrink-0">
-              <UButton
-                size="xs"
-                variant="outline"
-                color="neutral"
-                @click="reset(key.id)"
-              >
-                重置
-              </UButton>
-              <UButton
-                size="xs"
-                variant="outline"
-                color="error"
-                @click="remove(key.id)"
-              >
-                删除
-              </UButton>
+            <div class="text-xs text-muted font-mono truncate">
+              {{ key.apiKey }}
             </div>
+          </div>
+          <div class="flex gap-1 shrink-0">
+            <UButton
+              size="xs"
+              variant="outline"
+              color="neutral"
+              @click="reset(key.id)"
+            >
+              重置
+            </UButton>
+            <UButton
+              size="xs"
+              variant="outline"
+              color="error"
+              @click="remove(key.id)"
+            >
+              删除
+            </UButton>
           </div>
         </div>
       </div>

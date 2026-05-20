@@ -279,62 +279,67 @@ const columns: TableColumn<ApiKey>[] = [
       <!-- 创建 Key -->
       <UModal
         v-model:open="createOpen"
+        :title="createdKey ? '请保存你的新 Key' : '生成新 API Key'"
         :ui="{ content: 'sm:max-w-md' }"
       >
-        <template #content>
-          <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">
-              {{ createdKey ? '请保存你的新 Key' : '生成新 API Key' }}
-            </h3>
-            <template v-if="!createdKey">
-              <UFormField label="名称（可选）">
-                <UInput
-                  v-model="newName"
-                  placeholder="例如：默认密钥 / 生产密钥"
-                />
-              </UFormField>
-              <div class="flex justify-end gap-2 mt-6">
-                <UButton
-                  variant="outline"
-                  color="neutral"
-                  @click="createOpen = false"
-                >
-                  取消
-                </UButton>
-                <UButton
-                  :loading="creating"
-                  @click="submitCreate"
-                >
-                  生成
-                </UButton>
-              </div>
-            </template>
-            <template v-else>
-              <UAlert
-                color="warning"
-                variant="subtle"
-                title="请立即复制并妥善保存"
-                description="为了安全，关闭对话框后将仅显示遮罩。"
-                icon="i-mdi-alert-outline"
-                class="mb-4"
+        <template #body>
+          <template v-if="!createdKey">
+            <UFormField label="名称（可选）">
+              <UInput
+                v-model="newName"
+                placeholder="例如：默认密钥 / 生产密钥"
               />
-              <code class="block font-mono text-sm break-all p-3 rounded bg-elevated">
-                {{ createdKey.apiKey }}
-              </code>
-              <div class="flex justify-end gap-2 mt-6">
-                <UButton
-                  variant="outline"
-                  color="neutral"
-                  icon="i-mdi-content-copy"
-                  @click="copy(createdKey.apiKey)"
-                >
-                  复制
-                </UButton>
-                <UButton @click="createOpen = false">
-                  我已保存
-                </UButton>
-              </div>
-            </template>
+            </UFormField>
+          </template>
+          <template v-else>
+            <UAlert
+              color="warning"
+              variant="subtle"
+              title="请立即复制并妥善保存"
+              description="为了安全，关闭对话框后将仅显示遮罩。"
+              icon="i-mdi-alert-outline"
+              class="mb-4"
+            />
+            <code class="block font-mono text-sm break-all p-3 rounded bg-elevated">
+              {{ createdKey.apiKey }}
+            </code>
+          </template>
+        </template>
+
+        <template #footer>
+          <div
+            v-if="!createdKey"
+            class="flex justify-end gap-2 w-full"
+          >
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="createOpen = false"
+            >
+              取消
+            </UButton>
+            <UButton
+              :loading="creating"
+              @click="submitCreate"
+            >
+              生成
+            </UButton>
+          </div>
+          <div
+            v-else
+            class="flex justify-end gap-2 w-full"
+          >
+            <UButton
+              variant="outline"
+              color="neutral"
+              icon="i-mdi-content-copy"
+              @click="copy(createdKey.apiKey)"
+            >
+              复制
+            </UButton>
+            <UButton @click="createOpen = false">
+              我已保存
+            </UButton>
           </div>
         </template>
       </UModal>
@@ -342,57 +347,61 @@ const columns: TableColumn<ApiKey>[] = [
       <!-- 重置 Key -->
       <UModal
         v-model:open="resetOpen"
+        :title="resetResult ? '已重置，请保存新 Key' : '确认重置 API Key'"
         :ui="{ content: 'sm:max-w-md' }"
       >
-        <template #content>
-          <div class="p-6">
-            <h3 class="text-lg font-semibold mb-4">
-              {{ resetResult ? '已重置，请保存新 Key' : '确认重置 API Key' }}
-            </h3>
-            <template v-if="!resetResult">
-              <UAlert
-                color="warning"
-                variant="subtle"
-                title="重置将立即让旧 Key 失效"
-                :description="`将重置「${resetTarget?.name || '默认密钥'}」，所有正在使用旧 Key 的调用方会立刻失败，请确认后再继续。`"
-                icon="i-mdi-alert-outline"
-                class="mb-4"
-              />
-              <div class="flex justify-end gap-2 mt-6">
-                <UButton
-                  variant="outline"
-                  color="neutral"
-                  @click="resetOpen = false"
-                >
-                  取消
-                </UButton>
-                <UButton
-                  color="warning"
-                  :loading="resetLoading"
-                  @click="confirmReset"
-                >
-                  确认重置
-                </UButton>
-              </div>
-            </template>
-            <template v-else>
-              <code class="block font-mono text-sm break-all p-3 rounded bg-elevated mb-4">
-                {{ resetResult.apiKey }}
-              </code>
-              <div class="flex justify-end gap-2">
-                <UButton
-                  variant="outline"
-                  color="neutral"
-                  icon="i-mdi-content-copy"
-                  @click="copy(resetResult.apiKey)"
-                >
-                  复制
-                </UButton>
-                <UButton @click="resetOpen = false">
-                  我已保存
-                </UButton>
-              </div>
-            </template>
+        <template #body>
+          <template v-if="!resetResult">
+            <UAlert
+              color="warning"
+              variant="subtle"
+              title="重置将立即让旧 Key 失效"
+              :description="`将重置「${resetTarget?.name || '默认密钥'}」，所有正在使用旧 Key 的调用方会立刻失败，请确认后再继续。`"
+              icon="i-mdi-alert-outline"
+            />
+          </template>
+          <template v-else>
+            <code class="block font-mono text-sm break-all p-3 rounded bg-elevated">
+              {{ resetResult.apiKey }}
+            </code>
+          </template>
+        </template>
+
+        <template #footer>
+          <div
+            v-if="!resetResult"
+            class="flex justify-end gap-2 w-full"
+          >
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="resetOpen = false"
+            >
+              取消
+            </UButton>
+            <UButton
+              color="warning"
+              :loading="resetLoading"
+              @click="confirmReset"
+            >
+              确认重置
+            </UButton>
+          </div>
+          <div
+            v-else
+            class="flex justify-end gap-2 w-full"
+          >
+            <UButton
+              variant="outline"
+              color="neutral"
+              icon="i-mdi-content-copy"
+              @click="copy(resetResult.apiKey)"
+            >
+              复制
+            </UButton>
+            <UButton @click="resetOpen = false">
+              我已保存
+            </UButton>
           </div>
         </template>
       </UModal>

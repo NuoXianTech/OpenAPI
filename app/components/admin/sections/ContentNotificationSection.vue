@@ -353,54 +353,44 @@ const columns: TableColumn<MessageRow>[] = [
 
     <UModal
       v-model:open="detailOpen"
+      title="接收详情"
+      :description="detailMessage ? `${detailMessage.title} · ${formatDate(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
+      scrollable
       :ui="{ content: 'sm:max-w-2xl' }"
     >
-      <template #content>
-        <div class="p-6 max-h-[80vh] overflow-y-auto">
-          <h3 class="text-lg font-semibold mb-1">
-            接收详情
-          </h3>
-          <p
-            v-if="detailMessage"
-            class="text-xs text-muted mb-4"
-          >
-            {{ detailMessage.title }} · {{ formatDate(detailMessage.createdAt) }} ·
-            范围 {{ audienceMeta[detailMessage.audience].label }} ·
-            已投递 {{ detailMessage.deliveredCount }} / 已读 {{ detailMessage.readCount }}
-          </p>
+      <template #body>
+        <div
+          v-if="detailLoading"
+          class="text-center text-sm text-muted py-8"
+        >
+          加载中...
+        </div>
+        <div
+          v-else-if="detailRows.length === 0"
+          class="text-center text-sm text-muted py-8"
+        >
+          暂无投递记录
+        </div>
+        <div
+          v-else
+          class="divide-y divide-default"
+        >
           <div
-            v-if="detailLoading"
-            class="text-center text-sm text-muted py-8"
+            v-for="r in detailRows"
+            :key="r.id"
+            class="flex items-center gap-3 py-2 text-sm"
           >
-            加载中...
-          </div>
-          <div
-            v-else-if="detailRows.length === 0"
-            class="text-center text-sm text-muted py-8"
-          >
-            暂无投递记录
-          </div>
-          <div
-            v-else
-            class="divide-y divide-default"
-          >
-            <div
-              v-for="r in detailRows"
-              :key="r.id"
-              class="flex items-center gap-3 py-2 text-sm"
-            >
-              <UIcon
-                :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
-                :class="r.isRead ? 'text-success' : 'text-muted'"
-                class="size-4"
-              />
-              <span class="flex-1 font-medium">
-                {{ r.recipientUsername || `#${r.recipientUserId}` }}
-              </span>
-              <span class="text-xs text-muted">
-                {{ r.isRead ? `已读 · ${formatDate(r.readAt)}` : '未读' }}
-              </span>
-            </div>
+            <UIcon
+              :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
+              :class="r.isRead ? 'text-success' : 'text-muted'"
+              class="size-4"
+            />
+            <span class="flex-1 font-medium">
+              {{ r.recipientUsername || `#${r.recipientUserId}` }}
+            </span>
+            <span class="text-xs text-muted">
+              {{ r.isRead ? `已读 · ${formatDate(r.readAt)}` : '未读' }}
+            </span>
           </div>
         </div>
       </template>

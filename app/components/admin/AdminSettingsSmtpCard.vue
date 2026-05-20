@@ -106,41 +106,37 @@ async function submitTest() {
     <UModal
       v-model:open="testOpen"
       title="SMTP 测试发信"
+      description="将使用已保存的 SMTP 配置发送一封测试邮件。若你刚修改了上方表单，请先点「保存」再测试。"
     >
-      <template #content>
-        <div class="p-6 space-y-4">
-          <h3 class="text-lg font-semibold">
-            SMTP 测试发信
-          </h3>
-          <p class="text-sm text-muted">
-            将使用<strong>已保存</strong>的 SMTP 配置发送一封测试邮件。若你刚修改了上方表单，请先点"保存"再测试。
-          </p>
-          <UFormField label="收件邮箱">
-            <UInput
-              v-model="testEmail"
-              type="email"
-              placeholder="you@example.com"
-              autofocus
-              @keydown.enter="submitTest"
-            />
-          </UFormField>
-          <div class="flex justify-end gap-2 pt-2">
-            <UButton
-              variant="outline"
-              color="neutral"
-              :disabled="sending"
-              @click="testOpen = false"
-            >
-              取消
-            </UButton>
-            <UButton
-              :loading="sending"
-              icon="i-mdi-send-outline"
-              @click="submitTest"
-            >
-              发送
-            </UButton>
-          </div>
+      <template #body>
+        <UFormField label="收件邮箱">
+          <UInput
+            v-model="testEmail"
+            type="email"
+            placeholder="you@example.com"
+            autofocus
+            @keydown.enter="submitTest"
+          />
+        </UFormField>
+      </template>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton
+            variant="outline"
+            color="neutral"
+            :disabled="sending"
+            @click="testOpen = false"
+          >
+            取消
+          </UButton>
+          <UButton
+            :loading="sending"
+            icon="i-mdi-send-outline"
+            @click="submitTest"
+          >
+            发送
+          </UButton>
         </div>
       </template>
     </UModal>

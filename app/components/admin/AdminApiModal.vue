@@ -234,315 +234,309 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 </script>
 
 <template>
-  <UModal v-model:open="open">
-    <template #content>
-      <div class="p-6 max-h-[85vh] overflow-y-auto">
-        <h3 class="text-lg font-semibold mb-1">
-          {{ headerLabel }}
-        </h3>
-        <p
-          v-if="target"
-          class="text-xs text-muted mb-4 font-mono"
-        >
-          {{ target.sourceDir }} · {{ target.endpointCount }} 端点
-        </p>
-
-        <div
-          v-if="target?.endpoints.length"
-          class="mb-4 rounded-lg border border-default p-3 bg-elevated/30"
-        >
-          <div class="text-xs text-muted mb-2">
-            发现的端点（路径与方法不可编辑，由文件结构决定）
-          </div>
-          <div class="flex flex-col gap-1">
-            <div
-              v-for="ep in target.endpoints"
-              :key="`${ep.method}-${ep.apiPath}`"
-              class="flex items-center gap-2 text-sm"
+  <UModal
+    v-model:open="open"
+    :title="headerLabel"
+    :description="target ? `${target.sourceDir} · ${target.endpointCount} 端点` : undefined"
+    scrollable
+    :ui="{ content: 'sm:max-w-2xl' }"
+  >
+    <template #body>
+      <div
+        v-if="target?.endpoints.length"
+        class="mb-4 rounded-lg border border-default p-3 bg-elevated/30"
+      >
+        <div class="text-xs text-muted mb-2">
+          发现的端点（路径与方法不可编辑，由文件结构决定）
+        </div>
+        <div class="flex flex-col gap-1">
+          <div
+            v-for="ep in target.endpoints"
+            :key="`${ep.method}-${ep.apiPath}`"
+            class="flex items-center gap-2 text-sm"
+          >
+            <UBadge
+              variant="subtle"
+              class="font-mono"
             >
-              <UBadge
-                variant="subtle"
-                class="font-mono"
-              >
-                {{ ep.method }}
-              </UBadge>
-              <span class="font-mono">{{ ep.apiPath }}</span>
-              <span
-                v-if="ep.isDynamic"
-                class="text-xs text-primary"
-              >动态</span>
+              {{ ep.method }}
+            </UBadge>
+            <span class="font-mono">{{ ep.apiPath }}</span>
+            <span
+              v-if="ep.isDynamic"
+              class="text-xs text-primary"
+            >动态</span>
+          </div>
+        </div>
+      </div>
+
+      <UForm
+        :schema="schema"
+        :state="state"
+        class="space-y-3"
+        @submit="onSubmit"
+      >
+        <div class="grid grid-cols-2 gap-3">
+          <UFormField
+            label="名称"
+            name="name"
+          >
+            <UInput
+              v-model="state.name"
+              placeholder="对外展示名称"
+            />
+          </UFormField>
+          <UFormField
+            label="状态"
+            name="status"
+          >
+            <USelect
+              v-model="state.status"
+              :items="statusOptions"
+            />
+          </UFormField>
+        </div>
+        <UFormField
+          label="简短描述"
+          name="shortDesc"
+        >
+          <UInput
+            v-model="state.shortDesc"
+            placeholder="最多30字"
+          />
+        </UFormField>
+        <UFormField
+          label="详细描述"
+          name="description"
+        >
+          <UTextarea
+            v-model="state.description"
+            :rows="3"
+          />
+        </UFormField>
+        <div class="grid grid-cols-2 gap-3">
+          <UFormField
+            label="文档地址"
+            name="docUrl"
+          >
+            <UInput
+              v-model="state.docUrl"
+              placeholder="https://docs.example.com"
+            />
+          </UFormField>
+          <UFormField
+            label="分类"
+            name="categoryId"
+          >
+            <div class="flex gap-2">
+              <USelect
+                v-model="state.categoryId"
+                :items="categoryOptions"
+                class="flex-1"
+              />
+              <UButton
+                icon="i-mdi-plus"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                type="button"
+                @click="showAddCategory = !showAddCategory"
+              />
             </div>
+            <div
+              v-if="showAddCategory"
+              class="mt-2 p-2 rounded-md border border-default bg-elevated/30 flex flex-col gap-2"
+            >
+              <div class="grid grid-cols-2 gap-2">
+                <UInput
+                  v-model="newCategoryCode"
+                  placeholder="code（如：weather）"
+                  size="sm"
+                />
+                <UInput
+                  v-model="newCategoryName"
+                  placeholder="名称（如：天气类）"
+                  size="sm"
+                />
+              </div>
+              <div class="flex justify-end gap-2">
+                <UButton
+                  size="xs"
+                  variant="ghost"
+                  color="neutral"
+                  type="button"
+                  @click="showAddCategory = false"
+                >
+                  取消
+                </UButton>
+                <UButton
+                  size="xs"
+                  :loading="addingCategory"
+                  type="button"
+                  @click="submitAddCategory"
+                >
+                  新增
+                </UButton>
+              </div>
+            </div>
+          </UFormField>
+        </div>
+
+        <div class="border-t border-default pt-3 mt-3">
+          <div class="text-sm font-medium mb-2">
+            访问控制
+          </div>
+          <div class="flex flex-wrap gap-6">
+            <USwitch
+              v-model="state.isEnabled"
+              label="启用接口"
+            />
+            <USwitch
+              v-model="state.isApiKey"
+              label="必需 API Key"
+            />
+            <USwitch
+              v-model="state.isStatistics"
+              label="统计调用"
+            />
+          </div>
+          <p
+            v-if="!state.isApiKey && (state.costCredits ?? 0) > 0"
+            class="text-xs text-warning mt-2"
+          >
+            关闭「必需 API Key」会同时把扣费金额归 0（无法定位扣款账户）。
+          </p>
+        </div>
+
+        <div class="border-t border-default pt-3 mt-3">
+          <div class="text-sm font-medium mb-2">
+            限流（0 = 不限）
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <UFormField
+              label="每秒"
+              name="rateLimitPerSecond"
+            >
+              <UInput
+                v-model.number="state.rateLimitPerSecond"
+                type="number"
+                min="0"
+              />
+            </UFormField>
+            <UFormField
+              label="每分钟"
+              name="rateLimitPerMinute"
+            >
+              <UInput
+                v-model.number="state.rateLimitPerMinute"
+                type="number"
+                min="0"
+              />
+            </UFormField>
+            <UFormField
+              label="每小时"
+              name="rateLimitPerHour"
+            >
+              <UInput
+                v-model.number="state.rateLimitPerHour"
+                type="number"
+                min="0"
+              />
+            </UFormField>
+            <UFormField
+              label="每天"
+              name="rateLimitPerDay"
+            >
+              <UInput
+                v-model.number="state.rateLimitPerDay"
+                type="number"
+                min="0"
+              />
+            </UFormField>
+            <UFormField
+              label="日配额"
+              name="dailyQuota"
+            >
+              <UInput
+                v-model.number="state.dailyQuota"
+                type="number"
+                min="0"
+              />
+            </UFormField>
+            <UFormField
+              label="超时(ms)"
+              name="timeoutMs"
+            >
+              <UInput
+                v-model.number="state.timeoutMs"
+                type="number"
+                min="0"
+              />
+            </UFormField>
           </div>
         </div>
 
-        <UForm
-          :schema="schema"
-          :state="state"
-          class="space-y-3"
-          @submit="onSubmit"
-        >
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField
-              label="名称"
-              name="name"
+        <div class="border-t border-default pt-3 mt-3">
+          <div class="text-sm font-medium mb-2 flex items-center gap-2">
+            <span>计费</span>
+            <UBadge
+              v-if="!state.isApiKey"
+              color="neutral"
+              variant="subtle"
+              size="sm"
             >
-              <UInput
-                v-model="state.name"
-                placeholder="对外展示名称"
-              />
-            </UFormField>
-            <UFormField
-              label="状态"
-              name="status"
+              需先开启「必需 API Key」
+            </UBadge>
+            <UBadge
+              v-else-if="(state.costCredits ?? 0) > 0"
+              color="warning"
+              variant="subtle"
+              size="sm"
             >
-              <USelect
-                v-model="state.status"
-                :items="statusOptions"
-              />
-            </UFormField>
+              收费接口
+            </UBadge>
+            <UBadge
+              v-else
+              color="success"
+              variant="subtle"
+              size="sm"
+            >
+              免费接口
+            </UBadge>
           </div>
           <UFormField
-            label="简短描述"
-            name="shortDesc"
+            label="单次调用消耗积分"
+            name="costCredits"
           >
             <UInput
-              v-model="state.shortDesc"
-              placeholder="最多30字"
+              v-model.number="state.costCredits"
+              type="number"
+              min="0"
+              :disabled="!state.isApiKey"
+              :placeholder="state.isApiKey ? '设为 0 表示免费' : '请先开启「必需 API Key」'"
             />
-          </UFormField>
-          <UFormField
-            label="详细描述"
-            name="description"
-          >
-            <UTextarea
-              v-model="state.description"
-              :rows="3"
-            />
-          </UFormField>
-          <div class="grid grid-cols-2 gap-3">
-            <UFormField
-              label="文档地址"
-              name="docUrl"
-            >
-              <UInput
-                v-model="state.docUrl"
-                placeholder="https://docs.example.com"
-              />
-            </UFormField>
-            <UFormField
-              label="分类"
-              name="categoryId"
-            >
-              <div class="flex gap-2">
-                <USelect
-                  v-model="state.categoryId"
-                  :items="categoryOptions"
-                  class="flex-1"
-                />
-                <UButton
-                  icon="i-mdi-plus"
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  @click="showAddCategory = !showAddCategory"
-                />
-              </div>
-              <div
-                v-if="showAddCategory"
-                class="mt-2 p-2 rounded-md border border-default bg-elevated/30 flex flex-col gap-2"
-              >
-                <div class="grid grid-cols-2 gap-2">
-                  <UInput
-                    v-model="newCategoryCode"
-                    placeholder="code（如：weather）"
-                    size="sm"
-                  />
-                  <UInput
-                    v-model="newCategoryName"
-                    placeholder="名称（如：天气类）"
-                    size="sm"
-                  />
-                </div>
-                <div class="flex justify-end gap-2">
-                  <UButton
-                    size="xs"
-                    variant="ghost"
-                    color="neutral"
-                    type="button"
-                    @click="showAddCategory = false"
-                  >
-                    取消
-                  </UButton>
-                  <UButton
-                    size="xs"
-                    :loading="addingCategory"
-                    type="button"
-                    @click="submitAddCategory"
-                  >
-                    新增
-                  </UButton>
-                </div>
-              </div>
-            </UFormField>
-          </div>
-
-          <div class="border-t border-default pt-3 mt-3">
-            <div class="text-sm font-medium mb-2">
-              访问控制
-            </div>
-            <div class="flex flex-wrap gap-6">
-              <USwitch
-                v-model="state.isEnabled"
-                label="启用接口"
-              />
-              <USwitch
-                v-model="state.isApiKey"
-                label="必需 API Key"
-              />
-              <USwitch
-                v-model="state.isStatistics"
-                label="统计调用"
-              />
-            </div>
-            <p
-              v-if="!state.isApiKey && (state.costCredits ?? 0) > 0"
-              class="text-xs text-warning mt-2"
-            >
-              关闭「必需 API Key」会同时把扣费金额归 0（无法定位扣款账户）。
+            <p class="text-xs text-muted mt-1">
+              只有开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
             </p>
-          </div>
+          </UFormField>
+        </div>
 
-          <div class="border-t border-default pt-3 mt-3">
-            <div class="text-sm font-medium mb-2">
-              限流（0 = 不限）
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <UFormField
-                label="每秒"
-                name="rateLimitPerSecond"
-              >
-                <UInput
-                  v-model.number="state.rateLimitPerSecond"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-              <UFormField
-                label="每分钟"
-                name="rateLimitPerMinute"
-              >
-                <UInput
-                  v-model.number="state.rateLimitPerMinute"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-              <UFormField
-                label="每小时"
-                name="rateLimitPerHour"
-              >
-                <UInput
-                  v-model.number="state.rateLimitPerHour"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-              <UFormField
-                label="每天"
-                name="rateLimitPerDay"
-              >
-                <UInput
-                  v-model.number="state.rateLimitPerDay"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-              <UFormField
-                label="日配额"
-                name="dailyQuota"
-              >
-                <UInput
-                  v-model.number="state.dailyQuota"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-              <UFormField
-                label="超时(ms)"
-                name="timeoutMs"
-              >
-                <UInput
-                  v-model.number="state.timeoutMs"
-                  type="number"
-                  min="0"
-                />
-              </UFormField>
-            </div>
-          </div>
-
-          <div class="border-t border-default pt-3 mt-3">
-            <div class="text-sm font-medium mb-2 flex items-center gap-2">
-              <span>计费</span>
-              <UBadge
-                v-if="!state.isApiKey"
-                color="neutral"
-                variant="subtle"
-                size="sm"
-              >
-                需先开启「必需 API Key」
-              </UBadge>
-              <UBadge
-                v-else-if="(state.costCredits ?? 0) > 0"
-                color="warning"
-                variant="subtle"
-                size="sm"
-              >
-                收费接口
-              </UBadge>
-              <UBadge
-                v-else
-                color="success"
-                variant="subtle"
-                size="sm"
-              >
-                免费接口
-              </UBadge>
-            </div>
-            <UFormField
-              label="单次调用消耗积分"
-              name="costCredits"
-            >
-              <UInput
-                v-model.number="state.costCredits"
-                type="number"
-                min="0"
-                :disabled="!state.isApiKey"
-                :placeholder="state.isApiKey ? '设为 0 表示免费' : '请先开启「必需 API Key」'"
-              />
-              <p class="text-xs text-muted mt-1">
-                只有开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
-              </p>
-            </UFormField>
-          </div>
-
-          <div class="flex justify-end gap-2 pt-3">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="open = false"
-            >
-              取消
-            </UButton>
-            <UButton
-              type="submit"
-              :loading="loading"
-            >
-              {{ mode === 'edit' ? '保存' : '登记' }}
-            </UButton>
-          </div>
-        </UForm>
-      </div>
+        <div class="flex justify-end gap-2 pt-3">
+          <UButton
+            variant="outline"
+            color="neutral"
+            @click="open = false"
+          >
+            取消
+          </UButton>
+          <UButton
+            type="submit"
+            :loading="loading"
+          >
+            {{ mode === 'edit' ? '保存' : '登记' }}
+          </UButton>
+        </div>
+      </UForm>
     </template>
   </UModal>
 </template>

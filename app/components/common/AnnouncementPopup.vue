@@ -111,98 +111,101 @@ function formatDate(iso: string) {
 <template>
   <UModal
     v-model:open="open"
+    scrollable
     :ui="{ content: 'sm:max-w-2xl' }"
   >
-    <template #content>
-      <div class="p-6 max-h-[80vh] overflow-y-auto">
-        <div class="flex items-center gap-2 mb-4">
-          <UIcon
-            name="i-mdi-bullhorn-outline"
-            class="size-5 text-primary"
-          />
-          <h3 class="text-lg font-semibold">
-            站点公告
-          </h3>
-          <span class="ml-auto text-xs text-muted">
-            共 {{ items.length }} 条
-          </span>
-        </div>
+    <template #header>
+      <div class="flex items-center gap-2 w-full">
+        <UIcon
+          name="i-mdi-bullhorn-outline"
+          class="size-5 text-primary"
+        />
+        <h3 class="text-lg font-semibold">
+          站点公告
+        </h3>
+        <span class="ml-auto text-xs text-muted">
+          共 {{ items.length }} 条
+        </span>
+      </div>
+    </template>
 
-        <div
-          v-if="items.length === 0"
-          class="text-center py-8 text-muted text-sm"
-        >
-          暂无公告
-        </div>
+    <template #body>
+      <div
+        v-if="items.length === 0"
+        class="text-center py-8 text-muted text-sm"
+      >
+        暂无公告
+      </div>
 
-        <UAccordion
-          v-else
-          v-model="expandedIds"
-          :items="accordionItems"
-          type="multiple"
-          :ui="{ root: 'space-y-2', item: 'border border-default rounded-md px-3' }"
-        >
-          <template #default="{ item }">
-            <div class="flex items-center gap-2 py-2 text-left">
-              <UBadge
-                :color="levelMeta[(item.raw as Announcement).level].color"
-                variant="subtle"
-                class="shrink-0"
-              >
-                <UIcon
-                  :name="levelMeta[(item.raw as Announcement).level].icon"
-                  class="size-3.5"
-                />
-                <span class="ml-1">{{ levelMeta[(item.raw as Announcement).level].label }}</span>
-              </UBadge>
-              <UBadge
-                v-if="(item.raw as Announcement).isPinned"
-                color="warning"
-                variant="soft"
-                class="shrink-0"
-              >
-                置顶
-              </UBadge>
-              <span class="font-medium truncate">
-                {{ item.label }}
-              </span>
-              <span class="ml-auto shrink-0 text-xs text-muted">
-                {{ formatDate((item.raw as Announcement).createdAt) }}
-              </span>
-            </div>
-          </template>
-
-          <template #content="{ item }">
-            <div class="py-3 text-sm whitespace-pre-wrap leading-6">
-              {{ (item.raw as Announcement).content }}
-            </div>
-            <div
-              v-if="(item.raw as Announcement).linkUrl"
-              class="pb-3"
+      <UAccordion
+        v-else
+        v-model="expandedIds"
+        :items="accordionItems"
+        type="multiple"
+        :ui="{ root: 'space-y-2', item: 'border border-default rounded-md px-3' }"
+      >
+        <template #default="{ item }">
+          <div class="flex items-center gap-2 py-2 text-left">
+            <UBadge
+              :color="levelMeta[(item.raw as Announcement).level].color"
+              variant="subtle"
+              class="shrink-0"
             >
-              <UButton
-                :to="(item.raw as Announcement).linkUrl || undefined"
-                target="_blank"
-                size="xs"
-                variant="outline"
-                icon="i-mdi-open-in-new"
-                trailing
-              >
-                查看详情
-              </UButton>
-            </div>
-          </template>
-        </UAccordion>
+              <UIcon
+                :name="levelMeta[(item.raw as Announcement).level].icon"
+                class="size-3.5"
+              />
+              <span class="ml-1">{{ levelMeta[(item.raw as Announcement).level].label }}</span>
+            </UBadge>
+            <UBadge
+              v-if="(item.raw as Announcement).isPinned"
+              color="warning"
+              variant="soft"
+              class="shrink-0"
+            >
+              置顶
+            </UBadge>
+            <span class="font-medium truncate">
+              {{ item.label }}
+            </span>
+            <span class="ml-auto shrink-0 text-xs text-muted">
+              {{ formatDate((item.raw as Announcement).createdAt) }}
+            </span>
+          </div>
+        </template>
 
-        <div class="flex justify-end pt-4 mt-2 border-t border-default">
-          <UButton
-            color="neutral"
-            variant="outline"
-            @click="open = false"
+        <template #content="{ item }">
+          <div class="py-3 text-sm whitespace-pre-wrap leading-6">
+            {{ (item.raw as Announcement).content }}
+          </div>
+          <div
+            v-if="(item.raw as Announcement).linkUrl"
+            class="pb-3"
           >
-            我知道了
-          </UButton>
-        </div>
+            <UButton
+              :to="(item.raw as Announcement).linkUrl || undefined"
+              target="_blank"
+              size="xs"
+              variant="outline"
+              icon="i-mdi-open-in-new"
+              trailing
+            >
+              查看详情
+            </UButton>
+          </div>
+        </template>
+      </UAccordion>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end w-full">
+        <UButton
+          color="neutral"
+          variant="outline"
+          @click="open = false"
+        >
+          我知道了
+        </UButton>
       </div>
     </template>
   </UModal>

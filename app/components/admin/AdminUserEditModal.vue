@@ -78,96 +78,92 @@ async function submit() {
 <template>
   <UModal
     :open="open"
+    title="编辑用户"
     @update:open="emit('update:open', $event)"
   >
-    <template #content>
-      <div class="p-6">
-        <h3 class="text-lg font-semibold mb-4">
-          编辑用户
-        </h3>
-        <form
-          class="space-y-3"
-          @submit.prevent="submit"
-        >
-          <UFormField label="用户名">
-            <UInput v-model="form.username" />
-          </UFormField>
-          <UFormField label="邮箱">
-            <UInput
-              v-model="form.email"
-              type="email"
-            />
-          </UFormField>
-          <UFormField label="显示名">
-            <UInput
-              v-model="form.displayName"
-              :maxlength="32"
-            />
-          </UFormField>
-          <USwitch
-            v-model="form.isActive"
-            label="已激活"
+    <template #body>
+      <form
+        class="space-y-3"
+        @submit.prevent="submit"
+      >
+        <UFormField label="用户名">
+          <UInput v-model="form.username" />
+        </UFormField>
+        <UFormField label="邮箱">
+          <UInput
+            v-model="form.email"
+            type="email"
           />
+        </UFormField>
+        <UFormField label="显示名">
+          <UInput
+            v-model="form.displayName"
+            :maxlength="32"
+          />
+        </UFormField>
+        <USwitch
+          v-model="form.isActive"
+          label="已激活"
+        />
 
-          <div class="pt-3 border-t border-default space-y-2">
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-shield-key-outline"
-                class="size-4 text-muted"
-              />
-              <span class="text-sm font-medium">已绑定第三方</span>
-              <span class="text-xs text-muted">（只读）</span>
-            </div>
+        <div class="pt-3 border-t border-default space-y-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-shield-key-outline"
+              class="size-4 text-muted"
+            />
+            <span class="text-sm font-medium">已绑定第三方</span>
+            <span class="text-xs text-muted">（只读）</span>
+          </div>
+          <div
+            v-if="bindingsLoading"
+            class="text-xs text-muted py-2"
+          >
+            加载中...
+          </div>
+          <div
+            v-else-if="bindings.length === 0"
+            class="text-xs text-muted italic py-2"
+          >
+            该用户未绑定任何第三方账号
+          </div>
+          <div
+            v-else
+            class="space-y-1"
+          >
             <div
-              v-if="bindingsLoading"
-              class="text-xs text-muted py-2"
+              v-for="b in bindings"
+              :key="b.id"
+              class="flex items-center gap-2 text-xs py-1.5 px-2 rounded bg-elevated/50"
             >
-              加载中...
-            </div>
-            <div
-              v-else-if="bindings.length === 0"
-              class="text-xs text-muted italic py-2"
-            >
-              该用户未绑定任何第三方账号
-            </div>
-            <div
-              v-else
-              class="space-y-1"
-            >
-              <div
-                v-for="b in bindings"
-                :key="b.id"
-                class="flex items-center gap-2 text-xs py-1.5 px-2 rounded bg-elevated/50"
+              <UBadge
+                variant="subtle"
+                color="neutral"
               >
-                <UBadge
-                  variant="subtle"
-                  color="neutral"
-                >
-                  {{ b.provider }}
-                </UBadge>
-                <span class="font-mono">{{ b.nickname || b.email || `#${b.providerUserId}` }}</span>
-                <span class="ml-auto text-muted">最近登录 {{ formatDate(b.lastLoginAt) }}</span>
-              </div>
+                {{ b.provider }}
+              </UBadge>
+              <span class="font-mono">{{ b.nickname || b.email || `#${b.providerUserId}` }}</span>
+              <span class="ml-auto text-muted">最近登录 {{ formatDate(b.lastLoginAt) }}</span>
             </div>
           </div>
+        </div>
 
-          <div class="flex justify-end gap-2 pt-3">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="emit('update:open', false)"
-            >
-              取消
-            </UButton>
-            <UButton
-              type="submit"
-              :loading="loading"
-            >
-              保存
-            </UButton>
-          </div>
-        </form>
-      </div>
+        <div class="flex justify-end gap-2 pt-3">
+          <UButton
+            variant="outline"
+            color="neutral"
+            @click="emit('update:open', false)"
+          >
+            取消
+          </UButton>
+          <UButton
+            type="submit"
+            :loading="loading"
+          >
+            保存
+          </UButton>
+        </div>
+      </form>
     </template>
   </UModal>
 </template>

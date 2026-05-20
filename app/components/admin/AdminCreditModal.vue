@@ -75,18 +75,13 @@ async function submit() {
 </script>
 
 <template>
-  <UModal v-model:open="open">
-    <template #content>
-      <div class="p-6 space-y-4">
-        <div>
-          <h3 class="text-lg font-semibold">
-            积分管理
-          </h3>
-          <p class="text-sm text-muted mt-1">
-            目标：<span class="font-medium text-default">{{ targetSummary }}</span>
-          </p>
-        </div>
-
+  <UModal
+    v-model:open="open"
+    title="积分管理"
+    :description="`目标：${targetSummary}`"
+  >
+    <template #body>
+      <div class="space-y-4">
         <UFormField label="操作类型">
           <USelect
             v-model="operation"
@@ -113,22 +108,24 @@ async function submit() {
             placeholder="例如：促销发放 / 违规扣除"
           />
         </UFormField>
+      </div>
+    </template>
 
-        <div class="flex justify-end gap-2 pt-2">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="open = false"
-          >
-            取消
-          </UButton>
-          <UButton
-            :loading="loading"
-            @click="submit"
-          >
-            确认
-          </UButton>
-        </div>
+    <template #footer>
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
+          variant="outline"
+          color="neutral"
+          @click="open = false"
+        >
+          取消
+        </UButton>
+        <UButton
+          :loading="loading"
+          @click="submit"
+        >
+          确认
+        </UButton>
       </div>
     </template>
   </UModal>
