@@ -1,4 +1,3 @@
-import type { ComputedRef, InjectionKey } from 'vue'
 import type { DashboardConfig } from '~/constants/dashboard-config'
 
 // 已带 brand 求值后的运行时配置（DashboardLayoutBase 注入）

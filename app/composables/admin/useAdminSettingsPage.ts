@@ -1,6 +1,3 @@
-import type { InjectionKey } from 'vue'
-import { PUBLIC_SITE_SETTINGS_KEY, type PublicSiteSettings } from '~/composables/useSiteSettings'
-
 export interface AdminSettingsForm {
   siteName: string
   siteUrl: string

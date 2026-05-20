@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
 import { useUserProfilePage } from '~/composables/user/useUserProfilePage'
 
 useHead({ title: '账号信息' })

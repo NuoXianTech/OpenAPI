@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useSiteSettings } from '~/composables/useSiteSettings'
 import { adminSystemHref } from '~/constants/admin-sections/system'
 
 const { user } = useAuth()

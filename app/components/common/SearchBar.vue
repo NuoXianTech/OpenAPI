@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
-
 interface Props {
   modelValue?: string
   placeholder?: string

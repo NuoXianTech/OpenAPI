@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import type { PropType } from 'vue'
 import type { FriendLinkItem } from '~/composables/link/types'
 
 const { items } = defineProps({

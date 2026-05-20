@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { CommandPaletteGroup, CommandPaletteItem, DropdownMenuItem } from '@nuxt/ui'
-import { useSiteSettings } from '~/composables/useSiteSettings'
 import type { DashboardConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,

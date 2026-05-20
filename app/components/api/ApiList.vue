@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import type { PropType } from 'vue'
 import type { ApiCatalogItem, ApiCategoryItem } from '~/composables/api/types'
 
 const { items, categoryMap } = defineProps({

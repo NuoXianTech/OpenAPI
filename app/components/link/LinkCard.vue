@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import { computed } from 'vue'
-
 const props = defineProps({
   title: { type: String, default: '链接标题' },
   description: { type: String, default: '站点描述' },

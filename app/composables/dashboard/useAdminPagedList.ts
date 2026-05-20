@@ -1,4 +1,3 @@
-import type { Ref } from 'vue'
 import type { AsyncDataRequestStatus } from '#app'
 
 export interface AdminPagedPagination {

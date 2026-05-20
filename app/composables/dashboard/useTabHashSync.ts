@@ -1,5 +1,3 @@
-import type { WritableComputedRef } from 'vue'
-
 export interface TabHashItem {
   value: string
 }
