@@ -20,6 +20,7 @@ import { apiCallService } from '~~/server/service/apiCallService'
 import { apiKeyService } from '~~/server/service/apiKeyService'
 import { apiService, type StatisticsTargetItem } from '~~/server/service/apiService'
 import { creditService } from '~~/server/service/creditService'
+import { pendingChargeService } from '~~/server/service/pendingChargeService'
 import { shouldCharge } from '~~/server/utils/apiCallOutcome'
 import { isGuardedPath } from '~~/shared/config/apiGuard'
 
@@ -241,26 +242,43 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 
     // 扣费 · 单独事务，与日志写入解耦避免互相阻塞
     if (willCharge && billing && billing.apiKeyUserId && callId) {
+      const remark = `API 调用扣费 · ${target.apiPath}`
       try {
         const r = await creditService.charge({
           userId: billing.apiKeyUserId,
           amount: billing.costCredits,
           apiId: target.apiId,
           apiCallId: callId,
-          remark: `API 调用扣费 · ${target.apiPath}`
+          remark
         })
         if (r.charged > 0) {
           // 把实际扣除的金额回填到 apiCalls.creditsCost
           await apiCallService.patchCreditsCost(callId, r.charged)
         }
       } catch (err) {
-        // 扣费失败不应回滚日志，仅记录错误（极少：积分已被 gate 校验过）
-        console.error('failed to charge credits after api call', {
+        // 扣费失败入队补偿，由 pendingChargesRetry plugin 周期性重试
+        const error = (err as Error).message || 'charge failed'
+        console.error('failed to charge credits after api call, enqueuing for retry', {
           callId,
           userId: billing.apiKeyUserId,
           amount: billing.costCredits,
-          error: (err as Error).message
+          error
         })
+        try {
+          await pendingChargeService.enqueue({
+            apiCallId: callId,
+            userId: billing.apiKeyUserId,
+            apiId: target.apiId,
+            amount: billing.costCredits,
+            remark,
+            error
+          })
+        } catch (enqueueErr) {
+          console.error('failed to enqueue pending charge', {
+            callId,
+            error: (enqueueErr as Error).message
+          })
+        }
       }
     }
 

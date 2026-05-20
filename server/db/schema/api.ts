@@ -74,8 +74,6 @@ export const apis = pgTable('apis', {
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
 
-  totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
-
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
@@ -143,7 +141,6 @@ export const apiCalls = pgTable('api_calls', {
 
   requestSize: integer('request_size'),
   responseSize: integer('response_size'),
-  requestSnapshot: jsonb('request_snapshot').$type<Record<string, unknown>>(), // 结构化请求快照（按采样率写入）
 
   errorCode: varchar('error_code', { length: 50 }),
   errorMessage: varchar('error_message', { length: 500 }),
@@ -194,4 +191,31 @@ export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
 }, table => [
   uniqueIndex('api_rate_limit_buckets_key_window_uq').on(table.bucketKey, table.windowStart),
   index('api_rate_limit_buckets_window_idx').on(table.windowStart)
+])
+
+// ------------------------------------------------------------------
+// Pending Charges（待扣费补偿队列）
+//
+// 调用统计 plugin 在 afterResponse 阶段同步扣费失败时入队，后台 plugin
+// 按 nextAttemptAt 扫描重试。达到 MAX_ATTEMPTS 转 dead_letter，等待人工处理。
+// 重试成功后回填 apiCalls.creditsCost 并删除本行。
+// ------------------------------------------------------------------
+export const pendingCharges = pgTable('pending_charges', {
+  id: serial('id').primaryKey(),
+  apiCallId: integer('api_call_id').notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
+  amount: integer('amount').notNull(),
+  remark: varchar('remark', { length: 500 }),
+  attempts: integer('attempts').notNull().default(0),
+  lastError: varchar('last_error', { length: 500 }),
+  lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
+  nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | dead_letter
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
+}, table => [
+  uniqueIndex('pending_charges_api_call_uq').on(table.apiCallId),
+  index('pending_charges_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
+  index('pending_charges_user_idx').on(table.userId)
 ])

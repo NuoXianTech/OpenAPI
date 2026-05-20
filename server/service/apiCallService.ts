@@ -19,7 +19,6 @@ export interface AddCallInput {
   city?: string | null
   requestSize?: number | null
   responseSize?: number | null
-  requestSnapshot?: Record<string, unknown> | null
   errorCode?: string | null
   errorMessage?: string | null
   creditsCost?: number
@@ -43,7 +42,6 @@ function normalizeCallRow(data: AddCallInput) {
     city: data.city ?? null,
     requestSize: data.requestSize ?? null,
     responseSize: data.responseSize ?? null,
-    requestSnapshot: data.requestSnapshot ?? null,
     errorCode: data.errorCode ?? null,
     errorMessage: data.errorMessage ?? null,
     creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0)

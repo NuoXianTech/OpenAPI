@@ -46,7 +46,6 @@ CREATE TABLE "api_calls" (
 	"referer" varchar(1000),
 	"request_size" integer,
 	"response_size" integer,
-	"request_snapshot" jsonb,
 	"error_code" varchar(50),
 	"error_message" varchar(500),
 	"credits_cost" integer DEFAULT 0 NOT NULL,
@@ -121,7 +120,6 @@ CREATE TABLE "apis" (
 	"cost_credits" integer DEFAULT 0 NOT NULL,
 	"daily_quota" integer DEFAULT 0 NOT NULL,
 	"timeout_ms" integer DEFAULT 10000 NOT NULL,
-	"total_calls" bigint DEFAULT 0 NOT NULL,
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_by" integer,
@@ -215,6 +213,22 @@ CREATE TABLE "operation_logs" (
 	"detail" jsonb,
 	"status" varchar(20) DEFAULT 'success' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "pending_charges" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"api_call_id" integer NOT NULL,
+	"user_id" integer NOT NULL,
+	"api_id" integer NOT NULL,
+	"amount" integer NOT NULL,
+	"remark" varchar(500),
+	"attempts" integer DEFAULT 0 NOT NULL,
+	"last_error" varchar(500),
+	"last_attempt_at" timestamp with time zone,
+	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"status" varchar(20) DEFAULT 'pending' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "redemption_codes" (
@@ -349,6 +363,9 @@ ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_re
 ALTER TABLE "notification_messages" ADD CONSTRAINT "notification_messages_sender_user_id_users_id_fk" FOREIGN KEY ("sender_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "operation_logs" ADD CONSTRAINT "operation_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_call_id_api_calls_id_fk" FOREIGN KEY ("api_call_id") REFERENCES "public"."api_calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "redemption_records" ADD CONSTRAINT "redemption_records_code_id_redemption_codes_id_fk" FOREIGN KEY ("code_id") REFERENCES "public"."redemption_codes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "redemption_records" ADD CONSTRAINT "redemption_records_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "sessions" ADD CONSTRAINT "sessions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -393,6 +410,9 @@ CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("c
 CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint
 CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "pending_charges_api_call_uq" ON "pending_charges" USING btree ("api_call_id");--> statement-breakpoint
+CREATE INDEX "pending_charges_status_next_attempt_idx" ON "pending_charges" USING btree ("status","next_attempt_at");--> statement-breakpoint
+CREATE INDEX "pending_charges_user_idx" ON "pending_charges" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_batch_idx" ON "redemption_codes" USING btree ("batch_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_enabled_expires_idx" ON "redemption_codes" USING btree ("is_enabled","expires_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "redemption_records_code_user_uq" ON "redemption_records" USING btree ("code_id","user_id");--> statement-breakpoint
