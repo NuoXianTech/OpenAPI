@@ -2,8 +2,6 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
 
-const toast = useToast()
-
 const {
   keyword,
   status,
@@ -12,10 +10,10 @@ const {
   rowSelection,
   selectedIds,
   clearSelection,
+  requireSelection,
   deleteUser,
   toggleBan,
-  updateUser,
-  errMsg
+  updateUser
 } = useAdminUsersPage()
 
 const deleteOpen = ref(false)
@@ -30,14 +28,9 @@ function openDelete(item: AdminUserItem) {
 async function confirmDelete() {
   if (!deleteTarget.value) return
   deleteLoading.value = true
-  try {
-    await deleteUser(deleteTarget.value.id)
-    deleteOpen.value = false
-  } catch (err) {
-    toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+  const ok = await deleteUser(deleteTarget.value.id)
+  deleteLoading.value = false
+  if (ok) deleteOpen.value = false
 }
 
 const editOpen = ref(false)
@@ -67,10 +60,7 @@ function openCreditForOne(item: AdminUserItem) {
 }
 
 function openCreditForSelection() {
-  if (selectedIds.value.length === 0) {
-    toast.add({ title: '请先勾选用户', color: 'warning' })
-    return
-  }
+  if (!requireSelection()) return
   creditUserIds.value = [...selectedIds.value]
   creditSelectionLabel.value = `已选 ${selectedIds.value.length} 个用户`
   creditOpen.value = true

@@ -38,10 +38,24 @@ export function useAdminUsersPage() {
     rowSelection.value = {}
   }
 
-  async function deleteUser(id: number) {
-    await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
-    toast.add({ title: '删除成功', color: 'success' })
-    await refresh()
+  function requireSelection(): boolean {
+    if (selectedIds.value.length === 0) {
+      toast.add({ title: '请先勾选用户', color: 'warning' })
+      return false
+    }
+    return true
+  }
+
+  async function deleteUser(id: number): Promise<boolean> {
+    try {
+      await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
+      toast.add({ title: '删除成功', color: 'success' })
+      await refresh()
+      return true
+    } catch (err) {
+      toast.add({ title: errMsg(err, '删除失败'), color: 'error' })
+      return false
+    }
   }
 
   async function toggleBan(item: AdminUserItem) {
@@ -52,18 +66,24 @@ export function useAdminUsersPage() {
       })
       toast.add({ title: item.isBanned ? '已解封' : '已封禁', color: 'success' })
       await refresh()
-    } catch {
-      toast.add({ title: '操作失败', color: 'error' })
+    } catch (err) {
+      toast.add({ title: errMsg(err, '操作失败'), color: 'error' })
     }
   }
 
-  async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }) {
-    await $fetch('/api/admin/users/update', {
-      method: 'PUT',
-      body: { id, ...payload }
-    })
-    toast.add({ title: '更新成功', color: 'success' })
-    await refresh()
+  async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }): Promise<boolean> {
+    try {
+      await $fetch('/api/admin/users/update', {
+        method: 'PUT',
+        body: { id, ...payload }
+      })
+      toast.add({ title: '更新成功', color: 'success' })
+      await refresh()
+      return true
+    } catch (err) {
+      toast.add({ title: errMsg(err, '更新失败'), color: 'error' })
+      return false
+    }
   }
 
   return {
@@ -74,9 +94,9 @@ export function useAdminUsersPage() {
     rowSelection,
     selectedIds,
     clearSelection,
+    requireSelection,
     deleteUser,
     toggleBan,
-    updateUser,
-    errMsg
+    updateUser
   }
 }

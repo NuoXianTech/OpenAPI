@@ -15,14 +15,13 @@ interface OAuthBinding {
 const props = defineProps<{
   open: boolean
   target: AdminUserItem | null
-  onSubmit: (id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }) => Promise<void>
+  onSubmit: (id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const toast = useToast()
 const form = reactive({ username: '', email: '', displayName: '', isActive: false })
 const loading = ref(false)
 
@@ -70,14 +69,9 @@ function formatDate(iso: string | null) {
 async function submit() {
   if (!props.target) return
   loading.value = true
-  try {
-    await props.onSubmit(props.target.id, { ...form })
-    emit('update:open', false)
-  } catch (err) {
-    toast.add({ title: (err as { data?: { message?: string } })?.data?.message || '更新失败', color: 'error' })
-  } finally {
-    loading.value = false
-  }
+  const ok = await props.onSubmit(props.target.id, { ...form })
+  loading.value = false
+  if (ok) emit('update:open', false)
 }
 </script>
 
