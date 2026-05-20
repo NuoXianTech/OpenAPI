@@ -27,6 +27,8 @@ export function useAuth() {
     loading.value = true
     try {
       const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+      // 必须用 $fetch 而不是 useAsyncData / useFetch：后者会把响应写进 nuxt payload，
+      // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
       const res = await $fetch<AuthUser | null>('/api/auth/me', { headers })
       user.value = res ?? null
     } catch (err) {
