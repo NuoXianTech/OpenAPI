@@ -32,7 +32,7 @@ const ratio = computed(() => {
           class="mb-3 w-fit gap-1 rounded-full px-2.5 py-1 text-[11px] uppercase tracking-[0.18em]"
         >
           <UIcon
-            name="i-lucide-link"
+            name="i-mdi-link-variant"
             class="size-3.5"
           />
           Friend Links
@@ -49,7 +49,7 @@ const ratio = computed(() => {
         <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
           <span class="inline-flex items-center gap-1.5">
             <UIcon
-              name="i-lucide-globe"
+              name="i-mdi-earth"
               class="size-3.5"
             />
             站点互联
@@ -60,7 +60,7 @@ const ratio = computed(() => {
           />
           <span class="inline-flex items-center gap-1.5">
             <UIcon
-              name="i-lucide-handshake"
+              name="i-mdi-handshake-outline"
               class="size-3.5"
             />
             欢迎交换
@@ -72,7 +72,7 @@ const ratio = computed(() => {
         <div class="hero-stat">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-bookmark"
+              name="i-mdi-bookmark-outline"
               class="size-4"
             />
           </div>
@@ -87,7 +87,7 @@ const ratio = computed(() => {
         <div class="hero-stat hero-stat--accent">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-circle-check"
+              name="i-mdi-check-circle-outline"
               class="size-4"
             />
           </div>
@@ -102,7 +102,7 @@ const ratio = computed(() => {
         <div class="hero-stat">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-circle-x"
+              name="i-mdi-close-circle-outline"
               class="size-4"
             />
           </div>

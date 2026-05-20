@@ -87,7 +87,7 @@ const healthRatio = computed(() => {
           class="mb-3 w-fit gap-1 rounded-full px-2.5 py-1 text-[11px] tracking-[0.18em] uppercase"
         >
           <UIcon
-            name="i-lucide-sparkles"
+            name="i-mdi-creation-outline"
             class="size-3.5"
           />
           Free · Open · Stable
@@ -112,7 +112,7 @@ const healthRatio = computed(() => {
           />
           <span class="inline-flex items-center gap-1.5">
             <UIcon
-              name="i-lucide-clock"
+              name="i-mdi-clock-outline"
               class="size-3.5"
             />
             <span class="font-mono tracking-tight text-default/85">{{ nowTime }}</span>
@@ -123,7 +123,7 @@ const healthRatio = computed(() => {
           />
           <span class="hidden items-center gap-1.5 sm:inline-flex">
             <UIcon
-              name="i-lucide-server"
+              name="i-mdi-server"
               class="size-3.5"
             />
             <span class="font-mono tracking-tight text-default/85">{{ upTime }}</span>
@@ -135,7 +135,7 @@ const healthRatio = computed(() => {
         <div class="hero-stat">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-layers"
+              name="i-mdi-layers-outline"
               class="size-4"
             />
           </div>
@@ -150,7 +150,7 @@ const healthRatio = computed(() => {
         <div class="hero-stat hero-stat--accent">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-activity"
+              name="i-mdi-pulse"
               class="size-4"
             />
           </div>
@@ -165,7 +165,7 @@ const healthRatio = computed(() => {
         <div class="hero-stat">
           <div class="hero-stat__icon">
             <UIcon
-              name="i-lucide-shapes"
+              name="i-mdi-shape-outline"
               class="size-4"
             />
           </div>

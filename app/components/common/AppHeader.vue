@@ -49,65 +49,63 @@ const handleLogout = async () => {
         调用统计
       </UButton>
 
-      <ClientOnly>
-        <template v-if="user">
-          <div class="text-sm text-muted">
-            {{ user.username }}
-          </div>
-          <UButton
-            v-if="user.kind === 'admin'"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            to="/admin"
-          >
-            管理后台
-          </UButton>
-          <UButton
-            v-if="user.kind === 'user'"
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            to="/user"
-          >
-            用户后台
-          </UButton>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            @click="handleLogout"
-          >
-            退出
-          </UButton>
-        </template>
-        <template v-else>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            to="/admin/login"
-          >
-            管理登录
-          </UButton>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            to="/login"
-          >
-            登录
-          </UButton>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            size="sm"
-            to="/register"
-          >
-            注册
-          </UButton>
-        </template>
-      </ClientOnly>
+      <template v-if="user">
+        <div class="text-sm text-muted">
+          {{ user.username }}
+        </div>
+        <UButton
+          v-if="user.kind === 'admin'"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          to="/admin"
+        >
+          管理后台
+        </UButton>
+        <UButton
+          v-if="user.kind === 'user'"
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          to="/user"
+        >
+          用户后台
+        </UButton>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          @click="handleLogout"
+        >
+          退出
+        </UButton>
+      </template>
+      <template v-else>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          to="/admin/login"
+        >
+          管理登录
+        </UButton>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          to="/login"
+        >
+          登录
+        </UButton>
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          to="/register"
+        >
+          注册
+        </UButton>
+      </template>
     </div>
   </header>
 </template>

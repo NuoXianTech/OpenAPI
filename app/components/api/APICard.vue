@@ -103,7 +103,7 @@ function formatCallCount(count: number) {
         :title="props.docUrl"
       >
         <UIcon
-          name="i-lucide-file-text"
+          name="i-mdi-file-document-outline"
           class="size-3.5"
         />
         {{ props.docUrl }}
@@ -115,7 +115,7 @@ function formatCallCount(count: number) {
         color="neutral"
         variant="outline"
         size="xs"
-        icon="i-lucide-external-link"
+        icon="i-mdi-open-in-new"
         square
         class="shrink-0"
         aria-label="打开文档"
@@ -128,7 +128,7 @@ function formatCallCount(count: number) {
         color="warning"
         variant="soft"
         size="sm"
-        icon="i-lucide-coins"
+        icon="i-mdi-cash-multiple"
         class="rounded-full"
         :title="`收费 ${props.costCredits} / 次`"
       >
@@ -139,7 +139,7 @@ function formatCallCount(count: number) {
         color="success"
         variant="soft"
         size="sm"
-        icon="i-lucide-gift"
+        icon="i-mdi-gift-outline"
         class="api-card__badge-icon rounded-full"
         title="免费"
         aria-label="免费"
@@ -149,7 +149,7 @@ function formatCallCount(count: number) {
         color="neutral"
         variant="subtle"
         size="sm"
-        icon="i-lucide-key-round"
+        icon="i-mdi-key-variant"
         class="api-card__badge-icon rounded-full"
         title="需要 APIKey"
         aria-label="需要 APIKey"
@@ -157,7 +157,7 @@ function formatCallCount(count: number) {
 
       <span class="api-card__calls">
         <UIcon
-          name="i-lucide-bar-chart-3"
+          name="i-mdi-chart-bar"
           class="size-3"
         />
         <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
@@ -170,7 +170,7 @@ function formatCallCount(count: number) {
           color="neutral"
           variant="ghost"
           size="xs"
-          :trailing-icon="open ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+          :trailing-icon="open ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
           class="rounded-full"
           :aria-expanded="open"
         >
@@ -212,7 +212,7 @@ function formatCallCount(count: number) {
                 color="warning"
                 variant="soft"
                 size="sm"
-                icon="i-lucide-coins"
+                icon="i-mdi-cash-multiple"
                 class="rounded-full"
               >
                 {{ props.costCredits }} / 次
@@ -222,7 +222,7 @@ function formatCallCount(count: number) {
                 color="success"
                 variant="soft"
                 size="sm"
-                icon="i-lucide-gift"
+                icon="i-mdi-gift-outline"
                 class="rounded-full"
               >
                 免费
@@ -237,7 +237,7 @@ function formatCallCount(count: number) {
                 color="neutral"
                 variant="subtle"
                 size="sm"
-                icon="i-lucide-key-round"
+                icon="i-mdi-key-variant"
                 class="rounded-full"
               >
                 需要 APIKey
@@ -247,7 +247,7 @@ function formatCallCount(count: number) {
                 color="neutral"
                 variant="soft"
                 size="sm"
-                icon="i-lucide-unlock"
+                icon="i-mdi-lock-open-outline"
                 class="rounded-full"
               >
                 免鉴权
@@ -259,7 +259,7 @@ function formatCallCount(count: number) {
             <div class="api-card__detail-value api-card__detail-value--row">
               <span class="api-card__calls">
                 <UIcon
-                  name="i-lucide-bar-chart-3"
+                  name="i-mdi-chart-bar"
                   class="size-3"
                 />
                 <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>

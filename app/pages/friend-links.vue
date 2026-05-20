@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
 import SearchBar from '~/components/common/SearchBar.vue'
 import LinkList from '~/components/link/LinkList.vue'
 import type { ApiTabOption } from '~/composables/api/types'
@@ -80,14 +79,17 @@ const visibleCount = computed(() => filteredItems.value.length)
         <div class="px-4 py-3.5 sm:px-5 sm:py-4">
           <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
             <UIcon
-              name="i-lucide-filter"
+              name="i-mdi-filter-variant"
               class="size-3"
             />
             状态筛选
           </div>
-          <ApiFilterTabs
+          <UTabs
             v-model="currentStatus"
-            :tabs="statusTabs"
+            :items="statusTabs"
+            color="neutral"
+            variant="link"
+            :content="false"
             aria-label="友情链接状态筛选"
           />
         </div>
@@ -103,7 +105,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-8"
         >
           <UEmpty
-            icon="i-lucide-loader"
+            icon="i-mdi-loading"
             title="加载中..."
             description="正在拉取友情链接"
             variant="naked"
@@ -117,12 +119,12 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-lucide-circle-alert"
+            icon="i-mdi-alert-circle-outline"
             title="加载失败"
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: retryFetchFriendLinks }]"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: retryFetchFriendLinks }]"
           />
         </section>
 
@@ -132,7 +134,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-lucide-link-2-off"
+            icon="i-mdi-link-variant-off"
             title="暂无友情链接"
             description="暂无可展示的友情链接"
             variant="naked"
@@ -146,7 +148,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-lucide-search-x"
+            icon="i-mdi-magnify-close"
             title="无匹配结果"
             description="当前筛选条件没有匹配结果，试试其他关键词或状态"
             variant="naked"
@@ -162,14 +164,14 @@ const visibleCount = computed(() => filteredItems.value.length)
           <div class="mb-3 flex items-center justify-between text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
               <UIcon
-                name="i-lucide-list"
+                name="i-mdi-format-list-bulleted"
                 class="size-3.5"
               />
               当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个站点
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
-                name="i-lucide-mouse-pointer-click"
+                name="i-mdi-cursor-default-click-outline"
                 class="size-3.5"
               />
               点击卡片访问站点

@@ -68,7 +68,7 @@ export default defineNuxtConfig({
     }
   },
   icon: {
-    // 服务端按需打包 mdi/lucide 图标，避免客户端逐个 fetch /api/_nuxt_icon/*
-    serverBundle: { collections: ['mdi', 'lucide'] }
-  }
+    // 服务端按需打包 mdi 图标，避免客户端逐个 fetch /api/_nuxt_icon/*
+    serverBundle: { collections: ['mdi'] }
+  },
 })
