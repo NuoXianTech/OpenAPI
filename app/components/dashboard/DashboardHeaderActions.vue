@@ -53,7 +53,19 @@ async function handleRefresh() {
       @click="handleRefresh"
     />
 
-    <UColorModeButton />
+    <ClientOnly>
+      <UColorModeButton />
+      <template #fallback>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          square
+          disabled
+          icon="i-mdi-theme-light-dark"
+          aria-hidden="true"
+        />
+      </template>
+    </ClientOnly>
 
     <NotificationBell :to="config.notificationLink" />
 
