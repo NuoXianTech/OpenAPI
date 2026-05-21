@@ -18,10 +18,6 @@ interface Announcement {
 }
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-const USwitch = resolveComponent('USwitch')
 
 const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
   default: () => []
@@ -101,66 +97,13 @@ function formatDate(iso: string | null) {
 }
 
 const columns: TableColumn<Announcement>[] = [
-  {
-    accessorKey: 'title',
-    header: '标题',
-    cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
-      h(UBadge, {
-        color: levelMeta[row.original.level].color,
-        variant: 'subtle'
-      }, () => levelMeta[row.original.level].label),
-      h('span', { class: 'font-medium truncate max-w-[300px]' }, row.original.title),
-      row.original.isPinned
-        ? h(UBadge, { color: 'warning', variant: 'soft' }, () => '置顶')
-        : null
-    ].filter(Boolean))
-  },
-  {
-    id: 'window',
-    header: '生效窗口',
-    cell: ({ row }) => h('div', { class: 'text-xs text-muted' }, [
-      h('div', `开始：${formatDate(row.original.startAt)}`),
-      h('div', `结束：${formatDate(row.original.endAt)}`)
-    ])
-  },
-  {
-    accessorKey: 'sortOrder',
-    header: '排序'
-  },
-  {
-    id: 'isEnabled',
-    header: '启用',
-    cell: ({ row }) => h(USwitch, {
-      'modelValue': row.original.isEnabled,
-      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isEnabled', val)
-    })
-  },
-  {
-    id: 'isPinned',
-    header: '置顶',
-    cell: ({ row }) => h(USwitch, {
-      'modelValue': row.original.isPinned,
-      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, 'isPinned', val)
-    })
-  },
-  {
-    accessorKey: 'createdAt',
-    header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'title', header: '标题' },
+  { id: 'window', header: '生效窗口' },
+  { accessorKey: 'sortOrder', header: '排序' },
+  { id: 'isEnabled', header: '启用' },
+  { id: 'isPinned', header: '置顶' },
+  { accessorKey: 'createdAt', header: '创建时间' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -195,7 +138,62 @@ const columns: TableColumn<Announcement>[] = [
         th: 'py-2',
         td: 'py-2 align-top'
       }"
-    />
+    >
+      <template #title-cell="{ row }">
+        <div class="flex items-center gap-2">
+          <UBadge
+            :color="levelMeta[row.original.level].color"
+            variant="subtle"
+          >
+            {{ levelMeta[row.original.level].label }}
+          </UBadge>
+          <span class="font-medium truncate max-w-[300px]">{{ row.original.title }}</span>
+          <UBadge
+            v-if="row.original.isPinned"
+            color="warning"
+            variant="soft"
+          >
+            置顶
+          </UBadge>
+        </div>
+      </template>
+      <template #window-cell="{ row }">
+        <div class="text-xs text-muted">
+          <div>开始：{{ formatDate(row.original.startAt) }}</div>
+          <div>结束：{{ formatDate(row.original.endAt) }}</div>
+        </div>
+      </template>
+      <template #isEnabled-cell="{ row }">
+        <USwitch
+          :model-value="row.original.isEnabled"
+          @update:model-value="(val: boolean) => quickToggle(row.original, 'isEnabled', val)"
+        />
+      </template>
+      <template #isPinned-cell="{ row }">
+        <USwitch
+          :model-value="row.original.isPinned"
+          @update:model-value="(val: boolean) => quickToggle(row.original, 'isPinned', val)"
+        />
+      </template>
+      <template #createdAt-cell="{ row }">
+        <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
+        </div>
+      </template>
+    </UTable>
 
     <AdminAnnouncementModal
       v-model:open="modalOpen"

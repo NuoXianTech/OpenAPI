@@ -6,8 +6,6 @@ useHead({ title: '积分' })
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
-const UBadge = resolveComponent('UBadge')
-
 const {
   summary,
   summaryLoading,
@@ -57,67 +55,19 @@ function formatDate(iso: string) {
 }
 
 const columns: TableColumn<TransactionRow>[] = [
-  {
-    accessorKey: 'createdAt',
-    header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap tabular-nums' }, formatDate(row.original.createdAt))
-  },
-  {
-    accessorKey: 'reason',
-    header: '类型',
-    cell: ({ row }) => h(UBadge, {
-      color: reasonColor(row.original.reason),
-      variant: 'subtle',
-      size: 'sm'
-    }, () => reasonLabel(row.original.reason))
-  },
-  {
-    accessorKey: 'amount',
-    header: '变动',
-    cell: ({ row }) => {
-      const amt = Number(row.original.amount) || 0
-      const cls = amt > 0
-        ? 'text-success font-semibold tabular-nums'
-        : amt < 0
-          ? 'text-error font-semibold tabular-nums'
-          : 'text-muted tabular-nums'
-      const sign = amt > 0 ? '+' : ''
-      return h('span', { class: cls }, `${sign}${amt.toLocaleString()}`)
-    }
-  },
-  {
-    accessorKey: 'balanceAfter',
-    header: '操作后积分',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, Number(row.original.balanceAfter).toLocaleString())
-  },
-  {
-    id: 'detail',
-    header: '关联',
-    cell: ({ row }) => {
-      if (row.original.apiId && row.original.apiName) {
-        return h('div', { class: 'flex flex-col text-xs' }, [
-          h('span', { class: 'font-medium' }, row.original.apiName),
-          h('span', { class: 'font-mono text-muted' }, row.original.apiPath || ''),
-          row.original.apiCallId
-            ? h('span', { class: 'text-muted text-[10px]' }, `调用 #${row.original.apiCallId}`)
-            : null
-        ].filter(Boolean))
-      }
-      if (row.original.operatorName) {
-        return h('div', { class: 'flex flex-col text-xs' }, [
-          h('span', { class: 'text-muted' }, '操作人'),
-          h('span', null, row.original.operatorName)
-        ])
-      }
-      return h('span', { class: 'text-muted text-xs' }, '-')
-    }
-  },
-  {
-    accessorKey: 'remark',
-    header: '备注',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[280px] block' }, row.original.remark || '-')
-  }
+  { accessorKey: 'createdAt', header: '时间' },
+  { accessorKey: 'reason', header: '类型' },
+  { accessorKey: 'amount', header: '变动' },
+  { accessorKey: 'balanceAfter', header: '操作后积分' },
+  { id: 'detail', header: '关联' },
+  { accessorKey: 'remark', header: '备注' }
 ]
+
+function amountClass(amt: number) {
+  if (amt > 0) return 'text-success font-semibold tabular-nums'
+  if (amt < 0) return 'text-error font-semibold tabular-nums'
+  return 'text-muted tabular-nums'
+}
 </script>
 
 <template>
@@ -211,7 +161,55 @@ const columns: TableColumn<TransactionRow>[] = [
               th: 'py-2',
               td: 'py-2 align-middle'
             }"
-          />
+          >
+            <template #createdAt-cell="{ row }">
+              <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDate(row.original.createdAt) }}</span>
+            </template>
+            <template #reason-cell="{ row }">
+              <UBadge
+                :color="reasonColor(row.original.reason)"
+                variant="subtle"
+                size="sm"
+              >
+                {{ reasonLabel(row.original.reason) }}
+              </UBadge>
+            </template>
+            <template #amount-cell="{ row }">
+              <span :class="amountClass(Number(row.original.amount) || 0)">
+                {{ (Number(row.original.amount) || 0) > 0 ? '+' : '' }}{{ (Number(row.original.amount) || 0).toLocaleString() }}
+              </span>
+            </template>
+            <template #balanceAfter-cell="{ row }">
+              <span class="tabular-nums">{{ Number(row.original.balanceAfter).toLocaleString() }}</span>
+            </template>
+            <template #detail-cell="{ row }">
+              <div
+                v-if="row.original.apiId && row.original.apiName"
+                class="flex flex-col text-xs"
+              >
+                <span class="font-medium">{{ row.original.apiName }}</span>
+                <span class="font-mono text-muted">{{ row.original.apiPath || '' }}</span>
+                <span
+                  v-if="row.original.apiCallId"
+                  class="text-muted text-[10px]"
+                >调用 #{{ row.original.apiCallId }}</span>
+              </div>
+              <div
+                v-else-if="row.original.operatorName"
+                class="flex flex-col text-xs"
+              >
+                <span class="text-muted">操作人</span>
+                <span>{{ row.original.operatorName }}</span>
+              </div>
+              <span
+                v-else
+                class="text-muted text-xs"
+              >-</span>
+            </template>
+            <template #remark-cell="{ row }">
+              <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.remark || '-' }}</span>
+            </template>
+          </UTable>
           <div
             v-if="total > pageSize"
             class="flex items-center justify-between pt-3 border-t border-default mt-3"

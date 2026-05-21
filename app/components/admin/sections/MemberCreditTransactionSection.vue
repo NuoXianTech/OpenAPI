@@ -18,8 +18,6 @@ interface CreditTxnRow {
 
 const props = defineProps<{ defaultUserId?: number }>()
 
-const UBadge = resolveComponent('UBadge')
-
 const filters = reactive({
   userId: '' as number | '',
   reason: 'all' as 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
@@ -107,52 +105,23 @@ const reasonMeta: Record<string, { label: string, color: 'success' | 'warning' |
 }
 
 const columns: TableColumn<CreditTxnRow>[] = [
-  {
-    accessorKey: 'createdAt',
-    header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
-  },
-  {
-    accessorKey: 'userId',
-    header: '用户',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, `#${row.original.userId}`)
-  },
-  {
-    accessorKey: 'reason',
-    header: '原因',
-    cell: ({ row }) => {
-      const meta = reasonMeta[row.original.reason] || { label: row.original.reason, color: 'neutral' as const }
-      return h(UBadge, { color: meta.color, variant: 'subtle' }, () => meta.label)
-    }
-  },
-  {
-    accessorKey: 'amount',
-    header: '金额',
-    cell: ({ row }) => {
-      const amt = row.original.amount
-      const color = amt > 0 ? 'text-success' : amt < 0 ? 'text-error' : 'text-muted'
-      const sign = amt > 0 ? '+' : ''
-      return h('span', { class: `tabular-nums font-semibold ${color}` }, `${sign}${amt.toLocaleString()}`)
-    }
-  },
-  {
-    accessorKey: 'balanceAfter',
-    header: '余额',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs text-muted' }, row.original.balanceAfter.toLocaleString())
-  },
-  {
-    accessorKey: 'operatorName',
-    header: '操作人',
-    cell: ({ row }) => row.original.operatorName
-      ? h('span', { class: 'text-xs' }, row.original.operatorName)
-      : h('span', { class: 'text-xs text-muted italic' }, '系统')
-  },
-  {
-    accessorKey: 'remark',
-    header: '备注',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[260px] block' }, row.original.remark || '-')
-  }
+  { accessorKey: 'createdAt', header: '时间' },
+  { accessorKey: 'userId', header: '用户' },
+  { accessorKey: 'reason', header: '原因' },
+  { accessorKey: 'amount', header: '金额' },
+  { accessorKey: 'balanceAfter', header: '余额' },
+  { accessorKey: 'operatorName', header: '操作人' },
+  { accessorKey: 'remark', header: '备注' }
 ]
+
+function getReasonMeta(reason: string) {
+  return reasonMeta[reason] || { label: reason, color: 'neutral' as const }
+}
+
+function amountClass(amt: number) {
+  const color = amt > 0 ? 'text-success' : amt < 0 ? 'text-error' : 'text-muted'
+  return `tabular-nums font-semibold ${color}`
+}
 </script>
 
 <template>
@@ -219,7 +188,43 @@ const columns: TableColumn<CreditTxnRow>[] = [
         :total="total"
         empty-title="暂无积分流水"
         empty-icon="i-mdi-cash-multiple"
-      />
+      >
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #userId-cell="{ row }">
+          <span class="font-mono text-xs">#{{ row.original.userId }}</span>
+        </template>
+        <template #reason-cell="{ row }">
+          <UBadge
+            :color="getReasonMeta(row.original.reason).color"
+            variant="subtle"
+          >
+            {{ getReasonMeta(row.original.reason).label }}
+          </UBadge>
+        </template>
+        <template #amount-cell="{ row }">
+          <span :class="amountClass(row.original.amount)">
+            {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
+          </span>
+        </template>
+        <template #balanceAfter-cell="{ row }">
+          <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
+        </template>
+        <template #operatorName-cell="{ row }">
+          <span
+            v-if="row.original.operatorName"
+            class="text-xs"
+          >{{ row.original.operatorName }}</span>
+          <span
+            v-else
+            class="text-xs text-muted italic"
+          >系统</span>
+        </template>
+        <template #remark-cell="{ row }">
+          <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
+        </template>
+      </DashboardDataTable>
     </UCard>
   </div>
 </template>

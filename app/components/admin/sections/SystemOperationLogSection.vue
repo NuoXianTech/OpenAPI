@@ -18,8 +18,6 @@ interface OperationLogRow {
 
 const props = defineProps<{ defaultUserId?: number }>()
 
-const UBadge = resolveComponent('UBadge')
-
 interface OperationLogFilters {
   userId: number | ''
   actorKind: 'all' | 'admin' | 'user'
@@ -83,63 +81,13 @@ const statusItems = [
 ]
 
 const columns: TableColumn<OperationLogRow>[] = [
-  {
-    accessorKey: 'createdAt',
-    header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
-  },
-  {
-    id: 'actor',
-    header: '操作者',
-    cell: ({ row }) => h('div', { class: 'flex flex-col text-xs' }, [
-      h('span', { class: 'font-medium' }, row.original.actor || '匿名'),
-      row.original.userId
-        ? h('span', { class: 'text-muted' }, `用户 #${row.original.userId}`)
-        : h('span', { class: 'text-muted' }, '管理员')
-    ])
-  },
-  {
-    accessorKey: 'action',
-    header: '动作',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.action)
-  },
-  {
-    id: 'resource',
-    header: '资源',
-    cell: ({ row }) => {
-      const t = row.original.resourceType
-      const id = row.original.resourceId
-      if (!t && !id) return h('span', { class: 'text-muted' }, '-')
-      return h('div', { class: 'flex flex-col text-xs' }, [
-        t ? h('span', { class: 'font-mono' }, t) : null,
-        id ? h('span', { class: 'font-mono text-muted' }, `#${id}`) : null
-      ].filter(Boolean))
-    }
-  },
-  {
-    accessorKey: 'status',
-    header: '状态',
-    cell: ({ row }) => row.original.status === 'success'
-      ? h(UBadge, { color: 'success', variant: 'subtle' }, () => '成功')
-      : h(UBadge, { color: 'error', variant: 'subtle' }, () => '失败')
-  },
-  {
-    accessorKey: 'ip',
-    header: 'IP',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-')
-  },
-  {
-    id: 'detail',
-    header: '详情',
-    cell: ({ row }) => {
-      if (!row.original.detail) return h('span', { class: 'text-muted' }, '-')
-      const text = JSON.stringify(row.original.detail)
-      return h('span', {
-        class: 'font-mono text-xs text-muted truncate max-w-[260px] block',
-        title: text
-      }, text)
-    }
-  }
+  { accessorKey: 'createdAt', header: '时间' },
+  { id: 'actor', header: '操作者' },
+  { accessorKey: 'action', header: '动作' },
+  { id: 'resource', header: '资源' },
+  { accessorKey: 'status', header: '状态' },
+  { accessorKey: 'ip', header: 'IP' },
+  { id: 'detail', header: '详情' }
 ]
 </script>
 
@@ -233,7 +181,61 @@ const columns: TableColumn<OperationLogRow>[] = [
           th: 'py-2',
           td: 'py-2 align-middle'
         }"
-      />
+      >
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #actor-cell="{ row }">
+          <div class="flex flex-col text-xs">
+            <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
+            <span class="text-muted">{{ row.original.userId ? `用户 #${row.original.userId}` : '管理员' }}</span>
+          </div>
+        </template>
+        <template #action-cell="{ row }">
+          <span class="font-mono text-xs">{{ row.original.action }}</span>
+        </template>
+        <template #resource-cell="{ row }">
+          <span
+            v-if="!row.original.resourceType && !row.original.resourceId"
+            class="text-muted"
+          >-</span>
+          <div
+            v-else
+            class="flex flex-col text-xs"
+          >
+            <span
+              v-if="row.original.resourceType"
+              class="font-mono"
+            >{{ row.original.resourceType }}</span>
+            <span
+              v-if="row.original.resourceId"
+              class="font-mono text-muted"
+            >#{{ row.original.resourceId }}</span>
+          </div>
+        </template>
+        <template #status-cell="{ row }">
+          <UBadge
+            :color="row.original.status === 'success' ? 'success' : 'error'"
+            variant="subtle"
+          >
+            {{ row.original.status === 'success' ? '成功' : '失败' }}
+          </UBadge>
+        </template>
+        <template #ip-cell="{ row }">
+          <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+        </template>
+        <template #detail-cell="{ row }">
+          <span
+            v-if="!row.original.detail"
+            class="text-muted"
+          >-</span>
+          <span
+            v-else
+            class="font-mono text-xs text-muted truncate max-w-[260px] block"
+            :title="JSON.stringify(row.original.detail)"
+          >{{ JSON.stringify(row.original.detail) }}</span>
+        </template>
+      </UTable>
       <div class="flex items-center justify-between pt-3 border-t border-default mt-3">
         <span class="text-xs text-muted tabular-nums">
           第 {{ page }} 页 · 本页 {{ items.length }} 条

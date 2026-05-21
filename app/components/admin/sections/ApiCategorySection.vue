@@ -17,10 +17,6 @@ interface ApiCategoryItem {
 }
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-const USwitch = resolveComponent('USwitch')
 
 const { data, status, refresh } = useLazyFetch<ApiCategoryItem[]>('/api/admin/api-categories/list', {
   default: () => []
@@ -84,57 +80,13 @@ function getRowItems(row: ApiCategoryItem): DropdownMenuItem[] {
 }
 
 const columns: TableColumn<ApiCategoryItem>[] = [
-  {
-    accessorKey: 'code',
-    header: '编码',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs' }, row.original.code)
-  },
-  {
-    accessorKey: 'name',
-    header: '名称',
-    cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
-      row.original.icon ? h(resolveComponent('UIcon'), { name: row.original.icon, class: 'size-4 text-muted' }) : null,
-      h('span', { class: 'font-medium' }, row.original.name)
-    ].filter(Boolean))
-  },
-  {
-    accessorKey: 'description',
-    header: '描述',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted truncate max-w-[280px] block' }, row.original.description || '-')
-  },
-  {
-    accessorKey: 'sortOrder',
-    header: '排序',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, row.original.sortOrder)
-  },
-  {
-    accessorKey: 'color',
-    header: '颜色',
-    cell: ({ row }) => row.original.color
-      ? h(UBadge, { variant: 'subtle', color: 'neutral' }, () => row.original.color)
-      : h('span', { class: 'text-muted' }, '-')
-  },
-  {
-    id: 'isEnabled',
-    header: '启用',
-    cell: ({ row }) => h(USwitch, {
-      'modelValue': row.original.isEnabled,
-      'onUpdate:modelValue': (val: boolean) => quickToggle(row.original, val)
-    })
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'code', header: '编码' },
+  { accessorKey: 'name', header: '名称' },
+  { accessorKey: 'description', header: '描述' },
+  { accessorKey: 'sortOrder', header: '排序' },
+  { accessorKey: 'color', header: '颜色' },
+  { id: 'isEnabled', header: '启用' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -168,7 +120,61 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         th: 'py-2',
         td: 'py-2 align-middle'
       }"
-    />
+    >
+      <template #code-cell="{ row }">
+        <span class="font-mono text-xs">{{ row.original.code }}</span>
+      </template>
+      <template #name-cell="{ row }">
+        <div class="flex items-center gap-2">
+          <UIcon
+            v-if="row.original.icon"
+            :name="row.original.icon"
+            class="size-4 text-muted"
+          />
+          <span class="font-medium">{{ row.original.name }}</span>
+        </div>
+      </template>
+      <template #description-cell="{ row }">
+        <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.description || '-' }}</span>
+      </template>
+      <template #sortOrder-cell="{ row }">
+        <span class="tabular-nums">{{ row.original.sortOrder }}</span>
+      </template>
+      <template #color-cell="{ row }">
+        <UBadge
+          v-if="row.original.color"
+          variant="subtle"
+          color="neutral"
+        >
+          {{ row.original.color }}
+        </UBadge>
+        <span
+          v-else
+          class="text-muted"
+        >-</span>
+      </template>
+      <template #isEnabled-cell="{ row }">
+        <USwitch
+          :model-value="row.original.isEnabled"
+          @update:model-value="(val: boolean) => quickToggle(row.original, val)"
+        />
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
+        </div>
+      </template>
+    </UTable>
 
     <AdminApiCategoryModal
       v-model:open="modalOpen"

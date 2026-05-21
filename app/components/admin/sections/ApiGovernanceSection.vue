@@ -50,10 +50,6 @@ interface VersionGroup {
 }
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const USwitch = resolveComponent('USwitch')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch('/api/admin/apis/discover', {
   default: () => ({ versions: [] as VersionGroup[] })
@@ -163,87 +159,20 @@ function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
 }
 
 const columns: TableColumn<DiscoveredApi>[] = [
-  {
-    accessorKey: 'code',
-    header: '编码 / 名称',
-    cell: ({ row }) => h('div', { class: 'flex flex-col gap-0.5' }, [
-      h('div', { class: 'font-mono text-sm' }, row.original.code),
-      h('div', { class: 'text-xs text-muted truncate max-w-[260px]' },
-        row.original.registered?.name || h('span', { class: 'italic opacity-60' }, '未登记'))
-    ])
-  },
-  {
-    id: 'endpoints',
-    header: '端点',
-    cell: ({ row }) => {
-      if (row.original.endpoints.length === 0) {
-        return h('span', { class: 'text-xs text-muted italic' }, '代码已删除')
-      }
-      return h('div', { class: 'flex flex-col gap-1' }, row.original.endpoints.map(ep => h('div', {
-        class: 'flex items-center gap-2'
-      }, [
-        h(UBadge, {
-          color: methodColor(ep.method),
-          variant: 'subtle',
-          class: 'font-mono'
-        }, () => ep.method),
-        h('span', {
-          class: 'font-mono text-xs',
-          class2: ep.isDynamic ? 'text-primary' : ''
-        }, ep.apiPath)
-      ])))
-    }
-  },
-  {
-    id: 'category',
-    header: '分类',
-    cell: ({ row }) => row.original.registered?.categoryId
-      ? (categoriesMap.value.get(row.original.registered.categoryId) || `#${row.original.registered.categoryId}`)
-      : '-'
-  },
-  {
-    id: 'isEnabled',
-    header: '启用',
-    cell: ({ row }) => row.original.registered
-      ? h(USwitch, {
-          'modelValue': row.original.registered.isEnabled,
-          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isEnabled', val)
-        })
-      : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '默认停用')
-  },
-  {
-    id: 'isStatistics',
-    header: '统计',
-    cell: ({ row }) => row.original.registered
-      ? h(USwitch, {
-          'modelValue': row.original.registered.isStatistics,
-          'onUpdate:modelValue': (val: boolean) => handleToggle(row.original, 'isStatistics', val)
-        })
-      : h('span', { class: 'text-muted' }, '-')
-  },
-  {
-    id: 'isApiKey',
-    header: 'ApiKey',
-    cell: ({ row }) => row.original.registered
-      ? (row.original.registered.isApiKey
-          ? h(UBadge, { color: 'warning', variant: 'subtle' }, () => '必需')
-          : h(UBadge, { color: 'neutral', variant: 'subtle' }, () => '可选'))
-      : h('span', { class: 'text-muted' }, '-')
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'code', header: '编码 / 名称' },
+  { id: 'endpoints', header: '端点' },
+  { id: 'category', header: '分类' },
+  { id: 'isEnabled', header: '启用' },
+  { id: 'isStatistics', header: '统计' },
+  { id: 'isApiKey', header: 'ApiKey' },
+  { id: 'actions', header: '' }
 ]
+
+function categoryLabel(row: DiscoveredApi) {
+  const id = row.registered?.categoryId
+  if (!id) return '-'
+  return categoriesMap.value.get(id) || `#${id}`
+}
 
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
   switch (method) {
@@ -305,7 +234,108 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         th: 'py-2',
         td: 'py-2 align-top'
       }"
-    />
+    >
+      <template #code-cell="{ row }">
+        <div class="flex flex-col gap-0.5">
+          <div class="font-mono text-sm">
+            {{ row.original.code }}
+          </div>
+          <div class="text-xs text-muted truncate max-w-[260px]">
+            <template v-if="row.original.registered?.name">
+              {{ row.original.registered.name }}
+            </template>
+            <span
+              v-else
+              class="italic opacity-60"
+            >未登记</span>
+          </div>
+        </div>
+      </template>
+      <template #endpoints-cell="{ row }">
+        <span
+          v-if="row.original.endpoints.length === 0"
+          class="text-xs text-muted italic"
+        >代码已删除</span>
+        <div
+          v-else
+          class="flex flex-col gap-1"
+        >
+          <div
+            v-for="ep in row.original.endpoints"
+            :key="`${ep.method}-${ep.apiPath}`"
+            class="flex items-center gap-2"
+          >
+            <UBadge
+              :color="methodColor(ep.method)"
+              variant="subtle"
+              class="font-mono"
+            >
+              {{ ep.method }}
+            </UBadge>
+            <span
+              class="font-mono text-xs"
+              :class="ep.isDynamic ? 'text-primary' : ''"
+            >{{ ep.apiPath }}</span>
+          </div>
+        </div>
+      </template>
+      <template #category-cell="{ row }">
+        {{ categoryLabel(row.original) }}
+      </template>
+      <template #isEnabled-cell="{ row }">
+        <USwitch
+          v-if="row.original.registered"
+          :model-value="row.original.registered.isEnabled"
+          @update:model-value="(val: boolean) => handleToggle(row.original, 'isEnabled', val)"
+        />
+        <UBadge
+          v-else
+          color="neutral"
+          variant="subtle"
+        >
+          默认停用
+        </UBadge>
+      </template>
+      <template #isStatistics-cell="{ row }">
+        <USwitch
+          v-if="row.original.registered"
+          :model-value="row.original.registered.isStatistics"
+          @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
+        />
+        <span
+          v-else
+          class="text-muted"
+        >-</span>
+      </template>
+      <template #isApiKey-cell="{ row }">
+        <UBadge
+          v-if="row.original.registered"
+          :color="row.original.registered.isApiKey ? 'warning' : 'neutral'"
+          variant="subtle"
+        >
+          {{ row.original.registered.isApiKey ? '必需' : '可选' }}
+        </UBadge>
+        <span
+          v-else
+          class="text-muted"
+        >-</span>
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
+        </div>
+      </template>
+    </UTable>
 
     <AdminApiModal
       v-model:open="modalOpen"

@@ -27,8 +27,6 @@ interface FilterOptions {
   apiKeys: Array<{ id: number, name: string }>
 }
 
-const UBadge = resolveComponent('UBadge')
-
 const filters = reactive({
   apiId: 0,
   apiKeyId: 0,
@@ -137,75 +135,15 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
 }
 
 const columns: TableColumn<LogRow>[] = [
-  {
-    accessorKey: 'createdAt',
-    header: '时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted whitespace-nowrap' }, formatDate(row.original.createdAt))
-  },
-  {
-    accessorKey: 'method',
-    header: '方法',
-    cell: ({ row }) => h(UBadge, {
-      color: methodColor(row.original.method),
-      variant: 'subtle',
-      class: 'font-mono'
-    }, () => row.original.method)
-  },
-  {
-    accessorKey: 'apiName',
-    header: '服务',
-    cell: ({ row }) => h('div', { class: 'flex flex-col' }, [
-      h('span', { class: 'font-medium text-sm' }, row.original.apiName || '-'),
-      h('span', { class: 'font-mono text-xs text-muted' }, row.original.apiPath)
-    ])
-  },
-  {
-    accessorKey: 'statusCode',
-    header: '状态',
-    cell: ({ row }) => h('div', { class: 'flex items-center gap-1' }, [
-      h(UBadge, {
-        color: statusColor(row.original.statusCode),
-        variant: 'subtle'
-      }, () => row.original.statusCode),
-      row.original.statusCode >= 200 && row.original.statusCode < 400
-        ? h(UBadge, { color: 'success', variant: 'soft', size: 'sm' }, () => '成功')
-        : h(UBadge, { color: 'error', variant: 'soft', size: 'sm' }, () => '失败')
-    ])
-  },
-  {
-    accessorKey: 'creditsCost',
-    header: '扣除积分',
-    cell: ({ row }) => row.original.creditsCost > 0
-      ? h(UBadge, { color: 'warning', variant: 'subtle', class: 'tabular-nums' }, () => `-${row.original.creditsCost}`)
-      : h('span', { class: 'text-xs text-muted' }, '免费')
-  },
-  {
-    accessorKey: 'latencyMs',
-    header: '耗时',
-    cell: ({ row }) => h('span', { class: 'tabular-nums text-xs' }, `${row.original.latencyMs} ms`)
-  },
-  {
-    accessorKey: 'apiKeyName',
-    header: 'API Key',
-    cell: ({ row }) => row.original.apiKeyId
-      ? h('span', { class: 'text-xs' }, row.original.apiKeyName || `#${row.original.apiKeyId}`)
-      : h('span', { class: 'text-xs text-muted italic' }, '未携带')
-  },
-  {
-    accessorKey: 'ip',
-    header: 'IP',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.ip || '-')
-  },
-  {
-    id: 'error',
-    header: '错误信息',
-    cell: ({ row }) => row.original.errorCode || row.original.errorMessage
-      ? h('div', { class: 'flex flex-col text-xs' }, [
-          row.original.errorCode ? h('span', { class: 'font-mono text-error' }, row.original.errorCode) : null,
-          row.original.errorMessage ? h('span', { class: 'text-muted truncate max-w-[200px]' }, row.original.errorMessage) : null
-        ].filter(Boolean))
-      : h('span', { class: 'text-muted' }, '-')
-  }
+  { accessorKey: 'createdAt', header: '时间' },
+  { accessorKey: 'method', header: '方法' },
+  { accessorKey: 'apiName', header: '服务' },
+  { accessorKey: 'statusCode', header: '状态' },
+  { accessorKey: 'creditsCost', header: '扣除积分' },
+  { accessorKey: 'latencyMs', header: '耗时' },
+  { accessorKey: 'apiKeyName', header: 'API Key' },
+  { accessorKey: 'ip', header: 'IP' },
+  { id: 'error', header: '错误信息' }
 ]
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
@@ -301,7 +239,92 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
               th: 'py-2',
               td: 'py-2 align-middle'
             }"
-          />
+          >
+            <template #createdAt-cell="{ row }">
+              <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+            </template>
+            <template #method-cell="{ row }">
+              <UBadge
+                :color="methodColor(row.original.method)"
+                variant="subtle"
+                class="font-mono"
+              >
+                {{ row.original.method }}
+              </UBadge>
+            </template>
+            <template #apiName-cell="{ row }">
+              <div class="flex flex-col">
+                <span class="font-medium text-sm">{{ row.original.apiName || '-' }}</span>
+                <span class="font-mono text-xs text-muted">{{ row.original.apiPath }}</span>
+              </div>
+            </template>
+            <template #statusCode-cell="{ row }">
+              <div class="flex items-center gap-1">
+                <UBadge
+                  :color="statusColor(row.original.statusCode)"
+                  variant="subtle"
+                >
+                  {{ row.original.statusCode }}
+                </UBadge>
+                <UBadge
+                  :color="row.original.statusCode >= 200 && row.original.statusCode < 400 ? 'success' : 'error'"
+                  variant="soft"
+                  size="sm"
+                >
+                  {{ row.original.statusCode >= 200 && row.original.statusCode < 400 ? '成功' : '失败' }}
+                </UBadge>
+              </div>
+            </template>
+            <template #creditsCost-cell="{ row }">
+              <UBadge
+                v-if="row.original.creditsCost > 0"
+                color="warning"
+                variant="subtle"
+                class="tabular-nums"
+              >
+                -{{ row.original.creditsCost }}
+              </UBadge>
+              <span
+                v-else
+                class="text-xs text-muted"
+              >免费</span>
+            </template>
+            <template #latencyMs-cell="{ row }">
+              <span class="tabular-nums text-xs">{{ row.original.latencyMs }} ms</span>
+            </template>
+            <template #apiKeyName-cell="{ row }">
+              <span
+                v-if="row.original.apiKeyId"
+                class="text-xs"
+              >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
+              <span
+                v-else
+                class="text-xs text-muted italic"
+              >未携带</span>
+            </template>
+            <template #ip-cell="{ row }">
+              <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+            </template>
+            <template #error-cell="{ row }">
+              <div
+                v-if="row.original.errorCode || row.original.errorMessage"
+                class="flex flex-col text-xs"
+              >
+                <span
+                  v-if="row.original.errorCode"
+                  class="font-mono text-error"
+                >{{ row.original.errorCode }}</span>
+                <span
+                  v-if="row.original.errorMessage"
+                  class="text-muted truncate max-w-[200px]"
+                >{{ row.original.errorMessage }}</span>
+              </div>
+              <span
+                v-else
+                class="text-muted"
+              >-</span>
+            </template>
+          </UTable>
           <div
             v-if="total > pageSize"
             class="flex items-center justify-between pt-3 border-t border-default mt-3"

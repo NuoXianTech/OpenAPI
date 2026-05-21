@@ -165,10 +165,6 @@ function formatDate(iso: string | null) {
   }
 }
 
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
-
 function getRowItems(row: MessageRow): DropdownMenuItem[] {
   return [
     { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => openDetail(row) },
@@ -177,50 +173,11 @@ function getRowItems(row: MessageRow): DropdownMenuItem[] {
 }
 
 const columns: TableColumn<MessageRow>[] = [
-  {
-    accessorKey: 'title',
-    header: '标题',
-    cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
-      h(UBadge, {
-        color: levelMeta[row.original.level].color,
-        variant: 'subtle',
-        size: 'sm'
-      }, () => levelMeta[row.original.level].label),
-      h(UBadge, {
-        color: audienceMeta[row.original.audience].color,
-        variant: 'soft',
-        size: 'sm'
-      }, () => audienceMeta[row.original.audience].label),
-      h('span', { class: 'font-medium truncate max-w-[260px]' }, row.original.title)
-    ])
-  },
-  {
-    id: 'delivery',
-    header: '投递 / 已读',
-    cell: ({ row }) => h('div', { class: 'flex flex-col text-xs' }, [
-      h('span', { class: 'tabular-nums' }, `投递 ${row.original.deliveredCount} 人`),
-      h('span', { class: 'text-muted tabular-nums' }, `已读 ${row.original.readCount} 人`)
-    ])
-  },
+  { accessorKey: 'title', header: '标题' },
+  { id: 'delivery', header: '投递 / 已读' },
   { accessorKey: 'senderActor', header: '发送人' },
-  {
-    accessorKey: 'createdAt',
-    header: '发送时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'createdAt', header: '发送时间' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -348,7 +305,51 @@ const columns: TableColumn<MessageRow>[] = [
             th: 'py-2',
             td: 'py-2 align-top'
           }"
-        />
+        >
+          <template #title-cell="{ row }">
+            <div class="flex items-center gap-2">
+              <UBadge
+                :color="levelMeta[row.original.level].color"
+                variant="subtle"
+                size="sm"
+              >
+                {{ levelMeta[row.original.level].label }}
+              </UBadge>
+              <UBadge
+                :color="audienceMeta[row.original.audience].color"
+                variant="soft"
+                size="sm"
+              >
+                {{ audienceMeta[row.original.audience].label }}
+              </UBadge>
+              <span class="font-medium truncate max-w-[260px]">{{ row.original.title }}</span>
+            </div>
+          </template>
+          <template #delivery-cell="{ row }">
+            <div class="flex flex-col text-xs">
+              <span class="tabular-nums">投递 {{ row.original.deliveredCount }} 人</span>
+              <span class="text-muted tabular-nums">已读 {{ row.original.readCount }} 人</span>
+            </div>
+          </template>
+          <template #createdAt-cell="{ row }">
+            <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+          </template>
+          <template #actions-cell="{ row }">
+            <div class="text-right">
+              <UDropdownMenu
+                :items="getRowItems(row.original)"
+                :content="{ align: 'end' }"
+              >
+                <UButton
+                  icon="i-mdi-dots-vertical"
+                  color="neutral"
+                  variant="ghost"
+                  size="sm"
+                />
+              </UDropdownMenu>
+            </div>
+          </template>
+        </UTable>
       </UCard>
     </div>
 

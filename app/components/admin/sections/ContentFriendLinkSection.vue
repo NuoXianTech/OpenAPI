@@ -3,9 +3,6 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch<FriendLinkItem[]>('/api/admin/friend-links/list', {
   default: () => []
@@ -57,22 +54,8 @@ const columns: TableColumn<FriendLinkItem>[] = [
   { accessorKey: 'title', header: '标题' },
   { accessorKey: 'url', header: 'URL' },
   { accessorKey: 'description', header: '描述' },
-  {
-    accessorKey: 'isActive',
-    header: '状态',
-    cell: ({ row }) => h(UBadge, {
-      color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle'
-    }, () => row.original.isActive ? '正常' : '停用')
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, { icon: 'i-mdi-dots-vertical', color: 'neutral', variant: 'ghost', size: 'sm' })))
-  }
+  { accessorKey: 'isActive', header: '状态' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -106,7 +89,31 @@ const columns: TableColumn<FriendLinkItem>[] = [
         th: 'py-2',
         td: 'py-2'
       }"
-    />
+    >
+      <template #isActive-cell="{ row }">
+        <UBadge
+          :color="row.original.isActive ? 'success' : 'neutral'"
+          variant="subtle"
+        >
+          {{ row.original.isActive ? '正常' : '停用' }}
+        </UBadge>
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
+          >
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
+        </div>
+      </template>
+    </UTable>
 
     <AdminLinkModal
       v-model:open="modalOpen"

@@ -19,9 +19,6 @@ interface ApiKey {
 }
 
 const toast = useToast()
-const UBadge = resolveComponent('UBadge')
-const UButton = resolveComponent('UButton')
-const UDropdownMenu = resolveComponent('UDropdownMenu')
 
 const { data, status, refresh } = useLazyFetch<ApiKey[]>('/api/user/apikeys/list', {
   default: () => []
@@ -149,74 +146,13 @@ function toggleReveal(id: number) {
 }
 
 const columns: TableColumn<ApiKey>[] = [
-  {
-    accessorKey: 'name',
-    header: '名称',
-    cell: ({ row }) => h('span', { class: 'font-medium' }, row.original.name || '默认密钥')
-  },
-  {
-    accessorKey: 'apiKey',
-    header: 'API Key',
-    cell: ({ row }) => h('div', { class: 'flex items-center gap-2' }, [
-      h('code', { class: 'font-mono text-xs px-2 py-1 rounded bg-elevated' },
-        showFullKeyId.value === row.original.id ? row.original.apiKey : maskKey(row.original.apiKey)),
-      h(UButton, {
-        icon: showFullKeyId.value === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline',
-        size: 'xs',
-        color: 'neutral',
-        variant: 'ghost',
-        onClick: () => toggleReveal(row.original.id)
-      }),
-      h(UButton, {
-        icon: 'i-mdi-content-copy',
-        size: 'xs',
-        color: 'neutral',
-        variant: 'ghost',
-        onClick: () => copy(row.original.apiKey)
-      })
-    ])
-  },
-  {
-    accessorKey: 'totalCalls',
-    header: '调用次数',
-    cell: ({ row }) => h('span', { class: 'tabular-nums' }, (row.original.totalCalls || 0).toLocaleString())
-  },
-  {
-    accessorKey: 'lastUsedAt',
-    header: '最近使用',
-    cell: ({ row }) => h('div', { class: 'flex flex-col text-xs' }, [
-      h('span', formatDate(row.original.lastUsedAt)),
-      row.original.lastUsedIp
-        ? h('span', { class: 'text-muted font-mono' }, row.original.lastUsedIp)
-        : null
-    ].filter(Boolean))
-  },
-  {
-    id: 'isActive',
-    header: '状态',
-    cell: ({ row }) => h(UBadge, {
-      color: row.original.isActive ? 'success' : 'neutral',
-      variant: 'subtle'
-    }, () => row.original.isActive ? '启用' : '停用')
-  },
-  {
-    accessorKey: 'createdAt',
-    header: '创建时间',
-    cell: ({ row }) => h('span', { class: 'text-xs text-muted' }, formatDate(row.original.createdAt))
-  },
-  {
-    id: 'actions',
-    header: '',
-    cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
-      items: getRowItems(row.original),
-      content: { align: 'end' }
-    }, () => h(UButton, {
-      icon: 'i-mdi-dots-vertical',
-      color: 'neutral',
-      variant: 'ghost',
-      size: 'sm'
-    })))
-  }
+  { accessorKey: 'name', header: '名称' },
+  { accessorKey: 'apiKey', header: 'API Key' },
+  { accessorKey: 'totalCalls', header: '调用次数' },
+  { accessorKey: 'lastUsedAt', header: '最近使用' },
+  { id: 'isActive', header: '状态' },
+  { accessorKey: 'createdAt', header: '创建时间' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
@@ -275,7 +211,70 @@ const columns: TableColumn<ApiKey>[] = [
           th: 'py-2',
           td: 'py-2 align-middle'
         }"
-      />
+      >
+        <template #name-cell="{ row }">
+          <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
+        </template>
+        <template #apiKey-cell="{ row }">
+          <div class="flex items-center gap-2">
+            <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
+              {{ showFullKeyId === row.original.id ? row.original.apiKey : maskKey(row.original.apiKey) }}
+            </code>
+            <UButton
+              :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              @click="toggleReveal(row.original.id)"
+            />
+            <UButton
+              icon="i-mdi-content-copy"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              @click="copy(row.original.apiKey)"
+            />
+          </div>
+        </template>
+        <template #totalCalls-cell="{ row }">
+          <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
+        </template>
+        <template #lastUsedAt-cell="{ row }">
+          <div class="flex flex-col text-xs">
+            <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+            <span
+              v-if="row.original.lastUsedIp"
+              class="text-muted font-mono"
+            >{{ row.original.lastUsedIp }}</span>
+          </div>
+        </template>
+        <template #isActive-cell="{ row }">
+          <UBadge
+            :color="row.original.isActive ? 'success' : 'neutral'"
+            variant="subtle"
+          >
+            {{ row.original.isActive ? '启用' : '停用' }}
+          </UBadge>
+        </template>
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu
+              :items="getRowItems(row.original)"
+              :content="{ align: 'end' }"
+            >
+              <UButton
+                icon="i-mdi-dots-vertical"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
+      </UTable>
 
       <!-- 创建 Key -->
       <UModal
