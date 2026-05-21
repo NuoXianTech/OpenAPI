@@ -25,8 +25,6 @@ const props = withDefaults(defineProps<{
   to: '/user/notifications'
 })
 
-const POLL_INTERVAL_MS = 60_000
-
 const open = ref(false)
 const expandedId = ref<number | null>(null)
 const items = ref<Notification[]>([])
@@ -83,15 +81,7 @@ watch(open, (val) => {
   if (val) void fetchList()
 })
 
-onMounted(() => {
-  void fetchUnreadCount()
-  if (import.meta.client) {
-    const timer = window.setInterval(() => {
-      void fetchUnreadCount()
-    }, POLL_INTERVAL_MS)
-    onBeforeUnmount(() => window.clearInterval(timer))
-  }
-})
+useIntervalFn(fetchUnreadCount, 60_000, { immediateCallback: true })
 
 const levelMeta: Record<Notification['level'], { color: 'info' | 'success' | 'warning' | 'error', icon: string, label: string }> = {
   info: { color: 'info', icon: 'i-mdi-information-outline', label: '通知' },
