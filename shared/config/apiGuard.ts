@@ -22,7 +22,7 @@ export function isGuardedPath(pathname: string): boolean {
  * 一键登记的默认治理配置（公开 API 定位）：
  * - isEnabled=false：登记后仍需管理员显式启用，避免误放
  * - isApiKey=false：公开可访问，ApiKey 为可选增强
- * - isStatistics=false：默认不开启调用统计，避免无谓写库
+ * - isStatistics=true：默认开启调用统计，管理员可在后台关闭
  * - status=-1：未知（接口未启用前不应预设为正常）
  * - rateLimitPerMinute=60：默认防刷
  */
@@ -30,7 +30,7 @@ export const DEFAULT_API_REGISTRATION = {
   status: -1,
   isEnabled: false,
   isApiKey: false,
-  isStatistics: false,
+  isStatistics: true,
   rateLimitPerSecond: 0,
   rateLimitPerMinute: 60,
   rateLimitPerHour: 1000,
