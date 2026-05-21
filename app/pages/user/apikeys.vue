@@ -184,7 +184,7 @@ const columns: TableColumn<ApiKey>[] = [
         <template #description>
           <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">
             <li>
-              请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apiKey=&lt;your-key&gt;</UKbd> 中。
+              请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apikey=&lt;your-key&gt;</UKbd> 中。
             </li>
             <li>
               出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。

@@ -57,7 +57,7 @@ function readApiKeyFromEvent(event: H3Event): string {
   const headerKey = (getHeader(event, 'x-api-key') || '').toString().trim()
   if (headerKey) return headerKey
   const query = getQuery(event)
-  const queryKey = (query.apiKey || query.api_key || '').toString().trim()
+  const queryKey = (query.apikey || '').toString().trim()
   return queryKey
 }
 

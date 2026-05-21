@@ -94,7 +94,7 @@ function getApiKeyFromEvent(event: H3Event) {
   }
 
   const query = getQuery(event)
-  return (query.apiKey || '').toString().trim()
+  return (query.apikey || '').toString().trim()
 }
 
 function supportsMethod(httpMethodList: Set<string>, method: string) {
