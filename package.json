@@ -35,17 +35,12 @@
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",
     "@nuxt/eslint": "1.15.2",
-    "@nuxt/test-utils": "^4.0.3",
     "@types/node": "^24.12.4",
     "@types/nodemailer": "^8.0.0",
-    "@vue/test-utils": "^2.4.10",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.0",
-    "happy-dom": "^20.9.0",
-    "playwright-core": "^1.60.0",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.6",
     "vue-tsc": "^3.2.9"
   }
 }

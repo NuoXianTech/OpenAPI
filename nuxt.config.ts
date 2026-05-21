@@ -51,7 +51,6 @@ export default defineNuxtConfig({
     // 生产部署目标：独立 Node 进程（Docker / VPS / PM2）。
     // 显式声明 preset，避免 @nuxthub/core 在检测到 NUXT_HUB_* 环境时自动切到 cloudflare-pages。
     preset: 'node-server',
-    // 启用静态资源压缩（brotli + gzip）
     compressPublicAssets: { brotli: true, gzip: true }
   },
   hub: {
@@ -68,7 +67,6 @@ export default defineNuxtConfig({
     }
   },
   icon: {
-    // 服务端按需打包 mdi 图标，避免客户端逐个 fetch /api/_nuxt_icon/*
     serverBundle: { collections: ['mdi'] }
   },
 })
