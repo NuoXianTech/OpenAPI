@@ -24,14 +24,16 @@ const active = useTabHashSync({ tabs: adminSystemTabs })
           <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
-      <div class="px-4 pt-3 border-b border-default">
-        <UTabs
-          v-model="active"
-          :items="adminSystemTabs"
-          :content="false"
-          variant="link"
-        />
-      </div>
+      <UDashboardToolbar>
+        <template #left>
+          <UTabs
+            v-model="active"
+            :items="adminSystemTabs"
+            :content="false"
+            variant="link"
+          />
+        </template>
+      </UDashboardToolbar>
     </template>
 
     <template #body>
