@@ -1,7 +1,15 @@
 <script setup lang="ts" generic="T">
 import type { TableColumn } from '@nuxt/ui'
 
-const props = withDefaults(defineProps<{
+const {
+  data,
+  loading = false,
+  emptyTitle = '暂无数据',
+  emptyIcon = 'i-mdi-inbox-outline',
+  page = 1,
+  pageSize = 0,
+  total = 0
+} = defineProps<{
   data: T[]
   columns: TableColumn<T>[]
   loading?: boolean
@@ -12,21 +20,14 @@ const props = withDefaults(defineProps<{
   pageSize?: number
   total?: number
   ui?: Record<string, string>
-}>(), {
-  loading: false,
-  emptyTitle: '暂无数据',
-  emptyIcon: 'i-mdi-inbox-outline',
-  page: 1,
-  pageSize: 0,
-  total: 0
-})
+}>()
 
 const emit = defineEmits<{
   'update:page': [value: number]
 }>()
 
-const showPagination = computed(() => props.pageSize > 0 && props.total > props.pageSize)
-const showEmpty = computed(() => !props.loading && props.data.length === 0)
+const showPagination = computed(() => pageSize > 0 && total > pageSize)
+const showEmpty = computed(() => !loading && data.length === 0)
 
 function onPageChange(p: number) {
   emit('update:page', p)

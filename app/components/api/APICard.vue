@@ -1,27 +1,39 @@
 <script lang="ts" setup>
 type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
-const props = defineProps({
-  name: { type: String, default: '这是标题' },
-  status: { type: Number, default: -1 },
-  shortDesc: { type: String, default: '' },
-  description: { type: String, default: '' },
-  categoryName: { type: String, default: '' },
-  httpMethod: { type: String, default: 'GET' },
-  apiPath: { type: String, default: '/v1/path' },
-  docUrl: { type: String, default: '' },
-  isApiKey: { type: Boolean, default: false },
-  costCredits: { type: Number, default: 0 },
-  totalCalls: { type: Number, default: 0 }
-})
+const {
+  name = '这是标题',
+  status = -1,
+  shortDesc = '',
+  description = '',
+  categoryName = '',
+  httpMethod = 'GET',
+  apiPath = '/v1/path',
+  docUrl = '',
+  isApiKey = false,
+  costCredits = 0,
+  totalCalls = 0
+} = defineProps<{
+  name?: string
+  status?: number
+  shortDesc?: string
+  description?: string
+  categoryName?: string
+  httpMethod?: string
+  apiPath?: string
+  docUrl?: string
+  isApiKey?: boolean
+  costCredits?: number
+  totalCalls?: number
+}>()
 
 const open = ref(false)
 
 const methods = computed(() =>
-  props.httpMethod.split(',').map(m => m.trim()).filter(Boolean)
+  httpMethod.split(',').map(m => m.trim()).filter(Boolean)
 )
 
-const isPaid = computed(() => props.costCredits > 0)
+const isPaid = computed(() => costCredits > 0)
 
 function methodColor(method: string): BadgeColor {
   switch (method.trim().toUpperCase()) {
@@ -35,7 +47,7 @@ function methodColor(method: string): BadgeColor {
 }
 
 const radarClass = computed(() => {
-  switch (props.status) {
+  switch (status) {
     case 1: return ''
     case 0: return 'is-error'
     default: return 'is-unknown'
@@ -43,7 +55,7 @@ const radarClass = computed(() => {
 })
 
 const radarTitle = computed(() => {
-  switch (props.status) {
+  switch (status) {
     case -1: return '未知'
     case 0: return '异常'
     case 1: return '正常'
@@ -67,7 +79,7 @@ function formatCallCount(count: number) {
   >
     <header class="api-card__head">
       <h3 class="api-card__title">
-        {{ props.name }}
+        {{ name }}
       </h3>
       <span
         class="api-card__radar"
@@ -77,11 +89,11 @@ function formatCallCount(count: number) {
     </header>
 
     <p class="api-card__short">
-      {{ props.shortDesc || '暂无简介' }}
+      {{ shortDesc || '暂无简介' }}
     </p>
 
     <div
-      v-if="props.categoryName"
+      v-if="categoryName"
       class="relative z-1 mb-2.5 flex flex-wrap gap-1.5 px-4"
     >
       <UBadge
@@ -90,26 +102,26 @@ function formatCallCount(count: number) {
         size="sm"
         class="rounded-full text-[11px]"
       >
-        {{ props.categoryName }}
+        {{ categoryName }}
       </UBadge>
     </div>
 
     <div
-      v-if="props.docUrl"
+      v-if="docUrl"
       class="api-card__doc"
     >
       <span
         class="api-card__doc-text"
-        :title="props.docUrl"
+        :title="docUrl"
       >
         <UIcon
           name="i-mdi-file-document-outline"
           class="size-3.5"
         />
-        {{ props.docUrl }}
+        {{ docUrl }}
       </span>
       <UButton
-        :to="props.docUrl"
+        :to="docUrl"
         target="_blank"
         rel="noopener"
         color="neutral"
@@ -130,9 +142,9 @@ function formatCallCount(count: number) {
         size="sm"
         icon="i-mdi-cash-multiple"
         class="rounded-full"
-        :title="`收费 ${props.costCredits} / 次`"
+        :title="`收费 ${costCredits} / 次`"
       >
-        {{ props.costCredits }}
+        {{ costCredits }}
       </UBadge>
       <UBadge
         v-else
@@ -145,7 +157,7 @@ function formatCallCount(count: number) {
         aria-label="免费"
       />
       <UBadge
-        v-if="props.isApiKey"
+        v-if="isApiKey"
         color="neutral"
         variant="subtle"
         size="sm"
@@ -160,7 +172,7 @@ function formatCallCount(count: number) {
           name="i-mdi-chart-bar"
           class="size-3"
         />
-        <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
+        <span class="api-card__calls-num">{{ formatCallCount(totalCalls) }}</span>
       </span>
     </div>
 
@@ -183,11 +195,11 @@ function formatCallCount(count: number) {
           <div class="api-card__detail-row">
             <span class="api-card__detail-label">接口地址</span>
             <a
-              :href="props.apiPath"
+              :href="apiPath"
               target="_blank"
               rel="noopener"
               class="api-card__detail-value font-mono text-[12.5px]"
-            >{{ props.apiPath }}</a>
+            >{{ apiPath }}</a>
           </div>
           <div class="api-card__detail-row">
             <span class="api-card__detail-label">请求方法</span>
@@ -215,7 +227,7 @@ function formatCallCount(count: number) {
                 icon="i-mdi-cash-multiple"
                 class="rounded-full"
               >
-                {{ props.costCredits }} / 次
+                {{ costCredits }} / 次
               </UBadge>
               <UBadge
                 v-else
@@ -233,7 +245,7 @@ function formatCallCount(count: number) {
             <span class="api-card__detail-label">鉴权要求</span>
             <div class="api-card__detail-value api-card__detail-value--row">
               <UBadge
-                v-if="props.isApiKey"
+                v-if="isApiKey"
                 color="neutral"
                 variant="subtle"
                 size="sm"
@@ -262,18 +274,18 @@ function formatCallCount(count: number) {
                   name="i-mdi-chart-bar"
                   class="size-3"
                 />
-                <span class="api-card__calls-num">{{ formatCallCount(props.totalCalls) }}</span>
+                <span class="api-card__calls-num">{{ formatCallCount(totalCalls) }}</span>
                 <span class="api-card__calls-label">次</span>
               </span>
             </div>
           </div>
           <div
-            v-if="props.description"
+            v-if="description"
             class="api-card__detail-row"
           >
             <span class="api-card__detail-label">接口描述</span>
             <p class="api-card__detail-value m-0 text-[12.5px] leading-relaxed">
-              {{ props.description }}
+              {{ description }}
             </p>
           </div>
         </div>
