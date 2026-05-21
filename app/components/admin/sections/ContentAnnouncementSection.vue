@@ -18,6 +18,7 @@ interface Announcement {
 }
 
 const toast = useToast()
+const confirm = useConfirmDialog()
 
 const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
   default: () => []
@@ -26,9 +27,6 @@ const items = computed<Announcement[]>(() => data.value || [])
 
 const modalOpen = ref(false)
 const editItem = ref<Announcement | null>(null)
-const deleteOpen = ref(false)
-const deleteTarget = ref<Announcement | null>(null)
-const deleteLoading = ref(false)
 
 function openAdd() {
   editItem.value = null
@@ -38,27 +36,24 @@ function openEdit(item: Announcement) {
   editItem.value = item
   modalOpen.value = true
 }
-function openDelete(item: Announcement) {
-  deleteTarget.value = item
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/admin/announcements/delete', {
-      method: 'POST',
-      body: { id: deleteTarget.value.id }
-    })
-    toast.add({ title: '删除成功', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+async function openDelete(item: Announcement) {
+  await confirm({
+    title: `删除公告: ${item.title}`,
+    description: '删除后该公告不再展示，且不可恢复。',
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/admin/announcements/delete', {
+          method: 'POST',
+          body: { id: item.id }
+        })
+        toast.add({ title: '删除成功', color: 'success' })
+        await refresh()
+      } catch (err: unknown) {
+        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        throw err
+      }
+    }
+  })
 }
 
 async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', value: boolean) {
@@ -193,14 +188,6 @@ const columns: TableColumn<Announcement>[] = [
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"
-    />
-
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除公告: ${deleteTarget?.title}`"
-      description="删除后该公告不再展示，且不可恢复。"
-      @confirm="confirmDelete"
     />
   </div>
 </template>

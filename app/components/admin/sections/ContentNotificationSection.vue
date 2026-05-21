@@ -116,31 +116,26 @@ async function openDetail(row: MessageRow) {
   }
 }
 
-const deleteOpen = ref(false)
-const deleteTarget = ref<MessageRow | null>(null)
-const deleteLoading = ref(false)
+const confirm = useConfirmDialog()
 
-function openDelete(row: MessageRow) {
-  deleteTarget.value = row
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/admin/notifications/delete', {
-      method: 'POST',
-      body: { messageId: deleteTarget.value.id }
-    })
-    toast.add({ title: '已删除', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+async function openDelete(row: MessageRow) {
+  await confirm({
+    title: `删除通知: ${row.title || ''}`,
+    description: '软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。',
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/admin/notifications/delete', {
+          method: 'POST',
+          body: { messageId: row.id }
+        })
+        toast.add({ title: '已删除', color: 'success' })
+        await refresh()
+      } catch (err: unknown) {
+        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        throw err
+      }
+    }
+  })
 }
 
 const levelMeta: Record<MessageRow['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
@@ -392,13 +387,5 @@ const columns: TableColumn<MessageRow>[] = [
         </div>
       </template>
     </UModal>
-
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除通知: ${deleteTarget?.title || ''}`"
-      description="软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
-      @confirm="confirmDelete"
-    />
   </div>
 </template>

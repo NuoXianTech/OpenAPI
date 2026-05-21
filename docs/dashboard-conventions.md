@@ -99,7 +99,43 @@ async function openEdit(user) {
 }
 ```
 
-老页面（users.vue / apis.vue / wallet.vue / apikeys.vue 等）保留 `v-model:open` 模式可工作，重构计划见 [plan](C:\Users\nuoxian\.claude\plans\nuxt-ui-nuxt-optimized-gadget.md) Phase 3。
+### 7.1 删除/确认对话框：`useConfirmDialog()`
+
+所有"二次确认 + 执行动作"场景统一走 `useConfirmDialog`，弹窗内部托管 loading，调用方只需提供动作和错误 toast。
+
+```ts
+const confirm = useConfirmDialog()
+const toast = useToast()
+
+async function openDelete(item) {
+  await confirm({
+    title: `删除分类: ${item.name}`,
+    description: '删除后该分类不再可选...',
+    // 默认 confirmLabel='删除' / confirmColor='error'，按需覆盖
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/admin/api-categories/delete', { method: 'POST', body: { id: item.id } })
+        toast.add({ title: '已删除', color: 'success' })
+        await refresh()
+      } catch (err) {
+        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        throw err // 抛出 → 弹窗保持打开供用户重试
+      }
+    }
+  })
+}
+```
+
+实现：[useConfirmDialog](../app/composables/useConfirmDialog.ts) + [AppConfirmDialog.vue](../app/components/common/AppConfirmDialog.vue)。原 `AdminDeleteModal` 已下线。
+
+### 7.2 何时不用 useOverlay
+
+弹窗内容与父组件 reactive state 高度耦合（如表单 props 跟随父组件 `selected` 实时变化），用 useOverlay 反而要走 `modal.patch()` 同步，不如继续 `v-model:open`。
+
+> [!IMPORTANT]
+> useOverlay 弹窗挂在 `UApp` 之外，**拿不到页面级 `provide()`**。需要 inject 的值必须在 `overlay.create()` 时通过 `props` 显式传入。
+
+老页面（users.vue / apis.vue / wallet.vue 等）剩余的 `v-model:open` 用法可工作，遵循"改 modal 时顺手改造"原则渐进迁移。
 
 ## 8. 目录约定
 

@@ -17,6 +17,7 @@ interface ApiCategoryItem {
 }
 
 const toast = useToast()
+const confirm = useConfirmDialog()
 
 const { data, status, refresh } = useLazyFetch<ApiCategoryItem[]>('/api/admin/api-categories/list', {
   default: () => []
@@ -25,9 +26,6 @@ const items = computed<ApiCategoryItem[]>(() => data.value || [])
 
 const modalOpen = ref(false)
 const editItem = ref<ApiCategoryItem | null>(null)
-const deleteOpen = ref(false)
-const deleteTarget = ref<ApiCategoryItem | null>(null)
-const deleteLoading = ref(false)
 
 function openAdd() {
   editItem.value = null
@@ -37,27 +35,24 @@ function openEdit(item: ApiCategoryItem) {
   editItem.value = item
   modalOpen.value = true
 }
-function openDelete(item: ApiCategoryItem) {
-  deleteTarget.value = item
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/admin/api-categories/delete', {
-      method: 'POST',
-      body: { id: deleteTarget.value.id }
-    })
-    toast.add({ title: '已删除', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+async function openDelete(item: ApiCategoryItem) {
+  await confirm({
+    title: `删除分类: ${item.name}`,
+    description: '删除后该分类不再可选；已挂在此分类下的接口将变为未分类。',
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/admin/api-categories/delete', {
+          method: 'POST',
+          body: { id: item.id }
+        })
+        toast.add({ title: '已删除', color: 'success' })
+        await refresh()
+      } catch (err: unknown) {
+        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        throw err
+      }
+    }
+  })
 }
 
 async function quickToggle(row: ApiCategoryItem, value: boolean) {
@@ -174,13 +169,6 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"
-    />
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除分类: ${deleteTarget?.name}`"
-      description="删除后该分类不再可选；已挂在此分类下的接口将变为未分类。"
-      @confirm="confirmDelete"
     />
   </div>
 </template>

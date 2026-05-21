@@ -85,31 +85,26 @@ async function confirmReset() {
 }
 
 // 删除
-const deleteOpen = ref(false)
-const deleteTarget = ref<ApiKey | null>(null)
-const deleteLoading = ref(false)
+const confirm = useConfirmDialog()
 
-function openDelete(row: ApiKey) {
-  deleteTarget.value = row
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/user/apikeys/delete', {
-      method: 'POST',
-      body: { id: deleteTarget.value.id }
-    })
-    toast.add({ title: '已删除', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+async function openDelete(row: ApiKey) {
+  await confirm({
+    title: `删除 API Key: ${row.name || ''}`,
+    description: '删除后该 Key 立即失效且不可恢复。',
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/user/apikeys/delete', {
+          method: 'POST',
+          body: { id: row.id }
+        })
+        toast.add({ title: '已删除', color: 'success' })
+        await refresh()
+      } catch (err: unknown) {
+        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        throw err
+      }
+    }
+  })
 }
 
 // 复制
@@ -399,15 +394,6 @@ const columns: TableColumn<ApiKey>[] = [
           </div>
         </template>
       </UModal>
-
-      <!-- 删除 Key -->
-      <AdminDeleteModal
-        v-model:open="deleteOpen"
-        :loading="deleteLoading"
-        :title="`删除 API Key: ${deleteTarget?.name || ''}`"
-        description="删除后该 Key 立即失效且不可恢复。"
-        @confirm="confirmDelete"
-      />
     </template>
   </UDashboardPanel>
 </template>

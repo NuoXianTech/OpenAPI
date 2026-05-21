@@ -3,6 +3,7 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
 
 const toast = useToast()
+const confirm = useConfirmDialog()
 
 const { data, status, refresh } = useLazyFetch<FriendLinkItem[]>('/api/admin/friend-links/list', {
   default: () => []
@@ -11,9 +12,6 @@ const items = computed(() => data.value || [])
 
 const modalOpen = ref(false)
 const editItem = ref<FriendLinkItem | null>(null)
-const deleteOpen = ref(false)
-const deleteTarget = ref<FriendLinkItem | null>(null)
-const deleteLoading = ref(false)
 
 function openAdd() {
   editItem.value = null
@@ -23,24 +21,20 @@ function openEdit(item: FriendLinkItem) {
   editItem.value = item
   modalOpen.value = true
 }
-function openDelete(item: FriendLinkItem) {
-  deleteTarget.value = item
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/admin/friend-links/delete', { method: 'POST', body: { id: deleteTarget.value.id } })
-    toast.add({ title: '删除成功', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch {
-    toast.add({ title: '删除失败', color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
+async function openDelete(item: FriendLinkItem) {
+  await confirm({
+    title: `删除: ${item.title}`,
+    onConfirm: async () => {
+      try {
+        await $fetch('/api/admin/friend-links/delete', { method: 'POST', body: { id: item.id } })
+        toast.add({ title: '删除成功', color: 'success' })
+        await refresh()
+      } catch (err) {
+        toast.add({ title: '删除失败', color: 'error' })
+        throw err
+      }
+    }
+  })
 }
 
 function getRowItems(row: FriendLinkItem): DropdownMenuItem[] {
@@ -113,12 +107,6 @@ const columns: TableColumn<FriendLinkItem>[] = [
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"
-    />
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除: ${deleteTarget?.title}`"
-      @confirm="confirmDelete"
     />
   </div>
 </template>

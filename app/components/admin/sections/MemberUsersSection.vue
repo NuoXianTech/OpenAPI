@@ -16,21 +16,17 @@ const {
   updateUser
 } = useAdminUsersPage()
 
-const deleteOpen = ref(false)
-const deleteTarget = ref<AdminUserItem | null>(null)
-const deleteLoading = ref(false)
+const confirm = useConfirmDialog()
 
-function openDelete(item: AdminUserItem) {
-  deleteTarget.value = item
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value) return
-  deleteLoading.value = true
-  const ok = await deleteUser(deleteTarget.value.id)
-  deleteLoading.value = false
-  if (ok) deleteOpen.value = false
+async function openDelete(item: AdminUserItem) {
+  await confirm({
+    title: `删除用户: ${item.username}`,
+    description: '删除用户后，其所有数据（API Keys、会话等）将被永久移除。',
+    onConfirm: async () => {
+      const ok = await deleteUser(item.id)
+      if (!ok) throw new Error('delete failed')
+    }
+  })
 }
 
 const editOpen = ref(false)
@@ -248,14 +244,6 @@ const columns: TableColumn<AdminUserItem>[] = [
       :user-ids="creditUserIds"
       :selection-label="creditSelectionLabel"
       @saved="onCreditSaved"
-    />
-
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除用户: ${deleteTarget?.username}`"
-      description="删除用户后，其所有数据（API Keys、会话等）将被永久移除。"
-      @confirm="confirmDelete"
     />
   </div>
 </template>
