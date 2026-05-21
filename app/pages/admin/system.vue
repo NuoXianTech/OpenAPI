@@ -37,10 +37,12 @@ const active = useTabHashSync({ tabs: adminSystemTabs })
     </template>
 
     <template #body>
-      <SystemSettingsSection v-if="active === 'settings'" />
-      <SystemOauthProvidersSection v-else-if="active === 'oauth-providers'" />
-      <SystemOperationLogSection v-else-if="active === 'operation-logs'" />
-      <SystemProfileSection v-else-if="active === 'profile'" />
+      <KeepAlive>
+        <SystemSettingsSection v-if="active === 'settings'" />
+        <SystemOauthProvidersSection v-else-if="active === 'oauth-providers'" />
+        <SystemOperationLogSection v-else-if="active === 'operation-logs'" />
+        <SystemProfileSection v-else-if="active === 'profile'" />
+      </KeepAlive>
     </template>
   </UDashboardPanel>
 </template>

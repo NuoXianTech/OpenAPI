@@ -36,9 +36,11 @@ const active = useTabHashSync({ tabs: adminApiHubTabs })
     </template>
 
     <template #body>
-      <ApiGovernanceSection v-if="active === 'governance'" />
-      <ApiCategorySection v-else-if="active === 'categories'" />
-      <ApiCallsSection v-else-if="active === 'calls'" />
+      <KeepAlive>
+        <ApiGovernanceSection v-if="active === 'governance'" />
+        <ApiCategorySection v-else-if="active === 'categories'" />
+        <ApiCallsSection v-else-if="active === 'calls'" />
+      </KeepAlive>
     </template>
   </UDashboardPanel>
 </template>

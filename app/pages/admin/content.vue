@@ -36,9 +36,11 @@ const active = useTabHashSync({ tabs: adminContentTabs })
     </template>
 
     <template #body>
-      <ContentAnnouncementSection v-if="active === 'announcements'" />
-      <ContentNotificationSection v-else-if="active === 'notifications'" />
-      <ContentFriendLinkSection v-else-if="active === 'friend-links'" />
+      <KeepAlive>
+        <ContentAnnouncementSection v-if="active === 'announcements'" />
+        <ContentNotificationSection v-else-if="active === 'notifications'" />
+        <ContentFriendLinkSection v-else-if="active === 'friend-links'" />
+      </KeepAlive>
     </template>
   </UDashboardPanel>
 </template>

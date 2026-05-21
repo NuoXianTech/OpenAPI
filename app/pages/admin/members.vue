@@ -37,10 +37,12 @@ const active = useTabHashSync({ tabs: adminMembersTabs })
     </template>
 
     <template #body>
-      <MemberUsersSection v-if="active === 'users'" />
-      <MemberCreditTransactionSection v-else-if="active === 'credit-transactions'" />
-      <MemberRedemptionCodeSection v-else-if="active === 'redemption-codes'" />
-      <MemberRedemptionRecordSection v-else-if="active === 'redemption-records'" />
+      <KeepAlive>
+        <MemberUsersSection v-if="active === 'users'" />
+        <MemberCreditTransactionSection v-else-if="active === 'credit-transactions'" />
+        <MemberRedemptionCodeSection v-else-if="active === 'redemption-codes'" />
+        <MemberRedemptionRecordSection v-else-if="active === 'redemption-records'" />
+      </KeepAlive>
     </template>
   </UDashboardPanel>
 </template>
