@@ -30,27 +30,29 @@ interface AuthContext {
   authLoading?: boolean
 }
 
-function getServerAuthContext(): AuthContext | null {
-  if (!import.meta.server) return null
-  const event = useRequestEvent()
-  if (!event) return null
-  return event.context as AuthContext
-}
-
 export function useAuth() {
+  // useRequestEvent 必须在 useAuth() 同步执行时调用并缓存：computed 的 getter/setter
+  // 触发时机不保证在 Nuxt 实例上下文里（异步边界、外部 effect 求值都会丢上下文），
+  // 那时再调 useRequestEvent() 会抛 "called outside of a plugin, Nuxt hook..."。
+  const serverEvent = import.meta.server ? useRequestEvent() : null
+  const serverCookieHeaders = import.meta.server ? useRequestHeaders(['cookie']) : undefined
+  const getServerCtx = (): AuthContext | null => {
+    return serverEvent ? (serverEvent.context as AuthContext) : null
+  }
+
   const clientUser = import.meta.client ? useState<AuthUser | null>('auth-user', () => null) : null
   const clientLoading = import.meta.client ? useState<boolean>('auth-loading', () => false) : null
 
   const user = computed<AuthUser | null>({
     get() {
       if (import.meta.server) {
-        return getServerAuthContext()?.authUser ?? null
+        return getServerCtx()?.authUser ?? null
       }
       return clientUser!.value
     },
     set(value) {
       if (import.meta.server) {
-        const ctx = getServerAuthContext()
+        const ctx = getServerCtx()
         if (ctx) ctx.authUser = value
         return
       }
@@ -61,13 +63,13 @@ export function useAuth() {
   const loading = computed<boolean>({
     get() {
       if (import.meta.server) {
-        return getServerAuthContext()?.authLoading ?? false
+        return getServerCtx()?.authLoading ?? false
       }
       return clientLoading!.value
     },
     set(value) {
       if (import.meta.server) {
-        const ctx = getServerAuthContext()
+        const ctx = getServerCtx()
         if (ctx) ctx.authLoading = value
         return
       }
@@ -78,10 +80,9 @@ export function useAuth() {
   const runFetch = async () => {
     loading.value = true
     try {
-      const headers = import.meta.server ? useRequestHeaders(['cookie']) : undefined
       // 必须用 $fetch 而不是 useAsyncData / useFetch：后者会把响应写进 nuxt payload,
       // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
-      const res = await $fetch<AuthUser | null>('/api/auth/me', { headers })
+      const res = await $fetch<AuthUser | null>('/api/auth/me', { headers: serverCookieHeaders })
       user.value = res ?? null
     } catch (err) {
       // /api/auth/me 异常一律视为未登录，让中间件去重定向
