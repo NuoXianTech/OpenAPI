@@ -99,7 +99,6 @@ CREATE TABLE "apis" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"code" varchar(50) NOT NULL,
 	"path_version" varchar(8) DEFAULT 'v1' NOT NULL,
-	"source_dir" varchar(500),
 	"endpoint_count" integer DEFAULT 0 NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"status" integer DEFAULT 1 NOT NULL,

@@ -1,5 +1,5 @@
 {
-  "id": "10b21a64-013d-4c35-8601-203bf41dc776",
+  "id": "766ec906-eae3-4e85-841d-8be08f4dfd54",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1037,12 +1037,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'v1'"
-        },
-        "source_dir": {
-          "name": "source_dir",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
         },
         "endpoint_count": {
           "name": "endpoint_count",

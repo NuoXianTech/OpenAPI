@@ -47,7 +47,6 @@ export const apis = pgTable('apis', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 50 }).notNull(), // = server/routes/v{N}/<code>/ 目录名
   pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
-  sourceDir: varchar('source_dir', { length: 500 }), // 源目录相对路径，展示与一致性校验用
   endpointCount: integer('endpoint_count').notNull().default(0), // 下辖 endpoints 数量，admin 行展示
   name: varchar('name', { length: 100 }).notNull(),
   status: integer('status').default(1).notNull(), // -1=未知 0=异常 1=正常 2=维护 3=废弃

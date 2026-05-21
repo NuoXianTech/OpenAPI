@@ -159,7 +159,6 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
           )
         }
         const code = child.name
-        const sourceDir = relative(rootDir, join(versionRoot, code)).split(sep).join('/')
         const endpoints = await scanDirRecursive(join(versionRoot, code), {
           rootDir,
           basePath: `/${pathVersion}/${code}`,
@@ -168,7 +167,7 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
         })
         const existing = byCode.get(code)
         if (existing) existing.endpoints.push(...endpoints)
-        else byCode.set(code, { pathVersion, code, sourceDir, endpoints })
+        else byCode.set(code, { pathVersion, code, endpoints })
       } else if (child.isFile()) {
         const parsed = parseEndpointFile(child.name)
         if (!parsed) continue
@@ -200,7 +199,6 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
           byCode.set(code, {
             pathVersion,
             code,
-            sourceDir: relative(rootDir, versionRoot).split(sep).join('/'),
             endpoints: [endpoint]
           })
         }

@@ -58,13 +58,13 @@ function inferHttpMethod(api: ManifestApi): string {
 
 /** @returns true 表示查询成功（无论是否有告警），false 表示查询本身失败 */
 async function checkConsistency(): Promise<boolean> {
-  let dbRows: Array<{ id: number, code: string, pathVersion: string, sourceDir: string | null }>
+  let dbRows: Array<{ id: number, code: string, pathVersion: string, endpointCount: number }>
   try {
     dbRows = await db.select({
       id: apis.id,
       code: apis.code,
       pathVersion: apis.pathVersion,
-      sourceDir: apis.sourceDir
+      endpointCount: apis.endpointCount
     }).from(apis)
   } catch {
     // 表尚未建好或连接未就绪 → 静默重试
@@ -89,13 +89,12 @@ async function checkConsistency(): Promise<boolean> {
           code: a.code,
           apiPath: inferApiPath(a),
           httpMethod: inferHttpMethod(a),
-          sourceDir: a.sourceDir,
           endpointCount: a.endpoints.length,
           createdBy: null, // 系统自动登记，无 admin id
           defaults: {
             name: a.code,
             shortDesc: `${a.pathVersion} ${a.code}`,
-            description: `自动登记于 ${a.sourceDir}`,
+            description: `自动登记于 ${a.pathVersion}/${a.code}`,
             docUrl: '',
             status: DEFAULT_API_REGISTRATION.status,
             categoryId: null,
@@ -133,17 +132,17 @@ async function checkConsistency(): Promise<boolean> {
       + `可能已删除或重命名，请检查：`
     )
     for (const r of orphaned) {
-      console.warn(`  - ${r.pathVersion}/${r.code}  (id=${r.id})  ${r.sourceDir || ''}`)
+      console.warn(`  - ${r.pathVersion}/${r.code}  (id=${r.id})`)
     }
   }
 
-  // 同步 manifest 的 endpointCount / sourceDir 到 DB，admin 列表展示用
+  // 同步 manifest 的 endpointCount 到 DB，admin 列表展示用
   for (const a of API_MANIFEST) {
     const row = dbRows.find(r => r.pathVersion === a.pathVersion && r.code === a.code)
     if (!row) continue
-    if (row.sourceDir === a.sourceDir) continue
+    if (row.endpointCount === a.endpoints.length) continue
     await db.update(apis)
-      .set({ endpointCount: a.endpoints.length, sourceDir: a.sourceDir })
+      .set({ endpointCount: a.endpoints.length })
       .where(eq(apis.id, row.id))
       .catch((err: unknown) => {
         console.error('[api-manifest] failed to sync endpointCount', { id: row.id, err })

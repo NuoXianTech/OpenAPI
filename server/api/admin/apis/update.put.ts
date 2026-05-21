@@ -9,7 +9,7 @@ import { readZodBody } from '~~/server/utils/zod'
 /**
  * Admin · 编辑已登记 API 的治理字段。
  *
- * 注意：code/pathVersion/apiPath/httpMethod/sourceDir/endpointCount 由 manifest 注入，
+ * 注意：code/pathVersion/apiPath/httpMethod/endpointCount 由 manifest 注入，
  * 不接受外部修改。要修改路径或方法，请改文件后重新登记。
  */
 export default defineEventHandler(async (event: H3Event) => {

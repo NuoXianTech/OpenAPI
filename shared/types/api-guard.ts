@@ -33,8 +33,6 @@ export interface ManifestApi {
   pathVersion: string
   /** 业务编码 = v{N} 下第一层目录/文件名 */
   code: string
-  /** 源目录相对项目根路径 */
-  sourceDir: string
   /** 该 code 下所有 (path, method) endpoints */
   endpoints: ManifestEndpoint[]
 }

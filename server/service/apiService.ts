@@ -189,7 +189,7 @@ export const apiService = {
   },
 
   /**
-   * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/sourceDir/endpointCount 由 manifest 注入，
+   * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/endpointCount 由 manifest 注入，
    * 不接受外部 patch。
    *
    * 计费一致性：合并请求 patch 与现有记录后，若 costCredits>0 但 isApiKey=false，
@@ -201,7 +201,6 @@ export const apiService = {
       pathVersion: _pv,
       apiPath: _ap,
       httpMethod: _hm,
-      sourceDir: _sd,
       endpointCount: _ec,
       ...patch
     } = data as Partial<typeof apis.$inferInsert>
@@ -258,14 +257,13 @@ export const apiService = {
 
   /**
    * 一键登记：按 (pathVersion, code) 幂等入库。
-   * 已存在则刷新 manifest 投影（apiPath/httpMethod/sourceDir/endpointCount），治理字段保留。
+   * 已存在则刷新 manifest 投影（apiPath/httpMethod/endpointCount），治理字段保留。
    */
   async registerFromManifest(data: {
     pathVersion: string
     code: string
     apiPath: string
     httpMethod: string
-    sourceDir: string
     endpointCount: number
     createdBy: number | null
     defaults: {
@@ -293,7 +291,6 @@ export const apiService = {
         .set({
           apiPath: data.apiPath,
           httpMethod: normalizeMethodList(data.httpMethod),
-          sourceDir: data.sourceDir,
           endpointCount: data.endpointCount,
           updatedBy: data.createdBy,
           updatedAt: new Date()
@@ -308,7 +305,6 @@ export const apiService = {
     const res = await db.insert(apis).values({
       code: data.code,
       pathVersion: data.pathVersion,
-      sourceDir: data.sourceDir,
       endpointCount: data.endpointCount,
       name: data.defaults.name,
       status: data.defaults.status,

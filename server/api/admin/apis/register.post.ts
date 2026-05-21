@@ -1,8 +1,8 @@
 /**
  * Admin · 一键从 manifest 登记 / 重新同步一个 (pathVersion, code)。
  *
- * - 从 manifest 查 sourceDir / endpointCount / 推断 apiPath / httpMethod
- * - 已存在则刷新 manifest 投影字段（apiPath/httpMethod/sourceDir/endpointCount），治理字段保留
+ * - 从 manifest 查 endpointCount / 推断 apiPath / httpMethod
+ * - 已存在则刷新 manifest 投影字段（apiPath/httpMethod/endpointCount），治理字段保留
  * - 不存在则使用 DEFAULT_API_REGISTRATION + overrides 入库
  */
 
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const defaults = {
     name: o.name || code,
     shortDesc: o.shortDesc || `${pathVersion} ${code}`,
-    description: o.description || `自动登记于 ${manifestApi.sourceDir}`,
+    description: o.description || `自动登记于 ${pathVersion}/${code}`,
     docUrl: o.docUrl || '',
     status: typeof o.status === 'number' ? o.status : DEFAULT_API_REGISTRATION.status,
     categoryId: o.categoryId === undefined ? null : o.categoryId,
@@ -66,7 +66,6 @@ export default defineEventHandler(async (event: H3Event) => {
     code,
     apiPath,
     httpMethod,
-    sourceDir: manifestApi.sourceDir,
     endpointCount: manifestApi.endpoints.length,
     createdBy: admin.id || null,
     defaults
@@ -78,7 +77,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api.register',
     resourceType: 'api',
     resourceId: String(saved?.id || ''),
-    detail: { pathVersion, code, manifestSource: manifestApi.sourceDir }
+    detail: { pathVersion, code }
   })
 
   return saved
