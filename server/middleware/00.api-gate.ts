@@ -17,7 +17,8 @@
  * 不影响调用统计 plugin 的行为。
  *
  * 拒绝路径输出开放 API 标准响应壳（见 server/utils/openApiResponse.ts），
- * data 中携带 errorCode 字符串便于调用方排查。
+ * body `data` 恒为 null；机器可读的错误子类型由 body 字段 `code` 表达
+ * （如 401 下的 MISSING_API_KEY / INVALID_API_KEY / REVOKED_API_KEY 区分）。
  */
 
 import type { H3Event } from 'h3'
@@ -38,19 +39,12 @@ function normalizePathname(pathname: string) {
 /**
  * 拒绝请求时以开放 API 标准壳作答。直接通过 h3 的 send 写出，
  * 保证 middleware 阶段就终止请求，不会继续走到业务 handler。
+ *
+ * errorDef.code 作为 body `code` 字段输出，严守 restful-api-style.md §3.3
+ * 「失败时 data 为 null」。其他上下文（如 405 的 Allow、429 的 Retry-After）走对应标准头。
  */
-async function rejectWithOpenApi(
-  event: H3Event,
-  errorDef: ErrorDef,
-  extra?: Record<string, unknown>
-) {
-  const payload = openApiFail(
-    event,
-    errorDef.bizCode,
-    errorDef.msg,
-    { errorCode: errorDef.code, ...(extra || {}) },
-    errorDef.status
-  )
+async function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef) {
+  const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg)
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   await send(event, JSON.stringify(payload))
 }
@@ -74,7 +68,7 @@ export default defineEventHandler(async (event: H3Event) => {
   // [2] DB 中未登记
   const api = await apiService.loadGuardConfig(pathVersion, code)
   if (!api) {
-    return rejectWithOpenApi(event, API_GUARD_ERROR.NOT_REGISTERED, { pathVersion, apiCode: code })
+    return rejectWithOpenApi(event, API_GUARD_ERROR.NOT_REGISTERED)
   }
 
   // 尽早挂 apiStatsTarget，使后续即便被规则链拒绝也能被调用统计 plugin 记录。
@@ -92,16 +86,15 @@ export default defineEventHandler(async (event: H3Event) => {
   // [3] 方法/路径匹配（动态路由在此解析）
   const match = matchEndpoint(pathVersion, code, pathname, method)
   if (!match) {
-    return rejectWithOpenApi(event, API_GUARD_ERROR.METHOD_NOT_ALLOWED, {
-      allowed: manifest.endpoints.map(e => e.method)
-    })
+    setResponseHeader(event, 'allow', manifest.endpoints.map(e => e.method).join(', '))
+    return rejectWithOpenApi(event, API_GUARD_ERROR.METHOD_NOT_ALLOWED)
   }
 
   // [4] 规则链
   const result = await runApiGuard({ event, api, match })
   if (!result.passed) {
     if (result.headers) setResponseHeaders(event, result.headers)
-    return rejectWithOpenApi(event, result.error, { outcome: result.outcome })
+    return rejectWithOpenApi(event, result.error)
   }
 
   // [5] 通过：挂载 context，让后置中间件 / 业务 handler 读取

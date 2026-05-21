@@ -57,7 +57,7 @@ export interface CryptoAlgorithm {
   exec: (input: CryptoExecInput) => Promise<CryptoExecResult> | CryptoExecResult
 }
 
-/** 业务侧错误：交给 dispatcher 转 OPEN_API_CODE.BUSINESS_FAILED */
+/** 业务侧错误：交给 dispatcher 转 HTTP 422，并通过 markApiCallFailed 把 bizCode 写入调用日志 */
 export class CryptoBusinessError extends Error {
   constructor(message: string, public readonly bizCode = 'CRYPTO_FAILED') {
     super(message)

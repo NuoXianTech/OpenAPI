@@ -8,15 +8,20 @@
  *     ...其他算法专属参数（详见 GET /v1/crypto）
  *   }
  *
- * 注意：未知算法名 → 40000 BAD_REQUEST；业务侧失败（密文损坏、参数越界等）
- * → 60000 BUSINESS_FAILED 且 markApiCallFailed 跳过扣费。
+ * 状态码：
+ *   - 400 MISSING_PARAMETER / INVALID_REQUEST_BODY / INVALID_PARAMETER —— 请求格式问题
+ *   - 404 ALGORITHM_NOT_FOUND —— 未知算法名
+ *   - 422 UNSUPPORTED_MODE / CRYPTO_FAILED ... —— mode 非法 / 参数语义校验失败 / 加解密执行失败（业务侧）
+ *   - 500 算法 exec 抛非业务异常（统一兜底）
+ *
+ * 422 路径同时 markApiCallFailed，把可读 bizCode（CRYPTO_FAILED 等）写入调用日志。
+ * 4xx/5xx 默认跳过扣费，无需额外标记。
  */
 
 import type { H3Event } from 'h3'
 import { getRouterParam, readBody } from 'h3'
 import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
 import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
-import { OPEN_API_CODE } from '~~/shared/config/openApiCodes'
 import {
   CryptoBusinessError,
   type CryptoMode
@@ -26,37 +31,38 @@ import { getAlgorithm, normalizeParams } from '~~/server/lib/crypto/registry'
 
 function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED') {
   markApiCallFailed(event, bizCode, message)
-  return openApiFail(event, OPEN_API_CODE.BUSINESS_FAILED, message)
+  return openApiFail(event, 422, bizCode, message)
 }
 
 export default defineEventHandler(async (event: H3Event) => {
   ensureCryptoRegistered()
   const name = (getRouterParam(event, 'name') || '').trim().toLowerCase()
   if (!name) {
-    return openApiFail(event, OPEN_API_CODE.BAD_REQUEST, '缺少算法名')
+    return openApiFail(event, 400, 'MISSING_PARAMETER', '缺少算法名')
   }
   const algorithm = getAlgorithm(name)
   if (!algorithm) {
-    return openApiFail(event, OPEN_API_CODE.BAD_REQUEST, `未知算法 "${name}"，请通过 GET /v1/crypto 查看可用列表`)
+    return openApiFail(event, 404, 'ALGORITHM_NOT_FOUND', `未知算法 "${name}"，请通过 GET /v1/crypto 查看可用列表`)
   }
 
   const body = (await readBody(event).catch(() => null)) as Record<string, unknown> | null
   if (!body || typeof body !== 'object') {
-    return openApiFail(event, OPEN_API_CODE.BAD_REQUEST, '请求体必须是 JSON 对象')
+    return openApiFail(event, 400, 'INVALID_REQUEST_BODY', '请求体必须是 JSON 对象')
   }
 
   const mode = String(body.mode || '').toLowerCase() as CryptoMode
   if (!algorithm.modes.includes(mode)) {
     return openApiFail(
       event,
-      OPEN_API_CODE.BAD_REQUEST,
+      422,
+      'UNSUPPORTED_MODE',
       `算法 "${name}" 仅支持 ${algorithm.modes.join(' / ')}，当前 mode=${body.mode ?? '<空>'}`
     )
   }
 
   const text = body.text
   if (typeof text !== 'string') {
-    return openApiFail(event, OPEN_API_CODE.BAD_REQUEST, '参数 text 必须是字符串')
+    return openApiFail(event, 400, 'INVALID_PARAMETER', '参数 text 必须是字符串')
   }
 
   let params: Record<string, unknown>
@@ -69,12 +75,16 @@ export default defineEventHandler(async (event: H3Event) => {
 
   try {
     const result = await algorithm.exec({ mode, text, params })
-    return openApiOk(event, {
-      name: algorithm.name,
-      mode,
-      text: result.text,
-      ...(result.meta ? { meta: result.meta } : {})
-    })
+    return openApiOk(
+      event,
+      {
+        name: algorithm.name,
+        mode,
+        text: result.text,
+        ...(result.meta ? { meta: result.meta } : {})
+      },
+      mode === 'encrypt' ? '加密成功' : '解密成功'
+    )
   } catch (err) {
     if (err instanceof CryptoBusinessError) return failBusiness(event, err.message, err.bizCode)
     const message = err instanceof Error ? err.message : '加/解密执行失败'

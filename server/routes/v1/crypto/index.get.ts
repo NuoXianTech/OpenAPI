@@ -24,5 +24,5 @@ export default defineEventHandler((event: H3Event) => {
   return openApiOk(event, {
     total: algorithms.length,
     items: algorithms
-  })
+  }, '获取算法列表成功')
 })

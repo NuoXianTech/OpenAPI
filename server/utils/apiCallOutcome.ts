@@ -1,18 +1,20 @@
 /**
  * API 调用结果显式标记 · 业务 handler 用。
  *
- * 默认行为：finish 时按 statusCode 判定成功/失败，仅成功扣费。
- * 但部分场景下 handler 返回 200 但业务侧失败（上游接口错、参数错等业务语义），
- * 此时调用 markApiCallFailed 强制标记失败，避免错误扣费。
+ * 默认行为：finish 时按 statusCode 判定成功/失败，仅 2xx/3xx 扣费。
  *
- * 反过来，若 handler 抛错 / 返回 500 但业务实际上已完成、想正常扣费，
+ * markApiCallFailed 的两个用途：
+ *   1. 把可读的业务失败码 / 文案写入 `apiCalls.errorCode` / `errorMessage`
+ *      —— 默认仅 forcedOutcome='failed' 才会持久化这两个字段（见 plugins/apiCallStats.ts）
+ *   2. 极少数业务必须返回 2xx 但仍要跳过扣费（罕见）
+ *
+ * 反过来，若 handler 抛错 / 返回 5xx 但业务实际上已完成、想正常扣费，
  * 可以调用 markApiCallSuccess（极少用）。
  *
  * 使用示例：
  * ```ts
  * import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
  * import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
- * import { OPEN_API_CODE } from '~~/shared/config/openApiCodes'
  *
  * export default defineEventHandler(async (event) => {
  *   try {
@@ -20,9 +22,9 @@
  *     return openApiOk(event, data)
  *   }
  *   catch (err) {
- *     // 上游失败，统一返回 HTTP 200 + 业务失败码；不扣费
+ *     // 上游失败：HTTP 502 自动跳过扣费；markApiCallFailed 把 bizCode 写进调用日志
  *     markApiCallFailed(event, 'UPSTREAM_ERROR', (err as Error).message)
- *     return openApiFail(event, OPEN_API_CODE.UPSTREAM_ERROR, '上游服务异常')
+ *     return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游服务异常')
  *   }
  * })
  * ```
