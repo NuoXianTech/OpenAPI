@@ -65,19 +65,21 @@ URL Path 表达**资源定位**，query 表达**过滤、排序、分页、字�
 
 ```ts
 {
-  code: number       // 业务码，通常与 HTTP status 对齐，详见第 4 节
+  code: string       // 机器可读标识，大写 + 下划线（OK / CREATED / MISSING_API_KEY ...），详见第 4 节
   message: string    // 人类可读的提示信息
   data: T | null     // 业务数据，失败时为 null
   timestamp: number  // 服务端响应时间（Unix 秒或毫秒，全局统一）
 }
 ```
 
+`code` 与 HTTP status 分工：HTTP status 表达粗粒度（2xx 成功 / 4xx 客户端错 / 5xx 服务端错），body `code` 表达精确的机器可读子类型，便于同一 status 下区分多种原因（如 401 下的 `MISSING_API_KEY` / `INVALID_API_KEY` / `EXPIRED_API_KEY`）。
+
 ### 3.2 成功示例
 
 ```json
 GET /v1/users/1   →   200 OK
 {
-  "code": 200,
+  "code": "OK",
   "message": "ok",
   "data": { "id": 1, "name": "张三" },
   "timestamp": 1700000000
@@ -87,7 +89,7 @@ GET /v1/users/1   →   200 OK
 ```json
 POST /v1/articles   →   201 Created
 {
-  "code": 201,
+  "code": "CREATED",
   "message": "created",
   "data": { "id": 42, "title": "Hello" },
   "timestamp": 1700000000
@@ -99,7 +101,7 @@ POST /v1/articles   →   201 Created
 ```json
 GET /v1/users/999   →   404 Not Found
 {
-  "code": 404,
+  "code": "USER_NOT_FOUND",
   "message": "用户不存在",
   "data": null,
   "timestamp": 1700000000
@@ -109,7 +111,7 @@ GET /v1/users/999   →   404 Not Found
 ```json
 POST /v1/articles   →   400 Bad Request
 {
-  "code": 400,
+  "code": "INVALID_REQUEST",
   "message": "title 不能为空",
   "data": null,
   "timestamp": 1700000000
@@ -123,7 +125,7 @@ POST /v1/articles   →   400 Bad Request
 ```json
 GET /v1/articles?page=1&pageSize=20   →   200 OK
 {
-  "code": 200,
+  "code": "OK",
   "message": "ok",
   "data": {
     "items": [ /* ... */ ],
@@ -137,7 +139,7 @@ GET /v1/articles?page=1&pageSize=20   →   200 OK
 
 ## 4. HTTP 状态码
 
-`code` 字段同时承担业务码与 HTTP 状态码的对齐，**优先使用标准 HTTP status**。
+HTTP status 在响应行里准确表达请求结果的粗粒度类别，body `code` 给精确的机器可读子类型。两者各司其职、**都要正确填**。
 
 ### 4.1 2xx 成功
 
@@ -169,9 +171,13 @@ GET /v1/articles?page=1&pageSize=20   →   200 OK
 | `503` | Service Unavailable | 服务不可用（维护中 / 过载） |
 | `504` | Gateway Timeout | 上游超时 |
 
-### 4.4 何时启用业务码
+### 4.4 body `code` 命名约定
 
-当 HTTP status 不足以表达细节时，扩展业务码命名空间（如 `40001` / `40002`），但仍要保留前 3 位与 HTTP status 对齐的习惯，便于网关、日志、监控统一识别。
+- **大写 + 下划线**（SCREAMING_SNAKE_CASE）：`OK` / `CREATED` / `MISSING_API_KEY` / `UPSTREAM_TIMEOUT`，不要 camelCase 或纯小写
+- **成功侧**：`200 → "OK"`、`201 → "CREATED"`、`204` 无 body 不涉及
+- **失败侧**：用业务子类型，不直接照搬 HTTP status 名（即 `MISSING_API_KEY` 优于 `UNAUTHORIZED`）。同一 HTTP status 多种原因时**必须**用 `code` 区分
+- **稳定性等同于公开契约**：`code` 是客户端用来做分支判断的字段，命名一旦发布就不要随便改；新增 code 不算破坏性变更，重命名 / 删除是
+- **不冗余**：HTTP status 已经在响应行里，`code` 不要重复编码同样的信息（不写 `"400"` / `"HTTP_400"`）
 
 ## 5. 版本控制
 
@@ -227,8 +233,9 @@ X-API-Version: 1
 - [ ] URL 用名词复数，没有动词
 - [ ] HTTP method 选对了（创建用 POST、全量改用 PUT、局部改用 PATCH）
 - [ ] 响应壳是 `{ code, message, data, timestamp }`，没有裸 `{ id, name }`
+- [ ] body `code` 用大写下划线字符串（`OK` / `MISSING_API_KEY` ...），失败时 `data` 为 `null`
 - [ ] 成功返回正确的 2xx（创建用 201、无返回体用 204）
-- [ ] 失败返回对应 4xx/5xx，`message` 给出可读提示
+- [ ] 失败返回对应 4xx/5xx，`message` 给出可读提示；同 status 多子类型用 `code` 区分
 - [ ] 列表接口包含 `total` / `page` / `pageSize`
 - [ ] URL 带版本前缀 `/v{N}/`
 - [ ] 破坏性改动升版本号，不在原版本上偷偷改

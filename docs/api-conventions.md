@@ -50,20 +50,26 @@ server/routes/
 
 ```ts
 {
-  code: number       // 等于 HTTP status，无独立业务码命名空间
+  code: string       // 大写下划线机器可读标识，详见 restful-api-style.md §4.4
   message: string
-  data: T | null
+  data: T | null     // 失败时恒为 null
   timestamp: number  // Unix 毫秒
 }
 ```
 
-- **`code` = HTTP status**：成功 `200` / `201` / `204`，失败 `4xx` / `5xx`，按 [restful-api-style.md §4](./restful-api-style.md#4-http-状态码) 选码。**不存在** `0` 表示成功、`6xxxx` 业务侧失败这类项目内私有码 —— 业务失败也必须用对应的标准 HTTP status（参数错 `422`、上游错 `502` 等）
-- **`X-Request-Id` 走响应头，不进 body**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取，不在响应体里冗余
-- **HTTP status 与 body `code` 同步**：`openApiOk(event, data)` 默认 200；`openApiFail(event, status, message)` 用传入的 HTTP status 同时设置响应行与 body `code`，二者必然一致
+- **`code` 是字符串标识，不是 HTTP status 数值**：成功**固定** `"OK"`（由 `openApiOk` 写死），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
+- **`code` 的来源**：
+  - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/apiGuard.ts](../shared/config/apiGuard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
+  - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
+- **`message` 由 handler 自由定**：`openApiOk` 和 `openApiFail` 的 `message` 参数都接受 handler 自定义文案，应面向调用方可读（含上下文，例如失败时 ``未知算法 "xxx"，请通过 GET /v1/crypto 查看可用列表``），不要复用 `API_GUARD_ERROR.msg`。gate 层错误的默认文案保留在 `API_GUARD_ERROR.msg`，只服务 gate 自己
+- **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `REVOKED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
+- **失败响应 `data` 恒为 `null`**：严守 [restful-api-style.md §3.3](./restful-api-style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
+- **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
+- **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body
 
 ## 5. 计费标记
 
-api-gate 通过后会挂 `event.context.apiBilling`，默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status 返回即可，扣费会自动跳过：
+api-gate 通过后会挂 `event.context.apiBilling`，默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status + 字符串 `code` 返回即可，扣费会自动跳过：
 
 ```ts
 import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
@@ -73,11 +79,11 @@ try {
   return openApiOk(event, data)
 }
 catch (err) {
-  return openApiFail(event, 502, '上游服务异常')
+  return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游服务异常')
 }
 ```
 
-若极少数业务流程必须返回 2xx 但仍要跳过扣费，可显式调用 `markApiCallFailed(event, reason, detail)`。详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
+若极少数业务流程必须返回 2xx 但仍要跳过扣费，或者想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库），追加 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
 
 ## 6. 最小完整示例
 
@@ -131,7 +137,7 @@ export default defineEventHandler((event: H3Event) => {
 - [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号 遵循 [restful-api-style.md](./restful-api-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
-- [ ] 失败用对应 HTTP status（`4xx` / `5xx`）返回，没有 `0` / `6xxxx` 这类项目私有码
+- [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
 - [ ] 业务侧失败但 HTTP 仍 2xx 的罕见场景才需要 `markApiCallFailed`
 - [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `costCredits` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通
