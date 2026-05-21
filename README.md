@@ -74,19 +74,6 @@ pnpm test          # 单元测试
 pnpm test:e2e      # e2e 测试
 ```
 
-## Docker 部署
-
-仓库已带 [Dockerfile](Dockerfile)（多阶段 alpine 镜像，产物约 200 MB，无 node_modules）。
-
-```bash
-DATABASE_URL='...' pnpm db:migrate:prod          # 先在本地/CI 跑迁移
-docker build -t openapi:latest .
-docker run -d --name openapi --restart unless-stopped \
-  --env-file .env.production -p 127.0.0.1:3000:3000 openapi:latest
-```
-
-容器内置 `/api/health` 健康检查与 tini 信号转发。
-
 ## 项目结构
 
 ```text
