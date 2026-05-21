@@ -46,35 +46,38 @@ server/routes/
 
 所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
-响应结构遵循 [restful-api-style.md §3](./restful-api-style.md#3-响应格式)，项目特有差异：
+响应结构**完全对齐** [restful-api-style.md §3](./restful-api-style.md#3-响应格式)，没有项目私有扩展：
 
-- **多一个 `requestId` 字段**：从请求头 `X-Request-Id` 透传，无则自动生成 UUID，同时回写响应头，便于客户端排查
-- **`code` 取值用 `OPEN_API_CODE` 常量**：见 [shared/config/openApiCodes.ts](../shared/config/openApiCodes.ts)，禁止硬编码数字。命名空间约定：
-  - `0` 表示成功（注意不是风格指南里的 `200`，这是项目内部约定）
-  - `4xxxx` / `5xxxx` 前 3 位对齐 HTTP status（如 `40100` → 401）
-  - `6xxxx` 业务侧失败专属 —— HTTP 仍 200，配合下一节的 `markApiCallFailed` 跳过扣费
-- **HTTP status 自动推导**：由 `httpStatusForCode(code)` 完成，handler 极少需要手动覆盖
+```ts
+{
+  code: number       // 等于 HTTP status，无独立业务码命名空间
+  message: string
+  data: T | null
+  timestamp: number  // Unix 毫秒
+}
+```
+
+- **`code` = HTTP status**：成功 `200` / `201` / `204`，失败 `4xx` / `5xx`，按 [restful-api-style.md §4](./restful-api-style.md#4-http-状态码) 选码。**不存在** `0` 表示成功、`6xxxx` 业务侧失败这类项目内私有码 —— 业务失败也必须用对应的标准 HTTP status（参数错 `422`、上游错 `502` 等）
+- **`X-Request-Id` 走响应头，不进 body**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取，不在响应体里冗余
+- **HTTP status 与 body `code` 同步**：`openApiOk(event, data)` 默认 200；`openApiFail(event, status, message)` 用传入的 HTTP status 同时设置响应行与 body `code`，二者必然一致
 
 ## 5. 计费标记
 
-api-gate 通过后会挂 `event.context.apiBilling`，默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。但有些场景 HTTP 仍 200 而业务实际失败（上游错、参数错），需显式标记：
+api-gate 通过后会挂 `event.context.apiBilling`，默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status 返回即可，扣费会自动跳过：
 
 ```ts
-import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
-import { openApiFail } from '~~/server/utils/openApiResponse'
-import { OPEN_API_CODE } from '~~/shared/config/openApiCodes'
+import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
 
 try {
   const data = await callUpstream()
   return openApiOk(event, data)
 }
 catch (err) {
-  markApiCallFailed(event, 'UPSTREAM_ERROR', (err as Error).message)
-  return openApiFail(event, OPEN_API_CODE.UPSTREAM_ERROR, '上游服务异常')
+  return openApiFail(event, 502, '上游服务异常')
 }
 ```
 
-详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
+若极少数业务流程必须返回 2xx 但仍要跳过扣费，可显式调用 `markApiCallFailed(event, reason, detail)`。详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
 
 ## 6. 最小完整示例
 
@@ -128,7 +131,7 @@ export default defineEventHandler((event: H3Event) => {
 - [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号 遵循 [restful-api-style.md](./restful-api-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
-- [ ] 错误码用了 `OPEN_API_CODE` 常量，没有硬编码数字
-- [ ] 业务侧失败场景调用了 `markApiCallFailed`（避免错误扣费）
+- [ ] 失败用对应 HTTP status（`4xx` / `5xx`）返回，没有 `0` / `6xxxx` 这类项目私有码
+- [ ] 业务侧失败但 HTTP 仍 2xx 的罕见场景才需要 `markApiCallFailed`
 - [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `costCredits` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通
