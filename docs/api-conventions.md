@@ -2,6 +2,8 @@
 
 适用范围：`server/routes/v{N}/**` 下所有面向调用方的 HTTP 接口。这是被 [modules/api-manifest.ts](../modules/api-manifest.ts) 扫描、被 [server/middleware/00.api-gate.ts](../server/middleware/00.api-gate.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类。后台内部 API（`server/api/admin/**`、`server/api/user/**` 等）**不在本规范覆盖范围内**。
 
+接口**风格层面**（URL 设计、HTTP 方法语义、响应壳结构、状态码、版本控制）一律遵循 [restful-api-style.md](./restful-api-style.md)。本文档只讲**项目落地**：目录约定、构建期约束、计费标记、后台注册等差异点。
+
 ## 1. 路径与目录约定
 
 外部调用路径形如 `/v{N}/<code>/...`，**不含 `/api/` 前缀**——之所以放在 `server/routes/` 而非 `server/api/`，就是为了规避 Nitro 对后者强制添加 `/api` 前缀。
@@ -42,26 +44,16 @@ server/routes/
 
 ## 4. 响应壳（必须）
 
-所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiFail` 返回，统一壳：
+所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
-```ts
-{
-  code: number          // 0=成功，详见 OPEN_API_CODE
-  message: string
-  data: T | null
-  requestId: string     // 自动透传/生成
-  timestamp: number     // ms
-}
-```
+响应结构遵循 [restful-api-style.md §3](./restful-api-style.md#3-响应格式)，项目特有差异：
 
-业务码命名空间见 [shared/config/openApiCodes.ts](../shared/config/openApiCodes.ts)：
-
-- `0` 成功
-- `4xxxx` 客户端错误（前 3 位对齐 HTTP status，如 `40100` → 401）
-- `5xxxx` 服务端错误
-- `6xxxx` 业务侧失败（HTTP 仍 200，配合 `markApiCallFailed` 跳过扣费）
-
-HTTP status 由 `httpStatusForCode(code)` 自动推导，handler 极少需要手动覆盖。
+- **多一个 `requestId` 字段**：从请求头 `X-Request-Id` 透传，无则自动生成 UUID，同时回写响应头，便于客户端排查
+- **`code` 取值用 `OPEN_API_CODE` 常量**：见 [shared/config/openApiCodes.ts](../shared/config/openApiCodes.ts)，禁止硬编码数字。命名空间约定：
+  - `0` 表示成功（注意不是风格指南里的 `200`，这是项目内部约定）
+  - `4xxxx` / `5xxxx` 前 3 位对齐 HTTP status（如 `40100` → 401）
+  - `6xxxx` 业务侧失败专属 —— HTTP 仍 200，配合下一节的 `markApiCallFailed` 跳过扣费
+- **HTTP status 自动推导**：由 `httpStatusForCode(code)` 完成，handler 极少需要手动覆盖
 
 ## 5. 计费标记
 
@@ -133,6 +125,7 @@ export default defineEventHandler((event: H3Event) => {
 
 ## 9. 检查清单（PR 自查）
 
+- [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号 遵循 [restful-api-style.md](./restful-api-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 错误码用了 `OPEN_API_CODE` 常量，没有硬编码数字
