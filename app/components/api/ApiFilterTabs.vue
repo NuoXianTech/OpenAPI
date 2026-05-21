@@ -99,3 +99,18 @@ function toggleExpanded() {
     </UButton>
   </section>
 </template>
+
+<style scoped>
+.api-filter-tabs {
+  will-change: transform;
+}
+
+.api-filter-tab {
+  transform: translateY(0);
+  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+.api-filter-tab:hover {
+  transform: translateY(-1px);
+}
+</style>

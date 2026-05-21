@@ -185,3 +185,16 @@ const visibleCount = computed(() => filteredItems.value.length)
     <CommonAppFooter />
   </div>
 </template>
+
+<style scoped>
+.state-fade-enter-active,
+.state-fade-leave-active {
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.state-fade-enter-from,
+.state-fade-leave-to {
+  opacity: 0;
+  transform: translateY(10px);
+}
+</style>

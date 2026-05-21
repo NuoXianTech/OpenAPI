@@ -8,7 +8,7 @@ const { items } = defineProps({
 
 <template>
   <TransitionGroup
-    name="api-card"
+    name="link-card-item"
     tag="div"
     class="link-grid"
     appear
@@ -20,8 +20,48 @@ const { items } = defineProps({
       :description="item.description || '暂无描述'"
       :url="item.url"
       :status="item.isActive ? 1 : 0"
-      class="api-card-item"
+      class="link-card-item"
       :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
     />
   </TransitionGroup>
 </template>
+
+<style scoped>
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+@media (min-width: 640px) {
+  .link-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .link-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.link-card-item {
+  will-change: transform, opacity;
+}
+
+.link-card-item-enter-active,
+.link-card-item-leave-active {
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.link-card-item-enter-from,
+.link-card-item-leave-to {
+  opacity: 0;
+  transform: translateY(8px) scale(0.985);
+}
+
+.link-card-item-move {
+  transition: transform 180ms ease;
+}
+</style>

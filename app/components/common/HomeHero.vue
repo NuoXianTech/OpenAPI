@@ -180,3 +180,152 @@ const healthRatio = computed(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.home-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-elevated);
+  border-radius: 20px;
+  margin-bottom: 16px;
+  isolation: isolate;
+}
+
+.home-hero__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: var(--ui-text);
+  opacity: 0.045;
+  mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  pointer-events: none;
+}
+
+.home-hero__glow {
+  position: absolute;
+  top: -120px;
+  right: -120px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(17, 17, 19, 0.08), transparent 65%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.dark .home-hero__glow {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.06), transparent 65%);
+}
+
+.home-hero__title-mark {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ui-text);
+  vertical-align: 4px;
+  margin-left: 2px;
+  animation: heroDotPulse 2.4s ease-in-out infinite;
+}
+
+.hero-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  position: relative;
+  box-shadow: 0 0 0 3px rgba(35, 197, 94, 0.18);
+}
+
+.hero-pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid rgba(35, 197, 94, 0.55);
+  animation: heroPulse 2s ease-out infinite;
+}
+
+.hero-stat {
+  position: relative;
+  border: 1px solid var(--ui-border);
+  background: color-mix(in srgb, var(--ui-bg) 80%, transparent);
+  border-radius: 14px;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease;
+  backdrop-filter: blur(4px);
+}
+
+.hero-stat:hover {
+  transform: translateY(-2px);
+  border-color: var(--ui-border-accented);
+}
+
+.hero-stat--accent {
+  background: var(--ui-text);
+  border-color: var(--ui-text);
+  color: var(--ui-text-inverted);
+}
+
+.hero-stat--accent .hero-stat__label,
+.hero-stat--accent .text-muted {
+  color: color-mix(in srgb, var(--ui-text-inverted) 70%, transparent) !important;
+}
+
+.hero-stat__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-text) 8%, transparent);
+  color: var(--ui-text);
+  margin-bottom: 4px;
+}
+
+.hero-stat--accent .hero-stat__icon {
+  background: color-mix(in srgb, var(--ui-text-inverted) 14%, transparent);
+  color: var(--ui-text-inverted);
+}
+
+.hero-stat__value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat__label {
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 640px) {
+  .hero-stat__value {
+    font-size: 18px;
+  }
+  .hero-stat__icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@keyframes heroDotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.7); opacity: 0.55; }
+}
+
+@keyframes heroPulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+</style>

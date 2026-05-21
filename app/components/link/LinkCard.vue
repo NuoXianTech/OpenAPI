@@ -94,3 +94,177 @@ const isActive = computed(() => props.status === 1)
     </div>
   </a>
 </template>
+
+<style scoped>
+.link-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-elevated);
+  border-radius: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  isolation: isolate;
+  min-height: 168px;
+  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+}
+
+.link-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--ui-text) 6%, transparent), transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.link-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ui-border-accented);
+  box-shadow: 0 10px 24px -10px rgba(17, 17, 19, 0.18);
+}
+
+.dark .link-card:hover {
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.55);
+}
+
+.link-card__spotlight {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ui-text) 14%, transparent), transparent 55%);
+  opacity: 0;
+  transition: opacity 240ms ease;
+  z-index: 0;
+}
+
+.link-card:hover .link-card__spotlight {
+  opacity: 1;
+}
+
+.link-card__top {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.link-card__avatar {
+  transition: transform 240ms ease;
+  background: var(--ui-text) !important;
+  color: var(--ui-text-inverted) !important;
+}
+
+.link-card:hover .link-card__avatar {
+  transform: rotate(-4deg);
+}
+
+.link-card__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.link-card__dot--ok {
+  background: var(--green);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 28%, transparent);
+}
+
+.link-card__dot--err {
+  background: var(--red);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 28%, transparent);
+}
+
+.link-card__body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.link-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ui-text);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-card__desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ui-text-muted);
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-card__footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--ui-border);
+  font-size: 12px;
+}
+
+.link-card__host {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ui-text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.link-card__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ui-text-muted);
+  font-weight: 500;
+  transition: color 200ms ease, gap 200ms ease;
+  flex-shrink: 0;
+}
+
+.link-card:hover .link-card__cta {
+  color: var(--ui-text);
+  gap: 6px;
+}
+
+.link-card--inactive .link-card__avatar {
+  background: var(--ui-text-muted) !important;
+}
+
+.link-card--inactive .link-card__title {
+  color: var(--ui-text-muted);
+}
+</style>

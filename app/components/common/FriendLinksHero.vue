@@ -117,3 +117,116 @@ const ratio = computed(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.links-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  background: var(--ui-bg-elevated);
+  border-radius: 20px;
+  margin-bottom: 16px;
+  isolation: isolate;
+}
+
+.links-hero__pattern {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, currentColor 1px, transparent 1px),
+    linear-gradient(to bottom, currentColor 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ui-text);
+  opacity: 0.04;
+  mask-image: radial-gradient(ellipse at top right, black 0%, transparent 65%);
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.links-hero__title-mark {
+  display: inline-block;
+  width: 28px;
+  height: 2px;
+  background: var(--ui-text);
+  border-radius: 2px;
+  vertical-align: 6px;
+  position: relative;
+  animation: linksDash 2.4s ease-in-out infinite;
+  transform-origin: left center;
+}
+
+.hero-stat {
+  position: relative;
+  border: 1px solid var(--ui-border);
+  background: color-mix(in srgb, var(--ui-bg) 80%, transparent);
+  border-radius: 14px;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease;
+  backdrop-filter: blur(4px);
+}
+
+.hero-stat:hover {
+  transform: translateY(-2px);
+  border-color: var(--ui-border-accented);
+}
+
+.hero-stat--accent {
+  background: var(--ui-text);
+  border-color: var(--ui-text);
+  color: var(--ui-text-inverted);
+}
+
+.hero-stat--accent .hero-stat__label,
+.hero-stat--accent .text-muted {
+  color: color-mix(in srgb, var(--ui-text-inverted) 70%, transparent) !important;
+}
+
+.hero-stat__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-text) 8%, transparent);
+  color: var(--ui-text);
+  margin-bottom: 4px;
+}
+
+.hero-stat--accent .hero-stat__icon {
+  background: color-mix(in srgb, var(--ui-text-inverted) 14%, transparent);
+  color: var(--ui-text-inverted);
+}
+
+.hero-stat__value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat__label {
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 640px) {
+  .hero-stat__value {
+    font-size: 18px;
+  }
+  .hero-stat__icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@keyframes linksDash {
+  0%, 100% { transform: scaleX(1); opacity: 1; }
+  50% { transform: scaleX(0.3); opacity: 0.55; }
+}
+</style>

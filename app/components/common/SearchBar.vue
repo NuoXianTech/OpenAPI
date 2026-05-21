@@ -87,3 +87,18 @@ onUnmounted(() => {
     </template>
   </UInput>
 </template>
+
+<style scoped>
+.searchbar-shortcut {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .searchbar-shortcut {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--ui-text-muted);
+  }
+}
+</style>
