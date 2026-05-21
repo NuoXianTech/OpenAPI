@@ -39,7 +39,7 @@ function getSecret() {
 
 function generateApiKey() {
   const nonce = randomBytes(24)
-  return createHmac('sha256', getSecret()).update(nonce).digest('base64url')
+  return `sk_${createHmac('sha256', getSecret()).update(nonce).digest('base64url')}`
 }
 
 export const apiKeyService = {
