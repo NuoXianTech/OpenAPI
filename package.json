@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.5",
-    "@nuxt/ui": "^4.7.1",
+    "@nuxt/ui": "^4.8.0",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.5",
