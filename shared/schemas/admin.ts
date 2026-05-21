@@ -24,6 +24,20 @@ export const adminBanUserSchema = z.object({
   isBanned: z.boolean()
 })
 
+/** 管理员-直接创建用户（跳过邮箱验证流程） */
+export const adminCreateUserSchema = z.object({
+  username: z
+    .string()
+    .trim()
+    .min(3, '用户名至少 3 位')
+    .max(32, '用户名最多 32 位')
+    .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线'),
+  email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
+  password: z.string().min(8, '密码至少 8 位'),
+  displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
+  isActive: z.boolean().optional()
+})
+
 /** 更新用户信息（部分字段） */
 export const adminUpdateUserSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),

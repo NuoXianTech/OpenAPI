@@ -13,7 +13,8 @@ const {
   requireSelection,
   deleteUser,
   toggleBan,
-  updateUser
+  updateUser,
+  createUser
 } = useAdminUsersPage()
 
 const confirm = useConfirmDialog()
@@ -36,6 +37,8 @@ function openEdit(item: AdminUserItem) {
   editTarget.value = item
   editOpen.value = true
 }
+
+const createOpen = ref(false)
 
 const keysOpen = ref(false)
 const keysTarget = ref<AdminUserItem | null>(null)
@@ -131,6 +134,14 @@ const columns: TableColumn<AdminUserItem>[] = [
         <span class="text-xs text-muted">
           已选 {{ selectedIds.length }} / {{ items.length }}
         </span>
+        <UButton
+          size="sm"
+          color="primary"
+          icon="i-mdi-account-plus-outline"
+          @click="createOpen = true"
+        >
+          添加用户
+        </UButton>
         <UButton
           size="sm"
           color="primary"
@@ -232,6 +243,11 @@ const columns: TableColumn<AdminUserItem>[] = [
       v-model:open="editOpen"
       :target="editTarget"
       :on-submit="updateUser"
+    />
+
+    <AdminUserCreateModal
+      v-model:open="createOpen"
+      :on-submit="createUser"
     />
 
     <AdminUserKeysModal

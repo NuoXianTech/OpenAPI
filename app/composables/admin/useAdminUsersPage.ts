@@ -84,6 +84,27 @@ export function useAdminUsersPage() {
     }
   }
 
+  async function createUser(payload: { username: string, email: string, password: string, displayName: string, isActive: boolean }): Promise<boolean> {
+    try {
+      await $fetch('/api/admin/users/create', {
+        method: 'POST',
+        body: {
+          username: payload.username,
+          email: payload.email,
+          password: payload.password,
+          displayName: payload.displayName || undefined,
+          isActive: payload.isActive
+        }
+      })
+      toast.add({ title: '创建成功', color: 'success' })
+      await refresh()
+      return true
+    } catch (err) {
+      toast.add({ title: parseFetchError(err, '创建失败'), color: 'error' })
+      return false
+    }
+  }
+
   return {
     keyword,
     status,
@@ -95,6 +116,7 @@ export function useAdminUsersPage() {
     requireSelection,
     deleteUser,
     toggleBan,
-    updateUser
+    updateUser,
+    createUser
   }
 }
