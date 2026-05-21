@@ -24,7 +24,6 @@ type RegisteredApi = Awaited<ReturnType<typeof apiService.listByVersion>>[number
 interface DiscoveredApi {
   pathVersion: string
   code: string
-  sourceDir: string
   endpointCount: number
   endpoints: DiscoveredEndpoint[]
   /** DB 中已登记记录的完整治理字段；null 表示尚未登记 */
@@ -82,7 +81,6 @@ export default defineEventHandler(async (event: H3Event) => {
     group.apis.push({
       pathVersion: api.pathVersion,
       code: api.code,
-      sourceDir: api.sourceDir,
       endpointCount: api.endpoints.length,
       endpoints,
       registered,
@@ -101,7 +99,6 @@ export default defineEventHandler(async (event: H3Event) => {
     group.apis.push({
       pathVersion: row.pathVersion,
       code: row.code,
-      sourceDir: row.sourceDir || '(已删除)',
       endpointCount: row.endpointCount,
       endpoints: [],
       registered: row,

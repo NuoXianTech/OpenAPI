@@ -18,7 +18,6 @@ interface RegisteredApi {
   description: string
   apiPath: string
   httpMethod: string
-  sourceDir: string | null
   endpointCount: number
   docUrl: string
   status: number
@@ -38,7 +37,6 @@ interface RegisteredApi {
 interface DiscoveredApi {
   pathVersion: string
   code: string
-  sourceDir: string
   endpointCount: number
   endpoints: DiscoveredEndpoint[]
   registered: RegisteredApi | null
@@ -79,16 +77,12 @@ watchEffect(() => {
 })
 
 const keyword = ref('')
-const filterMode = ref<'all' | 'registered' | 'unregistered' | 'orphaned'>('all')
 
 const filteredApis = computed<DiscoveredApi[]>(() => {
   const group = versions.value.find(v => v.pathVersion === activeVersion.value)
   if (!group) return []
   const kw = keyword.value.trim().toLowerCase()
   return group.apis.filter((a) => {
-    if (filterMode.value === 'registered' && !a.registered) return false
-    if (filterMode.value === 'unregistered' && a.registered) return false
-    if (filterMode.value === 'orphaned' && !a.orphaned) return false
     if (!kw) return true
     return (
       a.code.toLowerCase().includes(kw)
@@ -117,33 +111,6 @@ function openEdit(row: DiscoveredApi) {
   modalMode.value = 'edit'
   modalTarget.value = row
   modalOpen.value = true
-}
-
-const deleteOpen = ref(false)
-const deleteTarget = ref<DiscoveredApi | null>(null)
-const deleteLoading = ref(false)
-
-function openDelete(row: DiscoveredApi) {
-  deleteTarget.value = row
-  deleteOpen.value = true
-}
-
-async function confirmDelete() {
-  if (!deleteTarget.value?.registered) return
-  deleteLoading.value = true
-  try {
-    await $fetch('/api/admin/apis/delete', {
-      method: 'POST',
-      body: { id: deleteTarget.value.registered.id }
-    })
-    toast.add({ title: '已删除登记', color: 'success' })
-    deleteOpen.value = false
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-  } finally {
-    deleteLoading.value = false
-  }
 }
 
 async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
@@ -192,23 +159,8 @@ function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
       onSelect: () => openRegister(row)
     })
   }
-  if (row.registered) {
-    items.push({
-      label: row.orphaned ? '清理孤儿登记' : '删除登记',
-      icon: 'i-mdi-delete-outline',
-      color: 'error' as const,
-      onSelect: () => openDelete(row)
-    })
-  }
   return items
 }
-
-const filterOptions = [
-  { label: '全部', value: 'all' },
-  { label: '已登记', value: 'registered' },
-  { label: '未登记', value: 'unregistered' },
-  { label: '孤儿', value: 'orphaned' }
-]
 
 const columns: TableColumn<DiscoveredApi>[] = [
   {
@@ -241,11 +193,6 @@ const columns: TableColumn<DiscoveredApi>[] = [
         }, ep.apiPath)
       ])))
     }
-  },
-  {
-    accessorKey: 'sourceDir',
-    header: '源目录',
-    cell: ({ row }) => h('span', { class: 'font-mono text-xs text-muted' }, row.original.sourceDir)
   },
   {
     id: 'category',
@@ -284,15 +231,6 @@ const columns: TableColumn<DiscoveredApi>[] = [
       : h('span', { class: 'text-muted' }, '-')
   },
   {
-    id: 'state',
-    header: '登记状态',
-    cell: ({ row }) => {
-      if (row.original.orphaned) return h(UBadge, { color: 'error', variant: 'subtle' }, () => '孤儿')
-      if (!row.original.registered) return h(UBadge, { color: 'warning', variant: 'subtle' }, () => '未登记')
-      return h(UBadge, { color: 'success', variant: 'subtle' }, () => '已登记')
-    }
-  },
-  {
     id: 'actions',
     header: '',
     cell: ({ row }) => h('div', { class: 'text-right' }, h(UDropdownMenu, {
@@ -328,12 +266,6 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         :items="versionItems"
         size="sm"
         class="w-44"
-      />
-      <USelect
-        v-model="filterMode"
-        :items="filterOptions"
-        size="sm"
-        class="w-32"
       />
       <UInput
         v-model="keyword"
@@ -380,14 +312,6 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
       :mode="modalMode"
       :target="modalTarget"
       @saved="refresh()"
-    />
-
-    <AdminDeleteModal
-      v-model:open="deleteOpen"
-      :loading="deleteLoading"
-      :title="`删除登记: ${deleteTarget?.code}`"
-      description="删除登记后该接口默认拒绝访问。代码文件不会被删除，可随时重新登记。"
-      @confirm="confirmDelete"
     />
   </div>
 </template>

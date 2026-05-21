@@ -19,7 +19,6 @@ interface RegisteredApi {
   description: string
   apiPath: string
   httpMethod: string
-  sourceDir: string | null
   endpointCount: number
   docUrl: string
   status: number
@@ -39,7 +38,6 @@ interface RegisteredApi {
 interface DiscoveredApi {
   pathVersion: string
   code: string
-  sourceDir: string
   endpointCount: number
   endpoints: DiscoveredEndpoint[]
   registered: RegisteredApi | null
@@ -79,7 +77,7 @@ function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
   return {
     name: target.code,
     shortDesc: `${target.pathVersion} ${target.code}`,
-    description: `自动登记于 ${target.sourceDir}`,
+    description: `${target.pathVersion} ${target.code} 接口`,
     docUrl: '',
     status: -1,
     categoryId: null,
@@ -238,7 +236,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal
     v-model:open="open"
     :title="headerLabel"
-    :description="target ? `${target.sourceDir} · ${target.endpointCount} 端点` : undefined"
+    :description="target ? `${target.endpointCount} 端点` : undefined"
     scrollable
     :ui="{ content: 'sm:max-w-2xl' }"
   >
