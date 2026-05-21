@@ -1,9 +1,45 @@
-import { randomBytes } from 'node:crypto'
+import { createHmac, randomBytes } from 'node:crypto'
 import { and, eq, sql } from 'drizzle-orm'
 import { apiKeys } from '@nuxthub/db/schema'
 
+const SECRET_BYTES = 32
+
+function base64UrlDecode(input: string) {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
+  return Buffer.from(padded, 'base64')
+}
+
+function parseSecret(raw: string): Buffer {
+  if (!raw) {
+    throw new Error('API_KEY_SECRET is not configured')
+  }
+  if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === SECRET_BYTES * 2) {
+    return Buffer.from(raw, 'hex')
+  }
+  const decoded = base64UrlDecode(raw)
+  if (decoded.length === SECRET_BYTES) {
+    return decoded
+  }
+  const utf8 = Buffer.from(raw, 'utf8')
+  if (utf8.length === SECRET_BYTES) {
+    return utf8
+  }
+  throw new Error(`API_KEY_SECRET must be ${SECRET_BYTES} bytes (hex / base64url / utf-8)`)
+}
+
+let cachedSecret: Buffer | null = null
+
+function getSecret() {
+  if (cachedSecret) return cachedSecret
+  const raw = useRuntimeConfig().auth.apiKeySecret as string
+  cachedSecret = parseSecret(raw)
+  return cachedSecret
+}
+
 function generateApiKey() {
-  return `opk_${randomBytes(24).toString('base64url')}`
+  const nonce = randomBytes(24)
+  return createHmac('sha256', getSecret()).update(nonce).digest('base64url')
 }
 
 export const apiKeyService = {

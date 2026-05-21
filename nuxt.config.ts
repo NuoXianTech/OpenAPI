@@ -20,7 +20,8 @@ export default defineNuxtConfig({
       adminPassword: process.env.ADMIN_PASSWORD || '',
       adminEmail: process.env.ADMIN_EMAIL || '',
       emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
-      oauthSecretKey: process.env.OAUTH_SECRET_KEY || ''
+      oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
+      apiKeySecret: process.env.API_KEY_SECRET || ''
     },
     apiGuard: {
       // 'memory' | 'postgres' | 'kv'；留空 → 自动选择：
