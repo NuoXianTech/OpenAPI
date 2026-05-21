@@ -233,12 +233,6 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
             :data="items"
             :columns="columns"
             :loading="loading"
-            :ui="{
-              base: 'table-fixed',
-              thead: '[&>tr]:bg-elevated/50',
-              th: 'py-2',
-              td: 'py-2 align-middle'
-            }"
           >
             <template #createdAt-cell="{ row }">
               <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>

@@ -205,12 +205,6 @@ const columns: TableColumn<ApiKey>[] = [
         :data="items"
         :columns="columns"
         :loading="status === 'pending'"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2 align-middle'
-        }"
       >
         <template #name-cell="{ row }">
           <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>

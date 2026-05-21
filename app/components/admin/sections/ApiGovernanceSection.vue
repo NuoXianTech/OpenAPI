@@ -228,12 +228,6 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
       :columns="columns"
       :loading="status === 'pending'"
       class="shrink-0"
-      :ui="{
-        base: 'table-fixed',
-        thead: '[&>tr]:bg-elevated/50',
-        th: 'py-2',
-        td: 'py-2 align-top'
-      }"
     >
       <template #code-cell="{ row }">
         <div class="flex flex-col gap-0.5">

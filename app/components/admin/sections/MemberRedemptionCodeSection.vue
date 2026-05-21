@@ -183,12 +183,6 @@ const columns: TableColumn<RedemptionCode>[] = [
         :columns="columns"
         :loading="loading"
         empty="暂无兑换码"
-        :ui="{
-          base: 'table-fixed',
-          thead: '[&>tr]:bg-elevated/50',
-          th: 'py-2',
-          td: 'py-2 align-middle'
-        }"
       >
         <template #code-cell="{ row }">
           <div class="flex flex-col gap-0.5">

@@ -114,12 +114,6 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       :data="items"
       :columns="columns"
       :loading="status === 'pending'"
-      :ui="{
-        base: 'table-fixed',
-        thead: '[&>tr]:bg-elevated/50',
-        th: 'py-2',
-        td: 'py-2 align-middle'
-      }"
     >
       <template #code-cell="{ row }">
         <span class="font-mono text-xs">{{ row.original.code }}</span>

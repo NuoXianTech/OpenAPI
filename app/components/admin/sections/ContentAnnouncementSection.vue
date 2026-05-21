@@ -132,12 +132,6 @@ const columns: TableColumn<Announcement>[] = [
       :columns="columns"
       :loading="status === 'pending'"
       class="shrink-0"
-      :ui="{
-        base: 'table-fixed',
-        thead: '[&>tr]:bg-elevated/50',
-        th: 'py-2',
-        td: 'py-2 align-top'
-      }"
     >
       <template #title-cell="{ row }">
         <div class="flex items-center gap-2">

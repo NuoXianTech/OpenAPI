@@ -3,63 +3,46 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * 黑白主题：
+ *  - app.config.ts 里 ui.colors 把 primary/secondary/info 映射到 zinc 色板（提供 50-950 色阶给 subtle/soft variant）。
+ *  - 主色由下面 --ui-primary/--ui-secondary/--ui-info 直接覆盖为纯黑（light）/纯白（dark）。
+ *    这是 Nuxt UI 官方推荐用法，见 https://ui.nuxt.com/docs/getting-started/theme/css-variables
+ *  - 其余 --ui-text-* / --ui-bg-* / --ui-border-* / --ui-ring 走 Nuxt UI 默认（基于 neutral 色板）即可，
+ *    只在项目想要不同观感的地方做最小覆盖。
+ */
+
 :root {
-  /* Reference palette mapped into Nuxt UI semantic tokens */
-  --ref-bg: #f7f7f8;
-  --ref-surface: #ffffff;
-  --ref-text: #111113;
-  --ref-muted: #666872;
-  --ref-border: #e6e6ea;
-  --ref-primary: #111113;
-  --ref-green: #23c55e;
-  --ref-red: #ef4444;
-  --ref-gray: #94a3b8;
-
   --ui-radius: 0.625rem;
-  --ui-primary: var(--ref-primary);
-  --ui-secondary: var(--ref-text);
-  --ui-success: var(--ref-green);
-  --ui-info: var(--ref-text);
+
+  --ui-primary: #111113;
+  --ui-secondary: #111113;
+  --ui-info: #111113;
   --ui-warning: var(--ui-color-warning-600);
-  --ui-error: var(--ref-red);
 
+  /* 文字层级比 Nuxt UI 默认更深更黑 */
   --ui-text-dimmed: #8a8c95;
-  --ui-text-muted: var(--ref-muted);
+  --ui-text-muted: #666872;
   --ui-text-toned: #4d4f58;
-  --ui-text: var(--ref-text);
-  --ui-text-highlighted: var(--ref-text);
-  --ui-text-inverted: white;
+  --ui-text: #111113;
+  --ui-text-highlighted: #111113;
 
-  --ui-bg: var(--ref-bg);
-  --ui-bg-muted: var(--ref-bg);
-  --ui-bg-elevated: var(--ref-surface);
+  /* 背景：default 用浅灰、elevated 用纯白（与 Nuxt UI 默认的 white / neutral-100 顺序反转） */
+  --ui-bg: #f7f7f8;
+  --ui-bg-muted: #f7f7f8;
+  --ui-bg-elevated: #ffffff;
   --ui-bg-accented: #f0f0f2;
-  --ui-bg-inverted: var(--ui-color-neutral-900);
 
-  --ui-border: var(--ref-border);
-  --ui-border-muted: var(--ref-border);
+  --ui-border: #e6e6ea;
+  --ui-border-muted: #e6e6ea;
   --ui-border-accented: #d7d8de;
-  --ui-border-inverted: var(--ui-color-neutral-900);
   --ui-ring: #c8cad2;
+}
 
-  --chart-1: var(--ui-color-primary-500);
-  --chart-2: var(--ui-color-success-500);
-  --chart-3: var(--ui-color-secondary-500);
-  --chart-4: var(--ui-color-warning-500);
-  --chart-5: var(--ui-color-error-500);
-
-  --sidebar: var(--ui-bg);
-  --sidebar-foreground: var(--ui-text);
-  --sidebar-primary: var(--ui-primary);
-  --sidebar-primary-foreground: var(--ui-text-inverted);
-  --sidebar-accent: var(--ui-bg-accented);
-  --sidebar-accent-foreground: var(--ui-text-highlighted);
-  --sidebar-border: var(--ui-border);
-  --sidebar-ring: var(--ui-ring);
-
-  --green: var(--ref-green);
-  --red: var(--ref-red);
-  --gray: var(--ref-gray);
+.dark {
+  --ui-primary: white;
+  --ui-secondary: white;
+  --ui-info: white;
 }
 
 body {
@@ -67,98 +50,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-@theme inline {
-  --radius-sm: calc(var(--ui-radius) * 0.6);
-  --radius-md: calc(var(--ui-radius) * 0.8);
-  --radius-lg: var(--ui-radius);
-  --radius-xl: calc(var(--ui-radius) * 1.4);
-  --radius-2xl: calc(var(--ui-radius) * 1.8);
-  --radius-3xl: calc(var(--ui-radius) * 2.2);
-  --radius-4xl: calc(var(--ui-radius) * 2.6);
-  --color-background: var(--ui-bg);
-  --color-foreground: var(--ui-text);
-  --color-card: var(--ui-bg-elevated);
-  --color-card-foreground: var(--ui-text);
-  --color-popover: var(--ui-bg-elevated);
-  --color-popover-foreground: var(--ui-text);
-  --color-primary: var(--ui-primary);
-  --color-primary-foreground: var(--ui-text-inverted);
-  --color-secondary: var(--ui-secondary);
-  --color-secondary-foreground: var(--ui-text-inverted);
-  --color-muted: var(--ui-bg-muted);
-  --color-muted-foreground: var(--ui-text-muted);
-  --color-accent: var(--ui-bg-accented);
-  --color-accent-foreground: var(--ui-text-highlighted);
-  --color-destructive: var(--ui-error);
-  --color-border: var(--ui-border);
-  --color-input: var(--ui-border);
-  --color-ring: var(--ui-ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-.dark {
-  --ui-primary: var(--ui-color-primary-400);
-  --ui-secondary: var(--ui-color-secondary-400);
-  --ui-success: var(--ui-color-success-400);
-  --ui-info: var(--ui-color-info-400);
-  --ui-warning: var(--ui-color-warning-400);
-  --ui-error: var(--ui-color-error-400);
-
-  --ui-text-dimmed: var(--ui-color-neutral-500);
-  --ui-text-muted: var(--ui-color-neutral-400);
-  --ui-text-toned: var(--ui-color-neutral-300);
-  --ui-text: var(--ui-color-neutral-200);
-  --ui-text-highlighted: white;
-  --ui-text-inverted: var(--ui-color-neutral-900);
-
-  --ui-bg: var(--ui-color-neutral-900);
-  --ui-bg-muted: var(--ui-color-neutral-800);
-  --ui-bg-elevated: var(--ui-color-neutral-800);
-  --ui-bg-accented: var(--ui-color-neutral-700);
-  --ui-bg-inverted: white;
-
-  --ui-border: var(--ui-color-neutral-800);
-  --ui-border-muted: var(--ui-color-neutral-700);
-  --ui-border-accented: var(--ui-color-neutral-700);
-  --ui-border-inverted: white;
-  --ui-ring: var(--ui-color-neutral-500);
-
-  --chart-1: var(--ui-color-primary-400);
-  --chart-2: var(--ui-color-success-400);
-  --chart-3: var(--ui-color-secondary-400);
-  --chart-4: var(--ui-color-warning-400);
-  --chart-5: var(--ui-color-error-400);
-
-  --sidebar: var(--ui-bg);
-  --sidebar-foreground: var(--ui-text);
-  --sidebar-primary: var(--ui-primary);
-  --sidebar-primary-foreground: var(--ui-text-inverted);
-  --sidebar-accent: var(--ui-bg-accented);
-  --sidebar-accent-foreground: var(--ui-text-highlighted);
-  --sidebar-border: var(--ui-border);
-  --sidebar-ring: var(--ui-ring);
-
-  --green: var(--ui-success);
-  --red: var(--ui-error);
-  --gray: var(--ui-text-muted);
-}
-
 @layer base {
-  * {
-    @apply border-default outline-ring/50;
-  }
   body {
     @apply antialiased text-default bg-default scheme-light dark:scheme-dark;
   }

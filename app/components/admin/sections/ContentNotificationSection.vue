@@ -300,11 +300,6 @@ const columns: TableColumn<MessageRow>[] = [
           :data="messages"
           :columns="columns"
           :loading="status === 'pending'"
-          :ui="{
-            base: 'table-fixed',
-            th: 'py-2',
-            td: 'py-2 align-top'
-          }"
         >
           <template #title-cell="{ row }">
             <div class="flex items-center gap-2">

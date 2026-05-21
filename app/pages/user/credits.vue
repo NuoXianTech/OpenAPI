@@ -155,12 +155,6 @@ function amountClass(amt: number) {
             :columns="columns"
             :loading="loading"
             empty="暂无流水记录"
-            :ui="{
-              base: 'table-fixed',
-              thead: '[&>tr]:bg-elevated/50',
-              th: 'py-2',
-              td: 'py-2 align-middle'
-            }"
           >
             <template #createdAt-cell="{ row }">
               <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDate(row.original.createdAt) }}</span>

@@ -173,12 +173,6 @@ const columns: TableColumn<AdminUserItem>[] = [
       :columns="columns"
       :loading="status === 'pending'"
       :get-row-id="(row: AdminUserItem) => String(row.id)"
-      :ui="{
-        base: 'table-fixed',
-        thead: '[&>tr]:bg-elevated/50',
-        th: 'py-2',
-        td: 'py-2'
-      }"
     >
       <template #select-header="{ table }">
         <UCheckbox

@@ -28,14 +28,6 @@ const emit = defineEmits<{
 const showPagination = computed(() => props.pageSize > 0 && props.total > props.pageSize)
 const showEmpty = computed(() => !props.loading && props.data.length === 0)
 
-const baseUi = {
-  base: 'table-fixed',
-  thead: '[&>tr]:bg-elevated/50',
-  th: 'py-2',
-  td: 'py-2 align-middle'
-}
-const mergedUi = computed(() => ({ ...baseUi, ...(props.ui || {}) }))
-
 function onPageChange(p: number) {
   emit('update:page', p)
 }
@@ -62,7 +54,6 @@ function onPageChange(p: number) {
       :data="data"
       :columns="columns"
       :loading="loading"
-      :ui="mergedUi"
     >
       <template
         v-for="(_, name) in $slots"
