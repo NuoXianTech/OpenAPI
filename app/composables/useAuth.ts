@@ -21,9 +21,59 @@ const AUTH_FRESH_FOR_MS = 5 * 60 * 1000
 let clientInflight: Promise<AuthUser | null> | null = null
 let clientFetchedAt = 0
 
+// SSR 阶段的 user 存在 event.context 上（请求级，跨请求隔离），不进 nuxt payload；
+// 客户端阶段的 user 存在 useState 里。这样 SSR 输出的 HTML 永远不含 user 字段，
+// 即便上游被加 public cache 也不会把 A 用户的身份串给 B 用户。
+// 代价：依赖 user 的 UI 在 SSR 期间渲染为未登录态，必须配合 <ClientOnly> + fallback 使用。
+interface AuthContext {
+  authUser?: AuthUser | null
+  authLoading?: boolean
+}
+
+function getServerAuthContext(): AuthContext | null {
+  if (!import.meta.server) return null
+  const event = useRequestEvent()
+  if (!event) return null
+  return event.context as AuthContext
+}
+
 export function useAuth() {
-  const user = useState<AuthUser | null>('auth-user', () => null)
-  const loading = useState<boolean>('auth-loading', () => false)
+  const clientUser = import.meta.client ? useState<AuthUser | null>('auth-user', () => null) : null
+  const clientLoading = import.meta.client ? useState<boolean>('auth-loading', () => false) : null
+
+  const user = computed<AuthUser | null>({
+    get() {
+      if (import.meta.server) {
+        return getServerAuthContext()?.authUser ?? null
+      }
+      return clientUser!.value
+    },
+    set(value) {
+      if (import.meta.server) {
+        const ctx = getServerAuthContext()
+        if (ctx) ctx.authUser = value
+        return
+      }
+      clientUser!.value = value
+    }
+  })
+
+  const loading = computed<boolean>({
+    get() {
+      if (import.meta.server) {
+        return getServerAuthContext()?.authLoading ?? false
+      }
+      return clientLoading!.value
+    },
+    set(value) {
+      if (import.meta.server) {
+        const ctx = getServerAuthContext()
+        if (ctx) ctx.authLoading = value
+        return
+      }
+      clientLoading!.value = value
+    }
+  })
 
   const runFetch = async () => {
     loading.value = true

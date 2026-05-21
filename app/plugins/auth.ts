@@ -1,11 +1,19 @@
 export default defineNuxtPlugin(async (nuxtApp) => {
-  // SSR + 客户端都拉一次 /api/auth/me：SSR 阶段把 user 写进 nuxt payload，避免 AppHeader 等公共组件
-  // 在 hydrate 之后出现"未登录 → 已登录"的闪烁；客户端 hydrate 后再跑一次校准 TTL 起点
-  // （HTML 可能来自浏览器缓存，SSR 时间戳不可信）。fetchMe 内部已分端处理 cookie 转发与 dedup。
+  // SSR：拉一次 /api/auth/me 写到 event.context（不进 payload），让 SSR 阶段的 middleware /
+  // route guard 能拿到登录态做重定向，但不会把 user 序列化下发给浏览器。
+  // 客户端：app:mounted 后再拉一次，把 user 写进 useState 驱动 UI。
+  // 不在客户端 plugin 阶段 await，是为了不阻塞首屏 hydrate；依赖 user 的 UI 需要用 <ClientOnly>
+  // + fallback 渲染未登录占位，待 fetchMe 完成后自然切到登录态。
   const { fetchMe } = useAuth()
-  await fetchMe()
 
-  if (import.meta.server) return
+  if (import.meta.server) {
+    await fetchMe()
+    return
+  }
+
+  nuxtApp.hook('app:mounted', () => {
+    fetchMe().catch(() => {})
+  })
 
   // 客户端独占：长会话定时和切回标签时重拉一次 /api/auth/me，
   // 用来感知后端封禁、踢人、session 失效；fetchMe 内部有 TTL 短路，重复触发不会打满请求。
