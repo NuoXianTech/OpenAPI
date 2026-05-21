@@ -66,7 +66,7 @@ function defaultForm(): AdminSettingsForm {
   }
 }
 
-export const ADMIN_SETTINGS_FORM_KEY: InjectionKey<AdminSettingsForm> = Symbol('admin-settings-form')
+export const ADMIN_SETTINGS_FORM_KEY: InjectionKey<AdminSettingsForm> = Symbol.for('admin-settings-form')
 
 export function useAdminSettingsForm(): AdminSettingsForm {
   const form = inject(ADMIN_SETTINGS_FORM_KEY)

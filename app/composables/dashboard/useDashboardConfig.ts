@@ -5,7 +5,7 @@ export type ResolvedDashboardConfig = Omit<DashboardConfig, 'brand'> & {
   brand: ReturnType<DashboardConfig['brand']>
 }
 
-export const dashboardConfigInjectionKey = Symbol('dashboardConfig') as InjectionKey<ComputedRef<ResolvedDashboardConfig>>
+export const dashboardConfigInjectionKey = Symbol.for('dashboardConfig') as InjectionKey<ComputedRef<ResolvedDashboardConfig>>
 
 export function useDashboardConfig(): ComputedRef<ResolvedDashboardConfig> {
   const config = inject(dashboardConfigInjectionKey)
