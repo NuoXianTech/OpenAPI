@@ -1,9 +1,6 @@
 allowBuilds:
-  '@parcel/watcher': true
-  esbuild: true
+  '@parcel/watcher': false
+  esbuild: false
   maplibre-gl: false
-  unrs-resolver: true
-  vue-demi: true
-minimumReleaseAgeExclude:
-  - '@vue/language-core@3.2.9'
-  - vue-tsc@3.2.9
+  unrs-resolver: false
+  vue-demi: false
