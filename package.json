@@ -12,9 +12,6 @@
     "db:migrate:prod": "NODE_ENV=production nuxt db migrate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest run",
-    "test:e2e": "vitest run tests/e2e",
-    "test:e2e:ci": "vitest run tests/e2e --maxWorkers=1",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
