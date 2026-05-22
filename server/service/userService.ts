@@ -1,6 +1,10 @@
-import { eq } from 'drizzle-orm'
-import { users } from '@nuxthub/db/schema'
+import { and, eq, isNull } from 'drizzle-orm'
+import { apiKeys, sessions, users } from '@nuxthub/db/schema'
 import { notificationService } from './notificationService'
+
+// 软删除后用户行仍在表中作为外键锚点，但对所有业务查询不可见。
+// 读路径必须 AND deleted_at IS NULL，写路径同理避免对僵尸行操作。
+const aliveOnly = isNull(users.deletedAt)
 
 export const usersService = {
   async list() {
@@ -21,21 +25,27 @@ export const usersService = {
       emailVerifiedAt: users.emailVerifiedAt,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt
-    }).from(users)
+    }).from(users).where(aliveOnly)
   },
 
   async findByEmail(email: string) {
-    const res = await db.select().from(users).where(eq(users.email, email)).limit(1)
+    const res = await db.select().from(users)
+      .where(and(eq(users.email, email), aliveOnly))
+      .limit(1)
     return res[0]
   },
 
   async findByUsername(username: string) {
-    const res = await db.select().from(users).where(eq(users.username, username)).limit(1)
+    const res = await db.select().from(users)
+      .where(and(eq(users.username, username), aliveOnly))
+      .limit(1)
     return res[0]
   },
 
   async getById(id: number) {
-    const res = await db.select().from(users).where(eq(users.id, id)).limit(1)
+    const res = await db.select().from(users)
+      .where(and(eq(users.id, id), aliveOnly))
+      .limit(1)
     return res[0]
   },
 
@@ -52,15 +62,36 @@ export const usersService = {
         ...data,
         updatedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
 
     return res[0] || null
   },
 
+  /**
+   * 软删除：写 deletedAt 时间戳，同时强制吊销该用户所有 API Key 并踢出全部会话。
+   * 用户行本身保留，让 creditTransactions / apiCalls / operationLogs 等审计链不丢失指向。
+   * 邮箱/用户名 unique 索引带 WHERE deleted_at IS NULL，软删后原值可被新注册复用。
+   */
   async deleteUser(id: number) {
-    const res = await db.delete(users).where(eq(users.id, id)).returning()
-    return res[0] || null
+    return await db.transaction(async (tx: typeof db) => {
+      const res = await tx.update(users)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(users.id, id), aliveOnly))
+        .returning()
+      const deleted = res[0]
+      if (!deleted) return null
+
+      // 吊销该用户全部未吊销的 API Key，防止已签发凭证继续走 apiGuard
+      await tx.update(apiKeys)
+        .set({ isActive: false, revokedAt: new Date(), updatedAt: new Date() })
+        .where(and(eq(apiKeys.userId, id), isNull(apiKeys.revokedAt)))
+
+      // 直接清掉会话；sessions 外键还是 cascade，但这里软删不会触发 cascade，所以显式删
+      await tx.delete(sessions).where(eq(sessions.userId, id))
+
+      return deleted
+    })
   },
 
   async addUser(data: {
@@ -91,7 +122,7 @@ export const usersService = {
         lastLoginAt: new Date(),
         lastLoginIp: ip
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
 
     return res[0]
@@ -103,7 +134,7 @@ export const usersService = {
         isActive: true,
         emailVerifiedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
 
     // 用户首次激活时补发所有 audience='all_with_future' 的历史消息
@@ -126,7 +157,7 @@ export const usersService = {
         passwordHash,
         updatedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
     return res[0] || null
   },
@@ -138,7 +169,7 @@ export const usersService = {
         emailVerifiedAt: new Date(),
         updatedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
     return res[0] || null
   },
@@ -149,7 +180,7 @@ export const usersService = {
         isBanned,
         updatedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(eq(users.id, id), aliveOnly))
       .returning()
 
     return res[0] || null

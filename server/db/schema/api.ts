@@ -123,7 +123,7 @@ export const apiKeys = pgTable('api_keys', {
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
   requestId: uuid('request_id').defaultRandom(), // 分布式追踪 ID
-  apiId: integer('api_id').references(() => apis.id).notNull(),
+  apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
   userId: integer('user_id').references(() => users.id),
   path: varchar('path', { length: 1000 }).notNull(),

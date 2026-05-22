@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     distributionRows,
     recentRows
   ] = await Promise.all([
-    db.select({ userCount: sql<number>`count(*)` }).from(users),
+    db.select({ userCount: sql<number>`count(*)` }).from(users).where(isNull(users.deletedAt)),
     db.select({
       enabledApiCount: sql<number>`coalesce(sum(case when ${apis.isEnabled} then 1 else 0 end), 0)`,
       totalApiCount: sql<number>`count(*)`

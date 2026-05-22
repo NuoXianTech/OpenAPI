@@ -14,11 +14,11 @@ import { sql } from 'drizzle-orm'
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  username: varchar('username', { length: 50 }).unique().notNull(),
+  username: varchar('username', { length: 50 }).notNull(),
   // 显示名：用于导航栏展示，不参与登录；为空时回退 username
   displayName: varchar('display_name', { length: 100 }),
   // email 以原大小写存储，通过 lower(email) 唯一索引做不区分大小写去重
-  email: varchar('email', { length: 255 }).unique().notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
   credits: bigint('credits', { mode: 'number' }).notNull().default(0), // API 配额积分
@@ -30,10 +30,14 @@ export const users = pgTable('users', {
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  // 软删除时间戳。设置后该用户对登录/查询/通知不可见，但行本身保留以维持外键引用（积分流水、API 调用、operator 等审计链）。
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`),
+  // username / email 唯一性仅在未软删的活跃用户范围内成立，软删后原值可被新注册复用
+  uniqueIndex('users_username_uq').on(table.username).where(sql`${table.deletedAt} IS NULL`),
+  uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`).where(sql`${table.deletedAt} IS NULL`),
   index('users_active_banned_idx').on(table.isActive, table.isBanned)
 ])
 
@@ -49,10 +53,12 @@ export const users = pgTable('users', {
 //
 // amount 正负表示进出（正=加积分，负=扣积分）。
 // balanceAfter 为快照值，便于审计与对账。
+// userId 在用户被软删后会被外键置空：流水本身是不可变的金融审计记录，
+// 不应随用户消失（operatorName/remark/meta 仍可读，确保审计链完整）。
 // ------------------------------------------------------------------
 export const creditTransactions = pgTable('credit_transactions', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
   amount: integer('amount').notNull(), // 正=入账，负=出账
   balanceAfter: bigint('balance_after', { mode: 'number' }).notNull(),
   reason: varchar('reason', { length: 50 }).notNull(),
