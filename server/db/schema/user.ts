@@ -72,7 +72,14 @@ export const creditTransactions = pgTable('credit_transactions', {
 }, table => [
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt),
   index('credit_transactions_reason_idx').on(table.reason),
-  index('credit_transactions_api_call_idx').on(table.apiCallId)
+  index('credit_transactions_api_call_idx').on(table.apiCallId),
+  // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一，仅对
+  // 'api_charge' / 'api_refund' 有效（其他 reason 不带 apiCallId）。
+  // 即使补偿队列调度出 bug 让两个实例同时拾起同一行，第二次 INSERT 会被这条
+  // 唯一索引拒绝、整个 charge 事务回滚，余额不会被双扣。
+  uniqueIndex('credit_transactions_api_call_reason_uq')
+    .on(table.apiCallId, table.reason)
+    .where(sql`${table.apiCallId} IS NOT NULL`)
 ])
 
 // ------------------------------------------------------------------

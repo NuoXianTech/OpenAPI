@@ -180,8 +180,8 @@ UPDATE redemption_codes
 | 退避表 | 30s → 1min → 2min → 5min → 10min |
 | 最大重试 | 5 次，超出转 `dead_letter` 状态需人工 |
 | 扫描周期 | 每 30s |
-
-**已知限制**（见 §3.5）：当前实现假设单实例部署。多实例需要补行锁或抢占式状态转换。
+| 多实例认领 | `claimDue` 用 `UPDATE ... WHERE id IN (SELECT FOR UPDATE SKIP LOCKED)` 原子转 `processing` 并写 60s lease；崩溃后 lease 到期可被重新认领 |
+| 双扣兜底 | `credit_transactions (apiCallId, reason) WHERE apiCallId IS NOT NULL` 部分唯一索引让任何漏过认领的重复 charge 在 INSERT 时回滚整个事务 |
 
 ---
 
@@ -418,17 +418,16 @@ export default defineEventHandler(async (event) => {
 
 **禁止**在没启用时把 `signup_bonus` 当成"已实现"展示给用户——前端 UI 现在如果显示「累计赠送 0」是真实的 0，不是 bug。
 
-#### (c) `pendingChargesRetry` 单实例假设
+#### (c) 重试卡 dead_letter 后无 admin UI 处理
 
-[server/plugins/pendingChargesRetry.ts:8-13](../../server/plugins/pendingChargesRetry.ts#L8-L13) 注释明确：
+`pending_charges.status='dead_letter'` 行需要人工介入（确认余额状态、决定补扣 / 退款 / 放弃），但**当前**没有后台界面：
 
-> 单实例假设，无分布式锁。多实例部署时需要换成 `SELECT ... FOR UPDATE SKIP LOCKED` 或抢占式 `UPDATE WHERE status='pending'` 转 `status='processing'` 防止并发重试同一行。
+- 查询：admin 需要直接连 DB 看 `pending_charges WHERE status='dead_letter'`
+- 处理：admin 需要写 SQL 手动操作（删除该行、调整用户余额、写 `credit_transactions` 流水）
 
-**何时需要处理**：
-- 多副本水平扩展时
-- 引入容器编排（K8s / Docker Swarm）滚动更新时
+**何时需要处理**：dead_letter 累积到运营关注 / 用户投诉时。
 
-**临时缓解**：单实例下不会出问题，但部署架构若变更必须先改这里。
+**扩展方向**：在 [server/api/admin/](../../server/api/admin/) 新增 `pending-charges` 路由 + 前端 `app/pages/admin/billing/pending-charges.vue` 列表页，提供"标记为已处理 / 手动补扣 / 删除"操作。所有手动改动必须经 `creditService` 写流水，**禁止**直接 `UPDATE users.credits`。
 
 #### (d) 三级覆盖（API / endpoint / method）目前只到 method
 

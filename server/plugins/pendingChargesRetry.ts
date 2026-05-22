@@ -2,12 +2,15 @@
  * 待扣费补偿重试 · Nitro plugin
  *
  * 启动后挂一个 setInterval，每 30s 扫描一次 pending_charges，
- * 按 nextAttemptAt 取一批到期任务，串行重试 charge：
+ * 用 pendingChargeService.claimDue 抢占式认领一批到期任务（原子转 processing
+ * 并写 lease），串行重试 charge：
  *   - 成功 → patchCreditsCost + 删除队列行
- *   - 失败 → markAttempt（attempts +1，nextAttemptAt += 退避；达到上限转 dead_letter）
+ *   - 失败 → markAttempt（attempts +1，nextAttemptAt += 退避，释放 lease；达到上限转 dead_letter）
  *
- * 单实例假设：当前部署单点，无分布式锁。多实例部署时需要换成 SELECT ... FOR UPDATE
- * 或抢占式 UPDATE WHERE status='pending'  status='processing' 防止并发重试同一行。
+ * 多实例安全：claimDue 用 UPDATE...IN (SELECT FOR UPDATE SKIP LOCKED) 保证
+ * 同一行只会被一个实例认领；worker 崩溃后 lease 到期，行被重新认领，不会卡死。
+ * 兜底：credit_transactions (apiCallId, reason) 部分唯一索引让任何漏过认领的
+ * 重复 charge 在 INSERT 时被 DB 拒绝，整个事务回滚，余额不会双扣。
  *
  * dev HMR 友好：使用全局符号注册 timer 句柄，热更新前清除上一轮 setInterval，
  * 避免多个 plugin 实例叠加触发重复扣费。
@@ -26,16 +29,16 @@ type GlobalWithTimer = typeof globalThis & {
 }
 
 async function runOnce() {
-  let dueRows: Awaited<ReturnType<typeof pendingChargeService.listDue>>
+  let claimed: Awaited<ReturnType<typeof pendingChargeService.claimDue>>
   try {
-    dueRows = await pendingChargeService.listDue(BATCH_SIZE)
+    claimed = await pendingChargeService.claimDue(BATCH_SIZE)
   } catch (err) {
-    console.error('[pending-charges] failed to list due rows', { error: (err as Error).message })
+    console.error('[pending-charges] failed to claim due rows', { error: (err as Error).message })
     return
   }
-  if (dueRows.length === 0) return
+  if (claimed.length === 0) return
 
-  for (const row of dueRows) {
+  for (const row of claimed) {
     try {
       const r = await creditService.charge({
         userId: row.userId,

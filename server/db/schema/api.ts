@@ -201,6 +201,11 @@ export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
 // 调用统计 plugin 在 afterResponse 阶段同步扣费失败时入队，后台 plugin
 // 按 nextAttemptAt 扫描重试。达到 MAX_ATTEMPTS 转 dead_letter，等待人工处理。
 // 重试成功后回填 apiCalls.creditsCost 并删除本行。
+//
+// 多实例并发安全：status='processing' + leaseExpiresAt 抢占式认领 —— 调度器
+// 用原子 UPDATE...WHERE id IN (SELECT FOR UPDATE SKIP LOCKED) 把一批 pending
+// 抢成 processing 并写入 lease，其他实例在同一窗口跳过这些行。worker 崩溃后
+// lease 到期，下一轮扫描重新认领。
 // ------------------------------------------------------------------
 export const pendingCharges = pgTable('pending_charges', {
   id: serial('id').primaryKey(),
@@ -213,11 +218,15 @@ export const pendingCharges = pgTable('pending_charges', {
   lastError: varchar('last_error', { length: 500 }),
   lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
   nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
-  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | dead_letter
+  // 仅 processing 状态使用：当前持有者的 lease 截止时刻；到期后视为可重新认领
+  leaseExpiresAt: timestamp('lease_expires_at', { withTimezone: true }),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | processing | dead_letter
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('pending_charges_api_call_uq').on(table.apiCallId),
   index('pending_charges_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
+  // 调度器扫描 processing 行查 lease 过期，单独走这条索引
+  index('pending_charges_lease_idx').on(table.status, table.leaseExpiresAt),
   index('pending_charges_user_idx').on(table.userId)
 ])
