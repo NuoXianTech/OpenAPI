@@ -32,8 +32,8 @@
 
 ### 环境要求
 
-- Node.js >= 24.13
-- pnpm 10.x
+- Node.js >= 24.15
+- pnpm 11.x
 - PostgreSQL 16+（dev 可省略，自动走 pglite）
 
 ### 安装与配置
@@ -70,8 +70,6 @@ pnpm dev           # 启动开发服务器 → http://localhost:3000
 pnpm build         # 构建生产产物
 pnpm preview       # 预览生产构建
 pnpm lint          # ESLint 检查
-pnpm test          # 单元测试
-pnpm test:e2e      # e2e 测试
 ```
 
 ## 项目结构
@@ -96,7 +94,6 @@ pnpm test:e2e      # e2e 测试
 ├─ modules/api-manifest.ts   构建期扫描生成 manifest
 ├─ shared/                   前后端共享类型
 ├─ docs/                     部署 + 规范文档
-└─ tests/e2e/                e2e 测试
 ```
 
 ## OAuth 接入（GitHub 示例）
