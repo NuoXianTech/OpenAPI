@@ -127,7 +127,7 @@ CREATE TABLE "apis" (
 --> statement-breakpoint
 CREATE TABLE "credit_transactions" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"user_id" integer,
 	"amount" integer NOT NULL,
 	"balance_after" bigint NOT NULL,
 	"reason" varchar(50) NOT NULL,
@@ -225,6 +225,7 @@ CREATE TABLE "pending_charges" (
 	"last_error" varchar(500),
 	"last_attempt_at" timestamp with time zone,
 	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"lease_expires_at" timestamp with time zone,
 	"status" varchar(20) DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -325,10 +326,9 @@ CREATE TABLE "users" (
 	"last_login_ip" varchar(45),
 	"last_login_user_agent" varchar(500),
 	"email_verified_at" timestamp with time zone,
+	"deleted_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now(),
-	CONSTRAINT "users_username_unique" UNIQUE("username"),
-	CONSTRAINT "users_email_unique" UNIQUE("email")
+	"updated_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
 CREATE TABLE "verification_tokens" (
@@ -348,14 +348,14 @@ CREATE TABLE "verification_tokens" (
 ALTER TABLE "announcements" ADD CONSTRAINT "announcements_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "announcements" ADD CONSTRAINT "announcements_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_call_stats" ADD CONSTRAINT "api_call_stats_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_key_id_api_keys_id_fk" FOREIGN KEY ("api_key_id") REFERENCES "public"."api_keys"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apis" ADD CONSTRAINT "apis_category_id_api_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apis" ADD CONSTRAINT "apis_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apis" ADD CONSTRAINT "apis_updated_by_users_id_fk" FOREIGN KEY ("updated_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "credit_transactions" ADD CONSTRAINT "credit_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "credit_transactions" ADD CONSTRAINT "credit_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "friend_links" ADD CONSTRAINT "friend_links_created_by_users_id_fk" FOREIGN KEY ("created_by") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_message_id_notification_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_recipient_user_id_users_id_fk" FOREIGN KEY ("recipient_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -395,6 +395,7 @@ CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_versio
 CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "credit_transactions_reason_idx" ON "credit_transactions" USING btree ("reason");--> statement-breakpoint
 CREATE INDEX "credit_transactions_api_call_idx" ON "credit_transactions" USING btree ("api_call_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "credit_transactions_api_call_reason_uq" ON "credit_transactions" USING btree ("api_call_id","reason") WHERE "credit_transactions"."api_call_id" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "friend_links_active_idx" ON "friend_links" USING btree ("is_active");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliveries" USING btree ("recipient_user_id","created_at");--> statement-breakpoint
@@ -411,6 +412,7 @@ CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("actio
 CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "pending_charges_api_call_uq" ON "pending_charges" USING btree ("api_call_id");--> statement-breakpoint
 CREATE INDEX "pending_charges_status_next_attempt_idx" ON "pending_charges" USING btree ("status","next_attempt_at");--> statement-breakpoint
+CREATE INDEX "pending_charges_lease_idx" ON "pending_charges" USING btree ("status","lease_expires_at");--> statement-breakpoint
 CREATE INDEX "pending_charges_user_idx" ON "pending_charges" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_batch_idx" ON "redemption_codes" USING btree ("batch_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_enabled_expires_idx" ON "redemption_codes" USING btree ("is_enabled","expires_at");--> statement-breakpoint
@@ -419,7 +421,8 @@ CREATE INDEX "redemption_records_user_redeemed_idx" ON "redemption_records" USIN
 CREATE INDEX "sessions_user_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "sessions_expires_idx" ON "sessions" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "sessions_last_active_idx" ON "sessions" USING btree ("last_active_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "users_email_lower_uq" ON "users" USING btree (lower("email"));--> statement-breakpoint
+CREATE UNIQUE INDEX "users_username_uq" ON "users" USING btree ("username") WHERE "users"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "users_email_lower_uq" ON "users" USING btree (lower("email")) WHERE "users"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "users_active_banned_idx" ON "users" USING btree ("is_active","is_banned");--> statement-breakpoint
 CREATE INDEX "verification_tokens_user_created_idx" ON "verification_tokens" USING btree ("user_id","created_at");--> statement-breakpoint
 CREATE INDEX "verification_tokens_email_idx" ON "verification_tokens" USING btree ("email");--> statement-breakpoint
