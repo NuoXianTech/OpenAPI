@@ -38,7 +38,6 @@ function costFor(method: string): number {
   return typeof v === 'number' && v > 0 ? v : 0
 }
 
-const isPaid = computed(() => methods.value.some(m => costFor(m) > 0))
 const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
 // 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
 const aggregateCost = computed(() => {
@@ -261,8 +260,8 @@ function formatCallCount(count: number) {
             <div class="api-card__detail-value api-card__detail-value--row">
               <UBadge
                 v-if="isApiKey"
-                color="neutral"
-                variant="subtle"
+                color="warning"
+                variant="soft"
                 size="sm"
                 icon="i-mdi-key-variant"
                 class="rounded-full"
@@ -271,8 +270,8 @@ function formatCallCount(count: number) {
               </UBadge>
               <UBadge
                 v-else
-                color="neutral"
-                variant="subtle"
+                color="info"
+                variant="soft"
                 size="sm"
                 icon="i-mdi-lock-open-outline"
                 class="rounded-full"
@@ -284,14 +283,15 @@ function formatCallCount(count: number) {
           <div class="api-card__detail-row">
             <span class="api-card__detail-label">调用次数</span>
             <div class="api-card__detail-value api-card__detail-value--row">
-              <span class="api-card__calls">
-                <UIcon
-                  name="i-mdi-chart-bar"
-                  class="size-3"
-                />
-                <span class="api-card__calls-num">{{ formatCallCount(totalCalls) }}</span>
-                <span class="api-card__calls-label">次</span>
-              </span>
+              <UBadge
+                :color="totalCalls > 0 ? 'primary' : 'neutral'"
+                variant="soft"
+                size="sm"
+                icon="i-mdi-chart-bar"
+                class="rounded-full"
+              >
+                {{ totalCalls > 0 ? `累计调用 ${formatCallCount(totalCalls)} 次` : '暂无调用次数' }}
+              </UBadge>
             </div>
           </div>
           <div
@@ -483,16 +483,16 @@ function formatCallCount(count: number) {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(35, 197, 94, 0.3);
+  border: 2px solid rgba(35, 197, 94, 0.4);
   animation: radarPulse 2s ease-out infinite;
 }
 
 .api-card__radar::after {
-  animation-delay: 1s;
+  animation-delay: 0s;
 }
 
 .api-card__radar.is-error {
-  background: var(--red);
+  background: #ef4444;
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.24), 0 0 8px rgba(239, 68, 68, 0.45);
 }
 
@@ -502,8 +502,8 @@ function formatCallCount(count: number) {
 }
 
 .api-card__radar.is-unknown {
-  background: var(--gray);
-  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.24), 0 0 8px rgba(148, 163, 184, 0.45);
+  background: #94a3b8;
+  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.24), 0 0 8px rgba(148, 163, 184, 0.45);
 }
 
 .api-card__radar.is-unknown::before,
@@ -556,8 +556,7 @@ function formatCallCount(count: number) {
 }
 
 @keyframes radarPulse {
-  0% { transform: scale(1); opacity: 0.6; }
-  70% { transform: scale(2.3); opacity: 0; }
+  0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(2.5); opacity: 0; }
 }
 </style>

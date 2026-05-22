@@ -99,7 +99,7 @@ const balanceStatus = computed<{ label: string, textClass: string, dotClass: str
                   几分钟内开始使用你的 API 网关
                 </h2>
                 <p class="text-sm sm:text-base text-toned max-w-xl">
-                  你好<span v-if="user?.username">，{{ user.username }}</span>。在这里管理 API 密钥、查看余额与调用量，监控服务健康状态。
+                  你好<span v-if="user?.username">，{{ user.username }}</span>。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。
                 </p>
               </div>
 
