@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, asc, eq, gte, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, isNull, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
 import { createError } from 'h3'
 import { requireAuth } from '~~/server/utils/auth'
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
     db.select({
       total: sql<number>`count(*)`,
       active: sql<number>`count(*) filter (where ${apiKeys.isActive})`
-    }).from(apiKeys).where(eq(apiKeys.userId, userId))
+    }).from(apiKeys).where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
   ])
 
   const balance = toNumber(balanceRows[0]?.credits)

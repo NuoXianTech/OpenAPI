@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, sql } from 'drizzle-orm'
 import { apiKeys } from '@nuxthub/db/schema'
 
 const SECRET_BYTES = 32
@@ -72,11 +72,13 @@ export const apiKeyService = {
   },
 
   async listByUser(userId: number) {
-    return db.select().from(apiKeys).where(eq(apiKeys.userId, userId))
+    return db.select().from(apiKeys)
+      .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
+      .orderBy(desc(apiKeys.createdAt))
   },
 
   async listAll() {
-    return db.select().from(apiKeys)
+    return db.select().from(apiKeys).where(isNull(apiKeys.revokedAt))
   },
 
   /**
@@ -112,15 +114,19 @@ export const apiKeyService = {
   },
 
   async deleteForUser(userId: number, id: number) {
-    const res = await db.delete(apiKeys)
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id)))
+    const now = new Date()
+    const res = await db.update(apiKeys)
+      .set({ isActive: false, revokedAt: now, updatedAt: now })
+      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
     return res[0] || null
   },
 
   async deleteById(id: number) {
-    const res = await db.delete(apiKeys)
-      .where(eq(apiKeys.id, id))
+    const now = new Date()
+    const res = await db.update(apiKeys)
+      .set({ isActive: false, revokedAt: now, updatedAt: now })
+      .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
     return res[0] || null
   },
@@ -137,6 +143,7 @@ export const apiKeyService = {
     totalQuota?: number | null
     scopes?: string[] | null
     ipWhitelist?: string[] | null
+    isActive?: boolean
   }, opts: { userId?: number } = {}): Promise<ApiKeyRecord | null> {
     const set: Partial<typeof apiKeys.$inferInsert> = {}
     if (patch.name !== undefined) {
@@ -147,24 +154,28 @@ export const apiKeyService = {
     if (patch.totalQuota !== undefined) set.totalQuota = patch.totalQuota
     if (patch.scopes !== undefined) set.scopes = patch.scopes
     if (patch.ipWhitelist !== undefined) set.ipWhitelist = patch.ipWhitelist
+    if (patch.isActive !== undefined) set.isActive = patch.isActive
 
     if (Object.keys(set).length === 0) {
-      const cur = await db.select().from(apiKeys).where(eq(apiKeys.id, id)).limit(1)
+      const where = opts.userId !== undefined
+        ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
+        : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
+      const cur = await db.select().from(apiKeys).where(where).limit(1)
       return cur[0] || null
     }
 
     const where = opts.userId !== undefined
-      ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId))
-      : eq(apiKeys.id, id)
-    const res = await db.update(apiKeys).set(set).where(where).returning()
+      ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
+      : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
+    const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(where).returning()
     return res[0] || null
   },
 
   async resetForUser(userId: number, id: number) {
     const nextKey = generateApiKey()
     const res = await db.update(apiKeys)
-      .set({ apiKey: nextKey })
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id)))
+      .set({ apiKey: nextKey, updatedAt: new Date() })
+      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
     return res[0] || null
   },
@@ -173,9 +184,10 @@ export const apiKeyService = {
     const nextKey = generateApiKey()
     const res = await db.update(apiKeys)
       .set({
-        apiKey: nextKey
+        apiKey: nextKey,
+        updatedAt: new Date()
       })
-      .where(eq(apiKeys.id, id))
+      .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
     return res[0] || null
   },

@@ -68,7 +68,7 @@ export const userCreateApiKeySchema = z.object({
       if (v === null || v === '') return null
       return v
     },
-    z.union([z.coerce.number().int().min(0, '积分上限不能为负'), z.null()]).optional()
+    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
   ),
   /** 接口范围；null / [] = 全部 */
   scopes: nullableStringArray(scopeSchema, 200),
@@ -80,7 +80,7 @@ export const userCreateApiKeySchema = z.object({
 export type UserCreateApiKeyInput = z.output<typeof userCreateApiKeySchema>
 
 /**
- * 用户更新自己的 API Key 配置 · 仅允许改 name / expiresAt / totalQuota / scopes / ipWhitelist。
+ * 用户更新自己的 API Key 配置 · 仅允许改 name / expiresAt / totalQuota / scopes / ipWhitelist / isActive。
  * apiKey 字符串本身、归属用户、计费状态等不可改；要换 key 走 reset。
  *
  * 所有可选字段：未传 = 不修改；传 null = 清空（无限/全部/永不过期）。
@@ -95,16 +95,18 @@ export const userUpdateApiKeySchema = z.object({
       if (v === null || v === '') return null
       return v
     },
-    z.union([z.coerce.number().int().min(0, '积分上限不能为负'), z.null()]).optional()
+    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
   ),
   scopes: nullableStringArray(scopeSchema, 200),
-  ipWhitelist: nullableStringArray(cidrSchema, 200)
+  ipWhitelist: nullableStringArray(cidrSchema, 200),
+  isActive: z.boolean().optional()
 }).refine(
   d => d.name !== undefined
     || d.expiresAt !== undefined
     || d.totalQuota !== undefined
     || d.scopes !== undefined
-    || d.ipWhitelist !== undefined,
+    || d.ipWhitelist !== undefined
+    || d.isActive !== undefined,
   { message: '至少需要修改一个字段', path: [] }
 )
 export type UserUpdateApiKeyInput = z.output<typeof userUpdateApiKeySchema>

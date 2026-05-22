@@ -1,5 +1,5 @@
 {
-  "id": "c3102e26-57b0-4c01-b3ad-25a00ed157a1",
+  "id": "b807822e-d67c-4d9b-b262-f12e74a1cc42",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -332,6 +332,12 @@
         "api_key_id": {
           "name": "api_key_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "api_key_name": {
+          "name": "api_key_name",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
         },

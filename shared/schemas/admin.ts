@@ -86,7 +86,7 @@ export const adminCreateUserApiKeySchema = z.object({
       if (v === null || v === '') return null
       return v
     },
-    z.union([z.coerce.number().int().min(0, '积分上限不能为负'), z.null()]).optional()
+    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
   ),
   scopes: apiKeyNullableArray(apiKeyScopeSchema, 200),
   ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200),
@@ -105,16 +105,18 @@ export const adminUpdateUserApiKeySchema = z.object({
       if (v === null || v === '') return null
       return v
     },
-    z.union([z.coerce.number().int().min(0, '积分上限不能为负'), z.null()]).optional()
+    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
   ),
   scopes: apiKeyNullableArray(apiKeyScopeSchema, 200),
-  ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200)
+  ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200),
+  isActive: z.boolean().optional()
 }).refine(
   d => d.name !== undefined
     || d.expiresAt !== undefined
     || d.totalQuota !== undefined
     || d.scopes !== undefined
-    || d.ipWhitelist !== undefined,
+    || d.ipWhitelist !== undefined
+    || d.isActive !== undefined,
   { message: '至少需要修改一个字段', path: [] }
 )
 export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySchema>

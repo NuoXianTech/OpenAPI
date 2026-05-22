@@ -32,6 +32,7 @@ CREATE TABLE "api_calls" (
 	"request_id" uuid DEFAULT gen_random_uuid(),
 	"api_id" integer NOT NULL,
 	"api_key_id" integer,
+	"api_key_name" varchar(100),
 	"user_id" integer,
 	"path" varchar(1000) NOT NULL,
 	"method" varchar(10) NOT NULL,

@@ -1,10 +1,11 @@
-import { count, desc, eq, sql, and, type SQL } from 'drizzle-orm'
+import { count, desc, eq, sql, and, isNull, type SQL } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
 import { getLocalDayStart } from '~~/server/utils/localTime'
 
 export interface AddCallInput {
   apiId: number
   apiKeyId?: number | null
+  apiKeyName?: string | null
   userId?: number | null
   path: string
   method: string
@@ -29,6 +30,7 @@ function normalizeCallRow(data: AddCallInput) {
   return {
     apiId: data.apiId,
     apiKeyId: data.apiKeyId ?? null,
+    apiKeyName: data.apiKeyName ?? null,
     userId: data.userId ?? null,
     path: data.path,
     method: data.method,
@@ -95,7 +97,7 @@ export const apiCallService = {
       latencyMs: apiCalls.latencyMs,
       ip: apiCalls.ip,
       apiKeyId: apiCalls.apiKeyId,
-      apiKeyName: apiKeys.name,
+      apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
       userId: apiCalls.userId,
       userName: users.username,
       errorCode: apiCalls.errorCode,
@@ -177,7 +179,7 @@ export const apiCallService = {
         latencyMs: apiCalls.latencyMs,
         ip: apiCalls.ip,
         apiKeyId: apiCalls.apiKeyId,
-        apiKeyName: apiKeys.name,
+        apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
         errorCode: apiCalls.errorCode,
         errorMessage: apiCalls.errorMessage,
         creditsCost: apiCalls.creditsCost,
@@ -218,7 +220,7 @@ export const apiCallService = {
       name: apiKeys.name
     })
       .from(apiKeys)
-      .where(eq(apiKeys.userId, userId))
+      .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
       .orderBy(desc(apiKeys.createdAt))
 
     return { apis: apiOptionsRaw, apiKeys: keyOptionsRaw }

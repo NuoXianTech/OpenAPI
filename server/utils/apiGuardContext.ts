@@ -23,6 +23,7 @@ export interface ApiMetaContext {
 export interface ApiKeyContext {
   id: number
   userId: number
+  name: string
   scopes: string[] | null
 }
 
@@ -59,6 +60,7 @@ export interface ApiGateRejectionContext {
   errorCode: string
   errorMessage: string
   apiKeyId: number | null
+  apiKeyName: string | null
   apiKeyUserId: number | null
 }
 

@@ -127,6 +127,7 @@ export const apiCalls = pgTable('api_calls', {
   requestId: uuid('request_id').defaultRandom(), // 分布式追踪 ID
   apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
+  apiKeyName: varchar('api_key_name', { length: 100 }),
   userId: integer('user_id').references(() => users.id),
   path: varchar('path', { length: 1000 }).notNull(),
   method: varchar('method', { length: 10 }).notNull(),

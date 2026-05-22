@@ -262,6 +262,22 @@ async function reset(id: number) {
   }
 }
 
+async function toggleActive(key: AdminApiKeyItem) {
+  try {
+    await $fetch('/api/admin/users/apikeys/update', {
+      method: 'POST',
+      body: {
+        id: key.id,
+        isActive: !key.isActive
+      }
+    })
+    toast.add({ title: key.isActive ? 'API Key 已停用' : 'API Key 已启用', color: 'success' })
+    await load()
+  } catch (err) {
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+  }
+}
+
 async function remove(id: number) {
   try {
     await $fetch('/api/admin/users/apikeys/delete', { method: 'POST', body: { id } })
@@ -540,6 +556,14 @@ function ipSummary(row: AdminApiKeyItem) {
                 @click="openEditForm(key)"
               >
                 编辑
+              </UButton>
+              <UButton
+                size="xs"
+                variant="outline"
+                color="neutral"
+                @click="toggleActive(key)"
+              >
+                {{ key.isActive ? '停用' : '启用' }}
               </UButton>
               <UButton
                 size="xs"

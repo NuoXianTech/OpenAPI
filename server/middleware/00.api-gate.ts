@@ -105,6 +105,7 @@ export default defineEventHandler(async (event: H3Event) => {
       errorCode: result.error.code,
       errorMessage: result.error.msg,
       apiKeyId: result.apiKey?.id ?? null,
+      apiKeyName: result.apiKey?.name ?? null,
       apiKeyUserId: result.apiKey?.userId ?? null
     }
     return rejectWithOpenApi(event, result.error, result.detail ?? null)
@@ -119,7 +120,7 @@ export default defineEventHandler(async (event: H3Event) => {
     startedAt: Date.now()
   }
   event.context.apiKey = result.apiKey
-    ? { id: result.apiKey.id, userId: result.apiKey.userId, scopes: result.apiKey.scopes ?? null }
+    ? { id: result.apiKey.id, userId: result.apiKey.userId, name: result.apiKey.name, scopes: result.apiKey.scopes ?? null }
     : null
 
   // 计费上下文 · 后置中间件根据该状态决定是否扣款。业务 handler 可通过

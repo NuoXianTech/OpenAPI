@@ -31,7 +31,8 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'api_key_quota_exceeded',
   'disabled',
   'expired_api_key',
-  'insufficient_credits'
+  'insufficient_credits',
+  'revoked_api_key'
 ])
 
 declare module 'h3' {
@@ -91,6 +92,9 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     const apiKeyId = event.context.apiKey?.id
       ?? rejection?.apiKeyId
       ?? null
+    const apiKeyName = event.context.apiKey?.name
+      ?? rejection?.apiKeyName
+      ?? null
     const apiKeyUserId = event.context.apiKey?.userId
       ?? rejection?.apiKeyUserId
       ?? null
@@ -119,6 +123,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     const callInput = {
       apiId: target.apiId,
       apiKeyId,
+      apiKeyName,
       userId: apiKeyUserId,
       path: tracked.pathname,
       method: tracked.method,

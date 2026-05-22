@@ -366,6 +366,22 @@ async function confirmReset() {
 // ------------------------------------------------------------
 const confirm = useConfirmDialog()
 
+async function toggleActive(row: ApiKey) {
+  try {
+    await $fetch('/api/user/apikeys/update', {
+      method: 'POST',
+      body: {
+        id: row.id,
+        isActive: !row.isActive
+      }
+    })
+    toast.add({ title: row.isActive ? '已停用' : '已启用', color: 'success' })
+    await refresh()
+  } catch (err: unknown) {
+    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+  }
+}
+
 async function openDelete(row: ApiKey) {
   await confirm({
     title: `删除 API Key: ${row.name || ''}`,
@@ -448,6 +464,11 @@ function getRowItems(row: ApiKey): DropdownMenuItem[] {
   return [
     { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
     { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    {
+      label: row.isActive ? '停用' : '启用',
+      icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
+      onSelect: () => toggleActive(row)
+    },
     { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
     { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]

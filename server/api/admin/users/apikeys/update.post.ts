@@ -15,7 +15,8 @@ export default defineEventHandler(async (event: H3Event) => {
     expiresAt: input.expiresAt,
     totalQuota: input.totalQuota,
     scopes: input.scopes,
-    ipWhitelist: input.ipWhitelist
+    ipWhitelist: input.ipWhitelist,
+    isActive: input.isActive
   })
 
   if (!updated) {
@@ -34,7 +35,8 @@ export default defineEventHandler(async (event: H3Event) => {
         expiresAt: input.expiresAt,
         totalQuota: input.totalQuota,
         scopes: input.scopes,
-        ipWhitelist: input.ipWhitelist
+        ipWhitelist: input.ipWhitelist,
+        isActive: input.isActive
       }
     }
   })
