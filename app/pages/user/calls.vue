@@ -54,8 +54,8 @@ const keySelectItems = computed(() => [
 ])
 const statusSelectItems = [
   { label: '全部状态', value: 'all' },
-  { label: '成功（2xx/3xx）', value: 'success' },
-  { label: '失败（4xx/5xx）', value: 'failure' }
+  { label: '成功', value: 'success' },
+  { label: '失败', value: 'failure' }
 ]
 
 async function loadFilters() {
@@ -121,6 +121,10 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
   if (code >= 300 && code < 400) return 'neutral'
   if (code >= 400 && code < 500) return 'warning'
   return 'error'
+}
+
+function isCallSuccess(row: LogRow) {
+  return row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
 }
 
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
@@ -261,11 +265,11 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
                   {{ row.original.statusCode }}
                 </UBadge>
                 <UBadge
-                  :color="row.original.statusCode >= 200 && row.original.statusCode < 400 ? 'success' : 'error'"
+                  :color="isCallSuccess(row.original) ? 'success' : 'error'"
                   variant="soft"
                   size="sm"
                 >
-                  {{ row.original.statusCode >= 200 && row.original.statusCode < 400 ? '成功' : '失败' }}
+                  {{ isCallSuccess(row.original) ? '成功' : '失败' }}
                 </UBadge>
               </div>
             </template>

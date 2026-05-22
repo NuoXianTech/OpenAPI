@@ -93,6 +93,10 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
   return 'error'
 }
 
+function isCallSuccess(row: AdminCallRow) {
+  return row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+}
+
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
   switch (method) {
     case 'GET': return 'success'
@@ -106,8 +110,8 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
 
 const statusSelectItems = [
   { label: '全部状态', value: 'all' },
-  { label: '成功（2xx/3xx）', value: 'success' },
-  { label: '失败（4xx/5xx）', value: 'failure' }
+  { label: '成功', value: 'success' },
+  { label: '失败', value: 'failure' }
 ]
 
 const logColumns: TableColumn<AdminCallRow>[] = [
@@ -305,20 +309,11 @@ const logColumns: TableColumn<AdminCallRow>[] = [
               {{ row.original.statusCode }}
             </UBadge>
             <UBadge
-              v-if="row.original.statusCode >= 200 && row.original.statusCode < 400"
-              color="success"
+              :color="isCallSuccess(row.original) ? 'success' : 'error'"
               variant="soft"
               size="sm"
             >
-              成功
-            </UBadge>
-            <UBadge
-              v-else
-              color="error"
-              variant="soft"
-              size="sm"
-            >
-              失败
+              {{ isCallSuccess(row.original) ? '成功' : '失败' }}
             </UBadge>
           </div>
         </template>

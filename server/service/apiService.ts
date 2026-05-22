@@ -106,12 +106,6 @@ type PublicApiItem = {
   totalCalls: number
 }
 
-export type StatisticsTargetItem = {
-  id: number
-  apiPath: string
-  httpMethod: string
-}
-
 export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
@@ -136,17 +130,6 @@ export const apiService = {
       methodCosts: row.methodCosts ?? {},
       totalCalls: statsMap[row.id]?.totalCalls ?? 0
     }))
-  },
-
-  async listStatisticsTargets() {
-    return db.select({
-      id: apis.id,
-      apiPath: apis.apiPath,
-      httpMethod: apis.httpMethod
-    }).from(apis).where(and(
-      eq(apis.isEnabled, true),
-      eq(apis.isStatistics, true)
-    ))
   },
 
   async getById(id: number) {

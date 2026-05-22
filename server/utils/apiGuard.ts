@@ -238,11 +238,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
         return {
           passed: false,
           outcome: 'api_key_quota_exceeded',
-          error: {
-            ...API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
-            msg: `该 API Key 累计已消耗 ${used} 积分，配额上限 ${limit}，本次调用需要 ${effectiveCost} 积分`
-          },
-          detail: { usedCredits: used, totalQuota: limit, cost: effectiveCost },
+          error: API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
           apiKey
         }
       }

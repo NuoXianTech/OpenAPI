@@ -28,8 +28,10 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
   const tomorrowStart = addLocalDays(todayStart, 1)
 
   const totalExpr = sql<number>`count(*)`
-  const successExpr = sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`
-  const failureExpr = sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`
+  const callSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
+  const callFailureCondition = sql`not (${callSuccessCondition})`
+  const successExpr = sql<number>`count(*) filter (where ${callSuccessCondition})`
+  const failureExpr = sql<number>`count(*) filter (where ${callFailureCondition})`
   const creditsSpentExpr = sql<number>`coalesce(sum(${apiCalls.creditsCost}), 0)`
   const dayBucketExpr = sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone 'Asia/Shanghai')`
 

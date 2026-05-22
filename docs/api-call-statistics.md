@@ -63,11 +63,11 @@
 | IP 不在白名单 | 是 | 否 |
 | 触发限流 | 是 | 否 |
 | API 每日配额超限 | 是 | 否 |
-| API Key 累计积分配额超限 | 是 | 否 |
+| API Key 累计积分配额超限 | 是，但不更新日聚合统计 | 否 |
 | 余额不足 | 是 | 否 |
 | API 被禁用 | 是，若已命中统计目标 | 否 |
 
-已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。
+已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 累计积分配额超限只写调用日志，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。
 
 ## 5. 成功与失败口径
 

@@ -73,9 +73,8 @@ export default defineEventHandler(async (event: H3Event) => {
     return rejectWithOpenApi(event, API_GUARD_ERROR.NOT_REGISTERED)
   }
 
-  // 尽早挂 apiStatsTarget，使后续即便被规则链拒绝也能被调用统计 plugin 记录。
-  // 仅当 isStatistics=true 时挂载，否则 plugin 的 fallback (resolveStatisticsTarget)
-  // 也会按 isStatistics 过滤而返回 null，自然短路、不写库。
+  // 仅当 isStatistics=true 时挂载统计目标；统计 plugin 只信任该上下文。
+  // 未注册、未命中 manifest 或关闭统计的请求不会写入 apiCalls/apiCallStats。
   if (api.isStatistics) {
     event.context.apiStatsTarget = {
       apiId: api.id,

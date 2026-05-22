@@ -70,6 +70,11 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
   return 'neutral'
 }
 
+function recentStatusColor(row: AdminDashboardRecentCall): 'success' | 'warning' | 'error' | 'neutral' {
+  if (row.errorCode) return 'error'
+  return statusColor(row.statusCode)
+}
+
 function methodColor(method: string): 'info' | 'success' | 'warning' | 'error' | 'neutral' {
   switch (method.toUpperCase()) {
     case 'GET': return 'info'
@@ -283,7 +288,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             </template>
             <template #statusCode-cell="{ row }">
               <UBadge
-                :color="statusColor(row.original.statusCode)"
+                :color="recentStatusColor(row.original)"
                 variant="subtle"
                 size="sm"
               >

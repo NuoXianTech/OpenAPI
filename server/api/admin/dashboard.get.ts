@@ -98,6 +98,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
       apiPath: apiCalls.path,
       method: apiCalls.method,
       statusCode: apiCalls.statusCode,
+      errorCode: apiCalls.errorCode,
       latencyMs: apiCalls.latencyMs,
       createdAt: apiCalls.createdAt
     }).from(apiCalls)
@@ -151,6 +152,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     apiPath: string
     method: string
     statusCode: number
+    errorCode: string | null
     latencyMs: number
     createdAt: Date
   }) => ({
@@ -159,6 +161,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     apiPath: row.apiPath,
     method: row.method,
     statusCode: row.statusCode,
+    errorCode: row.errorCode,
     latencyMs: row.latencyMs,
     createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : new Date(row.createdAt).toISOString()
   }))

@@ -61,7 +61,7 @@ export const API_GUARD_ERROR = {
   IP_DENIED: { status: 403, code: 'IP_DENIED', msg: '当前 IP 不在白名单内' },
   RATE_LIMITED: { status: 429, code: 'RATE_LIMITED', msg: '请求过于频繁，请稍后再试' },
   QUOTA_EXCEEDED: { status: 429, code: 'QUOTA_EXCEEDED', msg: '已达到当日配额上限' },
-  API_KEY_QUOTA_EXCEEDED: { status: 429, code: 'API_KEY_QUOTA_EXCEEDED', msg: '该 API Key 累计消耗积分已达上限' },
+  API_KEY_QUOTA_EXCEEDED: { status: 429, code: 'API_KEY_QUOTA_EXCEEDED', msg: '积分配额超限' },
   INSUFFICIENT_CREDITS: { status: 402, code: 'INSUFFICIENT_CREDITS', msg: '积分不足，请充值后再试' }
 } as const
 

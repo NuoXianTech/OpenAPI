@@ -48,6 +48,9 @@ function normalizeCallRow(data: AddCallInput) {
   }
 }
 
+const callSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
+const callFailureCondition = sql`not (${callSuccessCondition})`
+
 export const apiCallService = {
   async list() {
     return db.select().from(apiCalls).orderBy(desc(apiCalls.createdAt))
@@ -72,9 +75,9 @@ export const apiCallService = {
     if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
     if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
     if (opts.status === 'success') {
-      conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
+      conds.push(callSuccessCondition)
     } else if (opts.status === 'failure') {
-      conds.push(sql`${apiCalls.statusCode} >= 400`)
+      conds.push(callFailureCondition)
     }
 
     const where = conds.length ? and(...conds) : undefined
@@ -124,8 +127,8 @@ export const apiCallService = {
   async getSummaryForUser(userId: number) {
     const rows = await db.select({
       total: count(),
-      success: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400)`,
-      failure: sql<number>`count(*) filter (where ${apiCalls.statusCode} >= 400)`
+      success: sql<number>`count(*) filter (where ${callSuccessCondition})`,
+      failure: sql<number>`count(*) filter (where ${callFailureCondition})`
     }).from(apiCalls).where(eq(apiCalls.userId, userId))
     const r = rows[0] || { total: 0, success: 0, failure: 0 }
     return {
@@ -153,9 +156,9 @@ export const apiCallService = {
     if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
     if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
     if (opts.status === 'success') {
-      conds.push(sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400`)
+      conds.push(callSuccessCondition)
     } else if (opts.status === 'failure') {
-      conds.push(sql`${apiCalls.statusCode} >= 400`)
+      conds.push(callFailureCondition)
     }
 
     const [items, totalRows] = await Promise.all([

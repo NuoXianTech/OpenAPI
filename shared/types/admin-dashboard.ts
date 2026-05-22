@@ -31,6 +31,7 @@ export interface AdminDashboardRecentCall {
   apiPath: string
   method: string
   statusCode: number
+  errorCode: string | null
   latencyMs: number
   createdAt: string
 }
