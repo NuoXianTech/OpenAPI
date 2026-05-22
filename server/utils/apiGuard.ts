@@ -54,6 +54,8 @@ export type GateResult
     headers?: GateDeniedHeaders
     /** 附加给客户端的结构化信息（写入 openApiFail 的 data 字段） */
     detail?: Record<string, unknown>
+    /** 拒绝时若已识别到具体 Key，仍带出以便日志归属（INVALID/MISSING 时为 null） */
+    apiKey: ApiKeyRecord | null
   }
 
 const QUOTA_CACHE_TTL_MS = 1_000
@@ -148,7 +150,7 @@ export interface RunGuardInput {
 export async function runApiGuard({ event, api, match: _match, effectiveCost }: RunGuardInput): Promise<GateResult> {
   // [1] isEnabled
   if (!api.isEnabled) {
-    return { passed: false, outcome: 'disabled', error: API_GUARD_ERROR.DISABLED }
+    return { passed: false, outcome: 'disabled', error: API_GUARD_ERROR.DISABLED, apiKey: null }
   }
 
   // [2] / [3] ApiKey 处理
@@ -158,13 +160,20 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
   if (rawKey) {
     apiKey = await loadApiKey(rawKey)
     if (!apiKey) {
-      return { passed: false, outcome: 'invalid_api_key', error: API_GUARD_ERROR.INVALID_API_KEY }
+      return { passed: false, outcome: 'invalid_api_key', error: API_GUARD_ERROR.INVALID_API_KEY, apiKey: null }
     }
     if (!apiKey.isActive || apiKey.revokedAt) {
-      return { passed: false, outcome: 'revoked_api_key', error: API_GUARD_ERROR.REVOKED_API_KEY }
+      return { passed: false, outcome: 'revoked_api_key', error: API_GUARD_ERROR.REVOKED_API_KEY, apiKey }
     }
-    if (apiKey.expiresAt && apiKey.expiresAt.getTime() <= Date.now()) {
-      const expiresAtIso = apiKey.expiresAt.toISOString()
+    // 防御性归一：drizzle PG timestamp 通常返回 Date，但保险起见兼容字符串/数字
+    const expiresAtRaw = apiKey.expiresAt as Date | string | number | null | undefined
+    const expiresAtMs = expiresAtRaw instanceof Date
+      ? expiresAtRaw.getTime()
+      : (expiresAtRaw === null || expiresAtRaw === undefined
+          ? null
+          : new Date(expiresAtRaw).getTime())
+    if (expiresAtMs !== null && Number.isFinite(expiresAtMs) && expiresAtMs <= Date.now()) {
+      const expiresAtIso = new Date(expiresAtMs).toISOString()
       return {
         passed: false,
         outcome: 'expired_api_key',
@@ -172,19 +181,20 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
           ...API_GUARD_ERROR.EXPIRED_API_KEY,
           msg: `API Key 已于 ${expiresAtIso} 过期`
         },
-        detail: { expiresAt: expiresAtIso }
+        detail: { expiresAt: expiresAtIso },
+        apiKey
       }
     }
     if (!hasScope(apiKey.scopes, api)) {
-      return { passed: false, outcome: 'scope_denied', error: API_GUARD_ERROR.SCOPE_DENIED }
+      return { passed: false, outcome: 'scope_denied', error: API_GUARD_ERROR.SCOPE_DENIED, apiKey }
     }
     const ip = getRequestIP(event) || null
     if (!ipInAnyCidr(ip, apiKey.ipWhitelist)) {
-      return { passed: false, outcome: 'ip_denied', error: API_GUARD_ERROR.IP_DENIED }
+      return { passed: false, outcome: 'ip_denied', error: API_GUARD_ERROR.IP_DENIED, apiKey }
     }
   } else if (api.isApiKey || effectiveCost > 0) {
     // 显式开启 isApiKey 必需，或本次 method 有扣费要求 → 必须带 apiKey 才能定位归属用户
-    return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY }
+    return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY, apiKey: null }
   }
 
   // [4] 限流：带 key 按 key 计，不带按 IP 计
@@ -197,7 +207,8 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
       passed: false,
       outcome: 'rate_limited',
       error: API_GUARD_ERROR.RATE_LIMITED,
-      headers: rateLimitHeaders([rateResult.denied])
+      headers: rateLimitHeaders([rateResult.denied]),
+      apiKey
     }
   }
 
@@ -206,7 +217,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
     try {
       const used = await getTodayQuotaUsage(api.id)
       if (used >= api.dailyQuota) {
-        return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED }
+        return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED, apiKey }
       }
     } catch (err) {
       console.error('[api-guard] quota check failed', {
@@ -231,7 +242,8 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
             ...API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
             msg: `该 API Key 累计已消耗 ${used} 积分，配额上限 ${limit}，本次调用需要 ${effectiveCost} 积分`
           },
-          detail: { usedCredits: used, totalQuota: limit, cost: effectiveCost }
+          detail: { usedCredits: used, totalQuota: limit, cost: effectiveCost },
+          apiKey
         }
       }
     }
@@ -244,7 +256,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
         .limit(1)
       const balance = Number(userRow[0]?.credits || 0)
       if (balance < effectiveCost) {
-        return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
+        return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
       }
     } catch (err) {
       console.error('[api-guard] credits check failed', {
@@ -252,7 +264,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
         error: (err as Error).message
       })
       // 积分校验异常时 fail-close 更安全：避免漏扣或误调用
-      return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
+      return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
     }
   }
 

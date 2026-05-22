@@ -125,6 +125,41 @@ export const apiKeyService = {
     return res[0] || null
   },
 
+  /**
+   * 更新一个 Key 的可配置字段。
+   *
+   * 入参以 undefined 表示"不修改"、null 表示"清空（无限/全部/永不过期）"。
+   * userId 非空时校验 Key 归属，避免越权改别人的 Key。
+   */
+  async updateConfig(id: number, patch: {
+    name?: string
+    expiresAt?: Date | null
+    totalQuota?: number | null
+    scopes?: string[] | null
+    ipWhitelist?: string[] | null
+  }, opts: { userId?: number } = {}): Promise<ApiKeyRecord | null> {
+    const set: Partial<typeof apiKeys.$inferInsert> = {}
+    if (patch.name !== undefined) {
+      const trimmed = patch.name.trim()
+      set.name = trimmed || '默认密钥'
+    }
+    if (patch.expiresAt !== undefined) set.expiresAt = patch.expiresAt
+    if (patch.totalQuota !== undefined) set.totalQuota = patch.totalQuota
+    if (patch.scopes !== undefined) set.scopes = patch.scopes
+    if (patch.ipWhitelist !== undefined) set.ipWhitelist = patch.ipWhitelist
+
+    if (Object.keys(set).length === 0) {
+      const cur = await db.select().from(apiKeys).where(eq(apiKeys.id, id)).limit(1)
+      return cur[0] || null
+    }
+
+    const where = opts.userId !== undefined
+      ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId))
+      : eq(apiKeys.id, id)
+    const res = await db.update(apiKeys).set(set).where(where).returning()
+    return res[0] || null
+  },
+
   async resetForUser(userId: number, id: number) {
     const nextKey = generateApiKey()
     const res = await db.update(apiKeys)

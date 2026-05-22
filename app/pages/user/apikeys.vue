@@ -203,6 +203,133 @@ async function submitCreate() {
 }
 
 // ------------------------------------------------------------
+// 编辑
+// ------------------------------------------------------------
+const editOpen = ref(false)
+const editing = ref(false)
+const editTargetId = ref<number | null>(null)
+
+const editForm = reactive({
+  name: '',
+  expiryPreset: 'never' as ExpiryPreset,
+  expiresAtCustom: defaultCustomExpiry(),
+  unlimitedQuota: true,
+  totalQuota: 1000 as number | null,
+  scopesMode: 'all' as 'all' | 'pick',
+  scopesSelected: [] as string[],
+  ipWhitelistText: ''
+})
+
+function expiresAtToPresetInput(expiresAt: string | null): {
+  preset: ExpiryPreset
+  custom: string
+} {
+  if (!expiresAt) return { preset: 'never', custom: defaultCustomExpiry() }
+  // 编辑场景下已经签发的 Key 不便回推到「1h / 1d / 1mo」预设——直接进入自定义并把
+  // datetime-local 的初值填成当前的 expiresAt（本地时区）
+  const d = new Date(expiresAt)
+  if (Number.isNaN(d.getTime())) return { preset: 'never', custom: defaultCustomExpiry() }
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  const custom = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return { preset: 'custom', custom }
+}
+
+async function openEdit(row: ApiKey) {
+  editTargetId.value = row.id
+  const expiry = expiresAtToPresetInput(row.expiresAt)
+  editForm.name = row.name || ''
+  editForm.expiryPreset = expiry.preset
+  editForm.expiresAtCustom = expiry.custom
+  editForm.unlimitedQuota = row.totalQuota === null || row.totalQuota === undefined
+  editForm.totalQuota = row.totalQuota === null || row.totalQuota === undefined ? 1000 : Number(row.totalQuota)
+  editForm.scopesMode = row.scopes && row.scopes.length > 0 ? 'pick' : 'all'
+  editForm.scopesSelected = row.scopes ? [...row.scopes] : []
+  editForm.ipWhitelistText = row.ipWhitelist ? row.ipWhitelist.join('\n') : ''
+  editOpen.value = true
+  await ensureApiOptions()
+  // 切到 pick 但当前选中为空时，预选所有项作为起点
+  if (editForm.scopesMode === 'all' && editForm.scopesSelected.length === 0) {
+    editForm.scopesSelected = apiOptions.value.map(o => o.scope)
+  }
+}
+
+const editIpLineErrors = computed(() => {
+  if (!editForm.ipWhitelistText.trim()) return [] as Array<{ index: number, value: string }>
+  const lines = editForm.ipWhitelistText
+    .split(/[\n,]/)
+    .map(s => s.trim())
+    .filter(Boolean)
+  const errs: Array<{ index: number, value: string }> = []
+  lines.forEach((line, i) => {
+    if (!isCidr(line)) errs.push({ index: i + 1, value: line })
+  })
+  return errs
+})
+
+const editFormError = computed(() => {
+  if (editForm.expiryPreset === 'custom' && !editForm.expiresAtCustom) return '请填写过期时间'
+  if (!editForm.unlimitedQuota) {
+    if (editForm.totalQuota === null || editForm.totalQuota === undefined || Number(editForm.totalQuota) < 0) {
+      return '请填写有效的积分上限'
+    }
+  }
+  if (editForm.scopesMode === 'pick' && editForm.scopesSelected.length === 0) {
+    return '请至少选择一个接口，或切回"全部接口"'
+  }
+  if (editIpLineErrors.value.length > 0) {
+    return `IP 白名单第 ${editIpLineErrors.value.map(e => e.index).join(', ')} 行格式错误`
+  }
+  return null
+})
+
+function computeEditExpiresAt(): string | null {
+  switch (editForm.expiryPreset) {
+    case 'never': return null
+    case '1h': return new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    case '1d': return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    case '1mo': return new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    case 'custom': {
+      if (!editForm.expiresAtCustom) return null
+      const d = new Date(editForm.expiresAtCustom)
+      return Number.isNaN(d.getTime()) ? null : d.toISOString()
+    }
+  }
+}
+
+async function submitEdit() {
+  if (!editTargetId.value) return
+  if (editFormError.value) {
+    toast.add({ title: editFormError.value, color: 'warning' })
+    return
+  }
+  const ipList = editForm.ipWhitelistText
+    .split(/[\n,]/)
+    .map(s => s.trim())
+    .filter(Boolean)
+  editing.value = true
+  try {
+    await $fetch('/api/user/apikeys/update', {
+      method: 'POST',
+      body: {
+        id: editTargetId.value,
+        name: editForm.name.trim() || '默认密钥',
+        expiresAt: computeEditExpiresAt(),
+        totalQuota: editForm.unlimitedQuota ? null : Number(editForm.totalQuota),
+        scopes: editForm.scopesMode === 'all' ? null : editForm.scopesSelected,
+        ipWhitelist: ipList.length === 0 ? null : ipList
+      }
+    })
+    toast.add({ title: '已更新', color: 'success' })
+    editOpen.value = false
+    await refresh()
+  } catch (err) {
+    toast.add({ title: parseFetchError(err, '更新失败'), color: 'error' })
+  } finally {
+    editing.value = false
+  }
+}
+
+// ------------------------------------------------------------
 // 重置
 // ------------------------------------------------------------
 const resetOpen = ref(false)
@@ -319,6 +446,7 @@ function ipWhitelistText(row: ApiKey) {
 
 function getRowItems(row: ApiKey): DropdownMenuItem[] {
   return [
+    { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
     { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
     { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
@@ -658,6 +786,128 @@ const columns: TableColumn<ApiKey>[] = [
               @click="submitCreate"
             >
               生成
+            </UButton>
+          </div>
+        </template>
+      </UModal>
+
+      <!-- 编辑 Key -->
+      <UModal
+        v-model:open="editOpen"
+        title="编辑 API Key"
+        :ui="{ content: 'sm:max-w-2xl' }"
+      >
+        <template #body>
+          <div class="space-y-4">
+            <UFormField
+              label="名称"
+              help="仅展示用，不影响 Key 字符串本身"
+            >
+              <UInput
+                v-model="editForm.name"
+                placeholder="例如：默认密钥 / 生产密钥"
+                :maxlength="80"
+              />
+            </UFormField>
+
+            <UFormField label="过期时间">
+              <URadioGroup
+                v-model="editForm.expiryPreset"
+                orientation="horizontal"
+                :items="expiryItems"
+              />
+              <UInput
+                v-if="editForm.expiryPreset === 'custom'"
+                v-model="editForm.expiresAtCustom"
+                type="datetime-local"
+                class="mt-2"
+              />
+              <p class="text-xs text-muted mt-1">
+                选择「永不过期」会清空过期时间；选择预设会从当前时间起算。
+              </p>
+            </UFormField>
+
+            <UFormField label="积分配额">
+              <div class="flex items-center gap-3">
+                <USwitch
+                  v-model="editForm.unlimitedQuota"
+                  label="无限配额"
+                />
+                <UInput
+                  v-if="!editForm.unlimitedQuota"
+                  v-model.number="editForm.totalQuota"
+                  type="number"
+                  :min="0"
+                  placeholder="累计可消耗积分上限"
+                  class="flex-1"
+                />
+              </div>
+              <p class="text-xs text-muted mt-1">
+                修改上限不会重置已消耗积分；若新上限低于已消耗，Key 将立即停止可用直至再次提高。
+              </p>
+            </UFormField>
+
+            <UFormField label="接口范围">
+              <URadioGroup
+                v-model="editForm.scopesMode"
+                orientation="horizontal"
+                :items="[
+                  { label: '全部接口', value: 'all' },
+                  { label: '指定接口', value: 'pick' }
+                ]"
+              />
+              <USelectMenu
+                v-if="editForm.scopesMode === 'pick'"
+                v-model="editForm.scopesSelected"
+                :items="scopeSelectItems"
+                multiple
+                searchable
+                value-key="value"
+                placeholder="选择允许调用的接口"
+                class="mt-2 w-full"
+              />
+            </UFormField>
+
+            <UFormField
+              label="IP 白名单（CIDR）"
+              :help="editIpLineErrors.length > 0
+                ? `第 ${editIpLineErrors.map(e => e.index).join(', ')} 行格式错误`
+                : '每行一条 CIDR；留空 = 不限'"
+              :error="editIpLineErrors.length > 0"
+            >
+              <UTextarea
+                v-model="editForm.ipWhitelistText"
+                :rows="3"
+                placeholder="1.2.3.4/32&#10;10.0.0.0/8"
+                class="font-mono text-xs"
+              />
+            </UFormField>
+
+            <UAlert
+              v-if="editFormError"
+              :title="editFormError"
+              color="warning"
+              variant="subtle"
+              icon="i-mdi-alert-outline"
+            />
+          </div>
+        </template>
+
+        <template #footer>
+          <div class="flex justify-end gap-2 w-full">
+            <UButton
+              variant="outline"
+              color="neutral"
+              @click="editOpen = false"
+            >
+              取消
+            </UButton>
+            <UButton
+              :loading="editing"
+              :disabled="!!editFormError"
+              @click="submitEdit"
+            >
+              保存
             </UButton>
           </div>
         </template>

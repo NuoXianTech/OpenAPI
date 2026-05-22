@@ -94,6 +94,31 @@ export const adminCreateUserApiKeySchema = z.object({
 })
 export type AdminCreateUserApiKeyInput = z.output<typeof adminCreateUserApiKeySchema>
 
+/** 管理员-编辑某个 API Key 的配置（id 唯一定位；不绑定 userId） */
+export const adminUpdateUserApiKeySchema = z.object({
+  id: z.coerce.number().int().positive('id is required'),
+  name: z.string().trim().max(80, '名称最多 80 字').optional(),
+  expiresAt: optionalDate,
+  totalQuota: z.preprocess(
+    (v) => {
+      if (v === undefined) return undefined
+      if (v === null || v === '') return null
+      return v
+    },
+    z.union([z.coerce.number().int().min(0, '积分上限不能为负'), z.null()]).optional()
+  ),
+  scopes: apiKeyNullableArray(apiKeyScopeSchema, 200),
+  ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200)
+}).refine(
+  d => d.name !== undefined
+    || d.expiresAt !== undefined
+    || d.totalQuota !== undefined
+    || d.scopes !== undefined
+    || d.ipWhitelist !== undefined,
+  { message: '至少需要修改一个字段', path: [] }
+)
+export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySchema>
+
 // ============================================================
 // Admin · User · Credits
 // ============================================================

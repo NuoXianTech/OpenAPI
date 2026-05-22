@@ -194,9 +194,15 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       return
     }
 
-    // gate 已解析的 apiKey 直接复用，避免二次查询
-    const apiKeyId = event.context.apiKey?.id ?? await resolveApiKeyId(tracked.apiKey)
-    const apiKeyUserId = event.context.apiKey?.userId ?? null
+    const rejection = event.context.apiGateRejection ?? null
+
+    // gate 已解析的 apiKey 直接复用（含被拒情形）；其次回查
+    const apiKeyId = event.context.apiKey?.id
+      ?? rejection?.apiKeyId
+      ?? await resolveApiKeyId(tracked.apiKey)
+    const apiKeyUserId = event.context.apiKey?.userId
+      ?? rejection?.apiKeyUserId
+      ?? null
     const billing = event.context.apiBilling
 
     // 计费判定：仅当 gate 通过且具备扣费上下文时执行
@@ -209,9 +215,13 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
         })
       : false
 
-    // 业务标记的失败信息，覆盖默认 errorCode/errorMessage
-    const errorCode = billing?.forcedOutcome === 'failed' ? billing.failedCode : null
-    const errorMessage = billing?.forcedOutcome === 'failed' ? billing.failedMessage : null
+    // 错误信息优先级：gate 拒绝 > 业务 forced=failed
+    const errorCode = rejection
+      ? rejection.errorCode
+      : billing?.forcedOutcome === 'failed' ? billing.failedCode : null
+    const errorMessage = rejection
+      ? rejection.errorMessage
+      : billing?.forcedOutcome === 'failed' ? billing.failedMessage : null
 
     // 业务标记 forced=failed 时，statusCode 仍是真实的（200），但要让 stats 视为失败：
     // 借助传入 addCallAndUpsertDailyStat 一个修正后的 statusCode 给统计逻辑
@@ -292,7 +302,9 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       }
     }
 
-    if (apiKeyId) {
+    // gate 拒绝时不累加 totalCalls：被拒的调用不算"该 Key 的成功使用"。
+    // 仍把日志归属到 apiKeyId（已在上面写入 apiCalls.apiKeyId）便于审计。
+    if (apiKeyId && !rejection) {
       await apiKeyService.recordUsage(apiKeyId, tracked.ip)
     }
   } catch (error) {

@@ -1,11 +1,14 @@
 import type { H3Event } from 'h3'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { apis } from '@nuxthub/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
 
 /**
- * 用户侧 · 获取所有可见接口（active + enabled），用于 API Key 创建表单
+ * 用户侧 · 获取所有"已启用"的接口（仅看 isEnabled），用于 API Key 创建/编辑表单
  * 的"接口范围"下拉选项。
+ *
+ * 不再用 status=1 过滤：status 反映运行状态（维护/废弃/未知），那些状态下用户
+ * 仍可能需要把接口加入 scope，调用时由 gate/manifest 给出对应错误即可。
  *
  * 返回字段：
  *   - scope：写入 apiKeys.scopes 的字符串，格式 `${pathVersion}.${code}`
@@ -24,7 +27,7 @@ export default defineEventHandler(async (event: H3Event) => {
     httpMethod: apis.httpMethod
   })
     .from(apis)
-    .where(and(eq(apis.isEnabled, true), eq(apis.status, 1)))
+    .where(eq(apis.isEnabled, true))
     .orderBy(apis.pathVersion, apis.code)
 
   return rows.map((r: typeof rows[number]) => ({

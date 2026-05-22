@@ -100,6 +100,14 @@ export default defineEventHandler(async (event: H3Event) => {
   const result = await runApiGuard({ event, api, match, effectiveCost })
   if (!result.passed) {
     if (result.headers) setResponseHeaders(event, result.headers)
+    // 把拒绝原因挂到 context，供 apiCallStats plugin 写入 apiCalls.errorCode/errorMessage
+    event.context.apiGateRejection = {
+      outcome: result.outcome,
+      errorCode: result.error.code,
+      errorMessage: result.error.msg,
+      apiKeyId: result.apiKey?.id ?? null,
+      apiKeyUserId: result.apiKey?.userId ?? null
+    }
     return rejectWithOpenApi(event, result.error, result.detail ?? null)
   }
 

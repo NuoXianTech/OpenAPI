@@ -1,11 +1,13 @@
 import type { H3Event } from 'h3'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { apis } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 
 /**
- * 管理员侧 · 获取所有可见接口（active + enabled），用于 admin 给用户配置
+ * 管理员侧 · 获取所有"已启用"的接口（仅看 isEnabled），用于 admin 给用户配置
  * API Key 时的"接口范围"下拉选项。与 user/apis-list 字段一致。
+ *
+ * 不再按 status=1 过滤：status 是运行状态（维护/废弃/未知），不应限制 Key 配置面。
  */
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
@@ -20,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
     httpMethod: apis.httpMethod
   })
     .from(apis)
-    .where(and(eq(apis.isEnabled, true), eq(apis.status, 1)))
+    .where(eq(apis.isEnabled, true))
     .orderBy(apis.pathVersion, apis.code)
 
   return rows.map((r: typeof rows[number]) => ({

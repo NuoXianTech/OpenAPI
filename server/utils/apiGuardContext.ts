@@ -7,7 +7,7 @@
  */
 
 import type { apiKeys, apis } from '@nuxthub/db/schema'
-import type { ApiStatsTarget, ManifestApi, ManifestEndpoint } from '~~/shared/types/api-guard'
+import type { ApiStatsTarget, GateOutcome, ManifestApi, ManifestEndpoint } from '~~/shared/types/api-guard'
 
 export type ApiRecord = typeof apis.$inferSelect
 export type ApiKeyRecord = typeof apiKeys.$inferSelect
@@ -45,12 +45,30 @@ export interface ApiBillingContext {
   failedMessage: string | null
 }
 
+/**
+ * gate 拒绝上下文 · 仅 gate 中间件因规则失败短路时挂载。
+ *
+ * apiCallStats plugin 据此把拒绝原因落到 apiCalls.errorCode/errorMessage，
+ * 同时不再为该次调用累加 apiKeys.totalCalls —— 拒绝的请求不算"成功调用"。
+ *
+ * - apiKeyId：如果 gate 识别到了具体的 Key（即便随后因 expired/scope/ip/quota 被拒），
+ *   仍要把日志归属到该 Key，便于审计；INVALID/MISSING_API_KEY 时为 null
+ */
+export interface ApiGateRejectionContext {
+  outcome: GateOutcome
+  errorCode: string
+  errorMessage: string
+  apiKeyId: number | null
+  apiKeyUserId: number | null
+}
+
 declare module 'h3' {
   interface H3EventContext {
     apiStatsTarget?: ApiStatsTarget
     apiMeta?: ApiMetaContext
     apiKey?: ApiKeyContext | null
     apiBilling?: ApiBillingContext
+    apiGateRejection?: ApiGateRejectionContext
   }
 }
 

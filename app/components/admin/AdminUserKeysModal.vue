@@ -72,10 +72,11 @@ watch(() => [props.open, props.target?.id] as const, ([isOpen]) => {
 })
 
 // ------------------------------------------------------------
-// 创建
+// 创建 / 编辑（共用同一份表单，编辑时 editingId 非 null）
 // ------------------------------------------------------------
 const formOpen = ref(false)
 const creating = ref(false)
+const editingId = ref<number | null>(null)
 
 const expiryItems: Array<{ label: string, value: ExpiryPreset }> = [
   { label: '永不过期', value: 'never' },
@@ -118,6 +119,38 @@ function resetForm() {
 function toggleForm() {
   formOpen.value = !formOpen.value
   if (formOpen.value) {
+    editingId.value = null
+    resetForm()
+    form.scopesSelected = apiOptions.value.map(o => o.scope)
+  }
+}
+
+function expiresAtToPresetInput(expiresAt: string | null): {
+  preset: ExpiryPreset
+  custom: string
+} {
+  if (!expiresAt) return { preset: 'never', custom: defaultCustomExpiry() }
+  const d = new Date(expiresAt)
+  if (Number.isNaN(d.getTime())) return { preset: 'never', custom: defaultCustomExpiry() }
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  const custom = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return { preset: 'custom', custom }
+}
+
+function openEditForm(key: AdminApiKeyItem) {
+  editingId.value = key.id
+  const expiry = expiresAtToPresetInput(key.expiresAt)
+  form.name = key.name || ''
+  form.expiryPreset = expiry.preset
+  form.expiresAtCustom = expiry.custom
+  form.count = 1
+  form.unlimitedQuota = key.totalQuota === null || key.totalQuota === undefined
+  form.totalQuota = key.totalQuota === null || key.totalQuota === undefined ? 1000 : Number(key.totalQuota)
+  form.scopesMode = key.scopes && key.scopes.length > 0 ? 'pick' : 'all'
+  form.scopesSelected = key.scopes ? [...key.scopes] : []
+  form.ipWhitelistText = key.ipWhitelist ? key.ipWhitelist.join('\n') : ''
+  formOpen.value = true
+  if (form.scopesMode === 'all' && form.scopesSelected.length === 0) {
     form.scopesSelected = apiOptions.value.map(o => o.scope)
   }
 }
@@ -165,7 +198,7 @@ function computeExpiresAt(): string | null {
   }
 }
 
-async function add() {
+async function submitForm() {
   if (!props.target) return
   if (formError.value) {
     toast.add({ title: formError.value, color: 'warning' })
@@ -177,27 +210,43 @@ async function add() {
     .filter(Boolean)
   creating.value = true
   try {
-    const res = await $fetch<{ keys: AdminApiKeyItem[], count: number }>('/api/admin/users/apikeys/add', {
-      method: 'POST',
-      body: {
-        userId: props.target.id,
-        name: form.name.trim() || '默认密钥',
-        expiresAt: computeExpiresAt(),
-        totalQuota: form.unlimitedQuota ? null : Number(form.totalQuota),
-        scopes: form.scopesMode === 'all' ? null : form.scopesSelected,
-        ipWhitelist: ipList.length === 0 ? null : ipList,
-        count: form.count
-      }
-    })
-    toast.add({
-      title: res.count > 1 ? `已生成 ${res.count} 个 API Key` : '已生成新 API Key',
-      color: 'success'
-    })
+    if (editingId.value) {
+      await $fetch('/api/admin/users/apikeys/update', {
+        method: 'POST',
+        body: {
+          id: editingId.value,
+          name: form.name.trim() || '默认密钥',
+          expiresAt: computeExpiresAt(),
+          totalQuota: form.unlimitedQuota ? null : Number(form.totalQuota),
+          scopes: form.scopesMode === 'all' ? null : form.scopesSelected,
+          ipWhitelist: ipList.length === 0 ? null : ipList
+        }
+      })
+      toast.add({ title: '已更新', color: 'success' })
+    } else {
+      const res = await $fetch<{ keys: AdminApiKeyItem[], count: number }>('/api/admin/users/apikeys/add', {
+        method: 'POST',
+        body: {
+          userId: props.target.id,
+          name: form.name.trim() || '默认密钥',
+          expiresAt: computeExpiresAt(),
+          totalQuota: form.unlimitedQuota ? null : Number(form.totalQuota),
+          scopes: form.scopesMode === 'all' ? null : form.scopesSelected,
+          ipWhitelist: ipList.length === 0 ? null : ipList,
+          count: form.count
+        }
+      })
+      toast.add({
+        title: res.count > 1 ? `已生成 ${res.count} 个 API Key` : '已生成新 API Key',
+        color: 'success'
+      })
+    }
     formOpen.value = false
+    editingId.value = null
     resetForm()
     await load()
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '创建失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, editingId.value ? '更新失败' : '创建失败'), color: 'error' })
   } finally {
     creating.value = false
   }
@@ -286,11 +335,17 @@ function ipSummary(row: AdminApiKeyItem) {
         </UButton>
       </div>
 
-      <!-- 创建表单 · 折叠区 -->
+      <!-- 创建 / 编辑表单 · 折叠区 -->
       <div
         v-if="formOpen"
         class="rounded-lg border border-default p-3 mb-4 space-y-3"
       >
+        <div
+          v-if="editingId"
+          class="text-xs text-muted -mb-1"
+        >
+          编辑 Key #{{ editingId }} · 不会更换 Key 字符串本身
+        </div>
         <div class="grid grid-cols-3 gap-3">
           <UFormField
             label="名称"
@@ -303,7 +358,10 @@ function ipSummary(row: AdminApiKeyItem) {
               size="sm"
             />
           </UFormField>
-          <UFormField label="生成数量">
+          <UFormField
+            v-if="!editingId"
+            label="生成数量"
+          >
             <UInput
               v-model.number="form.count"
               type="number"
@@ -405,9 +463,9 @@ function ipSummary(row: AdminApiKeyItem) {
             size="sm"
             :loading="creating"
             :disabled="!!formError"
-            @click="add"
+            @click="submitForm"
           >
-            生成
+            {{ editingId ? '保存' : '生成' }}
           </UButton>
         </div>
       </div>
@@ -475,6 +533,14 @@ function ipSummary(row: AdminApiKeyItem) {
               </div>
             </div>
             <div class="flex gap-1 shrink-0">
+              <UButton
+                size="xs"
+                variant="outline"
+                color="neutral"
+                @click="openEditForm(key)"
+              >
+                编辑
+              </UButton>
               <UButton
                 size="xs"
                 variant="outline"
