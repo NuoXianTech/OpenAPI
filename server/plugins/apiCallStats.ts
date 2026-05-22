@@ -196,6 +196,13 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 
     const rejection = event.context.apiGateRejection ?? null
 
+    // 无效 / 缺失 ApiKey 的情况：不写 apiCalls，也不更新日统计——这些请求
+    // 既无法归属到具体的 Key/用户，又通常是攻击或客户端配置错误，落库只会
+    // 制造噪声。
+    if (rejection && (rejection.outcome === 'invalid_api_key' || rejection.outcome === 'missing_api_key')) {
+      return
+    }
+
     // gate 已解析的 apiKey 直接复用（含被拒情形）；其次回查
     const apiKeyId = event.context.apiKey?.id
       ?? rejection?.apiKeyId
