@@ -9,11 +9,11 @@
  *
  * 规则顺序（短路求值）：
  *   1. isEnabled
- *   2. isApiKey 强制 / effectiveCost>0 → 必须带 ApiKey；校验 key + scope + ip 白名单
+ *   2. isApiKey 强制 / effectiveCost>0 → 必须带 ApiKey；校验 key + expiresAt + scope + ip CIDR 白名单
  *   3. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
  *   4. rateLimit（多窗口，任意一个超限即拒）
  *   5. dailyQuota（API 级）
- *   6. credits 积分校验（effectiveCost>0 时，校验 apiKey 持有者积分）
+ *   6. credits 积分校验（effectiveCost>0 时；先校验 apiKey 自身 totalQuota，再校验持有者积分）
  *
  * 故障降级：
  *   - 鉴权类失败：fail-close（401/403）
@@ -30,10 +30,11 @@ import { API_GUARD_ERROR } from '~~/shared/config/apiGuard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
 import { getLocalDayStart } from '~~/server/utils/localTime'
+import { ipInAnyCidr } from '~~/shared/utils/cidr'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
-type ErrorDef = (typeof API_GUARD_ERROR)[keyof typeof API_GUARD_ERROR]
+type ErrorDef = { status: number, code: string, msg: string }
 
 export interface GateDeniedHeaders {
   [key: string]: string
@@ -51,6 +52,8 @@ export type GateResult
     outcome: GateOutcome
     error: ErrorDef
     headers?: GateDeniedHeaders
+    /** 附加给客户端的结构化信息（写入 openApiFail 的 data 字段） */
+    detail?: Record<string, unknown>
   }
 
 const QUOTA_CACHE_TTL_MS = 1_000
@@ -62,19 +65,6 @@ function readApiKeyFromEvent(event: H3Event): string {
   const query = getQuery(event)
   const queryKey = (query.apikey || '').toString().trim()
   return queryKey
-}
-
-function matchesWhitelist(whitelist: string[] | null | undefined, value: string | null): boolean {
-  if (!whitelist || whitelist.length === 0) return true
-  if (!value) return false
-  for (const entry of whitelist) {
-    const trimmed = entry.trim()
-    if (!trimmed) continue
-    if (trimmed === value) return true
-    // 支持简单前缀匹配：'https://example.com' 匹配 'https://example.com/*'
-    if (trimmed.endsWith('*') && value.startsWith(trimmed.slice(0, -1))) return true
-  }
-  return false
 }
 
 function hasScope(scopes: string[] | null | undefined, api: ApiRecord): boolean {
@@ -174,13 +164,22 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
       return { passed: false, outcome: 'revoked_api_key', error: API_GUARD_ERROR.REVOKED_API_KEY }
     }
     if (apiKey.expiresAt && apiKey.expiresAt.getTime() <= Date.now()) {
-      return { passed: false, outcome: 'expired_api_key', error: API_GUARD_ERROR.EXPIRED_API_KEY }
+      const expiresAtIso = apiKey.expiresAt.toISOString()
+      return {
+        passed: false,
+        outcome: 'expired_api_key',
+        error: {
+          ...API_GUARD_ERROR.EXPIRED_API_KEY,
+          msg: `API Key 已于 ${expiresAtIso} 过期`
+        },
+        detail: { expiresAt: expiresAtIso }
+      }
     }
     if (!hasScope(apiKey.scopes, api)) {
       return { passed: false, outcome: 'scope_denied', error: API_GUARD_ERROR.SCOPE_DENIED }
     }
     const ip = getRequestIP(event) || null
-    if (!matchesWhitelist(apiKey.ipWhitelist, ip)) {
+    if (!ipInAnyCidr(ip, apiKey.ipWhitelist)) {
       return { passed: false, outcome: 'ip_denied', error: API_GUARD_ERROR.IP_DENIED }
     }
   } else if (api.isApiKey || effectiveCost > 0) {
@@ -220,6 +219,24 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
 
   // [6] 积分校验（仅当本次 method 扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
   if (effectiveCost > 0 && apiKey) {
+    // [6a] Key 级累计积分上限（totalQuota 为 null 表示无限）
+    if (apiKey.totalQuota !== null && apiKey.totalQuota !== undefined) {
+      const used = Number(apiKey.usedCredits || 0)
+      const limit = Number(apiKey.totalQuota)
+      if (used + effectiveCost > limit) {
+        return {
+          passed: false,
+          outcome: 'api_key_quota_exceeded',
+          error: {
+            ...API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
+            msg: `该 API Key 累计已消耗 ${used} 积分，配额上限 ${limit}，本次调用需要 ${effectiveCost} 积分`
+          },
+          detail: { usedCredits: used, totalQuota: limit, cost: effectiveCost }
+        }
+      }
+    }
+
+    // [6b] 用户钱包余额校验
     try {
       const userRow = await db.select({ credits: users.credits })
         .from(users)

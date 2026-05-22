@@ -11,8 +11,16 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: 'admin cannot access user api keys' })
   }
 
-  const { name } = await readZodBody(event, userCreateApiKeySchema)
+  const input = await readZodBody(event, userCreateApiKeySchema)
 
-  const created = await apiKeyService.createForUser(user.id, name || '默认密钥')
-  return created
+  const created = await apiKeyService.createForUser(user.id, {
+    name: input.name || '默认密钥',
+    expiresAt: input.expiresAt ?? null,
+    totalQuota: input.totalQuota ?? null,
+    scopes: input.scopes ?? null,
+    ipWhitelist: input.ipWhitelist ?? null,
+    count: input.count
+  })
+
+  return { keys: created, count: created.length }
 })

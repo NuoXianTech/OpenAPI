@@ -7,18 +7,25 @@ import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const { userId, name } = await readZodBody(event, adminCreateUserApiKeySchema)
+  const input = await readZodBody(event, adminCreateUserApiKeySchema)
 
-  const created = await apiKeyService.createForUser(userId, name || '默认密钥')
+  const created = await apiKeyService.createForUser(input.userId, {
+    name: input.name || '默认密钥',
+    expiresAt: input.expiresAt ?? null,
+    totalQuota: input.totalQuota ?? null,
+    scopes: input.scopes ?? null,
+    ipWhitelist: input.ipWhitelist ?? null,
+    count: input.count
+  })
 
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.apikey.create',
     resourceType: 'apikey',
-    resourceId: String(created.id),
-    detail: { created }
+    resourceId: created.map(k => k.id).join(','),
+    detail: { created, count: created.length }
   })
 
-  return created
+  return { keys: created, count: created.length }
 })

@@ -80,6 +80,7 @@ export type GateOutcome
     | 'ip_denied'
     | 'rate_limited'
     | 'quota_exceeded'
+    | 'api_key_quota_exceeded'
     | 'insufficient_credits'
 
 /**

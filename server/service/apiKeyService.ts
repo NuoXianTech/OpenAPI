@@ -3,6 +3,7 @@ import { and, eq, sql } from 'drizzle-orm'
 import { apiKeys } from '@nuxthub/db/schema'
 
 const SECRET_BYTES = 32
+const MAX_BATCH_COUNT = 5
 
 function base64UrlDecode(input: string) {
   const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
@@ -42,6 +43,28 @@ function generateApiKey() {
   return `sk_${createHmac('sha256', getSecret()).update(nonce).digest('base64url')}`
 }
 
+/** 给批量创建的 key 名追加随机后缀，避免重名扎堆 */
+function randomNameSuffix() {
+  return randomBytes(3).toString('hex')
+}
+
+/** 用户创建 API Key 的入参 */
+export interface CreateApiKeyInput {
+  name: string
+  /** 过期时刻；null = 永不过期 */
+  expiresAt?: Date | null
+  /** Key 累计消耗积分上限；null = 无限 */
+  totalQuota?: number | null
+  /** 接口范围；null / [] = 全部 */
+  scopes?: string[] | null
+  /** IP 白名单（CIDR 数组）；null / [] = 全部 */
+  ipWhitelist?: string[] | null
+  /** 批量数量 1-5；首个用 name 原值，后续追加随机后缀 */
+  count?: number
+}
+
+type ApiKeyRecord = typeof apiKeys.$inferSelect
+
 export const apiKeyService = {
   async getByApiKey(apiKey: string) {
     const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, apiKey)).limit(1)
@@ -56,17 +79,36 @@ export const apiKeyService = {
     return db.select().from(apiKeys)
   },
 
-  async createForUser(userId: number, name: string) {
-    const key = generateApiKey()
-    const res = await db.insert(apiKeys)
-      .values({
-        userId,
-        name,
-        apiKey: key,
-        isActive: true
-      })
-      .returning()
-    return res[0]
+  /**
+   * 创建一个或多个 API Key（单事务）。
+   *
+   * 批量模式（count > 1）：首个 key 用 input.name 原值；后续追加 -<6 位十六进制后缀>
+   * 区分。Schema 字段 `name` 最大 100，留足够空间。
+   *
+   * 注意：每条 key 各自生成 nonce，所以即使批量也必须逐行 insert（不能合并 values）。
+   */
+  async createForUser(userId: number, input: CreateApiKeyInput): Promise<ApiKeyRecord[]> {
+    const count = Math.max(1, Math.min(Math.trunc(input.count ?? 1), MAX_BATCH_COUNT))
+    const baseName = (input.name || '').trim() || '默认密钥'
+
+    return db.transaction(async (tx: typeof db) => {
+      const created: ApiKeyRecord[] = []
+      for (let i = 0; i < count; i++) {
+        const name = i === 0 ? baseName : `${baseName}-${randomNameSuffix()}`
+        const row = await tx.insert(apiKeys).values({
+          userId,
+          name,
+          apiKey: generateApiKey(),
+          isActive: true,
+          expiresAt: input.expiresAt ?? null,
+          totalQuota: input.totalQuota ?? null,
+          scopes: input.scopes ?? null,
+          ipWhitelist: input.ipWhitelist ?? null
+        }).returning()
+        if (row[0]) created.push(row[0])
+      }
+      return created
+    })
   },
 
   async deleteForUser(userId: number, id: number) {
@@ -114,6 +156,20 @@ export const apiKeyService = {
         lastUsedIp: ip,
         totalCalls: sql`${apiKeys.totalCalls} + 1`
       })
+      .where(eq(apiKeys.id, id))
+  },
+
+  /**
+   * 扣费成功后累加该 Key 的 usedCredits。
+   * - amount<=0 直接返回；不允许使 usedCredits 倒退
+   * - 用 SQL 原子加避免并发竞态
+   * - 调用方应 fire-and-forget；失败仅日志，不影响业务（资金已扣 users.credits）
+   */
+  async addUsedCredits(id: number, amount: number) {
+    const delta = Math.max(Math.trunc(amount), 0)
+    if (delta === 0) return
+    await db.update(apiKeys)
+      .set({ usedCredits: sql`${apiKeys.usedCredits} + ${delta}` })
       .where(eq(apiKeys.id, id))
   }
 }

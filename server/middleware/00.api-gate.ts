@@ -29,7 +29,7 @@ import { runApiGuard } from '~~/server/utils/apiGuard'
 import { apiService } from '~~/server/service/apiService'
 import { openApiFail } from '~~/server/utils/openApiResponse'
 
-type ErrorDef = (typeof API_GUARD_ERROR)[keyof typeof API_GUARD_ERROR]
+type ErrorDef = { status: number, code: string, msg: string }
 
 function normalizePathname(pathname: string) {
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
@@ -42,9 +42,11 @@ function normalizePathname(pathname: string) {
  *
  * errorDef.code 作为 body `code` 字段输出，严守 restful-api-style.md §3.3
  * 「失败时 data 为 null」。其他上下文（如 405 的 Allow、429 的 Retry-After）走对应标准头。
+ *
+ * detail 非空时写入 body `data` 字段，用于回传结构化提示（如过期时间、配额详情）。
  */
-async function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef) {
-  const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg)
+async function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<string, unknown> | null = null) {
+  const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg, detail)
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   await send(event, JSON.stringify(payload))
 }
@@ -98,7 +100,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const result = await runApiGuard({ event, api, match, effectiveCost })
   if (!result.passed) {
     if (result.headers) setResponseHeaders(event, result.headers)
-    return rejectWithOpenApi(event, result.error)
+    return rejectWithOpenApi(event, result.error, result.detail ?? null)
   }
 
   // [5] 通过：挂载 context，让后置中间件 / 业务 handler 读取

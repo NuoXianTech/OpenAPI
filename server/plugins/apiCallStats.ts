@@ -254,6 +254,16 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
         if (r.charged > 0) {
           // 把实际扣除的金额回填到 apiCalls.creditsCost
           await apiCallService.patchCreditsCost(callId, r.charged)
+          // 同步累加 Key 维度的 usedCredits（用于 totalQuota 校验）；失败仅日志
+          if (apiKeyId) {
+            apiKeyService.addUsedCredits(apiKeyId, r.charged).catch((err) => {
+              console.error('failed to accumulate apiKey usedCredits', {
+                apiKeyId,
+                amount: r.charged,
+                error: (err as Error).message
+              })
+            })
+          }
         }
       } catch (err) {
         // 扣费失败入队补偿，由 pendingChargesRetry plugin 周期性重试

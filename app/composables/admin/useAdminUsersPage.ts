@@ -15,6 +15,17 @@ export interface AdminApiKeyItem {
   id: number
   name: string
   apiKey: string
+  isActive: boolean
+  scopes: string[] | null
+  ipWhitelist: string[] | null
+  totalQuota: number | null
+  usedCredits: number | string
+  totalCalls: number
+  lastUsedAt: string | null
+  lastUsedIp: string | null
+  expiresAt: string | null
+  revokedAt: string | null
+  createdAt: string
 }
 
 export function useAdminUsersPage() {
