@@ -382,7 +382,7 @@ export default defineEventHandler(async (event) => {
 | --- | --- | --- |
 | 401 | `MISSING_API_KEY` / `INVALID_API_KEY` / `REVOKED_API_KEY` / `EXPIRED_API_KEY` | apiKey 校验失败 |
 | 402 | `INSUFFICIENT_CREDITS` | 余额不足 |
-| 403 | `API_NOT_REGISTERED` / `IP_NOT_ALLOWED` / `REFERER_NOT_ALLOWED` / `SCOPE_NOT_ALLOWED` | 鉴权/范围拒绝 |
+| 403 | `API_NOT_REGISTERED` / `IP_NOT_ALLOWED` / `SCOPE_NOT_ALLOWED` | 鉴权/范围拒绝 |
 | 429 | `RATE_LIMITED` / `DAILY_QUOTA_EXCEEDED` | 限流/配额超限 |
 | 503 | `API_DISABLED` | 接口被管理员关闭 |
 

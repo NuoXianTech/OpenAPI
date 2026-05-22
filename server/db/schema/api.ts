@@ -99,9 +99,11 @@ export const apiKeys = pgTable('api_keys', {
   isActive: boolean('is_active').notNull().default(true),
 
   scopes: jsonb('scopes').$type<string[]>(), // null / [] = 全部
-  ipWhitelist: jsonb('ip_whitelist').$type<string[]>(),
-  refererWhitelist: jsonb('referer_whitelist').$type<string[]>(),
-  dailyQuota: integer('daily_quota').notNull().default(0),
+  ipWhitelist: jsonb('ip_whitelist').$type<string[]>(), // CIDR 列表（单 IP 必须写成 /32 或 /128）
+  // 累计消耗积分上限：null = 无限配额；非 null 时 usedCredits 达到上限即拒绝调用
+  totalQuota: bigint('total_quota', { mode: 'number' }),
+  // 该 Key 累计已消耗的积分；仅在 charge 成功时累加，资金仍走 users.credits
+  usedCredits: bigint('used_credits', { mode: 'number' }).notNull().default(0),
   totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
 
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),

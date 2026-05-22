@@ -78,7 +78,6 @@ export type GateOutcome
     | 'expired_api_key'
     | 'scope_denied'
     | 'ip_denied'
-    | 'referer_denied'
     | 'rate_limited'
     | 'quota_exceeded'
     | 'insufficient_credits'

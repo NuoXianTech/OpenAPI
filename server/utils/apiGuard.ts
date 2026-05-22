@@ -9,7 +9,7 @@
  *
  * 规则顺序（短路求值）：
  *   1. isEnabled
- *   2. isApiKey 强制 / effectiveCost>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
+ *   2. isApiKey 强制 / effectiveCost>0 → 必须带 ApiKey；校验 key + scope + ip 白名单
  *   3. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
  *   4. rateLimit（多窗口，任意一个超限即拒）
  *   5. dailyQuota（API 级）
@@ -62,10 +62,6 @@ function readApiKeyFromEvent(event: H3Event): string {
   const query = getQuery(event)
   const queryKey = (query.apikey || '').toString().trim()
   return queryKey
-}
-
-function readRefererFromEvent(event: H3Event): string | null {
-  return (getHeader(event, 'referer') || getHeader(event, 'referrer') || '').toString().trim() || null
 }
 
 function matchesWhitelist(whitelist: string[] | null | undefined, value: string | null): boolean {
@@ -121,12 +117,13 @@ function rateLimitHeaders(results: RateLimitResult[]): GateDeniedHeaders {
 }
 
 async function checkRateLimit(api: ApiRecord, subjectKey: string): Promise<RateLimitResult[] | { denied: RateLimitResult }> {
-  const windows: Array<{ window: RateLimitWindow, limit: number }> = [
+  const windowSpecs: Array<{ window: RateLimitWindow, limit: number }> = [
     { window: 'second', limit: api.rateLimitPerSecond },
     { window: 'minute', limit: api.rateLimitPerMinute },
     { window: 'hour', limit: api.rateLimitPerHour },
     { window: 'day', limit: api.rateLimitPerDay }
-  ].filter(w => w.limit > 0)
+  ]
+  const windows = windowSpecs.filter(w => w.limit > 0)
 
   if (windows.length === 0) return []
 
@@ -185,10 +182,6 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
     const ip = getRequestIP(event) || null
     if (!matchesWhitelist(apiKey.ipWhitelist, ip)) {
       return { passed: false, outcome: 'ip_denied', error: API_GUARD_ERROR.IP_DENIED }
-    }
-    const referer = readRefererFromEvent(event)
-    if (!matchesWhitelist(apiKey.refererWhitelist, referer)) {
-      return { passed: false, outcome: 'referer_denied', error: API_GUARD_ERROR.REFERER_DENIED }
     }
   } else if (api.isApiKey || effectiveCost > 0) {
     // 显式开启 isApiKey 必需，或本次 method 有扣费要求 → 必须带 apiKey 才能定位归属用户
