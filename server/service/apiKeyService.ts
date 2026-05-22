@@ -1,6 +1,6 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, sql } from 'drizzle-orm'
-import { apiKeys } from '@nuxthub/db/schema'
+import { apiCalls, apiKeys } from '@nuxthub/db/schema'
 
 const SECRET_BYTES = 32
 const MAX_BATCH_COUNT = 5
@@ -114,21 +114,47 @@ export const apiKeyService = {
   },
 
   async deleteForUser(userId: number, id: number) {
-    const now = new Date()
-    const res = await db.update(apiKeys)
-      .set({ isActive: false, revokedAt: now, updatedAt: now })
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
-      .returning()
-    return res[0] || null
+    return db.transaction(async (tx: typeof db) => {
+      const rows = await tx.select().from(apiKeys)
+        .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id)))
+        .limit(1)
+      const key = rows[0]
+      if (!key) return null
+
+      await tx.update(apiCalls)
+        .set({
+          apiKeyName: sql`coalesce(${apiCalls.apiKeyName}, ${key.name})`,
+          apiKeyId: null
+        })
+        .where(eq(apiCalls.apiKeyId, key.id))
+
+      const deleted = await tx.delete(apiKeys)
+        .where(eq(apiKeys.id, key.id))
+        .returning()
+      return deleted[0] || null
+    })
   },
 
   async deleteById(id: number) {
-    const now = new Date()
-    const res = await db.update(apiKeys)
-      .set({ isActive: false, revokedAt: now, updatedAt: now })
-      .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
-      .returning()
-    return res[0] || null
+    return db.transaction(async (tx: typeof db) => {
+      const rows = await tx.select().from(apiKeys)
+        .where(eq(apiKeys.id, id))
+        .limit(1)
+      const key = rows[0]
+      if (!key) return null
+
+      await tx.update(apiCalls)
+        .set({
+          apiKeyName: sql`coalesce(${apiCalls.apiKeyName}, ${key.name})`,
+          apiKeyId: null
+        })
+        .where(eq(apiCalls.apiKeyId, key.id))
+
+      const deleted = await tx.delete(apiKeys)
+        .where(eq(apiKeys.id, key.id))
+        .returning()
+      return deleted[0] || null
+    })
   },
 
   /**

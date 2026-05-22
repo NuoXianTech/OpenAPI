@@ -347,7 +347,7 @@ const logColumns: TableColumn<AdminCallRow>[] = [
         </template>
         <template #apiKeyName-cell="{ row }">
           <span
-            v-if="row.original.apiKeyId"
+            v-if="row.original.apiKeyName || row.original.apiKeyId"
             class="text-xs"
           >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
           <span
