@@ -79,7 +79,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       return
     }
 
-    const skipDailyStat = rejection?.outcome === 'api_key_quota_exceeded'
+    const isCounted = rejection?.outcome !== 'api_key_quota_exceeded'
 
     const apiKeyId = event.context.apiKey?.id
       ?? rejection?.apiKeyId
@@ -127,9 +127,10 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       errorCode,
       errorMessage,
       creditsCost: 0,
+      isCounted,
       statusCodeForStats: statStatusCode
     }
-    const callId = skipDailyStat
+    const callId = !isCounted
       ? (await apiCallService.addCall(callInput))[0]?.id ?? null
       : await apiCallService.addCallAndUpsertDailyStat(callInput)
 

@@ -49,6 +49,7 @@ CREATE TABLE "api_calls" (
 	"error_code" varchar(50),
 	"error_message" varchar(500),
 	"credits_cost" integer DEFAULT 0 NOT NULL,
+	"is_counted" boolean DEFAULT true NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint

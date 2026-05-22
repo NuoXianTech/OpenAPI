@@ -19,6 +19,7 @@ interface LogRow {
   errorCode: string | null
   errorMessage: string | null
   creditsCost: number
+  isCounted: boolean
   createdAt: string
 }
 
@@ -124,7 +125,17 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
 }
 
 function isCallSuccess(row: LogRow) {
-  return row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+  return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+}
+
+function callOutcomeLabel(row: LogRow) {
+  if (!row.isCounted) return '未计数'
+  return isCallSuccess(row) ? '成功' : '失败'
+}
+
+function callOutcomeColor(row: LogRow): 'success' | 'error' | 'neutral' {
+  if (!row.isCounted) return 'neutral'
+  return isCallSuccess(row) ? 'success' : 'error'
 }
 
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
@@ -265,11 +276,11 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
                   {{ row.original.statusCode }}
                 </UBadge>
                 <UBadge
-                  :color="isCallSuccess(row.original) ? 'success' : 'error'"
+                  :color="callOutcomeColor(row.original)"
                   variant="soft"
                   size="sm"
                 >
-                  {{ isCallSuccess(row.original) ? '成功' : '失败' }}
+                  {{ callOutcomeLabel(row.original) }}
                 </UBadge>
               </div>
             </template>

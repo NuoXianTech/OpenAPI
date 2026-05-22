@@ -11,12 +11,12 @@
 | 口径 | 存储位置 | 含义 | 主要用途 |
 | --- | --- | --- | --- |
 | 调用日志 | `api_calls` | 单次请求明细，一行代表一次已落库调用 | 用户/管理员查看明细、排错、审计 |
-| 日聚合统计 | `api_call_stats` | 按 `apiId + 本地日期` 聚合的总数、成功数、失败数 | 公开统计页、后台趋势、TOP 排行 |
+| 日聚合统计 | `api_call_stats` | 按 `apiId + 本地日期` 聚合 `api_calls.isCounted=true` 的总数、成功数、失败数 | 公开统计页、后台趋势、TOP 排行 |
 | API Key 调用次数 | `api_keys.totalCalls` | 该 Key 成功通过 gate 的使用次数 | 用户 Key 列表展示、Key 使用情况 |
 
 重点约定：
 
-- `api_call_stats.totalCount` 统计的是已落库调用日志条数，包含成功与失败。
+- `api_call_stats.totalCount` 统计的是 `api_calls.isCounted=true` 的已落库调用日志条数，包含成功与失败。
 - `api_keys.totalCalls` 只统计成功通过 gate 的请求，不统计任何 gate 拒绝请求。
 - 不要把 `api_call_stats.totalCount` 当成某个 API Key 的成功调用次数。
 
@@ -26,7 +26,7 @@
 
 1. `request` 阶段：如果路径属于 `/v{N}/**` 治理范围，记录请求开始时间、路径、方法、IP、API Key、User-Agent、Referer、QueryString、请求大小等快照。
 2. `api-gate` 阶段：命中已注册 API 且 `apis.isStatistics=true` 时，gate 将 `apiStatsTarget` 写入 `event.context`。
-3. `afterResponse` 阶段：响应发出后异步写入 `api_calls` 明细，并同步 upsert `api_call_stats` 日聚合。
+3. `afterResponse` 阶段：响应发出后异步写入 `api_calls` 明细；当 `api_calls.isCounted=true` 时，同步 upsert `api_call_stats` 日聚合。
 4. gate 通过且识别到 API Key 时，调用成功使用记录会累加 `api_keys.totalCalls`。
 
 统计写入是 after-response 异步执行：业务响应不会等待统计落库完成。统计失败只写服务端日志，不影响本次 API 响应。
@@ -67,11 +67,11 @@
 | 余额不足 | 是 | 否 |
 | API 被禁用 | 是，若已命中统计目标 | 否 |
 
-已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 累计积分配额超限只写调用日志，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。
+已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 累计积分配额超限会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。
 
 ## 5. 成功与失败口径
 
-默认按 HTTP 状态码判断日聚合里的成功/失败：
+默认只对 `api_calls.isCounted=true` 的日志按 HTTP 状态码判断日聚合里的成功/失败：
 
 | 条件 | 日聚合结果 |
 | --- | --- |
@@ -103,9 +103,10 @@
 | `requestSize` / `responseSize` | 请求/响应大小；无法解析时为 `null` |
 | `errorCode` / `errorMessage` | gate 拒绝原因或业务显式失败原因 |
 | `creditsCost` | 本次实际扣除积分；免费、失败未扣或未完成回填时为 `0` |
+| `isCounted` | 是否计入 `api_call_stats`、用户汇总、后台趋势等统计口径；`false` 表示仅保留审计日志 |
 | `createdAt` | 明细写入时间 |
 
-写入入口统一走 [server/service/apiCallService.ts](../server/service/apiCallService.ts) 的 `addCallAndUpsertDailyStat`，禁止绕过 service 直接写表。
+写入入口统一走 [server/service/apiCallService.ts](../server/service/apiCallService.ts)：计数日志使用 `addCallAndUpsertDailyStat`，仅留审计日志使用 `addCall`，禁止绕过 service 直接写表。
 
 ### 6.2 `api_call_stats` 日聚合
 
@@ -113,20 +114,20 @@
 
 | 字段 | 说明 |
 | --- | --- |
-| `totalCount` | 已落库调用日志总数 |
-| `successCount` | 成功调用数 |
-| `failureCount` | 失败调用数 |
+| `totalCount` | `api_calls.isCounted=true` 的已落库调用日志总数 |
+| `successCount` | `api_calls.isCounted=true` 的成功调用数 |
+| `failureCount` | `api_calls.isCounted=true` 的失败调用数 |
 | `statDate` | 本地日期零点，来自 `getLocalDayStart` |
 
-日聚合与明细在同一个事务中写入：只要明细成功落库，对应日聚合就必须同步增加。
+日聚合与计数明细在同一个事务中写入：只要 `isCounted=true` 的明细成功落库，对应日聚合就必须同步增加；`isCounted=false` 的明细只保留在 `api_calls`。
 
 ## 7. 查询与展示口径
 
 | 页面/接口 | 数据来源 | 口径 |
 | --- | --- | --- |
-| 用户调用汇总 | `apiCallService.getSummaryForUser` | 按 `api_calls.userId` 过滤，基于真实 `statusCode` 汇总 |
-| 用户调用日志 | `apiCallService.listLogForUser` | 按 `api_calls.userId` 过滤，可筛 API、Key、成功/失败 |
-| 管理员调用日志 | `apiCallService.listForAdmin` | 全量 `api_calls`，可筛用户、API、Key、成功/失败 |
+| 用户调用汇总 | `apiCallService.getSummaryForUser` | 按 `api_calls.userId` 过滤，只汇总 `isCounted=true` |
+| 用户调用日志 | `apiCallService.listLogForUser` | 按 `api_calls.userId` 过滤；全部列表包含 `isCounted=false`，成功/失败筛选只匹配 `isCounted=true` |
+| 管理员调用日志 | `apiCallService.listForAdmin` | 全量 `api_calls`；全部列表包含 `isCounted=false`，成功/失败筛选只匹配 `isCounted=true` |
 | 管理员统计汇总 | `apiCallStatsService.getSummary` | 全量 `api_call_stats` 汇总 |
 | 公开统计页 | `apiCallStatsService.getPublicDashboard` | 只统计 `apis.isEnabled=true && apis.isStatistics=true` 的 API |
 
@@ -145,7 +146,7 @@
 
 - [ ] 是否明确区分了 `api_calls`、`api_call_stats.totalCount`、`api_keys.totalCalls`
 - [ ] 缺失/无效 API Key 是否不写日志、不更新日聚合、不累加 `totalCalls`
-- [ ] 已识别 Key 的 gate 拒绝请求是否写日志和日聚合，但不累加 `totalCalls`
+- [ ] 已识别 Key 的 gate 拒绝请求是否按 `isCounted` 口径处理：一般写日志和日聚合但不累加 `totalCalls`，API Key 累计积分配额超限写日志但 `isCounted=false`
 - [ ] 成功通过 gate 的请求是否写日志、更新日聚合，并累加 `totalCalls`
 - [ ] `isStatistics=false` 是否不写日志、不更新日聚合、不参与公开统计
 - [ ] HTTP 2xx 但业务失败的场景是否调用 `markApiCallFailed`

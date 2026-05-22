@@ -60,6 +60,7 @@ interface AdminCallRow {
   errorCode: string | null
   errorMessage: string | null
   creditsCost: number
+  isCounted: boolean
   createdAt: string
 }
 
@@ -94,7 +95,17 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
 }
 
 function isCallSuccess(row: AdminCallRow) {
-  return row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+  return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+}
+
+function callOutcomeLabel(row: AdminCallRow) {
+  if (!row.isCounted) return '未计数'
+  return isCallSuccess(row) ? '成功' : '失败'
+}
+
+function callOutcomeColor(row: AdminCallRow): 'success' | 'error' | 'neutral' {
+  if (!row.isCounted) return 'neutral'
+  return isCallSuccess(row) ? 'success' : 'error'
 }
 
 function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
@@ -309,11 +320,11 @@ const logColumns: TableColumn<AdminCallRow>[] = [
               {{ row.original.statusCode }}
             </UBadge>
             <UBadge
-              :color="isCallSuccess(row.original) ? 'success' : 'error'"
+              :color="callOutcomeColor(row.original)"
               variant="soft"
               size="sm"
             >
-              {{ isCallSuccess(row.original) ? '成功' : '失败' }}
+              {{ callOutcomeLabel(row.original) }}
             </UBadge>
           </div>
         </template>

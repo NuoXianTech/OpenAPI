@@ -71,6 +71,7 @@ function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' 
 }
 
 function recentStatusColor(row: AdminDashboardRecentCall): 'success' | 'warning' | 'error' | 'neutral' {
+  if (!row.isCounted) return 'neutral'
   if (row.errorCode) return 'error'
   return statusColor(row.statusCode)
 }

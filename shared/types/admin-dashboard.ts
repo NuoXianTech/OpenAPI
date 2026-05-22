@@ -32,6 +32,7 @@ export interface AdminDashboardRecentCall {
   method: string
   statusCode: number
   errorCode: string | null
+  isCounted: boolean
   latencyMs: number
   createdAt: string
 }

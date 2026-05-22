@@ -22,6 +22,7 @@ export interface AddCallInput {
   errorCode?: string | null
   errorMessage?: string | null
   creditsCost?: number
+  isCounted?: boolean
 }
 
 function normalizeCallRow(data: AddCallInput) {
@@ -44,12 +45,15 @@ function normalizeCallRow(data: AddCallInput) {
     responseSize: data.responseSize ?? null,
     errorCode: data.errorCode ?? null,
     errorMessage: data.errorMessage ?? null,
-    creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0)
+    creditsCost: Math.max(Math.trunc(data.creditsCost ?? 0), 0),
+    isCounted: data.isCounted ?? true
   }
 }
 
-const callSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
-const callFailureCondition = sql`not (${callSuccessCondition})`
+const callCountedCondition = sql`${apiCalls.isCounted} = true`
+const callHttpSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
+const callSuccessCondition = sql`${callCountedCondition} and ${callHttpSuccessCondition}`
+const callFailureCondition = sql`${callCountedCondition} and not (${callHttpSuccessCondition})`
 
 export const apiCallService = {
   async list() {
@@ -97,6 +101,7 @@ export const apiCallService = {
       errorCode: apiCalls.errorCode,
       errorMessage: apiCalls.errorMessage,
       creditsCost: apiCalls.creditsCost,
+      isCounted: apiCalls.isCounted,
       createdAt: apiCalls.createdAt
     })
       .from(apiCalls)
@@ -126,7 +131,7 @@ export const apiCallService = {
   /** 用户调用汇总（成功/失败/总数），按 apiCalls.userId 过滤 */
   async getSummaryForUser(userId: number) {
     const rows = await db.select({
-      total: count(),
+      total: sql<number>`count(*) filter (where ${callCountedCondition})`,
       success: sql<number>`count(*) filter (where ${callSuccessCondition})`,
       failure: sql<number>`count(*) filter (where ${callFailureCondition})`
     }).from(apiCalls).where(eq(apiCalls.userId, userId))
@@ -176,6 +181,7 @@ export const apiCallService = {
         errorCode: apiCalls.errorCode,
         errorMessage: apiCalls.errorMessage,
         creditsCost: apiCalls.creditsCost,
+        isCounted: apiCalls.isCounted,
         createdAt: apiCalls.createdAt
       })
         .from(apiCalls)
@@ -234,12 +240,12 @@ export const apiCallService = {
     const normalizedLatencyMs = Math.max(Math.trunc(data.latencyMs), 0)
     const statDate = getLocalDayStart(data.statDate || new Date())
     const statStatusCode = Math.trunc(data.statusCodeForStats ?? normalizedStatusCode)
-    const successDelta = statStatusCode >= 200 && statStatusCode < 400 ? 1 : 0
+    const successDelta = statStatusCode >= 200 && statStatusCode < 400 && !data.errorCode ? 1 : 0
     const failureDelta = successDelta ? 0 : 1
 
     return db.transaction(async (tx: typeof db) => {
       const inserted = await tx.insert(apiCalls).values({
-        ...normalizeCallRow(data),
+        ...normalizeCallRow({ ...data, isCounted: true }),
         statusCode: normalizedStatusCode,
         latencyMs: normalizedLatencyMs
       }).returning({ id: apiCalls.id })

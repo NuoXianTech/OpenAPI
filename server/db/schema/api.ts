@@ -151,6 +151,7 @@ export const apiCalls = pgTable('api_calls', {
 
   // 此次调用扣除的积分。0 表示免费 / 失败未扣 / 已退款
   creditsCost: integer('credits_cost').notNull().default(0),
+  isCounted: boolean('is_counted').notNull().default(true),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [

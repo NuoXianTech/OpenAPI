@@ -27,9 +27,11 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
   const rangeStart = addLocalDays(todayStart, -(TREND_DAYS - 1))
   const tomorrowStart = addLocalDays(todayStart, 1)
 
-  const totalExpr = sql<number>`count(*)`
-  const callSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
-  const callFailureCondition = sql`not (${callSuccessCondition})`
+  const countedCondition = sql`${apiCalls.isCounted} = true`
+  const totalExpr = sql<number>`count(*) filter (where ${countedCondition})`
+  const callHttpSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
+  const callSuccessCondition = sql`${countedCondition} and ${callHttpSuccessCondition}`
+  const callFailureCondition = sql`${countedCondition} and not (${callHttpSuccessCondition})`
   const successExpr = sql<number>`count(*) filter (where ${callSuccessCondition})`
   const failureExpr = sql<number>`count(*) filter (where ${callFailureCondition})`
   const creditsSpentExpr = sql<number>`coalesce(sum(${apiCalls.creditsCost}), 0)`
