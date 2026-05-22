@@ -70,7 +70,8 @@ export const creditTransactions = pgTable('credit_transactions', {
   meta: jsonb('meta').$type<Record<string, unknown>>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
-  index('credit_transactions_user_created_idx').on(table.userId, table.createdAt),
+  index('credit_transactions_created_at_idx').on(table.createdAt.desc()),
+  index('credit_transactions_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('credit_transactions_reason_idx').on(table.reason),
   index('credit_transactions_api_call_idx').on(table.apiCallId),
   // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一，仅对
@@ -107,7 +108,8 @@ export const redemptionCodes = pgTable('redemption_codes', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   index('redemption_codes_batch_idx').on(table.batchId),
-  index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt)
+  index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt),
+  index('redemption_codes_created_at_idx').on(table.createdAt.desc())
 ])
 
 // ------------------------------------------------------------------

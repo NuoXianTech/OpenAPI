@@ -22,16 +22,10 @@ export default defineNuxtConfig({
       emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
       oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
       apiKeySecret: process.env.API_KEY_SECRET || ''
-    },
-    apiGuard: {
-      // 'memory' | 'postgres' | 'kv'；留空 → 自动选择：
-      //   NuxtHub 部署（NUXT_HUB_PROJECT_KEY 存在）→ kv，否则 → memory
-      // 多实例 Node + 共享 PG 部署可在此显式置为 'postgres'；
-      // 仍可通过 Nuxt 标准的 NUXT_API_GUARD_RATE_LIMIT_DRIVER 环境变量按部署覆盖。
-      rateLimitDriver: ''
     }
   },
-  // 公共 list 接口走 HTTP cache-control 让浏览器/CDN 复用；后台页保持 SSR，鉴权由 server 端 requireAdmin 兜底
+  // Public list endpoints use short HTTP cache windows; private pages remain SSR
+  // and are guarded on the server side.
   routeRules: {
     '/api/list': { headers: { 'cache-control': 'public, max-age=10, stale-while-revalidate=60' } },
     '/api/api-categories/list': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } },
@@ -40,17 +34,14 @@ export default defineNuxtConfig({
     '/api/settings/public': { headers: { 'cache-control': 'public, max-age=30, stale-while-revalidate=300' } }
   },
   experimental: {
-    // 路由切换走视图过渡，更顺滑
     viewTransition: true,
-    // 浏览器空闲时预热相邻路由
     defaults: {
       nuxtLink: { prefetch: true, prefetchOn: { visibility: true } }
     }
   },
   compatibilityDate: '2025-07-15',
   nitro: {
-    // 生产部署目标：独立 Node 进程（Docker / VPS / PM2）。
-    // 显式声明 preset，避免 @nuxthub/core 在检测到 NUXT_HUB_* 环境时自动切到 cloudflare-pages。
+    // Production target: a single Node server process.
     preset: 'node-server',
     compressPublicAssets: { brotli: true, gzip: true }
   },
@@ -69,5 +60,5 @@ export default defineNuxtConfig({
   },
   icon: {
     serverBundle: { collections: ['mdi'] }
-  },
+  }
 })

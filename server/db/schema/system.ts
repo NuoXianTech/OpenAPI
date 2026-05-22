@@ -99,8 +99,8 @@ export const operationLogs = pgTable('operation_logs', {
   status: varchar('status', { length: 20 }).notNull().default('success'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
-  index('operation_logs_created_at_idx').on(table.createdAt),
-  index('operation_logs_user_created_idx').on(table.userId, table.createdAt),
+  index('operation_logs_created_at_idx').on(table.createdAt.desc()),
+  index('operation_logs_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('operation_logs_action_idx').on(table.action),
   index('operation_logs_resource_idx').on(table.resourceType, table.resourceId)
 ])

@@ -95,6 +95,7 @@ export const notificationDeliveries = pgTable('notification_deliveries', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   uniqueIndex('notification_deliveries_msg_user_uq').on(table.messageId, table.recipientUserId),
+  index('notification_deliveries_message_idx').on(table.messageId),
   index('notification_deliveries_user_created_idx').on(table.recipientUserId, table.createdAt),
   index('notification_deliveries_user_unread_idx').on(table.recipientUserId, table.isRead)
 ])

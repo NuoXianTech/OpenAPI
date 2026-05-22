@@ -10,13 +10,12 @@ import {
   timestamp,
   uuid,
   index,
-  uniqueIndex
+  uniqueIndex,
+  check
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { users } from './user'
 
-// ------------------------------------------------------------------
-// API Categories（结构化分类，支持二级父子）
-// ------------------------------------------------------------------
 export const apiCategories = pgTable('api_categories', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 50 }).notNull(),
@@ -36,42 +35,30 @@ export const apiCategories = pgTable('api_categories', {
   index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
 ])
 
-// ------------------------------------------------------------------
-// APIs（接口主表）
-//
-// 治理粒度：一条记录 = 一个 (pathVersion, code) = server/routes/v{N}/<code>/ 目录。
-// 该 code 下所有 endpoints（不同 HTTP 方法、子路径、动态路由）共享同一份治理配置。
-// 子路由明细由构建期 manifest 提供，DB 不重复存储。
-// ------------------------------------------------------------------
 export const apis = pgTable('apis', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 50 }).notNull(), // = server/routes/v{N}/<code>/ 目录名
+  code: varchar('code', { length: 50 }).notNull(),
   pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
-  endpointCount: integer('endpoint_count').notNull().default(0), // 下辖 endpoints 数量，admin 行展示
+  endpointCount: integer('endpoint_count').notNull().default(0),
   name: varchar('name', { length: 100 }).notNull(),
-  status: integer('status').default(1).notNull(), // -1=未知 0=异常 1=正常 2=维护 3=废弃
+  status: integer('status').default(1).notNull(),
   categoryId: integer('category_id').references(() => apiCategories.id, { onDelete: 'set null' }),
   shortDesc: varchar('short_desc', { length: 30 }).notNull(),
   description: text('description').notNull(),
-  httpMethod: varchar('http_method', { length: 50 }).notNull(), // 可逗号分隔
-  apiPath: varchar('api_path', { length: 200 }).notNull(), // 基础展示路径，例 /v1/user
+  httpMethod: varchar('http_method', { length: 50 }).notNull(),
+  apiPath: varchar('api_path', { length: 200 }).notNull(),
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
-  docVersion: varchar('doc_version', { length: 32 }).notNull().default('v1'), // 文档语义版本号（与 pathVersion 不同）
+  docVersion: varchar('doc_version', { length: 32 }).notNull().default('v1'),
 
   isEnabled: boolean('is_enabled').default(true).notNull(),
   isApiKey: boolean('is_api_key').default(false).notNull(),
   isStatistics: boolean('is_statistics').default(true).notNull(),
 
-  // 限流（0 表示不限）
   rateLimitPerSecond: integer('rate_limit_per_second').default(0).notNull(),
   rateLimitPerMinute: integer('rate_limit_per_minute').default(0).notNull(),
   rateLimitPerHour: integer('rate_limit_per_hour').default(0).notNull(),
   rateLimitPerDay: integer('rate_limit_per_day').default(0).notNull(),
 
-  // 配额与性能
-  // methodCosts：按 HTTP 方法粒度的扣费表。键为大写方法名（GET/POST/...），值为扣多少积分（0=免费）。
-  // 未列出的方法视为 0（免费）。所有值为 0 / 空对象 = 整组接口免费。
-  // 例：{ "GET": 0, "POST": 10, "PUT": 5 } 表示 GET 免费、POST 10 分、PUT 5 分。
   methodCosts: jsonb('method_costs').$type<Record<string, number>>().notNull().default({}),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
@@ -88,9 +75,6 @@ export const apis = pgTable('apis', {
   index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled)
 ])
 
-// ------------------------------------------------------------------
-// API Keys（用户签发的访问密钥）
-// ------------------------------------------------------------------
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -98,11 +82,9 @@ export const apiKeys = pgTable('api_keys', {
   apiKey: varchar('api_key', { length: 120 }).notNull().unique(),
   isActive: boolean('is_active').notNull().default(true),
 
-  scopes: jsonb('scopes').$type<string[]>(), // null / [] = 全部
-  ipWhitelist: jsonb('ip_whitelist').$type<string[]>(), // CIDR 列表（单 IP 必须写成 /32 或 /128）
-  // 累计消耗积分上限：null = 无限配额；非 null 时 usedCredits 达到上限即拒绝调用
+  scopes: jsonb('scopes').$type<string[]>(),
+  ipWhitelist: jsonb('ip_whitelist').$type<string[]>(),
   totalQuota: bigint('total_quota', { mode: 'number' }),
-  // 该 Key 累计已消耗的积分；仅在 charge 成功时累加，资金仍走 users.credits
   usedCredits: bigint('used_credits', { mode: 'number' }).notNull().default(0),
   totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
 
@@ -119,12 +101,9 @@ export const apiKeys = pgTable('api_keys', {
   index('api_keys_expires_idx').on(table.expiresAt)
 ])
 
-// ------------------------------------------------------------------
-// API Calls（单次调用明细日志）
-// ------------------------------------------------------------------
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
-  requestId: uuid('request_id').defaultRandom(), // 分布式追踪 ID
+  requestId: uuid('request_id').defaultRandom(),
   apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
   apiKeyName: varchar('api_key_name', { length: 100 }),
@@ -137,7 +116,6 @@ export const apiCalls = pgTable('api_calls', {
   latencyMs: integer('latency_ms').notNull().default(0),
 
   ip: varchar('ip', { length: 45 }),
-  // GeoIP 反查字段（待接入 GeoIP 数据源后写入）
   country: varchar('country', { length: 2 }),
   region: varchar('region', { length: 100 }),
   city: varchar('city', { length: 100 }),
@@ -150,23 +128,19 @@ export const apiCalls = pgTable('api_calls', {
   errorCode: varchar('error_code', { length: 50 }),
   errorMessage: varchar('error_message', { length: 500 }),
 
-  // 此次调用扣除的积分。0 表示免费 / 失败未扣 / 已退款
   creditsCost: integer('credits_cost').notNull().default(0),
   isCounted: boolean('is_counted').notNull().default(true),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
-  index('api_calls_created_at_idx').on(table.createdAt),
-  index('api_calls_api_id_created_at_idx').on(table.apiId, table.createdAt),
-  index('api_calls_user_created_at_idx').on(table.userId, table.createdAt),
-  index('api_calls_api_key_created_at_idx').on(table.apiKeyId, table.createdAt),
+  index('api_calls_created_at_idx').on(table.createdAt.desc()),
+  index('api_calls_api_id_created_at_idx').on(table.apiId, table.createdAt.desc()),
+  index('api_calls_user_created_at_idx').on(table.userId, table.createdAt.desc()),
+  index('api_calls_api_key_created_at_idx').on(table.apiKeyId, table.createdAt.desc()),
   index('api_calls_status_idx').on(table.statusCode),
   index('api_calls_request_id_idx').on(table.requestId)
 ])
 
-// ------------------------------------------------------------------
-// API Call Stats（按 api × 天聚合）
-// ------------------------------------------------------------------
 export const apiCallStats = pgTable('api_call_stats', {
   id: serial('id').primaryKey(),
   apiId: integer('api_id').notNull().references(() => apis.id),
@@ -181,36 +155,6 @@ export const apiCallStats = pgTable('api_call_stats', {
   index('api_call_stats_stat_date_idx').on(table.statDate)
 ])
 
-// ------------------------------------------------------------------
-// API Rate Limit Buckets（限流桶，postgres driver 使用）
-//
-// 滑动窗口的"固定桶"近似实现：按 windowStart 对齐时间窗，同一 (bucketKey, windowStart)
-// 用 upsert 原子累加 count。driver 查询当前桶 count 并判断是否超额。
-// 过期窗口由 server/plugins/gcExpired.ts 每小时清理，避免无限增长。
-// ------------------------------------------------------------------
-export const apiRateLimitBuckets = pgTable('api_rate_limit_buckets', {
-  id: serial('id').primaryKey(),
-  bucketKey: varchar('bucket_key', { length: 200 }).notNull(),
-  windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
-  count: integer('count').notNull().default(0),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('api_rate_limit_buckets_key_window_uq').on(table.bucketKey, table.windowStart),
-  index('api_rate_limit_buckets_window_idx').on(table.windowStart)
-])
-
-// ------------------------------------------------------------------
-// Pending Charges（待扣费补偿队列）
-//
-// 调用统计 plugin 在 afterResponse 阶段同步扣费失败时入队，后台 plugin
-// 按 nextAttemptAt 扫描重试。达到 MAX_ATTEMPTS 转 dead_letter，等待人工处理。
-// 重试成功后回填 apiCalls.creditsCost 并删除本行。
-//
-// 多实例并发安全：status='processing' + leaseExpiresAt 抢占式认领 —— 调度器
-// 用原子 UPDATE...WHERE id IN (SELECT FOR UPDATE SKIP LOCKED) 把一批 pending
-// 抢成 processing 并写入 lease，其他实例在同一窗口跳过这些行。worker 崩溃后
-// lease 到期，下一轮扫描重新认领。
-// ------------------------------------------------------------------
 export const pendingCharges = pgTable('pending_charges', {
   id: serial('id').primaryKey(),
   apiCallId: integer('api_call_id').notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),
@@ -222,15 +166,12 @@ export const pendingCharges = pgTable('pending_charges', {
   lastError: varchar('last_error', { length: 500 }),
   lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
   nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
-  // 仅 processing 状态使用：当前持有者的 lease 截止时刻；到期后视为可重新认领
-  leaseExpiresAt: timestamp('lease_expires_at', { withTimezone: true }),
-  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | processing | dead_letter
+  status: varchar('status', { length: 20 }).notNull().default('pending'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('pending_charges_api_call_uq').on(table.apiCallId),
   index('pending_charges_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
-  // 调度器扫描 processing 行查 lease 过期，单独走这条索引
-  index('pending_charges_lease_idx').on(table.status, table.leaseExpiresAt),
-  index('pending_charges_user_idx').on(table.userId)
+  index('pending_charges_user_idx').on(table.userId),
+  check('pending_charges_status_chk', sql`${table.status} in ('pending', 'dead_letter')`)
 ])

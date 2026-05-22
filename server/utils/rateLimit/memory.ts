@@ -1,11 +1,6 @@
 /**
- * 进程内内存限流 · 固定窗口计数。
- *
- * 适用：dev / 单实例 prod。
- * 不适用：多实例（各实例计数独立，无法共享）。
- *
- * 使用 Map 保存 bucket，LRU 限制在 10k 条，防止 key 爆炸导致内存泄漏。
- * 过期窗口由惰性清理 + 定时清理（每 60s）共同保障。
+ * In-process fixed-window rate limiter for the single Node server process.
+ * Counters are intentionally memory-only and reset when the process restarts.
  */
 
 import { RATE_LIMIT_WINDOW_SECONDS } from '~~/shared/config/apiGuard'
@@ -40,7 +35,6 @@ function cleanup(now: number) {
     if (b.expiresAt <= now) buckets.delete(k)
   }
   if (buckets.size > MAX_BUCKETS) {
-    // 粗粒度剔除：删除前 1/4（Map 保持插入顺序，前面多半是较旧的）
     const toDelete = Math.ceil(buckets.size / 4)
     let i = 0
     for (const k of buckets.keys()) {

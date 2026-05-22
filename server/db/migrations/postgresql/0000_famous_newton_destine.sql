@@ -89,14 +89,6 @@ CREATE TABLE "api_keys" (
 	CONSTRAINT "api_keys_api_key_unique" UNIQUE("api_key")
 );
 --> statement-breakpoint
-CREATE TABLE "api_rate_limit_buckets" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"bucket_key" varchar(200) NOT NULL,
-	"window_start" timestamp with time zone NOT NULL,
-	"count" integer DEFAULT 0 NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "apis" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"code" varchar(50) NOT NULL,
@@ -227,10 +219,10 @@ CREATE TABLE "pending_charges" (
 	"last_error" varchar(500),
 	"last_attempt_at" timestamp with time zone,
 	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"lease_expires_at" timestamp with time zone,
 	"status" varchar(20) DEFAULT 'pending' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "pending_charges_status_chk" CHECK ("pending_charges"."status" in ('pending', 'dead_letter'))
 );
 --> statement-breakpoint
 CREATE TABLE "redemption_codes" (
@@ -375,10 +367,10 @@ CREATE INDEX "announcements_enabled_pin_sort_idx" ON "announcements" USING btree
 CREATE INDEX "announcements_window_idx" ON "announcements" USING btree ("start_at","end_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_call_stats_api_id_stat_date_uq" ON "api_call_stats" USING btree ("api_id","stat_date");--> statement-breakpoint
 CREATE INDEX "api_call_stats_stat_date_idx" ON "api_call_stats" USING btree ("stat_date");--> statement-breakpoint
-CREATE INDEX "api_calls_created_at_idx" ON "api_calls" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "api_calls_api_id_created_at_idx" ON "api_calls" USING btree ("api_id","created_at");--> statement-breakpoint
-CREATE INDEX "api_calls_user_created_at_idx" ON "api_calls" USING btree ("user_id","created_at");--> statement-breakpoint
-CREATE INDEX "api_calls_api_key_created_at_idx" ON "api_calls" USING btree ("api_key_id","created_at");--> statement-breakpoint
+CREATE INDEX "api_calls_created_at_idx" ON "api_calls" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "api_calls_api_id_created_at_idx" ON "api_calls" USING btree ("api_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "api_calls_user_created_at_idx" ON "api_calls" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "api_calls_api_key_created_at_idx" ON "api_calls" USING btree ("api_key_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "api_calls_status_idx" ON "api_calls" USING btree ("status_code");--> statement-breakpoint
 CREATE INDEX "api_calls_request_id_idx" ON "api_calls" USING btree ("request_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code");--> statement-breakpoint
@@ -387,19 +379,19 @@ CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree (
 CREATE INDEX "api_keys_user_idx" ON "api_keys" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "api_keys_active_idx" ON "api_keys" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX "api_keys_expires_idx" ON "api_keys" USING btree ("expires_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "api_rate_limit_buckets_key_window_uq" ON "api_rate_limit_buckets" USING btree ("bucket_key","window_start");--> statement-breakpoint
-CREATE INDEX "api_rate_limit_buckets_window_idx" ON "api_rate_limit_buckets" USING btree ("window_start");--> statement-breakpoint
 CREATE UNIQUE INDEX "apis_version_code_uq" ON "apis" USING btree ("path_version","code");--> statement-breakpoint
 CREATE INDEX "apis_category_idx" ON "apis" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "apis_enabled_idx" ON "apis" USING btree ("is_enabled");--> statement-breakpoint
 CREATE INDEX "apis_status_idx" ON "apis" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_version","is_enabled");--> statement-breakpoint
-CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "credit_transactions_created_at_idx" ON "credit_transactions" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "credit_transactions_reason_idx" ON "credit_transactions" USING btree ("reason");--> statement-breakpoint
 CREATE INDEX "credit_transactions_api_call_idx" ON "credit_transactions" USING btree ("api_call_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "credit_transactions_api_call_reason_uq" ON "credit_transactions" USING btree ("api_call_id","reason") WHERE "credit_transactions"."api_call_id" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "friend_links_active_idx" ON "friend_links" USING btree ("is_active");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint
+CREATE INDEX "notification_deliveries_message_idx" ON "notification_deliveries" USING btree ("message_id");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliveries" USING btree ("recipient_user_id","created_at");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_unread_idx" ON "notification_deliveries" USING btree ("recipient_user_id","is_read");--> statement-breakpoint
 CREATE INDEX "notification_messages_audience_idx" ON "notification_messages" USING btree ("audience");--> statement-breakpoint
@@ -408,16 +400,16 @@ CREATE UNIQUE INDEX "oauth_accounts_provider_pid_uq" ON "oauth_accounts" USING b
 CREATE INDEX "oauth_accounts_user_idx" ON "oauth_accounts" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_provider_idx" ON "oauth_accounts" USING btree ("provider");--> statement-breakpoint
 CREATE UNIQUE INDEX "oauth_providers_provider_uq" ON "oauth_providers" USING btree ("provider");--> statement-breakpoint
-CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at");--> statement-breakpoint
+CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint
 CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "pending_charges_api_call_uq" ON "pending_charges" USING btree ("api_call_id");--> statement-breakpoint
 CREATE INDEX "pending_charges_status_next_attempt_idx" ON "pending_charges" USING btree ("status","next_attempt_at");--> statement-breakpoint
-CREATE INDEX "pending_charges_lease_idx" ON "pending_charges" USING btree ("status","lease_expires_at");--> statement-breakpoint
 CREATE INDEX "pending_charges_user_idx" ON "pending_charges" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_batch_idx" ON "redemption_codes" USING btree ("batch_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_enabled_expires_idx" ON "redemption_codes" USING btree ("is_enabled","expires_at");--> statement-breakpoint
+CREATE INDEX "redemption_codes_created_at_idx" ON "redemption_codes" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "redemption_records_code_user_uq" ON "redemption_records" USING btree ("code_id","user_id");--> statement-breakpoint
 CREATE INDEX "redemption_records_user_redeemed_idx" ON "redemption_records" USING btree ("user_id","redeemed_at");--> statement-breakpoint
 CREATE INDEX "sessions_user_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
