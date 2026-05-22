@@ -12,15 +12,29 @@ const { turnstile, passwordResetEnabled } = useSiteSettings()
 const schema = requestPasswordResetSchema.omit({ turnstileToken: true })
 type Schema = Omit<RequestPasswordResetInput, 'turnstileToken'>
 
-const state = reactive<Schema>({
-  email: ''
-})
+const authForm = ref<{ state: Schema } | null>(null)
+
 const errorMessage = ref('')
 const submitted = ref(false)
+const submittedEmail = ref('')
 const submitting = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.passwordReset)
+
+const fields = computed(() => [
+  {
+    name: 'email',
+    type: 'email' as const,
+    label: '邮箱',
+    placeholder: 'you@example.com',
+    autocomplete: 'email',
+    icon: 'i-mdi-email-outline',
+    size: 'lg' as const,
+    required: true,
+    autofocus: true
+  }
+])
 
 const FORGOT_PASSWORD_ERROR_CODES: Record<number, string> = {
   403: '该功能已被管理员关闭',
@@ -45,6 +59,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
       }
     })
+    submittedEmail.value = event.data.email
     submitted.value = true
   } catch (error: unknown) {
     errorMessage.value = parseFetchError(error, '提交失败，请稍后重试', FORGOT_PASSWORD_ERROR_CODES)
@@ -57,22 +72,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <CommonAppAuthShell>
-    <div class="auth-brand">
-      <div class="auth-brand__logo">
-        <UIcon
-          name="i-mdi-lock-reset"
-          class="size-6"
-        />
-      </div>
-      <div>
-        <h1 class="auth-brand__title">
-          找回密码
-        </h1>
-        <p class="auth-brand__subtitle">
-          输入注册时使用的邮箱，我们会发送重置链接到该邮箱
-        </p>
-      </div>
-    </div>
+    <AuthBrandHeader
+      icon="i-mdi-lock-reset"
+      title="找回密码"
+      subtitle="输入注册时使用的邮箱，我们会发送重置链接到该邮箱"
+    />
 
     <UCard
       variant="outline"
@@ -117,7 +121,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             邮件已发送
           </h3>
           <p class="text-sm text-muted mt-1.5 leading-relaxed">
-            如果 <span class="font-medium text-default">{{ state.email }}</span> 已注册，<br>
+            如果 <span class="font-medium text-default">{{ submittedEmail }}</span> 已注册，<br>
             我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
           </p>
         </div>
@@ -131,81 +135,44 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UButton>
       </div>
 
-      <UForm
+      <UAuthForm
         v-else
+        ref="authForm"
         :schema="schema"
-        :state="state"
-        class="space-y-4"
-        action="javascript:void(0)"
+        :fields="fields"
+        :loading="submitting"
+        :submit="{ label: '发送重置链接', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
         @submit="onSubmit"
       >
-        <UFormField
-          label="邮箱"
-          name="email"
-          required
-        >
-          <UInput
-            v-model="state.email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            icon="i-mdi-email-outline"
-            size="lg"
-            class="w-full"
-            autofocus
+        <template #validation>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
+
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
           />
-        </UFormField>
-
-        <Transition name="state-fade">
-          <div
-            v-if="errorMessage"
-            class="auth-message auth-message--error"
-          >
-            <UIcon
-              name="i-mdi-alert-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ errorMessage }}</span>
-          </div>
-        </Transition>
-
-        <CommonTurnstileWidget
-          v-if="turnstileRequired"
-          ref="turnstileWidget"
-          v-model:token="turnstileToken"
-          :site-key="turnstile.siteKey"
-        />
-
-        <UButton
-          type="submit"
-          block
-          size="lg"
-          :loading="submitting"
-          :disabled="turnstileRequired && !turnstileToken"
-        >
-          发送重置链接
-        </UButton>
-      </UForm>
+        </template>
+      </UAuthForm>
     </UCard>
 
-    <div class="auth-footer-links">
-      <UButton
-        variant="link"
-        size="sm"
-        to="/login"
-        class="px-0"
-      >
-        返回登录
-      </UButton>
-      <span class="text-dimmed">·</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/"
-        class="px-0"
-      >
-        返回首页
-      </UButton>
-    </div>
+    <AuthFooterLinks
+      :links="[
+        { label: '返回登录', to: '/login' },
+        { label: '返回首页', to: '/' }
+      ]"
+    />
   </CommonAppAuthShell>
 </template>

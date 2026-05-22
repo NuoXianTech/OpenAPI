@@ -21,44 +21,60 @@ const schema = registerSchema
 
 type Schema = z.output<typeof schema>
 
-const state = reactive<Schema>({
-  username: '',
-  email: '',
-  password: '',
-  confirm: ''
-})
+const authForm = ref<{ state: Schema } | null>(null)
+const passwordValue = computed(() => authForm.value?.state?.password ?? '')
 
 const errorMessage = ref('')
 const successMessage = ref('')
 const submitting = ref(false)
-const passwordVisible = ref(false)
-const confirmVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.register)
 
-const passwordStrength = computed(() => {
-  const v = state.password
-  if (!v) return { label: '', color: 'neutral', value: 0 }
-  let score = 0
-  if (v.length >= 8) score += 1
-  if (v.length >= 12) score += 1
-  if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score += 1
-  if (/\d/.test(v)) score += 1
-  if (/[^A-Za-z0-9]/.test(v)) score += 1
-  if (score <= 2) return { label: '弱', color: 'error' as const, value: 33 }
-  if (score <= 3) return { label: '中', color: 'warning' as const, value: 66 }
-  return { label: '强', color: 'success' as const, value: 100 }
-})
-
-const passwordStrengthLabelClass = computed(() => {
-  switch (passwordStrength.value.color) {
-    case 'success': return 'text-success font-medium'
-    case 'warning': return 'text-warning font-medium'
-    case 'error': return 'text-error font-medium'
-    default: return 'text-muted'
+const fields = computed(() => [
+  {
+    name: 'username',
+    type: 'text' as const,
+    label: '用户名',
+    placeholder: 'openapi_user',
+    help: '3-32 位，可包含字母、数字、下划线和短横线',
+    autocomplete: 'username',
+    icon: 'i-mdi-account-outline',
+    size: 'lg' as const,
+    required: true,
+    autofocus: true
+  },
+  {
+    name: 'email',
+    type: 'email' as const,
+    label: '邮箱',
+    placeholder: 'you@example.com',
+    autocomplete: 'email',
+    icon: 'i-mdi-email-outline',
+    size: 'lg' as const,
+    required: true
+  },
+  {
+    name: 'password',
+    type: 'password' as const,
+    label: '密码',
+    placeholder: '设置不少于 8 位的登录密码',
+    autocomplete: 'new-password',
+    icon: 'i-mdi-lock-outline',
+    size: 'lg' as const,
+    required: true
+  },
+  {
+    name: 'confirm',
+    type: 'password' as const,
+    label: '确认密码',
+    placeholder: '再次输入密码',
+    autocomplete: 'new-password',
+    icon: 'i-mdi-lock-check-outline',
+    size: 'lg' as const,
+    required: true
   }
-})
+])
 
 const REGISTER_ERROR_CODES: Record<number, string> = {
   403: '当前未开放注册或邮箱不被允许',
@@ -88,8 +104,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     successMessage.value = res.verificationRequired
       ? '账号已创建，请查收邮箱完成验证后再登录。'
       : '账号创建成功，可以直接登录。'
-    state.password = ''
-    state.confirm = ''
+    if (authForm.value?.state) {
+      authForm.value.state.password = ''
+      authForm.value.state.confirm = ''
+    }
     turnstileWidget.value?.reset()
   } catch (error: unknown) {
     errorMessage.value = parseFetchError(error, '注册失败', REGISTER_ERROR_CODES)
@@ -102,208 +120,72 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <CommonAppAuthShell>
-    <div class="auth-brand">
-      <div class="auth-brand__logo">
-        <UIcon
-          name="i-mdi-account-plus-outline"
-          class="size-6"
-        />
-      </div>
-      <div>
-        <h1 class="auth-brand__title">
-          创建 {{ settings.siteName }} 账号
-        </h1>
-        <p class="auth-brand__subtitle">
-          注册完成后将通过邮箱进行验证，验证通过即可使用
-        </p>
-      </div>
-    </div>
+    <AuthBrandHeader
+      icon="i-mdi-account-plus-outline"
+      :title="`创建 ${settings.siteName} 账号`"
+      subtitle="注册完成后将通过邮箱进行验证，验证通过即可使用"
+    />
 
     <UCard
       variant="outline"
       class="auth-card"
       :ui="{ body: 'p-6 sm:p-7' }"
     >
-      <UForm
+      <UAuthForm
+        ref="authForm"
         :schema="schema"
-        :state="state"
-        class="space-y-4"
-        action="javascript:void(0)"
+        :fields="fields"
+        :loading="submitting"
+        :submit="{ label: '创建账号', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
         @submit="onSubmit"
       >
-        <UFormField
-          label="用户名"
-          name="username"
-          help="3-32 位，可包含字母、数字、下划线和短横线"
-          required
-        >
-          <UInput
-            v-model="state.username"
-            type="text"
-            autocomplete="username"
-            placeholder="openapi_user"
-            icon="i-mdi-account-outline"
-            size="lg"
-            class="w-full"
-            autofocus
-          />
-        </UFormField>
+        <template #password-help>
+          <AuthPasswordStrength :password="passwordValue" />
+        </template>
 
-        <UFormField
-          label="邮箱"
-          name="email"
-          required
-        >
-          <UInput
-            v-model="state.email"
-            type="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            icon="i-mdi-email-outline"
-            size="lg"
-            class="w-full"
-          />
-        </UFormField>
-
-        <UFormField
-          label="密码"
-          name="password"
-          required
-        >
-          <UInput
-            v-model="state.password"
-            :type="passwordVisible ? 'text' : 'password'"
-            autocomplete="new-password"
-            placeholder="设置不少于 8 位的登录密码"
-            icon="i-mdi-lock-outline"
-            size="lg"
-            class="w-full"
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                @click="passwordVisible = !passwordVisible"
-              />
-            </template>
-          </UInput>
+        <template #validation>
           <Transition name="state-fade">
             <div
-              v-if="state.password"
-              class="mt-2"
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
             >
-              <UProgress
-                :model-value="passwordStrength.value"
-                :color="passwordStrength.color"
-                size="xs"
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
               />
-              <p class="mt-1 text-xs text-muted">
-                密码强度：<span :class="passwordStrengthLabelClass">{{ passwordStrength.label }}</span>
-              </p>
+              <span>{{ errorMessage }}</span>
             </div>
           </Transition>
-        </UFormField>
 
-        <UFormField
-          label="确认密码"
-          name="confirm"
-          required
-        >
-          <UInput
-            v-model="state.confirm"
-            :type="confirmVisible ? 'text' : 'password'"
-            autocomplete="new-password"
-            placeholder="再次输入密码"
-            icon="i-mdi-lock-check-outline"
-            size="lg"
-            class="w-full"
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
-                @click="confirmVisible = !confirmVisible"
+          <Transition name="state-fade">
+            <div
+              v-if="successMessage"
+              class="auth-message auth-message--success"
+            >
+              <UIcon
+                name="i-mdi-check-circle-outline"
+                class="auth-message__icon size-4"
               />
-            </template>
-          </UInput>
-        </UFormField>
+              <span>{{ successMessage }}</span>
+            </div>
+          </Transition>
 
-        <Transition name="state-fade">
-          <div
-            v-if="errorMessage"
-            class="auth-message auth-message--error"
-          >
-            <UIcon
-              name="i-mdi-alert-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ errorMessage }}</span>
-          </div>
-        </Transition>
-
-        <Transition name="state-fade">
-          <div
-            v-if="successMessage"
-            class="auth-message auth-message--success"
-          >
-            <UIcon
-              name="i-mdi-check-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ successMessage }}</span>
-          </div>
-        </Transition>
-
-        <CommonTurnstileWidget
-          v-if="turnstileRequired"
-          ref="turnstileWidget"
-          v-model:token="turnstileToken"
-          :site-key="turnstile.siteKey"
-        />
-
-        <UButton
-          type="submit"
-          block
-          size="lg"
-          :loading="submitting"
-          :disabled="turnstileRequired && !turnstileToken"
-        >
-          创建账号
-        </UButton>
-      </UForm>
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
+        </template>
+      </UAuthForm>
     </UCard>
 
-    <div class="auth-footer-links">
-      <span>已有账号？</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/login"
-        class="px-0"
-      >
-        直接登录
-      </UButton>
-      <span class="text-dimmed">·</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/"
-        class="px-0"
-      >
-        返回首页
-      </UButton>
-    </div>
+    <AuthFooterLinks
+      prefix="已有账号？"
+      :links="[
+        { label: '直接登录', to: '/login' },
+        { label: '返回首页', to: '/' }
+      ]"
+    />
   </CommonAppAuthShell>
 </template>

@@ -13,20 +13,14 @@ const route = useRoute()
 
 const schema = z.object({
   identifier: z.string().min(1, '请输入邮箱或用户名'),
-  password: z.string().min(1, '请输入密码')
+  password: z.string().min(1, '请输入密码'),
+  remember: z.boolean().optional()
 })
 type Schema = z.output<typeof schema>
 
-const state = reactive<Schema>({
-  identifier: '',
-  password: ''
-})
-
-const remember = ref(false)
 const errorMessage = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
-const passwordVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
@@ -34,7 +28,44 @@ const turnstileRequired = computed(() => turnstile.value.login)
 const { data: providersData } = useLazyFetch<Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }>>('/api/auth/providers/list', {
   default: () => []
 })
-const providers = computed(() => providersData.value || [])
+
+const providers = computed(() => (providersData.value || []).map(p => ({
+  label: `使用 ${p.displayName} 登录`,
+  icon: p.icon || 'i-mdi-account-circle-outline',
+  color: 'neutral' as const,
+  variant: 'outline' as const,
+  size: 'lg' as const,
+  onClick: () => gotoOAuth(p.authorizeEntry)
+})))
+
+const fields = computed(() => [
+  {
+    name: 'identifier',
+    type: 'text' as const,
+    label: '邮箱或用户名',
+    placeholder: 'you@example.com',
+    autocomplete: 'username',
+    icon: 'i-mdi-account-outline',
+    size: 'lg' as const,
+    required: true,
+    autofocus: true
+  },
+  {
+    name: 'password',
+    type: 'password' as const,
+    label: '密码',
+    placeholder: '请输入登录密码',
+    autocomplete: 'current-password',
+    icon: 'i-mdi-lock-outline',
+    size: 'lg' as const,
+    required: true
+  },
+  {
+    name: 'remember',
+    type: 'checkbox' as const,
+    label: '记住我'
+  }
+])
 
 const oauthError = computed(() => {
   const code = (route.query.oauth_error || '').toString()
@@ -89,7 +120,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const base = event.data.identifier.includes('@')
       ? { email: event.data.identifier, password: event.data.password }
       : { username: event.data.identifier, password: event.data.password }
-    const withRemember = { ...base, remember: remember.value }
+    const withRemember = { ...base, remember: Boolean(event.data.remember) }
     const payload = turnstileRequired.value
       ? { ...withRemember, turnstileToken: turnstileToken.value }
       : withRemember
@@ -112,22 +143,11 @@ function gotoOAuth(entry: string) {
 
 <template>
   <CommonAppAuthShell>
-    <div class="auth-brand">
-      <div class="auth-brand__logo">
-        <UIcon
-          name="i-mdi-account-circle-outline"
-          class="size-6"
-        />
-      </div>
-      <div>
-        <h1 class="auth-brand__title">
-          欢迎回到 {{ settings.siteName }}
-        </h1>
-        <p class="auth-brand__subtitle">
-          使用邮箱或用户名登录，开始调用接口
-        </p>
-      </div>
-    </div>
+    <AuthBrandHeader
+      icon="i-mdi-account-circle-outline"
+      :title="`欢迎回到 ${settings.siteName}`"
+      subtitle="使用邮箱或用户名登录，开始调用接口"
+    />
 
     <UCard
       variant="outline"
@@ -143,66 +163,17 @@ function gotoOAuth(entry: string) {
         <USkeleton class="h-11 w-full rounded-lg" />
       </div>
 
-      <UForm
+      <UAuthForm
         v-else
         :schema="schema"
-        :state="state"
-        class="space-y-4"
-        action="javascript:void(0)"
+        :fields="fields"
+        :providers="providers"
+        :loading="submitting"
+        :submit="{ label: '登录', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
+        separator="或使用第三方登录"
         @submit="onSubmit"
       >
-        <UFormField
-          label="邮箱或用户名"
-          name="identifier"
-          required
-        >
-          <UInput
-            v-model="state.identifier"
-            type="text"
-            autocomplete="username"
-            placeholder="you@example.com"
-            icon="i-mdi-account-outline"
-            size="lg"
-            class="w-full"
-            autofocus
-          />
-        </UFormField>
-
-        <UFormField
-          label="密码"
-          name="password"
-          required
-        >
-          <UInput
-            v-model="state.password"
-            :type="passwordVisible ? 'text' : 'password'"
-            autocomplete="current-password"
-            placeholder="请输入登录密码"
-            icon="i-mdi-lock-outline"
-            size="lg"
-            class="w-full"
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                @click="passwordVisible = !passwordVisible"
-              />
-            </template>
-          </UInput>
-        </UFormField>
-
-        <div class="flex items-center justify-between -mt-1">
-          <UCheckbox
-            v-model="remember"
-            label="记住我"
-          />
+        <template #password-hint>
           <UButton
             v-if="passwordResetEnabled"
             type="button"
@@ -213,94 +184,51 @@ function gotoOAuth(entry: string) {
           >
             忘记密码？
           </UButton>
-        </div>
-
-        <Transition name="state-fade">
-          <div
-            v-if="errorMessage"
-            class="auth-message auth-message--error"
-          >
-            <UIcon
-              name="i-mdi-alert-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ errorMessage }}</span>
-          </div>
-        </Transition>
-
-        <Transition name="state-fade">
-          <div
-            v-if="oauthError"
-            class="auth-message auth-message--error"
-          >
-            <UIcon
-              name="i-mdi-alert-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ oauthError }}</span>
-          </div>
-        </Transition>
-
-        <CommonTurnstileWidget
-          v-if="turnstileRequired"
-          ref="turnstileWidget"
-          v-model:token="turnstileToken"
-          :site-key="turnstile.siteKey"
-        />
-
-        <UButton
-          type="submit"
-          block
-          size="lg"
-          :loading="submitting"
-          :disabled="turnstileRequired && !turnstileToken"
-        >
-          登录
-        </UButton>
-
-        <template v-if="providers.length">
-          <div class="auth-divider">
-            或使用第三方登录
-          </div>
-
-          <div class="grid gap-2">
-            <UButton
-              v-for="p in providers"
-              :key="p.provider"
-              type="button"
-              variant="outline"
-              color="neutral"
-              size="lg"
-              block
-              :icon="p.icon || 'i-mdi-account-circle-outline'"
-              @click="gotoOAuth(p.authorizeEntry)"
-            >
-              使用 {{ p.displayName }} 登录
-            </UButton>
-          </div>
         </template>
-      </UForm>
+
+        <template #validation>
+          <Transition name="state-fade">
+            <div
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
+            >
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
+              />
+              <span>{{ errorMessage }}</span>
+            </div>
+          </Transition>
+
+          <Transition name="state-fade">
+            <div
+              v-if="oauthError"
+              class="auth-message auth-message--error"
+            >
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
+              />
+              <span>{{ oauthError }}</span>
+            </div>
+          </Transition>
+
+          <CommonTurnstileWidget
+            v-if="turnstileRequired"
+            ref="turnstileWidget"
+            v-model:token="turnstileToken"
+            :site-key="turnstile.siteKey"
+          />
+        </template>
+      </UAuthForm>
     </UCard>
 
-    <div class="auth-footer-links">
-      <span>还没有账号？</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/register"
-        class="px-0"
-      >
-        创建账号
-      </UButton>
-      <span class="text-dimmed">·</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/"
-        class="px-0"
-      >
-        返回首页
-      </UButton>
-    </div>
+    <AuthFooterLinks
+      prefix="还没有账号？"
+      :links="[
+        { label: '创建账号', to: '/register' },
+        { label: '返回首页', to: '/' }
+      ]"
+    />
   </CommonAppAuthShell>
 </template>

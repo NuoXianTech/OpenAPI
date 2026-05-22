@@ -25,38 +25,36 @@ const schema = z.object({
 
 type Schema = z.output<typeof schema>
 
-const state = reactive<Schema>({
-  password: '',
-  confirm: ''
-})
+const authForm = ref<{ state: Schema } | null>(null)
+const passwordValue = computed(() => authForm.value?.state?.password ?? '')
+
 const errorMessage = ref('')
 const submitting = ref(false)
 const success = ref(false)
-const passwordVisible = ref(false)
-const confirmVisible = ref(false)
 
-const passwordStrength = computed(() => {
-  const v = state.password
-  if (!v) return { label: '', color: 'neutral', value: 0 }
-  let score = 0
-  if (v.length >= 8) score += 1
-  if (v.length >= 12) score += 1
-  if (/[A-Z]/.test(v) && /[a-z]/.test(v)) score += 1
-  if (/\d/.test(v)) score += 1
-  if (/[^A-Za-z0-9]/.test(v)) score += 1
-  if (score <= 2) return { label: '弱', color: 'error' as const, value: 33 }
-  if (score <= 3) return { label: '中', color: 'warning' as const, value: 66 }
-  return { label: '强', color: 'success' as const, value: 100 }
-})
-
-const passwordStrengthLabelClass = computed(() => {
-  switch (passwordStrength.value.color) {
-    case 'success': return 'text-success font-medium'
-    case 'warning': return 'text-warning font-medium'
-    case 'error': return 'text-error font-medium'
-    default: return 'text-muted'
+const fields = computed(() => [
+  {
+    name: 'password',
+    type: 'password' as const,
+    label: '新密码',
+    placeholder: '设置新密码（至少 8 位）',
+    autocomplete: 'new-password',
+    icon: 'i-mdi-lock-outline',
+    size: 'lg' as const,
+    required: true,
+    autofocus: true
+  },
+  {
+    name: 'confirm',
+    type: 'password' as const,
+    label: '确认新密码',
+    placeholder: '再次输入新密码',
+    autocomplete: 'new-password',
+    icon: 'i-mdi-lock-check-outline',
+    size: 'lg' as const,
+    required: true
   }
-})
+])
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
@@ -85,22 +83,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 <template>
   <CommonAppAuthShell>
-    <div class="auth-brand">
-      <div class="auth-brand__logo">
-        <UIcon
-          name="i-mdi-lock-reset"
-          class="size-6"
-        />
-      </div>
-      <div>
-        <h1 class="auth-brand__title">
-          重置密码
-        </h1>
-        <p class="auth-brand__subtitle">
-          请为账号设置新的登录密码，密码至少 8 位
-        </p>
-      </div>
-    </div>
+    <AuthBrandHeader
+      icon="i-mdi-lock-reset"
+      title="重置密码"
+      subtitle="请为账号设置新的登录密码，密码至少 8 位"
+    />
 
     <UCard
       variant="outline"
@@ -148,132 +135,41 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </div>
       </div>
 
-      <UForm
+      <UAuthForm
         v-else
+        ref="authForm"
         :schema="schema"
-        :state="state"
-        class="space-y-4"
-        action="javascript:void(0)"
+        :fields="fields"
+        :loading="submitting"
+        :submit="{ label: '重置密码', size: 'lg' }"
         @submit="onSubmit"
       >
-        <UFormField
-          label="新密码"
-          name="password"
-          required
-        >
-          <UInput
-            v-model="state.password"
-            :type="passwordVisible ? 'text' : 'password'"
-            autocomplete="new-password"
-            placeholder="设置新密码（至少 8 位）"
-            icon="i-mdi-lock-outline"
-            size="lg"
-            class="w-full"
-            autofocus
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                @click="passwordVisible = !passwordVisible"
-              />
-            </template>
-          </UInput>
+        <template #password-help>
+          <AuthPasswordStrength :password="passwordValue" />
+        </template>
+
+        <template #validation>
           <Transition name="state-fade">
             <div
-              v-if="state.password"
-              class="mt-2"
+              v-if="errorMessage"
+              class="auth-message auth-message--error"
             >
-              <UProgress
-                :model-value="passwordStrength.value"
-                :color="passwordStrength.color"
-                size="xs"
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
               />
-              <p class="mt-1 text-xs text-muted">
-                密码强度：<span :class="passwordStrengthLabelClass">{{ passwordStrength.label }}</span>
-              </p>
+              <span>{{ errorMessage }}</span>
             </div>
           </Transition>
-        </UFormField>
-
-        <UFormField
-          label="确认新密码"
-          name="confirm"
-          required
-        >
-          <UInput
-            v-model="state.confirm"
-            :type="confirmVisible ? 'text' : 'password'"
-            autocomplete="new-password"
-            placeholder="再次输入新密码"
-            icon="i-mdi-lock-check-outline"
-            size="lg"
-            class="w-full"
-            :ui="{ trailing: 'pe-1' }"
-          >
-            <template #trailing>
-              <UButton
-                type="button"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="confirmVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                :aria-label="confirmVisible ? '隐藏密码' : '显示密码'"
-                @click="confirmVisible = !confirmVisible"
-              />
-            </template>
-          </UInput>
-        </UFormField>
-
-        <Transition name="state-fade">
-          <div
-            v-if="errorMessage"
-            class="auth-message auth-message--error"
-          >
-            <UIcon
-              name="i-mdi-alert-circle-outline"
-              class="auth-message__icon size-4"
-            />
-            <span>{{ errorMessage }}</span>
-          </div>
-        </Transition>
-
-        <UButton
-          type="submit"
-          block
-          size="lg"
-          :loading="submitting"
-        >
-          重置密码
-        </UButton>
-      </UForm>
+        </template>
+      </UAuthForm>
     </UCard>
 
-    <div class="auth-footer-links">
-      <UButton
-        variant="link"
-        size="sm"
-        to="/login"
-        class="px-0"
-      >
-        返回登录
-      </UButton>
-      <span class="text-dimmed">·</span>
-      <UButton
-        variant="link"
-        size="sm"
-        to="/"
-        class="px-0"
-      >
-        返回首页
-      </UButton>
-    </div>
+    <AuthFooterLinks
+      :links="[
+        { label: '返回登录', to: '/login' },
+        { label: '返回首页', to: '/' }
+      ]"
+    />
   </CommonAppAuthShell>
 </template>
