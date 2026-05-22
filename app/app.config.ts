@@ -1,12 +1,13 @@
 export default defineAppConfig({
   ui: {
-    // 黑白主题：primary/secondary/info 映射到 zinc 色板（提供 subtle/soft variant 用的灰色阶），
-    // 实际主色由 tailwind.css 里 --ui-primary/--ui-secondary/--ui-info 直接覆盖为纯黑(light)/纯白(dark)。
+    // 黑白主题：primary/secondary/neutral 映射到 zinc 色板（提供 subtle/soft variant 用的灰色阶），
+    // 实际主色由 tailwind.css 里 --ui-primary/--ui-secondary 直接覆盖为纯黑(light)/纯白(dark)。
     // 见 https://ui.nuxt.com/docs/getting-started/theme/css-variables 的 Colors 段官方推荐做法。
+    // info 保持默认 blue：admin dashboard 的 method/level Badge、UAlert color="info" 等依赖语义色区分，
+    // 若也映射到 zinc 会全部退化成黑白。
     colors: {
       primary: 'zinc',
       secondary: 'zinc',
-      info: 'zinc',
       neutral: 'zinc'
     },
     table: {

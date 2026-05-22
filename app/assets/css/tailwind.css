@@ -5,18 +5,17 @@
 
 /*
  * 黑白主题：
- *  - app.config.ts 里 ui.colors 把 primary/secondary/info 映射到 zinc 色板（提供 50-950 色阶给 subtle/soft variant）。
- *  - 主色由下面 --ui-primary/--ui-secondary/--ui-info 直接覆盖为纯黑（light）/纯白（dark）。
+ *  - app.config.ts 里 ui.colors 把 primary/secondary 映射到 zinc 色板（提供 50-950 色阶给 subtle/soft variant）。
+ *  - 主色由下面 --ui-primary/--ui-secondary 直接覆盖为纯黑（light）/纯白（dark）。
  *    这是 Nuxt UI 官方推荐用法，见 https://ui.nuxt.com/docs/getting-started/theme/css-variables
- *  - 其余 --ui-text-* / --ui-bg-* / --ui-border-* / --ui-ring 走 Nuxt UI 默认（基于 neutral 色板）即可，
- *    只在项目想要不同观感的地方做最小覆盖。
+ *  - info/success/warning/error 保持 Nuxt UI 默认（blue/green/yellow/red），保证 Badge / Alert 的语义色区分。
+ *  - bg / text / border / ring 在 light 下做了反转设计（default 用浅灰、elevated 用纯白），
+ *    dark 下必须用同名变量给出对应值，否则 :root 的 light 值会沿用导致切主题不变色。
  */
 
 :root {
   --ui-primary: #111113;
   --ui-secondary: #111113;
-  --ui-info: #111113;
-  --ui-warning: var(--ui-color-warning-600);
 
   /* 文字层级比 Nuxt UI 默认更深更黑 */
   --ui-text-dimmed: #8a8c95;
@@ -40,7 +39,24 @@
 .dark {
   --ui-primary: white;
   --ui-secondary: white;
-  --ui-info: white;
+
+  /* 文字层级：与 light 镜像，highlighted 用纯白增强对比 */
+  --ui-text-dimmed: #71717a;
+  --ui-text-muted: #a1a1aa;
+  --ui-text-toned: #d4d4d8;
+  --ui-text: #fafafa;
+  --ui-text-highlighted: #ffffff;
+
+  /* 背景：与 light 的 "default 浅 / elevated 亮" 反转一致——default 最深、elevated 略亮显层级 */
+  --ui-bg: #09090b;
+  --ui-bg-muted: #09090b;
+  --ui-bg-elevated: #18181b;
+  --ui-bg-accented: #27272a;
+
+  --ui-border: #27272a;
+  --ui-border-muted: #27272a;
+  --ui-border-accented: #3f3f46;
+  --ui-ring: #52525b;
 }
 
 body {
