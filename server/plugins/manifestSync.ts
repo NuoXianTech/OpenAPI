@@ -106,7 +106,7 @@ async function checkConsistency(): Promise<boolean> {
             rateLimitPerHour: DEFAULT_API_REGISTRATION.rateLimitPerHour,
             rateLimitPerDay: DEFAULT_API_REGISTRATION.rateLimitPerDay,
             dailyQuota: DEFAULT_API_REGISTRATION.dailyQuota,
-            costCredits: DEFAULT_API_REGISTRATION.costCredits,
+            methodCosts: DEFAULT_API_REGISTRATION.methodCosts,
             timeoutMs: DEFAULT_API_REGISTRATION.timeoutMs
           }
         })

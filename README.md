@@ -12,7 +12,7 @@
 
 - **接口自动发现** — 构建期扫描 [server/routes/v{N}/](server/routes/) 零配置生成 API manifest（[接口约定](docs/api-conventions.md)）
 - **完整用户体系** — 邮箱注册/验证/重置、会话鉴权、第三方登录（GitHub / QQ）
-- **API Key 鉴权** — 用户中心自助管理，按 `costCredits` 自动扣费
+- **API Key 鉴权** — 用户中心自助管理，按 `methodCosts` 按 HTTP 方法粒度自动扣费
 - **多级限流** — QPS / 分钟 / 小时 / 日 + 每日配额，driver 自动适配（memory / postgres / kv）
 - **调用监控** — 中间件记录调用日志，按日聚合并提供公共统计页 + TOP 接口榜单
 - **管理后台** — 用户 / API / 分类 / 兑换码 / Provider / 站点设置 / 操作审计

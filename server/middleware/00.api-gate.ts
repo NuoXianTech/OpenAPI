@@ -23,7 +23,7 @@
 
 import type { H3Event } from 'h3'
 import { getRequestURL, send, setResponseHeader, setResponseHeaders } from 'h3'
-import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath } from '~~/shared/config/apiGuard'
+import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, resolveMethodCost } from '~~/shared/config/apiGuard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/apiManifest'
 import { runApiGuard } from '~~/server/utils/apiGuard'
 import { apiService } from '~~/server/service/apiService'
@@ -90,8 +90,12 @@ export default defineEventHandler(async (event: H3Event) => {
     return rejectWithOpenApi(event, API_GUARD_ERROR.METHOD_NOT_ALLOWED)
   }
 
+  // 按命中的 endpoint method 解析本次调用的扣费金额，作为 guard / 计费的唯一依据。
+  // ANY 端点也走同一份表（按当前请求的真实 method 查），保持 method 粒度的可控扣费。
+  const effectiveCost = resolveMethodCost(api.methodCosts, method)
+
   // [4] 规则链
-  const result = await runApiGuard({ event, api, match })
+  const result = await runApiGuard({ event, api, match, effectiveCost })
   if (!result.passed) {
     if (result.headers) setResponseHeaders(event, result.headers)
     return rejectWithOpenApi(event, result.error)
@@ -112,7 +116,7 @@ export default defineEventHandler(async (event: H3Event) => {
   // 计费上下文 · 后置中间件根据该状态决定是否扣款。业务 handler 可通过
   // markApiCallSuccess / markApiCallFailed 显式覆盖判定。
   event.context.apiBilling = {
-    costCredits: api.costCredits,
+    costCredits: effectiveCost,
     apiKeyUserId: result.apiKey?.userId ?? null,
     // 默认按 statusCode 判定，业务可显式标记
     forcedOutcome: null as 'success' | 'failed' | null,

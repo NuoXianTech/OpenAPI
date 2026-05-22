@@ -69,7 +69,10 @@ export const apis = pgTable('apis', {
   rateLimitPerDay: integer('rate_limit_per_day').default(0).notNull(),
 
   // 配额与性能
-  costCredits: integer('cost_credits').default(0).notNull(),
+  // methodCosts：按 HTTP 方法粒度的扣费表。键为大写方法名（GET/POST/...），值为扣多少积分（0=免费）。
+  // 未列出的方法视为 0（免费）。所有值为 0 / 空对象 = 整组接口免费。
+  // 例：{ "GET": 0, "POST": 10, "PUT": 5 } 表示 GET 免费、POST 10 分、PUT 5 分。
+  methodCosts: jsonb('method_costs').$type<Record<string, number>>().notNull().default({}),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
 

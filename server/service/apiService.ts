@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
-import { API_META_CACHE_TTL_MS } from '~~/shared/config/apiGuard'
+import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/apiGuard'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -101,7 +101,8 @@ type PublicApiItem = {
   apiPath: string
   docUrl: string
   isApiKey: boolean
-  costCredits: number
+  /** 按 HTTP 方法粒度的扣费表。未列出的方法视为 0（免费）。 */
+  methodCosts: Record<string, number>
   totalCalls: number
 }
 
@@ -132,7 +133,7 @@ export const apiService = {
       apiPath: row.apiPath,
       docUrl: row.docUrl,
       isApiKey: row.isApiKey,
-      costCredits: row.costCredits,
+      methodCosts: row.methodCosts ?? {},
       totalCalls: statsMap[row.id]?.totalCalls ?? 0
     }))
   },
@@ -192,7 +193,7 @@ export const apiService = {
    * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/endpointCount 由 manifest 注入，
    * 不接受外部 patch。
    *
-   * 计费一致性：合并请求 patch 与现有记录后，若 costCredits>0 但 isApiKey=false，
+   * 计费一致性：合并请求 patch 与现有记录后，若 methodCosts 中存在 > 0 的方法但 isApiKey=false，
    * 视为非法配置，抛错（兜底 admin 接口的不完整 patch）。
    */
   async updateApi(id: number, userid: number | null, data: Partial<typeof apis.$inferInsert>) {
@@ -205,13 +206,15 @@ export const apiService = {
       ...patch
     } = data as Partial<typeof apis.$inferInsert>
 
-    // 合并后的 effective costCredits / isApiKey 校验
-    if (patch.costCredits !== undefined || patch.isApiKey !== undefined) {
+    // 合并后的 effective methodCosts / isApiKey 校验
+    if (patch.methodCosts !== undefined || patch.isApiKey !== undefined) {
       const existing = await this.getById(id)
       if (existing) {
-        const effectiveCost = patch.costCredits !== undefined ? Number(patch.costCredits) : existing.costCredits
+        const effectiveCosts = patch.methodCosts !== undefined
+          ? (patch.methodCosts as Record<string, number>)
+          : existing.methodCosts
         const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
-        if (effectiveCost > 0 && !effectiveIsApiKey) {
+        if (hasAnyChargedMethod(effectiveCosts) && !effectiveIsApiKey) {
           throw new Error('设置扣费金额时必须开启「必需 API Key」')
         }
       }
@@ -281,7 +284,7 @@ export const apiService = {
       rateLimitPerHour: number
       rateLimitPerDay: number
       dailyQuota: number
-      costCredits: number
+      methodCosts: Record<string, number>
       timeoutMs: number
     }
   }) {
@@ -322,7 +325,7 @@ export const apiService = {
       rateLimitPerHour: data.defaults.rateLimitPerHour,
       rateLimitPerDay: data.defaults.rateLimitPerDay,
       dailyQuota: data.defaults.dailyQuota,
-      costCredits: data.defaults.costCredits,
+      methodCosts: data.defaults.methodCosts,
       timeoutMs: data.defaults.timeoutMs,
       createdBy: data.createdBy,
       updatedBy: data.createdBy

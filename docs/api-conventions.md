@@ -69,7 +69,9 @@ server/routes/
 
 ## 5. 计费标记
 
-api-gate 通过后会挂 `event.context.apiBilling`，默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status + 字符串 `code` 返回即可，扣费会自动跳过：
+api-gate 通过后会按本次请求的 HTTP 方法在 `apis.methodCosts` 中查到本次调用的扣费金额，挂到 `event.context.apiBilling.costCredits`。同一组 `(pathVersion, code)` 下不同方法可以有不同扣费（GET 免费 / POST 收费 / PUT 收费等）。
+
+默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status + 字符串 `code` 返回即可，扣费会自动跳过：
 
 ```ts
 import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
@@ -117,7 +119,7 @@ export default defineEventHandler((event: H3Event) => {
 | `isEnabled` | 关闭后整组接口直接 503 `API_DISABLED` |
 | `isApiKey` | 是否要求请求头 `X-API-Key`，否则任意调用方可访问 |
 | `scopes` | 与 API Key 的 scopes 做交集校验 |
-| `costCredits` | 每次成功调用扣多少积分（0 = 免费） |
+| `methodCosts` | 按 HTTP 方法粒度的扣费表（jsonb），例 `{"GET":0,"POST":10}`。键缺失或值为 0 = 该方法免费。**任意方法 > 0 时必须同时 `isApiKey=true`**，否则无法定位扣款账户 |
 | `rateLimit*` | QPS / 分钟 / 小时 / 日 限额 + 每日配额 |
 
 后台拉取的 manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新文件需要先 build/重启 dev**才能在后台下拉里看到。
@@ -139,5 +141,5 @@ export default defineEventHandler((event: H3Event) => {
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
 - [ ] 业务侧失败但 HTTP 仍 2xx 的罕见场景才需要 `markApiCallFailed`
-- [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `costCredits` / `rateLimit*`
+- [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `methodCosts` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通

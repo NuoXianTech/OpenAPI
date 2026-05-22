@@ -30,7 +30,7 @@ interface RegisteredApi {
   rateLimitPerHour: number
   rateLimitPerDay: number
   dailyQuota: number
-  costCredits: number
+  methodCosts: Record<string, number>
   timeoutMs: number
 }
 

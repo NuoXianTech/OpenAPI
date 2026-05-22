@@ -9,7 +9,8 @@ export interface ApiCatalogItem {
   apiPath: string
   docUrl: string
   isApiKey: boolean
-  costCredits: number
+  /** 按 HTTP 方法粒度的扣费表。键为大写方法名，值为积分（0 / 缺失 = 该方法免费）。 */
+  methodCosts: Record<string, number>
   totalCalls: number
 }
 

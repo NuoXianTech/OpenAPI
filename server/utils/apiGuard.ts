@@ -1,16 +1,19 @@
 /**
  * API Guard · 规则链。
  *
- * 输入：H3Event + 命中的 apis DB 记录 + manifest 端点 + 路径参数
+ * 输入：H3Event + 命中的 apis DB 记录 + manifest 端点 + 路径参数 + 本次调用扣费金额
  * 输出：passed=true（挂 context）或 passed=false（错误信息）
+ *
+ * effectiveCost 由 gate 中间件按命中的 method 在 api.methodCosts 中解析后传入：
+ * 同一组 API 下不同 method 可有不同扣费金额（GET 免费 / POST 收费等）。
  *
  * 规则顺序（短路求值）：
  *   1. isEnabled
- *   2. isApiKey 强制 / costCredits>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
+ *   2. isApiKey 强制 / effectiveCost>0 → 必须带 ApiKey；校验 key + scope + ip + referer 白名单
  *   3. ApiKey 可选携带 → 若带了也校验；不带则 IP 为限流/配额主键
  *   4. rateLimit（多窗口，任意一个超限即拒）
  *   5. dailyQuota（API 级）
- *   6. credits 积分校验（costCredits>0 时，校验 apiKey 持有者积分）
+ *   6. credits 积分校验（effectiveCost>0 时，校验 apiKey 持有者积分）
  *
  * 故障降级：
  *   - 鉴权类失败：fail-close（401/403）
@@ -151,9 +154,11 @@ export interface RunGuardInput {
   event: H3Event
   api: ApiRecord
   match: EndpointMatch
+  /** gate 已按本次请求 method 在 api.methodCosts 中解析出的扣费金额（0=免费） */
+  effectiveCost: number
 }
 
-export async function runApiGuard({ event, api, match: _match }: RunGuardInput): Promise<GateResult> {
+export async function runApiGuard({ event, api, match: _match, effectiveCost }: RunGuardInput): Promise<GateResult> {
   // [1] isEnabled
   if (!api.isEnabled) {
     return { passed: false, outcome: 'disabled', error: API_GUARD_ERROR.DISABLED }
@@ -185,8 +190,8 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     if (!matchesWhitelist(apiKey.refererWhitelist, referer)) {
       return { passed: false, outcome: 'referer_denied', error: API_GUARD_ERROR.REFERER_DENIED }
     }
-  } else if (api.isApiKey || api.costCredits > 0) {
-    // 显式开启 isApiKey 必需，或接口本身有扣费要求 → 必须带 apiKey 才能定位归属用户
+  } else if (api.isApiKey || effectiveCost > 0) {
+    // 显式开启 isApiKey 必需，或本次 method 有扣费要求 → 必须带 apiKey 才能定位归属用户
     return { passed: false, outcome: 'missing_api_key', error: API_GUARD_ERROR.MISSING_API_KEY }
   }
 
@@ -220,15 +225,15 @@ export async function runApiGuard({ event, api, match: _match }: RunGuardInput):
     }
   }
 
-  // [6] 积分校验（仅当扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
-  if (api.costCredits > 0 && apiKey) {
+  // [6] 积分校验（仅当本次 method 扣费 > 0 且带了 apiKey 时进行；apiKey 已在 [2] 校验为存在）
+  if (effectiveCost > 0 && apiKey) {
     try {
       const userRow = await db.select({ credits: users.credits })
         .from(users)
         .where(eq(users.id, apiKey.userId))
         .limit(1)
       const balance = Number(userRow[0]?.credits || 0)
-      if (balance < api.costCredits) {
+      if (balance < effectiveCost) {
         return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS }
       }
     } catch (err) {

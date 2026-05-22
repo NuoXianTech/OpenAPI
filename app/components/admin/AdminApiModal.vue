@@ -31,7 +31,7 @@ interface RegisteredApi {
   rateLimitPerHour: number
   rateLimitPerDay: number
   dailyQuota: number
-  costCredits: number
+  methodCosts: Record<string, number>
   timeoutMs: number
 }
 
@@ -67,7 +67,7 @@ const schema = z.object({
   rateLimitPerHour: z.number().min(0).default(1000),
   rateLimitPerDay: z.number().min(0).default(0),
   dailyQuota: z.number().min(0).default(0),
-  costCredits: z.number().min(0).default(0),
+  methodCosts: z.record(z.string(), z.number().int().min(0)).default({}),
   timeoutMs: z.number().min(0).default(10_000)
 })
 
@@ -89,7 +89,7 @@ function defaultsForRegister(target: DiscoveredApi): Partial<Schema> {
     rateLimitPerHour: 1000,
     rateLimitPerDay: 0,
     dailyQuota: 0,
-    costCredits: 0,
+    methodCosts: {},
     timeoutMs: 10_000
   }
 }
@@ -110,7 +110,7 @@ function defaultsForEdit(reg: RegisteredApi): Partial<Schema> {
     rateLimitPerHour: reg.rateLimitPerHour,
     rateLimitPerDay: reg.rateLimitPerDay,
     dailyQuota: reg.dailyQuota,
-    costCredits: reg.costCredits,
+    methodCosts: { ...(reg.methodCosts || {}) },
     timeoutMs: reg.timeoutMs
   }
 }
@@ -166,15 +166,34 @@ watch(() => [props.target, props.mode, open.value], () => {
   Object.assign(state, next)
 }, { immediate: true })
 
-// 计费与 ApiKey 强一致：关闭 ApiKey 必需时，自动把 costCredits 归 0
-// 反之，若管理员把 costCredits 设为 > 0，自动开启 isApiKey 并提示
+// 该 code 下从 manifest 自动发现的方法（去重，排除 ANY）。
+// 收费表按这些方法逐行展示；ANY 端点视为对所有 HTTP 方法生效，由用户在已列出的方法上分别填价。
+const availableMethods = computed<string[]>(() => {
+  if (!props.target) return []
+  const set = new Set<string>()
+  for (const ep of props.target.endpoints) {
+    const m = ep.method.toUpperCase()
+    if (m && m !== 'ANY') set.add(m)
+  }
+  // 没有显式方法（全 ANY / 空）兜底给一个 GET，避免无处可填
+  if (set.size === 0) set.add('GET')
+  return Array.from(set).sort()
+})
+
+const hasChargedMethod = computed(() => {
+  const map = state.methodCosts || {}
+  return Object.values(map).some(v => typeof v === 'number' && v > 0)
+})
+
+// 计费与 ApiKey 强一致：关闭 ApiKey 必需时，把 methodCosts 全部归 0
+// 反之，若管理员任意方法填了 > 0，自动开启 isApiKey 并提示
 watch(() => state.isApiKey, (val) => {
-  if (!val && (state.costCredits ?? 0) > 0) {
-    state.costCredits = 0
+  if (!val && hasChargedMethod.value) {
+    state.methodCosts = {}
   }
 })
-watch(() => state.costCredits, (val) => {
-  if ((val ?? 0) > 0 && !state.isApiKey) {
+watch(hasChargedMethod, (val) => {
+  if (val && !state.isApiKey) {
     state.isApiKey = true
     toast.add({
       title: '已自动开启「必需 API Key」',
@@ -192,6 +211,39 @@ const statusOptions = [
   { label: '废弃', value: 3 }
 ]
 
+function methodBadgeColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'secondary' | 'neutral' {
+  switch (method.toUpperCase()) {
+    case 'GET': return 'success'
+    case 'POST': return 'info'
+    case 'PUT': return 'warning'
+    case 'DELETE': return 'error'
+    case 'PATCH': return 'secondary'
+    default: return 'neutral'
+  }
+}
+
+function getMethodCost(method: string): number {
+  const v = state.methodCosts?.[method.toUpperCase()]
+  return typeof v === 'number' && v >= 0 ? v : 0
+}
+function setMethodCost(method: string, value: number | string | null | undefined) {
+  const num = Number(value)
+  const safe = Number.isFinite(num) && num > 0 ? Math.trunc(num) : 0
+  const next: Record<string, number> = { ...(state.methodCosts || {}) }
+  const key = method.toUpperCase()
+  if (safe === 0) {
+    if (key in next) {
+      const { [key]: _omit, ...rest } = next
+      state.methodCosts = rest
+      return
+    }
+    state.methodCosts = next
+    return
+  }
+  next[key] = safe
+  state.methodCosts = next
+}
+
 const headerLabel = computed(() => {
   if (!props.target) return ''
   return props.mode === 'edit'
@@ -203,10 +255,17 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!props.target) return
   loading.value = true
   try {
+    // 序列化 methodCosts：去掉 0 项（语义=免费），key 归一为大写
+    const cleanedCosts: Record<string, number> = {}
+    for (const [k, v] of Object.entries(event.data.methodCosts || {})) {
+      const num = Number(v)
+      if (Number.isFinite(num) && num > 0) cleanedCosts[k.toUpperCase()] = Math.trunc(num)
+    }
+    const payload = { ...event.data, methodCosts: cleanedCosts }
     if (props.mode === 'edit' && props.target.registered) {
       await $fetch('/api/admin/apis/update', {
         method: 'PUT',
-        body: { id: props.target.registered.id, ...event.data }
+        body: { id: props.target.registered.id, ...payload }
       })
     } else {
       await $fetch('/api/admin/apis/register', {
@@ -214,7 +273,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         body: {
           pathVersion: props.target.pathVersion,
           code: props.target.code,
-          overrides: event.data
+          overrides: payload
         }
       })
     }
@@ -400,10 +459,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             />
           </div>
           <p
-            v-if="!state.isApiKey && (state.costCredits ?? 0) > 0"
+            v-if="!state.isApiKey && hasChargedMethod"
             class="text-xs text-warning mt-2"
           >
-            关闭「必需 API Key」会同时把扣费金额归 0（无法定位扣款账户）。
+            关闭「必需 API Key」会清空所有方法的扣费配置（无法定位扣款账户）。
           </p>
         </div>
 
@@ -477,7 +536,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
         <div class="border-t border-default pt-3 mt-3">
           <div class="text-sm font-medium mb-2 flex items-center gap-2">
-            <span>计费</span>
+            <span>计费（按 HTTP 方法）</span>
             <UBadge
               v-if="!state.isApiKey"
               color="neutral"
@@ -487,12 +546,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               需先开启「必需 API Key」
             </UBadge>
             <UBadge
-              v-else-if="(state.costCredits ?? 0) > 0"
+              v-else-if="hasChargedMethod"
               color="warning"
               variant="subtle"
               size="sm"
             >
-              收费接口
+              含收费方法
             </UBadge>
             <UBadge
               v-else
@@ -500,22 +559,46 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               variant="subtle"
               size="sm"
             >
-              免费接口
+              整组免费
             </UBadge>
           </div>
           <UFormField
             label="单次调用消耗积分"
-            name="costCredits"
+            name="methodCosts"
           >
-            <UInput
-              v-model.number="state.costCredits"
-              type="number"
-              min="0"
-              :disabled="!state.isApiKey"
-              :placeholder="state.isApiKey ? '设为 0 表示免费' : '请先开启「必需 API Key」'"
-            />
-            <p class="text-xs text-muted mt-1">
-              只有开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
+            <div class="flex flex-col gap-2">
+              <div
+                v-for="method in availableMethods"
+                :key="method"
+                class="flex items-center gap-2"
+              >
+                <UBadge
+                  :color="methodBadgeColor(method)"
+                  variant="subtle"
+                  size="sm"
+                  class="font-mono w-16 justify-center"
+                >
+                  {{ method }}
+                </UBadge>
+                <UInput
+                  type="number"
+                  min="0"
+                  :model-value="getMethodCost(method)"
+                  :disabled="!state.isApiKey"
+                  :placeholder="state.isApiKey ? '0 = 免费' : '请先开启「必需 API Key」'"
+                  class="flex-1"
+                  @update:model-value="(v: number | string) => setMethodCost(method, v)"
+                />
+                <span
+                  class="text-xs w-12 text-right"
+                  :class="getMethodCost(method) > 0 ? 'text-warning' : 'text-success'"
+                >
+                  {{ getMethodCost(method) > 0 ? `${getMethodCost(method)} / 次` : '免费' }}
+                </span>
+              </div>
+            </div>
+            <p class="text-xs text-muted mt-2">
+              逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
             </p>
           </UFormField>
         </div>

@@ -100,6 +100,20 @@ export const adminUpdateApiCategorySchema = z.object({
 // Admin · APIs
 // ============================================================
 
+/** methodCosts：按 HTTP 方法粒度的扣费表（key=大写方法名，value=积分>=0）。空对象/缺失=整组免费。 */
+const methodCostsSchema = z.preprocess(
+  (v) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return v
+    const out: Record<string, number> = {}
+    for (const [k, raw] of Object.entries(v as Record<string, unknown>)) {
+      const num = Number(raw)
+      if (Number.isFinite(num) && num >= 0) out[k.toUpperCase()] = Math.trunc(num)
+    }
+    return out
+  },
+  z.record(z.string(), z.number().int().min(0))
+)
+
 /** 从 manifest 登记 / 重新同步一个 (pathVersion, code) */
 export const adminRegisterApiSchema = z.object({
   pathVersion: z.string().trim().min(1, 'pathVersion 和 code 均必填'),
@@ -119,7 +133,7 @@ export const adminRegisterApiSchema = z.object({
     rateLimitPerHour: z.number().optional(),
     rateLimitPerDay: z.number().optional(),
     dailyQuota: z.number().optional(),
-    costCredits: z.number().optional(),
+    methodCosts: methodCostsSchema.optional(),
     timeoutMs: z.number().optional()
   }).optional()
 })
@@ -145,7 +159,7 @@ export const adminUpdateApiSchema = z.object({
   rateLimitPerHour: z.coerce.number().optional(),
   rateLimitPerDay: z.coerce.number().optional(),
   dailyQuota: z.coerce.number().optional(),
-  costCredits: z.coerce.number().optional(),
+  methodCosts: methodCostsSchema.optional(),
   timeoutMs: z.coerce.number().optional()
 })
 

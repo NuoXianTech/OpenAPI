@@ -116,7 +116,7 @@ CREATE TABLE "apis" (
 	"rate_limit_per_minute" integer DEFAULT 0 NOT NULL,
 	"rate_limit_per_hour" integer DEFAULT 0 NOT NULL,
 	"rate_limit_per_day" integer DEFAULT 0 NOT NULL,
-	"cost_credits" integer DEFAULT 0 NOT NULL,
+	"method_costs" jsonb DEFAULT '{}'::jsonb NOT NULL,
 	"daily_quota" integer DEFAULT 0 NOT NULL,
 	"timeout_ms" integer DEFAULT 10000 NOT NULL,
 	"created_by" integer,

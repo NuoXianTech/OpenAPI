@@ -11,7 +11,7 @@ const {
   apiPath = '/v1/path',
   docUrl = '',
   isApiKey = false,
-  costCredits = 0,
+  methodCosts = {},
   totalCalls = 0
 } = defineProps<{
   name?: string
@@ -23,7 +23,7 @@ const {
   apiPath?: string
   docUrl?: string
   isApiKey?: boolean
-  costCredits?: number
+  methodCosts?: Record<string, number>
   totalCalls?: number
 }>()
 
@@ -33,7 +33,20 @@ const methods = computed(() =>
   httpMethod.split(',').map(m => m.trim()).filter(Boolean)
 )
 
-const isPaid = computed(() => costCredits > 0)
+function costFor(method: string): number {
+  const v = methodCosts?.[method.toUpperCase()]
+  return typeof v === 'number' && v > 0 ? v : 0
+}
+
+const isPaid = computed(() => methods.value.some(m => costFor(m) > 0))
+const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
+// 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
+const aggregateCost = computed(() => {
+  if (methods.value.length === 0) return 0
+  const prices = methods.value.map(costFor)
+  const first = prices[0]!
+  return prices.every(p => p === first) ? first : -1
+})
 
 function methodColor(method: string): BadgeColor {
   switch (method.trim().toUpperCase()) {
@@ -136,15 +149,26 @@ function formatCallCount(count: number) {
 
     <div class="api-card__meta">
       <UBadge
-        v-if="isPaid"
+        v-if="aggregateCost > 0"
         color="warning"
         variant="soft"
         size="sm"
         icon="i-mdi-cash-multiple"
         class="rounded-full"
-        :title="`收费 ${costCredits} / 次`"
+        :title="`收费 ${aggregateCost} / 次`"
       >
-        {{ costCredits }}
+        {{ aggregateCost }}
+      </UBadge>
+      <UBadge
+        v-else-if="aggregateCost === -1"
+        color="warning"
+        variant="soft"
+        size="sm"
+        icon="i-mdi-cash-multiple"
+        class="rounded-full"
+        :title="isAllPaid ? '按方法定价' : '部分方法收费'"
+      >
+        {{ isAllPaid ? '按方法定价' : '部分收费' }}
       </UBadge>
       <UBadge
         v-else
@@ -220,24 +244,24 @@ function formatCallCount(count: number) {
             <span class="api-card__detail-label">调用计费</span>
             <div class="api-card__detail-value api-card__detail-value--row">
               <UBadge
-                v-if="isPaid"
-                color="warning"
+                v-for="method in methods"
+                :key="`cost-${method}`"
+                :color="costFor(method) > 0 ? 'warning' : 'success'"
                 variant="soft"
                 size="sm"
-                icon="i-mdi-cash-multiple"
+                :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-gift-outline'"
                 class="rounded-full"
               >
-                {{ costCredits }} / 次
+                {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
               </UBadge>
               <UBadge
-                v-else
-                color="success"
-                variant="soft"
+                v-if="!isPaid"
+                color="neutral"
+                variant="subtle"
                 size="sm"
-                icon="i-mdi-gift-outline"
                 class="rounded-full"
               >
-                免费
+                整组接口免费
               </UBadge>
             </div>
           </div>

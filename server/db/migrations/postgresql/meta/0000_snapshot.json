@@ -1,5 +1,5 @@
 {
-  "id": "766ec906-eae3-4e85-841d-8be08f4dfd54",
+  "id": "b6658d0e-5c39-40c7-b781-27a95f345118",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1150,12 +1150,12 @@
           "notNull": true,
           "default": 0
         },
-        "cost_credits": {
-          "name": "cost_credits",
-          "type": "integer",
+        "method_costs": {
+          "name": "method_costs",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": true,
-          "default": 0
+          "default": "'{}'::jsonb"
         },
         "daily_quota": {
           "name": "daily_quota",

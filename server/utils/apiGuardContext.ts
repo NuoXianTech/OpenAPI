@@ -29,7 +29,8 @@ export interface ApiKeyContext {
 /**
  * 计费上下文 · gate 通过时挂载，后置 stats 中间件读取以决定扣款。
  *
- * - costCredits：本次调用单价（来自 apis.costCredits）
+ * - costCredits：本次调用的扣费金额，由 gate 按命中的 HTTP method 在 apis.methodCosts 中解析后得出
+ *   （例：apis.methodCosts={GET:0,POST:10}，本次请求是 POST → costCredits=10）
  * - apiKeyUserId：扣款账户（仅当带 apiKey 时有值）
  * - forcedOutcome：业务 handler 主动标记的结果，覆盖 statusCode 判定
  *   * 'success' → 强制视为成功，照常扣款

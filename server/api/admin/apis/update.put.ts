@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateApiSchema } from '#shared/schemas/admin'
+import { hasAnyChargedMethod } from '~~/shared/config/apiGuard'
 import { apiService } from '~~/server/service/apiService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
@@ -15,11 +16,11 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const body = await readZodBody(event, adminUpdateApiSchema)
-  const { id, costCredits, isApiKey } = body
+  const { id, methodCosts, isApiKey } = body
 
-  // 计费一致性校验：costCredits>0 必须搭配 isApiKey=true
+  // 计费一致性校验：methodCosts 中存在 > 0 的方法时必须搭配 isApiKey=true
   // 仅对显式给出的字段做校验；未传字段需结合数据库现状（在 service 层兜底）
-  if (costCredits !== undefined && costCredits > 0 && isApiKey === false) {
+  if (methodCosts !== undefined && hasAnyChargedMethod(methodCosts) && isApiKey === false) {
     throw createError({
       statusCode: 400,
       message: '设置扣费金额时必须开启「必需 API Key」'
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event: H3Event) => {
     rateLimitPerHour: body.rateLimitPerHour,
     rateLimitPerDay: body.rateLimitPerDay,
     dailyQuota: body.dailyQuota,
-    costCredits,
+    methodCosts,
     timeoutMs: body.timeoutMs
   })
 

@@ -36,7 +36,7 @@ export const DEFAULT_API_REGISTRATION = {
   rateLimitPerHour: 1000,
   rateLimitPerDay: 0,
   dailyQuota: 0,
-  costCredits: 0,
+  methodCosts: {} as Record<string, number>,
   timeoutMs: 10_000
 } as const
 
@@ -67,6 +67,29 @@ export const API_GUARD_ERROR = {
 
 /** API 元数据缓存 TTL（服务层 LRU） */
 export const API_META_CACHE_TTL_MS = 15_000
+
+/**
+ * 按 HTTP method 在 methodCosts 中查到本次调用的扣费金额。
+ * - methodCosts 缺省 / 缺少该 method → 0（免费）
+ * - method 大小写不敏感，内部归一化为大写
+ */
+export function resolveMethodCost(
+  methodCosts: Record<string, number> | null | undefined,
+  method: string
+): number {
+  if (!methodCosts) return 0
+  const value = methodCosts[method.toUpperCase()]
+  return typeof value === 'number' && value > 0 ? value : 0
+}
+
+/** 判断 methodCosts 中是否存在任意一个 > 0 的方法（即整组接口至少有一个方法是收费的） */
+export function hasAnyChargedMethod(methodCosts: Record<string, number> | null | undefined): boolean {
+  if (!methodCosts) return false
+  for (const value of Object.values(methodCosts)) {
+    if (typeof value === 'number' && value > 0) return true
+  }
+  return false
+}
 
 /**
  * 限流 driver 可选项。
