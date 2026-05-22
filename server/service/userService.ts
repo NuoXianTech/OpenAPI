@@ -4,7 +4,24 @@ import { notificationService } from './notificationService'
 
 export const usersService = {
   async list() {
-    return await db.select().from(users)
+    // passwordHash 永远不离开 DB，避免 admin 端浏览器扩展 / sentry / 截图泄漏后被字典攻击
+    return await db.select({
+      id: users.id,
+      username: users.username,
+      displayName: users.displayName,
+      email: users.email,
+      credits: users.credits,
+      isActive: users.isActive,
+      isBanned: users.isBanned,
+      bannedReason: users.bannedReason,
+      bannedUntil: users.bannedUntil,
+      lastLoginAt: users.lastLoginAt,
+      lastLoginIp: users.lastLoginIp,
+      lastLoginUserAgent: users.lastLoginUserAgent,
+      emailVerifiedAt: users.emailVerifiedAt,
+      createdAt: users.createdAt,
+      updatedAt: users.updatedAt
+    }).from(users)
   },
 
   async findByEmail(email: string) {
