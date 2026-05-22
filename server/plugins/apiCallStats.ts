@@ -27,6 +27,13 @@ interface ApiStatsTracked {
   queryString: string | null
 }
 
+const NON_COUNTED_REJECTION_OUTCOMES = new Set([
+  'api_key_quota_exceeded',
+  'disabled',
+  'expired_api_key',
+  'insufficient_credits'
+])
+
 declare module 'h3' {
   interface H3EventContext {
     apiStatsTracked?: ApiStatsTracked
@@ -79,7 +86,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       return
     }
 
-    const isCounted = rejection?.outcome !== 'api_key_quota_exceeded'
+    const isCounted = !rejection || !NON_COUNTED_REJECTION_OUTCOMES.has(rejection.outcome)
 
     const apiKeyId = event.context.apiKey?.id
       ?? rejection?.apiKeyId
