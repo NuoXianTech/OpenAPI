@@ -5,11 +5,8 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
-    "start": "node .output/server/index.mjs",
-    "start:cluster": "NITRO_PRESET=node_cluster node .output/server/index.mjs",
     "db:generate": "nuxt db generate",
     "db:migrate": "nuxt db migrate",
-    "db:migrate:prod": "NODE_ENV=production nuxt db migrate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
