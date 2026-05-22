@@ -9,7 +9,7 @@ const { user } = useAuth()
 const toast = useToast()
 
 const requestURL = useRequestURL()
-const origin = requestURL.origin || 'https://your-domain.com'
+const origin = requestURL.origin || ''
 
 const data = ref<UserDashboardData | null>(null)
 const loading = ref(false)
@@ -39,31 +39,6 @@ const callsTrendValues = computed(() => trend.value.map(p => p.totalCalls))
 const spendTrendValues = computed(() => trend.value.map(p => p.creditsSpent))
 
 const hasKeys = computed(() => apiKeys.value.total > 0)
-const hasCredits = computed(() => credits.value.balance > 0)
-const hasCalls = computed(() => calls.value.total > 0)
-
-const steps = computed(() => [
-  {
-    title: '创建 API 密钥',
-    description: hasKeys.value ? `已创建 ${apiKeys.value.total} 个，其中 ${apiKeys.value.active} 个启用` : '前往 API Key 页面创建你的第一把密钥',
-    done: hasKeys.value,
-    to: '/user/apikeys'
-  },
-  {
-    title: '确保足够积分',
-    description: hasCredits.value ? `当前余额 ${credits.value.balance.toLocaleString()} 积分` : '兑换码或联系管理员充值积分',
-    done: hasCredits.value,
-    to: '/user/credits'
-  },
-  {
-    title: '发送首个请求',
-    description: hasCalls.value ? `累计已调用 ${calls.value.total.toLocaleString()} 次` : '用下方示例 cURL 触发一次调用',
-    done: hasCalls.value,
-    to: '/user/calls'
-  }
-])
-
-const completedStep = computed(() => steps.value.filter(s => s.done).length)
 
 const sampleCurl = computed(() => {
   return [
@@ -86,11 +61,6 @@ const balanceStatus = computed<{ label: string, textClass: string, dotClass: str
   if (credits.value.balance <= 0) return { label: '积分不足', textClass: 'text-error', dotClass: 'bg-error' }
   if (credits.value.balance < 100) return { label: '余额偏低', textClass: 'text-warning', dotClass: 'bg-warning' }
   return { label: '正常', textClass: 'text-success', dotClass: 'bg-success' }
-})
-
-const successRateLabel = computed(() => {
-  if (!calls.value.total) return '—'
-  return `${calls.value.successRate.toFixed(1)}%`
 })
 </script>
 
@@ -152,52 +122,6 @@ const successRateLabel = computed(() => {
                   管理积分
                 </UButton>
               </div>
-
-              <div class="pt-2">
-                <p class="text-xs uppercase tracking-wider text-muted mb-3">
-                  入门指引 · {{ completedStep }}/{{ steps.length }}
-                </p>
-                <ol class="relative space-y-0">
-                  <li
-                    v-for="(step, i) in steps"
-                    :key="i"
-                    class="relative pl-10 pb-5 last:pb-0"
-                  >
-                    <span
-                      v-if="i < steps.length - 1"
-                      class="absolute left-[14px] top-7 bottom-0 w-px bg-default/60"
-                      aria-hidden="true"
-                    />
-                    <span
-                      class="absolute left-0 top-0 inline-flex size-7 items-center justify-center rounded-full border border-default text-xs font-medium tabular-nums shrink-0 transition-colors"
-                      :class="step.done ? 'bg-success text-inverted border-success' : 'bg-default text-toned'"
-                    >
-                      <UIcon
-                        v-if="step.done"
-                        name="i-mdi-check"
-                        class="size-4"
-                      />
-                      <template v-else>
-                        {{ i + 1 }}
-                      </template>
-                    </span>
-                    <NuxtLink
-                      :to="step.to"
-                      class="block group"
-                    >
-                      <div
-                        class="font-medium text-sm transition-colors group-hover:text-primary"
-                        :class="step.done ? 'text-muted line-through decoration-1' : 'text-highlighted'"
-                      >
-                        {{ step.title }}
-                      </div>
-                      <div class="text-xs text-muted mt-0.5">
-                        {{ step.description }}
-                      </div>
-                    </NuxtLink>
-                  </li>
-                </ol>
-              </div>
             </div>
 
             <div class="lg:col-span-2">
@@ -239,14 +163,6 @@ const successRateLabel = computed(() => {
                       <span class="size-1.5 rounded-full bg-warning" />
                       未创建
                     </span>
-                  </div>
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">当前积分</span>
-                    <span class="font-medium tabular-nums">{{ credits.balance.toLocaleString() }}</span>
-                  </div>
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">累计调用</span>
-                    <span class="font-medium tabular-nums">{{ calls.total.toLocaleString() }}</span>
                   </div>
                 </div>
               </div>
@@ -360,20 +276,6 @@ const successRateLabel = computed(() => {
               <div class="text-2xl font-semibold tabular-nums">
                 {{ credits.balance.toLocaleString() }}
                 <span class="text-xs font-normal text-muted ml-1">积分</span>
-              </div>
-              <div class="space-y-2 text-xs">
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">近 24h 消耗</span>
-                  <span class="tabular-nums">{{ credits.spent24h.toLocaleString() }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">近 24h 请求</span>
-                  <span class="tabular-nums">{{ calls.requests24h.toLocaleString() }}</span>
-                </div>
-                <div class="flex items-center justify-between">
-                  <span class="text-muted">成功率</span>
-                  <span class="tabular-nums">{{ successRateLabel }}</span>
-                </div>
               </div>
               <UButton
                 to="/user/credits"
