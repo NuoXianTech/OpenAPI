@@ -36,7 +36,7 @@ function onPageChange(p: number) {
 
 <template>
   <div class="flex flex-col gap-3">
-    <DashboardEmpty
+    <UEmpty
       v-if="showEmpty"
       :icon="emptyIcon"
       :title="emptyTitle"
@@ -48,7 +48,7 @@ function onPageChange(p: number) {
       >
         <slot name="empty-actions" />
       </template>
-    </DashboardEmpty>
+    </UEmpty>
 
     <UTable
       v-else

@@ -69,42 +69,55 @@ function formatDate(iso: string) {
 
     <template #body>
       <div class="space-y-6">
-        <DashboardPageHeader
-          icon="i-mdi-hand-wave"
+        <UPageHeader
           :title="`你好，${user?.username || ''}`"
           description="这里是你的个人中心，你可以管理 API Key、查看调用统计和处理通知。"
-        />
+        >
+          <template #title>
+            <div class="flex items-center gap-2">
+              <UIcon
+                name="i-mdi-hand-wave"
+                class="size-6 text-primary"
+              />
+              <span>你好，{{ user?.username || '' }}</span>
+            </div>
+          </template>
+        </UPageHeader>
 
-        <DashboardStatGrid>
-          <DashboardStatCard
-            label="积分"
-            :value="credits.toLocaleString()"
+        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
+          <UPageCard
             icon="i-mdi-cash-multiple"
-            icon-color="text-success"
+            :title="credits.toLocaleString()"
+            description="积分"
             to="/user/credits"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-          <DashboardStatCard
-            label="总调用"
-            :value="summary.total.toLocaleString()"
+          <UPageCard
             icon="i-mdi-chart-line"
-            icon-color="text-primary"
+            :title="summary.total.toLocaleString()"
+            description="总调用"
             to="/user/calls"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-          <DashboardStatCard
-            label="成功率"
-            :value="successRate"
+          <UPageCard
             icon="i-mdi-percent"
-            icon-color="text-info"
+            :title="successRate"
+            description="成功率"
             to="/user/calls"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-          <DashboardStatCard
-            label="活跃 API Key"
-            :value="`${activeKeys} / ${keys.length}`"
+          <UPageCard
             icon="i-mdi-key-outline"
-            icon-color="text-warning"
+            :title="`${activeKeys} / ${keys.length}`"
+            description="活跃 API Key"
             to="/user/apikeys"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-        </DashboardStatGrid>
+        </UPageGrid>
 
         <UCard>
           <template #header>
@@ -129,7 +142,7 @@ function formatDate(iso: string) {
               </UButton>
             </div>
           </template>
-          <DashboardEmpty
+          <UEmpty
             v-if="recentNotifs.length === 0"
             icon="i-mdi-bell-off-outline"
             title="暂无通知"

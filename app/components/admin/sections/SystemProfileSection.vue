@@ -7,13 +7,22 @@ const { settings } = useSiteSettings()
 
 <template>
   <div class="max-w-3xl space-y-6">
-    <DashboardPageHeader
-      icon="i-mdi-shield-crown-outline"
+    <UPageHeader
       title="管理员账户"
       description="此账户通过服务器环境变量配置，无法在界面修改用户名或密码。"
-    />
+    >
+      <template #title>
+        <div class="flex items-center gap-2">
+          <UIcon
+            name="i-mdi-shield-crown-outline"
+            class="size-6 text-primary"
+          />
+          <span>管理员账户</span>
+        </div>
+      </template>
+    </UPageHeader>
 
-    <DashboardSettingsSection
+    <UPageCard
       icon="i-mdi-account-circle-outline"
       title="身份"
     >
@@ -40,9 +49,9 @@ const { settings } = useSiteSettings()
         <code class="font-mono px-1 rounded bg-elevated">ADMIN_PASSWORD</code>
         后重启服务。
       </p>
-    </DashboardSettingsSection>
+    </UPageCard>
 
-    <DashboardSettingsSection
+    <UPageCard
       icon="i-mdi-web"
       title="站点信息"
       description="只读快照；如需修改请前往站点设置标签页。"
@@ -83,6 +92,6 @@ const { settings } = useSiteSettings()
           </UButton>
         </div>
       </template>
-    </DashboardSettingsSection>
+    </UPageCard>
   </div>
 </template>

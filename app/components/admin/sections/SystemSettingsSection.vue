@@ -28,7 +28,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
       v-else
       class="max-w-3xl space-y-8"
     >
-      <DashboardSettingsSection
+      <UPageCard
         icon="i-mdi-web"
         title="基本信息"
       >
@@ -66,11 +66,11 @@ const { form, saving, status, save } = useAdminSettingsPage()
             />
           </UFormField>
         </div>
-      </DashboardSettingsSection>
+      </UPageCard>
 
       <AdminSettingsSecurityCard />
 
-      <DashboardSettingsSection
+      <UPageCard
         icon="i-mdi-shield-key-outline"
         title="第三方登录开关"
       >
@@ -98,11 +98,11 @@ const { form, saving, status, save } = useAdminSettingsPage()
             各 provider 的 Client ID/Secret 请在「第三方登录」标签页内逐项配置。
           </p>
         </div>
-      </DashboardSettingsSection>
+      </UPageCard>
 
       <AdminSettingsTurnstileCard />
 
-      <DashboardSettingsSection
+      <UPageCard
         icon="i-mdi-bullhorn-outline"
         title="公告"
       >
@@ -124,7 +124,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
             label="在网站首页弹出公告"
           />
         </div>
-      </DashboardSettingsSection>
+      </UPageCard>
 
       <AdminSettingsSmtpCard />
     </div>

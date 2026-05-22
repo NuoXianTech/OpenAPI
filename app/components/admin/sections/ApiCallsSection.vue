@@ -136,15 +136,17 @@ const logColumns: TableColumn<AdminCallRow>[] = [
       </UButton>
     </div>
 
-    <DashboardStatGrid>
-      <DashboardStatCard
+    <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
+      <UPageCard
         v-for="card in overviewCards"
         :key="card.label"
-        :label="card.label"
-        :value="card.value"
         :icon="card.icon"
+        :title="card.value"
+        :description="card.label"
+        variant="subtle"
+        class="[&_h3]:tabular-nums"
       />
-    </DashboardStatGrid>
+    </UPageGrid>
 
     <UCard>
       <template #header>

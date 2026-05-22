@@ -107,45 +107,78 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
 
     <template #body>
       <div class="space-y-6">
-        <DashboardPageHeader
-          icon="i-mdi-shield-crown-outline"
+        <UPageHeader
           title="管理员仪表盘"
           :description="`数据更新于 ${generatedAt}`"
-        />
+        >
+          <template #title>
+            <div class="flex items-center gap-2">
+              <UIcon
+                name="i-mdi-shield-crown-outline"
+                class="size-6 text-primary"
+              />
+              <span>管理员仪表盘</span>
+            </div>
+          </template>
+        </UPageHeader>
 
-        <DashboardStatGrid>
-          <DashboardStatCard
-            label="注册用户"
-            :value="formatNumber(overview.userCount)"
+        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
+          <UPageCard
             icon="i-mdi-account-group-outline"
-            icon-color="text-primary"
+            :title="formatNumber(overview.userCount)"
+            description="注册用户"
             :to="adminMembersHref('users')"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-          <DashboardStatCard
-            label="启用 API"
-            :value="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
+          <UPageCard
             icon="i-mdi-api"
-            icon-color="text-success"
+            :title="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
+            description="启用 API"
             :to="adminApiHubHref('governance')"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
           />
-          <DashboardStatCard
-            label="总调用"
-            :value="formatNumber(overview.totalCalls)"
+          <UPageCard
             icon="i-mdi-chart-line"
-            icon-color="text-info"
-            :trend="overview.todayChangeRate"
-            :hint="`今日 ${formatNumber(overview.todayCalls)}`"
+            :title="formatNumber(overview.totalCalls)"
+            description="总调用"
             :to="adminApiHubHref('calls')"
-          />
-          <DashboardStatCard
-            label="成功率"
-            :value="formatRate(overview.successRate)"
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
+          >
+            <template #footer>
+              <p class="text-xs text-muted">
+                <span
+                  v-if="overview.todayChangeRate !== null"
+                  :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
+                  class="mr-1 inline-flex items-center gap-0.5"
+                >
+                  <UIcon
+                    :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
+                    class="size-3.5"
+                  />
+                  {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
+                </span>
+                今日 {{ formatNumber(overview.todayCalls) }}
+              </p>
+            </template>
+          </UPageCard>
+          <UPageCard
             icon="i-mdi-shield-check-outline"
-            icon-color="text-warning"
-            :hint="`成功 ${formatNumber(overview.successCalls)} · 失败 ${formatNumber(overview.failureCalls)}`"
+            :title="formatRate(overview.successRate)"
+            description="成功率"
             :to="adminApiHubHref('calls')"
-          />
-        </DashboardStatGrid>
+            variant="subtle"
+            class="[&_h3]:tabular-nums"
+          >
+            <template #footer>
+              <p class="text-xs text-muted">
+                成功 {{ formatNumber(overview.successCalls) }} · 失败 {{ formatNumber(overview.failureCalls) }}
+              </p>
+            </template>
+          </UPageCard>
+        </UPageGrid>
 
         <div class="grid gap-4 xl:grid-cols-5">
           <UCard class="xl:col-span-3">

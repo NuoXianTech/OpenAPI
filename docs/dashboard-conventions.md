@@ -29,8 +29,8 @@ definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user
 
     <template #body>
       <div class="space-y-6">
-        <DashboardPageHeader ... />        <!-- 可选：页面 hero -->
-        <DashboardStatGrid>...</DashboardStatGrid> <!-- 可选：KPI -->
+        <UPageHeader title="…" description="…" />     <!-- 可选：页面 hero -->
+        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">…</UPageGrid> <!-- 可选：KPI -->
         <!-- 主体内容 -->
       </div>
     </template>
@@ -43,11 +43,11 @@ definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user
 | # | 规范 | 反例 |
 | --- | --- | --- |
 | 1 | navbar 右侧必须用 `DashboardHeaderActions` | 直接写 `<UButton icon="refresh">` + `<AdminHeaderUser />` |
-| 2 | KPI 概览必须用 `DashboardStatGrid` + `DashboardStatCard` | 自己写 `<div class="grid">` + `<UCard>` |
-| 3 | 设置卡必须用 `DashboardSettingsSection` | 复制 6 张 `UCard` + header icon |
+| 2 | KPI 概览必须用 `UPageGrid` + `UPageCard`（`title=value` / `description=label` / `variant="subtle"` / `class="[&_h3]:tabular-nums"`） | 自己写 `<div class="grid">` + `<UCard>` |
+| 3 | 设置卡必须用 `UPageCard`（icon + title 在 header，content 在默认 slot，按钮组在 `#footer`） | 复制 6 张 `UCard` + header icon |
 | 4 | 数据表格必须用 `DashboardDataTable` | 直接放 `<UTable>` 不带分页 / 空状态 |
-| 5 | 空状态必须用 `DashboardEmpty` | `<div class="text-center py-12">暂无数据</div>` |
-| 6 | 页面 hero 必须用 `DashboardPageHeader` | 自己拼 icon + h1 + p |
+| 5 | 空状态必须用 `UEmpty` | `<div class="text-center py-12">暂无数据</div>` |
+| 6 | 页面 hero 必须用 `UPageHeader`（icon 可放在 `#title` slot 里） | 自己拼 icon + h1 + p |
 | 7 | 菜单 / 快捷动作必须在 `app/constants/dashboard-config.ts` 维护 | 在 layout 里硬编码 |
 | 8 | 图标只用 `i-mdi-*` / `i-lucide-*` | 引入其它 iconify 集合 |
 | 9 | 颜色只用主题 token（`text-muted`、`bg-elevated`、`color="primary"`…） | `text-green-500`、`dark:bg-gray-900` |
@@ -142,7 +142,7 @@ async function openDelete(item) {
 ```
 app/
 ├── components/
-│   ├── dashboard/        通用骨架（Layout/HeaderActions/StatCard/PageHeader/SettingsSection/Empty/DataTable）
+│   ├── dashboard/        通用骨架（Layout/HeaderActions/DataTable）
 │   ├── admin/            管理员业务弹窗 / 卡片
 │   ├── user/             普通用户业务卡片
 │   └── common/           跨域共用（NotificationBell、AppHeader …）
