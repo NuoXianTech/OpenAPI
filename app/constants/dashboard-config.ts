@@ -102,23 +102,19 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
   }),
   groups: [
     {
+      label: '常规',
       items: [
-        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: '/user' }
+        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: '/user' },
+        { label: 'API 密钥', icon: 'i-mdi-key-outline', to: '/user/apikeys' },
+        { label: '使用日志', icon: 'i-mdi-history', to: '/user/calls' }
       ]
     },
     {
-      label: '资源',
-      items: [
-        { label: 'API Key', icon: 'i-mdi-key-outline', to: '/user/apikeys' },
-        { label: '调用日志', icon: 'i-mdi-history', to: '/user/calls' }
-      ]
-    },
-    {
-      label: '账户',
+      label: '个人',
       items: [
         { label: '积分', icon: 'i-mdi-cash-multiple', to: '/user/credits' },
-        { label: '个人设置', icon: 'i-mdi-account-cog-outline', to: '/user/profile' },
-        { label: '通知中心', icon: 'i-mdi-bell-outline', to: '/user/notifications' }
+        { label: '通知', icon: 'i-mdi-bell-outline', to: '/user/notifications' },
+        { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/profile' }
       ]
     }
   ],
@@ -132,8 +128,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
     { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/profile' }
   ],
   userMenuExtra: () => [[
-    { label: '个人设置', icon: 'i-mdi-account-cog-outline', to: '/user/profile' },
-    { label: '通知中心', icon: 'i-mdi-bell-outline', to: '/user/notifications' },
+    { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/profile' },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
   loginRedirect: '/login',

@@ -13,8 +13,6 @@ const props = defineProps<{
 }>()
 
 const { settings } = useSiteSettings()
-const { user, logout } = useAuth()
-const router = useRouter()
 
 const siteName = computed(() => settings.value?.siteName || 'OpenAPI')
 
@@ -112,37 +110,6 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
           orientation="vertical"
           class="mt-auto"
         />
-      </template>
-
-      <template #footer="{ collapsed }">
-        <UDropdownMenu
-          :items="[[
-            { type: 'label' as const, label: user?.email || user?.username || resolved.brand.label }
-          ], ...((resolved.userMenuExtra?.({ logout }) || []) as DropdownMenuItem[][]), [
-            {
-              label: '退出登录',
-              icon: 'i-mdi-logout',
-              color: 'error' as const,
-              async onSelect() {
-                await logout()
-                await router.push(resolved.loginRedirect)
-              }
-            }
-          ]]"
-          :content="{ align: 'start', collisionPadding: 12 }"
-          :ui="{ content: collapsed ? 'w-48' : 'w-(--reka-dropdown-menu-trigger-width)' }"
-        >
-          <UButton
-            :label="collapsed ? undefined : (user?.displayName || user?.username || resolved.brand.label)"
-            :trailing-icon="collapsed ? undefined : 'i-mdi-chevron-up'"
-            icon="i-mdi-account-circle-outline"
-            color="neutral"
-            variant="ghost"
-            block
-            :square="collapsed"
-            class="data-[state=open]:bg-elevated"
-          />
-        </UDropdownMenu>
       </template>
     </UDashboardSidebar>
 
