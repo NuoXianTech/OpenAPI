@@ -1,5 +1,5 @@
 {
-  "id": "0070f8b8-4ef1-4867-8619-948fab1d4245",
+  "id": "f707d421-886e-4b59-957d-6325181184e3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -798,15 +798,15 @@
           "primaryKey": false,
           "notNull": false
         },
-        "referer_whitelist": {
-          "name": "referer_whitelist",
-          "type": "jsonb",
+        "total_quota": {
+          "name": "total_quota",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
-        "daily_quota": {
-          "name": "daily_quota",
-          "type": "integer",
+        "used_credits": {
+          "name": "used_credits",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true,
           "default": 0
