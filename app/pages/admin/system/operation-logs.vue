@@ -2,6 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface OperationLogRow {
   id: number
   userId: number | null
@@ -15,8 +17,6 @@ interface OperationLogRow {
   status: 'success' | 'failure'
   createdAt: string
 }
-
-const props = defineProps<{ defaultUserId?: number }>()
 
 interface OperationLogFilters {
   userId: number | ''
@@ -45,7 +45,6 @@ const {
     status: 'all'
   },
   defaultPageSize: localPageSize,
-  immediate: false,
   buildQuery: (f, p) => ({
     userId: f.userId || undefined,
     actorKind: f.actorKind === 'all' ? undefined : f.actorKind,
@@ -58,11 +57,6 @@ const {
 })
 
 const loading = computed(() => status.value === 'pending')
-
-watch(() => props.defaultUserId, (val) => {
-  if (typeof val === 'number') filters.userId = val
-  void applyFilters()
-}, { immediate: true })
 
 function formatDate(val: string) {
   if (!val) return '-'

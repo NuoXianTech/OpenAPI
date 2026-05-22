@@ -2,6 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface RedemptionRecordRow {
   id: number
   codeId: number
@@ -13,8 +15,6 @@ interface RedemptionRecordRow {
   ip: string | null
   redeemedAt: string
 }
-
-const props = defineProps<{ defaultCodeId?: number, defaultUserId?: number }>()
 
 const pageSize = 50
 const {
@@ -29,7 +29,6 @@ const {
   path: '/api/admin/redemption-codes/redemptions',
   defaultFilters: { codeId: '', userId: '', batchId: '' },
   defaultPageSize: pageSize,
-  immediate: false,
   buildQuery: (f, p) => ({
     codeId: f.codeId || undefined,
     userId: f.userId || undefined,
@@ -40,12 +39,6 @@ const {
 })
 
 const loading = computed(() => status.value === 'pending')
-
-watch(() => [props.defaultCodeId, props.defaultUserId], ([cid, uid]) => {
-  if (typeof cid === 'number') filters.codeId = cid
-  if (typeof uid === 'number') filters.userId = uid
-  void applyFilters()
-}, { immediate: true })
 
 function formatDate(val: string) {
   if (!val) return '-'

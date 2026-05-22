@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import SystemSettingsSection from '~/components/admin/sections/SystemSettingsSection.vue'
-import SystemOauthProvidersSection from '~/components/admin/sections/SystemOauthProvidersSection.vue'
-import SystemOperationLogSection from '~/components/admin/sections/SystemOperationLogSection.vue'
-import SystemProfileSection from '~/components/admin/sections/SystemProfileSection.vue'
-import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
-import { adminSystemTabs } from '~/constants/admin-sections/system'
+import { adminSystemLinks } from '~/constants/admin-sections/system'
 
 useHead({ title: '系统' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const active = useTabHashSync({ tabs: adminSystemTabs })
 </script>
 
 <template>
@@ -25,24 +18,16 @@ const active = useTabHashSync({ tabs: adminSystemTabs })
         </template>
       </UDashboardNavbar>
       <UDashboardToolbar>
-        <template #left>
-          <UTabs
-            v-model="active"
-            :items="adminSystemTabs"
-            :content="false"
-            variant="link"
-          />
-        </template>
+        <UNavigationMenu
+          :items="adminSystemLinks"
+          highlight
+          class="-mx-1 flex-1"
+        />
       </UDashboardToolbar>
     </template>
 
     <template #body>
-      <KeepAlive>
-        <SystemSettingsSection v-if="active === 'settings'" />
-        <SystemOauthProvidersSection v-else-if="active === 'oauth-providers'" />
-        <SystemOperationLogSection v-else-if="active === 'operation-logs'" />
-        <SystemProfileSection v-else-if="active === 'profile'" />
-      </KeepAlive>
+      <NuxtPage />
     </template>
   </UDashboardPanel>
 </template>

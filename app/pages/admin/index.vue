@@ -4,8 +4,8 @@ import type {
   AdminDashboardData,
   AdminDashboardRecentCall
 } from '~~/shared/types/admin-dashboard'
-import { adminApiHubHref } from '~/constants/admin-sections/api-hub'
-import { adminMembersHref } from '~/constants/admin-sections/members'
+import { ADMIN_APIS_PATH } from '~/constants/admin-sections/apis'
+import { ADMIN_MEMBERS_PATH } from '~/constants/admin-sections/members'
 
 useHead({ title: '管理中心' })
 
@@ -127,7 +127,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-account-group-outline"
             :title="formatNumber(overview.userCount)"
             description="注册用户"
-            :to="adminMembersHref('users')"
+            :to="ADMIN_MEMBERS_PATH"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           />
@@ -135,7 +135,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-api"
             :title="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
             description="启用 API"
-            :to="adminApiHubHref('governance')"
+            :to="ADMIN_APIS_PATH"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           />
@@ -143,7 +143,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-chart-line"
             :title="formatNumber(overview.totalCalls)"
             description="总调用"
-            :to="adminApiHubHref('calls')"
+            :to="`${ADMIN_APIS_PATH}/calls`"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           >
@@ -168,7 +168,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-shield-check-outline"
             :title="formatRate(overview.successRate)"
             description="成功率"
-            :to="adminApiHubHref('calls')"
+            :to="`${ADMIN_APIS_PATH}/calls`"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           >
@@ -239,7 +239,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                 </p>
               </div>
               <UButton
-                :to="adminApiHubHref('calls')"
+                :to="`${ADMIN_APIS_PATH}/calls`"
                 variant="link"
                 size="sm"
                 trailing-icon="i-mdi-arrow-right"

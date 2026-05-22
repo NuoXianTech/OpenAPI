@@ -2,6 +2,8 @@
 import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
 import { parseFetchError } from '#shared/utils/clientError'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface ProviderItem {
   provider: string
   displayName: string

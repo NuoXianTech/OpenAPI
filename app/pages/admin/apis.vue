@@ -1,19 +1,13 @@
 <script setup lang="ts">
-import ApiGovernanceSection from '~/components/admin/sections/ApiGovernanceSection.vue'
-import ApiCategorySection from '~/components/admin/sections/ApiCategorySection.vue'
-import ApiCallsSection from '~/components/admin/sections/ApiCallsSection.vue'
-import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
-import { adminApiHubTabs } from '~/constants/admin-sections/api-hub'
+import { adminApisLinks } from '~/constants/admin-sections/apis'
 
 useHead({ title: 'API 中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const active = useTabHashSync({ tabs: adminApiHubTabs })
 </script>
 
 <template>
-  <UDashboardPanel id="admin-api-hub">
+  <UDashboardPanel id="admin-apis">
     <template #header>
       <UDashboardNavbar title="API 中心">
         <template #leading>
@@ -24,23 +18,16 @@ const active = useTabHashSync({ tabs: adminApiHubTabs })
         </template>
       </UDashboardNavbar>
       <UDashboardToolbar>
-        <template #left>
-          <UTabs
-            v-model="active"
-            :items="adminApiHubTabs"
-            :content="false"
-            variant="link"
-          />
-        </template>
+        <UNavigationMenu
+          :items="adminApisLinks"
+          highlight
+          class="-mx-1 flex-1"
+        />
       </UDashboardToolbar>
     </template>
 
     <template #body>
-      <KeepAlive>
-        <ApiGovernanceSection v-if="active === 'governance'" />
-        <ApiCategorySection v-else-if="active === 'categories'" />
-        <ApiCallsSection v-else-if="active === 'calls'" />
-      </KeepAlive>
+      <NuxtPage />
     </template>
   </UDashboardPanel>
 </template>

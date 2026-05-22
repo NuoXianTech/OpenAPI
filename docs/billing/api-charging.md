@@ -233,7 +233,7 @@ export default defineEventHandler(async (event) => {
 
 #### ✅ 后台侧
 
-[管理后台 → 接口管理 → 新增](../../app/components/admin/sections/ApiGovernanceSection.vue) → 填写 `methodCosts`：
+[管理后台 → 接口管理 → 新增](../../app/pages/admin/apis/index.vue) → 填写 `methodCosts`：
 
 | 场景 | 配置 |
 | --- | --- |

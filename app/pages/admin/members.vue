@@ -1,16 +1,9 @@
 <script setup lang="ts">
-import MemberUsersSection from '~/components/admin/sections/MemberUsersSection.vue'
-import MemberCreditTransactionSection from '~/components/admin/sections/MemberCreditTransactionSection.vue'
-import MemberRedemptionCodeSection from '~/components/admin/sections/MemberRedemptionCodeSection.vue'
-import MemberRedemptionRecordSection from '~/components/admin/sections/MemberRedemptionRecordSection.vue'
-import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
-import { adminMembersTabs } from '~/constants/admin-sections/members'
+import { adminMembersLinks } from '~/constants/admin-sections/members'
 
 useHead({ title: '会员中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const active = useTabHashSync({ tabs: adminMembersTabs })
 </script>
 
 <template>
@@ -25,24 +18,16 @@ const active = useTabHashSync({ tabs: adminMembersTabs })
         </template>
       </UDashboardNavbar>
       <UDashboardToolbar>
-        <template #left>
-          <UTabs
-            v-model="active"
-            :items="adminMembersTabs"
-            :content="false"
-            variant="link"
-          />
-        </template>
+        <UNavigationMenu
+          :items="adminMembersLinks"
+          highlight
+          class="-mx-1 flex-1"
+        />
       </UDashboardToolbar>
     </template>
 
     <template #body>
-      <KeepAlive>
-        <MemberUsersSection v-if="active === 'users'" />
-        <MemberCreditTransactionSection v-else-if="active === 'credit-transactions'" />
-        <MemberRedemptionCodeSection v-else-if="active === 'redemption-codes'" />
-        <MemberRedemptionRecordSection v-else-if="active === 'redemption-records'" />
-      </KeepAlive>
+      <NuxtPage />
     </template>
   </UDashboardPanel>
 </template>

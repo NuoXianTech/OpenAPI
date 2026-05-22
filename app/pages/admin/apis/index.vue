@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface DiscoveredEndpoint {
   apiPath: string
   method: string

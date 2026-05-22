@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 const toast = useToast()
 const confirm = useConfirmDialog()
 

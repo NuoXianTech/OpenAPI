@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { adminSystemHref } from '~/constants/admin-sections/system'
+import { ADMIN_SYSTEM_PATH } from '~/constants/admin-sections/system'
+
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const { user } = useAuth()
 const { settings } = useSiteSettings()
@@ -73,7 +75,7 @@ const { settings } = useSiteSettings()
       <template #footer>
         <div class="flex gap-2">
           <UButton
-            :to="adminSystemHref('settings')"
+            :to="ADMIN_SYSTEM_PATH"
             size="sm"
             variant="outline"
             color="neutral"

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface CreditTxnRow {
   id: number
   userId: number
@@ -16,8 +18,6 @@ interface CreditTxnRow {
   createdAt: string
 }
 
-const props = defineProps<{ defaultUserId?: number }>()
-
 const filters = reactive({
   userId: '' as number | '',
   reason: 'all' as 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
@@ -27,14 +27,6 @@ const pageSize = ref(50)
 const items = ref<CreditTxnRow[]>([])
 const total = ref(0)
 const loading = ref(false)
-
-watch(() => props.defaultUserId, (val) => {
-  if (typeof val === 'number') {
-    filters.userId = val
-    page.value = 1
-    void fetchList()
-  }
-}, { immediate: true })
 
 async function fetchList() {
   loading.value = true
@@ -63,7 +55,7 @@ watch(page, () => {
 })
 
 onMounted(() => {
-  if (typeof props.defaultUserId !== 'number') void fetchList()
+  void fetchList()
 })
 
 function apply() {

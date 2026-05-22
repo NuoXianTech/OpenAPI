@@ -1,16 +1,14 @@
-export const ADMIN_API_HUB_PATH = '/admin/api-hub'
+import type { NavigationMenuItem } from '@nuxt/ui'
 
-export const adminApiHubTabs = [
-  { value: 'governance', label: '接口治理', icon: 'i-mdi-api' },
-  { value: 'categories', label: '分类管理', icon: 'i-mdi-shape-outline' },
-  { value: 'calls', label: '调用统计', icon: 'i-mdi-chart-bar' }
-] as const
+export const ADMIN_APIS_PATH = '/admin/apis'
 
-export type AdminApiHubTab = typeof adminApiHubTabs[number]['value']
+export const adminApisLinks: NavigationMenuItem[] = [
+  { label: '接口治理', icon: 'i-mdi-api', to: ADMIN_APIS_PATH, exact: true },
+  { label: '分类管理', icon: 'i-mdi-shape-outline', to: `${ADMIN_APIS_PATH}/categories` },
+  { label: '调用统计', icon: 'i-mdi-chart-bar', to: `${ADMIN_APIS_PATH}/calls` }
+]
 
-export const adminApiHubHref = (tab: AdminApiHubTab) => `${ADMIN_API_HUB_PATH}#${tab}`
-
-export const adminApiHubQuickActions = [
-  { tab: 'governance', label: '登记接口', icon: 'i-mdi-plus-circle-outline' },
-  { tab: 'calls', label: '查看调用日志', icon: 'i-mdi-history' }
-] as const satisfies ReadonlyArray<{ tab: AdminApiHubTab, label: string, icon: string }>
+export const adminApisQuickActions = [
+  { label: '登记接口', icon: 'i-mdi-plus-circle-outline', to: ADMIN_APIS_PATH },
+  { label: '查看调用日志', icon: 'i-mdi-history', to: `${ADMIN_APIS_PATH}/calls` }
+]

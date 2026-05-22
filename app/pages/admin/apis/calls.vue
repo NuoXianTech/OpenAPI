@@ -2,6 +2,8 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 interface AggregateRow {
   apiPath?: string | null
   totalCount?: number | null

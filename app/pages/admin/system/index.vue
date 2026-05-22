@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
-import { adminContentHref } from '~/constants/admin-sections/content'
+import { ADMIN_CONTENT_PATH } from '~/constants/admin-sections/content'
+
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const { form, saving, status, save } = useAdminSettingsPage()
 </script>
@@ -112,7 +114,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
             管理后台已通过顶部铃铛常驻入口展示公告，无需额外开关。
             公告内容请前往
             <NuxtLink
-              :to="adminContentHref('announcements')"
+              :to="ADMIN_CONTENT_PATH"
               class="text-primary underline"
             >
               公告管理

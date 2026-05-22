@@ -1,29 +1,20 @@
 import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem } from '@nuxt/ui'
 import {
-  ADMIN_API_HUB_PATH,
-  adminApiHubQuickActions
-} from './admin-sections/api-hub'
+  ADMIN_APIS_PATH,
+  adminApisQuickActions
+} from './admin-sections/apis'
 import {
   ADMIN_MEMBERS_PATH,
   adminMembersQuickActions
 } from './admin-sections/members'
 import {
-  adminContentHref,
   ADMIN_CONTENT_PATH,
   adminContentQuickActions
 } from './admin-sections/content'
 import {
-  adminSystemHref,
   ADMIN_SYSTEM_PATH,
   adminSystemQuickActions
 } from './admin-sections/system'
-
-function expandQuickActions(
-  path: string,
-  actions: ReadonlyArray<{ tab: string, label: string, icon: string }>
-): DashboardQuickAction[] {
-  return actions.map(a => ({ label: a.label, icon: a.icon, to: `${path}#${a.tab}` }))
-}
 
 export interface DashboardNavGroup {
   label?: string
@@ -72,7 +63,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     {
       label: '业务',
       items: [
-        { label: 'API 中心', icon: 'i-mdi-api', to: ADMIN_API_HUB_PATH },
+        { label: 'API 中心', icon: 'i-mdi-api', to: ADMIN_APIS_PATH },
         { label: '会员中心', icon: 'i-mdi-account-group-outline', to: ADMIN_MEMBERS_PATH }
       ]
     },
@@ -88,18 +79,18 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ],
   quickActions: [
-    ...expandQuickActions(ADMIN_API_HUB_PATH, adminApiHubQuickActions),
-    ...expandQuickActions(ADMIN_CONTENT_PATH, adminContentQuickActions),
-    ...expandQuickActions(ADMIN_MEMBERS_PATH, adminMembersQuickActions),
-    ...expandQuickActions(ADMIN_SYSTEM_PATH, adminSystemQuickActions)
+    ...adminApisQuickActions,
+    ...adminContentQuickActions,
+    ...adminMembersQuickActions,
+    ...adminSystemQuickActions
   ],
   userMenuExtra: () => [[
-    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: adminSystemHref('profile') },
-    { label: '站点设置', icon: 'i-mdi-cog-outline', to: adminSystemHref('settings') },
+    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: `${ADMIN_SYSTEM_PATH}/profile` },
+    { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
   loginRedirect: '/admin/login',
-  notificationLink: adminContentHref('notifications')
+  notificationLink: `${ADMIN_CONTENT_PATH}/notifications`
 }
 
 export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {

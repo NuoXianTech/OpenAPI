@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useRedemptionCodesPage, type RedemptionCode } from '~/composables/admin/useRedemptionCodesPage'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 const {
   filters,
   page,

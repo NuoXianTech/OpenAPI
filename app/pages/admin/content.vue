@@ -1,15 +1,9 @@
 <script setup lang="ts">
-import ContentAnnouncementSection from '~/components/admin/sections/ContentAnnouncementSection.vue'
-import ContentNotificationSection from '~/components/admin/sections/ContentNotificationSection.vue'
-import ContentFriendLinkSection from '~/components/admin/sections/ContentFriendLinkSection.vue'
-import { useTabHashSync } from '~/composables/dashboard/useTabHashSync'
-import { adminContentTabs } from '~/constants/admin-sections/content'
+import { adminContentLinks } from '~/constants/admin-sections/content'
 
 useHead({ title: '内容管理' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const active = useTabHashSync({ tabs: adminContentTabs })
 </script>
 
 <template>
@@ -24,23 +18,16 @@ const active = useTabHashSync({ tabs: adminContentTabs })
         </template>
       </UDashboardNavbar>
       <UDashboardToolbar>
-        <template #left>
-          <UTabs
-            v-model="active"
-            :items="adminContentTabs"
-            :content="false"
-            variant="link"
-          />
-        </template>
+        <UNavigationMenu
+          :items="adminContentLinks"
+          highlight
+          class="-mx-1 flex-1"
+        />
       </UDashboardToolbar>
     </template>
 
     <template #body>
-      <KeepAlive>
-        <ContentAnnouncementSection v-if="active === 'announcements'" />
-        <ContentNotificationSection v-else-if="active === 'notifications'" />
-        <ContentFriendLinkSection v-else-if="active === 'friend-links'" />
-      </KeepAlive>
+      <NuxtPage />
     </template>
   </UDashboardPanel>
 </template>

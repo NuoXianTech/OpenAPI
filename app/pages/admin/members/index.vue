@@ -2,6 +2,8 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
 
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
 const {
   keyword,
   status,
