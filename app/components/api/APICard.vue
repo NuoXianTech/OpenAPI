@@ -254,15 +254,6 @@ function formatCallCount(count: number) {
               >
                 {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
               </UBadge>
-              <UBadge
-                v-if="!isPaid"
-                color="neutral"
-                variant="subtle"
-                size="sm"
-                class="rounded-full"
-              >
-                整组接口免费
-              </UBadge>
             </div>
           </div>
           <div class="api-card__detail-row">
@@ -281,12 +272,12 @@ function formatCallCount(count: number) {
               <UBadge
                 v-else
                 color="neutral"
-                variant="soft"
+                variant="subtle"
                 size="sm"
                 icon="i-mdi-lock-open-outline"
                 class="rounded-full"
               >
-                免鉴权
+                无需 APIKey
               </UBadge>
             </div>
           </div>
