@@ -27,12 +27,26 @@ interface ApiStatsTracked {
   queryString: string | null
 }
 
+// 调用日志写入规则：
+//   - DO_NOT_WRITE_LOG_OUTCOMES：完全不写 apiCalls 行
+//     · invalid_api_key / missing_api_key：API 密钥无效
+//     · disabled：公共接口被禁用（接口禁用时直接关闭所有调用日志/统计）
+//   - NON_COUNTED_REJECTION_OUTCOMES：写 apiCalls 但 isCounted=false（不参与统计聚合）
+//     · disabled_api_key：API 密钥被禁用（isActive=false 或 revokedAt 已设）
+//     · expired_api_key：API 密钥到期
+//     · api_key_quota_exceeded：密钥配额上限
+//     · insufficient_credits：积分不足
+const DO_NOT_WRITE_LOG_OUTCOMES = new Set([
+  'disabled',
+  'invalid_api_key',
+  'missing_api_key'
+])
+
 const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'api_key_quota_exceeded',
-  'disabled',
+  'disabled_api_key',
   'expired_api_key',
-  'insufficient_credits',
-  'revoked_api_key'
+  'insufficient_credits'
 ])
 
 declare module 'h3' {
@@ -81,10 +95,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 
     const rejection = event.context.apiGateRejection ?? null
 
-    if (rejection && (
-      rejection.outcome === 'invalid_api_key'
-      || rejection.outcome === 'missing_api_key'
-    )) {
+    if (rejection && DO_NOT_WRITE_LOG_OUTCOMES.has(rejection.outcome)) {
       return
     }
 

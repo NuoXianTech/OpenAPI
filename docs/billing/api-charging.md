@@ -38,5 +38,8 @@ restarts, which is acceptable for this deployment model.
 ## Known Gaps
 
 - `creditService.refund` exists for future flows but is not currently called by the standard API charging pipeline.
-- `signup_bonus` is a reserved credit reason and is not currently written during registration.
 - `dead_letter` pending charges currently require operational handling; a dedicated admin page would be a useful follow-up.
+
+## Signup Bonus
+
+`signup_bonus` is written automatically by `usersService.activateUser` on the user's first activation when `siteSettings.defaultRegisterCredits > 0`. The same code path covers both email-verification and OAuth auto-registration; subsequent re-activations are guarded by `users.emailVerifiedAt IS NULL` and do not re-grant credits.

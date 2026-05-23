@@ -146,7 +146,7 @@ const overviewCards = computed(() => {
   <UPage class="mx-auto max-w-7xl px-4 sm:px-6 py-8">
     <UPageHeader
       headline="公开数据"
-      title="OpenAPI 调用统计"
+      title="调用统计"
       description="实时聚合的接口调用情况，可作为服务可用性与活跃度的参考"
     >
       <template #links>

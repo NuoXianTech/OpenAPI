@@ -1,11 +1,14 @@
-import { and, eq, isNull } from 'drizzle-orm'
-import { apiKeys, sessions, users } from '@nuxthub/db/schema'
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import { creditTransactions, users } from '@nuxthub/db/schema'
 import { notificationService } from './notificationService'
+import { siteSettingsService } from './siteSettingsService'
 
-// 软删除后用户行仍在表中作为外键锚点，但对所有业务查询不可见。
-// 读路径必须 AND deleted_at IS NULL，写路径同理避免对僵尸行操作。
-const aliveOnly = isNull(users.deletedAt)
-
+// 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
+//   - sessions / verificationTokens / oauthAccounts / apiKeys / notificationDeliveries / loginLogs
+//     全部 cascade 一并清除（账号级数据）
+//   - pendingCharges cascade 清除（待重试扣费在用户消失后无意义）
+// 日志类表（creditTransactions / apiCalls / operationLogs / redemptionRecords）
+// 已通过解除外键约束保留为整数快照，不会随用户消失。
 export const usersService = {
   async list() {
     // passwordHash 永远不离开 DB，避免 admin 端浏览器扩展 / sentry / 截图泄漏后被字典攻击
@@ -25,26 +28,26 @@ export const usersService = {
       emailVerifiedAt: users.emailVerifiedAt,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt
-    }).from(users).where(aliveOnly)
+    }).from(users)
   },
 
   async findByEmail(email: string) {
     const res = await db.select().from(users)
-      .where(and(eq(users.email, email), aliveOnly))
+      .where(eq(users.email, email))
       .limit(1)
     return res[0]
   },
 
   async findByUsername(username: string) {
     const res = await db.select().from(users)
-      .where(and(eq(users.username, username), aliveOnly))
+      .where(eq(users.username, username))
       .limit(1)
     return res[0]
   },
 
   async getById(id: number) {
     const res = await db.select().from(users)
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .limit(1)
     return res[0]
   },
@@ -62,36 +65,23 @@ export const usersService = {
         ...data,
         updatedAt: new Date()
       })
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .returning()
 
     return res[0] || null
   },
 
   /**
-   * 软删除：写 deletedAt 时间戳，同时强制吊销该用户所有 API Key 并踢出全部会话。
-   * 用户行本身保留，让 creditTransactions / apiCalls / operationLogs 等审计链不丢失指向。
-   * 邮箱/用户名 unique 索引带 WHERE deleted_at IS NULL，软删后原值可被新注册复用。
+   * 硬删除：物理 DELETE，FK cascade 自动清理 sessions / apiKeys / oauthAccounts /
+   * verificationTokens / notificationDeliveries / loginLogs / pendingCharges。
+   * creditTransactions / apiCalls / operationLogs / redemptionRecords 已解除 FK，
+   * 自动以 userId 整数快照保留历史。
    */
   async deleteUser(id: number) {
-    return await db.transaction(async (tx: typeof db) => {
-      const res = await tx.update(users)
-        .set({ deletedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(users.id, id), aliveOnly))
-        .returning()
-      const deleted = res[0]
-      if (!deleted) return null
-
-      // 吊销该用户全部未吊销的 API Key，防止已签发凭证继续走 apiGuard
-      await tx.update(apiKeys)
-        .set({ isActive: false, revokedAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(apiKeys.userId, id), isNull(apiKeys.revokedAt)))
-
-      // 直接清掉会话；sessions 外键还是 cascade，但这里软删不会触发 cascade，所以显式删
-      await tx.delete(sessions).where(eq(sessions.userId, id))
-
-      return deleted
-    })
+    const res = await db.delete(users)
+      .where(eq(users.id, id))
+      .returning()
+    return res[0] || null
   },
 
   async addUser(data: {
@@ -116,30 +106,72 @@ export const usersService = {
     return res[0]
   },
 
-  async updateLastLogin(id: number, ip: string) {
+  async updateLastLogin(id: number, ip: string, userAgent?: string | null) {
     const res = await db.update(users)
       .set({
         lastLoginAt: new Date(),
-        lastLoginIp: ip
+        lastLoginIp: ip,
+        lastLoginUserAgent: userAgent ?? null
       })
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .returning()
 
     return res[0]
   },
 
+  /**
+   * 激活账号 · 首次激活赠送默认积分。
+   *
+   * 用 emailVerifiedAt IS NULL 作为"首次激活"判定：
+   *   - 邮箱验证流程：addUser 时 emailVerifiedAt=null → 这里 set + 赠分
+   *   - OAuth 自动注册：addUser 时 emailVerifiedAt=null，oauthCallback 显式调本方法 → 同样首次赠分
+   *   - 已激活账号再次调本方法（极少见，例如手工调用）：WHERE 失败，不重复赠分
+   *
+   * 通知补发（audience='all_with_future'）也只在首次激活时触发。
+   */
   async activateUser(id: number) {
-    const res = await db.update(users)
-      .set({
-        isActive: true,
-        emailVerifiedAt: new Date()
-      })
-      .where(and(eq(users.id, id), aliveOnly))
-      .returning()
+    const settings = await siteSettingsService.getOrCreate()
+    const grantAmount = Math.max(Math.trunc(settings.defaultRegisterCredits || 0), 0)
 
-    // 用户首次激活时补发所有 audience='all_with_future' 的历史消息
-    // ON CONFLICT DO NOTHING 保证幂等：已存在的投递不会重复
-    if (res[0]) {
+    const activated = await db.transaction(async (tx: typeof db) => {
+      const res = await tx.update(users)
+        .set({
+          isActive: true,
+          emailVerifiedAt: new Date()
+        })
+        .where(and(eq(users.id, id), isNull(users.emailVerifiedAt)))
+        .returning()
+      const row = res[0]
+      if (!row) return null
+
+      if (grantAmount > 0) {
+        const updated = await tx.update(users)
+          .set({
+            credits: sql`${users.credits} + ${grantAmount}`,
+            updatedAt: new Date()
+          })
+          .where(eq(users.id, id))
+          .returning({ credits: users.credits })
+
+        const balanceAfter = Number(updated[0]?.credits || 0)
+        await tx.insert(creditTransactions).values({
+          userId: id,
+          amount: grantAmount,
+          balanceAfter,
+          reason: 'signup_bonus',
+          operatorId: null,
+          operatorName: null,
+          remark: '注册赠送'
+        })
+        return { ...row, credits: balanceAfter }
+      }
+
+      return row
+    })
+
+    if (activated) {
+      // 用户首次激活时补发所有 audience='all_with_future' 的历史消息
+      // ON CONFLICT DO NOTHING 保证幂等：已存在的投递不会重复
       try {
         await notificationService.fanOutFutureMessagesTo(id)
       } catch (err) {
@@ -148,7 +180,7 @@ export const usersService = {
       }
     }
 
-    return res[0]
+    return activated
   },
 
   async updatePasswordHash(id: number, passwordHash: string) {
@@ -157,7 +189,7 @@ export const usersService = {
         passwordHash,
         updatedAt: new Date()
       })
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .returning()
     return res[0] || null
   },
@@ -169,7 +201,7 @@ export const usersService = {
         emailVerifiedAt: new Date(),
         updatedAt: new Date()
       })
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .returning()
     return res[0] || null
   },
@@ -180,7 +212,7 @@ export const usersService = {
         isBanned,
         updatedAt: new Date()
       })
-      .where(and(eq(users.id, id), aliveOnly))
+      .where(eq(users.id, id))
       .returning()
 
     return res[0] || null

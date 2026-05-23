@@ -11,6 +11,18 @@ import {
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
+// ------------------------------------------------------------------
+// Users（用户主表 · 硬删除）
+//
+// 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理 sessions /
+// oauthAccounts / apiKeys / verificationTokens / notificationDeliveries /
+// loginLogs 等"账号级"附属表。
+//
+// 与之相对，"审计型"日志表（creditTransactions / apiCalls / operationLogs /
+// redemptionRecords）通过解除外键约束，仅以 userId 整数快照保存历史归属，
+// 不会随用户硬删消失。PostgreSQL 的 serial 序列不会回收已用过的 id，因此
+// 硬删后 userId 值在全局范围内永远是稳定唯一的快照。
+// ------------------------------------------------------------------
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 50 }).notNull(),
@@ -20,7 +32,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
-  credits: integer('credits').notNull().default(0), // API 配额积分
+  credits: integer('credits').notNull().default(0),
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   bannedReason: varchar('banned_reason', { length: 500 }),
@@ -29,42 +41,38 @@ export const users = pgTable('users', {
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
-  // 软删除时间戳。设置后该用户对登录/查询/通知不可见，但行本身保留以维持外键引用（积分流水、API 调用、operator 等审计链）。
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date())
 }, table => [
-  // username / email 唯一性仅在未软删的活跃用户范围内成立，软删后原值可被新注册复用
-  uniqueIndex('users_username_uq').on(table.username).where(sql`${table.deletedAt} IS NULL`),
-  uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`).where(sql`${table.deletedAt} IS NULL`),
+  uniqueIndex('users_username_uq').on(table.username),
+  uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`),
   index('users_active_banned_idx').on(table.isActive, table.isBanned)
 ])
 
 // ------------------------------------------------------------------
-// Credit Transactions（积分变动流水）
+// Credit Transactions（积分变动流水 · 审计不可变）
 //
 // 每一次积分变动都落一条流水：
 //   - admin 调整：reason='admin_grant' / 'admin_revoke' / 'admin_reset'
 //   - API 调用扣费：reason='api_charge'，apiCallId 关联具体调用
 //   - 调用失败退款：reason='api_refund'
-//   - 注册赠送：reason='signup_bonus'
+//   - 注册赠送：reason='signup_bonus'，金额取自 siteSettings.defaultRegisterCredits
 //   - 兑换码兑换：reason='redemption_code'，meta.codeId 关联兑换码
 //
-// amount 正负表示进出（正=加积分，负=扣积分）。
-// balanceAfter 为快照值，便于审计与对账。
-// userId 在用户被软删后会被外键置空：流水本身是不可变的金融审计记录，
-// 不应随用户消失（operatorName/remark/meta 仍可读，确保审计链完整）。
+// userId 是 users.id 的整数快照，**无外键约束**。用户硬删后该字段保留，
+// 但无法 join 到 users 表。读取端把它当作"曾经存在的用户 id"看待。
+// operatorId=null 表示由 admin 内置账号操作（admin 不在 users 表）。
 // ------------------------------------------------------------------
 export const creditTransactions = pgTable('credit_transactions', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+  userId: integer('user_id'), // users.id 快照，无 FK
   amount: integer('amount').notNull(), // 正=入账，负=出账
   balanceAfter: integer('balance_after').notNull(),
   reason: varchar('reason', { length: 50 }).notNull(),
-  apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值
-  apiCallId: integer('api_call_id'), // 关联 apiCalls.id
-  operatorId: integer('operator_id'), // admin 操作时记录管理员（admin 伪用户用 null）
-  operatorName: varchar('operator_name', { length: 140 }),
+  apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
+  apiCallId: integer('api_call_id'), // 关联 apiCalls.id 快照
+  operatorId: integer('operator_id'), // null = admin 内置账号；整数 = 实际操作的用户 id 快照
+  operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照（admin 名取自 .env）
   remark: varchar('remark', { length: 500 }),
   meta: jsonb('meta').$type<Record<string, unknown>>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
@@ -73,36 +81,32 @@ export const creditTransactions = pgTable('credit_transactions', {
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('credit_transactions_reason_idx').on(table.reason),
   index('credit_transactions_api_call_idx').on(table.apiCallId),
-  // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一，仅对
-  // 'api_charge' / 'api_refund' 有效（其他 reason 不带 apiCallId）。
-  // 即使补偿队列调度出 bug 让两个实例同时拾起同一行，第二次 INSERT 会被这条
-  // 唯一索引拒绝、整个 charge 事务回滚，余额不会被双扣。
+  // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一。
+  // 即使补偿队列双调度，第二次 INSERT 被这条索引拒绝、事务回滚，余额不会被双扣。
   uniqueIndex('credit_transactions_api_call_reason_uq')
     .on(table.apiCallId, table.reason)
     .where(sql`${table.apiCallId} IS NOT NULL`)
 ])
 
 // ------------------------------------------------------------------
-// Redemption Codes（兑换码）
+// Redemption Codes（兑换码 · admin 生成）
 //
-// 管理员生成兑换码后，用户在积分页输入兑换。一个兑换码可以是单次性
-// （maxUses=1，用完即失效），也可以是多次性（maxUses>1，被多个用户共享一次）。
+// 单次性（maxUses=1）或多次性（maxUses>1，被多个用户共享）。
 // 同一用户对同一兑换码只能兑换一次，由 redemptionRecords 唯一索引保证。
-//
-// 并发安全：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING
+// 并发：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING
 // 做条件递增，避免超额兑换。
 // ------------------------------------------------------------------
 export const redemptionCodes = pgTable('redemption_codes', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 64 }).notNull().unique(),
-  amount: integer('amount').notNull(), // 兑换得到的积分，> 0
-  batchId: varchar('batch_id', { length: 64 }), // 同一批次共享，便于管理员后台分组
-  note: varchar('note', { length: 500 }), // 批次备注（活动名等）
-  maxUses: integer('max_uses').notNull().default(1), // 总可兑换次数（不同用户共享）
-  usedCount: integer('used_count').notNull().default(0), // 已被兑换次数
+  amount: integer('amount').notNull(),
+  batchId: varchar('batch_id', { length: 64 }),
+  note: varchar('note', { length: 500 }),
+  maxUses: integer('max_uses').notNull().default(1),
+  usedCount: integer('used_count').notNull().default(0),
   expiresAt: timestamp('expires_at', { withTimezone: true }), // null = 永不过期
   isEnabled: boolean('is_enabled').notNull().default(true),
-  createdBy: integer('created_by'), // admin id（admin 伪用户为 null）
+  createdBy: integer('created_by'), // null = admin（无 FK，admin 不在 users 表）
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
@@ -112,17 +116,17 @@ export const redemptionCodes = pgTable('redemption_codes', {
 ])
 
 // ------------------------------------------------------------------
-// Redemption Records（兑换记录）
+// Redemption Records（兑换记录 · 审计不可变）
 //
+// userId 是 users.id 快照，无外键约束。用户硬删后兑换历史保留。
 // (codeId, userId) 唯一索引保证同一用户对同一码只能兑换一次。
-// transactionId 指向写入的 credit_transactions 行，便于追溯。
 // ------------------------------------------------------------------
 export const redemptionRecords = pgTable('redemption_records', {
   id: serial('id').primaryKey(),
   codeId: integer('code_id').notNull().references(() => redemptionCodes.id, { onDelete: 'cascade' }),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: integer('user_id').notNull(), // users.id 快照，无 FK
   amount: integer('amount').notNull(),
-  transactionId: integer('transaction_id'), // 关联 credit_transactions.id
+  transactionId: integer('transaction_id'), // 关联 creditTransactions.id 快照
   ip: varchar('ip', { length: 45 }),
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [

@@ -18,7 +18,7 @@
  *
  * 拒绝路径输出开放 API 标准响应壳（见 server/utils/openApiResponse.ts），
  * body `data` 恒为 null；机器可读的错误子类型由 body 字段 `code` 表达
- * （如 401 下的 MISSING_API_KEY / INVALID_API_KEY / REVOKED_API_KEY 区分）。
+ * （如 401 下的 MISSING_API_KEY / INVALID_API_KEY / DISABLED_API_KEY 区分）。
  */
 
 import type { H3Event } from 'h3'

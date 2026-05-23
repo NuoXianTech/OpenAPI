@@ -1,6 +1,8 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
 
+// 用户表已是硬删模型，listActiveUserIds / send 不再需要过滤 deletedAt
+
 export type NotificationLevel = 'info' | 'success' | 'warning' | 'critical'
 export type NotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
@@ -20,8 +22,7 @@ async function listActiveUserIds(): Promise<number[]> {
   const rows = await db.select({ id: users.id }).from(users)
     .where(and(
       eq(users.isActive, true),
-      eq(users.isBanned, false),
-      isNull(users.deletedAt)
+      eq(users.isBanned, false)
     ))
   return rows.map((r: { id: number }) => r.id)
 }
@@ -37,9 +38,9 @@ export const notificationService = {
     if (input.audience === 'specific') {
       const ids = Array.from(new Set((input.recipientUserIds || []).map(Number).filter(n => Number.isFinite(n) && n > 0)))
       if (ids.length === 0) throw new Error('specific audience requires recipientUserIds')
-      // 过滤为存在且未软删的 users
+      // 过滤为实际存在的 users（用户硬删后该 id 已无对应行）
       const valid = await db.select({ id: users.id }).from(users)
-        .where(and(inArray(users.id, ids), isNull(users.deletedAt)))
+        .where(inArray(users.id, ids))
       recipientIds = valid.map((r: { id: number }) => r.id)
     } else {
       recipientIds = await listActiveUserIds()

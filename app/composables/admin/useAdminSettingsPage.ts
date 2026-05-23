@@ -11,6 +11,7 @@ export interface AdminSettingsForm {
   sessionRememberMaxAgeSeconds: number
   registerEmailFilterMode: 'off' | 'whitelist' | 'blacklist'
   registerEmailFilterList: string
+  defaultRegisterCredits: number
   emailVerifyExpiresInMinutes: number
   passwordResetExpiresInMinutes: number
   passwordResetEnabled: boolean
@@ -44,6 +45,7 @@ function defaultForm(): AdminSettingsForm {
     sessionRememberMaxAgeSeconds: 2592000,
     registerEmailFilterMode: 'off',
     registerEmailFilterList: '',
+    defaultRegisterCredits: 0,
     emailVerifyExpiresInMinutes: 30,
     passwordResetExpiresInMinutes: 30,
     passwordResetEnabled: true,
@@ -102,6 +104,7 @@ export function useAdminSettingsPage() {
         ? val.registerEmailFilterMode
         : 'off',
       registerEmailFilterList: val.registerEmailFilterList ?? d.registerEmailFilterList,
+      defaultRegisterCredits: val.defaultRegisterCredits ?? d.defaultRegisterCredits,
       emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? d.emailVerifyExpiresInMinutes,
       passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? d.passwordResetExpiresInMinutes,
       passwordResetEnabled: val.passwordResetEnabled ?? d.passwordResetEnabled,

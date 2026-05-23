@@ -23,6 +23,7 @@ export interface SiteSettingsUpsertInput {
   sessionRememberMaxAgeSeconds?: number
   registerEmailFilterList?: string
   registerEmailFilterMode?: 'off' | 'whitelist' | 'blacklist'
+  defaultRegisterCredits?: number
   emailVerifyExpiresInMinutes?: number
   passwordResetExpiresInMinutes?: number
   passwordResetEnabled?: boolean

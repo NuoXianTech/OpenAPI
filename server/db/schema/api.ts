@@ -15,6 +15,12 @@ import {
 import { sql } from 'drizzle-orm'
 import { users } from './user'
 
+// ------------------------------------------------------------------
+// API Categories（公共接口分类）
+//
+// 分类可被 admin 软删（deletedAt），用以在 admin 列表中标记"已停用"，
+// 但与之关联的 apis.categoryId 在分类硬删时会被 set null。
+// ------------------------------------------------------------------
 export const apiCategories = pgTable('api_categories', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 50 }).notNull(),
@@ -34,6 +40,22 @@ export const apiCategories = pgTable('api_categories', {
   index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
 ])
 
+// ------------------------------------------------------------------
+// APIs（公共接口注册表 · 永不物理删除）
+//
+// 接口由 manifestSync 从 server/routes/v{N}/{code} 自动注册，
+// 治理字段（isEnabled / methodCosts / categoryId 等）由 admin 后台维护。
+//
+// 物理删除文件夹（orphan）行为：
+//   - manifestSync 检测到 manifest 中无对应文件夹时，把行标记为 isOrphaned=true
+//     并强制 isEnabled=false / isStatistics=false
+//   - admin 后台仍可修改 categoryId / 元数据，但不可重新启用
+//   - 文件夹回归（且同名 + endpoint 方法集匹配）时，manifestSync 自动清除 isOrphaned
+//
+// createdBy / updatedBy 用作"操作者快照"，无外键约束：
+//   - null = admin 内置账号（admin 不在 users 表）
+//   - 整数 = 用户 id 快照（理论上仅 admin 能创建接口，但保留扩展位）
+// ------------------------------------------------------------------
 export const apis = pgTable('apis', {
   id: serial('id').primaryKey(),
   code: varchar('code', { length: 50 }).notNull(),
@@ -47,11 +69,12 @@ export const apis = pgTable('apis', {
   httpMethod: varchar('http_method', { length: 50 }).notNull(),
   apiPath: varchar('api_path', { length: 200 }).notNull(),
   docUrl: varchar('doc_url', { length: 200 }).notNull(),
-  docVersion: varchar('doc_version', { length: 32 }).notNull().default('v1'),
 
-  isEnabled: boolean('is_enabled').default(true).notNull(),
+  isEnabled: boolean('is_enabled').default(false).notNull(),
   isApiKey: boolean('is_api_key').default(false).notNull(),
-  isStatistics: boolean('is_statistics').default(true).notNull(),
+  isStatistics: boolean('is_statistics').default(false).notNull(),
+  // 文件夹物理删除后被 manifestSync 置为 true；为 true 时拒绝启用，admin 仍可改分类
+  isOrphaned: boolean('is_orphaned').default(false).notNull(),
 
   rateLimitPerSecond: integer('rate_limit_per_second').default(0).notNull(),
   rateLimitPerMinute: integer('rate_limit_per_minute').default(0).notNull(),
@@ -62,21 +85,24 @@ export const apis = pgTable('apis', {
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
 
-  createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdBy: integer('created_by'), // 操作者快照，null = admin
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
-  // 软删后，apiCalls / apiCallStats 历史行通过外键保留，但 admin/public 列表不可见；
-  // (pathVersion, code) 唯一性只在未软删范围内成立，便于同名 api 重建
-  deletedAt: timestamp('deleted_at', { withTimezone: true })
+  updatedBy: integer('updated_by'), // 操作者快照，null = admin
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code).where(sql`${table.deletedAt} IS NULL`),
+  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
   index('apis_category_idx').on(table.categoryId),
   index('apis_enabled_idx').on(table.isEnabled),
   index('apis_status_idx').on(table.status),
+  index('apis_orphaned_idx').on(table.isOrphaned),
   index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled)
 ])
 
+// ------------------------------------------------------------------
+// API Keys（用户 API 密钥）
+//
+// userId cascade：用户硬删时自动清除该用户所有密钥。
+// ------------------------------------------------------------------
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
@@ -103,13 +129,29 @@ export const apiKeys = pgTable('api_keys', {
   index('api_keys_expires_idx').on(table.expiresAt)
 ])
 
+// ------------------------------------------------------------------
+// API Calls（调用日志 · 审计不可变）
+//
+// userId / apiKeyId 是整数快照，无外键约束：
+//   - userId = null 表示匿名调用（接口未开启 isApiKey）
+//   - apiKeyId / apiKeyName：apiKeyId 整数快照，apiKeyName 名称快照
+//   - 用户硬删 / 密钥删除时本表行保留，对应需求 #5
+// apiId 保留外键：apis 行永不物理删除（最多被标记 isOrphaned），FK 仅做防御性约束。
+//
+// 调用日志写入规则（参见 docs/api-call-statistics.md）：
+//   - 接口未开启 isStatistics → 不写
+//   - 接口被禁用（isEnabled=false / API_DISABLED）→ 不写
+//   - 密钥无效（INVALID_API_KEY / MISSING_API_KEY）→ 不写
+//   - 其他场景（成功 + 业务失败 + 配额/积分/到期/吊销拒绝）→ 写入，
+//     其中"业务可见拒绝"的 isCounted=false（不参与统计聚合）
+// ------------------------------------------------------------------
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
   requestId: uuid('request_id').defaultRandom().notNull(),
   apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
-  apiKeyId: integer('api_key_id').references(() => apiKeys.id),
-  apiKeyName: varchar('api_key_name', { length: 100 }),
-  userId: integer('user_id').references(() => users.id),
+  apiKeyId: integer('api_key_id'), // 快照，无 FK
+  apiKeyName: varchar('api_key_name', { length: 100 }), // 名称快照（删除密钥后仍可读）
+  userId: integer('user_id'), // 用户 id 快照，无 FK；null = 匿名
   path: varchar('path', { length: 1000 }).notNull(),
   method: varchar('method', { length: 10 }).notNull(),
   queryString: varchar('query_string', { length: 2000 }),
@@ -131,6 +173,7 @@ export const apiCalls = pgTable('api_calls', {
   errorMessage: varchar('error_message', { length: 500 }),
 
   creditsCost: integer('credits_cost').notNull().default(0),
+  // false = 业务可见拒绝（配额/积分/密钥到期/密钥被禁用），写日志但不进 stats 聚合
   isCounted: boolean('is_counted').notNull().default(true),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
@@ -143,6 +186,12 @@ export const apiCalls = pgTable('api_calls', {
   index('api_calls_request_id_idx').on(table.requestId)
 ])
 
+// ------------------------------------------------------------------
+// API Call Stats（按 apiId × 自然日聚合 · 统计源）
+//
+// 仅在 apiCalls.isCounted=true 时累加；orphan / disabled / isStatistics=false
+// 的接口完全不会进入本表。dashboard / 单接口日统计/总统计聚合均基于本表。
+// ------------------------------------------------------------------
 export const apiCallStats = pgTable('api_call_stats', {
   id: serial('id').primaryKey(),
   apiId: integer('api_id').notNull().references(() => apis.id),
@@ -157,6 +206,12 @@ export const apiCallStats = pgTable('api_call_stats', {
   index('api_call_stats_stat_date_idx').on(table.statDate)
 ])
 
+// ------------------------------------------------------------------
+// Pending Charges（扣费补偿队列）
+//
+// charge 失败时入队，pendingChargesRetry 定时重试。
+// 用户硬删时 cascade 清理（无法对已删除用户扣费）。
+// ------------------------------------------------------------------
 export const pendingCharges = pgTable('pending_charges', {
   id: serial('id').primaryKey(),
   apiCallId: integer('api_call_id').notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),

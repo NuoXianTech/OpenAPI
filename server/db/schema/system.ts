@@ -28,6 +28,8 @@ export const siteSettings = pgTable('site_settings', {
 
   // 注册
   registrationMode: varchar('registration_mode', { length: 20 }).notNull().default('open'), // open / invite / closed
+  // 新注册用户的默认积分。> 0 时激活流程会发一条 reason='signup_bonus' 的积分流水。
+  defaultRegisterCredits: integer('default_register_credits').notNull().default(0),
   // 注册邮箱域名过滤：off=不过滤；whitelist=只允许列表内域名；blacklist=拒绝列表内域名
   registerEmailFilterMode: varchar('register_email_filter_mode', { length: 20 }).notNull().default('off'),
   // 注册邮箱域名过滤列表（逗号或换行分隔，例如：163.com,qq.com）。filterMode=off 时此字段被忽略；
@@ -84,12 +86,17 @@ export const siteSettings = pgTable('site_settings', {
 })
 
 // ------------------------------------------------------------------
-// Operation Logs（后台审计日志）
+// Operation Logs（后台审计日志 · 审计不可变）
+//
+// userId 是 users.id 整数快照，无外键约束：
+//   - null = admin 内置账号操作（admin 不在 users 表）
+//   - 整数 = 实际操作的用户 id 快照（用户硬删后仍保留历史指向）
+// actor 是用户名/管理员名快照，用于在用户被硬删后继续可追溯人物姓名。
 // ------------------------------------------------------------------
 export const operationLogs = pgTable('operation_logs', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
-  actor: varchar('actor', { length: 140 }), // 冗余字段，用户被删后仍可追溯（admin 操作 userId 为 NULL）
+  userId: integer('user_id'), // null=admin，整数=用户 id 快照（无 FK）
+  actor: varchar('actor', { length: 140 }), // 操作者名快照
   action: varchar('action', { length: 80 }).notNull(), // e.g. admin.user.ban / user.password.change
   resourceType: varchar('resource_type', { length: 80 }),
   resourceId: varchar('resource_id', { length: 120 }),
@@ -103,4 +110,28 @@ export const operationLogs = pgTable('operation_logs', {
   index('operation_logs_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('operation_logs_action_idx').on(table.action),
   index('operation_logs_resource_idx').on(table.resourceType, table.resourceId)
+])
+
+// ------------------------------------------------------------------
+// Login Logs（登录日志 · 跟随用户删除）
+//
+// 对应需求 #7：仅记录已识别用户的登录尝试（成功 + 失败），userId NOT NULL +
+// cascade，用户硬删时这部分历史一并清除。
+// method:    password / oauth_github / oauth_qq
+// success:   true=登录成功 / false=失败（密码错误、被封禁、未激活等）
+// failureReason: 失败时填写（如 invalid_password / banned / not_active）
+// ------------------------------------------------------------------
+export const loginLogs = pgTable('login_logs', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  method: varchar('method', { length: 32 }).notNull(),
+  success: boolean('success').notNull(),
+  failureReason: varchar('failure_reason', { length: 100 }),
+  ip: varchar('ip', { length: 45 }),
+  userAgent: varchar('user_agent', { length: 500 }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
+}, table => [
+  index('login_logs_user_created_idx').on(table.userId, table.createdAt.desc()),
+  index('login_logs_created_at_idx').on(table.createdAt.desc()),
+  index('login_logs_method_idx').on(table.method)
 ])

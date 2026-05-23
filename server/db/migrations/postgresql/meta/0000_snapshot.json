@@ -1,5 +1,5 @@
 {
-  "id": "08a747e5-8388-4e69-84e2-14e35e503e58",
+  "id": "dbf003c5-45b3-47e8-a5bd-35582d02da4f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -155,34 +155,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "announcements_created_by_users_id_fk": {
-          "name": "announcements_created_by_users_id_fk",
-          "tableFrom": "announcements",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "announcements_updated_by_users_id_fk": {
-          "name": "announcements_updated_by_users_id_fk",
-          "tableFrom": "announcements",
-          "tableTo": "users",
-          "columnsFrom": [
-            "updated_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -320,7 +293,7 @@
           "name": "request_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "default": "gen_random_uuid()"
         },
         "api_id": {
@@ -583,32 +556,6 @@
           ],
           "onDelete": "restrict",
           "onUpdate": "no action"
-        },
-        "api_calls_api_key_id_api_keys_id_fk": {
-          "name": "api_calls_api_key_id_api_keys_id_fk",
-          "tableFrom": "api_calls",
-          "tableTo": "api_keys",
-          "columnsFrom": [
-            "api_key_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "api_calls_user_id_users_id_fk": {
-          "name": "api_calls_user_id_users_id_fk",
-          "tableFrom": "api_calls",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -813,20 +760,20 @@
         },
         "total_quota": {
           "name": "total_quota",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
         "used_credits": {
           "name": "used_credits",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
         },
         "total_calls": {
           "name": "total_calls",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
@@ -1025,13 +972,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "doc_version": {
-          "name": "doc_version",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'v1'"
-        },
         "is_enabled": {
           "name": "is_enabled",
           "type": "boolean",
@@ -1052,6 +992,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
+        },
+        "is_orphaned": {
+          "name": "is_orphaned",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "rate_limit_per_second": {
           "name": "rate_limit_per_second",
@@ -1196,6 +1143,21 @@
           "method": "btree",
           "with": {}
         },
+        "apis_orphaned_idx": {
+          "name": "apis_orphaned_idx",
+          "columns": [
+            {
+              "expression": "is_orphaned",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "apis_path_version_enabled_idx": {
           "name": "apis_path_version_enabled_idx",
           "columns": [
@@ -1225,32 +1187,6 @@
           "tableTo": "api_categories",
           "columnsFrom": [
             "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "apis_created_by_users_id_fk": {
-          "name": "apis_created_by_users_id_fk",
-          "tableFrom": "apis",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        },
-        "apis_updated_by_users_id_fk": {
-          "name": "apis_updated_by_users_id_fk",
-          "tableFrom": "apis",
-          "tableTo": "users",
-          "columnsFrom": [
-            "updated_by"
           ],
           "columnsTo": [
             "id"
@@ -1289,7 +1225,7 @@
         },
         "balance_after": {
           "name": "balance_after",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
@@ -1433,21 +1369,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "credit_transactions_user_id_users_id_fk": {
-          "name": "credit_transactions_user_id_users_id_fk",
-          "tableFrom": "credit_transactions",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1533,18 +1455,132 @@
           "with": {}
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.login_logs": {
+      "name": "login_logs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "method": {
+          "name": "method",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "success": {
+          "name": "success",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "login_logs_user_created_idx": {
+          "name": "login_logs_user_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "login_logs_created_at_idx": {
+          "name": "login_logs_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "login_logs_method_idx": {
+          "name": "login_logs_method_idx",
+          "columns": [
+            {
+              "expression": "method",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "friend_links_created_by_users_id_fk": {
-          "name": "friend_links_created_by_users_id_fk",
-          "tableFrom": "friend_links",
+        "login_logs_user_id_users_id_fk": {
+          "name": "login_logs_user_id_users_id_fk",
+          "tableFrom": "login_logs",
           "tableTo": "users",
           "columnsFrom": [
-            "created_by"
+            "user_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1818,21 +1854,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "notification_messages_sender_user_id_users_id_fk": {
-          "name": "notification_messages_sender_user_id_users_id_fk",
-          "tableFrom": "notification_messages",
-          "tableTo": "users",
-          "columnsFrom": [
-            "sender_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2216,21 +2238,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "operation_logs_user_id_users_id_fk": {
-          "name": "operation_logs_user_id_users_id_fk",
-          "tableFrom": "operation_logs",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2685,19 +2693,6 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
-        },
-        "redemption_records_user_id_users_id_fk": {
-          "name": "redemption_records_user_id_users_id_fk",
-          "tableFrom": "redemption_records",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2895,6 +2890,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'open'"
+        },
+        "default_register_credits": {
+          "name": "default_register_credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "register_email_filter_mode": {
           "name": "register_email_filter_mode",
@@ -3155,7 +3157,7 @@
         },
         "credits": {
           "name": "credits",
-          "type": "bigint",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "default": 0
@@ -3210,12 +3212,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -3243,7 +3239,6 @@
             }
           ],
           "isUnique": true,
-          "where": "\"users\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3259,7 +3254,6 @@
             }
           ],
           "isUnique": true,
-          "where": "\"users\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}

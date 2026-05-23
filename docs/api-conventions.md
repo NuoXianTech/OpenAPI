@@ -62,7 +62,7 @@ server/routes/
   - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/apiGuard.ts](../shared/config/apiGuard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
 - **`message` 由 handler 自由定**：`openApiOk` 和 `openApiFail` 的 `message` 参数都接受 handler 自定义文案，应面向调用方可读（含上下文，例如失败时 ``未知算法 "xxx"，请通过 GET /v1/crypto 查看可用列表``），不要复用 `API_GUARD_ERROR.msg`。gate 层错误的默认文案保留在 `API_GUARD_ERROR.msg`，只服务 gate 自己
-- **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `REVOKED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
+- **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `DISABLED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
 - **失败响应 `data` 恒为 `null`**：严守 [restful-api-style.md §3.3](./restful-api-style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
 - **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
 - **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body

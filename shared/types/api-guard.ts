@@ -40,7 +40,7 @@ export type GateOutcome
     | 'method_not_allowed'
     | 'missing_api_key'
     | 'invalid_api_key'
-    | 'revoked_api_key'
+    | 'disabled_api_key'
     | 'expired_api_key'
     | 'scope_denied'
     | 'ip_denied'

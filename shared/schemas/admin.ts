@@ -368,6 +368,7 @@ export const adminUpdateSiteSettingsSchema = z.object({
   sessionRememberMaxAgeSeconds: z.coerce.number().int().positive('sessionRememberMaxAgeSeconds must be a positive number').optional(),
   registerEmailFilterMode: emailFilterMode,
   registerEmailFilterList: z.string().max(5000).optional(),
+  defaultRegisterCredits: z.coerce.number().int().min(0, 'defaultRegisterCredits must be >= 0').optional(),
   emailVerifyExpiresInMinutes: z.coerce.number().int().positive('emailVerifyExpiresInMinutes must be a positive number').optional(),
   passwordResetExpiresInMinutes: z.coerce.number().int().positive('passwordResetExpiresInMinutes must be a positive number').optional(),
   passwordResetEnabled: z.boolean().optional(),

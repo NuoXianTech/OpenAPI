@@ -11,7 +11,10 @@ import {
 import { users } from './user'
 
 // ------------------------------------------------------------------
-// Sessions
+// Sessions（用户/管理员会话）
+//
+// userId nullable：admin 会话 userId=null（admin 不在 users 表）。
+// 用户硬删时 FK cascade 自动清除该用户的所有会话。
 // ------------------------------------------------------------------
 export const sessions = pgTable('sessions', {
   sessionId: varchar('session_id', { length: 128 }).primaryKey(), // sessionId 的哈希值
@@ -32,6 +35,8 @@ export const sessions = pgTable('sessions', {
 
 // ------------------------------------------------------------------
 // Verification tokens（邮箱验证 / 密码重置 / 邮箱变更等一次性 token）
+//
+// 用户硬删时 FK cascade 自动清除该用户所有未消费 token。
 // ------------------------------------------------------------------
 export const verificationTokens = pgTable('verification_tokens', {
   id: serial('id').primaryKey(),
@@ -68,10 +73,13 @@ export const oauthProviders = pgTable('oauth_providers', {
 ])
 
 // ------------------------------------------------------------------
-// User third-party account binding
-// 一个用户可绑定多个第三方账号；本应用 OAuth 仅用于登录身份识别，
+// User third-party account binding（用户三方绑定）
+//
+// 一个用户可绑定多个第三方账号。本应用 OAuth 仅用于登录身份识别，
 // 不调用上游 API，因此不持久化 access_token / refresh_token / scope。
 // providerUserId 已经是稳定身份标识。
+//
+// 用户硬删时 FK cascade 自动清除该用户所有 OAuth 绑定。
 // ------------------------------------------------------------------
 export const oauthAccounts = pgTable('oauth_accounts', {
   id: serial('id').primaryKey(),

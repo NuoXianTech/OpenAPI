@@ -10,7 +10,13 @@ export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const { id } = await readZodBody(event, idSchema)
 
-  const deleted = await apiService.deleteApi(id)
+  let deleted: Awaited<ReturnType<typeof apiService.deleteApi>>
+  try {
+    deleted = await apiService.deleteApi(id)
+  } catch (err) {
+    // apiCalls.apiId restrict 阻止删除：接口有历史调用日志，不允许真删（保留日志可 join 到接口名）
+    throw createError({ statusCode: 409, message: (err as Error).message })
+  }
   if (!deleted) {
     throw createError({ statusCode: 404, message: 'api not found' })
   }

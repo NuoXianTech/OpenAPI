@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm'
+import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/apiGuard'
 
@@ -53,10 +53,11 @@ export interface ApiListFilters {
   categoryId?: number
   isEnabled?: boolean
   isStatistics?: boolean
+  isOrphaned?: boolean
 }
 
 function buildApiFilters(filters: ApiListFilters) {
-  const conditions: SQL[] = [isNull(apis.deletedAt)]
+  const conditions: SQL[] = []
 
   if (filters.keyword) {
     const keywordPattern = toContainsPattern(filters.keyword)
@@ -87,6 +88,10 @@ function buildApiFilters(filters: ApiListFilters) {
     conditions.push(eq(apis.isStatistics, filters.isStatistics))
   }
 
+  if (typeof filters.isOrphaned === 'boolean') {
+    conditions.push(eq(apis.isOrphaned, filters.isOrphaned))
+  }
+
   return conditions
 }
 
@@ -109,8 +114,12 @@ type PublicApiItem = {
 export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
+    const where = conditions.length ? and(...conditions) : undefined
     const [rows, statsMap] = await Promise.all([
-      db.select().from(apis).where(and(...conditions)).orderBy(desc(apis.updatedAt)),
+      (where
+        ? db.select().from(apis).where(where)
+        : db.select().from(apis)
+      ).orderBy(desc(apis.updatedAt)),
       loadApiStats()
     ])
 
@@ -132,14 +141,14 @@ export const apiService = {
 
   async getById(id: number) {
     const res = await db.select().from(apis)
-      .where(and(eq(apis.id, id), isNull(apis.deletedAt)))
+      .where(eq(apis.id, id))
       .limit(1)
     return res[0] || null
   },
 
   async getByCode(code: string) {
     const res = await db.select().from(apis)
-      .where(and(eq(apis.code, code), isNull(apis.deletedAt)))
+      .where(eq(apis.code, code))
       .limit(1)
     return res[0] || null
   },
@@ -155,7 +164,7 @@ export const apiService = {
     if (cached && cached.expiresAt > now) return cached.value
 
     const rows = await db.select().from(apis)
-      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code), isNull(apis.deletedAt)))
+      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
       .limit(1)
     const value = rows[0] || null
     guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
@@ -170,13 +179,13 @@ export const apiService = {
   /** 按版本列出已登记 APIs，admin 页面分 tab 使用 */
   async listByVersion(pathVersion: string) {
     return db.select().from(apis)
-      .where(and(eq(apis.pathVersion, pathVersion), isNull(apis.deletedAt)))
+      .where(eq(apis.pathVersion, pathVersion))
       .orderBy(desc(apis.updatedAt))
   },
 
   /**
    * 仅治理字段可编辑：code/pathVersion/apiPath/httpMethod/endpointCount 由 manifest 注入，
-   * 不接受外部 patch。
+   * 不接受外部 patch。orphan 接口（文件夹已被物理删除）不可重新启用，但允许改分类等元数据。
    *
    * 计费一致性：合并请求 patch 与现有记录后，若 methodCosts 中存在 > 0 的方法但 isApiKey=false，
    * 视为非法配置，抛错（兜底 admin 接口的不完整 patch）。
@@ -188,20 +197,31 @@ export const apiService = {
       apiPath: _ap,
       httpMethod: _hm,
       endpointCount: _ec,
+      isOrphaned: _io,
       ...patch
     } = data as Partial<typeof apis.$inferInsert>
 
+    const existing = await this.getById(id)
+    if (!existing) return null
+
+    // Orphan 守护：文件夹物理删除后，禁止再启用接口或开统计
+    if (existing.isOrphaned) {
+      if (patch.isEnabled === true) {
+        throw new Error('该接口对应的源文件已被物理删除，无法启用；如需启用请恢复 server/routes 中的同名文件夹')
+      }
+      if (patch.isStatistics === true) {
+        throw new Error('该接口对应的源文件已被物理删除，无法开启统计；如需统计请恢复 server/routes 中的同名文件夹')
+      }
+    }
+
     // 合并后的 effective methodCosts / isApiKey 校验
     if (patch.methodCosts !== undefined || patch.isApiKey !== undefined) {
-      const existing = await this.getById(id)
-      if (existing) {
-        const effectiveCosts = patch.methodCosts !== undefined
-          ? (patch.methodCosts as Record<string, number>)
-          : existing.methodCosts
-        const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
-        if (hasAnyChargedMethod(effectiveCosts) && !effectiveIsApiKey) {
-          throw new Error('设置扣费金额时必须开启「必需 API Key」')
-        }
+      const effectiveCosts = patch.methodCosts !== undefined
+        ? (patch.methodCosts as Record<string, number>)
+        : existing.methodCosts
+      const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
+      if (hasAnyChargedMethod(effectiveCosts) && !effectiveIsApiKey) {
+        throw new Error('设置扣费金额时必须开启「必需 API Key」')
       }
     }
 
@@ -218,17 +238,37 @@ export const apiService = {
     return updated
   },
 
+  /**
+   * 物理删除接口行。
+   *
+   * 仅当不存在任何关联 apiCalls 时才能成功（apiCalls.apiId FK 为 restrict）。
+   * 这是为了保证调用日志/统计/积分流水中的 apiId 快照仍能 join 到 apis 表。
+   * 若 admin 希望"隐藏"orphan 接口，应通过 isEnabled=false + isStatistics=false 实现，
+   * 不要试图删除有历史的接口行。
+   */
   async deleteApi(id: number) {
-    const res = await db.update(apis)
-      .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
-      .where(and(eq(apis.id, id), isNull(apis.deletedAt)))
-      .returning()
-    const deleted = res[0] || null
-    if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
-    return deleted
+    try {
+      const res = await db.delete(apis)
+        .where(eq(apis.id, id))
+        .returning()
+      const deleted = res[0] || null
+      if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
+      return deleted
+    } catch (_err) {
+      // FK restrict 触发：apiCalls 中仍有该接口的历史调用
+      throw new Error('该接口存在历史调用日志，无法删除；请先在统计页面清理调用日志，或保留接口为禁用状态')
+    }
   },
 
   async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number | null) {
+    // orphan 接口禁止开启 isEnabled / isStatistics
+    if (value === true) {
+      const existing = await this.getById(id)
+      if (existing?.isOrphaned) {
+        throw new Error('该接口对应的源文件已被物理删除，无法启用相关功能；如需恢复请补回 server/routes 中的同名文件夹')
+      }
+    }
+
     const patch: {
       updatedAt: Date
       updatedBy?: number | null
@@ -238,7 +278,7 @@ export const apiService = {
       updatedAt: new Date(),
       [field]: value
     }
-    // 0 是 admin 伪用户的占位，users 表无此 id；此处归一为 null 避免触发外键约束
+    // null 表示 admin 内置账号；正整数为真实用户 id；其他视作 admin
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
     const updated = res[0] || null
@@ -249,6 +289,8 @@ export const apiService = {
   /**
    * 一键登记：按 (pathVersion, code) 幂等入库。
    * 已存在则刷新 manifest 投影（apiPath/httpMethod/endpointCount），治理字段保留。
+   * 当 orphan 接口被重新注册时（文件夹回归），自动清除 isOrphaned 标志；
+   * isEnabled/isStatistics 仍保持原值（admin 需要主动启用，避免静默上线）。
    */
   async registerFromManifest(data: {
     pathVersion: string
@@ -278,18 +320,40 @@ export const apiService = {
   }) {
     const existing = await this.loadGuardConfig(data.pathVersion, data.code)
     if (existing) {
+      const incomingMethods = normalizeMethodList(data.httpMethod)
+      const methodChanged = existing.httpMethod !== incomingMethods
+      const wasOrphan = existing.isOrphaned
+
+      const patch: Partial<typeof apis.$inferInsert> = {
+        apiPath: data.apiPath,
+        httpMethod: incomingMethods,
+        endpointCount: data.endpointCount,
+        isOrphaned: false,
+        updatedBy: data.createdBy,
+        updatedAt: new Date()
+      }
+
+      // 从 orphan 状态回归且方法集变化（新增/减少了 xxx.<method>.ts）：保持禁用，
+      // 让 admin 主动复核——避免悄无声息地把"看似同名但行为已变"的接口重新上线
+      if (wasOrphan && methodChanged) {
+        patch.isEnabled = false
+        patch.isStatistics = false
+      }
+
       const res = await db.update(apis)
-        .set({
-          apiPath: data.apiPath,
-          httpMethod: normalizeMethodList(data.httpMethod),
-          endpointCount: data.endpointCount,
-          updatedBy: data.createdBy,
-          updatedAt: new Date()
-        })
+        .set(patch)
         .where(eq(apis.id, existing.id))
         .returning()
       const updated = res[0] || null
       if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+
+      if (methodChanged) {
+        console.warn(
+          `[api-manifest] httpMethod changed for ${data.pathVersion}/${data.code}: `
+          + `"${existing.httpMethod}" → "${incomingMethods}"${wasOrphan ? ' (orphan recovered, kept disabled for admin review)' : ''}`
+        )
+      }
+
       return updated
     }
 
@@ -319,5 +383,24 @@ export const apiService = {
       updatedBy: data.createdBy
     }).returning()
     return res[0] || null
+  },
+
+  /**
+   * Orphan 标记：manifest 中已无对应文件夹时，把行强制设为 orphan 状态。
+   * 强制关闭 isEnabled + isStatistics，后续 admin 可改分类但不能再启用。
+   */
+  async markOrphaned(id: number) {
+    const res = await db.update(apis)
+      .set({
+        isOrphaned: true,
+        isEnabled: false,
+        isStatistics: false,
+        updatedAt: new Date()
+      })
+      .where(eq(apis.id, id))
+      .returning()
+    const updated = res[0] || null
+    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    return updated
   }
 }

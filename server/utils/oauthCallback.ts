@@ -1,10 +1,11 @@
 import type { H3Event } from 'h3'
 import { randomBytes } from 'node:crypto'
-import { getQuery, getRequestIP, sendRedirect } from 'h3'
+import { getHeader, getQuery, getRequestIP, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/service/oauthProviderService'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { usersService } from '~~/server/service/userService'
+import { loginLogService } from '~~/server/service/loginLogService'
 import { consumeState } from '~~/server/utils/oauthState'
 import { decryptSecret } from '~~/server/utils/oauthCrypto'
 import { createUserSession, getAuthUser, hashPassword } from '~~/server/utils/auth'
@@ -12,7 +13,12 @@ import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDoma
 import { githubProvider } from '~~/server/utils/oauthProviders/github'
 import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
+import type { LoginMethod } from '~~/server/service/loginLogService'
 import type { SupportedOauthProvider } from '~~/shared/types/oauth'
+
+function methodFromProvider(provider: SupportedOauthProvider): LoginMethod {
+  return provider === 'github' ? 'oauth_github' : 'oauth_qq'
+}
 
 async function redirectError(event: H3Event, code: string, mode: 'login' | 'bind' = 'login') {
   const target = mode === 'bind'
@@ -94,6 +100,8 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     }
 
     const ip = getRequestIP(event) || null
+    const userAgent = getHeader(event, 'user-agent') || null
+    const method = methodFromProvider(provider)
 
     // ============ bind 模式：当前已登录用户主动绑定 ============
     if (consumed.mode === 'bind') {
@@ -139,11 +147,17 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       })
 
       const user = await usersService.getById(existingAccount.userId)
-      if (!user || user.isBanned) {
+      if (!user) {
+        // 用户已被硬删，oauthAccounts 通过 cascade 应已清理；保险起见仍 redirect
+        return redirectError(event, 'user_unavailable')
+      }
+      if (user.isBanned) {
+        await loginLogService.record({ userId: user.id, method, success: false, failureReason: 'banned', ip, userAgent })
         return redirectError(event, 'user_unavailable')
       }
       await createUserSession(event, { id: user.id, kind: 'user' })
-      await usersService.updateLastLogin(user.id, ip || '0.0.0.0')
+      await usersService.updateLastLogin(user.id, ip || '0.0.0.0', userAgent)
+      await loginLogService.record({ userId: user.id, method, success: true, ip, userAgent })
       return sendRedirect(event, consumed.returnTo || '/', 302)
     }
 
@@ -152,6 +166,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       const matched = await usersService.findByEmail(profile.email.toLowerCase())
       if (matched) {
         if (matched.isBanned) {
+          await loginLogService.record({ userId: matched.id, method, success: false, failureReason: 'banned', ip, userAgent })
           return redirectError(event, 'user_banned')
         }
         targetUserId = matched.id
@@ -204,7 +219,8 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     })
 
     await createUserSession(event, { id: finalUserId, kind: 'user' })
-    await usersService.updateLastLogin(finalUserId, ip || '0.0.0.0')
+    await usersService.updateLastLogin(finalUserId, ip || '0.0.0.0', userAgent)
+    await loginLogService.record({ userId: finalUserId, method, success: true, ip, userAgent })
     return sendRedirect(event, consumed.returnTo || '/', 302)
   } catch (err: unknown) {
     console.error('[oauth callback] failed', err)

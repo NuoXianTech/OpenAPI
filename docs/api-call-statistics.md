@@ -42,10 +42,14 @@
 | `/v{N}/**` 但 manifest 中不存在对应 `(pathVersion, code)` | 没有可归属的对外 API 代码目录 |
 | manifest 存在但 DB 中未注册对应 `apis` 记录 | 没有统计目标，gate 返回 `API_NOT_REGISTERED` |
 | `apis.isStatistics=false` | 管理员关闭该 API 的统计 |
+| `apis.isEnabled=false`（公共接口禁用） | 接口被关停期间所有调用都不写日志 |
+| `apis.isOrphaned=true`（源码已被物理删除） | manifestSync 已强制 `isEnabled=false / isStatistics=false`，等价于上一行 |
 | 缺失 API Key 且该接口要求 Key | 无法归属到具体 Key/用户，跳过落库 |
 | API Key 无效 | 无法确认具体 Key/用户，跳过落库 |
 
 缺失 Key 和无效 Key 特别容易误判：它们会被 gate 拒绝，但不会进入调用日志，也不会进入日聚合。这是为了避免攻击流量或客户端配置错误制造大量不可归属的噪声数据。
+
+> 接口禁用与密钥禁用的行为差异：**接口禁用**（`apis.isEnabled=false`，对应 outcome `disabled`）直接不写任何日志；**API Key 禁用**（`apiKeys.isActive=false` 或 `revokedAt != null`，对应 outcome `disabled_api_key`）仍会写一条 `isCounted=false` 的日志。
 
 ## 4. 哪些请求不计入调用次数
 
@@ -57,7 +61,7 @@
 | --- | --- | --- |
 | 缺失 API Key | 否 | 否 |
 | API Key 无效 | 否 | 否 |
-| API Key 已禁用 | 是，若能识别到 Key；`isCounted=false` | 否 |
+| API Key 已禁用（`isActive=false` 或 `revokedAt`） | 是，若能识别到 Key；`isCounted=false` | 否 |
 | API Key 已过期 | 是，若能识别到 Key；`isCounted=false` | 否 |
 | scope 不允许 | 是 | 否 |
 | IP 不在白名单 | 是 | 否 |
@@ -65,9 +69,9 @@
 | API 每日配额超限 | 是 | 否 |
 | API Key 累计积分配额超限 | 是，但不更新日聚合统计 | 否 |
 | 余额不足 | 是；`isCounted=false` | 否 |
-| API 被停用 | 是，若已命中统计目标；`isCounted=false` | 否 |
+| 公共接口被禁用（`isEnabled=false`） | 否（接口禁用时关闭全部日志/统计） | 否 |
 
-已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 已过期、API Key 累计积分配额超限、API Key 已禁用、API 已停用、余额不足会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。
+已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 已过期、API Key 累计积分配额超限、API Key 已禁用、余额不足会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。**公共接口禁用**（`apis.isEnabled=false`，gate outcome `disabled`）直接不写任何调用日志，与缺失/无效密钥同列。
 
 ## 5. 成功与失败口径
 
@@ -146,7 +150,7 @@
 
 - [ ] 是否明确区分了 `api_calls`、`api_call_stats.totalCount`、`api_keys.totalCalls`
 - [ ] 缺失/无效 API Key 是否不写日志、不更新日聚合、不累加 `totalCalls`
-- [ ] 已识别 Key 的 gate 拒绝请求是否按 `isCounted` 口径处理：一般写日志和日聚合但不累加 `totalCalls`，API Key 已过期、API Key 累计积分配额超限、API 已停用和余额不足写日志但 `isCounted=false`
+- [ ] 已识别 Key 的 gate 拒绝请求是否按 `isCounted` 口径处理：一般写日志和日聚合但不累加 `totalCalls`，API Key 已过期、API Key 累计积分配额超限和余额不足写日志但 `isCounted=false`
 - [ ] 成功通过 gate 的请求是否写日志、更新日聚合，并累加 `totalCalls`
-- [ ] `isStatistics=false` 是否不写日志、不更新日聚合、不参与公开统计
+- [ ] `isStatistics=false` 或 `isEnabled=false` 是否不写日志、不更新日聚合、不参与公开统计
 - [ ] HTTP 2xx 但业务失败的场景是否调用 `markApiCallFailed`

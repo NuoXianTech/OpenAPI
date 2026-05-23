@@ -142,7 +142,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
       return { passed: false, outcome: 'invalid_api_key', error: API_GUARD_ERROR.INVALID_API_KEY, apiKey: null }
     }
     if (!apiKey.isActive || apiKey.revokedAt) {
-      return { passed: false, outcome: 'revoked_api_key', error: API_GUARD_ERROR.REVOKED_API_KEY, apiKey }
+      return { passed: false, outcome: 'disabled_api_key', error: API_GUARD_ERROR.DISABLED_API_KEY, apiKey }
     }
 
     const expiresAtRaw = apiKey.expiresAt as Date | string | number | null | undefined
