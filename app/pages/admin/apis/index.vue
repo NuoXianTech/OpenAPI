@@ -113,11 +113,18 @@ function openEdit(row: DiscoveredApi) {
 
 async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
   if (!row.registered) return
+  if (field === 'isStatistics' && value && !row.registered.isEnabled) {
+    toast.add({ title: '请先启用接口，再开启统计', color: 'warning' })
+    return
+  }
   try {
     await $fetch('/api/admin/apis/toggle', {
       method: 'PUT',
       body: { id: row.registered.id, field, value }
     })
+    if (field === 'isEnabled' && !value && row.registered.isStatistics) {
+      toast.add({ title: '已同时关闭调用统计', color: 'info' })
+    }
     await refresh()
   } catch (err: unknown) {
     toast.add({ title: parseFetchError(err, '切换失败'), color: 'error' })
@@ -296,6 +303,7 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         <USwitch
           v-if="row.original.registered"
           :model-value="row.original.registered.isStatistics"
+          :disabled="!row.original.registered.isEnabled && !row.original.registered.isStatistics"
           @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
         />
         <span

@@ -61,6 +61,12 @@ export default defineEventHandler(async (event: H3Event) => {
       message: '设置扣费金额时必须开启「必需 API Key」'
     })
   }
+  if (defaults.isStatistics && !defaults.isEnabled) {
+    throw createError({
+      statusCode: 400,
+      message: '启用统计前必须先启用接口'
+    })
+  }
 
   const saved = await apiService.registerFromManifest({
     pathVersion,

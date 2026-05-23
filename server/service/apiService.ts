@@ -214,6 +214,15 @@ export const apiService = {
       }
     }
 
+    if (patch.isEnabled === false) {
+      patch.isStatistics = false
+    } else if (patch.isStatistics === true) {
+      const effectiveIsEnabled = patch.isEnabled ?? existing.isEnabled
+      if (!effectiveIsEnabled) {
+        throw new Error('启用统计前必须先启用接口')
+      }
+    }
+
     // 合并后的 effective methodCosts / isApiKey 校验
     if (patch.methodCosts !== undefined || patch.isApiKey !== undefined) {
       const effectiveCosts = patch.methodCosts !== undefined
@@ -261,11 +270,15 @@ export const apiService = {
   },
 
   async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number | null) {
-    // orphan 接口禁止开启 isEnabled / isStatistics
+    // orphan 接口禁止开启 isEnabled / isStatistics；统计只能在接口启用后开启。
     if (value === true) {
       const existing = await this.getById(id)
+      if (!existing) return null
       if (existing?.isOrphaned) {
         throw new Error('该接口对应的源文件已被物理删除，无法启用相关功能；如需恢复请补回 server/routes 中的同名文件夹')
+      }
+      if (field === 'isStatistics' && !existing.isEnabled) {
+        throw new Error('启用统计前必须先启用接口')
       }
     }
 
@@ -277,6 +290,9 @@ export const apiService = {
     } = {
       updatedAt: new Date(),
       [field]: value
+    }
+    if (field === 'isEnabled' && value === false) {
+      patch.isStatistics = false
     }
     // null 表示 admin 内置账号；正整数为真实用户 id；其他视作 admin
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
@@ -318,6 +334,10 @@ export const apiService = {
       timeoutMs: number
     }
   }) {
+    if (data.defaults.isStatistics && !data.defaults.isEnabled) {
+      throw new Error('启用统计前必须先启用接口')
+    }
+
     const existing = await this.loadGuardConfig(data.pathVersion, data.code)
     if (existing) {
       const incomingMethods = normalizeMethodList(data.httpMethod)

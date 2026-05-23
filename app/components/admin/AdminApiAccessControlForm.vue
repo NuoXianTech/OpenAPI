@@ -21,8 +21,15 @@ const state = useAdminApiForm()
       <USwitch
         v-model="state.isStatistics"
         label="统计调用"
+        :disabled="!state.isEnabled"
       />
     </div>
+    <p
+      v-if="!state.isEnabled"
+      class="text-xs text-muted mt-2"
+    >
+      启用接口后才能开启调用统计。
+    </p>
     <p
       v-if="!state.isApiKey && hasChargedMethod"
       class="text-xs text-warning mt-2"

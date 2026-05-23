@@ -123,6 +123,18 @@ watch(hasChargedMethod, (val) => {
   }
 })
 
+// 统计依赖接口可用：关闭接口时同步关闭统计；未启用接口时不允许单独开启统计。
+watch(() => state.isEnabled, (val) => {
+  if (!val && state.isStatistics) {
+    state.isStatistics = false
+  }
+})
+watch(() => state.isStatistics, (val) => {
+  if (val && !state.isEnabled) {
+    state.isStatistics = false
+  }
+})
+
 const headerLabel = computed(() => {
   if (!props.target) return ''
   return props.mode === 'edit'
