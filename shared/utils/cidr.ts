@@ -28,9 +28,9 @@ function isValidIPv4(input: string): boolean {
 
 function ipv4ToBigint(ip: string): bigint | null {
   if (!isValidIPv4(ip)) return null
-  let result = 0n
+  let result = BigInt(0)
   for (const part of ip.split('.')) {
-    result = (result << 8n) | BigInt(Number(part))
+    result = (result << BigInt(8)) | BigInt(Number(part))
   }
   return result
 }
@@ -91,19 +91,19 @@ function isValidIPv6(input: string): boolean {
 function ipv6ToBigint(ip: string): bigint | null {
   const groups = parseIPv6Groups(ip)
   if (!groups) return null
-  let result = 0n
+  let result = BigInt(0)
   for (const g of groups) {
-    result = (result << 16n) | BigInt(parseInt(g, 16))
+    result = (result << BigInt(16)) | BigInt(parseInt(g, 16))
   }
   return result
 }
 
 function applyMask(addr: bigint, prefix: number, total: number): bigint {
   if (prefix === total) return addr
-  if (prefix === 0) return 0n
+  if (prefix === 0) return BigInt(0)
   const hostBits = total - prefix
-  const fullMask = (1n << BigInt(total)) - 1n
-  const mask = (~((1n << BigInt(hostBits)) - 1n)) & fullMask
+  const fullMask = (BigInt(1) << BigInt(total)) - BigInt(1)
+  const mask = (~((BigInt(1) << BigInt(hostBits)) - BigInt(1))) & fullMask
   return addr & mask
 }
 
