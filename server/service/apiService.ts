@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
+import { and, desc, eq, ilike, isNull, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/apiGuard'
 
@@ -56,7 +56,7 @@ export interface ApiListFilters {
 }
 
 function buildApiFilters(filters: ApiListFilters) {
-  const conditions: SQL[] = []
+  const conditions: SQL[] = [isNull(apis.deletedAt)]
 
   if (filters.keyword) {
     const keywordPattern = toContainsPattern(filters.keyword)
@@ -110,9 +110,7 @@ export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
     const conditions = buildApiFilters(filters)
     const [rows, statsMap] = await Promise.all([
-      conditions.length
-        ? await db.select().from(apis).where(and(...conditions)).orderBy(desc(apis.updatedAt))
-        : await db.select().from(apis).orderBy(desc(apis.updatedAt)),
+      db.select().from(apis).where(and(...conditions)).orderBy(desc(apis.updatedAt)),
       loadApiStats()
     ])
 
@@ -133,12 +131,16 @@ export const apiService = {
   },
 
   async getById(id: number) {
-    const res = await db.select().from(apis).where(eq(apis.id, id)).limit(1)
+    const res = await db.select().from(apis)
+      .where(and(eq(apis.id, id), isNull(apis.deletedAt)))
+      .limit(1)
     return res[0] || null
   },
 
   async getByCode(code: string) {
-    const res = await db.select().from(apis).where(eq(apis.code, code)).limit(1)
+    const res = await db.select().from(apis)
+      .where(and(eq(apis.code, code), isNull(apis.deletedAt)))
+      .limit(1)
     return res[0] || null
   },
 
@@ -153,7 +155,7 @@ export const apiService = {
     if (cached && cached.expiresAt > now) return cached.value
 
     const rows = await db.select().from(apis)
-      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
+      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code), isNull(apis.deletedAt)))
       .limit(1)
     const value = rows[0] || null
     guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
@@ -168,7 +170,7 @@ export const apiService = {
   /** 按版本列出已登记 APIs，admin 页面分 tab 使用 */
   async listByVersion(pathVersion: string) {
     return db.select().from(apis)
-      .where(eq(apis.pathVersion, pathVersion))
+      .where(and(eq(apis.pathVersion, pathVersion), isNull(apis.deletedAt)))
       .orderBy(desc(apis.updatedAt))
   },
 
@@ -217,7 +219,10 @@ export const apiService = {
   },
 
   async deleteApi(id: number) {
-    const res = await db.delete(apis).where(eq(apis.id, id)).returning()
+    const res = await db.update(apis)
+      .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
+      .where(and(eq(apis.id, id), isNull(apis.deletedAt)))
+      .returning()
     const deleted = res[0] || null
     if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
     return deleted

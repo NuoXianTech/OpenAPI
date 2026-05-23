@@ -14,7 +14,7 @@
  */
 
 import { apis } from '@nuxthub/db/schema'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { API_MANIFEST as RAW_API_MANIFEST } from '#api-manifest'
 import { apiService } from '~~/server/service/apiService'
 import { DEFAULT_API_REGISTRATION } from '~~/shared/config/apiGuard'
@@ -56,7 +56,7 @@ async function checkConsistency(): Promise<boolean> {
       code: apis.code,
       pathVersion: apis.pathVersion,
       endpointCount: apis.endpointCount
-    }).from(apis)
+    }).from(apis).where(isNull(apis.deletedAt))
   } catch {
     return false
   }
@@ -131,7 +131,7 @@ async function checkConsistency(): Promise<boolean> {
     if (row.endpointCount === a.endpoints.length) continue
     await db.update(apis)
       .set({ endpointCount: a.endpoints.length })
-      .where(eq(apis.id, row.id))
+      .where(and(eq(apis.id, row.id), isNull(apis.deletedAt)))
       .catch((err: unknown) => {
         console.error('[api-manifest] failed to sync endpointCount', { id: row.id, err })
       })

@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import { apis } from '@nuxthub/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
 
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event: H3Event) => {
     httpMethod: apis.httpMethod
   })
     .from(apis)
-    .where(eq(apis.isEnabled, true))
+    .where(and(eq(apis.isEnabled, true), isNull(apis.deletedAt)))
     .orderBy(apis.pathVersion, apis.code)
 
   return rows.map((r: typeof rows[number]) => ({

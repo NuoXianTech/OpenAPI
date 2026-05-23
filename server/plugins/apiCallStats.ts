@@ -38,6 +38,7 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
 declare module 'h3' {
   interface H3EventContext {
     apiStatsTracked?: ApiStatsTracked
+    requestId?: string
   }
 }
 
@@ -125,6 +126,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       apiKeyId,
       apiKeyName,
       userId: apiKeyUserId,
+      requestId: event.context.requestId ?? null,
       path: tracked.pathname,
       method: tracked.method,
       statusCode,
@@ -213,6 +215,11 @@ export default defineNitroPlugin((nitroApp) => {
     const pathname = normalizePathname(requestUrl.pathname)
     if (!isGuardedPath(pathname)) {
       return
+    }
+
+    if (!event.context.requestId) {
+      const incoming = getHeader(event, 'x-request-id')?.toString().trim()
+      event.context.requestId = incoming || globalThis.crypto.randomUUID()
     }
 
     event.context.apiStatsTracked = {

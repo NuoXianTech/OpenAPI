@@ -4,7 +4,6 @@ import {
   varchar,
   boolean,
   timestamp,
-  bigint,
   integer,
   jsonb,
   index,
@@ -21,7 +20,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
-  credits: bigint('credits', { mode: 'number' }).notNull().default(0), // API 配额积分
+  credits: integer('credits').notNull().default(0), // API 配额积分
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),
   bannedReason: varchar('banned_reason', { length: 500 }),
@@ -60,7 +59,7 @@ export const creditTransactions = pgTable('credit_transactions', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
   amount: integer('amount').notNull(), // 正=入账，负=出账
-  balanceAfter: bigint('balance_after', { mode: 'number' }).notNull(),
+  balanceAfter: integer('balance_after').notNull(),
   reason: varchar('reason', { length: 50 }).notNull(),
   apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值
   apiCallId: integer('api_call_id'), // 关联 apiCalls.id

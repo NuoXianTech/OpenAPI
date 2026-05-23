@@ -52,7 +52,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     db.select({
       enabledApiCount: sql<number>`coalesce(sum(case when ${apis.isEnabled} then 1 else 0 end), 0)`,
       totalApiCount: sql<number>`count(*)`
-    }).from(apis),
+    }).from(apis).where(isNull(apis.deletedAt)),
     db.select({
       totalCalls: totalExpr,
       successCalls: successExpr,

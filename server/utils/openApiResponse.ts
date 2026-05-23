@@ -27,11 +27,14 @@ export interface OpenApiResponse<T = unknown> {
   timestamp: number
 }
 
-/** 复用请求头 X-Request-Id（无则生成 UUID），并写回响应头。不进 body。 */
+/** 复用请求头 X-Request-Id（无则生成 UUID），写回响应头并挂到 event.context，
+ *  让 apiCalls.requestId 与响应头是同一个 ID（便于客户端报错时反查日志）。 */
 function ensureRequestIdHeader(event: H3Event) {
-  const incoming = getHeader(event, 'x-request-id')?.toString().trim()
-  const id = incoming || globalThis.crypto.randomUUID()
-  setResponseHeader(event, 'X-Request-Id', id)
+  if (!event.context.requestId) {
+    const incoming = getHeader(event, 'x-request-id')?.toString().trim()
+    event.context.requestId = incoming || globalThis.crypto.randomUUID()
+  }
+  setResponseHeader(event, 'X-Request-Id', event.context.requestId)
 }
 
 export function openApiOk<T>(

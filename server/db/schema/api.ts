@@ -6,7 +6,6 @@ import {
   text,
   boolean,
   jsonb,
-  bigint,
   timestamp,
   uuid,
   index,
@@ -66,9 +65,12 @@ export const apis = pgTable('apis', {
   createdBy: integer('created_by').references(() => users.id, { onDelete: 'set null' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedBy: integer('updated_by').references(() => users.id, { onDelete: 'set null' }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  // 软删后，apiCalls / apiCallStats 历史行通过外键保留，但 admin/public 列表不可见；
+  // (pathVersion, code) 唯一性只在未软删范围内成立，便于同名 api 重建
+  deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
+  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code).where(sql`${table.deletedAt} IS NULL`),
   index('apis_category_idx').on(table.categoryId),
   index('apis_enabled_idx').on(table.isEnabled),
   index('apis_status_idx').on(table.status),
@@ -84,9 +86,9 @@ export const apiKeys = pgTable('api_keys', {
 
   scopes: jsonb('scopes').$type<string[]>(),
   ipWhitelist: jsonb('ip_whitelist').$type<string[]>(),
-  totalQuota: bigint('total_quota', { mode: 'number' }),
-  usedCredits: bigint('used_credits', { mode: 'number' }).notNull().default(0),
-  totalCalls: bigint('total_calls', { mode: 'number' }).notNull().default(0),
+  totalQuota: integer('total_quota'),
+  usedCredits: integer('used_credits').notNull().default(0),
+  totalCalls: integer('total_calls').notNull().default(0),
 
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   lastUsedIp: varchar('last_used_ip', { length: 45 }),
@@ -103,7 +105,7 @@ export const apiKeys = pgTable('api_keys', {
 
 export const apiCalls = pgTable('api_calls', {
   id: serial('id').primaryKey(),
-  requestId: uuid('request_id').defaultRandom(),
+  requestId: uuid('request_id').defaultRandom().notNull(),
   apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
   apiKeyId: integer('api_key_id').references(() => apiKeys.id),
   apiKeyName: varchar('api_key_name', { length: 100 }),

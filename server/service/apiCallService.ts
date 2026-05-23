@@ -7,6 +7,7 @@ export interface AddCallInput {
   apiKeyId?: number | null
   apiKeyName?: string | null
   userId?: number | null
+  requestId?: string | null
   path: string
   method: string
   statusCode: number
@@ -32,6 +33,7 @@ function normalizeCallRow(data: AddCallInput) {
     apiKeyId: data.apiKeyId ?? null,
     apiKeyName: data.apiKeyName ?? null,
     userId: data.userId ?? null,
+    ...(data.requestId ? { requestId: data.requestId } : {}),
     path: data.path,
     method: data.method,
     statusCode: data.statusCode,
