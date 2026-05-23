@@ -11,6 +11,7 @@ import type { H3Event } from 'h3'
 import { API_MANIFEST } from '#api-manifest'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/service/apiService'
+import type { ManifestEndpoint } from '~~/shared/types/api-guard'
 
 interface DiscoveredEndpoint {
   apiPath: string
@@ -70,7 +71,7 @@ export default defineEventHandler(async (event: H3Event) => {
   for (const api of API_MANIFEST) {
     const key = `${api.pathVersion}:${api.code}`
     const registered = registeredMap.get(key) ?? null
-    const endpoints: DiscoveredEndpoint[] = api.endpoints.map(ep => ({
+    const endpoints: DiscoveredEndpoint[] = api.endpoints.map((ep: ManifestEndpoint) => ({
       apiPath: ep.apiPath,
       method: ep.method,
       sourceFile: ep.sourceFile,

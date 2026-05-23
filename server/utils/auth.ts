@@ -1,4 +1,5 @@
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
 import { createError, getCookie, getHeader, getRequestIP, setCookie } from 'h3'
@@ -17,7 +18,14 @@ export interface AuthUserPayload {
 // 误把 0 写进外键列会让审计/关联查询很难排查。
 export const ADMIN_ACTOR_ID = null
 
-const scrypt = promisify(scryptCallback)
+// util.promisify 只识别 scrypt(password, salt, keylen, cb) 这一个 overload，
+// 想传 options 必须断言成带 options 的签名。
+const scrypt = promisify(scryptCallback) as (
+  password: BinaryLike,
+  salt: BinaryLike,
+  keylen: number,
+  options?: ScryptOptions
+) => Promise<Buffer>
 const COOKIE_NAME = 'app_session'
 const SALT_BYTES = 16
 const KEY_LENGTH = 64

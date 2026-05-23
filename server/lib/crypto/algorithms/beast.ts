@@ -19,7 +19,7 @@ export function beastEncode(text: string): string {
   for (let i = 0; i < hex.length; i++) {
     let k = Number.parseInt(hex[i]!, 16) + (i % 0x10)
     if (k >= 0x10) k -= 0x10
-    out += BEAST_DICT[Math.floor(k / 4)] + BEAST_DICT[k % 4]
+    out += BEAST_DICT[Math.floor(k / 4)]! + BEAST_DICT[k % 4]!
   }
   return out
 }

@@ -169,7 +169,7 @@ const columns: TableColumn<AdminUserItem>[] = [
           variant="outline"
           icon="i-mdi-refresh"
           :loading="status === 'pending'"
-          @click="refresh"
+          @click="() => refresh()"
         >
           刷新
         </UButton>
@@ -197,7 +197,7 @@ const columns: TableColumn<AdminUserItem>[] = [
       </template>
       <template #credits-cell="{ row }">
         <UBadge
-          :color="(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
+          :color="Number(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
           variant="subtle"
           class="tabular-nums font-mono"
         >

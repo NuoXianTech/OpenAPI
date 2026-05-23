@@ -18,7 +18,9 @@ interface OperationLogRow {
   createdAt: string
 }
 
-interface OperationLogFilters {
+// 用 type 别名而非 interface：useAdminPagedList 的 TFilters 受 Record<string, unknown> 约束，
+// interface 因为可扩展不被认为兼容，type 字面量则会通过结构性检查。
+type OperationLogFilters = {
   userId: number | ''
   actorKind: 'all' | 'admin' | 'user'
   action: string

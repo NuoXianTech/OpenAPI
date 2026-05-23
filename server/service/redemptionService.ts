@@ -106,7 +106,7 @@ export const redemptionService = {
       batchId,
       generated: inserted.length,
       requested: wantCount,
-      codes: inserted.map(r => ({ id: r.id, code: r.code, amount: r.amount })),
+      codes: inserted.map((r: typeof redemptionCodes.$inferSelect) => ({ id: r.id, code: r.code, amount: r.amount })),
       amount,
       maxUses,
       expiresAt,
@@ -180,7 +180,16 @@ export const redemptionService = {
       .orderBy(sql`max(${redemptionCodes.createdAt}) desc`)
       .limit(Math.min(Math.max(Math.trunc(limit), 1), 200))
 
-    return rows.filter(r => r.batchId).map(r => ({
+    type BatchRow = {
+      batchId: string | null
+      note: string | null
+      amount: number
+      total: number
+      usedTotal: number
+      maxUsesTotal: number
+      createdAt: Date
+    }
+    return rows.filter((r: BatchRow) => r.batchId).map((r: BatchRow) => ({
       batchId: r.batchId as string,
       note: r.note,
       amount: Number(r.amount),

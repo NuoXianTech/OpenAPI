@@ -6,6 +6,19 @@ import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { OAUTH_PROVIDER_PRESETS, isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { requireAuth } from '~~/server/utils/auth'
 
+// 显式声明形状：drizzle 的 select().from().where() 在某些链上推不出元素类型，
+// listSafeByUserId 的 Awaited 也会随之降级为 any[]，导致下面索引 OAUTH_PROVIDER_PRESETS 失败。
+interface BoundOauthAccount {
+  id: number
+  provider: string
+  providerUserId: string
+  nickname: string | null
+  avatarUrl: string | null
+  email: string | null
+  linkedAt: Date | string | null
+  lastLoginAt: Date | string | null
+}
+
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
 
@@ -48,7 +61,7 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  for (const acc of bound) {
+  for (const acc of bound as BoundOauthAccount[]) {
     const preset = isSupportedOauthProvider(acc.provider)
       ? OAUTH_PROVIDER_PRESETS[acc.provider]
       : { displayName: acc.provider, icon: 'i-mdi-link-variant' }

@@ -20,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
       action: 'admin.settings.smtp.test',
       resourceType: 'site-settings',
       detail: { to, error: message },
-      status: 'failed'
+      status: 'failure'
     })
     throw createError({ statusCode: 500, message: `SMTP 发送失败：${message}` })
   }

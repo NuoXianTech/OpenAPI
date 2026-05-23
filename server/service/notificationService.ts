@@ -23,7 +23,7 @@ async function listActiveUserIds(): Promise<number[]> {
       eq(users.isBanned, false),
       isNull(users.deletedAt)
     ))
-  return rows.map(r => r.id)
+  return rows.map((r: { id: number }) => r.id)
 }
 
 export const notificationService = {
@@ -40,7 +40,7 @@ export const notificationService = {
       // 过滤为存在且未软删的 users
       const valid = await db.select({ id: users.id }).from(users)
         .where(and(inArray(users.id, ids), isNull(users.deletedAt)))
-      recipientIds = valid.map(r => r.id)
+      recipientIds = valid.map((r: { id: number }) => r.id)
     } else {
       recipientIds = await listActiveUserIds()
     }
@@ -82,7 +82,7 @@ export const notificationService = {
     if (messages.length === 0) return 0
 
     await db.insert(notificationDeliveries).values(
-      messages.map(m => ({ messageId: m.id, recipientUserId: userId }))
+      messages.map((m: { id: number }) => ({ messageId: m.id, recipientUserId: userId }))
     ).onConflictDoNothing({
       target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId]
     })

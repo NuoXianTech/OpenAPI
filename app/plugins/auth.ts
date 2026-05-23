@@ -40,9 +40,4 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
   })
   g[SCOPE_KEY] = scope
-
-  nuxtApp.hook('app:unmount', () => {
-    scope.stop()
-    if (g[SCOPE_KEY] === scope) g[SCOPE_KEY] = undefined
-  })
 })

@@ -273,7 +273,7 @@ export default defineNuxtModule({
       }
     })
 
-    // 声明 #api-manifest 的类型，使 server 代码 import 时有提示
+    // 声明 #api-manifest 的类型，使 nuxt / nitro / shared 三套 tsconfig 都能解析到
     addTypeTemplate({
       filename: 'types/api-manifest.d.ts',
       getContents: () => [
@@ -284,6 +284,6 @@ export default defineNuxtModule({
         `}`,
         ''
       ].join('\n')
-    })
+    }, { nitro: true, nuxt: true, shared: true })
   }
 })

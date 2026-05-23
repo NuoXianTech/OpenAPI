@@ -15,6 +15,7 @@ import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/service/apiService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { readZodBody } from '~~/server/utils/zod'
+import type { ManifestEndpoint } from '~~/shared/types/api-guard'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
@@ -28,9 +29,9 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const methods = Array.from(new Set(manifestApi.endpoints.map(e => e.method))).filter(m => m !== 'ANY')
+  const methods = Array.from(new Set(manifestApi.endpoints.map((e: ManifestEndpoint) => e.method))).filter(m => m !== 'ANY')
   const httpMethod = methods.length > 0 ? methods.join(',') : 'GET'
-  const baseEp = manifestApi.endpoints.find(e => e.paramNames.length === 0) || manifestApi.endpoints[0]!
+  const baseEp = manifestApi.endpoints.find((e: ManifestEndpoint) => e.paramNames.length === 0) || manifestApi.endpoints[0]!
   const apiPath = baseEp.apiPath.replace(/\/:[^/]+$/, '') || `/${pathVersion}/${code}`
 
   const o = overrides || {}

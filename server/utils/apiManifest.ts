@@ -25,7 +25,7 @@ function ensureIndex(): Map<string, CompiledApi> {
   if (byVersionCodeCache) return byVersionCodeCache
   const map = new Map<string, CompiledApi>()
   for (const api of API_MANIFEST) {
-    const compiled: CompiledEndpoint[] = api.endpoints.map(ep => ({
+    const compiled: CompiledEndpoint[] = api.endpoints.map((ep: ManifestEndpoint) => ({
       endpoint: ep,
       regex: new RegExp(ep.patternRegex)
     }))
