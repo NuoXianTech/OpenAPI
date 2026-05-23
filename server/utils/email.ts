@@ -63,6 +63,22 @@ export async function sendVerificationEmail(to: string, verifyUrl: string) {
   })
 }
 
+export async function sendDuplicateRegistrationEmail(to: string, loginUrl: string) {
+  const { smtp, siteName } = await getSmtpConfig()
+  const safeSiteName = escapeHtml(siteName)
+  await sendSmtpMail(smtp, {
+    to,
+    subject: '您的邮箱已注册',
+    html: renderActionEmail({
+      heading: '账号已存在',
+      intro: `检测到有人尝试用您的邮箱在 ${safeSiteName} 注册账号。如果是您本人，请直接登录；忘记密码可在登录页通过"找回密码"重置。`,
+      buttonLabel: '前往登录',
+      url: loginUrl,
+      footer: '如果不是您本人操作，您可以忽略本邮件。'
+    })
+  })
+}
+
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const { smtp, siteName } = await getSmtpConfig()
   const safeSiteName = escapeHtml(siteName)

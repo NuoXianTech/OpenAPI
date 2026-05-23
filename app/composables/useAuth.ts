@@ -128,7 +128,7 @@ export function useAuth() {
   }
 
   const register = async (payload: RegisterInput) => {
-    return await $fetch<{ user: AuthUser, verificationRequired: boolean }>('/api/auth/register', {
+    return await $fetch<{ verificationRequired: boolean }>('/api/auth/register', {
       method: 'POST',
       body: payload
     })
