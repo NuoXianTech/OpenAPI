@@ -22,8 +22,9 @@ export const userChangePasswordSchema = z
     path: ['newPassword']
   })
 
-/** 已登录用户申请变更邮箱 */
+/** 已登录用户申请变更邮箱 · 需当前密码以阻止未锁定浏览器被接管 */
 export const userRequestEmailChangeSchema = z.object({
+  currentPassword: z.string().min(1, '请输入当前密码'),
   newEmail: z.string().trim().toLowerCase().pipe(z.email('Invalid new email address'))
 })
 

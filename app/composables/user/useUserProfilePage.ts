@@ -76,10 +76,10 @@ export function useUserProfilePage() {
     })
   }
 
-  async function requestEmailChange(newEmail: string): Promise<string> {
+  async function requestEmailChange(currentPassword: string, newEmail: string): Promise<string> {
     const res = await $fetch<{ pendingEmail: string }>('/api/user/request-email-change', {
       method: 'POST',
-      body: { newEmail }
+      body: { currentPassword, newEmail }
     })
     toast.add({
       title: '验证邮件已发送',

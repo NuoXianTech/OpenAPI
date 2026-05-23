@@ -4,11 +4,12 @@ import { parseFetchError } from '#shared/utils/clientError'
 
 const props = defineProps<{
   profile: ProfileData | null
-  onRequestChange: (newEmail: string) => Promise<string>
+  onRequestChange: (currentPassword: string, newEmail: string) => Promise<string>
 }>()
 
 const toast = useToast()
 const newEmail = ref('')
+const currentPassword = ref('')
 const saving = ref(false)
 const pending = ref<string | null>(null)
 
@@ -18,14 +19,19 @@ async function submit() {
     toast.add({ title: '请输入新邮箱', color: 'warning' })
     return
   }
+  if (!currentPassword.value) {
+    toast.add({ title: '请输入当前密码', color: 'warning' })
+    return
+  }
   if (v === (props.profile?.email || '').toLowerCase()) {
     toast.add({ title: '新邮箱与当前邮箱相同', color: 'warning' })
     return
   }
   saving.value = true
   try {
-    pending.value = await props.onRequestChange(v)
+    pending.value = await props.onRequestChange(currentPassword.value, v)
     newEmail.value = ''
+    currentPassword.value = ''
   } catch (err) {
     toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
   } finally {
@@ -74,6 +80,14 @@ async function submit() {
         修改邮箱将向新邮箱发送一封验证邮件，点击邮件中的链接后才会生效。
         更改邮箱后头像会自动跟随更新。
       </div>
+      <UFormField label="当前密码">
+        <UInput
+          v-model="currentPassword"
+          type="password"
+          placeholder="••••••••"
+          autocomplete="current-password"
+        />
+      </UFormField>
       <div class="flex flex-wrap items-end gap-3">
         <UFormField
           label="新邮箱"
