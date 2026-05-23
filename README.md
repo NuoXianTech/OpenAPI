@@ -117,7 +117,7 @@ It stores failed charge attempts for the single process retry worker.
 ## Credits
 
 This project builds on Nuxt, Nitro, Nuxt UI, Tailwind CSS, Drizzle ORM,
-postgres.js, pglite, Zod, VeeValidate, Unovis, Vitest, ESLint, TypeScript,
+postgres.js, pglite, Zod, VeeValidate, Unovis, ESLint, TypeScript,
 VueUse, and nodemailer.
 
 ## License

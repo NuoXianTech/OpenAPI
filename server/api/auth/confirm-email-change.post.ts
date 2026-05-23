@@ -1,17 +1,13 @@
-// 消费 change_email token，更新用户 email。
+// 消费 change_email token，更新用户 email。POST 携带 userId / token，避免邮件预扫描或浏览器预取误触发副作用。
 import type { H3Event } from 'h3'
-import { createError, getQuery } from 'h3'
+import { createError } from 'h3'
+import { confirmEmailChangeSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
-  const query = getQuery(event)
-  const userId = Number(query.user || 0)
-  const token = (query.token || '').toString()
-
-  if (!userId || !token) {
-    throw createError({ statusCode: 400, message: 'Invalid confirmation link' })
-  }
+  const { userId, token } = await readZodBody(event, confirmEmailChangeSchema)
 
   const user = await usersService.getById(userId)
   if (!user) {

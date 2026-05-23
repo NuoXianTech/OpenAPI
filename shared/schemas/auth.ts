@@ -43,3 +43,10 @@ export const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, '密码至少 8 位')
 })
 export type ResetPasswordInput = z.output<typeof resetPasswordSchema>
+
+/** 消费 change_email token 完成邮箱变更：userId/token 来自邮件链接 query，由前端页面 POST 提交 */
+export const confirmEmailChangeSchema = z.object({
+  userId: z.coerce.number().int().positive('Invalid user id'),
+  token: z.string().min(1, '缺少确认令牌')
+})
+export type ConfirmEmailChangeInput = z.output<typeof confirmEmailChangeSchema>
