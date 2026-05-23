@@ -6,7 +6,7 @@ const {
   status = -1,
   shortDesc = '',
   description = '',
-  categoryName = '',
+  categoryName = '未分类',
   httpMethod = 'GET',
   apiPath = '/v1/path',
   docUrl = '',
@@ -27,25 +27,19 @@ const {
   totalCalls?: number
 }>()
 
-const open = ref(false)
+const detailsOpen = ref(false)
 
 const methods = computed(() =>
   httpMethod.split(',').map(m => m.trim()).filter(Boolean)
 )
 
+const categoryLabel = computed(() => categoryName.trim() || '未分类')
+const isUncategorized = computed(() => categoryLabel.value === '未分类')
+
 function costFor(method: string): number {
   const v = methodCosts?.[method.toUpperCase()]
   return typeof v === 'number' && v > 0 ? v : 0
 }
-
-const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
-// 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
-const aggregateCost = computed(() => {
-  if (methods.value.length === 0) return 0
-  const prices = methods.value.map(costFor)
-  const first = prices[0]!
-  return prices.every(p => p === first) ? first : -1
-})
 
 function methodColor(method: string): BadgeColor {
   switch (method.trim().toUpperCase()) {
@@ -57,6 +51,15 @@ function methodColor(method: string): BadgeColor {
     default: return 'neutral'
   }
 }
+
+const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
+// 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
+const aggregateCost = computed(() => {
+  if (methods.value.length === 0) return 0
+  const prices = methods.value.map(costFor)
+  const first = prices[0]!
+  return prices.every(p => p === first) ? first : -1
+})
 
 const radarClass = computed(() => {
   switch (status) {
@@ -77,6 +80,21 @@ const radarTitle = computed(() => {
   }
 })
 
+const statusMeta = computed(() => {
+  switch (status) {
+    case 1:
+      return { label: '正常', color: 'success' as BadgeColor, icon: 'i-mdi-check-circle-outline' }
+    case 0:
+      return { label: '异常', color: 'error' as BadgeColor, icon: 'i-mdi-alert-circle-outline' }
+    case 2:
+      return { label: '维护', color: 'warning' as BadgeColor, icon: 'i-mdi-wrench-outline' }
+    case 3:
+      return { label: '废弃', color: 'neutral' as BadgeColor, icon: 'i-mdi-archive-outline' }
+    default:
+      return { label: '未知', color: 'neutral' as BadgeColor, icon: 'i-mdi-help-circle-outline' }
+  }
+})
+
 function formatCallCount(count: number) {
   if (count < 10000) return `${count}`
   return `${Math.floor(count / 10000)}万`
@@ -87,6 +105,7 @@ function formatCallCount(count: number) {
   <UCard
     variant="outline"
     class="api-card border-default bg-elevated"
+    :class="{ 'is-active': detailsOpen }"
     :ui="{ root: 'gap-0', body: '!p-0' }"
   >
     <header class="api-card__head">
@@ -104,18 +123,17 @@ function formatCallCount(count: number) {
       {{ shortDesc || '暂无简介' }}
     </p>
 
-    <div
-      v-if="categoryName"
-      class="relative z-1 mb-2.5 flex flex-wrap gap-1.5 px-4"
-    >
-      <UBadge
-        color="neutral"
-        variant="soft"
-        size="sm"
-        class="rounded-full text-[11px]"
+    <div class="api-card__category-row">
+      <span
+        class="api-card__category-chip"
+        :class="{ 'is-uncategorized': isUncategorized }"
       >
-        {{ categoryName }}
-      </UBadge>
+        <UIcon
+          name="i-mdi-tag-outline"
+          class="size-3.5"
+        />
+        <span>{{ categoryLabel }}</span>
+      </span>
     </div>
 
     <div
@@ -199,113 +217,138 @@ function formatCallCount(count: number) {
       </span>
     </div>
 
-    <UCollapsible v-model:open="open">
-      <div class="api-card__toggle-row">
+    <div class="api-card__toggle-row">
+      <UPopover
+        v-model:open="detailsOpen"
+        arrow
+        :content="{ align: 'end', side: 'bottom', sideOffset: 8, collisionPadding: 12 }"
+        :ui="{ content: 'p-0 overflow-hidden' }"
+      >
         <UButton
           color="neutral"
-          variant="ghost"
+          :variant="detailsOpen ? 'soft' : 'ghost'"
           size="xs"
-          :trailing-icon="open ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
+          :trailing-icon="detailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-arrow-right'"
           class="rounded-full"
-          :aria-expanded="open"
         >
-          {{ open ? '收起详情' : '查看详情' }}
+          {{ detailsOpen ? '收起详情' : '查看详情' }}
         </UButton>
-      </div>
 
-      <template #content>
-        <div class="api-card__details">
-          <div class="api-card__detail-row">
-            <span class="api-card__detail-label">接口地址</span>
-            <a
-              :href="apiPath"
-              target="_blank"
-              rel="noopener"
-              class="api-card__detail-value font-mono text-[12.5px]"
-            >{{ apiPath }}</a>
-          </div>
-          <div class="api-card__detail-row">
-            <span class="api-card__detail-label">请求方法</span>
-            <div class="api-card__detail-value api-card__detail-value--row">
-              <UBadge
-                v-for="method in methods"
-                :key="method"
-                :color="methodColor(method)"
-                variant="soft"
-                size="sm"
-                class="rounded-full"
+        <template #content>
+          <div class="api-card__popover">
+            <div class="api-card__popover-head">
+              <div class="api-card__popover-badges">
+                <UBadge
+                  :color="statusMeta.color"
+                  variant="soft"
+                  size="sm"
+                  :icon="statusMeta.icon"
+                  class="rounded-full"
+                >
+                  {{ statusMeta.label }}
+                </UBadge>
+                <span
+                  class="api-card__category-chip api-card__category-chip--compact"
+                  :class="{ 'is-uncategorized': isUncategorized }"
+                >
+                  <UIcon
+                    name="i-mdi-tag-outline"
+                    class="size-3.5"
+                  />
+                  <span>{{ categoryLabel }}</span>
+                </span>
+              </div>
+
+              <h4 class="api-card__popover-title">
+                {{ name }}
+              </h4>
+              <p class="api-card__popover-summary">
+                {{ shortDesc || description || '暂无简介' }}
+              </p>
+            </div>
+
+            <div class="api-card__popover-body">
+              <div class="api-card__endpoint">
+                <span>接口地址</span>
+                <a
+                  :href="apiPath"
+                  target="_blank"
+                  rel="noopener"
+                  :title="apiPath"
+                >
+                  {{ apiPath }}
+                </a>
+              </div>
+
+              <div class="api-card__detail-grid">
+                <div class="api-card__detail-cell">
+                  <span>调用次数</span>
+                  <strong>{{ formatCallCount(totalCalls) }}</strong>
+                </div>
+                <div class="api-card__detail-cell">
+                  <span>鉴权要求</span>
+                  <strong>{{ isApiKey ? 'APIKey' : '无需' }}</strong>
+                </div>
+              </div>
+
+              <div class="api-card__popover-section">
+                <span class="api-card__popover-label">请求方法</span>
+                <div class="api-card__popover-badges">
+                  <UBadge
+                    v-for="method in methods"
+                    :key="method"
+                    :color="methodColor(method)"
+                    variant="soft"
+                    size="sm"
+                    class="rounded-full"
+                  >
+                    {{ method }}
+                  </UBadge>
+                </div>
+              </div>
+
+              <div class="api-card__popover-section">
+                <span class="api-card__popover-label">调用计费</span>
+                <div class="api-card__popover-badges">
+                  <UBadge
+                    v-for="method in methods"
+                    :key="`cost-${method}`"
+                    :color="costFor(method) > 0 ? 'warning' : 'success'"
+                    variant="soft"
+                    size="sm"
+                    :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-gift-outline'"
+                    class="rounded-full"
+                  >
+                    {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
+                  </UBadge>
+                </div>
+              </div>
+
+              <p
+                v-if="description"
+                class="api-card__popover-description"
               >
-                {{ method }}
-              </UBadge>
+                {{ description }}
+              </p>
+
+              <UButton
+                v-if="docUrl"
+                :to="docUrl"
+                target="_blank"
+                rel="noopener"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                icon="i-mdi-open-in-new"
+                block
+              >
+                打开接口文档
+              </UButton>
             </div>
           </div>
-          <div class="api-card__detail-row">
-            <span class="api-card__detail-label">调用计费</span>
-            <div class="api-card__detail-value api-card__detail-value--row">
-              <UBadge
-                v-for="method in methods"
-                :key="`cost-${method}`"
-                :color="costFor(method) > 0 ? 'warning' : 'success'"
-                variant="soft"
-                size="sm"
-                :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-gift-outline'"
-                class="rounded-full"
-              >
-                {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
-              </UBadge>
-            </div>
-          </div>
-          <div class="api-card__detail-row">
-            <span class="api-card__detail-label">鉴权要求</span>
-            <div class="api-card__detail-value api-card__detail-value--row">
-              <UBadge
-                v-if="isApiKey"
-                color="warning"
-                variant="soft"
-                size="sm"
-                icon="i-mdi-key-variant"
-                class="rounded-full"
-              >
-                需要 APIKey
-              </UBadge>
-              <UBadge
-                v-else
-                color="info"
-                variant="soft"
-                size="sm"
-                icon="i-mdi-lock-open-outline"
-                class="rounded-full"
-              >
-                无需 APIKey
-              </UBadge>
-            </div>
-          </div>
-          <div class="api-card__detail-row">
-            <span class="api-card__detail-label">调用次数</span>
-            <div class="api-card__detail-value api-card__detail-value--row">
-              <UBadge
-                :color="totalCalls > 0 ? 'primary' : 'neutral'"
-                variant="soft"
-                size="sm"
-                icon="i-mdi-chart-bar"
-                class="rounded-full"
-              >
-                {{ totalCalls > 0 ? `累计调用 ${formatCallCount(totalCalls)} 次` : '暂无调用次数' }}
-              </UBadge>
-            </div>
-          </div>
-          <div
-            v-if="description"
-            class="api-card__detail-row"
-          >
-            <span class="api-card__detail-label">接口描述</span>
-            <p class="api-card__detail-value m-0 text-[12.5px] leading-relaxed">
-              {{ description }}
-            </p>
-          </div>
-        </div>
-      </template>
-    </UCollapsible>
+        </template>
+      </UPopover>
+    </div>
   </UCard>
 </template>
 
@@ -337,6 +380,11 @@ function formatCallCount(count: number) {
 .api-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px -10px rgba(17, 17, 19, 0.16);
+}
+
+.api-card.is-active {
+  border-color: color-mix(in srgb, var(--ui-primary) 42%, var(--ui-border));
+  box-shadow: 0 14px 30px -22px color-mix(in srgb, var(--ui-primary) 44%, transparent);
 }
 
 :global(.dark) .api-card:hover {
@@ -381,6 +429,45 @@ function formatCallCount(count: number) {
   min-height: 2.6em;
 }
 
+.api-card__category-row {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin: 0 16px 10px;
+}
+
+.api-card__category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+  height: 24px;
+  padding: 0 9px 0 7px;
+  border: 1px solid color-mix(in srgb, var(--ui-primary) 18%, var(--ui-border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-primary) 8%, transparent);
+  color: var(--ui-text-toned);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.api-card__category-chip span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-card__category-chip.is-uncategorized {
+  border-color: var(--ui-border);
+  background: color-mix(in srgb, var(--ui-bg-muted) 68%, transparent);
+  color: var(--ui-text-muted);
+}
+
 .api-card__doc {
   position: relative;
   z-index: 1;
@@ -418,52 +505,13 @@ function formatCallCount(count: number) {
   padding: 0 16px 12px;
 }
 
-.api-card__details {
-  border-top: 1px dashed var(--ui-border);
-  padding: 12px 16px 14px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 30%, transparent);
-  display: grid;
-  gap: 8px;
-}
-
-.api-card__detail-row {
-  display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: 10px;
-  align-items: start;
-  font-size: 12.5px;
-}
-
-.api-card__detail-label {
-  color: var(--ui-text-muted);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  padding-top: 2px;
-}
-
-.api-card__detail-value {
-  color: var(--ui-text);
-  word-break: break-all;
-}
-
-.api-card__detail-value a {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.api-card__detail-value--row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-
 .api-card__toggle-row {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-top: auto;
   padding: 0 16px 12px;
 }
 
@@ -553,6 +601,125 @@ function formatCallCount(count: number) {
 
 .api-card__badge-icon > span {
   margin: 0;
+}
+
+.api-card__popover {
+  width: min(360px, calc(100vw - 28px));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--ui-primary) 8%, transparent), transparent 48%),
+    var(--ui-bg-elevated);
+}
+
+.api-card__popover-head {
+  display: grid;
+  gap: 7px;
+  padding: 14px 14px 12px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.api-card__popover-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.api-card__category-chip--compact {
+  height: 22px;
+  font-size: 11px;
+}
+
+.api-card__popover-title {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.api-card__popover-summary {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: 12.5px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.api-card__popover-body {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px 14px;
+}
+
+.api-card__endpoint {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg-muted) 48%, transparent);
+}
+
+.api-card__endpoint span,
+.api-card__popover-label,
+.api-card__detail-cell span {
+  color: var(--ui-text-muted);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.api-card__endpoint a {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ui-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.api-card__detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.api-card__detail-cell {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg-muted) 34%, transparent);
+}
+
+.api-card__detail-cell strong {
+  color: var(--ui-text);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.api-card__popover-section {
+  display: grid;
+  gap: 7px;
+}
+
+.api-card__popover-description {
+  max-height: 7.2em;
+  overflow: auto;
+  margin: 0;
+  color: var(--ui-text-toned);
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
 }
 
 @keyframes radarPulse {

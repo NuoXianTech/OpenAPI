@@ -8,37 +8,39 @@ const { items, categoryMap } = defineProps({
 
 function resolveCategoryName(id: number | null | undefined) {
   if (typeof id !== 'number') {
-    return ''
+    return '未分类'
   }
-  return categoryMap[id]?.name || ''
+  return categoryMap[id]?.name || '未分类'
 }
 </script>
 
 <template>
-  <TransitionGroup
-    name="api-card"
-    tag="div"
-    class="api-card-grid"
-    appear
-  >
-    <APICard
-      v-for="(item, index) in items"
-      :key="item.id ?? index"
-      :name="item.name"
-      :status="item.status"
-      :short-desc="item.shortDesc"
-      :description="item.description"
-      :category-name="resolveCategoryName(item.categoryId)"
-      :http-method="item.httpMethod"
-      :api-path="item.apiPath"
-      :doc-url="item.docUrl"
-      :is-api-key="item.isApiKey"
-      :method-costs="item.methodCosts"
-      :total-calls="item.totalCalls"
-      class="api-card-item"
-      :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
-    />
-  </TransitionGroup>
+  <div>
+    <TransitionGroup
+      name="api-card"
+      tag="div"
+      class="api-card-grid"
+      appear
+    >
+      <APICard
+        v-for="(item, index) in items"
+        :key="item.id ?? index"
+        :name="item.name"
+        :status="item.status"
+        :short-desc="item.shortDesc"
+        :description="item.description"
+        :category-name="resolveCategoryName(item.categoryId)"
+        :http-method="item.httpMethod"
+        :api-path="item.apiPath"
+        :doc-url="item.docUrl"
+        :is-api-key="item.isApiKey"
+        :method-costs="item.methodCosts"
+        :total-calls="item.totalCalls"
+        class="api-card-item"
+        :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
+      />
+    </TransitionGroup>
+  </div>
 </template>
 
 <style scoped>
