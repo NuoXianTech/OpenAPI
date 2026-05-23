@@ -102,6 +102,15 @@ const container = ref<HTMLElement | null>(null)
 const widgetId = ref<string | null>(null)
 const loadError = ref('')
 
+function reportError(message: string) {
+  loadError.value = message
+  emit('error', message)
+}
+
+function clearError() {
+  loadError.value = ''
+}
+
 function renderWidget() {
   if (!container.value) {
     return
@@ -111,7 +120,7 @@ function renderWidget() {
     return
   }
   if (!props.siteKey) {
-    loadError.value = 'Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置'
+    reportError('Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置')
     return
   }
   // 已有 widget 时先移除避免重复
@@ -127,6 +136,7 @@ function renderWidget() {
     'size': props.size,
     'callback': (value: string) => {
       token.value = value
+      clearError()
       emit('verified', value)
     },
     'expired-callback': () => {
@@ -137,8 +147,7 @@ function renderWidget() {
       token.value = ''
       const message = String(err ?? 'turnstile_error')
       // Cloudflare 错误码参考 https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/
-      loadError.value = `Turnstile 校验失败：${message}`
-      emit('error', message)
+      reportError(`Turnstile 校验失败：${message}`)
     }
   }
   if (props.action) {
@@ -147,9 +156,9 @@ function renderWidget() {
   const id = turnstile.render(container.value, opts) || null
   widgetId.value = id
   if (!id) {
-    loadError.value = 'Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配'
+    reportError('Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配')
   } else {
-    loadError.value = ''
+    clearError()
   }
 }
 
@@ -168,7 +177,7 @@ onMounted(async () => {
     await loadScript()
     renderWidget()
   } catch (err) {
-    loadError.value = err instanceof Error ? err.message : 'Turnstile 脚本加载失败'
+    reportError(err instanceof Error ? err.message : 'Turnstile 脚本加载失败')
   }
 })
 
@@ -190,16 +199,8 @@ watch(() => props.siteKey, () => {
 </script>
 
 <template>
-  <div>
-    <div
-      ref="container"
-      class="cf-turnstile"
-    />
-    <p
-      v-if="loadError"
-      class="text-xs text-[var(--red)] mt-1"
-    >
-      {{ loadError }}
-    </p>
-  </div>
+  <div
+    ref="container"
+    class="cf-turnstile"
+  />
 </template>

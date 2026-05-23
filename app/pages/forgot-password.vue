@@ -15,6 +15,7 @@ type Schema = Omit<RequestPasswordResetInput, 'turnstileToken'>
 const authForm = ref<{ state: Schema } | null>(null)
 
 const errorMessage = ref('')
+const turnstileError = ref('')
 const submitted = ref(false)
 const submittedEmail = ref('')
 const submitting = ref(false)
@@ -44,6 +45,7 @@ const FORGOT_PASSWORD_ERROR_CODES: Record<number, string> = {
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
+  turnstileError.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMessage.value = '请先完成人机验证'
@@ -67,6 +69,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } finally {
     submitting.value = false
   }
+}
+
+function onTurnstileError(message: string) {
+  turnstileError.value = message
+}
+
+function clearTurnstileError() {
+  turnstileError.value = ''
 }
 </script>
 
@@ -158,11 +168,27 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
             </div>
           </Transition>
 
+          <Transition name="state-fade">
+            <div
+              v-if="turnstileError"
+              class="auth-message auth-message--error"
+            >
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
+              />
+              <span>{{ turnstileError }}</span>
+            </div>
+          </Transition>
+
           <CommonTurnstileWidget
             v-if="turnstileRequired"
             ref="turnstileWidget"
             v-model:token="turnstileToken"
             :site-key="turnstile.siteKey"
+            @verified="clearTurnstileError"
+            @expired="clearTurnstileError"
+            @error="onTurnstileError"
           />
         </template>
       </UAuthForm>

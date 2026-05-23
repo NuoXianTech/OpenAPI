@@ -64,32 +64,30 @@ useSeoMeta({
           />
         </div>
 
-        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[auto_1fr]">
+        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(220px,0.58fr)_1fr]">
           <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
-            <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
+            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon
                 name="i-mdi-filter-variant"
                 class="size-3"
               />
-              状态
+              接口状态
             </div>
-            <UTabs
+            <ApiFilterTabs
               v-model="currentTab"
-              :items="statusTabs"
-              color="neutral"
-              variant="link"
-              :content="false"
+              :tabs="statusTabs"
+              :enable-collapse="false"
               aria-label="API 状态筛选"
             />
           </div>
 
           <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
-            <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
+            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon
                 name="i-mdi-tag-multiple-outline"
                 class="size-3"
               />
-              分类
+              接口分类
             </div>
             <ApiFilterTabs
               v-model="currentCategory"

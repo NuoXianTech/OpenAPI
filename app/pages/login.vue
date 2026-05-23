@@ -19,6 +19,7 @@ const schema = z.object({
 type Schema = z.output<typeof schema>
 
 const errorMessage = ref('')
+const turnstileError = ref('')
 const submitting = ref(false)
 const checkingAuth = ref(true)
 const turnstileToken = ref('')
@@ -109,6 +110,7 @@ onMounted(async () => {
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
+  turnstileError.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMessage.value = '请先完成人机验证'
@@ -138,6 +140,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 function gotoOAuth(entry: string) {
   const returnTo = encodeURIComponent(window.location.pathname + window.location.search)
   window.location.href = `${entry}?returnTo=${returnTo}`
+}
+
+function onTurnstileError(message: string) {
+  turnstileError.value = message
+}
+
+function clearTurnstileError() {
+  turnstileError.value = ''
 }
 </script>
 
@@ -213,11 +223,27 @@ function gotoOAuth(entry: string) {
             </div>
           </Transition>
 
+          <Transition name="state-fade">
+            <div
+              v-if="turnstileError"
+              class="auth-message auth-message--error"
+            >
+              <UIcon
+                name="i-mdi-alert-circle-outline"
+                class="auth-message__icon size-4"
+              />
+              <span>{{ turnstileError }}</span>
+            </div>
+          </Transition>
+
           <CommonTurnstileWidget
             v-if="turnstileRequired"
             ref="turnstileWidget"
             v-model:token="turnstileToken"
             :site-key="turnstile.siteKey"
+            @verified="clearTurnstileError"
+            @expired="clearTurnstileError"
+            @error="onTurnstileError"
           />
         </template>
       </UAuthForm>

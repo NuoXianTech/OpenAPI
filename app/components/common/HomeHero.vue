@@ -1,6 +1,4 @@
 <script lang="ts" setup>
-import type { DropdownMenuItem } from '@nuxt/ui'
-
 interface Props {
   startTime?: string
   siteName?: string
@@ -74,28 +72,34 @@ const healthRatio = computed(() => {
   return Math.round((props.normalCount / props.totalCount) * 100)
 })
 
-const listStatus = computed(() => {
+type ListStatusTone = 'info' | 'error' | 'neutral' | 'success'
+
+const listStatus = computed<{ label: string, tone: ListStatusTone, title: string }>(() => {
   if (props.apiListLoading) {
     return {
       label: '加载中',
-      tone: 'info'
+      tone: 'info',
+      title: '依据：首页公开接口列表和分类接口正在加载'
     }
   }
   if (props.apiListError) {
     return {
       label: '加载失败',
-      tone: 'error'
+      tone: 'error',
+      title: '依据：首页公开接口列表或分类接口请求失败'
     }
   }
   if (props.totalCount <= 0) {
     return {
       label: '暂无接口',
-      tone: 'neutral'
+      tone: 'neutral',
+      title: '依据：首页公开接口列表请求成功，但当前没有接口'
     }
   }
   return {
     label: '接口正常',
-    tone: 'success'
+    tone: 'success',
+    title: '依据：首页公开接口列表和分类接口请求成功'
   }
 })
 
@@ -106,36 +110,11 @@ const compactCallCount = computed(() => new Intl.NumberFormat('zh-CN', {
 
 const dashboardPath = computed(() => user.value?.kind === 'admin' ? '/admin' : '/user')
 const dashboardLabel = computed(() => user.value?.kind === 'admin' ? '管理后台' : '用户后台')
-const displayName = computed(() => user.value?.displayName || user.value?.username || '已登录')
 
-const accountMenuItems = computed<DropdownMenuItem[][]>(() => {
-  if (!user.value) return []
-  return [
-    [
-      {
-        label: displayName.value,
-        avatar: user.value.avatarUrl ? { src: user.value.avatarUrl, alt: displayName.value } : undefined,
-        type: 'label'
-      }
-    ],
-    [
-      {
-        label: dashboardLabel.value,
-        icon: user.value.kind === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-view-dashboard-outline',
-        to: dashboardPath.value
-      },
-      {
-        label: '退出登录',
-        icon: 'i-mdi-logout',
-        color: 'error',
-        onSelect: async () => {
-          await logout()
-          await navigateTo('/')
-        }
-      }
-    ]
-  ]
-})
+async function handleLogout() {
+  await logout()
+  await navigateTo('/')
+}
 </script>
 
 <template>
@@ -197,23 +176,15 @@ const accountMenuItems = computed<DropdownMenuItem[][]>(() => {
                 >
                   {{ dashboardLabel }}
                 </UButton>
-                <UDropdownMenu
-                  :items="accountMenuItems"
-                  :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
-                  :ui="{ content: 'w-52' }"
+                <UButton
+                  icon="i-mdi-logout"
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  @click="handleLogout"
                 >
-                  <UButton
-                    color="neutral"
-                    variant="outline"
-                    size="sm"
-                    trailing-icon="i-mdi-chevron-down"
-                    :avatar="user.avatarUrl ? { src: user.avatarUrl, alt: displayName } : undefined"
-                    class="max-w-42"
-                    :ui="{ label: 'truncate' }"
-                  >
-                    {{ displayName }}
-                  </UButton>
-                </UDropdownMenu>
+                  退出登录
+                </UButton>
               </div>
             </template>
             <template v-else>

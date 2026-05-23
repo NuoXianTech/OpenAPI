@@ -23,6 +23,7 @@ const state = reactive<Schema>({
 const remember = ref(false)
 const loading = ref(false)
 const errorMsg = ref('')
+const turnstileError = ref('')
 const passwordVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
@@ -37,6 +38,7 @@ const ADMIN_LOGIN_ERROR_CODES: Record<number, string> = {
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMsg.value = ''
+  turnstileError.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMsg.value = '请先完成人机验证'
@@ -57,6 +59,14 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } finally {
     loading.value = false
   }
+}
+
+function onTurnstileError(message: string) {
+  turnstileError.value = message
+}
+
+function clearTurnstileError() {
+  turnstileError.value = ''
 }
 </script>
 
@@ -158,11 +168,27 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           </div>
         </Transition>
 
+        <Transition name="state-fade">
+          <div
+            v-if="turnstileError"
+            class="auth-message auth-message--error"
+          >
+            <UIcon
+              name="i-mdi-alert-circle-outline"
+              class="auth-message__icon size-4"
+            />
+            <span>{{ turnstileError }}</span>
+          </div>
+        </Transition>
+
         <CommonTurnstileWidget
           v-if="turnstileRequired"
           ref="turnstileWidget"
           v-model:token="turnstileToken"
           :site-key="turnstile.siteKey"
+          @verified="clearTurnstileError"
+          @expired="clearTurnstileError"
+          @error="onTurnstileError"
         />
 
         <UButton

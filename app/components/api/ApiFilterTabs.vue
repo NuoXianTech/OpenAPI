@@ -17,7 +17,8 @@ const emit = defineEmits<{
   'update:modelValue': [value: string | number]
 }>()
 
-const expanded = ref(false)
+const popoverOpen = ref(false)
+const popoverQuery = ref('')
 
 function isActive(value: string | number) {
   return String(value) === String(props.modelValue)
@@ -32,7 +33,7 @@ const hasOverflow = computed(() => {
 })
 
 const visibleTabs = computed(() => {
-  if (!hasOverflow.value || expanded.value) {
+  if (!hasOverflow.value) {
     return props.tabs
   }
 
@@ -55,62 +56,208 @@ const hiddenCount = computed(() => {
   return Math.max(props.tabs.length - visibleTabs.value.length, 0)
 })
 
-watch(() => props.tabs, () => {
-  expanded.value = false
+const filteredPopoverTabs = computed(() => {
+  const q = popoverQuery.value.trim().toLowerCase()
+  if (!q) return props.tabs
+  return props.tabs.filter(tab => String(tab.label).toLowerCase().includes(q))
 })
 
-function toggleExpanded() {
-  if (!hasOverflow.value) {
-    return
-  }
-  expanded.value = !expanded.value
+watch(() => props.tabs, () => {
+  popoverOpen.value = false
+  popoverQuery.value = ''
+})
+
+function selectFromPopover(value: string | number) {
+  selectTab(value)
+  popoverOpen.value = false
+  popoverQuery.value = ''
 }
 </script>
 
 <template>
   <section
     :aria-label="props.ariaLabel"
-    class="api-filter-tabs mb-4 flex flex-wrap gap-2"
+    class="api-filter-tabs"
   >
-    <UButton
-      v-for="tab in visibleTabs"
-      :key="String(tab.value)"
-      :variant="isActive(tab.value) ? 'solid' : 'outline'"
-      color="neutral"
-      size="sm"
-      class="api-filter-tab cursor-pointer h-8 rounded-full px-3.5 text-xs font-medium sm:text-sm"
-      :class="isActive(tab.value)
-        ? 'text-inverted shadow-xs'
-        : 'bg-elevated text-muted hover:bg-accented/70 hover:text-default'"
-      @click="selectTab(tab.value)"
-    >
-      {{ tab.label }}
-    </UButton>
+    <div class="api-filter-tabs__list">
+      <UButton
+        v-for="tab in visibleTabs"
+        :key="String(tab.value)"
+        variant="ghost"
+        color="neutral"
+        size="sm"
+        class="api-filter-tab cursor-pointer"
+        :class="{ 'is-active': isActive(tab.value) }"
+        :ui="{ label: 'truncate' }"
+        @click="selectTab(tab.value)"
+      >
+        {{ tab.label }}
+      </UButton>
 
-    <UButton
-      v-if="hasOverflow"
-      variant="outline"
-      color="neutral"
-      size="sm"
-      class="api-filter-tab cursor-pointer h-8 rounded-full px-3 text-xs text-muted hover:bg-accented/70 hover:text-default sm:text-sm"
-      @click="toggleExpanded"
-    >
-      {{ expanded ? '收起' : `更多(${hiddenCount})` }}
-    </UButton>
+      <UPopover
+        v-if="hasOverflow"
+        v-model:open="popoverOpen"
+        :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
+        :ui="{ content: 'w-72 p-0' }"
+      >
+        <UButton
+          variant="ghost"
+          color="neutral"
+          size="sm"
+          class="api-filter-tab api-filter-tab--more cursor-pointer"
+          trailing-icon="i-mdi-chevron-down"
+        >
+          更多 {{ hiddenCount }}
+        </UButton>
+
+        <template #content>
+          <div class="api-filter-popover">
+            <div class="api-filter-popover__head">
+              <UInput
+                v-model="popoverQuery"
+                icon="i-mdi-magnify"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                placeholder="搜索分类"
+                autocomplete="off"
+                autofocus
+              />
+            </div>
+
+            <div class="api-filter-popover__list">
+              <button
+                v-for="tab in filteredPopoverTabs"
+                :key="String(tab.value)"
+                type="button"
+                class="api-filter-option"
+                :class="{ 'is-active': isActive(tab.value) }"
+                @click="selectFromPopover(tab.value)"
+              >
+                <span class="truncate">{{ tab.label }}</span>
+                <UIcon
+                  v-if="isActive(tab.value)"
+                  name="i-mdi-check"
+                  class="size-4"
+                />
+              </button>
+
+              <div
+                v-if="filteredPopoverTabs.length === 0"
+                class="api-filter-empty"
+              >
+                未找到分类
+              </div>
+            </div>
+          </div>
+        </template>
+      </UPopover>
+    </div>
   </section>
 </template>
 
 <style scoped>
 .api-filter-tabs {
-  will-change: transform;
+  width: 100%;
+}
+
+.api-filter-tabs__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg-elevated) 64%, transparent);
 }
 
 .api-filter-tab {
-  transform: translateY(0);
-  transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  min-width: 0;
+  height: 30px;
+  max-width: 160px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding-inline: 10px;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0;
+  transition: box-shadow 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 
 .api-filter-tab:hover {
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ui-border) 72%, transparent);
+  background: color-mix(in srgb, var(--ui-bg) 72%, transparent);
+  color: var(--ui-text);
+}
+
+.api-filter-tab.is-active {
+  border-color: color-mix(in srgb, var(--ui-border-accented) 72%, transparent);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, black 8%, transparent);
+}
+
+.dark .api-filter-tab.is-active {
+  background: color-mix(in srgb, var(--ui-bg-elevated) 88%, white 4%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
+}
+
+.api-filter-tab--more {
+  margin-left: auto;
+  color: var(--ui-text-muted);
+}
+
+.api-filter-popover {
+  padding: 8px;
+}
+
+.api-filter-popover__head {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.api-filter-popover__list {
+  display: grid;
+  gap: 3px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-top: 8px;
+}
+
+.api-filter-option {
+  display: flex;
+  min-width: 0;
+  width: 100%;
+  height: 32px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 9px;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  text-align: left;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.api-filter-option:hover {
+  border-color: color-mix(in srgb, var(--ui-border) 70%, transparent);
+  background: color-mix(in srgb, var(--ui-bg-elevated) 70%, transparent);
+  color: var(--ui-text);
+}
+
+.api-filter-option.is-active {
+  background: color-mix(in srgb, var(--ui-primary) 9%, transparent);
+  color: var(--ui-text);
+}
+
+.api-filter-empty {
+  padding: 18px 8px;
+  color: var(--ui-text-muted);
+  font-size: 12px;
+  text-align: center;
 }
 </style>
