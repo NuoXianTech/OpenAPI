@@ -116,6 +116,10 @@ const yTickFormat = (tick: number | Date) => {
 
 const formatRate = (value: number) => `${value.toFixed(2)}%`
 const formatCount = (value: number) => value.toLocaleString()
+const formatCompact = (value: number) => new Intl.NumberFormat('zh-CN', {
+  notation: 'compact',
+  maximumFractionDigits: 1
+}).format(value)
 
 const formatMethod = (value: string) => {
   return value
@@ -125,61 +129,312 @@ const formatMethod = (value: string) => {
     .join(' / ')
 }
 
+type StatTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
+
+const clampPercent = (value: number) => Math.min(100, Math.max(0, value))
+
+const todayDelta = computed(() => {
+  if (!overview.value) {
+    return 0
+  }
+  return overview.value.todayCalls - overview.value.yesterdayCalls
+})
+
+const todayDeltaTone = computed<StatTone>(() => {
+  if (todayDelta.value > 0) {
+    return 'success'
+  }
+  if (todayDelta.value < 0) {
+    return 'warning'
+  }
+  return 'neutral'
+})
+
+const todayDeltaLabel = computed(() => {
+  if (!overview.value) {
+    return '等待统计同步'
+  }
+  if (todayDelta.value === 0) {
+    return '较昨日持平'
+  }
+  const prefix = todayDelta.value > 0 ? '+' : ''
+  return `较昨日 ${prefix}${formatCount(todayDelta.value)}`
+})
+
+const successRateProgress = computed(() => clampPercent(overview.value?.successRate ?? 0))
+const failureRate = computed(() => clampPercent(100 - successRateProgress.value))
+const trackedApiRatio = computed(() => {
+  if (!overview.value?.trackedApiCount) {
+    return 0
+  }
+  return clampPercent((overview.value.enabledTrackedApiCount / overview.value.trackedApiCount) * 100)
+})
+
+const trackedApiRatioLabel = computed(() => {
+  if (!overview.value?.trackedApiCount) {
+    return '暂无接口纳入统计'
+  }
+  return `${formatRate(trackedApiRatio.value)} 已启用`
+})
+
+const trendTotalCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.totalCalls, 0))
+const trendSuccessCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.successCalls, 0))
+const trendFailureCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.failureCalls, 0))
+const hasTrendData = computed(() => trendChartData.value.some(item => item[SUCCESS_KEY] + item[FAILURE_KEY] > 0))
+
+const topApi = computed(() => top10Last30d.value[0] ?? null)
+const rankMaxCalls = computed(() => Math.max(...top10Last30d.value.map(item => item.totalCalls), 1))
+const getRankPercent = (value: number) => clampPercent((value / rankMaxCalls.value) * 100)
+
 const overviewCards = computed(() => {
   if (!overview.value) {
     return []
   }
   return [
-    { key: 'total', label: '累计调用', value: formatCount(overview.value.totalCalls), icon: 'i-mdi-counter' },
-    { key: 'today', label: '今日调用', value: formatCount(overview.value.todayCalls), icon: 'i-mdi-calendar-today-outline' },
-    { key: 'yesterday', label: '昨日调用', value: formatCount(overview.value.yesterdayCalls), icon: 'i-mdi-calendar-arrow-left' },
-    { key: 'successRate', label: '请求成功率', value: formatRate(overview.value.successRate), icon: 'i-mdi-chart-donut' },
-    { key: 'success', label: '成功调用', value: formatCount(overview.value.successCalls), icon: 'i-mdi-check-circle-outline' },
-    { key: 'failure', label: '失败调用', value: formatCount(overview.value.failureCalls), icon: 'i-mdi-close-circle-outline' },
-    { key: 'users', label: '注册用户', value: formatCount(overview.value.userCount), icon: 'i-mdi-account-group-outline' },
-    { key: 'enabledStatsApis', label: '统计接口', value: formatCount(overview.value.enabledTrackedApiCount), icon: 'i-mdi-api' }
+    {
+      key: 'total',
+      label: '累计调用',
+      value: formatCount(overview.value.totalCalls),
+      helper: '全站历史请求总量',
+      icon: 'i-mdi-counter',
+      tone: 'primary' as StatTone,
+      accent: 'var(--ui-primary)'
+    },
+    {
+      key: 'today',
+      label: '今日调用',
+      value: formatCount(overview.value.todayCalls),
+      helper: todayDeltaLabel.value,
+      icon: 'i-mdi-calendar-today-outline',
+      tone: todayDeltaTone.value,
+      accent: 'var(--ui-info)'
+    },
+    {
+      key: 'yesterday',
+      label: '昨日调用',
+      value: formatCount(overview.value.yesterdayCalls),
+      helper: '自然日聚合',
+      icon: 'i-mdi-calendar-arrow-left',
+      tone: 'neutral' as StatTone,
+      accent: 'var(--ui-text-muted)'
+    },
+    {
+      key: 'successRate',
+      label: '请求成功率',
+      value: formatRate(overview.value.successRate),
+      helper: `失败率 ${formatRate(failureRate.value)}`,
+      icon: 'i-mdi-chart-donut',
+      tone: 'success' as StatTone,
+      accent: 'var(--ui-success)'
+    },
+    {
+      key: 'success',
+      label: '成功调用',
+      value: formatCount(overview.value.successCalls),
+      helper: 'HTTP 成功响应',
+      icon: 'i-mdi-check-circle-outline',
+      tone: 'success' as StatTone,
+      accent: 'var(--ui-success)'
+    },
+    {
+      key: 'failure',
+      label: '失败调用',
+      value: formatCount(overview.value.failureCalls),
+      helper: overview.value.failureCalls > 0 ? '需要关注的异常请求' : '暂无失败记录',
+      icon: 'i-mdi-close-circle-outline',
+      tone: overview.value.failureCalls > 0 ? 'error' as StatTone : 'neutral' as StatTone,
+      accent: 'var(--ui-error)'
+    },
+    {
+      key: 'users',
+      label: '注册用户',
+      value: formatCount(overview.value.userCount),
+      helper: '平台账户规模',
+      icon: 'i-mdi-account-group-outline',
+      tone: 'info' as StatTone,
+      accent: 'var(--ui-info)'
+    },
+    {
+      key: 'enabledStatsApis',
+      label: '统计接口',
+      value: formatCount(overview.value.enabledTrackedApiCount),
+      helper: trackedApiRatioLabel.value,
+      icon: 'i-mdi-api',
+      tone: 'primary' as StatTone,
+      accent: 'var(--ui-primary)'
+    }
   ]
 })
 </script>
 
 <template>
-  <UPage class="mx-auto max-w-7xl px-4 sm:px-6 py-8">
-    <UPageHeader
-      headline="公开数据"
-      title="调用统计"
-      description="实时聚合的接口调用情况，可作为服务可用性与活跃度的参考"
-    >
-      <template #links>
-        <UButton
-          icon="i-mdi-refresh"
-          variant="outline"
-          color="neutral"
-          size="sm"
-          :loading="pending"
-          @click="reloadStats"
-        >
-          刷新
-        </UButton>
-        <UButton
-          icon="i-mdi-home-outline"
-          variant="outline"
-          color="neutral"
-          size="sm"
-          to="/"
-        >
-          返回首页
-        </UButton>
-      </template>
-    </UPageHeader>
+  <UPage class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
+    <section class="stats-hero">
+      <div
+        class="stats-hero__pattern"
+        aria-hidden="true"
+      />
 
-    <UPageBody>
-      <p
-        v-if="generatedAtLabel"
-        class="text-xs text-muted -mt-2 mb-4"
-      >
-        更新时间：{{ generatedAtLabel }}
-      </p>
+      <div class="relative p-5 sm:p-7 lg:p-8">
+        <div class="stats-hero__topbar">
+          <div class="flex min-w-0 flex-wrap items-center gap-2">
+            <UBadge
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-mdi-chart-bar"
+              class="rounded-md px-2.5 py-1 text-[11px]"
+            >
+              公开数据
+            </UBadge>
+            <UBadge
+              v-if="generatedAtLabel"
+              color="neutral"
+              variant="soft"
+              size="sm"
+              icon="i-mdi-clock-outline"
+              class="rounded-md px-2.5 py-1 text-[11px]"
+            >
+              {{ generatedAtLabel }}
+            </UBadge>
+          </div>
 
+          <div class="stats-hero__actions">
+            <UButton
+              icon="i-mdi-refresh"
+              variant="outline"
+              color="neutral"
+              size="sm"
+              :loading="pending"
+              @click="reloadStats"
+            >
+              刷新
+            </UButton>
+            <UButton
+              icon="i-mdi-home-outline"
+              variant="ghost"
+              color="neutral"
+              size="sm"
+              to="/"
+            >
+              返回首页
+            </UButton>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-7 lg:grid-cols-[1.08fr_0.92fr] lg:items-end lg:gap-10">
+          <div>
+            <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
+              公共调用统计
+            </h1>
+            <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
+              实时聚合公开 API 的调用规模、请求质量和热门接口，方便快速判断服务活跃度与稳定性。
+            </p>
+
+            <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
+              <span class="inline-flex items-center gap-1.5">
+                <span
+                  class="stats-status-dot"
+                  :class="{ 'is-loading': pending }"
+                />
+                {{ pending ? '同步中' : '统计已就绪' }}
+              </span>
+              <USeparator
+                orientation="vertical"
+                class="h-3"
+              />
+              <span class="inline-flex items-center gap-1.5">
+                <UIcon
+                  name="i-mdi-api"
+                  class="size-3.5"
+                />
+                已启用 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.enabledTrackedApiCount) : '--' }}</span> 个统计接口
+              </span>
+              <USeparator
+                orientation="vertical"
+                class="hidden h-3 sm:inline-flex"
+              />
+              <span class="hidden items-center gap-1.5 sm:inline-flex">
+                <UIcon
+                  name="i-mdi-account-group-outline"
+                  class="size-3.5"
+                />
+                用户 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.userCount) : '--' }}</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
+            <template v-if="isInitialLoading">
+              <div
+                v-for="n in 3"
+                :key="n"
+                class="stats-hero-metric"
+              >
+                <USkeleton class="mb-3 h-6 w-6 rounded-md" />
+                <USkeleton class="h-7 w-20 rounded-md" />
+                <USkeleton class="mt-2 h-3 w-16 rounded-md" />
+              </div>
+            </template>
+
+            <template v-else>
+              <div class="stats-hero-metric">
+                <div class="stats-hero-metric__icon is-primary">
+                  <UIcon
+                    name="i-mdi-counter"
+                    class="size-4"
+                  />
+                </div>
+                <div
+                  class="stats-hero-metric__value"
+                  :title="overview ? formatCount(overview.totalCalls) : undefined"
+                >
+                  {{ overview ? formatCompact(overview.totalCalls) : '--' }}
+                </div>
+                <div class="stats-hero-metric__label">
+                  累计调用
+                </div>
+              </div>
+
+              <div class="stats-hero-metric">
+                <div class="stats-hero-metric__icon is-success">
+                  <UIcon
+                    name="i-mdi-check-decagram-outline"
+                    class="size-4"
+                  />
+                </div>
+                <div class="stats-hero-metric__value">
+                  {{ overview ? formatRate(overview.successRate) : '--' }}
+                </div>
+                <div class="stats-hero-metric__label">
+                  请求成功率
+                </div>
+              </div>
+
+              <div class="stats-hero-metric">
+                <div class="stats-hero-metric__icon is-info">
+                  <UIcon
+                    name="i-mdi-trophy-outline"
+                    class="size-4"
+                  />
+                </div>
+                <div
+                  class="stats-hero-metric__value"
+                  :title="topApi?.name"
+                >
+                  {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
+                </div>
+                <div class="stats-hero-metric__label truncate">
+                  {{ topApi?.name || '近 30 日热门接口' }}
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <UPageBody class="mt-4">
       <UAlert
         v-if="error"
         color="error"
@@ -187,46 +442,129 @@ const overviewCards = computed(() => {
         icon="i-mdi-alert-circle-outline"
         title="统计加载失败"
         description="请稍后重试，或检查网络连接。"
-        class="mb-6"
-        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', onClick: reloadStats }]"
+        class="mb-4"
+        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: reloadStats }]"
       />
 
       <div
-        v-else-if="isInitialLoading"
-        class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-6"
+        v-if="isInitialLoading"
+        class="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
       >
         <USkeleton
           v-for="n in 8"
           :key="n"
-          class="h-24 w-full rounded-lg"
+          class="h-34 w-full rounded-lg"
         />
       </div>
 
       <template v-else-if="hasData">
-        <UPageGrid class="mb-6 sm:grid-cols-2 lg:grid-cols-4">
-          <UPageCard
+        <UPageGrid class="mb-4 sm:grid-cols-2 lg:grid-cols-4">
+          <UCard
             v-for="item in overviewCards"
             :key="item.key"
-            :icon="item.icon"
-            :title="item.value"
-            :description="item.label"
             variant="subtle"
-            class="text-center sm:text-left [&_h3]:tabular-nums"
-          />
+            class="stats-card"
+            :style="{ '--stat-accent': item.accent }"
+            :ui="{ body: 'p-4 sm:p-5' }"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-muted">
+                  {{ item.label }}
+                </div>
+                <div
+                  class="mt-2 truncate text-2xl font-semibold leading-none text-highlighted tabular-nums"
+                  :title="item.value"
+                >
+                  {{ item.value }}
+                </div>
+              </div>
+              <div
+                class="stats-card__icon"
+                :class="`is-${item.tone}`"
+              >
+                <UIcon
+                  :name="item.icon"
+                  class="size-4"
+                />
+              </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between gap-3 text-xs text-muted">
+              <span class="min-w-0 truncate">{{ item.helper }}</span>
+              <UBadge
+                :color="item.tone"
+                variant="soft"
+                size="sm"
+                class="shrink-0 rounded-md"
+              >
+                {{ item.key === 'successRate' ? formatRate(successRateProgress) : item.key === 'enabledStatsApis' ? formatRate(trackedApiRatio) : '实时' }}
+              </UBadge>
+            </div>
+
+            <UProgress
+              v-if="item.key === 'successRate' || item.key === 'enabledStatsApis'"
+              :model-value="item.key === 'successRate' ? successRateProgress : trackedApiRatio"
+              :color="item.tone"
+              size="xs"
+              class="mt-3"
+            />
+          </UCard>
         </UPageGrid>
 
-        <div class="grid gap-6 xl:grid-cols-5">
-          <UCard class="xl:col-span-3">
+        <div class="grid gap-4 xl:grid-cols-5">
+          <UCard
+            variant="subtle"
+            class="stats-panel xl:col-span-3"
+            :ui="{ body: 'p-4 sm:p-5' }"
+          >
             <template #header>
-              <h3 class="text-base font-semibold text-highlighted">
-                近 7 日趋势
-              </h3>
-              <p class="text-sm text-muted mt-0.5">
-                按天聚合成功与失败调用次数
-              </p>
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-base font-semibold text-highlighted">
+                    近 7 日趋势
+                  </h2>
+                  <p class="mt-0.5 text-sm text-muted">
+                    按天聚合成功与失败调用次数
+                  </p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  <UBadge
+                    variant="soft"
+                    color="success"
+                    icon="i-mdi-check-circle-outline"
+                    class="rounded-md"
+                  >
+                    {{ formatCompact(trendSuccessCalls) }}
+                  </UBadge>
+                  <UBadge
+                    variant="soft"
+                    color="error"
+                    icon="i-mdi-close-circle-outline"
+                    class="rounded-md"
+                  >
+                    {{ formatCompact(trendFailureCalls) }}
+                  </UBadge>
+                </div>
+              </div>
             </template>
 
-            <ClientOnly>
+            <div class="mb-4 grid gap-3 sm:grid-cols-3">
+              <div class="stats-mini-metric">
+                <span>7 日总调用</span>
+                <strong>{{ formatCount(trendTotalCalls) }}</strong>
+              </div>
+              <div class="stats-mini-metric">
+                <span>成功调用</span>
+                <strong>{{ formatCount(trendSuccessCalls) }}</strong>
+              </div>
+              <div class="stats-mini-metric">
+                <span>失败调用</span>
+                <strong>{{ formatCount(trendFailureCalls) }}</strong>
+              </div>
+            </div>
+
+            <ClientOnly v-if="hasTrendData">
               <div class="h-[320px] w-full">
                 <VisXYContainer
                   :data="trendChartData"
@@ -236,13 +574,13 @@ const overviewCards = computed(() => {
                     :x="xAccessor"
                     :y="successLineAccessor"
                     color="var(--ui-success)"
-                    :line-width="2.5"
+                    :line-width="2.8"
                   />
                   <VisLine
                     :x="xAccessor"
                     :y="failureLineAccessor"
                     color="var(--ui-error)"
-                    :line-width="2.5"
+                    :line-width="2.4"
                   />
                   <VisAxis
                     type="y"
@@ -268,6 +606,7 @@ const overviewCards = computed(() => {
                   variant="soft"
                   color="success"
                   icon="i-mdi-circle"
+                  class="rounded-md"
                 >
                   成功次数
                 </UBadge>
@@ -275,6 +614,7 @@ const overviewCards = computed(() => {
                   variant="soft"
                   color="error"
                   icon="i-mdi-circle"
+                  class="rounded-md"
                 >
                   失败次数
                 </UBadge>
@@ -284,16 +624,40 @@ const overviewCards = computed(() => {
                 <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
               </template>
             </ClientOnly>
+
+            <UEmpty
+              v-else
+              icon="i-mdi-chart-line"
+              title="暂无趋势数据"
+              description="近 7 天还没有可展示的调用趋势。"
+              class="h-[320px]"
+            />
           </UCard>
 
-          <UCard class="xl:col-span-2">
+          <UCard
+            variant="subtle"
+            class="stats-panel xl:col-span-2"
+            :ui="{ body: 'p-0 sm:p-0' }"
+          >
             <template #header>
-              <h3 class="text-base font-semibold text-highlighted">
-                近 30 日调用排行 TOP 10
-              </h3>
-              <p class="text-sm text-muted mt-0.5">
-                按近 30 天调用总次数排序
-              </p>
+              <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 class="text-base font-semibold text-highlighted">
+                    近 30 日调用排行
+                  </h2>
+                  <p class="mt-0.5 text-sm text-muted">
+                    按调用总次数排序的 TOP 10 接口
+                  </p>
+                </div>
+                <UBadge
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                  class="rounded-md"
+                >
+                  TOP 10
+                </UBadge>
+              </div>
             </template>
 
             <UEmpty
@@ -301,53 +665,61 @@ const overviewCards = computed(() => {
               icon="i-mdi-chart-bar"
               title="暂无调用数据"
               description="近 30 天还没有任何接口调用记录。"
-              class="h-[320px]"
+              class="h-[420px]"
             />
 
             <ol
               v-else
-              class="divide-y divide-default"
+              class="stats-rank-list"
             >
               <li
                 v-for="item in top10Last30d"
                 :key="item.apiId"
-                class="flex items-center gap-3 py-3 first:pt-0 last:pb-0 transition-colors hover:bg-elevated/40 rounded-md -mx-2 px-2"
+                class="stats-rank-item"
               >
-                <UBadge
-                  :color="item.rank <= 3 ? 'primary' : 'neutral'"
-                  :variant="item.rank <= 3 ? 'solid' : 'soft'"
-                  class="w-7 justify-center tabular-nums shrink-0"
-                >
-                  {{ item.rank }}
-                </UBadge>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="font-medium truncate text-default"
-                    :title="item.name"
+                <div class="flex items-start gap-3">
+                  <UBadge
+                    :color="item.rank <= 3 ? 'primary' : 'neutral'"
+                    :variant="item.rank <= 3 ? 'solid' : 'soft'"
+                    class="mt-0.5 w-7 shrink-0 justify-center rounded-md tabular-nums"
                   >
-                    {{ item.name }}
+                    {{ item.rank }}
+                  </UBadge>
+                  <div class="min-w-0 flex-1">
+                    <div
+                      class="truncate text-sm font-medium text-default"
+                      :title="item.name"
+                    >
+                      {{ item.name }}
+                    </div>
+                    <div
+                      class="mt-0.5 truncate font-mono text-xs text-muted"
+                      :title="item.apiPath"
+                    >
+                      {{ item.apiPath }}
+                    </div>
                   </div>
-                  <div
-                    class="text-xs text-muted truncate font-mono"
-                    :title="item.apiPath"
-                  >
-                    {{ item.apiPath }}
+                  <div class="shrink-0 text-right">
+                    <div class="text-sm font-semibold tabular-nums text-highlighted">
+                      {{ formatCount(item.totalCalls) }}
+                    </div>
+                    <div class="text-xs text-muted tabular-nums">
+                      {{ formatRate(item.successRate) }}
+                    </div>
                   </div>
+                </div>
+
+                <div class="mt-3 flex items-center gap-2">
                   <UBadge
                     color="neutral"
                     variant="subtle"
                     size="sm"
-                    class="mt-1"
+                    class="shrink-0 rounded-md"
                   >
                     {{ formatMethod(item.httpMethod) }}
                   </UBadge>
-                </div>
-                <div class="text-right shrink-0">
-                  <div class="text-sm font-semibold tabular-nums text-highlighted">
-                    {{ formatCount(item.totalCalls) }}
-                  </div>
-                  <div class="text-xs text-muted tabular-nums">
-                    {{ formatRate(item.successRate) }}
+                  <div class="stats-rank-bar">
+                    <span :style="{ width: `${getRankPercent(item.totalCalls)}%` }" />
                   </div>
                 </div>
               </li>
@@ -360,3 +732,297 @@ const overviewCards = computed(() => {
     <CommonAppFooter />
   </UPage>
 </template>
+
+<style scoped>
+.stats-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 90%, var(--ui-primary) 10%) 0%,
+      var(--ui-bg-elevated) 42%,
+      color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 16%) 100%);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  isolation: isolate;
+}
+
+.dark .stats-hero {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 88%, var(--ui-primary) 12%) 0%,
+      var(--ui-bg-elevated) 46%,
+      color-mix(in srgb, var(--ui-bg) 82%, var(--ui-success) 10%) 100%);
+}
+
+.stats-hero__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: var(--ui-text);
+  opacity: 0.045;
+  mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  pointer-events: none;
+}
+
+.stats-hero__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stats-hero__actions {
+  margin-left: auto;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.stats-status-dot {
+  --stats-status-color: var(--ui-success);
+
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--stats-status-color);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--stats-status-color) 18%, transparent);
+  flex: 0 0 auto;
+}
+
+.stats-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--stats-status-color) 55%, transparent);
+  animation: statsPulse 2s ease-out infinite;
+}
+
+.stats-status-dot.is-loading {
+  --stats-status-color: var(--ui-info);
+}
+
+.stats-hero-metric {
+  position: relative;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
+      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
+  border-radius: 8px;
+  padding: 12px 12px 14px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+  transition: transform 220ms ease, border-color 220ms ease;
+  backdrop-filter: blur(8px);
+}
+
+.stats-hero-metric:hover {
+  transform: translateY(-2px);
+  border-color: var(--ui-border-accented);
+}
+
+.dark .stats-hero-metric {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
+      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+}
+
+.stats-hero-metric__icon,
+.stats-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+
+.stats-hero-metric__icon {
+  width: 26px;
+  height: 26px;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
+  color: var(--ui-text-muted);
+}
+
+.stats-hero-metric__icon.is-primary,
+.stats-card__icon.is-primary {
+  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
+  color: var(--ui-text);
+}
+
+.stats-hero-metric__icon.is-success,
+.stats-card__icon.is-success {
+  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
+  color: var(--ui-success);
+}
+
+.stats-hero-metric__icon.is-info,
+.stats-card__icon.is-info {
+  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
+  color: var(--ui-info);
+}
+
+.stats-card__icon.is-warning {
+  background: color-mix(in srgb, var(--ui-warning) 15%, transparent);
+  color: var(--ui-warning);
+}
+
+.stats-card__icon.is-error {
+  background: color-mix(in srgb, var(--ui-error) 13%, transparent);
+  color: var(--ui-error);
+}
+
+.stats-card__icon.is-neutral {
+  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
+  color: var(--ui-text-muted);
+}
+
+.stats-hero-metric__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.1;
+  color: var(--ui-text-highlighted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-hero-metric__label {
+  min-width: 0;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ui-text-muted);
+  letter-spacing: 0;
+}
+
+.stats-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.stats-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: color-mix(in srgb, var(--stat-accent, var(--ui-primary)) 72%, transparent);
+  opacity: 0.7;
+}
+
+.stats-card__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.stats-panel {
+  overflow: hidden;
+}
+
+.stats-mini-metric {
+  border: 1px solid color-mix(in srgb, var(--ui-border) 78%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg) 56%, transparent);
+  padding: 10px 12px;
+}
+
+.stats-mini-metric span {
+  display: block;
+  font-size: 12px;
+  color: var(--ui-text-muted);
+}
+
+.stats-mini-metric strong {
+  display: block;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ui-text-highlighted);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stats-rank-item {
+  padding: 14px 16px;
+  border-top: 1px solid var(--ui-border);
+  transition: background-color 180ms ease;
+}
+
+.stats-rank-item:first-child {
+  border-top: 0;
+}
+
+.stats-rank-item:hover {
+  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
+}
+
+.stats-rank-bar {
+  position: relative;
+  min-width: 52px;
+  height: 6px;
+  flex: 1 1 auto;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ui-border) 72%, transparent);
+}
+
+.stats-rank-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--ui-primary) 82%, var(--ui-info) 18%),
+      color-mix(in srgb, var(--ui-info) 78%, var(--ui-success) 22%));
+}
+
+@media (max-width: 640px) {
+  .stats-hero__topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .stats-hero__actions {
+    justify-content: flex-start;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .stats-hero-metric__value {
+    font-size: 20px;
+  }
+}
+
+@keyframes statsPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+</style>
