@@ -1,11 +1,15 @@
 <script lang="ts" setup>
+import type { DropdownMenuItem } from '@nuxt/ui'
+
 interface Props {
   startTime?: string
   siteName?: string
   siteDescription?: string
   totalCount?: number
   normalCount?: number
-  categoryCount?: number
+  callCount?: number
+  apiListLoading?: boolean
+  apiListError?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -14,8 +18,12 @@ const props = withDefaults(defineProps<Props>(), {
   siteDescription: '免费为用户提供网络数据接口调用的服务平台',
   totalCount: 0,
   normalCount: 0,
-  categoryCount: 0
+  callCount: 0,
+  apiListLoading: false,
+  apiListError: false
 })
+
+const { user, logout } = useAuth()
 
 const startTimestamp = computed(() => {
   const ts = new Date(props.startTime).getTime()
@@ -65,6 +73,69 @@ const healthRatio = computed(() => {
   if (props.totalCount <= 0) return 0
   return Math.round((props.normalCount / props.totalCount) * 100)
 })
+
+const listStatus = computed(() => {
+  if (props.apiListLoading) {
+    return {
+      label: '加载中',
+      tone: 'info'
+    }
+  }
+  if (props.apiListError) {
+    return {
+      label: '加载失败',
+      tone: 'error'
+    }
+  }
+  if (props.totalCount <= 0) {
+    return {
+      label: '暂无接口',
+      tone: 'neutral'
+    }
+  }
+  return {
+    label: '接口正常',
+    tone: 'success'
+  }
+})
+
+const compactCallCount = computed(() => new Intl.NumberFormat('zh-CN', {
+  notation: 'compact',
+  maximumFractionDigits: 1
+}).format(props.callCount))
+
+const dashboardPath = computed(() => user.value?.kind === 'admin' ? '/admin' : '/user')
+const dashboardLabel = computed(() => user.value?.kind === 'admin' ? '管理后台' : '用户后台')
+const displayName = computed(() => user.value?.displayName || user.value?.username || '已登录')
+
+const accountMenuItems = computed<DropdownMenuItem[][]>(() => {
+  if (!user.value) return []
+  return [
+    [
+      {
+        label: displayName.value,
+        avatar: user.value.avatarUrl ? { src: user.value.avatarUrl, alt: displayName.value } : undefined,
+        type: 'label'
+      }
+    ],
+    [
+      {
+        label: dashboardLabel.value,
+        icon: user.value.kind === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-view-dashboard-outline',
+        to: dashboardPath.value
+      },
+      {
+        label: '退出登录',
+        icon: 'i-mdi-logout',
+        color: 'error',
+        onSelect: async () => {
+          await logout()
+          await navigateTo('/')
+        }
+      }
+    ]
+  ]
+})
 </script>
 
 <template>
@@ -73,18 +144,14 @@ const healthRatio = computed(() => {
       class="home-hero__pattern"
       aria-hidden="true"
     />
-    <div
-      class="home-hero__glow"
-      aria-hidden="true"
-    />
 
-    <div class="relative grid gap-7 p-5 sm:p-7 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-10 lg:p-9">
-      <div class="flex flex-col">
+    <div class="relative p-5 sm:p-7 lg:p-8">
+      <div class="hero-topbar">
         <UBadge
           color="neutral"
           variant="outline"
           size="sm"
-          class="mb-3 w-fit gap-1 rounded-full px-2.5 py-1 text-[11px] tracking-[0.18em] uppercase"
+          class="hidden w-fit gap-1 rounded-md px-2.5 py-1 text-[11px] sm:inline-flex"
         >
           <UIcon
             name="i-mdi-creation-outline"
@@ -93,87 +160,210 @@ const healthRatio = computed(() => {
           Free · Open · Stable
         </UBadge>
 
-        <h1 class="m-0 text-[28px] leading-tight font-semibold tracking-tight text-default sm:text-[34px]">
-          {{ siteName }}
-          <span class="home-hero__title-mark" />
-        </h1>
-        <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
-          {{ siteDescription }}
-        </p>
+        <div class="hero-actions">
+          <div
+            class="hero-nav"
+            aria-label="公开导航"
+          >
+            <UButton
+              to="/stats"
+              icon="i-mdi-chart-bar"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="hero-nav__item"
+            >
+              调用统计
+            </UButton>
+            <UButton
+              to="/friend-links"
+              icon="i-mdi-link-variant"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="hero-nav__item"
+            >
+              友情链接
+            </UButton>
+          </div>
 
-        <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
-          <span class="inline-flex items-center gap-1.5">
-            <span class="hero-pulse-dot" />
-            服务在线
-          </span>
-          <USeparator
-            orientation="vertical"
-            class="h-3"
-          />
-          <span class="inline-flex items-center gap-1.5">
-            <UIcon
-              name="i-mdi-clock-outline"
-              class="size-3.5"
-            />
-            <span class="font-mono tracking-tight text-default/85">{{ nowTime }}</span>
-          </span>
-          <USeparator
-            orientation="vertical"
-            class="hidden h-3 sm:inline-flex"
-          />
-          <span class="hidden items-center gap-1.5 sm:inline-flex">
-            <UIcon
-              name="i-mdi-server"
-              class="size-3.5"
-            />
-            <span class="font-mono tracking-tight text-default/85">{{ upTime }}</span>
-          </span>
+          <ClientOnly>
+            <template v-if="user">
+              <div class="hero-auth">
+                <UButton
+                  :to="dashboardPath"
+                  :icon="user.kind === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-view-dashboard-outline'"
+                  size="sm"
+                >
+                  {{ dashboardLabel }}
+                </UButton>
+                <UDropdownMenu
+                  :items="accountMenuItems"
+                  :content="{ align: 'end', side: 'bottom', sideOffset: 8 }"
+                  :ui="{ content: 'w-52' }"
+                >
+                  <UButton
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
+                    trailing-icon="i-mdi-chevron-down"
+                    :avatar="user.avatarUrl ? { src: user.avatarUrl, alt: displayName } : undefined"
+                    class="max-w-42"
+                    :ui="{ label: 'truncate' }"
+                  >
+                    {{ displayName }}
+                  </UButton>
+                </UDropdownMenu>
+              </div>
+            </template>
+            <template v-else>
+              <div class="hero-auth">
+                <UButton
+                  to="/login"
+                  icon="i-mdi-login"
+                  size="sm"
+                >
+                  登录
+                </UButton>
+                <UButton
+                  to="/register"
+                  icon="i-mdi-account-plus-outline"
+                  color="neutral"
+                  variant="outline"
+                  size="sm"
+                >
+                  注册
+                </UButton>
+                <UTooltip text="管理入口">
+                  <UButton
+                    to="/admin/login"
+                    icon="i-mdi-shield-key-outline"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    square
+                    aria-label="管理入口"
+                  />
+                </UTooltip>
+              </div>
+            </template>
+            <template #fallback>
+              <div class="hero-auth">
+                <USkeleton class="h-8 w-16 rounded-md" />
+                <USkeleton class="h-8 w-16 rounded-md" />
+              </div>
+            </template>
+          </ClientOnly>
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-3">
-        <div class="hero-stat">
-          <div class="hero-stat__icon">
-            <UIcon
-              name="i-mdi-layers-outline"
-              class="size-4"
+      <div class="mt-6 grid gap-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-10">
+        <div class="flex flex-col">
+          <div class="mb-3">
+            <UBadge
+              color="neutral"
+              variant="outline"
+              size="sm"
+              class="w-fit gap-1 rounded-md px-2.5 py-1 text-[11px] sm:hidden"
+            >
+              <UIcon
+                name="i-mdi-creation-outline"
+                class="size-3.5"
+              />
+              Free · Open · Stable
+            </UBadge>
+          </div>
+
+          <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
+            {{ siteName }}
+          </h1>
+          <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
+            {{ siteDescription }}
+          </p>
+
+          <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
+            <span
+              class="inline-flex items-center gap-1.5"
+              :title="listStatus.title"
+            >
+              <span
+                class="hero-status-dot"
+                :class="`is-${listStatus.tone}`"
+              />
+              {{ listStatus.label }}
+            </span>
+            <USeparator
+              orientation="vertical"
+              class="h-3"
             />
-          </div>
-          <div class="hero-stat__value">
-            {{ totalCount }}
-          </div>
-          <div class="hero-stat__label">
-            接口总数
+            <span class="inline-flex items-center gap-1.5">
+              <UIcon
+                name="i-mdi-clock-outline"
+                class="size-3.5"
+              />
+              <span class="font-mono text-default/85">{{ nowTime }}</span>
+            </span>
+            <USeparator
+              orientation="vertical"
+              class="hidden h-3 sm:inline-flex"
+            />
+            <span class="hidden items-center gap-1.5 sm:inline-flex">
+              <UIcon
+                name="i-mdi-server"
+                class="size-3.5"
+              />
+              <span class="font-mono text-default/85">{{ upTime }}</span>
+            </span>
           </div>
         </div>
 
-        <div class="hero-stat hero-stat--accent">
-          <div class="hero-stat__icon">
-            <UIcon
-              name="i-mdi-pulse"
-              class="size-4"
-            />
+        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
+          <div class="hero-stat">
+            <div class="hero-stat__icon">
+              <UIcon
+                name="i-mdi-layers-outline"
+                class="size-4"
+              />
+            </div>
+            <div class="hero-stat__value">
+              {{ totalCount }}
+            </div>
+            <div class="hero-stat__label">
+              接口总数
+            </div>
           </div>
-          <div class="hero-stat__value">
-            {{ healthRatio }}<span class="text-base text-muted">%</span>
-          </div>
-          <div class="hero-stat__label">
-            可用率
-          </div>
-        </div>
 
-        <div class="hero-stat">
-          <div class="hero-stat__icon">
-            <UIcon
-              name="i-mdi-shape-outline"
-              class="size-4"
-            />
+          <div class="hero-stat">
+            <div class="hero-stat__icon">
+              <UIcon
+                name="i-mdi-check-circle-outline"
+                class="size-4"
+              />
+            </div>
+            <div class="hero-stat__value">
+              {{ normalCount }}
+            </div>
+            <div class="hero-stat__label">
+              可用接口 · {{ healthRatio }}%
+            </div>
           </div>
-          <div class="hero-stat__value">
-            {{ categoryCount }}
-          </div>
-          <div class="hero-stat__label">
-            分类数
+
+          <div class="hero-stat">
+            <div class="hero-stat__icon">
+              <UIcon
+                name="i-mdi-counter"
+                class="size-4"
+              />
+            </div>
+            <div
+              class="hero-stat__value"
+              :title="callCount.toLocaleString('zh-CN')"
+            >
+              {{ compactCallCount }}
+            </div>
+            <div class="hero-stat__label">
+              累计调用
+            </div>
           </div>
         </div>
       </div>
@@ -186,10 +376,22 @@ const healthRatio = computed(() => {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--ui-border);
-  background: var(--ui-bg-elevated);
-  border-radius: 20px;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 90%, var(--ui-primary) 10%) 0%,
+      var(--ui-bg-elevated) 42%,
+      color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 16%) 100%);
+  border-radius: 8px;
   margin-bottom: 16px;
   isolation: isolate;
+}
+
+.dark .home-hero {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 88%, var(--ui-primary) 12%) 0%,
+      var(--ui-bg-elevated) 46%,
+      color-mix(in srgb, var(--ui-bg) 82%, var(--ui-success) 10%) 100%);
 }
 
 .home-hero__pattern {
@@ -204,62 +406,100 @@ const healthRatio = computed(() => {
   pointer-events: none;
 }
 
-.home-hero__glow {
-  position: absolute;
-  top: -120px;
-  right: -120px;
-  width: 360px;
-  height: 360px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(17, 17, 19, 0.08), transparent 65%);
-  filter: blur(20px);
-  pointer-events: none;
+.hero-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.dark .home-hero__glow {
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.06), transparent 65%);
+.hero-actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.home-hero__title-mark {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--ui-text);
-  vertical-align: 4px;
-  margin-left: 2px;
-  animation: heroDotPulse 2.4s ease-in-out infinite;
+.hero-nav,
+.hero-auth {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
 
-.hero-pulse-dot {
+.hero-nav {
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.hero-auth {
+  padding-left: 8px;
+  border-left: 1px solid color-mix(in srgb, var(--ui-border) 80%, transparent);
+}
+
+.hero-nav__item {
+  color: var(--ui-text-muted);
+}
+
+.hero-status-dot {
+  --hero-status-color: var(--ui-success);
+
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--hero-status-color);
   position: relative;
-  box-shadow: 0 0 0 3px rgba(35, 197, 94, 0.18);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hero-status-color) 18%, transparent);
+  flex: 0 0 auto;
 }
 
-.hero-pulse-dot::after {
+.hero-status-dot::after {
   content: "";
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
-  border: 1px solid rgba(35, 197, 94, 0.55);
+  border: 1px solid color-mix(in srgb, var(--hero-status-color) 55%, transparent);
   animation: heroPulse 2s ease-out infinite;
+}
+
+.hero-status-dot.is-info {
+  --hero-status-color: var(--ui-info);
+}
+
+.hero-status-dot.is-error {
+  --hero-status-color: var(--ui-error);
+}
+
+.hero-status-dot.is-neutral {
+  --hero-status-color: var(--ui-text-muted);
+}
+
+.hero-status-dot.is-error::after,
+.hero-status-dot.is-neutral::after {
+  display: none;
 }
 
 .hero-stat {
   position: relative;
-  border: 1px solid var(--ui-border);
-  background: color-mix(in srgb, var(--ui-bg) 80%, transparent);
-  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
+      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
+  border-radius: 8px;
   padding: 12px 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 2px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
   transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
 }
 
 .hero-stat:hover {
@@ -267,15 +507,12 @@ const healthRatio = computed(() => {
   border-color: var(--ui-border-accented);
 }
 
-.hero-stat--accent {
-  background: var(--ui-text);
-  border-color: var(--ui-text);
-  color: var(--ui-text-inverted);
-}
-
-.hero-stat--accent .hero-stat__label,
-.hero-stat--accent .text-muted {
-  color: color-mix(in srgb, var(--ui-text-inverted) 70%, transparent) !important;
+.dark .hero-stat {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
+      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
 }
 
 .hero-stat__icon {
@@ -284,21 +521,31 @@ const healthRatio = computed(() => {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-text) 8%, transparent);
-  color: var(--ui-text);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
+  color: var(--ui-text-muted);
   margin-bottom: 4px;
 }
 
-.hero-stat--accent .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-text-inverted) 14%, transparent);
-  color: var(--ui-text-inverted);
+.hero-stat:nth-child(1) .hero-stat__icon {
+  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
+  color: var(--ui-info);
+}
+
+.hero-stat:nth-child(2) .hero-stat__icon {
+  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
+  color: var(--ui-success);
+}
+
+.hero-stat:nth-child(3) .hero-stat__icon {
+  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
+  color: var(--ui-text);
 }
 
 .hero-stat__value {
   font-size: 22px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
@@ -306,10 +553,24 @@ const healthRatio = computed(() => {
 .hero-stat__label {
   font-size: 11px;
   color: var(--ui-text-muted);
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
 }
 
 @media (max-width: 640px) {
+  .hero-topbar {
+    align-items: flex-start;
+  }
+
+  .hero-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .hero-auth {
+    padding-left: 0;
+    border-left: 0;
+  }
+
   .hero-stat__value {
     font-size: 18px;
   }
@@ -317,11 +578,6 @@ const healthRatio = computed(() => {
     width: 22px;
     height: 22px;
   }
-}
-
-@keyframes heroDotPulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(0.7); opacity: 0.55; }
 }
 
 @keyframes heroPulse {

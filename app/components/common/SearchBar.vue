@@ -15,10 +15,21 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
-const inputComp = ref<{ inputRef: { value: HTMLInputElement | null } } | null>(null)
+type InputExpose = {
+  inputRef?: HTMLInputElement | { value: HTMLInputElement | null } | null
+}
+
+const inputComp = ref<InputExpose | null>(null)
+
+const getInputElement = () => {
+  const inputRef = inputComp.value?.inputRef
+  if (!inputRef) return null
+  if ('focus' in inputRef) return inputRef
+  return inputRef.value
+}
 
 const focusInput = () => {
-  inputComp.value?.inputRef?.value?.focus()
+  getInputElement()?.focus()
 }
 
 const handleInput = (value: string | number) => {
@@ -37,11 +48,16 @@ const onKeydown = (event: KeyboardEvent) => {
   }
 }
 
-const onGlobalKey = (e: KeyboardEvent) => {
-  if (e.key !== '/') return
-  const tag = (document.activeElement as HTMLElement | null)?.tagName
-  if (tag === 'INPUT' || tag === 'TEXTAREA') return
-  e.preventDefault()
+const isEditableTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
+const onGlobalKey = (event: KeyboardEvent) => {
+  if (event.defaultPrevented || event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return
+  if (isEditableTarget(event.target)) return
+  event.preventDefault()
   focusInput()
 }
 

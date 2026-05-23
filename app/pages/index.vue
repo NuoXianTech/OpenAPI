@@ -27,7 +27,7 @@ const visibleCount = computed(() => filteredItems.value.length)
 const heroStats = computed(() => ({
   total: allItems.value.length,
   normal: allItems.value.filter((i: { status: number }) => i.status === 1).length,
-  categories: Math.max(0, categoryTabs.value.length - 1)
+  calls: allItems.value.reduce((sum: number, item: { totalCalls?: number }) => sum + (Number(item.totalCalls) || 0), 0)
 }))
 
 useSeoMeta({
@@ -41,15 +41,16 @@ useSeoMeta({
 
 <template>
   <div>
-    <CommonAppHeader />
-    <main class="mx-auto max-w-275 px-5 pb-6">
+    <main class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
       <CommonHomeHero
         :start-time="settings.startTime"
         :site-name="settings.siteName"
         :site-description="settings.siteDescription"
         :total-count="heroStats.total"
         :normal-count="heroStats.normal"
-        :category-count="heroStats.categories"
+        :call-count="heroStats.calls"
+        :api-list-loading="loading"
+        :api-list-error="!!error"
       />
 
       <UCard
