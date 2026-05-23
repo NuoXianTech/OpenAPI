@@ -56,15 +56,14 @@ const visibleCount = computed(() => filteredItems.value.length)
 
 <template>
   <div>
-    <CommonAppHeader />
-
-    <main class="mx-auto max-w-275 px-5 pb-6">
+    <main class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
       <CommonFriendLinksHero
         :total-count="totalCount"
         :active-count="activeCount"
       />
 
       <UCard
+        class="friend-filter-card"
         :ui="{ root: 'mb-4 overflow-hidden', body: 'p-0 sm:p-0' }"
         variant="subtle"
       >
@@ -76,22 +75,41 @@ const visibleCount = computed(() => filteredItems.value.length)
           />
         </div>
 
-        <div class="px-4 py-3.5 sm:px-5 sm:py-4">
-          <div class="mb-2 flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted">
-            <UIcon
-              name="i-mdi-filter-variant"
-              class="size-3"
+        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(220px,0.48fr)_1fr]">
+          <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
+            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
+              <UIcon
+                name="i-mdi-filter-variant"
+                class="size-3"
+              />
+              状态筛选
+            </div>
+            <UTabs
+              v-model="currentStatus"
+              :items="statusTabs"
+              color="neutral"
+              variant="link"
+              :content="false"
+              aria-label="友情链接状态筛选"
             />
-            状态筛选
           </div>
-          <UTabs
-            v-model="currentStatus"
-            :items="statusTabs"
-            color="neutral"
-            variant="link"
-            :content="false"
-            aria-label="友情链接状态筛选"
-          />
+
+          <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
+            <div class="grid grid-cols-3 gap-2.5">
+              <div class="friend-filter-stat">
+                <span>全部</span>
+                <strong>{{ totalCount }}</strong>
+              </div>
+              <div class="friend-filter-stat">
+                <span>正常</span>
+                <strong>{{ activeCount }}</strong>
+              </div>
+              <div class="friend-filter-stat">
+                <span>当前</span>
+                <strong>{{ visibleCount }}</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </UCard>
 
@@ -187,6 +205,50 @@ const visibleCount = computed(() => filteredItems.value.length)
 </template>
 
 <style scoped>
+.friend-filter-card {
+  position: relative;
+}
+
+.friend-filter-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: var(--ui-text);
+  opacity: 0.025;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
+  pointer-events: none;
+}
+
+.friend-filter-stat {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
+  padding: 9px 10px;
+}
+
+.friend-filter-stat span {
+  display: block;
+  font-size: 11px;
+  color: var(--ui-text-muted);
+}
+
+.friend-filter-stat strong {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ui-text-highlighted);
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
 .state-fade-enter-active,
 .state-fade-leave-active {
   transition: opacity 220ms ease, transform 220ms ease;

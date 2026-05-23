@@ -51,7 +51,7 @@ const isActive = computed(() => props.status === 1)
         :color="isActive ? 'success' : 'error'"
         variant="soft"
         size="sm"
-        class="rounded-full"
+        class="rounded-md"
       >
         <span
           class="link-card__dot"
@@ -101,9 +101,13 @@ const isActive = computed(() => props.status === 1)
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid var(--ui-border);
-  background: var(--ui-bg-elevated);
-  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 94%, var(--ui-primary) 6%) 0%,
+      var(--ui-bg-elevated) 42%,
+      color-mix(in srgb, var(--ui-bg) 88%, transparent) 100%);
+  border-radius: 8px;
   padding: 16px;
   text-decoration: none;
   color: inherit;
@@ -113,6 +117,14 @@ const isActive = computed(() => props.status === 1)
   transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
 }
 
+.dark .link-card {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 92%, var(--ui-primary) 8%) 0%,
+      var(--ui-bg-elevated) 48%,
+      color-mix(in srgb, var(--ui-bg) 90%, transparent) 100%);
+}
+
 .link-card::after {
   content: "";
   position: absolute;
@@ -120,7 +132,10 @@ const isActive = computed(() => props.status === 1)
   right: 0;
   width: 90px;
   height: 90px;
-  background: radial-gradient(circle at top right, color-mix(in srgb, var(--ui-text) 6%, transparent), transparent 70%);
+  background:
+    radial-gradient(circle at top right,
+      color-mix(in srgb, var(--ui-info) 10%, transparent),
+      transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -140,7 +155,10 @@ const isActive = computed(() => props.status === 1)
   inset: -1px;
   pointer-events: none;
   border-radius: inherit;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--ui-text) 14%, transparent), transparent 55%);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-primary) 10%, transparent),
+      transparent 56%);
   opacity: 0;
   transition: opacity 240ms ease;
   z-index: 0;
@@ -161,8 +179,9 @@ const isActive = computed(() => props.status === 1)
 
 .link-card__avatar {
   transition: transform 240ms ease;
-  background: var(--ui-text) !important;
-  color: var(--ui-text-inverted) !important;
+  background: color-mix(in srgb, var(--ui-primary) 12%, transparent) !important;
+  color: var(--ui-text) !important;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
 }
 
 .link-card:hover .link-card__avatar {
@@ -179,13 +198,13 @@ const isActive = computed(() => props.status === 1)
 }
 
 .link-card__dot--ok {
-  background: var(--green);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 28%, transparent);
+  background: var(--ui-success);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-success) 28%, transparent);
 }
 
 .link-card__dot--err {
-  background: var(--red);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--red) 28%, transparent);
+  background: var(--ui-error);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-error) 28%, transparent);
 }
 
 .link-card__body {
@@ -201,7 +220,7 @@ const isActive = computed(() => props.status === 1)
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: var(--ui-text);
   line-height: 1.4;
   display: -webkit-box;
@@ -261,7 +280,8 @@ const isActive = computed(() => props.status === 1)
 }
 
 .link-card--inactive .link-card__avatar {
-  background: var(--ui-text-muted) !important;
+  background: color-mix(in srgb, var(--ui-text-muted) 18%, transparent) !important;
+  color: var(--ui-text-muted) !important;
 }
 
 .link-card--inactive .link-card__title {
