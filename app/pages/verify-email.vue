@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { parseFetchError } from '#shared/utils/clientError'
+import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
 useHead({ title: '邮箱验证' })
 
@@ -75,7 +76,7 @@ onMounted(async () => {
       message.value = '验证成功，已自动登录，正在跳转到用户中心...'
       await fetchMe(true)
       await new Promise(resolve => setTimeout(resolve, 3000))
-      await navigateTo('/user')
+      await navigateTo(USER_OVERVIEW_PATH)
     }
   } catch (error: unknown) {
     status.value = 'error'
@@ -139,7 +140,7 @@ onMounted(async () => {
           {{ message }}
         </p>
         <UButton
-          :to="alreadyVerified ? '/login' : '/user'"
+          :to="alreadyVerified ? '/login' : USER_OVERVIEW_PATH"
           block
           size="lg"
         >

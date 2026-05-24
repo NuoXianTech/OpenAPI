@@ -4,9 +4,9 @@ import {
   adminApisQuickActions
 } from './admin-sections/apis'
 import {
-  ADMIN_MEMBERS_PATH,
-  adminMembersQuickActions
-} from './admin-sections/members'
+  ADMIN_USERS_PATH,
+  adminUsersQuickActions
+} from './admin-sections/users'
 import {
   ADMIN_CONTENT_PATH,
   adminContentQuickActions
@@ -20,6 +20,12 @@ import {
   ADMIN_LOGS_PATH,
   adminLogsQuickActions
 } from './admin-sections/logs'
+import {
+  ADMIN_REDEMPTION_CODES_PATH,
+  adminRedemptionCodesQuickActions
+} from './admin-sections/redemption-codes'
+import { ADMIN_OVERVIEW_PATH } from './admin-sections/overview'
+import { USER_OVERVIEW_PATH } from './user-sections/overview'
 
 export interface DashboardNavGroup {
   label?: string
@@ -57,13 +63,13 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
   brand: siteName => ({
     label: siteName || 'OpenAPI',
     icon: 'i-mdi-shield-crown-outline',
-    to: '/admin'
+    to: ADMIN_OVERVIEW_PATH
   }),
   groups: [
     {
       label: '常规',
       items: [
-        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: '/admin' },
+        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: ADMIN_OVERVIEW_PATH },
         { label: '数据看板', icon: 'i-mdi-chart-box-outline', to: ADMIN_ANALYTICS_PATH },
         { label: '通用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
       ]
@@ -71,7 +77,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     {
       label: '运营',
       items: [
-        { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: `/admin/members/redemption-codes` },
+        { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: ADMIN_REDEMPTION_CODES_PATH },
         { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH },
       ]
     },
@@ -79,7 +85,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
       label: '管理员',
       items: [
         { label: '接口管理', icon: 'i-mdi-cog-outline', to: ADMIN_APIS_PATH },
-        { label: '用户管理', icon: 'i-mdi-account-group-outline', to: ADMIN_MEMBERS_PATH },
+        { label: '用户管理', icon: 'i-mdi-account-group-outline', to: ADMIN_USERS_PATH },
         { label: '系统设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH }
       ]
     }
@@ -91,7 +97,8 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     ...adminApisQuickActions,
     ...adminLogsQuickActions,
     ...adminContentQuickActions,
-    ...adminMembersQuickActions,
+    ...adminUsersQuickActions,
+    ...adminRedemptionCodesQuickActions,
     ...adminSystemQuickActions
   ],
   userMenuExtra: () => [[
@@ -108,13 +115,13 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
   brand: siteName => ({
     label: siteName || 'OpenAPI',
     icon: 'i-mdi-account-circle-outline',
-    to: '/user'
+    to: USER_OVERVIEW_PATH
   }),
   groups: [
     {
       label: '常规',
       items: [
-        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: '/user' },
+        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: USER_OVERVIEW_PATH },
         { label: 'API 密钥', icon: 'i-mdi-key-outline', to: '/user/apikeys' },
         { label: '使用日志', icon: 'i-mdi-history', to: '/user/calls' }
       ]

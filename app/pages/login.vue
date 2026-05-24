@@ -2,6 +2,8 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
+import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
 useHead({ title: '登录' })
 
@@ -102,7 +104,7 @@ const LOGIN_ERROR_CODES: Record<number, string> = {
 onMounted(async () => {
   await fetchMe()
   if (user.value) {
-    await navigateTo(user.value.kind === 'admin' ? '/admin' : '/')
+    await navigateTo(user.value.kind === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
     return
   }
   checkingAuth.value = false
@@ -128,7 +130,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       : withRemember
 
     await login(payload)
-    await navigateTo('/')
+    await navigateTo(USER_OVERVIEW_PATH)
   } catch (error: unknown) {
     errorMessage.value = parseFetchError(error, '登录失败', LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()

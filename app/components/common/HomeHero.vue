@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
+import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
+
 interface Props {
   startTime?: string
   siteName?: string
@@ -108,7 +111,7 @@ const compactCallCount = computed(() => new Intl.NumberFormat('zh-CN', {
   maximumFractionDigits: 1
 }).format(props.callCount))
 
-const dashboardPath = computed(() => user.value?.kind === 'admin' ? '/admin' : '/user')
+const dashboardPath = computed(() => user.value?.kind === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
 const dashboardLabel = computed(() => user.value?.kind === 'admin' ? '管理后台' : '用户后台')
 
 async function handleLogout() {

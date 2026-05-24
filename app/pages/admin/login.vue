@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
 
 useHead({ title: '管理员登录' })
 
@@ -52,7 +53,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       remember: remember.value,
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
     })
-    await navigateTo('/admin')
+    await navigateTo(ADMIN_OVERVIEW_PATH)
   } catch (err: unknown) {
     errorMsg.value = parseFetchError(err, '登录失败，请稍后再试', ADMIN_LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()

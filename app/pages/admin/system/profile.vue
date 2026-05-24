@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ADMIN_SYSTEM_PATH } from '~/constants/admin-sections/system'
+import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -84,7 +85,7 @@ const { settings } = useSiteSettings()
             站点设置
           </UButton>
           <UButton
-            to="/admin"
+            :to="ADMIN_OVERVIEW_PATH"
             size="sm"
             variant="outline"
             color="neutral"

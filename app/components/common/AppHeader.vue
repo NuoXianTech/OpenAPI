@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
+import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
+
 const { user, logout } = useAuth()
 const { settings } = useSiteSettings()
 
@@ -59,7 +62,7 @@ const handleLogout = async () => {
             variant="ghost"
             color="neutral"
             size="sm"
-            to="/admin"
+            :to="ADMIN_OVERVIEW_PATH"
           >
             管理后台
           </UButton>
@@ -68,7 +71,7 @@ const handleLogout = async () => {
             variant="ghost"
             color="neutral"
             size="sm"
-            to="/user"
+            :to="USER_OVERVIEW_PATH"
           >
             用户后台
           </UButton>
