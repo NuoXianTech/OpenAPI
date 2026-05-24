@@ -28,6 +28,32 @@ const items = ref<CreditTxnRow[]>([])
 const total = ref(0)
 const loading = ref(false)
 
+const activeFilterCount = computed(() => [
+  filters.userId !== '',
+  filters.reason !== 'all'
+].filter(Boolean).length)
+
+const logMetricItems = computed(() => [
+  {
+    label: '总记录',
+    value: total.value.toLocaleString(),
+    icon: 'i-mdi-cash-multiple',
+    tone: 'text-primary'
+  },
+  {
+    label: '本页',
+    value: items.value.length.toLocaleString(),
+    icon: 'i-mdi-format-list-numbered',
+    tone: 'text-info'
+  },
+  {
+    label: '筛选',
+    value: activeFilterCount.value ? `${activeFilterCount.value} 项` : '未启用',
+    icon: 'i-mdi-filter-variant',
+    tone: activeFilterCount.value ? 'text-warning' : 'text-muted'
+  }
+])
+
 async function fetchList() {
   loading.value = true
   try {
@@ -58,16 +84,23 @@ onMounted(() => {
   void fetchList()
 })
 
-function apply() {
+function reloadFromFirstPage() {
+  if (page.value === 1) {
+    void fetchList()
+    return
+  }
+
   page.value = 1
-  void fetchList()
+}
+
+function apply() {
+  reloadFromFirstPage()
 }
 
 function reset() {
   filters.userId = ''
   filters.reason = 'all'
-  page.value = 1
-  void fetchList()
+  reloadFromFirstPage()
 }
 
 function formatDate(val: string) {
@@ -117,59 +150,132 @@ function amountClass(amt: number) {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <UCard>
+  <div class="log-page-shell space-y-4 sm:space-y-5">
+    <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
+      <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div class="space-y-3">
+          <UBadge
+            color="neutral"
+            variant="solid"
+            size="sm"
+            class="bg-elevated/80 text-default backdrop-blur"
+          >
+            Credit ledger
+          </UBadge>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
+              全站积分流水
+            </h2>
+            <p class="mt-1 text-sm text-toned">
+              用户积分变动、扣费退款与后台调整记录
+            </p>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+          <div
+            v-for="metric in logMetricItems"
+            :key="metric.label"
+            class="rounded-xl border border-default bg-elevated/80 p-3 shadow-sm backdrop-blur"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-muted">{{ metric.label }}</span>
+              <UIcon
+                :name="metric.icon"
+                class="size-4"
+                :class="metric.tone"
+              />
+            </div>
+            <div class="mt-2 text-lg font-semibold tabular-nums text-highlighted">
+              {{ metric.value }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <UCard
+      class="log-filter-card"
+      variant="subtle"
+      :ui="{ body: 'p-4 sm:p-5' }"
+    >
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-filter-variant"
+              class="size-4 text-muted"
+            />
+            <h3 class="text-sm font-semibold text-highlighted">
+              筛选条件
+            </h3>
+          </div>
+          <UBadge
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          >
+            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
+          </UBadge>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+          <UFormField label="用户 ID">
+            <UInput
+              v-model.number="filters.userId"
+              type="number"
+              placeholder="留空查全部"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="原因">
+            <USelect
+              v-model="filters.reason"
+              :items="reasonItems"
+              class="w-full"
+            />
+          </UFormField>
+          <div class="flex gap-2 md:col-span-2 xl:col-span-1">
+            <UButton
+              icon="i-mdi-magnify"
+              @click="apply"
+            >
+              查询
+            </UButton>
+            <UButton
+              color="neutral"
+              variant="outline"
+              icon="i-mdi-restore"
+              @click="reset"
+            >
+              重置
+            </UButton>
+          </div>
+        </div>
+      </div>
+    </UCard>
+
+    <UCard
+      class="log-table-card overflow-hidden"
+      variant="subtle"
+      :ui="{ body: 'p-0 sm:p-0' }"
+    >
       <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-mdi-cash-multiple"
-            class="size-5 text-muted"
-          />
-          <h3 class="font-semibold">
-            全站积分流水
-          </h3>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-cash-multiple"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold text-highlighted">
+              流水明细
+            </h3>
+          </div>
           <span class="ml-auto text-xs text-muted tabular-nums">
             共 {{ total.toLocaleString() }} 条
           </span>
         </div>
       </template>
-
-      <div class="flex flex-wrap items-end gap-3 mb-4">
-        <UFormField
-          label="用户 ID"
-          class="min-w-[160px]"
-        >
-          <UInput
-            v-model.number="filters.userId"
-            type="number"
-            placeholder="留空查全部"
-          />
-        </UFormField>
-        <UFormField
-          label="原因"
-          class="min-w-[180px]"
-        >
-          <USelect
-            v-model="filters.reason"
-            :items="reasonItems"
-          />
-        </UFormField>
-        <div class="flex gap-2">
-          <UButton
-            icon="i-mdi-magnify"
-            @click="apply"
-          >
-            查询
-          </UButton>
-          <UButton
-            color="neutral"
-            variant="outline"
-            @click="reset"
-          >
-            重置
-          </UButton>
-        </div>
-      </div>
 
       <DashboardDataTable
         v-model:page="page"
@@ -220,3 +326,12 @@ function amountClass(amt: number) {
     </UCard>
   </div>
 </template>
+
+<style scoped>
+.log-page-hero {
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 12%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-success) 10%, transparent) 0%, transparent 58%),
+    var(--ui-bg);
+}
+</style>

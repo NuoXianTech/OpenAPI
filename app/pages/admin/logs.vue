@@ -101,6 +101,37 @@ const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(
   () => filters.apiKeyId !== '' || filters.userId !== '' || !!filters.requestId
 )
+const activeFilterCount = computed(() => [
+  !!filters.startAt,
+  !!filters.endAt,
+  filters.apiId !== 0,
+  filters.categoryId !== 0,
+  filters.types.length > 0,
+  filters.apiKeyId !== '',
+  filters.userId !== '',
+  !!filters.requestId
+].filter(Boolean).length)
+
+const logMetricItems = computed(() => [
+  {
+    label: '总记录',
+    value: total.value.toLocaleString(),
+    icon: 'i-mdi-database-search-outline',
+    tone: 'text-primary'
+  },
+  {
+    label: '本页',
+    value: items.value.length.toLocaleString(),
+    icon: 'i-mdi-format-list-numbered',
+    tone: 'text-info'
+  },
+  {
+    label: '筛选',
+    value: activeFilterCount.value ? `${activeFilterCount.value} 项` : '未启用',
+    icon: 'i-mdi-filter-variant',
+    tone: activeFilterCount.value ? 'text-warning' : 'text-muted'
+  }
+])
 
 onMounted(() => {
   void loadFilterOptions()
@@ -161,32 +192,98 @@ const columns: TableColumn<AdminLogRow>[] = [
     </template>
 
     <template #body>
-      <div class="space-y-4">
+      <div class="log-page-shell space-y-4 sm:space-y-5">
+        <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
+          <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div class="space-y-3">
+              <UBadge
+                color="neutral"
+                variant="solid"
+                size="sm"
+                class="bg-elevated/80 text-default backdrop-blur"
+              >
+                Admin logs
+              </UBadge>
+              <div>
+                <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
+                  调用日志
+                </h2>
+                <p class="mt-1 text-sm text-toned">
+                  公共接口调用流水、扣费结果与客户端上下文
+                </p>
+              </div>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+              <div
+                v-for="metric in logMetricItems"
+                :key="metric.label"
+                class="rounded-xl border border-default bg-elevated/80 p-3 shadow-sm backdrop-blur"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-muted">{{ metric.label }}</span>
+                  <UIcon
+                    :name="metric.icon"
+                    class="size-4"
+                    :class="metric.tone"
+                  />
+                </div>
+                <div class="mt-2 text-lg font-semibold tabular-nums text-highlighted">
+                  {{ metric.value }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <!-- 筛选区 -->
-        <UCard>
-          <div class="space-y-3">
-            <div class="flex flex-wrap items-end gap-3">
+        <UCard
+          class="log-filter-card"
+          variant="subtle"
+          :ui="{ body: 'p-4 sm:p-5' }"
+        >
+          <div class="space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-2">
+                <UIcon
+                  name="i-mdi-filter-variant"
+                  class="size-4 text-muted"
+                />
+                <h3 class="text-sm font-semibold text-highlighted">
+                  筛选条件
+                </h3>
+              </div>
+              <UBadge
+                color="neutral"
+                variant="subtle"
+                size="sm"
+              >
+                {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
+              </UBadge>
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               <UFormField
                 label="开始时间"
-                class="min-w-[200px]"
               >
                 <UInput
                   v-model="filters.startAt"
                   type="datetime-local"
+                  class="w-full"
                 />
               </UFormField>
               <UFormField
                 label="结束时间"
-                class="min-w-[200px]"
               >
                 <UInput
                   v-model="filters.endAt"
                   type="datetime-local"
+                  class="w-full"
                 />
               </UFormField>
               <UFormField
                 label="接口名称"
-                class="min-w-[220px] flex-1"
+                class="xl:col-span-1"
               >
                 <USelectMenu
                   v-model="filters.apiId"
@@ -194,21 +291,21 @@ const columns: TableColumn<AdminLogRow>[] = [
                   value-key="value"
                   searchable
                   placeholder="全部接口"
+                  class="w-full"
                 />
               </UFormField>
               <UFormField
                 label="分类"
-                class="min-w-[160px]"
               >
                 <USelect
                   v-model="filters.categoryId"
                   :items="categorySelectItems"
                   value-key="value"
+                  class="w-full"
                 />
               </UFormField>
               <UFormField
                 label="类型"
-                class="min-w-[220px] flex-1"
               >
                 <USelectMenu
                   v-model="filters.types"
@@ -216,26 +313,9 @@ const columns: TableColumn<AdminLogRow>[] = [
                   value-key="value"
                   multiple
                   placeholder="所有类型"
+                  class="w-full"
                 />
               </UFormField>
-
-              <UButton
-                :color="expandedFilters ? 'primary' : 'neutral'"
-                variant="outline"
-                :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-                @click="expandedFilters = !expandedFilters"
-              >
-                展开
-                <UBadge
-                  v-if="hasAdvancedFilters"
-                  color="primary"
-                  variant="solid"
-                  size="sm"
-                  class="ml-1"
-                >
-                  ·
-                </UBadge>
-              </UButton>
             </div>
 
             <Transition
@@ -248,71 +328,97 @@ const columns: TableColumn<AdminLogRow>[] = [
             >
               <div
                 v-if="expandedFilters"
-                class="flex flex-wrap items-end gap-3 border-t border-default pt-3"
+                class="grid gap-3 border-t border-default pt-4 md:grid-cols-3"
               >
                 <UFormField
                   label="密钥名称"
                   hint="按 API Key ID 筛选"
-                  class="min-w-[180px]"
                 >
                   <UInput
                     v-model.number="filters.apiKeyId"
                     type="number"
                     placeholder="留空查全部"
+                    class="w-full"
                   />
                 </UFormField>
                 <UFormField
                   label="用户"
                   hint="按用户 ID 筛选"
-                  class="min-w-[180px]"
                 >
                   <UInput
                     v-model.number="filters.userId"
                     type="number"
                     placeholder="留空查全部"
+                    class="w-full"
                   />
                 </UFormField>
                 <UFormField
                   label="请求 ID"
-                  class="min-w-[260px] flex-1"
                 >
                   <UInput
                     v-model="filters.requestId"
                     placeholder="UUID，精确匹配"
+                    class="w-full"
                   />
                 </UFormField>
               </div>
             </Transition>
 
-            <div class="flex justify-end gap-2 pt-1">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4">
               <UButton
-                color="neutral"
+                :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
                 variant="outline"
-                @click="reset"
+                :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
+                @click="expandedFilters = !expandedFilters"
               >
-                重置
+                更多筛选
+                <UBadge
+                  v-if="hasAdvancedFilters"
+                  color="primary"
+                  variant="solid"
+                  size="sm"
+                  class="ml-1"
+                >
+                  ·
+                </UBadge>
               </UButton>
-              <UButton
-                icon="i-mdi-magnify"
-                @click="applyFilters"
-              >
-                查询
-              </UButton>
+              <div class="flex gap-2">
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  icon="i-mdi-restore"
+                  @click="reset"
+                >
+                  重置
+                </UButton>
+                <UButton
+                  icon="i-mdi-magnify"
+                  @click="applyFilters"
+                >
+                  查询
+                </UButton>
+              </div>
             </div>
           </div>
         </UCard>
 
         <!-- 列表 -->
-        <UCard :ui="{ body: 'p-0' }">
+        <UCard
+          class="log-table-card overflow-hidden"
+          variant="subtle"
+          :ui="{ body: 'p-0 sm:p-0' }"
+        >
           <template #header>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-text-box-search-outline"
-                class="size-5 text-muted"
-              />
-              <h3 class="font-semibold">
-                调用日志
-              </h3>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-2">
+                <UIcon
+                  name="i-mdi-text-box-search-outline"
+                  class="size-5 text-muted"
+                />
+                <h3 class="font-semibold text-highlighted">
+                  调用明细
+                </h3>
+              </div>
               <span class="ml-auto text-xs text-muted tabular-nums">
                 共 {{ total.toLocaleString() }} 条
               </span>
@@ -605,3 +711,12 @@ const columns: TableColumn<AdminLogRow>[] = [
     </template>
   </UDashboardPanel>
 </template>
+
+<style scoped>
+.log-page-hero {
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 12%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-info) 10%, transparent) 0%, transparent 58%),
+    var(--ui-bg);
+}
+</style>

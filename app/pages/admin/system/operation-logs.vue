@@ -73,8 +73,44 @@ const loading = computed(() => status.value === 'pending')
 
 const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(
-  () => filters.userId !== '' || !!filters.action || !!filters.resourceType
+  () => filters.actorKind !== 'all'
+    || !!filters.actor
+    || filters.status !== 'all'
+    || filters.userId !== ''
+    || !!filters.action
+    || !!filters.resourceType
 )
+const activeFilterCount = computed(() => [
+  !!filters.startAt,
+  !!filters.endAt,
+  filters.userId !== '',
+  filters.actorKind !== 'all',
+  !!filters.actor,
+  !!filters.action,
+  !!filters.resourceType,
+  filters.status !== 'all'
+].filter(Boolean).length)
+
+const logMetricItems = computed(() => [
+  {
+    label: '总记录',
+    value: total.value.toLocaleString(),
+    icon: 'i-mdi-clipboard-text-clock-outline',
+    tone: 'text-primary'
+  },
+  {
+    label: '本页',
+    value: items.value.length.toLocaleString(),
+    icon: 'i-mdi-format-list-numbered',
+    tone: 'text-info'
+  },
+  {
+    label: '筛选',
+    value: activeFilterCount.value ? `${activeFilterCount.value} 项` : '未启用',
+    icon: 'i-mdi-filter-variant',
+    tone: activeFilterCount.value ? 'text-warning' : 'text-muted'
+  }
+])
 
 function formatDate(val: string) {
   if (!val) return '-'
@@ -122,89 +158,114 @@ const detailJson = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <UCard>
-      <template #header>
-        <div class="flex items-center gap-2 flex-wrap">
-          <UIcon
-            name="i-mdi-clipboard-text-clock-outline"
-            class="size-5 text-muted"
-          />
-          <h3 class="font-semibold">
-            操作日志
-          </h3>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
-      </template>
-
-      <div class="space-y-3">
-        <div class="flex flex-wrap items-end gap-3">
-          <UFormField
-            label="开始时间"
-            class="min-w-[200px]"
+  <div class="log-page-shell space-y-4 sm:space-y-5">
+    <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
+      <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+        <div class="space-y-3">
+          <UBadge
+            color="neutral"
+            variant="solid"
+            size="sm"
+            class="bg-elevated/80 text-default backdrop-blur"
           >
+            Audit trail
+          </UBadge>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
+              操作日志
+            </h2>
+            <p class="mt-1 text-sm text-toned">
+              后台动作、资源变更与操作者审计轨迹
+            </p>
+          </div>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
+          <div
+            v-for="metric in logMetricItems"
+            :key="metric.label"
+            class="rounded-xl border border-default bg-elevated/80 p-3 shadow-sm backdrop-blur"
+          >
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs text-muted">{{ metric.label }}</span>
+              <UIcon
+                :name="metric.icon"
+                class="size-4"
+                :class="metric.tone"
+              />
+            </div>
+            <div class="mt-2 text-lg font-semibold tabular-nums text-highlighted">
+              {{ metric.value }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <UCard
+      class="log-filter-card"
+      variant="subtle"
+      :ui="{ body: 'p-4 sm:p-5' }"
+    >
+      <div class="space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-filter-variant"
+              class="size-4 text-muted"
+            />
+            <h3 class="text-sm font-semibold text-highlighted">
+              筛选条件
+            </h3>
+          </div>
+          <UBadge
+            color="neutral"
+            variant="subtle"
+            size="sm"
+          >
+            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
+          </UBadge>
+        </div>
+
+        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <UFormField label="开始时间">
             <UInput
               v-model="filters.startAt"
               type="datetime-local"
+              class="w-full"
             />
           </UFormField>
-          <UFormField
-            label="结束时间"
-            class="min-w-[200px]"
-          >
+          <UFormField label="结束时间">
             <UInput
               v-model="filters.endAt"
               type="datetime-local"
+              class="w-full"
             />
           </UFormField>
-          <UFormField
-            label="来源"
-            class="min-w-[140px]"
-          >
+          <UFormField label="来源">
             <USelect
               v-model="filters.actorKind"
               :items="actorKindItems"
+              class="w-full"
             />
           </UFormField>
           <UFormField
             label="操作者"
             hint="名称模糊匹配"
-            class="min-w-[180px]"
           >
             <UInput
               v-model="filters.actor"
               placeholder="留空查全部"
+              class="w-full"
             />
           </UFormField>
-          <UFormField
-            label="状态"
-            class="min-w-[140px]"
-          >
+          <UFormField label="状态">
             <USelect
               v-model="filters.status"
               :items="statusItems"
+              class="w-full"
             />
           </UFormField>
-
-          <UButton
-            :color="expandedFilters ? 'primary' : 'neutral'"
-            variant="outline"
-            :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-            @click="expandedFilters = !expandedFilters"
-          >
-            展开
-            <UBadge
-              v-if="hasAdvancedFilters"
-              color="primary"
-              variant="solid"
-              size="sm"
-              class="ml-1"
-            >
-              ·
-            </UBadge>
-          </UButton>
         </div>
 
         <Transition
@@ -217,148 +278,160 @@ const detailJson = computed(() => {
         >
           <div
             v-if="expandedFilters"
-            class="flex flex-wrap items-end gap-3 border-t border-default pt-3"
+            class="grid gap-3 border-t border-default pt-4 md:grid-cols-3"
           >
-            <UFormField
-              label="用户 ID"
-              class="min-w-[140px]"
-            >
+            <UFormField label="用户 ID">
               <UInput
                 v-model.number="filters.userId"
                 type="number"
                 placeholder="留空查全部"
+                class="w-full"
               />
             </UFormField>
             <UFormField
               label="动作前缀"
               hint="例如 admin.user."
-              class="min-w-[200px]"
             >
               <UInput
                 v-model="filters.action"
                 placeholder="留空查全部"
+                class="w-full"
               />
             </UFormField>
-            <UFormField
-              label="资源类型"
-              class="min-w-[160px]"
-            >
+            <UFormField label="资源类型">
               <UInput
                 v-model="filters.resourceType"
                 placeholder="如 api / user"
+                class="w-full"
               />
             </UFormField>
           </div>
         </Transition>
 
-        <div class="flex justify-end gap-2 pt-1">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4">
           <UButton
-            color="neutral"
+            :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
             variant="outline"
-            @click="reset"
+            :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
+            @click="expandedFilters = !expandedFilters"
           >
-            重置
-          </UButton>
-          <UButton
-            icon="i-mdi-magnify"
-            @click="applyFilters"
-          >
-            查询
-          </UButton>
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <DashboardDataTable
-          :data="items"
-          :columns="columns"
-          :loading="loading"
-          empty-title="暂无操作日志"
-          empty-icon="i-mdi-clipboard-text-clock-outline"
-        >
-          <template #createdAt-cell="{ row }">
-            <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-          </template>
-          <template #actor-cell="{ row }">
-            <div class="flex flex-col text-xs">
-              <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
-              <span class="text-muted">{{ row.original.userId ? `用户 #${row.original.userId}` : '管理员' }}</span>
-            </div>
-          </template>
-          <template #action-cell="{ row }">
-            <span class="font-mono text-xs">{{ row.original.action }}</span>
-          </template>
-          <template #resource-cell="{ row }">
-            <span
-              v-if="!row.original.resourceType && !row.original.resourceId"
-              class="text-muted"
-            >-</span>
-            <div
-              v-else
-              class="flex flex-col text-xs"
-            >
-              <span
-                v-if="row.original.resourceType"
-                class="font-mono"
-              >{{ row.original.resourceType }}</span>
-              <span
-                v-if="row.original.resourceId"
-                class="font-mono text-muted"
-              >#{{ row.original.resourceId }}</span>
-            </div>
-          </template>
-          <template #status-cell="{ row }">
+            更多筛选
             <UBadge
-              :color="row.original.status === 'success' ? 'success' : 'error'"
-              variant="subtle"
+              v-if="hasAdvancedFilters"
+              color="primary"
+              variant="solid"
               size="sm"
+              class="ml-1"
             >
-              {{ row.original.status === 'success' ? '成功' : '失败' }}
+              ·
             </UBadge>
-          </template>
-          <template #ip-cell="{ row }">
-            <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
-          </template>
-          <template #actions-cell="{ row }">
+          </UButton>
+          <div class="flex gap-2">
             <UButton
-              size="xs"
               color="neutral"
-              variant="ghost"
-              icon="i-mdi-eye-outline"
-              aria-label="查看详情"
-              @click="openDetail(row.original)"
-            />
-          </template>
-        </DashboardDataTable>
-      </div>
-
-      <div class="flex items-center justify-between pt-3 border-t border-default mt-3">
-        <span class="text-xs text-muted tabular-nums">
-          第 {{ page }} 页 · 本页 {{ items.length }} 条
-        </span>
-        <div class="flex gap-2">
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            icon="i-mdi-chevron-left"
-            :disabled="page <= 1"
-            @click="page = Math.max(1, page - 1)"
-          >
-            上一页
-          </UButton>
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            trailing-icon="i-mdi-chevron-right"
-            :disabled="items.length < pageSize"
-            @click="page = page + 1"
-          >
-            下一页
-          </UButton>
+              variant="outline"
+              icon="i-mdi-restore"
+              @click="reset"
+            >
+              重置
+            </UButton>
+            <UButton
+              icon="i-mdi-magnify"
+              @click="applyFilters"
+            >
+              查询
+            </UButton>
+          </div>
         </div>
       </div>
+    </UCard>
+
+    <UCard
+      class="log-table-card overflow-hidden"
+      variant="subtle"
+      :ui="{ body: 'p-0 sm:p-0' }"
+    >
+      <template #header>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              name="i-mdi-clipboard-text-clock-outline"
+              class="size-5 text-muted"
+            />
+            <h3 class="font-semibold text-highlighted">
+              操作明细
+            </h3>
+          </div>
+          <span class="ml-auto text-xs text-muted tabular-nums">
+            共 {{ total.toLocaleString() }} 条
+          </span>
+        </div>
+      </template>
+
+      <DashboardDataTable
+        v-model:page="page"
+        :data="items"
+        :columns="columns"
+        :loading="loading"
+        :page-size="pageSize"
+        :total="total"
+        empty-title="暂无操作日志"
+        empty-icon="i-mdi-clipboard-text-clock-outline"
+      >
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #actor-cell="{ row }">
+          <div class="flex flex-col text-xs">
+            <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
+            <span class="text-muted">{{ row.original.userId ? `用户 #${row.original.userId}` : '管理员' }}</span>
+          </div>
+        </template>
+        <template #action-cell="{ row }">
+          <span class="font-mono text-xs">{{ row.original.action }}</span>
+        </template>
+        <template #resource-cell="{ row }">
+          <span
+            v-if="!row.original.resourceType && !row.original.resourceId"
+            class="text-muted"
+          >-</span>
+          <div
+            v-else
+            class="flex flex-col text-xs"
+          >
+            <span
+              v-if="row.original.resourceType"
+              class="font-mono"
+            >{{ row.original.resourceType }}</span>
+            <span
+              v-if="row.original.resourceId"
+              class="font-mono text-muted"
+            >#{{ row.original.resourceId }}</span>
+          </div>
+        </template>
+        <template #status-cell="{ row }">
+          <UBadge
+            :color="row.original.status === 'success' ? 'success' : 'error'"
+            variant="subtle"
+            size="sm"
+          >
+            {{ row.original.status === 'success' ? '成功' : '失败' }}
+          </UBadge>
+        </template>
+        <template #ip-cell="{ row }">
+          <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <UButton
+            size="xs"
+            color="neutral"
+            variant="ghost"
+            icon="i-mdi-eye-outline"
+            aria-label="查看详情"
+            @click="openDetail(row.original)"
+          />
+        </template>
+      </DashboardDataTable>
     </UCard>
 
     <UModal
@@ -460,3 +533,12 @@ const detailJson = computed(() => {
     </UModal>
   </div>
 </template>
+
+<style scoped>
+.log-page-hero {
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 12%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-warning) 10%, transparent) 0%, transparent 58%),
+    var(--ui-bg);
+}
+</style>

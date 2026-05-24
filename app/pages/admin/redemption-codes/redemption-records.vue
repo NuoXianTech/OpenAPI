@@ -62,7 +62,7 @@ const loading = computed(() => status.value === 'pending')
 
 const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(
-  () => filters.codeId !== '' || !!filters.batchId || filters.userId !== ''
+  () => !!filters.username || filters.codeId !== '' || !!filters.batchId || filters.userId !== ''
 )
 
 function formatDate(val: string) {
