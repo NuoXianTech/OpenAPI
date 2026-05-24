@@ -71,8 +71,8 @@ export const siteSettings = pgTable('site_settings', {
   // Cloudflare Turnstile 人机验证
   turnstileEnabled: boolean('turnstile_enabled').notNull().default(false),
   turnstileSiteKey: varchar('turnstile_site_key', { length: 200 }).notNull().default(''),
-  // 密文存储（AES-GCM），复用 oauthCrypto encryptSecret/decryptSecret
-  turnstileSecretKey: varchar('turnstile_secret_key', { length: 500 }).notNull().default(''),
+  // 明文存储；后台 UI 直接展示
+  turnstileSecretKey: varchar('turnstile_secret_key', { length: 200 }).notNull().default(''),
   turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(true),
   turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
   turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(false),

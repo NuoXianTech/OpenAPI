@@ -37,8 +37,7 @@ const form = useAdminSettingsForm()
         <UFormField label="Secret Key">
           <UInput
             v-model="form.turnstileSecretKey"
-            type="password"
-            placeholder="留空或保持 *** 表示不修改"
+            placeholder="0x4AAAAAA..."
           />
         </UFormField>
       </div>

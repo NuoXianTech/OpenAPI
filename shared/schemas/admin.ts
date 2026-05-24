@@ -382,7 +382,7 @@ export const adminUpdateSiteSettingsSchema = z.object({
   oauthForceBinding: z.boolean().optional(),
   turnstileEnabled: z.boolean().optional(),
   turnstileSiteKey: z.string().max(200, 'turnstileSiteKey is too long').optional(),
-  turnstileSecretKey: z.string().max(1000, 'turnstileSecretKey is too long').optional(),
+  turnstileSecretKey: z.string().max(200, 'turnstileSecretKey is too long').optional(),
   turnstileLoginEnabled: z.boolean().optional(),
   turnstileRegisterEnabled: z.boolean().optional(),
   turnstileAdminLoginEnabled: z.boolean().optional(),

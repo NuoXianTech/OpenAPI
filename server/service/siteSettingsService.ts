@@ -6,7 +6,6 @@ import type {
 } from '#shared/types/siteSettings'
 import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 import { siteSettings } from '~~/server/db/schema/system'
-import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
 
 const DEFAULT_SCOPE = 'default'
 
@@ -37,7 +36,7 @@ export interface SiteSettingsUpsertInput {
   oauthForceBinding?: boolean
   turnstileEnabled?: boolean
   turnstileSiteKey?: string
-  // 明文 secret；由 service 层加密后落库。传入 mask（'***'）或 undefined 都表示"不改动"
+  // 明文 secret；undefined = 不改动，其他值（含空串）直接覆盖
   turnstileSecretKey?: string
   turnstileLoginEnabled?: boolean
   turnstileRegisterEnabled?: boolean
@@ -147,33 +146,17 @@ export const siteSettingsService = {
     }
   },
 
-  // 给后台用：保留所有字段，但把 turnstileSecretKey mask 掉
+  // 给后台用：保留所有字段，turnstileSecretKey 明文返回（UI 直接展示）
   async getForAdmin() {
-    const settings = await this.getOrCreate()
-    if (settings.turnstileSecretKey) {
-      settings.turnstileSecretKey = maskSecret(settings.turnstileSecretKey)
-    }
-    return settings
+    return await this.getOrCreate()
   },
 
   async update(input: SiteSettingsUpsertInput) {
     const current = await this.getOrCreate()
 
-    const { turnstileSecretKey, ...rest } = input
-    const patch: Record<string, unknown> = { ...rest }
-
-    // secret：空串 = 清空；mask 或 undefined = 保持原值；其他 = 加密存储
-    if (turnstileSecretKey !== undefined) {
-      if (turnstileSecretKey === '') {
-        patch.turnstileSecretKey = ''
-      } else if (!isSecretMask(turnstileSecretKey)) {
-        patch.turnstileSecretKey = encryptSecret(turnstileSecretKey)
-      }
-    }
-
     const updated = await db.update(siteSettings)
       .set({
-        ...patch,
+        ...input,
         updatedAt: new Date()
       })
       .where(eq(siteSettings.id, current.id))

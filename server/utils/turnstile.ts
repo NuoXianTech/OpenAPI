@@ -1,7 +1,6 @@
 // Cloudflare Turnstile 服务端验证。参见 https://developers.cloudflare.com/turnstile/
 import { createError } from 'h3'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { decryptSecret } from './oauthCrypto'
 
 export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset'
 
@@ -49,12 +48,7 @@ export async function verifyTurnstileForPage(
     return { required: true, valid: false, reason: 'missing_token' }
   }
 
-  let secret: string
-  try {
-    secret = decryptSecret(settings.turnstileSecretKey)
-  } catch {
-    return { required: true, valid: false, reason: 'secret_decrypt_failed' }
-  }
+  const secret = settings.turnstileSecretKey
 
   const form = new URLSearchParams()
   form.append('secret', secret)
@@ -80,7 +74,6 @@ export async function verifyTurnstileForPage(
 
 const FAILURE_MESSAGE: Record<string, string> = {
   'missing_token': '请先完成人机验证',
-  'secret_decrypt_failed': 'Turnstile 密钥配置异常，请联系管理员',
   'invalid-input-secret': 'Turnstile 密钥配置异常，请联系管理员',
   'missing-input-secret': 'Turnstile 密钥未配置',
   'invalid-input-response': '人机验证 token 无效，请刷新重试',
