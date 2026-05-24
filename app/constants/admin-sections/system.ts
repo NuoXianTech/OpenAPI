@@ -4,6 +4,9 @@ export const ADMIN_SYSTEM_PATH = '/admin/system'
 
 export const adminSystemLinks: NavigationMenuItem[] = [
   { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH, exact: true },
+  { label: '用户会话', icon: 'i-mdi-account-clock-outline', to: `${ADMIN_SYSTEM_PATH}/user-session` },
+  { label: '验证码', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/captcha` },
+  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
   { label: '第三方登录', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/oauth-providers` },
   { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` },
   { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: `${ADMIN_SYSTEM_PATH}/profile` }
