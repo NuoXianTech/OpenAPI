@@ -25,15 +25,14 @@ const apiCallTypeExpr = sql<AdminLogType>`
       or ${apiCalls.statusCode} >= 400
       or ${apiCalls.isCounted} = false
     then 'error'
-    when ${apiCalls.creditsCost} > 0 then 'consume'
-    else 'unknown'
+    else 'consume'
   end
 `
 
 /** credit_transactions 行 → AdminLogType（已排除 api_charge：由 api_calls 覆盖） */
 const creditTypeExpr = sql<AdminLogType>`
   case
-    when ${creditTransactions.reason} = 'redemption_code' then 'exchange'
+    when ${creditTransactions.reason} = 'redemption_code' then 'recharge'
     when ${creditTransactions.reason} in ('admin_grant', 'admin_revoke', 'admin_reset') then 'admin'
     when ${creditTransactions.reason} = 'signup_bonus' then 'system'
     when ${creditTransactions.reason} = 'api_refund' then 'refund'
@@ -73,8 +72,8 @@ function splitTypes(types?: AdminLogType[]) {
     return { needCalls: true, needCredits: true, callTypes: null, creditTypes: null }
   }
   const set = new Set(types)
-  const callTypes = (['consume', 'error', 'unknown'] as AdminLogType[]).filter(t => set.has(t))
-  const creditTypes = (['exchange', 'admin', 'system', 'refund', 'unknown', 'recharge'] as AdminLogType[]).filter(t => set.has(t))
+  const callTypes = (['consume', 'error'] as AdminLogType[]).filter(t => set.has(t))
+  const creditTypes = (['recharge', 'admin', 'system', 'refund', 'unknown'] as AdminLogType[]).filter(t => set.has(t))
   return {
     needCalls: callTypes.length > 0,
     needCredits: creditTypes.length > 0,

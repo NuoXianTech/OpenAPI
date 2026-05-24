@@ -2,8 +2,8 @@
  * Admin · 通用日志 / 数据看板 共享类型
  *
  * 通用日志（admin/logs）把两类审计源整合到同一视图：
- *   1. api_calls         → API 调用流水（消耗 / 错误 / 未知）
- *   2. credit_transactions → 积分变动流水（充值 / 兑换 / 管理 / 系统 / 退款）
+ *   1. api_calls         → API 调用流水（请求 / 错误）
+ *   2. credit_transactions → 积分变动流水（充值（含兑换码）/ 管理 / 系统 / 退款）
  *
  * 数据看板（admin/analytics）专注「公共接口分析」：仅基于 apis.isEnabled
  *  + apis.isStatistics + api_call_stats，与 stats 公开页同源，但视角更细。
@@ -16,34 +16,31 @@
 /**
  * 通用日志条目类型 · 与 sidebar 筛选器一一对应。
  *
- *   unknown   未知    - 兜底（不在已知映射内的来源）
- *   recharge  充值    - 充值（管理员加分、注册赠送等"无成本入账"暂归类此处）
- *   exchange  兑换    - 兑换码兑换
- *   consume   消耗    - API 调用成功扣费
+ *   recharge  充值    - 充值 / 兑换码兑换（"无成本入账"统一归此）
+ *   consume   请求    - API 调用（成功扣费 + 免费成功）
  *   admin     管理    - 管理员加/减/重置积分
- *   system    系统    - 系统赠送 / 自动发放
+ *   system    系统    - 系统赠送 / 自动发放（注册赠送等）
  *   error     错误    - API 调用失败（含计费失败）
  *   refund    退款    - API 调用退款
+ *   unknown   未知    - 兜底（不在已知映射内的来源）
  */
 export type AdminLogType
-  = | 'unknown'
-    | 'recharge'
-    | 'exchange'
+  = | 'recharge'
     | 'consume'
     | 'admin'
     | 'system'
     | 'error'
     | 'refund'
+    | 'unknown'
 
 export const ADMIN_LOG_TYPES: AdminLogType[] = [
-  'unknown',
   'recharge',
-  'exchange',
   'consume',
   'admin',
   'system',
   'error',
-  'refund'
+  'refund',
+  'unknown'
 ]
 
 // ────────────────────────────────────────────────────────────────────
@@ -52,7 +49,7 @@ export const ADMIN_LOG_TYPES: AdminLogType[] = [
 
 /**
  * 来源类别：决定 detail / cost 字段的语义。
- *   - api_call : 行来自 api_calls，cost = creditsCost（消耗），detail 含 method/status/latency
+ *   - api_call : 行来自 api_calls，cost = creditsCost（请求扣费），detail 含 method/status/latency
  *   - credit   : 行来自 credit_transactions，cost = amount（带符号），detail 含 reason/balanceAfter
  */
 export type AdminLogSource = 'api_call' | 'credit'
@@ -83,7 +80,7 @@ export interface AdminLogRow {
   // ─── 费用 / 详情 ───────────────────────────────────────────────
   /**
    * 费用：
-   *   - api_call : creditsCost（≥0；正数表示扣费金额）
+   *   - api_call : creditsCost（≥0；正数表示扣费金额，0 = 免费请求）
    *   - credit   : amount（带符号；负数=出账）
    */
   cost: number

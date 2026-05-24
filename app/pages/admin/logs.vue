@@ -15,12 +15,21 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 const typeMeta: Record<AdminLogType, { label: string, color: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary', icon: string }> = {
   unknown: { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' },
   recharge: { label: '充值', color: 'success', icon: 'i-mdi-cash-plus' },
-  exchange: { label: '兑换', color: 'primary', icon: 'i-mdi-ticket-percent-outline' },
-  consume: { label: '消耗', color: 'warning', icon: 'i-mdi-fire' },
+  consume: { label: '请求', color: 'primary', icon: 'i-mdi-swap-horizontal-circle-outline' },
   admin: { label: '管理', color: 'info', icon: 'i-mdi-shield-account-outline' },
   system: { label: '系统', color: 'neutral', icon: 'i-mdi-cog-outline' },
   error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' },
   refund: { label: '退款', color: 'info', icon: 'i-mdi-cash-refund' }
+}
+
+// credit_transactions.reason → 详情中可读描述
+const reasonMeta: Record<string, string> = {
+  redemption_code: '兑换码兑换',
+  admin_grant: '管理员加分',
+  admin_revoke: '管理员扣分',
+  admin_reset: '管理员重置',
+  signup_bonus: '注册赠送',
+  api_refund: '调用退款'
 }
 
 const typeSelectItems = ADMIN_LOG_TYPES.map(t => ({
@@ -428,6 +437,10 @@ const columns: TableColumn<AdminLogRow>[] = [
                 v-else
                 class="flex flex-col text-xs gap-0.5"
               >
+                <span
+                  v-if="row.original.reason && reasonMeta[row.original.reason]"
+                  class="font-medium text-default"
+                >{{ reasonMeta[row.original.reason] }}</span>
                 <span
                   v-if="row.original.balanceAfter !== null"
                   class="text-muted"
