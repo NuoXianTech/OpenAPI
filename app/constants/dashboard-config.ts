@@ -15,6 +15,11 @@ import {
   ADMIN_SYSTEM_PATH,
   adminSystemQuickActions
 } from './admin-sections/system'
+import {
+  ADMIN_ANALYTICS_PATH,
+  ADMIN_LOGS_PATH,
+  adminLogsQuickActions
+} from './admin-sections/logs'
 
 export interface DashboardNavGroup {
   label?: string
@@ -56,22 +61,26 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
   }),
   groups: [
     {
+      label: '常规',
       items: [
-        { label: '仪表盘', icon: 'i-mdi-view-dashboard-outline', to: '/admin' }
-      ]
-    },
-    {
-      label: '业务',
-      items: [
-        { label: 'API 中心', icon: 'i-mdi-api', to: ADMIN_APIS_PATH },
-        { label: '会员中心', icon: 'i-mdi-account-group-outline', to: ADMIN_MEMBERS_PATH }
+        { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: '/admin' },
+        { label: '数据看板', icon: 'i-mdi-chart-box-outline', to: ADMIN_ANALYTICS_PATH },
+        { label: '通用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
       ]
     },
     {
       label: '运营',
       items: [
+        { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: `/admin/members/redemption-codes` },
         { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH },
-        { label: '系统', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH }
+      ]
+    },
+    {
+      label: '管理员',
+      items: [
+        { label: '接口管理', icon: 'i-mdi-cog-outline', to: ADMIN_APIS_PATH },
+        { label: '用户管理', icon: 'i-mdi-account-group-outline', to: ADMIN_MEMBERS_PATH },
+        { label: '系统设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH }
       ]
     }
   ],
@@ -80,6 +89,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
   ],
   quickActions: [
     ...adminApisQuickActions,
+    ...adminLogsQuickActions,
     ...adminContentQuickActions,
     ...adminMembersQuickActions,
     ...adminSystemQuickActions
