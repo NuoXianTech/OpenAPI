@@ -3,12 +3,13 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
 import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
+import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
 useHead({ title: '管理员登录' })
 
 definePageMeta({ layout: false })
 
-const { adminLogin } = useAuth()
+const { fetchMe, user, adminLogin } = useAuth()
 const { turnstile, settings } = useSiteSettings()
 
 const schema = z.object({
@@ -29,6 +30,7 @@ const passwordVisible = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.adminLogin)
+const checkingAuth = ref(true)
 
 const ADMIN_LOGIN_ERROR_CODES: Record<number, string> = {
   401: '管理员账号或密码错误',
@@ -36,6 +38,15 @@ const ADMIN_LOGIN_ERROR_CODES: Record<number, string> = {
   429: '尝试次数过多，请稍后再试',
   500: '服务器暂时无法响应，请稍后再试'
 }
+
+onMounted(async () => {
+  await fetchMe()
+  if (user.value) {
+    await navigateTo(user.value.kind === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
+    return
+  }
+  checkingAuth.value = false
+})
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMsg.value = ''
@@ -95,7 +106,17 @@ function clearTurnstileError() {
       class="auth-card"
       :ui="{ body: 'p-6 sm:p-7' }"
     >
+      <div
+        v-if="checkingAuth"
+        class="space-y-3"
+      >
+        <USkeleton class="h-11 w-full rounded-lg" />
+        <USkeleton class="h-11 w-full rounded-lg" />
+        <USkeleton class="h-11 w-full rounded-lg" />
+      </div>
+
       <UForm
+        v-else
         :schema="schema"
         :state="state"
         class="space-y-4"

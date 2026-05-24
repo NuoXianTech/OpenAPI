@@ -140,11 +140,6 @@ export function useAuth() {
     if (import.meta.client) clientFetchedAt = Date.now()
   }
 
-  const ensureAdmin = async () => {
-    await fetchMe()
-    return user.value?.kind === 'admin'
-  }
-
   return {
     user,
     loading,
@@ -152,7 +147,6 @@ export function useAuth() {
     login,
     adminLogin,
     register,
-    logout,
-    ensureAdmin
+    logout
   }
 }
