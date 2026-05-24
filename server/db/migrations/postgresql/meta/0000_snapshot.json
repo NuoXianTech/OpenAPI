@@ -1,5 +1,5 @@
 {
-  "id": "dbf003c5-45b3-47e8-a5bd-35582d02da4f",
+  "id": "ebac4c49-1415-42cc-aa5f-82a902c4e113",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -977,7 +977,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "is_api_key": {
           "name": "is_api_key",
@@ -991,7 +991,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "is_orphaned": {
           "name": "is_orphaned",
@@ -2678,6 +2678,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "redemption_records_redeemed_at_idx": {
+          "name": "redemption_records_redeemed_at_idx",
+          "columns": [
+            {
+              "expression": "redeemed_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -3050,7 +3065,7 @@
         },
         "turnstile_secret_key": {
           "name": "turnstile_secret_key",
-          "type": "varchar(500)",
+          "type": "varchar(200)",
           "primaryKey": false,
           "notNull": true,
           "default": "''"

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ilike, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, redemptionRecords, users } from '@nuxthub/db/schema'
 
 /**
@@ -375,10 +375,11 @@ export const redemptionService = {
       .orderBy(desc(redemptionRecords.redeemedAt))
   },
 
-  /** 管理员视角：兑换记录全量查询，支持按 code / batch / user / 时间区间过滤 + 分页。 */
+  /** 管理员视角：兑换记录全量查询，支持按 code / batch / user / username / 时间区间过滤 + 分页。 */
   async listRedemptions(filters: {
     codeId?: number
     userId?: number
+    username?: string
     batchId?: string
     startAt?: Date
     endAt?: Date
@@ -388,6 +389,7 @@ export const redemptionService = {
     const conditions: SQL[] = []
     if (typeof filters.codeId === 'number') conditions.push(eq(redemptionRecords.codeId, filters.codeId))
     if (typeof filters.userId === 'number') conditions.push(eq(redemptionRecords.userId, filters.userId))
+    if (filters.username) conditions.push(ilike(users.username, `%${filters.username}%`))
     if (filters.batchId) conditions.push(eq(redemptionCodes.batchId, filters.batchId))
     if (filters.startAt) conditions.push(gte(redemptionRecords.redeemedAt, filters.startAt))
     if (filters.endAt) conditions.push(lte(redemptionRecords.redeemedAt, filters.endAt))
@@ -414,6 +416,7 @@ export const redemptionService = {
     const countQuery = db.select({ value: count() })
       .from(redemptionRecords)
       .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
+      .leftJoin(users, eq(users.id, redemptionRecords.userId))
 
     const [items, totalRows] = await Promise.all([
       where

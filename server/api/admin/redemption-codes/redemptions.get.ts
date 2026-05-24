@@ -13,19 +13,14 @@ export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const query = getQuery(event)
 
-  const codeId = query.codeId ? Number(query.codeId) : undefined
-  const userId = query.userId ? Number(query.userId) : undefined
-  const batchId = (query.batchId || '').toString().trim() || undefined
-
-  const data = await redemptionService.listRedemptions({
-    codeId,
-    userId,
-    batchId,
+  return redemptionService.listRedemptions({
+    codeId: query.codeId ? Number(query.codeId) : undefined,
+    userId: query.userId ? Number(query.userId) : undefined,
+    username: (query.username || '').toString().trim() || undefined,
+    batchId: (query.batchId || '').toString().trim() || undefined,
     startAt: parseDate(query.startAt),
     endAt: parseDate(query.endAt),
     limit: query.limit ? Number(query.limit) : undefined,
     offset: query.offset ? Number(query.offset) : undefined
   })
-
-  return data
 })

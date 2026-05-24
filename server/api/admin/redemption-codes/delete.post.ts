@@ -16,8 +16,8 @@ export default defineEventHandler(async (event: H3Event) => {
     await operationLogService.addLog({
       userId: admin.id || null,
       actor: admin.username,
-      action: 'admin.redemption_code.delete',
-      resourceType: 'redemption_code',
+      action: 'admin.redemption-code.delete',
+      resourceType: 'redemption-code',
       resourceId: String(id)
     })
     return removed
@@ -28,8 +28,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: 'admin.redemption_code.batch_delete',
-    resourceType: 'redemption_code_batch',
+    action: 'admin.redemption-code.batch-delete',
+    resourceType: 'redemption-code-batch',
     resourceId: batchId,
     detail: { includeUsed: !!includeUsed, affected: res.affected }
   })

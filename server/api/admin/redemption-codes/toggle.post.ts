@@ -18,8 +18,8 @@ export default defineEventHandler(async (event: H3Event) => {
     await operationLogService.addLog({
       userId: admin.id || null,
       actor: admin.username,
-      action: enabled ? 'admin.redemption_code.enable' : 'admin.redemption_code.disable',
-      resourceType: 'redemption_code',
+      action: enabled ? 'admin.redemption-code.enable' : 'admin.redemption-code.disable',
+      resourceType: 'redemption-code',
       resourceId: String(id)
     })
     return updated
@@ -30,8 +30,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: enabled ? 'admin.redemption_code.batch_enable' : 'admin.redemption_code.batch_disable',
-    resourceType: 'redemption_code_batch',
+    action: enabled ? 'admin.redemption-code.batch-enable' : 'admin.redemption-code.batch-disable',
+    resourceType: 'redemption-code-batch',
     resourceId: batchId,
     detail: { affected: res.affected }
   })

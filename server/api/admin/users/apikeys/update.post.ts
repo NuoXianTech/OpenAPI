@@ -26,8 +26,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: 'admin.apikey.update',
-    resourceType: 'apikey',
+    action: 'admin.api-key.update',
+    resourceType: 'api-key',
     resourceId: String(updated.id),
     detail: {
       patch: {

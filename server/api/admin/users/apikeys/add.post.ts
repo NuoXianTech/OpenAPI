@@ -21,8 +21,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: 'admin.apikey.create',
-    resourceType: 'apikey',
+    action: 'admin.api-key.create',
+    resourceType: 'api-key',
     resourceId: created.map(k => k.id).join(','),
     detail: { created, count: created.length }
   })

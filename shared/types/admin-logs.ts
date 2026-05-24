@@ -1,106 +1,79 @@
 /**
- * Admin · 通用日志 / 数据看板 共享类型
+ * Admin · 调用日志 / 数据看板 共享类型
  *
- * 通用日志（admin/logs）把两类审计源整合到同一视图：
- *   1. api_calls         → API 调用流水（请求 / 错误）
- *   2. credit_transactions → 积分变动流水（充值（含兑换码）/ 管理 / 系统 / 退款）
+ * 调用日志（admin/logs）：公共接口调用流水的审计视图，数据源仅来自 `api_calls`。
+ *   - 不再合并积分流水：积分相关查询请走 /admin/users/credit-transactions。
+ *   - 不再合并管理 / 系统 / 退款 等条目：相关操作请走 /admin/system/operation-logs。
  *
  * 数据看板（admin/analytics）专注「公共接口分析」：仅基于 apis.isEnabled
  *  + apis.isStatistics + api_call_stats，与 stats 公开页同源，但视角更细。
  */
 
 // ────────────────────────────────────────────────────────────────────
-// 通用日志 - 类型枚举
+// 调用日志 - 类型枚举
 // ────────────────────────────────────────────────────────────────────
 
 /**
- * 通用日志条目类型 · 与 sidebar 筛选器一一对应。
+ * 调用日志条目类型 · 与 sidebar 筛选器一一对应。
  *
- *   recharge  充值    - 充值 / 兑换码兑换（"无成本入账"统一归此）
- *   consume   请求    - API 调用（成功扣费 + 免费成功）
- *   admin     管理    - 管理员加/减/重置积分
- *   system    系统    - 系统赠送 / 自动发放（注册赠送等）
- *   error     错误    - API 调用失败（含计费失败）
- *   refund    退款    - API 调用退款
- *   unknown   未知    - 兜底（不在已知映射内的来源）
+ *   consume   请求    - API 调用成功（含免费成功 / 计费成功）
+ *   error     错误    - API 调用失败（含业务可见拒绝 / HTTP 4xx-5xx / 错误码非空）
  */
-export type AdminLogType
-  = | 'recharge'
-    | 'consume'
-    | 'admin'
-    | 'system'
-    | 'error'
-    | 'refund'
-    | 'unknown'
+export type AdminLogType = 'consume' | 'error'
 
-export const ADMIN_LOG_TYPES: AdminLogType[] = [
-  'recharge',
-  'consume',
-  'admin',
-  'system',
-  'error',
-  'refund',
-  'unknown'
-]
+export const ADMIN_LOG_TYPES: AdminLogType[] = ['consume', 'error']
 
 // ────────────────────────────────────────────────────────────────────
-// 通用日志 - 列表行
+// 调用日志 - 列表行
 // ────────────────────────────────────────────────────────────────────
-
-/**
- * 来源类别：决定 detail / cost 字段的语义。
- *   - api_call : 行来自 api_calls，cost = creditsCost（请求扣费），detail 含 method/status/latency
- *   - credit   : 行来自 credit_transactions，cost = amount（带符号），detail 含 reason/balanceAfter
- */
-export type AdminLogSource = 'api_call' | 'credit'
 
 export interface AdminLogRow {
-  /** 行 id：来自原表，按 source 区分命名空间 */
+  /** 行 id：api_calls.id */
   id: number
-  source: AdminLogSource
   type: AdminLogType
-  /** 调用 / 流水发生时间 */
   createdAt: string
 
-  // ─── 用户 / 密钥 / 请求 标识（展开区使用）──────────────────────────
+  // ─── 用户 / 密钥 / 请求 标识 ─────────────────────────────────────
   userId: number | null
   userName: string | null
   apiKeyId: number | null
   apiKeyName: string | null
-  /** api_calls 行有；credit_transactions 行回查 apiCallId → requestId */
   requestId: string | null
 
   // ─── 接口 / 分类（筛选区使用）──────────────────────────────────
   apiId: number | null
   apiName: string | null
-  apiPath: string | null
+  apiPath: string
   categoryId: number | null
   categoryName: string | null
 
-  // ─── 费用 / 详情 ───────────────────────────────────────────────
-  /**
-   * 费用：
-   *   - api_call : creditsCost（≥0；正数表示扣费金额，0 = 免费请求）
-   *   - credit   : amount（带符号；负数=出账）
-   */
+  // ─── 请求摘要 ───────────────────────────────────────────────────
+  method: string
+  statusCode: number
+  latencyMs: number
+  /** 本次请求扣费：≥0，0 = 免费请求 */
   cost: number
+  /** 是否进入 api_call_stats 聚合（false = 业务可见拒绝） */
+  isCounted: boolean
 
-  /** 调用日志详情（仅 source=api_call 时有意义） */
-  method: string | null
-  statusCode: number | null
-  latencyMs: number | null
+  // ─── 错误信息 ───────────────────────────────────────────────────
   errorCode: string | null
   errorMessage: string | null
 
-  /** 积分流水详情（仅 source=credit 时有意义） */
-  reason: string | null
-  balanceAfter: number | null
-  operatorName: string | null
-  remark: string | null
+  // ─── 详情面板字段（列表不展示，仅详情弹窗读取）─────────────────
+  queryString: string | null
+  ip: string | null
+  country: string | null
+  region: string | null
+  city: string | null
+  userAgent: string | null
+  referer: string | null
+  requestSize: number | null
+  responseSize: number | null
 }
 
 // ────────────────────────────────────────────────────────────────────
-// 通用日志 - 筛选 / 列表响应
+// 调用日志 - 筛选 / 列表响应
 // ────────────────────────────────────────────────────────────────────
 
 export interface AdminLogsListQuery {
@@ -111,7 +84,6 @@ export interface AdminLogsListQuery {
   categoryId?: number
   /** 多选；缺省=全部 */
   types?: AdminLogType[]
-  /** 仅在展开区联想 */
   apiKeyId?: number
   userId?: number
   requestId?: string

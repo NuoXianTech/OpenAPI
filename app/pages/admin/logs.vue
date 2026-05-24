@@ -8,28 +8,13 @@ import {
   type AdminLogsFilterOptions
 } from '~~/shared/types/admin-logs'
 
-useHead({ title: '通用日志' })
+useHead({ title: '调用日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 // ─── 类型展示元数据 ──────────────────────────────────────────────
-const typeMeta: Record<AdminLogType, { label: string, color: 'success' | 'warning' | 'error' | 'info' | 'neutral' | 'primary', icon: string }> = {
-  unknown: { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' },
-  recharge: { label: '充值', color: 'success', icon: 'i-mdi-cash-plus' },
+const typeMeta: Record<AdminLogType, { label: string, color: 'success' | 'error' | 'primary', icon: string }> = {
   consume: { label: '请求', color: 'primary', icon: 'i-mdi-swap-horizontal-circle-outline' },
-  admin: { label: '管理', color: 'info', icon: 'i-mdi-shield-account-outline' },
-  system: { label: '系统', color: 'neutral', icon: 'i-mdi-cog-outline' },
-  error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' },
-  refund: { label: '退款', color: 'info', icon: 'i-mdi-cash-refund' }
-}
-
-// credit_transactions.reason → 详情中可读描述
-const reasonMeta: Record<string, string> = {
-  redemption_code: '兑换码兑换',
-  admin_grant: '管理员加分',
-  admin_revoke: '管理员扣分',
-  admin_reset: '管理员重置',
-  signup_bonus: '注册赠送',
-  api_refund: '调用退款'
+  error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' }
 }
 
 const typeSelectItems = ADMIN_LOG_TYPES.map(t => ({
@@ -121,10 +106,31 @@ onMounted(() => {
   void loadFilterOptions()
 })
 
+// ─── 详情弹窗 ───────────────────────────────────────────────────
+const detailRow = ref<AdminLogRow | null>(null)
+const detailOpen = ref(false)
+
+function openDetail(row: AdminLogRow) {
+  detailRow.value = row
+  detailOpen.value = true
+}
+
 // ─── 表格列 ─────────────────────────────────────────────────────
 function formatDate(iso: string) {
   if (!iso) return '-'
   return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+}
+
+function formatBytes(value: number | null) {
+  if (value == null) return '-'
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+  return `${(value / 1024 / 1024).toFixed(2)} MB`
+}
+
+function formatLocation(row: AdminLogRow) {
+  const parts = [row.country, row.region, row.city].filter(Boolean)
+  return parts.length ? parts.join(' / ') : '-'
 }
 
 const columns: TableColumn<AdminLogRow>[] = [
@@ -133,14 +139,15 @@ const columns: TableColumn<AdminLogRow>[] = [
   { accessorKey: 'apiKeyName', header: '密钥' },
   { accessorKey: 'apiName', header: '接口' },
   { accessorKey: 'cost', header: '费用' },
-  { id: 'detail', header: '详情' }
+  { id: 'summary', header: '摘要' },
+  { id: 'actions', header: '' }
 ]
 </script>
 
 <template>
   <UDashboardPanel id="admin-logs">
     <template #header>
-      <UDashboardNavbar title="通用日志">
+      <UDashboardNavbar title="调用日志">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -304,7 +311,7 @@ const columns: TableColumn<AdminLogRow>[] = [
                 class="size-5 text-muted"
               />
               <h3 class="font-semibold">
-                通用日志
+                调用日志
               </h3>
               <span class="ml-auto text-xs text-muted tabular-nums">
                 共 {{ total.toLocaleString() }} 条
@@ -350,7 +357,7 @@ const columns: TableColumn<AdminLogRow>[] = [
               <span
                 v-else
                 class="text-xs text-muted italic"
-              >系统</span>
+              >匿名</span>
             </template>
 
             <template #apiKeyName-cell="{ row }">
@@ -380,26 +387,15 @@ const columns: TableColumn<AdminLogRow>[] = [
 
             <template #cost-cell="{ row }">
               <span
-                v-if="row.original.source === 'api_call'"
                 class="tabular-nums text-sm"
                 :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
               >
                 {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
               </span>
-              <span
-                v-else
-                class="tabular-nums text-sm font-semibold"
-                :class="row.original.cost > 0 ? 'text-success' : row.original.cost < 0 ? 'text-error' : 'text-muted'"
-              >
-                {{ row.original.cost > 0 ? `+${row.original.cost}` : row.original.cost }}
-              </span>
             </template>
 
-            <template #detail-cell="{ row }">
-              <div
-                v-if="row.original.source === 'api_call'"
-                class="flex flex-col text-xs gap-0.5"
-              >
+            <template #summary-cell="{ row }">
+              <div class="flex flex-col text-xs gap-0.5">
                 <div class="flex items-center gap-1.5">
                   <UBadge
                     color="neutral"
@@ -411,14 +407,22 @@ const columns: TableColumn<AdminLogRow>[] = [
                   </UBadge>
                   <span
                     class="tabular-nums"
-                    :class="row.original.statusCode && row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
+                    :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
                   >
                     {{ row.original.statusCode }}
                   </span>
-                  <span
-                    v-if="row.original.latencyMs !== null"
-                    class="text-muted tabular-nums"
-                  >· {{ row.original.latencyMs }}ms</span>
+                  <span class="text-muted tabular-nums">
+                    · {{ row.original.latencyMs }}ms
+                  </span>
+                  <UBadge
+                    v-if="!row.original.isCounted"
+                    color="warning"
+                    variant="subtle"
+                    size="sm"
+                    title="未计入统计"
+                  >
+                    拒绝
+                  </UBadge>
                 </div>
                 <span
                   v-if="row.original.errorMessage"
@@ -427,38 +431,177 @@ const columns: TableColumn<AdminLogRow>[] = [
                 >
                   {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
                 </span>
-                <span
-                  v-if="row.original.requestId"
-                  class="font-mono text-muted text-[10px] truncate max-w-[280px]"
-                  :title="row.original.requestId"
-                >{{ row.original.requestId }}</span>
               </div>
-              <div
-                v-else
-                class="flex flex-col text-xs gap-0.5"
-              >
-                <span
-                  v-if="row.original.reason && reasonMeta[row.original.reason]"
-                  class="font-medium text-default"
-                >{{ reasonMeta[row.original.reason] }}</span>
-                <span
-                  v-if="row.original.balanceAfter !== null"
-                  class="text-muted"
-                >余额 <span class="tabular-nums text-default">{{ row.original.balanceAfter.toLocaleString() }}</span></span>
-                <span
-                  v-if="row.original.operatorName"
-                  class="text-muted"
-                >操作人 {{ row.original.operatorName }}</span>
-                <span
-                  v-if="row.original.remark"
-                  class="text-muted truncate max-w-[280px]"
-                  :title="row.original.remark"
-                >{{ row.original.remark }}</span>
-              </div>
+            </template>
+
+            <template #actions-cell="{ row }">
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                icon="i-mdi-eye-outline"
+                aria-label="查看详情"
+                @click="openDetail(row.original)"
+              />
             </template>
           </DashboardDataTable>
         </UCard>
       </div>
+
+      <UModal
+        v-model:open="detailOpen"
+        title="调用详情"
+        :ui="{ content: 'max-w-2xl' }"
+      >
+        <template #body>
+          <div
+            v-if="detailRow"
+            class="space-y-4 text-sm"
+          >
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <div class="text-xs text-muted">
+                  时间
+                </div>
+                <div>{{ formatDate(detailRow.createdAt) }}</div>
+              </div>
+              <div>
+                <div class="text-xs text-muted">
+                  类型
+                </div>
+                <UBadge
+                  :color="typeMeta[detailRow.type].color"
+                  :icon="typeMeta[detailRow.type].icon"
+                  variant="subtle"
+                  size="sm"
+                  class="w-fit"
+                >
+                  {{ typeMeta[detailRow.type].label }}
+                </UBadge>
+              </div>
+              <div>
+                <div class="text-xs text-muted">
+                  请求 ID
+                </div>
+                <div class="font-mono text-xs break-all">
+                  {{ detailRow.requestId || '-' }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-muted">
+                  用户
+                </div>
+                <div>
+                  {{ detailRow.userId ? `${detailRow.userName || '-'} (#${detailRow.userId})` : '匿名' }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-muted">
+                  密钥
+                </div>
+                <div>
+                  {{ detailRow.apiKeyName || (detailRow.apiKeyId ? `#${detailRow.apiKeyId}` : '-') }}
+                </div>
+              </div>
+              <div>
+                <div class="text-xs text-muted">
+                  接口
+                </div>
+                <div>
+                  {{ detailRow.apiName || '-' }}
+                  <span
+                    v-if="detailRow.categoryName"
+                    class="text-muted text-xs"
+                  >· {{ detailRow.categoryName }}</span>
+                </div>
+              </div>
+            </div>
+
+            <UCard
+              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
+            >
+              <template #header>
+                <span class="text-xs font-semibold text-muted">请求</span>
+              </template>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center gap-2">
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    class="font-mono"
+                  >
+                    {{ detailRow.method }}
+                  </UBadge>
+                  <span class="font-mono break-all">{{ detailRow.apiPath }}</span>
+                </div>
+                <div
+                  v-if="detailRow.queryString"
+                  class="font-mono text-muted break-all"
+                >
+                  ?{{ detailRow.queryString }}
+                </div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">
+                  <span>状态码 <span
+                    class="tabular-nums"
+                    :class="detailRow.statusCode >= 400 ? 'text-error' : 'text-default'"
+                  >{{ detailRow.statusCode }}</span></span>
+                  <span>耗时 <span class="tabular-nums text-default">{{ detailRow.latencyMs }}ms</span></span>
+                  <span>费用 <span class="tabular-nums text-default">{{ detailRow.cost > 0 ? `-${detailRow.cost}` : '免费' }}</span></span>
+                  <span>请求体 <span class="text-default">{{ formatBytes(detailRow.requestSize) }}</span></span>
+                  <span>响应体 <span class="text-default">{{ formatBytes(detailRow.responseSize) }}</span></span>
+                </div>
+              </div>
+            </UCard>
+
+            <UCard
+              v-if="detailRow.errorCode || detailRow.errorMessage"
+              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
+            >
+              <template #header>
+                <span class="text-xs font-semibold text-error">错误</span>
+              </template>
+              <div class="space-y-1 text-xs">
+                <div v-if="detailRow.errorCode">
+                  <span class="text-muted">code </span>
+                  <span class="font-mono">{{ detailRow.errorCode }}</span>
+                </div>
+                <div
+                  v-if="detailRow.errorMessage"
+                  class="break-all"
+                >
+                  {{ detailRow.errorMessage }}
+                </div>
+              </div>
+            </UCard>
+
+            <UCard
+              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
+            >
+              <template #header>
+                <span class="text-xs font-semibold text-muted">客户端</span>
+              </template>
+              <div class="space-y-1 text-xs">
+                <div>
+                  <span class="text-muted">IP </span>
+                  <span class="font-mono">{{ detailRow.ip || '-' }}</span>
+                </div>
+                <div>
+                  <span class="text-muted">位置 </span>
+                  <span>{{ formatLocation(detailRow) }}</span>
+                </div>
+                <div>
+                  <span class="text-muted">User-Agent </span>
+                  <span class="font-mono break-all">{{ detailRow.userAgent || '-' }}</span>
+                </div>
+                <div v-if="detailRow.referer">
+                  <span class="text-muted">Referer </span>
+                  <span class="font-mono break-all">{{ detailRow.referer }}</span>
+                </div>
+              </div>
+            </UCard>
+          </div>
+        </template>
+      </UModal>
     </template>
   </UDashboardPanel>
 </template>

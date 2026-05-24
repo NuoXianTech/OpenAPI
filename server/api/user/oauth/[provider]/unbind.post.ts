@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event) => {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.oauth.unbind',
-    resourceType: 'oauth_account',
+    resourceType: 'oauth-account',
     resourceId: String(removed.id),
     detail: { provider, providerUserId: removed.providerUserId }
   })

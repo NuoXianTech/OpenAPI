@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ilike, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
 import { operationLogs } from '@nuxthub/db/schema'
 
 export type OperationLogStatus = 'success' | 'failure'
@@ -19,6 +19,8 @@ export interface OperationLogListFilters {
   userId?: number
   // admin 操作 userId 为 NULL；filter 通过这一点区分管理端/用户端操作
   actorKind?: 'admin' | 'user'
+  /** 模糊匹配操作者名快照（actor 字段） */
+  actor?: string
   action?: string // 支持前缀匹配，如 "user." 匹配所有用户相关操作
   resourceType?: string
   status?: OperationLogStatus
@@ -26,6 +28,11 @@ export interface OperationLogListFilters {
   endAt?: Date
   limit?: number
   offset?: number
+}
+
+export interface OperationLogListResult {
+  items: Array<typeof operationLogs.$inferSelect>
+  total: number
 }
 
 export const operationLogService = {
@@ -48,7 +55,7 @@ export const operationLogService = {
     }
   },
 
-  async list(filters: OperationLogListFilters = {}) {
+  async list(filters: OperationLogListFilters = {}): Promise<OperationLogListResult> {
     const conditions: SQL[] = []
     if (typeof filters.userId === 'number') {
       conditions.push(eq(operationLogs.userId, filters.userId))
@@ -57,6 +64,9 @@ export const operationLogService = {
       conditions.push(isNull(operationLogs.userId))
     } else if (filters.actorKind === 'user') {
       conditions.push(isNotNull(operationLogs.userId))
+    }
+    if (filters.actor) {
+      conditions.push(ilike(operationLogs.actor, `%${filters.actor}%`))
     }
     if (filters.action) {
       conditions.push(like(operationLogs.action, `${filters.action}%`))
@@ -76,12 +86,19 @@ export const operationLogService = {
 
     const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
     const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const where = conditions.length ? and(...conditions) : undefined
 
-    const query = db.select().from(operationLogs)
-    const rows = conditions.length
-      ? await query.where(and(...conditions)).orderBy(desc(operationLogs.createdAt)).limit(limit).offset(offset)
-      : await query.orderBy(desc(operationLogs.createdAt)).limit(limit).offset(offset)
+    const baseQuery = db.select().from(operationLogs)
+    const countQuery = db.select({ value: count() }).from(operationLogs)
 
-    return rows
+    const [items, totalRows] = await Promise.all([
+      (where ? baseQuery.where(where) : baseQuery)
+        .orderBy(desc(operationLogs.createdAt))
+        .limit(limit)
+        .offset(offset),
+      where ? countQuery.where(where) : countQuery
+    ])
+
+    return { items, total: Number(totalRows[0]?.value || 0) }
   }
 }

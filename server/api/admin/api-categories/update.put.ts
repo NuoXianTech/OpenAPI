@@ -27,7 +27,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     actor: admin.username,
     action: 'admin.api-category.update',
-    resourceType: 'api_category',
+    resourceType: 'api-category',
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,

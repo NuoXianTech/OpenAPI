@@ -33,8 +33,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: 'admin.redemption_code.generate',
-    resourceType: 'redemption_code',
+    action: 'admin.redemption-code.generate',
+    resourceType: 'redemption-code',
     resourceId: data.batchId,
     detail: {
       batchId: data.batchId,

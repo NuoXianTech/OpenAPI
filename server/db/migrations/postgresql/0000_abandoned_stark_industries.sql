@@ -102,9 +102,9 @@ CREATE TABLE "apis" (
 	"http_method" varchar(50) NOT NULL,
 	"api_path" varchar(200) NOT NULL,
 	"doc_url" varchar(200) NOT NULL,
-	"is_enabled" boolean DEFAULT true NOT NULL,
+	"is_enabled" boolean DEFAULT false NOT NULL,
 	"is_api_key" boolean DEFAULT false NOT NULL,
-	"is_statistics" boolean DEFAULT true NOT NULL,
+	"is_statistics" boolean DEFAULT false NOT NULL,
 	"is_orphaned" boolean DEFAULT false NOT NULL,
 	"rate_limit_per_second" integer DEFAULT 0 NOT NULL,
 	"rate_limit_per_minute" integer DEFAULT 0 NOT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE "site_settings" (
 	"oauth_force_binding" boolean DEFAULT false NOT NULL,
 	"turnstile_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_site_key" varchar(200) DEFAULT '' NOT NULL,
-	"turnstile_secret_key" varchar(500) DEFAULT '' NOT NULL,
+	"turnstile_secret_key" varchar(200) DEFAULT '' NOT NULL,
 	"turnstile_login_enabled" boolean DEFAULT true NOT NULL,
 	"turnstile_register_enabled" boolean DEFAULT true NOT NULL,
 	"turnstile_admin_login_enabled" boolean DEFAULT false NOT NULL,
@@ -417,6 +417,7 @@ CREATE INDEX "redemption_codes_enabled_expires_idx" ON "redemption_codes" USING 
 CREATE INDEX "redemption_codes_created_at_idx" ON "redemption_codes" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "redemption_records_code_user_uq" ON "redemption_records" USING btree ("code_id","user_id");--> statement-breakpoint
 CREATE INDEX "redemption_records_user_redeemed_idx" ON "redemption_records" USING btree ("user_id","redeemed_at");--> statement-breakpoint
+CREATE INDEX "redemption_records_redeemed_at_idx" ON "redemption_records" USING btree ("redeemed_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "sessions_user_idx" ON "sessions" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "sessions_expires_idx" ON "sessions" USING btree ("expires_at");--> statement-breakpoint
 CREATE INDEX "sessions_last_active_idx" ON "sessions" USING btree ("last_active_at");--> statement-breakpoint

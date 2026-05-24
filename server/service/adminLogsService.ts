@@ -15,10 +15,10 @@ import type {
 } from '~~/shared/types/admin-logs'
 
 // ─────────────────────────────────────────────────────────────────────
-// 类型映射 SQL 表达式 - 与 shared/types/admin-logs.ts 注释保持一致
+// 类型映射 SQL 表达式
 // ─────────────────────────────────────────────────────────────────────
 
-/** api_calls 行 → AdminLogType */
+/** api_calls 行 → AdminLogType（错误条件优先） */
 const apiCallTypeExpr = sql<AdminLogType>`
   case
     when ${apiCalls.errorCode} is not null
@@ -29,20 +29,15 @@ const apiCallTypeExpr = sql<AdminLogType>`
   end
 `
 
-/** credit_transactions 行 → AdminLogType（已排除 api_charge：由 api_calls 覆盖） */
-const creditTypeExpr = sql<AdminLogType>`
-  case
-    when ${creditTransactions.reason} = 'redemption_code' then 'recharge'
-    when ${creditTransactions.reason} in ('admin_grant', 'admin_revoke', 'admin_reset') then 'admin'
-    when ${creditTransactions.reason} = 'signup_bonus' then 'system'
-    when ${creditTransactions.reason} = 'api_refund' then 'refund'
-    else 'unknown'
-  end
-`
-
 function toNumber(value: number | string | null | undefined) {
   const n = Number(value)
   return Number.isFinite(n) ? n : 0
+}
+
+function toNullableNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined) return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
 }
 
 function toIso(value: Date | string | number): string {
@@ -50,7 +45,7 @@ function toIso(value: Date | string | number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 通用日志查询
+// 调用日志查询
 // ─────────────────────────────────────────────────────────────────────
 
 interface ListLogsInput {
@@ -66,213 +61,118 @@ interface ListLogsInput {
   offset?: number
 }
 
-/** 类型筛选拆分为 (api_call 集合, credit 集合) → 决定是否需要查对应表 */
-function splitTypes(types?: AdminLogType[]) {
-  if (!types || types.length === 0) {
-    return { needCalls: true, needCredits: true, callTypes: null, creditTypes: null }
-  }
-  const set = new Set(types)
-  const callTypes = (['consume', 'error'] as AdminLogType[]).filter(t => set.has(t))
-  const creditTypes = (['recharge', 'admin', 'system', 'refund', 'unknown'] as AdminLogType[]).filter(t => set.has(t))
-  return {
-    needCalls: callTypes.length > 0,
-    needCredits: creditTypes.length > 0,
-    callTypes: callTypes.length > 0 ? callTypes : null,
-    creditTypes: creditTypes.length > 0 ? creditTypes : null
-  }
-}
-
 export const adminLogsService = {
   /**
-   * 通用日志列表 · 合并 api_calls + credit_transactions（排除 api_charge）
+   * 调用日志列表 · 单表查询 api_calls。
    *
-   * 策略：分别查询两表，按时间戳并入内存后排序分页。
-   * 对管理后台场景（深度分页极少触发）已足够；如未来量级翻倍，可改 SQL UNION + 物化视图。
+   * 数据源仅 api_calls：积分流水请走 /admin/users/credit-transactions，
+   * 管理 / 系统操作请走 /admin/system/operation-logs。
    */
   async listLogs(input: ListLogsInput = {}): Promise<AdminLogsListResponse> {
     const limit = Math.min(Math.max(Math.trunc(input.limit ?? 50), 1), 200)
     const offset = Math.max(Math.trunc(input.offset ?? 0), 0)
-    const fetchCap = limit + offset
 
-    const { needCalls, needCredits, callTypes, creditTypes } = splitTypes(input.types)
-
-    // ─── api_calls 子查询 ───────────────────────────────────────────
-    const callsRows: AdminLogRow[] = []
-    let callsTotal = 0
-    if (needCalls) {
-      const conds: SQL[] = []
-      if (input.startAt) conds.push(sql`${apiCalls.createdAt} >= ${input.startAt}`)
-      if (input.endAt) conds.push(sql`${apiCalls.createdAt} < ${input.endAt}`)
-      if (input.apiId && input.apiId > 0) conds.push(eq(apiCalls.apiId, input.apiId))
-      if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
-      if (input.userId && input.userId > 0) conds.push(eq(apiCalls.userId, input.userId))
-      if (input.apiKeyId && input.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, input.apiKeyId))
-      if (input.requestId) conds.push(sql`${apiCalls.requestId}::text = ${input.requestId}`)
-      if (callTypes) {
-        conds.push(sql`(${apiCallTypeExpr}) in ${callTypes}`)
-      }
-      const where = conds.length ? and(...conds) : undefined
-
-      const baseSelect = db.select({
-        id: apiCalls.id,
-        type: apiCallTypeExpr.as('type'),
-        createdAt: apiCalls.createdAt,
-        userId: apiCalls.userId,
-        userName: users.username,
-        apiKeyId: apiCalls.apiKeyId,
-        apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
-        requestId: sql<string | null>`${apiCalls.requestId}::text`,
-        apiId: apiCalls.apiId,
-        apiName: apis.name,
-        apiPath: apiCalls.path,
-        categoryId: apis.categoryId,
-        categoryName: apiCategories.name,
-        cost: apiCalls.creditsCost,
-        method: apiCalls.method,
-        statusCode: apiCalls.statusCode,
-        latencyMs: apiCalls.latencyMs,
-        errorCode: apiCalls.errorCode,
-        errorMessage: apiCalls.errorMessage
-      })
-        .from(apiCalls)
-        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-        .leftJoin(apiCategories, eq(apiCategories.id, apis.categoryId))
-        .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
-        .leftJoin(users, eq(users.id, apiCalls.userId))
-
-      const [items, totalRows] = await Promise.all([
-        (where ? baseSelect.where(where) : baseSelect)
-          .orderBy(sql`${apiCalls.createdAt} desc`)
-          .limit(fetchCap),
-        (where
-          ? db.select({ value: sql<number>`count(*)` }).from(apiCalls)
-              .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-              .where(where)
-          : db.select({ value: sql<number>`count(*)` }).from(apiCalls))
-      ])
-
-      callsTotal = toNumber(totalRows[0]?.value)
-      for (const r of items as Array<typeof items[number]>) {
-        callsRows.push({
-          id: r.id,
-          source: 'api_call',
-          type: r.type,
-          createdAt: toIso(r.createdAt),
-          userId: r.userId,
-          userName: r.userName,
-          apiKeyId: r.apiKeyId,
-          apiKeyName: r.apiKeyName,
-          requestId: r.requestId,
-          apiId: r.apiId,
-          apiName: r.apiName,
-          apiPath: r.apiPath,
-          categoryId: r.categoryId,
-          categoryName: r.categoryName,
-          cost: toNumber(r.cost),
-          method: r.method,
-          statusCode: r.statusCode,
-          latencyMs: r.latencyMs,
-          errorCode: r.errorCode,
-          errorMessage: r.errorMessage,
-          reason: null,
-          balanceAfter: null,
-          operatorName: null,
-          remark: null
-        })
-      }
+    const conds: SQL[] = []
+    if (input.startAt) conds.push(sql`${apiCalls.createdAt} >= ${input.startAt}`)
+    if (input.endAt) conds.push(sql`${apiCalls.createdAt} < ${input.endAt}`)
+    if (input.apiId && input.apiId > 0) conds.push(eq(apiCalls.apiId, input.apiId))
+    if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
+    if (input.userId && input.userId > 0) conds.push(eq(apiCalls.userId, input.userId))
+    if (input.apiKeyId && input.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, input.apiKeyId))
+    if (input.requestId) conds.push(sql`${apiCalls.requestId}::text = ${input.requestId}`)
+    if (input.types && input.types.length > 0 && input.types.length < 2) {
+      conds.push(sql`(${apiCallTypeExpr}) in ${input.types}`)
     }
+    const where = conds.length ? and(...conds) : undefined
 
-    // ─── credit_transactions 子查询（排除 api_charge）─────────────────
-    const creditRows: AdminLogRow[] = []
-    let creditTotal = 0
-    if (needCredits) {
-      // api_charge 与 api_calls 1:1 同源（同一 apiCallId），跳过避免重复
-      const conds: SQL[] = [sql`${creditTransactions.reason} <> 'api_charge'`]
-      if (input.startAt) conds.push(sql`${creditTransactions.createdAt} >= ${input.startAt}`)
-      if (input.endAt) conds.push(sql`${creditTransactions.createdAt} < ${input.endAt}`)
-      if (input.apiId && input.apiId > 0) conds.push(eq(creditTransactions.apiId, input.apiId))
-      if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
-      if (input.userId && input.userId > 0) conds.push(eq(creditTransactions.userId, input.userId))
-      // apiKeyId / requestId 仅 api_calls 行携带，credit 行在这些筛选下应为空
-      if (input.apiKeyId && input.apiKeyId > 0) conds.push(sql`false`)
-      if (input.requestId) conds.push(sql`false`)
-      if (creditTypes) {
-        conds.push(sql`(${creditTypeExpr}) in ${creditTypes}`)
-      }
-      const where = and(...conds)
+    const baseSelect = db.select({
+      id: apiCalls.id,
+      type: apiCallTypeExpr.as('type'),
+      createdAt: apiCalls.createdAt,
+      userId: apiCalls.userId,
+      userName: users.username,
+      apiKeyId: apiCalls.apiKeyId,
+      apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
+      requestId: sql<string | null>`${apiCalls.requestId}::text`,
+      apiId: apiCalls.apiId,
+      apiName: apis.name,
+      apiPath: apiCalls.path,
+      categoryId: apis.categoryId,
+      categoryName: apiCategories.name,
+      method: apiCalls.method,
+      statusCode: apiCalls.statusCode,
+      latencyMs: apiCalls.latencyMs,
+      cost: apiCalls.creditsCost,
+      isCounted: apiCalls.isCounted,
+      errorCode: apiCalls.errorCode,
+      errorMessage: apiCalls.errorMessage,
+      queryString: apiCalls.queryString,
+      ip: apiCalls.ip,
+      country: apiCalls.country,
+      region: apiCalls.region,
+      city: apiCalls.city,
+      userAgent: apiCalls.userAgent,
+      referer: apiCalls.referer,
+      requestSize: apiCalls.requestSize,
+      responseSize: apiCalls.responseSize
+    })
+      .from(apiCalls)
+      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+      .leftJoin(apiCategories, eq(apiCategories.id, apis.categoryId))
+      .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+      .leftJoin(users, eq(users.id, apiCalls.userId))
 
-      const baseSelect = db.select({
-        id: creditTransactions.id,
-        type: creditTypeExpr.as('type'),
-        createdAt: creditTransactions.createdAt,
-        userId: creditTransactions.userId,
-        userName: users.username,
-        apiId: creditTransactions.apiId,
-        apiName: apis.name,
-        apiPath: apis.apiPath,
-        categoryId: apis.categoryId,
-        categoryName: apiCategories.name,
-        cost: creditTransactions.amount,
-        reason: creditTransactions.reason,
-        balanceAfter: creditTransactions.balanceAfter,
-        operatorName: creditTransactions.operatorName,
-        remark: creditTransactions.remark
-      })
-        .from(creditTransactions)
-        .leftJoin(apis, eq(apis.id, creditTransactions.apiId))
-        .leftJoin(apiCategories, eq(apiCategories.id, apis.categoryId))
-        .leftJoin(users, eq(users.id, creditTransactions.userId))
+    const countQuery = db.select({ value: sql<number>`count(*)` })
+      .from(apiCalls)
+      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
 
-      const [items, totalRows] = await Promise.all([
-        baseSelect.where(where).orderBy(sql`${creditTransactions.createdAt} desc`).limit(fetchCap),
-        db.select({ value: sql<number>`count(*)` }).from(creditTransactions)
-          .leftJoin(apis, eq(apis.id, creditTransactions.apiId))
-          .where(where)
-      ])
+    const [items, totalRows] = await Promise.all([
+      (where ? baseSelect.where(where) : baseSelect)
+        .orderBy(sql`${apiCalls.createdAt} desc`)
+        .limit(limit)
+        .offset(offset),
+      where ? countQuery.where(where) : countQuery
+    ])
 
-      creditTotal = toNumber(totalRows[0]?.value)
-      for (const r of items as Array<typeof items[number]>) {
-        creditRows.push({
-          id: r.id,
-          source: 'credit',
-          type: r.type,
-          createdAt: toIso(r.createdAt),
-          userId: r.userId,
-          userName: r.userName,
-          apiKeyId: null,
-          apiKeyName: null,
-          requestId: null,
-          apiId: r.apiId,
-          apiName: r.apiName,
-          apiPath: r.apiPath,
-          categoryId: r.categoryId,
-          categoryName: r.categoryName,
-          cost: toNumber(r.cost),
-          method: null,
-          statusCode: null,
-          latencyMs: null,
-          errorCode: null,
-          errorMessage: null,
-          reason: r.reason,
-          balanceAfter: toNumber(r.balanceAfter),
-          operatorName: r.operatorName,
-          remark: r.remark
-        })
-      }
-    }
-
-    // ─── 合并 / 排序 / 分页 ─────────────────────────────────────────
-    const merged = [...callsRows, ...creditRows]
-      .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
-      .slice(offset, offset + limit)
+    const rows: AdminLogRow[] = (items as Array<typeof items[number]>).map(r => ({
+      id: r.id,
+      type: r.type,
+      createdAt: toIso(r.createdAt),
+      userId: r.userId,
+      userName: r.userName,
+      apiKeyId: r.apiKeyId,
+      apiKeyName: r.apiKeyName,
+      requestId: r.requestId,
+      apiId: r.apiId,
+      apiName: r.apiName,
+      apiPath: r.apiPath,
+      categoryId: r.categoryId,
+      categoryName: r.categoryName,
+      method: r.method,
+      statusCode: r.statusCode,
+      latencyMs: r.latencyMs,
+      cost: toNumber(r.cost),
+      isCounted: !!r.isCounted,
+      errorCode: r.errorCode,
+      errorMessage: r.errorMessage,
+      queryString: r.queryString,
+      ip: r.ip,
+      country: r.country,
+      region: r.region,
+      city: r.city,
+      userAgent: r.userAgent,
+      referer: r.referer,
+      requestSize: toNullableNumber(r.requestSize),
+      responseSize: toNullableNumber(r.responseSize)
+    }))
 
     return {
-      items: merged,
-      total: callsTotal + creditTotal
+      items: rows,
+      total: toNumber(totalRows[0]?.value)
     }
   },
 
-  /** 通用日志的筛选下拉选项（接口 + 分类） */
+  /** 调用日志的筛选下拉选项（接口 + 分类） */
   async listFilterOptions(): Promise<AdminLogsFilterOptions> {
     const [apiRows, categoryRows] = await Promise.all([
       db.select({ id: apis.id, name: apis.name, apiPath: apis.apiPath })

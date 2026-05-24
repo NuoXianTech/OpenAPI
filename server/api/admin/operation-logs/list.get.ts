@@ -20,9 +20,10 @@ export default defineEventHandler(async (event: H3Event) => {
   const actorKindRaw = (query.actorKind || '').toString()
   const statusRaw = (query.status || '').toString()
 
-  const logs = await operationLogService.list({
+  return operationLogService.list({
     userId: query.userId ? Number(query.userId) : undefined,
     actorKind: ACTOR_KINDS.includes(actorKindRaw as ActorKind) ? actorKindRaw as ActorKind : undefined,
+    actor: (query.actor || '').toString().trim() || undefined,
     action: (query.action || '').toString().trim() || undefined,
     resourceType: (query.resourceType || '').toString().trim() || undefined,
     status: STATUSES.includes(statusRaw as OperationLogStatus) ? statusRaw as OperationLogStatus : undefined,
@@ -31,6 +32,4 @@ export default defineEventHandler(async (event: H3Event) => {
     limit: query.limit ? Number(query.limit) : undefined,
     offset: query.offset ? Number(query.offset) : undefined
   })
-
-  return logs
 })

@@ -71,7 +71,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
       items: [
         { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: ADMIN_OVERVIEW_PATH },
         { label: '数据看板', icon: 'i-mdi-chart-box-outline', to: ADMIN_ANALYTICS_PATH },
-        { label: '通用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
+        { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
       ]
     },
     {

@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.oauth-provider.update',
-    resourceType: 'oauth_provider',
+    resourceType: 'oauth-provider',
     resourceId: String(updated.id),
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,

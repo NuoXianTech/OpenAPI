@@ -18,8 +18,8 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
-    action: 'admin.apikey.reset',
-    resourceType: 'apikey',
+    action: 'admin.api-key.reset',
+    resourceType: 'api-key',
     resourceId: String(id),
     detail: { updated }
   })

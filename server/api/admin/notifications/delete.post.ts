@@ -16,7 +16,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await operationLogService.addLog({
     actor: admin.username,
     action: 'admin.notification.delete',
-    resourceType: 'notification_message',
+    resourceType: 'notification-message',
     resourceId: String(messageId),
     detail: { title: removed.title }
   })

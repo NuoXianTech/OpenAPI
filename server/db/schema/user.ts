@@ -131,5 +131,6 @@ export const redemptionRecords = pgTable('redemption_records', {
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   uniqueIndex('redemption_records_code_user_uq').on(table.codeId, table.userId),
-  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt)
+  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt),
+  index('redemption_records_redeemed_at_idx').on(table.redeemedAt.desc())
 ])
