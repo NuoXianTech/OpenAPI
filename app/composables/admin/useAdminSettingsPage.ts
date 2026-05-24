@@ -76,10 +76,53 @@ export function useAdminSettingsForm(): AdminSettingsForm {
   return form
 }
 
+function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
+  const d = defaultForm()
+  return {
+    siteName: val.siteName || d.siteName,
+    siteUrl: val.siteUrl || d.siteUrl,
+    siteImg: val.siteImg || d.siteImg,
+    siteDescription: val.siteDescription || d.siteDescription,
+    startTime: val.startTime || d.startTime,
+    sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? d.sessionMaxAgeSeconds,
+    sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? d.sessionAbsoluteMaxAgeSeconds,
+    sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? d.sessionRememberMaxAgeSeconds,
+    registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist')
+      ? val.registerEmailFilterMode
+      : 'off',
+    registerEmailFilterList: val.registerEmailFilterList ?? d.registerEmailFilterList,
+    defaultRegisterCredits: val.defaultRegisterCredits ?? d.defaultRegisterCredits,
+    emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? d.emailVerifyExpiresInMinutes,
+    passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? d.passwordResetExpiresInMinutes,
+    passwordResetEnabled: val.passwordResetEnabled ?? d.passwordResetEnabled,
+    smtpHost: val.smtpHost || d.smtpHost,
+    smtpPort: val.smtpPort ?? d.smtpPort,
+    smtpSecure: val.smtpSecure ?? d.smtpSecure,
+    smtpUser: val.smtpUser || d.smtpUser,
+    smtpPass: val.smtpPass || d.smtpPass,
+    smtpFrom: val.smtpFrom || d.smtpFrom,
+    oauthLoginEnabled: val.oauthLoginEnabled ?? d.oauthLoginEnabled,
+    oauthForceBinding: val.oauthForceBinding ?? d.oauthForceBinding,
+    turnstileEnabled: val.turnstileEnabled ?? d.turnstileEnabled,
+    turnstileSiteKey: val.turnstileSiteKey || d.turnstileSiteKey,
+    turnstileSecretKey: val.turnstileSecretKey || d.turnstileSecretKey,
+    turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,
+    turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
+    turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
+    turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
+    announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome
+  }
+}
+
+function snapshot(form: AdminSettingsForm): AdminSettingsForm {
+  return { ...form }
+}
+
 export function useAdminSettingsPage() {
   const toast = useToast()
 
   const form = reactive<AdminSettingsForm>(defaultForm())
+  const pristine = ref<AdminSettingsForm>(defaultForm())
   const saving = ref(false)
 
   provide(ADMIN_SETTINGS_FORM_KEY, form)
@@ -90,50 +133,35 @@ export function useAdminSettingsPage() {
 
   watch(() => data.value, (val) => {
     if (!val) return
-    const d = defaultForm()
-    Object.assign(form, {
-      siteName: val.siteName || d.siteName,
-      siteUrl: val.siteUrl || d.siteUrl,
-      siteImg: val.siteImg || d.siteImg,
-      siteDescription: val.siteDescription || d.siteDescription,
-      startTime: val.startTime || d.startTime,
-      sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? d.sessionMaxAgeSeconds,
-      sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? d.sessionAbsoluteMaxAgeSeconds,
-      sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? d.sessionRememberMaxAgeSeconds,
-      registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist')
-        ? val.registerEmailFilterMode
-        : 'off',
-      registerEmailFilterList: val.registerEmailFilterList ?? d.registerEmailFilterList,
-      defaultRegisterCredits: val.defaultRegisterCredits ?? d.defaultRegisterCredits,
-      emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? d.emailVerifyExpiresInMinutes,
-      passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? d.passwordResetExpiresInMinutes,
-      passwordResetEnabled: val.passwordResetEnabled ?? d.passwordResetEnabled,
-      smtpHost: val.smtpHost || d.smtpHost,
-      smtpPort: val.smtpPort ?? d.smtpPort,
-      smtpSecure: val.smtpSecure ?? d.smtpSecure,
-      smtpUser: val.smtpUser || d.smtpUser,
-      smtpPass: val.smtpPass || d.smtpPass,
-      smtpFrom: val.smtpFrom || d.smtpFrom,
-      oauthLoginEnabled: val.oauthLoginEnabled ?? d.oauthLoginEnabled,
-      oauthForceBinding: val.oauthForceBinding ?? d.oauthForceBinding,
-      turnstileEnabled: val.turnstileEnabled ?? d.turnstileEnabled,
-      turnstileSiteKey: val.turnstileSiteKey || d.turnstileSiteKey,
-      turnstileSecretKey: val.turnstileSecretKey || d.turnstileSecretKey,
-      turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,
-      turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
-      turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
-      turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
-      announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome
-    } satisfies AdminSettingsForm)
+    const next = normalizeForm(val)
+    Object.assign(form, next)
+    pristine.value = snapshot(next)
   }, { immediate: true })
 
+  const changedKeys = computed(() => {
+    const keys: Array<keyof AdminSettingsForm> = []
+    for (const k of Object.keys(pristine.value) as Array<keyof AdminSettingsForm>) {
+      if (form[k] !== pristine.value[k]) keys.push(k)
+    }
+    return keys
+  })
+
+  const dirty = computed(() => changedKeys.value.length > 0)
+
+  function reset() {
+    Object.assign(form, pristine.value)
+  }
+
   async function save() {
+    if (!dirty.value || saving.value) return
     saving.value = true
     try {
       const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
       // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
       const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
       cached.data.value = res.public
+      // 先把 pristine 推到当前值，避免 refresh 期间 dirty 仍然为 true 导致 sticky bar 闪烁。
+      pristine.value = snapshot(form)
       toast.add({ title: '保存成功', color: 'success' })
       await refresh()
     } catch (err) {
@@ -143,5 +171,5 @@ export function useAdminSettingsPage() {
     }
   }
 
-  return { form, saving, status, save }
+  return { form, saving, status, save, dirty, changedKeys, reset }
 }

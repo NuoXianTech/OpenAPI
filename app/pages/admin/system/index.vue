@@ -4,21 +4,11 @@ import { ADMIN_CONTENT_PATH } from '~/constants/admin-sections/content'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const { form, saving, status, save } = useAdminSettingsPage()
+const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettingsPage()
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-end">
-      <UButton
-        icon="i-mdi-content-save-outline"
-        :loading="saving"
-        @click="save"
-      >
-        保存设置
-      </UButton>
-    </div>
-
+  <div class="flex flex-1 flex-col max-w-3xl">
     <div
       v-if="status === 'pending'"
       class="text-center text-sm text-muted py-8"
@@ -28,7 +18,7 @@ const { form, saving, status, save } = useAdminSettingsPage()
 
     <div
       v-else
-      class="max-w-3xl space-y-8"
+      class="space-y-8"
     >
       <UPageCard
         icon="i-mdi-web"
@@ -130,5 +120,15 @@ const { form, saving, status, save } = useAdminSettingsPage()
 
       <AdminSettingsSmtpCard />
     </div>
+
+    <div class="flex-1" />
+
+    <AdminStickySaveBar
+      :dirty="dirty"
+      :saving="saving"
+      :changed-count="changedKeys.length"
+      @save="save"
+      @reset="reset"
+    />
   </div>
 </template>
