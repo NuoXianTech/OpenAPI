@@ -136,16 +136,5 @@ const fixedTimeInvalid = computed(() => {
         />
       </UFormField>
     </div>
-
-    <div class="flex flex-col gap-1 pt-4 border-t border-default mt-4">
-      <USwitch
-        v-model="form.turnstileCheckinEnabled"
-        :disabled="!form.checkinEnabled || !form.turnstileEnabled"
-        label="签到前需要 Turnstile 人机验证"
-      />
-      <p class="text-xs text-muted">
-        开启后，用户点击签到会弹出 Cloudflare Turnstile 验证窗口，通过后自动签到。需先在「Turnstile 人机验证」卡片中完成总开关与密钥配置。
-      </p>
-    </div>
   </UCard>
 </template>

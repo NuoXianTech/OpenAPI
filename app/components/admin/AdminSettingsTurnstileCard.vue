@@ -82,6 +82,16 @@ const form = useAdminSettingsForm()
             /forgot-password 申请重置链接时校验，避免邮件接口被刷。
           </p>
         </div>
+        <div class="flex flex-col gap-1">
+          <USwitch
+            v-model="form.turnstileCheckinEnabled"
+            :disabled="!form.turnstileEnabled || !form.checkinEnabled"
+            label="每日签到"
+          />
+          <p class="text-xs text-muted">
+            积分页点击签到时弹出验证窗口，通过后自动签到。
+          </p>
+        </div>
       </div>
     </div>
   </UCard>
