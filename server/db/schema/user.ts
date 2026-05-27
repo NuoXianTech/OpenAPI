@@ -40,6 +40,8 @@ export const users = pgTable('users', {
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
+  // 上次签到时间。配合 siteSettings.checkinRefreshHours 决定下次可签到时刻；签到流水另存于 creditTransactions(reason='checkin')。
+  lastCheckinAt: timestamp('last_checkin_at', { withTimezone: true }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date())

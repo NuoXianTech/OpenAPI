@@ -77,9 +77,28 @@ export const siteSettings = pgTable('site_settings', {
   turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
   turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(false),
   turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(true),
+  // 每日签到页是否要求 Turnstile（弹窗内验证）
+  turnstileCheckinEnabled: boolean('turnstile_checkin_enabled').notNull().default(false),
 
   // 首页公告弹窗开关（默认关闭，避免打扰；后台用通知铃铛常驻入口，无需开关）
-  announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(false),
+  announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(true),
+
+  // ----------------------------------------------------------------
+  // 每日签到
+  // checkinCooldownMode: 'hours' = 距上次签到 N 小时后才能再签；
+  //                      'fixed_time' = 每日固定 HH:mm 刷新（如 '00:00'）
+  // checkinRefreshHours: 仅 cooldownMode='hours' 时使用
+  // checkinFixedRefreshTime: 'HH:mm'，仅 cooldownMode='fixed_time' 时使用
+  // checkinMode: 'fixed' 固定积分；'range' 在 [min, max] 之间随机取整
+  // ----------------------------------------------------------------
+  checkinEnabled: boolean('checkin_enabled').notNull().default(true),
+  checkinCooldownMode: varchar('checkin_cooldown_mode', { length: 20 }).notNull().default('hours'),
+  checkinRefreshHours: integer('checkin_refresh_hours').notNull().default(24),
+  checkinFixedRefreshTime: varchar('checkin_fixed_refresh_time', { length: 8 }).notNull().default('00:00'),
+  checkinMode: varchar('checkin_mode', { length: 20 }).notNull().default('fixed'),
+  checkinAmountFixed: integer('checkin_amount_fixed').notNull().default(10),
+  checkinAmountMin: integer('checkin_amount_min').notNull().default(5),
+  checkinAmountMax: integer('checkin_amount_max').notNull().default(20),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())

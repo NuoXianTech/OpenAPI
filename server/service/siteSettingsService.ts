@@ -42,7 +42,16 @@ export interface SiteSettingsUpsertInput {
   turnstileRegisterEnabled?: boolean
   turnstileAdminLoginEnabled?: boolean
   turnstilePasswordResetEnabled?: boolean
+  turnstileCheckinEnabled?: boolean
   announcementShowOnHome?: boolean
+  checkinEnabled?: boolean
+  checkinCooldownMode?: 'hours' | 'fixed_time'
+  checkinRefreshHours?: number
+  checkinFixedRefreshTime?: string
+  checkinMode?: 'fixed' | 'range'
+  checkinAmountFixed?: number
+  checkinAmountMin?: number
+  checkinAmountMax?: number
 }
 
 function buildInitialDefaults() {
@@ -72,6 +81,7 @@ function toPublicTurnstile(settings: {
   turnstileRegisterEnabled: boolean
   turnstileAdminLoginEnabled: boolean
   turnstilePasswordResetEnabled: boolean
+  turnstileCheckinEnabled: boolean
 }): PublicTurnstileSettings {
   // 没配 siteKey / secretKey 时即便 enabled=true 也视为未启用，避免前端白屏。
   const configured = Boolean(settings.turnstileSiteKey) && Boolean(settings.turnstileSecretKey)
@@ -82,7 +92,8 @@ function toPublicTurnstile(settings: {
     login: enabled && settings.turnstileLoginEnabled,
     register: enabled && settings.turnstileRegisterEnabled,
     adminLogin: enabled && settings.turnstileAdminLoginEnabled,
-    passwordReset: enabled && settings.turnstilePasswordResetEnabled
+    passwordReset: enabled && settings.turnstilePasswordResetEnabled,
+    checkin: enabled && settings.turnstileCheckinEnabled
   }
 }
 

@@ -1,5 +1,5 @@
 {
-  "id": "fa16b4f4-b575-4fb9-950d-e4f498c01f06",
+  "id": "03237346-0231-4f83-b206-33149d7ccb9f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3098,12 +3098,75 @@
           "notNull": true,
           "default": true
         },
+        "turnstile_checkin_enabled": {
+          "name": "turnstile_checkin_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "announcement_show_on_home": {
           "name": "announcement_show_on_home",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": true
+        },
+        "checkin_enabled": {
+          "name": "checkin_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "checkin_cooldown_mode": {
+          "name": "checkin_cooldown_mode",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'hours'"
+        },
+        "checkin_refresh_hours": {
+          "name": "checkin_refresh_hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 24
+        },
+        "checkin_fixed_refresh_time": {
+          "name": "checkin_fixed_refresh_time",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'00:00'"
+        },
+        "checkin_mode": {
+          "name": "checkin_mode",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'fixed'"
+        },
+        "checkin_amount_fixed": {
+          "name": "checkin_amount_fixed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10
+        },
+        "checkin_amount_min": {
+          "name": "checkin_amount_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 5
+        },
+        "checkin_amount_max": {
+          "name": "checkin_amount_max",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 20
         },
         "created_at": {
           "name": "created_at",
@@ -3218,6 +3281,12 @@
         "last_login_user_agent": {
           "name": "last_login_user_agent",
           "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_checkin_at": {
+          "name": "last_checkin_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },

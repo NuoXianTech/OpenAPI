@@ -387,10 +387,22 @@ export const adminUpdateSiteSettingsSchema = z.object({
   turnstileRegisterEnabled: z.boolean().optional(),
   turnstileAdminLoginEnabled: z.boolean().optional(),
   turnstilePasswordResetEnabled: z.boolean().optional(),
-  announcementShowOnHome: z.boolean().optional()
+  turnstileCheckinEnabled: z.boolean().optional(),
+  announcementShowOnHome: z.boolean().optional(),
+  checkinEnabled: z.boolean().optional(),
+  checkinCooldownMode: z.enum(['hours', 'fixed_time'], 'checkinCooldownMode must be hours / fixed_time').optional(),
+  checkinRefreshHours: z.coerce.number().int().min(1, 'checkinRefreshHours must be >= 1').max(24 * 30, 'checkinRefreshHours is too large').optional(),
+  checkinFixedRefreshTime: z.string().regex(/^([01]?\d|2[0-3]):[0-5]\d$/, 'checkinFixedRefreshTime must be HH:mm').optional(),
+  checkinMode: z.enum(['fixed', 'range'], 'checkinMode must be fixed / range').optional(),
+  checkinAmountFixed: z.coerce.number().int().min(0, 'checkinAmountFixed must be >= 0').optional(),
+  checkinAmountMin: z.coerce.number().int().min(0, 'checkinAmountMin must be >= 0').optional(),
+  checkinAmountMax: z.coerce.number().int().min(0, 'checkinAmountMax must be >= 0').optional()
 }).refine(
   d => Object.values(d).some(v => v !== undefined),
   { message: 'at least one field is required', path: [] }
+).refine(
+  d => d.checkinMode !== 'range' || d.checkinAmountMin === undefined || d.checkinAmountMax === undefined || d.checkinAmountMin <= d.checkinAmountMax,
+  { message: 'checkinAmountMin must be <= checkinAmountMax', path: ['checkinAmountMin'] }
 )
 
 /** 测试发信：仅需收件邮箱，使用后台已保存的 SMTP 配置 */

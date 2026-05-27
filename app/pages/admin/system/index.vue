@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
-import { ADMIN_CONTENT_PATH } from '~/constants/admin-sections/content'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -62,6 +61,8 @@ const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettin
 
       <AdminSettingsSecurityCard />
 
+      <AdminSettingsCheckinCard />
+
       <UPageCard
         icon="i-mdi-shield-key-outline"
         title="第三方登录开关"
@@ -93,30 +94,6 @@ const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettin
       </UPageCard>
 
       <AdminSettingsTurnstileCard />
-
-      <UPageCard
-        icon="i-mdi-bullhorn-outline"
-        title="公告"
-      >
-        <div class="space-y-4">
-          <p class="text-xs text-muted">
-            开启后，访客首次进入网站首页会弹出当前生效的公告（最新一条默认展开，旧公告收起）。
-            管理后台已通过顶部铃铛常驻入口展示公告，无需额外开关。
-            公告内容请前往
-            <NuxtLink
-              :to="ADMIN_CONTENT_PATH"
-              class="text-primary underline"
-            >
-              公告管理
-            </NuxtLink>
-            标签页维护。
-          </p>
-          <USwitch
-            v-model="form.announcementShowOnHome"
-            label="在网站首页弹出公告"
-          />
-        </div>
-      </UPageCard>
 
       <AdminSettingsSmtpCard />
     </div>

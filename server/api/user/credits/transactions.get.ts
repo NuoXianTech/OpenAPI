@@ -4,7 +4,7 @@ import type { CreditReason } from '~~/server/service/creditService'
 import { creditService } from '~~/server/service/creditService'
 import { requireAuth } from '~~/server/utils/auth'
 
-const VALID_REASONS: CreditReason[] = ['admin_grant', 'admin_revoke', 'admin_reset', 'api_charge', 'api_refund', 'signup_bonus']
+const VALID_REASONS: CreditReason[] = ['admin_grant', 'admin_revoke', 'admin_reset', 'api_charge', 'api_refund', 'signup_bonus', 'redemption_code', 'checkin']
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)

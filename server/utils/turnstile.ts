@@ -2,7 +2,7 @@
 import { createError } from 'h3'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 
-export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset'
+export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset' | 'checkin'
 
 export interface TurnstileCheck {
   required: boolean
@@ -25,6 +25,7 @@ function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.ge
     case 'register': return settings.turnstileRegisterEnabled
     case 'adminLogin': return settings.turnstileAdminLoginEnabled
     case 'passwordReset': return settings.turnstilePasswordResetEnabled
+    case 'checkin': return settings.turnstileCheckinEnabled
   }
 }
 

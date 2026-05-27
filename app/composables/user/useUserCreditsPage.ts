@@ -29,7 +29,30 @@ export interface RedeemRecord {
   note: string | null
 }
 
-export type CreditReason = 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
+export interface CheckinStatus {
+  enabled: boolean
+  canCheckin: boolean
+  reason: 'DISABLED' | 'COOLDOWN' | 'OK'
+  lastCheckinAt: string | null
+  nextCheckinAt: string | null
+  cooldownMode: 'hours' | 'fixed_time'
+  refreshHours: number
+  fixedRefreshTime: string
+  mode: 'fixed' | 'range'
+  amountFixed: number
+  amountMin: number
+  amountMax: number
+  requiresTurnstile: boolean
+}
+
+export interface CheckinResult {
+  amount: number
+  balanceAfter: number
+  checkedAt: string
+  nextCheckinAt: string
+}
+
+export type CreditReason = 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code' | 'checkin'
 export type CreditDirection = 'all' | 'in' | 'out'
 
 export const REASON_META: Record<string, { label: string, color: 'success' | 'error' | 'warning' | 'info' | 'neutral' }> = {
@@ -39,7 +62,8 @@ export const REASON_META: Record<string, { label: string, color: 'success' | 'er
   admin_grant: { label: '管理员加', color: 'success' },
   admin_revoke: { label: '管理员扣', color: 'error' },
   admin_reset: { label: '管理员重置', color: 'warning' },
-  signup_bonus: { label: '注册赠送', color: 'info' }
+  signup_bonus: { label: '注册赠送', color: 'info' },
+  checkin: { label: '每日签到', color: 'success' }
 }
 
 export function reasonLabel(reason: string) {
@@ -67,6 +91,10 @@ export function useUserCreditsPage() {
   const loading = ref(false)
 
   const redeemRecords = ref<RedeemRecord[]>([])
+
+  const checkin = ref<CheckinStatus | null>(null)
+  const checkinLoading = ref(false)
+  const checkingIn = ref(false)
 
   async function fetchSummary() {
     summaryLoading.value = true
@@ -113,6 +141,38 @@ export function useUserCreditsPage() {
     }
   }
 
+  async function fetchCheckinStatus() {
+    checkinLoading.value = true
+    try {
+      const res = await $fetch<CheckinStatus>('/api/user/credits/checkin')
+      checkin.value = res
+    } catch (err) {
+      console.error('failed to load checkin status', err)
+      checkin.value = null
+    } finally {
+      checkinLoading.value = false
+    }
+  }
+
+  async function performCheckin(turnstileToken?: string): Promise<CheckinResult> {
+    checkingIn.value = true
+    try {
+      const res = await $fetch<CheckinResult>('/api/user/credits/checkin', {
+        method: 'POST',
+        body: turnstileToken ? { turnstileToken } : {}
+      })
+      toast.add({
+        title: `签到成功 +${res.amount.toLocaleString()}`,
+        description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
+        color: 'success'
+      })
+      await Promise.all([fetchSummary(), fetchTransactions(), fetchCheckinStatus()])
+      return res
+    } finally {
+      checkingIn.value = false
+    }
+  }
+
   async function redeem(code: string): Promise<{ amount: number, balanceAfter: number }> {
     const res = await $fetch<{ amount: number, balanceAfter: number }>('/api/user/credits/redeem', {
       method: 'POST',
@@ -150,7 +210,7 @@ export function useUserCreditsPage() {
   const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
   async function init() {
-    await Promise.all([refreshAll(), fetchRedeemRecords()])
+    await Promise.all([refreshAll(), fetchRedeemRecords(), fetchCheckinStatus()])
   }
 
   return {
@@ -163,9 +223,14 @@ export function useUserCreditsPage() {
     total,
     loading,
     redeemRecords,
+    checkin,
+    checkinLoading,
+    checkingIn,
     totalPages,
     fetchTransactions,
     redeem,
+    performCheckin,
+    fetchCheckinStatus,
     applyFilters,
     resetFilters,
     refreshAll,

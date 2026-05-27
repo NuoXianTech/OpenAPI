@@ -16,8 +16,12 @@ const {
   total,
   loading,
   redeemRecords,
+  checkin,
+  checkinLoading,
+  checkingIn,
   totalPages,
   redeem,
+  performCheckin,
   applyFilters,
   resetFilters,
   refreshAll,
@@ -33,6 +37,7 @@ const reasonItems = [
   { label: 'API 扣费', value: 'api_charge' },
   { label: 'API 退款', value: 'api_refund' },
   { label: '兑换码', value: 'redemption_code' },
+  { label: '每日签到', value: 'checkin' },
   { label: '管理员加积分', value: 'admin_grant' },
   { label: '管理员扣积分', value: 'admin_revoke' },
   { label: '管理员重置', value: 'admin_reset' },
@@ -89,6 +94,13 @@ function amountClass(amt: number) {
     <template #body>
       <div class="space-y-6">
         <UserCreditsOverviewCards :summary="summary" />
+
+        <UserCreditsCheckinCard
+          :status="checkin"
+          :loading="checkinLoading"
+          :submitting="checkingIn"
+          :on-checkin="performCheckin"
+        />
 
         <UserCreditsRedeemCard
           :records="redeemRecords"

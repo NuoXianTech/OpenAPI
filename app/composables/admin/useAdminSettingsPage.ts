@@ -30,7 +30,16 @@ export interface AdminSettingsForm {
   turnstileRegisterEnabled: boolean
   turnstileAdminLoginEnabled: boolean
   turnstilePasswordResetEnabled: boolean
+  turnstileCheckinEnabled: boolean
   announcementShowOnHome: boolean
+  checkinEnabled: boolean
+  checkinCooldownMode: 'hours' | 'fixed_time'
+  checkinRefreshHours: number
+  checkinFixedRefreshTime: string
+  checkinMode: 'fixed' | 'range'
+  checkinAmountFixed: number
+  checkinAmountMin: number
+  checkinAmountMax: number
 }
 
 function defaultForm(): AdminSettingsForm {
@@ -64,7 +73,16 @@ function defaultForm(): AdminSettingsForm {
     turnstileRegisterEnabled: true,
     turnstileAdminLoginEnabled: false,
     turnstilePasswordResetEnabled: true,
-    announcementShowOnHome: false
+    announcementShowOnHome: true,
+    checkinEnabled: true,
+    turnstileCheckinEnabled: false,
+    checkinCooldownMode: 'hours',
+    checkinRefreshHours: 24,
+    checkinFixedRefreshTime: '00:00',
+    checkinMode: 'fixed',
+    checkinAmountFixed: 10,
+    checkinAmountMin: 5,
+    checkinAmountMax: 20
   }
 }
 
@@ -110,7 +128,16 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
     turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
     turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
-    announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome
+    turnstileCheckinEnabled: val.turnstileCheckinEnabled ?? d.turnstileCheckinEnabled,
+    announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome,
+    checkinEnabled: val.checkinEnabled ?? d.checkinEnabled,
+    checkinCooldownMode: val.checkinCooldownMode === 'fixed_time' ? 'fixed_time' : 'hours',
+    checkinRefreshHours: val.checkinRefreshHours ?? d.checkinRefreshHours,
+    checkinFixedRefreshTime: val.checkinFixedRefreshTime || d.checkinFixedRefreshTime,
+    checkinMode: val.checkinMode === 'range' ? 'range' : 'fixed',
+    checkinAmountFixed: val.checkinAmountFixed ?? d.checkinAmountFixed,
+    checkinAmountMin: val.checkinAmountMin ?? d.checkinAmountMin,
+    checkinAmountMax: val.checkinAmountMax ?? d.checkinAmountMax
   }
 }
 

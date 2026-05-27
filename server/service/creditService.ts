@@ -18,6 +18,7 @@ export type CreditReason
     | 'api_refund' // API 调用退款
     | 'signup_bonus' // 注册赠送
     | 'redemption_code' // 兑换码兑换
+    | 'checkin' // 每日签到
 
 export interface ChargeInput {
   userId: number

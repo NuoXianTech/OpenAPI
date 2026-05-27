@@ -13,6 +13,7 @@ export interface PublicTurnstileSettings {
   register: boolean
   adminLogin: boolean
   passwordReset: boolean
+  checkin: boolean
 }
 
 export interface PublicAnnouncementSettings {
