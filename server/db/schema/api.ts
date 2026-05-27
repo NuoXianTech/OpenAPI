@@ -160,9 +160,6 @@ export const apiCalls = pgTable('api_calls', {
   latencyMs: integer('latency_ms').notNull().default(0),
 
   ip: varchar('ip', { length: 45 }),
-  country: varchar('country', { length: 2 }),
-  region: varchar('region', { length: 100 }),
-  city: varchar('city', { length: 100 }),
   userAgent: varchar('user_agent', { length: 500 }),
   referer: varchar('referer', { length: 1000 }),
 

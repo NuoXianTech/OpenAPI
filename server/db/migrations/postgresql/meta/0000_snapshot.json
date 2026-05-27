@@ -1,5 +1,5 @@
 {
-  "id": "03237346-0231-4f83-b206-33149d7ccb9f",
+  "id": "161524bd-ecec-4adc-b0e8-a4fb40b0b654",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -354,24 +354,6 @@
         "ip": {
           "name": "ip",
           "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "country": {
-          "name": "country",
-          "type": "varchar(2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "region": {
-          "name": "region",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "city": {
-          "name": "city",
-          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false
         },

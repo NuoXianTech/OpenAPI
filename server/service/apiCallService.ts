@@ -16,9 +16,6 @@ export interface AddCallInput {
   userAgent?: string | null
   referer?: string | null
   queryString?: string | null
-  country?: string | null
-  region?: string | null
-  city?: string | null
   requestSize?: number | null
   responseSize?: number | null
   errorCode?: string | null
@@ -42,9 +39,6 @@ function normalizeCallRow(data: AddCallInput) {
     userAgent: data.userAgent ?? null,
     referer: data.referer ?? null,
     queryString: data.queryString ?? null,
-    country: data.country ?? null,
-    region: data.region ?? null,
-    city: data.city ?? null,
     requestSize: data.requestSize ?? null,
     responseSize: data.responseSize ?? null,
     errorCode: data.errorCode ?? null,

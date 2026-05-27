@@ -159,11 +159,6 @@ function formatBytes(value: number | null) {
   return `${(value / 1024 / 1024).toFixed(2)} MB`
 }
 
-function formatLocation(row: AdminLogRow) {
-  const parts = [row.country, row.region, row.city].filter(Boolean)
-  return parts.length ? parts.join(' / ') : '-'
-}
-
 const columns: TableColumn<AdminLogRow>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'userName', header: '用户' },
@@ -690,10 +685,6 @@ const columns: TableColumn<AdminLogRow>[] = [
                 <div>
                   <span class="text-muted">IP </span>
                   <span class="font-mono">{{ detailRow.ip || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-muted">位置 </span>
-                  <span>{{ formatLocation(detailRow) }}</span>
                 </div>
                 <div>
                   <span class="text-muted">User-Agent </span>

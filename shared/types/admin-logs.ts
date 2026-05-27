@@ -63,9 +63,6 @@ export interface AdminLogRow {
   // ─── 详情面板字段（列表不展示，仅详情弹窗读取）─────────────────
   queryString: string | null
   ip: string | null
-  country: string | null
-  region: string | null
-  city: string | null
   userAgent: string | null
   referer: string | null
   requestSize: number | null

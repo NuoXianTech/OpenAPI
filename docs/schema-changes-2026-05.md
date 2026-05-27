@@ -164,7 +164,6 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
 | `apis.docVersion` | **移除**（用 `docUrl` 足够） |
 | `users.bannedReason` / `users.bannedUntil` | **保留**（封禁理由 UI / 自动解封功能预留） |
 | `users.lastLoginUserAgent` | **保留并启用写入**（`updateLastLogin` 已补写） |
-| `apiCalls.country` / `region` / `city` | **保留**（GeoIP 库集成预留） |
 | `apiCalls.queryString` / `userAgent` / `referer` / `requestSize` / `responseSize` | **保留**（前端展示待补，已落库可审计） |
 | `apiKeys.totalCalls` / `lastUsedAt` / `lastUsedIp` | **保留**（UI 待补，已落库可统计） |
 | `apis.timeoutMs` | **保留**（gate 内尚未消费，预留） |
