@@ -7,6 +7,7 @@ import { usersService } from '~~/server/service/userService'
 import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { getCravatarUrl } from '~~/server/utils/cravatar'
+import { banMessage, isBanActive } from '#shared/utils/ban'
 
 export interface AuthUserPayload {
   id: number
@@ -247,9 +248,13 @@ export async function getAuthUser(event: H3Event) {
   }
 
   if (user.isBanned) {
-    await sessionService.deleteSession(sessionId)
-    clearAuthCookie(event)
-    throw createError({ statusCode: 403, message: 'Account is banned' })
+    if (isBanActive(user)) {
+      await sessionService.deleteSession(sessionId)
+      clearAuthCookie(event)
+      throw createError({ statusCode: 403, message: banMessage(user) })
+    }
+    // 封禁已到期 → 惰性解封后放行
+    await usersService.clearExpiredBan(user.id)
   }
 
   return {

@@ -14,7 +14,8 @@ const {
   clearSelection,
   requireSelection,
   deleteUser,
-  toggleBan,
+  banUser,
+  unbanUser,
   updateUser,
   createUser
 } = useAdminUsersPage()
@@ -29,6 +30,22 @@ async function openDelete(item: AdminUserItem) {
       const ok = await deleteUser(item.id)
       if (!ok) throw new Error('delete failed')
     }
+  })
+}
+
+const banOpen = ref(false)
+const banTarget = ref<AdminUserItem | null>(null)
+
+function openBan(item: AdminUserItem) {
+  banTarget.value = item
+  banOpen.value = true
+}
+
+async function openUnban(item: AdminUserItem) {
+  await confirm({
+    title: `解封用户: ${item.username}`,
+    description: '解封后该用户可立即重新登录。',
+    onConfirm: () => unbanUser(item)
   })
 }
 
@@ -86,7 +103,7 @@ function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
   }, {
     label: row.isBanned ? '解封' : '封禁',
     icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
-    onSelect: () => toggleBan(row)
+    onSelect: () => row.isBanned ? openUnban(row) : openBan(row)
   }, {
     label: 'API Keys',
     icon: 'i-mdi-key-variant',
@@ -108,6 +125,13 @@ function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
 function formatDate(val: string) {
   if (!val) return '-'
   return new Date(val).toLocaleString('zh-CN', { hour12: false })
+}
+
+function banTooltip(row: AdminUserItem): string {
+  const parts: string[] = []
+  parts.push(row.bannedReason ? `原因：${row.bannedReason}` : '原因：未填写')
+  parts.push(row.bannedUntil ? `解封时间：${formatDate(row.bannedUntil)}` : '永久封禁')
+  return parts.join('\n')
 }
 
 const columns: TableColumn<AdminUserItem>[] = [
@@ -213,13 +237,19 @@ const columns: TableColumn<AdminUserItem>[] = [
         </UBadge>
       </template>
       <template #isBanned-cell="{ row }">
-        <UBadge
+        <UTooltip
           v-if="row.original.isBanned"
-          color="error"
-          variant="subtle"
+          :text="banTooltip(row.original)"
+          :content="{ side: 'top' }"
         >
-          已封禁
-        </UBadge>
+          <UBadge
+            color="error"
+            variant="subtle"
+            :icon="row.original.bannedUntil ? 'i-mdi-clock-alert-outline' : 'i-mdi-lock'"
+          >
+            {{ row.original.bannedUntil ? `封禁至 ${formatDate(row.original.bannedUntil)}` : '永久封禁' }}
+          </UBadge>
+        </UTooltip>
       </template>
       <template #createdAt-cell="{ row }">
         {{ formatDate(row.original.createdAt) }}
@@ -245,6 +275,12 @@ const columns: TableColumn<AdminUserItem>[] = [
       v-model:open="editOpen"
       :target="editTarget"
       :on-submit="updateUser"
+    />
+
+    <AdminUserBanModal
+      v-model:open="banOpen"
+      :target="banTarget"
+      :on-submit="banUser"
     />
 
     <AdminUserCreateModal

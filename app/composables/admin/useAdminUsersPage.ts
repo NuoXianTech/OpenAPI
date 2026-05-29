@@ -7,6 +7,8 @@ export interface AdminUserItem {
   displayName: string | null
   isActive: boolean
   isBanned: boolean
+  bannedReason?: string | null
+  bannedUntil?: string | null
   credits?: number | string | null
   createdAt: string
 }
@@ -67,16 +69,36 @@ export function useAdminUsersPage() {
     }
   }
 
-  async function toggleBan(item: AdminUserItem) {
+  async function banUser(id: number, payload: { reason: string, bannedUntil: string | null }): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/ban', {
         method: 'POST',
-        body: { id: item.id, isBanned: !item.isBanned }
+        body: {
+          id,
+          isBanned: true,
+          reason: payload.reason || undefined,
+          bannedUntil: payload.bannedUntil
+        }
       })
-      toast.add({ title: item.isBanned ? '已解封' : '已封禁', color: 'success' })
+      toast.add({ title: '已封禁', color: 'success' })
+      await refresh()
+      return true
+    } catch (err) {
+      toast.add({ title: parseFetchError(err, '封禁失败'), color: 'error' })
+      return false
+    }
+  }
+
+  async function unbanUser(item: AdminUserItem) {
+    try {
+      await $fetch('/api/admin/users/ban', {
+        method: 'POST',
+        body: { id: item.id, isBanned: false }
+      })
+      toast.add({ title: '已解封', color: 'success' })
       await refresh()
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '解封失败'), color: 'error' })
     }
   }
 
@@ -126,7 +148,8 @@ export function useAdminUsersPage() {
     clearSelection,
     requireSelection,
     deleteUser,
-    toggleBan,
+    banUser,
+    unbanUser,
     updateUser,
     createUser
   }

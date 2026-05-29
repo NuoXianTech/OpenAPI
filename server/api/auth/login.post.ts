@@ -6,6 +6,7 @@ import { loginLogService } from '~~/server/service/loginLogService'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { readZodBody } from '~~/server/utils/zod'
+import { banMessage, isBanActive } from '#shared/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readZodBody(event, loginSchema)
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 401, message: '账号或密码错误' })
   }
 
-  if (user.isBanned) {
+  if (user.isBanned && isBanActive(user)) {
     await loginLogService.record({
       userId: user.id,
       method: 'password',
@@ -50,7 +51,11 @@ export default defineEventHandler(async (event: H3Event) => {
       ip,
       userAgent
     })
-    throw createError({ statusCode: 403, message: '账号已被封禁，如有疑问请联系管理员' })
+    throw createError({ statusCode: 403, message: banMessage(user) })
+  }
+  if (user.isBanned) {
+    // 封禁已到期 → 惰性解封后继续登录
+    await usersService.clearExpiredBan(user.id)
   }
 
   if (!user.isActive) {

@@ -9,6 +9,7 @@ import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
 import { readZodBody } from '~~/server/utils/zod'
+import { isBanActive } from '#shared/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const user = await usersService.findByEmail(email)
-  if (user && user.isActive && !user.isBanned) {
+  if (user && user.isActive && !isBanActive(user)) {
     const expiresInMinutes = Number(settings.passwordResetExpiresInMinutes || 30)
     const { token } = await verificationTokenService.createToken(user.id, user.email, expiresInMinutes, 'reset_password', ip)
     const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')

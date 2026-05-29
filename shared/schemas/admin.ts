@@ -22,8 +22,16 @@ export type AdminLoginInput = z.output<typeof adminLoginSchema>
 /** 封禁/解封用户 */
 export const adminBanUserSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
-  isBanned: z.boolean()
-})
+  isBanned: z.boolean(),
+  // 封禁原因（仅 isBanned=true 时有意义；解封时忽略）
+  reason: z.string().trim().max(500, '封禁原因最多 500 字').optional(),
+  // 封禁到期时间；null/缺省 = 永久封禁（仅 isBanned=true 时有意义）
+  bannedUntil: optionalDate
+}).refine(
+  d => !d.isBanned || !d.bannedUntil || d.bannedUntil.getTime() > Date.now(),
+  { message: '封禁到期时间必须晚于当前时间', path: ['bannedUntil'] }
+)
+export type AdminBanUserInput = z.output<typeof adminBanUserSchema>
 
 /** 管理员-直接创建用户（跳过邮箱验证流程） */
 export const adminCreateUserSchema = z.object({

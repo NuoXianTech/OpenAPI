@@ -15,6 +15,7 @@ import { qqProvider } from '~~/server/utils/oauthProviders/qq'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauthProviders/types'
 import type { LoginMethod } from '~~/server/service/loginLogService'
 import type { SupportedOauthProvider } from '~~/shared/types/oauth'
+import { isBanActive } from '#shared/utils/ban'
 
 function methodFromProvider(provider: SupportedOauthProvider): LoginMethod {
   return provider === 'github' ? 'oauth_github' : 'oauth_qq'
@@ -151,9 +152,12 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         // 用户已被硬删，oauthAccounts 通过 cascade 应已清理；保险起见仍 redirect
         return redirectError(event, 'user_unavailable')
       }
-      if (user.isBanned) {
+      if (user.isBanned && isBanActive(user)) {
         await loginLogService.record({ userId: user.id, method, success: false, failureReason: 'banned', ip, userAgent })
         return redirectError(event, 'user_unavailable')
+      }
+      if (user.isBanned) {
+        await usersService.clearExpiredBan(user.id)
       }
       await createUserSession(event, { id: user.id, kind: 'user' })
       await usersService.updateLastLogin(user.id, ip || '0.0.0.0', userAgent)
@@ -165,9 +169,12 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     if (profile.email) {
       const matched = await usersService.findByEmail(profile.email.toLowerCase())
       if (matched) {
-        if (matched.isBanned) {
+        if (matched.isBanned && isBanActive(matched)) {
           await loginLogService.record({ userId: matched.id, method, success: false, failureReason: 'banned', ip, userAgent })
           return redirectError(event, 'user_banned')
+        }
+        if (matched.isBanned) {
+          await usersService.clearExpiredBan(matched.id)
         }
         targetUserId = matched.id
       }

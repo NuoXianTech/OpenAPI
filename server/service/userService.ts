@@ -206,10 +206,32 @@ export const usersService = {
     return res[0] || null
   },
 
-  async banUser(id: number, isBanned: boolean) {
+  /**
+   * 封禁 / 解封。
+   * - 封禁：写入 isBanned=true 以及 bannedReason / bannedUntil（bannedUntil 为 null 表示永久）
+   * - 解封：清空 isBanned 及 bannedReason / bannedUntil，避免遗留过期数据
+   */
+  async banUser(id: number, isBanned: boolean, opts?: { reason?: string | null, bannedUntil?: Date | null }) {
     const res = await db.update(users)
       .set({
         isBanned,
+        bannedReason: isBanned ? (opts?.reason?.trim() || null) : null,
+        bannedUntil: isBanned ? (opts?.bannedUntil ?? null) : null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning()
+
+    return res[0] || null
+  },
+
+  /** 封禁已到期 → 惰性解封：清除 isBanned / bannedReason / bannedUntil。 */
+  async clearExpiredBan(id: number) {
+    const res = await db.update(users)
+      .set({
+        isBanned: false,
+        bannedReason: null,
+        bannedUntil: null,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))

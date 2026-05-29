@@ -9,9 +9,9 @@ import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const { id, isBanned } = await readZodBody(event, adminBanUserSchema)
+  const { id, isBanned, reason, bannedUntil } = await readZodBody(event, adminBanUserSchema)
 
-  const updated = await usersService.banUser(id, isBanned)
+  const updated = await usersService.banUser(id, isBanned, { reason, bannedUntil })
 
   if (isBanned) {
     await sessionService.deleteSessionsByUserId(id)
@@ -24,7 +24,12 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { isBanned, username: updated?.username }
+    detail: {
+      isBanned,
+      username: updated?.username,
+      reason: isBanned ? (reason?.trim() || null) : undefined,
+      bannedUntil: isBanned ? (bannedUntil ? bannedUntil.toISOString() : null) : undefined
+    }
   })
 
   return updated
