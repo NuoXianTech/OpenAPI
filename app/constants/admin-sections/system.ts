@@ -9,6 +9,7 @@ export const adminSystemLinks: NavigationMenuItem[] = [
   { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
   { label: '第三方登录', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/oauth-providers` },
   { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` },
+  { label: '登录日志', icon: 'i-mdi-login-variant', to: `${ADMIN_SYSTEM_PATH}/login-logs` },
   { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: `${ADMIN_SYSTEM_PATH}/profile` }
 ]
 

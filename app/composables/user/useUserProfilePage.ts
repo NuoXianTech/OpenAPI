@@ -1,4 +1,5 @@
 import { parseFetchError } from '#shared/utils/clientError'
+import type { LoginLogRow } from '#shared/types/login-log'
 
 export interface ProfileData {
   id: number
@@ -43,6 +44,9 @@ export function useUserProfilePage() {
   const oauthList = ref<OauthBinding[]>([])
   const oauthEnabled = ref(true)
   const oauthLoading = ref(false)
+
+  const loginActivity = ref<LoginLogRow[]>([])
+  const loginActivityLoading = ref(false)
 
   async function loadProfile() {
     profileLoading.value = true
@@ -103,6 +107,19 @@ export function useUserProfilePage() {
     }
   }
 
+  async function loadLoginActivity() {
+    loginActivityLoading.value = true
+    try {
+      const res = await $fetch<{ items: LoginLogRow[], total: number }>('/api/user/login-logs/list')
+      loginActivity.value = res?.items || []
+    } catch (err) {
+      console.error('failed to load login activity', err)
+      loginActivity.value = []
+    } finally {
+      loginActivityLoading.value = false
+    }
+  }
+
   function startBind(provider: string) {
     const returnTo = encodeURIComponent('/user/profile')
     window.location.href = `/api/auth/oauth/${provider}/start?mode=bind&returnTo=${returnTo}`
@@ -142,11 +159,14 @@ export function useUserProfilePage() {
     oauthList,
     oauthEnabled,
     oauthLoading,
+    loginActivity,
+    loginActivityLoading,
     loadProfile,
     updateProfile,
     changePassword,
     requestEmailChange,
     loadOauth,
+    loadLoginActivity,
     startBind,
     unbind,
     notifyOauthCallback

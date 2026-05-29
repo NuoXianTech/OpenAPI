@@ -14,18 +14,21 @@ const {
   oauthList,
   oauthEnabled,
   oauthLoading,
+  loginActivity,
+  loginActivityLoading,
   loadProfile,
   updateProfile,
   changePassword,
   requestEmailChange,
   loadOauth,
+  loadLoginActivity,
   startBind,
   unbind,
   notifyOauthCallback
 } = useUserProfilePage()
 
 onMounted(async () => {
-  await Promise.all([loadProfile(), loadOauth()])
+  await Promise.all([loadProfile(), loadOauth(), loadLoginActivity()])
   notifyOauthCallback(route.query)
   // 同步刷新一下登录态（avatar 可能因 email 变更而需要刷新）
   void fetchMe()
@@ -68,6 +71,12 @@ onMounted(async () => {
           @refresh="loadOauth"
           @bind="startBind"
           @unbind="unbind"
+        />
+
+        <UserProfileLoginActivityCard
+          :items="loginActivity"
+          :loading="loginActivityLoading"
+          @refresh="loadLoginActivity"
         />
       </div>
     </template>
