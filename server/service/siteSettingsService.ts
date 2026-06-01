@@ -17,6 +17,10 @@ export interface SiteSettingsUpsertInput {
   siteName?: string
   siteDescription?: string
   startTime?: string
+  icpBeian?: string
+  policeBeian?: string
+  termsUrl?: string
+  privacyUrl?: string
   sessionMaxAgeSeconds?: number
   sessionAbsoluteMaxAgeSeconds?: number
   sessionRememberMaxAgeSeconds?: number

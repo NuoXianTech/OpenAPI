@@ -28,6 +28,10 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
 
+// 配置了服务条款 / 隐私政策时，登录前必须勾选同意
+const consent = ref(false)
+const consentRequired = computed(() => Boolean(settings.value.termsUrl || settings.value.privacyUrl))
+
 const { data: providersData } = useLazyFetch<Array<{ provider: string, displayName: string, icon: string | null, authorizeEntry: string }>>('/api/auth/providers/list', {
   default: () => []
 })
@@ -114,6 +118,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
   turnstileError.value = ''
 
+  if (consentRequired.value && !consent.value) {
+    errorMessage.value = '请先阅读并同意服务条款和隐私政策'
+    return
+  }
+
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMessage.value = '请先完成人机验证'
     return
@@ -181,7 +190,7 @@ function clearTurnstileError() {
         :fields="fields"
         :providers="providers"
         :loading="submitting"
-        :submit="{ label: '登录', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
+        :submit="{ label: '登录', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
         separator="或使用第三方登录"
         @submit="onSubmit"
       >
@@ -199,6 +208,11 @@ function clearTurnstileError() {
         </template>
 
         <template #validation>
+          <AuthConsent
+            v-if="consentRequired"
+            v-model="consent"
+          />
+
           <Transition name="state-fade">
             <div
               v-if="errorMessage"

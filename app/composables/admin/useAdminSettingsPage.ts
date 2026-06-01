@@ -6,6 +6,10 @@ export interface AdminSettingsForm {
   siteImg: string
   siteDescription: string
   startTime: string
+  icpBeian: string
+  policeBeian: string
+  termsUrl: string
+  privacyUrl: string
   sessionMaxAgeSeconds: number
   sessionAbsoluteMaxAgeSeconds: number
   sessionRememberMaxAgeSeconds: number
@@ -49,6 +53,10 @@ function defaultForm(): AdminSettingsForm {
     siteImg: '',
     siteDescription: '',
     startTime: '',
+    icpBeian: '',
+    policeBeian: '',
+    termsUrl: '',
+    privacyUrl: '',
     sessionMaxAgeSeconds: 86400,
     sessionAbsoluteMaxAgeSeconds: 604800,
     sessionRememberMaxAgeSeconds: 2592000,
@@ -102,6 +110,10 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     siteImg: val.siteImg || d.siteImg,
     siteDescription: val.siteDescription || d.siteDescription,
     startTime: val.startTime || d.startTime,
+    icpBeian: val.icpBeian || d.icpBeian,
+    policeBeian: val.policeBeian || d.policeBeian,
+    termsUrl: val.termsUrl || d.termsUrl,
+    privacyUrl: val.privacyUrl || d.privacyUrl,
     sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? d.sessionMaxAgeSeconds,
     sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? d.sessionAbsoluteMaxAgeSeconds,
     sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? d.sessionRememberMaxAgeSeconds,

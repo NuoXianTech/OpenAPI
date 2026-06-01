@@ -59,6 +59,8 @@ const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettin
         </div>
       </UPageCard>
 
+      <AdminSettingsLegalCard />
+
       <AdminSettingsSecurityCard />
 
       <AdminSettingsCheckinCard />

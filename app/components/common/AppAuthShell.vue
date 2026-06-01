@@ -116,6 +116,20 @@
   color: var(--ui-text);
 }
 
+.auth-consent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ui-text-muted);
+}
+
+.auth-consent__text {
+  margin: 0;
+}
+
 .auth-message {
   display: flex;
   align-items: flex-start;

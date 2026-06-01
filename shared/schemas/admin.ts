@@ -371,6 +371,11 @@ export const adminUpdateSiteSettingsSchema = z.object({
   siteName: z.string().trim().min(1, 'siteName cannot be empty').max(140, 'siteName is too long').optional(),
   siteDescription: z.string().trim().min(1, 'siteDescription cannot be empty').max(5000, 'siteDescription is too long').optional(),
   startTime: z.string().trim().min(1, 'startTime cannot be empty').max(32, 'startTime is too long').optional(),
+  // 备案与法务（均可留空：留空时 footer 不展示备案、登录/注册页不展示条款链接）
+  icpBeian: z.string().trim().max(100, 'icpBeian is too long').optional(),
+  policeBeian: z.string().trim().max(100, 'policeBeian is too long').optional(),
+  termsUrl: z.string().trim().max(1000, 'termsUrl is too long').optional(),
+  privacyUrl: z.string().trim().max(1000, 'privacyUrl is too long').optional(),
   sessionMaxAgeSeconds: z.coerce.number().int().positive('sessionMaxAgeSeconds must be a positive number').optional(),
   sessionAbsoluteMaxAgeSeconds: z.coerce.number().int().positive('sessionAbsoluteMaxAgeSeconds must be a positive number').optional(),
   sessionRememberMaxAgeSeconds: z.coerce.number().int().positive('sessionRememberMaxAgeSeconds must be a positive number').optional(),

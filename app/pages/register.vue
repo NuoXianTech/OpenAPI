@@ -32,6 +32,10 @@ const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.register)
 
+// 配置了服务条款 / 隐私政策时，注册前必须勾选同意
+const consent = ref(false)
+const consentRequired = computed(() => Boolean(settings.value.termsUrl || settings.value.privacyUrl))
+
 const fields = computed(() => [
   {
     name: 'username',
@@ -90,6 +94,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   successMessage.value = ''
   turnstileError.value = ''
 
+  if (consentRequired.value && !consent.value) {
+    errorMessage.value = '请先阅读并同意服务条款和隐私政策'
+    return
+  }
+
   if (turnstileRequired.value && !turnstileToken.value) {
     errorMessage.value = '请先完成人机验证'
     return
@@ -146,7 +155,7 @@ function clearTurnstileError() {
         :schema="schema"
         :fields="fields"
         :loading="submitting"
-        :submit="{ label: '创建账号', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
+        :submit="{ label: '创建账号', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
         @submit="onSubmit"
       >
         <template #password-help>
@@ -154,6 +163,11 @@ function clearTurnstileError() {
         </template>
 
         <template #validation>
+          <AuthConsent
+            v-if="consentRequired"
+            v-model="consent"
+          />
+
           <Transition name="state-fade">
             <div
               v-if="errorMessage"
