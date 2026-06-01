@@ -14,8 +14,8 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.4.5",
-    "@nuxt/ui": "^4.8.0",
+    "@electric-sql/pglite": "^0.4.6",
+    "@nuxt/ui": "^4.8.1",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/vue-table": "^8.21.3",
     "@unovis/ts": "^1.6.5",
@@ -27,7 +27,7 @@
     "nodemailer": "^8.0.7",
     "nuxt": "^4.4.6",
     "postgres": "^3.4.9",
-    "vue": "^3.5.34",
+    "vue": "^3.5.35",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,9 +36,9 @@
     "@types/node": "^24.12.4",
     "@types/nodemailer": "^8.0.0",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^10.4.0",
+    "eslint": "^10.4.1",
     "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
-    "vue-tsc": "^3.2.9"
+    "vue-tsc": "^3.3.3"
   }
 }
