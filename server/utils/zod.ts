@@ -17,7 +17,7 @@ export async function readZodBody<S extends z.ZodType>(
     if (error instanceof ZodError) {
       throw createError({
         statusCode: 400,
-        message: error.issues[0]?.message ?? 'Invalid request body',
+        message: error.issues[0]?.message ?? '请求参数有误',
         data: { issues: error.issues }
       })
     }
