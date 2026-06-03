@@ -103,14 +103,30 @@ function toPublicTurnstile(settings: {
 
 type SiteSettingsRow = typeof siteSettings.$inferSelect
 
+// getOrCreate 挂在鉴权热路径上：每个非「记住我」请求都要读 3 个会话时长整数（见
+// server/utils/auth.ts），SSR 还会经 /api/auth/me 再触发一次。但 default scope 只有
+// 一行、几乎从不变更，故沿用 apiService 的 { value, expiresAt } 短 TTL 缓存避免反复查库，
+// update() 时失效。整站全局配置（非 per-user），共享模块级缓存是安全的。
+const SITE_SETTINGS_CACHE_TTL_MS = 10_000
+let settingsCache: { value: SiteSettingsRow, expiresAt: number } | null = null
+
+function cacheSettings(value: SiteSettingsRow) {
+  settingsCache = { value, expiresAt: Date.now() + SITE_SETTINGS_CACHE_TTL_MS }
+  return value
+}
+
 export const siteSettingsService = {
   async getOrCreate() {
+    if (settingsCache && settingsCache.expiresAt > Date.now()) {
+      return settingsCache.value
+    }
+
     const exists = await db.select().from(siteSettings)
       .where(eq(siteSettings.scope, DEFAULT_SCOPE))
       .limit(1)
 
     if (exists[0]) {
-      return exists[0]
+      return cacheSettings(exists[0])
     }
 
     const defaults = buildInitialDefaults()
@@ -118,7 +134,7 @@ export const siteSettingsService = {
     try {
       const inserted = await db.insert(siteSettings).values(defaults).returning()
       if (inserted[0]) {
-        return inserted[0]
+        return cacheSettings(inserted[0])
       }
     } catch {
       // Ignore duplicate insert races and fallback to a fresh read.
@@ -132,7 +148,7 @@ export const siteSettingsService = {
       throw new Error('failed to initialize site settings')
     }
 
-    return reloaded[0]
+    return cacheSettings(reloaded[0])
   },
 
   async getPublicSettings(): Promise<PublicSiteSettings> {
@@ -176,6 +192,9 @@ export const siteSettingsService = {
       })
       .where(eq(siteSettings.id, current.id))
       .returning()
+
+    // 失效缓存：下次 getOrCreate 重新读库，避免后台改完设置后最多 10s 不生效
+    settingsCache = null
 
     return updated[0] || current
   }
