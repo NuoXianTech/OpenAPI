@@ -1,12 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxthub/core',
-    '@nuxt/ui',
-    '@vueuse/nuxt',
-    '~~/modules/api-manifest'
-  ],
+  modules: ['@nuxt/eslint', '@nuxthub/core', '@nuxt/ui', '@vueuse/nuxt', '~~/modules/api-manifest', '@nuxtjs/i18n'],
   devtools: {
     enabled: true
   },
