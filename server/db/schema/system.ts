@@ -45,6 +45,8 @@ export const siteSettings = pgTable('site_settings', {
   // 「记住我」会话有效期：勾选后使用，按秒；不滑动续期，到期重新登录
   sessionRememberMaxAgeSeconds: integer('session_remember_max_age_seconds').notNull().default(60 * 60 * 24 * 30),
   emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(30),
+  // 邮件激活总开关：开启=注册后须点邮件链接激活（isActive=false 起步）；关闭=注册即激活、不发验证邮件
+  emailActivationEnabled: boolean('email_activation_enabled').notNull().default(true),
   passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(30),
   // 忘记密码功能总开关：关闭后，请求重置邮件 / 消费重置 token 都会被拒，登录页也不展示入口
   passwordResetEnabled: boolean('password_reset_enabled').notNull().default(PUBLIC_SITE_DEFAULTS.passwordResetEnabled),
@@ -62,6 +64,12 @@ export const siteSettings = pgTable('site_settings', {
   smtpUser: varchar('smtp_user', { length: 255 }).notNull().default(''),
   smtpPass: varchar('smtp_pass', { length: 255 }).notNull().default(''),
   smtpFrom: varchar('smtp_from', { length: 255 }).notNull().default('no-reply@example.com'),
+  // 发件人显示名：非空时发信头形如 "显示名 <smtpFrom>"；留空则只用地址
+  smtpFromName: varchar('smtp_from_name', { length: 255 }).notNull().default(''),
+  // 回信邮箱（Reply-To）：留空则不设置，用户回信默认回到 smtpFrom
+  smtpReplyTo: varchar('smtp_reply_to', { length: 255 }).notNull().default(''),
+  // SMTP 连接复用窗口（秒）：>0 时启用连接池并在该秒数后重建连接；0=每封新建即关闭（不复用）
+  smtpPoolMaxAgeSeconds: integer('smtp_pool_max_age_seconds').notNull().default(0),
 
   // 第三方登录总开关
   oauthLoginEnabled: boolean('oauth_login_enabled').notNull().default(true),

@@ -24,10 +24,12 @@ export interface SiteSettingsUpsertInput {
   sessionMaxAgeSeconds?: number
   sessionAbsoluteMaxAgeSeconds?: number
   sessionRememberMaxAgeSeconds?: number
+  registrationMode?: 'open' | 'invite' | 'closed'
   registerEmailFilterList?: string
   registerEmailFilterMode?: 'off' | 'whitelist' | 'blacklist'
   defaultRegisterCredits?: number
   emailVerifyExpiresInMinutes?: number
+  emailActivationEnabled?: boolean
   passwordResetExpiresInMinutes?: number
   passwordResetEnabled?: boolean
   smtpHost?: string
@@ -36,6 +38,9 @@ export interface SiteSettingsUpsertInput {
   smtpUser?: string
   smtpPass?: string
   smtpFrom?: string
+  smtpFromName?: string
+  smtpReplyTo?: string
+  smtpPoolMaxAgeSeconds?: number
   oauthLoginEnabled?: boolean
   oauthForceBinding?: boolean
   turnstileEnabled?: boolean

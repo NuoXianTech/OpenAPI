@@ -13,10 +13,12 @@ export interface AdminSettingsForm {
   sessionMaxAgeSeconds: number
   sessionAbsoluteMaxAgeSeconds: number
   sessionRememberMaxAgeSeconds: number
+  registrationMode: 'open' | 'invite' | 'closed'
   registerEmailFilterMode: 'off' | 'whitelist' | 'blacklist'
   registerEmailFilterList: string
   defaultRegisterCredits: number
   emailVerifyExpiresInMinutes: number
+  emailActivationEnabled: boolean
   passwordResetExpiresInMinutes: number
   passwordResetEnabled: boolean
   smtpHost: string
@@ -25,6 +27,9 @@ export interface AdminSettingsForm {
   smtpUser: string
   smtpPass: string
   smtpFrom: string
+  smtpFromName: string
+  smtpReplyTo: string
+  smtpPoolMaxAgeSeconds: number
   oauthLoginEnabled: boolean
   oauthForceBinding: boolean
   turnstileEnabled: boolean
@@ -60,10 +65,12 @@ function defaultForm(): AdminSettingsForm {
     sessionMaxAgeSeconds: 86400,
     sessionAbsoluteMaxAgeSeconds: 604800,
     sessionRememberMaxAgeSeconds: 2592000,
+    registrationMode: 'open',
     registerEmailFilterMode: 'off',
     registerEmailFilterList: '',
     defaultRegisterCredits: 0,
     emailVerifyExpiresInMinutes: 30,
+    emailActivationEnabled: true,
     passwordResetExpiresInMinutes: 30,
     passwordResetEnabled: true,
     smtpHost: '',
@@ -72,6 +79,9 @@ function defaultForm(): AdminSettingsForm {
     smtpUser: '',
     smtpPass: '',
     smtpFrom: '',
+    smtpFromName: '',
+    smtpReplyTo: '',
+    smtpPoolMaxAgeSeconds: 0,
     oauthLoginEnabled: true,
     oauthForceBinding: false,
     turnstileEnabled: false,
@@ -94,14 +104,6 @@ function defaultForm(): AdminSettingsForm {
   }
 }
 
-export const ADMIN_SETTINGS_FORM_KEY: InjectionKey<AdminSettingsForm> = Symbol.for('admin-settings-form')
-
-export function useAdminSettingsForm(): AdminSettingsForm {
-  const form = inject(ADMIN_SETTINGS_FORM_KEY)
-  if (!form) throw new Error('AdminSettings form not provided')
-  return form
-}
-
 function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
   const d = defaultForm()
   return {
@@ -117,12 +119,16 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? d.sessionMaxAgeSeconds,
     sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? d.sessionAbsoluteMaxAgeSeconds,
     sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? d.sessionRememberMaxAgeSeconds,
+    registrationMode: (val.registrationMode === 'invite' || val.registrationMode === 'closed')
+      ? val.registrationMode
+      : 'open',
     registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist')
       ? val.registerEmailFilterMode
       : 'off',
     registerEmailFilterList: val.registerEmailFilterList ?? d.registerEmailFilterList,
     defaultRegisterCredits: val.defaultRegisterCredits ?? d.defaultRegisterCredits,
     emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? d.emailVerifyExpiresInMinutes,
+    emailActivationEnabled: val.emailActivationEnabled ?? d.emailActivationEnabled,
     passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? d.passwordResetExpiresInMinutes,
     passwordResetEnabled: val.passwordResetEnabled ?? d.passwordResetEnabled,
     smtpHost: val.smtpHost || d.smtpHost,
@@ -131,6 +137,9 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     smtpUser: val.smtpUser || d.smtpUser,
     smtpPass: val.smtpPass || d.smtpPass,
     smtpFrom: val.smtpFrom || d.smtpFrom,
+    smtpFromName: val.smtpFromName ?? d.smtpFromName,
+    smtpReplyTo: val.smtpReplyTo ?? d.smtpReplyTo,
+    smtpPoolMaxAgeSeconds: val.smtpPoolMaxAgeSeconds ?? d.smtpPoolMaxAgeSeconds,
     oauthLoginEnabled: val.oauthLoginEnabled ?? d.oauthLoginEnabled,
     oauthForceBinding: val.oauthForceBinding ?? d.oauthForceBinding,
     turnstileEnabled: val.turnstileEnabled ?? d.turnstileEnabled,
@@ -163,8 +172,6 @@ export function useAdminSettingsPage() {
   const form = reactive<AdminSettingsForm>(defaultForm())
   const pristine = ref<AdminSettingsForm>(defaultForm())
   const saving = ref(false)
-
-  provide(ADMIN_SETTINGS_FORM_KEY, form)
 
   const { data, status, refresh } = useLazyFetch<Partial<AdminSettingsForm> | null>('/api/admin/settings/get', {
     default: () => null

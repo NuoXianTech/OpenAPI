@@ -1,5 +1,5 @@
 {
-  "id": "161524bd-ecec-4adc-b0e8-a4fb40b0b654",
+  "id": "c34365e0-bedc-4845-b1f8-e47d52bd8b45",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2937,6 +2937,13 @@
           "notNull": true,
           "default": 30
         },
+        "email_activation_enabled": {
+          "name": "email_activation_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
         "password_reset_expires_in_minutes": {
           "name": "password_reset_expires_in_minutes",
           "type": "integer",
@@ -3016,6 +3023,27 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'no-reply@example.com'"
+        },
+        "smtp_from_name": {
+          "name": "smtp_from_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "smtp_reply_to": {
+          "name": "smtp_reply_to",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "smtp_pool_max_age_seconds": {
+          "name": "smtp_pool_max_age_seconds",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "oauth_login_enabled": {
           "name": "oauth_login_enabled",

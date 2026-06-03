@@ -12,12 +12,17 @@ import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rateLimit'
 
-// 注册接口对外永远返回此中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
+// 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
 // 防止匿名访问者用接口差异遍历账号库。真实分支信号只走邮件通道。
-const NEUTRAL_RESPONSE = { verificationRequired: true } as const
+// 响应里的 verificationRequired 取决于站点是否开启邮件激活：同一激活模式下所有分支返回值一致，
+// 不会因"是否需要验证"泄露账号是否存在。
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()
+
+  // 邮件激活总开关：开启=注册后须邮件验证；关闭=注册即激活、不发验证邮件
+  const activationRequired = settings.emailActivationEnabled !== false
+  const neutralResponse = { verificationRequired: activationRequired }
 
   // 注册模式闸门：closed 直接拒绝，invite 要求有邀请码字段（先留 TODO 占位）。
   const mode = settings.registrationMode || 'open'
@@ -38,12 +43,12 @@ export default defineEventHandler(async (event: H3Event) => {
   const limiter = getRateLimiter()
   const emailLimit = await limiter.consume(`register:email:${email}`, 1, 'minute')
   if (!emailLimit.allowed) {
-    return NEUTRAL_RESPONSE
+    return neutralResponse
   }
   if (ip) {
     const ipLimit = await limiter.consume(`register:ip:${ip}`, 10, 'hour')
     if (!ipLimit.allowed) {
-      return NEUTRAL_RESPONSE
+      return neutralResponse
     }
   }
 
@@ -71,14 +76,14 @@ export default defineEventHandler(async (event: H3Event) => {
     } catch (error) {
       console.error('[register] failed to send duplicate-registration notice', { error })
     }
-    return NEUTRAL_RESPONSE
+    return neutralResponse
   }
 
   // 用户名已被占用：静默返回中性响应。不向用户填写的邮箱发"用户名冲突"通知，
   // 避免攻击者控制邮箱后通过邮件内容反推目标用户名是否存在。
   const existUser = await usersService.findByUsername(username)
   if (existUser) {
-    return NEUTRAL_RESPONSE
+    return neutralResponse
   }
 
   const passwordHash = await hashPassword(password)
@@ -89,6 +94,26 @@ export default defineEventHandler(async (event: H3Event) => {
     passwordHash,
     isActive: false
   })
+
+  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知），不发验证邮件。
+  // activateUser 失败则回滚刚建的账号，避免邮箱/用户名被占住无法重试。
+  if (!activationRequired) {
+    try {
+      await usersService.activateUser(created.id)
+    } catch (error) {
+      console.error('[register] failed to auto-activate user, rolling back', { userId: created.id, error })
+      try {
+        await usersService.deleteUser(created.id)
+      } catch (rollbackError) {
+        console.error('[register] failed to rollback user after activation failure', { userId: created.id, error: rollbackError })
+      }
+      throw createError({
+        statusCode: 503,
+        message: '注册失败，请稍后重试或联系管理员'
+      })
+    }
+    return neutralResponse
+  }
 
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
   const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
@@ -110,5 +135,5 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  return NEUTRAL_RESPONSE
+  return neutralResponse
 })

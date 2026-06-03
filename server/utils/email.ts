@@ -10,7 +10,10 @@ async function getSmtpConfig() {
       secure: settings.smtpSecure,
       user: settings.smtpUser,
       pass: settings.smtpPass,
-      from: settings.smtpFrom
+      from: settings.smtpFrom,
+      fromName: settings.smtpFromName || undefined,
+      replyTo: settings.smtpReplyTo || undefined,
+      poolMaxAgeSeconds: settings.smtpPoolMaxAgeSeconds || 0
     },
     siteName: settings.siteName
   }

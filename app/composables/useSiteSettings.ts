@@ -15,7 +15,8 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   login: false,
   register: false,
   adminLogin: false,
-  passwordReset: false
+  passwordReset: false,
+  checkin: false
 }
 
 const EMPTY_ANNOUNCEMENT: PublicAnnouncementSettings = {
