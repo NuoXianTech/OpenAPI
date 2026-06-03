@@ -192,38 +192,52 @@ export async function getAuthUser(event: H3Event) {
     return null
   }
 
+  const nowMs = Date.now()
+  const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
+
+  // 写库节流：把「每个已登录请求一次 UPDATE」降到「距上次落库的 lastActiveAt 超过
+  // 阈值才写」。阈值取 defaultMaxAge/4——必须远小于 defaultMaxAge，才能保证活跃用户
+  // 总在滑动窗口失效前完成一次续期（最坏空闲窗口 = defaultMaxAge − 阈值）。
+  const writeThrottleMs = (defaultMaxAge * 1000) / 4
+  const shouldWrite = nowMs - session.lastActiveAt.getTime() > writeThrottleMs
+
   // 「记住我」会话保持登录时给定的固定到期时间；普通会话每次活跃都滑动续期，
   // 但绝不允许跨过 createdAt + sessionAbsoluteMaxAgeSeconds 的硬顶。
   if (session.isRemembered) {
-    // fail-open：touch 失败不影响本次鉴权，但需留痕便于排查 DB 写入异常
-    sessionService.touchSession(sessionId).catch((err) => {
-      console.error('[auth] failed to touch remembered session', { sessionId, err })
-    })
+    // touch 只刷新 lastActiveAt（展示/审计用，不参与鉴权判定），故可放心节流。
+    // fail-open：touch 失败不影响本次鉴权，但需留痕便于排查 DB 写入异常。
+    if (shouldWrite) {
+      sessionService.touchSession(sessionId).catch((err) => {
+        console.error('[auth] failed to touch remembered session', { sessionId, err })
+      })
+    }
   } else {
-    const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
-    const nowMs = Date.now()
     const absoluteExpiryMs = session.createdAt.getTime() + absoluteMaxAge * 1000
 
-    // 已经撞到硬顶 → 立刻清掉会话，等同未登录
+    // 硬顶检查不写库、很廉价，必须每个请求都跑、不受节流影响：撞顶立刻清会话，等同未登录。
     if (absoluteExpiryMs <= nowMs) {
       await sessionService.deleteSession(sessionId)
       clearAuthCookie(event)
       return null
     }
 
-    const slidingExpiryMs = nowMs + defaultMaxAge * 1000
-    const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
-    // 必须先 await DB 续期成功，再下发新的 cookie maxAge；否则 cookie 写了「续期成功」的
-    // maxAge，但库里 expiresAt 仍是旧值，下一次请求会被 getSessionById 判过期踢出，
-    // 形成「明明 cookie 没过期却莫名要重新登录」的不一致状态。
-    try {
-      await sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs))
-      const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
-      setAuthCookie(event, sessionId, cookieMaxAge)
-    } catch (err) {
-      // DB 续期失败：本次请求仍按当前会话通过，但不下发新 cookie maxAge；
-      // 下一次请求若 DB 恢复会自然重新续期，否则随旧 expiresAt 自然过期。
-      console.error('[auth] failed to extend session expiry, cookie maxAge left unchanged', { sessionId, err })
+    // 滑动续期的「写库 + 重发 cookie」必须锁步：要么一起续、要么一起跳过。节流跳过时
+    // 两者都不动，仍指向上次续期写入的同一到期时刻；只有这样才不会出现「cookie 没过期
+    // 但库里 expiresAt 已落后 → 下次 getSessionById 判过期踢出 → 明明没过期却要重登」。
+    if (shouldWrite) {
+      const slidingExpiryMs = nowMs + defaultMaxAge * 1000
+      const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
+      // 必须先 await DB 续期成功，再下发新的 cookie maxAge；否则 cookie 写了「续期成功」的
+      // maxAge，但库里 expiresAt 仍是旧值，下一次请求会被 getSessionById 判过期踢出。
+      try {
+        await sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs))
+        const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
+        setAuthCookie(event, sessionId, cookieMaxAge)
+      } catch (err) {
+        // DB 续期失败：本次请求仍按当前会话通过，但不下发新 cookie maxAge；
+        // 下一次请求若 DB 恢复会自然重新续期，否则随旧 expiresAt 自然过期。
+        console.error('[auth] failed to extend session expiry, cookie maxAge left unchanged', { sessionId, err })
+      }
     }
   }
 

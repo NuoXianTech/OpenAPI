@@ -50,8 +50,9 @@ export const sessionService = {
   },
 
   /**
-   * 每次鉴权请求都调用一次，刷新会话活跃度。
-   * 目前实现每次都 update 一下，简单；若要降负载可改成间隔节流（>5 分钟才写）。
+   * 刷新「记住我」会话的 lastActiveAt（展示/审计用，不参与鉴权判定）。
+   * 写库节流由调用方（server/utils/auth.ts getAuthUser）按 lastActiveAt 间隔把控，
+   * 本方法一旦被调用即无条件写一次。
    */
   async touchSession(sessionId: string) {
     const sessionHash = hashSessionId(sessionId)
@@ -62,7 +63,7 @@ export const sessionService = {
 
   /**
    * 滑动续期：刷新活跃时间并把 expiresAt 推到调用方计算好的时间点。
-   * 调用方负责取 min(滑动到期, 绝对硬顶) 后传入。
+   * 调用方负责取 min(滑动到期, 绝对硬顶) 后传入，并负责写库节流与 cookie maxAge 锁步（见 getAuthUser）。
    * 仅用于未勾选「记住我」的会话；勾选「记住我」的会话保持登录时给定的固定到期时间。
    */
   async extendSessionExpiry(sessionId: string, expiresAt: Date) {
