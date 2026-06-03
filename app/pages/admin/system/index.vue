@@ -7,6 +7,173 @@ const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettin
 </script>
 
 <template>
+  <Uform
+    id="system"
+  >
+    <UPageCard
+      title="基本信息"
+      description="These informations will be displayed publicly."
+      variant="naked"
+      orientation="horizontal"
+      class="mb-4"
+    >
+    </UPageCard>
+
+    <UPageCard variant="subtle">
+      <UFormField
+        name="siteName"
+        label="站点名称"
+        description="Will appear on receipts, invoices, and other communication."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.siteName"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="siteDescription"
+        label="站点描述"
+        description="Will appear on receipts, invoices, and other communication."
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+        :ui="{ container: 'w-full' }"
+      >
+        <UTextarea
+          v-model="form.siteDescription"
+          :rows="5"
+          autoresize
+          class="w-full"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="siteUrl"
+        label="站点URL"
+        description="Will appear on receipts, invoices, and other communication."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.siteUrl"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="siteImg"
+        label="站点图标"
+        description="Will appear on receipts, invoices, and other communication."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.siteImg"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="startTime"
+        label="运行时间"
+        description="Used to sign in, for email receipts and product updates."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.startTime"
+          type="datetime-local"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="xxxx"
+        label="使用条款链接"
+        description="Used to sign in, for email receipts and product updates."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.startTime"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="xxx"
+        label="隐私政策链接"
+        description="Used to sign in, for email receipts and product updates."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.startTime"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="xxx"
+        label="ICP 备案号"
+        description="Used to sign in, for email receipts and product updates."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.startTime"
+          autocomplete="off"
+        />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="xxx"
+        label="公安备案号"
+        description="Used to sign in, for email receipts and product updates."
+        required
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <UInput
+          v-model="form.startTime"
+          autocomplete="off"
+        />
+      </UFormField>
+    </UPageCard>
+  </Uform>
+
+  <Uform
+    id="system"
+  >
+    <UPageCard
+      title="每日签到"
+      description="These informations will be displayed publicly."
+      variant="naked"
+      orientation="horizontal"
+      class="mb-4"
+    >
+    </UPageCard>
+
+    <UPageCard variant="subtle">
+      <UFormField
+        name="xxx"
+        label="启用每日签到"
+        description="xxx"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
+      >
+        <USwitch />
+      </UFormField>
+      <USeparator />
+      <UFormField
+        name="xxx"
+        label="冷却方式"
+        description="xxxx"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
+        <USelect v-model="value" :items="items" />
+      </UFormField>
+    </UPageCard>
+  </Uform>
   <div class="flex flex-1 flex-col max-w-3xl">
     <div
       v-if="status === 'pending'"
@@ -19,85 +186,7 @@ const { form, saving, status, save, dirty, changedKeys, reset } = useAdminSettin
       v-else
       class="space-y-8"
     >
-      <UPageCard
-        icon="i-mdi-web"
-        title="基本信息"
-      >
-        <div class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <UFormField label="站点名称">
-              <UInput
-                v-model="form.siteName"
-                placeholder="OpenAPI"
-              />
-            </UFormField>
-            <UFormField label="站点 URL">
-              <UInput
-                v-model="form.siteUrl"
-                placeholder="https://example.com"
-              />
-            </UFormField>
-          </div>
-          <UFormField label="站点图标 URL">
-            <UInput
-              v-model="form.siteImg"
-              placeholder="https://example.com/logo.png"
-            />
-          </UFormField>
-          <UFormField label="站点描述">
-            <UTextarea
-              v-model="form.siteDescription"
-              :rows="3"
-            />
-          </UFormField>
-          <UFormField label="启动时间">
-            <UInput
-              v-model="form.startTime"
-              placeholder="2026-01-01 00:00:00"
-            />
-          </UFormField>
-        </div>
-      </UPageCard>
-
-      <AdminSettingsLegalCard />
-
-      <AdminSettingsSecurityCard />
-
       <AdminSettingsCheckinCard />
-
-      <UPageCard
-        icon="i-mdi-shield-key-outline"
-        title="第三方登录开关"
-      >
-        <div class="space-y-4">
-          <div class="flex flex-col gap-1">
-            <USwitch
-              v-model="form.oauthLoginEnabled"
-              label="启用第三方登录"
-            />
-            <p class="text-xs text-muted">
-              关闭后，登录页不会显示 GitHub/QQ 等第三方入口，回调接口也将拒绝请求。
-            </p>
-          </div>
-          <div class="flex flex-col gap-1">
-            <USwitch
-              v-model="form.oauthForceBinding"
-              :disabled="!form.oauthLoginEnabled"
-              label="强制绑定已有账号"
-            />
-            <p class="text-xs text-muted">
-              开启后，第三方登录不会自动创建新用户；只能通过已绑定或邮箱命中的本站账号登录。
-            </p>
-          </div>
-          <p class="text-xs text-muted">
-            各 provider 的 Client ID/Secret 请在「第三方登录」标签页内逐项配置。
-          </p>
-        </div>
-      </UPageCard>
-
-      <AdminSettingsTurnstileCard />
-
-      <AdminSettingsSmtpCard />
     </div>
 
     <div class="flex-1" />
