@@ -172,17 +172,29 @@ export function useAdminSettingsPage() {
   const form = reactive<AdminSettingsForm>(defaultForm())
   const pristine = ref<AdminSettingsForm>(defaultForm())
   const saving = ref(false)
+  const loading = ref(false)
 
-  const { data, status, refresh } = useLazyFetch<Partial<AdminSettingsForm> | null>('/api/admin/settings/get', {
-    default: () => null
+  // 后台设置含明文 SMTP 密码、Turnstile secret，必须用 $fetch（仅客户端 onMounted 触发）拉取：
+  // useFetch/useLazyFetch 会把响应写进 SSR payload（window.__NUXT__），硬刷新 /admin/system/*
+  // 时这些明文密钥就嵌进 HTML 源码（view-source / 浏览器磁盘缓存 / 中间代理均可见）。
+  async function load() {
+    loading.value = true
+    try {
+      const val = await $fetch<Partial<AdminSettingsForm> | null>('/api/admin/settings/get')
+      if (!val) return
+      const next = normalizeForm(val)
+      Object.assign(form, next)
+      pristine.value = snapshot(next)
+    } catch (err) {
+      console.error('failed to load admin settings', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  onMounted(() => {
+    void load()
   })
-
-  watch(() => data.value, (val) => {
-    if (!val) return
-    const next = normalizeForm(val)
-    Object.assign(form, next)
-    pristine.value = snapshot(next)
-  }, { immediate: true })
 
   const changedKeys = computed(() => {
     const keys: Array<keyof AdminSettingsForm> = []
@@ -206,10 +218,10 @@ export function useAdminSettingsPage() {
       // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
       const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
       cached.data.value = res.public
-      // 先把 pristine 推到当前值，避免 refresh 期间 dirty 仍然为 true 导致 sticky bar 闪烁。
+      // 先把 pristine 推到当前值，避免 load 期间 dirty 仍然为 true 导致 sticky bar 闪烁。
       pristine.value = snapshot(form)
       toast.add({ title: '保存成功', color: 'success' })
-      await refresh()
+      await load()
     } catch (err) {
       toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
     } finally {
@@ -217,5 +229,5 @@ export function useAdminSettingsPage() {
     }
   }
 
-  return { form, saving, status, save, dirty, changedKeys, reset }
+  return { form, saving, loading, save, dirty, changedKeys, reset }
 }
