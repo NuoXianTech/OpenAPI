@@ -109,19 +109,16 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       </UButton>
     </div>
 
-    <UTable
-      class="shrink-0"
+    <DashboardDataTable
+      v-model:page="page"
+      v-model:page-size="pageSize"
       :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      :total="total"
+      :page-size-items="PAGE_SIZE_ITEMS"
+      empty-title="暂无分类"
+      empty-icon="i-mdi-shape-outline"
     >
       <template #code-cell="{ row }">
         <span class="font-mono text-xs">{{ row.original.code }}</span>
@@ -162,42 +159,9 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         />
       </template>
       <template #actions-cell="{ row }">
-        <div class="text-right">
-          <UDropdownMenu
-            :items="getRowItems(row.original)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-mdi-dots-vertical"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-            />
-          </UDropdownMenu>
-        </div>
+        <DashboardRowActions :items="getRowItems(row.original)" />
       </template>
-    </UTable>
-
-    <div
-      v-if="total > 0"
-      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
-    >
-      <div class="flex items-center gap-2 text-sm text-muted">
-        <span>共 {{ total.toLocaleString() }} 条</span>
-        <USelect
-          v-model="pageSize"
-          :items="PAGE_SIZE_ITEMS"
-          value-key="value"
-          size="sm"
-          class="w-24"
-        />
-      </div>
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="total"
-      />
-    </div>
+    </DashboardDataTable>
 
     <AdminApiCategoryModal
       v-model:open="modalOpen"

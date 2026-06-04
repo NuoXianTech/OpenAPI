@@ -304,7 +304,11 @@ export const adminLogsService = {
       averageWindowDays
     }
 
-    const distribution: AdminAnalyticsDistributionItem[] = distributionRows.map(r => ({
+    // Promise.all 对 8 个异构查询的元组推断会让靠后的结果退化为 any，
+    // 显式标注回调行类型补回类型安全(distribution 与 ranking 同 shape)。
+    type ApiCallStatRow = { apiId: number, name: string, apiPath: string, totalCalls: number, successCalls: number, failureCalls: number }
+
+    const distribution: AdminAnalyticsDistributionItem[] = distributionRows.map((r: ApiCallStatRow) => ({
       apiId: r.apiId,
       name: r.name,
       apiPath: r.apiPath,
@@ -338,10 +342,10 @@ export const adminLogsService = {
     ]
     const callBuckets: AdminAnalyticsCallBucket[] = bucketDefs.map(def => ({
       label: def.label,
-      apiCount: bucketsRows.filter(r => def.test(toNumber(r.totalCalls))).length
+      apiCount: bucketsRows.filter((r: { apiId: number, totalCalls: number }) => def.test(toNumber(r.totalCalls))).length
     }))
 
-    const ranking: AdminAnalyticsRankItem[] = rankingRows.map((r, i) => {
+    const ranking: AdminAnalyticsRankItem[] = rankingRows.map((r: ApiCallStatRow, i: number) => {
       const total = toNumber(r.totalCalls)
       const success = toNumber(r.successCalls)
       return {

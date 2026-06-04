@@ -14,12 +14,7 @@ const emit = defineEmits<{
 }>()
 
 function formatDate(iso: string | null) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 </script>
 

@@ -142,15 +142,15 @@
 }
 
 .auth-message--error {
-  color: var(--red);
-  background: color-mix(in srgb, var(--red) 8%, transparent);
-  border-color: color-mix(in srgb, var(--red) 18%, transparent);
+  color: var(--ui-color-error-500);
+  background: color-mix(in srgb, var(--ui-color-error-500) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ui-color-error-500) 18%, transparent);
 }
 
 .auth-message--success {
-  color: var(--green);
-  background: color-mix(in srgb, var(--green) 8%, transparent);
-  border-color: color-mix(in srgb, var(--green) 20%, transparent);
+  color: var(--ui-color-success-500);
+  background: color-mix(in srgb, var(--ui-color-success-500) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ui-color-success-500) 20%, transparent);
 }
 
 .auth-message__icon {
@@ -166,9 +166,9 @@
   height: 72px;
   border-radius: 999px;
   margin: 0 auto 4px;
-  color: var(--green);
-  background: color-mix(in srgb, var(--green) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--green) 22%, transparent);
+  color: var(--ui-color-success-500);
+  background: color-mix(in srgb, var(--ui-color-success-500) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-color-success-500) 22%, transparent);
 }
 
 .dark .auth-shell {

@@ -188,17 +188,6 @@ function categoryLabel(row: DiscoveredApi) {
   if (!id) return '-'
   return categoriesMap.value.get(id) || `#${id}`
 }
-
-function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
-  switch (method) {
-    case 'GET': return 'success'
-    case 'POST': return 'info'
-    case 'PUT':
-    case 'PATCH': return 'warning'
-    case 'DELETE': return 'error'
-    default: return 'neutral'
-  }
-}
 </script>
 
 <template>
@@ -237,20 +226,17 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
       未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
     </div>
 
-    <UTable
+    <DashboardDataTable
       v-else
+      v-model:page="page"
+      v-model:page-size="pageSize"
       :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
-      class="shrink-0"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      :total="total"
+      :page-size-items="PAGE_SIZE_ITEMS"
+      empty-title="该版本暂无接口"
+      empty-icon="i-mdi-api"
     >
       <template #code-cell="{ row }">
         <div class="flex flex-col gap-0.5">
@@ -283,7 +269,7 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
             class="flex items-center gap-2"
           >
             <UBadge
-              :color="methodColor(ep.method)"
+              :color="httpMethodColor(ep.method)"
               variant="subtle"
               class="font-mono"
             >
@@ -339,42 +325,9 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         >-</span>
       </template>
       <template #actions-cell="{ row }">
-        <div class="text-right">
-          <UDropdownMenu
-            :items="getRowItems(row.original)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-mdi-dots-vertical"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-            />
-          </UDropdownMenu>
-        </div>
+        <DashboardRowActions :items="getRowItems(row.original)" />
       </template>
-    </UTable>
-
-    <div
-      v-if="total > 0"
-      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
-    >
-      <div class="flex items-center gap-2 text-sm text-muted">
-        <span>共 {{ total.toLocaleString() }} 条</span>
-        <USelect
-          v-model="pageSize"
-          :items="PAGE_SIZE_ITEMS"
-          value-key="value"
-          size="sm"
-          class="w-24"
-        />
-      </div>
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="total"
-      />
-    </div>
+    </DashboardDataTable>
 
     <AdminApiModal
       v-model:open="modalOpen"

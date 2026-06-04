@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '@nuxthub/db/schema'
+import type { CreditReason } from '~~/shared/types/credit-reason'
 
 /**
  * 积分服务 · 单源真理
@@ -10,15 +11,7 @@ import { apis, creditTransactions, users } from '@nuxthub/db/schema'
  *   3. balanceAfter 快照值正确，便于审计
  */
 
-export type CreditReason
-  = | 'admin_grant' // 管理员加积分
-    | 'admin_revoke' // 管理员扣积分
-    | 'admin_reset' // 管理员重置积分
-    | 'api_charge' // API 调用扣费
-    | 'api_refund' // API 调用退款
-    | 'signup_bonus' // 注册赠送
-    | 'redemption_code' // 兑换码兑换
-    | 'checkin' // 每日签到
+export type { CreditReason }
 
 export interface ChargeInput {
   userId: number

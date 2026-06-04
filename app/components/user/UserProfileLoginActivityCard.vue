@@ -16,12 +16,7 @@ defineProps<{
 const emit = defineEmits<{ refresh: [] }>()
 
 function formatDate(iso: string) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 function methodColor(method: string) {
   return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
@@ -62,59 +57,51 @@ const columns: TableColumn<LoginLogRow>[] = [
       </div>
     </template>
 
-    <div
-      v-if="loading && items.length === 0"
-      class="text-sm text-muted py-4 text-center"
+    <DashboardDataTable
+      :data="items"
+      :columns="columns"
+      :loading="loading"
+      :fixed="false"
+      empty-title="暂无登录记录"
+      empty-icon="i-mdi-login-variant"
     >
-      加载中...
-    </div>
-    <div
-      v-else-if="items.length === 0"
-      class="text-sm text-muted py-4 text-center"
+      <template #createdAt-cell="{ row }">
+        <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+      </template>
+      <template #method-cell="{ row }">
+        <UBadge
+          :color="methodColor(row.original.method)"
+          :icon="methodIcon(row.original.method)"
+          variant="subtle"
+          size="sm"
+        >
+          {{ loginMethodLabel(row.original.method) }}
+        </UBadge>
+      </template>
+      <template #success-cell="{ row }">
+        <UBadge
+          :color="row.original.success ? 'success' : 'error'"
+          variant="subtle"
+          size="sm"
+        >
+          {{ row.original.success ? '成功' : loginFailureReasonLabel(row.original.failureReason) }}
+        </UBadge>
+      </template>
+      <template #device-cell="{ row }">
+        <span
+          class="text-xs"
+          :title="row.original.userAgent || ''"
+        >{{ row.original.device }}</span>
+      </template>
+      <template #ip-cell="{ row }">
+        <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+      </template>
+    </DashboardDataTable>
+    <p
+      v-if="items.length > 0"
+      class="mt-3 text-xs text-muted"
     >
-      暂无登录记录
-    </div>
-    <template v-else>
-      <UTable
-        :data="items"
-        :columns="columns"
-        :loading="loading"
-      >
-        <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-        </template>
-        <template #method-cell="{ row }">
-          <UBadge
-            :color="methodColor(row.original.method)"
-            :icon="methodIcon(row.original.method)"
-            variant="subtle"
-            size="sm"
-          >
-            {{ loginMethodLabel(row.original.method) }}
-          </UBadge>
-        </template>
-        <template #success-cell="{ row }">
-          <UBadge
-            :color="row.original.success ? 'success' : 'error'"
-            variant="subtle"
-            size="sm"
-          >
-            {{ row.original.success ? '成功' : loginFailureReasonLabel(row.original.failureReason) }}
-          </UBadge>
-        </template>
-        <template #device-cell="{ row }">
-          <span
-            class="text-xs"
-            :title="row.original.userAgent || ''"
-          >{{ row.original.device }}</span>
-        </template>
-        <template #ip-cell="{ row }">
-          <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
-        </template>
-      </UTable>
-      <p class="mt-3 text-xs text-muted">
-        仅展示最近 {{ items.length }} 条。若发现非本人登录，请尽快修改密码。
-      </p>
-    </template>
+      仅展示最近 {{ items.length }} 条。若发现非本人登录，请尽快修改密码。
+    </p>
   </UCard>
 </template>

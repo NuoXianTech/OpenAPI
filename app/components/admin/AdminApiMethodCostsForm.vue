@@ -6,17 +6,6 @@ defineProps<{
 
 const state = useAdminApiForm()
 
-function methodBadgeColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'secondary' | 'neutral' {
-  switch (method.toUpperCase()) {
-    case 'GET': return 'success'
-    case 'POST': return 'info'
-    case 'PUT': return 'warning'
-    case 'DELETE': return 'error'
-    case 'PATCH': return 'secondary'
-    default: return 'neutral'
-  }
-}
-
 function getMethodCost(method: string): number {
   const v = state.methodCosts?.[method.toUpperCase()]
   return typeof v === 'number' && v >= 0 ? v : 0
@@ -81,7 +70,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
           class="flex items-center gap-2"
         >
           <UBadge
-            :color="methodBadgeColor(method)"
+            :color="httpMethodColor(method)"
             variant="subtle"
             size="sm"
             class="font-mono w-16 justify-center"

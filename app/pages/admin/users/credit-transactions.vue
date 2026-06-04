@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
+import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -20,7 +21,7 @@ interface CreditTxnRow {
 
 const filters = reactive({
   userId: '' as number | '',
-  reason: 'all' as 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code'
+  reason: 'all' as CreditReasonFilter
 })
 const page = ref(1)
 const pageSize = ref(50)
@@ -104,8 +105,7 @@ function reset() {
 }
 
 function formatDate(val: string) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val)
 }
 
 const reasonItems = [
@@ -119,16 +119,6 @@ const reasonItems = [
   { label: '兑换码', value: 'redemption_code' }
 ]
 
-const reasonMeta: Record<string, { label: string, color: 'success' | 'warning' | 'error' | 'info' | 'neutral' }> = {
-  admin_grant: { label: '管理员加', color: 'success' },
-  admin_revoke: { label: '管理员扣', color: 'warning' },
-  admin_reset: { label: '重置', color: 'neutral' },
-  api_charge: { label: 'API 扣费', color: 'warning' },
-  api_refund: { label: 'API 退款', color: 'info' },
-  signup_bonus: { label: '注册赠送', color: 'success' },
-  redemption_code: { label: '兑换码', color: 'success' }
-}
-
 const columns: TableColumn<CreditTxnRow>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'userId', header: '用户' },
@@ -138,10 +128,6 @@ const columns: TableColumn<CreditTxnRow>[] = [
   { accessorKey: 'operatorName', header: '操作人' },
   { accessorKey: 'remark', header: '备注' }
 ]
-
-function getReasonMeta(reason: string) {
-  return reasonMeta[reason] || { label: reason, color: 'neutral' as const }
-}
 
 function amountClass(amt: number) {
   const color = amt > 0 ? 'text-success' : amt < 0 ? 'text-error' : 'text-muted'
@@ -255,20 +241,15 @@ function amountClass(amt: number) {
       </div>
     </UCard>
 
-    <UTable
-      class="shrink-0"
+    <DashboardDataTable
+      v-model:page="page"
       :data="items"
       :columns="columns"
       :loading="loading"
-      empty="暂无积分流水"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      :page-size="pageSize"
+      :total="total"
+      empty-title="暂无积分流水"
+      empty-icon="i-mdi-cash-multiple"
     >
       <template #createdAt-cell="{ row }">
         <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
@@ -278,10 +259,10 @@ function amountClass(amt: number) {
       </template>
       <template #reason-cell="{ row }">
         <UBadge
-          :color="getReasonMeta(row.original.reason).color"
+          :color="creditReasonColor(row.original.reason)"
           variant="subtle"
         >
-          {{ getReasonMeta(row.original.reason).label }}
+          {{ creditReasonLabel(row.original.reason) }}
         </UBadge>
       </template>
       <template #amount-cell="{ row }">
@@ -305,20 +286,7 @@ function amountClass(amt: number) {
       <template #remark-cell="{ row }">
         <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
       </template>
-    </UTable>
-
-    <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
-      <div class="text-sm text-muted">
-        共 {{ total.toLocaleString() }} 条
-      </div>
-      <div class="flex items-center gap-1.5">
-        <UPagination
-          v-model:page="page"
-          :items-per-page="pageSize"
-          :total="total"
-        />
-      </div>
-    </div>
+    </DashboardDataTable>
   </div>
 </template>
 

@@ -83,12 +83,7 @@ const verifying = ref(false)
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 
 function formatDate(iso: string | null) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 function openModal() {

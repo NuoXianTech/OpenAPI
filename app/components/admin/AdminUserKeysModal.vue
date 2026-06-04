@@ -307,8 +307,7 @@ function toggleReveal(id: number) {
 }
 
 function formatDateOrDash(val: string | null) {
-  if (!val) return '永不过期'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val, '永不过期')
 }
 
 function isExpired(row: AdminApiKeyItem) {

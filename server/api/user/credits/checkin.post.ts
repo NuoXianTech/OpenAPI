@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const ip = getRequestIP(event) || null
-  const body = await readBody<{ turnstileToken?: string }>(event).catch(() => ({}))
+  const body = await readBody<{ turnstileToken?: string }>(event).catch(() => ({} as { turnstileToken?: string }))
   await assertTurnstileForPage('checkin', body?.turnstileToken ?? '', ip)
 
   try {

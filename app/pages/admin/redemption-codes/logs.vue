@@ -66,8 +66,7 @@ const hasAdvancedFilters = computed(
 )
 
 function formatDate(val: string) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val)
 }
 
 const columns: TableColumn<RedemptionRecordRow>[] = [
@@ -194,20 +193,15 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
       </Transition>
     </div>
 
-    <UTable
-      class="shrink-0"
+    <DashboardDataTable
+      v-model:page="page"
       :data="items"
       :columns="columns"
       :loading="loading"
-      empty="暂无兑换记录"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      :page-size="pageSize"
+      :total="total"
+      empty-title="暂无兑换记录"
+      empty-icon="i-mdi-ticket-confirmation-outline"
     >
       <template #redeemedAt-cell="{ row }">
         <span class="text-xs text-muted whitespace-nowrap">
@@ -241,20 +235,6 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
       <template #ip-cell="{ row }">
         <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
       </template>
-    </UTable>
-
-    <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
-      <div class="text-sm text-muted">
-        共 {{ total.toLocaleString() }} 条
-      </div>
-
-      <div class="flex items-center gap-1.5">
-        <UPagination
-          v-model:page="page"
-          :items-per-page="pageSize"
-          :total="total"
-        />
-      </div>
-    </div>
+    </DashboardDataTable>
   </div>
 </template>

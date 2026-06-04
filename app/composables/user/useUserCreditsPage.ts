@@ -1,3 +1,7 @@
+import type { CreditReasonFilter } from '#shared/types/credit-reason'
+
+export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
+
 export interface CreditSummary {
   balance: number
   totalIn: number
@@ -52,27 +56,7 @@ export interface CheckinResult {
   nextCheckinAt: string
 }
 
-export type CreditReason = 'all' | 'admin_grant' | 'admin_revoke' | 'admin_reset' | 'api_charge' | 'api_refund' | 'signup_bonus' | 'redemption_code' | 'checkin'
 export type CreditDirection = 'all' | 'in' | 'out'
-
-export const REASON_META: Record<string, { label: string, color: 'success' | 'error' | 'warning' | 'info' | 'neutral' }> = {
-  api_charge: { label: 'API 扣费', color: 'error' },
-  api_refund: { label: 'API 退款', color: 'success' },
-  redemption_code: { label: '兑换码', color: 'success' },
-  admin_grant: { label: '管理员加', color: 'success' },
-  admin_revoke: { label: '管理员扣', color: 'error' },
-  admin_reset: { label: '管理员重置', color: 'warning' },
-  signup_bonus: { label: '注册赠送', color: 'info' },
-  checkin: { label: '每日签到', color: 'success' }
-}
-
-export function reasonLabel(reason: string) {
-  return REASON_META[reason]?.label || reason
-}
-
-export function reasonColor(reason: string) {
-  return REASON_META[reason]?.color || 'neutral'
-}
 
 export function useUserCreditsPage() {
   const toast = useToast()
@@ -81,7 +65,7 @@ export function useUserCreditsPage() {
   const summaryLoading = ref(false)
 
   const filters = reactive({
-    reason: 'all' as CreditReason,
+    reason: 'all' as CreditReasonFilter,
     direction: 'all' as CreditDirection
   })
   const page = ref(1)

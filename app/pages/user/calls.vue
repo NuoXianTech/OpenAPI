@@ -110,18 +110,7 @@ onMounted(async () => {
 })
 
 function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
-}
-
-function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {
-  if (code >= 200 && code < 300) return 'success'
-  if (code >= 300 && code < 400) return 'neutral'
-  if (code >= 400 && code < 500) return 'warning'
-  return 'error'
+  return formatDateTime(iso)
 }
 
 function isCallSuccess(row: LogRow) {
@@ -138,17 +127,6 @@ function callOutcomeColor(row: LogRow): 'success' | 'error' | 'neutral' {
   return isCallSuccess(row) ? 'success' : 'error'
 }
 
-function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' | 'neutral' {
-  switch (method) {
-    case 'GET': return 'success'
-    case 'POST': return 'info'
-    case 'PUT':
-    case 'PATCH': return 'warning'
-    case 'DELETE': return 'error'
-    default: return 'neutral'
-  }
-}
-
 const columns: TableColumn<LogRow>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'method', header: '方法' },
@@ -160,8 +138,6 @@ const columns: TableColumn<LogRow>[] = [
   { accessorKey: 'ip', header: 'IP' },
   { id: 'error', header: '错误信息' }
 ]
-
-const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 </script>
 
 <template>
@@ -244,17 +220,23 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
               </span>
             </div>
           </template>
-          <UTable
+          <DashboardDataTable
+            v-model:page="page"
             :data="items"
             :columns="columns"
             :loading="loading"
+            :page-size="pageSize"
+            :total="total"
+            :fixed="false"
+            empty-title="暂无调用记录"
+            empty-icon="i-mdi-history"
           >
             <template #createdAt-cell="{ row }">
               <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
             </template>
             <template #method-cell="{ row }">
               <UBadge
-                :color="methodColor(row.original.method)"
+                :color="httpMethodColor(row.original.method)"
                 variant="subtle"
                 class="font-mono"
               >
@@ -270,7 +252,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
             <template #statusCode-cell="{ row }">
               <div class="flex items-center gap-1">
                 <UBadge
-                  :color="statusColor(row.original.statusCode)"
+                  :color="httpStatusColor(row.original.statusCode)"
                   variant="subtle"
                 >
                   {{ row.original.statusCode }}
@@ -333,37 +315,7 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.v
                 class="text-muted"
               >-</span>
             </template>
-          </UTable>
-          <div
-            v-if="total > pageSize"
-            class="flex items-center justify-between pt-3 border-t border-default mt-3"
-          >
-            <span class="text-xs text-muted">
-              第 {{ page }} / {{ totalPages }} 页
-            </span>
-            <div class="flex gap-2">
-              <UButton
-                size="sm"
-                color="neutral"
-                variant="outline"
-                icon="i-mdi-chevron-left"
-                :disabled="page <= 1"
-                @click="page = Math.max(1, page - 1)"
-              >
-                上一页
-              </UButton>
-              <UButton
-                size="sm"
-                color="neutral"
-                variant="outline"
-                trailing-icon="i-mdi-chevron-right"
-                :disabled="page >= totalPages"
-                @click="page = Math.min(totalPages, page + 1)"
-              >
-                下一页
-              </UButton>
-            </div>
-          </div>
+          </DashboardDataTable>
         </UCard>
       </div>
     </template>

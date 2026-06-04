@@ -41,17 +41,6 @@ function costFor(method: string): number {
   return typeof v === 'number' && v > 0 ? v : 0
 }
 
-function methodColor(method: string): BadgeColor {
-  switch (method.trim().toUpperCase()) {
-    case 'GET': return 'success'
-    case 'POST': return 'info'
-    case 'PUT': return 'warning'
-    case 'DELETE': return 'error'
-    case 'PATCH': return 'secondary'
-    default: return 'neutral'
-  }
-}
-
 const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
 // 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
 const aggregateCost = computed(() => {
@@ -297,7 +286,7 @@ function formatCallCount(count: number) {
                   <UBadge
                     v-for="method in methods"
                     :key="method"
-                    :color="methodColor(method)"
+                    :color="httpMethodColor(method)"
                     variant="soft"
                     size="sm"
                     class="rounded-full"
@@ -520,7 +509,7 @@ function formatCallCount(count: number) {
   height: 12px;
   border-radius: 50%;
   position: relative;
-  background: var(--green);
+  background: var(--ui-color-success-500);
   box-shadow: 0 0 0 2px rgba(35, 197, 94, 0.24), 0 0 8px rgba(35, 197, 94, 0.45);
   flex-shrink: 0;
 }

@@ -5,6 +5,7 @@ import type {
   AdminDashboardRecentCall
 } from '~~/shared/types/admin-dashboard'
 import { ADMIN_APIS_PATH } from '~/constants/admin-sections/apis'
+import { ADMIN_LOGS_PATH } from '~/constants/admin-sections/logs'
 import { ADMIN_USERS_PATH } from '~/constants/admin-sections/users'
 
 useHead({ title: '管理中心' })
@@ -49,31 +50,15 @@ const overview = computed(() => dashboard.value.overview)
 const trend = computed(() => dashboard.value.trend)
 const distribution = computed(() => dashboard.value.distribution)
 const recentCalls = computed(() => dashboard.value.recentCalls)
-const generatedAt = computed(() => {
-  const date = new Date(dashboard.value.generatedAt)
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN', { hour12: false })
-})
+const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
 
 const formatNumber = (val: number) => val.toLocaleString()
 const formatRate = (val: number) => `${val.toFixed(2)}%`
 
-function formatDateTime(value: string) {
-  if (!value) return '-'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('zh-CN', { hour12: false })
-}
-
-function statusColor(code: number): 'success' | 'warning' | 'error' | 'neutral' {
-  if (code >= 500) return 'error'
-  if (code >= 400) return 'warning'
-  if (code >= 200 && code < 400) return 'success'
-  return 'neutral'
-}
-
 function recentStatusColor(row: AdminDashboardRecentCall): 'success' | 'warning' | 'error' | 'neutral' {
   if (!row.isCounted) return 'neutral'
   if (row.errorCode) return 'error'
-  return statusColor(row.statusCode)
+  return httpStatusColor(row.statusCode)
 }
 
 function methodColor(method: string): 'info' | 'success' | 'warning' | 'error' | 'neutral' {
@@ -149,7 +134,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-chart-line"
             :title="formatNumber(overview.totalCalls)"
             description="总调用"
-            :to="`${ADMIN_APIS_PATH}/calls`"
+            :to="ADMIN_LOGS_PATH"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           >
@@ -174,7 +159,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             icon="i-mdi-shield-check-outline"
             :title="formatRate(overview.successRate)"
             description="成功率"
-            :to="`${ADMIN_APIS_PATH}/calls`"
+            :to="ADMIN_LOGS_PATH"
             variant="subtle"
             class="[&_h3]:tabular-nums"
           >
@@ -245,7 +230,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
                 </p>
               </div>
               <UButton
-                :to="`${ADMIN_APIS_PATH}/calls`"
+                :to="ADMIN_LOGS_PATH"
                 variant="link"
                 size="sm"
                 trailing-icon="i-mdi-arrow-right"

@@ -420,13 +420,11 @@ function maskKey(key: string) {
 }
 
 function formatDate(val: string | null) {
-  if (!val) return '从未使用'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val, '从未使用')
 }
 
 function formatDateOrDash(val: string | null) {
-  if (!val) return '—'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val, '—')
 }
 
 function isExpired(row: ApiKey) {
@@ -542,10 +540,13 @@ const columns: TableColumn<ApiKey>[] = [
         </template>
       </UAlert>
 
-      <UTable
+      <DashboardDataTable
         :data="items"
         :columns="columns"
         :loading="status === 'pending'"
+        :fixed="false"
+        empty-title="暂无 API Key"
+        empty-icon="i-mdi-key-outline"
       >
         <template #name-cell="{ row }">
           <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
@@ -655,21 +656,9 @@ const columns: TableColumn<ApiKey>[] = [
         </template>
 
         <template #actions-cell="{ row }">
-          <div class="text-right">
-            <UDropdownMenu
-              :items="getRowItems(row.original)"
-              :content="{ align: 'end' }"
-            >
-              <UButton
-                icon="i-mdi-dots-vertical"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-              />
-            </UDropdownMenu>
-          </div>
+          <DashboardRowActions :items="getRowItems(row.original)" />
         </template>
-      </UTable>
+      </DashboardDataTable>
 
       <!-- 创建 Key -->
       <UModal

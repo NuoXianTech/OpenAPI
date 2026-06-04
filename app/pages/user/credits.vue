@@ -19,7 +19,6 @@ const {
   checkin,
   checkinLoading,
   checkingIn,
-  totalPages,
   redeem,
   performCheckin,
   applyFilters,
@@ -51,12 +50,7 @@ const directionItems = [
 ]
 
 function formatDate(iso: string) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 const columns: TableColumn<TransactionRow>[] = [
@@ -162,11 +156,16 @@ function amountClass(amt: number) {
               </span>
             </div>
           </template>
-          <UTable
+          <DashboardDataTable
+            v-model:page="page"
             :data="items"
             :columns="columns"
             :loading="loading"
-            empty="暂无流水记录"
+            :page-size="pageSize"
+            :total="total"
+            :fixed="false"
+            empty-title="暂无流水记录"
+            empty-icon="i-mdi-format-list-bulleted"
           >
             <template #createdAt-cell="{ row }">
               <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDate(row.original.createdAt) }}</span>
@@ -215,37 +214,7 @@ function amountClass(amt: number) {
             <template #remark-cell="{ row }">
               <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.remark || '-' }}</span>
             </template>
-          </UTable>
-          <div
-            v-if="total > pageSize"
-            class="flex items-center justify-between pt-3 border-t border-default mt-3"
-          >
-            <span class="text-xs text-muted">
-              第 {{ page }} / {{ totalPages }} 页
-            </span>
-            <div class="flex gap-2">
-              <UButton
-                size="sm"
-                color="neutral"
-                variant="outline"
-                icon="i-mdi-chevron-left"
-                :disabled="page <= 1"
-                @click="page = Math.max(1, page - 1)"
-              >
-                上一页
-              </UButton>
-              <UButton
-                size="sm"
-                color="neutral"
-                variant="outline"
-                trailing-icon="i-mdi-chevron-right"
-                :disabled="page >= totalPages"
-                @click="page = Math.min(totalPages, page + 1)"
-              >
-                下一页
-              </UButton>
-            </div>
-          </div>
+          </DashboardDataTable>
         </UCard>
       </div>
     </template>

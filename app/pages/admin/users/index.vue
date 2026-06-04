@@ -129,8 +129,7 @@ function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
 }
 
 function formatDate(val: string) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val)
 }
 
 function banTooltip(row: AdminUserItem): string {
@@ -206,21 +205,18 @@ const columns: TableColumn<AdminUserItem>[] = [
       </div>
     </div>
 
-    <UTable
+    <DashboardDataTable
+      v-model:page="page"
+      v-model:page-size="pageSize"
       v-model:row-selection="rowSelection"
-      class="shrink-0"
       :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
+      :total="total"
+      :page-size-items="PAGE_SIZE_ITEMS"
       :get-row-id="(row: AdminUserItem) => String(row.id)"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      empty-title="暂无用户"
+      empty-icon="i-mdi-account-off-outline"
     >
       <template #select-header="{ table }">
         <UCheckbox
@@ -270,42 +266,9 @@ const columns: TableColumn<AdminUserItem>[] = [
         {{ formatDate(row.original.createdAt) }}
       </template>
       <template #actions-cell="{ row }">
-        <div class="text-right">
-          <UDropdownMenu
-            :items="getRowItems(row.original)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-mdi-dots-vertical"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-            />
-          </UDropdownMenu>
-        </div>
+        <DashboardRowActions :items="getRowItems(row.original)" />
       </template>
-    </UTable>
-
-    <div
-      v-if="total > 0"
-      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
-    >
-      <div class="flex items-center gap-2 text-sm text-muted">
-        <span>共 {{ total.toLocaleString() }} 条</span>
-        <USelect
-          v-model="pageSize"
-          :items="PAGE_SIZE_ITEMS"
-          value-key="value"
-          size="sm"
-          class="w-24"
-        />
-      </div>
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="total"
-      />
-    </div>
+    </DashboardDataTable>
 
     <AdminUserEditModal
       v-model:open="editOpen"

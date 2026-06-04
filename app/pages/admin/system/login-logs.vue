@@ -84,8 +84,7 @@ const logMetricItems = computed(() => [
 ])
 
 function formatDate(val: string) {
-  if (!val) return '-'
-  return new Date(val).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(val)
 }
 
 const methodItems = [

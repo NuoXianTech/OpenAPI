@@ -148,8 +148,7 @@ function openDetail(row: AdminLogRow) {
 
 // ─── 表格列 ─────────────────────────────────────────────────────
 function formatDate(iso: string) {
-  if (!iso) return '-'
-  return new Date(iso).toLocaleString('zh-CN', { hour12: false })
+  return formatDateTime(iso)
 }
 
 function formatBytes(value: number | null) {
@@ -398,20 +397,15 @@ const columns: TableColumn<AdminLogRow>[] = [
         </UCard>
 
         <!-- 列表 -->
-        <UTable
-          class="shrink-0"
+        <DashboardDataTable
+          v-model:page="page"
           :data="items"
           :columns="columns"
           :loading="loading"
-          empty="暂无日志"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody: '[&>tr]:last:[&>td]:border-b-0',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-            separator: 'h-0'
-          }"
+          :page-size="pageSize"
+          :total="total"
+          empty-title="暂无日志"
+          empty-icon="i-mdi-text-box-search-outline"
         >
           <template #createdAt-cell="{ row }">
             <div class="flex flex-col gap-1 min-w-[150px]">
@@ -528,20 +522,7 @@ const columns: TableColumn<AdminLogRow>[] = [
               @click="openDetail(row.original)"
             />
           </template>
-        </UTable>
-
-        <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
-          <div class="text-sm text-muted">
-            共 {{ total.toLocaleString() }} 条
-          </div>
-          <div class="flex items-center gap-1.5">
-            <UPagination
-              v-model:page="page"
-              :items-per-page="pageSize"
-              :total="total"
-            />
-          </div>
-        </div>
+        </DashboardDataTable>
       </div>
 
       <UModal

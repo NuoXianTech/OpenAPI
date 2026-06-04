@@ -12,12 +12,7 @@ const code = ref('')
 const redeeming = ref(false)
 
 function formatDate(iso: string) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 async function submit() {

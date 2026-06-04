@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ANNOUNCEMENT_LEVEL_META as levelMeta } from '#shared/types/message-level'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
@@ -108,20 +109,8 @@ function getRowItems(row: Announcement): DropdownMenuItem[] {
   ]
 }
 
-const levelMeta: Record<Announcement['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
-  info: { color: 'info', label: '公告' },
-  success: { color: 'success', label: '通知' },
-  warning: { color: 'warning', label: '提醒' },
-  critical: { color: 'error', label: '紧急' }
-}
-
 function formatDate(iso: string | null) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 const columns: TableColumn<Announcement>[] = [
@@ -182,19 +171,16 @@ const columns: TableColumn<Announcement>[] = [
       </UButton>
     </div>
 
-    <UTable
+    <DashboardDataTable
+      v-model:page="page"
+      v-model:page-size="pageSize"
       :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
-      class="shrink-0"
-      :ui="{
-        base: 'table-fixed border-separate border-spacing-0',
-        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-        tbody: '[&>tr]:last:[&>td]:border-b-0',
-        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-        td: 'border-b border-default',
-        separator: 'h-0'
-      }"
+      :total="total"
+      :page-size-items="PAGE_SIZE_ITEMS"
+      empty-title="暂无公告"
+      empty-icon="i-mdi-bullhorn-outline"
     >
       <template #title-cell="{ row }">
         <div class="flex items-center gap-2">
@@ -236,42 +222,9 @@ const columns: TableColumn<Announcement>[] = [
         <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
       </template>
       <template #actions-cell="{ row }">
-        <div class="text-right">
-          <UDropdownMenu
-            :items="getRowItems(row.original)"
-            :content="{ align: 'end' }"
-          >
-            <UButton
-              icon="i-mdi-dots-vertical"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-            />
-          </UDropdownMenu>
-        </div>
+        <DashboardRowActions :items="getRowItems(row.original)" />
       </template>
-    </UTable>
-
-    <div
-      v-if="total > 0"
-      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
-    >
-      <div class="flex items-center gap-2 text-sm text-muted">
-        <span>共 {{ total.toLocaleString() }} 条</span>
-        <USelect
-          v-model="pageSize"
-          :items="PAGE_SIZE_ITEMS"
-          value-key="value"
-          size="sm"
-          class="w-24"
-        />
-      </div>
-      <UPagination
-        v-model:page="page"
-        :items-per-page="pageSize"
-        :total="total"
-      />
-    </div>
+    </DashboardDataTable>
 
     <AdminAnnouncementModal
       v-model:open="modalOpen"

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { NOTIFICATION_LEVEL_META as levelMeta } from '#shared/types/message-level'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
@@ -142,13 +143,6 @@ async function openDelete(row: MessageRow) {
   })
 }
 
-const levelMeta: Record<MessageRow['level'], { color: 'info' | 'success' | 'warning' | 'error', label: string }> = {
-  info: { color: 'info', label: '通知' },
-  success: { color: 'success', label: '成功' },
-  warning: { color: 'warning', label: '提醒' },
-  critical: { color: 'error', label: '紧急' }
-}
-
 const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' | 'warning', label: string }> = {
   specific: { color: 'neutral', label: '指定' },
   all_current: { color: 'info', label: '全员' },
@@ -156,12 +150,7 @@ const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' |
 }
 
 function formatDate(iso: string | null) {
-  if (!iso) return '-'
-  try {
-    return new Date(iso).toLocaleString('zh-CN', { hour12: false })
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 
 function getRowItems(row: MessageRow): DropdownMenuItem[] {
@@ -295,19 +284,16 @@ const columns: TableColumn<MessageRow>[] = [
             </span>
           </div>
         </template>
-        <UTable
-          class="shrink-0"
+        <DashboardDataTable
+          v-model:page="page"
+          v-model:page-size="pageSize"
           :data="paginated"
           :columns="columns"
           :loading="status === 'pending'"
-          :ui="{
-            base: 'table-fixed border-separate border-spacing-0',
-            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-            tbody: '[&>tr]:last:[&>td]:border-b-0',
-            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-            td: 'border-b border-default',
-            separator: 'h-0'
-          }"
+          :total="total"
+          :page-size-items="PAGE_SIZE_ITEMS"
+          empty-title="暂无发送历史"
+          empty-icon="i-mdi-history"
         >
           <template #title-cell="{ row }">
             <div class="flex items-center gap-2">
@@ -338,42 +324,9 @@ const columns: TableColumn<MessageRow>[] = [
             <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
           </template>
           <template #actions-cell="{ row }">
-            <div class="text-right">
-              <UDropdownMenu
-                :items="getRowItems(row.original)"
-                :content="{ align: 'end' }"
-              >
-                <UButton
-                  icon="i-mdi-dots-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                />
-              </UDropdownMenu>
-            </div>
+            <DashboardRowActions :items="getRowItems(row.original)" />
           </template>
-        </UTable>
-
-        <div
-          v-if="total > 0"
-          class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
-        >
-          <div class="flex items-center gap-2 text-sm text-muted">
-            <span>共 {{ total.toLocaleString() }} 条</span>
-            <USelect
-              v-model="pageSize"
-              :items="PAGE_SIZE_ITEMS"
-              value-key="value"
-              size="sm"
-              class="w-24"
-            />
-          </div>
-          <UPagination
-            v-model:page="page"
-            :items-per-page="pageSize"
-            :total="total"
-          />
-        </div>
+        </DashboardDataTable>
       </UCard>
     </div>
 
