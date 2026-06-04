@@ -80,24 +80,9 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
-    <UCard>
-      <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-mdi-clipboard-check-outline"
-            class="size-5 text-muted"
-          />
-          <h3 class="font-semibold">
-            兑换记录
-          </h3>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
-      </template>
-
-      <div class="space-y-3">
+  <div class="flex flex-1 flex-col gap-4 sm:gap-6">
+    <div class="space-y-3">
+      <div class="flex flex-wrap items-end justify-between gap-3">
         <div class="flex flex-wrap items-end gap-3">
           <UFormField
             label="开始时间"
@@ -125,9 +110,12 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
             <UInput
               v-model="filters.username"
               placeholder="留空查全部"
+              @keydown.enter="applyFilters"
             />
           </UFormField>
+        </div>
 
+        <div class="flex items-center gap-1.5">
           <UButton
             :color="expandedFilters ? 'primary' : 'neutral'"
             variant="outline"
@@ -145,53 +133,6 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
               ·
             </UBadge>
           </UButton>
-        </div>
-
-        <Transition
-          enter-active-class="transition duration-150 ease-out"
-          enter-from-class="opacity-0 -translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition duration-100 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div
-            v-if="expandedFilters"
-            class="flex flex-wrap items-end gap-3 border-t border-default pt-3"
-          >
-            <UFormField
-              label="兑换码 ID"
-              class="min-w-[140px]"
-            >
-              <UInput
-                v-model.number="filters.codeId"
-                type="number"
-                placeholder="留空"
-              />
-            </UFormField>
-            <UFormField
-              label="批次 ID"
-              class="min-w-[220px]"
-            >
-              <UInput
-                v-model="filters.batchId"
-                placeholder="留空"
-              />
-            </UFormField>
-            <UFormField
-              label="用户 ID"
-              class="min-w-[140px]"
-            >
-              <UInput
-                v-model.number="filters.userId"
-                type="number"
-                placeholder="留空"
-              />
-            </UFormField>
-          </div>
-        </Transition>
-
-        <div class="flex justify-end gap-2 pt-1">
           <UButton
             color="neutral"
             variant="outline"
@@ -208,51 +149,112 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
         </div>
       </div>
 
-      <div class="mt-4">
-        <DashboardDataTable
-          v-model:page="page"
-          :data="items"
-          :columns="columns"
-          :loading="loading"
-          :page-size="pageSize"
-          :total="total"
-          empty-title="暂无兑换记录"
-          empty-icon="i-mdi-clipboard-check-outline"
+      <Transition
+        enter-active-class="transition duration-150 ease-out"
+        enter-from-class="opacity-0 -translate-y-1"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition duration-100 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="expandedFilters"
+          class="flex flex-wrap items-end gap-3 border-t border-default pt-3"
         >
-          <template #redeemedAt-cell="{ row }">
-            <span class="text-xs text-muted whitespace-nowrap">
-              {{ formatDate(row.original.redeemedAt) }}
-            </span>
-          </template>
-          <template #code-cell="{ row }">
-            <div class="flex flex-col gap-0.5">
-              <span class="font-mono text-xs">
-                {{ row.original.code || `#${row.original.codeId}` }}
-              </span>
-              <span
-                v-if="row.original.batchId"
-                class="font-mono text-[11px] text-muted"
-              >
-                {{ row.original.batchId }}
-              </span>
-            </div>
-          </template>
-          <template #username-cell="{ row }">
-            <div class="flex flex-col text-xs">
-              <span>{{ row.original.username || '-' }}</span>
-              <span class="font-mono text-muted">#{{ row.original.userId }}</span>
-            </div>
-          </template>
-          <template #amount-cell="{ row }">
-            <span class="tabular-nums font-semibold text-success">
-              +{{ row.original.amount.toLocaleString() }}
-            </span>
-          </template>
-          <template #ip-cell="{ row }">
-            <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
-          </template>
-        </DashboardDataTable>
+          <UFormField
+            label="兑换码 ID"
+            class="min-w-[140px]"
+          >
+            <UInput
+              v-model.number="filters.codeId"
+              type="number"
+              placeholder="留空"
+            />
+          </UFormField>
+          <UFormField
+            label="批次 ID"
+            class="min-w-[220px]"
+          >
+            <UInput
+              v-model="filters.batchId"
+              placeholder="留空"
+            />
+          </UFormField>
+          <UFormField
+            label="用户 ID"
+            class="min-w-[140px]"
+          >
+            <UInput
+              v-model.number="filters.userId"
+              type="number"
+              placeholder="留空"
+            />
+          </UFormField>
+        </div>
+      </Transition>
+    </div>
+
+    <UTable
+      class="shrink-0"
+      :data="items"
+      :columns="columns"
+      :loading="loading"
+      empty="暂无兑换记录"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default',
+        separator: 'h-0'
+      }"
+    >
+      <template #redeemedAt-cell="{ row }">
+        <span class="text-xs text-muted whitespace-nowrap">
+          {{ formatDate(row.original.redeemedAt) }}
+        </span>
+      </template>
+      <template #code-cell="{ row }">
+        <div class="flex flex-col gap-0.5">
+          <span class="font-mono text-xs">
+            {{ row.original.code || `#${row.original.codeId}` }}
+          </span>
+          <span
+            v-if="row.original.batchId"
+            class="font-mono text-[11px] text-muted"
+          >
+            {{ row.original.batchId }}
+          </span>
+        </div>
+      </template>
+      <template #username-cell="{ row }">
+        <div class="flex flex-col text-xs">
+          <span>{{ row.original.username || '-' }}</span>
+          <span class="font-mono text-muted">#{{ row.original.userId }}</span>
+        </div>
+      </template>
+      <template #amount-cell="{ row }">
+        <span class="tabular-nums font-semibold text-success">
+          +{{ row.original.amount.toLocaleString() }}
+        </span>
+      </template>
+      <template #ip-cell="{ row }">
+        <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+      </template>
+    </UTable>
+
+    <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+      <div class="text-sm text-muted">
+        共 {{ total.toLocaleString() }} 条
       </div>
-    </UCard>
+
+      <div class="flex items-center gap-1.5">
+        <UPagination
+          v-model:page="page"
+          :items-per-page="pageSize"
+          :total="total"
+        />
+      </div>
+    </div>
   </div>
 </template>

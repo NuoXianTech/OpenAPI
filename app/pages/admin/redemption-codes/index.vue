@@ -12,7 +12,6 @@ const {
   total,
   loading,
   batches,
-  totalPages,
   fetchList,
   init,
   applyFilters,
@@ -100,62 +99,59 @@ const columns: TableColumn<RedemptionCode>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <USelect
-        v-model="filters.status"
-        :items="statusItems"
-        size="sm"
-        class="w-32"
-      />
-      <USelect
-        v-model="filters.batchId"
-        :items="batchItems"
-        size="sm"
-        class="w-72"
-      />
+  <div class="flex flex-1 flex-col gap-4 sm:gap-6">
+    <div class="flex flex-wrap items-center justify-between gap-1.5">
       <UInput
         v-model="filters.keyword"
+        class="max-w-sm"
         icon="i-mdi-magnify"
         placeholder="搜索兑换码 / 备注..."
-        size="sm"
-        class="max-w-xs"
         @keydown.enter="applyFilters"
       />
-      <UButton
-        size="sm"
-        icon="i-mdi-magnify"
-        @click="applyFilters"
-      >
-        查询
-      </UButton>
-      <UButton
-        size="sm"
-        color="neutral"
-        variant="outline"
-        @click="resetFilters"
-      >
-        重置
-      </UButton>
-      <UButton
-        class="ml-auto"
-        size="sm"
-        icon="i-mdi-plus"
-        color="primary"
-        @click="generateOpen = true"
-      >
-        生成兑换码
-      </UButton>
-      <UButton
-        size="sm"
-        color="neutral"
-        variant="outline"
-        icon="i-mdi-refresh"
-        :loading="loading"
-        @click="fetchList"
-      >
-        刷新
-      </UButton>
+
+      <div class="flex flex-wrap items-center gap-1.5">
+        <USelect
+          v-model="filters.status"
+          :items="statusItems"
+          :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+          class="min-w-28"
+        />
+        <USelect
+          v-model="filters.batchId"
+          :items="batchItems"
+          :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+          class="w-72"
+        />
+        <UButton
+          icon="i-mdi-magnify"
+          @click="applyFilters"
+        >
+          查询
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          @click="resetFilters"
+        >
+          重置
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="loading"
+          @click="fetchList"
+        >
+          刷新
+        </UButton>
+        <UButton
+          icon="i-mdi-plus"
+          color="primary"
+          @click="generateOpen = true"
+        >
+          生成兑换码
+        </UButton>
+      </div>
     </div>
 
     <AdminRedemptionCodeBatchCard
@@ -165,116 +161,93 @@ const columns: TableColumn<RedemptionCode>[] = [
       @delete="deleteBatch"
     />
 
-    <UCard>
-      <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-mdi-ticket-percent-outline"
-            class="size-5 text-muted"
-          />
-          <h3 class="font-semibold">
-            兑换码列表
-          </h3>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
+    <UTable
+      class="shrink-0"
+      :data="items"
+      :columns="columns"
+      :loading="loading"
+      empty="暂无兑换码"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default',
+        separator: 'h-0'
+      }"
+    >
+      <template #code-cell="{ row }">
+        <div class="flex flex-col gap-0.5">
+          <span
+            class="font-mono text-sm cursor-pointer hover:text-primary"
+            title="点击复制"
+            @click="copyOne(row.original.code)"
+          >
+            {{ row.original.code }}
+          </span>
+          <span
+            v-if="row.original.batchId"
+            class="text-[11px] text-muted font-mono"
+          >
+            {{ row.original.batchId }}
           </span>
         </div>
       </template>
-      <UTable
-        :data="items"
-        :columns="columns"
-        :loading="loading"
-        empty="暂无兑换码"
-      >
-        <template #code-cell="{ row }">
-          <div class="flex flex-col gap-0.5">
-            <span
-              class="font-mono text-sm cursor-pointer hover:text-primary"
-              title="点击复制"
-              @click="copyOne(row.original.code)"
-            >
-              {{ row.original.code }}
-            </span>
-            <span
-              v-if="row.original.batchId"
-              class="text-[11px] text-muted font-mono"
-            >
-              {{ row.original.batchId }}
-            </span>
-          </div>
-        </template>
-        <template #amount-cell="{ row }">
-          <span class="tabular-nums font-semibold text-success">+{{ row.original.amount.toLocaleString() }}</span>
-        </template>
-        <template #usage-cell="{ row }">
-          <span class="tabular-nums text-sm">{{ row.original.usedCount }} / {{ row.original.maxUses }}</span>
-        </template>
-        <template #note-cell="{ row }">
-          <span class="text-xs text-muted truncate max-w-[200px] block">{{ row.original.note || '-' }}</span>
-        </template>
-        <template #expiresAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">
-            {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
-          </span>
-        </template>
-        <template #status-cell="{ row }">
-          <UBadge
-            :color="statusOf(row.original).color"
-            variant="subtle"
-          >
-            {{ statusOf(row.original).label }}
-          </UBadge>
-        </template>
-        <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-        </template>
-        <template #actions-cell="{ row }">
-          <div class="text-right">
-            <UDropdownMenu
-              :items="getRowItems(row.original)"
-              :content="{ align: 'end' }"
-            >
-              <UButton
-                icon="i-mdi-dots-vertical"
-                color="neutral"
-                variant="ghost"
-                size="sm"
-              />
-            </UDropdownMenu>
-          </div>
-        </template>
-      </UTable>
-      <div
-        v-if="total > pageSize"
-        class="flex items-center justify-between pt-3 border-t border-default mt-3"
-      >
-        <span class="text-xs text-muted">
-          第 {{ page }} / {{ totalPages }} 页
+      <template #amount-cell="{ row }">
+        <span class="tabular-nums font-semibold text-success">+{{ row.original.amount.toLocaleString() }}</span>
+      </template>
+      <template #usage-cell="{ row }">
+        <span class="tabular-nums text-sm">{{ row.original.usedCount }} / {{ row.original.maxUses }}</span>
+      </template>
+      <template #note-cell="{ row }">
+        <span class="text-xs text-muted truncate max-w-[200px] block">{{ row.original.note || '-' }}</span>
+      </template>
+      <template #expiresAt-cell="{ row }">
+        <span class="text-xs text-muted whitespace-nowrap">
+          {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
         </span>
-        <div class="flex gap-2">
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            icon="i-mdi-chevron-left"
-            :disabled="page <= 1"
-            @click="page = Math.max(1, page - 1)"
+      </template>
+      <template #status-cell="{ row }">
+        <UBadge
+          :color="statusOf(row.original).color"
+          variant="subtle"
+        >
+          {{ statusOf(row.original).label }}
+        </UBadge>
+      </template>
+      <template #createdAt-cell="{ row }">
+        <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+      </template>
+      <template #actions-cell="{ row }">
+        <div class="text-right">
+          <UDropdownMenu
+            :items="getRowItems(row.original)"
+            :content="{ align: 'end' }"
           >
-            上一页
-          </UButton>
-          <UButton
-            size="sm"
-            color="neutral"
-            variant="outline"
-            trailing-icon="i-mdi-chevron-right"
-            :disabled="page >= totalPages"
-            @click="page = Math.min(totalPages, page + 1)"
-          >
-            下一页
-          </UButton>
+            <UButton
+              icon="i-mdi-dots-vertical"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+            />
+          </UDropdownMenu>
         </div>
+      </template>
+    </UTable>
+
+    <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+      <div class="text-sm text-muted">
+        共 {{ total.toLocaleString() }} 条
       </div>
-    </UCard>
+
+      <div class="flex items-center gap-1.5">
+        <UPagination
+          v-model:page="page"
+          :items-per-page="pageSize"
+          :total="total"
+        />
+      </div>
+    </div>
 
     <AdminRedemptionCodeGenerateModal
       v-model:open="generateOpen"

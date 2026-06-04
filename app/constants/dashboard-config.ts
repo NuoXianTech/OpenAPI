@@ -102,7 +102,6 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     ...adminSystemQuickActions
   ],
   userMenuExtra: () => [[
-    { label: '个人信息', icon: 'i-mdi-account-circle-outline', to: `${ADMIN_SYSTEM_PATH}/profile` },
     { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
