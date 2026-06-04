@@ -187,7 +187,7 @@ const columns: TableColumn<AdminLogRow>[] = [
     </template>
 
     <template #body>
-      <div class="log-page-shell space-y-4 sm:space-y-5">
+      <div class="log-page-shell flex flex-1 flex-col gap-4 sm:gap-5">
         <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
           <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
             <div class="space-y-3">
@@ -398,155 +398,150 @@ const columns: TableColumn<AdminLogRow>[] = [
         </UCard>
 
         <!-- 列表 -->
-        <UCard
-          class="log-table-card overflow-hidden"
-          variant="subtle"
-          :ui="{ body: 'p-0 sm:p-0' }"
+        <UTable
+          class="shrink-0"
+          :data="items"
+          :columns="columns"
+          :loading="loading"
+          empty="暂无日志"
+          :ui="{
+            base: 'table-fixed border-separate border-spacing-0',
+            thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+            tbody: '[&>tr]:last:[&>td]:border-b-0',
+            th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+            td: 'border-b border-default',
+            separator: 'h-0'
+          }"
         >
-          <template #header>
-            <div class="flex flex-wrap items-center gap-2">
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-mdi-text-box-search-outline"
-                  class="size-5 text-muted"
-                />
-                <h3 class="font-semibold text-highlighted">
-                  调用明细
-                </h3>
+          <template #createdAt-cell="{ row }">
+            <div class="flex flex-col gap-1 min-w-[150px]">
+              <span class="text-xs whitespace-nowrap">
+                {{ formatDate(row.original.createdAt) }}
+              </span>
+              <UBadge
+                :color="typeMeta[row.original.type].color"
+                :icon="typeMeta[row.original.type].icon"
+                variant="subtle"
+                size="sm"
+                class="w-fit"
+              >
+                {{ typeMeta[row.original.type].label }}
+              </UBadge>
+            </div>
+          </template>
+
+          <template #userName-cell="{ row }">
+            <div
+              v-if="row.original.userId"
+              class="flex flex-col text-xs"
+            >
+              <span>{{ row.original.userName || '-' }}</span>
+              <span class="text-muted">#{{ row.original.userId }}</span>
+            </div>
+            <span
+              v-else
+              class="text-xs text-muted italic"
+            >匿名</span>
+          </template>
+
+          <template #apiKeyName-cell="{ row }">
+            <span
+              v-if="row.original.apiKeyName || row.original.apiKeyId"
+              class="text-xs"
+            >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
+            <span
+              v-else
+              class="text-xs text-muted italic"
+            >-</span>
+          </template>
+
+          <template #apiName-cell="{ row }">
+            <div
+              v-if="row.original.apiName"
+              class="flex flex-col"
+            >
+              <span class="text-sm font-medium">{{ row.original.apiName }}</span>
+              <span class="font-mono text-xs text-muted">{{ row.original.apiPath }}</span>
+            </div>
+            <span
+              v-else
+              class="text-xs text-muted italic"
+            >-</span>
+          </template>
+
+          <template #cost-cell="{ row }">
+            <span
+              class="tabular-nums text-sm"
+              :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
+            >
+              {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
+            </span>
+          </template>
+
+          <template #summary-cell="{ row }">
+            <div class="flex flex-col text-xs gap-0.5">
+              <div class="flex items-center gap-1.5">
+                <UBadge
+                  color="neutral"
+                  variant="subtle"
+                  size="sm"
+                  class="font-mono"
+                >
+                  {{ row.original.method }}
+                </UBadge>
+                <span
+                  class="tabular-nums"
+                  :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
+                >
+                  {{ row.original.statusCode }}
+                </span>
+                <span class="text-muted tabular-nums">
+                  · {{ row.original.latencyMs }}ms
+                </span>
+                <UBadge
+                  v-if="!row.original.isCounted"
+                  color="warning"
+                  variant="subtle"
+                  size="sm"
+                  title="未计入统计"
+                >
+                  拒绝
+                </UBadge>
               </div>
-              <span class="ml-auto text-xs text-muted tabular-nums">
-                共 {{ total.toLocaleString() }} 条
+              <span
+                v-if="row.original.errorMessage"
+                class="text-muted truncate max-w-[280px]"
+                :title="row.original.errorMessage"
+              >
+                {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
               </span>
             </div>
           </template>
 
-          <DashboardDataTable
-            v-model:page="page"
-            :data="items"
-            :columns="columns"
-            :loading="loading"
-            :page-size="pageSize"
-            :total="total"
-            empty-title="暂无日志"
-            empty-icon="i-mdi-text-box-search-outline"
-          >
-            <template #createdAt-cell="{ row }">
-              <div class="flex flex-col gap-1 min-w-[150px]">
-                <span class="text-xs whitespace-nowrap">
-                  {{ formatDate(row.original.createdAt) }}
-                </span>
-                <UBadge
-                  :color="typeMeta[row.original.type].color"
-                  :icon="typeMeta[row.original.type].icon"
-                  variant="subtle"
-                  size="sm"
-                  class="w-fit"
-                >
-                  {{ typeMeta[row.original.type].label }}
-                </UBadge>
-              </div>
-            </template>
+          <template #actions-cell="{ row }">
+            <UButton
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              icon="i-mdi-eye-outline"
+              aria-label="查看详情"
+              @click="openDetail(row.original)"
+            />
+          </template>
+        </UTable>
 
-            <template #userName-cell="{ row }">
-              <div
-                v-if="row.original.userId"
-                class="flex flex-col text-xs"
-              >
-                <span>{{ row.original.userName || '-' }}</span>
-                <span class="text-muted">#{{ row.original.userId }}</span>
-              </div>
-              <span
-                v-else
-                class="text-xs text-muted italic"
-              >匿名</span>
-            </template>
-
-            <template #apiKeyName-cell="{ row }">
-              <span
-                v-if="row.original.apiKeyName || row.original.apiKeyId"
-                class="text-xs"
-              >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
-              <span
-                v-else
-                class="text-xs text-muted italic"
-              >-</span>
-            </template>
-
-            <template #apiName-cell="{ row }">
-              <div
-                v-if="row.original.apiName"
-                class="flex flex-col"
-              >
-                <span class="text-sm font-medium">{{ row.original.apiName }}</span>
-                <span class="font-mono text-xs text-muted">{{ row.original.apiPath }}</span>
-              </div>
-              <span
-                v-else
-                class="text-xs text-muted italic"
-              >-</span>
-            </template>
-
-            <template #cost-cell="{ row }">
-              <span
-                class="tabular-nums text-sm"
-                :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
-              >
-                {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
-              </span>
-            </template>
-
-            <template #summary-cell="{ row }">
-              <div class="flex flex-col text-xs gap-0.5">
-                <div class="flex items-center gap-1.5">
-                  <UBadge
-                    color="neutral"
-                    variant="subtle"
-                    size="sm"
-                    class="font-mono"
-                  >
-                    {{ row.original.method }}
-                  </UBadge>
-                  <span
-                    class="tabular-nums"
-                    :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
-                  >
-                    {{ row.original.statusCode }}
-                  </span>
-                  <span class="text-muted tabular-nums">
-                    · {{ row.original.latencyMs }}ms
-                  </span>
-                  <UBadge
-                    v-if="!row.original.isCounted"
-                    color="warning"
-                    variant="subtle"
-                    size="sm"
-                    title="未计入统计"
-                  >
-                    拒绝
-                  </UBadge>
-                </div>
-                <span
-                  v-if="row.original.errorMessage"
-                  class="text-muted truncate max-w-[280px]"
-                  :title="row.original.errorMessage"
-                >
-                  {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
-                </span>
-              </div>
-            </template>
-
-            <template #actions-cell="{ row }">
-              <UButton
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                icon="i-mdi-eye-outline"
-                aria-label="查看详情"
-                @click="openDetail(row.original)"
-              />
-            </template>
-          </DashboardDataTable>
-        </UCard>
+        <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+          <div class="text-sm text-muted">
+            共 {{ total.toLocaleString() }} 条
+          </div>
+          <div class="flex items-center gap-1.5">
+            <UPagination
+              v-model:page="page"
+              :items-per-page="pageSize"
+              :total="total"
+            />
+          </div>
+        </div>
       </div>
 
       <UModal

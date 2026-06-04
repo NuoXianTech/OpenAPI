@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -88,6 +89,11 @@ const filteredApis = computed<DiscoveredApi[]>(() => {
       || (a.registered?.shortDesc || '').toLowerCase().includes(kw)
     )
   })
+})
+
+const { page, pageSize, total, paginated } = useClientPagination(filteredApis, 10)
+watch([keyword, activeVersion], () => {
+  page.value = 1
 })
 
 const versionItems = computed(() => versions.value.map(v => ({
@@ -233,10 +239,18 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
 
     <UTable
       v-else
-      :data="filteredApis"
+      :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
       class="shrink-0"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default',
+        separator: 'h-0'
+      }"
     >
       <template #code-cell="{ row }">
         <div class="flex flex-col gap-0.5">
@@ -340,6 +354,27 @@ function methodColor(method: string): 'success' | 'info' | 'warning' | 'error' |
         </div>
       </template>
     </UTable>
+
+    <div
+      v-if="total > 0"
+      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
+    >
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <span>共 {{ total.toLocaleString() }} 条</span>
+        <USelect
+          v-model="pageSize"
+          :items="PAGE_SIZE_ITEMS"
+          value-key="value"
+          size="sm"
+          class="w-24"
+        />
+      </div>
+      <UPagination
+        v-model:page="page"
+        :items-per-page="pageSize"
+        :total="total"
+      />
+    </div>
 
     <AdminApiModal
       v-model:open="modalOpen"

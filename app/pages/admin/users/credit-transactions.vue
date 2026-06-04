@@ -150,7 +150,7 @@ function amountClass(amt: number) {
 </script>
 
 <template>
-  <div class="log-page-shell space-y-4 sm:space-y-5">
+  <div class="log-page-shell flex flex-1 flex-col gap-4 sm:gap-5">
     <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
       <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div class="space-y-3">
@@ -255,75 +255,70 @@ function amountClass(amt: number) {
       </div>
     </UCard>
 
-    <UCard
-      class="log-table-card overflow-hidden"
-      variant="subtle"
-      :ui="{ body: 'p-0 sm:p-0' }"
+    <UTable
+      class="shrink-0"
+      :data="items"
+      :columns="columns"
+      :loading="loading"
+      empty="暂无积分流水"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default',
+        separator: 'h-0'
+      }"
     >
-      <template #header>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-cash-multiple"
-              class="size-5 text-muted"
-            />
-            <h3 class="font-semibold text-highlighted">
-              流水明细
-            </h3>
-          </div>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
+      <template #createdAt-cell="{ row }">
+        <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
       </template>
+      <template #userId-cell="{ row }">
+        <span class="font-mono text-xs">#{{ row.original.userId }}</span>
+      </template>
+      <template #reason-cell="{ row }">
+        <UBadge
+          :color="getReasonMeta(row.original.reason).color"
+          variant="subtle"
+        >
+          {{ getReasonMeta(row.original.reason).label }}
+        </UBadge>
+      </template>
+      <template #amount-cell="{ row }">
+        <span :class="amountClass(row.original.amount)">
+          {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
+        </span>
+      </template>
+      <template #balanceAfter-cell="{ row }">
+        <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
+      </template>
+      <template #operatorName-cell="{ row }">
+        <span
+          v-if="row.original.operatorName"
+          class="text-xs"
+        >{{ row.original.operatorName }}</span>
+        <span
+          v-else
+          class="text-xs text-muted italic"
+        >系统</span>
+      </template>
+      <template #remark-cell="{ row }">
+        <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
+      </template>
+    </UTable>
 
-      <DashboardDataTable
-        v-model:page="page"
-        :data="items"
-        :columns="columns"
-        :loading="loading"
-        :page-size="pageSize"
-        :total="total"
-        empty-title="暂无积分流水"
-        empty-icon="i-mdi-cash-multiple"
-      >
-        <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-        </template>
-        <template #userId-cell="{ row }">
-          <span class="font-mono text-xs">#{{ row.original.userId }}</span>
-        </template>
-        <template #reason-cell="{ row }">
-          <UBadge
-            :color="getReasonMeta(row.original.reason).color"
-            variant="subtle"
-          >
-            {{ getReasonMeta(row.original.reason).label }}
-          </UBadge>
-        </template>
-        <template #amount-cell="{ row }">
-          <span :class="amountClass(row.original.amount)">
-            {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
-          </span>
-        </template>
-        <template #balanceAfter-cell="{ row }">
-          <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
-        </template>
-        <template #operatorName-cell="{ row }">
-          <span
-            v-if="row.original.operatorName"
-            class="text-xs"
-          >{{ row.original.operatorName }}</span>
-          <span
-            v-else
-            class="text-xs text-muted italic"
-          >系统</span>
-        </template>
-        <template #remark-cell="{ row }">
-          <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
-        </template>
-      </DashboardDataTable>
-    </UCard>
+    <div class="flex items-center justify-between gap-3 border-t border-default pt-4 mt-auto">
+      <div class="text-sm text-muted">
+        共 {{ total.toLocaleString() }} 条
+      </div>
+      <div class="flex items-center gap-1.5">
+        <UPagination
+          v-model:page="page"
+          :items-per-page="pageSize"
+          :total="total"
+        />
+      </div>
+    </div>
   </div>
 </template>
 

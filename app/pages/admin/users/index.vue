@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -19,6 +20,11 @@ const {
   updateUser,
   createUser
 } = useAdminUsersPage()
+
+const { page, pageSize, total, paginated } = useClientPagination(items, 10)
+watch(keyword, () => {
+  page.value = 1
+})
 
 const confirm = useConfirmDialog()
 
@@ -202,10 +208,19 @@ const columns: TableColumn<AdminUserItem>[] = [
 
     <UTable
       v-model:row-selection="rowSelection"
-      :data="items"
+      class="shrink-0"
+      :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"
       :get-row-id="(row: AdminUserItem) => String(row.id)"
+      :ui="{
+        base: 'table-fixed border-separate border-spacing-0',
+        thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+        tbody: '[&>tr]:last:[&>td]:border-b-0',
+        th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+        td: 'border-b border-default',
+        separator: 'h-0'
+      }"
     >
       <template #select-header="{ table }">
         <UCheckbox
@@ -270,6 +285,27 @@ const columns: TableColumn<AdminUserItem>[] = [
         </div>
       </template>
     </UTable>
+
+    <div
+      v-if="total > 0"
+      class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4"
+    >
+      <div class="flex items-center gap-2 text-sm text-muted">
+        <span>共 {{ total.toLocaleString() }} 条</span>
+        <USelect
+          v-model="pageSize"
+          :items="PAGE_SIZE_ITEMS"
+          value-key="value"
+          size="sm"
+          class="w-24"
+        />
+      </div>
+      <UPagination
+        v-model:page="page"
+        :items-per-page="pageSize"
+        :total="total"
+      />
+    </div>
 
     <AdminUserEditModal
       v-model:open="editOpen"
