@@ -27,6 +27,9 @@ server/routes/
 | 1 | `v{N}/` 下第一层不能是动态段（`[id]` / `[...slug]`） | [api-manifest.ts:155-160](../modules/api-manifest.ts#L155-L160) |
 | 2 | `v{N}/index.*` 不允许（必须经过 code 目录或 `<code>.<method>.ts`） | [api-manifest.ts:175-180](../modules/api-manifest.ts#L175-L180) |
 | 3 | `v{N}/[id].get.ts` 这种第一层是动态段的文件不允许 | [api-manifest.ts:182-186](../modules/api-manifest.ts#L182-L186) |
+| 4 | 同一 `(method, 匹配正则)` 不能由多个文件产生（路由冲突） | [api-manifest.ts:216-227](../modules/api-manifest.ts#L216-L227) |
+
+约束 4 拦两类歧义路由：① 同一路由两种写法并存（`crypto/index.get.ts` 与 `crypto.get.ts` 都 → `GET /v1/crypto`）；② 同形动态段换了参数名（`[name].get.ts` 与 `[id].get.ts`，路径串不同但匹配正则全等，运行时只会命中其一）。报错会同时列出两个冲突的源文件。
 
 `code/` 内部不受这些限制：`[name]` / `[...rest]` / 嵌套子目录都正常工作，Nitro 文件路由怎么写就怎么映射。
 

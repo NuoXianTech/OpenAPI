@@ -206,13 +206,25 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
     }
 
     for (const api of byCode.values()) {
-      const seen = new Set<string>()
-      api.endpoints = api.endpoints.filter((ep) => {
-        const key = `${ep.method}|${ep.apiPath}`
-        if (seen.has(key)) return false
-        seen.add(key)
-        return true
-      })
+      // 路由冲突检测：同一 (method, 匹配正则) 只能由一个源文件产生。
+      // 用 patternRegex 作冲突身份（而非 apiPath）能一并抓出两类隐患：
+      //   1. 同一路由两种写法并存：crypto/index.get.ts 与 crypto.get.ts 都 → GET /v1/crypto
+      //   2. 同形动态段换了参数名：[name].get.ts 与 [id].get.ts，apiPath 不同但正则全等
+      // 二者在 Nitro 路由表里都是歧义路由，静默去重只会把它变成"接口没生效 / 参数名取不到"
+      // 这类难查的运行时问题。与其它约定违例一致，构建期 fail fast。
+      const seen = new Map<string, ManifestEndpoint>()
+      for (const ep of api.endpoints) {
+        const key = `${ep.method}|${ep.patternRegex}`
+        const prev = seen.get(key)
+        if (prev) {
+          const where = prev.apiPath === ep.apiPath ? ep.apiPath : `${prev.apiPath} 与 ${ep.apiPath}`
+          throw new Error(
+            `[api-manifest] 路由冲突：${prev.sourceFile} 与 ${ep.sourceFile} 都解析为 `
+            + `${ep.method} ${where}（匹配规则相同）。请删除其一，或改用不同的方法 / 路径。`
+          )
+        }
+        seen.set(key, ep)
+      }
       api.endpoints.sort((a, b) => {
         if (a.apiPath !== b.apiPath) return a.apiPath.localeCompare(b.apiPath)
         return a.method.localeCompare(b.method)
