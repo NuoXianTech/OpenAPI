@@ -262,10 +262,7 @@ async function handleLogout() {
               class="inline-flex items-center gap-1.5"
               :title="listStatus.title"
             >
-              <span
-                class="hero-status-dot"
-                :class="`is-${listStatus.tone}`"
-              />
+              <CommonStatusDot :tone="listStatus.tone" />
               {{ listStatus.label }}
             </span>
             <USeparator
@@ -294,53 +291,36 @@ async function handleLogout() {
         </div>
 
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-layers-outline"
-                class="size-4"
-              />
-            </div>
-            <div class="hero-stat__value">
+          <CommonHeroStatCard
+            icon="i-mdi-layers-outline"
+            icon-tone="info"
+          >
+            <template #value>
               {{ totalCount }}
-            </div>
-            <div class="hero-stat__label">
-              接口总数
-            </div>
-          </div>
+            </template>
+            接口总数
+          </CommonHeroStatCard>
 
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-check-circle-outline"
-                class="size-4"
-              />
-            </div>
-            <div class="hero-stat__value">
+          <CommonHeroStatCard
+            icon="i-mdi-check-circle-outline"
+            icon-tone="success"
+          >
+            <template #value>
               {{ normalCount }}
-            </div>
-            <div class="hero-stat__label">
-              可用接口 · {{ healthRatio }}%
-            </div>
-          </div>
+            </template>
+            可用接口 · {{ healthRatio }}%
+          </CommonHeroStatCard>
 
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-counter"
-                class="size-4"
-              />
-            </div>
-            <div
-              class="hero-stat__value"
-              :title="callCount.toLocaleString('zh-CN')"
-            >
+          <CommonHeroStatCard
+            icon="i-mdi-counter"
+            icon-tone="primary"
+            :value-title="callCount.toLocaleString('zh-CN')"
+          >
+            <template #value>
               {{ compactCallCount }}
-            </div>
-            <div class="hero-stat__label">
-              累计调用
-            </div>
-          </div>
+            </template>
+            累计调用
+          </CommonHeroStatCard>
         </div>
       </div>
     </div>
@@ -423,115 +403,6 @@ async function handleLogout() {
   color: var(--ui-text-muted);
 }
 
-.hero-status-dot {
-  --hero-status-color: var(--ui-success);
-
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--hero-status-color);
-  position: relative;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hero-status-color) 18%, transparent);
-  flex: 0 0 auto;
-}
-
-.hero-status-dot::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--hero-status-color) 55%, transparent);
-  animation: heroPulse 2s ease-out infinite;
-}
-
-.hero-status-dot.is-info {
-  --hero-status-color: var(--ui-info);
-}
-
-.hero-status-dot.is-error {
-  --hero-status-color: var(--ui-error);
-}
-
-.hero-status-dot.is-neutral {
-  --hero-status-color: var(--ui-text-muted);
-}
-
-.hero-status-dot.is-error::after,
-.hero-status-dot.is-neutral::after {
-  display: none;
-}
-
-.hero-stat {
-  position: relative;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
-      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
-  border-radius: 8px;
-  padding: 12px 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
-  transition: transform 220ms ease, border-color 220ms ease, background-color 220ms ease;
-  backdrop-filter: blur(8px);
-}
-
-.hero-stat:hover {
-  transform: translateY(-2px);
-  border-color: var(--ui-border-accented);
-}
-
-.dark .hero-stat {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
-      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
-}
-
-.hero-stat__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
-  margin-bottom: 4px;
-}
-
-.hero-stat:nth-child(1) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
-  color: var(--ui-info);
-}
-
-.hero-stat:nth-child(2) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
-  color: var(--ui-success);
-}
-
-.hero-stat:nth-child(3) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
-  color: var(--ui-text);
-}
-
-.hero-stat__value {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.hero-stat__label {
-  font-size: 11px;
-  color: var(--ui-text-muted);
-  letter-spacing: 0;
-}
-
 @media (max-width: 640px) {
   .hero-topbar {
     align-items: flex-start;
@@ -546,18 +417,5 @@ async function handleLogout() {
     padding-left: 0;
     border-left: 0;
   }
-
-  .hero-stat__value {
-    font-size: 18px;
-  }
-  .hero-stat__icon {
-    width: 22px;
-    height: 22px;
-  }
-}
-
-@keyframes heroPulse {
-  0% { transform: scale(0.8); opacity: 0.8; }
-  100% { transform: scale(2.2); opacity: 0; }
 }
 </style>

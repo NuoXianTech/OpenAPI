@@ -50,7 +50,7 @@ const yTickFormat = (tick: number | Date) => {
 const tooltipTemplate = (d: AreaRow) => `
   <div style="font-size:12px;line-height:1.6">
     <div style="font-weight:600;margin-bottom:4px">${d.name}</div>
-    <div style="color:#888;font-family:ui-monospace,Menlo,monospace;font-size:11px">${d.apiPath}</div>
+    <div style="color:var(--ui-text-muted);font-family:ui-monospace,Menlo,monospace;font-size:11px">${d.apiPath}</div>
     <div>总调用：${d.totalCalls.toLocaleString()}</div>
   </div>
 `

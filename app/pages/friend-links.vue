@@ -248,15 +248,4 @@ const visibleCount = computed(() => filteredItems.value.length)
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }
-
-.state-fade-enter-active,
-.state-fade-leave-active {
-  transition: opacity 220ms ease, transform 220ms ease;
-}
-
-.state-fade-enter-from,
-.state-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
 </style>

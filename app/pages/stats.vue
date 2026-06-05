@@ -333,10 +333,7 @@ const overviewCards = computed(() => {
 
             <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
               <span class="inline-flex items-center gap-1.5">
-                <span
-                  class="stats-status-dot"
-                  :class="{ 'is-loading': isPending }"
-                />
+                <CommonStatusDot :tone="isPending ? 'info' : 'success'" />
                 {{ isPending ? '同步中' : '统计已就绪' }}
               </span>
               <USeparator
@@ -366,68 +363,46 @@ const overviewCards = computed(() => {
 
           <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
             <template v-if="isInitialLoading">
-              <div
+              <CommonHeroStatCard
                 v-for="n in 3"
                 :key="n"
-                class="stats-hero-metric"
-              >
-                <USkeleton class="mb-3 h-6 w-6 rounded-md" />
-                <USkeleton class="h-7 w-20 rounded-md" />
-                <USkeleton class="mt-2 h-3 w-16 rounded-md" />
-              </div>
+                loading
+              />
             </template>
 
             <template v-else>
-              <div class="stats-hero-metric">
-                <div class="stats-hero-metric__icon is-primary">
-                  <UIcon
-                    name="i-mdi-counter"
-                    class="size-4"
-                  />
-                </div>
-                <div
-                  class="stats-hero-metric__value"
-                  :title="overview ? formatCount(overview.totalCalls) : undefined"
-                >
+              <CommonHeroStatCard
+                icon="i-mdi-counter"
+                icon-tone="primary"
+                :value-title="overview ? formatCount(overview.totalCalls) : undefined"
+              >
+                <template #value>
                   {{ overview ? formatCompact(overview.totalCalls) : '--' }}
-                </div>
-                <div class="stats-hero-metric__label">
-                  累计调用
-                </div>
-              </div>
+                </template>
+                累计调用
+              </CommonHeroStatCard>
 
-              <div class="stats-hero-metric">
-                <div class="stats-hero-metric__icon is-success">
-                  <UIcon
-                    name="i-mdi-check-decagram-outline"
-                    class="size-4"
-                  />
-                </div>
-                <div class="stats-hero-metric__value">
+              <CommonHeroStatCard
+                icon="i-mdi-check-decagram-outline"
+                icon-tone="success"
+              >
+                <template #value>
                   {{ overview ? formatRate(overview.successRate) : '--' }}
-                </div>
-                <div class="stats-hero-metric__label">
-                  请求成功率
-                </div>
-              </div>
+                </template>
+                请求成功率
+              </CommonHeroStatCard>
 
-              <div class="stats-hero-metric">
-                <div class="stats-hero-metric__icon is-info">
-                  <UIcon
-                    name="i-mdi-trophy-outline"
-                    class="size-4"
-                  />
-                </div>
-                <div
-                  class="stats-hero-metric__value"
-                  :title="topApi?.name"
-                >
+              <CommonHeroStatCard
+                icon="i-mdi-trophy-outline"
+                icon-tone="info"
+                :value-title="topApi?.name"
+                :label-title="topApi?.name"
+              >
+                <template #value>
                   {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
-                </div>
-                <div class="stats-hero-metric__label truncate">
-                  {{ topApi?.name || '近 30 日热门接口' }}
-                </div>
-              </div>
+                </template>
+                {{ topApi?.name || '近 30 日热门接口' }}
+              </CommonHeroStatCard>
             </template>
           </div>
         </div>
@@ -784,60 +759,6 @@ const overviewCards = computed(() => {
   gap: 6px;
 }
 
-.stats-status-dot {
-  --stats-status-color: var(--ui-success);
-
-  position: relative;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--stats-status-color);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--stats-status-color) 18%, transparent);
-  flex: 0 0 auto;
-}
-
-.stats-status-dot::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--stats-status-color) 55%, transparent);
-  animation: statsPulse 2s ease-out infinite;
-}
-
-.stats-status-dot.is-loading {
-  --stats-status-color: var(--ui-info);
-}
-
-.stats-hero-metric {
-  position: relative;
-  min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
-      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
-  border-radius: 8px;
-  padding: 12px 12px 14px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
-  transition: transform 220ms ease, border-color 220ms ease;
-  backdrop-filter: blur(8px);
-}
-
-.stats-hero-metric:hover {
-  transform: translateY(-2px);
-  border-color: var(--ui-border-accented);
-}
-
-.dark .stats-hero-metric {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
-      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
-}
-
-.stats-hero-metric__icon,
 .stats-card__icon {
   display: inline-flex;
   align-items: center;
@@ -846,27 +767,16 @@ const overviewCards = computed(() => {
   flex: 0 0 auto;
 }
 
-.stats-hero-metric__icon {
-  width: 26px;
-  height: 26px;
-  margin-bottom: 8px;
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
-}
-
-.stats-hero-metric__icon.is-primary,
 .stats-card__icon.is-primary {
   background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
   color: var(--ui-text);
 }
 
-.stats-hero-metric__icon.is-success,
 .stats-card__icon.is-success {
   background: color-mix(in srgb, var(--ui-success) 13%, transparent);
   color: var(--ui-success);
 }
 
-.stats-hero-metric__icon.is-info,
 .stats-card__icon.is-info {
   background: color-mix(in srgb, var(--ui-info) 13%, transparent);
   color: var(--ui-info);
@@ -885,27 +795,6 @@ const overviewCards = computed(() => {
 .stats-card__icon.is-neutral {
   background: color-mix(in srgb, var(--ui-text) 7%, transparent);
   color: var(--ui-text-muted);
-}
-
-.stats-hero-metric__value {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0;
-  line-height: 1.1;
-  color: var(--ui-text-highlighted);
-  font-variant-numeric: tabular-nums;
-}
-
-.stats-hero-metric__label {
-  min-width: 0;
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--ui-text-muted);
-  letter-spacing: 0;
 }
 
 .stats-card {
@@ -1007,22 +896,6 @@ const overviewCards = computed(() => {
     justify-content: flex-start;
     margin-left: 0;
     width: 100%;
-  }
-
-  .stats-hero-metric__value {
-    font-size: 20px;
-  }
-}
-
-@keyframes statsPulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
   }
 }
 </style>

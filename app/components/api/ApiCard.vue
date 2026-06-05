@@ -505,12 +505,16 @@ function formatCallCount(count: number) {
 }
 
 .api-card__radar {
+  /* 状态色走语义变量：var(--ui-success/error) 自带 light/dark 切换，透明衍生色用 color-mix 取自同一变量 */
+  --radar-color: var(--ui-success);
   width: 12px;
   height: 12px;
   border-radius: 50%;
   position: relative;
-  background: var(--ui-color-success-500);
-  box-shadow: 0 0 0 2px rgba(35, 197, 94, 0.24), 0 0 8px rgba(35, 197, 94, 0.45);
+  background: var(--radar-color);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--radar-color) 24%, transparent),
+    0 0 8px color-mix(in srgb, var(--radar-color) 45%, transparent);
   flex-shrink: 0;
 }
 
@@ -520,7 +524,7 @@ function formatCallCount(count: number) {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 2px solid rgba(35, 197, 94, 0.4);
+  border: 2px solid color-mix(in srgb, var(--radar-color) 40%, transparent);
   animation: radarPulse 2s ease-out infinite;
 }
 
@@ -529,23 +533,11 @@ function formatCallCount(count: number) {
 }
 
 .api-card__radar.is-error {
-  background: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.24), 0 0 8px rgba(239, 68, 68, 0.45);
-}
-
-.api-card__radar.is-error::before,
-.api-card__radar.is-error::after {
-  border-color: rgba(239, 68, 68, 0.32);
+  --radar-color: var(--ui-error);
 }
 
 .api-card__radar.is-unknown {
-  background: #94a3b8;
-  box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.24), 0 0 8px rgba(148, 163, 184, 0.45);
-}
-
-.api-card__radar.is-unknown::before,
-.api-card__radar.is-unknown::after {
-  border-color: rgba(148, 163, 184, 0.32);
+  --radar-color: var(--ui-text-dimmed);
 }
 
 .api-card__calls {

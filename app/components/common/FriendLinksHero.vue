@@ -24,6 +24,18 @@ const networkStatus = computed(() => {
   }
   return '站点可达'
 })
+
+type StatusTone = 'success' | 'info' | 'warning' | 'error' | 'neutral'
+
+const networkTone = computed<StatusTone>(() => {
+  if (props.totalCount <= 0) {
+    return 'neutral'
+  }
+  if (inactiveCount.value > 0) {
+    return 'warning'
+  }
+  return 'success'
+})
 </script>
 
 <template>
@@ -83,10 +95,7 @@ const networkStatus = computed(() => {
 
           <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
-              <span
-                class="links-status-dot"
-                :class="{ 'is-warning': inactiveCount > 0, 'is-neutral': totalCount <= 0 }"
-              />
+              <CommonStatusDot :tone="networkTone" />
               {{ networkStatus }}
             </span>
             <USeparator
@@ -115,50 +124,35 @@ const networkStatus = computed(() => {
         </div>
 
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-bookmark-outline"
-                class="size-4"
-              />
-            </div>
-            <div class="hero-stat__value">
+          <CommonHeroStatCard
+            icon="i-mdi-bookmark-outline"
+            icon-tone="info"
+          >
+            <template #value>
               {{ totalCount }}
-            </div>
-            <div class="hero-stat__label">
-              收录数
-            </div>
-          </div>
+            </template>
+            收录数
+          </CommonHeroStatCard>
 
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-check-circle-outline"
-                class="size-4"
-              />
-            </div>
-            <div class="hero-stat__value">
+          <CommonHeroStatCard
+            icon="i-mdi-check-circle-outline"
+            icon-tone="success"
+          >
+            <template #value>
               {{ ratio }}<span class="text-base text-muted">%</span>
-            </div>
-            <div class="hero-stat__label">
-              可达率
-            </div>
-          </div>
+            </template>
+            可达率
+          </CommonHeroStatCard>
 
-          <div class="hero-stat">
-            <div class="hero-stat__icon">
-              <UIcon
-                name="i-mdi-close-circle-outline"
-                class="size-4"
-              />
-            </div>
-            <div class="hero-stat__value">
+          <CommonHeroStatCard
+            icon="i-mdi-close-circle-outline"
+            icon-tone="error"
+          >
+            <template #value>
               {{ inactiveCount }}
-            </div>
-            <div class="hero-stat__label">
-              异常数
-            </div>
-          </div>
+            </template>
+            异常数
+          </CommonHeroStatCard>
         </div>
       </div>
     </div>
@@ -224,111 +218,6 @@ const networkStatus = computed(() => {
   color: var(--ui-text-muted);
 }
 
-.links-status-dot {
-  --links-status-color: var(--ui-success);
-
-  position: relative;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--links-status-color);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--links-status-color) 18%, transparent);
-  flex: 0 0 auto;
-}
-
-.links-status-dot::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--links-status-color) 55%, transparent);
-  animation: linksPulse 2s ease-out infinite;
-}
-
-.links-status-dot.is-warning {
-  --links-status-color: var(--ui-warning);
-}
-
-.links-status-dot.is-neutral {
-  --links-status-color: var(--ui-text-muted);
-}
-
-.links-status-dot.is-neutral::after {
-  display: none;
-}
-
-.hero-stat {
-  position: relative;
-  min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
-      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
-  border-radius: 8px;
-  padding: 12px 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
-  transition: transform 220ms ease, border-color 220ms ease;
-  backdrop-filter: blur(8px);
-}
-
-.hero-stat:hover {
-  transform: translateY(-2px);
-  border-color: var(--ui-border-accented);
-}
-
-.dark .hero-stat {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
-      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
-}
-
-.hero-stat__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
-  margin-bottom: 4px;
-}
-
-.hero-stat:nth-child(1) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
-  color: var(--ui-info);
-}
-
-.hero-stat:nth-child(2) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
-  color: var(--ui-success);
-}
-
-.hero-stat:nth-child(3) .hero-stat__icon {
-  background: color-mix(in srgb, var(--ui-error) 13%, transparent);
-  color: var(--ui-error);
-}
-
-.hero-stat__value {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: 0;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-
-.hero-stat__label {
-  font-size: 11px;
-  color: var(--ui-text-muted);
-  letter-spacing: 0;
-}
-
 @media (max-width: 640px) {
   .links-hero__topbar {
     align-items: flex-start;
@@ -339,27 +228,6 @@ const networkStatus = computed(() => {
     justify-content: flex-start;
     margin-left: 0;
     width: 100%;
-  }
-
-  .hero-stat__value {
-    font-size: 18px;
-  }
-
-  .hero-stat__icon {
-    width: 22px;
-    height: 22px;
-  }
-}
-
-@keyframes linksPulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.8;
-  }
-
-  100% {
-    transform: scale(2.2);
-    opacity: 0;
   }
 }
 </style>

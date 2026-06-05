@@ -191,15 +191,4 @@
   0% { opacity: 0; transform: translateY(10px); }
   100% { opacity: 1; transform: translateY(0); }
 }
-
-.state-fade-enter-active,
-.state-fade-leave-active {
-  transition: opacity 220ms ease, transform 220ms ease;
-}
-
-.state-fade-enter-from,
-.state-fade-leave-to {
-  opacity: 0;
-  transform: translateY(10px);
-}
 </style>
