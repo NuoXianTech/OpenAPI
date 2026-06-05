@@ -61,16 +61,6 @@ function recentStatusColor(row: AdminDashboardRecentCall): 'success' | 'warning'
   return httpStatusColor(row.statusCode)
 }
 
-function methodColor(method: string): 'info' | 'success' | 'warning' | 'error' | 'neutral' {
-  switch (method.toUpperCase()) {
-    case 'GET': return 'info'
-    case 'POST': return 'success'
-    case 'PUT': return 'warning'
-    case 'DELETE': return 'error'
-    default: return 'neutral'
-  }
-}
-
 const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'method', header: '方法' },
@@ -254,7 +244,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             </template>
             <template #method-cell="{ row }">
               <UBadge
-                :color="methodColor(row.original.method)"
+                :color="httpMethodColor(row.original.method)"
                 variant="subtle"
                 size="sm"
                 class="font-mono"

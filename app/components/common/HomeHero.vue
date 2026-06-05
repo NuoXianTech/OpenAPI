@@ -49,8 +49,10 @@ const formatUpTime = (ms: number): string => {
   return parts.join(' ') || '0分'
 }
 
-const nowTime = ref(formatNowTime())
-const upTime = ref(formatUpTime(Date.now() - startTimestamp.value))
+// 实时时钟依赖"当前时刻"：SSR 渲染时刻与客户端 hydrate 时刻必然不同（秒级字段几乎必错），
+// 初始留空让两端首帧一致以避免 hydration mismatch；真实值由下方 onMounted 的 updateTimes() 填充并每秒刷新。
+const nowTime = ref('')
+const upTime = ref('')
 let timer: number | undefined
 
 const updateTimes = () => {

@@ -113,9 +113,12 @@ async function openDetail(row: MessageRow) {
   detailMessage.value = row
   detailOpen.value = true
   detailLoading.value = true
+  detailRows.value = []
   try {
     const res = await $fetch<{ deliveries?: typeof detailRows.value }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
     detailRows.value = res?.deliveries || []
+  } catch (err: unknown) {
+    toast.add({ title: parseFetchError(err, '加载接收详情失败'), color: 'error' })
   } finally {
     detailLoading.value = false
   }

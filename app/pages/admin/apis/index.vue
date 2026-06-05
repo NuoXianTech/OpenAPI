@@ -70,7 +70,11 @@ const categoriesMap = computed(() => {
 const versions = computed<VersionGroup[]>(() => (data.value?.versions || []) as VersionGroup[])
 const activeVersion = ref<string>('')
 watchEffect(() => {
-  if (!activeVersion.value && versions.value.length > 0) {
+  if (versions.value.length === 0) return
+  // 初次为空、或刷新后当前选中版本已不在列表中（接口被删 / 版本目录变化）都回退到首个版本，
+  // 否则 filteredApis 里 group 查找失败会让表格永久空白且无任何提示。
+  const exists = versions.value.some(v => v.pathVersion === activeVersion.value)
+  if (!exists) {
     activeVersion.value = versions.value[0]!.pathVersion
   }
 })

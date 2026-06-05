@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { VisXYContainer, VisGroupedBar, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { AdminAnalyticsCallBucket } from '~~/shared/types/admin-logs'
+
+// @unovis（d3 + DOM）体积较大：改为 client-only 异步组件，拆成独立 chunk，不进 admin 首屏 bundle。
+const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
+const VisGroupedBar = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisGroupedBar))
+const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
+const VisCrosshair = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisCrosshair))
+const VisTooltip = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisTooltip))
 
 interface Props {
   buckets: AdminAnalyticsCallBucket[]
