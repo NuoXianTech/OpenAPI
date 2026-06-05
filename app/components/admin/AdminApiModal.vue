@@ -11,6 +11,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
+const form = useTemplateRef('form')
 
 const schema = z.object({
   name: z.string().min(1, '必填').max(100),
@@ -196,6 +197,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       />
 
       <UForm
+        ref="form"
         :schema="schema"
         :state="state"
         class="space-y-3"
@@ -210,23 +212,25 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           :available-methods="availableMethods"
           :has-charged-method="hasChargedMethod"
         />
-
-        <div class="flex justify-end gap-2 pt-3">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="open = false"
-          >
-            取消
-          </UButton>
-          <UButton
-            type="submit"
-            :loading="loading"
-          >
-            {{ mode === 'edit' ? '保存' : '登记' }}
-          </UButton>
-        </div>
       </UForm>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
+          variant="outline"
+          color="neutral"
+          @click="open = false"
+        >
+          取消
+        </UButton>
+        <UButton
+          :loading="loading"
+          @click="form?.submit()"
+        >
+          {{ mode === 'edit' ? '保存' : '登记' }}
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>

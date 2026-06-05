@@ -14,7 +14,7 @@ defineProps<{
           name="i-mdi-chart-pie-outline"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           收支分布
         </h3>
       </div>

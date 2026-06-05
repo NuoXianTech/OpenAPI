@@ -195,7 +195,7 @@ function categoryLabel(row: DiscoveredApi) {
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <div class="flex items-center gap-2 flex-wrap">
       <USelect
         v-if="versionItems.length > 0"

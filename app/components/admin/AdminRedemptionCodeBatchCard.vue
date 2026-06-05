@@ -20,7 +20,7 @@ const emit = defineEmits<{
           name="i-mdi-package-variant"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           最近批次
         </h3>
         <span class="ml-auto text-xs text-muted">

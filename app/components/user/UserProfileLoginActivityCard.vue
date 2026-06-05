@@ -42,7 +42,7 @@ const columns: TableColumn<LoginLogRow>[] = [
           name="i-mdi-login-variant"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           最近登录活动
         </h3>
         <UButton

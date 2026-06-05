@@ -148,7 +148,7 @@ function amountClass(amt: number) {
                 name="i-mdi-format-list-bulleted"
                 class="size-5 text-muted"
               />
-              <h3 class="font-semibold">
+              <h3 class="text-lg font-semibold text-highlighted">
                 积分流水
               </h3>
               <span class="ml-auto text-xs text-muted tabular-nums">

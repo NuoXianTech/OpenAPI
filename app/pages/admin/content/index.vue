@@ -125,7 +125,7 @@ const columns: TableColumn<Announcement>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <UCard>
       <div class="flex items-start justify-between gap-4 flex-wrap">
         <div class="flex-1 min-w-[260px]">
@@ -134,7 +134,7 @@ const columns: TableColumn<Announcement>[] = [
               name="i-mdi-bullhorn-outline"
               class="size-5 text-muted"
             />
-            <h3 class="font-semibold">
+            <h3 class="text-lg font-semibold text-highlighted">
               首页公告弹窗
             </h3>
           </div>

@@ -77,7 +77,7 @@ const columns: TableColumn<RedemptionRecordRow>[] = [
 </script>
 
 <template>
-  <div class="flex flex-1 flex-col gap-4 sm:gap-6">
+  <div class="space-y-6">
     <div class="space-y-3">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div class="flex flex-wrap items-end gap-3">

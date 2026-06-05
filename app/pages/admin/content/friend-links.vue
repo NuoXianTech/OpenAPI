@@ -58,7 +58,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <div class="flex items-center justify-end gap-2">
       <UButton
         icon="i-mdi-plus"

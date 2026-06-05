@@ -173,7 +173,7 @@ const columns: TableColumn<MessageRow>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <div class="flex items-center justify-end">
       <UButton
         color="neutral"
@@ -194,7 +194,7 @@ const columns: TableColumn<MessageRow>[] = [
               name="i-mdi-email-edit-outline"
               class="size-5 text-muted"
             />
-            <h3 class="font-semibold">
+            <h3 class="text-lg font-semibold text-highlighted">
               发送新通知
             </h3>
           </div>
@@ -279,7 +279,7 @@ const columns: TableColumn<MessageRow>[] = [
               name="i-mdi-history"
               class="size-5 text-muted"
             />
-            <h3 class="font-semibold">
+            <h3 class="text-lg font-semibold text-highlighted">
               发送历史
             </h3>
             <span class="ml-auto text-xs text-muted">

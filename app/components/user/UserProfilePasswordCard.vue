@@ -44,7 +44,7 @@ async function submit() {
           name="i-mdi-lock-outline"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           修改密码
         </h3>
       </div>

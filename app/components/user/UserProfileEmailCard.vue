@@ -48,7 +48,7 @@ async function submit() {
           name="i-mdi-email-outline"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           绑定邮箱
         </h3>
       </div>

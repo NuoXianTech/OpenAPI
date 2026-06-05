@@ -8,6 +8,7 @@ const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: FriendLinkItem | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
+const form = useTemplateRef('form')
 
 const isEdit = computed(() => !!props.item)
 
@@ -55,6 +56,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   >
     <template #body>
       <UForm
+        ref="form"
         :schema="schema"
         :state="state"
         class="space-y-3"
@@ -91,22 +93,25 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           v-model="state.isActive"
           label="启用"
         />
-        <div class="flex justify-end gap-2 pt-3">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="open = false"
-          >
-            取消
-          </UButton>
-          <UButton
-            type="submit"
-            :loading="loading"
-          >
-            {{ isEdit ? '保存' : '创建' }}
-          </UButton>
-        </div>
       </UForm>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
+          variant="outline"
+          color="neutral"
+          @click="open = false"
+        >
+          取消
+        </UButton>
+        <UButton
+          :loading="loading"
+          @click="form?.submit()"
+        >
+          {{ isEdit ? '保存' : '创建' }}
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>

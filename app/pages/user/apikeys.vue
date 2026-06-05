@@ -253,7 +253,7 @@ const columns: TableColumn<ApiKeyItem>[] = [
         variant="subtle"
         icon="i-mdi-information-outline"
         title="API Key 使用说明"
-        class="mb-4"
+        class="mb-6"
       >
         <template #description>
           <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">

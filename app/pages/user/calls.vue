@@ -157,7 +157,7 @@ const columns: TableColumn<LogRow>[] = [
     </template>
 
     <template #body>
-      <div class="space-y-4">
+      <div class="space-y-6">
         <UCard>
           <div class="flex flex-wrap items-end gap-3">
             <UFormField
@@ -212,7 +212,7 @@ const columns: TableColumn<LogRow>[] = [
                 name="i-mdi-history"
                 class="size-5 text-muted"
               />
-              <h3 class="font-semibold">
+              <h3 class="text-lg font-semibold text-highlighted">
                 调用日志
               </h3>
               <span class="ml-auto text-xs text-muted tabular-nums">

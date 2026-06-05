@@ -41,7 +41,7 @@ async function submit() {
           name="i-mdi-ticket-percent-outline"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           兑换码
         </h3>
       </div>

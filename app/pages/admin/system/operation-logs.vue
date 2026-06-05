@@ -155,7 +155,7 @@ const detailJson = computed(() => {
 </script>
 
 <template>
-  <div class="log-page-shell space-y-4 sm:space-y-5">
+  <div class="log-page-shell space-y-6">
     <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
       <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div class="space-y-3">
@@ -355,7 +355,7 @@ const detailJson = computed(() => {
               name="i-mdi-clipboard-text-clock-outline"
               class="size-5 text-muted"
             />
-            <h3 class="font-semibold text-highlighted">
+            <h3 class="text-lg font-semibold text-highlighted">
               操作明细
             </h3>
           </div>

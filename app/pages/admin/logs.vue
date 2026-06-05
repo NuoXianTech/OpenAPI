@@ -184,7 +184,7 @@ const columns: TableColumn<AdminLogRow>[] = [
     </template>
 
     <template #body>
-      <div class="log-page-shell flex flex-1 flex-col gap-4 sm:gap-5">
+      <div class="log-page-shell space-y-6">
         <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
           <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
             <div class="space-y-3">

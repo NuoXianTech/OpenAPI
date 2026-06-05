@@ -144,7 +144,7 @@ function onTurnstileError(message: string) {
           name="i-mdi-calendar-check-outline"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           每日签到
         </h3>
         <span

@@ -135,24 +135,26 @@ async function submit() {
             到期后用户将被自动解封；封禁后该用户的所有会话会立即失效。
           </p>
         </UFormField>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="emit('update:open', false)"
-          >
-            取消
-          </UButton>
-          <UButton
-            type="submit"
-            color="error"
-            :loading="loading"
-          >
-            确认封禁
-          </UButton>
-        </div>
       </form>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
+          variant="outline"
+          color="neutral"
+          @click="emit('update:open', false)"
+        >
+          取消
+        </UButton>
+        <UButton
+          color="error"
+          :loading="loading"
+          @click="submit"
+        >
+          确认封禁
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>

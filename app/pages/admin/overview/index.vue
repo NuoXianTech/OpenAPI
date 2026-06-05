@@ -166,10 +166,10 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
             <template #header>
               <div class="flex items-center justify-between gap-3">
                 <div>
-                  <h3 class="font-semibold">
+                  <h3 class="text-lg font-semibold text-highlighted">
                     API 调用趋势
                   </h3>
-                  <p class="mt-0.5 text-xs text-muted">
+                  <p class="mt-1 text-sm text-muted">
                     按天聚合总调用、成功与失败次数
                   </p>
                 </div>
@@ -192,10 +192,10 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
           <UCard class="xl:col-span-2">
             <template #header>
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   API 使用分布
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   Top 6 高频调用接口
                 </p>
               </div>
@@ -212,10 +212,10 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
           <template #header>
             <div class="flex items-center justify-between gap-2">
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   最新 API 请求
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   最近 10 条调用记录
                 </p>
               </div>

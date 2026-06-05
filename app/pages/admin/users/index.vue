@@ -153,7 +153,7 @@ const columns: TableColumn<AdminUserItem>[] = [
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div class="space-y-6">
     <div class="flex items-center gap-2 flex-wrap">
       <UInput
         v-model="keyword"

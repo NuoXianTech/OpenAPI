@@ -26,7 +26,7 @@ function formatDate(iso: string | null) {
           name="i-mdi-link-variant"
           class="size-5 text-muted"
         />
-        <h3 class="font-semibold">
+        <h3 class="text-lg font-semibold text-highlighted">
           第三方账号
         </h3>
         <UButton

@@ -144,10 +144,10 @@ const overviewCards = computed(() => [
           <template #header>
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   请求分布
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   各启用接口的请求情况（成功 / 失败叠加展示）
                 </p>
               </div>
@@ -182,10 +182,10 @@ const overviewCards = computed(() => [
           <UCard>
             <template #header>
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   调用趋势（近 24 小时）
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   按小时聚合的请求次数
                 </p>
               </div>
@@ -201,10 +201,10 @@ const overviewCards = computed(() => [
           <UCard>
             <template #header>
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   调用次数分布
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   按调用量分桶统计的接口数量
                 </p>
               </div>
@@ -222,10 +222,10 @@ const overviewCards = computed(() => [
           <template #header>
             <div class="flex items-center justify-between gap-3">
               <div>
-                <h3 class="font-semibold">
+                <h3 class="text-lg font-semibold text-highlighted">
                   调用次数排行
                 </h3>
-                <p class="mt-0.5 text-xs text-muted">
+                <p class="mt-1 text-sm text-muted">
                   TOP {{ ranking.length }} 高频调用接口
                 </p>
               </div>

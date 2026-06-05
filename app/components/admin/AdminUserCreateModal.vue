@@ -96,23 +96,25 @@ async function submit() {
           v-model="form.isActive"
           label="创建后立即激活"
         />
-
-        <div class="flex justify-end gap-2 pt-3">
-          <UButton
-            variant="outline"
-            color="neutral"
-            @click="emit('update:open', false)"
-          >
-            取消
-          </UButton>
-          <UButton
-            type="submit"
-            :loading="loading"
-          >
-            创建
-          </UButton>
-        </div>
       </form>
+    </template>
+
+    <template #footer>
+      <div class="flex justify-end gap-2 w-full">
+        <UButton
+          variant="outline"
+          color="neutral"
+          @click="emit('update:open', false)"
+        >
+          取消
+        </UButton>
+        <UButton
+          :loading="loading"
+          @click="submit"
+        >
+          创建
+        </UButton>
+      </div>
     </template>
   </UModal>
 </template>
