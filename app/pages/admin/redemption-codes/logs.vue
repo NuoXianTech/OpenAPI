@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 
 useHead({ title: '兑换记录' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -32,10 +32,10 @@ const {
   page,
   items,
   total,
-  status,
+  loading,
   applyFilters,
   reset
-} = useAdminPagedList<RedemptionFilters, RedemptionRecordRow>({
+} = usePrivatePagedList<RedemptionFilters, RedemptionRecordRow>({
   path: '/api/admin/redemption-codes/redemptions',
   defaultFilters: {
     startAt: '',
@@ -57,8 +57,6 @@ const {
     offset: p.offset
   })
 })
-
-const loading = computed(() => status.value === 'pending')
 
 const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(

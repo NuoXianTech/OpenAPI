@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 import {
   ADMIN_LOG_TYPES,
   type AdminLogRow,
@@ -74,10 +74,10 @@ const {
   page,
   items,
   total,
-  status,
+  loading,
   applyFilters,
   reset
-} = useAdminPagedList<LogsFilters, AdminLogRow>({
+} = usePrivatePagedList<LogsFilters, AdminLogRow>({
   path: '/api/admin/logs/list',
   defaultFilters,
   defaultPageSize: pageSize,
@@ -94,8 +94,6 @@ const {
     offset: p.offset
   })
 })
-
-const loading = computed(() => status.value === 'pending')
 
 const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(

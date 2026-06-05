@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 import {
   LOGIN_METHOD_META,
   loginFailureReasonLabel,
@@ -12,7 +12,7 @@ import {
 useHead({ title: '登录日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-// 用 type 别名而非 interface：useAdminPagedList 的 TFilters 受 Record<string, unknown> 约束。
+// 用 type 别名而非 interface：usePrivatePagedList 的 TFilters 受 Record<string, unknown> 约束。
 type LoginLogFilters = {
   startAt: string
   endAt: string
@@ -28,10 +28,10 @@ const {
   pageSize,
   items,
   total,
-  status,
+  loading,
   applyFilters,
   reset
-} = useAdminPagedList<LoginLogFilters, AdminLoginLogRow>({
+} = usePrivatePagedList<LoginLogFilters, AdminLoginLogRow>({
   path: '/api/admin/login-logs/list',
   defaultFilters: {
     startAt: '',
@@ -51,8 +51,6 @@ const {
     offset: p.offset
   })
 })
-
-const loading = computed(() => status.value === 'pending')
 
 const activeFilterCount = computed(() => [
   !!filters.startAt,

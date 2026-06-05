@@ -1,4 +1,5 @@
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 
 export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
 
@@ -58,21 +59,30 @@ export interface CheckinResult {
 
 export type CreditDirection = 'all' | 'in' | 'out'
 
+interface CreditTxnFilters extends Record<string, unknown> {
+  reason: CreditReasonFilter
+  direction: CreditDirection
+}
+
 export function useUserCreditsPage() {
   const toast = useToast()
 
   const summary = ref<CreditSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
   const summaryLoading = ref(false)
 
-  const filters = reactive({
-    reason: 'all' as CreditReasonFilter,
-    direction: 'all' as CreditDirection
+  // 交易流水分页：私有数据统一走 usePrivatePagedList（$fetch，不进 payload）。
+  // immediate:false —— 由 init() 与 summary/签到一起并发首拉，避免重复触发。
+  const txns = usePrivatePagedList<CreditTxnFilters, TransactionRow>({
+    path: '/api/user/credits/transactions',
+    defaultFilters: { reason: 'all', direction: 'all' },
+    immediate: false,
+    buildQuery: (f, p) => ({
+      reason: f.reason === 'all' ? undefined : f.reason,
+      direction: f.direction === 'all' ? undefined : f.direction,
+      limit: p.limit,
+      offset: p.offset
+    })
   })
-  const page = ref(1)
-  const pageSize = ref(50)
-  const items = ref<TransactionRow[]>([])
-  const total = ref(0)
-  const loading = ref(false)
 
   const redeemRecords = ref<RedeemRecord[]>([])
 
@@ -89,28 +99,6 @@ export function useUserCreditsPage() {
       console.error('failed to load credits summary', err)
     } finally {
       summaryLoading.value = false
-    }
-  }
-
-  async function fetchTransactions() {
-    loading.value = true
-    try {
-      const res = await $fetch<{ items: TransactionRow[], total: number }>('/api/user/credits/transactions', {
-        query: {
-          reason: filters.reason === 'all' ? undefined : filters.reason,
-          direction: filters.direction === 'all' ? undefined : filters.direction,
-          limit: pageSize.value,
-          offset: (page.value - 1) * pageSize.value
-        }
-      })
-      items.value = res?.items || []
-      total.value = res?.total || 0
-    } catch (err) {
-      console.error('failed to load transactions', err)
-      items.value = []
-      total.value = 0
-    } finally {
-      loading.value = false
     }
   }
 
@@ -150,7 +138,7 @@ export function useUserCreditsPage() {
         description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
         color: 'success'
       })
-      await Promise.all([fetchSummary(), fetchTransactions(), fetchCheckinStatus()])
+      await Promise.all([fetchSummary(), txns.refresh(), fetchCheckinStatus()])
       return res
     } finally {
       isCheckingIn.value = false
@@ -167,31 +155,13 @@ export function useUserCreditsPage() {
       description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
       color: 'success'
     })
-    await Promise.all([fetchSummary(), fetchTransactions(), fetchRedeemRecords()])
+    await Promise.all([fetchSummary(), txns.refresh(), fetchRedeemRecords()])
     return res
   }
 
-  function applyFilters() {
-    page.value = 1
-    void fetchTransactions()
-  }
-
-  function resetFilters() {
-    filters.reason = 'all'
-    filters.direction = 'all'
-    page.value = 1
-    void fetchTransactions()
-  }
-
   async function refreshAll() {
-    await Promise.all([fetchSummary(), fetchTransactions()])
+    await Promise.all([fetchSummary(), txns.refresh()])
   }
-
-  watch(page, () => {
-    void fetchTransactions()
-  })
-
-  const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
   async function init() {
     await Promise.all([refreshAll(), fetchRedeemRecords(), fetchCheckinStatus()])
@@ -200,23 +170,23 @@ export function useUserCreditsPage() {
   return {
     summary,
     summaryLoading,
-    filters,
-    page,
-    pageSize,
-    items,
-    total,
-    loading,
+    filters: txns.filters,
+    page: txns.page,
+    pageSize: txns.pageSize,
+    items: txns.items,
+    total: txns.total,
+    loading: txns.loading,
+    totalPages: txns.totalPages,
     redeemRecords,
     checkin,
     checkinLoading,
     isCheckingIn,
-    totalPages,
-    fetchTransactions,
+    fetchTransactions: txns.refresh,
     redeem,
     performCheckin,
     fetchCheckinStatus,
-    applyFilters,
-    resetFilters,
+    applyFilters: txns.applyFilters,
+    resetFilters: txns.reset,
     refreshAll,
     init
   }

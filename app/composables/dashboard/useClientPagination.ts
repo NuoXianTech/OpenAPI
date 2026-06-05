@@ -1,6 +1,6 @@
 // 前端分页：对“一次性全量加载”的后台列表做客户端切片，
 // 不改服务端接口（与 customers.vue 模板用 tanstack 客户端分页同思路）。
-// 适用于数据量可控、列表一次拿全的页面；服务端分页请用 useAdminPagedList。
+// 适用于数据量可控、列表一次拿全的页面；服务端分页请用 usePrivatePagedList。
 
 export const PAGE_SIZE_ITEMS = [
   { label: '10 / 页', value: 10 },

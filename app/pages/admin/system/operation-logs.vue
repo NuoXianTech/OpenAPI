@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useAdminPagedList } from '~/composables/dashboard/useAdminPagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 
 useHead({ title: '操作日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -19,7 +19,7 @@ interface OperationLogRow {
   createdAt: string
 }
 
-// 用 type 别名而非 interface：useAdminPagedList 的 TFilters 受 Record<string, unknown> 约束，
+// 用 type 别名而非 interface：usePrivatePagedList 的 TFilters 受 Record<string, unknown> 约束，
 // interface 因为可扩展不被认为兼容，type 字面量则会通过结构性检查。
 type OperationLogFilters = {
   startAt: string
@@ -39,10 +39,10 @@ const {
   pageSize,
   items,
   total,
-  status,
+  loading,
   applyFilters,
   reset
-} = useAdminPagedList<OperationLogFilters, OperationLogRow>({
+} = usePrivatePagedList<OperationLogFilters, OperationLogRow>({
   path: '/api/admin/operation-logs/list',
   defaultFilters: {
     startAt: '',
@@ -68,8 +68,6 @@ const {
     offset: p.offset
   })
 })
-
-const loading = computed(() => status.value === 'pending')
 
 const expandedFilters = ref(false)
 const hasAdvancedFilters = computed(

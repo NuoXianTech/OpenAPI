@@ -37,6 +37,7 @@ const OAUTH_BIND_ERRORS: Record<string, string> = {
 export function useUserProfilePage() {
   const toast = useToast()
   const { fetchMe } = useAuth()
+  const confirm = useConfirmDialog()
 
   const profile = ref<ProfileData | null>(null)
   const profileLoading = ref(false)
@@ -126,14 +127,20 @@ export function useUserProfilePage() {
   }
 
   async function unbind(provider: string) {
-    if (!confirm(`确认解绑 ${provider} 账号？解绑后将无法使用该方式登录。`)) return
-    try {
-      await $fetch(`/api/user/oauth/${provider}/unbind`, { method: 'POST' })
-      toast.add({ title: '已解绑', color: 'success' })
-      await loadOauth()
-    } catch (err) {
-      toast.add({ title: parseFetchError(err, '解绑失败'), color: 'error' })
-    }
+    await confirm({
+      title: `解绑 ${provider} 账号`,
+      description: '解绑后将无法使用该方式登录。',
+      onConfirm: async () => {
+        try {
+          await $fetch(`/api/user/oauth/${provider}/unbind`, { method: 'POST' })
+          toast.add({ title: '已解绑', color: 'success' })
+          await loadOauth()
+        } catch (err) {
+          toast.add({ title: parseFetchError(err, '解绑失败'), color: 'error' })
+          throw err
+        }
+      }
+    })
   }
 
   function notifyOauthCallback(query: Record<string, unknown>) {

@@ -1,4 +1,5 @@
 import { parseFetchError } from '#shared/utils/clientError'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 
 export interface RedemptionCode {
   id: number
@@ -42,20 +43,31 @@ export interface GeneratePayload {
   note: string | null
 }
 
+interface RedemptionFilters extends Record<string, unknown> {
+  status: RedemptionStatus
+  batchId: string
+  keyword: string
+}
+
 export function useRedemptionCodesPage() {
   const toast = useToast()
+  const confirm = useConfirmDialog()
 
-  const filters = reactive({
-    status: 'all' as RedemptionStatus,
-    batchId: 'all' as string,
-    keyword: ''
+  // 兑换码列表分页：后台敏感数据统一走 usePrivatePagedList（$fetch，不进 payload）。
+  // immediate:false —— 由 init() 与 batches 一起并发首拉。
+  const paged = usePrivatePagedList<RedemptionFilters, RedemptionCode>({
+    path: '/api/admin/redemption-codes/list',
+    defaultFilters: { status: 'all', batchId: 'all', keyword: '' },
+    immediate: false,
+    buildQuery: (f, p) => ({
+      status: f.status === 'all' ? undefined : f.status,
+      batchId: f.batchId === 'all' ? undefined : f.batchId,
+      keyword: f.keyword || undefined,
+      limit: p.limit,
+      offset: p.offset
+    })
   })
-  const page = ref(1)
-  const pageSize = ref(50)
 
-  const items = ref<RedemptionCode[]>([])
-  const total = ref(0)
-  const loading = ref(false)
   const batches = ref<BatchSummary[]>([])
 
   async function fetchBatches() {
@@ -67,50 +79,13 @@ export function useRedemptionCodesPage() {
     }
   }
 
-  async function fetchList() {
-    loading.value = true
-    try {
-      const res = await $fetch<{ items: RedemptionCode[], total: number }>('/api/admin/redemption-codes/list', {
-        query: {
-          status: filters.status === 'all' ? undefined : filters.status,
-          batchId: filters.batchId === 'all' ? undefined : filters.batchId,
-          keyword: filters.keyword || undefined,
-          limit: pageSize.value,
-          offset: (page.value - 1) * pageSize.value
-        }
-      })
-      items.value = res?.items || []
-      total.value = res?.total || 0
-    } catch (err) {
-      console.error('failed to load codes', err)
-      items.value = []
-      total.value = 0
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
-
-  function applyFilters() {
-    page.value = 1
-    void fetchList()
-  }
-  function resetFilters() {
-    filters.status = 'all'
-    filters.batchId = 'all'
-    filters.keyword = ''
-    page.value = 1
-    void fetchList()
-  }
-
   async function generate(payload: GeneratePayload): Promise<GenerateResult> {
     const res = await $fetch<GenerateResult>('/api/admin/redemption-codes/generate', {
       method: 'POST',
       body: payload
     })
     toast.add({ title: `已生成 ${res.generated} 张兑换码`, color: 'success' })
-    await Promise.all([fetchBatches(), fetchList()])
+    await Promise.all([fetchBatches(), paged.refresh()])
     return res
   }
 
@@ -121,24 +96,30 @@ export function useRedemptionCodesPage() {
         body: { id: item.id, enabled: !item.isEnabled }
       })
       toast.add({ title: item.isEnabled ? '已禁用' : '已启用', color: 'success' })
-      await fetchList()
+      await paged.refresh()
     } catch (err) {
       toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
     }
   }
 
   async function remove(item: RedemptionCode) {
-    if (!confirm(`确认删除兑换码 ${item.code}？`)) return
-    try {
-      await $fetch('/api/admin/redemption-codes/delete', {
-        method: 'POST',
-        body: { id: item.id }
-      })
-      toast.add({ title: '已删除', color: 'success' })
-      await fetchList()
-    } catch (err) {
-      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-    }
+    await confirm({
+      title: `删除兑换码 ${item.code}`,
+      description: '删除后该兑换码立即失效，操作不可恢复。',
+      onConfirm: async () => {
+        try {
+          await $fetch('/api/admin/redemption-codes/delete', {
+            method: 'POST',
+            body: { id: item.id }
+          })
+          toast.add({ title: '已删除', color: 'success' })
+          await paged.refresh()
+        } catch (err) {
+          toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+          throw err
+        }
+      }
+    })
   }
 
   async function toggleBatch(batchId: string, enabled: boolean) {
@@ -148,27 +129,33 @@ export function useRedemptionCodesPage() {
         body: { batchId, enabled }
       })
       toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
-      await Promise.all([fetchBatches(), fetchList()])
+      await Promise.all([fetchBatches(), paged.refresh()])
     } catch (err) {
       toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
     }
   }
 
   async function deleteBatch(batchId: string, includeUsed: boolean) {
-    const msg = includeUsed
-      ? `确认删除批次 ${batchId} 的全部兑换码（含已被兑换过的）？此操作不可恢复。`
-      : `确认删除批次 ${batchId} 中未被使用过的兑换码？`
-    if (!confirm(msg)) return
-    try {
-      const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/delete', {
-        method: 'POST',
-        body: { batchId, includeUsed }
-      })
-      toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
-      await Promise.all([fetchBatches(), fetchList()])
-    } catch (err) {
-      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-    }
+    const description = includeUsed
+      ? `将删除批次 ${batchId} 的全部兑换码（含已被兑换过的），此操作不可恢复。`
+      : `将删除批次 ${batchId} 中未被使用过的兑换码。`
+    await confirm({
+      title: `删除批次 ${batchId}`,
+      description,
+      onConfirm: async () => {
+        try {
+          const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/delete', {
+            method: 'POST',
+            body: { batchId, includeUsed }
+          })
+          toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
+          await Promise.all([fetchBatches(), paged.refresh()])
+        } catch (err) {
+          toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+          throw err
+        }
+      }
+    })
   }
 
   function copyOne(code: string) {
@@ -184,28 +171,24 @@ export function useRedemptionCodesPage() {
     })
   }
 
-  watch(page, () => {
-    void fetchList()
-  })
-
   async function init() {
-    await Promise.all([fetchBatches(), fetchList()])
+    await Promise.all([fetchBatches(), paged.refresh()])
   }
 
   return {
-    filters,
-    page,
-    pageSize,
-    items,
-    total,
-    loading,
+    filters: paged.filters,
+    page: paged.page,
+    pageSize: paged.pageSize,
+    items: paged.items,
+    total: paged.total,
+    loading: paged.loading,
+    totalPages: paged.totalPages,
     batches,
-    totalPages,
-    fetchList,
+    fetchList: paged.refresh,
     fetchBatches,
     init,
-    applyFilters,
-    resetFilters,
+    applyFilters: paged.applyFilters,
+    resetFilters: paged.reset,
     generate,
     toggle,
     remove,

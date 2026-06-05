@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
+import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
@@ -19,15 +20,30 @@ interface CreditTxnRow {
   createdAt: string
 }
 
-const filters = reactive({
-  userId: '' as number | '',
-  reason: 'all' as CreditReasonFilter
+interface CreditTxnFilters extends Record<string, unknown> {
+  userId: number | ''
+  reason: CreditReasonFilter
+}
+
+const {
+  filters,
+  page,
+  pageSize,
+  items,
+  total,
+  loading,
+  applyFilters: apply,
+  reset
+} = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
+  path: '/api/admin/users/credits/transactions',
+  defaultFilters: { userId: '', reason: 'all' },
+  buildQuery: (f, p) => ({
+    userId: f.userId || undefined,
+    reason: f.reason === 'all' ? undefined : f.reason,
+    limit: p.limit,
+    offset: p.offset
+  })
 })
-const page = ref(1)
-const pageSize = ref(50)
-const items = ref<CreditTxnRow[]>([])
-const total = ref(0)
-const loading = ref(false)
 
 const activeFilterCount = computed(() => [
   filters.userId !== '',
@@ -54,55 +70,6 @@ const logMetricItems = computed(() => [
     tone: activeFilterCount.value ? 'text-warning' : 'text-muted'
   }
 ])
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await $fetch<{ items: CreditTxnRow[], total: number }>('/api/admin/users/credits/transactions', {
-      query: {
-        userId: filters.userId || undefined,
-        reason: filters.reason === 'all' ? undefined : filters.reason,
-        limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value
-      }
-    })
-    items.value = res?.items || []
-    total.value = res?.total || 0
-  } catch (err) {
-    console.error('failed to fetch credit transactions', err)
-    items.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-watch(page, () => {
-  void fetchList()
-})
-
-onMounted(() => {
-  void fetchList()
-})
-
-function reloadFromFirstPage() {
-  if (page.value === 1) {
-    void fetchList()
-    return
-  }
-
-  page.value = 1
-}
-
-function apply() {
-  reloadFromFirstPage()
-}
-
-function reset() {
-  filters.userId = ''
-  filters.reason = 'all'
-  reloadFromFirstPage()
-}
 
 function formatDate(val: string) {
   return formatDateTime(val)
