@@ -10,7 +10,7 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
-const saving = ref(false)
+const isSaving = ref(false)
 const displayName = ref('')
 
 watch(() => props.profile, (val) => {
@@ -18,13 +18,13 @@ watch(() => props.profile, (val) => {
 }, { immediate: true })
 
 async function submit() {
-  saving.value = true
+  isSaving.value = true
   try {
     await props.onSave(displayName.value)
   } catch (err) {
     toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
   } finally {
-    saving.value = false
+    isSaving.value = false
   }
 }
 </script>
@@ -84,7 +84,7 @@ async function submit() {
 
       <div class="flex justify-end">
         <UButton
-          :loading="saving"
+          :loading="isSaving"
           @click="submit"
         >
           保存资料

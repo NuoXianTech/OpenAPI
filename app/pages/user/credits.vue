@@ -18,7 +18,7 @@ const {
   redeemRecords,
   checkin,
   checkinLoading,
-  checkingIn,
+  isCheckingIn,
   redeem,
   performCheckin,
   applyFilters,
@@ -92,7 +92,7 @@ function amountClass(amt: number) {
         <UserCreditsCheckinCard
           :status="checkin"
           :loading="checkinLoading"
-          :submitting="checkingIn"
+          :submitting="isCheckingIn"
           :on-checkin="performCheckin"
         />
 

@@ -11,7 +11,7 @@ const SCOPES = ['read:user', 'user:email']
  * GitHub OAuth provider 实现。
  *
  * 用对象命名空间导出，避免与 qq.ts 顶层同名 export 触发 nitro auto-import 冲突。
- * 调用方：`import { githubProvider } from '~~/server/utils/oauthProviders/github'`
+ * 调用方：`import { githubProvider } from '~~/server/utils/oauth-providers/github'`
  */
 export const githubProvider: OauthProviderModule = {
   buildAuthorizeUrl(config: ProviderConfig, state: string): string {

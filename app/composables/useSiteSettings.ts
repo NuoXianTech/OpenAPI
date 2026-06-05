@@ -2,7 +2,7 @@ import type {
   PublicAnnouncementSettings,
   PublicSiteSettings,
   PublicTurnstileSettings
-} from '#shared/types/siteSettings'
+} from '#shared/types/site-settings'
 import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 
 export const PUBLIC_SITE_SETTINGS_KEY = 'public-site-settings'

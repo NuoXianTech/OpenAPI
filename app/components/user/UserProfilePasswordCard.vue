@@ -7,7 +7,7 @@ const props = defineProps<{
 
 const toast = useToast()
 const form = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
-const saving = ref(false)
+const isSaving = ref(false)
 
 async function submit() {
   if (!form.currentPassword) {
@@ -22,7 +22,7 @@ async function submit() {
     toast.add({ title: '两次输入的新密码不一致', color: 'warning' })
     return
   }
-  saving.value = true
+  isSaving.value = true
   try {
     await props.onSubmit(form.currentPassword, form.newPassword)
     form.currentPassword = ''
@@ -31,7 +31,7 @@ async function submit() {
   } catch (err) {
     toast.add({ title: parseFetchError(err, '修改失败'), color: 'error' })
   } finally {
-    saving.value = false
+    isSaving.value = false
   }
 }
 </script>
@@ -83,7 +83,7 @@ async function submit() {
       />
       <div class="flex justify-end">
         <UButton
-          :loading="saving"
+          :loading="isSaving"
           @click="submit"
         >
           更新密码

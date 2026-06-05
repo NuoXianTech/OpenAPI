@@ -12,7 +12,7 @@ import { apiCallStats, apiKeys, users } from '@nuxthub/db/schema'
 import type { RateLimitWindow } from '~~/shared/config/apiGuard'
 import { API_GUARD_ERROR } from '~~/shared/config/apiGuard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
-import { getRateLimiter } from '~~/server/utils/rateLimit'
+import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { getLocalDayStart } from '~~/server/utils/localTime'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
 

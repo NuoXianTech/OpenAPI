@@ -3,7 +3,7 @@ import type {
   PublicAnnouncementSettings,
   PublicSiteSettings,
   PublicTurnstileSettings
-} from '#shared/types/siteSettings'
+} from '#shared/types/site-settings'
 import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
 import { siteSettings } from '~~/server/db/schema/system'
 

@@ -22,7 +22,7 @@ type Schema = z.output<typeof schema>
 
 const errorMessage = ref('')
 const turnstileError = ref('')
-const submitting = ref(false)
+const isSubmitting = ref(false)
 const checkingAuth = ref(true)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
@@ -128,7 +128,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  submitting.value = true
+  isSubmitting.value = true
   try {
     const base = event.data.identifier.includes('@')
       ? { email: event.data.identifier, password: event.data.password }
@@ -144,7 +144,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     errorMessage.value = parseFetchError(error, '登录失败', LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
-    submitting.value = false
+    isSubmitting.value = false
   }
 }
 
@@ -189,7 +189,7 @@ function clearTurnstileError() {
         :schema="schema"
         :fields="fields"
         :providers="providers"
-        :loading="submitting"
+        :loading="isSubmitting"
         :submit="{ label: '登录', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
         separator="或使用第三方登录"
         @submit="onSubmit"

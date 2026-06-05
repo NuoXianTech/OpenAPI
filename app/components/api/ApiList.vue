@@ -22,7 +22,7 @@ function resolveCategoryName(id: number | null | undefined) {
       class="api-card-grid"
       appear
     >
-      <APICard
+      <ApiCard
         v-for="(item, index) in items"
         :key="item.id ?? index"
         :name="item.name"

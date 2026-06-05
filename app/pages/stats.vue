@@ -41,18 +41,18 @@ const SUCCESS_KEY = '成功次数' as const
 const FAILURE_KEY = '失败次数' as const
 
 const data = ref<PublicCallStatsDashboard | null>(null)
-const pending = ref(false)
+const isPending = ref(false)
 const error = ref<unknown>(null)
 
 const fetchStats = async () => {
-  pending.value = true
+  isPending.value = true
   error.value = null
   try {
     data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public')
   } catch (err) {
     error.value = err
   } finally {
-    pending.value = false
+    isPending.value = false
   }
 }
 
@@ -69,7 +69,7 @@ const overview = computed(() => data.value?.overview ?? null)
 const trend7d = computed(() => data.value?.trend7d ?? [])
 const top10Last30d = computed(() => data.value?.top10Last30d ?? [])
 const hasData = computed(() => data.value !== null)
-const isInitialLoading = computed(() => pending.value && !hasData.value)
+const isInitialLoading = computed(() => isPending.value && !hasData.value)
 
 // 没数据时不显示"更新时间"，避免 1970-01-01 这种 placeholder 时间被渲染出来
 const generatedAtLabel = computed(() => {
@@ -305,7 +305,7 @@ const overviewCards = computed(() => {
               variant="outline"
               color="neutral"
               size="sm"
-              :loading="pending"
+              :loading="isPending"
               @click="reloadStats"
             >
               刷新
@@ -335,9 +335,9 @@ const overviewCards = computed(() => {
               <span class="inline-flex items-center gap-1.5">
                 <span
                   class="stats-status-dot"
-                  :class="{ 'is-loading': pending }"
+                  :class="{ 'is-loading': isPending }"
                 />
-                {{ pending ? '同步中' : '统计已就绪' }}
+                {{ isPending ? '同步中' : '统计已就绪' }}
               </span>
               <USeparator
                 orientation="vertical"

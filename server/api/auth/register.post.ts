@@ -10,7 +10,7 @@ import { verificationTokenService } from '../../service/verificationTokenService
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { getRateLimiter } from '~~/server/utils/rateLimit'
+import { getRateLimiter } from '~~/server/utils/rate-limit'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
 // 防止匿名访问者用接口差异遍历账号库。真实分支信号只走邮件通道。

@@ -206,7 +206,7 @@ async function submitCreate() {
 // 编辑
 // ------------------------------------------------------------
 const editOpen = ref(false)
-const editing = ref(false)
+const isEditing = ref(false)
 const editTargetId = ref<number | null>(null)
 
 const editForm = reactive({
@@ -306,7 +306,7 @@ async function submitEdit() {
     .split(/[\n,]/)
     .map(s => s.trim())
     .filter(Boolean)
-  editing.value = true
+  isEditing.value = true
   try {
     await $fetch('/api/user/apikeys/update', {
       method: 'POST',
@@ -325,7 +325,7 @@ async function submitEdit() {
   } catch (err) {
     toast.add({ title: parseFetchError(err, '更新失败'), color: 'error' })
   } finally {
-    editing.value = false
+    isEditing.value = false
   }
 }
 
@@ -913,7 +913,7 @@ const columns: TableColumn<ApiKey>[] = [
               取消
             </UButton>
             <UButton
-              :loading="editing"
+              :loading="isEditing"
               :disabled="!!editFormError"
               @click="submitEdit"
             >

@@ -50,7 +50,7 @@ interface QqUserInfoResponse extends Record<string, unknown> {
  * QQ OAuth provider 实现。
  *
  * 用对象命名空间导出，避免与 github.ts 顶层同名 export 触发 nitro auto-import 冲突。
- * 调用方：`import { qqProvider } from '~~/server/utils/oauthProviders/qq'`
+ * 调用方：`import { qqProvider } from '~~/server/utils/oauth-providers/qq'`
  */
 export const qqProvider: OauthProviderModule = {
   buildAuthorizeUrl(config: ProviderConfig, state: string): string {

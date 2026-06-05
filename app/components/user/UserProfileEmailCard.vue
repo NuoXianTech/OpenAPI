@@ -10,7 +10,7 @@ const props = defineProps<{
 const toast = useToast()
 const newEmail = ref('')
 const currentPassword = ref('')
-const saving = ref(false)
+const isSaving = ref(false)
 const pending = ref<string | null>(null)
 
 async function submit() {
@@ -27,7 +27,7 @@ async function submit() {
     toast.add({ title: '新邮箱与当前邮箱相同', color: 'warning' })
     return
   }
-  saving.value = true
+  isSaving.value = true
   try {
     pending.value = await props.onRequestChange(currentPassword.value, v)
     newEmail.value = ''
@@ -35,7 +35,7 @@ async function submit() {
   } catch (err) {
     toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
   } finally {
-    saving.value = false
+    isSaving.value = false
   }
 }
 </script>
@@ -101,7 +101,7 @@ async function submit() {
         </UFormField>
         <UButton
           icon="i-mdi-email-arrow-right-outline"
-          :loading="saving"
+          :loading="isSaving"
           @click="submit"
         >
           发送验证

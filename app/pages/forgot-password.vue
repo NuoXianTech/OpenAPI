@@ -18,7 +18,7 @@ const errorMessage = ref('')
 const turnstileError = ref('')
 const submitted = ref(false)
 const submittedEmail = ref('')
-const submitting = ref(false)
+const isSubmitting = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.passwordReset)
@@ -52,7 +52,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  submitting.value = true
+  isSubmitting.value = true
   try {
     await $fetch('/api/auth/request-password-reset', {
       method: 'POST',
@@ -67,7 +67,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     errorMessage.value = parseFetchError(error, '提交失败，请稍后重试', FORGOT_PASSWORD_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
-    submitting.value = false
+    isSubmitting.value = false
   }
 }
 
@@ -150,7 +150,7 @@ function clearTurnstileError() {
         ref="authForm"
         :schema="schema"
         :fields="fields"
-        :loading="submitting"
+        :loading="isSubmitting"
         :submit="{ label: '发送重置链接', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
         @submit="onSubmit"
       >

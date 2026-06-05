@@ -29,7 +29,7 @@ const authForm = ref<{ state: Schema } | null>(null)
 const passwordValue = computed(() => authForm.value?.state?.password ?? '')
 
 const errorMessage = ref('')
-const submitting = ref(false)
+const isSubmitting = ref(false)
 const success = ref(false)
 
 const fields = computed(() => [
@@ -59,7 +59,7 @@ const fields = computed(() => [
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   errorMessage.value = ''
 
-  submitting.value = true
+  isSubmitting.value = true
   try {
     await $fetch('/api/auth/reset-password', {
       method: 'POST',
@@ -76,7 +76,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   } catch (error: unknown) {
     errorMessage.value = parseFetchError(error, '重置失败，链接可能已失效')
   } finally {
-    submitting.value = false
+    isSubmitting.value = false
   }
 }
 </script>
@@ -140,7 +140,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         ref="authForm"
         :schema="schema"
         :fields="fields"
-        :loading="submitting"
+        :loading="isSubmitting"
         :submit="{ label: '重置密码', size: 'lg' }"
         @submit="onSubmit"
       >

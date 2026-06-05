@@ -27,7 +27,7 @@ const passwordValue = computed(() => authForm.value?.state?.password ?? '')
 const errorMessage = ref('')
 const successMessage = ref('')
 const turnstileError = ref('')
-const submitting = ref(false)
+const isSubmitting = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.register)
@@ -104,7 +104,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     return
   }
 
-  submitting.value = true
+  isSubmitting.value = true
   try {
     const res = await register({
       username: event.data.username,
@@ -124,7 +124,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     errorMessage.value = parseFetchError(error, '注册失败', REGISTER_ERROR_CODES)
     turnstileWidget.value?.reset()
   } finally {
-    submitting.value = false
+    isSubmitting.value = false
   }
 }
 
@@ -154,7 +154,7 @@ function clearTurnstileError() {
         ref="authForm"
         :schema="schema"
         :fields="fields"
-        :loading="submitting"
+        :loading="isSubmitting"
         :submit="{ label: '创建账号', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
         @submit="onSubmit"
       >

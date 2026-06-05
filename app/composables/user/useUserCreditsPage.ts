@@ -78,7 +78,7 @@ export function useUserCreditsPage() {
 
   const checkin = ref<CheckinStatus | null>(null)
   const checkinLoading = ref(false)
-  const checkingIn = ref(false)
+  const isCheckingIn = ref(false)
 
   async function fetchSummary() {
     summaryLoading.value = true
@@ -139,7 +139,7 @@ export function useUserCreditsPage() {
   }
 
   async function performCheckin(turnstileToken?: string): Promise<CheckinResult> {
-    checkingIn.value = true
+    isCheckingIn.value = true
     try {
       const res = await $fetch<CheckinResult>('/api/user/credits/checkin', {
         method: 'POST',
@@ -153,7 +153,7 @@ export function useUserCreditsPage() {
       await Promise.all([fetchSummary(), fetchTransactions(), fetchCheckinStatus()])
       return res
     } finally {
-      checkingIn.value = false
+      isCheckingIn.value = false
     }
   }
 
@@ -209,7 +209,7 @@ export function useUserCreditsPage() {
     redeemRecords,
     checkin,
     checkinLoading,
-    checkingIn,
+    isCheckingIn,
     totalPages,
     fetchTransactions,
     redeem,
