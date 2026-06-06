@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
 import { creditTransactions, users } from '@nuxthub/db/schema'
 import { notificationService } from './notificationService'
 import { siteSettingsService } from './siteSettingsService'
@@ -10,9 +10,20 @@ import { siteSettingsService } from './siteSettingsService'
 // 日志类表（creditTransactions / apiCalls / operationLogs / redemptionRecords）
 // 已通过解除外键约束保留为整数快照，不会随用户消失。
 export const usersService = {
-  async list() {
+  async list(opts: { keyword?: string } = {}) {
     // passwordHash 永远不离开 DB，避免 admin 端浏览器扩展 / sentry / 截图泄漏后被字典攻击
-    return await db.select({
+    const kw = opts.keyword?.trim().toLowerCase()
+    // 关键字过滤下推到 SQL（username / email / displayName 不区分大小写包含匹配），
+    // 取代旧版"全量拉取后在 handler 内存 filter"。沿用 operationLogService.list 的三元构建范式。
+    const where = kw
+      ? or(
+          ilike(users.username, `%${kw}%`),
+          ilike(users.email, `%${kw}%`),
+          ilike(users.displayName, `%${kw}%`)
+        )
+      : undefined
+
+    const base = db.select({
       id: users.id,
       username: users.username,
       displayName: users.displayName,
@@ -29,6 +40,8 @@ export const usersService = {
       createdAt: users.createdAt,
       updatedAt: users.updatedAt
     }).from(users)
+
+    return (where ? base.where(where) : base).orderBy(desc(users.createdAt))
   },
 
   async findByEmail(email: string) {

@@ -15,14 +15,17 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'user not found' })
   }
 
+  // passwordHash / tokenVersion 是敏感字段，不能进审计日志、也不应回给前端
+  const { passwordHash: _ph, tokenVersion: _tv, ...safe } = deleted
+
   await operationLogService.addLog({
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.user.delete',
     resourceType: 'user',
     resourceId: String(id),
-    detail: { deleted }
+    detail: { username: safe.username, email: safe.email }
   })
 
-  return deleted
+  return safe
 })

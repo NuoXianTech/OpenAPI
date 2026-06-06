@@ -3,19 +3,9 @@ import { getQuery } from 'h3'
 import { usersService } from '~~/server/service/userService'
 import { requireAdmin } from '~~/server/utils/auth'
 
-type AdminUserRow = Awaited<ReturnType<typeof usersService.list>>[number]
-
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const query = getQuery(event)
-  const users = await usersService.list()
-  const keyword = (query.keyword || '').toString().trim().toLowerCase()
-
-  const filtered = users.filter((user: AdminUserRow) => {
-    const matchesKeyword = !keyword
-      || [user.username, user.email, user.displayName].some(value => (value || '').toString().toLowerCase().includes(keyword))
-    return matchesKeyword
-  })
-
-  return filtered
+  const { keyword } = getQuery(event)
+  // keyword 过滤已下推到 SQL（见 usersService.list），不再全量拉取后在内存 filter
+  return usersService.list({ keyword: (keyword || '').toString() })
 })
