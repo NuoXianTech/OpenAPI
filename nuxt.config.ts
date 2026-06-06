@@ -35,11 +35,6 @@ export default defineNuxtConfig({
     }
   },
   compatibilityDate: '2025-07-15',
-  nitro: {
-    // Production target: a single Node server process.
-    preset: 'node-server',
-    compressPublicAssets: { brotli: true, gzip: true }
-  },
   hub: {
     db: {
       dialect: 'postgresql'

@@ -83,7 +83,6 @@ function close() {
   <UModal
     :open="open"
     title="生成兑换码"
-    scrollable
     @update:open="emit('update:open', $event)"
   >
     <template #body>

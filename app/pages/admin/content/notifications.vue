@@ -337,7 +337,6 @@ const columns: TableColumn<MessageRow>[] = [
       v-model:open="detailOpen"
       title="接收详情"
       :description="detailMessage ? `${detailMessage.title} · ${formatDate(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
-      scrollable
       :ui="{ content: 'sm:max-w-2xl' }"
     >
       <template #body>

@@ -123,7 +123,6 @@ async function onSubmit() {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑公告' : '新建公告'"
-    scrollable
     :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #body>

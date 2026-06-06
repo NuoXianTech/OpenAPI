@@ -101,7 +101,6 @@ function formatDate(iso: string) {
 <template>
   <UModal
     v-model:open="open"
-    scrollable
     :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #header>

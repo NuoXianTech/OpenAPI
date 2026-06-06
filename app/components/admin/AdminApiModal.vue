@@ -187,7 +187,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     v-model:open="open"
     :title="headerLabel"
     :description="target ? `${target.endpointCount} 端点` : undefined"
-    scrollable
     :ui="{ content: 'sm:max-w-2xl' }"
   >
     <template #body>
