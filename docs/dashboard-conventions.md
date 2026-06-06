@@ -72,7 +72,7 @@ quickActions: [
 
 ## 5. 通知铃铛
 
-`DashboardHeaderActions` 内置 `NotificationBell`，admin/user 两端共用，按 `notificationLink` 配置跳转。**不要** 复制铃铛代码到页面。
+`CommonNotificationBell`（站内信收件箱）是 **user 专属**——admin 走 env、无 `users` 表记录也无收件箱。它**不进**共用的 `DashboardHeaderActions`，而由 `UserHeaderActions`（= `DashboardHeaderActions` + 铃铛塞进其 `<slot />`）注入：user 页面 navbar 用 `UserHeaderActions`，admin 页面用裸 `DashboardHeaderActions`（slot 为空，无铃铛、无角色判断）。点击从右侧滑出 Slideover 通知中心（无独立页面）。**不要** 复制铃铛代码到页面。
 
 ## 6. 分页 & 筛选（待统一）
 

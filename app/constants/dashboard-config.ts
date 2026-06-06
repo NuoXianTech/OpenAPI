@@ -53,7 +53,6 @@ export interface DashboardConfig {
   quickActions?: DashboardQuickAction[]
   userMenuExtra?: (ctx: { logout: () => Promise<void> | void }) => DropdownMenuItem[][]
   loginRedirect: string
-  notificationLink: string
 }
 
 export type { CommandPaletteItem }
@@ -105,8 +104,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
     { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
-  loginRedirect: '/admin/login',
-  notificationLink: `${ADMIN_CONTENT_PATH}/notifications`
+  loginRedirect: '/admin/login'
 }
 
 export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {
@@ -129,7 +127,6 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
       label: '个人',
       items: [
         { label: '积分', icon: 'i-mdi-cash-multiple', to: '/user/credits' },
-        { label: '通知', icon: 'i-mdi-bell-outline', to: '/user/notifications' },
         { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/profile' }
       ]
     }
@@ -147,6 +144,5 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
     { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/profile' },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
-  loginRedirect: '/login',
-  notificationLink: '/user/notifications'
+  loginRedirect: '/login'
 }

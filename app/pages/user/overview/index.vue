@@ -72,7 +72,7 @@ const balanceStatus = computed<{ label: string, textClass: string, dotClass: str
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
+          <UserHeaderActions
             :on-refresh="refresh"
             :refreshing="loading"
           />

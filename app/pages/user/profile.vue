@@ -43,7 +43,7 @@ onMounted(async () => {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions />
+          <UserHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>

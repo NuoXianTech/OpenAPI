@@ -148,7 +148,7 @@ const columns: TableColumn<LogRow>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
+          <UserHeaderActions
             :on-refresh="fetchList"
             :refreshing="loading"
           />

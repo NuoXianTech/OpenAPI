@@ -77,7 +77,7 @@ function amountClass(amt: number) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
+          <UserHeaderActions
             :on-refresh="refreshAll"
             :refreshing="loading || summaryLoading"
           />

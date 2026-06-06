@@ -239,7 +239,7 @@ const columns: TableColumn<ApiKeyItem>[] = [
           >
             生成新 Key
           </UButton>
-          <DashboardHeaderActions
+          <UserHeaderActions
             :on-refresh="refresh"
             :refreshing="status === 'pending'"
           />
