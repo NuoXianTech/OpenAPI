@@ -40,7 +40,7 @@ function getSecret() {
 
 function generateApiKey() {
   const nonce = randomBytes(24)
-  return `sk_${createHmac('sha256', getSecret()).update(nonce).digest('base64url')}`
+  return `op_${createHmac('sha256', getSecret()).update(nonce).digest('base64url')}`
 }
 
 /** 给批量创建的 key 名追加随机后缀，避免重名扎堆 */
