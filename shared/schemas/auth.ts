@@ -29,6 +29,29 @@ export const loginSchema = z
   })
 export type LoginInput = z.output<typeof loginSchema>
 
+/** OAuth 待绑定身份 → 绑定到已有账号：用账密验证账号归属后再 link */
+export const oauthBindSchema = z.object({
+  identifier: z.string().trim().min(1, '请输入邮箱或用户名'),
+  password: z.string().min(1, '请输入密码'),
+  turnstileToken: z.string().optional()
+})
+export type OauthBindInput = z.output<typeof oauthBindSchema>
+
+/** OAuth 待绑定身份 → 新注册：用户确认/填写邮箱（QQ 不返回邮箱时必填）+ 自设密码，用户名可选（留空则由昵称派生） */
+export const oauthRegisterSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
+  username: z
+    .string()
+    .trim()
+    .min(3, '用户名至少 3 位')
+    .max(32, '用户名最多 32 位')
+    .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线')
+    .optional(),
+  password: z.string().min(8, '密码至少 8 位'),
+  turnstileToken: z.string().optional()
+})
+export type OauthRegisterInput = z.output<typeof oauthRegisterSchema>
+
 /** 申请重置密码：邮箱 + Turnstile */
 export const requestPasswordResetSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),

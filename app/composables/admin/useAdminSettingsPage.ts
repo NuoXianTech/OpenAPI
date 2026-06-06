@@ -30,9 +30,7 @@ export interface AdminSettingsForm {
   smtpFromName: string
   smtpReplyTo: string
   smtpPoolMaxAgeSeconds: number
-  oauthLoginEnabled: boolean
   oauthForceBinding: boolean
-  turnstileEnabled: boolean
   turnstileSiteKey: string
   turnstileSecretKey: string
   turnstileLoginEnabled: boolean
@@ -82,15 +80,13 @@ function defaultForm(): AdminSettingsForm {
     smtpFromName: '',
     smtpReplyTo: '',
     smtpPoolMaxAgeSeconds: 0,
-    oauthLoginEnabled: true,
     oauthForceBinding: false,
-    turnstileEnabled: false,
     turnstileSiteKey: '',
     turnstileSecretKey: '',
-    turnstileLoginEnabled: true,
-    turnstileRegisterEnabled: true,
+    turnstileLoginEnabled: false,
+    turnstileRegisterEnabled: false,
     turnstileAdminLoginEnabled: false,
-    turnstilePasswordResetEnabled: true,
+    turnstilePasswordResetEnabled: false,
     announcementShowOnHome: true,
     checkinEnabled: true,
     turnstileCheckinEnabled: false,
@@ -140,9 +136,7 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     smtpFromName: val.smtpFromName ?? d.smtpFromName,
     smtpReplyTo: val.smtpReplyTo ?? d.smtpReplyTo,
     smtpPoolMaxAgeSeconds: val.smtpPoolMaxAgeSeconds ?? d.smtpPoolMaxAgeSeconds,
-    oauthLoginEnabled: val.oauthLoginEnabled ?? d.oauthLoginEnabled,
     oauthForceBinding: val.oauthForceBinding ?? d.oauthForceBinding,
-    turnstileEnabled: val.turnstileEnabled ?? d.turnstileEnabled,
     turnstileSiteKey: val.turnstileSiteKey || d.turnstileSiteKey,
     turnstileSecretKey: val.turnstileSecretKey || d.turnstileSecretKey,
     turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,

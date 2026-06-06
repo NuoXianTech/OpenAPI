@@ -2,7 +2,6 @@
 import type { H3Event } from 'h3'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
 import { oauthProviderService } from '~~/server/service/oauthProviderService'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { OAUTH_PROVIDER_PRESETS, isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { requireAuth } from '~~/server/utils/auth'
 
@@ -22,13 +21,12 @@ interface BoundOauthAccount {
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)
 
-  const settings = await siteSettingsService.getOrCreate()
-  const oauthEnabled = !!settings.oauthLoginEnabled
-
   const [bound, enabled] = await Promise.all([
     oauthAccountService.listSafeByUserId(authUser.id),
-    oauthEnabled ? oauthProviderService.listEnabledProviders() : Promise.resolve([] as string[])
+    oauthProviderService.listEnabledProviders()
   ])
+  // 无全局总开关：有任一 provider 启用即视为可用（已有绑定仍照常展示，可解绑）
+  const oauthEnabled = enabled.length > 0
 
   // 把已启用的 provider 与已绑定的账号合并成一个统一的列表，前端按 provider 一一渲染
   const map = new Map<string, {

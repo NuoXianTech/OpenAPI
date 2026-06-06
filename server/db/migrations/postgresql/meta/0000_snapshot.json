@@ -1,5 +1,5 @@
 {
-  "id": "86d40e3a-092b-4548-89cb-b28c9474718b",
+  "id": "3e2152ea-9559-4469-b470-e0a46c6f3291",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1945,17 +1945,23 @@
           "method": "btree",
           "with": {}
         },
-        "oauth_accounts_user_idx": {
-          "name": "oauth_accounts_user_idx",
+        "oauth_accounts_user_provider_uq": {
+          "name": "oauth_accounts_user_provider_uq",
           "columns": [
             {
               "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
+            },
+            {
+              "expression": "provider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
-          "isUnique": false,
+          "isUnique": true,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1991,82 +1997,6 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.oauth_providers": {
-      "name": "oauth_providers",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "provider": {
-          "name": "provider",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "client_id": {
-          "name": "client_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "client_secret": {
-          "name": "client_secret",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "is_enabled": {
-          "name": "is_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "oauth_providers_provider_uq": {
-          "name": "oauth_providers_provider_uq",
-          "columns": [
-            {
-              "expression": "provider",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -2914,13 +2844,6 @@
           "notNull": true,
           "default": 0
         },
-        "oauth_login_enabled": {
-          "name": "oauth_login_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
         "oauth_force_binding": {
           "name": "oauth_force_binding",
           "type": "boolean",
@@ -2928,8 +2851,43 @@
           "notNull": true,
           "default": false
         },
-        "turnstile_enabled": {
-          "name": "turnstile_enabled",
+        "oauth_github_client_id": {
+          "name": "oauth_github_client_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "oauth_github_client_secret": {
+          "name": "oauth_github_client_secret",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "oauth_github_enabled": {
+          "name": "oauth_github_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "oauth_qq_client_id": {
+          "name": "oauth_qq_client_id",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "oauth_qq_client_secret": {
+          "name": "oauth_qq_client_secret",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "oauth_qq_enabled": {
+          "name": "oauth_qq_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
@@ -2954,14 +2912,14 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "turnstile_register_enabled": {
           "name": "turnstile_register_enabled",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "turnstile_admin_login_enabled": {
           "name": "turnstile_admin_login_enabled",
@@ -2975,7 +2933,7 @@
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": true
+          "default": false
         },
         "turnstile_checkin_enabled": {
           "name": "turnstile_checkin_enabled",

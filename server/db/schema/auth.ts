@@ -3,7 +3,6 @@ import {
   serial,
   integer,
   varchar,
-  boolean,
   timestamp,
   index,
   uniqueIndex
@@ -34,27 +33,15 @@ export const verificationTokens = pgTable('verification_tokens', {
 ])
 
 // ------------------------------------------------------------------
-// OAuth provider config（仅支持 GitHub / QQ，显示名/图标/scopes/URL 全部硬编码在 shared/types/oauth.ts 的 OAUTH_PROVIDER_PRESETS；callbackUrl 由 siteUrl 运行时拼）
-// clientSecret 应用层 AES-GCM 加密后落库
-// ------------------------------------------------------------------
-export const oauthProviders = pgTable('oauth_providers', {
-  id: serial('id').primaryKey(),
-  provider: varchar('provider', { length: 32 }).notNull(),
-  clientId: varchar('client_id', { length: 255 }).notNull().default(''),
-  clientSecret: varchar('client_secret', { length: 1000 }).notNull().default(''),
-  isEnabled: boolean('is_enabled').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('oauth_providers_provider_uq').on(table.provider)
-])
-
-// ------------------------------------------------------------------
 // User third-party account binding（用户三方绑定）
 //
-// 一个用户可绑定多个第三方账号。本应用 OAuth 仅用于登录身份识别，
-// 不调用上游 API，因此不持久化 access_token / refresh_token / scope。
-// providerUserId 已经是稳定身份标识。
+// OAuth 各 provider 的应用配置（clientId / clientSecret / 启用开关）已并入
+// siteSettings 的扁平列（明文），由 oauthProviderService 适配读写，不再单列一张
+// oauth_providers 表。
+//
+// 一个用户每个 provider 至多一个绑定（见下方 (userId, provider) 唯一约束）。
+// 本应用 OAuth 仅用于登录身份识别，不调用上游 API，因此不持久化
+// access_token / refresh_token / scope。providerUserId 已是稳定身份标识。
 //
 // 用户硬删时 FK cascade 自动清除该用户所有 OAuth 绑定。
 // ------------------------------------------------------------------
@@ -73,6 +60,9 @@ export const oauthAccounts = pgTable('oauth_accounts', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   uniqueIndex('oauth_accounts_provider_pid_uq').on(table.provider, table.providerUserId),
-  index('oauth_accounts_user_idx').on(table.userId),
+  // 一个用户每个 provider 至多一个绑定（对应 oauthAccountService.unbind(userId, provider) 语义；
+  // 借鉴 Cloudreve open_ids 的 openid_user_id_provider）。该唯一索引的 userId 前缀亦覆盖按 userId 的查询，
+  // 故无需再单列 userId 索引。
+  uniqueIndex('oauth_accounts_user_provider_uq').on(table.userId, table.provider),
   index('oauth_accounts_provider_idx').on(table.provider)
 ])

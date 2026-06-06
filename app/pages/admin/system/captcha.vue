@@ -15,7 +15,7 @@ const captchaType = ref('Cloudflare Turnstile')
     <div>
       <UPageCard
         title="验证码"
-        description="人机验证总开关与服务商配置。未配置 Site Key / Secret Key 时即使开启也视为未启用。"
+        description="人机验证服务商配置。未配置 Site Key / Secret Key 时所有验证场景均不生效。"
         variant="naked"
         class="mb-4"
       />
@@ -23,14 +23,6 @@ const captchaType = ref('Cloudflare Turnstile')
         variant="subtle"
         :ui="{ container: 'divide-y divide-default' }"
       >
-        <UFormField
-          name="turnstileEnabled"
-          label="启用验证码"
-          description="总开关。关闭后所有页面均不进行人机验证。"
-          class="flex items-center justify-between not-last:pb-4 gap-2"
-        >
-          <USwitch v-model="form.turnstileEnabled" />
-        </UFormField>
         <UFormField
           name="captchaType"
           label="验证码类型"
@@ -75,7 +67,7 @@ const captchaType = ref('Cloudflare Turnstile')
     <div>
       <UPageCard
         title="验证场景"
-        description="选择需要弹出人机验证的页面。需先开启上方「启用验证码」并配置密钥。"
+        description="选择需要弹出人机验证的页面。需先在上方配置 Site Key / Secret Key 后方可生效。"
         variant="naked"
         class="mb-4"
       />
@@ -89,10 +81,7 @@ const captchaType = ref('Cloudflare Turnstile')
           description="/login 提交时校验。"
           class="flex items-center justify-between not-last:pb-4 gap-2"
         >
-          <USwitch
-            v-model="form.turnstileLoginEnabled"
-            :disabled="!form.turnstileEnabled"
-          />
+          <USwitch v-model="form.turnstileLoginEnabled" />
         </UFormField>
         <UFormField
           name="turnstileRegisterEnabled"
@@ -100,10 +89,7 @@ const captchaType = ref('Cloudflare Turnstile')
           description="/register 提交时校验。"
           class="flex items-center justify-between not-last:pb-4 gap-2"
         >
-          <USwitch
-            v-model="form.turnstileRegisterEnabled"
-            :disabled="!form.turnstileEnabled"
-          />
+          <USwitch v-model="form.turnstileRegisterEnabled" />
         </UFormField>
         <UFormField
           name="turnstilePasswordResetEnabled"
@@ -113,7 +99,7 @@ const captchaType = ref('Cloudflare Turnstile')
         >
           <USwitch
             v-model="form.turnstilePasswordResetEnabled"
-            :disabled="!form.turnstileEnabled || !form.passwordResetEnabled"
+            :disabled="!form.passwordResetEnabled"
           />
         </UFormField>
         <UFormField
@@ -122,10 +108,7 @@ const captchaType = ref('Cloudflare Turnstile')
           description="/admin/login 提交时校验。"
           class="flex items-center justify-between not-last:pb-4 gap-2"
         >
-          <USwitch
-            v-model="form.turnstileAdminLoginEnabled"
-            :disabled="!form.turnstileEnabled"
-          />
+          <USwitch v-model="form.turnstileAdminLoginEnabled" />
         </UFormField>
         <UFormField
           name="turnstileCheckinEnabled"
@@ -135,7 +118,7 @@ const captchaType = ref('Cloudflare Turnstile')
         >
           <USwitch
             v-model="form.turnstileCheckinEnabled"
-            :disabled="!form.turnstileEnabled || !form.checkinEnabled"
+            :disabled="!form.checkinEnabled"
           />
         </UFormField>
       </UPageCard>

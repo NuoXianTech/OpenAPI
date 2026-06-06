@@ -267,7 +267,7 @@ async function copyCallback(item: ProviderItem) {
     <div>
       <UPageCard
         title="第三方登录"
-        description="OAuth 登录总开关与各 provider 的应用配置。"
+        description="各 provider 的应用配置与绑定策略。"
         variant="naked"
         class="mb-4"
       />
@@ -277,23 +277,12 @@ async function copyCallback(item: ProviderItem) {
         :ui="{ container: 'divide-y divide-default' }"
       >
         <UFormField
-          name="oauthLoginEnabled"
-          label="启用第三方登录"
-          description="总开关。关闭后登录 / 注册页不再展示第三方登录入口，OAuth 回调也会被拒绝。"
-          class="flex items-center justify-between not-last:pb-4 gap-2"
-        >
-          <USwitch v-model="form.oauthLoginEnabled" />
-        </UFormField>
-        <UFormField
           name="oauthForceBinding"
           label="强制绑定已有账号"
-          description="开启后，OAuth 登录不再自动创建新用户，必须命中已绑定的账号或同邮箱账号。"
+          description="开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册。"
           class="flex items-center justify-between not-last:pb-4 gap-2"
         >
-          <USwitch
-            v-model="form.oauthForceBinding"
-            :disabled="!form.oauthLoginEnabled"
-          />
+          <USwitch v-model="form.oauthForceBinding" />
         </UFormField>
       </UPageCard>
 

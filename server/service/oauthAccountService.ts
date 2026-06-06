@@ -19,6 +19,14 @@ export const oauthAccountService = {
     return res[0] || null
   },
 
+  /** 查某用户在某 provider 上的绑定（受 (userId, provider) 唯一约束，至多一条） */
+  async findByUserAndProvider(userId: number, provider: string) {
+    const res = await db.select().from(oauthAccounts)
+      .where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)))
+      .limit(1)
+    return res[0] || null
+  },
+
   async listByUserId(userId: number) {
     return db.select().from(oauthAccounts)
       .where(eq(oauthAccounts.userId, userId))

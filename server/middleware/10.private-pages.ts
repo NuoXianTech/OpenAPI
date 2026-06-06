@@ -8,6 +8,7 @@ const PRIVATE_PAGE_PREFIXES = [
   '/admin',
   '/login',
   '/register',
+  '/oauth',
   '/verify-email',
   '/forgot-password',
   '/reset-password'

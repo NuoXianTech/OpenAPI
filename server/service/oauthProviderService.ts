@@ -1,9 +1,11 @@
-import { asc, eq } from 'drizzle-orm'
 import { createError } from 'h3'
-import { oauthProviders } from '@nuxthub/db/schema'
-import { encryptSecret, isSecretMask, maskSecret } from '~~/server/utils/oauthCrypto'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { isSupportedOauthProvider, providerIndex, SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import {
+  isSupportedOauthProvider,
+  providerIndex,
+  SUPPORTED_OAUTH_PROVIDERS,
+  type SupportedOauthProvider
+} from '~~/shared/types/oauth'
+import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/service/siteSettingsService'
 
 export interface OauthProviderPatch {
   clientId?: string
@@ -11,11 +13,37 @@ export interface OauthProviderPatch {
   isEnabled?: boolean
 }
 
-type ProviderRow = typeof oauthProviders.$inferSelect
-export type OauthProviderRow = ProviderRow
+// provider 配置视图。数据实际落在 siteSettings 的扁平列里（明文），此处合成成统一形状，
+// 让 oauthCallback / start / admin 端点无需感知存储细节（曾是独立的 oauth_providers 表）。
+export interface OauthProviderRow {
+  provider: SupportedOauthProvider
+  clientId: string
+  clientSecret: string
+  isEnabled: boolean
+}
 
-function maskRow(row: ProviderRow): ProviderRow {
-  return { ...row, clientSecret: maskSecret(row.clientSecret) }
+type SiteSettingsRow = Awaited<ReturnType<typeof siteSettingsService.getOrCreate>>
+
+// provider → siteSettings 列名映射，集中一处。
+// 扩 provider 时：① schema/system.ts 加 3 列 ② 此表加一行 ③ SiteSettingsUpsertInput 加字段。
+interface ProviderColumns {
+  clientId: 'oauthGithubClientId' | 'oauthQqClientId'
+  clientSecret: 'oauthGithubClientSecret' | 'oauthQqClientSecret'
+  isEnabled: 'oauthGithubEnabled' | 'oauthQqEnabled'
+}
+const PROVIDER_COLUMNS: Record<SupportedOauthProvider, ProviderColumns> = {
+  github: { clientId: 'oauthGithubClientId', clientSecret: 'oauthGithubClientSecret', isEnabled: 'oauthGithubEnabled' },
+  qq: { clientId: 'oauthQqClientId', clientSecret: 'oauthQqClientSecret', isEnabled: 'oauthQqEnabled' }
+}
+
+function rowFromSettings(settings: SiteSettingsRow, provider: SupportedOauthProvider): OauthProviderRow {
+  const cols = PROVIDER_COLUMNS[provider]
+  return {
+    provider,
+    clientId: settings[cols.clientId],
+    clientSecret: settings[cols.clientSecret],
+    isEnabled: settings[cols.isEnabled]
+  }
 }
 
 export function buildCallbackUrl(siteUrl: string, provider: string) {
@@ -28,71 +56,51 @@ export function buildCallbackUrl(siteUrl: string, provider: string) {
   return `${base}/callback/openid/${providerIndex(provider)}`
 }
 
-async function ensureRow(provider: SupportedOauthProvider): Promise<ProviderRow> {
-  const existing = await db.select().from(oauthProviders).where(eq(oauthProviders.provider, provider)).limit(1)
-  if (existing[0]) {
-    return existing[0]
-  }
-  const inserted = await db.insert(oauthProviders).values({
-    provider,
-    clientId: '',
-    clientSecret: '',
-    isEnabled: false
-  }).returning()
-  return inserted[0]!
-}
-
 export const oauthProviderService = {
-  async list(): Promise<ProviderRow[]> {
-    for (const p of SUPPORTED_OAUTH_PROVIDERS) {
-      await ensureRow(p)
-    }
-    const rows: ProviderRow[] = await db.select().from(oauthProviders).orderBy(asc(oauthProviders.id))
-    return rows
-      .filter((row: ProviderRow) => isSupportedOauthProvider(row.provider))
-      .map(maskRow)
+  /** 列出全部受支持 provider 的配置（github / qq，固定两条），admin 列表用 */
+  async list(): Promise<OauthProviderRow[]> {
+    const settings = await siteSettingsService.getOrCreate()
+    return SUPPORTED_OAUTH_PROVIDERS.map(p => rowFromSettings(settings, p))
   },
 
+  /** 已启用的 provider（按各 provider 自己的启用开关；无全局总开关） */
   async listEnabledProviders(): Promise<SupportedOauthProvider[]> {
-    const rows: Array<{ provider: string }> = await db.select({ provider: oauthProviders.provider })
-      .from(oauthProviders)
-      .where(eq(oauthProviders.isEnabled, true))
-    return rows
-      .map(r => r.provider)
-      .filter(isSupportedOauthProvider)
+    const settings = await siteSettingsService.getOrCreate()
+    return SUPPORTED_OAUTH_PROVIDERS.filter(p => settings[PROVIDER_COLUMNS[p].isEnabled])
   },
 
-  async getByProvider(provider: string) {
+  async getByProvider(provider: string): Promise<OauthProviderRow | null> {
     if (!isSupportedOauthProvider(provider)) {
       return null
     }
-    const res = await db.select().from(oauthProviders).where(eq(oauthProviders.provider, provider)).limit(1)
-    return res[0] || null
+    const settings = await siteSettingsService.getOrCreate()
+    return rowFromSettings(settings, provider)
   },
 
-  async update(provider: string, patch: OauthProviderPatch) {
+  async update(provider: string, patch: OauthProviderPatch): Promise<OauthProviderRow | null> {
     if (!isSupportedOauthProvider(provider)) {
       throw createError({ statusCode: 400, message: 'provider not supported, only github and qq are allowed' })
     }
-    const current = await ensureRow(provider)
-
-    const next: Partial<ProviderRow> = { updatedAt: new Date() }
-    if (patch.clientId !== undefined) next.clientId = patch.clientId.trim()
-    if (patch.clientSecret !== undefined && !isSecretMask(patch.clientSecret)) {
-      next.clientSecret = encryptSecret(patch.clientSecret)
-    }
-    if (patch.isEnabled !== undefined) next.isEnabled = patch.isEnabled
-
-    if (patch.isEnabled === true) {
-      const effectiveClientId = next.clientId ?? current.clientId
-      const effectiveSecret = next.clientSecret ?? current.clientSecret
-      if (!effectiveClientId || !effectiveSecret) {
-        throw createError({ statusCode: 400, message: 'clientId 和 clientSecret 都需要配置后才能启用' })
-      }
+    const current = await this.getByProvider(provider)
+    if (!current) {
+      return null // provider 已校验，理论不可达
     }
 
-    const res = await db.update(oauthProviders).set(next).where(eq(oauthProviders.id, current.id)).returning()
-    return res[0] ? maskRow(res[0]) : null
+    const nextClientId = patch.clientId !== undefined ? patch.clientId.trim() : current.clientId
+    // 明文：undefined = 不改动；其他值（含空串）直接覆盖
+    const nextSecret = patch.clientSecret !== undefined ? patch.clientSecret : current.clientSecret
+    const nextEnabled = patch.isEnabled !== undefined ? patch.isEnabled : current.isEnabled
+
+    if (nextEnabled && (!nextClientId || !nextSecret)) {
+      throw createError({ statusCode: 400, message: 'clientId 和 clientSecret 都需要配置后才能启用' })
+    }
+
+    const input: SiteSettingsUpsertInput = provider === 'github'
+      ? { oauthGithubClientId: nextClientId, oauthGithubClientSecret: nextSecret, oauthGithubEnabled: nextEnabled }
+      : { oauthQqClientId: nextClientId, oauthQqClientSecret: nextSecret, oauthQqEnabled: nextEnabled }
+    await siteSettingsService.update(input)
+
+    return { provider, clientId: nextClientId, clientSecret: nextSecret, isEnabled: nextEnabled }
   },
 
   async getSiteCallbackUrl(provider: string) {

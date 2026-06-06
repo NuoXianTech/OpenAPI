@@ -33,7 +33,6 @@ export interface PublicSiteSettings {
   termsUrl: string | null
   privacyUrl: string | null
   registrationMode: RegistrationMode | string
-  oauthLoginEnabled: boolean
   passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
   announcement: PublicAnnouncementSettings

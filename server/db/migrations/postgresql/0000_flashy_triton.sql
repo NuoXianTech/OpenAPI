@@ -192,16 +192,6 @@ CREATE TABLE "oauth_accounts" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "oauth_providers" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"provider" varchar(32) NOT NULL,
-	"client_id" varchar(255) DEFAULT '' NOT NULL,
-	"client_secret" varchar(1000) DEFAULT '' NOT NULL,
-	"is_enabled" boolean DEFAULT false NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "operation_logs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
@@ -291,15 +281,19 @@ CREATE TABLE "site_settings" (
 	"smtp_from_name" varchar(255) DEFAULT '' NOT NULL,
 	"smtp_reply_to" varchar(255) DEFAULT '' NOT NULL,
 	"smtp_pool_max_age_seconds" integer DEFAULT 0 NOT NULL,
-	"oauth_login_enabled" boolean DEFAULT true NOT NULL,
 	"oauth_force_binding" boolean DEFAULT false NOT NULL,
-	"turnstile_enabled" boolean DEFAULT false NOT NULL,
+	"oauth_github_client_id" varchar(255) DEFAULT '' NOT NULL,
+	"oauth_github_client_secret" varchar(255) DEFAULT '' NOT NULL,
+	"oauth_github_enabled" boolean DEFAULT false NOT NULL,
+	"oauth_qq_client_id" varchar(255) DEFAULT '' NOT NULL,
+	"oauth_qq_client_secret" varchar(255) DEFAULT '' NOT NULL,
+	"oauth_qq_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_site_key" varchar(200) DEFAULT '' NOT NULL,
 	"turnstile_secret_key" varchar(200) DEFAULT '' NOT NULL,
-	"turnstile_login_enabled" boolean DEFAULT true NOT NULL,
-	"turnstile_register_enabled" boolean DEFAULT true NOT NULL,
+	"turnstile_login_enabled" boolean DEFAULT false NOT NULL,
+	"turnstile_register_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_admin_login_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_password_reset_enabled" boolean DEFAULT true NOT NULL,
+	"turnstile_password_reset_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_checkin_enabled" boolean DEFAULT false NOT NULL,
 	"announcement_show_on_home" boolean DEFAULT true NOT NULL,
 	"checkin_enabled" boolean DEFAULT true NOT NULL,
@@ -401,9 +395,8 @@ CREATE INDEX "notification_deliveries_user_unread_idx" ON "notification_deliveri
 CREATE INDEX "notification_messages_audience_idx" ON "notification_messages" USING btree ("audience");--> statement-breakpoint
 CREATE INDEX "notification_messages_created_at_idx" ON "notification_messages" USING btree ("created_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "oauth_accounts_provider_pid_uq" ON "oauth_accounts" USING btree ("provider","provider_user_id");--> statement-breakpoint
-CREATE INDEX "oauth_accounts_user_idx" ON "oauth_accounts" USING btree ("user_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "oauth_accounts_user_provider_uq" ON "oauth_accounts" USING btree ("user_id","provider");--> statement-breakpoint
 CREATE INDEX "oauth_accounts_provider_idx" ON "oauth_accounts" USING btree ("provider");--> statement-breakpoint
-CREATE UNIQUE INDEX "oauth_providers_provider_uq" ON "oauth_providers" USING btree ("provider");--> statement-breakpoint
 CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint

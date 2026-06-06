@@ -30,7 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
     actor: admin.username,
     action: 'admin.oauth-provider.update',
     resourceType: 'oauth-provider',
-    resourceId: String(updated.id),
+    resourceId: updated.provider,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
     detail: { provider: updated.provider, changedFields: Object.keys(patch) }

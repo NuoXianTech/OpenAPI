@@ -70,7 +70,6 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 必填 | 首次启动用于创建超级管理员的初始凭据 |
 | `ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
 | `EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
-| `OAUTH_SECRET_KEY` | 用 OAuth 时必填 | 加密 OAuth 提供商密钥的 AES-256-GCM 主密钥 |
 | `API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
 
 完整的单实例生产配置见 [.env.example](.env.example)。

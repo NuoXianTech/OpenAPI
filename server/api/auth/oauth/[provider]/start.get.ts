@@ -16,9 +16,6 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const settings = await siteSettingsService.getOrCreate()
-  if (!settings.oauthLoginEnabled) {
-    throw createError({ statusCode: 403, message: 'oauth login is disabled' })
-  }
 
   const row = await oauthProviderService.getByProvider(provider)
   if (!row || !row.isEnabled || !row.clientId) {

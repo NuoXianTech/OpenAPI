@@ -71,20 +71,27 @@ export const siteSettings = pgTable('site_settings', {
   // SMTP 连接复用窗口（秒）：>0 时启用连接池并在该秒数后重建连接；0=每封新建即关闭（不复用）
   smtpPoolMaxAgeSeconds: integer('smtp_pool_max_age_seconds').notNull().default(0),
 
-  // 第三方登录总开关
-  oauthLoginEnabled: boolean('oauth_login_enabled').notNull().default(true),
-  // 强制绑定：开启后，OAuth 登录不再自动创建新用户，必须命中已有账号（通过已绑定的 provider_user_id 或同邮箱）
+  // 强制绑定：开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册
   oauthForceBinding: boolean('oauth_force_binding').notNull().default(false),
 
-  // Cloudflare Turnstile 人机验证
-  turnstileEnabled: boolean('turnstile_enabled').notNull().default(false),
+  // 第三方登录 · 各 provider 应用配置
+  // clientSecret 明文存储（与 turnstileSecretKey / smtpPass 一致，后台 UI 写时覆盖）。
+  // provider 白名单固定在 shared/types/oauth.ts；扩 provider 时在此加列并同步 oauthProviderService 的列映射。
+  oauthGithubClientId: varchar('oauth_github_client_id', { length: 255 }).notNull().default(''),
+  oauthGithubClientSecret: varchar('oauth_github_client_secret', { length: 255 }).notNull().default(''),
+  oauthGithubEnabled: boolean('oauth_github_enabled').notNull().default(false),
+  oauthQqClientId: varchar('oauth_qq_client_id', { length: 255 }).notNull().default(''),
+  oauthQqClientSecret: varchar('oauth_qq_client_secret', { length: 255 }).notNull().default(''),
+  oauthQqEnabled: boolean('oauth_qq_enabled').notNull().default(false),
+
+  // Cloudflare Turnstile 人机验证（无总开关：配置 Site Key + Secret Key 后，由各「验证场景」开关分别决定是否生效）
   turnstileSiteKey: varchar('turnstile_site_key', { length: 200 }).notNull().default(''),
   // 明文存储；后台 UI 直接展示
   turnstileSecretKey: varchar('turnstile_secret_key', { length: 200 }).notNull().default(''),
-  turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(true),
-  turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(true),
+  turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(false),
+  turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(false),
   turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(false),
-  turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(true),
+  turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(false),
   // 每日签到页是否要求 Turnstile（弹窗内验证）
   turnstileCheckinEnabled: boolean('turnstile_checkin_enabled').notNull().default(false),
 

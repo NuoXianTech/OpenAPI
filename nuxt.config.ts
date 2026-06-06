@@ -14,7 +14,6 @@ export default defineNuxtConfig({
       adminPassword: process.env.ADMIN_PASSWORD || '',
       adminEmail: process.env.ADMIN_EMAIL || '',
       emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
-      oauthSecretKey: process.env.OAUTH_SECRET_KEY || '',
       apiKeySecret: process.env.API_KEY_SECRET || '',
       // access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed（见 server/utils/jwt.ts）
       jwtSecret: process.env.JWT_SECRET || ''

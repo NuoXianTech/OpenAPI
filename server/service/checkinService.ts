@@ -128,8 +128,7 @@ export const checkinService = {
       amountFixed: settings.checkinAmountFixed,
       amountMin: settings.checkinAmountMin,
       amountMax: settings.checkinAmountMax,
-      requiresTurnstile: settings.turnstileEnabled
-        && Boolean(settings.turnstileSiteKey)
+      requiresTurnstile: Boolean(settings.turnstileSiteKey)
         && Boolean(settings.turnstileSecretKey)
         && settings.turnstileCheckinEnabled
     }

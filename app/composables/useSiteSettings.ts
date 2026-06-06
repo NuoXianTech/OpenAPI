@@ -32,7 +32,6 @@ const FALLBACK_SETTINGS: PublicSiteSettings = {
   termsUrl: null,
   privacyUrl: null,
   registrationMode: 'open',
-  oauthLoginEnabled: true,
   turnstile: { ...EMPTY_TURNSTILE },
   announcement: { ...EMPTY_ANNOUNCEMENT }
 }

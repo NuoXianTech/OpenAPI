@@ -18,7 +18,8 @@ export default defineEventHandler(async (event: H3Event) => {
       icon: preset.icon,
       scopes: preset.scopes,
       clientId: row.clientId,
-      clientSecret: row.clientSecret,
+      // 只回传"是否已配置"提示，不把明文 secret 发到浏览器（admin UI 对 secret 是只写模式）
+      clientSecret: row.clientSecret ? '***' : '',
       isEnabled: row.isEnabled,
       callbackUrl: buildCallbackUrl(settings.siteUrl, row.provider),
       authorizeUrl: preset.authorizeUrl,

@@ -41,9 +41,14 @@ export interface SiteSettingsUpsertInput {
   smtpFromName?: string
   smtpReplyTo?: string
   smtpPoolMaxAgeSeconds?: number
-  oauthLoginEnabled?: boolean
   oauthForceBinding?: boolean
-  turnstileEnabled?: boolean
+  // 第三方登录 · per-provider 配置（明文）；undefined = 不改动，其他值（含空串）直接覆盖
+  oauthGithubClientId?: string
+  oauthGithubClientSecret?: string
+  oauthGithubEnabled?: boolean
+  oauthQqClientId?: string
+  oauthQqClientSecret?: string
+  oauthQqEnabled?: boolean
   turnstileSiteKey?: string
   // 明文 secret；undefined = 不改动，其他值（含空串）直接覆盖
   turnstileSecretKey?: string
@@ -83,7 +88,6 @@ function buildInitialDefaults() {
 }
 
 function toPublicTurnstile(settings: {
-  turnstileEnabled: boolean
   turnstileSiteKey: string
   turnstileSecretKey: string
   turnstileLoginEnabled: boolean
@@ -92,9 +96,9 @@ function toPublicTurnstile(settings: {
   turnstilePasswordResetEnabled: boolean
   turnstileCheckinEnabled: boolean
 }): PublicTurnstileSettings {
-  // 没配 siteKey / secretKey 时即便 enabled=true 也视为未启用，避免前端白屏。
+  // 无总开关：配齐 siteKey / secretKey 即视为可用，具体场景由各 turnstileXEnabled 决定
   const configured = Boolean(settings.turnstileSiteKey) && Boolean(settings.turnstileSecretKey)
-  const enabled = settings.turnstileEnabled && configured
+  const enabled = configured
   return {
     enabled,
     siteKey: enabled ? settings.turnstileSiteKey : '',
@@ -173,7 +177,6 @@ export const siteSettingsService = {
       termsUrl: settings.termsUrl || null,
       privacyUrl: settings.privacyUrl || null,
       registrationMode: settings.registrationMode,
-      oauthLoginEnabled: settings.oauthLoginEnabled,
       passwordResetEnabled: settings.passwordResetEnabled,
       turnstile: toPublicTurnstile(settings),
       announcement: {

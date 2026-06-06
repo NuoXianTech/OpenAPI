@@ -86,13 +86,9 @@ const oauthError = computed(() => {
     provider_not_supported: '暂不支持该 Provider，仅支持 GitHub / QQ',
     provider_not_implemented: '暂不支持该 Provider',
     oauth_disabled: '第三方登录已关闭',
-    binding_required: '请先注册本站账号后再使用第三方登录',
-    email_required: '该账号未提供邮箱，无法创建',
-    email_not_allowed: '该邮箱不在允许注册的列表内',
+    account_inactive: '账号尚未激活，请先完成邮箱验证后再登录',
     user_banned: '该用户已被封禁',
     user_unavailable: '用户不可用',
-    secret_decrypt_failed: 'Provider 密钥配置异常',
-    user_create_failed: '用户创建失败',
     callback_failed: 'OAuth 回调失败，请重试'
   }
   return map[code] || `登录失败：${code}`

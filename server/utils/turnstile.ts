@@ -36,8 +36,8 @@ export async function verifyTurnstileForPage(
 ): Promise<TurnstileCheck> {
   const settings = await siteSettingsService.getOrCreate()
 
-  // 未配置或未启用：完全跳过，不视为失败
-  if (!settings.turnstileEnabled || !settings.turnstileSiteKey || !settings.turnstileSecretKey) {
+  // 未配置密钥：完全跳过，不视为失败（无总开关，是否校验由各场景开关决定）
+  if (!settings.turnstileSiteKey || !settings.turnstileSecretKey) {
     return { required: false, valid: true }
   }
 
