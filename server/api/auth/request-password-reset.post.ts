@@ -4,7 +4,7 @@ import { createError, getRequestIP } from 'h3'
 import { requestPasswordResetSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { verificationTokenService } from '~~/server/service/verificationTokenService'
+import { signVerificationToken } from '~~/server/utils/verificationToken'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const user = await usersService.findByEmail(email)
   if (user && user.isActive && !isBanActive(user)) {
     const expiresInMinutes = Number(settings.passwordResetExpiresInMinutes || 30)
-    const { token } = await verificationTokenService.createToken(user.id, user.email, expiresInMinutes, 'reset_password', ip)
+    const token = signVerificationToken(user, { purpose: 'reset_password', email: user.email, expiresInMinutes })
     const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
     const resetUrl = `${normalizedSiteUrl}/reset-password?user=${user.id}&token=${token}`
     // 发信失败仅记录日志，不把错误抛给前端以免泄露账号是否存在。

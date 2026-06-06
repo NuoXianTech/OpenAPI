@@ -8,7 +8,7 @@ import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauthPending'
 import { usersService } from '~~/server/service/userService'
 import { oauthAccountService } from '~~/server/service/oauthAccountService'
-import { verificationTokenService } from '~~/server/service/verificationTokenService'
+import { signVerificationToken } from '~~/server/utils/verificationToken'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { loginLogService, type LoginMethod } from '~~/server/service/loginLogService'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
@@ -125,7 +125,7 @@ export default defineEventHandler(async (event: H3Event) => {
   // 开启邮件激活：发验证邮件，账号待激活；发信失败回滚（绑定随 cascade 清）
   const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
+  const token = signVerificationToken(created, { purpose: 'verify', email: created.email, expiresInMinutes })
   const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
   try {
     await sendVerificationEmail(email, verifyUrl)

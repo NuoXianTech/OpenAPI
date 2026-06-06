@@ -330,20 +330,6 @@ CREATE TABLE "users" (
 	"updated_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
-CREATE TABLE "verification_tokens" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"purpose" varchar(20) DEFAULT 'verify' NOT NULL,
-	"token_hash" varchar(64) NOT NULL,
-	"ip" varchar(45),
-	"expires_at" timestamp with time zone NOT NULL,
-	"consumed_at" timestamp with time zone,
-	"revoked_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "verification_tokens_token_hash_unique" UNIQUE("token_hash")
-);
---> statement-breakpoint
 ALTER TABLE "api_call_stats" ADD CONSTRAINT "api_call_stats_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -356,7 +342,6 @@ ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_call_id_api_ca
 ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "redemption_records" ADD CONSTRAINT "redemption_records_code_id_redemption_codes_id_fk" FOREIGN KEY ("code_id") REFERENCES "public"."redemption_codes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "verification_tokens" ADD CONSTRAINT "verification_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "announcements_enabled_pin_sort_idx" ON "announcements" USING btree ("is_enabled","is_pinned","sort_order");--> statement-breakpoint
 CREATE INDEX "announcements_window_idx" ON "announcements" USING btree ("start_at","end_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_call_stats_api_id_stat_date_uq" ON "api_call_stats" USING btree ("api_id","stat_date");--> statement-breakpoint
@@ -412,8 +397,4 @@ CREATE INDEX "redemption_records_user_redeemed_idx" ON "redemption_records" USIN
 CREATE INDEX "redemption_records_redeemed_at_idx" ON "redemption_records" USING btree ("redeemed_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "users_username_uq" ON "users" USING btree ("username");--> statement-breakpoint
 CREATE UNIQUE INDEX "users_email_lower_uq" ON "users" USING btree (lower("email"));--> statement-breakpoint
-CREATE INDEX "users_active_banned_idx" ON "users" USING btree ("is_active","is_banned");--> statement-breakpoint
-CREATE INDEX "verification_tokens_user_created_idx" ON "verification_tokens" USING btree ("user_id","created_at");--> statement-breakpoint
-CREATE INDEX "verification_tokens_email_idx" ON "verification_tokens" USING btree ("email");--> statement-breakpoint
-CREATE INDEX "verification_tokens_purpose_idx" ON "verification_tokens" USING btree ("purpose");--> statement-breakpoint
-CREATE INDEX "verification_tokens_expires_idx" ON "verification_tokens" USING btree ("expires_at");
+CREATE INDEX "users_active_banned_idx" ON "users" USING btree ("is_active","is_banned");

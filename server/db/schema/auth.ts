@@ -10,29 +10,6 @@ import {
 import { users } from './user'
 
 // ------------------------------------------------------------------
-// Verification tokens（邮箱验证 / 密码重置 / 邮箱变更等一次性 token）
-//
-// 用户硬删时 FK cascade 自动清除该用户所有未消费 token。
-// ------------------------------------------------------------------
-export const verificationTokens = pgTable('verification_tokens', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  email: varchar('email', { length: 255 }).notNull(),
-  purpose: varchar('purpose', { length: 20 }).notNull().default('verify'), // verify / reset_password / change_email
-  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
-  ip: varchar('ip', { length: 45 }),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  consumedAt: timestamp('consumed_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-}, table => [
-  index('verification_tokens_user_created_idx').on(table.userId, table.createdAt),
-  index('verification_tokens_email_idx').on(table.email),
-  index('verification_tokens_purpose_idx').on(table.purpose),
-  index('verification_tokens_expires_idx').on(table.expiresAt)
-])
-
-// ------------------------------------------------------------------
 // User third-party account binding（用户三方绑定）
 //
 // OAuth 各 provider 的应用配置（clientId / clientSecret / 启用开关）已并入

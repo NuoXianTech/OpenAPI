@@ -6,7 +6,7 @@ import { usersService } from '~~/server/service/userService'
 import { hashPassword } from '~~/server/utils/auth'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
 import { readZodBody } from '~~/server/utils/zod'
-import { verificationTokenService } from '../../service/verificationTokenService'
+import { signVerificationToken } from '~~/server/utils/verificationToken'
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
@@ -116,13 +116,13 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const { token } = await verificationTokenService.createToken(created.id, created.email, expiresInMinutes, 'verify', ip)
+  const token = signVerificationToken(created, { purpose: 'verify', email: created.email, expiresInMinutes })
   const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
   try {
     await sendVerificationEmail(email, verifyUrl)
   } catch (error) {
     // 邮件发不出去就把刚建的账号回滚，否则邮箱/用户名会被占住，用户无法重试。
-    // verification_tokens 通过外键 cascade 一起清掉。
+    // 验证 token 无状态、不落库，无需额外清理。
     console.error('[register] failed to send verification email, rolling back user', { userId: created.id, error })
     try {
       await usersService.deleteUser(created.id)

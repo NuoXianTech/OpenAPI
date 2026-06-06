@@ -21,7 +21,6 @@
 | 表 | onDelete | 用户硬删时 |
 | --- | --- | --- |
 | `sessions` | cascade | 全部会话清除 |
-| `verification_tokens` | cascade | 全部一次性 token 清除 |
 | `oauth_accounts` | cascade | 全部三方绑定清除 |
 | `api_keys` | cascade | 全部密钥清除 |
 | `notification_deliveries` | cascade | 用户视角的通知投递（含已读状态）清除 |

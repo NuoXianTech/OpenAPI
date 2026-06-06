@@ -15,8 +15,7 @@ import { sql } from 'drizzle-orm'
 // Users（用户主表 · 硬删除）
 //
 // 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理
-// oauthAccounts / apiKeys / verificationTokens / notificationDeliveries /
-// loginLogs 等"账号级"附属表。
+// oauthAccounts / apiKeys / notificationDeliveries / loginLogs 等"账号级"附属表。
 //
 // 与之相对，"审计型"日志表（creditTransactions / apiCalls / operationLogs /
 // redemptionRecords）通过解除外键约束，仅以 userId 整数快照保存历史归属，

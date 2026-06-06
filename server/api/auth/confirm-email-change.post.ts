@@ -3,7 +3,7 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { confirmEmailChangeSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
-import { verificationTokenService } from '~~/server/service/verificationTokenService'
+import { verifyVerificationToken } from '~~/server/utils/verificationToken'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
-  const tokenPayload = await verificationTokenService.consumeToken(userId, token, 'change_email')
+  const tokenPayload = verifyVerificationToken(token, user, 'change_email')
   if (!tokenPayload) {
     throw createError({ statusCode: 400, message: 'Confirmation link expired or invalid' })
   }
