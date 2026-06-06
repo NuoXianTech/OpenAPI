@@ -31,6 +31,8 @@ interface ParsedFile {
 }
 
 function parseEndpointFile(filename: string): ParsedFile | null {
+  // .d.ts 声明文件不是 endpoint：SOURCE_FILE_RE 会把它误解析成 baseName='xxx.d'
+  if (filename.endsWith('.d.ts')) return null
   const m = SOURCE_FILE_RE.exec(filename)
   if (!m) return null
   return {
@@ -74,6 +76,43 @@ function compilePatternRegex(pattern: string): string {
   return `^/${parts.join('/')}/?$`
 }
 
+/** 把一个目录/文件段拼接到 basePath 之后，统一动态段（:name / :name*）与静态段的写法 */
+function appendSegment(basePath: string, seg: SegmentInfo): string {
+  if (!seg.paramName) return `${basePath}/${seg.literal}`
+  return `${basePath}/:${seg.paramName}${seg.isCatchAll ? '*' : ''}`
+}
+
+/** 唯一的 ManifestEndpoint 工厂：sourceFile 归一化与 patternRegex 编译都只此一处 */
+function makeEndpoint(
+  rootDir: string,
+  fullPath: string,
+  apiPath: string,
+  method: string,
+  paramNames: string[],
+  isCatchAll: boolean
+): ManifestEndpoint {
+  return {
+    apiPath,
+    method,
+    sourceFile: relative(rootDir, fullPath).split(sep).join('/'),
+    paramNames,
+    isCatchAll,
+    patternRegex: compilePatternRegex(apiPath)
+  }
+}
+
+/** 按 code 把 endpoints 聚合进 byCode（已存在则追加，否则新建 ManifestApi） */
+function upsertApi(
+  byCode: Map<string, ManifestApi>,
+  pathVersion: string,
+  code: string,
+  endpoints: ManifestEndpoint[]
+): void {
+  const existing = byCode.get(code)
+  if (existing) existing.endpoints.push(...endpoints)
+  else byCode.set(code, { pathVersion, code, endpoints: [...endpoints] })
+}
+
 interface ScanContext {
   rootDir: string
   basePath: string
@@ -87,16 +126,13 @@ async function scanDirRecursive(dir: string, ctx: ScanContext): Promise<Manifest
 
   for (const entry of entries) {
     const full = join(dir, entry.name)
+
     if (entry.isDirectory()) {
       const seg = parseSegment(entry.name)
-      const nextPath = seg.paramName
-        ? `${ctx.basePath}/${seg.isCatchAll ? `:${seg.paramName}*` : `:${seg.paramName}`}`
-        : `${ctx.basePath}/${seg.literal}`
-      const nextParams = seg.paramName ? [...ctx.paramNames, seg.paramName] : ctx.paramNames
       const nested = await scanDirRecursive(full, {
         rootDir: ctx.rootDir,
-        basePath: nextPath,
-        paramNames: nextParams,
+        basePath: appendSegment(ctx.basePath, seg),
+        paramNames: seg.paramName ? [...ctx.paramNames, seg.paramName] : ctx.paramNames,
         hasCatchAllUpstream: ctx.hasCatchAllUpstream || seg.isCatchAll
       })
       out.push(...nested)
@@ -107,29 +143,21 @@ async function scanDirRecursive(dir: string, ctx: ScanContext): Promise<Manifest
     const parsed = parseEndpointFile(entry.name)
     if (!parsed) continue
 
-    const fileSeg = parseSegment(parsed.baseName)
-    let apiPath = ctx.basePath
-    let paramNames = ctx.paramNames
-    let isCatchAll = ctx.hasCatchAllUpstream
-
+    // index.* → 路径即所在目录；其余文件名作为一个路径段拼接（可能是动态段）
     if (parsed.baseName === 'index') {
-      // index.get.ts → basePath 不变
-    } else if (fileSeg.paramName) {
-      apiPath = `${ctx.basePath}/${fileSeg.isCatchAll ? `:${fileSeg.paramName}*` : `:${fileSeg.paramName}`}`
-      paramNames = [...ctx.paramNames, fileSeg.paramName]
-      isCatchAll = isCatchAll || fileSeg.isCatchAll
-    } else {
-      apiPath = `${ctx.basePath}/${fileSeg.literal}`
+      out.push(makeEndpoint(ctx.rootDir, full, ctx.basePath, parsed.method, ctx.paramNames, ctx.hasCatchAllUpstream))
+      continue
     }
 
-    out.push({
-      apiPath,
-      method: parsed.method,
-      sourceFile: relative(ctx.rootDir, full).split(sep).join('/'),
-      paramNames,
-      isCatchAll,
-      patternRegex: compilePatternRegex(apiPath)
-    })
+    const seg = parseSegment(parsed.baseName)
+    out.push(makeEndpoint(
+      ctx.rootDir,
+      full,
+      appendSegment(ctx.basePath, seg),
+      parsed.method,
+      seg.paramName ? [...ctx.paramNames, seg.paramName] : ctx.paramNames,
+      ctx.hasCatchAllUpstream || seg.isCatchAll
+    ))
   }
 
   return out
@@ -165,44 +193,29 @@ export async function buildManifest(rootDir: string): Promise<ManifestApi[]> {
           paramNames: [],
           hasCatchAllUpstream: false
         })
-        const existing = byCode.get(code)
-        if (existing) existing.endpoints.push(...endpoints)
-        else byCode.set(code, { pathVersion, code, endpoints })
-      } else if (child.isFile()) {
-        const parsed = parseEndpointFile(child.name)
-        if (!parsed) continue
-        if (parsed.baseName === 'index') {
-          throw new Error(
-            `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 不合法；`
-            + `请改用子目录或 <code>.<method>.ts 命名。`
-          )
-        }
-        const fileSeg = parseSegment(parsed.baseName)
-        if (fileSeg.paramName) {
-          throw new Error(
-            `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 第一层是动态段。`
-          )
-        }
-        const code = fileSeg.literal
-        const apiPath = `/${pathVersion}/${code}`
-        const endpoint: ManifestEndpoint = {
-          apiPath,
-          method: parsed.method,
-          sourceFile: relative(rootDir, join(versionRoot, child.name)).split(sep).join('/'),
-          paramNames: [],
-          isCatchAll: false,
-          patternRegex: compilePatternRegex(apiPath)
-        }
-        const existing = byCode.get(code)
-        if (existing) existing.endpoints.push(endpoint)
-        else {
-          byCode.set(code, {
-            pathVersion,
-            code,
-            endpoints: [endpoint]
-          })
-        }
+        upsertApi(byCode, pathVersion, code, endpoints)
+        continue
       }
+
+      if (!child.isFile()) continue
+      const parsed = parseEndpointFile(child.name)
+      if (!parsed) continue
+      if (parsed.baseName === 'index') {
+        throw new Error(
+          `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 不合法；`
+          + `请改用子目录或 <code>.<method>.ts 命名。`
+        )
+      }
+      const fileSeg = parseSegment(parsed.baseName)
+      if (fileSeg.paramName) {
+        throw new Error(
+          `[api-manifest] 违反约定：server/routes/${pathVersion}/${child.name} 第一层是动态段。`
+        )
+      }
+      const code = fileSeg.literal
+      const fullPath = join(versionRoot, child.name)
+      const endpoint = makeEndpoint(rootDir, fullPath, `/${pathVersion}/${code}`, parsed.method, [], false)
+      upsertApi(byCode, pathVersion, code, [endpoint])
     }
 
     for (const api of byCode.values()) {
@@ -244,7 +257,6 @@ function renderManifestModule(apis: ManifestApi[]): string {
   return [
     '// AUTO-GENERATED by modules/api-manifest.ts — DO NOT EDIT',
     `export const API_MANIFEST = ${JSON.stringify(apis, null, 2)}`,
-    `export const API_MANIFEST_GENERATED_AT = ${Date.now()}`,
     ''
   ].join('\n')
 }
@@ -292,7 +304,6 @@ export default defineNuxtModule({
         `declare module '#api-manifest' {`,
         `  import type { ManifestApi } from '${relative(join(rootDir, '.nuxt', 'types'), join(rootDir, 'shared', 'types', 'api-guard')).split(sep).join('/')}'`,
         `  export const API_MANIFEST: ManifestApi[]`,
-        `  export const API_MANIFEST_GENERATED_AT: number`,
         `}`,
         ''
       ].join('\n')

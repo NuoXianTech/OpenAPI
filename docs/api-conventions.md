@@ -24,10 +24,10 @@ server/routes/
 
 | # | 约束 | 抛错位置 |
 | --- | --- | --- |
-| 1 | `v{N}/` 下第一层不能是动态段（`[id]` / `[...slug]`） | [api-manifest.ts:155-160](../modules/api-manifest.ts#L155-L160) |
-| 2 | `v{N}/index.*` 不允许（必须经过 code 目录或 `<code>.<method>.ts`） | [api-manifest.ts:175-180](../modules/api-manifest.ts#L175-L180) |
-| 3 | `v{N}/[id].get.ts` 这种第一层是动态段的文件不允许 | [api-manifest.ts:182-186](../modules/api-manifest.ts#L182-L186) |
-| 4 | 同一 `(method, 匹配正则)` 不能由多个文件产生（路由冲突） | [api-manifest.ts:216-227](../modules/api-manifest.ts#L216-L227) |
+| 1 | `v{N}/` 下第一层不能是动态段（`[id]` / `[...slug]`） | [api-manifest.ts:183-188](../modules/api-manifest.ts#L183-L188) |
+| 2 | `v{N}/index.*` 不允许（必须经过 code 目录或 `<code>.<method>.ts`） | [api-manifest.ts:203-208](../modules/api-manifest.ts#L203-L208) |
+| 3 | `v{N}/[id].get.ts` 这种第一层是动态段的文件不允许 | [api-manifest.ts:210-214](../modules/api-manifest.ts#L210-L214) |
+| 4 | 同一 `(method, 匹配正则)` 不能由多个文件产生（路由冲突） | [api-manifest.ts:229-240](../modules/api-manifest.ts#L229-L240) |
 
 约束 4 拦两类歧义路由：① 同一路由两种写法并存（`crypto/index.get.ts` 与 `crypto.get.ts` 都 → `GET /v1/crypto`）；② 同形动态段换了参数名（`[name].get.ts` 与 `[id].get.ts`，路径串不同但匹配正则全等，运行时只会命中其一）。报错会同时列出两个冲突的源文件。
 
@@ -135,7 +135,7 @@ export default defineEventHandler((event: H3Event) => {
 | 新增/删除 endpoint 文件 | **建议重启 `pnpm dev`** 以确保 Nitro 路由表与 manifest 一致 | 重新 build |
 | 违反约定 | dev 启动时抛错 | build 失败 |
 
-来源：[modules/api-manifest.ts:263-275](../modules/api-manifest.ts#L263-L275)。
+来源：[modules/api-manifest.ts:283-297](../modules/api-manifest.ts#L283-L297)。
 
 ## 9. 检查清单（PR 自查）
 
