@@ -4,7 +4,6 @@ import { adminBanUserSchema } from '#shared/schemas/admin'
 import { usersService } from '~~/server/service/userService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
-import { sessionService } from '~~/server/service/sessionService'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -13,10 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const updated = await usersService.banUser(id, isBanned, { reason, bannedUntil })
 
-  if (isBanned) {
-    await sessionService.deleteSessionsByUserId(id)
-  }
-
+  // 封禁立即生效由 getAuthUser 的 isBanned 检查保证（每次鉴权都查 users 表），无需额外撤销操作。
   await operationLogService.addLog({
     actor: admin.username,
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',

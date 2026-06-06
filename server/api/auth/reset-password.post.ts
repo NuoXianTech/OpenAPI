@@ -4,7 +4,6 @@ import { createError } from 'h3'
 import { resetPasswordSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/service/userService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
-import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { hashPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -30,8 +29,8 @@ export default defineEventHandler(async (event: H3Event) => {
   const passwordHash = await hashPassword(newPassword)
   await usersService.updatePasswordHash(userId, passwordHash)
 
-  // 密码改动后，强制所有活动会话下线，避免旧设备继续访问。
-  await sessionService.deleteSessionsByUserId(userId)
+  // 密码改动后，tokenVersion 自增令所有旧 token 失效（用户此时未登录，无需重签）。
+  await usersService.bumpTokenVersion(userId)
 
   return null
 })

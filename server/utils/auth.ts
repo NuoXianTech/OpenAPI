@@ -2,11 +2,11 @@ import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:cry
 import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
-import { createError, getCookie, getHeader, getRequestIP, setCookie } from 'h3'
+import { createError, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/service/userService'
-import { sessionService } from '~~/server/service/sessionService'
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { getCravatarUrl } from '~~/server/utils/cravatar'
+import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '#shared/utils/ban'
 
 export interface AuthUserPayload {
@@ -27,7 +27,9 @@ const scrypt = promisify(scryptCallback) as (
   keylen: number,
   options?: ScryptOptions
 ) => Promise<Buffer>
-const COOKIE_NAME = 'app_session'
+
+// 会话完全由 JWT 承载、无服务端会话表；此 cookie 装签发的 JWT。
+const AUTH_COOKIE_NAME = 'app_token'
 const SALT_BYTES = 16
 const KEY_LENGTH = 64
 
@@ -124,46 +126,8 @@ async function getSessionMaxAgesSeconds() {
   }
 }
 
-function getClientContext(event: H3Event) {
-  return {
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null
-  }
-}
-
-export async function createUserSession(event: H3Event, user: AuthUserPayload, options: { remember?: boolean } = {}) {
-  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
-  const remember = Boolean(options.remember)
-  const maxAgeSeconds = remember ? rememberMaxAge : defaultMaxAge
-  const { ip, userAgent } = getClientContext(event)
-  const { sessionId } = await sessionService.createSession({
-    userId: user.id,
-    kind: 'user',
-    ip,
-    userAgent,
-    isRemembered: remember
-  }, maxAgeSeconds)
-  setAuthCookie(event, sessionId, maxAgeSeconds)
-}
-
-export async function createAdminSession(event: H3Event, options: { remember?: boolean } = {}) {
-  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
-  const remember = Boolean(options.remember)
-  const maxAgeSeconds = remember ? rememberMaxAge : defaultMaxAge
-  const { ip, userAgent } = getClientContext(event)
-
-  const { sessionId } = await sessionService.createSession({
-    userId: null,
-    kind: 'admin',
-    ip,
-    userAgent,
-    isRemembered: remember
-  }, maxAgeSeconds)
-  setAuthCookie(event, sessionId, maxAgeSeconds)
-}
-
-export function setAuthCookie(event: H3Event, sessionId: string, maxAgeSeconds: number) {
-  setCookie(event, COOKIE_NAME, sessionId, {
+function setAuthCookie(event: H3Event, token: string, maxAgeSeconds: number) {
+  setCookie(event, AUTH_COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
@@ -173,75 +137,76 @@ export function setAuthCookie(event: H3Event, sessionId: string, maxAgeSeconds: 
 }
 
 export function clearAuthCookie(event: H3Event) {
-  setCookie(event, COOKIE_NAME, '', {
+  setCookie(event, AUTH_COOKIE_NAME, '', {
     httpOnly: true,
     sameSite: 'lax',
     path: '/',
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 0
   })
 }
 
+export async function createUserSession(event: H3Event, user: AuthUserPayload, options: { remember?: boolean } = {}) {
+  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
+  const remember = Boolean(options.remember)
+  const ttlSeconds = remember ? rememberMaxAge : defaultMaxAge
+  // 取当前 tokenVersion 嵌入 token（登录 / 重签均低频，多查一次可接受）。
+  // 改密后重签会读到 bump 过的新 ver，从而当前设备拿新 token、其他设备旧 token 失效。
+  const row = await usersService.getById(user.id)
+  const ver = row?.tokenVersion ?? 0
+  const loginAt = Math.floor(Date.now() / 1000)
+  setAuthCookie(event, signAccessToken({ sub: user.id, kind: 'user', ver, loginAt, rmb: remember }, ttlSeconds), ttlSeconds)
+}
+
+export async function createAdminSession(event: H3Event, options: { remember?: boolean } = {}) {
+  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
+  const remember = Boolean(options.remember)
+  const ttlSeconds = remember ? rememberMaxAge : defaultMaxAge
+  const loginAt = Math.floor(Date.now() / 1000)
+  // admin 不在 users 表、无 tokenVersion：ver 恒 0 且鉴权时不校验
+  setAuthCookie(event, signAccessToken({ sub: ADMIN_ACTOR_ID, kind: 'admin', ver: 0, loginAt, rmb: remember }, ttlSeconds), ttlSeconds)
+}
+
+export function destroyCurrentSession(event: H3Event) {
+  // 无状态：登出仅清本机 cookie；该 token 无法被服务端撤销（需全局失效用 usersService.bumpTokenVersion）。
+  clearAuthCookie(event)
+}
+
+// token 剩余寿命不足一半时重签（最新 ver + 原 loginAt + 原 rmb），维持活跃会话不掉线。
+// 纯 token 操作、零 DB 写；loginAt 透传以保持绝对硬顶基准不被重置。
+async function maybeSlidingRenew(event: H3Event, payload: VerifiedToken, latestVer: number) {
+  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
+  const ttl = payload.rmb ? rememberMaxAge : defaultMaxAge
+  const remaining = payload.exp - Math.floor(Date.now() / 1000)
+  if (remaining >= ttl / 2) {
+    return
+  }
+  const fresh = signAccessToken({
+    sub: payload.sub,
+    kind: payload.kind,
+    ver: latestVer,
+    loginAt: payload.loginAt,
+    rmb: payload.rmb
+  }, ttl)
+  setAuthCookie(event, fresh, ttl)
+}
+
 export async function getAuthUser(event: H3Event) {
-  const sessionId = getCookie(event, COOKIE_NAME)
-  if (!sessionId) {
+  const token = getCookie(event, AUTH_COOKIE_NAME)
+  if (!token) {
     return null
   }
 
-  const session = await sessionService.getSessionById(sessionId)
-  if (!session) {
+  const payload = verifyAccessToken(token)
+  if (!payload) {
+    // 验签失败 / 过期 → 清残留 cookie，等同未登录
+    clearAuthCookie(event)
     return null
   }
 
-  const nowMs = Date.now()
-  const { defaultMaxAge, absoluteMaxAge } = await getSessionMaxAgesSeconds()
-
-  // 写库节流：把「每个已登录请求一次 UPDATE」降到「距上次落库的 lastActiveAt 超过
-  // 阈值才写」。阈值取 defaultMaxAge/4——必须远小于 defaultMaxAge，才能保证活跃用户
-  // 总在滑动窗口失效前完成一次续期（最坏空闲窗口 = defaultMaxAge − 阈值）。
-  const writeThrottleMs = (defaultMaxAge * 1000) / 4
-  const shouldWrite = nowMs - session.lastActiveAt.getTime() > writeThrottleMs
-
-  // 「记住我」会话保持登录时给定的固定到期时间；普通会话每次活跃都滑动续期，
-  // 但绝不允许跨过 createdAt + sessionAbsoluteMaxAgeSeconds 的硬顶。
-  if (session.isRemembered) {
-    // touch 只刷新 lastActiveAt（展示/审计用，不参与鉴权判定），故可放心节流。
-    // fail-open：touch 失败不影响本次鉴权，但需留痕便于排查 DB 写入异常。
-    if (shouldWrite) {
-      sessionService.touchSession(sessionId).catch((err) => {
-        console.error('[auth] failed to touch remembered session', { sessionId, err })
-      })
-    }
-  } else {
-    const absoluteExpiryMs = session.createdAt.getTime() + absoluteMaxAge * 1000
-
-    // 硬顶检查不写库、很廉价，必须每个请求都跑、不受节流影响：撞顶立刻清会话，等同未登录。
-    if (absoluteExpiryMs <= nowMs) {
-      await sessionService.deleteSession(sessionId)
-      clearAuthCookie(event)
-      return null
-    }
-
-    // 滑动续期的「写库 + 重发 cookie」必须锁步：要么一起续、要么一起跳过。节流跳过时
-    // 两者都不动，仍指向上次续期写入的同一到期时刻；只有这样才不会出现「cookie 没过期
-    // 但库里 expiresAt 已落后 → 下次 getSessionById 判过期踢出 → 明明没过期却要重登」。
-    if (shouldWrite) {
-      const slidingExpiryMs = nowMs + defaultMaxAge * 1000
-      const newExpiryMs = Math.min(slidingExpiryMs, absoluteExpiryMs)
-      // 必须先 await DB 续期成功，再下发新的 cookie maxAge；否则 cookie 写了「续期成功」的
-      // maxAge，但库里 expiresAt 仍是旧值，下一次请求会被 getSessionById 判过期踢出。
-      try {
-        await sessionService.extendSessionExpiry(sessionId, new Date(newExpiryMs))
-        const cookieMaxAge = Math.max(1, Math.floor((newExpiryMs - nowMs) / 1000))
-        setAuthCookie(event, sessionId, cookieMaxAge)
-      } catch (err) {
-        // DB 续期失败：本次请求仍按当前会话通过，但不下发新 cookie maxAge；
-        // 下一次请求若 DB 恢复会自然重新续期，否则随旧 expiresAt 自然过期。
-        console.error('[auth] failed to extend session expiry, cookie maxAge left unchanged', { sessionId, err })
-      }
-    }
-  }
-
-  if (session.kind === 'admin') {
+  // admin：不在 users 表，不查库、不校验 ver
+  if (payload.kind === 'admin') {
+    await maybeSlidingRenew(event, payload, payload.ver)
     const authConfig = useRuntimeConfig().auth
     return {
       id: ADMIN_ACTOR_ID,
@@ -252,24 +217,41 @@ export async function getAuthUser(event: H3Event) {
     }
   }
 
-  if (!session.userId) {
+  // user：查库拿最新 tokenVersion / 封禁状态 / 资料
+  if (payload.sub === null) {
+    clearAuthCookie(event)
     return null
   }
 
-  const user = await usersService.getById(session.userId)
+  const user = await usersService.getById(payload.sub)
   if (!user) {
+    clearAuthCookie(event)
+    return null
+  }
+
+  // tokenVersion 比对：改密 / 重置 / 全局登出后旧 token 立即失效
+  if (user.tokenVersion !== payload.ver) {
+    clearAuthCookie(event)
+    return null
+  }
+
+  // 绝对硬顶（仅非「记住我」）：从首登算超过 absoluteMaxAge 强制重登
+  const { absoluteMaxAge } = await getSessionMaxAgesSeconds()
+  if (!payload.rmb && Math.floor(Date.now() / 1000) - payload.loginAt > absoluteMaxAge) {
+    clearAuthCookie(event)
     return null
   }
 
   if (user.isBanned) {
     if (isBanActive(user)) {
-      await sessionService.deleteSession(sessionId)
       clearAuthCookie(event)
       throw createError({ statusCode: 403, message: banMessage(user) })
     }
     // 封禁已到期 → 惰性解封后放行
     await usersService.clearExpiredBan(user.id)
   }
+
+  await maybeSlidingRenew(event, payload, user.tokenVersion)
 
   return {
     id: user.id,
@@ -295,12 +277,4 @@ export async function requireAdmin(event: H3Event) {
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
   return user
-}
-
-export async function destroyCurrentSession(event: H3Event) {
-  const sessionId = getCookie(event, COOKIE_NAME)
-  if (sessionId) {
-    await sessionService.deleteSession(sessionId)
-  }
-  clearAuthCookie(event)
 }

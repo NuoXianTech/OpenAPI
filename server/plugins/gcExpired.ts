@@ -2,7 +2,6 @@
  * Expired-record GC for the single production Node process.
  */
 
-import { sessionService } from '~~/server/service/sessionService'
 import { verificationTokenService } from '~~/server/service/verificationTokenService'
 
 const SCAN_INTERVAL_MS = 60 * 60 * 1_000
@@ -14,7 +13,6 @@ type GlobalWithTimer = typeof globalThis & {
 
 async function runOnce() {
   const jobs: Array<[string, () => Promise<void>]> = [
-    ['sessions', () => sessionService.deleteExpiredSessions()],
     ['verification_tokens', () => verificationTokenService.deleteExpired()]
   ]
   for (const [name, job] of jobs) {

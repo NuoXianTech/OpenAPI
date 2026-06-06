@@ -14,7 +14,7 @@ import { sql } from 'drizzle-orm'
 // ------------------------------------------------------------------
 // Users（用户主表 · 硬删除）
 //
-// 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理 sessions /
+// 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理
 // oauthAccounts / apiKeys / verificationTokens / notificationDeliveries /
 // loginLogs 等"账号级"附属表。
 //
@@ -43,6 +43,8 @@ export const users = pgTable('users', {
   // 上次签到时间。配合 siteSettings.checkinRefreshHours 决定下次可签到时刻；签到流水另存于 creditTransactions(reason='checkin')。
   lastCheckinAt: timestamp('last_checkin_at', { withTimezone: true }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
+  // 会话失效版本号：改密 / 重置 / 全局登出时自增，令该账号所有已签发 JWT 立即失效（见 server/utils/jwt.ts）
+  tokenVersion: integer('token_version').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().$onUpdate(() => new Date())
 }, table => [

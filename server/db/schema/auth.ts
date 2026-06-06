@@ -11,29 +11,6 @@ import {
 import { users } from './user'
 
 // ------------------------------------------------------------------
-// Sessions（用户/管理员会话）
-//
-// userId nullable：admin 会话 userId=null（admin 不在 users 表）。
-// 用户硬删时 FK cascade 自动清除该用户的所有会话。
-// ------------------------------------------------------------------
-export const sessions = pgTable('sessions', {
-  sessionId: varchar('session_id', { length: 128 }).primaryKey(), // sessionId 的哈希值
-  kind: varchar('kind', { length: 20 }).notNull().default('user'), // user / admin
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  ip: varchar('ip', { length: 45 }),
-  userAgent: varchar('user_agent', { length: 500 }),
-  // 「记住我」标记：true=登录时勾选，按 sessionRememberMaxAgeSeconds 一次性给定有效期；false=按 sessionMaxAgeSeconds 滑动续期
-  isRemembered: boolean('is_remembered').notNull().default(false),
-  lastActiveAt: timestamp('last_active_at', { withTimezone: true }).notNull().defaultNow(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
-}, table => [
-  index('sessions_user_idx').on(table.userId),
-  index('sessions_expires_idx').on(table.expiresAt),
-  index('sessions_last_active_idx').on(table.lastActiveAt)
-])
-
-// ------------------------------------------------------------------
 // Verification tokens（邮箱验证 / 密码重置 / 邮箱变更等一次性 token）
 //
 // 用户硬删时 FK cascade 自动清除该用户所有未消费 token。

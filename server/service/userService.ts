@@ -4,7 +4,7 @@ import { notificationService } from './notificationService'
 import { siteSettingsService } from './siteSettingsService'
 
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
-//   - sessions / verificationTokens / oauthAccounts / apiKeys / notificationDeliveries / loginLogs
+//   - verificationTokens / oauthAccounts / apiKeys / notificationDeliveries / loginLogs
 //     全部 cascade 一并清除（账号级数据）
 //   - pendingCharges cascade 清除（待重试扣费在用户消失后无意义）
 // 日志类表（creditTransactions / apiCalls / operationLogs / redemptionRecords）
@@ -72,7 +72,7 @@ export const usersService = {
   },
 
   /**
-   * 硬删除：物理 DELETE，FK cascade 自动清理 sessions / apiKeys / oauthAccounts /
+   * 硬删除：物理 DELETE，FK cascade 自动清理 apiKeys / oauthAccounts /
    * verificationTokens / notificationDeliveries / loginLogs / pendingCharges。
    * creditTransactions / apiCalls / operationLogs / redemptionRecords 已解除 FK，
    * 自动以 userId 整数快照保留历史。
@@ -232,6 +232,19 @@ export const usersService = {
         isBanned: false,
         bannedReason: null,
         bannedUntil: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, id))
+      .returning()
+
+    return res[0] || null
+  },
+
+  /** 令该用户所有已签发 JWT 失效（改密 / 重置 / 全局登出）：tokenVersion 自增。 */
+  async bumpTokenVersion(id: number) {
+    const res = await db.update(users)
+      .set({
+        tokenVersion: sql`${users.tokenVersion} + 1`,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))
