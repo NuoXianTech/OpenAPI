@@ -58,6 +58,11 @@ export default defineNuxtConfig({
     },
   },
   compatibilityDate: '2025-07-15',
+  // Pin the deploy target so the `.output` layout is deterministic across CI
+  // environments; the production scripts assume the node-server preset.
+  nitro: {
+    preset: 'node-server',
+  },
   hub: {
     db: {
       dialect: 'postgresql',
