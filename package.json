@@ -4,10 +4,10 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "build": "nuxt build",
+    "build": "nuxt build && node scripts/prepare-output.mjs",
     "dev": "nuxt dev",
     "db:generate": "nuxt db generate",
-    "db:migrate": "nuxt db migrate",
+    "db:migrate": "node scripts/migrate.mjs",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
