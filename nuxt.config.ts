@@ -9,14 +9,16 @@ export default defineNuxtConfig({
   ],
   ui: { fonts: false },
   runtimeConfig: {
+    // 默认值留空，运行时由「名字匹配结构」的 NUXT_AUTH_* 环境变量覆盖。
+    // Nuxt 生产环境只认 NUXT_ 前缀且与 runtimeConfig 结构同名的变量；
+    // 写成 process.env.ADMIN_USERNAME 这类差异命名只在构建期有效、运行期会失效。
     auth: {
-      adminUsername: process.env.ADMIN_USERNAME || '',
-      adminPassword: process.env.ADMIN_PASSWORD || '',
-      adminEmail: process.env.ADMIN_EMAIL || '',
-      emailVerifySecret: process.env.EMAIL_VERIFY_SECRET || '',
-      apiKeySecret: process.env.API_KEY_SECRET || '',
-      // access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed（见 server/utils/jwt.ts）
-      jwtSecret: process.env.JWT_SECRET || ''
+      adminUsername: '',
+      adminPassword: '',
+      adminEmail: '',
+      emailVerifySecret: '',
+      apiKeySecret: '',
+      jwtSecret: ''
     }
   },
   // Public list endpoints use short HTTP cache windows; private pages remain SSR
