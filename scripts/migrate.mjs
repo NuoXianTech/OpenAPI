@@ -1,3 +1,8 @@
+// Standalone migration runner used by `pnpm db:migrate` and, in production, by
+// .output/server/start.mjs before Nitro boots. Used instead of NuxtHub's
+// `nuxt db migrate` because it additionally (1) creates the target database if it
+// does not exist yet (SQLSTATE 3D000) and (2) resolves the migrations folder
+// across the source-tree and deployed (.output) layouts.
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'

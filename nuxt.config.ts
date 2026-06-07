@@ -62,6 +62,18 @@ export default defineNuxtConfig({
   // environments; the production scripts assume the node-server preset.
   nitro: {
     preset: 'node-server',
+    // NuxtHub's db client and the standalone migrate.mjs reach postgres /
+    // drizzle-orm through dynamic `import(variable)`, which nft cannot trace, so
+    // Nitro never bundles them. Force-trace the exact entrypoints both use (with
+    // their transitive deps) into .output/server/node_modules — replacing the old
+    // blind whole-package copy in scripts/prepare-output.mjs.
+    externals: {
+      traceInclude: [
+        'postgres',
+        'drizzle-orm/postgres-js',
+        'drizzle-orm/postgres-js/migrator',
+      ],
+    },
   },
   hub: {
     db: {
