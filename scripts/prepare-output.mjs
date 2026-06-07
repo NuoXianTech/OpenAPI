@@ -39,6 +39,26 @@ await copyDir(
 await fs.copyFile(path.join(root, 'scripts/migrate.mjs'), path.join(outputServer, 'migrate.mjs'))
 await fs.copyFile(path.join(root, 'scripts/start.mjs'), path.join(outputServer, 'start.mjs'))
 await fs.rm(path.join(outputServer, 'load-env.mjs'), { force: true })
+await fs.writeFile(
+  path.join(outputNodeModules, '@nuxthub/db/db.mjs'),
+  [
+    'import postgres from \'postgres\'',
+    'import { drizzle } from \'drizzle-orm/postgres-js\'',
+    'import * as schema from \'./schema.mjs\'',
+    '',
+    'const connectionString = process.env.DATABASE_URL',
+    'if (!connectionString) {',
+    '  throw new Error(\'DATABASE_URL is required to start the database client.\')',
+    '}',
+    '',
+    'const max = Number.parseInt(process.env.DATABASE_POOL_SIZE || \'10\', 10)',
+    'const client = postgres(connectionString, { max })',
+    'const db = drizzle(client, { schema })',
+    '',
+    'export { db, schema }',
+    ''
+  ].join('\n')
+)
 await fs.writeFile(path.join(outputRoot, 'start.mjs'), 'await import(\'./server/start.mjs\')\n')
 await fs.writeFile(
   path.join(outputRoot, 'package.json'),
