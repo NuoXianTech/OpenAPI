@@ -67,13 +67,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | 变量 | 是否必填 | 说明 |
 | --- | --- | --- |
 | `DATABASE_URL` | 生产必填 | PostgreSQL 连接串；运行时读取，改后重启即生效 |
-| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 管理员内置账号凭据（不入库、后台不可改，改后重启即生效） |
-| `NUXT_AUTH_ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
-| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
-| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
-| `NUXT_AUTH_JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
-
-> 管理员/密钥类变量必须使用 `NUXT_AUTH_` 前缀，运行时才会覆盖（Nuxt 生产环境只认 `NUXT_` 前缀且名字匹配 `runtimeConfig` 结构的环境变量）。所有变量改后重启进程即生效，无需重新构建。
+| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 必填 | 管理员内置账号凭据（不入库、后台不可改，改后重启即生效） |
+| `ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
+| `EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
+| `API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
+| `JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
 
 完整的单实例生产配置见 [.env.example](.env.example)。
 
