@@ -127,7 +127,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
       label: '个人',
       items: [
         { label: '积分', icon: 'i-mdi-cash-multiple', to: '/user/credits' },
-        { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/settings' }
+        { label: '设置', icon: 'i-mdi-account-cog-outline', to: '/user/settings' }
       ]
     }
   ],
@@ -141,7 +141,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
     { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/settings/security' }
   ],
   userMenuExtra: () => [[
-    { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/settings' },
+    { label: '设置', icon: 'i-mdi-account-cog-outline', to: '/user/settings' },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],
   loginRedirect: '/login'
