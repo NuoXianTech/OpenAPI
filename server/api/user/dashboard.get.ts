@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { and, asc, eq, gte, isNull, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
 import { createError } from 'h3'
 import { requireAuth } from '~~/server/utils/auth'
-import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
+import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
 import type { UserDashboardData, UserDashboardTrendPoint } from '~~/shared/types/user-dashboard'
 
 function toNumber(value: number | string | null | undefined) {
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
   const successExpr = sql<number>`count(*) filter (where ${callSuccessCondition})`
   const failureExpr = sql<number>`count(*) filter (where ${callFailureCondition})`
   const creditsSpentExpr = sql<number>`coalesce(sum(${apiCalls.creditsCost}), 0)`
-  const dayBucketExpr = sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone 'Asia/Shanghai')`
+  const dayBucketExpr = sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`
 
   const [
     balanceRows,
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
       .where(and(
         eq(apiCalls.userId, userId),
         gte(apiCalls.createdAt, rangeStart),
-        sql`${apiCalls.createdAt} < ${tomorrowStart}`
+        lt(apiCalls.createdAt, tomorrowStart)
       ))
       .groupBy(dayBucketExpr)
       .orderBy(asc(dayBucketExpr)),

@@ -1,4 +1,4 @@
-import { and, eq, sql, type SQL } from 'drizzle-orm'
+import { and, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
 import { addLocalDays, getLocalDayStart } from '~~/server/utils/localTime'
 import type {
@@ -73,8 +73,8 @@ export const adminLogsService = {
     const offset = Math.max(Math.trunc(input.offset ?? 0), 0)
 
     const conds: SQL[] = []
-    if (input.startAt) conds.push(sql`${apiCalls.createdAt} >= ${input.startAt}`)
-    if (input.endAt) conds.push(sql`${apiCalls.createdAt} < ${input.endAt}`)
+    if (input.startAt) conds.push(gte(apiCalls.createdAt, input.startAt))
+    if (input.endAt) conds.push(lt(apiCalls.createdAt, input.endAt))
     if (input.apiId && input.apiId > 0) conds.push(eq(apiCalls.apiId, input.apiId))
     if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
     if (input.userId && input.userId > 0) conds.push(eq(apiCalls.userId, input.userId))
@@ -235,8 +235,8 @@ export const adminLogsService = {
         .innerJoin(apis, eq(apis.id, apiCallStats.apiId))
         .where(and(
           publicApiCondition,
-          sql`${apiCallStats.statDate} >= ${windowStart}`,
-          sql`${apiCallStats.statDate} < ${tomorrowStart}`
+          gte(apiCallStats.statDate, windowStart),
+          lt(apiCallStats.statDate, tomorrowStart)
         )),
       // 请求分布：所有启用接口（无调用接口 LEFT JOIN 后填 0）
       db.select({
@@ -259,7 +259,7 @@ export const adminLogsService = {
         .innerJoin(apis, eq(apis.id, apiCalls.apiId))
         .where(and(
           publicApiCondition,
-          sql`${apiCalls.createdAt} >= ${last24hStart}`,
+          gte(apiCalls.createdAt, last24hStart),
           eq(apiCalls.isCounted, true)
         ))
         .groupBy(sql`date_trunc('hour', ${apiCalls.createdAt})`)
