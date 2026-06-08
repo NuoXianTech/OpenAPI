@@ -67,11 +67,13 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | 变量 | 是否必填 | 说明 |
 | --- | --- | --- |
 | `DATABASE_URL` | 生产必填 | PostgreSQL 连接串；运行时读取，改后重启即生效 |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | 必填 | 管理员内置账号凭据（不入库、后台不可改，改后重启即生效） |
-| `ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
-| `EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
-| `API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
-| `JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
+| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 管理员内置账号凭据（不入库、后台不可改，改后重启即生效） |
+| `NUXT_AUTH_ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
+| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
+| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
+| `NUXT_AUTH_JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
+
+> 上述 `NUXT_AUTH_*` 走 Nuxt runtimeConfig（`auth.*`），运行时**必须带 `NUXT_AUTH_` 前缀**才会被读取；`DATABASE_URL` / `NITRO_*` 则由 Nitro 直接读取，用原名即可。
 
 完整的单实例生产配置见 [.env.example](.env.example)。
 
