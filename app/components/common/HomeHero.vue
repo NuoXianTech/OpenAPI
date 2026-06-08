@@ -72,11 +72,6 @@ onUnmounted(() => {
   }
 })
 
-const healthRatio = computed(() => {
-  if (props.totalCount <= 0) return 0
-  return Math.round((props.normalCount / props.totalCount) * 100)
-})
-
 type ListStatusTone = 'info' | 'error' | 'neutral' | 'success'
 
 const listStatus = computed<{ label: string, tone: ListStatusTone, title: string }>(() => {
@@ -308,7 +303,7 @@ async function handleLogout() {
             <template #value>
               {{ normalCount }}
             </template>
-            可用接口 · {{ healthRatio }}%
+            可用接口
           </CommonHeroStatCard>
 
           <CommonHeroStatCard
