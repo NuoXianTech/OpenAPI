@@ -1,6 +1,6 @@
-import { and, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
-import { addLocalDays, getLocalDayStart } from '~~/server/utils/localTime'
+import { APP_TIME_ZONE, addLocalDays, getLocalDayStart } from '~~/server/utils/localTime'
 import type {
   AdminAnalyticsCallBucket,
   AdminAnalyticsData,
@@ -212,6 +212,21 @@ export const adminLogsService = {
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
     const failureExpr = sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
 
+    // 近 24h 小时桶按 APP_TIME_ZONE 切，收进子查询只算一次；外层按纯列 hour 分组，
+    // 避免时区参数在 select/group by/order by 各生成占位符、令 Postgres 报 42803（见 user/dashboard 同款）。
+    const hourlySource = db
+      .select({
+        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`
+      })
+      .from(apiCalls)
+      .innerJoin(apis, eq(apis.id, apiCalls.apiId))
+      .where(and(
+        publicApiCondition,
+        gte(apiCalls.createdAt, last24hStart),
+        eq(apiCalls.isCounted, true)
+      ))
+      .as('hourly_source')
+
     const [
       enabledApiRows,
       totalEnabledRows,
@@ -251,19 +266,13 @@ export const adminLogsService = {
         .where(publicApiCondition)
         .groupBy(apis.id, apis.name, apis.apiPath)
         .orderBy(sql`coalesce(sum(${apiCallStats.totalCount}), 0) desc`, apis.name),
-      // 近 24h 按小时聚合（来源 api_calls，因为 api_call_stats 仅按天）
+      // 近 24h 按小时聚合（来源 api_calls，因为 api_call_stats 仅按天）：桶来自上面的 hourlySource 子查询
       db.select({
-        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`,
+        hour: hourlySource.hour,
         totalCalls: sql<number>`count(*)`
-      }).from(apiCalls)
-        .innerJoin(apis, eq(apis.id, apiCalls.apiId))
-        .where(and(
-          publicApiCondition,
-          gte(apiCalls.createdAt, last24hStart),
-          eq(apiCalls.isCounted, true)
-        ))
-        .groupBy(sql`date_trunc('hour', ${apiCalls.createdAt})`)
-        .orderBy(sql`date_trunc('hour', ${apiCalls.createdAt}) asc`),
+      }).from(hourlySource)
+        .groupBy(hourlySource.hour)
+        .orderBy(asc(hourlySource.hour)),
       // 调用次数分布桶
       db.select({
         apiId: apis.id,

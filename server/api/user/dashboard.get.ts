@@ -35,7 +35,22 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
   const successExpr = sql<number>`count(*) filter (where ${callSuccessCondition})`
   const failureExpr = sql<number>`count(*) filter (where ${callFailureCondition})`
   const creditsSpentExpr = sql<number>`coalesce(sum(${apiCalls.creditsCost}), 0)`
-  const dayBucketExpr = sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`
+  // 趋势按 APP_TIME_ZONE 切日：桶表达式收进子查询、只此一处，外层按纯列 bucket 分组。
+  // 切勿把整条 date_trunc 重复进 select/group by/order by——复用的 sql 片段会各自生成绑定参数，
+  // 令时区常量裂成 $1/$5/$6 等互不相等的占位符，Postgres 判不出 group by 已覆盖 select 而报 42803。
+  const trendSource = db
+    .select({
+      bucket: sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`,
+      isCounted: apiCalls.isCounted,
+      creditsCost: apiCalls.creditsCost
+    })
+    .from(apiCalls)
+    .where(and(
+      eq(apiCalls.userId, userId),
+      gte(apiCalls.createdAt, rangeStart),
+      lt(apiCalls.createdAt, tomorrowStart)
+    ))
+    .as('trend_source')
 
   const [
     balanceRows,
@@ -62,17 +77,12 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
       gte(apiCalls.createdAt, since24h)
     )),
     db.select({
-      bucket: dayBucketExpr,
-      totalCalls: totalExpr,
-      creditsSpent: creditsSpentExpr
-    }).from(apiCalls)
-      .where(and(
-        eq(apiCalls.userId, userId),
-        gte(apiCalls.createdAt, rangeStart),
-        lt(apiCalls.createdAt, tomorrowStart)
-      ))
-      .groupBy(dayBucketExpr)
-      .orderBy(asc(dayBucketExpr)),
+      bucket: trendSource.bucket,
+      totalCalls: sql<number>`count(*) filter (where ${trendSource.isCounted} = true)`,
+      creditsSpent: sql<number>`coalesce(sum(${trendSource.creditsCost}), 0)`
+    }).from(trendSource)
+      .groupBy(trendSource.bucket)
+      .orderBy(asc(trendSource.bucket)),
     db.select({
       total: sql<number>`count(*)`,
       active: sql<number>`count(*) filter (where ${apiKeys.isActive})`
