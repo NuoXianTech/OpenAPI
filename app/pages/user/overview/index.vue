@@ -55,13 +55,6 @@ async function copyCurl() {
     toast.add({ title: '复制失败', color: 'error' })
   }
 }
-
-const balanceStatus = computed<{ label: string, textClass: string, dotClass: string }>(() => {
-  if (!hasKeys.value) return { label: '待创建密钥', textClass: 'text-warning', dotClass: 'bg-warning' }
-  if (credits.value.balance <= 0) return { label: '积分不足', textClass: 'text-error', dotClass: 'bg-error' }
-  if (credits.value.balance < 100) return { label: '余额偏低', textClass: 'text-warning', dotClass: 'bg-warning' }
-  return { label: '正常', textClass: 'text-success', dotClass: 'bg-success' }
-})
 </script>
 
 <template>
@@ -263,15 +256,10 @@ const balanceStatus = computed<{ label: string, textClass: string, dotClass: str
             >
               <div class="flex items-center justify-between">
                 <span class="text-xs text-muted">剩余额度</span>
-                <span class="inline-flex items-center gap-1.5 text-xs">
-                  <span
-                    class="size-1.5 rounded-full"
-                    :class="balanceStatus.dotClass"
-                  />
-                  <span :class="balanceStatus.textClass">
-                    {{ balanceStatus.label }}
-                  </span>
-                </span>
+                <UIcon
+                  name="i-mdi-cash-multiple"
+                  class="size-4 text-warning"
+                />
               </div>
               <div class="text-2xl font-semibold tabular-nums">
                 {{ credits.balance.toLocaleString() }}
