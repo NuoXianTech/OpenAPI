@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ProfileData } from '~/composables/user/useUserProfilePage'
+import type { SettingsData } from '~/composables/user/useUserSettingsPage'
 import { parseFetchError } from '#shared/utils/clientError'
 
 const props = defineProps<{
-  profile: ProfileData | null
+  profile: SettingsData | null
   profileLoading: boolean
   avatarUrl?: string | null
   onSave: (displayName: string) => Promise<void>

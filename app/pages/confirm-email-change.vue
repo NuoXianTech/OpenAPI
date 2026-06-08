@@ -75,7 +75,7 @@ async function onConfirm() {
           <span>确认链接无效或已损坏，请重新发起变更。</span>
         </div>
         <UButton
-          to="/user/profile"
+          to="/user/settings"
           block
           size="lg"
           icon="i-mdi-account-cog-outline"
@@ -103,7 +103,7 @@ async function onConfirm() {
           </p>
         </div>
         <UButton
-          to="/user/profile"
+          to="/user/settings"
           block
           size="lg"
         >

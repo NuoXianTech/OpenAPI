@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { OauthBinding } from '~/composables/user/useUserProfilePage'
+import type { OauthBinding } from '~/composables/user/useUserSettingsPage'
 
 defineProps<{
   list: OauthBinding[]

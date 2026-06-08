@@ -34,7 +34,7 @@ const OAUTH_BIND_ERRORS: Record<string, string> = {
   missing_code: '未收到授权 code'
 }
 
-export function useUserProfilePage() {
+export function useUserSettingsPage() {
   const toast = useToast()
   const { fetchMe } = useAuth()
   const confirm = useConfirmDialog()
@@ -52,7 +52,7 @@ export function useUserProfilePage() {
   async function loadProfile() {
     profileLoading.value = true
     try {
-      profile.value = await $fetch<ProfileData>('/api/user/profile')
+      profile.value = await $fetch<ProfileData>('/api/user/settings')
     } catch (err) {
       console.error('failed to load profile', err)
     } finally {
@@ -61,7 +61,7 @@ export function useUserProfilePage() {
   }
 
   async function updateProfile(displayName: string) {
-    await $fetch('/api/user/profile', {
+    await $fetch('/api/user/settings', {
       method: 'PUT',
       body: { displayName: displayName.trim() }
     })
@@ -122,7 +122,7 @@ export function useUserProfilePage() {
   }
 
   function startBind(provider: string) {
-    const returnTo = encodeURIComponent('/user/profile')
+    const returnTo = encodeURIComponent('/user/settings')
     window.location.href = `/api/auth/oauth/${provider}/start?mode=bind&returnTo=${returnTo}`
   }
 

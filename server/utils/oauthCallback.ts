@@ -21,7 +21,7 @@ function methodFromProvider(provider: SupportedOauthProvider): LoginMethod {
 
 async function redirectError(event: H3Event, code: string, mode: 'login' | 'bind' = 'login') {
   const target = mode === 'bind'
-    ? `/user/profile?oauth_error=${encodeURIComponent(code)}`
+    ? `/user/settings?oauth_error=${encodeURIComponent(code)}`
     : `/login?oauth_error=${encodeURIComponent(code)}`
   return sendRedirect(event, target, 302)
 }
@@ -111,7 +111,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
 
       const target = consumed.returnTo && consumed.returnTo.startsWith('/')
         ? consumed.returnTo
-        : '/user/profile'
+        : '/user/settings'
       const sep = target.includes('?') ? '&' : '?'
       return sendRedirect(event, `${target}${sep}oauth_bound=${provider}`, 302)
     }

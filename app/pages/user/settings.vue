@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUserProfilePage } from '~/composables/user/useUserProfilePage'
+import { useUserSettingsPage } from '~/composables/user/useUserSettingsPage'
 
 useHead({ title: '账号信息' })
 
@@ -25,7 +25,7 @@ const {
   startBind,
   unbind,
   notifyOauthCallback
-} = useUserProfilePage()
+} = useUserSettingsPage()
 
 onMounted(async () => {
   await Promise.all([loadProfile(), loadOauth(), loadLoginActivity()])
@@ -50,21 +50,21 @@ onMounted(async () => {
 
     <template #body>
       <div class="space-y-6 max-w-3xl">
-        <UserProfileBasicCard
+        <UserSettingsBasicCard
           :profile="profile"
           :profile-loading="profileLoading"
           :avatar-url="user?.avatarUrl"
           :on-save="updateProfile"
         />
 
-        <UserProfileEmailCard
+        <UserSettingsEmailCard
           :profile="profile"
           :on-request-change="requestEmailChange"
         />
 
-        <UserProfilePasswordCard :on-submit="changePassword" />
+        <UserSettingsPasswordCard :on-submit="changePassword" />
 
-        <UserProfileOauthCard
+        <UserSettingsOauthCard
           :list="oauthList"
           :enabled="oauthEnabled"
           :loading="oauthLoading"
@@ -73,7 +73,7 @@ onMounted(async () => {
           @unbind="unbind"
         />
 
-        <UserProfileLoginActivityCard
+        <UserSettingsLoginActivityCard
           :items="loginActivity"
           :loading="loginActivityLoading"
           @refresh="loadLoginActivity"
