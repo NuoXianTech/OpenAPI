@@ -20,7 +20,7 @@
 
 import type { H3Event } from 'h3'
 import { getRouterParam, readBody } from 'h3'
-import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
+import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
 import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
 import {
   CryptoBusinessError,
@@ -30,8 +30,7 @@ import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { getAlgorithm, normalizeParams } from '~~/server/lib/crypto/registry'
 
 function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED') {
-  markApiCallFailed(event, bizCode, message)
-  return openApiFail(event, 422, bizCode, message)
+  return openApiBizFail(event, 422, bizCode, message)
 }
 
 export default defineEventHandler(async (event: H3Event) => {

@@ -14,7 +14,8 @@ import { apiKeyService } from '~~/server/service/apiKeyService'
 import { creditService } from '~~/server/service/creditService'
 import { pendingChargeService } from '~~/server/service/pendingChargeService'
 import { shouldCharge } from '~~/server/utils/apiCallOutcome'
-import { isGuardedPath } from '~~/shared/config/apiGuard'
+import { ensureRequestId } from '~~/server/utils/requestId'
+import { isGuardedPath, normalizePathname } from '~~/shared/config/apiGuard'
 
 interface ApiStatsTracked {
   startedAt: number
@@ -54,13 +55,6 @@ declare module 'h3' {
     apiStatsTracked?: ApiStatsTracked
     requestId?: string
   }
-}
-
-function normalizePathname(pathname: string) {
-  if (pathname.length > 1 && pathname.endsWith('/')) {
-    return pathname.slice(0, -1)
-  }
-  return pathname
 }
 
 function parseOptionalInt(value: string | string[] | number | null | undefined) {
@@ -228,10 +222,7 @@ export default defineNitroPlugin((nitroApp) => {
       return
     }
 
-    if (!event.context.requestId) {
-      const incoming = getHeader(event, 'x-request-id')?.toString().trim()
-      event.context.requestId = incoming || globalThis.crypto.randomUUID()
-    }
+    ensureRequestId(event)
 
     event.context.apiStatsTracked = {
       startedAt: Date.now(),

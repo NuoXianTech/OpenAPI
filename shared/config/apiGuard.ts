@@ -9,6 +9,12 @@ export function isGuardedPath(pathname: string): boolean {
   return VERSION_CODE_PATTERN.test(pathname)
 }
 
+/** 去掉非根路径末尾的 `/`，让 `/v1/crypto` 与 `/v1/crypto/` 归一到同一形态。 */
+export function normalizePathname(pathname: string): string {
+  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
+  return pathname
+}
+
 export const DEFAULT_API_REGISTRATION = {
   status: -1,
   isEnabled: false,

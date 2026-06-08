@@ -23,18 +23,13 @@
 
 import type { H3Event } from 'h3'
 import { getRequestURL, send, setResponseHeader, setResponseHeaders } from 'h3'
-import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, resolveMethodCost } from '~~/shared/config/apiGuard'
+import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/shared/config/apiGuard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/apiManifest'
 import { runApiGuard } from '~~/server/utils/apiGuard'
 import { apiService } from '~~/server/service/apiService'
 import { openApiFail } from '~~/server/utils/openApiResponse'
 
 type ErrorDef = { status: number, code: string, msg: string }
-
-function normalizePathname(pathname: string) {
-  if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
-  return pathname
-}
 
 /**
  * 拒绝请求时以开放 API 标准壳作答。直接通过 h3 的 send 写出，

@@ -47,7 +47,7 @@ server/routes/
 
 ## 4. 响应壳（必须）
 
-所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiFail` 返回，不允许裸 `return { ... }`。
+所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
 响应结构**完全对齐** [restful-api-style.md §3](./restful-api-style.md#3-响应格式)，没有项目私有扩展：
 
@@ -60,7 +60,7 @@ server/routes/
 }
 ```
 
-- **`code` 是字符串标识，不是 HTTP status 数值**：成功**固定** `"OK"`（由 `openApiOk` 写死），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
+- **`code` 是字符串标识，不是 HTTP status 数值**：成功为 `"OK"`（`openApiOk`，200）或 `"CREATED"`（`openApiCreated`，201，POST 新建资源），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
 - **`code` 的来源**：
   - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/apiGuard.ts](../shared/config/apiGuard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
@@ -69,6 +69,27 @@ server/routes/
 - **失败响应 `data` 恒为 `null`**：严守 [restful-api-style.md §3.3](./restful-api-style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
 - **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
 - **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body
+
+### 4.1 入参校验（可选）
+
+需要校验请求体时，用 [`readOpenApiBody`](../server/utils/zod.ts) —— 复用 zod，但失败**自动返回 400 标准壳**，区别于后台内部接口的 `readZodBody`（失败 `throw createError`，走 H3 默认错误格式，不符合对外契约）：
+
+```ts
+import { z } from 'zod'
+import { readOpenApiBody } from '~~/server/utils/zod'
+import { openApiOk } from '~~/server/utils/openApiResponse'
+
+const BodySchema = z.object({ mode: z.enum(['encrypt', 'decrypt']), text: z.string() })
+
+export default defineEventHandler(async (event) => {
+  const parsed = await readOpenApiBody(event, BodySchema)
+  if (!parsed.ok) return parsed.response   // 400 INVALID_REQUEST_BODY，已是标准壳、data 恒 null
+  const { mode, text } = parsed.data       // 类型安全
+  return openApiOk(event, await run(mode, text))
+})
+```
+
+静态 schema 放 `shared/schemas/`（与现有 `readZodBody` 一致）。若入参 schema 随请求动态变化（如 crypto 按算法 `params` 决定校验规则），沿用 handler 内自定义校验（crypto 的 `normalizeParams`）即可，不必硬套 zod。
 
 ## 5. 计费标记
 
@@ -88,7 +109,22 @@ catch (err) {
 }
 ```
 
-若极少数业务流程必须返回 2xx 但仍要跳过扣费，或者想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库），追加 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
+想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库）时，用 [`openApiBizFail`](../server/utils/apiCallOutcome.ts) **一行**替代「`markApiCallFailed` + `openApiFail`」两步：
+
+```ts
+import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
+import { openApiOk } from '~~/server/utils/openApiResponse'
+
+try {
+  return openApiOk(event, await runAlgorithm(input))
+}
+catch (err) {
+  // 业务失败：跳过扣费 + 把 bizCode/message 落到调用日志，一行搞定
+  return openApiBizFail(event, 422, 'CRYPTO_FAILED', (err as Error).message)
+}
+```
+
+极少数业务流程必须返回 2xx 但仍要跳过扣费（罕见）时，单独调 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
 
 ## 6. 最小完整示例
 
@@ -112,7 +148,7 @@ export default defineEventHandler((event: H3Event) => {
 
 ## 7. 后台注册（必做）
 
-代码部署后，gate 还会查数据库 `apis` 表 —— 没登记的 `(pathVersion, code)` 一律 403 `API_NOT_REGISTERED`（[api-gate:75-78](../server/middleware/00.api-gate.ts#L75-L78)）。
+代码部署后，gate 还会查数据库 `apis` 表 —— 没登记的 `(pathVersion, code)` 一律 403 `API_NOT_REGISTERED`（[api-gate:66-69](../server/middleware/00.api-gate.ts#L66-L69)）。
 
 新加接口后，去 **管理后台 → 接口管理 → 新增**，填：
 
@@ -141,8 +177,8 @@ export default defineEventHandler((event: H3Event) => {
 
 - [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号 遵循 [restful-api-style.md](./restful-api-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
-- [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
+- [ ] handler 通过 `openApiOk` / `openApiCreated` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
-- [ ] 业务侧失败但 HTTP 仍 2xx 的罕见场景才需要 `markApiCallFailed`
+- [ ] 业务失败要把 code/message 写进调用日志 → `openApiBizFail`（一行）；纯协议失败（缺参 / 格式错）→ 直接 `openApiFail`；仅"返回 2xx 但需跳过扣费"的罕见场景 → 单用 `markApiCallFailed`
 - [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `methodCosts` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通

@@ -11,10 +11,10 @@
  * 反过来，若 handler 抛错 / 返回 5xx 但业务实际上已完成、想正常扣费，
  * 可以调用 markApiCallSuccess（极少用）。
  *
- * 使用示例：
+ * 使用示例（业务失败首选 openApiBizFail，一行完成标记 + 返回）：
  * ```ts
- * import { markApiCallFailed } from '~~/server/utils/apiCallOutcome'
- * import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
+ * import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
+ * import { openApiOk } from '~~/server/utils/openApiResponse'
  *
  * export default defineEventHandler(async (event) => {
  *   try {
@@ -22,15 +22,15 @@
  *     return openApiOk(event, data)
  *   }
  *   catch (err) {
- *     // 上游失败：HTTP 502 自动跳过扣费；markApiCallFailed 把 bizCode 写进调用日志
- *     markApiCallFailed(event, 'UPSTREAM_ERROR', (err as Error).message)
- *     return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游服务异常')
+ *     // 上游失败：HTTP 502 自动跳过扣费 + 把 bizCode/message 落到调用日志
+ *     return openApiBizFail(event, 502, 'UPSTREAM_ERROR', (err as Error).message)
  *   }
  * })
  * ```
  */
 
 import type { H3Event } from 'h3'
+import { openApiFail, type OpenApiResponse } from '~~/server/utils/openApiResponse'
 
 /** 标记本次调用业务成功 · finish 时按成功扣费 */
 export function markApiCallSuccess(event: H3Event) {
@@ -46,6 +46,29 @@ export function markApiCallFailed(event: H3Event, code?: string | null, message?
   event.context.apiBilling.forcedOutcome = 'failed'
   event.context.apiBilling.failedCode = (code || '').slice(0, 50) || null
   event.context.apiBilling.failedMessage = (message || '').slice(0, 500) || null
+}
+
+/**
+ * 业务失败便捷出口 · 一行完成「标记失败（跳过扣费 + 写错误日志）+ 返回标准失败壳」。
+ *
+ * 等价于 markApiCallFailed(event, code, message) 后再 openApiFail(event, status, code, message)，
+ * 但 code / message 不必重复传两遍。新增对外接口处理「业务失败」时首选此函数。
+ *
+ * 何时用它 vs 裸 openApiFail：
+ *   - openApiBizFail：算法执行 / 上游调用等「业务失败」，要把 code/message 落到
+ *     apiCalls.errorCode/errorMessage 便于排查（即便返回 HTTP < 400 也强制跳过扣费）。
+ *   - openApiFail：纯协议失败（缺参数 / body 非法 / method 不符），4xx 本就自动跳过扣费、
+ *     无需写业务错误日志，直接返回即可。
+ */
+export function openApiBizFail(
+  event: H3Event,
+  status: number,
+  code: string,
+  message: string,
+  data: unknown = null
+): OpenApiResponse {
+  markApiCallFailed(event, code, message)
+  return openApiFail(event, status, code, message, data)
 }
 
 /**
