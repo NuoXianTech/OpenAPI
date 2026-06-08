@@ -216,7 +216,7 @@ export const adminLogsService = {
     // 避免时区参数在 select/group by/order by 各生成占位符、令 Postgres 报 42803（见 user/dashboard 同款）。
     const hourlySource = db
       .select({
-        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`
+        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('hour')
       })
       .from(apiCalls)
       .innerJoin(apis, eq(apis.id, apiCalls.apiId))

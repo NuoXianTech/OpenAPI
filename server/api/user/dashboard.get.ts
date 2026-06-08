@@ -40,7 +40,7 @@ export default defineEventHandler(async (event: H3Event): Promise<UserDashboardD
   // 令时区常量裂成 $1/$5/$6 等互不相等的占位符，Postgres 判不出 group by 已覆盖 select 而报 42803。
   const trendSource = db
     .select({
-      bucket: sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`,
+      bucket: sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
       isCounted: apiCalls.isCounted,
       creditsCost: apiCalls.creditsCost
     })
