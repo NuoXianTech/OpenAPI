@@ -20,11 +20,6 @@ export interface ApiCatalogFilters {
   categoryId?: number
 }
 
-export interface ApiTabOption {
-  label: string
-  value: string | number
-}
-
 export interface ApiCategoryItem {
   id: number
   code: string

@@ -1,4 +1,5 @@
-import type { ApiCatalogItem, ApiTabOption } from './types'
+import type { ApiCatalogItem } from './types'
+import type { FilterTabOption } from '~/composables/ui/types'
 
 export function usePublicApiList() {
   const { data, pending, error, refresh } = useFetch<ApiCatalogItem[]>(
@@ -14,7 +15,7 @@ export function usePublicApiList() {
   // 兼容旧调用方 result.value.data：仍提供同形结构
   const result = computed(() => ({ data: catalogItems.value }))
 
-  const statusTabs: ApiTabOption[] = [
+  const statusTabs: FilterTabOption[] = [
     { label: '全部', value: 'all' },
     { label: '正常', value: 1 },
     { label: '异常', value: 0 },

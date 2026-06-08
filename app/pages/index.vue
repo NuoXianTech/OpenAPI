@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
-import ApiFilterTabs from '~/components/api/ApiFilterTabs.vue'
+import FilterTabs from '~/components/common/FilterTabs.vue'
 import { useApiList } from '~/composables/api/useApiList'
 
 const {
@@ -73,7 +73,7 @@ useSeoMeta({
               />
               接口状态
             </div>
-            <ApiFilterTabs
+            <FilterTabs
               v-model="currentTab"
               :tabs="statusTabs"
               :enable-collapse="false"
@@ -89,10 +89,12 @@ useSeoMeta({
               />
               接口分类
             </div>
-            <ApiFilterTabs
+            <FilterTabs
               v-model="currentCategory"
               :tabs="categoryTabs"
               :max-visible="10"
+              search-placeholder="搜索分类"
+              empty-text="未找到分类"
               aria-label="API 分类筛选"
             />
           </div>

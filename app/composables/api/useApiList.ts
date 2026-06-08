@@ -1,5 +1,6 @@
 import { usePublicApiList } from './usePublicApiList'
-import type { ApiCatalogItem, ApiCategoryItem, ApiTabOption } from './types'
+import type { ApiCatalogItem, ApiCategoryItem } from './types'
+import type { FilterTabOption } from '~/composables/ui/types'
 
 export function useApiList() {
   const { result, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()
@@ -34,14 +35,14 @@ export function useApiList() {
     return map
   })
 
-  const categoryTabs = computed<ApiTabOption[]>(() => {
+  const categoryTabs = computed<FilterTabOption[]>(() => {
     const referenced = new Set<number>()
     allData.value.forEach((item) => {
       if (typeof item.categoryId === 'number') {
         referenced.add(item.categoryId)
       }
     })
-    const tabs: ApiTabOption[] = [{ label: '全部', value: 'all' }]
+    const tabs: FilterTabOption[] = [{ label: '全部', value: 'all' }]
     categories.value
       .filter(cat => referenced.has(cat.id))
       .forEach((cat) => {

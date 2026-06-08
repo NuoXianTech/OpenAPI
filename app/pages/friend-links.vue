@@ -1,7 +1,8 @@
 <script lang="ts" setup>
 import SearchBar from '~/components/common/SearchBar.vue'
+import FilterTabs from '~/components/common/FilterTabs.vue'
 import LinkList from '~/components/link/LinkList.vue'
-import type { ApiTabOption } from '~/composables/api/types'
+import type { FilterTabOption } from '~/composables/ui/types'
 import { useFriendLinkList } from '~/composables/link/useFriendLinkList'
 
 useHead({ title: '友情链接' })
@@ -14,7 +15,7 @@ useSeoMeta({
 const query = ref('')
 const currentStatus = ref<string | number>('all')
 
-const statusTabs: ApiTabOption[] = [
+const statusTabs: FilterTabOption[] = [
   { label: '全部', value: 'all' },
   { label: '正常', value: 1 },
   { label: '异常', value: 0 }
@@ -44,10 +45,6 @@ const filteredItems = computed(() => {
 })
 
 const isFilteredEmpty = computed(() => !loading.value && !error.value && filteredItems.value.length === 0 && items.value.length > 0)
-
-const retryFetchFriendLinks = async () => {
-  await fetchFriendLinks()
-}
 
 const totalCount = computed(() => items.value.length)
 const activeCount = computed(() => items.value.filter(item => item.isActive).length)
@@ -84,12 +81,10 @@ const visibleCount = computed(() => filteredItems.value.length)
               />
               状态筛选
             </div>
-            <UTabs
+            <FilterTabs
               v-model="currentStatus"
-              :items="statusTabs"
-              color="neutral"
-              variant="link"
-              :content="false"
+              :tabs="statusTabs"
+              :enable-collapse="false"
               aria-label="友情链接状态筛选"
             />
           </div>
@@ -142,7 +137,7 @@ const visibleCount = computed(() => filteredItems.value.length)
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: retryFetchFriendLinks }]"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: fetchFriendLinks }]"
           />
         </section>
 

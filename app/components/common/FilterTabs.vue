@@ -1,16 +1,20 @@
 <script lang="ts" setup>
-import type { ApiTabOption } from '~/composables/api/types'
+import type { FilterTabOption } from '~/composables/ui/types'
 
 const props = withDefaults(defineProps<{
   modelValue: string | number
-  tabs: ApiTabOption[]
+  tabs: FilterTabOption[]
   ariaLabel?: string
   maxVisible?: number
   enableCollapse?: boolean
+  searchPlaceholder?: string
+  emptyText?: string
 }>(), {
   ariaLabel: '筛选标签',
   maxVisible: 8,
-  enableCollapse: true
+  enableCollapse: true,
+  searchPlaceholder: '搜索选项',
+  emptyText: '未找到选项'
 })
 
 const emit = defineEmits<{
@@ -77,16 +81,16 @@ function selectFromPopover(value: string | number) {
 <template>
   <section
     :aria-label="props.ariaLabel"
-    class="api-filter-tabs"
+    class="filter-tabs"
   >
-    <div class="api-filter-tabs__list">
+    <div class="filter-tabs__list">
       <UButton
         v-for="tab in visibleTabs"
         :key="String(tab.value)"
         variant="ghost"
         color="neutral"
         size="sm"
-        class="api-filter-tab cursor-pointer"
+        class="filter-tab cursor-pointer"
         :class="{ 'is-active': isActive(tab.value) }"
         :ui="{ label: 'truncate' }"
         @click="selectTab(tab.value)"
@@ -104,33 +108,33 @@ function selectFromPopover(value: string | number) {
           variant="ghost"
           color="neutral"
           size="sm"
-          class="api-filter-tab api-filter-tab--more cursor-pointer"
+          class="filter-tab filter-tab--more cursor-pointer"
           trailing-icon="i-mdi-chevron-down"
         >
           更多 {{ hiddenCount }}
         </UButton>
 
         <template #content>
-          <div class="api-filter-popover">
-            <div class="api-filter-popover__head">
+          <div class="filter-tabs-popover">
+            <div class="filter-tabs-popover__head">
               <UInput
                 v-model="popoverQuery"
                 icon="i-mdi-magnify"
                 color="neutral"
                 variant="outline"
                 size="sm"
-                placeholder="搜索分类"
+                :placeholder="searchPlaceholder"
                 autocomplete="off"
                 autofocus
               />
             </div>
 
-            <div class="api-filter-popover__list">
+            <div class="filter-tabs-popover__list">
               <button
                 v-for="tab in filteredPopoverTabs"
                 :key="String(tab.value)"
                 type="button"
-                class="api-filter-option"
+                class="filter-tabs-option"
                 :class="{ 'is-active': isActive(tab.value) }"
                 @click="selectFromPopover(tab.value)"
               >
@@ -144,9 +148,9 @@ function selectFromPopover(value: string | number) {
 
               <div
                 v-if="filteredPopoverTabs.length === 0"
-                class="api-filter-empty"
+                class="filter-tabs-empty"
               >
-                未找到分类
+                {{ emptyText }}
               </div>
             </div>
           </div>
@@ -157,11 +161,11 @@ function selectFromPopover(value: string | number) {
 </template>
 
 <style scoped>
-.api-filter-tabs {
+.filter-tabs {
   width: 100%;
 }
 
-.api-filter-tabs__list {
+.filter-tabs__list {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -172,7 +176,7 @@ function selectFromPopover(value: string | number) {
   background: color-mix(in srgb, var(--ui-bg-elevated) 64%, transparent);
 }
 
-.api-filter-tab {
+.filter-tab {
   min-width: 0;
   height: 30px;
   max-width: 160px;
@@ -186,39 +190,39 @@ function selectFromPopover(value: string | number) {
   transition: box-shadow 180ms ease, background-color 180ms ease, color 180ms ease, border-color 180ms ease;
 }
 
-.api-filter-tab:hover {
+.filter-tab:hover {
   border-color: color-mix(in srgb, var(--ui-border) 72%, transparent);
   background: color-mix(in srgb, var(--ui-bg) 72%, transparent);
   color: var(--ui-text);
 }
 
-.api-filter-tab.is-active {
+.filter-tab.is-active {
   border-color: color-mix(in srgb, var(--ui-border-accented) 72%, transparent);
   background: var(--ui-bg);
   color: var(--ui-text);
   box-shadow: 0 1px 2px color-mix(in srgb, black 8%, transparent);
 }
 
-.dark .api-filter-tab.is-active {
+.dark .filter-tab.is-active {
   background: color-mix(in srgb, var(--ui-bg-elevated) 88%, white 4%);
   box-shadow: inset 0 1px 0 color-mix(in srgb, white 7%, transparent);
 }
 
-.api-filter-tab--more {
+.filter-tab--more {
   margin-left: auto;
   color: var(--ui-text-muted);
 }
 
-.api-filter-popover {
+.filter-tabs-popover {
   padding: 8px;
 }
 
-.api-filter-popover__head {
+.filter-tabs-popover__head {
   padding-bottom: 8px;
   border-bottom: 1px solid var(--ui-border);
 }
 
-.api-filter-popover__list {
+.filter-tabs-popover__list {
   display: grid;
   gap: 3px;
   max-height: 280px;
@@ -226,7 +230,7 @@ function selectFromPopover(value: string | number) {
   padding-top: 8px;
 }
 
-.api-filter-option {
+.filter-tabs-option {
   display: flex;
   min-width: 0;
   width: 100%;
@@ -243,18 +247,18 @@ function selectFromPopover(value: string | number) {
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
 }
 
-.api-filter-option:hover {
+.filter-tabs-option:hover {
   border-color: color-mix(in srgb, var(--ui-border) 70%, transparent);
   background: color-mix(in srgb, var(--ui-bg-elevated) 70%, transparent);
   color: var(--ui-text);
 }
 
-.api-filter-option.is-active {
+.filter-tabs-option.is-active {
   background: color-mix(in srgb, var(--ui-primary) 9%, transparent);
   color: var(--ui-text);
 }
 
-.api-filter-empty {
+.filter-tabs-empty {
   padding: 18px 8px;
   color: var(--ui-text-muted);
   font-size: 12px;

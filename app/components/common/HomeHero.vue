@@ -314,7 +314,7 @@ async function handleLogout() {
             <template #value>
               {{ compactCallCount }}
             </template>
-            累计调用
+            调用次数
           </CommonHeroStatCard>
         </div>
       </div>
