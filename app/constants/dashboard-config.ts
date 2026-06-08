@@ -138,7 +138,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
     { label: '生成 API Key', icon: 'i-mdi-key-plus', to: '/user/apikeys' },
     { label: '兑换积分', icon: 'i-mdi-ticket-percent-outline', to: '/user/credits' },
     { label: '查看调用日志', icon: 'i-mdi-history', to: '/user/calls' },
-    { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/settings' }
+    { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/settings/security' }
   ],
   userMenuExtra: () => [[
     { label: '个人资料', icon: 'i-mdi-account-cog-outline', to: '/user/settings' },

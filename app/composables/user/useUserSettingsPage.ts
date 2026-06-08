@@ -122,7 +122,7 @@ export function useUserSettingsPage() {
   }
 
   function startBind(provider: string) {
-    const returnTo = encodeURIComponent('/user/settings')
+    const returnTo = encodeURIComponent('/user/settings/connections')
     window.location.href = `/api/auth/oauth/${provider}/start?mode=bind&returnTo=${returnTo}`
   }
 
