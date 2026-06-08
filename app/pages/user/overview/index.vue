@@ -124,7 +124,7 @@ const balanceStatus = computed<{ label: string, textClass: string, dotClass: str
               </div>
             </div>
 
-            <div class="lg:col-span-2">
+            <div class="lg:col-span-2 min-w-0">
               <div class="rounded-xl bg-elevated/85 border border-default backdrop-blur-sm p-4 space-y-4 shadow-sm">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">

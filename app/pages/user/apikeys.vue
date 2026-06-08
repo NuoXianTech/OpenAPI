@@ -233,12 +233,6 @@ const columns: TableColumn<ApiKeyItem>[] = [
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton
-            icon="i-mdi-plus"
-            @click="openCreate"
-          >
-            生成新 Key
-          </UButton>
           <UserHeaderActions
             :on-refresh="refresh"
             :refreshing="status === 'pending'"
@@ -272,6 +266,15 @@ const columns: TableColumn<ApiKeyItem>[] = [
           </ul>
         </template>
       </UAlert>
+
+      <div class="flex justify-end mb-4">
+        <UButton
+          icon="i-mdi-plus"
+          @click="openCreate"
+        >
+          生成新 Key
+        </UButton>
+      </div>
 
       <DashboardDataTable
         :data="items"
