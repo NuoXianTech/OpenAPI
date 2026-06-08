@@ -12,6 +12,16 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+// drizzle's migrator issues `CREATE SCHEMA/TABLE IF NOT EXISTS` for its own
+// bookkeeping (the `drizzle` schema + `__drizzle_migrations` tracking table).
+// After the first run these already exist, so Postgres returns the harmless
+// 42P06/42P07 NOTICEs on every restart. postgres-js console.logs any unhandled
+// notice, so swallow just these two and surface anything genuinely unexpected.
+function onnotice(notice) {
+  if (notice.code === '42P06' || notice.code === '42P07') return
+  console.log(notice)
+}
+
 function findMigrationsFolder() {
   const candidates = [
     process.env.MIGRATIONS_DIR,
@@ -47,7 +57,7 @@ async function ensureDatabaseExists() {
   const adminUrl = new URL(url)
   adminUrl.pathname = '/postgres'
 
-  const adminClient = postgres(adminUrl.toString(), { max: 1 })
+  const adminClient = postgres(adminUrl.toString(), { max: 1, onnotice })
   try {
     const rows = await adminClient`
       SELECT 1 FROM pg_database WHERE datname = ${databaseName}
@@ -62,7 +72,7 @@ async function ensureDatabaseExists() {
 }
 
 async function migrateOnce() {
-  const client = postgres(databaseUrl, { max: 1 })
+  const client = postgres(databaseUrl, { max: 1, onnotice })
   const db = drizzle(client)
 
   try {
