@@ -119,7 +119,7 @@ function amountClass(amt: number) {
           </UBadge>
           <div>
             <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-              全站积分流水
+              积分日志
             </h2>
             <p class="mt-1 text-sm text-toned">
               用户积分变动、扣费退款与后台调整记录
@@ -217,7 +217,7 @@ function amountClass(amt: number) {
       :loading="loading"
       :page-size="pageSize"
       :total="total"
-      empty-title="暂无积分流水"
+      empty-title="暂无积分日志"
       empty-icon="i-mdi-cash-multiple"
     >
       <template #createdAt-cell="{ row }">

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, users } from '@nuxthub/db/schema'
 
 /**
@@ -355,62 +355,6 @@ export const redemptionService = {
         .offset(off),
       db.select({ value: count() }).from(creditTransactions).where(where)
     ])
-    return { items, total: Number(totalRows[0]?.value || 0) }
-  },
-
-  /** 管理员视角：兑换记录全量查询（reason='redemption_code' 的积分流水），支持按 code / batch / user / username / 时间区间过滤 + 分页。 */
-  async listRedemptions(filters: {
-    codeId?: number
-    userId?: number
-    username?: string
-    batchId?: string
-    startAt?: Date
-    endAt?: Date
-    limit?: number
-    offset?: number
-  } = {}) {
-    const conditions: SQL[] = [eq(creditTransactions.reason, 'redemption_code')]
-    if (typeof filters.codeId === 'number') conditions.push(eq(creditTransactions.codeId, filters.codeId))
-    if (typeof filters.userId === 'number') conditions.push(eq(creditTransactions.userId, filters.userId))
-    if (filters.username) conditions.push(ilike(users.username, `%${filters.username}%`))
-    if (filters.batchId) conditions.push(eq(redemptionCodes.batchId, filters.batchId))
-    if (filters.startAt) conditions.push(gte(creditTransactions.createdAt, filters.startAt))
-    if (filters.endAt) conditions.push(lte(creditTransactions.createdAt, filters.endAt))
-
-    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
-    const where = and(...conditions)
-
-    // code/batchId 优先取兑换码当前值，删码后回退 meta 快照
-    const code = sql<string | null>`coalesce(${redemptionCodes.code}, ${creditTransactions.meta}->>'code')`
-    const batchId = sql<string | null>`coalesce(${redemptionCodes.batchId}, ${creditTransactions.meta}->>'batchId')`
-
-    const [items, totalRows] = await Promise.all([
-      db.select({
-        id: creditTransactions.id,
-        codeId: creditTransactions.codeId,
-        code,
-        batchId,
-        userId: creditTransactions.userId,
-        username: users.username,
-        amount: creditTransactions.amount,
-        ip: creditTransactions.ip,
-        redeemedAt: creditTransactions.createdAt
-      })
-        .from(creditTransactions)
-        .leftJoin(redemptionCodes, eq(redemptionCodes.id, creditTransactions.codeId))
-        .leftJoin(users, eq(users.id, creditTransactions.userId))
-        .where(where)
-        .orderBy(desc(creditTransactions.createdAt))
-        .limit(limit)
-        .offset(offset),
-      db.select({ value: count() })
-        .from(creditTransactions)
-        .leftJoin(redemptionCodes, eq(redemptionCodes.id, creditTransactions.codeId))
-        .leftJoin(users, eq(users.id, creditTransactions.userId))
-        .where(where)
-    ])
-
     return { items, total: Number(totalRows[0]?.value || 0) }
   }
 }

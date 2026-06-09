@@ -44,10 +44,14 @@
 ### 受影响代码
 
 - `server/db/schema/user.ts`：`creditTransactions` 加 `code_id` / `ip` 列 + `credit_transactions_code_idx` 与 `credit_transactions_redemption_user_uq` 索引；删 `redemptionRecords` 表。
-- `server/service/redemptionService.ts`：`redeem` 写入合并（带 `codeId`/`ip`，唯一冲突兜底防重）；`listUserRedemptions` / `listRedemptions` 改查 `credit_transactions(reason='redemption_code')`；删死代码 `listCodeRedemptions`。
-- `server/service/creditService.ts`：`listUserTransactions` 补 `code_id` / `code`，用户积分流水「关联」列对兑换行显示兑换码。
+- `server/service/redemptionService.ts`：`redeem` 写入合并（带 `codeId`/`ip`，唯一冲突兜底防重）；`listUserRedemptions` 改查 `credit_transactions(reason='redemption_code')` 供用户端「最近兑换」；删死代码 `listCodeRedemptions`。
+- `server/service/creditService.ts`：`listUserTransactions` 补 `code_id` / `code`，积分日志「关联」列对兑换行显示兑换码。
 
-API 端点（`/api/user/credits/redemptions`、`/api/admin/redemption-codes/redemptions`）与前端组件返回形状保持不变，无需改动。
+### 后台呈现（随合并一并调整）
+
+- 管理端原「兑换记录」独立页（`/admin/redemption-codes/logs`）及其 `listRedemptions` / `/api/admin/redemption-codes/redemptions` 已删除：兑换情况统一到「积分日志」（用户管理，原"积分流水"页）按 `reason='redemption_code'` 查看；兑换码管理田回单页。
+- 登录日志由"系统设置"移入"用户管理"。
+- 用户端 `/api/user/credits/redemptions`（「最近兑换」）保留，返回形状不变。
 
 ### 迁移
 
