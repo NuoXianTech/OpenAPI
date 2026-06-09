@@ -16,10 +16,6 @@ export interface PublicTurnstileSettings {
   checkin: boolean
 }
 
-export interface PublicAnnouncementSettings {
-  showOnHome: boolean
-}
-
 export type RegistrationMode = 'open' | 'invite' | 'closed'
 
 export interface PublicSiteSettings {
@@ -35,5 +31,4 @@ export interface PublicSiteSettings {
   registrationMode: RegistrationMode | string
   passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
-  announcement: PublicAnnouncementSettings
 }

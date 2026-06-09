@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, lt, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
 import { announcements } from '@nuxthub/db/schema'
 
 export interface AnnouncementInput {
@@ -7,8 +7,6 @@ export interface AnnouncementInput {
   level?: 'info' | 'success' | 'warning' | 'critical'
   isPinned?: boolean
   isEnabled?: boolean
-  startAt?: Date | null
-  endAt?: Date | null
   linkUrl?: string | null
   sortOrder?: number
 }
@@ -20,15 +18,12 @@ export const announcementService = {
       .orderBy(desc(announcements.isPinned), asc(announcements.sortOrder), desc(announcements.createdAt))
   },
 
-  /** 前台公告：生效中（isEnabled + 当前时间落在 startAt/endAt 窗口内） */
+  /** 前台公告：生效中（未删除 + isEnabled） */
   async listPublic() {
-    const now = new Date()
     return db.select().from(announcements)
       .where(and(
         isNull(announcements.deletedAt),
-        eq(announcements.isEnabled, true),
-        or(isNull(announcements.startAt), lt(announcements.startAt, now)),
-        or(isNull(announcements.endAt), gt(announcements.endAt, now))
+        eq(announcements.isEnabled, true)
       ))
       .orderBy(desc(announcements.isPinned), asc(announcements.sortOrder), desc(announcements.createdAt))
   },
@@ -45,8 +40,6 @@ export const announcementService = {
       level: input.level || 'info',
       isPinned: input.isPinned ?? false,
       isEnabled: input.isEnabled ?? true,
-      startAt: input.startAt ?? null,
-      endAt: input.endAt ?? null,
       linkUrl: input.linkUrl ?? null,
       sortOrder: input.sortOrder ?? 0,
       createdBy: actorUserId,
@@ -60,9 +53,6 @@ export const announcementService = {
     if (actorUserId !== undefined) {
       setClause.updatedBy = actorUserId
     }
-    // drizzle 要 Date 类型传入；避免字符串意外通过
-    if (patch.startAt !== undefined) setClause.startAt = patch.startAt
-    if (patch.endAt !== undefined) setClause.endAt = patch.endAt
 
     const res = await db.update(announcements)
       .set(setClause)

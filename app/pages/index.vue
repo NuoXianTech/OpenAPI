@@ -20,7 +20,6 @@ const {
 } = useApiList()
 
 const { settings } = useSiteSettings()
-const announcementSettings = computed(() => settings.value.announcement)
 
 const visibleCount = computed(() => filteredItems.value.length)
 
@@ -181,9 +180,6 @@ useSeoMeta({
       </Transition>
     </main>
     <CommonAppFooter />
-    <LazyCommonAnnouncementPopup
-      v-if="announcementSettings?.showOnHome"
-      storage-scope="home"
-    />
+    <LazyCommonAnnouncementPopup />
   </div>
 </template>

@@ -13,8 +13,6 @@ interface Announcement {
   level: 'info' | 'success' | 'warning' | 'critical'
   isPinned: boolean
   isEnabled: boolean
-  startAt: string | null
-  endAt: string | null
   linkUrl: string | null
   sortOrder: number
   createdAt: string
@@ -23,35 +21,6 @@ interface Announcement {
 
 const toast = useToast()
 const confirm = useConfirmDialog()
-const { settings, refresh: refreshSiteSettings } = useSiteSettings()
-
-const showOnHome = ref(settings.value.announcement?.showOnHome ?? false)
-const showOnHomeSaving = ref(false)
-
-watch(() => settings.value.announcement?.showOnHome, (val) => {
-  showOnHome.value = !!val
-})
-
-async function toggleShowOnHome(val: boolean) {
-  const prev = showOnHome.value
-  showOnHome.value = val
-  showOnHomeSaving.value = true
-  try {
-    const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', {
-      method: 'PUT',
-      body: { announcementShowOnHome: val }
-    })
-    const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
-    if (cached.data.value) cached.data.value = res.public
-    await refreshSiteSettings()
-    toast.add({ title: val ? '已开启首页公告' : '已关闭首页公告', color: 'success' })
-  } catch (err: unknown) {
-    showOnHome.value = prev
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
-  } finally {
-    showOnHomeSaving.value = false
-  }
-}
 
 const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
   default: () => []
@@ -115,7 +84,6 @@ function formatDate(iso: string | null) {
 
 const columns: TableColumn<Announcement>[] = [
   { accessorKey: 'title', header: '标题' },
-  { id: 'window', header: '生效窗口' },
   { accessorKey: 'sortOrder', header: '排序' },
   { id: 'isEnabled', header: '启用' },
   { id: 'isPinned', header: '置顶' },
@@ -126,33 +94,6 @@ const columns: TableColumn<Announcement>[] = [
 
 <template>
   <div class="space-y-6">
-    <UCard>
-      <div class="flex items-start justify-between gap-4 flex-wrap">
-        <div class="flex-1 min-w-[260px]">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-bullhorn-outline"
-              class="size-5 text-muted"
-            />
-            <h3 class="text-lg font-semibold text-highlighted">
-              首页公告弹窗
-            </h3>
-          </div>
-          <p class="text-xs text-muted mt-2">
-            开启后，访客首次进入网站首页会弹出当前生效的公告（最新一条默认展开，旧公告收起）。
-            管理后台已通过顶部铃铛常驻入口展示公告，无需额外开关。
-          </p>
-        </div>
-        <USwitch
-          :model-value="showOnHome"
-          :loading="showOnHomeSaving"
-          :disabled="showOnHomeSaving"
-          label="在网站首页弹出公告"
-          @update:model-value="toggleShowOnHome"
-        />
-      </div>
-    </UCard>
-
     <div class="flex items-center justify-end gap-2">
       <UButton
         icon="i-mdi-plus"
@@ -198,12 +139,6 @@ const columns: TableColumn<Announcement>[] = [
           >
             置顶
           </UBadge>
-        </div>
-      </template>
-      <template #window-cell="{ row }">
-        <div class="text-xs text-muted">
-          <div>开始：{{ formatDate(row.original.startAt) }}</div>
-          <div>结束：{{ formatDate(row.original.endAt) }}</div>
         </div>
       </template>
       <template #isEnabled-cell="{ row }">

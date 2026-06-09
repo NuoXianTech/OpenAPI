@@ -4,8 +4,8 @@ import { ANNOUNCEMENT_LEVEL_META as levelMeta } from '#shared/types/message-leve
  * 公告弹窗：自动加载生效中的公告，按 isPinned > sortOrder > createdAt 排序，
  * 默认展开第一条（"最新"），其余收起。
  *
- * 弹出时机：组件挂载且存在比 localStorage 记录 lastSeenId 更新的公告时自动 open；
- * 关闭后将当前最新 id 写回，避免重复打扰。
+ * 弹出时机：组件挂载且存在生效公告时自动 open。不记忆已读状态，
+ * 每次进入首页都会展示。
  */
 
 interface Announcement {
@@ -15,20 +15,11 @@ interface Announcement {
   level: 'info' | 'success' | 'warning' | 'critical'
   isPinned: boolean
   isEnabled: boolean
-  startAt: string | null
-  endAt: string | null
   linkUrl: string | null
   sortOrder: number
   createdAt: string
   updatedAt: string
 }
-
-const props = defineProps<{
-  /** localStorage key 区分场景，避免首页和后台共用一个 lastSeenId */
-  storageScope: string
-}>()
-
-const STORAGE_KEY = computed(() => `announcement:lastSeenId:${props.storageScope}`)
 
 const open = ref(false)
 const expandedIds = ref<string[]>([])
@@ -54,44 +45,16 @@ const accordionItems = computed(() => items.value.map(a => ({
   raw: a
 })))
 
-function readLastSeenId(): number | null {
-  if (!import.meta.client) return null
-  const raw = window.localStorage.getItem(STORAGE_KEY.value)
-  if (!raw) return null
-  const parsed = Number(raw)
-  return Number.isFinite(parsed) ? parsed : null
-}
-
-function persistLastSeenId(id: number) {
-  if (!import.meta.client) return
-  window.localStorage.setItem(STORAGE_KEY.value, String(id))
-}
-
-function maybeAutoOpen() {
-  if (items.value.length === 0) return
-  const lastSeen = readLastSeenId()
-  if (lastSeen === latestId.value) return
+// 数据为 lazy 拉取：挂载时若缓存已有公告立即弹，否则等数据到来再弹。
+// 不持久化已读状态，每次进入首页都会展示。
+function openIfHasAnnouncements() {
+  if (!import.meta.client || items.value.length === 0) return
   expandedIds.value = latestId.value !== null ? [String(latestId.value)] : []
   open.value = true
 }
 
-watch(() => open.value, (val) => {
-  if (!val && latestId.value !== null) persistLastSeenId(latestId.value)
-})
-
-// data 是 lazy 拉取的，等到来后再决定是否打开
-watch(items, () => {
-  if (import.meta.client) maybeAutoOpen()
-}, { immediate: false })
-
-defineExpose({
-  /** 外部按钮可重新弹出 */
-  reopen: () => {
-    if (latestId.value === null) return
-    expandedIds.value = [String(latestId.value)]
-    open.value = true
-  }
-})
+onMounted(openIfHasAnnouncements)
+watch(items, openIfHasAnnouncements)
 
 function formatDate(iso: string) {
   return formatDateTime(iso)

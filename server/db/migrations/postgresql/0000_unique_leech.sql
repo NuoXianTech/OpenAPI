@@ -5,8 +5,6 @@ CREATE TABLE "announcements" (
 	"level" varchar(20) DEFAULT 'info' NOT NULL,
 	"is_pinned" boolean DEFAULT false NOT NULL,
 	"is_enabled" boolean DEFAULT true NOT NULL,
-	"start_at" timestamp with time zone,
-	"end_at" timestamp with time zone,
 	"link_url" varchar(1000),
 	"sort_order" integer DEFAULT 0 NOT NULL,
 	"created_by" integer,
@@ -295,7 +293,6 @@ CREATE TABLE "site_settings" (
 	"turnstile_admin_login_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_password_reset_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_checkin_enabled" boolean DEFAULT false NOT NULL,
-	"announcement_show_on_home" boolean DEFAULT true NOT NULL,
 	"checkin_enabled" boolean DEFAULT true NOT NULL,
 	"checkin_cooldown_mode" varchar(20) DEFAULT 'hours' NOT NULL,
 	"checkin_refresh_hours" integer DEFAULT 24 NOT NULL,
@@ -343,7 +340,6 @@ ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_user_id_users_id_f
 ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "redemption_records" ADD CONSTRAINT "redemption_records_code_id_redemption_codes_id_fk" FOREIGN KEY ("code_id") REFERENCES "public"."redemption_codes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "announcements_enabled_pin_sort_idx" ON "announcements" USING btree ("is_enabled","is_pinned","sort_order");--> statement-breakpoint
-CREATE INDEX "announcements_window_idx" ON "announcements" USING btree ("start_at","end_at");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_call_stats_api_id_stat_date_uq" ON "api_call_stats" USING btree ("api_id","stat_date");--> statement-breakpoint
 CREATE INDEX "api_call_stats_stat_date_idx" ON "api_call_stats" USING btree ("stat_date");--> statement-breakpoint
 CREATE INDEX "api_calls_created_at_idx" ON "api_calls" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint

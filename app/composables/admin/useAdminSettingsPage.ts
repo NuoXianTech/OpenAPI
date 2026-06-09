@@ -38,7 +38,6 @@ export interface AdminSettingsForm {
   turnstileAdminLoginEnabled: boolean
   turnstilePasswordResetEnabled: boolean
   turnstileCheckinEnabled: boolean
-  announcementShowOnHome: boolean
   checkinEnabled: boolean
   checkinCooldownMode: 'hours' | 'fixed_time'
   checkinRefreshHours: number
@@ -87,7 +86,6 @@ function defaultForm(): AdminSettingsForm {
     turnstileRegisterEnabled: false,
     turnstileAdminLoginEnabled: false,
     turnstilePasswordResetEnabled: false,
-    announcementShowOnHome: true,
     checkinEnabled: true,
     turnstileCheckinEnabled: false,
     checkinCooldownMode: 'hours',
@@ -144,7 +142,6 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
     turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
     turnstileCheckinEnabled: val.turnstileCheckinEnabled ?? d.turnstileCheckinEnabled,
-    announcementShowOnHome: val.announcementShowOnHome ?? d.announcementShowOnHome,
     checkinEnabled: val.checkinEnabled ?? d.checkinEnabled,
     checkinCooldownMode: val.checkinCooldownMode === 'fixed_time' ? 'fixed_time' : 'hours',
     checkinRefreshHours: val.checkinRefreshHours ?? d.checkinRefreshHours,

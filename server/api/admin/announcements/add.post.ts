@@ -16,8 +16,6 @@ export default defineEventHandler(async (event: H3Event) => {
     level: body.level ?? 'info',
     isPinned: body.isPinned ?? false,
     isEnabled: body.isEnabled ?? true,
-    startAt: body.startAt ?? null,
-    endAt: body.endAt ?? null,
     linkUrl: body.linkUrl?.trim() || null,
     sortOrder: body.sortOrder ?? 0
   }, admin.id || null)

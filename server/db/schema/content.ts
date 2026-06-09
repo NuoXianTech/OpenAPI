@@ -44,8 +44,6 @@ export const announcements = pgTable('announcements', {
   level: varchar('level', { length: 20 }).notNull().default('info'), // info / success / warning / critical
   isPinned: boolean('is_pinned').notNull().default(false),
   isEnabled: boolean('is_enabled').notNull().default(true),
-  startAt: timestamp('start_at', { withTimezone: true }),
-  endAt: timestamp('end_at', { withTimezone: true }),
   linkUrl: varchar('link_url', { length: 1000 }),
   sortOrder: integer('sort_order').notNull().default(0),
   createdBy: integer('created_by'), // 操作者快照，null=admin
@@ -54,8 +52,7 @@ export const announcements = pgTable('announcements', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder),
-  index('announcements_window_idx').on(table.startAt, table.endAt)
+  index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder)
 ])
 
 // ------------------------------------------------------------------

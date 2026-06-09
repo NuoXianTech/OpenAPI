@@ -12,7 +12,7 @@ export const messageIdSchema = z.object({
 
 /**
  * 把 string/number/Date/null/空串 解析成 Date | null；undefined 透传。
- * 用于 announcements 等 startAt/endAt 字段。
+ * 用于 bannedUntil / expiresAt 等可空日期字段。
  */
 export const optionalDate = z.preprocess(
   (v) => {

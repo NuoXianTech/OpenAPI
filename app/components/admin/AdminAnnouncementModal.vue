@@ -8,8 +8,6 @@ interface Announcement {
   level: 'info' | 'success' | 'warning' | 'critical'
   isPinned: boolean
   isEnabled: boolean
-  startAt: string | null
-  endAt: string | null
   linkUrl: string | null
   sortOrder: number
 }
@@ -25,8 +23,6 @@ const form = reactive({
   level: 'info' as Announcement['level'],
   isPinned: false,
   isEnabled: true,
-  startAt: '',
-  endAt: '',
   linkUrl: '',
   sortOrder: 0
 })
@@ -41,15 +37,6 @@ const levelOptions = [
   { label: '紧急 (critical)', value: 'critical' }
 ]
 
-function toLocalInput(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  // datetime-local 需要 YYYY-MM-DDTHH:MM
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
 watch(() => [props.item, open.value], () => {
   if (!open.value) return
   if (props.item) {
@@ -59,8 +46,6 @@ watch(() => [props.item, open.value], () => {
       level: props.item.level,
       isPinned: props.item.isPinned,
       isEnabled: props.item.isEnabled,
-      startAt: toLocalInput(props.item.startAt),
-      endAt: toLocalInput(props.item.endAt),
       linkUrl: props.item.linkUrl || '',
       sortOrder: props.item.sortOrder
     })
@@ -71,8 +56,6 @@ watch(() => [props.item, open.value], () => {
       level: 'info',
       isPinned: false,
       isEnabled: true,
-      startAt: '',
-      endAt: '',
       linkUrl: '',
       sortOrder: 0
     })
@@ -92,8 +75,6 @@ async function onSubmit() {
       level: form.level,
       isPinned: form.isPinned,
       isEnabled: form.isEnabled,
-      startAt: form.startAt ? new Date(form.startAt).toISOString() : null,
-      endAt: form.endAt ? new Date(form.endAt).toISOString() : null,
       linkUrl: form.linkUrl.trim() || null,
       sortOrder: Number(form.sortOrder) || 0
     }
@@ -152,21 +133,6 @@ async function onSubmit() {
             placeholder="支持纯文本，换行将保留"
           />
         </UFormField>
-
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField label="开始时间（可选）">
-            <UInput
-              v-model="form.startAt"
-              type="datetime-local"
-            />
-          </UFormField>
-          <UFormField label="结束时间（可选）">
-            <UInput
-              v-model="form.endAt"
-              type="datetime-local"
-            />
-          </UFormField>
-        </div>
 
         <div class="grid grid-cols-2 gap-3">
           <UFormField label="详情链接（可选）">

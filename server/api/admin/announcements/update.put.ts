@@ -17,9 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (body.level !== undefined) patch.level = body.level
   if (body.isPinned !== undefined) patch.isPinned = body.isPinned
   if (body.isEnabled !== undefined) patch.isEnabled = body.isEnabled
-  if (body.startAt !== undefined) patch.startAt = body.startAt
-  if (body.endAt !== undefined) patch.endAt = body.endAt
-  if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl.trim() || null
+  if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl?.trim() || null
   if (body.sortOrder !== undefined) patch.sortOrder = body.sortOrder
 
   const updated = await announcementService.update(id, patch, admin.id || null)

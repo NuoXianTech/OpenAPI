@@ -1,5 +1,5 @@
 {
-  "id": "ce461837-0963-403e-b57c-d6cbebfe2249",
+  "id": "f6fbcfbc-a66d-4281-90e5-0c66a066e421",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -46,18 +46,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
-        },
-        "start_at": {
-          "name": "start_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "end_at": {
-          "name": "end_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         },
         "link_url": {
           "name": "link_url",
@@ -123,27 +111,6 @@
             },
             {
               "expression": "sort_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "announcements_window_idx": {
-          "name": "announcements_window_idx",
-          "columns": [
-            {
-              "expression": "start_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "end_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2941,13 +2908,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "announcement_show_on_home": {
-          "name": "announcement_show_on_home",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
         },
         "checkin_enabled": {
           "name": "checkin_enabled",

@@ -1,6 +1,5 @@
 import { eq } from 'drizzle-orm'
 import type {
-  PublicAnnouncementSettings,
   PublicSiteSettings,
   PublicTurnstileSettings
 } from '#shared/types/site-settings'
@@ -9,7 +8,7 @@ import { siteSettings } from '~~/server/db/schema/system'
 
 const DEFAULT_SCOPE = 'default'
 
-export type { PublicAnnouncementSettings, PublicSiteSettings, PublicTurnstileSettings }
+export type { PublicSiteSettings, PublicTurnstileSettings }
 
 export interface SiteSettingsUpsertInput {
   siteUrl?: string
@@ -57,7 +56,6 @@ export interface SiteSettingsUpsertInput {
   turnstileAdminLoginEnabled?: boolean
   turnstilePasswordResetEnabled?: boolean
   turnstileCheckinEnabled?: boolean
-  announcementShowOnHome?: boolean
   checkinEnabled?: boolean
   checkinCooldownMode?: 'hours' | 'fixed_time'
   checkinRefreshHours?: number
@@ -178,10 +176,7 @@ export const siteSettingsService = {
       privacyUrl: settings.privacyUrl || null,
       registrationMode: settings.registrationMode,
       passwordResetEnabled: settings.passwordResetEnabled,
-      turnstile: toPublicTurnstile(settings),
-      announcement: {
-        showOnHome: settings.announcementShowOnHome
-      }
+      turnstile: toPublicTurnstile(settings)
     }
   },
 

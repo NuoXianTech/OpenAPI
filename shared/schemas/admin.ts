@@ -253,9 +253,7 @@ export const adminCreateAnnouncementSchema = z.object({
   level: announcementLevel.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
-  startAt: optionalDate,
-  endAt: optionalDate,
-  linkUrl: z.string().optional(),
+  linkUrl: z.string().nullable().optional(),
   sortOrder: z.coerce.number().int().optional()
 })
 
@@ -266,9 +264,7 @@ export const adminUpdateAnnouncementSchema = z.object({
   level: announcementLevel.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
-  startAt: optionalDate,
-  endAt: optionalDate,
-  linkUrl: z.string().optional(),
+  linkUrl: z.string().nullable().optional(),
   sortOrder: z.coerce.number().int().optional()
 })
 
@@ -404,7 +400,6 @@ export const adminUpdateSiteSettingsSchema = z.object({
   turnstileAdminLoginEnabled: z.boolean().optional(),
   turnstilePasswordResetEnabled: z.boolean().optional(),
   turnstileCheckinEnabled: z.boolean().optional(),
-  announcementShowOnHome: z.boolean().optional(),
   checkinEnabled: z.boolean().optional(),
   checkinCooldownMode: z.enum(['hours', 'fixed_time'], 'checkinCooldownMode must be hours / fixed_time').optional(),
   checkinRefreshHours: z.coerce.number().int().min(1, 'checkinRefreshHours must be >= 1').max(24 * 30, 'checkinRefreshHours is too large').optional(),

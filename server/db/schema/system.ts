@@ -95,9 +95,6 @@ export const siteSettings = pgTable('site_settings', {
   // 每日签到页是否要求 Turnstile（弹窗内验证）
   turnstileCheckinEnabled: boolean('turnstile_checkin_enabled').notNull().default(false),
 
-  // 首页公告弹窗开关（默认关闭，避免打扰；后台用通知铃铛常驻入口，无需开关）
-  announcementShowOnHome: boolean('announcement_show_on_home').notNull().default(true),
-
   // ----------------------------------------------------------------
   // 每日签到
   // checkinCooldownMode: 'hours' = 距上次签到 N 小时后才能再签；
