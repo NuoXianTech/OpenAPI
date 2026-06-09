@@ -350,6 +350,8 @@ export const creditService = {
         apiName: apis.name,
         apiPath: apis.apiPath,
         apiCallId: creditTransactions.apiCallId,
+        codeId: creditTransactions.codeId,
+        code: sql<string | null>`${creditTransactions.meta}->>'code'`, // 兑换码 chip：meta 快照
         operatorName: creditTransactions.operatorName,
         remark: creditTransactions.remark,
         createdAt: creditTransactions.createdAt

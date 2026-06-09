@@ -20,6 +20,8 @@ export interface TransactionRow {
   apiName: string | null
   apiPath: string | null
   apiCallId: number | null
+  codeId: number | null
+  code: string | null
   operatorName: string | null
   remark: string | null
   createdAt: string

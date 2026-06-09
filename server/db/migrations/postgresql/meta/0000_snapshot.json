@@ -1,5 +1,5 @@
 {
-  "id": "f6fbcfbc-a66d-4281-90e5-0c66a066e421",
+  "id": "783cbb97-d98b-44ea-a912-c66ab0055ed7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1196,6 +1196,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "code_id": {
+          "name": "code_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "operator_id": {
           "name": "operator_id",
           "type": "integer",
@@ -1205,6 +1211,12 @@
         "operator_name": {
           "name": "operator_name",
           "type": "varchar(140)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "varchar(45)",
           "primaryKey": false,
           "notNull": false
         },
@@ -1295,6 +1307,21 @@
           "method": "btree",
           "with": {}
         },
+        "credit_transactions_code_idx": {
+          "name": "credit_transactions_code_idx",
+          "columns": [
+            {
+              "expression": "code_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "credit_transactions_api_call_reason_uq": {
           "name": "credit_transactions_api_call_reason_uq",
           "columns": [
@@ -1313,6 +1340,28 @@
           ],
           "isUnique": true,
           "where": "\"credit_transactions\".\"api_call_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "credit_transactions_redemption_user_uq": {
+          "name": "credit_transactions_redemption_user_uq",
+          "columns": [
+            {
+              "expression": "code_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"credit_transactions\".\"reason\" = 'redemption_code' AND \"credit_transactions\".\"code_id\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2463,134 +2512,6 @@
           ]
         }
       },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.redemption_records": {
-      "name": "redemption_records",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "code_id": {
-          "name": "code_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "transaction_id": {
-          "name": "transaction_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ip": {
-          "name": "ip",
-          "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "redeemed_at": {
-          "name": "redeemed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "redemption_records_code_user_uq": {
-          "name": "redemption_records_code_user_uq",
-          "columns": [
-            {
-              "expression": "code_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "redemption_records_user_redeemed_idx": {
-          "name": "redemption_records_user_redeemed_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "redeemed_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "redemption_records_redeemed_at_idx": {
-          "name": "redemption_records_redeemed_at_idx",
-          "columns": [
-            {
-              "expression": "redeemed_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "redemption_records_code_id_redemption_codes_id_fk": {
-          "name": "redemption_records_code_id_redemption_codes_id_fk",
-          "tableFrom": "redemption_records",
-          "tableTo": "redemption_codes",
-          "columnsFrom": [
-            "code_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

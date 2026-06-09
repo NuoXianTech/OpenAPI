@@ -7,7 +7,7 @@ import { siteSettingsService } from './siteSettingsService'
 //   - oauthAccounts / apiKeys / notificationDeliveries / loginLogs
 //     全部 cascade 一并清除（账号级数据）
 //   - pendingCharges cascade 清除（待重试扣费在用户消失后无意义）
-// 日志类表（creditTransactions / apiCalls / operationLogs / redemptionRecords）
+// 日志类表（creditTransactions / apiCalls / operationLogs）
 // 已通过解除外键约束保留为整数快照，不会随用户消失。
 export const usersService = {
   async list(opts: { keyword?: string } = {}) {
@@ -87,7 +87,7 @@ export const usersService = {
   /**
    * 硬删除：物理 DELETE，FK cascade 自动清理 apiKeys / oauthAccounts /
    * notificationDeliveries / loginLogs / pendingCharges。
-   * creditTransactions / apiCalls / operationLogs / redemptionRecords 已解除 FK，
+   * creditTransactions / apiCalls / operationLogs 已解除 FK，
    * 自动以 userId 整数快照保留历史。
    */
   async deleteUser(id: number) {

@@ -17,8 +17,8 @@ import { sql } from 'drizzle-orm'
 // 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理
 // oauthAccounts / apiKeys / notificationDeliveries / loginLogs 等"账号级"附属表。
 //
-// 与之相对，"审计型"日志表（creditTransactions / apiCalls / operationLogs /
-// redemptionRecords）通过解除外键约束，仅以 userId 整数快照保存历史归属，
+// 与之相对，"审计型"日志表（creditTransactions / apiCalls / operationLogs）
+// 通过解除外键约束，仅以 userId 整数快照保存历史归属，
 // 不会随用户硬删消失。PostgreSQL 的 serial 序列不会回收已用过的 id，因此
 // 硬删后 userId 值在全局范围内永远是稳定唯一的快照。
 // ------------------------------------------------------------------
@@ -60,7 +60,8 @@ export const users = pgTable('users', {
 //   - API 调用扣费：reason='api_charge'，apiCallId 关联具体调用
 //   - 调用失败退款：reason='api_refund'
 //   - 注册赠送：reason='signup_bonus'，金额取自 siteSettings.defaultRegisterCredits
-//   - 兑换码兑换：reason='redemption_code'，meta.codeId 关联兑换码
+//   - 兑换码兑换：reason='redemption_code'，codeId 关联兑换码、ip 记录兑换来源；
+//     (codeId, userId) 部分唯一索引保证同一用户对同一码只兑换一次（接管原 redemptionRecords 职责）
 //
 // userId 是 users.id 的整数快照，**无外键约束**。用户硬删后该字段保留，
 // 但无法 join 到 users 表。读取端把它当作"曾经存在的用户 id"看待。
@@ -74,8 +75,10 @@ export const creditTransactions = pgTable('credit_transactions', {
   reason: varchar('reason', { length: 50 }).notNull(),
   apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
   apiCallId: integer('api_call_id'), // 关联 apiCalls.id 快照
+  codeId: integer('code_id'), // 仅 reason=redemption_code 有值，关联 redemptionCodes.id 快照（无 FK）
   operatorId: integer('operator_id'), // null = admin 内置账号；整数 = 实际操作的用户 id 快照
   operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照（admin 名取自 .env）
+  ip: varchar('ip', { length: 45 }), // 操作来源 IP 快照；目前仅兑换码兑换写入，其余 reason 留 null
   remark: varchar('remark', { length: 500 }),
   meta: jsonb('meta').$type<Record<string, unknown>>(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
@@ -84,18 +87,26 @@ export const creditTransactions = pgTable('credit_transactions', {
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('credit_transactions_reason_idx').on(table.reason),
   index('credit_transactions_api_call_idx').on(table.apiCallId),
+  index('credit_transactions_code_idx').on(table.codeId),
   // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一。
   // 即使补偿队列双调度，第二次 INSERT 被这条索引拒绝、事务回滚，余额不会被双扣。
   uniqueIndex('credit_transactions_api_call_reason_uq')
     .on(table.apiCallId, table.reason)
-    .where(sql`${table.apiCallId} IS NOT NULL`)
+    .where(sql`${table.apiCallId} IS NOT NULL`),
+  // 防止同一用户重复兑换同一兑换码：(codeId, userId) 在兑换行上唯一。
+  // 接管原 redemptionRecords 的防重职责；并发重复兑换时第二条 INSERT 被拒、事务回滚，
+  // usedCount 递增一并撤销。仅约束兑换行，不波及 api_charge 等其它 reason。
+  uniqueIndex('credit_transactions_redemption_user_uq')
+    .on(table.codeId, table.userId)
+    .where(sql`${table.reason} = 'redemption_code' AND ${table.codeId} IS NOT NULL`)
 ])
 
 // ------------------------------------------------------------------
 // Redemption Codes（兑换码 · admin 生成）
 //
 // 单次性（maxUses=1）或多次性（maxUses>1，被多个用户共享）。
-// 同一用户对同一兑换码只能兑换一次，由 redemptionRecords 唯一索引保证。
+// 同一用户对同一兑换码只能兑换一次，由 creditTransactions 上
+// (codeId, userId) where reason='redemption_code' 部分唯一索引保证。
 // 并发：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING
 // 做条件递增，避免超额兑换。
 // ------------------------------------------------------------------
@@ -116,24 +127,4 @@ export const redemptionCodes = pgTable('redemption_codes', {
   index('redemption_codes_batch_idx').on(table.batchId),
   index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt),
   index('redemption_codes_created_at_idx').on(table.createdAt.desc())
-])
-
-// ------------------------------------------------------------------
-// Redemption Records（兑换记录 · 审计不可变）
-//
-// userId 是 users.id 快照，无外键约束。用户硬删后兑换历史保留。
-// (codeId, userId) 唯一索引保证同一用户对同一码只能兑换一次。
-// ------------------------------------------------------------------
-export const redemptionRecords = pgTable('redemption_records', {
-  id: serial('id').primaryKey(),
-  codeId: integer('code_id').notNull().references(() => redemptionCodes.id, { onDelete: 'cascade' }),
-  userId: integer('user_id').notNull(), // users.id 快照，无 FK
-  amount: integer('amount').notNull(),
-  transactionId: integer('transaction_id'), // 关联 creditTransactions.id 快照
-  ip: varchar('ip', { length: 45 }),
-  redeemedAt: timestamp('redeemed_at', { withTimezone: true }).notNull().defaultNow()
-}, table => [
-  uniqueIndex('redemption_records_code_user_uq').on(table.codeId, table.userId),
-  index('redemption_records_user_redeemed_idx').on(table.userId, table.redeemedAt),
-  index('redemption_records_redeemed_at_idx').on(table.redeemedAt.desc())
 ])

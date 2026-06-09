@@ -33,10 +33,9 @@
 
 | 表 | `userId` 字段语义 |
 | --- | --- |
-| `credit_transactions` | 用户 id 快照，无 FK；用户删除后行保留 |
+| `credit_transactions` | 用户 id 快照，无 FK；用户删除后行保留（兑换记录已并入，见 `docs/schema-changes-2026-06.md`） |
 | `api_calls` | 用户 id 快照，无 FK；同时 `apiKeyId` / `apiKeyName` 也是快照 |
 | `operation_logs` | 用户 id 快照，无 FK；`null=admin`，整数=用户 |
-| `redemption_records` | 用户 id 快照，无 FK；用户删除后兑换记录保留 |
 
 ### 1.3 管理员 = `null`
 

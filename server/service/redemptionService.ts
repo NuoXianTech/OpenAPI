@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, ilike, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
-import { creditTransactions, redemptionCodes, redemptionRecords, users } from '@nuxthub/db/schema'
+import { creditTransactions, redemptionCodes, users } from '@nuxthub/db/schema'
 
 /**
  * 兑换码服务
@@ -240,8 +240,7 @@ export const redemptionService = {
    *   2. UPDATE redemption_codes SET used_count = used_count + 1 WHERE used_count < max_uses AND ...
    *      → 失败说明并发竞争已抢光，抛 USED_UP
    *   3. UPDATE users SET credits = credits + amount RETURNING new credits
-   *   4. INSERT credit_transactions
-   *   5. INSERT redemption_records（codeId+userId 唯一索引兜底）
+   *   4. INSERT credit_transactions（含 codeId/ip 快照；(codeId,userId) 部分唯一索引兜底重复兑换）
    */
   async redeem(input: RedeemInput) {
     const code = normalizeCode(input.code)
@@ -258,10 +257,15 @@ export const redemptionService = {
       throw createRedeemError('USED_UP', '兑换码已被领完')
     }
 
-    // 同一用户重复兑换：用 (codeId, userId) 唯一索引兜底；这里先做一次显式查询给出更友好错误
-    const dup = await db.select({ id: redemptionRecords.id })
-      .from(redemptionRecords)
-      .where(and(eq(redemptionRecords.codeId, target.id), eq(redemptionRecords.userId, input.userId)))
+    // 同一用户重复兑换：用 creditTransactions (codeId, userId) 部分唯一索引兜底；
+    // 这里先做一次显式查询给出更友好错误。
+    const dup = await db.select({ id: creditTransactions.id })
+      .from(creditTransactions)
+      .where(and(
+        eq(creditTransactions.codeId, target.id),
+        eq(creditTransactions.userId, input.userId),
+        eq(creditTransactions.reason, 'redemption_code')
+      ))
       .limit(1)
     if (dup[0]) throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码')
 
@@ -292,35 +296,28 @@ export const redemptionService = {
       }
       const balanceAfter = Number(userUpdated[0].credits)
 
-      // 写流水
-      const txInserted = await tx.insert(creditTransactions).values({
-        userId: input.userId,
-        amount: grantAmount,
-        balanceAfter,
-        reason: 'redemption_code',
-        apiId: null,
-        apiCallId: null,
-        operatorId: null,
-        operatorName: null,
-        remark: target.note || null,
-        meta: {
-          codeId: target.id,
-          code: target.code,
-          batchId: target.batchId
-        }
-      }).returning({ id: creditTransactions.id })
-
-      // 写兑换记录（codeId+userId 唯一索引）
+      // 写流水（兑换记录已并入 credit_transactions）：codeId 关联兑换码、ip 记录来源，
+      // meta 保留 code/batchId 快照以便删码后仍可显示。
+      // (codeId, userId) 部分唯一索引兜底重复兑换 —— 冲突即事务回滚，usedCount 与积分一并撤销。
       try {
-        await tx.insert(redemptionRecords).values({
-          codeId: target.id,
+        await tx.insert(creditTransactions).values({
           userId: input.userId,
           amount: grantAmount,
-          transactionId: txInserted[0]?.id ?? null,
-          ip: input.ip ?? null
+          balanceAfter,
+          reason: 'redemption_code',
+          apiId: null,
+          apiCallId: null,
+          codeId: target.id,
+          operatorId: null,
+          operatorName: null,
+          ip: input.ip ?? null,
+          remark: target.note || null,
+          meta: {
+            code: target.code,
+            batchId: target.batchId
+          }
         })
       } catch (err) {
-        // 唯一索引冲突 → 让事务回滚（usedCount 与积分都会撤销）
         throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
       }
 
@@ -334,48 +331,34 @@ export const redemptionService = {
     })
   },
 
-  /** 用户视角：自己的兑换记录 */
+  /** 用户视角：自己的兑换记录（即 reason='redemption_code' 的积分流水） */
   async listUserRedemptions(userId: number, limit: number = 50, offset: number = 0) {
     const lim = Math.min(Math.max(Math.trunc(limit), 1), 200)
     const off = Math.max(Math.trunc(offset), 0)
+    const where = and(
+      eq(creditTransactions.userId, userId),
+      eq(creditTransactions.reason, 'redemption_code')
+    )
     const [items, totalRows] = await Promise.all([
       db.select({
-        id: redemptionRecords.id,
-        codeId: redemptionRecords.codeId,
-        code: redemptionCodes.code,
-        amount: redemptionRecords.amount,
-        transactionId: redemptionRecords.transactionId,
-        redeemedAt: redemptionRecords.redeemedAt,
-        note: redemptionCodes.note
+        id: creditTransactions.id,
+        codeId: creditTransactions.codeId,
+        code: sql<string | null>`${creditTransactions.meta}->>'code'`, // meta 快照，删码后仍可显示
+        amount: creditTransactions.amount,
+        redeemedAt: creditTransactions.createdAt,
+        note: creditTransactions.remark // redeem 时 remark = 兑换码 note 快照
       })
-        .from(redemptionRecords)
-        .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
-        .where(eq(redemptionRecords.userId, userId))
-        .orderBy(desc(redemptionRecords.redeemedAt))
+        .from(creditTransactions)
+        .where(where)
+        .orderBy(desc(creditTransactions.createdAt))
         .limit(lim)
         .offset(off),
-      db.select({ value: count() }).from(redemptionRecords).where(eq(redemptionRecords.userId, userId))
+      db.select({ value: count() }).from(creditTransactions).where(where)
     ])
     return { items, total: Number(totalRows[0]?.value || 0) }
   },
 
-  /** 管理员视角：某个 code 的所有兑换记录 */
-  async listCodeRedemptions(codeId: number) {
-    return db.select({
-      id: redemptionRecords.id,
-      userId: redemptionRecords.userId,
-      username: users.username,
-      amount: redemptionRecords.amount,
-      ip: redemptionRecords.ip,
-      redeemedAt: redemptionRecords.redeemedAt
-    })
-      .from(redemptionRecords)
-      .leftJoin(users, eq(users.id, redemptionRecords.userId))
-      .where(eq(redemptionRecords.codeId, codeId))
-      .orderBy(desc(redemptionRecords.redeemedAt))
-  },
-
-  /** 管理员视角：兑换记录全量查询，支持按 code / batch / user / username / 时间区间过滤 + 分页。 */
+  /** 管理员视角：兑换记录全量查询（reason='redemption_code' 的积分流水），支持按 code / batch / user / username / 时间区间过滤 + 分页。 */
   async listRedemptions(filters: {
     codeId?: number
     userId?: number
@@ -386,45 +369,46 @@ export const redemptionService = {
     limit?: number
     offset?: number
   } = {}) {
-    const conditions: SQL[] = []
-    if (typeof filters.codeId === 'number') conditions.push(eq(redemptionRecords.codeId, filters.codeId))
-    if (typeof filters.userId === 'number') conditions.push(eq(redemptionRecords.userId, filters.userId))
+    const conditions: SQL[] = [eq(creditTransactions.reason, 'redemption_code')]
+    if (typeof filters.codeId === 'number') conditions.push(eq(creditTransactions.codeId, filters.codeId))
+    if (typeof filters.userId === 'number') conditions.push(eq(creditTransactions.userId, filters.userId))
     if (filters.username) conditions.push(ilike(users.username, `%${filters.username}%`))
     if (filters.batchId) conditions.push(eq(redemptionCodes.batchId, filters.batchId))
-    if (filters.startAt) conditions.push(gte(redemptionRecords.redeemedAt, filters.startAt))
-    if (filters.endAt) conditions.push(lte(redemptionRecords.redeemedAt, filters.endAt))
+    if (filters.startAt) conditions.push(gte(creditTransactions.createdAt, filters.startAt))
+    if (filters.endAt) conditions.push(lte(creditTransactions.createdAt, filters.endAt))
 
     const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
     const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
-    const where = conditions.length ? and(...conditions) : undefined
+    const where = and(...conditions)
 
-    const baseQuery = db.select({
-      id: redemptionRecords.id,
-      codeId: redemptionRecords.codeId,
-      code: redemptionCodes.code,
-      batchId: redemptionCodes.batchId,
-      userId: redemptionRecords.userId,
-      username: users.username,
-      amount: redemptionRecords.amount,
-      ip: redemptionRecords.ip,
-      redeemedAt: redemptionRecords.redeemedAt
-    })
-      .from(redemptionRecords)
-      .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
-      .leftJoin(users, eq(users.id, redemptionRecords.userId))
-
-    const countQuery = db.select({ value: count() })
-      .from(redemptionRecords)
-      .leftJoin(redemptionCodes, eq(redemptionCodes.id, redemptionRecords.codeId))
-      .leftJoin(users, eq(users.id, redemptionRecords.userId))
+    // code/batchId 优先取兑换码当前值，删码后回退 meta 快照
+    const code = sql<string | null>`coalesce(${redemptionCodes.code}, ${creditTransactions.meta}->>'code')`
+    const batchId = sql<string | null>`coalesce(${redemptionCodes.batchId}, ${creditTransactions.meta}->>'batchId')`
 
     const [items, totalRows] = await Promise.all([
-      where
-        ? baseQuery.where(where).orderBy(desc(redemptionRecords.redeemedAt)).limit(limit).offset(offset)
-        : baseQuery.orderBy(desc(redemptionRecords.redeemedAt)).limit(limit).offset(offset),
-      where
-        ? countQuery.where(where)
-        : countQuery
+      db.select({
+        id: creditTransactions.id,
+        codeId: creditTransactions.codeId,
+        code,
+        batchId,
+        userId: creditTransactions.userId,
+        username: users.username,
+        amount: creditTransactions.amount,
+        ip: creditTransactions.ip,
+        redeemedAt: creditTransactions.createdAt
+      })
+        .from(creditTransactions)
+        .leftJoin(redemptionCodes, eq(redemptionCodes.id, creditTransactions.codeId))
+        .leftJoin(users, eq(users.id, creditTransactions.userId))
+        .where(where)
+        .orderBy(desc(creditTransactions.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() })
+        .from(creditTransactions)
+        .leftJoin(redemptionCodes, eq(redemptionCodes.id, creditTransactions.codeId))
+        .leftJoin(users, eq(users.id, creditTransactions.userId))
+        .where(where)
     ])
 
     return { items, total: Number(totalRows[0]?.value || 0) }

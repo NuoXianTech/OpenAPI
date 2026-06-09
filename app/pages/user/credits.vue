@@ -200,6 +200,13 @@ function amountClass(amt: number) {
                 >调用 #{{ row.original.apiCallId }}</span>
               </div>
               <div
+                v-else-if="row.original.reason === 'redemption_code' && (row.original.code || row.original.codeId)"
+                class="flex flex-col text-xs"
+              >
+                <span class="text-muted">兑换码</span>
+                <span class="font-mono">{{ row.original.code || `#${row.original.codeId}` }}</span>
+              </div>
+              <div
                 v-else-if="row.original.operatorName"
                 class="flex flex-col text-xs"
               >

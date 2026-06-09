@@ -13,8 +13,10 @@ interface CreditTxnRow {
   reason: string
   apiId: number | null
   apiCallId: number | null
+  codeId: number | null
   operatorId: number | null
   operatorName: string | null
+  ip: string | null
   remark: string | null
   meta: Record<string, unknown> | null
   createdAt: string
