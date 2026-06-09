@@ -56,7 +56,7 @@ const fixedTimeInvalid = computed(() => {
         <UFormField
           name="siteDescription"
           label="站点描述"
-          description="用于首页与 SEO 的站点简介。"
+          description="站点描述信息，站点描述将显示在网页代码的头部与首页卡片中。"
           required
           class="flex max-sm:flex-col justify-between items-start gap-4"
           :ui="{ container: 'w-full' }"
