@@ -17,39 +17,7 @@ const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
 
 <template>
   <footer class="text-center pb-10 text-xs text-muted mt-6">
-    <div class="mb-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-      <UButton
-        to="/friend-links"
-        variant="link"
-        color="neutral"
-        size="xs"
-        class="px-0"
-      >
-        友情链接
-      </UButton>
-      <UButton
-        to="/stats"
-        variant="link"
-        color="neutral"
-        size="xs"
-        class="px-0"
-      >
-        调用统计
-      </UButton>
-      <UButton
-        to="/admin/login"
-        variant="link"
-        color="neutral"
-        size="xs"
-        class="px-0"
-      >
-        管理入口
-      </UButton>
-    </div>
-    <span>© {{ yearLabel }} <a
-      href="#"
-      class="hover:underline"
-    >{{ settings.siteName }}</a>. All Rights Reserved.</span>
+    <span>© {{ yearLabel }} {{ settings.siteName }}. All Rights Reserved.</span>
     <div
       v-if="hasBeian"
       class="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
