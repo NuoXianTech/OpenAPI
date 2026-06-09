@@ -189,8 +189,11 @@ function preventAutoFocus(event: Event) {
           </div>
         </template>
 
-        <template #content="{ item }">
-          <p class="text-sm leading-6 whitespace-pre-wrap break-words text-default">
+        <!-- 用 #body 而非 #content：#content 会替换掉带 px-3/pb-3 的 body padding 容器，
+             导致正文顶死卡片左下边框。#body 落进 ui.body 容器，再加 pl-11(44px=chip 32+gap 12)
+             让正文与上方标题文字左对齐。 -->
+        <template #body="{ item }">
+          <p class="pl-11 text-sm leading-6 whitespace-pre-wrap break-words text-default">
             {{ item.text }}
           </p>
         </template>
