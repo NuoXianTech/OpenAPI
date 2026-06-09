@@ -17,7 +17,7 @@ const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
 
 <template>
   <footer class="text-center pb-10 text-xs text-muted mt-6">
-    <span>© {{ yearLabel }} {{ settings.siteName }}. All Rights Reserved.</span>
+    <span>© {{ yearLabel }} {{ settings.siteName }}.</span>
     <div
       v-if="hasBeian"
       class="mt-1 flex flex-wrap items-center justify-center gap-x-3 gap-y-1"
