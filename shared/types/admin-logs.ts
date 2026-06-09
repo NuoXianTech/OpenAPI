@@ -2,7 +2,7 @@
  * Admin · 调用日志 / 数据看板 共享类型
  *
  * 调用日志（admin/logs）：公共接口调用流水的审计视图，数据源仅来自 `api_calls`。
- *   - 不再合并积分流水：积分相关查询请走 /admin/users/credit-transactions。
+ *   - 不再合并积分流水：积分相关查询请走 /admin/users/credit-logs。
  *   - 不再合并管理 / 系统 / 退款 等条目：相关操作请走 /admin/system/operation-logs。
  *
  * 数据看板（admin/analytics）专注「公共接口分析」：仅基于 apis.isEnabled
