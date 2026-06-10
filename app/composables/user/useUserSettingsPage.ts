@@ -52,7 +52,7 @@ export function useUserSettingsPage() {
   async function loadProfile() {
     profileLoading.value = true
     try {
-      profile.value = await $fetch<ProfileData>('/api/user/settings')
+      profile.value = await $fetch<ProfileData>('/api/user/profile')
     } catch (err) {
       console.error('failed to load profile', err)
     } finally {
@@ -61,7 +61,7 @@ export function useUserSettingsPage() {
   }
 
   async function updateProfile(displayName: string) {
-    await $fetch('/api/user/settings', {
+    await $fetch('/api/user/profile', {
       method: 'PUT',
       body: { displayName: displayName.trim() }
     })
