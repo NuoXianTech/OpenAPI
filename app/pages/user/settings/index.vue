@@ -20,7 +20,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-3xl">
+  <div class="space-y-8">
     <UserSettingsBasicCard
       :profile="profile"
       :profile-loading="profileLoading"

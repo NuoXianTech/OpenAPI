@@ -37,58 +37,66 @@ async function submit() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-lock-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          修改密码
-        </h3>
-      </div>
-    </template>
-    <div class="space-y-3">
-      <UFormField label="当前密码">
+  <div>
+    <UPageCard
+      title="修改密码"
+      description="定期更换密码有助于保护账号安全。修改后其他设备会被强制下线。"
+      variant="naked"
+      class="mb-4"
+    />
+
+    <UPageCard
+      variant="subtle"
+      :ui="{ container: 'divide-y divide-default' }"
+    >
+      <UFormField
+        label="当前密码"
+        description="验证身份所需的现有密码。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
         <UInput
           v-model="form.currentPassword"
           type="password"
           placeholder="••••••••"
+          autocomplete="current-password"
+          class="min-w-64"
         />
       </UFormField>
       <UFormField
         label="新密码"
-        hint="至少 8 位"
+        description="至少 8 位，建议混合大小写字母与数字。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
       >
         <UInput
           v-model="form.newPassword"
           type="password"
           placeholder="••••••••"
+          autocomplete="new-password"
+          class="min-w-64"
         />
       </UFormField>
-      <UFormField label="确认新密码">
+      <UFormField
+        label="确认新密码"
+        description="再次输入新密码以确认无误。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
         <UInput
           v-model="form.confirmPassword"
           type="password"
           placeholder="••••••••"
+          autocomplete="new-password"
+          class="min-w-64"
         />
       </UFormField>
-      <UAlert
-        color="warning"
-        variant="soft"
-        icon="i-mdi-alert-outline"
-        title="修改密码后会注销所有其他设备"
-        description="本次会话保留登录状态，其他终端的会话将立即失效。"
-      />
-      <div class="flex justify-end">
+      <div class="flex justify-end pt-4">
         <UButton
           :loading="isSaving"
+          icon="i-mdi-content-save-outline"
           @click="submit"
         >
           更新密码
         </UButton>
       </div>
-    </div>
-  </UCard>
+    </UPageCard>
+  </div>
 </template>

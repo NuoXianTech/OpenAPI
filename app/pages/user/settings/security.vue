@@ -16,7 +16,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6 max-w-3xl">
+  <div class="space-y-8">
     <UserSettingsPasswordCard :on-submit="changePassword" />
 
     <UserSettingsLoginActivityCard

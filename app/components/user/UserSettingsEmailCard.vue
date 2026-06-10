@@ -41,23 +41,25 @@ async function submit() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-email-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          绑定邮箱
-        </h3>
-      </div>
-    </template>
-    <div class="space-y-3">
-      <div class="rounded-lg border border-default bg-elevated/30 p-3 text-sm">
+  <div>
+    <UPageCard
+      title="绑定邮箱"
+      description="修改邮箱需验证当前密码，并通过新邮箱的确认链接生效。更改后头像会自动跟随更新。"
+      variant="naked"
+      class="mb-4"
+    />
+
+    <UPageCard
+      variant="subtle"
+      :ui="{ container: 'divide-y divide-default' }"
+    >
+      <UFormField
+        label="当前邮箱"
+        description="当前账号绑定并用于接收系统邮件的邮箱。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
         <div class="flex items-center gap-2">
-          <span class="text-muted">当前邮箱</span>
-          <span class="font-mono">{{ profile?.email }}</span>
+          <span class="font-mono text-sm">{{ profile?.email }}</span>
           <UBadge
             v-if="profile?.emailVerifiedAt"
             color="success"
@@ -75,30 +77,35 @@ async function submit() {
             未验证
           </UBadge>
         </div>
-      </div>
-      <div class="text-xs text-muted">
-        修改邮箱将向新邮箱发送一封验证邮件，点击邮件中的链接后才会生效。
-        更改邮箱后头像会自动跟随更新。
-      </div>
-      <UFormField label="当前密码">
+      </UFormField>
+      <UFormField
+        name="currentPassword"
+        label="当前密码"
+        description="为保护账号安全，修改邮箱需先验证当前密码。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
         <UInput
           v-model="currentPassword"
           type="password"
           placeholder="••••••••"
           autocomplete="current-password"
+          class="min-w-64"
         />
       </UFormField>
-      <div class="flex flex-wrap items-end gap-3">
-        <UFormField
-          label="新邮箱"
-          class="flex-1 min-w-[260px]"
-        >
-          <UInput
-            v-model="newEmail"
-            type="email"
-            placeholder="new@example.com"
-          />
-        </UFormField>
+      <UFormField
+        name="newEmail"
+        label="新邮箱"
+        description="将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。"
+        class="flex items-center justify-between not-last:pb-4 gap-2"
+      >
+        <UInput
+          v-model="newEmail"
+          type="email"
+          placeholder="new@example.com"
+          class="min-w-64"
+        />
+      </UFormField>
+      <div class="flex justify-end pt-4">
         <UButton
           icon="i-mdi-email-arrow-right-outline"
           :loading="isSaving"
@@ -107,14 +114,16 @@ async function submit() {
           发送验证
         </UButton>
       </div>
-      <UAlert
-        v-if="pending"
-        color="info"
-        variant="subtle"
-        icon="i-mdi-email-fast-outline"
-        :title="`已发送验证邮件到 ${pending}`"
-        description="请到该邮箱点击确认链接以完成更改。链接的有效期由站点配置决定。"
-      />
-    </div>
-  </UCard>
+    </UPageCard>
+
+    <UAlert
+      v-if="pending"
+      color="info"
+      variant="subtle"
+      icon="i-mdi-email-fast-outline"
+      class="mt-4"
+      :title="`已发送验证邮件到 ${pending}`"
+      description="请到该邮箱点击确认链接以完成更改。链接的有效期由站点配置决定。"
+    />
+  </div>
 </template>

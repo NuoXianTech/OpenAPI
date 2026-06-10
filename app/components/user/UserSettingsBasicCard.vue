@@ -30,66 +30,74 @@ async function submit() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-account-circle-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          基本信息
-        </h3>
-      </div>
-    </template>
-    <div
-      v-if="profileLoading && !profile"
-      class="text-sm text-muted py-4 text-center"
-    >
-      加载中...
-    </div>
-    <div
-      v-else
-      class="space-y-4"
-    >
-      <div class="flex items-center gap-4">
-        <img
-          v-if="avatarUrl"
-          :src="avatarUrl"
-          alt="avatar"
-          class="size-16 rounded-full border border-default object-cover"
-        >
-        <div class="text-xs text-muted">
-          头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新
-        </div>
-      </div>
+  <div>
+    <UPageCard
+      title="基本信息"
+      description="管理你对外展示的资料信息。"
+      variant="naked"
+      class="mb-4"
+    />
 
-      <UFormField
-        label="用户名"
-        hint="用户名不可修改"
+    <UPageCard
+      variant="subtle"
+      :ui="{ container: 'divide-y divide-default' }"
+    >
+      <div
+        v-if="profileLoading && !profile"
+        class="text-sm text-muted py-4 text-center"
       >
-        <UInput
-          :model-value="profile?.username || ''"
-          disabled
-        />
-      </UFormField>
-
-      <UFormField label="显示名">
-        <UInput
-          v-model="displayName"
-          :maxlength="32"
-          placeholder="对外展示的名字"
-        />
-      </UFormField>
-
-      <div class="flex justify-end">
-        <UButton
-          :loading="isSaving"
-          @click="submit"
-        >
-          保存资料
-        </UButton>
+        加载中...
       </div>
-    </div>
-  </UCard>
+      <template v-else>
+        <UFormField
+          label="头像"
+          description="头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新。"
+          class="flex items-center justify-between not-last:pb-4 gap-2"
+        >
+          <img
+            v-if="avatarUrl"
+            :src="avatarUrl"
+            alt="avatar"
+            class="size-16 rounded-full border border-default object-cover"
+          >
+          <div
+            v-else
+            class="size-16 rounded-full border border-default bg-elevated"
+          />
+        </UFormField>
+        <UFormField
+          label="用户名"
+          description="用户名不可修改。"
+          class="flex items-center justify-between not-last:pb-4 gap-2"
+        >
+          <UInput
+            :model-value="profile?.username || ''"
+            disabled
+            class="min-w-64"
+          />
+        </UFormField>
+        <UFormField
+          label="显示名"
+          description="对外展示的名字，最多 32 字。"
+          class="flex items-center justify-between not-last:pb-4 gap-2"
+        >
+          <UInput
+            v-model="displayName"
+            :maxlength="32"
+            placeholder="对外展示的名字"
+            class="min-w-64"
+          />
+        </UFormField>
+        <div class="flex justify-end pt-4">
+          <UButton
+            :loading="isSaving"
+            icon="i-mdi-content-save-outline"
+            @click="submit"
+          >
+            保存资料
+          </UButton>
+        </div>
+      </template>
+    </UPageCard>
+  </div>
 </template>
