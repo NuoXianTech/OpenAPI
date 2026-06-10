@@ -52,27 +52,6 @@ const activeFilterCount = computed(() => [
   filters.reason !== 'all'
 ].filter(Boolean).length)
 
-const logMetricItems = computed(() => [
-  {
-    label: '总记录',
-    value: total.value.toLocaleString(),
-    icon: 'i-mdi-cash-multiple',
-    tone: 'text-primary'
-  },
-  {
-    label: '本页',
-    value: items.value.length.toLocaleString(),
-    icon: 'i-mdi-format-list-numbered',
-    tone: 'text-info'
-  },
-  {
-    label: '筛选',
-    value: activeFilterCount.value ? `${activeFilterCount.value} 项` : '未启用',
-    icon: 'i-mdi-filter-variant',
-    tone: activeFilterCount.value ? 'text-warning' : 'text-muted'
-  }
-])
-
 function formatDate(val: string) {
   return formatDateTime(val)
 }
@@ -107,44 +86,22 @@ function amountClass(amt: number) {
 <template>
   <div class="log-page-shell space-y-6">
     <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
-      <div class="relative z-10 grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div class="space-y-3">
-          <UBadge
-            color="neutral"
-            variant="solid"
-            size="sm"
-            class="bg-elevated/80 text-default backdrop-blur"
-          >
-            Credit ledger
-          </UBadge>
-          <div>
-            <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-              积分日志
-            </h2>
-            <p class="mt-1 text-sm text-toned">
-              用户积分变动、扣费退款与后台调整记录
-            </p>
-          </div>
-        </div>
-
-        <div class="grid gap-3 sm:grid-cols-3 lg:min-w-[420px]">
-          <div
-            v-for="metric in logMetricItems"
-            :key="metric.label"
-            class="rounded-xl border border-default bg-elevated/80 p-3 shadow-sm backdrop-blur"
-          >
-            <div class="flex items-center justify-between gap-2">
-              <span class="text-xs text-muted">{{ metric.label }}</span>
-              <UIcon
-                :name="metric.icon"
-                class="size-4"
-                :class="metric.tone"
-              />
-            </div>
-            <div class="mt-2 text-lg font-semibold tabular-nums text-highlighted">
-              {{ metric.value }}
-            </div>
-          </div>
+      <div class="relative z-10 space-y-3">
+        <UBadge
+          color="neutral"
+          variant="solid"
+          size="sm"
+          class="bg-elevated/80 text-default backdrop-blur"
+        >
+          Credit ledger
+        </UBadge>
+        <div>
+          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
+            积分日志
+          </h2>
+          <p class="mt-1 text-sm text-toned">
+            用户积分变动、扣费退款与后台调整记录
+          </p>
         </div>
       </div>
     </section>
