@@ -30,15 +30,15 @@ OpenAPI 是一个基于 Nuxt 4 的 API 服务平台，提供 API 密钥鉴权、
 - **兑换码 / 每日签到**：生成兑换码兑换积分、每日签到领取积分，均有完整流水记录
 - **站内通知 / 公告 / 友情链接**：内容侧的消息投递与展示管理
 - **后台管理**：用户、接口、分类、兑换码、OAuth 提供商、站点设置、公告、友链、通知、操作日志、登录日志，以及数据分析仪表盘
-- **安全默认值**：会话 ID 哈希存储、scrypt 密码哈希、AES-256-GCM 加密的 OAuth 密钥、私有页面服务端守卫、图形验证码
+- **安全默认值**：无状态 JWT 会话、scrypt 密码哈希、邮箱验证 / 重置 / 改邮箱走 HMAC 无状态一次性 token、私有页面服务端守卫、Cloudflare Turnstile 人机校验
 - **前端**：Nuxt UI v4 + Tailwind CSS v4
 
 ## 技术栈
 
 | 领域 | 主要依赖 |
 | --- | --- |
-| 前端 | Nuxt 4.4、Vue 3.5、Nuxt UI 4.8、Tailwind CSS 4、@unovis/vue（图表）、@tanstack/vue-table、VueUse、Zod、bowser（设备解析） |
-| 服务端 | Nitro（`node-server` 预设）、Drizzle ORM 0.45、drizzle-kit、postgres.js、nodemailer、@nuxthub/core |
+| 前端 | Nuxt、Vue、Nuxt UI、Tailwind CSS、@unovis/vue、@tanstack/table-core、VueUse、Zod、bowser |
+| 服务端 | Nitro、Drizzle ORM、drizzle-kit、postgres.js、nodemailer、iconv-lite、@nuxthub/core |
 | 数据库 | 生产使用 PostgreSQL 16+；开发可使用 pglite |
 | 工具链 | TypeScript、ESLint、pnpm |
 
@@ -73,8 +73,6 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
 | `NUXT_AUTH_JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
 
-> 上述 `NUXT_AUTH_*` 走 Nuxt runtimeConfig（`auth.*`），运行时**必须带 `NUXT_AUTH_` 前缀**才会被读取；`DATABASE_URL` / `NITRO_*` 则由 Nitro 直接读取，用原名即可。
-
 完整的单实例生产配置见 [.env.example](.env.example)。
 
 ### 常用命令
@@ -106,16 +104,6 @@ modules/api-manifest.ts   构建期接口清单生成器
 shared/                   共享类型与配置
 docs/                     项目文档
 ```
-
-## 公开接口约定
-
-公开接口位于 `server/routes/v{N}/<code>/`，遵循 Nitro 的文件路由约定，**不带 `/api/` 前缀**：
-
-- 第一层目录 / 文件名即接口 `code`，例如 `server/routes/v1/crypto/`
-- 同一 `code` 下的多个 HTTP 方法文件聚合为同一个接口的多个 endpoint
-- 物理删除接口文件夹后，`manifestSync` 会将对应记录标记为 `isOrphaned` 并强制下线，后台仍可调整其分类等元数据
-
-更多约定见 [docs/](docs/) 目录。
 
 ## 部署说明
 
