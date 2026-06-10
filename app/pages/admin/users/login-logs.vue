@@ -16,7 +16,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 type LoginLogFilters = {
   startAt: string
   endAt: string
-  method: '' | LoginMethod
+  method: 'all' | LoginMethod
   success: 'all' | 'success' | 'failure'
   userId: number | ''
 }
@@ -36,7 +36,7 @@ const {
   defaultFilters: {
     startAt: '',
     endAt: '',
-    method: '',
+    method: 'all',
     success: 'all',
     userId: ''
   },
@@ -44,7 +44,7 @@ const {
   buildQuery: (f, p) => ({
     startAt: f.startAt ? new Date(f.startAt).toISOString() : undefined,
     endAt: f.endAt ? new Date(f.endAt).toISOString() : undefined,
-    method: f.method || undefined,
+    method: f.method === 'all' ? undefined : f.method,
     success: f.success === 'all' ? undefined : f.success,
     userId: f.userId || undefined,
     limit: p.limit,
@@ -55,7 +55,7 @@ const {
 const activeFilterCount = computed(() => [
   !!filters.startAt,
   !!filters.endAt,
-  filters.method !== '',
+  filters.method !== 'all',
   filters.success !== 'all',
   filters.userId !== ''
 ].filter(Boolean).length)
@@ -65,7 +65,7 @@ function formatDate(val: string) {
 }
 
 const methodItems = [
-  { label: '全部方式', value: '' },
+  { label: '全部方式', value: 'all' },
   { label: LOGIN_METHOD_META.password.label, value: 'password' },
   { label: LOGIN_METHOD_META.oauth_github.label, value: 'oauth_github' },
   { label: LOGIN_METHOD_META.oauth_qq.label, value: 'oauth_qq' }
