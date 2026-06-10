@@ -6,7 +6,3 @@ export const adminApisLinks: NavigationMenuItem[] = [
   { label: '接口治理', icon: 'i-mdi-api', to: ADMIN_APIS_PATH, exact: true },
   { label: '分类管理', icon: 'i-mdi-shape-outline', to: `${ADMIN_APIS_PATH}/categories` }
 ]
-
-export const adminApisQuickActions = [
-  { label: '登记接口', icon: 'i-mdi-plus-circle-outline', to: ADMIN_APIS_PATH }
-]

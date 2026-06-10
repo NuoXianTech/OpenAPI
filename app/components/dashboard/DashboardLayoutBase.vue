@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CommandPaletteGroup, CommandPaletteItem, DropdownMenuItem } from '@nuxt/ui'
+import type { DropdownMenuItem } from '@nuxt/ui'
 import type { DashboardConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,
@@ -29,26 +29,6 @@ const open = ref(false)
 const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
   { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true }
 ]])
-
-// 命令面板：直接复用导航分组 + 快捷动作（仅过滤 to 不是字符串的项）
-const searchTerm = ref('')
-const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
-  const navGroups = resolved.value.groups.reduce<CommandPaletteGroup<CommandPaletteItem>[]>((acc, g, idx) => {
-    const items = g.items.filter(item => typeof item.to === 'string') as CommandPaletteItem[]
-    if (items.length) acc.push({ id: `nav-${idx}`, label: g.label || '导航', items })
-    return acc
-  }, [])
-
-  if (resolved.value.quickActions?.length) {
-    navGroups.unshift({
-      id: 'quick-actions',
-      label: '快捷操作',
-      items: resolved.value.quickActions as CommandPaletteItem[]
-    })
-  }
-
-  return navGroups
-})
 </script>
 
 <template>
@@ -81,11 +61,6 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
       </template>
 
       <template #default="{ collapsed }">
-        <UDashboardSearchButton
-          v-if="!collapsed"
-          class="mb-2"
-        />
-
         <template
           v-for="(group, gIdx) in resolved.groups"
           :key="gIdx"
@@ -112,12 +87,6 @@ const searchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
         />
       </template>
     </UDashboardSidebar>
-
-    <UDashboardSearch
-      v-model:search-term="searchTerm"
-      :groups="searchGroups"
-      placeholder="搜索页面或操作…（Ctrl/⌘+K）"
-    />
 
     <slot />
   </UDashboardGroup>

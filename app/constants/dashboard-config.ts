@@ -1,42 +1,16 @@
-import type { NavigationMenuItem, DropdownMenuItem, CommandPaletteItem } from '@nuxt/ui'
-import {
-  ADMIN_APIS_PATH,
-  adminApisQuickActions
-} from './admin-sections/apis'
-import {
-  ADMIN_USERS_PATH,
-  adminUsersQuickActions
-} from './admin-sections/users'
-import {
-  ADMIN_CONTENT_PATH,
-  adminContentQuickActions
-} from './admin-sections/content'
-import {
-  ADMIN_SYSTEM_PATH,
-  adminSystemQuickActions
-} from './admin-sections/system'
-import {
-  ADMIN_ANALYTICS_PATH,
-  ADMIN_LOGS_PATH,
-  adminLogsQuickActions
-} from './admin-sections/logs'
-import {
-  ADMIN_REDEMPTION_CODES_PATH,
-  adminRedemptionCodesQuickActions
-} from './admin-sections/redemption-codes'
+import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
+import { ADMIN_APIS_PATH } from './admin-sections/apis'
+import { ADMIN_USERS_PATH } from './admin-sections/users'
+import { ADMIN_CONTENT_PATH } from './admin-sections/content'
+import { ADMIN_SYSTEM_PATH } from './admin-sections/system'
+import { ADMIN_ANALYTICS_PATH, ADMIN_LOGS_PATH } from './admin-sections/logs'
+import { ADMIN_REDEMPTION_CODES_PATH } from './admin-sections/redemption-codes'
 import { ADMIN_OVERVIEW_PATH } from './admin-sections/overview'
 import { USER_OVERVIEW_PATH } from './user-sections/overview'
 
 export interface DashboardNavGroup {
   label?: string
   items: NavigationMenuItem[]
-}
-
-export interface DashboardQuickAction {
-  label: string
-  icon: string
-  to?: string
-  kbds?: string[]
 }
 
 export interface DashboardBrand {
@@ -50,12 +24,9 @@ export interface DashboardConfig {
   brand: DashboardBrand
   groups: DashboardNavGroup[]
   footerLinks: NavigationMenuItem[]
-  quickActions?: DashboardQuickAction[]
   userMenuExtra?: (ctx: { logout: () => Promise<void> | void }) => DropdownMenuItem[][]
   loginRedirect: string
 }
-
-export type { CommandPaletteItem }
 
 export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {
   id: 'admin',
@@ -92,14 +63,6 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
   footerLinks: [
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ],
-  quickActions: [
-    ...adminApisQuickActions,
-    ...adminLogsQuickActions,
-    ...adminContentQuickActions,
-    ...adminUsersQuickActions,
-    ...adminRedemptionCodesQuickActions,
-    ...adminSystemQuickActions
-  ],
   userMenuExtra: () => [[
     { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
@@ -133,12 +96,6 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
   ],
   footerLinks: [
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
-  ],
-  quickActions: [
-    { label: '生成 API Key', icon: 'i-mdi-key-plus', to: '/user/apikeys' },
-    { label: '兑换积分', icon: 'i-mdi-ticket-percent-outline', to: '/user/credits' },
-    { label: '查看调用日志', icon: 'i-mdi-history', to: '/user/calls' },
-    { label: '修改密码', icon: 'i-mdi-lock-reset', to: '/user/settings/security' }
   ],
   userMenuExtra: () => [[
     { label: '设置', icon: 'i-mdi-account-cog-outline', to: '/user/settings' },

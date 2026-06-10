@@ -7,7 +7,3 @@ export const adminContentLinks: NavigationMenuItem[] = [
   { label: '通知', icon: 'i-mdi-bell-outline', to: `${ADMIN_CONTENT_PATH}/notifications` },
   { label: '友情链接', icon: 'i-mdi-link-variant', to: `${ADMIN_CONTENT_PATH}/friend-links` }
 ]
-
-export const adminContentQuickActions = [
-  { label: '发布公告', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH }
-]

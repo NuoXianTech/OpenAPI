@@ -38,11 +38,6 @@ async function handleRefresh() {
 
 <template>
   <div class="flex items-center gap-1">
-    <UDashboardSearchButton
-      :collapsed="true"
-      :ui="{ trailing: 'me-0' }"
-    />
-
     <UButton
       v-if="onRefresh"
       variant="ghost"

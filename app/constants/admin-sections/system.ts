@@ -9,8 +9,3 @@ export const adminSystemLinks: NavigationMenuItem[] = [
   { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
   { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` }
 ]
-
-export const adminSystemQuickActions = [
-  { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` },
-  { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH }
-]

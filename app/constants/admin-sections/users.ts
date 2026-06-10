@@ -7,7 +7,3 @@ export const adminUsersLinks: NavigationMenuItem[] = [
   { label: '登录日志', icon: 'i-mdi-login-variant', to: `${ADMIN_USERS_PATH}/login-logs` },
   { label: '积分日志', icon: 'i-mdi-cash-multiple', to: `${ADMIN_USERS_PATH}/credit-logs` }
 ]
-
-export const adminUsersQuickActions = [
-  { label: '调整用户积分', icon: 'i-mdi-cash-multiple', to: ADMIN_USERS_PATH }
-]
