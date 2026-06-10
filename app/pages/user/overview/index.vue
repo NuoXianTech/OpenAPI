@@ -175,7 +175,7 @@ async function copyCurl() {
               </p>
             </div>
             <UButton
-              to="/user/calls"
+              to="/user/logs"
               size="xs"
               color="neutral"
               variant="ghost"

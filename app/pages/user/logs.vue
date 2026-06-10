@@ -141,7 +141,7 @@ const columns: TableColumn<LogRow>[] = [
 </script>
 
 <template>
-  <UDashboardPanel id="user-calls">
+  <UDashboardPanel id="user-logs">
     <template #header>
       <UDashboardNavbar title="调用日志">
         <template #leading>

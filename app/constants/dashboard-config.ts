@@ -83,7 +83,7 @@ export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (sit
       items: [
         { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: USER_OVERVIEW_PATH },
         { label: 'API 密钥', icon: 'i-mdi-key-outline', to: '/user/apikeys' },
-        { label: '使用日志', icon: 'i-mdi-history', to: '/user/calls' }
+        { label: '使用日志', icon: 'i-mdi-history', to: '/user/logs' }
       ]
     },
     {
