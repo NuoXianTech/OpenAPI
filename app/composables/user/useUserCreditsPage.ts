@@ -73,7 +73,7 @@ export function useUserCreditsPage() {
   const summaryLoading = ref(false)
 
   // 交易流水分页：私有数据统一走 usePrivatePagedList（$fetch，不进 payload）。
-  // immediate:false —— 由 init() 与 summary/签到一起并发首拉，避免重复触发。
+  // immediate:false —— 仅「流水明细」子页挂载时自行调用 fetchTransactions 首拉，其余 tab 不触发。
   const txns = usePrivatePagedList<CreditTxnFilters, TransactionRow>({
     path: '/api/user/credits/transactions',
     defaultFilters: { reason: 'all', direction: 'all' },
@@ -140,7 +140,8 @@ export function useUserCreditsPage() {
         description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
         color: 'success'
       })
-      await Promise.all([fetchSummary(), txns.refresh(), fetchCheckinStatus()])
+      // 签到后只刷新本 tab 的签到状态；余额/流水分属其它 tab，重新进入时各自挂载首拉。
+      await fetchCheckinStatus()
       return res
     } finally {
       isCheckingIn.value = false
@@ -157,21 +158,17 @@ export function useUserCreditsPage() {
       description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
       color: 'success'
     })
-    await Promise.all([fetchSummary(), txns.refresh(), fetchRedeemRecords()])
+    // 兑换后只刷新本 tab 的兑换记录；余额/流水分属其它 tab，重新进入时各自挂载首拉。
+    await fetchRedeemRecords()
     return res
   }
 
-  async function refreshAll() {
-    await Promise.all([fetchSummary(), txns.refresh()])
-  }
-
-  async function init() {
-    await Promise.all([refreshAll(), fetchRedeemRecords(), fetchCheckinStatus()])
-  }
-
   return {
+    // 概览 tab
     summary,
     summaryLoading,
+    fetchSummary,
+    // 流水明细 tab
     filters: txns.filters,
     page: txns.page,
     pageSize: txns.pageSize,
@@ -179,17 +176,17 @@ export function useUserCreditsPage() {
     total: txns.total,
     loading: txns.loading,
     totalPages: txns.totalPages,
-    redeemRecords,
+    fetchTransactions: txns.refresh,
+    applyFilters: txns.applyFilters,
+    resetFilters: txns.reset,
+    // 签到兑换 tab
     checkin,
     checkinLoading,
     isCheckingIn,
-    fetchTransactions: txns.refresh,
-    redeem,
     performCheckin,
     fetchCheckinStatus,
-    applyFilters: txns.applyFilters,
-    resetFilters: txns.reset,
-    refreshAll,
-    init
+    redeemRecords,
+    fetchRedeemRecords,
+    redeem
   }
 }
