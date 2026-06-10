@@ -46,7 +46,7 @@ const formatUpTime = (ms: number): string => {
   if (days > 0 || years > 0) parts.push(`${days}天`)
   if (hours > 0 || days > 0 || years > 0) parts.push(`${hours}时`)
   if (minutes > 0 || hours > 0 || days > 0 || years > 0) parts.push(`${minutes}分`)
-  return parts.join(' ') || '0分'
+  return parts.join('') || '0分'
 }
 
 // 实时时钟依赖"当前时刻"：SSR 渲染时刻与客户端 hydrate 时刻必然不同（秒级字段几乎必错），
