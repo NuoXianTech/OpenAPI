@@ -49,7 +49,7 @@ definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user
 | 5 | 空状态必须用 `UEmpty` | `<div class="text-center py-12">暂无数据</div>` |
 | 6 | 页面 hero 必须用 `UPageHeader`（icon 可放在 `#title` slot 里） | 自己拼 icon + h1 + p |
 | 7 | 菜单 / 快捷动作必须在 `app/constants/dashboard-config.ts` 维护 | 在 layout 里硬编码 |
-| 8 | 图标只用 `i-mdi-*` / `i-lucide-*` | 引入其它 iconify 集合 |
+| 8 | 图标只用 `i-mdi-*` | 引入其它 iconify 集合 |
 | 9 | 颜色只用主题 token（`text-muted`、`bg-elevated`、`color="primary"`…） | `text-green-500`、`dark:bg-gray-900` |
 | 10 | 数字字段必须挂 `tabular-nums` | 纯数字让等宽对齐 |
 | 11 | 弹窗状态建议走 `useOverlay()`（Nuxt UI v4） | 页面 setup 持 4 个 `v-model:open` |

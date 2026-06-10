@@ -326,7 +326,7 @@ async function copyCallback(item: ProviderItem) {
               {{ item.isEnabled ? '已启用' : '未启用' }}
             </UBadge>
             <UIcon
-              name="i-lucide-chevron-down"
+              name="i-mdi-chevron-down"
               class="size-5 shrink-0 text-muted transition-transform duration-200"
               :class="getForm(item.provider).open ? 'rotate-180' : ''"
             />
