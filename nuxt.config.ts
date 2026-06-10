@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   devtools: {
     enabled: true,
   },
-  css: ['~/assets/css/tailwind.css'],
+  css: ['~/assets/css/main.css'],
   ui: { fonts: false },
   // 认证密钥走 runtimeConfig（Nuxt 官方推荐范式）。默认值一律留空字符串、
   // 绝不引用 process.env —— 空默认值不会把任何 .env 值烤进 build 产物；
