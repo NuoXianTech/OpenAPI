@@ -201,7 +201,7 @@ async function copyCurl() {
                 {{ credits.spent24h.toLocaleString() }}
                 <span class="text-xs font-normal text-muted ml-1">积分</span>
               </div>
-              <UserOverviewSparkline
+              <DashboardSparkline
                 :values="spendTrendValues"
                 color="var(--ui-warning)"
               />
@@ -222,7 +222,7 @@ async function copyCurl() {
                 {{ credits.totalSpent.toLocaleString() }}
                 <span class="text-xs font-normal text-muted ml-1">积分</span>
               </div>
-              <UserOverviewSparkline
+              <DashboardSparkline
                 :values="spendTrendValues"
                 color="var(--ui-primary)"
               />
@@ -243,7 +243,7 @@ async function copyCurl() {
                 {{ calls.total.toLocaleString() }}
                 <span class="text-xs font-normal text-muted ml-1">次</span>
               </div>
-              <UserOverviewSparkline
+              <DashboardSparkline
                 :values="callsTrendValues"
                 color="var(--ui-info)"
               />

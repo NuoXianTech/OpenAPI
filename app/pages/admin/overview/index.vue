@@ -12,6 +12,8 @@ useHead({ title: '管理中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
+const { user } = useAuth()
+
 function createEmptyData(): AdminDashboardData {
   return {
     overview: {
@@ -52,6 +54,11 @@ const distribution = computed(() => dashboard.value.distribution)
 const recentCalls = computed(() => dashboard.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
 
+const callsTrendValues = computed(() => trend.value.map(p => p.totalCalls))
+const successRateTrendValues = computed(() =>
+  trend.value.map(p => (p.totalCalls > 0 ? (p.successCalls / p.totalCalls) * 100 : 0))
+)
+
 const formatNumber = (val: number) => val.toLocaleString()
 const formatRate = (val: number) => `${val.toFixed(2)}%`
 
@@ -73,7 +80,7 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
 <template>
   <UDashboardPanel id="admin-home">
     <template #header>
-      <UDashboardNavbar title="仪表盘">
+      <UDashboardNavbar title="概览">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -88,78 +95,193 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
 
     <template #body>
       <div class="space-y-6">
-        <UPageHeader
-          title="管理员仪表盘"
-          :description="`数据更新于 ${generatedAt}`"
-        >
-          <template #title>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-shield-crown-outline"
-                class="size-6 text-primary"
-              />
-              <span>管理员仪表盘</span>
-            </div>
-          </template>
-        </UPageHeader>
-
-        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
-          <UPageCard
-            icon="i-mdi-account-group-outline"
-            :title="formatNumber(overview.userCount)"
-            description="注册用户"
-            :to="ADMIN_USERS_PATH"
-            variant="subtle"
-            class="[&_h3]:tabular-nums"
-          />
-          <UPageCard
-            icon="i-mdi-api"
-            :title="`${formatNumber(overview.enabledApiCount)} / ${formatNumber(overview.totalApiCount)}`"
-            description="启用 API"
-            :to="ADMIN_APIS_PATH"
-            variant="subtle"
-            class="[&_h3]:tabular-nums"
-          />
-          <UPageCard
-            icon="i-mdi-chart-line"
-            :title="formatNumber(overview.totalCalls)"
-            description="总调用"
-            :to="ADMIN_LOGS_PATH"
-            variant="subtle"
-            class="[&_h3]:tabular-nums"
-          >
-            <template #footer>
-              <p class="text-xs text-muted">
-                <span
-                  v-if="overview.todayChangeRate !== null"
-                  :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
-                  class="mr-1 inline-flex items-center gap-0.5"
+        <!-- Hero / 运营总览 -->
+        <div class="overview-hero relative overflow-hidden rounded-2xl border border-default p-6 sm:p-8">
+          <div class="grid gap-6 lg:grid-cols-5 relative z-10">
+            <div class="lg:col-span-3 space-y-5">
+              <div class="space-y-3">
+                <UBadge
+                  color="neutral"
+                  variant="solid"
+                  size="sm"
+                  class="bg-elevated/80 text-default backdrop-blur"
                 >
-                  <UIcon
-                    :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
-                    class="size-3.5"
-                  />
-                  {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
-                </span>
-                今日 {{ formatNumber(overview.todayCalls) }}
+                  管理中心
+                </UBadge>
+                <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
+                  平台运营总览
+                </h2>
+                <p class="text-sm sm:text-base text-toned max-w-xl">
+                  你好<span v-if="user?.username">，{{ user.username }}</span>。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。
+                </p>
+              </div>
+
+              <div class="flex flex-wrap gap-2">
+                <UButton
+                  :to="ADMIN_USERS_PATH"
+                  color="neutral"
+                  size="md"
+                  icon="i-mdi-account-group-outline"
+                >
+                  用户管理
+                </UButton>
+                <UButton
+                  :to="ADMIN_APIS_PATH"
+                  color="neutral"
+                  variant="outline"
+                  size="md"
+                  icon="i-mdi-api"
+                >
+                  接口管理
+                </UButton>
+              </div>
+            </div>
+
+            <div class="lg:col-span-2 min-w-0">
+              <div class="rounded-xl bg-elevated/85 border border-default backdrop-blur-sm p-4 space-y-4 shadow-sm">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <UIcon
+                      name="i-mdi-pulse"
+                      class="size-4 text-muted"
+                    />
+                    <span class="text-sm font-medium">今日快照</span>
+                  </div>
+                  <span class="text-[11px] text-muted tabular-nums">{{ generatedAt }}</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="space-y-1">
+                    <div class="text-xs text-muted">
+                      今日调用
+                    </div>
+                    <div class="text-xl font-semibold tabular-nums">
+                      {{ formatNumber(overview.todayCalls) }}
+                    </div>
+                  </div>
+                  <div class="space-y-1">
+                    <div class="text-xs text-muted">
+                      成功率
+                    </div>
+                    <div class="text-xl font-semibold tabular-nums">
+                      {{ formatRate(overview.successRate) }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="border-t border-default pt-3">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="text-muted">较昨日</span>
+                    <span
+                      :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
+                      class="inline-flex items-center gap-1 font-medium"
+                    >
+                      <UIcon
+                        :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
+                        class="size-3.5"
+                      />
+                      {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 平台概览 -->
+        <section class="space-y-4">
+          <div class="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h3 class="text-lg font-semibold text-highlighted">
+                平台概览
+              </h3>
+              <p class="text-sm text-muted">
+                用户、接口与调用总览
               </p>
-            </template>
-          </UPageCard>
-          <UPageCard
-            icon="i-mdi-shield-check-outline"
-            :title="formatRate(overview.successRate)"
-            description="成功率"
-            :to="ADMIN_LOGS_PATH"
-            variant="subtle"
-            class="[&_h3]:tabular-nums"
-          >
-            <template #footer>
+            </div>
+            <UButton
+              :to="ADMIN_LOGS_PATH"
+              size="xs"
+              color="neutral"
+              variant="ghost"
+              trailing-icon="i-mdi-chevron-right"
+            >
+              查看调用日志
+            </UButton>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <UCard :ui="{ body: 'space-y-3' }">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted">注册用户</span>
+                <UIcon
+                  name="i-mdi-account-group-outline"
+                  class="size-4 text-primary"
+                />
+              </div>
+              <div class="text-2xl font-semibold tabular-nums">
+                {{ formatNumber(overview.userCount) }}
+                <span class="text-xs font-normal text-muted ml-1">人</span>
+              </div>
+            </UCard>
+
+            <UCard :ui="{ body: 'space-y-3' }">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted">启用 API</span>
+                <UIcon
+                  name="i-mdi-api"
+                  class="size-4 text-info"
+                />
+              </div>
+              <div class="text-2xl font-semibold tabular-nums">
+                {{ formatNumber(overview.enabledApiCount) }}
+                <span class="text-xs font-normal text-muted ml-1">个</span>
+              </div>
               <p class="text-xs text-muted">
-                成功 {{ formatNumber(overview.successCalls) }} · 失败 {{ formatNumber(overview.failureCalls) }}
+                共 {{ formatNumber(overview.totalApiCount) }} 个接口
               </p>
-            </template>
-          </UPageCard>
-        </UPageGrid>
+            </UCard>
+
+            <UCard :ui="{ body: 'space-y-3' }">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted">总调用</span>
+                <UIcon
+                  name="i-mdi-chart-line"
+                  class="size-4 text-warning"
+                />
+              </div>
+              <div class="text-2xl font-semibold tabular-nums">
+                {{ formatNumber(overview.totalCalls) }}
+                <span class="text-xs font-normal text-muted ml-1">次</span>
+              </div>
+              <DashboardSparkline
+                :values="callsTrendValues"
+                color="var(--ui-warning)"
+              />
+            </UCard>
+
+            <UCard
+              :ui="{ body: 'space-y-3' }"
+              class="ring-1 ring-primary/10"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted">成功率</span>
+                <UIcon
+                  name="i-mdi-shield-check-outline"
+                  class="size-4 text-success"
+                />
+              </div>
+              <div class="text-2xl font-semibold tabular-nums">
+                {{ formatRate(overview.successRate) }}
+              </div>
+              <DashboardSparkline
+                :values="successRateTrendValues"
+                color="var(--ui-success)"
+              />
+            </UCard>
+          </div>
+        </section>
 
         <div class="grid gap-4 xl:grid-cols-5">
           <UCard class="xl:col-span-3">
@@ -280,3 +402,13 @@ const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
     </template>
   </UDashboardPanel>
 </template>
+
+<style scoped>
+.overview-hero {
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 14%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-warning) 12%, transparent) 0%, transparent 60%),
+    radial-gradient(140% 100% at 100% 100%, color-mix(in oklab, var(--ui-success) 10%, transparent) 0%, transparent 60%),
+    var(--ui-bg);
+}
+</style>
