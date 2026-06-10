@@ -41,6 +41,9 @@ importers:
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@cloudflare/workers-types@4.20260605.1)(@electric-sql/pglite@0.5.1)(postgres@3.4.9)
+      iconv-lite:
+        specifier: ^0.6.0
+        version: 0.6.0
       nodemailer:
         specifier: ^8.0.10
         version: 8.0.10

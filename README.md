@@ -123,6 +123,15 @@ docs/                     项目文档
 
 `pending_charges` 表用于计费可靠性：它保存失败的扣费尝试，由单进程的重试 worker 处理。
 
+## 参考项目（公共接口）
+
+- [emoji-aes](https://github.com/a8763506128977812212307169331690/emoji-aes)
+- [taiji-encode](https://github.com/Cat7373/taiji-encode)
+- [beast_sdk](https://github.com/SycAlright/beast_sdk)
+- [Core-Values-Encoder](https://github.com/wTool/Core-Values-Encoder)
+- [talk-with-buddha](https://github.com/takuron/talk-with-buddha)
+- [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
+
 ## 致谢
 
 本项目构建于 Nuxt、Nitro、Nuxt UI、Tailwind CSS、Drizzle ORM、postgres.js、pglite、Zod、Unovis、VueUse、ESLint、TypeScript 与 nodemailer 等优秀的开源项目之上。

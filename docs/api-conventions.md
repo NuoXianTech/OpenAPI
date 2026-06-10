@@ -70,6 +70,18 @@ server/routes/
 - **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
 - **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body
 
+### 4.0 内容协商型接口（`encode` 多格式输出）
+
+少数接口本质是**内容协商**——同一资源按 `encode` 参数返回不同表示（纯文本 / JSON / JS / Markdown 等），并可叠加 `charset`（字节编码）与 `callback`（JSONP）。这类接口按下面的分工实现，**而非「一律裸 JSON 壳」也非「一律不套壳」**：
+
+- **`encode=json`（含未指定 encode 的默认值）必须套标准 openApiResponse 壳**（§4 的 `{code,message,data,timestamp}`），与平台其余 JSON 接口完全一致，`data` 放资源本体。
+- **JSONP（`callback`）属 JSON 表示的变体，包裹的也是这同一个标准壳**——即 `callback({code,...,data})`，而非裸资源对象。
+- **其他 encode（`text` / `js` / `md` / ……）由各接口自行定义原始输出格式**，直出内容并自设 `Content-Type`，不套壳。
+- **`charset` 只决定响应体的字节编码，不改变结构**：`encode=json` 在 `charset=gbk` 下仍是同一个标准壳，只是用 GBK 编码（GBK 与 `callback` 不可同用）。
+- **失败一律走标准壳**：参数错误 / 资源未命中等用 `openApiFail`（对应 HTTP status，`data` 恒 `null`），与 §4 完全一致，**不受 `encode` 影响**。
+
+目前的实例是 [`/v1/yiyan`](../server/routes/v1/yiyan/index.get.ts)（随机「一言」，支持 `encode=text|json|js|md`、`charset=utf-8|gbk`、JSONP `callback`）。新增此类接口时按上面的分工实现；没有真实多格式诉求的常规接口，一律按 §4 只返回 JSON 壳。
+
 ### 4.1 入参校验（可选）
 
 需要校验请求体时，用 [`readOpenApiBody`](../server/utils/zod.ts) —— 复用 zod，但失败**自动返回 400 标准壳**，区别于后台内部接口的 `readZodBody`（失败 `throw createError`，走 H3 默认错误格式，不符合对外契约）：

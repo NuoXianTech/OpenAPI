@@ -1,0 +1,1712 @@
+[
+  {
+    "id": 1,
+    "yiyan": "爱你所爱，行你所行，听从你心，无问西东。",
+    "type": "f",
+    "from": "无问西东",
+    "from_who": null,
+    "created_at": "1580886541",
+    "length": 20
+  },
+  {
+    "id": 2,
+    "yiyan": "高调做事，低调做人。",
+    "type": "f",
+    "from": "某电视剧",
+    "from_who": null,
+    "created_at": "1580792293",
+    "length": 10
+  },
+  {
+    "id": 3,
+    "yiyan": "我感谢一切我有权奉承的神明，让我在这个不唯一的世界遇见唯一的你。",
+    "type": "f",
+    "from": "Vitamin少女",
+    "from_who": null,
+    "created_at": "1580370816",
+    "length": 32
+  },
+  {
+    "id": 4,
+    "yiyan": "虽然我和他已十年不见，但我知道我会永远怀念他。",
+    "type": "f",
+    "from": "伴我同行",
+    "from_who": "伴我同行",
+    "created_at": "1574250827",
+    "length": 23
+  },
+  {
+    "id": 5,
+    "yiyan": "成年人的世界没有容易二字。",
+    "type": "f",
+    "from": "天气预报员",
+    "from_who": "天气预报员",
+    "created_at": "1573714325",
+    "length": 13
+  },
+  {
+    "id": 6,
+    "yiyan": "最初，没有人在意这场灾难，这不过是一场山火，一次旱灾，一个物种的灭绝，一座城市的消失。直到这场灾难和每个人息息相关。",
+    "type": "f",
+    "from": "流浪地球",
+    "from_who": "刘慈欣",
+    "created_at": "1581398835",
+    "length": 58
+  },
+  {
+    "id": 7,
+    "yiyan": "An apple once a day，keep your enemies away.",
+    "type": "f",
+    "from": "白雪公主",
+    "from_who": "皇后",
+    "created_at": "1580116451",
+    "length": 43
+  },
+  {
+    "id": 8,
+    "yiyan": "I will see you in another life, when we are both cats.",
+    "type": "f",
+    "from": "Vanilla Sky",
+    "from_who": null,
+    "created_at": "1582074043",
+    "length": 54
+  },
+  {
+    "id": 9,
+    "yiyan": "那就是在梦里，找一个很高很高的地方，然后往下跳，不管再恐怖的噩梦都会结束。",
+    "type": "f",
+    "from": "想加你",
+    "from_who": "陈韵如",
+    "created_at": "1582459011",
+    "length": 37
+  },
+  {
+    "id": 10,
+    "yiyan": "迎着风，拥抱彩虹！",
+    "type": "f",
+    "from": "你的答案",
+    "from_who": "黄霄雲",
+    "created_at": "1582694688",
+    "length": 9
+  },
+  {
+    "id": 11,
+    "yiyan": "Everything ends. But everything begins again too.",
+    "type": "f",
+    "from": "奇异博士",
+    "from_who": null,
+    "created_at": "1579018067",
+    "length": 49
+  },
+  {
+    "id": 12,
+    "yiyan": "虽有遗憾，绝不后悔。",
+    "type": "f",
+    "from": "古剑奇谭",
+    "from_who": null,
+    "created_at": "1576919441",
+    "length": 10
+  },
+  {
+    "id": 13,
+    "yiyan": "明明想做个好人，最后却变成了坏人，以为能做个超人，才发现甚至当不好一个凡人，在名为人生的这个大公司里，命运才是我们的顶头上司，虽然人生不能换，命运不能选，幸好还有这群好同事，好兄弟，一起互相伤害。",
+    "type": "f",
+    "from": "人生无限公司",
+    "from_who": "五月天",
+    "created_at": "1582876573",
+    "length": 98
+  },
+  {
+    "id": 14,
+    "yiyan": "Why so serious?",
+    "type": "f",
+    "from": "小丑",
+    "from_who": "小丑",
+    "created_at": "1583075832",
+    "length": 15
+  },
+  {
+    "id": 15,
+    "yiyan": "你说过，人最大的敌人是自己。",
+    "type": "f",
+    "from": "我的前半生",
+    "from_who": "贺涵",
+    "created_at": "1583786533",
+    "length": 14
+  },
+  {
+    "id": 16,
+    "yiyan": "A lion does not concern himself with the opinion of sheep.",
+    "type": "f",
+    "from": "权力的游戏",
+    "from_who": null,
+    "created_at": "1583893749",
+    "length": 58
+  },
+  {
+    "id": 17,
+    "yiyan": "There's a beast in every man, and it stirs when you put a sword in his hand.",
+    "type": "f",
+    "from": "权力的游戏",
+    "from_who": null,
+    "created_at": "1583893817",
+    "length": 76
+  },
+  {
+    "id": 18,
+    "yiyan": "Valar morghulis; Valar dohaeris.",
+    "type": "f",
+    "from": "权力的游戏",
+    "from_who": null,
+    "created_at": "1583894042",
+    "length": 32
+  },
+  {
+    "id": 19,
+    "yiyan": "不是每一个人都能成为伟大的艺术家，但是伟大的艺术家可以来自任何一个地方。",
+    "type": "f",
+    "from": "料理鼠王",
+    "from_who": "小米",
+    "created_at": "1584030182",
+    "length": 36
+  },
+  {
+    "id": 20,
+    "yiyan": "陆上的人喜欢寻根问底，虚度了大好光阴，冬天忧虑夏天的姗姗来迟，夏天忧虑冬天的将至，所以他们不停四处游走，追求一个遥不可及的四季如夏的地方，然而我并不羡慕。",
+    "type": "f",
+    "from": "海上钢琴师",
+    "from_who": "1900",
+    "created_at": "1584697156",
+    "length": 77
+  },
+  {
+    "id": 21,
+    "yiyan": "我们生活在阴沟里，但有人依然仰望星空。",
+    "type": "f",
+    "from": "少年的你",
+    "from_who": "陈念",
+    "created_at": "1585269003",
+    "length": 19
+  },
+  {
+    "id": 22,
+    "yiyan": "所以我松开拳头用手握紧笔，作为自己作为人类也作为你。",
+    "type": "f",
+    "from": "贰拾",
+    "from_who": "张颜齐",
+    "created_at": "1585291368",
+    "length": 26
+  },
+  {
+    "id": 23,
+    "yiyan": "谎话被歌颂，扮清醒的人作哑装聋。",
+    "type": "f",
+    "from": "不痛",
+    "from_who": "南语",
+    "created_at": "1585293573",
+    "length": 16
+  },
+  {
+    "id": 24,
+    "yiyan": "如果你有梦想，就要守护它。",
+    "type": "f",
+    "from": "当幸福来敲门",
+    "from_who": "克里斯·加德纳",
+    "created_at": "1585296385",
+    "length": 13
+  },
+  {
+    "id": 25,
+    "yiyan": "当人们做不到一些事情的时候，他们会对你说你也同样不能。",
+    "type": "f",
+    "from": "当幸福来敲门",
+    "from_who": "克里斯·加德纳",
+    "created_at": "1585296454",
+    "length": 27
+  },
+  {
+    "id": 26,
+    "yiyan": "隔着人潮呼救像只困兽，呼吸颤抖去泪流，去相拥。",
+    "type": "f",
+    "from": "不痛",
+    "from_who": "南语",
+    "created_at": "1585293619",
+    "length": 23
+  },
+  {
+    "id": 27,
+    "yiyan": "曾盛开过一朵，曾不会败落，曾在他眼中流淌过浩瀚的银河。",
+    "type": "f",
+    "from": "不痛",
+    "from_who": "南语",
+    "created_at": "1585293655",
+    "length": 27
+  },
+  {
+    "id": 28,
+    "yiyan": "忘掉生日，忘掉青涩的诗，忘掉他不厌其烦夜夜追逐他影子。",
+    "type": "f",
+    "from": "菱形月亮",
+    "from_who": "邱意",
+    "created_at": "1585293912",
+    "length": 27
+  },
+  {
+    "id": 29,
+    "yiyan": "金钱和女人，是人生犯错的根源。",
+    "type": "f",
+    "from": "贫民窟里的百万富翁",
+    "from_who": "丹尼·鮑伊",
+    "created_at": "1585215070",
+    "length": 15
+  },
+  {
+    "id": 30,
+    "yiyan": "祈愿万家灯火熨烫过脉络，刀山与火海多深刻，都陪你渡过。",
+    "type": "f",
+    "from": "不痛",
+    "from_who": "南语",
+    "created_at": "1585293712",
+    "length": 27
+  },
+  {
+    "id": 31,
+    "yiyan": "we are in the gutter, but some of us are looking at the stars.",
+    "type": "f",
+    "from": "少年的你",
+    "from_who": "陈念",
+    "created_at": "1585616988",
+    "length": 62
+  },
+  {
+    "id": 32,
+    "yiyan": "呐，做人呢，最重要的是开心，你饿不饿，我煮碗面给你吃啊。",
+    "type": "f",
+    "from": "大内密探零零发",
+    "from_who": "周星驰",
+    "created_at": "1585647296",
+    "length": 28
+  },
+  {
+    "id": 33,
+    "yiyan": "Tough times don't last, tough people do.",
+    "type": "f",
+    "from": "Elementary",
+    "from_who": "Joan Watson",
+    "created_at": "1586362271",
+    "length": 40
+  },
+  {
+    "id": 34,
+    "yiyan": "经不经典这种事，每个人本来就不一样嘛。因为，你有你的回忆，我有我的传记，只要感动，都是经典。",
+    "type": "f",
+    "from": "五月天人生无限公司",
+    "from_who": null,
+    "created_at": "1588353078",
+    "length": 46
+  },
+  {
+    "id": 35,
+    "yiyan": "就像是一场华尔街的阴谋，透露着优雅的杀戮。",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": null,
+    "created_at": "1586939443",
+    "length": 21
+  },
+  {
+    "id": 36,
+    "yiyan": "一个细胞里，却分裂出了两种截然不同的命运。",
+    "type": "f",
+    "from": "法医秦明",
+    "from_who": "秦明",
+    "created_at": "1586939487",
+    "length": 21
+  },
+  {
+    "id": 37,
+    "yiyan": "人的痛苦会把自己折磨到多深呢？",
+    "type": "f",
+    "from": "如实陈述",
+    "from_who": null,
+    "created_at": "1586776496",
+    "length": 15
+  },
+  {
+    "id": 38,
+    "yiyan": "如果你仲记得我，就返转头啦。",
+    "type": "f",
+    "from": "刑事侦缉档案",
+    "from_who": null,
+    "created_at": "1586939583",
+    "length": 14
+  },
+  {
+    "id": 39,
+    "yiyan": "世界上有三种欺诈师，欺骗别人金钱的白鹫；用美色来玩弄别人心灵的红鹫；还有一种只把白鹫和红鹫当成猎物的史上最强的欺诈师。他的名字叫做黑鹫。",
+    "type": "f",
+    "from": "欺诈猎人",
+    "from_who": null,
+    "created_at": "1586939770",
+    "length": 68
+  },
+  {
+    "id": 40,
+    "yiyan": "那片洁白无瑕的雪地上留下的两个人的回忆很快就会消失，只有那十字，那隔窗的吻痕，那棵树，那人的心在自己胸膛留下的心跳声，永存不灭。",
+    "type": "f",
+    "from": "天国的树",
+    "from_who": null,
+    "created_at": "1586939826",
+    "length": 64
+  },
+  {
+    "id": 41,
+    "yiyan": "世事变幻无常，而近乎永恒不变者，唯你我头上的同一片星空。",
+    "type": "f",
+    "from": "万国志",
+    "from_who": null,
+    "created_at": "1588648123",
+    "length": 28
+  },
+  {
+    "id": 42,
+    "yiyan": "如果温柔是罪，那就只能用拳头来洗清我们犯下的罪孽。",
+    "type": "f",
+    "from": "镇魂街",
+    "from_who": "曹玄亮",
+    "created_at": "1588658329",
+    "length": 25
+  },
+  {
+    "id": 43,
+    "yiyan": "I will always be here for you.",
+    "type": "f",
+    "from": "环太平洋 Pacific Rim",
+    "from_who": null,
+    "created_at": "1590074335",
+    "length": 30
+  },
+  {
+    "id": 44,
+    "yiyan": "我花了二十多年告诉我的女儿如何保护自己，你却没有花十分钟教你的儿子不要伤害女孩子。",
+    "type": "f",
+    "from": "一个母亲的复仇",
+    "from_who": "吉里什·科赫利",
+    "created_at": "1592397411",
+    "length": 41
+  },
+  {
+    "id": 45,
+    "yiyan": "爸爸我也不是一生下来就是爸爸，爸爸也是头一次当爸爸。",
+    "type": "f",
+    "from": "请回答1988",
+    "from_who": "德善父亲",
+    "created_at": "1592529632",
+    "length": 26
+  },
+  {
+    "id": 46,
+    "yiyan": "我想虽然现在是太空时代，人类早就可以坐太空船去月球，但永远无法探索别人内心的宇宙。",
+    "type": "f",
+    "from": "大佛普拉斯",
+    "from_who": null,
+    "created_at": "1594981207",
+    "length": 41
+  },
+  {
+    "id": 47,
+    "yiyan": "自责要短暂，不过要长久铭记。",
+    "type": "f",
+    "from": "当你沉睡时",
+    "from_who": null,
+    "created_at": "1593237879",
+    "length": 14
+  },
+  {
+    "id": 48,
+    "yiyan": "You complete me !",
+    "type": "f",
+    "from": "黑暗骑士",
+    "from_who": "joker",
+    "created_at": "1596239713",
+    "length": 17
+  },
+  {
+    "id": 49,
+    "yiyan": "痛苦犹如一艘船，欲望是指南针。",
+    "type": "f",
+    "from": "暗黑",
+    "from_who": null,
+    "created_at": "1595569612",
+    "length": 15
+  },
+  {
+    "id": 50,
+    "yiyan": "当时光的列车缓缓驶过酋长球场，32岁的亨利就坐在那里，深情的目光望过去，都是自己22岁的影子。",
+    "type": "f",
+    "from": "天下足球",
+    "from_who": null,
+    "created_at": "1602838143",
+    "length": 47
+  },
+  {
+    "id": 51,
+    "yiyan": "I'll do anything to get back what I lost.",
+    "type": "f",
+    "from": "The Flash",
+    "from_who": "Eobard Thawne",
+    "created_at": "1602837828",
+    "length": 41
+  },
+  {
+    "id": 52,
+    "yiyan": "I'm nothing without you.",
+    "type": "f",
+    "from": "The Flash",
+    "from_who": "Clifford Devo",
+    "created_at": "1602837770",
+    "length": 24
+  },
+  {
+    "id": 53,
+    "yiyan": "看看人间的苦难，听听人民的呐喊！",
+    "type": "f",
+    "from": "悲惨世界",
+    "from_who": "《悲惨世界》音乐剧",
+    "created_at": "1602079304",
+    "length": 16
+  },
+  {
+    "id": 54,
+    "yiyan": "Have you ever danced with devil in the pale moonligh?",
+    "type": "f",
+    "from": "Batman(1989)",
+    "from_who": "The Joker (Jack Nicholson)",
+    "created_at": "1600867959",
+    "length": 53
+  },
+  {
+    "id": 55,
+    "yiyan": "我会把历史欠你的都给你还回来，我要让褚嬴的名字传遍大江南北，让你成为真正的棋王！",
+    "type": "f",
+    "from": "棋魂",
+    "from_who": "时光",
+    "created_at": "1605408531",
+    "length": 40
+  },
+  {
+    "id": 56,
+    "yiyan": "你现在的气质里，藏着你走过的路，读过的书和爱过的人。",
+    "type": "f",
+    "from": "卡萨布兰卡",
+    "from_who": "迈克尔·柯蒂茲",
+    "created_at": "1605768805",
+    "length": 26
+  },
+  {
+    "id": 57,
+    "yiyan": "めまぐるしい景色の中,君だけが止まって見えた.",
+    "type": "f",
+    "from": "グランドエスケープ",
+    "from_who": "野田洋次郎",
+    "created_at": "1613294162",
+    "length": 23
+  },
+  {
+    "id": 58,
+    "yiyan": "我希望，你能见识到令你惊奇的事物；我希望，你能体验未曾体验的情感；我希望，你能遇见一些想法不同的人；我希望，你为你自己的人生感到骄傲。如果你发现自己还没做到，我希望，你有勇气，从头再来。",
+    "type": "f",
+    "from": "返老还童",
+    "from_who": "本杰明",
+    "created_at": "1607219097",
+    "length": 93
+  },
+  {
+    "id": 59,
+    "yiyan": "有些人沦为平庸浅薄，玉其外，而败絮其中。可不经意间，有一天你会遇到一个彩虹般绚丽的人，从此以后，其他人就不过是匆匆浮云。",
+    "type": "f",
+    "from": "怦然心动",
+    "from_who": null,
+    "created_at": "1607219550",
+    "length": 60
+  },
+  {
+    "id": 60,
+    "yiyan": "厨房里有煮好的饭，另外我还买了几个杯子，我知道，用不了多久就都会被打破，所以我偷偷藏起了一个，到有一天你需要那个杯子的时候，就打一个电话给我，我会告诉你放在什么地方。",
+    "type": "f",
+    "from": "旺角卡门",
+    "from_who": null,
+    "created_at": "1607219692",
+    "length": 83
+  },
+  {
+    "id": 61,
+    "yiyan": "我想有一天和你去旅行,去那没有去过的地方，没有行李,没有背包,不带电脑更不要手机,走一个地方停一个地方。在我心里最美好的就是和你一起老在路上,捕捉最后的流星,坐在最高的山顶上,听音乐,聊电影,吃东西....当日出越过山涧，我未老，你依然。",
+    "type": "f",
+    "from": "飞屋环游记",
+    "from_who": null,
+    "created_at": "1607266120",
+    "length": 119
+  },
+  {
+    "id": 62,
+    "yiyan": "我希望在20出头的生命里，做一件到八十岁想起来都还会微笑的事。",
+    "type": "f",
+    "from": "练习曲",
+    "from_who": "陈怀恩",
+    "created_at": "1607266225",
+    "length": 31
+  },
+  {
+    "id": 63,
+    "yiyan": "我从出生那天起就是我自己，如果你不能理解，那是你的失败，不是我的。",
+    "type": "f",
+    "from": "大鱼",
+    "from_who": "蒂姆·伯顿",
+    "created_at": "1607266240",
+    "length": 33
+  },
+  {
+    "id": 64,
+    "yiyan": "我一直在等待你来拯救我的一生，曾经我也感动到一塌糊涂，挥洒热泪，但现实情况是，没有人能拯救一个抑郁症患者，你的医生不能，你的咨询师不能，你的恋人朋友家人更不能。",
+    "type": "f",
+    "from": "暖暖内含光",
+    "from_who": null,
+    "created_at": "1607659684",
+    "length": 80
+  },
+  {
+    "id": 65,
+    "yiyan": "宇宙是蚂蚁的梦。",
+    "type": "f",
+    "from": "the shivering truth",
+    "from_who": null,
+    "created_at": "1613444892",
+    "length": 8
+  },
+  {
+    "id": 66,
+    "yiyan": "机会的大门没有把手，自己无法打开，当有人替你打开大门时，你能否毫不犹豫地走进去。",
+    "type": "f",
+    "from": "花牌情缘：结",
+    "from_who": "真岛太一",
+    "created_at": "1613666036",
+    "length": 40
+  },
+  {
+    "id": 67,
+    "yiyan": "跟你在一起的时光都，很耀眼，因为天气好，因为天气不好，因为天气刚刚好，每一天，都很美好。",
+    "type": "f",
+    "from": "孤单又灿烂的神：鬼怪",
+    "from_who": null,
+    "created_at": "1613825445",
+    "length": 44
+  },
+  {
+    "id": 68,
+    "yiyan": "时光会把你雕刻成你应有的样子。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "时光",
+    "created_at": "1619248045",
+    "length": 15
+  },
+  {
+    "id": 69,
+    "yiyan": "比起想念来，千年又何其长。比起相见来，千年又何其短。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "褚嬴",
+    "created_at": "1619248161",
+    "length": 26
+  },
+  {
+    "id": 70,
+    "yiyan": "Pretty things should be enjoyed.",
+    "type": "f",
+    "from": "小妇人",
+    "from_who": "马奇太太",
+    "created_at": "1614148460",
+    "length": 32
+  },
+  {
+    "id": 71,
+    "yiyan": "冬天之所以那么冷是为了告诉大家身边人的温暖有多重要。",
+    "type": "f",
+    "from": "熔炉",
+    "from_who": "孔枝泳",
+    "created_at": "1614524862",
+    "length": 26
+  },
+  {
+    "id": 72,
+    "yiyan": "为什么我眼睛一睁开，你就不是我的了。",
+    "type": "f",
+    "from": "被偷走的那五年",
+    "from_who": "寂落白",
+    "created_at": "1615031769",
+    "length": 18
+  },
+  {
+    "id": 73,
+    "yiyan": "人们宁愿去关心一个蹩脚电影演员的吃喝拉撒和鸡毛蒜皮，而不愿了解一个普通人波涛汹涌的内心世界。",
+    "type": "f",
+    "from": "平凡的世界",
+    "from_who": "路遥",
+    "created_at": "1616906415",
+    "length": 46
+  },
+  {
+    "id": 74,
+    "yiyan": "就算是堕落浪子，也能力挽狂澜。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "方绪",
+    "created_at": "1619248402",
+    "length": 15
+  },
+  {
+    "id": 75,
+    "yiyan": "如果你执意追逐我的幻影，迟早会被真正的我打败。",
+    "type": "f",
+    "from": "棋魂",
+    "from_who": "时光",
+    "created_at": "1619248191",
+    "length": 23
+  },
+  {
+    "id": 76,
+    "yiyan": "我眺望远方的山峰，却错过转弯的路口，蓦然回首，才发现你在等我，没离开过。",
+    "type": "f",
+    "from": "没离开过",
+    "from_who": "楼南蔚",
+    "created_at": "1619790579",
+    "length": 36
+  },
+  {
+    "id": 77,
+    "yiyan": "我寻找大海的尽头，却忽略蜿蜒的河流，当我逆水行舟，你在我左右，推着我走。",
+    "type": "f",
+    "from": "没离开过",
+    "from_who": "楼南蔚",
+    "created_at": "1619790629",
+    "length": 36
+  },
+  {
+    "id": 78,
+    "yiyan": "Control is Power.",
+    "type": "f",
+    "from": "辛德勒的名单",
+    "from_who": "奥斯卡·辛德勒",
+    "created_at": "1623125876",
+    "length": 17
+  },
+  {
+    "id": 79,
+    "yiyan": "这瓜多少钱一斤？",
+    "type": "f",
+    "from": "征服",
+    "from_who": "刘华强",
+    "created_at": "1632695247",
+    "length": 8
+  },
+  {
+    "id": 80,
+    "yiyan": "你呢，是这辈子没故事，想拥有一段故事，我呢，是故事太多，想给故事一个结局。",
+    "type": "f",
+    "from": "飞驰认识",
+    "from_who": "韩寒",
+    "created_at": "1618661843",
+    "length": 37
+  },
+  {
+    "id": 81,
+    "yiyan": "每一局棋，都象征着世间万物的运转规律。一招一式，变化无穷，它应该是自由的，我们也是自由的。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "褚嬴",
+    "created_at": "1619248253",
+    "length": 45
+  },
+  {
+    "id": 82,
+    "yiyan": "有的人，袖里能定乾坤；有的人，春风桃李，俯首为火种；有的人，浪子回头，成为星河里最亮的一颗。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "褚嬴",
+    "created_at": "1619248362",
+    "length": 46
+  },
+  {
+    "id": 83,
+    "yiyan": "当你真正想做成一件事情的时候，就连天地万物都会帮你。",
+    "type": "f",
+    "from": "网剧棋魂",
+    "from_who": "褚嬴",
+    "created_at": "1619248686",
+    "length": 26
+  },
+  {
+    "id": 84,
+    "yiyan": "有时候不能指望别人理解你的委屈，感同身受这个东西，这个世界上不存在。",
+    "type": "f",
+    "from": "我在他乡挺好的",
+    "from_who": "南嘉",
+    "created_at": "1628321412",
+    "length": 34
+  },
+  {
+    "id": 85,
+    "yiyan": "人们往往为了逃避一个错误而去犯另一个错误，既然很多错误无法回避，何必让悔恨埋葬你的人生呢。与其逃来逃去，还不如面对一个。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "吕子乔",
+    "created_at": "1636006443",
+    "length": 60
+  },
+  {
+    "id": 86,
+    "yiyan": "她轻轻唱起来宛如天籁，让我的梦似翅膀心似海。",
+    "type": "f",
+    "from": "天边外",
+    "from_who": "关山",
+    "created_at": "1619791161",
+    "length": 22
+  },
+  {
+    "id": 87,
+    "yiyan": "When all is lost, then all is found.",
+    "type": "f",
+    "from": "Frozen II",
+    "from_who": null,
+    "created_at": "1620016274",
+    "length": 36
+  },
+  {
+    "id": 88,
+    "yiyan": "隔岸无旧情，姑苏有钟声。",
+    "type": "f",
+    "from": "地尽头",
+    "from_who": "林夕",
+    "created_at": "1620288404",
+    "length": 12
+  },
+  {
+    "id": 89,
+    "yiyan": "这短短的一生我们终将会失去，你不妨大胆一点，爱一个人，攀一座山，追一个梦。",
+    "type": "f",
+    "from": "大鱼海棠",
+    "from_who": null,
+    "created_at": "1638460749",
+    "length": 37
+  },
+  {
+    "id": 90,
+    "yiyan": "爱情不是一个拼图，是一个圆碰到另一个圆。",
+    "type": "f",
+    "from": "非正式会谈",
+    "from_who": "陈铭",
+    "created_at": "1642492018",
+    "length": 20
+  },
+  {
+    "id": 91,
+    "yiyan": "哪一场仗不难打，越难打，就更要打。",
+    "type": "f",
+    "from": "长津湖之水门桥",
+    "from_who": "余从戎",
+    "created_at": "1643855215",
+    "length": 17
+  },
+  {
+    "id": 92,
+    "yiyan": "其实我们无处可去，身上背负着伤痛，没有救赎，没有解脱，可这才是人生啊。",
+    "type": "f",
+    "from": "海边的曼彻斯特",
+    "from_who": "肯尼斯·罗纳根",
+    "created_at": "1649294181",
+    "length": 35
+  },
+  {
+    "id": 93,
+    "yiyan": "一切已失去，不可以再追。",
+    "type": "f",
+    "from": "梦伴",
+    "from_who": "梅艳芳",
+    "created_at": "1657937208",
+    "length": 12
+  },
+  {
+    "id": 94,
+    "yiyan": "所谓宿命，其实都是最好的安排。",
+    "type": "f",
+    "from": "将夜",
+    "from_who": null,
+    "created_at": "1657006768",
+    "length": 15
+  },
+  {
+    "id": 95,
+    "yiyan": "其实失去，只是痛那么一下而已；如果不这么痛一下，怎么会知道这痛其实不算什么。",
+    "type": "f",
+    "from": "铠甲勇士",
+    "from_who": "乔奢费",
+    "created_at": "1657768529",
+    "length": 38
+  },
+  {
+    "id": 96,
+    "yiyan": "让子弹飞一会儿！",
+    "type": "f",
+    "from": "让子弹飞",
+    "from_who": "张麻子",
+    "created_at": "1657371272",
+    "length": 8
+  },
+  {
+    "id": 97,
+    "yiyan": "人是万灵之长，智慧的差异是很小的，经历本身也是文化。",
+    "type": "f",
+    "from": "牧马人",
+    "from_who": null,
+    "created_at": "1656381821",
+    "length": 26
+  },
+  {
+    "id": 98,
+    "yiyan": "当你足够期待失望时，你就永远不会失望。",
+    "type": "f",
+    "from": "蜘蛛侠：英雄无归",
+    "from_who": "MJ",
+    "created_at": "1644389751",
+    "length": 19
+  },
+  {
+    "id": 99,
+    "yiyan": "老子就是一门炮。",
+    "type": "f",
+    "from": "长津湖之水门桥",
+    "from_who": "伍万里",
+    "created_at": "1643855284",
+    "length": 8
+  },
+  {
+    "id": 100,
+    "yiyan": "It is our choices that show what we truly are, far more than our abilities.",
+    "type": "f",
+    "from": "哈利波特",
+    "from_who": "J.K. Rowling",
+    "created_at": "1645924259",
+    "length": 75
+  },
+  {
+    "id": 101,
+    "yiyan": "阶砖不会拒绝磨蚀，窗花不可幽禁落霞。",
+    "type": "f",
+    "from": "喜帖街",
+    "from_who": "黄伟文",
+    "created_at": "1658848518",
+    "length": 18
+  },
+  {
+    "id": 102,
+    "yiyan": "经过上千年的修炼，你学到的就是这个吗？",
+    "type": "f",
+    "from": "神龙许愿",
+    "from_who": "神龙许愿",
+    "created_at": "1646283736",
+    "length": 19
+  },
+  {
+    "id": 103,
+    "yiyan": "恋爱本质不是走向婚姻，而是探究最真实的自己。",
+    "type": "f",
+    "from": "青春杂货铺",
+    "from_who": null,
+    "created_at": "1632637542",
+    "length": 22
+  },
+  {
+    "id": 104,
+    "yiyan": "会不会我们的青春，只是一个关于追求更好的途中，却失去最好的故事。",
+    "type": "f",
+    "from": "你值得更好的",
+    "from_who": "佚名",
+    "created_at": "1629129518",
+    "length": 32
+  },
+  {
+    "id": 105,
+    "yiyan": "世上无魔便无佛，如果没有失败，他们怎么会珍惜胜利的感觉呢，赢一场跟输一场是一样的，都是他们人生轨迹上的重要转折点。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "曾小贤",
+    "created_at": "1636006875",
+    "length": 57
+  },
+  {
+    "id": 106,
+    "yiyan": "你是故意找茬是不是？",
+    "type": "f",
+    "from": "征服",
+    "from_who": "华强",
+    "created_at": "1638587166",
+    "length": 10
+  },
+  {
+    "id": 107,
+    "yiyan": "我没有梦想，但我可以守护别人的梦想！",
+    "type": "f",
+    "from": "假面骑士faiz",
+    "from_who": "乾巧",
+    "created_at": "1660545988",
+    "length": 18
+  },
+  {
+    "id": 108,
+    "yiyan": "极霸矛，湘阿痕响啊。",
+    "type": "f",
+    "from": "中华inm",
+    "from_who": "王爷",
+    "created_at": "1652019004",
+    "length": 10
+  },
+  {
+    "id": 109,
+    "yiyan": "我只是个路过的假面骑士。",
+    "type": "f",
+    "from": "假面骑士decade",
+    "from_who": "门矢士",
+    "created_at": "1660540829",
+    "length": 12
+  },
+  {
+    "id": 110,
+    "yiyan": "无聊的并不是时间，而是平庸无奇的我。",
+    "type": "f",
+    "from": "樱花庄的宠物女孩",
+    "from_who": "樱花庄的宠物女孩​",
+    "created_at": "1644009745",
+    "length": 18
+  },
+  {
+    "id": 111,
+    "yiyan": "生活，就是生出来活下去，其它都是浮云，活的潇洒一点。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "吕小布",
+    "created_at": "1636006723",
+    "length": 26
+  },
+  {
+    "id": 112,
+    "yiyan": "我的人生没有彩排，每天都是现场直播。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "吕小布",
+    "created_at": "1636006581",
+    "length": 18
+  },
+  {
+    "id": 113,
+    "yiyan": "人们往往用逃避来解决问题，可我们要承认，每个硬币都有它的另一面。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "唐悠悠",
+    "created_at": "1636351948",
+    "length": 32
+  },
+  {
+    "id": 114,
+    "yiyan": "我觉得这个世上这么多人，可是没有人想听我讲话。",
+    "type": "f",
+    "from": "后会无期",
+    "from_who": null,
+    "created_at": "1640797431",
+    "length": 23
+  },
+  {
+    "id": 115,
+    "yiyan": "记忆是痛苦的根源。",
+    "type": "f",
+    "from": "功夫",
+    "from_who": "周星驰",
+    "created_at": "1644460005",
+    "length": 9
+  },
+  {
+    "id": 116,
+    "yiyan": "这两个过早的品尝了人世沧桑的孩子一见如故。",
+    "type": "f",
+    "from": "神奇动物在哪里",
+    "from_who": "J.K.罗琳",
+    "created_at": "1651298447",
+    "length": 21
+  },
+  {
+    "id": 117,
+    "yiyan": "本杰明，我们命中注定要失去所爱之人， 不然我们怎么知道，他们在我们的生命中有多重要？",
+    "type": "f",
+    "from": "返老还童",
+    "from_who": null,
+    "created_at": "1651222927",
+    "length": 42
+  },
+  {
+    "id": 118,
+    "yiyan": "我要打倒最可怕的邪恶，难免要撕去虚假正义的薄薄糖衣。",
+    "type": "f",
+    "from": "铠甲勇士",
+    "from_who": "路法",
+    "created_at": "1649475280",
+    "length": 26
+  },
+  {
+    "id": 119,
+    "yiyan": "什么叫正义，正义就是那些赢家所说的冠冕堂皇的话，如果你是个输家，就没什么正义！",
+    "type": "f",
+    "from": "铠甲勇士",
+    "from_who": "路法",
+    "created_at": "1649475352",
+    "length": 39
+  },
+  {
+    "id": 120,
+    "yiyan": "智慧需要沉淀，积累才能够饱满。",
+    "type": "f",
+    "from": "铠甲勇士",
+    "from_who": "路法",
+    "created_at": "1649475394",
+    "length": 15
+  },
+  {
+    "id": 121,
+    "yiyan": "自满必定失败，骄傲必定后悔。",
+    "type": "f",
+    "from": "铠甲勇士",
+    "from_who": "路法",
+    "created_at": "1649475459",
+    "length": 14
+  },
+  {
+    "id": 122,
+    "yiyan": "亲近你的朋友，但更要亲近你的敌人。",
+    "type": "f",
+    "from": "教父2",
+    "from_who": null,
+    "created_at": "1662738249",
+    "length": 17
+  },
+  {
+    "id": 123,
+    "yiyan": "没有值不值得，只有愿不愿意。",
+    "type": "f",
+    "from": "择天记",
+    "from_who": "徐有容",
+    "created_at": "1662876303",
+    "length": 14
+  },
+  {
+    "id": 124,
+    "yiyan": "如果你的人生只有柠檬，不妨配盐喝点龙舌兰。",
+    "type": "f",
+    "from": "我是谁：没有绝对安全的系统",
+    "from_who": null,
+    "created_at": "1664974336",
+    "length": 21
+  },
+  {
+    "id": 125,
+    "yiyan": "世界上有太多孤独的人害怕先踏出第一步。",
+    "type": "f",
+    "from": "绿皮书",
+    "from_who": null,
+    "created_at": "1665138564",
+    "length": 19
+  },
+  {
+    "id": 126,
+    "yiyan": "人类把最精密的保密系统，都用在了自我毁灭上。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": null,
+    "created_at": "1674896997",
+    "length": 22
+  },
+  {
+    "id": 127,
+    "yiyan": "我相信，人类的勇气可以跨越时间，跨越每一个历史，当下和未来；我相信 ，我们的人一定可以完成任务，无论虚实，不计存亡。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": null,
+    "created_at": "1674896911",
+    "length": 58
+  },
+  {
+    "id": 128,
+    "yiyan": "沉湎于虚幻的梦想，而忘记现实的生活，这是毫无意义的，千万记住。",
+    "type": "f",
+    "from": "哈利•波特与魔法石",
+    "from_who": "阿布思•邓布利多",
+    "created_at": "1666962318",
+    "length": 31
+  },
+  {
+    "id": 129,
+    "yiyan": "叶底藏花一度，梦里踏雪几回。",
+    "type": "f",
+    "from": "一代宗师",
+    "from_who": null,
+    "created_at": "1667062821",
+    "length": 14
+  },
+  {
+    "id": 130,
+    "yiyan": "不气盛能叫年轻人吗？",
+    "type": "f",
+    "from": "征服",
+    "from_who": "刘华强",
+    "created_at": "1667474645",
+    "length": 10
+  },
+  {
+    "id": 131,
+    "yiyan": "一个女孩知道了怎么去模仿女人，并不代表她真的准备好做女人了。",
+    "type": "f",
+    "from": "水果硬糖",
+    "from_who": "海莉",
+    "created_at": "1666244945",
+    "length": 30
+  },
+  {
+    "id": 132,
+    "yiyan": "死亡不是生命的终点，遗忘才是。",
+    "type": "f",
+    "from": "寻梦环游记",
+    "from_who": null,
+    "created_at": "1665491485",
+    "length": 15
+  },
+  {
+    "id": 133,
+    "yiyan": "A gentleman's quote is a gentleman's word.",
+    "type": "f",
+    "from": "Henry Golding",
+    "from_who": "Dry Eye",
+    "created_at": "1665541115",
+    "length": 42
+  },
+  {
+    "id": 134,
+    "yiyan": "服下红色药丸吧，那是自由的象征。",
+    "type": "f",
+    "from": "黑客帝国",
+    "from_who": null,
+    "created_at": "1669819045",
+    "length": 16
+  },
+  {
+    "id": 135,
+    "yiyan": "结局是什么，我们自己决定！",
+    "type": "f",
+    "from": "明日战记",
+    "from_who": "郑重生",
+    "created_at": "1672677945",
+    "length": 13
+  },
+  {
+    "id": 136,
+    "yiyan": "没有人的文明毫无意义。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": "马兆",
+    "created_at": "1674405082",
+    "length": 11
+  },
+  {
+    "id": 137,
+    "yiyan": "为难当前，唯有责任。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": "周喆直",
+    "created_at": "1675171086",
+    "length": 10
+  },
+  {
+    "id": 138,
+    "yiyan": "远离亲人，我很遗憾，但这是我不得不做的事情。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": "刘培强",
+    "created_at": "1675328395",
+    "length": 22
+  },
+  {
+    "id": 139,
+    "yiyan": "我信，我的孩子会信，孩子的孩子会信，我相信会再次看到蓝天，鲜花挂满枝头。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": "周喆直",
+    "created_at": "1677673372",
+    "length": 36
+  },
+  {
+    "id": 140,
+    "yiyan": "你想走，就请立马抽刀，爱一笔勾销。",
+    "type": "f",
+    "from": "缘分一道桥",
+    "from_who": "方文山",
+    "created_at": "1675839309",
+    "length": 17
+  },
+  {
+    "id": 141,
+    "yiyan": "一万五千年前，一根愈合的人类股骨，标志着人类文明的诞生；一万五千年后，当太阳系将不复存在，人类的团结与勇气将延续文明的火种。",
+    "type": "f",
+    "from": "流浪地球2",
+    "from_who": null,
+    "created_at": "1674896931",
+    "length": 62
+  },
+  {
+    "id": 142,
+    "yiyan": "闪烁的灯光是我在异世界大声地呼唤你。",
+    "type": "f",
+    "from": "怪奇物语",
+    "from_who": null,
+    "created_at": "1675852905",
+    "length": 18
+  },
+  {
+    "id": 143,
+    "yiyan": "风声细碎烛影乱，相思浓时情转淡。",
+    "type": "f",
+    "from": "月中天",
+    "from_who": "陈涛",
+    "created_at": "1675925541",
+    "length": 16
+  },
+  {
+    "id": 144,
+    "yiyan": "希望你今后的每一次笑，都是真心的。",
+    "type": "f",
+    "from": "深海",
+    "from_who": "南河",
+    "created_at": "1676799363",
+    "length": 17
+  },
+  {
+    "id": 145,
+    "yiyan": "生活和漫画里面的那种热血还是不一样的。",
+    "type": "f",
+    "from": "影视飓风",
+    "from_who": "Tim",
+    "created_at": "1679128135",
+    "length": 19
+  },
+  {
+    "id": 146,
+    "yiyan": "贾维斯，在我们学会走之前，要先学会跑！",
+    "type": "f",
+    "from": "钢铁侠",
+    "from_who": "托尼·斯塔克",
+    "created_at": "1681557147",
+    "length": 19
+  },
+  {
+    "id": 147,
+    "yiyan": "人生总是那么痛苦吗?还是只有小时候是这样?",
+    "type": "f",
+    "from": "这个杀手不太冷",
+    "from_who": "玛蒂达",
+    "created_at": "1681801317",
+    "length": 21
+  },
+  {
+    "id": 148,
+    "yiyan": "我会和命运战斗，并且战胜给你看！",
+    "type": "f",
+    "from": "假面骑士·剑",
+    "from_who": "剑崎一真",
+    "created_at": "1682088739",
+    "length": 16
+  },
+  {
+    "id": 149,
+    "yiyan": "总有一天你会笑着说出曾经令你痛苦的事情。",
+    "type": "f",
+    "from": "肖申克的救赎",
+    "from_who": null,
+    "created_at": "1696064559",
+    "length": 20
+  },
+  {
+    "id": 150,
+    "yiyan": "球可以输，人不能输。",
+    "type": "f",
+    "from": "夺冠",
+    "from_who": "陈忠和",
+    "created_at": "1676469233",
+    "length": 10
+  },
+  {
+    "id": 151,
+    "yiyan": "我只希望我的死，比我的生更有意义。",
+    "type": "f",
+    "from": "小丑",
+    "from_who": "亚瑟",
+    "created_at": "1682848724",
+    "length": 17
+  },
+  {
+    "id": 152,
+    "yiyan": "我们只有一条出路，那就是胜利。还有另外一条路，死亡。死亡不属于工人阶级！",
+    "type": "f",
+    "from": "列宁在1918",
+    "from_who": "米哈伊尔·罗姆",
+    "created_at": "1684563054",
+    "length": 36
+  },
+  {
+    "id": 153,
+    "yiyan": "火车是往前开的，去哪并不重要，重要的是窗外的风景。",
+    "type": "f",
+    "from": "爱情公寓",
+    "from_who": "吕子乔",
+    "created_at": "1694464264",
+    "length": 25
+  },
+  {
+    "id": 154,
+    "yiyan": "每一个在地球上活过的人，在这个宇宙上都有一颗对应的星星在闪烁。",
+    "type": "f",
+    "from": "2001太空漫游",
+    "from_who": null,
+    "created_at": "1698587989",
+    "length": 31
+  },
+  {
+    "id": 155,
+    "yiyan": "人生若无悔，那该多无趣啊。",
+    "type": "f",
+    "from": "一代宗师",
+    "from_who": null,
+    "created_at": "1701267519",
+    "length": 13
+  },
+  {
+    "id": 156,
+    "yiyan": "新人结婚的时候，不应该把手搭在圣经上说：不论贫穷富有，健康疾病，都至死相伴。应该把手放在《进化心理学》和《自私的基因》这两本书上宣誓：我将违背我的天性，忤逆我的本能，永远爱你。",
+    "type": "f",
+    "from": "奇葩说",
+    "from_who": "陈铭",
+    "created_at": "1706426045",
+    "length": 88
+  },
+  {
+    "id": 157,
+    "yiyan": "风浪越大鱼越贵。",
+    "type": "f",
+    "from": "狂飙",
+    "from_who": "高启强",
+    "created_at": "1706518742",
+    "length": 8
+  },
+  {
+    "id": 158,
+    "yiyan": "All is well!",
+    "type": "f",
+    "from": "三傻大闹宝莱坞",
+    "from_who": null,
+    "created_at": "1707276149",
+    "length": 12
+  },
+  {
+    "id": 159,
+    "yiyan": "我们办的不是案子，是别人的人生。",
+    "type": "f",
+    "from": "第二十条",
+    "from_who": null,
+    "created_at": "1708783613",
+    "length": 16
+  },
+  {
+    "id": 160,
+    "yiyan": "我的生命，本来就在不假思索地奔向死亡。",
+    "type": "f",
+    "from": "弥留之国的爱丽丝",
+    "from_who": "苣屋骏太郎",
+    "created_at": "1709224139",
+    "length": 19
+  },
+  {
+    "id": 161,
+    "yiyan": "光荣在于平淡，艰巨在于漫长。",
+    "type": "f",
+    "from": "士兵突击",
+    "from_who": null,
+    "created_at": "1723848293",
+    "length": 14
+  },
+  {
+    "id": 162,
+    "yiyan": "May the force be with you.",
+    "type": "f",
+    "from": "星球大战",
+    "from_who": null,
+    "created_at": "1724935475",
+    "length": 26
+  },
+  {
+    "id": 163,
+    "yiyan": "Good morning, and in case I don't see you, Good afternoon, Good evening, And good night.",
+    "type": "f",
+    "from": "楚门的世界",
+    "from_who": "楚门",
+    "created_at": "1726026880",
+    "length": 88
+  },
+  {
+    "id": 164,
+    "yiyan": "人穷尽一生追寻另一个人类共度一生的事，我一直不能理解，或许是我自己太有意思，无需另一个人陪伴。所以，我祝你们在对方身上得到的快乐，与我给自己的一样多。",
+    "type": "f",
+    "from": "生活大爆炸",
+    "from_who": "谢尔顿",
+    "created_at": "1726026913",
+    "length": 75
+  },
+  {
+    "id": 165,
+    "yiyan": "Yes, minister.",
+    "type": "f",
+    "from": "是，大臣",
+    "from_who": "彼得·惠特莫尔等",
+    "created_at": "1726547060",
+    "length": 14
+  },
+  {
+    "id": 166,
+    "yiyan": "在每个银河坠入山谷的梦里，我会醒来，也忘记梦境。",
+    "type": "f",
+    "from": "后会无期",
+    "from_who": "韩寒",
+    "created_at": "1729552224",
+    "length": 24
+  },
+  {
+    "id": 167,
+    "yiyan": "哪儿啊，哪儿啊...",
+    "type": "f",
+    "from": "哪儿啊哪儿啊神去村",
+    "from_who": "矢口史靖",
+    "created_at": "1730962631",
+    "length": 10
+  },
+  {
+    "id": 168,
+    "yiyan": "人生就是这样，苦和累，你总得选一样吧，哪有什么好事，都让你佟湘玉一个人占了呢？",
+    "type": "f",
+    "from": "武林外传",
+    "from_who": "白展堂",
+    "created_at": "1731197678",
+    "length": 39
+  },
+  {
+    "id": 169,
+    "yiyan": "赌就是赌，没有大小，赢了的还想赢，输了的就想翻盘，只要是上了赌桌久赌必输啊。",
+    "type": "f",
+    "from": "武林外传",
+    "from_who": "断指轩辕",
+    "created_at": "1731197991",
+    "length": 38
+  },
+  {
+    "id": 170,
+    "yiyan": "洪水般的爱情像灾难，爱在一点点时，最珍贵！",
+    "type": "f",
+    "from": "失笑",
+    "from_who": null,
+    "created_at": "1731999402",
+    "length": 21
+  },
+  {
+    "id": 171,
+    "yiyan": "Some of us get dipped in flat, some in satin, some in gloss. But every once in a while you find someone who's iridescent, and when you do, nothing will ever compare.",
+    "type": "f",
+    "from": "Flipped怦然心动",
+    "from_who": null,
+    "created_at": "1743858125",
+    "length": 165
+  },
+  {
+    "id": 172,
+    "yiyan": "恐惧，是弱点劫持了，你身体里的驾驶舱。",
+    "type": "f",
+    "from": "A Minecraft movie",
+    "from_who": null,
+    "created_at": "1743932100",
+    "length": 19
+  },
+  {
+    "id": 173,
+    "yiyan": "“当你不能够再拥有，你唯一可以做的，就是令自己不要忘记！”",
+    "type": "f",
+    "from": "东邪西毒",
+    "from_who": null,
+    "created_at": "1744696780",
+    "length": 29
+  },
+  {
+    "id": 174,
+    "yiyan": "地球不需要被拯救，需要被拯救的是人类自己。",
+    "type": "f",
+    "from": "柴静专访",
+    "from_who": "丁仲礼",
+    "created_at": "1753325193",
+    "length": 21
+  },
+  {
+    "id": 175,
+    "yiyan": "奇怪的动物会被保护起来，奇怪的人却遭受排挤。",
+    "type": "f",
+    "from": "阳光劫匪",
+    "from_who": "伊坂幸太郎",
+    "created_at": "1753587688",
+    "length": 22
+  },
+  {
+    "id": 176,
+    "yiyan": "为了胜利，向我开炮！",
+    "type": "f",
+    "from": "英雄儿女",
+    "from_who": "王成",
+    "created_at": "1684563717",
+    "length": 10
+  },
+  {
+    "id": 177,
+    "yiyan": "搞怪的不是红绿灯，不是时机，而是我数不清的犹豫。",
+    "type": "f",
+    "from": "请回答1988",
+    "from_who": null,
+    "created_at": "1682563809",
+    "length": 24
+  },
+  {
+    "id": 178,
+    "yiyan": "我们的情人，不过是随便借个名字，用幻想吹出来的肥皂泡。",
+    "type": "f",
+    "from": "大鼻子情圣",
+    "from_who": "埃德蒙·罗斯丹",
+    "created_at": "1689061112",
+    "length": 27
+  },
+  {
+    "id": 179,
+    "yiyan": "所有的决定都是人在当下处境里所能做出的最好选择。",
+    "type": "f",
+    "from": "狂飙",
+    "from_who": "徐纪周",
+    "created_at": "1689123036",
+    "length": 24
+  },
+  {
+    "id": 180,
+    "yiyan": "失去贞操的应该是强奸犯，而不是被强奸的人。我的贞操不在我的身体里。",
+    "type": "f",
+    "from": "真相访谈",
+    "from_who": "阿米尔·汗",
+    "created_at": "1689479357",
+    "length": 33
+  },
+  {
+    "id": 181,
+    "yiyan": "世界上有太多孤独的人，都害怕走出第一步。",
+    "type": "f",
+    "from": "绿皮书",
+    "from_who": "Tony Vallelonga",
+    "created_at": "1775673933",
+    "length": 20
+  },
+  {
+    "id": 182,
+    "yiyan": "酒调动着我们自身的温度，我们却糊涂的感谢世界的温暖。",
+    "type": "f",
+    "from": "百家讲坛",
+    "from_who": "鲍鹏山",
+    "created_at": "1776102366",
+    "length": 26
+  },
+  {
+    "id": 183,
+    "yiyan": "时间差不多咯。",
+    "type": "f",
+    "from": "周处除三害",
+    "from_who": null,
+    "created_at": "1776913393",
+    "length": 7
+  },
+  {
+    "id": 184,
+    "yiyan": "我们虽然穷，但是不乱说脏话。我们不去偷，不去抢，不属于自己的东西，我们不会拿，你要努力读书，将来做一个有用的人。",
+    "type": "f",
+    "from": "长江七号",
+    "from_who": "周铁",
+    "created_at": "1777253915",
+    "length": 56
+  },
+  {
+    "id": 185,
+    "yiyan": "爱的承诺，失去的苦楚，赎罪的欢愉。",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": "麦考夫·福尔摩斯",
+    "created_at": "1777538097",
+    "length": 17
+  },
+  {
+    "id": 186,
+    "yiyan": "终一生渡世人和终一世渡一人，为师觉得是一样的。",
+    "type": "f",
+    "from": "八十一难",
+    "from_who": "十上无难事",
+    "created_at": "1777642357",
+    "length": 23
+  },
+  {
+    "id": 187,
+    "yiyan": "生命终有尽头，徒留一颗破碎的心。",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": "迈克夫特·福尔摩斯",
+    "created_at": "1778168800",
+    "length": 16
+  },
+  {
+    "id": 188,
+    "yiyan": "天堂不过是轻信和胆小之人的幻想，我可以给你地图，索引地狱的所在。",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": "麦考夫·福尔摩斯",
+    "created_at": "1779761691",
+    "length": 32
+  },
+  {
+    "id": 189,
+    "yiyan": "时间在流淌，生活会改变，没什么是永恒。",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": "麦考夫·福尔摩斯",
+    "created_at": "1779761762",
+    "length": 19
+  },
+  {
+    "id": 190,
+    "yiyan": "Brainy is the new sexy.",
+    "type": "f",
+    "from": "神探夏洛克",
+    "from_who": "艾琳·艾德勒",
+    "created_at": "1779761885",
+    "length": 23
+  }
+]
