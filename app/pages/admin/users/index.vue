@@ -143,7 +143,6 @@ const columns: TableColumn<AdminUserItem>[] = [
   { id: 'select' },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'email', header: '邮箱' },
-  { accessorKey: 'displayName', header: '显示名' },
   { accessorKey: 'credits', header: '积分' },
   { accessorKey: 'isActive', header: '激活' },
   { accessorKey: 'isBanned', header: '封禁' },
