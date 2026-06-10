@@ -54,7 +54,12 @@ export const adminUpdateUserSchema = z.object({
   email: z.string().trim().toLowerCase().optional(),
   displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
   isActive: z.boolean().optional(),
-  isBanned: z.boolean().optional()
+  isBanned: z.boolean().optional(),
+  // 重置密码：留空（''/null/缺省）= 不修改；提供则至少 8 位，update handler 会强制该用户重新登录
+  password: z.preprocess(
+    v => (v === '' || v === null ? undefined : v),
+    z.string().min(8, '密码至少 8 位').optional()
+  )
 })
 
 // ============================================================

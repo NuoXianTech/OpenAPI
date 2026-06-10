@@ -85,7 +85,7 @@ export function useAdminUsersPage() {
     }
   }
 
-  async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }): Promise<boolean> {
+  async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean, password?: string }): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/update', {
         method: 'PUT',

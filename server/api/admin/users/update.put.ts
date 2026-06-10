@@ -2,23 +2,32 @@ import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { adminUpdateUserSchema } from '#shared/schemas/admin'
 import { usersService } from '~~/server/service/userService'
-import { requireAdmin } from '~~/server/utils/auth'
+import { hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const { id, username, email, displayName, isActive, isBanned } = await readZodBody(event, adminUpdateUserSchema)
+  const { id, username, email, displayName, isActive, isBanned, password } = await readZodBody(event, adminUpdateUserSchema)
+
+  // 提供 password 才重置；否则 passwordHash 保持 undefined，drizzle 不会触碰该列
+  const passwordHash = password ? await hashPassword(password) : undefined
 
   const updated = await usersService.updateUser(id, {
     username,
     email,
     displayName: displayName !== undefined ? (displayName || null) : undefined,
     isActive,
-    isBanned
+    isBanned,
+    passwordHash
   })
   if (!updated) {
     throw createError({ statusCode: 404, message: 'user not found' })
+  }
+
+  // 管理员重置密码后，自增 tokenVersion 令该用户所有已签发 JWT 失效，强制重新登录
+  if (password) {
+    await usersService.bumpTokenVersion(id)
   }
 
   await operationLogService.addLog({
@@ -28,7 +37,8 @@ export default defineEventHandler(async (event: H3Event) => {
     resourceId: id,
     ip: getRequestIP(event) || null,
     userAgent: getHeader(event, 'user-agent') || null,
-    detail: { patch: { username, email, displayName, isActive, isBanned } }
+    // 仅记录是否改过密码，绝不落明文 / hash
+    detail: { patch: { username, email, displayName, isActive, isBanned, passwordChanged: Boolean(password) } }
   })
 
   const { passwordHash: _ph, ...safe } = updated

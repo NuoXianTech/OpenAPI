@@ -15,14 +15,14 @@ interface OAuthBinding {
 const props = defineProps<{
   open: boolean
   target: AdminUserItem | null
-  onSubmit: (id: number, payload: { username: string, email: string, displayName: string, isActive: boolean }) => Promise<boolean>
+  onSubmit: (id: number, payload: { username: string, email: string, displayName: string, isActive: boolean, password?: string }) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const form = reactive({ username: '', email: '', displayName: '', isActive: false })
+const form = reactive({ username: '', email: '', displayName: '', isActive: false, password: '' })
 const loading = ref(false)
 
 const bindings = ref<OAuthBinding[]>([])
@@ -43,6 +43,8 @@ watch(() => props.open, async (opened) => {
     bindings.value = []
     return
   }
+  // 每次打开重置密码输入，避免上次输入残留（不回填现有密码）
+  form.password = ''
   bindingsLoading.value = true
   try {
     const data = await $fetch<OAuthBinding[]>('/api/admin/users/oauth-accounts', {
@@ -64,7 +66,14 @@ function formatDate(iso: string | null) {
 async function submit() {
   if (!props.target) return
   loading.value = true
-  const ok = await props.onSubmit(props.target.id, { ...form })
+  const ok = await props.onSubmit(props.target.id, {
+    username: form.username,
+    email: form.email,
+    displayName: form.displayName,
+    isActive: form.isActive,
+    // 留空 = 不改密码（传 undefined，不进 body）
+    password: form.password.trim() ? form.password : undefined
+  })
   loading.value = false
   if (ok) emit('update:open', false)
 }
@@ -100,6 +109,18 @@ async function submit() {
           v-model="form.isActive"
           label="已激活"
         />
+
+        <UFormField
+          label="重置密码"
+          help="留空则不修改；填写后将强制该用户重新登录（至少 8 位）"
+        >
+          <UInput
+            v-model="form.password"
+            type="password"
+            placeholder="留空表示不修改"
+            autocomplete="new-password"
+          />
+        </UFormField>
 
         <div class="pt-3 border-t border-default space-y-2">
           <div class="flex items-center gap-2">

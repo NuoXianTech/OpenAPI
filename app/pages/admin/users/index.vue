@@ -261,6 +261,13 @@ const columns: TableColumn<AdminUserItem>[] = [
             {{ row.original.bannedUntil ? `封禁至 ${formatDate(row.original.bannedUntil)}` : '永久封禁' }}
           </UBadge>
         </UTooltip>
+        <UBadge
+          v-else
+          color="success"
+          variant="subtle"
+        >
+          未封禁
+        </UBadge>
       </template>
       <template #createdAt-cell="{ row }">
         {{ formatDate(row.original.createdAt) }}
