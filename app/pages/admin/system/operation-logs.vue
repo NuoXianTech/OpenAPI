@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { resolveOperationLogActionLabel } from '~/constants/operation-log-actions'
 
 useHead({ title: '操作日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -342,7 +343,10 @@ const detailJson = computed(() => {
           </div>
         </template>
         <template #action-cell="{ row }">
-          <span class="font-mono text-xs">{{ row.original.action }}</span>
+          <div class="flex flex-col text-xs">
+            <span class="font-medium">{{ resolveOperationLogActionLabel(row.original.action) }}</span>
+            <span class="font-mono text-muted">{{ row.original.action }}</span>
+          </div>
         </template>
         <template #resource-cell="{ row }">
           <span
@@ -433,7 +437,8 @@ const detailJson = computed(() => {
               <div class="text-xs text-muted">
                 动作
               </div>
-              <div class="font-mono text-xs break-all">
+              <div>{{ resolveOperationLogActionLabel(detailRow.action) }}</div>
+              <div class="font-mono text-xs text-muted break-all">
                 {{ detailRow.action }}
               </div>
             </div>
