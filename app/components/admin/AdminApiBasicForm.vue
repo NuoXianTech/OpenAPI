@@ -1,9 +1,7 @@
 <script setup lang="ts">
 const state = useAdminApiForm()
 
-const inlineCreate = useTemplateRef<{ toggle: () => void } | null>('inlineCreate')
-
-const { data: categoriesData, refresh: refreshCategories } = useLazyFetch<Array<{ id: number, name: string, code: string }>>('/api/admin/api-categories/list', {
+const { data: categoriesData } = useLazyFetch<Array<{ id: number, name: string, code: string }>>('/api/admin/api-categories/list', {
   default: () => []
 })
 const categoryOptions = computed(() => [
@@ -18,11 +16,6 @@ const statusOptions = [
   { label: '维护', value: 2 },
   { label: '废弃', value: 3 }
 ]
-
-async function onCategoryCreated(id: number) {
-  await refreshCategories()
-  state.categoryId = id
-}
 </script>
 
 <template>
@@ -79,24 +72,9 @@ async function onCategoryCreated(id: number) {
         label="分类"
         name="categoryId"
       >
-        <div class="flex gap-2">
-          <USelect
-            v-model="state.categoryId"
-            :items="categoryOptions"
-            class="flex-1"
-          />
-          <UButton
-            icon="i-mdi-plus"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            type="button"
-            @click="inlineCreate?.toggle()"
-          />
-        </div>
-        <AdminCategoryInlineCreate
-          ref="inlineCreate"
-          @created="onCategoryCreated"
+        <USelect
+          v-model="state.categoryId"
+          :items="categoryOptions"
         />
       </UFormField>
     </div>

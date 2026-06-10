@@ -42,7 +42,7 @@ function openEdit(item: ApiCategoryItem) {
 async function openDelete(item: ApiCategoryItem) {
   await confirm({
     title: `删除分类: ${item.name}`,
-    description: '删除后该分类不再可选；已挂在此分类下的接口将变为未分类。',
+    description: '删除后该分类将不再可选；若仍有接口绑定该分类，将无法删除。',
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/api-categories/delete', {

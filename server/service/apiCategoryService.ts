@@ -1,6 +1,6 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { createError } from 'h3'
-import { apiCategories } from '@nuxthub/db/schema'
+import { apiCategories, apis } from '@nuxthub/db/schema'
 
 export interface ApiCategoryInput {
   code: string
@@ -66,7 +66,24 @@ export const apiCategoryService = {
     return res[0] || null
   },
 
+  /** 统计绑定到该分类的接口数量（含已禁用 / orphan 接口） */
+  async countBoundApis(id: number) {
+    const [row] = await db.select({ value: count() }).from(apis).where(eq(apis.categoryId, id))
+    return row?.value ?? 0
+  },
+
+  /**
+   * 软删分类。删除前校验无接口绑定：只要仍有接口（含禁用 / orphan）的 categoryId
+   * 指向该分类，就拒绝删除并提示 admin 先改这些接口的分类，避免接口悬挂在不可见分类上。
+   */
   async softDelete(id: number) {
+    const boundCount = await this.countBoundApis(id)
+    if (boundCount > 0) {
+      throw createError({
+        statusCode: 409,
+        message: `仍有 ${boundCount} 个接口绑定该分类，请先调整这些接口的分类后再删除`
+      })
+    }
     const res = await db.update(apiCategories)
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))
