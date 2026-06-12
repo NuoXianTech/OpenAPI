@@ -15,10 +15,6 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// 跟随容器宽度：dashboard 模板同款做法，避免全宽 / 栅格变化时图表不重排、宽度算错。
-const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
-const { width } = useElementSize(rootRef)
-
 const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] as const
 
 function parseTrendDate(value: string) {
@@ -65,6 +61,17 @@ const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
 })))
 
 const hasData = computed(() => rows.value.some(row => row.success + row.failure > 0))
+
+// unovis 的 VisXYContainer 首次实例化时不绘制坐标轴刻度——只有后续一次「数据更新」重绘才会补画
+// （这正是为什么「点刷新按钮重新拉数据 / 手动 resize」后刻度才出现，而首次进入/F5 不出现）。
+// 故让数据延迟一帧灌入：容器先以空数据挂载，下一帧再填真实数据，等价于走一次 update 重绘路径。
+const displayRows = ref<TrendRow[]>([])
+watch(rows, (val) => {
+  displayRows.value = []
+  nextTick(() => {
+    displayRows.value = val
+  })
+}, { immediate: true })
 
 const formatCount = (value: number) => value.toLocaleString()
 
@@ -128,10 +135,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
 </script>
 
 <template>
-  <div
-    ref="rootRef"
-    class="stats-chart relative"
-  >
+  <div class="stats-chart relative">
     <UEmpty
       v-if="!hasData"
       icon="i-mdi-chart-line"
@@ -142,8 +146,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
 
     <template v-else>
       <VisXYContainer
-        :data="rows"
-        :width="width"
+        :data="displayRows"
         :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
         class="h-[320px] w-full"
       >
