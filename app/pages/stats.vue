@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import type { PublicCallStatsDashboard } from '~~/shared/types/public-stats'
+import type { TableColumn } from '@nuxt/ui'
+import type { PublicCallStatsDashboard, PublicCallStatsTopItem } from '~~/shared/types/public-stats'
 
 useHead({ title: '数据统计' })
 useSeoMeta({
@@ -9,36 +10,6 @@ useSeoMeta({
 })
 
 definePageMeta({ layout: false })
-
-// 图表依赖 d3 + DOM，体积较大。改为 lazy + client-only 异步组件，
-// 让 stats 页主体可以 SSR，图表在客户端 hydrate 后再下载/渲染。
-const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
-const VisLine = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisLine))
-const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
-
-interface TrendChartRow {
-  label: string
-  成功次数: number
-  失败次数: number
-}
-
-function toShortDate(value: string) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return value.slice(5)
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${month}-${day}`
-}
-
-const SUCCESS_KEY = '成功次数' as const
-const FAILURE_KEY = '失败次数' as const
 
 const data = ref<PublicCallStatsDashboard | null>(null)
 const isPending = ref(false)
@@ -82,37 +53,6 @@ const generatedAtLabel = computed(() => {
   }
   return date.toLocaleString('zh-CN', { hour12: false })
 })
-
-const trendChartData = computed<TrendChartRow[]>(() => {
-  return trend7d.value.map(item => ({
-    label: toShortDate(item.date),
-    [SUCCESS_KEY]: item.successCalls,
-    [FAILURE_KEY]: item.failureCalls
-  }))
-})
-
-const xAccessor = (_item: TrendChartRow, index: number) => index
-const successLineAccessor = (item: TrendChartRow) => item[SUCCESS_KEY]
-const failureLineAccessor = (item: TrendChartRow) => item[FAILURE_KEY]
-
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') {
-    return tick
-  }
-  if (typeof tick === 'number') {
-    const maxIndex = Math.max(trendChartData.value.length - 1, 0)
-    const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-    return trendChartData.value[index]?.label || ''
-  }
-  return ''
-}
-
-const yTickFormat = (tick: number | Date) => {
-  if (typeof tick !== 'number') {
-    return ''
-  }
-  return `${Math.round(tick)}`
-}
 
 const formatRate = (value: number) => `${value.toFixed(2)}%`
 const formatCount = (value: number) => value.toLocaleString()
@@ -180,11 +120,25 @@ const trackedApiRatioLabel = computed(() => {
 const trendTotalCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.totalCalls, 0))
 const trendSuccessCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.successCalls, 0))
 const trendFailureCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.failureCalls, 0))
-const hasTrendData = computed(() => trendChartData.value.some(item => item[SUCCESS_KEY] + item[FAILURE_KEY] > 0))
 
 const topApi = computed(() => top10Last30d.value[0] ?? null)
 const rankMaxCalls = computed(() => Math.max(...top10Last30d.value.map(item => item.totalCalls), 1))
 const getRankPercent = (value: number) => clampPercent((value / rankMaxCalls.value) * 100)
+
+// 成功率分档配色：走语义色，自动适配暗色（颜色阈值可按需调整）
+const rankSuccessTone = (rate: number): StatTone =>
+  rate >= 99 ? 'success' : rate >= 95 ? 'info' : rate >= 90 ? 'warning' : 'error'
+
+const rankColumns: TableColumn<PublicCallStatsTopItem>[] = [
+  { accessorKey: 'rank', header: '#' },
+  { accessorKey: 'name', header: '接口' },
+  { accessorKey: 'totalCalls', header: '调用次数' },
+  {
+    accessorKey: 'successRate',
+    header: '成功率',
+    meta: { class: { th: 'text-right', td: 'text-right' } }
+  }
+]
 
 const overviewCards = computed(() => {
   if (!overview.value) {
@@ -487,10 +441,10 @@ const overviewCards = computed(() => {
           </UCard>
         </UPageGrid>
 
-        <div class="grid gap-4 xl:grid-cols-5">
+        <div class="space-y-4">
           <UCard
             variant="subtle"
-            class="stats-panel xl:col-span-3"
+            class="stats-panel"
             :ui="{ body: 'p-4 sm:p-5' }"
           >
             <template #header>
@@ -539,80 +493,18 @@ const overviewCards = computed(() => {
               </div>
             </div>
 
-            <ClientOnly v-if="hasTrendData">
-              <div class="h-[320px] w-full">
-                <VisXYContainer
-                  :data="trendChartData"
-                  :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
-                >
-                  <VisLine
-                    :x="xAccessor"
-                    :y="successLineAccessor"
-                    color="var(--ui-success)"
-                    :line-width="2.8"
-                  />
-                  <VisLine
-                    :x="xAccessor"
-                    :y="failureLineAccessor"
-                    color="var(--ui-error)"
-                    :line-width="2.4"
-                  />
-                  <VisAxis
-                    type="y"
-                    :tick-line="false"
-                    :domain-line="false"
-                    :grid-line="true"
-                    :tick-format="yTickFormat"
-                  />
-                  <VisAxis
-                    type="x"
-                    :x="xAccessor"
-                    :tick-line="false"
-                    :domain-line="false"
-                    :grid-line="false"
-                    :tick-format="xTickFormat"
-                    :num-ticks="7"
-                  />
-                </VisXYContainer>
-              </div>
-
-              <div class="mt-4 flex flex-wrap gap-2">
-                <UBadge
-                  variant="soft"
-                  color="success"
-                  icon="i-mdi-circle"
-                  class="rounded-md"
-                >
-                  成功次数
-                </UBadge>
-                <UBadge
-                  variant="soft"
-                  color="error"
-                  icon="i-mdi-circle"
-                  class="rounded-md"
-                >
-                  失败次数
-                </UBadge>
-              </div>
-
+            <ClientOnly>
+              <StatsTrendChart :trend="trend7d" />
               <template #fallback>
                 <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
               </template>
             </ClientOnly>
-
-            <UEmpty
-              v-else
-              icon="i-mdi-chart-line"
-              title="暂无趋势数据"
-              description="近 7 天还没有可展示的调用趋势。"
-              class="h-[320px]"
-            />
           </UCard>
 
           <UCard
             variant="subtle"
-            class="stats-panel xl:col-span-2"
-            :ui="{ body: 'p-0 sm:p-0' }"
+            class="stats-panel"
+            :ui="{ body: 'p-3 sm:p-4' }"
           >
             <template #header>
               <div class="flex flex-wrap items-start justify-between gap-3">
@@ -635,70 +527,73 @@ const overviewCards = computed(() => {
               </div>
             </template>
 
-            <UEmpty
-              v-if="top10Last30d.length === 0"
-              icon="i-mdi-chart-bar"
-              title="暂无调用数据"
-              description="近 30 天还没有任何接口调用记录。"
-              class="h-[420px]"
-            />
-
-            <ol
-              v-else
-              class="stats-rank-list"
+            <DashboardDataTable
+              :data="top10Last30d"
+              :columns="rankColumns"
+              :fixed="false"
+              empty-icon="i-mdi-chart-bar"
+              empty-title="暂无调用数据"
+              empty-description="近 30 天还没有任何接口调用记录。"
             >
-              <li
-                v-for="item in top10Last30d"
-                :key="item.apiId"
-                class="stats-rank-item"
-              >
-                <div class="flex items-start gap-3">
-                  <UBadge
-                    :color="item.rank <= 3 ? 'primary' : 'neutral'"
-                    :variant="item.rank <= 3 ? 'solid' : 'soft'"
-                    class="mt-0.5 w-7 shrink-0 justify-center rounded-md tabular-nums"
-                  >
-                    {{ item.rank }}
-                  </UBadge>
-                  <div class="min-w-0 flex-1">
-                    <div
-                      class="truncate text-sm font-medium text-default"
-                      :title="item.name"
-                    >
-                      {{ item.name }}
-                    </div>
-                    <div
-                      class="mt-0.5 truncate font-mono text-xs text-muted"
-                      :title="item.apiPath"
-                    >
-                      {{ item.apiPath }}
-                    </div>
-                  </div>
-                  <div class="shrink-0 text-right">
-                    <div class="text-sm font-semibold tabular-nums text-highlighted">
-                      {{ formatCount(item.totalCalls) }}
-                    </div>
-                    <div class="text-xs text-muted tabular-nums">
-                      {{ formatRate(item.successRate) }}
-                    </div>
-                  </div>
-                </div>
+              <template #rank-cell="{ row }">
+                <UBadge
+                  :color="row.original.rank <= 3 ? 'primary' : 'neutral'"
+                  :variant="row.original.rank <= 3 ? 'solid' : 'soft'"
+                  class="w-7 justify-center rounded-md tabular-nums"
+                >
+                  {{ row.original.rank }}
+                </UBadge>
+              </template>
 
-                <div class="mt-3 flex items-center gap-2">
-                  <UBadge
-                    color="neutral"
-                    variant="subtle"
-                    size="sm"
-                    class="shrink-0 rounded-md"
+              <template #name-cell="{ row }">
+                <div class="min-w-0 max-w-[520px]">
+                  <div
+                    class="truncate text-sm font-medium text-default"
+                    :title="row.original.name"
                   >
-                    {{ formatMethod(item.httpMethod) }}
-                  </UBadge>
-                  <div class="stats-rank-bar">
-                    <span :style="{ width: `${getRankPercent(item.totalCalls)}%` }" />
+                    {{ row.original.name }}
+                  </div>
+                  <div class="mt-1 flex items-center gap-1.5">
+                    <UBadge
+                      color="neutral"
+                      variant="subtle"
+                      size="sm"
+                      class="shrink-0 rounded font-mono"
+                    >
+                      {{ formatMethod(row.original.httpMethod) }}
+                    </UBadge>
+                    <span
+                      class="truncate font-mono text-xs text-muted"
+                      :title="row.original.apiPath"
+                    >
+                      {{ row.original.apiPath }}
+                    </span>
                   </div>
                 </div>
-              </li>
-            </ol>
+              </template>
+
+              <template #totalCalls-cell="{ row }">
+                <div class="min-w-[112px]">
+                  <div class="text-sm font-semibold tabular-nums text-highlighted">
+                    {{ formatCount(row.original.totalCalls) }}
+                  </div>
+                  <div class="stats-table-bar mt-1.5">
+                    <span :style="{ width: `${getRankPercent(row.original.totalCalls)}%` }" />
+                  </div>
+                </div>
+              </template>
+
+              <template #successRate-cell="{ row }">
+                <UBadge
+                  :color="rankSuccessTone(row.original.successRate)"
+                  variant="soft"
+                  size="sm"
+                  class="rounded-md tabular-nums"
+                >
+                  {{ formatRate(row.original.successRate) }}
+                </UBadge>
+              </template>
+            </DashboardDataTable>
           </UCard>
         </div>
       </template>
@@ -846,37 +741,16 @@ const overviewCards = computed(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.stats-rank-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.stats-rank-item {
-  padding: 14px 16px;
-  border-top: 1px solid var(--ui-border);
-  transition: background-color 180ms ease;
-}
-
-.stats-rank-item:first-child {
-  border-top: 0;
-}
-
-.stats-rank-item:hover {
-  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
-}
-
-.stats-rank-bar {
+/* 表格内的相对调用量迷你进度条 */
+.stats-table-bar {
   position: relative;
-  min-width: 52px;
-  height: 6px;
-  flex: 1 1 auto;
+  height: 5px;
   overflow: hidden;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ui-border) 72%, transparent);
 }
 
-.stats-rank-bar span {
+.stats-table-bar span {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
