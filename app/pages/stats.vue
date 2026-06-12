@@ -573,12 +573,17 @@ const overviewCards = computed(() => {
               </template>
 
               <template #totalCalls-cell="{ row }">
-                <div class="min-w-[112px]">
+                <div class="min-w-[140px]">
                   <div class="text-sm font-semibold tabular-nums text-highlighted">
                     {{ formatCount(row.original.totalCalls) }}
                   </div>
-                  <div class="stats-table-bar mt-1.5">
-                    <span :style="{ width: `${getRankPercent(row.original.totalCalls)}%` }" />
+                  <div class="mt-1.5 flex items-center gap-2">
+                    <div class="stats-table-bar">
+                      <span :style="{ width: `${getRankPercent(row.original.totalCalls)}%` }" />
+                    </div>
+                    <span class="shrink-0 text-xs text-muted tabular-nums">
+                      {{ Math.round(getRankPercent(row.original.totalCalls)) }}%
+                    </span>
                   </div>
                 </div>
               </template>
@@ -741,9 +746,11 @@ const overviewCards = computed(() => {
   font-variant-numeric: tabular-nums;
 }
 
-/* 表格内的相对调用量迷你进度条 */
+/* 表格内的相对调用量迷你进度条：宽度 = 占榜首比例，单色不喧宾夺主 */
 .stats-table-bar {
   position: relative;
+  flex: 1 1 auto;
+  min-width: 48px;
   height: 5px;
   overflow: hidden;
   border-radius: 999px;
@@ -754,10 +761,7 @@ const overviewCards = computed(() => {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background:
-    linear-gradient(90deg,
-      color-mix(in srgb, var(--ui-primary) 82%, var(--ui-info) 18%),
-      color-mix(in srgb, var(--ui-info) 78%, var(--ui-success) 22%));
+  background: var(--ui-primary);
 }
 
 @media (max-width: 640px) {
