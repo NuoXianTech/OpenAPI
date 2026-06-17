@@ -4,6 +4,8 @@
 
 接口**风格层面**（URL 设计、HTTP 方法语义、响应壳结构、状态码、版本控制）一律遵循 [restful-api-style.md](./restful-api-style.md)。本文档只讲**项目落地**：目录约定、构建期约束、计费标记、后台注册等差异点。
 
+> 想要**端到端接入流程**（业务实现层 `server/lib/` 的两种组织模式、给现有接口加算法 / 从零新建一类接口的 walkthrough、注册行的自动同步机制）见 [public-api-onboarding.md](./public-api-onboarding.md)。本文是它引用的「落地规范」层，两者配合阅读。
+
 ## 1. 路径与目录约定
 
 外部调用路径形如 `/v{N}/<code>/...`，**不含 `/api/` 前缀**——之所以放在 `server/routes/` 而非 `server/api/`，就是为了规避 Nitro 对后者强制添加 `/api` 前缀。
@@ -158,22 +160,27 @@ export default defineEventHandler((event: H3Event) => {
 
 **`server/routes/v1/crypto/[name].post.ts`** — 动态路由 + body + 业务失败标记，完整版见 [server/routes/v1/crypto/[name].post.ts](../server/routes/v1/crypto/%5Bname%5D.post.ts)。
 
-## 7. 后台注册（必做）
+## 7. 后台启用与配置（必做）
 
-代码部署后，gate 还会查数据库 `apis` 表 —— 没登记的 `(pathVersion, code)` 一律 403 `API_NOT_REGISTERED`（[api-gate:66-69](../server/middleware/00.api-gate.ts#L66-L69)）。
+代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../server/plugins/manifestSync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../shared/config/apiGuard.ts#L18-L30) 默认值，关键是默认 `isEnabled=false`）。
 
-新加接口后，去 **管理后台 → 接口管理 → 新增**，填：
+所以新接口接入后会经历两种 gate 拒绝状态，**都属正常**，按状态对症处理即可：
+
+- **还没重启** → DB 无此行 → 403 `API_NOT_REGISTERED`（[api-gate:66-69](../server/middleware/00.api-gate.ts#L66-L69)）
+- **重启后、未配置** → 行已自动建好但默认禁用 → 503 `API_DISABLED`
+
+你要做的是去 **管理后台 → 接口管理**，找到这条自动入库的记录，配置下列治理字段并**启用**它：
 
 | 字段 | 说明 |
 | --- | --- |
-| `pathVersion` + `code` | 必须严格等于目录上的 `v{N}` + 第一层目录名 |
-| `isEnabled` | 关闭后整组接口直接 503 `API_DISABLED` |
+| `pathVersion` + `code` | 关联键，由 manifest 自动带入（= 目录上的 `v{N}` + 第一层目录名），**不可改**；改名等同删旧建新，丢调用统计与 API Key 关联 |
+| `isEnabled` | 默认 `false`，不启用则整组接口直接 503 `API_DISABLED`；配置完务必打开 |
 | `isApiKey` | 是否要求请求头 `X-API-Key`，否则任意调用方可访问 |
 | `scopes` | 与 API Key 的 scopes 做交集校验 |
 | `methodCosts` | 按 HTTP 方法粒度的扣费表（jsonb），例 `{"GET":0,"POST":10}`。键缺失或值为 0 = 该方法免费。**任意方法 > 0 时必须同时 `isApiKey=true`**，否则无法定位扣款账户 |
 | `rateLimit*` | QPS / 分钟 / 小时 / 日 限额 + 每日配额 |
 
-后台拉取的 manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新文件需要先 build/重启 dev**才能在后台下拉里看到。
+manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新文件必须先 build / 重启 dev**，manifestSync 才能感知并入库。
 
 ## 8. dev vs prod 行为差异
 
@@ -192,5 +199,5 @@ export default defineEventHandler((event: H3Event) => {
 - [ ] handler 通过 `openApiOk` / `openApiCreated` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
 - [ ] 业务失败要把 code/message 写进调用日志 → `openApiBizFail`（一行）；纯协议失败（缺参 / 格式错）→ 直接 `openApiFail`；仅"返回 2xx 但需跳过扣费"的罕见场景 → 单用 `markApiCallFailed`
-- [ ] 后台已注册 `(pathVersion, code)` 并配好 `isEnabled` / `isApiKey` / `methodCosts` / `rateLimit*`
+- [ ] 重启后该 `(pathVersion, code)` 已被 manifestSync 自动入库，且在后台**启用**并配好 `isApiKey` / `methodCosts` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通

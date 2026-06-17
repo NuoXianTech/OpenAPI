@@ -119,6 +119,7 @@ docs/                     项目文档
 - [Core-Values-Encoder](https://github.com/wTool/Core-Values-Encoder)
 - [talk-with-buddha](https://github.com/takuron/talk-with-buddha)
 - [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
+- [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 
 ## 致谢
 
