@@ -17,9 +17,9 @@ APIs under `server/routes/v{N}/**`.
 2. `runApiGuard` checks API status, API Key rules, in-memory rate limits, daily quota, and user balance.
 3. The public API handler runs and returns the standard OpenAPI response shape.
 4. `server/plugins/apiCallStats.ts` records `api_calls` and updates `api_call_stats` after the response is sent.
-5. If the call should be charged, `creditService.charge` atomically decrements `users.credits` and inserts `credit_transactions`.
-6. If charging fails after the response has already been sent, `pendingChargeService.enqueue` writes one retry row keyed by `apiCallId`.
-7. `server/plugins/pendingChargesRetry.ts` scans due `pending_charges` rows every 30 seconds in the single Node process, retries the charge, and either deletes the row on success or backs off until it becomes `dead_letter`.
+5. If the call should be charged, `creditService.forceCharge` atomically decrements `users.credits` and inserts `credit_transactions`. Because the upstream work has already happened, this charge is unconditional and may drive the balance negative; a negative balance is then rejected by the api-gate `balance < effectiveCost` check on subsequent calls until the user tops up.
+6. Charging only fails here on a transient fault (e.g. a database error), in which case `pendingChargeService.enqueue` writes one retry row keyed by `apiCallId`. Insufficient balance is no longer enqueued.
+7. `server/plugins/pendingChargesRetry.ts` scans due `pending_charges` rows every 30 seconds in the single Node process, retries with `forceCharge`, and either deletes the row on success or backs off until it becomes `dead_letter`.
 
 ## Reliability Rules
 
@@ -39,6 +39,7 @@ restarts, which is acceptable for this deployment model.
 
 - `creditService.refund` exists for future flows but is not currently called by the standard API charging pipeline.
 - `dead_letter` pending charges currently require operational handling; a dedicated admin page would be a useful follow-up.
+- Charging is post-paid and the api-gate balance check is advisory only: concurrent in-flight calls can each pass the gate and then drive the balance negative at `forceCharge` time. This is accepted (a negative balance blocks further calls until top-up). If strict prepayment is ever required, move to an atomic reserve/hold at the gate and refund the delta after the handler runs.
 
 ## Signup Bonus
 

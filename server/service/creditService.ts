@@ -7,8 +7,12 @@ import type { CreditReason } from '~~/shared/types/credit-reason'
  *
  * 所有对 users.credits 的写入都必须走本服务，以保证：
  *   1. 积分变动 ↔ credit_transactions 流水 1:1 同时落盘（事务）
- *   2. 积分始终 >= 0（扣款用 row-lock + 积分校验，避免负数）
- *   3. balanceAfter 快照值正确，便于审计
+ *   2. balanceAfter 快照值正确，便于审计
+ *
+ * 余额非负约束分两档：
+ *   - charge / adminRevoke：扣款前校验，余额不足则拒绝或扣到 0，扣后恒 >= 0（前置可控扣费）
+ *   - forceCharge：后付费兜底，调用已发生、上游成本已产生，必须记账，允许扣成负数；
+ *     负余额由 api-gate 的 balance < effectiveCost 校验挡住后续调用，直到充值回正
  */
 
 export type { CreditReason }
@@ -43,8 +47,9 @@ export interface ListTransactionsFilters {
 
 export const creditService = {
   /**
-   * API 调用扣费 · 事务内完成「积分校验 + 扣减 + 流水」。
-   * 积分不足会抛错（应在 gate 阶段已拦截，但兜底）。
+   * 前置校验扣费 · 事务内完成「积分校验 + 扣减 + 流水」，扣后余额恒 >= 0。
+   * 余额不足抛 INSUFFICIENT_CREDITS。适用于「扣费前必须保证余额充足」的同步场景；
+   * 后付费链路（调用已发生、必须记账）请改用 forceCharge。
    */
   async charge(input: ChargeInput) {
     const amount = Math.max(Math.trunc(input.amount), 0)
@@ -63,6 +68,46 @@ export const creditService = {
       if (!updated[0]) {
         throw new Error('INSUFFICIENT_CREDITS')
       }
+
+      const balanceAfter = Number(updated[0].credits)
+      await tx.insert(creditTransactions).values({
+        userId: input.userId,
+        amount: -amount,
+        balanceAfter,
+        reason: 'api_charge',
+        apiId: input.apiId ?? null,
+        apiCallId: input.apiCallId ?? null,
+        remark: input.remark ?? null,
+        meta: input.meta ?? null
+      })
+
+      return { charged: amount, balanceAfter }
+    })
+  },
+
+  /**
+   * 后付费兜底扣费 · 用于「调用已发生、必须记账」的后置/重试扣费链路。
+   *
+   * 与 charge 的唯一区别：不做 credits >= amount 校验，余额不足时扣成负数。
+   * 因为上游成本（如豆包/千问）此刻已真实产生，丢弃扣费等于平台白付；负余额会被
+   * api-gate 的 balance < effectiveCost 校验挡住后续调用，直到用户充值回正。
+   * 仅在用户不存在（极罕见，通常被 apiKey→users 外键挡住）时返回 0、不记流水，
+   * 避免把不可重试的永久状态塞进重试队列空转。
+   */
+  async forceCharge(input: ChargeInput) {
+    const amount = Math.max(Math.trunc(input.amount), 0)
+    if (amount === 0) return { charged: 0, balanceAfter: null }
+
+    return db.transaction(async (tx: typeof db) => {
+      const updated = await tx.update(users)
+        .set({
+          credits: sql`${users.credits} - ${amount}`,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, input.userId))
+        .returning({ id: users.id, credits: users.credits })
+
+      if (!updated[0]) return { charged: 0, balanceAfter: null }
 
       const balanceAfter = Number(updated[0].credits)
       await tx.insert(creditTransactions).values({

@@ -156,7 +156,10 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     if (willCharge && billing && billing.apiKeyUserId && callId) {
       const remark = `API 调用扣费 · ${target.apiPath}`
       try {
-        const r = await creditService.charge({
+        // 调用已发生、上游成本已产生 → forceCharge 必扣（余额不足扣成负数，由 api-gate
+        // 挡住后续调用）。下面的 catch 只会捕获瞬时故障（如 DB 抖动），那种才值得进
+        // 重试队列；余额不足不再入队空转。
+        const r = await creditService.forceCharge({
           userId: billing.apiKeyUserId,
           amount: billing.costCredits,
           apiId: target.apiId,

@@ -27,7 +27,9 @@ async function runOnce() {
 
   for (const row of dueRows) {
     try {
-      const r = await creditService.charge({
+      // forceCharge 允许扣成负数：队列只承载瞬时故障，重试到 DB 恢复即成功。
+      // 历史遗留的余额不足行（旧 charge 入队的）也会在此自愈——扣成负数后 complete。
+      const r = await creditService.forceCharge({
         userId: row.userId,
         amount: row.amount,
         apiId: row.apiId,

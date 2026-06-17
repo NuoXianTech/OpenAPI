@@ -37,7 +37,6 @@ export default defineEventHandler(async (event: H3Event) => {
       const status = CHECKIN_ERROR_STATUS[err.code] || 400
       throw createError({
         statusCode: status,
-        statusMessage: err.message,
         message: err.message,
         data: { errorCode: err.code }
       })
