@@ -28,7 +28,45 @@ const QIANWEN_HEADERS: Record<string, string> = {
     + 'Chrome/146.0.0.0 Safari/537.36 Edg/146.0.0.0'
 }
 
-const DOUBAO_DATA_RE = /data-script-src="modern-run-router-data-fn" data-fn-args="([\s\S]*?)" nonce="/
+/**
+ * 页面内嵌对话数据的两种载体（按顺序匹配，取首个命中）：
+ *  1. modern-run-router-data-fn —— 数组元素形如 { data: { message_snapshot } }
+ *  2. mergeLoaderData          —— 数组元素形如 [{ routerDataFnArgs: [JSON 字符串] }]
+ * 两者 data-fn-args 均为 &quot; 转义的 JSON；解析后按元素形态在 doubaoImageParse 内分流。
+ */
+const DOUBAO_DATA_RES: RegExp[] = [
+  /data-script-src="modern-run-router-data-fn" data-fn-args="([\s\S]*?)" nonce="/,
+  /data-script-src="modern-run-window-fn" data-fn-name="mergeLoaderData" data-fn-args="([\s\S]*?)" nonce="/
+]
+
+/**
+ * 从 message_snapshot.message_list 中提取无水印原图，追加到 images。
+ * 每条 message 的 content_block[].content_v2（缺省回退 content）可能是 JSON 字符串；
+ * 解析后 creation_block.creations[].image.image_ori_raw 即原图（url 需反转义 &amp;）。
+ */
+function collectImages(messageSnapshot: unknown, images: DoubaoImage[]): void {
+  for (const message of asArray(asRecord(messageSnapshot).message_list)) {
+    for (const block of asArray(asRecord(message).content_block)) {
+      const b = asRecord(block)
+      const rawContent = b.content_v2 || b.content // content_v2 优先，缺省回退 content
+      let parsed: unknown = rawContent
+      if (typeof rawContent === 'string') {
+        try {
+          parsed = JSON.parse(rawContent)
+        } catch {
+          continue
+        }
+      }
+      for (const creation of asArray(asRecord(asRecord(parsed).creation_block).creations)) {
+        const imageOriRaw = asRecord(asRecord(asRecord(creation).image).image_ori_raw)
+        const imageUrl = asString(imageOriRaw.url)
+        if (!imageUrl) continue
+        imageOriRaw.url = imageUrl.replace(/&amp;/g, '&')
+        images.push(imageOriRaw as DoubaoImage)
+      }
+    }
+  }
+}
 
 /** 解析豆包对话链接中的图片。raw=true 时返回页面内嵌的原始 JSON。 */
 export async function doubaoImageParse(url: string, raw = false): Promise<DoubaoImage[] | unknown> {
@@ -37,7 +75,11 @@ export async function doubaoImageParse(url: string, raw = false): Promise<Doubao
   }
 
   const html = await fetchText(url, { headers: DOUBAO_HEADERS })
-  const match = DOUBAO_DATA_RE.exec(html)
+  let match: RegExpExecArray | null = null
+  for (const re of DOUBAO_DATA_RES) {
+    match = re.exec(html)
+    if (match) break
+  }
   if (!match) {
     throw new DoubaoError('business', 502, 'PARSE_FAILED', '无法解析页面数据，请确认链接是否有效')
   }
@@ -53,29 +95,21 @@ export async function doubaoImageParse(url: string, raw = false): Promise<Doubao
 
   const images: DoubaoImage[] = []
   for (const item of asArray(json)) {
-    const data = asRecord(asRecord(item).data)
-    const messageList = asArray(asRecord(data.message_snapshot).message_list)
-    for (const message of messageList) {
-      const contentBlock = asArray(asRecord(message).content_block)
-      for (const block of contentBlock) {
-        const contentV2 = asRecord(block).content_v2
-        if (typeof contentV2 !== 'string') continue
-        let parsed: unknown
-        try {
-          parsed = JSON.parse(contentV2)
-        } catch {
-          continue
-        }
-        const creations = asArray(asRecord(asRecord(parsed).creation_block).creations)
-        for (const creation of creations) {
-          const imageOriRaw = asRecord(asRecord(asRecord(creation).image).image_ori_raw)
-          const imageUrl = asString(imageOriRaw.url)
-          if (!imageUrl) continue
-          imageOriRaw.url = imageUrl.replace(/&amp;/g, '&')
-          images.push(imageOriRaw as DoubaoImage)
-        }
+    // 列表分支：item = [{ routerDataFnArgs: [JSON 字符串] }]，message_snapshot 藏在该字符串里
+    if (Array.isArray(item)) {
+      const firstArg = asArray(asRecord(item[0]).routerDataFnArgs)[0]
+      if (typeof firstArg !== 'string') continue
+      let routerData: unknown
+      try {
+        routerData = JSON.parse(firstArg)
+      } catch {
+        continue
       }
+      collectImages(asRecord(asRecord(routerData).data).message_snapshot, images)
+      continue
     }
+    // 字典分支：item = { data: { message_snapshot } }
+    collectImages(asRecord(asRecord(item).data).message_snapshot, images)
   }
   return images
 }
