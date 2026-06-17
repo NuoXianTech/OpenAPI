@@ -104,10 +104,10 @@ const fixedTimeInvalid = computed(() => {
           required
           class="flex max-sm:flex-col justify-between items-start gap-4"
         >
-          <UInput
+          <CommonDateTimePicker
             v-model="form.startTime"
-            type="datetime-local"
-            autocomplete="off"
+            :block="false"
+            placeholder="选择上线时间"
           />
         </UFormField>
         <USeparator />

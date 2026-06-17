@@ -183,18 +183,14 @@ const detailJson = computed(() => {
         </div>
 
         <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <UFormField label="开始时间">
-            <UInput
-              v-model="filters.startAt"
-              type="datetime-local"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField label="结束时间">
-            <UInput
-              v-model="filters.endAt"
-              type="datetime-local"
-              class="w-full"
+          <UFormField
+            label="时间范围"
+            class="xl:col-span-2"
+          >
+            <CommonDateRangePicker
+              v-model:start="filters.startAt"
+              v-model:end="filters.endAt"
+              placeholder="全部时间"
             />
           </UFormField>
           <UFormField label="来源">

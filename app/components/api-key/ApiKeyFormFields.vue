@@ -100,12 +100,12 @@ const ipHelp = computed(() => {
         orientation="horizontal"
         :items="expiryItems"
       />
-      <UInput
+      <CommonDateTimePicker
         v-if="form.expiryPreset === 'custom'"
         v-model="form.expiresAtCustom"
-        type="datetime-local"
         class="mt-2"
         :size="size"
+        placeholder="选择过期时间"
       />
       <p
         v-if="hints"

@@ -115,12 +115,12 @@ async function submit() {
             orientation="horizontal"
             :items="durationItems"
           />
-          <UInput
+          <CommonDateTimePicker
             v-if="form.duration === 'custom'"
             v-model="form.customUntil"
-            type="datetime-local"
             class="mt-2"
             size="sm"
+            placeholder="选择解封时间"
           />
           <p
             v-if="formError"

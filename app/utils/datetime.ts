@@ -1,3 +1,5 @@
+import { CalendarDateTime } from '@internationalized/date'
+
 /**
  * 统一的本地时间格式化(zh-CN，24 小时制)。
  *
@@ -44,4 +46,32 @@ export function formatTrendFullDate(value: string): string {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${date.getFullYear()}-${month}-${day} ${WEEKDAY_LABELS[date.getDay()]}`
+}
+
+const pad2 = (value: number) => `${value}`.padStart(2, '0')
+
+/**
+ * 把 `<input type="datetime-local">` 的字符串 `YYYY-MM-DDTHH:mm`(可带秒)解析为
+ * `CalendarDateTime`，供日历 / 时间选择器使用。空值或非法格式返回 undefined。
+ */
+export function dateTimeLocalToCalendar(value: string | null | undefined): CalendarDateTime | undefined {
+  if (!value) return undefined
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(value)
+  if (!match) return undefined
+  return new CalendarDateTime(
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    Number(match[4]),
+    Number(match[5]),
+    match[6] ? Number(match[6]) : 0
+  )
+}
+
+/**
+ * 把 `CalendarDateTime` 序列化回 `YYYY-MM-DDTHH:mm`，与 datetime-local 字段同格式，
+ * 让选择器对外保持纯字符串契约（消费方 `new Date(str)` 按本地时间解析）。
+ */
+export function calendarToDateTimeLocal(value: CalendarDateTime): string {
+  return `${value.year}-${pad2(value.month)}-${pad2(value.day)}T${pad2(value.hour)}:${pad2(value.minute)}`
 }
