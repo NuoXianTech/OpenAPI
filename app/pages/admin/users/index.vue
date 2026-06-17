@@ -26,6 +26,9 @@ watch(keyword, () => {
   page.value = 1
 })
 
+// 列显示/隐藏状态，与表格和「显示列」下拉共享。
+const columnVisibility = ref<Record<string, boolean>>({})
+
 const confirm = useConfirmDialog()
 
 async function openDelete(item: AdminUserItem) {
@@ -191,6 +194,10 @@ const columns: TableColumn<AdminUserItem>[] = [
         >
           全员积分操作
         </UButton>
+        <DashboardColumnVisibility
+          v-model:column-visibility="columnVisibility"
+          :columns="columns"
+        />
         <UButton
           size="sm"
           color="neutral"
@@ -208,6 +215,7 @@ const columns: TableColumn<AdminUserItem>[] = [
       v-model:page="page"
       v-model:page-size="pageSize"
       v-model:row-selection="rowSelection"
+      v-model:column-visibility="columnVisibility"
       :data="paginated"
       :columns="columns"
       :loading="status === 'pending'"

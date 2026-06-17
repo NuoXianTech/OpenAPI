@@ -11,6 +11,7 @@ const {
   total = 0,
   pageSizeItems,
   rowSelection,
+  columnVisibility,
   getRowId,
   fixed = true,
   ui
@@ -28,6 +29,8 @@ const {
   pageSizeItems?: Array<{ label: string, value: number }>
   /** 行选择状态（配合 v-model:row-selection）；不传则禁用行选择 */
   rowSelection?: Record<string, boolean>
+  /** 列可见性状态（配合 v-model:column-visibility）；不传则全部列可见 */
+  columnVisibility?: Record<string, boolean>
   /** 行唯一 id 取值函数（启用行选择时建议提供） */
   getRowId?: (row: T) => string
   /** 列宽算法：true=table-fixed 等宽（默认）；列多/内容宽的表传 false 走自动列宽 */
@@ -40,6 +43,7 @@ const emit = defineEmits<{
   'update:page': [value: number]
   'update:pageSize': [value: number]
   'update:rowSelection': [value: Record<string, boolean>]
+  'update:columnVisibility': [value: Record<string, boolean>]
 }>()
 
 // 后台表格统一外观：圆角描边 + 行分隔线。原先散落在各列表页的同款 :ui 收敛到此。
@@ -70,6 +74,10 @@ function onPageSizeChange(value: string | number) {
 function onRowSelectionChange(value: Record<string, boolean> | undefined) {
   emit('update:rowSelection', value ?? {})
 }
+
+function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
+  emit('update:columnVisibility', value ?? {})
+}
 </script>
 
 <template>
@@ -95,8 +103,10 @@ function onRowSelectionChange(value: Record<string, boolean> | undefined) {
       :loading="loading"
       :ui="tableUi"
       :row-selection="rowSelection"
+      :column-visibility="columnVisibility"
       :get-row-id="getRowId"
       @update:row-selection="onRowSelectionChange"
+      @update:column-visibility="onColumnVisibilityChange"
     >
       <template
         v-for="(_, name) in $slots"
