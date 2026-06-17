@@ -1,13 +1,10 @@
 <script setup lang="ts">
+import { VisXYContainer, VisArea, VisLine, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { AdminAnalyticsDistributionItem } from '~~/shared/types/admin-logs'
 
-// @unovis（d3 + DOM）体积较大：改为 client-only 异步组件，拆成独立 chunk，不进 admin 首屏 bundle。
-const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
-const VisArea = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisArea))
-const VisLine = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisLine))
-const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
-const VisCrosshair = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisCrosshair))
-const VisTooltip = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisTooltip))
+// 本组件是 .client.vue（@unovis 的 d3+DOM 不进 admin 首屏 entry）。
+// unovis 原语必须静态导入、同步可用——各自 defineAsyncComponent 会让 VisXYContainer 在
+// VisAxis 注册前就首绘，导致坐标轴首帧画不出来（须点刷新才补画）。
 
 interface Props {
   distribution: AdminAnalyticsDistributionItem[]
@@ -47,13 +44,13 @@ const yTickFormat = (tick: number | Date) => {
   return Math.round(tick).toString()
 }
 
-const tooltipTemplate = (d: AreaRow) => `
-  <div style="font-size:12px;line-height:1.6">
-    <div style="font-weight:600;margin-bottom:4px">${d.name}</div>
-    <div style="color:var(--ui-text-muted);font-family:ui-monospace,Menlo,monospace;font-size:11px">${d.apiPath}</div>
-    <div>总调用：${d.totalCalls.toLocaleString()}</div>
-  </div>
-`
+const tooltipTemplate = (d: AreaRow) => renderChartTooltip({
+  title: d.name,
+  subtitle: d.apiPath,
+  rows: [
+    { color: 'var(--ui-primary)', label: '总调用', value: d.totalCalls.toLocaleString() }
+  ]
+})
 </script>
 
 <template>

@@ -1,12 +1,10 @@
 <script setup lang="ts">
+import { VisXYContainer, VisStackedBar, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { AdminAnalyticsDistributionItem } from '~~/shared/types/admin-logs'
 
-// @unovis（d3 + DOM）体积较大：改为 client-only 异步组件，拆成独立 chunk，不进 admin 首屏 bundle。
-const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
-const VisStackedBar = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisStackedBar))
-const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
-const VisCrosshair = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisCrosshair))
-const VisTooltip = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisTooltip))
+// 本组件是 .client.vue（@unovis 的 d3+DOM 不进 admin 首屏 entry）。
+// unovis 原语必须静态导入、同步可用——各自 defineAsyncComponent 会让 VisXYContainer 在
+// VisAxis 注册前就首绘，导致坐标轴首帧画不出来（须点刷新才补画）。
 
 interface Props {
   distribution: AdminAnalyticsDistributionItem[]
@@ -51,15 +49,17 @@ const yTickFormat = (tick: number | Date) => {
   return Math.round(tick).toString()
 }
 
-const tooltipTemplate = (d: BarRow) => `
-  <div style="font-size:12px;line-height:1.6">
-    <div style="font-weight:600;margin-bottom:4px">${d.name}</div>
-    <div style="color:var(--ui-text-muted);font-family:ui-monospace,Menlo,monospace;font-size:11px">${d.apiPath}</div>
-    <div>总调用：${d.totalCalls.toLocaleString()}</div>
-    <div>成功：${d.successCalls.toLocaleString()}</div>
-    <div>失败：${d.failureCalls.toLocaleString()}</div>
-  </div>
-`
+const tooltipTemplate = (d: BarRow) => renderChartTooltip({
+  title: d.name,
+  subtitle: d.apiPath,
+  rows: [
+    { color: 'var(--ui-success)', label: '成功', value: d.successCalls.toLocaleString() },
+    { color: 'var(--ui-error)', label: '失败', value: d.failureCalls.toLocaleString() }
+  ],
+  footer: [
+    { label: '总调用', value: d.totalCalls.toLocaleString() }
+  ]
+})
 </script>
 
 <template>
@@ -113,27 +113,24 @@ const tooltipTemplate = (d: BarRow) => `
 
     <div
       v-if="rows.length > 0"
-      class="mt-3 flex flex-wrap gap-4 text-xs text-muted"
+      class="mt-4 flex flex-wrap gap-2"
     >
-      <span class="inline-flex items-center gap-1.5">
-        <span class="legend-dot legend-dot--success" />
+      <UBadge
+        variant="soft"
+        color="success"
+        icon="i-mdi-circle"
+        class="rounded-md"
+      >
         成功
-      </span>
-      <span class="inline-flex items-center gap-1.5">
-        <span class="legend-dot legend-dot--error" />
+      </UBadge>
+      <UBadge
+        variant="soft"
+        color="error"
+        icon="i-mdi-circle"
+        class="rounded-md"
+      >
         失败
-      </span>
+      </UBadge>
     </div>
   </div>
 </template>
-
-<style scoped>
-.legend-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 9999px;
-  display: inline-block;
-}
-.legend-dot--success { background: var(--ui-success); }
-.legend-dot--error { background: var(--ui-error); }
-</style>
