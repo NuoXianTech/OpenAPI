@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import { VisXYContainer, VisArea, VisLine, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
 import type { PublicCallStatsTrendPoint } from '~~/shared/types/public-stats'
 
-// @unovis（d3 + DOM）体积较大：client-only 异步组件，拆独立 chunk，不进首屏 bundle。
-const VisXYContainer = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisXYContainer))
-const VisArea = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisArea))
-const VisLine = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisLine))
-const VisAxis = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisAxis))
-const VisCrosshair = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisCrosshair))
-const VisTooltip = defineAsyncComponent(() => import('@unovis/vue').then(m => m.VisTooltip))
+// 本组件是 .client.vue（仅客户端打包，@unovis 的 d3+DOM 不进首屏 entry）。
+// 注意：unovis 原语必须静态导入、同步可用——若各自用 defineAsyncComponent 异步加载，
+// VisXYContainer 可能在 VisAxis 解析注册前就完成首次绘制，导致坐标轴首帧画不出来，
+// 只有后续一次数据 update 才补画（即「点刷新才出现坐标轴」的根因）。
 
 interface Props {
   trend: PublicCallStatsTrendPoint[]
 }
 
 const props = defineProps<Props>()
+
+// 把容器宽度响应式地喂给 VisXYContainer（官方仪表盘模板同款）：
+// unovis 首次挂载时内部测得的宽度可能为 0、不绘制坐标轴，必须等一次尺寸变化才补画。
+// useElementSize 在元素测量后由 0 更新为真实宽度，这次变更即驱动 unovis 重绘画出刻度。
+const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
+const { width } = useElementSize(rootRef)
 
 const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] as const
 
@@ -61,17 +65,6 @@ const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
 })))
 
 const hasData = computed(() => rows.value.some(row => row.success + row.failure > 0))
-
-// unovis 的 VisXYContainer 首次实例化时不绘制坐标轴刻度——只有后续一次「数据更新」重绘才会补画
-// （这正是为什么「点刷新按钮重新拉数据 / 手动 resize」后刻度才出现，而首次进入/F5 不出现）。
-// 故让数据延迟一帧灌入：容器先以空数据挂载，下一帧再填真实数据，等价于走一次 update 重绘路径。
-const displayRows = ref<TrendRow[]>([])
-watch(rows, (val) => {
-  displayRows.value = []
-  nextTick(() => {
-    displayRows.value = val
-  })
-}, { immediate: true })
 
 const formatCount = (value: number) => value.toLocaleString()
 
@@ -135,7 +128,10 @@ function tooltipTemplate(datum: TrendRow | undefined) {
 </script>
 
 <template>
-  <div class="stats-chart relative">
+  <div
+    ref="rootRef"
+    class="stats-chart relative"
+  >
     <UEmpty
       v-if="!hasData"
       icon="i-mdi-chart-line"
@@ -146,8 +142,9 @@ function tooltipTemplate(datum: TrendRow | undefined) {
 
     <template v-else>
       <VisXYContainer
-        :data="displayRows"
+        :data="rows"
         :padding="{ left: 8, right: 16, top: 20, bottom: 28 }"
+        :width="width"
         class="h-[320px] w-full"
       >
         <VisArea
