@@ -71,9 +71,8 @@ body {
 }
 
 /*
- * unovis 全局主题 — X / Y 轴刻度、网格、crosshair、tooltip 在深浅主题下都走语义色（--ui-*）。
+ * unovis 全局主题 — X / Y 轴刻度、网格、crosshair 在深浅主题下都走语义色（--ui-*）。
  * 全站图表（stats 公开统计页 + admin 数据看板）共享的唯一外观来源，组件内不再各自覆盖。
- * 注意 --vis-tooltip-padding: 0：内边距由 renderChartTooltip 卡片自身提供（见 utils/chart-tooltip.ts）。
  */
 .unovis-xy-container {
   --vis-font-family: inherit;
@@ -90,13 +89,21 @@ body {
   --vis-crosshair-line-stroke-width: 1;
   --vis-crosshair-circle-stroke-color: var(--ui-bg);
   --vis-crosshair-circle-stroke-width: 2;
+}
 
+/*
+ * tooltip 变量放全局并用 :root:root 抬高优先级，压过 unovis 运行时 injectGlobal 注入到 :root 的
+ * 默认值（默认边框 #e5e9f7、box-shadow:none，在纯白 admin 卡片上几乎看不出框）。unovis 把 tooltip
+ * append 到容器内，但放全局可保证即便挂到 body 也生效。边框用 accented（比 --ui-border 深）+ 强阴影，
+ * 框更清晰。--vis-tooltip-padding:0：内边距由 renderChartTooltip 卡片自身提供（见 utils/chart-tooltip.ts）。
+ */
+:root:root {
   --vis-tooltip-background-color: var(--ui-bg-elevated);
-  --vis-tooltip-border-color: var(--ui-border);
+  --vis-tooltip-border-color: var(--ui-border-accented);
   --vis-tooltip-text-color: var(--ui-text-highlighted);
   --vis-tooltip-border-radius: 10px;
   --vis-tooltip-padding: 0;
-  --vis-tooltip-box-shadow: 0 8px 24px -6px color-mix(in srgb, var(--ui-text) 22%, transparent);
+  --vis-tooltip-box-shadow: 0 10px 30px -8px color-mix(in srgb, var(--ui-text) 30%, transparent);
 }
 
 .unovis-single-container {

@@ -19,37 +19,6 @@ const props = defineProps<Props>()
 const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
-const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] as const
-
-function parseTrendDate(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  if (match) {
-    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date
-}
-
-function toShortDate(value: string) {
-  const date = parseTrendDate(value)
-  if (!date) {
-    return value
-  }
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${month}-${day}`
-}
-
-function toFullDate(value: string) {
-  const date = parseTrendDate(value)
-  if (!date) {
-    return value
-  }
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${date.getFullYear()}-${month}-${day} ${WEEKDAY_LABELS[date.getDay()]}`
-}
-
 interface TrendRow {
   label: string
   fullLabel: string
@@ -58,8 +27,8 @@ interface TrendRow {
 }
 
 const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
-  label: toShortDate(item.date),
-  fullLabel: toFullDate(item.date),
+  label: formatTrendShortDate(item.date),
+  fullLabel: formatTrendFullDate(item.date),
   success: item.successCalls,
   failure: item.failureCalls
 })))
