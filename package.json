@@ -29,7 +29,7 @@
     "bowser": "^2.14.1",
     "drizzle-orm": "^0.45.2",
     "iconv-lite": "^0.6.0",
-    "nodemailer": "^8.0.10",
+    "nodemailer": "^9.0.1",
     "nuxt": "^4.4.7",
     "postgres": "^3.4.9",
     "tailwindcss": "^4.3.0",

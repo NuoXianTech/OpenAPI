@@ -48,8 +48,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0
       nodemailer:
-        specifier: ^8.0.10
-        version: 8.0.10
+        specifier: ^9.0.1
+        version: 9.0.1
       nuxt:
         specifier: ^4.4.7
         version: 4.4.7(@babel/plugin-syntax-jsx@7.29.7(@babel/core@7.29.7))(@babel/plugin-syntax-typescript@7.29.7(@babel/core@7.29.7))(@electric-sql/pglite@0.5.1)(@parcel/watcher@2.5.6)(@types/node@24.13.1)(@vue/compiler-sfc@3.5.35)(cac@6.7.14)(db0@0.3.4(@electric-sql/pglite@0.5.1)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260605.1)(@electric-sql/pglite@0.5.1)(postgres@3.4.9)))(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260605.1)(@electric-sql/pglite@0.5.1)(postgres@3.4.9))(eslint@10.4.1(jiti@2.7.0))(ioredis@5.11.1)(lightningcss@1.32.0)(magicast@0.5.3)(optionator@0.9.4)(rolldown@1.0.0-beta.57(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rollup-plugin-visualizer@7.0.1(rolldown@1.0.0-beta.57(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0))(rollup@4.61.1))(rollup@4.61.1)(srvx@0.11.16)(terser@5.48.0)(tsx@4.22.4)(typescript@5.9.3)(vite@7.3.5(@types/node@24.13.1)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.4)(yaml@2.9.0))(vue-tsc@3.3.3(typescript@5.9.3))(yaml@2.9.0)
@@ -5048,8 +5048,8 @@ packages:
     resolution: {integrity: sha512-Uzmd6LXpouKo8EUK68IjH4+E01w/hXyV3R3g/geCJo+rXLNfh1xucB+LOzYEOQPSiUK3h/xZf0cQGcSsmyL2Og==}
     engines: {node: '>=18'}
 
-  nodemailer@8.0.10:
-    resolution: {integrity: sha512-BLFuSth7QtHOkBzyqTehWWyub0NTRDuK2Q2SQfnGLsrJnzyU+Yeh4WpV1eZGuARFj1xQJHIdnTuJZLP+b9R1GQ==}
+  nodemailer@9.0.1:
+    resolution: {integrity: sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw==}
     engines: {node: '>=6.0.0'}
 
   nopt@8.0.0:
@@ -5830,8 +5830,8 @@ packages:
   streamx@2.27.0:
     resolution: {integrity: sha512-WZ189TKnHoAokYHvwzaAQMpd55cgUmFIcJFzBSgGcb886jau5DL+XdDhTWV4ps3FLvk+OORp0dLRTPsLZ21CSA==}
 
-  string-width@4.2.0:
-    resolution: {integrity: sha512-zUz5JD+tgqtuDjMhwIg5uFVV3dtqZ9yQJlZVfq4I01/K5Paj5UHj7VyrQOJvzawSVlKpObApbfD0Ed6yJc+1eg==}
+  string-width@4.2.3:
+    resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
     engines: {node: '>=8'}
 
   string-width@5.1.2:
@@ -7321,7 +7321,7 @@ snapshots:
   '@isaacs/cliui@8.0.2':
     dependencies:
       string-width: 5.1.2
-      string-width-cjs: string-width@4.2.0
+      string-width-cjs: string-width@4.2.3
       strip-ansi: 7.2.0
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
@@ -11564,7 +11564,7 @@ snapshots:
 
   node-releases@2.0.47: {}
 
-  nodemailer@8.0.10: {}
+  nodemailer@9.0.1: {}
 
   nopt@8.0.0:
     dependencies:
@@ -12566,7 +12566,7 @@ snapshots:
       - bare-abort-controller
       - react-native-b4a
 
-  string-width@4.2.0:
+  string-width@4.2.3:
     dependencies:
       emoji-regex: 8.0.0
       is-fullwidth-code-point: 3.0.0
@@ -13208,7 +13208,7 @@ snapshots:
   wrap-ansi@7.0.0:
     dependencies:
       ansi-styles: 4.3.0
-      string-width: 4.2.0
+      string-width: 4.2.3
       strip-ansi: 6.0.1
 
   wrap-ansi@8.1.0:
