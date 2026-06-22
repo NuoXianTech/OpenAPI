@@ -6,7 +6,7 @@ import { requireAuth } from '~~/server/utils/auth'
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
   if (!user.id) {
-    throw createError({ statusCode: 403, message: 'admin cannot access user api keys' })
+    throw createError({ statusCode: 403, message: '管理员不能访问用户 API Key' })
   }
 
   const list = await apiKeyService.listByUser(user.id)

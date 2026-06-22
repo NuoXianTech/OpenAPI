@@ -8,14 +8,14 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
   if (!user.id) {
-    throw createError({ statusCode: 403, message: 'admin cannot access user api keys' })
+    throw createError({ statusCode: 403, message: '管理员不能访问用户 API Key' })
   }
 
   const { id } = await readZodBody(event, idSchema)
 
   const updated = await apiKeyService.resetForUser(user.id, id)
   if (!updated) {
-    throw createError({ statusCode: 404, message: 'api key not found' })
+    throw createError({ statusCode: 404, message: 'API Key 不存在' })
   }
 
   return updated

@@ -12,7 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const updated = await apiKeyService.resetById(id)
   if (!updated) {
-    throw createError({ statusCode: 404, message: 'api key not found' })
+    throw createError({ statusCode: 404, message: 'API Key 不存在' })
   }
 
   await operationLogService.addLog({

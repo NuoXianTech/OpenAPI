@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const deleted = await apiKeyService.deleteById(id)
   if (!deleted) {
-    throw createError({ statusCode: 404, message: 'api key not found' })
+    throw createError({ statusCode: 404, message: 'API Key 不存在' })
   }
 
   return deleted
