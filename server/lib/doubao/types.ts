@@ -54,18 +54,33 @@ export function detectVideoSource(url: string): VideoSource {
  * - kind='input'：调用方输入问题（缺参 / 格式错 / 链接不支持）→ 4xx，纯协议失败
  * - kind='business'：上游网络 / 数据结构解析失败 → 4xx/5xx，业务失败（写调用日志、跳过扣费）
  */
-export class DoubaoError extends Error {
+export interface DoubaoError extends Error {
+  readonly name: 'DoubaoError'
   readonly kind: 'input' | 'business'
   readonly status: number
   readonly code: string
+}
 
-  constructor(kind: 'input' | 'business', status: number, code: string, message: string) {
-    super(message)
-    this.name = 'DoubaoError'
-    this.kind = kind
-    this.status = status
-    this.code = code
-  }
+export function createDoubaoError(
+  kind: 'input' | 'business',
+  status: number,
+  code: string,
+  message: string
+): DoubaoError {
+  return Object.assign(new Error(message), {
+    name: 'DoubaoError' as const,
+    kind,
+    status,
+    code
+  })
+}
+
+export function isDoubaoError(error: unknown): error is DoubaoError {
+  return error instanceof Error
+    && error.name === 'DoubaoError'
+    && ((error as { kind?: unknown }).kind === 'input' || (error as { kind?: unknown }).kind === 'business')
+    && typeof (error as { status?: unknown }).status === 'number'
+    && typeof (error as { code?: unknown }).code === 'string'
 }
 
 /** 把任意异常归类为对外失败描述，供 route handler 选择 openApiFail / openApiBizFail。 */
@@ -77,7 +92,7 @@ export interface DoubaoFailure {
 }
 
 export function classifyDoubaoError(err: unknown, fallbackMessage: string): DoubaoFailure {
-  if (err instanceof DoubaoError) {
+  if (isDoubaoError(err)) {
     return { status: err.status, code: err.code, message: err.message, biz: err.kind === 'business' }
   }
   return { status: 500, code: 'PARSE_FAILED', message: fallbackMessage, biz: true }
@@ -108,10 +123,10 @@ function isTruthy(value: unknown): boolean {
 export function parseMediaQuery(query: Record<string, unknown>): MediaQuery {
   const url = firstString(query.url).trim()
   if (!url) {
-    throw new DoubaoError('input', 400, 'MISSING_PARAMETER', '缺少参数 url')
+    throw createDoubaoError('input', 400, 'MISSING_PARAMETER', '缺少参数 url')
   }
   if (!/^https?:\/\//i.test(url)) {
-    throw new DoubaoError('input', 400, 'INVALID_PARAMETER', 'url 必须是合法的 http(s) 链接')
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', 'url 必须是合法的 http(s) 链接')
   }
   return { url, raw: isTruthy(query.raw) }
 }

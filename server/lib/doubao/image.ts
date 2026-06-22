@@ -12,7 +12,7 @@ import {
   asArray,
   asRecord,
   asString,
-  DoubaoError,
+  createDoubaoError,
   type DoubaoImage
 } from './types'
 
@@ -71,7 +71,7 @@ function collectImages(messageSnapshot: unknown, images: DoubaoImage[]): void {
 /** 解析豆包对话链接中的图片。raw=true 时返回页面内嵌的原始 JSON。 */
 export async function doubaoImageParse(url: string, raw = false): Promise<DoubaoImage[] | unknown> {
   if (!url.includes('doubao.com/thread/')) {
-    throw new DoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用豆包对话链接（包含 /thread/）')
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用豆包对话链接（包含 /thread/）')
   }
 
   const html = await fetchText(url, { headers: DOUBAO_HEADERS })
@@ -81,14 +81,14 @@ export async function doubaoImageParse(url: string, raw = false): Promise<Doubao
     if (match) break
   }
   if (!match) {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '无法解析页面数据，请确认链接是否有效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '无法解析页面数据，请确认链接是否有效')
   }
 
   let json: unknown
   try {
     json = JSON.parse(match[1]!.replace(/&quot;/g, '"'))
   } catch {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '页面数据格式错误，无法解析')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '页面数据格式错误，无法解析')
   }
 
   if (raw) return json
@@ -117,7 +117,7 @@ export async function doubaoImageParse(url: string, raw = false): Promise<Doubao
 /** 解析千问分享链接中的图片。raw=true 时返回上游 share/info 接口的原始响应。 */
 export async function qianwenImageParse(url: string, raw = false): Promise<DoubaoImage[] | unknown> {
   if (!url.includes('qianwen.com/share/chat/')) {
-    throw new DoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用千问分享链接（包含 qianwen.com/share/chat/）')
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用千问分享链接（包含 qianwen.com/share/chat/）')
   }
 
   const shareId = url.split('?')[0]!.split('chat/').pop() ?? ''

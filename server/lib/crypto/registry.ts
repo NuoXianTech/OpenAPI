@@ -7,7 +7,7 @@
  */
 
 import type { CryptoAlgorithm, CryptoMode, CryptoParamSchema } from './types'
-import { CryptoBusinessError } from './types'
+import { createCryptoBusinessError } from './types'
 
 const registry = new Map<string, CryptoAlgorithm>()
 
@@ -31,7 +31,7 @@ function coerce(value: unknown, schema: CryptoParamSchema): unknown {
   if (schema.type === 'number') {
     const n = typeof value === 'number' ? value : Number(value)
     if (!Number.isFinite(n)) {
-      throw new CryptoBusinessError(`参数 ${schema.name} 不是合法数字`)
+      throw createCryptoBusinessError(`参数 ${schema.name} 不是合法数字`)
     }
     return n
   }
@@ -39,7 +39,7 @@ function coerce(value: unknown, schema: CryptoParamSchema): unknown {
     if (typeof value === 'boolean') return value
     if (value === 'true' || value === 1 || value === '1') return true
     if (value === 'false' || value === 0 || value === '0') return false
-    throw new CryptoBusinessError(`参数 ${schema.name} 不是合法布尔值`)
+    throw createCryptoBusinessError(`参数 ${schema.name} 不是合法布尔值`)
   }
   return String(value)
 }
@@ -62,21 +62,21 @@ export function normalizeParams(
     const final = incoming === undefined ? schema.default : incoming
     if (final === undefined) {
       if (schema.required) {
-        throw new CryptoBusinessError(`缺少必填参数：${schema.name}`)
+        throw createCryptoBusinessError(`缺少必填参数：${schema.name}`)
       }
       continue
     }
     if (schema.type === 'number') {
       const n = final as number
       if (schema.min !== undefined && n < schema.min) {
-        throw new CryptoBusinessError(`参数 ${schema.name} 不能小于 ${schema.min}`)
+        throw createCryptoBusinessError(`参数 ${schema.name} 不能小于 ${schema.min}`)
       }
       if (schema.max !== undefined && n > schema.max) {
-        throw new CryptoBusinessError(`参数 ${schema.name} 不能大于 ${schema.max}`)
+        throw createCryptoBusinessError(`参数 ${schema.name} 不能大于 ${schema.max}`)
       }
     }
     if (schema.enum && !schema.enum.includes(final as string | number)) {
-      throw new CryptoBusinessError(`参数 ${schema.name} 必须是 ${schema.enum.join(' / ')} 之一`)
+      throw createCryptoBusinessError(`参数 ${schema.name} 必须是 ${schema.enum.join(' / ')} 之一`)
     }
     out[schema.name] = final
   }

@@ -58,9 +58,23 @@ export interface CryptoAlgorithm {
 }
 
 /** 业务侧错误：交给 dispatcher 转 HTTP 422，并通过 markApiCallFailed 把 bizCode 写入调用日志 */
-export class CryptoBusinessError extends Error {
-  constructor(message: string, public readonly bizCode = 'CRYPTO_FAILED') {
-    super(message)
-    this.name = 'CryptoBusinessError'
-  }
+export interface CryptoBusinessError extends Error {
+  readonly name: 'CryptoBusinessError'
+  readonly bizCode: string
+}
+
+export function createCryptoBusinessError(
+  message: string,
+  bizCode: string = 'CRYPTO_FAILED'
+): CryptoBusinessError {
+  return Object.assign(new Error(message), {
+    name: 'CryptoBusinessError' as const,
+    bizCode
+  })
+}
+
+export function isCryptoBusinessError(error: unknown): error is CryptoBusinessError {
+  return error instanceof Error
+    && error.name === 'CryptoBusinessError'
+    && typeof (error as { bizCode?: unknown }).bizCode === 'string'
 }

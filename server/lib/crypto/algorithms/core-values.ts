@@ -11,7 +11,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 
 const VALUES = '富强民主文明和谐自由平等公正法治爱国敬业诚信友善'
 
@@ -24,7 +24,7 @@ function str2hex(str: string): string {
 
 function hex2str(hex: string): string {
   if ((hex.length & 1) !== 0) {
-    throw new CryptoBusinessError('密文长度异常，无法解码')
+    throw createCryptoBusinessError('密文长度异常，无法解码')
   }
   const parts: string[] = []
   for (let i = 0; i < hex.length; i++) {
@@ -34,7 +34,7 @@ function hex2str(hex: string): string {
   try {
     return decodeURIComponent(parts.join(''))
   } catch {
-    throw new CryptoBusinessError('密文内容损坏，无法还原为 UTF-8 文本')
+    throw createCryptoBusinessError('密文内容损坏，无法还原为 UTF-8 文本')
   }
 }
 

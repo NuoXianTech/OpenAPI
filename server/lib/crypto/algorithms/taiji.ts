@@ -10,7 +10,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 import { base64Decode, base64Encode } from './base64'
 
 const TAIJI_CHS = '䷁䷗䷆䷒䷎䷣䷭䷊䷏䷲䷧䷵䷽䷶䷟䷡䷇䷂䷜䷻䷦䷾䷯䷄䷬䷐䷮䷹䷞䷰䷛䷪䷖䷚䷃䷨䷳䷕䷑䷙䷢䷔䷿䷥䷷䷝䷱䷍䷓䷩䷺䷼䷴䷤䷸䷈䷋䷘䷅䷉䷠䷌䷫䷀☯'
@@ -54,7 +54,7 @@ export function taijiEncode(text: string, pwd?: string): string {
   let out = ''
   for (const ch of base64) {
     const idx = BASE64_INDEX.get(ch)
-    if (idx === undefined) throw new CryptoBusinessError('内部编码错误：Base64 字符越界')
+    if (idx === undefined) throw createCryptoBusinessError('内部编码错误：Base64 字符越界')
     out += TAIJI_CHS[map(idx)]
   }
   return out
@@ -66,7 +66,7 @@ export function taijiDecode(text: string, pwd?: string): string {
   for (const ch of text) {
     const idx = TAIJI_INDEX.get(ch)
     if (idx === undefined) {
-      throw new CryptoBusinessError('密文包含非太极字符')
+      throw createCryptoBusinessError('密文包含非太极字符')
     }
     base64 += BASE64_CHS[map(idx)]
   }

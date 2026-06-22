@@ -13,7 +13,7 @@ import {
   asNumber,
   asRecord,
   asString,
-  DoubaoError,
+  createDoubaoError,
   type DoubaoVideo
 } from './types'
 
@@ -81,7 +81,7 @@ export async function doubaoVideoParse(url: string, raw = false): Promise<Doubao
   } else if (url.includes('video_id=')) {
     vids = new URL(url).searchParams.getAll('video_id')
   } else {
-    throw new DoubaoError('input', 400, 'INVALID_PARAMETER', '链接中缺少 video_id 参数，请检查链接是否正确')
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '链接中缺少 video_id 参数，请检查链接是否正确')
   }
 
   const videos: DoubaoVideo[] = []
@@ -95,7 +95,7 @@ export async function doubaoVideoParse(url: string, raw = false): Promise<Doubao
 
     const root = asRecord(result)
     if (!('data' in root)) {
-      throw new DoubaoError('business', 502, 'PARSE_FAILED', 'API 返回数据格式异常，可能链接已失效')
+      throw createDoubaoError('business', 502, 'PARSE_FAILED', 'API 返回数据格式异常，可能链接已失效')
     }
     if (raw) return result
 
@@ -123,7 +123,7 @@ export async function yunqueVideoParse(url: string, raw = false): Promise<Doubao
   const shareSecDid = params.get('share_sec_did')
   const shareSecUid = params.get('share_sec_uid')
   if (!shareId || !shareSecDid || !shareSecUid) {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '无法从链接解析分享参数，请确认链接是否有效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '无法从链接解析分享参数，请确认链接是否有效')
   }
 
   const result = await fetchJson(
@@ -147,11 +147,11 @@ export async function yunqueVideoParse(url: string, raw = false): Promise<Doubao
 
   const root = asRecord(result)
   if (!('data' in root)) {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', 'API 返回数据格式异常，可能链接已失效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', 'API 返回数据格式异常，可能链接已失效')
   }
   const data = asRecord(root.data)
   if (!('page_info' in data)) {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '无法获取视频播放信息，请检查链接是否有效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '无法获取视频播放信息，请检查链接是否有效')
   }
   if (raw) return result
 
@@ -160,7 +160,7 @@ export async function yunqueVideoParse(url: string, raw = false): Promise<Doubao
   )
   const videoInfo = asRecord(videoInfoList[0])
   if (videoInfoList.length === 0) {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '未找到视频信息，请检查链接是否有效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '未找到视频信息，请检查链接是否有效')
   }
 
   const width = asNumber(videoInfo.width)

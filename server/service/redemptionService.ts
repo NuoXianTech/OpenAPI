@@ -245,17 +245,17 @@ export const redemptionService = {
    */
   async redeem(input: RedeemInput) {
     const code = normalizeCode(input.code)
-    if (!code) throw createRedeemError('INVALID_CODE', '兑换码不能为空')
+    if (!code) throw createRedemptionError('INVALID_CODE', '兑换码不能为空')
 
     const found = await db.select().from(redemptionCodes).where(eq(redemptionCodes.code, code)).limit(1)
     const target = found[0]
-    if (!target) throw createRedeemError('NOT_FOUND', '兑换码不存在')
-    if (!target.isEnabled) throw createRedeemError('DISABLED', '兑换码已被禁用')
+    if (!target) throw createRedemptionError('NOT_FOUND', '兑换码不存在')
+    if (!target.isEnabled) throw createRedemptionError('DISABLED', '兑换码已被禁用')
     if (target.expiresAt && target.expiresAt.getTime() <= Date.now()) {
-      throw createRedeemError('EXPIRED', '兑换码已过期')
+      throw createRedemptionError('EXPIRED', '兑换码已过期')
     }
     if (target.usedCount >= target.maxUses) {
-      throw createRedeemError('USED_UP', '兑换码已被领完')
+      throw createRedemptionError('USED_UP', '兑换码已被领完')
     }
 
     // 同一用户重复兑换：用 creditTransactions (codeId, userId) 部分唯一索引兜底；
@@ -268,7 +268,7 @@ export const redemptionService = {
         eq(creditTransactions.reason, 'redemption_code')
       ))
       .limit(1)
-    if (dup[0]) throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码')
+    if (dup[0]) throw createRedemptionError('ALREADY_REDEEMED', '你已兑换过该兑换码')
 
     return db.transaction(async (tx: typeof db) => {
       // 原子递增 usedCount，竞争失败说明被别人抢走
@@ -282,7 +282,7 @@ export const redemptionService = {
         ))
         .returning({ id: redemptionCodes.id, amount: redemptionCodes.amount })
       if (!consumed[0]) {
-        throw createRedeemError('USED_UP', '兑换码已被领完')
+        throw createRedemptionError('USED_UP', '兑换码已被领完')
       }
 
       const grantAmount = Math.max(Math.trunc(consumed[0].amount), 0)
@@ -293,7 +293,7 @@ export const redemptionService = {
         .where(eq(users.id, input.userId))
         .returning({ id: users.id, credits: users.credits })
       if (!userUpdated[0]) {
-        throw createRedeemError('USER_NOT_FOUND', '用户不存在')
+        throw createRedemptionError('USER_NOT_FOUND', '用户不存在')
       }
       const balanceAfter = Number(userUpdated[0].credits)
 
@@ -319,7 +319,7 @@ export const redemptionService = {
           }
         })
       } catch (err) {
-        throw createRedeemError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
+        throw createRedemptionError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
       }
 
       return {
@@ -359,18 +359,21 @@ export const redemptionService = {
   }
 }
 
-interface RedeemError extends Error {
-  code: string
-  cause?: unknown
+export interface RedemptionError extends Error {
+  readonly code: string
+  readonly cause?: unknown
 }
 
-function createRedeemError(code: string, message: string, cause?: unknown): RedeemError {
-  const err = new Error(message) as RedeemError
-  err.code = code
-  if (cause) err.cause = cause
-  return err
+export function createRedemptionError(code: string, message: string, cause?: unknown): RedemptionError {
+  return Object.assign(new Error(message), {
+    name: 'RedemptionError',
+    code,
+    ...(cause === undefined ? {} : { cause })
+  })
 }
 
-export function isRedeemError(err: unknown): err is RedeemError {
-  return err instanceof Error && typeof (err as RedeemError).code === 'string'
+export function isRedemptionError(error: unknown): error is RedemptionError {
+  return error instanceof Error
+    && error.name === 'RedemptionError'
+    && typeof (error as { code?: unknown }).code === 'string'
 }

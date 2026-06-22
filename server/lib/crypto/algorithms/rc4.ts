@@ -11,7 +11,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 import { CIPHER_RC4, opensslSaltedDecrypt, opensslSaltedEncrypt } from '../cryptojs-openssl'
 import {
   type BytesEncoding,
@@ -21,18 +21,18 @@ import {
 } from '../raw-cipher'
 
 export function rc4Encrypt(plaintext: string, password: string): string {
-  if (!plaintext) throw new CryptoBusinessError('待加密明文不能为空')
-  if (!password) throw new CryptoBusinessError('密钥不能为空')
+  if (!plaintext) throw createCryptoBusinessError('待加密明文不能为空')
+  if (!password) throw createCryptoBusinessError('密钥不能为空')
   return opensslSaltedEncrypt(plaintext, password, CIPHER_RC4)
 }
 
 export function rc4Decrypt(ciphertextB64: string, password: string): string {
-  if (!ciphertextB64) throw new CryptoBusinessError('待解密密文不能为空')
-  if (!password) throw new CryptoBusinessError('密钥不能为空')
+  if (!ciphertextB64) throw createCryptoBusinessError('待解密密文不能为空')
+  if (!password) throw createCryptoBusinessError('密钥不能为空')
   try {
     return opensslSaltedDecrypt(ciphertextB64.trim(), password, CIPHER_RC4)
   } catch {
-    throw new CryptoBusinessError('解密失败：密文或密钥错误')
+    throw createCryptoBusinessError('解密失败：密文或密钥错误')
   }
 }
 

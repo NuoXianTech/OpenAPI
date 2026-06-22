@@ -8,7 +8,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError, isCryptoBusinessError } from '../types'
 import { CIPHER_AES_256_CBC, opensslSaltedDecrypt, opensslSaltedEncrypt } from '../cryptojs-openssl'
 
 const EMOJIS_INIT = [
@@ -32,22 +32,22 @@ function rotateEmojis(rotation: number): string[] {
 }
 
 export function emojiAesEncrypt(message: string, key: string, rotation = 0): string {
-  if (!message) throw new CryptoBusinessError('待加密明文不能为空')
-  if (!key) throw new CryptoBusinessError('密钥不能为空')
+  if (!message) throw createCryptoBusinessError('待加密明文不能为空')
+  if (!key) throw createCryptoBusinessError('密钥不能为空')
   const ciphertext = opensslSaltedEncrypt(message, key, CIPHER_AES_256_CBC)
   const emojis = rotateEmojis(rotation)
   let out = ''
   for (const ch of ciphertext) {
     const idx = BASE64_ALPHABET.indexOf(ch)
-    if (idx === -1) throw new CryptoBusinessError('内部编码错误：Base64 字符越界')
+    if (idx === -1) throw createCryptoBusinessError('内部编码错误：Base64 字符越界')
     out += emojis[idx]
   }
   return out
 }
 
 export function emojiAesDecrypt(emojified: string, key: string, rotation = 0): string {
-  if (!emojified) throw new CryptoBusinessError('待解密密文不能为空')
-  if (!key) throw new CryptoBusinessError('密钥不能为空')
+  if (!emojified) throw createCryptoBusinessError('待解密密文不能为空')
+  if (!key) throw createCryptoBusinessError('密钥不能为空')
   const emojis = rotateEmojis(rotation)
   const emojiToIdx = new Map<string, number>()
   for (let i = 0; i < emojis.length; i++) emojiToIdx.set(emojis[i]!, i)
@@ -58,18 +58,18 @@ export function emojiAesDecrypt(emojified: string, key: string, rotation = 0): s
   for (const ch of chars) {
     const idx = emojiToIdx.get(ch)
     if (idx === undefined) {
-      throw new CryptoBusinessError('密文包含不属于 emoji-aes 字符表的字符')
+      throw createCryptoBusinessError('密文包含不属于 emoji-aes 字符表的字符')
     }
     base64 += BASE64_ALPHABET[idx]
   }
 
   try {
     const plain = opensslSaltedDecrypt(base64, key, CIPHER_AES_256_CBC)
-    if (!plain) throw new CryptoBusinessError('解密失败：密文或密钥错误')
+    if (!plain) throw createCryptoBusinessError('解密失败：密文或密钥错误')
     return plain
   } catch (err) {
-    if (err instanceof CryptoBusinessError) throw err
-    throw new CryptoBusinessError('解密失败：密文或密钥错误')
+    if (isCryptoBusinessError(err)) throw err
+    throw createCryptoBusinessError('解密失败：密文或密钥错误')
   }
 }
 

@@ -5,7 +5,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 
 export function base64Encode(text: string): string {
   return Buffer.from(text, 'utf8').toString('base64')
@@ -14,7 +14,7 @@ export function base64Encode(text: string): string {
 export function base64Decode(text: string): string {
   const trimmed = text.trim()
   if (!/^[A-Za-z0-9+/=\s]*$/.test(trimmed)) {
-    throw new CryptoBusinessError('输入不是合法的 Base64 字符串')
+    throw createCryptoBusinessError('输入不是合法的 Base64 字符串')
   }
   // Buffer.from 对非法 base64 不会抛异常，而是丢弃；为保持严格语义，前置正则即可
   return Buffer.from(trimmed, 'base64').toString('utf8')

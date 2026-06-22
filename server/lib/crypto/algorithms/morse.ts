@@ -3,7 +3,7 @@
 // 解码：忽略大小写；未知 token 抛 CryptoBusinessError
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 
 // 用 D 表示 dot、H 表示 dash，避免在源码中出现长串连字符（既不影响阅读，也便于 grep）
 const PACKED: Record<string, string> = {
@@ -41,7 +41,7 @@ export function morseEncode(text: string): string {
     for (const ch of w) {
       const code = TO_MORSE[ch]
       if (!code) {
-        throw new CryptoBusinessError(`字符 "${ch}" 不在摩斯码表中（仅支持 A-Z / 0-9 / 常用标点）`)
+        throw createCryptoBusinessError(`字符 "${ch}" 不在摩斯码表中（仅支持 A-Z / 0-9 / 常用标点）`)
       }
       letters.push(code)
     }
@@ -61,7 +61,7 @@ export function morseDecode(text: string): string {
     for (const code of letters) {
       const ch = FROM_MORSE[code]
       if (!ch) {
-        throw new CryptoBusinessError(`未识别的摩斯片段 "${code}"`)
+        throw createCryptoBusinessError(`未识别的摩斯片段 "${code}"`)
       }
       decoded += ch
     }

@@ -9,7 +9,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 import { CIPHER_AES_256_CBC, opensslSaltedDecrypt, opensslSaltedEncrypt } from '../cryptojs-openssl'
 
 const PREFIX = '佛又曰：'
@@ -40,18 +40,18 @@ for (const [a, b] of MAPPING_PAIRS) {
 }
 
 export function buddhaEncrypt(message: string, key: string = DEFAULT_KEY): string {
-  if (!message) throw new CryptoBusinessError('待加密明文不能为空')
+  if (!message) throw createCryptoBusinessError('待加密明文不能为空')
   const ciphertext = opensslSaltedEncrypt(message, key || DEFAULT_KEY, CIPHER_AES_256_CBC)
   // 原站丢弃前 10 字符（固定的 "U2FsdGVkX1"），解密时拼回
   if (!ciphertext.startsWith(FIXED_BASE64_HEAD)) {
-    throw new CryptoBusinessError('内部加密格式异常')
+    throw createCryptoBusinessError('内部加密格式异常')
   }
   const tail = ciphertext.slice(FIXED_BASE64_HEAD.length)
   let mapped = ''
   for (const ch of tail) {
     const replacement = TO_BUDDHA.get(ch)
     if (replacement === undefined) {
-      throw new CryptoBusinessError(`内部编码错误：未知字符 ${ch}`)
+      throw createCryptoBusinessError(`内部编码错误：未知字符 ${ch}`)
     }
     mapped += replacement
   }
@@ -59,23 +59,23 @@ export function buddhaEncrypt(message: string, key: string = DEFAULT_KEY): strin
 }
 
 export function buddhaDecrypt(ciphertext: string, key: string = DEFAULT_KEY): string {
-  if (!ciphertext) throw new CryptoBusinessError('待解密密文不能为空')
+  if (!ciphertext) throw createCryptoBusinessError('待解密密文不能为空')
   if (!ciphertext.startsWith(PREFIX)) {
-    throw new CryptoBusinessError(`密文必须以 "${PREFIX}" 开头`)
+    throw createCryptoBusinessError(`密文必须以 "${PREFIX}" 开头`)
   }
   const body = ciphertext.slice(PREFIX.length)
   let base64Tail = ''
   for (const ch of body) {
     const replacement = FROM_BUDDHA.get(ch)
     if (replacement === undefined) {
-      throw new CryptoBusinessError('密文包含非佛语字符，无法还原')
+      throw createCryptoBusinessError('密文包含非佛语字符，无法还原')
     }
     base64Tail += replacement
   }
   try {
     return opensslSaltedDecrypt(FIXED_BASE64_HEAD + base64Tail, key || DEFAULT_KEY, CIPHER_AES_256_CBC)
   } catch {
-    throw new CryptoBusinessError('解密失败：密文或密钥错误')
+    throw createCryptoBusinessError('解密失败：密文或密钥错误')
   }
 }
 

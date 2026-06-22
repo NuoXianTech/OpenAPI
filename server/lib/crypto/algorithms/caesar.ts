@@ -9,7 +9,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 
 const A_UPPER = 'A'.charCodeAt(0)
 const A_LOWER = 'a'.charCodeAt(0)
@@ -35,12 +35,12 @@ function applyShift(text: string, shift: number): string {
 }
 
 export function caesarEncrypt(text: string, shift = 3): string {
-  if (!Number.isInteger(shift)) throw new CryptoBusinessError('shift 必须是整数')
+  if (!Number.isInteger(shift)) throw createCryptoBusinessError('shift 必须是整数')
   return applyShift(text, shift)
 }
 
 export function caesarDecrypt(text: string, shift = 3): string {
-  if (!Number.isInteger(shift)) throw new CryptoBusinessError('shift 必须是整数')
+  if (!Number.isInteger(shift)) throw createCryptoBusinessError('shift 必须是整数')
   return applyShift(text, -shift)
 }
 

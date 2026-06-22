@@ -23,7 +23,7 @@ import { getRouterParam, readBody } from 'h3'
 import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
 import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
 import {
-  CryptoBusinessError,
+  isCryptoBusinessError,
   type CryptoMode
 } from '~~/server/lib/crypto/types'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event: H3Event) => {
   try {
     params = normalizeParams(algorithm.params, mode, body)
   } catch (err) {
-    if (err instanceof CryptoBusinessError) return failBusiness(event, err.message, err.bizCode)
+    if (isCryptoBusinessError(err)) return failBusiness(event, err.message, err.bizCode)
     throw err
   }
 
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event: H3Event) => {
       mode === 'encrypt' ? '加密成功' : '解密成功'
     )
   } catch (err) {
-    if (err instanceof CryptoBusinessError) return failBusiness(event, err.message, err.bizCode)
+    if (isCryptoBusinessError(err)) return failBusiness(event, err.message, err.bizCode)
     const message = err instanceof Error ? err.message : '加/解密执行失败'
     return failBusiness(event, message)
   }

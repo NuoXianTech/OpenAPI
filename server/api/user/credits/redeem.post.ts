@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { userRedeemCodeSchema } from '#shared/schemas/user'
-import { isRedeemError, redemptionService } from '~~/server/service/redemptionService'
+import { isRedemptionError, redemptionService } from '~~/server/service/redemptionService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAuth } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event: H3Event) => {
     })
     return data
   } catch (err) {
-    if (isRedeemError(err)) {
+    if (isRedemptionError(err)) {
       const status = REDEEM_ERROR_STATUS[err.code] || 400
       throw createError({
         statusCode: status,

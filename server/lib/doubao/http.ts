@@ -9,7 +9,7 @@
  * 所有网络异常统一转 DoubaoError('business', 502, 'UPSTREAM_ERROR')，调用方无需各自 try/catch 网络层。
  */
 
-import { DoubaoError } from './types'
+import { createDoubaoError } from './types'
 
 const DEFAULT_TIMEOUT_MS = 15000
 
@@ -47,7 +47,7 @@ async function request(url: string, opts: UpstreamRequest = {}): Promise<Respons
     })
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err)
-    throw new DoubaoError('business', 502, 'UPSTREAM_ERROR', `上游请求失败，请稍后重试：${reason}`)
+    throw createDoubaoError('business', 502, 'UPSTREAM_ERROR', `上游请求失败，请稍后重试：${reason}`)
   }
 }
 
@@ -63,7 +63,7 @@ export async function fetchJson<T = unknown>(url: string, opts: UpstreamRequest 
   try {
     return (await res.json()) as T
   } catch {
-    throw new DoubaoError('business', 502, 'PARSE_FAILED', '上游返回数据格式异常，可能链接已失效')
+    throw createDoubaoError('business', 502, 'PARSE_FAILED', '上游返回数据格式异常，可能链接已失效')
   }
 }
 

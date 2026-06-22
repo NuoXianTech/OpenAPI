@@ -6,7 +6,7 @@
  */
 
 import { register } from '../registry'
-import { CryptoBusinessError } from '../types'
+import { createCryptoBusinessError } from '../types'
 
 const BEAST_DICT = ['嗷', '呜', '啊', '~']
 
@@ -30,7 +30,7 @@ export function beastDecode(text: string): string {
   const filtered = chars.filter(c => BEAST_DICT.includes(c))
   if (filtered.length === 0) return ''
   if (filtered.length % 2 !== 0) {
-    throw new CryptoBusinessError('密文长度异常，无法解码（汉字数应为偶数）')
+    throw createCryptoBusinessError('密文长度异常，无法解码（汉字数应为偶数）')
   }
   let hex = ''
   for (let i = 0; i < filtered.length; i += 2) {
@@ -41,7 +41,7 @@ export function beastDecode(text: string): string {
     hex += v.toString(16)
   }
   if (hex.length % 4 !== 0) {
-    throw new CryptoBusinessError('密文长度异常，无法还原为字符')
+    throw createCryptoBusinessError('密文长度异常，无法还原为字符')
   }
   let out = ''
   for (let i = 0; i < hex.length; i += 4) {
