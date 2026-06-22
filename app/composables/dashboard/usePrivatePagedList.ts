@@ -1,4 +1,13 @@
 import type { AsyncDataRequestStatus } from '#app'
+import {
+  computed,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+  type ComputedRef,
+  type Ref
+} from 'vue'
 
 export interface PrivatePagedPagination {
   page: number
@@ -15,6 +24,10 @@ export interface UsePrivatePagedListOptions<
   defaultPageSize?: number
   // 默认 true：组件挂载后（仅客户端）自动拉首屏；false 时需调用方自行触发 refresh / applyFilters。
   immediate?: boolean
+  // 与 useDashboardListState 配合时可传入外部状态，确保筛选、分页和 URL 查询只有一份来源。
+  filters?: TFilters
+  page?: Ref<number>
+  pageSize?: Ref<number>
   // 把 filters + 分页拼成最终 query；缺省直接展开 filters 并附加 limit/offset。
   buildQuery?: (filters: TFilters, pagination: PrivatePagedPagination) => Record<string, unknown>
   // 把响应映射成 { items, total }；缺省：数组 → items=数组、total=length；对象 → 取 { items, total }。
@@ -30,6 +43,7 @@ export interface UsePrivatePagedListReturn<TFilters, TItem> {
   totalPages: ComputedRef<number>
   status: Ref<AsyncDataRequestStatus>
   loading: ComputedRef<boolean>
+  error: Ref<unknown>
   refresh: () => Promise<void>
   applyFilters: () => Promise<void>
   reset: () => Promise<void>
@@ -62,28 +76,40 @@ export function usePrivatePagedList<
     defaultFilters,
     defaultPageSize = 50,
     immediate = true,
+    filters: externalFilters,
+    page: externalPage,
+    pageSize: externalPageSize,
     buildQuery,
     transform
   } = options
 
   const doTransform = transform ?? defaultTransform<TItem>
 
-  const filters = reactive({ ...defaultFilters }) as TFilters
-  const page = ref(1)
-  const pageSize = ref(defaultPageSize)
+  const filters = externalFilters ?? (reactive({ ...defaultFilters }) as TFilters)
+  const page = externalPage ?? ref(1)
+  const pageSize = externalPageSize ?? ref(defaultPageSize)
   const items = ref<TItem[]>([]) as Ref<TItem[]>
   const total = ref(0)
   const status = ref<AsyncDataRequestStatus>(immediate ? 'pending' : 'idle')
+  const error = ref<unknown>(null)
 
   const loading = computed(() => status.value === 'pending')
   const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
   // 请求序号：并发 / 快慢乱序时只采用最新一次请求的结果，避免旧响应覆盖新数据。
   let requestSeq = 0
+  let skipNextPageRefresh = false
+
+  function resetPageWithoutAutoRefresh() {
+    if (page.value === 1) return
+    skipNextPageRefresh = true
+    page.value = 1
+  }
 
   async function refresh() {
     const seq = ++requestSeq
     status.value = 'pending'
+    error.value = null
     const limit = pageSize.value
     const offset = (page.value - 1) * limit
     const query = buildQuery
@@ -101,22 +127,34 @@ export function usePrivatePagedList<
       console.error(`[usePrivatePagedList] fetch ${path} failed`, err)
       items.value = []
       total.value = 0
+      error.value = err
       status.value = 'error'
     }
   }
 
   async function applyFilters() {
-    page.value = 1
+    resetPageWithoutAutoRefresh()
     await refresh()
   }
 
   async function reset() {
     Object.assign(filters, defaultFilters)
-    page.value = 1
+    resetPageWithoutAutoRefresh()
     await refresh()
   }
 
-  watch(page, () => { void refresh() })
+  watch(page, () => {
+    if (skipNextPageRefresh) {
+      skipNextPageRefresh = false
+      return
+    }
+    void refresh()
+  })
+
+  watch(pageSize, () => {
+    resetPageWithoutAutoRefresh()
+    void refresh()
+  })
 
   if (immediate) {
     // onMounted 天然只在客户端触发，保证私有数据不在 SSR 阶段拉取 / 落入 HTML。
@@ -132,6 +170,7 @@ export function usePrivatePagedList<
     totalPages,
     status,
     loading,
+    error,
     refresh,
     applyFilters,
     reset
