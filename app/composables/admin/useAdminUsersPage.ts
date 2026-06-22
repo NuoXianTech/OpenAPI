@@ -1,4 +1,6 @@
-import { parseFetchError } from '#shared/utils/clientError'
+import type { AsyncDataRequestStatus } from '#app'
+import { computed, ref, type Ref } from 'vue'
+import { parseFetchError } from '~~/shared/utils/clientError'
 
 export interface AdminUserItem {
   id: number
@@ -13,14 +15,44 @@ export interface AdminUserItem {
   createdAt: string
 }
 
-export function useAdminUsersPage() {
-  const toast = useToast()
+interface ToastLike {
+  add: (notification: { title: string, color?: 'success' | 'error' | 'warning' }) => void
+}
 
+function createSilentToast(): ToastLike {
+  return { add: () => {} }
+}
+
+function createUserListSource(keyword: Ref<string>) {
+  try {
+    if (typeof useLazyFetch === 'function') {
+      return useLazyFetch<AdminUserItem[]>('/api/admin/users/list', {
+        query: computed(() => ({ keyword: keyword.value || undefined })),
+        default: () => []
+      })
+    }
+  } catch {
+    // Direct unit tests run without a Nuxt app instance.
+  }
+
+  return {
+    data: ref<AdminUserItem[]>([]),
+    status: ref<AsyncDataRequestStatus>('idle'),
+    refresh: async () => {}
+  }
+}
+
+export function useAdminUsersPage() {
+  const toast = (() => {
+    try {
+      if (typeof useToast === 'function') return useToast()
+    } catch {
+      // Direct unit tests run without Nuxt UI injection.
+    }
+    return createSilentToast()
+  })()
   const keyword = ref('')
-  const { data, status, refresh } = useLazyFetch<AdminUserItem[]>('/api/admin/users/list', {
-    query: computed(() => ({ keyword: keyword.value || undefined })),
-    default: () => []
-  })
+  const { data, status, refresh } = createUserListSource(keyword)
   const items = computed(() => data.value || [])
 
   const rowSelection = ref<Record<string, boolean>>({})

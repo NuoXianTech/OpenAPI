@@ -22,8 +22,9 @@ const {
 } = useAdminUsersPage()
 
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
-watch(keyword, () => {
+watch([keyword, pageSize], () => {
   page.value = 1
+  clearSelection()
 })
 
 // 列显示/隐藏状态，与表格和「显示列」下拉共享。
