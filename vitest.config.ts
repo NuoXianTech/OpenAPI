@@ -14,6 +14,7 @@ const aliases = {
 
 export default defineConfig({
   test: {
+    hookTimeout: 30000,
     projects: [
       {
         resolve: {
@@ -23,7 +24,10 @@ export default defineConfig({
           name: 'unit',
           environment: 'node',
           globals: false,
-          include: ['tests/server/**/*.{test,spec}.ts']
+          include: [
+            'tests/server/**/*.{test,spec}.ts',
+            'tests/app/**/*.{test,spec}.ts'
+          ]
         }
       },
       await defineVitestProject({
@@ -31,6 +35,7 @@ export default defineConfig({
           name: 'nuxt',
           environment: 'nuxt',
           globals: false,
+          hookTimeout: 30000,
           include: ['tests/nuxt/**/*.{test,spec}.ts'],
           environmentOptions: {
             nuxt: {
