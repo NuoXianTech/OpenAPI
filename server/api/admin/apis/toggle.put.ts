@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import type { H3Event } from 'h3'
 import { adminToggleApiSchema } from '#shared/schemas/admin'
 import { apiService } from '~~/server/service/apiService'
@@ -10,6 +11,9 @@ export default defineEventHandler(async (event: H3Event) => {
   const { id, field, value } = await readZodBody(event, adminToggleApiSchema)
 
   const updated = await apiService.toggleApiField(id, field, value, admin.id || null)
+    .catch((err: unknown) => {
+      throw createError({ statusCode: 400, message: err instanceof Error ? err.message : 'api toggle failed' })
+    })
 
   await operationLogService.addLog({
     userId: admin.id || null,

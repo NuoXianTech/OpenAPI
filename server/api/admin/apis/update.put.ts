@@ -44,6 +44,8 @@ export default defineEventHandler(async (event: H3Event) => {
     dailyQuota: body.dailyQuota,
     methodCosts,
     timeoutMs: body.timeoutMs
+  }).catch((err: unknown) => {
+    throw createError({ statusCode: 400, message: err instanceof Error ? err.message : 'api update failed' })
   })
 
   await operationLogService.addLog({

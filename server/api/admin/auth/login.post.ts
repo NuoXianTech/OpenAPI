@@ -4,6 +4,7 @@ import { createError, getRequestIP } from 'h3'
 import { adminLoginSchema } from '#shared/schemas/admin'
 import { ADMIN_ACTOR_ID, createAdminSession } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
+import { assertLoginRateLimit } from '~~/server/utils/loginRateLimit'
 import { readZodBody } from '~~/server/utils/zod'
 
 function safeEquals(left: string, right: string) {
@@ -33,7 +34,15 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 500, message: '管理员密码未配置，请联系系统管理员' })
   }
 
-  await assertTurnstileForPage('adminLogin', turnstileToken, getRequestIP(event) || null)
+  const ip = getRequestIP(event) || '0.0.0.0'
+  await assertLoginRateLimit({
+    namespace: 'admin-login',
+    account: username,
+    ip,
+    accountLimit: 3,
+    ipLimit: 10
+  })
+  await assertTurnstileForPage('adminLogin', turnstileToken, ip)
 
   if (!safeEquals(username, adminUsername) || !safeEquals(password, adminPassword)) {
     throw createError({ statusCode: 401, message: '管理员账号或密码错误' })

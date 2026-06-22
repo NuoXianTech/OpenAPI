@@ -5,6 +5,7 @@ import { usersService } from '~~/server/service/userService'
 import { loginLogService } from '~~/server/service/loginLogService'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
+import { assertLoginRateLimit } from '~~/server/utils/loginRateLimit'
 import { readZodBody } from '~~/server/utils/zod'
 import { banMessage, isBanActive } from '#shared/utils/ban'
 
@@ -17,6 +18,13 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const ip = getRequestIP(event) || '0.0.0.0'
   const userAgent = getHeader(event, 'user-agent') || null
+  await assertLoginRateLimit({
+    namespace: 'login',
+    account: emailOrUsername,
+    ip,
+    accountLimit: 5,
+    ipLimit: 30
+  })
   await assertTurnstileForPage('login', turnstileToken, ip)
 
   // 支持通过 email 或 username 登录

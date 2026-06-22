@@ -47,20 +47,39 @@ export const adminCreateUserSchema = z.object({
   isActive: z.boolean().optional()
 })
 
+const adminUsernameSchema = z
+  .string()
+  .trim()
+  .min(3, '用户名至少 3 位')
+  .max(32, '用户名最多 32 位')
+  .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线')
+
+const adminEmailSchema = z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址'))
+
 /** 更新用户信息（部分字段） */
-export const adminUpdateUserSchema = z.object({
-  id: z.coerce.number().int().positive('id is required'),
-  username: z.string().trim().optional(),
-  email: z.string().trim().toLowerCase().optional(),
-  displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
-  isActive: z.boolean().optional(),
-  isBanned: z.boolean().optional(),
-  // 重置密码：留空（''/null/缺省）= 不修改；提供则至少 8 位，update handler 会强制该用户重新登录
-  password: z.preprocess(
-    v => (v === '' || v === null ? undefined : v),
-    z.string().min(8, '密码至少 8 位').optional()
+export const adminUpdateUserSchema = z
+  .object({
+    id: z.coerce.number().int().positive('id is required'),
+    username: adminUsernameSchema.optional(),
+    email: adminEmailSchema.optional(),
+    displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
+    isActive: z.boolean().optional(),
+    isBanned: z.boolean().optional(),
+    // 重置密码：留空（''/null/缺省）= 不修改；提供则至少 8 位，update handler 会强制该用户重新登录
+    password: z.preprocess(
+      v => (v === '' || v === null ? undefined : v),
+      z.string().min(8, '密码至少 8 位').optional()
+    )
+  })
+  .refine(
+    d => d.username !== undefined
+      || d.email !== undefined
+      || d.displayName !== undefined
+      || d.isActive !== undefined
+      || d.isBanned !== undefined
+      || d.password !== undefined,
+    { message: '至少需要修改一个字段', path: [] }
   )
-})
 
 // ============================================================
 // Admin · User · API Keys
@@ -139,12 +158,23 @@ export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySc
 // ============================================================
 
 /** 管理员-用户积分批量调整（grant/revoke/reset） */
-export const adminAdjustCreditsSchema = z.object({
-  userIds: z.array(z.coerce.number().int().positive()).default([]),
-  operation: z.enum(['grant', 'revoke', 'reset'], 'operation 只能是 grant / revoke / reset'),
-  amount: z.coerce.number().int().min(0).default(0),
-  remark: z.string().trim().max(500).optional()
-})
+export const adminAdjustCreditsSchema = z
+  .object({
+    userIds: z.array(z.coerce.number().int().positive()).default([]),
+    scope: z.enum(['selected', 'all'], 'scope 只能是 selected / all').default('selected'),
+    confirmAll: z.boolean().optional(),
+    operation: z.enum(['grant', 'revoke', 'reset'], 'operation 只能是 grant / revoke / reset'),
+    amount: z.coerce.number().int().min(0).default(0),
+    remark: z.string().trim().max(500).optional()
+  })
+  .refine(
+    d => d.scope !== 'selected' || d.userIds.length > 0,
+    { message: '请选择至少一个用户，或显式选择全员范围', path: ['userIds'] }
+  )
+  .refine(
+    d => d.scope !== 'all' || d.confirmAll === true,
+    { message: '全员积分调整必须显式确认', path: ['confirmAll'] }
+  )
 
 // ============================================================
 // Admin · API Categories
@@ -215,6 +245,9 @@ export const adminRegisterApiSchema = z.object({
 })
 
 /** 编辑已登记 API 的治理字段 */
+const guardLimitSchema = z.coerce.number().int().min(0, 'limit must be >= 0')
+const guardTimeoutSchema = z.coerce.number().int().min(100, 'timeoutMs must be >= 100').max(120000, 'timeoutMs is too large')
+
 export const adminUpdateApiSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
   name: z.string().trim().optional(),
@@ -230,13 +263,13 @@ export const adminUpdateApiSchema = z.object({
   isEnabled: z.boolean().optional(),
   isApiKey: z.boolean().optional(),
   isStatistics: z.boolean().optional(),
-  rateLimitPerSecond: z.coerce.number().optional(),
-  rateLimitPerMinute: z.coerce.number().optional(),
-  rateLimitPerHour: z.coerce.number().optional(),
-  rateLimitPerDay: z.coerce.number().optional(),
-  dailyQuota: z.coerce.number().optional(),
+  rateLimitPerSecond: guardLimitSchema.optional(),
+  rateLimitPerMinute: guardLimitSchema.optional(),
+  rateLimitPerHour: guardLimitSchema.optional(),
+  rateLimitPerDay: guardLimitSchema.optional(),
+  dailyQuota: guardLimitSchema.optional(),
   methodCosts: methodCostsSchema.optional(),
-  timeoutMs: z.coerce.number().optional()
+  timeoutMs: guardTimeoutSchema.optional()
 })
 
 /** 切换 API 字段开关 */

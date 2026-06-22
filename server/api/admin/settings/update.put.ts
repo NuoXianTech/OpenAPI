@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { adminUpdateSiteSettingsSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
-import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/service/siteSettingsService'
+import { siteSettingsService, toAdminSiteSettings, type SiteSettingsUpsertInput } from '~~/server/service/siteSettingsService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   // 同时返回 public shape：前端用它原地刷新 useFetch('/api/settings/public') 缓存，避免再发一次 GET。
   return {
-    ...data,
+    ...toAdminSiteSettings(data),
     public: siteSettingsService.toPublicSettings(data)
   }
 })

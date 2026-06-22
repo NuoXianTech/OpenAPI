@@ -59,6 +59,8 @@ async function submit() {
     await $fetch('/api/admin/users/credits/adjust', {
       method: 'POST',
       body: {
+        scope: props.userIds.length === 0 ? 'all' : 'selected',
+        confirmAll: props.userIds.length === 0,
         userIds: props.userIds,
         operation: operation.value,
         amount: Math.max(Math.trunc(amount.value), 0),

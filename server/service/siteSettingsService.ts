@@ -110,6 +110,40 @@ function toPublicTurnstile(settings: {
 
 type SiteSettingsRow = typeof siteSettings.$inferSelect
 
+export interface AdminSiteSettingsSecrets {
+  hasSmtpPass: boolean
+  hasOauthGithubClientSecret: boolean
+  hasOauthQqClientSecret: boolean
+  hasTurnstileSecretKey: boolean
+}
+
+export interface AdminSiteSettings extends Omit<
+  SiteSettingsRow,
+  'smtpPass' | 'oauthGithubClientSecret' | 'oauthQqClientSecret' | 'turnstileSecretKey'
+> {
+  secrets: AdminSiteSettingsSecrets
+}
+
+export function toAdminSiteSettings(settings: SiteSettingsRow): AdminSiteSettings {
+  const {
+    smtpPass,
+    oauthGithubClientSecret,
+    oauthQqClientSecret,
+    turnstileSecretKey,
+    ...safe
+  } = settings
+
+  return {
+    ...safe,
+    secrets: {
+      hasSmtpPass: smtpPass.length > 0,
+      hasOauthGithubClientSecret: oauthGithubClientSecret.length > 0,
+      hasOauthQqClientSecret: oauthQqClientSecret.length > 0,
+      hasTurnstileSecretKey: turnstileSecretKey.length > 0
+    }
+  }
+}
+
 // getOrCreate 挂在鉴权热路径上：每个非「记住我」请求都要读 3 个会话时长整数（见
 // server/utils/auth.ts），SSR 还会经 /api/auth/me 再触发一次。但 default scope 只有
 // 一行、几乎从不变更，故沿用 apiService 的 { value, expiresAt } 短 TTL 缓存避免反复查库，
@@ -180,9 +214,9 @@ export const siteSettingsService = {
     }
   },
 
-  // 给后台用：保留所有字段，turnstileSecretKey 明文返回（UI 直接展示）
+  // 给后台用：敏感字段只返回是否已配置，具体值保持只写。
   async getForAdmin() {
-    return await this.getOrCreate()
+    return toAdminSiteSettings(await this.getOrCreate())
   },
 
   async update(input: SiteSettingsUpsertInput) {

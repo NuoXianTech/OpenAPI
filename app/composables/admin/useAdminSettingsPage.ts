@@ -48,6 +48,8 @@ export interface AdminSettingsForm {
   checkinAmountMax: number
 }
 
+const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
+
 function defaultForm(): AdminSettingsForm {
   return {
     siteName: '',
@@ -165,9 +167,8 @@ export function useAdminSettingsPage() {
   const saving = ref(false)
   const loading = ref(false)
 
-  // 后台设置含明文 SMTP 密码、Turnstile secret，必须用 $fetch（仅客户端 onMounted 触发）拉取：
-  // useFetch/useLazyFetch 会把响应写进 SSR payload（window.__NUXT__），硬刷新 /admin/system/*
-  // 时这些明文密钥就嵌进 HTML 源码（view-source / 浏览器磁盘缓存 / 中间代理均可见）。
+  // 后台设置含只写 secret 状态，仍用 $fetch（仅客户端 onMounted 触发）拉取，
+  // 避免管理端配置进入 SSR payload。
   async function load() {
     loading.value = true
     try {
@@ -205,7 +206,15 @@ export function useAdminSettingsPage() {
     if (!dirty.value || saving.value) return
     saving.value = true
     try {
-      const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body: { ...form } })
+      const body = changedKeys.value.reduce<Partial<AdminSettingsForm>>((accumulator, key) => {
+        const isEmptyWriteOnlySecret = writeOnlySecretKeys.includes(key as typeof writeOnlySecretKeys[number])
+          && !String(form[key] ?? '').trim()
+        if (!isEmptyWriteOnlySecret) {
+          accumulator[key] = form[key] as never
+        }
+        return accumulator
+      }, {})
+      const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body })
       // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
       const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
       cached.data.value = res.public

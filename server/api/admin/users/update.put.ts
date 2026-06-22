@@ -10,6 +10,20 @@ export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const { id, username, email, displayName, isActive, isBanned, password } = await readZodBody(event, adminUpdateUserSchema)
 
+  if (email !== undefined) {
+    const existing = await usersService.findByEmail(email)
+    if (existing && existing.id !== id) {
+      throw createError({ statusCode: 409, message: '该邮箱已被注册' })
+    }
+  }
+
+  if (username !== undefined) {
+    const existing = await usersService.findByUsername(username)
+    if (existing && existing.id !== id) {
+      throw createError({ statusCode: 409, message: '该用户名已被占用' })
+    }
+  }
+
   // 提供 password 才重置；否则 passwordHash 保持 undefined，drizzle 不会触碰该列
   const passwordHash = password ? await hashPassword(password) : undefined
 
