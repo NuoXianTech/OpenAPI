@@ -1,5 +1,10 @@
 import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, users } from '@nuxthub/db/schema'
+import {
+  buildRedemptionCodeRows,
+  insertRedemptionCodesUntilComplete,
+  normalizeRedemptionGeneration
+} from '~~/server/service/redemptionCodeGeneration'
 import { normalizePagination } from '~~/server/utils/pagination'
 
 /**
@@ -12,7 +17,6 @@ import { normalizePagination } from '~~/server/utils/pagination'
  *   4. 兑换发生在事务里：递增 usedCount + 加用户积分 + 写流水 + 写 record。
  */
 
-const DEFAULT_CODE_LENGTH = 16
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 去掉易混淆 0/O/I/1
 
 export type RedemptionStatus = 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available'
@@ -61,6 +65,15 @@ function buildBatchId(): string {
   return `B-${yyyy}-${mm}-${dd}-${tail}`
 }
 
+function createCodeStrings(count: number, length: number, prefix: string): string[] {
+  const codeStrings = new Set<string>()
+  while (codeStrings.size < count) {
+    const body = randomCode(length)
+    codeStrings.add(prefix ? `${prefix}-${body}` : body)
+  }
+  return Array.from(codeStrings)
+}
+
 function normalizeCode(raw: string): string {
   return (raw || '').trim().toUpperCase().replace(/\s+/g, '')
 }
@@ -71,47 +84,35 @@ export const redemptionService = {
    * 同一批次共享 amount/maxUses/expiresAt/note。
    */
   async generate(input: GenerateInput) {
-    const amount = Math.max(Math.trunc(input.amount), 1)
-    const wantCount = Math.min(Math.max(Math.trunc(input.count ?? 1), 1), 1000)
-    const length = Math.min(Math.max(Math.trunc(input.length ?? DEFAULT_CODE_LENGTH), 8), 48)
-    const maxUses = Math.max(Math.trunc(input.maxUses ?? 1), 1)
-    const prefix = (input.prefix || '').trim().toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 16)
-    const note = (input.note || '').trim().slice(0, 500) || null
-    const expiresAt = input.expiresAt && !Number.isNaN(input.expiresAt.getTime()) ? input.expiresAt : null
-
+    const normalized = normalizeRedemptionGeneration(input)
     const batchId = buildBatchId()
 
-    // 一次性生成 code 列表（前缀 + 随机后缀），DB 唯一约束兜底
-    const codeStrings = new Set<string>()
-    while (codeStrings.size < wantCount) {
-      const body = randomCode(length)
-      codeStrings.add(prefix ? `${prefix}-${body}` : body)
-    }
-
-    const rows = Array.from(codeStrings).map(code => ({
-      code,
-      amount,
-      batchId,
-      note,
-      maxUses,
-      usedCount: 0,
-      expiresAt,
-      isEnabled: true,
-      createdBy: input.createdBy ?? null
-    }))
-
-    // onConflictDoNothing 兜底极小概率重复，再补生成保证总数
-    const inserted = await db.insert(redemptionCodes).values(rows).onConflictDoNothing().returning()
+    const inserted = await insertRedemptionCodesUntilComplete<
+      typeof redemptionCodes.$inferInsert,
+      typeof redemptionCodes.$inferSelect
+    >({
+      requestedCount: normalized.count,
+      createRows: count => buildRedemptionCodeRows({
+        codes: createCodeStrings(count, normalized.length, normalized.prefix),
+        amount: normalized.amount,
+        batchId,
+        note: normalized.note,
+        maxUses: normalized.maxUses,
+        expiresAt: normalized.expiresAt,
+        createdBy: normalized.createdBy
+      }),
+      insertRows: rows => db.insert(redemptionCodes).values(rows).onConflictDoNothing().returning()
+    })
 
     return {
       batchId,
       generated: inserted.length,
-      requested: wantCount,
+      requested: normalized.count,
       codes: inserted.map((r: typeof redemptionCodes.$inferSelect) => ({ id: r.id, code: r.code, amount: r.amount })),
-      amount,
-      maxUses,
-      expiresAt,
-      note
+      amount: normalized.amount,
+      maxUses: normalized.maxUses,
+      expiresAt: normalized.expiresAt,
+      note: normalized.note
     }
   },
 
