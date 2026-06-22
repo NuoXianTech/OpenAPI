@@ -13,11 +13,11 @@ export interface DashboardQueryCodec<TValue> {
   serialize: (value: TValue) => string | number | undefined
 }
 
-export type DashboardListQueryCodecs<TFilters extends Record<string, unknown>> = {
+export type DashboardListQueryCodecs<TFilters extends object> = {
   [K in keyof TFilters]?: DashboardQueryCodec<TFilters[K]>
 }
 
-export interface UseDashboardListStateOptions<TFilters extends Record<string, unknown>> {
+export interface UseDashboardListStateOptions<TFilters extends object> {
   defaultFilters: TFilters
   defaultPage?: number
   defaultPageSize?: number
@@ -28,7 +28,7 @@ export interface UseDashboardListStateOptions<TFilters extends Record<string, un
   filterCodecs?: DashboardListQueryCodecs<TFilters>
 }
 
-export interface UseDashboardListStateReturn<TFilters extends Record<string, unknown>> {
+export interface UseDashboardListStateReturn<TFilters extends object> {
   filters: TFilters
   page: Ref<number>
   pageSize: Ref<number>
@@ -38,7 +38,7 @@ export interface UseDashboardListStateReturn<TFilters extends Record<string, unk
   syncQuery: () => Promise<void>
 }
 
-function cloneFilters<TFilters extends Record<string, unknown>>(filters: TFilters): TFilters {
+function cloneFilters<TFilters extends object>(filters: TFilters): TFilters {
   return structuredClone(filters)
 }
 
@@ -92,7 +92,7 @@ export function createStringArrayQueryCodec(defaultValue: string[] = []): Dashbo
   }
 }
 
-export function useDashboardListState<TFilters extends Record<string, unknown>>(
+export function useDashboardListState<TFilters extends object>(
   options: UseDashboardListStateOptions<TFilters>
 ): UseDashboardListStateReturn<TFilters> {
   const {

@@ -1,149 +1,55 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { LazyAdminCallLogDetailModal } from '#components'
 import {
-  ADMIN_LOG_TYPES,
-  type AdminLogRow,
-  type AdminLogType,
-  type AdminLogsFilterOptions
-} from '~~/shared/types/admin-logs'
+  ADMIN_CALL_LOG_TYPE_META,
+  useAdminCallLogsPage
+} from '~/composables/admin/useAdminCallLogsPage'
+import type { AdminLogRow } from '~~/shared/types/admin-logs'
 
 useHead({ title: '调用日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-// ─── 类型展示元数据 ──────────────────────────────────────────────
-const typeMeta: Record<AdminLogType, { label: string, color: 'success' | 'error' | 'primary', icon: string }> = {
-  consume: { label: '请求', color: 'primary', icon: 'i-mdi-swap-horizontal-circle-outline' },
-  error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' }
-}
-
-const typeSelectItems = ADMIN_LOG_TYPES.map(t => ({
-  label: typeMeta[t].label,
-  value: t,
-  icon: typeMeta[t].icon
-}))
-
-// ─── 筛选选项 ───────────────────────────────────────────────────
-const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
-
-const apiSelectItems = computed(() => [
-  { label: '全部接口', value: 0 },
-  ...filterOptions.value.apis.map(a => ({ label: `${a.name}（${a.apiPath}）`, value: a.id }))
-])
-
-const categorySelectItems = computed(() => [
-  { label: '全部分类', value: 0 },
-  ...filterOptions.value.categories.map(c => ({ label: c.name, value: c.id }))
-])
-
-async function loadFilterOptions() {
-  try {
-    const res = await $fetch<AdminLogsFilterOptions>('/api/admin/logs/filters')
-    filterOptions.value = res || { apis: [], categories: [] }
-  } catch (err) {
-    console.error('failed to load logs filters', err)
-  }
-}
-
-// ─── 分页列表 ───────────────────────────────────────────────────
-interface LogsFilters extends Record<string, unknown> {
-  startAt: string
-  endAt: string
-  apiId: number
-  categoryId: number
-  types: AdminLogType[]
-  apiKeyId: number | ''
-  userId: number | ''
-  requestId: string
-}
-
-const defaultFilters: LogsFilters = {
-  startAt: '',
-  endAt: '',
-  apiId: 0,
-  categoryId: 0,
-  types: [],
-  apiKeyId: '',
-  userId: '',
-  requestId: ''
-}
-
-const pageSize = 50
+const route = useRoute()
+const router = useRouter()
 const {
   filters,
   page,
+  pageSize,
   items,
   total,
   loading,
   applyFilters,
-  reset
-} = usePrivatePagedList<LogsFilters, AdminLogRow>({
-  path: '/api/admin/logs/list',
-  defaultFilters,
-  defaultPageSize: pageSize,
-  buildQuery: (f, p) => ({
-    startAt: f.startAt ? new Date(f.startAt).toISOString() : undefined,
-    endAt: f.endAt ? new Date(f.endAt).toISOString() : undefined,
-    apiId: f.apiId || undefined,
-    categoryId: f.categoryId || undefined,
-    types: f.types.length ? f.types.join(',') : undefined,
-    apiKeyId: f.apiKeyId || undefined,
-    userId: f.userId || undefined,
-    requestId: f.requestId?.trim() || undefined,
-    limit: p.limit,
-    offset: p.offset
-  })
+  resetFilters,
+  refresh,
+  typeSelectItems,
+  apiSelectItems,
+  categorySelectItems,
+  hasAdvancedFilters,
+  activeFilterCount,
+  columns,
+  loadFilterOptions
+} = useAdminCallLogsPage({
+  routeQuery: computed(() => route.query),
+  replaceQuery: async (query) => {
+    await router.replace({ query })
+  }
 })
 
 const expandedFilters = ref(false)
-const hasAdvancedFilters = computed(
-  () => filters.apiKeyId !== '' || filters.userId !== '' || !!filters.requestId
-)
-const activeFilterCount = computed(() => [
-  !!filters.startAt,
-  !!filters.endAt,
-  filters.apiId !== 0,
-  filters.categoryId !== 0,
-  filters.types.length > 0,
-  filters.apiKeyId !== '',
-  filters.userId !== '',
-  !!filters.requestId
-].filter(Boolean).length)
+const overlay = useOverlay()
+const detailModal = overlay.create(LazyAdminCallLogDetailModal, { destroyOnClose: true })
 
 onMounted(() => {
   void loadFilterOptions()
 })
 
-// ─── 详情弹窗 ───────────────────────────────────────────────────
-const detailRow = ref<AdminLogRow | null>(null)
-const detailOpen = ref(false)
-
 function openDetail(row: AdminLogRow) {
-  detailRow.value = row
-  detailOpen.value = true
+  detailModal.open({ row })
 }
 
-// ─── 表格列 ─────────────────────────────────────────────────────
 function formatDate(iso: string) {
   return formatDateTime(iso)
 }
-
-function formatBytes(value: number | null) {
-  if (value == null) return '-'
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
-  return `${(value / 1024 / 1024).toFixed(2)} MB`
-}
-
-const columns: TableColumn<AdminLogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'userName', header: '用户' },
-  { accessorKey: 'apiKeyName', header: '密钥' },
-  { accessorKey: 'apiName', header: '接口' },
-  { accessorKey: 'cost', header: '费用' },
-  { id: 'summary', header: '摘要' },
-  { id: 'actions', header: '' }
-]
 </script>
 
 <template>
@@ -155,7 +61,7 @@ const columns: TableColumn<AdminLogRow>[] = [
         </template>
         <template #right>
           <DashboardHeaderActions
-            :on-refresh="applyFilters"
+            :on-refresh="refresh"
             :refreshing="loading"
           />
         </template>
@@ -328,7 +234,7 @@ const columns: TableColumn<AdminLogRow>[] = [
                   color="neutral"
                   variant="outline"
                   icon="i-mdi-restore"
-                  @click="reset"
+                  @click="resetFilters"
                 >
                   重置
                 </UButton>
@@ -360,13 +266,13 @@ const columns: TableColumn<AdminLogRow>[] = [
                 {{ formatDate(row.original.createdAt) }}
               </span>
               <UBadge
-                :color="typeMeta[row.original.type].color"
-                :icon="typeMeta[row.original.type].icon"
+                :color="ADMIN_CALL_LOG_TYPE_META[row.original.type].color"
+                :icon="ADMIN_CALL_LOG_TYPE_META[row.original.type].icon"
                 variant="subtle"
                 size="sm"
                 class="w-fit"
               >
-                {{ typeMeta[row.original.type].label }}
+                {{ ADMIN_CALL_LOG_TYPE_META[row.original.type].label }}
               </UBadge>
             </div>
           </template>
@@ -471,157 +377,6 @@ const columns: TableColumn<AdminLogRow>[] = [
           </template>
         </DashboardDataTable>
       </div>
-
-      <UModal
-        v-model:open="detailOpen"
-        title="调用详情"
-        :ui="{ content: 'max-w-2xl' }"
-      >
-        <template #body>
-          <div
-            v-if="detailRow"
-            class="space-y-4 text-sm"
-          >
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <div class="text-xs text-muted">
-                  时间
-                </div>
-                <div>{{ formatDate(detailRow.createdAt) }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  类型
-                </div>
-                <UBadge
-                  :color="typeMeta[detailRow.type].color"
-                  :icon="typeMeta[detailRow.type].icon"
-                  variant="subtle"
-                  size="sm"
-                  class="w-fit"
-                >
-                  {{ typeMeta[detailRow.type].label }}
-                </UBadge>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  请求 ID
-                </div>
-                <div class="font-mono text-xs break-all">
-                  {{ detailRow.requestId || '-' }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  用户
-                </div>
-                <div>
-                  {{ detailRow.userId ? `${detailRow.userName || '-'} (#${detailRow.userId})` : '匿名' }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  密钥
-                </div>
-                <div>
-                  {{ detailRow.apiKeyName || (detailRow.apiKeyId ? `#${detailRow.apiKeyId}` : '-') }}
-                </div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  接口
-                </div>
-                <div>
-                  {{ detailRow.apiName || '-' }}
-                  <span
-                    v-if="detailRow.categoryName"
-                    class="text-muted text-xs"
-                  >· {{ detailRow.categoryName }}</span>
-                </div>
-              </div>
-            </div>
-
-            <UCard
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-muted">请求</span>
-              </template>
-              <div class="space-y-2 text-xs">
-                <div class="flex items-center gap-2">
-                  <UBadge
-                    color="neutral"
-                    variant="subtle"
-                    class="font-mono"
-                  >
-                    {{ detailRow.method }}
-                  </UBadge>
-                  <span class="font-mono break-all">{{ detailRow.apiPath }}</span>
-                </div>
-                <div
-                  v-if="detailRow.queryString"
-                  class="font-mono text-muted break-all"
-                >
-                  ?{{ detailRow.queryString }}
-                </div>
-                <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">
-                  <span>状态码 <span
-                    class="tabular-nums"
-                    :class="detailRow.statusCode >= 400 ? 'text-error' : 'text-default'"
-                  >{{ detailRow.statusCode }}</span></span>
-                  <span>耗时 <span class="tabular-nums text-default">{{ detailRow.latencyMs }}ms</span></span>
-                  <span>费用 <span class="tabular-nums text-default">{{ detailRow.cost > 0 ? `-${detailRow.cost}` : '免费' }}</span></span>
-                  <span>请求体 <span class="text-default">{{ formatBytes(detailRow.requestSize) }}</span></span>
-                  <span>响应体 <span class="text-default">{{ formatBytes(detailRow.responseSize) }}</span></span>
-                </div>
-              </div>
-            </UCard>
-
-            <UCard
-              v-if="detailRow.errorCode || detailRow.errorMessage"
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-error">错误</span>
-              </template>
-              <div class="space-y-1 text-xs">
-                <div v-if="detailRow.errorCode">
-                  <span class="text-muted">code </span>
-                  <span class="font-mono">{{ detailRow.errorCode }}</span>
-                </div>
-                <div
-                  v-if="detailRow.errorMessage"
-                  class="break-all"
-                >
-                  {{ detailRow.errorMessage }}
-                </div>
-              </div>
-            </UCard>
-
-            <UCard
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-muted">客户端</span>
-              </template>
-              <div class="space-y-1 text-xs">
-                <div>
-                  <span class="text-muted">IP </span>
-                  <span class="font-mono">{{ detailRow.ip || '-' }}</span>
-                </div>
-                <div>
-                  <span class="text-muted">User-Agent </span>
-                  <span class="font-mono break-all">{{ detailRow.userAgent || '-' }}</span>
-                </div>
-                <div v-if="detailRow.referer">
-                  <span class="text-muted">Referer </span>
-                  <span class="font-mono break-all">{{ detailRow.referer }}</span>
-                </div>
-              </div>
-            </UCard>
-          </div>
-        </template>
-      </UModal>
     </template>
   </UDashboardPanel>
 </template>

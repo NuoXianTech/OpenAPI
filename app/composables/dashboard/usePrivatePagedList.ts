@@ -16,7 +16,7 @@ export interface PrivatePagedPagination {
 }
 
 export interface UsePrivatePagedListOptions<
-  TFilters extends Record<string, unknown>,
+  TFilters extends object,
   TItem
 > {
   path: string
@@ -68,7 +68,7 @@ function defaultTransform<TItem>(resp: unknown): { items: TItem[], total: number
  * 翻页通过 watch(page) 触发。并发或快慢乱序时用 requestSeq 只采用最新一次结果，旧响应直接丢弃。
  */
 export function usePrivatePagedList<
-  TFilters extends Record<string, unknown>,
+  TFilters extends object,
   TItem = unknown
 >(options: UsePrivatePagedListOptions<TFilters, TItem>): UsePrivatePagedListReturn<TFilters, TItem> {
   const {
