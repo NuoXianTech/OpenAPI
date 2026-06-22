@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
-import { useAdminUsersPage, type AdminUserItem } from '~/composables/admin/useAdminUsersPage'
+import {
+  useAdminUsersDisplayMeta,
+  useAdminUsersPage,
+  type AdminUserItem
+} from '~/composables/admin/useAdminUsersPage'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -105,54 +108,19 @@ async function onCreditSaved() {
   await refresh()
 }
 
-function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
-  return [{
-    label: '编辑',
-    icon: 'i-mdi-pencil-outline',
-    onSelect: () => openEdit(row)
-  }, {
-    label: row.isBanned ? '解封' : '封禁',
-    icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
-    onSelect: () => row.isBanned ? openUnban(row) : openBan(row)
-  }, {
-    label: 'API Keys',
-    icon: 'i-mdi-key-variant',
-    onSelect: () => openKeys(row)
-  }, {
-    label: '积分管理',
-    icon: 'i-mdi-cash-multiple',
-    onSelect: () => openCreditForOne(row)
-  }, {
-    type: 'separator'
-  }, {
-    label: '删除',
-    icon: 'i-mdi-delete-outline',
-    color: 'error' as const,
-    onSelect: () => openDelete(row)
-  }]
-}
-
-function formatDate(val: string) {
-  return formatDateTime(val)
-}
-
-function banTooltip(row: AdminUserItem): string {
-  const parts: string[] = []
-  parts.push(row.bannedReason ? `原因：${row.bannedReason}` : '原因：未填写')
-  parts.push(row.bannedUntil ? `解封时间：${formatDate(row.bannedUntil)}` : '永久封禁')
-  return parts.join('\n')
-}
-
-const columns: TableColumn<AdminUserItem>[] = [
-  { id: 'select' },
-  { accessorKey: 'username', header: '用户名' },
-  { accessorKey: 'email', header: '邮箱' },
-  { accessorKey: 'credits', header: '积分' },
-  { accessorKey: 'isActive', header: '激活' },
-  { accessorKey: 'isBanned', header: '封禁' },
-  { accessorKey: 'createdAt', header: '注册时间' },
-  { id: 'actions', header: '' }
-]
+const {
+  columns,
+  formatDate,
+  banTooltip,
+  getRowItems
+} = useAdminUsersDisplayMeta({
+  openEdit,
+  openBan,
+  openUnban,
+  openKeys,
+  openCreditForOne,
+  openDelete
+})
 </script>
 
 <template>

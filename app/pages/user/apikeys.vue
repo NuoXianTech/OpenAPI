@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { LazyApiKeyResetModal } from '#components'
 import { parseFetchError } from '#shared/utils/clientError'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/useApiKeys'
 import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
 import type { ApiKeyItem } from '~/composables/api/types'
+import { formatDateTime } from '~/utils/datetime'
 
 useHead({ title: 'API Keys' })
 
@@ -160,42 +161,6 @@ async function openDelete(row: ApiKeyItem) {
 // ------------------------------------------------------------
 // 展示辅助
 // ------------------------------------------------------------
-async function copy(text: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({ title: '已复制到剪贴板', color: 'success' })
-  } catch {
-    toast.add({ title: '复制失败', color: 'error' })
-  }
-}
-
-const showFullKeyId = ref<number | null>(null)
-function toggleReveal(id: number) {
-  showFullKeyId.value = showFullKeyId.value === id ? null : id
-}
-
-function formatDate(val: string | null) {
-  return formatDateTime(val, '从未使用')
-}
-
-function formatDateOrDash(val: string | null) {
-  return formatDateTime(val, '—')
-}
-
-function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
-  return [
-    { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
-    {
-      label: row.isActive ? '停用' : '启用',
-      icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
-      onSelect: () => toggleActive(row)
-    },
-    { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
-  ]
-}
-
 const columns: TableColumn<ApiKeyItem>[] = [
   { accessorKey: 'name', header: '名称' },
   { accessorKey: 'apiKey', header: 'API Key' },
@@ -209,6 +174,47 @@ const columns: TableColumn<ApiKeyItem>[] = [
   { id: 'status', header: '状态' },
   { id: 'actions', header: '' }
 ]
+const showFullKeyId = ref<number | null>(null)
+
+async function copy(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.add({ title: '已复制到剪贴板', color: 'success' })
+  } catch {
+    toast.add({ title: '复制失败', color: 'error' })
+  }
+}
+
+function toggleReveal(id: number) {
+  showFullKeyId.value = showFullKeyId.value === id ? null : id
+}
+
+function formatDate(value: string | null): string {
+  return formatDateTime(value, '从未使用')
+}
+
+function formatDateOrDash(value: string | null): string {
+  return formatDateTime(value, '—')
+}
+
+function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
+  return [
+    { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    {
+      label: row.isActive ? '停用' : '启用',
+      icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
+      onSelect: () => toggleActive(row)
+    },
+    { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
+    {
+      label: '删除',
+      icon: 'i-mdi-delete-outline',
+      color: 'error',
+      onSelect: () => openDelete(row)
+    }
+  ]
+}
 </script>
 
 <template>

@@ -1,6 +1,8 @@
-import { parseFetchError } from '#shared/utils/clientError'
+import type { ComputedRef, Ref } from 'vue'
+import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
+import { parseFetchError } from '~~/shared/utils/clientError'
 
-export interface AdminSettingsForm {
+interface AdminSettingsForm {
   siteName: string
   siteUrl: string
   siteImg: string
@@ -46,6 +48,66 @@ export interface AdminSettingsForm {
   checkinAmountFixed: number
   checkinAmountMin: number
   checkinAmountMax: number
+}
+
+interface AdminOauthProviderItem {
+  provider: string
+  displayName: string
+  icon: string
+  scopes: string[]
+  clientId: string
+  clientSecret: string
+  isEnabled: boolean
+  callbackUrl: string
+  authorizeUrl: string
+  tokenUrl: string
+  userInfoUrl: string
+}
+
+interface AdminOauthProviderForm {
+  clientId: string
+  clientSecret: string
+  isEnabled: boolean
+  saving: boolean
+  copied: boolean
+  secretVisible: boolean
+  open: boolean
+}
+
+interface AdminOauthProviderUpdateBody {
+  provider: string
+  clientId: string
+  isEnabled: boolean
+  clientSecret?: string
+}
+
+interface AdminUserSessionSettingsState {
+  form: AdminSettingsForm
+  saving: Ref<boolean>
+  save: () => void | Promise<void>
+  dirty: ComputedRef<boolean>
+  changedKeys: ComputedRef<unknown[]>
+  reset: () => void
+}
+
+interface AdminOauthProviderFetchState {
+  data: Ref<AdminOauthProviderItem[] | null>
+  status: Ref<'idle' | 'pending' | 'success' | 'error'>
+  refresh: () => Promise<void>
+}
+
+interface AdminUserSessionToast {
+  add: (toast: { title: string, color: 'success' | 'error' }) => void
+}
+
+interface UseAdminUserSessionSettingsOptions {
+  supportedProviders?: readonly string[]
+  useSettingsPage?: () => AdminUserSessionSettingsState
+  useProviderFetch?: () => AdminOauthProviderFetchState
+  updateProvider?: (body: AdminOauthProviderUpdateBody) => Promise<void>
+  copyText?: (text: string) => Promise<void>
+  toast?: AdminUserSessionToast
+  scheduleCopiedReset?: (callback: () => void) => void
 }
 
 const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
@@ -230,4 +292,163 @@ export function useAdminSettingsPage() {
   }
 
   return { form, saving, loading, save, dirty, changedKeys, reset }
+}
+
+const ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS = [
+  { label: '不开启', value: 'off' },
+  { label: '白名单', value: 'whitelist' },
+  { label: '黑名单', value: 'blacklist' }
+]
+
+function createAdminOauthProviderForm(): AdminOauthProviderForm {
+  return {
+    clientId: '',
+    clientSecret: '',
+    isEnabled: false,
+    saving: false,
+    copied: false,
+    secretVisible: false,
+    open: false
+  }
+}
+
+function getAdminOauthProviderForm(
+  forms: Record<string, AdminOauthProviderForm>,
+  provider: string
+): AdminOauthProviderForm {
+  let providerForm = forms[provider]
+  if (!providerForm) {
+    providerForm = createAdminOauthProviderForm()
+    forms[provider] = providerForm
+  }
+  return providerForm
+}
+
+function syncAdminOauthProviderFormsFromItems(
+  forms: Record<string, AdminOauthProviderForm>,
+  items: AdminOauthProviderItem[]
+): void {
+  for (const item of items) {
+    const providerForm = getAdminOauthProviderForm(forms, item.provider)
+    providerForm.clientId = item.clientId || ''
+    providerForm.clientSecret = ''
+    providerForm.isEnabled = item.isEnabled
+  }
+}
+
+function buildAdminOauthProviderUpdateBody(
+  provider: string,
+  providerForm: AdminOauthProviderForm
+): AdminOauthProviderUpdateBody {
+  const body: AdminOauthProviderUpdateBody = {
+    provider,
+    clientId: providerForm.clientId,
+    isEnabled: providerForm.isEnabled
+  }
+
+  if (providerForm.clientSecret) {
+    body.clientSecret = providerForm.clientSecret
+  }
+
+  return body
+}
+
+function useDefaultProviderFetch(): AdminOauthProviderFetchState {
+  const result = useLazyFetch<AdminOauthProviderItem[]>('/api/admin/oauth-providers/list', {
+    default: () => [] as AdminOauthProviderItem[]
+  })
+
+  return {
+    data: result.data,
+    status: result.status,
+    refresh: async () => {
+      await result.refresh()
+    }
+  }
+}
+
+async function updateDefaultProvider(body: AdminOauthProviderUpdateBody): Promise<void> {
+  await $fetch('/api/admin/oauth-providers/update', { method: 'PUT', body })
+}
+
+async function copyDefaultText(text: string): Promise<void> {
+  await navigator.clipboard.writeText(text)
+}
+
+function scheduleDefaultCopiedReset(callback: () => void): void {
+  setTimeout(callback, 1500)
+}
+
+export function useAdminUserSessionSettings(options: UseAdminUserSessionSettingsOptions = {}) {
+  const toast = options.toast ?? useToast()
+  const settings = options.useSettingsPage?.() ?? useAdminSettingsPage()
+  const providerFetch = options.useProviderFetch?.() ?? useDefaultProviderFetch()
+  const updateProvider = options.updateProvider ?? updateDefaultProvider
+  const copyText = options.copyText ?? copyDefaultText
+  const scheduleCopiedReset = options.scheduleCopiedReset ?? scheduleDefaultCopiedReset
+  const supportedProviders = options.supportedProviders ?? SUPPORTED_OAUTH_PROVIDERS
+  const forms = reactive<Record<string, AdminOauthProviderForm>>(
+    Object.fromEntries(supportedProviders.map(provider => [provider, createAdminOauthProviderForm()]))
+  )
+  const items = computed<AdminOauthProviderItem[]>(() => providerFetch.data.value || [])
+  const allowRegistration = computed({
+    get: () => settings.form.registrationMode !== 'closed',
+    set: (value: boolean) => {
+      settings.form.registrationMode = value ? 'open' : 'closed'
+    }
+  })
+
+  watch(items, (list) => {
+    syncAdminOauthProviderFormsFromItems(forms, list)
+  }, { immediate: true })
+
+  function getForm(provider: string): AdminOauthProviderForm {
+    return getAdminOauthProviderForm(forms, provider)
+  }
+
+  async function saveProvider(item: AdminOauthProviderItem): Promise<void> {
+    const providerForm = getForm(item.provider)
+    providerForm.saving = true
+    try {
+      await updateProvider(buildAdminOauthProviderUpdateBody(item.provider, providerForm))
+      toast.add({ title: `${item.displayName} 保存成功`, color: 'success' })
+      providerForm.clientSecret = ''
+      await providerFetch.refresh()
+    } catch (err: unknown) {
+      toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
+    } finally {
+      providerForm.saving = false
+    }
+  }
+
+  async function copyCallback(item: AdminOauthProviderItem): Promise<void> {
+    const providerForm = getForm(item.provider)
+    try {
+      await copyText(item.callbackUrl)
+      providerForm.copied = true
+      scheduleCopiedReset(() => {
+        providerForm.copied = false
+      })
+    } catch {
+      toast.add({ title: '复制失败，请手动选中复制', color: 'error' })
+    }
+  }
+
+  return {
+    form: settings.form,
+    saving: settings.saving,
+    save: settings.save,
+    dirty: settings.dirty,
+    changedKeys: settings.changedKeys,
+    reset: settings.reset,
+    allowRegistration,
+    emailFilterModeItems: ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS,
+    status: providerFetch.status,
+    refresh: providerFetch.refresh,
+    items,
+    forms,
+    getForm,
+    saveProvider,
+    copyCallback
+  }
 }

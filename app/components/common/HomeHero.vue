@@ -2,6 +2,20 @@
 import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
 import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
+type HomeHeroListStatusTone = 'info' | 'error' | 'neutral' | 'success'
+
+interface HomeHeroListStatus {
+  label: string
+  tone: HomeHeroListStatusTone
+  title: string
+}
+
+interface HomeHeroDashboardMeta {
+  path: string
+  label: string
+  icon: string
+}
+
 interface Props {
   startTime?: string
   siteName?: string
@@ -26,70 +40,68 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { user, logout } = useAuth()
 
-const startTimestamp = computed(() => {
-  const ts = new Date(props.startTime).getTime()
-  return Number.isNaN(ts) ? Date.now() : ts
-})
+// 实时时钟依赖"当前时刻"：SSR 渲染时刻与客户端 hydrate 时刻必然不同（秒级字段几乎必错），
+// 初始留空让两端首帧一致以避免 hydration mismatch；真实值由下方 onMounted 的 updateTimes() 填充并每秒刷新。
+const nowTime = ref('')
+const upTime = ref('')
+const startTimestamp = computed(() => parseStartTimestamp(props.startTime))
+const listStatus = computed(() => getListStatus({
+  totalCount: props.totalCount,
+  apiListLoading: props.apiListLoading,
+  apiListError: props.apiListError
+}))
+const compactCallCount = computed(() => formatCompactCallCount(props.callCount))
+const dashboardMeta = computed(() => getDashboardMeta(user.value?.kind))
+const dashboardPath = computed(() => dashboardMeta.value.path)
+const dashboardLabel = computed(() => dashboardMeta.value.label)
+const dashboardIcon = computed(() => dashboardMeta.value.icon)
+let timer: number | undefined
 
-const padZero = (n: number) => String(n).padStart(2, '0')
-const formatNowTime = (date = new Date()) =>
-  `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`
+function padZero(value: number): string {
+  return String(value).padStart(2, '0')
+}
 
-const formatUpTime = (ms: number): string => {
+function formatNowTime(date = new Date()): string {
+  return `${date.getFullYear()}-${padZero(date.getMonth() + 1)}-${padZero(date.getDate())} ${padZero(date.getHours())}:${padZero(date.getMinutes())}:${padZero(date.getSeconds())}`
+}
+
+function formatUpTime(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
   const years = Math.floor(totalSeconds / (365 * 24 * 60 * 60))
   const days = Math.floor((totalSeconds % (365 * 24 * 60 * 60)) / (24 * 60 * 60))
   const hours = Math.floor((totalSeconds % (24 * 60 * 60)) / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const parts: string[] = []
+
   if (years > 0) parts.push(`${years}年`)
   if (days > 0 || years > 0) parts.push(`${days}天`)
   if (hours > 0 || days > 0 || years > 0) parts.push(`${hours}时`)
   if (minutes > 0 || hours > 0 || days > 0 || years > 0) parts.push(`${minutes}分`)
+
   return parts.join('') || '0分'
 }
 
-// 实时时钟依赖"当前时刻"：SSR 渲染时刻与客户端 hydrate 时刻必然不同（秒级字段几乎必错），
-// 初始留空让两端首帧一致以避免 hydration mismatch；真实值由下方 onMounted 的 updateTimes() 填充并每秒刷新。
-const nowTime = ref('')
-const upTime = ref('')
-let timer: number | undefined
-
-const updateTimes = () => {
-  nowTime.value = formatNowTime()
-  upTime.value = formatUpTime(Date.now() - startTimestamp.value)
+function parseStartTimestamp(startTime: string | undefined): number {
+  const timestamp = new Date(startTime || '').getTime()
+  return Number.isNaN(timestamp) ? Date.now() : timestamp
 }
 
-onMounted(() => {
-  updateTimes()
-  timer = window.setInterval(updateTimes, 1000)
-})
-
-onUnmounted(() => {
-  if (timer !== undefined) {
-    clearInterval(timer)
-    timer = undefined
-  }
-})
-
-type ListStatusTone = 'info' | 'error' | 'neutral' | 'success'
-
-const listStatus = computed<{ label: string, tone: ListStatusTone, title: string }>(() => {
-  if (props.apiListLoading) {
+function getListStatus(input: Pick<Props, 'totalCount' | 'apiListLoading' | 'apiListError'>): HomeHeroListStatus {
+  if (input.apiListLoading) {
     return {
       label: '加载中',
       tone: 'info',
       title: '依据：首页公开接口列表和分类接口正在加载'
     }
   }
-  if (props.apiListError) {
+  if (input.apiListError) {
     return {
       label: '加载失败',
       tone: 'error',
       title: '依据：首页公开接口列表或分类接口请求失败'
     }
   }
-  if (props.totalCount <= 0) {
+  if ((input.totalCount ?? 0) <= 0) {
     return {
       label: '暂无接口',
       tone: 'neutral',
@@ -101,15 +113,47 @@ const listStatus = computed<{ label: string, tone: ListStatusTone, title: string
     tone: 'success',
     title: '依据：首页公开接口列表和分类接口请求成功'
   }
+}
+
+function formatCompactCallCount(callCount = 0): string {
+  return new Intl.NumberFormat('zh-CN', {
+    notation: 'compact',
+    maximumFractionDigits: 1
+  }).format(callCount)
+}
+
+function getDashboardMeta(userKind: string | null | undefined): HomeHeroDashboardMeta {
+  if (userKind === 'admin') {
+    return {
+      path: ADMIN_OVERVIEW_PATH,
+      label: '管理后台',
+      icon: 'i-mdi-shield-crown-outline'
+    }
+  }
+
+  return {
+    path: USER_OVERVIEW_PATH,
+    label: '用户后台',
+    icon: 'i-mdi-view-dashboard-outline'
+  }
+}
+
+function updateTimes(date = new Date()): void {
+  nowTime.value = formatNowTime(date)
+  upTime.value = formatUpTime(date.getTime() - startTimestamp.value)
+}
+
+onMounted(() => {
+  updateTimes()
+  timer = window.setInterval(() => updateTimes(), 1000)
 })
 
-const compactCallCount = computed(() => new Intl.NumberFormat('zh-CN', {
-  notation: 'compact',
-  maximumFractionDigits: 1
-}).format(props.callCount))
-
-const dashboardPath = computed(() => user.value?.kind === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
-const dashboardLabel = computed(() => user.value?.kind === 'admin' ? '管理后台' : '用户后台')
+onUnmounted(() => {
+  if (timer !== undefined) {
+    clearInterval(timer)
+    timer = undefined
+  }
+})
 
 async function handleLogout() {
   await logout()
@@ -171,7 +215,7 @@ async function handleLogout() {
               <div class="hero-auth">
                 <UButton
                   :to="dashboardPath"
-                  :icon="user.kind === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-view-dashboard-outline'"
+                  :icon="dashboardIcon"
                   size="sm"
                 >
                   {{ dashboardLabel }}

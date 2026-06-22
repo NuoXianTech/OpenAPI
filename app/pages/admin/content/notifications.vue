@@ -1,72 +1,45 @@
 <script setup lang="ts">
 import { NOTIFICATION_LEVEL_META as levelMeta } from '#shared/types/message-level'
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import {
+  createAdminNotificationForm,
+  useAdminNotificationsDisplayMeta,
+  type AdminNotificationDeliveryRow,
+  type AdminNotificationMessageRow,
+  type AdminNotificationUserItem
+} from '~/composables/admin/useAdminDisplayMeta'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-interface UserItem {
-  id: number
-  username: string
-  email: string
-  displayName: string | null
-  isActive: boolean
-  isBanned: boolean
-}
-
-interface MessageRow {
-  id: number
-  title: string
-  level: 'info' | 'success' | 'warning' | 'critical'
-  audience: 'specific' | 'all_current' | 'all_with_future'
-  recipientCount: number
-  senderActor: string | null
-  createdAt: string
-  deliveredCount: number
-  readCount: number
-}
-
 const toast = useToast()
 
-const { data: usersData } = useLazyFetch<UserItem[]>('/api/admin/users/list', {
+const { data: usersData } = useLazyFetch<AdminNotificationUserItem[]>('/api/admin/users/list', {
   default: () => []
 })
-const users = computed(() => (usersData.value || []).filter(u => !u.isBanned))
 
-const { data: messagesData, status, refresh } = useLazyFetch<MessageRow[]>('/api/admin/notifications/list', {
+const { data: messagesData, status, refresh } = useLazyFetch<AdminNotificationMessageRow[]>('/api/admin/notifications/list', {
   default: () => []
 })
-const messages = computed<MessageRow[]>(() => messagesData.value || [])
+const messages = computed<AdminNotificationMessageRow[]>(() => messagesData.value || [])
 const { page, pageSize, total, paginated } = useClientPagination(messages, 10)
 
-const form = reactive({
-  audience: 'specific' as MessageRow['audience'],
-  recipientUserIds: [] as number[],
-  title: '',
-  content: '',
-  level: 'info' as 'info' | 'success' | 'warning' | 'critical',
-  linkUrl: ''
-})
+const form = reactive(createAdminNotificationForm())
 const sending = ref(false)
 
-const userOptions = computed(() => users.value.map(u => ({
-  label: `${u.username}${u.email ? ` <${u.email}>` : ''}`,
-  value: u.id
-})))
-
-const audienceOptions = [
-  { label: '指定用户（仅选中收件人）', value: 'specific' },
-  { label: '当前所有用户（不含未来注册）', value: 'all_current' },
-  { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' }
-]
-
-const levelOptions = [
-  { label: '通知 (info)', value: 'info' },
-  { label: '成功 (success)', value: 'success' },
-  { label: '提醒 (warning)', value: 'warning' },
-  { label: '紧急 (critical)', value: 'critical' }
-]
+const {
+  userOptions,
+  audienceOptions,
+  levelOptions,
+  audienceMeta,
+  columns,
+  formatDate,
+  getRowItems
+} = useAdminNotificationsDisplayMeta({
+  users: computed(() => usersData.value || []),
+  openDetail,
+  openDelete
+})
 
 async function submitSend() {
   if (!form.title.trim() || !form.content.trim()) {
@@ -106,10 +79,10 @@ async function submitSend() {
 
 const detailOpen = ref(false)
 const detailLoading = ref(false)
-const detailMessage = ref<MessageRow | null>(null)
-const detailRows = ref<Array<{ id: number, recipientUserId: number, recipientUsername: string | null, isRead: boolean, readAt: string | null, createdAt: string }>>([])
+const detailMessage = ref<AdminNotificationMessageRow | null>(null)
+const detailRows = ref<AdminNotificationDeliveryRow[]>([])
 
-async function openDetail(row: MessageRow) {
+async function openDetail(row: AdminNotificationMessageRow) {
   detailMessage.value = row
   detailOpen.value = true
   detailLoading.value = true
@@ -126,7 +99,7 @@ async function openDetail(row: MessageRow) {
 
 const confirm = useConfirmDialog()
 
-async function openDelete(row: MessageRow) {
+async function openDelete(row: AdminNotificationMessageRow) {
   await confirm({
     title: `删除通知: ${row.title || ''}`,
     description: '软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。',
@@ -145,31 +118,6 @@ async function openDelete(row: MessageRow) {
     }
   })
 }
-
-const audienceMeta: Record<MessageRow['audience'], { color: 'neutral' | 'info' | 'warning', label: string }> = {
-  specific: { color: 'neutral', label: '指定' },
-  all_current: { color: 'info', label: '全员' },
-  all_with_future: { color: 'warning', label: '全员+未来' }
-}
-
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
-
-function getRowItems(row: MessageRow): DropdownMenuItem[] {
-  return [
-    { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => openDetail(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
-  ]
-}
-
-const columns: TableColumn<MessageRow>[] = [
-  { accessorKey: 'title', header: '标题' },
-  { id: 'delivery', header: '投递 / 已读' },
-  { accessorKey: 'senderActor', header: '发送人' },
-  { accessorKey: 'createdAt', header: '发送时间' },
-  { id: 'actions', header: '' }
-]
 </script>
 
 <template>

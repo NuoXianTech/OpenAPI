@@ -30,22 +30,25 @@ onMounted(() => {
   refresh()
 })
 
-const credits = computed(() => data.value?.credits ?? { balance: 0, totalSpent: 0, spent24h: 0 })
-const calls = computed(() => data.value?.calls ?? { total: 0, success: 0, failure: 0, successRate: 0, requests24h: 0 })
-const apiKeys = computed(() => data.value?.apiKeys ?? { total: 0, active: 0 })
-const trend = computed(() => data.value?.trend ?? [])
-
-const callsTrendValues = computed(() => trend.value.map(p => p.totalCalls))
-const spendTrendValues = computed(() => trend.value.map(p => p.creditsSpent))
-
+const emptyDashboardData: UserDashboardData = {
+  credits: { balance: 0, totalSpent: 0, spent24h: 0 },
+  calls: { total: 0, success: 0, failure: 0, successRate: 0, requests24h: 0 },
+  apiKeys: { total: 0, active: 0 },
+  trend: [],
+  generatedAt: new Date(0).toISOString()
+}
+const dashboard = computed(() => data.value ?? emptyDashboardData)
+const credits = computed(() => dashboard.value.credits)
+const calls = computed(() => dashboard.value.calls)
+const apiKeys = computed(() => dashboard.value.apiKeys)
+const trend = computed(() => dashboard.value.trend)
+const callsTrendValues = computed(() => trend.value.map(point => point.totalCalls))
+const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
-
-const sampleCurl = computed(() => {
-  return [
-    `curl -X GET '${origin}/api/your-endpoint' \\`,
-    `  -H 'x-api-key: <your-api-key>'`
-  ].join('\n')
-})
+const sampleCurl = computed(() => [
+  `curl -X GET '${origin}/api/your-endpoint' \\`,
+  `  -H 'x-api-key: <your-api-key>'`
+].join('\n'))
 
 async function copyCurl() {
   try {

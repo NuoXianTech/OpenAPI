@@ -1,6 +1,8 @@
 import type { AsyncDataRequestStatus } from '#app'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, ref, type Ref } from 'vue'
 import { parseFetchError } from '~~/shared/utils/clientError'
+import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
   id: number
@@ -167,5 +169,81 @@ export function useAdminUsersPage() {
     unbanUser,
     updateUser,
     createUser
+  }
+}
+
+interface UseAdminUsersDisplayMetaOptions {
+  openEdit: (row: AdminUserItem) => void | Promise<void>
+  openBan: (row: AdminUserItem) => void | Promise<void>
+  openUnban: (row: AdminUserItem) => void | Promise<void>
+  openKeys: (row: AdminUserItem) => void | Promise<void>
+  openCreditForOne: (row: AdminUserItem) => void | Promise<void>
+  openDelete: (row: AdminUserItem) => void | Promise<void>
+}
+
+interface UseAdminUsersDisplayMetaReturn {
+  columns: TableColumn<AdminUserItem>[]
+  formatDate: (value: string) => string
+  banTooltip: (row: AdminUserItem) => string
+  getRowItems: (row: AdminUserItem) => DropdownMenuItem[]
+}
+
+const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
+  { id: 'select' },
+  { accessorKey: 'username', header: '用户名' },
+  { accessorKey: 'email', header: '邮箱' },
+  { accessorKey: 'credits', header: '积分' },
+  { accessorKey: 'isActive', header: '激活' },
+  { accessorKey: 'isBanned', header: '封禁' },
+  { accessorKey: 'createdAt', header: '注册时间' },
+  { id: 'actions', header: '' }
+]
+
+function formatAdminUserDate(value: string): string {
+  return formatDateTime(value)
+}
+
+function buildAdminUserBanTooltip(row: AdminUserItem): string {
+  const parts: string[] = []
+  parts.push(row.bannedReason ? `原因：${row.bannedReason}` : '原因：未填写')
+  parts.push(row.bannedUntil ? `解封时间：${formatAdminUserDate(row.bannedUntil)}` : '永久封禁')
+  return parts.join('\n')
+}
+
+export function useAdminUsersDisplayMeta(
+  options: UseAdminUsersDisplayMetaOptions
+): UseAdminUsersDisplayMetaReturn {
+  function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
+    return [{
+      label: '编辑',
+      icon: 'i-mdi-pencil-outline',
+      onSelect: () => options.openEdit(row)
+    }, {
+      label: row.isBanned ? '解封' : '封禁',
+      icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
+      onSelect: () => row.isBanned ? options.openUnban(row) : options.openBan(row)
+    }, {
+      label: 'API Keys',
+      icon: 'i-mdi-key-variant',
+      onSelect: () => options.openKeys(row)
+    }, {
+      label: '积分管理',
+      icon: 'i-mdi-cash-multiple',
+      onSelect: () => options.openCreditForOne(row)
+    }, {
+      type: 'separator'
+    }, {
+      label: '删除',
+      icon: 'i-mdi-delete-outline',
+      color: 'error',
+      onSelect: () => options.openDelete(row)
+    }]
+  }
+
+  return {
+    columns: ADMIN_USER_TABLE_COLUMNS,
+    formatDate: formatAdminUserDate,
+    banTooltip: buildAdminUserBanTooltip,
+    getRowItems
   }
 }

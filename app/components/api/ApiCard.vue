@@ -1,19 +1,7 @@
 <script lang="ts" setup>
-type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+type ApiCardBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
-const {
-  name = '这是标题',
-  status = -1,
-  shortDesc = '',
-  description = '',
-  categoryName = '未分类',
-  httpMethod = 'GET',
-  apiPath = '/v1/path',
-  docUrl = '',
-  isApiKey = false,
-  methodCosts = {},
-  totalCalls = 0
-} = defineProps<{
+interface ApiCardProps {
   name?: string
   status?: number
   shortDesc?: string
@@ -25,66 +13,91 @@ const {
   isApiKey?: boolean
   methodCosts?: Record<string, number>
   totalCalls?: number
-}>()
-
-const detailsOpen = ref(false)
-
-const methods = computed(() =>
-  httpMethod.split(',').map(m => m.trim()).filter(Boolean)
-)
-
-const categoryLabel = computed(() => categoryName.trim() || '未分类')
-const isUncategorized = computed(() => categoryLabel.value === '未分类')
-
-function costFor(method: string): number {
-  const v = methodCosts?.[method.toUpperCase()]
-  return typeof v === 'number' && v > 0 ? v : 0
 }
 
-const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(m => costFor(m) > 0))
-// 当全部方法同价时给一个聚合金额用于顶部 badge；否则用 -1 表示"按方法定价"
+interface ApiCardStatusMeta {
+  label: string
+  color: ApiCardBadgeColor
+  icon: string
+}
+
+const props = withDefaults(defineProps<ApiCardProps>(), {
+  name: '这是标题',
+  status: -1,
+  shortDesc: '',
+  description: '',
+  categoryName: '未分类',
+  httpMethod: 'GET',
+  apiPath: '/v1/path',
+  docUrl: '',
+  isApiKey: false,
+  methodCosts: () => ({}),
+  totalCalls: 0
+})
+const {
+  name,
+  shortDesc,
+  description,
+  apiPath,
+  docUrl,
+  isApiKey,
+  totalCalls
+} = toRefs(props)
+const detailsOpen = ref(false)
+const methods = computed(() => parseMethods(props.httpMethod))
+const categoryLabel = computed(() => props.categoryName?.trim() || '未分类')
+const isUncategorized = computed(() => categoryLabel.value === '未分类')
+const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(method => costFor(method) > 0))
 const aggregateCost = computed(() => {
   if (methods.value.length === 0) return 0
   const prices = methods.value.map(costFor)
   const first = prices[0]!
-  return prices.every(p => p === first) ? first : -1
+  return prices.every(price => price === first) ? first : -1
 })
+const radarMeta = computed(() => getSuccessRadar(props.status))
+const radarClass = computed(() => radarMeta.value.className)
+const radarTitle = computed(() => radarMeta.value.title)
+const statusMeta = computed(() => getStatusMeta(props.status))
 
-const radarClass = computed(() => {
-  switch (status) {
-    case 1: return ''
-    case 0: return 'is-error'
-    default: return 'is-unknown'
-  }
-})
+function parseMethods(value = 'GET'): string[] {
+  return value
+    .split(',')
+    .map(method => method.trim())
+    .filter(Boolean)
+}
 
-const radarTitle = computed(() => {
-  switch (status) {
-    case -1: return '未知'
-    case 0: return '异常'
-    case 1: return '正常'
-    case 2: return '维护'
-    case 3: return '废弃'
-    default: return '未知'
-  }
-})
+function costFor(method: string): number {
+  const value = props.methodCosts?.[method.toUpperCase()]
+  return typeof value === 'number' && value > 0 ? value : 0
+}
 
-const statusMeta = computed(() => {
+function getSuccessRadar(status = -1): { className: string, title: string } {
   switch (status) {
     case 1:
-      return { label: '正常', color: 'success' as BadgeColor, icon: 'i-mdi-check-circle-outline' }
+      return { className: '', title: '正常' }
     case 0:
-      return { label: '异常', color: 'error' as BadgeColor, icon: 'i-mdi-alert-circle-outline' }
-    case 2:
-      return { label: '维护', color: 'warning' as BadgeColor, icon: 'i-mdi-wrench-outline' }
-    case 3:
-      return { label: '废弃', color: 'neutral' as BadgeColor, icon: 'i-mdi-archive-outline' }
+      return { className: 'is-error', title: '异常' }
     default:
-      return { label: '未知', color: 'neutral' as BadgeColor, icon: 'i-mdi-help-circle-outline' }
+      return { className: 'is-unknown', title: '未知' }
   }
-})
+}
 
-function formatCallCount(count: number) {
+function getStatusMeta(status = -1): ApiCardStatusMeta {
+  switch (status) {
+    case 1:
+      return { label: '正常', color: 'success', icon: 'i-mdi-check-circle-outline' }
+    case 0:
+      return { label: '异常', color: 'error', icon: 'i-mdi-alert-circle-outline' }
+    case 2:
+      return { label: '维护', color: 'warning', icon: 'i-mdi-wrench-outline' }
+    case 3:
+      return { label: '废弃', color: 'neutral', icon: 'i-mdi-archive-outline' }
+    default:
+      return { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
+  }
+}
+
+function formatCallCount(count: number): string {
   if (count < 10000) return `${count}`
   return `${Math.floor(count / 10000)}万`
 }

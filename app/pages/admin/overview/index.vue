@@ -2,19 +2,36 @@
 import type { TableColumn } from '@nuxt/ui'
 import type {
   AdminDashboardData,
-  AdminDashboardRecentCall
+  AdminDashboardRange,
+  AdminDashboardRecentCall,
+  AdminDashboardTrendPoint
 } from '~~/shared/types/admin-dashboard'
 import { ADMIN_APIS_PATH } from '~/constants/admin-sections/apis'
 import { ADMIN_LOGS_PATH } from '~/constants/admin-sections/logs'
 import { ADMIN_USERS_PATH } from '~/constants/admin-sections/users'
+import { formatDateTime } from '~/utils/datetime'
+import { httpStatusColor, type HttpStatusColor } from '~/utils/http-status'
 
 useHead({ title: '管理中心' })
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
 const { user } = useAuth()
+const selectedRange = ref<AdminDashboardRange>(7)
+const rangeOptions: Array<{ label: string, value: AdminDashboardRange }> = [
+  { label: '近 7 天', value: 7 },
+  { label: '近 14 天', value: 14 },
+  { label: '近 30 天', value: 30 }
+]
+const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
+  { accessorKey: 'createdAt', header: '时间' },
+  { accessorKey: 'method', header: '方法' },
+  { accessorKey: 'apiName', header: 'API' },
+  { accessorKey: 'statusCode', header: '状态' },
+  { accessorKey: 'latencyMs', header: '耗时' }
+]
 
-function createEmptyData(): AdminDashboardData {
+function createEmptyDashboardData(): AdminDashboardData {
   return {
     overview: {
       userCount: 0,
@@ -35,46 +52,40 @@ function createEmptyData(): AdminDashboardData {
   }
 }
 
-const rangeOptions = [
-  { label: '近 7 天', value: 7 },
-  { label: '近 14 天', value: 14 },
-  { label: '近 30 天', value: 30 }
-]
-const selectedRange = ref<number>(7)
-
 const { data, status, refresh } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
   query: computed(() => ({ days: selectedRange.value })),
-  default: () => createEmptyData()
+  default: createEmptyDashboardData
 })
-
-const dashboard = computed(() => data.value || createEmptyData())
+const dashboard = computed(() => data.value || createEmptyDashboardData())
 const overview = computed(() => dashboard.value.overview)
 const trend = computed(() => dashboard.value.trend)
 const distribution = computed(() => dashboard.value.distribution)
 const recentCalls = computed(() => dashboard.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
+const callsTrendValues = computed(() => getCallsTrendValues(trend.value))
+const successRateTrendValues = computed(() => getSuccessRateTrendValues(trend.value))
 
-const callsTrendValues = computed(() => trend.value.map(p => p.totalCalls))
-const successRateTrendValues = computed(() =>
-  trend.value.map(p => (p.totalCalls > 0 ? (p.successCalls / p.totalCalls) * 100 : 0))
-)
+function getCallsTrendValues(trendItems: AdminDashboardTrendPoint[]): number[] {
+  return trendItems.map(point => point.totalCalls)
+}
 
-const formatNumber = (val: number) => val.toLocaleString()
-const formatRate = (val: number) => `${val.toFixed(2)}%`
+function getSuccessRateTrendValues(trendItems: AdminDashboardTrendPoint[]): number[] {
+  return trendItems.map(point => (point.totalCalls > 0 ? (point.successCalls / point.totalCalls) * 100 : 0))
+}
 
-function recentStatusColor(row: AdminDashboardRecentCall): 'success' | 'warning' | 'error' | 'neutral' {
+function formatNumber(value: number): string {
+  return value.toLocaleString()
+}
+
+function formatRate(value: number): string {
+  return `${value.toFixed(2)}%`
+}
+
+function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
   if (!row.isCounted) return 'neutral'
   if (row.errorCode) return 'error'
   return httpStatusColor(row.statusCode)
 }
-
-const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'method', header: '方法' },
-  { accessorKey: 'apiName', header: 'API' },
-  { accessorKey: 'statusCode', header: '状态' },
-  { accessorKey: 'latencyMs', header: '耗时' }
-]
 </script>
 
 <template>

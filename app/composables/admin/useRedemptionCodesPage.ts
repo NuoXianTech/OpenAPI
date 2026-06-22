@@ -1,5 +1,8 @@
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { formatDateTime } from '~/utils/datetime'
 
 export interface RedemptionCode {
   id: number
@@ -196,5 +199,124 @@ export function useRedemptionCodesPage() {
     deleteBatch,
     copyOne,
     copyAll
+  }
+}
+
+interface AdminRedemptionCodeSelectItem {
+  label: string
+  value: string
+}
+
+interface AdminRedemptionCodeFilters {
+  status: RedemptionStatus
+  batchId: string
+  keyword: string
+}
+
+interface AdminRedemptionCodeStatusMeta {
+  label: string
+  color: 'success' | 'warning' | 'error' | 'neutral'
+}
+
+interface UseAdminRedemptionCodesDisplayMetaOptions {
+  batches: Ref<BatchSummary[]>
+  filters: AdminRedemptionCodeFilters
+  applyFilters: () => void
+  toggle: (row: RedemptionCode) => void | Promise<void>
+  remove: (row: RedemptionCode) => void | Promise<void>
+  copyOne: (code: string) => void | Promise<void>
+}
+
+interface UseAdminRedemptionCodesDisplayMetaReturn {
+  statusItems: AdminRedemptionCodeSelectItem[]
+  batchItems: ComputedRef<AdminRedemptionCodeSelectItem[]>
+  columns: TableColumn<RedemptionCode>[]
+  formatDate: (iso: string | null) => string
+  statusOf: (item: RedemptionCode) => AdminRedemptionCodeStatusMeta
+  getRowItems: (row: RedemptionCode) => DropdownMenuItem[]
+  onBatchFilter: (batchId: string) => void
+}
+
+const ADMIN_REDEMPTION_CODE_STATUS_ITEMS: AdminRedemptionCodeSelectItem[] = [
+  { label: '全部', value: 'all' },
+  { label: '可用', value: 'available' },
+  { label: '已禁用', value: 'disabled' },
+  { label: '已用完', value: 'used_up' },
+  { label: '已过期', value: 'expired' }
+]
+
+const ADMIN_REDEMPTION_CODE_TABLE_COLUMNS: TableColumn<RedemptionCode>[] = [
+  { accessorKey: 'code', header: '兑换码' },
+  { accessorKey: 'amount', header: '面额' },
+  { id: 'usage', header: '使用' },
+  { accessorKey: 'note', header: '备注' },
+  { accessorKey: 'expiresAt', header: '过期时间' },
+  { id: 'status', header: '状态' },
+  { accessorKey: 'createdAt', header: '创建时间' },
+  { id: 'actions', header: '' }
+]
+
+function formatAdminRedemptionCodeDate(iso: string | null): string {
+  return formatDateTime(iso)
+}
+
+function getAdminRedemptionCodeStatus(item: RedemptionCode): AdminRedemptionCodeStatusMeta {
+  if (!item.isEnabled) return { label: '已禁用', color: 'neutral' }
+  if (item.usedCount >= item.maxUses) return { label: '已用完', color: 'warning' }
+  if (item.expiresAt && new Date(item.expiresAt).getTime() <= Date.now()) {
+    return { label: '已过期', color: 'error' }
+  }
+  return { label: '可用', color: 'success' }
+}
+
+function buildAdminRedemptionCodeBatchItems(
+  batches: BatchSummary[]
+): AdminRedemptionCodeSelectItem[] {
+  return [
+    { label: '全部批次', value: 'all' },
+    ...batches.map(batch => ({
+      label: `${batch.batchId} (${batch.usedTotal}/${batch.maxUsesTotal} 用 · ${batch.amount} 积分)`,
+      value: batch.batchId
+    }))
+  ]
+}
+
+export function useAdminRedemptionCodesDisplayMeta(
+  options: UseAdminRedemptionCodesDisplayMetaOptions
+): UseAdminRedemptionCodesDisplayMetaReturn {
+  const batchItems = computed(() => buildAdminRedemptionCodeBatchItems(options.batches.value))
+
+  function getRowItems(row: RedemptionCode): DropdownMenuItem[] {
+    return [{
+      label: row.isEnabled ? '禁用' : '启用',
+      icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
+      onSelect: () => options.toggle(row)
+    }, {
+      label: '复制兑换码',
+      icon: 'i-mdi-content-copy',
+      onSelect: () => options.copyOne(row.code)
+    }, {
+      type: 'separator'
+    }, {
+      label: '删除',
+      icon: 'i-mdi-delete-outline',
+      color: 'error',
+      onSelect: () => options.remove(row)
+    }]
+  }
+
+  function onBatchFilter(batchId: string) {
+    options.filters.batchId = batchId
+    options.applyFilters()
+  }
+
+  return {
+    statusItems: ADMIN_REDEMPTION_CODE_STATUS_ITEMS,
+    batchItems,
+    columns: ADMIN_REDEMPTION_CODE_TABLE_COLUMNS,
+    formatDate: formatAdminRedemptionCodeDate,
+    statusOf: getAdminRedemptionCodeStatus,
+    getRowItems,
+    onBatchFilter
   }
 }

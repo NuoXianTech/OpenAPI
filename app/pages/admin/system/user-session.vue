@@ -1,121 +1,23 @@
 <script setup lang="ts">
-import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
-import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
-import { parseFetchError } from '#shared/utils/clientError'
+import { useAdminUserSessionSettings } from '~/composables/admin/useAdminSettingsPage'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-interface ProviderItem {
-  provider: string
-  displayName: string
-  icon: string
-  scopes: string[]
-  clientId: string
-  clientSecret: string
-  isEnabled: boolean
-  callbackUrl: string
-  authorizeUrl: string
-  tokenUrl: string
-  userInfoUrl: string
-}
-
-interface ProviderForm {
-  clientId: string
-  clientSecret: string
-  isEnabled: boolean
-  saving: boolean
-  copied: boolean
-  secretVisible: boolean
-  open: boolean
-}
-
-const toast = useToast()
-
-// 站点设置表单（注册/会话/邮箱过滤/第三方登录总开关），整发全 form 走统一 save bar
-const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
-
-// 「允许新用户注册」开关 ↔ registrationMode：on=open / off=closed
-const allowRegistration = computed({
-  get: () => form.registrationMode !== 'closed',
-  set: (v: boolean) => {
-    form.registrationMode = v ? 'open' : 'closed'
-  }
-})
-
-const emailFilterModeItems = [
-  { label: '不开启', value: 'off' },
-  { label: '白名单', value: 'whitelist' },
-  { label: '黑名单', value: 'blacklist' }
-]
-
-// 第三方登录 provider 配置（独立 API，每个 provider 自己保存）
-const { data, status, refresh } = useLazyFetch<ProviderItem[]>('/api/admin/oauth-providers/list', {
-  default: () => [] as ProviderItem[]
-})
-
-const items = computed<ProviderItem[]>(() => data.value || [])
-
-function createForm(): ProviderForm {
-  return { clientId: '', clientSecret: '', isEnabled: false, saving: false, copied: false, secretVisible: false, open: false }
-}
-
-const forms = reactive<Record<string, ProviderForm>>(
-  Object.fromEntries(SUPPORTED_OAUTH_PROVIDERS.map(p => [p, createForm()]))
-)
-
-function getForm(provider: string): ProviderForm {
-  let providerForm = forms[provider]
-  if (!providerForm) {
-    providerForm = createForm()
-    forms[provider] = providerForm
-  }
-  return providerForm
-}
-
-watch(items, (list) => {
-  for (const item of list) {
-    const providerForm = getForm(item.provider)
-    providerForm.clientId = item.clientId || ''
-    providerForm.clientSecret = ''
-    providerForm.isEnabled = item.isEnabled
-  }
-}, { immediate: true })
-
-async function saveProvider(item: ProviderItem) {
-  const providerForm = getForm(item.provider)
-  providerForm.saving = true
-  try {
-    const body: Record<string, unknown> = {
-      provider: item.provider,
-      clientId: providerForm.clientId,
-      isEnabled: providerForm.isEnabled
-    }
-    if (providerForm.clientSecret) {
-      body.clientSecret = providerForm.clientSecret
-    }
-    await $fetch('/api/admin/oauth-providers/update', { method: 'PUT', body })
-    toast.add({ title: `${item.displayName} 保存成功`, color: 'success' })
-    providerForm.clientSecret = ''
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
-  } finally {
-    providerForm.saving = false
-  }
-}
-
-async function copyCallback(item: ProviderItem) {
-  const providerForm = getForm(item.provider)
-  try {
-    await navigator.clipboard.writeText(item.callbackUrl)
-    providerForm.copied = true
-    setTimeout(() => {
-      providerForm.copied = false
-    }, 1500)
-  } catch {
-    toast.add({ title: '复制失败，请手动选中复制', color: 'error' })
-  }
-}
+const {
+  form,
+  saving,
+  save,
+  dirty,
+  changedKeys,
+  reset,
+  allowRegistration,
+  emailFilterModeItems,
+  status,
+  items,
+  getForm,
+  saveProvider,
+  copyCallback
+} = useAdminUserSessionSettings()
 </script>
 
 <template>

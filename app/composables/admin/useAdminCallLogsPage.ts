@@ -1,5 +1,6 @@
 import type { TableColumn } from '@nuxt/ui'
-import { computed, ref, type MaybeRefOrGetter } from 'vue'
+import { computed, ref, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
+import { resolveOperationLogActionLabel } from '~/constants/operation-log-actions'
 import {
   ADMIN_LOG_TYPES,
   type AdminLogRow,
@@ -7,13 +8,19 @@ import {
   type AdminLogsFilterOptions
 } from '~~/shared/types/admin-logs'
 import {
+  LOGIN_METHOD_META,
+  type AdminLoginLogRow,
+  type LoginMethod
+} from '~~/shared/types/login-log'
+import {
   createNumberQueryCodec,
   createStringArrayQueryCodec,
   createStringQueryCodec,
   type DashboardQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/useDashboardListState'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/usePrivatePagedList'
+import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminCallLogsFilters {
   startAt: string
@@ -199,5 +206,348 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     activeFilterCount,
     columns,
     loadFilterOptions
+  }
+}
+
+interface AdminLoginLogFilters {
+  startAt: string
+  endAt: string
+  method: 'all' | LoginMethod
+  success: 'all' | 'success' | 'failure'
+  userId: number | ''
+}
+
+interface AdminLoginLogSelectItem<TValue extends string = string> {
+  label: string
+  value: TValue
+}
+
+interface UseAdminLoginLogListOptions {
+  immediate?: boolean
+}
+
+interface UseAdminLoginLogListReturn {
+  activeFilterCount: ComputedRef<number>
+  applyFilters: () => Promise<void>
+  columns: TableColumn<AdminLoginLogRow>[]
+  filters: AdminLoginLogFilters
+  formatDate: (value: string) => string
+  items: Ref<AdminLoginLogRow[]>
+  loading: ComputedRef<boolean>
+  methodColor: (method: string) => AdminLoginLogBadgeColor
+  methodIcon: (method: string) => string | undefined
+  methodItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>
+  page: Ref<number>
+  pageSize: Ref<number>
+  reset: () => Promise<void>
+  successItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>
+  total: Ref<number>
+}
+
+type AdminLoginLogBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
+
+const ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE = 50
+
+const ADMIN_LOGIN_LOG_DEFAULT_FILTERS: AdminLoginLogFilters = {
+  startAt: '',
+  endAt: '',
+  method: 'all',
+  success: 'all',
+  userId: ''
+}
+
+const ADMIN_LOGIN_LOG_METHOD_ITEMS: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>> = [
+  { label: '全部方式', value: 'all' },
+  { label: LOGIN_METHOD_META.password.label, value: 'password' },
+  { label: LOGIN_METHOD_META.oauth_github.label, value: 'oauth_github' },
+  { label: LOGIN_METHOD_META.oauth_qq.label, value: 'oauth_qq' }
+]
+
+const ADMIN_LOGIN_LOG_SUCCESS_ITEMS: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>> = [
+  { label: '全部结果', value: 'all' },
+  { label: '成功', value: 'success' },
+  { label: '失败', value: 'failure' }
+]
+
+const ADMIN_LOGIN_LOG_COLUMNS: TableColumn<AdminLoginLogRow>[] = [
+  { accessorKey: 'createdAt', header: '时间' },
+  { id: 'user', header: '用户' },
+  { accessorKey: 'method', header: '方式' },
+  { accessorKey: 'success', header: '结果' },
+  { accessorKey: 'device', header: '设备' },
+  { accessorKey: 'ip', header: 'IP' }
+]
+
+function optionalDateIso(value: string): string | undefined {
+  return value ? new Date(value).toISOString() : undefined
+}
+
+function buildAdminLoginLogQuery(
+  filters: AdminLoginLogFilters,
+  pagination: PrivatePagedPagination
+): Record<string, unknown> {
+  return {
+    startAt: optionalDateIso(filters.startAt),
+    endAt: optionalDateIso(filters.endAt),
+    method: filters.method === 'all' ? undefined : filters.method,
+    success: filters.success === 'all' ? undefined : filters.success,
+    userId: filters.userId || undefined,
+    limit: pagination.limit,
+    offset: pagination.offset
+  }
+}
+
+function formatAdminLoginLogDate(value: string): string {
+  return formatDateTime(value)
+}
+
+function resolveAdminLoginLogMethodColor(method: string): AdminLoginLogBadgeColor {
+  return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
+}
+
+function resolveAdminLoginLogMethodIcon(method: string): string | undefined {
+  return LOGIN_METHOD_META[method as LoginMethod]?.icon
+}
+
+export function useAdminLoginLogList(
+  options: UseAdminLoginLogListOptions = {}
+): UseAdminLoginLogListReturn {
+  const {
+    filters,
+    page,
+    pageSize,
+    items,
+    total,
+    loading,
+    applyFilters,
+    reset
+  } = usePrivatePagedList<AdminLoginLogFilters, AdminLoginLogRow>({
+    path: '/api/admin/login-logs/list',
+    defaultFilters: ADMIN_LOGIN_LOG_DEFAULT_FILTERS,
+    defaultPageSize: ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE,
+    immediate: options.immediate ?? true,
+    buildQuery: buildAdminLoginLogQuery
+  })
+
+  const activeFilterCount = computed(() => [
+    !!filters.startAt,
+    !!filters.endAt,
+    filters.method !== 'all',
+    filters.success !== 'all',
+    filters.userId !== ''
+  ].filter(Boolean).length)
+
+  return {
+    activeFilterCount,
+    applyFilters,
+    columns: ADMIN_LOGIN_LOG_COLUMNS,
+    filters,
+    formatDate: formatAdminLoginLogDate,
+    items,
+    loading,
+    methodColor: resolveAdminLoginLogMethodColor,
+    methodIcon: resolveAdminLoginLogMethodIcon,
+    methodItems: ADMIN_LOGIN_LOG_METHOD_ITEMS,
+    page,
+    pageSize,
+    reset,
+    successItems: ADMIN_LOGIN_LOG_SUCCESS_ITEMS,
+    total
+  }
+}
+
+interface AdminOperationLogRow {
+  id: number
+  userId: number | null
+  actor: string | null
+  action: string
+  resourceType: string | null
+  resourceId: string | null
+  ip: string | null
+  userAgent: string | null
+  detail: Record<string, unknown> | null
+  status: 'success' | 'failure'
+  createdAt: string
+}
+
+interface AdminOperationLogFilters extends Record<string, unknown> {
+  startAt: string
+  endAt: string
+  userId: number | ''
+  actorKind: 'all' | 'admin' | 'user'
+  actor: string
+  action: string
+  resourceType: string
+  status: 'all' | 'success' | 'failure'
+}
+
+interface UseAdminOperationLogListOptions {
+  immediate?: boolean
+}
+
+interface UseAdminOperationLogListReturn {
+  actorKindItems: Array<{ label: string, value: AdminOperationLogFilters['actorKind'] }>
+  activeFilterCount: ComputedRef<number>
+  applyFilters: () => Promise<void>
+  columns: TableColumn<AdminOperationLogRow>[]
+  detailJson: ComputedRef<string>
+  detailOpen: Ref<boolean>
+  detailRow: Ref<AdminOperationLogRow | null>
+  expandedFilters: Ref<boolean>
+  filters: AdminOperationLogFilters
+  formatDate: (value: string) => string
+  hasAdvancedFilters: ComputedRef<boolean>
+  items: Ref<AdminOperationLogRow[]>
+  loading: ComputedRef<boolean>
+  openDetail: (row: AdminOperationLogRow) => void
+  page: Ref<number>
+  pageSize: Ref<number>
+  reset: () => Promise<void>
+  resolveActionLabel: (action: string) => string
+  statusItems: Array<{ label: string, value: AdminOperationLogFilters['status'] }>
+  total: Ref<number>
+}
+
+const ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE = 50
+
+const ADMIN_OPERATION_LOG_DEFAULT_FILTERS: AdminOperationLogFilters = {
+  startAt: '',
+  endAt: '',
+  userId: '',
+  actorKind: 'all',
+  actor: '',
+  action: '',
+  resourceType: '',
+  status: 'all'
+}
+
+const ADMIN_OPERATION_LOG_ACTOR_KIND_ITEMS: UseAdminOperationLogListReturn['actorKindItems'] = [
+  { label: '全部来源', value: 'all' },
+  { label: '管理员操作', value: 'admin' },
+  { label: '用户操作', value: 'user' }
+]
+
+const ADMIN_OPERATION_LOG_STATUS_ITEMS: UseAdminOperationLogListReturn['statusItems'] = [
+  { label: '全部状态', value: 'all' },
+  { label: '成功', value: 'success' },
+  { label: '失败', value: 'failure' }
+]
+
+const ADMIN_OPERATION_LOG_COLUMNS: TableColumn<AdminOperationLogRow>[] = [
+  { accessorKey: 'createdAt', header: '时间' },
+  { id: 'actor', header: '操作者' },
+  { accessorKey: 'action', header: '动作' },
+  { id: 'resource', header: '资源' },
+  { accessorKey: 'status', header: '状态' },
+  { accessorKey: 'ip', header: 'IP' },
+  { id: 'actions', header: '' }
+]
+
+function trimmedOrUndefined(value: string): string | undefined {
+  const trimmed = value.trim()
+  return trimmed || undefined
+}
+
+function buildAdminOperationLogQuery(
+  filters: AdminOperationLogFilters,
+  pagination: PrivatePagedPagination
+): Record<string, unknown> {
+  return {
+    startAt: optionalDateIso(filters.startAt),
+    endAt: optionalDateIso(filters.endAt),
+    userId: filters.userId || undefined,
+    actorKind: filters.actorKind === 'all' ? undefined : filters.actorKind,
+    actor: trimmedOrUndefined(filters.actor),
+    action: trimmedOrUndefined(filters.action),
+    resourceType: trimmedOrUndefined(filters.resourceType),
+    status: filters.status === 'all' ? undefined : filters.status,
+    limit: pagination.limit,
+    offset: pagination.offset
+  }
+}
+
+function stringifyOperationLogDetail(detail: Record<string, unknown> | null | undefined): string {
+  if (!detail) return ''
+  try {
+    return JSON.stringify(detail, null, 2)
+  } catch {
+    return String(detail)
+  }
+}
+
+function formatOperationLogDate(value: string): string {
+  return formatDateTime(value)
+}
+
+export function useAdminOperationLogList(
+  options: UseAdminOperationLogListOptions = {}
+): UseAdminOperationLogListReturn {
+  const {
+    filters,
+    page,
+    pageSize,
+    items,
+    total,
+    loading,
+    applyFilters,
+    reset
+  } = usePrivatePagedList<AdminOperationLogFilters, AdminOperationLogRow>({
+    path: '/api/admin/operation-logs/list',
+    defaultFilters: ADMIN_OPERATION_LOG_DEFAULT_FILTERS,
+    defaultPageSize: ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE,
+    immediate: options.immediate ?? true,
+    buildQuery: buildAdminOperationLogQuery
+  })
+
+  const expandedFilters = ref(false)
+  const hasAdvancedFilters = computed(
+    () => filters.actorKind !== 'all'
+      || !!filters.actor
+      || filters.status !== 'all'
+      || filters.userId !== ''
+      || !!filters.action
+      || !!filters.resourceType
+  )
+  const activeFilterCount = computed(() => [
+    !!filters.startAt,
+    !!filters.endAt,
+    filters.userId !== '',
+    filters.actorKind !== 'all',
+    !!filters.actor,
+    !!filters.action,
+    !!filters.resourceType,
+    filters.status !== 'all'
+  ].filter(Boolean).length)
+
+  const detailRow = ref<AdminOperationLogRow | null>(null)
+  const detailOpen = ref(false)
+  const detailJson = computed(() => stringifyOperationLogDetail(detailRow.value?.detail))
+
+  function openDetail(row: AdminOperationLogRow) {
+    detailRow.value = row
+    detailOpen.value = true
+  }
+
+  return {
+    actorKindItems: ADMIN_OPERATION_LOG_ACTOR_KIND_ITEMS,
+    activeFilterCount,
+    applyFilters,
+    columns: ADMIN_OPERATION_LOG_COLUMNS,
+    detailJson,
+    detailOpen,
+    detailRow,
+    expandedFilters,
+    filters,
+    formatDate: formatOperationLogDate,
+    hasAdvancedFilters,
+    items,
+    loading,
+    openDetail,
+    page,
+    pageSize,
+    reset,
+    resolveActionLabel: resolveOperationLogActionLabel,
+    statusItems: ADMIN_OPERATION_LOG_STATUS_ITEMS,
+    total
   }
 }

@@ -1,137 +1,31 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
-import { resolveOperationLogActionLabel } from '~/constants/operation-log-actions'
+import { useAdminOperationLogList } from '~/composables/admin/useAdminCallLogsPage'
 
 useHead({ title: '操作日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-interface OperationLogRow {
-  id: number
-  userId: number | null
-  actor: string | null
-  action: string
-  resourceType: string | null
-  resourceId: string | null
-  ip: string | null
-  userAgent: string | null
-  detail: Record<string, unknown> | null
-  status: 'success' | 'failure'
-  createdAt: string
-}
-
-// 用 type 别名而非 interface：usePrivatePagedList 的 TFilters 受 Record<string, unknown> 约束，
-// interface 因为可扩展不被认为兼容，type 字面量则会通过结构性检查。
-type OperationLogFilters = {
-  startAt: string
-  endAt: string
-  userId: number | ''
-  actorKind: 'all' | 'admin' | 'user'
-  actor: string
-  action: string
-  resourceType: string
-  status: 'all' | 'success' | 'failure'
-}
-
-const localPageSize = 50
 const {
+  actorKindItems,
+  activeFilterCount,
+  applyFilters,
+  columns,
+  detailJson,
+  detailOpen,
+  detailRow,
+  expandedFilters,
   filters,
+  formatDate,
+  hasAdvancedFilters,
+  items,
+  loading,
+  openDetail,
   page,
   pageSize,
-  items,
+  reset,
+  resolveActionLabel,
+  statusItems,
   total,
-  loading,
-  applyFilters,
-  reset
-} = usePrivatePagedList<OperationLogFilters, OperationLogRow>({
-  path: '/api/admin/operation-logs/list',
-  defaultFilters: {
-    startAt: '',
-    endAt: '',
-    userId: '',
-    actorKind: 'all',
-    actor: '',
-    action: '',
-    resourceType: '',
-    status: 'all'
-  },
-  defaultPageSize: localPageSize,
-  buildQuery: (f, p) => ({
-    startAt: f.startAt ? new Date(f.startAt).toISOString() : undefined,
-    endAt: f.endAt ? new Date(f.endAt).toISOString() : undefined,
-    userId: f.userId || undefined,
-    actorKind: f.actorKind === 'all' ? undefined : f.actorKind,
-    actor: f.actor.trim() || undefined,
-    action: f.action.trim() || undefined,
-    resourceType: f.resourceType.trim() || undefined,
-    status: f.status === 'all' ? undefined : f.status,
-    limit: p.limit,
-    offset: p.offset
-  })
-})
-
-const expandedFilters = ref(false)
-const hasAdvancedFilters = computed(
-  () => filters.actorKind !== 'all'
-    || !!filters.actor
-    || filters.status !== 'all'
-    || filters.userId !== ''
-    || !!filters.action
-    || !!filters.resourceType
-)
-const activeFilterCount = computed(() => [
-  !!filters.startAt,
-  !!filters.endAt,
-  filters.userId !== '',
-  filters.actorKind !== 'all',
-  !!filters.actor,
-  !!filters.action,
-  !!filters.resourceType,
-  filters.status !== 'all'
-].filter(Boolean).length)
-
-function formatDate(val: string) {
-  return formatDateTime(val)
-}
-
-const actorKindItems = [
-  { label: '全部来源', value: 'all' },
-  { label: '管理员操作', value: 'admin' },
-  { label: '用户操作', value: 'user' }
-]
-const statusItems = [
-  { label: '全部状态', value: 'all' },
-  { label: '成功', value: 'success' },
-  { label: '失败', value: 'failure' }
-]
-
-const columns: TableColumn<OperationLogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { id: 'actor', header: '操作者' },
-  { accessorKey: 'action', header: '动作' },
-  { id: 'resource', header: '资源' },
-  { accessorKey: 'status', header: '状态' },
-  { accessorKey: 'ip', header: 'IP' },
-  { id: 'actions', header: '' }
-]
-
-// ─── 详情弹窗 ───────────────────────────────────────────────────
-const detailRow = ref<OperationLogRow | null>(null)
-const detailOpen = ref(false)
-
-function openDetail(row: OperationLogRow) {
-  detailRow.value = row
-  detailOpen.value = true
-}
-
-const detailJson = computed(() => {
-  if (!detailRow.value?.detail) return ''
-  try {
-    return JSON.stringify(detailRow.value.detail, null, 2)
-  } catch {
-    return String(detailRow.value.detail)
-  }
-})
+} = useAdminOperationLogList()
 </script>
 
 <template>
@@ -340,7 +234,7 @@ const detailJson = computed(() => {
         </template>
         <template #action-cell="{ row }">
           <div class="flex flex-col text-xs">
-            <span class="font-medium">{{ resolveOperationLogActionLabel(row.original.action) }}</span>
+            <span class="font-medium">{{ resolveActionLabel(row.original.action) }}</span>
             <span class="font-mono text-muted">{{ row.original.action }}</span>
           </div>
         </template>
@@ -433,7 +327,7 @@ const detailJson = computed(() => {
               <div class="text-xs text-muted">
                 动作
               </div>
-              <div>{{ resolveOperationLogActionLabel(detailRow.action) }}</div>
+              <div>{{ resolveActionLabel(detailRow.action) }}</div>
               <div class="font-mono text-xs text-muted break-all">
                 {{ detailRow.action }}
               </div>

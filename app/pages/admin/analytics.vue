@@ -1,82 +1,29 @@
 <script setup lang="ts">
 import type { AdminAnalyticsData } from '~~/shared/types/admin-logs'
+import {
+  createEmptyAdminAnalyticsData,
+  useAdminAnalyticsDisplayMeta
+} from '~/composables/admin/useAdminDisplayMeta'
 
 useHead({ title: '数据看板' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-function createEmpty(): AdminAnalyticsData {
-  return {
-    overview: {
-      enabledApiCount: 0,
-      totalEnabledApiCount: 0,
-      totalCreditsSpent: 0,
-      averageDailyCalls: 0,
-      averageWindowDays: 7
-    },
-    distribution: [],
-    hourlyTrend24h: [],
-    callBuckets: [],
-    ranking: [],
-    generatedAt: new Date(0).toISOString()
-  }
-}
-
 const { data, status, refresh } = useLazyFetch<AdminAnalyticsData>('/api/admin/analytics', {
-  default: () => createEmpty()
+  default: () => createEmptyAdminAnalyticsData()
 })
 
-const analytics = computed(() => data.value || createEmpty())
-const overview = computed(() => analytics.value.overview)
-const distribution = computed(() => analytics.value.distribution)
-const hourlyTrend24h = computed(() => analytics.value.hourlyTrend24h)
-const callBuckets = computed(() => analytics.value.callBuckets)
-const ranking = computed(() => analytics.value.ranking)
-
-const distributionChart = ref<'bar' | 'area'>('bar')
-const distributionChartItems = [
-  { label: '柱状图', value: 'bar', icon: 'i-mdi-chart-bar' },
-  { label: '面积图', value: 'area', icon: 'i-mdi-chart-areaspline' }
-]
-
-const generatedAtLabel = computed(() => {
-  const date = new Date(analytics.value.generatedAt)
-  return Number.isNaN(date.getTime()) || date.getTime() === 0
-    ? '-'
-    : date.toLocaleString('zh-CN', { hour12: false })
-})
-
-const formatCount = (val: number) => val.toLocaleString()
-const formatCompact = (val: number) => new Intl.NumberFormat('zh-CN', {
-  notation: 'compact',
-  maximumFractionDigits: 1
-}).format(val)
-
-const overviewCards = computed(() => [
-  {
-    key: 'apis',
-    label: '接口总数',
-    value: formatCount(overview.value.enabledApiCount),
-    helper: `已启用 ${overview.value.totalEnabledApiCount}，其中纳入统计 ${overview.value.enabledApiCount}`,
-    icon: 'i-mdi-api',
-    accent: 'primary' as const
-  },
-  {
-    key: 'credits',
-    label: '总使用积分',
-    value: formatCount(overview.value.totalCreditsSpent),
-    helper: '累计 API 调用扣费',
-    icon: 'i-mdi-cash-multiple',
-    accent: 'warning' as const
-  },
-  {
-    key: 'average',
-    label: '平均请求数',
-    value: formatCount(Math.round(overview.value.averageDailyCalls)),
-    helper: `近 ${overview.value.averageWindowDays} 天日均`,
-    icon: 'i-mdi-chart-line',
-    accent: 'info' as const
-  }
-])
+const analytics = computed(() => data.value || createEmptyAdminAnalyticsData())
+const {
+  distribution,
+  hourlyTrend24h,
+  callBuckets,
+  ranking,
+  distributionChart,
+  distributionChartItems,
+  generatedAtLabel,
+  formatCompact,
+  overviewCards
+} = useAdminAnalyticsDisplayMeta({ analytics })
 </script>
 
 <template>

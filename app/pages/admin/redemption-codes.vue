@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
-import { useRedemptionCodesPage, type RedemptionCode } from '~/composables/admin/useRedemptionCodesPage'
+import {
+  useAdminRedemptionCodesDisplayMeta,
+  useRedemptionCodesPage
+} from '~/composables/admin/useRedemptionCodesPage'
 
 useHead({ title: '兑换码' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
@@ -32,66 +34,22 @@ onMounted(() => {
   void init()
 })
 
-const statusItems = [
-  { label: '全部', value: 'all' },
-  { label: '可用', value: 'available' },
-  { label: '已禁用', value: 'disabled' },
-  { label: '已用完', value: 'used_up' },
-  { label: '已过期', value: 'expired' }
-]
-const batchItems = computed(() => [
-  { label: '全部批次', value: 'all' },
-  ...batches.value.map(b => ({
-    label: `${b.batchId} (${b.usedTotal}/${b.maxUsesTotal} 用 · ${b.amount} 积分)`,
-    value: b.batchId
-  }))
-])
-
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
-
-function statusOf(item: RedemptionCode): { label: string, color: 'success' | 'warning' | 'error' | 'neutral' } {
-  if (!item.isEnabled) return { label: '已禁用', color: 'neutral' }
-  if (item.usedCount >= item.maxUses) return { label: '已用完', color: 'warning' }
-  if (item.expiresAt && new Date(item.expiresAt).getTime() <= Date.now()) return { label: '已过期', color: 'error' }
-  return { label: '可用', color: 'success' }
-}
-
-function getRowItems(row: RedemptionCode): DropdownMenuItem[] {
-  return [{
-    label: row.isEnabled ? '禁用' : '启用',
-    icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
-    onSelect: () => toggle(row)
-  }, {
-    label: '复制兑换码',
-    icon: 'i-mdi-content-copy',
-    onSelect: () => copyOne(row.code)
-  }, {
-    type: 'separator'
-  }, {
-    label: '删除',
-    icon: 'i-mdi-delete-outline',
-    color: 'error' as const,
-    onSelect: () => remove(row)
-  }]
-}
-
-function onBatchFilter(batchId: string) {
-  filters.batchId = batchId
-  applyFilters()
-}
-
-const columns: TableColumn<RedemptionCode>[] = [
-  { accessorKey: 'code', header: '兑换码' },
-  { accessorKey: 'amount', header: '面额' },
-  { id: 'usage', header: '使用' },
-  { accessorKey: 'note', header: '备注' },
-  { accessorKey: 'expiresAt', header: '过期时间' },
-  { id: 'status', header: '状态' },
-  { accessorKey: 'createdAt', header: '创建时间' },
-  { id: 'actions', header: '' }
-]
+const {
+  statusItems,
+  batchItems,
+  columns,
+  formatDate,
+  statusOf,
+  getRowItems,
+  onBatchFilter
+} = useAdminRedemptionCodesDisplayMeta({
+  batches,
+  filters,
+  applyFilters,
+  toggle,
+  remove,
+  copyOne
+})
 </script>
 
 <template>

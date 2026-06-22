@@ -1,127 +1,45 @@
 <script setup lang="ts">
-import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/clientError'
+import {
+  useAdminApisDisplayMeta,
+  type AdminApiCategoryItem,
+  type AdminDiscoveredApi,
+  type AdminVersionGroup
+} from '~/composables/admin/useAdminDisplayMeta'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-interface DiscoveredEndpoint {
-  apiPath: string
-  method: string
-  sourceFile: string
-  isDynamic: boolean
-}
-
-interface RegisteredApi {
-  id: number
-  code: string
-  pathVersion: string
-  name: string
-  shortDesc: string
-  description: string
-  apiPath: string
-  httpMethod: string
-  endpointCount: number
-  docUrl: string
-  status: number
-  categoryId: number | null
-  isEnabled: boolean
-  isApiKey: boolean
-  isStatistics: boolean
-  rateLimitPerSecond: number
-  rateLimitPerMinute: number
-  rateLimitPerHour: number
-  rateLimitPerDay: number
-  dailyQuota: number
-  methodCosts: Record<string, number>
-  timeoutMs: number
-}
-
-interface DiscoveredApi {
-  pathVersion: string
-  code: string
-  endpointCount: number
-  endpoints: DiscoveredEndpoint[]
-  registered: RegisteredApi | null
-  orphaned: boolean
-}
-
-interface VersionGroup {
-  pathVersion: string
-  apis: DiscoveredApi[]
-  stats: { total: number, registered: number, unregistered: number, orphaned: number }
-}
-
 const toast = useToast()
 
-const { data, status, refresh } = useLazyFetch('/api/admin/apis/discover', {
-  default: () => ({ versions: [] as VersionGroup[] })
+const { data, status, refresh } = useLazyFetch<{ versions: AdminVersionGroup[] }>('/api/admin/apis/discover', {
+  default: () => ({ versions: [] })
 })
 
-const { data: categoriesData } = useLazyFetch<Array<{ id: number, name: string }>>('/api/admin/api-categories/list', {
+const { data: categoriesData } = useLazyFetch<AdminApiCategoryItem[]>('/api/admin/api-categories/list', {
   default: () => []
 })
-const categoriesMap = computed(() => {
-  const map = new Map<number, string>()
-  for (const cat of (categoriesData.value || [])) map.set(cat.id, cat.name)
-  return map
-})
 
-const versions = computed<VersionGroup[]>(() => (data.value?.versions || []) as VersionGroup[])
-const activeVersion = ref<string>('')
-watchEffect(() => {
-  if (versions.value.length === 0) return
-  // 初次为空、或刷新后当前选中版本已不在列表中（接口被删 / 版本目录变化）都回退到首个版本，
-  // 否则 filteredApis 里 group 查找失败会让表格永久空白且无任何提示。
-  const exists = versions.value.some(v => v.pathVersion === activeVersion.value)
-  if (!exists) {
-    activeVersion.value = versions.value[0]!.pathVersion
-  }
-})
-
-const keyword = ref('')
-
-const filteredApis = computed<DiscoveredApi[]>(() => {
-  const group = versions.value.find(v => v.pathVersion === activeVersion.value)
-  if (!group) return []
-  const kw = keyword.value.trim().toLowerCase()
-  return group.apis.filter((a) => {
-    if (!kw) return true
-    return (
-      a.code.toLowerCase().includes(kw)
-      || (a.registered?.name || '').toLowerCase().includes(kw)
-      || (a.registered?.shortDesc || '').toLowerCase().includes(kw)
-    )
-  })
-})
-
-const { page, pageSize, total, paginated } = useClientPagination(filteredApis, 10)
-watch([keyword, activeVersion], () => {
-  page.value = 1
-})
-
-const versionItems = computed(() => versions.value.map(v => ({
-  label: `${v.pathVersion} (${v.stats.registered}/${v.stats.total})`,
-  value: v.pathVersion
-})))
+const versions = computed(() => data.value?.versions || [])
+const categories = computed(() => categoriesData.value || [])
 
 const modalOpen = ref(false)
 const modalMode = ref<'register' | 'edit'>('register')
-const modalTarget = ref<DiscoveredApi | null>(null)
+const modalTarget = ref<AdminDiscoveredApi | null>(null)
 
-function openRegister(row: DiscoveredApi) {
+function openRegister(row: AdminDiscoveredApi) {
   modalMode.value = 'register'
   modalTarget.value = row
   modalOpen.value = true
 }
 
-function openEdit(row: DiscoveredApi) {
+function openEdit(row: AdminDiscoveredApi) {
   modalMode.value = 'edit'
   modalTarget.value = row
   modalOpen.value = true
 }
 
-async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
+async function handleToggle(row: AdminDiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
   if (!row.registered) return
   if (field === 'isStatistics' && value && !row.registered.isEnabled) {
     toast.add({ title: '请先启用接口，再开启统计', color: 'warning' })
@@ -141,7 +59,7 @@ async function handleToggle(row: DiscoveredApi, field: 'isEnabled' | 'isStatisti
   }
 }
 
-async function resyncManifest(row: DiscoveredApi) {
+async function resyncManifest(row: AdminDiscoveredApi) {
   try {
     await $fetch('/api/admin/apis/register', {
       method: 'POST',
@@ -154,44 +72,26 @@ async function resyncManifest(row: DiscoveredApi) {
   }
 }
 
-function getRowItems(row: DiscoveredApi): DropdownMenuItem[] {
-  const items: DropdownMenuItem[] = []
-  if (row.registered && !row.orphaned) {
-    items.push({
-      label: '编辑配置',
-      icon: 'i-mdi-pencil-outline',
-      onSelect: () => openEdit(row)
-    }, {
-      label: '同步路由信息',
-      icon: 'i-mdi-sync',
-      onSelect: () => resyncManifest(row)
-    })
-  }
-  if (!row.registered) {
-    items.push({
-      label: '登记接口',
-      icon: 'i-mdi-plus-circle-outline',
-      onSelect: () => openRegister(row)
-    })
-  }
-  return items
-}
+const {
+  activeVersion,
+  keyword,
+  filteredApis,
+  versionItems,
+  columns,
+  categoryLabel,
+  getRowItems
+} = useAdminApisDisplayMeta({
+  versions,
+  categories,
+  openRegister,
+  openEdit,
+  resyncManifest
+})
 
-const columns: TableColumn<DiscoveredApi>[] = [
-  { accessorKey: 'code', header: '编码 / 名称' },
-  { id: 'endpoints', header: '端点' },
-  { id: 'category', header: '分类' },
-  { id: 'isEnabled', header: '启用' },
-  { id: 'isStatistics', header: '统计' },
-  { id: 'isApiKey', header: 'ApiKey' },
-  { id: 'actions', header: '' }
-]
-
-function categoryLabel(row: DiscoveredApi) {
-  const id = row.registered?.categoryId
-  if (!id) return '-'
-  return categoriesMap.value.get(id) || `#${id}`
-}
+const { page, pageSize, total, paginated } = useClientPagination(filteredApis, 10)
+watch([keyword, activeVersion], () => {
+  page.value = 1
+})
 </script>
 
 <template>
