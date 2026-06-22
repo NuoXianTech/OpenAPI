@@ -35,7 +35,7 @@ type ErrorDef = { status: number, code: string, msg: string }
  * 拒绝请求时以开放 API 标准壳作答。直接通过 h3 的 send 写出，
  * 保证 middleware 阶段就终止请求，不会继续走到业务 handler。
  *
- * errorDef.code 作为 body `code` 字段输出，严守 restful-api-style.md §3.3
+ * errorDef.code 作为 body `code` 字段输出，严守 docs/api/style.md §3.3
  * 「失败时 data 为 null」。其他上下文（如 405 的 Allow、429 的 Retry-After）走对应标准头。
  *
  * detail 非空时写入 body `data` 字段，用于回传结构化提示（如过期时间、配额详情）。

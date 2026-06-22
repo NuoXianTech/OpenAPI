@@ -1,7 +1,7 @@
 /**
  * 对外开放 API（/v{N}/*）统一响应壳。
  *
- * 结构（完全对齐 docs/restful-api-style.md §3，无项目私有扩展）：
+ * 结构（完全对齐 docs/api/style.md §3，无项目私有扩展）：
  *   {
  *     code: string,        // 大写下划线机器可读标识（OK / CREATED / MISSING_API_KEY ...）
  *     message: string,
@@ -62,7 +62,7 @@ export function openApiOk<T>(
   return buildSuccess(event, data, message, 200, 'OK')
 }
 
-/** 201 Created · POST 新建资源成功（restful-api-style.md §4.1），code 固定 'CREATED' 与 'OK' 区分 */
+/** 201 Created · POST 新建资源成功（docs/api/style.md §4.1），code 固定 'CREATED' 与 'OK' 区分 */
 export function openApiCreated<T>(
   event: H3Event,
   data: T,

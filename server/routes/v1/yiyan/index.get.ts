@@ -11,7 +11,7 @@
  *   max_length  句子最大长度（含），默认 30
  *   id          指定复合 id（如 a1）查看该句完整信息；未命中 → 404
  *
- * 响应分工（见 docs/api-conventions.md §4.0 内容协商型接口）：
+ * 响应分工（见 docs/api/conventions.md §4.0 内容协商型接口）：
  *   - encode=json（含默认）→ 套标准 openApiResponse 壳，data 为句子记录；
  *     JSONP（callback）属 json 表示的变体，包裹的也是这同一个标准壳：callback({code,...,data})
  *   - encode=text|js|md → 各接口自定义原始格式，直出内容并自设 Content-Type

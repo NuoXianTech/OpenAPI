@@ -138,7 +138,7 @@ export const apiKeys = pgTable('api_keys', {
 //   - 用户硬删 / 密钥删除时本表行保留，对应需求 #5
 // apiId 保留外键：apis 行永不物理删除（最多被标记 isOrphaned），FK 仅做防御性约束。
 //
-// 调用日志写入规则（参见 docs/api-call-statistics.md）：
+// 调用日志写入规则（参见 docs/api/call-statistics.md）：
 //   - 接口未开启 isStatistics → 不写
 //   - 接口被禁用（isEnabled=false / API_DISABLED）→ 不写
 //   - 密钥无效（INVALID_API_KEY / MISSING_API_KEY）→ 不写

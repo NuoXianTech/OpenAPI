@@ -1,7 +1,7 @@
 # RESTful API 设计风格指南
 
 > 一份通用的 RESTful 接口设计参考，约束 URL、HTTP 方法、响应壳、状态码与版本控制。
-> 项目内部的具体落地（manifest 扫描、计费、注册）见 [api-conventions.md](./api-conventions.md)；本文档关注**风格层面**的统一。
+> 项目内部的具体落地（manifest 扫描、计费、注册）见 [对外接口落地规范](./conventions.md)；本文档关注**风格层面**的统一。
 
 ## 1. URL 设计
 

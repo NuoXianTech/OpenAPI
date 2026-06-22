@@ -102,7 +102,7 @@ server/utils/             服务端共享工具
 server/plugins/           启动同步与单进程定时任务
 modules/api-manifest.ts   构建期接口清单生成器
 shared/                   共享类型与配置
-docs/                     项目文档
+docs/                     项目文档（入口见 docs/README.md）
 ```
 
 ## 部署说明

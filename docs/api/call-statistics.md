@@ -1,8 +1,8 @@
 # API 请求调用统计规范
 
-适用范围：`server/routes/v{N}/**` 下所有被 [server/middleware/00.api-gate.ts](../server/middleware/00.api-gate.ts) 治理的对外 API。后台内部接口（`server/api/admin/**`、`server/api/user/**` 等）不在本规范覆盖范围内。
+适用范围：`server/routes/v{N}/**` 下所有被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理的对外 API。后台内部接口（`server/api/admin/**`、`server/api/user/**` 等）不在本规范覆盖范围内。
 
-本文只定义“调用统计”口径，不定义扣费规则。扣费链路见 [billing/api-charging.md](./billing/api-charging.md)，对外 API 目录与注册规范见 [api-conventions.md](./api-conventions.md)。
+本文只定义“调用统计”口径，不定义扣费规则。扣费链路见 [API 计费规则](../billing/charging.md)，对外 API 目录与注册规范见 [对外接口落地规范](./conventions.md)。
 
 ## 1. 三类统计口径
 
@@ -22,7 +22,7 @@
 
 ## 2. 统计链路
 
-[server/plugins/apiCallStats.ts](../server/plugins/apiCallStats.ts) 通过 Nitro 生命周期钩子记录统计：
+[server/plugins/apiCallStats.ts](../../server/plugins/apiCallStats.ts) 通过 Nitro 生命周期钩子记录统计：
 
 1. `request` 阶段：如果路径属于 `/v{N}/**` 治理范围，记录请求开始时间、路径、方法、IP、API Key、User-Agent、Referer、QueryString、请求大小等快照。
 2. `api-gate` 阶段：命中已注册 API 且 `apis.isStatistics=true` 时，gate 将 `apiStatsTarget` 写入 `event.context`。
@@ -82,7 +82,7 @@
 | `200 <= statusCode < 400` | `successCount + 1` |
 | 其他状态码 | `failureCount + 1` |
 
-业务 handler 可以通过 [server/utils/apiCallOutcome.ts](../server/utils/apiCallOutcome.ts) 显式修正统计结果：
+业务 handler 可以通过 [server/utils/apiCallOutcome.ts](../../server/utils/apiCallOutcome.ts) 显式修正统计结果：
 
 - `markApiCallFailed(event, code, message)`：即使最终 HTTP 是 2xx，也让 `api_call_stats` 按失败计，并把 `code/message` 写入 `api_calls.errorCode/errorMessage`。
 - `markApiCallSuccess(event)`：极少使用；用于 handler 抛错或返回非 2xx，但业务实际已完成且需要按成功处理的场景。
@@ -93,7 +93,7 @@
 
 ### 6.1 `api_calls` 明细
 
-表结构定义见 [server/db/schema/api.ts](../server/db/schema/api.ts)。每条调用日志至少包含：
+表结构定义见 [server/db/schema/api.ts](../../server/db/schema/api.ts)。每条调用日志至少包含：
 
 | 字段 | 说明 |
 | --- | --- |
@@ -110,7 +110,7 @@
 | `isCounted` | 是否计入 `api_call_stats`、用户汇总、后台趋势等统计口径；`false` 表示仅保留审计日志 |
 | `createdAt` | 明细写入时间 |
 
-写入入口统一走 [server/service/apiCallService.ts](../server/service/apiCallService.ts)：计数日志使用 `addCallAndUpsertDailyStat`，仅留审计日志使用 `addCall`，禁止绕过 service 直接写表。
+写入入口统一走 [server/service/apiCallService.ts](../../server/service/apiCallService.ts)：计数日志使用 `addCallAndUpsertDailyStat`，仅留审计日志使用 `addCall`，禁止绕过 service 直接写表。
 
 ### 6.2 `api_call_stats` 日聚合
 
