@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '@nuxthub/db/schema'
+import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '~~/shared/types/credit-reason'
 
 /**
@@ -347,8 +348,7 @@ export const creditService = {
     if (filters.startAt) conditions.push(gte(creditTransactions.createdAt, filters.startAt))
     if (filters.endAt) conditions.push(lte(creditTransactions.createdAt, filters.endAt))
 
-    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(filters)
 
     const where = conditions.length ? and(...conditions) : undefined
     const [items, totalRows] = await Promise.all([
@@ -381,8 +381,7 @@ export const creditService = {
     if (filters.direction === 'in') conditions.push(sql`${creditTransactions.amount} > 0`)
     else if (filters.direction === 'out') conditions.push(sql`${creditTransactions.amount} < 0`)
 
-    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(filters)
     const where = and(...conditions)
 
     const [items, totalRows] = await Promise.all([

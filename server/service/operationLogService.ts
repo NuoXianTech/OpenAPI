@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, ilike, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
 import { operationLogs } from '@nuxthub/db/schema'
+import { normalizePagination } from '~~/server/utils/pagination'
 
 export type OperationLogStatus = 'success' | 'failure'
 
@@ -84,8 +85,7 @@ export const operationLogService = {
       conditions.push(lte(operationLogs.createdAt, filters.endAt))
     }
 
-    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(filters)
     const where = conditions.length ? and(...conditions) : undefined
 
     const baseQuery = db.select().from(operationLogs)

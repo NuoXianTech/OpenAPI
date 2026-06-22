@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, users } from '@nuxthub/db/schema'
+import { normalizePagination } from '~~/server/utils/pagination'
 
 /**
  * 兑换码服务
@@ -115,8 +116,7 @@ export const redemptionService = {
   },
 
   async list(filters: ListFilters = {}) {
-    const limit = Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(filters.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(filters)
     const conditions: SQL[] = []
 
     if (filters.batchId) conditions.push(eq(redemptionCodes.batchId, filters.batchId))
@@ -165,6 +165,7 @@ export const redemptionService = {
 
   /** 列出所有批次（按最新创建时间倒序） */
   async listBatches(limit: number = 50) {
+    const { limit: normalizedLimit } = normalizePagination({ limit })
     const rows = await db.select({
       batchId: redemptionCodes.batchId,
       note: sql<string | null>`max(${redemptionCodes.note})`,
@@ -178,7 +179,7 @@ export const redemptionService = {
       .where(sql`${redemptionCodes.batchId} is not null`)
       .groupBy(redemptionCodes.batchId)
       .orderBy(sql`max(${redemptionCodes.createdAt}) desc`)
-      .limit(Math.min(Math.max(Math.trunc(limit), 1), 200))
+      .limit(normalizedLimit)
 
     type BatchRow = {
       batchId: string | null
@@ -333,8 +334,7 @@ export const redemptionService = {
 
   /** 用户视角：自己的兑换记录（即 reason='redemption_code' 的积分流水） */
   async listUserRedemptions(userId: number, limit: number = 50, offset: number = 0) {
-    const lim = Math.min(Math.max(Math.trunc(limit), 1), 200)
-    const off = Math.max(Math.trunc(offset), 0)
+    const pagination = normalizePagination({ limit, offset })
     const where = and(
       eq(creditTransactions.userId, userId),
       eq(creditTransactions.reason, 'redemption_code')
@@ -351,8 +351,8 @@ export const redemptionService = {
         .from(creditTransactions)
         .where(where)
         .orderBy(desc(creditTransactions.createdAt))
-        .limit(lim)
-        .offset(off),
+        .limit(pagination.limit)
+        .offset(pagination.offset),
       db.select({ value: count() }).from(creditTransactions).where(where)
     ])
     return { items, total: Number(totalRows[0]?.value || 0) }

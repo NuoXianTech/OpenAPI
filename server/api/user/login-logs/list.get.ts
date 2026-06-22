@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
 import { loginLogService } from '~~/server/service/loginLogService'
 import { requireAuth } from '~~/server/utils/auth'
+import { parsePaginationQuery } from '~~/server/utils/pagination'
 import { summarizeUserAgent } from '~~/server/utils/userAgent'
 import type { LoginLogRow } from '~~/shared/types/login-log'
 
@@ -14,8 +15,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!user.id) throw createError({ statusCode: 403, message: 'admin cannot access user login logs' })
 
   const query = getQuery(event)
-  const limit = query.limit ? Number(query.limit) : 10
-  const offset = query.offset ? Number(query.offset) : 0
+  const { limit, offset } = parsePaginationQuery(query, { defaultLimit: 10 })
 
   const { items, total } = await loginLogService.list({
     userId: user.id,

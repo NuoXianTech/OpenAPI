@@ -1,6 +1,7 @@
 import { count, desc, eq, sql, and, isNull, type SQL } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
 import { getLocalDayStart } from '~~/server/utils/localTime'
+import { normalizePagination } from '~~/server/utils/pagination'
 
 export interface AddCallInput {
   apiId: number
@@ -70,8 +71,7 @@ export const apiCallService = {
     limit?: number
     offset?: number
   } = {}) {
-    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(opts)
     const conds: SQL[] = []
     if (opts.userId && opts.userId > 0) conds.push(eq(apiCalls.userId, opts.userId))
     if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
@@ -153,8 +153,7 @@ export const apiCallService = {
     limit?: number
     offset?: number
   } = {}) {
-    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(opts)
     const conds = [eq(apiCalls.userId, userId)]
     if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
     if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))

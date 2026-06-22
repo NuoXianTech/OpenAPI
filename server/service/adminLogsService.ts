@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart } from '~~/server/utils/localTime'
+import { normalizePagination } from '~~/server/utils/pagination'
 import type {
   AdminAnalyticsCallBucket,
   AdminAnalyticsData,
@@ -69,8 +70,7 @@ export const adminLogsService = {
    * 管理 / 系统操作请走 /admin/system/operation-logs。
    */
   async listLogs(input: ListLogsInput = {}): Promise<AdminLogsListResponse> {
-    const limit = Math.min(Math.max(Math.trunc(input.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(input.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(input)
 
     const conds: SQL[] = []
     if (input.startAt) conds.push(gte(apiCalls.createdAt, input.startAt))

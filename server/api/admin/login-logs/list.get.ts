@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
 import { loginLogService } from '~~/server/service/loginLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { parsePaginationQuery } from '~~/server/utils/pagination'
 import { summarizeUserAgent } from '~~/server/utils/userAgent'
 import type { AdminLoginLogRow, LoginMethod } from '~~/shared/types/login-log'
 
@@ -32,6 +33,7 @@ function toIso(value: Date | string): string {
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const query = getQuery(event)
+  const { limit, offset } = parsePaginationQuery(query)
 
   const { items, total } = await loginLogService.listForAdmin({
     startAt: parseDate(query.startAt),
@@ -39,8 +41,8 @@ export default defineEventHandler(async (event: H3Event) => {
     method: parseMethod(query.method),
     success: parseSuccess(query.success),
     userId: query.userId ? Number(query.userId) : undefined,
-    limit: query.limit ? Number(query.limit) : undefined,
-    offset: query.offset ? Number(query.offset) : undefined
+    limit,
+    offset
   })
 
   const rows: AdminLoginLogRow[] = items.map(r => ({

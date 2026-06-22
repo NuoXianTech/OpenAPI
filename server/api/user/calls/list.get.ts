@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
 import { apiCallService } from '~~/server/service/apiCallService'
 import { requireAuth } from '~~/server/utils/auth'
+import { parsePaginationQuery } from '~~/server/utils/pagination'
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
@@ -12,8 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const apiKeyId = query.apiKeyId ? Number(query.apiKeyId) : undefined
   const statusRaw = (query.status || '').toString()
   const status = statusRaw === 'success' || statusRaw === 'failure' ? statusRaw : undefined
-  const limit = query.limit ? Number(query.limit) : 50
-  const offset = query.offset ? Number(query.offset) : 0
+  const { limit, offset } = parsePaginationQuery(query)
 
   const data = await apiCallService.listLogForUser(user.id, { apiId, apiKeyId, status, limit, offset })
   return data

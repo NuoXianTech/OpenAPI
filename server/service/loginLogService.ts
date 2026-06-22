@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
 import { loginLogs, users } from '@nuxthub/db/schema'
+import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '~~/shared/types/login-log'
 
 /**
@@ -61,13 +62,6 @@ function buildConditions(filters: ListFilters): SQL[] {
   return conditions
 }
 
-function clampPaging(filters: ListFilters) {
-  return {
-    limit: Math.min(Math.max(Math.trunc(filters.limit ?? 50), 1), 200),
-    offset: Math.max(Math.trunc(filters.offset ?? 0), 0)
-  }
-}
-
 export const loginLogService = {
   /**
    * 写入一条登录日志。失败不抛错，不阻塞登录流程。
@@ -92,7 +86,7 @@ export const loginLogService = {
    */
   async list(filters: ListFilters = {}): Promise<{ items: LoginLogRecord[], total: number }> {
     const conditions = buildConditions(filters)
-    const { limit, offset } = clampPaging(filters)
+    const { limit, offset } = normalizePagination(filters)
     const where = conditions.length ? and(...conditions) : undefined
 
     const [items, totalRows] = await Promise.all([
@@ -113,7 +107,7 @@ export const loginLogService = {
    */
   async listForAdmin(filters: ListFilters = {}): Promise<{ items: AdminLoginLogRecord[], total: number }> {
     const conditions = buildConditions(filters)
-    const { limit, offset } = clampPaging(filters)
+    const { limit, offset } = normalizePagination(filters)
     const where = conditions.length ? and(...conditions) : undefined
 
     const baseSelect = db.select({

@@ -1,5 +1,6 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
+import { normalizePagination } from '~~/server/utils/pagination'
 
 // 用户表已是硬删模型，listActiveUserIds / send 不再需要过滤 deletedAt
 
@@ -92,8 +93,7 @@ export const notificationService = {
 
   /** 用户视角列表（join message，过滤被管理员删除的 message） */
   async listForUser(userId: number, opts: { limit?: number, offset?: number, onlyUnread?: boolean } = {}) {
-    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(opts)
     const conds = [
       eq(notificationDeliveries.recipientUserId, userId),
       isNull(notificationMessages.deletedAt)
@@ -159,8 +159,7 @@ export const notificationService = {
 
   /** Admin 列表：每条 message + 当前已投递数 + 已读数 */
   async listMessagesForAdmin(opts: { limit?: number, offset?: number } = {}) {
-    const limit = Math.min(Math.max(Math.trunc(opts.limit ?? 50), 1), 200)
-    const offset = Math.max(Math.trunc(opts.offset ?? 0), 0)
+    const { limit, offset } = normalizePagination(opts)
 
     return db.select({
       id: notificationMessages.id,
