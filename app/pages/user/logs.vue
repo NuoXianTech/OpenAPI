@@ -1,160 +1,56 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import { LazyUserCallLogDetailModal } from '#components'
+import {
+  useUserCallLogsPage,
+  userCallOutcomeColor,
+  userCallOutcomeIcon,
+  userCallOutcomeLabel,
+  type UserCallLogRow
+} from '~/composables/user/useUserCallLogsPage'
 
 useHead({ title: '调用日志' })
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 
-interface LogRow {
-  id: number
-  apiId: number
-  apiName: string | null
-  apiPath: string
-  method: string
-  statusCode: number
-  latencyMs: number
-  ip: string | null
-  apiKeyId: number | null
-  apiKeyName: string | null
-  errorCode: string | null
-  errorMessage: string | null
-  creditsCost: number
-  isCounted: boolean
-  createdAt: string
-}
-
-interface FilterOptions {
-  apis: Array<{ id: number, name: string, apiPath: string }>
-  apiKeys: Array<{ id: number, name: string }>
-}
-
-const filters = reactive({
-  apiId: 0,
-  apiKeyId: 0,
-  status: 'all' as 'all' | 'success' | 'failure'
-})
-const page = ref(1)
-const pageSize = ref(50)
-
-const items = ref<LogRow[]>([])
-const total = ref(0)
-const loading = ref(false)
-
-const filterOptions = ref<FilterOptions>({ apis: [], apiKeys: [] })
-
-const apiSelectItems = computed(() => [
-  { label: '全部 API', value: 0 },
-  ...filterOptions.value.apis.map(a => ({
-    label: `${a.name}（${a.apiPath}）`,
-    value: a.id
-  }))
-])
-const keySelectItems = computed(() => [
-  { label: '全部 Key', value: 0 },
-  ...filterOptions.value.apiKeys.map(k => ({ label: k.name || `#${k.id}`, value: k.id }))
-])
-const statusSelectItems = [
-  { label: '全部状态', value: 'all' },
-  { label: '成功', value: 'success' },
-  { label: '失败', value: 'failure' }
-]
-
-const activeFilterCount = computed(() => [
-  filters.apiId !== 0,
-  filters.apiKeyId !== 0,
-  filters.status !== 'all'
-].filter(Boolean).length)
-
-async function loadFilters() {
-  const res = await $fetch<FilterOptions>('/api/user/calls/filters')
-  filterOptions.value = res || { apis: [], apiKeys: [] }
-}
-
-async function fetchList() {
-  loading.value = true
-  try {
-    const res = await $fetch<{ items: LogRow[], total: number }>('/api/user/calls/list', {
-      query: {
-        apiId: filters.apiId || undefined,
-        apiKeyId: filters.apiKeyId || undefined,
-        status: filters.status === 'all' ? undefined : filters.status,
-        limit: pageSize.value,
-        offset: (page.value - 1) * pageSize.value
-      }
-    })
-    items.value = res?.items || []
-    total.value = res?.total || 0
-  } catch (err) {
-    console.error('failed to fetch user calls list', err)
-    items.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
+const route = useRoute()
+const router = useRouter()
+const {
+  filters,
+  page,
+  pageSize,
+  items,
+  total,
+  loading,
+  refresh,
+  applyFilters,
+  resetFilters,
+  apiSelectItems,
+  keySelectItems,
+  statusSelectItems,
+  activeFilterCount,
+  columns,
+  loadFilterOptions
+} = useUserCallLogsPage({
+  routeQuery: computed(() => route.query),
+  replaceQuery: async (query) => {
+    await router.replace({ query })
   }
-}
-
-function applyFilters() {
-  page.value = 1
-  void fetchList()
-}
-
-function resetFilters() {
-  filters.apiId = 0
-  filters.apiKeyId = 0
-  filters.status = 'all'
-  page.value = 1
-  void fetchList()
-}
-
-watch(page, () => {
-  void fetchList()
 })
 
-onMounted(async () => {
-  await loadFilters()
-  await fetchList()
+const overlay = useOverlay()
+const detailModal = overlay.create(LazyUserCallLogDetailModal, { destroyOnClose: true })
+
+onMounted(() => {
+  void loadFilterOptions()
 })
 
 function formatDate(iso: string) {
   return formatDateTime(iso)
 }
 
-function isCallSuccess(row: LogRow) {
-  return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
+function openDetail(row: UserCallLogRow) {
+  detailModal.open({ row })
 }
-
-function callOutcomeLabel(row: LogRow) {
-  if (!row.isCounted) return '未计数'
-  return isCallSuccess(row) ? '成功' : '失败'
-}
-
-function callOutcomeColor(row: LogRow): 'success' | 'error' | 'neutral' {
-  if (!row.isCounted) return 'neutral'
-  return isCallSuccess(row) ? 'success' : 'error'
-}
-
-function callOutcomeIcon(row: LogRow) {
-  if (!row.isCounted) return 'i-mdi-minus-circle-outline'
-  return isCallSuccess(row) ? 'i-mdi-check-circle-outline' : 'i-mdi-alert-circle-outline'
-}
-
-// ─── 详情弹窗 ───────────────────────────────────────────────────
-const detailRow = ref<LogRow | null>(null)
-const detailOpen = ref(false)
-
-function openDetail(row: LogRow) {
-  detailRow.value = row
-  detailOpen.value = true
-}
-
-const columns: TableColumn<LogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'apiKeyName', header: '密钥' },
-  { accessorKey: 'apiName', header: '接口' },
-  { accessorKey: 'creditsCost', header: '费用' },
-  { id: 'summary', header: '摘要' },
-  { id: 'actions', header: '' }
-]
 </script>
 
 <template>
@@ -166,7 +62,7 @@ const columns: TableColumn<LogRow>[] = [
         </template>
         <template #right>
           <UserHeaderActions
-            :on-refresh="fetchList"
+            :on-refresh="refresh"
             :refreshing="loading"
           />
         </template>
@@ -287,13 +183,13 @@ const columns: TableColumn<LogRow>[] = [
                 {{ formatDate(row.original.createdAt) }}
               </span>
               <UBadge
-                :color="callOutcomeColor(row.original)"
-                :icon="callOutcomeIcon(row.original)"
+                :color="userCallOutcomeColor(row.original)"
+                :icon="userCallOutcomeIcon(row.original)"
                 variant="subtle"
                 size="sm"
                 class="w-fit"
               >
-                {{ callOutcomeLabel(row.original) }}
+                {{ userCallOutcomeLabel(row.original) }}
               </UBadge>
             </div>
           </template>
@@ -375,119 +271,6 @@ const columns: TableColumn<LogRow>[] = [
           </template>
         </DashboardDataTable>
       </div>
-
-      <UModal
-        v-model:open="detailOpen"
-        title="调用详情"
-        :ui="{ content: 'max-w-2xl' }"
-      >
-        <template #body>
-          <div
-            v-if="detailRow"
-            class="space-y-4 text-sm"
-          >
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <div class="text-xs text-muted">
-                  时间
-                </div>
-                <div>{{ formatDate(detailRow.createdAt) }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  结果
-                </div>
-                <UBadge
-                  :color="callOutcomeColor(detailRow)"
-                  :icon="callOutcomeIcon(detailRow)"
-                  variant="subtle"
-                  size="sm"
-                  class="w-fit"
-                >
-                  {{ callOutcomeLabel(detailRow) }}
-                </UBadge>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  接口
-                </div>
-                <div>{{ detailRow.apiName || '-' }}</div>
-              </div>
-              <div>
-                <div class="text-xs text-muted">
-                  密钥
-                </div>
-                <div>
-                  {{ detailRow.apiKeyName || (detailRow.apiKeyId ? `#${detailRow.apiKeyId}` : '未携带') }}
-                </div>
-              </div>
-            </div>
-
-            <UCard
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-muted">请求</span>
-              </template>
-              <div class="space-y-2 text-xs">
-                <div class="flex items-center gap-2">
-                  <UBadge
-                    color="neutral"
-                    variant="subtle"
-                    class="font-mono"
-                  >
-                    {{ detailRow.method }}
-                  </UBadge>
-                  <span class="font-mono break-all">{{ detailRow.apiPath }}</span>
-                </div>
-                <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">
-                  <span>状态码 <span
-                    class="tabular-nums"
-                    :class="detailRow.statusCode >= 400 ? 'text-error' : 'text-default'"
-                  >{{ detailRow.statusCode }}</span></span>
-                  <span>耗时 <span class="tabular-nums text-default">{{ detailRow.latencyMs }}ms</span></span>
-                  <span>费用 <span class="tabular-nums text-default">{{ detailRow.creditsCost > 0 ? `-${detailRow.creditsCost}` : '免费' }}</span></span>
-                </div>
-              </div>
-            </UCard>
-
-            <UCard
-              v-if="detailRow.errorCode || detailRow.errorMessage"
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-error">错误</span>
-              </template>
-              <div class="space-y-1 text-xs">
-                <div v-if="detailRow.errorCode">
-                  <span class="text-muted">code </span>
-                  <span class="font-mono">{{ detailRow.errorCode }}</span>
-                </div>
-                <div
-                  v-if="detailRow.errorMessage"
-                  class="break-all"
-                >
-                  {{ detailRow.errorMessage }}
-                </div>
-              </div>
-            </UCard>
-
-            <UCard
-              :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
-            >
-              <template #header>
-                <span class="text-xs font-semibold text-muted">客户端</span>
-              </template>
-              <div class="space-y-1 text-xs">
-                <div>
-                  <span class="text-muted">IP </span>
-                  <span class="font-mono">{{ detailRow.ip || '-' }}</span>
-                </div>
-              </div>
-            </UCard>
-          </div>
-        </template>
-      </UModal>
     </template>
   </UDashboardPanel>
 </template>
