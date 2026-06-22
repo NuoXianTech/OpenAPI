@@ -15,7 +15,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:unit": "vitest --project unit",
+    "test:nuxt": "vitest --project nuxt"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.1",
@@ -40,10 +42,13 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "1.15.2",
+    "@nuxt/test-utils": "^4.0.3",
     "@types/node": "^24.12.4",
     "@types/nodemailer": "^8.0.0",
+    "@vue/test-utils": "^2.4.11",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.4.1",
+    "happy-dom": "^20.10.6",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9",
     "vue-tsc": "^3.3.3"
