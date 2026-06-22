@@ -74,17 +74,34 @@ quickActions: [
 
 `CommonNotificationBell`（站内信收件箱）是 **user 专属**——admin 走 env、无 `users` 表记录也无收件箱。它**不进**共用的 `DashboardHeaderActions`，而由 `UserHeaderActions`（= `DashboardHeaderActions` + 铃铛塞进其 `<slot />`）注入：user 页面 navbar 用 `UserHeaderActions`，admin 页面用裸 `DashboardHeaderActions`（slot 为空，无铃铛、无角色判断）。点击从右侧滑出 Slideover 通知中心（无独立页面）。**不要** 复制铃铛代码到页面。
 
-## 6. 分页 & 筛选（待统一）
+## 6. 分页 & 筛选
 
 - 现阶段表格用 `DashboardDataTable` 支持 `v-model:page` / `:page-size` / `:total` 自动渲染 `UPagination`
-- 下一轮规范化会把 admin 的 list 接口统一改为 `{ items, total }` 并加 `limit/offset` 查询参数
-- 筛选条件下一轮将统一通过 `useUrlSearchParams` 写回 URL，刷新可恢复
+- 私有长列表优先用 `usePrivatePagedList` 请求 `{ items, total }` 风格接口，并通过 `limit/offset` 查询参数分页
+- 需要刷新恢复 / 分享查询条件的长列表，优先用 `useDashboardListState` 同步稳定筛选项到 URL
 
 新加表格请：
 
 1. 用 `DashboardDataTable`
 2. 数据若可能很大（>200 行），与后端约定服务端分页，传 `:page` / `:page-size` / `:total`
 3. 别再手写"上一页 / 下一页"按钮
+
+### 6.1 列表状态与 URL 同步
+
+长列表页优先使用 `useDashboardListState` 管理 `filters` / `page` / `pageSize`。私有数据列表继续使用 `usePrivatePagedList` 拉取，确保响应不进入 Nuxt SSR payload。
+
+适合写入 URL 的状态：
+
+- 调用日志等排查型页面的筛选条件
+- 当前页与每页条数
+- 简短、稳定、可分享的查询值
+
+不适合写入 URL 的状态：
+
+- 弹窗开关
+- 行选择
+- 临时输入但尚未点击“查询”的内容
+- API Key 明文或其它敏感内容
 
 ## 7. Modal 推荐路径
 
