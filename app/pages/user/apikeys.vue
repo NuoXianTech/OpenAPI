@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { LazyApiKeyResetModal } from '#components'
 import { parseFetchError } from '#shared/utils/clientError'
 import { useApiKeys } from '~/composables/api/useApiKeys'
 import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
@@ -116,29 +117,14 @@ async function submitEdit() {
 // ------------------------------------------------------------
 // 重置
 // ------------------------------------------------------------
-const resetOpen = ref(false)
-const resetTarget = ref<ApiKeyItem | null>(null)
-const resetLoading = ref(false)
-const resetResult = ref<ApiKeyItem | null>(null)
+const overlay = useOverlay()
+const resetModal = overlay.create(LazyApiKeyResetModal, { destroyOnClose: true })
 
 function openReset(row: ApiKeyItem) {
-  resetTarget.value = row
-  resetResult.value = null
-  resetOpen.value = true
-}
-
-async function confirmReset() {
-  if (!resetTarget.value) return
-  resetLoading.value = true
-  try {
-    const res = await resetKey(resetTarget.value.id)
-    resetResult.value = res || null
-    toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
-  } catch (err) {
-    toast.add({ title: parseFetchError(err, '重置失败'), color: 'error' })
-  } finally {
-    resetLoading.value = false
-  }
+  resetModal.open({
+    target: row,
+    onReset: resetKey
+  })
 }
 
 // ------------------------------------------------------------
@@ -465,68 +451,6 @@ const columns: TableColumn<ApiKeyItem>[] = [
               @click="submitEdit"
             >
               保存
-            </UButton>
-          </div>
-        </template>
-      </UModal>
-
-      <!-- 重置 Key -->
-      <UModal
-        v-model:open="resetOpen"
-        :title="resetResult ? '已重置，请保存新 Key' : '确认重置 API Key'"
-        :ui="{ content: 'sm:max-w-md' }"
-      >
-        <template #body>
-          <template v-if="!resetResult">
-            <UAlert
-              color="warning"
-              variant="subtle"
-              title="重置将立即让旧 Key 失效"
-              :description="`将重置「${resetTarget?.name || '默认密钥'}」，所有正在使用旧 Key 的调用方会立刻失败，请确认后再继续。`"
-              icon="i-mdi-alert-outline"
-            />
-          </template>
-          <template v-else>
-            <code class="block font-mono text-sm break-all p-3 rounded bg-elevated">
-              {{ resetResult.apiKey }}
-            </code>
-          </template>
-        </template>
-
-        <template #footer>
-          <div
-            v-if="!resetResult"
-            class="flex justify-end gap-2 w-full"
-          >
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="resetOpen = false"
-            >
-              取消
-            </UButton>
-            <UButton
-              color="warning"
-              :loading="resetLoading"
-              @click="confirmReset"
-            >
-              确认重置
-            </UButton>
-          </div>
-          <div
-            v-else
-            class="flex justify-end gap-2 w-full"
-          >
-            <UButton
-              variant="outline"
-              color="neutral"
-              icon="i-mdi-content-copy"
-              @click="copy(resetResult.apiKey)"
-            >
-              复制
-            </UButton>
-            <UButton @click="resetOpen = false">
-              我已保存
             </UButton>
           </div>
         </template>
