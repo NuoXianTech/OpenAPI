@@ -32,13 +32,13 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
 </script>
 
 <template>
-  <UDashboardGroup>
+  <UDashboardGroup class="dashboard-shell">
     <UDashboardSidebar
       :id="resolved.id"
       v-model:open="open"
       collapsible
       resizable
-      class="bg-elevated/25"
+      class="dashboard-sidebar"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
@@ -54,7 +54,7 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
             variant="ghost"
             block
             :square="collapsed"
-            class="data-[state=open]:bg-elevated"
+            class="dashboard-brand-trigger data-[state=open]:bg-elevated"
             :ui="{ trailingIcon: 'size-5' }"
           />
         </UDropdownMenu>

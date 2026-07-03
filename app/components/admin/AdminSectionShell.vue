@@ -13,7 +13,10 @@ useHead({ title: props.title })
 <template>
   <UDashboardPanel :id="id">
     <template #header>
-      <UDashboardNavbar :title="title">
+      <UDashboardNavbar
+        :title="title"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -21,7 +24,7 @@ useHead({ title: props.title })
           <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
-      <UDashboardToolbar>
+      <UDashboardToolbar class="dashboard-toolbar">
         <UNavigationMenu
           :items="items"
           highlight
@@ -31,7 +34,9 @@ useHead({ title: props.title })
     </template>
 
     <template #body>
-      <NuxtPage />
+      <div class="dashboard-section-page">
+        <NuxtPage />
+      </div>
     </template>
   </UDashboardPanel>
 </template>

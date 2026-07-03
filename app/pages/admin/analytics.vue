@@ -29,7 +29,10 @@ const {
 <template>
   <UDashboardPanel id="admin-analytics">
     <template #header>
-      <UDashboardNavbar title="数据看板">
+      <UDashboardNavbar
+        title="数据看板"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

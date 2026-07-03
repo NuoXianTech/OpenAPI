@@ -64,6 +64,72 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.dashboard-shell {
+  min-height: 100dvh;
+  background: var(--ui-bg);
+}
+
+.dashboard-sidebar {
+  background: color-mix(in oklab, var(--ui-bg-elevated) 72%, var(--ui-bg) 28%);
+  border-color: var(--ui-border);
+  box-shadow: 18px 0 42px -40px color-mix(in oklab, var(--ui-text) 28%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.dashboard-brand-trigger {
+  border: 1px solid transparent;
+}
+
+.dashboard-navbar {
+  background: color-mix(in oklab, var(--ui-bg) 88%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+.dashboard-toolbar {
+  background: color-mix(in oklab, var(--ui-bg-elevated) 80%, var(--ui-bg) 20%);
+}
+
+.dashboard-section-page {
+  position: relative;
+  isolation: isolate;
+}
+
+.dashboard-section-page::before {
+  position: absolute;
+  inset: -1.5rem -1rem auto;
+  z-index: -1;
+  height: 14rem;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--ui-bg-elevated) 56%, transparent), transparent 72%);
+}
+
+.dashboard-action-bar {
+  padding: 0.75rem;
+  background: color-mix(in oklab, var(--ui-bg-elevated) 90%, transparent);
+  border: 1px solid var(--ui-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 16px 36px -34px color-mix(in oklab, var(--ui-text) 34%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.dashboard-gradient-alert {
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--ui-info) 30%, var(--ui-border));
+  background:
+    color-mix(in oklab, var(--ui-bg-elevated) 92%, var(--ui-info) 4%);
+}
+
+.dashboard-data-table {
+  padding: 0.75rem;
+  background: color-mix(in oklab, var(--ui-bg-elevated) 92%, transparent);
+  border: 1px solid var(--ui-border);
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 46px -40px color-mix(in oklab, var(--ui-text) 36%, transparent);
+  backdrop-filter: blur(14px);
+}
+
 @layer base {
   body {
     @apply antialiased text-default bg-default scheme-light dark:scheme-dark;

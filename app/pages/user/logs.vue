@@ -56,7 +56,10 @@ function openDetail(row: UserCallLogRow) {
 <template>
   <UDashboardPanel id="user-logs">
     <template #header>
-      <UDashboardNavbar title="调用日志">
+      <UDashboardNavbar
+        title="调用日志"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

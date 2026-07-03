@@ -55,7 +55,10 @@ const {
 <template>
   <UDashboardPanel id="admin-redemption-codes">
     <template #header>
-      <UDashboardNavbar title="兑换码">
+      <UDashboardNavbar
+        title="兑换码"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

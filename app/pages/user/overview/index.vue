@@ -63,7 +63,10 @@ async function copyCurl() {
 <template>
   <UDashboardPanel id="user-overview">
     <template #header>
-      <UDashboardNavbar title="概览">
+      <UDashboardNavbar
+        title="概览"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

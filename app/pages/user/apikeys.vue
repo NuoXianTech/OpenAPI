@@ -220,7 +220,10 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 <template>
   <UDashboardPanel id="user-apikeys">
     <template #header>
-      <UDashboardNavbar title="API Key">
+      <UDashboardNavbar
+        title="API Key"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -234,159 +237,161 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
     </template>
 
     <template #body>
-      <UAlert
-        color="info"
-        variant="subtle"
-        icon="i-mdi-information-outline"
-        title="API Key 使用说明"
-        class="mb-6"
-      >
-        <template #description>
-          <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">
-            <li>
-              请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apikey=&lt;your-key&gt;</UKbd> 中。
-            </li>
-            <li>
-              出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。
-            </li>
-            <li>
-              <span class="font-medium text-highlighted">过期</span>的 Key 不会被删除或禁用，调用时会返回到期信息；<span class="font-medium text-highlighted">重置</span>会立即让旧 Key 失效；<span class="font-medium text-highlighted">删除</span>不可恢复。
-            </li>
-            <li>
-              IP 白名单使用 CIDR 格式：单 IP 写成 <UKbd>1.2.3.4/32</UKbd>，网段写成 <UKbd>10.0.0.0/8</UKbd>。
-            </li>
-          </ul>
-        </template>
-      </UAlert>
-
-      <div class="flex justify-end mb-4">
-        <UButton
-          icon="i-mdi-plus"
-          @click="openCreate"
+      <div class="dashboard-section-page space-y-6">
+        <UAlert
+          color="info"
+          variant="subtle"
+          icon="i-mdi-information-outline"
+          title="API Key 使用说明"
+          class="dashboard-gradient-alert"
         >
-          生成新 Key
-        </UButton>
-      </div>
+          <template #description>
+            <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">
+              <li>
+                请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apikey=&lt;your-key&gt;</UKbd> 中。
+              </li>
+              <li>
+                出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。
+              </li>
+              <li>
+                <span class="font-medium text-highlighted">过期</span>的 Key 不会被删除或禁用，调用时会返回到期信息；<span class="font-medium text-highlighted">重置</span>会立即让旧 Key 失效；<span class="font-medium text-highlighted">删除</span>不可恢复。
+              </li>
+              <li>
+                IP 白名单使用 CIDR 格式：单 IP 写成 <UKbd>1.2.3.4/32</UKbd>，网段写成 <UKbd>10.0.0.0/8</UKbd>。
+              </li>
+            </ul>
+          </template>
+        </UAlert>
 
-      <DashboardDataTable
-        :data="items"
-        :columns="columns"
-        :loading="status === 'pending'"
-        :fixed="false"
-        empty-title="暂无 API Key"
-        empty-icon="i-mdi-key-outline"
-      >
-        <template #name-cell="{ row }">
-          <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
-        </template>
-
-        <template #apiKey-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
-              {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
-            </code>
-            <UButton
-              :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              @click="toggleReveal(row.original.id)"
-            />
-            <UButton
-              icon="i-mdi-content-copy"
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              @click="copy(row.original.apiKey)"
-            />
-          </div>
-        </template>
-
-        <template #quota-cell="{ row }">
-          <span
-            class="tabular-nums text-xs"
-            :class="row.original.totalQuota === null ? 'text-muted' : ''"
-          >{{ apiKeyQuotaText(row.original) }}</span>
-        </template>
-
-        <template #scopes-cell="{ row }">
-          <UTooltip
-            v-if="row.original.scopes && row.original.scopes.length > 0"
-            :text="row.original.scopes.map(s => scopeLabelMap.get(s) || s).join('\n')"
-            :content="{ side: 'top' }"
+        <div class="dashboard-action-bar flex justify-end">
+          <UButton
+            icon="i-mdi-plus"
+            @click="openCreate"
           >
-            <UBadge
-              variant="soft"
-              color="neutral"
-              class="cursor-help"
-            >
-              {{ apiKeyScopesText(row.original.scopes, scopeLabelMap) }}
-            </UBadge>
-          </UTooltip>
-          <span
-            v-else
-            class="text-xs text-muted"
-          >全部接口</span>
-        </template>
+            生成新 Key
+          </UButton>
+        </div>
 
-        <template #ipWhitelist-cell="{ row }">
-          <UTooltip
-            v-if="row.original.ipWhitelist && row.original.ipWhitelist.length > 0"
-            :text="row.original.ipWhitelist.join('\n')"
-            :content="{ side: 'top' }"
-          >
-            <UBadge
-              variant="soft"
-              color="neutral"
-              class="cursor-help font-mono"
-            >
-              {{ apiKeyIpText(row.original.ipWhitelist) }}
-            </UBadge>
-          </UTooltip>
-          <span
-            v-else
-            class="text-xs text-muted"
-          >全部 IP</span>
-        </template>
+        <DashboardDataTable
+          :data="items"
+          :columns="columns"
+          :loading="status === 'pending'"
+          :fixed="false"
+          empty-title="暂无 API Key"
+          empty-icon="i-mdi-key-outline"
+        >
+          <template #name-cell="{ row }">
+            <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
+          </template>
 
-        <template #totalCalls-cell="{ row }">
-          <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
-        </template>
+          <template #apiKey-cell="{ row }">
+            <div class="flex items-center gap-2">
+              <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
+                {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
+              </code>
+              <UButton
+                :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                @click="toggleReveal(row.original.id)"
+              />
+              <UButton
+                icon="i-mdi-content-copy"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                @click="copy(row.original.apiKey)"
+              />
+            </div>
+          </template>
 
-        <template #lastUsedAt-cell="{ row }">
-          <div class="flex flex-col text-xs">
-            <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+          <template #quota-cell="{ row }">
             <span
-              v-if="row.original.lastUsedIp"
-              class="text-muted font-mono"
-            >{{ row.original.lastUsedIp }}</span>
-          </div>
-        </template>
+              class="tabular-nums text-xs"
+              :class="row.original.totalQuota === null ? 'text-muted' : ''"
+            >{{ apiKeyQuotaText(row.original) }}</span>
+          </template>
 
-        <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
-        </template>
+          <template #scopes-cell="{ row }">
+            <UTooltip
+              v-if="row.original.scopes && row.original.scopes.length > 0"
+              :text="row.original.scopes.map(s => scopeLabelMap.get(s) || s).join('\n')"
+              :content="{ side: 'top' }"
+            >
+              <UBadge
+                variant="soft"
+                color="neutral"
+                class="cursor-help"
+              >
+                {{ apiKeyScopesText(row.original.scopes, scopeLabelMap) }}
+              </UBadge>
+            </UTooltip>
+            <span
+              v-else
+              class="text-xs text-muted"
+            >全部接口</span>
+          </template>
 
-        <template #expiresAt-cell="{ row }">
-          <span
-            class="text-xs"
-            :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
-          >{{ formatDateOrDash(row.original.expiresAt) }}</span>
-        </template>
+          <template #ipWhitelist-cell="{ row }">
+            <UTooltip
+              v-if="row.original.ipWhitelist && row.original.ipWhitelist.length > 0"
+              :text="row.original.ipWhitelist.join('\n')"
+              :content="{ side: 'top' }"
+            >
+              <UBadge
+                variant="soft"
+                color="neutral"
+                class="cursor-help font-mono"
+              >
+                {{ apiKeyIpText(row.original.ipWhitelist) }}
+              </UBadge>
+            </UTooltip>
+            <span
+              v-else
+              class="text-xs text-muted"
+            >全部 IP</span>
+          </template>
 
-        <template #status-cell="{ row }">
-          <UBadge
-            :color="apiKeyStatus(row.original).color"
-            variant="subtle"
-          >
-            {{ apiKeyStatus(row.original).label }}
-          </UBadge>
-        </template>
+          <template #totalCalls-cell="{ row }">
+            <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
+          </template>
 
-        <template #actions-cell="{ row }">
-          <DashboardRowActions :items="getRowItems(row.original)" />
-        </template>
-      </DashboardDataTable>
+          <template #lastUsedAt-cell="{ row }">
+            <div class="flex flex-col text-xs">
+              <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+              <span
+                v-if="row.original.lastUsedIp"
+                class="text-muted font-mono"
+              >{{ row.original.lastUsedIp }}</span>
+            </div>
+          </template>
+
+          <template #createdAt-cell="{ row }">
+            <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+          </template>
+
+          <template #expiresAt-cell="{ row }">
+            <span
+              class="text-xs"
+              :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
+            >{{ formatDateOrDash(row.original.expiresAt) }}</span>
+          </template>
+
+          <template #status-cell="{ row }">
+            <UBadge
+              :color="apiKeyStatus(row.original).color"
+              variant="subtle"
+            >
+              {{ apiKeyStatus(row.original).label }}
+            </UBadge>
+          </template>
+
+          <template #actions-cell="{ row }">
+            <DashboardRowActions :items="getRowItems(row.original)" />
+          </template>
+        </DashboardDataTable>
+      </div>
 
       <!-- 创建 Key -->
       <UModal

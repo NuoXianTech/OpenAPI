@@ -49,10 +49,10 @@ const emit = defineEmits<{
 // 后台表格统一外观：圆角描边 + 行分隔线。原先散落在各列表页的同款 :ui 收敛到此。
 const DEFAULT_TABLE_UI = {
   base: 'table-fixed border-separate border-spacing-0',
-  thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+  thead: '[&>tr]:bg-elevated/70 [&>tr]:after:content-none',
   tbody: '[&>tr]:last:[&>td]:border-b-0',
   th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-  td: 'border-b border-default',
+  td: 'border-b border-default bg-default/35',
   separator: 'h-0'
 }
 const tableUi = computed(() => ({
@@ -81,7 +81,7 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
 </script>
 
 <template>
-  <div class="flex flex-col gap-3">
+  <div class="dashboard-data-table flex flex-col gap-3">
     <UEmpty
       v-if="showEmpty"
       :icon="emptyIcon"

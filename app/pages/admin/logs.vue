@@ -55,7 +55,10 @@ function formatDate(iso: string) {
 <template>
   <UDashboardPanel id="admin-logs">
     <template #header>
-      <UDashboardNavbar title="调用日志">
+      <UDashboardNavbar
+        title="调用日志"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
