@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from 'node:crypto'
-import { and, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys } from '@nuxthub/db/schema'
 
 const SECRET_BYTES = 32
@@ -219,6 +219,54 @@ export const apiKeyService = {
   },
 
   /**
+   * 在 gate 阶段原子预占 API Key 使用额度。
+   *
+   * 这一步同时覆盖"无限配额"与"有限 totalQuota"两类 key：
+   * - totalQuota = null：直接累加 usedCredits，用作真实使用量统计
+   * - totalQuota 有值：只有 usedCredits + amount <= totalQuota 时才累加
+   *
+   * 预占成功后，成功调用无需再二次累加；业务失败 / 非扣费响应必须调用
+   * releaseReservedCredits 释放预占额度。
+   */
+  async reserveUsedCredits(id: number, amount: number): Promise<boolean> {
+    const delta = Math.max(Math.trunc(amount), 0)
+    if (delta === 0) return true
+
+    const rows = await db.update(apiKeys)
+      .set({
+        usedCredits: sql`${apiKeys.usedCredits} + ${delta}`,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(apiKeys.id, id),
+        isNull(apiKeys.revokedAt),
+        eq(apiKeys.isActive, true),
+        or(
+          isNull(apiKeys.totalQuota),
+          sql`${apiKeys.usedCredits} + ${delta} <= ${apiKeys.totalQuota}`
+        )!
+      ))
+      .returning({ id: apiKeys.id })
+
+    return Boolean(rows[0])
+  },
+
+  /**
+   * 释放 gate 阶段的额度预占。使用 greatest 防御重复释放或并发修正导致的负数。
+   */
+  async releaseReservedCredits(id: number, amount: number): Promise<void> {
+    const delta = Math.max(Math.trunc(amount), 0)
+    if (delta === 0) return
+
+    await db.update(apiKeys)
+      .set({
+        usedCredits: sql`greatest(${apiKeys.usedCredits} - ${delta}, 0)`,
+        updatedAt: new Date()
+      })
+      .where(eq(apiKeys.id, id))
+  },
+
+  /**
    * 记录一次使用：更新 lastUsedAt/lastUsedIp 并累加 totalCalls。
    * 调用方（middleware）应 fire-and-forget，失败不影响业务。
    */
@@ -229,20 +277,6 @@ export const apiKeyService = {
         lastUsedIp: ip,
         totalCalls: sql`${apiKeys.totalCalls} + 1`
       })
-      .where(eq(apiKeys.id, id))
-  },
-
-  /**
-   * 扣费成功后累加该 Key 的 usedCredits。
-   * - amount<=0 直接返回；不允许使 usedCredits 倒退
-   * - 用 SQL 原子加避免并发竞态
-   * - 调用方应 fire-and-forget；失败仅日志，不影响业务（资金已扣 users.credits）
-   */
-  async addUsedCredits(id: number, amount: number) {
-    const delta = Math.max(Math.trunc(amount), 0)
-    if (delta === 0) return
-    await db.update(apiKeys)
-      .set({ usedCredits: sql`${apiKeys.usedCredits} + ${delta}` })
       .where(eq(apiKeys.id, id))
   }
 }

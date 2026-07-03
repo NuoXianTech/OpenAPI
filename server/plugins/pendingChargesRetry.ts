@@ -3,7 +3,6 @@
  */
 
 import { apiCallService } from '~~/server/service/apiCallService'
-import { apiKeyService } from '~~/server/service/apiKeyService'
 import { creditService } from '~~/server/service/creditService'
 import { pendingChargeService } from '~~/server/service/pendingChargeService'
 
@@ -38,16 +37,6 @@ async function runOnce() {
       })
       if (r.charged > 0) {
         await apiCallService.patchCreditsCost(row.apiCallId, r.charged)
-        const apiKeyId = await apiCallService.getApiKeyIdForCall(row.apiCallId).catch(() => null)
-        if (apiKeyId) {
-          apiKeyService.addUsedCredits(apiKeyId, r.charged).catch((err) => {
-            console.error('[pending-charges] failed to accumulate apiKey usedCredits', {
-              apiKeyId,
-              amount: r.charged,
-              error: (err as Error).message
-            })
-          })
-        }
       }
       await pendingChargeService.complete(row.id)
     } catch (err) {

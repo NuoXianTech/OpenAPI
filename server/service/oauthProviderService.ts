@@ -22,6 +22,13 @@ export interface OauthProviderRow {
   isEnabled: boolean
 }
 
+export interface AdminOauthProviderSafe {
+  provider: SupportedOauthProvider
+  clientId: string
+  clientSecret: string
+  isEnabled: boolean
+}
+
 type SiteSettingsRow = Awaited<ReturnType<typeof siteSettingsService.getOrCreate>>
 
 // provider → siteSettings 列名映射，集中一处。
@@ -43,6 +50,15 @@ function rowFromSettings(settings: SiteSettingsRow, provider: SupportedOauthProv
     clientId: settings[cols.clientId],
     clientSecret: settings[cols.clientSecret],
     isEnabled: settings[cols.isEnabled]
+  }
+}
+
+export function toAdminOauthProviderSafe(row: OauthProviderRow): AdminOauthProviderSafe {
+  return {
+    provider: row.provider,
+    clientId: row.clientId,
+    clientSecret: row.clientSecret ? '***' : '',
+    isEnabled: row.isEnabled
   }
 }
 

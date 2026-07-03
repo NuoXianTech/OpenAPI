@@ -123,6 +123,7 @@ export default defineEventHandler(async (event: H3Event) => {
   event.context.apiBilling = {
     costCredits: effectiveCost,
     apiKeyUserId: result.apiKey?.userId ?? null,
+    apiKeyQuotaReservation: result.quotaReservation,
     // 默认按 statusCode 判定，业务可显式标记
     forcedOutcome: null as 'success' | 'failed' | null,
     failedCode: null as string | null,

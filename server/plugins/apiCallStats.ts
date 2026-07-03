@@ -78,6 +78,8 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     event.node.res.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
+  let quotaReservation: { apiKeyId: number, amount: number } | null = null
+  let shouldReleaseQuotaReservation = false
 
   try {
     const target = event.context.apiStatsTarget
@@ -114,6 +116,8 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
           statusCode
         })
       : false
+    quotaReservation = billing?.apiKeyQuotaReservation ?? null
+    shouldReleaseQuotaReservation = Boolean(quotaReservation) && !willCharge
 
     const errorCode = rejection
       ? rejection.errorCode
@@ -168,15 +172,6 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
         })
         if (r.charged > 0) {
           await apiCallService.patchCreditsCost(callId, r.charged)
-          if (apiKeyId) {
-            apiKeyService.addUsedCredits(apiKeyId, r.charged).catch((err) => {
-              console.error('failed to accumulate apiKey usedCredits', {
-                apiKeyId,
-                amount: r.charged,
-                error: (err as Error).message
-              })
-            })
-          }
         }
       } catch (err) {
         const error = (err as Error).message || 'charge failed'
@@ -214,6 +209,16 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       statusCode,
       error
     })
+  } finally {
+    if (shouldReleaseQuotaReservation && quotaReservation) {
+      await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount).catch((err) => {
+        console.error('failed to release apiKey quota reservation', {
+          apiKeyId: quotaReservation?.apiKeyId,
+          amount: quotaReservation?.amount,
+          error: (err as Error).message
+        })
+      })
+    }
   }
 }
 

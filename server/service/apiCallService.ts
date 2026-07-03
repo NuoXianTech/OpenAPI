@@ -275,14 +275,5 @@ export const apiCallService = {
     await db.update(apiCalls)
       .set({ creditsCost: value })
       .where(eq(apiCalls.id, callId))
-  },
-
-  /** 查 apiCalls.apiKeyId（补偿队列重试时回查归属 Key 用） */
-  async getApiKeyIdForCall(callId: number): Promise<number | null> {
-    const rows = await db.select({ apiKeyId: apiCalls.apiKeyId })
-      .from(apiCalls)
-      .where(eq(apiCalls.id, callId))
-      .limit(1)
-    return rows[0]?.apiKeyId ?? null
   }
 }

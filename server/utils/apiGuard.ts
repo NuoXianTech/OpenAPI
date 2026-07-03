@@ -15,10 +15,16 @@ import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/type
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { getLocalDayStart } from '~~/server/utils/localTime'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
+import { apiKeyService } from '~~/server/service/apiKeyService'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 type ErrorDef = { status: number, code: string, msg: string }
+
+export interface ApiKeyQuotaReservation {
+  apiKeyId: number
+  amount: number
+}
 
 export interface GateDeniedHeaders {
   [key: string]: string
@@ -29,6 +35,7 @@ export type GateResult
     passed: true
     outcome: 'passed'
     apiKey: ApiKeyRecord | null
+    quotaReservation: ApiKeyQuotaReservation | null
     rateLimitHeaders: GateDeniedHeaders
   }
   | {
@@ -135,6 +142,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
 
   const rawKey = readApiKeyFromEvent(event)
   let apiKey: ApiKeyRecord | null = null
+  let quotaReservation: ApiKeyQuotaReservation | null = null
 
   if (rawKey) {
     apiKey = await loadApiKey(rawKey)
@@ -204,19 +212,6 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
   }
 
   if (effectiveCost > 0 && apiKey) {
-    if (apiKey.totalQuota !== null && apiKey.totalQuota !== undefined) {
-      const used = Number(apiKey.usedCredits || 0)
-      const limit = Number(apiKey.totalQuota)
-      if (used + effectiveCost > limit) {
-        return {
-          passed: false,
-          outcome: 'api_key_quota_exceeded',
-          error: API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
-          apiKey
-        }
-      }
-    }
-
     try {
       const userRow = await db.select({ credits: users.credits })
         .from(users)
@@ -233,12 +228,28 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
       })
       return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
     }
+
+    const reserved = await apiKeyService.reserveUsedCredits(apiKey.id, effectiveCost)
+    if (!reserved) {
+      return {
+        passed: false,
+        outcome: 'api_key_quota_exceeded',
+        error: API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
+        apiKey
+      }
+    }
+
+    quotaReservation = {
+      apiKeyId: apiKey.id,
+      amount: effectiveCost
+    }
   }
 
   return {
     passed: true,
     outcome: 'passed',
     apiKey,
+    quotaReservation,
     rateLimitHeaders: rateLimitHeaders(rateResult)
   }
 }

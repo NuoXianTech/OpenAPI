@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { adminUpdateOauthProviderSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
-import { oauthProviderService, type OauthProviderPatch } from '~~/server/service/oauthProviderService'
+import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/service/oauthProviderService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -36,5 +36,5 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: { provider: updated.provider, changedFields: Object.keys(patch) }
   })
 
-  return updated
+  return toAdminOauthProviderSafe(updated)
 })

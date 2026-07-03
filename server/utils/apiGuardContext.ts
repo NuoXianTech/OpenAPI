@@ -27,6 +27,11 @@ export interface ApiKeyContext {
   scopes: string[] | null
 }
 
+export interface ApiKeyQuotaReservationContext {
+  apiKeyId: number
+  amount: number
+}
+
 /**
  * 计费上下文 · gate 通过时挂载，后置 stats 中间件读取以决定扣款。
  *
@@ -37,10 +42,13 @@ export interface ApiKeyContext {
  *   * 'success' → 强制视为成功，照常扣款
  *   * 'failed'  → 强制视为失败，跳过扣款（即使 statusCode=200）
  * - failedCode / failedMessage：业务标记失败时的明细，写入 apiCalls.errorCode/errorMessage
+ * - apiKeyQuotaReservation：gate 阶段已原子预占的 API Key 使用额度；成功扣费时保留，
+ *   业务失败 / 非扣费响应由 stats plugin 释放
  */
 export interface ApiBillingContext {
   costCredits: number
   apiKeyUserId: number | null
+  apiKeyQuotaReservation: ApiKeyQuotaReservationContext | null
   forcedOutcome: 'success' | 'failed' | null
   failedCode: string | null
   failedMessage: string | null
