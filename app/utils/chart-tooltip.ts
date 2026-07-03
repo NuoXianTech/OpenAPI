@@ -20,7 +20,7 @@ export interface ChartTooltipFooterItem {
   value: string
 }
 
-export interface ChartTooltipOptions {
+interface ChartTooltipOptions {
   title: string
   /** 副标题，常用于接口路径等次要信息（等宽字体展示） */
   subtitle?: string

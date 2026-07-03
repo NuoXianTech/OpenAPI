@@ -5,7 +5,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 </script>
 
 <template>
-  <AdminSectionShell
+  <DashboardSectionShell
     id="admin-apis"
     title="接口管理"
     :items="adminApisLinks"

@@ -5,7 +5,7 @@ definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 </script>
 
 <template>
-  <AdminSectionShell
+  <DashboardSectionShell
     id="admin-system"
     title="系统"
     :items="adminSystemLinks"

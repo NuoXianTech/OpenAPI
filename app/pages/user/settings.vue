@@ -5,9 +5,13 @@ definePageMeta({ layout: 'user', middleware: 'auth-user' })
 </script>
 
 <template>
-  <UserSectionShell
+  <DashboardSectionShell
     id="user-settings"
     title="个人设置"
     :items="userSettingsLinks"
-  />
+  >
+    <template #right>
+      <UserHeaderActions />
+    </template>
+  </DashboardSectionShell>
 </template>

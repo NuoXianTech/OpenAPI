@@ -21,7 +21,9 @@ useHead({ title: props.title })
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions />
+          <slot name="right">
+            <DashboardHeaderActions />
+          </slot>
         </template>
       </UDashboardNavbar>
       <UDashboardToolbar class="dashboard-toolbar">

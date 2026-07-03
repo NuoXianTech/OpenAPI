@@ -8,7 +8,7 @@ import { ADMIN_REDEMPTION_CODES_PATH } from './admin-sections/redemption-codes'
 import { ADMIN_OVERVIEW_PATH } from './admin-sections/overview'
 import { USER_OVERVIEW_PATH } from './user-sections/overview'
 
-export interface DashboardNavGroup {
+interface DashboardNavGroup {
   label?: string
   items: NavigationMenuItem[]
 }

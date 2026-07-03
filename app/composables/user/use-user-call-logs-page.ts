@@ -36,7 +36,7 @@ export interface UserCallLogFilters {
   status: 'all' | 'success' | 'failure'
 }
 
-export interface UseUserCallLogsPageOptions {
+interface UseUserCallLogsPageOptions {
   immediate?: boolean
   replaceQuery?: (query: Record<string, string | number>) => void | Promise<void>
   routeQuery?: MaybeRefOrGetter<Record<string, unknown>>

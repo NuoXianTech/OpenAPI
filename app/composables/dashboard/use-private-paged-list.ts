@@ -15,7 +15,7 @@ export interface PrivatePagedPagination {
   offset: number
 }
 
-export interface UsePrivatePagedListOptions<
+interface UsePrivatePagedListOptions<
   TFilters extends object,
   TItem
 > {
@@ -34,7 +34,7 @@ export interface UsePrivatePagedListOptions<
   transform?: (resp: unknown) => { items: TItem[], total: number }
 }
 
-export interface UsePrivatePagedListReturn<TFilters, TItem> {
+interface UsePrivatePagedListReturn<TFilters, TItem> {
   filters: TFilters
   page: Ref<number>
   pageSize: Ref<number>

@@ -59,7 +59,7 @@ export interface CheckinResult {
   nextCheckinAt: string
 }
 
-export type CreditDirection = 'all' | 'in' | 'out'
+type CreditDirection = 'all' | 'in' | 'out'
 
 interface CreditTxnFilters extends Record<string, unknown> {
   reason: CreditReasonFilter

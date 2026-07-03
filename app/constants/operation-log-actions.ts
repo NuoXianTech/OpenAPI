@@ -8,7 +8,7 @@
  * 未命中的 key 由 resolveOperationLogActionLabel 回退为原始 key，不会渲染空白。
  */
 
-export const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
+const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
   // ─── 接口分类 ───────────────────────────────────────────────
   'admin.api-category.create': '创建接口分类',
   'admin.api-category.update': '更新接口分类',

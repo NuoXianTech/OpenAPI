@@ -33,7 +33,7 @@ export interface AdminCallLogsFilters {
   requestId: string
 }
 
-export interface UseAdminCallLogsPageOptions {
+interface UseAdminCallLogsPageOptions {
   immediate?: boolean
   replaceQuery?: (query: Record<string, string | number>) => void | Promise<void>
   routeQuery?: MaybeRefOrGetter<Record<string, unknown>>

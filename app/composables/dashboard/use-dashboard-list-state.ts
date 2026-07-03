@@ -17,7 +17,7 @@ export type DashboardListQueryCodecs<TFilters extends object> = {
   [K in keyof TFilters]?: DashboardQueryCodec<TFilters[K]>
 }
 
-export interface UseDashboardListStateOptions<TFilters extends object> {
+interface UseDashboardListStateOptions<TFilters extends object> {
   defaultFilters: TFilters
   defaultPage?: number
   defaultPageSize?: number
@@ -28,7 +28,7 @@ export interface UseDashboardListStateOptions<TFilters extends object> {
   filterCodecs?: DashboardListQueryCodecs<TFilters>
 }
 
-export interface UseDashboardListStateReturn<TFilters extends object> {
+interface UseDashboardListStateReturn<TFilters extends object> {
   filters: TFilters
   page: Ref<number>
   pageSize: Ref<number>

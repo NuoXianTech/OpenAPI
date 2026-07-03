@@ -6,7 +6,7 @@
  *
  * 注意:这是 HTTP 方法着色，与「登录方式」着色(LOGIN_METHOD_META)是两个概念，勿混用。
  */
-export type HttpMethodColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
+type HttpMethodColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 export function httpMethodColor(method: string): HttpMethodColor {
   switch (method.trim().toUpperCase()) {

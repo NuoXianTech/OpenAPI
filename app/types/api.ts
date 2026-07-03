@@ -14,12 +14,6 @@ export interface ApiCatalogItem {
   totalCalls: number
 }
 
-export interface ApiCatalogFilters {
-  keyword?: string
-  status?: number
-  categoryId?: number
-}
-
 export interface ApiCategoryItem {
   id: number
   code: string
