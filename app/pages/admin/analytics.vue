@@ -8,7 +8,7 @@ import {
 useHead({ title: '数据看板' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 
-const { data, status, refresh } = useLazyFetch<AdminAnalyticsData>('/api/admin/analytics', {
+const { data } = useLazyFetch<AdminAnalyticsData>('/api/admin/analytics', {
   default: () => createEmptyAdminAnalyticsData()
 })
 
@@ -37,10 +37,7 @@ const {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
+          <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>

@@ -20,7 +20,6 @@ const {
   loading,
   applyFilters,
   resetFilters,
-  refresh,
   typeSelectItems,
   apiSelectItems,
   categorySelectItems,
@@ -47,6 +46,10 @@ function openDetail(row: AdminLogRow) {
   detailModal.open({ row })
 }
 
+function toggleAdvancedFilters() {
+  expandedFilters.value = !expandedFilters.value
+}
+
 function formatDate(iso: string) {
   return formatDateTime(iso)
 }
@@ -63,10 +66,7 @@ function formatDate(iso: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="loading"
-          />
+          <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>
@@ -219,7 +219,7 @@ function formatDate(iso: string) {
                 :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
                 variant="outline"
                 :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-                @click="expandedFilters = !expandedFilters"
+                @click="toggleAdvancedFilters"
               >
                 更多筛选
                 <UBadge

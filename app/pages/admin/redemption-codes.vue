@@ -15,7 +15,6 @@ const {
   total,
   loading,
   batches,
-  fetchList,
   init,
   applyFilters,
   resetFilters,
@@ -33,6 +32,10 @@ const generateOpen = ref(false)
 onMounted(() => {
   void init()
 })
+
+function openGenerateModal() {
+  generateOpen.value = true
+}
 
 const {
   statusItems,
@@ -63,10 +66,7 @@ const {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
-            :on-refresh="fetchList"
-            :refreshing="loading"
-          />
+          <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>
@@ -111,7 +111,7 @@ const {
             <UButton
               icon="i-mdi-plus"
               color="primary"
-              @click="generateOpen = true"
+              @click="openGenerateModal"
             >
               生成兑换码
             </UButton>

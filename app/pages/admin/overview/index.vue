@@ -52,7 +52,7 @@ function createEmptyDashboardData(): AdminDashboardData {
   }
 }
 
-const { data, status, refresh } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
+const { data, status } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
   query: computed(() => ({ days: selectedRange.value })),
   default: createEmptyDashboardData
 })
@@ -99,10 +99,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="status === 'pending'"
-          />
+          <DashboardHeaderActions />
         </template>
       </UDashboardNavbar>
     </template>
