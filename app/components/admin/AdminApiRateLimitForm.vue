@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAdminApiForm } from '~/composables/admin/useAdminApiForm'
+
 const state = useAdminApiForm()
 </script>
 

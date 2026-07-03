@@ -1,5 +1,5 @@
-import type { ApiCatalogItem } from './types'
-import type { FilterTabOption } from '~/composables/ui/types'
+import type { ApiCatalogItem } from '~/types/api'
+import type { FilterTabOption } from '~/types/ui'
 
 export function usePublicApiList() {
   const { data, pending, error, refresh } = useFetch<ApiCatalogItem[]>(

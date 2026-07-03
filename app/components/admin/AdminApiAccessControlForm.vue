@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAdminApiForm } from '~/composables/admin/useAdminApiForm'
+
 defineProps<{ hasChargedMethod: boolean }>()
 
 const state = useAdminApiForm()

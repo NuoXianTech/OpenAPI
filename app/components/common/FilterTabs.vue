@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { FilterTabOption } from '~/composables/ui/types'
+import type { FilterTabOption } from '~/types/ui'
 
 const props = withDefaults(defineProps<{
   modelValue: string | number

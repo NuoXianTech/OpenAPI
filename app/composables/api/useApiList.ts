@@ -1,6 +1,6 @@
 import { usePublicApiList } from './usePublicApiList'
-import type { ApiCatalogItem, ApiCategoryItem } from './types'
-import type { FilterTabOption } from '~/composables/ui/types'
+import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
+import type { FilterTabOption } from '~/types/ui'
 
 export function useApiList() {
   const { result, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()

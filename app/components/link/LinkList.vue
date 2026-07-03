@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { FriendLinkItem } from '~/composables/link/types'
+import type { FriendLinkItem } from '~/types/link'
 
 const { items } = defineProps({
   items: { type: Array as PropType<FriendLinkItem[]>, default: () => [] }

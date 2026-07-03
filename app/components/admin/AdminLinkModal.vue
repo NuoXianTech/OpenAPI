@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { FriendLinkItem } from '~/composables/link/types'
+import type { FriendLinkItem } from '~/types/link'
 import { parseFetchError } from '#shared/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })

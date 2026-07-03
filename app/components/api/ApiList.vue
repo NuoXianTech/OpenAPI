@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { ApiCatalogItem, ApiCategoryItem } from '~/composables/api/types'
+import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
 
 const { items, categoryMap } = defineProps({
   items: { type: Array as PropType<ApiCatalogItem[]>, default: () => [] },

@@ -2,7 +2,7 @@
 import SearchBar from '~/components/common/SearchBar.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
 import LinkList from '~/components/link/LinkList.vue'
-import type { FilterTabOption } from '~/composables/ui/types'
+import type { FilterTabOption } from '~/types/ui'
 import { useFriendLinkList } from '~/composables/link/useFriendLinkList'
 
 useHead({ title: '友情链接' })

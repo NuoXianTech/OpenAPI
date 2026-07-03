@@ -4,7 +4,7 @@ import { parseFetchError } from '#shared/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/useApiKeys'
 import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
-import type { ApiKeyItem } from '~/composables/api/types'
+import type { ApiKeyItem } from '~/types/api'
 import { formatDateTime } from '~/utils/datetime'
 
 useHead({ title: 'API Keys' })

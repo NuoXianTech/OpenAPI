@@ -1,12 +1,12 @@
-import type { ApiKeyFormModel, ApiKeyItem, ApiKeyPayload } from './types'
+import type { ApiKeyFormModel, ApiKeyItem, ApiKeyPayload } from '~/types/api'
 
 /**
  * API Key 创建 / 编辑表单状态机（user 与 admin 共用）。
  *
  * 一份 reactive 模型 + 校验 + payload 构造，取代此前 create / edit 两套并行实现：
- *   - 创建：new useApiKeyForm() → reset()
- *   - 编辑：new useApiKeyForm() → loadFrom(row)
- * 过期时间的「预设 ⇄ datetime-local ⇄ ISO」互转、CIDR 行校验均下沉到 utils/apikey。
+ *   - 创建：useApiKeyForm() → reset()
+ *   - 编辑：useApiKeyForm() → loadFrom(row)
+ * 过期时间的「预设 ⇄ datetime-local ⇄ ISO」互转、CIDR 行校验均下沉到 utils/api-key。
  */
 export function useApiKeyForm() {
   const form = reactive<ApiKeyFormModel>({
