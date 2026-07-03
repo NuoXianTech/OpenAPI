@@ -2,7 +2,7 @@
 // profile 页需要额外字段
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { usersService } from '~~/server/service/userService'
+import { usersService } from '~~/server/services/user-service'
 import { requireAuth } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {

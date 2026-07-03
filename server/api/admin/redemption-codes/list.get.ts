@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
-import type { RedemptionStatus } from '~~/server/service/redemptionService'
-import { redemptionService } from '~~/server/service/redemptionService'
+import type { RedemptionStatus } from '~~/server/services/redemption-service'
+import { redemptionService } from '~~/server/services/redemption-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/requestPagination'
+import { readPaginationQuery } from '~~/server/utils/request-pagination'
 
 const VALID_STATUS: Array<RedemptionStatus | 'all'> = ['all', 'enabled', 'disabled', 'used_up', 'expired', 'available']
 

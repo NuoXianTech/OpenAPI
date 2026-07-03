@@ -4,7 +4,7 @@ import { createError, getRequestIP } from 'h3'
 import { adminLoginSchema } from '#shared/schemas/admin'
 import { ADMIN_ACTOR_ID, createAdminSession } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { assertLoginRateLimit } from '~~/server/utils/loginRateLimit'
+import { assertLoginRateLimit } from '~~/server/utils/login-rate-limit'
 import { readZodBody } from '~~/server/utils/zod'
 
 function safeEquals(left: string, right: string) {

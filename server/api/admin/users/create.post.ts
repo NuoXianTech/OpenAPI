@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminCreateUserSchema } from '#shared/schemas/admin'
-import { usersService } from '~~/server/service/userService'
+import { usersService } from '~~/server/services/user-service'
 import { hashPassword, requireAdmin } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/service/operationLogService'
-import { readRequestMeta } from '~~/server/utils/requestMeta'
+import { operationLogService } from '~~/server/services/operation-log-service'
+import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

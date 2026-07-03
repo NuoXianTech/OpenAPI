@@ -179,7 +179,7 @@ server/lib/yiyan/
 本层的**全部规则**（路径与 `code` 目录约定、构建期 fail-fast 约束、文件名→method 映射、响应壳、入参校验）都在 [对外接口落地规范 §1–§4](./conventions.md) 里，**不在此重复**。接入时只需记住三条硬线：
 
 1. **路径**：`server/routes/v{N}/<code>/...`，`<code>` 必须是**静态目录名**（= 数据库 `apis.code`），不能是 `[id]` 动态段。
-2. **响应**：一律走 [server/utils/openApiResponse.ts](../../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail`，**禁止裸 `return { ... }`**。
+2. **响应**：一律走 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail`，**禁止裸 `return { ... }`**。
 3. **入参校验**：需要校验 body 时用 [`readOpenApiBody`](../../server/utils/zod.ts)（失败自动返回 400 标准壳），**不要**用后台内部接口那套 `readZodBody`（失败抛 H3 错误，不符合对外契约）。
 
 handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-本文重点) 的业务层。最小完整示例见 [对外接口落地规范 §6](./conventions.md#6-最小完整示例) 与现有的 [server/routes/v1/yiyan/index.get.ts](../../server/routes/v1/yiyan/index.get.ts)。
@@ -197,9 +197,9 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 返回 2xx 但要跳过扣费（罕见）→ 单独 markApiCallSuccess / markApiCallFailed
 ```
 
-判定规则（[apiCallOutcome.ts:83-94](../../server/utils/apiCallOutcome.ts#L83-L94) 的 `shouldCharge`）：`costCredits<=0` 或无归属用户 → 不扣；`forcedOutcome='failed'` → 跳过；`'success'` → 必扣；默认按 statusCode（2xx/3xx 扣，4xx/5xx 不扣）。
+判定规则（[api-call-outcome.ts:83-94](../../server/utils/api-call-outcome.ts#L83-L94) 的 `shouldCharge`）：`costCredits<=0` 或无归属用户 → 不扣；`forcedOutcome='failed'` → 跳过；`'success'` → 必扣；默认按 statusCode（2xx/3xx 扣，4xx/5xx 不扣）。
 
-- **业务失败优先用 [`openApiBizFail`](../../server/utils/apiCallOutcome.ts#L63-L72)**：一行完成「标记失败（跳过扣费）+ 写错误日志 + 返回标准壳」，`code`/`message` 不必传两遍。
+- **业务失败优先用 [`openApiBizFail`](../../server/utils/api-call-outcome.ts#L63-L72)**：一行完成「标记失败（跳过扣费）+ 写错误日志 + 返回标准壳」，`code`/`message` 不必传两遍。
 - gate 层错误码（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` …）登记在 [shared/config/api-guard.ts](../../shared/config/api-guard.ts#L32-L46) 的 `API_GUARD_ERROR`；业务 handler 自己的 `code`（`ALGORITHM_NOT_FOUND` / `UPSTREAM_ERROR` …）SCREAMING_SNAKE_CASE 内联即可，不必登记。
 
 详见 [对外接口落地规范 §5](./conventions.md#5-计费标记)。
@@ -210,7 +210,7 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 
 > **核心：注册是自动的，你只需启用。** 字段速查见 [对外接口落地规范 §7](./conventions.md#7-后台启用与配置必做)；下面讲清背后的同步机制。
 
-**机制**：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [server/plugins/manifestSync.ts](../../server/plugins/manifestSync.ts) 会对账 manifest 与 `apis` 表（[manifestSync.ts:3-15](../../server/plugins/manifestSync.ts#L3-L15)）：
+**机制**：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [server/plugins/manifest-sync.ts](../../server/plugins/manifest-sync.ts) 会对账 manifest 与 `apis` 表（[manifest-sync.ts:3-15](../../server/plugins/manifest-sync.ts#L3-L15)）：
 
 - **manifest 有 / DB 无** → **自动以 [`DEFAULT_API_REGISTRATION`](../../shared/config/api-guard.ts#L18-L30) 入库**，但默认 `isEnabled=false`、`isApiKey=false`、`isStatistics=false`、`methodCosts={}`、分钟/小时限流 60/1000，**留待管理员启用**。
 - **manifest 有 / DB 有** → 刷新 `apiPath` / `httpMethod` / `endpointCount`，自动清除 orphan 标记。

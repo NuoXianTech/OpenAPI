@@ -1,5 +1,5 @@
 import { getQuery } from 'h3'
-import { apiCallStatsService } from '~~/server/service/apiCallStatsService'
+import { apiCallStatsService } from '~~/server/services/api-call-stats-service'
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event)

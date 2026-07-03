@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
-import type { CreditReason } from '~~/server/service/creditService'
-import { creditService } from '~~/server/service/creditService'
+import type { CreditReason } from '~~/server/services/credit-service'
+import { creditService } from '~~/server/services/credit-service'
 import { requireAuth } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/requestPagination'
+import { readPaginationQuery } from '~~/server/utils/request-pagination'
 
 const VALID_REASONS: CreditReason[] = ['admin_grant', 'admin_revoke', 'admin_reset', 'api_charge', 'api_refund', 'signup_bonus', 'redemption_code', 'checkin']
 

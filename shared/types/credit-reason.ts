@@ -2,7 +2,7 @@
  * 积分流水原因（credit_transactions.reason）的单一事实来源：
  * 枚举 + 中文展示元数据（标签 + Badge 颜色）。
  *
- * 写入端见 server/service/creditService.ts（直接复用此枚举）；
+ * 写入端见 server/services/credit-service.ts（直接复用此枚举）；
  * 管理端 / 用户端的列表、汇总、筛选统一引用这里，避免标签 / 配色各处重复且漂移。
  */
 

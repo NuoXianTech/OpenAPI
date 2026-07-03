@@ -1,6 +1,6 @@
 import { count, desc, eq, sql, and, isNull, type SQL } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
-import { getLocalDayStart } from '~~/server/utils/localTime'
+import { getLocalDayStart } from '~~/server/utils/local-time'
 import { normalizePagination } from '~~/server/utils/pagination'
 
 export interface AddCallInput {

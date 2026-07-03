@@ -1,4 +1,4 @@
-import { oauthProviderService } from '~~/server/service/oauthProviderService'
+import { oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/shared/types/oauth'
 
 export default defineEventHandler(async () => {

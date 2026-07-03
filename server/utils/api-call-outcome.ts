@@ -5,7 +5,7 @@
  *
  * markApiCallFailed 的两个用途：
  *   1. 把可读的业务失败码 / 文案写入 `apiCalls.errorCode` / `errorMessage`
- *      —— 默认仅 forcedOutcome='failed' 才会持久化这两个字段（见 plugins/apiCallStats.ts）
+ *      —— 默认仅 forcedOutcome='failed' 才会持久化这两个字段（见 plugins/api-call-stats.ts）
  *   2. 极少数业务必须返回 2xx 但仍要跳过扣费（罕见）
  *
  * 反过来，若 handler 抛错 / 返回 5xx 但业务实际上已完成、想正常扣费，
@@ -13,8 +13,8 @@
  *
  * 使用示例（业务失败首选 openApiBizFail，一行完成标记 + 返回）：
  * ```ts
- * import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
- * import { openApiOk } from '~~/server/utils/openApiResponse'
+ * import { openApiBizFail } from '~~/server/utils/api-call-outcome'
+ * import { openApiOk } from '~~/server/utils/open-api-response'
  *
  * export default defineEventHandler(async (event) => {
  *   try {
@@ -30,7 +30,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { openApiFail, type OpenApiResponse } from '~~/server/utils/openApiResponse'
+import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 
 /** 标记本次调用业务成功 · finish 时按成功扣费 */
 export function markApiCallSuccess(event: H3Event) {

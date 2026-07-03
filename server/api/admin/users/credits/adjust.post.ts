@@ -13,8 +13,8 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminAdjustCreditsSchema } from '#shared/schemas/admin'
-import { creditService } from '~~/server/service/creditService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { creditService } from '~~/server/services/credit-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 

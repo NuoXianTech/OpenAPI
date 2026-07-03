@@ -1,7 +1,7 @@
 import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
 import { creditTransactions, users } from '@nuxthub/db/schema'
-import { notificationService } from './notificationService'
-import { siteSettingsService } from './siteSettingsService'
+import { notificationService } from './notification-service'
+import { siteSettingsService } from './site-settings-service'
 
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
 //   - oauthAccounts / apiKeys / notificationDeliveries / loginLogs

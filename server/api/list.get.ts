@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
-import { apiService } from '~~/server/service/apiService'
+import { apiService } from '~~/server/services/api-service'
 
 export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event)

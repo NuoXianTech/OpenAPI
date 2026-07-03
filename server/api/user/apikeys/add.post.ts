@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { userCreateApiKeySchema } from '#shared/schemas/user'
-import { apiKeyService } from '~~/server/service/apiKeyService'
+import { apiKeyService } from '~~/server/services/api-key-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 

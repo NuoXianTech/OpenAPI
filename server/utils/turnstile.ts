@@ -1,6 +1,6 @@
 // Cloudflare Turnstile 服务端验证。参见 https://developers.cloudflare.com/turnstile/
 import { createError } from 'h3'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
 
 export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset' | 'checkin'
 

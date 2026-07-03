@@ -1,9 +1,9 @@
 import { createError } from 'h3'
 import type { H3Event } from 'h3'
 import { adminToggleApiSchema } from '#shared/schemas/admin'
-import { apiService } from '~~/server/service/apiService'
+import { apiService } from '~~/server/services/api-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

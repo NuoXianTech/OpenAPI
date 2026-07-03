@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertLoginRateLimit } from '~~/server/utils/loginRateLimit'
+import { assertLoginRateLimit } from '~~/server/utils/login-rate-limit'
 import type { RateLimiter } from '~~/shared/types/api-guard'
 
 function createDenyingLimiter(): RateLimiter {

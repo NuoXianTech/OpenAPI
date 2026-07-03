@@ -15,10 +15,10 @@
 1. `server/middleware/00.api-gate.ts` 解析 `(pathVersion, code)`，加载 API 配置，匹配 endpoint，并计算本次 method 的有效费用。
 2. `runApiGuard` 检查 API 状态、API Key 规则、内存限流、每日配额和用户余额。
 3. 公开 API handler 执行业务逻辑，并返回标准 OpenAPI 响应结构。
-4. `server/plugins/apiCallStats.ts` 在响应发出后记录 `api_calls`，并更新 `api_call_stats`。
+4. `server/plugins/api-call-stats.ts` 在响应发出后记录 `api_calls`，并更新 `api_call_stats`。
 5. 如果本次调用需要扣费，`creditService.forceCharge` 会在同一事务中扣减 `users.credits` 并插入 `credit_transactions`。由于上游工作已经发生，此处扣费是无条件的，可能把余额扣成负数；后续调用会被 api-gate 的 `balance < effectiveCost` 检查拒绝，直到用户充值。
 6. 此阶段的扣费失败只应来自瞬时故障（例如数据库错误）。失败时 `pendingChargeService.enqueue` 写入一条以 `apiCallId` 为键的重试记录；余额不足不再进入重试队列。
-7. `server/plugins/pendingChargesRetry.ts` 在单 Node 进程内每 30 秒扫描到期的 `pending_charges`，通过 `forceCharge` 重试；成功后删除记录，失败则退避，直到进入 `dead_letter`。
+7. `server/plugins/pending-charges-retry.ts` 在单 Node 进程内每 30 秒扫描到期的 `pending_charges`，通过 `forceCharge` 重试；成功后删除记录，失败则退避，直到进入 `dead_letter`。
 
 ## 可靠性规则
 

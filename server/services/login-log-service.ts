@@ -13,7 +13,7 @@ import type { LoginFailureReason, LoginMethod } from '~~/shared/types/login-log'
  * userId 与 users 表 FK cascade，用户硬删时该用户全部登录历史一并清除。
  *
  * LoginMethod / LoginFailureReason 的权威定义在 shared/types/login-log.ts，
- * 这里 re-export 供登录流程（login.post.ts / oauthCallback.ts）按旧路径继续引用。
+ * 这里 re-export 供登录流程（login.post.ts / oauth-callback.ts）按旧路径继续引用。
  */
 export type { LoginFailureReason, LoginMethod }
 

@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
-import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
+import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import type { UserDashboardData, UserDashboardTrendPoint } from '~~/shared/types/user-dashboard'
 
 function toNumber(value: number | string | null | undefined) {

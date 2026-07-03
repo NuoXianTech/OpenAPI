@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
-import { verifyVerificationToken } from '~~/server/utils/verificationToken'
-import { usersService } from '~~/server/service/userService'
+import { verifyVerificationToken } from '~~/server/utils/verification-token'
+import { usersService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {

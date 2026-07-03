@@ -1,4 +1,4 @@
-import { usersService } from '~~/server/service/userService'
+import { usersService } from '~~/server/services/user-service'
 
 export interface RollbackCreatedUserOptions {
   userId: number

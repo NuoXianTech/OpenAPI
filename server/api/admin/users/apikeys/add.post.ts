@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { adminCreateUserApiKeySchema } from '#shared/schemas/admin'
-import { apiKeyService } from '~~/server/service/apiKeyService'
+import { apiKeyService } from '~~/server/services/api-key-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

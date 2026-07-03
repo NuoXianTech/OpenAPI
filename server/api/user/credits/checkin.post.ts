@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestIP, readBody } from 'h3'
-import { checkinService, isCheckinError } from '~~/server/service/checkinService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { checkinService, isCheckinError } from '~~/server/services/checkin-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 

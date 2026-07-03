@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
-import { toAdminSiteSettings } from '~~/server/service/siteSettingsService'
-import { toAdminOauthProviderSafe } from '~~/server/service/oauthProviderService'
+import { toAdminSiteSettings } from '~~/server/services/site-settings-service'
+import { toAdminOauthProviderSafe } from '~~/server/services/oauth-provider-service'
 
 vi.mock('h3', () => ({
   createError: (input: unknown) => Object.assign(new Error('h3 error'), input)

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { getRouterParam, sendRedirect } from 'h3'
-import { handleOauthCallback } from '~~/server/utils/oauthCallback'
+import { handleOauthCallback } from '~~/server/utils/oauth-callback'
 import { providerByIndex } from '~~/shared/types/oauth'
 
 /**

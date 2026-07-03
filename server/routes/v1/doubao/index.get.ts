@@ -5,7 +5,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiOk } from '~~/server/utils/open-api-response'
 import { IMAGE_SOURCE_LABELS, VIDEO_SOURCE_LABELS } from '~~/server/lib/doubao/types'
 
 export default defineEventHandler((event: H3Event) => {

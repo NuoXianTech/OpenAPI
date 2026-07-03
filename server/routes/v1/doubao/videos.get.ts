@@ -14,8 +14,8 @@
 
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
-import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
-import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiBizFail } from '~~/server/utils/api-call-outcome'
+import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import {
   classifyDoubaoError,
   detectVideoSource,

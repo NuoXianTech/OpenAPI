@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { requireAdmin } from '~~/server/utils/auth'
-import { buildCallbackUrl, oauthProviderService, toAdminOauthProviderSafe, type OauthProviderRow } from '~~/server/service/oauthProviderService'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { buildCallbackUrl, oauthProviderService, toAdminOauthProviderSafe, type OauthProviderRow } from '~~/server/services/oauth-provider-service'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { OAUTH_PROVIDER_PRESETS, type SupportedOauthProvider } from '~~/shared/types/oauth'
 
 export default defineEventHandler(async (event: H3Event) => {

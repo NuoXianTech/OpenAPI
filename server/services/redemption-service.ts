@@ -4,7 +4,7 @@ import {
   buildRedemptionCodeRows,
   insertRedemptionCodesUntilComplete,
   normalizeRedemptionGeneration
-} from '~~/server/service/redemptionCodeGeneration'
+} from '~~/server/services/redemption-code-generation'
 import { normalizePagination } from '~~/server/utils/pagination'
 
 /**

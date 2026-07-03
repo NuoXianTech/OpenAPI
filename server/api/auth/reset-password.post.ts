@@ -2,9 +2,9 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { resetPasswordSchema } from '#shared/schemas/auth'
-import { usersService } from '~~/server/service/userService'
-import { verifyVerificationToken } from '~~/server/utils/verificationToken'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { usersService } from '~~/server/services/user-service'
+import { verifyVerificationToken } from '~~/server/utils/verification-token'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { hashPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 

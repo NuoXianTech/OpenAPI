@@ -13,9 +13,9 @@ import type { RateLimitWindow } from '~~/shared/config/api-guard'
 import { API_GUARD_ERROR } from '~~/shared/config/api-guard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/shared/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
-import { getLocalDayStart } from '~~/server/utils/localTime'
+import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
-import { apiKeyService } from '~~/server/service/apiKeyService'
+import { apiKeyService } from '~~/server/services/api-key-service'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect

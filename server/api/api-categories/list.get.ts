@@ -1,4 +1,4 @@
-import { apiCategoryService } from '~~/server/service/apiCategoryService'
+import { apiCategoryService } from '~~/server/services/api-category-service'
 
 export default defineEventHandler(async () => {
   const data = await apiCategoryService.listEnabled()

@@ -6,7 +6,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiOk } from '~~/server/utils/open-api-response'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { listAlgorithms } from '~~/server/lib/crypto/registry'
 

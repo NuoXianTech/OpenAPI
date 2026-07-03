@@ -1,7 +1,7 @@
 // 列出当前用户的所有第三方绑定 + 站点上启用的 provider 元信息（供前端渲染绑定/解绑按钮）
 import type { H3Event } from 'h3'
-import { oauthAccountService } from '~~/server/service/oauthAccountService'
-import { oauthProviderService } from '~~/server/service/oauthProviderService'
+import { oauthAccountService } from '~~/server/services/oauth-account-service'
+import { oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { OAUTH_PROVIDER_PRESETS, isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { requireAuth } from '~~/server/utils/auth'
 

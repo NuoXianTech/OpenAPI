@@ -97,7 +97,7 @@ server/routes/v{N}/       由清单模块发现的公开 API 路由
 server/db/schema/         Drizzle schema 模块
 server/db/migrations/     drizzle-kit 生成的迁移
 server/middleware/        API 网关、私有页面守卫
-server/service/           业务服务层
+server/services/           业务服务层
 server/utils/             服务端共享工具
 server/plugins/           启动同步与单进程定时任务
 modules/api-manifest.ts   构建期接口清单生成器

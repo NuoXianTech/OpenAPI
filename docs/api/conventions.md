@@ -49,7 +49,7 @@ server/routes/
 
 ## 4. 响应壳（必须）
 
-所有对外 endpoint **必须**通过 [server/utils/openApiResponse.ts](../../server/utils/openApiResponse.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail` 返回，不允许裸 `return { ... }`。
+所有对外 endpoint **必须**通过 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
 响应结构**完全对齐** [RESTful API 设计风格 §3](./style.md#3-响应格式)，没有项目私有扩展：
 
@@ -91,7 +91,7 @@ server/routes/
 ```ts
 import { z } from 'zod'
 import { readOpenApiBody } from '~~/server/utils/zod'
-import { openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiOk } from '~~/server/utils/open-api-response'
 
 const BodySchema = z.object({ mode: z.enum(['encrypt', 'decrypt']), text: z.string() })
 
@@ -112,7 +112,7 @@ api-gate 通过后会按本次请求的 HTTP 方法在 `apis.methodCosts` 中查
 默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status + 字符串 `code` 返回即可，扣费会自动跳过：
 
 ```ts
-import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 
 try {
   const data = await callUpstream()
@@ -123,11 +123,11 @@ catch (err) {
 }
 ```
 
-想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库）时，用 [`openApiBizFail`](../../server/utils/apiCallOutcome.ts) **一行**替代「`markApiCallFailed` + `openApiFail`」两步：
+想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库）时，用 [`openApiBizFail`](../../server/utils/api-call-outcome.ts) **一行**替代「`markApiCallFailed` + `openApiFail`」两步：
 
 ```ts
-import { openApiBizFail } from '~~/server/utils/apiCallOutcome'
-import { openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiBizFail } from '~~/server/utils/api-call-outcome'
+import { openApiOk } from '~~/server/utils/open-api-response'
 
 try {
   return openApiOk(event, await runAlgorithm(input))
@@ -138,7 +138,7 @@ catch (err) {
 }
 ```
 
-极少数业务流程必须返回 2xx 但仍要跳过扣费（罕见）时，单独调 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/apiCallOutcome.ts](../../server/utils/apiCallOutcome.ts) 的 `shouldCharge` 规则。
+极少数业务流程必须返回 2xx 但仍要跳过扣费（罕见）时，单独调 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/api-call-outcome.ts](../../server/utils/api-call-outcome.ts) 的 `shouldCharge` 规则。
 
 ## 6. 最小完整示例
 
@@ -148,7 +148,7 @@ catch (err) {
 
 ```ts
 import type { H3Event } from 'h3'
-import { openApiOk } from '~~/server/utils/openApiResponse'
+import { openApiOk } from '~~/server/utils/open-api-response'
 
 export default defineEventHandler((event: H3Event) => {
   return openApiOk(event, {
@@ -162,7 +162,7 @@ export default defineEventHandler((event: H3Event) => {
 
 ## 7. 后台启用与配置（必做）
 
-代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../../server/plugins/manifestSync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../../shared/config/api-guard.ts#L18-L30) 默认值，关键是默认 `isEnabled=false`）。
+代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../../server/plugins/manifest-sync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../../shared/config/api-guard.ts#L18-L30) 默认值，关键是默认 `isEnabled=false`）。
 
 所以新接口接入后会经历两种 gate 拒绝状态，**都属正常**，按状态对症处理即可：
 

@@ -2,9 +2,9 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { userChangePasswordSchema } from '#shared/schemas/user'
-import { usersService } from '~~/server/service/userService'
+import { usersService } from '~~/server/services/user-service'
 import { hashPassword, verifyPassword, requireAuth, createUserSession } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

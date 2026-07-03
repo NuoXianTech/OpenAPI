@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
-import { loginLogService } from '~~/server/service/loginLogService'
+import { loginLogService } from '~~/server/services/login-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/requestPagination'
-import { summarizeUserAgent } from '~~/server/utils/userAgent'
+import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { summarizeUserAgent } from '~~/server/utils/user-agent'
 import type { AdminLoginLogRow, LoginMethod } from '~~/shared/types/login-log'
 
 function parseDate(value: unknown): Date | undefined {

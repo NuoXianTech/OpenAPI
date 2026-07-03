@@ -1,9 +1,9 @@
 // 回读「待处理 OAuth 身份」供 /oauth/complete 窗口渲染。
 // 仅暴露展示用字段，不返回 providerUserId；由持有签名 pending cookie 者（刚走完 OAuth 流程）访问。
 import type { H3Event } from 'h3'
-import { readPendingOauth } from '~~/server/utils/oauthPending'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
-import { usersService } from '~~/server/service/userService'
+import { readPendingOauth } from '~~/server/utils/oauth-pending'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { usersService } from '~~/server/services/user-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/shared/types/oauth'
 
 function sanitizeUsername(base: string) {

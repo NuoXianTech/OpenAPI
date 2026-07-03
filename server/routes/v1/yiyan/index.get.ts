@@ -24,8 +24,8 @@
 
 import type { H3Event } from 'h3'
 import { getQuery, setResponseHeader } from 'h3'
-import { openApiFail, openApiOk } from '~~/server/utils/openApiResponse'
-import { ensureRequestId } from '~~/server/utils/requestId'
+import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
+import { ensureRequestId } from '~~/server/utils/request-id'
 import {
   DEFAULT_MAX_LENGTH,
   DEFAULT_MIN_LENGTH,

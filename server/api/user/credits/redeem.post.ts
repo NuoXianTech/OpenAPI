@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { userRedeemCodeSchema } from '#shared/schemas/user'
-import { isRedemptionError, redemptionService } from '~~/server/service/redemptionService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { isRedemptionError, redemptionService } from '~~/server/services/redemption-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 

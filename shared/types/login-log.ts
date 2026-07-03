@@ -2,8 +2,8 @@
  * 登录日志 · 共享类型与展示元数据
  *
  * 数据源 `login_logs` 表（server/db/schema/system.ts），只记录「已识别用户」的
- * 登录尝试（成功 + 失败）。写入由 server/service/loginLogService.ts 完成，
- * 已接入密码登录（auth/login.post.ts）与 OAuth 回调（utils/oauthCallback.ts）。
+ * 登录尝试（成功 + 失败）。写入由 server/services/login-log-service.ts 完成，
+ * 已接入密码登录（auth/login.post.ts）与 OAuth 回调（utils/oauth-callback.ts）。
  *
  * 这里集中：
  *   - LoginMethod / LoginFailureReason 枚举（server service 复用同一份）

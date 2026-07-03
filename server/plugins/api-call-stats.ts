@@ -9,12 +9,12 @@
 
 import type { H3Event } from 'h3'
 import { getHeader, getRequestIP, getRequestURL } from 'h3'
-import { apiCallService } from '~~/server/service/apiCallService'
-import { apiKeyService } from '~~/server/service/apiKeyService'
-import { creditService } from '~~/server/service/creditService'
-import { pendingChargeService } from '~~/server/service/pendingChargeService'
-import { shouldCharge } from '~~/server/utils/apiCallOutcome'
-import { ensureRequestId } from '~~/server/utils/requestId'
+import { apiCallService } from '~~/server/services/api-call-service'
+import { apiKeyService } from '~~/server/services/api-key-service'
+import { creditService } from '~~/server/services/credit-service'
+import { pendingChargeService } from '~~/server/services/pending-charge-service'
+import { shouldCharge } from '~~/server/utils/api-call-outcome'
+import { ensureRequestId } from '~~/server/utils/request-id'
 import { isGuardedPath, normalizePathname } from '~~/shared/config/api-guard'
 
 interface ApiStatsTracked {

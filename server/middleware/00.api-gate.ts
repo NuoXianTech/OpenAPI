@@ -2,7 +2,7 @@
  * API Gate · 前置守卫中间件。
  *
  * 命名前缀 `00.` 保证字母序最早，确保 gate 在业务 handler 之前执行；
- * 调用统计由 `server/plugins/apiCallStats.ts` 通过 Nitro `afterResponse`
+ * 调用统计由 `server/plugins/api-call-stats.ts` 通过 Nitro `afterResponse`
  * hook 在响应发出后异步记录，与本中间件无顺序耦合。
  *
  * 仅对治理范围内路径（/v{N}/**）生效：
@@ -16,7 +16,7 @@
  * 非治理路径（/api/auth/**、/api/admin/**、/api/user/**、/api/list 等）完全放行，
  * 不影响调用统计 plugin 的行为。
  *
- * 拒绝路径输出开放 API 标准响应壳（见 server/utils/openApiResponse.ts），
+ * 拒绝路径输出开放 API 标准响应壳（见 server/utils/open-api-response.ts），
  * body `data` 恒为 null；机器可读的错误子类型由 body 字段 `code` 表达
  * （如 401 下的 MISSING_API_KEY / INVALID_API_KEY / DISABLED_API_KEY 区分）。
  */
@@ -24,10 +24,10 @@
 import type { H3Event } from 'h3'
 import { getRequestURL, send, setResponseHeader, setResponseHeaders } from 'h3'
 import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/shared/config/api-guard'
-import { getManifestApi, matchEndpoint } from '~~/server/utils/apiManifest'
-import { runApiGuard } from '~~/server/utils/apiGuard'
-import { apiService } from '~~/server/service/apiService'
-import { openApiFail } from '~~/server/utils/openApiResponse'
+import { getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
+import { runApiGuard } from '~~/server/utils/api-guard'
+import { apiService } from '~~/server/services/api-service'
+import { openApiFail } from '~~/server/utils/open-api-response'
 
 type ErrorDef = { status: number, code: string, msg: string }
 

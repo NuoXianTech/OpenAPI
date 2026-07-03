@@ -1,4 +1,4 @@
-import { announcementService } from '~~/server/service/announcementService'
+import { announcementService } from '~~/server/services/announcement-service'
 
 export default defineEventHandler(async () => {
   const data = await announcementService.listPublic()

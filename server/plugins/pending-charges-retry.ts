@@ -2,9 +2,9 @@
  * Pending charge retry worker for the single production Node process.
  */
 
-import { apiCallService } from '~~/server/service/apiCallService'
-import { creditService } from '~~/server/service/creditService'
-import { pendingChargeService } from '~~/server/service/pendingChargeService'
+import { apiCallService } from '~~/server/services/api-call-service'
+import { creditService } from '~~/server/services/credit-service'
+import { pendingChargeService } from '~~/server/services/pending-charge-service'
 
 const SCAN_INTERVAL_MS = 30_000
 const BATCH_SIZE = 20

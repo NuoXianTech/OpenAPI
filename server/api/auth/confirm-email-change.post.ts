@@ -2,8 +2,8 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { confirmEmailChangeSchema } from '#shared/schemas/auth'
-import { usersService } from '~~/server/service/userService'
-import { verifyVerificationToken } from '~~/server/utils/verificationToken'
+import { usersService } from '~~/server/services/user-service'
+import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

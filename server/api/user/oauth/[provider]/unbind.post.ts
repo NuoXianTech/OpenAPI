@@ -1,8 +1,8 @@
 // 解绑当前用户的第三方账号绑定
 import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
-import { oauthAccountService } from '~~/server/service/oauthAccountService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { oauthAccountService } from '~~/server/services/oauth-account-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 

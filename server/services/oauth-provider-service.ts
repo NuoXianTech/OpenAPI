@@ -5,7 +5,7 @@ import {
   SUPPORTED_OAUTH_PROVIDERS,
   type SupportedOauthProvider
 } from '~~/shared/types/oauth'
-import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/service/siteSettingsService'
+import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
 
 export interface OauthProviderPatch {
   clientId?: string

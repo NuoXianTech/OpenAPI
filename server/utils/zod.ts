@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, readBody, readValidatedBody } from 'h3'
 import { ZodError } from 'zod'
 import type { z } from 'zod'
-import { openApiFail, type OpenApiResponse } from '~~/server/utils/openApiResponse'
+import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 
 /**
  * 用 zod schema 校验请求体；失败抛 400，message 取第一个 issue。

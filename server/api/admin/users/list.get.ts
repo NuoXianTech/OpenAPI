@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
-import { usersService } from '~~/server/service/userService'
+import { usersService } from '~~/server/services/user-service'
 import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {

@@ -9,9 +9,9 @@
  */
 
 import type { H3Event } from 'h3'
-import { creditService, type CreditReason } from '~~/server/service/creditService'
+import { creditService, type CreditReason } from '~~/server/services/credit-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/requestPagination'
+import { readPaginationQuery } from '~~/server/utils/request-pagination'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)

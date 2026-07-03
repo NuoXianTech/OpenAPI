@@ -2,10 +2,10 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateOauthProviderSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
-import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/service/oauthProviderService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/services/oauth-provider-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
-import { readRequestMeta } from '~~/server/utils/requestMeta'
+import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
-import { notificationService } from '~~/server/service/notificationService'
+import { notificationService } from '~~/server/services/notification-service'
 import { requireAdmin } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event: H3Event) => {

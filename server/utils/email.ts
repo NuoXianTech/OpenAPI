@@ -1,5 +1,5 @@
 import { sendSmtpMail } from './smtp'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
 
 async function getSmtpConfig() {
   const settings = await siteSettingsService.getOrCreate()

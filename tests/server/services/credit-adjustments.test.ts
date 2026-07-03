@@ -3,7 +3,7 @@ import {
   calculateAdminRevokeAdjustment,
   getAdminCreditReason,
   normalizeCreditAmount
-} from '~~/server/service/creditAdjustments'
+} from '~~/server/services/credit-adjustments'
 
 describe('credit adjustment helpers', () => {
   it('normalizes amounts, calculates revokes, and maps admin reasons', () => {

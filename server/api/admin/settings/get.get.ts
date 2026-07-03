@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { setResponseHeader } from 'h3'
 import { requireAdmin } from '~~/server/utils/auth'
-import { siteSettingsService } from '~~/server/service/siteSettingsService'
+import { siteSettingsService } from '~~/server/services/site-settings-service'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { setResponseHeader } from 'h3'
 import { getAuthUser } from '~~/server/utils/auth'
-import { creditService } from '~~/server/service/creditService'
+import { creditService } from '~~/server/services/credit-service'
 
 export default defineEventHandler(async (event: H3Event) => {
   // 登录态是按 cookie 维度的私有响应：禁止任何下游 CDN / 反向代理 / Service Worker 缓存，

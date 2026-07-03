@@ -7,7 +7,7 @@
  * 保证 apiCalls.requestId（apiCallStats plugin 在请求阶段写）与响应头 X-Request-Id
  * （openApiResponse 在响应阶段写）是同一个值，便于客户端报错时反查调用日志。
  *
- * event.context.requestId 的类型声明在 server/plugins/apiCallStats.ts 的 declare module，
+ * event.context.requestId 的类型声明在 server/plugins/api-call-stats.ts 的 declare module，
  * 全局合并后此处直接可用。
  */
 

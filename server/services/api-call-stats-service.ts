@@ -5,7 +5,7 @@ import type {
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
 } from '~~/shared/types/public-stats'
-import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
+import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 
 function toNumber(value: number | string | null | undefined) {
   const normalized = Number(value)

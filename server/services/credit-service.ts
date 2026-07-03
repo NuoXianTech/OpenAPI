@@ -5,7 +5,7 @@ import {
   getAdminCreditReason,
   normalizeCreditAmount,
   type AdminCreditOperation
-} from '~~/server/service/creditAdjustments'
+} from '~~/server/services/credit-adjustments'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '~~/shared/types/credit-reason'
 

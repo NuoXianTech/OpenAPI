@@ -1,6 +1,6 @@
 import { and, eq, sql, lt, isNull, or } from 'drizzle-orm'
 import { creditTransactions, users } from '@nuxthub/db/schema'
-import { siteSettingsService } from './siteSettingsService'
+import { siteSettingsService } from './site-settings-service'
 
 /**
  * 每日签到服务

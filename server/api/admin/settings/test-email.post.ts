@@ -3,7 +3,7 @@ import { createError } from 'h3'
 import { adminTestSmtpSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { sendTestEmail } from '~~/server/utils/email'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

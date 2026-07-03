@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateApiCategorySchema } from '#shared/schemas/admin'
-import { apiCategoryService } from '~~/server/service/apiCategoryService'
-import { operationLogService } from '~~/server/service/operationLogService'
+import { apiCategoryService } from '~~/server/services/api-category-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/requestMeta'
+import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {

@@ -14,14 +14,14 @@
  *   - 成功自定义文案：return openApiOk(event, data, '创建成功')        // code: 'OK', message 由 handler 决定
  *   - 创建成功：return openApiCreated(event, data)                   // code: 'CREATED', status: 201（restful §4.1）
  *   - 失败：return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游超时')
- *   - 业务失败（标记+返回一行）：见 server/utils/apiCallOutcome.ts 的 openApiBizFail
+ *   - 业务失败（标记+返回一行）：见 server/utils/api-call-outcome.ts 的 openApiBizFail
  *
  * X-Request-Id 走响应头：值取自 ensureRequestId（与 apiCalls.requestId 同源），便于客户端排查。
  */
 
 import type { H3Event } from 'h3'
 import { setResponseHeader, setResponseStatus } from 'h3'
-import { ensureRequestId } from '~~/server/utils/requestId'
+import { ensureRequestId } from '~~/server/utils/request-id'
 
 export interface OpenApiResponse<T = unknown> {
   code: string

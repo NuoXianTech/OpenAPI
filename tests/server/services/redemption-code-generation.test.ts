@@ -3,7 +3,7 @@ import {
   buildRedemptionCodeRows,
   insertRedemptionCodesUntilComplete,
   normalizeRedemptionGeneration
-} from '~~/server/service/redemptionCodeGeneration'
+} from '~~/server/services/redemption-code-generation'
 
 describe('normalizeRedemptionGeneration', () => {
   it('clamps count, length, amount, max uses, prefix, and note', () => {

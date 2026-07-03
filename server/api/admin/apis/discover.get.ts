@@ -10,7 +10,7 @@
 import type { H3Event } from 'h3'
 import { API_MANIFEST } from '#api-manifest'
 import { requireAdmin } from '~~/server/utils/auth'
-import { apiService } from '~~/server/service/apiService'
+import { apiService } from '~~/server/services/api-service'
 import type { ManifestEndpoint } from '~~/shared/types/api-guard'
 
 interface DiscoveredEndpoint {
