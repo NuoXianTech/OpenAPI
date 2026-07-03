@@ -1,6 +1,6 @@
 import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { usePrivatePagedList } from '../../../../app/composables/dashboard/use-private-paged-list'
+import { usePrivatePagedList } from '@/composables/dashboard/use-private-paged-list'
 
 interface TestFilters extends Record<string, unknown> {
   keyword: string

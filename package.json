@@ -16,8 +16,7 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:unit": "vitest --project unit",
-    "test:nuxt": "vitest --project nuxt"
+    "test:unit": "vitest run --project unit"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.3",

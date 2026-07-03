@@ -40,10 +40,6 @@ export function getManifestApi(pathVersion: string, code: string): ManifestApi |
   return compiled ? compiled.api : null
 }
 
-export function listManifestApis(): ManifestApi[] {
-  return API_MANIFEST
-}
-
 /**
  * 在某个 ManifestApi 下寻找匹配的 endpoint。
  * 优先方法精确匹配，其次 ANY（无方法限定）。
