@@ -1,7 +1,3 @@
-export function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
 export type EmailFilterMode = 'off' | 'whitelist' | 'blacklist'
 
 export function normalizeEmailFilterMode(value: unknown): EmailFilterMode {

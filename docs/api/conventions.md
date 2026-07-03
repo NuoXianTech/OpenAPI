@@ -49,7 +49,7 @@ server/routes/
 
 ## 4. 响应壳（必须）
 
-所有对外 endpoint **必须**通过 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail` 返回，不允许裸 `return { ... }`。
+所有对外 endpoint **必须**通过 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
 响应结构**完全对齐** [RESTful API 设计风格 §3](./style.md#3-响应格式)，没有项目私有扩展：
 
@@ -62,7 +62,7 @@ server/routes/
 }
 ```
 
-- **`code` 是字符串标识，不是 HTTP status 数值**：成功为 `"OK"`（`openApiOk`，200）或 `"CREATED"`（`openApiCreated`，201，POST 新建资源），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
+- **`code` 是字符串标识，不是 HTTP status 数值**：成功为 `"OK"`（`openApiOk`，200），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
 - **`code` 的来源**：
   - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/api-guard.ts](../../shared/config/api-guard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
@@ -196,7 +196,7 @@ manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新�
 
 - [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号遵循 [RESTful API 设计风格](./style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
-- [ ] handler 通过 `openApiOk` / `openApiCreated` / `openApiFail` 返回，没有裸 `return { ... }`
+- [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
 - [ ] 业务失败要把 code/message 写进调用日志 → `openApiBizFail`（一行）；纯协议失败（缺参 / 格式错）→ 直接 `openApiFail`；仅"返回 2xx 但需跳过扣费"的罕见场景 → 单用 `markApiCallFailed`
 - [ ] 重启后该 `(pathVersion, code)` 已被 manifestSync 自动入库，且在后台**启用**并配好 `isApiKey` / `methodCosts` / `rateLimit*`

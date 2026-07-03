@@ -179,7 +179,7 @@ server/lib/yiyan/
 本层的**全部规则**（路径与 `code` 目录约定、构建期 fail-fast 约束、文件名→method 映射、响应壳、入参校验）都在 [对外接口落地规范 §1–§4](./conventions.md) 里，**不在此重复**。接入时只需记住三条硬线：
 
 1. **路径**：`server/routes/v{N}/<code>/...`，`<code>` 必须是**静态目录名**（= 数据库 `apis.code`），不能是 `[id]` 动态段。
-2. **响应**：一律走 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiCreated` / `openApiFail`，**禁止裸 `return { ... }`**。
+2. **响应**：一律走 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiFail`，**禁止裸 `return { ... }`**。
 3. **入参校验**：需要校验 body 时用 [`readOpenApiBody`](../../server/utils/zod.ts)（失败自动返回 400 标准壳），**不要**用后台内部接口那套 `readZodBody`（失败抛 H3 错误，不符合对外契约）。
 
 handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-本文重点) 的业务层。最小完整示例见 [对外接口落地规范 §6](./conventions.md#6-最小完整示例) 与现有的 [server/routes/v1/yiyan/index.get.ts](../../server/routes/v1/yiyan/index.get.ts)。
@@ -191,7 +191,7 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 扣费由 [api-gate](../../server/middleware/00.api-gate.ts#L89-L130) 按本次请求 method 在 `apis.methodCosts` 里查到金额，挂到 `event.context.apiBilling`，响应发出后结算。你在 handler 里要做的只是**正确表达成功 / 失败**，扣费会自动跟随：
 
 ```
-成功                       → openApiOk / openApiCreated
+成功                       → openApiOk
 纯协议失败（缺参/格式错）    → openApiFail(event, 4xx, 'CODE', '提示')        // 4xx 自动跳过扣费
 业务失败（算法/上游报错）    → openApiBizFail(event, 4xx/5xx, 'CODE', '提示') // 跳过扣费 + 写调用日志（errorCode/errorMessage）
 返回 2xx 但要跳过扣费（罕见）→ 单独 markApiCallSuccess / markApiCallFailed
@@ -272,7 +272,7 @@ curl 'http://localhost:3000/v1/<code>?foo=bar'
 
 - [ ] 接口形状遵循 [RESTful API 设计风格](./style.md)（URL 名词复数、method 语义、状态码、版本前缀）
 - [ ] 业务逻辑在 `server/lib/<code>/`，handler 保持薄；含 register/list 单例状态的模块**确认放在 `server/lib/` 而非 `server/utils/`**
-- [ ] 响应全部走 `openApiOk` / `openApiCreated` / `openApiFail`，无裸 `return {}`
+- [ ] 响应全部走 `openApiOk` / `openApiFail`，无裸 `return {}`
 - [ ] 失败处理选对出口：协议失败 → `openApiFail`；业务失败 → `openApiBizFail`（一行）
 - [ ] 重启 dev，按 [§7](#7-验证) 三层验证通过
 
