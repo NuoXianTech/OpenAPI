@@ -1,9 +1,10 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { adminUpdateUserSchema } from '#shared/schemas/admin'
 import { usersService } from '~~/server/service/userService'
 import { hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -49,8 +50,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.user.update',
     resourceType: 'user',
     resourceId: id,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     // 仅记录是否改过密码，绝不落明文 / hash
     detail: { patch: { username, email, displayName, isActive, isBanned, passwordChanged: Boolean(password) } }
   })

@@ -1,9 +1,10 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { adminUpdateApiCategorySchema } from '#shared/schemas/admin'
 import { apiCategoryService } from '~~/server/service/apiCategoryService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -29,8 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api-category.update',
     resourceType: 'api-category',
     resourceId: id,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     detail: { patch }
   })
 

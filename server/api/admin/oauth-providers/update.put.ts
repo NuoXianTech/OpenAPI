@@ -1,10 +1,11 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { adminUpdateOauthProviderSchema } from '#shared/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/service/oauthProviderService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -31,8 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.oauth-provider.update',
     resourceType: 'oauth-provider',
     resourceId: updated.provider,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     detail: { provider: updated.provider, changedFields: Object.keys(patch) }
   })
 

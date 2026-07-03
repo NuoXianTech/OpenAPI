@@ -15,6 +15,7 @@ import { createUserSession, hashPassword } from '~~/server/utils/auth'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
@@ -111,8 +112,7 @@ export default defineEventHandler(async (event: H3Event) => {
     try {
       await usersService.activateUser(created.id)
     } catch (error) {
-      console.error('[oauth register] auto-activate failed, rolling back', { userId: created.id, error })
-      try { await usersService.deleteUser(created.id) } catch (e) { console.error('[oauth register] rollback failed', e) }
+      await rollbackCreatedUser({ userId: created.id, reason: 'oauth auto-activation failed', error })
       throw createError({ statusCode: 503, message: '注册失败，请稍后重试或联系管理员' })
     }
     clearPendingOauth(event)
@@ -130,8 +130,7 @@ export default defineEventHandler(async (event: H3Event) => {
   try {
     await sendVerificationEmail(email, verifyUrl)
   } catch (error) {
-    console.error('[oauth register] verification email failed, rolling back', { userId: created.id, error })
-    try { await usersService.deleteUser(created.id) } catch (e) { console.error('[oauth register] rollback failed', e) }
+    await rollbackCreatedUser({ userId: created.id, reason: 'oauth verification email failed', error })
     throw createError({ statusCode: 503, message: '验证邮件发送失败，请稍后重试或联系管理员检查邮件服务配置' })
   }
 

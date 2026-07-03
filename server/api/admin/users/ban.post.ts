@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { getHeader, getRequestIP } from 'h3'
 import { adminBanUserSchema } from '#shared/schemas/admin'
 import { usersService } from '~~/server/service/userService'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/service/operationLogService'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -18,8 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
     resourceType: 'user',
     resourceId: id,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     detail: {
       isBanned,
       username: updated?.username,

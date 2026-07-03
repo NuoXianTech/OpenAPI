@@ -1,9 +1,10 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { adminUpdateAnnouncementSchema } from '#shared/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/service/announcementService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -30,8 +31,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.announcement.update',
     resourceType: 'announcement',
     resourceId: id,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     detail: { patch }
   })
 

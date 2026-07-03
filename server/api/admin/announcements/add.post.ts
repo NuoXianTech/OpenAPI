@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { getHeader, getRequestIP } from 'h3'
 import { adminCreateAnnouncementSchema } from '#shared/schemas/admin'
 import { announcementService } from '~~/server/service/announcementService'
 import { operationLogService } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
+import { readRequestMeta } from '~~/server/utils/requestMeta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -25,8 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.announcement.create',
     resourceType: 'announcement',
     resourceId: created?.id,
-    ip: getRequestIP(event) || null,
-    userAgent: getHeader(event, 'user-agent') || null,
+    ...readRequestMeta(event),
     detail: { title: body.title, level: body.level ?? 'info' }
   })
 

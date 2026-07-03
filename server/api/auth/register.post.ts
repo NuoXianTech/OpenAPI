@@ -1,4 +1,3 @@
-// 注册接口
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { registerSchema } from '#shared/schemas/auth'
@@ -11,6 +10,7 @@ import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server
 import { siteSettingsService } from '~~/server/service/siteSettingsService'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
 // 防止匿名访问者用接口差异遍历账号库。真实分支信号只走邮件通道。
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const activationRequired = settings.emailActivationEnabled !== false
   const neutralResponse = { verificationRequired: activationRequired }
 
-  // 注册模式闸门：closed 直接拒绝，invite 要求有邀请码字段（先留 TODO 占位）。
+  // 注册模式闸门：closed 直接拒绝；invite 当前保持安全默认，不开放匿名注册。
   const mode = settings.registrationMode || 'open'
   if (mode === 'closed') {
     throw createError({ statusCode: 403, message: '注册功能已关闭' })
@@ -61,7 +61,6 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (mode === 'invite') {
-    // TODO: 接入邀请码校验（当前版本未实现，拒绝以保持安全默认）
     throw createError({ statusCode: 403, message: '仅邀请注册模式下未开放通道' })
   }
 
@@ -101,12 +100,7 @@ export default defineEventHandler(async (event: H3Event) => {
     try {
       await usersService.activateUser(created.id)
     } catch (error) {
-      console.error('[register] failed to auto-activate user, rolling back', { userId: created.id, error })
-      try {
-        await usersService.deleteUser(created.id)
-      } catch (rollbackError) {
-        console.error('[register] failed to rollback user after activation failure', { userId: created.id, error: rollbackError })
-      }
+      await rollbackCreatedUser({ userId: created.id, reason: 'auto-activation failed', error })
       throw createError({
         statusCode: 503,
         message: '注册失败，请稍后重试或联系管理员'
@@ -121,14 +115,7 @@ export default defineEventHandler(async (event: H3Event) => {
   try {
     await sendVerificationEmail(email, verifyUrl)
   } catch (error) {
-    // 邮件发不出去就把刚建的账号回滚，否则邮箱/用户名会被占住，用户无法重试。
-    // 验证 token 无状态、不落库，无需额外清理。
-    console.error('[register] failed to send verification email, rolling back user', { userId: created.id, error })
-    try {
-      await usersService.deleteUser(created.id)
-    } catch (rollbackError) {
-      console.error('[register] failed to rollback user after email failure', { userId: created.id, error: rollbackError })
-    }
+    await rollbackCreatedUser({ userId: created.id, reason: 'verification email failed', error })
     throw createError({
       statusCode: 503,
       message: '验证邮件发送失败，请稍后重试或联系管理员检查邮件服务配置'
