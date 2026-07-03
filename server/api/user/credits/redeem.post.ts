@@ -18,9 +18,6 @@ const REDEEM_ERROR_STATUS: Record<string, number> = {
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
-  if (!user.id || user.kind !== 'user') {
-    throw createError({ statusCode: 403, message: 'admin 不能兑换' })
-  }
   const { code } = await readZodBody(event, userRedeemCodeSchema)
 
   const ip = getRequestIP(event) || null

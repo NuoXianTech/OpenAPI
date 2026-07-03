@@ -1,8 +1,7 @@
 import type { H3Event } from 'h3'
-import { getQuery } from 'h3'
 import { operationLogService, type OperationLogStatus } from '~~/server/service/operationLogService'
 import { requireAdmin } from '~~/server/utils/auth'
-import { parsePaginationQuery } from '~~/server/utils/pagination'
+import { readPaginationQuery } from '~~/server/utils/requestPagination'
 
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
 const ACTOR_KINDS = ['admin', 'user'] as const
@@ -16,8 +15,7 @@ function parseDate(value: unknown): Date | undefined {
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const query = getQuery(event)
-  const { limit, offset } = parsePaginationQuery(query)
+  const { query, limit, offset } = readPaginationQuery(event)
 
   const actorKindRaw = (query.actorKind || '').toString()
   const statusRaw = (query.status || '').toString()

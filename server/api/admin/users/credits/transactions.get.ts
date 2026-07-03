@@ -9,19 +9,17 @@
  */
 
 import type { H3Event } from 'h3'
-import { getQuery } from 'h3'
 import { creditService, type CreditReason } from '~~/server/service/creditService'
 import { requireAdmin } from '~~/server/utils/auth'
-import { parsePaginationQuery } from '~~/server/utils/pagination'
+import { readPaginationQuery } from '~~/server/utils/requestPagination'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const query = getQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event)
 
   const userId = query.userId ? Number(query.userId) : undefined
   const reasonRaw = (query.reason || '').toString()
   const reason = reasonRaw ? (reasonRaw as CreditReason) : undefined
-  const { limit, offset } = parsePaginationQuery(query)
 
   const data = await creditService.listTransactions({ userId, reason, limit, offset })
   return data

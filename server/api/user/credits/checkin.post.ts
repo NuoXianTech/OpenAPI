@@ -12,10 +12,6 @@ const CHECKIN_ERROR_STATUS: Record<string, number> = {
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
-  if (!user.id || user.kind !== 'user') {
-    throw createError({ statusCode: 403, message: 'admin 不能签到' })
-  }
-
   const ip = getRequestIP(event) || null
   const body = await readBody<{ turnstileToken?: string }>(event).catch(() => ({} as { turnstileToken?: string }))
   await assertTurnstileForPage('checkin', body?.turnstileToken ?? '', ip)

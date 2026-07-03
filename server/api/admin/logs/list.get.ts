@@ -1,8 +1,7 @@
 import type { H3Event } from 'h3'
-import { getQuery } from 'h3'
 import { adminLogsService } from '~~/server/service/adminLogsService'
 import { requireAdmin } from '~~/server/utils/auth'
-import { parsePaginationQuery } from '~~/server/utils/pagination'
+import { readPaginationQuery } from '~~/server/utils/requestPagination'
 import { ADMIN_LOG_TYPES, type AdminLogType } from '~~/shared/types/admin-logs'
 
 function parseDate(value: unknown): Date | undefined {
@@ -22,8 +21,7 @@ function parseTypes(value: unknown): AdminLogType[] | undefined {
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const query = getQuery(event)
-  const { limit, offset } = parsePaginationQuery(query)
+  const { query, limit, offset } = readPaginationQuery(event)
 
   const data = await adminLogsService.listLogs({
     startAt: parseDate(query.startAt),

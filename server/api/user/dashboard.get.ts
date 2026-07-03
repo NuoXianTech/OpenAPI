@@ -1,7 +1,6 @@
 import type { H3Event } from 'h3'
 import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
-import { createError } from 'h3'
 import { requireAuth } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/localTime'
 import type { UserDashboardData, UserDashboardTrendPoint } from '~~/shared/types/user-dashboard'
@@ -15,9 +14,6 @@ const TREND_DAYS = 7
 
 export default defineEventHandler(async (event: H3Event): Promise<UserDashboardData> => {
   const user = await requireAuth(event)
-  if (!user.id || user.kind !== 'user') {
-    throw createError({ statusCode: 403, message: 'admin 无个人概览数据' })
-  }
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
 
   const userId = user.id

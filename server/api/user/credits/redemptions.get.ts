@@ -1,16 +1,11 @@
 import type { H3Event } from 'h3'
-import { createError, getQuery } from 'h3'
 import { redemptionService } from '~~/server/service/redemptionService'
 import { requireAuth } from '~~/server/utils/auth'
-import { parsePaginationQuery } from '~~/server/utils/pagination'
+import { readPaginationQuery } from '~~/server/utils/requestPagination'
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
-  if (!user.id || user.kind !== 'user') {
-    throw createError({ statusCode: 403, message: 'admin 不持有兑换记录' })
-  }
-  const query = getQuery(event)
-  const { limit, offset } = parsePaginationQuery(query)
+  const { limit, offset } = readPaginationQuery(event)
   const data = await redemptionService.listUserRedemptions(user.id, limit, offset)
   return data
 })
