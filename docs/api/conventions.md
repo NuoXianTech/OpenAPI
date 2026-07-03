@@ -64,7 +64,7 @@ server/routes/
 
 - **`code` 是字符串标识，不是 HTTP status 数值**：成功为 `"OK"`（`openApiOk`，200）或 `"CREATED"`（`openApiCreated`，201，POST 新建资源），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
 - **`code` 的来源**：
-  - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/apiGuard.ts](../../shared/config/apiGuard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
+  - **gate 拒绝路径**（middleware/00.api-gate.ts）一律取 [shared/config/api-guard.ts](../../shared/config/api-guard.ts) 的 `API_GUARD_ERROR[X].code`（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` ...），新增/调整鉴权与限流相关错误**在该表里登记**
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
 - **`message` 由 handler 自由定**：`openApiOk` 和 `openApiFail` 的 `message` 参数都接受 handler 自定义文案，应面向调用方可读（含上下文，例如失败时 ``未知算法 "xxx"，请通过 GET /v1/crypto 查看可用列表``），不要复用 `API_GUARD_ERROR.msg`。gate 层错误的默认文案保留在 `API_GUARD_ERROR.msg`，只服务 gate 自己
 - **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `DISABLED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
@@ -162,7 +162,7 @@ export default defineEventHandler((event: H3Event) => {
 
 ## 7. 后台启用与配置（必做）
 
-代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../../server/plugins/manifestSync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../../shared/config/apiGuard.ts#L18-L30) 默认值，关键是默认 `isEnabled=false`）。
+代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../../server/plugins/manifestSync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../../shared/config/api-guard.ts#L18-L30) 默认值，关键是默认 `isEnabled=false`）。
 
 所以新接口接入后会经历两种 gate 拒绝状态，**都属正常**，按状态对症处理即可：
 

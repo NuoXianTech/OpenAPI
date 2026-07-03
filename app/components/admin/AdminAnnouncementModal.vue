@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 interface Announcement {
   id: number

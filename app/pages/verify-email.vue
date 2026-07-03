@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
 useHead({ title: '邮箱验证' })

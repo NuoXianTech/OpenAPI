@@ -2,7 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/composables/link/types'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: FriendLinkItem | null }>()

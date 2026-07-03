@@ -1,4 +1,4 @@
-import type { RateLimitWindow } from '../config/apiGuard'
+import type { RateLimitWindow } from '../config/api-guard'
 
 export interface ManifestEndpoint {
   apiPath: string

@@ -2,7 +2,7 @@ import type {
   PublicSiteSettings,
   PublicTurnstileSettings
 } from '#shared/types/site-settings'
-import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
+import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/site-defaults'
 
 export const PUBLIC_SITE_SETTINGS_KEY = 'public-site-settings'
 
@@ -19,7 +19,7 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
 }
 
 // DB 是唯一权威源；以下兜底仅在 /api/settings/public 请求异常时使用。
-// 基础字段（siteUrl/siteName 等）从 shared/config/siteDefaults 取，与 schema 默认值同源。
+// 基础字段（siteUrl/siteName 等）从 shared/config/site-defaults 取，与 schema 默认值同源。
 const FALLBACK_SETTINGS: PublicSiteSettings = {
   ...PUBLIC_SITE_DEFAULTS,
   icpBeian: null,

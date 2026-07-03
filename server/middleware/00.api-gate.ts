@@ -23,7 +23,7 @@
 
 import type { H3Event } from 'h3'
 import { getRequestURL, send, setResponseHeader, setResponseHeaders } from 'h3'
-import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/shared/config/apiGuard'
+import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/shared/config/api-guard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/apiManifest'
 import { runApiGuard } from '~~/server/utils/apiGuard'
 import { apiService } from '~~/server/service/apiService'

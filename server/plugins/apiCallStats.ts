@@ -15,7 +15,7 @@ import { creditService } from '~~/server/service/creditService'
 import { pendingChargeService } from '~~/server/service/pendingChargeService'
 import { shouldCharge } from '~~/server/utils/apiCallOutcome'
 import { ensureRequestId } from '~~/server/utils/requestId'
-import { isGuardedPath, normalizePathname } from '~~/shared/config/apiGuard'
+import { isGuardedPath, normalizePathname } from '~~/shared/config/api-guard'
 
 interface ApiStatsTracked {
   startedAt: number

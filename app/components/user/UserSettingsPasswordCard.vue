@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 const props = defineProps<{
   onSubmit: (currentPassword: string, newPassword: string) => Promise<void>

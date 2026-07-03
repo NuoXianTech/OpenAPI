@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { ConfirmEmailChangeInput } from '#shared/schemas/auth'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 useHead({ title: '确认邮箱变更' })
 

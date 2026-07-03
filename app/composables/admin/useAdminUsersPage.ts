@@ -1,7 +1,7 @@
 import type { AsyncDataRequestStatus } from '#app'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, ref, type Ref } from 'vue'
-import { parseFetchError } from '~~/shared/utils/clientError'
+import { parseFetchError } from '~~/shared/utils/client-error'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {

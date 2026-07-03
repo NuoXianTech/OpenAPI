@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

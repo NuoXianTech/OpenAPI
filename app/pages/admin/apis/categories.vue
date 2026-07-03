@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })

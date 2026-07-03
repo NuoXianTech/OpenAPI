@@ -3,7 +3,7 @@ import type {
   PublicSiteSettings,
   PublicTurnstileSettings
 } from '#shared/types/site-settings'
-import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/siteDefaults'
+import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/site-defaults'
 import { siteSettings } from '~~/server/db/schema/system'
 
 const DEFAULT_SCOPE = 'default'

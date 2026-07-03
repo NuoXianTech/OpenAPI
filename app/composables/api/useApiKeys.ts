@@ -1,4 +1,4 @@
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import type { ApiKeyItem, ApiKeyPayload, ApiKeyScopeOption } from './types'
 
 /**

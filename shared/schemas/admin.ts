@@ -1,12 +1,21 @@
 import { z } from 'zod'
-import { isCidr } from '../utils/cidr'
-import { optionalDate } from './common'
+import {
+  apiKeyCidrSchema,
+  apiKeyCreateCountSchema,
+  apiKeyNameSchema,
+  apiKeyScopeSchema,
+  apiKeyTotalQuotaSchema,
+  nullableArraySchema
+} from './api-key'
+import {
+  displayNameSchema,
+  emailSchema,
+  optionalDate,
+  passwordSchema,
+  usernameSchema
+} from './common'
 
-// ============================================================
-// Admin · Auth
-// ============================================================
-
-/** 管理员登录 */
+// Admin auth
 export const adminLoginSchema = z.object({
   username: z.string().trim().min(1, '请输入管理员账号'),
   password: z.string().min(1, '请输入管理员密码'),
@@ -15,17 +24,11 @@ export const adminLoginSchema = z.object({
 })
 export type AdminLoginInput = z.output<typeof adminLoginSchema>
 
-// ============================================================
-// Admin · Users
-// ============================================================
-
-/** 封禁/解封用户 */
+// Users
 export const adminBanUserSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
   isBanned: z.boolean(),
-  // 封禁原因（仅 isBanned=true 时有意义；解封时忽略）
   reason: z.string().trim().max(500, '封禁原因最多 500 字').optional(),
-  // 封禁到期时间；null/缺省 = 永久封禁（仅 isBanned=true 时有意义）
   bannedUntil: optionalDate
 }).refine(
   d => !d.isBanned || !d.bannedUntil || d.bannedUntil.getTime() > Date.now(),
@@ -33,42 +36,25 @@ export const adminBanUserSchema = z.object({
 )
 export type AdminBanUserInput = z.output<typeof adminBanUserSchema>
 
-/** 管理员-直接创建用户（跳过邮箱验证流程） */
 export const adminCreateUserSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, '用户名至少 3 位')
-    .max(32, '用户名最多 32 位')
-    .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线'),
-  email: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址')),
-  password: z.string().min(8, '密码至少 8 位'),
-  displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
+  username: usernameSchema,
+  email: emailSchema,
+  password: passwordSchema,
+  displayName: displayNameSchema.optional(),
   isActive: z.boolean().optional()
 })
 
-const adminUsernameSchema = z
-  .string()
-  .trim()
-  .min(3, '用户名至少 3 位')
-  .max(32, '用户名最多 32 位')
-  .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线')
-
-const adminEmailSchema = z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址'))
-
-/** 更新用户信息（部分字段） */
 export const adminUpdateUserSchema = z
   .object({
     id: z.coerce.number().int().positive('id is required'),
-    username: adminUsernameSchema.optional(),
-    email: adminEmailSchema.optional(),
-    displayName: z.string().trim().max(32, '显示名最多 32 字').optional(),
+    username: usernameSchema.optional(),
+    email: emailSchema.optional(),
+    displayName: displayNameSchema.optional(),
     isActive: z.boolean().optional(),
     isBanned: z.boolean().optional(),
-    // 重置密码：留空（''/null/缺省）= 不修改；提供则至少 8 位，update handler 会强制该用户重新登录
     password: z.preprocess(
       v => (v === '' || v === null ? undefined : v),
-      z.string().min(8, '密码至少 8 位').optional()
+      passwordSchema.optional()
     )
   })
   .refine(
@@ -81,66 +67,25 @@ export const adminUpdateUserSchema = z
     { message: '至少需要修改一个字段', path: [] }
   )
 
-// ============================================================
-// Admin · User · API Keys
-// ============================================================
-
-const apiKeyScopeSchema = z.string()
-  .trim()
-  .min(1, '接口标识不能为空')
-  .max(80, '接口标识过长')
-  .regex(/^[a-zA-Z0-9_.\-*]+$/, '接口标识仅允许字母数字 _ - . *')
-
-const apiKeyCidrSchema = z.string()
-  .trim()
-  .min(1, 'CIDR 不能为空')
-  .max(64, 'CIDR 过长')
-  .refine(isCidr, { message: '必须为 CIDR 格式（例：1.2.3.4/32 或 10.0.0.0/8）' })
-
-const apiKeyNullableArray = <T extends z.ZodTypeAny>(item: T, max: number) => z.preprocess(
-  (v) => {
-    if (v === undefined) return undefined
-    if (v === null) return null
-    if (Array.isArray(v) && v.length === 0) return null
-    return v
-  },
-  z.union([z.array(item).max(max), z.null()]).optional()
-)
-
-/** 管理员-给指定用户加 apikey */
+// User API keys
 export const adminCreateUserApiKeySchema = z.object({
   userId: z.coerce.number().int().positive('userId is required'),
-  name: z.string().trim().max(80, '名称最多 80 字').optional(),
+  name: apiKeyNameSchema.optional(),
   expiresAt: optionalDate,
-  totalQuota: z.preprocess(
-    (v) => {
-      if (v === undefined) return undefined
-      if (v === null || v === '') return null
-      return v
-    },
-    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
-  ),
-  scopes: apiKeyNullableArray(apiKeyScopeSchema, 200),
-  ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200),
-  count: z.coerce.number().int().min(1, '至少 1 个').max(5, '最多 5 个').default(1)
+  totalQuota: apiKeyTotalQuotaSchema,
+  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
+  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
+  count: apiKeyCreateCountSchema
 })
 export type AdminCreateUserApiKeyInput = z.output<typeof adminCreateUserApiKeySchema>
 
-/** 管理员-编辑某个 API Key 的配置（id 唯一定位；不绑定 userId） */
 export const adminUpdateUserApiKeySchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
-  name: z.string().trim().max(80, '名称最多 80 字').optional(),
+  name: apiKeyNameSchema.optional(),
   expiresAt: optionalDate,
-  totalQuota: z.preprocess(
-    (v) => {
-      if (v === undefined) return undefined
-      if (v === null || v === '') return null
-      return v
-    },
-    z.union([z.null(), z.coerce.number().int().min(0, '积分上限不能为负')]).optional()
-  ),
-  scopes: apiKeyNullableArray(apiKeyScopeSchema, 200),
-  ipWhitelist: apiKeyNullableArray(apiKeyCidrSchema, 200),
+  totalQuota: apiKeyTotalQuotaSchema,
+  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
+  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
   isActive: z.boolean().optional()
 }).refine(
   d => d.name !== undefined
@@ -153,11 +98,7 @@ export const adminUpdateUserApiKeySchema = z.object({
 )
 export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySchema>
 
-// ============================================================
-// Admin · User · Credits
-// ============================================================
-
-/** 管理员-用户积分批量调整（grant/revoke/reset） */
+// Credits
 export const adminAdjustCreditsSchema = z
   .object({
     userIds: z.array(z.coerce.number().int().positive()).default([]),
@@ -176,10 +117,7 @@ export const adminAdjustCreditsSchema = z
     { message: '全员积分调整必须显式确认', path: ['confirmAll'] }
   )
 
-// ============================================================
-// Admin · API Categories
-// ============================================================
-
+// API categories
 export const adminCreateApiCategorySchema = z.object({
   code: z.string().trim().min(1, 'code and name are required'),
   name: z.string().trim().min(1, 'code and name are required'),
@@ -202,11 +140,7 @@ export const adminUpdateApiCategorySchema = z.object({
   isEnabled: z.boolean().optional()
 })
 
-// ============================================================
-// Admin · APIs
-// ============================================================
-
-/** methodCosts：按 HTTP 方法粒度的扣费表（key=大写方法名，value=积分>=0）。空对象/缺失=整组免费。 */
+// APIs
 const methodCostsSchema = z.preprocess(
   (v) => {
     if (!v || typeof v !== 'object' || Array.isArray(v)) return v
@@ -220,7 +154,6 @@ const methodCostsSchema = z.preprocess(
   z.record(z.string(), z.number().int().min(0))
 )
 
-/** 从 manifest 登记 / 重新同步一个 (pathVersion, code) */
 export const adminRegisterApiSchema = z.object({
   pathVersion: z.string().trim().min(1, 'pathVersion 和 code 均必填'),
   code: z.string().trim().min(1, 'pathVersion 和 code 均必填'),
@@ -244,7 +177,6 @@ export const adminRegisterApiSchema = z.object({
   }).optional()
 })
 
-/** 编辑已登记 API 的治理字段 */
 const guardLimitSchema = z.coerce.number().int().min(0, 'limit must be >= 0')
 const guardTimeoutSchema = z.coerce.number().int().min(100, 'timeoutMs must be >= 100').max(120000, 'timeoutMs is too large')
 
@@ -252,7 +184,6 @@ export const adminUpdateApiSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
   name: z.string().trim().optional(),
   status: z.coerce.number().optional(),
-  // 兼容 '' / null / number：上游把空值视为 null（清空分类）
   categoryId: z.preprocess(
     v => (v === '' || v === null ? null : v),
     z.union([z.coerce.number().int().positive(), z.null()]).optional()
@@ -272,23 +203,19 @@ export const adminUpdateApiSchema = z.object({
   timeoutMs: guardTimeoutSchema.optional()
 })
 
-/** 切换 API 字段开关 */
 export const adminToggleApiSchema = z.object({
   id: z.coerce.number().int().positive('invalid parameters'),
   field: z.enum(['isEnabled', 'isStatistics'], 'invalid parameters'),
   value: z.boolean()
 })
 
-// ============================================================
-// Admin · Announcements
-// ============================================================
-
-const announcementLevel = z.enum(['info', 'success', 'warning', 'critical'])
+// Announcements
+const messageLevelSchema = z.enum(['info', 'success', 'warning', 'critical'])
 
 export const adminCreateAnnouncementSchema = z.object({
   title: z.string().trim().min(1, 'title and content are required'),
   content: z.string().min(1, 'title and content are required'),
-  level: announcementLevel.catch('info').optional(),
+  level: messageLevelSchema.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
   linkUrl: z.string().nullable().optional(),
@@ -299,17 +226,14 @@ export const adminUpdateAnnouncementSchema = z.object({
   id: z.coerce.number().int().positive('id is required'),
   title: z.string().trim().optional(),
   content: z.string().optional(),
-  level: announcementLevel.catch('info').optional(),
+  level: messageLevelSchema.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
   linkUrl: z.string().nullable().optional(),
   sortOrder: z.coerce.number().int().optional()
 })
 
-// ============================================================
-// Admin · Friend Links
-// ============================================================
-
+// Friend links
 export const adminCreateFriendLinkSchema = z.object({
   title: z.string().trim().min(1, 'title and url are required'),
   url: z.string().trim().min(1, 'title and url are required'),
@@ -325,10 +249,7 @@ export const adminUpdateFriendLinkSchema = z.object({
   isActive: z.boolean().optional()
 })
 
-// ============================================================
-// Admin · OAuth Providers
-// ============================================================
-
+// OAuth providers
 export const adminUpdateOauthProviderSchema = z.object({
   provider: z.string().trim().toLowerCase().min(1, 'provider 不合法，仅支持 github / qq'),
   clientId: z.string().optional(),
@@ -336,11 +257,7 @@ export const adminUpdateOauthProviderSchema = z.object({
   isEnabled: z.boolean().optional()
 })
 
-// ============================================================
-// Admin · Notifications
-// ============================================================
-
-const notificationLevel = z.enum(['info', 'success', 'warning', 'critical'])
+// Notifications
 const notificationAudience = z.enum(['specific', 'all_current', 'all_with_future'])
 
 export const adminSendNotificationSchema = z.object({
@@ -348,14 +265,11 @@ export const adminSendNotificationSchema = z.object({
   recipientUserIds: z.array(z.coerce.number().int().positive()).optional(),
   title: z.string().trim().min(1, 'title 与 content 必填').max(200, 'title 过长（最多 200 字）'),
   content: z.string().min(1, 'title 与 content 必填'),
-  level: notificationLevel.catch('info').optional(),
+  level: messageLevelSchema.catch('info').optional(),
   linkUrl: z.string().nullable().optional()
 })
 
-// ============================================================
-// Admin · Redemption Codes
-// ============================================================
-
+// Redemption codes
 export const adminGenerateRedemptionCodeSchema = z.object({
   amount: z.coerce.number().int().positive('amount 必须 > 0'),
   count: z.coerce.number().int().min(1).max(1000).optional(),
@@ -384,10 +298,7 @@ export const adminDeleteRedemptionCodeSchema = z.object({
   path: ['id']
 })
 
-// ============================================================
-// Admin · Site Settings
-// ============================================================
-
+// Site settings
 const emailFilterMode = z.preprocess(
   v => (v === '' || v === null ? undefined : v),
   z.enum(['off', 'whitelist', 'blacklist'], 'registerEmailFilterMode must be off / whitelist / blacklist').optional()
@@ -454,7 +365,6 @@ export const adminUpdateSiteSettingsSchema = z.object({
   { message: 'checkinAmountMin must be <= checkinAmountMax', path: ['checkinAmountMin'] }
 )
 
-/** 测试发信：仅需收件邮箱，使用后台已保存的 SMTP 配置 */
 export const adminTestSmtpSchema = z.object({
-  to: z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址'))
+  to: emailSchema
 })

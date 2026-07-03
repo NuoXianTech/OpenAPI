@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CheckinStatus } from '~/composables/user/useUserCreditsPage'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 const props = defineProps<{
   status: CheckinStatus | null

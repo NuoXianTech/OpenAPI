@@ -1,6 +1,6 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
-import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/apiGuard'
+import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/api-guard'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')

@@ -1,6 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
 import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
-import { parseFetchError } from '~~/shared/utils/clientError'
+import { parseFetchError } from '~~/shared/utils/client-error'
 
 interface AdminSettingsForm {
   siteName: string

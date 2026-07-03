@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '找回密码' })

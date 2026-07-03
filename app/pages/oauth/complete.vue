@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { z } from 'zod'
 import { oauthBindSchema, oauthRegisterSchema } from '#shared/schemas/auth'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
 definePageMeta({ layout: false })

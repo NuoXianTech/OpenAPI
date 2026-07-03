@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { LazyApiKeyResetModal } from '#components'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/useApiKeys'
 import { useApiKeyForm } from '~/composables/api/useApiKeyForm'

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AdminUserItem } from '~/composables/admin/useAdminUsersPage'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 import { useApiKeys } from '~/composables/api/useApiKeys'
 import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
 import type { ApiKeyItem } from '~/composables/api/types'

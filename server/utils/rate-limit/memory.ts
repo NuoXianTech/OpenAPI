@@ -3,9 +3,9 @@
  * Counters are intentionally memory-only and reset when the process restarts.
  */
 
-import { RATE_LIMIT_WINDOW_SECONDS } from '~~/shared/config/apiGuard'
+import { RATE_LIMIT_WINDOW_SECONDS } from '~~/shared/config/api-guard'
 import type { RateLimitResult, RateLimiter } from '~~/shared/types/api-guard'
-import type { RateLimitWindow } from '~~/shared/config/apiGuard'
+import type { RateLimitWindow } from '~~/shared/config/api-guard'
 
 interface Bucket {
   windowStart: number

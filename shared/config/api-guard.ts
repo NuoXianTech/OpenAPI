@@ -1,7 +1,4 @@
-/**
- * Shared API guard constants. Keep this file runtime-dependency free because
- * it is imported by both app and server code.
- */
+// Imported by app and server code; keep this file runtime-dependency free.
 
 export const VERSION_CODE_PATTERN = /^\/(v\d+)\/([^/?#]+)/
 
@@ -9,7 +6,6 @@ export function isGuardedPath(pathname: string): boolean {
   return VERSION_CODE_PATTERN.test(pathname)
 }
 
-/** 去掉非根路径末尾的 `/`，让 `/v1/crypto` 与 `/v1/crypto/` 归一到同一形态。 */
 export function normalizePathname(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
   return pathname

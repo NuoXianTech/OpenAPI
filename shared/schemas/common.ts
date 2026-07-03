@@ -1,19 +1,13 @@
 import { z } from 'zod'
 
-/** 单个 id 入参，常见于 delete / reset / toggle */
 export const idSchema = z.object({
   id: z.coerce.number().int().positive('id is required')
 })
 
-/** messageId 入参 */
 export const messageIdSchema = z.object({
   messageId: z.coerce.number().int().positive('messageId is required')
 })
 
-/**
- * 把 string/number/Date/null/空串 解析成 Date | null；undefined 透传。
- * 用于 bannedUntil / expiresAt 等可空日期字段。
- */
 export const optionalDate = z.preprocess(
   (v) => {
     if (v === undefined) return undefined
@@ -23,3 +17,16 @@ export const optionalDate = z.preprocess(
   },
   z.union([z.date(), z.null()]).optional()
 )
+
+export const usernameSchema = z
+  .string()
+  .trim()
+  .min(3, '用户名至少 3 位')
+  .max(32, '用户名最多 32 位')
+  .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线')
+
+export const emailSchema = z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址'))
+
+export const passwordSchema = z.string().min(8, '密码至少 8 位')
+
+export const displayNameSchema = z.string().trim().max(32, '显示名最多 32 字')

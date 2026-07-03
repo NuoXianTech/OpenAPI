@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { RedeemRecord } from '~/composables/user/useUserCreditsPage'
-import { parseFetchError } from '#shared/utils/clientError'
+import { parseFetchError } from '#shared/utils/client-error'
 
 const props = defineProps<{
   records: RedeemRecord[]
