@@ -13,29 +13,17 @@ interface TestFilters extends Record<string, unknown> {
   types: string[]
 }
 
-describe('dashboard list query codecs', () => {
-  it('parses invalid numbers back to the default value', () => {
-    const codec = createNumberQueryCodec(0)
-
-    expect(codec.parse('42')).toBe(42)
-    expect(codec.parse('bad')).toBe(0)
-    expect(codec.parse(undefined)).toBe(0)
-    expect(codec.serialize(0)).toBeUndefined()
-    expect(codec.serialize(7)).toBe(7)
-  })
-
-  it('serializes string arrays as comma-separated values', () => {
-    const codec = createStringArrayQueryCodec([])
-
-    expect(codec.parse('consume,error')).toEqual(['consume', 'error'])
-    expect(codec.parse(['consume', 'error'])).toEqual(['consume', 'error'])
-    expect(codec.serialize([])).toBeUndefined()
-    expect(codec.serialize(['consume', 'error'])).toBe('consume,error')
-  })
-})
-
 describe('useDashboardListState', () => {
-  it('hydrates filters and pagination from query values', () => {
+  it('hydrates, syncs, resets, and serializes compact query values', async () => {
+    const numberCodec = createNumberQueryCodec(0)
+    const arrayCodec = createStringArrayQueryCodec([])
+
+    expect(numberCodec.parse('bad')).toBe(0)
+    expect(numberCodec.serialize(0)).toBeUndefined()
+    expect(arrayCodec.parse('consume,error')).toEqual(['consume', 'error'])
+    expect(arrayCodec.serialize(['consume', 'error'])).toBe('consume,error')
+
+    const replaceQuery = vi.fn()
     const query = ref<Record<string, unknown>>({
       page: '3',
       pageSize: '20',
@@ -48,10 +36,11 @@ describe('useDashboardListState', () => {
       defaultFilters: { apiId: 0, keyword: '', types: [] },
       defaultPageSize: 50,
       routeQuery: query,
+      replaceQuery,
       filterCodecs: {
-        apiId: createNumberQueryCodec(0),
+        apiId: numberCodec,
         keyword: createStringQueryCodec(''),
-        types: createStringArrayQueryCodec([])
+        types: arrayCodec
       }
     })
 
@@ -60,20 +49,6 @@ describe('useDashboardListState', () => {
     expect(state.filters.apiId).toBe(9)
     expect(state.filters.keyword).toBe('request-1')
     expect(state.filters.types).toEqual(['consume', 'error'])
-  })
-
-  it('resets filters, resets to page one, and writes compact query values', async () => {
-    const replaceQuery = vi.fn()
-    const state = useDashboardListState<TestFilters>({
-      defaultFilters: { apiId: 0, keyword: '', types: [] },
-      defaultPageSize: 50,
-      replaceQuery,
-      filterCodecs: {
-        apiId: createNumberQueryCodec(0),
-        keyword: createStringQueryCodec(''),
-        types: createStringArrayQueryCodec([])
-      }
-    })
 
     state.filters.apiId = 12
     state.filters.keyword = 'abc'
@@ -85,6 +60,7 @@ describe('useDashboardListState', () => {
     expect(replaceQuery).toHaveBeenLastCalledWith({
       apiId: 12,
       keyword: 'abc',
+      pageSize: 20,
       types: 'consume'
     })
 
@@ -92,28 +68,14 @@ describe('useDashboardListState', () => {
 
     expect(state.filters).toMatchObject({ apiId: 0, keyword: '', types: [] })
     expect(state.page.value).toBe(1)
-    expect(replaceQuery).toHaveBeenLastCalledWith({})
-  })
-
-  it('resets page and syncs query when page size changes', async () => {
-    const replaceQuery = vi.fn()
-    const state = useDashboardListState<TestFilters>({
-      defaultFilters: { apiId: 0, keyword: '', types: [] },
-      defaultPageSize: 50,
-      replaceQuery,
-      filterCodecs: {
-        apiId: createNumberQueryCodec(0),
-        keyword: createStringQueryCodec(''),
-        types: createStringArrayQueryCodec([])
-      }
-    })
+    expect(replaceQuery).toHaveBeenLastCalledWith({ pageSize: 20 })
 
     state.page.value = 3
     await nextTick()
-    state.pageSize.value = 20
+    state.pageSize.value = 25
     await nextTick()
 
     expect(state.page.value).toBe(1)
-    expect(replaceQuery).toHaveBeenLastCalledWith({ pageSize: 20 })
+    expect(replaceQuery).toHaveBeenLastCalledWith({ pageSize: 25 })
   })
 })

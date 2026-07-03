@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { toAdminSiteSettings } from '~~/server/service/siteSettingsService'
+import { toAdminOauthProviderSafe } from '~~/server/service/oauthProviderService'
+
+vi.mock('h3', () => ({
+  createError: (input: unknown) => Object.assign(new Error('h3 error'), input)
+}))
 
 describe('toAdminSiteSettings', () => {
   it('redacts write-only secrets from admin responses', () => {
@@ -73,5 +78,24 @@ describe('toAdminSiteSettings', () => {
       hasOauthQqClientSecret: false,
       hasTurnstileSecretKey: true
     })
+
+    expect(toAdminOauthProviderSafe({
+      provider: 'github',
+      clientId: 'github-client',
+      clientSecret: 'github-secret',
+      isEnabled: true
+    })).toMatchObject({
+      provider: 'github',
+      clientId: 'github-client',
+      clientSecret: '***',
+      isEnabled: true
+    })
+
+    expect(toAdminOauthProviderSafe({
+      provider: 'qq',
+      clientId: 'qq-client',
+      clientSecret: '',
+      isEnabled: false
+    }).clientSecret).toBe('')
   })
 })

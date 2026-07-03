@@ -34,18 +34,7 @@ function createRecordingLimiter(keys: string[]): RateLimiter {
 }
 
 describe('assertLoginRateLimit', () => {
-  it('throws 429 when the limiter denies a login attempt', async () => {
-    await expect(assertLoginRateLimit({
-      limiter: createDenyingLimiter(),
-      namespace: 'admin-login',
-      account: 'root',
-      ip: '127.0.0.1',
-      accountLimit: 5,
-      ipLimit: 20
-    })).rejects.toMatchObject({ statusCode: 429 })
-  })
-
-  it('checks both account and ip buckets', async () => {
+  it('checks account and ip buckets, then surfaces limiter denials as 429', async () => {
     const keys: string[] = []
 
     await assertLoginRateLimit({
@@ -61,5 +50,14 @@ describe('assertLoginRateLimit', () => {
       'login:account:user@example.com:5:minute',
       'login:ip:127.0.0.1:20:minute'
     ])
+
+    await expect(assertLoginRateLimit({
+      limiter: createDenyingLimiter(),
+      namespace: 'admin-login',
+      account: 'root',
+      ip: '127.0.0.1',
+      accountLimit: 5,
+      ipLimit: 20
+    })).rejects.toMatchObject({ statusCode: 429 })
   })
 })
