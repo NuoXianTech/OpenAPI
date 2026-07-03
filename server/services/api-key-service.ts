@@ -77,10 +77,6 @@ export const apiKeyService = {
       .orderBy(desc(apiKeys.createdAt))
   },
 
-  async listAll() {
-    return db.select().from(apiKeys).where(isNull(apiKeys.revokedAt))
-  },
-
   /**
    * 创建一个或多个 API Key（单事务）。
    *

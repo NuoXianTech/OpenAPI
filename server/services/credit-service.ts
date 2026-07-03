@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '@nuxthub/db/schema'
 import {
   calculateAdminRevokeAdjustment,
@@ -11,7 +11,7 @@ import type { CreditReason } from '~~/shared/types/credit-reason'
 
 export type { CreditReason }
 
-export interface ChargeInput {
+interface ChargeInput {
   userId: number
   amount: number
   apiId?: number | null
@@ -20,7 +20,7 @@ export interface ChargeInput {
   meta?: Record<string, unknown> | null
 }
 
-export interface AdjustInput {
+interface AdjustInput {
   userId: number
   amount: number
   reason: CreditReason
@@ -30,11 +30,11 @@ export interface AdjustInput {
   meta?: Record<string, unknown> | null
 }
 
-export interface AdminResetInput extends AdjustInput {
+interface AdminResetInput extends AdjustInput {
   targetValue?: number
 }
 
-export interface AdminBatchAdjustInput {
+interface AdminBatchAdjustInput {
   userIds: number[]
   operation: AdminCreditOperation
   amount: number
@@ -43,12 +43,12 @@ export interface AdminBatchAdjustInput {
   remark?: string | null
 }
 
-export interface CreditOperationResult {
+interface CreditOperationResult {
   userId: number
   balanceAfter: number
 }
 
-export interface AdminBatchAdjustResult {
+interface AdminBatchAdjustResult {
   affected: number
   results: CreditOperationResult[]
 }
@@ -62,7 +62,7 @@ interface AdminOperationTransactionInput {
   remark?: string | null
 }
 
-export interface ListTransactionsFilters {
+interface ListTransactionsFilters {
   userId?: number
   reason?: CreditReason
   startAt?: Date
@@ -71,47 +71,14 @@ export interface ListTransactionsFilters {
   offset?: number
 }
 
-export interface ListUserTransactionsFilters {
+interface ListUserTransactionsFilters {
   reason?: CreditReason
   direction?: 'in' | 'out'
   limit?: number
   offset?: number
 }
 
-export async function charge(input: ChargeInput) {
-  const amount = normalizeCreditAmount(input.amount)
-  if (amount === 0) return { charged: 0, balanceAfter: null }
-
-  return db.transaction(async (tx: typeof db) => {
-    const updated = await tx.update(users)
-      .set({
-        credits: sql`${users.credits} - ${amount}`,
-        updatedAt: new Date()
-      })
-      .where(and(eq(users.id, input.userId), gte(users.credits, amount)))
-      .returning({ id: users.id, credits: users.credits })
-
-    if (!updated[0]) {
-      throw new Error('INSUFFICIENT_CREDITS')
-    }
-
-    const balanceAfter = Number(updated[0].credits)
-    await tx.insert(creditTransactions).values({
-      userId: input.userId,
-      amount: -amount,
-      balanceAfter,
-      reason: 'api_charge',
-      apiId: input.apiId ?? null,
-      apiCallId: input.apiCallId ?? null,
-      remark: input.remark ?? null,
-      meta: input.meta ?? null
-    })
-
-    return { charged: amount, balanceAfter }
-  })
-}
-
-export async function forceCharge(input: ChargeInput) {
+async function forceCharge(input: ChargeInput) {
   const amount = normalizeCreditAmount(input.amount)
   if (amount === 0) return { charged: 0, balanceAfter: null }
 
@@ -142,50 +109,7 @@ export async function forceCharge(input: ChargeInput) {
   })
 }
 
-export async function refund(input: ChargeInput) {
-  const amount = normalizeCreditAmount(input.amount)
-  if (amount === 0) return { refunded: 0, balanceAfter: null }
-
-  return db.transaction(async (tx: typeof db) => {
-    const updated = await tx.update(users)
-      .set({
-        credits: sql`${users.credits} + ${amount}`,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, input.userId))
-      .returning({ id: users.id, credits: users.credits })
-
-    if (!updated[0]) return { refunded: 0, balanceAfter: null }
-
-    const balanceAfter = Number(updated[0].credits)
-    await tx.insert(creditTransactions).values({
-      userId: input.userId,
-      amount,
-      balanceAfter,
-      reason: 'api_refund',
-      apiId: input.apiId ?? null,
-      apiCallId: input.apiCallId ?? null,
-      remark: input.remark ?? null,
-      meta: input.meta ?? null
-    })
-
-    return { refunded: amount, balanceAfter }
-  })
-}
-
-export async function adminGrant(input: AdjustInput): Promise<CreditOperationResult | null> {
-  return db.transaction(async (tx: typeof db) => adminGrantWithTransaction(tx, input))
-}
-
-export async function adminRevoke(input: AdjustInput): Promise<CreditOperationResult | null> {
-  return db.transaction(async (tx: typeof db) => adminRevokeWithTransaction(tx, input))
-}
-
-export async function adminReset(input: AdminResetInput): Promise<CreditOperationResult | null> {
-  return db.transaction(async (tx: typeof db) => adminResetWithTransaction(tx, input))
-}
-
-export async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<AdminBatchAdjustResult> {
+async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<AdminBatchAdjustResult> {
   return db.transaction(async (tx: typeof db) => {
     const targetIds = await resolveAdminBatchTargetIds(tx, input.userIds)
     const results: CreditOperationResult[] = []
@@ -211,20 +135,12 @@ export async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<Ad
   })
 }
 
-export async function getBalance(userId: number): Promise<number> {
+async function getBalance(userId: number): Promise<number> {
   const rows = await db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1)
   return Number(rows[0]?.credits || 0)
 }
 
-export async function listBalances(userIds: number[]): Promise<Array<{ id: number, credits: number }>> {
-  if (userIds.length === 0) return []
-  const rows = await db.select({ id: users.id, credits: users.credits })
-    .from(users)
-    .where(inArray(users.id, userIds))
-  return rows.map((row: { id: number, credits: number }) => ({ id: row.id, credits: Number(row.credits) }))
-}
-
-export async function listTransactions(filters: ListTransactionsFilters = {}) {
+async function listTransactions(filters: ListTransactionsFilters = {}) {
   const conditions: SQL[] = []
   if (typeof filters.userId === 'number') conditions.push(eq(creditTransactions.userId, filters.userId))
   if (filters.reason) conditions.push(eq(creditTransactions.reason, filters.reason))
@@ -249,7 +165,7 @@ export async function listTransactions(filters: ListTransactionsFilters = {}) {
   }
 }
 
-export async function listUserTransactions(
+async function listUserTransactions(
   userId: number,
   filters: ListUserTransactionsFilters = {}
 ) {
@@ -292,7 +208,7 @@ export async function listUserTransactions(
   }
 }
 
-export async function getUserCreditsSummary(userId: number) {
+async function getUserCreditsSummary(userId: number) {
   const [balanceRow, aggRows, reasonRows] = await Promise.all([
     db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1),
     db.select({
@@ -468,15 +384,9 @@ async function applyAdminOperationWithTransaction(
 }
 
 export const creditService = {
-  charge,
   forceCharge,
-  refund,
-  adminGrant,
-  adminRevoke,
-  adminReset,
   adminBatchAdjust,
   getBalance,
-  listBalances,
   listTransactions,
   listUserTransactions,
   getUserCreditsSummary

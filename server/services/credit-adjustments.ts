@@ -1,12 +1,6 @@
 import type { CreditReason } from '~~/shared/types/credit-reason'
 
-export const ADMIN_CREDIT_OPERATION = {
-  grant: 'grant',
-  revoke: 'revoke',
-  reset: 'reset'
-} as const
-
-export type AdminCreditOperation = typeof ADMIN_CREDIT_OPERATION[keyof typeof ADMIN_CREDIT_OPERATION]
+export type AdminCreditOperation = 'grant' | 'revoke' | 'reset'
 
 export interface AdminRevokeAdjustmentInput {
   currentCredits: number

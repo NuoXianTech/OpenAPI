@@ -11,7 +11,7 @@ import { pendingCharges } from '@nuxthub/db/schema'
  * same API call from being enqueued more than once.
  */
 
-export const PENDING_CHARGE_MAX_ATTEMPTS = 5
+const PENDING_CHARGE_MAX_ATTEMPTS = 5
 
 const BACKOFF_SECONDS_SCHEDULE = [30, 60, 120, 300, 600]
 
@@ -21,7 +21,7 @@ function nextAttemptAt(attempts: number): Date {
   return new Date(Date.now() + seconds * 1000)
 }
 
-export interface EnqueueInput {
+interface EnqueueInput {
   apiCallId: number
   userId: number
   apiId: number
@@ -30,7 +30,7 @@ export interface EnqueueInput {
   error: string
 }
 
-export interface DueRow {
+interface DueRow {
   id: number
   apiCallId: number
   userId: number

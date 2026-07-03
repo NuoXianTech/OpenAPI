@@ -13,29 +13,6 @@ function toNumber(value: number | string | null | undefined) {
 }
 
 export const apiCallStatsService = {
-  async list() {
-    return db.select().from(apiCallStats).orderBy(desc(apiCallStats.statDate), desc(apiCallStats.updatedAt))
-  },
-
-  async listByApi(apiId: number) {
-    return db.select().from(apiCallStats).where(eq(apiCallStats.apiId, apiId)).orderBy(desc(apiCallStats.statDate), desc(apiCallStats.updatedAt))
-  },
-
-  async getSummary() {
-    const rows = await db.select({
-      total: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
-      success: sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`,
-      failure: sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
-    }).from(apiCallStats)
-
-    const summary = rows[0] || { total: 0, success: 0, failure: 0 }
-    return {
-      total: Number(summary.total) || 0,
-      success: Number(summary.success) || 0,
-      failure: Number(summary.failure) || 0
-    }
-  },
-
   async getPublicDashboard(options: { days?: number, topLimit?: number } = {}): Promise<PublicCallStatsDashboard> {
     const days = Math.min(Math.max(Math.trunc(options.days || 7), 1), 30)
     const topLimit = Math.min(Math.max(Math.trunc(options.topLimit || 10), 1), 50)
@@ -212,39 +189,5 @@ export const apiCallStatsService = {
       top10Last30d,
       generatedAt: new Date().toISOString()
     }
-  },
-
-  async upsertDailyStat(data: {
-    apiId: number
-    statDate: Date
-    totalCount: number
-    successCount: number
-    failureCount: number
-  }) {
-    const totalDelta = Math.max(Math.trunc(data.totalCount), 0)
-    const successDelta = Math.max(Math.trunc(data.successCount), 0)
-    const failureDelta = Math.max(Math.trunc(data.failureCount), 0)
-
-    if (totalDelta === 0 && successDelta === 0 && failureDelta === 0) {
-      return []
-    }
-
-    const statDate = getLocalDayStart(data.statDate)
-    return db.insert(apiCallStats).values({
-      apiId: data.apiId,
-      statDate,
-      totalCount: totalDelta,
-      successCount: successDelta,
-      failureCount: failureDelta
-    }).onConflictDoUpdate({
-      target: [apiCallStats.apiId, apiCallStats.statDate],
-      set: {
-        totalCount: sql`${apiCallStats.totalCount} + ${totalDelta}`,
-        successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
-        failureCount: sql`${apiCallStats.failureCount} + ${failureDelta}`,
-        updatedAt: new Date()
-      }
-    })
-      .returning()
   }
 }

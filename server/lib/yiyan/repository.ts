@@ -31,7 +31,7 @@ const LOADERS: Record<YiyanType, () => Promise<SentenceModule>> = {
 
 const cache = new Map<YiyanType, YiyanSentence[]>()
 
-export async function loadSentences(type: YiyanType): Promise<YiyanSentence[]> {
+async function loadSentences(type: YiyanType): Promise<YiyanSentence[]> {
   const cached = cache.get(type)
   if (cached) return cached
   const mod = await LOADERS[type]()
@@ -40,7 +40,7 @@ export async function loadSentences(type: YiyanType): Promise<YiyanSentence[]> {
   return list
 }
 
-export interface PickOptions {
+interface PickOptions {
   type: YiyanType
   minLength: number
   maxLength: number

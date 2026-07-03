@@ -1,5 +1,5 @@
-import { count, desc, eq, sql, and, isNull, type SQL } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apiKeys, apis, users } from '@nuxthub/db/schema'
+import { count, desc, eq, sql, and, isNull } from 'drizzle-orm'
+import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { normalizePagination } from '~~/server/utils/pagination'
 
@@ -55,77 +55,6 @@ const callSuccessCondition = sql`${callCountedCondition} and ${callHttpSuccessCo
 const callFailureCondition = sql`${callCountedCondition} and not (${callHttpSuccessCondition})`
 
 export const apiCallService = {
-  async list() {
-    return db.select().from(apiCalls).orderBy(desc(apiCalls.createdAt))
-  },
-
-  /**
-   * Admin 视角调用日志：join apis & api_keys & users 携带展示字段。
-   * 支持 userId / apiId / status 过滤 + 分页。
-   */
-  async listForAdmin(opts: {
-    userId?: number
-    apiId?: number
-    apiKeyId?: number
-    status?: 'success' | 'failure'
-    limit?: number
-    offset?: number
-  } = {}) {
-    const { limit, offset } = normalizePagination(opts)
-    const conds: SQL[] = []
-    if (opts.userId && opts.userId > 0) conds.push(eq(apiCalls.userId, opts.userId))
-    if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
-    if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
-    if (opts.status === 'success') {
-      conds.push(callSuccessCondition)
-    } else if (opts.status === 'failure') {
-      conds.push(callFailureCondition)
-    }
-
-    const where = conds.length ? and(...conds) : undefined
-    const baseQuery = db.select({
-      id: apiCalls.id,
-      apiId: apiCalls.apiId,
-      apiName: apis.name,
-      apiPath: apiCalls.path,
-      method: apiCalls.method,
-      statusCode: apiCalls.statusCode,
-      latencyMs: apiCalls.latencyMs,
-      ip: apiCalls.ip,
-      apiKeyId: apiCalls.apiKeyId,
-      apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
-      userId: apiCalls.userId,
-      userName: users.username,
-      errorCode: apiCalls.errorCode,
-      errorMessage: apiCalls.errorMessage,
-      creditsCost: apiCalls.creditsCost,
-      isCounted: apiCalls.isCounted,
-      createdAt: apiCalls.createdAt
-    })
-      .from(apiCalls)
-      .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-      .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
-      .leftJoin(users, eq(users.id, apiCalls.userId))
-
-    const [items, totalRows] = await Promise.all([
-      where
-        ? baseQuery.where(where).orderBy(desc(apiCalls.createdAt)).limit(limit).offset(offset)
-        : baseQuery.orderBy(desc(apiCalls.createdAt)).limit(limit).offset(offset),
-      where
-        ? db.select({ value: count() }).from(apiCalls).where(where)
-        : db.select({ value: count() }).from(apiCalls)
-    ])
-
-    return {
-      items,
-      total: Number(totalRows[0]?.value || 0)
-    }
-  },
-
-  async listByApi(apiId: number) {
-    return db.select().from(apiCalls).where(eq(apiCalls.apiId, apiId)).orderBy(desc(apiCalls.createdAt))
-  },
-
   /** 用户调用汇总（成功/失败/总数），按 apiCalls.userId 过滤 */
   async getSummaryForUser(userId: number) {
     const rows = await db.select({
