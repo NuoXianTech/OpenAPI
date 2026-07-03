@@ -3,6 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/admin-api'
 import { parseFetchError } from '#shared/utils/client-error'
+import { requiredString } from '#shared/schemas/validation'
 import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
 
 const open = defineModel<boolean>('open', { default: false })
@@ -15,9 +16,9 @@ const toast = useToast()
 const form = useTemplateRef('form')
 
 const schema = z.object({
-  name: z.string().min(1, '必填').max(100),
-  shortDesc: z.string().min(1, '必填').max(30, '最多30字'),
-  description: z.string().min(1, '必填'),
+  name: requiredString('接口名称', { max: 100 }),
+  shortDesc: requiredString('接口短描述', { max: 30 }),
+  description: requiredString('接口描述'),
   docUrl: z.string().default(''),
   status: z.number().default(-1),
   categoryId: z.number().nullable().optional(),

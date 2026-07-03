@@ -2,6 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
+import { requiredString } from '#shared/schemas/validation'
 
 interface ApiCategoryItem {
   id: number
@@ -23,8 +24,8 @@ const form = useTemplateRef('form')
 const isEdit = computed(() => !!props.item)
 
 const schema = z.object({
-  code: z.string().trim().min(1, '必填').max(64),
-  name: z.string().trim().min(1, '必填').max(64),
+  code: requiredString('分类标识', { max: 64 }),
+  name: requiredString('分类名称', { max: 64 }),
   description: z.string().optional(),
   icon: z.string().optional(),
   color: z.string().optional(),

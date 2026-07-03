@@ -8,9 +8,10 @@ import {
   nullableArraySchema
 } from '../api-key'
 import { optionalDate } from '../common'
+import { atLeastOneFieldMessage, positiveInt } from '../validation'
 
 export const adminCreateUserApiKeySchema = z.object({
-  userId: z.coerce.number().int().positive('userId is required'),
+  userId: positiveInt('用户 ID'),
   name: apiKeyNameSchema.optional(),
   expiresAt: optionalDate,
   totalQuota: apiKeyTotalQuotaSchema,
@@ -21,7 +22,7 @@ export const adminCreateUserApiKeySchema = z.object({
 export type AdminCreateUserApiKeyInput = z.output<typeof adminCreateUserApiKeySchema>
 
 export const adminUpdateUserApiKeySchema = z.object({
-  id: z.coerce.number().int().positive('id is required'),
+  id: positiveInt('API Key ID'),
   name: apiKeyNameSchema.optional(),
   expiresAt: optionalDate,
   totalQuota: apiKeyTotalQuotaSchema,
@@ -35,6 +36,6 @@ export const adminUpdateUserApiKeySchema = z.object({
     || d.scopes !== undefined
     || d.ipWhitelist !== undefined
     || d.isActive !== undefined,
-  { message: '至少需要修改一个字段', path: [] }
+  { message: atLeastOneFieldMessage(), path: [] }
 )
 export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySchema>

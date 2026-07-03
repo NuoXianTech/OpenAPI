@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { emailSchema, passwordSchema, usernameSchema } from './common'
+import { positiveInt } from './validation'
 
 export const registerSchema = z.object({
   username: usernameSchema,
@@ -45,14 +46,14 @@ export const requestPasswordResetSchema = z.object({
 export type RequestPasswordResetInput = z.output<typeof requestPasswordResetSchema>
 
 export const resetPasswordSchema = z.object({
-  userId: z.coerce.number().int().positive('Invalid user id'),
+  userId: positiveInt('用户 ID'),
   token: z.string().min(1, '缺少重置令牌'),
   newPassword: passwordSchema
 })
 export type ResetPasswordInput = z.output<typeof resetPasswordSchema>
 
 export const confirmEmailChangeSchema = z.object({
-  userId: z.coerce.number().int().positive('Invalid user id'),
+  userId: positiveInt('用户 ID'),
   token: z.string().min(1, '缺少确认令牌')
 })
 export type ConfirmEmailChangeInput = z.output<typeof confirmEmailChangeSchema>

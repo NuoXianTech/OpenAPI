@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import type { ResetPasswordInput } from '#shared/schemas/auth'
 import { parseFetchError } from '#shared/utils/client-error'
+import { minMessage, requiredMessage } from '#shared/schemas/validation'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '重置密码' })
@@ -16,8 +17,8 @@ const token = computed(() => (route.query.token || '').toString())
 const linkValid = computed(() => userId.value > 0 && token.value.length > 0)
 
 const schema = z.object({
-  password: z.string().min(8, '密码至少 8 位'),
-  confirm: z.string().min(1, '请再次输入密码')
+  password: z.string().min(8, minMessage('密码', 8)),
+  confirm: z.string().min(1, requiredMessage('确认密码'))
 }).refine(d => d.password === d.confirm, {
   path: ['confirm'],
   message: '两次输入的密码不一致'

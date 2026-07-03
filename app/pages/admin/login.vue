@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
+import { requiredMessage } from '#shared/schemas/validation'
 import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
 import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 
@@ -13,8 +14,8 @@ const { fetchMe, user, adminLogin } = useAuth()
 const { turnstile, settings } = useSiteSettings()
 
 const schema = z.object({
-  username: z.string().min(1, '请输入用户名'),
-  password: z.string().min(1, '请输入密码')
+  username: z.string().min(1, requiredMessage('用户名')),
+  password: z.string().min(1, requiredMessage('密码'))
 })
 type Schema = z.output<typeof schema>
 

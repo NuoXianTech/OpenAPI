@@ -1,11 +1,12 @@
 import { z } from 'zod'
+import { maxMessage, minMessage } from './validation'
 
 export const idSchema = z.object({
-  id: z.coerce.number().int().positive('id is required')
+  id: z.coerce.number().int().positive('ID 必填')
 })
 
 export const messageIdSchema = z.object({
-  messageId: z.coerce.number().int().positive('messageId is required')
+  messageId: z.coerce.number().int().positive('消息 ID 必填')
 })
 
 export const optionalDate = z.preprocess(
@@ -21,12 +22,12 @@ export const optionalDate = z.preprocess(
 export const usernameSchema = z
   .string()
   .trim()
-  .min(3, '用户名至少 3 位')
-  .max(32, '用户名最多 32 位')
+  .min(3, minMessage('用户名', 3))
+  .max(32, maxMessage('用户名', 32, '位'))
   .regex(/^[a-zA-Z0-9_-]+$/, '只能包含字母、数字、下划线和短横线')
 
 export const emailSchema = z.string().trim().toLowerCase().pipe(z.email('请输入有效的邮箱地址'))
 
-export const passwordSchema = z.string().min(8, '密码至少 8 位')
+export const passwordSchema = z.string().min(8, minMessage('密码', 8))
 
-export const displayNameSchema = z.string().trim().max(32, '显示名最多 32 字')
+export const displayNameSchema = z.string().trim().max(32, maxMessage('显示名', 32))

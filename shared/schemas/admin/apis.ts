@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { enumMessage, nonNegativeInt, positiveInt, requiredString } from '../validation'
 
 const methodCostsSchema = z.preprocess(
   (v) => {
@@ -14,8 +15,8 @@ const methodCostsSchema = z.preprocess(
 )
 
 export const adminRegisterApiSchema = z.object({
-  pathVersion: z.string().trim().min(1, 'pathVersion 和 code 均必填'),
-  code: z.string().trim().min(1, 'pathVersion 和 code 均必填'),
+  pathVersion: requiredString('接口版本'),
+  code: requiredString('接口标识'),
   overrides: z.object({
     name: z.string().optional(),
     shortDesc: z.string().optional(),
@@ -36,11 +37,11 @@ export const adminRegisterApiSchema = z.object({
   }).optional()
 })
 
-const guardLimitSchema = z.coerce.number().int().min(0, 'limit must be >= 0')
-const guardTimeoutSchema = z.coerce.number().int().min(100, 'timeoutMs must be >= 100').max(120000, 'timeoutMs is too large')
+const guardLimitSchema = nonNegativeInt('限流额度')
+const guardTimeoutSchema = z.coerce.number().int().min(100, '超时时间不能小于 100ms').max(120000, '超时时间不能超过 120000ms')
 
 export const adminUpdateApiSchema = z.object({
-  id: z.coerce.number().int().positive('id is required'),
+  id: positiveInt('接口 ID'),
   name: z.string().trim().optional(),
   status: z.coerce.number().optional(),
   categoryId: z.preprocess(
@@ -63,7 +64,7 @@ export const adminUpdateApiSchema = z.object({
 })
 
 export const adminToggleApiSchema = z.object({
-  id: z.coerce.number().int().positive('invalid parameters'),
-  field: z.enum(['isEnabled', 'isStatistics'], 'invalid parameters'),
+  id: positiveInt('接口 ID'),
+  field: z.enum(['isEnabled', 'isStatistics'], enumMessage('切换字段', ['isEnabled', 'isStatistics'])),
   value: z.boolean()
 })

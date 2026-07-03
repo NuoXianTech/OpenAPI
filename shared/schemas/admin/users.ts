@@ -6,11 +6,12 @@ import {
   passwordSchema,
   usernameSchema
 } from '../common'
+import { atLeastOneFieldMessage, maxMessage, positiveInt } from '../validation'
 
 export const adminBanUserSchema = z.object({
-  id: z.coerce.number().int().positive('id is required'),
+  id: positiveInt('用户 ID'),
   isBanned: z.boolean(),
-  reason: z.string().trim().max(500, '封禁原因最多 500 字').optional(),
+  reason: z.string().trim().max(500, maxMessage('封禁原因', 500)).optional(),
   bannedUntil: optionalDate
 }).refine(
   d => !d.isBanned || !d.bannedUntil || d.bannedUntil.getTime() > Date.now(),
@@ -28,7 +29,7 @@ export const adminCreateUserSchema = z.object({
 
 export const adminUpdateUserSchema = z
   .object({
-    id: z.coerce.number().int().positive('id is required'),
+    id: positiveInt('用户 ID'),
     username: usernameSchema.optional(),
     email: emailSchema.optional(),
     displayName: displayNameSchema.optional(),
@@ -46,5 +47,5 @@ export const adminUpdateUserSchema = z
       || d.isActive !== undefined
       || d.isBanned !== undefined
       || d.password !== undefined,
-    { message: '至少需要修改一个字段', path: [] }
+    { message: atLeastOneFieldMessage(), path: [] }
   )

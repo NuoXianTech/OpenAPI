@@ -3,6 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/types/link'
 import { parseFetchError } from '#shared/utils/client-error'
+import { requiredString } from '#shared/schemas/validation'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: FriendLinkItem | null }>()
@@ -13,8 +14,8 @@ const form = useTemplateRef('form')
 const isEdit = computed(() => !!props.item)
 
 const schema = z.object({
-  title: z.string().min(1, '必填'),
-  url: z.string().min(1, '必填'),
+  title: requiredString('链接标题'),
+  url: requiredString('链接地址'),
   description: z.string().optional(),
   isActive: z.boolean().default(true)
 })
