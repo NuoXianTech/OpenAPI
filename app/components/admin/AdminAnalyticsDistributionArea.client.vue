@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { VisXYContainer, VisArea, VisLine, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
-import type { AdminAnalyticsDistributionItem } from '~~/shared/types/admin-logs'
+import type { AdminAnalyticsDistributionItem } from '~~/shared/types/admin-analytics'
 
 // 本组件是 .client.vue（@unovis 的 d3+DOM 不进 admin 首屏 entry）。
 // unovis 原语必须静态导入、同步可用——各自 defineAsyncComponent 会让 VisXYContainer 在

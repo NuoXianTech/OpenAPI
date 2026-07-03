@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminAnalyticsData } from '~~/shared/types/admin-logs'
+import type { AdminAnalyticsData } from '~~/shared/types/admin-analytics'
 import {
   createEmptyAdminAnalyticsData,
   useAdminAnalyticsDisplayMeta

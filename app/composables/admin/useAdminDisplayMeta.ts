@@ -7,7 +7,7 @@ import type {
   AdminAnalyticsHourlyPoint,
   AdminAnalyticsOverview,
   AdminAnalyticsRankItem
-} from '~~/shared/types/admin-logs'
+} from '~~/shared/types/admin-analytics'
 import { formatDateTime } from '~/utils/datetime'
 
 interface AdminAnalyticsDistributionChartItem {

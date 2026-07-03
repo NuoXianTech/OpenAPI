@@ -8,7 +8,9 @@ import type {
   AdminAnalyticsDistributionItem,
   AdminAnalyticsHourlyPoint,
   AdminAnalyticsOverview,
-  AdminAnalyticsRankItem,
+  AdminAnalyticsRankItem
+} from '~~/shared/types/admin-analytics'
+import type {
   AdminLogRow,
   AdminLogType,
   AdminLogsFilterOptions,

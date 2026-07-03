@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminAnalyticsRankItem } from '~~/shared/types/admin-logs'
+import type { AdminAnalyticsRankItem } from '~~/shared/types/admin-analytics'
 
 interface Props {
   ranking: AdminAnalyticsRankItem[]
