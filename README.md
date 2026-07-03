@@ -1,117 +1,183 @@
-# OpenAPI
+<div align="center">
 
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.4-00DC82?logo=nuxt)](https://nuxt.com)
-[![Vue](https://img.shields.io/badge/Vue-3.5-42b883?logo=vue.js)](https://vuejs.org)
-[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A524.15-339933?logo=node.js)](https://nodejs.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?logo=postgresql)](https://www.postgresql.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<img src="docs/images/logo.png" width="136" alt="OpenAPI icon" />
 
-OpenAPI 是一个基于 Nuxt 4 的 API 服务平台，提供 API 密钥鉴权、单进程内存限流、积分计费、调用日志、每日统计、后台审计日志、站内通知、第三方 OAuth 登录与站点设置等能力，开箱即用的全中文界面。
+## OpenAPI
 
-## 生产部署目标
+A Nuxt-powered API service platform with keys, credits, analytics, and an admin console.
 
-本项目面向**单台 Node 服务进程 + PostgreSQL** 的部署形态。
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.4-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
-- Nitro 预设：`node-server`
-- 数据库：PostgreSQL 16+
-- 限流：进程内存计数器
-- 后台任务：由同一个 Node 进程承载启动同步、过期数据回收、扣费补偿重试等定时作业
+[EN](README.md) | [中文](README_ZH.md)
 
-请勿对同一个生产数据库启动多个 Node 实例。限流窗口被设计为在 Node 进程重启时清零。
+</div>
 
-## 功能特性
+OpenAPI is a self-hosted API service platform built with Nuxt 4 and Nitro. It is designed for publishing, billing, analytics, and operating public APIs, with built-in API keys, gateway rate limiting, credits, call logs, site notifications, OAuth login, and a Chinese admin console.
 
-- **构建期接口发现**：`server/routes/v{N}/{code}/` 下的文件即接口，构建期由 `modules/api-manifest` 自动生成接口清单，启动时同步进数据库
-- **用户体系**：注册、邮箱验证、登录会话、找回密码、修改邮箱，以及第三方 OAuth 登录
-- **API 密钥**：用户自助创建与管理，支持作用域、IP 白名单、配额、有效期与吊销
-- **积分计费**：按接口、按方法配置积分单价（`methodCosts`），含每日配额、积分流水与扣费补偿队列重试
-- **限流与配额**：秒 / 分 / 时 / 天 四级内存限流，叠加每日配额校验
-- **调用日志与统计**：不可变的调用审计日志（`api_calls`）+ 按接口按自然日聚合的统计（`api_call_stats`）
-- **兑换码 / 每日签到**：生成兑换码兑换积分、每日签到领取积分，均有完整流水记录
-- **站内通知 / 公告 / 友情链接**：内容侧的消息投递与展示管理
-- **后台管理**：用户、接口、分类、兑换码、OAuth 提供商、站点设置、公告、友链、通知、操作日志、登录日志，以及数据分析仪表盘
-- **安全默认值**：无状态 JWT 会话、scrypt 密码哈希、邮箱验证 / 重置 / 改邮箱走 HMAC 无状态一次性 token、私有页面服务端守卫、Cloudflare Turnstile 人机校验
-- **前端**：Nuxt UI v4 + Tailwind CSS v4
+### How does it work?
 
-## 技术栈
+OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During build, `modules/api-manifest` scans those routes and produces a manifest; when the server starts, the manifest is synchronized into PostgreSQL so administrators can enable APIs, assign categories, configure pricing, and control access from the dashboard.
 
-| 领域 | 主要依赖 |
-| --- | --- |
-| 前端 | Nuxt、Vue、Nuxt UI、Tailwind CSS、@unovis/vue、@tanstack/table-core、VueUse、Zod、bowser |
-| 服务端 | Nitro、Drizzle ORM、drizzle-kit、postgres.js、nodemailer、iconv-lite、@nuxthub/core |
-| 数据库 | 生产使用 PostgreSQL 16+；开发可使用 pglite |
-| 工具链 | TypeScript、ESLint、pnpm |
+- Public requests pass through `server/middleware/00.api-gate.ts`, where API status, API keys, scopes, IP allowlists, rate limits, daily quotas, and credit balance are checked.
 
-## 快速开始
+- Route handlers keep business logic thin and return a consistent OpenAPI response envelope.
 
-### 环境要求
+- Call logs and daily aggregates are written after responses are sent, and paid calls are charged through the credit ledger.
 
-- Node.js >= 24.15
-- pnpm 11.x
-- PostgreSQL 16+
+- Failed charge attempts are stored in `pending_charges` and retried by the same Node process.
 
-### 安装
+The production target is intentionally simple: **one Node/Nitro process plus one PostgreSQL database**. Runtime counters live in memory, so running multiple Node processes against the same production database is not supported.
+
+### Highlights
+
+- Build-time API discovery with startup database synchronization.
+
+- User accounts with email verification, password reset, email change, session invalidation, GitHub OAuth, and QQ OAuth.
+
+- API keys with scopes, IP allowlists, total quotas, expiry, revocation, and usage snapshots.
+
+- Credit billing per API and HTTP method, with immutable credit transactions and retryable pending charges.
+
+- Public API gateway rate limits per API and caller API key or IP, with second, minute, hour, and day windows backed by process memory.
+
+- Immutable API call logs, per-day statistics, admin audit logs, and login logs.
+
+- Redemption codes, daily check-in credits, announcements, friend links, and site notifications.
+
+- Admin dashboards for users, APIs, categories, credits, content, OAuth providers, site settings, logs, and analytics.
+
+- Security-oriented defaults: stateless JWT sessions, scrypt password hashes, HMAC one-time tokens, server-side private page guards, and Cloudflare Turnstile support.
+
+### Built-in APIs
+
+| API | Endpoint | Description |
+| --- | --- | --- |
+| Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | Lists and runs registered encryption / encoding algorithms. |
+| Yiyan | `GET /v1/yiyan` | Returns a random sentence with JSON, text, JavaScript, Markdown, GBK, and JSONP variants. |
+| Doubao | `GET /v1/doubao/images`, `GET /v1/doubao/videos` | Extracts images or videos from supported Doubao, Qianwen, and Yunque share links. |
+
+### Usage
+
+#### Requirements
+
+- Node.js `>= 24.15`
+- pnpm `11.x`
+- PostgreSQL `16+`
+
+#### Development
+
+Clone the project:
 
 ```bash
-git clone https://github.com/NuoXianTech/OpenAPI.git
-cd OpenAPI
-pnpm install
+git clone https://github.com/NuoXianTech/OpenAPI.git && cd OpenAPI
+```
 
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Prepare the environment file:
+
+```bash
 cp .env.example .env
-# 生成随机密钥
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 关键环境变量
-
-| 变量 | 是否必填 | 说明 |
-| --- | --- | --- |
-| `DATABASE_URL` | 生产必填 | PostgreSQL 连接串；运行时读取，改后重启即生效 |
-| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 管理员内置账号凭据（不入库、后台不可改，改后重启即生效） |
-| `NUXT_AUTH_ADMIN_EMAIL` | 否 | 管理员展示邮箱 |
-| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥 |
-| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API 密钥相关的服务端密钥 |
-| `NUXT_AUTH_JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed |
-
-完整的单实例生产配置见 [.env.example](.env.example)。
-
-### 常用命令
+Start the development server:
 
 ```bash
-pnpm db:generate   # 修改 schema 后生成 SQL 迁移
-pnpm db:migrate    # 应用迁移
-pnpm dev           # 启动开发服务器
-pnpm build         # 构建生产产物
-pnpm preview       # 预览生产构建
-pnpm lint          # 运行 ESLint
-pnpm lint:fix      # 自动修复 ESLint 问题
-pnpm typecheck     # 运行 Nuxt TypeScript 检查
+pnpm dev
 ```
 
-## 目录结构
+#### Database
+
+Generate migrations after changing the Drizzle schema:
+
+```bash
+pnpm db:generate
+```
+
+Apply migrations:
+
+```bash
+pnpm db:migrate
+```
+
+#### Production
+
+Build the application:
+
+```bash
+pnpm build
+```
+
+Preview the production build:
+
+```bash
+pnpm preview
+```
+
+The generated production entry is `.output/start.mjs`. It runs database migrations first and then starts Nitro. See [docs/deployment/vps.md](docs/deployment/vps.md) for the full single-instance VPS guide.
+
+### Configuration
+
+The project reads production settings from runtime environment variables. The most important ones are:
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `DATABASE_URL` | Production required | PostgreSQL connection string. |
+| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | Required | Built-in administrator credentials. |
+| `NUXT_AUTH_ADMIN_EMAIL` | Optional | Administrator display email. |
+| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | Recommended | HMAC secret for email verification and OAuth state. |
+| `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
+| `NUXT_AUTH_JWT_SECRET` | Required | HS256 signing secret for access JWTs. Authentication fails closed when empty. |
+
+See [.env.example](.env.example) for the complete single-instance configuration.
+
+### Project layout
 
 ```text
-app/                      Nuxt 前端
-server/api/               内部 API 路由
-server/routes/v{N}/       由清单模块发现的公开 API 路由
-server/db/schema/         Drizzle schema 模块
-server/db/migrations/     drizzle-kit 生成的迁移
-server/middleware/        API 网关、私有页面守卫
-server/services/           业务服务层
-server/utils/             服务端共享工具
-server/plugins/           启动同步与单进程定时任务
-modules/api-manifest.ts   构建期接口清单生成器
-shared/                   共享类型与配置
-docs/                     项目文档（入口见 docs/README.md）
+app/                      Nuxt frontend
+server/api/               Internal user and admin API routes
+server/routes/v{N}/       Public APIs discovered by the manifest module
+server/db/schema/         Drizzle schema modules
+server/db/migrations/     drizzle-kit generated migrations
+server/middleware/        API gateway and private page guards
+server/services/          Business services
+server/lib/               Public API business implementations
+server/plugins/           Startup sync and single-process background jobs
+modules/api-manifest.ts   Build-time API manifest generator
+shared/                   Shared types, schemas, and configuration
+docs/                     Project documentation
 ```
 
-## 部署说明
+### Commands
 
-请对一个 PostgreSQL 数据库只运行**唯一一个** Node 服务进程。PostgreSQL 仅持久化业务数据，运行时计数器只存在于 Node 内存中。
+```bash
+pnpm dev           # Start the development server
+pnpm build         # Build for production
+pnpm preview       # Preview the production build
+pnpm db:generate   # Generate database migrations
+pnpm db:migrate    # Apply database migrations
+pnpm lint          # Run ESLint
+pnpm lint:fix      # Fix ESLint issues
+pnpm typecheck     # Run Nuxt TypeScript checks
+pnpm test:run      # Run tests once
+```
 
-`pending_charges` 表用于计费可靠性：它保存失败的扣费尝试，由单进程的重试 worker 处理。
+### Documentation
 
-## 参考项目（公共接口）
+- [Project documentation](docs/README.md)
+- [Public API onboarding](docs/api/onboarding.md)
+- [API design style](docs/api/style.md)
+- [Billing rules](docs/billing/charging.md)
+- [VPS deployment](docs/deployment/vps.md)
+
+### Credits
+
+Some built-in public APIs are based on or inspired by:
 
 - [emoji-aes](https://github.com/a8763506128977812212307169331690/emoji-aes)
 - [taiji-encode](https://github.com/Cat7373/taiji-encode)
@@ -121,10 +187,10 @@ docs/                     项目文档（入口见 docs/README.md）
 - [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 
-## 致谢
+### Contributing
 
-本项目构建于 Nuxt、Nitro、Nuxt UI、Tailwind CSS、Drizzle ORM、postgres.js、pglite、Zod、Unovis、VueUse、ESLint、TypeScript 与 nodemailer 等优秀的开源项目之上。
+Issues and PRs are welcome. If you want to add a public API, start with [docs/api/onboarding.md](docs/api/onboarding.md).
 
-## 许可证
+### License
 
-[MIT](./LICENSE) NuoXianTech
+[MIT](LICENSE) NuoXianTech
