@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAdminSettingsPage } from '~/composables/admin/useAdminSettingsPage'
+import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

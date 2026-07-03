@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { usePublicStatsDashboard } from '~/composables/stats/usePublicStatsDashboard'
+import { usePublicStatsDashboard } from '~/composables/stats/use-public-stats-dashboard'
 
 useHead({ title: '数据统计' })
 useSeoMeta({

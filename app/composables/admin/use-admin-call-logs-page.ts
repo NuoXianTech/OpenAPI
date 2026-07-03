@@ -18,8 +18,8 @@ import {
   createStringQueryCodec,
   type DashboardQueryCodec,
   useDashboardListState
-} from '~/composables/dashboard/useDashboardListState'
-import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/usePrivatePagedList'
+} from '~/composables/dashboard/use-dashboard-list-state'
+import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminCallLogsFilters {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUserSettingsPage } from '~/composables/user/useUserSettingsPage'
+import { useUserSettingsPage } from '~/composables/user/use-user-settings-page'
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 

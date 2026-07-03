@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { BatchSummary } from '~/composables/admin/useRedemptionCodesPage'
+import type { BatchSummary } from '~/composables/admin/use-redemption-codes-page'
 
 defineProps<{
   batches: BatchSummary[]

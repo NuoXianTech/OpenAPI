@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAdminLoginLogList } from '~/composables/admin/useAdminCallLogsPage'
+import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-page'
 import {
   loginFailureReasonLabel,
   loginMethodLabel

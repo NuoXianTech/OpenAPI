@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAdminOperationLogList } from '~/composables/admin/useAdminCallLogsPage'
+import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
 
 useHead({ title: '操作日志' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })

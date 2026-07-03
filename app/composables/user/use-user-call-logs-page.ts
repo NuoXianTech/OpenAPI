@@ -4,8 +4,8 @@ import {
   createNumberQueryCodec,
   type DashboardQueryCodec,
   useDashboardListState
-} from '~/composables/dashboard/useDashboardListState'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+} from '~/composables/dashboard/use-dashboard-list-state'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 export interface UserCallLogRow {
   id: number

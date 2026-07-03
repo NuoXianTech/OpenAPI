@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { CreditSummary } from '~/composables/user/useUserCreditsPage'
+import type { CreditSummary } from '~/composables/user/use-user-credits-page'
 
 const props = defineProps<{
   summary: CreditSummary

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useUserCreditsPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/useUserCreditsPage'
+import { useUserCreditsPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/use-user-credits-page'
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 

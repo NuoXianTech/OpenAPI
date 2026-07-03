@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ProfileData } from '~/composables/user/useUserSettingsPage'
+import type { ProfileData } from '~/composables/user/use-user-settings-page'
 import { parseFetchError } from '#shared/utils/client-error'
 
 const props = defineProps<{

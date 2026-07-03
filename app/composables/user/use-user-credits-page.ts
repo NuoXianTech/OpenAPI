@@ -1,5 +1,5 @@
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
 

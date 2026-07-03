@@ -3,7 +3,7 @@ import SearchBar from '~/components/common/SearchBar.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
 import LinkList from '~/components/link/LinkList.vue'
 import type { FilterTabOption } from '~/types/ui'
-import { useFriendLinkList } from '~/composables/link/useFriendLinkList'
+import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
 useHead({ title: '友情链接' })
 useSeoMeta({

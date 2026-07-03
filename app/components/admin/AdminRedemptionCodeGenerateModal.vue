@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { GeneratePayload, GenerateResult } from '~/composables/admin/useRedemptionCodesPage'
+import type { GeneratePayload, GenerateResult } from '~/composables/admin/use-redemption-codes-page'
 import { parseFetchError } from '#shared/utils/client-error'
 
 const props = defineProps<{

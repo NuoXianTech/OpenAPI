@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import { useDashboardConfig } from '~/composables/dashboard/useDashboardConfig'
+import { useDashboardConfig } from '~/composables/dashboard/use-dashboard-config'
 
 const props = defineProps<{
   onRefresh?: () => void | Promise<void>

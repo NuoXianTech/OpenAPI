@@ -2,7 +2,7 @@
 import {
   useAdminRedemptionCodesDisplayMeta,
   useRedemptionCodesPage
-} from '~/composables/admin/useRedemptionCodesPage'
+} from '~/composables/admin/use-redemption-codes-page'
 
 useHead({ title: '兑换码' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })

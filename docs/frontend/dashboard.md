@@ -143,7 +143,7 @@ async function openDelete(item) {
 }
 ```
 
-实现：[useConfirmDialog](../../app/composables/useConfirmDialog.ts) + [AppConfirmDialog.vue](../../app/components/common/AppConfirmDialog.vue)。原 `AdminDeleteModal` 已下线。
+实现：[useConfirmDialog](../../app/composables/use-confirm-dialog.ts) + [AppConfirmDialog.vue](../../app/components/common/AppConfirmDialog.vue)。原 `AdminDeleteModal` 已下线。
 
 ### 7.2 何时不用 useOverlay
 

@@ -3,7 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/admin-api'
 import { parseFetchError } from '#shared/utils/client-error'
-import { provideAdminApiForm } from '~/composables/admin/useAdminApiForm'
+import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{

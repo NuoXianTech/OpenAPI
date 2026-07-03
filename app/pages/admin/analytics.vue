@@ -3,7 +3,7 @@ import type { AdminAnalyticsData } from '~~/shared/types/admin-analytics'
 import {
   createEmptyAdminAnalyticsData,
   useAdminAnalyticsDisplayMeta
-} from '~/composables/admin/useAdminDisplayMeta'
+} from '~/composables/admin/use-admin-display-meta'
 
 useHead({ title: '数据看板' })
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })

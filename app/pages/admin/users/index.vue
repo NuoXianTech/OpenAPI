@@ -3,8 +3,8 @@ import {
   useAdminUsersDisplayMeta,
   useAdminUsersPage,
   type AdminUserItem
-} from '~/composables/admin/useAdminUsersPage'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
+} from '~/composables/admin/use-admin-users-page'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

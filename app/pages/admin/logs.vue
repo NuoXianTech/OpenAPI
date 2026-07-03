@@ -3,7 +3,7 @@ import { LazyAdminCallLogDetailModal } from '#components'
 import {
   ADMIN_CALL_LOG_TYPE_META,
   useAdminCallLogsPage
-} from '~/composables/admin/useAdminCallLogsPage'
+} from '~/composables/admin/use-admin-call-logs-page'
 import type { AdminLogRow } from '~~/shared/types/admin-logs'
 
 useHead({ title: '调用日志' })

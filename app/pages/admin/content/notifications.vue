@@ -7,8 +7,8 @@ import {
   type AdminNotificationDeliveryRow,
   type AdminNotificationMessageRow,
   type AdminNotificationUserItem
-} from '~/composables/admin/useAdminDisplayMeta'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
+} from '~/composables/admin/use-admin-display-meta'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

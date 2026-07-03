@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useUserCreditsPage } from '~/composables/user/useUserCreditsPage'
+import { useUserCreditsPage } from '~/composables/user/use-user-credits-page'
 
 definePageMeta({ layout: 'user', middleware: 'auth-user' })
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
-import { usePrivatePagedList } from '~/composables/dashboard/usePrivatePagedList'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

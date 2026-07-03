@@ -5,8 +5,8 @@ import {
   type AdminApiCategoryItem,
   type AdminDiscoveredApi,
   type AdminVersionGroup
-} from '~/composables/admin/useAdminDisplayMeta'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
+} from '~/composables/admin/use-admin-display-meta'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

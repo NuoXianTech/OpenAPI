@@ -5,7 +5,7 @@ import {
   createStringArrayQueryCodec,
   createStringQueryCodec,
   useDashboardListState
-} from '../../../../app/composables/dashboard/useDashboardListState'
+} from '../../../../app/composables/dashboard/use-dashboard-list-state'
 
 interface TestFilters extends Record<string, unknown> {
   apiId: number

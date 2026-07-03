@@ -2,7 +2,7 @@
 import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
-import { useApiList } from '~/composables/api/useApiList'
+import { useApiList } from '~/composables/api/use-api-list'
 
 const {
   query,

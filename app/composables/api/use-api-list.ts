@@ -1,4 +1,4 @@
-import { usePublicApiList } from './usePublicApiList'
+import { usePublicApiList } from './use-public-api-list'
 import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
 import type { FilterTabOption } from '~/types/ui'
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAdminApiForm } from '~/composables/admin/useAdminApiForm'
+import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
 
 defineProps<{ hasChargedMethod: boolean }>()
 

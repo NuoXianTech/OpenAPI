@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminUserItem } from '~/composables/admin/useAdminUsersPage'
+import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
 
 type DurationPreset = 'permanent' | '1d' | '7d' | '30d' | 'custom'
 

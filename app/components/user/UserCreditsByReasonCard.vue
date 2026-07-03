@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reasonLabel, reasonColor, type CreditSummary } from '~/composables/user/useUserCreditsPage'
+import { reasonLabel, reasonColor, type CreditSummary } from '~/composables/user/use-user-credits-page'
 
 defineProps<{
   byReason: CreditSummary['byReason']

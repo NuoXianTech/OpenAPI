@@ -4,7 +4,7 @@ import {
   userCallOutcomeIcon,
   userCallOutcomeLabel,
   type UserCallLogRow
-} from '~/composables/user/useUserCallLogsPage'
+} from '~/composables/user/use-user-call-logs-page'
 
 const props = defineProps<{
   row: UserCallLogRow | null

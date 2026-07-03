@@ -4,7 +4,7 @@ import type { DashboardConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,
   type ResolvedDashboardConfig
-} from '~/composables/dashboard/useDashboardConfig'
+} from '~/composables/dashboard/use-dashboard-config'
 
 type StaticBrandConfig = Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardConfig['brand'] }
 

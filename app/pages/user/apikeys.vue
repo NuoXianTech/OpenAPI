@@ -2,8 +2,8 @@
 import { LazyApiKeyResetModal } from '#components'
 import { parseFetchError } from '#shared/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { useApiKeys } from '~/composables/api/useApiKeys'
-import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
+import { useApiKeys } from '~/composables/api/use-api-keys'
+import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import type { ApiKeyItem } from '~/types/api'
 import { formatDateTime } from '~/utils/datetime'
 

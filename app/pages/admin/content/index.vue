@@ -2,7 +2,7 @@
 import { ANNOUNCEMENT_LEVEL_META as levelMeta } from '#shared/types/message-level'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

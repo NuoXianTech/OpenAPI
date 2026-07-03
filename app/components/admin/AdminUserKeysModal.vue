@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { AdminUserItem } from '~/composables/admin/useAdminUsersPage'
+import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
 import { parseFetchError } from '#shared/utils/client-error'
-import { useApiKeys } from '~/composables/api/useApiKeys'
-import { useApiKeyForm } from '~/composables/api/useApiKeyForm'
+import { useApiKeys } from '~/composables/api/use-api-keys'
+import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import type { ApiKeyItem } from '~/types/api'
 
 const props = defineProps<{

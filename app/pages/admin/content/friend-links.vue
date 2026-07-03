@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/types/link'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/useClientPagination'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
 

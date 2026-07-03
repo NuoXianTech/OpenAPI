@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminUserItem } from '~/composables/admin/useAdminUsersPage'
+import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
 
 interface OAuthBinding {
   id: number

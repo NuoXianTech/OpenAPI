@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AdminLogRow } from '~~/shared/types/admin-logs'
-import { ADMIN_CALL_LOG_TYPE_META } from '~/composables/admin/useAdminCallLogsPage'
+import { ADMIN_CALL_LOG_TYPE_META } from '~/composables/admin/use-admin-call-logs-page'
 
 const props = defineProps<{
   row: AdminLogRow | null
