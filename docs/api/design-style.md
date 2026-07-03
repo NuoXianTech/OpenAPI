@@ -1,7 +1,7 @@
 # RESTful API 设计风格指南
 
 > 一份通用的 RESTful 接口设计参考，约束 URL、HTTP 方法、响应壳、状态码与版本控制。
-> 项目内部的具体落地（manifest 扫描、计费、注册）见 [对外接口落地规范](./conventions.md)；本文档关注**风格层面**的统一。
+> 项目内部的具体落地（manifest 扫描、计费、注册）见 [对外接口落地规范](./public-api-conventions.md)；本文档关注**风格层面**的统一。
 
 ## 1. URL 设计
 
@@ -64,12 +64,25 @@ URL Path 表达**资源定位**，query 表达**过滤、排序、分页、字�
 无论成功还是失败，JSON 结构保持一致，前端按同一套逻辑解析：
 
 ```ts
-{
-  code: string       // 机器可读标识，大写 + 下划线（OK / CREATED / MISSING_API_KEY ...），详见第 4 节
-  message: string    // 人类可读的提示信息
-  data: T | null     // 业务数据，失败时为 null
-  timestamp: number  // 服务端响应时间（Unix 秒或毫秒，全局统一）
+export interface OpenApiResponse<T> {
+  /** 机器可读标识，大写 + 下划线（OK / CREATED / MISSING_API_KEY ...），详见第 4 节 */
+  code: string
+  /** 人类可读的提示信息 */
+  message: string
+  /** 业务数据，失败时为 null */
+  data: T | null
+  /** 服务端响应时间（Unix 秒或毫秒，全局统一） */
+  timestamp: number
 }
+```
+
+```ts
+const response = {
+  code: 'OK',
+  message: 'ok',
+  data: { id: 1, name: '张三' },
+  timestamp: 1700000000
+} satisfies OpenApiResponse<{ id: number, name: string }>
 ```
 
 `code` 与 HTTP status 分工：HTTP status 表达粗粒度（2xx 成功 / 4xx 客户端错 / 5xx 服务端错），body `code` 表达精确的机器可读子类型，便于同一 status 下区分多种原因（如 401 下的 `MISSING_API_KEY` / `INVALID_API_KEY` / `EXPIRED_API_KEY`）。

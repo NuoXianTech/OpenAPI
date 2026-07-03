@@ -2,9 +2,9 @@
 
 适用范围：`server/routes/v{N}/**` 下所有面向调用方的 HTTP 接口。这是被 [modules/api-manifest.ts](../../modules/api-manifest.ts) 扫描、被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类。后台内部 API（`server/api/admin/**`、`server/api/user/**` 等）**不在本规范覆盖范围内**。
 
-接口**风格层面**（URL 设计、HTTP 方法语义、响应壳结构、状态码、版本控制）一律遵循 [RESTful API 设计风格](./style.md)。本文档只讲**项目落地**：目录约定、构建期约束、计费标记、后台注册等差异点。
+接口**风格层面**（URL 设计、HTTP 方法语义、响应壳结构、状态码、版本控制）一律遵循 [RESTful API 设计风格](./design-style.md)。本文档只讲**项目落地**：目录约定、构建期约束、计费标记、后台注册等差异点。
 
-> 想要**端到端接入流程**（业务实现层 `server/lib/` 的两种组织模式、给现有接口加算法 / 从零新建一类接口的 walkthrough、注册行的自动同步机制）见 [公共接口接入指南](./onboarding.md)。本文是它引用的「落地规范」层，两者配合阅读。
+> 想要**端到端接入流程**（业务实现层 `server/lib/` 的两种组织模式、给现有接口加算法 / 从零新建一类接口的 walkthrough、注册行的自动同步机制）见 [公共接口接入指南](./public-api-onboarding.md)。本文是它引用的「落地规范」层，两者配合阅读。
 
 ## 1. 路径与目录约定
 
@@ -51,15 +51,27 @@ server/routes/
 
 所有对外 endpoint **必须**通过 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiFail` 返回，不允许裸 `return { ... }`。
 
-响应结构**完全对齐** [RESTful API 设计风格 §3](./style.md#3-响应格式)，没有项目私有扩展：
+响应结构**完全对齐** [RESTful API 设计风格 §3](./design-style.md#3-响应格式)，没有项目私有扩展：
 
 ```ts
-{
-  code: string       // 大写下划线机器可读标识，详见 RESTful API 设计风格 §4.4
+export interface OpenApiResponse<T> {
+  /** 大写下划线机器可读标识，详见 RESTful API 设计风格 §4.4 */
+  code: string
   message: string
-  data: T | null     // 失败时恒为 null
-  timestamp: number  // Unix 毫秒
+  /** 失败时恒为 null */
+  data: T | null
+  /** Unix 毫秒 */
+  timestamp: number
 }
+```
+
+```ts
+const response = {
+  code: 'OK',
+  message: 'ok',
+  data: { total: 2 },
+  timestamp: 1700000000000
+} satisfies OpenApiResponse<{ total: number }>
 ```
 
 - **`code` 是字符串标识，不是 HTTP status 数值**：成功为 `"OK"`（`openApiOk`，200），失败用 `"MISSING_API_KEY"` / `"ALGORITHM_NOT_FOUND"` / `"UPSTREAM_ERROR"` 这类业务子类型。HTTP status 仍然在响应行里准确表达粗粒度类别，**两者各填各的**
@@ -68,7 +80,7 @@ server/routes/
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
 - **`message` 由 handler 自由定**：`openApiOk` 和 `openApiFail` 的 `message` 参数都接受 handler 自定义文案，应面向调用方可读（含上下文，例如失败时 ``未知算法 "xxx"，请通过 GET /v1/crypto 查看可用列表``），不要复用 `API_GUARD_ERROR.msg`。gate 层错误的默认文案保留在 `API_GUARD_ERROR.msg`，只服务 gate 自己
 - **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `DISABLED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
-- **失败响应 `data` 恒为 `null`**：严守 [RESTful API 设计风格 §3.3](./style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
+- **失败响应 `data` 恒为 `null`**：严守 [RESTful API 设计风格 §3.3](./design-style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
 - **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
 - **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body
 
@@ -89,18 +101,23 @@ server/routes/
 需要校验请求体时，用 [`readOpenApiBody`](../../server/utils/zod.ts) —— 复用 zod，但失败**自动返回 400 标准壳**，区别于后台内部接口的 `readZodBody`（失败 `throw createError`，走 H3 默认错误格式，不符合对外契约）：
 
 ```ts
+import type { H3Event } from 'h3'
 import { z } from 'zod'
 import { readOpenApiBody } from '~~/server/utils/zod'
 import { openApiOk } from '~~/server/utils/open-api-response'
 
-const BodySchema = z.object({ mode: z.enum(['encrypt', 'decrypt']), text: z.string() })
+const BODY_MODES = ['encrypt', 'decrypt'] as const
+const BodySchema = z.object({ mode: z.enum(BODY_MODES), text: z.string() })
 
-export default defineEventHandler(async (event) => {
+async function handleCryptoRequest(event: H3Event) {
   const parsed = await readOpenApiBody(event, BodySchema)
   if (!parsed.ok) return parsed.response   // 400 INVALID_REQUEST_BODY，已是标准壳、data 恒 null
   const { mode, text } = parsed.data       // 类型安全
+
   return openApiOk(event, await run(mode, text))
-})
+}
+
+export default defineEventHandler(handleCryptoRequest)
 ```
 
 静态 schema 放 `shared/schemas/`（与现有 `readZodBody` 一致）。若入参 schema 随请求动态变化（如 crypto 按算法 `params` 决定校验规则），沿用 handler 内自定义校验（crypto 的 `normalizeParams`）即可，不必硬套 zod。
@@ -112,29 +129,37 @@ api-gate 通过后会按本次请求的 HTTP 方法在 `apis.methodCosts` 中查
 默认按响应 statusCode 判定是否扣费（2xx/3xx 扣，4xx/5xx 不扣）。失败场景直接用对应的 HTTP status + 字符串 `code` 返回即可，扣费会自动跳过：
 
 ```ts
+import type { H3Event } from 'h3'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 
-try {
-  const data = await callUpstream()
-  return openApiOk(event, data)
-}
-catch (err) {
-  return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游服务异常')
+async function handleProxyRequest(event: H3Event) {
+  try {
+    const data = await callUpstream()
+    return openApiOk(event, data)
+  }
+  catch {
+    return openApiFail(event, 502, 'UPSTREAM_ERROR', '上游服务异常')
+  }
 }
 ```
 
 想把可读的业务失败码（`CRYPTO_FAILED` / `UPSTREAM_ERROR` 等）写入 `apiCalls.errorCode` / `errorMessage`（默认仅 `forcedOutcome='failed'` 才落库）时，用 [`openApiBizFail`](../../server/utils/api-call-outcome.ts) **一行**替代「`markApiCallFailed` + `openApiFail`」两步：
 
 ```ts
+import type { H3Event } from 'h3'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiOk } from '~~/server/utils/open-api-response'
 
-try {
-  return openApiOk(event, await runAlgorithm(input))
-}
-catch (err) {
-  // 业务失败：跳过扣费 + 把 bizCode/message 落到调用日志，一行搞定
-  return openApiBizFail(event, 422, 'CRYPTO_FAILED', (err as Error).message)
+async function handleAlgorithmRequest(event: H3Event, input: string) {
+  try {
+    return openApiOk(event, await runAlgorithm(input))
+  }
+  catch (error) {
+    const message = error instanceof Error ? error.message : '算法执行失败'
+
+    // 业务失败：跳过扣费 + 把 bizCode/message 落到调用日志，一行搞定
+    return openApiBizFail(event, 422, 'CRYPTO_FAILED', message)
+  }
 }
 ```
 
@@ -150,12 +175,14 @@ catch (err) {
 import type { H3Event } from 'h3'
 import { openApiOk } from '~~/server/utils/open-api-response'
 
-export default defineEventHandler((event: H3Event) => {
+function listCryptoAlgorithms(event: H3Event) {
   return openApiOk(event, {
     total: 2,
     items: [{ name: 'aes' }, { name: 'rsa' }]
   })
-})
+}
+
+export default defineEventHandler(listCryptoAlgorithms)
 ```
 
 **`server/routes/v1/crypto/[name].post.ts`** — 动态路由 + body + 业务失败标记，完整版见 [server/routes/v1/crypto/[name].post.ts](../../server/routes/v1/crypto/%5Bname%5D.post.ts)。
@@ -194,7 +221,7 @@ manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新�
 
 ## 9. 检查清单（PR 自查）
 
-- [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号遵循 [RESTful API 设计风格](./style.md)
+- [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号遵循 [RESTful API 设计风格](./design-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
 - [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`

@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/images/logo.png" width="136" alt="OpenAPI 图标" />
+<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI 图标" />
 
 ## OpenAPI
 
 一个基于 Nuxt 的 API 服务平台，内置密钥、积分、统计与管理后台。
 
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.4-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
 [EN](README.md) | [中文](README_ZH.md)
 
@@ -119,7 +119,7 @@ pnpm build
 pnpm preview
 ```
 
-生成后的生产入口是 `.output/start.mjs`。它会先运行数据库迁移，再启动 Nitro。完整的单实例 VPS 部署流程见 [docs/deployment/vps.md](docs/deployment/vps.md)。
+生成后的生产入口是 `.output/start.mjs`。它会先运行数据库迁移，再启动 Nitro。完整的单实例 VPS 部署流程见 [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md)。
 
 ### 配置
 
@@ -169,11 +169,11 @@ pnpm test:run      # 单次运行测试
 
 ### 项目文档
 
-- [项目文档入口](docs/README.md)
-- [公共接口接入指南](docs/api/onboarding.md)
-- [RESTful API 设计风格](docs/api/style.md)
-- [API 计费规则](docs/billing/charging.md)
-- [VPS 部署指南](docs/deployment/vps.md)
+- [项目文档入口](docs/index.md)
+- [公共接口接入指南](docs/api/public-api-onboarding.md)
+- [RESTful API 设计风格](docs/api/design-style.md)
+- [API 计费规则](docs/platform/billing-rules.md)
+- [VPS 部署指南](docs/operations/vps-deployment.md)
 
 ### 致谢
 
@@ -189,7 +189,7 @@ pnpm test:run      # 单次运行测试
 
 ### 贡献
 
-欢迎任何 issue 与 PR。如果你希望新增公开 API，请先阅读 [docs/api/onboarding.md](docs/api/onboarding.md)。
+欢迎任何 issue 与 PR。如果你希望新增公开 API，请先阅读 [docs/api/public-api-onboarding.md](docs/api/public-api-onboarding.md)。
 
 ### 许可证
 

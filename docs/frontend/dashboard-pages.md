@@ -8,14 +8,38 @@
 
 ```vue
 <script setup lang="ts">
-definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user' })
+interface DashboardPageCopy {
+  title: string
+  description: string
+}
+
+definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+
+const pageCopy: DashboardPageCopy = {
+  title: '用户管理',
+  description: '管理用户状态、余额和登录信息'
+}
+const hasFilters = ref(true)
+const isLoading = ref(false)
+
+async function refresh(): Promise<void> {
+  isLoading.value = true
+  try {
+    // 拉取页面数据
+  }
+  finally {
+    isLoading.value = false
+  }
+}
 </script>
 
 <template>
-  <UDashboardPanel :id="..">
+  <UDashboardPanel id="admin-users">
     <template #header>
-      <UDashboardNavbar :title :description>
-        <template #leading><UDashboardSidebarCollapse /></template>
+      <UDashboardNavbar :title="pageCopy.title" :description="pageCopy.description">
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
         <template #right>
           <!-- 业务专属按钮（如"新建"），放在 HeaderActions 之前 -->
           <DashboardHeaderActions :on-refresh="refresh" :refreshing="isLoading" />
@@ -29,8 +53,10 @@ definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user
 
     <template #body>
       <div class="space-y-6">
-        <UPageHeader title="…" description="…" />     <!-- 可选：页面 hero -->
-        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">…</UPageGrid> <!-- 可选：KPI -->
+        <UPageHeader :title="pageCopy.title" :description="pageCopy.description" />
+        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
+          <UPageCard title="128" description="用户总数" variant="subtle" class="[&_h3]:tabular-nums" />
+        </UPageGrid>
         <!-- 主体内容 -->
       </div>
     </template>
@@ -61,8 +87,14 @@ definePageMeta({ layout: 'admin' | 'user', middleware: 'auth-admin' | 'auth-user
 新增快捷操作：在 `app/constants/dashboard-config.ts` 的 `quickActions` 数组中加一项即可。
 
 ```ts
-quickActions: [
-  { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/redemption-codes' },
+interface DashboardQuickAction {
+  label: string
+  icon: string
+  to: string
+}
+
+export const quickActions: DashboardQuickAction[] = [
+  { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/redemption-codes' }
 ]
 ```
 
@@ -108,10 +140,16 @@ quickActions: [
 新页面优先用 [Nuxt UI v4 useOverlay()](https://ui.nuxt.com/docs/composables/use-overlay) 调起业务弹窗，让页面 setup 不持弹窗 state。
 
 ```ts
+interface UserEditTarget {
+  id: number
+  email: string
+}
+
 const overlay = useOverlay()
 const editModal = overlay.create(AdminUserEditModal)
-async function openEdit(user) {
-  const result = await editModal.open({ target: user })
+
+async function openEdit(target: UserEditTarget): Promise<void> {
+  const result = await editModal.open({ target })
   if (result) await refresh()
 }
 ```
@@ -121,22 +159,31 @@ async function openEdit(user) {
 所有"二次确认 + 执行动作"场景统一走 `useConfirmDialog`，弹窗内部托管 loading，调用方只需提供动作和错误 toast。
 
 ```ts
+interface ApiCategoryListItem {
+  id: number
+  name: string
+}
+
 const confirm = useConfirmDialog()
 const toast = useToast()
 
-async function openDelete(item) {
+async function openDelete(item: ApiCategoryListItem): Promise<void> {
   await confirm({
     title: `删除分类: ${item.name}`,
     description: '删除后该分类不再可选...',
     // 默认 confirmLabel='删除' / confirmColor='error'，按需覆盖
-    onConfirm: async () => {
+    async onConfirm() {
       try {
-        await $fetch('/api/admin/api-categories/delete', { method: 'POST', body: { id: item.id } })
+        await $fetch('/api/admin/api-categories/delete', {
+          method: 'POST',
+          body: { id: item.id }
+        })
         toast.add({ title: '已删除', color: 'success' })
         await refresh()
-      } catch (err) {
-        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
-        throw err // 抛出 → 弹窗保持打开供用户重试
+      }
+      catch (error) {
+        toast.add({ title: parseFetchError(error, '删除失败'), color: 'error' })
+        throw error // 抛出 → 弹窗保持打开供用户重试
       }
     }
   })

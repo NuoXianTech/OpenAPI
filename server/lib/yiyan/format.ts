@@ -1,7 +1,7 @@
 /**
  * yiyan 多格式输出 + 字符集编码 + JSONP 包装。
  *
- * 成功响应直出原始内容（非 openApiResponse JSON 壳），见 docs/api/conventions.md §4 例外。
+ * 成功响应直出原始内容（非 openApiResponse JSON 壳），见 docs/api/public-api-conventions.md §4 例外。
  */
 
 import { Buffer } from 'node:buffer'

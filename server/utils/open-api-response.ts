@@ -1,7 +1,7 @@
 /**
  * 对外开放 API（/v{N}/*）统一响应壳。
  *
- * 结构（完全对齐 docs/api/style.md §3，无项目私有扩展）：
+ * 结构（完全对齐 docs/api/design-style.md §3，无项目私有扩展）：
  *   {
  *     code: string,        // 大写下划线机器可读标识（OK / MISSING_API_KEY ...）
  *     message: string,

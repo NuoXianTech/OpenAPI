@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="docs/images/logo.png" width="136" alt="OpenAPI icon" />
+<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI icon" />
 
 ## OpenAPI
 
 A Nuxt-powered API service platform with keys, credits, analytics, and an admin console.
 
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.4-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![pnpm](https://img.shields.io/badge/pnpm-11-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
 [EN](README.md) | [中文](README_ZH.md)
 
@@ -119,7 +119,7 @@ Preview the production build:
 pnpm preview
 ```
 
-The generated production entry is `.output/start.mjs`. It runs database migrations first and then starts Nitro. See [docs/deployment/vps.md](docs/deployment/vps.md) for the full single-instance VPS guide.
+The generated production entry is `.output/start.mjs`. It runs database migrations first and then starts Nitro. See [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md) for the full single-instance VPS guide.
 
 ### Configuration
 
@@ -169,11 +169,11 @@ pnpm test:run      # Run tests once
 
 ### Documentation
 
-- [Project documentation](docs/README.md)
-- [Public API onboarding](docs/api/onboarding.md)
-- [API design style](docs/api/style.md)
-- [Billing rules](docs/billing/charging.md)
-- [VPS deployment](docs/deployment/vps.md)
+- [Project documentation](docs/index.md)
+- [Public API onboarding](docs/api/public-api-onboarding.md)
+- [API design style](docs/api/design-style.md)
+- [Billing rules](docs/platform/billing-rules.md)
+- [VPS deployment](docs/operations/vps-deployment.md)
 
 ### Credits
 
@@ -189,7 +189,7 @@ Some built-in public APIs are based on or inspired by:
 
 ### Contributing
 
-Issues and PRs are welcome. If you want to add a public API, start with [docs/api/onboarding.md](docs/api/onboarding.md).
+Issues and PRs are welcome. If you want to add a public API, start with [docs/api/public-api-onboarding.md](docs/api/public-api-onboarding.md).
 
 ### License
 

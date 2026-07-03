@@ -6,8 +6,8 @@
 >
 > | 文档 | 关注层面 | 何时查 |
 > | --- | --- | --- |
-> | [RESTful API 设计风格](./style.md) | **风格层**：URL、HTTP 方法、响应壳、状态码、版本 | 设计接口形状时 |
-> | [对外接口落地规范](./conventions.md) | **落地规范**：目录约定、构建期约束、响应工具、计费标记、后台注册字段 | 写 route handler 时 |
+> | [RESTful API 设计风格](./design-style.md) | **风格层**：URL、HTTP 方法、响应壳、状态码、版本 | 设计接口形状时 |
+> | [对外接口落地规范](./public-api-conventions.md) | **落地规范**：目录约定、构建期约束、响应工具、计费标记、后台注册字段 | 写 route handler 时 |
 > | **本文** | **接入流程**：选形态 → 实现业务层 → 接路由 → 配计费 → 注册启用 → 验证 | 接一个新接口时 |
 
 「公共接口」特指 `server/routes/v{N}/<code>/**` 下、被 [modules/api-manifest.ts](../../modules/api-manifest.ts) 扫描、被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类对外 HTTP 接口。后台内部 API（`server/api/admin/**`、`server/api/user/**`）**不属于**本文范围。
@@ -88,20 +88,41 @@ server/lib/crypto/
 
 import { register } from '../registry'
 
-const LOWER_A = 'a'.charCodeAt(0)
-const LOWER_Z = 'z'.charCodeAt(0)
-const UPPER_A = 'A'.charCodeAt(0)
-const UPPER_Z = 'Z'.charCodeAt(0)
+interface CharacterRange {
+  start: number
+  end: number
+}
+
+const LOWERCASE_RANGE: CharacterRange = {
+  start: 'a'.charCodeAt(0),
+  end: 'z'.charCodeAt(0)
+}
+const UPPERCASE_RANGE: CharacterRange = {
+  start: 'A'.charCodeAt(0),
+  end: 'Z'.charCodeAt(0)
+}
+
+function isInRange(code: number, range: CharacterRange): boolean {
+  return code >= range.start && code <= range.end
+}
+
+function mirrorCode(code: number, range: CharacterRange): number {
+  return range.start + range.end - code
+}
+
+function transformAtbashCharacter(character: string): string {
+  const code = character.charCodeAt(0)
+  if (isInRange(code, LOWERCASE_RANGE)) {
+    return String.fromCharCode(mirrorCode(code, LOWERCASE_RANGE))
+  }
+  if (isInRange(code, UPPERCASE_RANGE)) {
+    return String.fromCharCode(mirrorCode(code, UPPERCASE_RANGE))
+  }
+  return character
+}
 
 export function atbashTransform(text: string): string {
-  let out = ''
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i)
-    if (code >= LOWER_A && code <= LOWER_Z) out += String.fromCharCode(LOWER_A + LOWER_Z - code)
-    else if (code >= UPPER_A && code <= UPPER_Z) out += String.fromCharCode(UPPER_A + UPPER_Z - code)
-    else out += text[i]
-  }
-  return out
+  return Array.from(text, transformAtbashCharacter).join('')
 }
 
 register({
@@ -168,7 +189,7 @@ server/lib/yiyan/
 
 2. **首次加载后进程级缓存常驻**（`const cache = new Map(...)`，数据只读），后续命中零 IO。
 
-输出层若涉及**多格式 / 字符集 / JSONP**（内容协商型接口），实现分工严格遵循 [对外接口落地规范 §4.0](./conventions.md#40-内容协商型接口encode-多格式输出)：`encode=json`（含默认）走标准响应壳，其余格式各自直出。绝大多数常规接口不需要这一层，只返回 JSON 壳即可。
+输出层若涉及**多格式 / 字符集 / JSONP**（内容协商型接口），实现分工严格遵循 [对外接口落地规范 §4.0](./public-api-conventions.md#40-内容协商型接口encode-多格式输出)：`encode=json`（含默认）走标准响应壳，其余格式各自直出。绝大多数常规接口不需要这一层，只返回 JSON 壳即可。
 
 ---
 
@@ -176,13 +197,13 @@ server/lib/yiyan/
 
 > 形态 A 不涉及本步。形态 B 必做。
 
-本层的**全部规则**（路径与 `code` 目录约定、构建期 fail-fast 约束、文件名→method 映射、响应壳、入参校验）都在 [对外接口落地规范 §1–§4](./conventions.md) 里，**不在此重复**。接入时只需记住三条硬线：
+本层的**全部规则**（路径与 `code` 目录约定、构建期 fail-fast 约束、文件名→method 映射、响应壳、入参校验）都在 [对外接口落地规范 §1–§4](./public-api-conventions.md) 里，**不在此重复**。接入时只需记住三条硬线：
 
 1. **路径**：`server/routes/v{N}/<code>/...`，`<code>` 必须是**静态目录名**（= 数据库 `apis.code`），不能是 `[id]` 动态段。
 2. **响应**：一律走 [server/utils/open-api-response.ts](../../server/utils/open-api-response.ts) 的 `openApiOk` / `openApiFail`，**禁止裸 `return { ... }`**。
 3. **入参校验**：需要校验 body 时用 [`readOpenApiBody`](../../server/utils/zod.ts)（失败自动返回 400 标准壳），**不要**用后台内部接口那套 `readZodBody`（失败抛 H3 错误，不符合对外契约）。
 
-handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-本文重点) 的业务层。最小完整示例见 [对外接口落地规范 §6](./conventions.md#6-最小完整示例) 与现有的 [server/routes/v1/yiyan/index.get.ts](../../server/routes/v1/yiyan/index.get.ts)。
+handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-本文重点) 的业务层。最小完整示例见 [对外接口落地规范 §6](./public-api-conventions.md#6-最小完整示例) 与现有的 [server/routes/v1/yiyan/index.get.ts](../../server/routes/v1/yiyan/index.get.ts)。
 
 ---
 
@@ -202,13 +223,13 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 - **业务失败优先用 [`openApiBizFail`](../../server/utils/api-call-outcome.ts#L63-L72)**：一行完成「标记失败（跳过扣费）+ 写错误日志 + 返回标准壳」，`code`/`message` 不必传两遍。
 - gate 层错误码（`MISSING_API_KEY` / `RATE_LIMITED` / `API_NOT_REGISTERED` …）登记在 [shared/config/api-guard.ts](../../shared/config/api-guard.ts#L32-L46) 的 `API_GUARD_ERROR`；业务 handler 自己的 `code`（`ALGORITHM_NOT_FOUND` / `UPSTREAM_ERROR` …）SCREAMING_SNAKE_CASE 内联即可，不必登记。
 
-详见 [对外接口落地规范 §5](./conventions.md#5-计费标记)。
+详见 [对外接口落地规范 §5](./public-api-conventions.md#5-计费标记)。
 
 ---
 
 ## 6. 重启 + 后台启用（形态 B 必做）
 
-> **核心：注册是自动的，你只需启用。** 字段速查见 [对外接口落地规范 §7](./conventions.md#7-后台启用与配置必做)；下面讲清背后的同步机制。
+> **核心：注册是自动的，你只需启用。** 字段速查见 [对外接口落地规范 §7](./public-api-conventions.md#7-后台启用与配置必做)；下面讲清背后的同步机制。
 
 **机制**：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [server/plugins/manifest-sync.ts](../../server/plugins/manifest-sync.ts) 会对账 manifest 与 `apis` 表（[manifest-sync.ts:3-15](../../server/plugins/manifest-sync.ts#L3-L15)）：
 
@@ -230,7 +251,7 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 
 > **未启用前**：gate 因为 DB 行存在但 `isEnabled=false` 直接 503，这是正常现象，不是 bug。
 
-> **`code` / `pathVersion` 是关联键，等于公开契约**：它们必须严格等于目录上的 `v{N}` + 第一层目录名。事后改名 = manifestSync 把旧行标 orphan + 建一个全新行，**丢失既有调用统计、API Key 关联、限流配置**。改名要走升版本流程（[RESTful API 设计风格 §5](./style.md#5-版本控制)）。
+> **`code` / `pathVersion` 是关联键，等于公开契约**：它们必须严格等于目录上的 `v{N}` + 第一层目录名。事后改名 = manifestSync 把旧行标 orphan + 建一个全新行，**丢失既有调用统计、API Key 关联、限流配置**。改名要走升版本流程（[RESTful API 设计风格 §5](./design-style.md#5-版本控制)）。
 
 后台下拉里的可选项来自构建期 `#api-manifest`，所以**新文件必须先 build / 重启 dev** 才会出现。
 
@@ -266,11 +287,11 @@ curl 'http://localhost:3000/v1/<code>?foo=bar'
 
 ## 8. 接入检查清单（PR 自查）
 
-在 [对外接口落地规范 §9](./conventions.md#9-检查清单pr-自查) 之上，补充业务层与流程项：
+在 [对外接口落地规范 §9](./public-api-conventions.md#9-检查清单pr-自查) 之上，补充业务层与流程项：
 
 **通用**
 
-- [ ] 接口形状遵循 [RESTful API 设计风格](./style.md)（URL 名词复数、method 语义、状态码、版本前缀）
+- [ ] 接口形状遵循 [RESTful API 设计风格](./design-style.md)（URL 名词复数、method 语义、状态码、版本前缀）
 - [ ] 业务逻辑在 `server/lib/<code>/`，handler 保持薄；含 register/list 单例状态的模块**确认放在 `server/lib/` 而非 `server/utils/`**
 - [ ] 响应全部走 `openApiOk` / `openApiFail`，无裸 `return {}`
 - [ ] 失败处理选对出口：协议失败 → `openApiFail`；业务失败 → `openApiBizFail`（一行）
