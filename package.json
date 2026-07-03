@@ -20,38 +20,38 @@
     "test:nuxt": "vitest --project nuxt"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.5.1",
+    "@electric-sql/pglite": "^0.5.3",
     "@iconify-json/mdi": "^1.2.3",
     "@internationalized/date": "3.12.2",
-    "@nuxt/ui": "^4.8.2",
+    "@nuxt/ui": "^4.9.0",
     "@nuxthub/core": "^0.10.7",
     "@tanstack/table-core": "^8.21.3",
-    "@unovis/ts": "^1.6.5",
-    "@unovis/vue": "^1.6.5",
+    "@unovis/ts": "^1.6.7",
+    "@unovis/vue": "^1.6.7",
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",
     "bowser": "^2.14.1",
     "drizzle-orm": "^0.45.2",
     "iconv-lite": "^0.6.0",
-    "nodemailer": "^8.0.10",
-    "nuxt": "^4.4.7",
+    "nodemailer": "^8.0.11",
+    "nuxt": "^4.4.8",
     "postgres": "^3.4.9",
-    "tailwindcss": "^4.3.0",
-    "vue": "^3.5.35",
+    "tailwindcss": "^4.3.2",
+    "vue": "^3.5.39",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@nuxt/eslint": "1.15.2",
     "@nuxt/test-utils": "^4.0.3",
-    "@types/node": "^24.12.4",
-    "@types/nodemailer": "^8.0.0",
+    "@types/node": "^24.13.2",
+    "@types/nodemailer": "^8.0.1",
     "@vue/test-utils": "^2.4.11",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^10.4.1",
+    "eslint": "^10.6.0",
     "happy-dom": "^20.10.6",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9",
-    "vue-tsc": "^3.3.3"
+    "vue-tsc": "^3.3.6"
   },
-  "packageManager": "pnpm@11.5.1"
+  "packageManager": "pnpm@11.9.0"
 }
