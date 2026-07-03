@@ -6,4 +6,3 @@ export const adminLoginSchema = z.object({
   remember: z.boolean().optional(),
   turnstileToken: z.string().optional()
 })
-export type AdminLoginInput = z.output<typeof adminLoginSchema>

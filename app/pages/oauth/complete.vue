@@ -218,7 +218,7 @@ async function submitRegister() {
             :variant="mode === 'bind' ? 'solid' : 'outline'"
             :color="mode === 'bind' ? 'primary' : 'neutral'"
             block
-            @click="mode = 'bind'"
+            @click="() => { mode = 'bind' }"
           >
             绑定已有账号
           </UButton>
@@ -226,7 +226,7 @@ async function submitRegister() {
             :variant="mode === 'register' ? 'solid' : 'outline'"
             :color="mode === 'register' ? 'primary' : 'neutral'"
             block
-            @click="mode = 'register'"
+            @click="() => { mode = 'register' }"
           >
             新注册
           </UButton>

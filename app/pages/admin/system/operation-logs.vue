@@ -158,7 +158,7 @@ const {
             :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
             variant="outline"
             :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-            @click="expandedFilters = !expandedFilters"
+            @click="() => { expandedFilters = !expandedFilters }"
           >
             更多筛选
             <UBadge

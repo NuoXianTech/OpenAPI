@@ -165,7 +165,7 @@ function clearTurnstileError() {
                 square
                 :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
                 :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
-                @click="passwordVisible = !passwordVisible"
+                @click="() => { passwordVisible = !passwordVisible }"
               />
             </template>
           </UInput>

@@ -209,7 +209,7 @@ function preventAutoFocus(event: Event) {
           color="neutral"
           icon="i-mdi-check"
           class="ml-auto"
-          @click="open = false"
+          @click="() => { open = false }"
         >
           我知道了
         </UButton>

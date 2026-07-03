@@ -31,19 +31,6 @@ export interface AdminLogRow {
   responseSize: number | null
 }
 
-export interface AdminLogsListQuery {
-  startAt?: string
-  endAt?: string
-  apiId?: number
-  categoryId?: number
-  types?: AdminLogType[]
-  apiKeyId?: number
-  userId?: number
-  requestId?: string
-  limit?: number
-  offset?: number
-}
-
 export interface AdminLogsListResponse {
   items: AdminLogRow[]
   total: number

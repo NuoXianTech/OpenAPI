@@ -203,7 +203,7 @@ function formatExpiry(val: string | null) {
             variant="outline"
             color="neutral"
             size="sm"
-            @click="formOpen = false"
+            @click="() => { formOpen = false }"
           >
             取消
           </UButton>

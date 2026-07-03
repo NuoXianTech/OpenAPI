@@ -17,7 +17,6 @@ export const adminBanUserSchema = z.object({
   d => !d.isBanned || !d.bannedUntil || d.bannedUntil.getTime() > Date.now(),
   { message: '封禁到期时间必须晚于当前时间', path: ['bannedUntil'] }
 )
-export type AdminBanUserInput = z.output<typeof adminBanUserSchema>
 
 export const adminCreateUserSchema = z.object({
   username: usernameSchema,

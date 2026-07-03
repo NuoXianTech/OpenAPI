@@ -213,7 +213,7 @@ async function submitTest() {
             variant="outline"
             color="neutral"
             :disabled="sending"
-            @click="testOpen = false"
+            @click="() => { testOpen = false }"
           >
             取消
           </UButton>

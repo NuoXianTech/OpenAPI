@@ -140,7 +140,7 @@ const {
           size="sm"
           color="primary"
           icon="i-mdi-account-plus-outline"
-          @click="createOpen = true"
+          @click="() => { createOpen = true }"
         >
           添加用户
         </UButton>

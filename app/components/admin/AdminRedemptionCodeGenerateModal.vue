@@ -229,7 +229,7 @@ function close() {
         <UButton
           variant="outline"
           color="neutral"
-          @click="result = null"
+          @click="() => { result = null }"
         >
           继续生成
         </UButton>

@@ -44,12 +44,6 @@ export interface AdminLoginLogRow extends LoginLogRow {
   username: string | null
 }
 
-// ── 列表响应 ────────────────────────────────────────────────────────
-export interface LoginLogsListResponse<T = LoginLogRow> {
-  items: T[]
-  total: number
-}
-
 // ── 展示元数据（前后端共用）────────────────────────────────────────
 type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
@@ -64,12 +58,7 @@ export function loginMethodLabel(method: string): string {
   return LOGIN_METHOD_META[method as LoginMethod]?.label ?? method
 }
 
-/** method 值 → 图标；未知值回退通用登录图标 */
-export function loginMethodIcon(method: string): string {
-  return LOGIN_METHOD_META[method as LoginMethod]?.icon ?? 'i-mdi-login-variant'
-}
-
-export const LOGIN_FAILURE_REASON_LABELS: Record<LoginFailureReason, string> = {
+const LOGIN_FAILURE_REASON_LABELS: Record<LoginFailureReason, string> = {
   invalid_password: '密码错误',
   banned: '账号被封禁',
   not_active: '邮箱未验证',

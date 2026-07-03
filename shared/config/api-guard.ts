@@ -60,12 +60,10 @@ export function hasAnyChargedMethod(methodCosts: Record<string, number> | null |
   return false
 }
 
-export const RATE_LIMIT_WINDOWS = ['second', 'minute', 'hour', 'day'] as const
-export type RateLimitWindow = typeof RATE_LIMIT_WINDOWS[number]
-
-export const RATE_LIMIT_WINDOW_SECONDS: Record<RateLimitWindow, number> = {
+export const RATE_LIMIT_WINDOW_SECONDS = {
   second: 1,
   minute: 60,
   hour: 3_600,
   day: 86_400
-}
+} as const
+export type RateLimitWindow = keyof typeof RATE_LIMIT_WINDOW_SECONDS

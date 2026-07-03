@@ -161,13 +161,13 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         <UButton
           variant="outline"
           color="neutral"
-          @click="open = false"
+          @click="() => { open = false }"
         >
           取消
         </UButton>
         <UButton
           :loading="loading"
-          @click="form?.submit()"
+          @click="() => { form?.submit() }"
         >
           {{ isEdit ? '保存' : '创建' }}
         </UButton>

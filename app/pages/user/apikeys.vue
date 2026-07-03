@@ -415,7 +415,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             <UButton
               variant="outline"
               color="neutral"
-              @click="createOpen = false"
+              @click="() => { createOpen = false }"
             >
               取消
             </UButton>
@@ -452,7 +452,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             <UButton
               variant="outline"
               color="neutral"
-              @click="editOpen = false"
+              @click="() => { editOpen = false }"
             >
               取消
             </UButton>

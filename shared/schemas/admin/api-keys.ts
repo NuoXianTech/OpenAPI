@@ -19,7 +19,6 @@ export const adminCreateUserApiKeySchema = z.object({
   ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
   count: apiKeyCreateCountSchema
 })
-export type AdminCreateUserApiKeyInput = z.output<typeof adminCreateUserApiKeySchema>
 
 export const adminUpdateUserApiKeySchema = z.object({
   id: positiveInt('API Key ID'),
@@ -38,4 +37,3 @@ export const adminUpdateUserApiKeySchema = z.object({
     || d.isActive !== undefined,
   { message: atLeastOneFieldMessage(), path: [] }
 )
-export type AdminUpdateUserApiKeyInput = z.output<typeof adminUpdateUserApiKeySchema>

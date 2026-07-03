@@ -29,7 +29,6 @@ export const oauthBindSchema = z.object({
   password: z.string().min(1, '请输入密码'),
   turnstileToken: z.string().optional()
 })
-export type OauthBindInput = z.output<typeof oauthBindSchema>
 
 export const oauthRegisterSchema = z.object({
   email: emailSchema,
@@ -37,7 +36,6 @@ export const oauthRegisterSchema = z.object({
   password: passwordSchema,
   turnstileToken: z.string().optional()
 })
-export type OauthRegisterInput = z.output<typeof oauthRegisterSchema>
 
 export const requestPasswordResetSchema = z.object({
   email: emailSchema,

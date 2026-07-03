@@ -11,7 +11,7 @@
 
 const IPV4_LITERAL_RE = /^\d{1,3}(\.\d{1,3}){3}$/
 
-export type CidrParseResult
+type CidrParseResult
   = | { ok: true, family: 4 | 6, network: bigint, prefix: number, total: number }
     | { ok: false, reason: string }
 
@@ -108,7 +108,7 @@ function applyMask(addr: bigint, prefix: number, total: number): bigint {
 }
 
 /** 解析单条 CIDR；失败时返回带原因的错误对象 */
-export function parseCidr(input: string): CidrParseResult {
+function parseCidr(input: string): CidrParseResult {
   const trimmed = input.trim()
   if (!trimmed) return { ok: false, reason: '不能为空' }
 
@@ -145,7 +145,7 @@ export function isCidr(input: string): boolean {
 }
 
 /** 检查 IP 是否落在指定 CIDR 范围内 */
-export function ipInCidr(ip: string, cidr: string): boolean {
+function ipInCidr(ip: string, cidr: string): boolean {
   const parsed = parseCidr(cidr)
   if (!parsed.ok) return false
 

@@ -167,7 +167,7 @@ async function onSubmit() {
         <UButton
           variant="outline"
           color="neutral"
-          @click="open = false"
+          @click="() => { open = false }"
         >
           取消
         </UButton>

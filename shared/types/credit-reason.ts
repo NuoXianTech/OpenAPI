@@ -25,7 +25,7 @@ export interface CreditReasonMeta {
   color: 'success' | 'error' | 'warning' | 'info' | 'neutral'
 }
 
-export const CREDIT_REASON_META: Record<CreditReason, CreditReasonMeta> = {
+const CREDIT_REASON_META: Record<CreditReason, CreditReasonMeta> = {
   admin_grant: { label: '管理员加', color: 'success' },
   admin_revoke: { label: '管理员扣', color: 'error' },
   admin_reset: { label: '管理员重置', color: 'warning' },

@@ -265,7 +265,7 @@ const {
                       square
                       :icon="getForm(item.provider).secretVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
                       :aria-label="getForm(item.provider).secretVisible ? '隐藏密钥' : '显示密钥'"
-                      @click="getForm(item.provider).secretVisible = !getForm(item.provider).secretVisible"
+                      @click="() => { getForm(item.provider).secretVisible = !getForm(item.provider).secretVisible }"
                     />
                   </template>
                 </UInput>

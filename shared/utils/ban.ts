@@ -20,11 +20,6 @@ export function isBanActive(user: BanState, now: Date = new Date()): boolean {
   return new Date(user.bannedUntil).getTime() > now.getTime()
 }
 
-/** isBanned=true 但 bannedUntil 已过去 → 封禁已到期，可惰性解封。 */
-export function isBanExpired(user: BanState, now: Date = new Date()): boolean {
-  return user.isBanned === true && !isBanActive(user, now)
-}
-
 /** 面向被封禁用户的提示文案（含原因与解封时间）。 */
 export function banMessage(user: BanState): string {
   const parts = ['账号已被封禁']

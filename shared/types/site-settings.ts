@@ -16,8 +16,6 @@ export interface PublicTurnstileSettings {
   checkin: boolean
 }
 
-export type RegistrationMode = 'open' | 'invite' | 'closed'
-
 export interface PublicSiteSettings {
   siteUrl: string
   siteImg: string
@@ -28,7 +26,7 @@ export interface PublicSiteSettings {
   policeBeian: string | null
   termsUrl: string | null
   privacyUrl: string | null
-  registrationMode: RegistrationMode | string
+  registrationMode: string
   passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
 }

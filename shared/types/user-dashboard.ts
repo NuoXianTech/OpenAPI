@@ -1,10 +1,10 @@
-export interface UserDashboardCredits {
+interface UserDashboardCredits {
   balance: number
   totalSpent: number
   spent24h: number
 }
 
-export interface UserDashboardCalls {
+interface UserDashboardCalls {
   total: number
   success: number
   failure: number
@@ -12,7 +12,7 @@ export interface UserDashboardCalls {
   requests24h: number
 }
 
-export interface UserDashboardApiKeys {
+interface UserDashboardApiKeys {
   total: number
   active: number
 }

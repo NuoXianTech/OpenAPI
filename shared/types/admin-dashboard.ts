@@ -1,4 +1,4 @@
-export interface AdminDashboardOverview {
+interface AdminDashboardOverview {
   userCount: number
   enabledApiCount: number
   totalApiCount: number
