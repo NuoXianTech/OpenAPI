@@ -27,7 +27,7 @@ export const adminCreateFriendLinkSchema = z.object({
   title: requiredString('链接标题'),
   url: requiredString('链接地址'),
   description: z.string().optional(),
-  isActive: z.boolean().optional()
+  isActive: z.boolean().default(true)
 })
 
 export const adminUpdateFriendLinkSchema = z.object({

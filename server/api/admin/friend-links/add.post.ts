@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
     title: body.title,
     url: body.url,
     description: body.description?.trim() || null,
-    isActive: body.isActive ?? false,
+    isActive: body.isActive ?? true,
     createdBy: admin.id || null
   })
 
