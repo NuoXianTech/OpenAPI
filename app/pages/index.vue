@@ -10,7 +10,6 @@ const {
   currentCategory,
   statusTabs,
   categoryTabs,
-  categoryMap,
   allItems,
   loading,
   error,
@@ -174,7 +173,6 @@ useSeoMeta({
           </div>
           <ApiList
             :items="filteredItems"
-            :category-map="categoryMap"
           />
         </section>
       </Transition>

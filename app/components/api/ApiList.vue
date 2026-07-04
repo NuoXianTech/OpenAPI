@@ -1,17 +1,11 @@
 <script lang="ts" setup>
-import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
+import type { ApiCatalogItem } from '~/types/api'
 
-const { items, categoryMap } = defineProps({
-  items: { type: Array as PropType<ApiCatalogItem[]>, default: () => [] },
-  categoryMap: { type: Object as PropType<Record<number, ApiCategoryItem>>, default: () => ({}) }
-})
-
-function resolveCategoryName(id: number | null | undefined) {
-  if (typeof id !== 'number') {
-    return '未分类'
-  }
-  return categoryMap[id]?.name || '未分类'
+interface ApiListProps {
+  items?: ApiCatalogItem[]
 }
+
+const { items = [] } = defineProps<ApiListProps>()
 </script>
 
 <template>
@@ -29,7 +23,6 @@ function resolveCategoryName(id: number | null | undefined) {
         :status="item.status"
         :short-desc="item.shortDesc"
         :description="item.description"
-        :category-name="resolveCategoryName(item.categoryId)"
         :http-method="item.httpMethod"
         :api-path="item.apiPath"
         :doc-url="item.docUrl"

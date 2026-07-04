@@ -297,13 +297,15 @@ async function handleLogout() {
           </p>
 
           <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
-            <span
-              class="inline-flex items-center gap-1.5"
-              :title="listStatus.title"
+            <UTooltip
+              :text="listStatus.title"
+              :content="{ side: 'top' }"
             >
-              <CommonStatusDot :tone="listStatus.tone" />
-              {{ listStatus.label }}
-            </span>
+              <span class="inline-flex items-center gap-1.5">
+                <CommonStatusDot :tone="listStatus.tone" />
+                {{ listStatus.label }}
+              </span>
+            </UTooltip>
             <USeparator
               orientation="vertical"
               class="h-3"
