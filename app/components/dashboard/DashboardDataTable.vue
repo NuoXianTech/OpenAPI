@@ -64,9 +64,9 @@ const DEFAULT_TABLE_UI = {
   base: 'dashboard-table-native table-fixed border-separate border-spacing-0',
   thead: '[&>tr]:[background-color:var(--dashboard-table-header)] [&>tr]:after:content-none',
   tbody: '[&>tr]:last:[&>td]:border-b-0',
-  th: 'py-2 text-[11px] font-semibold uppercase tracking-wide text-muted first:rounded-tl-lg last:rounded-tr-lg border-b border-default',
-  td: 'py-2.5 border-b border-default [background-color:var(--dashboard-table-row)]',
-  empty: 'py-10 border-b border-default rounded-b-lg [background-color:var(--dashboard-table-row)]',
+  th: 'py-2 text-[10px] font-medium uppercase tracking-wider text-muted first:rounded-tl-md last:rounded-tr-md border-b border-default',
+  td: 'py-2.5 text-sm border-b border-default [background-color:var(--dashboard-table-row)]',
+  empty: 'py-9 border-b border-default rounded-b-md [background-color:var(--dashboard-table-row)]',
   separator: 'h-0'
 }
 const tableUi = computed(() => ({
@@ -101,10 +101,10 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
 </script>
 
 <template>
-  <div class="dashboard-data-table flex flex-col gap-3">
+  <div class="dashboard-data-table flex flex-col gap-2.5">
     <div
       v-if="showSkeleton"
-      class="dashboard-table-skeleton overflow-hidden rounded-lg"
+      class="dashboard-table-skeleton overflow-hidden rounded-md"
     >
       <div class="grid gap-0">
         <div
@@ -195,7 +195,7 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
 
     <div
       v-if="showFooter"
-      class="flex items-center justify-between gap-3 border-t border-default pt-3"
+      class="flex items-center justify-between gap-3 border-t border-default px-3 py-2.5"
     >
       <div class="flex items-center gap-2">
         <span class="text-xs text-muted tabular-nums">

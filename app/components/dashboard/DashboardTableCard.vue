@@ -30,15 +30,15 @@ const totalText = computed(() => {
     :ui="{ body: 'p-0 sm:p-0' }"
   >
     <template #header>
-      <div class="flex flex-wrap items-start gap-3">
-        <div class="flex min-w-0 items-start gap-2">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex min-w-0 items-center gap-2">
           <UIcon
             v-if="icon"
             :name="icon"
-            class="mt-0.5 size-5 shrink-0 text-muted"
+            class="size-4.5 shrink-0 text-muted"
           />
           <div class="min-w-0">
-            <h3 class="text-lg font-semibold text-highlighted">
+            <h3 class="text-base font-semibold text-highlighted">
               {{ title }}
             </h3>
             <p
@@ -71,12 +71,12 @@ const totalText = computed(() => {
     v-else
     class="dashboard-table-card-embedded"
   >
-    <div class="flex flex-wrap items-start gap-3 px-0 pb-3">
-      <div class="flex min-w-0 items-start gap-2">
+    <div class="flex flex-wrap items-center gap-2.5 px-0 pb-2.5">
+      <div class="flex min-w-0 items-center gap-2">
         <UIcon
           v-if="icon"
           :name="icon"
-          class="mt-0.5 size-5 shrink-0 text-muted"
+          class="size-4.5 shrink-0 text-muted"
         />
         <div class="min-w-0">
           <h3 class="text-base font-semibold text-highlighted">

@@ -36,11 +36,11 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
 
 const navigationMenuUi = {
   root: 'dashboard-sidebar-menu',
-  list: 'space-y-1',
+  list: 'space-y-0.5',
   item: 'min-w-0',
-  link: 'dashboard-sidebar-link min-h-9 rounded-lg px-2.5 py-2',
-  linkLeadingIcon: 'dashboard-sidebar-link-icon size-4.5',
-  linkLabel: 'dashboard-sidebar-link-label text-[13px] font-medium',
+  link: 'dashboard-sidebar-link min-h-8 rounded-md px-2 py-1.5',
+  linkLeadingIcon: 'dashboard-sidebar-link-icon size-4',
+  linkLabel: 'dashboard-sidebar-link-label text-xs font-medium',
   linkTrailing: 'dashboard-sidebar-link-trailing',
   label: 'dashboard-sidebar-menu-label'
 }
@@ -56,9 +56,9 @@ const navigationMenuUi = {
       class="dashboard-sidebar"
       :ui="{
         root: 'border-e-0',
-        header: 'h-auto px-3 pb-2 pt-3',
-        body: 'gap-3 px-3 py-2',
-        footer: 'px-3 pb-3 pt-2 lg:border-t lg:border-default',
+        header: 'h-auto px-2.5 pb-1.5 pt-2.5',
+        body: 'gap-2 px-2.5 py-2',
+        footer: 'px-2.5 pb-2.5 pt-2 lg:border-t lg:border-default',
         handle: 'dashboard-sidebar-resize-handle'
       }"
     >
@@ -82,9 +82,9 @@ const navigationMenuUi = {
               class="dashboard-brand-trigger data-[state=open]:bg-elevated"
               trailing-icon="i-mdi-chevron-down"
               :ui="{
-                leadingIcon: 'dashboard-brand-icon size-5',
-                trailingIcon: collapsed ? 'hidden' : 'dashboard-brand-chevron size-4',
-                label: 'truncate text-sm font-semibold'
+                leadingIcon: 'dashboard-brand-icon size-4.5',
+                trailingIcon: collapsed ? 'hidden' : 'dashboard-brand-chevron size-3.5',
+                label: 'truncate text-[13px] font-semibold'
               }"
             />
           </UDropdownMenu>
