@@ -6,11 +6,15 @@ import {
   type ResolvedDashboardConfig
 } from '~/composables/dashboard/use-dashboard-config'
 
-type StaticBrandConfig = Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardConfig['brand'] }
+interface StaticBrandConfig extends Omit<DashboardConfig, 'brand'> {
+  brand: (siteName: string) => DashboardConfig['brand']
+}
 
-const props = defineProps<{
+interface DashboardLayoutBaseProps {
   config: StaticBrandConfig
-}>()
+}
+
+const props = defineProps<DashboardLayoutBaseProps>()
 
 const { settings } = useSiteSettings()
 
@@ -29,35 +33,60 @@ const open = ref(false)
 const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
   { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true }
 ]])
+
+const navigationMenuUi = {
+  root: 'dashboard-sidebar-menu',
+  list: 'space-y-1',
+  item: 'min-w-0',
+  link: 'dashboard-sidebar-link min-h-9 rounded-lg px-2.5 py-2',
+  linkLeadingIcon: 'dashboard-sidebar-link-icon size-4.5',
+  linkLabel: 'dashboard-sidebar-link-label text-[13px] font-medium',
+  linkTrailing: 'dashboard-sidebar-link-trailing',
+  label: 'dashboard-sidebar-menu-label'
+}
 </script>
 
 <template>
-  <UDashboardGroup class="dashboard-shell">
+  <UDashboardGroup class="dashboard-shell dashboard-shell-refined">
     <UDashboardSidebar
       :id="resolved.id"
       v-model:open="open"
       collapsible
       resizable
       class="dashboard-sidebar"
-      :ui="{ footer: 'lg:border-t lg:border-default' }"
+      :ui="{
+        header: 'h-auto px-3 pb-2 pt-3',
+        body: 'gap-3 px-3 py-2',
+        footer: 'px-3 pb-3 pt-2 lg:border-t lg:border-default'
+      }"
     >
       <template #header="{ collapsed }">
-        <UDropdownMenu
-          :items="brandDropdownItems"
-          :content="{ align: 'start' }"
-          :ui="{ content: 'w-48' }"
+        <div
+          class="dashboard-sidebar-brand"
+          :class="{ 'dashboard-sidebar-brand-collapsed': collapsed }"
         >
-          <UButton
-            :label="collapsed ? undefined : resolved.brand.label"
-            :icon="resolved.brand.icon"
-            color="neutral"
-            variant="ghost"
-            block
-            :square="collapsed"
-            class="dashboard-brand-trigger data-[state=open]:bg-elevated"
-            :ui="{ trailingIcon: 'size-5' }"
-          />
-        </UDropdownMenu>
+          <UDropdownMenu
+            :items="brandDropdownItems"
+            :content="{ align: 'start' }"
+            :ui="{ content: 'w-48' }"
+          >
+            <UButton
+              :label="collapsed ? undefined : resolved.brand.label"
+              :icon="resolved.brand.icon"
+              color="neutral"
+              variant="ghost"
+              block
+              :square="collapsed"
+              class="dashboard-brand-trigger data-[state=open]:bg-elevated"
+              trailing-icon="i-mdi-chevron-down"
+              :ui="{
+                leadingIcon: 'dashboard-brand-icon size-5',
+                trailingIcon: collapsed ? 'hidden' : 'dashboard-brand-chevron size-4',
+                label: 'truncate text-sm font-semibold'
+              }"
+            />
+          </UDropdownMenu>
+        </div>
       </template>
 
       <template #default="{ collapsed }">
@@ -67,7 +96,7 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
         >
           <div
             v-if="group.label && !collapsed"
-            class="px-2 pb-1 pt-2 text-[11px] font-medium uppercase tracking-wide text-muted"
+            class="dashboard-sidebar-group-label"
           >
             {{ group.label }}
           </div>
@@ -75,7 +104,10 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
             :collapsed="collapsed"
             :items="group.items"
             orientation="vertical"
+            color="neutral"
+            variant="pill"
             :tooltip="collapsed"
+            :ui="navigationMenuUi"
           />
         </template>
 
@@ -83,7 +115,10 @@ const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
           :collapsed="collapsed"
           :items="resolved.footerLinks"
           orientation="vertical"
+          color="neutral"
+          variant="pill"
           class="mt-auto"
+          :ui="navigationMenuUi"
         />
       </template>
     </UDashboardSidebar>
