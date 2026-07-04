@@ -1,8 +1,47 @@
 <script setup lang="ts" generic="T">
 import type { TableColumn } from '@nuxt/ui'
 
+interface DashboardDataTablePageSizeItem {
+  label: string
+  value: number
+}
+
+interface DashboardDataTableProps<T> {
+  data: T[]
+  columns: TableColumn<T>[]
+  loading?: boolean
+  emptyTitle?: string
+  emptyDescription?: string
+  emptyIcon?: string
+  page?: number
+  pageSize?: number
+  total?: number
+  /** 传入后底部显示“每页条数”下拉（配合 v-model:page-size）；不传则只显示计数 + 分页 */
+  pageSizeItems?: DashboardDataTablePageSizeItem[]
+  /** 行选择状态（配合 v-model:row-selection）；不传则禁用行选择 */
+  rowSelection?: Record<string, boolean>
+  /** 列可见性状态（配合 v-model:column-visibility）；不传则全部列可见 */
+  columnVisibility?: Record<string, boolean>
+  /** 行唯一 id 取值函数（启用行选择时建议提供） */
+  getRowId?: (row: T) => string
+  /** 列宽算法：true=table-fixed 等宽（默认）；列多/内容宽的表传 false 走自动列宽 */
+  fixed?: boolean
+  /** 首屏空数据加载时的骨架行数 */
+  skeletonRows?: number
+  /** 覆盖默认表格 :ui（与组件内置样式浅合并） */
+  ui?: Record<string, string>
+}
+
+interface DashboardDataTableEmits {
+  'update:page': [value: number]
+  'update:pageSize': [value: number]
+  'update:rowSelection': [value: Record<string, boolean>]
+  'update:columnVisibility': [value: Record<string, boolean>]
+}
+
 const {
   data,
+  columns,
   loading = false,
   emptyTitle = '暂无数据',
   emptyIcon = 'i-mdi-inbox-outline',
@@ -14,58 +53,39 @@ const {
   columnVisibility,
   getRowId,
   fixed = true,
+  skeletonRows = 8,
   ui
-} = defineProps<{
-  data: T[]
-  columns: TableColumn<T>[]
-  loading?: boolean
-  emptyTitle?: string
-  emptyDescription?: string
-  emptyIcon?: string
-  page?: number
-  pageSize?: number
-  total?: number
-  /** 传入后底部显示“每页条数”下拉（配合 v-model:page-size）；不传则只显示计数 + 分页 */
-  pageSizeItems?: Array<{ label: string, value: number }>
-  /** 行选择状态（配合 v-model:row-selection）；不传则禁用行选择 */
-  rowSelection?: Record<string, boolean>
-  /** 列可见性状态（配合 v-model:column-visibility）；不传则全部列可见 */
-  columnVisibility?: Record<string, boolean>
-  /** 行唯一 id 取值函数（启用行选择时建议提供） */
-  getRowId?: (row: T) => string
-  /** 列宽算法：true=table-fixed 等宽（默认）；列多/内容宽的表传 false 走自动列宽 */
-  fixed?: boolean
-  /** 覆盖默认表格 :ui（与组件内置样式浅合并） */
-  ui?: Record<string, string>
-}>()
+} = defineProps<DashboardDataTableProps<T>>()
 
-const emit = defineEmits<{
-  'update:page': [value: number]
-  'update:pageSize': [value: number]
-  'update:rowSelection': [value: Record<string, boolean>]
-  'update:columnVisibility': [value: Record<string, boolean>]
-}>()
+const emit = defineEmits<DashboardDataTableEmits>()
 
 // 后台表格统一外观：圆角描边 + 行分隔线。原先散落在各列表页的同款 :ui 收敛到此。
 const DEFAULT_TABLE_UI = {
-  base: 'table-fixed border-separate border-spacing-0',
-  thead: '[&>tr]:bg-elevated/70 [&>tr]:after:content-none',
+  base: 'dashboard-table-native table-fixed border-separate border-spacing-0',
+  thead: '[&>tr]:[background-color:var(--dashboard-table-header)] [&>tr]:after:content-none',
   tbody: '[&>tr]:last:[&>td]:border-b-0',
-  th: 'py-2 first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-  td: 'border-b border-default bg-default/35',
+  th: 'py-2 text-[11px] font-semibold uppercase tracking-wide text-muted first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+  td: 'py-2.5 border-b border-default [background-color:var(--dashboard-table-row)]',
   separator: 'h-0'
 }
 const tableUi = computed(() => ({
   ...DEFAULT_TABLE_UI,
-  base: fixed ? DEFAULT_TABLE_UI.base : 'border-separate border-spacing-0',
+  base: fixed ? DEFAULT_TABLE_UI.base : 'dashboard-table-native border-separate border-spacing-0',
   ...ui
 }))
 
 const hasPageSizeSelect = computed(() => !!pageSizeItems?.length)
+const showSkeleton = computed(() => loading && data.length === 0)
 const showEmpty = computed(() => !loading && data.length === 0)
 const showPagination = computed(() => pageSize > 0 && total > pageSize)
+const skeletonColumnCount = computed(() => Math.max(columns.length || 0, 3))
 // 带每页条数下拉时，只要有数据就展示底部（计数/下拉常驻）；否则沿用“仅多页时显示分页”。
 const showFooter = computed(() => hasPageSizeSelect.value ? total > 0 : showPagination.value)
+
+function skeletonWidth(rowIndex: number, columnIndex: number) {
+  const widths = ['72%', '48%', '84%', '56%', '66%', '38%', '76%', '52%']
+  return widths[(rowIndex + columnIndex) % widths.length]
+}
 
 function onPageSizeChange(value: string | number) {
   emit('update:pageSize', Number(value))
@@ -82,8 +102,48 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
 
 <template>
   <div class="dashboard-data-table flex flex-col gap-3">
+    <div
+      v-if="showSkeleton"
+      class="dashboard-table-skeleton overflow-hidden rounded-lg border border-default"
+    >
+      <div class="grid gap-0">
+        <div
+          class="grid border-b border-default [background-color:var(--dashboard-table-header)]"
+          :style="{ gridTemplateColumns: `repeat(${skeletonColumnCount}, minmax(0, 1fr))` }"
+        >
+          <div
+            v-for="columnIndex in skeletonColumnCount"
+            :key="`header-${columnIndex}`"
+            class="px-3 py-2"
+          >
+            <div
+              class="dashboard-skeleton h-3 rounded-sm"
+              :style="{ width: skeletonWidth(0, columnIndex) }"
+            />
+          </div>
+        </div>
+        <div
+          v-for="rowIndex in skeletonRows"
+          :key="rowIndex"
+          class="grid border-b border-default last:border-b-0"
+          :style="{ gridTemplateColumns: `repeat(${skeletonColumnCount}, minmax(0, 1fr))` }"
+        >
+          <div
+            v-for="columnIndex in skeletonColumnCount"
+            :key="`${rowIndex}-${columnIndex}`"
+            class="px-3 py-3"
+          >
+            <div
+              class="dashboard-skeleton h-4 rounded-sm"
+              :style="{ width: skeletonWidth(rowIndex, columnIndex) }"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
     <UEmpty
-      v-if="showEmpty"
+      v-else-if="showEmpty"
       :icon="emptyIcon"
       :title="emptyTitle"
       :description="emptyDescription"
@@ -98,6 +158,7 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
 
     <UTable
       v-else
+      class="min-w-full"
       :data="data"
       :columns="columns"
       :loading="loading"

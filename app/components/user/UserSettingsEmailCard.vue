@@ -41,22 +41,15 @@ async function submit() {
 </script>
 
 <template>
-  <div>
-    <UPageCard
+  <div class="dashboard-settings-page">
+    <DashboardSettingsSection
       title="绑定邮箱"
       description="修改邮箱需验证当前密码，并通过新邮箱的确认链接生效。更改后头像会自动跟随更新。"
-      variant="naked"
-      class="mb-4"
-    />
-
-    <UPageCard
-      variant="subtle"
-      :ui="{ container: 'divide-y divide-default' }"
     >
       <UFormField
         label="当前邮箱"
         description="当前账号绑定并用于接收系统邮件的邮箱。"
-        class="flex items-center justify-between not-last:pb-4 gap-2"
+        class="flex items-center justify-between gap-2"
       >
         <div class="flex items-center gap-2">
           <span class="font-mono text-sm">{{ profile?.email }}</span>
@@ -82,7 +75,7 @@ async function submit() {
         name="currentPassword"
         label="当前密码"
         description="为保护账号安全，修改邮箱需先验证当前密码。"
-        class="flex items-center justify-between not-last:pb-4 gap-2"
+        class="flex items-center justify-between gap-2"
       >
         <UInput
           v-model="currentPassword"
@@ -96,7 +89,7 @@ async function submit() {
         name="newEmail"
         label="新邮箱"
         description="将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。"
-        class="flex items-center justify-between not-last:pb-4 gap-2"
+        class="flex items-center justify-between gap-2"
       >
         <UInput
           v-model="newEmail"
@@ -114,7 +107,7 @@ async function submit() {
           发送验证
         </UButton>
       </div>
-    </UPageCard>
+    </DashboardSettingsSection>
 
     <UAlert
       v-if="pending"

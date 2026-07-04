@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const props = defineProps<{
+interface DashboardSectionShellProps {
   id: string
   title: string
   items: NavigationMenuItem[]
-}>()
+  fixedContent?: boolean
+}
+
+const props = defineProps<DashboardSectionShellProps>()
 
 useHead({ title: props.title })
 </script>
@@ -13,12 +16,14 @@ useHead({ title: props.title })
 <template>
   <UDashboardPanel :id="id">
     <template #header>
-      <UDashboardNavbar
-        :title="title"
-        class="dashboard-navbar"
-      >
+      <UDashboardNavbar class="dashboard-navbar dashboard-section-navbar">
         <template #leading>
           <UDashboardSidebarCollapse />
+          <div class="dashboard-section-title min-w-0">
+            <h1 class="truncate text-base font-semibold text-highlighted sm:text-lg">
+              {{ title }}
+            </h1>
+          </div>
         </template>
         <template #right>
           <slot name="right">
@@ -26,17 +31,27 @@ useHead({ title: props.title })
           </slot>
         </template>
       </UDashboardNavbar>
-      <UDashboardToolbar class="dashboard-toolbar">
+      <UDashboardToolbar class="dashboard-toolbar dashboard-section-toolbar">
         <UNavigationMenu
           :items="items"
           highlight
-          class="-mx-1 flex-1"
+          color="neutral"
+          variant="pill"
+          class="dashboard-section-tabs -mx-1 flex-1"
+          :ui="{
+            link: 'px-2.5 py-1.5 rounded-lg text-sm',
+            linkLeadingIcon: 'size-4',
+            linkLabel: 'font-medium'
+          }"
         />
       </UDashboardToolbar>
     </template>
 
     <template #body>
-      <div class="dashboard-section-page">
+      <div
+        class="dashboard-section-page"
+        :class="{ 'dashboard-section-page-fixed': fixedContent }"
+      >
         <NuxtPage />
       </div>
     </template>
