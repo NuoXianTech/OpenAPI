@@ -130,108 +130,114 @@ watch([keyword, activeVersion], () => {
       未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
     </div>
 
-    <DashboardDataTable
+    <DashboardTableCard
       v-else
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :data="paginated"
-      :columns="columns"
-      :loading="status === 'pending'"
+      title="接口列表"
+      icon="i-mdi-api"
       :total="total"
-      :page-size-items="PAGE_SIZE_ITEMS"
-      empty-title="该版本暂无接口"
-      empty-icon="i-mdi-api"
     >
-      <template #code-cell="{ row }">
-        <div class="flex flex-col gap-0.5">
-          <div class="font-mono text-sm">
-            {{ row.original.code }}
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :data="paginated"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        empty-title="该版本暂无接口"
+        empty-icon="i-mdi-api"
+      >
+        <template #code-cell="{ row }">
+          <div class="flex flex-col gap-0.5">
+            <div class="font-mono text-sm">
+              {{ row.original.code }}
+            </div>
+            <div class="text-xs text-muted truncate max-w-[260px]">
+              <template v-if="row.original.registered?.name">
+                {{ row.original.registered.name }}
+              </template>
+              <span
+                v-else
+                class="italic opacity-60"
+              >未登记</span>
+            </div>
           </div>
-          <div class="text-xs text-muted truncate max-w-[260px]">
-            <template v-if="row.original.registered?.name">
-              {{ row.original.registered.name }}
-            </template>
-            <span
-              v-else
-              class="italic opacity-60"
-            >未登记</span>
-          </div>
-        </div>
-      </template>
-      <template #endpoints-cell="{ row }">
-        <span
-          v-if="row.original.endpoints.length === 0"
-          class="text-xs text-muted italic"
-        >代码已删除</span>
-        <div
-          v-else
-          class="flex flex-col gap-1"
-        >
+        </template>
+        <template #endpoints-cell="{ row }">
+          <span
+            v-if="row.original.endpoints.length === 0"
+            class="text-xs text-muted italic"
+          >代码已删除</span>
           <div
-            v-for="ep in row.original.endpoints"
-            :key="`${ep.method}-${ep.apiPath}`"
-            class="flex items-center gap-2"
+            v-else
+            class="flex flex-col gap-1"
           >
-            <UBadge
-              :color="httpMethodColor(ep.method)"
-              variant="subtle"
-              class="font-mono"
+            <div
+              v-for="ep in row.original.endpoints"
+              :key="`${ep.method}-${ep.apiPath}`"
+              class="flex items-center gap-2"
             >
-              {{ ep.method }}
-            </UBadge>
-            <span
-              class="font-mono text-xs"
-              :class="ep.isDynamic ? 'text-primary' : ''"
-            >{{ ep.apiPath }}</span>
+              <UBadge
+                :color="httpMethodColor(ep.method)"
+                variant="subtle"
+                class="font-mono"
+              >
+                {{ ep.method }}
+              </UBadge>
+              <span
+                class="font-mono text-xs"
+                :class="ep.isDynamic ? 'text-primary' : ''"
+              >{{ ep.apiPath }}</span>
+            </div>
           </div>
-        </div>
-      </template>
-      <template #category-cell="{ row }">
-        {{ categoryLabel(row.original) }}
-      </template>
-      <template #isEnabled-cell="{ row }">
-        <USwitch
-          v-if="row.original.registered"
-          :model-value="row.original.registered.isEnabled"
-          @update:model-value="(val: boolean) => handleToggle(row.original, 'isEnabled', val)"
-        />
-        <UBadge
-          v-else
-          color="neutral"
-          variant="subtle"
-        >
-          默认停用
-        </UBadge>
-      </template>
-      <template #isStatistics-cell="{ row }">
-        <USwitch
-          v-if="row.original.registered"
-          :model-value="row.original.registered.isStatistics"
-          :disabled="!row.original.registered.isEnabled && !row.original.registered.isStatistics"
-          @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
-        />
-        <span
-          v-else
-          class="text-muted"
-        >-</span>
-      </template>
-      <template #isApiKey-cell="{ row }">
-        <UBadge
-          v-if="row.original.registered"
-          :color="row.original.registered.isApiKey ? 'warning' : 'neutral'"
-          variant="subtle"
-        >
-          {{ row.original.registered.isApiKey ? '必需' : '可选' }}
-        </UBadge>
-        <span
-          v-else
-          class="text-muted"
-        >-</span>
-      </template>
-      <template #actions-cell="{ row }">
-        <DashboardRowActions :items="getRowItems(row.original)" />
-      </template>
-    </DashboardDataTable>
+        </template>
+        <template #category-cell="{ row }">
+          {{ categoryLabel(row.original) }}
+        </template>
+        <template #isEnabled-cell="{ row }">
+          <USwitch
+            v-if="row.original.registered"
+            :model-value="row.original.registered.isEnabled"
+            @update:model-value="(val: boolean) => handleToggle(row.original, 'isEnabled', val)"
+          />
+          <UBadge
+            v-else
+            color="neutral"
+            variant="subtle"
+          >
+            默认停用
+          </UBadge>
+        </template>
+        <template #isStatistics-cell="{ row }">
+          <USwitch
+            v-if="row.original.registered"
+            :model-value="row.original.registered.isStatistics"
+            :disabled="!row.original.registered.isEnabled && !row.original.registered.isStatistics"
+            @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
+          />
+          <span
+            v-else
+            class="text-muted"
+          >-</span>
+        </template>
+        <template #isApiKey-cell="{ row }">
+          <UBadge
+            v-if="row.original.registered"
+            :color="row.original.registered.isApiKey ? 'warning' : 'neutral'"
+            variant="subtle"
+          >
+            {{ row.original.registered.isApiKey ? '必需' : '可选' }}
+          </UBadge>
+          <span
+            v-else
+            class="text-muted"
+          >-</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <DashboardRowActions :items="getRowItems(row.original)" />
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
     <AdminApiModal
       v-model:open="modalOpen"

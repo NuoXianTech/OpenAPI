@@ -220,21 +220,11 @@ async function openDelete(row: AdminNotificationMessageRow) {
         </div>
       </UCard>
 
-      <UCard class="shadow-sm">
-        <template #header>
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-history"
-              class="size-5 text-muted"
-            />
-            <h3 class="text-lg font-semibold text-highlighted">
-              发送历史
-            </h3>
-            <span class="ml-auto text-xs text-muted">
-              用户的"已读"或个人删除不会影响此处历史
-            </span>
-          </div>
-        </template>
+      <DashboardTableCard
+        title="发送历史"
+        icon="i-mdi-history"
+        :total="total"
+      >
         <DashboardDataTable
           v-model:page="page"
           v-model:page-size="pageSize"
@@ -278,7 +268,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
             <DashboardRowActions :items="getRowItems(row.original)" />
           </template>
         </DashboardDataTable>
-      </UCard>
+      </DashboardTableCard>
     </div>
 
     <UModal

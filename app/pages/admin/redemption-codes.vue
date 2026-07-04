@@ -125,62 +125,68 @@ const {
           @delete="deleteBatch"
         />
 
-        <DashboardDataTable
-          v-model:page="page"
-          :data="items"
-          :columns="columns"
-          :loading="loading"
-          :page-size="pageSize"
+        <DashboardTableCard
+          title="兑换码明细"
+          icon="i-mdi-ticket-percent-outline"
           :total="total"
-          empty-title="暂无兑换码"
-          empty-icon="i-mdi-ticket-percent-outline"
         >
-          <template #code-cell="{ row }">
-            <div class="flex flex-col gap-0.5">
-              <span
-                class="font-mono text-sm cursor-pointer hover:text-primary"
-                title="点击复制"
-                @click="copyOne(row.original.code)"
-              >
-                {{ row.original.code }}
+          <DashboardDataTable
+            v-model:page="page"
+            :data="items"
+            :columns="columns"
+            :loading="loading"
+            :page-size="pageSize"
+            :total="total"
+            empty-title="暂无兑换码"
+            empty-icon="i-mdi-ticket-percent-outline"
+          >
+            <template #code-cell="{ row }">
+              <div class="flex flex-col gap-0.5">
+                <span
+                  class="font-mono text-sm cursor-pointer hover:text-primary"
+                  title="点击复制"
+                  @click="copyOne(row.original.code)"
+                >
+                  {{ row.original.code }}
+                </span>
+                <span
+                  v-if="row.original.batchId"
+                  class="text-[11px] text-muted font-mono"
+                >
+                  {{ row.original.batchId }}
+                </span>
+              </div>
+            </template>
+            <template #amount-cell="{ row }">
+              <span class="tabular-nums font-semibold text-success">+{{ row.original.amount.toLocaleString() }}</span>
+            </template>
+            <template #usage-cell="{ row }">
+              <span class="tabular-nums text-sm">{{ row.original.usedCount }} / {{ row.original.maxUses }}</span>
+            </template>
+            <template #note-cell="{ row }">
+              <span class="text-xs text-muted truncate max-w-[200px] block">{{ row.original.note || '-' }}</span>
+            </template>
+            <template #expiresAt-cell="{ row }">
+              <span class="text-xs text-muted whitespace-nowrap">
+                {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
               </span>
-              <span
-                v-if="row.original.batchId"
-                class="text-[11px] text-muted font-mono"
+            </template>
+            <template #status-cell="{ row }">
+              <UBadge
+                :color="statusOf(row.original).color"
+                variant="subtle"
               >
-                {{ row.original.batchId }}
-              </span>
-            </div>
-          </template>
-          <template #amount-cell="{ row }">
-            <span class="tabular-nums font-semibold text-success">+{{ row.original.amount.toLocaleString() }}</span>
-          </template>
-          <template #usage-cell="{ row }">
-            <span class="tabular-nums text-sm">{{ row.original.usedCount }} / {{ row.original.maxUses }}</span>
-          </template>
-          <template #note-cell="{ row }">
-            <span class="text-xs text-muted truncate max-w-[200px] block">{{ row.original.note || '-' }}</span>
-          </template>
-          <template #expiresAt-cell="{ row }">
-            <span class="text-xs text-muted whitespace-nowrap">
-              {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
-            </span>
-          </template>
-          <template #status-cell="{ row }">
-            <UBadge
-              :color="statusOf(row.original).color"
-              variant="subtle"
-            >
-              {{ statusOf(row.original).label }}
-            </UBadge>
-          </template>
-          <template #createdAt-cell="{ row }">
-            <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-          </template>
-          <template #actions-cell="{ row }">
-            <DashboardRowActions :items="getRowItems(row.original)" />
-          </template>
-        </DashboardDataTable>
+                {{ statusOf(row.original).label }}
+              </UBadge>
+            </template>
+            <template #createdAt-cell="{ row }">
+              <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+            </template>
+            <template #actions-cell="{ row }">
+              <DashboardRowActions :items="getRowItems(row.original)" />
+            </template>
+          </DashboardDataTable>
+        </DashboardTableCard>
 
         <AdminRedemptionCodeGenerateModal
           v-model:open="generateOpen"

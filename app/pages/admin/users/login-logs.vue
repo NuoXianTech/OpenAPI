@@ -134,28 +134,11 @@ const {
       </div>
     </UCard>
 
-    <UCard
-      class="log-table-card overflow-hidden"
-      variant="subtle"
-      :ui="{ body: 'p-0 sm:p-0' }"
+    <DashboardTableCard
+      title="登录明细"
+      icon="i-mdi-login-variant"
+      :total="total"
     >
-      <template #header>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-login-variant"
-              class="size-5 text-muted"
-            />
-            <h3 class="text-lg font-semibold text-highlighted">
-              登录明细
-            </h3>
-          </div>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
-      </template>
-
       <DashboardDataTable
         v-model:page="page"
         :data="items"
@@ -204,7 +187,7 @@ const {
           <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
         </template>
       </DashboardDataTable>
-    </UCard>
+    </DashboardTableCard>
   </div>
 </template>
 

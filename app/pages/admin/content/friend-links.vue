@@ -77,29 +77,35 @@ const columns: TableColumn<FriendLinkItem>[] = [
       </UButton>
     </div>
 
-    <DashboardDataTable
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :data="paginated"
-      :columns="columns"
-      :loading="status === 'pending'"
+    <DashboardTableCard
+      title="友链列表"
+      icon="i-mdi-link-variant"
       :total="total"
-      :page-size-items="PAGE_SIZE_ITEMS"
-      empty-title="暂无友链"
-      empty-icon="i-mdi-link-variant"
     >
-      <template #isActive-cell="{ row }">
-        <UBadge
-          :color="row.original.isActive ? 'success' : 'neutral'"
-          variant="subtle"
-        >
-          {{ row.original.isActive ? '正常' : '停用' }}
-        </UBadge>
-      </template>
-      <template #actions-cell="{ row }">
-        <DashboardRowActions :items="getRowItems(row.original)" />
-      </template>
-    </DashboardDataTable>
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :data="paginated"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        empty-title="暂无友链"
+        empty-icon="i-mdi-link-variant"
+      >
+        <template #isActive-cell="{ row }">
+          <UBadge
+            :color="row.original.isActive ? 'success' : 'neutral'"
+            variant="subtle"
+          >
+            {{ row.original.isActive ? '正常' : '停用' }}
+          </UBadge>
+        </template>
+        <template #actions-cell="{ row }">
+          <DashboardRowActions :items="getRowItems(row.original)" />
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
     <AdminLinkModal
       v-model:open="modalOpen"

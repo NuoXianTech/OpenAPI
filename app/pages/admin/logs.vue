@@ -252,133 +252,138 @@ function formatDate(iso: string) {
           </div>
         </UCard>
 
-        <!-- 列表 -->
-        <DashboardDataTable
-          v-model:page="page"
-          :data="items"
-          :columns="columns"
-          :loading="loading"
-          :page-size="pageSize"
+        <DashboardTableCard
+          title="调用明细"
+          icon="i-mdi-text-box-search-outline"
           :total="total"
-          empty-title="暂无日志"
-          empty-icon="i-mdi-text-box-search-outline"
         >
-          <template #createdAt-cell="{ row }">
-            <div class="flex flex-col gap-1 min-w-[150px]">
-              <span class="text-xs whitespace-nowrap">
-                {{ formatDate(row.original.createdAt) }}
-              </span>
-              <UBadge
-                :color="ADMIN_CALL_LOG_TYPE_META[row.original.type].color"
-                :icon="ADMIN_CALL_LOG_TYPE_META[row.original.type].icon"
-                variant="subtle"
-                size="sm"
-                class="w-fit"
-              >
-                {{ ADMIN_CALL_LOG_TYPE_META[row.original.type].label }}
-              </UBadge>
-            </div>
-          </template>
-
-          <template #userName-cell="{ row }">
-            <div
-              v-if="row.original.userId"
-              class="flex flex-col text-xs"
-            >
-              <span>{{ row.original.userName || '-' }}</span>
-              <span class="text-muted">#{{ row.original.userId }}</span>
-            </div>
-            <span
-              v-else
-              class="text-xs text-muted italic"
-            >匿名</span>
-          </template>
-
-          <template #apiKeyName-cell="{ row }">
-            <span
-              v-if="row.original.apiKeyName || row.original.apiKeyId"
-              class="text-xs"
-            >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
-            <span
-              v-else
-              class="text-xs text-muted italic"
-            >-</span>
-          </template>
-
-          <template #apiName-cell="{ row }">
-            <div
-              v-if="row.original.apiName"
-              class="flex flex-col"
-            >
-              <span class="text-sm font-medium">{{ row.original.apiName }}</span>
-              <span class="font-mono text-xs text-muted">{{ row.original.apiPath }}</span>
-            </div>
-            <span
-              v-else
-              class="text-xs text-muted italic"
-            >-</span>
-          </template>
-
-          <template #cost-cell="{ row }">
-            <span
-              class="tabular-nums text-sm"
-              :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
-            >
-              {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
-            </span>
-          </template>
-
-          <template #summary-cell="{ row }">
-            <div class="flex flex-col text-xs gap-0.5">
-              <div class="flex items-center gap-1.5">
-                <UBadge
-                  color="neutral"
-                  variant="subtle"
-                  size="sm"
-                  class="font-mono"
-                >
-                  {{ row.original.method }}
-                </UBadge>
-                <span
-                  class="tabular-nums"
-                  :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
-                >
-                  {{ row.original.statusCode }}
-                </span>
-                <span class="text-muted tabular-nums">
-                  · {{ row.original.latencyMs }}ms
+          <DashboardDataTable
+            v-model:page="page"
+            :data="items"
+            :columns="columns"
+            :loading="loading"
+            :page-size="pageSize"
+            :total="total"
+            empty-title="暂无日志"
+            empty-icon="i-mdi-text-box-search-outline"
+          >
+            <template #createdAt-cell="{ row }">
+              <div class="flex flex-col gap-1 min-w-[150px]">
+                <span class="text-xs whitespace-nowrap">
+                  {{ formatDate(row.original.createdAt) }}
                 </span>
                 <UBadge
-                  v-if="!row.original.isCounted"
-                  color="warning"
+                  :color="ADMIN_CALL_LOG_TYPE_META[row.original.type].color"
+                  :icon="ADMIN_CALL_LOG_TYPE_META[row.original.type].icon"
                   variant="subtle"
                   size="sm"
-                  title="未计入统计"
+                  class="w-fit"
                 >
-                  拒绝
+                  {{ ADMIN_CALL_LOG_TYPE_META[row.original.type].label }}
                 </UBadge>
               </div>
-              <span
-                v-if="row.original.errorMessage"
-                class="text-muted truncate max-w-[280px]"
-                :title="row.original.errorMessage"
-              >
-                {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
-              </span>
-            </div>
-          </template>
+            </template>
 
-          <template #actions-cell="{ row }">
-            <UButton
-              size="xs"
-              color="neutral"
-              variant="ghost"
-              icon="i-mdi-eye-outline"
-              aria-label="查看详情"
-              @click="openDetail(row.original)"
-            />
-          </template>
-        </DashboardDataTable>
+            <template #userName-cell="{ row }">
+              <div
+                v-if="row.original.userId"
+                class="flex flex-col text-xs"
+              >
+                <span>{{ row.original.userName || '-' }}</span>
+                <span class="text-muted">#{{ row.original.userId }}</span>
+              </div>
+              <span
+                v-else
+                class="text-xs text-muted italic"
+              >匿名</span>
+            </template>
+
+            <template #apiKeyName-cell="{ row }">
+              <span
+                v-if="row.original.apiKeyName || row.original.apiKeyId"
+                class="text-xs"
+              >{{ row.original.apiKeyName || `#${row.original.apiKeyId}` }}</span>
+              <span
+                v-else
+                class="text-xs text-muted italic"
+              >-</span>
+            </template>
+
+            <template #apiName-cell="{ row }">
+              <div
+                v-if="row.original.apiName"
+                class="flex flex-col"
+              >
+                <span class="text-sm font-medium">{{ row.original.apiName }}</span>
+                <span class="font-mono text-xs text-muted">{{ row.original.apiPath }}</span>
+              </div>
+              <span
+                v-else
+                class="text-xs text-muted italic"
+              >-</span>
+            </template>
+
+            <template #cost-cell="{ row }">
+              <span
+                class="tabular-nums text-sm"
+                :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
+              >
+                {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
+              </span>
+            </template>
+
+            <template #summary-cell="{ row }">
+              <div class="flex flex-col text-xs gap-0.5">
+                <div class="flex items-center gap-1.5">
+                  <UBadge
+                    color="neutral"
+                    variant="subtle"
+                    size="sm"
+                    class="font-mono"
+                  >
+                    {{ row.original.method }}
+                  </UBadge>
+                  <span
+                    class="tabular-nums"
+                    :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"
+                  >
+                    {{ row.original.statusCode }}
+                  </span>
+                  <span class="text-muted tabular-nums">
+                    · {{ row.original.latencyMs }}ms
+                  </span>
+                  <UBadge
+                    v-if="!row.original.isCounted"
+                    color="warning"
+                    variant="subtle"
+                    size="sm"
+                    title="未计入统计"
+                  >
+                    拒绝
+                  </UBadge>
+                </div>
+                <span
+                  v-if="row.original.errorMessage"
+                  class="text-muted truncate max-w-[280px]"
+                  :title="row.original.errorMessage"
+                >
+                  {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
+                </span>
+              </div>
+            </template>
+
+            <template #actions-cell="{ row }">
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                icon="i-mdi-eye-outline"
+                aria-label="查看详情"
+                @click="openDetail(row.original)"
+              />
+            </template>
+          </DashboardDataTable>
+        </DashboardTableCard>
       </div>
     </template>
   </UDashboardPanel>

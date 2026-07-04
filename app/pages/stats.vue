@@ -317,30 +317,20 @@ const {
             </ClientOnly>
           </UCard>
 
-          <UCard
-            variant="subtle"
-            class="stats-panel"
-            :ui="{ body: 'p-3 sm:p-4' }"
+          <DashboardTableCard
+            title="近 30 日调用排行"
+            icon="i-mdi-chart-bar"
+            :total="top10Last30d.length"
           >
-            <template #header>
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 class="text-base font-semibold text-highlighted">
-                    近 30 日调用排行
-                  </h2>
-                  <p class="mt-0.5 text-sm text-muted">
-                    按调用总次数排序的 TOP 10 接口
-                  </p>
-                </div>
-                <UBadge
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  class="rounded-md"
-                >
-                  TOP 10
-                </UBadge>
-              </div>
+            <template #actions>
+              <UBadge
+                color="neutral"
+                variant="outline"
+                size="sm"
+                class="rounded-md"
+              >
+                TOP 10
+              </UBadge>
             </template>
 
             <DashboardDataTable
@@ -415,7 +405,7 @@ const {
                 </UBadge>
               </template>
             </DashboardDataTable>
-          </UCard>
+          </DashboardTableCard>
         </div>
       </template>
     </UPageBody>

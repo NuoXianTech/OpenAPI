@@ -109,59 +109,65 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       </UButton>
     </div>
 
-    <DashboardDataTable
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :data="paginated"
-      :columns="columns"
-      :loading="status === 'pending'"
+    <DashboardTableCard
+      title="分类列表"
+      icon="i-mdi-shape-outline"
       :total="total"
-      :page-size-items="PAGE_SIZE_ITEMS"
-      empty-title="暂无分类"
-      empty-icon="i-mdi-shape-outline"
     >
-      <template #code-cell="{ row }">
-        <span class="font-mono text-xs">{{ row.original.code }}</span>
-      </template>
-      <template #name-cell="{ row }">
-        <div class="flex items-center gap-2">
-          <UIcon
-            v-if="row.original.icon"
-            :name="row.original.icon"
-            class="size-4 text-muted"
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :data="paginated"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        empty-title="暂无分类"
+        empty-icon="i-mdi-shape-outline"
+      >
+        <template #code-cell="{ row }">
+          <span class="font-mono text-xs">{{ row.original.code }}</span>
+        </template>
+        <template #name-cell="{ row }">
+          <div class="flex items-center gap-2">
+            <UIcon
+              v-if="row.original.icon"
+              :name="row.original.icon"
+              class="size-4 text-muted"
+            />
+            <span class="font-medium">{{ row.original.name }}</span>
+          </div>
+        </template>
+        <template #description-cell="{ row }">
+          <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.description || '-' }}</span>
+        </template>
+        <template #sortOrder-cell="{ row }">
+          <span class="tabular-nums">{{ row.original.sortOrder }}</span>
+        </template>
+        <template #color-cell="{ row }">
+          <UBadge
+            v-if="row.original.color"
+            variant="subtle"
+            color="neutral"
+          >
+            {{ row.original.color }}
+          </UBadge>
+          <span
+            v-else
+            class="text-muted"
+          >-</span>
+        </template>
+        <template #isEnabled-cell="{ row }">
+          <USwitch
+            :model-value="row.original.isEnabled"
+            @update:model-value="(val: boolean) => quickToggle(row.original, val)"
           />
-          <span class="font-medium">{{ row.original.name }}</span>
-        </div>
-      </template>
-      <template #description-cell="{ row }">
-        <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.description || '-' }}</span>
-      </template>
-      <template #sortOrder-cell="{ row }">
-        <span class="tabular-nums">{{ row.original.sortOrder }}</span>
-      </template>
-      <template #color-cell="{ row }">
-        <UBadge
-          v-if="row.original.color"
-          variant="subtle"
-          color="neutral"
-        >
-          {{ row.original.color }}
-        </UBadge>
-        <span
-          v-else
-          class="text-muted"
-        >-</span>
-      </template>
-      <template #isEnabled-cell="{ row }">
-        <USwitch
-          :model-value="row.original.isEnabled"
-          @update:model-value="(val: boolean) => quickToggle(row.original, val)"
-        />
-      </template>
-      <template #actions-cell="{ row }">
-        <DashboardRowActions :items="getRowItems(row.original)" />
-      </template>
-    </DashboardDataTable>
+        </template>
+        <template #actions-cell="{ row }">
+          <DashboardRowActions :items="getRowItems(row.original)" />
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
     <AdminApiCategoryModal
       v-model:open="modalOpen"

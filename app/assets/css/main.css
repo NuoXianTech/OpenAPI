@@ -274,12 +274,6 @@ body {
 }
 
 .dashboard-data-table {
-  padding: 0.75rem;
-  background: color-mix(in oklab, var(--ui-bg-elevated) 92%, transparent);
-  border: 1px solid var(--ui-border);
-  border-radius: var(--dashboard-radius);
-  box-shadow: 0 20px 46px -40px color-mix(in oklab, var(--ui-text) 36%, transparent);
-  backdrop-filter: blur(14px);
   overflow-x: auto;
 }
 

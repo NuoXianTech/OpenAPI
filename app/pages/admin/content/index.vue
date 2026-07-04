@@ -112,54 +112,60 @@ const columns: TableColumn<Announcement>[] = [
       </UButton>
     </div>
 
-    <DashboardDataTable
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      :data="paginated"
-      :columns="columns"
-      :loading="status === 'pending'"
+    <DashboardTableCard
+      title="公告列表"
+      icon="i-mdi-bullhorn-outline"
       :total="total"
-      :page-size-items="PAGE_SIZE_ITEMS"
-      empty-title="暂无公告"
-      empty-icon="i-mdi-bullhorn-outline"
     >
-      <template #title-cell="{ row }">
-        <div class="flex items-center gap-2">
-          <UBadge
-            :color="levelMeta[row.original.level].color"
-            variant="subtle"
-          >
-            {{ levelMeta[row.original.level].label }}
-          </UBadge>
-          <span class="font-medium truncate max-w-[300px]">{{ row.original.title }}</span>
-          <UBadge
-            v-if="row.original.isPinned"
-            color="warning"
-            variant="soft"
-          >
-            置顶
-          </UBadge>
-        </div>
-      </template>
-      <template #isEnabled-cell="{ row }">
-        <USwitch
-          :model-value="row.original.isEnabled"
-          @update:model-value="(val: boolean) => quickToggle(row.original, 'isEnabled', val)"
-        />
-      </template>
-      <template #isPinned-cell="{ row }">
-        <USwitch
-          :model-value="row.original.isPinned"
-          @update:model-value="(val: boolean) => quickToggle(row.original, 'isPinned', val)"
-        />
-      </template>
-      <template #createdAt-cell="{ row }">
-        <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
-      </template>
-      <template #actions-cell="{ row }">
-        <DashboardRowActions :items="getRowItems(row.original)" />
-      </template>
-    </DashboardDataTable>
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :data="paginated"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        empty-title="暂无公告"
+        empty-icon="i-mdi-bullhorn-outline"
+      >
+        <template #title-cell="{ row }">
+          <div class="flex items-center gap-2">
+            <UBadge
+              :color="levelMeta[row.original.level].color"
+              variant="subtle"
+            >
+              {{ levelMeta[row.original.level].label }}
+            </UBadge>
+            <span class="font-medium truncate max-w-[300px]">{{ row.original.title }}</span>
+            <UBadge
+              v-if="row.original.isPinned"
+              color="warning"
+              variant="soft"
+            >
+              置顶
+            </UBadge>
+          </div>
+        </template>
+        <template #isEnabled-cell="{ row }">
+          <USwitch
+            :model-value="row.original.isEnabled"
+            @update:model-value="(val: boolean) => quickToggle(row.original, 'isEnabled', val)"
+          />
+        </template>
+        <template #isPinned-cell="{ row }">
+          <USwitch
+            :model-value="row.original.isPinned"
+            @update:model-value="(val: boolean) => quickToggle(row.original, 'isPinned', val)"
+          />
+        </template>
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <DashboardRowActions :items="getRowItems(row.original)" />
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
     <AdminAnnouncementModal
       v-model:open="modalOpen"

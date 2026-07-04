@@ -98,21 +98,11 @@ function amountClass(amt: number) {
       </div>
     </UCard>
 
-    <UCard>
-      <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon
-            name="i-mdi-format-list-bulleted"
-            class="size-5 text-muted"
-          />
-          <h3 class="text-lg font-semibold text-highlighted">
-            积分流水
-          </h3>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
-      </template>
+    <DashboardTableCard
+      title="积分流水"
+      icon="i-mdi-format-list-bulleted"
+      :total="total"
+    >
       <DashboardDataTable
         v-model:page="page"
         :data="items"
@@ -179,6 +169,6 @@ function amountClass(amt: number) {
           <span class="text-xs text-muted truncate max-w-[280px] block">{{ row.original.remark || '-' }}</span>
         </template>
       </DashboardDataTable>
-    </UCard>
+    </DashboardTableCard>
   </div>
 </template>

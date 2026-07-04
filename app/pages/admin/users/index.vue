@@ -180,78 +180,84 @@ const {
       </div>
     </div>
 
-    <DashboardDataTable
-      v-model:page="page"
-      v-model:page-size="pageSize"
-      v-model:row-selection="rowSelection"
-      v-model:column-visibility="columnVisibility"
-      :data="paginated"
-      :columns="columns"
-      :loading="status === 'pending'"
+    <DashboardTableCard
+      title="用户列表"
+      icon="i-mdi-account-group-outline"
       :total="total"
-      :page-size-items="PAGE_SIZE_ITEMS"
-      :get-row-id="(row: AdminUserItem) => String(row.id)"
-      empty-title="暂无用户"
-      empty-icon="i-mdi-account-off-outline"
     >
-      <template #select-header="{ table }">
-        <UCheckbox
-          :model-value="table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected()"
-          @update:model-value="(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(value === true)"
-        />
-      </template>
-      <template #select-cell="{ row }">
-        <UCheckbox
-          :model-value="row.getIsSelected()"
-          @update:model-value="(value: boolean | 'indeterminate') => row.toggleSelected(value === true)"
-        />
-      </template>
-      <template #credits-cell="{ row }">
-        <UBadge
-          :color="Number(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
-          variant="subtle"
-          class="tabular-nums font-mono"
-        >
-          {{ Number(row.original.credits ?? 0).toLocaleString() }}
-        </UBadge>
-      </template>
-      <template #isActive-cell="{ row }">
-        <UBadge
-          :color="row.original.isActive ? 'success' : 'neutral'"
-          variant="subtle"
-        >
-          {{ row.original.isActive ? '已激活' : '未激活' }}
-        </UBadge>
-      </template>
-      <template #isBanned-cell="{ row }">
-        <UTooltip
-          v-if="row.original.isBanned"
-          :text="banTooltip(row.original)"
-          :content="{ side: 'top' }"
-        >
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        v-model:row-selection="rowSelection"
+        v-model:column-visibility="columnVisibility"
+        :data="paginated"
+        :columns="columns"
+        :loading="status === 'pending'"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        :get-row-id="(row: AdminUserItem) => String(row.id)"
+        empty-title="暂无用户"
+        empty-icon="i-mdi-account-off-outline"
+      >
+        <template #select-header="{ table }">
+          <UCheckbox
+            :model-value="table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected()"
+            @update:model-value="(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(value === true)"
+          />
+        </template>
+        <template #select-cell="{ row }">
+          <UCheckbox
+            :model-value="row.getIsSelected()"
+            @update:model-value="(value: boolean | 'indeterminate') => row.toggleSelected(value === true)"
+          />
+        </template>
+        <template #credits-cell="{ row }">
           <UBadge
-            color="error"
+            :color="Number(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
             variant="subtle"
-            :icon="row.original.bannedUntil ? 'i-mdi-clock-alert-outline' : 'i-mdi-lock'"
+            class="tabular-nums font-mono"
           >
-            {{ row.original.bannedUntil ? `封禁至 ${formatDate(row.original.bannedUntil)}` : '永久封禁' }}
+            {{ Number(row.original.credits ?? 0).toLocaleString() }}
           </UBadge>
-        </UTooltip>
-        <UBadge
-          v-else
-          color="success"
-          variant="subtle"
-        >
-          未封禁
-        </UBadge>
-      </template>
-      <template #createdAt-cell="{ row }">
-        {{ formatDate(row.original.createdAt) }}
-      </template>
-      <template #actions-cell="{ row }">
-        <DashboardRowActions :items="getRowItems(row.original)" />
-      </template>
-    </DashboardDataTable>
+        </template>
+        <template #isActive-cell="{ row }">
+          <UBadge
+            :color="row.original.isActive ? 'success' : 'neutral'"
+            variant="subtle"
+          >
+            {{ row.original.isActive ? '已激活' : '未激活' }}
+          </UBadge>
+        </template>
+        <template #isBanned-cell="{ row }">
+          <UTooltip
+            v-if="row.original.isBanned"
+            :text="banTooltip(row.original)"
+            :content="{ side: 'top' }"
+          >
+            <UBadge
+              color="error"
+              variant="subtle"
+              :icon="row.original.bannedUntil ? 'i-mdi-clock-alert-outline' : 'i-mdi-lock'"
+            >
+              {{ row.original.bannedUntil ? `封禁至 ${formatDate(row.original.bannedUntil)}` : '永久封禁' }}
+            </UBadge>
+          </UTooltip>
+          <UBadge
+            v-else
+            color="success"
+            variant="subtle"
+          >
+            未封禁
+          </UBadge>
+        </template>
+        <template #createdAt-cell="{ row }">
+          {{ formatDate(row.original.createdAt) }}
+        </template>
+        <template #actions-cell="{ row }">
+          <DashboardRowActions :items="getRowItems(row.original)" />
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
     <AdminUserEditModal
       v-model:open="editOpen"

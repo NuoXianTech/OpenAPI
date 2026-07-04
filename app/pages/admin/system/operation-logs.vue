@@ -191,28 +191,11 @@ const {
       </div>
     </UCard>
 
-    <UCard
-      class="log-table-card overflow-hidden"
-      variant="subtle"
-      :ui="{ body: 'p-0 sm:p-0' }"
+    <DashboardTableCard
+      title="操作明细"
+      icon="i-mdi-clipboard-text-clock-outline"
+      :total="total"
     >
-      <template #header>
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-clipboard-text-clock-outline"
-              class="size-5 text-muted"
-            />
-            <h3 class="text-lg font-semibold text-highlighted">
-              操作明细
-            </h3>
-          </div>
-          <span class="ml-auto text-xs text-muted tabular-nums">
-            共 {{ total.toLocaleString() }} 条
-          </span>
-        </div>
-      </template>
-
       <DashboardDataTable
         v-model:page="page"
         :data="items"
@@ -280,7 +263,7 @@ const {
           />
         </template>
       </DashboardDataTable>
-    </UCard>
+    </DashboardTableCard>
 
     <UModal
       v-model:open="detailOpen"

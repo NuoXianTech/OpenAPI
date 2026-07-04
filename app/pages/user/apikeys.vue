@@ -272,125 +272,131 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
           </UButton>
         </div>
 
-        <DashboardDataTable
-          :data="items"
-          :columns="columns"
-          :loading="status === 'pending'"
-          :fixed="false"
-          empty-title="暂无 API Key"
-          empty-icon="i-mdi-key-outline"
+        <DashboardTableCard
+          title="API Key 列表"
+          icon="i-mdi-key-outline"
+          :total="items.length"
         >
-          <template #name-cell="{ row }">
-            <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
-          </template>
+          <DashboardDataTable
+            :data="items"
+            :columns="columns"
+            :loading="status === 'pending'"
+            :fixed="false"
+            empty-title="暂无 API Key"
+            empty-icon="i-mdi-key-outline"
+          >
+            <template #name-cell="{ row }">
+              <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
+            </template>
 
-          <template #apiKey-cell="{ row }">
-            <div class="flex items-center gap-2">
-              <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
-                {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
-              </code>
-              <UButton
-                :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click="toggleReveal(row.original.id)"
-              />
-              <UButton
-                icon="i-mdi-content-copy"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click="copy(row.original.apiKey)"
-              />
-            </div>
-          </template>
+            <template #apiKey-cell="{ row }">
+              <div class="flex items-center gap-2">
+                <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
+                  {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
+                </code>
+                <UButton
+                  :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  @click="toggleReveal(row.original.id)"
+                />
+                <UButton
+                  icon="i-mdi-content-copy"
+                  size="xs"
+                  color="neutral"
+                  variant="ghost"
+                  @click="copy(row.original.apiKey)"
+                />
+              </div>
+            </template>
 
-          <template #quota-cell="{ row }">
-            <span
-              class="tabular-nums text-xs"
-              :class="row.original.totalQuota === null ? 'text-muted' : ''"
-            >{{ apiKeyQuotaText(row.original) }}</span>
-          </template>
-
-          <template #scopes-cell="{ row }">
-            <UTooltip
-              v-if="row.original.scopes && row.original.scopes.length > 0"
-              :text="row.original.scopes.map(s => scopeLabelMap.get(s) || s).join('\n')"
-              :content="{ side: 'top' }"
-            >
-              <UBadge
-                variant="soft"
-                color="neutral"
-                class="cursor-help"
-              >
-                {{ apiKeyScopesText(row.original.scopes, scopeLabelMap) }}
-              </UBadge>
-            </UTooltip>
-            <span
-              v-else
-              class="text-xs text-muted"
-            >全部接口</span>
-          </template>
-
-          <template #ipWhitelist-cell="{ row }">
-            <UTooltip
-              v-if="row.original.ipWhitelist && row.original.ipWhitelist.length > 0"
-              :text="row.original.ipWhitelist.join('\n')"
-              :content="{ side: 'top' }"
-            >
-              <UBadge
-                variant="soft"
-                color="neutral"
-                class="cursor-help font-mono"
-              >
-                {{ apiKeyIpText(row.original.ipWhitelist) }}
-              </UBadge>
-            </UTooltip>
-            <span
-              v-else
-              class="text-xs text-muted"
-            >全部 IP</span>
-          </template>
-
-          <template #totalCalls-cell="{ row }">
-            <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
-          </template>
-
-          <template #lastUsedAt-cell="{ row }">
-            <div class="flex flex-col text-xs">
-              <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+            <template #quota-cell="{ row }">
               <span
-                v-if="row.original.lastUsedIp"
-                class="text-muted font-mono"
-              >{{ row.original.lastUsedIp }}</span>
-            </div>
-          </template>
+                class="tabular-nums text-xs"
+                :class="row.original.totalQuota === null ? 'text-muted' : ''"
+              >{{ apiKeyQuotaText(row.original) }}</span>
+            </template>
 
-          <template #createdAt-cell="{ row }">
-            <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
-          </template>
+            <template #scopes-cell="{ row }">
+              <UTooltip
+                v-if="row.original.scopes && row.original.scopes.length > 0"
+                :text="row.original.scopes.map(s => scopeLabelMap.get(s) || s).join('\n')"
+                :content="{ side: 'top' }"
+              >
+                <UBadge
+                  variant="soft"
+                  color="neutral"
+                  class="cursor-help"
+                >
+                  {{ apiKeyScopesText(row.original.scopes, scopeLabelMap) }}
+                </UBadge>
+              </UTooltip>
+              <span
+                v-else
+                class="text-xs text-muted"
+              >全部接口</span>
+            </template>
 
-          <template #expiresAt-cell="{ row }">
-            <span
-              class="text-xs"
-              :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
-            >{{ formatDateOrDash(row.original.expiresAt) }}</span>
-          </template>
+            <template #ipWhitelist-cell="{ row }">
+              <UTooltip
+                v-if="row.original.ipWhitelist && row.original.ipWhitelist.length > 0"
+                :text="row.original.ipWhitelist.join('\n')"
+                :content="{ side: 'top' }"
+              >
+                <UBadge
+                  variant="soft"
+                  color="neutral"
+                  class="cursor-help font-mono"
+                >
+                  {{ apiKeyIpText(row.original.ipWhitelist) }}
+                </UBadge>
+              </UTooltip>
+              <span
+                v-else
+                class="text-xs text-muted"
+              >全部 IP</span>
+            </template>
 
-          <template #status-cell="{ row }">
-            <UBadge
-              :color="apiKeyStatus(row.original).color"
-              variant="subtle"
-            >
-              {{ apiKeyStatus(row.original).label }}
-            </UBadge>
-          </template>
+            <template #totalCalls-cell="{ row }">
+              <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
+            </template>
 
-          <template #actions-cell="{ row }">
-            <DashboardRowActions :items="getRowItems(row.original)" />
-          </template>
-        </DashboardDataTable>
+            <template #lastUsedAt-cell="{ row }">
+              <div class="flex flex-col text-xs">
+                <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+                <span
+                  v-if="row.original.lastUsedIp"
+                  class="text-muted font-mono"
+                >{{ row.original.lastUsedIp }}</span>
+              </div>
+            </template>
+
+            <template #createdAt-cell="{ row }">
+              <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+            </template>
+
+            <template #expiresAt-cell="{ row }">
+              <span
+                class="text-xs"
+                :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
+              >{{ formatDateOrDash(row.original.expiresAt) }}</span>
+            </template>
+
+            <template #status-cell="{ row }">
+              <UBadge
+                :color="apiKeyStatus(row.original).color"
+                variant="subtle"
+              >
+                {{ apiKeyStatus(row.original).label }}
+              </UBadge>
+            </template>
+
+            <template #actions-cell="{ row }">
+              <DashboardRowActions :items="getRowItems(row.original)" />
+            </template>
+          </DashboardDataTable>
+        </DashboardTableCard>
       </div>
 
       <!-- 创建 Key -->

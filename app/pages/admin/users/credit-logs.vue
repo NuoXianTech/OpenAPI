@@ -167,52 +167,58 @@ function amountClass(amt: number) {
       </div>
     </UCard>
 
-    <DashboardDataTable
-      v-model:page="page"
-      :data="items"
-      :columns="columns"
-      :loading="loading"
-      :page-size="pageSize"
+    <DashboardTableCard
+      title="积分明细"
+      icon="i-mdi-cash-multiple"
       :total="total"
-      empty-title="暂无积分日志"
-      empty-icon="i-mdi-cash-multiple"
     >
-      <template #createdAt-cell="{ row }">
-        <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
-      </template>
-      <template #userId-cell="{ row }">
-        <span class="font-mono text-xs">#{{ row.original.userId }}</span>
-      </template>
-      <template #reason-cell="{ row }">
-        <UBadge
-          :color="creditReasonColor(row.original.reason)"
-          variant="subtle"
-        >
-          {{ creditReasonLabel(row.original.reason) }}
-        </UBadge>
-      </template>
-      <template #amount-cell="{ row }">
-        <span :class="amountClass(row.original.amount)">
-          {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
-        </span>
-      </template>
-      <template #balanceAfter-cell="{ row }">
-        <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
-      </template>
-      <template #operatorName-cell="{ row }">
-        <span
-          v-if="row.original.operatorName"
-          class="text-xs"
-        >{{ row.original.operatorName }}</span>
-        <span
-          v-else
-          class="text-xs text-muted italic"
-        >系统</span>
-      </template>
-      <template #remark-cell="{ row }">
-        <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
-      </template>
-    </DashboardDataTable>
+      <DashboardDataTable
+        v-model:page="page"
+        :data="items"
+        :columns="columns"
+        :loading="loading"
+        :page-size="pageSize"
+        :total="total"
+        empty-title="暂无积分日志"
+        empty-icon="i-mdi-cash-multiple"
+      >
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+        </template>
+        <template #userId-cell="{ row }">
+          <span class="font-mono text-xs">#{{ row.original.userId }}</span>
+        </template>
+        <template #reason-cell="{ row }">
+          <UBadge
+            :color="creditReasonColor(row.original.reason)"
+            variant="subtle"
+          >
+            {{ creditReasonLabel(row.original.reason) }}
+          </UBadge>
+        </template>
+        <template #amount-cell="{ row }">
+          <span :class="amountClass(row.original.amount)">
+            {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
+          </span>
+        </template>
+        <template #balanceAfter-cell="{ row }">
+          <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
+        </template>
+        <template #operatorName-cell="{ row }">
+          <span
+            v-if="row.original.operatorName"
+            class="text-xs"
+          >{{ row.original.operatorName }}</span>
+          <span
+            v-else
+            class="text-xs text-muted italic"
+          >系统</span>
+        </template>
+        <template #remark-cell="{ row }">
+          <span class="text-xs text-muted truncate max-w-[260px] block">{{ row.original.remark || '-' }}</span>
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
   </div>
 </template>
 

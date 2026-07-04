@@ -341,26 +341,20 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           </UCard>
         </div>
 
-        <UCard :ui="{ body: 'p-0' }">
-          <template #header>
-            <div class="flex items-center justify-between gap-2">
-              <div>
-                <h3 class="text-lg font-semibold text-highlighted">
-                  最新 API 请求
-                </h3>
-                <p class="mt-1 text-sm text-muted">
-                  最近 10 条调用记录
-                </p>
-              </div>
-              <UButton
-                :to="ADMIN_LOGS_PATH"
-                variant="link"
-                size="sm"
-                trailing-icon="i-mdi-arrow-right"
-              >
-                查看完整日志
-              </UButton>
-            </div>
+        <DashboardTableCard
+          title="最新 API 请求"
+          icon="i-mdi-history"
+          :total="recentCalls.length"
+        >
+          <template #actions>
+            <UButton
+              :to="ADMIN_LOGS_PATH"
+              variant="link"
+              size="sm"
+              trailing-icon="i-mdi-arrow-right"
+            >
+              查看完整日志
+            </UButton>
           </template>
 
           <DashboardDataTable
@@ -408,7 +402,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               <span class="whitespace-nowrap tabular-nums text-xs">{{ row.original.latencyMs }} ms</span>
             </template>
           </DashboardDataTable>
-        </UCard>
+        </DashboardTableCard>
       </div>
     </template>
   </UDashboardPanel>

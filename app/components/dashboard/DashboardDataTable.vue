@@ -64,8 +64,9 @@ const DEFAULT_TABLE_UI = {
   base: 'dashboard-table-native table-fixed border-separate border-spacing-0',
   thead: '[&>tr]:[background-color:var(--dashboard-table-header)] [&>tr]:after:content-none',
   tbody: '[&>tr]:last:[&>td]:border-b-0',
-  th: 'py-2 text-[11px] font-semibold uppercase tracking-wide text-muted first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+  th: 'py-2 text-[11px] font-semibold uppercase tracking-wide text-muted first:rounded-tl-lg last:rounded-tr-lg border-b border-default',
   td: 'py-2.5 border-b border-default [background-color:var(--dashboard-table-row)]',
+  empty: 'py-10 border-b border-default rounded-b-lg [background-color:var(--dashboard-table-row)]',
   separator: 'h-0'
 }
 const tableUi = computed(() => ({
@@ -76,7 +77,6 @@ const tableUi = computed(() => ({
 
 const hasPageSizeSelect = computed(() => !!pageSizeItems?.length)
 const showSkeleton = computed(() => loading && data.length === 0)
-const showEmpty = computed(() => !loading && data.length === 0)
 const showPagination = computed(() => pageSize > 0 && total > pageSize)
 const skeletonColumnCount = computed(() => Math.max(columns.length || 0, 3))
 // 带每页条数下拉时，只要有数据就展示底部（计数/下拉常驻）；否则沿用“仅多页时显示分页”。
@@ -104,7 +104,7 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
   <div class="dashboard-data-table flex flex-col gap-3">
     <div
       v-if="showSkeleton"
-      class="dashboard-table-skeleton overflow-hidden rounded-lg border border-default"
+      class="dashboard-table-skeleton overflow-hidden rounded-lg"
     >
       <div class="grid gap-0">
         <div
@@ -142,20 +142,6 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
       </div>
     </div>
 
-    <UEmpty
-      v-else-if="showEmpty"
-      :icon="emptyIcon"
-      :title="emptyTitle"
-      :description="emptyDescription"
-    >
-      <template
-        v-if="$slots['empty-actions']"
-        #actions
-      >
-        <slot name="empty-actions" />
-      </template>
-    </UEmpty>
-
     <UTable
       v-else
       class="min-w-full"
@@ -169,6 +155,32 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
       @update:row-selection="onRowSelectionChange"
       @update:column-visibility="onColumnVisibilityChange"
     >
+      <template #empty>
+        <div class="flex min-h-32 flex-col items-center justify-center gap-2 px-4 text-center">
+          <UIcon
+            :name="emptyIcon"
+            class="size-7 text-muted"
+          />
+          <div>
+            <p class="text-sm font-medium text-highlighted">
+              {{ emptyTitle }}
+            </p>
+            <p
+              v-if="emptyDescription"
+              class="mt-1 text-sm text-muted"
+            >
+              {{ emptyDescription }}
+            </p>
+          </div>
+          <div
+            v-if="$slots['empty-actions']"
+            class="mt-1"
+          >
+            <slot name="empty-actions" />
+          </div>
+        </div>
+      </template>
+
       <template
         v-for="(_, name) in $slots"
         :key="name"
