@@ -5,7 +5,7 @@
  *   {
  *     code: string,        // 大写下划线机器可读标识（OK / MISSING_API_KEY ...）
  *     message: string,
- *     data: T | null,      // 失败时恒为 null
+ *     data: T | null,      // 失败时默认 null；必要时可放公开安全的结构化详情
  *     timestamp: number    // ms
  *   }
  *

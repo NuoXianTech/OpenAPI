@@ -2,12 +2,14 @@
 import type { ProfileData } from '~/composables/user/use-user-settings-page'
 import { parseFetchError } from '#shared/utils/client-error'
 
-const props = defineProps<{
+interface UserSettingsBasicCardProps {
   profile: ProfileData | null
   profileLoading: boolean
   avatarUrl?: string | null
   onSave: (displayName: string) => Promise<void>
-}>()
+}
+
+const props = defineProps<UserSettingsBasicCardProps>()
 
 const toast = useToast()
 const isSaving = ref(false)
@@ -58,6 +60,10 @@ async function submit() {
             v-if="avatarUrl"
             :src="avatarUrl"
             alt="avatar"
+            width="64"
+            height="64"
+            loading="lazy"
+            decoding="async"
             class="size-16 rounded-full border border-default object-cover"
           >
           <div
