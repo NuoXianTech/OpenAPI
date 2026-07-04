@@ -48,7 +48,7 @@ const statusOptions = [
     >
       <UInput
         v-model="state.shortDesc"
-        placeholder="最多30字"
+        placeholder="最多50字"
       />
     </UFormField>
     <UFormField

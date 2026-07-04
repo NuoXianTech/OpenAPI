@@ -17,7 +17,7 @@ const form = useTemplateRef('form')
 
 const schema = z.object({
   name: requiredString('接口名称', { max: 100 }),
-  shortDesc: requiredString('接口短描述', { max: 30 }),
+  shortDesc: requiredString('接口短描述', { max: 50 }),
   description: requiredString('接口描述'),
   docUrl: z.string().default(''),
   status: z.number().default(-1),

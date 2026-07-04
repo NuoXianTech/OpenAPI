@@ -1,5 +1,5 @@
 {
-  "id": "783cbb97-d98b-44ea-a912-c66ab0055ed7",
+  "id": "84f77b7a-72a8-48a3-b3ea-4a4739afe366",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -893,7 +893,7 @@
         },
         "short_desc": {
           "name": "short_desc",
-          "type": "varchar(30)",
+          "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },

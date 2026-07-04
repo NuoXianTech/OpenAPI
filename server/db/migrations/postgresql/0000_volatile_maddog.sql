@@ -92,7 +92,7 @@ CREATE TABLE "apis" (
 	"name" varchar(100) NOT NULL,
 	"status" integer DEFAULT 1 NOT NULL,
 	"category_id" integer,
-	"short_desc" varchar(30) NOT NULL,
+	"short_desc" varchar(50) NOT NULL,
 	"description" text NOT NULL,
 	"http_method" varchar(50) NOT NULL,
 	"api_path" varchar(200) NOT NULL,
