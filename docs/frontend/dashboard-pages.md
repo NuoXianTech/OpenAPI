@@ -1,62 +1,66 @@
 # 后台页面规范
 
-适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下所有页面。两套后台共用同一份 `DashboardLayoutBase`，仅菜单/品牌/快捷动作按角色配置。
+适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`DashboardHeaderActions` 与 `UserHeaderActions` 收敛。
 
-## 1. 骨架
+## 1. 页面骨架
 
-每个后台页面 **必须** 遵循以下结构：
+后台页面分两类：
+
+| 类型 | 用法 | 现有样板 |
+| --- | --- | --- |
+| 分组父级页 | 用 `DashboardSectionShell` 渲染二级导航，并通过内部 `<NuxtPage />` 承载子页 | `app/pages/admin/apis.vue`、`app/pages/user/settings.vue` |
+| 业务叶子页 | 用 `UDashboardPanel` + `UDashboardNavbar` + `dashboard-section-page` 承载具体内容 | `app/pages/admin/logs.vue`、`app/pages/user/apikeys.vue` |
+
+分组父级页保持薄，只负责标题、二级导航和右上角动作：
 
 ```vue
 <script setup lang="ts">
-interface DashboardPageCopy {
-  title: string
-  description: string
-}
+import { adminApisLinks } from '~/constants/admin-sections/apis'
 
 definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
-
-const pageCopy: DashboardPageCopy = {
-  title: '用户管理',
-  description: '管理用户状态、余额和登录信息'
-}
-const hasFilters = ref(true)
-const isLoading = ref(false)
-
-async function refresh(): Promise<void> {
-  isLoading.value = true
-  try {
-    // 拉取页面数据
-  }
-  finally {
-    isLoading.value = false
-  }
-}
 </script>
 
 <template>
-  <UDashboardPanel id="admin-users">
+  <DashboardSectionShell
+    id="admin-apis"
+    title="接口管理"
+    :items="adminApisLinks"
+  />
+</template>
+```
+
+叶子页直接声明面板。admin 使用 `DashboardHeaderActions`，user 使用 `UserHeaderActions`：
+
+```vue
+<script setup lang="ts">
+definePageMeta({ layout: 'user', middleware: 'auth-user' })
+
+const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
+  default: () => []
+})
+</script>
+
+<template>
+  <UDashboardPanel id="user-apikeys">
     <template #header>
-      <UDashboardNavbar :title="pageCopy.title" :description="pageCopy.description">
+      <UDashboardNavbar
+        title="API Key"
+        class="dashboard-navbar"
+      >
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <!-- 业务专属按钮（如"新建"），放在 HeaderActions 之前 -->
-          <DashboardHeaderActions :on-refresh="refresh" :refreshing="isLoading" />
+          <UserHeaderActions
+            :on-refresh="refresh"
+            :refreshing="status === 'pending'"
+          />
         </template>
       </UDashboardNavbar>
-
-      <UDashboardToolbar v-if="hasFilters">
-        <!-- 左：搜索/筛选；右：批量动作（v-if="selectedCount > 0"） -->
-      </UDashboardToolbar>
     </template>
 
     <template #body>
-      <div class="space-y-6">
-        <UPageHeader :title="pageCopy.title" :description="pageCopy.description" />
-        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-4">
-          <UPageCard title="128" description="用户总数" variant="subtle" class="[&_h3]:tabular-nums" />
-        </UPageGrid>
+      <div class="dashboard-section-page space-y-6">
         <!-- 主体内容 -->
       </div>
     </template>
@@ -64,114 +68,82 @@ async function refresh(): Promise<void> {
 </template>
 ```
 
-## 2. 强制规范
+## 2. 组件约定
 
-| # | 规范 | 反例 |
-| --- | --- | --- |
-| 1 | navbar 右侧必须用 `DashboardHeaderActions` | 直接写 `<UButton icon="refresh">` + `<AdminHeaderUser />` |
-| 2 | KPI 概览必须用 `UPageGrid` + `UPageCard`（`title=value` / `description=label` / `variant="subtle"` / `class="[&_h3]:tabular-nums"`） | 自己写 `<div class="grid">` + `<UCard>` |
-| 3 | 设置卡必须用 `UPageCard`（icon + title 在 header，content 在默认 slot，按钮组在 `#footer`） | 复制 6 张 `UCard` + header icon |
-| 4 | 数据表格必须用 `DashboardDataTable` | 直接放 `<UTable>` 不带分页 / 空状态 |
-| 5 | 空状态必须用 `UEmpty` | `<div class="text-center py-12">暂无数据</div>` |
-| 6 | 页面 hero 必须用 `UPageHeader`（icon 可放在 `#title` slot 里） | 自己拼 icon + h1 + p |
-| 7 | 菜单 / 快捷动作必须在 `app/constants/dashboard-config.ts` 维护 | 在 layout 里硬编码 |
-| 8 | 图标只用 `i-mdi-*` | 引入其它 iconify 集合 |
-| 9 | 颜色只用主题 token（`text-muted`、`bg-elevated`、`color="primary"`…） | `text-green-500`、`dark:bg-gray-900` |
-| 10 | 数字字段必须挂 `tabular-nums` | 纯数字让等宽对齐 |
-| 11 | 弹窗状态建议走 `useOverlay()`（Nuxt UI v4） | 页面 setup 持 4 个 `v-model:open` |
+| 场景 | 优先使用 |
+| --- | --- |
+| 后台整体布局 | `DashboardLayoutBase`，由 `admin.vue` / `user.vue` layout 包装 |
+| 分组页二级导航 | `DashboardSectionShell` |
+| 右上角刷新、主题、账号菜单 | `DashboardHeaderActions` |
+| 用户后台通知铃铛 | `UserHeaderActions`，不要在页面里复制通知组件 |
+| 表格 | `DashboardDataTable` |
+| 行操作菜单 | `DashboardRowActions` |
+| 列显隐 | `DashboardColumnVisibility` |
+| 统计小图 | `DashboardSparkline` |
+| 空状态 | `DashboardDataTable` 内置 `UEmpty`，非表格场景直接用 `UEmpty` |
 
-## 3. 命令面板（Ctrl/⌘+K）
+后台 UI 以 Nuxt UI 组件和主题 token 为主。图标统一使用 `i-mdi-*`；颜色优先使用 `text-muted`、`bg-elevated`、`color="primary"` 这类主题语义，不在业务页散落硬编码色值。
 
-由 `DashboardLayoutBase` 全局挂载，每个角色的导航项 + `quickActions` 已经自动注入。
+## 3. 数据与分页
 
-新增快捷操作：在 `app/constants/dashboard-config.ts` 的 `quickActions` 数组中加一项即可。
+小型列表可以一次性拉取，再用 `useClientPagination` 做客户端分页。可能增长的私有长列表优先使用 `usePrivatePagedList`，接口返回 `{ items, total }`，前端用 `limit/offset` 查询参数分页。
 
-```ts
-interface DashboardQuickAction {
-  label: string
-  icon: string
-  to: string
-}
+需要刷新后恢复、复制链接排查的问题页，使用 `useDashboardListState` 将稳定筛选项同步到 URL。适合写入 URL 的状态包括：
 
-export const quickActions: DashboardQuickAction[] = [
-  { label: '生成兑换码', icon: 'i-mdi-ticket-percent-outline', to: '/admin/redemption-codes' }
-]
-```
-
-## 4. 主题切换
-
-`DashboardHeaderActions` 内置 `UColorModeButton`，自动联动系统/亮/暗。命令面板也支持按主题切换命令。**不要** 自己实现主题切换逻辑。
-
-## 5. 通知铃铛
-
-`CommonNotificationBell`（站内信收件箱）是 **user 专属**——admin 走 env、无 `users` 表记录也无收件箱。它**不进**共用的 `DashboardHeaderActions`，而由 `UserHeaderActions`（= `DashboardHeaderActions` + 铃铛塞进其 `<slot />`）注入：user 页面 navbar 用 `UserHeaderActions`，admin 页面用裸 `DashboardHeaderActions`（slot 为空，无铃铛、无角色判断）。点击从右侧滑出 Slideover 通知中心（无独立页面）。**不要** 复制铃铛代码到页面。
-
-## 6. 分页 & 筛选
-
-- 现阶段表格用 `DashboardDataTable` 支持 `v-model:page` / `:page-size` / `:total` 自动渲染 `UPagination`
-- 私有长列表优先用 `usePrivatePagedList` 请求 `{ items, total }` 风格接口，并通过 `limit/offset` 查询参数分页
-- 需要刷新恢复 / 分享查询条件的长列表，优先用 `useDashboardListState` 同步稳定筛选项到 URL
-
-新加表格请：
-
-1. 用 `DashboardDataTable`
-2. 数据若可能很大（>200 行），与后端约定服务端分页，传 `:page` / `:page-size` / `:total`
-3. 别再手写"上一页 / 下一页"按钮
-
-### 6.1 列表状态与 URL 同步
-
-长列表页优先使用 `useDashboardListState` 管理 `filters` / `page` / `pageSize`。私有数据列表继续使用 `usePrivatePagedList` 拉取，确保响应不进入 Nuxt SSR payload。
-
-适合写入 URL 的状态：
-
-- 调用日志等排查型页面的筛选条件
-- 当前页与每页条数
+- 调用日志、登录日志、积分流水等排查型筛选条件
+- 当前页和每页条数
 - 简短、稳定、可分享的查询值
 
-不适合写入 URL 的状态：
+不写入 URL 的状态包括：
 
 - 弹窗开关
 - 行选择
-- 临时输入但尚未点击“查询”的内容
-- API Key 明文或其它敏感内容
+- 临时输入但尚未提交的搜索词
+- API Key 明文或其他敏感内容
 
-## 7. Modal 推荐路径
+## 4. 表格
 
-新页面优先用 [Nuxt UI v4 useOverlay()](https://ui.nuxt.com/docs/composables/use-overlay) 调起业务弹窗，让页面 setup 不持弹窗 state。
+新表格优先用 `DashboardDataTable`，让空状态、分页、每页条数、行选择、列显隐和默认表格外观保持一致。
+
+```vue
+<DashboardDataTable
+  v-model:page="page"
+  v-model:page-size="pageSize"
+  :data="items"
+  :columns="columns"
+  :loading="loading"
+  :total="total"
+  :page-size-items="PAGE_SIZE_ITEMS"
+  empty-title="暂无日志"
+  empty-icon="i-mdi-history"
+/>
+```
+
+列多或内容较宽的表格传 `:fixed="false"`，避免内容挤压。数字字段显示时加 `tabular-nums`，金额、次数、状态码等字段优先在 cell slot 中统一格式化。
+
+## 5. 弹窗与确认
+
+脱离父组件状态的详情、重置、确认弹窗优先使用 Nuxt UI 的 `useOverlay()`。表单内容与父组件 reactive state 高度耦合时，保留 `v-model:open` 更直接，不强行迁移。
 
 ```ts
-interface UserEditTarget {
-  id: number
-  email: string
-}
-
 const overlay = useOverlay()
-const editModal = overlay.create(AdminUserEditModal)
+const detailModal = overlay.create(LazyAdminCallLogDetailModal, { destroyOnClose: true })
 
-async function openEdit(target: UserEditTarget): Promise<void> {
-  const result = await editModal.open({ target })
-  if (result) await refresh()
+function openDetail(row: AdminLogRow) {
+  detailModal.open({ row })
 }
 ```
 
-### 7.1 删除/确认对话框：`useConfirmDialog()`
-
-所有"二次确认 + 执行动作"场景统一走 `useConfirmDialog`，弹窗内部托管 loading，调用方只需提供动作和错误 toast。
+删除、停用、批量操作等二次确认统一走 `useConfirmDialog()`。弹窗内部托管 loading，调用方在失败时抛出错误，弹窗会保持打开以便重试。
 
 ```ts
-interface ApiCategoryListItem {
-  id: number
-  name: string
-}
-
 const confirm = useConfirmDialog()
 const toast = useToast()
 
 async function openDelete(item: ApiCategoryListItem): Promise<void> {
   await confirm({
     title: `删除分类: ${item.name}`,
-    description: '删除后该分类不再可选...',
-    // 默认 confirmLabel='删除' / confirmColor='error'，按需覆盖
+    description: '删除后该分类不再可选。',
     async onConfirm() {
       try {
         await $fetch('/api/admin/api-categories/delete', {
@@ -180,53 +152,55 @@ async function openDelete(item: ApiCategoryListItem): Promise<void> {
         })
         toast.add({ title: '已删除', color: 'success' })
         await refresh()
-      }
-      catch (error) {
+      } catch (error) {
         toast.add({ title: parseFetchError(error, '删除失败'), color: 'error' })
-        throw error // 抛出 → 弹窗保持打开供用户重试
+        throw error
       }
     }
   })
 }
 ```
 
-实现：[useConfirmDialog](../../app/composables/use-confirm-dialog.ts) + [AppConfirmDialog.vue](../../app/components/common/AppConfirmDialog.vue)。原 `AdminDeleteModal` 已下线。
-
-### 7.2 何时不用 useOverlay
-
-弹窗内容与父组件 reactive state 高度耦合（如表单 props 跟随父组件 `selected` 实时变化），用 useOverlay 反而要走 `modal.patch()` 同步，不如继续 `v-model:open`。
-
 > [!IMPORTANT]
-> useOverlay 弹窗挂在 `UApp` 之外，**拿不到页面级 `provide()`**。需要 inject 的值必须在 `overlay.create()` 时通过 `props` 显式传入。
+> `useOverlay()` 弹窗挂在页面组件树之外，不能依赖页面级 `provide()`。需要的数据必须通过 `overlay.open()` 的 props 显式传入。
 
-老页面（users.vue / apis.vue / wallet.vue 等）剩余的 `v-model:open` 用法可工作，遵循"改 modal 时顺手改造"原则渐进迁移。
+## 6. 通知与头部动作
 
-## 8. 目录约定
+`DashboardHeaderActions` 内置刷新按钮、主题切换和账号菜单；`UserHeaderActions` 在其基础上注入 `CommonNotificationBell`。通知中心是用户后台能力，admin 页面保持使用 `DashboardHeaderActions`。
 
+如果页面支持刷新，把 `refresh` 和加载状态传给 HeaderActions；如果页面没有明确刷新动作，可以省略：
+
+```vue
+<DashboardHeaderActions
+  :on-refresh="refresh"
+  :refreshing="status === 'pending'"
+/>
 ```
+
+## 7. 目录约定
+
+```text
 app/
 ├── components/
-│   ├── dashboard/        通用骨架（Layout/HeaderActions/DataTable）
+│   ├── dashboard/        后台骨架、表格、行操作、列显隐等通用组件
 │   ├── admin/            管理员业务弹窗 / 卡片
-│   ├── user/             普通用户业务卡片
-│   └── common/           跨域共用（NotificationBell、AppHeader …）
+│   ├── user/             用户业务卡片 / 弹窗
+│   └── common/           跨域共用组件
 ├── composables/
-│   ├── dashboard/        useDashboardConfig 等
-│   ├── admin/  user/    业务页面 hook（注意：子目录走显式 import）
+│   ├── dashboard/        后台列表状态、分页、配置注入
+│   ├── admin/            管理后台页面组合式函数
+│   ├── user/             用户后台页面组合式函数
+│   └── api/              API Key 与公开接口相关组合式函数
 ├── constants/
-│   └── dashboard-config.ts   admin / user 菜单与快捷动作
+│   ├── admin-sections/   管理后台分组导航
+│   ├── user-sections/    用户后台分组导航
+│   └── dashboard-config.ts
 ├── layouts/
-│   ├── admin.vue         瓦壳 → DashboardLayoutBase
-│   └── user.vue          瓦壳 → DashboardLayoutBase
+│   ├── admin.vue
+│   └── user.vue
 └── pages/
-    └── admin/  user/...
+    ├── admin/
+    └── user/
 ```
 
-## 9. 后续待办
-
-| 项 | 状态 |
-| --- | --- |
-| 服务端分页 + URL 同步（admin/users、admin/apis 等长列表） | 待办 |
-| useOverlay 全面迁移（admin/users、admin/apis、user/apikeys 等弹窗） | 待办 |
-| settings.vue 改为 UTabs 二级切换（基本信息 / 安全 / OAuth / Turnstile / SMTP / 公告） | 可选 |
-| breadcrumb（系统 / 站点设置 / SMTP） | 可选 |
+新增页面时先找同域现有样板，优先复用组合式函数和 dashboard 组件；确实出现第三处重复逻辑时再提取新组件或 composable。

@@ -22,7 +22,7 @@
 | --- | --- | --- |
 | **典型动作** | 给 `/v1/crypto` 加一个新算法、给某个分发型接口加一个新子项 | 从零开一个 `/v1/<新code>`（如 `/v1/yiyan`） |
 | **要不要碰路由** | **不用**。已有的 `[name].post.ts` 按名字自动分发 | **要**。新建 `server/routes/v{N}/<code>/` 下的 handler |
-| **要不要后台注册新 `(version, code)`** | 不用，复用现有接口的注册行 | **要**，注册并启用新行 |
+| **要不要后台配置新 `(version, code)`** | 不用，复用现有接口的注册行 | **要**，重启后启用并配置自动建好的新行 |
 | **业务层模式** | **注册中心**（registry）——见 [§3.2](#32-模式-a注册中心registry) | **数据源 / 仓库**（repository）或任意自定义——见 [§3.3](#33-模式-b数据源--仓库repository) |
 | **现存样板** | [server/lib/crypto/](../../server/lib/crypto/) | [server/lib/yiyan/](../../server/lib/yiyan/) |
 
@@ -215,7 +215,8 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 成功                       → openApiOk
 纯协议失败（缺参/格式错）    → openApiFail(event, 4xx, 'CODE', '提示')        // 4xx 自动跳过扣费
 业务失败（算法/上游报错）    → openApiBizFail(event, 4xx/5xx, 'CODE', '提示') // 跳过扣费 + 写调用日志（errorCode/errorMessage）
-返回 2xx 但要跳过扣费（罕见）→ 单独 markApiCallSuccess / markApiCallFailed
+返回 2xx 但要跳过扣费（罕见）→ 单独 markApiCallFailed
+返回非 2xx 但仍要扣费（更罕见）→ 单独 markApiCallSuccess
 ```
 
 判定规则（[api-call-outcome.ts:83-94](../../server/utils/api-call-outcome.ts#L83-L94) 的 `shouldCharge`）：`costCredits<=0` 或无归属用户 → 不扣；`forcedOutcome='failed'` → 跳过；`'success'` → 必扣；默认按 statusCode（2xx/3xx 扣，4xx/5xx 不扣）。
@@ -318,4 +319,4 @@ curl 'http://localhost:3000/v1/<code>?foo=bar'
 | 新增业务文件 | `server/lib/crypto/algorithms/atbash.ts` | `server/lib/foo/*.ts`（+ `data/` 如需） |
 | 改动登记文件 | `server/lib/crypto/index.ts`（import + anchor） | — |
 | 新增路由文件 | —（复用 `[name].post.ts`） | `server/routes/v1/foo/index.get.ts` 等 |
-| 后台操作 | —（复用 `(v1, crypto)` 注册行） | 重启后在后台启用并配置 `(v1, foo)` |
+| 后台操作 | —（复用 `(v1, crypto)` 注册行） | 重启后启用并配置自动建好的 `(v1, foo)` |

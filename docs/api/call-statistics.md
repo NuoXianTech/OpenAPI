@@ -12,12 +12,12 @@
 | --- | --- | --- | --- |
 | 调用日志 | `api_calls` | 单次请求明细，一行代表一次已落库调用 | 用户/管理员查看明细、排错、审计 |
 | 日聚合统计 | `api_call_stats` | 按 `apiId + 本地日期` 聚合 `api_calls.isCounted=true` 的总数、成功数、失败数 | 公开统计页、后台趋势、TOP 排行 |
-| API Key 调用次数 | `api_keys.totalCalls` | 该 Key 成功通过 gate 的使用次数 | 用户 Key 列表展示、Key 使用情况 |
+| API Key 调用次数 | `api_keys.totalCalls` | 该 Key 通过 gate 并进入 handler 的使用次数，不等同于业务成功次数 | 用户 Key 列表展示、Key 使用情况 |
 
 重点约定：
 
 - `api_call_stats.totalCount` 统计的是 `api_calls.isCounted=true` 的已落库调用日志条数，包含成功与失败。
-- `api_keys.totalCalls` 只统计成功通过 gate 的请求，不统计任何 gate 拒绝请求。
+- `api_keys.totalCalls` 只统计通过 gate 的请求，不统计任何 gate 拒绝请求；handler 后续返回 4xx/5xx 时仍算一次 Key 使用。
 - 不要把 `api_call_stats.totalCount` 当成某个 API Key 的成功调用次数。
 
 ## 2. 统计链路
@@ -27,7 +27,7 @@
 1. `request` 阶段：如果路径属于 `/v{N}/**` 治理范围，记录请求开始时间、路径、方法、IP、API Key、User-Agent、Referer、QueryString、请求大小等快照。
 2. `api-gate` 阶段：命中已注册 API 且 `apis.isStatistics=true` 时，gate 将 `apiStatsTarget` 写入 `event.context`。
 3. `afterResponse` 阶段：响应发出后异步写入 `api_calls` 明细；当 `api_calls.isCounted=true` 时，同步 upsert `api_call_stats` 日聚合。
-4. gate 通过且识别到 API Key 时，调用成功使用记录会累加 `api_keys.totalCalls`。
+4. gate 通过且识别到 API Key 时，使用记录会累加 `api_keys.totalCalls`。
 
 统计写入是 after-response 异步执行：业务响应不会等待统计落库完成。统计失败只写服务端日志，不影响本次 API 响应。
 
@@ -55,7 +55,7 @@
 
 这里的“调用次数”特指 `api_keys.totalCalls`。
 
-`api_keys.totalCalls` 只在 gate 通过、且识别到具体 API Key 时累加。任何 gate 拒绝请求都不累加 `totalCalls`，包括：
+`api_keys.totalCalls` 只在 gate 通过、且识别到具体 API Key 时累加。它表达“这个 Key 被服务接受并进入 handler 多少次”，不是业务成功次数。任何 gate 拒绝请求都不累加 `totalCalls`，包括：
 
 | 场景 | 是否写调用日志 | 是否累加 `api_keys.totalCalls` |
 | --- | --- | --- |
@@ -71,7 +71,7 @@
 | 余额不足 | 是；`isCounted=false` | 否 |
 | 公共接口被禁用（`isEnabled=false`） | 否（接口禁用时关闭全部日志/统计） | 否 |
 
-已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们不是“成功使用”，所以不累加 `api_keys.totalCalls`。其中 API Key 已过期、API Key 累计积分配额超限、API Key 已禁用、余额不足会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。**公共接口禁用**（`apis.isEnabled=false`，gate outcome `disabled`）直接不写任何调用日志，与缺失/无效密钥同列。
+已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们没有进入 handler，所以不累加 `api_keys.totalCalls`。其中 API Key 已过期、API Key 累计积分配额超限、API Key 已禁用、余额不足会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。**公共接口禁用**（`apis.isEnabled=false`，gate outcome `disabled`）直接不写任何调用日志，与缺失/无效密钥同列。
 
 ## 5. 成功与失败口径
 
@@ -79,8 +79,8 @@
 
 | 条件 | 日聚合结果 |
 | --- | --- |
-| `200 <= statusCode < 400` | `successCount + 1` |
-| 其他状态码 | `failureCount + 1` |
+| `200 <= statusCode < 400` 且没有 `errorCode` | `successCount + 1` |
+| 其他状态码，或业务显式写入了 `errorCode` | `failureCount + 1` |
 
 业务 handler 可以通过 [server/utils/api-call-outcome.ts](../../server/utils/api-call-outcome.ts) 显式修正统计结果：
 
@@ -139,7 +139,7 @@
 
 ## 8. 开发规范
 
-- 新增对外 API 后，必须在后台注册对应 `(pathVersion, code)`；否则不会产生调用日志。
+- 新增对外 API 后，重启 dev / 重新 build 让 manifestSync 自动建行，并在后台启用对应 `(pathVersion, code)`；否则不会产生调用日志。
 - 如不希望某 API 出现在统计中，使用 `apis.isStatistics=false`，不要在 handler 里手动跳过统计。
 - handler 不要直接写 `api_calls` 或 `api_call_stats`。
 - 业务失败但返回 4xx/5xx 时，不需要额外标记；默认会按失败统计。

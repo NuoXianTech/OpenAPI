@@ -69,7 +69,7 @@ export interface OpenApiResponse<T> {
   code: string
   /** 人类可读的提示信息 */
   message: string
-  /** 业务数据，失败时为 null */
+  /** 业务数据；失败时通常为 null，少数错误可放公开、安全的结构化详情 */
   data: T | null
   /** 服务端响应时间（Unix 秒或毫秒，全局统一） */
   timestamp: number
@@ -246,7 +246,7 @@ X-API-Version: 1
 - [ ] URL 用名词复数，没有动词
 - [ ] HTTP method 选对了（创建用 POST、全量改用 PUT、局部改用 PATCH）
 - [ ] 响应壳是 `{ code, message, data, timestamp }`，没有裸 `{ id, name }`
-- [ ] body `code` 用大写下划线字符串（`OK` / `MISSING_API_KEY` ...），失败时 `data` 为 `null`
+- [ ] body `code` 用大写下划线字符串（`OK` / `MISSING_API_KEY` ...），失败时默认 `data` 为 `null`；只有调用方确实需要时才放公开、安全的结构化详情
 - [ ] 成功返回正确的 2xx（创建用 201、无返回体用 204）
 - [ ] 失败返回对应 4xx/5xx，`message` 给出可读提示；同 status 多子类型用 `code` 区分
 - [ ] 列表接口包含 `total` / `page` / `pageSize`

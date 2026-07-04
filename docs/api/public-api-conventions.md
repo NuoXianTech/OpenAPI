@@ -58,7 +58,7 @@ export interface OpenApiResponse<T> {
   /** 大写下划线机器可读标识，详见 RESTful API 设计风格 §4.4 */
   code: string
   message: string
-  /** 失败时恒为 null */
+  /** 失败时默认 null；少数 gate / handler 可放公开、安全的结构化详情 */
   data: T | null
   /** Unix 毫秒 */
   timestamp: number
@@ -80,7 +80,7 @@ const response = {
   - **业务 handler**（`server/routes/v{N}/<code>/*` 内部）由 handler 自行命名（SCREAMING_SNAKE_CASE，如 `ALGORITHM_NOT_FOUND` / `CRYPTO_FAILED` / `UPSTREAM_ERROR`），**不必登记到全局表**，inline 字面量即可
 - **`message` 由 handler 自由定**：`openApiOk` 和 `openApiFail` 的 `message` 参数都接受 handler 自定义文案，应面向调用方可读（含上下文，例如失败时 ``未知算法 "xxx"，请通过 GET /v1/crypto 查看可用列表``），不要复用 `API_GUARD_ERROR.msg`。gate 层错误的默认文案保留在 `API_GUARD_ERROR.msg`，只服务 gate 自己
 - **同一 HTTP status 下用 `code` 区分子类型**：例如 401 下 `MISSING_API_KEY` / `INVALID_API_KEY` / `DISABLED_API_KEY` / `EXPIRED_API_KEY`，全部由 gate 中间件统一发码
-- **失败响应 `data` 恒为 `null`**：严守 [RESTful API 设计风格 §3.3](./design-style.md#33-失败示例)，不再把 `errorCode` / `outcome` 等内部状态塞进 `data`
+- **失败响应 `data` 默认是 `null`**：不要把 `errorCode` / `outcome` 等内部状态塞进 `data`。只有调用方确实需要、且内容可公开时，才放小型结构化详情；当前 gate 的过期 Key 会返回 `{ expiresAt }` 这类 detail
 - **`X-Request-Id` 走响应头**：每个响应都会自动写入响应头 `X-Request-Id`（复用同名请求头的值，没有则生成 UUID），客户端排查从 header 取
 - **辅助上下文走标准 HTTP 头**：405 → `Allow`、429 → `Retry-After` 与 `X-RateLimit-*`，不进 body
 
@@ -92,7 +92,7 @@ const response = {
 - **JSONP（`callback`）属 JSON 表示的变体，包裹的也是这同一个标准壳**——即 `callback({code,...,data})`，而非裸资源对象。
 - **其他 encode（`text` / `js` / `md` / ……）由各接口自行定义原始输出格式**，直出内容并自设 `Content-Type`，不套壳。
 - **`charset` 只决定响应体的字节编码，不改变结构**：`encode=json` 在 `charset=gbk` 下仍是同一个标准壳，只是用 GBK 编码（GBK 与 `callback` 不可同用）。
-- **失败一律走标准壳**：参数错误 / 资源未命中等用 `openApiFail`（对应 HTTP status，`data` 恒 `null`），与 §4 完全一致，**不受 `encode` 影响**。
+- **失败一律走标准壳**：参数错误 / 资源未命中等用 `openApiFail`（对应 HTTP status，`data` 默认 `null`），与 §4 完全一致，**不受 `encode` 影响**。
 
 目前的实例是 [`/v1/yiyan`](../../server/routes/v1/yiyan/index.get.ts)（随机「一言」，支持 `encode=text|json|js|md`、`charset=utf-8|gbk`、JSONP `callback`）。新增此类接口时按上面的分工实现；没有真实多格式诉求的常规接口，一律按 §4 只返回 JSON 壳。
 
@@ -224,7 +224,7 @@ manifest 来自构建期生成的 `#api-manifest` virtual module，因此**新�
 - [ ] URL 设计 / HTTP 方法 / 状态码 / 版本号遵循 [RESTful API 设计风格](./design-style.md)
 - [ ] 路径在 `server/routes/v{N}/<code>/...` 下，`<code>` 是静态目录名
 - [ ] handler 通过 `openApiOk` / `openApiFail` 返回，没有裸 `return { ... }`
-- [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 为 `null`
+- [ ] 失败用对应 HTTP status（`4xx` / `5xx`），body `code` 用大写下划线字符串（`MISSING_API_KEY` / `UPSTREAM_ERROR` ...），失败时 `data` 默认 `null`，只在必要时返回公开 detail
 - [ ] 业务失败要把 code/message 写进调用日志 → `openApiBizFail`（一行）；纯协议失败（缺参 / 格式错）→ 直接 `openApiFail`；仅"返回 2xx 但需跳过扣费"的罕见场景 → 单用 `markApiCallFailed`
 - [ ] 重启后该 `(pathVersion, code)` 已被 manifestSync 自动入库，且在后台**启用**并配好 `isApiKey` / `methodCosts` / `rateLimit*`
 - [ ] 重启过 dev 服务器，调用真实路径验证 gate / manifest / handler 三层都通
