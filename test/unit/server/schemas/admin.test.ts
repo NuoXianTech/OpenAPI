@@ -4,6 +4,7 @@ import {
   adminUpdateApiSchema,
   adminUpdateUserSchema
 } from '~~/shared/schemas/admin'
+import { API_STATUS } from '~~/shared/config/api-status'
 
 describe('admin schemas', () => {
   it('rejects unsafe admin mutations and requires explicit bulk confirmation', () => {
@@ -41,6 +42,18 @@ describe('admin schemas', () => {
       userIds: [],
       operation: 'grant',
       amount: 1
+    }).success).toBe(false)
+  })
+
+  it('accepts automatic API status and rejects unknown status values', () => {
+    expect(adminUpdateApiSchema.safeParse({
+      id: 1,
+      status: API_STATUS.automatic
+    }).success).toBe(true)
+
+    expect(adminUpdateApiSchema.safeParse({
+      id: 1,
+      status: 999
     }).success).toBe(false)
   })
 })

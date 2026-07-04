@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { isApiStatusValue } from '../../config/api-status'
 import { enumMessage, nonNegativeInt, positiveInt, requiredString } from '../validation'
 
 const methodCostsSchema = z.preprocess(
@@ -14,6 +15,10 @@ const methodCostsSchema = z.preprocess(
   z.record(z.string(), z.number().int().min(0))
 )
 
+const guardLimitSchema = nonNegativeInt('限流额度')
+const guardTimeoutSchema = z.coerce.number().int().min(100, '超时时间不能小于 100ms').max(120000, '超时时间不能超过 120000ms')
+const apiStatusSchema = z.coerce.number().int().refine(isApiStatusValue, '接口状态不合法')
+
 export const adminRegisterApiSchema = z.object({
   pathVersion: requiredString('接口版本'),
   code: requiredString('接口标识'),
@@ -22,7 +27,7 @@ export const adminRegisterApiSchema = z.object({
     shortDesc: z.string().optional(),
     description: z.string().optional(),
     docUrl: z.string().optional(),
-    status: z.number().optional(),
+    status: apiStatusSchema.optional(),
     categoryId: z.number().nullable().optional(),
     isEnabled: z.boolean().optional(),
     isApiKey: z.boolean().optional(),
@@ -37,13 +42,10 @@ export const adminRegisterApiSchema = z.object({
   }).optional()
 })
 
-const guardLimitSchema = nonNegativeInt('限流额度')
-const guardTimeoutSchema = z.coerce.number().int().min(100, '超时时间不能小于 100ms').max(120000, '超时时间不能超过 120000ms')
-
 export const adminUpdateApiSchema = z.object({
   id: positiveInt('接口 ID'),
   name: z.string().trim().optional(),
-  status: z.coerce.number().optional(),
+  status: apiStatusSchema.optional(),
   categoryId: z.preprocess(
     v => (v === '' || v === null ? null : v),
     z.union([z.coerce.number().int().positive(), z.null()]).optional()

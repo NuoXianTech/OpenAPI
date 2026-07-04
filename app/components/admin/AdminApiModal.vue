@@ -2,6 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/admin-api'
+import { API_STATUS } from '#shared/config/api-status'
 import { parseFetchError } from '#shared/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
@@ -20,7 +21,7 @@ const schema = z.object({
   shortDesc: requiredString('接口短描述', { max: 50 }),
   description: requiredString('接口描述'),
   docUrl: z.string().default(''),
-  status: z.number().default(-1),
+  status: z.number().default(API_STATUS.unknown),
   categoryId: z.number().nullable().optional(),
   isEnabled: z.boolean().default(false),
   isApiKey: z.boolean().default(false),
@@ -42,7 +43,7 @@ function defaultsForRegister(target: DiscoveredApi): AdminApiFormState {
     shortDesc: `${target.pathVersion} ${target.code}`,
     description: `${target.pathVersion} ${target.code} 接口`,
     docUrl: '',
-    status: -1,
+    status: API_STATUS.unknown,
     categoryId: null,
     isEnabled: false,
     isApiKey: false,

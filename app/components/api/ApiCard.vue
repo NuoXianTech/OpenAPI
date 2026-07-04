@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { API_STATUS } from '#shared/config/api-status'
+
 type ApiCardBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 interface ApiCardProps {
@@ -22,7 +24,7 @@ interface ApiCardStatusMeta {
 
 const props = withDefaults(defineProps<ApiCardProps>(), {
   name: '这是标题',
-  status: -1,
+  status: API_STATUS.unknown,
   shortDesc: '',
   description: '',
   httpMethod: 'GET',
@@ -69,9 +71,9 @@ function costFor(method: string): number {
 
 function getSuccessRadar(status = -1): { className: string, title: string } {
   switch (status) {
-    case 1:
+    case API_STATUS.normal:
       return { className: '', title: '正常' }
-    case 0:
+    case API_STATUS.abnormal:
       return { className: 'is-error', title: '异常' }
     default:
       return { className: 'is-unknown', title: '未知' }
@@ -80,14 +82,16 @@ function getSuccessRadar(status = -1): { className: string, title: string } {
 
 function getStatusMeta(status = -1): ApiCardStatusMeta {
   switch (status) {
-    case 1:
+    case API_STATUS.normal:
       return { label: '正常', color: 'success', icon: 'i-mdi-check-circle-outline' }
-    case 0:
+    case API_STATUS.abnormal:
       return { label: '异常', color: 'error', icon: 'i-mdi-alert-circle-outline' }
-    case 2:
+    case API_STATUS.maintenance:
       return { label: '维护', color: 'warning', icon: 'i-mdi-wrench-outline' }
-    case 3:
+    case API_STATUS.deprecated:
       return { label: '废弃', color: 'neutral', icon: 'i-mdi-archive-outline' }
+    case API_STATUS.automatic:
+      return { label: '自动', color: 'info', icon: 'i-mdi-sync' }
     default:
       return { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ADMIN_API_STATUS_ITEMS } from '#shared/config/api-status'
 import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
 
 const state = useAdminApiForm()
@@ -11,13 +12,7 @@ const categoryOptions = computed(() => [
   ...((categoriesData.value || []).map(c => ({ label: c.name, value: c.id })))
 ])
 
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '异常', value: 0 },
-  { label: '未知', value: -1 },
-  { label: '维护', value: 2 },
-  { label: '废弃', value: 3 }
-]
+const statusOptions = ADMIN_API_STATUS_ITEMS
 </script>
 
 <template>

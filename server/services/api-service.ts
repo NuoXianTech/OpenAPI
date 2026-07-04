@@ -1,6 +1,8 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/api-guard'
+import { isAutomaticApiStatus } from '~~/shared/config/api-status'
+import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -98,6 +100,7 @@ function buildApiFilters(filters: ApiListFilters) {
 type PublicApiItem = {
   id: number
   name: string
+  /** 自动模式会在服务端解析为正常 / 异常 / 未知后返回。 */
   status: number
   categoryId: number | null
   shortDesc: string
@@ -111,9 +114,15 @@ type PublicApiItem = {
   totalCalls: number
 }
 
+function resolvePublicApiStatus(row: typeof apis.$inferSelect, autoStatusMap: Record<number, number>) {
+  if (!isAutomaticApiStatus(row.status)) return row.status
+  return autoStatusMap[row.id] ?? row.status
+}
+
 export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
-    const conditions = buildApiFilters(filters)
+    const requestedStatus = filters.status
+    const conditions = buildApiFilters({ ...filters, status: undefined })
     const where = conditions.length ? and(...conditions) : undefined
     const [rows, statsMap] = await Promise.all([
       (where
@@ -122,21 +131,29 @@ export const apiService = {
       ).orderBy(desc(apis.updatedAt)),
       loadApiStats()
     ])
+    const apiRows = rows as Array<typeof apis.$inferSelect>
+    const autoStatusMap = await resolveApiAutoStatuses(
+      apiRows
+        .filter(row => isAutomaticApiStatus(row.status))
+        .map(row => row.id)
+    )
 
-    return (rows as Array<typeof apis.$inferSelect>).map((row): PublicApiItem => ({
-      id: row.id,
-      name: row.name,
-      status: row.status,
-      categoryId: row.categoryId,
-      shortDesc: row.shortDesc,
-      description: row.description,
-      httpMethod: row.httpMethod,
-      apiPath: row.apiPath,
-      docUrl: row.docUrl,
-      isApiKey: row.isApiKey,
-      methodCosts: row.methodCosts ?? {},
-      totalCalls: statsMap[row.id]?.totalCalls ?? 0
-    }))
+    return apiRows
+      .map((row): PublicApiItem => ({
+        id: row.id,
+        name: row.name,
+        status: resolvePublicApiStatus(row, autoStatusMap),
+        categoryId: row.categoryId,
+        shortDesc: row.shortDesc,
+        description: row.description,
+        httpMethod: row.httpMethod,
+        apiPath: row.apiPath,
+        docUrl: row.docUrl,
+        isApiKey: row.isApiKey,
+        methodCosts: row.methodCosts ?? {},
+        totalCalls: statsMap[row.id]?.totalCalls ?? 0
+      }))
+      .filter(row => typeof requestedStatus !== 'number' || row.status === requestedStatus)
   },
 
   async getById(id: number) {

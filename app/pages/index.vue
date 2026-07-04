@@ -3,6 +3,7 @@ import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
 import { useApiList } from '~/composables/api/use-api-list'
+import { API_STATUS } from '#shared/config/api-status'
 
 const {
   query,
@@ -24,7 +25,7 @@ const visibleCount = computed(() => filteredItems.value.length)
 
 const heroStats = computed(() => ({
   total: allItems.value.length,
-  normal: allItems.value.filter((i: { status: number }) => i.status === 1).length,
+  normal: allItems.value.filter((i: { status: number }) => i.status === API_STATUS.normal).length,
   calls: allItems.value.reduce((sum: number, item: { totalCalls?: number }) => sum + (Number(item.totalCalls) || 0), 0)
 }))
 

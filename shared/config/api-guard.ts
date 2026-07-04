@@ -1,3 +1,5 @@
+import { API_STATUS } from './api-status'
+
 // Imported by app and server code; keep this file runtime-dependency free.
 
 export const VERSION_CODE_PATTERN = /^\/(v\d+)\/([^/?#]+)/
@@ -12,7 +14,7 @@ export function normalizePathname(pathname: string): string {
 }
 
 export const DEFAULT_API_REGISTRATION = {
-  status: -1,
+  status: API_STATUS.unknown,
   isEnabled: false,
   isApiKey: false,
   isStatistics: false,

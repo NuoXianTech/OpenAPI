@@ -1,5 +1,6 @@
 import type { ApiCatalogItem } from '~/types/api'
 import type { FilterTabOption } from '~/types/ui'
+import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
 
 export function usePublicApiList() {
   const { data, pending, error, refresh } = useFetch<ApiCatalogItem[]>(
@@ -17,10 +18,7 @@ export function usePublicApiList() {
 
   const statusTabs: FilterTabOption[] = [
     { label: '全部', value: 'all' },
-    { label: '正常', value: 1 },
-    { label: '异常', value: 0 },
-    { label: '维护', value: 2 },
-    { label: '废弃', value: 3 }
+    ...PUBLIC_API_STATUS_FILTER_ITEMS
   ]
 
   return {
