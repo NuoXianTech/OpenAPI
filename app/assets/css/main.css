@@ -103,9 +103,19 @@ body {
   background:
     linear-gradient(180deg, color-mix(in oklab, var(--ui-bg-elevated) 30%, transparent), transparent 34rem),
     var(--dashboard-sidebar-bg);
-  border-color: color-mix(in oklab, var(--ui-border) 88%, transparent);
-  box-shadow: 18px 0 52px -44px var(--dashboard-sidebar-shadow);
+  border-inline-end: 0;
+  box-shadow: 12px 0 34px -32px var(--dashboard-sidebar-shadow);
   backdrop-filter: blur(18px) saturate(1.05);
+}
+
+.dashboard-sidebar-resize-handle {
+  width: 1px;
+  background: color-mix(in oklab, var(--ui-border) 78%, transparent);
+}
+
+.dashboard-sidebar-resize-handle:hover,
+.dashboard-sidebar[data-dragging="true"] + .dashboard-sidebar-resize-handle {
+  background: color-mix(in oklab, var(--ui-primary) 42%, var(--ui-border));
 }
 
 .dashboard-sidebar-brand {

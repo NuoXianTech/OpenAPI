@@ -55,9 +55,11 @@ const navigationMenuUi = {
       resizable
       class="dashboard-sidebar"
       :ui="{
+        root: 'border-e-0',
         header: 'h-auto px-3 pb-2 pt-3',
         body: 'gap-3 px-3 py-2',
-        footer: 'px-3 pb-3 pt-2 lg:border-t lg:border-default'
+        footer: 'px-3 pb-3 pt-2 lg:border-t lg:border-default',
+        handle: 'dashboard-sidebar-resize-handle'
       }"
     >
       <template #header="{ collapsed }">
