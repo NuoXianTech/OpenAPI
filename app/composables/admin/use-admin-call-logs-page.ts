@@ -39,7 +39,7 @@ interface UseAdminCallLogsPageOptions {
   routeQuery?: MaybeRefOrGetter<Record<string, unknown>>
 }
 
-export const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
+const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
   startAt: '',
   endAt: '',
   apiId: 0,

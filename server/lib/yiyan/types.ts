@@ -27,7 +27,7 @@ export interface YiyanRecord {
 }
 
 /** 句子类型 → 中文标签。键集合即合法 type 全集（见接口 spec 第三节）。 */
-export const YIYAN_TYPE_LABELS = {
+const YIYAN_TYPE_LABELS = {
   a: '动画',
   b: '漫画',
   c: '游戏',
@@ -51,7 +51,7 @@ export function isYiyanType(value: string): value is YiyanType {
 }
 
 /** 返回编码。其他值回退 json（见接口 spec）。 */
-export const YIYAN_ENCODES = ['text', 'json', 'js', 'md'] as const
+const YIYAN_ENCODES = ['text', 'json', 'js', 'md'] as const
 export type YiyanEncode = typeof YIYAN_ENCODES[number]
 export const DEFAULT_YIYAN_ENCODE: YiyanEncode = 'json'
 

@@ -12,7 +12,7 @@ export interface ApiStatusSelectItem {
   value: number
 }
 
-export const API_STATUS_VALUES = [
+const API_STATUS_VALUES = [
   API_STATUS.unknown,
   API_STATUS.abnormal,
   API_STATUS.normal,

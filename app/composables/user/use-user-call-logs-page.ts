@@ -42,7 +42,7 @@ interface UseUserCallLogsPageOptions {
   routeQuery?: MaybeRefOrGetter<Record<string, unknown>>
 }
 
-export const USER_CALL_LOG_DEFAULT_FILTERS: UserCallLogFilters = {
+const USER_CALL_LOG_DEFAULT_FILTERS: UserCallLogFilters = {
   apiId: 0,
   apiKeyId: 0,
   status: 'all'
@@ -65,7 +65,7 @@ function createUserCallStatusQueryCodec(): DashboardQueryCodec<UserCallLogFilter
   }
 }
 
-export function isUserCallSuccess(row: UserCallLogRow) {
+function isUserCallSuccess(row: UserCallLogRow) {
   return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
 }
 

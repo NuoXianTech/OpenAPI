@@ -75,7 +75,7 @@ export function createDoubaoError(
   })
 }
 
-export function isDoubaoError(error: unknown): error is DoubaoError {
+function isDoubaoError(error: unknown): error is DoubaoError {
   return error instanceof Error
     && error.name === 'DoubaoError'
     && ((error as { kind?: unknown }).kind === 'input' || (error as { kind?: unknown }).kind === 'business')
