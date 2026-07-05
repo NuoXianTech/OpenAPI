@@ -3,6 +3,7 @@ import type { RedemptionStatus } from '~~/server/services/redemption-service'
 import { redemptionService } from '~~/server/services/redemption-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readQueryOption, readQueryText } from '~~/server/utils/request-query'
 
 const VALID_STATUS: Array<RedemptionStatus | 'all'> = ['all', 'enabled', 'disabled', 'used_up', 'expired', 'available']
 
@@ -10,12 +11,9 @@ export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const { query, limit, offset } = readPaginationQuery(event)
 
-  const batchId = (query.batchId || '').toString().trim() || undefined
-  const keyword = (query.keyword || '').toString().trim() || undefined
-  const statusRaw = (query.status || 'all').toString()
-  const status = (VALID_STATUS as string[]).includes(statusRaw)
-    ? (statusRaw as RedemptionStatus | 'all')
-    : 'all'
+  const batchId = readQueryText(query.batchId)
+  const keyword = readQueryText(query.keyword)
+  const status = readQueryOption(query.status, VALID_STATUS) ?? 'all'
 
   const data = await redemptionService.list({
     batchId,

@@ -17,6 +17,7 @@ import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
 import { firstRow } from '~~/server/utils/row'
+import { readQueryString } from '~~/server/utils/request-query'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
@@ -55,7 +56,7 @@ function readApiKeyFromEvent(event: H3Event): string {
   const headerKey = (getHeader(event, 'x-api-key') || '').toString().trim()
   if (headerKey) return headerKey
   const query = getQuery(event)
-  return (query.apikey || '').toString().trim()
+  return readQueryString(query.apikey).trim()
 }
 
 function hasScope(scopes: string[] | null | undefined, api: ApiRecord): boolean {

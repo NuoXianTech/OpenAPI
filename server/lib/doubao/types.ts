@@ -8,6 +8,8 @@
  * - parseMediaQuery：集中处理对外接口的 url / raw 入参校验
  */
 
+import { readQueryString } from '~~/server/utils/request-query'
+
 /** 图片记录：透传上游原始字段，至少含可访问的 url。 */
 export interface DoubaoImage {
   url: string
@@ -104,15 +106,9 @@ export interface MediaQuery {
   raw: boolean
 }
 
-/** getQuery 的值可能是 string | string[] | undefined，统一取首个并转字符串。 */
-function firstString(value: unknown): string {
-  if (Array.isArray(value)) return firstString(value[0])
-  return value === undefined || value === null ? '' : String(value)
-}
-
 /** 宽松真值：raw=1 / true / yes 视为开启原始模式。 */
 function isTruthy(value: unknown): boolean {
-  const s = firstString(value).trim().toLowerCase()
+  const s = readQueryString(value).trim().toLowerCase()
   return s === '1' || s === 'true' || s === 'yes'
 }
 
@@ -121,7 +117,7 @@ function isTruthy(value: unknown): boolean {
  * 由 handler 转 openApiFail（400，纯协议失败，自动跳过扣费）。
  */
 export function parseMediaQuery(query: Record<string, unknown>): MediaQuery {
-  const url = firstString(query.url).trim()
+  const url = readQueryString(query.url).trim()
   if (!url) {
     throw createDoubaoError('input', 400, 'MISSING_PARAMETER', '缺少参数 url')
   }

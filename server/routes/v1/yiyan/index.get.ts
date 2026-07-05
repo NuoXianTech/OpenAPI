@@ -26,6 +26,7 @@ import type { H3Event } from 'h3'
 import { getQuery, setResponseHeader } from 'h3'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
+import { readQueryNumber, readQueryString } from '~~/server/utils/request-query'
 import {
   DEFAULT_MAX_LENGTH,
   DEFAULT_MIN_LENGTH,
@@ -51,37 +52,29 @@ import {
   wrapJsonp
 } from '~~/server/lib/yiyan/format'
 
-/** getQuery 的值可能是 string | string[] | undefined，统一取首个并转字符串。 */
-function firstString(value: unknown): string {
-  if (Array.isArray(value)) return firstString(value[0])
-  return value === undefined || value === null ? '' : String(value)
-}
-
 function parseLength(value: unknown, fallback: number): number {
-  const s = firstString(value).trim()
-  if (s === '') return fallback
-  const n = Number(s)
-  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback
+  const normalized = readQueryNumber(value)
+  return normalized !== undefined && normalized >= 0 ? Math.floor(normalized) : fallback
 }
 
 export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event)
 
-  const typeRaw = firstString(query.type).trim().toLowerCase()
+  const typeRaw = readQueryString(query.type).trim().toLowerCase()
   const type: YiyanType = isYiyanType(typeRaw) ? typeRaw : DEFAULT_YIYAN_TYPE
 
-  const encodeRaw = firstString(query.encode).trim().toLowerCase()
+  const encodeRaw = readQueryString(query.encode).trim().toLowerCase()
   const encode: YiyanEncode = isYiyanEncode(encodeRaw) ? encodeRaw : DEFAULT_YIYAN_ENCODE
 
-  const charset: YiyanCharset = firstString(query.charset).trim().toLowerCase() === 'gbk'
+  const charset: YiyanCharset = readQueryString(query.charset).trim().toLowerCase() === 'gbk'
     ? 'gbk'
     : DEFAULT_YIYAN_CHARSET
 
-  const callback = firstString(query.callback).trim()
-  const select = firstString(query.select).trim() || DEFAULT_YIYAN_SELECT
+  const callback = readQueryString(query.callback).trim()
+  const select = readQueryString(query.select).trim() || DEFAULT_YIYAN_SELECT
   const minLength = parseLength(query.min_length, DEFAULT_MIN_LENGTH)
   const maxLength = parseLength(query.max_length, DEFAULT_MAX_LENGTH)
-  const id = firstString(query.id).trim() || null
+  const id = readQueryString(query.id).trim() || null
 
   if (minLength > maxLength) {
     return openApiFail(event, 400, 'INVALID_PARAMETER', `min_length(${minLength}) 不能大于 max_length(${maxLength})`)

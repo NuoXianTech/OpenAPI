@@ -4,6 +4,7 @@ import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
+import { readQueryNumber } from '~~/server/utils/request-query'
 import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
@@ -12,16 +13,16 @@ import type {
 } from '~~/shared/types/admin-dashboard'
 
 function resolveRange(raw: unknown): number {
-  return clampInteger(raw, 1, 90, 7)
+  return clampInteger(readQueryNumber(raw), 1, 90, 7)
 }
 
 export default defineEventHandler(async (event: H3Event): Promise<AdminDashboardData> => {
   await requireAdmin(event)
 
   const query = getQuery(event)
-  const days = resolveRange(query.days ?? 7)
-  const distributionLimit = clampInteger(query.top ?? 6, 1, 20, 6)
-  const recentLimit = clampInteger(query.recent ?? 10, 1, 50, 10)
+  const days = resolveRange(query.days)
+  const distributionLimit = clampInteger(readQueryNumber(query.top), 1, 20, 6)
+  const recentLimit = clampInteger(readQueryNumber(query.recent), 1, 50, 10)
 
   const todayStart = getLocalDayStart(new Date())
   const yesterdayStart = addLocalDays(todayStart, -1)

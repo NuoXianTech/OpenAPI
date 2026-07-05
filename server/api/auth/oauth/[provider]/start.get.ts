@@ -8,6 +8,9 @@ import { qqProvider } from '~~/server/utils/oauth-providers/qq'
 import type { ProviderConfig } from '~~/server/utils/oauth-providers/types'
 import { isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { getAuthUser } from '~~/server/utils/auth'
+import { readQueryOption, readQueryString } from '~~/server/utils/request-query'
+
+const OAUTH_FLOW_MODES = ['login', 'bind'] as const
 
 export default defineEventHandler(async (event: H3Event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
@@ -23,10 +26,10 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const query = getQuery(event)
-  const rawReturnTo = (query.returnTo || '/').toString()
+  const rawReturnTo = readQueryString(query.returnTo, '/')
   const returnTo = rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/'
 
-  const mode: OauthFlowMode = (query.mode || '').toString() === 'bind' ? 'bind' : 'login'
+  const mode: OauthFlowMode = readQueryOption(query.mode, OAUTH_FLOW_MODES) ?? 'login'
 
   // bind 模式必须已登录为普通用户
   if (mode === 'bind') {

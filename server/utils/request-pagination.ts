@@ -5,9 +5,7 @@ import {
   type NormalizedPagination,
   type PaginationOptions
 } from '~~/server/utils/pagination'
-
-export type RequestQueryValue = string | string[] | undefined
-export type RequestQuery = Record<string, RequestQueryValue>
+import type { RequestQuery } from '~~/server/utils/request-query'
 
 export interface ReadPaginationQueryResult extends NormalizedPagination {
   query: RequestQuery

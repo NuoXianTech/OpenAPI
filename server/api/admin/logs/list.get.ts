@@ -2,13 +2,8 @@ import type { H3Event } from 'h3'
 import { adminLogsService } from '~~/server/services/admin-logs-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readQueryDate, readQueryNumber, readQueryText } from '~~/server/utils/request-query'
 import { ADMIN_LOG_TYPES, type AdminLogType } from '~~/shared/types/admin-logs'
-
-function parseDate(value: unknown): Date | undefined {
-  if (!value) return undefined
-  const date = new Date(String(value))
-  return Number.isNaN(date.getTime()) ? undefined : date
-}
 
 function parseTypes(value: unknown): AdminLogType[] | undefined {
   if (!value) return undefined
@@ -24,14 +19,14 @@ export default defineEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event)
 
   const data = await adminLogsService.listLogs({
-    startAt: parseDate(query.startAt),
-    endAt: parseDate(query.endAt),
-    apiId: query.apiId ? Number(query.apiId) : undefined,
-    categoryId: query.categoryId ? Number(query.categoryId) : undefined,
+    startAt: readQueryDate(query.startAt),
+    endAt: readQueryDate(query.endAt),
+    apiId: readQueryNumber(query.apiId),
+    categoryId: readQueryNumber(query.categoryId),
     types: parseTypes(query.types),
-    userId: query.userId ? Number(query.userId) : undefined,
-    apiKeyId: query.apiKeyId ? Number(query.apiKeyId) : undefined,
-    requestId: query.requestId ? String(query.requestId).trim() : undefined,
+    userId: readQueryNumber(query.userId),
+    apiKeyId: readQueryNumber(query.apiKeyId),
+    requestId: readQueryText(query.requestId),
     limit,
     offset
   })

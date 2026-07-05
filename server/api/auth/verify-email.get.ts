@@ -3,11 +3,12 @@ import { createError, getQuery } from 'h3'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { usersService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
+import { readQueryNumber, readQueryString } from '~~/server/utils/request-query'
 
 export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event)
-  const userId = Number(query.user || 0)
-  const token = (query.token || '').toString()
+  const userId = readQueryNumber(query.user)
+  const token = readQueryString(query.token)
 
   if (!userId || !token) {
     throw createError({ statusCode: 400, message: 'Invalid verification link' })

@@ -1,4 +1,5 @@
 import { clampInteger } from '~~/server/utils/number'
+import { firstQueryValue } from '~~/server/utils/request-query'
 
 export interface PaginationInput {
   limit?: unknown
@@ -19,10 +20,6 @@ export interface NormalizedPagination {
 const DEFAULT_LIMIT = 50
 const DEFAULT_MAX_LIMIT = 200
 const DEFAULT_OFFSET = 0
-
-function firstQueryValue(value: unknown): unknown {
-  return Array.isArray(value) ? firstQueryValue(value[0]) : value
-}
 
 function toFiniteInteger(value: unknown): number | null {
   const normalized = firstQueryValue(value)

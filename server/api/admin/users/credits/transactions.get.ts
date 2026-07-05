@@ -12,13 +12,14 @@ import type { H3Event } from 'h3'
 import { creditService, type CreditReason } from '~~/server/services/credit-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readQueryNumber, readQueryText } from '~~/server/utils/request-query'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const { query, limit, offset } = readPaginationQuery(event)
 
-  const userId = query.userId ? Number(query.userId) : undefined
-  const reasonRaw = (query.reason || '').toString()
+  const userId = readQueryNumber(query.userId)
+  const reasonRaw = readQueryText(query.reason)
   const reason = reasonRaw ? (reasonRaw as CreditReason) : undefined
 
   const data = await creditService.listTransactions({ userId, reason, limit, offset })

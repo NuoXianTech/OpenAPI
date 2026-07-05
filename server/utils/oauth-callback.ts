@@ -10,6 +10,7 @@ import { issuePendingOauth } from '~~/server/utils/oauth-pending'
 import { createUserSession, getAuthUser } from '~~/server/utils/auth'
 import { githubProvider } from '~~/server/utils/oauth-providers/github'
 import { qqProvider } from '~~/server/utils/oauth-providers/qq'
+import { readQueryString } from '~~/server/utils/request-query'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauth-providers/types'
 import type { LoginMethod } from '~~/server/services/login-log-service'
 import type { SupportedOauthProvider } from '~~/shared/types/oauth'
@@ -38,17 +39,18 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
   const settings = await siteSettingsService.getOrCreate()
 
   const query = getQuery(event)
-  const stateParam = typeof query.state === 'string' ? query.state : null
+  const stateParam = readQueryString(query.state) || null
   const consumed = consumeState(event, provider, stateParam)
   if (!consumed) {
     return redirectError(event, 'state_mismatch')
   }
 
-  if (typeof query.error === 'string' && query.error) {
-    return redirectError(event, String(query.error), consumed.mode)
+  const error = readQueryString(query.error)
+  if (error) {
+    return redirectError(event, error, consumed.mode)
   }
 
-  const code = typeof query.code === 'string' ? query.code : null
+  const code = readQueryString(query.code) || null
   if (!code) {
     return redirectError(event, 'missing_code', consumed.mode)
   }

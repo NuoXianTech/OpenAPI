@@ -2,24 +2,18 @@ import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readQueryDate, readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
 import type { AdminLoginLogRow, LoginMethod } from '~~/shared/types/login-log'
-
-function parseDate(value: unknown): Date | undefined {
-  if (!value) return undefined
-  const date = new Date(String(value))
-  return Number.isNaN(date.getTime()) ? undefined : date
-}
 
 const VALID_METHODS: LoginMethod[] = ['password', 'oauth_github', 'oauth_qq']
 
 function parseMethod(value: unknown): LoginMethod | undefined {
-  const v = String(value || '').trim()
-  return (VALID_METHODS as string[]).includes(v) ? (v as LoginMethod) : undefined
+  return readQueryOption(value, VALID_METHODS)
 }
 
 function parseSuccess(value: unknown): boolean | undefined {
-  const v = String(value || '').trim()
+  const v = readQueryString(value).trim()
   if (v === 'success' || v === 'true') return true
   if (v === 'failure' || v === 'false') return false
   return undefined
@@ -34,11 +28,11 @@ export default defineEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event)
 
   const { items, total } = await loginLogService.listForAdmin({
-    startAt: parseDate(query.startAt),
-    endAt: parseDate(query.endAt),
+    startAt: readQueryDate(query.startAt),
+    endAt: readQueryDate(query.endAt),
     method: parseMethod(query.method),
     success: parseSuccess(query.success),
-    userId: query.userId ? Number(query.userId) : undefined,
+    userId: readQueryNumber(query.userId),
     limit,
     offset
   })
