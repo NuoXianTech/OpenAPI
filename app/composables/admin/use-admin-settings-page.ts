@@ -1,6 +1,7 @@
 import type { ComputedRef, Ref } from 'vue'
 import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
 import { parseFetchError } from '~~/shared/utils/client-error'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 interface AdminSettingsForm {
   siteName: string
@@ -91,7 +92,7 @@ interface AdminUserSessionSettingsState {
 }
 
 interface AdminOauthProviderFetchState {
-  data: Ref<AdminOauthProviderItem[] | null>
+  data: Ref<AdminOauthProviderItem[]>
   status: Ref<'idle' | 'pending' | 'success' | 'error'>
   refresh: () => Promise<void>
 }
@@ -354,8 +355,9 @@ function buildAdminOauthProviderUpdateBody(
 }
 
 function useDefaultProviderFetch(): AdminOauthProviderFetchState {
-  const result = useLazyFetch<AdminOauthProviderItem[]>('/api/admin/oauth-providers/list', {
-    default: () => [] as AdminOauthProviderItem[]
+  const result = usePrivateResource<AdminOauthProviderItem[]>({
+    path: '/api/admin/oauth-providers/list',
+    defaultData: () => []
   })
 
   return {
@@ -390,7 +392,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
   const forms = reactive<Record<string, AdminOauthProviderForm>>(
     Object.fromEntries(supportedProviders.map(provider => [provider, createAdminOauthProviderForm()]))
   )
-  const items = computed<AdminOauthProviderItem[]>(() => providerFetch.data.value || [])
+  const items = computed<AdminOauthProviderItem[]>(() => providerFetch.data.value)
   const allowRegistration = computed({
     get: () => settings.form.registrationMode !== 'closed',
     set: (value: boolean) => {

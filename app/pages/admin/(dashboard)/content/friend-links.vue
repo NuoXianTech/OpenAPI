@@ -2,14 +2,16 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/types/link'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const toast = useToast()
 const confirm = useConfirmDialog()
 
-const { data, status, refresh } = useLazyFetch<FriendLinkItem[]>('/api/admin/friend-links/list', {
-  default: () => []
+const { data, status, refresh } = usePrivateResource<FriendLinkItem[]>({
+  path: '/api/admin/friend-links/list',
+  defaultData: () => []
 })
-const items = computed(() => data.value || [])
+const items = computed(() => data.value)
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
 
 const modalOpen = ref(false)

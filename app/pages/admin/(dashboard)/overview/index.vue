@@ -9,6 +9,7 @@ import type {
 import { ADMIN_APIS_PATH } from '~/constants/admin-sections/apis'
 import { ADMIN_LOGS_PATH } from '~/constants/admin-sections/logs'
 import { ADMIN_USERS_PATH } from '~/constants/admin-sections/users'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { httpStatusColor, type HttpStatusColor } from '~/utils/http-status'
 
 useHead({ title: '管理中心' })
@@ -49,11 +50,12 @@ function createEmptyDashboardData(): AdminDashboardData {
   }
 }
 
-const { data, status } = useLazyFetch<AdminDashboardData>('/api/admin/dashboard', {
+const { data, status, refresh } = usePrivateResource<AdminDashboardData>({
+  path: '/api/admin/dashboard',
   query: computed(() => ({ days: selectedRange.value })),
-  default: createEmptyDashboardData
+  defaultData: createEmptyDashboardData
 })
-const dashboard = computed(() => data.value || createEmptyDashboardData())
+const dashboard = computed(() => data.value)
 const overview = computed(() => dashboard.value.overview)
 const trend = computed(() => dashboard.value.trend)
 const distribution = computed(() => dashboard.value.distribution)
@@ -61,6 +63,8 @@ const recentCalls = computed(() => dashboard.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
 const callsTrendValues = computed(() => getCallsTrendValues(trend.value))
 const successRateTrendValues = computed(() => getSuccessRateTrendValues(trend.value))
+
+watch(selectedRange, () => { void refresh() })
 
 interface OverviewMetricCard {
   key: string

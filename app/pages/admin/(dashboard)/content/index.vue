@@ -3,6 +3,7 @@ import { ANNOUNCEMENT_LEVEL_META as levelMeta } from '#shared/types/message-leve
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 interface Announcement {
   id: number
@@ -20,10 +21,11 @@ interface Announcement {
 const toast = useToast()
 const confirm = useConfirmDialog()
 
-const { data, status, refresh } = useLazyFetch<Announcement[]>('/api/admin/announcements/list', {
-  default: () => []
+const { data, status, refresh } = usePrivateResource<Announcement[]>({
+  path: '/api/admin/announcements/list',
+  defaultData: () => []
 })
-const items = computed<Announcement[]>(() => data.value || [])
+const items = computed<Announcement[]>(() => data.value)
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
 
 const modalOpen = ref(false)

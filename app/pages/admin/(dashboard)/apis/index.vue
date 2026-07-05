@@ -7,19 +7,22 @@ import {
   type AdminVersionGroup
 } from '~/composables/admin/use-admin-display-meta'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const toast = useToast()
 
-const { data, status, refresh } = useLazyFetch<{ versions: AdminVersionGroup[] }>('/api/admin/apis/discover', {
-  default: () => ({ versions: [] })
+const { data, status, refresh } = usePrivateResource<{ versions: AdminVersionGroup[] }>({
+  path: '/api/admin/apis/discover',
+  defaultData: () => ({ versions: [] })
 })
 
-const { data: categoriesData } = useLazyFetch<AdminApiCategoryItem[]>('/api/admin/api-categories/list', {
-  default: () => []
+const { data: categoriesData } = usePrivateResource<AdminApiCategoryItem[]>({
+  path: '/api/admin/api-categories/list',
+  defaultData: () => []
 })
 
-const versions = computed(() => data.value?.versions || [])
-const categories = computed(() => categoriesData.value || [])
+const versions = computed(() => data.value.versions)
+const categories = computed(() => categoriesData.value)
 
 const modalOpen = ref(false)
 const modalMode = ref<'register' | 'edit'>('register')

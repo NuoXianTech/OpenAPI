@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ADMIN_API_STATUS_ITEMS } from '#shared/config/api-status'
 import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const state = useAdminApiForm()
 
-const { data: categoriesData } = useLazyFetch<Array<{ id: number, name: string, code: string }>>('/api/admin/api-categories/list', {
-  default: () => []
+const { data: categoriesData } = usePrivateResource<Array<{ id: number, name: string, code: string }>>({
+  path: '/api/admin/api-categories/list',
+  defaultData: () => []
 })
 const categoryOptions = computed(() => [
   { label: '未分类', value: null },
-  ...((categoriesData.value || []).map(c => ({ label: c.name, value: c.id })))
+  ...categoriesData.value.map(c => ({ label: c.name, value: c.id }))
 ])
 
 const statusOptions = ADMIN_API_STATUS_ITEMS

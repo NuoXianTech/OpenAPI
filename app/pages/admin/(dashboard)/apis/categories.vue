@@ -2,6 +2,7 @@
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 interface ApiCategoryItem {
   id: number
@@ -20,10 +21,11 @@ interface ApiCategoryItem {
 const toast = useToast()
 const confirm = useConfirmDialog()
 
-const { data, status, refresh } = useLazyFetch<ApiCategoryItem[]>('/api/admin/api-categories/list', {
-  default: () => []
+const { data, status, refresh } = usePrivateResource<ApiCategoryItem[]>({
+  path: '/api/admin/api-categories/list',
+  defaultData: () => []
 })
-const items = computed<ApiCategoryItem[]>(() => data.value || [])
+const items = computed<ApiCategoryItem[]>(() => data.value)
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
 
 const modalOpen = ref(false)

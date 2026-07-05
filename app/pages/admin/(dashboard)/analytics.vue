@@ -4,13 +4,15 @@ import {
   createEmptyAdminAnalyticsData,
   useAdminAnalyticsDisplayMeta
 } from '~/composables/admin/use-admin-display-meta'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 useHead({ title: '数据看板' })
-const { data } = useLazyFetch<AdminAnalyticsData>('/api/admin/analytics', {
-  default: () => createEmptyAdminAnalyticsData()
+const { data } = usePrivateResource<AdminAnalyticsData>({
+  path: '/api/admin/analytics',
+  defaultData: createEmptyAdminAnalyticsData
 })
 
-const analytics = computed(() => data.value || createEmptyAdminAnalyticsData())
+const analytics = computed(() => data.value)
 const {
   distribution,
   hourlyTrend24h,

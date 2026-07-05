@@ -9,17 +9,20 @@ import {
   type AdminNotificationUserItem
 } from '~/composables/admin/use-admin-display-meta'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const toast = useToast()
 
-const { data: usersData } = useLazyFetch<AdminNotificationUserItem[]>('/api/admin/users/list', {
-  default: () => []
+const { data: usersData } = usePrivateResource<AdminNotificationUserItem[]>({
+  path: '/api/admin/users/list',
+  defaultData: () => []
 })
 
-const { data: messagesData, status, refresh } = useLazyFetch<AdminNotificationMessageRow[]>('/api/admin/notifications/list', {
-  default: () => []
+const { data: messagesData, status, refresh } = usePrivateResource<AdminNotificationMessageRow[]>({
+  path: '/api/admin/notifications/list',
+  defaultData: () => []
 })
-const messages = computed<AdminNotificationMessageRow[]>(() => messagesData.value || [])
+const messages = computed<AdminNotificationMessageRow[]>(() => messagesData.value)
 const { page, pageSize, total, paginated } = useClientPagination(messages, 10)
 
 const form = reactive(createAdminNotificationForm())
@@ -33,7 +36,7 @@ const {
   columns,
   getRowItems
 } = useAdminNotificationsDisplayMeta({
-  users: computed(() => usersData.value || []),
+  users: computed(() => usersData.value),
   openDetail,
   openDelete
 })
