@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const isProduction = process.env.NODE_ENV === 'production'
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -9,10 +11,15 @@ export default defineNuxtConfig({
     '~~/modules/api-manifest',
   ],
   devtools: {
-    enabled: true,
+    enabled: !isProduction,
   },
   css: ['~/assets/css/main.css'],
-  ui: { fonts: false },
+  ui: {
+    fonts: false,
+    experimental: {
+      componentDetection: true
+    }
+  },
   // 认证密钥走 runtimeConfig（Nuxt 官方推荐范式）。默认值一律留空字符串、
   // 绝不引用 process.env —— 空默认值不会把任何 .env 值烤进 build 产物；
   // 运行时用「同构」的 NUXT_AUTH_* 变量覆盖（auth.jwtSecret → NUXT_AUTH_JWT_SECRET，
