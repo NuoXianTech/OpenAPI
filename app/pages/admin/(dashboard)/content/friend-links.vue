@@ -7,7 +7,7 @@ import { usePrivateResource } from '~/composables/dashboard/use-private-resource
 const toast = useToast()
 const confirm = useConfirmDialog()
 
-const { data, status, refresh } = usePrivateResource<FriendLinkItem[]>({
+const { data, loading, refresh } = usePrivateResource<FriendLinkItem[]>({
   path: '/api/admin/friend-links/list',
   defaultData: () => []
 })
@@ -69,7 +69,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
         color="neutral"
         variant="outline"
         icon="i-mdi-refresh"
-        :loading="status === 'pending'"
+        :loading="loading"
         @click="refresh()"
       >
         刷新
@@ -86,7 +86,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
         v-model:page-size="pageSize"
         :data="paginated"
         :columns="columns"
-        :loading="status === 'pending'"
+        :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无友链"

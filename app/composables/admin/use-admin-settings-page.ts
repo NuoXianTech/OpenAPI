@@ -93,7 +93,7 @@ interface AdminUserSessionSettingsState {
 
 interface AdminOauthProviderFetchState {
   data: Ref<AdminOauthProviderItem[]>
-  status: Ref<'idle' | 'pending' | 'success' | 'error'>
+  loading: Ref<boolean>
   refresh: () => Promise<void>
 }
 
@@ -362,7 +362,7 @@ function useDefaultProviderFetch(): AdminOauthProviderFetchState {
 
   return {
     data: result.data,
-    status: result.status,
+    loading: result.loading,
     refresh: async () => {
       await result.refresh()
     }
@@ -445,7 +445,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     reset: settings.reset,
     allowRegistration,
     emailFilterModeItems: ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS,
-    status: providerFetch.status,
+    loading: providerFetch.loading,
     refresh: providerFetch.refresh,
     items,
     forms,

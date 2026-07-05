@@ -50,7 +50,7 @@ function createEmptyDashboardData(): AdminDashboardData {
   }
 }
 
-const { data, status, refresh } = usePrivateResource<AdminDashboardData>({
+const { data, loading, refresh } = usePrivateResource<AdminDashboardData>({
   path: '/api/admin/dashboard',
   query: computed(() => ({ days: selectedRange.value })),
   defaultData: createEmptyDashboardData
@@ -308,7 +308,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 
             <AdminDashboardTrend
               :trend="trend"
-              :loading="status === 'pending'"
+              :loading="loading"
             />
           </UCard>
 
@@ -326,7 +326,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 
             <AdminDashboardDistribution
               :distribution="distribution"
-              :loading="status === 'pending'"
+              :loading="loading"
             />
           </UCard>
         </div>
@@ -350,7 +350,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           <DashboardDataTable
             :data="recentCalls"
             :columns="recentColumns"
-            :loading="status === 'pending' && recentCalls.length === 0"
+            :loading="loading && recentCalls.length === 0"
             empty-title="暂无请求日志"
             empty-icon="i-mdi-history"
           >

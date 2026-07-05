@@ -36,7 +36,7 @@ export function useAdminUsersPage() {
     return createSilentToast()
   })()
   const keyword = ref('')
-  const { data, status, refresh } = usePrivateResource<AdminUserItem[]>({
+  const { data, loading, refresh } = usePrivateResource<AdminUserItem[]>({
     path: '/api/admin/users/list',
     defaultData: () => [],
     query: computed(() => ({ keyword: keyword.value.trim() || undefined }))
@@ -144,7 +144,7 @@ export function useAdminUsersPage() {
 
   return {
     keyword,
-    status,
+    loading,
     items: data,
     refresh,
     rowSelection,

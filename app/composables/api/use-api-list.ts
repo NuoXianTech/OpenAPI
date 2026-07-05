@@ -3,7 +3,7 @@ import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
 import type { FilterTabOption } from '~/types/ui'
 
 export function useApiList() {
-  const { result, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()
+  const { catalogItems, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()
 
   const query = ref('')
   const currentTab = ref<string | number>('all')
@@ -18,7 +18,6 @@ export function useApiList() {
   )
 
   const categories = computed(() => categoriesData.value || [])
-  const allData = computed(() => result.value.data || [])
 
   const loading = computed(() => listPending.value || categoriesPending.value)
   const error = computed(() => {
@@ -37,7 +36,7 @@ export function useApiList() {
 
   const categoryTabs = computed<FilterTabOption[]>(() => {
     const referenced = new Set<number>()
-    allData.value.forEach((item) => {
+    catalogItems.value.forEach((item) => {
       if (typeof item.categoryId === 'number') {
         referenced.add(item.categoryId)
       }
@@ -57,7 +56,7 @@ export function useApiList() {
 
   const filteredItems = computed(() => {
     const q = query.value.toLowerCase().trim()
-    return allData.value.filter((api: ApiCatalogItem) => {
+    return catalogItems.value.filter((api: ApiCatalogItem) => {
       const matchesQuery = q === ''
         || (api.name || '').toLowerCase().includes(q)
         || (api.description || '').toLowerCase().includes(q)
@@ -80,7 +79,7 @@ export function useApiList() {
     categoryTabs,
     categoryMap,
     categories,
-    allItems: allData,
+    allItems: catalogItems,
     loading,
     error,
     filteredItems,

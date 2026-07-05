@@ -10,7 +10,7 @@ const {
   reset,
   allowRegistration,
   emailFilterModeItems,
-  status,
+  loading,
   items,
   getForm,
   saveProvider,
@@ -161,7 +161,7 @@ const {
     </DashboardSettingsSection>
 
     <div
-      v-if="status === 'pending' && items.length === 0"
+      v-if="loading && items.length === 0"
       class="space-y-3"
     >
       <USkeleton

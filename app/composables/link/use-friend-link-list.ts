@@ -10,12 +10,11 @@ export function useFriendLinkList() {
   )
 
   const items = computed(() => data.value || [])
-  const loading = computed(() => pending.value)
   const error = computed(() => {
     if (!rawError.value) return null
     return rawError.value instanceof Error ? rawError.value.message : String(rawError.value)
   })
-  const isEmpty = computed(() => !loading.value && !error.value && items.value.length === 0)
+  const isEmpty = computed(() => !pending.value && !error.value && items.value.length === 0)
 
   // 包装为无参函数：吃掉 onClick 透传的事件对象，对齐 useApiList().fetchList 的调用契约
   const fetchFriendLinks = async () => {
@@ -24,7 +23,7 @@ export function useFriendLinkList() {
 
   return {
     items,
-    loading,
+    loading: pending,
     error,
     isEmpty,
     fetchFriendLinks

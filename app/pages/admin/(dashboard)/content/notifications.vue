@@ -18,7 +18,7 @@ const { data: usersData } = usePrivateResource<AdminNotificationUserItem[]>({
   defaultData: () => []
 })
 
-const { data: messagesData, status, refresh } = usePrivateResource<AdminNotificationMessageRow[]>({
+const { data: messagesData, loading, refresh } = usePrivateResource<AdminNotificationMessageRow[]>({
   path: '/api/admin/notifications/list',
   defaultData: () => []
 })
@@ -126,7 +126,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
         color="neutral"
         variant="outline"
         icon="i-mdi-refresh"
-        :loading="status === 'pending'"
+        :loading="loading"
         @click="refresh()"
       >
         刷新
@@ -229,7 +229,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
           v-model:page-size="pageSize"
           :data="paginated"
           :columns="columns"
-          :loading="status === 'pending'"
+          :loading="loading"
           :total="total"
           :page-size-items="PAGE_SIZE_ITEMS"
           empty-title="暂无发送历史"

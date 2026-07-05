@@ -11,7 +11,7 @@ import { usePrivateResource } from '~/composables/dashboard/use-private-resource
 
 const toast = useToast()
 
-const { data, status, refresh } = usePrivateResource<{ versions: AdminVersionGroup[] }>({
+const { data, loading, refresh } = usePrivateResource<{ versions: AdminVersionGroup[] }>({
   path: '/api/admin/apis/discover',
   defaultData: () => ({ versions: [] })
 })
@@ -116,7 +116,7 @@ watch([keyword, activeVersion], () => {
         color="neutral"
         variant="outline"
         icon="i-mdi-refresh"
-        :loading="status === 'pending'"
+        :loading="loading"
         @click="refresh()"
       >
         刷新
@@ -124,7 +124,7 @@ watch([keyword, activeVersion], () => {
     </div>
 
     <div
-      v-if="versions.length === 0 && status !== 'pending'"
+      v-if="versions.length === 0 && !loading"
       class="text-center py-12 text-muted"
     >
       未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
@@ -141,7 +141,7 @@ watch([keyword, activeVersion], () => {
         v-model:page-size="pageSize"
         :data="paginated"
         :columns="columns"
-        :loading="status === 'pending'"
+        :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="该版本暂无接口"

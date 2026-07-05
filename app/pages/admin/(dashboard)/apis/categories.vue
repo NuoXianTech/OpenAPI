@@ -21,7 +21,7 @@ interface ApiCategoryItem {
 const toast = useToast()
 const confirm = useConfirmDialog()
 
-const { data, status, refresh } = usePrivateResource<ApiCategoryItem[]>({
+const { data, loading, refresh } = usePrivateResource<ApiCategoryItem[]>({
   path: '/api/admin/api-categories/list',
   defaultData: () => []
 })
@@ -101,7 +101,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         color="neutral"
         variant="outline"
         icon="i-mdi-refresh"
-        :loading="status === 'pending'"
+        :loading="loading"
         @click="refresh()"
       >
         刷新
@@ -118,7 +118,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         v-model:page-size="pageSize"
         :data="paginated"
         :columns="columns"
-        :loading="status === 'pending'"
+        :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无分类"

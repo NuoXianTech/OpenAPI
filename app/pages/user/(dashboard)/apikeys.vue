@@ -4,29 +4,26 @@ import { parseFetchError } from '#shared/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { ApiKeyItem } from '~/types/api'
 
 useHead({ title: 'API Keys' })
 
 const toast = useToast()
 
-const items = ref<ApiKeyItem[]>([])
-const status = ref<'pending' | 'success' | 'error'>('pending')
+const {
+  data: items,
+  loading,
+  error,
+  refresh
+} = usePrivateResource<ApiKeyItem[]>({
+  path: '/api/user/apikeys/list',
+  defaultData: () => []
+})
 
-async function refresh() {
-  status.value = 'pending'
-  try {
-    items.value = (await $fetch<ApiKeyItem[]>('/api/user/apikeys/list')) || []
-    status.value = 'success'
-  } catch (err) {
-    items.value = []
-    status.value = 'error'
-    toast.add({ title: parseFetchError(err, '加载 API Key 失败'), color: 'error' })
-  }
-}
-
-onMounted(() => {
-  void refresh()
+watch(error, (err) => {
+  if (!err) return
+  toast.add({ title: parseFetchError(err, '加载 API Key 失败'), color: 'error' })
 })
 
 // 数据层：接口范围下拉 + CRUD（成功后自动 refresh 列表）
@@ -233,7 +230,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         <template #right>
           <UserHeaderActions
             :on-refresh="refresh"
-            :refreshing="status === 'pending'"
+            :refreshing="loading"
           />
         </template>
       </UDashboardNavbar>
@@ -283,7 +280,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
           <DashboardDataTable
             :data="items"
             :columns="columns"
-            :loading="status === 'pending'"
+            :loading="loading"
             :fixed="false"
             empty-title="暂无 API Key"
             empty-icon="i-mdi-key-outline"

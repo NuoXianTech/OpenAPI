@@ -8,7 +8,7 @@ import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/us
 
 const {
   keyword,
-  status,
+  loading,
   items,
   refresh,
   rowSelection,
@@ -169,7 +169,7 @@ const {
           color="neutral"
           variant="outline"
           icon="i-mdi-refresh"
-          :loading="status === 'pending'"
+          :loading="loading"
           @click="() => refresh()"
         >
           刷新
@@ -189,7 +189,7 @@ const {
         v-model:column-visibility="columnVisibility"
         :data="paginated"
         :columns="columns"
-        :loading="status === 'pending'"
+        :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         :get-row-id="(row: AdminUserItem) => String(row.id)"
