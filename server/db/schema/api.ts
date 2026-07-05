@@ -62,7 +62,7 @@ export const apis = pgTable('apis', {
   pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
   endpointCount: integer('endpoint_count').notNull().default(0),
   name: varchar('name', { length: 100 }).notNull(),
-  status: integer('status').default(1).notNull(),
+  status: integer('status').default(4).notNull(),
   categoryId: integer('category_id').references(() => apiCategories.id, { onDelete: 'set null' }),
   shortDesc: varchar('short_desc', { length: 50 }).notNull(),
   description: text('description').notNull(),

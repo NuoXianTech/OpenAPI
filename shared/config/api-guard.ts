@@ -14,7 +14,7 @@ export function normalizePathname(pathname: string): string {
 }
 
 export const DEFAULT_API_REGISTRATION = {
-  status: API_STATUS.unknown,
+  status: API_STATUS.automatic,
   isEnabled: false,
   isApiKey: false,
   isStatistics: false,
