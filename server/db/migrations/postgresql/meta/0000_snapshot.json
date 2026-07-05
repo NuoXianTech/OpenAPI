@@ -1,5 +1,5 @@
 {
-  "id": "84f77b7a-72a8-48a3-b3ea-4a4739afe366",
+  "id": "c3ebf229-6640-4dfa-b645-3892d7f85c68",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -883,7 +883,7 @@
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": 1
+          "default": 4
         },
         "category_id": {
           "name": "category_id",

@@ -90,7 +90,7 @@ CREATE TABLE "apis" (
 	"path_version" varchar(8) DEFAULT 'v1' NOT NULL,
 	"endpoint_count" integer DEFAULT 0 NOT NULL,
 	"name" varchar(100) NOT NULL,
-	"status" integer DEFAULT 1 NOT NULL,
+	"status" integer DEFAULT 4 NOT NULL,
 	"category_id" integer,
 	"short_desc" varchar(50) NOT NULL,
 	"description" text NOT NULL,
