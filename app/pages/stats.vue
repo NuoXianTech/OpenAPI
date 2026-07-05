@@ -400,34 +400,14 @@ const {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--ui-border);
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 90%, var(--ui-primary) 10%) 0%,
-      var(--ui-bg-elevated) 42%,
-      color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 16%) 100%);
+  background: var(--ui-bg-elevated);
   border-radius: 8px;
   margin-bottom: 16px;
   isolation: isolate;
 }
 
-.dark .stats-hero {
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 88%, var(--ui-primary) 12%) 0%,
-      var(--ui-bg-elevated) 46%,
-      color-mix(in srgb, var(--ui-bg) 82%, var(--ui-success) 10%) 100%);
-}
-
 .stats-hero__pattern {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
-  background-size: 18px 18px;
-  color: var(--ui-text);
-  opacity: 0.045;
-  mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .stats-hero__topbar {

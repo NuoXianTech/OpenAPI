@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { parseFetchError } from '#shared/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
 

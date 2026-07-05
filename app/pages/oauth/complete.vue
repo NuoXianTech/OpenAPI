@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { z } from 'zod'
 import { oauthBindSchema, oauthRegisterSchema } from '#shared/schemas/auth'
 import { parseFetchError } from '#shared/utils/client-error'

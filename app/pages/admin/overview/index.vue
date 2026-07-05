@@ -161,18 +161,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
     <template #body>
       <div class="space-y-6">
         <!-- Hero / 运营总览 -->
-        <div class="overview-hero relative overflow-hidden rounded-2xl border border-default p-6 sm:p-8">
+        <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
           <div class="grid gap-6 lg:grid-cols-5 relative z-10">
             <div class="lg:col-span-3 space-y-5">
               <div class="space-y-3">
-                <UBadge
-                  color="neutral"
-                  variant="solid"
-                  size="sm"
-                  class="bg-elevated/80 text-default backdrop-blur"
-                >
-                  管理中心
-                </UBadge>
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   平台运营总览
                 </h2>
@@ -203,7 +195,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             </div>
 
             <div class="lg:col-span-2 min-w-0">
-              <div class="rounded-xl bg-elevated/85 border border-default backdrop-blur-sm p-4 space-y-4 shadow-sm">
+              <div class="rounded-lg border border-default bg-elevated p-4 space-y-4">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <UIcon
@@ -405,13 +397,3 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
     </template>
   </UDashboardPanel>
 </template>
-
-<style scoped>
-.overview-hero {
-  background:
-    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 14%, transparent) 0%, transparent 55%),
-    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-warning) 12%, transparent) 0%, transparent 60%),
-    radial-gradient(140% 100% at 100% 100%, color-mix(in oklab, var(--ui-success) 10%, transparent) 0%, transparent 60%),
-    var(--ui-bg);
-}
-</style>

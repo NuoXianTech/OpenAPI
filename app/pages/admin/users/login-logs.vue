@@ -29,16 +29,8 @@ const {
 
 <template>
   <div class="log-page-shell space-y-6">
-    <section class="log-page-hero relative overflow-hidden rounded-2xl border border-default p-5 sm:p-6">
+    <section class="log-page-hero dashboard-hero-surface dashboard-hero-surface-info relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 space-y-3">
-        <UBadge
-          color="neutral"
-          variant="solid"
-          size="sm"
-          class="bg-elevated/80 text-default backdrop-blur"
-        >
-          Login logs
-        </UBadge>
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
             登录日志
@@ -190,12 +182,3 @@ const {
     </DashboardTableCard>
   </div>
 </template>
-
-<style scoped>
-.log-page-hero {
-  background:
-    radial-gradient(120% 80% at 0% 0%, color-mix(in oklab, var(--ui-primary) 12%, transparent) 0%, transparent 55%),
-    radial-gradient(110% 90% at 100% 0%, color-mix(in oklab, var(--ui-info) 10%, transparent) 0%, transparent 58%),
-    var(--ui-bg);
-}
-</style>

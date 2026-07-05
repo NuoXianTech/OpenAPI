@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'

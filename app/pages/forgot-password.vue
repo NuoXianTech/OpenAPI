@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
 import { parseFetchError } from '#shared/utils/client-error'
 import type { FormSubmitEvent } from '@nuxt/ui'

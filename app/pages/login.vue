@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'

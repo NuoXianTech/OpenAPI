@@ -168,127 +168,9 @@ async function handleLogout() {
       aria-hidden="true"
     />
 
-    <div class="relative p-5 sm:p-7 lg:p-8">
-      <div class="hero-topbar">
-        <UBadge
-          color="neutral"
-          variant="outline"
-          size="sm"
-          class="hidden w-fit gap-1 rounded-md px-2.5 py-1 text-[11px] sm:inline-flex"
-        >
-          <UIcon
-            name="i-mdi-creation-outline"
-            class="size-3.5"
-          />
-          Free · Open · Stable
-        </UBadge>
-
-        <div class="hero-actions">
-          <div
-            class="hero-nav"
-            aria-label="公开导航"
-          >
-            <UButton
-              to="/stats"
-              icon="i-mdi-chart-bar"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              class="hero-nav__item"
-            >
-              调用统计
-            </UButton>
-            <UButton
-              to="/friend-links"
-              icon="i-mdi-link-variant"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              class="hero-nav__item"
-            >
-              友情链接
-            </UButton>
-          </div>
-
-          <ClientOnly>
-            <template v-if="user">
-              <div class="hero-auth">
-                <UButton
-                  :to="dashboardPath"
-                  :icon="dashboardIcon"
-                  size="sm"
-                >
-                  {{ dashboardLabel }}
-                </UButton>
-                <UButton
-                  icon="i-mdi-logout"
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                  @click="handleLogout"
-                >
-                  退出登录
-                </UButton>
-              </div>
-            </template>
-            <template v-else>
-              <div class="hero-auth">
-                <UButton
-                  to="/login"
-                  icon="i-mdi-login"
-                  size="sm"
-                >
-                  登录
-                </UButton>
-                <UButton
-                  to="/register"
-                  icon="i-mdi-account-plus-outline"
-                  color="neutral"
-                  variant="outline"
-                  size="sm"
-                >
-                  注册
-                </UButton>
-                <UTooltip text="管理入口">
-                  <UButton
-                    to="/admin/login"
-                    icon="i-mdi-shield-key-outline"
-                    color="neutral"
-                    variant="ghost"
-                    size="sm"
-                    square
-                    aria-label="管理入口"
-                  />
-                </UTooltip>
-              </div>
-            </template>
-            <template #fallback>
-              <div class="hero-auth">
-                <USkeleton class="h-8 w-16 rounded-md" />
-                <USkeleton class="h-8 w-16 rounded-md" />
-              </div>
-            </template>
-          </ClientOnly>
-        </div>
-      </div>
-
-      <div class="mt-6 grid gap-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-10">
-        <div class="flex flex-col">
-          <div class="mb-3">
-            <UBadge
-              color="neutral"
-              variant="outline"
-              size="sm"
-              class="w-fit gap-1 rounded-md px-2.5 py-1 text-[11px] sm:hidden"
-            >
-              <UIcon
-                name="i-mdi-creation-outline"
-                class="size-3.5"
-              />
-              Free · Open · Stable
-            </UBadge>
-          </div>
-
+    <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+      <div class="hero-layout">
+        <div class="hero-copy">
           <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
             {{ siteName }}
           </h1>
@@ -296,7 +178,7 @@ async function handleLogout() {
             {{ siteDescription }}
           </p>
 
-          <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
+          <div class="hero-meta flex flex-wrap items-center gap-2.5 text-xs text-muted">
             <UTooltip
               :text="listStatus.title"
               :content="{ side: 'top' }"
@@ -331,37 +213,127 @@ async function handleLogout() {
           </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-          <CommonHeroStatCard
-            icon="i-mdi-layers-outline"
-            icon-tone="info"
-          >
-            <template #value>
-              {{ totalCount }}
-            </template>
-            接口总数
-          </CommonHeroStatCard>
+        <div class="hero-aside">
+          <div class="hero-actions">
+            <div
+              class="hero-nav"
+              aria-label="公开导航"
+            >
+              <UButton
+                to="/stats"
+                icon="i-mdi-chart-bar"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="hero-nav__item"
+              >
+                调用统计
+              </UButton>
+              <UButton
+                to="/friend-links"
+                icon="i-mdi-link-variant"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                class="hero-nav__item"
+              >
+                友情链接
+              </UButton>
+            </div>
 
-          <CommonHeroStatCard
-            icon="i-mdi-check-circle-outline"
-            icon-tone="success"
-          >
-            <template #value>
-              {{ normalCount }}
-            </template>
-            可用接口
-          </CommonHeroStatCard>
+            <ClientOnly>
+              <template v-if="user">
+                <div class="hero-auth">
+                  <UButton
+                    :to="dashboardPath"
+                    :icon="dashboardIcon"
+                    size="sm"
+                  >
+                    {{ dashboardLabel }}
+                  </UButton>
+                  <UButton
+                    icon="i-mdi-logout"
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
+                    @click="handleLogout"
+                  >
+                    退出登录
+                  </UButton>
+                </div>
+              </template>
+              <template v-else>
+                <div class="hero-auth">
+                  <UButton
+                    to="/login"
+                    icon="i-mdi-login"
+                    size="sm"
+                  >
+                    登录
+                  </UButton>
+                  <UButton
+                    to="/register"
+                    icon="i-mdi-account-plus-outline"
+                    color="neutral"
+                    variant="outline"
+                    size="sm"
+                  >
+                    注册
+                  </UButton>
+                  <UTooltip text="管理入口">
+                    <UButton
+                      to="/admin/login"
+                      icon="i-mdi-shield-key-outline"
+                      color="neutral"
+                      variant="ghost"
+                      size="sm"
+                      square
+                      aria-label="管理入口"
+                    />
+                  </UTooltip>
+                </div>
+              </template>
+              <template #fallback>
+                <div class="hero-auth">
+                  <USkeleton class="h-8 w-16 rounded-md" />
+                  <USkeleton class="h-8 w-16 rounded-md" />
+                </div>
+              </template>
+            </ClientOnly>
+          </div>
 
-          <CommonHeroStatCard
-            icon="i-mdi-counter"
-            icon-tone="primary"
-            :value-title="callCount.toLocaleString('zh-CN')"
-          >
-            <template #value>
-              {{ compactCallCount }}
-            </template>
-            调用次数
-          </CommonHeroStatCard>
+          <div class="hero-stats grid grid-cols-3 gap-2.5 sm:gap-3">
+            <CommonHeroStatCard
+              icon="i-mdi-layers-outline"
+              icon-tone="info"
+            >
+              <template #value>
+                {{ totalCount }}
+              </template>
+              接口总数
+            </CommonHeroStatCard>
+
+            <CommonHeroStatCard
+              icon="i-mdi-check-circle-outline"
+              icon-tone="success"
+            >
+              <template #value>
+                {{ normalCount }}
+              </template>
+              可用接口
+            </CommonHeroStatCard>
+
+            <CommonHeroStatCard
+              icon="i-mdi-counter"
+              icon-tone="primary"
+              :value-title="callCount.toLocaleString('zh-CN')"
+            >
+              <template #value>
+                {{ compactCallCount }}
+              </template>
+              调用次数
+            </CommonHeroStatCard>
+          </div>
         </div>
       </div>
     </div>
@@ -403,20 +375,57 @@ async function handleLogout() {
   pointer-events: none;
 }
 
-.hero-topbar {
+.hero-layout {
+  display: grid;
+  grid-template-areas:
+    "copy"
+    "aside";
+  gap: 16px;
+}
+
+.hero-copy {
+  grid-area: copy;
+  min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+}
+
+.hero-meta {
+  margin-top: 20px;
+}
+
+.hero-aside {
+  grid-area: aside;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .hero-actions {
-  margin-left: auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 8px;
+}
+
+.hero-stats {
+  min-width: 0;
+}
+
+.hero-stats :deep(.hero-stat-card) {
+  padding: 10px 10px 11px;
+}
+
+.hero-stats :deep(.hero-stat-card__icon) {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 3px;
+}
+
+.hero-stats :deep(.hero-stat-card__value) {
+  font-size: 20px;
 }
 
 .hero-nav,
@@ -444,13 +453,26 @@ async function handleLogout() {
   color: var(--ui-text-muted);
 }
 
-@media (max-width: 640px) {
-  .hero-topbar {
-    align-items: flex-start;
+@media (min-width: 1024px) {
+  .hero-layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    grid-template-areas: "copy aside";
+    gap: 36px;
+    align-items: stretch;
   }
 
   .hero-actions {
-    justify-content: flex-start;
+    justify-content: flex-end;
+  }
+
+  .hero-meta {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-actions {
     width: 100%;
   }
 

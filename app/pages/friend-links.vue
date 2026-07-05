@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import SearchBar from '~/components/common/SearchBar.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
 import LinkList from '~/components/link/LinkList.vue'
@@ -200,23 +200,6 @@ const visibleCount = computed(() => filteredItems.value.length)
 </template>
 
 <style scoped>
-.friend-filter-card {
-  position: relative;
-}
-
-.friend-filter-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
-  background-size: 18px 18px;
-  color: var(--ui-text);
-  opacity: 0.025;
-  mask-image: linear-gradient(to bottom, black, transparent 78%);
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent 78%);
-  pointer-events: none;
-}
-
 .friend-filter-stat {
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);

@@ -264,6 +264,39 @@ body {
     color-mix(in oklab, var(--ui-bg-elevated) 92%, var(--ui-info) 4%);
 }
 
+.dashboard-hero-surface {
+  --dashboard-hero-accent: var(--ui-primary);
+  --dashboard-hero-accent-secondary: var(--dashboard-hero-accent);
+
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--ui-bg-elevated) 96%, var(--dashboard-hero-accent) 4%) 0%,
+      var(--ui-bg-elevated) 48%,
+      color-mix(in oklab, var(--ui-bg-elevated) 94%, var(--dashboard-hero-accent-secondary) 6%) 100%
+    );
+}
+
+.dashboard-hero-surface-info {
+  --dashboard-hero-accent: var(--ui-info);
+  --dashboard-hero-accent-secondary: var(--ui-primary);
+}
+
+.dashboard-hero-surface-success {
+  --dashboard-hero-accent: var(--ui-success);
+  --dashboard-hero-accent-secondary: var(--ui-primary);
+}
+
+.dashboard-hero-surface-warning {
+  --dashboard-hero-accent: var(--ui-warning);
+  --dashboard-hero-accent-secondary: var(--ui-primary);
+}
+
+.dashboard-hero-surface-mixed {
+  --dashboard-hero-accent: var(--ui-warning);
+  --dashboard-hero-accent-secondary: var(--ui-success);
+}
+
 .dashboard-data-table {
   overflow-x: auto;
 }
