@@ -26,6 +26,17 @@ const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
   sparklineValues: undefined,
   sparklineColor: undefined
 })
+
+const slots = useSlots()
+const hasFooter = computed(() => Boolean(
+  slots.footer
+  || props.meta
+  || (props.sparklineValues?.length && props.sparklineColor)
+))
+const bodyClass = computed(() => [
+  'relative z-10 flex flex-col gap-4 p-4 sm:p-5',
+  hasFooter.value ? 'min-h-32' : undefined
+])
 </script>
 
 <template>
@@ -33,7 +44,7 @@ const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
     variant="outline"
     class="dashboard-metric-card"
     :class="metricToneClasses[props.tone]"
-    :ui="{ body: 'relative z-10 flex min-h-32 flex-col gap-4 p-4 sm:p-5' }"
+    :ui="{ body: bodyClass }"
   >
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 space-y-1">
@@ -61,7 +72,10 @@ const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
       </div>
     </div>
 
-    <div class="mt-auto min-h-8">
+    <div
+      v-if="hasFooter"
+      class="mt-auto min-h-8"
+    >
       <slot name="footer">
         <DashboardSparkline
           v-if="sparklineValues && sparklineColor"

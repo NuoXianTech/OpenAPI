@@ -26,10 +26,8 @@ const {
   rankColumns,
   rankSuccessTone,
   reloadStats,
-  successRateProgress,
   top10Last30d,
   topApi,
-  trackedApiRatio,
   trend7d,
   trendFailureCalls,
   trendSuccessCalls,
@@ -40,23 +38,9 @@ const {
 <template>
   <UPage class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
     <section class="stats-hero">
-      <div
-        class="stats-hero__pattern"
-        aria-hidden="true"
-      />
-
       <div class="relative p-5 sm:p-7 lg:p-8">
         <div class="stats-hero__topbar">
           <div class="flex min-w-0 flex-wrap items-center gap-2">
-            <UBadge
-              color="neutral"
-              variant="outline"
-              size="sm"
-              icon="i-mdi-chart-bar"
-              class="rounded-md px-2.5 py-1 text-[11px]"
-            >
-              公开数据
-            </UBadge>
             <UBadge
               v-if="generatedAtLabel"
               color="neutral"
@@ -82,7 +66,7 @@ const {
             </UButton>
             <UButton
               icon="i-mdi-home-outline"
-              variant="ghost"
+              variant="outline"
               color="neutral"
               size="sm"
               to="/"
@@ -179,7 +163,7 @@ const {
       </div>
     </section>
 
-    <UPageBody class="mt-4">
+    <UPageBody class="mt-4 pb-0">
       <UAlert
         v-if="error"
         color="error"
@@ -212,30 +196,7 @@ const {
             :icon="item.icon"
             :tone="item.tone"
             :style="{ '--dashboard-metric-accent': item.accent }"
-          >
-            <template #footer>
-              <div class="space-y-3">
-                <div class="flex items-center justify-between gap-3 text-xs text-muted">
-                  <span class="min-w-0 truncate">{{ item.helper }}</span>
-                  <UBadge
-                    :color="item.tone"
-                    variant="soft"
-                    size="sm"
-                    class="shrink-0 rounded-md"
-                  >
-                    {{ item.key === 'successRate' ? formatRate(successRateProgress) : item.key === 'enabledStatsApis' ? formatRate(trackedApiRatio) : '实时' }}
-                  </UBadge>
-                </div>
-
-                <UProgress
-                  v-if="item.key === 'successRate' || item.key === 'enabledStatsApis'"
-                  :model-value="item.key === 'successRate' ? successRateProgress : trackedApiRatio"
-                  :color="item.tone"
-                  size="xs"
-                />
-              </div>
-            </template>
-          </DashboardMetricCard>
+          />
         </div>
 
         <div class="space-y-4">
@@ -400,14 +361,22 @@ const {
   position: relative;
   overflow: hidden;
   border: 1px solid var(--ui-border);
-  background: var(--ui-bg-elevated);
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 92%, var(--ui-primary) 8%) 0%,
+      var(--ui-bg-elevated) 46%,
+      color-mix(in srgb, var(--ui-bg) 86%, var(--ui-info) 14%) 100%);
   border-radius: 8px;
   margin-bottom: 16px;
   isolation: isolate;
 }
 
-.stats-hero__pattern {
-  display: none;
+.dark .stats-hero {
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--ui-bg-elevated) 90%, var(--ui-primary) 10%) 0%,
+      var(--ui-bg-elevated) 48%,
+      color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 10%) 100%);
 }
 
 .stats-hero__topbar {
