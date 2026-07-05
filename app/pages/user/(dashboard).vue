@@ -6,7 +6,7 @@ definePageMeta({
       dashboardId: 'user'
     }
   },
-  middleware: ['auth-user', 'dashboard-root-redirect']
+  middleware: 'auth-dashboard'
 })
 </script>
 
