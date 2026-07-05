@@ -1,8 +1,12 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import type { FriendLinkItem } from '~/types/link'
 
-const { items } = defineProps({
-  items: { type: Array as PropType<FriendLinkItem[]>, default: () => [] }
+interface LinkListProps {
+  items?: FriendLinkItem[]
+}
+
+const props = withDefaults(defineProps<LinkListProps>(), {
+  items: () => []
 })
 </script>
 
@@ -14,14 +18,13 @@ const { items } = defineProps({
     appear
   >
     <LinkCard
-      v-for="(item, index) in items"
+      v-for="(item, index) in props.items"
       :key="item.id ?? index"
       :title="item.title"
       :description="item.description || '暂无描述'"
       :url="item.url"
       :status="item.isActive ? 1 : 0"
       class="link-card-item"
-      :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
     />
   </TransitionGroup>
 </template>

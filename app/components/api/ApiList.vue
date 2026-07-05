@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import type { ApiCatalogItem } from '~/types/api'
 
 interface ApiListProps {
@@ -30,7 +30,6 @@ const { items = [] } = defineProps<ApiListProps>()
         :method-costs="item.methodCosts"
         :total-calls="item.totalCalls"
         class="api-card-item"
-        :style="{ animationDelay: `${Math.min(index, 12) * 40}ms` }"
       />
     </TransitionGroup>
   </div>

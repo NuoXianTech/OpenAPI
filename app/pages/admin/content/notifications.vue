@@ -135,7 +135,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <UCard class="shadow-sm">
+      <UCard>
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon

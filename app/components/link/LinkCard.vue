@@ -1,9 +1,16 @@
-<script lang="ts" setup>
-const props = defineProps({
-  title: { type: String, default: '链接标题' },
-  description: { type: String, default: '站点描述' },
-  url: { type: String, default: '#' },
-  status: { type: Number, default: -1 }
+<script setup lang="ts">
+interface LinkCardProps {
+  title?: string
+  description?: string
+  url?: string
+  status?: number
+}
+
+const props = withDefaults(defineProps<LinkCardProps>(), {
+  title: '链接标题',
+  description: '站点描述',
+  url: '#',
+  status: -1
 })
 
 const displayDescription = computed(() => {
