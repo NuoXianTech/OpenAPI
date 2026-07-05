@@ -3,6 +3,7 @@ import SearchBar from '~/components/common/SearchBar.vue'
 import ApiList from '~/components/api/ApiList.vue'
 import FilterTabs from '~/components/common/FilterTabs.vue'
 import { useApiList } from '~/composables/api/use-api-list'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { API_STATUS } from '#shared/config/api-status'
 
 const {
@@ -21,7 +22,19 @@ const {
 
 const { settings } = useSiteSettings()
 
-const visibleCount = computed(() => filteredItems.value.length)
+const {
+  page,
+  pageSize,
+  total,
+  totalPages,
+  paginated: paginatedItems
+} = useClientPagination(filteredItems, 13)
+
+watch([query, currentTab, currentCategory], () => {
+  page.value = 1
+})
+
+const hasPagination = computed(() => total.value > pageSize.value)
 
 const heroStats = computed(() => ({
   total: allItems.value.length,
@@ -162,7 +175,7 @@ useSeoMeta({
                 name="i-mdi-format-list-bulleted"
                 class="size-3.5"
               />
-              当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个接口
+              共 <span class="font-mono font-semibold text-default">{{ total }}</span> 个接口
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
@@ -173,8 +186,23 @@ useSeoMeta({
             </span>
           </div>
           <ApiList
-            :items="filteredItems"
+            :items="paginatedItems"
           />
+          <div
+            v-if="hasPagination"
+            class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-default pt-4 sm:flex-row"
+          >
+            <span class="text-xs text-muted tabular-nums">
+              第 {{ page }} / {{ totalPages }} 页
+            </span>
+            <UPagination
+              v-model:page="page"
+              :items-per-page="pageSize"
+              :total="total"
+              :sibling-count="1"
+              size="sm"
+            />
+          </div>
         </section>
       </Transition>
     </main>
