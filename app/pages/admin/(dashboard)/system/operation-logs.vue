@@ -12,7 +12,6 @@ const {
   detailRow,
   expandedFilters,
   filters,
-  formatDate,
   hasAdvancedFilters,
   items,
   loading,
@@ -197,7 +196,7 @@ const {
         empty-icon="i-mdi-clipboard-text-clock-outline"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #actor-cell="{ row }">
           <div class="flex flex-col text-xs">
@@ -270,7 +269,7 @@ const {
               <div class="text-xs text-muted">
                 时间
               </div>
-              <div>{{ formatDate(detailRow.createdAt) }}</div>
+              <div>{{ formatDateTime(detailRow.createdAt) }}</div>
             </div>
             <div>
               <div class="text-xs text-muted">

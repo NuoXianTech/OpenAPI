@@ -59,10 +59,6 @@ watch(() => props.open, async (opened) => {
   }
 })
 
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
-
 async function submit() {
   if (!props.target) return
   loading.value = true
@@ -159,7 +155,7 @@ async function submit() {
                 {{ b.provider }}
               </UBadge>
               <span class="font-mono">{{ b.nickname || b.email || `#${b.providerUserId}` }}</span>
-              <span class="ml-auto text-muted">最近登录 {{ formatDate(b.lastLoginAt) }}</span>
+              <span class="ml-auto text-muted">最近登录 {{ formatDateTime(b.lastLoginAt) }}</span>
             </div>
           </div>
         </div>

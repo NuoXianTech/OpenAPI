@@ -42,10 +42,6 @@ onMounted(() => {
   void loadFilterOptions()
 })
 
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
-
 function openDetail(row: UserCallLogRow) {
   detailModal.open({ row })
 }
@@ -177,7 +173,7 @@ function openDetail(row: UserCallLogRow) {
             <template #createdAt-cell="{ row }">
               <div class="flex flex-col gap-1 min-w-[150px]">
                 <span class="text-xs whitespace-nowrap">
-                  {{ formatDate(row.original.createdAt) }}
+                  {{ formatDateTime(row.original.createdAt) }}
                 </span>
                 <UBadge
                   :color="userCallOutcomeColor(row.original)"

@@ -16,7 +16,6 @@ const {
   applyFilters,
   reset,
   activeFilterCount,
-  formatDate,
   methodItems,
   successItems,
   methodColor,
@@ -140,7 +139,7 @@ const {
         empty-icon="i-mdi-login-variant"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #user-cell="{ row }">
           <div class="flex flex-col text-xs">

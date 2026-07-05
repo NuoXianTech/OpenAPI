@@ -6,10 +6,6 @@ const props = defineProps<{
   row: AdminLogRow | null
 }>()
 
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
-
 function formatBytes(value: number | null) {
   if (value == null) return '-'
   if (value < 1024) return `${value} B`
@@ -33,7 +29,7 @@ function formatBytes(value: number | null) {
             <div class="text-xs text-muted">
               时间
             </div>
-            <div>{{ formatDate(props.row.createdAt) }}</div>
+            <div>{{ formatDateTime(props.row.createdAt) }}</div>
           </div>
           <div>
             <div class="text-xs text-muted">

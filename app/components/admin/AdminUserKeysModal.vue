@@ -152,10 +152,6 @@ const showFullKeyId = ref<number | null>(null)
 function toggleReveal(id: number) {
   showFullKeyId.value = showFullKeyId.value === id ? null : id
 }
-
-function formatExpiry(val: string | null) {
-  return formatDateTime(val, '永不过期')
-}
 </script>
 
 <template>
@@ -316,7 +312,7 @@ function formatExpiry(val: string | null) {
             </div>
           </div>
           <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted">
-            <div>过期：{{ formatExpiry(key.expiresAt) }}</div>
+            <div>过期：{{ formatDateTime(key.expiresAt, '永不过期') }}</div>
             <div>配额：{{ apiKeyQuotaText(key) }}</div>
             <div>接口：{{ apiKeyScopesText(key.scopes, scopeLabelMap) }}</div>
             <div>IP：{{ apiKeyIpText(key.ipWhitelist) }}</div>

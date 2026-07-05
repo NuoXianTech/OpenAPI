@@ -39,7 +39,6 @@ const {
   statusItems,
   batchItems,
   columns,
-  formatDate,
   statusOf,
   getRowItems,
   onBatchFilter
@@ -166,7 +165,7 @@ const {
             </template>
             <template #expiresAt-cell="{ row }">
               <span class="text-xs text-muted whitespace-nowrap">
-                {{ row.original.expiresAt ? formatDate(row.original.expiresAt) : '永不过期' }}
+                {{ row.original.expiresAt ? formatDateTime(row.original.expiresAt) : '永不过期' }}
               </span>
             </template>
             <template #status-cell="{ row }">
@@ -178,7 +177,7 @@ const {
               </UBadge>
             </template>
             <template #createdAt-cell="{ row }">
-              <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+              <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
             </template>
             <template #actions-cell="{ row }">
               <DashboardRowActions :items="getRowItems(row.original)" />

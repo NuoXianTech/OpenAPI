@@ -50,10 +50,6 @@ const activeFilterCount = computed(() => [
   filters.reason !== 'all'
 ].filter(Boolean).length)
 
-function formatDate(val: string) {
-  return formatDateTime(val)
-}
-
 const reasonItems = [
   { label: '全部原因', value: 'all' },
   { label: '管理员加积分', value: 'admin_grant' },
@@ -173,7 +169,7 @@ function amountClass(amt: number) {
         empty-icon="i-mdi-cash-multiple"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #userId-cell="{ row }">
           <span class="font-mono text-xs">#{{ row.original.userId }}</span>

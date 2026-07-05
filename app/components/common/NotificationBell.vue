@@ -86,10 +86,6 @@ useIntervalFn(fetchUnreadCount, 60_000)
 onMounted(() => {
   void fetchUnreadCount()
 })
-
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
 </script>
 
 <template>
@@ -204,7 +200,7 @@ function formatDate(iso: string) {
               {{ n.title }}
             </span>
             <span class="shrink-0 text-xs text-muted">
-              {{ formatDate(n.createdAt) }}
+              {{ formatDateTime(n.createdAt) }}
             </span>
           </div>
           <div class="text-xs text-muted">

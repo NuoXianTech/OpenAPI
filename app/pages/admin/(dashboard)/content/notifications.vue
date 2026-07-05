@@ -31,7 +31,6 @@ const {
   levelOptions,
   audienceMeta,
   columns,
-  formatDate,
   getRowItems
 } = useAdminNotificationsDisplayMeta({
   users: computed(() => usersData.value || []),
@@ -260,7 +259,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
             </div>
           </template>
           <template #createdAt-cell="{ row }">
-            <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+            <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
           </template>
           <template #actions-cell="{ row }">
             <DashboardRowActions :items="getRowItems(row.original)" />
@@ -272,7 +271,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
     <UModal
       v-model:open="detailOpen"
       title="接收详情"
-      :description="detailMessage ? `${detailMessage.title} · ${formatDate(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
+      :description="detailMessage ? `${detailMessage.title} · ${formatDateTime(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
       :ui="{ content: 'sm:max-w-2xl' }"
     >
       <template #body>
@@ -306,7 +305,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
               {{ r.recipientUsername || `#${r.recipientUserId}` }}
             </span>
             <span class="text-xs text-muted">
-              {{ r.isRead ? `已读 · ${formatDate(r.readAt)}` : '未读' }}
+              {{ r.isRead ? `已读 · ${formatDateTime(r.readAt)}` : '未读' }}
             </span>
           </div>
         </div>

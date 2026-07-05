@@ -144,20 +144,12 @@ body {
   box-shadow: none;
 }
 
-.dark .dashboard-brand-trigger {
-  box-shadow: none;
-}
-
 .dashboard-brand-trigger:hover {
   background: var(--dashboard-sidebar-hover);
 }
 
 .dashboard-brand-icon {
   color: var(--ui-text-highlighted);
-}
-
-.dashboard-brand-chevron {
-  color: var(--ui-text-dimmed);
 }
 
 .dashboard-sidebar-group-label {

@@ -8,7 +8,6 @@ import type {
   AdminAnalyticsOverview,
   AdminAnalyticsRankItem
 } from '~~/shared/types/admin-analytics'
-import { formatDateTime } from '~/utils/datetime'
 
 interface AdminAnalyticsDistributionChartItem {
   label: string
@@ -385,7 +384,6 @@ interface UseAdminNotificationsDisplayMetaReturn {
   levelOptions: Array<AdminNotificationSelectItem<AdminNotificationLevel>>
   audienceMeta: Record<AdminNotificationAudience, AdminNotificationAudienceMeta>
   columns: TableColumn<AdminNotificationMessageRow>[]
-  formatDate: (iso: string | null) => string
   getRowItems: (row: AdminNotificationMessageRow) => DropdownMenuItem[]
 }
 
@@ -431,10 +429,6 @@ export function createAdminNotificationForm(): AdminNotificationForm {
   }
 }
 
-function formatAdminNotificationDate(iso: string | null): string {
-  return formatDateTime(iso)
-}
-
 export function useAdminNotificationsDisplayMeta(
   options: UseAdminNotificationsDisplayMetaOptions
 ): UseAdminNotificationsDisplayMetaReturn {
@@ -458,7 +452,6 @@ export function useAdminNotificationsDisplayMeta(
     levelOptions: ADMIN_NOTIFICATION_LEVEL_OPTIONS,
     audienceMeta: ADMIN_NOTIFICATION_AUDIENCE_META,
     columns: ADMIN_NOTIFICATION_TABLE_COLUMNS,
-    formatDate: formatAdminNotificationDate,
     getRowItems
   }
 }

@@ -108,7 +108,6 @@ async function onCreditSaved() {
 
 const {
   columns,
-  formatDate,
   banTooltip,
   getRowItems
 } = useAdminUsersDisplayMeta({
@@ -237,7 +236,7 @@ const {
               variant="subtle"
               :icon="row.original.bannedUntil ? 'i-mdi-clock-alert-outline' : 'i-mdi-lock'"
             >
-              {{ row.original.bannedUntil ? `封禁至 ${formatDate(row.original.bannedUntil)}` : '永久封禁' }}
+              {{ row.original.bannedUntil ? `封禁至 ${formatDateTime(row.original.bannedUntil)}` : '永久封禁' }}
             </UBadge>
           </UTooltip>
           <UBadge
@@ -249,7 +248,7 @@ const {
           </UBadge>
         </template>
         <template #createdAt-cell="{ row }">
-          {{ formatDate(row.original.createdAt) }}
+          {{ formatDateTime(row.original.createdAt) }}
         </template>
         <template #actions-cell="{ row }">
           <DashboardRowActions :items="getRowItems(row.original)" />

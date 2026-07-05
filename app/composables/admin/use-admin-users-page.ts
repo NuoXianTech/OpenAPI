@@ -183,7 +183,6 @@ interface UseAdminUsersDisplayMetaOptions {
 
 interface UseAdminUsersDisplayMetaReturn {
   columns: TableColumn<AdminUserItem>[]
-  formatDate: (value: string) => string
   banTooltip: (row: AdminUserItem) => string
   getRowItems: (row: AdminUserItem) => DropdownMenuItem[]
 }
@@ -199,14 +198,10 @@ const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
   { id: 'actions', header: '' }
 ]
 
-function formatAdminUserDate(value: string): string {
-  return formatDateTime(value)
-}
-
 function buildAdminUserBanTooltip(row: AdminUserItem): string {
   const parts: string[] = []
   parts.push(row.bannedReason ? `原因：${row.bannedReason}` : '原因：未填写')
-  parts.push(row.bannedUntil ? `解封时间：${formatAdminUserDate(row.bannedUntil)}` : '永久封禁')
+  parts.push(row.bannedUntil ? `解封时间：${formatDateTime(row.bannedUntil)}` : '永久封禁')
   return parts.join('\n')
 }
 
@@ -242,7 +237,6 @@ export function useAdminUsersDisplayMeta(
 
   return {
     columns: ADMIN_USER_TABLE_COLUMNS,
-    formatDate: formatAdminUserDate,
     banTooltip: buildAdminUserBanTooltip,
     getRowItems
   }

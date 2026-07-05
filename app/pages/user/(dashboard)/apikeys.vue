@@ -187,14 +187,6 @@ function toggleReveal(id: number) {
   showFullKeyId.value = showFullKeyId.value === id ? null : id
 }
 
-function formatDate(value: string | null): string {
-  return formatDateTime(value, '从未使用')
-}
-
-function formatDateOrDash(value: string | null): string {
-  return formatDateTime(value, '—')
-}
-
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
     { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
@@ -362,7 +354,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 
             <template #lastUsedAt-cell="{ row }">
               <div class="flex flex-col text-xs">
-                <span>{{ formatDate(row.original.lastUsedAt) }}</span>
+                <span>{{ formatDateTime(row.original.lastUsedAt, '从未使用') }}</span>
                 <span
                   v-if="row.original.lastUsedIp"
                   class="text-muted font-mono"
@@ -371,14 +363,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #createdAt-cell="{ row }">
-              <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+              <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt, '从未使用') }}</span>
             </template>
 
             <template #expiresAt-cell="{ row }">
               <span
                 class="text-xs"
                 :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
-              >{{ formatDateOrDash(row.original.expiresAt) }}</span>
+              >{{ formatDateTime(row.original.expiresAt, '—') }}</span>
             </template>
 
             <template #status-cell="{ row }">

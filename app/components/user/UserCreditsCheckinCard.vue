@@ -82,10 +82,6 @@ const turnstileError = ref('')
 const verifying = ref(false)
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
-
 function openModal() {
   turnstileToken.value = ''
   turnstileError.value = ''
@@ -194,7 +190,7 @@ function onTurnstileError(message: string) {
           v-if="status.lastCheckinAt"
           class="text-xs text-muted mt-1"
         >
-          上次签到：{{ formatDate(status.lastCheckinAt) }}
+          上次签到：{{ formatDateTime(status.lastCheckinAt) }}
         </p>
       </div>
       <UButton

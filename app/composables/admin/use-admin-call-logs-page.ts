@@ -20,7 +20,6 @@ import {
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
-import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminCallLogsFilters {
   startAt: string
@@ -231,7 +230,6 @@ interface UseAdminLoginLogListReturn {
   applyFilters: () => Promise<void>
   columns: TableColumn<AdminLoginLogRow>[]
   filters: AdminLoginLogFilters
-  formatDate: (value: string) => string
   items: Ref<AdminLoginLogRow[]>
   loading: ComputedRef<boolean>
   methodColor: (method: string) => AdminLoginLogBadgeColor
@@ -297,10 +295,6 @@ function buildAdminLoginLogQuery(
   }
 }
 
-function formatAdminLoginLogDate(value: string): string {
-  return formatDateTime(value)
-}
-
 function resolveAdminLoginLogMethodColor(method: string): AdminLoginLogBadgeColor {
   return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
 }
@@ -342,7 +336,6 @@ export function useAdminLoginLogList(
     applyFilters,
     columns: ADMIN_LOGIN_LOG_COLUMNS,
     filters,
-    formatDate: formatAdminLoginLogDate,
     items,
     loading,
     methodColor: resolveAdminLoginLogMethodColor,
@@ -395,7 +388,6 @@ interface UseAdminOperationLogListReturn {
   detailRow: Ref<AdminOperationLogRow | null>
   expandedFilters: Ref<boolean>
   filters: AdminOperationLogFilters
-  formatDate: (value: string) => string
   hasAdvancedFilters: ComputedRef<boolean>
   items: Ref<AdminOperationLogRow[]>
   loading: ComputedRef<boolean>
@@ -475,10 +467,6 @@ function stringifyOperationLogDetail(detail: Record<string, unknown> | null | un
   }
 }
 
-function formatOperationLogDate(value: string): string {
-  return formatDateTime(value)
-}
-
 export function useAdminOperationLogList(
   options: UseAdminOperationLogListOptions = {}
 ): UseAdminOperationLogListReturn {
@@ -538,7 +526,6 @@ export function useAdminOperationLogList(
     detailRow,
     expandedFilters,
     filters,
-    formatDate: formatOperationLogDate,
     hasAdvancedFilters,
     items,
     loading,

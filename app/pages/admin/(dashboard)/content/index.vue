@@ -76,10 +76,6 @@ function getRowItems(row: Announcement): DropdownMenuItem[] {
   ]
 }
 
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
-
 const columns: TableColumn<Announcement>[] = [
   { accessorKey: 'title', header: '标题' },
   { accessorKey: 'sortOrder', header: '排序' },
@@ -157,7 +153,7 @@ const columns: TableColumn<Announcement>[] = [
           />
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #actions-cell="{ row }">
           <DashboardRowActions :items="getRowItems(row.original)" />

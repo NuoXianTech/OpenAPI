@@ -9,10 +9,6 @@ import {
 const props = defineProps<{
   row: UserCallLogRow | null
 }>()
-
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
 </script>
 
 <template>
@@ -30,7 +26,7 @@ function formatDate(iso: string) {
             <div class="text-xs text-muted">
               时间
             </div>
-            <div>{{ formatDate(props.row.createdAt) }}</div>
+            <div>{{ formatDateTime(props.row.createdAt) }}</div>
           </div>
           <div>
             <div class="text-xs text-muted">

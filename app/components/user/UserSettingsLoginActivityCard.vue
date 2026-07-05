@@ -15,9 +15,6 @@ defineProps<{
 
 const emit = defineEmits<{ refresh: [] }>()
 
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
 function methodColor(method: string) {
   return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
 }
@@ -65,7 +62,7 @@ const columns: TableColumn<LoginLogRow>[] = [
         empty-icon="i-mdi-login-variant"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #method-cell="{ row }">
           <UBadge

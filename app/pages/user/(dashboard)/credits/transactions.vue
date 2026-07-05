@@ -36,10 +36,6 @@ const directionItems = [
   { label: '支出（−）', value: 'out' }
 ]
 
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
-
 const columns: TableColumn<TransactionRow>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'reason', header: '类型' },
@@ -113,7 +109,7 @@ function amountClass(amt: number) {
         empty-icon="i-mdi-format-list-bulleted"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDate(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #reason-cell="{ row }">
           <UBadge

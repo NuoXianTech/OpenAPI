@@ -47,10 +47,6 @@ function openDetail(row: AdminLogRow) {
 function toggleAdvancedFilters() {
   expandedFilters.value = !expandedFilters.value
 }
-
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
 </script>
 
 <template>
@@ -260,7 +256,7 @@ function formatDate(iso: string) {
             <template #createdAt-cell="{ row }">
               <div class="flex flex-col gap-1 min-w-[150px]">
                 <span class="text-xs whitespace-nowrap">
-                  {{ formatDate(row.original.createdAt) }}
+                  {{ formatDateTime(row.original.createdAt) }}
                 </span>
                 <UBadge
                   :color="ADMIN_CALL_LOG_TYPE_META[row.original.type].color"

@@ -12,10 +12,6 @@ const emit = defineEmits<{
   bind: [provider: string]
   unbind: [provider: string]
 }>()
-
-function formatDate(iso: string | null) {
-  return formatDateTime(iso)
-}
 </script>
 
 <template>
@@ -101,7 +97,7 @@ function formatDate(iso: string | null) {
               <span
                 v-if="item.linkedAt"
                 class="ml-1"
-              >· 绑定于 {{ formatDate(item.linkedAt) }}</span>
+              >· 绑定于 {{ formatDateTime(item.linkedAt) }}</span>
             </div>
           </div>
         </div>

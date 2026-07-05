@@ -2,7 +2,6 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
-import { formatDateTime } from '~/utils/datetime'
 
 export interface RedemptionCode {
   id: number
@@ -231,7 +230,6 @@ interface UseAdminRedemptionCodesDisplayMetaReturn {
   statusItems: AdminRedemptionCodeSelectItem[]
   batchItems: ComputedRef<AdminRedemptionCodeSelectItem[]>
   columns: TableColumn<RedemptionCode>[]
-  formatDate: (iso: string | null) => string
   statusOf: (item: RedemptionCode) => AdminRedemptionCodeStatusMeta
   getRowItems: (row: RedemptionCode) => DropdownMenuItem[]
   onBatchFilter: (batchId: string) => void
@@ -255,10 +253,6 @@ const ADMIN_REDEMPTION_CODE_TABLE_COLUMNS: TableColumn<RedemptionCode>[] = [
   { accessorKey: 'createdAt', header: '创建时间' },
   { id: 'actions', header: '' }
 ]
-
-function formatAdminRedemptionCodeDate(iso: string | null): string {
-  return formatDateTime(iso)
-}
 
 function getAdminRedemptionCodeStatus(item: RedemptionCode): AdminRedemptionCodeStatusMeta {
   if (!item.isEnabled) return { label: '已禁用', color: 'neutral' }
@@ -314,7 +308,6 @@ export function useAdminRedemptionCodesDisplayMeta(
     statusItems: ADMIN_REDEMPTION_CODE_STATUS_ITEMS,
     batchItems,
     columns: ADMIN_REDEMPTION_CODE_TABLE_COLUMNS,
-    formatDate: formatAdminRedemptionCodeDate,
     statusOf: getAdminRedemptionCodeStatus,
     getRowItems,
     onBatchFilter

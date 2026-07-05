@@ -11,10 +11,6 @@ const toast = useToast()
 const code = ref('')
 const redeeming = ref(false)
 
-function formatDate(iso: string) {
-  return formatDateTime(iso)
-}
-
 async function submit() {
   const v = code.value.trim().toUpperCase()
   if (!v) {
@@ -85,7 +81,7 @@ async function submit() {
           <span class="font-semibold text-success tabular-nums">
             +{{ r.amount.toLocaleString() }}
           </span>
-          <span class="text-muted">{{ formatDate(r.redeemedAt) }}</span>
+          <span class="text-muted">{{ formatDateTime(r.redeemedAt) }}</span>
         </div>
       </div>
     </div>

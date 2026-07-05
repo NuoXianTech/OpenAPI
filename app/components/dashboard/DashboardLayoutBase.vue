@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { DropdownMenuItem } from '@nuxt/ui'
 import type { DashboardStaticConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,
@@ -25,10 +24,6 @@ provide(dashboardConfigInjectionKey, resolved)
 
 // 给 mobile drawer 用
 const open = ref(false)
-
-const brandDropdownItems = computed<DropdownMenuItem[][]>(() => [[
-  { label: resolved.value.brand.label, icon: resolved.value.brand.icon, disabled: true }
-]])
 
 const navigationMenuUi = {
   root: 'dashboard-sidebar-menu',
@@ -66,27 +61,21 @@ const navigationMenuUi = {
           class="dashboard-sidebar-brand"
           :class="{ 'dashboard-sidebar-brand-collapsed': collapsed }"
         >
-          <UDropdownMenu
-            :items="brandDropdownItems"
-            :content="{ align: 'start' }"
-            :ui="{ content: 'w-48' }"
-          >
-            <UButton
-              :label="collapsed ? undefined : resolved.brand.label"
-              :icon="resolved.brand.icon"
-              color="neutral"
-              variant="ghost"
-              block
-              :square="collapsed"
-              class="dashboard-brand-trigger data-[state=open]:bg-elevated"
-              trailing-icon="i-mdi-chevron-down"
-              :ui="{
-                leadingIcon: 'dashboard-brand-icon size-4.5',
-                trailingIcon: collapsed ? 'hidden' : 'dashboard-brand-chevron size-3.5',
-                label: 'truncate text-[13px] font-semibold'
-              }"
-            />
-          </UDropdownMenu>
+          <UButton
+            :to="resolved.brand.to"
+            :label="collapsed ? undefined : resolved.brand.label"
+            :icon="resolved.brand.icon"
+            :aria-label="resolved.brand.label"
+            color="neutral"
+            variant="ghost"
+            block
+            :square="collapsed"
+            class="dashboard-brand-trigger"
+            :ui="{
+              leadingIcon: 'dashboard-brand-icon size-4.5',
+              label: 'truncate text-[13px] font-semibold'
+            }"
+          />
         </div>
       </template>
 
