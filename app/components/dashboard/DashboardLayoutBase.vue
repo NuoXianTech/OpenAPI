@@ -43,7 +43,10 @@ const navigationMenuUi = {
 </script>
 
 <template>
-  <UDashboardGroup class="dashboard-shell dashboard-shell-refined">
+  <UDashboardGroup
+    class="dashboard-shell dashboard-shell-refined"
+    :storage-key="`dashboard-${resolved.id}`"
+  >
     <UDashboardSidebar
       :id="resolved.id"
       v-model:open="open"

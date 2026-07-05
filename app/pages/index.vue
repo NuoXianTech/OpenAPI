@@ -207,6 +207,11 @@ useSeoMeta({
       </Transition>
     </main>
     <CommonAppFooter />
-    <LazyCommonAnnouncementPopup />
+    <Suspense>
+      <LazyCommonAnnouncementPopup />
+      <template #fallback>
+        <span class="sr-only">公告加载中</span>
+      </template>
+    </Suspense>
   </div>
 </template>

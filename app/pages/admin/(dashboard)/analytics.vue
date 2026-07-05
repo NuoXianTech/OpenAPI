@@ -108,14 +108,19 @@ const analyticsMetricTones = {
           </template>
 
           <ClientOnly>
-            <AdminAnalyticsDistributionBar
-              v-if="distributionChart === 'bar'"
-              :distribution="distribution"
-            />
-            <AdminAnalyticsDistributionArea
-              v-else
-              :distribution="distribution"
-            />
+            <Suspense>
+              <LazyAdminAnalyticsDistributionBar
+                v-if="distributionChart === 'bar'"
+                :distribution="distribution"
+              />
+              <LazyAdminAnalyticsDistributionArea
+                v-else
+                :distribution="distribution"
+              />
+              <template #fallback>
+                <div class="h-72 w-full rounded-lg bg-elevated/50" />
+              </template>
+            </Suspense>
             <template #fallback>
               <div class="h-72 w-full rounded-lg bg-elevated/50" />
             </template>
@@ -136,7 +141,12 @@ const analyticsMetricTones = {
               </div>
             </template>
             <ClientOnly>
-              <AdminAnalyticsHourlyTrend :trend="hourlyTrend24h" />
+              <Suspense>
+                <LazyAdminAnalyticsHourlyTrend :trend="hourlyTrend24h" />
+                <template #fallback>
+                  <div class="h-64 w-full rounded-lg bg-elevated/50" />
+                </template>
+              </Suspense>
               <template #fallback>
                 <div class="h-64 w-full rounded-lg bg-elevated/50" />
               </template>
@@ -155,7 +165,12 @@ const analyticsMetricTones = {
               </div>
             </template>
             <ClientOnly>
-              <AdminAnalyticsCallBuckets :buckets="callBuckets" />
+              <Suspense>
+                <LazyAdminAnalyticsCallBuckets :buckets="callBuckets" />
+                <template #fallback>
+                  <div class="h-64 w-full rounded-lg bg-elevated/50" />
+                </template>
+              </Suspense>
               <template #fallback>
                 <div class="h-64 w-full rounded-lg bg-elevated/50" />
               </template>

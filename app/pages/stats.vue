@@ -252,7 +252,12 @@ const {
             </div>
 
             <ClientOnly>
-              <StatsTrendChart :trend="trend7d" />
+              <Suspense>
+                <LazyStatsTrendChart :trend="trend7d" />
+                <template #fallback>
+                  <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
+                </template>
+              </Suspense>
               <template #fallback>
                 <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
               </template>
