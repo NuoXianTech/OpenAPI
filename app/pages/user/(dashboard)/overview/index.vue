@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { UserDashboardData } from '~~/shared/types/user-dashboard'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 useHead({ title: '个人中心' })
 
@@ -9,36 +10,31 @@ const toast = useToast()
 const requestURL = useRequestURL()
 const origin = requestURL.origin || ''
 
-const data = ref<UserDashboardData | null>(null)
-const loading = ref(false)
-
-async function refresh() {
-  loading.value = true
-  try {
-    data.value = await $fetch<UserDashboardData>('/api/user/dashboard')
-  } catch {
-    toast.add({ title: '加载概览失败', color: 'error' })
-  } finally {
-    loading.value = false
+function createEmptyUserDashboardData(): UserDashboardData {
+  return {
+    credits: { balance: 0, totalSpent: 0, spent24h: 0 },
+    calls: { total: 0, success: 0, failure: 0, successRate: 0, requests24h: 0 },
+    apiKeys: { total: 0, active: 0 },
+    trend: [],
+    generatedAt: new Date(0).toISOString()
   }
 }
 
-onMounted(() => {
-  refresh()
+const { data, loading, error, refresh } = usePrivateResource<UserDashboardData>({
+  path: '/api/user/dashboard',
+  defaultData: createEmptyUserDashboardData
 })
 
-const emptyDashboardData: UserDashboardData = {
-  credits: { balance: 0, totalSpent: 0, spent24h: 0 },
-  calls: { total: 0, success: 0, failure: 0, successRate: 0, requests24h: 0 },
-  apiKeys: { total: 0, active: 0 },
-  trend: [],
-  generatedAt: new Date(0).toISOString()
-}
-const dashboard = computed(() => data.value ?? emptyDashboardData)
-const credits = computed(() => dashboard.value.credits)
-const calls = computed(() => dashboard.value.calls)
-const apiKeys = computed(() => dashboard.value.apiKeys)
-const trend = computed(() => dashboard.value.trend)
+watch(error, (err) => {
+  if (err) {
+    toast.add({ title: '加载概览失败', color: 'error' })
+  }
+})
+
+const credits = computed(() => data.value.credits)
+const calls = computed(() => data.value.calls)
+const apiKeys = computed(() => data.value.apiKeys)
+const trend = computed(() => data.value.trend)
 const callsTrendValues = computed(() => trend.value.map(point => point.totalCalls))
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)

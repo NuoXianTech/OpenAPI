@@ -22,7 +22,6 @@ const { data: categoriesData } = usePrivateResource<AdminApiCategoryItem[]>({
 })
 
 const versions = computed(() => data.value.versions)
-const categories = computed(() => categoriesData.value)
 
 const modalOpen = ref(false)
 const modalMode = ref<'register' | 'edit'>('register')
@@ -83,7 +82,7 @@ const {
   getRowItems
 } = useAdminApisDisplayMeta({
   versions,
-  categories,
+  categories: categoriesData,
   openRegister,
   openEdit,
   resyncManifest

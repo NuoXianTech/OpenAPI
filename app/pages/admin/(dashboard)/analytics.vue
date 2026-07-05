@@ -12,7 +12,6 @@ const { data } = usePrivateResource<AdminAnalyticsData>({
   defaultData: createEmptyAdminAnalyticsData
 })
 
-const analytics = computed(() => data.value)
 const {
   distribution,
   hourlyTrend24h,
@@ -23,7 +22,7 @@ const {
   generatedAtLabel,
   formatCompact,
   overviewCards
-} = useAdminAnalyticsDisplayMeta({ analytics })
+} = useAdminAnalyticsDisplayMeta({ analytics: data })
 
 const analyticsMetricTones = {
   primary: 'neutral',

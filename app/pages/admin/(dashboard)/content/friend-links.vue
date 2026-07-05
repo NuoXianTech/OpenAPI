@@ -11,8 +11,7 @@ const { data, status, refresh } = usePrivateResource<FriendLinkItem[]>({
   path: '/api/admin/friend-links/list',
   defaultData: () => []
 })
-const items = computed(() => data.value)
-const { page, pageSize, total, paginated } = useClientPagination(items, 10)
+const { page, pageSize, total, paginated } = useClientPagination(data, 10)
 
 const modalOpen = ref(false)
 const editItem = ref<FriendLinkItem | null>(null)

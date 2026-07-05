@@ -55,12 +55,11 @@ const { data, status, refresh } = usePrivateResource<AdminDashboardData>({
   query: computed(() => ({ days: selectedRange.value })),
   defaultData: createEmptyDashboardData
 })
-const dashboard = computed(() => data.value)
-const overview = computed(() => dashboard.value.overview)
-const trend = computed(() => dashboard.value.trend)
-const distribution = computed(() => dashboard.value.distribution)
-const recentCalls = computed(() => dashboard.value.recentCalls)
-const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
+const overview = computed(() => data.value.overview)
+const trend = computed(() => data.value.trend)
+const distribution = computed(() => data.value.distribution)
+const recentCalls = computed(() => data.value.recentCalls)
+const generatedAt = computed(() => formatDateTime(data.value.generatedAt))
 const callsTrendValues = computed(() => getCallsTrendValues(trend.value))
 const successRateTrendValues = computed(() => getSuccessRateTrendValues(trend.value))
 

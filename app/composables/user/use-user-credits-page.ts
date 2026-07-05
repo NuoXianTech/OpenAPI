@@ -1,4 +1,5 @@
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
@@ -73,8 +74,15 @@ function createEmptyCreditSummary(): CreditSummary {
 export function useUserCreditsPage() {
   const toast = useToast()
 
-  const summary = ref<CreditSummary>(createEmptyCreditSummary())
-  const summaryLoading = ref(false)
+  const {
+    data: summary,
+    loading: summaryLoading,
+    refresh: fetchSummary
+  } = usePrivateResource<CreditSummary>({
+    path: '/api/user/credits/summary',
+    defaultData: createEmptyCreditSummary,
+    immediate: false
+  })
 
   // 交易流水分页：私有数据统一走 usePrivatePagedList（$fetch，不进 payload）。
   // immediate:false —— 仅「流水明细」子页挂载时自行调用 fetchTransactions 首拉，其余 tab 不触发。
@@ -92,21 +100,16 @@ export function useUserCreditsPage() {
 
   const redeemRecords = ref<RedeemRecord[]>([])
 
-  const checkin = ref<CheckinStatus | null>(null)
-  const checkinLoading = ref(false)
+  const {
+    data: checkin,
+    loading: checkinLoading,
+    refresh: fetchCheckinStatus
+  } = usePrivateResource<CheckinStatus | null>({
+    path: '/api/user/credits/checkin',
+    defaultData: () => null,
+    immediate: false
+  })
   const isCheckingIn = ref(false)
-
-  async function fetchSummary() {
-    summaryLoading.value = true
-    try {
-      const res = await $fetch<CreditSummary>('/api/user/credits/summary')
-      summary.value = res || createEmptyCreditSummary()
-    } catch {
-      summary.value = createEmptyCreditSummary()
-    } finally {
-      summaryLoading.value = false
-    }
-  }
 
   async function fetchRedeemRecords() {
     try {
@@ -116,18 +119,6 @@ export function useUserCreditsPage() {
       redeemRecords.value = res?.items || []
     } catch {
       redeemRecords.value = []
-    }
-  }
-
-  async function fetchCheckinStatus() {
-    checkinLoading.value = true
-    try {
-      const res = await $fetch<CheckinStatus>('/api/user/credits/checkin')
-      checkin.value = res
-    } catch {
-      checkin.value = null
-    } finally {
-      checkinLoading.value = false
     }
   }
 

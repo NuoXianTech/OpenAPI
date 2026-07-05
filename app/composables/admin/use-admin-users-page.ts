@@ -41,7 +41,6 @@ export function useAdminUsersPage() {
     defaultData: () => [],
     query: computed(() => ({ keyword: keyword.value.trim() || undefined }))
   })
-  const items = computed(() => data.value)
 
   watchDebounced(keyword, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
 
@@ -146,7 +145,7 @@ export function useAdminUsersPage() {
   return {
     keyword,
     status,
-    items,
+    items: data,
     refresh,
     rowSelection,
     selectedIds,

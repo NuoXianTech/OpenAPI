@@ -25,8 +25,7 @@ const { data, status, refresh } = usePrivateResource<ApiCategoryItem[]>({
   path: '/api/admin/api-categories/list',
   defaultData: () => []
 })
-const items = computed<ApiCategoryItem[]>(() => data.value)
-const { page, pageSize, total, paginated } = useClientPagination(items, 10)
+const { page, pageSize, total, paginated } = useClientPagination(data, 10)
 
 const modalOpen = ref(false)
 const editItem = ref<ApiCategoryItem | null>(null)

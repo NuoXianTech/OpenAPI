@@ -22,8 +22,7 @@ const { data: messagesData, status, refresh } = usePrivateResource<AdminNotifica
   path: '/api/admin/notifications/list',
   defaultData: () => []
 })
-const messages = computed<AdminNotificationMessageRow[]>(() => messagesData.value)
-const { page, pageSize, total, paginated } = useClientPagination(messages, 10)
+const { page, pageSize, total, paginated } = useClientPagination(messagesData, 10)
 
 const form = reactive(createAdminNotificationForm())
 const sending = ref(false)
@@ -36,7 +35,7 @@ const {
   columns,
   getRowItems
 } = useAdminNotificationsDisplayMeta({
-  users: computed(() => usersData.value),
+  users: usersData,
   openDetail,
   openDelete
 })
