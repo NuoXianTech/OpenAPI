@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
 import { announcements } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 
 export interface AnnouncementInput {
   title: string
@@ -30,7 +31,7 @@ export const announcementService = {
 
   async getById(id: number) {
     const res = await db.select().from(announcements).where(eq(announcements.id, id)).limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async create(input: AnnouncementInput, actorUserId: number | null) {
@@ -58,7 +59,7 @@ export const announcementService = {
       .set(setClause)
       .where(eq(announcements.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async softDelete(id: number) {
@@ -66,7 +67,7 @@ export const announcementService = {
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
       .where(eq(announcements.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async bumpSort(id: number, direction: 'up' | 'down') {

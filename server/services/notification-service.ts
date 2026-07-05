@@ -1,6 +1,7 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
 import { normalizePagination } from '~~/server/utils/pagination'
+import { firstRow } from '~~/server/utils/row'
 
 // 用户表已是硬删模型，listActiveUserIds / send 不再需要过滤 deletedAt
 
@@ -141,7 +142,7 @@ export const notificationService = {
         eq(notificationDeliveries.isRead, false)
       ))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async markAllRead(userId: number) {
@@ -184,7 +185,7 @@ export const notificationService = {
     const messageRows = await db.select().from(notificationMessages)
       .where(eq(notificationMessages.id, messageId))
       .limit(1)
-    const message = messageRows[0] || null
+    const message = firstRow(messageRows)
     if (!message) return { message: null, deliveries: [] }
 
     const deliveries = await db.select({
@@ -209,6 +210,6 @@ export const notificationService = {
       .set({ deletedAt: new Date() })
       .where(eq(notificationMessages.id, messageId))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   }
 }

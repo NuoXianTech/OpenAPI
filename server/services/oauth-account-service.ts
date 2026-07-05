@@ -1,5 +1,6 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { oauthAccounts } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 
 export interface OauthAccountUpsertInput {
   userId: number
@@ -16,7 +17,7 @@ export const oauthAccountService = {
     const res = await db.select().from(oauthAccounts)
       .where(and(eq(oauthAccounts.provider, provider), eq(oauthAccounts.providerUserId, providerUserId)))
       .limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 查某用户在某 provider 上的绑定（受 (userId, provider) 唯一约束，至多一条） */
@@ -24,7 +25,7 @@ export const oauthAccountService = {
     const res = await db.select().from(oauthAccounts)
       .where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)))
       .limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async listByUserId(userId: number) {
@@ -56,7 +57,7 @@ export const oauthAccountService = {
     const res = await db.delete(oauthAccounts)
       .where(and(eq(oauthAccounts.userId, userId), eq(oauthAccounts.provider, provider)))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async upsertAccount(input: OauthAccountUpsertInput) {

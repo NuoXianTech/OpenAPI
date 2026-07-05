@@ -3,6 +3,7 @@ import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/api-guard'
 import { API_STATUS, isAutomaticApiStatus } from '~~/shared/config/api-status'
 import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
+import { firstRow } from '~~/server/utils/row'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -160,14 +161,14 @@ export const apiService = {
     const res = await db.select().from(apis)
       .where(eq(apis.id, id))
       .limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async getByCode(code: string) {
     const res = await db.select().from(apis)
       .where(eq(apis.code, code))
       .limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   /**
@@ -183,7 +184,7 @@ export const apiService = {
     const rows = await db.select().from(apis)
       .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
       .limit(1)
-    const value = rows[0] || null
+    const value = firstRow(rows)
     guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
     return value
   },
@@ -259,7 +260,7 @@ export const apiService = {
       })
       .where(eq(apis.id, id))
       .returning()
-    const updated = res[0] || null
+    const updated = firstRow(res)
     if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
     return updated
   },
@@ -277,7 +278,7 @@ export const apiService = {
       const res = await db.delete(apis)
         .where(eq(apis.id, id))
         .returning()
-      const deleted = res[0] || null
+      const deleted = firstRow(res)
       if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
       return deleted
     } catch (err) {
@@ -314,7 +315,7 @@ export const apiService = {
     // null 表示 admin 内置账号；正整数为真实用户 id；其他视作 admin
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
-    const updated = res[0] || null
+    const updated = firstRow(res)
     if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
     return updated
   },
@@ -381,7 +382,7 @@ export const apiService = {
         .set(patch)
         .where(eq(apis.id, existing.id))
         .returning()
-      const updated = res[0] || null
+      const updated = firstRow(res)
       if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
 
       if (methodChanged) {
@@ -419,7 +420,7 @@ export const apiService = {
       createdBy: data.createdBy,
       updatedBy: data.createdBy
     }).returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /**
@@ -436,7 +437,7 @@ export const apiService = {
       })
       .where(eq(apis.id, id))
       .returning()
-    const updated = res[0] || null
+    const updated = firstRow(res)
     if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
     return updated
   }

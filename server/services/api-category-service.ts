@@ -1,6 +1,7 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { createError } from 'h3'
 import { apiCategories, apis } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 
 export interface ApiCategoryInput {
   code: string
@@ -28,12 +29,12 @@ export const apiCategoryService = {
 
   async getById(id: number) {
     const res = await db.select().from(apiCategories).where(eq(apiCategories.id, id)).limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async getByCode(code: string) {
     const res = await db.select().from(apiCategories).where(eq(apiCategories.code, code)).limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async create(input: ApiCategoryInput) {
@@ -63,7 +64,7 @@ export const apiCategoryService = {
       .set({ ...rest, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 统计绑定到该分类的接口数量（含已禁用 / orphan 接口） */
@@ -88,6 +89,6 @@ export const apiCategoryService = {
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   }
 }

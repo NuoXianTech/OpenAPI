@@ -1,6 +1,7 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 
 const SECRET_BYTES = 32
 const MAX_BATCH_COUNT = 5
@@ -68,7 +69,7 @@ type ApiKeyRecord = typeof apiKeys.$inferSelect
 export const apiKeyService = {
   async getByApiKey(apiKey: string) {
     const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, apiKey)).limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async listByUser(userId: number) {
@@ -127,7 +128,7 @@ export const apiKeyService = {
       const deleted = await tx.delete(apiKeys)
         .where(eq(apiKeys.id, key.id))
         .returning()
-      return deleted[0] || null
+      return firstRow(deleted)
     })
   },
 
@@ -149,7 +150,7 @@ export const apiKeyService = {
       const deleted = await tx.delete(apiKeys)
         .where(eq(apiKeys.id, key.id))
         .returning()
-      return deleted[0] || null
+      return firstRow(deleted)
     })
   },
 
@@ -183,14 +184,14 @@ export const apiKeyService = {
         ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
         : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
       const cur = await db.select().from(apiKeys).where(where).limit(1)
-      return cur[0] || null
+      return firstRow(cur)
     }
 
     const where = opts.userId !== undefined
       ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
       : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
     const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(where).returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async resetForUser(userId: number, id: number) {
@@ -199,7 +200,7 @@ export const apiKeyService = {
       .set({ apiKey: nextKey, updatedAt: new Date() })
       .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async resetById(id: number) {
@@ -211,7 +212,7 @@ export const apiKeyService = {
       })
       .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /**

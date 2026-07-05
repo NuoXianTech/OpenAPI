@@ -49,16 +49,3 @@ export function normalizePagination(
     offset: Math.max(parsedOffset ?? defaultOffset, 0)
   }
 }
-
-export function parsePaginationQuery(
-  query: PaginationInput,
-  options: PaginationOptions = {}
-): NormalizedPagination {
-  return normalizePagination(
-    {
-      limit: query.limit,
-      offset: query.offset
-    },
-    options
-  )
-}

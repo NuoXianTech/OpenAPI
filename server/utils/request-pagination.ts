@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
 import {
-  parsePaginationQuery,
+  normalizePagination,
   type NormalizedPagination,
   type PaginationOptions
 } from '~~/server/utils/pagination'
@@ -20,6 +20,6 @@ export function readPaginationQuery(
   const query = getQuery(event) as RequestQuery
   return {
     query,
-    ...parsePaginationQuery(query, options)
+    ...normalizePagination(query, options)
   }
 }

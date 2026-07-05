@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePagination, parsePaginationQuery } from '~~/server/utils/pagination'
+import { normalizePagination } from '~~/server/utils/pagination'
 
 describe('pagination utilities', () => {
   it('normalizes defaults, clamps bounds, and parses query values', () => {
@@ -9,7 +9,7 @@ describe('pagination utilities', () => {
     expect(normalizePagination({}, { defaultLimit: 10, maxLimit: 30 })).toEqual({ limit: 10, offset: 0 })
     expect(normalizePagination({ limit: 100 }, { defaultLimit: 10, maxLimit: 30 })).toEqual({ limit: 30, offset: 0 })
 
-    expect(parsePaginationQuery({ limit: '25', offset: ['8'] })).toEqual({ limit: 25, offset: 8 })
-    expect(parsePaginationQuery({ limit: 'many', offset: 'soon' })).toEqual({ limit: 50, offset: 0 })
+    expect(normalizePagination({ limit: '25', offset: ['8'] })).toEqual({ limit: 25, offset: 8 })
+    expect(normalizePagination({ limit: 'many', offset: 'soon' })).toEqual({ limit: 50, offset: 0 })
   })
 })

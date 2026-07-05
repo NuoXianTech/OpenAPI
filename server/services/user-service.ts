@@ -1,5 +1,6 @@
 import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
 import { creditTransactions, users } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
 import { siteSettingsService } from './site-settings-service'
 
@@ -81,7 +82,7 @@ export const usersService = {
       .where(eq(users.id, id))
       .returning()
 
-    return res[0] || null
+    return firstRow(res)
   },
 
   /**
@@ -94,7 +95,7 @@ export const usersService = {
     const res = await db.delete(users)
       .where(eq(users.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async addUser(data: {
@@ -204,7 +205,7 @@ export const usersService = {
       })
       .where(eq(users.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async updateEmail(id: number, email: string) {
@@ -216,7 +217,7 @@ export const usersService = {
       })
       .where(eq(users.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /**
@@ -235,7 +236,7 @@ export const usersService = {
       .where(eq(users.id, id))
       .returning()
 
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 封禁已到期 → 惰性解封：清除 isBanned / bannedReason / bannedUntil。 */
@@ -250,7 +251,7 @@ export const usersService = {
       .where(eq(users.id, id))
       .returning()
 
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 令该用户所有已签发 JWT 失效（改密 / 重置 / 全局登出）：tokenVersion 自增。 */
@@ -263,6 +264,6 @@ export const usersService = {
       .where(eq(users.id, id))
       .returning()
 
-    return res[0] || null
+    return firstRow(res)
   }
 }

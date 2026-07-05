@@ -16,6 +16,7 @@ import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
+import { firstRow } from '~~/server/utils/row'
 
 type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
@@ -66,7 +67,7 @@ function hasScope(scopes: string[] | null | undefined, api: ApiRecord): boolean 
 async function loadApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null
   const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, rawKey)).limit(1)
-  return res[0] || null
+  return firstRow(res)
 }
 
 async function getTodayQuotaUsage(apiId: number): Promise<number> {

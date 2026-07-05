@@ -1,5 +1,6 @@
 import { desc, eq } from 'drizzle-orm'
 import { friendLinks } from '@nuxthub/db/schema'
+import { firstRow } from '~~/server/utils/row'
 
 export const friendLinkService = {
   async list() {
@@ -15,7 +16,7 @@ export const friendLinkService = {
 
   async getById(id: number) {
     const res = await db.select().from(friendLinks).where(eq(friendLinks.id, id)).limit(1)
-    return res[0] || null
+    return firstRow(res)
   },
 
   async create(data: {
@@ -48,11 +49,11 @@ export const friendLinkService = {
       })
       .where(eq(friendLinks.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   async delete(id: number) {
     const res = await db.delete(friendLinks).where(eq(friendLinks.id, id)).returning()
-    return res[0] || null
+    return firstRow(res)
   }
 }

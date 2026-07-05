@@ -6,6 +6,7 @@ import {
   normalizeRedemptionGeneration
 } from '~~/server/services/redemption-code-generation'
 import { normalizePagination } from '~~/server/utils/pagination'
+import { firstRow } from '~~/server/utils/row'
 
 /**
  * 兑换码服务
@@ -207,7 +208,7 @@ export const redemptionService = {
       .set({ isEnabled: enabled, updatedAt: new Date() })
       .where(eq(redemptionCodes.id, id))
       .returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 批量启用/禁用整个批次 */
@@ -221,7 +222,7 @@ export const redemptionService = {
 
   async remove(id: number) {
     const res = await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id)).returning()
-    return res[0] || null
+    return firstRow(res)
   },
 
   /** 删除整个批次（仅未被使用过的码会被删除，已被使用的保留以保证审计） */
