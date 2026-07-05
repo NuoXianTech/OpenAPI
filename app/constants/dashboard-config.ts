@@ -28,7 +28,11 @@ export interface DashboardConfig {
   loginRedirect: string
 }
 
-export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {
+export interface DashboardStaticConfig extends Omit<DashboardConfig, 'brand'> {
+  brand: (siteName: string) => DashboardBrand
+}
+
+export const adminDashboardConfig: DashboardStaticConfig = {
   id: 'admin',
   brand: siteName => ({
     label: siteName || 'OpenAPI',
@@ -70,7 +74,7 @@ export const adminDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (si
   loginRedirect: '/admin/login'
 }
 
-export const userDashboardConfig: Omit<DashboardConfig, 'brand'> & { brand: (siteName: string) => DashboardBrand } = {
+export const userDashboardConfig: DashboardStaticConfig = {
   id: 'user',
   brand: siteName => ({
     label: siteName || 'OpenAPI',

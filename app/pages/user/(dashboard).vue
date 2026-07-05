@@ -1,6 +1,11 @@
 <script setup lang="ts">
 definePageMeta({
-  layout: 'user',
+  layout: {
+    name: 'dashboard',
+    props: {
+      dashboardId: 'user'
+    }
+  },
   middleware: ['auth-user', 'dashboard-root-redirect']
 })
 </script>

@@ -280,9 +280,9 @@ export const apiService = {
       const deleted = res[0] || null
       if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
       return deleted
-    } catch (_err) {
+    } catch (err) {
       // FK restrict 触发：apiCalls 中仍有该接口的历史调用
-      throw new Error('该接口存在历史调用日志，无法删除；请先在统计页面清理调用日志，或保留接口为禁用状态')
+      throw new Error('该接口存在历史调用日志，无法删除；请先在统计页面清理调用日志，或保留接口为禁用状态', { cause: err })
     }
   },
 

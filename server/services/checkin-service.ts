@@ -170,7 +170,7 @@ export const checkinService = {
         throw err
       }
 
-      let balanceAfter = 0
+      let balanceAfter: number
       if (amount > 0) {
         const credited = await tx.update(users)
           .set({ credits: sql`${users.credits} + ${amount}`, updatedAt: now })

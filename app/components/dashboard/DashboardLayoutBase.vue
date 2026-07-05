@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
-import type { DashboardConfig } from '~/constants/dashboard-config'
+import type { DashboardStaticConfig } from '~/constants/dashboard-config'
 import {
   dashboardConfigInjectionKey,
   type ResolvedDashboardConfig
 } from '~/composables/dashboard/use-dashboard-config'
 
-interface StaticBrandConfig extends Omit<DashboardConfig, 'brand'> {
-  brand: (siteName: string) => DashboardConfig['brand']
-}
-
 interface DashboardLayoutBaseProps {
-  config: StaticBrandConfig
+  config: DashboardStaticConfig
 }
 
 const props = defineProps<DashboardLayoutBaseProps>()

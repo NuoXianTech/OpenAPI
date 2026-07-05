@@ -35,7 +35,7 @@ export const notificationService = {
    * 'all_with_future' 还会被 userService.activateUser 在新用户激活时补发（见下面 fanOutFutureMessagesTo）。
    */
   async send(input: SendNotificationInput) {
-    let recipientIds: number[] = []
+    let recipientIds: number[]
     if (input.audience === 'specific') {
       const ids = Array.from(new Set((input.recipientUserIds || []).map(Number).filter(n => Number.isFinite(n) && n > 0)))
       if (ids.length === 0) throw new Error('specific audience requires recipientUserIds')
