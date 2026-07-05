@@ -40,7 +40,7 @@ const navigationMenuUi = {
   item: 'min-w-0',
   link: 'dashboard-sidebar-link min-h-8 rounded-md px-2 py-1.5',
   linkLeadingIcon: 'dashboard-sidebar-link-icon size-4',
-  linkLabel: 'dashboard-sidebar-link-label text-xs font-medium',
+  linkLabel: 'dashboard-sidebar-link-label',
   linkTrailing: 'dashboard-sidebar-link-trailing',
   label: 'dashboard-sidebar-menu-label'
 }

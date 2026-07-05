@@ -162,10 +162,10 @@ body {
 
 .dashboard-sidebar-group-label {
   padding: 0.65rem 0.5rem 0.2rem;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1rem;
-  color: color-mix(in oklab, var(--ui-text-dimmed) 88%, transparent);
+  line-height: 1.25rem;
+  color: var(--ui-text-highlighted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -176,7 +176,6 @@ body {
 
 .dashboard-sidebar-link {
   position: relative;
-  color: var(--ui-text-muted);
   border: 1px solid transparent;
 }
 
@@ -184,31 +183,17 @@ body {
   border-radius: var(--dashboard-radius);
 }
 
-.dashboard-sidebar-link:hover {
-  color: var(--ui-text-highlighted);
-}
-
 .dashboard-sidebar-link:hover::before {
   background: var(--dashboard-sidebar-hover);
 }
 
 .dashboard-sidebar-link[data-active] {
-  color: var(--ui-text-highlighted);
   border-color: transparent;
   box-shadow: none;
 }
 
 .dashboard-sidebar-link[data-active]::before {
   background: var(--dashboard-sidebar-active);
-}
-
-.dashboard-sidebar-link-icon {
-  color: color-mix(in oklab, var(--ui-text-muted) 86%, var(--ui-primary) 14%);
-}
-
-.dashboard-sidebar-link:hover .dashboard-sidebar-link-icon,
-.dashboard-sidebar-link[data-active] .dashboard-sidebar-link-icon {
-  color: var(--ui-text-highlighted);
 }
 
 .dashboard-sidebar-link-label {

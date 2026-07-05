@@ -24,6 +24,12 @@ const {
   formatCompact,
   overviewCards
 } = useAdminAnalyticsDisplayMeta({ analytics })
+
+const analyticsMetricTones = {
+  primary: 'neutral',
+  warning: 'warning',
+  info: 'info'
+} as const
 </script>
 
 <template>
@@ -68,23 +74,17 @@ const {
         </UPageHeader>
 
         <!-- 概览卡片 -->
-        <UPageGrid class="sm:grid-cols-2 lg:grid-cols-3">
-          <UPageCard
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <DashboardMetricCard
             v-for="card in overviewCards"
             :key="card.key"
+            :label="card.label"
+            :value="card.value"
             :icon="card.icon"
-            :title="card.value"
-            :description="card.label"
-            variant="subtle"
-            class="[&_h3]:tabular-nums"
-          >
-            <template #footer>
-              <p class="text-xs text-muted">
-                {{ card.helper }}
-              </p>
-            </template>
-          </UPageCard>
-        </UPageGrid>
+            :meta="card.helper"
+            :tone="analyticsMetricTones[card.accent]"
+          />
+        </div>
 
         <!-- 请求分布 -->
         <UCard>

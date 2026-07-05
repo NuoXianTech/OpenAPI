@@ -50,6 +50,68 @@ const sampleCurl = computed(() => [
   `  -H 'x-api-key: <your-api-key>'`
 ].join('\n'))
 
+interface UserOverviewMetricAction {
+  label: string
+  to: string
+  icon: string
+}
+
+interface UserOverviewMetricCard {
+  key: string
+  label: string
+  value: string
+  unit?: string
+  icon: string
+  tone: 'neutral' | 'info' | 'warning' | 'success'
+  sparklineValues?: number[]
+  sparklineColor?: string
+  action?: UserOverviewMetricAction
+}
+
+const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserOverviewMetricCards() {
+  return [
+    {
+      key: 'spent24h',
+      label: '近 24 小时消耗',
+      value: credits.value.spent24h.toLocaleString(),
+      unit: '积分',
+      icon: 'i-mdi-fire',
+      tone: 'warning',
+      sparklineValues: spendTrendValues.value,
+      sparklineColor: 'var(--ui-warning)'
+    },
+    {
+      key: 'totalSpent',
+      label: '历史累计消耗',
+      value: credits.value.totalSpent.toLocaleString(),
+      unit: '积分',
+      icon: 'i-mdi-chart-line',
+      tone: 'neutral',
+      sparklineValues: spendTrendValues.value,
+      sparklineColor: 'var(--ui-primary)'
+    },
+    {
+      key: 'totalCalls',
+      label: '请求计数',
+      value: calls.value.total.toLocaleString(),
+      unit: '次',
+      icon: 'i-mdi-heart-pulse',
+      tone: 'info',
+      sparklineValues: callsTrendValues.value,
+      sparklineColor: 'var(--ui-info)'
+    },
+    {
+      key: 'balance',
+      label: '剩余额度',
+      value: credits.value.balance.toLocaleString(),
+      unit: '积分',
+      icon: 'i-mdi-cash-multiple',
+      tone: 'success',
+      action: { label: '查看积分', to: '/user/credits', icon: 'i-mdi-arrow-right' }
+    }
+  ]
+})
+
 async function copyCurl() {
   try {
     await navigator.clipboard.writeText(sampleCurl.value)
@@ -191,95 +253,33 @@ async function copyCurl() {
             </UButton>
           </div>
 
-          <div class="grid gap-4 lg:grid-cols-4">
-            <UCard
-              :ui="{ body: 'space-y-3' }"
+          <div class="grid gap-3 lg:grid-cols-4">
+            <DashboardMetricCard
+              v-for="card in overviewMetricCards"
+              :key="card.key"
               class="lg:col-span-1"
+              :label="card.label"
+              :value="card.value"
+              :unit="card.unit"
+              :icon="card.icon"
+              :tone="card.tone"
+              :sparkline-values="card.sparklineValues"
+              :sparkline-color="card.sparklineColor"
             >
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">近 24 小时消耗</span>
-                <UIcon
-                  name="i-mdi-fire"
-                  class="size-4 text-warning"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ credits.spent24h.toLocaleString() }}
-                <span class="text-xs font-normal text-muted ml-1">积分</span>
-              </div>
-              <DashboardSparkline
-                :values="spendTrendValues"
-                color="var(--ui-warning)"
-              />
-            </UCard>
-
-            <UCard
-              :ui="{ body: 'space-y-3' }"
-              class="lg:col-span-1"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">历史累计消耗</span>
-                <UIcon
-                  name="i-mdi-chart-line"
-                  class="size-4 text-primary"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ credits.totalSpent.toLocaleString() }}
-                <span class="text-xs font-normal text-muted ml-1">积分</span>
-              </div>
-              <DashboardSparkline
-                :values="spendTrendValues"
-                color="var(--ui-primary)"
-              />
-            </UCard>
-
-            <UCard
-              :ui="{ body: 'space-y-3' }"
-              class="lg:col-span-1"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">请求计数</span>
-                <UIcon
-                  name="i-mdi-heart-pulse"
-                  class="size-4 text-info"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ calls.total.toLocaleString() }}
-                <span class="text-xs font-normal text-muted ml-1">次</span>
-              </div>
-              <DashboardSparkline
-                :values="callsTrendValues"
-                color="var(--ui-info)"
-              />
-            </UCard>
-
-            <!-- Wallet & Status -->
-            <UCard
-              :ui="{ body: 'space-y-4' }"
-              class="lg:col-span-1 ring-1 ring-primary/10"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">剩余额度</span>
-                <UIcon
-                  name="i-mdi-cash-multiple"
-                  class="size-4 text-warning"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ credits.balance.toLocaleString() }}
-                <span class="text-xs font-normal text-muted ml-1">积分</span>
-              </div>
-              <UButton
-                to="/user/credits"
-                block
-                color="neutral"
-                trailing-icon="i-mdi-arrow-right"
+              <template
+                v-if="card.action"
+                #footer
               >
-                积分
-              </UButton>
-            </UCard>
+                <UButton
+                  :to="card.action.to"
+                  block
+                  color="neutral"
+                  :trailing-icon="card.action.icon"
+                >
+                  {{ card.action.label }}
+                </UButton>
+              </template>
+            </DashboardMetricCard>
           </div>
         </section>
       </div>

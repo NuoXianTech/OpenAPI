@@ -203,59 +203,40 @@ const {
       </div>
 
       <template v-else-if="hasData">
-        <UPageGrid class="mb-4 sm:grid-cols-2 lg:grid-cols-4">
-          <UCard
+        <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <DashboardMetricCard
             v-for="item in overviewCards"
             :key="item.key"
-            variant="subtle"
-            class="stats-card"
-            :style="{ '--stat-accent': item.accent }"
-            :ui="{ body: 'p-4 sm:p-5' }"
+            :label="item.label"
+            :value="item.value"
+            :icon="item.icon"
+            :tone="item.tone"
+            :style="{ '--dashboard-metric-accent': item.accent }"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="min-w-0">
-                <div class="text-xs font-medium text-muted">
-                  {{ item.label }}
+            <template #footer>
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-3 text-xs text-muted">
+                  <span class="min-w-0 truncate">{{ item.helper }}</span>
+                  <UBadge
+                    :color="item.tone"
+                    variant="soft"
+                    size="sm"
+                    class="shrink-0 rounded-md"
+                  >
+                    {{ item.key === 'successRate' ? formatRate(successRateProgress) : item.key === 'enabledStatsApis' ? formatRate(trackedApiRatio) : '实时' }}
+                  </UBadge>
                 </div>
-                <div
-                  class="mt-2 truncate text-2xl font-semibold leading-none text-highlighted tabular-nums"
-                  :title="item.value"
-                >
-                  {{ item.value }}
-                </div>
-              </div>
-              <div
-                class="stats-card__icon"
-                :class="`is-${item.tone}`"
-              >
-                <UIcon
-                  :name="item.icon"
-                  class="size-4"
+
+                <UProgress
+                  v-if="item.key === 'successRate' || item.key === 'enabledStatsApis'"
+                  :model-value="item.key === 'successRate' ? successRateProgress : trackedApiRatio"
+                  :color="item.tone"
+                  size="xs"
                 />
               </div>
-            </div>
-
-            <div class="mt-4 flex items-center justify-between gap-3 text-xs text-muted">
-              <span class="min-w-0 truncate">{{ item.helper }}</span>
-              <UBadge
-                :color="item.tone"
-                variant="soft"
-                size="sm"
-                class="shrink-0 rounded-md"
-              >
-                {{ item.key === 'successRate' ? formatRate(successRateProgress) : item.key === 'enabledStatsApis' ? formatRate(trackedApiRatio) : '实时' }}
-              </UBadge>
-            </div>
-
-            <UProgress
-              v-if="item.key === 'successRate' || item.key === 'enabledStatsApis'"
-              :model-value="item.key === 'successRate' ? successRateProgress : trackedApiRatio"
-              :color="item.tone"
-              size="xs"
-              class="mt-3"
-            />
-          </UCard>
-        </UPageGrid>
+            </template>
+          </DashboardMetricCard>
+        </div>
 
         <div class="space-y-4">
           <UCard
@@ -463,63 +444,6 @@ const {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-}
-
-.stats-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  flex: 0 0 auto;
-}
-
-.stats-card__icon.is-primary {
-  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
-  color: var(--ui-text);
-}
-
-.stats-card__icon.is-success {
-  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
-  color: var(--ui-success);
-}
-
-.stats-card__icon.is-info {
-  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
-  color: var(--ui-info);
-}
-
-.stats-card__icon.is-warning {
-  background: color-mix(in srgb, var(--ui-warning) 15%, transparent);
-  color: var(--ui-warning);
-}
-
-.stats-card__icon.is-error {
-  background: color-mix(in srgb, var(--ui-error) 13%, transparent);
-  color: var(--ui-error);
-}
-
-.stats-card__icon.is-neutral {
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
-}
-
-.stats-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.stats-card::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  background: color-mix(in srgb, var(--stat-accent, var(--ui-primary)) 72%, transparent);
-  opacity: 0.7;
-}
-
-.stats-card__icon {
-  width: 32px;
-  height: 32px;
 }
 
 .stats-panel {

@@ -10,6 +10,32 @@ export default defineAppConfig({
       secondary: 'zinc',
       neutral: 'zinc'
     },
+    card: {
+      slots: {
+        root: 'rounded-lg overflow-hidden shadow-none',
+        header: 'p-4 sm:px-5',
+        title: 'text-highlighted font-semibold',
+        description: 'mt-1 text-muted text-sm',
+        body: 'p-4 sm:p-5',
+        footer: 'p-4 sm:px-5'
+      },
+      variants: {
+        variant: {
+          outline: {
+            root: 'border border-default bg-elevated divide-y divide-default ring-0'
+          },
+          soft: {
+            root: 'border border-default bg-elevated divide-y divide-default ring-0'
+          },
+          subtle: {
+            root: 'border border-default bg-elevated divide-y divide-default ring-0'
+          }
+        }
+      },
+      defaultVariants: {
+        variant: 'outline'
+      }
+    },
     table: {
       slots: {
         root: 'relative overflow-auto',

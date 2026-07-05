@@ -65,6 +65,60 @@ const generatedAt = computed(() => formatDateTime(dashboard.value.generatedAt))
 const callsTrendValues = computed(() => getCallsTrendValues(trend.value))
 const successRateTrendValues = computed(() => getSuccessRateTrendValues(trend.value))
 
+interface OverviewMetricCard {
+  key: string
+  label: string
+  value: string
+  unit?: string
+  meta?: string
+  icon: string
+  tone: 'neutral' | 'info' | 'warning' | 'success'
+  sparklineValues?: number[]
+  sparklineColor?: string
+}
+
+const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewMetricCards() {
+  return [
+    {
+      key: 'users',
+      label: '注册用户',
+      value: formatNumber(overview.value.userCount),
+      unit: '人',
+      meta: '当前平台注册账号总量',
+      icon: 'i-mdi-account-group-outline',
+      tone: 'neutral'
+    },
+    {
+      key: 'apis',
+      label: '启用 API',
+      value: formatNumber(overview.value.enabledApiCount),
+      unit: '个',
+      meta: `共 ${formatNumber(overview.value.totalApiCount)} 个接口`,
+      icon: 'i-mdi-api',
+      tone: 'info'
+    },
+    {
+      key: 'calls',
+      label: '总调用',
+      value: formatNumber(overview.value.totalCalls),
+      unit: '次',
+      icon: 'i-mdi-chart-line',
+      tone: 'warning',
+      sparklineValues: callsTrendValues.value,
+      sparklineColor: 'var(--ui-warning)'
+    },
+    {
+      key: 'success-rate',
+      label: '成功率',
+      value: formatRate(overview.value.successRate),
+      icon: 'i-mdi-shield-check-outline',
+      tone: 'success',
+      sparklineValues: successRateTrendValues.value,
+      sparklineColor: 'var(--ui-success)'
+    }
+  ]
+})
+
 function getCallsTrendValues(trendItems: AdminDashboardTrendPoint[]): number[] {
   return trendItems.map(point => point.totalCalls)
 }
@@ -222,75 +276,19 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             </UButton>
           </div>
 
-          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <UCard :ui="{ body: 'space-y-3' }">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">注册用户</span>
-                <UIcon
-                  name="i-mdi-account-group-outline"
-                  class="size-4 text-primary"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ formatNumber(overview.userCount) }}
-                <span class="text-xs font-normal text-muted ml-1">人</span>
-              </div>
-            </UCard>
-
-            <UCard :ui="{ body: 'space-y-3' }">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">启用 API</span>
-                <UIcon
-                  name="i-mdi-api"
-                  class="size-4 text-info"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ formatNumber(overview.enabledApiCount) }}
-                <span class="text-xs font-normal text-muted ml-1">个</span>
-              </div>
-              <p class="text-xs text-muted">
-                共 {{ formatNumber(overview.totalApiCount) }} 个接口
-              </p>
-            </UCard>
-
-            <UCard :ui="{ body: 'space-y-3' }">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">总调用</span>
-                <UIcon
-                  name="i-mdi-chart-line"
-                  class="size-4 text-warning"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ formatNumber(overview.totalCalls) }}
-                <span class="text-xs font-normal text-muted ml-1">次</span>
-              </div>
-              <DashboardSparkline
-                :values="callsTrendValues"
-                color="var(--ui-warning)"
-              />
-            </UCard>
-
-            <UCard
-              :ui="{ body: 'space-y-3' }"
-              class="ring-1 ring-primary/10"
-            >
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted">成功率</span>
-                <UIcon
-                  name="i-mdi-shield-check-outline"
-                  class="size-4 text-success"
-                />
-              </div>
-              <div class="text-2xl font-semibold tabular-nums">
-                {{ formatRate(overview.successRate) }}
-              </div>
-              <DashboardSparkline
-                :values="successRateTrendValues"
-                color="var(--ui-success)"
-              />
-            </UCard>
+          <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <DashboardMetricCard
+              v-for="card in overviewMetricCards"
+              :key="card.key"
+              :label="card.label"
+              :value="card.value"
+              :unit="card.unit"
+              :meta="card.meta"
+              :icon="card.icon"
+              :tone="card.tone"
+              :sparkline-values="card.sparklineValues"
+              :sparkline-color="card.sparklineColor"
+            />
           </div>
         </section>
 
