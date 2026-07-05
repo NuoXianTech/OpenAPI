@@ -6,16 +6,12 @@ import type {
   PublicCallStatsTrendPoint
 } from '~~/shared/types/public-stats'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
-
-function toNumber(value: number | string | null | undefined) {
-  const normalized = Number(value)
-  return Number.isFinite(normalized) ? normalized : 0
-}
+import { clampInteger, toNumber } from '~~/server/utils/number'
 
 export const apiCallStatsService = {
   async getPublicDashboard(options: { days?: number, topLimit?: number } = {}): Promise<PublicCallStatsDashboard> {
-    const days = Math.min(Math.max(Math.trunc(options.days || 7), 1), 30)
-    const topLimit = Math.min(Math.max(Math.trunc(options.topLimit || 10), 1), 50)
+    const days = clampInteger(options.days || 7, 1, 30, 7)
+    const topLimit = clampInteger(options.topLimit || 10, 1, 50, 10)
 
     const todayStart = getLocalDayStart(new Date())
     const yesterdayStart = addLocalDays(todayStart, -1)

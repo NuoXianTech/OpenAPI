@@ -1,3 +1,5 @@
+import { clampInteger, toInteger } from '~~/server/utils/number'
+
 export interface RedemptionGenerationInput {
   amount: number
   count?: number
@@ -59,15 +61,6 @@ const MAX_PREFIX_LENGTH = 16
 const MAX_NOTE_LENGTH = 500
 const DEFAULT_MAX_ATTEMPTS = 5
 
-function normalizeInteger(value: number | undefined, fallback: number): number {
-  if (value === undefined || !Number.isFinite(value)) return fallback
-  return Math.trunc(value)
-}
-
-function clampInteger(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
-}
-
 function normalizePrefix(prefix: string | null | undefined): string {
   return (prefix || '')
     .trim()
@@ -89,10 +82,10 @@ export function normalizeRedemptionGeneration(
   input: RedemptionGenerationInput
 ): NormalizedRedemptionGeneration {
   return {
-    amount: Math.max(normalizeInteger(input.amount, 1), 1),
-    count: clampInteger(normalizeInteger(input.count, DEFAULT_COUNT), 1, MAX_COUNT),
-    length: clampInteger(normalizeInteger(input.length, DEFAULT_CODE_LENGTH), MIN_CODE_LENGTH, MAX_CODE_LENGTH),
-    maxUses: Math.max(normalizeInteger(input.maxUses, DEFAULT_MAX_USES), 1),
+    amount: Math.max(toInteger(input.amount, 1), 1),
+    count: clampInteger(input.count, 1, MAX_COUNT, DEFAULT_COUNT),
+    length: clampInteger(input.length, MIN_CODE_LENGTH, MAX_CODE_LENGTH, DEFAULT_CODE_LENGTH),
+    maxUses: Math.max(toInteger(input.maxUses, DEFAULT_MAX_USES), 1),
     prefix: normalizePrefix(input.prefix),
     note: normalizeNote(input.note),
     expiresAt: normalizeDate(input.expiresAt),
@@ -117,8 +110,8 @@ export function buildRedemptionCodeRows(input: BuildRedemptionCodeRowsInput): Re
 export async function insertRedemptionCodesUntilComplete<TInput, TInserted>(
   input: InsertRedemptionCodesUntilCompleteInput<TInput, TInserted>
 ): Promise<TInserted[]> {
-  const requestedCount = Math.max(normalizeInteger(input.requestedCount, 0), 0)
-  const maxAttempts = Math.max(normalizeInteger(input.maxAttempts, DEFAULT_MAX_ATTEMPTS), 1)
+  const requestedCount = Math.max(toInteger(input.requestedCount, 0), 0)
+  const maxAttempts = Math.max(toInteger(input.maxAttempts, DEFAULT_MAX_ATTEMPTS), 1)
   const inserted: TInserted[] = []
 
   for (let attempt = 0; attempt < maxAttempts && inserted.length < requestedCount; attempt++) {

@@ -3,12 +3,8 @@ import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
+import { toNumber } from '~~/server/utils/number'
 import type { UserDashboardData, UserDashboardTrendPoint } from '~~/shared/types/user-dashboard'
-
-function toNumber(value: number | string | null | undefined) {
-  const normalized = Number(value)
-  return Number.isFinite(normalized) ? normalized : 0
-}
 
 const TREND_DAYS = 7
 

@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart } from '~~/server/utils/local-time'
+import { clampInteger, toNullableNumber, toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type {
   AdminAnalyticsCallBucket,
@@ -31,17 +32,6 @@ const apiCallTypeExpr = sql<AdminLogType>`
     else 'consume'
   end
 `
-
-function toNumber(value: number | string | null | undefined) {
-  const n = Number(value)
-  return Number.isFinite(n) ? n : 0
-}
-
-function toNullableNumber(value: number | string | null | undefined) {
-  if (value === null || value === undefined) return null
-  const n = Number(value)
-  return Number.isFinite(n) ? n : null
-}
 
 function toIso(value: Date | string | number): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
@@ -198,8 +188,8 @@ export const adminLogsService = {
    * 仅统计 `apis.isEnabled = true AND apis.isStatistics = true` 的"公共接口"。
    */
   async getAnalytics(options: { topLimit?: number, averageWindowDays?: number } = {}): Promise<AdminAnalyticsData> {
-    const topLimit = Math.min(Math.max(Math.trunc(options.topLimit ?? 10), 1), 50)
-    const averageWindowDays = Math.min(Math.max(Math.trunc(options.averageWindowDays ?? 7), 1), 30)
+    const topLimit = clampInteger(options.topLimit ?? 10, 1, 50, 10)
+    const averageWindowDays = clampInteger(options.averageWindowDays ?? 7, 1, 30, 7)
 
     const todayStart = getLocalDayStart(new Date())
     const tomorrowStart = addLocalDays(todayStart, 1)

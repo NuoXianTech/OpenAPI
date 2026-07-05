@@ -1,3 +1,5 @@
+import { clampInteger } from '~~/server/utils/number'
+
 export interface PaginationInput {
   limit?: unknown
   offset?: unknown
@@ -30,10 +32,6 @@ function toFiniteInteger(value: unknown): number | null {
   if (!Number.isFinite(numericValue)) return null
 
   return Math.trunc(numericValue)
-}
-
-function clampInteger(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
 }
 
 export function normalizePagination(

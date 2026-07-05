@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
+import { clampInteger, toNumber } from '~~/server/utils/number'
 import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
@@ -10,15 +11,8 @@ import type {
   AdminDashboardTrendPoint
 } from '~~/shared/types/admin-dashboard'
 
-function toNumber(value: number | string | null | undefined) {
-  const normalized = Number(value)
-  return Number.isFinite(normalized) ? normalized : 0
-}
-
 function resolveRange(raw: unknown): number {
-  const parsed = Number(raw)
-  if (!Number.isFinite(parsed)) return 7
-  return Math.min(Math.max(Math.trunc(parsed), 1), 90)
+  return clampInteger(raw, 1, 90, 7)
 }
 
 export default defineEventHandler(async (event: H3Event): Promise<AdminDashboardData> => {
@@ -26,8 +20,8 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
 
   const query = getQuery(event)
   const days = resolveRange(query.days ?? 7)
-  const distributionLimit = Math.min(Math.max(Math.trunc(Number(query.top ?? 6)), 1), 20)
-  const recentLimit = Math.min(Math.max(Math.trunc(Number(query.recent ?? 10)), 1), 50)
+  const distributionLimit = clampInteger(query.top ?? 6, 1, 20, 6)
+  const recentLimit = clampInteger(query.recent ?? 10, 1, 50, 10)
 
   const todayStart = getLocalDayStart(new Date())
   const yesterdayStart = addLocalDays(todayStart, -1)
