@@ -1,7 +1,8 @@
-import type { AsyncDataRequestStatus } from '#app'
+import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { computed, ref, type Ref } from 'vue'
+import { computed, ref } from 'vue'
 import { parseFetchError } from '~~/shared/utils/client-error'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
@@ -25,25 +26,6 @@ function createSilentToast(): ToastLike {
   return { add: () => {} }
 }
 
-function createUserListSource(keyword: Ref<string>) {
-  try {
-    if (typeof useLazyFetch === 'function') {
-      return useLazyFetch<AdminUserItem[]>('/api/admin/users/list', {
-        query: computed(() => ({ keyword: keyword.value || undefined })),
-        default: () => []
-      })
-    }
-  } catch {
-    // Direct unit tests run without a Nuxt app instance.
-  }
-
-  return {
-    data: ref<AdminUserItem[]>([]),
-    status: ref<AsyncDataRequestStatus>('idle'),
-    refresh: async () => {}
-  }
-}
-
 export function useAdminUsersPage() {
   const toast = (() => {
     try {
@@ -54,8 +36,14 @@ export function useAdminUsersPage() {
     return createSilentToast()
   })()
   const keyword = ref('')
-  const { data, status, refresh } = createUserListSource(keyword)
-  const items = computed(() => data.value || [])
+  const { data, status, refresh } = usePrivateResource<AdminUserItem[]>({
+    path: '/api/admin/users/list',
+    defaultData: () => [],
+    query: computed(() => ({ keyword: keyword.value.trim() || undefined }))
+  })
+  const items = computed(() => data.value)
+
+  watchDebounced(keyword, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
 
   const rowSelection = ref<Record<string, boolean>>({})
   const selectedIds = computed(() =>
