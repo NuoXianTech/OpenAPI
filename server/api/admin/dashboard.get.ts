@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
+import { toIsoString } from '~~/server/utils/date'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
 import { readQueryNumber } from '~~/server/utils/request-query'
@@ -161,7 +162,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
     errorCode: row.errorCode,
     isCounted: row.isCounted,
     latencyMs: row.latencyMs,
-    createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : new Date(row.createdAt).toISOString()
+    createdAt: toIsoString(row.createdAt)
   }))
 
   const todayChangeRate = yesterdayCalls > 0

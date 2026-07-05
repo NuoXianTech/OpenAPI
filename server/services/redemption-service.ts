@@ -5,6 +5,7 @@ import {
   insertRedemptionCodesUntilComplete,
   normalizeRedemptionGeneration
 } from '~~/server/services/redemption-code-generation'
+import { toIsoString } from '~~/server/utils/date'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 
@@ -199,7 +200,7 @@ export const redemptionService = {
       total: Number(r.total),
       usedTotal: Number(r.usedTotal),
       maxUsesTotal: Number(r.maxUsesTotal),
-      createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
+      createdAt: toIsoString(r.createdAt)
     }))
   },
 

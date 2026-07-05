@@ -4,6 +4,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { OAUTH_PROVIDER_PRESETS, isSupportedOauthProvider } from '~~/shared/types/oauth'
 import { requireAuth } from '~~/server/utils/auth'
+import { toNullableIsoString } from '~~/server/utils/date'
 
 // 显式声明形状：drizzle 的 select().from().where() 在某些链上推不出元素类型，
 // listSafeByUserId 的 Awaited 也会随之降级为 any[]，导致下面索引 OAUTH_PROVIDER_PRESETS 失败。
@@ -80,9 +81,7 @@ export default defineEventHandler(async (event: H3Event) => {
     item.email = acc.email
     item.avatarUrl = acc.avatarUrl
     item.providerUserId = acc.providerUserId
-    item.linkedAt = acc.linkedAt instanceof Date
-      ? acc.linkedAt.toISOString()
-      : (acc.linkedAt ? new Date(acc.linkedAt).toISOString() : null)
+    item.linkedAt = toNullableIsoString(acc.linkedAt)
     map.set(acc.provider, item)
   }
 

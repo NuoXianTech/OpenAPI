@@ -1,5 +1,6 @@
 import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
+import { toIsoString } from '~~/server/utils/date'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart } from '~~/server/utils/local-time'
 import { clampInteger, toNullableNumber, toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -32,10 +33,6 @@ const apiCallTypeExpr = sql<AdminLogType>`
     else 'consume'
   end
 `
-
-function toIso(value: Date | string | number): string {
-  return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
-}
 
 // ─────────────────────────────────────────────────────────────────────
 // 调用日志查询
@@ -126,7 +123,7 @@ export const adminLogsService = {
     const rows: AdminLogRow[] = (items as Array<typeof items[number]>).map(r => ({
       id: r.id,
       type: r.type,
-      createdAt: toIso(r.createdAt),
+      createdAt: toIsoString(r.createdAt),
       userId: r.userId,
       userName: r.userName,
       apiKeyId: r.apiKeyId,

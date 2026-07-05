@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
+import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
 import { readQueryDate, readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
@@ -17,10 +18,6 @@ function parseSuccess(value: unknown): boolean | undefined {
   if (v === 'success' || v === 'true') return true
   if (v === 'failure' || v === 'false') return false
   return undefined
-}
-
-function toIso(value: Date | string): string {
-  return value instanceof Date ? value.toISOString() : new Date(value).toISOString()
 }
 
 export default defineEventHandler(async (event: H3Event) => {
@@ -47,7 +44,7 @@ export default defineEventHandler(async (event: H3Event) => {
     ip: r.ip,
     device: summarizeUserAgent(r.userAgent),
     userAgent: r.userAgent,
-    createdAt: toIso(r.createdAt)
+    createdAt: toIsoString(r.createdAt)
   }))
 
   return { items: rows, total }

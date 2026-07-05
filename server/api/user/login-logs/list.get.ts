@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { requireAuth } from '~~/server/utils/auth'
+import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/request-pagination'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
 import type { LoginLogRow } from '~~/shared/types/login-log'
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event: H3Event) => {
     ip: r.ip,
     device: summarizeUserAgent(r.userAgent),
     userAgent: r.userAgent,
-    createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date(r.createdAt).toISOString()
+    createdAt: toIsoString(r.createdAt)
   }))
 
   return { items: rows, total }
