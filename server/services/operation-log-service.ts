@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, ilike, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
 import { operationLogs } from '@nuxthub/db/schema'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 
 export type OperationLogStatus = 'success' | 'failure'
@@ -99,6 +100,6 @@ export const operationLogService = {
       where ? countQuery.where(where) : countQuery
     ])
 
-    return { items, total: Number(totalRows[0]?.value || 0) }
+    return { items, total: toNumber(totalRows[0]?.value) }
   }
 }

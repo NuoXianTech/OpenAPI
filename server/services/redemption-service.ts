@@ -6,6 +6,7 @@ import {
   normalizeRedemptionGeneration
 } from '~~/server/services/redemption-code-generation'
 import { toIsoString } from '~~/server/utils/date'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 
@@ -162,7 +163,7 @@ export const redemptionService = {
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0)
+      total: toNumber(totalRows[0]?.value)
     }
   },
 
@@ -196,10 +197,10 @@ export const redemptionService = {
     return rows.filter((r: BatchRow) => r.batchId).map((r: BatchRow) => ({
       batchId: r.batchId as string,
       note: r.note,
-      amount: Number(r.amount),
-      total: Number(r.total),
-      usedTotal: Number(r.usedTotal),
-      maxUsesTotal: Number(r.maxUsesTotal),
+      amount: toNumber(r.amount),
+      total: toNumber(r.total),
+      usedTotal: toNumber(r.usedTotal),
+      maxUsesTotal: toNumber(r.maxUsesTotal),
       createdAt: toIsoString(r.createdAt)
     }))
   },
@@ -298,7 +299,7 @@ export const redemptionService = {
       if (!userUpdated[0]) {
         throw createRedemptionError('USER_NOT_FOUND', '用户不存在')
       }
-      const balanceAfter = Number(userUpdated[0].credits)
+      const balanceAfter = toNumber(userUpdated[0].credits)
 
       // 写流水（兑换记录已并入 credit_transactions）：codeId 关联兑换码、ip 记录来源，
       // meta 保留 code/batchId 快照以便删码后仍可显示。
@@ -358,7 +359,7 @@ export const redemptionService = {
         .offset(pagination.offset),
       db.select({ value: count() }).from(creditTransactions).where(where)
     ])
-    return { items, total: Number(totalRows[0]?.value || 0) }
+    return { items, total: toNumber(totalRows[0]?.value) }
   }
 }
 

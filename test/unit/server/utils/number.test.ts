@@ -4,6 +4,9 @@ import { clampInteger, toInteger, toNullableNumber, toNumber } from '~~/server/u
 describe('number utilities', () => {
   it('normalizes finite numeric values', () => {
     expect(toNumber('12.5')).toBe(12.5)
+    expect(toNumber(null)).toBe(0)
+    expect(toNumber(undefined)).toBe(0)
+    expect(toNumber('')).toBe(0)
     expect(toNumber('bad', 7)).toBe(7)
   })
 

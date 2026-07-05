@@ -1,5 +1,6 @@
 import { and, eq, sql, lt, isNull, or } from 'drizzle-orm'
 import { creditTransactions, users } from '@nuxthub/db/schema'
+import { toNumber } from '~~/server/utils/number'
 import { siteSettingsService } from './site-settings-service'
 
 /**
@@ -176,10 +177,10 @@ export const checkinService = {
           .set({ credits: sql`${users.credits} + ${amount}`, updatedAt: now })
           .where(eq(users.id, userId))
           .returning({ credits: users.credits })
-        balanceAfter = Number(credited[0]?.credits ?? 0)
+        balanceAfter = toNumber(credited[0]?.credits)
       } else {
         const row = await tx.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1)
-        balanceAfter = Number(row[0]?.credits ?? 0)
+        balanceAfter = toNumber(row[0]?.credits)
       }
 
       await tx.insert(creditTransactions).values({

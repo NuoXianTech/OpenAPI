@@ -1,5 +1,6 @@
 import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
 import { loginLogs, users } from '@nuxthub/db/schema'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '~~/shared/types/login-log'
 
@@ -98,7 +99,7 @@ export const loginLogService = {
         : db.select({ value: count() }).from(loginLogs)
     ])
 
-    return { items, total: Number(totalRows[0]?.value || 0) }
+    return { items, total: toNumber(totalRows[0]?.value) }
   },
 
   /**
@@ -134,6 +135,6 @@ export const loginLogService = {
       where ? countQuery.where(where) : countQuery
     ])
 
-    return { items, total: Number(totalRows[0]?.value || 0) }
+    return { items, total: toNumber(totalRows[0]?.value) }
   }
 }

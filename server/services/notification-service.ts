@@ -1,5 +1,6 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 
@@ -130,7 +131,7 @@ export const notificationService = {
         eq(notificationDeliveries.isRead, false),
         isNull(notificationMessages.deletedAt)
       ))
-    return Number(rows[0]?.value || 0)
+    return toNumber(rows[0]?.value)
   },
 
   async markRead(userId: number, deliveryId: number) {

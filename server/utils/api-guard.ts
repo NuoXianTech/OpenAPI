@@ -16,6 +16,7 @@ import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '~~/shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
+import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString } from '~~/server/utils/request-query'
 
@@ -219,7 +220,7 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
         .from(users)
         .where(eq(users.id, apiKey.userId))
         .limit(1)
-      const balance = Number(userRow[0]?.credits || 0)
+      const balance = toNumber(userRow[0]?.credits)
       if (balance < effectiveCost) {
         return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
       }

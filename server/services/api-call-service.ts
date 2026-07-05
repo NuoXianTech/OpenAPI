@@ -1,6 +1,7 @@
 import { count, desc, eq, sql, and, isNull } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
 import { getLocalDayStart } from '~~/server/utils/local-time'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 
 export interface AddCallInput {
@@ -64,9 +65,9 @@ export const apiCallService = {
     }).from(apiCalls).where(eq(apiCalls.userId, userId))
     const r = rows[0] || { total: 0, success: 0, failure: 0 }
     return {
-      total: Number(r.total) || 0,
-      success: Number(r.success) || 0,
-      failure: Number(r.failure) || 0
+      total: toNumber(r.total),
+      success: toNumber(r.success),
+      failure: toNumber(r.failure)
     }
   },
 
@@ -122,7 +123,7 @@ export const apiCallService = {
 
     return {
       items,
-      total: Number(totalRows[0]?.value || 0)
+      total: toNumber(totalRows[0]?.value)
     }
   },
 

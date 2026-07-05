@@ -3,6 +3,7 @@ import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/shared/config/api-guard'
 import { API_STATUS, isAutomaticApiStatus } from '~~/shared/config/api-status'
 import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
+import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 
 function escapeLikePattern(value: string) {
@@ -43,7 +44,7 @@ async function loadApiStats() {
   const statsRows = rows as Array<{ apiId: number, totalCalls: number | string | null }>
 
   const value = statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
-    accumulator[row.apiId] = { totalCalls: Number(row.totalCalls) || 0 }
+    accumulator[row.apiId] = { totalCalls: toNumber(row.totalCalls) }
     return accumulator
   }, {})
   apiStatsCache = { value, expiresAt: now + API_META_CACHE_TTL_MS }

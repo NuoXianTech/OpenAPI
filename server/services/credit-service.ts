@@ -6,6 +6,7 @@ import {
   normalizeCreditAmount,
   type AdminCreditOperation
 } from '~~/server/services/credit-adjustments'
+import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '~~/shared/types/credit-reason'
 
@@ -93,7 +94,7 @@ async function forceCharge(input: ChargeInput) {
 
     if (!updated[0]) return { charged: 0, balanceAfter: null }
 
-    const balanceAfter = Number(updated[0].credits)
+    const balanceAfter = toNumber(updated[0].credits)
     await tx.insert(creditTransactions).values({
       userId: input.userId,
       amount: -amount,
@@ -137,7 +138,7 @@ async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<AdminBatc
 
 async function getBalance(userId: number): Promise<number> {
   const rows = await db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1)
-  return Number(rows[0]?.credits || 0)
+  return toNumber(rows[0]?.credits)
 }
 
 async function listTransactions(filters: ListTransactionsFilters = {}) {
@@ -161,7 +162,7 @@ async function listTransactions(filters: ListTransactionsFilters = {}) {
 
   return {
     items,
-    total: Number(totalRows[0]?.value || 0)
+    total: toNumber(totalRows[0]?.value)
   }
 }
 
@@ -204,7 +205,7 @@ async function listUserTransactions(
 
   return {
     items,
-    total: Number(totalRows[0]?.value || 0)
+    total: toNumber(totalRows[0]?.value)
   }
 }
 
@@ -226,19 +227,19 @@ async function getUserCreditsSummary(userId: number) {
       .groupBy(creditTransactions.reason)
   ])
 
-  const balance = Number(balanceRow[0]?.credits || 0)
+  const balance = toNumber(balanceRow[0]?.credits)
   const agg = aggRows[0] || { totalIn: 0, totalOut: 0, totalCount: 0 }
   const byReason = reasonRows.map((row: { reason: string, count: number | string, sum: number | string }) => ({
     reason: row.reason,
-    count: Number(row.count) || 0,
-    sum: Number(row.sum) || 0
+    count: toNumber(row.count),
+    sum: toNumber(row.sum)
   }))
 
   return {
     balance,
-    totalIn: Number(agg.totalIn) || 0,
-    totalOut: Number(agg.totalOut) || 0,
-    totalCount: Number(agg.totalCount) || 0,
+    totalIn: toNumber(agg.totalIn),
+    totalOut: toNumber(agg.totalOut),
+    totalCount: toNumber(agg.totalCount),
     byReason
   }
 }
@@ -260,7 +261,7 @@ async function adminGrantWithTransaction(
 
   if (!updated[0]) return null
 
-  const balanceAfter = Number(updated[0].credits)
+  const balanceAfter = toNumber(updated[0].credits)
   await tx.insert(creditTransactions).values({
     userId: input.userId,
     amount,
@@ -290,7 +291,7 @@ async function adminRevokeWithTransaction(
   if (!current[0]) return null
 
   const adjustment = calculateAdminRevokeAdjustment({
-    currentCredits: Number(current[0].credits),
+    currentCredits: toNumber(current[0].credits),
     requestedAmount: amount
   })
 
@@ -332,7 +333,7 @@ async function adminResetWithTransaction(
     .for('update')
   if (!current[0]) return null
 
-  const before = Number(current[0].credits)
+  const before = toNumber(current[0].credits)
   const delta = target - before
   const updated = await tx.update(users)
     .set({
@@ -342,7 +343,7 @@ async function adminResetWithTransaction(
     .where(eq(users.id, input.userId))
     .returning({ credits: users.credits })
 
-  const balanceAfter = Number(updated[0]?.credits || 0)
+  const balanceAfter = toNumber(updated[0]?.credits)
   await tx.insert(creditTransactions).values({
     userId: input.userId,
     amount: delta,
