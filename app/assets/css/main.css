@@ -195,7 +195,7 @@ body {
 .dashboard-sidebar-link[data-active] {
   color: var(--ui-text-highlighted);
   border-color: transparent;
-  box-shadow: inset 2px 0 0 color-mix(in oklab, var(--ui-primary) 62%, transparent);
+  box-shadow: none;
 }
 
 .dashboard-sidebar-link[data-active]::before {
