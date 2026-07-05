@@ -16,8 +16,7 @@ async function refresh() {
   loading.value = true
   try {
     data.value = await $fetch<UserDashboardData>('/api/user/dashboard')
-  } catch (err) {
-    console.error('failed to load user dashboard', err)
+  } catch {
     toast.add({ title: '加载概览失败', color: 'error' })
   } finally {
     loading.value = false

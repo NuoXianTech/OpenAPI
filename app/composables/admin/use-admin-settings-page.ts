@@ -239,8 +239,8 @@ export function useAdminSettingsPage() {
       const next = normalizeForm(val)
       Object.assign(form, next)
       pristine.value = snapshot(next)
-    } catch (err) {
-      console.error('failed to load admin settings', err)
+    } catch {
+      // 保持当前表单值，避免失败请求覆盖用户正在编辑的内容。
     } finally {
       loading.value = false
     }

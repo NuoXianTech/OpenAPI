@@ -124,7 +124,6 @@ export function usePrivatePagedList<
       status.value = 'success'
     } catch (err) {
       if (seq !== requestSeq) return
-      console.error(`[usePrivatePagedList] fetch ${path} failed`, err)
       items.value = []
       total.value = 0
       error.value = err

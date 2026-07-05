@@ -84,9 +84,8 @@ export function useAuth() {
       // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
       const res = await $fetch<AuthUser | null>('/api/auth/me', { headers: serverCookieHeaders })
       user.value = res ?? null
-    } catch (err) {
+    } catch {
       // /api/auth/me 异常一律视为未登录，让中间件去重定向
-      console.error('[useAuth] fetchMe failed', err)
       user.value = null
     } finally {
       loading.value = false

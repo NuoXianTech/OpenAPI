@@ -10,10 +10,24 @@ useHead({ title: 'API Keys' })
 
 const toast = useToast()
 
-const { data: keysData, status, refresh } = useLazyFetch<ApiKeyItem[]>('/api/user/apikeys/list', {
-  default: () => []
+const items = ref<ApiKeyItem[]>([])
+const status = ref<'pending' | 'success' | 'error'>('pending')
+
+async function refresh() {
+  status.value = 'pending'
+  try {
+    items.value = (await $fetch<ApiKeyItem[]>('/api/user/apikeys/list')) || []
+    status.value = 'success'
+  } catch (err) {
+    items.value = []
+    status.value = 'error'
+    toast.add({ title: parseFetchError(err, '加载 API Key 失败'), color: 'error' })
+  }
+}
+
+onMounted(() => {
+  void refresh()
 })
-const items = computed<ApiKeyItem[]>(() => keysData.value || [])
 
 // 数据层：接口范围下拉 + CRUD（成功后自动 refresh 列表）
 const {

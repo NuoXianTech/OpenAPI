@@ -53,8 +53,8 @@ export function useUserSettingsPage() {
     profileLoading.value = true
     try {
       profile.value = await $fetch<ProfileData>('/api/user/profile')
-    } catch (err) {
-      console.error('failed to load profile', err)
+    } catch {
+      profile.value = null
     } finally {
       profileLoading.value = false
     }
@@ -100,8 +100,7 @@ export function useUserSettingsPage() {
       const res = await $fetch<{ oauthEnabled: boolean, providers: OauthBinding[] }>('/api/user/oauth/list')
       oauthEnabled.value = res.oauthEnabled
       oauthList.value = res.providers
-    } catch (err) {
-      console.error('failed to load oauth list', err)
+    } catch {
       oauthList.value = []
     } finally {
       oauthLoading.value = false
@@ -113,8 +112,7 @@ export function useUserSettingsPage() {
     try {
       const res = await $fetch<{ items: LoginLogRow[], total: number }>('/api/user/login-logs/list')
       loginActivity.value = res?.items || []
-    } catch (err) {
-      console.error('failed to load login activity', err)
+    } catch {
       loginActivity.value = []
     } finally {
       loginActivityLoading.value = false

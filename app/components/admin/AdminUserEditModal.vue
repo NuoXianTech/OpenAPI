@@ -51,8 +51,7 @@ watch(() => props.open, async (opened) => {
       query: { userId: props.target.id }
     })
     bindings.value = data || []
-  } catch (err) {
-    console.error('failed to load oauth bindings', err)
+  } catch {
     bindings.value = []
   } finally {
     bindingsLoading.value = false

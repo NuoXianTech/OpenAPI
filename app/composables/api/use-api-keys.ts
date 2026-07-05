@@ -5,7 +5,7 @@ import type { ApiKeyItem, ApiKeyPayload, ApiKeyScopeOption } from '~/types/api'
  * API Key 数据层（user 与 admin 共用）：接口范围下拉的懒加载 + CRUD。
  *
  * 端点按 scope 参数化；CRUD 成功后调用注入的 `refresh`（列表数据加载由调用方负责：
- * user 页面用 useLazyFetch.refresh，admin 弹窗用按 target 用户的 load）。
+ * user 页面用本地 $fetch refresh，admin 弹窗用按 target 用户的 load）。
  * 不在内部 toast——成功 / 失败文案两端不同，由调用方处理。
  */
 interface UseApiKeysOptions {

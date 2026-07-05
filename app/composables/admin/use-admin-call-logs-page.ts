@@ -168,8 +168,8 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     try {
       filterOptions.value = await $fetch<AdminLogsFilterOptions>('/api/admin/logs/filters')
         || { apis: [], categories: [] }
-    } catch (err) {
-      console.error('failed to load logs filters', err)
+    } catch {
+      filterOptions.value = { apis: [], categories: [] }
     }
   }
 

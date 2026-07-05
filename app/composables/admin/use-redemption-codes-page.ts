@@ -76,8 +76,8 @@ export function useRedemptionCodesPage() {
     try {
       const res = await $fetch<BatchSummary[]>('/api/admin/redemption-codes/batches')
       batches.value = res || []
-    } catch (err) {
-      console.error('failed to load batches', err)
+    } catch {
+      batches.value = []
     }
   }
 

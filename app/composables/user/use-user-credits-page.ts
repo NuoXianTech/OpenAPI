@@ -66,10 +66,14 @@ interface CreditTxnFilters extends Record<string, unknown> {
   direction: CreditDirection
 }
 
+function createEmptyCreditSummary(): CreditSummary {
+  return { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
+}
+
 export function useUserCreditsPage() {
   const toast = useToast()
 
-  const summary = ref<CreditSummary>({ balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] })
+  const summary = ref<CreditSummary>(createEmptyCreditSummary())
   const summaryLoading = ref(false)
 
   // 交易流水分页：私有数据统一走 usePrivatePagedList（$fetch，不进 payload）。
@@ -96,9 +100,9 @@ export function useUserCreditsPage() {
     summaryLoading.value = true
     try {
       const res = await $fetch<CreditSummary>('/api/user/credits/summary')
-      summary.value = res || { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
-    } catch (err) {
-      console.error('failed to load credits summary', err)
+      summary.value = res || createEmptyCreditSummary()
+    } catch {
+      summary.value = createEmptyCreditSummary()
     } finally {
       summaryLoading.value = false
     }
@@ -110,8 +114,8 @@ export function useUserCreditsPage() {
         query: { limit: 10 }
       })
       redeemRecords.value = res?.items || []
-    } catch (err) {
-      console.error('failed to load redemption records', err)
+    } catch {
+      redeemRecords.value = []
     }
   }
 
@@ -120,8 +124,7 @@ export function useUserCreditsPage() {
     try {
       const res = await $fetch<CheckinStatus>('/api/user/credits/checkin')
       checkin.value = res
-    } catch (err) {
-      console.error('failed to load checkin status', err)
+    } catch {
       checkin.value = null
     } finally {
       checkinLoading.value = false
