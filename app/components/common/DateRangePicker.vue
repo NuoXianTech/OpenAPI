@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { CalendarDate, CalendarDateTime, Time, DateFormatter, getLocalTimeZone, today } from '@internationalized/date'
 
 /**

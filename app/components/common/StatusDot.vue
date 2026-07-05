@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 type StatusTone = 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 const { tone = 'success', pulse } = defineProps<{

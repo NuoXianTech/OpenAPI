@@ -5,7 +5,6 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import type { ApiKeyItem } from '~/types/api'
-import { formatDateTime } from '~/utils/datetime'
 
 useHead({ title: 'API Keys' })
 
@@ -363,7 +362,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #createdAt-cell="{ row }">
-              <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt, '从未使用') }}</span>
+              <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
             </template>
 
             <template #expiresAt-cell="{ row }">

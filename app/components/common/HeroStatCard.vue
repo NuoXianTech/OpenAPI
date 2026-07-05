@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 type IconTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
 
 const { icon = '', iconTone = 'neutral', loading = false, valueTitle, labelTitle } = defineProps<{

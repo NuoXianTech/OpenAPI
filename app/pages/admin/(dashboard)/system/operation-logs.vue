@@ -26,8 +26,8 @@ const {
 </script>
 
 <template>
-  <div class="log-page-shell space-y-6">
-    <section class="log-page-hero dashboard-hero-surface dashboard-hero-surface-warning relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+  <div class="space-y-6">
+    <section class="dashboard-hero-surface dashboard-hero-surface-warning relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
@@ -41,7 +41,6 @@ const {
     </section>
 
     <UCard
-      class="log-filter-card"
       variant="subtle"
       :ui="{ body: 'p-4 sm:p-5' }"
     >

@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import { zh_cn } from '@nuxt/ui/locale'
 
 // 站点元信息（标题模板、favicon、描述）统一由 siteSettings 提供，

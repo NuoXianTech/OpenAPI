@@ -9,7 +9,6 @@ import type {
 import { ADMIN_APIS_PATH } from '~/constants/admin-sections/apis'
 import { ADMIN_LOGS_PATH } from '~/constants/admin-sections/logs'
 import { ADMIN_USERS_PATH } from '~/constants/admin-sections/users'
-import { formatDateTime } from '~/utils/datetime'
 import { httpStatusColor, type HttpStatusColor } from '~/utils/http-status'
 
 useHead({ title: '管理中心' })

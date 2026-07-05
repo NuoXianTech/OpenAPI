@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 interface Props {
   totalCount?: number
   activeCount?: number

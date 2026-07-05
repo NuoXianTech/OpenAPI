@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup lang="ts">
 import type { FilterTabOption } from '~/types/ui'
 
 const props = withDefaults(defineProps<{
