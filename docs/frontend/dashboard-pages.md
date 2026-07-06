@@ -1,6 +1,6 @@
 # 后台页面规范
 
-适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`DashboardHeaderActions` 与 `UserHeaderActions` 收敛。
+适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `dashboard` layout 与 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`app/constants/dashboard-sections.ts`、`DashboardHeaderActions` 与 `UserHeaderActions` 收敛。
 
 ## 1. 页面骨架
 
@@ -8,33 +8,39 @@
 
 | 类型 | 用法 | 现有样板 |
 | --- | --- | --- |
-| 分组父级页 | 用 `DashboardSectionShell` 渲染二级导航，并通过内部 `<NuxtPage />` 承载子页 | `app/pages/admin/apis.vue`、`app/pages/user/settings.vue` |
-| 业务叶子页 | 用 `UDashboardPanel` + `UDashboardNavbar` + `dashboard-section-page` 承载具体内容 | `app/pages/admin/logs.vue`、`app/pages/user/apikeys.vue` |
+| 分组父级页 | 用 `DashboardSectionShell` 渲染二级导航，并通过内部 `<NuxtPage />` 承载子页 | `app/pages/admin/(dashboard)/apis.vue`、`app/pages/user/(dashboard)/settings.vue` |
+| 业务叶子页 | 用 `UDashboardPanel` + `UDashboardNavbar` + `dashboard-section-page` 承载具体内容 | `app/pages/admin/(dashboard)/logs.vue`、`app/pages/user/(dashboard)/apikeys.vue` |
 
 分组父级页保持薄，只负责标题、二级导航和右上角动作：
 
 ```vue
 <script setup lang="ts">
-import { adminApisLinks } from '~/constants/admin-sections/apis'
-
-definePageMeta({ layout: 'admin', middleware: 'auth-admin' })
+import { adminApisSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell
-    id="admin-apis"
-    title="接口管理"
-    :items="adminApisLinks"
-  />
+  <DashboardSectionShell v-bind="adminApisSection" />
 </template>
 ```
 
-叶子页直接声明面板。admin 使用 `DashboardHeaderActions`，user 使用 `UserHeaderActions`：
+`app/pages/admin/(dashboard).vue` 与 `app/pages/user/(dashboard).vue` 统一声明：
+
+```ts
+definePageMeta({
+  layout: {
+    name: 'dashboard',
+    props: {
+      dashboardId: 'admin'
+    }
+  },
+  middleware: 'auth-dashboard'
+})
+```
+
+子页面不要重复声明 layout / middleware，直接声明面板。admin 使用 `DashboardHeaderActions`，user 使用 `UserHeaderActions`：
 
 ```vue
 <script setup lang="ts">
-definePageMeta({ layout: 'user', middleware: 'auth-user' })
-
 const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
   default: () => []
 })
@@ -72,7 +78,7 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
 
 | 场景 | 优先使用 |
 | --- | --- |
-| 后台整体布局 | `DashboardLayoutBase`，由 `admin.vue` / `user.vue` layout 包装 |
+| 后台整体布局 | `app/layouts/dashboard.vue` + `DashboardLayoutBase` |
 | 分组页二级导航 | `DashboardSectionShell` |
 | 右上角刷新、主题、账号菜单 | `DashboardHeaderActions` |
 | 用户后台通知铃铛 | `UserHeaderActions`，不要在页面里复制通知组件 |
@@ -192,12 +198,10 @@ app/
 │   ├── user/             用户后台页面组合式函数
 │   └── api/              API Key 与公开接口相关组合式函数
 ├── constants/
-│   ├── admin-sections/   管理后台分组导航
-│   ├── user-sections/    用户后台分组导航
+│   ├── dashboard-sections.ts
 │   └── dashboard-config.ts
 ├── layouts/
-│   ├── admin.vue
-│   └── user.vue
+│   └── dashboard.vue
 └── pages/
     ├── admin/
     └── user/

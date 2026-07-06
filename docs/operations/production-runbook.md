@@ -68,7 +68,8 @@ pg_restore --dbname=openapi_restore_test --clean --if-exists backup-YYYYMMDD-HHM
 ```bash
 pm2 stop openapi
 pg_restore --dbname="$DATABASE_URL" --clean --if-exists backup-YYYYMMDD-HHMMSS.dump
-pm2 start openapi --update-env
+cd .output
+pm2 restart openapi --update-env
 ```
 
 如果迁移不可逆，优先回滚应用版本并评估数据修复脚本，不直接强行恢复旧库覆盖新业务数据。
@@ -77,7 +78,7 @@ pm2 start openapi --update-env
 
 | 项目 | 要求 |
 | --- | --- |
-| 管理员密码 | 初始密码发布后立即修改，定期轮换 |
+| 管理员密码 | 通过 `NUXT_AUTH_ADMIN_PASSWORD` 配置，定期在环境变量中轮换并重启进程 |
 | 运行时密钥 | 每个环境独立生成，泄露后立即轮换 |
 | Nginx | 只开放必要端口，反向代理到本机 Nitro |
 | 数据库 | 不暴露公网，账号只给应用所需权限 |

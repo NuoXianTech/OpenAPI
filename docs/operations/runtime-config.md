@@ -15,8 +15,8 @@
 | 变量 | 生产要求 | 说明 |
 | --- | --- | --- |
 | `DATABASE_URL` | 必填 | PostgreSQL 连接串，生产必须指向稳定数据库实例 |
-| `NUXT_AUTH_ADMIN_USERNAME` | 必填 | 初始管理员用户名 |
-| `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 初始管理员密码，首次登录后应在后台修改 |
+| `NUXT_AUTH_ADMIN_USERNAME` | 必填 | 内置管理员用户名，来自运行时配置，不落库 |
+| `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 内置管理员密码，来自运行时配置；轮换时修改环境变量并重启进程 |
 | `NUXT_AUTH_JWT_SECRET` | 必填 | JWT HS256 签名密钥，缺失时鉴权应 fail-closed |
 | `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 相关服务端密钥 |
 | `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 必填 | 邮箱验证、一次性 token 或 OAuth state HMAC 密钥 |
@@ -28,7 +28,13 @@
 | `NITRO_HOST` | `127.0.0.1` | VPS + Nginx 反向代理时只监听本机 |
 | `NITRO_PORT` | `3000` | Nitro 服务端口 |
 | `TZ` | `Asia/Shanghai` | 统一日志、统计和运维时间 |
+| `DATABASE_POOL_SIZE` | `10` | 应用运行时 postgres-js 连接池大小，未设置时由构建后替换的 db client 使用默认值 10 |
+| `MIGRATIONS_DIR` | 留空 | 仅迁移目录不在默认位置时设置，常规 `.output/start.mjs` 不需要 |
 | `NUXT_AUTH_ADMIN_EMAIL` | 管理员邮箱 | 用于展示或通知 |
+
+`.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
+
+管理员账号不是 `users` 表中的普通用户，当前后台没有修改 `NUXT_AUTH_ADMIN_PASSWORD` 的页面。生产轮换管理员凭据时，修改进程环境变量后执行 `pm2 restart openapi --update-env` 或等价重启。
 
 ## 密钥生成
 
