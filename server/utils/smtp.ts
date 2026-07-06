@@ -15,7 +15,7 @@ export interface SmtpConfig {
   poolMaxAgeSeconds?: number
 }
 
-export interface SendMailInput {
+interface SendMailInput {
   to: string
   subject: string
   html: string

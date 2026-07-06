@@ -86,7 +86,7 @@ function isDoubaoError(error: unknown): error is DoubaoError {
 }
 
 /** 把任意异常归类为对外失败描述，供 route handler 选择 openApiFail / openApiBizFail。 */
-export interface DoubaoFailure {
+interface DoubaoFailure {
   status: number
   code: string
   message: string
@@ -101,7 +101,7 @@ export function classifyDoubaoError(err: unknown, fallbackMessage: string): Doub
 }
 
 /** 对外接口公共入参（url 必填、raw 可选）。 */
-export interface MediaQuery {
+interface MediaQuery {
   url: string
   raw: boolean
 }

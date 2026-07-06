@@ -22,7 +22,7 @@ export interface OauthProviderRow {
   isEnabled: boolean
 }
 
-export interface AdminOauthProviderSafe {
+interface AdminOauthProviderSafe {
   provider: SupportedOauthProvider
   clientId: string
   clientSecret: string

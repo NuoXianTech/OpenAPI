@@ -24,16 +24,16 @@ type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 type ErrorDef = { status: number, code: string, msg: string }
 
-export interface ApiKeyQuotaReservation {
+interface ApiKeyQuotaReservation {
   apiKeyId: number
   amount: number
 }
 
-export interface GateDeniedHeaders {
+interface GateDeniedHeaders {
   [key: string]: string
 }
 
-export type GateResult
+type GateResult
   = | {
     passed: true
     outcome: 'passed'
@@ -131,7 +131,7 @@ async function checkRateLimit(
   return results
 }
 
-export interface RunGuardInput {
+interface RunGuardInput {
   event: H3Event
   api: ApiRecord
   match: EndpointMatch

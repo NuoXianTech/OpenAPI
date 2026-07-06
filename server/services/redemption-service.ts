@@ -24,7 +24,7 @@ const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 去掉易混淆 0/O/
 
 export type RedemptionStatus = 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available'
 
-export interface GenerateInput {
+interface GenerateInput {
   amount: number
   count?: number // 一次生成多少张，默认 1，最多 1000
   prefix?: string | null
@@ -43,7 +43,7 @@ export interface ListFilters {
   offset?: number
 }
 
-export interface RedeemInput {
+interface RedeemInput {
   userId: number
   code: string
   ip?: string | null

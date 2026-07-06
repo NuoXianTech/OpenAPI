@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { getHeader, getRequestIP } from 'h3'
 
-export interface RequestMeta {
+interface RequestMeta {
   ip: string | null
   userAgent: string | null
 }

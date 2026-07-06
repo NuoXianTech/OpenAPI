@@ -9,7 +9,7 @@ import { getCravatarUrl } from '~~/server/utils/cravatar'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '#shared/utils/ban'
 
-export interface AuthUserPayload {
+interface AuthUserPayload {
   id: number
   kind: 'user' | 'admin'
 }

@@ -27,7 +27,7 @@ export async function readZodBody<S extends z.ZodType>(
 }
 
 /** readOpenApiBody 的结果：成功携带类型安全 data，失败携带可直接 return 的标准壳响应 */
-export type OpenApiBodyResult<T>
+type OpenApiBodyResult<T>
   = | { ok: true, data: T }
     | { ok: false, response: OpenApiResponse }
 

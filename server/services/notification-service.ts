@@ -6,10 +6,10 @@ import { firstRow } from '~~/server/utils/row'
 
 // 用户表已是硬删模型，listActiveUserIds / send 不再需要过滤 deletedAt
 
-export type NotificationLevel = 'info' | 'success' | 'warning' | 'critical'
-export type NotificationAudience = 'specific' | 'all_current' | 'all_with_future'
+type NotificationLevel = 'info' | 'success' | 'warning' | 'critical'
+type NotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
-export interface SendNotificationInput {
+interface SendNotificationInput {
   title: string
   content: string
   level?: NotificationLevel

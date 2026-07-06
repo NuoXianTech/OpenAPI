@@ -4,7 +4,7 @@ import { siteSettingsService } from '~~/server/services/site-settings-service'
 
 export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset' | 'checkin'
 
-export interface TurnstileCheck {
+interface TurnstileCheck {
   required: boolean
   valid: boolean
   reason?: string
@@ -29,7 +29,7 @@ function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.ge
   }
 }
 
-export async function verifyTurnstileForPage(
+async function verifyTurnstileForPage(
   page: TurnstilePageKey,
   token: string | undefined | null,
   remoteIp?: string | null

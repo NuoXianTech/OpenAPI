@@ -50,7 +50,7 @@ function randomNameSuffix() {
 }
 
 /** 用户创建 API Key 的入参 */
-export interface CreateApiKeyInput {
+interface CreateApiKeyInput {
   name: string
   /** 过期时刻；null = 永不过期 */
   expiresAt?: Date | null

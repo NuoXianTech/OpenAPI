@@ -5,7 +5,7 @@ import { normalizePagination } from '~~/server/utils/pagination'
 
 export type OperationLogStatus = 'success' | 'failure'
 
-export interface OperationLogInput {
+interface OperationLogInput {
   userId?: number | null
   actor?: string | null
   action: string
@@ -17,7 +17,7 @@ export interface OperationLogInput {
   status?: OperationLogStatus
 }
 
-export interface OperationLogListFilters {
+interface OperationLogListFilters {
   userId?: number
   // admin 操作 userId 为 NULL；filter 通过这一点区分管理端/用户端操作
   actorKind?: 'admin' | 'user'
@@ -32,7 +32,7 @@ export interface OperationLogListFilters {
   offset?: number
 }
 
-export interface OperationLogListResult {
+interface OperationLogListResult {
   items: Array<typeof operationLogs.$inferSelect>
   total: number
 }

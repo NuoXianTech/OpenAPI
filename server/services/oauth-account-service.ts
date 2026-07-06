@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import { oauthAccounts } from '@nuxthub/db/schema'
 import { firstRow } from '~~/server/utils/row'
 
-export interface OauthAccountUpsertInput {
+interface OauthAccountUpsertInput {
   userId: number
   provider: string
   providerUserId: string

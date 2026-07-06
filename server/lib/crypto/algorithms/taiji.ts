@@ -60,7 +60,7 @@ export function taijiEncode(text: string, pwd?: string): string {
   return out
 }
 
-export function taijiDecode(text: string, pwd?: string): string {
+function taijiDecode(text: string, pwd?: string): string {
   const map = convMapping(pwd)
   let base64 = ''
   for (const ch of text) {

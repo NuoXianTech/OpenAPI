@@ -24,7 +24,7 @@ export function beastEncode(text: string): string {
   return out
 }
 
-export function beastDecode(text: string): string {
+function beastDecode(text: string): string {
   const chars = Array.from(text)
   // 字典里包含 ~，要剔除非字典字符以兼容前后空白
   const filtered = chars.filter(c => BEAST_DICT.includes(c))

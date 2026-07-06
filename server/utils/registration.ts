@@ -1,6 +1,6 @@
 import { usersService } from '~~/server/services/user-service'
 
-export interface RollbackCreatedUserOptions {
+interface RollbackCreatedUserOptions {
   userId: number
   reason: string
   error: unknown

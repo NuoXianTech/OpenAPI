@@ -1,6 +1,6 @@
 import { clampInteger, toInteger } from '~~/server/utils/number'
 
-export interface RedemptionGenerationInput {
+interface RedemptionGenerationInput {
   amount: number
   count?: number
   prefix?: string | null
@@ -11,7 +11,7 @@ export interface RedemptionGenerationInput {
   createdBy?: number | null
 }
 
-export interface NormalizedRedemptionGeneration {
+interface NormalizedRedemptionGeneration {
   amount: number
   count: number
   prefix: string
@@ -22,7 +22,7 @@ export interface NormalizedRedemptionGeneration {
   createdBy: number | null
 }
 
-export interface RedemptionCodeRow {
+interface RedemptionCodeRow {
   code: string
   amount: number
   batchId: string
@@ -34,7 +34,7 @@ export interface RedemptionCodeRow {
   createdBy: number | null
 }
 
-export interface BuildRedemptionCodeRowsInput {
+interface BuildRedemptionCodeRowsInput {
   codes: string[]
   amount: number
   batchId: string
@@ -44,7 +44,7 @@ export interface BuildRedemptionCodeRowsInput {
   createdBy: number | null
 }
 
-export interface InsertRedemptionCodesUntilCompleteInput<TInput, TInserted> {
+interface InsertRedemptionCodesUntilCompleteInput<TInput, TInserted> {
   requestedCount: number
   maxAttempts?: number
   createRows: (count: number) => TInput[]

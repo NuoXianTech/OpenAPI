@@ -58,7 +58,7 @@ export function buddhaEncrypt(message: string, key: string = DEFAULT_KEY): strin
   return PREFIX + mapped
 }
 
-export function buddhaDecrypt(ciphertext: string, key: string = DEFAULT_KEY): string {
+function buddhaDecrypt(ciphertext: string, key: string = DEFAULT_KEY): string {
   if (!ciphertext) throw createCryptoBusinessError('待解密密文不能为空')
   if (!ciphertext.startsWith(PREFIX)) {
     throw createCryptoBusinessError(`密文必须以 "${PREFIX}" 开头`)

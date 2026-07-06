@@ -32,7 +32,7 @@ function sign(payload: string) {
   return base64UrlEncode(createHmac('sha256', getSecret()).update(payload).digest())
 }
 
-export interface IssuedState {
+interface IssuedState {
   state: string
   nonce: string
 }
@@ -57,7 +57,7 @@ export function issueState(event: H3Event, provider: string, returnTo: string, m
   return { state: nonce, nonce }
 }
 
-export interface ConsumedState {
+interface ConsumedState {
   nonce: string
   provider: string
   returnTo: string
@@ -115,7 +115,7 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
   }
 }
 
-export function clearStateCookie(event: H3Event) {
+function clearStateCookie(event: H3Event) {
   setCookie(event, STATE_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',

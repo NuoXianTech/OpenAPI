@@ -19,10 +19,10 @@ import type { LoginFailureReason, LoginMethod } from '~~/shared/types/login-log'
 export type { LoginFailureReason, LoginMethod }
 
 /** login_logs 整行（list 返回的元素类型） */
-export type LoginLogRecord = typeof loginLogs.$inferSelect
+type LoginLogRecord = typeof loginLogs.$inferSelect
 
 /** listForAdmin 返回的元素：login_logs 行投影 + 用户名快照（leftJoin users） */
-export interface AdminLoginLogRecord {
+interface AdminLoginLogRecord {
   id: number
   userId: number
   username: string | null
@@ -34,7 +34,7 @@ export interface AdminLoginLogRecord {
   createdAt: Date
 }
 
-export interface RecordLoginInput {
+interface RecordLoginInput {
   userId: number
   method: LoginMethod
   success: boolean
@@ -43,7 +43,7 @@ export interface RecordLoginInput {
   userAgent?: string | null
 }
 
-export interface ListFilters {
+interface ListFilters {
   userId?: number
   method?: LoginMethod
   success?: boolean

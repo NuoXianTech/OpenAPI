@@ -50,7 +50,7 @@ export function morseEncode(text: string): string {
   return encodedWords.join(' / ')
 }
 
-export function morseDecode(text: string): string {
+function morseDecode(text: string): string {
   const trimmed = text.trim()
   if (!trimmed) return ''
   const words = trimmed.split(/\s*\/\s*/)

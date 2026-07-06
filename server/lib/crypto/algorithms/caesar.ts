@@ -39,7 +39,7 @@ export function caesarEncrypt(text: string, shift = 3): string {
   return applyShift(text, shift)
 }
 
-export function caesarDecrypt(text: string, shift = 3): string {
+function caesarDecrypt(text: string, shift = 3): string {
   if (!Number.isInteger(shift)) throw createCryptoBusinessError('shift 必须是整数')
   return applyShift(text, -shift)
 }

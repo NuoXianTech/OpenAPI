@@ -13,10 +13,10 @@ import { siteSettingsService } from './site-settings-service'
  * 原子性：所有冷却判定通过 UPDATE ... WHERE 收紧；事务内重复请求只会有一条命中。
  */
 
-export type CheckinStatusCode = 'DISABLED' | 'COOLDOWN' | 'OK'
-export type CheckinCooldownMode = 'hours' | 'fixed_time'
+type CheckinStatusCode = 'DISABLED' | 'COOLDOWN' | 'OK'
+type CheckinCooldownMode = 'hours' | 'fixed_time'
 
-export interface CheckinStatus {
+interface CheckinStatus {
   enabled: boolean
   canCheckin: boolean
   reason: CheckinStatusCode
@@ -32,7 +32,7 @@ export interface CheckinStatus {
   requiresTurnstile: boolean
 }
 
-export interface CheckinResult {
+interface CheckinResult {
   amount: number
   balanceAfter: number
   checkedAt: string

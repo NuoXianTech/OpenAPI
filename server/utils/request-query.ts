@@ -1,4 +1,4 @@
-export type RequestQueryValue = string | string[] | undefined
+type RequestQueryValue = string | string[] | undefined
 
 export interface RequestQuery {
   [key: string]: RequestQueryValue

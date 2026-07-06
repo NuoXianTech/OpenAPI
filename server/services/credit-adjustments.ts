@@ -2,12 +2,12 @@ import type { CreditReason } from '~~/shared/types/credit-reason'
 
 export type AdminCreditOperation = 'grant' | 'revoke' | 'reset'
 
-export interface AdminRevokeAdjustmentInput {
+interface AdminRevokeAdjustmentInput {
   currentCredits: number
   requestedAmount: number
 }
 
-export interface AdminRevokeAdjustment {
+interface AdminRevokeAdjustment {
   deductedAmount: number
   balanceAfter: number
   transactionAmount: number

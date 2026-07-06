@@ -45,7 +45,7 @@ export function emojiAesEncrypt(message: string, key: string, rotation = 0): str
   return out
 }
 
-export function emojiAesDecrypt(emojified: string, key: string, rotation = 0): string {
+function emojiAesDecrypt(emojified: string, key: string, rotation = 0): string {
   if (!emojified) throw createCryptoBusinessError('待解密密文不能为空')
   if (!key) throw createCryptoBusinessError('密钥不能为空')
   const emojis = rotateEmojis(rotation)

@@ -44,7 +44,7 @@ function cleanup(now: number) {
   }
 }
 
-export const memoryRateLimiter: RateLimiter = {
+const memoryRateLimiter: RateLimiter = {
   name: 'memory',
   async consume(key, limit, window) {
     const windowSec = RATE_LIMIT_WINDOW_SECONDS[window]

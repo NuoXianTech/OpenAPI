@@ -110,14 +110,14 @@ function toPublicTurnstile(settings: {
 
 type SiteSettingsRow = typeof siteSettings.$inferSelect
 
-export interface AdminSiteSettingsSecrets {
+interface AdminSiteSettingsSecrets {
   hasSmtpPass: boolean
   hasOauthGithubClientSecret: boolean
   hasOauthQqClientSecret: boolean
   hasTurnstileSecretKey: boolean
 }
 
-export interface AdminSiteSettings extends Omit<
+interface AdminSiteSettings extends Omit<
   SiteSettingsRow,
   'smtpPass' | 'oauthGithubClientSecret' | 'oauthQqClientSecret' | 'turnstileSecretKey'
 > {

@@ -80,7 +80,7 @@ export function coreValuesEncode(text: string): string {
   return duo2values(hex2duo(str2hex(text)))
 }
 
-export function coreValuesDecode(text: string): string {
+function coreValuesDecode(text: string): string {
   const duo: number[] = []
   for (const c of text) {
     const idx = VALUES.indexOf(c)

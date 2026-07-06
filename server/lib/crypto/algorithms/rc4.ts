@@ -26,7 +26,7 @@ export function rc4Encrypt(plaintext: string, password: string): string {
   return opensslSaltedEncrypt(plaintext, password, CIPHER_RC4)
 }
 
-export function rc4Decrypt(ciphertextB64: string, password: string): string {
+function rc4Decrypt(ciphertextB64: string, password: string): string {
   if (!ciphertextB64) throw createCryptoBusinessError('待解密密文不能为空')
   if (!password) throw createCryptoBusinessError('密钥不能为空')
   try {

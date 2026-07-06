@@ -1,7 +1,7 @@
 import { clampInteger } from '~~/server/utils/number'
 import { firstQueryValue, type RequestQuery } from '~~/server/utils/request-query'
 
-export interface PaginationInput {
+interface PaginationInput {
   limit?: unknown
   offset?: unknown
 }
@@ -17,11 +17,11 @@ export interface NormalizedPagination {
   offset: number
 }
 
-export interface ReadPaginationQueryResult extends NormalizedPagination {
+interface ReadPaginationQueryResult extends NormalizedPagination {
   query: RequestQuery
 }
 
-export interface RequestQueryEvent {
+interface RequestQueryEvent {
   path?: string
   node?: {
     req?: {

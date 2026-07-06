@@ -1,7 +1,7 @@
 import type { RateLimiter } from '~~/shared/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
 
-export interface LoginRateLimitInput {
+interface LoginRateLimitInput {
   namespace: string
   account: string
   ip: string
@@ -10,11 +10,11 @@ export interface LoginRateLimitInput {
   limiter?: RateLimiter
 }
 
-export interface LoginRateLimitError extends Error {
+interface LoginRateLimitError extends Error {
   statusCode: 429
 }
 
-export function createLoginRateLimitError(): LoginRateLimitError {
+function createLoginRateLimitError(): LoginRateLimitError {
   return Object.assign(new Error('尝试次数过多，请稍后再试'), {
     statusCode: 429 as const
   })
