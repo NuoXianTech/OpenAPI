@@ -7,7 +7,7 @@ import type {
   AdminAnalyticsHourlyPoint,
   AdminAnalyticsOverview,
   AdminAnalyticsRankItem
-} from '#shared/types/admin-analytics'
+} from '#shared/types/admin'
 
 interface AdminAnalyticsDistributionChartItem {
   label: string

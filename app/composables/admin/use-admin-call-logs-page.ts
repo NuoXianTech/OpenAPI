@@ -5,7 +5,7 @@ import {
   type AdminLogRow,
   type AdminLogType,
   type AdminLogsFilterOptions
-} from '#shared/types/admin-logs'
+} from '#shared/types/admin'
 import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
 import { LOGIN_METHOD_META, type LoginLogBadgeColor } from '~/types/login-log'
 import {

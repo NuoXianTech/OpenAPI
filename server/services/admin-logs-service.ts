@@ -10,14 +10,12 @@ import type {
   AdminAnalyticsDistributionItem,
   AdminAnalyticsHourlyPoint,
   AdminAnalyticsOverview,
-  AdminAnalyticsRankItem
-} from '#shared/types/admin-analytics'
-import type {
+  AdminAnalyticsRankItem,
   AdminLogRow,
   AdminLogType,
   AdminLogsFilterOptions,
   AdminLogsListResponse
-} from '#shared/types/admin-logs'
+} from '#shared/types/admin'
 
 // ─────────────────────────────────────────────────────────────────────
 // 类型映射 SQL 表达式
