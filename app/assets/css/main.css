@@ -301,7 +301,7 @@ body {
   transition: background-color 160ms ease;
 }
 
-.dashboard-table-native tbody tr:hover td {
+.dashboard-table-native tbody tr:hover td:not([data-slot="empty"]) {
   background-color: var(--dashboard-table-header-hover);
 }
 
