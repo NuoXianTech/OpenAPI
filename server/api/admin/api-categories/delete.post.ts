@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { idSchema } from '#shared/schemas/common'
+import { idSchema } from '~~/server/schemas/common'
 import { apiCategoryService } from '~~/server/services/api-category-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

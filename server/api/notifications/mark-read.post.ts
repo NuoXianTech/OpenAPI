@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { idSchema } from '#shared/schemas/common'
+import { idSchema } from '~~/server/schemas/common'
 import { notificationService } from '~~/server/services/notification-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'

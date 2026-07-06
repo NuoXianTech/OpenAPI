@@ -1,11 +1,10 @@
 import { z } from 'zod'
 import {
-  displayNameSchema,
   emailSchema,
-  optionalDate,
   passwordSchema,
   usernameSchema
 } from '../../../shared/schemas/common'
+import { displayNameSchema, optionalDate } from '../common'
 import { atLeastOneFieldMessage, maxMessage, positiveInt } from '../../../shared/schemas/validation'
 
 export const adminBanUserSchema = z.object({

@@ -7,7 +7,7 @@ import {
   apiKeyTotalQuotaSchema,
   nullableArraySchema
 } from '../api-key'
-import { optionalDate } from '../../../shared/schemas/common'
+import { optionalDate } from '../common'
 import { atLeastOneFieldMessage, positiveInt } from '../../../shared/schemas/validation'
 
 export const adminCreateUserApiKeySchema = z.object({

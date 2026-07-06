@@ -10,7 +10,7 @@ import {
 import {
   displayNameSchema,
   optionalDate
-} from '../../shared/schemas/common'
+} from './common'
 import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from '../../shared/schemas/validation'
 
 // Profile
