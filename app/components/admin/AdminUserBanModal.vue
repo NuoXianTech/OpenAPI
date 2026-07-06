@@ -105,7 +105,7 @@ async function submit() {
             :rows="3"
             :maxlength="500"
             placeholder="例如：违反社区规范、滥用接口等"
-            class="w-full"
+            class="w-full sm:max-w-lg"
           />
         </UFormField>
 

@@ -55,6 +55,7 @@ const statusOptions = ADMIN_API_STATUS_ITEMS
       <UTextarea
         v-model="state.description"
         :rows="3"
+        class="w-full sm:max-w-lg"
       />
     </UFormField>
     <div class="grid grid-cols-2 gap-3">

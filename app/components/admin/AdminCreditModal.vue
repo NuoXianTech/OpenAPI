@@ -110,6 +110,7 @@ async function submit() {
             v-model="remark"
             :rows="2"
             placeholder="例如：促销发放 / 违规扣除"
+            class="w-full sm:max-w-lg"
           />
         </UFormField>
       </div>

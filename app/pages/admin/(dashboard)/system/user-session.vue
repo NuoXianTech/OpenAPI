@@ -67,7 +67,7 @@ const {
           ? '当前模式为「不开启」，此列表不会生效。'
           : '逗号或换行分隔，仅写域名（不带 @）。例如：163.com, qq.com、gmail.com。'"
         class="flex max-sm:flex-col justify-between items-start gap-4"
-        :ui="{ container: 'w-full' }"
+        :ui="{ container: 'w-full sm:max-w-lg' }"
       >
         <UTextarea
           v-model="form.registerEmailFilterList"

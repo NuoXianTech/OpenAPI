@@ -174,7 +174,7 @@ const ipHelp = computed(() => {
         v-model="form.ipWhitelistText"
         :rows="size === 'sm' ? 2 : 3"
         placeholder="1.2.3.4/32&#10;10.0.0.0/8"
-        class="font-mono text-xs"
+        class="w-full sm:max-w-lg font-mono text-xs"
       />
     </UFormField>
 

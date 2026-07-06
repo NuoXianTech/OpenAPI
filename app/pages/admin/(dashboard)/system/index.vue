@@ -51,7 +51,7 @@ const fixedTimeInvalid = computed(() => {
         description="站点描述信息，站点描述将显示在网页代码的头部与首页卡片中。"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
-        :ui="{ container: 'w-full' }"
+        :ui="{ container: 'w-full sm:max-w-lg' }"
       >
         <UTextarea
           v-model="form.siteDescription"

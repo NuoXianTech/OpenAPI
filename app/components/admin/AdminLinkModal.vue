@@ -88,6 +88,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           <UTextarea
             v-model="state.description"
             :rows="3"
+            class="w-full sm:max-w-lg"
           />
         </UFormField>
         <USwitch

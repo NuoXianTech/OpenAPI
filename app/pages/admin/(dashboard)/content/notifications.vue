@@ -197,6 +197,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
               v-model="form.content"
               :rows="6"
               placeholder="支持纯文本，换行将保留"
+              class="w-full sm:max-w-lg"
             />
           </UFormField>
 
