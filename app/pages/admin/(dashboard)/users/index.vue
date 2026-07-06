@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import {
   useAdminUsersDisplayMeta,
   useAdminUsersPage,
@@ -118,6 +119,42 @@ const {
   openCreditForOne,
   openDelete
 })
+
+interface ToggleableColumn {
+  id: string
+  header: string
+}
+
+function readUserColumn(column: TableColumn<AdminUserItem>): ToggleableColumn | undefined {
+  const header = 'header' in column && typeof column.header === 'string' ? column.header : ''
+  if (!header) return undefined
+
+  const id = 'id' in column && typeof column.id === 'string'
+    ? column.id
+    : 'accessorKey' in column
+      ? String(column.accessorKey)
+      : ''
+  if (!id) return undefined
+
+  return { id, header }
+}
+
+const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
+  columns
+    .map(readUserColumn)
+    .filter((column): column is ToggleableColumn => column != null)
+    .map(column => ({
+      label: column.header,
+      type: 'checkbox' as const,
+      checked: columnVisibility.value[column.id] !== false,
+      onUpdateChecked(checked: boolean) {
+        columnVisibility.value = { ...columnVisibility.value, [column.id]: checked }
+      },
+      onSelect(event: Event) {
+        event.preventDefault()
+      }
+    }))
+)
 </script>
 
 <template>
@@ -160,10 +197,17 @@ const {
         >
           全员积分操作
         </UButton>
-        <DashboardColumnVisibility
-          v-model:column-visibility="columnVisibility"
-          :columns="columns"
-        />
+        <UDropdownMenu
+          :items="columnVisibilityItems"
+          :content="{ align: 'end' }"
+        >
+          <UButton
+            label="显示列"
+            color="neutral"
+            variant="outline"
+            icon="i-mdi-view-column-outline"
+          />
+        </UDropdownMenu>
         <UButton
           size="sm"
           color="neutral"
