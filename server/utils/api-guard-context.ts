@@ -1,18 +1,9 @@
-/**
- * h3 H3EventContext 的扩展声明。
- *
- * 由 gate 中间件设置，后置中间件 / 业务 handler 读取：
- * - apiStatsTarget：命中 apis 记录即设置（覆盖成功与被拒两种情形）
- * - apiMeta / apiKey：仅 gate 全规则通过后设置
- */
-
-import type { apiKeys, apis } from '@nuxthub/db/schema'
+import type { apis } from '@nuxthub/db/schema'
 import type { ApiStatsTarget, GateOutcome, ManifestApi, ManifestEndpoint } from '~~/shared/types/api-guard'
 
-export type ApiRecord = typeof apis.$inferSelect
-export type ApiKeyRecord = typeof apiKeys.$inferSelect
+type ApiRecord = typeof apis.$inferSelect
 
-export interface ApiMetaContext {
+interface ApiMetaContext {
   api: ApiRecord
   manifest: ManifestApi
   endpoint: ManifestEndpoint
@@ -20,32 +11,19 @@ export interface ApiMetaContext {
   startedAt: number
 }
 
-export interface ApiKeyContext {
+interface ApiKeyContext {
   id: number
   userId: number
   name: string
   scopes: string[] | null
 }
 
-export interface ApiKeyQuotaReservationContext {
+interface ApiKeyQuotaReservationContext {
   apiKeyId: number
   amount: number
 }
 
-/**
- * 计费上下文 · gate 通过时挂载，后置 stats 中间件读取以决定扣款。
- *
- * - costCredits：本次调用的扣费金额，由 gate 按命中的 HTTP method 在 apis.methodCosts 中解析后得出
- *   （例：apis.methodCosts={GET:0,POST:10}，本次请求是 POST → costCredits=10）
- * - apiKeyUserId：扣款账户（仅当带 apiKey 时有值）
- * - forcedOutcome：业务 handler 主动标记的结果，覆盖 statusCode 判定
- *   * 'success' → 强制视为成功，照常扣款
- *   * 'failed'  → 强制视为失败，跳过扣款（即使 statusCode=200）
- * - failedCode / failedMessage：业务标记失败时的明细，写入 apiCalls.errorCode/errorMessage
- * - apiKeyQuotaReservation：gate 阶段已原子预占的 API Key 使用额度；成功扣费时保留，
- *   业务失败 / 非扣费响应由 stats plugin 释放
- */
-export interface ApiBillingContext {
+interface ApiBillingContext {
   costCredits: number
   apiKeyUserId: number | null
   apiKeyQuotaReservation: ApiKeyQuotaReservationContext | null
@@ -54,16 +32,7 @@ export interface ApiBillingContext {
   failedMessage: string | null
 }
 
-/**
- * gate 拒绝上下文 · 仅 gate 中间件因规则失败短路时挂载。
- *
- * apiCallStats plugin 据此把拒绝原因落到 apiCalls.errorCode/errorMessage，
- * 同时不再为该次调用累加 apiKeys.totalCalls —— 拒绝的请求不算"成功调用"。
- *
- * - apiKeyId：如果 gate 识别到了具体的 Key（即便随后因 expired/scope/ip/quota 被拒），
- *   仍要把日志归属到该 Key，便于审计；INVALID/MISSING_API_KEY 时为 null
- */
-export interface ApiGateRejectionContext {
+interface ApiGateRejectionContext {
   outcome: GateOutcome
   errorCode: string
   errorMessage: string

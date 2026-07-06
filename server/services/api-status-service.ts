@@ -20,14 +20,6 @@ export function resolveApiAutoStatusFromStatusCodes(statusCodes: number[]): numb
     : API_STATUS.abnormal
 }
 
-export function clearApiAutoStatusCache(apiId?: number): void {
-  if (typeof apiId === 'number') {
-    apiAutoStatusCache.delete(apiId)
-    return
-  }
-  apiAutoStatusCache.clear()
-}
-
 function normalizeApiIds(apiIds: number[]): number[] {
   return Array.from(new Set(
     apiIds
@@ -85,9 +77,4 @@ export async function resolveApiAutoStatuses(apiIds: number[]): Promise<Record<n
   }
 
   return result
-}
-
-export async function resolveApiAutoStatus(apiId: number): Promise<number> {
-  const statuses = await resolveApiAutoStatuses([apiId])
-  return statuses[Math.trunc(apiId)] ?? API_STATUS.unknown
 }
