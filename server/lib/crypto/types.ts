@@ -28,13 +28,13 @@ export interface CryptoParamSchema {
 export type CryptoMode = 'encrypt' | 'decrypt'
 
 /** 算法运行结果统一形态 */
-export interface CryptoExecResult {
+interface CryptoExecResult {
   text: string
   /** 算法侧附加信息（如 emoji-aes 的实际 rotation） */
   meta?: Record<string, unknown>
 }
 
-export interface CryptoExecInput {
+interface CryptoExecInput {
   mode: CryptoMode
   text: string
   /** 经 normalizeParams 校验/补默认后的参数集 */
