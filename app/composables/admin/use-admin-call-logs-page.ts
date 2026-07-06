@@ -6,11 +6,8 @@ import {
   type AdminLogType,
   type AdminLogsFilterOptions
 } from '~~/shared/types/admin-logs'
-import {
-  LOGIN_METHOD_META,
-  type AdminLoginLogRow,
-  type LoginMethod
-} from '~~/shared/types/login-log'
+import type { AdminLoginLogRow, LoginMethod } from '~~/shared/types/login-log'
+import { LOGIN_METHOD_META, type LoginLogBadgeColor } from '~/types/login-log'
 import {
   createNumberQueryCodec,
   createStringArrayQueryCodec,
@@ -231,7 +228,7 @@ interface UseAdminLoginLogListReturn {
   filters: AdminLoginLogFilters
   items: Ref<AdminLoginLogRow[]>
   loading: ComputedRef<boolean>
-  methodColor: (method: string) => AdminLoginLogBadgeColor
+  methodColor: (method: string) => LoginLogBadgeColor
   methodIcon: (method: string) => string | undefined
   methodItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>
   page: Ref<number>
@@ -240,8 +237,6 @@ interface UseAdminLoginLogListReturn {
   successItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>
   total: Ref<number>
 }
-
-type AdminLoginLogBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 const ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE = 50
 
@@ -294,7 +289,7 @@ function buildAdminLoginLogQuery(
   }
 }
 
-function resolveAdminLoginLogMethodColor(method: string): AdminLoginLogBadgeColor {
+function resolveAdminLoginLogMethodColor(method: string): LoginLogBadgeColor {
   return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
 }
 

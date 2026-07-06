@@ -3,7 +3,7 @@ import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-pa
 import {
   loginFailureReasonLabel,
   loginMethodLabel
-} from '~~/shared/types/login-log'
+} from '~/types/login-log'
 
 useHead({ title: '登录日志' })
 const {
