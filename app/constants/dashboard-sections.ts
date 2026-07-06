@@ -16,8 +16,8 @@ export const ADMIN_USERS_PATH = '/admin/users'
 export const ADMIN_SYSTEM_PATH = '/admin/system'
 
 export const USER_OVERVIEW_PATH = '/user/overview'
-export const USER_CREDITS_PATH = '/user/credits'
-export const USER_SETTINGS_PATH = '/user/settings'
+const USER_CREDITS_PATH = '/user/credits'
+const USER_SETTINGS_PATH = '/user/settings'
 
 const adminContentLinks: NavigationMenuItem[] = [
   { label: '公告', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH, exact: true },

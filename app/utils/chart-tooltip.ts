@@ -8,14 +8,14 @@
  * 配合 main.css 全局 `--vis-tooltip-padding: 0`：内边距由本卡片自身提供。
  */
 
-export interface ChartTooltipRow {
+interface ChartTooltipRow {
   /** 行首小圆点颜色（语义色变量），单系列可省略 */
   color?: string
   label: string
   value: string
 }
 
-export interface ChartTooltipFooterItem {
+interface ChartTooltipFooterItem {
   label: string
   value: string
 }
@@ -30,7 +30,7 @@ interface ChartTooltipOptions {
 }
 
 /** tooltip 文本可能含接口名 / 路径等用户可控内容，渲染前必须转义 */
-export function escapeChartHtml(value: string): string {
+function escapeChartHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

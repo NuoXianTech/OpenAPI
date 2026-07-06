@@ -16,7 +16,7 @@ interface DashboardNavGroup {
   items: NavigationMenuItem[]
 }
 
-export interface DashboardBrand {
+interface DashboardBrand {
   label: string
   icon: string
   to: string

@@ -21,7 +21,7 @@ export function formatDateTime(
 const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] as const
 
 /** 解析趋势数据点的日期：优先按本地零点解析 YYYY-MM-DD（避免 UTC 偏移串天），否则交给 Date */
-export function parseTrendDate(value: string): Date | null {
+function parseTrendDate(value: string): Date | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
   if (match) {
     return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
