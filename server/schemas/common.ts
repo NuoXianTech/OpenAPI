@@ -9,6 +9,8 @@ export const messageIdSchema = z.object({
   messageId: z.coerce.number().int().positive('消息 ID 必填')
 })
 
+export const messageLevelSchema = z.enum(['info', 'success', 'warning', 'critical'])
+
 export const optionalDate = z.preprocess(
   (value) => {
     if (value === undefined) return undefined

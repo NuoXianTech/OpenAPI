@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { messageLevelSchema } from '../message-level'
+import { messageLevelSchema } from '../common'
 
 const notificationAudience = z.enum(['specific', 'all_current', 'all_with_future'])
 

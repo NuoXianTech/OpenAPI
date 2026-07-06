@@ -30,7 +30,7 @@ export const users = pgTable('users', {
   // email 以原大小写存储，通过 lower(email) 唯一索引做不区分大小写去重
   email: varchar('email', { length: 255 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  // 头像统一由 server/utils/cravatar.ts 通过 email 派生，不落库
+  // 头像统一由 auth 工具通过 email 派生，不落库
   credits: integer('credits').notNull().default(0),
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),

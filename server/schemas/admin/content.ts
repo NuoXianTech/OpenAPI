@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { messageLevelSchema } from '../message-level'
+import { messageLevelSchema } from '../common'
 import { requiredString } from '#shared/schemas/validation'
 
 export const adminCreateAnnouncementSchema = z.object({

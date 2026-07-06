@@ -1,11 +1,10 @@
-import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
 import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
 import { createError, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
-import { getCravatarUrl } from '~~/server/utils/cravatar'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 
@@ -36,6 +35,12 @@ const KEY_LENGTH = 64
 // 当前默认 scrypt 参数；调整这里相当于升级新注册用户的强度，
 // 历史哈希仍按其落库时的参数校验（见 verifyPassword）。
 const SCRYPT_DEFAULTS = { N: 16384, r: 8, p: 1 } as const
+
+function getCravatarUrl(email: string | null | undefined) {
+  const normalized = (email ?? '').trim().toLowerCase()
+  const hash = createHash('md5').update(normalized).digest('hex')
+  return `https://cravatar.cn/avatar/${hash}`
+}
 
 function base64UrlEncode(input: Buffer | string) {
   const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input)
