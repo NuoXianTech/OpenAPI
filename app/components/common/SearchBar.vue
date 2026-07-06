@@ -61,13 +61,7 @@ const onGlobalKey = (event: KeyboardEvent) => {
   focusInput()
 }
 
-onMounted(() => {
-  window.addEventListener('keydown', onGlobalKey)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('keydown', onGlobalKey)
-})
+useEventListener('keydown', onGlobalKey)
 </script>
 
 <template>

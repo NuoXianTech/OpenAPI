@@ -393,7 +393,19 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #actions-cell="{ row }">
-              <DashboardRowActions :items="getRowItems(row.original)" />
+              <div class="text-right">
+                <UDropdownMenu
+                  :items="getRowItems(row.original)"
+                  :content="{ align: 'end' }"
+                >
+                  <UButton
+                    icon="i-mdi-dots-vertical"
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                  />
+                </UDropdownMenu>
+              </div>
             </template>
           </DashboardDataTable>
         </DashboardTableCard>
