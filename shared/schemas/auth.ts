@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import { emailSchema, passwordSchema, usernameSchema } from './common'
-import { positiveInt } from './validation'
+import { emailSchema, passwordSchema, positiveInt, usernameSchema } from './validation'
 
 export const registerSchema = z.object({
   username: usernameSchema,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { LoginLogRow, LoginMethod } from '~~/shared/types/login-log'
+import type { LoginLogRow, LoginMethod } from '#shared/types/login-log'
 import {
   LOGIN_METHOD_META,
   loginFailureReasonLabel,

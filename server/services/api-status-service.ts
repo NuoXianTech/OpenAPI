@@ -4,7 +4,7 @@ import {
   API_AUTO_STATUS_CACHE_TTL_MS,
   API_AUTO_STATUS_SAMPLE_SIZE,
   API_STATUS
-} from '~~/shared/config/api-status'
+} from '#shared/config/api-status'
 
 interface ApiAutoStatusCacheEntry {
   value: number

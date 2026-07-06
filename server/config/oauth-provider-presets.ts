@@ -1,4 +1,4 @@
-import type { SupportedOauthProvider } from '~~/shared/types/oauth'
+import type { SupportedOauthProvider } from '#shared/types/oauth'
 
 export interface OauthProviderPreset {
   provider: SupportedOauthProvider

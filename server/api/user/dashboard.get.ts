@@ -4,7 +4,7 @@ import { apiCalls, apiKeys, users } from '@nuxthub/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
-import type { UserDashboardData, UserDashboardTrendPoint } from '~~/shared/types/user-dashboard'
+import type { UserDashboardData, UserDashboardTrendPoint } from '#shared/types/user-dashboard'
 
 const TREND_DAYS = 7
 

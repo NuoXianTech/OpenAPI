@@ -3,7 +3,7 @@ import { adminLogsService } from '~~/server/services/admin-logs-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryText } from '~~/server/utils/request-query'
-import { ADMIN_LOG_TYPES, type AdminLogType } from '~~/shared/types/admin-logs'
+import { ADMIN_LOG_TYPES, type AdminLogType } from '#shared/types/admin-logs'
 
 function parseTypes(value: unknown): AdminLogType[] | undefined {
   if (!value) return undefined

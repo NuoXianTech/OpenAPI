@@ -4,7 +4,7 @@ import {
   adminUpdateApiSchema,
   adminUpdateUserSchema
 } from '~~/server/schemas/admin'
-import { API_STATUS } from '~~/shared/config/api-status'
+import { API_STATUS } from '#shared/config/api-status'
 
 describe('admin schemas', () => {
   it('rejects unsafe admin mutations and requires explicit bulk confirmation', () => {

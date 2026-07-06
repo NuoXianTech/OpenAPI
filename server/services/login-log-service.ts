@@ -2,7 +2,7 @@ import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
 import { loginLogs, users } from '@nuxthub/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
-import type { LoginFailureReason, LoginMethod } from '~~/shared/types/login-log'
+import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
 
 /**
  * 登录日志服务（对应需求 #7）

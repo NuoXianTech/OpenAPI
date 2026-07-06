@@ -11,7 +11,7 @@ import type {
   AdminDashboardDistributionItem,
   AdminDashboardRecentCall,
   AdminDashboardTrendPoint
-} from '~~/shared/types/admin-dashboard'
+} from '#shared/types/admin-dashboard'
 
 function resolveRange(raw: unknown): number {
   return clampInteger(readQueryNumber(raw), 1, 90, 7)

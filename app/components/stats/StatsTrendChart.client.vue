@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { VisXYContainer, VisArea, VisLine, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
-import type { PublicCallStatsTrendPoint } from '~~/shared/types/public-stats'
+import type { PublicCallStatsTrendPoint } from '#shared/types/public-stats'
 
 // 本组件是 .client.vue（仅客户端打包，@unovis 的 d3+DOM 不进首屏 entry）。
 // 注意：unovis 原语必须静态导入、同步可用——若各自用 defineAsyncComponent 异步加载，

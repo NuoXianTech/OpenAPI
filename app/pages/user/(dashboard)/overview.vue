@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { UserDashboardData } from '~~/shared/types/user-dashboard'
+import type { UserDashboardData } from '#shared/types/user-dashboard'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 useHead({ title: '个人中心' })

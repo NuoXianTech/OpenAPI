@@ -1,4 +1,4 @@
-import type { CreditReason } from '~~/shared/types/credit-reason'
+import type { CreditReason } from '#shared/types/credit-reason'
 
 export type AdminCreditOperation = 'grant' | 'revoke' | 'reset'
 

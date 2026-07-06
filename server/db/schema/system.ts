@@ -9,7 +9,7 @@ import {
   timestamp,
   index
 } from 'drizzle-orm/pg-core'
-import { PUBLIC_SITE_DEFAULTS } from '~~/shared/config/site-defaults'
+import { PUBLIC_SITE_DEFAULTS } from '#shared/config/site-defaults'
 import { users } from './user'
 
 // ------------------------------------------------------------------

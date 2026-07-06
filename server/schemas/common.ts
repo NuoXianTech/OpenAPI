@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { maxMessage } from '../../shared/schemas/validation'
+import { maxMessage } from '#shared/schemas/validation'
 
 export const idSchema = z.object({
   id: z.coerce.number().int().positive('ID 必填')

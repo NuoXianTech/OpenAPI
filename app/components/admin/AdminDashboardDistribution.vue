@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminDashboardDistributionItem } from '~~/shared/types/admin-dashboard'
+import type { AdminDashboardDistributionItem } from '#shared/types/admin-dashboard'
 
 interface Props {
   distribution: AdminDashboardDistributionItem[]

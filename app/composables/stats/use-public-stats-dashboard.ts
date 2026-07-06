@@ -5,7 +5,7 @@ import type {
   PublicCallStatsOverview,
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
-} from '~~/shared/types/public-stats'
+} from '#shared/types/public-stats'
 
 type PublicStatTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
 

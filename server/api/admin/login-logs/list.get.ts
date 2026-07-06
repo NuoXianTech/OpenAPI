@@ -5,7 +5,7 @@ import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
-import type { AdminLoginLogRow, LoginMethod } from '~~/shared/types/login-log'
+import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
 
 const VALID_METHODS: LoginMethod[] = ['password', 'oauth_github', 'oauth_qq']
 

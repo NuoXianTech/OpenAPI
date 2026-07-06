@@ -8,7 +8,7 @@ import {
 } from '~~/server/services/credit-adjustments'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
-import type { CreditReason } from '~~/shared/types/credit-reason'
+import type { CreditReason } from '#shared/types/credit-reason'
 
 export type { CreditReason }
 

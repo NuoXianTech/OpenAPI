@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { API_STATUS } from '~~/shared/config/api-status'
+import { API_STATUS } from '#shared/config/api-status'
 import { resolveApiAutoStatusFromStatusCodes } from '~~/server/services/api-status-service'
 
 describe('resolveApiAutoStatusFromStatusCodes', () => {

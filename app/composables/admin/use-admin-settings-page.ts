@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from 'vue'
-import { SUPPORTED_OAUTH_PROVIDERS } from '~~/shared/types/oauth'
+import { SUPPORTED_OAUTH_PROVIDERS } from '#shared/types/oauth'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 

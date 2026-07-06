@@ -5,7 +5,7 @@ import type {
   AdminDashboardRange,
   AdminDashboardRecentCall,
   AdminDashboardTrendPoint
-} from '~~/shared/types/admin-dashboard'
+} from '#shared/types/admin-dashboard'
 import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-sections'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { httpStatusColor, type HttpStatusColor } from '~/utils/http-status'

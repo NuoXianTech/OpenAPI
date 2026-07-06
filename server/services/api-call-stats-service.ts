@@ -4,7 +4,7 @@ import type {
   PublicCallStatsDashboard,
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
-} from '~~/shared/types/public-stats'
+} from '#shared/types/public-stats'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
 

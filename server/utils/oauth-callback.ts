@@ -13,7 +13,7 @@ import { qqProvider } from '~~/server/utils/oauth-providers/qq'
 import { readQueryString } from '~~/server/utils/request-query'
 import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/utils/oauth-providers/types'
 import type { LoginMethod } from '~~/server/services/login-log-service'
-import type { SupportedOauthProvider } from '~~/shared/types/oauth'
+import type { SupportedOauthProvider } from '#shared/types/oauth'
 import { isBanActive } from '~~/server/utils/ban'
 
 function methodFromProvider(provider: SupportedOauthProvider): LoginMethod {

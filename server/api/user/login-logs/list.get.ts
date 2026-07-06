@@ -4,7 +4,7 @@ import { requireAuth } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
-import type { LoginLogRow } from '~~/shared/types/login-log'
+import type { LoginLogRow } from '#shared/types/login-log'
 
 /**
  * 用户「最近登录活动」：只返回当前登录用户本人的登录日志（成功 + 失败）。

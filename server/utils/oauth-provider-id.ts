@@ -1,4 +1,4 @@
-import { SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import { SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '#shared/types/oauth'
 
 export function isSupportedOauthProvider(value: unknown): value is SupportedOauthProvider {
   return typeof value === 'string' && (SUPPORTED_OAUTH_PROVIDERS as readonly string[]).includes(value)

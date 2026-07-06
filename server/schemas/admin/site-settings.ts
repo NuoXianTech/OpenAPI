@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import { emailSchema } from '../../../shared/schemas/common'
 import {
   atLeastOneFieldMessage,
+  emailSchema,
   enumMessage,
   intRange,
   nonNegativeInt,
@@ -9,7 +9,7 @@ import {
   positiveInt,
   requiredHttpUrl,
   requiredString
-} from '../../../shared/schemas/validation'
+} from '#shared/schemas/validation'
 
 const emailFilterMode = z.preprocess(
   v => (v === '' || v === null ? undefined : v),

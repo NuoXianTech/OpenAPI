@@ -8,7 +8,7 @@ import {
   nullableArraySchema
 } from '../api-key'
 import { optionalDate } from '../common'
-import { atLeastOneFieldMessage, positiveInt } from '../../../shared/schemas/validation'
+import { atLeastOneFieldMessage, positiveInt } from '#shared/schemas/validation'
 
 export const adminCreateUserApiKeySchema = z.object({
   userId: positiveInt('用户 ID'),

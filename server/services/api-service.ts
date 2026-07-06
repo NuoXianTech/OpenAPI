@@ -1,7 +1,7 @@
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '@nuxthub/db/schema'
 import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/server/config/api-guard'
-import { API_STATUS, isAutomaticApiStatus } from '~~/shared/config/api-status'
+import { API_STATUS, isAutomaticApiStatus } from '#shared/config/api-status'
 import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
 import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
