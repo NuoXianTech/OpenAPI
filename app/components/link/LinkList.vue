@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FriendLinkItem } from '~/types/link'
+import type { FriendLinkItem } from '~/types'
 
 interface LinkListProps {
   items?: FriendLinkItem[]

@@ -24,9 +24,18 @@ export interface ApiCategoryItem {
   isEnabled: boolean
 }
 
-// ============================================================
-// API Keys（用户密钥管理 · user 与 admin 两端共用）
-// ============================================================
+export interface FriendLinkItem {
+  id: number
+  title: string
+  url: string
+  description: string | null
+  isActive: boolean
+}
+
+export interface FilterTabOption {
+  label: string
+  value: string | number
+}
 
 /** 过期时间预设；'custom' 走 datetime-local 自定义 */
 export type ExpiryPreset = 'never' | '1h' | '1d' | '1mo' | 'custom'

@@ -1,4 +1,4 @@
-import type { FriendLinkItem } from '~/types/link'
+import type { FriendLinkItem } from '~/types'
 
 export function useFriendLinkList() {
   const { data, pending, error: rawError, refresh } = useFetch<FriendLinkItem[]>(

@@ -1,6 +1,5 @@
 import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
-import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
-import type { FilterTabOption } from '~/types/ui'
+import type { ApiCatalogItem, ApiCategoryItem, FilterTabOption } from '~/types'
 
 export function useApiList() {
   const { data: listData, pending: listPending, error: listError, refresh: refreshList } = useFetch<ApiCatalogItem[]>(

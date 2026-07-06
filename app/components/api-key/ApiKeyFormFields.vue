@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiKeyFormModel, ExpiryPreset } from '~/types/api'
+import type { ApiKeyFormModel, ExpiryPreset } from '~/types'
 
 /**
  * API Key 创建 / 编辑的字段集合（受控）。

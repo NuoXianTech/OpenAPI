@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FilterTabOption } from '~/types/ui'
+import type { FilterTabOption } from '~/types'
 import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
 useHead({ title: '友情链接' })

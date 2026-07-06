@@ -6,7 +6,7 @@
  * 与 utils/datetime.ts 同为顶层 util，使用处无需显式 import。
  */
 import { isCidr } from '#shared/utils/cidr'
-import type { ApiKeyItem, ExpiryPreset } from '~/types/api'
+import type { ApiKeyItem, ExpiryPreset } from '~/types'
 
 const HOUR_MS = 60 * 60 * 1000
 const DAY_MS = 24 * HOUR_MS
