@@ -1,4 +1,4 @@
-import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
+import { PUBLIC_API_STATUS_FILTER_ITEMS } from '~/config/api-status'
 import type { ApiCatalogItem, ApiCategoryItem, FilterTabOption } from '~/types'
 
 export function useApiList() {

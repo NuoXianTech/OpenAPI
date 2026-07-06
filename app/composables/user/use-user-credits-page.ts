@@ -1,8 +1,8 @@
-import type { CreditReasonFilter } from '#shared/types/credit-reason'
+import type { CreditReasonFilter } from '~/types/credit-reason'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
-export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
+export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '~/types/credit-reason'
 
 export interface CreditSummary {
   balance: number
