@@ -48,20 +48,9 @@ const onKeydown = (event: KeyboardEvent) => {
   }
 }
 
-const isEditableTarget = (target: EventTarget | null) => {
-  if (!(target instanceof HTMLElement)) return false
-  const tag = target.tagName
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
-}
-
-const onGlobalKey = (event: KeyboardEvent) => {
-  if (event.defaultPrevented || event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) return
-  if (isEditableTarget(event.target)) return
-  event.preventDefault()
-  focusInput()
-}
-
-useEventListener('keydown', onGlobalKey)
+defineShortcuts({
+  '/': focusInput
+})
 </script>
 
 <template>
