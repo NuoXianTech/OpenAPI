@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { requireAuth } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
-import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readPaginationQuery } from '~~/server/utils/pagination'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
 import type { LoginLogRow } from '~~/shared/types/login-log'
 

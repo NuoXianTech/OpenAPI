@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePagination } from '~~/server/utils/pagination'
+import { normalizePagination, readPaginationQuery } from '~~/server/utils/pagination'
 
 describe('pagination utilities', () => {
   it('normalizes defaults, clamps bounds, and parses query values', () => {
@@ -11,5 +11,25 @@ describe('pagination utilities', () => {
 
     expect(normalizePagination({ limit: '25', offset: ['8'] })).toEqual({ limit: 25, offset: 8 })
     expect(normalizePagination({ limit: 'many', offset: 'soon' })).toEqual({ limit: 50, offset: 0 })
+  })
+
+  it('reads pagination from a Nitro event path without importing h3', () => {
+    expect(readPaginationQuery({ path: '/api/items?limit=25&offset=10&tag=a&tag=b' })).toEqual({
+      query: {
+        limit: '25',
+        offset: '10',
+        tag: ['a', 'b']
+      },
+      limit: 25,
+      offset: 10
+    })
+
+    expect(readPaginationQuery({ node: { req: { url: '/api/items?limit=999' } } }, { maxLimit: 80 })).toEqual({
+      query: {
+        limit: '999'
+      },
+      limit: 80,
+      offset: 0
+    })
   })
 })

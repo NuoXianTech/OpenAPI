@@ -1,5 +1,5 @@
 import { clampInteger } from '~~/server/utils/number'
-import { firstQueryValue } from '~~/server/utils/request-query'
+import { firstQueryValue, type RequestQuery } from '~~/server/utils/request-query'
 
 export interface PaginationInput {
   limit?: unknown
@@ -15,6 +15,19 @@ export interface PaginationOptions {
 export interface NormalizedPagination {
   limit: number
   offset: number
+}
+
+export interface ReadPaginationQueryResult extends NormalizedPagination {
+  query: RequestQuery
+}
+
+export interface RequestQueryEvent {
+  path?: string
+  node?: {
+    req?: {
+      url?: string
+    }
+  }
 }
 
 const DEFAULT_LIMIT = 50
@@ -44,5 +57,36 @@ export function normalizePagination(
   return {
     limit: clampInteger(parsedLimit ?? defaultLimit, 1, maxLimit),
     offset: Math.max(parsedOffset ?? defaultOffset, 0)
+  }
+}
+
+function readQueryFromPath(path: string | undefined): RequestQuery {
+  if (!path) return {}
+
+  const search = path.startsWith('?') ? path.slice(1) : path.split('?')[1]
+  if (!search) return {}
+
+  const query: RequestQuery = {}
+  for (const [key, value] of new URLSearchParams(search)) {
+    const current = query[key]
+    if (current === undefined) {
+      query[key] = value
+      continue
+    }
+
+    query[key] = Array.isArray(current) ? [...current, value] : [current, value]
+  }
+
+  return query
+}
+
+export function readPaginationQuery(
+  event: RequestQueryEvent,
+  options: PaginationOptions = {}
+): ReadPaginationQueryResult {
+  const query = readQueryFromPath(event.path ?? event.node?.req?.url)
+  return {
+    query,
+    ...normalizePagination(query, options)
   }
 }

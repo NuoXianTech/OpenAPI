@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { apiCallService } from '~~/server/services/api-call-service'
 import { requireAuth } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryNumber, readQueryOption } from '~~/server/utils/request-query'
 
 const CALL_STATUSES = ['success', 'failure'] as const

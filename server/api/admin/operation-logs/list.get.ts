@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { operationLogService, type OperationLogStatus } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils/request-query'
 
 const STATUSES: OperationLogStatus[] = ['success', 'failure']

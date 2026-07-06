@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { notificationService } from '~~/server/services/notification-service'
 import { requireAuth } from '~~/server/utils/auth'
-import { readPaginationQuery } from '~~/server/utils/request-pagination'
+import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryString } from '~~/server/utils/request-query'
 
 export default defineEventHandler(async (event: H3Event) => {
