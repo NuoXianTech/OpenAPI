@@ -8,9 +8,10 @@ import type {
 } from '#shared/types/admin'
 import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-sections'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import { httpStatusColor, type HttpStatusColor } from '~/utils/http-status'
 
 useHead({ title: '管理中心' })
+
+type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
 const { user } = useAuth()
 const selectedRange = ref<AdminDashboardRange>(7)
@@ -131,6 +132,13 @@ function formatNumber(value: number): string {
 
 function formatRate(value: number): string {
   return `${value.toFixed(2)}%`
+}
+
+function httpStatusColor(code: number): HttpStatusColor {
+  if (code >= 500) return 'error'
+  if (code >= 400) return 'warning'
+  if (code >= 200 && code < 300) return 'success'
+  return 'neutral'
 }
 
 function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
