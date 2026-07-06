@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminUpdateApiSchema } from '#shared/schemas/admin'
+import { adminUpdateApiSchema } from '~~/server/schemas/admin'
 import { hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { apiService } from '~~/server/services/api-service'
 import { requireAdmin } from '~~/server/utils/auth'

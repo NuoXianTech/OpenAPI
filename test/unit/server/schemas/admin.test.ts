@@ -3,7 +3,7 @@ import {
   adminAdjustCreditsSchema,
   adminUpdateApiSchema,
   adminUpdateUserSchema
-} from '~~/shared/schemas/admin'
+} from '~~/server/schemas/admin'
 import { API_STATUS } from '~~/shared/config/api-status'
 
 describe('admin schemas', () => {

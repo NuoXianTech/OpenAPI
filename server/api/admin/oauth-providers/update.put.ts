@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminUpdateOauthProviderSchema } from '#shared/schemas/admin'
+import { adminUpdateOauthProviderSchema } from '~~/server/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/services/oauth-provider-service'
 import { operationLogService } from '~~/server/services/operation-log-service'

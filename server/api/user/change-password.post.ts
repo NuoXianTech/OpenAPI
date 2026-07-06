@@ -1,7 +1,7 @@
 // 已登录用户修改密码：校验旧密码 → 设新密码 → 令所有旧 token 失效并重签当前设备
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { userChangePasswordSchema } from '#shared/schemas/user'
+import { userChangePasswordSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
 import { hashPassword, verifyPassword, requireAuth, createUserSession } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'

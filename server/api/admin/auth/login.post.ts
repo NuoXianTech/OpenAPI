@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { timingSafeEqual } from 'node:crypto'
 import { createError, getRequestIP } from 'h3'
-import { adminLoginSchema } from '#shared/schemas/admin'
+import { adminLoginSchema } from '~~/server/schemas/admin'
 import { ADMIN_ACTOR_ID, createAdminSession } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { assertLoginRateLimit } from '~~/server/utils/login-rate-limit'

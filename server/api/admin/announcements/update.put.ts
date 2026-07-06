@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminUpdateAnnouncementSchema } from '#shared/schemas/admin'
+import { adminUpdateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/services/announcement-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

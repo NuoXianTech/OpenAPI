@@ -1,6 +1,6 @@
 import { createError } from 'h3'
 import type { H3Event } from 'h3'
-import { adminToggleApiSchema } from '#shared/schemas/admin'
+import { adminToggleApiSchema } from '~~/server/schemas/admin'
 import { apiService } from '~~/server/services/api-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'

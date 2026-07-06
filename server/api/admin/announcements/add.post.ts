@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { adminCreateAnnouncementSchema } from '#shared/schemas/admin'
+import { adminCreateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService } from '~~/server/services/announcement-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

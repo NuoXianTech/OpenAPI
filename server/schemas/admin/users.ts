@@ -5,8 +5,8 @@ import {
   optionalDate,
   passwordSchema,
   usernameSchema
-} from '../common'
-import { atLeastOneFieldMessage, maxMessage, positiveInt } from '../validation'
+} from '../../../shared/schemas/common'
+import { atLeastOneFieldMessage, maxMessage, positiveInt } from '../../../shared/schemas/validation'
 
 export const adminBanUserSchema = z.object({
   id: positiveInt('用户 ID'),

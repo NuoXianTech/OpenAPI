@@ -10,8 +10,8 @@ import {
 import {
   displayNameSchema,
   optionalDate
-} from './common'
-import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from './validation'
+} from '../../shared/schemas/common'
+import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from '../../shared/schemas/validation'
 
 // Profile
 export const userUpdateProfileSchema = z.object({

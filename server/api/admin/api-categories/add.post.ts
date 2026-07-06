@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { adminCreateApiCategorySchema } from '#shared/schemas/admin'
+import { adminCreateApiCategorySchema } from '~~/server/schemas/admin'
 import { apiCategoryService } from '~~/server/services/api-category-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

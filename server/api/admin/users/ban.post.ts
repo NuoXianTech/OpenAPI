@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { adminBanUserSchema } from '#shared/schemas/admin'
+import { adminBanUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'

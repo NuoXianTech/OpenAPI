@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { adminUpdateFriendLinkSchema } from '#shared/schemas/admin'
+import { adminUpdateFriendLinkSchema } from '~~/server/schemas/admin'
 import { friendLinkService } from '~~/server/services/friend-link-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'

@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { adminUpdateSiteSettingsSchema } from '#shared/schemas/admin'
+import { adminUpdateSiteSettingsSchema } from '~~/server/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { siteSettingsService, toAdminSiteSettings, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
 import { operationLogService } from '~~/server/services/operation-log-service'

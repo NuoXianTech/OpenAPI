@@ -8,7 +8,7 @@
 
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminRegisterApiSchema } from '#shared/schemas/admin'
+import { adminRegisterApiSchema } from '~~/server/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
 import { DEFAULT_API_REGISTRATION, hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { requireAdmin } from '~~/server/utils/auth'

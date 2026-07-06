@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminDeleteRedemptionCodeSchema } from '#shared/schemas/admin'
+import { adminDeleteRedemptionCodeSchema } from '~~/server/schemas/admin'
 import { redemptionService } from '~~/server/services/redemption-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

@@ -12,7 +12,7 @@
 
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminAdjustCreditsSchema } from '#shared/schemas/admin'
+import { adminAdjustCreditsSchema } from '~~/server/schemas/admin'
 import { creditService } from '~~/server/services/credit-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

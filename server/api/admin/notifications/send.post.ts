@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { adminSendNotificationSchema } from '#shared/schemas/admin'
+import { adminSendNotificationSchema } from '~~/server/schemas/admin'
 import { notificationService } from '~~/server/services/notification-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAdmin } from '~~/server/utils/auth'

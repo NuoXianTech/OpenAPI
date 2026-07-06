@@ -1,7 +1,7 @@
 // 登录用户请求变更邮箱：发确认链接到"新"邮箱。
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { userRequestEmailChangeSchema } from '#shared/schemas/user'
+import { userRequestEmailChangeSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { signVerificationToken } from '~~/server/utils/verification-token'
