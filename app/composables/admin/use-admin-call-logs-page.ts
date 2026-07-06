@@ -1,6 +1,5 @@
 import type { TableColumn } from '@nuxt/ui'
 import { computed, ref, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
-import { resolveOperationLogActionLabel } from '~/constants/operation-log-actions'
 import {
   ADMIN_LOG_TYPES,
   type AdminLogRow,
@@ -435,6 +434,50 @@ const ADMIN_OPERATION_LOG_COLUMNS: TableColumn<AdminOperationLogRow>[] = [
   { id: 'actions', header: '' }
 ]
 
+const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
+  'admin.api-category.create': '创建接口分类',
+  'admin.api-category.update': '更新接口分类',
+  'admin.api-category.delete': '删除接口分类',
+  'admin.api.register': '注册接口',
+  'admin.api.update': '更新接口',
+  'admin.api.delete': '删除接口',
+  'admin.api.toggle.isEnabled': '切换接口启用状态',
+  'admin.api.toggle.isStatistics': '切换接口统计状态',
+  'admin.friend-link.create': '创建友情链接',
+  'admin.friend-link.update': '更新友情链接',
+  'admin.friend-link.delete': '删除友情链接',
+  'admin.announcement.create': '创建公告',
+  'admin.announcement.update': '更新公告',
+  'admin.announcement.delete': '删除公告',
+  'admin.notification.send': '发送通知',
+  'admin.notification.delete': '删除通知',
+  'admin.api-key.create': '创建 API 密钥',
+  'admin.api-key.update': '更新 API 密钥',
+  'admin.api-key.reset': '重置 API 密钥',
+  'admin.user.create': '创建用户',
+  'admin.user.update': '更新用户',
+  'admin.user.delete': '删除用户',
+  'admin.user.ban': '封禁用户',
+  'admin.user.unban': '解封用户',
+  'admin.credit.grant': '发放积分',
+  'admin.credit.revoke': '扣除积分',
+  'admin.credit.reset': '重置积分',
+  'admin.redemption-code.generate': '生成兑换码',
+  'admin.redemption-code.delete': '删除兑换码',
+  'admin.redemption-code.batch-delete': '批量删除兑换码',
+  'admin.redemption-code.enable': '启用兑换码',
+  'admin.redemption-code.disable': '停用兑换码',
+  'admin.redemption-code.batch-enable': '批量启用兑换码',
+  'admin.redemption-code.batch-disable': '批量停用兑换码',
+  'admin.oauth-provider.update': '更新 OAuth 配置',
+  'admin.settings.update': '更新系统设置',
+  'admin.settings.smtp.test': '测试邮件发送',
+  'user.checkin': '每日签到',
+  'user.password.change': '修改密码',
+  'user.oauth.unbind': '解绑第三方账号',
+  'user.redemption-code.redeem': '兑换码兑换'
+}
+
 function trimmedOrUndefined(value: string): string | undefined {
   const trimmed = value.trim()
   return trimmed || undefined
@@ -465,6 +508,10 @@ function stringifyOperationLogDetail(detail: Record<string, unknown> | null | un
   } catch {
     return String(detail)
   }
+}
+
+function resolveOperationLogActionLabel(action: string): string {
+  return OPERATION_LOG_ACTION_LABELS[action] ?? action
 }
 
 export function useAdminOperationLogList(
