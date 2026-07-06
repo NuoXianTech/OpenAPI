@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ANNOUNCEMENT_LEVEL_META as levelMeta, type MessageLevel, type MessageLevelMeta } from '~/types/message-level'
+import type { Announcement } from '~/types/announcement'
+import { ANNOUNCEMENT_LEVEL_META as levelMeta, type MessageLevelMeta } from '~/types/message-level'
 /**
  * 公告弹窗：自动加载生效中的公告，按 isPinned > sortOrder > createdAt 排序，
  * 默认展开第一条，其余收起。
@@ -11,19 +12,6 @@ import { ANNOUNCEMENT_LEVEL_META as levelMeta, type MessageLevel, type MessageLe
  * 弹出时机：组件挂载且存在生效公告时自动 open。不记忆已读状态，
  * 每次进入首页都会展示。
  */
-
-interface Announcement {
-  id: number
-  title: string
-  content: string
-  level: MessageLevel
-  isPinned: boolean
-  isEnabled: boolean
-  linkUrl: string | null
-  sortOrder: number
-  createdAt: string
-  updatedAt: string
-}
 
 // 预解析为展示项：把等级元数据与日期格式化提前算好，模板保持声明式无逻辑。
 // 字段刻意避开 UAccordion 内建的 `icon` / `content`（会被组件自动渲染），改用 levelIcon / text。

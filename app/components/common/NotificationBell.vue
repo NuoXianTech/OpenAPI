@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NOTIFICATION_LEVEL_META as levelMeta } from '~/types/message-level'
+import { NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '~/types/message-level'
 /**
  * 后台站内信通知中心（admin / user 两端共用）
  *
@@ -14,7 +14,7 @@ interface Notification {
   id: number
   title: string
   content: string
-  level: 'info' | 'success' | 'warning' | 'critical'
+  level: MessageLevel
   linkUrl: string | null
   isRead: boolean
   readAt: string | null

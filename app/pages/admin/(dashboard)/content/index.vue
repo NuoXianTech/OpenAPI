@@ -1,22 +1,10 @@
 <script setup lang="ts">
+import type { Announcement } from '~/types/announcement'
 import { ANNOUNCEMENT_LEVEL_META as levelMeta } from '~/types/message-level'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-
-interface Announcement {
-  id: number
-  title: string
-  content: string
-  level: 'info' | 'success' | 'warning' | 'critical'
-  isPinned: boolean
-  isEnabled: boolean
-  linkUrl: string | null
-  sortOrder: number
-  createdAt: string
-  updatedAt: string
-}
 
 const toast = useToast()
 const confirm = useConfirmDialog()

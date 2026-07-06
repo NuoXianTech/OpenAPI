@@ -8,6 +8,10 @@ import type {
   AdminAnalyticsOverview,
   AdminAnalyticsRankItem
 } from '#shared/types/admin'
+import type { DiscoveredApi as AdminDiscoveredApi } from '~/types/admin-api'
+import type { MessageLevel } from '~/types/message-level'
+
+export type { DiscoveredApi as AdminDiscoveredApi } from '~/types/admin-api'
 
 interface AdminAnalyticsDistributionChartItem {
   label: string
@@ -135,47 +139,6 @@ export function useAdminAnalyticsDisplayMeta(
     overviewCards,
     ranking
   }
-}
-
-interface AdminDiscoveredEndpoint {
-  apiPath: string
-  method: string
-  sourceFile: string
-  isDynamic: boolean
-}
-
-interface AdminRegisteredApi {
-  id: number
-  code: string
-  pathVersion: string
-  name: string
-  shortDesc: string
-  description: string
-  apiPath: string
-  httpMethod: string
-  endpointCount: number
-  docUrl: string
-  status: number
-  categoryId: number | null
-  isEnabled: boolean
-  isApiKey: boolean
-  isStatistics: boolean
-  rateLimitPerSecond: number
-  rateLimitPerMinute: number
-  rateLimitPerHour: number
-  rateLimitPerDay: number
-  dailyQuota: number
-  methodCosts: Record<string, number>
-  timeoutMs: number
-}
-
-export interface AdminDiscoveredApi {
-  pathVersion: string
-  code: string
-  endpointCount: number
-  endpoints: AdminDiscoveredEndpoint[]
-  registered: AdminRegisteredApi | null
-  orphaned: boolean
 }
 
 export interface AdminVersionGroup {
@@ -334,7 +297,7 @@ export interface AdminNotificationUserItem {
 export interface AdminNotificationMessageRow {
   id: number
   title: string
-  level: AdminNotificationLevel
+  level: MessageLevel
   audience: AdminNotificationAudience
   recipientCount: number
   senderActor: string | null
@@ -357,7 +320,7 @@ interface AdminNotificationForm {
   recipientUserIds: number[]
   title: string
   content: string
-  level: AdminNotificationLevel
+  level: MessageLevel
   linkUrl: string
 }
 
@@ -381,7 +344,7 @@ interface UseAdminNotificationsDisplayMetaReturn {
   users: ComputedRef<AdminNotificationUserItem[]>
   userOptions: ComputedRef<Array<AdminNotificationSelectItem<number>>>
   audienceOptions: Array<AdminNotificationSelectItem<AdminNotificationAudience>>
-  levelOptions: Array<AdminNotificationSelectItem<AdminNotificationLevel>>
+  levelOptions: Array<AdminNotificationSelectItem<MessageLevel>>
   audienceMeta: Record<AdminNotificationAudience, AdminNotificationAudienceMeta>
   columns: TableColumn<AdminNotificationMessageRow>[]
   getRowItems: (row: AdminNotificationMessageRow) => DropdownMenuItem[]
@@ -389,15 +352,13 @@ interface UseAdminNotificationsDisplayMetaReturn {
 
 type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
-type AdminNotificationLevel = 'info' | 'success' | 'warning' | 'critical'
-
 const ADMIN_NOTIFICATION_AUDIENCE_OPTIONS: Array<AdminNotificationSelectItem<AdminNotificationAudience>> = [
   { label: '指定用户（仅选中收件人）', value: 'specific' },
   { label: '当前所有用户（不含未来注册）', value: 'all_current' },
   { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' }
 ]
 
-const ADMIN_NOTIFICATION_LEVEL_OPTIONS: Array<AdminNotificationSelectItem<AdminNotificationLevel>> = [
+const ADMIN_NOTIFICATION_LEVEL_OPTIONS: Array<AdminNotificationSelectItem<MessageLevel>> = [
   { label: '通知 (info)', value: 'info' },
   { label: '成功 (success)', value: 'success' },
   { label: '提醒 (warning)', value: 'warning' },

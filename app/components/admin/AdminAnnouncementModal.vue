@@ -1,16 +1,6 @@
 <script setup lang="ts">
+import type { Announcement } from '~/types/announcement'
 import { parseFetchError } from '~/utils/client-error'
-
-interface Announcement {
-  id: number
-  title: string
-  content: string
-  level: 'info' | 'success' | 'warning' | 'critical'
-  isPinned: boolean
-  isEnabled: boolean
-  linkUrl: string | null
-  sortOrder: number
-}
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item: Announcement | null }>()
