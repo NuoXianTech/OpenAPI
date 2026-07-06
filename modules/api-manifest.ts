@@ -266,20 +266,21 @@ export default defineNuxtModule({
     name: 'api-manifest',
     configKey: 'apiManifest'
   },
-  async setup(_options, nuxt) {
+  setup(_options, nuxt) {
     const rootDir = nuxt.options.rootDir
 
-    // 提前跑一次：build 阶段 fail fast，并在 prod 把结果物化为静态字符串
-    let initialManifest: ManifestApi[]
-    try {
-      initialManifest = await buildManifest(rootDir)
-    } catch (err) {
-      console.error((err as Error).message)
-      throw err
-    }
-
-    nuxt.hook('nitro:config', (nitroConfig) => {
+    nuxt.hook('nitro:config', async (nitroConfig) => {
       nitroConfig.virtual = nitroConfig.virtual || {}
+
+      // 在 Nitro 配置阶段扫描一次：构建期 fail fast，生产环境固化为静态字符串。
+      let initialManifest: ManifestApi[]
+      try {
+        initialManifest = await buildManifest(rootDir)
+      } catch (err) {
+        console.error((err as Error).message)
+        throw err
+      }
+
       // dev：每次 import 重新扫盘以反映新增/删除的 endpoint 文件
       // prod：build 阶段已 frozen，固化为静态字符串避免运行时 IO
       if (nuxt.options.dev) {

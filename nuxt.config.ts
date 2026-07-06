@@ -8,7 +8,6 @@ export default defineNuxtConfig({
     '@nuxthub/core',
     '@nuxt/ui',
     '@vueuse/nuxt',
-    '~~/modules/api-manifest',
   ],
   devtools: {
     enabled: !isProduction,
