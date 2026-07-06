@@ -14,28 +14,6 @@ const ratio = computed(() => {
   if (props.totalCount <= 0) return 0
   return Math.round((props.activeCount / props.totalCount) * 100)
 })
-
-const networkStatus = computed(() => {
-  if (props.totalCount <= 0) {
-    return '等待收录'
-  }
-  if (inactiveCount.value > 0) {
-    return '部分站点异常'
-  }
-  return '站点可达'
-})
-
-type StatusTone = 'success' | 'info' | 'warning' | 'error' | 'neutral'
-
-const networkTone = computed<StatusTone>(() => {
-  if (props.totalCount <= 0) {
-    return 'neutral'
-  }
-  if (inactiveCount.value > 0) {
-    return 'warning'
-  }
-  return 'success'
-})
 </script>
 
 <template>
@@ -92,35 +70,6 @@ const networkTone = computed<StatusTone>(() => {
           <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
             与社区里的独立站点互相连接，把有趣的服务、项目和创作者放在更容易被发现的位置。
           </p>
-
-          <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
-            <span class="inline-flex items-center gap-1.5">
-              <CommonStatusDot :tone="networkTone" />
-              {{ networkStatus }}
-            </span>
-            <USeparator
-              orientation="vertical"
-              class="h-3"
-            />
-            <span class="inline-flex items-center gap-1.5">
-              <UIcon
-                name="i-mdi-earth"
-                class="size-3.5"
-              />
-              站点互联
-            </span>
-            <USeparator
-              orientation="vertical"
-              class="hidden h-3 sm:inline-flex"
-            />
-            <span class="hidden items-center gap-1.5 sm:inline-flex">
-              <UIcon
-                name="i-mdi-handshake-outline"
-                class="size-3.5"
-              />
-              欢迎交换
-            </span>
-          </div>
         </div>
 
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">

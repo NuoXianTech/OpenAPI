@@ -1,14 +1,6 @@
 <script setup lang="ts">
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
-type HomeHeroListStatusTone = 'info' | 'error' | 'neutral' | 'success'
-
-interface HomeHeroListStatus {
-  label: string
-  tone: HomeHeroListStatusTone
-  title: string
-}
-
 interface HomeHeroDashboardMeta {
   path: string
   label: string
@@ -44,11 +36,6 @@ const { user, logout } = useAuth()
 const nowTime = ref('')
 const upTime = ref('')
 const startTimestamp = computed(() => parseStartTimestamp(props.startTime))
-const listStatus = computed(() => getListStatus({
-  totalCount: props.totalCount,
-  apiListLoading: props.apiListLoading,
-  apiListError: props.apiListError
-}))
 const compactCallCount = computed(() => formatCompactCallCount(props.callCount))
 const dashboardMeta = computed(() => getDashboardMeta(user.value?.kind))
 const dashboardPath = computed(() => dashboardMeta.value.path)
@@ -83,35 +70,6 @@ function formatUpTime(ms: number): string {
 function parseStartTimestamp(startTime: string | undefined): number {
   const timestamp = new Date(startTime || '').getTime()
   return Number.isNaN(timestamp) ? Date.now() : timestamp
-}
-
-function getListStatus(input: Pick<Props, 'totalCount' | 'apiListLoading' | 'apiListError'>): HomeHeroListStatus {
-  if (input.apiListLoading) {
-    return {
-      label: '加载中',
-      tone: 'info',
-      title: '依据：首页公开接口列表和分类接口正在加载'
-    }
-  }
-  if (input.apiListError) {
-    return {
-      label: '加载失败',
-      tone: 'error',
-      title: '依据：首页公开接口列表或分类接口请求失败'
-    }
-  }
-  if ((input.totalCount ?? 0) <= 0) {
-    return {
-      label: '暂无接口',
-      tone: 'neutral',
-      title: '依据：首页公开接口列表请求成功，但当前没有接口'
-    }
-  }
-  return {
-    label: '接口正常',
-    tone: 'success',
-    title: '依据：首页公开接口列表和分类接口请求成功'
-  }
 }
 
 function formatCompactCallCount(callCount = 0): string {
@@ -178,15 +136,6 @@ async function handleLogout() {
           </p>
 
           <div class="hero-meta flex flex-wrap items-center gap-2.5 text-xs text-muted">
-            <UTooltip
-              :text="listStatus.title"
-              :content="{ side: 'top' }"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <CommonStatusDot :tone="listStatus.tone" />
-                {{ listStatus.label }}
-              </span>
-            </UTooltip>
             <USeparator
               orientation="vertical"
               class="h-3"

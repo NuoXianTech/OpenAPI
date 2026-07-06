@@ -84,35 +84,6 @@ const {
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
               实时聚合公开 API 的调用规模、请求质量和热门接口，方便快速判断服务活跃度与稳定性。
             </p>
-
-            <div class="mt-5 flex flex-wrap items-center gap-2.5 text-xs text-muted">
-              <span class="inline-flex items-center gap-1.5">
-                <CommonStatusDot :tone="isPending ? 'info' : 'success'" />
-                {{ isPending ? '同步中' : '统计已就绪' }}
-              </span>
-              <USeparator
-                orientation="vertical"
-                class="h-3"
-              />
-              <span class="inline-flex items-center gap-1.5">
-                <UIcon
-                  name="i-mdi-api"
-                  class="size-3.5"
-                />
-                已启用 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.enabledTrackedApiCount) : '--' }}</span> 个统计接口
-              </span>
-              <USeparator
-                orientation="vertical"
-                class="hidden h-3 sm:inline-flex"
-              />
-              <span class="hidden items-center gap-1.5 sm:inline-flex">
-                <UIcon
-                  name="i-mdi-account-group-outline"
-                  class="size-3.5"
-                />
-                用户 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.userCount) : '--' }}</span>
-              </span>
-            </div>
           </div>
 
           <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
