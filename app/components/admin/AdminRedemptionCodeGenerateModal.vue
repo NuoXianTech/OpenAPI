@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { GeneratePayload, GenerateResult } from '~/composables/admin/use-redemption-codes-page'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
   open: boolean

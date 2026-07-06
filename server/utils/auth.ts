@@ -7,7 +7,7 @@ import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { getCravatarUrl } from '~~/server/utils/cravatar'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
-import { banMessage, isBanActive } from '#shared/utils/ban'
+import { banMessage, isBanActive } from '~~/server/utils/ban'
 
 interface AuthUserPayload {
   id: number

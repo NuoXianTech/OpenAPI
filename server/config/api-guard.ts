@@ -1,6 +1,4 @@
-import { API_STATUS } from './api-status'
-
-// Imported by app and server code; keep this file runtime-dependency free.
+import { API_STATUS } from '../../shared/config/api-status'
 
 export const VERSION_CODE_PATTERN = /^\/(v\d+)\/([^/?#]+)/
 
@@ -68,4 +66,5 @@ export const RATE_LIMIT_WINDOW_SECONDS = {
   hour: 3_600,
   day: 86_400
 } as const
+
 export type RateLimitWindow = keyof typeof RATE_LIMIT_WINDOW_SECONDS

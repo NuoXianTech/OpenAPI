@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProfileData } from '~/composables/user/use-user-settings-page'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
   profile: ProfileData | null

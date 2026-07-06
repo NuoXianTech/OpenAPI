@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProfileData } from '~/composables/user/use-user-settings-page'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 
 interface UserSettingsBasicCardProps {
   profile: ProfileData | null

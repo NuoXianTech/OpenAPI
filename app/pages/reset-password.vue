@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { ResetPasswordInput } from '#shared/schemas/auth'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { minMessage, requiredMessage } from '#shared/schemas/validation'
 import type { FormSubmitEvent } from '@nuxt/ui'
 

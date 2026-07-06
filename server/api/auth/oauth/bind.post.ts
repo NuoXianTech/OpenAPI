@@ -9,7 +9,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { loginLogService, type LoginMethod } from '~~/server/services/login-log-service'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
-import { banMessage, isBanActive } from '#shared/utils/ban'
+import { banMessage, isBanActive } from '~~/server/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {
   const pending = readPendingOauth(event)

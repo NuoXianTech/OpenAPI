@@ -2,7 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '~/types'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 
 const open = defineModel<boolean>('open', { default: false })

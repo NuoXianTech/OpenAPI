@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{

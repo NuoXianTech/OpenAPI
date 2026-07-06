@@ -18,8 +18,8 @@ import { apis } from '@nuxthub/db/schema'
 import { eq } from 'drizzle-orm'
 import { API_MANIFEST as RAW_API_MANIFEST } from '#api-manifest'
 import { apiService } from '~~/server/services/api-service'
-import { DEFAULT_API_REGISTRATION } from '~~/shared/config/api-guard'
-import type { ManifestApi } from '~~/shared/types/api-guard'
+import { DEFAULT_API_REGISTRATION } from '~~/server/config/api-guard'
+import type { ManifestApi } from '~~/server/types/api-guard'
 
 const API_MANIFEST = RAW_API_MANIFEST as readonly ManifestApi[]
 

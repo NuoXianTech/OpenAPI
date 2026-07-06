@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import {
   useAdminApisDisplayMeta,
   type AdminApiCategoryItem,

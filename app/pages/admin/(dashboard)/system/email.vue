@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 
 const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
 const toast = useToast()

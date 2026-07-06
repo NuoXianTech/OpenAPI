@@ -3,7 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/admin-api'
 import { API_STATUS } from '#shared/config/api-status'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
 

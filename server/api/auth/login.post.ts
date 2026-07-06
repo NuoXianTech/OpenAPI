@@ -7,7 +7,7 @@ import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { assertLoginRateLimit } from '~~/server/utils/login-rate-limit'
 import { readZodBody } from '~~/server/utils/zod'
-import { banMessage, isBanActive } from '#shared/utils/ban'
+import { banMessage, isBanActive } from '~~/server/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {
   const body = await readZodBody(event, loginSchema)

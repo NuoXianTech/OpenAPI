@@ -1,4 +1,4 @@
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import type { LoginLogRow } from '#shared/types/login-log'
 
 export interface ProfileData {

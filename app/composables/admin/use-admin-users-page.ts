@@ -1,7 +1,7 @@
 import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, ref } from 'vue'
-import { parseFetchError } from '~~/shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { formatDateTime } from '~/utils/datetime'
 

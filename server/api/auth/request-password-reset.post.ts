@@ -9,7 +9,7 @@ import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
 import { readZodBody } from '~~/server/utils/zod'
-import { isBanActive } from '#shared/utils/ban'
+import { isBanActive } from '~~/server/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {
   const settings = await siteSettingsService.getOrCreate()

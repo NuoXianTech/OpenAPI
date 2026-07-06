@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import { registerSchema } from '#shared/schemas/auth'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import type { FormSubmitEvent } from '@nuxt/ui'
 
 useHead({ title: '注册' })

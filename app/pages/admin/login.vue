@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { requiredMessage } from '#shared/schemas/validation'
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 

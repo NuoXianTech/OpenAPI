@@ -1,5 +1,5 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { parseFetchError } from '#shared/utils/client-error'
+import { parseFetchError } from '~/utils/client-error'
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 

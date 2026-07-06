@@ -10,12 +10,12 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminRegisterApiSchema } from '#shared/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
-import { DEFAULT_API_REGISTRATION, hasAnyChargedMethod } from '~~/shared/config/api-guard'
+import { DEFAULT_API_REGISTRATION, hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/services/api-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
-import type { ManifestEndpoint } from '~~/shared/types/api-guard'
+import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)

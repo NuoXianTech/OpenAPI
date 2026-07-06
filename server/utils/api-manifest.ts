@@ -7,7 +7,7 @@
  */
 
 import { API_MANIFEST } from '#api-manifest'
-import type { EndpointMatch, ManifestApi, ManifestEndpoint } from '~~/shared/types/api-guard'
+import type { EndpointMatch, ManifestApi, ManifestEndpoint } from '~~/server/types/api-guard'
 
 interface CompiledEndpoint {
   endpoint: ManifestEndpoint

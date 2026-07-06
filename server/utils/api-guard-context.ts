@@ -1,5 +1,5 @@
 import type { apis } from '@nuxthub/db/schema'
-import type { ApiStatsTarget, GateOutcome, ManifestApi, ManifestEndpoint } from '~~/shared/types/api-guard'
+import type { ApiStatsTarget, GateOutcome, ManifestApi, ManifestEndpoint } from '~~/server/types/api-guard'
 
 type ApiRecord = typeof apis.$inferSelect
 

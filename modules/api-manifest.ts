@@ -18,7 +18,7 @@ import { readdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 import { addTypeTemplate, defineNuxtModule } from 'nuxt/kit'
-import type { ManifestApi, ManifestEndpoint } from '../shared/types/api-guard'
+import type { ManifestApi, ManifestEndpoint } from '../server/types/api-guard'
 
 const SOURCE_FILE_RE = /^(.+?)(?:\.(get|post|put|delete|patch|head|options|connect|trace))?\.(ts|mts|js|mjs)$/i
 const DYNAMIC_PARAM_RE = /^\[(.+?)\]$/
@@ -297,16 +297,16 @@ export default defineNuxtModule({
       }
     })
 
-    // 声明 #api-manifest 的类型，使 nuxt / nitro / shared 三套 tsconfig 都能解析到
+    // 声明 #api-manifest 的类型，使 Nuxt / Nitro 类型检查都能解析到。
     addTypeTemplate({
       filename: 'types/api-manifest.d.ts',
       getContents: () => [
         `declare module '#api-manifest' {`,
-        `  import type { ManifestApi } from '${relative(join(rootDir, '.nuxt', 'types'), join(rootDir, 'shared', 'types', 'api-guard')).split(sep).join('/')}'`,
+        `  import type { ManifestApi } from '${relative(join(rootDir, '.nuxt', 'types'), join(rootDir, 'server', 'types', 'api-guard')).split(sep).join('/')}'`,
         `  export const API_MANIFEST: ManifestApi[]`,
         `}`,
         ''
       ].join('\n')
-    }, { nitro: true, nuxt: true, shared: true })
+    }, { nitro: true, nuxt: true })
   }
 })
