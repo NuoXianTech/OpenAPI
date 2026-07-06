@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import SearchBar from '~/components/common/SearchBar.vue'
-import ApiList from '~/components/api/ApiList.vue'
-import FilterTabs from '~/components/common/FilterTabs.vue'
 import { useApiList } from '~/composables/api/use-api-list'
 import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { API_STATUS } from '#shared/config/api-status'
@@ -70,7 +67,7 @@ useSeoMeta({
         variant="subtle"
       >
         <div class="border-b border-default px-4 py-3 sm:px-5">
-          <SearchBar
+          <CommonSearchBar
             v-model="query"
             class="!mt-0 !mb-0"
           />
@@ -85,7 +82,7 @@ useSeoMeta({
               />
               接口状态
             </div>
-            <FilterTabs
+            <CommonFilterTabs
               v-model="currentTab"
               :tabs="statusTabs"
               :enable-collapse="false"
@@ -101,7 +98,7 @@ useSeoMeta({
               />
               接口分类
             </div>
-            <FilterTabs
+            <CommonFilterTabs
               v-model="currentCategory"
               :tabs="categoryTabs"
               :max-visible="10"

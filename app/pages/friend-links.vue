@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import SearchBar from '~/components/common/SearchBar.vue'
-import FilterTabs from '~/components/common/FilterTabs.vue'
-import LinkList from '~/components/link/LinkList.vue'
 import type { FilterTabOption } from '~/types/ui'
 import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
@@ -65,7 +62,7 @@ const visibleCount = computed(() => filteredItems.value.length)
         variant="subtle"
       >
         <div class="border-b border-default px-4 py-3 sm:px-5">
-          <SearchBar
+          <CommonSearchBar
             v-model="query"
             placeholder="搜索友情链接名称或描述..."
             class="!mt-0 !mb-0"
@@ -81,7 +78,7 @@ const visibleCount = computed(() => filteredItems.value.length)
               />
               状态筛选
             </div>
-            <FilterTabs
+            <CommonFilterTabs
               v-model="currentStatus"
               :tabs="statusTabs"
               :enable-collapse="false"

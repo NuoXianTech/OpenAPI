@@ -1,13 +1,26 @@
-import { usePublicApiList } from './use-public-api-list'
+import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
 import type { ApiCatalogItem, ApiCategoryItem } from '~/types/api'
 import type { FilterTabOption } from '~/types/ui'
 
 export function useApiList() {
-  const { catalogItems, statusTabs, pending: listPending, error: listError, fetchPublicApiList } = usePublicApiList()
+  const { data: listData, pending: listPending, error: listError, refresh: refreshList } = useFetch<ApiCatalogItem[]>(
+    '/api/list',
+    {
+      key: 'public-api-list',
+      method: 'GET',
+      default: () => []
+    }
+  )
 
   const query = ref('')
   const currentTab = ref<string | number>('all')
   const currentCategory = ref<string | number>('all')
+  const catalogItems = computed(() => listData.value || [])
+
+  const statusTabs: FilterTabOption[] = [
+    { label: '全部', value: 'all' },
+    ...PUBLIC_API_STATUS_FILTER_ITEMS
+  ]
 
   const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useFetch<ApiCategoryItem[]>(
     '/api/api-categories/list',
@@ -51,7 +64,7 @@ export function useApiList() {
   })
 
   const fetchList = async () => {
-    await Promise.all([fetchPublicApiList(), refreshCategories()])
+    await Promise.all([refreshList(), refreshCategories()])
   }
 
   const filteredItems = computed(() => {
