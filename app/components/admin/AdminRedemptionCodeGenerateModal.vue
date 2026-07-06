@@ -167,7 +167,7 @@ function close() {
         <UAlert
           color="success"
           variant="subtle"
-          icon="i-lucide-circle-check"
+          icon="i-mdi-check-circle-outline"
           :title="`已生成 ${result.generated} 张兑换码`"
           :description="`批次 ${result.batchId}` + (result.generated < result.requested
             ? ` · 申请 ${result.requested} 张，因冲突实际生成 ${result.generated} 张` : '')"
@@ -176,7 +176,7 @@ function close() {
           <UButton
             size="sm"
             variant="outline"
-            icon="i-lucide-copy"
+            icon="i-mdi-content-copy"
             @click="onCopyAll(result.codes)"
           >
             复制全部
@@ -195,7 +195,7 @@ function close() {
               size="xs"
               variant="ghost"
               color="neutral"
-              icon="i-lucide-copy"
+              icon="i-mdi-content-copy"
               @click="onCopyOne(c.code)"
             />
           </div>

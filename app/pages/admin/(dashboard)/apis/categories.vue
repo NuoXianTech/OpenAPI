@@ -72,8 +72,8 @@ async function quickToggle(row: ApiCategoryItem, value: boolean) {
 
 function getRowItems(row: ApiCategoryItem): DropdownMenuItem[] {
   return [
-    { label: '编辑', icon: 'i-lucide-pencil', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(row) }
+    { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -92,7 +92,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
   <div class="space-y-6">
     <div class="flex items-center justify-end gap-2">
       <UButton
-        icon="i-lucide-plus"
+        icon="i-mdi-plus"
         @click="openAdd"
       >
         新建分类
@@ -100,7 +100,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       <UButton
         color="neutral"
         variant="outline"
-        icon="i-lucide-refresh-cw"
+        icon="i-mdi-refresh"
         :loading="loading"
         @click="refresh()"
       >
@@ -110,7 +110,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
 
     <DashboardTableCard
       title="分类列表"
-      icon="i-lucide-shapes"
+      icon="i-mdi-shape-outline"
       :total="total"
     >
       <DashboardDataTable
@@ -122,7 +122,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无分类"
-        empty-icon="i-lucide-shapes"
+        empty-icon="i-mdi-shape-outline"
       >
         <template #code-cell="{ row }">
           <span class="font-mono text-xs">{{ row.original.code }}</span>

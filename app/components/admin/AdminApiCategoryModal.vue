@@ -122,12 +122,12 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         </UFormField>
         <div class="grid grid-cols-2 gap-3">
           <UFormField
-            label="图标 (i-lucide-*)"
+            label="图标 (i-mdi-*)"
             name="icon"
           >
             <UInput
               v-model="state.icon"
-              placeholder="i-lucide-bot"
+              placeholder="i-mdi-robot-outline"
             />
           </UFormField>
           <UFormField

@@ -198,25 +198,25 @@ export function useAdminUsersDisplayMeta(
   function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
     return [{
       label: '编辑',
-      icon: 'i-lucide-pencil',
+      icon: 'i-mdi-pencil-outline',
       onSelect: () => options.openEdit(row)
     }, {
       label: row.isBanned ? '解封' : '封禁',
-      icon: row.isBanned ? 'i-lucide-lock-open' : 'i-lucide-lock',
+      icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
       onSelect: () => row.isBanned ? options.openUnban(row) : options.openBan(row)
     }, {
       label: 'API Keys',
-      icon: 'i-lucide-key-round',
+      icon: 'i-mdi-key-variant',
       onSelect: () => options.openKeys(row)
     }, {
       label: '积分管理',
-      icon: 'i-lucide-coins',
+      icon: 'i-mdi-cash-multiple',
       onSelect: () => options.openCreditForOne(row)
     }, {
       type: 'separator'
     }, {
       label: '删除',
-      icon: 'i-lucide-trash-2',
+      icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => options.openDelete(row)
     }]

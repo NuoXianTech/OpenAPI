@@ -83,17 +83,17 @@ function getSuccessRadar(status = -1): { className: string, title: string } {
 function getStatusMeta(status = -1): ApiCardStatusMeta {
   switch (status) {
     case API_STATUS.normal:
-      return { label: '正常', color: 'success', icon: 'i-lucide-circle-check' }
+      return { label: '正常', color: 'success', icon: 'i-mdi-check-circle-outline' }
     case API_STATUS.abnormal:
-      return { label: '异常', color: 'error', icon: 'i-lucide-circle-alert' }
+      return { label: '异常', color: 'error', icon: 'i-mdi-alert-circle-outline' }
     case API_STATUS.maintenance:
-      return { label: '维护', color: 'warning', icon: 'i-lucide-wrench' }
+      return { label: '维护', color: 'warning', icon: 'i-mdi-wrench-outline' }
     case API_STATUS.deprecated:
-      return { label: '废弃', color: 'neutral', icon: 'i-lucide-archive' }
+      return { label: '废弃', color: 'neutral', icon: 'i-mdi-archive-outline' }
     case API_STATUS.automatic:
-      return { label: '自动', color: 'info', icon: 'i-lucide-refresh-cw' }
+      return { label: '自动', color: 'info', icon: 'i-mdi-sync' }
     default:
-      return { label: '未知', color: 'neutral', icon: 'i-lucide-circle-question-mark' }
+      return { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }
 }
 
@@ -131,7 +131,7 @@ function formatCallCount(count: number): string {
         color="warning"
         variant="soft"
         size="sm"
-        icon="i-lucide-coins"
+        icon="i-mdi-cash-multiple"
         class="rounded-full"
         :title="`收费 ${aggregateCost} / 次`"
       >
@@ -142,7 +142,7 @@ function formatCallCount(count: number): string {
         color="warning"
         variant="soft"
         size="sm"
-        icon="i-lucide-coins"
+        icon="i-mdi-cash-multiple"
         class="rounded-full"
         :title="isAllPaid ? '按方法定价' : '部分方法收费'"
       >
@@ -153,7 +153,7 @@ function formatCallCount(count: number): string {
         color="success"
         variant="soft"
         size="sm"
-        icon="i-lucide-gift"
+        icon="i-mdi-gift-outline"
         class="api-card__badge-icon rounded-full"
         title="免费"
         aria-label="免费"
@@ -163,7 +163,7 @@ function formatCallCount(count: number): string {
         color="neutral"
         variant="subtle"
         size="sm"
-        icon="i-lucide-key-round"
+        icon="i-mdi-key-variant"
         class="api-card__badge-icon rounded-full"
         title="需要 APIKey"
         aria-label="需要 APIKey"
@@ -171,7 +171,7 @@ function formatCallCount(count: number): string {
 
       <span class="api-card__calls">
         <UIcon
-          name="i-lucide-chart-bar"
+          name="i-mdi-chart-bar"
           class="size-3"
         />
         <span class="api-card__calls-num">{{ formatCallCount(totalCalls) }}</span>
@@ -192,7 +192,7 @@ function formatCallCount(count: number): string {
             color="neutral"
             variant="soft"
             size="xs"
-            icon="i-lucide-file-text"
+            icon="i-mdi-file-document-outline"
             class="api-card__action-button"
           >
             文档
@@ -213,7 +213,7 @@ function formatCallCount(count: number): string {
               color="neutral"
               variant="soft"
               size="xs"
-              :icon="detailsOpen ? 'i-lucide-chevron-up' : 'i-lucide-info'"
+              :icon="detailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-information-outline'"
               class="api-card__action-button"
             >
               {{ detailsOpen ? '收起' : '详情' }}
@@ -292,7 +292,7 @@ function formatCallCount(count: number): string {
                       :color="costFor(method) > 0 ? 'warning' : 'success'"
                       variant="soft"
                       size="sm"
-                      :icon="costFor(method) > 0 ? 'i-lucide-coins' : 'i-lucide-gift'"
+                      :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-gift-outline'"
                       class="rounded-full"
                     >
                       {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
@@ -315,7 +315,7 @@ function formatCallCount(count: number): string {
                   color="neutral"
                   variant="outline"
                   size="sm"
-                  icon="i-lucide-external-link"
+                  icon="i-mdi-open-in-new"
                   block
                 >
                   打开接口文档

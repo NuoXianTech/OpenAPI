@@ -112,7 +112,7 @@ function selectFromPopover(value: string | number) {
           color="neutral"
           size="sm"
           class="filter-tab filter-tab--more cursor-pointer"
-          trailing-icon="i-lucide-chevron-down"
+          trailing-icon="i-mdi-chevron-down"
         >
           更多 {{ hiddenCount }}
         </UButton>
@@ -122,7 +122,7 @@ function selectFromPopover(value: string | number) {
             <div class="filter-tabs-popover__head">
               <UInput
                 v-model="popoverQuery"
-                icon="i-lucide-search"
+                icon="i-mdi-magnify"
                 color="neutral"
                 variant="outline"
                 size="sm"
@@ -144,7 +144,7 @@ function selectFromPopover(value: string | number) {
                 <span class="truncate">{{ tab.label }}</span>
                 <UIcon
                   v-if="isActive(tab.value)"
-                  name="i-lucide-check"
+                  name="i-mdi-check"
                   class="size-4"
                 />
               </button>

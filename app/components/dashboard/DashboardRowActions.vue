@@ -17,7 +17,7 @@ defineProps<{
       :content="{ align: 'end' }"
     >
       <UButton
-        icon="i-lucide-ellipsis-vertical"
+        icon="i-mdi-dots-vertical"
         color="neutral"
         variant="ghost"
         size="sm"

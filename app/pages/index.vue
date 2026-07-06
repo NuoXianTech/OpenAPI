@@ -77,7 +77,7 @@ useSeoMeta({
           <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
             <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon
-                name="i-lucide-funnel"
+                name="i-mdi-filter-variant"
                 class="size-3"
               />
               接口状态
@@ -93,7 +93,7 @@ useSeoMeta({
           <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
             <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon
-                name="i-lucide-tags"
+                name="i-mdi-tag-multiple-outline"
                 class="size-3"
               />
               接口分类
@@ -121,7 +121,7 @@ useSeoMeta({
           class="py-8"
         >
           <UEmpty
-            icon="i-lucide-loader-circle"
+            icon="i-mdi-loading"
             title="加载中..."
             description="正在拉取最新的 API 列表"
             variant="naked"
@@ -136,12 +136,12 @@ useSeoMeta({
           class="py-2"
         >
           <UEmpty
-            icon="i-lucide-circle-alert"
+            icon="i-mdi-alert-circle-outline"
             title="加载失败"
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: fetchList }]"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: fetchList }]"
           />
         </section>
 
@@ -152,7 +152,7 @@ useSeoMeta({
           class="py-2"
         >
           <UEmpty
-            icon="i-lucide-search-x"
+            icon="i-mdi-magnify-close"
             title="未找到匹配的 API"
             description="尝试调整搜索关键词或切换筛选标签"
             variant="naked"
@@ -169,14 +169,14 @@ useSeoMeta({
           <div class="mb-3 flex items-center justify-between text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
               <UIcon
-                name="i-lucide-list"
+                name="i-mdi-format-list-bulleted"
                 class="size-3.5"
               />
               共 <span class="font-mono font-semibold text-default">{{ total }}</span> 个接口
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
-                name="i-lucide-mouse-pointer-click"
+                name="i-mdi-cursor-default-click-outline"
                 class="size-3.5"
               />
               点击卡片查看详情

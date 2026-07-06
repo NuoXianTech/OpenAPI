@@ -24,7 +24,7 @@ const emit = defineEmits<{
         size="xs"
         variant="ghost"
         color="neutral"
-        icon="i-lucide-refresh-cw"
+        icon="i-mdi-refresh"
         :loading="loading"
         @click="emit('refresh')"
       />

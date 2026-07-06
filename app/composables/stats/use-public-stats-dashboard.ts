@@ -174,7 +174,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '累计调用',
         value: formatPublicStatsCount(overview.value.totalCalls),
         helper: '全站历史请求总量',
-        icon: 'i-lucide-tally-5',
+        icon: 'i-mdi-counter',
         tone: 'primary',
         accent: 'var(--ui-primary)'
       },
@@ -183,7 +183,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '今日调用',
         value: formatPublicStatsCount(overview.value.todayCalls),
         helper: todayDeltaLabel.value,
-        icon: 'i-lucide-calendar-days',
+        icon: 'i-mdi-calendar-today-outline',
         tone: todayDeltaTone.value,
         accent: 'var(--ui-info)'
       },
@@ -192,7 +192,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '昨日调用',
         value: formatPublicStatsCount(overview.value.yesterdayCalls),
         helper: '自然日聚合',
-        icon: 'i-lucide-calendar-clock',
+        icon: 'i-mdi-calendar-arrow-left',
         tone: 'neutral',
         accent: 'var(--ui-text-muted)'
       },
@@ -201,7 +201,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '请求成功率',
         value: formatPublicStatsRate(overview.value.successRate),
         helper: `失败率 ${formatPublicStatsRate(failureRate.value)}`,
-        icon: 'i-lucide-donut',
+        icon: 'i-mdi-chart-donut',
         tone: 'success',
         accent: 'var(--ui-success)'
       },
@@ -210,7 +210,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '成功调用',
         value: formatPublicStatsCount(overview.value.successCalls),
         helper: 'HTTP 成功响应',
-        icon: 'i-lucide-circle-check',
+        icon: 'i-mdi-check-circle-outline',
         tone: 'success',
         accent: 'var(--ui-success)'
       },
@@ -219,7 +219,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '失败调用',
         value: formatPublicStatsCount(overview.value.failureCalls),
         helper: overview.value.failureCalls > 0 ? '需要关注的异常请求' : '暂无失败记录',
-        icon: 'i-lucide-circle-x',
+        icon: 'i-mdi-close-circle-outline',
         tone: overview.value.failureCalls > 0 ? 'error' : 'neutral',
         accent: 'var(--ui-error)'
       },
@@ -228,7 +228,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '注册用户',
         value: formatPublicStatsCount(overview.value.userCount),
         helper: '平台账户规模',
-        icon: 'i-lucide-users-round',
+        icon: 'i-mdi-account-group-outline',
         tone: 'info',
         accent: 'var(--ui-info)'
       },
@@ -237,7 +237,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         label: '统计接口',
         value: formatPublicStatsCount(overview.value.enabledTrackedApiCount),
         helper: trackedApiRatioLabel.value,
-        icon: 'i-lucide-braces',
+        icon: 'i-mdi-api',
         tone: 'primary',
         accent: 'var(--ui-primary)'
       }

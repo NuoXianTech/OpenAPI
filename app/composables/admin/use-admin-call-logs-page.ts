@@ -54,8 +54,8 @@ export const ADMIN_CALL_LOG_TYPE_META: Record<AdminLogType, {
   color: 'success' | 'error' | 'primary'
   icon: string
 }> = {
-  consume: { label: '请求', color: 'primary', icon: 'i-lucide-arrow-left-right' },
-  error: { label: '错误', color: 'error', icon: 'i-lucide-circle-alert' }
+  consume: { label: '请求', color: 'primary', icon: 'i-mdi-swap-horizontal-circle-outline' },
+  error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' }
 }
 
 function isAdminLogType(value: string): value is AdminLogType {

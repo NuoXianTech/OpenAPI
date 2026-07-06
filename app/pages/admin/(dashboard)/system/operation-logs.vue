@@ -48,7 +48,7 @@ const {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon
-              name="i-lucide-funnel"
+              name="i-mdi-filter-variant"
               class="size-4 text-muted"
             />
             <h3 class="text-sm font-semibold text-highlighted">
@@ -145,7 +145,7 @@ const {
           <UButton
             :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
             variant="outline"
-            :icon="expandedFilters ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+            :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
             @click="() => { expandedFilters = !expandedFilters }"
           >
             更多筛选
@@ -163,13 +163,13 @@ const {
             <UButton
               color="neutral"
               variant="outline"
-              icon="i-lucide-rotate-ccw"
+              icon="i-mdi-restore"
               @click="reset"
             >
               重置
             </UButton>
             <UButton
-              icon="i-lucide-search"
+              icon="i-mdi-magnify"
               @click="applyFilters"
             >
               查询
@@ -181,7 +181,7 @@ const {
 
     <DashboardTableCard
       title="操作明细"
-      icon="i-lucide-clipboard-clock"
+      icon="i-mdi-clipboard-text-clock-outline"
       :total="total"
     >
       <DashboardDataTable
@@ -192,7 +192,7 @@ const {
         :page-size="pageSize"
         :total="total"
         empty-title="暂无操作日志"
-        empty-icon="i-lucide-clipboard-clock"
+        empty-icon="i-mdi-clipboard-text-clock-outline"
       >
         <template #createdAt-cell="{ row }">
           <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
@@ -245,7 +245,7 @@ const {
             size="xs"
             color="neutral"
             variant="ghost"
-            icon="i-lucide-eye"
+            icon="i-mdi-eye-outline"
             aria-label="查看详情"
             @click="openDetail(row.original)"
           />

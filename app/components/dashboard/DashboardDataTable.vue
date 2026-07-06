@@ -44,7 +44,7 @@ const {
   columns,
   loading = false,
   emptyTitle = '暂无数据',
-  emptyIcon = 'i-lucide-inbox',
+  emptyIcon = 'i-mdi-inbox-outline',
   page = 1,
   pageSize = 0,
   total = 0,

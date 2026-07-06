@@ -90,7 +90,7 @@ function openDetail(row: UserCallLogRow) {
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div class="flex items-center gap-2">
                 <UIcon
-                  name="i-lucide-funnel"
+                  name="i-mdi-filter-variant"
                   class="size-4 text-muted"
                 />
                 <h3 class="text-sm font-semibold text-highlighted">
@@ -139,13 +139,13 @@ function openDetail(row: UserCallLogRow) {
               <UButton
                 color="neutral"
                 variant="outline"
-                icon="i-lucide-rotate-ccw"
+                icon="i-mdi-restore"
                 @click="resetFilters"
               >
                 重置
               </UButton>
               <UButton
-                icon="i-lucide-search"
+                icon="i-mdi-magnify"
                 @click="applyFilters"
               >
                 查询
@@ -156,7 +156,7 @@ function openDetail(row: UserCallLogRow) {
 
         <DashboardTableCard
           title="调用明细"
-          icon="i-lucide-file-search"
+          icon="i-mdi-text-box-search-outline"
           :total="total"
         >
           <DashboardDataTable
@@ -167,7 +167,7 @@ function openDetail(row: UserCallLogRow) {
             :page-size="pageSize"
             :total="total"
             empty-title="暂无调用记录"
-            empty-icon="i-lucide-file-search"
+            empty-icon="i-mdi-text-box-search-outline"
           >
             <template #createdAt-cell="{ row }">
               <div class="flex flex-col gap-1 min-w-[150px]">
@@ -256,7 +256,7 @@ function openDetail(row: UserCallLogRow) {
                 size="xs"
                 color="neutral"
                 variant="ghost"
-                icon="i-lucide-eye"
+                icon="i-mdi-eye-outline"
                 aria-label="查看详情"
                 @click="openDetail(row.original)"
               />

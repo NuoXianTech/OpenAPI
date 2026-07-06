@@ -283,17 +283,17 @@ export function useAdminRedemptionCodesDisplayMeta(
   function getRowItems(row: RedemptionCode): DropdownMenuItem[] {
     return [{
       label: row.isEnabled ? '禁用' : '启用',
-      icon: row.isEnabled ? 'i-lucide-toggle-left' : 'i-lucide-toggle-right',
+      icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
       onSelect: () => options.toggle(row)
     }, {
       label: '复制兑换码',
-      icon: 'i-lucide-copy',
+      icon: 'i-mdi-content-copy',
       onSelect: () => options.copyOne(row.code)
     }, {
       type: 'separator'
     }, {
       label: '删除',
-      icon: 'i-lucide-trash-2',
+      icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => options.remove(row)
     }]

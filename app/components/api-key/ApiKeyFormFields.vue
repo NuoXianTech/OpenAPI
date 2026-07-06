@@ -183,7 +183,7 @@ const ipHelp = computed(() => {
       :title="error"
       color="warning"
       variant="subtle"
-      icon="i-lucide-triangle-alert"
+      icon="i-mdi-alert-outline"
     />
   </div>
 </template>

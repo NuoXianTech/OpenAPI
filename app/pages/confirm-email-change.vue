@@ -53,7 +53,7 @@ async function onConfirm() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-lucide-refresh-cw"
+      icon="i-mdi-email-sync-outline"
       title="确认邮箱变更"
       :subtitle="headerSubtitle"
     />
@@ -69,7 +69,7 @@ async function onConfirm() {
       >
         <div class="auth-message auth-message--error">
           <UIcon
-            name="i-lucide-unlink"
+            name="i-mdi-link-variant-off"
             class="auth-message__icon size-4"
           />
           <span>确认链接无效或已损坏，请重新发起变更。</span>
@@ -78,7 +78,7 @@ async function onConfirm() {
           to="/user/settings"
           block
           size="lg"
-          icon="i-lucide-user-round-cog"
+          icon="i-mdi-account-cog-outline"
         >
           返回账号设置
         </UButton>
@@ -90,7 +90,7 @@ async function onConfirm() {
       >
         <div class="auth-success-illustration">
           <UIcon
-            name="i-lucide-check"
+            name="i-mdi-check"
             class="size-11"
           />
         </div>
@@ -124,7 +124,7 @@ async function onConfirm() {
             class="auth-message auth-message--error"
           >
             <UIcon
-              name="i-lucide-circle-alert"
+              name="i-mdi-alert-circle-outline"
               class="auth-message__icon size-4"
             />
             <span>{{ errorMessage }}</span>
@@ -135,7 +135,7 @@ async function onConfirm() {
           :disabled="status === 'submitting'"
           block
           size="lg"
-          icon="i-lucide-mail-check"
+          icon="i-mdi-email-check-outline"
           @click="onConfirm"
         >
           确认变更

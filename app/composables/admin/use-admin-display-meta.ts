@@ -49,8 +49,8 @@ interface UseAdminAnalyticsDisplayMetaReturn {
 type AdminAnalyticsDistributionChart = 'bar' | 'area'
 
 const ADMIN_ANALYTICS_DISTRIBUTION_CHART_ITEMS: AdminAnalyticsDistributionChartItem[] = [
-  { label: '柱状图', value: 'bar', icon: 'i-lucide-chart-bar' },
-  { label: '面积图', value: 'area', icon: 'i-lucide-chart-area' }
+  { label: '柱状图', value: 'bar', icon: 'i-mdi-chart-bar' },
+  { label: '面积图', value: 'area', icon: 'i-mdi-chart-areaspline' }
 ]
 
 export function createEmptyAdminAnalyticsData(): AdminAnalyticsData {
@@ -105,7 +105,7 @@ export function useAdminAnalyticsDisplayMeta(
       label: '接口总数',
       value: formatAdminAnalyticsCount(overview.value.enabledApiCount),
       helper: `已启用 ${overview.value.totalEnabledApiCount}，其中纳入统计 ${overview.value.enabledApiCount}`,
-      icon: 'i-lucide-braces',
+      icon: 'i-mdi-api',
       accent: 'primary'
     },
     {
@@ -113,7 +113,7 @@ export function useAdminAnalyticsDisplayMeta(
       label: '总使用积分',
       value: formatAdminAnalyticsCount(overview.value.totalCreditsSpent),
       helper: '累计 API 调用扣费',
-      icon: 'i-lucide-coins',
+      icon: 'i-mdi-cash-multiple',
       accent: 'warning'
     },
     {
@@ -121,7 +121,7 @@ export function useAdminAnalyticsDisplayMeta(
       label: '平均请求数',
       value: formatAdminAnalyticsCount(Math.round(overview.value.averageDailyCalls)),
       helper: `近 ${overview.value.averageWindowDays} 天日均`,
-      icon: 'i-lucide-chart-line',
+      icon: 'i-mdi-chart-line',
       accent: 'info'
     }
   ])
@@ -256,18 +256,18 @@ export function useAdminApisDisplayMeta(
     if (row.registered && !row.orphaned) {
       items.push({
         label: '编辑配置',
-        icon: 'i-lucide-pencil',
+        icon: 'i-mdi-pencil-outline',
         onSelect: () => options.openEdit(row)
       }, {
         label: '同步路由信息',
-        icon: 'i-lucide-refresh-cw',
+        icon: 'i-mdi-sync',
         onSelect: () => options.resyncManifest(row)
       })
     }
     if (!row.registered) {
       items.push({
         label: '登记接口',
-        icon: 'i-lucide-circle-plus',
+        icon: 'i-mdi-plus-circle-outline',
         onSelect: () => options.openRegister(row)
       })
     }
@@ -401,8 +401,8 @@ export function useAdminNotificationsDisplayMeta(
 
   function getRowItems(row: AdminNotificationMessageRow): DropdownMenuItem[] {
     return [
-      { label: '查看接收详情', icon: 'i-lucide-users', onSelect: () => options.openDetail(row) },
-      { label: '删除', icon: 'i-lucide-trash-2', color: 'error', onSelect: () => options.openDelete(row) }
+      { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => options.openDetail(row) },
+      { label: '删除', icon: 'i-mdi-delete-outline', color: 'error', onSelect: () => options.openDelete(row) }
     ]
   }
 

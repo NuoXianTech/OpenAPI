@@ -40,7 +40,7 @@ const columns: TableColumn<LoginLogRow>[] = [
         size="xs"
         variant="ghost"
         color="neutral"
-        icon="i-lucide-refresh-cw"
+        icon="i-mdi-refresh"
         :loading="loading"
         @click="emit('refresh')"
       />
@@ -48,7 +48,7 @@ const columns: TableColumn<LoginLogRow>[] = [
 
     <DashboardTableCard
       title="登录记录"
-      icon="i-lucide-log-in"
+      icon="i-mdi-login-variant"
       :total="items.length"
       embedded
     >
@@ -58,7 +58,7 @@ const columns: TableColumn<LoginLogRow>[] = [
         :loading="loading"
         :fixed="false"
         empty-title="暂无登录记录"
-        empty-icon="i-lucide-log-in"
+        empty-icon="i-mdi-login-variant"
       >
         <template #createdAt-cell="{ row }">
           <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>

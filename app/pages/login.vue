@@ -37,7 +37,7 @@ const { data: providersData } = useLazyFetch<Array<{ provider: string, displayNa
 
 const providers = computed(() => (providersData.value || []).map(p => ({
   label: `使用 ${p.displayName} 登录`,
-  icon: p.icon || 'i-lucide-circle-user-round',
+  icon: p.icon || 'i-mdi-account-circle-outline',
   color: 'neutral' as const,
   variant: 'outline' as const,
   size: 'lg' as const,
@@ -51,7 +51,7 @@ const fields = computed(() => [
     label: '邮箱或用户名',
     placeholder: 'you@example.com',
     autocomplete: 'username',
-    icon: 'i-lucide-user',
+    icon: 'i-mdi-account-outline',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -62,7 +62,7 @@ const fields = computed(() => [
     label: '密码',
     placeholder: '请输入登录密码',
     autocomplete: 'current-password',
-    icon: 'i-lucide-lock',
+    icon: 'i-mdi-lock-outline',
     size: 'lg' as const,
     required: true
   },
@@ -160,7 +160,7 @@ function clearTurnstileError() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-lucide-circle-user-round"
+      icon="i-mdi-account-circle-outline"
       :title="`欢迎回到 ${settings.siteName}`"
       subtitle="使用邮箱或用户名登录，开始调用接口"
     />
@@ -214,7 +214,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ errorMessage }}</span>
@@ -227,7 +227,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ oauthError }}</span>
@@ -240,7 +240,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ turnstileError }}</span>

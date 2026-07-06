@@ -56,7 +56,7 @@ const analyticsMetricTones = {
           <template #title>
             <div class="flex items-center gap-2">
               <UIcon
-                name="i-lucide-chart-no-axes-combined"
+                name="i-mdi-chart-box-outline"
                 class="size-6 text-primary"
               />
               <span>数据看板</span>
@@ -194,7 +194,7 @@ const analyticsMetricTones = {
                 color="primary"
                 variant="soft"
                 size="sm"
-                icon="i-lucide-trophy"
+                icon="i-mdi-trophy-outline"
               >
                 {{ formatCompact(ranking.reduce((sum, r) => sum + r.totalCalls, 0)) }}
               </UBadge>

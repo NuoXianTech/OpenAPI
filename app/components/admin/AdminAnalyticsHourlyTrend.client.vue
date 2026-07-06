@@ -61,7 +61,7 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
   >
     <UEmpty
       v-if="!hasData"
-      icon="i-lucide-clock-8"
+      icon="i-mdi-clock-time-eight-outline"
       title="近 24 小时暂无调用"
       class="h-64"
     />

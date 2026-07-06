@@ -43,9 +43,9 @@ export interface LoginMethodMeta {
 }
 
 export const LOGIN_METHOD_META: Record<LoginMethod, LoginMethodMeta> = {
-  password: { label: '账号密码', icon: 'i-lucide-lock-keyhole', color: 'neutral' },
-  oauth_github: { label: 'GitHub', icon: 'i-lucide-github', color: 'neutral' },
-  oauth_qq: { label: 'QQ', icon: 'i-lucide-message-circle', color: 'info' }
+  password: { label: '账号密码', icon: 'i-mdi-form-textbox-password', color: 'neutral' },
+  oauth_github: { label: 'GitHub', icon: 'i-mdi-github', color: 'neutral' },
+  oauth_qq: { label: 'QQ', icon: 'i-mdi-qqchat', color: 'info' }
 }
 
 const LOGIN_FAILURE_REASON_LABELS: Record<LoginFailureReason, string> = {

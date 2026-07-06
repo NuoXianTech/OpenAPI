@@ -44,7 +44,7 @@ const fields = computed(() => [
     placeholder: 'openapi_user',
     help: '3-32 位，可包含字母、数字、下划线和短横线',
     autocomplete: 'username',
-    icon: 'i-lucide-user',
+    icon: 'i-mdi-account-outline',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -55,7 +55,7 @@ const fields = computed(() => [
     label: '邮箱',
     placeholder: 'you@example.com',
     autocomplete: 'email',
-    icon: 'i-lucide-mail',
+    icon: 'i-mdi-email-outline',
     size: 'lg' as const,
     required: true
   },
@@ -65,7 +65,7 @@ const fields = computed(() => [
     label: '密码',
     placeholder: '设置不少于 8 位的登录密码',
     autocomplete: 'new-password',
-    icon: 'i-lucide-lock',
+    icon: 'i-mdi-lock-outline',
     size: 'lg' as const,
     required: true
   },
@@ -75,7 +75,7 @@ const fields = computed(() => [
     label: '确认密码',
     placeholder: '再次输入密码',
     autocomplete: 'new-password',
-    icon: 'i-lucide-lock-keyhole',
+    icon: 'i-mdi-lock-check-outline',
     size: 'lg' as const,
     required: true
   }
@@ -140,7 +140,7 @@ function clearTurnstileError() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-lucide-user-plus"
+      icon="i-mdi-account-plus-outline"
       :title="`创建 ${settings.siteName} 账号`"
       subtitle="注册完成后将通过邮箱进行验证，验证通过即可使用"
     />
@@ -174,7 +174,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ errorMessage }}</span>
@@ -187,7 +187,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--success"
             >
               <UIcon
-                name="i-lucide-circle-check"
+                name="i-mdi-check-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ successMessage }}</span>
@@ -200,7 +200,7 @@ function clearTurnstileError() {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ turnstileError }}</span>

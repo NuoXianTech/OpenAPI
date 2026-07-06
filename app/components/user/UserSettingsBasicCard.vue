@@ -89,7 +89,7 @@ async function submit() {
       <div class="flex justify-end pt-4">
         <UButton
           :loading="isSaving"
-          icon="i-lucide-save"
+          icon="i-mdi-content-save-outline"
           @click="submit"
         >
           保存资料

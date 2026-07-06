@@ -34,7 +34,7 @@ async function submit() {
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
-          name="i-lucide-ticket-percent"
+          name="i-mdi-ticket-percent-outline"
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
@@ -57,7 +57,7 @@ async function submit() {
         />
       </UFormField>
       <UButton
-        icon="i-lucide-gift"
+        icon="i-mdi-gift-outline"
         :loading="redeeming"
         @click="submit"
       >

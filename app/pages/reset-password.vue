@@ -40,7 +40,7 @@ const fields = computed(() => [
     label: '新密码',
     placeholder: '设置新密码（至少 8 位）',
     autocomplete: 'new-password',
-    icon: 'i-lucide-lock',
+    icon: 'i-mdi-lock-outline',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -51,7 +51,7 @@ const fields = computed(() => [
     label: '确认新密码',
     placeholder: '再次输入新密码',
     autocomplete: 'new-password',
-    icon: 'i-lucide-lock-keyhole',
+    icon: 'i-mdi-lock-check-outline',
     size: 'lg' as const,
     required: true
   }
@@ -85,7 +85,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-lucide-rotate-ccw-key"
+      icon="i-mdi-lock-reset"
       title="重置密码"
       subtitle="请为账号设置新的登录密码，密码至少 8 位"
     />
@@ -101,7 +101,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       >
         <div class="auth-message auth-message--error">
           <UIcon
-            name="i-lucide-unlink"
+            name="i-mdi-link-variant-off"
             class="auth-message__icon size-4"
           />
           <span>重置链接无效或已损坏，请重新申请。</span>
@@ -110,7 +110,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
           to="/forgot-password"
           block
           size="lg"
-          icon="i-lucide-refresh-cw"
+          icon="i-mdi-refresh"
         >
           重新申请
         </UButton>
@@ -122,7 +122,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       >
         <div class="auth-success-illustration">
           <UIcon
-            name="i-lucide-check"
+            name="i-mdi-check"
             class="size-11"
           />
         </div>
@@ -156,7 +156,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
               class="auth-message auth-message--error"
             >
               <UIcon
-                name="i-lucide-circle-alert"
+                name="i-mdi-alert-circle-outline"
                 class="auth-message__icon size-4"
               />
               <span>{{ errorMessage }}</span>

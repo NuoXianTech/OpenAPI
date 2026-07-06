@@ -64,7 +64,7 @@ export default defineEventHandler(async (event: H3Event) => {
   for (const acc of bound as BoundOauthAccount[]) {
     const preset = isSupportedOauthProvider(acc.provider)
       ? OAUTH_PROVIDER_PRESETS[acc.provider]
-      : { displayName: acc.provider, icon: 'i-lucide-link' }
+      : { displayName: acc.provider, icon: 'i-mdi-link-variant' }
     const item = map.get(acc.provider) || {
       provider: acc.provider,
       displayName: preset.displayName,

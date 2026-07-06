@@ -163,7 +163,7 @@ async function submitTest() {
       >
         <UButton
           variant="outline"
-          icon="i-lucide-send"
+          icon="i-mdi-send-outline"
           @click="openTest"
         >
           发送测试邮件
@@ -209,7 +209,7 @@ async function submitTest() {
           </UButton>
           <UButton
             :loading="sending"
-            icon="i-lucide-send"
+            icon="i-mdi-send-outline"
             @click="submitTest"
           >
             发送

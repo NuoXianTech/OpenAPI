@@ -88,7 +88,7 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
 | 统计小图 | `DashboardSparkline` |
 | 空状态 | `DashboardDataTable` 内置 `UEmpty`，非表格场景直接用 `UEmpty` |
 
-后台 UI 以 Nuxt UI 组件和主题 token 为主。图标统一使用 `i-lucide-*`；颜色优先使用 `text-muted`、`bg-elevated`、`color="primary"` 这类主题语义，不在业务页散落硬编码色值。
+后台 UI 以 Nuxt UI 组件和主题 token 为主。图标统一使用 `i-mdi-*`；颜色优先使用 `text-muted`、`bg-elevated`、`color="primary"` 这类主题语义，不在业务页散落硬编码色值。
 
 ## 3. 数据与分页
 
@@ -121,7 +121,7 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
   :total="total"
   :page-size-items="PAGE_SIZE_ITEMS"
   empty-title="暂无日志"
-  empty-icon="i-lucide-history"
+  empty-icon="i-mdi-history"
 />
 ```
 

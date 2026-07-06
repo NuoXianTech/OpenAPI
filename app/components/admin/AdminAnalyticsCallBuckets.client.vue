@@ -57,7 +57,7 @@ const tooltipTemplate = (d: BucketRow) => renderChartTooltip({
   >
     <UEmpty
       v-if="!hasData"
-      icon="i-lucide-chart-bar"
+      icon="i-mdi-chart-bar"
       title="暂无调用分布"
       class="h-64"
     />

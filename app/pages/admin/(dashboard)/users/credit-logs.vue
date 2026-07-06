@@ -100,7 +100,7 @@ function amountClass(amt: number) {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon
-              name="i-lucide-funnel"
+              name="i-mdi-filter-variant"
               class="size-4 text-muted"
             />
             <h3 class="text-sm font-semibold text-highlighted">
@@ -134,7 +134,7 @@ function amountClass(amt: number) {
           </UFormField>
           <div class="flex gap-2 md:col-span-2 xl:col-span-1">
             <UButton
-              icon="i-lucide-search"
+              icon="i-mdi-magnify"
               @click="apply"
             >
               查询
@@ -142,7 +142,7 @@ function amountClass(amt: number) {
             <UButton
               color="neutral"
               variant="outline"
-              icon="i-lucide-rotate-ccw"
+              icon="i-mdi-restore"
               @click="reset"
             >
               重置
@@ -154,7 +154,7 @@ function amountClass(amt: number) {
 
     <DashboardTableCard
       title="积分明细"
-      icon="i-lucide-coins"
+      icon="i-mdi-cash-multiple"
       :total="total"
     >
       <DashboardDataTable
@@ -165,7 +165,7 @@ function amountClass(amt: number) {
         :page-size="pageSize"
         :total="total"
         empty-title="暂无积分日志"
-        empty-icon="i-lucide-coins"
+        empty-icon="i-mdi-cash-multiple"
       >
         <template #createdAt-cell="{ row }">
           <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>

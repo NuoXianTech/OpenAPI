@@ -21,7 +21,7 @@ const props = withDefaults(defineProps<{
   size: 'md',
   disabled: false,
   clearable: true,
-  icon: 'i-lucide-calendar',
+  icon: 'i-mdi-calendar-outline',
   block: true
 })
 
@@ -116,7 +116,7 @@ function clear() {
         <span class="ms-auto flex items-center gap-1">
           <UIcon
             v-if="props.clearable && displayLabel && !props.disabled"
-            name="i-lucide-x"
+            name="i-mdi-close"
             class="size-4 text-dimmed hover:text-default transition-colors"
             role="button"
             tabindex="-1"
@@ -124,7 +124,7 @@ function clear() {
             @click.stop="clear"
           />
           <UIcon
-            name="i-lucide-chevron-down"
+            name="i-mdi-chevron-down"
             class="size-4 shrink-0 text-dimmed transition-transform duration-200 group-data-[state=open]:rotate-180"
           />
         </span>
@@ -140,7 +140,7 @@ function clear() {
 
         <div class="flex items-center gap-2 border-t border-default p-2">
           <UIcon
-            name="i-lucide-clock"
+            name="i-mdi-clock-outline"
             class="size-4 shrink-0 text-dimmed"
           />
           <UInputTime

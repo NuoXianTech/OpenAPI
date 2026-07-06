@@ -1,6 +1,6 @@
 # Nuxt UI 标准
 
-本标准适用于 OpenAPI 的公开页面、管理后台、用户后台和可复用组件。项目使用 Nuxt UI 4、Reka UI、Tailwind CSS 4、Tailwind Variants 与 `i-lucide-*` 图标体系。
+本标准适用于 OpenAPI 的公开页面、管理后台、用户后台和可复用组件。项目使用 Nuxt UI 4、Reka UI、Tailwind CSS 4、Tailwind Variants 与 `i-mdi-*` 图标体系。
 
 ## 组件选择
 
@@ -19,7 +19,7 @@
 ## 主题与样式
 
 - 颜色优先使用 Nuxt UI 语义 token：`text-muted`、`text-toned`、`text-highlighted`、`bg-elevated`、`border-default`、`color="primary"`。
-- 图标统一使用 `i-lucide-*`，按钮有明确动作时优先图标加 tooltip 或图标加短文本。
+- 图标统一使用 `i-mdi-*`，按钮有明确动作时优先图标加 tooltip 或图标加短文本。
 - 组件变体优先通过 `app.config.ts` 的 Nuxt UI 主题配置、组件 `ui` prop 或 Tailwind Variants 扩展。
 - 页面级布局使用 Tailwind 工具类；复杂重复样式抽成组件或配置，不在多个页面复制。
 - 移动端优先，先写默认布局，再用 `sm:`、`md:`、`lg:` 扩展。

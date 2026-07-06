@@ -14,7 +14,7 @@ export const OAUTH_PROVIDER_PRESETS: Record<SupportedOauthProvider, OauthProvide
   github: {
     provider: 'github',
     displayName: 'GitHub',
-    icon: 'i-lucide-github',
+    icon: 'i-mdi-github',
     scopes: ['read:user', 'user:email'],
     authorizeUrl: 'https://github.com/login/oauth/authorize',
     tokenUrl: 'https://github.com/login/oauth/access_token',
@@ -23,7 +23,7 @@ export const OAUTH_PROVIDER_PRESETS: Record<SupportedOauthProvider, OauthProvide
   qq: {
     provider: 'qq',
     displayName: 'QQ',
-    icon: 'i-lucide-message-circle',
+    icon: 'i-mdi-qqchat',
     scopes: ['get_user_info'],
     authorizeUrl: 'https://graph.qq.com/oauth2.0/authorize',
     tokenUrl: 'https://graph.qq.com/oauth2.0/token',

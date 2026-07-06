@@ -137,7 +137,7 @@ function onTurnstileError(message: string) {
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
-          name="i-lucide-calendar-check"
+          name="i-mdi-calendar-check-outline"
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
@@ -195,7 +195,7 @@ function onTurnstileError(message: string) {
       </div>
       <UButton
         size="lg"
-        icon="i-lucide-badge-check"
+        icon="i-mdi-check-decagram-outline"
         :loading="submitting"
         :disabled="!canCheckin"
         @click="onClickCheckin"
@@ -252,7 +252,7 @@ function onTurnstileError(message: string) {
             class="flex items-center gap-2 text-xs text-muted"
           >
             <UIcon
-              name="i-lucide-loader-circle"
+              name="i-mdi-loading"
               class="size-4 animate-spin"
             />
             正在提交签到...

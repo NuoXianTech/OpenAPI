@@ -60,7 +60,7 @@ const tooltipTemplate = (d: AreaRow) => renderChartTooltip({
   >
     <UEmpty
       v-if="rows.length === 0"
-      icon="i-lucide-chart-area"
+      icon="i-mdi-chart-areaspline"
       title="暂无启用接口"
       description="请先在「接口管理」中启用接口并开启统计"
       class="h-72"

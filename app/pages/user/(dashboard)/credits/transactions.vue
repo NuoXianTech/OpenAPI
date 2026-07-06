@@ -76,7 +76,7 @@ function amountClass(amt: number) {
         </UFormField>
         <div class="flex gap-2">
           <UButton
-            icon="i-lucide-search"
+            icon="i-mdi-magnify"
             @click="applyFilters"
           >
             查询
@@ -94,7 +94,7 @@ function amountClass(amt: number) {
 
     <DashboardTableCard
       title="积分流水"
-      icon="i-lucide-list"
+      icon="i-mdi-format-list-bulleted"
       :total="total"
     >
       <DashboardDataTable
@@ -106,7 +106,7 @@ function amountClass(amt: number) {
         :total="total"
         :fixed="false"
         empty-title="暂无流水记录"
-        empty-icon="i-lucide-list"
+        empty-icon="i-mdi-format-list-bulleted"
       >
         <template #createdAt-cell="{ row }">
           <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDateTime(row.original.createdAt) }}</span>

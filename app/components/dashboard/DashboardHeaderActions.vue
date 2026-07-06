@@ -20,7 +20,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => {
     ...extra,
     [{
       label: '退出登录',
-      icon: 'i-lucide-log-out',
+      icon: 'i-mdi-logout',
       color: 'error',
       async onSelect() {
         await logout()
@@ -42,7 +42,7 @@ async function handleRefresh() {
       v-if="onRefresh"
       variant="ghost"
       color="neutral"
-      icon="i-lucide-refresh-cw"
+      icon="i-mdi-refresh"
       :loading="refreshing"
       aria-label="刷新"
       @click="handleRefresh"
@@ -56,7 +56,7 @@ async function handleRefresh() {
           variant="ghost"
           square
           disabled
-          icon="i-lucide-sun-moon"
+          icon="i-mdi-theme-light-dark"
           aria-hidden="true"
         />
       </template>
@@ -84,7 +84,7 @@ async function handleRefresh() {
           {{ displayName }}
         </span>
         <UIcon
-          name="i-lucide-chevron-down"
+          name="i-mdi-chevron-down"
           class="size-4 text-muted"
         />
       </UButton>

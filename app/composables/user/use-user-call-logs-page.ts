@@ -80,8 +80,8 @@ export function userCallOutcomeColor(row: UserCallLogRow): 'success' | 'error' |
 }
 
 export function userCallOutcomeIcon(row: UserCallLogRow) {
-  if (!row.isCounted) return 'i-lucide-circle-minus'
-  return isUserCallSuccess(row) ? 'i-lucide-circle-check' : 'i-lucide-circle-alert'
+  if (!row.isCounted) return 'i-mdi-minus-circle-outline'
+  return isUserCallSuccess(row) ? 'i-mdi-check-circle-outline' : 'i-mdi-alert-circle-outline'
 }
 
 export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
