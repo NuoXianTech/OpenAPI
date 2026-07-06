@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { adminSystemLinks } from '~/constants/admin-sections/system'
+import { adminSystemSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell
-    id="admin-system"
-    title="系统"
-    :items="adminSystemLinks"
-  />
+  <DashboardSectionShell v-bind="adminSystemSection" />
 </template>

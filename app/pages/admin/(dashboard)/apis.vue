@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { adminApisLinks } from '~/constants/admin-sections/apis'
+import { adminApisSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell
-    id="admin-apis"
-    title="接口管理"
-    :items="adminApisLinks"
-  />
+  <DashboardSectionShell v-bind="adminApisSection" />
 </template>

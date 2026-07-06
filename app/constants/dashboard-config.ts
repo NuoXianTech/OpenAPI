@@ -1,12 +1,15 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
-import { ADMIN_APIS_PATH } from './admin-sections/apis'
-import { ADMIN_USERS_PATH } from './admin-sections/users'
-import { ADMIN_CONTENT_PATH } from './admin-sections/content'
-import { ADMIN_SYSTEM_PATH } from './admin-sections/system'
-import { ADMIN_ANALYTICS_PATH, ADMIN_LOGS_PATH } from './admin-sections/logs'
-import { ADMIN_REDEMPTION_CODES_PATH } from './admin-sections/redemption-codes'
-import { ADMIN_OVERVIEW_PATH } from './admin-sections/overview'
-import { USER_OVERVIEW_PATH } from './user-sections/overview'
+import {
+  ADMIN_ANALYTICS_PATH,
+  ADMIN_APIS_PATH,
+  ADMIN_CONTENT_PATH,
+  ADMIN_LOGS_PATH,
+  ADMIN_OVERVIEW_PATH,
+  ADMIN_REDEMPTION_CODES_PATH,
+  ADMIN_SYSTEM_PATH,
+  ADMIN_USERS_PATH,
+  USER_OVERVIEW_PATH
+} from './dashboard-sections'
 
 interface DashboardNavGroup {
   label?: string

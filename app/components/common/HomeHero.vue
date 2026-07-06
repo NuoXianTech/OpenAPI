@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
-import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
+import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
 type HomeHeroListStatusTone = 'info' | 'error' | 'neutral' | 'success'
 

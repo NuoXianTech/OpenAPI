@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { userSettingsLinks } from '~/constants/user-sections/settings'
+import { userSettingsSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell
-    id="user-settings"
-    title="个人设置"
-    :items="userSettingsLinks"
-  >
+  <DashboardSectionShell v-bind="userSettingsSection">
     <template #right>
       <UserHeaderActions />
     </template>

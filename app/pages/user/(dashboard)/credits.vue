@@ -1,13 +1,9 @@
 <script setup lang="ts">
-import { userCreditsLinks } from '~/constants/user-sections/credits'
+import { userCreditsSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell
-    id="user-credits"
-    title="积分"
-    :items="userCreditsLinks"
-  >
+  <DashboardSectionShell v-bind="userCreditsSection">
     <template #right>
       <UserHeaderActions />
     </template>

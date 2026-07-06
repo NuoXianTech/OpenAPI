@@ -3,8 +3,7 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '#shared/utils/client-error'
 import { requiredMessage } from '#shared/schemas/validation'
-import { ADMIN_OVERVIEW_PATH } from '~/constants/admin-sections/overview'
-import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
+import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
 useHead({ title: '管理员登录' })
 

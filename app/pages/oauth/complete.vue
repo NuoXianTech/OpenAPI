@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { oauthBindSchema, oauthRegisterSchema } from '#shared/schemas/auth'
 import { parseFetchError } from '#shared/utils/client-error'
-import { USER_OVERVIEW_PATH } from '~/constants/user-sections/overview'
+import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
 definePageMeta({ layout: false })
 useHead({ title: '完成第三方登录' })
