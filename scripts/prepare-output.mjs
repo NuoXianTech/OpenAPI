@@ -37,6 +37,12 @@ const outputPackageJson = `${JSON.stringify({
   }
 }, null, 2)}\n`
 
+const outputServerStartSource = [
+  'await import(\'./migrate.mjs\')',
+  'await import(\'./index.mjs\')',
+  ''
+].join('\n')
+
 // Every step writes to a distinct path, so they run concurrently. postgres and
 // drizzle-orm are pulled into node_modules by Nitro's externals.traceInclude
 // (see nuxt.config.ts), so they are not copied here.
@@ -46,9 +52,9 @@ await Promise.all([
   // full copy. Not redundant — do not remove.
   fs.cp(sourceMigrations, outputMigrations, { recursive: true }),
   fs.copyFile(path.join(root, 'scripts/migrate.mjs'), path.join(outputServer, 'migrate.mjs')),
-  fs.copyFile(path.join(root, 'scripts/start.mjs'), path.join(outputServer, 'start.mjs')),
   fs.rm(path.join(outputServer, 'load-env.mjs'), { force: true }),
   fs.writeFile(path.join(outputNodeModules, '@nuxthub/db/db.mjs'), dbClientSource),
+  fs.writeFile(path.join(outputServer, 'start.mjs'), outputServerStartSource),
   fs.writeFile(path.join(outputRoot, 'start.mjs'), 'await import(\'./server/start.mjs\')\n'),
   fs.writeFile(path.join(outputRoot, 'package.json'), outputPackageJson)
 ])
