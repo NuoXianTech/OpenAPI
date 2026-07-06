@@ -4,7 +4,7 @@ import { createError, getRouterParam } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { requireAuth } from '~~/server/utils/auth'
-import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
 export default defineEventHandler(async (event: H3Event) => {
   const authUser = await requireAuth(event)

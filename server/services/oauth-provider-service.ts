@@ -1,10 +1,6 @@
 import { createError } from 'h3'
-import {
-  isSupportedOauthProvider,
-  providerIndex,
-  SUPPORTED_OAUTH_PROVIDERS,
-  type SupportedOauthProvider
-} from '~~/shared/types/oauth'
+import { SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider, providerIndex } from '~~/server/utils/oauth-provider-id'
 import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
 
 export interface OauthProviderPatch {

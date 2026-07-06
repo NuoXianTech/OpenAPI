@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { getRouterParam, sendRedirect } from 'h3'
 import { handleOauthCallback } from '~~/server/utils/oauth-callback'
-import { providerByIndex } from '~~/shared/types/oauth'
+import { providerByIndex } from '~~/server/utils/oauth-provider-id'
 
 /**
  * 第三方登录统一回调入口：/callback/openid/{index}

@@ -6,7 +6,7 @@ import { issueState, type OauthFlowMode } from '~~/server/utils/oauth-state'
 import { githubProvider } from '~~/server/utils/oauth-providers/github'
 import { qqProvider } from '~~/server/utils/oauth-providers/qq'
 import type { ProviderConfig } from '~~/server/utils/oauth-providers/types'
-import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { getAuthUser } from '~~/server/utils/auth'
 import { readQueryOption, readQueryString } from '~~/server/utils/request-query'
 

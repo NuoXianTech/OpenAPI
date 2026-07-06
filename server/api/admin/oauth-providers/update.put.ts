@@ -4,7 +4,7 @@ import { adminUpdateOauthProviderSchema } from '~~/server/schemas/admin'
 import { requireAdmin } from '~~/server/utils/auth'
 import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/services/oauth-provider-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 

@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
-import { isSupportedOauthProvider, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import type { SupportedOauthProvider } from '~~/shared/types/oauth'
+import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
 // ------------------------------------------------------------------
 // 「待处理 OAuth 身份」载体

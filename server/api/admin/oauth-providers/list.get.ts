@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { requireAdmin } from '~~/server/utils/auth'
 import { buildCallbackUrl, oauthProviderService, toAdminOauthProviderSafe, type OauthProviderRow } from '~~/server/services/oauth-provider-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
-import { OAUTH_PROVIDER_PRESETS, type SupportedOauthProvider } from '~~/shared/types/oauth'
+import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
     siteSettingsService.getOrCreate()
   ])
   const data = rows.map((row: OauthProviderRow) => {
-    const preset = OAUTH_PROVIDER_PRESETS[row.provider as SupportedOauthProvider]
+    const preset = OAUTH_PROVIDER_PRESETS[row.provider]
     const safe = toAdminOauthProviderSafe(row)
     return {
       provider: safe.provider,

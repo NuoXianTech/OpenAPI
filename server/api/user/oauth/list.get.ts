@@ -2,12 +2,13 @@
 import type { H3Event } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { oauthProviderService } from '~~/server/services/oauth-provider-service'
-import { OAUTH_PROVIDER_PRESETS, isSupportedOauthProvider } from '~~/shared/types/oauth'
+import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
+import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { requireAuth } from '~~/server/utils/auth'
 import { toNullableIsoString } from '~~/server/utils/date'
 
 // 显式声明形状：drizzle 的 select().from().where() 在某些链上推不出元素类型，
-// listSafeByUserId 的 Awaited 也会随之降级为 any[]，导致下面索引 OAUTH_PROVIDER_PRESETS 失败。
+// listSafeByUserId 的 Awaited 也会随之降级为 any[]，导致下面索引 provider preset 失败。
 interface BoundOauthAccount {
   id: number
   provider: string

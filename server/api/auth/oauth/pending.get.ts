@@ -4,7 +4,7 @@ import type { H3Event } from 'h3'
 import { readPendingOauth } from '~~/server/utils/oauth-pending'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { usersService } from '~~/server/services/user-service'
-import { OAUTH_PROVIDER_PRESETS } from '~~/shared/types/oauth'
+import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
 
 function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
