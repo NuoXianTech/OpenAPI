@@ -10,6 +10,7 @@
 | 2 | [对外接口落地规范](./public-api-conventions.md) | route 文件如何组织、manifest 如何扫描、响应和计费如何落地 |
 | 3 | [公共接口接入指南](./public-api-onboarding.md) | 从零新增接口或扩展现有接口的完整流程 |
 | 4 | [API 调用统计规范](./call-statistics.md) | 调用日志、日聚合统计、API Key 调用次数的统计口径 |
+| 5 | [Nuxt 应用标准](../standards/nuxt-application.md) | server/shared 边界、运行时配置、测试和性能门禁 |
 
 ## 维护边界
 
@@ -17,3 +18,4 @@
 - `public-api-conventions.md` 只描述项目落地约束，不重复完整流程。
 - `public-api-onboarding.md` 负责串联流程和样板，允许保留 walkthrough。
 - `call-statistics.md` 只定义统计口径；扣费细节链接到 [API 计费规则](../platform/billing-rules.md)。
+- 涉及公开 API 发布时，按 [生产就绪清单](../operations/production-readiness.md) 补充迁移、健康检查和调用日志验证。

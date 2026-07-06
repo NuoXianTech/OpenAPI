@@ -6,6 +6,9 @@
 
 | 文档 | 用途 |
 | --- | --- |
+| [生产就绪清单](./production-readiness.md) | 发布前质量门禁、配置核验、迁移、回滚、健康检查和 Web Vitals 基线 |
+| [生产运行手册](./production-runbook.md) | 上线后的日志、监控、备份、恢复、安全巡检和异常处理 |
+| [运行时配置](./runtime-config.md) | Nuxt runtimeConfig、生产环境变量、密钥生成与配置风险 |
 | [VPS 部署指南](./vps-deployment.md) | 单 Node/Nitro 进程 + PostgreSQL 的构建、上传、启动与 PM2 建议 |
 
 ## 维护边界
@@ -13,3 +16,4 @@
 - 环境变量、启动命令和回滚策略应保持可复制。
 - 涉及生产密钥时只给生成方式，不写真实值。
 - 与业务规则有关的内容链接到对应平台或 API 文档。
+- 与代码标准有关的内容链接到 [工程标准](../standards/index.md)，避免在运维文档重复编码规范。

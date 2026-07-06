@@ -2,10 +2,15 @@
 
 本项目推荐按单个 Node/Nitro 进程加一个 PostgreSQL 数据库部署。
 
+发布前先完成 [生产就绪清单](./production-readiness.md)，运行时变量按 [运行时配置](./runtime-config.md) 准备。
+
 ## 本地或 CI 构建
 
 ```bash
 pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm lint
+pnpm test:run
 pnpm build
 ```
 
@@ -79,3 +84,13 @@ pm2 restart openapi --update-env
 ```
 
 建议在 Node 进程前放置 Nginx，并反向代理到 `127.0.0.1:3000`。
+
+## 发布后检查
+
+```bash
+curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/list
+pm2 logs openapi --lines 80
+```
+
+确认管理员后台、用户后台、公开 API 调用、调用日志和统计均可用后，再按 [生产运行手册](./production-runbook.md) 观察日志和关键表，最后把发布标记为完成。
