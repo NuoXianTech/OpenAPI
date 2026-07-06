@@ -1,5 +1,5 @@
 import { parseFetchError } from '~/utils/client-error'
-import type { ApiKeyItem, ApiKeyPayload, ApiKeyScopeOption } from '~/types'
+import type { ApiKeyItem, ApiKeyPayload, ApiKeyScopeOption } from '#shared/types/api'
 
 /**
  * API Key 数据层（user 与 admin 共用）：接口范围下拉的懒加载 + CRUD。

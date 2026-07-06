@@ -8,10 +8,10 @@ import type {
   AdminAnalyticsOverview,
   AdminAnalyticsRankItem
 } from '#shared/types/admin'
-import type { DiscoveredApi as AdminDiscoveredApi } from '~/types/admin-api'
-import type { MessageLevel } from '~/types/message-level'
+import type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
+import type { MessageLevel } from '#shared/types/content'
 
-export type { DiscoveredApi as AdminDiscoveredApi } from '~/types/admin-api'
+export type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
 
 interface AdminAnalyticsDistributionChartItem {
   label: string

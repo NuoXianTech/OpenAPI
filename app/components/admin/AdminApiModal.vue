@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '~/types/admin-api'
+import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/api'
 import { API_STATUS } from '#shared/config/api-status'
 import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'

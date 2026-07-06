@@ -5,7 +5,7 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { ApiKeyItem } from '~/types'
+import type { ApiKeyItem } from '#shared/types/api'
 
 useHead({ title: 'API Keys' })
 

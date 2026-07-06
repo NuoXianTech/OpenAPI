@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DiscoveredEndpoint } from '~/types/admin-api'
+import type { DiscoveredEndpoint } from '#shared/types/api'
 
 defineProps<{ endpoints: DiscoveredEndpoint[] }>()
 </script>

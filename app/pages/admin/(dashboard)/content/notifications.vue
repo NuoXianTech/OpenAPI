@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NOTIFICATION_LEVEL_META as levelMeta } from '~/types/message-level'
+import { NOTIFICATION_LEVEL_META as levelMeta } from '#shared/types/content'
 import { parseFetchError } from '~/utils/client-error'
 import {
   createAdminNotificationForm,

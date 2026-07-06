@@ -5,7 +5,7 @@ import {
   LOGIN_METHOD_META,
   loginFailureReasonLabel,
   loginMethodLabel
-} from '~/types/login-log'
+} from '#shared/types/login-log'
 
 defineProps<{
   items: LoginLogRow[]

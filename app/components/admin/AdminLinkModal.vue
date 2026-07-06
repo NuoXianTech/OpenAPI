@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { FriendLinkItem } from '~/types'
+import type { FriendLinkItem } from '#shared/types/content'
 import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 

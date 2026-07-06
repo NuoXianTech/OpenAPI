@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ApiCatalogItem } from '~/types'
+import type { ApiCatalogItem } from '#shared/types/api'
 
 interface ApiListProps {
   items?: ApiCatalogItem[]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ADMIN_API_STATUS_ITEMS } from '~/config/api-status'
+import { ADMIN_API_STATUS_ITEMS } from '#shared/config/api-status'
 import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 

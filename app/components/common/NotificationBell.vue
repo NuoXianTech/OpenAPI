@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '~/types/message-level'
+import { NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
 /**
  * 后台站内信通知中心（admin / user 两端共用）
  *

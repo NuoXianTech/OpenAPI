@@ -9,7 +9,6 @@ export interface ApiCatalogItem {
   apiPath: string
   docUrl: string
   isApiKey: boolean
-  /** 按 HTTP 方法粒度的扣费表。键为大写方法名，值为积分（0 / 缺失 = 该方法免费）。 */
   methodCosts: Record<string, number>
   totalCalls: number
 }
@@ -24,23 +23,8 @@ export interface ApiCategoryItem {
   isEnabled: boolean
 }
 
-export interface FriendLinkItem {
-  id: number
-  title: string
-  url: string
-  description: string | null
-  isActive: boolean
-}
-
-export interface FilterTabOption {
-  label: string
-  value: string | number
-}
-
-/** 过期时间预设；'custom' 走 datetime-local 自定义 */
 export type ExpiryPreset = 'never' | '1h' | '1d' | '1mo' | 'custom'
 
-/** 列表行 / 详情：与 server `apiKeys` 表的可见字段一一对应 */
 export interface ApiKeyItem {
   id: number
   name: string
@@ -58,7 +42,6 @@ export interface ApiKeyItem {
   createdAt: string
 }
 
-/** “接口范围”下拉项,来自 /api/{user|admin}/apis-list */
 export interface ApiKeyScopeOption {
   id: number
   scope: string
@@ -70,12 +53,10 @@ export interface ApiKeyScopeOption {
   httpMethod: string
 }
 
-/** 创建/编辑表单的本地状态;由 useApiKeyForm 持有,ApiKeyFormFields 受控渲染 */
 export interface ApiKeyFormModel {
   name: string
   expiryPreset: ExpiryPreset
   expiresAtCustom: string
-  /** 仅创建时有意义:批量生成数量 1-5 */
   count: number
   unlimitedQuota: boolean
   totalQuota: number | null
@@ -84,11 +65,70 @@ export interface ApiKeyFormModel {
   ipWhitelistText: string
 }
 
-/** 提交给后端的配置载荷(创建时调用方再补 count) */
 export interface ApiKeyPayload {
   name: string
   expiresAt: string | null
   totalQuota: number | null
   scopes: string[] | null
   ipWhitelist: string[] | null
+}
+
+export interface DiscoveredEndpoint {
+  apiPath: string
+  method: string
+  sourceFile: string
+  isDynamic: boolean
+}
+
+export interface RegisteredApi {
+  id: number
+  code: string
+  pathVersion: string
+  name: string
+  shortDesc: string
+  description: string
+  apiPath: string
+  httpMethod: string
+  endpointCount: number
+  docUrl: string
+  status: number
+  categoryId: number | null
+  isEnabled: boolean
+  isApiKey: boolean
+  isStatistics: boolean
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  dailyQuota: number
+  methodCosts: Record<string, number>
+  timeoutMs: number
+}
+
+export interface DiscoveredApi {
+  pathVersion: string
+  code: string
+  endpointCount: number
+  endpoints: DiscoveredEndpoint[]
+  registered: RegisteredApi | null
+  orphaned: boolean
+}
+
+export interface AdminApiFormState {
+  name: string
+  shortDesc: string
+  description: string
+  docUrl: string
+  status: number
+  categoryId: number | null
+  isEnabled: boolean
+  isApiKey: boolean
+  isStatistics: boolean
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  dailyQuota: number
+  methodCosts: Record<string, number>
+  timeoutMs: number
 }

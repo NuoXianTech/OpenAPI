@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '~/types/credit-reason'
+import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 interface CreditTxnRow {

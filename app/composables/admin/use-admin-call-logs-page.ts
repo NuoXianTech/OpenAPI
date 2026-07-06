@@ -6,8 +6,12 @@ import {
   type AdminLogType,
   type AdminLogsFilterOptions
 } from '#shared/types/admin'
-import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
-import { LOGIN_METHOD_META, type LoginLogBadgeColor } from '~/types/login-log'
+import {
+  LOGIN_METHOD_META,
+  type AdminLoginLogRow,
+  type LoginLogBadgeColor,
+  type LoginMethod
+} from '#shared/types/login-log'
 import {
   createNumberQueryCodec,
   createStringArrayQueryCodec,

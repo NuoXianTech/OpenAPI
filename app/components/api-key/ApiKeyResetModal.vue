@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
-import type { ApiKeyItem } from '~/types'
+import type { ApiKeyItem } from '#shared/types/api'
 
 const props = defineProps<{
   target: ApiKeyItem | null

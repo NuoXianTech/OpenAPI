@@ -1,9 +1,32 @@
-export type MessageLevel = 'info' | 'success' | 'warning' | 'critical'
+export const MESSAGE_LEVELS = ['info', 'success', 'warning', 'critical'] as const
+
+export type MessageLevel = typeof MESSAGE_LEVELS[number]
 
 export interface MessageLevelMeta {
   color: 'info' | 'success' | 'warning' | 'error'
   icon: string
   label: string
+}
+
+export interface Announcement {
+  id: number
+  title: string
+  content: string
+  level: MessageLevel
+  isPinned: boolean
+  isEnabled: boolean
+  linkUrl: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FriendLinkItem {
+  id: number
+  title: string
+  url: string
+  description: string | null
+  isActive: boolean
 }
 
 const MESSAGE_LEVEL_STYLE: Record<MessageLevel, { color: MessageLevelMeta['color'], icon: string }> = {

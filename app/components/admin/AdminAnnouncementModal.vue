@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Announcement } from '~/types/announcement'
+import type { Announcement } from '#shared/types/content'
 import { parseFetchError } from '~/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })

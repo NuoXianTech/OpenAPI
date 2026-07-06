@@ -1,11 +1,12 @@
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
 import { announcements } from '@nuxthub/db/schema'
+import type { MessageLevel } from '#shared/types/content'
 import { firstRow } from '~~/server/utils/row'
 
 export interface AnnouncementInput {
   title: string
   content: string
-  level?: 'info' | 'success' | 'warning' | 'critical'
+  level?: MessageLevel
   isPinned?: boolean
   isEnabled?: boolean
   linkUrl?: string | null

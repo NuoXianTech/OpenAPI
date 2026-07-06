@@ -1,12 +1,13 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
+import type { MessageLevel } from '#shared/types/content'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 
 // 用户表已是硬删模型，listActiveUserIds / send 不再需要过滤 deletedAt
 
-type NotificationLevel = 'info' | 'success' | 'warning' | 'critical'
+type NotificationLevel = MessageLevel
 type NotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
 interface SendNotificationInput {

@@ -3,7 +3,7 @@ import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
 import { parseFetchError } from '~/utils/client-error'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
-import type { ApiKeyItem } from '~/types'
+import type { ApiKeyItem } from '#shared/types/api'
 
 const props = defineProps<{
   open: boolean

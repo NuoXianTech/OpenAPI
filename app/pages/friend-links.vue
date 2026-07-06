@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { FilterTabOption } from '~/types'
 import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
 useHead({ title: '友情链接' })
@@ -12,7 +11,7 @@ useSeoMeta({
 const query = ref('')
 const currentStatus = ref<string | number>('all')
 
-const statusTabs: FilterTabOption[] = [
+const statusTabs = [
   { label: '全部', value: 'all' },
   { label: '正常', value: 1 },
   { label: '异常', value: 0 }

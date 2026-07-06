@@ -1,4 +1,4 @@
-import type { AdminApiFormState } from '~/types/admin-api'
+import type { AdminApiFormState } from '#shared/types/api'
 
 const KEY: InjectionKey<AdminApiFormState> = Symbol('AdminApiFormState')
 

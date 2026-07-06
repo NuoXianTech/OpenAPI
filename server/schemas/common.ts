@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { maxMessage } from '#shared/schemas/validation'
+import { MESSAGE_LEVELS } from '#shared/types/content'
 
 export const idSchema = z.object({
   id: z.coerce.number().int().positive('ID 必填')
@@ -9,7 +10,7 @@ export const messageIdSchema = z.object({
   messageId: z.coerce.number().int().positive('消息 ID 必填')
 })
 
-export const messageLevelSchema = z.enum(['info', 'success', 'warning', 'critical'])
+export const messageLevelSchema = z.enum(MESSAGE_LEVELS)
 
 export const optionalDate = z.preprocess(
   (value) => {

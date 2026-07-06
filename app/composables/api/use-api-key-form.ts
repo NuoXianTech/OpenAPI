@@ -1,4 +1,4 @@
-import type { ApiKeyFormModel, ApiKeyItem, ApiKeyPayload } from '~/types'
+import type { ApiKeyFormModel, ApiKeyItem, ApiKeyPayload } from '#shared/types/api'
 
 /**
  * API Key 创建 / 编辑表单状态机（user 与 admin 共用）。

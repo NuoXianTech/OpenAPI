@@ -1,5 +1,5 @@
-import { PUBLIC_API_STATUS_FILTER_ITEMS } from '~/config/api-status'
-import type { ApiCatalogItem, ApiCategoryItem, FilterTabOption } from '~/types'
+import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
+import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
 
 export function useApiList() {
   const { data: listData, pending: listPending, error: listError, refresh: refreshList } = useFetch<ApiCatalogItem[]>(
@@ -16,7 +16,7 @@ export function useApiList() {
   const currentCategory = ref<string | number>('all')
   const catalogItems = computed(() => listData.value || [])
 
-  const statusTabs: FilterTabOption[] = [
+  const statusTabs = [
     { label: '全部', value: 'all' },
     ...PUBLIC_API_STATUS_FILTER_ITEMS
   ]
@@ -46,20 +46,20 @@ export function useApiList() {
     return map
   })
 
-  const categoryTabs = computed<FilterTabOption[]>(() => {
+  const categoryTabs = computed(() => {
     const referenced = new Set<number>()
     catalogItems.value.forEach((item) => {
       if (typeof item.categoryId === 'number') {
         referenced.add(item.categoryId)
       }
     })
-    const tabs: FilterTabOption[] = [{ label: '全部', value: 'all' }]
-    categories.value
-      .filter(cat => referenced.has(cat.id))
-      .forEach((cat) => {
-        tabs.push({ label: cat.name, value: cat.id })
-      })
-    return tabs
+
+    return [
+      { label: '全部', value: 'all' },
+      ...categories.value
+        .filter(cat => referenced.has(cat.id))
+        .map(cat => ({ label: cat.name, value: cat.id }))
+    ]
   })
 
   const fetchList = async () => {

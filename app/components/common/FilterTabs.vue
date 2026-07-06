@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { FilterTabOption } from '~/types'
+interface FilterTabOption {
+  label: string
+  value: string | number
+}
 
 const props = withDefaults(defineProps<{
   modelValue: string | number

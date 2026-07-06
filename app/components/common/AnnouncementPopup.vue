@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import type { Announcement } from '~/types/announcement'
-import { ANNOUNCEMENT_LEVEL_META as levelMeta, type MessageLevelMeta } from '~/types/message-level'
+import {
+  ANNOUNCEMENT_LEVEL_META as levelMeta,
+  type Announcement,
+  type MessageLevelMeta
+} from '#shared/types/content'
 /**
  * 公告弹窗：自动加载生效中的公告，按 isPinned > sortOrder > createdAt 排序，
  * 默认展开第一条，其余收起。

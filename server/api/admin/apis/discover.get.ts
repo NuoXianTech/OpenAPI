@@ -9,29 +9,10 @@
 
 import type { H3Event } from 'h3'
 import { API_MANIFEST } from '#api-manifest'
+import type { DiscoveredApi, DiscoveredEndpoint, RegisteredApi } from '#shared/types/api'
 import { requireAdmin } from '~~/server/utils/auth'
 import { apiService } from '~~/server/services/api-service'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
-
-interface DiscoveredEndpoint {
-  apiPath: string
-  method: string
-  sourceFile: string
-  isDynamic: boolean
-}
-
-type RegisteredApi = Awaited<ReturnType<typeof apiService.listByVersion>>[number]
-
-interface DiscoveredApi {
-  pathVersion: string
-  code: string
-  endpointCount: number
-  endpoints: DiscoveredEndpoint[]
-  /** DB 中已登记记录的完整治理字段；null 表示尚未登记 */
-  registered: RegisteredApi | null
-  /** true 表示 DB 有但代码已被删除 */
-  orphaned: boolean
-}
 
 interface VersionGroup {
   pathVersion: string
