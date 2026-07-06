@@ -23,7 +23,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       value: props.summary.balance.toLocaleString(),
       unit: '积分',
       meta: '可用于 API 调用',
-      icon: 'i-mdi-cash-multiple',
+      icon: 'i-lucide-coins',
       tone: 'neutral'
     },
     {
@@ -32,7 +32,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       value: props.summary.totalIn.toLocaleString(),
       unit: '积分',
       meta: '签到、兑换与后台发放',
-      icon: 'i-mdi-arrow-down-bold-circle-outline',
+      icon: 'i-lucide-circle-arrow-down',
       tone: 'success'
     },
     {
@@ -41,7 +41,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       value: props.summary.totalOut.toLocaleString(),
       unit: '积分',
       meta: 'API 调用扣费合计',
-      icon: 'i-mdi-arrow-up-bold-circle-outline',
+      icon: 'i-lucide-circle-arrow-up',
       tone: 'error'
     },
     {
@@ -50,7 +50,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       value: props.summary.totalCount.toLocaleString(),
       unit: '笔',
       meta: '全部积分变动记录',
-      icon: 'i-mdi-format-list-numbered',
+      icon: 'i-lucide-list-ordered',
       tone: 'info'
     }
   ]

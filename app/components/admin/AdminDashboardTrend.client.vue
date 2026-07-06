@@ -145,7 +145,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
         <UBadge
           variant="soft"
           color="primary"
-          icon="i-mdi-circle"
+          icon="i-lucide-circle"
           class="rounded-md"
         >
           总调用
@@ -153,7 +153,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
         <UBadge
           variant="soft"
           color="success"
-          icon="i-mdi-circle"
+          icon="i-lucide-circle"
           class="rounded-md"
         >
           成功
@@ -161,7 +161,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
         <UBadge
           variant="soft"
           color="error"
-          icon="i-mdi-circle"
+          icon="i-lucide-circle"
           class="rounded-md"
         >
           失败

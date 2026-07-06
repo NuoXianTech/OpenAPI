@@ -69,7 +69,7 @@ const tooltipTemplate = (d: BarRow) => renderChartTooltip({
   >
     <UEmpty
       v-if="rows.length === 0"
-      icon="i-mdi-chart-bar"
+      icon="i-lucide-chart-bar"
       title="暂无启用接口"
       description="请先在「接口管理」中启用接口并开启统计"
       class="h-72"
@@ -118,7 +118,7 @@ const tooltipTemplate = (d: BarRow) => renderChartTooltip({
       <UBadge
         variant="soft"
         color="success"
-        icon="i-mdi-circle"
+        icon="i-lucide-circle"
         class="rounded-md"
       >
         成功
@@ -126,7 +126,7 @@ const tooltipTemplate = (d: BarRow) => renderChartTooltip({
       <UBadge
         variant="soft"
         color="error"
-        icon="i-mdi-circle"
+        icon="i-lucide-circle"
         class="rounded-md"
       >
         失败

@@ -89,7 +89,7 @@ function toggleAdvancedFilters() {
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div class="flex items-center gap-2">
                 <UIcon
-                  name="i-mdi-filter-variant"
+                  name="i-lucide-funnel"
                   class="size-4 text-muted"
                 />
                 <h3 class="text-sm font-semibold text-highlighted">
@@ -203,7 +203,7 @@ function toggleAdvancedFilters() {
               <UButton
                 :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
                 variant="outline"
-                :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
+                :icon="expandedFilters ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
                 @click="toggleAdvancedFilters"
               >
                 更多筛选
@@ -221,13 +221,13 @@ function toggleAdvancedFilters() {
                 <UButton
                   color="neutral"
                   variant="outline"
-                  icon="i-mdi-restore"
+                  icon="i-lucide-rotate-ccw"
                   @click="resetFilters"
                 >
                   重置
                 </UButton>
                 <UButton
-                  icon="i-mdi-magnify"
+                  icon="i-lucide-search"
                   @click="applyFilters"
                 >
                   查询
@@ -239,7 +239,7 @@ function toggleAdvancedFilters() {
 
         <DashboardTableCard
           title="调用明细"
-          icon="i-mdi-text-box-search-outline"
+          icon="i-lucide-file-search"
           :total="total"
         >
           <DashboardDataTable
@@ -250,7 +250,7 @@ function toggleAdvancedFilters() {
             :page-size="pageSize"
             :total="total"
             empty-title="暂无日志"
-            empty-icon="i-mdi-text-box-search-outline"
+            empty-icon="i-lucide-file-search"
           >
             <template #createdAt-cell="{ row }">
               <div class="flex flex-col gap-1 min-w-[150px]">
@@ -362,7 +362,7 @@ function toggleAdvancedFilters() {
                 size="xs"
                 color="neutral"
                 variant="ghost"
-                icon="i-mdi-eye-outline"
+                icon="i-lucide-eye"
                 aria-label="查看详情"
                 @click="openDetail(row.original)"
               />

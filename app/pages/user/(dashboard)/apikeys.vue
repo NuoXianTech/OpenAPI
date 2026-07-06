@@ -199,17 +199,17 @@ function toggleReveal(id: number) {
 
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
-    { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    { label: '编辑配置', icon: 'i-lucide-pencil', onSelect: () => openEdit(row) },
+    { label: '复制完整 Key', icon: 'i-lucide-copy', onSelect: () => copy(row.apiKey) },
     {
       label: row.isActive ? '停用' : '启用',
-      icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
+      icon: row.isActive ? 'i-lucide-circle-pause' : 'i-lucide-circle-play',
       onSelect: () => toggleActive(row)
     },
-    { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
+    { label: '重置 Key', icon: 'i-lucide-refresh-cw', onSelect: () => openReset(row) },
     {
       label: '删除',
-      icon: 'i-mdi-delete-outline',
+      icon: 'i-lucide-trash-2',
       color: 'error',
       onSelect: () => openDelete(row)
     }
@@ -241,7 +241,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         <UAlert
           color="info"
           variant="subtle"
-          icon="i-mdi-information-outline"
+          icon="i-lucide-info"
           title="API Key 使用说明"
           class="dashboard-gradient-alert"
         >
@@ -265,7 +265,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 
         <div class="dashboard-action-bar flex justify-end">
           <UButton
-            icon="i-mdi-plus"
+            icon="i-lucide-plus"
             @click="openCreate"
           >
             生成新 Key
@@ -274,7 +274,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 
         <DashboardTableCard
           title="API Key 列表"
-          icon="i-mdi-key-outline"
+          icon="i-lucide-key-round"
           :total="items.length"
         >
           <DashboardDataTable
@@ -283,7 +283,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :loading="loading"
             :fixed="false"
             empty-title="暂无 API Key"
-            empty-icon="i-mdi-key-outline"
+            empty-icon="i-lucide-key-round"
           >
             <template #name-cell="{ row }">
               <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
@@ -295,14 +295,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
                   {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
                 </code>
                 <UButton
-                  :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :icon="showFullKeyId === row.original.id ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                   size="xs"
                   color="neutral"
                   variant="ghost"
                   @click="toggleReveal(row.original.id)"
                 />
                 <UButton
-                  icon="i-mdi-content-copy"
+                  icon="i-lucide-copy"
                   size="xs"
                   color="neutral"
                   variant="ghost"

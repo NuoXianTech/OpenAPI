@@ -61,7 +61,7 @@ async function copy(text: string) {
         variant="subtle"
         title="重置将立即让旧 Key 失效"
         :description="`将重置「${props.target?.name || '默认密钥'}」，所有正在使用旧 Key 的调用方会立刻失败，请确认后再继续。`"
-        icon="i-mdi-alert-outline"
+        icon="i-lucide-triangle-alert"
       />
       <code
         v-else
@@ -98,7 +98,7 @@ async function copy(text: string) {
         <UButton
           variant="outline"
           color="neutral"
-          icon="i-mdi-content-copy"
+          icon="i-lucide-copy"
           @click="copy(result.apiKey)"
         >
           复制

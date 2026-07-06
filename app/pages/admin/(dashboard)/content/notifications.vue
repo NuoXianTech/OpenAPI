@@ -125,7 +125,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
       <UButton
         color="neutral"
         variant="outline"
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         :loading="loading"
         @click="refresh()"
       >
@@ -138,7 +138,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
         <template #header>
           <div class="flex items-center gap-2">
             <UIcon
-              name="i-mdi-email-edit-outline"
+              name="i-lucide-mail-plus"
               class="size-5 text-muted"
             />
             <h3 class="text-lg font-semibold text-highlighted">
@@ -210,7 +210,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
 
           <div class="flex justify-end">
             <UButton
-              icon="i-mdi-send"
+              icon="i-lucide-send"
               :loading="sending"
               @click="submitSend"
             >
@@ -222,7 +222,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
 
       <DashboardTableCard
         title="发送历史"
-        icon="i-mdi-history"
+        icon="i-lucide-history"
         :total="total"
       >
         <DashboardDataTable
@@ -234,7 +234,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
           :total="total"
           :page-size-items="PAGE_SIZE_ITEMS"
           empty-title="暂无发送历史"
-          empty-icon="i-mdi-history"
+          empty-icon="i-lucide-history"
         >
           <template #title-cell="{ row }">
             <div class="flex items-center gap-2">
@@ -300,7 +300,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
             class="flex items-center gap-3 py-2 text-sm"
           >
             <UIcon
-              :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
+              :name="r.isRead ? 'i-lucide-mail-open' : 'i-lucide-mail'"
               :class="r.isRead ? 'text-success' : 'text-muted'"
               class="size-4"
             />

@@ -76,7 +76,7 @@ onUnmounted(() => {
     :model-value="props.modelValue"
     :placeholder="props.placeholder"
     :size="props.size"
-    icon="i-mdi-magnify"
+    icon="i-lucide-search"
     color="neutral"
     variant="outline"
     class="w-full"
@@ -90,7 +90,7 @@ onUnmounted(() => {
         color="neutral"
         variant="link"
         size="sm"
-        icon="i-mdi-close"
+        icon="i-lucide-x"
         aria-label="清除搜索"
         @click="clear"
       />

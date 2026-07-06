@@ -83,7 +83,7 @@ async function submit() {
     <div class="flex justify-end pt-4">
       <UButton
         :loading="isSaving"
-        icon="i-mdi-content-save-outline"
+        icon="i-lucide-save"
         @click="submit"
       >
         更新密码

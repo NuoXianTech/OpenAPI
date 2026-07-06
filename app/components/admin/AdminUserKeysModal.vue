@@ -165,7 +165,7 @@ function toggleReveal(id: number) {
       <div class="flex justify-end mb-3">
         <UButton
           size="sm"
-          :icon="formOpen ? 'i-mdi-close' : 'i-mdi-plus'"
+          :icon="formOpen ? 'i-lucide-x' : 'i-lucide-plus'"
           :variant="formOpen ? 'outline' : 'solid'"
           @click="toggleForm"
         >
@@ -261,14 +261,14 @@ function toggleReveal(id: number) {
                   {{ showFullKeyId === key.id ? key.apiKey : maskApiKey(key.apiKey) }}
                 </code>
                 <UButton
-                  :icon="showFullKeyId === key.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  :icon="showFullKeyId === key.id ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                   size="xs"
                   color="neutral"
                   variant="ghost"
                   @click="toggleReveal(key.id)"
                 />
                 <UButton
-                  icon="i-mdi-content-copy"
+                  icon="i-lucide-copy"
                   size="xs"
                   color="neutral"
                   variant="ghost"

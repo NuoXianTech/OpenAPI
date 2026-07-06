@@ -106,7 +106,7 @@ watch([keyword, activeVersion], () => {
       />
       <UInput
         v-model="keyword"
-        icon="i-mdi-magnify"
+        icon="i-lucide-search"
         placeholder="搜索 code / 名称..."
         size="sm"
         class="max-w-sm"
@@ -115,7 +115,7 @@ watch([keyword, activeVersion], () => {
         class="ml-auto"
         color="neutral"
         variant="outline"
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         :loading="loading"
         @click="refresh()"
       >
@@ -133,7 +133,7 @@ watch([keyword, activeVersion], () => {
     <DashboardTableCard
       v-else
       title="接口列表"
-      icon="i-mdi-api"
+      icon="i-lucide-braces"
       :total="total"
     >
       <DashboardDataTable
@@ -145,7 +145,7 @@ watch([keyword, activeVersion], () => {
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="该版本暂无接口"
-        empty-icon="i-mdi-api"
+        empty-icon="i-lucide-braces"
       >
         <template #code-cell="{ row }">
           <div class="flex flex-col gap-0.5">

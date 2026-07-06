@@ -100,7 +100,7 @@ async function submit() {
       </UFormField>
       <div class="flex justify-end pt-4">
         <UButton
-          icon="i-mdi-email-arrow-right-outline"
+          icon="i-lucide-mail-plus"
           :loading="isSaving"
           @click="submit"
         >
@@ -113,7 +113,7 @@ async function submit() {
       v-if="pending"
       color="info"
       variant="subtle"
-      icon="i-mdi-email-fast-outline"
+      icon="i-lucide-send"
       class="mt-4"
       :title="`已发送验证邮件到 ${pending}`"
       description="请到该邮箱点击确认链接以完成更改。链接的有效期由站点配置决定。"

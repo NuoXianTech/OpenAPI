@@ -101,7 +101,7 @@ function preventAutoFocus(event: Event) {
       <div class="flex items-center gap-3">
         <span class="announce-icon">
           <UIcon
-            name="i-mdi-bullhorn-outline"
+            name="i-lucide-megaphone"
             class="size-5"
           />
         </span>
@@ -165,13 +165,13 @@ function preventAutoFocus(event: Event) {
                   @keydown.enter.stop
                 >
                   <UIcon
-                    name="i-mdi-open-in-new"
+                    name="i-lucide-external-link"
                     class="size-3.5"
                   />
                 </a>
                 <UIcon
                   v-if="item.isPinned"
-                  name="i-mdi-pin"
+                  name="i-lucide-pin"
                   class="size-3.5 shrink-0 text-warning"
                   title="置顶"
                 />
@@ -180,7 +180,7 @@ function preventAutoFocus(event: Event) {
                 <span>{{ item.levelLabel }}</span>
                 <span class="text-dimmed">·</span>
                 <UIcon
-                  name="i-mdi-clock-outline"
+                  name="i-lucide-clock"
                   class="size-3 shrink-0"
                 />
                 <span class="font-mono">{{ item.date }}</span>
@@ -207,7 +207,7 @@ function preventAutoFocus(event: Event) {
         </p>
         <UButton
           color="neutral"
-          icon="i-mdi-check"
+          icon="i-lucide-check"
           class="ml-auto"
           @click="() => { open = false }"
         >

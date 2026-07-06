@@ -17,7 +17,7 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
 <template>
   <UEmpty
     v-if="ranking.length === 0"
-    icon="i-mdi-trophy-outline"
+    icon="i-lucide-trophy"
     title="暂无调用数据"
     class="h-64"
   />

@@ -47,7 +47,7 @@ const {
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="flex items-center gap-2">
             <UIcon
-              name="i-mdi-filter-variant"
+              name="i-lucide-funnel"
               class="size-4 text-muted"
             />
             <h3 class="text-sm font-semibold text-highlighted">
@@ -107,13 +107,13 @@ const {
           <UButton
             color="neutral"
             variant="outline"
-            icon="i-mdi-restore"
+            icon="i-lucide-rotate-ccw"
             @click="reset"
           >
             重置
           </UButton>
           <UButton
-            icon="i-mdi-magnify"
+            icon="i-lucide-search"
             @click="applyFilters"
           >
             查询
@@ -124,7 +124,7 @@ const {
 
     <DashboardTableCard
       title="登录明细"
-      icon="i-mdi-login-variant"
+      icon="i-lucide-log-in"
       :total="total"
     >
       <DashboardDataTable
@@ -135,7 +135,7 @@ const {
         :page-size="pageSize"
         :total="total"
         empty-title="暂无登录日志"
-        empty-icon="i-mdi-login-variant"
+        empty-icon="i-lucide-log-in"
       >
         <template #createdAt-cell="{ row }">
           <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>

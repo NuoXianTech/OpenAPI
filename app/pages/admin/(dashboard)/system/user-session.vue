@@ -200,7 +200,7 @@ const {
             {{ item.isEnabled ? '已启用' : '未启用' }}
           </UBadge>
           <UIcon
-            name="i-mdi-chevron-down"
+            name="i-lucide-chevron-down"
             class="size-5 shrink-0 text-muted transition-transform duration-200"
             :class="getForm(item.provider).open ? 'rotate-180' : ''"
           />
@@ -212,7 +212,7 @@ const {
               <UInput
                 v-model="getForm(item.provider).clientId"
                 placeholder="填写 OAuth App 的 Client ID"
-                icon="i-mdi-identifier"
+                icon="i-lucide-id-card"
                 class="w-full"
               />
             </UFormField>
@@ -224,7 +224,7 @@ const {
                 v-model="getForm(item.provider).clientSecret"
                 :type="getForm(item.provider).secretVisible ? 'text' : 'password'"
                 placeholder="••••••••"
-                icon="i-mdi-key-variant"
+                icon="i-lucide-key-round"
                 class="w-full"
                 :ui="{ trailing: 'pe-1' }"
               >
@@ -235,7 +235,7 @@ const {
                     variant="ghost"
                     size="xs"
                     square
-                    :icon="getForm(item.provider).secretVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                    :icon="getForm(item.provider).secretVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                     :aria-label="getForm(item.provider).secretVisible ? '隐藏密钥' : '显示密钥'"
                     @click="() => { getForm(item.provider).secretVisible = !getForm(item.provider).secretVisible }"
                   />
@@ -250,11 +250,11 @@ const {
                 <UInput
                   :model-value="item.callbackUrl"
                   readonly
-                  icon="i-mdi-link-variant"
+                  icon="i-lucide-link"
                   class="flex-1"
                 />
                 <UButton
-                  :icon="getForm(item.provider).copied ? 'i-mdi-check' : 'i-mdi-content-copy'"
+                  :icon="getForm(item.provider).copied ? 'i-lucide-check' : 'i-lucide-copy'"
                   :color="getForm(item.provider).copied ? 'success' : 'neutral'"
                   variant="outline"
                   @click="copyCallback(item)"
@@ -289,7 +289,7 @@ const {
                 label="启用该登录方式"
               />
               <UButton
-                icon="i-mdi-content-save-outline"
+                icon="i-lucide-save"
                 :loading="getForm(item.provider).saving"
                 @click="saveProvider(item)"
               >

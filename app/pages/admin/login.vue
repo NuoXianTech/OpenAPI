@@ -87,7 +87,7 @@ function clearTurnstileError() {
     <div class="auth-brand">
       <div class="auth-brand__logo">
         <UIcon
-          name="i-mdi-shield-crown-outline"
+          name="i-lucide-crown"
           class="size-6"
         />
       </div>
@@ -133,7 +133,7 @@ function clearTurnstileError() {
             type="text"
             autocomplete="username"
             placeholder="admin"
-            icon="i-mdi-account-key-outline"
+            icon="i-lucide-user-key"
             size="lg"
             class="w-full"
             autofocus
@@ -150,7 +150,7 @@ function clearTurnstileError() {
             :type="passwordVisible ? 'text' : 'password'"
             autocomplete="current-password"
             placeholder="请输入管理员密码"
-            icon="i-mdi-lock-outline"
+            icon="i-lucide-lock"
             size="lg"
             class="w-full"
             :ui="{ trailing: 'pe-1' }"
@@ -162,7 +162,7 @@ function clearTurnstileError() {
                 variant="ghost"
                 size="xs"
                 square
-                :icon="passwordVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                :icon="passwordVisible ? 'i-lucide-eye-off' : 'i-lucide-eye'"
                 :aria-label="passwordVisible ? '隐藏密码' : '显示密码'"
                 @click="() => { passwordVisible = !passwordVisible }"
               />
@@ -183,7 +183,7 @@ function clearTurnstileError() {
             class="auth-message auth-message--error"
           >
             <UIcon
-              name="i-mdi-alert-circle-outline"
+              name="i-lucide-circle-alert"
               class="auth-message__icon size-4"
             />
             <span>{{ errorMsg }}</span>
@@ -196,7 +196,7 @@ function clearTurnstileError() {
             class="auth-message auth-message--error"
           >
             <UIcon
-              name="i-mdi-alert-circle-outline"
+              name="i-lucide-circle-alert"
               class="auth-message__icon size-4"
             />
             <span>{{ turnstileError }}</span>

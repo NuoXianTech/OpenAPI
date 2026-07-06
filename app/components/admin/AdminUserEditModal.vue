@@ -120,7 +120,7 @@ async function submit() {
         <div class="pt-3 border-t border-default space-y-2">
           <div class="flex items-center gap-2">
             <UIcon
-              name="i-mdi-shield-key-outline"
+              name="i-lucide-shield-check"
               class="size-4 text-muted"
             />
             <span class="text-sm font-medium">已绑定第三方</span>

@@ -11,7 +11,7 @@ defineProps<{
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
-          name="i-mdi-chart-pie-outline"
+          name="i-lucide-chart-pie"
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">

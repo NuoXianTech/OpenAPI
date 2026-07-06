@@ -42,8 +42,8 @@ async function openDelete(item: FriendLinkItem) {
 
 function getRowItems(row: FriendLinkItem): DropdownMenuItem[] {
   return [
-    { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
+    { label: '编辑', icon: 'i-lucide-pencil', onSelect: () => openEdit(row) },
+    { label: '删除', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
@@ -60,7 +60,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
   <div class="space-y-6">
     <div class="flex items-center justify-end gap-2">
       <UButton
-        icon="i-mdi-plus"
+        icon="i-lucide-plus"
         @click="openAdd"
       >
         新增链接
@@ -68,7 +68,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
       <UButton
         color="neutral"
         variant="outline"
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         :loading="loading"
         @click="refresh()"
       >
@@ -78,7 +78,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
 
     <DashboardTableCard
       title="友链列表"
-      icon="i-mdi-link-variant"
+      icon="i-lucide-link"
       :total="total"
     >
       <DashboardDataTable
@@ -90,7 +90,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无友链"
-        empty-icon="i-mdi-link-variant"
+        empty-icon="i-lucide-link"
       >
         <template #isActive-cell="{ row }">
           <UBadge

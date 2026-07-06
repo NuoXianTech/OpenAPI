@@ -37,7 +37,7 @@ const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
         class="inline-flex items-center gap-1 hover:underline"
       >
         <UIcon
-          name="i-mdi-shield-check-outline"
+          name="i-lucide-shield-check"
           class="size-3.5"
         />
         {{ policeBeian }}

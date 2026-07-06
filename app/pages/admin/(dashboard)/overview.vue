@@ -83,7 +83,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       value: formatNumber(overview.value.userCount),
       unit: '人',
       meta: '当前平台注册账号总量',
-      icon: 'i-mdi-account-group-outline',
+      icon: 'i-lucide-users-round',
       tone: 'neutral'
     },
     {
@@ -92,7 +92,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       value: formatNumber(overview.value.enabledApiCount),
       unit: '个',
       meta: `共 ${formatNumber(overview.value.totalApiCount)} 个接口`,
-      icon: 'i-mdi-api',
+      icon: 'i-lucide-braces',
       tone: 'info'
     },
     {
@@ -100,7 +100,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       label: '总调用',
       value: formatNumber(overview.value.totalCalls),
       unit: '次',
-      icon: 'i-mdi-chart-line',
+      icon: 'i-lucide-chart-line',
       tone: 'warning',
       sparklineValues: callsTrendValues.value,
       sparklineColor: 'var(--ui-warning)'
@@ -109,7 +109,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       key: 'success-rate',
       label: '成功率',
       value: formatRate(overview.value.successRate),
-      icon: 'i-mdi-shield-check-outline',
+      icon: 'i-lucide-shield-check',
       tone: 'success',
       sparklineValues: successRateTrendValues.value,
       sparklineColor: 'var(--ui-success)'
@@ -176,7 +176,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   :to="ADMIN_USERS_PATH"
                   color="neutral"
                   size="md"
-                  icon="i-mdi-account-group-outline"
+                  icon="i-lucide-users-round"
                 >
                   用户管理
                 </UButton>
@@ -185,7 +185,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   color="neutral"
                   variant="outline"
                   size="md"
-                  icon="i-mdi-api"
+                  icon="i-lucide-braces"
                 >
                   接口管理
                 </UButton>
@@ -197,7 +197,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <UIcon
-                      name="i-mdi-pulse"
+                      name="i-lucide-activity"
                       class="size-4 text-muted"
                     />
                     <span class="text-sm font-medium">今日快照</span>
@@ -232,7 +232,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                       class="inline-flex items-center gap-1 font-medium"
                     >
                       <UIcon
-                        :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
+                        :name="overview.todayChangeRate >= 0 ? 'i-lucide-trending-up' : 'i-lucide-trending-down'"
                         class="size-3.5"
                       />
                       {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
@@ -260,7 +260,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               size="xs"
               color="neutral"
               variant="ghost"
-              trailing-icon="i-mdi-chevron-right"
+              trailing-icon="i-lucide-chevron-right"
             >
               查看调用日志
             </UButton>
@@ -331,7 +331,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 
         <DashboardTableCard
           title="最新 API 请求"
-          icon="i-mdi-history"
+          icon="i-lucide-history"
           :total="recentCalls.length"
         >
           <template #actions>
@@ -339,7 +339,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               :to="ADMIN_LOGS_PATH"
               variant="link"
               size="sm"
-              trailing-icon="i-mdi-arrow-right"
+              trailing-icon="i-lucide-arrow-right"
             >
               查看完整日志
             </UButton>
@@ -350,7 +350,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             :columns="recentColumns"
             :loading="loading && recentCalls.length === 0"
             empty-title="暂无请求日志"
-            empty-icon="i-mdi-history"
+            empty-icon="i-lucide-history"
           >
             <template #createdAt-cell="{ row }">
               <span class="whitespace-nowrap text-xs tabular-nums text-muted">

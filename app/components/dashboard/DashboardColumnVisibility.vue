@@ -65,7 +65,7 @@ const items = computed<DropdownMenuItem[]>(() =>
       :label="label"
       color="neutral"
       variant="outline"
-      icon="i-mdi-view-column-outline"
+      icon="i-lucide-columns-3"
     />
   </UDropdownMenu>
 </template>

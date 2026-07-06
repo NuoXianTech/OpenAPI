@@ -74,7 +74,7 @@ const {
           <UInput
             v-model="filters.keyword"
             class="max-w-sm"
-            icon="i-mdi-magnify"
+            icon="i-lucide-search"
             placeholder="搜索兑换码 / 备注..."
             @keydown.enter="applyFilters"
           />
@@ -93,7 +93,7 @@ const {
               class="w-72"
             />
             <UButton
-              icon="i-mdi-magnify"
+              icon="i-lucide-search"
               @click="applyFilters"
             >
               查询
@@ -106,7 +106,7 @@ const {
               重置
             </UButton>
             <UButton
-              icon="i-mdi-plus"
+              icon="i-lucide-plus"
               color="primary"
               @click="openGenerateModal"
             >
@@ -124,7 +124,7 @@ const {
 
         <DashboardTableCard
           title="兑换码明细"
-          icon="i-mdi-ticket-percent-outline"
+          icon="i-lucide-ticket-percent"
           :total="total"
         >
           <DashboardDataTable
@@ -135,7 +135,7 @@ const {
             :page-size="pageSize"
             :total="total"
             empty-title="暂无兑换码"
-            empty-icon="i-mdi-ticket-percent-outline"
+            empty-icon="i-lucide-ticket-percent"
           >
             <template #code-cell="{ row }">
               <div class="flex flex-col gap-0.5">

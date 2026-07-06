@@ -51,7 +51,7 @@ const networkTone = computed<StatusTone>(() => {
           color="neutral"
           variant="outline"
           size="sm"
-          icon="i-mdi-link-variant"
+          icon="i-lucide-link"
           class="w-fit rounded-md px-2.5 py-1 text-[11px]"
         >
           Friend Links
@@ -63,7 +63,7 @@ const networkTone = computed<StatusTone>(() => {
         >
           <UButton
             to="/"
-            icon="i-mdi-home-outline"
+            icon="i-lucide-house"
             color="neutral"
             variant="ghost"
             size="sm"
@@ -73,7 +73,7 @@ const networkTone = computed<StatusTone>(() => {
           </UButton>
           <UButton
             to="/stats"
-            icon="i-mdi-chart-bar"
+            icon="i-lucide-chart-bar"
             color="neutral"
             variant="ghost"
             size="sm"
@@ -104,7 +104,7 @@ const networkTone = computed<StatusTone>(() => {
             />
             <span class="inline-flex items-center gap-1.5">
               <UIcon
-                name="i-mdi-earth"
+                name="i-lucide-earth"
                 class="size-3.5"
               />
               站点互联
@@ -115,7 +115,7 @@ const networkTone = computed<StatusTone>(() => {
             />
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
-                name="i-mdi-handshake-outline"
+                name="i-lucide-handshake"
                 class="size-3.5"
               />
               欢迎交换
@@ -125,7 +125,7 @@ const networkTone = computed<StatusTone>(() => {
 
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
           <CommonHeroStatCard
-            icon="i-mdi-bookmark-outline"
+            icon="i-lucide-bookmark"
             icon-tone="info"
           >
             <template #value>
@@ -135,7 +135,7 @@ const networkTone = computed<StatusTone>(() => {
           </CommonHeroStatCard>
 
           <CommonHeroStatCard
-            icon="i-mdi-check-circle-outline"
+            icon="i-lucide-circle-check"
             icon-tone="success"
           >
             <template #value>
@@ -145,7 +145,7 @@ const networkTone = computed<StatusTone>(() => {
           </CommonHeroStatCard>
 
           <CommonHeroStatCard
-            icon="i-mdi-close-circle-outline"
+            icon="i-lucide-circle-x"
             icon-tone="error"
           >
             <template #value>

@@ -17,7 +17,7 @@ const emit = defineEmits<{
     <template #header>
       <div class="flex items-center gap-2">
         <UIcon
-          name="i-mdi-package-variant"
+          name="i-lucide-package"
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
@@ -40,16 +40,16 @@ const emit = defineEmits<{
           </span>
           <UDropdownMenu
             :items="[[
-              { label: '只看本批次', icon: 'i-mdi-filter-variant', onSelect: () => emit('filter', b.batchId) },
-              { label: '禁用整批', icon: 'i-mdi-toggle-switch-off-outline', onSelect: () => emit('toggle', b.batchId, false) },
-              { label: '启用整批', icon: 'i-mdi-toggle-switch-outline', onSelect: () => emit('toggle', b.batchId, true) }
+              { label: '只看本批次', icon: 'i-lucide-funnel', onSelect: () => emit('filter', b.batchId) },
+              { label: '禁用整批', icon: 'i-lucide-toggle-left', onSelect: () => emit('toggle', b.batchId, false) },
+              { label: '启用整批', icon: 'i-lucide-toggle-right', onSelect: () => emit('toggle', b.batchId, true) }
             ], [
-              { label: '删除未使用', icon: 'i-mdi-delete-outline', onSelect: () => emit('delete', b.batchId, false) },
-              { label: '删除全部', icon: 'i-mdi-delete-alert-outline', color: 'error' as const, onSelect: () => emit('delete', b.batchId, true) }
+              { label: '删除未使用', icon: 'i-lucide-trash-2', onSelect: () => emit('delete', b.batchId, false) },
+              { label: '删除全部', icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => emit('delete', b.batchId, true) }
             ]]"
           >
             <UButton
-              icon="i-mdi-dots-vertical"
+              icon="i-lucide-ellipsis-vertical"
               size="xs"
               variant="ghost"
               color="neutral"

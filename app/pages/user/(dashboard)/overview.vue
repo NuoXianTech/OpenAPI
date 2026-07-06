@@ -68,7 +68,7 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       label: '近 24 小时消耗',
       value: credits.value.spent24h.toLocaleString(),
       unit: '积分',
-      icon: 'i-mdi-fire',
+      icon: 'i-lucide-flame',
       tone: 'warning',
       sparklineValues: spendTrendValues.value,
       sparklineColor: 'var(--ui-warning)'
@@ -78,7 +78,7 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       label: '历史累计消耗',
       value: credits.value.totalSpent.toLocaleString(),
       unit: '积分',
-      icon: 'i-mdi-chart-line',
+      icon: 'i-lucide-chart-line',
       tone: 'neutral',
       sparklineValues: spendTrendValues.value,
       sparklineColor: 'var(--ui-primary)'
@@ -88,7 +88,7 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       label: '请求计数',
       value: calls.value.total.toLocaleString(),
       unit: '次',
-      icon: 'i-mdi-heart-pulse',
+      icon: 'i-lucide-heart-pulse',
       tone: 'info',
       sparklineValues: callsTrendValues.value,
       sparklineColor: 'var(--ui-info)'
@@ -98,9 +98,9 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       label: '剩余额度',
       value: credits.value.balance.toLocaleString(),
       unit: '积分',
-      icon: 'i-mdi-cash-multiple',
+      icon: 'i-lucide-coins',
       tone: 'success',
-      action: { label: '查看积分', to: '/user/credits', icon: 'i-mdi-arrow-right' }
+      action: { label: '查看积分', to: '/user/credits', icon: 'i-lucide-arrow-right' }
     }
   ]
 })
@@ -154,7 +154,7 @@ async function copyCurl() {
                   to="/user/apikeys"
                   color="neutral"
                   size="md"
-                  icon="i-mdi-key-plus"
+                  icon="i-lucide-key-round"
                 >
                   创建 API 密钥
                 </UButton>
@@ -163,7 +163,7 @@ async function copyCurl() {
                   color="neutral"
                   variant="outline"
                   size="md"
-                  icon="i-mdi-cash-multiple"
+                  icon="i-lucide-coins"
                 >
                   管理积分
                 </UButton>
@@ -175,7 +175,7 @@ async function copyCurl() {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <UIcon
-                      name="i-mdi-console-line"
+                      name="i-lucide-square-terminal"
                       class="size-4 text-muted"
                     />
                     <span class="text-sm font-medium">首个 API 请求</span>
@@ -184,7 +184,7 @@ async function copyCurl() {
                     size="xs"
                     color="neutral"
                     variant="ghost"
-                    icon="i-mdi-content-copy"
+                    icon="i-lucide-copy"
                     @click="copyCurl"
                   >
                     复制
@@ -232,7 +232,7 @@ async function copyCurl() {
               size="xs"
               color="neutral"
               variant="ghost"
-              trailing-icon="i-mdi-chevron-right"
+              trailing-icon="i-lucide-chevron-right"
             >
               查看调用日志
             </UButton>

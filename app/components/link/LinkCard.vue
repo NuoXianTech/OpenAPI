@@ -86,7 +86,7 @@ const isActive = computed(() => props.status === 1)
         :title="props.url"
       >
         <UIcon
-          name="i-mdi-earth"
+          name="i-lucide-earth"
           class="size-3"
         />
         {{ displayHost }}
@@ -94,7 +94,7 @@ const isActive = computed(() => props.status === 1)
       <span class="link-card__cta">
         访问
         <UIcon
-          name="i-mdi-arrow-top-right"
+          name="i-lucide-arrow-up-right"
           class="size-3.5"
         />
       </span>

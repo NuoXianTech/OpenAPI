@@ -125,7 +125,7 @@ const {
     <div class="flex items-center gap-2 flex-wrap">
       <UInput
         v-model="keyword"
-        icon="i-mdi-magnify"
+        icon="i-lucide-search"
         placeholder="搜索用户名、邮箱..."
         class="max-w-sm"
       />
@@ -136,7 +136,7 @@ const {
         <UButton
           size="sm"
           color="primary"
-          icon="i-mdi-account-plus-outline"
+          icon="i-lucide-user-plus"
           @click="() => { createOpen = true }"
         >
           添加用户
@@ -145,7 +145,7 @@ const {
           size="sm"
           color="primary"
           variant="outline"
-          icon="i-mdi-cash-multiple"
+          icon="i-lucide-coins"
           :disabled="selectedIds.length === 0"
           @click="openCreditForSelection"
         >
@@ -155,7 +155,7 @@ const {
           size="sm"
           color="warning"
           variant="outline"
-          icon="i-mdi-cash-100"
+          icon="i-lucide-banknote"
           @click="openCreditForAll"
         >
           全员积分操作
@@ -168,7 +168,7 @@ const {
           size="sm"
           color="neutral"
           variant="outline"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           :loading="loading"
           @click="() => refresh()"
         >
@@ -179,7 +179,7 @@ const {
 
     <DashboardTableCard
       title="用户列表"
-      icon="i-mdi-account-group-outline"
+      icon="i-lucide-users-round"
       :total="total"
     >
       <DashboardDataTable
@@ -194,7 +194,7 @@ const {
         :page-size-items="PAGE_SIZE_ITEMS"
         :get-row-id="(row: AdminUserItem) => String(row.id)"
         empty-title="暂无用户"
-        empty-icon="i-mdi-account-off-outline"
+        empty-icon="i-lucide-user-x"
       >
         <template #select-header="{ table }">
           <UCheckbox
@@ -234,7 +234,7 @@ const {
             <UBadge
               color="error"
               variant="subtle"
-              :icon="row.original.bannedUntil ? 'i-mdi-clock-alert-outline' : 'i-mdi-lock'"
+              :icon="row.original.bannedUntil ? 'i-lucide-clock-alert' : 'i-lucide-lock'"
             >
               {{ row.original.bannedUntil ? `封禁至 ${formatDateTime(row.original.bannedUntil)}` : '永久封禁' }}
             </UBadge>

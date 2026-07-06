@@ -48,9 +48,9 @@ export interface AdminLoginLogRow extends LoginLogRow {
 type BadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 export const LOGIN_METHOD_META: Record<LoginMethod, { label: string, icon: string, color: BadgeColor }> = {
-  password: { label: '账号密码', icon: 'i-mdi-form-textbox-password', color: 'neutral' },
-  oauth_github: { label: 'GitHub', icon: 'i-mdi-github', color: 'neutral' },
-  oauth_qq: { label: 'QQ', icon: 'i-mdi-qqchat', color: 'info' }
+  password: { label: '账号密码', icon: 'i-lucide-lock-keyhole', color: 'neutral' },
+  oauth_github: { label: 'GitHub', icon: 'i-lucide-github', color: 'neutral' },
+  oauth_qq: { label: 'QQ', icon: 'i-lucide-message-circle', color: 'info' }
 }
 
 /** method 值 → 中文标签；未知值原样返回 */

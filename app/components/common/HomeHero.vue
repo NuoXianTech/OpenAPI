@@ -126,14 +126,14 @@ function getDashboardMeta(userKind: string | null | undefined): HomeHeroDashboar
     return {
       path: ADMIN_OVERVIEW_PATH,
       label: '管理后台',
-      icon: 'i-mdi-shield-crown-outline'
+      icon: 'i-lucide-crown'
     }
   }
 
   return {
     path: USER_OVERVIEW_PATH,
     label: '用户后台',
-    icon: 'i-mdi-view-dashboard-outline'
+    icon: 'i-lucide-layout-dashboard'
   }
 }
 
@@ -193,7 +193,7 @@ async function handleLogout() {
             />
             <span class="inline-flex items-center gap-1.5">
               <UIcon
-                name="i-mdi-clock-outline"
+                name="i-lucide-clock"
                 class="size-3.5"
               />
               <span class="font-mono text-default/85">{{ nowTime }}</span>
@@ -204,7 +204,7 @@ async function handleLogout() {
             />
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
-                name="i-mdi-server"
+                name="i-lucide-server"
                 class="size-3.5"
               />
               <span class="font-mono text-default/85">{{ upTime }}</span>
@@ -220,7 +220,7 @@ async function handleLogout() {
             >
               <UButton
                 to="/stats"
-                icon="i-mdi-chart-bar"
+                icon="i-lucide-chart-bar"
                 color="neutral"
                 variant="ghost"
                 size="sm"
@@ -230,7 +230,7 @@ async function handleLogout() {
               </UButton>
               <UButton
                 to="/friend-links"
-                icon="i-mdi-link-variant"
+                icon="i-lucide-link"
                 color="neutral"
                 variant="ghost"
                 size="sm"
@@ -251,7 +251,7 @@ async function handleLogout() {
                     {{ dashboardLabel }}
                   </UButton>
                   <UButton
-                    icon="i-mdi-logout"
+                    icon="i-lucide-log-out"
                     color="neutral"
                     variant="outline"
                     size="sm"
@@ -265,14 +265,14 @@ async function handleLogout() {
                 <div class="hero-auth">
                   <UButton
                     to="/login"
-                    icon="i-mdi-login"
+                    icon="i-lucide-log-in"
                     size="sm"
                   >
                     登录
                   </UButton>
                   <UButton
                     to="/register"
-                    icon="i-mdi-account-plus-outline"
+                    icon="i-lucide-user-plus"
                     color="neutral"
                     variant="outline"
                     size="sm"
@@ -282,7 +282,7 @@ async function handleLogout() {
                   <UTooltip text="管理入口">
                     <UButton
                       to="/admin/login"
-                      icon="i-mdi-shield-key-outline"
+                      icon="i-lucide-shield-check"
                       color="neutral"
                       variant="ghost"
                       size="sm"
@@ -303,7 +303,7 @@ async function handleLogout() {
 
           <div class="hero-stats grid grid-cols-3 gap-2.5 sm:gap-3">
             <CommonHeroStatCard
-              icon="i-mdi-layers-outline"
+              icon="i-lucide-layers"
               icon-tone="info"
             >
               <template #value>
@@ -313,7 +313,7 @@ async function handleLogout() {
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
-              icon="i-mdi-check-circle-outline"
+              icon="i-lucide-circle-check"
               icon-tone="success"
             >
               <template #value>
@@ -323,7 +323,7 @@ async function handleLogout() {
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
-              icon="i-mdi-counter"
+              icon="i-lucide-tally-5"
               icon-tone="primary"
               :value-title="callCount.toLocaleString('zh-CN')"
             >

@@ -73,7 +73,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
             <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
               <UIcon
-                name="i-mdi-filter-variant"
+                name="i-lucide-funnel"
                 class="size-3"
               />
               状态筛选
@@ -115,7 +115,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-8"
         >
           <UEmpty
-            icon="i-mdi-loading"
+            icon="i-lucide-loader-circle"
             title="加载中..."
             description="正在拉取友情链接"
             variant="naked"
@@ -129,12 +129,12 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-mdi-alert-circle-outline"
+            icon="i-lucide-circle-alert"
             title="加载失败"
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: fetchFriendLinks }]"
+            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: fetchFriendLinks }]"
           />
         </section>
 
@@ -144,7 +144,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-mdi-link-variant-off"
+            icon="i-lucide-unlink"
             title="暂无友情链接"
             description="暂无可展示的友情链接"
             variant="naked"
@@ -158,7 +158,7 @@ const visibleCount = computed(() => filteredItems.value.length)
           class="py-2"
         >
           <UEmpty
-            icon="i-mdi-magnify-close"
+            icon="i-lucide-search-x"
             title="无匹配结果"
             description="当前筛选条件没有匹配结果，试试其他关键词或状态"
             variant="naked"
@@ -174,14 +174,14 @@ const visibleCount = computed(() => filteredItems.value.length)
           <div class="mb-3 flex items-center justify-between text-xs text-muted">
             <span class="inline-flex items-center gap-1.5">
               <UIcon
-                name="i-mdi-format-list-bulleted"
+                name="i-lucide-list"
                 class="size-3.5"
               />
               当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个站点
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
-                name="i-mdi-cursor-default-click-outline"
+                name="i-lucide-mouse-pointer-click"
                 class="size-3.5"
               />
               点击卡片访问站点

@@ -18,12 +18,12 @@ const alreadyVerified = ref(false)
 
 const headerIcon = computed(() => {
   if (status.value === 'success') {
-    return 'i-mdi-email-check-outline'
+    return 'i-lucide-mail-check'
   }
   if (status.value === 'error') {
-    return 'i-mdi-email-alert-outline'
+    return 'i-lucide-mail-warning'
   }
-  return 'i-mdi-email-sync-outline'
+  return 'i-lucide-refresh-cw'
 })
 
 const headerTitle = computed(() => {
@@ -117,7 +117,7 @@ onMounted(async () => {
       >
         <div class="flex items-center gap-2 text-sm text-muted">
           <UIcon
-            name="i-mdi-loading"
+            name="i-lucide-loader-circle"
             class="size-4 animate-spin"
           />
           <span>{{ message }}</span>
@@ -132,7 +132,7 @@ onMounted(async () => {
       >
         <div class="auth-success-illustration">
           <UIcon
-            name="i-mdi-check"
+            name="i-lucide-check"
             class="size-11"
           />
         </div>
@@ -154,7 +154,7 @@ onMounted(async () => {
       >
         <div class="auth-message auth-message--error">
           <UIcon
-            name="i-mdi-alert-circle-outline"
+            name="i-lucide-circle-alert"
             class="auth-message__icon size-4"
           />
           <span>{{ message }}</span>
@@ -163,7 +163,7 @@ onMounted(async () => {
           to="/register"
           block
           size="lg"
-          icon="i-mdi-account-plus-outline"
+          icon="i-lucide-user-plus"
         >
           重新注册
         </UButton>
@@ -173,7 +173,7 @@ onMounted(async () => {
           color="neutral"
           block
           size="lg"
-          icon="i-mdi-login"
+          icon="i-lucide-log-in"
         >
           去登录
         </UButton>

@@ -7,10 +7,10 @@ export interface MessageLevelMeta {
 }
 
 const MESSAGE_LEVEL_STYLE: Record<MessageLevel, { color: MessageLevelMeta['color'], icon: string }> = {
-  info: { color: 'info', icon: 'i-mdi-information-outline' },
-  success: { color: 'success', icon: 'i-mdi-check-circle-outline' },
-  warning: { color: 'warning', icon: 'i-mdi-alert-outline' },
-  critical: { color: 'error', icon: 'i-mdi-alert-circle-outline' }
+  info: { color: 'info', icon: 'i-lucide-info' },
+  success: { color: 'success', icon: 'i-lucide-circle-check' },
+  warning: { color: 'warning', icon: 'i-lucide-triangle-alert' },
+  critical: { color: 'error', icon: 'i-lucide-circle-alert' }
 }
 
 export const NOTIFICATION_LEVEL_META: Record<MessageLevel, MessageLevelMeta> = {

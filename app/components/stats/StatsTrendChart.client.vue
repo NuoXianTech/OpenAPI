@@ -86,7 +86,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
   >
     <UEmpty
       v-if="!hasData"
-      icon="i-mdi-chart-line"
+      icon="i-lucide-chart-line"
       title="暂无趋势数据"
       description="近 7 天还没有可展示的调用趋势。"
       class="h-[320px]"
@@ -145,7 +145,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
         <UBadge
           variant="soft"
           color="success"
-          icon="i-mdi-circle"
+          icon="i-lucide-circle"
           class="rounded-md"
         >
           成功次数
@@ -153,7 +153,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
         <UBadge
           variant="soft"
           color="error"
-          icon="i-mdi-circle"
+          icon="i-lucide-circle"
           class="rounded-md"
         >
           失败次数

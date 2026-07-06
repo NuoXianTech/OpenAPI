@@ -20,40 +20,40 @@ export const USER_CREDITS_PATH = '/user/credits'
 export const USER_SETTINGS_PATH = '/user/settings'
 
 const adminContentLinks: NavigationMenuItem[] = [
-  { label: '公告', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH, exact: true },
-  { label: '通知', icon: 'i-mdi-bell-outline', to: `${ADMIN_CONTENT_PATH}/notifications` },
-  { label: '友情链接', icon: 'i-mdi-link-variant', to: `${ADMIN_CONTENT_PATH}/friend-links` }
+  { label: '公告', icon: 'i-lucide-megaphone', to: ADMIN_CONTENT_PATH, exact: true },
+  { label: '通知', icon: 'i-lucide-bell', to: `${ADMIN_CONTENT_PATH}/notifications` },
+  { label: '友情链接', icon: 'i-lucide-link', to: `${ADMIN_CONTENT_PATH}/friend-links` }
 ]
 
 const adminApisLinks: NavigationMenuItem[] = [
-  { label: '接口管理', icon: 'i-mdi-api', to: ADMIN_APIS_PATH, exact: true },
-  { label: '分类管理', icon: 'i-mdi-shape-outline', to: `${ADMIN_APIS_PATH}/categories` }
+  { label: '接口管理', icon: 'i-lucide-braces', to: ADMIN_APIS_PATH, exact: true },
+  { label: '分类管理', icon: 'i-lucide-shapes', to: `${ADMIN_APIS_PATH}/categories` }
 ]
 
 const adminUsersLinks: NavigationMenuItem[] = [
-  { label: '用户管理', icon: 'i-mdi-account-group-outline', to: ADMIN_USERS_PATH, exact: true },
-  { label: '登录日志', icon: 'i-mdi-login-variant', to: `${ADMIN_USERS_PATH}/login-logs` },
-  { label: '积分日志', icon: 'i-mdi-cash-multiple', to: `${ADMIN_USERS_PATH}/credit-logs` }
+  { label: '用户管理', icon: 'i-lucide-users-round', to: ADMIN_USERS_PATH, exact: true },
+  { label: '登录日志', icon: 'i-lucide-log-in', to: `${ADMIN_USERS_PATH}/login-logs` },
+  { label: '积分日志', icon: 'i-lucide-coins', to: `${ADMIN_USERS_PATH}/credit-logs` }
 ]
 
 const adminSystemLinks: NavigationMenuItem[] = [
-  { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH, exact: true },
-  { label: '用户会话', icon: 'i-mdi-account-clock-outline', to: `${ADMIN_SYSTEM_PATH}/user-session` },
-  { label: '验证码', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/captcha` },
-  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
-  { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` }
+  { label: '站点设置', icon: 'i-lucide-settings', to: ADMIN_SYSTEM_PATH, exact: true },
+  { label: '用户会话', icon: 'i-lucide-clock', to: `${ADMIN_SYSTEM_PATH}/user-session` },
+  { label: '验证码', icon: 'i-lucide-shield-check', to: `${ADMIN_SYSTEM_PATH}/captcha` },
+  { label: '邮件', icon: 'i-lucide-mail', to: `${ADMIN_SYSTEM_PATH}/email` },
+  { label: '操作日志', icon: 'i-lucide-clipboard-clock', to: `${ADMIN_SYSTEM_PATH}/operation-logs` }
 ]
 
 const userCreditsLinks: NavigationMenuItem[] = [
-  { label: '概览', icon: 'i-mdi-wallet-outline', to: USER_CREDITS_PATH, exact: true },
-  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: `${USER_CREDITS_PATH}/earn` },
-  { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/transactions` }
+  { label: '概览', icon: 'i-lucide-wallet', to: USER_CREDITS_PATH, exact: true },
+  { label: '签到兑换', icon: 'i-lucide-gift', to: `${USER_CREDITS_PATH}/earn` },
+  { label: '流水明细', icon: 'i-lucide-list', to: `${USER_CREDITS_PATH}/transactions` }
 ]
 
 const userSettingsLinks: NavigationMenuItem[] = [
-  { label: '个人资料', icon: 'i-mdi-account-circle-outline', to: USER_SETTINGS_PATH, exact: true },
-  { label: '密码和安全', icon: 'i-mdi-shield-lock-outline', to: `${USER_SETTINGS_PATH}/security` },
-  { label: '第三方账号', icon: 'i-mdi-link-variant', to: `${USER_SETTINGS_PATH}/connections` }
+  { label: '个人资料', icon: 'i-lucide-circle-user-round', to: USER_SETTINGS_PATH, exact: true },
+  { label: '密码和安全', icon: 'i-lucide-shield', to: `${USER_SETTINGS_PATH}/security` },
+  { label: '第三方账号', icon: 'i-lucide-link', to: `${USER_SETTINGS_PATH}/connections` }
 ]
 
 export const adminContentSection: DashboardSectionConfig = {

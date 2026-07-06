@@ -102,7 +102,7 @@ onMounted(() => {
       aria-label="消息通知"
     >
       <UIcon
-        name="i-mdi-bell-outline"
+        name="i-lucide-bell"
         class="size-5"
       />
       <span
@@ -127,7 +127,7 @@ onMounted(() => {
         size="xs"
         color="neutral"
         variant="ghost"
-        icon="i-mdi-check-all"
+        icon="i-lucide-check-check"
         @click="markAllRead"
       >
         全部已读
@@ -145,7 +145,7 @@ onMounted(() => {
           size="xs"
           color="neutral"
           variant="ghost"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           :loading="loading"
           aria-label="刷新"
           @click="fetchList"
@@ -161,7 +161,7 @@ onMounted(() => {
       <UEmpty
         v-else-if="items.length === 0"
         variant="naked"
-        icon="i-mdi-bell-outline"
+        icon="i-lucide-bell"
         :title="onlyUnread ? '没有未读消息' : '暂无消息'"
         description="新的通知会显示在这里"
         class="py-12"
@@ -220,7 +220,7 @@ onMounted(() => {
                 target="_blank"
                 size="xs"
                 variant="outline"
-                icon="i-mdi-open-in-new"
+                icon="i-lucide-external-link"
                 trailing
                 @click.stop
               >

@@ -106,7 +106,7 @@ async function submitRegister() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-mdi-link-variant"
+      icon="i-lucide-link"
       title="完成第三方登录"
       subtitle="该第三方账号还未关联本站用户，请选择绑定已有账号或新注册"
     />
@@ -132,7 +132,7 @@ async function submitRegister() {
         class="space-y-4 text-center"
       >
         <UIcon
-          name="i-mdi-timer-sand-empty"
+          name="i-lucide-hourglass"
           class="mx-auto size-10 text-muted"
         />
         <p class="text-sm text-muted">
@@ -154,7 +154,7 @@ async function submitRegister() {
       >
         <div class="auth-success-illustration">
           <UIcon
-            name="i-mdi-email-fast-outline"
+            name="i-lucide-send"
             class="size-11"
           />
         </div>
@@ -187,7 +187,7 @@ async function submitRegister() {
         <div class="flex items-center gap-3 rounded-lg border border-default bg-elevated/40 p-3">
           <UAvatar
             :src="info?.avatarUrl || undefined"
-            :icon="info?.icon || 'i-mdi-account-circle-outline'"
+            :icon="info?.icon || 'i-lucide-circle-user-round'"
             size="lg"
           />
           <div class="min-w-0">
@@ -204,7 +204,7 @@ async function submitRegister() {
           v-if="info?.emailHasAccount"
           color="info"
           variant="subtle"
-          icon="i-mdi-information-outline"
+          icon="i-lucide-info"
           title="检测到该邮箱已注册"
           description="建议直接「绑定已有账号」，把这个第三方登录方式关联到你的现有账号。"
         />
@@ -247,7 +247,7 @@ async function submitRegister() {
             <UInput
               v-model="bindState.identifier"
               placeholder="you@example.com"
-              icon="i-mdi-account-outline"
+              icon="i-lucide-user"
               size="lg"
               autocomplete="username"
               class="w-full"
@@ -261,7 +261,7 @@ async function submitRegister() {
               v-model="bindState.password"
               type="password"
               placeholder="请输入登录密码"
-              icon="i-mdi-lock-outline"
+              icon="i-lucide-lock"
               size="lg"
               autocomplete="current-password"
               class="w-full"
@@ -294,7 +294,7 @@ async function submitRegister() {
               v-model="registerState.email"
               type="email"
               placeholder="you@example.com"
-              icon="i-mdi-email-outline"
+              icon="i-lucide-mail"
               size="lg"
               autocomplete="email"
               class="w-full"
@@ -308,7 +308,7 @@ async function submitRegister() {
             <UInput
               v-model="registerState.username"
               placeholder="留空自动生成"
-              icon="i-mdi-account-outline"
+              icon="i-lucide-user"
               size="lg"
               class="w-full"
             />
@@ -321,7 +321,7 @@ async function submitRegister() {
               v-model="registerState.password"
               type="password"
               placeholder="设置不少于 8 位的登录密码"
-              icon="i-mdi-lock-outline"
+              icon="i-lucide-lock"
               size="lg"
               autocomplete="new-password"
               class="w-full"
@@ -336,7 +336,7 @@ async function submitRegister() {
               v-model="registerState.confirmPassword"
               type="password"
               placeholder="再次输入密码"
-              icon="i-mdi-lock-check-outline"
+              icon="i-lucide-lock-keyhole"
               size="lg"
               autocomplete="new-password"
               class="w-full"

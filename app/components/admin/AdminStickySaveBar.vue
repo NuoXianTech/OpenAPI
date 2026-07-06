@@ -52,7 +52,7 @@ onKeyStroke(['s', 'S'], (e) => {
           放弃
         </UButton>
         <UButton
-          icon="i-mdi-content-save-outline"
+          icon="i-lucide-save"
           :loading="saving"
           :disabled="!dirty"
           @click="emit('save')"

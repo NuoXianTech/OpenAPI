@@ -46,7 +46,7 @@ const {
               color="neutral"
               variant="soft"
               size="sm"
-              icon="i-mdi-clock-outline"
+              icon="i-lucide-clock"
               class="rounded-md px-2.5 py-1 text-[11px]"
             >
               {{ generatedAtLabel }}
@@ -55,7 +55,7 @@ const {
 
           <div class="stats-hero__actions">
             <UButton
-              icon="i-mdi-refresh"
+              icon="i-lucide-refresh-cw"
               variant="outline"
               color="neutral"
               size="sm"
@@ -65,7 +65,7 @@ const {
               刷新
             </UButton>
             <UButton
-              icon="i-mdi-home-outline"
+              icon="i-lucide-house"
               variant="outline"
               color="neutral"
               size="sm"
@@ -96,7 +96,7 @@ const {
               />
               <span class="inline-flex items-center gap-1.5">
                 <UIcon
-                  name="i-mdi-api"
+                  name="i-lucide-braces"
                   class="size-3.5"
                 />
                 已启用 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.enabledTrackedApiCount) : '--' }}</span> 个统计接口
@@ -107,7 +107,7 @@ const {
               />
               <span class="hidden items-center gap-1.5 sm:inline-flex">
                 <UIcon
-                  name="i-mdi-account-group-outline"
+                  name="i-lucide-users-round"
                   class="size-3.5"
                 />
                 用户 <span class="font-mono text-default/85">{{ overview ? formatCount(overview.userCount) : '--' }}</span>
@@ -126,7 +126,7 @@ const {
 
             <template v-else>
               <CommonHeroStatCard
-                icon="i-mdi-counter"
+                icon="i-lucide-tally-5"
                 icon-tone="primary"
                 :value-title="overview ? formatCount(overview.totalCalls) : undefined"
               >
@@ -137,7 +137,7 @@ const {
               </CommonHeroStatCard>
 
               <CommonHeroStatCard
-                icon="i-mdi-check-decagram-outline"
+                icon="i-lucide-badge-check"
                 icon-tone="success"
               >
                 <template #value>
@@ -147,7 +147,7 @@ const {
               </CommonHeroStatCard>
 
               <CommonHeroStatCard
-                icon="i-mdi-trophy-outline"
+                icon="i-lucide-trophy"
                 icon-tone="info"
                 :value-title="topApi?.name"
                 :label-title="topApi?.name"
@@ -168,11 +168,11 @@ const {
         v-if="error"
         color="error"
         variant="soft"
-        icon="i-mdi-alert-circle-outline"
+        icon="i-lucide-circle-alert"
         title="统计加载失败"
         description="请稍后重试，或检查网络连接。"
         class="mb-4"
-        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: reloadStats }]"
+        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-lucide-refresh-cw', onClick: reloadStats }]"
       />
 
       <div
@@ -219,7 +219,7 @@ const {
                   <UBadge
                     variant="soft"
                     color="success"
-                    icon="i-mdi-check-circle-outline"
+                    icon="i-lucide-circle-check"
                     class="rounded-md"
                   >
                     {{ formatCompact(trendSuccessCalls) }}
@@ -227,7 +227,7 @@ const {
                   <UBadge
                     variant="soft"
                     color="error"
-                    icon="i-mdi-close-circle-outline"
+                    icon="i-lucide-circle-x"
                     class="rounded-md"
                   >
                     {{ formatCompact(trendFailureCalls) }}
@@ -266,7 +266,7 @@ const {
 
           <DashboardTableCard
             title="近 30 日调用排行"
-            icon="i-mdi-chart-bar"
+            icon="i-lucide-chart-bar"
             :total="top10Last30d.length"
           >
             <template #actions>
@@ -284,7 +284,7 @@ const {
               :data="top10Last30d"
               :columns="rankColumns"
               :fixed="false"
-              empty-icon="i-mdi-chart-bar"
+              empty-icon="i-lucide-chart-bar"
               empty-title="暂无调用数据"
               empty-description="近 30 天还没有任何接口调用记录。"
             >
