@@ -19,6 +19,12 @@ interface DashboardMetricCardProps {
   sparklineColor?: string
 }
 
+interface SparklinePathState {
+  linePath: string
+  areaPath: string
+  allZero: boolean
+}
+
 const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
   tone: 'neutral',
   unit: undefined,
@@ -37,6 +43,37 @@ const bodyClass = computed(() => [
   'relative z-10 flex flex-col gap-4 p-4 sm:p-5',
   hasFooter.value ? 'min-h-32' : undefined
 ])
+
+const SPARKLINE_VIEW_W = 200
+const SPARKLINE_VIEW_H = 60
+const SPARKLINE_PAD = 4
+const SPARKLINE_HEIGHT = 48
+
+function buildSparklinePath(values: number[]): SparklinePathState {
+  const vals = values.length ? values : [0, 0]
+  const min = Math.min(...vals)
+  const max = Math.max(...vals)
+  const range = max - min || 1
+
+  const usableW = SPARKLINE_VIEW_W - SPARKLINE_PAD * 2
+  const usableH = SPARKLINE_VIEW_H - SPARKLINE_PAD * 2
+  const step = vals.length > 1 ? usableW / (vals.length - 1) : 0
+
+  const points = vals.map((value, index) => {
+    const x = SPARKLINE_PAD + step * index
+    const y = SPARKLINE_PAD + (1 - (value - min) / range) * usableH
+    return { x, y }
+  })
+
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' ')
+  const lastX = points[points.length - 1]?.x ?? SPARKLINE_PAD
+  const firstX = points[0]?.x ?? SPARKLINE_PAD
+  const areaPath = `${linePath} L${lastX.toFixed(2)},${SPARKLINE_VIEW_H - SPARKLINE_PAD} L${firstX.toFixed(2)},${SPARKLINE_VIEW_H - SPARKLINE_PAD} Z`
+
+  return { linePath, areaPath, allZero: max === min && max === 0 }
+}
+
+const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? []))
 </script>
 
 <template>
@@ -77,11 +114,43 @@ const bodyClass = computed(() => [
       class="mt-auto min-h-8"
     >
       <slot name="footer">
-        <DashboardSparkline
+        <svg
           v-if="sparklineValues && sparklineColor"
-          :values="sparklineValues"
-          :color="sparklineColor"
-        />
+          :viewBox="`0 0 ${SPARKLINE_VIEW_W} ${SPARKLINE_VIEW_H}`"
+          preserveAspectRatio="none"
+          :style="{ height: `${SPARKLINE_HEIGHT}px`, width: '100%' }"
+          class="block overflow-visible"
+          aria-hidden="true"
+        >
+          <line
+            v-if="sparkline.allZero"
+            :x1="SPARKLINE_PAD"
+            :x2="SPARKLINE_VIEW_W - SPARKLINE_PAD"
+            :y1="SPARKLINE_VIEW_H / 2"
+            :y2="SPARKLINE_VIEW_H / 2"
+            :stroke="sparklineColor"
+            stroke-width="1.5"
+            stroke-dasharray="3 4"
+            opacity="0.5"
+            vector-effect="non-scaling-stroke"
+          />
+          <template v-else>
+            <path
+              :d="sparkline.areaPath"
+              :fill="sparklineColor"
+              opacity="0.12"
+            />
+            <path
+              :d="sparkline.linePath"
+              fill="none"
+              :stroke="sparklineColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              vector-effect="non-scaling-stroke"
+            />
+          </template>
+        </svg>
         <p
           v-else-if="meta"
           class="dashboard-metric-card-meta truncate text-xs text-muted"
