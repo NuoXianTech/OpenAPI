@@ -69,3 +69,7 @@ export const memoryRateLimiter: RateLimiter = {
     } satisfies RateLimitResult
   }
 }
+
+export function getRateLimiter(): RateLimiter {
+  return memoryRateLimiter
+}

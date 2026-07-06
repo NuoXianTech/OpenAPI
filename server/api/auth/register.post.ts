@@ -9,7 +9,7 @@ import { signVerificationToken } from '~~/server/utils/verification-token'
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，

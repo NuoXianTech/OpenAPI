@@ -1,5 +1,5 @@
 import type { RateLimiter } from '~~/shared/types/api-guard'
-import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
 
 export interface LoginRateLimitInput {
   namespace: string

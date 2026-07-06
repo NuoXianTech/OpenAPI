@@ -7,7 +7,7 @@ import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { signVerificationToken } from '~~/server/utils/verification-token'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
 import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '#shared/utils/ban'
 
