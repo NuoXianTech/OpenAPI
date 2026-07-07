@@ -36,6 +36,11 @@ const directionItems = [
   { label: '支出（−）', value: 'out' }
 ]
 
+const activeFilterCount = computed(() => [
+  filters.reason !== 'all',
+  filters.direction !== 'all'
+].filter(Boolean).length)
+
 const columns: TableColumn<TransactionRow>[] = [
   { accessorKey: 'createdAt', header: '时间' },
   { accessorKey: 'reason', header: '类型' },
@@ -54,49 +59,34 @@ function amountClass(amt: number) {
 
 <template>
   <div class="space-y-6">
-    <UCard>
-      <div class="flex flex-wrap items-end gap-3">
-        <UFormField
-          label="类型"
-          class="min-w-[180px] flex-1"
-        >
-          <USelect
-            v-model="filters.reason"
-            :items="reasonItems"
-          />
-        </UFormField>
-        <UFormField
-          label="方向"
-          class="min-w-[160px]"
-        >
-          <USelect
-            v-model="filters.direction"
-            :items="directionItems"
-          />
-        </UFormField>
-        <div class="flex gap-2">
-          <UButton
-            icon="i-mdi-magnify"
-            @click="applyFilters"
-          >
-            查询
-          </UButton>
-          <UButton
-            color="neutral"
-            variant="outline"
-            @click="resetFilters"
-          >
-            重置
-          </UButton>
-        </div>
-      </div>
-    </UCard>
-
     <DashboardTableCard
       title="积分流水"
       icon="i-mdi-format-list-bulleted"
       :total="total"
     >
+      <template #actions>
+        <AdminFilterPopover
+          :active-count="activeFilterCount"
+          @apply="applyFilters"
+          @reset="resetFilters"
+        >
+          <UFormField label="类型">
+            <USelect
+              v-model="filters.reason"
+              :items="reasonItems"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="方向">
+            <USelect
+              v-model="filters.direction"
+              :items="directionItems"
+              class="w-full"
+            />
+          </UFormField>
+        </AdminFilterPopover>
+      </template>
+
       <DashboardDataTable
         v-model:page="page"
         :data="items"
