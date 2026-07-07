@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<AdminFilterPopoverProps>(), {
 })
 
 const emit = defineEmits<{
+  apply: []
   reset: []
 }>()
 
@@ -23,6 +24,11 @@ const displayLabel = computed(() => {
 
 function closePopover() {
   open.value = false
+}
+
+function applyFilters() {
+  emit('apply')
+  closePopover()
 }
 
 function resetFilters() {
@@ -83,7 +89,7 @@ function resetFilters() {
           </UButton>
           <UButton
             size="sm"
-            @click="closePopover"
+            @click="applyFilters"
           >
             完成
           </UButton>

@@ -15,7 +15,6 @@ const {
   batches,
   init,
   applyFilters,
-  resetFilters,
   generate,
   toggle,
   remove,
@@ -26,6 +25,10 @@ const {
 } = useRedemptionCodesPage()
 
 const generateOpen = ref(false)
+const activeFilterCount = computed(() => [
+  filters.status !== 'all',
+  filters.batchId !== 'all'
+].filter(Boolean).length)
 
 onMounted(() => {
   void init()
@@ -33,6 +36,12 @@ onMounted(() => {
 
 function openGenerateModal() {
   generateOpen.value = true
+}
+
+async function resetRedemptionFilters() {
+  filters.status = 'all'
+  filters.batchId = 'all'
+  await applyFilters()
 }
 
 const {
@@ -71,40 +80,39 @@ const {
     <template #body>
       <div class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-1.5">
-          <UInput
-            v-model="filters.keyword"
-            class="max-w-sm"
-            icon="i-mdi-magnify"
-            placeholder="搜索兑换码 / 备注..."
-            @keydown.enter="applyFilters"
-          />
+          <div class="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
+            <UInput
+              v-model="filters.keyword"
+              class="w-full sm:w-80"
+              icon="i-mdi-magnify"
+              placeholder="搜索兑换码 / 备注..."
+              @keydown.enter="applyFilters"
+            />
+            <AdminFilterPopover
+              :active-count="activeFilterCount"
+              @apply="applyFilters"
+              @reset="resetRedemptionFilters"
+            >
+              <UFormField label="状态">
+                <USelect
+                  v-model="filters.status"
+                  :items="statusItems"
+                  :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="批次">
+                <USelect
+                  v-model="filters.batchId"
+                  :items="batchItems"
+                  :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+                  class="w-full"
+                />
+              </UFormField>
+            </AdminFilterPopover>
+          </div>
 
           <div class="flex flex-wrap items-center gap-1.5">
-            <USelect
-              v-model="filters.status"
-              :items="statusItems"
-              :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-              class="min-w-28"
-            />
-            <USelect
-              v-model="filters.batchId"
-              :items="batchItems"
-              :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-              class="w-72"
-            />
-            <UButton
-              icon="i-mdi-magnify"
-              @click="applyFilters"
-            >
-              查询
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              @click="resetFilters"
-            >
-              重置
-            </UButton>
             <UButton
               icon="i-mdi-plus"
               color="primary"

@@ -89,30 +89,47 @@ const {
 })
 
 const { page, pageSize, total, paginated } = useClientPagination(filteredApis, 10)
+const firstVersion = computed(() => versionItems.value[0]?.value ?? '')
+const activeFilterCount = computed(() => [
+  !!firstVersion.value && activeVersion.value !== firstVersion.value
+].filter(Boolean).length)
+
 watch([keyword, activeVersion], () => {
   page.value = 1
 })
+
+function resetApiFilters() {
+  if (!firstVersion.value) return
+  activeVersion.value = firstVersion.value
+}
 </script>
 
 <template>
   <div class="space-y-6">
     <div class="flex items-center gap-2 flex-wrap">
-      <USelect
-        v-if="versionItems.length > 0"
-        v-model="activeVersion"
-        :items="versionItems"
-        size="sm"
-        class="w-44"
-      />
       <UInput
         v-model="keyword"
         icon="i-mdi-magnify"
         placeholder="搜索 code / 名称..."
         size="sm"
-        class="max-w-sm"
+        class="w-full sm:max-w-sm"
       />
+      <AdminFilterPopover
+        v-if="versionItems.length > 0"
+        :active-count="activeFilterCount"
+        @reset="resetApiFilters"
+      >
+        <UFormField label="版本">
+          <USelect
+            v-model="activeVersion"
+            :items="versionItems"
+            size="sm"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
       <UButton
-        class="ml-auto"
+        class="w-full sm:ml-auto sm:w-auto"
         color="neutral"
         variant="outline"
         icon="i-mdi-refresh"
