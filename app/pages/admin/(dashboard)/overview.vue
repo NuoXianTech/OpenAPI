@@ -14,7 +14,8 @@ useHead({ title: '管理中心' })
 type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
 const { user } = useAuth()
-const selectedRange = ref<AdminDashboardRange>(7)
+const OVERVIEW_SPARKLINE_RANGE: AdminDashboardRange = 7
+const selectedTrendRange = ref<AdminDashboardRange>(OVERVIEW_SPARKLINE_RANGE)
 const rangeOptions: Array<{ label: string, value: AdminDashboardRange }> = [
   { label: '近 7 天', value: 7 },
   { label: '近 14 天', value: 14 },
@@ -49,20 +50,36 @@ function createEmptyDashboardData(): AdminDashboardData {
   }
 }
 
-const { data, loading, refresh } = usePrivateResource<AdminDashboardData>({
+const { data, loading } = usePrivateResource<AdminDashboardData>({
   path: '/api/admin/dashboard',
-  query: computed(() => ({ days: selectedRange.value })),
+  query: { days: OVERVIEW_SPARKLINE_RANGE },
+  defaultData: createEmptyDashboardData
+})
+const {
+  data: trendData,
+  loading: trendLoading,
+  refresh: refreshTrend
+} = usePrivateResource<AdminDashboardData>({
+  path: '/api/admin/dashboard',
+  query: computed(() => ({ days: selectedTrendRange.value, top: 1, recent: 1 })),
+  immediate: false,
   defaultData: createEmptyDashboardData
 })
 const overview = computed(() => data.value.overview)
-const trend = computed(() => data.value.trend)
+const overviewTrend = computed(() => data.value.trend)
+const isUsingOverviewTrend = computed(() => selectedTrendRange.value === OVERVIEW_SPARKLINE_RANGE)
+const chartTrend = computed(() => isUsingOverviewTrend.value ? data.value.trend : trendData.value.trend)
+const chartLoading = computed(() => isUsingOverviewTrend.value ? loading.value : trendLoading.value)
 const distribution = computed(() => data.value.distribution)
 const recentCalls = computed(() => data.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(data.value.generatedAt))
-const callsTrendValues = computed(() => getCallsTrendValues(trend.value))
-const successRateTrendValues = computed(() => getSuccessRateTrendValues(trend.value))
+const callsTrendValues = computed(() => getCallsTrendValues(overviewTrend.value))
+const successRateTrendValues = computed(() => getSuccessRateTrendValues(overviewTrend.value))
 
-watch(selectedRange, () => { void refresh() })
+watch(selectedTrendRange, () => {
+  if (isUsingOverviewTrend.value) return
+  void refreshTrend()
+})
 
 interface OverviewMetricCard {
   key: string
@@ -303,7 +320,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   </p>
                 </div>
                 <USelect
-                  v-model="selectedRange"
+                  v-model="selectedTrendRange"
                   :items="rangeOptions"
                   value-key="value"
                   size="sm"
@@ -313,8 +330,8 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             </template>
 
             <AdminDashboardTrend
-              :trend="trend"
-              :loading="loading"
+              :trend="chartTrend"
+              :loading="chartLoading"
             />
           </UCard>
 
