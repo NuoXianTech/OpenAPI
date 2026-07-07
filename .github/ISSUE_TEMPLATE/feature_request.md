@@ -1,6 +1,6 @@
 ---
 name: 功能请求
-about: 为 OpenAPI 提出功能改进建议
+about: 使用简练详细的语言描述希望加入的新功能
 title: ''
 labels: enhancement
 assignees: ''

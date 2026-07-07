@@ -1,6 +1,6 @@
 ---
 name: 报告问题
-about: 反馈 OpenAPI 使用或运行中遇到的问题
+about: 使用简练详细的语言描述你遇到的问题
 title: ''
 labels: bug
 assignees: ''
