@@ -33,15 +33,20 @@ const x = (_d: AreaRow, i: number) => i
 const yAccessor = (d: AreaRow) => d.totalCalls
 
 const xTickFormat = (tick: number | Date | string) => {
+  if (typeof tick === 'string') return tick
   if (typeof tick !== 'number') return ''
-  const item = rows.value[Math.round(tick)]
-  if (!item) return ''
-  return item.name.length > 8 ? `${item.name.slice(0, 8)}…` : item.name
+  const maxIndex = Math.max(rows.value.length - 1, 0)
+  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
+  return formatAxisName(rows.value[index]?.name || '')
 }
 
 const yTickFormat = (tick: number | Date) => {
   if (typeof tick !== 'number') return ''
   return Math.round(tick).toString()
+}
+
+function formatAxisName(name: string): string {
+  return name.length > 6 ? `${name.slice(0, 6)}…` : name
 }
 
 const tooltipTemplate = (d: AreaRow) => renderChartTooltip({
@@ -69,7 +74,7 @@ const tooltipTemplate = (d: AreaRow) => renderChartTooltip({
     <VisXYContainer
       v-else
       :data="rows"
-      :padding="{ top: 16, right: 16, bottom: 24, left: 8 }"
+      :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
       :width="width"
       class="h-72"
     >
@@ -91,6 +96,7 @@ const tooltipTemplate = (d: AreaRow) => renderChartTooltip({
         :domain-line="false"
         :grid-line="false"
         :tick-format="xTickFormat"
+        :num-ticks="7"
       />
       <VisAxis
         type="y"

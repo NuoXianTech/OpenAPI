@@ -5,10 +5,7 @@ interface Props {
   ranking: AdminAnalyticsRankItem[]
 }
 
-const props = defineProps<Props>()
-
-const maxCalls = computed(() => Math.max(...props.ranking.map(r => r.totalCalls), 1))
-const widthPercent = (value: number) => Math.min(100, Math.max(0, (value / maxCalls.value) * 100))
+defineProps<Props>()
 
 const formatCount = (val: number) => val.toLocaleString()
 const formatRate = (val: number) => `${val.toFixed(2)}%`
@@ -22,23 +19,31 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
     class="h-64"
   />
 
-  <ol
+  <div
     v-else
-    class="rank-list"
+    class="rank-table"
   >
-    <li
-      v-for="item in ranking"
-      :key="item.apiId"
-      class="rank-item"
-    >
-      <div class="flex items-center gap-3">
+    <div class="rank-header hidden sm:grid">
+      <span>#</span>
+      <span>接口</span>
+      <span class="text-right">调用次数</span>
+      <span class="text-right">成功率</span>
+    </div>
+
+    <ol>
+      <li
+        v-for="item in ranking"
+        :key="item.apiId"
+        class="rank-row"
+      >
         <UBadge
           :color="item.rank <= 3 ? 'primary' : 'neutral'"
           :variant="item.rank <= 3 ? 'solid' : 'soft'"
-          class="w-7 shrink-0 justify-center rounded-md tabular-nums"
+          class="w-7 justify-center rounded-md tabular-nums"
         >
           {{ item.rank }}
         </UBadge>
+
         <div class="min-w-0 flex-1">
           <div
             class="truncate text-sm font-medium text-default"
@@ -53,48 +58,70 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
             {{ item.apiPath }}
           </div>
         </div>
-        <div class="shrink-0 text-right">
-          <div class="text-sm font-semibold tabular-nums text-highlighted">
-            {{ formatCount(item.totalCalls) }}
-          </div>
-          <div class="text-xs text-muted tabular-nums">
-            {{ formatRate(item.successRate) }}
-          </div>
+
+        <div class="text-right text-sm font-semibold tabular-nums text-highlighted">
+          {{ formatCount(item.totalCalls) }}
+          <span class="ml-0.5 text-[11px] font-normal text-muted">次</span>
         </div>
-      </div>
-      <div class="rank-bar">
-        <span :style="{ width: `${widthPercent(item.totalCalls)}%` }" />
-      </div>
-    </li>
-  </ol>
+
+        <div class="text-right text-sm tabular-nums text-muted">
+          {{ formatRate(item.successRate) }}
+        </div>
+      </li>
+    </ol>
+  </div>
 </template>
 
 <style scoped>
-.rank-list {
-  display: flex;
-  flex-direction: column;
+.rank-table {
+  min-width: 0;
 }
-.rank-item {
-  padding: 12px 0;
+
+.rank-header,
+.rank-row {
+  grid-template-columns: 3rem minmax(0, 1fr) 7rem 6rem;
+  align-items: center;
+  column-gap: 0.75rem;
+}
+
+.rank-header {
+  padding-bottom: 0.625rem;
+  font-size: 0.75rem;
+  color: var(--ui-text-muted);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.rank-row {
+  display: grid;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--ui-border);
 }
-.rank-item:first-child {
+
+.rank-header + ol .rank-row:first-child {
   border-top: 0;
 }
-.rank-bar {
-  position: relative;
-  margin-top: 8px;
-  height: 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ui-border) 70%, transparent);
-  overflow: hidden;
+
+.rank-row:last-child {
+  padding-bottom: 0;
 }
-.rank-bar span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--ui-primary) 80%, var(--ui-info) 20%),
-    color-mix(in srgb, var(--ui-info) 70%, var(--ui-success) 30%));
+
+@media (max-width: 639px) {
+  .rank-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    row-gap: 0.5rem;
+  }
+
+  .rank-row > :nth-child(3),
+  .rank-row > :nth-child(4) {
+    grid-column: 2;
+  }
+
+  .rank-row > :nth-child(3) {
+    text-align: left;
+  }
+
+  .rank-row > :nth-child(4) {
+    text-align: left;
+  }
 }
 </style>

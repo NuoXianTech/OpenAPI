@@ -21,6 +21,7 @@ const {
   distributionChartItems,
   generatedAtLabel,
   formatCompact,
+  overview,
   overviewCards
 } = useAdminAnalyticsDisplayMeta({ analytics: data })
 
@@ -49,28 +50,37 @@ const analyticsMetricTones = {
 
     <template #body>
       <div class="space-y-6">
-        <UPageHeader
-          title="数据看板"
-          :description="`公共接口分析 · 数据更新于 ${generatedAtLabel}`"
-        >
-          <template #title>
-            <div class="flex items-center gap-2">
-              <UIcon
-                name="i-mdi-chart-box-outline"
-                class="size-6 text-primary"
-              />
-              <span>数据看板</span>
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                size="sm"
-                class="ml-1"
-              >
-                公共接口
-              </UBadge>
+        <section class="dashboard-hero-surface dashboard-hero-surface-info relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+          <div class="relative z-10 space-y-3">
+            <div>
+              <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
+                数据看板
+              </h2>
+              <p class="mt-1 text-sm text-toned">
+                汇总公共接口调用、积分消耗与请求分布，快速观察高频接口和近 24 小时调用走势。
+              </p>
             </div>
-          </template>
-        </UPageHeader>
+          </div>
+        </section>
+
+        <div class="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 class="text-lg font-semibold text-highlighted">
+              公共接口概览
+            </h3>
+            <p class="text-sm text-muted">
+              接口数量、积分消耗与近 {{ overview.averageWindowDays }} 天日均请求
+            </p>
+          </div>
+          <UBadge
+            color="neutral"
+            variant="subtle"
+            size="sm"
+            icon="i-mdi-clock-outline"
+          >
+            更新于 {{ generatedAtLabel }}
+          </UBadge>
+        </div>
 
         <!-- 概览卡片 -->
         <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

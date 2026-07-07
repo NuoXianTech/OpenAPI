@@ -18,12 +18,14 @@ const { width } = useElementSize(rootRef)
 interface BucketRow {
   index: number
   label: string
+  axisLabel: string
   apiCount: number
 }
 
 const rows = computed<BucketRow[]>(() => props.buckets.map((b, index) => ({
   index,
   label: b.label,
+  axisLabel: formatBucketAxisLabel(b.label),
   apiCount: b.apiCount
 })))
 
@@ -33,13 +35,22 @@ const x = (_d: BucketRow, i: number) => i
 const yAccessor = (d: BucketRow) => d.apiCount
 
 const xTickFormat = (tick: number | Date | string) => {
+  if (typeof tick === 'string') return tick
   if (typeof tick !== 'number') return ''
-  return rows.value[Math.round(tick)]?.label || ''
+  const maxIndex = Math.max(rows.value.length - 1, 0)
+  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
+  return rows.value[index]?.axisLabel || ''
 }
 
 const yTickFormat = (tick: number | Date) => {
   if (typeof tick !== 'number') return ''
   return Math.round(tick).toString()
+}
+
+function formatBucketAxisLabel(label: string): string {
+  if (label === '101-1000') return '101-1k'
+  if (label === '>1000') return '>1k'
+  return label
 }
 
 const tooltipTemplate = (d: BucketRow) => renderChartTooltip({
@@ -65,7 +76,7 @@ const tooltipTemplate = (d: BucketRow) => renderChartTooltip({
     <VisXYContainer
       v-else
       :data="rows"
-      :padding="{ top: 16, right: 16, bottom: 24, left: 8 }"
+      :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
       :width="width"
       class="h-64"
     >
@@ -82,6 +93,7 @@ const tooltipTemplate = (d: BucketRow) => renderChartTooltip({
         :domain-line="false"
         :grid-line="false"
         :tick-format="xTickFormat"
+        :num-ticks="rows.length"
       />
       <VisAxis
         type="y"

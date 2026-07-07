@@ -35,10 +35,11 @@ const x = (_d: TrendRow, i: number) => i
 const yAccessor = (d: TrendRow) => d.totalCalls
 
 const xTickFormat = (tick: number | Date | string) => {
+  if (typeof tick === 'string') return tick
   if (typeof tick !== 'number') return ''
-  const i = Math.round(tick)
-  if (i % 4 !== 0) return ''
-  return rows.value[i]?.label || ''
+  const maxIndex = Math.max(rows.value.length - 1, 0)
+  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
+  return rows.value[index]?.label || ''
 }
 
 const yTickFormat = (tick: number | Date) => {
@@ -69,7 +70,7 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
     <VisXYContainer
       v-else
       :data="rows"
-      :padding="{ top: 16, right: 16, bottom: 20, left: 8 }"
+      :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
       :width="width"
       class="h-64"
     >
@@ -91,6 +92,7 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
         :domain-line="false"
         :grid-line="false"
         :tick-format="xTickFormat"
+        :num-ticks="7"
       />
       <VisAxis
         type="y"
