@@ -303,6 +303,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               :tone="card.tone"
               :sparkline-values="card.sparklineValues"
               :sparkline-color="card.sparklineColor"
+              compact
             />
           </div>
         </section>

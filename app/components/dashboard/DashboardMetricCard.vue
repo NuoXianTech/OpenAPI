@@ -15,6 +15,7 @@ interface DashboardMetricCardProps {
   unit?: string
   meta?: string
   tone?: keyof typeof metricToneClasses
+  compact?: boolean
   sparklineValues?: number[]
   sparklineColor?: string
 }
@@ -29,6 +30,7 @@ const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
   tone: 'neutral',
   unit: undefined,
   meta: undefined,
+  compact: false,
   sparklineValues: undefined,
   sparklineColor: undefined
 })
@@ -40,9 +42,18 @@ const hasFooter = computed(() => Boolean(
   || (props.sparklineValues?.length && props.sparklineColor)
 ))
 const bodyClass = computed(() => [
-  'relative z-10 flex flex-col gap-4 p-4 sm:p-5',
-  hasFooter.value ? 'min-h-32' : undefined
+  'relative z-10 flex flex-col',
+  props.compact ? 'gap-3 p-3 sm:p-4' : 'gap-4 p-4 sm:p-5',
+  hasFooter.value ? props.compact ? 'min-h-28' : 'min-h-32' : undefined
 ])
+const footerClass = computed(() => props.compact ? 'mt-auto min-h-6' : 'mt-auto min-h-8')
+const valueClass = computed(() => props.compact
+  ? 'dashboard-metric-card-value text-xl font-semibold tabular-nums text-highlighted'
+  : 'dashboard-metric-card-value text-2xl font-semibold tabular-nums text-highlighted')
+const iconClass = computed(() => props.compact
+  ? 'dashboard-metric-card-icon flex size-8 shrink-0 items-center justify-center rounded-lg'
+  : 'dashboard-metric-card-icon flex size-9 shrink-0 items-center justify-center rounded-lg')
+const sparklineHeight = computed(() => props.compact ? 36 : SPARKLINE_HEIGHT)
 
 const SPARKLINE_VIEW_W = 200
 const SPARKLINE_VIEW_H = 60
@@ -89,7 +100,7 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
           {{ label }}
         </p>
         <div class="flex items-baseline gap-1.5">
-          <span class="dashboard-metric-card-value text-2xl font-semibold tabular-nums text-highlighted">
+          <span :class="valueClass">
             {{ value }}
           </span>
           <span
@@ -101,7 +112,7 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
         </div>
       </div>
 
-      <div class="dashboard-metric-card-icon flex size-9 shrink-0 items-center justify-center rounded-lg">
+      <div :class="iconClass">
         <UIcon
           :name="icon"
           class="size-4.5"
@@ -111,14 +122,14 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
 
     <div
       v-if="hasFooter"
-      class="mt-auto min-h-8"
+      :class="footerClass"
     >
       <slot name="footer">
         <svg
           v-if="sparklineValues && sparklineColor"
           :viewBox="`0 0 ${SPARKLINE_VIEW_W} ${SPARKLINE_VIEW_H}`"
           preserveAspectRatio="none"
-          :style="{ height: `${SPARKLINE_HEIGHT}px`, width: '100%' }"
+          :style="{ height: `${sparklineHeight}px`, width: '100%' }"
           class="block overflow-visible"
           aria-hidden="true"
         >

@@ -82,6 +82,7 @@ const analyticsMetricTones = {
             :icon="card.icon"
             :meta="card.helper"
             :tone="analyticsMetricTones[card.accent]"
+            compact
           />
         </div>
 
