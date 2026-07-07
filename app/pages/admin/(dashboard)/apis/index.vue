@@ -111,8 +111,7 @@ function resetApiFilters() {
         v-model="keyword"
         icon="i-mdi-magnify"
         placeholder="搜索 code / 名称..."
-        size="sm"
-        class="w-full sm:max-w-sm"
+        class="w-full sm:w-64"
       />
       <AdminFilterPopover
         v-if="versionItems.length > 0"
