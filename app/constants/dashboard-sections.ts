@@ -46,14 +46,14 @@ const adminSystemLinks: NavigationMenuItem[] = [
 
 const userCreditsLinks: NavigationMenuItem[] = [
   { label: '概览', icon: 'i-mdi-wallet-outline', to: USER_CREDITS_PATH, exact: true },
-  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: `${USER_CREDITS_PATH}/earn` },
-  { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/transactions` }
+  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: `${USER_CREDITS_PATH}/rewards` },
+  { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/logs` }
 ]
 
 const userSettingsLinks: NavigationMenuItem[] = [
   { label: '个人资料', icon: 'i-mdi-account-circle-outline', to: USER_SETTINGS_PATH, exact: true },
   { label: '密码和安全', icon: 'i-mdi-shield-lock-outline', to: `${USER_SETTINGS_PATH}/security` },
-  { label: '第三方账号', icon: 'i-mdi-link-variant', to: `${USER_SETTINGS_PATH}/connections` }
+  { label: '第三方账号', icon: 'i-mdi-link-variant', to: `${USER_SETTINGS_PATH}/oauth` }
 ]
 
 export const adminContentSection: DashboardSectionConfig = {
