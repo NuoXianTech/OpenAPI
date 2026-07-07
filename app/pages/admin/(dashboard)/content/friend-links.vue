@@ -4,6 +4,13 @@ import type { FriendLinkItem } from '#shared/types/content'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
+interface FriendLinkFilterOption<TValue extends string = string> {
+  label: string
+  value: TValue
+}
+
+type FriendLinkStatusFilter = 'all' | 'active' | 'inactive'
+
 const toast = useToast()
 const confirm = useConfirmDialog()
 
@@ -11,10 +18,37 @@ const { data, loading, refresh } = usePrivateResource<FriendLinkItem[]>({
   path: '/api/admin/friend-links/list',
   defaultData: () => []
 })
-const { page, pageSize, total, paginated } = useClientPagination(data, 10)
+
+const keyword = ref('')
+const statusFilter = ref<FriendLinkStatusFilter>('all')
+const statusFilterOptions: Array<FriendLinkFilterOption<FriendLinkStatusFilter>> = [
+  { label: '全部状态', value: 'all' },
+  { label: '正常', value: 'active' },
+  { label: '停用', value: 'inactive' }
+]
+
+const filteredData = computed(() => data.value.filter(item => isFriendLinkVisible(item)))
+const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
 
 const modalOpen = ref(false)
 const editItem = ref<FriendLinkItem | null>(null)
+
+watch([keyword, statusFilter], () => {
+  page.value = 1
+})
+
+function isFriendLinkVisible(item: FriendLinkItem): boolean {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  const matchesKeyword = !normalizedKeyword
+    || item.title.toLowerCase().includes(normalizedKeyword)
+    || item.url.toLowerCase().includes(normalizedKeyword)
+    || (item.description || '').toLowerCase().includes(normalizedKeyword)
+  const matchesStatus = statusFilter.value === 'all'
+    || (statusFilter.value === 'active' && item.isActive)
+    || (statusFilter.value === 'inactive' && !item.isActive)
+
+  return matchesKeyword && matchesStatus
+}
 
 function openAdd() {
   editItem.value = null
@@ -58,22 +92,37 @@ const columns: TableColumn<FriendLinkItem>[] = [
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-end gap-2">
-      <UButton
-        icon="i-mdi-plus"
-        @click="openAdd"
-      >
-        新增链接
-      </UButton>
-      <UButton
-        color="neutral"
-        variant="outline"
-        icon="i-mdi-refresh"
-        :loading="loading"
-        @click="refresh()"
-      >
-        刷新
-      </UButton>
+    <div class="dashboard-action-bar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+        <UInput
+          v-model="keyword"
+          icon="i-mdi-magnify"
+          placeholder="搜索名称、URL 或描述"
+          class="w-full sm:w-72"
+        />
+        <USelect
+          v-model="statusFilter"
+          :items="statusFilterOptions"
+          class="w-full sm:w-32"
+        />
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <UButton
+          icon="i-mdi-plus"
+          @click="openAdd"
+        >
+          新增链接
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="loading"
+          @click="refresh()"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard

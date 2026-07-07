@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { NOTIFICATION_LEVEL_META as levelMeta } from '#shared/types/content'
+import { MESSAGE_LEVELS, NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
 import { parseFetchError } from '~/utils/client-error'
 import {
   createAdminNotificationForm,
@@ -10,6 +10,14 @@ import {
 } from '~/composables/admin/use-admin-display-meta'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+
+interface AdminNotificationFilterOption<TValue extends string = string> {
+  label: string
+  value: TValue
+}
+
+type AdminNotificationAudienceFilter = 'all' | AdminNotificationMessageRow['audience']
+type AdminNotificationLevelFilter = 'all' | MessageLevel
 
 const toast = useToast()
 
@@ -22,7 +30,10 @@ const { data: messagesData, loading, refresh } = usePrivateResource<AdminNotific
   path: '/api/admin/notifications/list',
   defaultData: () => []
 })
-const { page, pageSize, total, paginated } = useClientPagination(messagesData, 10)
+
+const historyKeyword = ref('')
+const historyAudienceFilter = ref<AdminNotificationAudienceFilter>('all')
+const historyLevelFilter = ref<AdminNotificationLevelFilter>('all')
 
 const form = reactive(createAdminNotificationForm())
 const sending = ref(false)
@@ -39,6 +50,37 @@ const {
   openDetail,
   openDelete
 })
+
+const historyAudienceFilterOptions = computed<Array<AdminNotificationFilterOption<AdminNotificationAudienceFilter>>>(() => [
+  { label: '全部范围', value: 'all' },
+  { label: audienceMeta.specific.label, value: 'specific' },
+  { label: audienceMeta.all_current.label, value: 'all_current' },
+  { label: audienceMeta.all_with_future.label, value: 'all_with_future' }
+])
+const historyLevelFilterOptions = computed<Array<AdminNotificationFilterOption<AdminNotificationLevelFilter>>>(() => [
+  { label: '全部级别', value: 'all' },
+  ...MESSAGE_LEVELS.map(level => ({
+    label: levelMeta[level].label,
+    value: level
+  }))
+])
+const filteredMessagesData = computed(() => messagesData.value.filter(row => isNotificationMessageVisible(row)))
+const { page, pageSize, total, paginated } = useClientPagination(filteredMessagesData, 10)
+
+watch([historyKeyword, historyAudienceFilter, historyLevelFilter], () => {
+  page.value = 1
+})
+
+function isNotificationMessageVisible(row: AdminNotificationMessageRow): boolean {
+  const normalizedKeyword = historyKeyword.value.trim().toLowerCase()
+  const matchesKeyword = !normalizedKeyword
+    || row.title.toLowerCase().includes(normalizedKeyword)
+    || (row.senderActor || '').toLowerCase().includes(normalizedKeyword)
+  const matchesAudience = historyAudienceFilter.value === 'all' || row.audience === historyAudienceFilter.value
+  const matchesLevel = historyLevelFilter.value === 'all' || row.level === historyLevelFilter.value
+
+  return matchesKeyword && matchesAudience && matchesLevel
+}
 
 async function submitSend() {
   if (!form.title.trim() || !form.content.trim()) {
@@ -121,16 +163,36 @@ async function openDelete(row: AdminNotificationMessageRow) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-end">
-      <UButton
-        color="neutral"
-        variant="outline"
-        icon="i-mdi-refresh"
-        :loading="loading"
-        @click="refresh()"
-      >
-        刷新
-      </UButton>
+    <div class="dashboard-action-bar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+        <UInput
+          v-model="historyKeyword"
+          icon="i-mdi-magnify"
+          placeholder="搜索发送历史标题或发送人"
+          class="w-full sm:w-72"
+        />
+        <USelect
+          v-model="historyAudienceFilter"
+          :items="historyAudienceFilterOptions"
+          class="w-full sm:w-36"
+        />
+        <USelect
+          v-model="historyLevelFilter"
+          :items="historyLevelFilterOptions"
+          class="w-full sm:w-32"
+        />
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="loading"
+          @click="refresh()"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">

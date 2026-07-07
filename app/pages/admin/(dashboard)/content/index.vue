@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { ANNOUNCEMENT_LEVEL_META as levelMeta, type Announcement } from '#shared/types/content'
+import { ANNOUNCEMENT_LEVEL_META as levelMeta, MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/types/content'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+
+interface AnnouncementFilterOption<TValue extends string = string> {
+  label: string
+  value: TValue
+}
+
+type AnnouncementLevelFilter = 'all' | MessageLevel
+type AnnouncementStatusFilter = 'all' | 'enabled' | 'disabled'
+type AnnouncementPinnedFilter = 'all' | 'pinned' | 'normal'
 
 const toast = useToast()
 const confirm = useConfirmDialog()
@@ -12,10 +21,56 @@ const { data, loading, refresh } = usePrivateResource<Announcement[]>({
   path: '/api/admin/announcements/list',
   defaultData: () => []
 })
-const { page, pageSize, total, paginated } = useClientPagination(data, 10)
+
+const keyword = ref('')
+const levelFilter = ref<AnnouncementLevelFilter>('all')
+const statusFilter = ref<AnnouncementStatusFilter>('all')
+const pinnedFilter = ref<AnnouncementPinnedFilter>('all')
+
+const levelFilterOptions = computed<Array<AnnouncementFilterOption<AnnouncementLevelFilter>>>(() => [
+  { label: '全部级别', value: 'all' },
+  ...MESSAGE_LEVELS.map(level => ({
+    label: levelMeta[level].label,
+    value: level
+  }))
+])
+const statusFilterOptions: Array<AnnouncementFilterOption<AnnouncementStatusFilter>> = [
+  { label: '全部状态', value: 'all' },
+  { label: '已启用', value: 'enabled' },
+  { label: '已停用', value: 'disabled' }
+]
+const pinnedFilterOptions: Array<AnnouncementFilterOption<AnnouncementPinnedFilter>> = [
+  { label: '全部置顶', value: 'all' },
+  { label: '已置顶', value: 'pinned' },
+  { label: '未置顶', value: 'normal' }
+]
+
+const filteredData = computed(() => data.value.filter(item => isAnnouncementVisible(item)))
+const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
 
 const modalOpen = ref(false)
 const editItem = ref<Announcement | null>(null)
+
+watch([keyword, levelFilter, statusFilter, pinnedFilter], () => {
+  page.value = 1
+})
+
+function isAnnouncementVisible(item: Announcement): boolean {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  const matchesKeyword = !normalizedKeyword
+    || item.title.toLowerCase().includes(normalizedKeyword)
+    || item.content.toLowerCase().includes(normalizedKeyword)
+    || (item.linkUrl || '').toLowerCase().includes(normalizedKeyword)
+  const matchesLevel = levelFilter.value === 'all' || item.level === levelFilter.value
+  const matchesStatus = statusFilter.value === 'all'
+    || (statusFilter.value === 'enabled' && item.isEnabled)
+    || (statusFilter.value === 'disabled' && !item.isEnabled)
+  const matchesPinned = pinnedFilter.value === 'all'
+    || (pinnedFilter.value === 'pinned' && item.isPinned)
+    || (pinnedFilter.value === 'normal' && !item.isPinned)
+
+  return matchesKeyword && matchesLevel && matchesStatus && matchesPinned
+}
 
 function openAdd() {
   editItem.value = null
@@ -76,22 +131,47 @@ const columns: TableColumn<Announcement>[] = [
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-end gap-2">
-      <UButton
-        icon="i-mdi-plus"
-        @click="openAdd"
-      >
-        新建公告
-      </UButton>
-      <UButton
-        color="neutral"
-        variant="outline"
-        icon="i-mdi-refresh"
-        :loading="loading"
-        @click="refresh()"
-      >
-        刷新
-      </UButton>
+    <div class="dashboard-action-bar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+        <UInput
+          v-model="keyword"
+          icon="i-mdi-magnify"
+          placeholder="搜索标题、内容或链接"
+          class="w-full sm:w-64"
+        />
+        <USelect
+          v-model="levelFilter"
+          :items="levelFilterOptions"
+          class="w-full sm:w-32"
+        />
+        <USelect
+          v-model="statusFilter"
+          :items="statusFilterOptions"
+          class="w-full sm:w-32"
+        />
+        <USelect
+          v-model="pinnedFilter"
+          :items="pinnedFilterOptions"
+          class="w-full sm:w-32"
+        />
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <UButton
+          icon="i-mdi-plus"
+          @click="openAdd"
+        >
+          新建公告
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="loading"
+          @click="refresh()"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard
