@@ -25,10 +25,26 @@ const { data, loading, refresh } = usePrivateResource<ApiCategoryItem[]>({
   path: '/api/admin/api-categories/list',
   defaultData: () => []
 })
-const { page, pageSize, total, paginated } = useClientPagination(data, 10)
+
+const keyword = ref('')
+const filteredData = computed(() => data.value.filter(item => isApiCategoryVisible(item)))
+const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
 
 const modalOpen = ref(false)
 const editItem = ref<ApiCategoryItem | null>(null)
+
+watch(keyword, () => {
+  page.value = 1
+})
+
+function isApiCategoryVisible(item: ApiCategoryItem): boolean {
+  const normalizedKeyword = keyword.value.trim().toLowerCase()
+  if (!normalizedKeyword) return true
+
+  return item.code.toLowerCase().includes(normalizedKeyword)
+    || item.name.toLowerCase().includes(normalizedKeyword)
+    || (item.description || '').toLowerCase().includes(normalizedKeyword)
+}
 
 function openAdd() {
   editItem.value = null
@@ -90,22 +106,30 @@ const columns: TableColumn<ApiCategoryItem>[] = [
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-end gap-2">
-      <UButton
-        icon="i-mdi-plus"
-        @click="openAdd"
-      >
-        新建分类
-      </UButton>
-      <UButton
-        color="neutral"
-        variant="outline"
-        icon="i-mdi-refresh"
-        :loading="loading"
-        @click="refresh()"
-      >
-        刷新
-      </UButton>
+    <div class="flex items-center gap-2 flex-wrap">
+      <UInput
+        v-model="keyword"
+        icon="i-mdi-magnify"
+        placeholder="搜索编码、名称或描述"
+        class="w-full sm:w-64"
+      />
+      <div class="ml-auto flex items-center gap-2 flex-wrap">
+        <UButton
+          icon="i-mdi-plus"
+          @click="openAdd"
+        >
+          新建分类
+        </UButton>
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-mdi-refresh"
+          :loading="loading"
+          @click="refresh()"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard
