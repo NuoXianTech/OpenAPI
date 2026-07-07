@@ -142,8 +142,8 @@ const columns: TableColumn<Announcement>[] = [
 
 <template>
   <div class="space-y-6">
-    <div class="dashboard-action-bar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+    <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
@@ -177,7 +177,7 @@ const columns: TableColumn<Announcement>[] = [
           </UFormField>
         </AdminFilterPopover>
       </div>
-      <div class="flex items-center justify-end gap-2">
+      <div class="ml-auto flex items-center gap-2 flex-wrap">
         <UButton
           icon="i-mdi-plus"
           @click="openAdd"

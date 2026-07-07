@@ -172,8 +172,8 @@ async function openDelete(row: AdminNotificationMessageRow) {
 
 <template>
   <div class="space-y-6">
-    <div class="dashboard-action-bar flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div class="grid grid-cols-1 gap-2 sm:flex sm:flex-1 sm:flex-wrap sm:items-center">
+    <div class="flex items-center gap-2 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
         <UInput
           v-model="historyKeyword"
           icon="i-mdi-magnify"
@@ -200,7 +200,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
           </UFormField>
         </AdminFilterPopover>
       </div>
-      <div class="flex items-center justify-end gap-2">
+      <div class="ml-auto flex items-center gap-2 flex-wrap">
         <UButton
           color="neutral"
           variant="outline"
