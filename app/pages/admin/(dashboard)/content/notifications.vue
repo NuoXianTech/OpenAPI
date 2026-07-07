@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { MESSAGE_LEVELS, NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import {
   createAdminNotificationForm,
@@ -367,7 +368,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
       v-model:open="detailOpen"
       title="接收详情"
       :description="detailMessage ? `${detailMessage.title} · ${formatDateTime(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
-      :ui="{ content: 'sm:max-w-2xl' }"
+      :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
     >
       <template #body>
         <div

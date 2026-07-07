@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 
 type DurationPreset = 'permanent' | '1d' | '7d' | '30d' | 'custom'
 
@@ -89,6 +90,7 @@ async function submit() {
   <UModal
     :open="open"
     :title="`封禁用户: ${target?.username ?? ''}`"
+    :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
     <template #body>

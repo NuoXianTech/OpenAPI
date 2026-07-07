@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 
 interface OAuthBinding {
   id: number
@@ -78,6 +79,7 @@ async function submit() {
   <UModal
     :open="open"
     title="编辑用户"
+    :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
     <template #body>

@@ -3,6 +3,7 @@ import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/api'
 import { API_STATUS } from '#shared/config/api-status'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
@@ -190,7 +191,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     v-model:open="open"
     :title="headerLabel"
     :description="target ? `${target.endpointCount} 端点` : undefined"
-    :ui="{ content: 'sm:max-w-2xl' }"
+    :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
     <template #body>
       <AdminApiEndpointPreview

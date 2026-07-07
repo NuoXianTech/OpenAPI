@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { adminModalUi } from '~/utils/admin-modal-ui'
+
 const props = defineProps<{
   open: boolean
   onSubmit: (payload: { username: string, email: string, password: string, displayName: string, isActive: boolean }) => Promise<boolean>
@@ -42,6 +44,7 @@ async function submit() {
     :open="open"
     title="添加用户"
     description="直接创建用户账户，跳过邮箱验证流程"
+    :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
     <template #body>

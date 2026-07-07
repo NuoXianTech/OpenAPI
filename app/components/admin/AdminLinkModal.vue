@@ -2,6 +2,7 @@
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '#shared/types/content'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 
@@ -54,6 +55,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑链接' : '新增链接'"
+    :ui="adminModalUi()"
   >
     <template #body>
       <UForm

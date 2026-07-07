@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
 const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
@@ -183,6 +184,7 @@ async function submitTest() {
       v-model:open="testOpen"
       title="SMTP 测试发信"
       description="将使用已保存的 SMTP 配置发送一封测试邮件。若你刚修改了上方表单，请先点「保存设置」再测试。"
+      :ui="adminModalUi()"
     >
       <template #body>
         <UFormField label="收件邮箱">

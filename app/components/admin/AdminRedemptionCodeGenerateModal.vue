@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { GeneratePayload, GenerateResult } from '~/composables/admin/use-redemption-codes-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
@@ -83,6 +84,7 @@ function close() {
   <UModal
     :open="open"
     title="生成兑换码"
+    :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
     @update:open="emit('update:open', $event)"
   >
     <template #body>

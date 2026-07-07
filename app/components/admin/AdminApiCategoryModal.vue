@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { requiredString } from '#shared/schemas/validation'
 
@@ -81,6 +82,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑分类' : '新增分类'"
+    :ui="adminModalUi()"
   >
     <template #body>
       <UForm

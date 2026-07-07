@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })
@@ -83,6 +84,7 @@ async function submit() {
     v-model:open="open"
     title="积分管理"
     :description="`目标：${targetSummary}`"
+    :ui="adminModalUi()"
   >
     <template #body>
       <div class="space-y-4">

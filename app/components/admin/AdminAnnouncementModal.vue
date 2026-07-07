@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Announcement } from '#shared/types/content'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })
@@ -94,7 +95,7 @@ async function onSubmit() {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑公告' : '新建公告'"
-    :ui="{ content: 'sm:max-w-2xl' }"
+    :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
     <template #body>
       <div class="space-y-3">

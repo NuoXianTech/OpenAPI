@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminLogRow } from '#shared/types/admin'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { ADMIN_CALL_LOG_TYPE_META } from '~/composables/admin/use-admin-call-logs-page'
 
 const props = defineProps<{
@@ -17,7 +18,7 @@ function formatBytes(value: number | null) {
 <template>
   <UModal
     title="调用详情"
-    :ui="{ content: 'max-w-2xl' }"
+    :ui="adminModalUi({ content: 'max-w-2xl' })"
   >
     <template #body>
       <div

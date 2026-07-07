@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
@@ -158,7 +159,7 @@ function toggleReveal(id: number) {
   <UModal
     :open="open"
     :title="`${target?.username ?? ''} 的 API Keys`"
-    :ui="{ content: 'sm:max-w-3xl' }"
+    :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
     @update:open="emit('update:open', $event)"
   >
     <template #body>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 
 useHead({ title: '操作日志' })
 const {
@@ -256,7 +257,7 @@ const {
     <UModal
       v-model:open="detailOpen"
       title="操作详情"
-      :ui="{ content: 'max-w-2xl' }"
+      :ui="adminModalUi({ content: 'max-w-2xl' })"
     >
       <template #body>
         <div

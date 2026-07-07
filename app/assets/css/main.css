@@ -412,6 +412,101 @@ body {
   }
 }
 
+.admin-modal-overlay {
+  background: color-mix(in oklab, var(--ui-bg) 54%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.admin-modal-content {
+  max-height: calc(100dvh - 2rem);
+  overflow: hidden;
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--dashboard-radius);
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--dashboard-surface) 96%, var(--ui-bg) 4%) 0%,
+      var(--dashboard-surface) 42%,
+      color-mix(in oklab, var(--dashboard-surface) 94%, var(--ui-bg) 6%) 100%
+    );
+  box-shadow:
+    0 24px 60px -34px color-mix(in oklab, var(--ui-text) 34%, transparent),
+    var(--dashboard-shadow);
+}
+
+.admin-modal-header {
+  min-height: auto;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--dashboard-border);
+  background: color-mix(in oklab, var(--dashboard-surface) 88%, var(--ui-bg) 12%);
+}
+
+.admin-modal-title {
+  padding-inline-end: 1.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.35;
+  font-weight: 650;
+  letter-spacing: 0;
+  color: var(--ui-text-highlighted);
+}
+
+.admin-modal-description {
+  margin-top: 0.25rem;
+  padding-inline-end: 1.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--ui-text-muted);
+}
+
+.admin-modal-body {
+  min-height: 0;
+  max-height: calc(100dvh - 12rem);
+  padding: 1rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.admin-modal-body :where(form, .space-y-3, .space-y-4) {
+  min-width: 0;
+}
+
+.admin-modal-body :where(input, textarea, select) {
+  min-width: 0;
+}
+
+.admin-modal-footer {
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--dashboard-border);
+  background: color-mix(in oklab, var(--dashboard-surface-muted) 74%, var(--dashboard-surface) 26%);
+}
+
+.admin-modal-close {
+  top: 0.625rem;
+  inset-inline-end: 0.625rem;
+}
+
+.dark .admin-modal-overlay {
+  background: color-mix(in oklab, black 42%, transparent);
+}
+
+.dark .admin-modal-content {
+  box-shadow:
+    0 24px 64px -30px color-mix(in oklab, black 72%, transparent),
+    var(--dashboard-shadow);
+}
+
+@media (width >= 640px) {
+  .admin-modal-header,
+  .admin-modal-body,
+  .admin-modal-footer {
+    padding-inline: 1.25rem;
+  }
+}
+
 @layer base {
   body {
     @apply antialiased text-default bg-default scheme-light dark:scheme-dark;
