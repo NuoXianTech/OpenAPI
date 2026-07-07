@@ -4,7 +4,9 @@ import { parseFetchError } from '~/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
+import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { adminModalUi } from '~/utils/admin-modal-ui'
 import type { ApiKeyItem } from '#shared/types/api'
 
 useHead({ title: 'API Keys' })
@@ -183,6 +185,105 @@ const columns: TableColumn<ApiKeyItem>[] = [
   { id: 'actions', header: '' }
 ]
 const showFullKeyId = ref<number | null>(null)
+const keyword = ref('')
+const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired' | 'revoked'>('all')
+const scopeFilter = ref<'all' | 'full' | 'limited'>('all')
+const columnVisibility = ref<Record<string, boolean>>({})
+
+interface ToggleableColumn {
+  id: string
+  header: string
+}
+
+function readToggleableColumn(column: TableColumn<ApiKeyItem>): ToggleableColumn | undefined {
+  const header = 'header' in column && typeof column.header === 'string' ? column.header : ''
+  if (!header) return undefined
+
+  const id = 'id' in column && typeof column.id === 'string'
+    ? column.id
+    : 'accessorKey' in column
+      ? String(column.accessorKey)
+      : ''
+  if (!id) return undefined
+
+  return { id, header }
+}
+
+const statusItems = [
+  { label: '全部状态', value: 'all' },
+  { label: '启用', value: 'enabled' },
+  { label: '停用', value: 'disabled' },
+  { label: '已过期', value: 'expired' },
+  { label: '已撤销', value: 'revoked' }
+]
+
+const scopeFilterItems = [
+  { label: '全部范围', value: 'all' },
+  { label: '全部接口', value: 'full' },
+  { label: '指定接口', value: 'limited' }
+]
+
+const activeFilterCount = computed(() => [
+  statusFilter.value !== 'all',
+  scopeFilter.value !== 'all'
+].filter(Boolean).length)
+
+const filteredItems = computed(() => {
+  const q = keyword.value.trim().toLowerCase()
+  return items.value.filter((item) => {
+    const status = apiKeyStatus(item).label
+    const hasLimitedScopes = !!item.scopes?.length
+    const matchesKeyword = !q || [
+      item.name || '默认密钥',
+      item.apiKey,
+      status,
+      item.lastUsedIp || '',
+      ...(item.scopes || []),
+      ...(item.ipWhitelist || [])
+    ].some(value => value.toLowerCase().includes(q))
+
+    const matchesStatus = statusFilter.value === 'all'
+      || (statusFilter.value === 'enabled' && status === '启用')
+      || (statusFilter.value === 'disabled' && status === '停用')
+      || (statusFilter.value === 'expired' && status === '已过期')
+      || (statusFilter.value === 'revoked' && status === '已撤销')
+
+    const matchesScope = scopeFilter.value === 'all'
+      || (scopeFilter.value === 'full' && !hasLimitedScopes)
+      || (scopeFilter.value === 'limited' && hasLimitedScopes)
+
+    return matchesKeyword && matchesStatus && matchesScope
+  })
+})
+
+const { page, pageSize, total, paginated } = useClientPagination(filteredItems, 10)
+
+const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
+  columns
+    .map(readToggleableColumn)
+    .filter((column): column is ToggleableColumn => column != null)
+    .map(column => ({
+      label: column.header,
+      type: 'checkbox' as const,
+      checked: columnVisibility.value[column.id] !== false,
+      onUpdateChecked(checked: boolean) {
+        columnVisibility.value = { ...columnVisibility.value, [column.id]: checked }
+      },
+      onSelect(event: Event) {
+        event.preventDefault()
+      }
+    }))
+)
+
+watch([keyword, statusFilter, scopeFilter, pageSize], () => {
+  page.value = 1
+  showFullKeyId.value = null
+})
+
+function resetFilters() {
+  statusFilter.value = 'all'
+  scopeFilter.value = 'all'
+}
 
 async function copy(text: string) {
   try {
@@ -238,49 +339,68 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 
     <template #body>
       <div class="dashboard-section-page space-y-6">
-        <UAlert
-          color="info"
-          variant="subtle"
-          icon="i-mdi-information-outline"
-          title="API Key 使用说明"
-          class="dashboard-gradient-alert"
-        >
-          <template #description>
-            <ul class="space-y-1.5 text-xs leading-6 list-disc list-inside marker:text-muted">
-              <li>
-                请求时把 API Key 放在请求头 <UKbd>x-api-key: &lt;your-key&gt;</UKbd> 或 query 参数 <UKbd>?apikey=&lt;your-key&gt;</UKbd> 中。
-              </li>
-              <li>
-                出于安全考虑，列表默认显示遮罩；点击眼睛图标可临时显示完整 Key，仅自己可见。
-              </li>
-              <li>
-                <span class="font-medium text-highlighted">过期</span>的 Key 不会被删除或禁用，调用时会返回到期信息；<span class="font-medium text-highlighted">重置</span>会立即让旧 Key 失效；<span class="font-medium text-highlighted">删除</span>不可恢复。
-              </li>
-              <li>
-                IP 白名单使用 CIDR 格式：单 IP 写成 <UKbd>1.2.3.4/32</UKbd>，网段写成 <UKbd>10.0.0.0/8</UKbd>。
-              </li>
-            </ul>
-          </template>
-        </UAlert>
-
-        <div class="dashboard-action-bar flex justify-end">
-          <UButton
-            icon="i-mdi-plus"
-            @click="openCreate"
+        <div class="flex flex-wrap items-center gap-2">
+          <UInput
+            v-model="keyword"
+            icon="i-mdi-magnify"
+            placeholder="搜索名称、Key、IP..."
+            class="w-full sm:w-72"
+          />
+          <AdminFilterPopover
+            :active-count="activeFilterCount"
+            @reset="resetFilters"
           >
-            生成新 Key
-          </UButton>
+            <UFormField label="状态">
+              <USelect
+                v-model="statusFilter"
+                :items="statusItems"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="接口范围">
+              <USelect
+                v-model="scopeFilter"
+                :items="scopeFilterItems"
+                class="w-full"
+              />
+            </UFormField>
+          </AdminFilterPopover>
+
+          <div class="ml-auto flex flex-wrap items-center gap-2">
+            <UButton
+              icon="i-mdi-plus"
+              @click="openCreate"
+            >
+              生成新 Key
+            </UButton>
+            <UDropdownMenu
+              :items="columnVisibilityItems"
+              :content="{ align: 'end' }"
+            >
+              <UButton
+                label="显示列"
+                color="neutral"
+                variant="outline"
+                icon="i-mdi-view-column-outline"
+              />
+            </UDropdownMenu>
+          </div>
         </div>
 
         <DashboardTableCard
           title="API Key 列表"
           icon="i-mdi-key-outline"
-          :total="items.length"
+          :total="total"
         >
           <DashboardDataTable
-            :data="items"
+            v-model:page="page"
+            v-model:page-size="pageSize"
+            v-model:column-visibility="columnVisibility"
+            :data="paginated"
             :columns="columns"
             :loading="loading"
+            :total="total"
+            :page-size-items="PAGE_SIZE_ITEMS"
             :fixed="false"
             empty-title="暂无 API Key"
             empty-icon="i-mdi-key-outline"
@@ -415,7 +535,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <UModal
         v-model:open="createOpen"
         title="生成新 API Key"
-        :ui="{ content: 'sm:max-w-2xl' }"
+        :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
           <ApiKeyFormFields
@@ -424,7 +544,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :ip-line-errors="createIpLineErrors"
             :error="createError"
             show-count
-            hints
+            size="sm"
           />
         </template>
 
@@ -452,7 +572,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <UModal
         v-model:open="editOpen"
         title="编辑 API Key"
-        :ui="{ content: 'sm:max-w-2xl' }"
+        :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
           <ApiKeyFormFields
@@ -461,7 +581,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :ip-line-errors="editIpLineErrors"
             :error="editError"
             editing
-            hints
+            size="sm"
           />
         </template>
 
