@@ -44,6 +44,11 @@ const pinnedFilterOptions: Array<AnnouncementFilterOption<AnnouncementPinnedFilt
   { label: '已置顶', value: 'pinned' },
   { label: '未置顶', value: 'normal' }
 ]
+const activeFilterCount = computed(() => [
+  levelFilter.value !== 'all',
+  statusFilter.value !== 'all',
+  pinnedFilter.value !== 'all'
+].filter(Boolean).length)
 
 const filteredData = computed(() => data.value.filter(item => isAnnouncementVisible(item)))
 const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
@@ -70,6 +75,12 @@ function isAnnouncementVisible(item: Announcement): boolean {
     || (pinnedFilter.value === 'normal' && !item.isPinned)
 
   return matchesKeyword && matchesLevel && matchesStatus && matchesPinned
+}
+
+function resetFilters() {
+  levelFilter.value = 'all'
+  statusFilter.value = 'all'
+  pinnedFilter.value = 'all'
 }
 
 function openAdd() {
@@ -139,21 +150,32 @@ const columns: TableColumn<Announcement>[] = [
           placeholder="搜索标题、内容或链接"
           class="w-full sm:w-64"
         />
-        <USelect
-          v-model="levelFilter"
-          :items="levelFilterOptions"
-          class="w-full sm:w-32"
-        />
-        <USelect
-          v-model="statusFilter"
-          :items="statusFilterOptions"
-          class="w-full sm:w-32"
-        />
-        <USelect
-          v-model="pinnedFilter"
-          :items="pinnedFilterOptions"
-          class="w-full sm:w-32"
-        />
+        <AdminFilterPopover
+          :active-count="activeFilterCount"
+          @reset="resetFilters"
+        >
+          <UFormField label="级别">
+            <USelect
+              v-model="levelFilter"
+              :items="levelFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="状态">
+            <USelect
+              v-model="statusFilter"
+              :items="statusFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="置顶">
+            <USelect
+              v-model="pinnedFilter"
+              :items="pinnedFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+        </AdminFilterPopover>
       </div>
       <div class="flex items-center justify-end gap-2">
         <UButton

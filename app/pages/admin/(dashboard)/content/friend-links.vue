@@ -26,6 +26,9 @@ const statusFilterOptions: Array<FriendLinkFilterOption<FriendLinkStatusFilter>>
   { label: '正常', value: 'active' },
   { label: '停用', value: 'inactive' }
 ]
+const activeFilterCount = computed(() => [
+  statusFilter.value !== 'all'
+].filter(Boolean).length)
 
 const filteredData = computed(() => data.value.filter(item => isFriendLinkVisible(item)))
 const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
@@ -48,6 +51,10 @@ function isFriendLinkVisible(item: FriendLinkItem): boolean {
     || (statusFilter.value === 'inactive' && !item.isActive)
 
   return matchesKeyword && matchesStatus
+}
+
+function resetFilters() {
+  statusFilter.value = 'all'
 }
 
 function openAdd() {
@@ -100,11 +107,18 @@ const columns: TableColumn<FriendLinkItem>[] = [
           placeholder="搜索名称、URL 或描述"
           class="w-full sm:w-72"
         />
-        <USelect
-          v-model="statusFilter"
-          :items="statusFilterOptions"
-          class="w-full sm:w-32"
-        />
+        <AdminFilterPopover
+          :active-count="activeFilterCount"
+          @reset="resetFilters"
+        >
+          <UFormField label="状态">
+            <USelect
+              v-model="statusFilter"
+              :items="statusFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+        </AdminFilterPopover>
       </div>
       <div class="flex items-center justify-end gap-2">
         <UButton

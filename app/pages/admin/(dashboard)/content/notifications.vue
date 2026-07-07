@@ -64,6 +64,10 @@ const historyLevelFilterOptions = computed<Array<AdminNotificationFilterOption<A
     value: level
   }))
 ])
+const activeHistoryFilterCount = computed(() => [
+  historyAudienceFilter.value !== 'all',
+  historyLevelFilter.value !== 'all'
+].filter(Boolean).length)
 const filteredMessagesData = computed(() => messagesData.value.filter(row => isNotificationMessageVisible(row)))
 const { page, pageSize, total, paginated } = useClientPagination(filteredMessagesData, 10)
 
@@ -80,6 +84,11 @@ function isNotificationMessageVisible(row: AdminNotificationMessageRow): boolean
   const matchesLevel = historyLevelFilter.value === 'all' || row.level === historyLevelFilter.value
 
   return matchesKeyword && matchesAudience && matchesLevel
+}
+
+function resetHistoryFilters() {
+  historyAudienceFilter.value = 'all'
+  historyLevelFilter.value = 'all'
 }
 
 async function submitSend() {
@@ -171,16 +180,25 @@ async function openDelete(row: AdminNotificationMessageRow) {
           placeholder="搜索发送历史标题或发送人"
           class="w-full sm:w-72"
         />
-        <USelect
-          v-model="historyAudienceFilter"
-          :items="historyAudienceFilterOptions"
-          class="w-full sm:w-36"
-        />
-        <USelect
-          v-model="historyLevelFilter"
-          :items="historyLevelFilterOptions"
-          class="w-full sm:w-32"
-        />
+        <AdminFilterPopover
+          :active-count="activeHistoryFilterCount"
+          @reset="resetHistoryFilters"
+        >
+          <UFormField label="范围">
+            <USelect
+              v-model="historyAudienceFilter"
+              :items="historyAudienceFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="级别">
+            <USelect
+              v-model="historyLevelFilter"
+              :items="historyLevelFilterOptions"
+              class="w-full"
+            />
+          </UFormField>
+        </AdminFilterPopover>
       </div>
       <div class="flex items-center justify-end gap-2">
         <UButton
