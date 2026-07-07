@@ -1,7 +1,9 @@
 import type { TableColumn } from '@nuxt/ui'
+import { watchDebounced } from '@vueuse/core'
 import { computed, ref, type MaybeRefOrGetter } from 'vue'
 import {
   createNumberQueryCodec,
+  createStringQueryCodec,
   type DashboardQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
@@ -31,6 +33,7 @@ export interface UserCallLogFilterOptions {
 }
 
 export interface UserCallLogFilters {
+  keyword: string
   apiId: number
   apiKeyId: number
   status: 'all' | 'success' | 'failure'
@@ -43,6 +46,7 @@ interface UseUserCallLogsPageOptions {
 }
 
 const USER_CALL_LOG_DEFAULT_FILTERS: UserCallLogFilters = {
+  keyword: '',
   apiId: 0,
   apiKeyId: 0,
   status: 'all'
@@ -92,6 +96,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
+      keyword: createStringQueryCodec(''),
       apiId: createNumberQueryCodec(0),
       apiKeyId: createNumberQueryCodec(0),
       status: createUserCallStatusQueryCodec()
@@ -106,6 +111,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     pageSize: listState.pageSize,
     immediate: options.immediate ?? true,
     buildQuery: (filters, pagination) => ({
+      keyword: filters.keyword.trim() || undefined,
       apiId: filters.apiId || undefined,
       apiKeyId: filters.apiKeyId || undefined,
       status: filters.status === 'all' ? undefined : filters.status,
@@ -127,6 +133,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     { label: '成功', value: 'success' },
     { label: '失败', value: 'failure' }
   ]
+  const lastAppliedKeyword = ref(listState.filters.keyword.trim())
   const activeFilterCount = computed(() => [
     listState.filters.apiId !== 0,
     listState.filters.apiKeyId !== 0,
@@ -147,14 +154,27 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   }
 
   async function applyFilters() {
+    lastAppliedKeyword.value = listState.filters.keyword.trim()
     await list.applyFilters()
     await listState.syncQuery()
   }
 
   async function resetFilters() {
+    lastAppliedKeyword.value = USER_CALL_LOG_DEFAULT_FILTERS.keyword
     await list.reset()
     await listState.syncQuery()
   }
+
+  watchDebounced(
+    () => listState.filters.keyword.trim(),
+    async (keyword) => {
+      if (keyword === lastAppliedKeyword.value) return
+      lastAppliedKeyword.value = keyword
+      await list.applyFilters()
+      await listState.syncQuery()
+    },
+    { debounce: 250, maxWait: 1000 }
+  )
 
   return {
     filters: listState.filters,

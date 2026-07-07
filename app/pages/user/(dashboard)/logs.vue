@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { LazyUserCallLogDetailModal } from '#components'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
+import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import {
   useUserCallLogsPage,
   userCallOutcomeColor,
@@ -37,6 +39,43 @@ const {
 
 const overlay = useOverlay()
 const detailModal = overlay.create(LazyUserCallLogDetailModal, { destroyOnClose: true })
+const columnVisibility = ref<Record<string, boolean>>({})
+
+interface ToggleableColumn {
+  id: string
+  header: string
+}
+
+function readToggleableColumn(column: TableColumn<UserCallLogRow>): ToggleableColumn | undefined {
+  const header = 'header' in column && typeof column.header === 'string' ? column.header : ''
+  if (!header) return undefined
+
+  const id = 'id' in column && typeof column.id === 'string'
+    ? column.id
+    : 'accessorKey' in column
+      ? String(column.accessorKey)
+      : ''
+  if (!id) return undefined
+
+  return { id, header }
+}
+
+const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
+  columns
+    .map(readToggleableColumn)
+    .filter((column): column is ToggleableColumn => column != null)
+    .map(column => ({
+      label: column.header,
+      type: 'checkbox' as const,
+      checked: columnVisibility.value[column.id] !== false,
+      onUpdateChecked(checked: boolean) {
+        columnVisibility.value = { ...columnVisibility.value, [column.id]: checked }
+      },
+      onSelect(event: Event) {
+        event.preventDefault()
+      }
+    }))
+)
 
 onMounted(() => {
   void loadFilterOptions()
@@ -67,92 +106,62 @@ function openDetail(row: UserCallLogRow) {
     </template>
 
     <template #body>
-      <div class="space-y-6">
-        <section class="dashboard-hero-surface dashboard-hero-surface-info relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-          <div class="relative z-10 space-y-3">
-            <div>
-              <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-                调用日志
-              </h2>
-              <p class="mt-1 text-sm text-toned">
-                你的接口调用流水、扣费结果与请求状态
-              </p>
-            </div>
-          </div>
-        </section>
+      <div class="dashboard-section-page space-y-6">
+        <div class="flex flex-wrap items-center gap-2">
+          <UInput
+            v-model="filters.keyword"
+            icon="i-mdi-magnify"
+            placeholder="搜索接口、Key、状态码..."
+            class="w-full sm:w-72"
+            @keyup.enter="applyFilters"
+          />
+          <AdminFilterPopover
+            :active-count="activeFilterCount"
+            @apply="applyFilters"
+            @reset="resetFilters"
+          >
+            <UFormField label="服务（API）">
+              <USelectMenu
+                v-model="filters.apiId"
+                :items="apiSelectItems"
+                value-key="value"
+                searchable
+                placeholder="全部 API"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="API Key">
+              <USelect
+                v-model="filters.apiKeyId"
+                :items="keySelectItems"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="状态">
+              <USelect
+                v-model="filters.status"
+                :items="statusSelectItems"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+          </AdminFilterPopover>
 
-        <!-- 筛选区 -->
-        <UCard
-          variant="subtle"
-          :ui="{ body: 'p-4 sm:p-5' }"
-        >
-          <div class="space-y-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div class="flex items-center gap-2">
-                <UIcon
-                  name="i-mdi-filter-variant"
-                  class="size-4 text-muted"
-                />
-                <h3 class="text-sm font-semibold text-highlighted">
-                  筛选条件
-                </h3>
-              </div>
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                size="sm"
-              >
-                {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
-              </UBadge>
-            </div>
-
-            <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              <UFormField label="服务（API）">
-                <USelectMenu
-                  v-model="filters.apiId"
-                  :items="apiSelectItems"
-                  value-key="value"
-                  searchable
-                  placeholder="全部 API"
-                  class="w-full"
-                />
-              </UFormField>
-              <UFormField label="API Key">
-                <USelect
-                  v-model="filters.apiKeyId"
-                  :items="keySelectItems"
-                  value-key="value"
-                  class="w-full"
-                />
-              </UFormField>
-              <UFormField label="状态">
-                <USelect
-                  v-model="filters.status"
-                  :items="statusSelectItems"
-                  value-key="value"
-                  class="w-full"
-                />
-              </UFormField>
-            </div>
-
-            <div class="flex items-center justify-end gap-2 border-t border-default pt-4">
+          <div class="ml-auto flex flex-wrap items-center gap-2">
+            <UDropdownMenu
+              :items="columnVisibilityItems"
+              :content="{ align: 'end' }"
+            >
               <UButton
+                label="显示列"
                 color="neutral"
                 variant="outline"
-                icon="i-mdi-restore"
-                @click="resetFilters"
-              >
-                重置
-              </UButton>
-              <UButton
-                icon="i-mdi-magnify"
-                @click="applyFilters"
-              >
-                查询
-              </UButton>
-            </div>
+                icon="i-mdi-view-column-outline"
+              />
+            </UDropdownMenu>
           </div>
-        </UCard>
+        </div>
 
         <DashboardTableCard
           title="调用明细"
@@ -161,11 +170,13 @@ function openDetail(row: UserCallLogRow) {
         >
           <DashboardDataTable
             v-model:page="page"
+            v-model:page-size="pageSize"
+            v-model:column-visibility="columnVisibility"
             :data="items"
             :columns="columns"
             :loading="loading"
-            :page-size="pageSize"
             :total="total"
+            :page-size-items="PAGE_SIZE_ITEMS"
             empty-title="暂无调用记录"
             empty-icon="i-mdi-text-box-search-outline"
           >

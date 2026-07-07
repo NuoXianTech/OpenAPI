@@ -1,4 +1,4 @@
-import { count, desc, eq, sql, and, isNull } from 'drizzle-orm'
+import { count, desc, eq, sql, and, ilike, isNull, or } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
@@ -76,6 +76,7 @@ export const apiCallService = {
    * join apis & api_keys 携带名称给前端展示。
    */
   async listLogForUser(userId: number, opts: {
+    keyword?: string
     apiId?: number
     apiKeyId?: number
     /** 'success' | 'failure' */
@@ -91,6 +92,21 @@ export const apiCallService = {
       conds.push(callSuccessCondition)
     } else if (opts.status === 'failure') {
       conds.push(callFailureCondition)
+    }
+    const keyword = opts.keyword?.trim()
+    if (keyword) {
+      const keywordPattern = `%${keyword}%`
+      conds.push(or(
+        ilike(apis.name, keywordPattern),
+        ilike(apiCalls.path, keywordPattern),
+        ilike(apiCalls.method, keywordPattern),
+        ilike(apiCalls.ip, keywordPattern),
+        ilike(apiCalls.errorCode, keywordPattern),
+        ilike(apiCalls.errorMessage, keywordPattern),
+        ilike(apiCalls.apiKeyName, keywordPattern),
+        ilike(apiKeys.name, keywordPattern),
+        sql`${apiCalls.statusCode}::text ilike ${keywordPattern}`
+      )!)
     }
 
     const [items, totalRows] = await Promise.all([
@@ -118,7 +134,11 @@ export const apiCallService = {
         .orderBy(desc(apiCalls.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ value: count() }).from(apiCalls).where(and(...conds))
+      db.select({ value: count() })
+        .from(apiCalls)
+        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+        .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+        .where(and(...conds))
     ])
 
     return {
