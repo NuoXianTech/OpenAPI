@@ -46,7 +46,7 @@ async function submit() {
       <UFormField
         label="头像"
         description="头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <img
           v-if="avatarUrl"
@@ -66,24 +66,24 @@ async function submit() {
       <UFormField
         label="用户名"
         description="用户名不可修改。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           :model-value="profile?.username || ''"
           disabled
-          class="min-w-64"
+          class="w-full sm:w-60"
         />
       </UFormField>
       <UFormField
         label="显示名"
         description="对外展示的名字，最多 32 字。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="displayName"
           :maxlength="32"
           placeholder="对外展示的名字"
-          class="min-w-64"
+          class="w-full sm:w-60"
         />
       </UFormField>
       <div class="flex justify-end pt-4">

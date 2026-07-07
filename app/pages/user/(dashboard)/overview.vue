@@ -39,7 +39,7 @@ const callsTrendValues = computed(() => trend.value.map(point => point.totalCall
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
 const sampleCurl = computed(() => [
-  `curl -X GET '${origin}/api/your-endpoint' \\`,
+  `curl -X GET '${origin}/v1/your-endpoint' \\`,
   `  -H 'x-api-key: <your-api-key>'`
 ].join('\n'))
 

@@ -42,27 +42,31 @@ async function submit() {
         </h3>
       </div>
     </template>
-    <div class="flex flex-wrap items-end gap-3">
+    <div>
       <UFormField
-        label="输入兑换码"
-        class="flex-1 min-w-[260px]"
+        label="兑换码"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
         hint="输入后点「兑换」即可加入积分，不区分大小写"
+        :ui="{ label: 'sr-only', container: 'w-full sm:max-w-md' }"
       >
-        <UInput
-          v-model="code"
-          placeholder="例如 WELCOME-XXXXXXXXXXXXXXXX"
-          class="font-mono uppercase"
-          :ui="{ base: 'uppercase' }"
-          @keydown.enter="submit"
-        />
+        <div class="flex w-full max-sm:flex-col gap-2">
+          <UInput
+            v-model="code"
+            placeholder="例如 WELCOME-XXXXXXXXXXXXXXXX"
+            class="min-w-0 flex-1 font-mono uppercase"
+            :ui="{ base: 'uppercase' }"
+            @keydown.enter="submit"
+          />
+          <UButton
+            icon="i-mdi-gift-outline"
+            :loading="redeeming"
+            class="max-sm:w-full sm:shrink-0"
+            @click="submit"
+          >
+            兑换
+          </UButton>
+        </div>
       </UFormField>
-      <UButton
-        icon="i-mdi-gift-outline"
-        :loading="redeeming"
-        @click="submit"
-      >
-        兑换
-      </UButton>
     </div>
     <div
       v-if="records.length > 0"

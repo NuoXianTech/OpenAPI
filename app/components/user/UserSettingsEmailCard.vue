@@ -49,10 +49,10 @@ async function submit() {
       <UFormField
         label="当前邮箱"
         description="当前账号绑定并用于接收系统邮件的邮箱。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <div class="flex items-center gap-2">
-          <span class="font-mono text-sm">{{ profile?.email }}</span>
+        <div class="flex min-w-0 max-w-full items-center gap-2 sm:max-w-80">
+          <span class="truncate font-mono text-sm">{{ profile?.email }}</span>
           <UBadge
             v-if="profile?.emailVerifiedAt"
             color="success"
@@ -75,27 +75,27 @@ async function submit() {
         name="currentPassword"
         label="当前密码"
         description="为保护账号安全，修改邮箱需先验证当前密码。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="currentPassword"
           type="password"
           placeholder="••••••••"
           autocomplete="current-password"
-          class="min-w-64"
+          class="w-full sm:w-60"
         />
       </UFormField>
       <UFormField
         name="newEmail"
         label="新邮箱"
         description="将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="newEmail"
           type="email"
           placeholder="new@example.com"
-          class="min-w-64"
+          class="w-full sm:w-60"
         />
       </UFormField>
       <div class="flex justify-end pt-4">

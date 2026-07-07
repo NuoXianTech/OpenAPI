@@ -44,40 +44,40 @@ async function submit() {
     <UFormField
       label="当前密码"
       description="验证身份所需的现有密码。"
-      class="flex items-center justify-between gap-2"
+      class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
         v-model="form.currentPassword"
         type="password"
         placeholder="••••••••"
         autocomplete="current-password"
-        class="min-w-64"
+        class="w-full sm:w-60"
       />
     </UFormField>
     <UFormField
       label="新密码"
       description="至少 8 位，建议混合大小写字母与数字。"
-      class="flex items-center justify-between gap-2"
+      class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
         v-model="form.newPassword"
         type="password"
         placeholder="••••••••"
         autocomplete="new-password"
-        class="min-w-64"
+        class="w-full sm:w-60"
       />
     </UFormField>
     <UFormField
       label="确认新密码"
       description="再次输入新密码以确认无误。"
-      class="flex items-center justify-between gap-2"
+      class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
         v-model="form.confirmPassword"
         type="password"
         placeholder="••••••••"
         autocomplete="new-password"
-        class="min-w-64"
+        class="w-full sm:w-60"
       />
     </UFormField>
     <div class="flex justify-end pt-4">
