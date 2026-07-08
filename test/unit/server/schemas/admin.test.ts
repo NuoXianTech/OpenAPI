@@ -64,15 +64,22 @@ describe('admin schemas', () => {
     }).success).toBe(false)
   })
 
-  it('accepts default or custom initial admin username and email', () => {
+  it('requires initial admin password while accepting default or custom username and email', () => {
     expect(adminInitialProfileSchema.safeParse({
       username: 'admin',
       email: 'admin@openapi.com'
+    }).success).toBe(false)
+
+    expect(adminInitialProfileSchema.safeParse({
+      username: 'admin',
+      email: 'admin@openapi.com',
+      password: 'new-admin-password'
     }).success).toBe(true)
 
     expect(adminInitialProfileSchema.safeParse({
       username: 'owner',
-      email: 'owner@example.com'
+      email: 'owner@example.com',
+      password: 'new-admin-password'
     }).success).toBe(true)
   })
 })

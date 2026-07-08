@@ -4,17 +4,24 @@ import { parseFetchError } from '~/utils/client-error'
 interface AdminInitialProfileForm {
   username: string
   email: string
+  password: string
+  confirmPassword: string
 }
 
 function defaultForm(): AdminInitialProfileForm {
   return {
     username: '',
-    email: ''
+    email: '',
+    password: '',
+    confirmPassword: ''
   }
 }
 
 function canSaveProfile(form: AdminInitialProfileForm): boolean {
-  return form.username.trim().length > 0 && form.email.trim().length > 0
+  return form.username.trim().length > 0
+    && form.email.trim().length > 0
+    && form.password.length >= 8
+    && form.password === form.confirmPassword
 }
 
 export function useAdminInitialProfile() {
@@ -41,6 +48,8 @@ export function useAdminInitialProfile() {
 
     form.username = value.username || INITIAL_ADMIN_PROFILE.username
     form.email = value.email || INITIAL_ADMIN_PROFILE.email
+    form.password = ''
+    form.confirmPassword = ''
 
     if (checkedUserId.value === value.id) return
     checkedUserId.value = value.id
@@ -67,41 +76,18 @@ export function useAdminInitialProfile() {
         method: 'PUT',
         body: {
           username: form.username.trim(),
-          email: form.email.trim().toLowerCase()
+          email: form.email.trim().toLowerCase(),
+          password: form.password
         }
       })
       await fetchMe(true)
       open.value = false
-      toast.add({ title: '管理员资料已更新', color: 'success' })
+      toast.add({ title: '管理员账号已更新', color: 'success' })
     } catch (error: unknown) {
       errorMessage.value = parseFetchError(error, '保存失败')
     } finally {
       saving.value = false
     }
-  }
-
-  async function dismiss() {
-    if (saving.value || checking.value) return
-
-    saving.value = true
-    errorMessage.value = ''
-    try {
-      await $fetch('/api/admin/onboarding/seen', { method: 'POST' })
-      open.value = false
-    } catch (error: unknown) {
-      errorMessage.value = parseFetchError(error, '关闭失败')
-    } finally {
-      saving.value = false
-    }
-  }
-
-  function handleOpenChange(value: boolean) {
-    if (value) {
-      open.value = true
-      return
-    }
-
-    void dismiss()
   }
 
   return {
@@ -110,8 +96,6 @@ export function useAdminInitialProfile() {
     saving,
     errorMessage,
     canSubmit,
-    submit,
-    dismiss,
-    handleOpenChange
+    submit
   }
 }

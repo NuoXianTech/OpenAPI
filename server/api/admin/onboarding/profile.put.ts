@@ -4,7 +4,7 @@ import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION } from '#shared/config/admin-def
 import { adminInitialProfileSchema } from '~~/server/schemas/admin'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { usersService } from '~~/server/services/user-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { createUserSession, hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -29,8 +29,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const updated = await usersService.updateUser(admin.id, {
     username: body.username,
-    email: body.email
+    email: body.email,
+    passwordHash: await hashPassword(body.password)
   })
+  await usersService.bumpTokenVersion(admin.id)
+  await createUserSession(event, { id: admin.id, role: admin.role })
 
   await operationLogService.addLog({
     userId: admin.id,
@@ -42,11 +45,12 @@ export default defineEventHandler(async (event: H3Event) => {
     detail: {
       patch: {
         username: body.username,
-        email: body.email
+        email: body.email,
+        passwordChanged: true
       }
     }
   })
 
-  const { passwordHash: _passwordHash, ...safe } = updated
+  const { passwordHash: _passwordHash, tokenVersion: _tokenVersion, ...safe } = updated
   return safe
 })

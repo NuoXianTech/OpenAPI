@@ -8,9 +8,7 @@ const {
   saving,
   errorMessage,
   canSubmit,
-  submit,
-  dismiss,
-  handleOpenChange
+  submit
 } = useAdminInitialProfile()
 </script>
 
@@ -18,11 +16,10 @@ const {
   <UModal
     :open="open"
     title="完善管理员账号"
-    description="可以继续使用默认账号，也可以现在改成你的用户名和邮箱。"
-    :dismissible="!saving"
-    :close="!saving"
+    description="确认用户名和邮箱，并设置新的管理员密码。"
+    :dismissible="false"
+    :close="false"
     :ui="adminModalUi({ content: 'sm:max-w-md' })"
-    @update:open="handleOpenChange"
   >
     <template #body>
       <form
@@ -54,6 +51,31 @@ const {
           />
         </UFormField>
 
+        <UFormField
+          label="新密码"
+          required
+          help="至少 8 位"
+        >
+          <UInput
+            v-model="form.password"
+            type="password"
+            icon="i-mdi-lock-outline"
+            autocomplete="new-password"
+          />
+        </UFormField>
+
+        <UFormField
+          label="确认密码"
+          required
+        >
+          <UInput
+            v-model="form.confirmPassword"
+            type="password"
+            icon="i-mdi-lock-check-outline"
+            autocomplete="new-password"
+          />
+        </UFormField>
+
         <UAlert
           v-if="errorMessage"
           color="error"
@@ -66,14 +88,6 @@ const {
 
     <template #footer>
       <div class="flex w-full justify-end gap-2">
-        <UButton
-          color="neutral"
-          variant="outline"
-          :disabled="saving"
-          @click="dismiss"
-        >
-          保持默认
-        </UButton>
         <UButton
           color="primary"
           icon="i-mdi-check"
