@@ -57,7 +57,7 @@ export const siteSettings = pgTable('site_settings', {
   termsUrl: varchar('terms_url', { length: 1000 }),
   privacyUrl: varchar('privacy_url', { length: 1000 }),
 
-  // SMTP（保留兼容）
+  // SMTP
   smtpHost: varchar('smtp_host', { length: 255 }).notNull().default('smtp.example.com'),
   smtpPort: integer('smtp_port').notNull().default(465),
   smtpSecure: boolean('smtp_secure').notNull().default(true),

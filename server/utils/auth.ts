@@ -13,8 +13,6 @@ interface AuthUserPayload {
   role?: 'user' | 'admin'
 }
 
-export const SYSTEM_ACTOR_ID = null
-
 // util.promisify 只识别 scrypt(password, salt, keylen, cb) 这一个 overload，
 // 想传 options 必须断言成带 options 的签名。
 const scrypt = promisify(scryptCallback) as (
@@ -29,8 +27,7 @@ const AUTH_COOKIE_NAME = 'app_token'
 const SALT_BYTES = 16
 const KEY_LENGTH = 64
 
-// 当前默认 scrypt 参数；调整这里相当于升级新注册用户的强度，
-// 历史哈希仍按其落库时的参数校验（见 verifyPassword）。
+// 当前默认 scrypt 参数；调整这里相当于升级新注册用户的强度。
 const SCRYPT_DEFAULTS = { N: 16384, r: 8, p: 1 } as const
 
 function getCravatarUrl(email: string | null | undefined) {
@@ -88,33 +85,17 @@ export async function hashPassword(password: string) {
 
 export async function verifyPassword(stored: string, password: string) {
   const parts = stored.split('$')
-  if (parts[0] !== 'scrypt') {
+  if (parts.length !== 4 || parts[0] !== 'scrypt') {
     return false
   }
 
-  let params: { N: number, r: number, p: number }
-  let saltPart: string
-  let hashPart: string
-
-  if (parts.length === 4) {
-    // 新格式：scrypt$N=...,r=...,p=...$salt$hash
-    const parsed = parseScryptParams(parts[1] ?? '')
-    if (!parsed || !parts[2] || !parts[3]) return false
-    params = parsed
-    saltPart = parts[2]
-    hashPart = parts[3]
-  } else if (parts.length === 3) {
-    // 旧格式：scrypt$salt$hash，落库时未带参数，沿用 Node scrypt 默认（与 SCRYPT_DEFAULTS 一致）
-    if (!parts[1] || !parts[2]) return false
-    params = SCRYPT_DEFAULTS
-    saltPart = parts[1]
-    hashPart = parts[2]
-  } else {
+  const params = parseScryptParams(parts[1] ?? '')
+  if (!params || !parts[2] || !parts[3]) {
     return false
   }
 
-  const salt = base64UrlDecode(saltPart)
-  const hash = base64UrlDecode(hashPart)
+  const salt = base64UrlDecode(parts[2])
+  const hash = base64UrlDecode(parts[3])
   const derived = await scrypt(password, salt, hash.length, scryptOptions(params)) as Buffer
   return hash.length === derived.length && timingSafeEqual(hash, derived)
 }

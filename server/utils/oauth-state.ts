@@ -65,26 +65,19 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
   }
 
   const parts = cookie.split('.')
-  // 兼容旧格式（4 段）与新格式（5 段，多 mode）
-  if (parts.length !== 4 && parts.length !== 5) {
+  if (parts.length !== 5) {
     return null
   }
 
-  const nonce = parts[0]
-  const cookieProvider = parts[1]
-  const returnToEncoded = parts[2]
-  const modeOrSig = parts[3]
-  const sig = parts.length === 5 ? parts[4] : modeOrSig
-  const cookieMode: OauthFlowMode = parts.length === 5 && (modeOrSig === 'bind' || modeOrSig === 'login')
-    ? modeOrSig
-    : 'login'
+  const [nonce, cookieProvider, returnToEncoded, cookieMode, sig] = parts
   if (!nonce || !cookieProvider || !returnToEncoded || !sig) {
     return null
   }
+  if (cookieMode !== 'bind' && cookieMode !== 'login') {
+    return null
+  }
 
-  const expected = parts.length === 5
-    ? sign(`${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}`)
-    : sign(`${nonce}.${cookieProvider}.${returnToEncoded}`)
+  const expected = sign(`${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}`)
   const sigBuffer = Buffer.from(sig)
   const expectedBuffer = Buffer.from(expected)
   if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
