@@ -1,16 +1,10 @@
 import { z } from 'zod'
 import {
-  apiKeyCidrSchema,
-  apiKeyCreateCountSchema,
-  apiKeyNameSchema,
-  apiKeyScopeSchema,
-  apiKeyTotalQuotaSchema,
-  nullableArraySchema
+  apiKeyCreateFields,
+  apiKeyUpdateFields,
+  hasApiKeyUpdateField
 } from './api-key'
-import {
-  displayNameSchema,
-  optionalDate
-} from './common'
+import { displayNameSchema } from './common'
 import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from '#shared/schemas/validation'
 
 // Profile
@@ -35,29 +29,14 @@ export const userRequestEmailChangeSchema = z.object({
 
 // API keys
 export const userCreateApiKeySchema = z.object({
-  name: apiKeyNameSchema.optional(),
-  expiresAt: optionalDate,
-  totalQuota: apiKeyTotalQuotaSchema,
-  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
-  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
-  count: apiKeyCreateCountSchema
+  ...apiKeyCreateFields
 })
 
 export const userUpdateApiKeySchema = z.object({
   id: positiveInt('API Key ID'),
-  name: apiKeyNameSchema.optional(),
-  expiresAt: optionalDate,
-  totalQuota: apiKeyTotalQuotaSchema,
-  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
-  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
-  isActive: z.boolean().optional()
+  ...apiKeyUpdateFields
 }).refine(
-  d => d.name !== undefined
-    || d.expiresAt !== undefined
-    || d.totalQuota !== undefined
-    || d.scopes !== undefined
-    || d.ipWhitelist !== undefined
-    || d.isActive !== undefined,
+  hasApiKeyUpdateField,
   { message: atLeastOneFieldMessage(), path: [] }
 )
 

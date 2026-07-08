@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { isCidr } from '#shared/utils/cidr'
 import { maxMessage, minMessage, requiredMessage } from '#shared/schemas/validation'
+import { optionalDate } from './common'
 
 export const apiKeyNameSchema = z.string().trim().max(80, maxMessage('名称', 80))
 
@@ -37,4 +38,38 @@ export function nullableArraySchema<T extends z.ZodTypeAny>(item: T, max: number
     },
     z.union([z.array(item).max(max), z.null()]).optional()
   )
+}
+
+export const apiKeyCreateFields = {
+  name: apiKeyNameSchema.optional(),
+  expiresAt: optionalDate,
+  totalQuota: apiKeyTotalQuotaSchema,
+  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
+  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
+  count: apiKeyCreateCountSchema
+}
+
+export const apiKeyUpdateFields = {
+  name: apiKeyNameSchema.optional(),
+  expiresAt: optionalDate,
+  totalQuota: apiKeyTotalQuotaSchema,
+  scopes: nullableArraySchema(apiKeyScopeSchema, 200),
+  ipWhitelist: nullableArraySchema(apiKeyCidrSchema, 200),
+  isActive: z.boolean().optional()
+}
+
+export function hasApiKeyUpdateField(input: {
+  name?: unknown
+  expiresAt?: unknown
+  totalQuota?: unknown
+  scopes?: unknown
+  ipWhitelist?: unknown
+  isActive?: unknown
+}) {
+  return input.name !== undefined
+    || input.expiresAt !== undefined
+    || input.totalQuota !== undefined
+    || input.scopes !== undefined
+    || input.ipWhitelist !== undefined
+    || input.isActive !== undefined
 }

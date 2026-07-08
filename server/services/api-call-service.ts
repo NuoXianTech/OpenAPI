@@ -4,7 +4,7 @@ import { getLocalDayStart } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 
-export interface AddCallInput {
+interface AddCallInput {
   apiId: number
   apiKeyId?: number | null
   apiKeyName?: string | null

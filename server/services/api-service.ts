@@ -51,7 +51,7 @@ async function loadApiStats() {
   return value
 }
 
-export interface ApiListFilters {
+interface ApiListFilters {
   keyword?: string
   status?: number
   categoryId?: number

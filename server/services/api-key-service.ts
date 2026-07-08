@@ -49,9 +49,53 @@ function randomNameSuffix() {
   return randomBytes(3).toString('hex')
 }
 
+function keyWhere(id: number, userId?: number) {
+  return userId === undefined
+    ? eq(apiKeys.id, id)
+    : and(eq(apiKeys.id, id), eq(apiKeys.userId, userId))
+}
+
+function activeKeyWhere(id: number, userId?: number) {
+  return userId === undefined
+    ? and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
+    : and(eq(apiKeys.id, id), eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt))
+}
+
+async function deleteKey(tx: typeof db, id: number, userId?: number) {
+  const rows = await tx.select().from(apiKeys)
+    .where(keyWhere(id, userId))
+    .limit(1)
+  const key = rows[0]
+  if (!key) return null
+
+  await tx.update(apiCalls)
+    .set({
+      apiKeyName: sql`coalesce(${apiCalls.apiKeyName}, ${key.name})`,
+      apiKeyId: null
+    })
+    .where(eq(apiCalls.apiKeyId, key.id))
+
+  const deleted = await tx.delete(apiKeys)
+    .where(eq(apiKeys.id, key.id))
+    .returning()
+  return firstRow(deleted)
+}
+
+async function resetKey(id: number, userId?: number) {
+  const nextKey = generateApiKey()
+  const res = await db.update(apiKeys)
+    .set({
+      apiKey: nextKey,
+      updatedAt: new Date()
+    })
+    .where(activeKeyWhere(id, userId))
+    .returning()
+  return firstRow(res)
+}
+
 /** 用户创建 API Key 的入参 */
 interface CreateApiKeyInput {
-  name: string
+  name?: string | null
   /** 过期时刻；null = 永不过期 */
   expiresAt?: Date | null
   /** Key 累计消耗积分上限；null = 无限 */
@@ -111,47 +155,11 @@ export const apiKeyService = {
   },
 
   async deleteForUser(userId: number, id: number) {
-    return db.transaction(async (tx: typeof db) => {
-      const rows = await tx.select().from(apiKeys)
-        .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id)))
-        .limit(1)
-      const key = rows[0]
-      if (!key) return null
-
-      await tx.update(apiCalls)
-        .set({
-          apiKeyName: sql`coalesce(${apiCalls.apiKeyName}, ${key.name})`,
-          apiKeyId: null
-        })
-        .where(eq(apiCalls.apiKeyId, key.id))
-
-      const deleted = await tx.delete(apiKeys)
-        .where(eq(apiKeys.id, key.id))
-        .returning()
-      return firstRow(deleted)
-    })
+    return db.transaction((tx: typeof db) => deleteKey(tx, id, userId))
   },
 
   async deleteById(id: number) {
-    return db.transaction(async (tx: typeof db) => {
-      const rows = await tx.select().from(apiKeys)
-        .where(eq(apiKeys.id, id))
-        .limit(1)
-      const key = rows[0]
-      if (!key) return null
-
-      await tx.update(apiCalls)
-        .set({
-          apiKeyName: sql`coalesce(${apiCalls.apiKeyName}, ${key.name})`,
-          apiKeyId: null
-        })
-        .where(eq(apiCalls.apiKeyId, key.id))
-
-      const deleted = await tx.delete(apiKeys)
-        .where(eq(apiKeys.id, key.id))
-        .returning()
-      return firstRow(deleted)
-    })
+    return db.transaction((tx: typeof db) => deleteKey(tx, id))
   },
 
   /**
@@ -180,39 +188,20 @@ export const apiKeyService = {
     if (patch.isActive !== undefined) set.isActive = patch.isActive
 
     if (Object.keys(set).length === 0) {
-      const where = opts.userId !== undefined
-        ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
-        : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
-      const cur = await db.select().from(apiKeys).where(where).limit(1)
+      const cur = await db.select().from(apiKeys).where(activeKeyWhere(id, opts.userId)).limit(1)
       return firstRow(cur)
     }
 
-    const where = opts.userId !== undefined
-      ? and(eq(apiKeys.id, id), eq(apiKeys.userId, opts.userId), isNull(apiKeys.revokedAt))
-      : and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
-    const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(where).returning()
+    const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(activeKeyWhere(id, opts.userId)).returning()
     return firstRow(res)
   },
 
   async resetForUser(userId: number, id: number) {
-    const nextKey = generateApiKey()
-    const res = await db.update(apiKeys)
-      .set({ apiKey: nextKey, updatedAt: new Date() })
-      .where(and(eq(apiKeys.userId, userId), eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
-      .returning()
-    return firstRow(res)
+    return resetKey(id, userId)
   },
 
-  async resetById(id: number) {
-    const nextKey = generateApiKey()
-    const res = await db.update(apiKeys)
-      .set({
-        apiKey: nextKey,
-        updatedAt: new Date()
-      })
-      .where(and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt)))
-      .returning()
-    return firstRow(res)
+  async resetById(id: number, userId?: number) {
+    return resetKey(id, userId)
   },
 
   /**

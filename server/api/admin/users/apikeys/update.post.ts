@@ -9,15 +9,9 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
   const input = await readZodBody(event, adminUpdateUserApiKeySchema)
+  const { id, ...patch } = input
 
-  const updated = await apiKeyService.updateConfig(input.id, {
-    name: input.name,
-    expiresAt: input.expiresAt,
-    totalQuota: input.totalQuota,
-    scopes: input.scopes,
-    ipWhitelist: input.ipWhitelist,
-    isActive: input.isActive
-  })
+  const updated = await apiKeyService.updateConfig(id, patch)
 
   if (!updated) {
     throw createError({ statusCode: 404, message: 'API Key 不存在' })
@@ -29,16 +23,7 @@ export default defineEventHandler(async (event: H3Event) => {
     action: 'admin.api-key.update',
     resourceType: 'api-key',
     resourceId: String(updated.id),
-    detail: {
-      patch: {
-        name: input.name,
-        expiresAt: input.expiresAt,
-        totalQuota: input.totalQuota,
-        scopes: input.scopes,
-        ipWhitelist: input.ipWhitelist,
-        isActive: input.isActive
-      }
-    }
+    detail: { patch }
   })
 
   return updated
