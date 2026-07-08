@@ -12,17 +12,17 @@ const code = ref('')
 const redeeming = ref(false)
 
 async function submit() {
-  const v = code.value.trim().toUpperCase()
-  if (!v) {
+  const value = code.value.trim().toUpperCase()
+  if (!value) {
     toast.add({ title: '请输入兑换码', color: 'warning' })
     return
   }
   redeeming.value = true
   try {
-    await props.onRedeem(v)
+    await props.onRedeem(value)
     code.value = ''
-  } catch (err) {
-    toast.add({ title: parseFetchError(err, '兑换失败'), color: 'error' })
+  } catch (error) {
+    toast.add({ title: parseFetchError(error, '兑换失败'), color: 'error' })
   } finally {
     redeeming.value = false
   }
@@ -77,15 +77,15 @@ async function submit() {
       </div>
       <div class="flex flex-wrap gap-2">
         <div
-          v-for="r in records"
-          :key="r.id"
+          v-for="record in records"
+          :key="record.id"
           class="inline-flex items-center gap-2 rounded-full border border-default bg-elevated/30 px-3 py-1 text-xs"
         >
-          <span class="font-mono text-muted">{{ r.code || `#${r.codeId}` }}</span>
+          <span class="font-mono text-muted">{{ record.code || `#${record.codeId}` }}</span>
           <span class="font-semibold text-success tabular-nums">
-            +{{ r.amount.toLocaleString() }}
+            +{{ record.amount.toLocaleString() }}
           </span>
-          <span class="text-muted">{{ formatDateTime(r.redeemedAt) }}</span>
+          <span class="text-muted">{{ formatDateTime(record.redeemedAt) }}</span>
         </div>
       </div>
     </div>

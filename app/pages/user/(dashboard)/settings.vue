@@ -5,7 +5,9 @@ import { userSettingsSection } from '~/constants/dashboard-sections'
 <template>
   <DashboardSectionShell v-bind="userSettingsSection">
     <template #right>
-      <UserHeaderActions />
+      <DashboardHeaderActions>
+        <CommonNotificationBell />
+      </DashboardHeaderActions>
     </template>
   </DashboardSectionShell>
 </template>

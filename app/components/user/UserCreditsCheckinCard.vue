@@ -38,28 +38,28 @@ const remainingText = computed(() => {
   const ms = remainingMs.value
   if (ms <= 0) return '现在可签到'
   const total = Math.ceil(ms / 1000)
-  const d = Math.floor(total / 86400)
-  const h = Math.floor((total % 86400) / 3600)
-  const m = Math.floor((total % 3600) / 60)
-  const s = total % 60
-  if (d > 0) return `${d} 天 ${h} 小时 ${m} 分 ${s} 秒`
-  if (h > 0) return `${h} 小时 ${m} 分 ${s} 秒`
-  if (m > 0) return `${m} 分 ${s} 秒`
-  return `${s} 秒`
+  const days = Math.floor(total / 86400)
+  const hours = Math.floor((total % 86400) / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const seconds = total % 60
+  if (days > 0) return `${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`
+  if (hours > 0) return `${hours} 小时 ${minutes} 分 ${seconds} 秒`
+  if (minutes > 0) return `${minutes} 分 ${seconds} 秒`
+  return `${seconds} 秒`
 })
 
 const amountText = computed(() => {
-  const s = props.status
-  if (!s) return ''
-  if (s.mode === 'range') return `${s.amountMin} ~ ${s.amountMax} 积分`
-  return `${s.amountFixed} 积分`
+  const status = props.status
+  if (!status) return ''
+  if (status.mode === 'range') return `${status.amountMin} ~ ${status.amountMax} 积分`
+  return `${status.amountFixed} 积分`
 })
 
 const cooldownText = computed(() => {
-  const s = props.status
-  if (!s) return ''
-  if (s.cooldownMode === 'fixed_time') return `每日 ${s.fixedRefreshTime} 刷新`
-  return `每 ${s.refreshHours} 小时刷新`
+  const status = props.status
+  if (!status) return ''
+  if (status.cooldownMode === 'fixed_time') return `每日 ${status.fixedRefreshTime} 刷新`
+  return `每 ${status.refreshHours} 小时刷新`
 })
 
 const canCheckin = computed(() => {
@@ -69,7 +69,6 @@ const canCheckin = computed(() => {
 })
 
 const turnstileRequired = computed(() => {
-  // status 与公开 turnstile 配置任意一方说明需要，就需要
   if (props.status?.requiresTurnstile) return true
   return turnstile.value.enabled && turnstile.value.checkin
 })
@@ -99,8 +98,8 @@ async function doCheckin(token?: string) {
   try {
     await props.onCheckin(token)
     closeModal()
-  } catch (err) {
-    toast.add({ title: parseFetchError(err, '签到失败'), color: 'error' })
+  } catch (error) {
+    toast.add({ title: parseFetchError(error, '签到失败'), color: 'error' })
     turnstileWidget.value?.reset()
     turnstileToken.value = ''
   }
@@ -115,7 +114,6 @@ async function onClickCheckin() {
   await doCheckin()
 }
 
-// Turnstile 通过后自动签到 + 关闭弹窗
 async function onTurnstileVerified(token: string) {
   if (verifying.value || props.submitting) return
   turnstileError.value = ''

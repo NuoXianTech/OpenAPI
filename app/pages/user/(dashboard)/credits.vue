@@ -5,7 +5,9 @@ import { userCreditsSection } from '~/constants/dashboard-sections'
 <template>
   <DashboardSectionShell v-bind="userCreditsSection">
     <template #right>
-      <UserHeaderActions />
+      <DashboardHeaderActions>
+        <CommonNotificationBell />
+      </DashboardHeaderActions>
     </template>
   </DashboardSectionShell>
 </template>

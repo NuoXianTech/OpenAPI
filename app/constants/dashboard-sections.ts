@@ -9,7 +9,6 @@ interface DashboardSectionConfig {
 export const ADMIN_OVERVIEW_PATH = '/admin/overview'
 export const ADMIN_ANALYTICS_PATH = '/admin/analytics'
 export const ADMIN_LOGS_PATH = '/admin/logs'
-export const ADMIN_API_LOGS_PATH = `${ADMIN_LOGS_PATH}/api`
 export const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
 export const ADMIN_CREDIT_LOGS_PATH = `${ADMIN_LOGS_PATH}/credits`
 export const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
@@ -38,7 +37,7 @@ const adminApisLinks: NavigationMenuItem[] = [
 ]
 
 const adminLogsLinks: NavigationMenuItem[] = [
-  { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_API_LOGS_PATH },
+  { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH, exact: true },
   { label: '登录日志', icon: 'i-mdi-login-variant', to: ADMIN_LOGIN_LOGS_PATH },
   { label: '积分日志', icon: 'i-mdi-cash-multiple', to: ADMIN_CREDIT_LOGS_PATH },
   { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: ADMIN_OPERATION_LOGS_PATH }
@@ -54,6 +53,7 @@ const adminSystemLinks: NavigationMenuItem[] = [
 
 const userCreditsLinks: NavigationMenuItem[] = [
   { label: '概览', icon: 'i-mdi-wallet-outline', to: USER_CREDITS_PATH, exact: true },
+  { label: '签到兑换', icon: 'i-mdi-calendar-check-outline', to: USER_CREDITS_REWARDS_PATH },
   { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/logs` }
 ]
 

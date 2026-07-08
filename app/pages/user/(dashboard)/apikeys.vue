@@ -329,10 +329,12 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UserHeaderActions
+          <DashboardHeaderActions
             :on-refresh="refresh"
             :refreshing="loading"
-          />
+          >
+            <CommonNotificationBell />
+          </DashboardHeaderActions>
         </template>
       </UDashboardNavbar>
     </template>

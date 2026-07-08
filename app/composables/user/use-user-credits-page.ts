@@ -134,7 +134,6 @@ export function useUserCreditsPage() {
         description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
         color: 'success'
       })
-      // 签到后只刷新本 tab 的签到状态；余额/流水分属其它 tab，重新进入时各自挂载首拉。
       await fetchCheckinStatus()
       return res
     } finally {
@@ -152,7 +151,6 @@ export function useUserCreditsPage() {
       description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
       color: 'success'
     })
-    // 兑换后只刷新本 tab 的兑换记录；余额/流水分属其它 tab，重新进入时各自挂载首拉。
     await fetchRedeemRecords()
     return res
   }
@@ -173,7 +171,7 @@ export function useUserCreditsPage() {
     fetchTransactions: txns.refresh,
     applyFilters: txns.applyFilters,
     resetFilters: txns.reset,
-    // 奖励与兑换页
+    // 签到兑换 tab
     checkin,
     checkinLoading,
     isCheckingIn,
