@@ -129,9 +129,7 @@ async function copyCurl() {
           <DashboardHeaderActions
             :on-refresh="refresh"
             :refreshing="loading"
-          >
-            <CommonNotificationBell />
-          </DashboardHeaderActions>
+          />
         </template>
       </UDashboardNavbar>
     </template>

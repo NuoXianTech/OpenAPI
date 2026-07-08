@@ -3,7 +3,7 @@ import { parseFetchError } from '~/utils/client-error'
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
-export interface RedemptionCode {
+interface RedemptionCode {
   id: number
   code: string
   amount: number
@@ -26,7 +26,7 @@ export interface BatchSummary {
   createdAt: string
 }
 
-export type RedemptionStatus = 'all' | 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available'
+type RedemptionStatus = 'all' | 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available'
 
 export interface GenerateResult {
   batchId: string

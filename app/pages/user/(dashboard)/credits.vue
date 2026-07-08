@@ -3,11 +3,5 @@ import { userCreditsSection } from '~/constants/dashboard-sections'
 </script>
 
 <template>
-  <DashboardSectionShell v-bind="userCreditsSection">
-    <template #right>
-      <DashboardHeaderActions>
-        <CommonNotificationBell />
-      </DashboardHeaderActions>
-    </template>
-  </DashboardSectionShell>
+  <DashboardSectionShell v-bind="userCreditsSection" />
 </template>

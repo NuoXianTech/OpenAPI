@@ -21,7 +21,7 @@ import {
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 
-export interface AdminCallLogsFilters {
+interface AdminCallLogsFilters {
   startAt: string
   endAt: string
   apiId: number

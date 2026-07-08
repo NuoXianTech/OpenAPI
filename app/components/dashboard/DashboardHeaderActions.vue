@@ -62,8 +62,7 @@ async function handleRefresh() {
       </template>
     </ClientOnly>
 
-    <!-- 角色专属头部操作（如 user 的站内信铃铛）由具体后台的 HeaderActions 注入 -->
-    <slot />
+    <CommonNotificationBell />
 
     <UDropdownMenu
       :items="userMenuItems"

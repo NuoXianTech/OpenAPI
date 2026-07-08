@@ -53,7 +53,7 @@ export interface CheckinStatus {
   requiresTurnstile: boolean
 }
 
-export interface CheckinResult {
+interface CheckinResult {
   amount: number
   balanceAfter: number
   checkedAt: string

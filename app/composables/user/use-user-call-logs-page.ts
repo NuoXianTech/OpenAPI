@@ -27,12 +27,12 @@ export interface UserCallLogRow {
   createdAt: string
 }
 
-export interface UserCallLogFilterOptions {
+interface UserCallLogFilterOptions {
   apis: Array<{ id: number, name: string, apiPath: string }>
   apiKeys: Array<{ id: number, name: string }>
 }
 
-export interface UserCallLogFilters {
+interface UserCallLogFilters {
   keyword: string
   apiId: number
   apiKeyId: number

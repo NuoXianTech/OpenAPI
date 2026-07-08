@@ -100,9 +100,7 @@ function openDetail(row: UserCallLogRow) {
           <DashboardHeaderActions
             :on-refresh="refresh"
             :refreshing="loading"
-          >
-            <CommonNotificationBell />
-          </DashboardHeaderActions>
+          />
         </template>
       </UDashboardNavbar>
     </template>
