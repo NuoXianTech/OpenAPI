@@ -1,5 +1,5 @@
 {
-  "id": "8480d00f-5ca6-4fdf-bffe-957b8b8c0863",
+  "id": "fef17470-6ab9-42ea-bce4-18aa592a90de",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1476,6 +1476,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "username": {
+          "name": "username",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "method": {
           "name": "method",
           "type": "varchar(32)",
@@ -1528,6 +1534,21 @@
               "expression": "created_at",
               "isExpression": false,
               "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "login_logs_username_idx": {
+          "name": "login_logs_username_idx",
+          "columns": [
+            {
+              "expression": "username",
+              "isExpression": false,
+              "asc": true,
               "nulls": "last"
             }
           ],

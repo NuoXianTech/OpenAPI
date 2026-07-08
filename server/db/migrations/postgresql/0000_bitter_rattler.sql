@@ -146,6 +146,7 @@ CREATE TABLE "friend_links" (
 CREATE TABLE "login_logs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
+	"username" varchar(50) NOT NULL,
 	"method" varchar(32) NOT NULL,
 	"success" boolean NOT NULL,
 	"failure_reason" varchar(100),
@@ -361,6 +362,7 @@ CREATE UNIQUE INDEX "credit_transactions_api_call_reason_uq" ON "credit_transact
 CREATE UNIQUE INDEX "credit_transactions_redemption_user_uq" ON "credit_transactions" USING btree ("code_id","user_id") WHERE "credit_transactions"."reason" = 'redemption_code' AND "credit_transactions"."code_id" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "friend_links_active_idx" ON "friend_links" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX "login_logs_user_created_idx" ON "login_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "login_logs_username_idx" ON "login_logs" USING btree ("username");--> statement-breakpoint
 CREATE INDEX "login_logs_created_at_idx" ON "login_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "login_logs_method_idx" ON "login_logs" USING btree ("method");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint

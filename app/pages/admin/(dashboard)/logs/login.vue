@@ -142,7 +142,7 @@ const {
         </template>
         <template #user-cell="{ row }">
           <div class="flex flex-col text-xs">
-            <span class="font-medium">{{ row.original.username || '已删除用户' }}</span>
+            <span class="font-medium">{{ row.original.username }}</span>
             <span class="text-muted">#{{ row.original.userId }}</span>
           </div>
         </template>

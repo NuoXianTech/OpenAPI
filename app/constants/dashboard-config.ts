@@ -43,7 +43,7 @@ const userDashboardGroups: DashboardNavGroup[] = [
   {
     label: '常规',
     items: [
-      { label: '用户概览', icon: 'i-mdi-view-dashboard-outline', to: USER_OVERVIEW_PATH },
+      { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: USER_OVERVIEW_PATH },
       { label: 'API 密钥', icon: 'i-mdi-key-outline', to: USER_API_KEYS_PATH },
       { label: '使用日志', icon: 'i-mdi-history', to: USER_LOGS_PATH }
     ]
@@ -69,9 +69,9 @@ export const adminDashboardConfig: DashboardStaticConfig = {
     {
       label: '管理',
       items: [
-        { label: '管理概览', icon: 'i-mdi-shield-crown-outline', to: ADMIN_OVERVIEW_PATH },
+        { label: '概览', icon: 'i-mdi-shield-crown-outline', to: ADMIN_OVERVIEW_PATH },
         { label: '数据看板', icon: 'i-mdi-chart-box-outline', to: ADMIN_ANALYTICS_PATH },
-        { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
+        { label: '日志中心', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
       ]
     },
     {
@@ -94,7 +94,7 @@ export const adminDashboardConfig: DashboardStaticConfig = {
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ],
   userMenuExtra: () => [[
-    { label: '用户设置', icon: 'i-mdi-account-cog-outline', to: USER_SETTINGS_PATH },
+    { label: '个人设置', icon: 'i-mdi-account-cog-outline', to: USER_SETTINGS_PATH },
     { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
     { label: '返回前台', icon: 'i-mdi-arrow-left', to: '/' }
   ]],

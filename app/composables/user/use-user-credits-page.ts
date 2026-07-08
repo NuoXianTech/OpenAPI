@@ -173,7 +173,7 @@ export function useUserCreditsPage() {
     fetchTransactions: txns.refresh,
     applyFilters: txns.applyFilters,
     resetFilters: txns.reset,
-    // 签到兑换 tab
+    // 奖励与兑换页
     checkin,
     checkinLoading,
     isCheckingIn,

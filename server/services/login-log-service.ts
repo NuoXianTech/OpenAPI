@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
-import { loginLogs, users } from '@nuxthub/db/schema'
+import { loginLogs } from '@nuxthub/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
@@ -21,11 +21,11 @@ export type { LoginFailureReason, LoginMethod }
 /** login_logs 整行（list 返回的元素类型） */
 type LoginLogRecord = typeof loginLogs.$inferSelect
 
-/** listForAdmin 返回的元素：login_logs 行投影 + 用户名快照（leftJoin users） */
+/** listForAdmin 返回的元素：login_logs 行投影 + 用户名快照 */
 interface AdminLoginLogRecord {
   id: number
   userId: number
-  username: string | null
+  username: string
   method: string
   success: boolean
   failureReason: string | null
@@ -36,6 +36,7 @@ interface AdminLoginLogRecord {
 
 interface RecordLoginInput {
   userId: number
+  username: string
   method: LoginMethod
   success: boolean
   failureReason?: LoginFailureReason | null
@@ -71,6 +72,7 @@ export const loginLogService = {
     try {
       await db.insert(loginLogs).values({
         userId: input.userId,
+        username: input.username,
         method: input.method,
         success: input.success,
         failureReason: input.failureReason ?? null,
@@ -103,8 +105,7 @@ export const loginLogService = {
   },
 
   /**
-   * 管理后台登录日志列表：在 list 的筛选基础上 leftJoin users 取用户名快照，
-   * 便于管理员按用户名识别记录。userId 已是稳定整数，username 仅用于展示。
+   * 管理后台登录日志列表：username 为登录发生时的用户名快照，不使用 displayName。
    */
   async listForAdmin(filters: ListFilters = {}): Promise<{ items: AdminLoginLogRecord[], total: number }> {
     const conditions = buildConditions(filters)
@@ -114,7 +115,7 @@ export const loginLogService = {
     const baseSelect = db.select({
       id: loginLogs.id,
       userId: loginLogs.userId,
-      username: users.username,
+      username: loginLogs.username,
       method: loginLogs.method,
       success: loginLogs.success,
       failureReason: loginLogs.failureReason,
@@ -123,7 +124,6 @@ export const loginLogService = {
       createdAt: loginLogs.createdAt
     })
       .from(loginLogs)
-      .leftJoin(users, eq(users.id, loginLogs.userId))
 
     const countQuery = db.select({ value: count() }).from(loginLogs)
 

@@ -9,6 +9,10 @@ interface DashboardSectionConfig {
 export const ADMIN_OVERVIEW_PATH = '/admin/overview'
 export const ADMIN_ANALYTICS_PATH = '/admin/analytics'
 export const ADMIN_LOGS_PATH = '/admin/logs'
+export const ADMIN_API_LOGS_PATH = `${ADMIN_LOGS_PATH}/api`
+export const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
+export const ADMIN_CREDIT_LOGS_PATH = `${ADMIN_LOGS_PATH}/credits`
+export const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
 export const ADMIN_REDEMPTION_CODES_PATH = '/admin/redemption-codes'
 export const ADMIN_CONTENT_PATH = '/admin/content'
 export const ADMIN_APIS_PATH = '/admin/apis'
@@ -33,23 +37,22 @@ const adminApisLinks: NavigationMenuItem[] = [
   { label: '分类管理', icon: 'i-mdi-shape-outline', to: `${ADMIN_APIS_PATH}/categories` }
 ]
 
-const adminUsersLinks: NavigationMenuItem[] = [
-  { label: '用户管理', icon: 'i-mdi-account-group-outline', to: ADMIN_USERS_PATH, exact: true },
-  { label: '登录日志', icon: 'i-mdi-login-variant', to: `${ADMIN_USERS_PATH}/login-logs` },
-  { label: '积分日志', icon: 'i-mdi-cash-multiple', to: `${ADMIN_USERS_PATH}/credit-logs` }
+const adminLogsLinks: NavigationMenuItem[] = [
+  { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_API_LOGS_PATH },
+  { label: '登录日志', icon: 'i-mdi-login-variant', to: ADMIN_LOGIN_LOGS_PATH },
+  { label: '积分日志', icon: 'i-mdi-cash-multiple', to: ADMIN_CREDIT_LOGS_PATH },
+  { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: ADMIN_OPERATION_LOGS_PATH }
 ]
 
 const adminSystemLinks: NavigationMenuItem[] = [
   { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH, exact: true },
   { label: '用户会话', icon: 'i-mdi-account-clock-outline', to: `${ADMIN_SYSTEM_PATH}/user-session` },
   { label: '验证码', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/captcha` },
-  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
-  { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: `${ADMIN_SYSTEM_PATH}/operation-logs` }
+  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` }
 ]
 
 const userCreditsLinks: NavigationMenuItem[] = [
   { label: '概览', icon: 'i-mdi-wallet-outline', to: USER_CREDITS_PATH, exact: true },
-  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: USER_CREDITS_REWARDS_PATH },
   { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/logs` }
 ]
 
@@ -71,10 +74,10 @@ export const adminApisSection: DashboardSectionConfig = {
   items: adminApisLinks
 }
 
-export const adminUsersSection: DashboardSectionConfig = {
-  id: 'admin-users',
-  title: '用户中心',
-  items: adminUsersLinks
+export const adminLogsSection: DashboardSectionConfig = {
+  id: 'admin-logs',
+  title: '日志中心',
+  items: adminLogsLinks
 }
 
 export const adminSystemSection: DashboardSectionConfig = {

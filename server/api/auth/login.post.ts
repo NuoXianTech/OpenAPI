@@ -41,6 +41,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!ok) {
     await loginLogService.record({
       userId: user.id,
+      username: user.username,
       method: 'password',
       success: false,
       failureReason: 'invalid_password',
@@ -53,6 +54,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (user.isBanned && isBanActive(user)) {
     await loginLogService.record({
       userId: user.id,
+      username: user.username,
       method: 'password',
       success: false,
       failureReason: 'banned',
@@ -69,6 +71,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!user.isActive) {
     await loginLogService.record({
       userId: user.id,
+      username: user.username,
       method: 'password',
       success: false,
       failureReason: 'not_active',
@@ -86,6 +89,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await usersService.updateLastLogin(user.id, ip, userAgent)
   await loginLogService.record({
     userId: user.id,
+    username: user.username,
     method: 'password',
     success: true,
     ip,

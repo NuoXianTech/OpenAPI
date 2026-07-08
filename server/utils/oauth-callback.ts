@@ -129,7 +129,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         return redirectError(event, 'user_unavailable')
       }
       if (user.isBanned && isBanActive(user)) {
-        await loginLogService.record({ userId: user.id, method, success: false, failureReason: 'banned', ip, userAgent })
+        await loginLogService.record({ userId: user.id, username: user.username, method, success: false, failureReason: 'banned', ip, userAgent })
         return redirectError(event, 'user_unavailable')
       }
       if (user.isBanned) {
@@ -137,7 +137,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       }
       // 通过 OAuth 新注册但尚未完成邮箱验证的账号：绑定已建、账号仍未激活 → 拦住并提示去验证
       if (!user.isActive) {
-        await loginLogService.record({ userId: user.id, method, success: false, failureReason: 'not_active', ip, userAgent })
+        await loginLogService.record({ userId: user.id, username: user.username, method, success: false, failureReason: 'not_active', ip, userAgent })
         return redirectError(event, 'account_inactive')
       }
       await oauthAccountService.upsertAccount({
@@ -151,7 +151,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       })
       await createUserSession(event, { id: user.id, role: user.role })
       await usersService.updateLastLogin(user.id, ip || '0.0.0.0', userAgent)
-      await loginLogService.record({ userId: user.id, method, success: true, ip, userAgent })
+      await loginLogService.record({ userId: user.id, username: user.username, method, success: true, ip, userAgent })
       return sendRedirect(event, consumed.returnTo || '/', 302)
     }
 

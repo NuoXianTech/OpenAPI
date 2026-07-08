@@ -53,8 +53,8 @@ export const adminLogsService = {
   /**
    * 调用日志列表 · 单表查询 api_calls。
    *
-   * 数据源仅 api_calls：积分流水请走 /admin/users/credit-logs，
-   * 管理 / 系统操作请走 /admin/system/operation-logs。
+   * 数据源仅 api_calls：积分流水请走 /admin/logs/credits，
+   * 管理 / 系统操作请走 /admin/logs/operations。
    */
   async listLogs(input: ListLogsInput = {}): Promise<AdminLogsListResponse> {
     const { limit, offset } = normalizePagination(input)

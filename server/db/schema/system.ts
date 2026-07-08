@@ -147,6 +147,7 @@ export const operationLogs = pgTable('operation_logs', {
 //
 // 对应需求 #7：仅记录已识别用户的登录尝试（成功 + 失败），userId NOT NULL +
 // cascade，用户硬删时这部分历史一并清除。
+// username 是登录发生时的用户名快照，不使用 displayName，便于审计追踪。
 // method:    password / oauth_github / oauth_qq
 // success:   true=登录成功 / false=失败（密码错误、被封禁、未激活等）
 // failureReason: 失败时填写（如 invalid_password / banned / not_active）
@@ -154,6 +155,7 @@ export const operationLogs = pgTable('operation_logs', {
 export const loginLogs = pgTable('login_logs', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  username: varchar('username', { length: 50 }).notNull(),
   method: varchar('method', { length: 32 }).notNull(),
   success: boolean('success').notNull(),
   failureReason: varchar('failure_reason', { length: 100 }),
@@ -162,6 +164,7 @@ export const loginLogs = pgTable('login_logs', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('login_logs_user_created_idx').on(table.userId, table.createdAt.desc()),
+  index('login_logs_username_idx').on(table.username),
   index('login_logs_created_at_idx').on(table.createdAt.desc()),
   index('login_logs_method_idx').on(table.method)
 ])

@@ -31,7 +31,8 @@ export interface LoginLogRow {
 /** 管理后台登录日志行 = 用户端行 + 用户标识 */
 export interface AdminLoginLogRow extends LoginLogRow {
   userId: number
-  username: string | null
+  /** 登录发生时的 username 快照，不使用 displayName */
+  username: string
 }
 
 export type LoginLogBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
