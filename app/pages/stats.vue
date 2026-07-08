@@ -38,97 +38,103 @@ const {
 <template>
   <UPage class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
     <section class="stats-hero">
-      <div class="relative p-5 sm:p-7 lg:p-8">
-        <div class="stats-hero__topbar">
-          <div class="flex min-w-0 flex-wrap items-center gap-2">
-            <UBadge
-              v-if="generatedAtLabel"
-              color="neutral"
-              variant="soft"
-              size="sm"
-              icon="i-mdi-clock-outline"
-              class="rounded-md px-2.5 py-1 text-[11px]"
-            >
-              {{ generatedAtLabel }}
-            </UBadge>
-          </div>
+      <div
+        class="stats-hero__pattern"
+        aria-hidden="true"
+      />
 
-          <div class="stats-hero__actions">
-            <UButton
-              icon="i-mdi-refresh"
-              variant="outline"
-              color="neutral"
-              size="sm"
-              :loading="isPending"
-              @click="reloadStats"
-            >
-              刷新
-            </UButton>
-            <UButton
-              icon="i-mdi-home-outline"
-              variant="outline"
-              color="neutral"
-              size="sm"
-              to="/"
-            >
-              返回首页
-            </UButton>
-          </div>
-        </div>
-
-        <div class="mt-6 grid gap-7 lg:grid-cols-[1.08fr_0.92fr] lg:items-end lg:gap-10">
-          <div>
+      <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+        <div class="stats-hero__layout">
+          <div class="stats-hero__copy">
             <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
               公共调用统计
             </h1>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
               实时聚合公开 API 的调用规模、请求质量和热门接口，方便快速判断服务活跃度与稳定性。
             </p>
+            <div
+              v-if="generatedAtLabel"
+              class="stats-hero__meta"
+            >
+              <span class="inline-flex items-center gap-1.5">
+                <UIcon
+                  name="i-mdi-clock-outline"
+                  class="size-3.5"
+                />
+                <span class="font-mono text-default/85">{{ generatedAtLabel }}</span>
+              </span>
+            </div>
           </div>
 
-          <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
-            <template v-if="isInitialLoading">
-              <CommonHeroStatCard
-                v-for="n in 3"
-                :key="n"
-                loading
-              />
-            </template>
-
-            <template v-else>
-              <CommonHeroStatCard
-                icon="i-mdi-counter"
-                icon-tone="primary"
-                :value-title="overview ? formatCount(overview.totalCalls) : undefined"
+          <div class="stats-hero__aside">
+            <div class="stats-hero__actions">
+              <UButton
+                icon="i-mdi-refresh"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                class="stats-hero__nav-item"
+                :loading="isPending"
+                @click="reloadStats"
               >
-                <template #value>
-                  {{ overview ? formatCompact(overview.totalCalls) : '--' }}
-                </template>
-                累计调用
-              </CommonHeroStatCard>
-
-              <CommonHeroStatCard
-                icon="i-mdi-check-decagram-outline"
-                icon-tone="success"
+                刷新
+              </UButton>
+              <UButton
+                icon="i-mdi-home-outline"
+                variant="ghost"
+                color="neutral"
+                size="sm"
+                to="/"
+                class="stats-hero__nav-item"
               >
-                <template #value>
-                  {{ overview ? formatRate(overview.successRate) : '--' }}
-                </template>
-                请求成功率
-              </CommonHeroStatCard>
+                返回首页
+              </UButton>
+            </div>
 
-              <CommonHeroStatCard
-                icon="i-mdi-trophy-outline"
-                icon-tone="info"
-                :value-title="topApi?.name"
-                :label-title="topApi?.name"
-              >
-                <template #value>
-                  {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
-                </template>
-                {{ topApi?.name || '近 30 日热门接口' }}
-              </CommonHeroStatCard>
-            </template>
+            <div class="stats-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
+              <template v-if="isInitialLoading">
+                <CommonHeroStatCard
+                  v-for="n in 3"
+                  :key="n"
+                  loading
+                />
+              </template>
+
+              <template v-else>
+                <CommonHeroStatCard
+                  icon="i-mdi-counter"
+                  icon-tone="primary"
+                  :value-title="overview ? formatCount(overview.totalCalls) : undefined"
+                >
+                  <template #value>
+                    {{ overview ? formatCompact(overview.totalCalls) : '--' }}
+                  </template>
+                  累计调用
+                </CommonHeroStatCard>
+
+                <CommonHeroStatCard
+                  icon="i-mdi-check-decagram-outline"
+                  icon-tone="success"
+                >
+                  <template #value>
+                    {{ overview ? formatRate(overview.successRate) : '--' }}
+                  </template>
+                  请求成功率
+                </CommonHeroStatCard>
+
+                <CommonHeroStatCard
+                  icon="i-mdi-trophy-outline"
+                  icon-tone="info"
+                  :value-title="topApi?.name"
+                  :label-title="topApi?.name"
+                >
+                  <template #value>
+                    {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
+                  </template>
+                  {{ topApi?.name || '近 30 日热门接口' }}
+                </CommonHeroStatCard>
+              </template>
+            </div>
           </div>
         </div>
       </div>
@@ -355,20 +361,84 @@ const {
       color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 10%) 100%);
 }
 
-.stats-hero__topbar {
+.stats-hero__pattern {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+  background-size: 18px 18px;
+  color: var(--ui-text);
+  opacity: 0.045;
+  mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  pointer-events: none;
+}
+
+.stats-hero__layout {
+  display: grid;
+  grid-template-areas:
+    "copy"
+    "aside";
+  gap: 16px;
+}
+
+.stats-hero__copy {
+  grid-area: copy;
+  min-width: 0;
   display: flex;
+  flex-direction: column;
+}
+
+.stats-hero__meta {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ui-text-muted);
+}
+
+.stats-hero__aside {
+  grid-area: aside;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .stats-hero__actions {
-  margin-left: auto;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.stats-hero__stats {
+  min-width: 0;
+}
+
+.stats-hero__stats :deep(.hero-stat-card) {
+  padding: 10px 10px 11px;
+}
+
+.stats-hero__stats :deep(.hero-stat-card__icon) {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 3px;
+}
+
+.stats-hero__stats :deep(.hero-stat-card__value) {
+  font-size: 20px;
+}
+
+.stats-hero__nav-item {
+  color: var(--ui-text-muted);
 }
 
 .stats-panel {
@@ -419,15 +489,28 @@ const {
   background: var(--ui-primary);
 }
 
-@media (max-width: 640px) {
-  .stats-hero__topbar {
-    align-items: flex-start;
-    flex-direction: column;
+@media (min-width: 1024px) {
+  .stats-hero__layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    grid-template-areas: "copy aside";
+    gap: 36px;
+    align-items: stretch;
   }
 
   .stats-hero__actions {
+    justify-content: flex-end;
+    align-self: flex-end;
+  }
+
+  .stats-hero__meta {
+    margin-top: auto;
+    padding-top: 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-hero__actions {
     justify-content: flex-start;
-    margin-left: 0;
     width: 100%;
   }
 }

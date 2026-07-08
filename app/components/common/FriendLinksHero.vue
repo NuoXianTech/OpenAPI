@@ -23,47 +23,9 @@ const ratio = computed(() => {
       aria-hidden="true"
     />
 
-    <div class="relative p-5 sm:p-7 lg:p-8">
-      <div class="links-hero__topbar">
-        <UBadge
-          color="neutral"
-          variant="outline"
-          size="sm"
-          icon="i-mdi-link-variant"
-          class="w-fit rounded-md px-2.5 py-1 text-[11px]"
-        >
-          Friend Links
-        </UBadge>
-
-        <div
-          class="links-hero__nav"
-          aria-label="友情链接导航"
-        >
-          <UButton
-            to="/"
-            icon="i-mdi-home-outline"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="links-hero__nav-item"
-          >
-            API 首页
-          </UButton>
-          <UButton
-            to="/stats"
-            icon="i-mdi-chart-bar"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            class="links-hero__nav-item"
-          >
-            调用统计
-          </UButton>
-        </div>
-      </div>
-
-      <div class="mt-6 grid gap-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:gap-10">
-        <div class="flex flex-col">
+    <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+      <div class="links-hero__layout">
+        <div class="links-hero__copy">
           <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
             友情链接
           </h1>
@@ -72,36 +34,54 @@ const ratio = computed(() => {
           </p>
         </div>
 
-        <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-          <CommonHeroStatCard
-            icon="i-mdi-bookmark-outline"
-            icon-tone="info"
+        <div class="links-hero__aside">
+          <div
+            class="links-hero__actions"
+            aria-label="友情链接导航"
           >
-            <template #value>
-              {{ totalCount }}
-            </template>
-            收录数
-          </CommonHeroStatCard>
+            <UButton
+              to="/"
+              icon="i-mdi-home-outline"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="links-hero__nav-item"
+            >
+              返回首页
+            </UButton>
+          </div>
 
-          <CommonHeroStatCard
-            icon="i-mdi-check-circle-outline"
-            icon-tone="success"
-          >
-            <template #value>
-              {{ ratio }}<span class="text-base text-muted">%</span>
-            </template>
-            可达率
-          </CommonHeroStatCard>
+          <div class="links-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
+            <CommonHeroStatCard
+              icon="i-mdi-bookmark-outline"
+              icon-tone="info"
+            >
+              <template #value>
+                {{ totalCount }}
+              </template>
+              收录数
+            </CommonHeroStatCard>
 
-          <CommonHeroStatCard
-            icon="i-mdi-close-circle-outline"
-            icon-tone="error"
-          >
-            <template #value>
-              {{ inactiveCount }}
-            </template>
-            异常数
-          </CommonHeroStatCard>
+            <CommonHeroStatCard
+              icon="i-mdi-check-circle-outline"
+              icon-tone="success"
+            >
+              <template #value>
+                {{ ratio }}<span class="text-base text-muted">%</span>
+              </template>
+              可达率
+            </CommonHeroStatCard>
+
+            <CommonHeroStatCard
+              icon="i-mdi-close-circle-outline"
+              icon-tone="error"
+            >
+              <template #value>
+                {{ inactiveCount }}
+              </template>
+              异常数
+            </CommonHeroStatCard>
+          </div>
         </div>
       </div>
     </div>
@@ -143,18 +123,34 @@ const ratio = computed(() => {
   pointer-events: none;
 }
 
-.links-hero__topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+.links-hero__layout {
+  display: grid;
+  grid-template-areas:
+    "copy"
+    "aside";
+  gap: 16px;
 }
 
-.links-hero__nav {
-  margin-left: auto;
+.links-hero__copy {
+  grid-area: copy;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.links-hero__aside {
+  grid-area: aside;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.links-hero__actions {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-start;
   gap: 4px;
   padding: 3px;
   border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
@@ -163,19 +159,45 @@ const ratio = computed(() => {
   backdrop-filter: blur(8px);
 }
 
+.links-hero__stats {
+  min-width: 0;
+}
+
+.links-hero__stats :deep(.hero-stat-card) {
+  padding: 10px 10px 11px;
+}
+
+.links-hero__stats :deep(.hero-stat-card__icon) {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 3px;
+}
+
+.links-hero__stats :deep(.hero-stat-card__value) {
+  font-size: 20px;
+}
+
 .links-hero__nav-item {
   color: var(--ui-text-muted);
 }
 
-@media (max-width: 640px) {
-  .links-hero__topbar {
-    align-items: flex-start;
-    flex-direction: column;
+@media (min-width: 1024px) {
+  .links-hero__layout {
+    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+    grid-template-areas: "copy aside";
+    gap: 36px;
+    align-items: stretch;
   }
 
-  .links-hero__nav {
+  .links-hero__actions {
+    justify-content: flex-end;
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 640px) {
+  .links-hero__actions {
     justify-content: flex-start;
-    margin-left: 0;
     width: 100%;
   }
 }
