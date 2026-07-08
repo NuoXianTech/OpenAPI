@@ -20,6 +20,9 @@ type InputExpose = {
 }
 
 const inputComp = ref<InputExpose | null>(null)
+const searchInputUi = {
+  base: 'focus-visible:outline-none focus-visible:ring-accented'
+}
 
 const getInputElement = () => {
   const inputRef = inputComp.value?.inputRef
@@ -63,6 +66,7 @@ defineShortcuts({
     color="neutral"
     variant="outline"
     class="w-full"
+    :ui="searchInputUi"
     autocomplete="off"
     @update:model-value="handleInput"
     @keydown="onKeydown"
