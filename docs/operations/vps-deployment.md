@@ -44,9 +44,8 @@ DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 NUXT_AUTH_ADMIN_USERNAME=admin
 NUXT_AUTH_ADMIN_PASSWORD=change-me
 NUXT_AUTH_ADMIN_EMAIL=admin@example.com
-NUXT_AUTH_EMAIL_VERIFY_SECRET=change-me
+NUXT_AUTH_SECRET=change-me
 NUXT_AUTH_API_KEY_SECRET=change-me
-NUXT_AUTH_JWT_SECRET=change-me
 ```
 
 生产密钥可用以下命令生成：

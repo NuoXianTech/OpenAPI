@@ -17,9 +17,8 @@
 | `DATABASE_URL` | 必填 | PostgreSQL 连接串，生产必须指向稳定数据库实例 |
 | `NUXT_AUTH_ADMIN_USERNAME` | 必填 | 内置管理员用户名，来自运行时配置，不落库 |
 | `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 内置管理员密码，来自运行时配置；轮换时修改环境变量并重启进程 |
-| `NUXT_AUTH_JWT_SECRET` | 必填 | JWT HS256 签名密钥，缺失时鉴权应 fail-closed |
+| `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
 | `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 相关服务端密钥 |
-| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 必填 | 邮箱验证、一次性 token 或 OAuth state HMAC 密钥 |
 
 ## 推荐变量
 
@@ -38,13 +37,13 @@
 
 ## 密钥生成
 
-每个密钥单独生成，不要复用：
+每个密钥单独生成，不要和其他系统复用：
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-生产密钥最少 32 bytes 随机值。泄露后立即轮换，并观察登录、API Key 和邮箱验证相关异常。
+生产密钥最少 32 bytes 随机值。`NUXT_AUTH_SECRET` 泄露后立即轮换，并观察登录、邮箱验证与 OAuth 相关异常；`NUXT_AUTH_API_KEY_SECRET` 泄露后立即轮换，并评估 API Key 相关影响。
 
 ## PM2 示例
 
@@ -57,9 +56,8 @@ DATABASE_URL='postgresql://user:password@127.0.0.1:5432/openapi' \
 NUXT_AUTH_ADMIN_USERNAME='admin' \
 NUXT_AUTH_ADMIN_PASSWORD='change-me' \
 NUXT_AUTH_ADMIN_EMAIL='admin@example.com' \
-NUXT_AUTH_EMAIL_VERIFY_SECRET='replace-with-random-hex' \
+NUXT_AUTH_SECRET='replace-with-random-hex' \
 NUXT_AUTH_API_KEY_SECRET='replace-with-random-hex' \
-NUXT_AUTH_JWT_SECRET='replace-with-random-hex' \
 pm2 start start.mjs --name openapi --update-env
 ```
 

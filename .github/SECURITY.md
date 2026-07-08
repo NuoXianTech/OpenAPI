@@ -85,7 +85,7 @@ When deploying and using OpenAPI, we recommend following these security best pra
 
 Please ensure the following security-related environment variables and settings are properly configured:
 
-- `NUXT_AUTH_JWT_SECRET` - Use a strong random string
+- `NUXT_AUTH_SECRET` - Use a strong random string
 - `DATABASE_URL` - Ensure database connection uses secure configuration
 
 For detailed configuration instructions, please refer to the project documentation.

@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
+import { getAuthSecret } from '~~/server/utils/auth-secret'
 
 const STATE_COOKIE = 'oauth_state'
 const STATE_TTL_SECONDS = 5 * 60
@@ -20,16 +21,8 @@ function base64UrlDecode(input: string) {
   return Buffer.from(padded, 'base64')
 }
 
-function getSecret() {
-  const secret = useRuntimeConfig().auth.emailVerifySecret as string
-  if (!secret) {
-    throw new Error('auth.emailVerifySecret is not configured')
-  }
-  return secret
-}
-
 function sign(payload: string) {
-  return base64UrlEncode(createHmac('sha256', getSecret()).update(payload).digest())
+  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(payload).digest())
 }
 
 interface IssuedState {

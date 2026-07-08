@@ -129,9 +129,8 @@ The project reads production settings from runtime environment variables. The mo
 | `DATABASE_URL` | Production required | PostgreSQL connection string. |
 | `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | Required | Built-in administrator credentials. |
 | `NUXT_AUTH_ADMIN_EMAIL` | Optional | Administrator display email. |
-| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | Recommended | HMAC secret for email verification and OAuth state. |
 | `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
-| `NUXT_AUTH_JWT_SECRET` | Required | HS256 signing secret for access JWTs. Authentication fails closed when empty. |
+| `NUXT_AUTH_SECRET` | Required | Shared HS256/HMAC signing secret for access JWTs, email verification tokens and OAuth state. Authentication fails closed when empty. |
 
 See [.env.example](.env.example) for the complete single-instance configuration.
 

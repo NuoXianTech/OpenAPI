@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
 import type { SupportedOauthProvider } from '#shared/types/oauth'
+import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
 // ------------------------------------------------------------------
@@ -11,7 +12,7 @@ import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 // 不再自动建号/自动按邮箱关联，而是把 profile 用 HMAC 签名后写进一个短时
 // httpOnly cookie，跳转 /oauth/complete 让用户手动「绑定已有」或「新注册」。
 //
-// 与 oauthState 一样用 emailVerifySecret 做 HMAC，不落库、不建表。
+// 与 access JWT / oauthState 一样用 auth.secret 做 HMAC，不落库、不建表。
 // providerUserId 是稳定身份标识；email 仅作新注册表单的预填建议，真正注册
 // 邮箱以用户在窗口填写并经校验/验证的为准。
 // ------------------------------------------------------------------
@@ -40,16 +41,8 @@ function base64UrlDecode(input: string) {
   return Buffer.from(padded, 'base64')
 }
 
-function getSecret() {
-  const secret = useRuntimeConfig().auth.emailVerifySecret as string
-  if (!secret) {
-    throw new Error('auth.emailVerifySecret is not configured')
-  }
-  return secret
-}
-
 function sign(payload: string) {
-  return base64UrlEncode(createHmac('sha256', getSecret()).update(payload).digest())
+  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(payload).digest())
 }
 
 export function issuePendingOauth(event: H3Event, profile: PendingOauthProfile): void {

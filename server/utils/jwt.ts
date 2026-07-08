@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { getAuthSecret } from '~~/server/utils/auth-secret'
 
 // ------------------------------------------------------------------
 // 会话 JWT（HS256，自签自验）
@@ -30,20 +31,12 @@ interface JwtClaims extends AccessTokenPayload {
 
 const ALG = 'HS256'
 
-function getSecret() {
-  const secret = useRuntimeConfig().auth.jwtSecret
-  if (!secret) {
-    throw new Error('[jwt] JWT_SECRET 未配置，拒绝签发 / 校验 token')
-  }
-  return secret
-}
-
 function computeSignature(signingInput: string, secret: string) {
   return createHmac('sha256', secret).update(signingInput).digest('base64url')
 }
 
 export function signAccessToken(payload: AccessTokenPayload, ttlSeconds: number) {
-  const secret = getSecret()
+  const secret = getAuthSecret()
   const now = Math.floor(Date.now() / 1000)
   const claims: JwtClaims = {
     ...payload,
@@ -59,7 +52,7 @@ export function signAccessToken(payload: AccessTokenPayload, ttlSeconds: number)
 export function verifyAccessToken(token: string): VerifiedToken | null {
   let secret: string
   try {
-    secret = getSecret()
+    secret = getAuthSecret()
   } catch {
     return null // secret 缺失 → fail-closed
   }

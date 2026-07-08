@@ -38,9 +38,9 @@ curl -fsS http://127.0.0.1:3000/api/list
 | 现象 | 优先查看 |
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、迁移输出、端口占用 |
-| 管理后台无法登录 | `NUXT_AUTH_JWT_SECRET`、管理员账号、登录日志 |
+| 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号、登录日志 |
 | API Key 全部失效 | `NUXT_AUTH_API_KEY_SECRET` 是否变化、API Key 记录是否被撤销 |
-| 邮箱验证失败 | `NUXT_AUTH_EMAIL_VERIFY_SECRET`、SMTP 配置、邮件发送日志 |
+| 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
 | 公开 API 429 增多 | API 配置、内存限流窗口、调用方 IP 或 key |
 | 扣费异常 | `api_calls`、`credit_transactions`、`pending_charges` |
 

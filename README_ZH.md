@@ -129,9 +129,8 @@ pnpm preview
 | `DATABASE_URL` | 生产必填 | PostgreSQL 连接串。 |
 | `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 内置管理员账号凭据。 |
 | `NUXT_AUTH_ADMIN_EMAIL` | 否 | 管理员展示邮箱。 |
-| `NUXT_AUTH_EMAIL_VERIFY_SECRET` | 推荐 | 邮箱验证与 OAuth state 的 HMAC 密钥。 |
 | `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
-| `NUXT_AUTH_JWT_SECRET` | 必填 | access JWT 的 HS256 签名密钥；为空时鉴权 fail-closed。 |
+| `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证 token 与 OAuth state 共用的 HS256/HMAC 签名密钥；为空时鉴权 fail-closed。 |
 
 完整的单实例配置见 [.env.example](.env.example)。
 

@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
+import { getAuthSecret } from '~~/server/utils/auth-secret'
 
 // ------------------------------------------------------------------
 // 无状态邮箱类一次性 token（验证激活 / 密码重置 / 邮箱变更）
@@ -14,7 +15,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 //   - change_email   binding=当前(旧) email；确认后 updateEmail 改 email →
 //                    旧链接失效（payload.email 存的是「新」邮箱）
 //
-// 与 oauthState / oauthPending 一致，用 auth.emailVerifySecret 做 HMAC。
+// 与 access JWT / oauthState / oauthPending 一致，用 auth.secret 做 HMAC。
 // ------------------------------------------------------------------
 
 export type VerificationPurpose = 'verify' | 'reset_password' | 'change_email'
@@ -44,14 +45,6 @@ function base64UrlDecode(input: string) {
   return Buffer.from(padded, 'base64')
 }
 
-function getSecret() {
-  const secret = useRuntimeConfig().auth.emailVerifySecret as string
-  if (!secret) {
-    throw new Error('auth.emailVerifySecret is not configured')
-  }
-  return secret
-}
-
 // 把「操作成功后必变的字段」拼成 binding。purpose 前缀避免跨场景串用。
 function bindingMaterial(purpose: VerificationPurpose, user: BindingUser): string {
   switch (purpose) {
@@ -65,7 +58,7 @@ function bindingMaterial(purpose: VerificationPurpose, user: BindingUser): strin
 }
 
 function sign(payloadB64: string, binding: string) {
-  return base64UrlEncode(createHmac('sha256', getSecret()).update(`${payloadB64}.${binding}`).digest())
+  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(`${payloadB64}.${binding}`).digest())
 }
 
 /**

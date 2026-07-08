@@ -21,18 +21,17 @@ export default defineNuxtConfig({
   },
   // 认证密钥走 runtimeConfig（Nuxt 官方推荐范式）。默认值一律留空字符串、
   // 绝不引用 process.env —— 空默认值不会把任何 .env 值烤进 build 产物；
-  // 运行时用「同构」的 NUXT_AUTH_* 变量覆盖（auth.jwtSecret → NUXT_AUTH_JWT_SECRET，
+  // 运行时用「同构」的 NUXT_AUTH_* 变量覆盖（auth.secret → NUXT_AUTH_SECRET，
   // adminUsername → NUXT_AUTH_ADMIN_USERNAME，依此类推）。
-  // 切忌把默认值设成异名 env（如 jwtSecret: process.env.JWT_SECRET）：那会在 build 时
+  // 切忌把默认值设成异名 env（如 secret: process.env.AUTH_SECRET）：那会在 build 时
   // 求值并烤进产物，且运行时只认 NUXT_AUTH_*、纯名字失效 —— Nuxt 文档明示的头号坑。
   runtimeConfig: {
     auth: {
       adminUsername: '',
       adminPassword: '',
       adminEmail: '',
-      emailVerifySecret: '',
       apiKeySecret: '',
-      jwtSecret: '',
+      secret: '',
     },
   },
   compatibilityDate: '2026-06-30',
