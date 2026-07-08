@@ -5,11 +5,11 @@ import { usersService } from '~~/server/services/user-service'
 import { hashPassword } from '~~/server/utils/auth'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
 import { readZodBody } from '~~/server/utils/zod'
-import { signVerificationToken } from '~~/server/utils/verification-token'
+import { issueVerificationTokenUrl, normalizeSiteUrl } from '~~/server/utils/verification-token'
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
+import { canConsumeAnonymousEmailIpRateLimit } from '~~/server/utils/rate-limit/anonymous-action'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
@@ -40,17 +40,14 @@ export default defineEventHandler(async (event: H3Event) => {
   await assertTurnstileForPage('register', turnstileToken, ip)
 
   // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回中性响应，不暴露阈值与是否存在）。
-  const limiter = getRateLimiter()
-  const emailLimit = await limiter.consume(`register:email:${email}`, 1, 'minute')
-  if (!emailLimit.allowed) {
-    return neutralResponse
-  }
-  if (ip) {
-    const ipLimit = await limiter.consume(`register:ip:${ip}`, 10, 'hour')
-    if (!ipLimit.allowed) {
-      return neutralResponse
-    }
-  }
+  const canRegister = await canConsumeAnonymousEmailIpRateLimit({
+    namespace: 'register',
+    email,
+    ip,
+    emailLimit: 1,
+    ipLimit: 10
+  })
+  if (!canRegister) return neutralResponse
 
   // 邮箱域名过滤：off=不过滤；whitelist=仅允许列表内域名；blacklist=拒绝列表内域名
   const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
@@ -64,14 +61,12 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 403, message: '仅邀请注册模式下未开放通道' })
   }
 
-  const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
-
   // 邮箱已注册：投递"账号已存在"通知到该邮箱，外部返回中性响应。
   // 发信失败仅记录日志，不抛错，保持与"邮箱未注册"分支响应一致以防 timing/状态码枚举。
   const existEmail = await usersService.findByEmail(email)
   if (existEmail) {
     try {
-      await sendDuplicateRegistrationEmail(email, `${normalizedSiteUrl}/login`)
+      await sendDuplicateRegistrationEmail(email, `${normalizeSiteUrl(settings.siteUrl)}/login`)
     } catch (error) {
       console.error('[register] failed to send duplicate-registration notice', { error })
     }
@@ -110,8 +105,13 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const token = signVerificationToken(created, { purpose: 'verify', email: created.email, expiresInMinutes })
-  const verifyUrl = `${normalizedSiteUrl}/verify-email?user=${created.id}&token=${token}`
+  const verifyUrl = issueVerificationTokenUrl(created, {
+    siteUrl: settings.siteUrl,
+    path: 'verify-email',
+    purpose: 'verify',
+    email: created.email,
+    expiresInMinutes
+  })
   try {
     await sendVerificationEmail(email, verifyUrl)
   } catch (error) {

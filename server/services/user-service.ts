@@ -12,6 +12,28 @@ export const USER_ROLES = {
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES]
 
+interface AdminAvailabilityUser {
+  role: string
+  isActive: boolean
+  isBanned: boolean
+}
+
+interface AdminAccessPatch {
+  role?: UserRole
+  isActive?: boolean
+  isBanned?: boolean
+}
+
+function isAvailableAdmin(user: AdminAvailabilityUser) {
+  return user.role === USER_ROLES.admin && user.isActive && !user.isBanned
+}
+
+async function countAvailableAdmins() {
+  const res = await db.select({ count: sql<number>`count(*)` }).from(users)
+    .where(and(eq(users.role, USER_ROLES.admin), eq(users.isActive, true), eq(users.isBanned, false)))
+  return toNumber(res[0]?.count)
+}
+
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
 //   - oauthAccounts / apiKeys / notificationDeliveries / loginLogs
 //     全部 cascade 一并清除（账号级数据）
@@ -88,9 +110,16 @@ export const usersService = {
   },
 
   async countAvailableAdmins() {
-    const res = await db.select({ count: sql<number>`count(*)` }).from(users)
-      .where(and(eq(users.role, USER_ROLES.admin), eq(users.isActive, true), eq(users.isBanned, false)))
-    return toNumber(res[0]?.count)
+    return countAvailableAdmins()
+  },
+
+  willRemoveAdminAccess(user: AdminAvailabilityUser, patch: AdminAccessPatch) {
+    return user.role === USER_ROLES.admin
+      && (patch.role === USER_ROLES.user || patch.isActive === false || patch.isBanned === true)
+  },
+
+  async isOnlyAvailableAdmin(user: AdminAvailabilityUser) {
+    return isAvailableAdmin(user) && await countAvailableAdmins() <= 1
   },
 
   async getById(id: number) {

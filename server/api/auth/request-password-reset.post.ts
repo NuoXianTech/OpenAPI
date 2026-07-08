@@ -4,10 +4,10 @@ import { createError, getRequestIP } from 'h3'
 import { requestPasswordResetSchema } from '#shared/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
-import { signVerificationToken } from '~~/server/utils/verification-token'
+import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
+import { canConsumeAnonymousEmailIpRateLimit } from '~~/server/utils/rate-limit/anonymous-action'
 import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '~~/server/utils/ban'
 
@@ -28,24 +28,25 @@ export default defineEventHandler(async (event: H3Event) => {
   await assertTurnstileForPage('passwordReset', turnstileToken, ip)
 
   // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回 200，不暴露阈值与是否存在）。
-  const limiter = getRateLimiter()
-  const emailLimit = await limiter.consume(`password-reset:email:${email}`, 1, 'minute')
-  if (!emailLimit.allowed) {
-    return null
-  }
-  if (ip) {
-    const ipLimit = await limiter.consume(`password-reset:ip:${ip}`, 10, 'hour')
-    if (!ipLimit.allowed) {
-      return null
-    }
-  }
+  const canRequestReset = await canConsumeAnonymousEmailIpRateLimit({
+    namespace: 'password-reset',
+    email,
+    ip,
+    emailLimit: 1,
+    ipLimit: 10
+  })
+  if (!canRequestReset) return null
 
   const user = await usersService.findByEmail(email)
   if (user && user.isActive && !isBanActive(user)) {
     const expiresInMinutes = Number(settings.passwordResetExpiresInMinutes || 30)
-    const token = signVerificationToken(user, { purpose: 'reset_password', email: user.email, expiresInMinutes })
-    const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
-    const resetUrl = `${normalizedSiteUrl}/reset-password?user=${user.id}&token=${token}`
+    const resetUrl = issueVerificationTokenUrl(user, {
+      siteUrl: settings.siteUrl,
+      path: 'reset-password',
+      purpose: 'reset_password',
+      email: user.email,
+      expiresInMinutes
+    })
     // 发信失败仅记录日志，不把错误抛给前端以免泄露账号是否存在。
     try {
       await sendPasswordResetEmail(user.email, resetUrl)

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateUserSchema } from '~~/server/schemas/admin'
-import { usersService, USER_ROLES } from '~~/server/services/user-service'
+import { usersService } from '~~/server/services/user-service'
 import { hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readRequestMeta } from '~~/server/utils/request-meta'
@@ -15,12 +15,11 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'user not found' })
   }
 
-  const willRemoveAdminAccess = target.role === USER_ROLES.admin
-    && (role === USER_ROLES.user || isActive === false || isBanned === true)
+  const willRemoveAdminAccess = usersService.willRemoveAdminAccess(target, { role, isActive, isBanned })
   if (admin.id === id && willRemoveAdminAccess) {
     throw createError({ statusCode: 400, message: '不能移除当前登录管理员的管理权限' })
   }
-  if (willRemoveAdminAccess && target.isActive && !target.isBanned && await usersService.countAvailableAdmins() <= 1) {
+  if (willRemoveAdminAccess && await usersService.isOnlyAvailableAdmin(target)) {
     throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
   }
 

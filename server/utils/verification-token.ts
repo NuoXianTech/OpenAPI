@@ -32,6 +32,18 @@ interface BindingUser {
   tokenVersion: number
 }
 
+interface VerificationTokenUser extends BindingUser {
+  id: number
+}
+
+interface IssueVerificationTokenUrlOptions {
+  siteUrl: string | null | undefined
+  path: string
+  purpose: VerificationPurpose
+  email: string
+  expiresInMinutes: number
+}
+
 function base64UrlEncode(buffer: Buffer) {
   return buffer.toString('base64')
     .replace(/=+$/g, '')
@@ -66,7 +78,7 @@ function sign(payloadB64: string, binding: string) {
  * 邮箱，故 user.email 必须是变更前的当前邮箱；新邮箱通过 opts.email 进 payload）。
  */
 export function signVerificationToken(
-  user: { id: number, email: string, tokenVersion: number },
+  user: VerificationTokenUser,
   opts: { purpose: VerificationPurpose, email: string, expiresInMinutes: number }
 ): string {
   const exp = Math.floor(Date.now() / 1000) + opts.expiresInMinutes * 60
@@ -78,6 +90,32 @@ export function signVerificationToken(
   }
   const payloadB64 = base64UrlEncode(Buffer.from(JSON.stringify(payload), 'utf8'))
   return `${payloadB64}.${sign(payloadB64, bindingMaterial(opts.purpose, user))}`
+}
+
+export function normalizeSiteUrl(siteUrl: string | null | undefined): string {
+  return (siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
+}
+
+export function buildVerificationTokenUrl(
+  siteUrl: string | null | undefined,
+  path: string,
+  userId: number,
+  token: string
+): string {
+  const normalizedPath = path.replace(/^\/+/g, '')
+  return `${normalizeSiteUrl(siteUrl)}/${normalizedPath}?user=${userId}&token=${encodeURIComponent(token)}`
+}
+
+export function issueVerificationTokenUrl(
+  user: VerificationTokenUser,
+  opts: IssueVerificationTokenUrlOptions
+): string {
+  const token = signVerificationToken(user, {
+    purpose: opts.purpose,
+    email: opts.email,
+    expiresInMinutes: opts.expiresInMinutes
+  })
+  return buildVerificationTokenUrl(opts.siteUrl, opts.path, user.id, token)
 }
 
 /**

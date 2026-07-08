@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminBanUserSchema } from '~~/server/schemas/admin'
-import { usersService, USER_ROLES } from '~~/server/services/user-service'
+import { usersService } from '~~/server/services/user-service'
 import { requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readRequestMeta } from '~~/server/utils/request-meta'
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (isBanned && admin.id === id) {
     throw createError({ statusCode: 400, message: '不能封禁当前登录管理员' })
   }
-  if (isBanned && target.role === USER_ROLES.admin && target.isActive && !target.isBanned && await usersService.countAvailableAdmins() <= 1) {
+  if (isBanned && await usersService.isOnlyAvailableAdmin(target)) {
     throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
   }
 

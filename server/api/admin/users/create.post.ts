@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminCreateUserSchema } from '~~/server/schemas/admin'
-import { usersService, USER_ROLES } from '~~/server/services/user-service'
+import { usersService } from '~~/server/services/user-service'
 import { hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readRequestMeta } from '~~/server/utils/request-meta'
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const passwordHash = await hashPassword(password)
 
   const created = await usersService.addUser({
-    role: role ?? USER_ROLES.user,
+    role,
     username,
     email,
     passwordHash,

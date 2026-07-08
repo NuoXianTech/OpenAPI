@@ -26,6 +26,18 @@ export function readQueryNumber(value: unknown): number | undefined {
   return Number.isFinite(numericValue) ? numericValue : undefined
 }
 
+export function readRequiredQueryNumber(
+  query: Record<string, unknown>,
+  key: string,
+  message = `${key} is required`
+): number {
+  const value = readQueryNumber(query[key])
+  if (!value) {
+    throw Object.assign(new Error(message), { statusCode: 400 })
+  }
+  return value
+}
+
 export function readQueryDate(value: unknown): Date | undefined {
   const normalized = readQueryText(value)
   if (!normalized) return undefined

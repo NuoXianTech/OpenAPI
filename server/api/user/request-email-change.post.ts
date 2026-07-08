@@ -4,7 +4,7 @@ import { createError } from 'h3'
 import { userRequestEmailChangeSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
-import { signVerificationToken } from '~~/server/utils/verification-token'
+import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
 import { requireAuth, verifyPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -37,9 +37,13 @@ export default defineEventHandler(async (event: H3Event) => {
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
 
   // binding 取「当前(旧)」邮箱（userRow.email）；payload.email 存「新」邮箱，确认时写入 users.email。
-  const token = signVerificationToken(userRow, { purpose: 'change_email', email: newEmail, expiresInMinutes })
-  const normalizedSiteUrl = (settings.siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
-  const confirmUrl = `${normalizedSiteUrl}/confirm-email-change?user=${authUser.id}&token=${token}`
+  const confirmUrl = issueVerificationTokenUrl(userRow, {
+    siteUrl: settings.siteUrl,
+    path: 'confirm-email-change',
+    purpose: 'change_email',
+    email: newEmail,
+    expiresInMinutes
+  })
   await sendEmailChangeEmail(newEmail, confirmUrl)
 
   return { pendingEmail: newEmail }
