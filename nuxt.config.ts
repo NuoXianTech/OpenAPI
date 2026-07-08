@@ -26,8 +26,8 @@ export default defineNuxtConfig({
   // 求值并烤进产物，且运行时只认 NUXT_AUTH_*、纯名字失效 —— Nuxt 文档明示的头号坑。
   runtimeConfig: {
     auth: {
-      apiKeySecret: '',
       secret: '',
+      apiKeySecret: '',
     },
   },
   compatibilityDate: '2026-06-30',

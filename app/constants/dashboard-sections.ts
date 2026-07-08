@@ -48,7 +48,8 @@ const adminSystemLinks: NavigationMenuItem[] = [
   { label: '站点设置', icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH, exact: true },
   { label: '用户会话', icon: 'i-mdi-account-clock-outline', to: `${ADMIN_SYSTEM_PATH}/user-session` },
   { label: '验证码', icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/captcha` },
-  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` }
+  { label: '邮件', icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
+  { label: '关于', icon: 'i-mdi-information-outline', to: `${ADMIN_SYSTEM_PATH}/about` }
 ]
 
 const userCreditsLinks: NavigationMenuItem[] = [
