@@ -2,7 +2,7 @@
 import { createError } from 'h3'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 
-export type TurnstilePageKey = 'login' | 'register' | 'adminLogin' | 'passwordReset' | 'checkin'
+export type TurnstilePageKey = 'login' | 'register' | 'passwordReset' | 'checkin'
 
 interface TurnstileCheck {
   required: boolean
@@ -23,7 +23,6 @@ function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.ge
   switch (page) {
     case 'login': return settings.turnstileLoginEnabled
     case 'register': return settings.turnstileRegisterEnabled
-    case 'adminLogin': return settings.turnstileAdminLoginEnabled
     case 'passwordReset': return settings.turnstilePasswordResetEnabled
     case 'checkin': return settings.turnstileCheckinEnabled
   }
@@ -35,13 +34,10 @@ async function verifyTurnstileForPage(
   remoteIp?: string | null
 ): Promise<TurnstileCheck> {
   const settings = await siteSettingsService.getOrCreate()
+  const required = pageToggleOf(settings, page)
 
   // 未配置密钥：完全跳过，不视为失败（无总开关，是否校验由各场景开关决定）
-  if (!settings.turnstileSiteKey || !settings.turnstileSecretKey) {
-    return { required: false, valid: true }
-  }
-
-  if (!pageToggleOf(settings, page)) {
+  if (!settings.turnstileSiteKey || !settings.turnstileSecretKey || !required) {
     return { required: false, valid: true }
   }
 

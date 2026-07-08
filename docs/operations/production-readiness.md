@@ -19,8 +19,9 @@ pnpm build
 | 项目 | 检查 |
 | --- | --- |
 | 数据库 | `DATABASE_URL` 指向生产 PostgreSQL，账号权限满足迁移和运行；如果目标库可能尚不存在，账号还需要 `CREATEDB` 权限 |
+| 数据库迁移 | 已生成并应用包含 `users.role` 的迁移；已有 `kind` 字段的环境已直接改名为 `role` |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_AUTH_API_KEY_SECRET` 已独立生成 |
-| 管理员账号 | `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` 已使用生产强凭据；轮换需要修改环境变量并重启 |
+| 管理员账号 | 首次启动后从服务端控制台记录自动生成的 `admin` 随机密码，并登录后台立即轮换 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入 |
 | 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |
 | 备份 | 发布前有数据库备份或可恢复快照 |

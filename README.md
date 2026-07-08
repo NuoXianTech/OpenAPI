@@ -127,10 +127,11 @@ The project reads production settings from runtime environment variables. The mo
 | Variable | Required | Description |
 | --- | --- | --- |
 | `DATABASE_URL` | Production required | PostgreSQL connection string. |
-| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | Required | Built-in administrator credentials. |
-| `NUXT_AUTH_ADMIN_EMAIL` | Optional | Administrator display email. |
-| `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
 | `NUXT_AUTH_SECRET` | Required | Shared HS256/HMAC signing secret for access JWTs, email verification tokens and OAuth state. Authentication fails closed when empty. |
+| `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
+
+If no administrator exists on startup, the server creates `admin` with a random password and prints it to the console.
+Before deploying this schema change, generate and apply your database migration so `users.role` exists.
 
 See [.env.example](.env.example) for the complete single-instance configuration.
 

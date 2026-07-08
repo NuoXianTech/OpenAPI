@@ -116,7 +116,7 @@ export default defineEventHandler(async (event: H3Event) => {
       throw createError({ statusCode: 503, message: '注册失败，请稍后重试或联系管理员' })
     }
     clearPendingOauth(event)
-    await createUserSession(event, { id: created.id, kind: 'user' })
+    await createUserSession(event, { id: created.id, role: 'user' })
     await usersService.updateLastLogin(created.id, ip, userAgent)
     await loginLogService.record({ userId: created.id, method, success: true, ip, userAgent })
     return { ok: true, verificationRequired: false }

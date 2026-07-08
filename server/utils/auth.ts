@@ -10,13 +10,10 @@ import { banMessage, isBanActive } from '~~/server/utils/ban'
 
 interface AuthUserPayload {
   id: number
-  kind: 'user' | 'admin'
+  role?: 'user' | 'admin'
 }
 
-// admin 伪用户写表时使用的 actor id：所有 operatorId/createdBy/userId 等
-// "操作者 = admin 内置账号" 的场景都必须落 null，0 不是 users.id 的有效值，
-// 误把 0 写进外键列会让审计/关联查询很难排查。
-export const ADMIN_ACTOR_ID = null
+export const SYSTEM_ACTOR_ID = null
 
 // util.promisify 只识别 scrypt(password, salt, keylen, cb) 这一个 overload，
 // 想传 options 必须断言成带 options 的签名。
@@ -155,21 +152,13 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload, o
   const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
   const remember = Boolean(options.remember)
   const ttlSeconds = remember ? rememberMaxAge : defaultMaxAge
-  // 取当前 tokenVersion 嵌入 token（登录 / 重签均低频，多查一次可接受）。
-  // 改密后重签会读到 bump 过的新 ver，从而当前设备拿新 token、其他设备旧 token 失效。
+  // 从 DB 取当前 role/tokenVersion 嵌入 token，避免调用方传入过期角色导致会话降级或越权。
   const row = await usersService.getById(user.id)
-  const ver = row?.tokenVersion ?? 0
+  if (!row) {
+    throw createError({ statusCode: 401, message: 'unauthorized' })
+  }
   const loginAt = Math.floor(Date.now() / 1000)
-  setAuthCookie(event, signAccessToken({ sub: user.id, kind: 'user', ver, loginAt, rmb: remember }, ttlSeconds), ttlSeconds)
-}
-
-export async function createAdminSession(event: H3Event, options: { remember?: boolean } = {}) {
-  const { defaultMaxAge, rememberMaxAge } = await getSessionMaxAgesSeconds()
-  const remember = Boolean(options.remember)
-  const ttlSeconds = remember ? rememberMaxAge : defaultMaxAge
-  const loginAt = Math.floor(Date.now() / 1000)
-  // admin 不在 users 表、无 tokenVersion：ver 恒 0 且鉴权时不校验
-  setAuthCookie(event, signAccessToken({ sub: ADMIN_ACTOR_ID, kind: 'admin', ver: 0, loginAt, rmb: remember }, ttlSeconds), ttlSeconds)
+  setAuthCookie(event, signAccessToken({ sub: user.id, role: row.role as 'user' | 'admin', ver: row.tokenVersion, loginAt, rmb: remember }, ttlSeconds), ttlSeconds)
 }
 
 export function destroyCurrentSession(event: H3Event) {
@@ -188,7 +177,7 @@ async function maybeSlidingRenew(event: H3Event, payload: VerifiedToken, latestV
   }
   const fresh = signAccessToken({
     sub: payload.sub,
-    kind: payload.kind,
+    role: payload.role,
     ver: latestVer,
     loginAt: payload.loginAt,
     rmb: payload.rmb
@@ -209,27 +198,13 @@ export async function getAuthUser(event: H3Event) {
     return null
   }
 
-  // admin：不在 users 表，不查库、不校验 ver
-  if (payload.kind === 'admin') {
-    await maybeSlidingRenew(event, payload, payload.ver)
-    const authConfig = useRuntimeConfig().auth
-    return {
-      id: ADMIN_ACTOR_ID,
-      username: authConfig.adminUsername,
-      email: authConfig.adminEmail,
-      avatarUrl: getCravatarUrl(authConfig.adminEmail),
-      kind: 'admin' as const
-    }
-  }
-
-  // user：查库拿最新 tokenVersion / 封禁状态 / 资料
-  if (payload.sub === null) {
+  // user / admin 都在 users 表：查库拿最新 tokenVersion / 封禁状态 / 资料。
+  const user = await usersService.getById(payload.sub)
+  if (!user) {
     clearAuthCookie(event)
     return null
   }
-
-  const user = await usersService.getById(payload.sub)
-  if (!user) {
+  if (user.role !== payload.role) {
     clearAuthCookie(event)
     return null
   }
@@ -243,6 +218,10 @@ export async function getAuthUser(event: H3Event) {
   // 绝对硬顶（仅非「记住我」）：从首登算超过 absoluteMaxAge 强制重登
   const { absoluteMaxAge } = await getSessionMaxAgesSeconds()
   if (!payload.rmb && Math.floor(Date.now() / 1000) - payload.loginAt > absoluteMaxAge) {
+    clearAuthCookie(event)
+    return null
+  }
+  if (!user.isActive) {
     clearAuthCookie(event)
     return null
   }
@@ -264,13 +243,13 @@ export async function getAuthUser(event: H3Event) {
     displayName: user.displayName,
     email: user.email,
     avatarUrl: getCravatarUrl(user.email),
-    kind: 'user' as const
+    role: user.role as 'user' | 'admin'
   }
 }
 
 export async function requireAuth(event: H3Event) {
   const user = await getAuthUser(event)
-  if (!user || user.kind !== 'user') {
+  if (!user || (user.role !== 'user' && user.role !== 'admin')) {
     throw createError({ statusCode: 401, message: 'unauthorized' })
   }
   return user
@@ -278,7 +257,7 @@ export async function requireAuth(event: H3Event) {
 
 export async function requireAdmin(event: H3Event) {
   const user = await getAuthUser(event)
-  if (!user || user.kind !== 'admin') {
+  if (!user || user.role !== 'admin') {
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
   return user

@@ -1,13 +1,12 @@
 import type { LoginInput, RegisterInput } from '#shared/schemas/auth'
 
 interface AuthUser {
-  // admin 内置账号没有 users 表记录，id 为 null；普通用户为 users.id
-  id: number | null
+  id: number
   username: string
   displayName?: string | null
   email: string
   avatarUrl: string
-  kind: 'user' | 'admin'
+  role: 'user' | 'admin'
   credits?: number
 }
 
@@ -116,16 +115,6 @@ export function useAuth() {
     return res
   }
 
-  const adminLogin = async (payload: { username: string, password: string, remember?: boolean, turnstileToken?: string }) => {
-    const res = await $fetch<AuthUser>('/api/admin/auth/login', {
-      method: 'POST',
-      body: payload
-    })
-    user.value = res
-    if (import.meta.client) clientFetchedAt = Date.now()
-    return res
-  }
-
   const register = async (payload: RegisterInput) => {
     return await $fetch<{ verificationRequired: boolean }>('/api/auth/register', {
       method: 'POST',
@@ -144,7 +133,6 @@ export function useAuth() {
     loading,
     fetchMe,
     login,
-    adminLogin,
     register,
     logout
   }

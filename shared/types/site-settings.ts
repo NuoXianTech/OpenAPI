@@ -11,7 +11,6 @@ export interface PublicTurnstileSettings {
   siteKey: string
   login: boolean
   register: boolean
-  adminLogin: boolean
   passwordReset: boolean
   checkin: boolean
 }

@@ -27,7 +27,7 @@ export default defineEventHandler(async (event: H3Event) => {
   })
   await assertTurnstileForPage('login', turnstileToken, ip)
 
-  // 支持通过 email 或 username 登录
+  // 支持通过 email 或 username 登录；用户和管理员共用 users 表，用 role 决定登录后的入口。
   const user = emailOrUsername.includes('@')
     ? await usersService.findByEmail(emailOrUsername)
     : await usersService.findByUsername(emailOrUsername)
@@ -80,7 +80,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await createUserSession(event, {
     id: user.id,
-    kind: 'user'
+    role: user.role
   }, { remember })
 
   await usersService.updateLastLogin(user.id, ip, userAgent)
@@ -94,6 +94,6 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { passwordHash: _, ...safe } = user
 
-  return { ...safe, kind: 'user' }
+  return safe
 })
 // 登录接口

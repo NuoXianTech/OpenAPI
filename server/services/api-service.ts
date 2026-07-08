@@ -313,7 +313,7 @@ export const apiService = {
     if (field === 'isEnabled' && value === false) {
       patch.isStatistics = false
     }
-    // null 表示 admin 内置账号；正整数为真实用户 id；其他视作 admin
+    // null 表示系统任务或无操作者快照；正整数为 users.id 快照。
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
     const updated = firstRow(res)

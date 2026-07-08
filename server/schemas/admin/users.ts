@@ -9,6 +9,8 @@ import {
 } from '#shared/schemas/validation'
 import { displayNameSchema, optionalDate } from '../common'
 
+const userRoleSchema = z.enum(['user', 'admin'])
+
 export const adminBanUserSchema = z.object({
   id: positiveInt('用户 ID'),
   isBanned: z.boolean(),
@@ -24,15 +26,16 @@ export const adminCreateUserSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   displayName: displayNameSchema.optional(),
+  role: userRoleSchema.optional(),
   isActive: z.boolean().optional()
 })
 
 export const adminUpdateUserSchema = z
   .object({
     id: positiveInt('用户 ID'),
-    username: usernameSchema.optional(),
     email: emailSchema.optional(),
     displayName: displayNameSchema.optional(),
+    role: userRoleSchema.optional(),
     isActive: z.boolean().optional(),
     isBanned: z.boolean().optional(),
     password: z.preprocess(
@@ -40,10 +43,11 @@ export const adminUpdateUserSchema = z
       passwordSchema.optional()
     )
   })
+  .strict()
   .refine(
-    d => d.username !== undefined
-      || d.email !== undefined
+    d => d.email !== undefined
       || d.displayName !== undefined
+      || d.role !== undefined
       || d.isActive !== undefined
       || d.isBanned !== undefined
       || d.password !== undefined,

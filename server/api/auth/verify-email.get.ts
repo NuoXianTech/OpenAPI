@@ -35,7 +35,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await createUserSession(event, {
     id: updated.id,
-    kind: 'user'
+    role: 'user'
   })
 
   const { passwordHash: _, ...safe } = updated

@@ -1,5 +1,5 @@
 {
-  "id": "c3ebf229-6640-4dfa-b645-3892d7f85c68",
+  "id": "8480d00f-5ca6-4fdf-bffe-957b8b8c0863",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2809,13 +2809,6 @@
           "notNull": true,
           "default": false
         },
-        "turnstile_admin_login_enabled": {
-          "name": "turnstile_admin_login_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "turnstile_password_reset_enabled": {
           "name": "turnstile_password_reset_enabled",
           "type": "boolean",
@@ -2926,6 +2919,13 @@
           "type": "serial",
           "primaryKey": true,
           "notNull": true
+        },
+        "role": {
+          "name": "role",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'user'"
         },
         "username": {
           "name": "username",
@@ -3093,7 +3093,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "users_role_chk": {
+          "name": "users_role_chk",
+          "value": "\"users\".\"role\" in ('user', 'admin')"
+        }
+      },
       "isRLSEnabled": false
     }
   },

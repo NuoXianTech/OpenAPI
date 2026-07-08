@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminCreateUserSchema } from '~~/server/schemas/admin'
-import { usersService } from '~~/server/services/user-service'
+import { usersService, USER_ROLES } from '~~/server/services/user-service'
 import { hashPassword, requireAdmin } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readRequestMeta } from '~~/server/utils/request-meta'
@@ -9,7 +9,7 @@ import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event: H3Event) => {
   const admin = await requireAdmin(event)
-  const { username, email, password, displayName, isActive } = await readZodBody(event, adminCreateUserSchema)
+  const { username, email, password, displayName, role, isActive } = await readZodBody(event, adminCreateUserSchema)
 
   if (await usersService.findByEmail(email)) {
     throw createError({ statusCode: 409, message: '该邮箱已被注册' })
@@ -21,6 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const passwordHash = await hashPassword(password)
 
   const created = await usersService.addUser({
+    role: role ?? USER_ROLES.user,
     username,
     email,
     passwordHash,
@@ -29,12 +30,13 @@ export default defineEventHandler(async (event: H3Event) => {
   })
 
   await operationLogService.addLog({
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.user.create',
     resourceType: 'user',
     resourceId: created.id,
     ...readRequestMeta(event),
-    detail: { username: created.username, email: created.email, isActive: created.isActive }
+    detail: { username: created.username, email: created.email, role: created.role, isActive: created.isActive }
   })
 
   const { passwordHash: _, ...safe } = created

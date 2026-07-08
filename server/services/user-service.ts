@@ -5,6 +5,13 @@ import { firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
 import { siteSettingsService } from './site-settings-service'
 
+export const USER_ROLES = {
+  user: 'user',
+  admin: 'admin'
+} as const
+
+export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES]
+
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
 //   - oauthAccounts / apiKeys / notificationDeliveries / loginLogs
 //     全部 cascade 一并清除（账号级数据）
@@ -27,6 +34,7 @@ export const usersService = {
 
     const base = db.select({
       id: users.id,
+      role: users.role,
       username: users.username,
       displayName: users.displayName,
       email: users.email,
@@ -46,18 +54,43 @@ export const usersService = {
     return (where ? base.where(where) : base).orderBy(desc(users.createdAt))
   },
 
-  async findByEmail(email: string) {
+  async findByEmail(email: string, opts: { role?: UserRole } = {}) {
+    const where = opts.role
+      ? and(eq(users.email, email), eq(users.role, opts.role))
+      : eq(users.email, email)
     const res = await db.select().from(users)
-      .where(eq(users.email, email))
+      .where(where)
       .limit(1)
     return res[0]
   },
 
-  async findByUsername(username: string) {
+  async findByUsername(username: string, opts: { role?: UserRole } = {}) {
+    const where = opts.role
+      ? and(eq(users.username, username), eq(users.role, opts.role))
+      : eq(users.username, username)
     const res = await db.select().from(users)
-      .where(eq(users.username, username))
+      .where(where)
       .limit(1)
     return res[0]
+  },
+
+  async hasAdmin() {
+    const res = await db.select({ id: users.id }).from(users)
+      .where(eq(users.role, USER_ROLES.admin))
+      .limit(1)
+    return Boolean(res[0])
+  },
+
+  async countAdmins() {
+    const res = await db.select({ count: sql<number>`count(*)` }).from(users)
+      .where(eq(users.role, USER_ROLES.admin))
+    return toNumber(res[0]?.count)
+  },
+
+  async countAvailableAdmins() {
+    const res = await db.select({ count: sql<number>`count(*)` }).from(users)
+      .where(and(eq(users.role, USER_ROLES.admin), eq(users.isActive, true), eq(users.isBanned, false)))
+    return toNumber(res[0]?.count)
   },
 
   async getById(id: number) {
@@ -69,6 +102,7 @@ export const usersService = {
 
   async updateUser(id: number, data: Partial<{
     username: string
+    role: UserRole
     email: string
     displayName: string | null
     isActive: boolean
@@ -103,17 +137,21 @@ export const usersService = {
     username: string
     email: string
     passwordHash: string
+    role?: UserRole
     displayName?: string
     isActive?: boolean
+    emailVerifiedAt?: Date | null
   }) {
     const res = await db
       .insert(users)
       .values({
+        role: data.role ?? USER_ROLES.user,
         username: data.username,
         email: data.email,
         passwordHash: data.passwordHash,
         displayName: data.displayName || data.username,
         isActive: data.isActive ?? false,
+        emailVerifiedAt: data.emailVerifiedAt ?? null,
         isBanned: false
       })
       .returning()

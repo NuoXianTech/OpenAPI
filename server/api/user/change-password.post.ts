@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
   // 随即为当前设备重签新 token（createUserSession 内部读到 bump 后的新 ver），
   // 实现「下线其他设备、保留当前设备」。
   await usersService.bumpTokenVersion(authUser.id)
-  await createUserSession(event, { id: authUser.id, kind: 'user' })
+  await createUserSession(event, { id: authUser.id, role: authUser.role })
 
   await operationLogService.addLog({
     userId: authUser.id,

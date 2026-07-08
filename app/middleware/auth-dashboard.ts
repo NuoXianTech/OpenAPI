@@ -2,7 +2,7 @@ import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-s
 
 interface DashboardAuthRoute {
   basePath: string
-  kind: 'admin' | 'user'
+  role: 'admin' | 'user'
   loginPath: string
   overviewPath: string
   roleMismatchRedirectPath: string
@@ -11,14 +11,14 @@ interface DashboardAuthRoute {
 const dashboardAuthRoutes: DashboardAuthRoute[] = [
   {
     basePath: '/admin',
-    kind: 'admin',
-    loginPath: '/admin/login',
+    role: 'admin',
+    loginPath: '/login',
     overviewPath: ADMIN_OVERVIEW_PATH,
     roleMismatchRedirectPath: USER_OVERVIEW_PATH
   },
   {
     basePath: '/user',
-    kind: 'user',
+    role: 'user',
     loginPath: '/login',
     overviewPath: USER_OVERVIEW_PATH,
     roleMismatchRedirectPath: ADMIN_OVERVIEW_PATH
@@ -34,13 +34,13 @@ export default defineNuxtRouteMiddleware(async function authDashboardMiddleware(
   const { fetchMe, user } = useAuth()
   if (import.meta.client) await fetchMe()
 
-  if (user.value?.kind === route.kind) {
+  if (user.value?.role && canAccessDashboardRoute(user.value.role, route.role)) {
     return isDashboardRoot(to.path, route.basePath)
       ? navigateTo(route.overviewPath, { replace: true })
       : undefined
   }
 
-  if (user.value?.kind) return navigateTo(route.roleMismatchRedirectPath)
+  if (user.value?.role) return navigateTo(route.roleMismatchRedirectPath)
   return navigateTo(route.loginPath)
 })
 
@@ -50,4 +50,8 @@ function isInDashboardRoute(path: string, basePath: string): boolean {
 
 function isDashboardRoot(path: string, basePath: string): boolean {
   return path === basePath || path === `${basePath}/`
+}
+
+function canAccessDashboardRoute(userRole: DashboardAuthRoute['role'], routeRole: DashboardAuthRoute['role']): boolean {
+  return userRole === routeRole || (userRole === 'admin' && routeRole === 'user')
 }

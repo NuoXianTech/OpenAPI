@@ -53,7 +53,7 @@ describe('assertLoginRateLimit', () => {
 
     await expect(assertLoginRateLimit({
       limiter: createDenyingLimiter(),
-      namespace: 'admin-login',
+      namespace: 'login',
       account: 'root',
       ip: '127.0.0.1',
       accountLimit: 5,

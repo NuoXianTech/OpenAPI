@@ -11,10 +11,15 @@ interface DashboardLayoutProps {
 }
 
 const props = defineProps<DashboardLayoutProps>()
+const { user } = useAuth()
 
 const dashboardConfig = computed<DashboardStaticConfig>(() => resolveDashboardConfig(props.dashboardId))
 
 function resolveDashboardConfig(dashboardId: DashboardConfig['id']): DashboardStaticConfig {
+  if (dashboardId === 'user' && user.value?.role === 'admin') {
+    return adminDashboardConfig
+  }
+
   return dashboardId === 'admin' ? adminDashboardConfig : userDashboardConfig
 }
 </script>

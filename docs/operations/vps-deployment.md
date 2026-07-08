@@ -41,9 +41,6 @@ TZ=Asia/Shanghai
 
 DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 
-NUXT_AUTH_ADMIN_USERNAME=admin
-NUXT_AUTH_ADMIN_PASSWORD=change-me
-NUXT_AUTH_ADMIN_EMAIL=admin@example.com
 NUXT_AUTH_SECRET=change-me
 NUXT_AUTH_API_KEY_SECRET=change-me
 ```
@@ -64,6 +61,8 @@ node start.mjs
 ```
 
 迁移执行器使用 `DATABASE_URL` 和 Drizzle 的 `drizzle.__drizzle_migrations` 表，因此已经应用过的迁移会自动跳过。
+
+发布含账号角色 schema 的版本前，先生成并随版本发布数据库迁移，确保 `users.role` 字段存在；已有 `kind` 字段的环境应在迁移中直接改名为 `role`。
 
 ## 进程管理建议
 

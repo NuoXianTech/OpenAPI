@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, ilike, isNotNull, isNull, like, lte, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ilike, like, lte, type SQL } from 'drizzle-orm'
 import { operationLogs } from '@nuxthub/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -19,7 +19,7 @@ interface OperationLogInput {
 
 interface OperationLogListFilters {
   userId?: number
-  // admin 操作 userId 为 NULL；filter 通过这一点区分管理端/用户端操作
+  // 管理员也是真实 users 账号，来源按 action 前缀区分，而不是按 userId 是否为空区分。
   actorKind?: 'admin' | 'user'
   /** 模糊匹配操作者名快照（actor 字段） */
   actor?: string
@@ -63,9 +63,9 @@ export const operationLogService = {
       conditions.push(eq(operationLogs.userId, filters.userId))
     }
     if (filters.actorKind === 'admin') {
-      conditions.push(isNull(operationLogs.userId))
+      conditions.push(like(operationLogs.action, 'admin.%'))
     } else if (filters.actorKind === 'user') {
-      conditions.push(isNotNull(operationLogs.userId))
+      conditions.push(like(operationLogs.action, 'user.%'))
     }
     if (filters.actor) {
       conditions.push(ilike(operationLogs.actor, `%${filters.actor}%`))

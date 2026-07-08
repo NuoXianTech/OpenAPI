@@ -11,5 +11,10 @@ definePageMeta({
 </script>
 
 <template>
-  <NuxtPage />
+  <div class="contents">
+    <NuxtPage />
+    <ClientOnly>
+      <AdminInitialProfileModal />
+    </ClientOnly>
+  </div>
 </template>

@@ -16,8 +16,11 @@ export const ADMIN_USERS_PATH = '/admin/users'
 export const ADMIN_SYSTEM_PATH = '/admin/system'
 
 export const USER_OVERVIEW_PATH = '/user/overview'
-const USER_CREDITS_PATH = '/user/credits'
-const USER_SETTINGS_PATH = '/user/settings'
+export const USER_API_KEYS_PATH = '/user/apikeys'
+export const USER_LOGS_PATH = '/user/logs'
+export const USER_CREDITS_PATH = '/user/credits'
+export const USER_CREDITS_REWARDS_PATH = `${USER_CREDITS_PATH}/rewards`
+export const USER_SETTINGS_PATH = '/user/settings'
 
 const adminContentLinks: NavigationMenuItem[] = [
   { label: '公告', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH, exact: true },
@@ -46,7 +49,7 @@ const adminSystemLinks: NavigationMenuItem[] = [
 
 const userCreditsLinks: NavigationMenuItem[] = [
   { label: '概览', icon: 'i-mdi-wallet-outline', to: USER_CREDITS_PATH, exact: true },
-  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: `${USER_CREDITS_PATH}/rewards` },
+  { label: '签到兑换', icon: 'i-mdi-gift-outline', to: USER_CREDITS_REWARDS_PATH },
   { label: '流水明细', icon: 'i-mdi-format-list-bulleted', to: `${USER_CREDITS_PATH}/logs` }
 ]
 

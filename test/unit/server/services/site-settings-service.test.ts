@@ -51,7 +51,6 @@ describe('toAdminSiteSettings', () => {
       turnstileSecretKey: 'turnstile-secret',
       turnstileLoginEnabled: true,
       turnstileRegisterEnabled: false,
-      turnstileAdminLoginEnabled: false,
       turnstilePasswordResetEnabled: false,
       turnstileCheckinEnabled: false,
       checkinEnabled: true,

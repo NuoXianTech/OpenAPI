@@ -38,7 +38,6 @@ interface AdminSettingsForm {
   turnstileSecretKey: string
   turnstileLoginEnabled: boolean
   turnstileRegisterEnabled: boolean
-  turnstileAdminLoginEnabled: boolean
   turnstilePasswordResetEnabled: boolean
   turnstileCheckinEnabled: boolean
   checkinEnabled: boolean
@@ -149,7 +148,6 @@ function defaultForm(): AdminSettingsForm {
     turnstileSecretKey: '',
     turnstileLoginEnabled: false,
     turnstileRegisterEnabled: false,
-    turnstileAdminLoginEnabled: false,
     turnstilePasswordResetEnabled: false,
     checkinEnabled: true,
     turnstileCheckinEnabled: false,
@@ -204,7 +202,6 @@ function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
     turnstileSecretKey: val.turnstileSecretKey || d.turnstileSecretKey,
     turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,
     turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
-    turnstileAdminLoginEnabled: val.turnstileAdminLoginEnabled ?? d.turnstileAdminLoginEnabled,
     turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
     turnstileCheckinEnabled: val.turnstileCheckinEnabled ?? d.turnstileCheckinEnabled,
     checkinEnabled: val.checkinEnabled ?? d.checkinEnabled,

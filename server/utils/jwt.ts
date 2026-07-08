@@ -14,9 +14,9 @@ import { getAuthSecret } from '~~/server/utils/auth-secret'
 // ------------------------------------------------------------------
 
 export interface AccessTokenPayload {
-  sub: number | null // 用户 id；admin 内置账号为 null
-  kind: 'user' | 'admin'
-  ver: number // 签发时的 users.tokenVersion（admin 恒 0，不校验）
+  sub: number // users.id
+  role: 'user' | 'admin'
+  ver: number // 签发时的 users.tokenVersion
   loginAt: number // 首次登录的 unix 秒，用于绝对硬顶（滑动重签时透传）
   rmb: boolean // 记住我
 }
@@ -78,7 +78,7 @@ export function verifyAccessToken(token: string): VerifiedToken | null {
   if (expectedBuf.length !== actualBuf.length) return null
   if (!timingSafeEqual(expectedBuf, actualBuf)) return null
 
-  // 3) 解析 claims + 严格校验 exp / kind
+  // 3) 解析 claims + 严格校验 exp / role
   let claims: JwtClaims
   try {
     claims = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'))
@@ -88,7 +88,8 @@ export function verifyAccessToken(token: string): VerifiedToken | null {
   if (typeof claims.exp !== 'number' || claims.exp <= Math.floor(Date.now() / 1000)) {
     return null
   }
-  if (claims.kind !== 'user' && claims.kind !== 'admin') return null
+  if (!Number.isInteger(claims.sub) || claims.sub <= 0) return null
+  if (claims.role !== 'user' && claims.role !== 'admin') return null
 
   return claims
 }

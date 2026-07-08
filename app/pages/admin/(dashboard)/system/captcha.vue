@@ -86,14 +86,6 @@ const captchaType = ref('Cloudflare Turnstile')
         />
       </UFormField>
       <UFormField
-        name="turnstileAdminLoginEnabled"
-        label="管理登录验证码"
-        description="/admin/login 提交时校验。"
-        class="flex items-center justify-between gap-2"
-      >
-        <USwitch v-model="form.turnstileAdminLoginEnabled" />
-      </UFormField>
-      <UFormField
         name="turnstileCheckinEnabled"
         label="每日签到验证码"
         description="积分页点击签到时弹出验证窗口，通过后自动签到。需同时开启「每日签到」功能。"

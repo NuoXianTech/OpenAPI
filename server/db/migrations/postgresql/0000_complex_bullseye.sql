@@ -282,7 +282,6 @@ CREATE TABLE "site_settings" (
 	"turnstile_secret_key" varchar(200) DEFAULT '' NOT NULL,
 	"turnstile_login_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_register_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_admin_login_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_password_reset_enabled" boolean DEFAULT false NOT NULL,
 	"turnstile_checkin_enabled" boolean DEFAULT false NOT NULL,
 	"checkin_enabled" boolean DEFAULT true NOT NULL,
@@ -300,6 +299,7 @@ CREATE TABLE "site_settings" (
 --> statement-breakpoint
 CREATE TABLE "users" (
 	"id" serial PRIMARY KEY NOT NULL,
+	"role" varchar(20) DEFAULT 'user' NOT NULL,
 	"username" varchar(50) NOT NULL,
 	"display_name" varchar(100),
 	"email" varchar(255) NOT NULL,
@@ -316,7 +316,8 @@ CREATE TABLE "users" (
 	"email_verified_at" timestamp with time zone,
 	"token_version" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now()
+	"updated_at" timestamp with time zone DEFAULT now(),
+	CONSTRAINT "users_role_chk" CHECK ("users"."role" in ('user', 'admin'))
 );
 --> statement-breakpoint
 ALTER TABLE "api_call_stats" ADD CONSTRAINT "api_call_stats_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint

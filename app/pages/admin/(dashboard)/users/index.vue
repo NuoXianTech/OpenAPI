@@ -261,6 +261,15 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
             {{ Number(row.original.credits ?? 0).toLocaleString() }}
           </UBadge>
         </template>
+        <template #role-cell="{ row }">
+          <UBadge
+            :color="row.original.role === 'admin' ? 'primary' : 'neutral'"
+            variant="subtle"
+            :icon="row.original.role === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-account-outline'"
+          >
+            {{ row.original.role === 'admin' ? '管理员' : '普通用户' }}
+          </UBadge>
+        </template>
         <template #isActive-cell="{ row }">
           <UBadge
             :color="row.original.isActive ? 'success' : 'neutral'"

@@ -71,7 +71,7 @@ export default defineEventHandler(async (event: H3Event) => {
   })
 
   clearPendingOauth(event)
-  await createUserSession(event, { id: user.id, kind: 'user' })
+  await createUserSession(event, { id: user.id, role: user.role })
   await usersService.updateLastLogin(user.id, ip, userAgent)
   await loginLogService.record({ userId: user.id, method, success: true, ip, userAgent })
 

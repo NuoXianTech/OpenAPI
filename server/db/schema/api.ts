@@ -53,8 +53,8 @@ export const apiCategories = pgTable('api_categories', {
 //   - 文件夹回归（且同名 + endpoint 方法集匹配）时，manifestSync 自动清除 isOrphaned
 //
 // createdBy / updatedBy 用作"操作者快照"，无外键约束：
-//   - null = admin 内置账号（admin 不在 users 表）
-//   - 整数 = 用户 id 快照（理论上仅 admin 能创建接口，但保留扩展位）
+//   - null = 系统任务或无操作者快照
+//   - 整数 = users.id 快照
 // ------------------------------------------------------------------
 export const apis = pgTable('apis', {
   id: serial('id').primaryKey(),

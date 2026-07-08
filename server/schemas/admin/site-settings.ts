@@ -51,7 +51,6 @@ export const adminUpdateSiteSettingsSchema = z.object({
   turnstileSecretKey: optionalString('Turnstile Secret Key', { max: 200, trim: false }),
   turnstileLoginEnabled: z.boolean().optional(),
   turnstileRegisterEnabled: z.boolean().optional(),
-  turnstileAdminLoginEnabled: z.boolean().optional(),
   turnstilePasswordResetEnabled: z.boolean().optional(),
   turnstileCheckinEnabled: z.boolean().optional(),
   checkinEnabled: z.boolean().optional(),

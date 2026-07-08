@@ -127,10 +127,11 @@ pnpm preview
 | 变量 | 是否必填 | 说明 |
 | --- | --- | --- |
 | `DATABASE_URL` | 生产必填 | PostgreSQL 连接串。 |
-| `NUXT_AUTH_ADMIN_USERNAME` / `NUXT_AUTH_ADMIN_PASSWORD` | 必填 | 内置管理员账号凭据。 |
-| `NUXT_AUTH_ADMIN_EMAIL` | 否 | 管理员展示邮箱。 |
-| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证 token 与 OAuth state 共用的 HS256/HMAC 签名密钥；为空时鉴权 fail-closed。 |
+| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
+
+如果启动时不存在管理员账号，服务端会自动创建 `admin`，随机密码只输出到控制台。
+部署这次 schema 变更前，需要由你生成并应用数据库迁移，确保 `users.role` 字段已存在。
 
 完整的单实例配置见 [.env.example](.env.example)。
 

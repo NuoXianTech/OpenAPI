@@ -16,14 +16,18 @@ interface OAuthBinding {
 const props = defineProps<{
   open: boolean
   target: AdminUserItem | null
-  onSubmit: (id: number, payload: { username: string, email: string, displayName: string, isActive: boolean, password?: string }) => Promise<boolean>
+  onSubmit: (id: number, payload: { email: string, displayName: string, role: 'user' | 'admin', isActive: boolean, password?: string }) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
 
-const form = reactive({ username: '', email: '', displayName: '', isActive: false, password: '' })
+const form = reactive({ username: '', email: '', displayName: '', role: 'user' as 'user' | 'admin', isActive: false, password: '' })
+const roleOptions = [
+  { label: '普通用户', value: 'user' },
+  { label: '管理员', value: 'admin' }
+]
 const loading = ref(false)
 
 const bindings = ref<OAuthBinding[]>([])
@@ -35,6 +39,7 @@ watch(() => props.target, (val) => {
     username: val.username || '',
     email: val.email || '',
     displayName: val.displayName || '',
+    role: val.role || 'user',
     isActive: val.isActive ?? false
   })
 })
@@ -63,9 +68,9 @@ async function submit() {
   if (!props.target) return
   loading.value = true
   const ok = await props.onSubmit(props.target.id, {
-    username: form.username,
     email: form.email,
     displayName: form.displayName,
+    role: form.role,
     isActive: form.isActive,
     // 留空 = 不改密码（传 undefined，不进 body）
     password: form.password.trim() ? form.password : undefined
@@ -87,8 +92,14 @@ async function submit() {
         class="space-y-3"
         @submit.prevent="submit"
       >
-        <UFormField label="用户名">
-          <UInput v-model="form.username" />
+        <UFormField
+          label="用户名"
+          help="用户名创建后不可修改，用于保持审计记录稳定。"
+        >
+          <UInput
+            v-model="form.username"
+            disabled
+          />
         </UFormField>
         <UFormField label="邮箱">
           <UInput
@@ -100,6 +111,13 @@ async function submit() {
           <UInput
             v-model="form.displayName"
             :maxlength="32"
+          />
+        </UFormField>
+        <UFormField label="账号类型">
+          <USelect
+            v-model="form.role"
+            :items="roleOptions"
+            class="w-full"
           />
         </UFormField>
         <USwitch

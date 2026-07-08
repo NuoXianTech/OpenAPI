@@ -7,6 +7,7 @@ import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
   id: number
+  role: 'user' | 'admin'
   username: string
   email: string | null
   displayName: string | null
@@ -106,7 +107,7 @@ export function useAdminUsersPage() {
     }
   }
 
-  async function updateUser(id: number, payload: { username: string, email: string, displayName: string, isActive: boolean, password?: string }): Promise<boolean> {
+  async function updateUser(id: number, payload: { email: string, displayName: string, role: 'user' | 'admin', isActive: boolean, password?: string }): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/update', {
         method: 'PUT',
@@ -121,7 +122,7 @@ export function useAdminUsersPage() {
     }
   }
 
-  async function createUser(payload: { username: string, email: string, password: string, displayName: string, isActive: boolean }): Promise<boolean> {
+  async function createUser(payload: { username: string, email: string, password: string, displayName: string, role: 'user' | 'admin', isActive: boolean }): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/create', {
         method: 'POST',
@@ -130,6 +131,7 @@ export function useAdminUsersPage() {
           email: payload.email,
           password: payload.password,
           displayName: payload.displayName || undefined,
+          role: payload.role,
           isActive: payload.isActive
         }
       })
@@ -177,6 +179,7 @@ interface UseAdminUsersDisplayMetaReturn {
 const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
   { id: 'select' },
   { accessorKey: 'username', header: '用户名' },
+  { accessorKey: 'role', header: '类型' },
   { accessorKey: 'email', header: '邮箱' },
   { accessorKey: 'credits', header: '积分' },
   { accessorKey: 'isActive', header: '激活' },

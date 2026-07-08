@@ -13,7 +13,6 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
   siteKey: '',
   login: false,
   register: false,
-  adminLogin: false,
   passwordReset: false,
   checkin: false
 }

@@ -31,11 +31,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const mode: OauthFlowMode = readQueryOption(query.mode, OAUTH_FLOW_MODES) ?? 'login'
 
-  // bind 模式必须已登录为普通用户
+  // bind 模式必须已登录，用户和管理员都可以绑定第三方账号。
   if (mode === 'bind') {
     const authUser = await getAuthUser(event)
-    if (!authUser || authUser.kind !== 'user') {
-      throw createError({ statusCode: 401, message: '需要先登录普通用户账号才能绑定第三方' })
+    if (!authUser) {
+      throw createError({ statusCode: 401, message: '需要先登录账号才能绑定第三方' })
     }
   }
 

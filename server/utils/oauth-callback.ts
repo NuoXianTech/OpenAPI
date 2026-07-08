@@ -85,7 +85,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     // ============ bind 模式：当前已登录用户主动绑定 ============
     if (consumed.mode === 'bind') {
       const authUser = await getAuthUser(event)
-      if (!authUser || authUser.kind !== 'user') {
+      if (!authUser) {
         return redirectError(event, 'login_required', 'bind')
       }
 
@@ -149,7 +149,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         email: profile.email,
         lastLoginIp: ip
       })
-      await createUserSession(event, { id: user.id, kind: 'user' })
+      await createUserSession(event, { id: user.id, role: user.role })
       await usersService.updateLastLogin(user.id, ip || '0.0.0.0', userAgent)
       await loginLogService.record({ userId: user.id, method, success: true, ip, userAgent })
       return sendRedirect(event, consumed.returnTo || '/', 302)

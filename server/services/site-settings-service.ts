@@ -53,7 +53,6 @@ export interface SiteSettingsUpsertInput {
   turnstileSecretKey?: string
   turnstileLoginEnabled?: boolean
   turnstileRegisterEnabled?: boolean
-  turnstileAdminLoginEnabled?: boolean
   turnstilePasswordResetEnabled?: boolean
   turnstileCheckinEnabled?: boolean
   checkinEnabled?: boolean
@@ -90,7 +89,6 @@ function toPublicTurnstile(settings: {
   turnstileSecretKey: string
   turnstileLoginEnabled: boolean
   turnstileRegisterEnabled: boolean
-  turnstileAdminLoginEnabled: boolean
   turnstilePasswordResetEnabled: boolean
   turnstileCheckinEnabled: boolean
 }): PublicTurnstileSettings {
@@ -102,7 +100,6 @@ function toPublicTurnstile(settings: {
     siteKey: enabled ? settings.turnstileSiteKey : '',
     login: enabled && settings.turnstileLoginEnabled,
     register: enabled && settings.turnstileRegisterEnabled,
-    adminLogin: enabled && settings.turnstileAdminLoginEnabled,
     passwordReset: enabled && settings.turnstilePasswordResetEnabled,
     checkin: enabled && settings.turnstileCheckinEnabled
   }

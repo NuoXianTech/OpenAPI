@@ -103,7 +103,7 @@ const LOGIN_ERROR_CODES: Record<number, string> = {
 onMounted(async () => {
   await fetchMe()
   if (user.value) {
-    await navigateTo(user.value.kind === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
+    await navigateTo(user.value.role === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
     return
   }
   checkingAuth.value = false
@@ -133,8 +133,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       ? { ...withRemember, turnstileToken: turnstileToken.value }
       : withRemember
 
-    await login(payload)
-    await navigateTo(USER_OVERVIEW_PATH)
+    const authUser = await login(payload)
+    await navigateTo(authUser.role === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
   } catch (error: unknown) {
     errorMessage.value = parseFetchError(error, '登录失败', LOGIN_ERROR_CODES)
     turnstileWidget.value?.reset()
@@ -162,7 +162,7 @@ function clearTurnstileError() {
     <AuthBrandHeader
       icon="i-mdi-account-circle-outline"
       :title="`欢迎回到 ${settings.siteName}`"
-      subtitle="使用邮箱或用户名登录，开始调用接口"
+      subtitle="使用邮箱或用户名登录，进入你的工作台"
     />
 
     <UCard

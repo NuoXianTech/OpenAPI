@@ -90,7 +90,6 @@ export const siteSettings = pgTable('site_settings', {
   turnstileSecretKey: varchar('turnstile_secret_key', { length: 200 }).notNull().default(''),
   turnstileLoginEnabled: boolean('turnstile_login_enabled').notNull().default(false),
   turnstileRegisterEnabled: boolean('turnstile_register_enabled').notNull().default(false),
-  turnstileAdminLoginEnabled: boolean('turnstile_admin_login_enabled').notNull().default(false),
   turnstilePasswordResetEnabled: boolean('turnstile_password_reset_enabled').notNull().default(false),
   // 每日签到页是否要求 Turnstile（弹窗内验证）
   turnstileCheckinEnabled: boolean('turnstile_checkin_enabled').notNull().default(false),
@@ -120,13 +119,13 @@ export const siteSettings = pgTable('site_settings', {
 // Operation Logs（后台审计日志 · 审计不可变）
 //
 // userId 是 users.id 整数快照，无外键约束：
-//   - null = admin 内置账号操作（admin 不在 users 表）
+//   - null = 系统任务或无操作者快照
 //   - 整数 = 实际操作的用户 id 快照（用户硬删后仍保留历史指向）
 // actor 是用户名/管理员名快照，用于在用户被硬删后继续可追溯人物姓名。
 // ------------------------------------------------------------------
 export const operationLogs = pgTable('operation_logs', {
   id: serial('id').primaryKey(),
-  userId: integer('user_id'), // null=admin，整数=用户 id 快照（无 FK）
+  userId: integer('user_id'), // null=系统任务或无操作者快照，整数=用户 id 快照（无 FK）
   actor: varchar('actor', { length: 140 }), // 操作者名快照
   action: varchar('action', { length: 80 }).notNull(), // e.g. admin.user.ban / user.password.change
   resourceType: varchar('resource_type', { length: 80 }),

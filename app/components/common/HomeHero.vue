@@ -37,7 +37,7 @@ const nowTime = ref('')
 const upTime = ref('')
 const startTimestamp = computed(() => parseStartTimestamp(props.startTime))
 const compactCallCount = computed(() => formatCompactCallCount(props.callCount))
-const dashboardMeta = computed(() => getDashboardMeta(user.value?.kind))
+const dashboardMeta = computed(() => getDashboardMeta(user.value?.role))
 const dashboardPath = computed(() => dashboardMeta.value.path)
 const dashboardLabel = computed(() => dashboardMeta.value.label)
 const dashboardIcon = computed(() => dashboardMeta.value.icon)
@@ -79,8 +79,8 @@ function formatCompactCallCount(callCount = 0): string {
   }).format(callCount)
 }
 
-function getDashboardMeta(userKind: string | null | undefined): HomeHeroDashboardMeta {
-  if (userKind === 'admin') {
+function getDashboardMeta(userRole: string | null | undefined): HomeHeroDashboardMeta {
+  if (userRole === 'admin') {
     return {
       path: ADMIN_OVERVIEW_PATH,
       label: '管理后台',
@@ -230,7 +230,7 @@ async function handleLogout() {
                   </UButton>
                   <UTooltip text="管理入口">
                     <UButton
-                      to="/admin/login"
+                      to="/login"
                       icon="i-mdi-shield-key-outline"
                       color="neutral"
                       variant="ghost"

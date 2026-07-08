@@ -3,7 +3,7 @@ import { adminModalUi } from '~/utils/admin-modal-ui'
 
 const props = defineProps<{
   open: boolean
-  onSubmit: (payload: { username: string, email: string, password: string, displayName: string, isActive: boolean }) => Promise<boolean>
+  onSubmit: (payload: { username: string, email: string, password: string, displayName: string, role: 'user' | 'admin', isActive: boolean }) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
@@ -15,8 +15,13 @@ const form = reactive({
   email: '',
   password: '',
   displayName: '',
+  role: 'user' as 'user' | 'admin',
   isActive: true
 })
+const roleOptions = [
+  { label: '普通用户', value: 'user' },
+  { label: '管理员', value: 'admin' }
+]
 const loading = ref(false)
 
 function resetForm() {
@@ -24,6 +29,7 @@ function resetForm() {
   form.email = ''
   form.password = ''
   form.displayName = ''
+  form.role = 'user'
   form.isActive = true
 }
 
@@ -93,6 +99,13 @@ async function submit() {
           <UInput
             v-model="form.displayName"
             :maxlength="32"
+          />
+        </UFormField>
+        <UFormField label="账号类型">
+          <USelect
+            v-model="form.role"
+            :items="roleOptions"
+            class="w-full"
           />
         </UFormField>
         <USwitch

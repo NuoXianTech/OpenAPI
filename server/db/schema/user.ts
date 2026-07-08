@@ -7,7 +7,8 @@ import {
   integer,
   jsonb,
   index,
-  uniqueIndex
+  uniqueIndex,
+  check
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
@@ -24,6 +25,7 @@ import { sql } from 'drizzle-orm'
 // ------------------------------------------------------------------
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
+  role: varchar('role', { length: 20 }).notNull().default('user'),
   username: varchar('username', { length: 50 }).notNull(),
   // 显示名：用于导航栏展示，不参与登录；为空时回退 username
   displayName: varchar('display_name', { length: 100 }),
@@ -49,7 +51,8 @@ export const users = pgTable('users', {
 }, table => [
   uniqueIndex('users_username_uq').on(table.username),
   uniqueIndex('users_email_lower_uq').on(sql`lower(${table.email})`),
-  index('users_active_banned_idx').on(table.isActive, table.isBanned)
+  index('users_active_banned_idx').on(table.isActive, table.isBanned),
+  check('users_role_chk', sql`${table.role} in ('user', 'admin')`)
 ])
 
 // ------------------------------------------------------------------
@@ -65,7 +68,7 @@ export const users = pgTable('users', {
 //
 // userId 是 users.id 的整数快照，**无外键约束**。用户硬删后该字段保留，
 // 但无法 join 到 users 表。读取端把它当作"曾经存在的用户 id"看待。
-// operatorId=null 表示由 admin 内置账号操作（admin 不在 users 表）。
+// operatorId 记录操作者 users.id 快照；null 表示系统任务或无操作者快照。
 // ------------------------------------------------------------------
 export const creditTransactions = pgTable('credit_transactions', {
   id: serial('id').primaryKey(),
@@ -76,8 +79,8 @@ export const creditTransactions = pgTable('credit_transactions', {
   apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
   apiCallId: integer('api_call_id'), // 关联 apiCalls.id 快照
   codeId: integer('code_id'), // 仅 reason=redemption_code 有值，关联 redemptionCodes.id 快照（无 FK）
-  operatorId: integer('operator_id'), // null = admin 内置账号；整数 = 实际操作的用户 id 快照
-  operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照（admin 名取自 .env）
+  operatorId: integer('operator_id'), // users.id 快照；null = 系统任务或无操作者快照
+  operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照
   ip: varchar('ip', { length: 45 }), // 操作来源 IP 快照；目前仅兑换码兑换写入，其余 reason 留 null
   remark: varchar('remark', { length: 500 }),
   meta: jsonb('meta').$type<Record<string, unknown>>(),
@@ -120,7 +123,7 @@ export const redemptionCodes = pgTable('redemption_codes', {
   usedCount: integer('used_count').notNull().default(0),
   expiresAt: timestamp('expires_at', { withTimezone: true }), // null = 永不过期
   isEnabled: boolean('is_enabled').notNull().default(true),
-  createdBy: integer('created_by'), // null = admin（无 FK，admin 不在 users 表）
+  createdBy: integer('created_by'), // 操作者 users.id 快照；null = 系统任务或无操作者快照
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   adminAdjustCreditsSchema,
+  adminInitialProfileSchema,
   adminUpdateApiSchema,
   adminUpdateUserSchema
 } from '~~/server/schemas/admin'
@@ -12,6 +13,12 @@ describe('admin schemas', () => {
       id: 1,
       username: 'bad name',
       email: 'not-an-email'
+    }).success).toBe(false)
+
+    expect(adminUpdateUserSchema.safeParse({
+      id: 1,
+      username: 'new-name',
+      email: 'valid@example.com'
     }).success).toBe(false)
 
     expect(adminUpdateUserSchema.safeParse({ id: 1 }).success).toBe(false)
@@ -55,5 +62,17 @@ describe('admin schemas', () => {
       id: 1,
       status: 999
     }).success).toBe(false)
+  })
+
+  it('accepts default or custom initial admin username and email', () => {
+    expect(adminInitialProfileSchema.safeParse({
+      username: 'admin',
+      email: 'admin@openapi.com'
+    }).success).toBe(true)
+
+    expect(adminInitialProfileSchema.safeParse({
+      username: 'owner',
+      email: 'owner@example.com'
+    }).success).toBe(true)
   })
 })
