@@ -1,6 +1,6 @@
 # 前端后台文档
 
-本目录维护 admin/user 后台页面的结构、组件选型和交互规范。所有后台页面应优先复用 Nuxt UI、Vue Composition API、VueUse 和项目内已有 dashboard 组件。
+本目录维护 admin/user 后台页面的结构、组件选型和交互规范。所有后台页面应优先复用 Nuxt UI、Vue Composition API、VueUse 和项目内已有 dashboard 组件。管理员和普通用户共用账号体系，前端通过 `role` 决定工作区入口和侧边栏能力，不再维护独立管理登录页。
 
 ## 文档索引
 

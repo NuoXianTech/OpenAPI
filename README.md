@@ -4,7 +4,7 @@
 
 ## OpenAPI
 
-A Nuxt-powered API service platform with keys, credits, analytics, and an admin console.
+A unified API service platform for publishing endpoints, controlling access, metering usage, managing credits, and operating users.
 
 [![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
@@ -12,7 +12,7 @@ A Nuxt-powered API service platform with keys, credits, analytics, and an admin 
 
 </div>
 
-OpenAPI is a self-hosted API service platform built with Nuxt 4 and Nitro. It is designed for publishing, billing, analytics, and operating public APIs, with built-in API keys, gateway rate limiting, credits, call logs, site notifications, OAuth login, and a Chinese admin console.
+OpenAPI helps you turn public APIs into a manageable service. You can publish APIs, give users their own access keys, track usage, manage credits, send announcements, and run daily operations from a clean admin console. It is designed for small teams and individual builders who want a practical, self-hosted platform without stitching together a pile of separate tools.
 
 ### How does it work?
 
@@ -32,7 +32,7 @@ The production target is intentionally simple: **one Node/Nitro process plus one
 
 - Build-time API discovery with startup database synchronization.
 
-- User accounts with email verification, password reset, email change, session invalidation, GitHub OAuth, and QQ OAuth.
+- User and admin accounts with email verification, password reset, email change, session invalidation, GitHub OAuth, and QQ OAuth binding.
 
 - API keys with scopes, IP allowlists, total quotas, expiry, revocation, and usage snapshots.
 
@@ -44,9 +44,9 @@ The production target is intentionally simple: **one Node/Nitro process plus one
 
 - Redemption codes, daily check-in credits, announcements, friend links, and site notifications.
 
-- Admin dashboards for users, APIs, categories, credits, content, OAuth providers, site settings, logs, and analytics.
+- Admin dashboards for users, APIs, categories, credits, content, OAuth providers, site settings, logs, analytics, and project information.
 
-- Security-oriented defaults: stateless JWT sessions, scrypt password hashes, HMAC one-time tokens, server-side private page guards, and Cloudflare Turnstile support.
+- Security-oriented defaults: stateless JWT sessions, scrypt password hashes, HMAC one-time tokens, server-side private page guards, unified login/register/reset/check-in Turnstile checks, and immutable audit trails.
 
 ### Built-in APIs
 
@@ -131,7 +131,9 @@ The project reads production settings from runtime environment variables. The mo
 | `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
 
 If no administrator exists on startup, the server creates `admin` with a random password and prints it to the console.
-Before deploying this schema change, generate and apply your database migration so `users.role` exists.
+The initial email is `admin@openapi.com`. After the first login, an onboarding dialog appears once when the account still uses the initial username or email; it lets the administrator confirm username, email, and a new password. Later username changes are intentionally blocked outside this first-run flow to preserve auditability.
+
+Generate and apply database migrations from the current Drizzle schema before deployment.
 
 See [.env.example](.env.example) for the complete single-instance configuration.
 
@@ -164,6 +166,7 @@ pnpm lint          # Run ESLint
 pnpm lint:fix      # Fix ESLint issues
 pnpm typecheck     # Run Nuxt TypeScript checks
 pnpm test:run      # Run tests once
+pnpm test:unit     # Run unit tests once
 ```
 
 ### Documentation

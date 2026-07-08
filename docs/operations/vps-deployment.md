@@ -62,7 +62,7 @@ node start.mjs
 
 迁移执行器使用 `DATABASE_URL` 和 Drizzle 的 `drizzle.__drizzle_migrations` 表，因此已经应用过的迁移会自动跳过。
 
-发布含账号角色 schema 的版本前，先生成并随版本发布数据库迁移，确保 `users.role` 字段存在；已有 `kind` 字段的环境应在迁移中直接改名为 `role`。
+发布含账号、OAuth、通知、积分或日志 schema 变更的版本前，先生成并随版本发布数据库迁移。当前账号模型要求管理员和普通用户共用 `users` 表，并通过 `users.role` 区分权限。
 
 ## 进程管理建议
 
@@ -91,4 +91,4 @@ curl -fsS http://127.0.0.1:3000/api/list
 pm2 logs openapi --lines 80
 ```
 
-确认管理员后台、用户后台、公开 API 调用、调用日志和统计均可用后，再按 [生产运行手册](./production-runbook.md) 观察日志和关键表，最后把发布标记为完成。
+确认统一登录页、管理员后台、用户后台、公开 API 调用、调用日志、积分流水和统计均可用后，再按 [生产运行手册](./production-runbook.md) 观察日志和关键表，最后把发布标记为完成。

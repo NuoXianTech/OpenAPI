@@ -4,7 +4,7 @@
 
 ## OpenAPI
 
-一个基于 Nuxt 的 API 服务平台，内置密钥、积分、统计与管理后台。
+一个集接口发布、访问控制、用量计量、积分管理和用户运营于一体的 API 服务平台。
 
 [![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
@@ -12,7 +12,7 @@
 
 </div>
 
-OpenAPI 是一个基于 Nuxt 4 与 Nitro 的自托管 API 服务平台，面向公开接口的接入、计费、统计与运营管理。它内置 API 密钥、网关限流、积分体系、调用日志、站内通知、OAuth 登录和中文管理后台，帮助你快速搭建可运营、可审计的 API 平台。
+OpenAPI 可以帮助你把开放接口变成一个真正可运营的服务。你可以发布接口，为用户分配访问密钥，查看调用情况，管理积分，发送公告，并在清晰的管理后台中完成日常维护。它适合个人开发者和小团队，用一套自托管平台完成接口开放、用户服务和运营管理，而不需要东拼西凑多个系统。
 
 ### 它如何工作？
 
@@ -32,7 +32,7 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 
 - 构建期公开接口发现，并在启动时同步数据库。
 
-- 用户注册、邮箱验证、找回密码、修改邮箱、会话失效、GitHub OAuth 与 QQ OAuth。
+- 用户和管理员账号支持注册、邮箱验证、找回密码、修改邮箱、会话失效、GitHub OAuth 与 QQ OAuth 绑定。
 
 - API Key 支持作用域、IP 白名单、总配额、有效期、吊销与使用快照。
 
@@ -44,9 +44,9 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 
 - 兑换码、每日签到积分、公告、友情链接与站内通知。
 
-- 后台管理用户、接口、分类、积分、内容、OAuth 提供商、站点设置、日志与数据分析。
+- 后台管理用户、接口、分类、积分、内容、OAuth 提供商、站点设置、日志、数据分析与项目信息。
 
-- 默认安全设计包括无状态 JWT 会话、scrypt 密码哈希、HMAC 一次性 token、私有页面服务端守卫与 Cloudflare Turnstile 支持。
+- 默认安全设计包括无状态 JWT 会话、scrypt 密码哈希、HMAC 一次性 token、私有页面服务端守卫、登录/注册/找回密码/签到统一 Turnstile 校验与不可变审计记录。
 
 ### 内置接口
 
@@ -131,7 +131,9 @@ pnpm preview
 | `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
 
 如果启动时不存在管理员账号，服务端会自动创建 `admin`，随机密码只输出到控制台。
-部署这次 schema 变更前，需要由你生成并应用数据库迁移，确保 `users.role` 字段已存在。
+初始邮箱为 `admin@openapi.com`。首次登录后，如果账号仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码；后续除首次初始化流程外不允许修改用户名，以保证审计可追溯。
+
+部署前请基于当前 Drizzle schema 生成并应用数据库迁移。
 
 完整的单实例配置见 [.env.example](.env.example)。
 
@@ -164,6 +166,7 @@ pnpm lint          # 运行 ESLint
 pnpm lint:fix      # 自动修复 ESLint 问题
 pnpm typecheck     # 运行 Nuxt TypeScript 检查
 pnpm test:run      # 单次运行测试
+pnpm test:unit     # 单次运行单元测试
 ```
 
 ### 项目文档

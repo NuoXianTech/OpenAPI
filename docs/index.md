@@ -12,6 +12,14 @@
 | 处理生产异常 | [生产运行手册](./operations/production-runbook.md) | [生产就绪清单](./operations/production-readiness.md)、[API 调用统计规范](./api/call-statistics.md) |
 | 审查架构一致性 | [工程标准](./standards/index.md) | [平台能力文档](./platform/index.md)、[API 文档](./api/index.md) |
 
+## 当前架构摘要
+
+- 生产部署模型是单个 Node/Nitro 进程加一个 PostgreSQL 数据库；公开 API 限流和扣费重试依赖当前进程，不做多实例横向扩展。
+- 管理员和普通用户共用 `users` 表，通过 `users.role` 区分权限，并统一从 `/login` 登录。
+- 首次启动如果不存在管理员，服务端会创建 `admin <admin@openapi.com>`，随机密码只输出到控制台；首次登录后通过一次性初始化弹窗确认用户名、邮箱并设置新密码。
+- 管理员继承用户侧常规能力，同时拥有管理侧能力；普通用户只访问用户工作区。
+- 公共 API 由 `server/routes/v{N}/{code}/` 文件路由发现，启动时同步到数据库后由管理员启用和配置。
+
 ## 文档地图
 
 | 领域 | 入口 | 适合场景 |

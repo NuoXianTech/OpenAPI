@@ -31,7 +31,7 @@
 1. 页面骨架先参考 [后台页面规范](../frontend/dashboard-pages.md)。
 2. 表格优先使用 `DashboardDataTable`，行操作使用 `DashboardRowActions`。
 3. 分组页只负责标题、二级导航和 `<NuxtPage />`。
-4. 刷新、主题和账号菜单交给 `DashboardHeaderActions` 或 `UserHeaderActions`。
+4. 刷新、通知、主题和账号菜单交给 `DashboardHeaderActions`。
 5. 弹窗较独立时使用 `useOverlay()` 创建 `Lazy*Modal`；与父表单强耦合时使用 `v-model:open`。
 
 ## 表单与验证

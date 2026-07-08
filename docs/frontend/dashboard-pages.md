@@ -1,6 +1,6 @@
 # 后台页面规范
 
-适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `dashboard` layout 与 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`app/constants/dashboard-sections.ts`、`DashboardHeaderActions` 与 `UserHeaderActions` 收敛。
+适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `dashboard` layout 与 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`app/constants/dashboard-sections.ts` 与 `DashboardHeaderActions` 收敛。管理员也是 `users.role='admin'` 的用户账号，因此管理后台同时展示用户常规能力和管理能力；普通用户只展示用户常规能力。
 
 ## 1. 页面骨架
 
@@ -10,6 +10,19 @@
 | --- | --- | --- |
 | 分组父级页 | 用 `DashboardSectionShell` 渲染二级导航，并通过内部 `<NuxtPage />` 承载子页 | `app/pages/admin/(dashboard)/apis.vue`、`app/pages/user/(dashboard)/settings.vue` |
 | 业务叶子页 | 用 `UDashboardPanel` + `UDashboardNavbar` + `dashboard-section-page` 承载具体内容 | `app/pages/admin/(dashboard)/logs.vue`、`app/pages/user/(dashboard)/apikeys.vue` |
+
+当前侧边栏结构：
+
+| 工作区 | 分组 | 页面 |
+| --- | --- | --- |
+| 用户 | 常规 | 概览、API 密钥、使用日志 |
+| 用户 | 个人 | 积分、设置 |
+| 管理员 | 常规 / 个人 | 继承用户工作区能力 |
+| 管理员 | 管理 | 概览、数据看板、日志中心 |
+| 管理员 | 运营 | 兑换码、内容管理 |
+| 管理员 | 系统 | 接口管理、用户管理、系统设置 |
+
+日志中心统一挂在 `/admin/logs` 下：调用日志 `/admin/logs`、登录日志 `/admin/logs/login`、积分日志 `/admin/logs/credits`、操作日志 `/admin/logs/operations`。用户积分页保留二级 tab：概览、签到兑换、流水明细。
 
 分组父级页保持薄，只负责标题、二级导航和右上角动作：
 
@@ -37,7 +50,7 @@ definePageMeta({
 })
 ```
 
-子页面不要重复声明 layout / middleware，直接声明面板。admin 使用 `DashboardHeaderActions`，user 使用 `UserHeaderActions`：
+子页面不要重复声明 layout / middleware，直接声明面板。右上角动作统一使用 `DashboardHeaderActions`：
 
 ```vue
 <script setup lang="ts">
@@ -57,7 +70,7 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UserHeaderActions
+          <DashboardHeaderActions
             :on-refresh="refresh"
             :refreshing="status === 'pending'"
           />
@@ -80,8 +93,8 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
 | --- | --- |
 | 后台整体布局 | `app/layouts/dashboard.vue` + `DashboardLayoutBase` |
 | 分组页二级导航 | `DashboardSectionShell` |
-| 右上角刷新、主题、账号菜单 | `DashboardHeaderActions` |
-| 用户后台通知铃铛 | `UserHeaderActions`，不要在页面里复制通知组件 |
+| 右上角刷新、通知、主题、账号菜单 | `DashboardHeaderActions` |
+| 通知铃铛 | `DashboardHeaderActions` 内置 `CommonNotificationBell`，不要在页面里复制通知组件 |
 | 表格 | `DashboardDataTable` |
 | 行操作菜单 | `DashboardRowActions` |
 | 列显隐 | `DashboardColumnVisibility` |
@@ -172,7 +185,7 @@ async function openDelete(item: ApiCategoryListItem): Promise<void> {
 
 ## 6. 通知与头部动作
 
-`DashboardHeaderActions` 内置刷新按钮、主题切换和账号菜单；`UserHeaderActions` 在其基础上注入 `CommonNotificationBell`。通知中心是用户后台能力，admin 页面保持使用 `DashboardHeaderActions`。
+`DashboardHeaderActions` 内置刷新按钮、通知铃铛、主题切换和账号菜单。通知是账号能力，不是普通用户专属能力；管理员和普通用户都通过统一 HeaderActions 查看通知。页面内不要临时复制 `CommonNotificationBell`。
 
 如果页面支持刷新，把 `refresh` 和加载状态传给 HeaderActions；如果页面没有明确刷新动作，可以省略：
 
