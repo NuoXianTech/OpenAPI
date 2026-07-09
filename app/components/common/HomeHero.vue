@@ -228,17 +228,6 @@ async function handleLogout() {
                   >
                     注册
                   </UButton>
-                  <UTooltip text="管理入口">
-                    <UButton
-                      to="/login"
-                      icon="i-mdi-shield-key-outline"
-                      color="neutral"
-                      variant="ghost"
-                      size="sm"
-                      square
-                      aria-label="管理入口"
-                    />
-                  </UTooltip>
                 </div>
               </template>
               <template #fallback>
