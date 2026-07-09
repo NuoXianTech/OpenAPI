@@ -20,7 +20,7 @@ function createEmptyUserDashboardData(): UserDashboardData {
   }
 }
 
-const { data, loading, error, refresh } = usePrivateResource<UserDashboardData>({
+const { data, error } = usePrivateResource<UserDashboardData>({
   path: '/api/user/dashboard',
   defaultData: createEmptyUserDashboardData
 })
@@ -124,12 +124,6 @@ async function copyCurl() {
       >
         <template #leading>
           <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions
-            :on-refresh="refresh"
-            :refreshing="loading"
-          />
         </template>
       </UDashboardNavbar>
     </template>
