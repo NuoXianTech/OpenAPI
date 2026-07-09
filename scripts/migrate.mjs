@@ -10,6 +10,13 @@ import { migrate } from 'drizzle-orm/postgres-js/migrator'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+function loadProjectEnv() {
+  const envPath = path.resolve(process.cwd(), '.env')
+  if (!fs.existsSync(envPath)) return
+
+  process.loadEnvFile(envPath)
+}
+
 // drizzle's migrator issues `CREATE SCHEMA/TABLE IF NOT EXISTS` for its own
 // bookkeeping (the `drizzle` schema + `__drizzle_migrations` tracking table).
 // After the first run these already exist, so Postgres returns the harmless
@@ -39,6 +46,21 @@ function findMigrationsFolder() {
   throw new Error(`Cannot find migrations folder. Tried:\n${candidates.join('\n')}`)
 }
 
+function getSqlState(error) {
+  if (!error || typeof error !== 'object') return undefined
+
+  const direct = 'code' in error ? error.code : undefined
+  if (typeof direct === 'string') return direct
+
+  const cause = 'cause' in error ? error.cause : undefined
+  if (!cause || typeof cause !== 'object') return undefined
+
+  const causeCode = 'code' in cause ? cause.code : undefined
+  return typeof causeCode === 'string' ? causeCode : undefined
+}
+
+loadProjectEnv()
+
 const configuredDriver = process.env.DATABASE_DRIVER
 if (configuredDriver && configuredDriver !== 'postgres' && configuredDriver !== 'pglite') {
   throw new Error('DATABASE_DRIVER must be either "postgres" or "pglite".')
@@ -54,6 +76,17 @@ if (!databaseUrl && !shouldUsePglite) {
 }
 
 const migrationsFolder = findMigrationsFolder()
+const postgresTarget = databaseUrl
+  ? (() => {
+      const url = new URL(databaseUrl)
+      return `${url.protocol}//${url.host}${url.pathname}`
+    })()
+  : undefined
+const migrationTarget = shouldUsePglite
+  ? `PGlite ${pgliteDataDir}`
+  : postgresTarget
+
+console.log(`[db:migrate] Target: ${shouldUsePglite ? 'pglite' : 'postgres'} (${migrationTarget})`)
 
 async function ensureDatabaseExists() {
   const url = new URL(databaseUrl)
@@ -124,7 +157,7 @@ if (shouldUsePglite) {
 try {
   await migrateOnce()
 } catch (err) {
-  if (err?.cause?.code !== '3D000') throw err
+  if (getSqlState(err) !== '3D000') throw err
 
   await ensureDatabaseExists()
   await migrateOnce()

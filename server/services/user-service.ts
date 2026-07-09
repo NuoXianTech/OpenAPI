@@ -127,7 +127,7 @@ export const usersService = {
     const res = await db.select().from(users)
       .where(eq(users.id, id))
       .limit(1)
-    return expectFirstRow(res, 'Failed to create user.')
+    return firstRow(res)
   },
 
   async updateUser(id: number, data: Partial<{
@@ -186,7 +186,7 @@ export const usersService = {
       })
       .returning()
 
-    return expectFirstRow(res, 'Failed to update last login.')
+    return expectFirstRow(res, 'Failed to create user.')
   },
 
   async updateLastLogin(id: number, ip: string, userAgent?: string | null) {

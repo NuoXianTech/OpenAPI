@@ -32,7 +32,7 @@ import { openApiFail } from '~~/server/utils/open-api-response'
 type ErrorDef = { status: number, code: string, msg: string }
 
 /**
- * 拒绝请求时以开放 API 标准壳作答。直接通过 h3 的 send 写出，
+ * 拒绝请求时以开放 API 标准壳作答。直接写出 Node 响应，
  * 保证 middleware 阶段就终止请求，不会继续走到业务 handler。
  *
  * errorDef.code 作为 body `code` 字段输出，严守 docs/api/design-style.md §3.3
@@ -43,7 +43,9 @@ type ErrorDef = { status: number, code: string, msg: string }
 function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<string, unknown> | null = null) {
   const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg, detail)
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
-  return payload
+  if (!event.node?.res) return payload
+
+  event.node.res.end(JSON.stringify(payload))
 }
 
 export default defineEventHandler(async (event: H3Event) => {
