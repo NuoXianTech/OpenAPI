@@ -8,15 +8,19 @@ const props = defineProps<{
 }>()
 
 const config = useDashboardConfig()
-const { user, logout } = useAuth()
+const { user, loading, logout } = useAuth()
 const router = useRouter()
 
-const displayName = computed(() => user.value?.displayName || user.value?.username || (config.value.id === 'admin' ? 'Admin' : 'User'))
+const fallbackName = computed(() => config.value.id === 'admin' ? 'Admin' : 'User')
+const displayName = computed(() => user.value?.displayName || user.value?.username || '')
+const userButtonLabel = computed(() => displayName.value || fallbackName.value)
+const avatarSrc = computed(() => user.value?.avatarUrl || undefined)
+const isUserPending = computed(() => loading.value || !user.value)
 
 const userMenuItems = computed<DropdownMenuItem[][]>(() => {
   const extra = config.value.userMenuExtra?.({ logout }) || []
   return [
-    [{ type: 'label', label: user.value?.email || displayName.value }],
+    [{ type: 'label', label: user.value?.email || userButtonLabel.value }],
     ...extra,
     [{
       label: '退出登录',
@@ -64,7 +68,25 @@ async function handleRefresh() {
 
     <CommonNotificationBell />
 
+    <UButton
+      v-if="isUserPending"
+      variant="ghost"
+      color="neutral"
+      class="gap-2 pr-2"
+      disabled
+    >
+      <UAvatar
+        :alt="fallbackName"
+        size="2xs"
+      />
+      <span class="hidden h-4 w-16 rounded-sm bg-elevated sm:inline-block" />
+      <UIcon
+        name="i-mdi-chevron-down"
+        class="size-4 text-muted"
+      />
+    </UButton>
     <UDropdownMenu
+      v-else
       :items="userMenuItems"
       :content="{ align: 'end', collisionPadding: 12 }"
       :ui="{ content: 'w-56' }"
@@ -75,12 +97,12 @@ async function handleRefresh() {
         class="gap-2 pr-2"
       >
         <UAvatar
-          :src="user?.avatarUrl || undefined"
-          :alt="displayName"
+          :src="avatarSrc"
+          :alt="userButtonLabel"
           size="2xs"
         />
         <span class="hidden text-sm font-medium sm:inline">
-          {{ displayName }}
+          {{ userButtonLabel }}
         </span>
         <UIcon
           name="i-mdi-chevron-down"
