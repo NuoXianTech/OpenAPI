@@ -10,6 +10,8 @@ const {
   requestEmailChange
 } = useUserSettingsPage()
 
+const avatarUrl = computed(() => profile.value?.avatarUrl || user.value?.avatarUrl || null)
+
 onMounted(async () => {
   await loadProfile()
   // 头像由邮箱派生，进入资料页时顺带刷新登录态以保证头像最新
@@ -22,7 +24,7 @@ onMounted(async () => {
     <UserSettingsBasicCard
       :profile="profile"
       :profile-loading="profileLoading"
-      :avatar-url="user?.avatarUrl"
+      :avatar-url="avatarUrl"
       :on-save="updateProfile"
     />
 

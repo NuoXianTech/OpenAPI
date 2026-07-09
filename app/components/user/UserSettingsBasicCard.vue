@@ -14,6 +14,7 @@ const props = defineProps<UserSettingsBasicCardProps>()
 const toast = useToast()
 const isSaving = ref(false)
 const displayName = ref('')
+const avatarAlt = computed(() => props.profile?.displayName || props.profile?.username || '用户头像')
 
 watch(() => props.profile, (val) => {
   if (val) displayName.value = val.displayName || ''
@@ -48,19 +49,10 @@ async function submit() {
         description="头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新。"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
-        <img
-          v-if="avatarUrl"
-          :src="avatarUrl"
-          alt="avatar"
-          width="64"
-          height="64"
-          loading="lazy"
-          decoding="async"
-          class="size-16 rounded-full border border-default object-cover"
-        >
-        <div
-          v-else
-          class="size-16 rounded-full border border-default bg-elevated"
+        <UAvatar
+          :src="avatarUrl || undefined"
+          :alt="avatarAlt"
+          class="size-16 border border-default bg-elevated"
         />
       </UFormField>
       <UFormField

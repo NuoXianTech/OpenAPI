@@ -5,6 +5,7 @@ export interface ProfileData {
   id: number
   username: string
   email: string
+  avatarUrl: string
   displayName: string | null
   emailVerifiedAt: string | null
   createdAt: string

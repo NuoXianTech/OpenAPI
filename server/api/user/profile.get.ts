@@ -12,5 +12,8 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: '用户不存在' })
   }
   const { passwordHash: _ph, ...safe } = row
-  return safe
+  return {
+    ...safe,
+    avatarUrl: authUser.avatarUrl
+  }
 })
