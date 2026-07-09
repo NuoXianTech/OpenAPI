@@ -22,7 +22,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { getRequestURL, setResponseHeader, setResponseHeaders } from 'h3'
+import { setResponseHeader, setResponseHeaders } from 'h3'
 import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/server/config/api-guard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
 import { runApiGuard } from '~~/server/utils/api-guard'
@@ -30,6 +30,11 @@ import { apiService } from '~~/server/services/api-service'
 import { openApiFail } from '~~/server/utils/open-api-response'
 
 type ErrorDef = { status: number, code: string, msg: string }
+
+function getEventPathname(event: H3Event) {
+  const rawPath = event.path || event.node?.req?.url || '/'
+  return normalizePathname(rawPath.split('?')[0] || '/')
+}
 
 /**
  * 拒绝请求时以开放 API 标准壳作答。直接写出 Node 响应，
@@ -49,8 +54,7 @@ function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<st
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const url = getRequestURL(event)
-  const pathname = normalizePathname(url.pathname)
+  const pathname = getEventPathname(event)
   if (!isGuardedPath(pathname)) return
 
   const m = VERSION_CODE_PATTERN.exec(pathname)
