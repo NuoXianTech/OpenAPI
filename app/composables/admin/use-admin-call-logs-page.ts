@@ -453,6 +453,7 @@ const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
   'admin.api-key.create': '创建 API 密钥',
   'admin.api-key.update': '更新 API 密钥',
   'admin.api-key.reset': '重置 API 密钥',
+  'admin.profile.onboarding.update': '更新初始管理员资料',
   'admin.user.create': '创建用户',
   'admin.user.update': '更新用户',
   'admin.user.delete': '删除用户',
