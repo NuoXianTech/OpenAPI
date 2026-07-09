@@ -1,5 +1,5 @@
 import { inArray, lte, sql } from 'drizzle-orm'
-import { apiCalls } from '@nuxthub/db/schema'
+import { apiCalls } from '~~/server/db/schema'
 import {
   API_AUTO_STATUS_CACHE_TTL_MS,
   API_AUTO_STATUS_SAMPLE_SIZE,

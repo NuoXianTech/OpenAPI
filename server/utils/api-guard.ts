@@ -8,7 +8,7 @@
 import type { H3Event } from 'h3'
 import { getHeader, getQuery, getRequestIP } from 'h3'
 import { and, eq, gte } from 'drizzle-orm'
-import { apiCallStats, apiKeys, users } from '@nuxthub/db/schema'
+import { apiCallStats, apiKeys, users } from '~~/server/db/schema'
 import type { RateLimitWindow } from '~~/server/config/api-guard'
 import { API_GUARD_ERROR } from '~~/server/config/api-guard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
@@ -20,7 +20,7 @@ import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString } from '~~/server/utils/request-query'
 
-type ApiRecord = typeof import('@nuxthub/db/schema').apis.$inferSelect
+type ApiRecord = typeof import('~~/server/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 type ErrorDef = { status: number, code: string, msg: string }
 

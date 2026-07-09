@@ -1,6 +1,6 @@
 import { desc, eq } from 'drizzle-orm'
-import { friendLinks } from '@nuxthub/db/schema'
-import { firstRow } from '~~/server/utils/row'
+import { friendLinks } from '~~/server/db/schema'
+import { expectFirstRow, firstRow } from '~~/server/utils/row'
 
 export const friendLinkService = {
   async list() {
@@ -33,7 +33,7 @@ export const friendLinkService = {
       isActive: data.isActive ?? true,
       createdBy: data.createdBy ?? null
     }).returning()
-    return res[0]
+    return expectFirstRow(res, 'Failed to create friend link.')
   },
 
   async update(id: number, data: Partial<{

@@ -1,7 +1,8 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
-import { apiCalls, apiKeys } from '@nuxthub/db/schema'
+import { apiCalls, apiKeys } from '~~/server/db/schema'
 import { firstRow } from '~~/server/utils/row'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 const SECRET_BYTES = 32
 const MAX_BATCH_COUNT = 5
@@ -61,7 +62,7 @@ function activeKeyWhere(id: number, userId?: number) {
     : and(eq(apiKeys.id, id), eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt))
 }
 
-async function deleteKey(tx: typeof db, id: number, userId?: number) {
+async function deleteKey(tx: DatabaseTransaction, id: number, userId?: number) {
   const rows = await tx.select().from(apiKeys)
     .where(keyWhere(id, userId))
     .limit(1)
@@ -134,7 +135,7 @@ export const apiKeyService = {
     const count = Math.max(1, Math.min(Math.trunc(input.count ?? 1), MAX_BATCH_COUNT))
     const baseName = (input.name || '').trim() || '默认密钥'
 
-    return db.transaction(async (tx: typeof db) => {
+    return db.transaction(async (tx: DatabaseTransaction) => {
       const created: ApiKeyRecord[] = []
       for (let i = 0; i < count; i++) {
         const name = i === 0 ? baseName : `${baseName}-${randomNameSuffix()}`
@@ -155,11 +156,11 @@ export const apiKeyService = {
   },
 
   async deleteForUser(userId: number, id: number) {
-    return db.transaction((tx: typeof db) => deleteKey(tx, id, userId))
+    return db.transaction((tx: DatabaseTransaction) => deleteKey(tx, id, userId))
   },
 
   async deleteById(id: number) {
-    return db.transaction((tx: typeof db) => deleteKey(tx, id))
+    return db.transaction((tx: DatabaseTransaction) => deleteKey(tx, id))
   },
 
   /**

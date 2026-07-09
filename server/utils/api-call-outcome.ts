@@ -31,6 +31,7 @@
 
 import type { H3Event } from 'h3'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
+import '~~/server/utils/api-guard-context'
 
 /** 标记本次调用业务成功 · finish 时按成功扣费 */
 export function markApiCallSuccess(event: H3Event) {

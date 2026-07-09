@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
-import { apis, creditTransactions, users } from '@nuxthub/db/schema'
+import { apis, creditTransactions, users } from '~~/server/db/schema'
 import {
   calculateAdminRevokeAdjustment,
   getAdminCreditReason,
@@ -9,6 +9,7 @@ import {
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '#shared/types/credit-reason'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 export type { CreditReason }
 
@@ -83,7 +84,7 @@ async function forceCharge(input: ChargeInput) {
   const amount = normalizeCreditAmount(input.amount)
   if (amount === 0) return { charged: 0, balanceAfter: null }
 
-  return db.transaction(async (tx: typeof db) => {
+  return db.transaction(async (tx: DatabaseTransaction) => {
     const updated = await tx.update(users)
       .set({
         credits: sql`${users.credits} - ${amount}`,
@@ -111,7 +112,7 @@ async function forceCharge(input: ChargeInput) {
 }
 
 async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<AdminBatchAdjustResult> {
-  return db.transaction(async (tx: typeof db) => {
+  return db.transaction(async (tx: DatabaseTransaction) => {
     const targetIds = await resolveAdminBatchTargetIds(tx, input.userIds)
     const results: CreditOperationResult[] = []
 
@@ -245,7 +246,7 @@ async function getUserCreditsSummary(userId: number) {
 }
 
 async function adminGrantWithTransaction(
-  tx: typeof db,
+  tx: DatabaseTransaction,
   input: AdjustInput
 ): Promise<CreditOperationResult | null> {
   const amount = normalizeCreditAmount(input.amount)
@@ -277,7 +278,7 @@ async function adminGrantWithTransaction(
 }
 
 async function adminRevokeWithTransaction(
-  tx: typeof db,
+  tx: DatabaseTransaction,
   input: AdjustInput
 ): Promise<CreditOperationResult | null> {
   const amount = normalizeCreditAmount(input.amount)
@@ -322,7 +323,7 @@ async function adminRevokeWithTransaction(
 }
 
 async function adminResetWithTransaction(
-  tx: typeof db,
+  tx: DatabaseTransaction,
   input: AdminResetInput
 ): Promise<CreditOperationResult | null> {
   const target = normalizeCreditAmount(input.targetValue ?? 0)
@@ -358,7 +359,7 @@ async function adminResetWithTransaction(
   return { userId: input.userId, balanceAfter }
 }
 
-async function resolveAdminBatchTargetIds(tx: typeof db, userIds: number[]): Promise<number[]> {
+async function resolveAdminBatchTargetIds(tx: DatabaseTransaction, userIds: number[]): Promise<number[]> {
   if (userIds.length > 0) return userIds
 
   const rows = await tx.select({ id: users.id }).from(users)
@@ -366,7 +367,7 @@ async function resolveAdminBatchTargetIds(tx: typeof db, userIds: number[]): Pro
 }
 
 async function applyAdminOperationWithTransaction(
-  tx: typeof db,
+  tx: DatabaseTransaction,
   input: AdminOperationTransactionInput
 ): Promise<CreditOperationResult | null> {
   const reason = getAdminCreditReason(input.operation)

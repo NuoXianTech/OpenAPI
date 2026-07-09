@@ -1,11 +1,14 @@
+import { cp } from 'node:fs/promises'
+import { resolve } from 'node:path'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const isProduction = process.env.NODE_ENV === 'production'
+const databaseMigrationsDir = 'server/db/migrations/postgresql'
 
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/test-utils/module',
-    '@nuxthub/core',
     '@nuxt/ui',
     '@vueuse/nuxt',
   ],
@@ -35,26 +38,23 @@ export default defineNuxtConfig({
     preset: 'node-server',
     externals: {
       traceInclude: [
+        '@electric-sql/pglite',
         'postgres',
+        'drizzle-orm/pglite',
+        'drizzle-orm/pglite/migrator',
         'drizzle-orm/postgres-js',
         'drizzle-orm/postgres-js/migrator',
       ],
     },
-  },
-  hub: {
-    db: {
-      dialect: 'postgresql',
-      // Build 时不自动执行迁移
-      applyMigrationsDuringBuild: false,
-      ...(process.env.DATABASE_URL
-        ? {
-            driver: 'postgres-js',
-            connection: {
-              connectionString: process.env.DATABASE_URL,
-            },
-          }
-        : {}),
-    },
+    hooks: {
+      async compiled(nitro) {
+        await cp(
+          resolve(databaseMigrationsDir),
+          resolve(nitro.options.output.serverDir, 'db/migrations/postgresql'),
+          { recursive: true, force: true }
+        )
+      }
+    }
   },
   eslint: {
     config: {

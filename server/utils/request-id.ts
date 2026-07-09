@@ -13,6 +13,7 @@
 
 import type { H3Event } from 'h3'
 import { getHeader } from 'h3'
+import '~~/server/utils/api-guard-context'
 
 export function ensureRequestId(event: H3Event): string {
   if (!event.context.requestId) {

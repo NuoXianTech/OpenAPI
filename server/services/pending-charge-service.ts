@@ -1,5 +1,5 @@
 import { and, asc, eq, lte } from 'drizzle-orm'
-import { pendingCharges } from '@nuxthub/db/schema'
+import { pendingCharges } from '~~/server/db/schema'
 
 /**
  * Pending charge retry queue for the single production Node process.

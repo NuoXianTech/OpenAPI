@@ -1,5 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm'
-import { oauthAccounts } from '@nuxthub/db/schema'
+import { oauthAccounts } from '~~/server/db/schema'
 import { firstRow } from '~~/server/utils/row'
 
 interface OauthAccountUpsertInput {

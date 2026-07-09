@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
-import { apis } from '@nuxthub/db/schema'
+import { apis } from '~~/server/db/schema'
 import { requireAuth } from '~~/server/utils/auth'
 
 /**

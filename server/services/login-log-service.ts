@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
-import { loginLogs } from '@nuxthub/db/schema'
+import { loginLogs } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'

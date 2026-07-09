@@ -1,4 +1,4 @@
-import type { apis } from '@nuxthub/db/schema'
+import type { apis } from '~~/server/db/schema'
 import type { ApiStatsTarget, GateOutcome, ManifestApi, ManifestEndpoint } from '~~/server/types/api-guard'
 
 type ApiRecord = typeof apis.$inferSelect
@@ -48,6 +48,7 @@ declare module 'h3' {
     apiKey?: ApiKeyContext | null
     apiBilling?: ApiBillingContext
     apiGateRejection?: ApiGateRejectionContext
+    requestId?: string
   }
 }
 

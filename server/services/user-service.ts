@@ -1,9 +1,10 @@
 import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
-import { creditTransactions, users } from '@nuxthub/db/schema'
+import { creditTransactions, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
-import { firstRow } from '~~/server/utils/row'
+import { expectFirstRow, firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
 import { siteSettingsService } from './site-settings-service'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 export const USER_ROLES = {
   user: 'user',
@@ -83,7 +84,7 @@ export const usersService = {
     const res = await db.select().from(users)
       .where(where)
       .limit(1)
-    return res[0]
+    return firstRow(res)
   },
 
   async findByUsername(username: string, opts: { role?: UserRole } = {}) {
@@ -93,7 +94,7 @@ export const usersService = {
     const res = await db.select().from(users)
       .where(where)
       .limit(1)
-    return res[0]
+    return firstRow(res)
   },
 
   async hasAdmin() {
@@ -126,7 +127,7 @@ export const usersService = {
     const res = await db.select().from(users)
       .where(eq(users.id, id))
       .limit(1)
-    return res[0]
+    return expectFirstRow(res, 'Failed to create user.')
   },
 
   async updateUser(id: number, data: Partial<{
@@ -185,7 +186,7 @@ export const usersService = {
       })
       .returning()
 
-    return res[0]
+    return expectFirstRow(res, 'Failed to update last login.')
   },
 
   async updateLastLogin(id: number, ip: string, userAgent?: string | null) {
@@ -215,7 +216,7 @@ export const usersService = {
     const settings = await siteSettingsService.getOrCreate()
     const grantAmount = Math.max(Math.trunc(settings.defaultRegisterCredits || 0), 0)
 
-    const activated = await db.transaction(async (tx: typeof db) => {
+    const activated = await db.transaction(async (tx: DatabaseTransaction) => {
       const res = await tx.update(users)
         .set({
           isActive: true,

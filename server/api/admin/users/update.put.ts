@@ -41,6 +41,9 @@ export default defineEventHandler(async (event: H3Event) => {
     isBanned,
     passwordHash
   })
+  if (!updated) {
+    throw createError({ statusCode: 404, message: 'user not found' })
+  }
   // 管理员重置密码后，自增 tokenVersion 令该用户所有已签发 JWT 失效，强制重新登录
   if (password) {
     await usersService.bumpTokenVersion(id)

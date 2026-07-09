@@ -1,5 +1,5 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
-import { notificationDeliveries, notificationMessages, users } from '@nuxthub/db/schema'
+import { notificationDeliveries, notificationMessages, users } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'

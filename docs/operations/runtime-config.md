@@ -5,7 +5,7 @@
 ## 基本原则
 
 - `nuxt.config.ts` 中的私有配置默认值保持空字符串。
-- 生产环境使用 `NUXT_AUTH_*`、`DATABASE_URL`、`NITRO_*` 等变量覆盖。
+- 生产环境使用 `NUXT_AUTH_*`、`DATABASE_URL` / `DATABASE_DRIVER`、`NITRO_*` 等变量覆盖。
 - 不在 `nuxt.config.ts` 默认值中读取异名 `process.env`，避免构建时把密钥烤进 `.output`。
 - `.env.example` 只能放示例值；真实生产值配置在服务器面板、PM2 ecosystem、容器 secret 或 CI/CD secret 中。
 - 修改配置后重启 Node/Nitro 进程，确保运行时读取新值。
@@ -14,7 +14,7 @@
 
 | 变量 | 生产要求 | 说明 |
 | --- | --- | --- |
-| `DATABASE_URL` | 必填 | PostgreSQL 连接串，生产必须指向稳定数据库实例 |
+| `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 必填其一 | PostgreSQL 连接串；或显式选择 PGlite 文件数据库 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
 | `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 相关服务端密钥 |
 
@@ -24,9 +24,13 @@
 | --- | --- | --- |
 | `NITRO_HOST` | `127.0.0.1` | VPS + Nginx 反向代理时只监听本机 |
 | `NITRO_PORT` | `3000` | Nitro 服务端口 |
+| `NODE_ENV` | `production` | 让 Nuxt、Vue Router 和相关依赖使用生产分支，减少开发警告和日志噪声 |
 | `TZ` | `Asia/Shanghai` | 统一日志、统计和运维时间 |
-| `DATABASE_POOL_SIZE` | `10` | 应用运行时 postgres-js 连接池大小，未设置时由构建后替换的 db client 使用默认值 10 |
-| `MIGRATIONS_DIR` | 留空 | 仅迁移目录不在默认位置时设置，常规 `.output/start.mjs` 不需要 |
+| `DATABASE_POOL_SIZE` | `10` | `postgres-js` 连接池上限，启动迁移会单独使用 `max=1` 的连接 |
+| `DATABASE_DRIVER` | 留空或 `pglite` | 留空时有 `DATABASE_URL` 使用 PostgreSQL；生产无 PostgreSQL 时必须显式设为 `pglite` |
+| `PGLITE_DATA_DIR` | `.data/pglite` | PGlite 数据目录；生产使用 PGlite 时必须纳入备份 |
+| `DB_AUTO_MIGRATE` | 留空 | 默认启动时自动迁移；设置为 `false` 可临时跳过启动迁移 |
+| `MIGRATIONS_DIR` | 留空 | 仅迁移目录不在默认位置时设置；常规生产启动会读取 `.output/server/db/migrations/postgresql` |
 
 `.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
 
@@ -34,7 +38,13 @@
 
 首次登录后，如果管理员仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码。后续用户名不再作为常规资料项修改，以保证登录日志、操作日志和审计链路稳定。
 
-发布前必须基于当前 Drizzle schema 生成并应用数据库迁移，确保 `users.role varchar(20) not null default 'user'`、管理员初始化状态所需字段以及 OAuth/通知/积分相关表结构与代码一致。
+发布前必须基于当前 Drizzle schema 生成数据库迁移。构建时迁移目录会复制到 `.output/server/db/migrations/postgresql`，生产 Node 进程启动时自动应用；`pnpm db:migrate` 仅作为手动修复或演练入口。PGlite 使用同一套 PostgreSQL 方言迁移。
+
+数据库建议：
+
+- PostgreSQL 适合常规生产、远程数据库、成熟备份和未来扩展。
+- PGlite 适合单进程、低运维成本、自包含的小型部署；它不是多实例共享数据库，使用时备份 `PGLITE_DATA_DIR`。
+- 生产环境如果没有 `DATABASE_URL`，必须显式设置 `DATABASE_DRIVER=pglite`，避免漏配时静默创建新库。
 
 ## 密钥生成
 
@@ -52,11 +62,27 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 cd .output
 NITRO_HOST=127.0.0.1 \
 NITRO_PORT=3000 \
+NODE_ENV=production \
 TZ=Asia/Shanghai \
 DATABASE_URL='postgresql://user:password@127.0.0.1:5432/openapi' \
 NUXT_AUTH_SECRET='replace-with-random-hex' \
 NUXT_AUTH_API_KEY_SECRET='replace-with-random-hex' \
-pm2 start start.mjs --name openapi --update-env
+pm2 start server/index.mjs --name openapi --update-env
+```
+
+PGlite 生产示例：
+
+```bash
+cd .output
+NITRO_HOST=127.0.0.1 \
+NITRO_PORT=3000 \
+NODE_ENV=production \
+TZ=Asia/Shanghai \
+DATABASE_DRIVER=pglite \
+PGLITE_DATA_DIR=/var/lib/openapi/pglite \
+NUXT_AUTH_SECRET='replace-with-random-hex' \
+NUXT_AUTH_API_KEY_SECRET='replace-with-random-hex' \
+pm2 start server/index.mjs --name openapi --update-env
 ```
 
 ## 风险清单
@@ -66,5 +92,6 @@ pm2 start start.mjs --name openapi --update-env
 | 构建机 `.env` 泄露到产物 | 不在 runtimeConfig 默认值读取异名 `process.env` |
 | 多环境共用密钥 | 每个环境独立生成并独立轮换 |
 | 生产监听公网端口 | `NITRO_HOST=127.0.0.1`，由 Nginx 代理公网流量 |
-| 数据库迁移误连 | 发布前确认 `DATABASE_URL` 的主机、库名和用户 |
+| 数据库迁移误连 | PostgreSQL 发布前确认 `DATABASE_URL` 的主机、库名和用户；PGlite 发布前确认 `PGLITE_DATA_DIR` |
+| 自动迁移误执行 | 维护窗口可临时设置 `DB_AUTO_MIGRATE=false`，手动确认后再恢复默认 |
 | 配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令 |

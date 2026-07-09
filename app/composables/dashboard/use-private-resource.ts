@@ -47,7 +47,7 @@ export function usePrivateResource<TData>(
     try {
       const result = await $fetch<TData>(path, { query: toValue(query) })
       if (seq !== requestSeq) return
-      data.value = result ?? defaultData()
+      data.value = (result ?? defaultData()) as TData
       status.value = 'success'
     } catch (err) {
       if (seq !== requestSeq) return

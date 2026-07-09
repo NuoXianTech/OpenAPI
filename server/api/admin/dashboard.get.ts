@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apis, users } from '@nuxthub/db/schema'
+import { apiCallStats, apiCalls, apis, users } from '~~/server/db/schema'
 import { requireAdmin } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'

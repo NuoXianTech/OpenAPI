@@ -32,6 +32,9 @@ export default defineEventHandler(async (event: H3Event) => {
     email: body.email,
     passwordHash: await hashPassword(body.password)
   })
+  if (!updated) {
+    throw createError({ statusCode: 404, message: '管理员账号不存在' })
+  }
   await usersService.bumpTokenVersion(admin.id)
   await createUserSession(event, { id: admin.id, role: admin.role })
 

@@ -1,6 +1,6 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { createError } from 'h3'
-import { apiCategories, apis } from '@nuxthub/db/schema'
+import { apiCategories, apis } from '~~/server/db/schema'
 import { firstRow } from '~~/server/utils/row'
 
 export interface ApiCategoryInput {

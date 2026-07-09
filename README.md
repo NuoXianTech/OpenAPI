@@ -16,7 +16,7 @@ OpenAPI helps you turn public APIs into a manageable service. You can publish AP
 
 ### How does it work?
 
-OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During build, `modules/api-manifest` scans those routes and produces a manifest; when the server starts, the manifest is synchronized into PostgreSQL so administrators can enable APIs, assign categories, configure pricing, and control access from the dashboard.
+OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During build, `modules/api-manifest` scans those routes and produces a manifest; when the server starts, the manifest is synchronized into the configured database so administrators can enable APIs, assign categories, configure pricing, and control access from the dashboard.
 
 - Public requests pass through `server/middleware/00.api-gate.ts`, where API status, API keys, scopes, IP allowlists, rate limits, daily quotas, and credit balance are checked.
 
@@ -26,7 +26,7 @@ OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During b
 
 - Failed charge attempts are stored in `pending_charges` and retried by the same Node process.
 
-The production target is intentionally simple: **one Node/Nitro process plus one PostgreSQL database**. Runtime counters live in memory, so running multiple Node processes against the same production database is not supported.
+The production target is intentionally simple: **one Node/Nitro process plus one project-owned database**. PostgreSQL is recommended for normal production; PGlite is supported for lightweight single-process deployments. Runtime counters live in memory, so running multiple Node processes against the same production database is not supported.
 
 ### Highlights
 
@@ -61,7 +61,7 @@ The production target is intentionally simple: **one Node/Nitro process plus one
 #### Requirements
 
 - Node.js `>= 24.15`
-- PostgreSQL `16+`
+- PostgreSQL `16+` or PGlite for single-process lightweight deployments
 
 #### Development
 
@@ -118,7 +118,7 @@ Preview the production build:
 pnpm preview
 ```
 
-The generated production entry is `.output/start.mjs`. It runs database migrations first and then starts Nitro. See [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md) for the full single-instance VPS guide.
+The generated production entry is `.output/server/index.mjs`. The build output includes database migration files, and the production Node/Nitro process runs migrations automatically before accepting requests. See [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md) for the full single-instance VPS guide.
 
 ### Configuration
 
@@ -126,14 +126,16 @@ The project reads production settings from runtime environment variables. The mo
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | Production required | PostgreSQL connection string. |
+| `DATABASE_URL` or `DATABASE_DRIVER=pglite` | Production required | PostgreSQL connection string, or explicit PGlite selection. |
 | `NUXT_AUTH_SECRET` | Required | Shared HS256/HMAC signing secret for access JWTs, email verification tokens and OAuth state. Authentication fails closed when empty. |
 | `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
+
+If production uses PGlite, set `DATABASE_DRIVER=pglite` and put `PGLITE_DATA_DIR` on persistent storage that is included in backups. Without a `DATABASE_URL`, production requires the explicit driver to avoid silent database creation after a missed PostgreSQL configuration.
 
 If no administrator exists on startup, the server creates `admin` with a random password and prints it to the console.
 The initial email is `admin@openapi.com`. After the first login, an onboarding dialog appears once when the account still uses the initial username or email; it lets the administrator confirm username, email, and a new password. Later username changes are intentionally blocked outside this first-run flow to preserve auditability.
 
-Generate and apply database migrations from the current Drizzle schema before deployment.
+Generate database migrations from the current Drizzle schema before deployment; production startup applies the migrations shipped with `.output`.
 
 See [.env.example](.env.example) for the complete single-instance configuration.
 

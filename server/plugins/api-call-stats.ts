@@ -73,9 +73,10 @@ function parseOptionalInt(value: string | string[] | number | null | undefined) 
 }
 
 async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
-  const statusCode = Math.trunc(event.node.res.statusCode || 200)
+  const response = event.node?.res
+  const statusCode = Math.trunc(response?.statusCode || 200)
   const responseSize = parseOptionalInt(
-    event.node.res.getHeader('content-length') as string | string[] | number | undefined
+    response?.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
   let quotaReservation: { apiKeyId: number, amount: number } | null = null
@@ -223,7 +224,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 }
 
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('request', (event) => {
+  nitroApp.hooks.hook('request', (event: H3Event) => {
     const requestUrl = getRequestURL(event)
     const pathname = normalizePathname(requestUrl.pathname)
     if (!isGuardedPath(pathname)) {
@@ -244,7 +245,7 @@ export default defineNitroPlugin((nitroApp) => {
     }
   })
 
-  nitroApp.hooks.hook('afterResponse', (event) => {
+  nitroApp.hooks.hook('afterResponse', (event: H3Event) => {
     const tracked = event.context.apiStatsTracked
     if (!tracked) {
       return

@@ -25,7 +25,7 @@ import { sql } from 'drizzle-orm'
 // ------------------------------------------------------------------
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  role: varchar('role', { length: 20 }).notNull().default('user'),
+  role: varchar('role', { length: 20 }).$type<'user' | 'admin'>().notNull().default('user'),
   username: varchar('username', { length: 50 }).notNull(),
   // 显示名：用于导航栏展示，不参与登录；为空时回退 username
   displayName: varchar('display_name', { length: 100 }),

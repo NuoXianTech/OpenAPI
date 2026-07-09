@@ -1,7 +1,8 @@
 import { and, eq, sql, lt, isNull, or } from 'drizzle-orm'
-import { creditTransactions, users } from '@nuxthub/db/schema'
+import { creditTransactions, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { siteSettingsService } from './site-settings-service'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 /**
  * 每日签到服务
@@ -156,7 +157,7 @@ export const checkinService = {
     const now = new Date()
     const { cutoff } = computeCutoffAndNext(cooldownMode, null, now, refreshHours, settings.checkinFixedRefreshTime)
 
-    return db.transaction(async (tx: typeof db) => {
+    return db.transaction(async (tx: DatabaseTransaction) => {
       // 原子声明本次签到时间：要求 lastCheckinAt 为空或在 cutoff 之前
       const claimed = await tx.update(users)
         .set({ lastCheckinAt: now, updatedAt: now })

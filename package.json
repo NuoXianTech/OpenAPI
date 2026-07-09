@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "postbuild": "node scripts/prepare-output.mjs",
     "dev": "nuxt dev",
-    "db:generate": "nuxt db generate",
+    "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
     "preview": "nuxt preview",
+    "start": "node .output/server/index.mjs",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "lint": "eslint .",
@@ -19,10 +19,9 @@
     "test:unit": "vitest run --project unit"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.5.4",
+    "@electric-sql/pglite": "0.5.4",
     "@internationalized/date": "3.12.2",
     "@nuxt/ui": "^4.9.0",
-    "@nuxthub/core": "^0.10.7",
     "@tanstack/table-core": "^8.21.3",
     "@unovis/ts": "^1.6.7",
     "@unovis/vue": "^1.6.7",

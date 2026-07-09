@@ -14,7 +14,7 @@
  * 数据库可能在迁移中暂不可用，启动期做有限次重试，失败不阻塞进程。
  */
 
-import { apis } from '@nuxthub/db/schema'
+import { apis } from '~~/server/db/schema'
 import { eq } from 'drizzle-orm'
 import { API_MANIFEST as RAW_API_MANIFEST } from '#api-manifest'
 import { apiService } from '~~/server/services/api-service'

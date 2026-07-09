@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, ilike, like, lte, type SQL } from 'drizzle-orm'
-import { operationLogs } from '@nuxthub/db/schema'
+import { operationLogs } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 

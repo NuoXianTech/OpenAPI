@@ -1,5 +1,5 @@
 import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
-import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '@nuxthub/db/schema'
+import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, creditTransactions, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart } from '~~/server/utils/local-time'
 import { clampInteger, toNullableNumber, toNumber } from '~~/server/utils/number'

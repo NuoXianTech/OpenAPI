@@ -31,7 +31,7 @@ const stackItems: StackItem[] = [
   { label: 'Nuxt 4 / Vue 3', description: '使用 Composition API 与文件路由组织前后端能力。' },
   { label: 'Nuxt UI / Tailwind CSS', description: '构建一致、响应式、适合后台工作流的界面。' },
   { label: 'Nitro / H3', description: '提供服务端 API、鉴权中间件与运行时能力。' },
-  { label: 'Drizzle ORM / NuxtHub DB', description: '以类型安全方式维护数据库 schema 与查询。' },
+  { label: 'Drizzle ORM / PostgreSQL', description: '以类型安全方式维护数据库 schema、查询与迁移。' },
   { label: 'VueUse / Zod', description: '复用组合式工具，并对输入数据做结构化校验。' }
 ]
 
@@ -39,7 +39,7 @@ const operationItems: StackItem[] = [
   { label: '配置优先', description: '站点、邮件、验证码、OAuth 等运行参数集中在系统设置与环境变量中维护。' },
   { label: '审计优先', description: '管理动作和用户关键行为写入日志，便于追踪变更来源。' },
   { label: '角色清晰', description: '管理员可访问用户能力与管理能力，普通用户仅访问自身工作区。' },
-  { label: '迁移可控', description: '数据库 schema 与迁移流程分离，生产变更由维护者显式生成和执行。' }
+  { label: '迁移可控', description: '数据库迁移随构建产物发布，并在生产进程接受请求前自动执行。' }
 ]
 </script>
 

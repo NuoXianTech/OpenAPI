@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
-import { announcements } from '@nuxthub/db/schema'
+import { announcements } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
 import { firstRow } from '~~/server/utils/row'
 

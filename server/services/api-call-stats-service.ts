@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apis, users } from '@nuxthub/db/schema'
+import { apiCallStats, apis, users } from '~~/server/db/schema'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsTopItem,

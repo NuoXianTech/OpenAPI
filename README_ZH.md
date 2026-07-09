@@ -16,7 +16,7 @@ OpenAPI 可以帮助你把开放接口变成一个真正可运营的服务。你
 
 ### 它如何工作？
 
-OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构建时，`modules/api-manifest` 会扫描这些路由并生成接口清单；服务启动时，清单会同步进 PostgreSQL，管理员随后可以在后台启用接口、分配分类、配置价格，并控制访问策略。
+OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构建时，`modules/api-manifest` 会扫描这些路由并生成接口清单；服务启动时，清单会同步进当前配置的数据库，管理员随后可以在后台启用接口、分配分类、配置价格，并控制访问策略。
 
 - 公开请求会先经过 `server/middleware/00.api-gate.ts`，统一检查接口状态、API Key、作用域、IP 白名单、限流、每日配额与积分余额。
 
@@ -26,7 +26,7 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 
 - 扣费失败会写入 `pending_charges`，并由同一个 Node 进程中的重试任务继续处理。
 
-本项目的生产目标非常明确：**一个 Node/Nitro 进程 + 一个 PostgreSQL 数据库**。运行时计数器保存在进程内存中，因此不支持多个 Node 实例连接同一个生产数据库。
+本项目的生产目标非常明确：**一个 Node/Nitro 进程 + 一个项目自维护数据库**。PostgreSQL 更适合常规生产；PGlite 可用于轻量、自包含的单进程部署。运行时计数器保存在进程内存中，因此不支持多个 Node 实例连接同一个生产数据库。
 
 ### 功能亮点
 
@@ -61,7 +61,7 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 #### 环境要求
 
 - Node.js `>= 24.15`
-- PostgreSQL `16+`
+- PostgreSQL `16+`，或用于单进程轻量部署的 PGlite
 
 #### 开发
 
@@ -118,7 +118,7 @@ pnpm build
 pnpm preview
 ```
 
-生成后的生产入口是 `.output/start.mjs`。它会先运行数据库迁移，再启动 Nitro。完整的单实例 VPS 部署流程见 [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md)。
+生成后的生产入口是 `.output/server/index.mjs`。构建产物会包含数据库迁移文件，生产 Node/Nitro 进程启动时会先自动运行迁移，再接受请求。完整的单实例 VPS 部署流程见 [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md)。
 
 ### 配置
 
@@ -126,14 +126,16 @@ pnpm preview
 
 | 变量 | 是否必填 | 说明 |
 | --- | --- | --- |
-| `DATABASE_URL` | 生产必填 | PostgreSQL 连接串。 |
+| `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 生产必填 | PostgreSQL 连接串，或显式选择 PGlite。 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证 token 与 OAuth state 共用的 HS256/HMAC 签名密钥；为空时鉴权 fail-closed。 |
 | `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
+
+生产使用 PGlite 时，请设置 `DATABASE_DRIVER=pglite`，并把 `PGLITE_DATA_DIR` 放在会持久化和备份的位置。生产环境没有 `DATABASE_URL` 时必须显式选择 PGlite，避免 PostgreSQL 漏配后静默创建新的本地数据库。
 
 如果启动时不存在管理员账号，服务端会自动创建 `admin`，随机密码只输出到控制台。
 初始邮箱为 `admin@openapi.com`。首次登录后，如果账号仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码；后续除首次初始化流程外不允许修改用户名，以保证审计可追溯。
 
-部署前请基于当前 Drizzle schema 生成并应用数据库迁移。
+部署前请基于当前 Drizzle schema 生成数据库迁移；生产启动会自动应用已随 `.output` 发布的迁移。
 
 完整的单实例配置见 [.env.example](.env.example)。
 

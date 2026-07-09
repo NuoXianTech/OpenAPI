@@ -22,7 +22,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { getRequestURL, send, setResponseHeader, setResponseHeaders } from 'h3'
+import { getRequestURL, setResponseHeader, setResponseHeaders } from 'h3'
 import { API_GUARD_ERROR, VERSION_CODE_PATTERN, isGuardedPath, normalizePathname, resolveMethodCost } from '~~/server/config/api-guard'
 import { getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
 import { runApiGuard } from '~~/server/utils/api-guard'
@@ -40,10 +40,10 @@ type ErrorDef = { status: number, code: string, msg: string }
  *
  * detail 非空时写入 body `data` 字段，用于回传结构化提示（如过期时间、配额详情）。
  */
-async function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<string, unknown> | null = null) {
+function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<string, unknown> | null = null) {
   const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg, detail)
   setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
-  await send(event, JSON.stringify(payload))
+  return payload
 }
 
 export default defineEventHandler(async (event: H3Event) => {

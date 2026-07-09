@@ -1,8 +1,9 @@
 import { count, desc, eq, sql, and, ilike, isNull, or } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apiKeys, apis } from '@nuxthub/db/schema'
+import { apiCallStats, apiCalls, apiKeys, apis } from '~~/server/db/schema'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 interface AddCallInput {
   apiId: number
@@ -190,7 +191,7 @@ export const apiCallService = {
     const successDelta = statStatusCode >= 200 && statStatusCode < 400 && !data.errorCode ? 1 : 0
     const failureDelta = successDelta ? 0 : 1
 
-    return db.transaction(async (tx: typeof db) => {
+    return db.transaction(async (tx: DatabaseTransaction) => {
       const inserted = await tx.insert(apiCalls).values({
         ...normalizeCallRow({ ...data, isCounted: true }),
         statusCode: normalizedStatusCode,

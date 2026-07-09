@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
-import { creditTransactions, redemptionCodes, users } from '@nuxthub/db/schema'
+import { creditTransactions, redemptionCodes, users } from '~~/server/db/schema'
 import {
   buildRedemptionCodeRows,
   insertRedemptionCodesUntilComplete,
@@ -9,6 +9,7 @@ import { toIsoString } from '~~/server/utils/date'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
+import type { DatabaseTransaction } from '~~/server/db/client'
 
 /**
  * 兑换码服务
@@ -274,7 +275,7 @@ export const redemptionService = {
       .limit(1)
     if (dup[0]) throw createRedemptionError('ALREADY_REDEEMED', '你已兑换过该兑换码')
 
-    return db.transaction(async (tx: typeof db) => {
+    return db.transaction(async (tx: DatabaseTransaction) => {
       // 原子递增 usedCount，竞争失败说明被别人抢走
       const consumed = await tx.update(redemptionCodes)
         .set({ usedCount: sql`${redemptionCodes.usedCount} + 1`, updatedAt: new Date() })
