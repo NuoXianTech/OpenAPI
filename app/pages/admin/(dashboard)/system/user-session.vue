@@ -178,7 +178,7 @@ const {
         v-for="item in items"
         :key="item.provider"
         v-model:open="getForm(item.provider).open"
-        class="rounded-lg border border-default bg-default"
+        class="dashboard-oauth-provider-card"
       >
         <button
           type="button"
@@ -207,7 +207,7 @@ const {
         </button>
 
         <template #content>
-          <div class="border-t border-default p-4 space-y-4">
+          <div class="dashboard-oauth-provider-divider border-t p-4 space-y-4">
             <UFormField label="Client ID">
               <UInput
                 v-model="getForm(item.provider).clientId"
@@ -283,7 +283,7 @@ const {
               </div>
             </UFormField>
 
-            <div class="flex items-center justify-between gap-2 pt-2 border-t border-default">
+            <div class="dashboard-oauth-provider-divider flex items-center justify-between gap-2 pt-2 border-t">
               <USwitch
                 v-model="getForm(item.provider).isEnabled"
                 label="启用该登录方式"

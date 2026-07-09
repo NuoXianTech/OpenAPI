@@ -406,6 +406,18 @@ body {
   border-top: 1px solid var(--dashboard-border);
 }
 
+.dashboard-oauth-provider-card {
+  overflow: hidden;
+  border: 1px solid var(--dashboard-border);
+  border-radius: var(--dashboard-radius);
+  background: var(--dashboard-surface);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.dashboard-oauth-provider-divider {
+  border-color: var(--dashboard-border);
+}
+
 @media (width >= 640px) {
   .dashboard-settings-section-card > :where(:not([role="separator"])) {
     padding: 0.875rem 1rem;
