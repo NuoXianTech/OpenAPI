@@ -1,3 +1,4 @@
+import { mkdirSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { dirname, join, resolve } from 'node:path'
 import postgres from 'postgres'
@@ -123,9 +124,21 @@ export function getPgliteDataDir() {
   return process.env.PGLITE_DATA_DIR || '.data/pglite'
 }
 
+function isFilesystemPgliteDataDir(dataDir: string) {
+  return !/^[a-z][a-z0-9+.-]*:\/\//i.test(dataDir)
+}
+
+export function ensurePgliteDataDir(dataDir = getPgliteDataDir()) {
+  if (!isFilesystemPgliteDataDir(dataDir)) return
+
+  mkdirSync(resolve(dataDir), { recursive: true })
+}
+
 export function createPgliteClient() {
   const { PGlite: PGliteConstructor } = getPgliteRuntime().pgliteModule
-  return new PGliteConstructor(getPgliteDataDir())
+  const dataDir = getPgliteDataDir()
+  ensurePgliteDataDir(dataDir)
+  return new PGliteConstructor(dataDir)
 }
 
 export function createDatabase(client: PostgresClient) {

@@ -59,6 +59,16 @@ function getSqlState(error) {
   return typeof causeCode === 'string' ? causeCode : undefined
 }
 
+function isFilesystemPgliteDataDir(dataDir) {
+  return !/^[a-z][a-z0-9+.-]*:\/\//i.test(dataDir)
+}
+
+function ensurePgliteDataDir(dataDir) {
+  if (!isFilesystemPgliteDataDir(dataDir)) return
+
+  fs.mkdirSync(path.resolve(dataDir), { recursive: true })
+}
+
 loadProjectEnv()
 
 const configuredDriver = process.env.DATABASE_DRIVER
@@ -134,6 +144,7 @@ async function migratePgliteOnce() {
     import('drizzle-orm/pglite'),
     import('drizzle-orm/pglite/migrator')
   ])
+  ensurePgliteDataDir(pgliteDataDir)
   const client = new PGlite(pgliteDataDir)
   await client.waitReady
 
