@@ -187,7 +187,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
               已选 {{ selectedIds.length }} / {{ items.length }}
             </span>
             <UButton
-              size="sm"
               color="primary"
               icon="i-mdi-account-plus-outline"
               @click="() => { createOpen = true }"
@@ -195,7 +194,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
               添加用户
             </UButton>
             <UButton
-              size="sm"
               color="primary"
               variant="outline"
               icon="i-mdi-cash-multiple"
@@ -205,7 +203,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
               批量调整积分
             </UButton>
             <UButton
-              size="sm"
               color="warning"
               variant="outline"
               icon="i-mdi-cash-100"
@@ -225,7 +222,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
               />
             </UDropdownMenu>
             <UButton
-              size="sm"
               color="neutral"
               variant="outline"
               icon="i-mdi-refresh"
@@ -329,7 +325,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
                     icon="i-mdi-dots-vertical"
                     color="neutral"
                     variant="ghost"
-                    size="sm"
                   />
                 </UDropdownMenu>
               </div>
