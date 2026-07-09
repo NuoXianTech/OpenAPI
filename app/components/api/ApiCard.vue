@@ -52,6 +52,10 @@ const aggregateCost = computed(() => {
   const first = prices[0]!
   return prices.every(price => price === first) ? first : -1
 })
+const compactCallCountFormatter = new Intl.NumberFormat('zh-CN', {
+  notation: 'compact',
+  maximumFractionDigits: 1
+})
 const radarMeta = computed(() => getSuccessRadar(props.status))
 const radarClass = computed(() => radarMeta.value.className)
 const radarTitle = computed(() => radarMeta.value.title)
@@ -98,8 +102,9 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 }
 
 function formatCallCount(count: number): string {
-  if (count < 10000) return `${count}`
-  return `${Math.floor(count / 10000)}万`
+  const normalizedCount = Math.max(0, Math.floor(count))
+  if (normalizedCount < 10000) return normalizedCount.toLocaleString('zh-CN')
+  return compactCallCountFormatter.format(normalizedCount)
 }
 </script>
 
@@ -150,30 +155,38 @@ function formatCallCount(count: number): string {
       </UBadge>
       <UBadge
         v-else
-        color="success"
+        color="neutral"
         variant="soft"
         size="sm"
         icon="i-mdi-gift-outline"
-        class="api-card__badge-icon rounded-full"
+        class="api-card__badge-icon api-card__badge-icon--free rounded-full"
         title="免费"
         aria-label="免费"
       />
       <UBadge
         v-if="isApiKey"
         color="neutral"
-        variant="subtle"
+        variant="soft"
         size="sm"
         icon="i-mdi-key-variant"
-        class="api-card__badge-icon rounded-full"
+        class="api-card__badge-icon api-card__badge-icon--key rounded-full"
         title="需要 APIKey"
         aria-label="需要 APIKey"
       />
 
-      <span class="api-card__calls">
-        <UIcon
-          name="i-mdi-chart-bar"
-          class="size-3"
-        />
+      <span
+        class="api-card__calls"
+        :title="`调用次数 ${totalCalls.toLocaleString('zh-CN')}`"
+      >
+        <span
+          class="api-card__calls-icon"
+          aria-hidden="true"
+        >
+          <UIcon
+            name="i-mdi-chart-bar"
+            class="size-3"
+          />
+        </span>
         <span class="api-card__calls-num">{{ formatCallCount(totalCalls) }}</span>
       </span>
     </div>
@@ -257,13 +270,41 @@ function formatCallCount(count: number): string {
                 </div>
 
                 <div class="api-card__detail-grid">
-                  <div class="api-card__detail-cell">
-                    <span>调用次数</span>
-                    <strong>{{ formatCallCount(totalCalls) }}</strong>
+                  <div
+                    class="api-card__detail-cell api-card__detail-cell--calls"
+                    :title="`调用次数 ${totalCalls.toLocaleString('zh-CN')}`"
+                  >
+                    <span
+                      class="api-card__detail-icon"
+                      aria-hidden="true"
+                    >
+                      <UIcon
+                        name="i-mdi-chart-bar"
+                        class="size-3.5"
+                      />
+                    </span>
+                    <div class="api-card__detail-content">
+                      <span>调用次数</span>
+                      <strong>{{ formatCallCount(totalCalls) }}</strong>
+                    </div>
                   </div>
-                  <div class="api-card__detail-cell">
-                    <span>鉴权要求</span>
-                    <strong>{{ isApiKey ? 'APIKey' : '无需' }}</strong>
+                  <div
+                    class="api-card__detail-cell"
+                    :class="isApiKey ? 'api-card__detail-cell--key' : 'api-card__detail-cell--free'"
+                  >
+                    <span
+                      class="api-card__detail-icon"
+                      aria-hidden="true"
+                    >
+                      <UIcon
+                        :name="isApiKey ? 'i-mdi-key-variant' : 'i-mdi-gift-outline'"
+                        class="size-3.5"
+                      />
+                    </span>
+                    <div class="api-card__detail-content">
+                      <span>鉴权要求</span>
+                      <strong>{{ isApiKey ? 'APIKey' : '无需 Key' }}</strong>
+                    </div>
                   </div>
                 </div>
 
@@ -486,11 +527,13 @@ function formatCallCount(count: number): string {
 .api-card__calls {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px 3px 8px;
+  gap: 5px;
+  min-height: 22px;
+  padding: 1px 8px 1px 2px;
   border-radius: 999px;
-  border: 1px solid var(--ui-border);
-  background: color-mix(in srgb, var(--ui-bg-muted) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-info) 22%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-info) 7%, var(--ui-bg-elevated));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 5%, transparent);
   color: var(--ui-text-muted);
   font-size: 11px;
   line-height: 1;
@@ -498,9 +541,20 @@ function formatCallCount(count: number): string {
   white-space: nowrap;
 }
 
+.api-card__calls-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ui-info);
+  background: color-mix(in srgb, var(--ui-info) 10%, var(--ui-bg-elevated));
+}
+
 .api-card__calls-num {
   font-weight: 600;
-  color: var(--ui-text);
+  color: var(--ui-text-highlighted);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
 }
@@ -521,6 +575,21 @@ function formatCallCount(count: number): string {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
+  background: color-mix(in srgb, var(--ui-bg-muted) 62%, transparent) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 5%, transparent);
+}
+
+.api-card__badge-icon--free {
+  color: var(--ui-success);
+  border-color: color-mix(in srgb, var(--ui-success) 26%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-success) 8%, var(--ui-bg-elevated)) !important;
+}
+
+.api-card__badge-icon--key {
+  color: var(--ui-primary);
+  border-color: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-primary) 6%, var(--ui-bg-elevated)) !important;
 }
 
 .api-card__badge-icon > span {
@@ -611,15 +680,66 @@ function formatCallCount(count: number): string {
 
 .api-card__detail-cell {
   min-width: 0;
-  display: grid;
-  gap: 4px;
-  padding: 9px 10px;
-  border: 1px solid var(--ui-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 34%, transparent);
+  background: color-mix(in srgb, var(--ui-bg-muted) 42%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 4%, transparent);
 }
 
-.api-card__detail-cell strong {
+.api-card__detail-cell--calls {
+  border-color: color-mix(in srgb, var(--ui-info) 22%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-info) 6%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-cell--free {
+  border-color: color-mix(in srgb, var(--ui-success) 22%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-success) 6%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-cell--key {
+  border-color: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-primary) 5%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--ui-text-highlighted);
+  background: color-mix(in srgb, var(--ui-bg-elevated) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ui-border) 74%, transparent);
+}
+
+.api-card__detail-cell--calls .api-card__detail-icon {
+  color: var(--ui-info);
+  background: color-mix(in srgb, var(--ui-info) 10%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-cell--free .api-card__detail-icon {
+  color: var(--ui-success);
+  background: color-mix(in srgb, var(--ui-success) 10%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-cell--key .api-card__detail-icon {
+  color: var(--ui-primary);
+  background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg-elevated));
+}
+
+.api-card__detail-content {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.api-card__detail-content strong {
   color: var(--ui-text);
   font-size: 15px;
   font-weight: 700;
