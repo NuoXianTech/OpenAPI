@@ -39,34 +39,18 @@ const {
       </div>
     </section>
 
-    <UCard
-      variant="subtle"
-      :ui="{ body: 'p-4 sm:p-5' }"
-    >
-      <div class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-filter-variant"
-              class="size-4 text-muted"
-            />
-            <h3 class="text-sm font-semibold text-highlighted">
-              筛选条件
-            </h3>
-          </div>
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          >
-            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
-          </UBadge>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div class="flex flex-wrap items-center gap-2">
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        title="登录日志筛选"
+        panel-class="w-[min(calc(100vw-2rem),38rem)] p-3"
+        @apply="applyFilters"
+        @reset="reset"
+      >
+        <div class="grid gap-3 md:grid-cols-2">
           <UFormField
             label="时间范围"
-            class="xl:col-span-2"
+            class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
@@ -102,25 +86,8 @@ const {
             />
           </UFormField>
         </div>
-
-        <div class="flex items-center justify-end gap-2 border-t border-default pt-4">
-          <UButton
-            color="neutral"
-            variant="outline"
-            icon="i-mdi-restore"
-            @click="reset"
-          >
-            重置
-          </UButton>
-          <UButton
-            icon="i-mdi-magnify"
-            @click="applyFilters"
-          >
-            查询
-          </UButton>
-        </div>
-      </div>
-    </UCard>
+      </AdminFilterPopover>
+    </div>
 
     <DashboardTableCard
       title="登录明细"

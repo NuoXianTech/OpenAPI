@@ -11,9 +11,7 @@ const {
   detailJson,
   detailOpen,
   detailRow,
-  expandedFilters,
   filters,
-  hasAdvancedFilters,
   items,
   loading,
   openDetail,
@@ -41,34 +39,18 @@ const {
       </div>
     </section>
 
-    <UCard
-      variant="subtle"
-      :ui="{ body: 'p-4 sm:p-5' }"
-    >
-      <div class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-filter-variant"
-              class="size-4 text-muted"
-            />
-            <h3 class="text-sm font-semibold text-highlighted">
-              筛选条件
-            </h3>
-          </div>
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          >
-            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
-          </UBadge>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div class="flex flex-wrap items-center gap-2">
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        title="操作日志筛选"
+        panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
+        @apply="applyFilters"
+        @reset="reset"
+      >
+        <div class="grid gap-3 md:grid-cols-2">
           <UFormField
             label="时间范围"
-            class="xl:col-span-2"
+            class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
@@ -100,85 +82,41 @@ const {
               class="w-full"
             />
           </UFormField>
-        </div>
-
-        <Transition
-          enter-active-class="transition duration-150 ease-out"
-          enter-from-class="opacity-0 -translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition duration-100 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div
-            v-if="expandedFilters"
-            class="grid gap-3 border-t border-default pt-4 md:grid-cols-3"
-          >
-            <UFormField label="用户 ID">
-              <UInput
-                v-model.number="filters.userId"
-                type="number"
-                placeholder="留空查全部"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              label="动作前缀"
-              hint="例如 admin.user."
-            >
-              <UInput
-                v-model="filters.action"
-                placeholder="留空查全部"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField label="资源类型">
-              <UInput
-                v-model="filters.resourceType"
-                placeholder="如 api / user"
-                class="w-full"
-              />
-            </UFormField>
-          </div>
-        </Transition>
-
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4">
-          <UButton
-            :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
-            variant="outline"
-            :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-            @click="() => { expandedFilters = !expandedFilters }"
-          >
-            更多筛选
-            <UBadge
-              v-if="hasAdvancedFilters"
-              color="primary"
-              variant="solid"
-              size="sm"
-              class="ml-1"
-            >
-              ·
-            </UBadge>
-          </UButton>
-          <div class="flex gap-2">
-            <UButton
-              color="neutral"
-              variant="outline"
-              icon="i-mdi-restore"
-              @click="reset"
-            >
-              重置
-            </UButton>
-            <UButton
-              icon="i-mdi-magnify"
-              @click="applyFilters"
-            >
-              查询
-            </UButton>
+          <div class="border-t border-default pt-3 md:col-span-2">
+            <p class="mb-3 text-xs font-medium text-muted">
+              精确筛选
+            </p>
+            <div class="grid gap-3 md:grid-cols-3">
+              <UFormField label="用户 ID">
+                <UInput
+                  v-model.number="filters.userId"
+                  type="number"
+                  placeholder="留空查全部"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField
+                label="动作前缀"
+                hint="例如 admin.user."
+              >
+                <UInput
+                  v-model="filters.action"
+                  placeholder="留空查全部"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="资源类型">
+                <UInput
+                  v-model="filters.resourceType"
+                  placeholder="如 api / user"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
           </div>
         </div>
-      </div>
-    </UCard>
+      </AdminFilterPopover>
+    </div>
 
     <DashboardTableCard
       title="操作明细"

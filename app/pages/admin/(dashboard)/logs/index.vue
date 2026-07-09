@@ -21,7 +21,6 @@ const {
   typeSelectItems,
   apiSelectItems,
   categorySelectItems,
-  hasAdvancedFilters,
   activeFilterCount,
   columns,
   loadFilterOptions
@@ -32,7 +31,6 @@ const {
   }
 })
 
-const expandedFilters = ref(false)
 const overlay = useOverlay()
 const detailModal = overlay.create(LazyAdminCallLogDetailModal, { destroyOnClose: true })
 
@@ -42,10 +40,6 @@ onMounted(() => {
 
 function openDetail(row: AdminLogRow) {
   detailModal.open({ row })
-}
-
-function toggleAdvancedFilters() {
-  expandedFilters.value = !expandedFilters.value
 }
 </script>
 
@@ -64,35 +58,18 @@ function toggleAdvancedFilters() {
       </div>
     </section>
 
-    <!-- 筛选区 -->
-    <UCard
-      variant="subtle"
-      :ui="{ body: 'p-4 sm:p-5' }"
-    >
-      <div class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-filter-variant"
-              class="size-4 text-muted"
-            />
-            <h3 class="text-sm font-semibold text-highlighted">
-              筛选条件
-            </h3>
-          </div>
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          >
-            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
-          </UBadge>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+    <div class="flex flex-wrap items-center gap-2">
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        title="调用日志筛选"
+        panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
+        @apply="applyFilters"
+        @reset="resetFilters"
+      >
+        <div class="grid gap-3 md:grid-cols-2">
           <UFormField
             label="时间范围"
-            class="xl:col-span-2"
+            class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
@@ -100,10 +77,7 @@ function toggleAdvancedFilters() {
               placeholder="全部时间"
             />
           </UFormField>
-          <UFormField
-            label="接口名称"
-            class="xl:col-span-1"
-          >
+          <UFormField label="接口名称">
             <USelectMenu
               v-model="filters.apiId"
               :items="apiSelectItems"
@@ -113,9 +87,7 @@ function toggleAdvancedFilters() {
               class="w-full"
             />
           </UFormField>
-          <UFormField
-            label="分类"
-          >
+          <UFormField label="分类">
             <USelect
               v-model="filters.categoryId"
               :items="categorySelectItems"
@@ -123,9 +95,7 @@ function toggleAdvancedFilters() {
               class="w-full"
             />
           </UFormField>
-          <UFormField
-            label="类型"
-          >
+          <UFormField label="类型">
             <USelectMenu
               v-model="filters.types"
               :items="typeSelectItems"
@@ -135,91 +105,45 @@ function toggleAdvancedFilters() {
               class="w-full"
             />
           </UFormField>
-        </div>
-
-        <Transition
-          enter-active-class="transition duration-150 ease-out"
-          enter-from-class="opacity-0 -translate-y-1"
-          enter-to-class="opacity-100 translate-y-0"
-          leave-active-class="transition duration-100 ease-in"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
-          <div
-            v-if="expandedFilters"
-            class="grid gap-3 border-t border-default pt-4 md:grid-cols-3"
-          >
-            <UFormField
-              label="密钥名称"
-              hint="按 API Key ID 筛选"
-            >
-              <UInput
-                v-model.number="filters.apiKeyId"
-                type="number"
-                placeholder="留空查全部"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              label="用户"
-              hint="按用户 ID 筛选"
-            >
-              <UInput
-                v-model.number="filters.userId"
-                type="number"
-                placeholder="留空查全部"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              label="请求 ID"
-            >
-              <UInput
-                v-model="filters.requestId"
-                placeholder="UUID，精确匹配"
-                class="w-full"
-              />
-            </UFormField>
-          </div>
-        </Transition>
-
-        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-default pt-4">
-          <UButton
-            :color="expandedFilters || hasAdvancedFilters ? 'primary' : 'neutral'"
-            variant="outline"
-            :icon="expandedFilters ? 'i-mdi-chevron-up' : 'i-mdi-chevron-down'"
-            @click="toggleAdvancedFilters"
-          >
-            更多筛选
-            <UBadge
-              v-if="hasAdvancedFilters"
-              color="primary"
-              variant="solid"
-              size="sm"
-              class="ml-1"
-            >
-              ·
-            </UBadge>
-          </UButton>
-          <div class="flex gap-2">
-            <UButton
-              color="neutral"
-              variant="outline"
-              icon="i-mdi-restore"
-              @click="resetFilters"
-            >
-              重置
-            </UButton>
-            <UButton
-              icon="i-mdi-magnify"
-              @click="applyFilters"
-            >
-              查询
-            </UButton>
+          <div class="border-t border-default pt-3 md:col-span-2">
+            <p class="mb-3 text-xs font-medium text-muted">
+              精确筛选
+            </p>
+            <div class="grid gap-3 md:grid-cols-3">
+              <UFormField
+                label="密钥名称"
+                hint="按 API Key ID 筛选"
+              >
+                <UInput
+                  v-model.number="filters.apiKeyId"
+                  type="number"
+                  placeholder="留空查全部"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField
+                label="用户"
+                hint="按用户 ID 筛选"
+              >
+                <UInput
+                  v-model.number="filters.userId"
+                  type="number"
+                  placeholder="留空查全部"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField label="请求 ID">
+                <UInput
+                  v-model="filters.requestId"
+                  placeholder="UUID，精确匹配"
+                  class="w-full"
+                />
+              </UFormField>
+            </div>
           </div>
         </div>
-      </div>
-    </UCard>
+      </AdminFilterPopover>
+    </div>
 
     <DashboardTableCard
       title="调用明细"

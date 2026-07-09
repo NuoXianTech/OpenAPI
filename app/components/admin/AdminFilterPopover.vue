@@ -2,12 +2,14 @@
 interface AdminFilterPopoverProps {
   activeCount?: number
   buttonLabel?: string
+  panelClass?: string
   title?: string
 }
 
 const props = withDefaults(defineProps<AdminFilterPopoverProps>(), {
   activeCount: 0,
   buttonLabel: '筛选',
+  panelClass: 'w-72 p-3 sm:w-80',
   title: '筛选条件'
 })
 
@@ -54,7 +56,7 @@ function resetFilters() {
     </UButton>
 
     <template #content>
-      <div class="w-72 p-3 sm:w-80">
+      <div :class="props.panelClass">
         <div class="mb-3 flex items-center justify-between gap-3">
           <div class="flex min-w-0 items-center gap-2">
             <UIcon

@@ -92,31 +92,14 @@ function amountClass(amt: number) {
       </div>
     </section>
 
-    <UCard
-      variant="subtle"
-      :ui="{ body: 'p-4 sm:p-5' }"
-    >
-      <div class="space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-filter-variant"
-              class="size-4 text-muted"
-            />
-            <h3 class="text-sm font-semibold text-highlighted">
-              筛选条件
-            </h3>
-          </div>
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-          >
-            {{ activeFilterCount ? `${activeFilterCount} 项筛选` : '未筛选' }}
-          </UBadge>
-        </div>
-
-        <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end">
+    <div class="flex flex-wrap items-center gap-2">
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        title="积分日志筛选"
+        @apply="apply"
+        @reset="reset"
+      >
+        <div class="grid gap-3">
           <UFormField label="用户 ID">
             <UInput
               v-model.number="filters.userId"
@@ -132,25 +115,9 @@ function amountClass(amt: number) {
               class="w-full"
             />
           </UFormField>
-          <div class="flex gap-2 md:col-span-2 xl:col-span-1">
-            <UButton
-              icon="i-mdi-magnify"
-              @click="apply"
-            >
-              查询
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              icon="i-mdi-restore"
-              @click="reset"
-            >
-              重置
-            </UButton>
-          </div>
         </div>
-      </div>
-    </UCard>
+      </AdminFilterPopover>
+    </div>
 
     <DashboardTableCard
       title="积分明细"
