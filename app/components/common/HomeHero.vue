@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { formatCompactCount } from '~/utils/number-format'
 
 interface HomeHeroDashboardMeta {
   path: string
@@ -36,11 +37,7 @@ const { user, logout } = useAuth()
 const nowTime = ref('')
 const upTime = ref('')
 const startTimestamp = computed(() => parseStartTimestamp(props.startTime))
-const compactCallCountFormatter = new Intl.NumberFormat('zh-CN', {
-  notation: 'compact',
-  maximumFractionDigits: 1
-})
-const compactCallCount = computed(() => formatCompactCallCount(props.callCount))
+const compactCallCount = computed(() => formatCompactCount(props.callCount))
 const dashboardMeta = computed(() => getDashboardMeta(user.value?.role))
 const dashboardPath = computed(() => dashboardMeta.value.path)
 const dashboardLabel = computed(() => dashboardMeta.value.label)
@@ -74,12 +71,6 @@ function formatUpTime(ms: number): string {
 function parseStartTimestamp(startTime: string | undefined): number {
   const timestamp = new Date(startTime || '').getTime()
   return Number.isNaN(timestamp) ? Date.now() : timestamp
-}
-
-function formatCompactCallCount(callCount = 0): string {
-  const normalizedCount = Math.max(0, Math.floor(callCount))
-  if (normalizedCount < 10000) return normalizedCount.toLocaleString('zh-CN')
-  return compactCallCountFormatter.format(normalizedCount)
 }
 
 function getDashboardMeta(userRole: string | null | undefined): HomeHeroDashboardMeta {
