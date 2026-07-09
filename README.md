@@ -190,6 +190,7 @@ Some built-in public APIs are based on or inspired by:
 - [talk-with-buddha](https://github.com/takuron/talk-with-buddha)
 - [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
+- [60s](https://github.com/vikiboss/60s)
 
 ### Contributing
 
