@@ -28,6 +28,7 @@
     "@vueuse/core": "^14.3.0",
     "@vueuse/nuxt": "^14.3.0",
     "bowser": "^2.14.1",
+    "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
     "iconv-lite": "^0.6.0",
     "nodemailer": "^8.0.11",
@@ -52,5 +53,5 @@
     "vitest": "^4.1.9",
     "vue-tsc": "^3.3.5"
   },
-  "packageManager": "pnpm@11.9.0"
+  "packageManager": "pnpm@11.10.0"
 }
