@@ -1,28 +1,16 @@
 import type { H3Event } from 'h3'
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
+import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature, isTimingSafeEqual } from '~~/server/utils/secure-token'
 
 const STATE_COOKIE = 'oauth_state'
 const STATE_TTL_SECONDS = 5 * 60
 
 export type OauthFlowMode = 'login' | 'bind'
 
-function base64UrlEncode(buffer: Buffer) {
-  return buffer.toString('base64')
-    .replace(/=+$/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
-
-function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
-  return Buffer.from(padded, 'base64')
-}
-
 function sign(payload: string) {
-  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(payload).digest())
+  return createHmacSignature(payload, getAuthSecret())
 }
 
 interface IssuedState {
@@ -31,8 +19,8 @@ interface IssuedState {
 }
 
 export function issueState(event: H3Event, provider: string, returnTo: string, mode: OauthFlowMode = 'login'): IssuedState {
-  const nonce = base64UrlEncode(randomBytes(16))
-  const returnToEncoded = base64UrlEncode(Buffer.from(returnTo || '/'))
+  const nonce = encodeBase64Url(randomBytes(16))
+  const returnToEncoded = encodeBase64Url(returnTo || '/')
   const flowMode: OauthFlowMode = mode === 'bind' ? 'bind' : 'login'
   // payload: nonce.provider.returnTo.mode
   const payload = `${nonce}.${provider}.${returnToEncoded}.${flowMode}`
@@ -77,26 +65,25 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
     return null
   }
 
-  const expected = sign(`${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}`)
-  const sigBuffer = Buffer.from(sig)
-  const expectedBuffer = Buffer.from(expected)
-  if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
+  if (!hasValidHmacSignature(
+    `${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}`,
+    sig,
+    getAuthSecret()
+  )) {
     return null
   }
   if (cookieProvider !== provider) {
     return null
   }
 
-  const stateBuffer = Buffer.from(stateFromQuery)
-  const nonceBuffer = Buffer.from(nonce)
-  if (stateBuffer.length !== nonceBuffer.length || !timingSafeEqual(stateBuffer, nonceBuffer)) {
+  if (!isTimingSafeEqual(stateFromQuery, nonce)) {
     return null
   }
 
   return {
     nonce,
     provider: cookieProvider,
-    returnTo: base64UrlDecode(returnToEncoded).toString('utf8') || '/',
+    returnTo: decodeBase64Url(returnToEncoded).toString('utf8') || '/',
     mode: cookieMode
   }
 }

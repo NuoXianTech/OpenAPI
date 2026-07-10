@@ -1,4 +1,4 @@
-import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto'
+import { createHash, randomBytes, scrypt as scryptCallback } from 'node:crypto'
 import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
@@ -7,6 +7,7 @@ import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
+import { decodeBase64Url, encodeBase64Url, isTimingSafeEqual } from '~~/server/utils/secure-token'
 
 interface AuthUserPayload {
   id: number
@@ -34,20 +35,6 @@ function getCravatarUrl(email: string | null | undefined) {
   const normalized = (email ?? '').trim().toLowerCase()
   const hash = createHash('md5').update(normalized).digest('hex')
   return `https://cravatar.cn/avatar/${hash}`
-}
-
-function base64UrlEncode(input: Buffer | string) {
-  const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input)
-  return buffer.toString('base64')
-    .replace(/=+$/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
-
-function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
-  return Buffer.from(padded, 'base64')
 }
 
 function scryptOptions(params: { N: number, r: number, p: number }) {
@@ -80,7 +67,7 @@ function parseScryptParams(spec: string) {
 export async function hashPassword(password: string) {
   const salt = randomBytes(SALT_BYTES)
   const derived = await scrypt(password, salt, KEY_LENGTH, scryptOptions(SCRYPT_DEFAULTS)) as Buffer
-  return `scrypt$${formatScryptParams(SCRYPT_DEFAULTS)}$${base64UrlEncode(salt)}$${base64UrlEncode(derived)}`
+  return `scrypt$${formatScryptParams(SCRYPT_DEFAULTS)}$${encodeBase64Url(salt)}$${encodeBase64Url(derived)}`
 }
 
 export async function verifyPassword(stored: string, password: string) {
@@ -94,10 +81,10 @@ export async function verifyPassword(stored: string, password: string) {
     return false
   }
 
-  const salt = base64UrlDecode(parts[2])
-  const hash = base64UrlDecode(parts[3])
+  const salt = decodeBase64Url(parts[2])
+  const hash = decodeBase64Url(parts[3])
   const derived = await scrypt(password, salt, hash.length, scryptOptions(params)) as Buffer
-  return hash.length === derived.length && timingSafeEqual(hash, derived)
+  return isTimingSafeEqual(hash, derived)
 }
 
 async function getSessionMaxAgesSeconds() {

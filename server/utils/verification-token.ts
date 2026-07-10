@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
+import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature } from '~~/server/utils/secure-token'
 
 // ------------------------------------------------------------------
 // 无状态邮箱类一次性 token（验证激活 / 密码重置 / 邮箱变更）
@@ -18,9 +18,9 @@ import { getAuthSecret } from '~~/server/utils/auth-secret'
 // 与 access JWT / oauthState / oauthPending 一致，用 auth.secret 做 HMAC。
 // ------------------------------------------------------------------
 
-export type VerificationPurpose = 'verify' | 'reset_password' | 'change_email'
+type VerificationPurpose = 'verify' | 'reset_password' | 'change_email'
 
-export interface VerificationTokenPayload {
+interface VerificationTokenPayload {
   uid: number
   email: string // verify / reset_password：当前邮箱；change_email：新邮箱
   purpose: VerificationPurpose
@@ -44,19 +44,6 @@ interface IssueVerificationTokenUrlOptions {
   expiresInMinutes: number
 }
 
-function base64UrlEncode(buffer: Buffer) {
-  return buffer.toString('base64')
-    .replace(/=+$/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
-
-function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
-  return Buffer.from(padded, 'base64')
-}
-
 // 把「操作成功后必变的字段」拼成 binding。purpose 前缀避免跨场景串用。
 function bindingMaterial(purpose: VerificationPurpose, user: BindingUser): string {
   switch (purpose) {
@@ -70,14 +57,14 @@ function bindingMaterial(purpose: VerificationPurpose, user: BindingUser): strin
 }
 
 function sign(payloadB64: string, binding: string) {
-  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(`${payloadB64}.${binding}`).digest())
+  return createHmacSignature(`${payloadB64}.${binding}`, getAuthSecret())
 }
 
 /**
  * 签发无状态 token。`user` 提供 binding 所需字段（change_email 的 binding 取「旧」
  * 邮箱，故 user.email 必须是变更前的当前邮箱；新邮箱通过 opts.email 进 payload）。
  */
-export function signVerificationToken(
+function signVerificationToken(
   user: VerificationTokenUser,
   opts: { purpose: VerificationPurpose, email: string, expiresInMinutes: number }
 ): string {
@@ -88,7 +75,7 @@ export function signVerificationToken(
     purpose: opts.purpose,
     exp
   }
-  const payloadB64 = base64UrlEncode(Buffer.from(JSON.stringify(payload), 'utf8'))
+  const payloadB64 = encodeBase64Url(JSON.stringify(payload))
   return `${payloadB64}.${sign(payloadB64, bindingMaterial(opts.purpose, user))}`
 }
 
@@ -96,7 +83,7 @@ export function normalizeSiteUrl(siteUrl: string | null | undefined): string {
   return (siteUrl || 'http://localhost:3000').replace(/\/+$/g, '')
 }
 
-export function buildVerificationTokenUrl(
+function buildVerificationTokenUrl(
   siteUrl: string | null | undefined,
   path: string,
   userId: number,
@@ -137,15 +124,17 @@ export function verifyVerificationToken(
   const payloadB64 = token.slice(0, dot)
   const sig = token.slice(dot + 1)
 
-  const sigBuffer = Buffer.from(sig)
-  const expectedBuffer = Buffer.from(sign(payloadB64, bindingMaterial(expectedPurpose, user)))
-  if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
+  if (!hasValidHmacSignature(
+    `${payloadB64}.${bindingMaterial(expectedPurpose, user)}`,
+    sig,
+    getAuthSecret()
+  )) {
     return null
   }
 
   let payload: VerificationTokenPayload
   try {
-    payload = JSON.parse(base64UrlDecode(payloadB64).toString('utf8')) as VerificationTokenPayload
+    payload = JSON.parse(decodeBase64Url(payloadB64).toString('utf8')) as VerificationTokenPayload
   } catch {
     return null
   }

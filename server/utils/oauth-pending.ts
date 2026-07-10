@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
 import type { SupportedOauthProvider } from '#shared/types/oauth'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
+import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature } from '~~/server/utils/secure-token'
 
 // ------------------------------------------------------------------
 // 「待处理 OAuth 身份」载体
@@ -20,7 +20,7 @@ import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 const PENDING_COOKIE = 'oauth_pending'
 const PENDING_TTL_SECONDS = 10 * 60
 
-export interface PendingOauthProfile {
+interface PendingOauthProfile {
   provider: SupportedOauthProvider
   providerUserId: string
   email: string | null
@@ -28,25 +28,12 @@ export interface PendingOauthProfile {
   avatarUrl: string | null
 }
 
-function base64UrlEncode(buffer: Buffer) {
-  return buffer.toString('base64')
-    .replace(/=+$/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-}
-
-function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
-  return Buffer.from(padded, 'base64')
-}
-
 function sign(payload: string) {
-  return base64UrlEncode(createHmac('sha256', getAuthSecret()).update(payload).digest())
+  return createHmacSignature(payload, getAuthSecret())
 }
 
 export function issuePendingOauth(event: H3Event, profile: PendingOauthProfile): void {
-  const payload = base64UrlEncode(Buffer.from(JSON.stringify(profile), 'utf8'))
+  const payload = encodeBase64Url(JSON.stringify(profile))
   const cookieValue = `${payload}.${sign(payload)}`
   setCookie(event, PENDING_COOKIE, cookieValue, {
     httpOnly: true,
@@ -70,14 +57,12 @@ export function readPendingOauth(event: H3Event): PendingOauthProfile | null {
   const payload = cookie.slice(0, dot)
   const sig = cookie.slice(dot + 1)
 
-  const sigBuffer = Buffer.from(sig)
-  const expectedBuffer = Buffer.from(sign(payload))
-  if (sigBuffer.length !== expectedBuffer.length || !timingSafeEqual(sigBuffer, expectedBuffer)) {
+  if (!hasValidHmacSignature(payload, sig, getAuthSecret())) {
     return null
   }
 
   try {
-    const obj = JSON.parse(base64UrlDecode(payload).toString('utf8')) as Record<string, unknown>
+    const obj = JSON.parse(decodeBase64Url(payload).toString('utf8')) as Record<string, unknown>
     if (!obj || typeof obj !== 'object') {
       return null
     }

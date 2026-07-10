@@ -1,17 +1,12 @@
-import { createHmac, randomBytes } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys } from '~~/server/db/schema'
 import { firstRow } from '~~/server/utils/row'
 import type { DatabaseTransaction } from '~~/server/db/client'
+import { createHmacSignature, decodeBase64Url } from '~~/server/utils/secure-token'
 
 const SECRET_BYTES = 32
 const MAX_BATCH_COUNT = 5
-
-function base64UrlDecode(input: string) {
-  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4)
-  return Buffer.from(padded, 'base64')
-}
 
 function parseSecret(raw: string): Buffer {
   if (!raw) {
@@ -20,7 +15,7 @@ function parseSecret(raw: string): Buffer {
   if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === SECRET_BYTES * 2) {
     return Buffer.from(raw, 'hex')
   }
-  const decoded = base64UrlDecode(raw)
+  const decoded = decodeBase64Url(raw)
   if (decoded.length === SECRET_BYTES) {
     return decoded
   }
@@ -42,7 +37,7 @@ function getSecret() {
 
 function generateApiKey() {
   const nonce = randomBytes(24)
-  return `op_${createHmac('sha256', getSecret()).update(nonce).digest('base64url')}`
+  return `op_${createHmacSignature(nonce, getSecret())}`
 }
 
 /** 给批量创建的 key 名追加随机后缀，避免重名扎堆 */

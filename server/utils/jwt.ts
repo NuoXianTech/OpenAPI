@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from 'node:crypto'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
+import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature } from '~~/server/utils/secure-token'
 
 // ------------------------------------------------------------------
 // 会话 JWT（HS256，自签自验）
@@ -13,7 +13,7 @@ import { getAuthSecret } from '~~/server/utils/auth-secret'
 // 强制校验 exp、secret 未配置 fail-closed（签发抛错 / 校验返回 null）。
 // ------------------------------------------------------------------
 
-export interface AccessTokenPayload {
+interface AccessTokenPayload {
   sub: number // users.id
   role: 'user' | 'admin'
   ver: number // 签发时的 users.tokenVersion
@@ -31,10 +31,6 @@ interface JwtClaims extends AccessTokenPayload {
 
 const ALG = 'HS256'
 
-function computeSignature(signingInput: string, secret: string) {
-  return createHmac('sha256', secret).update(signingInput).digest('base64url')
-}
-
 export function signAccessToken(payload: AccessTokenPayload, ttlSeconds: number) {
   const secret = getAuthSecret()
   const now = Math.floor(Date.now() / 1000)
@@ -43,10 +39,10 @@ export function signAccessToken(payload: AccessTokenPayload, ttlSeconds: number)
     iat: now,
     exp: now + ttlSeconds
   }
-  const header = Buffer.from(JSON.stringify({ alg: ALG, typ: 'JWT' })).toString('base64url')
-  const body = Buffer.from(JSON.stringify(claims)).toString('base64url')
+  const header = encodeBase64Url(JSON.stringify({ alg: ALG, typ: 'JWT' }))
+  const body = encodeBase64Url(JSON.stringify(claims))
   const signingInput = `${header}.${body}`
-  return `${signingInput}.${computeSignature(signingInput, secret)}`
+  return `${signingInput}.${createHmacSignature(signingInput, secret)}`
 }
 
 export function verifyAccessToken(token: string): VerifiedToken | null {
@@ -65,23 +61,19 @@ export function verifyAccessToken(token: string): VerifiedToken | null {
   // 1) header.alg 必须是 HS256，拒绝 alg=none / 算法混淆
   let alg: unknown
   try {
-    alg = (JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as { alg?: unknown }).alg
+    alg = (JSON.parse(decodeBase64Url(header).toString('utf8')) as { alg?: unknown }).alg
   } catch {
     return null
   }
   if (alg !== ALG) return null
 
   // 2) 常量时间比对签名
-  const expected = computeSignature(`${header}.${body}`, secret)
-  const expectedBuf = Buffer.from(expected)
-  const actualBuf = Buffer.from(signature)
-  if (expectedBuf.length !== actualBuf.length) return null
-  if (!timingSafeEqual(expectedBuf, actualBuf)) return null
+  if (!hasValidHmacSignature(`${header}.${body}`, signature, secret)) return null
 
   // 3) 解析 claims + 严格校验 exp / role
   let claims: JwtClaims
   try {
-    claims = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'))
+    claims = JSON.parse(decodeBase64Url(body).toString('utf8'))
   } catch {
     return null
   }
