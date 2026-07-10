@@ -6,6 +6,7 @@ import type {
   PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
 } from '#shared/types/public-stats'
+import { formatCompactCount, formatCount, formatPercent } from '~/utils/number-format'
 
 type PublicStatTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
 
@@ -64,21 +65,6 @@ function roundPercent(value: number): number {
   return Number(value.toFixed(2))
 }
 
-function formatPublicStatsRate(value: number): string {
-  return `${value.toFixed(2)}%`
-}
-
-function formatPublicStatsCount(value: number): string {
-  return value.toLocaleString()
-}
-
-function formatPublicStatsCompact(value: number): string {
-  return new Intl.NumberFormat('zh-CN', {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(value)
-}
-
 function formatPublicStatsMethod(value: string): string {
   return value
     .split(',')
@@ -128,7 +114,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     if (!overview.value) return '等待统计同步'
     if (todayDelta.value === 0) return '较昨日持平'
     const prefix = todayDelta.value > 0 ? '+' : ''
-    return `较昨日 ${prefix}${formatPublicStatsCount(todayDelta.value)}`
+    return `较昨日 ${prefix}${formatCount(todayDelta.value)}`
   })
 
   const successRateProgress = computed(() => roundPercent(clampPercent(overview.value?.successRate ?? 0)))
@@ -140,7 +126,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
 
   const trackedApiRatioLabel = computed(() => {
     if (!overview.value?.trackedApiCount) return '暂无接口纳入统计'
-    return `${formatPublicStatsRate(trackedApiRatio.value)} 已启用`
+    return `${formatPercent(trackedApiRatio.value)} 已启用`
   })
 
   const trendTotalCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.totalCalls, 0))
@@ -172,7 +158,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'total',
         label: '累计调用',
-        value: formatPublicStatsCount(overview.value.totalCalls),
+        value: formatCount(overview.value.totalCalls),
         helper: '全站历史请求总量',
         icon: 'i-mdi-counter',
         tone: 'primary',
@@ -181,7 +167,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'today',
         label: '今日调用',
-        value: formatPublicStatsCount(overview.value.todayCalls),
+        value: formatCount(overview.value.todayCalls),
         helper: todayDeltaLabel.value,
         icon: 'i-mdi-calendar-today-outline',
         tone: todayDeltaTone.value,
@@ -190,7 +176,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'yesterday',
         label: '昨日调用',
-        value: formatPublicStatsCount(overview.value.yesterdayCalls),
+        value: formatCount(overview.value.yesterdayCalls),
         helper: '自然日聚合',
         icon: 'i-mdi-calendar-arrow-left',
         tone: 'neutral',
@@ -199,8 +185,8 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'successRate',
         label: '请求成功率',
-        value: formatPublicStatsRate(overview.value.successRate),
-        helper: `失败率 ${formatPublicStatsRate(failureRate.value)}`,
+        value: formatPercent(overview.value.successRate),
+        helper: `失败率 ${formatPercent(failureRate.value)}`,
         icon: 'i-mdi-chart-donut',
         tone: 'success',
         accent: 'var(--ui-success)'
@@ -208,7 +194,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'success',
         label: '成功调用',
-        value: formatPublicStatsCount(overview.value.successCalls),
+        value: formatCount(overview.value.successCalls),
         helper: 'HTTP 成功响应',
         icon: 'i-mdi-check-circle-outline',
         tone: 'success',
@@ -217,7 +203,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'failure',
         label: '失败调用',
-        value: formatPublicStatsCount(overview.value.failureCalls),
+        value: formatCount(overview.value.failureCalls),
         helper: overview.value.failureCalls > 0 ? '需要关注的异常请求' : '暂无失败记录',
         icon: 'i-mdi-close-circle-outline',
         tone: overview.value.failureCalls > 0 ? 'error' : 'neutral',
@@ -226,7 +212,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'users',
         label: '注册用户',
-        value: formatPublicStatsCount(overview.value.userCount),
+        value: formatCount(overview.value.userCount),
         helper: '平台账户规模',
         icon: 'i-mdi-account-group-outline',
         tone: 'info',
@@ -235,7 +221,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       {
         key: 'enabledStatsApis',
         label: '统计接口',
-        value: formatPublicStatsCount(overview.value.enabledTrackedApiCount),
+        value: formatCount(overview.value.enabledTrackedApiCount),
         helper: trackedApiRatioLabel.value,
         icon: 'i-mdi-api',
         tone: 'primary',
@@ -292,9 +278,9 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     overviewCards,
     fetchStats,
     reloadStats,
-    formatRate: formatPublicStatsRate,
-    formatCount: formatPublicStatsCount,
-    formatCompact: formatPublicStatsCompact,
+    formatRate: formatPercent,
+    formatCount,
+    formatCompact: formatCompactCount,
     formatMethod: formatPublicStatsMethod,
     getRankPercent,
     rankSuccessTone: getPublicStatsSuccessTone

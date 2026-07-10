@@ -8,6 +8,7 @@ import type {
 } from '#shared/types/admin'
 import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-sections'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { formatCount, formatPercent } from '~/utils/number-format'
 
 useHead({ title: '管理中心' })
 
@@ -98,7 +99,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
     {
       key: 'users',
       label: '注册用户',
-      value: formatNumber(overview.value.userCount),
+      value: formatCount(overview.value.userCount),
       unit: '人',
       meta: '当前平台注册账号总量',
       icon: 'i-mdi-account-group-outline',
@@ -107,16 +108,16 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
     {
       key: 'apis',
       label: '启用 API',
-      value: formatNumber(overview.value.enabledApiCount),
+      value: formatCount(overview.value.enabledApiCount),
       unit: '个',
-      meta: `共 ${formatNumber(overview.value.totalApiCount)} 个接口`,
+      meta: `共 ${formatCount(overview.value.totalApiCount)} 个接口`,
       icon: 'i-mdi-api',
       tone: 'info'
     },
     {
       key: 'calls',
       label: '总调用',
-      value: formatNumber(overview.value.totalCalls),
+      value: formatCount(overview.value.totalCalls),
       unit: '次',
       icon: 'i-mdi-chart-line',
       tone: 'warning',
@@ -126,7 +127,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
     {
       key: 'success-rate',
       label: '成功率',
-      value: formatRate(overview.value.successRate),
+      value: formatPercent(overview.value.successRate),
       icon: 'i-mdi-shield-check-outline',
       tone: 'success',
       sparklineValues: successRateTrendValues.value,
@@ -141,14 +142,6 @@ function getCallsTrendValues(trendItems: AdminDashboardTrendPoint[]): number[] {
 
 function getSuccessRateTrendValues(trendItems: AdminDashboardTrendPoint[]): number[] {
   return trendItems.map(point => (point.totalCalls > 0 ? (point.successCalls / point.totalCalls) * 100 : 0))
-}
-
-function formatNumber(value: number): string {
-  return value.toLocaleString()
-}
-
-function formatRate(value: number): string {
-  return `${value.toFixed(2)}%`
 }
 
 function httpStatusColor(code: number): HttpStatusColor {
@@ -236,7 +229,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                       今日调用
                     </div>
                     <div class="text-xl font-semibold tabular-nums">
-                      {{ formatNumber(overview.todayCalls) }}
+                      {{ formatCount(overview.todayCalls) }}
                     </div>
                   </div>
                   <div class="space-y-1">
@@ -244,7 +237,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                       成功率
                     </div>
                     <div class="text-xl font-semibold tabular-nums">
-                      {{ formatRate(overview.successRate) }}
+                      {{ formatPercent(overview.successRate) }}
                     </div>
                   </div>
                 </div>

@@ -127,16 +127,6 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   const hasAdvancedFilters = computed(
     () => listState.filters.apiKeyId !== '' || listState.filters.userId !== '' || !!listState.filters.requestId
   )
-  const activeFilterCount = computed(() => [
-    !!listState.filters.startAt,
-    !!listState.filters.endAt,
-    listState.filters.apiId !== 0,
-    listState.filters.categoryId !== 0,
-    listState.filters.types.length > 0,
-    listState.filters.apiKeyId !== '',
-    listState.filters.userId !== '',
-    !!listState.filters.requestId
-  ].filter(Boolean).length)
   const columns: TableColumn<AdminLogRow>[] = [
     { accessorKey: 'createdAt', header: '时间' },
     { accessorKey: 'userName', header: '用户' },
@@ -185,7 +175,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     apiSelectItems,
     categorySelectItems,
     hasAdvancedFilters,
-    activeFilterCount,
+    activeFilterCount: listState.activeFilterCount,
     columns,
     loadFilterOptions
   }

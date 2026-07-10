@@ -21,6 +21,7 @@ interface UseDashboardListStateOptions<TFilters extends object> {
   defaultFilters: TFilters
   defaultPage?: number
   defaultPageSize?: number
+  filterCountKeys?: readonly (keyof TFilters)[]
   pageQueryKey?: string
   pageSizeQueryKey?: string
   routeQuery?: MaybeRefOrGetter<Record<string, unknown>>
@@ -33,6 +34,7 @@ interface UseDashboardListStateReturn<TFilters extends object> {
   page: Ref<number>
   pageSize: Ref<number>
   activeQuery: Readonly<Ref<Record<string, string | number>>>
+  activeFilterCount: Readonly<Ref<number>>
   syncQuery: () => Promise<void>
 }
 
@@ -120,6 +122,7 @@ export function useDashboardListState<TFilters extends object>(
     defaultFilters,
     defaultPage = 1,
     defaultPageSize = 50,
+    filterCountKeys,
     pageQueryKey = 'page',
     pageSizeQueryKey = 'pageSize',
     routeQuery,
@@ -129,6 +132,7 @@ export function useDashboardListState<TFilters extends object>(
 
   const initialQuery = routeQuery ? toValue(routeQuery) : {}
   const codecs = (filterCodecs ?? {}) as DashboardListQueryCodecs<TFilters>
+  const countedFilterKeys = (filterCountKeys ?? Object.keys(defaultFilters)) as readonly (keyof TFilters)[]
   const filters = reactive(cloneFilters(defaultFilters)) as TFilters
   const page = ref(parsePositiveInteger(initialQuery[pageQueryKey], defaultPage))
   const pageSize = ref(parsePositiveInteger(initialQuery[pageSizeQueryKey], defaultPageSize))
@@ -157,6 +161,10 @@ export function useDashboardListState<TFilters extends object>(
 
     return query
   })
+  const activeFilterCount = computed(() => countedFilterKeys.filter((key) => {
+    const codec = codecs[key]
+    return codec?.serialize(filters[key]) !== undefined
+  }).length)
 
   async function syncQuery() {
     await replaceQuery?.(activeQuery.value)
@@ -176,6 +184,7 @@ export function useDashboardListState<TFilters extends object>(
     page,
     pageSize,
     activeQuery,
+    activeFilterCount,
     syncQuery
   }
 }

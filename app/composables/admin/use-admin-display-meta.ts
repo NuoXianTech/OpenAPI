@@ -10,6 +10,7 @@ import type {
 } from '#shared/types/admin'
 import type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
 import type { MessageLevel } from '#shared/types/content'
+import { formatCompactCount, formatCount } from '~/utils/number-format'
 
 export type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
 
@@ -70,17 +71,6 @@ export function createEmptyAdminAnalyticsData(): AdminAnalyticsData {
   }
 }
 
-function formatAdminAnalyticsCount(value: number): string {
-  return value.toLocaleString()
-}
-
-function formatAdminAnalyticsCompact(value: number): string {
-  return new Intl.NumberFormat('zh-CN', {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(value)
-}
-
 function formatAdminAnalyticsGeneratedAt(value: string): string {
   const date = new Date(value)
   return Number.isNaN(date.getTime()) || date.getTime() === 0
@@ -103,7 +93,7 @@ export function useAdminAnalyticsDisplayMeta(
     {
       key: 'apis',
       label: '接口总数',
-      value: formatAdminAnalyticsCount(overview.value.enabledApiCount),
+      value: formatCount(overview.value.enabledApiCount),
       helper: `已启用 ${overview.value.totalEnabledApiCount}，其中纳入统计 ${overview.value.enabledApiCount}`,
       icon: 'i-mdi-api',
       accent: 'primary'
@@ -111,7 +101,7 @@ export function useAdminAnalyticsDisplayMeta(
     {
       key: 'credits',
       label: '总使用积分',
-      value: formatAdminAnalyticsCount(overview.value.totalCreditsSpent),
+      value: formatCount(overview.value.totalCreditsSpent),
       helper: '累计 API 调用扣费',
       icon: 'i-mdi-cash-multiple',
       accent: 'warning'
@@ -119,7 +109,7 @@ export function useAdminAnalyticsDisplayMeta(
     {
       key: 'average',
       label: '平均请求数',
-      value: formatAdminAnalyticsCount(Math.round(overview.value.averageDailyCalls)),
+      value: formatCount(Math.round(overview.value.averageDailyCalls)),
       helper: `近 ${overview.value.averageWindowDays} 天日均`,
       icon: 'i-mdi-chart-line',
       accent: 'info'
@@ -132,7 +122,7 @@ export function useAdminAnalyticsDisplayMeta(
     distribution,
     distributionChart,
     distributionChartItems: ADMIN_ANALYTICS_DISTRIBUTION_CHART_ITEMS,
-    formatCompact: formatAdminAnalyticsCompact,
+    formatCompact: formatCompactCount,
     generatedAtLabel,
     hourlyTrend24h,
     overview,

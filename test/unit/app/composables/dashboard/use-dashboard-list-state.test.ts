@@ -41,6 +41,7 @@ describe('useDashboardListState', () => {
     const state = useDashboardListState<TestFilters>({
       defaultFilters: { apiId: 0, keyword: '', types: [] },
       defaultPageSize: 50,
+      filterCountKeys: ['apiId', 'types'],
       routeQuery: query,
       replaceQuery,
       filterCodecs: {
@@ -55,6 +56,7 @@ describe('useDashboardListState', () => {
     expect(state.filters.apiId).toBe(9)
     expect(state.filters.keyword).toBe('request-1')
     expect(state.filters.types).toEqual(['consume', 'error'])
+    expect(state.activeFilterCount.value).toBe(2)
 
     state.filters.apiId = 12
     state.filters.keyword = 'abc'
@@ -82,5 +84,9 @@ describe('useDashboardListState', () => {
       pageSize: 25,
       types: 'consume'
     })
+
+    state.filters.apiId = 0
+    state.filters.types = []
+    expect(state.activeFilterCount.value).toBe(0)
   })
 })

@@ -78,6 +78,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   const listState = useDashboardListState<UserCallLogFilters>({
     defaultFilters: USER_CALL_LOG_DEFAULT_FILTERS,
     defaultPageSize: 50,
+    filterCountKeys: ['apiId', 'apiKeyId', 'status'],
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
@@ -119,11 +120,6 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     { label: '失败', value: 'failure' }
   ]
   const lastAppliedKeyword = ref(listState.filters.keyword.trim())
-  const activeFilterCount = computed(() => [
-    listState.filters.apiId !== 0,
-    listState.filters.apiKeyId !== 0,
-    listState.filters.status !== 'all'
-  ].filter(Boolean).length)
   const columns: TableColumn<UserCallLogRow>[] = [
     { accessorKey: 'createdAt', header: '时间' },
     { accessorKey: 'apiKeyName', header: '密钥' },
@@ -179,7 +175,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     apiSelectItems,
     keySelectItems,
     statusSelectItems,
-    activeFilterCount,
+    activeFilterCount: listState.activeFilterCount,
     columns,
     loadFilterOptions
   }
