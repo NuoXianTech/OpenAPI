@@ -161,17 +161,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 <template>
   <UDashboardPanel id="admin-home">
     <template #header>
-      <UDashboardNavbar
-        title="概览"
-        class="dashboard-navbar"
-      >
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions />
-        </template>
-      </UDashboardNavbar>
+      <DashboardPageNavbar title="概览" />
     </template>
 
     <template #body>

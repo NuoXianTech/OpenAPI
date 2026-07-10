@@ -64,17 +64,7 @@ const {
 <template>
   <UDashboardPanel id="admin-redemption-codes">
     <template #header>
-      <UDashboardNavbar
-        title="兑换码"
-        class="dashboard-navbar"
-      >
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions />
-        </template>
-      </UDashboardNavbar>
+      <DashboardPageNavbar title="兑换码" />
     </template>
 
     <template #body>

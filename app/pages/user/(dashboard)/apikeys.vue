@@ -321,14 +321,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 <template>
   <UDashboardPanel id="user-apikeys">
     <template #header>
-      <UDashboardNavbar
-        title="API Key"
-        class="dashboard-navbar"
-      >
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-      </UDashboardNavbar>
+      <DashboardPageNavbar title="API Key" />
     </template>
 
     <template #body>

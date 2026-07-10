@@ -35,17 +35,7 @@ const analyticsMetricTones = {
 <template>
   <UDashboardPanel id="admin-analytics">
     <template #header>
-      <UDashboardNavbar
-        title="数据看板"
-        class="dashboard-navbar"
-      >
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions />
-        </template>
-      </UDashboardNavbar>
+      <DashboardPageNavbar title="数据看板" />
     </template>
 
     <template #body>

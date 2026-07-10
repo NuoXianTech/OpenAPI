@@ -160,17 +160,7 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
 <template>
   <UDashboardPanel id="admin-users">
     <template #header>
-      <UDashboardNavbar
-        title="用户管理"
-        class="dashboard-navbar"
-      >
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
-          <DashboardHeaderActions />
-        </template>
-      </UDashboardNavbar>
+      <DashboardPageNavbar title="用户管理" />
     </template>
 
     <template #body>
