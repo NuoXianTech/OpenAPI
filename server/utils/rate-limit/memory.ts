@@ -70,6 +70,6 @@ const memoryRateLimiter: RateLimiter = {
   }
 }
 
-export function getRateLimiter(): RateLimiter {
+export function getMemoryRateLimiter(): RateLimiter {
   return memoryRateLimiter
 }

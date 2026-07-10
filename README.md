@@ -38,7 +38,7 @@ The production target is intentionally simple: **one Node/Nitro process plus one
 
 - Credit billing per API and HTTP method, with immutable credit transactions and retryable pending charges.
 
-- Public API gateway rate limits per API and caller API key or IP, with second, minute, hour, and day windows backed by process memory.
+- Public API gateway and authentication abuse protection with second, minute, hour, and day windows; process memory is the default, while Redis provides shared atomic counters and explicit fail-closed production mode.
 
 - Immutable API call logs, per-day statistics, admin audit logs, and login logs.
 
@@ -129,6 +129,8 @@ The project reads production settings from runtime environment variables. The mo
 | `DATABASE_URL` or `DATABASE_DRIVER=pglite` | Production required | PostgreSQL connection string, or explicit PGlite selection. |
 | `NUXT_AUTH_SECRET` | Required | Shared HS256/HMAC signing secret for access JWTs, email verification tokens and OAuth state. Authentication fails closed when empty. |
 | `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
+| `NUXT_REDIS_URL` | Optional | Redis connection used for shared atomic rate limiting. |
+| `NUXT_REDIS_REQUIRED` | Recommended with Redis | Set to `true` to fail closed when Redis-backed protection is unavailable. |
 
 If production uses PGlite, set `DATABASE_DRIVER=pglite` and put `PGLITE_DATA_DIR` on persistent storage that is included in backups. Without a `DATABASE_URL`, production requires the explicit driver to avoid silent database creation after a missed PostgreSQL configuration.
 

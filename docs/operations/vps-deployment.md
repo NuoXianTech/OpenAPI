@@ -45,6 +45,10 @@ DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 
 NUXT_AUTH_SECRET=change-me
 NUXT_AUTH_API_KEY_SECRET=change-me
+
+# Redis 分布式限流（推荐正式生产启用）
+NUXT_REDIS_URL=redis://127.0.0.1:6379
+NUXT_REDIS_REQUIRED=true
 ```
 
 生产环境没有 `DATABASE_URL` 时，必须显式设置 `DATABASE_DRIVER=pglite`。这样可以避免 PostgreSQL 连接串漏配时，服务静默创建一个新的本地数据库。使用 PGlite 时，`PGLITE_DATA_DIR` 是生产数据目录，必须纳入服务器备份。
@@ -54,6 +58,8 @@ NUXT_AUTH_API_KEY_SECRET=change-me
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
+
+Redis 应仅监听本机或私有网络，并启用认证或 TLS。当前 Redis 数据均带 TTL，主要承载限流计数；建议使用 `maxmemory-policy noeviction` 并监控内存，避免关键限流 key 被内存策略提前淘汰。Redis 未配置时应用继续使用单进程内存限流；正式生产需要 Redis 保护时设置 `NUXT_REDIS_REQUIRED=true`，连接失败会阻止服务在无保护状态下启动。
 
 ## 启动
 
@@ -92,6 +98,7 @@ pm2 restart openapi --update-env
 
 ```bash
 curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/ready
 curl -fsS http://127.0.0.1:3000/api/list
 pm2 logs openapi --lines 80
 ```

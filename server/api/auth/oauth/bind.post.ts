@@ -9,7 +9,7 @@ import { usersService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
-import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
+import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 
 export default defineEventHandler(async (event: H3Event) => {

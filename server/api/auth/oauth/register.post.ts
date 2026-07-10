@@ -15,7 +15,7 @@ import { loginLogService } from '~~/server/services/login-log-service'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
-import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
+import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 function sanitizeUsername(base: string) {

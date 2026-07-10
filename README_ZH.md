@@ -38,7 +38,7 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 
 - 按接口与 HTTP 方法配置积分价格，带不可变积分流水与可重试扣费队列。
 
-- 公共 API 网关按接口与调用方 API Key 或 IP 执行秒、分、时、天多窗口限流，计数器保存在进程内存中。
+- 公共 API 网关和身份防刷支持秒、分、时、天多窗口限流；默认使用进程内存，可选 Redis 共享原子计数并支持生产环境显式 fail-closed。
 
 - 不可变 API 调用日志、按日聚合统计、后台操作审计日志与登录日志。
 
@@ -129,6 +129,8 @@ pnpm preview
 | `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 生产必填 | PostgreSQL 连接串，或显式选择 PGlite。 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证 token 与 OAuth state 共用的 HS256/HMAC 签名密钥；为空时鉴权 fail-closed。 |
 | `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
+| `NUXT_REDIS_URL` | 可选 | 共享原子限流使用的 Redis 连接地址。 |
+| `NUXT_REDIS_REQUIRED` | 使用 Redis 时推荐 | 设置为 `true` 后 Redis 限流不可用会 fail-closed。 |
 
 生产使用 PGlite 时，请设置 `DATABASE_DRIVER=pglite`，并把 `PGLITE_DATA_DIR` 放在会持久化和备份的位置。生产环境没有 `DATABASE_URL` 时必须显式选择 PGlite，避免 PostgreSQL 漏配后静默创建新的本地数据库。
 

@@ -32,7 +32,7 @@ export interface RateLimitResult {
 }
 
 export interface RateLimiter {
-  readonly name: 'memory'
+  readonly name: 'memory' | 'redis'
   consume(key: string, limit: number, window: RateLimitWindow): Promise<RateLimitResult>
 }
 
@@ -48,6 +48,7 @@ export type GateOutcome
     | 'scope_denied'
     | 'ip_denied'
     | 'rate_limited'
+    | 'rate_limit_unavailable'
     | 'quota_exceeded'
     | 'api_key_quota_exceeded'
     | 'insufficient_credits'

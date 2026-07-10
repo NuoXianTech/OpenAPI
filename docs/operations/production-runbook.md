@@ -8,7 +8,7 @@
 | --- | --- |
 | 应用进程 | 单 Node/Nitro 进程，不做多实例横向扩展 |
 | 数据库 | 单 PostgreSQL 实例，迁移由 Node/Nitro 启动插件在应用启动前自动执行 |
-| 限流 | 进程内内存计数，重启会清空 |
+| 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
 | 扣费重试 | `pending_charges` 由同一 Node 进程定时扫描 |
 | 代理 | 生产公网流量由 Nginx 或等价代理转发到 `127.0.0.1:<NITRO_PORT>` |
 
@@ -20,6 +20,7 @@
 pm2 status openapi
 pm2 logs openapi --lines 120
 curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/ready
 curl -fsS http://127.0.0.1:3000/api/list
 ```
 
@@ -38,6 +39,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | 现象 | 优先查看 |
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
+| readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
 | 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_AUTH_API_KEY_SECRET` 是否变化、API Key 记录是否被撤销 |

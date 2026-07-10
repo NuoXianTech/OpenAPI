@@ -37,6 +37,12 @@ export default defineNuxtConfig({
       secret: '',
       apiKeySecret: '',
     },
+    redis: {
+      url: '',
+      keyPrefix: 'openapi:',
+      connectTimeoutMs: 2_000,
+      required: false
+    }
   },
   routeRules: {
     '/admin': privatePageRouteRule,

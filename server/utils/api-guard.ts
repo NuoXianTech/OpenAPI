@@ -12,7 +12,8 @@ import { apiCallStats, apiKeys, users } from '~~/server/db/schema'
 import type { RateLimitWindow } from '~~/server/config/api-guard'
 import { API_GUARD_ERROR } from '~~/server/config/api-guard'
 import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
-import { getRateLimiter } from '~~/server/utils/rate-limit/memory'
+import { getRateLimiter } from '~~/server/utils/rate-limit'
+import { isRedisUnavailableError } from '~~/server/utils/redis'
 import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
@@ -121,11 +122,12 @@ async function checkRateLimit(
       results.push(result)
       if (!result.allowed) return { denied: result }
     } catch (err) {
-      console.error('[api-guard] memory rate limiter error', {
+      console.error(`[api-guard] ${limiter.name} rate limiter error`, {
         apiId: api.id,
         window,
         error: (err as Error).message
       })
+      if (isRedisUnavailableError(err)) throw err
     }
   }
   return results
@@ -189,7 +191,18 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
   const subjectKey = apiKey
     ? `apikey:${apiKey.id}`
     : `ip:${getRequestIP(event) || 'unknown'}`
-  const rateResult = await checkRateLimit(api, subjectKey)
+  let rateResult: Awaited<ReturnType<typeof checkRateLimit>>
+  try {
+    rateResult = await checkRateLimit(api, subjectKey)
+  } catch (error) {
+    if (!isRedisUnavailableError(error)) throw error
+    return {
+      passed: false,
+      outcome: 'rate_limit_unavailable',
+      error: API_GUARD_ERROR.RATE_LIMIT_UNAVAILABLE,
+      apiKey
+    }
+  }
   if ('denied' in rateResult) {
     return {
       passed: false,
