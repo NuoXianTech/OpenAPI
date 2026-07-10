@@ -163,10 +163,12 @@ function clearTurnstileError() {
         </template>
 
         <template #validation>
-          <AuthConsent
+          <div
             v-if="consentRequired"
-            v-model="consent"
-          />
+            class="auth-form-options"
+          >
+            <AuthConsent v-model="consent" />
+          </div>
 
           <Transition name="state-fade">
             <div

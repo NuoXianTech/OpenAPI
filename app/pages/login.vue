@@ -14,8 +14,7 @@ const route = useRoute()
 
 const schema = z.object({
   identifier: z.string().min(1, '请输入邮箱或用户名'),
-  password: z.string().min(1, '请输入密码'),
-  remember: z.boolean().optional()
+  password: z.string().min(1, '请输入密码')
 })
 type Schema = z.output<typeof schema>
 
@@ -26,6 +25,7 @@ const checkingAuth = ref(true)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.login)
+const remember = ref(false)
 
 // 配置了服务条款 / 隐私政策时，登录前必须勾选同意
 const consent = ref(false)
@@ -65,11 +65,6 @@ const fields = computed(() => [
     icon: 'i-mdi-lock-outline',
     size: 'lg' as const,
     required: true
-  },
-  {
-    name: 'remember',
-    type: 'checkbox' as const,
-    label: '记住我'
   }
 ])
 
@@ -128,7 +123,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     const base = event.data.identifier.includes('@')
       ? { email: event.data.identifier, password: event.data.password }
       : { username: event.data.identifier, password: event.data.password }
-    const withRemember = { ...base, remember: Boolean(event.data.remember) }
+    const withRemember = { ...base, remember: remember.value }
     const payload = turnstileRequired.value
       ? { ...withRemember, turnstileToken: turnstileToken.value }
       : withRemember
@@ -203,10 +198,23 @@ function clearTurnstileError() {
         </template>
 
         <template #validation>
-          <AuthConsent
-            v-if="consentRequired"
-            v-model="consent"
-          />
+          <div class="auth-form-options">
+            <UCheckbox
+              v-model="remember"
+              label="记住我"
+              size="md"
+              :ui="{
+                root: 'w-full',
+                wrapper: 'min-w-0',
+                label: 'cursor-pointer text-sm leading-5 font-normal text-muted'
+              }"
+            />
+
+            <AuthConsent
+              v-if="consentRequired"
+              v-model="consent"
+            />
+          </div>
 
           <Transition name="state-fade">
             <div

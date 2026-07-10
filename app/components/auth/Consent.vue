@@ -8,33 +8,43 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
 </script>
 
 <template>
-  <div class="auth-consent">
-    <UCheckbox
-      v-model="modelValue"
-      size="sm"
-      aria-label="同意服务条款与隐私政策"
-    />
-    <p class="auth-consent__text">
-      我已阅读并同意
-      <ULink
-        v-if="termsUrl"
-        :to="termsUrl"
-        target="_blank"
-        class="text-primary font-medium hover:underline"
-      >
-        《服务条款》
-      </ULink>
-      <template v-if="termsUrl && privacyUrl">
-        和
-      </template>
-      <ULink
-        v-if="privacyUrl"
-        :to="privacyUrl"
-        target="_blank"
-        class="text-primary font-medium hover:underline"
-      >
-        《隐私政策》
-      </ULink>
-    </p>
-  </div>
+  <UCheckbox
+    v-model="modelValue"
+    size="md"
+    aria-label="同意服务条款与隐私政策"
+    :ui="{
+      root: 'w-full',
+      wrapper: 'min-w-0',
+      label: 'cursor-pointer text-sm leading-5 font-normal text-muted'
+    }"
+  >
+    <template #label>
+      <span>
+        我已阅读并同意
+        <ULink
+          v-if="termsUrl"
+          :to="termsUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary font-medium hover:underline"
+          @click.stop
+        >
+          《服务条款》
+        </ULink>
+        <template v-if="termsUrl && privacyUrl">
+          和
+        </template>
+        <ULink
+          v-if="privacyUrl"
+          :to="privacyUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary font-medium hover:underline"
+          @click.stop
+        >
+          《隐私政策》
+        </ULink>
+      </span>
+    </template>
+  </UCheckbox>
 </template>

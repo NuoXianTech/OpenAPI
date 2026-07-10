@@ -116,18 +116,13 @@
   color: var(--ui-text);
 }
 
-.auth-consent {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--ui-text-muted);
-}
-
-.auth-consent__text {
-  margin: 0;
+.auth-form-options {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--ui-border-muted);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-bg-muted) 55%, transparent);
 }
 
 .auth-message {
