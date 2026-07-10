@@ -1,7 +1,23 @@
 import type { RateLimitWindow } from '../config/api-guard'
-import type { apis } from '../db/schema'
 
-type ApiRecord = typeof apis.$inferSelect
+export interface ApiGuardConfig {
+  id: number
+  code: string
+  pathVersion: string
+  apiPath: string
+  httpMethod: string
+  isEnabled: boolean
+  isApiKey: boolean
+  isStatistics: boolean
+  isOrphaned: boolean
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  methodCosts: Record<string, number>
+  dailyQuota: number
+  timeoutMs: number
+}
 
 export interface ManifestEndpoint {
   apiPath: string
@@ -72,7 +88,7 @@ export interface ApiStatsTracked {
 }
 
 interface ApiMetaContext {
-  api: ApiRecord
+  api: ApiGuardConfig
   manifest: ManifestApi
   endpoint: ManifestEndpoint
   params: Record<string, string>

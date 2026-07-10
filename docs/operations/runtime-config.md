@@ -31,14 +31,16 @@
 | `PGLITE_DATA_DIR` | `.data/pglite` | PGlite 数据目录；生产使用 PGlite 时必须纳入备份 |
 | `DB_AUTO_MIGRATE` | 留空 | 默认启动时自动迁移；设置为 `false` 可临时跳过启动迁移 |
 | `MIGRATIONS_DIR` | 留空 | 仅迁移目录不在默认位置时设置；常规生产启动会读取 `.output/server/db/migrations/postgresql` |
-| `NUXT_REDIS_URL` | 留空 | Redis 连接地址；配置后限流切换为 Redis 原子固定窗口 |
+| `NUXT_REDIS_URL` | 留空 | Redis 连接地址；配置后启用共享原子限流和公开短缓存 |
 | `NUXT_REDIS_KEY_PREFIX` | `openapi:` | Redis key 命名空间；同一 Redis 服务部署多个环境时必须区分 |
 | `NUXT_REDIS_CONNECT_TIMEOUT_MS` | `2000` | Redis 首次连接超时毫秒数 |
-| `NUXT_REDIS_REQUIRED` | `false` | `true` 时 Redis 缺失或不可用将阻止生产服务无保护运行；`false` 时回退到进程内限流 |
+| `NUXT_REDIS_REQUIRED` | `false` | `true` 时限流所需 Redis 缺失或不可用将阻止生产服务无保护运行；不改变缓存的数据库回源策略 |
 
 `.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
 
-Redis 当前用于公开 API 限流及登录、注册、密码重置、OAuth 等身份防刷。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis。单实例开发可以不配置 Redis；生产需要稳定的跨进程限流时应设置 `NUXT_REDIS_REQUIRED=true`。加入 Redis 后项目仍保持单 Node 生产边界，迁移、manifest 同步和后台任务完成多实例改造前不要直接横向扩容。
+Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，以及公开统计、API 目录、公开站点设置、公告、友情链接、API 分类和 API 守卫配置的短缓存。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
+
+缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，`NUXT_REDIS_REQUIRED=true` 只约束安全限流，不会让缓存故障把公开页面变成 503。单实例开发可以不配置 Redis；生产需要稳定的跨进程限流时应设置 `NUXT_REDIS_REQUIRED=true`。加入 Redis 后项目仍保持单 Node 生产边界，迁移、manifest 同步和后台任务完成多实例改造前不要直接横向扩容。
 
 管理员账号与普通用户共用 `users` 表，通过 `users.role='admin'` 区分，并统一从 `/login` 登录。启动时如果不存在任何管理员账号，服务端会自动创建用户名为 `admin`、邮箱为 `admin@openapi.com` 的管理员，并将随机密码输出到控制台。
 
@@ -103,4 +105,5 @@ pm2 start server/index.mjs --name openapi --update-env
 | 数据库迁移误连 | PostgreSQL 发布前确认 `DATABASE_URL` 的主机、库名和用户；PGlite 发布前确认 `PGLITE_DATA_DIR` |
 | 自动迁移误执行 | 维护窗口可临时设置 `DB_AUTO_MIGRATE=false`，手动确认后再恢复默认 |
 | Redis 故障后限流失效 | 正式生产设置 `NUXT_REDIS_REQUIRED=true`，并监控 `/api/ready` |
+| Redis 缓存命中率下降 | 检查 Redis 延迟、内存和淘汰统计；应用会回源数据库，但数据库负载会升高 |
 | 配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令 |

@@ -9,6 +9,7 @@
 | 应用进程 | 单 Node/Nitro 进程，不做多实例横向扩展 |
 | 数据库 | 单 PostgreSQL 实例，迁移由 Node/Nitro 启动插件在应用启动前自动执行 |
 | 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
+| 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
 | 扣费重试 | `pending_charges` 由同一 Node 进程定时扫描 |
 | 代理 | 生产公网流量由 Nginx 或等价代理转发到 `127.0.0.1:<NITRO_PORT>` |
 
@@ -45,6 +46,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | API Key 全部失效 | `NUXT_AUTH_API_KEY_SECRET` 是否变化、API Key 记录是否被撤销 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
 | 公开 API 429 增多 | API 配置、内存限流窗口、调用方 IP 或 key |
+| 数据库读取突增 | Redis 可用性、命令延迟、内存、淘汰数和公开缓存命中情况 |
 | 扣费异常 | `api_calls`、`credit_transactions`、`pending_charges` |
 
 ## 备份策略

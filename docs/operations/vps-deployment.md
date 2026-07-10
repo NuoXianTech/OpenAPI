@@ -46,7 +46,7 @@ DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 NUXT_AUTH_SECRET=change-me
 NUXT_AUTH_API_KEY_SECRET=change-me
 
-# Redis 分布式限流（推荐正式生产启用）
+# Redis 分布式限流与公开短缓存（推荐正式生产启用）
 NUXT_REDIS_URL=redis://127.0.0.1:6379
 NUXT_REDIS_REQUIRED=true
 ```
@@ -59,7 +59,7 @@ NUXT_REDIS_REQUIRED=true
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Redis 应仅监听本机或私有网络，并启用认证或 TLS。当前 Redis 数据均带 TTL，主要承载限流计数；建议使用 `maxmemory-policy noeviction` 并监控内存，避免关键限流 key 被内存策略提前淘汰。Redis 未配置时应用继续使用单进程内存限流；正式生产需要 Redis 保护时设置 `NUXT_REDIS_REQUIRED=true`，连接失败会阻止服务在无保护状态下启动。
+Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数和业务缓存均有短 TTL，少量缓存版本 key 持久存在；建议使用 `maxmemory-policy noeviction` 并监控内存、命中率、淘汰数与命令延迟，避免关键限流 key 被提前淘汰。Redis 未配置时应用继续使用单进程内存限流和短缓存；正式生产需要 Redis 保护时设置 `NUXT_REDIS_REQUIRED=true`，连接失败会阻止服务在无保护状态下启动。缓存命令故障不会触发 503，而会安全回源数据库。
 
 ## 启动
 

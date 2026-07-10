@@ -11,7 +11,7 @@ import { and, eq, gte } from 'drizzle-orm'
 import { apiCallStats, apiKeys, users } from '~~/server/db/schema'
 import type { RateLimitWindow } from '~~/server/config/api-guard'
 import { API_GUARD_ERROR } from '~~/server/config/api-guard'
-import type { EndpointMatch, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
+import type { ApiGuardConfig, EndpointMatch, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { isRedisUnavailableError } from '~~/server/utils/redis'
 import { getLocalDayStart } from '~~/server/utils/local-time'
@@ -21,7 +21,6 @@ import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString } from '~~/server/utils/request-query'
 
-type ApiRecord = typeof import('~~/server/db/schema').apis.$inferSelect
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 type ErrorDef = { status: number, code: string, msg: string }
 
@@ -61,7 +60,7 @@ function readApiKeyFromEvent(event: H3Event): string {
   return readQueryString(query.apikey).trim()
 }
 
-function hasScope(scopes: string[] | null | undefined, api: ApiRecord): boolean {
+function hasScope(scopes: string[] | null | undefined, api: ApiGuardConfig): boolean {
   if (!scopes || scopes.length === 0) return true
   const needed = [`${api.pathVersion}.${api.code}`, api.code, '*']
   return scopes.some(s => needed.includes(s))
@@ -100,7 +99,7 @@ function rateLimitHeaders(results: RateLimitResult[]): GateDeniedHeaders {
 }
 
 async function checkRateLimit(
-  api: ApiRecord,
+  api: ApiGuardConfig,
   subjectKey: string
 ): Promise<RateLimitResult[] | { denied: RateLimitResult }> {
   const windowSpecs: Array<{ window: RateLimitWindow, limit: number }> = [
@@ -135,7 +134,7 @@ async function checkRateLimit(
 
 interface RunGuardInput {
   event: H3Event
-  api: ApiRecord
+  api: ApiGuardConfig
   match: EndpointMatch
   effectiveCost: number
 }

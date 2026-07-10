@@ -1,8 +1,17 @@
+import { createHash } from 'node:crypto'
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '~~/server/db/schema'
-import { API_META_CACHE_TTL_MS, hasAnyChargedMethod } from '~~/server/config/api-guard'
+import { hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { API_STATUS, isAutomaticApiStatus } from '#shared/config/api-status'
+import type { ApiCatalogItem } from '#shared/types/api'
 import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
+import type { ApiGuardConfig } from '~~/server/types/api-guard'
+import {
+  deleteSharedCache,
+  getSharedCache,
+  getSharedCacheVersion,
+  incrementSharedCacheVersion
+} from '~~/server/utils/shared-cache'
 import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 
@@ -10,15 +19,10 @@ function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
 }
 
-// Guard 配置 LRU 缓存：热路径上反复命中同一条 apis 记录，用短 TTL 缓存避免查库
-type GuardCacheEntry = { value: typeof apis.$inferSelect | null, expiresAt: number }
-const guardConfigCache = new Map<string, GuardCacheEntry>()
-
-// 公共 API 列表的总调用数聚合：listPublicApis 是高频接口，groupBy 全表扫描代价高。
-// apiCallStats 写入频率远高于读取（每次 API 调用都写），按写失效会让缓存形同虚设，
-// 故只用 TTL；最大 15s 陈旧度对展示字段可接受。
-type ApiStatsCacheEntry = { value: Record<number, { totalCalls: number }>, expiresAt: number }
-let apiStatsCache: ApiStatsCacheEntry | null = null
+const PUBLIC_API_LIST_TTL_SECONDS = 15
+const API_GUARD_TTL_SECONDS = 15
+const PUBLIC_API_LIST_VERSION = 'public-apis'
+const PUBLIC_STATS_VERSION = 'public-stats'
 
 function toContainsPattern(value: string) {
   return `%${escapeLikePattern(value)}%`
@@ -33,9 +37,6 @@ function normalizeMethodList(httpMethod: string) {
 }
 
 async function loadApiStats() {
-  const now = Date.now()
-  if (apiStatsCache && apiStatsCache.expiresAt > now) return apiStatsCache.value
-
   const rows = await db.select({
     apiId: apiCallStats.apiId,
     totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
@@ -43,12 +44,10 @@ async function loadApiStats() {
 
   const statsRows = rows as Array<{ apiId: number, totalCalls: number | string | null }>
 
-  const value = statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
+  return statsRows.reduce<Record<number, { totalCalls: number }>>((accumulator, row) => {
     accumulator[row.apiId] = { totalCalls: toNumber(row.totalCalls) }
     return accumulator
   }, {})
-  apiStatsCache = { value, expiresAt: now + API_META_CACHE_TTL_MS }
-  return value
 }
 
 interface ApiListFilters {
@@ -99,21 +98,21 @@ function buildApiFilters(filters: ApiListFilters) {
   return conditions
 }
 
-type PublicApiItem = {
-  id: number
-  name: string
-  /** 自动模式会在服务端解析为正常 / 异常 / 未知后返回。 */
-  status: number
-  categoryId: number | null
-  shortDesc: string
-  description: string
-  httpMethod: string
-  apiPath: string
-  docUrl: string
-  isApiKey: boolean
-  /** 按 HTTP 方法粒度的扣费表。未列出的方法视为 0（免费）。 */
-  methodCosts: Record<string, number>
-  totalCalls: number
+function createGuardCacheKey(pathVersion: string, code: string): string {
+  return `cache:guard:${pathVersion}:${code}`
+}
+
+function createPublicApiListCacheKey(filters: ApiListFilters, version: number): string {
+  const digest = createHash('sha256').update(JSON.stringify(filters)).digest('hex')
+  return `cache:public:apis:v${version}:${digest}`
+}
+
+async function invalidateApiCaches(api: Pick<ApiGuardConfig, 'pathVersion' | 'code'>): Promise<void> {
+  await Promise.all([
+    deleteSharedCache([createGuardCacheKey(api.pathVersion, api.code)]),
+    incrementSharedCacheVersion(PUBLIC_API_LIST_VERSION),
+    incrementSharedCacheVersion(PUBLIC_STATS_VERSION)
+  ])
 }
 
 function resolvePublicApiStatus(row: typeof apis.$inferSelect, autoStatusMap: Record<number, number>) {
@@ -130,57 +129,88 @@ async function findApiById(id: number) {
 
 export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
-    const requestedStatus = filters.status
-    const conditions = buildApiFilters({ ...filters, status: undefined })
-    const where = conditions.length ? and(...conditions) : undefined
-    const [rows, statsMap] = await Promise.all([
-      (where
-        ? db.select().from(apis).where(where)
-        : db.select().from(apis)
-      ).orderBy(desc(apis.updatedAt)),
-      loadApiStats()
-    ])
-    const apiRows = rows as Array<typeof apis.$inferSelect>
-    const autoStatusMap = await resolveApiAutoStatuses(
-      apiRows
-        .filter(row => isAutomaticApiStatus(row.status))
-        .map(row => row.id)
-    )
+    const normalizedFilters: ApiListFilters = {
+      keyword: filters.keyword?.trim() || undefined,
+      status: filters.status,
+      categoryId: filters.categoryId,
+      isEnabled: filters.isEnabled,
+      isStatistics: filters.isStatistics,
+      isOrphaned: filters.isOrphaned
+    }
+    const version = await getSharedCacheVersion(PUBLIC_API_LIST_VERSION)
 
-    return apiRows
-      .map((row): PublicApiItem => ({
-        id: row.id,
-        name: row.name,
-        status: resolvePublicApiStatus(row, autoStatusMap),
-        categoryId: row.categoryId,
-        shortDesc: row.shortDesc,
-        description: row.description,
-        httpMethod: row.httpMethod,
-        apiPath: row.apiPath,
-        docUrl: row.docUrl,
-        isApiKey: row.isApiKey,
-        methodCosts: row.methodCosts ?? {},
-        totalCalls: statsMap[row.id]?.totalCalls ?? 0
-      }))
-      .filter(row => typeof requestedStatus !== 'number' || row.status === requestedStatus)
+    return getSharedCache<ApiCatalogItem[]>({
+      key: createPublicApiListCacheKey(normalizedFilters, version),
+      ttlSeconds: PUBLIC_API_LIST_TTL_SECONDS,
+      async loader() {
+        const requestedStatus = normalizedFilters.status
+        const conditions = buildApiFilters({ ...normalizedFilters, status: undefined })
+        const where = conditions.length ? and(...conditions) : undefined
+        const [rows, statsMap] = await Promise.all([
+          (where
+            ? db.select().from(apis).where(where)
+            : db.select().from(apis)
+          ).orderBy(desc(apis.updatedAt)),
+          loadApiStats()
+        ])
+        const apiRows = rows as Array<typeof apis.$inferSelect>
+        const autoStatusMap = await resolveApiAutoStatuses(
+          apiRows
+            .filter(row => isAutomaticApiStatus(row.status))
+            .map(row => row.id)
+        )
+
+        return apiRows
+          .map((row): ApiCatalogItem => ({
+            id: row.id,
+            name: row.name,
+            status: resolvePublicApiStatus(row, autoStatusMap),
+            categoryId: row.categoryId,
+            shortDesc: row.shortDesc,
+            description: row.description,
+            httpMethod: row.httpMethod,
+            apiPath: row.apiPath,
+            docUrl: row.docUrl,
+            isApiKey: row.isApiKey,
+            methodCosts: row.methodCosts ?? {},
+            totalCalls: statsMap[row.id]?.totalCalls ?? 0
+          }))
+          .filter(row => typeof requestedStatus !== 'number' || row.status === requestedStatus)
+      }
+    })
   },
 
   /**
-   * Gate 专用：按 (pathVersion, code) 读取完整治理配置。
-   * 命中 LRU 缓存（TTL 15s）避免热路径反复查库。
+   * Gate 专用：仅投影治理所需字段，避免把无关数据库字段写入共享缓存。
    */
-  async loadGuardConfig(pathVersion: string, code: string) {
-    const cacheKey = `${pathVersion}:${code}`
-    const now = Date.now()
-    const cached = guardConfigCache.get(cacheKey)
-    if (cached && cached.expiresAt > now) return cached.value
-
-    const rows = await db.select().from(apis)
-      .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
-      .limit(1)
-    const value = firstRow(rows)
-    guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
-    return value
+  async loadGuardConfig(pathVersion: string, code: string): Promise<ApiGuardConfig | null> {
+    return getSharedCache<ApiGuardConfig | null>({
+      key: createGuardCacheKey(pathVersion, code),
+      ttlSeconds: API_GUARD_TTL_SECONDS,
+      async loader() {
+        const rows = await db.select({
+          id: apis.id,
+          code: apis.code,
+          pathVersion: apis.pathVersion,
+          apiPath: apis.apiPath,
+          httpMethod: apis.httpMethod,
+          isEnabled: apis.isEnabled,
+          isApiKey: apis.isApiKey,
+          isStatistics: apis.isStatistics,
+          isOrphaned: apis.isOrphaned,
+          rateLimitPerSecond: apis.rateLimitPerSecond,
+          rateLimitPerMinute: apis.rateLimitPerMinute,
+          rateLimitPerHour: apis.rateLimitPerHour,
+          rateLimitPerDay: apis.rateLimitPerDay,
+          methodCosts: apis.methodCosts,
+          dailyQuota: apis.dailyQuota,
+          timeoutMs: apis.timeoutMs
+        }).from(apis)
+          .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
+          .limit(1)
+        return firstRow(rows)
+      }
+    })
   },
 
   /** 按版本列出已登记 APIs，admin 页面分 tab 使用 */
@@ -250,7 +280,7 @@ export const apiService = {
       .where(eq(apis.id, id))
       .returning()
     const updated = firstRow(res)
-    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    if (updated) await invalidateApiCaches(updated)
     return updated
   },
 
@@ -268,7 +298,7 @@ export const apiService = {
         .where(eq(apis.id, id))
         .returning()
       const deleted = firstRow(res)
-      if (deleted) guardConfigCache.delete(`${deleted.pathVersion}:${deleted.code}`)
+      if (deleted) await invalidateApiCaches(deleted)
       return deleted
     } catch (err) {
       // FK restrict 触发：apiCalls 中仍有该接口的历史调用
@@ -305,7 +335,7 @@ export const apiService = {
     patch.updatedBy = typeof updatedBy === 'number' && updatedBy > 0 ? updatedBy : null
     const res = await db.update(apis).set(patch).where(eq(apis.id, id)).returning()
     const updated = firstRow(res)
-    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    if (updated) await invalidateApiCaches(updated)
     return updated
   },
 
@@ -372,7 +402,7 @@ export const apiService = {
         .where(eq(apis.id, existing.id))
         .returning()
       const updated = firstRow(res)
-      if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+      if (updated) await invalidateApiCaches(updated)
 
       if (methodChanged) {
         console.warn(
@@ -409,7 +439,9 @@ export const apiService = {
       createdBy: data.createdBy,
       updatedBy: data.createdBy
     }).returning()
-    return firstRow(res)
+    const inserted = firstRow(res)
+    if (inserted) await invalidateApiCaches(inserted)
+    return inserted
   },
 
   /**
@@ -427,7 +459,7 @@ export const apiService = {
       .where(eq(apis.id, id))
       .returning()
     const updated = firstRow(res)
-    if (updated) guardConfigCache.delete(`${updated.pathVersion}:${updated.code}`)
+    if (updated) await invalidateApiCaches(updated)
     return updated
   }
 }

@@ -5,8 +5,11 @@ import type {
 } from '#shared/types/site-settings'
 import { PUBLIC_SITE_DEFAULTS } from '#shared/config/site-defaults'
 import { siteSettings } from '~~/server/db/schema/system'
+import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 
 const DEFAULT_SCOPE = 'default'
+const PUBLIC_SITE_SETTINGS_CACHE_KEY = 'cache:public:settings'
+const PUBLIC_SITE_SETTINGS_TTL_SECONDS = 30
 
 export type { PublicSiteSettings, PublicTurnstileSettings }
 
@@ -190,8 +193,14 @@ export const siteSettingsService = {
   },
 
   async getPublicSettings(): Promise<PublicSiteSettings> {
-    const settings = await this.getOrCreate()
-    return this.toPublicSettings(settings)
+    return getSharedCache<PublicSiteSettings>({
+      key: PUBLIC_SITE_SETTINGS_CACHE_KEY,
+      ttlSeconds: PUBLIC_SITE_SETTINGS_TTL_SECONDS,
+      async loader() {
+        const settings = await siteSettingsService.getOrCreate()
+        return siteSettingsService.toPublicSettings(settings)
+      }
+    })
   },
 
   toPublicSettings(settings: SiteSettingsRow): PublicSiteSettings {
@@ -229,6 +238,7 @@ export const siteSettingsService = {
 
     // 失效缓存：下次 getOrCreate 重新读库，避免后台改完设置后最多 10s 不生效
     settingsCache = null
+    await deleteSharedCache([PUBLIC_SITE_SETTINGS_CACHE_KEY])
 
     return updated[0] || current
   }

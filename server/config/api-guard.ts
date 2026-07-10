@@ -42,8 +42,6 @@ export const API_GUARD_ERROR = {
   INSUFFICIENT_CREDITS: { status: 402, code: 'INSUFFICIENT_CREDITS', msg: '积分不足，请充值后再试' }
 } as const
 
-export const API_META_CACHE_TTL_MS = 15_000
-
 export function resolveMethodCost(
   methodCosts: Record<string, number> | null | undefined,
   method: string

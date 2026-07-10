@@ -1,17 +1,40 @@
 import { desc, eq } from 'drizzle-orm'
 import { friendLinks } from '~~/server/db/schema'
+import type { FriendLinkItem } from '#shared/types/content'
+import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
+
+const PUBLIC_FRIEND_LINKS_CACHE_KEY = 'cache:public:friend-links'
+const PUBLIC_FRIEND_LINKS_TTL_SECONDS = 60
+
+function invalidatePublicFriendLinks(): Promise<void> {
+  return deleteSharedCache([PUBLIC_FRIEND_LINKS_CACHE_KEY])
+}
 
 export const friendLinkService = {
   async list() {
     return db.select().from(friendLinks).orderBy(desc(friendLinks.updatedAt))
   },
 
-  async listPublic() {
-    return db.select()
-      .from(friendLinks)
-      .where(eq(friendLinks.isActive, true))
-      .orderBy(desc(friendLinks.updatedAt))
+  async listPublic(): Promise<FriendLinkItem[]> {
+    return getSharedCache<FriendLinkItem[]>({
+      key: PUBLIC_FRIEND_LINKS_CACHE_KEY,
+      ttlSeconds: PUBLIC_FRIEND_LINKS_TTL_SECONDS,
+      async loader() {
+        const rows = await db.select()
+          .from(friendLinks)
+          .where(eq(friendLinks.isActive, true))
+          .orderBy(desc(friendLinks.updatedAt))
+
+        return rows.map(row => ({
+          id: row.id,
+          title: row.title,
+          url: row.url,
+          description: row.description,
+          isActive: row.isActive
+        }))
+      }
+    })
   },
 
   async create(data: {
@@ -28,7 +51,9 @@ export const friendLinkService = {
       isActive: data.isActive ?? true,
       createdBy: data.createdBy ?? null
     }).returning()
-    return expectFirstRow(res, 'Failed to create friend link.')
+    const created = expectFirstRow(res, 'Failed to create friend link.')
+    await invalidatePublicFriendLinks()
+    return created
   },
 
   async update(id: number, data: Partial<{
@@ -44,11 +69,15 @@ export const friendLinkService = {
       })
       .where(eq(friendLinks.id, id))
       .returning()
-    return firstRow(res)
+    const updated = firstRow(res)
+    if (updated) await invalidatePublicFriendLinks()
+    return updated
   },
 
   async delete(id: number) {
     const res = await db.delete(friendLinks).where(eq(friendLinks.id, id)).returning()
-    return firstRow(res)
+    const deleted = firstRow(res)
+    if (deleted) await invalidatePublicFriendLinks()
+    return deleted
   }
 }

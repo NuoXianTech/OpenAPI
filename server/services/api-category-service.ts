@@ -1,7 +1,16 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { createError } from 'h3'
 import { apiCategories, apis } from '~~/server/db/schema'
+import type { ApiCategoryItem } from '#shared/types/api'
+import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import { firstRow } from '~~/server/utils/row'
+
+const PUBLIC_API_CATEGORIES_CACHE_KEY = 'cache:public:api-categories'
+const PUBLIC_API_CATEGORIES_TTL_SECONDS = 60
+
+function invalidatePublicApiCategories(): Promise<void> {
+  return deleteSharedCache([PUBLIC_API_CATEGORIES_CACHE_KEY])
+}
 
 export interface ApiCategoryInput {
   code: string
@@ -31,10 +40,26 @@ export const apiCategoryService = {
       .orderBy(asc(apiCategories.sortOrder), asc(apiCategories.name))
   },
 
-  async listEnabled() {
-    return db.select().from(apiCategories)
-      .where(and(isNull(apiCategories.deletedAt), eq(apiCategories.isEnabled, true)))
-      .orderBy(asc(apiCategories.sortOrder), asc(apiCategories.name))
+  async listEnabled(): Promise<ApiCategoryItem[]> {
+    return getSharedCache<ApiCategoryItem[]>({
+      key: PUBLIC_API_CATEGORIES_CACHE_KEY,
+      ttlSeconds: PUBLIC_API_CATEGORIES_TTL_SECONDS,
+      async loader() {
+        const rows = await db.select().from(apiCategories)
+          .where(and(isNull(apiCategories.deletedAt), eq(apiCategories.isEnabled, true)))
+          .orderBy(asc(apiCategories.sortOrder), asc(apiCategories.name))
+
+        return rows.map(row => ({
+          id: row.id,
+          code: row.code,
+          name: row.name,
+          icon: row.icon,
+          color: row.color,
+          sortOrder: row.sortOrder,
+          isEnabled: row.isEnabled
+        }))
+      }
+    })
   },
 
   async create(input: ApiCategoryInput) {
@@ -55,7 +80,9 @@ export const apiCategoryService = {
       isEnabled: input.isEnabled ?? true
     }).returning()
 
-    return res[0]
+    const created = res[0]
+    if (created) await invalidatePublicApiCategories()
+    return created
   },
 
   async update(id: number, patch: Partial<ApiCategoryInput>) {
@@ -64,7 +91,9 @@ export const apiCategoryService = {
       .set({ ...rest, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))
       .returning()
-    return firstRow(res)
+    const updated = firstRow(res)
+    if (updated) await invalidatePublicApiCategories()
+    return updated
   },
 
   /**
@@ -83,6 +112,8 @@ export const apiCategoryService = {
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))
       .returning()
-    return firstRow(res)
+    const deleted = firstRow(res)
+    if (deleted) await invalidatePublicApiCategories()
+    return deleted
   }
 }
