@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import type { AdminApiFormState, DiscoveredApi, RegisteredApi } from '#shared/types/api'
 import { API_STATUS } from '#shared/config/api-status'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
-import { requiredString } from '#shared/schemas/validation'
 import { provideAdminApiForm } from '~/composables/admin/use-admin-api-form'
+import {
+  compactFormErrors,
+  integerRangeError,
+  maxLengthError,
+  requiredTextError
+} from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
@@ -17,26 +21,25 @@ const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const form = useTemplateRef('form')
 
-const schema = z.object({
-  name: requiredString('接口名称', { max: 100 }),
-  shortDesc: requiredString('接口短描述', { max: 50 }),
-  description: requiredString('接口描述'),
-  docUrl: z.string().default(''),
-  status: z.number().default(API_STATUS.automatic),
-  categoryId: z.number().nullable().optional(),
-  isEnabled: z.boolean().default(false),
-  isApiKey: z.boolean().default(false),
-  isStatistics: z.boolean().default(false),
-  rateLimitPerSecond: z.number().min(0).default(0),
-  rateLimitPerMinute: z.number().min(0).default(60),
-  rateLimitPerHour: z.number().min(0).default(1000),
-  rateLimitPerDay: z.number().min(0).default(0),
-  dailyQuota: z.number().min(0).default(0),
-  methodCosts: z.record(z.string(), z.number().int().min(0)).default({}),
-  timeoutMs: z.number().min(0).default(10_000)
-})
+function validateApiForm(state: Partial<AdminApiFormState>): FormError<string>[] {
+  const methodCostsAreValid = Object.values(state.methodCosts ?? {})
+    .every(value => Number.isInteger(value) && value >= 0)
 
-type Schema = z.output<typeof schema>
+  return compactFormErrors(
+    requiredTextError('name', state.name, '接口名称不能为空'),
+    maxLengthError('name', state.name, 100, '接口名称最多 100 字'),
+    requiredTextError('shortDesc', state.shortDesc, '接口短描述不能为空'),
+    maxLengthError('shortDesc', state.shortDesc, 50, '接口短描述最多 50 字'),
+    requiredTextError('description', state.description, '接口描述不能为空'),
+    integerRangeError('rateLimitPerSecond', state.rateLimitPerSecond, '每秒限流', 0),
+    integerRangeError('rateLimitPerMinute', state.rateLimitPerMinute, '每分钟限流', 0),
+    integerRangeError('rateLimitPerHour', state.rateLimitPerHour, '每小时限流', 0),
+    integerRangeError('rateLimitPerDay', state.rateLimitPerDay, '每天限流', 0),
+    integerRangeError('dailyQuota', state.dailyQuota, '日配额', 0),
+    integerRangeError('timeoutMs', state.timeoutMs, '超时时间', 100, 120_000),
+    !methodCostsAreValid && { name: 'methodCosts', message: '方法积分必须是非负整数' }
+  )
+}
 
 function defaultsForRegister(target: DiscoveredApi): AdminApiFormState {
   return {
@@ -147,7 +150,7 @@ const headerLabel = computed(() => {
     : `登记接口：${props.target.pathVersion} / ${props.target.code}`
 })
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
   if (!props.target) return
   loading.value = true
   try {
@@ -201,7 +204,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
       <UForm
         ref="form"
-        :schema="schema"
+        :validate="validateApiForm"
         :state="state"
         class="space-y-3"
         @submit="onSubmit"

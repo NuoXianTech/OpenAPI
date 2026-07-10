@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { compactFormErrors, requiredTextError } from '~/utils/form-validation'
 
 useHead({ title: '登录' })
 
@@ -12,11 +12,17 @@ const { fetchMe, user, login } = useAuth()
 const { turnstile, passwordResetEnabled, settings } = useSiteSettings()
 const route = useRoute()
 
-const schema = z.object({
-  identifier: z.string().min(1, '请输入邮箱或用户名'),
-  password: z.string().min(1, '请输入密码')
-})
-type Schema = z.output<typeof schema>
+interface LoginFormState {
+  identifier: string
+  password: string
+}
+
+function validateLoginForm(state: Partial<LoginFormState>): FormError<string>[] {
+  return compactFormErrors(
+    requiredTextError('identifier', state.identifier, '请输入邮箱或用户名'),
+    requiredTextError('password', state.password, '请输入密码')
+  )
+}
 
 const errorMessage = ref('')
 const turnstileError = ref('')
@@ -52,6 +58,7 @@ const fields = computed(() => [
     placeholder: 'you@example.com',
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -63,6 +70,7 @@ const fields = computed(() => [
     placeholder: '请输入登录密码',
     autocomplete: 'current-password',
     icon: 'i-mdi-lock-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true
   }
@@ -104,7 +112,7 @@ onMounted(async () => {
   checkingAuth.value = false
 })
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<LoginFormState>) {
   errorMessage.value = ''
   turnstileError.value = ''
 
@@ -176,7 +184,7 @@ function clearTurnstileError() {
 
       <UAuthForm
         v-else
-        :schema="schema"
+        :validate="validateLoginForm"
         :fields="fields"
         :providers="providers"
         :loading="isSubmitting"

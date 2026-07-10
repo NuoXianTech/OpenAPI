@@ -1,8 +1,15 @@
 <script setup lang="ts">
-import { z } from 'zod'
-import { oauthBindSchema, oauthRegisterSchema } from '#shared/schemas/auth'
+import type { FormError } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import {
+  compactFormErrors,
+  confirmationError,
+  emailError,
+  passwordError,
+  requiredTextError,
+  usernameError
+} from '~/utils/form-validation'
 
 definePageMeta({ layout: false })
 useHead({ title: '完成第三方登录' })
@@ -20,6 +27,18 @@ interface PendingInfo {
   allowRegister?: boolean
 }
 
+interface OauthBindFormState {
+  identifier: string
+  password: string
+}
+
+interface OauthRegisterFormState {
+  email: string
+  username: string
+  password: string
+  confirmPassword: string
+}
+
 const toast = useToast()
 
 const loading = ref(true)
@@ -27,8 +46,8 @@ const info = ref<PendingInfo | null>(null)
 const mode = ref<'bind' | 'register'>('bind')
 const submitting = ref(false)
 
-const bindState = reactive({ identifier: '', password: '' })
-const registerState = reactive({ email: '', username: '', password: '', confirmPassword: '' })
+const bindState = reactive<OauthBindFormState>({ identifier: '', password: '' })
+const registerState = reactive<OauthRegisterFormState>({ email: '', username: '', password: '', confirmPassword: '' })
 
 // 注册成功且需邮箱激活后，切换到「去邮箱激活」提示面板
 const emailSent = ref(false)
@@ -37,14 +56,21 @@ const sentToEmail = ref('')
 const ready = computed(() => Boolean(info.value?.pending))
 const allowRegister = computed(() => Boolean(info.value?.allowRegister))
 
-// 复用服务端 schema 做客户端校验，额外加「确认密码」一致性校验
-const registerFormSchema = oauthRegisterSchema
-  .omit({ turnstileToken: true })
-  .extend({ confirmPassword: z.string().min(1, '请再次输入密码') })
-  .refine(d => d.password === d.confirmPassword, {
-    path: ['confirmPassword'],
-    message: '两次输入的密码不一致'
-  })
+function validateBindForm(state: Partial<OauthBindFormState>): FormError<string>[] {
+  return compactFormErrors(
+    requiredTextError('identifier', state.identifier, '请输入邮箱或用户名'),
+    requiredTextError('password', state.password, '请输入密码')
+  )
+}
+
+function validateRegisterForm(state: Partial<OauthRegisterFormState>): FormError<string>[] {
+  return compactFormErrors(
+    emailError('email', state.email),
+    usernameError('username', state.username, false),
+    passwordError('password', state.password),
+    confirmationError('confirmPassword', state.confirmPassword, state.password ?? '')
+  )
+}
 
 onMounted(async () => {
   try {
@@ -235,7 +261,7 @@ async function submitRegister() {
         <!-- 绑定已有账号 -->
         <UForm
           v-if="mode === 'bind'"
-          :schema="oauthBindSchema"
+          :validate="validateBindForm"
           :state="bindState"
           class="space-y-4"
           @submit="submitBind"
@@ -280,7 +306,7 @@ async function submitRegister() {
         <!-- 新注册 -->
         <UForm
           v-else
-          :schema="registerFormSchema"
+          :validate="validateRegisterForm"
           :state="registerState"
           class="space-y-4"
           @submit="submitRegister"

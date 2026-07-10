@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { requestPasswordResetSchema, type RequestPasswordResetInput } from '#shared/schemas/auth'
+import type { RequestPasswordResetInput } from '#shared/schemas/auth'
 import { parseFetchError } from '~/utils/client-error'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import { compactFormErrors, emailError } from '~/utils/form-validation'
 
 useHead({ title: '找回密码' })
 
@@ -9,10 +10,15 @@ definePageMeta({ layout: false })
 
 const { turnstile, passwordResetEnabled } = useSiteSettings()
 
-const schema = requestPasswordResetSchema.omit({ turnstileToken: true })
-type Schema = Omit<RequestPasswordResetInput, 'turnstileToken'>
+interface ForgotPasswordFormState {
+  email: string
+}
 
-const authForm = ref<{ state: Schema } | null>(null)
+function validateForgotPasswordForm(state: Partial<ForgotPasswordFormState>): FormError<string>[] {
+  return compactFormErrors(emailError('email', state.email))
+}
+
+const authForm = ref<{ state: ForgotPasswordFormState } | null>(null)
 
 const errorMessage = ref('')
 const turnstileError = ref('')
@@ -31,6 +37,7 @@ const fields = computed(() => [
     placeholder: 'you@example.com',
     autocomplete: 'email',
     icon: 'i-mdi-email-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -43,7 +50,7 @@ const FORGOT_PASSWORD_ERROR_CODES: Record<number, string> = {
   500: '服务器暂时无法响应，请稍后再试'
 }
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<ForgotPasswordFormState>) {
   errorMessage.value = ''
   turnstileError.value = ''
 
@@ -59,7 +66,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       body: {
         email: event.data.email,
         turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
-      }
+      } satisfies RequestPasswordResetInput
     })
     submittedEmail.value = event.data.email
     submitted.value = true
@@ -148,7 +155,7 @@ function clearTurnstileError() {
       <UAuthForm
         v-else
         ref="authForm"
-        :schema="schema"
+        :validate="validateForgotPasswordForm"
         :fields="fields"
         :loading="isSubmitting"
         :submit="{ label: '发送重置链接', size: 'lg', disabled: turnstileRequired && !turnstileToken }"

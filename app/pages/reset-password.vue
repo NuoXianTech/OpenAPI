@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { z } from 'zod'
 import type { ResetPasswordInput } from '#shared/schemas/auth'
 import { parseFetchError } from '~/utils/client-error'
-import { minMessage, requiredMessage } from '#shared/schemas/validation'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import {
+  compactFormErrors,
+  confirmationError,
+  passwordError
+} from '~/utils/form-validation'
 
 useHead({ title: '重置密码' })
 
@@ -16,17 +19,19 @@ const userId = computed(() => Number((route.query.user || '').toString()) || 0)
 const token = computed(() => (route.query.token || '').toString())
 const linkValid = computed(() => userId.value > 0 && token.value.length > 0)
 
-const schema = z.object({
-  password: z.string().min(8, minMessage('密码', 8)),
-  confirm: z.string().min(1, requiredMessage('确认密码'))
-}).refine(d => d.password === d.confirm, {
-  path: ['confirm'],
-  message: '两次输入的密码不一致'
-})
+interface ResetPasswordFormState {
+  password: string
+  confirm: string
+}
 
-type Schema = z.output<typeof schema>
+function validateResetPasswordForm(state: Partial<ResetPasswordFormState>): FormError<string>[] {
+  return compactFormErrors(
+    passwordError('password', state.password),
+    confirmationError('confirm', state.confirm, state.password ?? '')
+  )
+}
 
-const authForm = ref<{ state: Schema } | null>(null)
+const authForm = ref<{ state: ResetPasswordFormState } | null>(null)
 const passwordValue = computed(() => authForm.value?.state?.password ?? '')
 
 const errorMessage = ref('')
@@ -41,6 +46,7 @@ const fields = computed(() => [
     placeholder: '设置新密码（至少 8 位）',
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -52,12 +58,13 @@ const fields = computed(() => [
     placeholder: '再次输入新密码',
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-check-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true
   }
 ])
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
   errorMessage.value = ''
 
   isSubmitting.value = true
@@ -139,7 +146,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       <UAuthForm
         v-else
         ref="authForm"
-        :schema="schema"
+        :validate="validateResetPasswordForm"
         :fields="fields"
         :loading="isSubmitting"
         :submit="{ label: '重置密码', size: 'lg' }"

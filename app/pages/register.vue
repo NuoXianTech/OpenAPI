@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { z } from 'zod'
-import { registerSchema } from '#shared/schemas/auth'
 import { parseFetchError } from '~/utils/client-error'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import {
+  compactFormErrors,
+  confirmationError,
+  emailError,
+  passwordError,
+  usernameError
+} from '~/utils/form-validation'
 
 useHead({ title: '注册' })
 
@@ -11,17 +16,23 @@ definePageMeta({ layout: false })
 const { register } = useAuth()
 const { turnstile, settings } = useSiteSettings()
 
-const schema = registerSchema
-  .omit({ turnstileToken: true })
-  .extend({ confirm: z.string().min(1, '请再次输入密码') })
-  .refine(d => d.password === d.confirm, {
-    path: ['confirm'],
-    message: '两次输入的密码不一致'
-  })
+interface RegisterFormState {
+  username: string
+  email: string
+  password: string
+  confirm: string
+}
 
-type Schema = z.output<typeof schema>
+function validateRegisterForm(state: Partial<RegisterFormState>): FormError<string>[] {
+  return compactFormErrors(
+    usernameError('username', state.username),
+    emailError('email', state.email),
+    passwordError('password', state.password),
+    confirmationError('confirm', state.confirm, state.password ?? '')
+  )
+}
 
-const authForm = ref<{ state: Schema } | null>(null)
+const authForm = ref<{ state: RegisterFormState } | null>(null)
 const passwordValue = computed(() => authForm.value?.state?.password ?? '')
 
 const errorMessage = ref('')
@@ -45,6 +56,7 @@ const fields = computed(() => [
     help: '3-32 位，可包含字母、数字、下划线和短横线',
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true,
     autofocus: true
@@ -56,6 +68,7 @@ const fields = computed(() => [
     placeholder: 'you@example.com',
     autocomplete: 'email',
     icon: 'i-mdi-email-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true
   },
@@ -66,6 +79,7 @@ const fields = computed(() => [
     placeholder: '设置不少于 8 位的登录密码',
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true
   },
@@ -76,6 +90,7 @@ const fields = computed(() => [
     placeholder: '再次输入密码',
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-check-outline',
+    defaultValue: '',
     size: 'lg' as const,
     required: true
   }
@@ -89,7 +104,7 @@ const REGISTER_ERROR_CODES: Record<number, string> = {
   500: '服务器暂时无法响应，请稍后再试'
 }
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
   errorMessage.value = ''
   successMessage.value = ''
   turnstileError.value = ''
@@ -152,7 +167,7 @@ function clearTurnstileError() {
     >
       <UAuthForm
         ref="authForm"
-        :schema="schema"
+        :validate="validateRegisterForm"
         :fields="fields"
         :loading="isSubmitting"
         :submit="{ label: '创建账号', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"

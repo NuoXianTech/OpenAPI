@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
-import { requiredString } from '#shared/schemas/validation'
+import {
+  compactFormErrors,
+  integerError,
+  maxLengthError,
+  requiredTextError
+} from '~/utils/form-validation'
 
 interface ApiCategoryItem {
   id: number
@@ -24,19 +28,27 @@ const form = useTemplateRef('form')
 
 const isEdit = computed(() => !!props.item)
 
-const schema = z.object({
-  code: requiredString('分类标识', { max: 64 }),
-  name: requiredString('分类名称', { max: 64 }),
-  description: z.string().optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  sortOrder: z.coerce.number().int().default(0),
-  isEnabled: z.boolean().default(true)
-})
+interface ApiCategoryFormState {
+  code: string
+  name: string
+  description: string
+  icon: string
+  color: string
+  sortOrder: number
+  isEnabled: boolean
+}
 
-type Schema = z.output<typeof schema>
+function validateCategoryForm(state: Partial<ApiCategoryFormState>): FormError<string>[] {
+  return compactFormErrors(
+    requiredTextError('code', state.code, '分类标识不能为空'),
+    maxLengthError('code', state.code, 64, '分类标识最多 64 字'),
+    requiredTextError('name', state.name, '分类名称不能为空'),
+    maxLengthError('name', state.name, 64, '分类名称最多 64 字'),
+    integerError('sortOrder', state.sortOrder, '排序')
+  )
+}
 
-const state = reactive<Partial<Schema>>({ code: '', name: '', description: '', icon: '', color: '', sortOrder: 0, isEnabled: true })
+const state = reactive<ApiCategoryFormState>({ code: '', name: '', description: '', icon: '', color: '', sortOrder: 0, isEnabled: true })
 const loading = ref(false)
 
 watch(() => props.item, (val) => {
@@ -55,7 +67,7 @@ watch(() => props.item, (val) => {
   }
 }, { immediate: true })
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
   loading.value = true
   try {
     if (isEdit.value) {
@@ -87,7 +99,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <template #body>
       <UForm
         ref="form"
-        :schema="schema"
+        :validate="validateCategoryForm"
         :state="state"
         class="space-y-3"
         @submit="onSubmit"

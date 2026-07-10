@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import type { FriendLinkItem } from '#shared/types/content'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
-import { requiredString } from '#shared/schemas/validation'
+import { compactFormErrors, requiredTextError } from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item?: FriendLinkItem | null }>()
@@ -14,16 +13,21 @@ const form = useTemplateRef('form')
 
 const isEdit = computed(() => !!props.item)
 
-const schema = z.object({
-  title: requiredString('链接标题'),
-  url: requiredString('链接地址'),
-  description: z.string().optional(),
-  isActive: z.boolean().default(true)
-})
+interface FriendLinkFormState {
+  title: string
+  url: string
+  description: string
+  isActive: boolean
+}
 
-type Schema = z.output<typeof schema>
+function validateFriendLinkForm(state: Partial<FriendLinkFormState>): FormError<string>[] {
+  return compactFormErrors(
+    requiredTextError('title', state.title, '链接标题不能为空'),
+    requiredTextError('url', state.url, '链接地址不能为空')
+  )
+}
 
-const state = reactive<Partial<Schema>>({ title: '', url: '', description: '', isActive: true })
+const state = reactive<FriendLinkFormState>({ title: '', url: '', description: '', isActive: true })
 const loading = ref(false)
 
 watch(() => props.item, (val) => {
@@ -34,7 +38,7 @@ watch(() => props.item, (val) => {
   }
 }, { immediate: true })
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
   loading.value = true
   try {
     if (isEdit.value) {
@@ -60,7 +64,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     <template #body>
       <UForm
         ref="form"
-        :schema="schema"
+        :validate="validateFriendLinkForm"
         :state="state"
         class="space-y-3"
         @submit="onSubmit"
