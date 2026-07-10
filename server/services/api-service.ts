@@ -2,9 +2,12 @@ import { createHash } from 'node:crypto'
 import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { apiCallStats, apis } from '~~/server/db/schema'
 import { hasAnyChargedMethod } from '~~/server/config/api-guard'
-import { API_STATUS, isAutomaticApiStatus } from '#shared/config/api-status'
+import { isAutomaticApiStatus } from '#shared/config/api-status'
 import type { ApiCatalogItem } from '#shared/types/api'
-import { resolveApiAutoStatuses } from '~~/server/services/api-status-service'
+import {
+  resolveApiAutoStatuses,
+  resolveEffectiveApiStatus
+} from '~~/server/services/api-status-service'
 import type { ApiGuardConfig } from '~~/server/types/api-guard'
 import {
   deleteSharedCache,
@@ -144,8 +147,7 @@ async function invalidateApiCaches(api: Pick<ApiGuardConfig, 'pathVersion' | 'co
 }
 
 function resolvePublicApiStatus(row: typeof apis.$inferSelect, autoStatusMap: Record<number, number>) {
-  if (!isAutomaticApiStatus(row.status)) return row.status
-  return autoStatusMap[row.id] ?? API_STATUS.unknown
+  return resolveEffectiveApiStatus(row.status, row.isStatistics, autoStatusMap[row.id])
 }
 
 async function findApiById(id: number) {
@@ -235,7 +237,7 @@ export const apiService = {
         const apiRows = rows as Array<typeof apis.$inferSelect>
         const autoStatusMap = await resolveApiAutoStatuses(
           apiRows
-            .filter(row => isAutomaticApiStatus(row.status))
+            .filter(row => isAutomaticApiStatus(row.status) && row.isStatistics)
             .map(row => row.id)
         )
 

@@ -1,18 +1,46 @@
 import { describe, expect, it } from 'vitest'
 import { API_STATUS } from '#shared/config/api-status'
-import { resolveApiAutoStatusFromStatusCodes } from '~~/server/services/api-status-service'
+import {
+  resolveApiAutoStatus,
+  resolveEffectiveApiStatus,
+  type ApiAutoStatusSample
+} from '~~/server/services/api-status-service'
 
-describe('resolveApiAutoStatusFromStatusCodes', () => {
+function samples(...values: Array<number | [number, string]>): ApiAutoStatusSample[] {
+  return values.map(value => Array.isArray(value)
+    ? { statusCode: value[0], errorCode: value[1] }
+    : { statusCode: value, errorCode: null })
+}
+
+describe('resolveApiAutoStatus', () => {
   it('returns unknown when there are no calls', () => {
-    expect(resolveApiAutoStatusFromStatusCodes([])).toBe(API_STATUS.unknown)
+    expect(resolveApiAutoStatus([])).toBe(API_STATUS.unknown)
   })
 
-  it('returns normal only when every recent status code is 200', () => {
-    expect(resolveApiAutoStatusFromStatusCodes([200, 200, 200])).toBe(API_STATUS.normal)
+  it('accepts successful HTTP responses without business errors', () => {
+    expect(resolveApiAutoStatus(samples(200, 201, 204, 302))).toBe(API_STATUS.normal)
   })
 
-  it('returns abnormal when any recent status code is not 200', () => {
-    expect(resolveApiAutoStatusFromStatusCodes([200, 500, 200])).toBe(API_STATUS.abnormal)
-    expect(resolveApiAutoStatusFromStatusCodes([204])).toBe(API_STATUS.abnormal)
+  it('treats explicit business errors as failures', () => {
+    expect(resolveApiAutoStatus(samples([200, 'BUSINESS_FAILED']))).toBe(API_STATUS.abnormal)
+  })
+
+  it('uses an eighty percent success threshold', () => {
+    expect(resolveApiAutoStatus(samples(200, 200, 200, 200, 500))).toBe(API_STATUS.normal)
+    expect(resolveApiAutoStatus(samples(200, 200, 200, 500, 500))).toBe(API_STATUS.abnormal)
+  })
+})
+
+describe('resolveEffectiveApiStatus', () => {
+  it('keeps manually configured statuses', () => {
+    expect(resolveEffectiveApiStatus(API_STATUS.maintenance, false, API_STATUS.normal))
+      .toBe(API_STATUS.maintenance)
+  })
+
+  it('requires statistics for automatic status', () => {
+    expect(resolveEffectiveApiStatus(API_STATUS.automatic, false, API_STATUS.normal))
+      .toBe(API_STATUS.unknown)
+    expect(resolveEffectiveApiStatus(API_STATUS.automatic, true, API_STATUS.normal))
+      .toBe(API_STATUS.normal)
   })
 })

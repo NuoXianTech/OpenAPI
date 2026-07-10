@@ -139,6 +139,11 @@
 
 ## 8. 开发规范
 
+API 状态设置为“自动”时，公开目录使用最近 24 小时内最多 100 条
+`isCounted=true` 的调用计算状态：`2xx/3xx` 且没有 `errorCode` 视为成功，成功率达到
+80% 显示“正常”，否则显示“异常”；没有有效样本或关闭调用统计时显示“未知”。结果缓存
+30 秒，避免公开列表重复扫描调用明细。
+
 - 新增对外 API 后，重启 dev / 重新 build 让 manifestSync 自动建行，并在后台启用对应 `(pathVersion, code)`；否则不会产生调用日志。
 - 如不希望某 API 出现在统计中，使用 `apis.isStatistics=false`，不要在 handler 里手动跳过统计。
 - handler 不要直接写 `api_calls` 或 `api_call_stats`。
