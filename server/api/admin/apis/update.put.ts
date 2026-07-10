@@ -48,7 +48,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 400, message: err instanceof Error ? err.message : 'api update failed' })
   })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.api.update',

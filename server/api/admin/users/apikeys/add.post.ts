@@ -12,7 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const created = await apiKeyService.createForUser(userId, payload)
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.api-key.create',

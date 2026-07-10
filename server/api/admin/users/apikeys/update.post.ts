@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'API Key 不存在' })
   }
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.api-key.update',

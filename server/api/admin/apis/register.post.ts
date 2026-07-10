@@ -78,7 +78,7 @@ export default defineEventHandler(async (event: H3Event) => {
     defaults
   })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.api.register',

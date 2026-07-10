@@ -6,6 +6,7 @@ import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-l
 interface CreditTxnRow {
   id: number
   userId: number
+  userName: string | null
   amount: number
   balanceAfter: number
   reason: string
@@ -138,7 +139,10 @@ function amountClass(amt: number) {
           <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
         </template>
         <template #userId-cell="{ row }">
-          <span class="font-mono text-xs">#{{ row.original.userId }}</span>
+          <div class="flex flex-col text-xs">
+            <span>{{ row.original.userName || '-' }}</span>
+            <span class="text-muted">{{ formatUserIdentity(row.original.userId) }}</span>
+          </div>
         </template>
         <template #reason-cell="{ row }">
           <UBadge
@@ -157,10 +161,20 @@ function amountClass(amt: number) {
           <span class="tabular-nums text-xs text-muted">{{ row.original.balanceAfter.toLocaleString() }}</span>
         </template>
         <template #operatorName-cell="{ row }">
-          <span
-            v-if="row.original.operatorName"
-            class="text-xs"
-          >{{ row.original.operatorName }}</span>
+          <div
+            v-if="row.original.operatorId"
+            class="flex flex-col text-xs"
+          >
+            <span>{{ row.original.operatorName || '-' }}</span>
+            <span class="text-muted">{{ formatAdminIdentity(row.original.operatorId) }}</span>
+          </div>
+          <div
+            v-else-if="row.original.operatorName"
+            class="flex flex-col text-xs"
+          >
+            <span>{{ row.original.operatorName }}</span>
+            <span class="text-muted">管理员</span>
+          </div>
           <span
             v-else
             class="text-xs text-muted italic"

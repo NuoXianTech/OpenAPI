@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
   // passwordHash / tokenVersion 是敏感字段，不能进审计日志、也不应回给前端
   const { passwordHash: _ph, tokenVersion: _tv, ...safe } = deleted
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.user.delete',

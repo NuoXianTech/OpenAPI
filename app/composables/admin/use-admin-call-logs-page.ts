@@ -20,6 +20,7 @@ import {
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
+import { formatAdminIdentity, formatUserIdentity } from '~/utils/log-identity'
 
 interface AdminCallLogsFilters {
   startAt: string
@@ -366,6 +367,7 @@ interface UseAdminOperationLogListReturn {
   page: Ref<number>
   pageSize: Ref<number>
   reset: () => Promise<void>
+  resolveActorLabel: (action: string, userId: number | null) => string
   resolveActionLabel: (action: string) => string
   statusItems: Array<{ label: string, value: AdminOperationLogFilters['status'] }>
   total: Ref<number>
@@ -487,6 +489,15 @@ function resolveOperationLogActionLabel(action: string): string {
   return OPERATION_LOG_ACTION_LABELS[action] ?? action
 }
 
+export function resolveOperationLogActorLabel(
+  action: string,
+  userId: number | null
+): string {
+  if (action.startsWith('admin.')) return userId ? formatAdminIdentity(userId) : '管理员'
+  if (action.startsWith('user.')) return userId ? formatUserIdentity(userId) : '用户'
+  return userId ? formatUserIdentity(userId) : '系统'
+}
+
 export function useAdminOperationLogList(
   options: UseAdminOperationLogListOptions = {}
 ): UseAdminOperationLogListReturn {
@@ -553,6 +564,7 @@ export function useAdminOperationLogList(
     page,
     pageSize,
     reset,
+    resolveActorLabel: resolveOperationLogActorLabel,
     resolveActionLabel: resolveOperationLogActionLabel,
     statusItems: ADMIN_OPERATION_LOG_STATUS_ITEMS,
     total

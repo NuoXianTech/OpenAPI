@@ -49,7 +49,7 @@ export default defineEventHandler(async (event: H3Event) => {
     await usersService.bumpTokenVersion(id)
   }
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.user.update',

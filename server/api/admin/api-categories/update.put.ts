@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: 'category not found' })
   }
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     actor: admin.username,
     action: 'admin.api-category.update',
     resourceType: 'api-category',

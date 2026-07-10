@@ -18,7 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   try {
     const data = await checkinService.checkin(user.id)
-    await operationLogService.addLog({
+    await operationLogService.addRequestLog(event, {
       userId: user.id,
       actor: user.username,
       action: 'user.checkin',

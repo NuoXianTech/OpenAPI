@@ -21,7 +21,7 @@ export default defineEventHandler(async (event: H3Event) => {
     isEnabled: body.isEnabled ?? true
   })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     actor: admin.username,
     action: 'admin.api-category.create',
     resourceType: 'api-category',

@@ -58,7 +58,16 @@ function formatBytes(value: number | null) {
             <div class="text-xs text-muted">
               用户
             </div>
-            <div>{{ props.row.userId ? `${props.row.userName || '-'} (#${props.row.userId})` : '匿名' }}</div>
+            <div
+              v-if="props.row.userId"
+              class="flex flex-col"
+            >
+              <span>{{ props.row.userName || '-' }}</span>
+              <span class="text-xs text-muted">{{ formatUserIdentity(props.row.userId) }}</span>
+            </div>
+            <div v-else>
+              匿名
+            </div>
           </div>
           <div>
             <div class="text-xs text-muted">

@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const updated = await usersService.banUser(id, isBanned, { reason, bannedUntil })
 
   // 封禁立即生效由 getAuthUser 的 isBanned 检查保证（每次鉴权都查 users 表），无需额外撤销操作。
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',

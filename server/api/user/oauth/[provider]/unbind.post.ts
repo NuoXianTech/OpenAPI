@@ -18,7 +18,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 404, message: '当前账号未绑定该第三方' })
   }
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.oauth.unbind',

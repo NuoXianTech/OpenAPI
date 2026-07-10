@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const removed = await notificationService.softDeleteMessage(messageId)
   if (!removed) throw createError({ statusCode: 404, message: 'message not found' })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     actor: admin.username,
     action: 'admin.notification.delete',
     resourceType: 'notification-message',

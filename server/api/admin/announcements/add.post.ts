@@ -20,7 +20,7 @@ export default defineEventHandler(async (event: H3Event) => {
     sortOrder: body.sortOrder ?? 0
   }, admin.id || null)
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     actor: admin.username,
     action: 'admin.announcement.create',
     resourceType: 'announcement',

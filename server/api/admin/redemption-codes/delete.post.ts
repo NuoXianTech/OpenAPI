@@ -13,7 +13,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (id) {
     const removed = await redemptionService.remove(id)
     if (!removed) throw createError({ statusCode: 404, message: '兑换码不存在' })
-    await operationLogService.addLog({
+    await operationLogService.addRequestLog(event, {
       userId: admin.id || null,
       actor: admin.username,
       action: 'admin.redemption-code.delete',
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   // refine 已保证 id 或 batchId 至少一个非空
   const res = await redemptionService.removeBatch(batchId!, !!includeUsed)
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.redemption-code.batch-delete',

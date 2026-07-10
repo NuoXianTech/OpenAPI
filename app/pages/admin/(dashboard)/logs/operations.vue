@@ -18,6 +18,7 @@ const {
   page,
   pageSize,
   reset,
+  resolveActorLabel,
   resolveActionLabel,
   statusItems,
   total,
@@ -139,7 +140,7 @@ const {
         <template #actor-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
-            <span class="text-muted">{{ row.original.userId ? `用户 #${row.original.userId}` : '管理员' }}</span>
+            <span class="text-muted">{{ resolveActorLabel(row.original.action, row.original.userId) }}</span>
           </div>
         </template>
         <template #action-cell="{ row }">
@@ -229,7 +230,7 @@ const {
               <div>
                 {{ detailRow.actor || '匿名' }}
                 <span class="text-muted text-xs">
-                  · {{ detailRow.userId ? `用户 #${detailRow.userId}` : '管理员' }}
+                  · {{ resolveActorLabel(detailRow.action, detailRow.userId) }}
                 </span>
               </div>
             </div>

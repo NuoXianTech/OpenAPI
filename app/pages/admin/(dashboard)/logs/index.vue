@@ -186,7 +186,7 @@ function openDetail(row: AdminLogRow) {
             class="flex flex-col text-xs"
           >
             <span>{{ row.original.userName || '-' }}</span>
-            <span class="text-muted">#{{ row.original.userId }}</span>
+            <span class="text-muted">{{ formatUserIdentity(row.original.userId) }}</span>
           </div>
           <span
             v-else

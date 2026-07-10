@@ -38,7 +38,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await usersService.bumpTokenVersion(admin.id)
   await createUserSession(event, { id: admin.id, role: admin.role })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION,

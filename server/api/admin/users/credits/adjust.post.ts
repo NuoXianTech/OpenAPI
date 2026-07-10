@@ -35,7 +35,7 @@ export default defineEventHandler(async (event: H3Event) => {
     remark: remark || null
   })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: `admin.credit.${operation}`,

@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   try {
     const data = await redemptionService.redeem({ userId: user.id, code, ip })
-    await operationLogService.addLog({
+    await operationLogService.addRequestLog(event, {
       userId: user.id,
       actor: user.username,
       action: 'user.redemption-code.redeem',

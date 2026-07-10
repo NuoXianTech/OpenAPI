@@ -31,7 +31,7 @@ export default defineEventHandler(async (event: H3Event) => {
   await usersService.bumpTokenVersion(authUser.id)
   await createUserSession(event, { id: authUser.id, role: authUser.role })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.password.change',

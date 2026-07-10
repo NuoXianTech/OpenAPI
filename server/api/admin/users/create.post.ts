@@ -29,7 +29,7 @@ export default defineEventHandler(async (event: H3Event) => {
     isActive: isActive ?? true
   })
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.user.create',

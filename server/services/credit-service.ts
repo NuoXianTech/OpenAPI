@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, lte, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, getTableColumns, gte, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '~~/server/db/schema'
 import {
   calculateAdminRevokeAdjustment,
@@ -152,13 +152,19 @@ async function listTransactions(filters: ListTransactionsFilters = {}) {
   const { limit, offset } = normalizePagination(filters)
 
   const where = conditions.length ? and(...conditions) : undefined
+  const transactionColumns = getTableColumns(creditTransactions)
   const [items, totalRows] = await Promise.all([
-    where
-      ? db.select().from(creditTransactions).where(where).orderBy(desc(creditTransactions.createdAt)).limit(limit).offset(offset)
-      : db.select().from(creditTransactions).orderBy(desc(creditTransactions.createdAt)).limit(limit).offset(offset),
-    where
-      ? db.select({ value: count() }).from(creditTransactions).where(where)
-      : db.select({ value: count() }).from(creditTransactions)
+    db.select({
+      ...transactionColumns,
+      userName: users.username
+    })
+      .from(creditTransactions)
+      .leftJoin(users, eq(users.id, creditTransactions.userId))
+      .where(where)
+      .orderBy(desc(creditTransactions.createdAt))
+      .limit(limit)
+      .offset(offset),
+    db.select({ value: count() }).from(creditTransactions).where(where)
   ])
 
   return {

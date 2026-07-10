@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
     await sendTestEmail(to, admin.username)
   } catch (error) {
     const message = (error as Error)?.message || '发信失败'
-    await operationLogService.addLog({
+    await operationLogService.addRequestLog(event, {
       userId: admin.id || null,
       actor: admin.username,
       action: 'admin.settings.smtp.test',
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ statusCode: 500, message: `SMTP 发送失败：${message}` })
   }
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.settings.smtp.test',

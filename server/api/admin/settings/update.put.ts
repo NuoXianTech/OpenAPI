@@ -17,7 +17,7 @@ export default defineEventHandler(async (event: H3Event) => {
     .filter(([, value]) => value !== undefined)
     .map(([key]) => key)
 
-  await operationLogService.addLog({
+  await operationLogService.addRequestLog(event, {
     userId: admin.id || null,
     actor: admin.username,
     action: 'admin.settings.update',
