@@ -1,5 +1,6 @@
+import type { H3Event } from 'h3'
 import { clampInteger } from '~~/server/utils/number'
-import { firstQueryValue, type RequestQuery } from '~~/server/utils/request-query'
+import { firstQueryValue } from '~~/server/utils/request-query'
 
 interface PaginationInput {
   limit?: unknown
@@ -15,19 +16,6 @@ export interface PaginationOptions {
 export interface NormalizedPagination {
   limit: number
   offset: number
-}
-
-interface ReadPaginationQueryResult extends NormalizedPagination {
-  query: RequestQuery
-}
-
-interface RequestQueryEvent {
-  path?: string
-  node?: {
-    req?: {
-      url?: string
-    }
-  }
 }
 
 const DEFAULT_LIMIT = 50
@@ -60,31 +48,11 @@ export function normalizePagination(
   }
 }
 
-function readQueryFromPath(path: string | undefined): RequestQuery {
-  if (!path) return {}
-
-  const search = path.startsWith('?') ? path.slice(1) : path.split('?')[1]
-  if (!search) return {}
-
-  const query: RequestQuery = {}
-  for (const [key, value] of new URLSearchParams(search)) {
-    const current = query[key]
-    if (current === undefined) {
-      query[key] = value
-      continue
-    }
-
-    query[key] = Array.isArray(current) ? [...current, value] : [current, value]
-  }
-
-  return query
-}
-
 export function readPaginationQuery(
-  event: RequestQueryEvent,
+  event: H3Event,
   options: PaginationOptions = {}
-): ReadPaginationQueryResult {
-  const query = readQueryFromPath(event.path ?? event.node?.req?.url)
+) {
+  const query = getQuery(event)
   return {
     query,
     ...normalizePagination(query, options)

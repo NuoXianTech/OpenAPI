@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { normalizePagination, readPaginationQuery } from '~~/server/utils/pagination'
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('pagination utilities', () => {
   it('normalizes defaults, clamps bounds, and parses query values', () => {
@@ -13,23 +17,13 @@ describe('pagination utilities', () => {
     expect(normalizePagination({ limit: 'many', offset: 'soon' })).toEqual({ limit: 50, offset: 0 })
   })
 
-  it('reads pagination from a Nitro event path without importing h3', () => {
-    expect(readPaginationQuery({ path: '/api/items?limit=25&offset=10&tag=a&tag=b' })).toEqual({
-      query: {
-        limit: '25',
-        offset: '10',
-        tag: ['a', 'b']
-      },
-      limit: 25,
-      offset: 10
-    })
+  it('normalizes the query returned by H3', () => {
+    vi.stubGlobal('getQuery', () => ({ limit: '999', offset: '10', tag: ['a', 'b'] }))
 
-    expect(readPaginationQuery({ node: { req: { url: '/api/items?limit=999' } } }, { maxLimit: 80 })).toEqual({
-      query: {
-        limit: '999'
-      },
+    expect(readPaginationQuery({} as never, { maxLimit: 80 })).toEqual({
+      query: { limit: '999', offset: '10', tag: ['a', 'b'] },
       limit: 80,
-      offset: 0
+      offset: 10
     })
   })
 })

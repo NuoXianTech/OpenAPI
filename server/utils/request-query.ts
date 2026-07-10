@@ -1,9 +1,3 @@
-type RequestQueryValue = string | string[] | undefined
-
-export interface RequestQuery {
-  [key: string]: RequestQueryValue
-}
-
 export function firstQueryValue(value: unknown): unknown {
   return Array.isArray(value) ? firstQueryValue(value[0]) : value
 }
