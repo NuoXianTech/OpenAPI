@@ -59,7 +59,7 @@ NUXT_REDIS_REQUIRED=true
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数和业务缓存均有短 TTL，少量缓存版本 key 持久存在；建议使用 `maxmemory-policy noeviction` 并监控内存、命中率、淘汰数与命令延迟，避免关键限流 key 被提前淘汰。Redis 未配置时应用继续使用单进程内存限流和短缓存；正式生产需要 Redis 保护时设置 `NUXT_REDIS_REQUIRED=true`，连接失败会阻止服务在无保护状态下启动。缓存命令故障不会触发 503，而会安全回源数据库。
+Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数、业务缓存和分布式租约均有 TTL，少量缓存版本 key 持久存在；建议使用 `maxmemory-policy noeviction` 并监控内存、命中率、淘汰数与命令延迟，避免关键限流或租约 key 被提前淘汰。Redis 未配置时应用继续使用单进程内存限流、短缓存和本地任务互斥；多实例生产必须设置 `NUXT_REDIS_REQUIRED=true`。缓存命令故障仍会安全回源数据库。
 
 ## 启动
 
@@ -92,7 +92,7 @@ pm2 restart openapi --update-env
 
 建议在 Node 进程前放置 Nginx，并反向代理到 `127.0.0.1:3000`。
 
-不要为同一个 PGlite 数据目录启动多个 Node 进程。当前应用的限流、后台任务和迁移执行策略也按单进程设计；需要横向扩展时应先切换 PostgreSQL，并重新设计进程间状态。
+不要为同一个 PGlite 数据目录启动多个 Node 进程。需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。限流、缓存、扣费补偿扫描和 Manifest 同步由 Redis 协调，PostgreSQL 迁移由 advisory lock 串行化。
 
 ## 发布后检查
 

@@ -20,6 +20,7 @@ interface MigrationFolder {
 }
 
 const migrationsAssetBase = 'db-migrations'
+const MIGRATION_ADVISORY_LOCK_KEY = 'openapi:database-migrations'
 
 async function hasJournal(folder: string) {
   try {
@@ -104,8 +105,12 @@ async function ensureDatabaseExists() {
 
     if (rows.length > 0) return
 
-    await adminClient`CREATE DATABASE ${adminClient(databaseName)}`
-    console.log(`[db:migrate] Created database ${databaseName}`)
+    try {
+      await adminClient`CREATE DATABASE ${adminClient(databaseName)}`
+      console.log(`[db:migrate] Created database ${databaseName}`)
+    } catch (error) {
+      if (getSqlState(error) !== '42P04') throw error
+    }
   } finally {
     await adminClient.end()
   }
@@ -127,8 +132,11 @@ function getSqlState(error: unknown) {
 async function migrateOnce(migrationsFolder: string) {
   const client = createPostgresClient({ max: 1 })
   const database = drizzlePostgres(client)
+  let hasMigrationLock = false
 
   try {
+    await client`SELECT pg_advisory_lock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`
+    hasMigrationLock = true
     await migrate(database, {
       migrationsFolder,
       migrationsSchema: 'drizzle',
@@ -136,6 +144,11 @@ async function migrateOnce(migrationsFolder: string) {
     })
     console.log(`[db:migrate] Applied migrations from ${migrationsFolder}`)
   } finally {
+    if (hasMigrationLock) {
+      await client`SELECT pg_advisory_unlock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`.catch((error) => {
+        console.error('[db:migrate] Failed to release migration advisory lock', error)
+      })
+    }
     await client.end()
   }
 }

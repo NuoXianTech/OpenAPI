@@ -9,6 +9,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const MIGRATION_ADVISORY_LOCK_KEY = 'openapi:database-migrations'
 
 function loadProjectEnv() {
   const envPath = path.resolve(process.cwd(), '.env')
@@ -115,8 +116,12 @@ async function ensureDatabaseExists() {
     `
     if (rows.length > 0) return
 
-    await adminClient`CREATE DATABASE ${adminClient(databaseName)}`
-    console.log(`[db:migrate] Created database ${databaseName}`)
+    try {
+      await adminClient`CREATE DATABASE ${adminClient(databaseName)}`
+      console.log(`[db:migrate] Created database ${databaseName}`)
+    } catch (error) {
+      if (getSqlState(error) !== '42P04') throw error
+    }
   } finally {
     await adminClient.end()
   }
@@ -125,8 +130,11 @@ async function ensureDatabaseExists() {
 async function migrateOnce() {
   const client = postgres(databaseUrl, { max: 1, onnotice })
   const db = drizzle(client)
+  let hasMigrationLock = false
 
   try {
+    await client`SELECT pg_advisory_lock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`
+    hasMigrationLock = true
     await migrate(db, {
       migrationsFolder,
       migrationsSchema: 'drizzle',
@@ -134,6 +142,11 @@ async function migrateOnce() {
     })
     console.log(`[db:migrate] Applied migrations from ${migrationsFolder}`)
   } finally {
+    if (hasMigrationLock) {
+      await client`SELECT pg_advisory_unlock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`.catch((error) => {
+        console.error('[db:migrate] Failed to release migration advisory lock', error)
+      })
+    }
     await client.end()
   }
 }

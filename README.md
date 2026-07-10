@@ -24,9 +24,9 @@ OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During b
 
 - Call logs and daily aggregates are written after responses are sent, and paid calls are charged through the credit ledger.
 
-- Failed charge attempts are stored in `pending_charges` and retried by the same Node process.
+- Failed charge attempts are stored in `pending_charges`; a Redis lease elects one retry scanner across instances.
 
-The production target is intentionally simple: **one Node/Nitro process plus one project-owned database**. PostgreSQL is recommended for normal production; PGlite is supported for lightweight single-process deployments. Runtime counters live in memory, so running multiple Node processes against the same production database is not supported.
+The default production model is intentionally simple: **one Node/Nitro process plus one project-owned database**. PostgreSQL is recommended for normal production, while PGlite remains single-process only. Horizontal scaling requires PostgreSQL, shared Redis, and `NUXT_REDIS_REQUIRED=true` for coordinated limits, caches, and background work.
 
 ### Highlights
 
@@ -152,7 +152,7 @@ server/db/migrations/     drizzle-kit generated migrations
 server/middleware/        API gateway and private page guards
 server/services/          Business services
 server/lib/               Public API business implementations
-server/plugins/           Startup sync and single-process background jobs
+server/plugins/           Startup sync and distributed background coordination
 modules/api-manifest.ts   Build-time API manifest generator
 shared/                   Shared types, schemas, and configuration
 docs/                     Project documentation

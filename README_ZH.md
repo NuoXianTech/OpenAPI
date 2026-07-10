@@ -24,9 +24,9 @@ OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构�
 
 - 响应发出后写入调用日志与每日统计，收费调用会进入积分流水。
 
-- 扣费失败会写入 `pending_charges`，并由同一个 Node 进程中的重试任务继续处理。
+- 扣费失败会写入 `pending_charges`，重试任务由 Redis lease 协调，多实例下仅一个扫描者执行。
 
-本项目的生产目标非常明确：**一个 Node/Nitro 进程 + 一个项目自维护数据库**。PostgreSQL 更适合常规生产；PGlite 可用于轻量、自包含的单进程部署。运行时计数器保存在进程内存中，因此不支持多个 Node 实例连接同一个生产数据库。
+默认生产模型是**一个 Node/Nitro 进程 + 一个项目自维护数据库**。PostgreSQL 更适合常规生产；PGlite 用于轻量、自包含的单进程部署。需要横向扩展时使用 PostgreSQL、共享 Redis 和 `NUXT_REDIS_REQUIRED=true`，由 Redis 协调限流、缓存和后台任务。
 
 ### 功能亮点
 
@@ -152,7 +152,7 @@ server/db/migrations/     drizzle-kit 生成的迁移
 server/middleware/        API 网关与私有页面守卫
 server/services/          业务服务层
 server/lib/               公开 API 业务实现
-server/plugins/           启动同步与单进程后台任务
+server/plugins/           启动同步与分布式协调后台任务
 modules/api-manifest.ts   构建期接口清单生成器
 shared/                   共享类型、schema 与配置
 docs/                     项目文档

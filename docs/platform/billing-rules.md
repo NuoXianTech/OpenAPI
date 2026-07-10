@@ -7,7 +7,7 @@
 - `users.credits` 是用户余额的唯一事实来源。
 - `apis.method_costs` 按 HTTP 方法保存价格，结构为 `Record<UPPER_METHOD, number>`。
 - `credit_transactions` 记录每次余额变化，并保留 `balanceAfter` 审计快照。
-- `pending_charges` 保存响应后扣费失败的重试任务，由同一个 Node 进程处理。
+- `pending_charges` 保存响应后扣费失败的重试任务；多实例由 Redis lease 选出单个扫描者。
 - 当前没有套餐、订阅、支付网关或月度额度系统。
 
 ## 请求链路
@@ -18,7 +18,7 @@
 4. `server/plugins/api-call-stats.ts` 在响应发出后记录 `api_calls`，并更新 `api_call_stats`。
 5. 如果本次调用需要扣费，`creditService.forceCharge` 会在同一事务中扣减 `users.credits` 并插入 `credit_transactions`。由于上游工作已经发生，此处扣费是无条件的，可能把余额扣成负数；后续调用会被 api-gate 的 `balance < effectiveCost` 检查拒绝，直到用户充值。
 6. 此阶段的扣费失败只应来自瞬时故障（例如数据库错误）。失败时 `pendingChargeService.enqueue` 写入一条以 `apiCallId` 为键的重试记录；余额不足不再进入重试队列。
-7. `server/plugins/pending-charges-retry.ts` 在单 Node 进程内每 30 秒扫描到期的 `pending_charges`，通过 `forceCharge` 重试；成功后删除记录，失败则退避，直到进入 `dead_letter`。
+7. `server/plugins/pending-charges-retry.ts` 每 30 秒尝试获取 Redis lease，持有者扫描到期的 `pending_charges` 并通过 `forceCharge` 重试；成功后删除记录，失败则退避，直到进入 `dead_letter`。未配置 Redis 的单实例使用进程内互斥。
 
 ## 可靠性规则
 

@@ -1,16 +1,16 @@
 # 生产运行手册
 
-本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。部署模型保持单个 Node/Nitro 进程加一个 PostgreSQL 数据库，所有监控和处置都围绕这个边界设计。
+本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。默认部署模型为单个 Node/Nitro 进程；使用 PostgreSQL、共享 Redis 且启用强制 Redis 后可部署多个 Node 实例。
 
 ## 运行边界
 
 | 项目 | 约束 |
 | --- | --- |
-| 应用进程 | 单 Node/Nitro 进程，不做多实例横向扩展 |
+| 应用进程 | 默认单实例；多实例必须使用 PostgreSQL、共享 Redis 和 `NUXT_REDIS_REQUIRED=true` |
 | 数据库 | 单 PostgreSQL 实例，迁移由 Node/Nitro 启动插件在应用启动前自动执行 |
 | 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
 | 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
-| 扣费重试 | `pending_charges` 由同一 Node 进程定时扫描 |
+| 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描 `pending_charges` |
 | 代理 | 生产公网流量由 Nginx 或等价代理转发到 `127.0.0.1:<NITRO_PORT>` |
 
 ## 日常巡检
@@ -41,6 +41,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
 | readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
+| 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[pending-charges]` 日志 |
 | 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_AUTH_API_KEY_SECRET` 是否变化、API Key 记录是否被撤销 |

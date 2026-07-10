@@ -1,20 +1,23 @@
 /**
- * Pending charge retry worker for the single production Node process.
+ * Pending charge retry worker. Redis coordinates scans across Node instances;
+ * single-process deployments retain an in-memory lease fallback.
  */
 
 import { apiCallService } from '~~/server/services/api-call-service'
 import { creditService } from '~~/server/services/credit-service'
 import { pendingChargeService } from '~~/server/services/pending-charge-service'
+import { withDistributedLease } from '~~/server/utils/distributed-lease'
 
 const SCAN_INTERVAL_MS = 30_000
 const BATCH_SIZE = 20
+const WORKER_LEASE_TTL_MS = 120_000
 const TIMER_KEY = Symbol.for('pendingChargesRetry.timer')
 
 type GlobalWithTimer = typeof globalThis & {
   [TIMER_KEY]?: NodeJS.Timeout
 }
 
-async function runOnce() {
+async function processDueCharges(): Promise<void> {
   let dueRows: Awaited<ReturnType<typeof pendingChargeService.claimDue>>
   try {
     dueRows = await pendingChargeService.claimDue(BATCH_SIZE)
@@ -53,6 +56,24 @@ async function runOnce() {
         })
       })
     }
+  }
+}
+
+async function runOnce(): Promise<void> {
+  try {
+    const result = await withDistributedLease({
+      key: 'pending-charges-retry',
+      ttlMs: WORKER_LEASE_TTL_MS,
+      renewIntervalMs: 30_000
+    }, processDueCharges)
+
+    if (result.leaseLost) {
+      console.error('[pending-charges] Redis worker lease was lost before the batch completed')
+    }
+  } catch (error) {
+    console.error('[pending-charges] Worker coordination unavailable; scan skipped', {
+      error: error instanceof Error ? error.message : String(error)
+    })
   }
 }
 

@@ -1,6 +1,6 @@
 # 生产就绪清单
 
-本清单用于发布 OpenAPI 到生产环境前的最终确认。项目生产目标是单个 Node/Nitro 进程加一个项目自维护数据库；数据库可选 PostgreSQL 或显式配置的 PGlite。横向扩展前需要重新设计内存限流、定时任务和迁移执行策略。
+本清单用于发布 OpenAPI 到生产环境前的最终确认。单实例可使用 PostgreSQL 或显式配置的 PGlite；多实例必须使用 PostgreSQL、共享 Redis 和强制 Redis 模式。
 
 ## 发布前门禁
 
@@ -21,7 +21,7 @@ pnpm build
 | 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：设置 `DATABASE_DRIVER=pglite` 并确认 `PGLITE_DATA_DIR` 是持久化目录 |
 | 数据库迁移 | 已基于当前 Drizzle schema 生成迁移；`.output/server/db/migrations/postgresql` 随构建产物发布，生产启动时自动应用到 PostgreSQL 或 PGlite |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_AUTH_API_KEY_SECRET` 已独立生成 |
-| Redis | 使用共享限流和公开短缓存时配置 `NUXT_REDIS_URL`；生产强制限流保护设置 `NUXT_REDIS_REQUIRED=true` |
+| Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
 | 管理员账号 | 首次启动后从服务端控制台记录自动生成的 `admin` 随机密码，并通过 `/login` 登录后完成一次初始化弹窗 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入 |
 | 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |

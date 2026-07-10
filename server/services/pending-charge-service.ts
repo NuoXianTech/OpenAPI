@@ -2,13 +2,14 @@ import { and, asc, eq, lte } from 'drizzle-orm'
 import { pendingCharges } from '~~/server/db/schema'
 
 /**
- * Pending charge retry queue for the single production Node process.
+ * Pending charge retry queue.
  *
  * The queue keeps failed after-response charges reliable without adding any
- * cross-process ownership model. A due row stays `pending` until this worker
- * either charges it successfully and deletes it, or records another failed
- * attempt and schedules the next retry. The unique apiCallId index prevents the
- * same API call from being enqueued more than once.
+ * ownership columns. Redis leases coordinate batch scans across processes; a
+ * due row stays `pending` until the worker either charges it successfully and
+ * deletes it, or records another failed attempt and schedules the next retry.
+ * The unique apiCallId index and credit transaction constraint remain the
+ * final database-level idempotency boundary.
  */
 
 const PENDING_CHARGE_MAX_ATTEMPTS = 5
