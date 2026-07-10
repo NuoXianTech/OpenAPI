@@ -250,6 +250,6 @@ export default defineNitroPlugin((nitroApp) => {
     if (!tracked) {
       return
     }
-    void recordCall(event, tracked)
+    return recordCall(event, tracked)
   })
 })

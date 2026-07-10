@@ -56,7 +56,7 @@ async function runOnce() {
   }
 }
 
-export default defineNitroPlugin(() => {
+export default defineNitroPlugin((nitroApp) => {
   const g = globalThis as GlobalWithTimer
   if (g[TIMER_KEY]) {
     clearInterval(g[TIMER_KEY])
@@ -67,4 +67,10 @@ export default defineNitroPlugin(() => {
   }, SCAN_INTERVAL_MS)
   if (typeof timer.unref === 'function') timer.unref()
   g[TIMER_KEY] = timer
+
+  nitroApp.hooks.hook('close', () => {
+    if (!g[TIMER_KEY]) return
+    clearInterval(g[TIMER_KEY])
+    g[TIMER_KEY] = undefined
+  })
 })

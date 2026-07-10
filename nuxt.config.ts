@@ -4,6 +4,11 @@ import { resolve } from 'node:path'
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const isProduction = process.env.NODE_ENV === 'production'
 const databaseMigrationsDir = 'server/db/migrations/postgresql'
+const privatePageRouteRule = {
+  headers: {
+    'cache-control': 'private, no-store'
+  }
+}
 
 export default defineNuxtConfig({
   modules: [
@@ -32,6 +37,20 @@ export default defineNuxtConfig({
       secret: '',
       apiKeySecret: '',
     },
+  },
+  routeRules: {
+    '/admin': privatePageRouteRule,
+    '/admin/**': privatePageRouteRule,
+    '/user': privatePageRouteRule,
+    '/user/**': privatePageRouteRule,
+    '/login': privatePageRouteRule,
+    '/register': privatePageRouteRule,
+    '/oauth': privatePageRouteRule,
+    '/oauth/**': privatePageRouteRule,
+    '/verify-email': privatePageRouteRule,
+    '/confirm-email-change': privatePageRouteRule,
+    '/forgot-password': privatePageRouteRule,
+    '/reset-password': privatePageRouteRule
   },
   compatibilityDate: '2026-06-30',
   nitro: {

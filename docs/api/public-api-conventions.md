@@ -189,7 +189,7 @@ export default defineEventHandler(listCryptoAlgorithms)
 
 ## 7. 后台启用与配置（必做）
 
-代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [manifestSync](../../server/plugins/manifest-sync.ts) 会对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库（取 [`DEFAULT_API_REGISTRATION`](../../server/config/api-guard.ts#L14) 默认值，关键是默认 `isEnabled=false`）。
+代码部署后，gate 会查数据库 `apis` 表。但你**不需要手动新增**这条记录：每次 `pnpm build` / 重启 `pnpm dev`，统一的 [启动插件](../../server/plugins/00.startup.ts) 会在数据库迁移和管理员初始化后对账 manifest 与 `apis` 表，把 manifest 里**新出现**的 `(pathVersion, code)` 自动入库，并刷新已有记录的路由投影（取 [`DEFAULT_API_REGISTRATION`](../../server/config/api-guard.ts#L14) 默认值，关键是默认 `isEnabled=false`）。
 
 所以新接口接入后会经历两种 gate 拒绝状态，**都属正常**，按状态对症处理即可：
 

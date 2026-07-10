@@ -232,7 +232,7 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 
 > **核心：注册是自动的，你只需启用。** 字段速查见 [对外接口落地规范 §7](./public-api-conventions.md#7-后台启用与配置必做)；下面讲清背后的同步机制。
 
-**机制**：每次 `pnpm build` / 重启 `pnpm dev`，启动期插件 [server/plugins/manifest-sync.ts](../../server/plugins/manifest-sync.ts) 会对账 manifest 与 `apis` 表（[manifest-sync.ts:3-15](../../server/plugins/manifest-sync.ts#L3-L15)）：
+**机制**：每次 `pnpm build` / 重启 `pnpm dev`，统一的 [server/plugins/00.startup.ts](../../server/plugins/00.startup.ts) 会在数据库迁移和管理员初始化后对账 manifest 与 `apis` 表：
 
 - **manifest 有 / DB 无** → **自动以 [`DEFAULT_API_REGISTRATION`](../../server/config/api-guard.ts#L14) 入库**，但默认 `isEnabled=false`、`isApiKey=false`、`isStatistics=false`、`methodCosts={}`、分钟/小时限流 60/1000，**留待管理员启用**。
 - **manifest 有 / DB 有** → 刷新 `apiPath` / `httpMethod` / `endpointCount`，自动清除 orphan 标记。
