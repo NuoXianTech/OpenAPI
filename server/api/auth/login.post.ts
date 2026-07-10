@@ -5,7 +5,7 @@ import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { assertLoginRateLimit } from '~~/server/utils/login-rate-limit'
+import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readZodBody } from '~~/server/utils/zod'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 
@@ -18,13 +18,16 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const ip = getRequestIP(event) || '0.0.0.0'
   const userAgent = getHeader(event, 'user-agent') || null
-  await assertLoginRateLimit({
+  const canAttemptLogin = await canConsumeIdentityRateLimit({
     namespace: 'login',
-    account: emailOrUsername,
-    ip,
-    accountLimit: 5,
-    ipLimit: 30
+    buckets: [
+      { name: 'account', value: emailOrUsername, limit: 5, window: 'minute' },
+      { name: 'ip', value: ip, limit: 30, window: 'minute' }
+    ]
   })
+  if (!canAttemptLogin) {
+    throw createError({ statusCode: 429, message: '尝试次数过多，请稍后再试' })
+  }
   await assertTurnstileForPage('login', turnstileToken, ip)
 
   // 支持通过 email 或 username 登录；用户和管理员共用 users 表，用 role 决定登录后的入口。

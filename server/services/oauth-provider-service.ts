@@ -113,10 +113,5 @@ export const oauthProviderService = {
     await siteSettingsService.update(input)
 
     return { provider, clientId: nextClientId, clientSecret: nextSecret, isEnabled: nextEnabled }
-  },
-
-  async getSiteCallbackUrl(provider: string) {
-    const settings = await siteSettingsService.getOrCreate()
-    return buildCallbackUrl(settings.siteUrl, provider)
   }
 }

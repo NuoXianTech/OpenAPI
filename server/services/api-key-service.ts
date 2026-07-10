@@ -112,11 +112,6 @@ interface CreateApiKeyInput {
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 
 export const apiKeyService = {
-  async getByApiKey(apiKey: string) {
-    const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, apiKey)).limit(1)
-    return firstRow(res)
-  },
-
   async listByUser(userId: number) {
     return db.select().from(apiKeys)
       .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))

@@ -28,12 +28,6 @@ export const oauthAccountService = {
     return firstRow(res)
   },
 
-  async listByUserId(userId: number) {
-    return db.select().from(oauthAccounts)
-      .where(eq(oauthAccounts.userId, userId))
-      .orderBy(desc(oauthAccounts.linkedAt))
-  },
-
   /** 用户视角：列出该用户绑定的所有第三方账号，仅返回展示用字段 */
   async listSafeByUserId(userId: number) {
     const rows = await db.select({

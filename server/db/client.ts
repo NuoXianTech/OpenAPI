@@ -157,7 +157,7 @@ let sqlClient: PostgresClient | undefined
 let pgliteClient: PgliteClient | undefined
 let database: Database | undefined
 
-export function getDb() {
+function getDb() {
   const driver = getDatabaseDriver()
 
   if (driver === 'postgres' && !sqlClient) {
@@ -182,5 +182,3 @@ export const db = new Proxy({} as Database, {
     return Reflect.get(getDb(), property)
   }
 })
-
-export { schema }

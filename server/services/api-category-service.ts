@@ -14,6 +14,16 @@ export interface ApiCategoryInput {
   isEnabled?: boolean
 }
 
+async function findCategoryByCode(code: string) {
+  const rows = await db.select().from(apiCategories).where(eq(apiCategories.code, code)).limit(1)
+  return firstRow(rows)
+}
+
+async function countBoundApis(categoryId: number): Promise<number> {
+  const [row] = await db.select({ value: count() }).from(apis).where(eq(apis.categoryId, categoryId))
+  return row?.value ?? 0
+}
+
 export const apiCategoryService = {
   async listAll() {
     return db.select().from(apiCategories)
@@ -27,21 +37,11 @@ export const apiCategoryService = {
       .orderBy(asc(apiCategories.sortOrder), asc(apiCategories.name))
   },
 
-  async getById(id: number) {
-    const res = await db.select().from(apiCategories).where(eq(apiCategories.id, id)).limit(1)
-    return firstRow(res)
-  },
-
-  async getByCode(code: string) {
-    const res = await db.select().from(apiCategories).where(eq(apiCategories.code, code)).limit(1)
-    return firstRow(res)
-  },
-
   async create(input: ApiCategoryInput) {
     const code = input.code.trim()
     if (!code) throw createError({ statusCode: 400, message: 'code is required' })
 
-    const existing = await this.getByCode(code)
+    const existing = await findCategoryByCode(code)
     if (existing) throw createError({ statusCode: 409, message: 'category code already exists' })
 
     const res = await db.insert(apiCategories).values({
@@ -67,18 +67,12 @@ export const apiCategoryService = {
     return firstRow(res)
   },
 
-  /** 统计绑定到该分类的接口数量（含已禁用 / orphan 接口） */
-  async countBoundApis(id: number) {
-    const [row] = await db.select({ value: count() }).from(apis).where(eq(apis.categoryId, id))
-    return row?.value ?? 0
-  },
-
   /**
    * 软删分类。删除前校验无接口绑定：只要仍有接口（含禁用 / orphan）的 categoryId
    * 指向该分类，就拒绝删除并提示 admin 先改这些接口的分类，避免接口悬挂在不可见分类上。
    */
   async softDelete(id: number) {
-    const boundCount = await this.countBoundApis(id)
+    const boundCount = await countBoundApis(id)
     if (boundCount > 0) {
       throw createError({
         statusCode: 409,

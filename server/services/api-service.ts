@@ -121,6 +121,13 @@ function resolvePublicApiStatus(row: typeof apis.$inferSelect, autoStatusMap: Re
   return autoStatusMap[row.id] ?? API_STATUS.unknown
 }
 
+async function findApiById(id: number) {
+  const rows = await db.select().from(apis)
+    .where(eq(apis.id, id))
+    .limit(1)
+  return firstRow(rows)
+}
+
 export const apiService = {
   async listPublicApis(filters: ApiListFilters = {}) {
     const requestedStatus = filters.status
@@ -158,20 +165,6 @@ export const apiService = {
       .filter(row => typeof requestedStatus !== 'number' || row.status === requestedStatus)
   },
 
-  async getById(id: number) {
-    const res = await db.select().from(apis)
-      .where(eq(apis.id, id))
-      .limit(1)
-    return firstRow(res)
-  },
-
-  async getByCode(code: string) {
-    const res = await db.select().from(apis)
-      .where(eq(apis.code, code))
-      .limit(1)
-    return firstRow(res)
-  },
-
   /**
    * Gate 专用：按 (pathVersion, code) 读取完整治理配置。
    * 命中 LRU 缓存（TTL 15s）避免热路径反复查库。
@@ -188,11 +181,6 @@ export const apiService = {
     const value = firstRow(rows)
     guardConfigCache.set(cacheKey, { value, expiresAt: now + API_META_CACHE_TTL_MS })
     return value
-  },
-
-  /** 使某 code 的 guard 缓存失效（admin 修改后调用） */
-  invalidateGuardConfig(pathVersion: string, code: string) {
-    guardConfigCache.delete(`${pathVersion}:${code}`)
   },
 
   /** 按版本列出已登记 APIs，admin 页面分 tab 使用 */
@@ -220,7 +208,7 @@ export const apiService = {
       ...patch
     } = data as Partial<typeof apis.$inferInsert>
 
-    const existing = await this.getById(id)
+    const existing = await findApiById(id)
     if (!existing) return null
 
     // Orphan 守护：文件夹物理删除后，禁止再启用接口或开统计
@@ -291,7 +279,7 @@ export const apiService = {
   async toggleApiField(id: number, field: 'isEnabled' | 'isStatistics', value: boolean, updatedBy?: number | null) {
     // orphan 接口禁止开启 isEnabled / isStatistics；统计只能在接口启用后开启。
     if (value === true) {
-      const existing = await this.getById(id)
+      const existing = await findApiById(id)
       if (!existing) return null
       if (existing?.isOrphaned) {
         throw new Error('该接口对应的源文件已被物理删除，无法启用相关功能；如需恢复请补回 server/routes 中的同名文件夹')

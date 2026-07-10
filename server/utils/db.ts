@@ -1,1 +1,1 @@
-export { db, getDb } from '~~/server/db/client'
+export { db } from '~~/server/db/client'

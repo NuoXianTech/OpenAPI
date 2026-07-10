@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, isNull } from 'drizzle-orm'
 import { announcements } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
 import { firstRow } from '~~/server/utils/row'
@@ -28,11 +28,6 @@ export const announcementService = {
         eq(announcements.isEnabled, true)
       ))
       .orderBy(desc(announcements.isPinned), asc(announcements.sortOrder), desc(announcements.createdAt))
-  },
-
-  async getById(id: number) {
-    const res = await db.select().from(announcements).where(eq(announcements.id, id)).limit(1)
-    return firstRow(res)
   },
 
   async create(input: AnnouncementInput, actorUserId: number | null) {
@@ -69,12 +64,5 @@ export const announcementService = {
       .where(eq(announcements.id, id))
       .returning()
     return firstRow(res)
-  },
-
-  async bumpSort(id: number, direction: 'up' | 'down') {
-    const delta = direction === 'up' ? -1 : 1
-    await db.update(announcements)
-      .set({ sortOrder: sql`${announcements.sortOrder} + ${delta}`, updatedAt: new Date() })
-      .where(eq(announcements.id, id))
   }
 }

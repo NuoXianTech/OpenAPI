@@ -7,7 +7,7 @@ import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { canConsumeAnonymousEmailIpRateLimit } from '~~/server/utils/rate-limit/anonymous-action'
+import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '~~/server/utils/ban'
 
@@ -28,12 +28,12 @@ export default defineEventHandler(async (event: H3Event) => {
   await assertTurnstileForPage('passwordReset', turnstileToken, ip)
 
   // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回 200，不暴露阈值与是否存在）。
-  const canRequestReset = await canConsumeAnonymousEmailIpRateLimit({
+  const canRequestReset = await canConsumeIdentityRateLimit({
     namespace: 'password-reset',
-    email,
-    ip,
-    emailLimit: 1,
-    ipLimit: 10
+    buckets: [
+      { name: 'email', value: email, limit: 1, window: 'minute' },
+      { name: 'ip', value: ip, limit: 10, window: 'hour' }
+    ]
   })
   if (!canRequestReset) return null
 

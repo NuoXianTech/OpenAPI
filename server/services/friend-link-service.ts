@@ -14,11 +14,6 @@ export const friendLinkService = {
       .orderBy(desc(friendLinks.updatedAt))
   },
 
-  async getById(id: number) {
-    const res = await db.select().from(friendLinks).where(eq(friendLinks.id, id)).limit(1)
-    return firstRow(res)
-  },
-
   async create(data: {
     title: string
     url: string

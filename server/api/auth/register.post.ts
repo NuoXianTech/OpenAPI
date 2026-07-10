@@ -9,7 +9,7 @@ import { issueVerificationTokenUrl, normalizeSiteUrl } from '~~/server/utils/ver
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
-import { canConsumeAnonymousEmailIpRateLimit } from '~~/server/utils/rate-limit/anonymous-action'
+import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
@@ -40,12 +40,12 @@ export default defineEventHandler(async (event: H3Event) => {
   await assertTurnstileForPage('register', turnstileToken, ip)
 
   // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回中性响应，不暴露阈值与是否存在）。
-  const canRegister = await canConsumeAnonymousEmailIpRateLimit({
+  const canRegister = await canConsumeIdentityRateLimit({
     namespace: 'register',
-    email,
-    ip,
-    emailLimit: 1,
-    ipLimit: 10
+    buckets: [
+      { name: 'email', value: email, limit: 1, window: 'minute' },
+      { name: 'ip', value: ip, limit: 10, window: 'hour' }
+    ]
   })
   if (!canRegister) return neutralResponse
 

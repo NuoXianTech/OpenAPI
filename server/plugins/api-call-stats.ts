@@ -16,17 +16,7 @@ import { pendingChargeService } from '~~/server/services/pending-charge-service'
 import { shouldCharge } from '~~/server/utils/api-call-outcome'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { isGuardedPath, normalizePathname } from '~~/server/config/api-guard'
-
-interface ApiStatsTracked {
-  startedAt: number
-  pathname: string
-  method: string
-  ip: string | null
-  requestSize: number | null
-  userAgent: string | null
-  referer: string | null
-  queryString: string | null
-}
+import type { ApiStatsTracked } from '~~/server/types/api-guard'
 
 // 调用日志写入规则：
 //   - DO_NOT_WRITE_LOG_OUTCOMES：完全不写 apiCalls 行
@@ -49,13 +39,6 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'expired_api_key',
   'insufficient_credits'
 ])
-
-declare module 'h3' {
-  interface H3EventContext {
-    apiStatsTracked?: ApiStatsTracked
-    requestId?: string
-  }
-}
 
 function parseOptionalInt(value: string | string[] | number | null | undefined) {
   const normalized = Array.isArray(value) ? value[0] : value
