@@ -37,7 +37,6 @@ const {
 })
 
 const overlay = useOverlay()
-const detailModal = overlay.create(LazyUserCallLogDetailModal, { destroyOnClose: true })
 const columnVisibility = ref<Record<string, boolean>>({})
 
 interface ToggleableColumn {
@@ -81,7 +80,11 @@ onMounted(() => {
 })
 
 function openDetail(row: UserCallLogRow) {
-  detailModal.open({ row })
+  const detailModal = overlay.create(LazyUserCallLogDetailModal, {
+    destroyOnClose: true,
+    props: { row }
+  })
+  void detailModal.open()
 }
 </script>
 

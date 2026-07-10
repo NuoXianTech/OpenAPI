@@ -32,14 +32,17 @@ const {
 })
 
 const overlay = useOverlay()
-const detailModal = overlay.create(LazyAdminCallLogDetailModal, { destroyOnClose: true })
 
 onMounted(() => {
   void loadFilterOptions()
 })
 
 function openDetail(row: AdminLogRow) {
-  detailModal.open({ row })
+  const detailModal = overlay.create(LazyAdminCallLogDetailModal, {
+    destroyOnClose: true,
+    props: { row }
+  })
+  void detailModal.open()
 }
 </script>
 
