@@ -14,6 +14,7 @@ import {
 } from '~~/server/utils/shared-cache'
 import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
+import { getSqlState } from '~~/server/utils/database-error'
 
 function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
@@ -102,6 +103,33 @@ function createGuardCacheKey(pathVersion: string, code: string): string {
   return `cache:guard:${pathVersion}:${code}`
 }
 
+interface ApiManifestRegistration {
+  pathVersion: string
+  code: string
+  apiPath: string
+  httpMethod: string
+  endpointCount: number
+  createdBy: number | null
+  defaults: {
+    name: string
+    shortDesc: string
+    description: string
+    docUrl: string
+    status: number
+    categoryId: number | null
+    isEnabled: boolean
+    isApiKey: boolean
+    isStatistics: boolean
+    rateLimitPerSecond: number
+    rateLimitPerMinute: number
+    rateLimitPerHour: number
+    rateLimitPerDay: number
+    dailyQuota: number
+    methodCosts: Record<string, number>
+    timeoutMs: number
+  }
+}
+
 function createPublicApiListCacheKey(filters: ApiListFilters, version: number): string {
   const digest = createHash('sha256').update(JSON.stringify(filters)).digest('hex')
   return `cache:public:apis:v${version}:${digest}`
@@ -125,6 +153,57 @@ async function findApiById(id: number) {
     .where(eq(apis.id, id))
     .limit(1)
   return firstRow(rows)
+}
+
+async function findApiByVersionCode(pathVersion: string, code: string) {
+  const rows = await db.select().from(apis)
+    .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
+    .limit(1)
+  return firstRow(rows)
+}
+
+async function updateManifestProjection(
+  existing: typeof apis.$inferSelect,
+  data: ApiManifestRegistration
+) {
+  const incomingMethods = normalizeMethodList(data.httpMethod)
+  const methodChanged = existing.httpMethod !== incomingMethods
+  const hasProjectionChange = existing.apiPath !== data.apiPath
+    || methodChanged
+    || existing.endpointCount !== data.endpointCount
+    || existing.isOrphaned
+
+  if (!hasProjectionChange) return existing
+
+  const patch: Partial<typeof apis.$inferInsert> = {
+    apiPath: data.apiPath,
+    httpMethod: incomingMethods,
+    endpointCount: data.endpointCount,
+    isOrphaned: false,
+    updatedBy: data.createdBy,
+    updatedAt: new Date()
+  }
+
+  if (existing.isOrphaned && methodChanged) {
+    patch.isEnabled = false
+    patch.isStatistics = false
+  }
+
+  const rows = await db.update(apis)
+    .set(patch)
+    .where(eq(apis.id, existing.id))
+    .returning()
+  const updated = firstRow(rows)
+  if (updated) await invalidateApiCaches(updated)
+
+  if (methodChanged) {
+    console.warn(
+      `[api-manifest] httpMethod changed for ${data.pathVersion}/${data.code}: `
+      + `"${existing.httpMethod}" → "${incomingMethods}"${existing.isOrphaned ? ' (orphan recovered, kept disabled for admin review)' : ''}`
+    )
+  }
+
+  return updated
 }
 
 export const apiService = {
@@ -345,103 +424,51 @@ export const apiService = {
    * 当 orphan 接口被重新注册时（文件夹回归），自动清除 isOrphaned 标志；
    * isEnabled/isStatistics 仍保持原值（admin 需要主动启用，避免静默上线）。
    */
-  async registerFromManifest(data: {
-    pathVersion: string
-    code: string
-    apiPath: string
-    httpMethod: string
-    endpointCount: number
-    createdBy: number | null
-    defaults: {
-      name: string
-      shortDesc: string
-      description: string
-      docUrl: string
-      status: number
-      categoryId: number | null
-      isEnabled: boolean
-      isApiKey: boolean
-      isStatistics: boolean
-      rateLimitPerSecond: number
-      rateLimitPerMinute: number
-      rateLimitPerHour: number
-      rateLimitPerDay: number
-      dailyQuota: number
-      methodCosts: Record<string, number>
-      timeoutMs: number
-    }
-  }) {
+  async registerFromManifest(data: ApiManifestRegistration) {
     if (data.defaults.isStatistics && !data.defaults.isEnabled) {
       throw new Error('启用统计前必须先启用接口')
     }
 
-    const existing = await this.loadGuardConfig(data.pathVersion, data.code)
+    const existing = await findApiByVersionCode(data.pathVersion, data.code)
     if (existing) {
-      const incomingMethods = normalizeMethodList(data.httpMethod)
-      const methodChanged = existing.httpMethod !== incomingMethods
-      const wasOrphan = existing.isOrphaned
-
-      const patch: Partial<typeof apis.$inferInsert> = {
-        apiPath: data.apiPath,
-        httpMethod: incomingMethods,
-        endpointCount: data.endpointCount,
-        isOrphaned: false,
-        updatedBy: data.createdBy,
-        updatedAt: new Date()
-      }
-
-      // 从 orphan 状态回归且方法集变化（新增/减少了 xxx.<method>.ts）：保持禁用，
-      // 让 admin 主动复核——避免悄无声息地把"看似同名但行为已变"的接口重新上线
-      if (wasOrphan && methodChanged) {
-        patch.isEnabled = false
-        patch.isStatistics = false
-      }
-
-      const res = await db.update(apis)
-        .set(patch)
-        .where(eq(apis.id, existing.id))
-        .returning()
-      const updated = firstRow(res)
-      if (updated) await invalidateApiCaches(updated)
-
-      if (methodChanged) {
-        console.warn(
-          `[api-manifest] httpMethod changed for ${data.pathVersion}/${data.code}: `
-          + `"${existing.httpMethod}" → "${incomingMethods}"${wasOrphan ? ' (orphan recovered, kept disabled for admin review)' : ''}`
-        )
-      }
-
-      return updated
+      return updateManifestProjection(existing, data)
     }
 
-    const res = await db.insert(apis).values({
-      code: data.code,
-      pathVersion: data.pathVersion,
-      endpointCount: data.endpointCount,
-      name: data.defaults.name,
-      status: data.defaults.status,
-      categoryId: data.defaults.categoryId,
-      shortDesc: data.defaults.shortDesc,
-      description: data.defaults.description,
-      httpMethod: normalizeMethodList(data.httpMethod),
-      apiPath: data.apiPath,
-      docUrl: data.defaults.docUrl,
-      isEnabled: data.defaults.isEnabled,
-      isApiKey: data.defaults.isApiKey,
-      isStatistics: data.defaults.isStatistics,
-      rateLimitPerSecond: data.defaults.rateLimitPerSecond,
-      rateLimitPerMinute: data.defaults.rateLimitPerMinute,
-      rateLimitPerHour: data.defaults.rateLimitPerHour,
-      rateLimitPerDay: data.defaults.rateLimitPerDay,
-      dailyQuota: data.defaults.dailyQuota,
-      methodCosts: data.defaults.methodCosts,
-      timeoutMs: data.defaults.timeoutMs,
-      createdBy: data.createdBy,
-      updatedBy: data.createdBy
-    }).returning()
-    const inserted = firstRow(res)
-    if (inserted) await invalidateApiCaches(inserted)
-    return inserted
+    try {
+      const rows = await db.insert(apis).values({
+        code: data.code,
+        pathVersion: data.pathVersion,
+        endpointCount: data.endpointCount,
+        name: data.defaults.name,
+        status: data.defaults.status,
+        categoryId: data.defaults.categoryId,
+        shortDesc: data.defaults.shortDesc,
+        description: data.defaults.description,
+        httpMethod: normalizeMethodList(data.httpMethod),
+        apiPath: data.apiPath,
+        docUrl: data.defaults.docUrl,
+        isEnabled: data.defaults.isEnabled,
+        isApiKey: data.defaults.isApiKey,
+        isStatistics: data.defaults.isStatistics,
+        rateLimitPerSecond: data.defaults.rateLimitPerSecond,
+        rateLimitPerMinute: data.defaults.rateLimitPerMinute,
+        rateLimitPerHour: data.defaults.rateLimitPerHour,
+        rateLimitPerDay: data.defaults.rateLimitPerDay,
+        dailyQuota: data.defaults.dailyQuota,
+        methodCosts: data.defaults.methodCosts,
+        timeoutMs: data.defaults.timeoutMs,
+        createdBy: data.createdBy,
+        updatedBy: data.createdBy
+      }).returning()
+      const inserted = firstRow(rows)
+      if (inserted) await invalidateApiCaches(inserted)
+      return inserted
+    } catch (error) {
+      if (getSqlState(error) !== '23505') throw error
+      const concurrent = await findApiByVersionCode(data.pathVersion, data.code)
+      if (!concurrent) throw error
+      return updateManifestProjection(concurrent, data)
+    }
   },
 
   /**

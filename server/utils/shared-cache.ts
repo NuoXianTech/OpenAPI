@@ -12,8 +12,6 @@ export interface SharedCacheOptions<TValue> {
   key: string
   ttlSeconds: number
   loader: () => Promise<TValue>
-  lockMs?: number
-  lockWaitMs?: number
 }
 
 export interface SharedCacheDependencies {
@@ -25,29 +23,21 @@ export interface SharedCacheDependencies {
   sleep: (milliseconds: number) => Promise<void>
 }
 
-export interface SharedCache {
-  get<TValue>(options: SharedCacheOptions<TValue>): Promise<TValue>
-  delete(keys: string[]): Promise<void>
-  getVersion(namespace: string): Promise<number>
-  incrementVersion(namespace: string): Promise<number>
-}
-
-interface MemoryCacheEntry {
+interface CacheEntry {
   value: unknown
   expiresAt: number
 }
 
-interface CacheReadResult<TValue> {
+interface CacheResult<TValue> {
   hit: boolean
   value?: TValue
 }
 
-const DEFAULT_LOCK_MS = 2_000
-const DEFAULT_LOCK_WAIT_MS = 500
-const LOCK_POLL_INTERVAL_MS = 50
+const LOCK_TTL_MS = 10_000
+const LOCK_WAIT_MS = 500
+const LOCK_POLL_MS = 50
+const MAX_MEMORY_ENTRIES = 500
 const TTL_JITTER_RATIO = 0.1
-const MAX_MEMORY_CACHE_ENTRIES = 500
-const CACHE_WARNING_INTERVAL_MS = 60_000
 const RELEASE_LOCK_SCRIPT = `
 if redis.call('GET', KEYS[1]) == ARGV[1] then
   return redis.call('DEL', KEYS[1])
@@ -62,307 +52,231 @@ redis.call('SET', KEYS[1], 2)
 return 2
 `
 
-function normalizeKeyPrefix(value: string): string {
-  return value.endsWith(':') ? value : `${value}:`
-}
-
-function createDefaultDependencies(): SharedCacheDependencies {
-  return {
-    getClient() {
-      return getRedisClient() as unknown as SharedCacheClient | null
-    },
-    getKeyPrefix() {
-      return getRedisConfig().keyPrefix
-    },
+export function createSharedCache(
+  dependencies: Partial<SharedCacheDependencies> = {}
+) {
+  const resolvedDependencies: SharedCacheDependencies = {
+    getClient: () => getRedisClient() as unknown as SharedCacheClient | null,
+    getKeyPrefix: () => getRedisConfig().keyPrefix,
     now: Date.now,
     random: Math.random,
     createToken: randomUUID,
-    sleep(milliseconds) {
-      return new Promise(resolve => setTimeout(resolve, milliseconds))
-    }
+    sleep: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
+    ...dependencies
   }
-}
-
-export function createSharedCache(
-  dependencies: Partial<SharedCacheDependencies> = {}
-): SharedCache {
-  const defaults = createDefaultDependencies()
-  const resolvedDependencies: SharedCacheDependencies = { ...defaults, ...dependencies }
-  const memoryCache = new Map<string, MemoryCacheEntry>()
-  const inFlightLoads = new Map<string, Promise<unknown>>()
+  const memory = new Map<string, CacheEntry>()
+  const pendingLoads = new Map<string, Promise<unknown>>()
   const localVersions = new Map<string, number>()
-  const warningTimestamps = new Map<string, number>()
+  const loggedFailures = new Set<string>()
 
   function toFullKey(key: string): string {
-    return `${normalizeKeyPrefix(resolvedDependencies.getKeyPrefix())}${key}`
+    const prefix = resolvedDependencies.getKeyPrefix()
+    return `${prefix.endsWith(':') ? prefix : `${prefix}:`}${key}`
   }
 
-  function getClientSafely(): SharedCacheClient | null {
-    try {
-      return resolvedDependencies.getClient()
-    } catch (error) {
-      warnCacheFailure('client', error)
-      return null
-    }
-  }
-
-  function warnCacheFailure(operation: string, error: unknown): void {
-    const now = resolvedDependencies.now()
-    const lastWarningAt = warningTimestamps.get(operation)
-    if (lastWarningAt !== undefined && now - lastWarningAt < CACHE_WARNING_INTERVAL_MS) return
-
-    warningTimestamps.set(operation, now)
-    console.warn('[shared-cache] Redis operation failed; using database or process memory fallback', {
+  function warnOnce(operation: string, error: unknown): void {
+    if (loggedFailures.has(operation)) return
+    loggedFailures.add(operation)
+    console.warn('[shared-cache] Redis unavailable; using database or memory fallback', {
       operation,
       error: error instanceof Error ? error.message : String(error)
     })
   }
 
-  function readMemory<TValue>(fullKey: string): CacheReadResult<TValue> {
-    const entry = memoryCache.get(fullKey)
+  function createTtlMs(ttlSeconds: number): number {
+    const random = Math.min(Math.max(resolvedDependencies.random(), 0), 1)
+    const multiplier = 1 - TTL_JITTER_RATIO + random * TTL_JITTER_RATIO * 2
+    return Math.max(1, Math.round(ttlSeconds * 1_000 * multiplier))
+  }
+
+  function readMemory<TValue>(key: string): CacheResult<TValue> {
+    const entry = memory.get(key)
     if (!entry) return { hit: false }
     if (entry.expiresAt <= resolvedDependencies.now()) {
-      memoryCache.delete(fullKey)
+      memory.delete(key)
       return { hit: false }
     }
     return { hit: true, value: entry.value as TValue }
   }
 
-  function createTtlMs(ttlSeconds: number): number {
-    const boundedRandom = Math.min(Math.max(resolvedDependencies.random(), 0), 1)
-    const jitterMultiplier = 1 - TTL_JITTER_RATIO + boundedRandom * TTL_JITTER_RATIO * 2
-    return Math.max(1, Math.round(ttlSeconds * 1_000 * jitterMultiplier))
-  }
-
-  function writeMemory<TValue>(fullKey: string, value: TValue, ttlMs: number): void {
-    if (memoryCache.size >= MAX_MEMORY_CACHE_ENTRIES) {
+  function writeMemory<TValue>(key: string, value: TValue, ttlMs: number): void {
+    if (memory.size >= MAX_MEMORY_ENTRIES) {
       const now = resolvedDependencies.now()
-      for (const [key, entry] of memoryCache) {
-        if (entry.expiresAt <= now) memoryCache.delete(key)
+      for (const [entryKey, entry] of memory) {
+        if (entry.expiresAt <= now) memory.delete(entryKey)
       }
-      while (memoryCache.size >= MAX_MEMORY_CACHE_ENTRIES) {
-        const oldestKey = memoryCache.keys().next().value as string | undefined
+      while (memory.size >= MAX_MEMORY_ENTRIES) {
+        const oldestKey = memory.keys().next().value as string | undefined
         if (!oldestKey) break
-        memoryCache.delete(oldestKey)
+        memory.delete(oldestKey)
       }
     }
-    memoryCache.set(fullKey, {
-      value,
-      expiresAt: resolvedDependencies.now() + ttlMs
-    })
+    memory.set(key, { value, expiresAt: resolvedDependencies.now() + ttlMs })
   }
 
-  async function readRedis<TValue>(
-    client: SharedCacheClient,
-    fullKey: string
-  ): Promise<CacheReadResult<TValue>> {
-    const serialized = await client.get(fullKey)
+  async function readRedis<TValue>(client: SharedCacheClient, key: string): Promise<CacheResult<TValue>> {
+    const serialized = await client.get(key)
     if (serialized === null) return { hit: false }
-
     try {
       return { hit: true, value: JSON.parse(serialized) as TValue }
     } catch (error) {
-      warnCacheFailure('parse', error)
-      try {
-        await client.del(fullKey)
-      } catch (deleteError) {
-        warnCacheFailure('delete-corrupt', deleteError)
-      }
+      warnOnce('parse', error)
+      await client.del(key).catch(deleteError => warnOnce('delete-corrupt', deleteError))
       return { hit: false }
     }
   }
 
-  async function writeRedis<TValue>(
-    client: SharedCacheClient,
-    fullKey: string,
-    value: TValue,
-    ttlMs: number
-  ): Promise<boolean> {
-    try {
-      const serialized = JSON.stringify(value)
-      if (serialized === undefined) return false
-      await client.set(fullKey, serialized, 'PX', ttlMs)
-      return true
-    } catch (error) {
-      warnCacheFailure('write', error)
-      return false
-    }
-  }
-
-  async function loadWithoutRedis<TValue>(
-    fullKey: string,
+  async function loadSource<TValue>(
+    key: string,
     ttlMs: number,
-    loader: () => Promise<TValue>
+    loader: () => Promise<TValue>,
+    client: SharedCacheClient | null
   ): Promise<TValue> {
-    const memoryResult = readMemory<TValue>(fullKey)
-    if (memoryResult.hit) return memoryResult.value as TValue
-
     const value = await loader()
-    writeMemory(fullKey, value, ttlMs)
+    if (client) {
+      try {
+        const serialized = JSON.stringify(value)
+        if (serialized !== undefined) {
+          await client.set(key, serialized, 'PX', ttlMs)
+          return value
+        }
+      } catch (error) {
+        warnOnce('write', error)
+      }
+    }
+    writeMemory(key, value, ttlMs)
     return value
   }
 
-  async function releaseLock(
-    client: SharedCacheClient,
-    lockKey: string,
-    token: string
-  ): Promise<void> {
-    try {
-      await client.eval(RELEASE_LOCK_SCRIPT, 1, lockKey, token)
-    } catch (error) {
-      warnCacheFailure('unlock', error)
-    }
-  }
-
-  async function waitForRedisValue<TValue>(
-    client: SharedCacheClient,
-    fullKey: string,
-    waitMs: number
-  ): Promise<CacheReadResult<TValue>> {
-    const deadline = resolvedDependencies.now() + waitMs
-    while (resolvedDependencies.now() < deadline) {
-      await resolvedDependencies.sleep(LOCK_POLL_INTERVAL_MS)
-      try {
-        const result = await readRedis<TValue>(client, fullKey)
-        if (result.hit) return result
-      } catch (error) {
-        warnCacheFailure('wait-read', error)
-        return { hit: false }
-      }
-    }
-    return { hit: false }
-  }
-
-  async function loadWithRedis<TValue>(
-    client: SharedCacheClient,
-    fullKey: string,
+  async function loadMemory<TValue>(
+    key: string,
     ttlMs: number,
-    options: SharedCacheOptions<TValue>
+    loader: () => Promise<TValue>
   ): Promise<TValue> {
-    const lockKey = `${fullKey}:lock`
+    const cached = readMemory<TValue>(key)
+    return cached.hit ? cached.value as TValue : loadSource(key, ttlMs, loader, null)
+  }
+
+  async function loadRedis<TValue>(
+    client: SharedCacheClient,
+    key: string,
+    ttlMs: number,
+    loader: () => Promise<TValue>
+  ): Promise<TValue> {
+    const lockKey = `${key}:lock`
     const token = resolvedDependencies.createToken()
-    const lockMs = options.lockMs ?? DEFAULT_LOCK_MS
-    let lockResult: unknown
-
+    let acquired = false
     try {
-      lockResult = await client.set(lockKey, token, 'PX', lockMs, 'NX')
+      acquired = await client.set(lockKey, token, 'PX', LOCK_TTL_MS, 'NX') === 'OK'
     } catch (error) {
-      warnCacheFailure('lock', error)
-      return loadWithoutRedis(fullKey, ttlMs, options.loader)
+      warnOnce('lock', error)
+      return loadMemory(key, ttlMs, loader)
     }
 
-    if (lockResult !== 'OK') {
-      const waitedResult = await waitForRedisValue<TValue>(
-        client,
-        fullKey,
-        options.lockWaitMs ?? DEFAULT_LOCK_WAIT_MS
-      )
-      if (waitedResult.hit) return waitedResult.value as TValue
-
-      const value = await options.loader()
-      const didWrite = await writeRedis(client, fullKey, value, ttlMs)
-      if (!didWrite) writeMemory(fullKey, value, ttlMs)
-      return value
+    if (!acquired) {
+      const deadline = resolvedDependencies.now() + LOCK_WAIT_MS
+      while (resolvedDependencies.now() < deadline) {
+        await resolvedDependencies.sleep(LOCK_POLL_MS)
+        try {
+          const cached = await readRedis<TValue>(client, key)
+          if (cached.hit) return cached.value as TValue
+        } catch (error) {
+          warnOnce('wait-read', error)
+          return loadMemory(key, ttlMs, loader)
+        }
+      }
+      return loadSource(key, ttlMs, loader, client)
     }
 
     try {
-      const value = await options.loader()
-      const didWrite = await writeRedis(client, fullKey, value, ttlMs)
-      if (!didWrite) writeMemory(fullKey, value, ttlMs)
-      return value
+      return await loadSource(key, ttlMs, loader, client)
     } finally {
-      await releaseLock(client, lockKey, token)
+      await client.eval(RELEASE_LOCK_SCRIPT, 1, lockKey, token)
+        .catch(error => warnOnce('unlock', error))
+    }
+  }
+
+  async function coalesce<TValue>(key: string, loader: () => Promise<TValue>): Promise<TValue> {
+    const existing = pendingLoads.get(key) as Promise<TValue> | undefined
+    if (existing) return existing
+
+    const pending = loader()
+    pendingLoads.set(key, pending)
+    try {
+      return await pending
+    } finally {
+      pendingLoads.delete(key)
     }
   }
 
   async function get<TValue>(options: SharedCacheOptions<TValue>): Promise<TValue> {
-    const fullKey = toFullKey(options.key)
-    const client = getClientSafely()
+    const key = toFullKey(options.key)
     const ttlMs = createTtlMs(options.ttlSeconds)
-
-    async function runCoalesced(loader: () => Promise<TValue>): Promise<TValue> {
-      const existingLoad = inFlightLoads.get(fullKey) as Promise<TValue> | undefined
-      if (existingLoad) return existingLoad
-
-      const pendingLoad = loader()
-      inFlightLoads.set(fullKey, pendingLoad)
-      try {
-        return await pendingLoad
-      } finally {
-        inFlightLoads.delete(fullKey)
-      }
+    let client: SharedCacheClient | null
+    try {
+      client = resolvedDependencies.getClient()
+    } catch (error) {
+      warnOnce('client', error)
+      client = null
     }
 
-    if (!client) {
-      return runCoalesced(() => loadWithoutRedis(fullKey, ttlMs, options.loader))
-    }
+    if (!client) return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
 
     try {
-      const redisResult = await readRedis<TValue>(client, fullKey)
-      if (redisResult.hit) return redisResult.value as TValue
+      const cached = await readRedis<TValue>(client, key)
+      if (cached.hit) return cached.value as TValue
     } catch (error) {
-      warnCacheFailure('read', error)
-      return runCoalesced(() => loadWithoutRedis(fullKey, ttlMs, options.loader))
+      warnOnce('read', error)
+      return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
     }
 
-    return runCoalesced(() => loadWithRedis(client, fullKey, ttlMs, options))
+    return coalesce(key, () => loadRedis(client, key, ttlMs, options.loader))
   }
 
   async function deleteKeys(keys: string[]): Promise<void> {
-    if (keys.length === 0) return
     const fullKeys = keys.map(toFullKey)
-    for (const fullKey of fullKeys) memoryCache.delete(fullKey)
+    for (const key of fullKeys) memory.delete(key)
+    if (fullKeys.length === 0) return
 
-    const client = getClientSafely()
-    if (!client) return
     try {
-      await client.del(...fullKeys)
+      await resolvedDependencies.getClient()?.del(...fullKeys)
     } catch (error) {
-      warnCacheFailure('delete', error)
+      warnOnce('delete', error)
     }
   }
 
   async function getVersion(namespace: string): Promise<number> {
-    const versionKey = toFullKey(`cache:version:${namespace}`)
-    const client = getClientSafely()
-    if (!client) return localVersions.get(versionKey) ?? 1
-
+    const key = toFullKey(`cache:version:${namespace}`)
     try {
-      const existingValue = Number(await client.get(versionKey))
-      if (Number.isSafeInteger(existingValue) && existingValue > 0) return existingValue
-
-      const initialized = await client.set(versionKey, '1', 'NX')
-      if (initialized === 'OK') return 1
-      const value = Number(await client.get(versionKey))
-      return Number.isSafeInteger(value) && value > 0 ? value : 1
+      const client = resolvedDependencies.getClient()
+      if (!client) return localVersions.get(key) ?? 1
+      const current = Number(await client.get(key))
+      if (Number.isSafeInteger(current) && current > 0) return current
+      if (await client.set(key, '1', 'NX') === 'OK') return 1
+      const initialized = Number(await client.get(key))
+      return Number.isSafeInteger(initialized) && initialized > 0 ? initialized : 1
     } catch (error) {
-      warnCacheFailure('version-read', error)
-      return localVersions.get(versionKey) ?? 1
+      warnOnce('version-read', error)
+      return localVersions.get(key) ?? 1
     }
   }
 
   async function incrementVersion(namespace: string): Promise<number> {
-    const versionKey = toFullKey(`cache:version:${namespace}`)
-    const nextLocalVersion = (localVersions.get(versionKey) ?? 1) + 1
-    localVersions.set(versionKey, nextLocalVersion)
-
-    const client = getClientSafely()
-    if (!client) return nextLocalVersion
+    const key = toFullKey(`cache:version:${namespace}`)
+    const localVersion = (localVersions.get(key) ?? 1) + 1
+    localVersions.set(key, localVersion)
     try {
-      const value = Number(await client.eval(INCREMENT_VERSION_SCRIPT, 1, versionKey))
-      return Number.isSafeInteger(value) && value > 0 ? value : nextLocalVersion
+      const client = resolvedDependencies.getClient()
+      if (!client) return localVersion
+      const version = Number(await client.eval(INCREMENT_VERSION_SCRIPT, 1, key))
+      return Number.isSafeInteger(version) && version > 0 ? version : localVersion
     } catch (error) {
-      warnCacheFailure('version-increment', error)
-      return nextLocalVersion
+      warnOnce('version-increment', error)
+      return localVersion
     }
   }
 
-  return {
-    get,
-    delete: deleteKeys,
-    getVersion,
-    incrementVersion
-  }
+  return { get, delete: deleteKeys, getVersion, incrementVersion }
 }
 
 const sharedCache = createSharedCache()

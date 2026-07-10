@@ -1,0 +1,10 @@
+.data
+.git
+.github
+.nuxt
+.output
+.vscode
+node_modules
+*.log
+.env
+.env.*

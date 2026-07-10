@@ -16,7 +16,28 @@ pnpm build
 
 构建命令会生成 `.output/server/index.mjs`。生产启动入口使用 Nuxt/Nitro 官方 Node server 入口，不再通过自定义 `start.mjs` 包装应用启动。
 
-不要在资源较小的 VPS 上执行 `pnpm build`。Nuxt/Nitro 生产构建可能短时间占用数 GB 内存，推荐在本地工作站或 CI 构建后上传 `.output`。
+不要在资源较小的 VPS 上执行 `pnpm build`。Nuxt/Nitro 生产构建可能短时间占用数 GB 内存，推荐在 Linux CI 或项目提供的 Docker 构建阶段完成构建。
+
+## 部署入口与目录
+
+Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工修改。它不是普通源码项目：`.output/server/package.json` 只描述运行依赖，默认没有 `scripts`。
+
+- 面板工作目录是项目源码根目录：使用 `pnpm start`。
+- 面板工作目录是 `.output`：使用 `node server/index.mjs`。
+- 面板工作目录是 `.output/server`：使用 `node index.mjs`，不要选择“从 package.json scripts 启动”。
+
+必须上传整个 `.output`，包括隐藏的 `.output/server/node_modules/.nitro`。不要只上传 `server`，也不要使用会忽略隐藏目录或破坏符号链接的压缩工具。Windows 构建产物含 Junction，跨系统上传容易出现 `Cannot find module 'entities/decode'`；生产优先在 Linux CI 或 Docker 内构建。
+
+## Docker 部署（推荐）
+
+仓库根目录的 `Dockerfile` 在 Linux builder 中构建，并将完整 Nitro 产物复制到精简运行镜像：
+
+```bash
+docker build -t openapi:latest .
+docker run --rm -p 3000:3000 --env-file .env openapi:latest
+```
+
+镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。生产数据库和 Redis 地址仍通过运行时环境变量注入。
 
 ## 上传文件
 
@@ -92,7 +113,7 @@ pm2 restart openapi --update-env
 
 建议在 Node 进程前放置 Nginx，并反向代理到 `127.0.0.1:3000`。
 
-不要为同一个 PGlite 数据目录启动多个 Node 进程。需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。限流、缓存、扣费补偿扫描和 Manifest 同步由 Redis 协调，PostgreSQL 迁移由 advisory lock 串行化。
+不要为同一个 PGlite 数据目录启动多个 Node 进程。需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。限流、缓存和扣费补偿扫描由 Redis 协调；Manifest 注册依靠数据库唯一约束保持幂等，PostgreSQL 迁移由 advisory lock 串行化。
 
 ## 发布后检查
 

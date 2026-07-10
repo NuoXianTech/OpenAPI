@@ -13,6 +13,7 @@ import {
   getDatabaseUrl,
   getPgliteDataDir
 } from './client'
+import { getSqlState } from '../utils/database-error'
 
 interface MigrationFolder {
   path: string
@@ -114,19 +115,6 @@ async function ensureDatabaseExists() {
   } finally {
     await adminClient.end()
   }
-}
-
-function getSqlState(error: unknown) {
-  if (!error || typeof error !== 'object') return undefined
-
-  const direct = 'code' in error ? error.code : undefined
-  if (typeof direct === 'string') return direct
-
-  const cause = 'cause' in error ? error.cause : undefined
-  if (!cause || typeof cause !== 'object') return undefined
-
-  const causeCode = 'code' in cause ? cause.code : undefined
-  return typeof causeCode === 'string' ? causeCode : undefined
 }
 
 async function migrateOnce(migrationsFolder: string) {

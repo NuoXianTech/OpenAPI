@@ -24,6 +24,7 @@ pnpm build
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
 | 管理员账号 | 首次启动后从服务端控制台记录自动生成的 `admin` 随机密码，并通过 `/login` 登录后完成一次初始化弹窗 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入 |
+| 部署产物 | 完整发布 `.output`；跨系统部署优先使用 Linux CI/Docker，不能遗漏 `node_modules/.nitro` |
 | 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `PGLITE_DATA_DIR` |
 | 巡检 | 发布负责人已阅读 [生产运行手册](./production-runbook.md) 的回滚和异常处置 |

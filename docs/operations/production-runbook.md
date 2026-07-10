@@ -41,6 +41,8 @@ curl -fsS http://127.0.0.1:3000/api/list
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
 | readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
+| 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
+| SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
 | 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[pending-charges]` 日志 |
 | 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |

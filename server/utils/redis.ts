@@ -17,7 +17,6 @@ export interface RedisConfig {
 let redisClient: Redis | null = null
 let redisClientUrl = ''
 let redisInitialization: Promise<Redis | null> | null = null
-let redisInitializationUrl = ''
 
 function normalizeBoolean(value: unknown): boolean {
   return value === true || value === 'true' || value === '1'
@@ -76,6 +75,7 @@ export function getRedisClient(): Redis | null {
   if (redisClient && redisClientUrl === config.url) return redisClient
 
   redisClient?.disconnect()
+  redisInitialization = null
   redisClientUrl = config.url
   redisClient = new Redis(config.url, {
     lazyConnect: true,
@@ -94,19 +94,14 @@ export function getRedisClient(): Redis | null {
 }
 
 export async function initializeRedis(): Promise<Redis | null> {
-  const config = getRedisConfig()
   const client = getRedisClient()
   if (!client) {
     redisInitialization = null
-    redisInitializationUrl = ''
     return null
   }
 
-  if (redisInitialization && redisInitializationUrl === config.url) {
-    return redisInitialization
-  }
+  if (redisInitialization) return redisInitialization
 
-  redisInitializationUrl = config.url
   const initialization = (async () => {
     try {
       if (client.status === 'wait') await client.connect()
@@ -118,7 +113,6 @@ export async function initializeRedis(): Promise<Redis | null> {
   })().catch((error) => {
     if (redisInitialization === initialization) {
       redisInitialization = null
-      redisInitializationUrl = ''
     }
     throw error
   })
@@ -132,7 +126,6 @@ export async function closeRedis(): Promise<void> {
   redisClient = null
   redisClientUrl = ''
   redisInitialization = null
-  redisInitializationUrl = ''
   if (!client) return
 
   try {

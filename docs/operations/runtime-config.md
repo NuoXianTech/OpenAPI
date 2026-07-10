@@ -38,9 +38,9 @@
 
 `.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
 
-Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，公开统计与内容短缓存，以及扣费补偿扫描、启动期 API Manifest 同步的分布式租约。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
+Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，公开统计与内容短缓存，以及扣费补偿扫描的分布式互斥。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
 
-缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。后台协调采用带 token 校验和自动续租的 Redis lease；可选模式故障时回退当前进程互斥，强制模式则跳过任务或阻止启动，避免多实例重复调度。
+缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。扣费扫描使用带 token 校验和固定 TTL 的最小 Redis lease；可选模式故障时回退当前进程互斥，强制模式则跳过任务，避免多实例重复调度。
 
 单实例开发可以不配置 Redis。多 Node 实例生产必须使用 PostgreSQL，并同时配置 `NUXT_REDIS_URL` 与 `NUXT_REDIS_REQUIRED=true`；PGlite 数据目录只允许一个 Node 进程。PostgreSQL 迁移另有数据库 advisory lock，即使多个实例同时启动也会串行执行。
 

@@ -12,19 +12,9 @@ import { apiService } from '~~/server/services/api-service'
 import { usersService, USER_ROLES } from '~~/server/services/user-service'
 import type { ManifestApi } from '~~/server/types/api-guard'
 import { hashPassword } from '~~/server/utils/auth'
-import { withDistributedLease } from '~~/server/utils/distributed-lease'
+import { getSqlState } from '~~/server/utils/database-error'
 
 const API_MANIFEST = RAW_API_MANIFEST as readonly ManifestApi[]
-const MANIFEST_SYNC_LEASE_TTL_MS = 300_000
-const MANIFEST_SYNC_WAIT_MS = 300_000
-
-function getSqlState(error: unknown): string | undefined {
-  if (!error || typeof error !== 'object') return undefined
-  const code = 'code' in error ? error.code : undefined
-  if (typeof code === 'string') return code
-  const cause = 'cause' in error ? error.cause : undefined
-  return getSqlState(cause)
-}
 
 function inferApiPath(api: ManifestApi): string {
   const baseEndpoint = api.endpoints.find(endpoint => endpoint.paramNames.length === 0) ?? api.endpoints[0]
@@ -105,23 +95,6 @@ async function ensureInitialAdmin(): Promise<void> {
   console.info('[startup] Sign in and rotate this password immediately.')
 }
 
-async function syncApiManifestWithCoordination(): Promise<void> {
-  const result = await withDistributedLease({
-    key: 'startup-api-manifest',
-    ttlMs: MANIFEST_SYNC_LEASE_TTL_MS,
-    waitMs: MANIFEST_SYNC_WAIT_MS,
-    retryIntervalMs: 250,
-    renewIntervalMs: 30_000
-  }, syncApiManifest)
-
-  if (!result.acquired) {
-    throw new Error('Timed out waiting for API manifest synchronization lease')
-  }
-  if (result.leaseLost) {
-    throw new Error('API manifest synchronization lease was lost')
-  }
-}
-
 async function syncApiManifest(): Promise<void> {
   const databaseApis = await db.select({
     id: apis.id,
@@ -168,7 +141,7 @@ async function syncApiManifest(): Promise<void> {
 async function initializeServer(): Promise<void> {
   await migrateDatabase()
   await ensureInitialAdmin()
-  await syncApiManifestWithCoordination()
+  await syncApiManifest()
 }
 
 export default defineNitroPlugin((nitroApp) => {

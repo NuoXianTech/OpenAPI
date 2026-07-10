@@ -10,7 +10,7 @@ import { withDistributedLease } from '~~/server/utils/distributed-lease'
 
 const SCAN_INTERVAL_MS = 30_000
 const BATCH_SIZE = 20
-const WORKER_LEASE_TTL_MS = 120_000
+const WORKER_LEASE_TTL_MS = 300_000
 const TIMER_KEY = Symbol.for('pendingChargesRetry.timer')
 
 type GlobalWithTimer = typeof globalThis & {
@@ -61,15 +61,10 @@ async function processDueCharges(): Promise<void> {
 
 async function runOnce(): Promise<void> {
   try {
-    const result = await withDistributedLease({
+    await withDistributedLease({
       key: 'pending-charges-retry',
-      ttlMs: WORKER_LEASE_TTL_MS,
-      renewIntervalMs: 30_000
+      ttlMs: WORKER_LEASE_TTL_MS
     }, processDueCharges)
-
-    if (result.leaseLost) {
-      console.error('[pending-charges] Redis worker lease was lost before the batch completed')
-    }
   } catch (error) {
     console.error('[pending-charges] Worker coordination unavailable; scan skipped', {
       error: error instanceof Error ? error.message : String(error)
