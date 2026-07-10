@@ -165,15 +165,15 @@ export function createSharedCache(
   ): Promise<TValue> {
     const lockKey = `${key}:lock`
     const token = resolvedDependencies.createToken()
-    let acquired = false
+    let isLockOwner: boolean
     try {
-      acquired = await client.set(lockKey, token, 'PX', LOCK_TTL_MS, 'NX') === 'OK'
+      isLockOwner = await client.set(lockKey, token, 'PX', LOCK_TTL_MS, 'NX') === 'OK'
     } catch (error) {
       warnOnce('lock', error)
       return loadMemory(key, ttlMs, loader)
     }
 
-    if (!acquired) {
+    if (!isLockOwner) {
       const deadline = resolvedDependencies.now() + LOCK_WAIT_MS
       while (resolvedDependencies.now() < deadline) {
         await resolvedDependencies.sleep(LOCK_POLL_MS)

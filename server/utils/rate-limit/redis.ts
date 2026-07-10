@@ -56,6 +56,17 @@ export function createRedisRateLimiter(options: CreateRedisRateLimiterOptions): 
       const nowMs = options.now?.() ?? Date.now()
       const windowStart = alignWindow(nowMs, windowSeconds)
       const resetAtMs = windowStart + windowSeconds * 1_000
+
+      if (limit <= 0) {
+        return {
+          allowed: true,
+          remaining: Number.MAX_SAFE_INTEGER,
+          resetAtMs,
+          limit,
+          window
+        } satisfies RateLimitResult
+      }
+
       const hashedKey = (options.hashKey ?? defaultHashKey)(key)
       const redisKey = `${options.config.keyPrefix}rate-limit:${window}:${windowStart}:${hashedKey}`
 
@@ -67,8 +78,8 @@ export function createRedisRateLimiter(options: CreateRedisRateLimiterOptions): 
           String(resetAtMs)
         ))
         return {
-          allowed: limit <= 0 || count <= limit,
-          remaining: limit <= 0 ? Number.MAX_SAFE_INTEGER : Math.max(limit - count, 0),
+          allowed: count <= limit,
+          remaining: Math.max(limit - count, 0),
           resetAtMs,
           limit,
           window

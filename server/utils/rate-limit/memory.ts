@@ -53,16 +53,26 @@ const memoryRateLimiter: RateLimiter = {
 
     const windowStart = alignWindow(now, windowSec)
     const resetAtMs = windowStart + windowSec * 1_000
+
+    if (limit <= 0) {
+      return {
+        allowed: true,
+        remaining: Number.MAX_SAFE_INTEGER,
+        resetAtMs,
+        limit,
+        window
+      } satisfies RateLimitResult
+    }
+
     const bk = bucketKey(key, window, windowStart)
 
     const existing = buckets.get(bk)
     const nextCount = (existing?.count ?? 0) + 1
     buckets.set(bk, { windowStart, count: nextCount, expiresAt: resetAtMs })
 
-    const allowed = limit <= 0 ? true : nextCount <= limit
     return {
-      allowed,
-      remaining: limit <= 0 ? Number.MAX_SAFE_INTEGER : Math.max(limit - nextCount, 0),
+      allowed: nextCount <= limit,
+      remaining: Math.max(limit - nextCount, 0),
       resetAtMs,
       limit,
       window

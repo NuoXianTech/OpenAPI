@@ -18,6 +18,25 @@ function createFallbackLimiter(): RateLimiter {
 }
 
 describe('Redis rate limiter', () => {
+  it('skips Redis for unlimited windows', async () => {
+    const evalCommand = vi.fn(async () => 1)
+    const limiter = createRedisRateLimiter({
+      client: { eval: evalCommand },
+      config: { keyPrefix: 'openapi:', required: true },
+      fallback: createFallbackLimiter(),
+      now: () => 61_000
+    })
+
+    await expect(limiter.consume('public', 0, 'minute')).resolves.toEqual({
+      allowed: true,
+      remaining: Number.MAX_SAFE_INTEGER,
+      resetAtMs: 120_000,
+      limit: 0,
+      window: 'minute'
+    })
+    expect(evalCommand).not.toHaveBeenCalled()
+  })
+
   it('uses an opaque fixed-window key and returns the atomic count result', async () => {
     const evalCommand = vi.fn(async () => 2)
     const limiter = createRedisRateLimiter({
