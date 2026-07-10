@@ -1,6 +1,7 @@
 import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
 import {
+  createEnumQueryCodec,
   createNumberQueryCodec,
   createStringArrayQueryCodec,
   createStringQueryCodec,
@@ -14,14 +15,19 @@ interface TestFilters extends Record<string, unknown> {
 }
 
 describe('useDashboardListState', () => {
-  it('hydrates, syncs, resets, and serializes compact query values', async () => {
+  it('hydrates, syncs, and serializes compact query values', async () => {
     const numberCodec = createNumberQueryCodec(0)
     const arrayCodec = createStringArrayQueryCodec([])
+    const statusCodec = createEnumQueryCodec(['all', 'success', 'failure'] as const, 'all')
+    const restrictedArrayCodec = createStringArrayQueryCodec([], ['consume', 'error'] as const)
 
     expect(numberCodec.parse('bad')).toBe(0)
     expect(numberCodec.serialize(0)).toBeUndefined()
     expect(arrayCodec.parse('consume,error')).toEqual(['consume', 'error'])
     expect(arrayCodec.serialize(['consume', 'error'])).toBe('consume,error')
+    expect(statusCodec.parse('invalid')).toBe('all')
+    expect(statusCodec.serialize('success')).toBe('success')
+    expect(restrictedArrayCodec.parse('consume,invalid,error')).toEqual(['consume', 'error'])
 
     const replaceQuery = vi.fn()
     const query = ref<Record<string, unknown>>({
@@ -53,8 +59,8 @@ describe('useDashboardListState', () => {
     state.filters.apiId = 12
     state.filters.keyword = 'abc'
     state.filters.types = ['consume']
-    state.page.value = 4
-    await state.applyFilters()
+    state.page.value = 1
+    await state.syncQuery()
 
     expect(state.page.value).toBe(1)
     expect(replaceQuery).toHaveBeenLastCalledWith({
@@ -64,18 +70,17 @@ describe('useDashboardListState', () => {
       types: 'consume'
     })
 
-    await state.resetFilters()
-
-    expect(state.filters).toMatchObject({ apiId: 0, keyword: '', types: [] })
-    expect(state.page.value).toBe(1)
-    expect(replaceQuery).toHaveBeenLastCalledWith({ pageSize: 20 })
-
     state.page.value = 3
     await nextTick()
     state.pageSize.value = 25
     await nextTick()
 
     expect(state.page.value).toBe(1)
-    expect(replaceQuery).toHaveBeenLastCalledWith({ pageSize: 25 })
+    expect(replaceQuery).toHaveBeenLastCalledWith({
+      apiId: 12,
+      keyword: 'abc',
+      pageSize: 25,
+      types: 'consume'
+    })
   })
 })

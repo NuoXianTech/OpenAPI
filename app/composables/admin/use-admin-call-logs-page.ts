@@ -58,23 +58,6 @@ export const ADMIN_CALL_LOG_TYPE_META: Record<AdminLogType, {
   error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' }
 }
 
-function isAdminLogType(value: string): value is AdminLogType {
-  return ADMIN_LOG_TYPES.includes(value as AdminLogType)
-}
-
-function createAdminLogTypesQueryCodec(): DashboardQueryCodec<AdminLogType[]> {
-  const stringArrayCodec = createStringArrayQueryCodec([])
-
-  return {
-    parse(value) {
-      return stringArrayCodec.parse(value).filter(isAdminLogType)
-    },
-    serialize(value) {
-      return value.length ? value.join(',') : undefined
-    }
-  }
-}
-
 function createOptionalNumberQueryCodec(): DashboardQueryCodec<number | ''> {
   return {
     parse(value) {
@@ -100,7 +83,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
       endAt: createStringQueryCodec(''),
       apiId: createNumberQueryCodec(0),
       categoryId: createNumberQueryCodec(0),
-      types: createAdminLogTypesQueryCodec(),
+      types: createStringArrayQueryCodec<AdminLogType>([], ADMIN_LOG_TYPES),
       apiKeyId: createOptionalNumberQueryCodec(),
       userId: createOptionalNumberQueryCodec(),
       requestId: createStringQueryCodec('')

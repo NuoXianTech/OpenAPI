@@ -33,8 +33,6 @@ interface UseDashboardListStateReturn<TFilters extends object> {
   page: Ref<number>
   pageSize: Ref<number>
   activeQuery: Readonly<Ref<Record<string, string | number>>>
-  applyFilters: () => Promise<void>
-  resetFilters: () => Promise<void>
   syncQuery: () => Promise<void>
 }
 
@@ -75,14 +73,37 @@ export function createStringQueryCodec(defaultValue = ''): DashboardQueryCodec<s
   }
 }
 
-export function createStringArrayQueryCodec(defaultValue: string[] = []): DashboardQueryCodec<string[]> {
+export function createEnumQueryCodec<TValue extends string>(
+  values: readonly TValue[],
+  defaultValue: TValue
+): DashboardQueryCodec<TValue> {
+  const allowedValues = new Set(values)
+
   return {
     parse(value) {
-      const values = Array.isArray(value) ? value : String(value ?? '').split(',')
-      return values
+      const parsed = String(firstQueryValue(value) ?? defaultValue) as TValue
+      return allowedValues.has(parsed) ? parsed : defaultValue
+    },
+    serialize(value) {
+      return value === defaultValue ? undefined : value
+    }
+  }
+}
+
+export function createStringArrayQueryCodec<TValue extends string = string>(
+  defaultValue: readonly TValue[] = [],
+  values?: readonly TValue[]
+): DashboardQueryCodec<TValue[]> {
+  const allowedValues = values ? new Set(values) : null
+
+  return {
+    parse(value) {
+      const rawValues = Array.isArray(value) ? value : String(value ?? '').split(',')
+      const parsed = rawValues
         .flatMap(item => String(item).split(','))
         .map(item => item.trim())
-        .filter(Boolean)
+        .filter(Boolean) as TValue[]
+      return allowedValues ? parsed.filter(item => allowedValues.has(item)) : parsed
     },
     serialize(value) {
       const isDefault = value.length === defaultValue.length
@@ -141,20 +162,6 @@ export function useDashboardListState<TFilters extends object>(
     await replaceQuery?.(activeQuery.value)
   }
 
-  async function applyFilters() {
-    page.value = defaultPage
-    await syncQuery()
-  }
-
-  async function resetFilters() {
-    const next = cloneFilters(defaultFilters)
-    for (const key of Object.keys(next) as Array<keyof TFilters>) {
-      filters[key] = next[key]
-    }
-    page.value = defaultPage
-    await syncQuery()
-  }
-
   watch(page, () => {
     void syncQuery()
   })
@@ -169,8 +176,6 @@ export function useDashboardListState<TFilters extends object>(
     page,
     pageSize,
     activeQuery,
-    applyFilters,
-    resetFilters,
     syncQuery
   }
 }

@@ -2,9 +2,9 @@ import type { TableColumn } from '@nuxt/ui'
 import { watchDebounced } from '@vueuse/core'
 import { computed, ref, type MaybeRefOrGetter } from 'vue'
 import {
+  createEnumQueryCodec,
   createNumberQueryCodec,
   createStringQueryCodec,
-  type DashboardQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
@@ -52,22 +52,7 @@ const USER_CALL_LOG_DEFAULT_FILTERS: UserCallLogFilters = {
   status: 'all'
 }
 
-function isUserCallStatus(value: string): value is UserCallLogFilters['status'] {
-  return value === 'all' || value === 'success' || value === 'failure'
-}
-
-function createUserCallStatusQueryCodec(): DashboardQueryCodec<UserCallLogFilters['status']> {
-  return {
-    parse(value) {
-      const raw = Array.isArray(value) ? value[0] : value
-      const status = String(raw ?? 'all')
-      return isUserCallStatus(status) ? status : 'all'
-    },
-    serialize(value) {
-      return value === 'all' ? undefined : value
-    }
-  }
-}
+const USER_CALL_STATUSES = ['all', 'success', 'failure'] as const
 
 function isUserCallSuccess(row: UserCallLogRow) {
   return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
@@ -99,7 +84,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
       keyword: createStringQueryCodec(''),
       apiId: createNumberQueryCodec(0),
       apiKeyId: createNumberQueryCodec(0),
-      status: createUserCallStatusQueryCodec()
+      status: createEnumQueryCodec(USER_CALL_STATUSES, 'all')
     }
   })
 
