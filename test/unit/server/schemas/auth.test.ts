@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { registerSchema } from '#shared/schemas/auth'
+import { registerSchema } from '~~/server/schemas/auth'
 
 describe('authentication schemas', () => {
   it('returns user-facing messages for missing registration fields', () => {

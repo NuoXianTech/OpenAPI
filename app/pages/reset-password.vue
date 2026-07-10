@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ResetPasswordInput } from '#shared/schemas/auth'
+import type { ResetPasswordInput } from '#shared/types/auth'
 import { parseFetchError } from '~/utils/client-error'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import {

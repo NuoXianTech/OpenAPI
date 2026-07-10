@@ -4,7 +4,7 @@ import {
   apiKeyUpdateFields,
   hasApiKeyUpdateField
 } from '../api-key'
-import { atLeastOneFieldMessage, positiveInt } from '#shared/schemas/validation'
+import { atLeastOneFieldMessage, positiveInt } from '../validation'
 
 export const adminCreateUserApiKeySchema = z.object({
   userId: positiveInt('用户 ID'),

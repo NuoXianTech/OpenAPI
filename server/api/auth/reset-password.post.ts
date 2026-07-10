@@ -1,7 +1,7 @@
 // 消费 reset_password token 并设置新密码。
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
-import { resetPasswordSchema } from '#shared/schemas/auth'
+import { resetPasswordSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { siteSettingsService } from '~~/server/services/site-settings-service'

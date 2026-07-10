@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { messageLevelSchema } from '../common'
-import { requiredString } from '#shared/schemas/validation'
+import { requiredString } from '../validation'
 
 export const adminCreateAnnouncementSchema = z.object({
   title: requiredString('公告标题'),

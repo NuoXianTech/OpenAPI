@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { emailSchema, passwordSchema, usernameSchema } from '#shared/schemas/validation'
+import { emailSchema, passwordSchema, usernameSchema } from '../validation'
 
 export const adminInitialProfileSchema = z.object({
   username: usernameSchema,

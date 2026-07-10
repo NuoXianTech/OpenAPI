@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { RequestPasswordResetInput } from '#shared/schemas/auth'
+import type { RequestPasswordResetInput } from '#shared/types/auth'
 import { parseFetchError } from '~/utils/client-error'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { compactFormErrors, emailError } from '~/utils/form-validation'

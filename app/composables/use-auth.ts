@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput } from '#shared/schemas/auth'
+import type { LoginInput, RegisterInput } from '#shared/types/auth'
 
 interface AuthUser {
   id: number

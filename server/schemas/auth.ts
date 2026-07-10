@@ -1,4 +1,11 @@
 import { z } from 'zod'
+import type {
+  ConfirmEmailChangeInput,
+  LoginInput,
+  RegisterInput,
+  RequestPasswordResetInput,
+  ResetPasswordInput
+} from '#shared/types/auth'
 import { emailSchema, passwordSchema, positiveInt, usernameSchema } from './validation'
 
 export const registerSchema = z.object({
@@ -6,8 +13,7 @@ export const registerSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
   turnstileToken: z.string().optional()
-})
-export type RegisterInput = z.output<typeof registerSchema>
+}) satisfies z.ZodType<RegisterInput>
 
 export const loginSchema = z
   .object({
@@ -17,11 +23,10 @@ export const loginSchema = z
     remember: z.boolean().optional(),
     turnstileToken: z.string().optional()
   })
-  .refine(d => Boolean(d.email || d.username), {
+  .refine(data => Boolean(data.email || data.username), {
     message: '请输入邮箱或用户名',
     path: ['email']
-  })
-export type LoginInput = z.output<typeof loginSchema>
+  }) satisfies z.ZodType<LoginInput>
 
 export const oauthBindSchema = z.object({
   identifier: z.string().trim().min(1, '请输入邮箱或用户名'),
@@ -39,18 +44,15 @@ export const oauthRegisterSchema = z.object({
 export const requestPasswordResetSchema = z.object({
   email: emailSchema,
   turnstileToken: z.string().optional()
-})
-export type RequestPasswordResetInput = z.output<typeof requestPasswordResetSchema>
+}) satisfies z.ZodType<RequestPasswordResetInput>
 
 export const resetPasswordSchema = z.object({
   userId: positiveInt('用户 ID'),
   token: z.string().min(1, '缺少重置令牌'),
   newPassword: passwordSchema
-})
-export type ResetPasswordInput = z.output<typeof resetPasswordSchema>
+}) satisfies z.ZodType<ResetPasswordInput>
 
 export const confirmEmailChangeSchema = z.object({
   userId: positiveInt('用户 ID'),
   token: z.string().min(1, '缺少确认令牌')
-})
-export type ConfirmEmailChangeInput = z.output<typeof confirmEmailChangeSchema>
+}) satisfies z.ZodType<ConfirmEmailChangeInput>

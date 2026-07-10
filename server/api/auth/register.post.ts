@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
-import { registerSchema } from '#shared/schemas/auth'
+import { registerSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { hashPassword } from '~~/server/utils/auth'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'

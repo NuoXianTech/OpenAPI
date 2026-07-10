@@ -1,7 +1,7 @@
 // OAuth 待绑定身份 → 绑定到「已有账号」：窗口内账密验证账号归属后再 link，然后登录。
 import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
-import { oauthBindSchema } from '#shared/schemas/auth'
+import { oauthBindSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
 import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pending'

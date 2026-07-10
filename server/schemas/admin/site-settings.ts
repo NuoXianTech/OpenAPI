@@ -9,7 +9,7 @@ import {
   positiveInt,
   requiredHttpUrl,
   requiredString
-} from '#shared/schemas/validation'
+} from '../validation'
 
 const emailFilterMode = z.preprocess(
   v => (v === '' || v === null ? undefined : v),

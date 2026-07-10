@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { isApiStatusValue } from '#shared/config/api-status'
-import { enumMessage, nonNegativeInt, positiveInt, requiredString } from '#shared/schemas/validation'
+import { enumMessage, nonNegativeInt, positiveInt, requiredString } from '../validation'
 
 const methodCostsSchema = z.preprocess(
   (v) => {

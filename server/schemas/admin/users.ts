@@ -6,7 +6,7 @@ import {
   passwordSchema,
   positiveInt,
   usernameSchema
-} from '#shared/schemas/validation'
+} from '../validation'
 import { displayNameSchema, optionalDate } from '../common'
 
 const userRoleSchema = z.enum(['user', 'admin'])

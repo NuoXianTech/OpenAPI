@@ -5,7 +5,7 @@ import {
   hasApiKeyUpdateField
 } from './api-key'
 import { displayNameSchema } from './common'
-import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from '#shared/schemas/validation'
+import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from './validation'
 
 // Profile
 export const userUpdateProfileSchema = z.object({

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
-import { loginSchema } from '#shared/schemas/auth'
+import { loginSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'

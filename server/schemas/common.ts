@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { maxMessage } from '#shared/schemas/validation'
+import { maxMessage } from './validation'
 import { MESSAGE_LEVELS } from '#shared/types/content'
 
 export const idSchema = z.object({

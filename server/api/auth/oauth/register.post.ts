@@ -3,7 +3,7 @@
 import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { randomBytes } from 'node:crypto'
-import { oauthRegisterSchema } from '#shared/schemas/auth'
+import { oauthRegisterSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
 import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pending'

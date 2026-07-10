@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { positiveInt, requiredString } from '#shared/schemas/validation'
+import { positiveInt, requiredString } from '../validation'
 
 export const adminCreateApiCategorySchema = z.object({
   code: requiredString('分类标识'),

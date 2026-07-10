@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { isCidr } from '#shared/utils/cidr'
-import { maxMessage, minMessage, requiredMessage } from '#shared/schemas/validation'
+import { maxMessage, minMessage, requiredMessage } from './validation'
 import { optionalDate } from './common'
 
 export const apiKeyNameSchema = z.string().trim().max(80, maxMessage('名称', 80))
