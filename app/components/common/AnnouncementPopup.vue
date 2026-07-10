@@ -4,6 +4,10 @@ import {
   type Announcement,
   type MessageLevelMeta
 } from '#shared/types/content'
+import {
+  getLatestAnnouncementRevision,
+  hasNewerAnnouncement
+} from '~/utils/announcement-dismissal'
 /**
  * 公告弹窗：自动加载生效中的公告，按 isPinned > sortOrder > createdAt 排序，
  * 默认展开第一条，其余收起。
@@ -12,8 +16,8 @@ import {
  * 公告数量无上限，body 限高 60dvh 后内部滚动，头/尾固定。
  * 暗色由 --ui-* 语义变量自动适配。
  *
- * 弹出时机：组件挂载且存在生效公告时自动 open。不记忆已读状态，
- * 每次进入首页都会展示。
+ * 弹出时机：组件挂载且存在生效公告时自动 open。用户选择“不再提醒”后，
+ * 当前浏览器会记录公告版本；新增或更新公告后自动恢复展示，游客同样适用。
  */
 
 // 预解析为展示项：把等级元数据与日期格式化提前算好，模板保持声明式无逻辑。
@@ -32,6 +36,7 @@ interface AnnouncementItem {
 
 const open = ref(false)
 const expandedIds = ref<string[]>([])
+const dismissedRevision = useLocalStorage('openapi:announcement-popup:dismissed-revision', '')
 
 // useFetch 全局唯一 key，多个组件实例共用一份缓存。
 // lazy + server: false：不阻塞 SSR、不影响首屏 LCP，hydrate 后再拉。
@@ -47,6 +52,7 @@ const { data } = useFetch<Announcement[]>(
 
 const items = computed<Announcement[]>(() => data.value || [])
 const latestId = computed(() => items.value[0]?.id ?? null)
+const currentRevision = computed(() => getLatestAnnouncementRevision(items.value))
 
 const accordionItems = computed<AnnouncementItem[]>(() => items.value.map(a => ({
   value: String(a.id),
@@ -61,9 +67,9 @@ const accordionItems = computed<AnnouncementItem[]>(() => items.value.map(a => (
 })))
 
 // 数据为 lazy 拉取：挂载时若缓存已有公告立即弹，否则等数据到来再弹。
-// 不持久化已读状态，每次进入首页都会展示。
 function openIfHasAnnouncements() {
   if (!import.meta.client || items.value.length === 0) return
+  if (!hasNewerAnnouncement(currentRevision.value, dismissedRevision.value)) return
   expandedIds.value = latestId.value !== null ? [String(latestId.value)] : []
   open.value = true
 }
@@ -76,6 +82,13 @@ watch(items, openIfHasAnnouncements)
 // 是纯黑描边，看起来像“黑色边框”圈住第一条。键盘 Tab 仍可正常进入弹窗。
 function preventAutoFocus(event: Event) {
   event.preventDefault()
+}
+
+function dismissCurrentAnnouncements() {
+  if (currentRevision.value) {
+    dismissedRevision.value = currentRevision.value
+  }
+  open.value = false
 }
 </script>
 
@@ -194,16 +207,24 @@ function preventAutoFocus(event: Event) {
     <template #footer>
       <div class="flex w-full items-center gap-3">
         <p class="hidden text-xs text-muted sm:block">
-          每次进入首页都会展示最新公告
+          新公告发布后会再次提醒
         </p>
-        <UButton
-          color="neutral"
-          icon="i-mdi-check"
-          class="ml-auto"
-          @click="() => { open = false }"
-        >
-          我知道了
-        </UButton>
+        <div class="ml-auto flex items-center gap-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            @click="dismissCurrentAnnouncements"
+          >
+            不再提醒
+          </UButton>
+          <UButton
+            color="neutral"
+            icon="i-mdi-check"
+            @click="() => { open = false }"
+          >
+            我知道了
+          </UButton>
+        </div>
       </div>
     </template>
   </UModal>
