@@ -1,7 +1,23 @@
 <script setup lang="ts">
+import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
-const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
+const { form, createSection } = useAdminSettingsPage()
+
+const captchaCredentialKeys = [
+  'turnstileSiteKey',
+  'turnstileSecretKey'
+] as const satisfies readonly AdminSettingsKey[]
+
+const captchaSceneKeys = [
+  'turnstileLoginEnabled',
+  'turnstileRegisterEnabled',
+  'turnstilePasswordResetEnabled',
+  'turnstileCheckinEnabled'
+] as const satisfies readonly AdminSettingsKey[]
+
+const captchaCredentialSection = createSection(captchaCredentialKeys)
+const captchaSceneSection = createSection(captchaSceneKeys)
 
 // 目前仅实现 Cloudflare Turnstile，下拉保留以便后续扩展其他验证码服务
 const captchaTypeItems = ['Cloudflare Turnstile']
@@ -52,6 +68,15 @@ const captchaType = ref('Cloudflare Turnstile')
           class="min-w-64"
         />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="captchaCredentialSection.dirty.value"
+        :changed-count="captchaCredentialSection.changedCount.value"
+        :saving="captchaCredentialSection.saving.value"
+        :disabled="captchaCredentialSection.disabled.value"
+        @save="captchaCredentialSection.save"
+        @reset="captchaCredentialSection.reset"
+      />
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -96,14 +121,15 @@ const captchaType = ref('Cloudflare Turnstile')
           :disabled="!form.checkinEnabled"
         />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="captchaSceneSection.dirty.value"
+        :changed-count="captchaSceneSection.changedCount.value"
+        :saving="captchaSceneSection.saving.value"
+        :disabled="captchaSceneSection.disabled.value"
+        @save="captchaSceneSection.save"
+        @reset="captchaSceneSection.reset"
+      />
     </DashboardSettingsSection>
-
-    <AdminStickySaveBar
-      :dirty="dirty"
-      :saving="saving"
-      :changed-count="changedKeys.length"
-      @save="save"
-      @reset="reset"
-    />
   </div>
 </template>

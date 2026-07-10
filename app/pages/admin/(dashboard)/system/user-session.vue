@@ -1,13 +1,10 @@
 <script setup lang="ts">
+import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
 import { useAdminUserSessionSettings } from '~/composables/admin/use-admin-settings-page'
 
 const {
   form,
-  saving,
-  save,
-  dirty,
-  changedKeys,
-  reset,
+  createSection,
   allowRegistration,
   emailFilterModeItems,
   loading,
@@ -16,6 +13,28 @@ const {
   saveProvider,
   copyCallback
 } = useAdminUserSessionSettings()
+
+const registrationKeys = [
+  'registrationMode',
+  'passwordResetEnabled',
+  'emailActivationEnabled',
+  'registerEmailFilterMode',
+  'registerEmailFilterList'
+] as const satisfies readonly AdminSettingsKey[]
+
+const sessionKeys = [
+  'sessionMaxAgeSeconds',
+  'sessionAbsoluteMaxAgeSeconds',
+  'sessionRememberMaxAgeSeconds',
+  'emailVerifyExpiresInMinutes',
+  'passwordResetExpiresInMinutes'
+] as const satisfies readonly AdminSettingsKey[]
+
+const oauthPolicyKeys = ['oauthForceBinding'] as const satisfies readonly AdminSettingsKey[]
+
+const registrationSection = createSection(registrationKeys)
+const sessionSection = createSection(sessionKeys)
+const oauthPolicySection = createSection(oauthPolicyKeys)
 </script>
 
 <template>
@@ -78,6 +97,15 @@ const {
           class="w-full"
         />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="registrationSection.dirty.value"
+        :changed-count="registrationSection.changedCount.value"
+        :saving="registrationSection.saving.value"
+        :disabled="registrationSection.disabled.value"
+        @save="registrationSection.save"
+        @reset="registrationSection.reset"
+      />
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -144,6 +172,15 @@ const {
           :min="1"
         />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="sessionSection.dirty.value"
+        :changed-count="sessionSection.changedCount.value"
+        :saving="sessionSection.saving.value"
+        :disabled="sessionSection.disabled.value"
+        @save="sessionSection.save"
+        @reset="sessionSection.reset"
+      />
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -158,6 +195,15 @@ const {
       >
         <USwitch v-model="form.oauthForceBinding" />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="oauthPolicySection.dirty.value"
+        :changed-count="oauthPolicySection.changedCount.value"
+        :saving="oauthPolicySection.saving.value"
+        :disabled="oauthPolicySection.disabled.value"
+        @save="oauthPolicySection.save"
+        @reset="oauthPolicySection.reset"
+      />
     </DashboardSettingsSection>
 
     <div
@@ -300,13 +346,5 @@ const {
         </template>
       </UCollapsible>
     </div>
-
-    <AdminStickySaveBar
-      :dirty="dirty"
-      :saving="saving"
-      :changed-count="changedKeys.length"
-      @save="save"
-      @reset="reset"
-    />
   </div>
 </template>

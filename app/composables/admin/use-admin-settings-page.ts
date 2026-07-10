@@ -3,7 +3,7 @@ import { SUPPORTED_OAUTH_PROVIDERS } from '#shared/types/oauth'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
-interface AdminSettingsForm {
+export interface AdminSettingsForm {
   siteName: string
   siteUrl: string
   siteImg: string
@@ -50,6 +50,17 @@ interface AdminSettingsForm {
   checkinAmountMax: number
 }
 
+export type AdminSettingsKey = keyof AdminSettingsForm
+
+export interface AdminSettingsSectionState {
+  dirty: ComputedRef<boolean>
+  changedCount: ComputedRef<number>
+  saving: ComputedRef<boolean>
+  disabled: ComputedRef<boolean>
+  save: () => Promise<void>
+  reset: () => void
+}
+
 interface AdminOauthProviderItem {
   provider: string
   displayName: string
@@ -84,10 +95,11 @@ interface AdminOauthProviderUpdateBody {
 interface AdminUserSessionSettingsState {
   form: AdminSettingsForm
   saving: Ref<boolean>
-  save: () => void | Promise<void>
+  save: (keys?: readonly AdminSettingsKey[]) => void | Promise<void>
   dirty: ComputedRef<boolean>
-  changedKeys: ComputedRef<unknown[]>
-  reset: () => void
+  changedKeys: ComputedRef<AdminSettingsKey[]>
+  reset: (keys?: readonly AdminSettingsKey[]) => void
+  createSection: (keys: readonly AdminSettingsKey[]) => AdminSettingsSectionState
 }
 
 interface AdminOauthProviderFetchState {
@@ -225,6 +237,7 @@ export function useAdminSettingsPage() {
   const form = reactive<AdminSettingsForm>(defaultForm())
   const pristine = ref<AdminSettingsForm>(defaultForm())
   const saving = ref(false)
+  const savingKeys = ref<readonly AdminSettingsKey[]>([])
   const loading = ref(false)
 
   // 后台设置含只写 secret 状态，仍用 $fetch（仅客户端 onMounted 触发）拉取，
@@ -258,15 +271,25 @@ export function useAdminSettingsPage() {
 
   const dirty = computed(() => changedKeys.value.length > 0)
 
-  function reset() {
-    Object.assign(form, pristine.value)
+  function getChangedKeys(keys?: readonly AdminSettingsKey[]): AdminSettingsKey[] {
+    if (!keys) return changedKeys.value
+    return keys.filter(key => form[key] !== pristine.value[key])
   }
 
-  async function save() {
-    if (!dirty.value || saving.value) return
+  function reset(keys?: readonly AdminSettingsKey[]) {
+    const keysToReset = keys ?? changedKeys.value
+    for (const key of keysToReset) {
+      form[key] = pristine.value[key] as never
+    }
+  }
+
+  async function save(keys?: readonly AdminSettingsKey[]) {
+    const keysToSave = getChangedKeys(keys)
+    if (!keysToSave.length || saving.value) return
     saving.value = true
+    savingKeys.value = keysToSave
     try {
-      const body = changedKeys.value.reduce<Partial<AdminSettingsForm>>((accumulator, key) => {
+      const body = keysToSave.reduce<Partial<AdminSettingsForm>>((accumulator, key) => {
         const isEmptyWriteOnlySecret = writeOnlySecretKeys.includes(key as typeof writeOnlySecretKeys[number])
           && !String(form[key] ?? '').trim()
         if (!isEmptyWriteOnlySecret) {
@@ -274,22 +297,44 @@ export function useAdminSettingsPage() {
         }
         return accumulator
       }, {})
-      const res = await $fetch<{ public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body })
+      const res = await $fetch<Partial<AdminSettingsForm> & { public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body })
       // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
       const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
       cached.data.value = res.public
-      // 先把 pristine 推到当前值，避免 load 期间 dirty 仍然为 true 导致 sticky bar 闪烁。
-      pristine.value = snapshot(form)
+
+      const normalizedResponse = normalizeForm(res)
+      const nextPristine = snapshot(pristine.value)
+      for (const key of keysToSave) {
+        const isWriteOnlySecret = writeOnlySecretKeys.includes(key as typeof writeOnlySecretKeys[number])
+        const savedValue = isWriteOnlySecret ? '' : normalizedResponse[key]
+        form[key] = savedValue as never
+        nextPristine[key] = savedValue as never
+      }
+      pristine.value = nextPristine
       toast.add({ title: '保存成功', color: 'success' })
-      await load()
     } catch (err) {
       toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
     } finally {
       saving.value = false
+      savingKeys.value = []
     }
   }
 
-  return { form, saving, loading, save, dirty, changedKeys, reset }
+  function createSection(keys: readonly AdminSettingsKey[]): AdminSettingsSectionState {
+    const sectionChangedKeys = computed(() => getChangedKeys(keys))
+    const isSectionSaving = computed(() => saving.value && savingKeys.value.some(key => keys.includes(key)))
+
+    return {
+      dirty: computed(() => sectionChangedKeys.value.length > 0),
+      changedCount: computed(() => sectionChangedKeys.value.length),
+      saving: isSectionSaving,
+      disabled: computed(() => saving.value && !isSectionSaving.value),
+      save: async () => save(keys),
+      reset: () => reset(keys)
+    }
+  }
+
+  return { form, saving, loading, save, dirty, changedKeys, reset, createSection }
 }
 
 const ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS = [
@@ -440,6 +485,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     dirty: settings.dirty,
     changedKeys: settings.changedKeys,
     reset: settings.reset,
+    createSection: settings.createSection,
     allowRegistration,
     emailFilterModeItems: ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS,
     loading: providerFetch.loading,

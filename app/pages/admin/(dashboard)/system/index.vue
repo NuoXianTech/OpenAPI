@@ -1,7 +1,34 @@
 <script setup lang="ts">
+import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
-const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
+const { form, createSection } = useAdminSettingsPage()
+
+const basicInformationKeys = [
+  'siteName',
+  'siteDescription',
+  'siteUrl',
+  'siteImg',
+  'startTime',
+  'termsUrl',
+  'privacyUrl',
+  'icpBeian',
+  'policeBeian'
+] as const satisfies readonly AdminSettingsKey[]
+
+const checkinKeys = [
+  'checkinEnabled',
+  'checkinCooldownMode',
+  'checkinRefreshHours',
+  'checkinFixedRefreshTime',
+  'checkinMode',
+  'checkinAmountFixed',
+  'checkinAmountMin',
+  'checkinAmountMax'
+] as const satisfies readonly AdminSettingsKey[]
+
+const basicInformationSection = createSection(basicInformationKeys)
+const checkinSection = createSection(checkinKeys)
 
 const cooldownItems = [
   { label: '按小时冷却', value: 'hours' },
@@ -154,6 +181,15 @@ const fixedTimeInvalid = computed(() => {
           autocomplete="off"
         />
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="basicInformationSection.dirty.value"
+        :changed-count="basicInformationSection.changedCount.value"
+        :saving="basicInformationSection.saving.value"
+        :disabled="basicInformationSection.disabled.value"
+        @save="basicInformationSection.save"
+        @reset="basicInformationSection.reset"
+      />
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -270,14 +306,15 @@ const fixedTimeInvalid = computed(() => {
           />
         </UFormField>
       </template>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="checkinSection.dirty.value"
+        :changed-count="checkinSection.changedCount.value"
+        :saving="checkinSection.saving.value"
+        :disabled="checkinSection.disabled.value || minMaxInvalid || fixedTimeInvalid"
+        @save="checkinSection.save"
+        @reset="checkinSection.reset"
+      />
     </DashboardSettingsSection>
-
-    <AdminStickySaveBar
-      :dirty="dirty"
-      :saving="saving"
-      :changed-count="changedKeys.length"
-      @save="save"
-      @reset="reset"
-    />
   </div>
 </template>

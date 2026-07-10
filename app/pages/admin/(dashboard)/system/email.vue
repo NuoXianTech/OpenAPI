@@ -1,10 +1,25 @@
 <script setup lang="ts">
+import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
-const { form, saving, save, dirty, changedKeys, reset } = useAdminSettingsPage()
+const { form, createSection } = useAdminSettingsPage()
 const toast = useToast()
+
+const emailKeys = [
+  'smtpFromName',
+  'smtpFrom',
+  'smtpHost',
+  'smtpPort',
+  'smtpUser',
+  'smtpPass',
+  'smtpReplyTo',
+  'smtpSecure',
+  'smtpPoolMaxAgeSeconds'
+] as const satisfies readonly AdminSettingsKey[]
+
+const emailSection = createSection(emailKeys)
 
 const testOpen = ref(false)
 const testEmail = ref('')
@@ -182,15 +197,16 @@ async function submitTest() {
           发送测试邮件
         </UButton>
       </UFormField>
+      <USeparator />
+      <AdminSettingsSectionActions
+        :dirty="emailSection.dirty.value"
+        :changed-count="emailSection.changedCount.value"
+        :saving="emailSection.saving.value"
+        :disabled="emailSection.disabled.value"
+        @save="emailSection.save"
+        @reset="emailSection.reset"
+      />
     </DashboardSettingsSection>
-
-    <AdminStickySaveBar
-      :dirty="dirty"
-      :saving="saving"
-      :changed-count="changedKeys.length"
-      @save="save"
-      @reset="reset"
-    />
 
     <UModal
       v-model:open="testOpen"
