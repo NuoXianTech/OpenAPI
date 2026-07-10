@@ -16,14 +16,12 @@ const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
 interface TrendRow {
-  index: number
   label: string
   hour: string
   totalCalls: number
 }
 
-const rows = computed<TrendRow[]>(() => props.trend.map((p, index) => ({
-  index,
+const rows = computed<TrendRow[]>(() => props.trend.map(p => ({
   label: p.label,
   hour: p.hour,
   totalCalls: p.totalCalls
@@ -33,19 +31,8 @@ const hasData = computed(() => rows.value.some(r => r.totalCalls > 0))
 
 const x = (_d: TrendRow, i: number) => i
 const yAccessor = (d: TrendRow) => d.totalCalls
-
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') return tick
-  if (typeof tick !== 'number') return ''
-  const maxIndex = Math.max(rows.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-  return rows.value[index]?.label || ''
-}
-
-const yTickFormat = (tick: number | Date) => {
-  if (typeof tick !== 'number') return ''
-  return Math.round(tick).toString()
-}
+const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
+const yTickFormat = formatChartIntegerTick
 
 const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
   title: d.label,

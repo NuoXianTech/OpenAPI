@@ -42,18 +42,8 @@ const failureAccessor = (row: TrendRow) => row.failure
 
 // 准星圆点配色，按 y 访问器顺序对应总调用 / 成功 / 失败
 const crosshairColors = ['var(--ui-primary)', 'var(--ui-success)', 'var(--ui-error)'] as const
-
-// 把任意刻度（可能为小数）映射回最近的数据索引取其 MM-DD 标签，配合 num-ticks 控制密度，
-// 兼容 7 / 14 / 30 天不同跨度（取代旧逻辑里强行置空首尾刻度导致几乎不显示日期的问题）。
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') return tick
-  if (typeof tick !== 'number') return ''
-  const maxIndex = Math.max(rows.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-  return rows.value[index]?.label || ''
-}
-
-const yTickFormat = (tick: number | Date) => (typeof tick === 'number' ? `${Math.round(tick)}` : '')
+const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
+const yTickFormat = formatChartIntegerTick
 
 // 走全站统一的卡片式 tooltip 渲染器（utils/chart-tooltip.ts），标题含「周X」与 stats 同款
 const tooltipTemplate = (d: TrendRow | undefined) => {

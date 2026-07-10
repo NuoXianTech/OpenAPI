@@ -16,14 +16,12 @@ const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
 interface BucketRow {
-  index: number
   label: string
   axisLabel: string
   apiCount: number
 }
 
-const rows = computed<BucketRow[]>(() => props.buckets.map((b, index) => ({
-  index,
+const rows = computed<BucketRow[]>(() => props.buckets.map(b => ({
   label: b.label,
   axisLabel: formatBucketAxisLabel(b.label),
   apiCount: b.apiCount
@@ -33,19 +31,8 @@ const hasData = computed(() => rows.value.some(r => r.apiCount > 0))
 
 const x = (_d: BucketRow, i: number) => i
 const yAccessor = (d: BucketRow) => d.apiCount
-
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') return tick
-  if (typeof tick !== 'number') return ''
-  const maxIndex = Math.max(rows.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-  return rows.value[index]?.axisLabel || ''
-}
-
-const yTickFormat = (tick: number | Date) => {
-  if (typeof tick !== 'number') return ''
-  return Math.round(tick).toString()
-}
+const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.axisLabel)
+const yTickFormat = formatChartIntegerTick
 
 function formatBucketAxisLabel(label: string): string {
   if (label === '101-1000') return '101-1k'

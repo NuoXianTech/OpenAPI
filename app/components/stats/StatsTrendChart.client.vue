@@ -43,20 +43,8 @@ const failureAccessor = (row: TrendRow) => row.failure
 
 // 准星圆点配色，按 y 访问器顺序对应成功 / 失败
 const crosshairColors = ['var(--ui-success)', 'var(--ui-error)'] as const
-
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') {
-    return tick
-  }
-  if (typeof tick !== 'number') {
-    return ''
-  }
-  const maxIndex = Math.max(rows.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-  return rows.value[index]?.label || ''
-}
-
-const yTickFormat = (tick: number | Date) => (typeof tick === 'number' ? `${Math.round(tick)}` : '')
+const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
+const yTickFormat = formatChartIntegerTick
 
 // 走全站统一的卡片式 tooltip 渲染器（utils/chart-tooltip.ts），与 admin 数据看板同款
 function tooltipTemplate(datum: TrendRow | undefined) {

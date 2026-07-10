@@ -16,7 +16,6 @@ const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
 interface BarRow {
-  index: number
   name: string
   apiPath: string
   successCalls: number
@@ -24,8 +23,7 @@ interface BarRow {
   totalCalls: number
 }
 
-const rows = computed<BarRow[]>(() => props.distribution.map((item, index) => ({
-  index,
+const rows = computed<BarRow[]>(() => props.distribution.map(item => ({
   name: item.name,
   apiPath: item.apiPath,
   successCalls: item.successCalls,
@@ -36,23 +34,11 @@ const rows = computed<BarRow[]>(() => props.distribution.map((item, index) => ({
 const x = (_d: BarRow, i: number) => i
 const successAccessor = (d: BarRow) => d.successCalls
 const failureAccessor = (d: BarRow) => d.failureCalls
-
-const xTickFormat = (tick: number | Date | string) => {
-  if (typeof tick === 'string') return tick
-  if (typeof tick !== 'number') return ''
-  const maxIndex = Math.max(rows.value.length - 1, 0)
-  const index = Math.min(maxIndex, Math.max(0, Math.round(tick)))
-  return formatAxisName(rows.value[index]?.name || '')
-}
-
-const yTickFormat = (tick: number | Date) => {
-  if (typeof tick !== 'number') return ''
-  return Math.round(tick).toString()
-}
-
-function formatAxisName(name: string): string {
-  return name.length > 6 ? `${name.slice(0, 6)}…` : name
-}
+const xTickFormat = createChartIndexedTickFormatter(
+  () => rows.value,
+  row => truncateChartAxisLabel(row.name)
+)
+const yTickFormat = formatChartIntegerTick
 
 const tooltipTemplate = (d: BarRow) => renderChartTooltip({
   title: d.name,
