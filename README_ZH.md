@@ -170,7 +170,6 @@ pnpm lint          # 运行 ESLint
 pnpm lint:fix      # 自动修复 ESLint 问题
 pnpm typecheck     # 运行 Nuxt TypeScript 检查
 pnpm test:run      # 单次运行测试
-pnpm test:unit     # 单次运行单元测试
 ```
 
 ### 项目文档

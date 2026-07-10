@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import {
   createDistributedLeaseManager,
   type DistributedLeaseClient
@@ -26,14 +26,6 @@ function createManager(options: {
 }
 
 describe('distributed lease', () => {
-  beforeEach(() => {
-    vi.spyOn(console, 'warn').mockImplementation(() => {})
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   it('acquires and token-safely releases a Redis lease', async () => {
     const client = createClient()
     const manager = createManager({ client })

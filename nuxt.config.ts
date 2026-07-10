@@ -13,7 +13,6 @@ const privatePageRouteRule = {
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
-    '@nuxt/test-utils/module',
     '@nuxt/ui',
     '@vueuse/nuxt',
   ],

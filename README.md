@@ -170,7 +170,6 @@ pnpm lint          # Run ESLint
 pnpm lint:fix      # Fix ESLint issues
 pnpm typecheck     # Run Nuxt TypeScript checks
 pnpm test:run      # Run tests once
-pnpm test:unit     # Run unit tests once
 ```
 
 ### Documentation

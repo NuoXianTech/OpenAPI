@@ -87,28 +87,17 @@ describe('shared cache', () => {
     expect(loader).toHaveBeenCalledOnce()
   })
 
-  it('falls back to process memory when Redis reads fail', async () => {
+  it('coalesces and caches loads when Redis reads fail', async () => {
     const loader = vi.fn(async () => ({ id: 1 }))
     const client = createFakeRedis().client
     vi.mocked(client.get).mockRejectedValue(new Error('offline'))
     const cache = createTestCache(client)
 
-    await expect(cache.get({ key: 'cache:item', ttlSeconds: 10, loader })).resolves.toEqual({ id: 1 })
-    await expect(cache.get({ key: 'cache:item', ttlSeconds: 10, loader })).resolves.toEqual({ id: 1 })
-    expect(loader).toHaveBeenCalledOnce()
-  })
-
-  it('coalesces concurrent loaders while Redis is unavailable', async () => {
-    const loader = vi.fn(async () => ({ id: 1 }))
-    const client = createFakeRedis().client
-    vi.mocked(client.get).mockRejectedValue(new Error('offline'))
-    const cache = createTestCache(client)
-
-    await Promise.all([
+    await expect(Promise.all([
       cache.get({ key: 'cache:item', ttlSeconds: 10, loader }),
       cache.get({ key: 'cache:item', ttlSeconds: 10, loader })
-    ])
-
+    ])).resolves.toEqual([{ id: 1 }, { id: 1 }])
+    await expect(cache.get({ key: 'cache:item', ttlSeconds: 10, loader })).resolves.toEqual({ id: 1 })
     expect(loader).toHaveBeenCalledOnce()
   })
 
