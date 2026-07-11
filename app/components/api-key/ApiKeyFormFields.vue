@@ -45,7 +45,7 @@ const scopesModeItems = [
 const nameHelp = computed(() => {
   if (!props.hints) return undefined
   if (props.showCount) return '批量生成 > 1 个时，首个使用此名称，其余自动追加后缀'
-  if (props.editing) return '仅展示用，不影响 Key 字符串本身'
+  if (props.editing) return '仅展示用，不影响密钥字符串本身'
   return undefined
 })
 
@@ -113,7 +113,7 @@ const ipHelp = computed(() => {
       >
         {{ editing
           ? '选择「永不过期」会清空过期时间；选择预设会从当前时间起算。'
-          : '过期后 Key 不会被删除或禁用，调用接口时会返回到期信息。' }}
+          : '过期后密钥不会被删除或禁用，调用接口时会返回到期信息。' }}
       </p>
     </UFormField>
 
@@ -139,8 +139,8 @@ const ipHelp = computed(() => {
         class="text-xs text-muted mt-1"
       >
         {{ editing
-          ? '修改上限不会重置已消耗积分；若新上限低于已消耗，Key 将立即停止可用直至再次提高。'
-          : '该 Key 累计消耗积分达到上限后将拒绝调用；资金仍从钱包扣除。' }}
+          ? '修改上限不会重置已消耗积分；若新上限低于已消耗，密钥将立即停止可用直至再次提高。'
+          : '该密钥累计消耗积分达到上限后将拒绝调用；资金仍从钱包扣除。' }}
       </p>
     </UFormField>
 

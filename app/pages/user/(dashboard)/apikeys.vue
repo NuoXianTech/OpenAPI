@@ -9,7 +9,7 @@ import { usePrivateResource } from '~/composables/dashboard/use-private-resource
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import type { ApiKeyItem } from '#shared/types/api'
 
-useHead({ title: 'API Keys' })
+useHead({ title: 'API 密钥' })
 
 const toast = useToast()
 
@@ -25,7 +25,7 @@ const {
 
 watch(error, (err) => {
   if (!err) return
-  toast.add({ title: parseFetchError(err, '加载 API Key 失败'), color: 'error' })
+  toast.add({ title: parseFetchError(err, '加载 API 密钥 失败'), color: 'error' })
 })
 
 // 数据层：接口范围下拉 + CRUD（成功后自动 refresh 列表）
@@ -81,7 +81,7 @@ async function submitCreate() {
   try {
     const res = await createKeys({ ...buildCreatePayload(), count: createFormState.count })
     toast.add({
-      title: res.count > 1 ? `已生成 ${res.count} 个 API Key` : '已生成新 API Key',
+      title: res.count > 1 ? `已生成 ${res.count} 个 API 密钥` : '已生成新 API 密钥',
       color: 'success'
     })
     createOpen.value = false
@@ -154,8 +154,8 @@ async function toggleActive(row: ApiKeyItem) {
 
 async function openDelete(row: ApiKeyItem) {
   await confirm({
-    title: `删除 API Key: ${row.name || ''}`,
-    description: '删除后该 Key 立即失效且不可恢复。',
+    title: `删除 API 密钥: ${row.name || ''}`,
+    description: '删除后该密钥立即失效且不可恢复。',
     onConfirm: async () => {
       try {
         await removeKey(row.id)
@@ -173,7 +173,7 @@ async function openDelete(row: ApiKeyItem) {
 // ------------------------------------------------------------
 const columns: TableColumn<ApiKeyItem>[] = [
   { accessorKey: 'name', header: '名称' },
-  { accessorKey: 'apiKey', header: 'API Key' },
+  { accessorKey: 'apiKey', header: 'API 密钥' },
   { id: 'quota', header: '配额（已用/总额）' },
   { id: 'scopes', header: '接口范围' },
   { id: 'ipWhitelist', header: 'IP 白名单' },
@@ -301,13 +301,13 @@ function toggleReveal(id: number) {
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
     { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '复制完整 Key', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    { label: '复制完整密钥', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     {
       label: row.isActive ? '停用' : '启用',
       icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
       onSelect: () => toggleActive(row)
     },
-    { label: '重置 Key', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
+    { label: '重置密钥', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
     {
       label: '删除',
       icon: 'i-mdi-delete-outline',
@@ -321,7 +321,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 <template>
   <UDashboardPanel id="user-apikeys">
     <template #header>
-      <DashboardPageNavbar title="API Key" />
+      <DashboardPageNavbar title="API 密钥" />
     </template>
 
     <template #body>
@@ -330,7 +330,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
           <UInput
             v-model="keyword"
             icon="i-mdi-magnify"
-            placeholder="搜索名称、Key、IP..."
+            placeholder="搜索名称、密钥、IP..."
             class="w-full sm:w-72"
           />
           <AdminFilterPopover
@@ -358,7 +358,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               icon="i-mdi-plus"
               @click="openCreate"
             >
-              生成新 Key
+              生成新密钥
             </UButton>
             <UDropdownMenu
               :items="columnVisibilityItems"
@@ -375,7 +375,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         </div>
 
         <DashboardTableCard
-          title="API Key 列表"
+          title="API 密钥列表"
           icon="i-mdi-key-outline"
           :total="total"
         >
@@ -389,7 +389,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :total="total"
             :page-size-items="PAGE_SIZE_ITEMS"
             :fixed="false"
-            empty-title="暂无 API Key"
+            empty-title="暂无 API 密钥"
             empty-icon="i-mdi-key-outline"
           >
             <template #name-cell="{ row }">
@@ -521,7 +521,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <!-- 创建 Key -->
       <UModal
         v-model:open="createOpen"
-        title="生成新 API Key"
+        title="生成新 API 密钥"
         :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
@@ -558,7 +558,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <!-- 编辑 Key -->
       <UModal
         v-model:open="editOpen"
-        title="编辑 API Key"
+        title="编辑 API 密钥"
         :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>

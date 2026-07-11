@@ -31,7 +31,7 @@ async function confirmReset() {
     const next = await props.onReset(props.target.id)
     result.value = next || null
     emit('saved')
-    toast.add({ title: '已重置，旧 Key 立即失效', color: 'success' })
+    toast.add({ title: '已重置，旧密钥立即失效', color: 'success' })
   } catch (err) {
     toast.add({ title: parseFetchError(err, '重置失败'), color: 'error' })
   } finally {
@@ -51,7 +51,7 @@ async function copy(text: string) {
 
 <template>
   <UModal
-    :title="result ? '已重置，请保存新 Key' : '确认重置 API Key'"
+    :title="result ? '已重置，请保存新密钥' : '确认重置 API 密钥'"
     :ui="{ content: 'sm:max-w-md' }"
   >
     <template #body>
@@ -59,8 +59,8 @@ async function copy(text: string) {
         v-if="!result"
         color="warning"
         variant="subtle"
-        title="重置将立即让旧 Key 失效"
-        :description="`将重置「${props.target?.name || '默认密钥'}」，所有正在使用旧 Key 的调用方会立刻失败，请确认后再继续。`"
+        title="重置将立即让旧密钥失效"
+        :description="`将重置「${props.target?.name || '默认密钥'}」，所有正在使用旧密钥的调用方会立刻失败，请确认后再继续。`"
         icon="i-mdi-alert-outline"
       />
       <code
