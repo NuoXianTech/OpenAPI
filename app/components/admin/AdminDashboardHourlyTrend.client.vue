@@ -15,6 +15,9 @@ const props = defineProps<Props>()
 const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
+const MINIMUM_CHART_WIDTH = 960
+const chartWidth = computed(() => Math.max(width.value, MINIMUM_CHART_WIDTH))
+
 interface TrendRow {
   label: string
   hour: string
@@ -31,6 +34,7 @@ const hasData = computed(() => rows.value.some(r => r.totalCalls > 0))
 
 const x = (_d: TrendRow, i: number) => i
 const yAccessor = (d: TrendRow) => d.totalCalls
+const xTickValues = computed(() => rows.value.map((_row, index) => index))
 const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
 const yTickFormat = formatChartIntegerTick
 
@@ -54,46 +58,50 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
       class="h-64"
     />
 
-    <VisXYContainer
+    <div
       v-else
-      :data="rows"
-      :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
-      :width="width"
-      class="h-64"
+      class="overflow-x-auto"
     >
-      <VisArea
-        :x="x"
-        :y="yAccessor"
-        color="var(--ui-info)"
-        :opacity="0.15"
-      />
-      <VisLine
-        :x="x"
-        :y="yAccessor"
-        color="var(--ui-info)"
-        :line-width="2.2"
-      />
-      <VisAxis
-        type="x"
-        :tick-line="false"
-        :domain-line="false"
-        :grid-line="false"
-        :tick-format="xTickFormat"
-        :num-ticks="7"
-      />
-      <VisAxis
-        type="y"
-        :tick-line="false"
-        :domain-line="false"
-        :grid-line="true"
-        :tick-format="yTickFormat"
-        :num-ticks="4"
-      />
-      <VisCrosshair
-        color="var(--ui-info)"
-        :template="tooltipTemplate"
-      />
-      <VisTooltip />
-    </VisXYContainer>
+      <VisXYContainer
+        :data="rows"
+        :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
+        :width="chartWidth"
+        class="h-64 min-w-[960px]"
+      >
+        <VisArea
+          :x="x"
+          :y="yAccessor"
+          color="var(--ui-info)"
+          :opacity="0.15"
+        />
+        <VisLine
+          :x="x"
+          :y="yAccessor"
+          color="var(--ui-info)"
+          :line-width="2.2"
+        />
+        <VisAxis
+          type="x"
+          :tick-line="false"
+          :domain-line="false"
+          :grid-line="false"
+          :tick-format="xTickFormat"
+          :tick-values="xTickValues"
+        />
+        <VisAxis
+          type="y"
+          :tick-line="false"
+          :domain-line="false"
+          :grid-line="true"
+          :tick-format="yTickFormat"
+          :num-ticks="4"
+        />
+        <VisCrosshair
+          color="var(--ui-info)"
+          :template="tooltipTemplate"
+        />
+        <VisTooltip />
+      </VisXYContainer>
+    </div>
   </div>
 </template>
