@@ -14,7 +14,7 @@ definePageMeta({
   <div class="contents">
     <NuxtPage />
     <ClientOnly>
-      <AdminInitialProfileModal />
+      <LazyAdminInitialProfileModal />
     </ClientOnly>
   </div>
 </template>
