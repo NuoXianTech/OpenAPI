@@ -49,7 +49,7 @@ const sessionSection = createSection(sessionKeys)
         name="registrationMode"
         label="允许新用户注册"
         description="关闭后，前台注册入口与注册接口都会被拒绝（等同注册模式「关闭」）。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="allowRegistration" />
       </UFormField>
@@ -57,7 +57,7 @@ const sessionSection = createSection(sessionKeys)
         name="passwordResetEnabled"
         label="启用「忘记密码」功能"
         description="关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.passwordResetEnabled" />
       </UFormField>
@@ -65,7 +65,7 @@ const sessionSection = createSection(sessionKeys)
         name="emailActivationEnabled"
         label="邮件激活"
         description="开启后，新用户注册需点击邮件中的激活链接才能完成；关闭则注册即激活、不发验证邮件。请确认 邮件发信设置 正确，否则激活邮件无法送达。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.emailActivationEnabled" />
       </UFormField>
@@ -73,12 +73,12 @@ const sessionSection = createSection(sessionKeys)
         name="registerEmailFilterMode"
         label="注册邮箱过滤模式"
         description="不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USelect
           v-model="form.registerEmailFilterMode"
           :items="emailFilterModeItems"
-          class="min-w-40"
+          class="w-full sm:min-w-40"
         />
       </UFormField>
       <UFormField
@@ -118,60 +118,65 @@ const sessionSection = createSection(sessionKeys)
         name="sessionMaxAgeSeconds"
         label="默认会话有效期 (秒)"
         description="未勾选「记住我」时使用，默认 86400=1 天，期间活跃会自动滑动续期。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model.number="form.sessionMaxAgeSeconds"
           type="number"
           :min="1"
+          class="w-full sm:w-40"
         />
       </UFormField>
       <UFormField
         name="sessionAbsoluteMaxAgeSeconds"
         label="会话绝对硬顶 (秒)"
         description="未勾选「记住我」时滑动续期的绝对上限，从首次登录算，默认 604800=7 天。到顶后强制重新登录。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model.number="form.sessionAbsoluteMaxAgeSeconds"
           type="number"
           :min="1"
+          class="w-full sm:w-40"
         />
       </UFormField>
       <UFormField
         name="sessionRememberMaxAgeSeconds"
         label="「记住我」会话有效期 (秒)"
         description="勾选「记住我」时使用，默认 2592000=30 天，到期后必须重新登录。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model.number="form.sessionRememberMaxAgeSeconds"
           type="number"
           :min="1"
+          class="w-full sm:w-40"
         />
       </UFormField>
       <UFormField
         name="emailVerifyExpiresInMinutes"
         label="邮箱验证过期 (分钟)"
         description="注册 / 换绑邮箱的验证链接有效时长，默认 30 分钟。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model.number="form.emailVerifyExpiresInMinutes"
           type="number"
           :min="1"
+          class="w-full sm:w-40"
         />
       </UFormField>
       <UFormField
         name="passwordResetExpiresInMinutes"
         label="密码重置链接过期 (分钟)"
         description="找回密码邮件中的重置链接有效时长，默认 30 分钟。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model.number="form.passwordResetExpiresInMinutes"
           type="number"
           :min="1"
+          class="w-full sm:w-40"
         />
       </UFormField>
       <USeparator />
@@ -193,7 +198,7 @@ const sessionSection = createSection(sessionKeys)
         name="oauthForceBinding"
         label="强制绑定已有账号"
         description="开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册。"
-        class="flex items-center justify-between gap-2"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.oauthForceBinding" />
       </UFormField>
@@ -285,12 +290,12 @@ const sessionSection = createSection(sessionKeys)
                 label="Callback URL"
                 description="由站点地址自动拼接，不可修改。请把该地址填到 OAuth App 的回调白名单。"
               >
-                <div class="flex gap-2">
+                <div class="flex min-w-0 flex-col gap-2 sm:flex-row">
                   <UInput
                     :model-value="item.callbackUrl"
                     readonly
                     icon="i-mdi-link-variant"
-                    class="flex-1"
+                    class="min-w-0 flex-1"
                   />
                   <UButton
                     :icon="getForm(item.provider).copied ? 'i-mdi-check' : 'i-mdi-content-copy'"

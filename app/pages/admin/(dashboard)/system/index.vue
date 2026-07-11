@@ -215,7 +215,7 @@ const fixedTimeInvalid = computed(() => {
           v-model="form.checkinCooldownMode"
           :items="cooldownItems"
           :disabled="!form.checkinEnabled"
-          class="min-w-48"
+          class="w-full sm:min-w-48"
         />
       </UFormField>
       <USeparator />
@@ -258,7 +258,7 @@ const fixedTimeInvalid = computed(() => {
           v-model="form.checkinMode"
           :items="modeItems"
           :disabled="!form.checkinEnabled"
-          class="min-w-48"
+          class="w-full sm:min-w-48"
         />
       </UFormField>
       <USeparator />
