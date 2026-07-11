@@ -214,15 +214,15 @@ interface UseAdminNotificationsDisplayMetaReturn {
   getRowItems: (row: AdminNotificationMessageRow) => DropdownMenuItem[]
 }
 
-type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
+export type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
-const ADMIN_NOTIFICATION_AUDIENCE_OPTIONS: Array<AdminNotificationSelectItem<AdminNotificationAudience>> = [
+export const ADMIN_NOTIFICATION_AUDIENCE_OPTIONS: Array<AdminNotificationSelectItem<AdminNotificationAudience>> = [
   { label: '指定用户（仅选中收件人）', value: 'specific' },
   { label: '当前所有用户（不含未来注册）', value: 'all_current' },
   { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' }
 ]
 
-const ADMIN_NOTIFICATION_LEVEL_OPTIONS: Array<AdminNotificationSelectItem<MessageLevel>> = [
+export const ADMIN_NOTIFICATION_LEVEL_OPTIONS: Array<AdminNotificationSelectItem<MessageLevel>> = [
   { label: '通知 (info)', value: 'info' },
   { label: '成功 (success)', value: 'success' },
   { label: '提醒 (warning)', value: 'warning' },

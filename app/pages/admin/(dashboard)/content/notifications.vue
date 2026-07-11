@@ -3,7 +3,6 @@ import { MESSAGE_LEVELS, NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import {
-  createAdminNotificationForm,
   useAdminNotificationsDisplayMeta,
   type AdminNotificationDeliveryRow,
   type AdminNotificationMessageRow,
@@ -36,13 +35,13 @@ const historyKeyword = ref('')
 const historyAudienceFilter = ref<AdminNotificationAudienceFilter>('all')
 const historyLevelFilter = ref<AdminNotificationLevelFilter>('all')
 
-const form = reactive(createAdminNotificationForm())
-const sending = ref(false)
+const sendModalOpen = ref(false)
+
+function openSendModal(): void {
+  sendModalOpen.value = true
+}
 
 const {
-  userOptions,
-  audienceOptions,
-  levelOptions,
   audienceMeta,
   columns,
   getRowItems
@@ -90,42 +89,6 @@ function isNotificationMessageVisible(row: AdminNotificationMessageRow): boolean
 function resetHistoryFilters() {
   historyAudienceFilter.value = 'all'
   historyLevelFilter.value = 'all'
-}
-
-async function submitSend() {
-  if (!form.title.trim() || !form.content.trim()) {
-    toast.add({ title: '标题和内容必填', color: 'warning' })
-    return
-  }
-  if (form.audience === 'specific' && form.recipientUserIds.length === 0) {
-    toast.add({ title: '请选择收件人或改为全员发送', color: 'warning' })
-    return
-  }
-  sending.value = true
-  try {
-    const res = await $fetch<{ deliveredCount?: number }>('/api/admin/notifications/send', {
-      method: 'POST',
-      body: {
-        audience: form.audience,
-        recipientUserIds: form.audience === 'specific' ? form.recipientUserIds : [],
-        title: form.title.trim(),
-        content: form.content,
-        level: form.level,
-        linkUrl: form.linkUrl.trim() || null
-      }
-    })
-    toast.add({ title: `已发送（投递 ${res?.deliveredCount ?? 0} 人）`, color: 'success' })
-    form.title = ''
-    form.content = ''
-    form.linkUrl = ''
-    form.recipientUserIds = []
-    form.audience = 'specific'
-    await refresh()
-  } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
-  } finally {
-    sending.value = false
-  }
 }
 
 const detailOpen = ref(false)
@@ -203,6 +166,12 @@ async function openDelete(row: AdminNotificationMessageRow) {
       </div>
       <div class="ml-auto flex items-center gap-2 flex-wrap">
         <UButton
+          icon="i-mdi-send"
+          @click="openSendModal"
+        >
+          发送通知
+        </UButton>
+        <UButton
           color="neutral"
           variant="outline"
           icon="i-mdi-refresh"
@@ -214,155 +183,73 @@ async function openDelete(row: AdminNotificationMessageRow) {
       </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-      <UCard>
-        <template #header>
+    <DashboardTableCard
+      title="发送历史"
+      icon="i-mdi-history"
+      :total="total"
+    >
+      <DashboardDataTable
+        v-model:page="page"
+        v-model:page-size="pageSize"
+        :data="paginated"
+        :columns="columns"
+        :loading="loading"
+        :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
+        empty-title="暂无发送历史"
+        empty-icon="i-mdi-history"
+      >
+        <template #title-cell="{ row }">
           <div class="flex items-center gap-2">
-            <UIcon
-              name="i-mdi-email-edit-outline"
-              class="size-5 text-muted"
-            />
-            <h3 class="text-lg font-semibold text-highlighted">
-              发送新通知
-            </h3>
+            <UBadge
+              :color="levelMeta[row.original.level].color"
+              variant="subtle"
+              size="sm"
+            >
+              {{ levelMeta[row.original.level].label }}
+            </UBadge>
+            <UBadge
+              :color="audienceMeta[row.original.audience].color"
+              variant="soft"
+              size="sm"
+            >
+              {{ audienceMeta[row.original.audience].label }}
+            </UBadge>
+            <span class="font-medium truncate max-w-[260px]">{{ row.original.title }}</span>
           </div>
         </template>
-        <div class="space-y-4">
-          <UFormField label="发送范围">
-            <USelect
-              v-model="form.audience"
-              :items="audienceOptions"
-            />
-            <p
-              v-if="form.audience === 'all_with_future'"
-              class="text-xs text-muted mt-1.5"
-            >
-              选择此项后，新注册用户首次激活时将自动补发本条通知。
-            </p>
-          </UFormField>
-
-          <UFormField
-            v-if="form.audience === 'specific'"
-            label="收件人（可多选）"
-          >
-            <USelectMenu
-              v-model="form.recipientUserIds"
-              :items="userOptions"
-              multiple
-              searchable
-              value-key="value"
-              placeholder="搜索用户名/邮箱..."
-            />
-          </UFormField>
-
-          <div class="grid grid-cols-3 gap-3">
-            <UFormField
-              label="标题"
-              class="col-span-2"
-            >
-              <UInput
-                v-model="form.title"
-                placeholder="最多 200 字"
-              />
-            </UFormField>
-            <UFormField label="级别">
-              <USelect
-                v-model="form.level"
-                :items="levelOptions"
-              />
-            </UFormField>
+        <template #delivery-cell="{ row }">
+          <div class="flex flex-col text-xs">
+            <span class="tabular-nums">投递 {{ row.original.deliveredCount }} 人</span>
+            <span class="text-muted tabular-nums">已读 {{ row.original.readCount }} 人</span>
           </div>
-
-          <UFormField label="内容">
-            <UTextarea
-              v-model="form.content"
-              :rows="6"
-              placeholder="支持纯文本，换行将保留"
-              class="w-full sm:max-w-lg"
-            />
-          </UFormField>
-
-          <UFormField label="附加链接（可选）">
-            <UInput
-              v-model="form.linkUrl"
-              placeholder="https://example.com/post/xx"
-            />
-          </UFormField>
-
-          <div class="flex justify-end">
-            <UButton
-              icon="i-mdi-send"
-              :loading="sending"
-              @click="submitSend"
+        </template>
+        <template #createdAt-cell="{ row }">
+          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+        </template>
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu
+              :items="getRowItems(row.original)"
+              :content="{ align: 'end' }"
             >
-              发送
-            </UButton>
+              <UButton
+                icon="i-mdi-dots-vertical"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+              />
+            </UDropdownMenu>
           </div>
-        </div>
-      </UCard>
+        </template>
+      </DashboardDataTable>
+    </DashboardTableCard>
 
-      <DashboardTableCard
-        title="发送历史"
-        icon="i-mdi-history"
-        :total="total"
-      >
-        <DashboardDataTable
-          v-model:page="page"
-          v-model:page-size="pageSize"
-          :data="paginated"
-          :columns="columns"
-          :loading="loading"
-          :total="total"
-          :page-size-items="PAGE_SIZE_ITEMS"
-          empty-title="暂无发送历史"
-          empty-icon="i-mdi-history"
-        >
-          <template #title-cell="{ row }">
-            <div class="flex items-center gap-2">
-              <UBadge
-                :color="levelMeta[row.original.level].color"
-                variant="subtle"
-                size="sm"
-              >
-                {{ levelMeta[row.original.level].label }}
-              </UBadge>
-              <UBadge
-                :color="audienceMeta[row.original.audience].color"
-                variant="soft"
-                size="sm"
-              >
-                {{ audienceMeta[row.original.audience].label }}
-              </UBadge>
-              <span class="font-medium truncate max-w-[260px]">{{ row.original.title }}</span>
-            </div>
-          </template>
-          <template #delivery-cell="{ row }">
-            <div class="flex flex-col text-xs">
-              <span class="tabular-nums">投递 {{ row.original.deliveredCount }} 人</span>
-              <span class="text-muted tabular-nums">已读 {{ row.original.readCount }} 人</span>
-            </div>
-          </template>
-          <template #createdAt-cell="{ row }">
-            <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
-          </template>
-          <template #actions-cell="{ row }">
-            <div class="text-right">
-              <UDropdownMenu
-                :items="getRowItems(row.original)"
-                :content="{ align: 'end' }"
-              >
-                <UButton
-                  icon="i-mdi-dots-vertical"
-                  color="neutral"
-                  variant="ghost"
-                  size="sm"
-                />
-              </UDropdownMenu>
-            </div>
-          </template>
-        </DashboardDataTable>
-      </DashboardTableCard>
-    </div>
+    <AdminNotificationSendModal
+      v-model:open="sendModalOpen"
+      :users="usersData"
+      @sent="refresh()"
+    />
 
     <UModal
       v-model:open="detailOpen"
