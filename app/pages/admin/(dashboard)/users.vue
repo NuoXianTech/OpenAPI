@@ -23,10 +23,6 @@ const {
   loading,
   items,
   refresh,
-  rowSelection,
-  selectedIds,
-  clearSelection,
-  requireSelection,
   deleteUser,
   banUser,
   unbanUser,
@@ -37,7 +33,6 @@ const {
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
 watch([keyword, userIdFilter, roleFilter, activeFilter, banFilter, pageSize], () => {
   page.value = 1
-  clearSelection()
 })
 
 const columnVisibility = ref<Record<string, boolean>>({})
@@ -98,21 +93,7 @@ function openCreditForOne(item: AdminUserItem) {
   creditOpen.value = true
 }
 
-function openCreditForSelection() {
-  if (!requireSelection()) return
-  creditUserIds.value = [...selectedIds.value]
-  creditSelectionLabel.value = `已选 ${selectedIds.value.length} 个用户`
-  creditOpen.value = true
-}
-
-function openCreditForAll() {
-  creditUserIds.value = []
-  creditSelectionLabel.value = '全部未删除用户'
-  creditOpen.value = true
-}
-
 async function onCreditSaved() {
-  clearSelection()
   await refresh()
 }
 
@@ -226,32 +207,12 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
             </UFormField>
           </AdminFilterPopover>
           <div class="ml-auto flex items-center gap-2 flex-wrap">
-            <span class="text-xs text-muted">
-              已选 {{ selectedIds.length }} / {{ items.length }}
-            </span>
             <UButton
               color="primary"
               icon="i-mdi-account-plus-outline"
               @click="() => { createOpen = true }"
             >
               添加用户
-            </UButton>
-            <UButton
-              color="primary"
-              variant="outline"
-              icon="i-mdi-cash-multiple"
-              :disabled="selectedIds.length === 0"
-              @click="openCreditForSelection"
-            >
-              批量调整积分
-            </UButton>
-            <UButton
-              color="warning"
-              variant="outline"
-              icon="i-mdi-cash-100"
-              @click="openCreditForAll"
-            >
-              全员积分操作
             </UButton>
             <UDropdownMenu
               :items="columnVisibilityItems"
@@ -284,7 +245,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
           <DashboardDataTable
             v-model:page="page"
             v-model:page-size="pageSize"
-            v-model:row-selection="rowSelection"
             v-model:column-visibility="columnVisibility"
             :data="paginated"
             :columns="columns"
@@ -295,18 +255,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
             empty-title="暂无用户"
             empty-icon="i-mdi-account-off-outline"
           >
-            <template #select-header="{ table }">
-              <UCheckbox
-                :model-value="table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected()"
-                @update:model-value="(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(value === true)"
-              />
-            </template>
-            <template #select-cell="{ row }">
-              <UCheckbox
-                :model-value="row.getIsSelected()"
-                @update:model-value="(value: boolean | 'indeterminate') => row.toggleSelected(value === true)"
-              />
-            </template>
             <template #credits-cell="{ row }">
               <UBadge
                 :color="Number(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"

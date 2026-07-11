@@ -10,9 +10,11 @@ export const ADMIN_OVERVIEW_PATH = '/admin/overview'
 export const ADMIN_ANALYTICS_PATH = '/admin/analytics'
 export const ADMIN_LOGS_PATH = '/admin/logs'
 export const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
-export const ADMIN_CREDIT_LOGS_PATH = `${ADMIN_LOGS_PATH}/credits`
+export const ADMIN_CREDITS_PATH = '/admin/credits'
+export const ADMIN_CREDIT_USERS_PATH = `${ADMIN_CREDITS_PATH}/users`
+export const ADMIN_CREDIT_TRANSACTIONS_PATH = `${ADMIN_CREDITS_PATH}/transactions`
 export const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
-export const ADMIN_REDEMPTION_CODES_PATH = '/admin/redemption-codes'
+export const ADMIN_REDEMPTION_CODES_PATH = `${ADMIN_CREDITS_PATH}/redemption-codes`
 export const ADMIN_CONTENT_PATH = '/admin/content'
 export const ADMIN_APIS_PATH = '/admin/apis'
 export const ADMIN_USERS_PATH = '/admin/users'
@@ -39,8 +41,14 @@ const adminApisLinks: NavigationMenuItem[] = [
 const adminLogsLinks: NavigationMenuItem[] = [
   { label: '调用日志', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH, exact: true },
   { label: '登录日志', icon: 'i-mdi-login-variant', to: ADMIN_LOGIN_LOGS_PATH },
-  { label: '积分日志', icon: 'i-mdi-cash-multiple', to: ADMIN_CREDIT_LOGS_PATH },
   { label: '操作日志', icon: 'i-mdi-clipboard-text-clock-outline', to: ADMIN_OPERATION_LOGS_PATH }
+]
+
+const adminCreditsLinks: NavigationMenuItem[] = [
+  { label: '概览', icon: 'i-mdi-view-dashboard-outline', to: ADMIN_CREDITS_PATH, exact: true },
+  { label: '用户积分', icon: 'i-mdi-account-cash-outline', to: ADMIN_CREDIT_USERS_PATH },
+  { label: '积分流水', icon: 'i-mdi-cash-multiple', to: ADMIN_CREDIT_TRANSACTIONS_PATH },
+  { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: ADMIN_REDEMPTION_CODES_PATH }
 ]
 
 const adminSystemLinks: NavigationMenuItem[] = [
@@ -79,6 +87,12 @@ export const adminLogsSection: DashboardSectionConfig = {
   id: 'admin-logs',
   title: '日志中心',
   items: adminLogsLinks
+}
+
+export const adminCreditsSection: DashboardSectionConfig = {
+  id: 'admin-credits',
+  title: '积分管理',
+  items: adminCreditsLinks
 }
 
 export const adminSystemSection: DashboardSectionConfig = {

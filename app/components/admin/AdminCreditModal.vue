@@ -4,7 +4,7 @@ import { parseFetchError } from '~/utils/client-error'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
-  /** 选中的目标用户 id 列表；为空表示「全部用户」 */
+  /** 目标用户 ID 列表，至少包含一项。 */
   userIds: number[]
   /** 用于在标题/描述中显示，便于辨识 */
   selectionLabel: string
@@ -37,7 +37,6 @@ const operationHelp = computed(() => {
 })
 
 const targetSummary = computed(() => {
-  if (props.userIds.length === 0) return '全部未删除用户'
   if (props.userIds.length === 1) return props.selectionLabel
   return `${props.userIds.length} 个用户`
 })
@@ -60,8 +59,6 @@ async function submit() {
     await $fetch('/api/admin/users/credits/adjust', {
       method: 'POST',
       body: {
-        scope: props.userIds.length === 0 ? 'all' : 'selected',
-        confirmAll: props.userIds.length === 0,
         userIds: props.userIds,
         operation: operation.value,
         amount: Math.max(Math.trunc(amount.value), 0),

@@ -4,6 +4,14 @@ import type { TableColumn } from '@nuxt/ui'
 import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
+useHead({ title: '积分流水' })
+
+function toIsoDateTime(value: string): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
 interface CreditTxnRow {
   id: number
   userId: number
@@ -25,6 +33,12 @@ interface CreditTxnRow {
 interface CreditTxnFilters extends Record<string, unknown> {
   userId: number | ''
   reason: CreditReasonFilter
+  direction: 'all' | 'in' | 'out'
+  operatorName: string
+  startAt: string
+  endAt: string
+  minAmount: number | ''
+  maxAmount: number | ''
 }
 
 const {
@@ -38,11 +52,26 @@ const {
   reset
 } = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
   path: '/api/admin/users/credits/transactions',
-  defaultFilters: { userId: '', reason: 'all' },
+  defaultFilters: {
+    userId: '',
+    reason: 'all',
+    direction: 'all',
+    operatorName: '',
+    startAt: '',
+    endAt: '',
+    minAmount: '',
+    maxAmount: ''
+  },
   defaultPageSize: DEFAULT_PAGE_SIZE,
   buildQuery: (f, p) => ({
     userId: f.userId || undefined,
     reason: f.reason === 'all' ? undefined : f.reason,
+    direction: f.direction === 'all' ? undefined : f.direction,
+    operatorName: f.operatorName.trim() || undefined,
+    startAt: toIsoDateTime(f.startAt),
+    endAt: toIsoDateTime(f.endAt),
+    minAmount: f.minAmount === '' ? undefined : f.minAmount,
+    maxAmount: f.maxAmount === '' ? undefined : f.maxAmount,
     limit: p.limit,
     offset: p.offset
   })
@@ -50,7 +79,13 @@ const {
 
 const activeFilterCount = computed(() => [
   filters.userId !== '',
-  filters.reason !== 'all'
+  filters.reason !== 'all',
+  filters.direction !== 'all',
+  filters.operatorName.trim() !== '',
+  filters.startAt !== '',
+  filters.endAt !== '',
+  filters.minAmount !== '',
+  filters.maxAmount !== ''
 ].filter(Boolean).length)
 
 const reasonItems = [
@@ -61,7 +96,14 @@ const reasonItems = [
   { label: 'API 调用扣费', value: 'api_charge' },
   { label: 'API 调用退款', value: 'api_refund' },
   { label: '注册赠送', value: 'signup_bonus' },
-  { label: '兑换码', value: 'redemption_code' }
+  { label: '兑换码', value: 'redemption_code' },
+  { label: '每日签到', value: 'checkin' }
+]
+
+const directionItems = [
+  { label: '全部方向', value: 'all' },
+  { label: '收入', value: 'in' },
+  { label: '支出', value: 'out' }
 ]
 
 const columns: TableColumn<CreditTxnRow>[] = [
@@ -83,13 +125,13 @@ function amountClass(amt: number) {
 <template>
   <div class="space-y-6">
     <section class="dashboard-hero-surface dashboard-hero-surface-success relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10 space-y-3">
+      <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            积分日志
+            积分流水
           </h2>
           <p class="mt-1 text-sm text-toned">
-            用户积分变动、扣费退款与后台调整记录
+            查看用户积分变动，并快速进入用户积分调整与兑换码管理
           </p>
         </div>
       </div>
@@ -98,15 +140,17 @@ function amountClass(amt: number) {
     <div class="flex flex-wrap items-center gap-2">
       <AdminFilterPopover
         :active-count="activeFilterCount"
-        title="积分日志筛选"
+        title="积分流水筛选"
+        panel-class="w-[calc(100vw-2rem)] max-w-2xl p-3"
         @apply="apply"
         @reset="reset"
       >
-        <div class="grid gap-3">
+        <div class="grid gap-3 sm:grid-cols-2">
           <UFormField label="用户 ID">
             <UInput
               v-model.number="filters.userId"
               type="number"
+              min="1"
               placeholder="留空查全部"
               class="w-full"
             />
@@ -115,6 +159,50 @@ function amountClass(amt: number) {
             <USelect
               v-model="filters.reason"
               :items="reasonItems"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="收支方向">
+            <USelect
+              v-model="filters.direction"
+              :items="directionItems"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="操作人">
+            <UInput
+              v-model="filters.operatorName"
+              placeholder="管理员名称"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="开始时间">
+            <UInput
+              v-model="filters.startAt"
+              type="datetime-local"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="结束时间">
+            <UInput
+              v-model="filters.endAt"
+              type="datetime-local"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="最小变动金额">
+            <UInput
+              v-model.number="filters.minAmount"
+              type="number"
+              placeholder="例如 -100"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField label="最大变动金额">
+            <UInput
+              v-model.number="filters.maxAmount"
+              type="number"
+              placeholder="例如 1000"
               class="w-full"
             />
           </UFormField>

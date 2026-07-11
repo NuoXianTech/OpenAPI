@@ -3,9 +3,9 @@ import {
   ADMIN_ANALYTICS_PATH,
   ADMIN_APIS_PATH,
   ADMIN_CONTENT_PATH,
+  ADMIN_CREDITS_PATH,
   ADMIN_LOGS_PATH,
   ADMIN_OVERVIEW_PATH,
-  ADMIN_REDEMPTION_CODES_PATH,
   ADMIN_SYSTEM_PATH,
   ADMIN_USERS_PATH,
   USER_API_KEYS_PATH,
@@ -77,7 +77,7 @@ export const adminDashboardConfig: DashboardStaticConfig = {
     {
       label: '运营',
       items: [
-        { label: '兑换码', icon: 'i-mdi-ticket-percent-outline', to: ADMIN_REDEMPTION_CODES_PATH },
+        { label: '积分管理', icon: 'i-mdi-cash-multiple', to: ADMIN_CREDITS_PATH },
         { label: '内容管理', icon: 'i-mdi-bullhorn-outline', to: ADMIN_CONTENT_PATH },
       ]
     },

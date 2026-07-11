@@ -8,7 +8,7 @@ import {
 import { API_STATUS } from '#shared/config/api-status'
 
 describe('admin schemas', () => {
-  it('rejects unsafe admin mutations and requires explicit bulk confirmation', () => {
+  it('rejects unsafe admin mutations and requires explicit credit targets', () => {
     expect(adminUpdateUserSchema.safeParse({
       id: 1,
       username: 'bad name',
@@ -37,19 +37,10 @@ describe('admin schemas', () => {
     }).success).toBe(false)
 
     expect(adminAdjustCreditsSchema.safeParse({
-      scope: 'all',
-      confirmAll: true,
-      userIds: [],
+      userIds: [1, 2],
       operation: 'grant',
       amount: 1
     }).success).toBe(true)
-
-    expect(adminAdjustCreditsSchema.safeParse({
-      scope: 'selected',
-      userIds: [],
-      operation: 'grant',
-      amount: 1
-    }).success).toBe(false)
   })
 
   it('accepts automatic API status and rejects unknown status values', () => {

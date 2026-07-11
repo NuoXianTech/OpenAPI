@@ -112,23 +112,6 @@ export function useAdminUsersPage() {
     banFilter.value = 'all'
   }
 
-  const rowSelection = ref<Record<string, boolean>>({})
-  const selectedIds = computed(() =>
-    Object.keys(rowSelection.value).filter(k => rowSelection.value[k]).map(Number)
-  )
-
-  function clearSelection() {
-    rowSelection.value = {}
-  }
-
-  function requireSelection(): boolean {
-    if (selectedIds.value.length === 0) {
-      toast.add({ title: '请先勾选用户', color: 'warning' })
-      return false
-    }
-    return true
-  }
-
   async function deleteUser(id: number): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
@@ -222,10 +205,6 @@ export function useAdminUsersPage() {
     loading,
     items: data,
     refresh,
-    rowSelection,
-    selectedIds,
-    clearSelection,
-    requireSelection,
     deleteUser,
     banUser,
     unbanUser,
@@ -250,7 +229,6 @@ interface UseAdminUsersDisplayMetaReturn {
 }
 
 const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
-  { id: 'select' },
   { accessorKey: 'username', header: '用户名' },
   { accessorKey: 'role', header: '类型' },
   { accessorKey: 'email', header: '邮箱' },

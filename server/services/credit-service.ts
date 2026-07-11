@@ -1,4 +1,4 @@
-import { and, count, desc, eq, getTableColumns, gte, lte, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lt, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '~~/server/db/schema'
 import {
   calculateAdminRevokeAdjustment,
@@ -67,8 +67,12 @@ interface AdminOperationTransactionInput {
 interface ListTransactionsFilters {
   userId?: number
   reason?: CreditReason
+  direction?: 'in' | 'out'
+  operatorName?: string
   startAt?: Date
   endAt?: Date
+  minAmount?: number
+  maxAmount?: number
   limit?: number
   offset?: number
 }
@@ -113,7 +117,7 @@ async function forceCharge(input: ChargeInput) {
 
 async function adminBatchAdjust(input: AdminBatchAdjustInput): Promise<AdminBatchAdjustResult> {
   return db.transaction(async (tx: DatabaseTransaction) => {
-    const targetIds = await resolveAdminBatchTargetIds(tx, input.userIds)
+    const targetIds = [...new Set(input.userIds)]
     const results: CreditOperationResult[] = []
 
     for (const userId of targetIds) {
@@ -146,8 +150,13 @@ async function listTransactions(filters: ListTransactionsFilters = {}) {
   const conditions: SQL[] = []
   if (typeof filters.userId === 'number') conditions.push(eq(creditTransactions.userId, filters.userId))
   if (filters.reason) conditions.push(eq(creditTransactions.reason, filters.reason))
+  if (filters.direction === 'in') conditions.push(gt(creditTransactions.amount, 0))
+  if (filters.direction === 'out') conditions.push(lt(creditTransactions.amount, 0))
+  if (filters.operatorName) conditions.push(ilike(creditTransactions.operatorName, `%${filters.operatorName}%`))
   if (filters.startAt) conditions.push(gte(creditTransactions.createdAt, filters.startAt))
   if (filters.endAt) conditions.push(lte(creditTransactions.createdAt, filters.endAt))
+  if (typeof filters.minAmount === 'number') conditions.push(gte(creditTransactions.amount, filters.minAmount))
+  if (typeof filters.maxAmount === 'number') conditions.push(lte(creditTransactions.amount, filters.maxAmount))
 
   const { limit, offset } = normalizePagination(filters)
 
@@ -363,13 +372,6 @@ async function adminResetWithTransaction(
   })
 
   return { userId: input.userId, balanceAfter }
-}
-
-async function resolveAdminBatchTargetIds(tx: DatabaseTransaction, userIds: number[]): Promise<number[]> {
-  if (userIds.length > 0) return userIds
-
-  const rows = await tx.select({ id: users.id }).from(users)
-  return rows.map((row: { id: number }) => row.id)
 }
 
 async function applyAdminOperationWithTransaction(
