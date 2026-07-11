@@ -1,16 +1,10 @@
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
+import type { UserCreditSummary } from '#shared/types/user-credits'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
-
-export interface CreditSummary {
-  balance: number
-  totalIn: number
-  totalOut: number
-  totalCount: number
-  byReason: Array<{ reason: string, count: number, sum: number }>
-}
+export type { UserCreditSummary as CreditSummary } from '#shared/types/user-credits'
 
 export interface TransactionRow {
   id: number
@@ -67,8 +61,15 @@ interface CreditTxnFilters extends Record<string, unknown> {
   direction: CreditDirection
 }
 
-function createEmptyCreditSummary(): CreditSummary {
-  return { balance: 0, totalIn: 0, totalOut: 0, totalCount: 0, byReason: [] }
+function createEmptyCreditSummary(): UserCreditSummary {
+  return {
+    balance: 0,
+    totalIn: 0,
+    totalOut: 0,
+    totalCount: 0,
+    byReason: [],
+    consumptionLast7Days: []
+  }
 }
 
 export function useUserCreditsPage() {
@@ -78,7 +79,7 @@ export function useUserCreditsPage() {
     data: summary,
     loading: summaryLoading,
     refresh: fetchSummary
-  } = usePrivateResource<CreditSummary>({
+  } = usePrivateResource<UserCreditSummary>({
     path: '/api/user/credits/summary',
     defaultData: createEmptyCreditSummary,
     immediate: false

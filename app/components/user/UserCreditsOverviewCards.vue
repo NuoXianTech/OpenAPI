@@ -68,6 +68,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       :meta="card.meta"
       :icon="card.icon"
       :tone="card.tone"
+      compact
     />
   </div>
 </template>

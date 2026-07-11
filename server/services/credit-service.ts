@@ -1,4 +1,4 @@
-import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lt, lte, sql, type SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, getTableColumns, gt, gte, ilike, lt, lte, sql, type SQL } from 'drizzle-orm'
 import { apis, creditTransactions, users } from '~~/server/db/schema'
 import {
   calculateAdminRevokeAdjustment,
@@ -6,9 +6,11 @@ import {
   normalizeCreditAmount,
   type AdminCreditOperation
 } from '~~/server/services/credit-adjustments'
+import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '#shared/types/credit-reason'
+import type { UserCreditConsumptionDailyRow, UserCreditSummary } from '#shared/types/user-credits'
 import type { DatabaseTransaction } from '~~/server/db/client'
 
 export type { CreditReason }
@@ -225,8 +227,26 @@ async function listUserTransactions(
   }
 }
 
-async function getUserCreditsSummary(userId: number) {
-  const [balanceRow, aggRows, reasonRows] = await Promise.all([
+async function getUserCreditsSummary(userId: number): Promise<UserCreditSummary> {
+  const consumptionDays = 7
+  const todayStart = getLocalDayStart()
+  const rangeStart = addLocalDays(todayStart, -(consumptionDays - 1))
+  const tomorrowStart = addLocalDays(todayStart, 1)
+  const consumptionSource = db
+    .select({
+      bucket: sql<Date>`date_trunc('day', ${creditTransactions.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
+      amount: creditTransactions.amount
+    })
+    .from(creditTransactions)
+    .where(and(
+      eq(creditTransactions.userId, userId),
+      lt(creditTransactions.amount, 0),
+      gte(creditTransactions.createdAt, rangeStart),
+      lt(creditTransactions.createdAt, tomorrowStart)
+    ))
+    .as('consumption_source')
+
+  const [balanceRow, aggRows, reasonRows, consumptionRows] = await Promise.all([
     db.select({ credits: users.credits }).from(users).where(eq(users.id, userId)).limit(1),
     db.select({
       totalIn: sql<number>`coalesce(sum(case when ${creditTransactions.amount} > 0 then ${creditTransactions.amount} else 0 end), 0)`,
@@ -240,7 +260,15 @@ async function getUserCreditsSummary(userId: number) {
     })
       .from(creditTransactions)
       .where(eq(creditTransactions.userId, userId))
-      .groupBy(creditTransactions.reason)
+      .groupBy(creditTransactions.reason),
+    db.select({
+      bucket: consumptionSource.bucket,
+      consumedCredits: sql<number>`coalesce(sum(-${consumptionSource.amount}), 0)`,
+      transactionCount: sql<number>`count(*)`
+    })
+      .from(consumptionSource)
+      .groupBy(consumptionSource.bucket)
+      .orderBy(asc(consumptionSource.bucket))
   ])
 
   const balance = toNumber(balanceRow[0]?.credits)
@@ -250,13 +278,27 @@ async function getUserCreditsSummary(userId: number) {
     count: toNumber(row.count),
     sum: toNumber(row.sum)
   }))
+  const consumptionMap = new Map<string, UserCreditConsumptionDailyRow>()
+  for (const row of consumptionRows) {
+    const date = toLocalDateKey(row.bucket)
+    consumptionMap.set(date, {
+      date,
+      consumedCredits: toNumber(row.consumedCredits),
+      transactionCount: toNumber(row.transactionCount)
+    })
+  }
+  const consumptionLast7Days = Array.from({ length: consumptionDays }, (_, index) => {
+    const date = toLocalDateKey(addLocalDays(rangeStart, index))
+    return consumptionMap.get(date) ?? { date, consumedCredits: 0, transactionCount: 0 }
+  })
 
   return {
     balance,
     totalIn: toNumber(agg.totalIn),
     totalOut: toNumber(agg.totalOut),
     totalCount: toNumber(agg.totalCount),
-    byReason
+    byReason,
+    consumptionLast7Days
   }
 }
 
