@@ -4,7 +4,7 @@ import { parseFetchError } from '~/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { DEFAULT_PAGE_SIZE, useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import type { ApiKeyItem } from '#shared/types/api'
@@ -256,7 +256,7 @@ const filteredItems = computed(() => {
   })
 })
 
-const { page, pageSize, total, paginated } = useClientPagination(filteredItems, 10)
+const { page, pageSize, total, paginated } = useClientPagination(filteredItems, DEFAULT_PAGE_SIZE)
 
 const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
   columns
@@ -388,6 +388,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :loading="loading"
             :total="total"
             :page-size-items="PAGE_SIZE_ITEMS"
+            always-show-pagination
             :fixed="false"
             empty-title="暂无 API 密钥"
             empty-icon="i-mdi-key-outline"

@@ -18,6 +18,8 @@ interface DashboardDataTableProps<T> {
   total?: number
   /** 传入后底部显示“每页条数”下拉（配合 v-model:page-size）；不传则只显示计数 + 分页 */
   pageSizeItems?: DashboardDataTablePageSizeItem[]
+  /** 数据只有一页时仍显示页码与上一页/下一页控件 */
+  alwaysShowPagination?: boolean
   /** 行选择状态（配合 v-model:row-selection）；不传则禁用行选择 */
   rowSelection?: Record<string, boolean>
   /** 列可见性状态（配合 v-model:column-visibility）；不传则全部列可见 */
@@ -49,6 +51,7 @@ const {
   pageSize = 0,
   total = 0,
   pageSizeItems,
+  alwaysShowPagination = false,
   rowSelection,
   columnVisibility,
   getRowId,
@@ -77,7 +80,8 @@ const tableUi = computed(() => ({
 
 const hasPageSizeSelect = computed(() => !!pageSizeItems?.length)
 const showSkeleton = computed(() => loading && data.length === 0)
-const showPagination = computed(() => pageSize > 0 && total > pageSize)
+const hasPaginationData = computed(() => pageSize > 0 && total > 0)
+const showPagination = computed(() => hasPaginationData.value && (alwaysShowPagination || total > pageSize))
 const skeletonColumnCount = computed(() => Math.max(columns.length || 0, 3))
 // 带每页条数下拉时，只要有数据就展示底部（计数/下拉常驻）；否则沿用“仅多页时显示分页”。
 const showFooter = computed(() => hasPageSizeSelect.value ? total > 0 : showPagination.value)
