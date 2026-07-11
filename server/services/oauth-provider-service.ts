@@ -9,6 +9,18 @@ export interface OauthProviderPatch {
   isEnabled?: boolean
 }
 
+export interface OauthProviderBatchItem {
+  provider: SupportedOauthProvider
+  clientId: string
+  clientSecret?: string
+  isEnabled: boolean
+}
+
+export interface OauthProviderBatchUpdate {
+  oauthForceBinding: boolean
+  providers: OauthProviderBatchItem[]
+}
+
 // provider 配置视图。数据实际落在 siteSettings 的扁平列里（明文），此处合成成统一形状，
 // 让 oauthCallback / start / admin 端点无需感知存储细节（曾是独立的 oauth_providers 表）。
 export interface OauthProviderRow {
@@ -113,5 +125,41 @@ export const oauthProviderService = {
     await siteSettingsService.update(input)
 
     return { provider, clientId: nextClientId, clientSecret: nextSecret, isEnabled: nextEnabled }
+  },
+
+  /** 将绑定策略和全部 provider 配置作为一次数据库更新提交，避免部分保存成功。 */
+  async updateAll(batch: OauthProviderBatchUpdate): Promise<OauthProviderRow[]> {
+    const currentSettings = await siteSettingsService.getOrCreate()
+    const input: SiteSettingsUpsertInput = { oauthForceBinding: batch.oauthForceBinding }
+    const rows: OauthProviderRow[] = []
+
+    for (const provider of SUPPORTED_OAUTH_PROVIDERS) {
+      const submitted = batch.providers.find(item => item.provider === provider)
+      if (!submitted) {
+        throw createError({ statusCode: 400, message: `缺少 ${provider} 登录配置` })
+      }
+
+      const current = rowFromSettings(currentSettings, provider)
+      const clientId = submitted.clientId.trim()
+      const clientSecret = submitted.clientSecret !== undefined
+        ? submitted.clientSecret
+        : current.clientSecret
+
+      if (submitted.isEnabled && (!clientId || !clientSecret)) {
+        throw createError({
+          statusCode: 400,
+          message: `${provider} 的 Client ID 和 Client Secret 都配置后才能启用`
+        })
+      }
+
+      const columns = PROVIDER_COLUMNS[provider]
+      input[columns.clientId] = clientId
+      input[columns.clientSecret] = clientSecret
+      input[columns.isEnabled] = submitted.isEnabled
+      rows.push({ provider, clientId, clientSecret, isEnabled: submitted.isEnabled })
+    }
+
+    await siteSettingsService.update(input)
+    return rows
   }
 }

@@ -79,7 +79,6 @@ interface AdminOauthProviderForm {
   clientId: string
   clientSecret: string
   isEnabled: boolean
-  saving: boolean
   copied: boolean
   secretVisible: boolean
   open: boolean
@@ -92,6 +91,11 @@ interface AdminOauthProviderUpdateBody {
   clientSecret?: string
 }
 
+interface AdminOauthSettingsUpdateBody {
+  oauthForceBinding: boolean
+  providers: AdminOauthProviderUpdateBody[]
+}
+
 interface AdminUserSessionSettingsState {
   form: AdminSettingsForm
   saving: Ref<boolean>
@@ -99,6 +103,7 @@ interface AdminUserSessionSettingsState {
   dirty: ComputedRef<boolean>
   changedKeys: ComputedRef<AdminSettingsKey[]>
   reset: (keys?: readonly AdminSettingsKey[]) => void
+  commit: (keys: readonly AdminSettingsKey[]) => void
   createSection: (keys: readonly AdminSettingsKey[]) => AdminSettingsSectionState
 }
 
@@ -116,7 +121,7 @@ interface UseAdminUserSessionSettingsOptions {
   supportedProviders?: readonly string[]
   useSettingsPage?: () => AdminUserSessionSettingsState
   useProviderFetch?: () => AdminOauthProviderFetchState
-  updateProvider?: (body: AdminOauthProviderUpdateBody) => Promise<void>
+  updateOauthSettings?: (body: AdminOauthSettingsUpdateBody) => Promise<void>
   copyText?: (text: string) => Promise<void>
   toast?: AdminUserSessionToast
   scheduleCopiedReset?: (callback: () => void) => void
@@ -283,6 +288,14 @@ export function useAdminSettingsPage() {
     }
   }
 
+  function commit(keys: readonly AdminSettingsKey[]): void {
+    const nextPristine = snapshot(pristine.value)
+    for (const key of keys) {
+      nextPristine[key] = form[key] as never
+    }
+    pristine.value = nextPristine
+  }
+
   async function save(keys?: readonly AdminSettingsKey[]) {
     const keysToSave = getChangedKeys(keys)
     if (!keysToSave.length || saving.value) return
@@ -334,7 +347,7 @@ export function useAdminSettingsPage() {
     }
   }
 
-  return { form, saving, loading, save, dirty, changedKeys, reset, createSection }
+  return { form, saving, loading, save, dirty, changedKeys, reset, commit, createSection }
 }
 
 const ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS = [
@@ -348,7 +361,6 @@ function createAdminOauthProviderForm(): AdminOauthProviderForm {
     clientId: '',
     clientSecret: '',
     isEnabled: false,
-    saving: false,
     copied: false,
     secretVisible: false,
     open: false
@@ -411,8 +423,8 @@ function useDefaultProviderFetch(): AdminOauthProviderFetchState {
   }
 }
 
-async function updateDefaultProvider(body: AdminOauthProviderUpdateBody): Promise<void> {
-  await $fetch('/api/admin/oauth-providers/update', { method: 'PUT', body })
+async function updateDefaultOauthSettings(body: AdminOauthSettingsUpdateBody): Promise<void> {
+  await $fetch('/api/admin/oauth-providers/update-all', { method: 'PUT', body })
 }
 
 async function copyDefaultText(text: string): Promise<void> {
@@ -427,7 +439,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
   const toast = options.toast ?? useToast()
   const settings = options.useSettingsPage?.() ?? useAdminSettingsPage()
   const providerFetch = options.useProviderFetch?.() ?? useDefaultProviderFetch()
-  const updateProvider = options.updateProvider ?? updateDefaultProvider
+  const updateOauthSettings = options.updateOauthSettings ?? updateDefaultOauthSettings
   const copyText = options.copyText ?? copyDefaultText
   const scheduleCopiedReset = options.scheduleCopiedReset ?? scheduleDefaultCopiedReset
   const supportedProviders = options.supportedProviders ?? SUPPORTED_OAUTH_PROVIDERS
@@ -435,6 +447,9 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     Object.fromEntries(supportedProviders.map(provider => [provider, createAdminOauthProviderForm()]))
   )
   const items = computed<AdminOauthProviderItem[]>(() => providerFetch.data.value)
+  const oauthPolicyKeys = ['oauthForceBinding'] as const satisfies readonly AdminSettingsKey[]
+  const oauthPolicySection = settings.createSection(oauthPolicyKeys)
+  const isOauthSaving = ref(false)
   const allowRegistration = computed({
     get: () => settings.form.registrationMode !== 'closed',
     set: (value: boolean) => {
@@ -450,18 +465,39 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     return getAdminOauthProviderForm(forms, provider)
   }
 
-  async function saveProvider(item: AdminOauthProviderItem): Promise<void> {
+  const changedProviderCount = computed(() => items.value.filter((item) => {
     const providerForm = getForm(item.provider)
-    providerForm.saving = true
+    return providerForm.clientId !== item.clientId
+      || providerForm.clientSecret.length > 0
+      || providerForm.isEnabled !== item.isEnabled
+  }).length)
+  const oauthChangedCount = computed(() => changedProviderCount.value + oauthPolicySection.changedCount.value)
+  const isOauthDirty = computed(() => oauthChangedCount.value > 0)
+  const isOauthReady = computed(() => !providerFetch.loading.value && items.value.length === supportedProviders.length)
+
+  function resetOauthSettings(): void {
+    oauthPolicySection.reset()
+    syncAdminOauthProviderFormsFromItems(forms, items.value)
+  }
+
+  async function saveOauthSettings(): Promise<void> {
+    if (!isOauthReady.value || !isOauthDirty.value || isOauthSaving.value) return
+    isOauthSaving.value = true
     try {
-      await updateProvider(buildAdminOauthProviderUpdateBody(item.provider, providerForm))
-      toast.add({ title: `${item.displayName} 保存成功`, color: 'success' })
-      providerForm.clientSecret = ''
+      await updateOauthSettings({
+        oauthForceBinding: settings.form.oauthForceBinding,
+        providers: items.value.map(item => buildAdminOauthProviderUpdateBody(item.provider, getForm(item.provider)))
+      })
+      settings.commit(oauthPolicyKeys)
+      for (const item of items.value) {
+        getForm(item.provider).clientSecret = ''
+      }
       await providerFetch.refresh()
+      toast.add({ title: '第三方登录设置保存成功', color: 'success' })
     } catch (err: unknown) {
-      toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, '第三方登录设置保存失败'), color: 'error' })
     } finally {
-      providerForm.saving = false
+      isOauthSaving.value = false
     }
   }
 
@@ -493,7 +529,12 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     items,
     forms,
     getForm,
-    saveProvider,
+    isOauthDirty,
+    isOauthReady,
+    oauthChangedCount,
+    isOauthSaving,
+    saveOauthSettings,
+    resetOauthSettings,
     copyCallback
   }
 }
