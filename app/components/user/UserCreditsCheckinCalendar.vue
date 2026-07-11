@@ -23,17 +23,19 @@ const checkedDayNumbers = computed(() => new Set(
 const checkedDayCount = computed(() => props.history?.checkedDayCount ?? 0)
 const totalAmount = computed(() => props.history?.totalAmount ?? 0)
 
+const visibleMonth = computed(() => toMonthKey(placeholder.value))
+
 onMounted(() => {
-  void props.onMonthChange(toMonthKey(placeholder.value))
+  void props.onMonthChange(visibleMonth.value)
+})
+
+watch(visibleMonth, (month, previousMonth) => {
+  if (month === previousMonth) return
+  void props.onMonthChange(month)
 })
 
 function toMonthKey(date: DateValue): string {
   return `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}`
-}
-
-function handlePlaceholderChange(date: DateValue) {
-  placeholder.value = new CalendarDate(date.year, date.month, 1)
-  void props.onMonthChange(toMonthKey(date))
 }
 
 function isCheckedDay(day: DateValue): boolean {
@@ -81,12 +83,12 @@ function isCheckedDay(day: DateValue): boolean {
 
     <div class="relative flex justify-center py-1">
       <UCalendar
+        v-model:placeholder="placeholder"
         multiple
         readonly
         fixed-weeks
         disable-days-outside-current-view
         :model-value="checkedDates"
-        :placeholder="placeholder"
         :max-value="today"
         :view-control="false"
         class="w-full max-w-md"
@@ -96,7 +98,6 @@ function isCheckedDay(day: DateValue): boolean {
           grid: 'w-full',
           cellTrigger: 'relative w-full'
         }"
-        @update:placeholder="handlePlaceholderChange"
       >
         <template #day="{ day }">
           <span>{{ day.day }}</span>
