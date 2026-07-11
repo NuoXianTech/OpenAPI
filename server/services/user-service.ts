@@ -25,6 +25,14 @@ interface AdminAccessPatch {
   isBanned?: boolean
 }
 
+interface AdminUserListOptions {
+  keyword?: string
+  userId?: number
+  role?: UserRole
+  isActive?: boolean
+  isBanned?: boolean
+}
+
 function isAvailableAdmin(user: AdminAvailabilityUser) {
   return user.role === USER_ROLES.admin && user.isActive && !user.isBanned
 }
@@ -42,18 +50,23 @@ async function countAvailableAdmins() {
 // 日志类表（creditTransactions / apiCalls / operationLogs）
 // 已通过解除外键约束保留为整数快照，不会随用户消失。
 export const usersService = {
-  async list(opts: { keyword?: string } = {}) {
+  async list(opts: AdminUserListOptions = {}) {
     // passwordHash 永远不离开 DB，避免 admin 端浏览器扩展 / sentry / 截图泄漏后被字典攻击
     const kw = opts.keyword?.trim().toLowerCase()
-    // 关键字过滤下推到 SQL（username / email / displayName 不区分大小写包含匹配），
-    // 取代旧版"全量拉取后在 handler 内存 filter"。沿用 operationLogService.list 的三元构建范式。
-    const where = kw
-      ? or(
-          ilike(users.username, `%${kw}%`),
-          ilike(users.email, `%${kw}%`),
-          ilike(users.displayName, `%${kw}%`)
-        )
-      : undefined
+    // 关键字、用户 ID、角色、激活及封禁条件统一下推到 SQL，避免在 handler 中全量过滤。
+    const where = and(
+      kw
+        ? or(
+            ilike(users.username, `%${kw}%`),
+            ilike(users.email, `%${kw}%`),
+            ilike(users.displayName, `%${kw}%`)
+          )
+        : undefined,
+      opts.userId ? eq(users.id, opts.userId) : undefined,
+      opts.role ? eq(users.role, opts.role) : undefined,
+      typeof opts.isActive === 'boolean' ? eq(users.isActive, opts.isActive) : undefined,
+      typeof opts.isBanned === 'boolean' ? eq(users.isBanned, opts.isBanned) : undefined
+    )
 
     const base = db.select({
       id: users.id,
@@ -74,7 +87,7 @@ export const usersService = {
       updatedAt: users.updatedAt
     }).from(users)
 
-    return (where ? base.where(where) : base).orderBy(desc(users.createdAt))
+    return base.where(where).orderBy(desc(users.createdAt))
   },
 
   async findByEmail(email: string, opts: { role?: UserRole } = {}) {

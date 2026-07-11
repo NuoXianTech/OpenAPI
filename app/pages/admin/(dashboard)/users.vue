@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import {
+  ADMIN_USER_ACTIVE_FILTER_OPTIONS,
+  ADMIN_USER_BAN_FILTER_OPTIONS,
+  ADMIN_USER_ROLE_FILTER_OPTIONS,
   useAdminUsersDisplayMeta,
   useAdminUsersPage,
   type AdminUserItem
@@ -11,6 +14,12 @@ useHead({ title: '用户管理' })
 
 const {
   keyword,
+  userIdFilter,
+  roleFilter,
+  activeFilter,
+  banFilter,
+  activeFilterCount,
+  resetFilters,
   loading,
   items,
   refresh,
@@ -26,7 +35,7 @@ const {
 } = useAdminUsersPage()
 
 const { page, pageSize, total, paginated } = useClientPagination(items, 10)
-watch([keyword, pageSize], () => {
+watch([keyword, userIdFilter, roleFilter, activeFilter, banFilter, pageSize], () => {
   page.value = 1
   clearSelection()
 })
@@ -169,9 +178,53 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
           <UInput
             v-model="keyword"
             icon="i-mdi-magnify"
-            placeholder="搜索用户名、邮箱..."
-            class="max-w-sm"
+            placeholder="搜索用户名、邮箱或昵称"
+            class="w-full sm:w-64"
           />
+          <AdminFilterPopover
+            :active-count="activeFilterCount"
+            title="用户筛选"
+            @reset="resetFilters"
+          >
+            <UFormField
+              label="用户 ID"
+              hint="精确匹配"
+            >
+              <UInput
+                v-model.number="userIdFilter"
+                type="number"
+                inputmode="numeric"
+                :min="1"
+                :step="1"
+                placeholder="输入用户 ID"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="角色">
+              <USelect
+                v-model="roleFilter"
+                :items="ADMIN_USER_ROLE_FILTER_OPTIONS"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="激活状态">
+              <USelect
+                v-model="activeFilter"
+                :items="ADMIN_USER_ACTIVE_FILTER_OPTIONS"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField label="封禁状态">
+              <USelect
+                v-model="banFilter"
+                :items="ADMIN_USER_BAN_FILTER_OPTIONS"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+          </AdminFilterPopover>
           <div class="ml-auto flex items-center gap-2 flex-wrap">
             <span class="text-xs text-muted">
               已选 {{ selectedIds.length }} / {{ items.length }}

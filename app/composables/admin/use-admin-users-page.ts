@@ -1,6 +1,6 @@
 import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { formatDateTime } from '~/utils/datetime'
@@ -17,6 +17,47 @@ export interface AdminUserItem {
   bannedUntil?: string | null
   credits?: number | string | null
   createdAt: string
+}
+
+export type AdminUserRoleFilter = 'all' | AdminUserItem['role']
+export type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
+export type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
+
+export interface AdminUserFilterOption<TValue extends string> {
+  label: string
+  value: TValue
+}
+
+export const ADMIN_USER_ROLE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserRoleFilter>> = [
+  { label: '全部角色', value: 'all' },
+  { label: '管理员', value: 'admin' },
+  { label: '普通用户', value: 'user' }
+]
+
+export const ADMIN_USER_ACTIVE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserActiveFilter>> = [
+  { label: '全部激活状态', value: 'all' },
+  { label: '已激活', value: 'active' },
+  { label: '未激活', value: 'inactive' }
+]
+
+export const ADMIN_USER_BAN_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserBanFilter>> = [
+  { label: '全部封禁状态', value: 'all' },
+  { label: '已封禁', value: 'banned' },
+  { label: '未封禁', value: 'unbanned' }
+]
+
+function serializeBooleanFilter<TValue extends string>(
+  value: TValue,
+  trueValue: TValue,
+  falseValue: TValue
+): boolean | undefined {
+  if (value === trueValue) return true
+  if (value === falseValue) return false
+  return undefined
+}
+
+function normalizeUserIdFilter(value: number | undefined): number | undefined {
+  return Number.isInteger(value) && Number(value) > 0 ? value : undefined
 }
 
 interface ToastLike {
@@ -37,13 +78,39 @@ export function useAdminUsersPage() {
     return createSilentToast()
   })()
   const keyword = ref('')
+  const userIdFilter = ref<number>()
+  const roleFilter = ref<AdminUserRoleFilter>('all')
+  const activeFilter = ref<AdminUserActiveFilter>('all')
+  const banFilter = ref<AdminUserBanFilter>('all')
+  const activeFilterCount = computed(() => [
+    normalizeUserIdFilter(userIdFilter.value) !== undefined,
+    roleFilter.value !== 'all',
+    activeFilter.value !== 'all',
+    banFilter.value !== 'all'
+  ].filter(Boolean).length)
+
   const { data, loading, refresh } = usePrivateResource<AdminUserItem[]>({
     path: '/api/admin/users/list',
     defaultData: () => [],
-    query: computed(() => ({ keyword: keyword.value.trim() || undefined }))
+    query: computed(() => ({
+      keyword: keyword.value.trim() || undefined,
+      userId: normalizeUserIdFilter(userIdFilter.value),
+      role: roleFilter.value === 'all' ? undefined : roleFilter.value,
+      isActive: serializeBooleanFilter(activeFilter.value, 'active', 'inactive'),
+      isBanned: serializeBooleanFilter(banFilter.value, 'banned', 'unbanned')
+    }))
   })
 
   watchDebounced(keyword, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
+  watchDebounced(userIdFilter, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
+  watch([roleFilter, activeFilter, banFilter], () => { void refresh() })
+
+  function resetFilters() {
+    userIdFilter.value = undefined
+    roleFilter.value = 'all'
+    activeFilter.value = 'all'
+    banFilter.value = 'all'
+  }
 
   const rowSelection = ref<Record<string, boolean>>({})
   const selectedIds = computed(() =>
@@ -146,6 +213,12 @@ export function useAdminUsersPage() {
 
   return {
     keyword,
+    userIdFilter,
+    roleFilter,
+    activeFilter,
+    banFilter,
+    activeFilterCount,
+    resetFilters,
     loading,
     items: data,
     refresh,
