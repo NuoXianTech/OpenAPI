@@ -46,7 +46,7 @@ const crosshairColors = ['var(--ui-success)', 'var(--ui-error)'] as const
 const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
 const yTickFormat = formatChartIntegerTick
 
-// 走全站统一的卡片式 tooltip 渲染器（utils/chart-tooltip.ts），与 admin 数据看板同款
+// 走全站统一的卡片式 tooltip 渲染器（utils/chart-tooltip.ts），与 admin 管理概览同款
 function tooltipTemplate(datum: TrendRow | undefined) {
   if (!datum) {
     return ''

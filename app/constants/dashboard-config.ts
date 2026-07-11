@@ -1,6 +1,5 @@
 import type { NavigationMenuItem, DropdownMenuItem } from '@nuxt/ui'
 import {
-  ADMIN_ANALYTICS_PATH,
   ADMIN_APIS_PATH,
   ADMIN_CONTENT_PATH,
   ADMIN_CREDITS_PATH,
@@ -70,7 +69,6 @@ export const adminDashboardConfig: DashboardStaticConfig = {
       label: '管理',
       items: [
         { label: '概览', icon: 'i-mdi-shield-crown-outline', to: ADMIN_OVERVIEW_PATH },
-        { label: '数据看板', icon: 'i-mdi-chart-box-outline', to: ADMIN_ANALYTICS_PATH },
         { label: '日志中心', icon: 'i-mdi-text-box-search-outline', to: ADMIN_LOGS_PATH }
       ]
     },

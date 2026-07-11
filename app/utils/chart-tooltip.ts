@@ -3,7 +3,7 @@
  *
  * unovis 的 tooltip 模板渲染成游离于 Vue 作用域外的 HTML 字符串，无法用 scoped class，
  * 故走内联样式 + 语义色变量（--ui-*，自动适配暗色）。全站图表 tooltip 的唯一来源，
- * 保证 stats 公开统计页与 admin 数据看板的悬浮卡片完全同款。
+ * 保证 stats 公开统计页与 admin 管理概览的悬浮卡片完全同款。
  *
  * 配合 main.css 全局 `--vis-tooltip-padding: 0`：内边距由本卡片自身提供。
  */

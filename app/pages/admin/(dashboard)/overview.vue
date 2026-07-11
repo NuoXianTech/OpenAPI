@@ -2,6 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import type {
   AdminDashboardData,
+  AdminDashboardInsightsData,
   AdminDashboardRange,
   AdminDashboardRecentCall,
   AdminDashboardTrendPoint
@@ -51,9 +52,16 @@ function createEmptyDashboardData(): AdminDashboardData {
   }
 }
 
+function createEmptyDashboardInsightsData(): AdminDashboardInsightsData {
+  return {
+    hourlyTrend24h: [],
+    ranking: []
+  }
+}
+
 const { data, loading } = usePrivateResource<AdminDashboardData>({
   path: '/api/admin/dashboard',
-  query: { days: OVERVIEW_SPARKLINE_RANGE },
+  query: { days: OVERVIEW_SPARKLINE_RANGE, top: 5 },
   defaultData: createEmptyDashboardData
 })
 const {
@@ -66,12 +74,22 @@ const {
   immediate: false,
   defaultData: createEmptyDashboardData
 })
+const {
+  data: insightsData,
+  loading: insightsLoading
+} = usePrivateResource<AdminDashboardInsightsData>({
+  path: '/api/admin/dashboard/insights',
+  query: { ranking: 10 },
+  defaultData: createEmptyDashboardInsightsData
+})
 const overview = computed(() => data.value.overview)
 const overviewTrend = computed(() => data.value.trend)
 const isUsingOverviewTrend = computed(() => selectedTrendRange.value === OVERVIEW_SPARKLINE_RANGE)
 const chartTrend = computed(() => isUsingOverviewTrend.value ? data.value.trend : trendData.value.trend)
 const chartLoading = computed(() => isUsingOverviewTrend.value ? loading.value : trendLoading.value)
 const distribution = computed(() => data.value.distribution)
+const hourlyTrend24h = computed(() => insightsData.value.hourlyTrend24h)
+const ranking = computed(() => insightsData.value.ranking)
 const recentCalls = computed(() => data.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(data.value.generatedAt))
 const callsTrendValues = computed(() => getCallsTrendValues(overviewTrend.value))
@@ -326,7 +344,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   API 使用分布
                 </h3>
                 <p class="mt-1 text-sm text-muted">
-                  Top 6 高频调用接口
+                  Top 5 高频调用接口
                 </p>
               </div>
             </template>
@@ -337,6 +355,63 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             />
           </UCard>
         </div>
+
+        <UCard>
+          <template #header>
+            <div>
+              <h3 class="text-lg font-semibold text-highlighted">
+                调用趋势（24 小时）
+              </h3>
+              <p class="mt-1 text-sm text-muted">
+                按小时聚合已计入统计的 API 请求次数
+              </p>
+            </div>
+          </template>
+
+          <div
+            v-if="insightsLoading"
+            class="h-64 w-full animate-pulse rounded-lg bg-elevated/50"
+          />
+          <ClientOnly v-else>
+            <Suspense>
+              <LazyAdminDashboardHourlyTrend :trend="hourlyTrend24h" />
+              <template #fallback>
+                <div class="h-64 w-full animate-pulse rounded-lg bg-elevated/50" />
+              </template>
+            </Suspense>
+            <template #fallback>
+              <div class="h-64 w-full animate-pulse rounded-lg bg-elevated/50" />
+            </template>
+          </ClientOnly>
+        </UCard>
+
+        <UCard>
+          <template #header>
+            <div>
+              <h3 class="text-lg font-semibold text-highlighted">
+                调用次数排行
+              </h3>
+              <p class="mt-1 text-sm text-muted">
+                Top {{ ranking.length || 10 }} 高频调用接口及成功率
+              </p>
+            </div>
+          </template>
+
+          <div
+            v-if="insightsLoading && ranking.length === 0"
+            class="space-y-3"
+          >
+            <USkeleton
+              v-for="index in 5"
+              :key="index"
+              class="h-12 w-full"
+            />
+          </div>
+          <AdminDashboardRanking
+            v-else
+            :ranking="ranking"
+          />
+        </UCard>
 
         <DashboardTableCard
           title="最新 API 请求"

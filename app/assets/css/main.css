@@ -527,7 +527,7 @@ body {
 
 /*
  * unovis 全局主题 — X / Y 轴刻度、网格、crosshair 在深浅主题下都走语义色（--ui-*）。
- * 全站图表（stats 公开统计页 + admin 数据看板）共享的唯一外观来源，组件内不再各自覆盖。
+ * 全站图表（stats 公开统计页 + admin 管理概览）共享的唯一外观来源，组件内不再各自覆盖。
  */
 .unovis-xy-container {
   --vis-font-family: inherit;

@@ -7,7 +7,6 @@ interface DashboardSectionConfig {
 }
 
 export const ADMIN_OVERVIEW_PATH = '/admin/overview'
-export const ADMIN_ANALYTICS_PATH = '/admin/analytics'
 export const ADMIN_LOGS_PATH = '/admin/logs'
 export const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
 export const ADMIN_CREDITS_PATH = '/admin/credits'

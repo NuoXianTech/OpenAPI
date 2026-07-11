@@ -7,9 +7,7 @@ import { readQueryNumber } from '~~/server/utils/request-query'
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
   const query = getQuery(event)
-  const data = await adminLogsService.getAnalytics({
-    topLimit: readQueryNumber(query.top),
-    averageWindowDays: readQueryNumber(query.window)
+  return adminLogsService.getDashboardInsights({
+    rankingLimit: readQueryNumber(query.ranking)
   })
-  return data
 })

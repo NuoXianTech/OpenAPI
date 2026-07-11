@@ -22,7 +22,7 @@ export default defineEventHandler(async (event: H3Event): Promise<AdminDashboard
 
   const query = getQuery(event)
   const days = resolveRange(query.days)
-  const distributionLimit = clampInteger(readQueryNumber(query.top), 1, 20, 6)
+  const distributionLimit = clampInteger(readQueryNumber(query.top), 1, 20, 5)
   const recentLimit = clampInteger(readQueryNumber(query.recent), 1, 50, 10)
 
   const todayStart = getLocalDayStart(new Date())

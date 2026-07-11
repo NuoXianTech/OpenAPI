@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { VisXYContainer, VisArea, VisLine, VisAxis, VisCrosshair, VisTooltip } from '@unovis/vue'
-import type { AdminAnalyticsHourlyPoint } from '#shared/types/admin'
+import type { AdminDashboardHourlyPoint } from '#shared/types/admin'
 
 // 本组件是 .client.vue（@unovis 的 d3+DOM 不进 admin 首屏 entry）。
 // unovis 原语必须静态导入、同步可用——各自 defineAsyncComponent 会让 VisXYContainer 在
 // VisAxis 注册前就首绘，导致坐标轴首帧画不出来（须点刷新才补画）。
 
 interface Props {
-  trend: AdminAnalyticsHourlyPoint[]
+  trend: AdminDashboardHourlyPoint[]
 }
 
 const props = defineProps<Props>()
