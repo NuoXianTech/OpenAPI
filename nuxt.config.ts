@@ -60,16 +60,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-06-30',
   nitro: {
     preset: 'node-server',
-    externals: {
-      traceInclude: [
-        '@electric-sql/pglite',
-        'postgres',
-        'drizzle-orm/pglite',
-        'drizzle-orm/pglite/migrator',
-        'drizzle-orm/postgres-js',
-        'drizzle-orm/postgres-js/migrator',
-      ],
-    },
     hooks: {
       async compiled(nitro) {
         await cp(

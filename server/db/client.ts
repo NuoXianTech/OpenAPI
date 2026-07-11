@@ -1,71 +1,18 @@
 import { mkdirSync } from 'node:fs'
-import { createRequire } from 'node:module'
-import { dirname, join, resolve } from 'node:path'
+import { resolve } from 'node:path'
 import postgres from 'postgres'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
-import type { PGlite } from '@electric-sql/pglite'
-import type { drizzle as drizzlePgliteDriver } from 'drizzle-orm/pglite'
+import { PGlite } from '@electric-sql/pglite'
+import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import * as schema from './schema'
 
 export interface CreatePostgresClientOptions {
   max?: number
 }
 
-interface PgliteModule {
-  PGlite: typeof PGlite
-}
-
-interface PgliteDriverModule {
-  drizzle: typeof drizzlePgliteDriver
-}
-
-interface PgliteRuntime {
-  pgliteModule: PgliteModule
-  driverModule: PgliteDriverModule
-}
-
 export type PostgresClient = ReturnType<typeof postgres>
 export type PgliteClient = PGlite
 export type DatabaseDriver = 'postgres' | 'pglite'
-
-let pgliteRuntime: PgliteRuntime | undefined
-
-function getRequireCandidates() {
-  const entryFile = process.argv[1] ? resolve(process.argv[1]) : undefined
-
-  return [
-    entryFile ? join(dirname(entryFile), 'package.json') : undefined,
-    join(process.cwd(), 'server/package.json'),
-    join(process.cwd(), '.output/server/package.json'),
-    join(process.cwd(), 'package.json')
-  ].filter((candidate): candidate is string => Boolean(candidate))
-}
-
-function loadPgliteRuntime() {
-  let lastError: unknown
-
-  for (const candidate of getRequireCandidates()) {
-    try {
-      const runtimeRequire = createRequire(candidate)
-      return {
-        pgliteModule: runtimeRequire('@electric-sql/pglite') as PgliteModule,
-        driverModule: runtimeRequire('drizzle-orm/pglite') as PgliteDriverModule
-      }
-    } catch (error) {
-      lastError = error
-    }
-  }
-
-  throw lastError
-}
-
-function getPgliteRuntime() {
-  if (!pgliteRuntime) {
-    pgliteRuntime = loadPgliteRuntime()
-  }
-
-  return pgliteRuntime
-}
 
 function handlePostgresNotice(notice: postgres.Notice) {
   if (notice.code === '42P06' || notice.code === '42P07') return
@@ -135,10 +82,9 @@ export function ensurePgliteDataDir(dataDir = getPgliteDataDir()) {
 }
 
 export function createPgliteClient() {
-  const { PGlite: PGliteConstructor } = getPgliteRuntime().pgliteModule
   const dataDir = getPgliteDataDir()
   ensurePgliteDataDir(dataDir)
-  return new PGliteConstructor(dataDir)
+  return new PGlite(dataDir)
 }
 
 export function createDatabase(client: PostgresClient) {
@@ -146,7 +92,6 @@ export function createDatabase(client: PostgresClient) {
 }
 
 export function createPgliteDatabase(client: PgliteClient) {
-  const { drizzle: drizzlePglite } = getPgliteRuntime().driverModule
   return drizzlePglite(client, { schema })
 }
 
