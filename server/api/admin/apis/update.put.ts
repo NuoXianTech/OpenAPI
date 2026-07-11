@@ -3,7 +3,7 @@ import { createError } from 'h3'
 import { adminUpdateApiSchema } from '~~/server/schemas/admin'
 import { hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { apiService } from '~~/server/services/api-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -13,8 +13,7 @@ import { readZodBody } from '~~/server/utils/zod'
  * 注意：code/pathVersion/apiPath/httpMethod/endpointCount 由 manifest 注入，
  * 不接受外部修改。要修改路径或方法，请改文件后重新登记。
  */
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const body = await readZodBody(event, adminUpdateApiSchema)
   const { id, methodCosts, isApiKey } = body
 

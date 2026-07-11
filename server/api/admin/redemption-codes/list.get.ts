@@ -1,14 +1,13 @@
 import type { H3Event } from 'h3'
 import type { RedemptionStatus } from '~~/server/services/redemption-service'
 import { redemptionService } from '~~/server/services/redemption-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryOption, readQueryText } from '~~/server/utils/request-query'
 
 const VALID_STATUS: Array<RedemptionStatus | 'all'> = ['all', 'enabled', 'disabled', 'used_up', 'expired', 'available']
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const batchId = readQueryText(query.batchId)

@@ -13,11 +13,10 @@ import { createError } from 'h3'
 import { adminAdjustCreditsSchema } from '~~/server/schemas/admin'
 import { creditService } from '~~/server/services/credit-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const { userIds, operation, amount, remark } = await readZodBody(event, adminAdjustCreditsSchema)
 
   if (operation !== 'reset' && amount <= 0) {

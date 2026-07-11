@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apis, users } from '~~/server/db/schema'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
@@ -17,9 +17,7 @@ function resolveRange(raw: unknown): number {
   return clampInteger(readQueryNumber(raw), 1, 90, 7)
 }
 
-export default defineEventHandler(async (event: H3Event): Promise<AdminDashboardData> => {
-  await requireAdmin(event)
-
+export default defineAdminEventHandler(async (event: H3Event): Promise<AdminDashboardData> => {
   const query = getQuery(event)
   const days = resolveRange(query.days)
   const distributionLimit = clampInteger(readQueryNumber(query.top), 1, 20, 5)

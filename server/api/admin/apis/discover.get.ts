@@ -10,7 +10,7 @@
 import type { H3Event } from 'h3'
 import { API_MANIFEST } from '#api-manifest'
 import type { DiscoveredApi, DiscoveredEndpoint, RegisteredApi } from '#shared/types/api'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { apiService } from '~~/server/services/api-service'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
@@ -25,9 +25,7 @@ interface VersionGroup {
   }
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
-
+export default defineAdminEventHandler(async (_event: H3Event) => {
   const versions = Array.from(new Set(API_MANIFEST.map(a => a.pathVersion)))
   const registeredMap = new Map<string, RegisteredApi>()
   for (const version of versions) {

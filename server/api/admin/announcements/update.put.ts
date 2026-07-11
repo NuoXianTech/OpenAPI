@@ -3,12 +3,11 @@ import { createError } from 'h3'
 import { adminUpdateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/services/announcement-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const body = await readZodBody(event, adminUpdateAnnouncementSchema)
   const { id } = body
 

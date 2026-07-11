@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
 import { USER_ROLES, usersService } from '~~/server/services/user-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
 
 const USER_ROLE_OPTIONS = Object.values(USER_ROLES)
@@ -18,8 +18,7 @@ function readUserIdFilter(value: unknown): number | undefined {
   return userId !== undefined && Number.isInteger(userId) && userId > 0 ? userId : undefined
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const query = getQuery(event)
 
   return usersService.list({

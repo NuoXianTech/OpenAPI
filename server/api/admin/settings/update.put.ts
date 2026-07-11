@@ -1,12 +1,11 @@
 import type { H3Event } from 'h3'
 import { adminUpdateSiteSettingsSchema } from '~~/server/schemas/admin'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { siteSettingsService, toAdminSiteSettings, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const body = await readZodBody(event, adminUpdateSiteSettingsSchema)
 
   const updateInput: SiteSettingsUpsertInput = body

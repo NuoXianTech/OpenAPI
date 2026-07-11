@@ -1,14 +1,13 @@
 import type { H3Event } from 'h3'
 import { operationLogService, type OperationLogStatus } from '~~/server/services/operation-log-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils/request-query'
 
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
 const ACTOR_KINDS = ['admin', 'user'] as const
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const actorKind = readQueryOption(query.actorKind, ACTOR_KINDS)

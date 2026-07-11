@@ -2,12 +2,11 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { idSchema } from '~~/server/schemas/common'
 import { apiService } from '~~/server/services/api-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const { id } = await readZodBody(event, idSchema)
 
   let deleted: Awaited<ReturnType<typeof apiService.deleteApi>>

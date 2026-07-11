@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { adminLogsService } from '~~/server/services/admin-logs-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryText } from '~~/server/utils/request-query'
 import { ADMIN_LOG_TYPES, type AdminLogType } from '#shared/types/admin'
@@ -14,8 +14,7 @@ function parseTypes(value: unknown): AdminLogType[] | undefined {
   return filtered.length ? filtered : undefined
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const data = await adminLogsService.listLogs({

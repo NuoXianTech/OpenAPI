@@ -11,14 +11,13 @@ import { createError } from 'h3'
 import { adminRegisterApiSchema } from '~~/server/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
 import { DEFAULT_API_REGISTRATION, hasAnyChargedMethod } from '~~/server/config/api-guard'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { apiService } from '~~/server/services/api-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const { pathVersion, code, overrides } = await readZodBody(event, adminRegisterApiSchema)
 
   const manifestApi = API_MANIFEST.find(a => a.pathVersion === pathVersion && a.code === code)

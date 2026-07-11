@@ -2,7 +2,7 @@ import { createHash, randomBytes, scrypt as scryptCallback } from 'node:crypto'
 import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
-import { createError, getCookie, setCookie } from 'h3'
+import { createError, defineEventHandler, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
@@ -229,4 +229,12 @@ export async function requireAdmin(event: H3Event) {
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
   return user
+}
+export function defineAdminEventHandler<TResult>(
+  handler: (event: H3Event, admin: NonNullable<Awaited<ReturnType<typeof getAuthUser>>>) => TResult | Promise<TResult>
+) {
+  return defineEventHandler(async (event) => {
+    const admin = await requireAdmin(event)
+    return handler(event, admin)
+  })
 }

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
@@ -20,8 +20,7 @@ function parseSuccess(value: unknown): boolean | undefined {
   return undefined
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const { items, total } = await loginLogService.listForAdmin({

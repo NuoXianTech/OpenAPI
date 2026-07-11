@@ -4,12 +4,11 @@ import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION } from '#shared/config/admin-def
 import { adminInitialProfileSchema } from '~~/server/schemas/admin'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { usersService } from '~~/server/services/user-service'
-import { createUserSession, hashPassword, requireAdmin } from '~~/server/utils/auth'
+import { createUserSession, defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const body = await readZodBody(event, adminInitialProfileSchema)
   const current = await usersService.getById(admin.id)
 

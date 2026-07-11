@@ -10,7 +10,7 @@
 
 import type { H3Event } from 'h3'
 import { creditService, type CreditReason } from '~~/server/services/credit-service'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import {
   readQueryDate,
@@ -31,8 +31,7 @@ const CREDIT_REASON_OPTIONS: CreditReason[] = [
 ]
 const DIRECTION_OPTIONS = ['in', 'out'] as const
 
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const userId = readQueryNumber(query.userId)

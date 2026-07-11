@@ -1,13 +1,12 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminTestSmtpSchema } from '~~/server/schemas/admin'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { sendTestEmail } from '~~/server/utils/email'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const admin = await requireAdmin(event)
+export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const { to } = await readZodBody(event, adminTestSmtpSchema)
 
   try {

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import { apis } from '~~/server/db/schema'
-import { requireAdmin } from '~~/server/utils/auth'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
 
 /**
  * 管理员侧 · 获取所有"已启用且非 orphan"的接口（仅看 isEnabled），用于 admin 给用户配置
@@ -10,9 +10,7 @@ import { requireAdmin } from '~~/server/utils/auth'
  * 不再按 status=1 过滤：status 是运行状态（维护/废弃/未知），不应限制 Key 配置面。
  * orphan 接口（源文件已被物理删除）自动被 isEnabled=false 排除。
  */
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAdmin(event)
-
+export default defineAdminEventHandler(async (_event: H3Event) => {
   const rows = await db.select({
     id: apis.id,
     code: apis.code,
