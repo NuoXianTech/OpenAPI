@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import type { TableColumn } from '@nuxt/ui'
 import { creditReasonColor, creditReasonLabel, type CreditReasonFilter } from '#shared/types/credit-reason'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
@@ -38,6 +39,7 @@ const {
 } = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
   path: '/api/admin/users/credits/transactions',
   defaultFilters: { userId: '', reason: 'all' },
+  defaultPageSize: DEFAULT_PAGE_SIZE,
   buildQuery: (f, p) => ({
     userId: f.userId || undefined,
     reason: f.reason === 'all' ? undefined : f.reason,
@@ -127,11 +129,12 @@ function amountClass(amt: number) {
     >
       <DashboardDataTable
         v-model:page="page"
+        v-model:page-size="pageSize"
         :data="items"
         :columns="columns"
         :loading="loading"
-        :page-size="pageSize"
         :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无积分日志"
         empty-icon="i-mdi-cash-multiple"
       >

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-page'
 import {
   loginFailureReasonLabel,
@@ -96,11 +97,12 @@ const {
     >
       <DashboardDataTable
         v-model:page="page"
+        v-model:page-size="pageSize"
         :data="items"
         :columns="columns"
         :loading="loading"
-        :page-size="pageSize"
         :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无登录日志"
         empty-icon="i-mdi-login-variant"
       >

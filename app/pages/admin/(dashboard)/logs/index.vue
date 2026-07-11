@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { LazyAdminCallLogDetailModal } from '#components'
 import {
   ADMIN_CALL_LOG_TYPE_META,
@@ -155,11 +156,12 @@ function openDetail(row: AdminLogRow) {
     >
       <DashboardDataTable
         v-model:page="page"
+        v-model:page-size="pageSize"
         :data="items"
         :columns="columns"
         :loading="loading"
-        :page-size="pageSize"
         :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
         empty-title="暂无日志"
         empty-icon="i-mdi-text-box-search-outline"
       >

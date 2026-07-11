@@ -8,7 +8,7 @@ const CALL_STATUSES = ['success', 'failure'] as const
 
 export default defineEventHandler(async (event: H3Event) => {
   const user = await requireAuth(event)
-  const { query, limit, offset } = readPaginationQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
   const apiId = readQueryNumber(query.apiId)
   const apiKeyId = readQueryNumber(query.apiKeyId)
   const status = readQueryOption(query.status, CALL_STATUSES)

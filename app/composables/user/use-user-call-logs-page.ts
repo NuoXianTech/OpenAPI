@@ -7,6 +7,7 @@ import {
   createStringQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
+import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 export interface UserCallLogRow {
@@ -77,7 +78,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   const filterOptions = ref<UserCallLogFilterOptions>({ apis: [], apiKeys: [] })
   const listState = useDashboardListState<UserCallLogFilters>({
     defaultFilters: USER_CALL_LOG_DEFAULT_FILTERS,
-    defaultPageSize: 50,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
     filterCountKeys: ['apiId', 'apiKeyId', 'status'],
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,

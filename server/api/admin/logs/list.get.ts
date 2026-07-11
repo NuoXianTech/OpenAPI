@@ -16,7 +16,7 @@ function parseTypes(value: unknown): AdminLogType[] | undefined {
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const { query, limit, offset } = readPaginationQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const data = await adminLogsService.listLogs({
     startAt: readQueryDate(query.startAt),

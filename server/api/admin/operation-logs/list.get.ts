@@ -9,7 +9,7 @@ const ACTOR_KINDS = ['admin', 'user'] as const
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const { query, limit, offset } = readPaginationQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const actorKind = readQueryOption(query.actorKind, ACTOR_KINDS)
   const status = readQueryOption(query.status, STATUSES)

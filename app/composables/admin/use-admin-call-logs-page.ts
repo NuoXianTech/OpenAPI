@@ -19,6 +19,7 @@ import {
   type DashboardQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
+import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 import { formatAdminIdentity, formatUserIdentity } from '~/utils/log-identity'
 
@@ -76,7 +77,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
-    defaultPageSize: 50,
+    defaultPageSize: DEFAULT_PAGE_SIZE,
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
@@ -216,7 +217,7 @@ interface UseAdminLoginLogListReturn {
   total: Ref<number>
 }
 
-const ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE = 50
+const ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 const ADMIN_LOGIN_LOG_DEFAULT_FILTERS: AdminLoginLogFilters = {
   startAt: '',
@@ -373,7 +374,7 @@ interface UseAdminOperationLogListReturn {
   total: Ref<number>
 }
 
-const ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE = 50
+const ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 const ADMIN_OPERATION_LOG_DEFAULT_FILTERS: AdminOperationLogFilters = {
   startAt: '',

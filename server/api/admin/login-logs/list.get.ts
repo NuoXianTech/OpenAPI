@@ -22,7 +22,7 @@ function parseSuccess(value: unknown): boolean | undefined {
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const { query, limit, offset } = readPaginationQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const { items, total } = await loginLogService.listForAdmin({
     startAt: readQueryDate(query.startAt),
