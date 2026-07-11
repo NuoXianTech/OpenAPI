@@ -11,8 +11,10 @@
 <style>
 .auth-shell {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
-  place-items: center;
+  align-items: start;
+  justify-items: center;
   background:
     radial-gradient(1200px 600px at 15% 20%, rgba(17, 17, 19, 0.06), transparent 60%),
     radial-gradient(900px 420px at 85% 30%, rgba(35, 197, 94, 0.10), transparent 55%),
@@ -22,12 +24,15 @@
 .auth-panel {
   display: grid;
   place-items: center;
-  padding: 32px 20px;
+  box-sizing: border-box;
   width: 100%;
+  min-width: 0;
+  padding: max(20px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom));
 }
 
 .auth-form-wrap {
   width: 100%;
+  min-width: 0;
   max-width: 400px;
   animation: authFadeInUp 0.45s ease-out;
 }
@@ -180,6 +185,16 @@
 .dark .auth-card {
   background: color-mix(in srgb, var(--ui-bg-elevated) 82%, transparent);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
+}
+
+@media (min-width: 640px) {
+  .auth-shell {
+    align-items: center;
+  }
+
+  .auth-panel {
+    padding: 32px 20px;
+  }
 }
 
 @keyframes authFadeInUp {

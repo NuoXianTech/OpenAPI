@@ -97,6 +97,10 @@ const emit = defineEmits<{
 }>()
 
 const token = defineModel<string>('token', { default: '' })
+const isNarrowViewport = useMediaQuery('(max-width: 359px)')
+const renderedSize = computed(() => (
+  props.size === 'flexible' && isNarrowViewport.value ? 'compact' : props.size
+))
 
 const container = ref<HTMLElement | null>(null)
 const widgetId = ref<string | null>(null)
@@ -140,7 +144,7 @@ function renderWidget() {
   const opts: Record<string, unknown> = {
     'sitekey': props.siteKey,
     'theme': props.theme,
-    'size': props.size,
+    'size': renderedSize.value,
     'callback': (value: string) => {
       token.value = value
       clearError()
@@ -200,8 +204,9 @@ onBeforeUnmount(() => {
   }
 })
 
-watch(() => props.siteKey, () => {
+watch([() => props.siteKey, renderedSize], () => {
   if (widgetId.value) {
+    token.value = ''
     renderWidget()
   }
 })
@@ -210,7 +215,7 @@ watch(() => props.siteKey, () => {
 <template>
   <div
     class="turnstile-widget"
-    :data-size="size"
+    :data-size="renderedSize"
     :data-state="widgetState"
   >
     <div
