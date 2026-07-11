@@ -323,29 +323,34 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
           </DashboardDataTable>
         </DashboardTableCard>
 
-        <AdminUserEditModal
+        <LazyAdminUserEditModal
+          v-if="editOpen"
           v-model:open="editOpen"
           :target="editTarget"
           :on-submit="updateUser"
         />
 
-        <AdminUserBanModal
+        <LazyAdminUserBanModal
+          v-if="banOpen"
           v-model:open="banOpen"
           :target="banTarget"
           :on-submit="banUser"
         />
 
-        <AdminUserCreateModal
+        <LazyAdminUserCreateModal
+          v-if="createOpen"
           v-model:open="createOpen"
           :on-submit="createUser"
         />
 
-        <AdminUserKeysModal
+        <LazyAdminUserKeysModal
+          v-if="keysOpen"
           v-model:open="keysOpen"
           :target="keysTarget"
         />
 
-        <AdminCreditModal
+        <LazyAdminCreditModal
+          v-if="creditOpen"
           v-model:open="creditOpen"
           :user-ids="creditUserIds"
           :selection-label="creditSelectionLabel"

@@ -263,7 +263,8 @@ const columns: TableColumn<Announcement>[] = [
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminAnnouncementModal
+    <LazyAdminAnnouncementModal
+      v-if="modalOpen"
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"

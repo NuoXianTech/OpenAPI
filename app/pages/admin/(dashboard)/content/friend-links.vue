@@ -181,7 +181,8 @@ const columns: TableColumn<FriendLinkItem>[] = [
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminLinkModal
+    <LazyAdminLinkModal
+      v-if="modalOpen"
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"

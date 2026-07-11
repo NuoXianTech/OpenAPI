@@ -213,7 +213,8 @@ const {
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminRedemptionCodeGenerateModal
+    <LazyAdminRedemptionCodeGenerateModal
+      v-if="generateOpen"
       v-model:open="generateOpen"
       :on-generate="generate"
       :on-copy-one="copyOne"

@@ -245,7 +245,8 @@ async function openDelete(row: AdminNotificationMessageRow) {
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminNotificationSendModal
+    <LazyAdminNotificationSendModal
+      v-if="sendModalOpen"
       v-model:open="sendModalOpen"
       :users="usersData"
       @sent="refresh()"

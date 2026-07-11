@@ -261,7 +261,8 @@ async function onCreditSaved() {
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminCreditModal
+    <LazyAdminCreditModal
+      v-if="creditOpen"
       v-model:open="creditOpen"
       :user-ids="creditUserIds"
       :selection-label="creditSelectionLabel"

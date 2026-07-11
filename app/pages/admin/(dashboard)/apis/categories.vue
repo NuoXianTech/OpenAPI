@@ -204,7 +204,8 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminApiCategoryModal
+    <LazyAdminApiCategoryModal
+      v-if="modalOpen"
       v-model:open="modalOpen"
       :item="editItem"
       @saved="refresh()"

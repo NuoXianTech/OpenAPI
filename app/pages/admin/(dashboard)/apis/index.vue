@@ -267,7 +267,8 @@ function resetApiFilters() {
       </DashboardDataTable>
     </DashboardTableCard>
 
-    <AdminApiModal
+    <LazyAdminApiModal
+      v-if="modalOpen"
       v-model:open="modalOpen"
       :mode="modalMode"
       :target="modalTarget"
