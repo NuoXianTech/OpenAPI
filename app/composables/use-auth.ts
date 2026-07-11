@@ -115,12 +115,10 @@ export function useAuth() {
     return res
   }
 
-  const register = async (payload: RegisterInput) => {
-    return await $fetch<{ verificationRequired: boolean }>('/api/auth/register', {
-      method: 'POST',
-      body: payload
-    })
-  }
+  const register = (payload: RegisterInput) => $fetch<{ verificationRequired: boolean }>('/api/auth/register', {
+    method: 'POST',
+    body: payload
+  })
 
   const logout = async () => {
     await $fetch('/api/auth/logout', { method: 'POST' })
