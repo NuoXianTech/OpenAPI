@@ -107,10 +107,10 @@ const { data, status, refresh } = useLazyFetch('/api/user/apikeys/list', {
 
 小型列表可以一次性拉取，再用 `useClientPagination` 做客户端分页。可能增长的私有长列表优先使用 `usePrivatePagedList`，接口返回 `{ items, total }`，前端用 `limit/offset` 查询参数分页。
 
-需要刷新后恢复、复制链接排查的问题页，使用 `useDashboardListState` 将稳定筛选项同步到 URL。适合写入 URL 的状态包括：
+只有产品明确要求“刷新恢复”或“复制链接复现筛选”时，才使用 `useDashboardListState` 将稳定筛选项同步到 URL。默认列表分页保持组件内状态；例如 `/user/logs` 与 `/user/apikeys` 均不得因切换分页产生 `page` 或 `pageSize` 查询参数。适合按需写入 URL 的状态包括：
 
 - 调用日志、登录日志、积分流水等排查型筛选条件
-- 当前页和每页条数
+- 明确需要分享时的当前页和每页条数（默认不写入）
 - 简短、稳定、可分享的查询值
 
 不写入 URL 的状态包括：

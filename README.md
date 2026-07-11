@@ -1,186 +1,177 @@
 <div align="center">
 
-<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI icon" />
+<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI logo" />
 
-## OpenAPI
+# OpenAPI
 
-A unified API service platform for publishing endpoints, controlling access, metering usage, managing credits, and operating users.
+A self-hosted API publishing, access control, usage metering, credit billing, and operations platform.
 
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Nuxt UI](https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://ui.nuxt.com) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
-[EN](README.md) | [中文](README_ZH.md)
+[English](README.md) · [中文](README_ZH.md) · [Documentation](docs/index.md)
 
 </div>
 
-OpenAPI helps you turn public APIs into a manageable service. You can publish APIs, give users their own access keys, track usage, manage credits, send announcements, and run daily operations from a clean admin console. It is designed for small teams and individual builders who want a practical, self-hosted platform without stitching together a pile of separate tools.
+OpenAPI turns versioned Nitro routes into governed public services. It discovers endpoints at build time, synchronizes their manifest at startup, and lets operators configure access, pricing, quotas, statistics, and content from Nuxt UI dashboards.
 
-### How does it work?
+## Features
 
-OpenAPI treats files under `server/routes/v{N}/{code}/` as public APIs. During build, `modules/api-manifest` scans those routes and produces a manifest; when the server starts, the manifest is synchronized into the configured database so administrators can enable APIs, assign categories, configure pricing, and control access from the dashboard.
+- **API lifecycle** — build-time discovery for `server/routes/v{N}/{code}`, startup registration, orphan detection, and admin-controlled activation.
+- **Gateway governance** — API keys, scopes, IP allowlists, expiration, revocation, per-key quotas, API daily quotas, and second/minute/hour/day rate limits.
+- **Credit billing** — per-method pricing, auditable balance transactions, idempotent charging, and retryable pending charges.
+- **Observability** — immutable call details, daily aggregates, login history, admin operation logs, health and readiness probes.
+- **Identity** — unified user/admin accounts, email verification, password recovery, session invalidation, GitHub and QQ OAuth binding, and Turnstile abuse protection.
+- **Operations** — users, API categories, redemption codes, daily rewards, announcements, notifications, friend links, mail, OAuth, CAPTCHA, and site settings.
+- **Production options** — PostgreSQL for normal production, PGlite for one-process lightweight deployments, and Redis for shared limits, short caches, and worker coordination.
 
-- Public requests pass through `server/middleware/00.api-gate.ts`, where API status, API keys, scopes, IP allowlists, rate limits, daily quotas, and credit balance are checked.
+## Request lifecycle
 
-- Route handlers keep business logic thin and return a consistent OpenAPI response envelope.
+1. `modules/api-manifest.ts` discovers versioned public routes during build.
+2. `server/plugins/00.startup.ts` applies Drizzle migrations, creates the first administrator when necessary, and synchronizes the manifest.
+3. `server/middleware/00.api-gate.ts` validates API configuration, credentials, scopes, IP rules, limits, quotas, and available credits.
+4. Thin route handlers call implementations from `server/lib/` and return the shared response envelope.
+5. Response hooks persist call statistics and credit transactions; failed post-response charges enter an idempotent retry queue.
 
-- Call logs and daily aggregates are written after responses are sent, and paid calls are charged through the credit ledger.
+Newly discovered APIs are disabled by default. Configure and enable them in the admin dashboard before exposing them.
 
-- Failed charge attempts are stored in `pending_charges`; a Redis lease elects one retry scanner across instances.
+## Built-in public APIs
 
-The default production model is intentionally simple: **one Node/Nitro process plus one project-owned database**. PostgreSQL is recommended for normal production, while PGlite remains single-process only. Horizontal scaling requires PostgreSQL, shared Redis, and `NUXT_REDIS_REQUIRED=true` for coordinated limits, caches, and background work.
-
-### Highlights
-
-- Build-time API discovery with startup database synchronization.
-
-- User and admin accounts with email verification, password reset, email change, session invalidation, GitHub OAuth, and QQ OAuth binding.
-
-- API keys with scopes, IP allowlists, total quotas, expiry, revocation, and usage snapshots.
-
-- Credit billing per API and HTTP method, with immutable credit transactions and retryable pending charges.
-
-- Public API gateway and authentication abuse protection with second, minute, hour, and day windows; process memory is the default, while Redis provides shared atomic counters and explicit fail-closed production mode.
-
-- Immutable API call logs, per-day statistics, admin audit logs, and login logs.
-
-- Redemption codes, daily check-in credits, announcements, friend links, and site notifications.
-
-- Admin dashboards for users, APIs, categories, credits, content, OAuth providers, site settings, logs, analytics, and project information.
-
-- Security-oriented defaults: stateless JWT sessions, scrypt password hashes, HMAC one-time tokens, server-side private page guards, unified login/register/reset/check-in Turnstile checks, and immutable audit trails.
-
-### Built-in APIs
-
-| API | Endpoint | Description |
+| API | Endpoints | Purpose |
 | --- | --- | --- |
-| Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | Lists and runs registered encryption / encoding algorithms. |
-| Yiyan | `GET /v1/yiyan` | Returns a random sentence with JSON, text, JavaScript, Markdown, GBK, and JSONP variants. |
-| Doubao | `GET /v1/doubao/images`, `GET /v1/doubao/videos` | Extracts images or videos from supported Doubao, Qianwen, and Yunque share links. |
+| Bing | `GET /v1/bing` | Bing daily image metadata. |
+| Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | Discover and run registered encoders or ciphers. |
+| Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
+| Fuel price | `GET /v1/fuel-price`, `/regions` | Query regional fuel prices and supported regions. |
+| Player | `GET /v1/player`, `/art` | Music player data and cover art. |
+| Yiyan | `GET /v1/yiyan` | Random sentences in several negotiated output formats. |
 
-### Usage
+Availability and authentication depend on the database configuration set by an administrator.
 
-#### Requirements
+## Technology
 
-- Node.js `>= 24.15`
-- PostgreSQL `16+` or PGlite for single-process lightweight deployments
+- Nuxt 4, Vue 3, TypeScript, Nitro, VueUse
+- Nuxt UI 4, Reka UI, Tailwind CSS 4, TanStack Table, Unovis
+- Drizzle ORM with PostgreSQL or PGlite
+- Redis via ioredis for distributed coordination
+- Zod, Vitest, ESLint
 
-#### Development
+## Quick start
 
-Clone the project:
+### Requirements
+
+- Node.js 24 LTS (the production image uses Node 24)
+- pnpm 11 via Corepack
+- PostgreSQL 16+ for standard production; no external database is required for local PGlite development
+- Redis is optional for development and required for coordinated multi-instance production
 
 ```bash
-git clone https://github.com/NuoXianTech/OpenAPI.git && cd OpenAPI
-```
-
-Install dependencies:
-
-```bash
+git clone https://github.com/NuoXianTech/OpenAPI.git
+cd OpenAPI
+corepack enable
 pnpm install
-```
-
-Prepare the environment file:
-
-```bash
 cp .env.example .env
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-Start the development server:
-
-```bash
 pnpm dev
 ```
 
-#### Database
+Before starting, replace both example secrets in `.env`. Generate independent values with:
 
-Generate migrations after changing the Drizzle schema:
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+The development server uses PGlite when no database mode is configured. On first startup, the server applies migrations and creates an administrator if none exists. The generated password is printed once to the server console; sign in at `/login` and complete the mandatory profile/password initialization.
+
+## Runtime configuration
+
+| Variable | Requirement | Description |
+| --- | --- | --- |
+| `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
+| `NUXT_AUTH_API_KEY_SECRET` | Required | Server-side API key secret. Use a distinct value. |
+| `DATABASE_URL` | Production option | PostgreSQL connection URL. |
+| `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
+| `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |
+| `NUXT_REDIS_URL` | Optional / multi-instance required | Shared Redis connection URL. |
+| `NUXT_REDIS_REQUIRED=true` | Multi-instance required | Fails closed when coordination-critical Redis operations are unavailable. |
+| `NITRO_HOST`, `NITRO_PORT` | Deployment | Node server listen address and port. |
+
+Production must define either `DATABASE_URL` or `DATABASE_DRIVER=pglite`; it never silently falls back to a new local database. See [runtime configuration](docs/operations/runtime-config.md) for the complete behavior and security boundaries.
+
+## Database workflow
+
+After changing files under `server/db/schema/`:
 
 ```bash
 pnpm db:generate
+pnpm test:run
 ```
 
-Apply migrations:
+Review and commit the generated migration. Production migrations are bundled into `.output` and run automatically during startup. Use `pnpm db:migrate` as a manual repair or rehearsal command, not as a substitute for committed migrations.
+
+## Quality checks
 
 ```bash
-pnpm db:migrate
-```
-
-#### Production
-
-Build the application:
-
-```bash
+pnpm lint
+pnpm typecheck
+pnpm test:run
 pnpm build
 ```
 
-Preview the production build:
+A failed check must stop a production release.
+
+## Production
+
+### Node server
 
 ```bash
-pnpm preview
+pnpm build
+NODE_ENV=production pnpm start
 ```
 
-The generated production entry is `.output/server/index.mjs`. The build output includes database migration files, and the production Node/Nitro process runs migrations automatically before accepting requests. See [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md) for the full single-instance VPS guide.
+Deploy the complete `.output` directory. The executable entry is `.output/server/index.mjs`; do not deploy only `.output/server` or omit its hidden Nitro dependencies.
 
-### Configuration
+### Docker
 
-The project reads production settings from runtime environment variables. The most important ones are:
+```bash
+docker build -t openapi:latest .
+docker run --rm -p 3000:3000 --env-file .env openapi:latest
+```
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `DATABASE_URL` or `DATABASE_DRIVER=pglite` | Production required | PostgreSQL connection string, or explicit PGlite selection. |
-| `NUXT_AUTH_SECRET` | Required | Shared HS256/HMAC signing secret for access JWTs, email verification tokens and OAuth state. Authentication fails closed when empty. |
-| `NUXT_AUTH_API_KEY_SECRET` | Recommended | Server-side secret for API key operations. |
-| `NUXT_REDIS_URL` | Optional | Redis connection used for shared atomic rate limiting. |
-| `NUXT_REDIS_REQUIRED` | Recommended with Redis | Set to `true` to fail closed when Redis-backed protection is unavailable. |
+Useful probes:
 
-If production uses PGlite, set `DATABASE_DRIVER=pglite` and put `PGLITE_DATA_DIR` on persistent storage that is included in backups. Without a `DATABASE_URL`, production requires the explicit driver to avoid silent database creation after a missed PostgreSQL configuration.
+```bash
+curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/ready
+```
 
-If no administrator exists on startup, the server creates `admin` with a random password and prints it to the console.
-The initial email is `admin@openapi.com`. After the first login, an onboarding dialog appears once when the account still uses the initial username or email; it lets the administrator confirm username, email, and a new password. Later username changes are intentionally blocked outside this first-run flow to preserve auditability.
+`/api/health` is a liveness check. `/api/ready` checks the database and the configured Redis readiness policy. Follow the [production readiness checklist](docs/operations/production-readiness.md) and [runbook](docs/operations/production-runbook.md) before and after a release.
 
-Generate database migrations from the current Drizzle schema before deployment; production startup applies the migrations shipped with `.output`.
-
-See [.env.example](.env.example) for the complete single-instance configuration.
-
-### Project layout
+## Project structure
 
 ```text
-app/                      Nuxt frontend
-server/api/               Internal user and admin API routes
-server/routes/v{N}/       Public APIs discovered by the manifest module
-server/db/schema/         Drizzle schema modules
-server/db/migrations/     drizzle-kit generated migrations
-server/middleware/        API gateway and private page guards
-server/services/          Business services
-server/lib/               Public API business implementations
-server/plugins/           Startup sync and distributed background coordination
-modules/api-manifest.ts   Build-time API manifest generator
-shared/                   Shared types, schemas, and configuration
-docs/                     Project documentation
+app/                         Nuxt pages, components, composables, and UI assets
+server/api/                  Internal user/admin endpoints
+server/routes/v{N}/          Governed public APIs
+server/lib/                  Public API business implementations
+server/services/             Transactions and cross-domain business rules
+server/db/                   Drizzle client, schema, and migrations
+server/middleware/           Public gateway and server-side request guards
+server/plugins/              Startup initialization, statistics, and retry workers
+modules/api-manifest.ts      Build-time public API manifest
+shared/                      Client-safe schemas, contracts, and configuration
+docs/                        Project-specific standards and operational workflows
 ```
 
-### Commands
+## Documentation
 
-```bash
-pnpm dev           # Start the development server
-pnpm build         # Build for production
-pnpm preview       # Preview the production build
-pnpm db:generate   # Generate database migrations
-pnpm db:migrate    # Apply database migrations
-pnpm lint          # Run ESLint
-pnpm lint:fix      # Fix ESLint issues
-pnpm typecheck     # Run Nuxt TypeScript checks
-pnpm test:run      # Run tests once
-```
-
-### Documentation
-
-- [Project documentation](docs/index.md)
+- [Documentation index](docs/index.md)
 - [Public API onboarding](docs/api/public-api-onboarding.md)
-- [API design style](docs/api/design-style.md)
+- [Public API conventions](docs/api/public-api-conventions.md)
+- [Frontend engineering standards](docs/standards.md)
 - [Billing rules](docs/platform/billing-rules.md)
+- [Runtime configuration](docs/operations/runtime-config.md)
 - [VPS deployment](docs/operations/vps-deployment.md)
 
-### Credits
+## Credits
 
 Some built-in public APIs are based on or inspired by:
 
@@ -193,10 +184,10 @@ Some built-in public APIs are based on or inspired by:
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 - [60s](https://github.com/vikiboss/60s)
 
-### Contributing
+## Contributing
 
-Issues and PRs are welcome. If you want to add a public API, start with [docs/api/public-api-onboarding.md](docs/api/public-api-onboarding.md).
+Issues and pull requests are welcome. For a new public endpoint, follow the onboarding guide, keep handlers thin, add or update tests, generate migrations when the schema changes, and run all quality checks.
 
-### License
+## License
 
-[MIT](LICENSE) NuoXianTech
+[MIT](LICENSE) © NuoXianTech

@@ -66,7 +66,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | CLS | 小于 0.1 | 图片、图表、表格和统计卡声明稳定尺寸 |
 | INP | 小于 200ms | 长列表分页，重图表懒加载，减少 hydration 阶段插件工作 |
 
-可使用 Lighthouse、Chrome Performance 面板、PageSpeed Insights 或 WebPageTest。发现大 bundle 时使用 Nuxt analyze 定位依赖，再按 [Nuxt 应用标准](../standards/nuxt-application.md) 拆分。
+可使用 Lighthouse、Chrome Performance 面板、PageSpeed Insights 或 WebPageTest。发现大 bundle 时使用 Nuxt analyze 定位依赖，再按 [Nuxt 应用标准](../standards.md) 拆分。
 
 ## 回滚策略
 

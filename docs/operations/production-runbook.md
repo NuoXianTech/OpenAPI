@@ -48,7 +48,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_AUTH_API_KEY_SECRET` 是否变化、API Key 记录是否被撤销 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
-| 公开 API 429 增多 | API 配置、内存限流窗口、调用方 IP 或 key |
+| 公开 API 429 增多 | API 配置、Redis/进程内限流窗口、调用方 IP 或 Key |
 | 数据库读取突增 | Redis 可用性、命令延迟、内存、淘汰数和公开缓存命中情况 |
 | 扣费异常 | `api_calls`、`credit_transactions`、`pending_charges` |
 
@@ -60,7 +60,9 @@ curl -fsS http://127.0.0.1:3000/api/list
 pg_dump "$DATABASE_URL" --format=custom --file="backup-$(date +%Y%m%d-%H%M%S).dump"
 ```
 
-备份文件应离开应用服务器保存，避免服务器磁盘故障时同时丢失应用和备份。
+PGlite 部署不使用 `pg_dump`。先停止唯一的 Node 进程，再对整个 `PGLITE_DATA_DIR` 做一致性快照或归档；恢复时同样保持进程停止，并恢复到原权限与路径。不要在进程写入期间只复制其中单个文件。
+
+备份文件应离开应用服务器保存，避免服务器磁盘故障时同时丢失应用和备份。Redis 只保存可重建缓存、限流计数和短期租约，不作为业务主数据备份来源。
 
 ## 恢复演练
 
@@ -108,5 +110,5 @@ pm2 restart openapi --update-env
 
 - 首页和后台入口的 LCP、CLS、INP。
 - 图表页和日志页的交互延迟。
-- `.output` bundle 变化，发现大块依赖时按 [Nuxt 应用标准](../standards/nuxt-application.md) 分析。
+- `.output` bundle 变化，发现大块依赖时按 [Nuxt 应用标准](../standards.md) 分析。
 - 第三方脚本和浏览器专属逻辑是否引入水合警告。

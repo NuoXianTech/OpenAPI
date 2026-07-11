@@ -1,6 +1,6 @@
 # API 计费规则
 
-本文描述 `server/routes/v{N}/**` 下公开 API 在单实例生产部署中的计费链路。
+本文描述 `server/routes/v{N}/**` 下公开 API 的统一计费链路，适用于单实例与按本文约束部署的多实例环境。
 
 ## 数据模型
 
@@ -30,7 +30,10 @@
 
 ## 限流模型
 
-限流有意只使用进程内内存。项目按单个生产 Node 服务进程设计，进程重启后计数器会重置，这对当前部署模型是可接受的。
+- 未配置 Redis 时，限流器使用进程内存；计数随进程重启而清空，只适用于开发或单实例轻量部署。
+- 配置 `NUXT_REDIS_URL` 后，公开 API 与身份防刷使用共享 Redis 原子计数，多实例可获得一致的限流结果。
+- 多实例生产必须同时设置 `NUXT_REDIS_REQUIRED=true`。Redis 不可用时限流链路 fail-closed，避免实例退回各自内存后绕过限制。
+- API 的秒、分、时、日窗口由 `rateLimitPerSecond/Minute/Hour/Day` 控制；`dailyQuota` 是按 API 统计口径执行的每日配额，不等同于 API Key 的余额或 `totalCalls`。
 
 ## 已知限制
 

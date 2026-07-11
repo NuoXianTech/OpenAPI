@@ -1,186 +1,178 @@
 <div align="center">
 
-<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI 图标" />
+<img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI 标志" />
 
-## OpenAPI
+# OpenAPI
 
-一个集接口发布、访问控制、用量计量、积分管理和用户运营于一体的 API 服务平台。
+一个自托管的 API 发布、访问控制、调用统计、积分计费与运营管理平台。
 
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Vue](https://img.shields.io/badge/Vue-3.5-42B883?style=for-the-badge&logo=vue.js&logoColor=white)](https://vuejs.org) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
+[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Nuxt UI](https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://ui.nuxt.com) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
 
-[EN](README.md) | [中文](README_ZH.md)
+[English](README.md) · [中文](README_ZH.md) · [项目文档](docs/index.md)
 
 </div>
 
-OpenAPI 可以帮助你把开放接口变成一个真正可运营的服务。你可以发布接口，为用户分配访问密钥，查看调用情况，管理积分，发送公告，并在清晰的管理后台中完成日常维护。它适合个人开发者和小团队，用一套自托管平台完成接口开放、用户服务和运营管理，而不需要东拼西凑多个系统。
+OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建期发现接口，启动时同步清单，管理员可在 Nuxt UI 后台配置鉴权、价格、配额、统计与运营内容。
 
-### 它如何工作？
+## 主要能力
 
-OpenAPI 会把 `server/routes/v{N}/{code}/` 下的文件视为公开 API。构建时，`modules/api-manifest` 会扫描这些路由并生成接口清单；服务启动时，清单会同步进当前配置的数据库，管理员随后可以在后台启用接口、分配分类、配置价格，并控制访问策略。
+- **API 生命周期**：构建期发现 `server/routes/v{N}/{code}`，启动注册、孤儿接口检测和后台启停。
+- **网关治理**：API Key、作用域、IP 白名单、有效期、吊销、Key 配额、API 每日配额，以及秒/分/时/日限流。
+- **积分计费**：按 HTTP 方法定价、可审计余额流水、幂等扣费和失败扣费重试。
+- **可观测性**：不可变调用明细、每日聚合、登录日志、管理员操作日志、存活与就绪探针。
+- **账号体系**：用户和管理员统一账号、邮箱验证、密码找回、会话失效、GitHub/QQ OAuth 绑定和 Turnstile 防刷。
+- **运营后台**：用户、接口分类、兑换码、每日奖励、公告、站内通知、友情链接、邮件、OAuth、验证码和站点设置。
+- **生产部署**：常规生产使用 PostgreSQL；单进程轻量部署可用 PGlite；Redis 提供共享限流、短缓存与后台任务协调。
 
-- 公开请求会先经过 `server/middleware/00.api-gate.ts`，统一检查接口状态、API Key、作用域、IP 白名单、限流、每日配额与积分余额。
+## 请求链路
 
-- 路由 handler 保持轻量，只处理入参、调用业务层，并返回统一的 OpenAPI 响应壳。
+1. `modules/api-manifest.ts` 在构建期发现带版本的公共路由。
+2. `server/plugins/00.startup.ts` 执行 Drizzle 迁移、按需创建初始管理员并同步接口清单。
+3. `server/middleware/00.api-gate.ts` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
+4. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
+5. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
 
-- 响应发出后写入调用日志与每日统计，收费调用会进入积分流水。
+新发现的公共 API 默认处于禁用状态，必须先在管理后台完成配置并启用。
 
-- 扣费失败会写入 `pending_charges`，重试任务由 Redis lease 协调，多实例下仅一个扫描者执行。
+## 内置公共 API
 
-默认生产模型是**一个 Node/Nitro 进程 + 一个项目自维护数据库**。PostgreSQL 更适合常规生产；PGlite 用于轻量、自包含的单进程部署。需要横向扩展时使用 PostgreSQL、共享 Redis 和 `NUXT_REDIS_REQUIRED=true`，由 Redis 协调限流、缓存和后台任务。
-
-### 功能亮点
-
-- 构建期公开接口发现，并在启动时同步数据库。
-
-- 用户和管理员账号支持注册、邮箱验证、找回密码、修改邮箱、会话失效、GitHub OAuth 与 QQ OAuth 绑定。
-
-- API Key 支持作用域、IP 白名单、总配额、有效期、吊销与使用快照。
-
-- 按接口与 HTTP 方法配置积分价格，带不可变积分流水与可重试扣费队列。
-
-- 公共 API 网关和身份防刷支持秒、分、时、天多窗口限流；默认使用进程内存，可选 Redis 共享原子计数并支持生产环境显式 fail-closed。
-
-- 不可变 API 调用日志、按日聚合统计、后台操作审计日志与登录日志。
-
-- 兑换码、每日签到积分、公告、友情链接与站内通知。
-
-- 后台管理用户、接口、分类、积分、内容、OAuth 提供商、站点设置、日志、数据分析与项目信息。
-
-- 默认安全设计包括无状态 JWT 会话、scrypt 密码哈希、HMAC 一次性 token、私有页面服务端守卫、登录/注册/找回密码/签到统一 Turnstile 校验与不可变审计记录。
-
-### 内置接口
-
-| 接口 | 路径 | 说明 |
+| API | 路径 | 用途 |
 | --- | --- | --- |
-| Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | 列出并执行已注册的加密 / 编码算法。 |
-| Yiyan | `GET /v1/yiyan` | 随机返回一句一言，支持 JSON、文本、JavaScript、Markdown、GBK 与 JSONP。 |
-| Doubao | `GET /v1/doubao/images`, `GET /v1/doubao/videos` | 从支持的豆包、千问、云雀分享链接中提取图片或视频。 |
+| Bing | `GET /v1/bing` | 获取 Bing 每日图片元数据。 |
+| Crypto | `GET /v1/crypto`、`POST /v1/crypto/{name}` | 发现并运行已注册的编码或加密算法。 |
+| Doubao | `GET /v1/doubao`、`/images`、`/videos` | 提取受支持分享链接中的媒体。 |
+| Fuel price | `GET /v1/fuel-price`、`/regions` | 查询地区油价和支持地区。 |
+| Player | `GET /v1/player`、`/art` | 获取音乐播放器数据和封面。 |
+| Yiyan | `GET /v1/yiyan` | 按内容协商返回多种格式的随机语句。 |
 
-### 使用方法
+接口是否可用、是否要求 API Key，以管理员在数据库中的实际配置为准。
 
-#### 环境要求
+## 技术栈
 
-- Node.js `>= 24.15`
-- PostgreSQL `16+`，或用于单进程轻量部署的 PGlite
+- Nuxt 4、Vue 3、TypeScript、Nitro、VueUse
+- Nuxt UI 4、Reka UI、Tailwind CSS 4、TanStack Table、Unovis
+- Drizzle ORM、PostgreSQL 或 PGlite
+- ioredis 提供 Redis 分布式协调
+- Zod、Vitest、ESLint
 
-#### 开发
+## 快速开始
 
-将项目 clone 到本地：
+### 环境要求
+
+- Node.js 24 LTS（生产镜像使用 Node 24）
+- 通过 Corepack 使用 pnpm 11
+- 标准生产环境使用 PostgreSQL 16+
+- 本地 PGlite 开发不要求外部数据库
+- Redis 在开发环境可选，在多实例生产环境必需
 
 ```bash
-git clone https://github.com/NuoXianTech/OpenAPI.git && cd OpenAPI
-```
-
-安装依赖：
-
-```bash
+git clone https://github.com/NuoXianTech/OpenAPI.git
+cd OpenAPI
+corepack enable
 pnpm install
-```
-
-准备环境变量文件：
-
-```bash
 cp .env.example .env
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-```
-
-启动开发服务器：
-
-```bash
 pnpm dev
 ```
 
-#### 数据库
+启动前必须替换 `.env` 中的两个示例密钥，并分别生成不同的随机值：
 
-修改 Drizzle schema 后生成迁移：
+```bash
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
+```
+
+开发环境未配置数据库模式时会使用 PGlite。首次启动会自动执行迁移；如果数据库中没有管理员，服务端会创建初始管理员，并仅在控制台输出一次随机密码。请通过 `/login` 登录，然后完成强制的资料和密码初始化。
+
+## 运行时配置
+
+| 变量 | 要求 | 说明 |
+| --- | --- | --- |
+| `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
+| `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 服务端密钥，必须使用独立值。 |
+| `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
+| `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
+| `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
+| `NUXT_REDIS_URL` | 可选；多实例必填 | 共享 Redis 连接地址。 |
+| `NUXT_REDIS_REQUIRED=true` | 多实例必填 | 协调关键 Redis 操作不可用时 fail-closed。 |
+| `NITRO_HOST`、`NITRO_PORT` | 部署配置 | Node 服务监听地址和端口。 |
+
+生产环境必须配置 `DATABASE_URL` 或 `DATABASE_DRIVER=pglite`，不会静默回退并创建新的本地数据库。完整语义和安全边界见[运行时配置](docs/operations/runtime-config.md)。
+
+## 数据库流程
+
+修改 `server/db/schema/` 后：
 
 ```bash
 pnpm db:generate
+pnpm test:run
 ```
 
-应用迁移：
+审查并提交生成的迁移。生产迁移会打包到 `.output`，并在应用启动时自动执行。`pnpm db:migrate` 只作为手动修复或演练入口，不能代替提交迁移文件。
+
+## 质量门禁
 
 ```bash
-pnpm db:migrate
-```
-
-#### 生产
-
-构建应用：
-
-```bash
+pnpm lint
+pnpm typecheck
+pnpm test:run
 pnpm build
 ```
 
-本地预览生产构建：
+任何命令失败都必须停止生产发布。
+
+## 生产部署
+
+### Node Server
 
 ```bash
-pnpm preview
+pnpm build
+NODE_ENV=production pnpm start
 ```
 
-生成后的生产入口是 `.output/server/index.mjs`。构建产物会包含数据库迁移文件，生产 Node/Nitro 进程启动时会先自动运行迁移，再接受请求。完整的单实例 VPS 部署流程见 [docs/operations/vps-deployment.md](docs/operations/vps-deployment.md)。
+必须部署完整的 `.output`。生产入口是 `.output/server/index.mjs`，不要只部署 `.output/server`，也不能遗漏其中的隐藏 Nitro 依赖。
 
-### 配置
+### Docker
 
-项目通过运行时环境变量读取生产配置。最重要的变量如下：
+```bash
+docker build -t openapi:latest .
+docker run --rm -p 3000:3000 --env-file .env openapi:latest
+```
 
-| 变量 | 是否必填 | 说明 |
-| --- | --- | --- |
-| `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 生产必填 | PostgreSQL 连接串，或显式选择 PGlite。 |
-| `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证 token 与 OAuth state 共用的 HS256/HMAC 签名密钥；为空时鉴权 fail-closed。 |
-| `NUXT_AUTH_API_KEY_SECRET` | 推荐 | API Key 相关操作的服务端密钥。 |
-| `NUXT_REDIS_URL` | 可选 | 共享原子限流使用的 Redis 连接地址。 |
-| `NUXT_REDIS_REQUIRED` | 使用 Redis 时推荐 | 设置为 `true` 后 Redis 限流不可用会 fail-closed。 |
+探针检查：
 
-生产使用 PGlite 时，请设置 `DATABASE_DRIVER=pglite`，并把 `PGLITE_DATA_DIR` 放在会持久化和备份的位置。生产环境没有 `DATABASE_URL` 时必须显式选择 PGlite，避免 PostgreSQL 漏配后静默创建新的本地数据库。
+```bash
+curl -fsS http://127.0.0.1:3000/api/health
+curl -fsS http://127.0.0.1:3000/api/ready
+```
 
-如果启动时不存在管理员账号，服务端会自动创建 `admin`，随机密码只输出到控制台。
-初始邮箱为 `admin@openapi.com`。首次登录后，如果账号仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码；后续除首次初始化流程外不允许修改用户名，以保证审计可追溯。
+`/api/health` 是进程存活检查；`/api/ready` 检查数据库和当前 Redis required 策略。发布前后应执行[生产就绪清单](docs/operations/production-readiness.md)和[生产运行手册](docs/operations/production-runbook.md)。
 
-部署前请基于当前 Drizzle schema 生成数据库迁移；生产启动会自动应用已随 `.output` 发布的迁移。
-
-完整的单实例配置见 [.env.example](.env.example)。
-
-### 目录结构
+## 项目结构
 
 ```text
-app/                      Nuxt 前端
-server/api/               内部用户与管理 API 路由
-server/routes/v{N}/       由清单模块发现的公开 API
-server/db/schema/         Drizzle schema 模块
-server/db/migrations/     drizzle-kit 生成的迁移
-server/middleware/        API 网关与私有页面守卫
-server/services/          业务服务层
-server/lib/               公开 API 业务实现
-server/plugins/           启动同步与分布式协调后台任务
-modules/api-manifest.ts   构建期接口清单生成器
-shared/                   共享类型、schema 与配置
-docs/                     项目文档
+app/                         Nuxt 页面、组件、组合式函数与 UI 资源
+server/api/                  站内用户和管理员接口
+server/routes/v{N}/          受网关治理的公共 API
+server/lib/                  公共 API 业务实现
+server/services/             事务和跨领域业务规则
+server/db/                   Drizzle 客户端、schema 与迁移
+server/middleware/           公共 API 网关和服务端请求守卫
+server/plugins/              启动初始化、统计和重试任务
+modules/api-manifest.ts      构建期公共 API 清单
+shared/                      客户端安全的 schema、契约与配置
+docs/                        项目特有标准与生产流程
 ```
 
-### 常用命令
+## 项目文档
 
-```bash
-pnpm dev           # 启动开发服务器
-pnpm build         # 构建生产产物
-pnpm preview       # 预览生产构建
-pnpm db:generate   # 生成数据库迁移
-pnpm db:migrate    # 应用数据库迁移
-pnpm lint          # 运行 ESLint
-pnpm lint:fix      # 自动修复 ESLint 问题
-pnpm typecheck     # 运行 Nuxt TypeScript 检查
-pnpm test:run      # 单次运行测试
-```
-
-### 项目文档
-
-- [项目文档入口](docs/index.md)
+- [文档入口](docs/index.md)
 - [公共接口接入指南](docs/api/public-api-onboarding.md)
-- [RESTful API 设计风格](docs/api/design-style.md)
+- [对外接口规范](docs/api/public-api-conventions.md)
+- [前端工程标准](docs/standards.md)
 - [API 计费规则](docs/platform/billing-rules.md)
+- [运行时配置](docs/operations/runtime-config.md)
 - [VPS 部署指南](docs/operations/vps-deployment.md)
 
-### 致谢
+## 致谢
 
 部分内置公开 API 基于或参考了以下项目：
 
@@ -193,10 +185,10 @@ pnpm test:run      # 单次运行测试
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 - [60s](https://github.com/vikiboss/60s)
 
-### 贡献
+## 贡献
 
-欢迎任何 issue 与 PR。如果你希望新增公开 API，请先阅读 [docs/api/public-api-onboarding.md](docs/api/public-api-onboarding.md)。
+欢迎提交 Issue 和 Pull Request。新增公共 API 时，请遵循接入指南、保持 handler 简洁、补充或更新测试；修改数据库 schema 时必须生成迁移，并执行全部质量门禁。
 
-### 许可证
+## 许可证
 
-[MIT](LICENSE) NuoXianTech
+[MIT](LICENSE) © NuoXianTech
