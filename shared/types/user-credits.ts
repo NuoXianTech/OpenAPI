@@ -18,3 +18,16 @@ export interface UserCreditSummary {
   byReason: UserCreditReasonSummary[]
   consumptionLast7Days: UserCreditConsumptionDailyRow[]
 }
+
+export interface UserCheckinCalendarDay {
+  date: string
+  amount: number
+  checkinCount: number
+}
+
+export interface UserCheckinCalendarMonth {
+  month: string
+  checkedDayCount: number
+  totalAmount: number
+  days: UserCheckinCalendarDay[]
+}

@@ -1,5 +1,5 @@
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
-import type { UserCreditSummary } from '#shared/types/user-credits'
+import type { UserCheckinCalendarMonth, UserCreditSummary } from '#shared/types/user-credits'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
@@ -111,6 +111,26 @@ export function useUserCreditsPage() {
     immediate: false
   })
   const isCheckingIn = ref(false)
+  const checkinCalendar = ref<UserCheckinCalendarMonth | null>(null)
+  const checkinCalendarLoading = ref(false)
+  const activeCheckinMonth = ref('')
+  let checkinCalendarRequestId = 0
+
+  async function fetchCheckinCalendar(month: string) {
+    const requestId = ++checkinCalendarRequestId
+    activeCheckinMonth.value = month
+    checkinCalendarLoading.value = true
+    try {
+      const data = await $fetch<UserCheckinCalendarMonth>('/api/user/credits/checkins', {
+        query: { month }
+      })
+      if (requestId === checkinCalendarRequestId) checkinCalendar.value = data
+    } catch {
+      if (requestId === checkinCalendarRequestId) checkinCalendar.value = null
+    } finally {
+      if (requestId === checkinCalendarRequestId) checkinCalendarLoading.value = false
+    }
+  }
 
   async function fetchRedeemRecords() {
     try {
@@ -136,6 +156,7 @@ export function useUserCreditsPage() {
         color: 'success'
       })
       await fetchCheckinStatus()
+      if (activeCheckinMonth.value) await fetchCheckinCalendar(activeCheckinMonth.value)
       return res
     } finally {
       isCheckingIn.value = false
@@ -178,6 +199,9 @@ export function useUserCreditsPage() {
     isCheckingIn,
     performCheckin,
     fetchCheckinStatus,
+    checkinCalendar,
+    checkinCalendarLoading,
+    fetchCheckinCalendar,
     redeemRecords,
     fetchRedeemRecords,
     redeem

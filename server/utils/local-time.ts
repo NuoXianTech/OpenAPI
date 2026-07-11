@@ -28,3 +28,28 @@ export function toLocalDateKey(value: Date | string | number): string {
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
 }
+
+export interface LocalMonthRange {
+  month: string
+  start: Date
+  end: Date
+}
+
+/** 解析 YYYY-MM，并返回应用本地时区下左闭右开的自然月边界。 */
+export function getLocalMonthRange(month: string): LocalMonthRange | null {
+  const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month)
+  if (!match) return null
+
+  const year = Number(match[1])
+  const monthNumber = Number(match[2])
+  if (year < 1970 || year > 9999) return null
+
+  const start = new Date(0)
+  start.setFullYear(year, monthNumber - 1, 1)
+  start.setHours(0, 0, 0, 0)
+
+  const end = new Date(start.getTime())
+  end.setMonth(end.getMonth() + 1)
+
+  return { month, start, end }
+}

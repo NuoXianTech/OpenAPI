@@ -1,7 +1,9 @@
-import { and, eq, sql, lt, isNull, or } from 'drizzle-orm'
+import { and, asc, eq, gte, sql, lt, isNull, or } from 'drizzle-orm'
 import { creditTransactions, users } from '~~/server/db/schema'
+import { APP_TIME_ZONE, toLocalDateKey, type LocalMonthRange } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { siteSettingsService } from './site-settings-service'
+import type { UserCheckinCalendarMonth } from '#shared/types/user-credits'
 import type { DatabaseTransaction } from '~~/server/db/client'
 
 /**
@@ -102,6 +104,43 @@ function computeCutoffAndNext(
 }
 
 export const checkinService = {
+  async getMonthlyHistory(userId: number, range: LocalMonthRange): Promise<UserCheckinCalendarMonth> {
+    const historySource = db
+      .select({
+        bucket: sql<Date>`date_trunc('day', ${creditTransactions.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
+        amount: creditTransactions.amount
+      })
+      .from(creditTransactions)
+      .where(and(
+        eq(creditTransactions.userId, userId),
+        eq(creditTransactions.reason, 'checkin'),
+        gte(creditTransactions.createdAt, range.start),
+        lt(creditTransactions.createdAt, range.end)
+      ))
+      .as('checkin_history_source')
+
+    const rows = await db.select({
+      bucket: historySource.bucket,
+      amount: sql<number>`coalesce(sum(${historySource.amount}), 0)`,
+      checkinCount: sql<number>`count(*)`
+    })
+      .from(historySource)
+      .groupBy(historySource.bucket)
+      .orderBy(asc(historySource.bucket))
+
+    const days = rows.map(row => ({
+      date: toLocalDateKey(row.bucket),
+      amount: toNumber(row.amount),
+      checkinCount: toNumber(row.checkinCount)
+    }))
+
+    return {
+      month: range.month,
+      checkedDayCount: days.length,
+      totalAmount: days.reduce((total, day) => total + day.amount, 0),
+      days
+    }
+  },
   async getStatus(userId: number): Promise<CheckinStatus> {
     const [settings, userRow] = await Promise.all([
       siteSettingsService.getOrCreate(),

@@ -7,6 +7,9 @@ const {
   isCheckingIn,
   performCheckin,
   fetchCheckinStatus,
+  checkinCalendar,
+  checkinCalendarLoading,
+  fetchCheckinCalendar,
   redeemRecords,
   redeem,
   fetchRedeemRecords
@@ -25,6 +28,12 @@ onMounted(() => {
       :loading="checkinLoading"
       :submitting="isCheckingIn"
       :on-checkin="performCheckin"
+    />
+
+    <UserCreditsCheckinCalendar
+      :history="checkinCalendar"
+      :loading="checkinCalendarLoading"
+      :on-month-change="fetchCheckinCalendar"
     />
 
     <UserCreditsRedeemCard
