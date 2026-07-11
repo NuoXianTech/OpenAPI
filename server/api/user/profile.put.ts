@@ -3,11 +3,10 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { userUpdateProfileSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const authUser = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
   const { displayName } = await readZodBody(event, userUpdateProfileSchema)
 
   const updated = await usersService.updateUser(authUser.id, {

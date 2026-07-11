@@ -230,11 +230,25 @@ export async function requireAdmin(event: H3Event) {
   }
   return user
 }
-export function defineAdminEventHandler<TResult>(
-  handler: (event: H3Event, admin: NonNullable<Awaited<ReturnType<typeof getAuthUser>>>) => TResult | Promise<TResult>
+interface AuthorizedEventHandler<TUser, TResult> {
+  (event: H3Event, user: TUser): TResult | Promise<TResult>
+}
+
+function defineAuthorizedEventHandler<TUser, TResult>(
+  authorize: (event: H3Event) => Promise<TUser>,
+  handler: AuthorizedEventHandler<TUser, TResult>
 ) {
-  return defineEventHandler(async (event) => {
-    const admin = await requireAdmin(event)
-    return handler(event, admin)
-  })
+  return defineEventHandler(async event => handler(event, await authorize(event)))
+}
+
+export function defineAuthenticatedEventHandler<TResult>(
+  handler: AuthorizedEventHandler<NonNullable<Awaited<ReturnType<typeof getAuthUser>>>, TResult>
+) {
+  return defineAuthorizedEventHandler(requireAuth, handler)
+}
+
+export function defineAdminEventHandler<TResult>(
+  handler: AuthorizedEventHandler<NonNullable<Awaited<ReturnType<typeof getAuthUser>>>, TResult>
+) {
+  return defineAuthorizedEventHandler(requireAdmin, handler)
 }

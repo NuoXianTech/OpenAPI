@@ -3,12 +3,11 @@ import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { userChangePasswordSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
-import { hashPassword, verifyPassword, requireAuth, createUserSession } from '~~/server/utils/auth'
+import { hashPassword, verifyPassword, defineAuthenticatedEventHandler, createUserSession } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const authUser = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
   const { currentPassword, newPassword } = await readZodBody(event, userChangePasswordSchema)
 
   // 拉数据库行（不能用 authUser，里面没有 passwordHash）

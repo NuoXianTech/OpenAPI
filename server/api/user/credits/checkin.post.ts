@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getRequestIP, readBody } from 'h3'
 import { checkinService, isCheckinError } from '~~/server/services/checkin-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 
 const CHECKIN_ERROR_STATUS: Record<string, number> = {
@@ -10,8 +10,7 @@ const CHECKIN_ERROR_STATUS: Record<string, number> = {
   COOLDOWN: 429
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  const user = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
   const ip = getRequestIP(event) || null
   const body = await readBody<{ turnstileToken?: string }>(event).catch(() => ({} as { turnstileToken?: string }))
   await assertTurnstileForPage('checkin', body?.turnstileToken ?? '', ip)

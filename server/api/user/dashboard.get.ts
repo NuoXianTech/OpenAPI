@@ -1,15 +1,14 @@
 import type { H3Event } from 'h3'
 import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '~~/server/db/schema'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import type { UserDashboardData, UserDashboardTrendPoint } from '#shared/types/user-dashboard'
 
 const TREND_DAYS = 7
 
-export default defineEventHandler(async (event: H3Event): Promise<UserDashboardData> => {
-  const user = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, user): Promise<UserDashboardData> => {
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
 
   const userId = user.id

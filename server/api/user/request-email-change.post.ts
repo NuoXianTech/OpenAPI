@@ -6,11 +6,10 @@ import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
-import { requireAuth, verifyPassword } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const authUser = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
   const { currentPassword, newEmail } = await readZodBody(event, userRequestEmailChangeSchema)
 
   if (newEmail === authUser.email.toLowerCase()) {

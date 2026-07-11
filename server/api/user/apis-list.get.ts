@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import { apis } from '~~/server/db/schema'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 
 /**
  * 用户侧 · 获取所有"已启用且非 orphan"的接口，用于 API Key 创建/编辑表单
@@ -15,9 +15,7 @@ import { requireAuth } from '~~/server/utils/auth'
  *   - scope：写入 apiKeys.scopes 的字符串，格式 `${pathVersion}.${code}`
  *   - 其它字段仅用于前端展示分组
  */
-export default defineEventHandler(async (event: H3Event) => {
-  await requireAuth(event)
-
+export default defineAuthenticatedEventHandler(async (_event: H3Event) => {
   const rows = await db.select({
     id: apis.id,
     code: apis.code,

@@ -3,11 +3,10 @@ import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
-export default defineEventHandler(async (event: H3Event) => {
-  const authUser = await requireAuth(event)
+export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
   if (!provider || !isSupportedOauthProvider(provider)) {
     throw createError({ statusCode: 404, message: 'provider not supported' })

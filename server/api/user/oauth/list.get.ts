@@ -4,7 +4,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
-import { requireAuth } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { toNullableIsoString } from '~~/server/utils/date'
 
 // 显式声明形状：drizzle 的 select().from().where() 在某些链上推不出元素类型，
@@ -20,9 +20,7 @@ interface BoundOauthAccount {
   lastLoginAt: Date | string | null
 }
 
-export default defineEventHandler(async (event: H3Event) => {
-  const authUser = await requireAuth(event)
-
+export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
   const [bound, enabled] = await Promise.all([
     oauthAccountService.listSafeByUserId(authUser.id),
     oauthProviderService.listEnabledProviders()
