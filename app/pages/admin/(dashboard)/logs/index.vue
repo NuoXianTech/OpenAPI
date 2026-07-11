@@ -17,6 +17,7 @@ const {
   items,
   total,
   loading,
+  refresh,
   applyFilters,
   resetFilters,
   typeSelectItems,
@@ -147,6 +148,16 @@ function openDetail(row: AdminLogRow) {
           </div>
         </div>
       </AdminFilterPopover>
+      <UButton
+        class="ml-auto"
+        icon="i-mdi-refresh"
+        color="neutral"
+        variant="outline"
+        :loading="loading"
+        @click="refresh"
+      >
+        刷新
+      </UButton>
     </div>
 
     <DashboardTableCard

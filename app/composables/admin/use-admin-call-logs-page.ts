@@ -212,6 +212,7 @@ interface UseAdminLoginLogListReturn {
   methodItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>
   page: Ref<number>
   pageSize: Ref<number>
+  refresh: () => Promise<void>
   reset: () => Promise<void>
   successItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>
   total: Ref<number>
@@ -286,6 +287,7 @@ export function useAdminLoginLogList(
     items,
     total,
     loading,
+    refresh,
     applyFilters,
     reset
   } = usePrivatePagedList<AdminLoginLogFilters, AdminLoginLogRow>({
@@ -316,6 +318,7 @@ export function useAdminLoginLogList(
     methodItems: ADMIN_LOGIN_LOG_METHOD_ITEMS,
     page,
     pageSize,
+    refresh,
     reset,
     successItems: ADMIN_LOGIN_LOG_SUCCESS_ITEMS,
     total
@@ -367,6 +370,7 @@ interface UseAdminOperationLogListReturn {
   openDetail: (row: AdminOperationLogRow) => void
   page: Ref<number>
   pageSize: Ref<number>
+  refresh: () => Promise<void>
   reset: () => Promise<void>
   resolveActorLabel: (action: string, userId: number | null) => string
   resolveActionLabel: (action: string) => string
@@ -509,6 +513,7 @@ export function useAdminOperationLogList(
     items,
     total,
     loading,
+    refresh,
     applyFilters,
     reset
   } = usePrivatePagedList<AdminOperationLogFilters, AdminOperationLogRow>({
@@ -564,6 +569,7 @@ export function useAdminOperationLogList(
     openDetail,
     page,
     pageSize,
+    refresh,
     reset,
     resolveActorLabel: resolveOperationLogActorLabel,
     resolveActionLabel: resolveOperationLogActionLabel,

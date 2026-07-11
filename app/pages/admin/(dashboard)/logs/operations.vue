@@ -15,6 +15,7 @@ const {
   filters,
   items,
   loading,
+  refresh,
   openDetail,
   page,
   pageSize,
@@ -118,6 +119,16 @@ const {
           </div>
         </div>
       </AdminFilterPopover>
+      <UButton
+        class="ml-auto"
+        icon="i-mdi-refresh"
+        color="neutral"
+        variant="outline"
+        :loading="loading"
+        @click="refresh"
+      >
+        刷新
+      </UButton>
     </div>
 
     <DashboardTableCard

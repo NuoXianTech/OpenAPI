@@ -14,6 +14,7 @@ const {
   items,
   total,
   loading,
+  refresh,
   applyFilters,
   reset,
   activeFilterCount,
@@ -88,6 +89,16 @@ const {
           </UFormField>
         </div>
       </AdminFilterPopover>
+      <UButton
+        class="ml-auto"
+        icon="i-mdi-refresh"
+        color="neutral"
+        variant="outline"
+        :loading="loading"
+        @click="refresh"
+      >
+        刷新
+      </UButton>
     </div>
 
     <DashboardTableCard

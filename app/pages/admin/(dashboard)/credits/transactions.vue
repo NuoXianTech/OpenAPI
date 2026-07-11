@@ -48,6 +48,7 @@ const {
   items,
   total,
   loading,
+  refresh,
   applyFilters: apply,
   reset
 } = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
@@ -208,6 +209,16 @@ function amountClass(amt: number) {
           </UFormField>
         </div>
       </AdminFilterPopover>
+      <UButton
+        class="ml-auto"
+        icon="i-mdi-refresh"
+        color="neutral"
+        variant="outline"
+        :loading="loading"
+        @click="refresh"
+      >
+        刷新
+      </UButton>
     </div>
 
     <DashboardTableCard

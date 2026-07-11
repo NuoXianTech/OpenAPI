@@ -110,13 +110,24 @@ const {
         </AdminFilterPopover>
       </div>
 
-      <UButton
-        icon="i-mdi-plus"
-        color="primary"
-        @click="openGenerateModal"
-      >
-        生成兑换码
-      </UButton>
+      <div class="flex flex-wrap items-center gap-1.5">
+        <UButton
+          icon="i-mdi-plus"
+          color="primary"
+          @click="openGenerateModal"
+        >
+          生成兑换码
+        </UButton>
+        <UButton
+          icon="i-mdi-refresh"
+          color="neutral"
+          variant="outline"
+          :loading="loading"
+          @click="init"
+        >
+          刷新
+        </UButton>
+      </div>
     </div>
 
     <AdminRedemptionCodeBatchCard
