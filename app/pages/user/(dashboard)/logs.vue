@@ -12,8 +12,6 @@ import {
 
 useHead({ title: '调用日志' })
 
-const route = useRoute()
-const router = useRouter()
 const {
   filters,
   page,
@@ -29,12 +27,7 @@ const {
   activeFilterCount,
   columns,
   loadFilterOptions
-} = useUserCallLogsPage({
-  routeQuery: computed(() => route.query),
-  replaceQuery: async (query) => {
-    await router.replace({ query })
-  }
-})
+} = useUserCallLogsPage()
 
 const overlay = useOverlay()
 const columnVisibility = ref<Record<string, boolean>>({})
