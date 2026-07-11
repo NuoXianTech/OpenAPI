@@ -1,11 +1,10 @@
-import type { TableColumn } from '@nuxt/ui'
 import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsOverview,
-  PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
 } from '#shared/types/public-stats'
+import type { DashboardCallRankItem } from '#shared/types/dashboard'
 import { formatCompactCount, formatCount, formatPercent } from '~/utils/number-format'
 
 type PublicStatTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
@@ -26,7 +25,7 @@ interface UsePublicStatsDashboardReturn {
   error: Ref<unknown>
   overview: ComputedRef<PublicCallStatsOverview | null>
   trend7d: ComputedRef<PublicCallStatsTrendPoint[]>
-  top10Last30d: ComputedRef<PublicCallStatsTopItem[]>
+  rankingLast30d: ComputedRef<DashboardCallRankItem[]>
   hasData: ComputedRef<boolean>
   isInitialLoading: ComputedRef<boolean>
   generatedAtLabel: ComputedRef<string>
@@ -40,17 +39,13 @@ interface UsePublicStatsDashboardReturn {
   trendTotalCalls: ComputedRef<number>
   trendSuccessCalls: ComputedRef<number>
   trendFailureCalls: ComputedRef<number>
-  topApi: ComputedRef<PublicCallStatsTopItem | null>
-  rankColumns: TableColumn<PublicCallStatsTopItem>[]
+  topApi: ComputedRef<DashboardCallRankItem | null>
   overviewCards: ComputedRef<PublicStatsOverviewCard[]>
   fetchStats: () => Promise<void>
   reloadStats: () => Promise<void>
   formatRate: (value: number) => string
   formatCount: (value: number) => string
   formatCompact: (value: number) => string
-  formatMethod: (value: string) => string
-  getRankPercent: (value: number) => number
-  rankSuccessTone: (rate: number) => PublicStatTone
 }
 
 interface UsePublicStatsDashboardOptions {
@@ -65,21 +60,6 @@ function roundPercent(value: number): number {
   return Number(value.toFixed(2))
 }
 
-function formatPublicStatsMethod(value: string): string {
-  return value
-    .split(',')
-    .map(method => method.trim())
-    .filter(Boolean)
-    .join(' / ')
-}
-
-function getPublicStatsSuccessTone(rate: number): PublicStatTone {
-  if (rate >= 99) return 'success'
-  if (rate >= 95) return 'info'
-  if (rate >= 90) return 'warning'
-  return 'error'
-}
-
 export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions = {}): UsePublicStatsDashboardReturn {
   const data = ref<PublicCallStatsDashboard | null>(null)
   const isPending = ref(false)
@@ -87,7 +67,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
 
   const overview = computed(() => data.value?.overview ?? null)
   const trend7d = computed(() => data.value?.trend7d ?? [])
-  const top10Last30d = computed(() => data.value?.top10Last30d ?? [])
+  const rankingLast30d = computed(() => data.value?.rankingLast30d ?? [])
   const hasData = computed(() => data.value !== null)
   const isInitialLoading = computed(() => isPending.value && !hasData.value)
 
@@ -133,23 +113,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
   const trendSuccessCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.successCalls, 0))
   const trendFailureCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.failureCalls, 0))
 
-  const topApi = computed(() => top10Last30d.value[0] ?? null)
-  const rankMaxCalls = computed(() => Math.max(...top10Last30d.value.map(item => item.totalCalls), 1))
-
-  function getRankPercent(value: number): number {
-    return clampPercent((value / rankMaxCalls.value) * 100)
-  }
-
-  const rankColumns: TableColumn<PublicCallStatsTopItem>[] = [
-    { accessorKey: 'rank', header: '#' },
-    { accessorKey: 'name', header: '接口' },
-    { accessorKey: 'totalCalls', header: '调用次数' },
-    {
-      accessorKey: 'successRate',
-      header: '成功率',
-      meta: { class: { th: 'text-right', td: 'text-right' } }
-    }
-  ]
+  const topApi = computed(() => rankingLast30d.value[0] ?? null)
 
   const overviewCards = computed<PublicStatsOverviewCard[]>(() => {
     if (!overview.value) return []
@@ -259,7 +223,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     error,
     overview,
     trend7d,
-    top10Last30d,
+    rankingLast30d,
     hasData,
     isInitialLoading,
     generatedAtLabel,
@@ -274,15 +238,11 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     trendSuccessCalls,
     trendFailureCalls,
     topApi,
-    rankColumns,
     overviewCards,
     fetchStats,
     reloadStats,
     formatRate: formatPercent,
     formatCount,
-    formatCompact: formatCompactCount,
-    formatMethod: formatPublicStatsMethod,
-    getRankPercent,
-    rankSuccessTone: getPublicStatsSuccessTone
+    formatCompact: formatCompactCount
   }
 }

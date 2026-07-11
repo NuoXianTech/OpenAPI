@@ -14,19 +14,15 @@ const {
   error,
   formatCompact,
   formatCount,
-  formatMethod,
   formatRate,
   generatedAtLabel,
-  getRankPercent,
   hasData,
   isInitialLoading,
   isPending,
   overview,
   overviewCards,
-  rankColumns,
-  rankSuccessTone,
   reloadStats,
-  top10Last30d,
+  rankingLast30d,
   topApi,
   trend7d,
   trendFailureCalls,
@@ -241,95 +237,24 @@ const {
             </ClientOnly>
           </UCard>
 
-          <DashboardTableCard
-            title="近 30 日调用排行"
-            icon="i-mdi-chart-bar"
-            :total="top10Last30d.length"
+          <UCard
+            variant="subtle"
+            class="stats-panel"
+            :ui="{ body: 'p-4 sm:p-5' }"
           >
-            <template #actions>
-              <UBadge
-                color="neutral"
-                variant="outline"
-                size="sm"
-                class="rounded-md"
-              >
-                TOP 10
-              </UBadge>
+            <template #header>
+              <div>
+                <h2 class="text-base font-semibold text-highlighted">
+                  近 30 日调用排行
+                </h2>
+                <p class="mt-0.5 text-sm text-muted">
+                  Top {{ rankingLast30d.length || 10 }} 高频调用接口及成功率
+                </p>
+              </div>
             </template>
 
-            <DashboardDataTable
-              :data="top10Last30d"
-              :columns="rankColumns"
-              :fixed="false"
-              empty-icon="i-mdi-chart-bar"
-              empty-title="暂无调用数据"
-              empty-description="近 30 天还没有任何接口调用记录。"
-            >
-              <template #rank-cell="{ row }">
-                <UBadge
-                  :color="row.original.rank <= 3 ? 'primary' : 'neutral'"
-                  :variant="row.original.rank <= 3 ? 'solid' : 'soft'"
-                  class="w-7 justify-center rounded-md tabular-nums"
-                >
-                  {{ row.original.rank }}
-                </UBadge>
-              </template>
-
-              <template #name-cell="{ row }">
-                <div class="min-w-0 max-w-[520px]">
-                  <div
-                    class="truncate text-sm font-medium text-default"
-                    :title="row.original.name"
-                  >
-                    {{ row.original.name }}
-                  </div>
-                  <div class="mt-1 flex items-center gap-1.5">
-                    <UBadge
-                      color="neutral"
-                      variant="subtle"
-                      size="sm"
-                      class="shrink-0 rounded font-mono"
-                    >
-                      {{ formatMethod(row.original.httpMethod) }}
-                    </UBadge>
-                    <span
-                      class="truncate font-mono text-xs text-muted"
-                      :title="row.original.apiPath"
-                    >
-                      {{ row.original.apiPath }}
-                    </span>
-                  </div>
-                </div>
-              </template>
-
-              <template #totalCalls-cell="{ row }">
-                <div class="min-w-[140px]">
-                  <div class="text-sm font-semibold tabular-nums text-highlighted">
-                    {{ formatCount(row.original.totalCalls) }}
-                  </div>
-                  <div class="mt-1.5 flex items-center gap-2">
-                    <div class="stats-table-bar">
-                      <span :style="{ width: `${getRankPercent(row.original.totalCalls)}%` }" />
-                    </div>
-                    <span class="shrink-0 text-xs text-muted tabular-nums">
-                      {{ Math.round(getRankPercent(row.original.totalCalls)) }}%
-                    </span>
-                  </div>
-                </div>
-              </template>
-
-              <template #successRate-cell="{ row }">
-                <UBadge
-                  :color="rankSuccessTone(row.original.successRate)"
-                  variant="soft"
-                  size="sm"
-                  class="rounded-md tabular-nums"
-                >
-                  {{ formatRate(row.original.successRate) }}
-                </UBadge>
-              </template>
-            </DashboardDataTable>
-          </DashboardTableCard>
+            <DashboardCallRanking :ranking="rankingLast30d" />
+          </UCard>
         </div>
       </template>
     </UPageBody>
@@ -469,24 +394,6 @@ const {
   font-weight: 600;
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
-}
-
-/* 表格内的相对调用量迷你进度条：宽度 = 占榜首比例，单色不喧宾夺主 */
-.stats-table-bar {
-  position: relative;
-  flex: 1 1 auto;
-  min-width: 48px;
-  height: 5px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ui-border) 72%, transparent);
-}
-
-.stats-table-bar span {
-  position: absolute;
-  inset: 0 auto 0 0;
-  border-radius: inherit;
-  background: var(--ui-primary);
 }
 
 @media (min-width: 1024px) {

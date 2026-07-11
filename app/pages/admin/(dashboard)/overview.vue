@@ -407,7 +407,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               class="h-12 w-full"
             />
           </div>
-          <AdminDashboardRanking
+          <DashboardCallRanking
             v-else
             :ranking="ranking"
           />

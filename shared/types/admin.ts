@@ -1,21 +1,14 @@
+import type { DashboardCallRankItem } from './dashboard'
+
 export interface AdminDashboardHourlyPoint {
   hour: string
   label: string
   totalCalls: number
 }
 
-export interface AdminDashboardRankItem {
-  rank: number
-  apiId: number
-  name: string
-  apiPath: string
-  totalCalls: number
-  successRate: number
-}
-
 export interface AdminDashboardInsightsData {
   hourlyTrend24h: AdminDashboardHourlyPoint[]
-  ranking: AdminDashboardRankItem[]
+  ranking: DashboardCallRankItem[]
 }
 
 interface AdminDashboardOverview {

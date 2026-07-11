@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { AdminDashboardRankItem } from '#shared/types/admin'
+import type { DashboardCallRankItem } from '#shared/types/dashboard'
 
 interface Props {
-  ranking: AdminDashboardRankItem[]
+  ranking: DashboardCallRankItem[]
 }
 
 defineProps<Props>()

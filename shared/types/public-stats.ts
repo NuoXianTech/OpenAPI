@@ -1,3 +1,5 @@
+import type { DashboardCallRankItem } from './dashboard'
+
 export interface PublicCallStatsOverview {
   totalCalls: number
   todayCalls: number
@@ -17,21 +19,9 @@ export interface PublicCallStatsTrendPoint {
   failureCalls: number
 }
 
-export interface PublicCallStatsTopItem {
-  rank: number
-  apiId: number
-  name: string
-  apiPath: string
-  httpMethod: string
-  totalCalls: number
-  successCalls: number
-  failureCalls: number
-  successRate: number
-}
-
 export interface PublicCallStatsDashboard {
   overview: PublicCallStatsOverview
   trend7d: PublicCallStatsTrendPoint[]
-  top10Last30d: PublicCallStatsTopItem[]
+  rankingLast30d: DashboardCallRankItem[]
   generatedAt: string
 }

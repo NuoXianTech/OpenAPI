@@ -2,23 +2,25 @@ import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCallStats, apis, users } from '~~/server/db/schema'
 import type {
   PublicCallStatsDashboard,
-  PublicCallStatsTopItem,
   PublicCallStatsTrendPoint
 } from '#shared/types/public-stats'
+import type { DashboardCallRankItem } from '#shared/types/dashboard'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
 import { getSharedCache, getSharedCacheVersion } from '~~/server/utils/shared-cache'
 
 const PUBLIC_STATS_TTL_SECONDS = 12
 const PUBLIC_STATS_VERSION = 'public-stats'
+const PUBLIC_RANKING_WINDOW_DAYS = 30
+const PUBLIC_STATS_CACHE_SCHEMA_VERSION = 2
 
 async function loadPublicDashboard(days: number, topLimit: number): Promise<PublicCallStatsDashboard> {
   const todayStart = getLocalDayStart(new Date())
   const yesterdayStart = addLocalDays(todayStart, -1)
   const rangeStart = addLocalDays(todayStart, -(days - 1))
   const tomorrowStart = addLocalDays(todayStart, 1)
-  // TOP 10 固定按近 30 天聚合，与趋势图的 days 解耦
-  const top30dStart = addLocalDays(todayStart, -29)
+  // 调用排行固定按最近 30 个自然日聚合，与趋势图的 days 解耦
+  const ranking30dStart = addLocalDays(todayStart, -(PUBLIC_RANKING_WINDOW_DAYS - 1))
 
   const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
   const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
@@ -84,22 +86,19 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       apiId: apiCallStats.apiId,
       name: apis.name,
       apiPath: apis.apiPath,
-      httpMethod: apis.httpMethod,
       totalCalls: totalExpr,
-      successCalls: successExpr,
-      failureCalls: failureExpr
+      successCalls: successExpr
     }).from(apiCallStats)
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         publicApiCondition,
-        gte(apiCallStats.statDate, top30dStart),
+        gte(apiCallStats.statDate, ranking30dStart),
         lt(apiCallStats.statDate, tomorrowStart)
       ))
       .groupBy(
         apiCallStats.apiId,
         apis.name,
-        apis.apiPath,
-        apis.httpMethod
+        apis.apiPath
       )
       .orderBy(desc(totalExpr), asc(apis.name))
       .limit(topLimit)
@@ -144,27 +143,21 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
     }
   })
 
-  const top10Last30d: PublicCallStatsTopItem[] = topRows.map((row: {
+  const rankingLast30d: DashboardCallRankItem[] = topRows.map((row: {
     apiId: number
     name: string
     apiPath: string
-    httpMethod: string
     totalCalls: number | string | null
     successCalls: number | string | null
-    failureCalls: number | string | null
   }, index: number) => {
     const rowTotalCalls = toNumber(row.totalCalls)
     const rowSuccessCalls = toNumber(row.successCalls)
-    const rowFailureCalls = toNumber(row.failureCalls)
     return {
       rank: index + 1,
       apiId: row.apiId,
       name: row.name,
       apiPath: row.apiPath,
-      httpMethod: row.httpMethod,
       totalCalls: rowTotalCalls,
-      successCalls: rowSuccessCalls,
-      failureCalls: rowFailureCalls,
       successRate: rowTotalCalls ? Number(((rowSuccessCalls / rowTotalCalls) * 100).toFixed(2)) : 0
     }
   })
@@ -182,7 +175,7 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       trackedApiCount: toNumber(summary.trackedApiCount)
     },
     trend7d,
-    top10Last30d,
+    rankingLast30d,
     generatedAt: new Date().toISOString()
   }
 }
@@ -194,7 +187,7 @@ export const apiCallStatsService = {
     const version = await getSharedCacheVersion(PUBLIC_STATS_VERSION)
 
     return getSharedCache<PublicCallStatsDashboard>({
-      key: `cache:public:stats:v${version}:${days}:${topLimit}`,
+      key: `cache:public:stats:s${PUBLIC_STATS_CACHE_SCHEMA_VERSION}:v${version}:${days}:${topLimit}`,
       ttlSeconds: PUBLIC_STATS_TTL_SECONDS,
       loader: () => loadPublicDashboard(days, topLimit)
     })

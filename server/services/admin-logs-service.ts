@@ -7,12 +7,12 @@ import { normalizePagination } from '~~/server/utils/pagination'
 import type {
   AdminDashboardHourlyPoint,
   AdminDashboardInsightsData,
-  AdminDashboardRankItem,
   AdminLogRow,
   AdminLogType,
   AdminLogsFilterOptions,
   AdminLogsListResponse
 } from '#shared/types/admin'
+import type { DashboardCallRankItem } from '#shared/types/dashboard'
 
 // ─────────────────────────────────────────────────────────────────────
 // 类型映射 SQL 表达式
@@ -235,7 +235,7 @@ export const adminLogsService = {
       successCalls: number
     }
 
-    const ranking: AdminDashboardRankItem[] = rankingRows.map((row: RankingRow, index: number) => {
+    const ranking: DashboardCallRankItem[] = rankingRows.map((row: RankingRow, index: number) => {
       const totalCalls = toNumber(row.totalCalls)
       const successCalls = toNumber(row.successCalls)
       return {
