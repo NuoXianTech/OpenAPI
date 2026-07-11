@@ -166,6 +166,7 @@ function openDetail(row: UserCallLogRow) {
             :loading="loading"
             :total="total"
             :page-size-items="PAGE_SIZE_ITEMS"
+            always-show-pagination
             empty-title="暂无调用记录"
             empty-icon="i-mdi-text-box-search-outline"
           >
