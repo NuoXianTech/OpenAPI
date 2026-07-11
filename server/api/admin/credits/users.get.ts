@@ -9,7 +9,7 @@ import { readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils
 
 const BALANCE_FILTERS: AdminCreditBalanceFilter[] = ['all', 'positive', 'zero', 'negative']
 
-export default defineAdminEventHandler(async (event: H3Event) => {
+export default defineAdminEventHandler((event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
   const userId = readQueryNumber(query.userId)
 

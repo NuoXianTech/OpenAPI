@@ -31,7 +31,7 @@ const CREDIT_REASON_OPTIONS: CreditReason[] = [
 ]
 const DIRECTION_OPTIONS = ['in', 'out'] as const
 
-export default defineAdminEventHandler(async (event: H3Event) => {
+export default defineAdminEventHandler((event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const userId = readQueryNumber(query.userId)

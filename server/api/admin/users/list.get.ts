@@ -18,7 +18,7 @@ function readUserIdFilter(value: unknown): number | undefined {
   return userId !== undefined && Number.isInteger(userId) && userId > 0 ? userId : undefined
 }
 
-export default defineAdminEventHandler(async (event: H3Event) => {
+export default defineAdminEventHandler((event: H3Event) => {
   const query = getQuery(event)
 
   return usersService.list({

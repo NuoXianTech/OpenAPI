@@ -8,11 +8,10 @@ import { readQueryOption } from '~~/server/utils/request-query'
 const VALID_REASONS: CreditReason[] = ['admin_grant', 'admin_revoke', 'admin_reset', 'api_charge', 'api_refund', 'signup_bonus', 'redemption_code', 'checkin']
 const DIRECTIONS = ['in', 'out'] as const
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
+export default defineAuthenticatedEventHandler((event: H3Event, user) => {
   const { query, limit, offset } = readPaginationQuery(event)
   const reason = readQueryOption(query.reason, VALID_REASONS)
   const direction = readQueryOption(query.direction, DIRECTIONS)
 
-  const data = await creditService.listUserTransactions(user.id, { reason, direction, limit, offset })
-  return data
+  return creditService.listUserTransactions(user.id, { reason, direction, limit, offset })
 })

@@ -7,7 +7,7 @@ import { readQueryDate, readQueryNumber, readQueryOption, readQueryText } from '
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
 const ACTOR_KINDS = ['admin', 'user'] as const
 
-export default defineAdminEventHandler(async (event: H3Event) => {
+export default defineAdminEventHandler((event: H3Event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const actorKind = readQueryOption(query.actorKind, ACTOR_KINDS)

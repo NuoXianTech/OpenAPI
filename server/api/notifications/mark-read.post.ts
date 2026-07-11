@@ -7,6 +7,5 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
   const { id } = await readZodBody(event, idSchema)
 
-  const updated = await notificationService.markRead(user.id, id)
-  return updated
+  return notificationService.markRead(user.id, id)
 })
