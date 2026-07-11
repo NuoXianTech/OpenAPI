@@ -9,7 +9,7 @@ const VALID_STATUS: Array<RedemptionStatus | 'all'> = ['all', 'enabled', 'disabl
 
 export default defineEventHandler(async (event: H3Event) => {
   await requireAdmin(event)
-  const { query, limit, offset } = readPaginationQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const batchId = readQueryText(query.batchId)
   const keyword = readQueryText(query.keyword)
