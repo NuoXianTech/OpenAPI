@@ -31,7 +31,7 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
   // 令时区常量裂成 $1/$5/$6 等互不相等的占位符，Postgres 判不出 group by 已覆盖 select 而报 42803。
   const hourlySource = db
     .select({
-      bucket: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
+      bucket: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`.as('bucket'),
       statusCode: apiCalls.statusCode,
       errorCode: apiCalls.errorCode
     })
@@ -136,6 +136,11 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
       failureCalls: toNumber(row.failureCalls)
     })
   }
+  const hourLabelFormatter = new Intl.DateTimeFormat('zh-CN', {
+    timeZone: APP_TIME_ZONE,
+    hour: '2-digit',
+    hourCycle: 'h23'
+  })
   const nowHour = new Date(now)
   nowHour.setMinutes(0, 0, 0)
   const hourlyTrend24h: UserDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
@@ -144,7 +149,7 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
     const counts = hourlyMap.get(hour) || { successCalls: 0, failureCalls: 0 }
     return {
       hour,
-      label: `${String(date.getHours()).padStart(2, '0')}:00`,
+      label: `${hourLabelFormatter.format(date)}:00`,
       ...counts
     }
   })

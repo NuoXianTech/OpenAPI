@@ -180,7 +180,7 @@ export const adminLogsService = {
 
     const hourlySource = db
       .select({
-        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('hour')
+        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`.as('hour')
       })
       .from(apiCalls)
       .innerJoin(apis, eq(apis.id, apiCalls.apiId))
@@ -218,12 +218,17 @@ export const adminLogsService = {
       hourMap.set(date.toISOString(), toNumber(row.totalCalls))
     }
 
+    const hourLabelFormatter = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: APP_TIME_ZONE,
+      hour: '2-digit',
+      hourCycle: 'h23'
+    })
     const nowHour = new Date()
     nowHour.setMinutes(0, 0, 0)
     const hourlyTrend24h: AdminDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
       const date = new Date(nowHour.getTime() - (23 - index) * 60 * 60 * 1000)
       const hour = date.toISOString()
-      const label = `${String(date.getHours()).padStart(2, '0')}:00`
+      const label = `${hourLabelFormatter.format(date)}:00`
       return { hour, label, totalCalls: hourMap.get(hour) ?? 0 }
     })
 
