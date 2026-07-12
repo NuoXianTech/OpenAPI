@@ -17,6 +17,13 @@ interface UserDashboardApiKeys {
   active: number
 }
 
+export interface UserDashboardHourlyPoint {
+  hour: string
+  label: string
+  successCalls: number
+  failureCalls: number
+}
+
 export interface UserDashboardTrendPoint {
   date: string
   totalCalls: number
@@ -28,5 +35,6 @@ export interface UserDashboardData {
   calls: UserDashboardCalls
   apiKeys: UserDashboardApiKeys
   trend: UserDashboardTrendPoint[]
+  hourlyTrend24h: UserDashboardHourlyPoint[]
   generatedAt: string
 }

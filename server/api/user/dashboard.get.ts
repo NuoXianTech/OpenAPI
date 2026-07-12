@@ -4,7 +4,7 @@ import { apiCalls, apiKeys, users } from '~~/server/db/schema'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
-import type { UserDashboardData, UserDashboardTrendPoint } from '#shared/types/user-dashboard'
+import type { UserDashboardData, UserDashboardHourlyPoint, UserDashboardTrendPoint } from '#shared/types/user-dashboard'
 
 const TREND_DAYS = 7
 
@@ -29,6 +29,20 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
   // 趋势按 APP_TIME_ZONE 切日：桶表达式收进子查询、只此一处，外层按纯列 bucket 分组。
   // 切勿把整条 date_trunc 重复进 select/group by/order by——复用的 sql 片段会各自生成绑定参数，
   // 令时区常量裂成 $1/$5/$6 等互不相等的占位符，Postgres 判不出 group by 已覆盖 select 而报 42803。
+  const hourlySource = db
+    .select({
+      bucket: sql<Date>`date_trunc('hour', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
+      statusCode: apiCalls.statusCode,
+      errorCode: apiCalls.errorCode
+    })
+    .from(apiCalls)
+    .where(and(
+      eq(apiCalls.userId, userId),
+      eq(apiCalls.isCounted, true),
+      gte(apiCalls.createdAt, since24h)
+    ))
+    .as('hourly_source')
+
   const trendSource = db
     .select({
       bucket: sql<Date>`date_trunc('day', ${apiCalls.createdAt} at time zone ${APP_TIME_ZONE})`.as('bucket'),
@@ -48,6 +62,7 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
     summaryRows,
     last24hRows,
     trendRows,
+    hourlyRows,
     keyRows
   ] = await Promise.all([
     db.select({ credits: users.credits })
@@ -74,6 +89,13 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
     }).from(trendSource)
       .groupBy(trendSource.bucket)
       .orderBy(asc(trendSource.bucket)),
+    db.select({
+      bucket: hourlySource.bucket,
+      successCalls: sql<number>`count(*) filter (where ${hourlySource.statusCode} >= 200 and ${hourlySource.statusCode} < 400 and ${hourlySource.errorCode} is null)`,
+      failureCalls: sql<number>`count(*) filter (where not (${hourlySource.statusCode} >= 200 and ${hourlySource.statusCode} < 400 and ${hourlySource.errorCode} is null))`
+    }).from(hourlySource)
+      .groupBy(hourlySource.bucket)
+      .orderBy(asc(hourlySource.bucket)),
     db.select({
       total: sql<number>`count(*)`,
       active: sql<number>`count(*) filter (where ${apiKeys.isActive})`
@@ -106,6 +128,27 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
     return trendMap.get(key) || { date: key, totalCalls: 0, creditsSpent: 0 }
   })
 
+  const hourlyMap = new Map<string, Pick<UserDashboardHourlyPoint, 'successCalls' | 'failureCalls'>>()
+  for (const row of hourlyRows) {
+    const date = row.bucket instanceof Date ? row.bucket : new Date(row.bucket)
+    hourlyMap.set(date.toISOString(), {
+      successCalls: toNumber(row.successCalls),
+      failureCalls: toNumber(row.failureCalls)
+    })
+  }
+  const nowHour = new Date(now)
+  nowHour.setMinutes(0, 0, 0)
+  const hourlyTrend24h: UserDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
+    const date = new Date(nowHour.getTime() - (23 - index) * 60 * 60 * 1000)
+    const hour = date.toISOString()
+    const counts = hourlyMap.get(hour) || { successCalls: 0, failureCalls: 0 }
+    return {
+      hour,
+      label: `${String(date.getHours()).padStart(2, '0')}:00`,
+      ...counts
+    }
+  })
+
   return {
     credits: {
       balance,
@@ -124,6 +167,7 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user): Pro
       active: toNumber(keyAgg.active)
     },
     trend,
+    hourlyTrend24h,
     generatedAt: new Date().toISOString()
   }
 })

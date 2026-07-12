@@ -16,6 +16,7 @@ function createEmptyUserDashboardData(): UserDashboardData {
     calls: { total: 0, success: 0, failure: 0, successRate: 0, requests24h: 0 },
     apiKeys: { total: 0, active: 0 },
     trend: [],
+    hourlyTrend24h: [],
     generatedAt: new Date(0).toISOString()
   }
 }
@@ -35,6 +36,7 @@ const credits = computed(() => data.value.credits)
 const calls = computed(() => data.value.calls)
 const apiKeys = computed(() => data.value.apiKeys)
 const trend = computed(() => data.value.trend)
+const hourlyTrend24h = computed(() => data.value.hourlyTrend24h)
 const callsTrendValues = computed(() => trend.value.map(point => point.totalCalls))
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
@@ -253,6 +255,32 @@ async function copyCurl() {
               </template>
             </DashboardMetricCard>
           </div>
+        </section>
+
+        <section class="space-y-4">
+          <div class="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <h3 class="text-lg font-semibold text-highlighted">
+                最近 24 小时 API 请求
+              </h3>
+              <p class="text-sm text-muted">
+                按小时统计成功与失败请求，仅包含计入统计的调用
+              </p>
+            </div>
+            <div class="flex items-center gap-4 text-xs text-muted" aria-label="图例">
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />成功</span>
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />失败</span>
+            </div>
+          </div>
+
+          <UCard :ui="{ body: 'p-4 sm:p-6' }">
+            <Suspense>
+              <UserApiRequestsHourlyChart :trend="hourlyTrend24h" />
+              <template #fallback>
+                <USkeleton class="h-64 w-full" />
+              </template>
+            </Suspense>
+          </UCard>
         </section>
       </div>
     </template>
