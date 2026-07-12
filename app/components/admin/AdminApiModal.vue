@@ -194,7 +194,7 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
     v-model:open="open"
     :title="headerLabel"
     :description="target ? `${target.endpointCount} 端点` : undefined"
-    :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
+    :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
   >
     <template #body>
       <AdminApiEndpointPreview
@@ -206,7 +206,7 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
         ref="form"
         :validate="validateApiForm"
         :state="state"
-        class="space-y-3"
+        class="grid gap-4 lg:grid-cols-2"
         @submit="onSubmit"
       >
         <AdminApiBasicForm />

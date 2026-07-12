@@ -5,9 +5,19 @@ const state = useAdminApiForm()
 </script>
 
 <template>
-  <div class="border-t border-default pt-3 mt-3">
-    <div class="text-sm font-medium mb-2">
-      限流（0 = 不限）
+  <section class="rounded-xl border border-default bg-elevated/30 p-4">
+    <div class="mb-4 flex items-center gap-2">
+      <span class="inline-flex size-8 items-center justify-center rounded-lg bg-info/10 text-info">
+        <UIcon name="i-mdi-speedometer" class="size-4" />
+      </span>
+      <div>
+        <h3 class="text-sm font-semibold text-highlighted">
+          限流与配额
+        </h3>
+        <p class="text-xs text-muted">
+          数值为 0 表示不限制
+        </p>
+      </div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <UFormField
@@ -16,6 +26,7 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.rateLimitPerSecond"
+          class="w-full"
           type="number"
           min="0"
         />
@@ -26,6 +37,7 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.rateLimitPerMinute"
+          class="w-full"
           type="number"
           min="0"
         />
@@ -36,6 +48,7 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.rateLimitPerHour"
+          class="w-full"
           type="number"
           min="0"
         />
@@ -46,6 +59,7 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.rateLimitPerDay"
+          class="w-full"
           type="number"
           min="0"
         />
@@ -56,6 +70,7 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.dailyQuota"
+          class="w-full"
           type="number"
           min="0"
         />
@@ -66,10 +81,11 @@ const state = useAdminApiForm()
       >
         <UInput
           v-model.number="state.timeoutMs"
+          class="w-full"
           type="number"
           min="0"
         />
       </UFormField>
     </div>
-  </div>
+  </section>
 </template>

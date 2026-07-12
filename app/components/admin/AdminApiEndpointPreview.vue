@@ -7,28 +7,37 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
 <template>
   <div
     v-if="endpoints.length"
-    class="mb-4 rounded-lg border border-default p-3 bg-elevated/30"
+    class="mb-4 rounded-xl border border-default bg-muted/30 p-4"
   >
-    <div class="text-xs text-muted mb-2">
-      发现的端点（路径与方法不可编辑，由文件结构决定）
+    <div class="mb-3 flex items-center gap-2 text-xs text-muted">
+      <UIcon name="i-mdi-source-branch" class="size-4" />
+      <span>自动发现的端点</span>
+      <span class="ms-auto">路径与方法由文件结构决定</span>
     </div>
     <div class="flex flex-col gap-1">
       <div
         v-for="ep in endpoints"
         :key="`${ep.method}-${ep.apiPath}`"
-        class="flex items-center gap-2 text-sm"
+        class="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-default/60 bg-default px-3 py-2.5"
       >
         <UBadge
-          variant="subtle"
-          class="font-mono"
+          color="neutral"
+          variant="soft"
+          class="w-fit min-w-12 justify-center font-mono text-[11px] font-semibold"
         >
-          {{ ep.method }}
+          {{ ep.method.toUpperCase() }}
         </UBadge>
-        <span class="font-mono">{{ ep.apiPath }}</span>
-        <span
+        <code class="min-w-0 truncate font-mono text-xs font-medium text-highlighted">
+          {{ ep.apiPath }}
+        </code>
+        <UBadge
           v-if="ep.isDynamic"
-          class="text-xs text-primary"
-        >动态</span>
+          color="primary"
+          variant="subtle"
+          size="sm"
+        >
+          动态
+        </UBadge>
       </div>
     </div>
   </div>

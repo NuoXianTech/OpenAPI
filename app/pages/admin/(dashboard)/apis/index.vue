@@ -200,10 +200,9 @@ function resetApiFilters() {
               >
                 {{ ep.method }}
               </UBadge>
-              <span
-                class="font-mono text-xs"
-                :class="ep.isDynamic ? 'text-primary' : ''"
-              >{{ ep.apiPath }}</span>
+              <code class="font-mono text-xs font-medium text-highlighted">
+                {{ ep.apiPath }}
+              </code>
             </div>
           </div>
         </template>

@@ -33,9 +33,19 @@ function setMethodCost(method: string, value: number | string | null | undefined
 </script>
 
 <template>
-  <div class="border-t border-default pt-3 mt-3">
-    <div class="text-sm font-medium mb-2 flex items-center gap-2">
-      <span>计费（按 HTTP 方法）</span>
+  <section class="rounded-xl border border-default bg-elevated/30 p-4">
+    <div class="mb-4 flex flex-wrap items-center gap-2">
+      <span class="inline-flex size-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
+        <UIcon name="i-mdi-coins" class="size-4" />
+      </span>
+      <div class="me-auto">
+        <h3 class="text-sm font-semibold text-highlighted">
+          调用计费
+        </h3>
+        <p class="text-xs text-muted">
+          按 HTTP 方法设置单次积分
+        </p>
+      </div>
       <UBadge
         v-if="!state.isApiKey"
         color="neutral"
@@ -100,5 +110,5 @@ function setMethodCost(method: string, value: number | string | null | undefined
         逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
       </p>
     </UFormField>
-  </div>
+  </section>
 </template>

@@ -7,11 +7,21 @@ const state = useAdminApiForm()
 </script>
 
 <template>
-  <div class="border-t border-default pt-3 mt-3">
-    <div class="text-sm font-medium mb-2">
-      访问控制
+  <section class="rounded-xl border border-default bg-elevated/30 p-4 lg:col-span-2">
+    <div class="mb-4 flex items-center gap-2">
+      <span class="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <UIcon name="i-mdi-shield-key-outline" class="size-4" />
+      </span>
+      <div>
+        <h3 class="text-sm font-semibold text-highlighted">
+          访问控制
+        </h3>
+        <p class="text-xs text-muted">
+          控制接口可用性、鉴权与调用统计
+        </p>
+      </div>
     </div>
-    <div class="flex flex-wrap gap-6">
+    <div class="grid gap-3 sm:grid-cols-3">
       <USwitch
         v-model="state.isEnabled"
         label="启用接口"
@@ -38,5 +48,5 @@ const state = useAdminApiForm()
     >
       关闭「必需 API Key」会清空所有方法的扣费配置（无法定位扣款账户）。
     </p>
-  </div>
+  </section>
 </template>
