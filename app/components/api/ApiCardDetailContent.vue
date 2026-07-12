@@ -84,7 +84,10 @@ function costFor(method: string): number {
 
     <div class="api-card-detail__body">
       <div class="api-card-detail__endpoint">
-        <span>接口地址</span>
+        <span class="api-card-detail__endpoint-label">
+          <UIcon name="i-mdi-routes" class="size-3.5" />
+          接口地址
+        </span>
         <a
           :href="apiPath"
           target="_blank"
@@ -105,7 +108,7 @@ function costFor(method: string): number {
             aria-hidden="true"
           >
             <UIcon
-              name="i-mdi-chart-bar"
+              name="i-mdi-pulse"
               class="size-3.5"
             />
           </span>
@@ -124,7 +127,7 @@ function costFor(method: string): number {
             aria-hidden="true"
           >
             <UIcon
-              :name="isApiKey ? 'i-mdi-key-variant' : 'i-mdi-gift-outline'"
+              :name="isApiKey ? 'i-mdi-shield-key-outline' : 'i-mdi-lock-open-variant-outline'"
               class="size-3.5"
             />
           </span>
@@ -136,7 +139,10 @@ function costFor(method: string): number {
       </div>
 
       <div class="api-card-detail__section">
-        <span class="api-card-detail__label">请求方法</span>
+        <span class="api-card-detail__label api-card-detail__section-label">
+          <UIcon name="i-mdi-code-braces" class="size-3.5" />
+          请求方法
+        </span>
         <div class="api-card-detail__badges">
           <UBadge
             v-for="method in methods"
@@ -152,7 +158,10 @@ function costFor(method: string): number {
       </div>
 
       <div class="api-card-detail__section">
-        <span class="api-card-detail__label">调用计费</span>
+        <span class="api-card-detail__label api-card-detail__section-label">
+          <UIcon name="i-mdi-wallet-outline" class="size-3.5" />
+          调用计费
+        </span>
         <div class="api-card-detail__badges">
           <UBadge
             v-for="method in methods"
@@ -160,7 +169,7 @@ function costFor(method: string): number {
             :color="costFor(method) > 0 ? 'warning' : 'success'"
             variant="soft"
             size="sm"
-            :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-gift-outline'"
+            :icon="costFor(method) > 0 ? 'i-mdi-coins' : 'i-mdi-check-circle-outline'"
             class="rounded-full"
           >
             {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
@@ -183,7 +192,7 @@ function costFor(method: string): number {
         color="neutral"
         variant="outline"
         size="sm"
-        icon="i-mdi-open-in-new"
+        trailing-icon="i-mdi-arrow-top-right"
         block
       >
         打开接口文档
@@ -194,9 +203,7 @@ function costFor(method: string): number {
 
 <style scoped>
 .api-card-detail {
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--ui-primary) 8%, transparent), transparent 48%),
-    var(--ui-bg-elevated);
+  background: var(--ui-bg-elevated);
 }
 
 .api-card-detail--popover {
@@ -210,8 +217,8 @@ function costFor(method: string): number {
 
 .api-card-detail__head {
   display: grid;
-  gap: 7px;
-  padding: 14px 14px 12px;
+  gap: 8px;
+  padding: 16px 16px 14px;
   border-bottom: 1px solid var(--ui-border);
 }
 
@@ -226,8 +233,8 @@ function costFor(method: string): number {
 .api-card-detail__title {
   margin: 0;
   color: var(--ui-text);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 650;
   line-height: 1.35;
 }
 
@@ -244,8 +251,8 @@ function costFor(method: string): number {
 
 .api-card-detail__body {
   display: grid;
-  gap: 10px;
-  padding: 12px 14px 14px;
+  gap: 14px;
+  padding: 14px 16px 16px;
 }
 
 .api-card-detail--modal .api-card-detail__body {
@@ -259,10 +266,10 @@ function costFor(method: string): number {
   display: grid;
   gap: 5px;
   min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 48%, transparent);
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--ui-primary) 14%, var(--ui-border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ui-primary) 4%, var(--ui-bg-muted));
 }
 
 .api-card-detail__endpoint span,
@@ -271,6 +278,13 @@ function costFor(method: string): number {
   color: var(--ui-text-muted);
   font-size: 11px;
   line-height: 1;
+}
+
+.api-card-detail__endpoint-label,
+.api-card-detail__section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .api-card-detail__endpoint a {
@@ -293,41 +307,40 @@ function costFor(method: string): number {
 
 .api-card-detail__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
 }
 
 .api-card-detail__cell {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 42%, transparent);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 4%, transparent);
+  gap: 9px;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--ui-bg-muted) 30%, transparent);
 }
 
 .api-card-detail__cell--calls {
-  border-color: color-mix(in srgb, var(--ui-info) 22%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-info) 6%, var(--ui-bg-elevated));
+  border-right: 1px solid var(--ui-border);
 }
 
 .api-card-detail__cell--free {
-  border-color: color-mix(in srgb, var(--ui-success) 22%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-success) 6%, var(--ui-bg-elevated));
+
 }
 
 .api-card-detail__cell--key {
-  border-color: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-primary) 5%, var(--ui-bg-elevated));
+
 }
 
 .api-card-detail__icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -360,14 +373,20 @@ function costFor(method: string): number {
 
 .api-card-detail__cell-content strong {
   color: var(--ui-text);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
 .api-card-detail__section {
   display: grid;
-  gap: 7px;
+  gap: 8px;
+  padding-top: 2px;
+}
+
+.api-card-detail__section + .api-card-detail__section {
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--ui-border) 72%, transparent);
 }
 
 .api-card-detail__description {

@@ -54,12 +54,18 @@ const aggregateCost = computed(() => {
   const first = prices[0]!
   return prices.every(price => price === first) ? first : -1
 })
+const pricingTooltip = computed(() => {
+  if (aggregateCost.value > 0) return `每次调用消耗 ${aggregateCost.value} 积分`
+  if (aggregateCost.value === -1) return isAllPaid.value ? '不同请求方法采用不同价格' : '部分请求方法需要消耗积分'
+  return '所有请求方法均可免费调用'
+})
 const isDetailsOpen = computed(() => popoverDetailsOpen.value || modalDetailsOpen.value)
 const detailSummary = computed(() => shortDesc.value || description.value || '暂无简介')
 const radarMeta = computed(() => getSuccessRadar(props.status))
 const radarClass = computed(() => radarMeta.value.className)
 const radarTitle = computed(() => radarMeta.value.title)
 const statusMeta = computed(() => getStatusMeta(props.status))
+const statusSurfaceClass = computed(() => `api-card--status-${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
   name: name.value,
   shortDesc: shortDesc.value,
@@ -118,7 +124,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   <UCard
     variant="outline"
     class="api-card border-default bg-elevated"
-    :class="{ 'is-active': isDetailsOpen }"
+    :class="[statusSurfaceClass, { 'is-active': isDetailsOpen }]"
     :ui="{ root: 'gap-0', body: '!p-0' }"
   >
     <header class="api-card__head">
@@ -136,68 +142,64 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
       {{ shortDesc || '暂无简介' }}
     </p>
 
-    <div class="api-card__meta">
-      <UBadge
-        v-if="aggregateCost > 0"
-        color="warning"
-        variant="soft"
-        size="sm"
-        icon="i-mdi-cash-multiple"
-        class="rounded-full"
-        :title="`收费 ${aggregateCost} / 次`"
-      >
-        {{ aggregateCost }}
-      </UBadge>
-      <UBadge
-        v-else-if="aggregateCost === -1"
-        color="warning"
-        variant="soft"
-        size="sm"
-        icon="i-mdi-cash-multiple"
-        class="rounded-full"
-        :title="isAllPaid ? '按方法定价' : '部分方法收费'"
-      >
-        {{ isAllPaid ? '按方法定价' : '部分收费' }}
-      </UBadge>
-      <UBadge
-        v-else
-        color="neutral"
-        variant="soft"
-        size="sm"
-        icon="i-mdi-gift-outline"
-        class="api-card__badge-icon api-card__badge-icon--free rounded-full"
-        title="免费"
-        aria-label="免费"
-      />
-      <UBadge
-        v-if="isApiKey"
-        color="neutral"
-        variant="soft"
-        size="sm"
-        icon="i-mdi-key-variant"
-        class="api-card__badge-icon api-card__badge-icon--key rounded-full"
-        title="需要 APIKey"
-        aria-label="需要 APIKey"
-      />
-
-      <span
-        class="api-card__calls"
-        :title="`调用次数 ${totalCalls.toLocaleString('zh-CN')}`"
-      >
-        <span
-          class="api-card__calls-icon"
-          aria-hidden="true"
-        >
-          <UIcon
-            name="i-mdi-chart-bar"
-            class="size-3"
-          />
-        </span>
-        <span class="api-card__calls-num">{{ formatCompactCount(totalCalls) }}</span>
-      </span>
-    </div>
-
     <div class="api-card__toggle-row">
+      <div class="api-card__footer-meta">
+        <UTooltip
+          :text="pricingTooltip"
+          :content="{ side: 'top' }"
+        >
+          <UBadge
+            color="warning"
+            variant="soft"
+            size="sm"
+            :icon="aggregateCost === 0 ? 'i-mdi-check-circle-outline' : 'i-mdi-coins'"
+            class="rounded-full"
+            :class="{ 'api-card__price-badge api-card__price-badge--free': aggregateCost === 0 }"
+          >
+            <template v-if="aggregateCost > 0">
+              {{ aggregateCost }} 积分/次
+            </template>
+            <template v-else-if="aggregateCost === -1">
+              {{ isAllPaid ? '按方法定价' : '部分收费' }}
+            </template>
+            <template v-else>
+              免费
+            </template>
+          </UBadge>
+        </UTooltip>
+        <UTooltip
+          v-if="isApiKey"
+          text="调用此接口需要提供 API Key"
+          :content="{ side: 'top' }"
+        >
+          <UBadge
+            color="neutral"
+            variant="soft"
+            size="sm"
+            icon="i-mdi-shield-key-outline"
+            class="api-card__key-badge rounded-full"
+          >
+            需 Key
+          </UBadge>
+        </UTooltip>
+        <UTooltip
+          :text="`累计调用 ${totalCalls.toLocaleString('zh-CN')} 次`"
+          :content="{ side: 'top' }"
+        >
+          <span class="api-card__calls">
+            <span
+              class="api-card__calls-icon"
+              aria-hidden="true"
+            >
+              <UIcon
+                name="i-mdi-pulse"
+                class="size-3"
+              />
+            </span>
+            <span class="api-card__calls-num">{{ formatCompactCount(totalCalls) }} 次</span>
+          </span>
+        </UTooltip>
+      </div>
       <div class="api-card__actions">
         <UTooltip
           v-if="docUrl"
@@ -233,7 +235,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
                 color="neutral"
                 variant="soft"
                 size="xs"
-                :icon="popoverDetailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-information-outline'"
+                :icon="popoverDetailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-arrow-top-right'"
                 class="api-card__action-button"
               >
                 {{ popoverDetailsOpen ? '收起' : '详情' }}
@@ -266,7 +268,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
               color="neutral"
               variant="soft"
               size="xs"
-              icon="i-mdi-information-outline"
+              trailing-icon="i-mdi-chevron-right"
               class="api-card__action-button"
             >
               详情
@@ -321,6 +323,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   gap: 0;
   border-radius: 16px;
   overflow: hidden;
+  --api-card-status: var(--ui-text-dimmed);
   isolation: isolate;
   height: 100%;
   transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
@@ -333,10 +336,16 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   right: 0;
   width: 110px;
   height: 110px;
-  background: radial-gradient(circle at top right, color-mix(in srgb, var(--ui-text) 5%, transparent), transparent 70%);
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--api-card-status) 18%, transparent), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
+
+.api-card--status-success { --api-card-status: var(--ui-success); }
+.api-card--status-error { --api-card-status: var(--ui-error); }
+.api-card--status-warning { --api-card-status: var(--ui-warning); }
+.api-card--status-info { --api-card-status: var(--ui-info); }
+.api-card--status-neutral { --api-card-status: var(--ui-text-dimmed); }
 
 .api-card:hover {
   transform: translateY(-2px);
@@ -348,7 +357,13 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   box-shadow: 0 14px 30px -22px color-mix(in srgb, var(--ui-primary) 44%, transparent);
 }
 
-:global(.dark) .api-card:hover {
+:global(.dark) .api-card--status-success { --api-card-status: var(--ui-success); }
+.api-card--status-error { --api-card-status: var(--ui-error); }
+.api-card--status-warning { --api-card-status: var(--ui-warning); }
+.api-card--status-info { --api-card-status: var(--ui-info); }
+.api-card--status-neutral { --api-card-status: var(--ui-text-dimmed); }
+
+.api-card:hover {
   box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
 }
 
@@ -390,28 +405,30 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   min-height: 2.6em;
 }
 
-.api-card__meta {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 16px 12px;
-}
-
 .api-card__toggle-row {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 10px;
   margin-top: auto;
-  padding: 0 16px 12px;
+  padding: 10px 16px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--ui-border) 68%, transparent);
+  background: color-mix(in srgb, var(--ui-bg-muted) 24%, transparent);
+}
+
+.api-card__footer-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
 }
 
 .api-card__actions {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 6px;
 }
@@ -515,36 +532,24 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   letter-spacing: 0.04em;
 }
 
-.api-card__meta .api-card__calls {
-  margin-left: auto;
+.api-card__price-badge,
+.api-card__key-badge {
+  min-height: 22px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 4%, transparent);
+  font-weight: 600;
 }
 
-.api-card__badge-icon {
-  width: 22px;
-  height: 22px;
-  padding: 0 !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  background: color-mix(in srgb, var(--ui-bg-muted) 62%, transparent) !important;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--ui-text) 5%, transparent);
-}
-
-.api-card__badge-icon--free {
+.api-card__price-badge--free {
   color: var(--ui-success);
-  border-color: color-mix(in srgb, var(--ui-success) 26%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-success) 8%, var(--ui-bg-elevated)) !important;
+  border-color: color-mix(in srgb, var(--ui-success) 24%, var(--ui-border));
+  background: color-mix(in srgb, var(--ui-success) 7%, var(--ui-bg-elevated)) !important;
 }
 
-.api-card__badge-icon--key {
+.api-card__key-badge {
   color: var(--ui-primary);
-  border-color: color-mix(in srgb, var(--ui-primary) 18%, var(--ui-border));
+  border-color: color-mix(in srgb, var(--ui-primary) 20%, var(--ui-border));
   background: color-mix(in srgb, var(--ui-primary) 6%, var(--ui-bg-elevated)) !important;
-}
-
-.api-card__badge-icon > span {
-  margin: 0;
 }
 
 .api-card__modal-icon {
