@@ -1,0 +1,114 @@
+name: Create GitHub release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Verify and release ${{ github.ref_name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Validate version tag
+        id: version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid release tag: $RELEASE_TAG" >&2
+            echo "Expected a semantic version such as v1.2.3 or v1.2.3-rc.1." >&2
+            exit 1
+          fi
+
+          echo "number=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+          if [[ "$RELEASE_TAG" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out tagged source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.12.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Verify package version
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ "$RELEASE_TAG" != "v${package_version}" ]]; then
+            echo "Release tag ${RELEASE_TAG} does not match package.json version ${package_version}." >&2
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Run unit tests
+        run: pnpm test:run
+
+      - name: Build production server
+        run: pnpm build
+
+      - name: Package Node server
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.number }}
+        run: |
+          package_name="openapi-${VERSION}"
+          package_dir="${RUNNER_TEMP}/${package_name}"
+
+          mkdir -p "$package_dir" release
+          cp -R .output "$package_dir/.output"
+          cp .env.example LICENSE README.md README_ZH.md "$package_dir/"
+
+          tar -czf "release/${package_name}-node.tar.gz" \
+            -C "$RUNNER_TEMP" "$package_name"
+
+          (
+            cd release
+            sha256sum "${package_name}-node.tar.gz" > SHA256SUMS
+          )
+
+      - name: Create or update GitHub release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: OpenAPI ${{ github.ref_name }}
+          generate_release_notes: true
+          prerelease: ${{ steps.version.outputs.prerelease }}
+          make_latest: ${{ steps.version.outputs.prerelease == 'false' }}
+          fail_on_unmatched_files: true
+          files: |
+            release/*

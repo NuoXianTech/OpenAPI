@@ -1,7 +1,11 @@
 import { cp } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
+const require = createRequire(import.meta.url)
+const { version: appVersion } = require('./package.json') as { version: string }
+
 const isProduction = process.env.NODE_ENV === 'production'
 const databaseMigrationsDir = 'server/db/migrations/postgresql'
 const privatePageRouteRule = {
@@ -32,6 +36,9 @@ export default defineNuxtConfig({
   // 切忌把默认值设成异名 env（如 secret: process.env.AUTH_SECRET）：那会在 build 时
   // 求值并烤进产物，且运行时只认 NUXT_AUTH_*、纯名字失效 —— Nuxt 文档明示的头号坑。
   runtimeConfig: {
+    public: {
+      appVersion
+    },
     auth: {
       secret: '',
       apiKeySecret: '',
