@@ -42,6 +42,7 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 | Crypto | `GET /v1/crypto`、`POST /v1/crypto/{name}` | 发现并运行已注册的编码或加密算法。 |
 | Doubao | `GET /v1/doubao`、`/images`、`/videos` | 提取受支持分享链接中的媒体。 |
 | Fuel price | `GET /v1/fuel-price`、`/regions` | 查询地区油价和支持地区。 |
+| Music | `GET /v1/music/**` | 统一查询网易云、QQ、酷狗、百度和酷我音乐。 |
 | Player | `GET /v1/player`、`/art` | 获取音乐播放器数据和封面。 |
 | Yiyan | `GET /v1/yiyan` | 按内容协商返回多种格式的随机语句。 |
 
@@ -191,6 +192,7 @@ docs/                        项目特有标准与生产流程
 - [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 - [60s](https://github.com/vikiboss/60s)
+- [Meting](https://github.com/metowolf/Meting)
 
 ## 贡献
 

@@ -42,6 +42,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 | Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | Discover and run registered encoders or ciphers. |
 | Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
 | Fuel price | `GET /v1/fuel-price`, `/regions` | Query regional fuel prices and supported regions. |
+| Music | `GET /v1/music/**` | Search and resolve songs across NetEase, Tencent, KuGou, Baidu, and Kuwo. |
 | Player | `GET /v1/player`, `/art` | Music player data and cover art. |
 | Yiyan | `GET /v1/yiyan` | Random sentences in several negotiated output formats. |
 
@@ -190,6 +191,7 @@ Some built-in public APIs are based on or inspired by:
 - [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
 - [doubao-nomark](https://github.com/ihmily/doubao-nomark)
 - [60s](https://github.com/vikiboss/60s)
+- [Meting](https://github.com/metowolf/Meting)
 
 ## Contributing
 
