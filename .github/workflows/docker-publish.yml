@@ -77,9 +77,8 @@ jobs:
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha,scope=openapi-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=openapi-${{ matrix.arch }}
-          # Attestations create extra untagged manifests that GHCR displays as SHA versions.
-          provenance: false
-          sbom: false
+provenance: mode=max
+sbom: true
 
       - name: Export image digest
         if: github.event_name != 'pull_request'
