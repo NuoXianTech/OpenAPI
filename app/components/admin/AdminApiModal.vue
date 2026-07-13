@@ -125,7 +125,7 @@ watch(hasChargedMethod, (val) => {
     state.isApiKey = true
     toast.add({
       title: '已自动开启「API密钥」',
-      description: '设置扣费后必须通过 API Key 鉴权扣款账户。',
+      description: '设置扣费后必须通过 API密钥 鉴权扣款账户。',
       color: 'info'
     })
   }

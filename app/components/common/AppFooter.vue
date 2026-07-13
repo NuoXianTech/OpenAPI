@@ -27,7 +27,7 @@ const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
         href="https://beian.miit.gov.cn"
         target="_blank"
         rel="noopener noreferrer"
-        class="hover:underline"
+        class="inline-flex items-center gap-1 hover:underline"
       >
         <UIcon
           name="i-mdi-shield-check-outline"
