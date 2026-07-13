@@ -7,7 +7,12 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - openapi-data:/app/.data
+      - app_data:/app/.data
 
 volumes:
-  openapi-data:
+  app_data:
+    name: openapi-app-data
+
+networks:
+  openapi:
+    name: openapi-network
