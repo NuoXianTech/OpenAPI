@@ -43,6 +43,19 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify version tag is on main
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          git fetch --no-tags origin main:refs/remotes/origin/main
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "Version tag ${GITHUB_REF_NAME} does not point to a commit on main." >&2
+            echo "Merge the release PR first, then create the tag from the updated main branch." >&2
+            exit 1
+          fi
 
       - name: Normalize image name
         id: image
@@ -69,7 +82,7 @@ jobs:
             suffix=-${{ matrix.arch }},onlatest=true
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push architecture image
         uses: docker/build-push-action@v7
@@ -118,7 +131,7 @@ jobs:
           images: ${{ steps.image.outputs.name }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Create multi-platform manifests
         shell: bash
