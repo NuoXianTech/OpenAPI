@@ -246,7 +246,7 @@ CREATE TABLE "site_settings" (
 	"site_url" varchar(1000) DEFAULT 'http://localhost:3000' NOT NULL,
 	"site_img" varchar(1000) DEFAULT '/favicon.ico' NOT NULL,
 	"site_name" varchar(140) DEFAULT 'OpenAPI' NOT NULL,
-	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台。' NOT NULL,
+	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台，我们致力于为用户提供稳定、快速的免费API数据接口服务。' NOT NULL,
 	"start_time" varchar(32) DEFAULT '2026-01-01 00:00:00' NOT NULL,
 	"registration_mode" varchar(20) DEFAULT 'open' NOT NULL,
 	"default_register_credits" integer DEFAULT 0 NOT NULL,

@@ -19,7 +19,7 @@ const form = reactive({
   isActive: true
 })
 const roleOptions = [
-  { label: '普通用户', value: 'user' },
+  { label: '用户', value: 'user' },
   { label: '管理员', value: 'admin' }
 ]
 const loading = ref(false)
@@ -93,7 +93,7 @@ async function submit() {
           />
         </UFormField>
         <UFormField
-          label="显示名（可选）"
+          label="昵称（可选）"
           help="留空时默认与用户名一致"
         >
           <UInput

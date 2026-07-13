@@ -26,7 +26,7 @@ export interface OauthBinding {
 
 const OAUTH_BIND_ERRORS: Record<string, string> = {
   state_mismatch: 'state 已失效，请重试',
-  login_required: '需要先登录普通用户',
+  login_required: '需要先登录用户',
   already_bound_by_other: '该第三方账号已被其他用户绑定',
   already_bound_same_provider: '你已绑定该平台的另一个账号，请先解绑后再绑定',
   callback_failed: '回调处理失败',

@@ -57,7 +57,6 @@ const fixedTimeInvalid = computed(() => {
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
       title="基本信息"
-      description="站点的对外展示信息，会显示在前台页面、页脚与登录注册页。"
     >
       <UFormField
         name="siteName"
@@ -194,7 +193,6 @@ const fixedTimeInvalid = computed(() => {
 
     <DashboardSettingsSection
       title="每日签到"
-      description="控制用户后台积分页的每日签到功能与奖励发放规则。"
     >
       <UFormField
         name="checkinEnabled"

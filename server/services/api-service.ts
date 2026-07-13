@@ -348,7 +348,7 @@ export const apiService = {
         : existing.methodCosts
       const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
       if (hasAnyChargedMethod(effectiveCosts) && !effectiveIsApiKey) {
-        throw new Error('设置扣费金额时必须开启「必需 API Key」')
+        throw new Error('设置扣费金额时必须开启「API密钥」')
       }
     }
 

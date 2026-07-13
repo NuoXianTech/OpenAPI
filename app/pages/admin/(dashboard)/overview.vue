@@ -277,9 +277,6 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               <h3 class="text-lg font-semibold text-highlighted">
                 平台概览
               </h3>
-              <p class="text-sm text-muted">
-                用户、接口与调用总览
-              </p>
             </div>
             <UButton
               :to="ADMIN_LOGS_PATH"

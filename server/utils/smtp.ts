@@ -7,7 +7,7 @@ export interface SmtpConfig {
   user?: string
   pass?: string
   from: string
-  // 发件人显示名：非空时发信头形如 "显示名 <from>"
+  // 发件人昵称：非空时发信头形如 "昵称 <from>"
   fromName?: string
   // 回信地址（Reply-To）：留空则不设置
   replyTo?: string

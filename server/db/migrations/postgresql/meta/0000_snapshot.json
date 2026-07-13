@@ -2580,7 +2580,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'OpenAPI是免费为用户提供网络数据接口调用的服务平台。'"
+          "default": "'OpenAPI是免费为用户提供网络数据接口调用的服务平台，我们致力于为用户提供稳定、快速的免费API数据接口服务。'"
         },
         "start_time": {
           "name": "start_time",

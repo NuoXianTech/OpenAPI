@@ -3,9 +3,9 @@ import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
 useHead({ title: '友情链接' })
 useSeoMeta({
-  description: '友情链接 — 与社区其他独立站点互联，欢迎交换。',
+  description: '友情链接 — 每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。',
   ogTitle: '友情链接',
-  ogDescription: '友情链接 — 与社区其他独立站点互联，欢迎交换。'
+  ogDescription: '友情链接 — 每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。'
 })
 
 const query = ref('')

@@ -43,7 +43,6 @@ const sessionSection = createSection(sessionKeys)
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
       title="登录与注册"
-      description="控制新用户注册、找回密码与注册邮箱校验策略。"
     >
       <UFormField
         name="registrationMode"
@@ -112,7 +111,6 @@ const sessionSection = createSection(sessionKeys)
 
     <DashboardSettingsSection
       title="用户会话时效"
-      description="登录会话、邮箱验证与密码重置链接的有效期。"
     >
       <UFormField
         name="sessionMaxAgeSeconds"
@@ -192,7 +190,6 @@ const sessionSection = createSection(sessionKeys)
 
     <DashboardSettingsSection
       title="第三方登录"
-      description="统一配置各登录方式及账号绑定策略，修改后在本区域底部一次保存。"
     >
       <UFormField
         name="oauthForceBinding"

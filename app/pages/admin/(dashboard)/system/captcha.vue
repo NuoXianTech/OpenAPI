@@ -28,7 +28,6 @@ const captchaType = ref('Cloudflare Turnstile')
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
       title="验证码"
-      description="人机验证服务商配置。未配置 Site Key / Secret Key 时所有验证场景均不生效。"
     >
       <UFormField
         name="captchaType"
@@ -81,7 +80,6 @@ const captchaType = ref('Cloudflare Turnstile')
 
     <DashboardSettingsSection
       title="验证场景"
-      description="选择需要弹出人机验证的页面。需先在上方配置 Site Key / Secret Key 后方可生效。"
     >
       <UFormField
         name="turnstileLoginEnabled"

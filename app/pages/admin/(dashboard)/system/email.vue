@@ -56,7 +56,6 @@ async function submitTest() {
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
       title="发信"
-      description="系统通知、注册激活、找回密码等邮件均通过此 SMTP 配置发送。"
     >
       <UFormField
         name="smtpFromName"

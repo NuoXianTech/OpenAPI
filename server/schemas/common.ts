@@ -28,4 +28,4 @@ export const optionalDate = z.preprocess(
   z.union([z.date(), z.null()]).optional()
 )
 
-export const displayNameSchema = z.string().trim().max(32, maxMessage('显示名', 32))
+export const displayNameSchema = z.string().trim().max(32, maxMessage('昵称', 32))

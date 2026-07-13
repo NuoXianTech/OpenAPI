@@ -169,7 +169,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
         </UTooltip>
         <UTooltip
           v-if="isApiKey"
-          text="调用此接口需要提供 API Key"
+          text="调用此接口需要提供 API密钥"
           :content="{ side: 'top' }"
         >
           <UBadge
@@ -179,7 +179,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             icon="i-mdi-shield-key-outline"
             class="api-card__key-badge rounded-full"
           >
-            需 Key
+            API密钥
           </UBadge>
         </UTooltip>
         <UTooltip

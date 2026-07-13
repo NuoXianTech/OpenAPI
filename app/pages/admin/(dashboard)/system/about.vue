@@ -38,7 +38,7 @@ const stackItems: StackItem[] = [
 const operationItems: StackItem[] = [
   { label: '配置优先', description: '站点、邮件、验证码、OAuth 等运行参数集中在系统设置与环境变量中维护。' },
   { label: '审计优先', description: '管理动作和用户关键行为写入日志，便于追踪变更来源。' },
-  { label: '角色清晰', description: '管理员可访问用户能力与管理能力，普通用户仅访问自身工作区。' },
+  { label: '角色清晰', description: '管理员可访问用户能力与管理能力，用户仅访问自身工作区。' },
   { label: '迁移可控', description: '数据库迁移随构建产物发布，并在生产进程接受请求前自动执行。' }
 ]
 </script>

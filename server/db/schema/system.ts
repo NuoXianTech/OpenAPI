@@ -64,7 +64,7 @@ export const siteSettings = pgTable('site_settings', {
   smtpUser: varchar('smtp_user', { length: 255 }).notNull().default(''),
   smtpPass: varchar('smtp_pass', { length: 255 }).notNull().default(''),
   smtpFrom: varchar('smtp_from', { length: 255 }).notNull().default('no-reply@example.com'),
-  // 发件人显示名：非空时发信头形如 "显示名 <smtpFrom>"；留空则只用地址
+  // 发件人昵称：非空时发信头形如 "昵称 <smtpFrom>"；留空则只用地址
   smtpFromName: varchar('smtp_from_name', { length: 255 }).notNull().default(''),
   // 回信邮箱（Reply-To）：留空则不设置，用户回信默认回到 smtpFrom
   smtpReplyTo: varchar('smtp_reply_to', { length: 255 }).notNull().default(''),

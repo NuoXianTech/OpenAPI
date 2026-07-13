@@ -17,7 +17,6 @@ const emit = defineEmits<{
 <template>
   <DashboardSettingsSection
     title="第三方账号"
-    description="绑定后可使用第三方账号快捷登录，也可随时解绑。"
   >
     <template #actions>
       <UButton
