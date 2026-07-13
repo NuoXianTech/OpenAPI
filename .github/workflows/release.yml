@@ -102,10 +102,37 @@ jobs:
             sha256sum "${package_name}-node.tar.gz" > SHA256SUMS
           )
 
+      - name: Generate commit history
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          previous_tag="$(git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true)"
+          if [[ -n "$previous_tag" ]]; then
+            commit_range="${previous_tag}..${RELEASE_TAG}"
+            comparison_url="https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${RELEASE_TAG}"
+          else
+            commit_range="$RELEASE_TAG"
+            comparison_url="https://github.com/${GITHUB_REPOSITORY}/commits/${RELEASE_TAG}"
+          fi
+
+          {
+            echo "## Commit history"
+            echo
+            echo "This list also includes commits pushed directly without a pull request."
+            echo
+            git log "$commit_range" --first-parent --no-merges \
+              --pretty=format:'- %s ([`%h`](https://github.com/'"${GITHUB_REPOSITORY}"'/commit/%H))'
+            echo
+            echo
+            echo "**Full Changelog**: ${comparison_url}"
+          } > "${RUNNER_TEMP}/release-commits.md"
+
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v3
         with:
           name: OpenAPI ${{ github.ref_name }}
+          body_path: ${{ runner.temp }}/release-commits.md
           generate_release_notes: true
           prerelease: ${{ steps.version.outputs.prerelease }}
           make_latest: ${{ steps.version.outputs.prerelease == 'false' }}
