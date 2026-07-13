@@ -270,7 +270,7 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
                 variant="subtle"
                 :icon="row.original.role === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-account-outline'"
               >
-                {{ row.original.role === 'admin' ? '管理员' : '普通用户' }}
+                {{ row.original.role === 'admin' ? '管理员' : '用户' }}
               </UBadge>
             </template>
             <template #isActive-cell="{ row }">

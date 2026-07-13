@@ -25,7 +25,7 @@ const emit = defineEmits<{
 
 const form = reactive({ username: '', email: '', displayName: '', role: 'user' as 'user' | 'admin', isActive: false, password: '' })
 const roleOptions = [
-  { label: '普通用户', value: 'user' },
+  { label: '用户', value: 'user' },
   { label: '管理员', value: 'admin' }
 ]
 const loading = ref(false)

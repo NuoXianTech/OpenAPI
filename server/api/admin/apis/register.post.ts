@@ -57,7 +57,7 @@ export default defineAdminEventHandler(async (event: H3Event, admin) => {
   if (hasAnyChargedMethod(defaults.methodCosts) && !defaults.isApiKey) {
     throw createError({
       statusCode: 400,
-      message: '设置扣费金额时必须开启「必需 API Key」'
+      message: '设置扣费金额时必须开启「API密钥」'
     })
   }
   if (defaults.isStatistics && !defaults.isEnabled) {

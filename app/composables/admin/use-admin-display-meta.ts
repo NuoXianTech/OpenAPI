@@ -50,7 +50,7 @@ const ADMIN_APIS_TABLE_COLUMNS: TableColumn<AdminDiscoveredApi>[] = [
   { id: 'category', header: '分类' },
   { id: 'isEnabled', header: '启用' },
   { id: 'isStatistics', header: '统计' },
-  { id: 'isApiKey', header: 'ApiKey' },
+  { id: 'isApiKey', header: 'API密钥' },
   { id: 'actions', header: '' }
 ]
 
@@ -119,11 +119,11 @@ export function useAdminApisDisplayMeta(
     const items: DropdownMenuItem[] = []
     if (row.registered && !row.orphaned) {
       items.push({
-        label: '编辑配置',
+        label: '编辑接口',
         icon: 'i-mdi-pencil-outline',
         onSelect: () => options.openEdit(row)
       }, {
-        label: '同步路由信息',
+        label: '同步路由',
         icon: 'i-mdi-sync',
         onSelect: () => options.resyncManifest(row)
       })

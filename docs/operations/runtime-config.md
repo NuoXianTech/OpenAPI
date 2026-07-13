@@ -44,7 +44,7 @@ Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防
 
 单实例开发可以不配置 Redis。多 Node 实例生产必须使用 PostgreSQL，并同时配置 `NUXT_REDIS_URL` 与 `NUXT_REDIS_REQUIRED=true`；PGlite 数据目录只允许一个 Node 进程。PostgreSQL 迁移另有数据库 advisory lock，即使多个实例同时启动也会串行执行。
 
-管理员账号与普通用户共用 `users` 表，通过 `users.role='admin'` 区分，并统一从 `/login` 登录。启动时如果不存在任何管理员账号，服务端会自动创建用户名为 `admin`、邮箱为 `admin@openapi.com` 的管理员，并将随机密码输出到控制台。
+管理员账号与用户共用 `users` 表，通过 `users.role='admin'` 区分，并统一从 `/login` 登录。启动时如果不存在任何管理员账号，服务端会自动创建用户名为 `admin`、邮箱为 `admin@openapi.com` 的管理员，并将随机密码输出到控制台。
 
 首次登录后，如果管理员仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码。后续用户名不再作为常规资料项修改，以保证登录日志、操作日志和审计链路稳定。
 

@@ -31,7 +31,7 @@ export interface AdminUserFilterOption<TValue extends string> {
 export const ADMIN_USER_ROLE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserRoleFilter>> = [
   { label: '全部角色', value: 'all' },
   { label: '管理员', value: 'admin' },
-  { label: '普通用户', value: 'user' }
+  { label: '用户', value: 'user' }
 ]
 
 export const ADMIN_USER_ACTIVE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserActiveFilter>> = [
@@ -233,7 +233,7 @@ const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
   { accessorKey: 'role', header: '类型' },
   { accessorKey: 'email', header: '邮箱' },
   { accessorKey: 'credits', header: '积分' },
-  { accessorKey: 'isActive', header: '激活' },
+  { accessorKey: 'isActive', header: '状态' },
   { accessorKey: 'isBanned', header: '封禁' },
   { accessorKey: 'createdAt', header: '注册时间' },
   { id: 'actions', header: '' }

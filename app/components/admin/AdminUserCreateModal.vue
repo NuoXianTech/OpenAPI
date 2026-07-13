@@ -19,7 +19,7 @@ const form = reactive({
   isActive: true
 })
 const roleOptions = [
-  { label: '普通用户', value: 'user' },
+  { label: '用户', value: 'user' },
   { label: '管理员', value: 'admin' }
 ]
 const loading = ref(false)

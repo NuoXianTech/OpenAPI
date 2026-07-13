@@ -24,14 +24,20 @@ const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
     >
       <a
         v-if="icpBeian"
-        href="https://beian.miit.gov.cn/"
+        href="https://beian.miit.gov.cn"
         target="_blank"
         rel="noopener noreferrer"
         class="hover:underline"
-      >{{ icpBeian }}</a>
+      >
+        <UIcon
+          name="i-mdi-shield-check-outline"
+          class="size-3.5"
+        />
+        {{ icpBeian }}
+      </a>
       <a
         v-if="policeBeian"
-        href="https://beian.mps.gov.cn/"
+        href="https://beian.mps.gov.cn/#/query/webSearch"
         target="_blank"
         rel="noopener noreferrer"
         class="inline-flex items-center gap-1 hover:underline"

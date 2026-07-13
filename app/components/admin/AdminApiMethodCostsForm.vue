@@ -52,7 +52,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
         variant="subtle"
         size="sm"
       >
-        需先开启「必需 API Key」
+        需先开启「API密钥」
       </UBadge>
       <UBadge
         v-else-if="hasChargedMethod"
@@ -94,7 +94,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
             min="0"
             :model-value="getMethodCost(method)"
             :disabled="!state.isApiKey"
-            :placeholder="state.isApiKey ? '0 = 免费' : '请先开启「必需 API Key」'"
+            :placeholder="state.isApiKey ? '0 = 免费' : '请先开启「API密钥」'"
             class="flex-1"
             @update:model-value="(v: number | string) => setMethodCost(method, v)"
           />
@@ -107,7 +107,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
         </div>
       </div>
       <p class="text-xs text-muted mt-2">
-        逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「必需 API Key」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
+        逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API密钥」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
       </p>
     </UFormField>
   </section>

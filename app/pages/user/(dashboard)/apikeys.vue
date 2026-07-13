@@ -301,15 +301,15 @@ function toggleReveal(id: number) {
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
     { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '复制完整密钥', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    { label: '复制密钥', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     {
-      label: row.isActive ? '停用' : '启用',
+      label: row.isActive ? '停用密钥' : '启用密钥',
       icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
       onSelect: () => toggleActive(row)
     },
     { label: '重置密钥', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
     {
-      label: '删除',
+      label: '删除密钥',
       icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => openDelete(row)

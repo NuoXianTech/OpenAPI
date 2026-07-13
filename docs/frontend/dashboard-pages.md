@@ -1,6 +1,6 @@
 # 后台页面规范
 
-适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `dashboard` layout 与 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`app/constants/dashboard-sections.ts` 与 `DashboardHeaderActions` 收敛。管理员也是 `users.role='admin'` 的用户账号，因此管理后台同时展示用户常规能力和管理能力；普通用户只展示用户常规能力。
+适用范围：`app/pages/admin/**` 与 `app/pages/user/**` 下的后台页面。两套后台共用 `dashboard` layout 与 `DashboardLayoutBase`，差异通过 `app/constants/dashboard-config.ts`、`app/constants/dashboard-sections.ts` 与 `DashboardHeaderActions` 收敛。管理员也是 `users.role='admin'` 的用户账号，因此管理后台同时展示用户常规能力和管理能力；用户只展示用户常规能力。
 
 ## 1. 页面骨架
 
@@ -185,7 +185,7 @@ async function openDelete(item: ApiCategoryListItem): Promise<void> {
 
 ## 6. 通知与头部动作
 
-`DashboardHeaderActions` 内置刷新按钮、通知铃铛、主题切换和账号菜单。通知是账号能力，不是普通用户专属能力；管理员和普通用户都通过统一 HeaderActions 查看通知。页面内不要临时复制 `CommonNotificationBell`。
+`DashboardHeaderActions` 内置刷新按钮、通知铃铛、主题切换和账号菜单。通知是账号能力，不是用户专属能力；管理员和用户都通过统一 HeaderActions 查看通知。页面内不要临时复制 `CommonNotificationBell`。
 
 如果页面支持刷新，把 `refresh` 和加载状态传给 HeaderActions；如果页面没有明确刷新动作，可以省略：
 

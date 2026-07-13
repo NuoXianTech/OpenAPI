@@ -109,7 +109,7 @@ NODE_ENV=production node .output/server/index.mjs
 
 启动插件会在 Nitro 接受请求前运行 Drizzle 迁移。迁移执行器根据运行时配置连接 PostgreSQL 或 PGlite，并使用 Drizzle 的 `drizzle.__drizzle_migrations` 表，因此已经应用过的迁移会自动跳过。维护窗口需要临时禁止自动迁移时，可设置 `DB_AUTO_MIGRATE=false`。
 
-发布含账号、OAuth、通知、积分或日志 schema 变更的版本前，先生成并随版本发布数据库迁移。当前账号模型要求管理员和普通用户共用 `users` 表，并通过 `users.role` 区分权限。
+发布含账号、OAuth、通知、积分或日志 schema 变更的版本前，先生成并随版本发布数据库迁移。当前账号模型要求管理员和用户共用 `users` 表，并通过 `users.role` 区分权限。
 
 ## 进程管理建议
 

@@ -28,11 +28,11 @@ const state = useAdminApiForm()
       />
       <USwitch
         v-model="state.isApiKey"
-        label="必需 API Key"
+        label="API密钥"
       />
       <USwitch
         v-model="state.isStatistics"
-        label="统计调用"
+        label="调用统计"
         :disabled="!state.isEnabled"
       />
     </div>
@@ -46,7 +46,7 @@ const state = useAdminApiForm()
       v-if="!state.isApiKey && hasChargedMethod"
       class="text-xs text-warning mt-2"
     >
-      关闭「必需 API Key」会清空所有方法的扣费配置（无法定位扣款账户）。
+      关闭「API密钥」会清空所有方法的扣费配置（无法定位扣款账户）。
     </p>
   </section>
 </template>

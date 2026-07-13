@@ -133,7 +133,7 @@ function costFor(method: string): number {
           </span>
           <div class="api-card-detail__cell-content">
             <span>鉴权要求</span>
-            <strong>{{ isApiKey ? 'APIKey' : '无需 Key' }}</strong>
+            <strong>{{ isApiKey ? 'API密钥' : '无需密钥' }}</strong>
           </div>
         </div>
       </div>
@@ -172,7 +172,7 @@ function costFor(method: string): number {
             :icon="costFor(method) > 0 ? 'i-mdi-coins' : 'i-mdi-check-circle-outline'"
             class="rounded-full"
           >
-            {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)} / 次` : '免费' }}
+            {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)}` : '免费' }}
           </UBadge>
         </div>
       </div>

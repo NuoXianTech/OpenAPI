@@ -30,7 +30,7 @@ const ratio = computed(() => {
             友情链接
           </h1>
           <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
-            与社区里的独立站点互相连接，把有趣的服务、项目和创作者放在更容易被发现的位置。
+            每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
           </p>
         </div>
 
