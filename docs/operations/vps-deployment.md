@@ -30,7 +30,7 @@ Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工�
 
 ## Docker 部署（推荐）
 
-GitHub Actions 使用仓库根目录的 `Dockerfile` 构建完整 Nitro 产物，并把 amd64/arm64 运行镜像发布到 GHCR。VPS 只下载和运行已经构建好的镜像，不会执行 `pnpm install` 或 `pnpm build`，因此适合小内存服务器：
+GitHub Actions 使用仓库根目录的 `Dockerfile` 构建完整 Nitro 产物，分别发布带标签的 amd64/arm64 镜像，再生成自动匹配服务器架构的多架构镜像。VPS 只下载和运行已经构建好的镜像，不会执行 `pnpm install` 或 `pnpm build`，因此适合小内存服务器：
 
 ```bash
 docker pull ghcr.io/nuoxiantech/openapi:latest
@@ -48,7 +48,7 @@ docker compose pull
 docker compose up -d
 ```
 
-`main` 分支发布 `latest`。版本镜像只由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v1.2.3` 会生成镜像标签 `1.2.3`；不要创建不带 `v` 的 Git 标签。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
+`main` 分支发布 `latest`。版本镜像只由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v1.2.3` 会生成自动选择架构的 `1.2.3`，以及显式架构标签 `1.2.3-amd64`、`1.2.3-arm64`。`main` 分支对应发布 `latest`、`latest-amd64`、`latest-arm64`。镜像标签按容器生态惯例不保留 Git 标签的 `v` 前缀；不要创建不带 `v` 的 Git 标签。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
 
 ```bash
 echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin

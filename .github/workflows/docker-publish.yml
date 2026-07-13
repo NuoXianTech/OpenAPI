@@ -60,64 +60,42 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract image metadata
+      - name: Extract architecture image metadata
         id: metadata
         uses: docker/metadata-action@v6
         with:
           images: ${{ steps.image.outputs.name }}
+          flavor: |
+            suffix=-${{ matrix.arch }},onlatest=true
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push image by digest
-        id: build
+      - name: Build and push architecture image
         uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
           platforms: ${{ matrix.platform }}
-          outputs: type=image,name=${{ steps.image.outputs.name }},name-canonical=true,push-by-digest=true,push=${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           cache-from: type=gha,scope=openapi-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=openapi-${{ matrix.arch }}
-          # Attestations create extra untagged manifests that GHCR displays as SHA versions.
           provenance: false
           sbom: false
 
-      - name: Export image digest
-        if: github.event_name != 'pull_request'
-        shell: bash
-        env:
-          IMAGE_DIGEST: ${{ steps.build.outputs.digest }}
-        run: |
-          mkdir -p "${RUNNER_TEMP}/digests"
-          touch "${RUNNER_TEMP}/digests/${IMAGE_DIGEST#sha256:}"
-
-      - name: Upload image digest
-        if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v7
-        with:
-          name: digests-${{ matrix.arch }}
-          path: ${{ runner.temp }}/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
   merge:
-    name: Create multi-platform image
+    name: Publish multi-platform image
     if: github.event_name != 'pull_request'
+    needs: build
     runs-on: ubuntu-24.04
-    needs:
-      - build
     timeout-minutes: 15
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Download image digests
-        uses: actions/download-artifact@v8
-        with:
-          path: ${{ runner.temp }}/digests
-          pattern: digests-*
-          merge-multiple: true
-
       - name: Normalize image name
         id: image
         shell: bash
@@ -133,7 +111,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract image metadata
+      - name: Extract multi-platform image metadata
         id: metadata
         uses: docker/metadata-action@v6
         with:
@@ -142,21 +120,26 @@ jobs:
             type=semver,pattern={{version}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Create multi-platform manifest
-        working-directory: ${{ runner.temp }}/digests
+      - name: Create multi-platform manifests
         shell: bash
         env:
-          IMAGE_NAME: ${{ steps.image.outputs.name }}
           IMAGE_TAGS_JSON: ${{ steps.metadata.outputs.json }}
         run: |
-          mapfile -t tags < <(jq -r '.tags[] | "-t", .' <<< "$IMAGE_TAGS_JSON")
-          digests=()
-          for digest in *; do
-            digests+=("${IMAGE_NAME}@sha256:${digest}")
+          set -euo pipefail
+          mapfile -t tags < <(jq -r '.tags[]' <<< "$IMAGE_TAGS_JSON")
+          for tag in "${tags[@]}"; do
+            docker buildx imagetools create \
+              --tag "$tag" \
+              "${tag}-amd64" \
+              "${tag}-arm64"
           done
-          docker buildx imagetools create "${tags[@]}" "${digests[@]}"
 
-      - name: Inspect multi-platform image
-        run: >-
-          docker buildx imagetools inspect
-          "${{ steps.image.outputs.name }}:${{ steps.metadata.outputs.version }}"
+      - name: Inspect published images
+        shell: bash
+        env:
+          IMAGE_TAGS_JSON: ${{ steps.metadata.outputs.json }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            docker buildx imagetools inspect "$tag"
+          done < <(jq -r '.tags[]' <<< "$IMAGE_TAGS_JSON")
