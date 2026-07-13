@@ -20,6 +20,19 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Validate pull request title
+        if: github.event_name == 'pull_request'
+        shell: bash
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+'
+          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
+            echo "Invalid pull request title: $PR_TITLE" >&2
+            echo "Use Conventional Commits, for example: feat: add analytics page" >&2
+            exit 1
+          fi
+
       - name: Check out source
         uses: actions/checkout@v7
 
