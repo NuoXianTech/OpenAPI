@@ -82,30 +82,33 @@ jobs:
       - name: Build production server
         run: pnpm build
 
-      - name: Package Node server
+      - name: Package application
+        id: package
         shell: bash
         env:
           VERSION: ${{ steps.version.outputs.number }}
         run: |
           package_name="openapi-${VERSION}"
+          archive_name="${package_name}.tar.gz"
           package_dir="${RUNNER_TEMP}/${package_name}"
 
           mkdir -p "$package_dir" release
           cp -R .output "$package_dir/.output"
           cp .env.example LICENSE README.md README_ZH.md "$package_dir/"
 
-          tar -czf "release/${package_name}-node.tar.gz" \
+          tar -czf "release/${archive_name}" \
             -C "$RUNNER_TEMP" "$package_name"
 
-          (
-            cd release
-            sha256sum "${package_name}-node.tar.gz" > SHA256SUMS
-          )
+          archive_sha256="$(sha256sum "release/${archive_name}" | awk '{print $1}')"
+          echo "archive_name=${archive_name}" >> "$GITHUB_OUTPUT"
+          echo "archive_sha256=${archive_sha256}" >> "$GITHUB_OUTPUT"
 
       - name: Generate commit history
         shell: bash
         env:
           RELEASE_TAG: ${{ github.ref_name }}
+          ARCHIVE_NAME: ${{ steps.package.outputs.archive_name }}
+          ARCHIVE_SHA256: ${{ steps.package.outputs.archive_sha256 }}
         run: |
           previous_tag="$(git describe --tags --abbrev=0 "${RELEASE_TAG}^" 2>/dev/null || true)"
           if [[ -n "$previous_tag" ]]; then
@@ -126,12 +129,18 @@ jobs:
             echo
             echo
             echo "**Full Changelog**: ${comparison_url}"
+            echo
+            echo "## SHA-256 verification"
+            echo
+            echo '```text'
+            echo "${ARCHIVE_SHA256}  ${ARCHIVE_NAME}"
+            echo '```'
           } > "${RUNNER_TEMP}/release-commits.md"
 
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          name: OpenAPI ${{ github.ref_name }}
+          name: ${{ github.ref_name }}
           body_path: ${{ runner.temp }}/release-commits.md
           generate_release_notes: true
           prerelease: ${{ steps.version.outputs.prerelease }}
