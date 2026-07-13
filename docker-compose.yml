@@ -1,0 +1,18 @@
+services:
+  openapi:
+    image: ghcr.io/nuoxiantech/openapi:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - app_data:/app/.data
+
+volumes:
+  app_data:
+    name: openapi-app-data
+
+networks:
+  openapi:
+    name: openapi-network

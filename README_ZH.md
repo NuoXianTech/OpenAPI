@@ -132,10 +132,17 @@ NODE_ENV=production pnpm start
 
 ### Docker
 
+GitHub Actions 会在推送到 `main` 或创建版本标签时构建带标签的 amd64/arm64 镜像，并发布合并后的多架构镜像到 GHCR。服务器无需克隆源码或执行 Nuxt 构建：
+
 ```bash
-docker build -t openapi:latest .
-docker run --rm -p 3000:3000 --env-file .env openapi:latest
+docker pull ghcr.io/nuoxiantech/openapi:latest
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  ghcr.io/nuoxiantech/openapi:latest
 ```
+
+也可以下载仓库中的 `compose.yml` 后运行 `docker compose pull && docker compose up -d`。正式版本可将 `latest` 替换为版本号（例如 `0.1.0`）以锁定部署版本。版本镜像只会由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v0.1.0` 会生成多架构标签 `0.1.0`，以及可显式选择架构的 `0.1.0-amd64`、`0.1.0-arm64`；`main` 同样发布 `latest`、`latest-amd64` 和 `latest-arm64`。镜像标签按容器生态惯例不保留 Git 标签的 `v` 前缀；不要使用不带 `v` 的 Git 标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
 
 探针检查：
 

@@ -131,10 +131,17 @@ Deploy the complete `.output` directory. The executable entry is `.output/server
 
 ### Docker
 
+GitHub Actions builds tagged amd64 and arm64 images on pushes to `main` and version tags, then publishes a multi-platform image to GHCR. The server does not need to clone the source or run the Nuxt build:
+
 ```bash
-docker build -t openapi:latest .
-docker run --rm -p 3000:3000 --env-file .env openapi:latest
+docker pull ghcr.io/nuoxiantech/openapi:latest
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  ghcr.io/nuoxiantech/openapi:latest
 ```
+
+Alternatively, download `compose.yml` and run `docker compose pull && docker compose up -d`. Replace `latest` with a release version such as `0.1.0` to pin deployments. Versioned images are published only from Git tags matching `v*.*.*`: for example, Git tag `v0.1.0` produces multi-platform tag `0.1.0` plus architecture tags `0.1.0-amd64` and `0.1.0-arm64`. The `main` branch similarly publishes `latest`, `latest-amd64`, and `latest-arm64`. Image tags omit the Git tag’s leading `v` by container ecosystem convention; do not create the Git tag without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
 
 Useful probes:
 

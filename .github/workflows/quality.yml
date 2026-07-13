@@ -1,7 +1,10 @@
-name: Quality checks
+name: Continuous Integration
 
 on:
   pull_request:
+    branches:
+      - main
+  push:
     branches:
       - main
   workflow_dispatch:
@@ -10,31 +13,57 @@ permissions:
   contents: read
 
 concurrency:
-  group: quality-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  CI: true
+
 jobs:
-  quality:
-    name: Quality checks
+  pull-request-policy:
+    name: Pull request policy
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 5
 
     steps:
-      - name: Validate pull request title
-        if: github.event_name == 'pull_request'
+      - name: Validate Conventional Commit title
         shell: bash
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
+          set -euo pipefail
           pattern='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([A-Za-z0-9._/-]+\))?!?: .+'
-          if [[ ! "$PR_TITLE" =~ $pattern ]]; then
-            echo "Invalid pull request title: $PR_TITLE" >&2
-            echo "Use Conventional Commits, for example: feat: add analytics page" >&2
-            exit 1
+
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
+            echo "### Pull request policy" >> "$GITHUB_STEP_SUMMARY"
+            echo "✅ Title follows the Conventional Commits specification." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
 
+          {
+            echo "### Pull request policy"
+            echo "❌ The title does not follow the Conventional Commits specification."
+            echo
+            echo 'Expected: `type(scope): concise description`'
+            echo
+            echo 'Example: `feat(auth): add passkey sign-in`'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Invalid pull request title: $PR_TITLE" >&2
+          echo "Expected Conventional Commits format, for example: feat(auth): add passkey sign-in" >&2
+          exit 1
+
+  application-quality:
+    name: Application quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
       - name: Check out source
         uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -48,17 +77,30 @@ jobs:
           node-version: 24
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Lint
+      - name: Check code style and correctness
         run: pnpm lint
 
-      - name: Type-check
+      - name: Verify TypeScript types
         run: pnpm typecheck
 
-      - name: Run unit tests
+      - name: Run unit test suite
         run: pnpm test:run
 
-      - name: Build production server
+      - name: Build production application
         run: pnpm build
+
+      - name: Publish validation summary
+        if: success()
+        shell: bash
+        run: |
+          {
+            echo "### Application quality"
+            echo "✅ Linting, type checking, unit tests, and the production build completed successfully."
+            echo
+            echo "- Node.js: \`$(node --version)\`"
+            echo "- pnpm: \`$(pnpm --version)\`"
+            echo "- Commit: \`${GITHUB_SHA::12}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
