@@ -43,6 +43,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 | Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
 | Exchange rate | `GET /v1/exchange-rate` | Query exchange rates with JSON, text, or Markdown output. |
 | Fuel price | `GET /v1/fuel-price`, `/regions` | Query regional fuel prices and supported regions. |
+| Maoyan | `GET /v1/maoyan/**` | Query global movie box office, realtime movie box office, TV ratings, and web-series heat. |
 | Music | `GET /v1/music/**` | Search and resolve songs across NetEase, Tencent, KuGou, Baidu, and Kuwo. |
 | Player | `GET /v1/player`, `/art` | Music player data and cover art. |
 | Yiyan | `GET /v1/yiyan` | Random sentences in several negotiated output formats. |

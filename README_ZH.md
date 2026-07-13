@@ -43,6 +43,7 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 | Doubao | `GET /v1/doubao`、`/images`、`/videos` | 提取受支持分享链接中的媒体。 |
 | Exchange rate | `GET /v1/exchange-rate` | 查询汇率，支持 JSON、纯文本和 Markdown 输出。 |
 | Fuel price | `GET /v1/fuel-price`、`/regions` | 查询地区油价和支持地区。 |
+| Maoyan | `GET /v1/maoyan/**` | 查询全球电影票房、实时电影票房、电视收视率和网播热度。 |
 | Music | `GET /v1/music/**` | 统一查询网易云、QQ、酷狗、百度和酷我音乐。 |
 | Player | `GET /v1/player`、`/art` | 获取音乐播放器数据和封面。 |
 | Yiyan | `GET /v1/yiyan` | 按内容协商返回多种格式的随机语句。 |
