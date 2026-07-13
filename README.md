@@ -41,6 +41,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 | Bing | `GET /v1/bing` | Bing daily image metadata. |
 | Crypto | `GET /v1/crypto`, `POST /v1/crypto/{name}` | Discover and run registered encoders or ciphers. |
 | Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
+| Exchange rate | `GET /v1/exchange-rate` | Query exchange rates with JSON, text, or Markdown output. |
 | Fuel price | `GET /v1/fuel-price`, `/regions` | Query regional fuel prices and supported regions. |
 | Music | `GET /v1/music/**` | Search and resolve songs across NetEase, Tencent, KuGou, Baidu, and Kuwo. |
 | Player | `GET /v1/player`, `/art` | Music player data and cover art. |
