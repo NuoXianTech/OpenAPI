@@ -30,14 +30,31 @@ Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工�
 
 ## Docker 部署（推荐）
 
-仓库根目录的 `Dockerfile` 在 Linux builder 中构建，并将完整 Nitro 产物复制到精简运行镜像：
+GitHub Actions 使用仓库根目录的 `Dockerfile` 构建完整 Nitro 产物，并把 amd64/arm64 运行镜像发布到 GHCR。VPS 只下载和运行已经构建好的镜像，不会执行 `pnpm install` 或 `pnpm build`，因此适合小内存服务器：
 
 ```bash
-docker build -t openapi:latest .
-docker run --rm -p 3000:3000 --env-file .env openapi:latest
+docker pull ghcr.io/nuoxiantech/openapi:latest
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  ghcr.io/nuoxiantech/openapi:latest
 ```
 
-镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。生产数据库和 Redis 地址仍通过运行时环境变量注入。
+仓库也提供直接引用 GHCR 镜像的 `compose.yml`：
+
+```bash
+# 服务器只需准备 compose.yml 和 .env，无需下载源码
+docker compose pull
+docker compose up -d
+```
+
+`main` 分支发布 `latest`；`v1.2.3` 标签同时发布 `1.2.3`。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
+```
+
+镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。生产数据库和 Redis 地址仍通过运行时环境变量注入；使用 PGlite 时必须保留 `/app/.data` 数据卷。
 
 ## 上传文件
 

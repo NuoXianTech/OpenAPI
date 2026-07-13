@@ -132,10 +132,17 @@ NODE_ENV=production pnpm start
 
 ### Docker
 
+GitHub Actions 会在推送到 `main` 或创建版本标签时构建 amd64/arm64 镜像并发布到 GHCR。服务器无需克隆源码或执行 Nuxt 构建：
+
 ```bash
-docker build -t openapi:latest .
-docker run --rm -p 3000:3000 --env-file .env openapi:latest
+docker pull ghcr.io/nuoxiantech/openapi:latest
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  ghcr.io/nuoxiantech/openapi:latest
 ```
+
+也可以下载仓库中的 `compose.yml` 后运行 `docker compose pull && docker compose up -d`。正式版本可将 `latest` 替换为版本号（例如 `0.1.0`）以锁定部署版本。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
 
 探针检查：
 

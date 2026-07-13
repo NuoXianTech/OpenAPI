@@ -131,10 +131,17 @@ Deploy the complete `.output` directory. The executable entry is `.output/server
 
 ### Docker
 
+GitHub Actions builds amd64/arm64 images on pushes to `main` and version tags, then publishes them to GHCR. The server does not need to clone the source or run the Nuxt build:
+
 ```bash
-docker build -t openapi:latest .
-docker run --rm -p 3000:3000 --env-file .env openapi:latest
+docker pull ghcr.io/nuoxiantech/openapi:latest
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  ghcr.io/nuoxiantech/openapi:latest
 ```
+
+Alternatively, download `compose.yml` and run `docker compose pull && docker compose up -d`. Replace `latest` with a release version such as `0.1.0` to pin deployments. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
 
 Useful probes:
 
