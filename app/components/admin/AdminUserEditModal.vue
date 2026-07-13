@@ -107,7 +107,7 @@ async function submit() {
             type="email"
           />
         </UFormField>
-        <UFormField label="显示名">
+        <UFormField label="昵称">
           <UInput
             v-model="form.displayName"
             :maxlength="32"

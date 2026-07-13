@@ -93,7 +93,7 @@ async function submit() {
           />
         </UFormField>
         <UFormField
-          label="显示名（可选）"
+          label="昵称（可选）"
           help="留空时默认与用户名一致"
         >
           <UInput

@@ -27,7 +27,7 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   role: varchar('role', { length: 20 }).$type<'user' | 'admin'>().notNull().default('user'),
   username: varchar('username', { length: 50 }).notNull(),
-  // 显示名：用于导航栏展示，不参与登录；为空时回退 username
+  // 昵称：用于导航栏展示，不参与登录；为空时回退 username
   displayName: varchar('display_name', { length: 100 }),
   // email 以原大小写存储，通过 lower(email) 唯一索引做不区分大小写去重
   email: varchar('email', { length: 255 }).notNull(),

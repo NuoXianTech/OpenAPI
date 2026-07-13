@@ -67,14 +67,13 @@ async function submit() {
         />
       </UFormField>
       <UFormField
-        label="显示名"
-        description="对外展示的名字，最多 32 字。"
+        label="昵称"
+        description="用于公开展示的名字，可使用真实姓名或昵称"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="displayName"
           :maxlength="32"
-          placeholder="对外展示的名字"
           class="w-full sm:w-60"
         />
       </UFormField>

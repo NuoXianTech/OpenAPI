@@ -128,7 +128,7 @@ async function onCreditSaved() {
       <UInput
         v-model="filters.keyword"
         icon="i-mdi-magnify"
-        placeholder="搜索用户名、显示名或邮箱..."
+        placeholder="搜索用户名、昵称或邮箱..."
         class="w-full sm:w-80"
       />
       <AdminFilterPopover
