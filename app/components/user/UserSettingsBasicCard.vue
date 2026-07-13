@@ -35,7 +35,6 @@ async function submit() {
 <template>
   <DashboardSettingsSection
     title="基本信息"
-    description="管理你对外展示的资料信息。"
   >
     <div
       v-if="profileLoading && !profile"

@@ -44,7 +44,6 @@ async function submit() {
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
       title="绑定邮箱"
-      description="修改邮箱需验证当前密码，并通过新邮箱的确认链接生效。更改后头像会自动跟随更新。"
     >
       <UFormField
         label="当前邮箱"

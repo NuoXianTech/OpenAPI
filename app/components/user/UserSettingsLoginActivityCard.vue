@@ -33,7 +33,6 @@ const columns: TableColumn<LoginLogRow>[] = [
 <template>
   <DashboardSettingsSection
     title="最近登录活动"
-    description="展示最近的登录记录，若发现非本人登录请尽快修改密码。"
   >
     <template #actions>
       <UButton

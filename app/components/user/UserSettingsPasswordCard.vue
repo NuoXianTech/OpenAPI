@@ -39,7 +39,6 @@ async function submit() {
 <template>
   <DashboardSettingsSection
     title="修改密码"
-    description="定期更换密码有助于保护账号安全。修改后其他设备会被强制下线。"
   >
     <UFormField
       label="当前密码"
