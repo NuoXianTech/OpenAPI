@@ -54,6 +54,46 @@ jobs:
           echo "Expected Conventional Commits format, for example: feat(auth): add passkey sign-in" >&2
           exit 1
 
+      - name: Check out source for version policy
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate version change
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          base_version="$(git show "${BASE_SHA}:package.json" | python -c 'import json, sys; print(json.load(sys.stdin)["version"])')"
+          head_version="$(node -p "require('./package.json').version")"
+
+          if [[ "$base_version" == "$head_version" ]]; then
+            echo "No application version change detected." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          expected_branch="release/v${head_version}"
+          if [[ "$HEAD_BRANCH" != "$expected_branch" ]]; then
+            {
+              echo "### Version policy"
+              echo "❌ Application version changed from \`${base_version}\` to \`${head_version}\`."
+              echo
+              echo "Version changes must come from branch \`${expected_branch}\`, not \`${HEAD_BRANCH}\`."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "Version changes must come from branch ${expected_branch}, not ${HEAD_BRANCH}." >&2
+            exit 1
+          fi
+
+          {
+            echo "### Version policy"
+            echo "✅ Validated version change: \`${base_version}\` → \`${head_version}\`."
+            echo
+            echo "Release branch: \`${HEAD_BRANCH}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   application-quality:
     name: Application quality
     runs-on: ubuntu-24.04
