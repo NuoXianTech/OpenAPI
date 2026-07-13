@@ -48,7 +48,7 @@ docker compose pull
 docker compose up -d
 ```
 
-`main` 分支发布 `latest`；`v1.2.3` 标签同时发布 `1.2.3`。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
+`main` 分支发布 `latest`。版本镜像只由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v1.2.3` 会生成镜像标签 `1.2.3`；不要创建不带 `v` 的 Git 标签。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
 
 ```bash
 echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin

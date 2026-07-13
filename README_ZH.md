@@ -142,7 +142,7 @@ docker run -d --name openapi --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi:latest
 ```
 
-也可以下载仓库中的 `compose.yml` 后运行 `docker compose pull && docker compose up -d`。正式版本可将 `latest` 替换为版本号（例如 `0.1.0`）以锁定部署版本。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
+也可以下载仓库中的 `compose.yml` 后运行 `docker compose pull && docker compose up -d`。正式版本可将 `latest` 替换为版本号（例如 `0.1.0`）以锁定部署版本。版本镜像只会由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v0.1.0` 会生成镜像标签 `0.1.0`；不要使用不带 `v` 的 Git 标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
 
 探针检查：
 

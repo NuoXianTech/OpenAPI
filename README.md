@@ -141,7 +141,7 @@ docker run -d --name openapi --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi:latest
 ```
 
-Alternatively, download `compose.yml` and run `docker compose pull && docker compose up -d`. Replace `latest` with a release version such as `0.1.0` to pin deployments. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
+Alternatively, download `compose.yml` and run `docker compose pull && docker compose up -d`. Replace `latest` with a release version such as `0.1.0` to pin deployments. Versioned images are published only from Git tags matching `v*.*.*`: for example, Git tag `v0.1.0` produces image tag `0.1.0`; do not create the Git tag without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
 
 Useful probes:
 

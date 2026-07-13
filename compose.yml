@@ -1,7 +1,6 @@
 services:
   openapi:
     image: ghcr.io/nuoxiantech/openapi:latest
-    pull_policy: always
     restart: unless-stopped
     env_file:
       - .env
