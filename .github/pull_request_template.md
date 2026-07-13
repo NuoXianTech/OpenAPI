@@ -9,7 +9,8 @@
 - [ ] refactor：重构
 - [ ] docs：文档
 - [ ] test：测试
-- [ ] chore/ci：维护或自动化
+- [ ] chore：维护或杂项
+- [ ] ci：维护或自动化
 
 ## 验证
 
