@@ -82,7 +82,7 @@ jobs:
             suffix=-${{ matrix.arch }},onlatest=true
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Build and push architecture image
         uses: docker/build-push-action@v7
@@ -131,7 +131,7 @@ jobs:
           images: ${{ steps.image.outputs.name }}
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Create multi-platform manifests
         shell: bash
