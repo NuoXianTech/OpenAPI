@@ -41,6 +41,7 @@ interface ApiCapabilityTextFieldBase extends ApiCapabilityFieldBase {
   placeholder?: string
   minLength?: number
   maxLength?: number
+  isSecret?: boolean
 }
 
 export interface ApiCapabilityTextField extends ApiCapabilityTextFieldBase {
@@ -86,6 +87,7 @@ export interface ApiCapabilityConfigSnapshot {
   values: Record<string, unknown>
   isConfigured: boolean
   updatedAt: string | null
+  configuredSecretKeys?: string[]
 }
 
 export interface AdminApiCapabilityResponse {

@@ -8,11 +8,7 @@ vi.mock('~~/server/lib/api-capabilities/config-service', () => ({
   loadApiCapabilityConfig: mocks.loadConfig
 }))
 
-vi.mock('~~/server/api-capabilities/v1/crypto', () => ({
-  CRYPTO_CAPABILITY_KEY: { allowedAlgorithms: 'allowedAlgorithms' }
-}))
-
-const { getEnabledCryptoAlgorithmNames } = await import('~~/server/lib/crypto/capability-config')
+const { loadApiCapabilityStringSet } = await import('~~/server/lib/api-capabilities/runtime')
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -25,23 +21,22 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-describe('crypto capability failure protection', () => {
+describe('API capability runtime protection', () => {
   it('temporarily fails closed without retrying or flooding logs', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     mocks.loadConfig.mockRejectedValueOnce(new Error('database unavailable'))
 
-    await expect(getEnabledCryptoAlgorithmNames()).resolves.toEqual(new Set())
-    await expect(getEnabledCryptoAlgorithmNames()).resolves.toEqual(new Set())
+    await expect(loadApiCapabilityStringSet('v1', 'example', 'enabledItems')).resolves.toEqual(new Set())
+    await expect(loadApiCapabilityStringSet('v1', 'example', 'enabledItems')).resolves.toEqual(new Set())
 
     expect(mocks.loadConfig).toHaveBeenCalledTimes(1)
     expect(consoleError).toHaveBeenCalledTimes(1)
 
     vi.advanceTimersByTime(5_001)
-    mocks.loadConfig.mockResolvedValueOnce({
-      values: { allowedAlgorithms: ['aes'] }
-    })
+    mocks.loadConfig.mockResolvedValueOnce({ values: { enabledItems: ['first'] } })
 
-    await expect(getEnabledCryptoAlgorithmNames()).resolves.toEqual(new Set(['aes']))
+    await expect(loadApiCapabilityStringSet('v1', 'example', 'enabledItems'))
+      .resolves.toEqual(new Set(['first']))
     expect(mocks.loadConfig).toHaveBeenCalledTimes(2)
   })
 })

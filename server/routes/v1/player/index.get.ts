@@ -20,8 +20,12 @@ import { parseDplayerOptions } from '~~/server/lib/player/query'
 import { renderDplayerHtml } from '~~/server/lib/player/html'
 import { openApiFail } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
+import { isPlayerEngineEnabled } from '~~/server/lib/player/capability-config'
 
-export default defineEventHandler((event: H3Event) => {
+export default defineEventHandler(async (event: H3Event) => {
+  if (!await isPlayerEngineEnabled('dplayer')) {
+    return openApiFail(event, 403, 'PLAYER_ENGINE_DISABLED', 'DPlayer 播放器已被管理员关闭')
+  }
   const options = parseDplayerOptions(getQuery(event) as Record<string, unknown>)
   if (!options) {
     return openApiFail(event, 400, 'INVALID_PARAMETER', '视频地址无效，请传入 http/https url')

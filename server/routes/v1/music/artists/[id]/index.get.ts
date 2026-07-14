@@ -6,7 +6,7 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 
 async function handleArtistSongs(event: H3Event) {
-  const context = readMusicRouteContext(event)
+  const context = await readMusicRouteContext(event)
   const limit = readBoundedInteger(getQuery(event).limit, 50, 1, 100)
   if (!context || limit === null) return openApiFail(event, 400, 'INVALID_PARAMETER', '歌手 ID、平台或 limit 参数无效')
 

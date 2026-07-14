@@ -1,9 +1,18 @@
 import { createCipheriv, randomBytes } from 'node:crypto'
-import { buildUrl, isRecord, normalizeCollection, readNumber, readPath, readString, requestJson, splitArtists } from './common'
+import { buildUrl, isRecord, mergeCookieHeader, normalizeCollection, readNumber, readPath, readString, requestJson, splitArtists } from './common'
 import type { MusicLyrics, MusicResourceUrl, MusicTrack } from './types'
+import { getMusicPlatformCookie } from './capability-config'
 
 const API_URL = 'https://musicapi.taihe.com/v1/restserver/ting'
-const HEADERS = { 'cookie': `BAIDUID=${randomBytes(16).toString('hex')}:FG=1`, 'user-agent': 'Mozilla/5.0 baidu-music/1.2.1', 'accept': '*/*' }
+const BASE_HEADERS = { 'user-agent': 'Mozilla/5.0 baidu-music/1.2.1', 'accept': '*/*' }
+
+async function createHeaders(): Promise<Record<string, string>> {
+  const cookie = await getMusicPlatformCookie('baidu')
+  return {
+    ...BASE_HEADERS,
+    cookie: mergeCookieHeader(`BAIDUID=${randomBytes(16).toString('hex')}:FG=1`, cookie)
+  }
+}
 
 function normalizeBaidu(value: unknown): MusicTrack | null {
   if (!isRecord(value)) return null
@@ -13,8 +22,8 @@ function normalizeBaidu(value: unknown): MusicTrack | null {
   return { id, name, artist: splitArtists(value.author, /,|，/), album: readString(value.album_title), pic_id: id, url_id: id, lyric_id: id, source: 'baidu' }
 }
 
-function get(params: Record<string, string | number>): Promise<unknown> {
-  return requestJson(buildUrl(API_URL, params), { headers: HEADERS })
+async function get(params: Record<string, string | number>): Promise<unknown> {
+  return requestJson(buildUrl(API_URL, params), { headers: await createHeaders() })
 }
 
 function encryptedSongParams(id: string): Record<string, string | number> {

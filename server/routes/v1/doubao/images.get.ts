@@ -18,16 +18,21 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import {
   classifyDoubaoError,
+  createDoubaoError,
   detectImageSource,
   parseMediaQuery,
   type DoubaoImage
 } from '~~/server/lib/doubao/types'
 import { doubaoImageParse, qianwenImageParse } from '~~/server/lib/doubao/image'
+import { getEnabledDoubaoImageSources } from '~~/server/lib/doubao/capability-config'
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
     const source = detectImageSource(url)
+    if (!(await getEnabledDoubaoImageSources()).has(source)) {
+      throw createDoubaoError('business', 403, 'DOUBAO_SOURCE_DISABLED', `图片来源 ${source} 已被管理员关闭`)
+    }
     const result = source === 'doubao'
       ? await doubaoImageParse(url, raw)
       : await qianwenImageParse(url, raw)

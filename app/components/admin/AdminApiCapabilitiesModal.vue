@@ -185,8 +185,11 @@ watch(
           <UInput
             v-else-if="field.control === API_CAPABILITY_CONTROL.text"
             class="w-full"
+            :type="field.isSecret ? 'password' : 'text'"
             :model-value="getStringValue(field.key)"
-            :placeholder="field.placeholder"
+            :placeholder="field.isSecret && response.config.configuredSecretKeys?.includes(field.key)
+              ? '已配置，留空保持不变'
+              : field.placeholder"
             :minlength="field.minLength"
             :maxlength="field.maxLength"
             @update:model-value="value => setValue(field.key, value)"

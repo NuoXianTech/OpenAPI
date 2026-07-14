@@ -121,6 +121,18 @@ export default defineEventHandler(async () => {
 4. 从行操作打开“接口配置”并保存。
 5. 所有实例在缓存失效后读取相同配置。
 
+## 已接入的公共接口
+
+- `v1/crypto`：控制允许调用的加密与解密算法。
+- `v1/music`：控制网易云、QQ、酷狗、千千、酷我等音乐平台，并配置各平台登录 Cookie。
+- `v1/doubao`：分别控制图片解析来源与视频解析来源。
+- `v1/maoyan`：控制电影、电视、网络剧和全球电影票房榜单。
+- `v1/player`：控制 DPlayer 与 ArtPlayer 播放器引擎。
+
+这些接口共用同一套声明、管理表单、持久化、revision、审计和故障保护机制，不包含接口专属管理页面。
+
+标记为 `isSecret: true` 的文本字段使用密码输入框，管理接口不会回显已有值；留空保存会保留原配置。审计日志只记录字段名，不记录 Cookie 等敏感内容。
+
 管理接口为：
 
 - `GET /api/admin/apis/capabilities?pathVersion=v1&code=example`

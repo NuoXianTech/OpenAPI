@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1783543632852,
-      "tag": "0000_bitter_rattler",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784047274164,
-      "tag": "0001_lyrical_mole_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1784051950834,
-      "tag": "0002_material_thena",
+      "when": 1784054725445,
+      "tag": "0000_mute_thunderbird",
       "breakpoints": true
     }
   ]

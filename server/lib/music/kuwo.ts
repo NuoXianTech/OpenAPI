@@ -1,8 +1,17 @@
-import { buildUrl, isRecord, normalizeCollection, readNumber, readPath, readString, requestJson, splitArtists } from './common'
+import { buildUrl, isRecord, mergeCookieHeader, normalizeCollection, readNumber, readPath, readString, requestJson, splitArtists } from './common'
 import type { MusicLyrics, MusicResourceUrl, MusicTrack } from './types'
+import { getMusicPlatformCookie } from './capability-config'
 
 const BASE_URL = 'https://www.kuwo.cn'
-const HEADERS = { 'cookie': 'kw_token=3E7JFQ7MRPL', 'csrf': '3E7JFQ7MRPL', 'referer': `${BASE_URL}/`, 'user-agent': 'Mozilla/5.0 Chrome/124 Safari/537.36' }
+const DEFAULT_COOKIE = 'kw_token=3E7JFQ7MRPL'
+const BASE_HEADERS = { 'csrf': '3E7JFQ7MRPL', 'referer': `${BASE_URL}/`, 'user-agent': 'Mozilla/5.0 Chrome/124 Safari/537.36' }
+
+async function createHeaders(): Promise<Record<string, string>> {
+  const cookie = await getMusicPlatformCookie('kuwo')
+  const mergedCookie = mergeCookieHeader(DEFAULT_COOKIE, cookie)
+  const csrf = /(?:^|;\s*)kw_token=([^;]+)/.exec(mergedCookie)?.[1] || BASE_HEADERS.csrf
+  return { ...BASE_HEADERS, cookie: mergedCookie, csrf }
+}
 
 function normalizeKuwo(value: unknown): MusicTrack | null {
   if (!isRecord(value)) return null
@@ -12,8 +21,8 @@ function normalizeKuwo(value: unknown): MusicTrack | null {
   return { id, name, artist: splitArtists(value.artist, '&'), album: readString(value.album), pic_id: id, url_id: id, lyric_id: id, source: 'kuwo' }
 }
 
-function get(path: string, params: Record<string, string | number>): Promise<unknown> {
-  return requestJson(buildUrl(`${BASE_URL}${path}`, params), { headers: HEADERS })
+async function get(path: string, params: Record<string, string | number>): Promise<unknown> {
+  return requestJson(buildUrl(`${BASE_URL}${path}`, params), { headers: await createHeaders() })
 }
 
 export function searchKuwo(keyword: string, page: number, limit: number): Promise<MusicTrack[]> {
@@ -41,7 +50,7 @@ export async function getKuwoUrl(id: string): Promise<MusicResourceUrl> {
 }
 
 export async function getKuwoLyrics(id: string): Promise<MusicLyrics> {
-  const payload = await requestJson(buildUrl('https://m.kuwo.cn/newh5/singles/songinfoandlrc', { musicId: id, httpsStatus: 1 }), { headers: HEADERS })
+  const payload = await requestJson(buildUrl('https://m.kuwo.cn/newh5/singles/songinfoandlrc', { musicId: id, httpsStatus: 1 }), { headers: await createHeaders() })
   const lines = readPath(payload, 'data.lrclist')
   if (!Array.isArray(lines)) return { lyric: '', tlyric: '' }
   const lyric = lines.map((item) => {

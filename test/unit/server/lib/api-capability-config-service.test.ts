@@ -14,6 +14,14 @@ const definition: ApiCapabilityDefinition = {
       label: 'Feature',
       description: 'Feature switch',
       defaultValue: true
+    },
+    {
+      key: 'serviceCookie',
+      control: API_CAPABILITY_CONTROL.text,
+      label: 'Cookie',
+      description: 'Service cookie',
+      defaultValue: '',
+      isSecret: true
     }
   ]
 }
@@ -36,6 +44,10 @@ vi.mock('~~/server/lib/api-capabilities/definition-registry', () => ({
   }
 }))
 
+vi.mock('~~/server/utils/auth-secret', () => ({
+  getAuthSecret: () => 'test-capability-secret'
+}))
+
 vi.mock('~~/server/utils/shared-cache', () => ({
   async getSharedCache<TValue>(options: {
     key: string
@@ -56,6 +68,7 @@ vi.mock('~~/server/utils/shared-cache', () => ({
 
 const {
   loadApiCapabilityConfig,
+  maskApiCapabilitySecrets,
   saveApiCapabilityConfig
 } = await import('~~/server/lib/api-capabilities/config-service')
 
@@ -109,7 +122,7 @@ describe('API capability configuration service', () => {
 
     await expect(loadApiCapabilityConfig('v1', 'example')).resolves.toEqual({
       revision: 0,
-      values: { isFeatureEnabled: true },
+      values: { isFeatureEnabled: true, serviceCookie: '' },
       isConfigured: false,
       updatedAt: null
     })
@@ -123,21 +136,52 @@ describe('API capability configuration service', () => {
       'v1',
       'example',
       0,
-      { isFeatureEnabled: false },
+      { isFeatureEnabled: false, serviceCookie: 'session=secret' },
       7
     )
 
     expect(saved).toMatchObject({
       revision: 1,
-      values: { isFeatureEnabled: false },
+      values: { isFeatureEnabled: false, serviceCookie: 'session=secret' },
       isConfigured: true
     })
     expect(saved.updatedAt).toEqual(expect.any(String))
     expect(testContext.deletedKeys).toEqual(['cache:api-capability:v1:example'])
+    const storedRows = await client.query<{ capability_config: Record<string, unknown> }>(
+      'SELECT capability_config FROM apis WHERE path_version = $1 AND code = $2',
+      ['v1', 'example']
+    )
+    expect(storedRows.rows[0]?.capability_config.serviceCookie).toMatch(/^enc:v1:/)
     await expect(loadApiCapabilityConfig('v1', 'example')).resolves.toMatchObject({
       revision: 1,
-      values: { isFeatureEnabled: false },
+      values: { isFeatureEnabled: false, serviceCookie: 'session=secret' },
       isConfigured: true
+    })
+  })
+
+  it('masks secrets for admins and preserves them when the submitted value is blank', async () => {
+    await insertApi()
+    const first = await saveApiCapabilityConfig(
+      'v1',
+      'example',
+      0,
+      { isFeatureEnabled: true, serviceCookie: 'session=secret' },
+      1
+    )
+    expect(maskApiCapabilitySecrets(definition, first)).toMatchObject({
+      values: { isFeatureEnabled: true, serviceCookie: '' },
+      configuredSecretKeys: ['serviceCookie']
+    })
+
+    await saveApiCapabilityConfig(
+      'v1',
+      'example',
+      1,
+      { isFeatureEnabled: false, serviceCookie: '' },
+      1
+    )
+    await expect(loadApiCapabilityConfig('v1', 'example')).resolves.toMatchObject({
+      values: { isFeatureEnabled: false, serviceCookie: 'session=secret' }
     })
   })
 
@@ -145,8 +189,8 @@ describe('API capability configuration service', () => {
     await insertApi()
 
     const results = await Promise.allSettled([
-      saveApiCapabilityConfig('v1', 'example', 0, { isFeatureEnabled: false }, 1),
-      saveApiCapabilityConfig('v1', 'example', 0, { isFeatureEnabled: true }, 2)
+      saveApiCapabilityConfig('v1', 'example', 0, { isFeatureEnabled: false, serviceCookie: '' }, 1),
+      saveApiCapabilityConfig('v1', 'example', 0, { isFeatureEnabled: true, serviceCookie: '' }, 2)
     ])
 
     expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
@@ -165,7 +209,7 @@ describe('API capability configuration service', () => {
       'v1',
       'example',
       0,
-      { isFeatureEnabled: false },
+      { isFeatureEnabled: false, serviceCookie: '' },
       1
     )).rejects.toMatchObject({ errorCode: 'API_NOT_REGISTERED' })
 
@@ -174,7 +218,7 @@ describe('API capability configuration service', () => {
       'v1',
       'example',
       0,
-      { isFeatureEnabled: false },
+      { isFeatureEnabled: false, serviceCookie: '' },
       1
     )).rejects.toMatchObject({ errorCode: 'API_ORPHANED' })
   })

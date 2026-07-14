@@ -32,6 +32,15 @@ export function createDefaultApiCapabilityValues(definition: ApiCapabilityDefini
   return Object.fromEntries(definition.fields.map(field => [field.key, cloneDefaultValue(field)]))
 }
 
+export function getApiCapabilitySecretKeys(definition: ApiCapabilityDefinition): string[] {
+  return definition.fields
+    .filter(field => (
+      field.control === API_CAPABILITY_CONTROL.text
+      || field.control === API_CAPABILITY_CONTROL.textarea
+    ) && field.isSecret === true)
+    .map(field => field.key)
+}
+
 function validateOptions(field: ApiCapabilitySingleSelectField | ApiCapabilityMultiSelectField): void {
   if (field.options.length === 0) throw createValueError(`${field.label} 至少需要一个选项`, 500)
 
@@ -53,6 +62,9 @@ function validateOptions(field: ApiCapabilitySingleSelectField | ApiCapabilityMu
 }
 
 function validateTextField(field: ApiCapabilityTextField | ApiCapabilityTextareaField): void {
+  if (field.isSecret && field.defaultValue !== '') {
+    throw createValueError(`${field.label} 的敏感字段默认值必须为空`, 500)
+  }
   if (field.minLength !== undefined && (!Number.isInteger(field.minLength) || field.minLength < 0)) {
     throw createValueError(`${field.label} 的最小长度必须是非负整数`, 500)
   }

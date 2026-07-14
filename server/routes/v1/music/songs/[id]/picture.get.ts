@@ -6,7 +6,7 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 
 async function handleMusicPicture(event: H3Event) {
-  const context = readMusicRouteContext(event)
+  const context = await readMusicRouteContext(event)
   const size = readBoundedInteger(getQuery(event).size, 300, 50, 2000)
   if (!context || size === null) return openApiFail(event, 400, 'INVALID_PARAMETER', '歌曲 ID、平台或 size 参数无效')
 

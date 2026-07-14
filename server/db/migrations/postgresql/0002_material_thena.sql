@@ -1,1 +1,0 @@
-ALTER TABLE "apis" ADD COLUMN "capability_updated_at" timestamp with time zone;

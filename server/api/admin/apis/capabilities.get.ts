@@ -3,7 +3,8 @@ import type { AdminApiCapabilityResponse } from '#shared/types/api-capability'
 import { getApiCapabilityDefinition } from '~~/server/lib/api-capabilities/definition-registry'
 import {
   isApiCapabilityConfigError,
-  loadApiCapabilityConfig
+  loadApiCapabilityConfig,
+  maskApiCapabilitySecrets
 } from '~~/server/lib/api-capabilities/config-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 
@@ -24,10 +25,8 @@ export default defineAdminEventHandler(async (event: H3Event): Promise<AdminApiC
   }
 
   try {
-    return {
-      definition,
-      config: await loadApiCapabilityConfig(pathVersion, code)
-    }
+    const config = await loadApiCapabilityConfig(pathVersion, code)
+    return { definition, config: maskApiCapabilitySecrets(definition, config) }
   } catch (error) {
     if (isApiCapabilityConfigError(error)) {
       throw createError({ statusCode: error.statusCode, message: error.message })

@@ -7,7 +7,7 @@ import { openApiFail } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
 
 async function handleMusicLyrics(event: H3Event) {
-  const context = readMusicRouteContext(event)
+  const context = await readMusicRouteContext(event)
   if (!context) return openApiFail(event, 400, 'INVALID_PARAMETER', '歌曲 ID 不能为空且音乐平台必须受支持')
 
   try {

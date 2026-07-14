@@ -18,16 +18,21 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import {
   classifyDoubaoError,
+  createDoubaoError,
   detectVideoSource,
   parseMediaQuery,
   type DoubaoVideo
 } from '~~/server/lib/doubao/types'
 import { doubaoVideoParse, yunqueVideoParse } from '~~/server/lib/doubao/video'
+import { getEnabledDoubaoVideoSources } from '~~/server/lib/doubao/capability-config'
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
     const source = detectVideoSource(url)
+    if (!(await getEnabledDoubaoVideoSources()).has(source)) {
+      throw createDoubaoError('business', 403, 'DOUBAO_SOURCE_DISABLED', `视频来源 ${source} 已被管理员关闭`)
+    }
     const result = source === 'doubao'
       ? await doubaoVideoParse(url, raw)
       : await yunqueVideoParse(url, raw)
