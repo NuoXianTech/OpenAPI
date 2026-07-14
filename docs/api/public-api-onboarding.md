@@ -8,6 +8,7 @@
 > | --- | --- | --- |
 > | [RESTful API 设计风格](./design-style.md) | **风格层**：URL、HTTP 方法、响应壳、状态码、版本 | 设计接口形状时 |
 > | [对外接口落地规范](./public-api-conventions.md) | **落地规范**：目录约定、构建期约束、响应工具、计费标记、后台注册字段 | 写 route handler 时 |
+> | [公共接口业务能力声明规范](./public-api-capabilities.md) | **能力扩展**：接口自声明、平台配置与运行时读取 | 接口需要管理员控制业务行为时 |
 > | **本文** | **接入流程**：选形态 → 实现业务层 → 接路由 → 配计费 → 注册启用 → 验证 | 接一个新接口时 |
 
 「公共接口」特指 `server/routes/v{N}/<code>/**` 下、被 [modules/api-manifest.ts](../../modules/api-manifest.ts) 扫描、被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类对外 HTTP 接口。后台内部 API（`server/api/admin/**`、`server/api/user/**`）**不属于**本文范围。
@@ -41,8 +42,9 @@
 ③ 写业务实现层         server/lib/<code>/…        ← 本文重点，§3
 ④ 接路由              server/routes/v{N}/<code>/  ← 形态 A 可跳过，§4
 ⑤ 标计费 / 失败        openApiOk / openApiFail / openApiBizFail，§5
-⑥ 重启 + 后台启用      manifestSync 自动建行 → 后台配置并启用，§6
-⑦ 验证               重启 dev，调真实路径，gate / manifest / handler 三层都过，§7
+⑥ 可选：声明业务能力  server/api-capabilities/v{N}/<code>.ts
+⑦ 重启 + 后台启用      manifestSync 自动建行 → 后台配置并启用，§6
+⑧ 验证               重启 dev，调真实路径，gate / manifest / handler 三层都过，§7
 ```
 
 ---

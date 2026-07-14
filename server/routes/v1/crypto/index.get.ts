@@ -9,17 +9,21 @@ import type { H3Event } from 'h3'
 import { openApiOk } from '~~/server/utils/open-api-response'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { listAlgorithms } from '~~/server/lib/crypto/registry'
+import { getEnabledCryptoAlgorithmNames } from '~~/server/lib/crypto/capability-config'
 
-export default defineEventHandler((event: H3Event) => {
+export default defineEventHandler(async (event: H3Event) => {
   ensureCryptoRegistered()
-  const algorithms = listAlgorithms().map(algo => ({
-    name: algo.name,
-    title: algo.title,
-    description: algo.description,
-    needsKey: algo.needsKey ?? false,
-    modes: algo.modes,
-    params: algo.params ?? []
-  }))
+  const enabledAlgorithmNames = await getEnabledCryptoAlgorithmNames()
+  const algorithms = listAlgorithms()
+    .filter(algorithm => enabledAlgorithmNames.has(algorithm.name))
+    .map(algorithm => ({
+      name: algorithm.name,
+      title: algorithm.title,
+      description: algorithm.description,
+      needsKey: algorithm.needsKey ?? false,
+      modes: algorithm.modes,
+      params: algorithm.params ?? []
+    }))
 
   return openApiOk(event, {
     total: algorithms.length,

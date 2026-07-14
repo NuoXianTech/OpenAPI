@@ -82,6 +82,8 @@ export const apis = pgTable('apis', {
   rateLimitPerDay: integer('rate_limit_per_day').default(0).notNull(),
 
   methodCosts: jsonb('method_costs').$type<Record<string, number>>().notNull().default({}),
+  capabilityConfig: jsonb('capability_config').$type<Record<string, unknown>>().notNull().default({}),
+  capabilityRevision: integer('capability_revision').notNull().default(0),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
 

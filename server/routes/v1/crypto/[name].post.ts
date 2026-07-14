@@ -28,6 +28,7 @@ import {
 } from '~~/server/lib/crypto/types'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { getAlgorithm, normalizeParams } from '~~/server/lib/crypto/registry'
+import { isCryptoAlgorithmEnabled } from '~~/server/lib/crypto/capability-config'
 
 function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED') {
   return openApiBizFail(event, 422, bizCode, message)
@@ -42,6 +43,9 @@ export default defineEventHandler(async (event: H3Event) => {
   const algorithm = getAlgorithm(name)
   if (!algorithm) {
     return openApiFail(event, 404, 'ALGORITHM_NOT_FOUND', `未知算法 "${name}"，请通过 GET /v1/crypto 查看可用列表`)
+  }
+  if (!await isCryptoAlgorithmEnabled(name)) {
+    return openApiFail(event, 403, 'CRYPTO_ALGORITHM_DISABLED', `算法 "${name}" 已被管理员关闭`)
   }
 
   const body = (await readBody(event).catch(() => null)) as Record<string, unknown> | null

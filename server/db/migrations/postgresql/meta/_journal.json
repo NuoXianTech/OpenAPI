@@ -8,6 +8,13 @@
       "when": 1783543632852,
       "tag": "0000_bitter_rattler",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1784047274164,
+      "tag": "0001_lyrical_mole_man",
+      "breakpoints": true
     }
   ]
 }
