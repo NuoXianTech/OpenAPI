@@ -84,6 +84,7 @@ export const apis = pgTable('apis', {
   methodCosts: jsonb('method_costs').$type<Record<string, number>>().notNull().default({}),
   capabilityConfig: jsonb('capability_config').$type<Record<string, unknown>>().notNull().default({}),
   capabilityRevision: integer('capability_revision').notNull().default(0),
+  capabilityUpdatedAt: timestamp('capability_updated_at', { withTimezone: true }),
   dailyQuota: integer('daily_quota').default(0).notNull(),
   timeoutMs: integer('timeout_ms').default(10000).notNull(),
 

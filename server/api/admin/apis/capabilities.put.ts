@@ -7,6 +7,7 @@ import {
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 import { nonNegativeInt, requiredString } from '~~/server/schemas/validation'
+import { operationLogService } from '~~/server/services/operation-log-service'
 
 const updateApiCapabilitiesSchema = z.object({
   pathVersion: requiredString('接口版本'),
@@ -19,13 +20,28 @@ export default defineAdminEventHandler(async (event: H3Event, admin) => {
   const body = await readZodBody(event, updateApiCapabilitiesSchema)
 
   try {
-    return await saveApiCapabilityConfig(
+    const config = await saveApiCapabilityConfig(
       body.pathVersion,
       body.code,
       body.revision,
       body.values,
       admin.id || null
     )
+    await operationLogService.addRequestLog(event, {
+      userId: admin.id || null,
+      actor: admin.username,
+      action: 'admin.api.capabilities.update',
+      resourceType: 'api',
+      resourceId: `${body.pathVersion}:${body.code}`,
+      detail: {
+        pathVersion: body.pathVersion,
+        code: body.code,
+        previousRevision: body.revision,
+        revision: config.revision,
+        changedKeys: Object.keys(body.values).sort()
+      }
+    })
+    return config
   } catch (error) {
     if (isApiCapabilityConfigError(error)) {
       throw createError({ statusCode: error.statusCode, message: error.message })

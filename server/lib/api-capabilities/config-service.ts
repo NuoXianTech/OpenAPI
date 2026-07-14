@@ -54,7 +54,7 @@ export async function loadApiCapabilityConfig(
       const rows = await db.select({
         values: apis.capabilityConfig,
         revision: apis.capabilityRevision,
-        updatedAt: apis.updatedAt
+        updatedAt: apis.capabilityUpdatedAt
       }).from(apis)
         .where(and(eq(apis.pathVersion, pathVersion), eq(apis.code, code)))
         .limit(1)
@@ -73,7 +73,7 @@ export async function loadApiCapabilityConfig(
         revision: row.revision,
         values: normalizeApiCapabilityValues(definition, row.values ?? {}, true),
         isConfigured: true,
-        updatedAt: row.updatedAt.toISOString()
+        updatedAt: row.updatedAt?.toISOString() ?? null
       }
     }
   })
@@ -93,6 +93,7 @@ export async function saveApiCapabilityConfig(
   const rows = await db.update(apis).set({
     capabilityConfig: normalizedValues,
     capabilityRevision: revision + 1,
+    capabilityUpdatedAt: updatedAt,
     updatedBy,
     updatedAt
   }).where(and(
