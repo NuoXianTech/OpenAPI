@@ -9,7 +9,7 @@ import { readQueryString } from '~~/server/utils/request-query'
 async function handleMusicSearch(event: H3Event) {
   const query = getQuery(event)
   const keyword = readQueryString(query.q).trim()
-  const platform = readMusicPlatform(event)
+  const platform = await readMusicPlatform(event)
   const page = readBoundedInteger(query.page, 1, 1, 1000)
   const pageSize = readBoundedInteger(query.pageSize, 30, 1, 100)
   const type = readBoundedInteger(query.type, 1, 1, 10_000)

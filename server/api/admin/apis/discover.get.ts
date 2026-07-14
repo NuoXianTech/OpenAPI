@@ -12,6 +12,7 @@ import { API_MANIFEST } from '#api-manifest'
 import type { DiscoveredApi, DiscoveredEndpoint, RegisteredApi } from '#shared/types/api'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { apiService } from '~~/server/services/api-service'
+import { hasApiCapabilityDefinition } from '~~/server/lib/api-capabilities/definition-registry'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
 interface VersionGroup {
@@ -64,7 +65,8 @@ export default defineAdminEventHandler(async (_event: H3Event) => {
       endpointCount: api.endpoints.length,
       endpoints,
       registered,
-      orphaned: false
+      orphaned: false,
+      hasCapabilities: hasApiCapabilityDefinition(api.pathVersion, api.code)
     })
     group.stats.total += 1
     if (registered) group.stats.registered += 1
@@ -82,7 +84,8 @@ export default defineAdminEventHandler(async (_event: H3Event) => {
       endpointCount: row.endpointCount,
       endpoints: [],
       registered: row,
-      orphaned: true
+      orphaned: true,
+      hasCapabilities: false
     })
     group.stats.total += 1
     group.stats.registered += 1

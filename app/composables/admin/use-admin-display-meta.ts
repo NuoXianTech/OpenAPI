@@ -31,6 +31,7 @@ interface UseAdminApisDisplayMetaOptions {
   categories: Readonly<Ref<AdminApiCategoryItem[]>>
   openRegister: (row: AdminDiscoveredApi) => void | Promise<void>
   openEdit: (row: AdminDiscoveredApi) => void | Promise<void>
+  openCapabilities: (row: AdminDiscoveredApi) => void | Promise<void>
   resyncManifest: (row: AdminDiscoveredApi) => void | Promise<void>
 }
 
@@ -122,7 +123,17 @@ export function useAdminApisDisplayMeta(
         label: '编辑接口',
         icon: 'i-mdi-pencil-outline',
         onSelect: () => options.openEdit(row)
-      }, {
+      })
+    }
+    if (row.registered && row.hasCapabilities && !row.orphaned) {
+      items.push({
+        label: '接口配置',
+        icon: 'i-mdi-tune-variant',
+        onSelect: () => options.openCapabilities(row)
+      })
+    }
+    if (row.registered && !row.orphaned) {
+      items.push({
         label: '同步路由',
         icon: 'i-mdi-sync',
         onSelect: () => options.resyncManifest(row)

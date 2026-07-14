@@ -6,10 +6,14 @@ import { readMaoyanEncoding, setMaoyanTextHeaders } from '~~/server/lib/maoyan/r
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { readQueryString } from '~~/server/utils/request-query'
+import { isMaoyanRankingEnabled } from '~~/server/lib/maoyan/capability-config'
 
 async function handleMaoyanRealtime(event: H3Event) {
   const type = getRouterParam(event, 'type') || ''
   if (!isMaoyanRealtimeType(type)) return openApiFail(event, 404, 'NOT_FOUND', '仅支持 movie、tv 或 web 类型')
+  if (!await isMaoyanRankingEnabled(type)) {
+    return openApiFail(event, 403, 'MAOYAN_RANKING_DISABLED', `猫眼 ${type} 榜单已被管理员关闭`)
+  }
   const query = getQuery(event) as Record<string, unknown>
   const date = readQueryString(query.date).trim()
   if (date && !isValidMaoyanDate(date)) return openApiFail(event, 400, 'INVALID_DATE', 'date 必须是 YYYY-MM-DD 格式的有效日期')

@@ -6,7 +6,7 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 
 async function handleMusicUrl(event: H3Event) {
-  const context = readMusicRouteContext(event)
+  const context = await readMusicRouteContext(event)
   const bitrate = readBoundedInteger(getQuery(event).bitrate, 320, 1, 9999)
   if (!context || bitrate === null) return openApiFail(event, 400, 'INVALID_PARAMETER', '歌曲 ID、平台或 bitrate 参数无效')
 

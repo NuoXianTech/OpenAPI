@@ -8,9 +8,10 @@
 
 1. 阅读 [公共接口接入指南](./api/public-api-onboarding.md)，选择接入形态并完成业务实现。
 2. 按 [对外接口规范](./api/public-api-conventions.md) 添加路由、验证、响应和计费标记。
-3. 用 [RESTful 设计指南](./api/design-style.md) 检查路径、方法、状态码和错误码。
-4. 根据 [调用统计规范](./api/call-statistics.md) 核对日志、次数和成功率口径。
-5. 重启同步 manifest，在后台启用接口，完成鉴权、失败和限流冒烟测试。
+3. 如需管理员控制接口业务功能，按 [公共接口业务能力声明规范](./api/public-api-capabilities.md) 声明能力并接入平台配置。
+4. 用 [RESTful 设计指南](./api/design-style.md) 检查路径、方法、状态码和错误码。
+5. 根据 [调用统计规范](./api/call-statistics.md) 核对日志、次数和成功率口径。
+6. 重启同步 manifest，在后台启用接口，完成鉴权、失败和限流冒烟测试。
 
 ### 开发后台页面
 
@@ -28,6 +29,7 @@
 ## 核心规则
 
 - 公共 API 位于 `server/routes/v{N}/{code}`，业务实现位于 `server/lib`；站内 API 位于 `server/api`。
+- 公共接口可在 `server/api-capabilities/v{N}/{code}.ts` 声明管理员可配置的业务能力；配置值统一保存在 PostgreSQL。
 - 管理员和用户共用账号体系，以角色区分权限；管理员同时拥有用户侧常规能力。
 - 计费、限流、调用日志和统计使用统一服务端链路，单个接口不得自行复制实现。
 - 单实例可使用 Node/Nitro；多实例生产环境必须使用 PostgreSQL、共享 Redis 和一致的运行时密钥。

@@ -26,6 +26,8 @@ const versions = computed(() => data.value.versions)
 const modalOpen = ref(false)
 const modalMode = ref<'register' | 'edit'>('register')
 const modalTarget = ref<AdminDiscoveredApi | null>(null)
+const capabilitiesModalOpen = ref(false)
+const capabilitiesModalTarget = ref<AdminDiscoveredApi | null>(null)
 
 function openRegister(row: AdminDiscoveredApi) {
   modalMode.value = 'register'
@@ -37,6 +39,11 @@ function openEdit(row: AdminDiscoveredApi) {
   modalMode.value = 'edit'
   modalTarget.value = row
   modalOpen.value = true
+}
+
+function openCapabilities(row: AdminDiscoveredApi) {
+  capabilitiesModalTarget.value = row
+  capabilitiesModalOpen.value = true
 }
 
 async function handleToggle(row: AdminDiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
@@ -85,6 +92,7 @@ const {
   categories: categoriesData,
   openRegister,
   openEdit,
+  openCapabilities,
   resyncManifest
 })
 
@@ -272,6 +280,12 @@ function resetApiFilters() {
       :mode="modalMode"
       :target="modalTarget"
       @saved="refresh()"
+    />
+
+    <LazyAdminApiCapabilitiesModal
+      v-if="capabilitiesModalOpen"
+      v-model:open="capabilitiesModalOpen"
+      :target="capabilitiesModalTarget"
     />
   </div>
 </template>

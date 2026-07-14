@@ -2,19 +2,21 @@ import type { H3Event } from 'h3'
 import { getQuery, getRouterParam } from 'h3'
 import { isMusicPlatform } from './client'
 import type { MusicPlatform } from './types'
+import { isMusicPlatformEnabled } from './capability-config'
 
 export interface MusicRouteContext {
   platform: MusicPlatform
   id: string
 }
 
-export function readMusicPlatform(event: H3Event): MusicPlatform | null {
+export async function readMusicPlatform(event: H3Event): Promise<MusicPlatform | null> {
   const value = String(getQuery(event).platform || 'netease').trim().toLowerCase()
-  return isMusicPlatform(value) ? value : null
+  if (!isMusicPlatform(value)) return null
+  return await isMusicPlatformEnabled(value) ? value : null
 }
 
-export function readMusicRouteContext(event: H3Event): MusicRouteContext | null {
-  const platform = readMusicPlatform(event)
+export async function readMusicRouteContext(event: H3Event): Promise<MusicRouteContext | null> {
+  const platform = await readMusicPlatform(event)
   const id = getRouterParam(event, 'id')?.trim()
   return platform && id ? { platform, id } : null
 }

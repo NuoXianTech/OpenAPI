@@ -1,6 +1,7 @@
 import { createCipheriv, createHash, randomBytes } from 'node:crypto'
-import { parseJsonResponseText } from './common'
+import { mergeCookieHeader, parseJsonResponseText } from './common'
 import type { MusicLyrics, MusicResourceUrl, MusicTrack, NeteaseAlbum, NeteaseArtist, NeteaseTrack } from './types'
+import { getMusicPlatformCookie } from './capability-config'
 
 const EAPI_KEY = Buffer.from('e82ckenh8dichen8', 'utf8')
 const BASE_URL = 'https://music.163.com'
@@ -25,21 +26,23 @@ function encryptEapi(path: string, body: Record<string, unknown>): string {
   return `${cipher.update(payload, 'utf8', 'hex')}${cipher.final('hex')}`.toUpperCase()
 }
 
-function createHeaders(): Record<string, string> {
+function createHeaders(configuredCookie: string): Record<string, string> {
   const timestamp = Date.now()
+  const defaultCookie = `os=android; appver=8.7.01; deviceId=${randomBytes(16).toString('hex').toUpperCase()}; requestId=${timestamp}_${Math.floor(Math.random() * 10_000).toString().padStart(4, '0')}`
   return {
     'accept': '*/*',
     'content-type': 'application/x-www-form-urlencoded',
-    'cookie': `os=android; appver=8.7.01; deviceId=${randomBytes(16).toString('hex').toUpperCase()}; requestId=${timestamp}_${Math.floor(Math.random() * 10_000).toString().padStart(4, '0')}`,
+    'cookie': mergeCookieHeader(defaultCookie, configuredCookie),
     'referer': BASE_URL,
     'user-agent': 'NeteaseMusic/8.7.01 (Linux; Android 11)'
   }
 }
 
 async function requestNetease(options: NeteaseRequestOptions): Promise<unknown> {
+  const cookie = await getMusicPlatformCookie('netease')
   const response = await fetch(`${BASE_URL}${options.path.replace('/api/', '/eapi/')}`, {
     method: 'POST',
-    headers: createHeaders(),
+    headers: createHeaders(cookie),
     body: new URLSearchParams({ params: encryptEapi(options.path, options.body) }),
     signal: AbortSignal.timeout(15_000)
   })

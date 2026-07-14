@@ -26,6 +26,12 @@ export function splitArtists(value: unknown, separator: string | RegExp): string
   return typeof value === 'string' ? value.split(separator).map(item => item.trim()).filter(Boolean) : []
 }
 
+export function mergeCookieHeader(defaultCookie: string, configuredCookie: string): string {
+  return [defaultCookie.trim().replace(/;+\s*$/, ''), configuredCookie.trim().replace(/^;+\s*/, '')]
+    .filter(Boolean)
+    .join('; ')
+}
+
 function extractJsonValue(text: string): string | null {
   const objectStart = text.indexOf('{')
   const arrayStart = text.indexOf('[')

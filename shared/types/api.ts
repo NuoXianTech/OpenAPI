@@ -112,6 +112,7 @@ export interface DiscoveredApi {
   endpoints: DiscoveredEndpoint[]
   registered: RegisteredApi | null
   orphaned: boolean
+  hasCapabilities: boolean
 }
 
 export interface AdminApiFormState {

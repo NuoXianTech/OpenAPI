@@ -83,7 +83,15 @@ function defaultsForEdit(reg: RegisteredApi): AdminApiFormState {
   }
 }
 
-const state = reactive<AdminApiFormState>(defaultsForRegister({ code: '', pathVersion: '', endpointCount: 0, endpoints: [], registered: null, orphaned: false }))
+const state = reactive<AdminApiFormState>(defaultsForRegister({
+  code: '',
+  pathVersion: '',
+  endpointCount: 0,
+  endpoints: [],
+  registered: null,
+  orphaned: false,
+  hasCapabilities: false
+}))
 const loading = ref(false)
 
 provideAdminApiForm(state)
