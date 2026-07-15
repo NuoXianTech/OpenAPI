@@ -56,6 +56,8 @@ curl -fsS http://127.0.0.1:3000/api/list
 - 一个低风险公开 API 可被 API Key 调用，调用日志和统计写入正常。
 - PM2 日志无鉴权密钥错误、数据库连接错误或 `[db:migrate]` 失败记录。
 - `pending_charges` 没有异常增长，调用日志和积分流水符合预期。
+- 静态资源在 `Accept-Encoding: br, gzip` 下返回 `Content-Encoding: br` 或 `gzip`。
+- HTML 响应包含 CSP、HSTS、`X-Content-Type-Options`、Referrer Policy 和 Permissions Policy。
 
 ## Web Vitals 基线
 
