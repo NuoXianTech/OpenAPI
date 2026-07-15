@@ -22,11 +22,8 @@ import type { ApiStatsTracked } from '~~/server/types/api-guard'
 //   - DO_NOT_WRITE_LOG_OUTCOMES：完全不写 apiCalls 行
 //     · invalid_api_key / missing_api_key：API 密钥无效
 //     · disabled：公共接口被禁用（接口禁用时直接关闭所有调用日志/统计）
-//   - NON_COUNTED_REJECTION_OUTCOMES：写 apiCalls 但 isCounted=false（不参与统计聚合）
-//     · disabled_api_key：API 密钥被禁用（isActive=false 或 revokedAt 已设）
-//     · expired_api_key：API 密钥到期
-//     · api_key_quota_exceeded：密钥配额上限
-//     · insufficient_credits：积分不足
+//   - NON_COUNTED_REJECTION_OUTCOMES：已识别请求主体的 gate 拒绝会写 apiCalls，
+//     但 isCounted=false，不参与成功率或调用量聚合。
 const DO_NOT_WRITE_LOG_OUTCOMES = new Set([
   'disabled',
   'invalid_api_key',
@@ -37,7 +34,13 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'api_key_quota_exceeded',
   'disabled_api_key',
   'expired_api_key',
-  'insufficient_credits'
+  'insufficient_credits',
+  'ip_denied',
+  'quota_exceeded',
+  'quota_unavailable',
+  'rate_limited',
+  'rate_limit_unavailable',
+  'scope_denied'
 ])
 
 function parseOptionalInt(value: string | string[] | number | null | undefined) {
@@ -63,7 +66,8 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
   let quotaReservation: { apiKeyId: number, amount: number } | null = null
-  let shouldReleaseQuotaReservation = false
+  let willCharge = false
+  let hasCallRecord = false
 
   try {
     const target = event.context.apiStatsTarget
@@ -92,7 +96,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       ?? null
     const billing = event.context.apiBilling
 
-    const willCharge = billing
+    willCharge = billing
       ? shouldCharge({
           costCredits: billing.costCredits,
           apiKeyUserId: billing.apiKeyUserId,
@@ -101,7 +105,6 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
         })
       : false
     quotaReservation = billing?.apiKeyQuotaReservation ?? null
-    shouldReleaseQuotaReservation = Boolean(quotaReservation) && !willCharge
 
     const errorCode = rejection
       ? rejection.errorCode
@@ -140,6 +143,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     const callId = !isCounted
       ? (await apiCallService.addCall(callInput))[0]?.id ?? null
       : await apiCallService.addCallAndUpsertDailyStat(callInput)
+    hasCallRecord = callId !== null
 
     if (willCharge && billing && billing.apiKeyUserId && callId) {
       const remark = `API 调用扣费 · ${target.apiPath}`
@@ -194,7 +198,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       error
     })
   } finally {
-    if (shouldReleaseQuotaReservation && quotaReservation) {
+    if (quotaReservation && (!willCharge || !hasCallRecord)) {
       await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount).catch((err) => {
         console.error('failed to release apiKey quota reservation', {
           apiKeyId: quotaReservation?.apiKeyId,

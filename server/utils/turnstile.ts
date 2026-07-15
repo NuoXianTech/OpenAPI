@@ -58,7 +58,9 @@ async function verifyTurnstileForPage(
     const res = await $fetch<SiteVerifyResponse>(VERIFY_URL, {
       method: 'POST',
       body: form.toString(),
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeout: 5_000,
+      retry: 0
     })
     if (res?.success) {
       return { required: true, valid: true }

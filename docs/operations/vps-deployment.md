@@ -84,12 +84,16 @@ DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 NUXT_AUTH_SECRET=change-me
 NUXT_AUTH_API_KEY_SECRET=change-me
 
+# 单层本机 Nginx 示例：
+NUXT_PROXY_TRUSTED_CIDRS=127.0.0.1/32,::1/128
+NUXT_PROXY_FORWARDED_HOPS=1
+
 # Redis 分布式限流与公开短缓存（推荐正式生产启用）
 NUXT_REDIS_URL=redis://127.0.0.1:6379
 NUXT_REDIS_REQUIRED=true
 ```
 
-生产环境没有 `DATABASE_URL` 时，必须显式设置 `DATABASE_DRIVER=pglite`。这样可以避免 PostgreSQL 连接串漏配时，服务静默创建一个新的本地数据库。使用 PGlite 时，`PGLITE_DATA_DIR` 是生产数据目录，必须纳入服务器备份。
+生产环境没有 `DATABASE_URL` 时，必须显式设置 `DATABASE_DRIVER=pglite`。这样可以避免 PostgreSQL 连接串漏配时，服务静默创建一个新的本地数据库。使用 PGlite 时，`PGLITE_DATA_DIR` 是生产数据目录，必须纳入服务器备份。首次创建管理员时，服务端日志只会输出一次随机初始密码；应立即登录并完成资料和密码初始化。
 
 生产密钥可用以下命令生成：
 

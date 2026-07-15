@@ -13,10 +13,17 @@
 import type { H3Event } from 'h3'
 import { getHeader } from 'h3'
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function normalizeRequestId(value: string | null | undefined): string | null {
+  const normalized = value?.trim()
+  return normalized && UUID_PATTERN.test(normalized) ? normalized.toLowerCase() : null
+}
+
 export function ensureRequestId(event: H3Event): string {
   if (!event.context.requestId) {
-    const incoming = getHeader(event, 'x-request-id')?.toString().trim()
-    event.context.requestId = incoming || globalThis.crypto.randomUUID()
+    const incoming = normalizeRequestId(getHeader(event, 'x-request-id')?.toString())
+    event.context.requestId = incoming ?? globalThis.crypto.randomUUID()
   }
   return event.context.requestId
 }

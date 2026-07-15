@@ -70,7 +70,8 @@ function collectImages(messageSnapshot: unknown, images: DoubaoImage[]): void {
 
 /** 解析豆包对话链接中的图片。raw=true 时返回页面内嵌的原始 JSON。 */
 export async function doubaoImageParse(url: string, raw = false): Promise<DoubaoImage[] | unknown> {
-  if (!url.includes('doubao.com/thread/')) {
+  const parsedUrl = new URL(url)
+  if (!parsedUrl.pathname.startsWith('/thread/')) {
     throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用豆包对话链接（包含 /thread/）')
   }
 
@@ -116,11 +117,15 @@ export async function doubaoImageParse(url: string, raw = false): Promise<Doubao
 
 /** 解析千问分享链接中的图片。raw=true 时返回上游 share/info 接口的原始响应。 */
 export async function qianwenImageParse(url: string, raw = false): Promise<DoubaoImage[] | unknown> {
-  if (!url.includes('qianwen.com/share/chat/')) {
+  const parsedUrl = new URL(url)
+  if (!parsedUrl.pathname.startsWith('/share/chat/')) {
     throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '链接格式不正确，请使用千问分享链接（包含 qianwen.com/share/chat/）')
   }
 
-  const shareId = url.split('?')[0]!.split('chat/').pop() ?? ''
+  const shareId = parsedUrl.pathname.split('/').filter(Boolean).pop() ?? ''
+  if (!shareId) {
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '千问分享链接缺少分享 ID')
+  }
   const data = await fetchJson('https://chat2-api.qianwen.com/api/v1/share/info', {
     method: 'POST',
     headers: QIANWEN_HEADERS,

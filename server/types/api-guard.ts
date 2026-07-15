@@ -66,6 +66,7 @@ export type GateOutcome
     | 'rate_limited'
     | 'rate_limit_unavailable'
     | 'quota_exceeded'
+    | 'quota_unavailable'
     | 'api_key_quota_exceeded'
     | 'insufficient_credits'
 

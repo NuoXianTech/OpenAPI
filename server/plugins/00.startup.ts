@@ -9,9 +9,11 @@ import { db } from '~~/server/db/client'
 import { runDatabaseMigrations } from '~~/server/db/migrate'
 import { DEFAULT_API_REGISTRATION } from '~~/server/config/api-guard'
 import { apiService } from '~~/server/services/api-service'
+import { assertApiKeySecretConfigured } from '~~/server/services/api-key-service'
 import { usersService, USER_ROLES } from '~~/server/services/user-service'
 import type { ManifestApi } from '~~/server/types/api-guard'
 import { hashPassword } from '~~/server/utils/auth'
+import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { getSqlState } from '~~/server/utils/database-error'
 
 const API_MANIFEST = RAW_API_MANIFEST as readonly ManifestApi[]
@@ -91,8 +93,8 @@ async function ensureInitialAdmin(): Promise<void> {
 
   console.info('[startup] Created initial administrator account.')
   console.info(`[startup] username: ${admin.username}`)
-  console.info(`[startup] password: ${password}`)
-  console.info('[startup] Sign in and rotate this password immediately.')
+  console.info(`[startup] initial password: ${password}`)
+  console.info('[startup] This password is shown once. Sign in and change it immediately.')
 }
 
 async function syncApiManifest(): Promise<void> {
@@ -139,6 +141,8 @@ async function syncApiManifest(): Promise<void> {
 }
 
 async function initializeServer(): Promise<void> {
+  getAuthSecret()
+  assertApiKeySecretConfigured()
   await migrateDatabase()
   await ensureInitialAdmin()
   await syncApiManifest()

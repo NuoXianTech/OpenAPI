@@ -43,6 +43,10 @@ export default defineNuxtConfig({
       secret: '',
       apiKeySecret: '',
     },
+    proxy: {
+      trustedCidrs: '',
+      forwardedHops: 1
+    },
     redis: {
       url: '',
       keyPrefix: 'openapi:',

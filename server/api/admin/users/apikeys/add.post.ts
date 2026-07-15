@@ -17,7 +17,7 @@ export default defineAdminEventHandler(async (event: H3Event, admin) => {
     action: 'admin.api-key.create',
     resourceType: 'api-key',
     resourceId: created.map(k => k.id).join(','),
-    detail: { created, count: created.length }
+    detail: { keyIds: created.map(key => key.id), count: created.length }
   })
 
   return { keys: created, count: created.length }

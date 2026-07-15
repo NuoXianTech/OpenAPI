@@ -37,8 +37,8 @@ function getEventPathname(event: H3Event) {
 }
 
 /**
- * 拒绝请求时以开放 API 标准壳作答。直接写出 Node 响应，
- * 保证 middleware 阶段就终止请求，不会继续走到业务 handler。
+ * 拒绝请求时返回开放 API 标准壳。H3 收到非 undefined 返回值后会统一序列化响应，
+ * 并终止后续路由匹配，无需直接操作 Node response。
  *
  * errorDef.code 作为 body `code` 字段输出，严守 docs/api/design-style.md §3.3
  * 「失败时 data 为 null」。其他上下文（如 405 的 Allow、429 的 Retry-After）走对应标准头。
@@ -46,11 +46,7 @@ function getEventPathname(event: H3Event) {
  * detail 非空时写入 body `data` 字段，用于回传结构化提示（如过期时间、配额详情）。
  */
 function rejectWithOpenApi(event: H3Event, errorDef: ErrorDef, detail: Record<string, unknown> | null = null) {
-  const payload = openApiFail(event, errorDef.status, errorDef.code, errorDef.msg, detail)
-  setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
-  if (!event.node?.res) return payload
-
-  event.node.res.end(JSON.stringify(payload))
+  return openApiFail(event, errorDef.status, errorDef.code, errorDef.msg, detail)
 }
 
 export default defineEventHandler(async (event: H3Event) => {

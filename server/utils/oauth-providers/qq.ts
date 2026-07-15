@@ -6,6 +6,7 @@ const TOKEN_URL = 'https://graph.qq.com/oauth2.0/token'
 const USERINFO_URL = 'https://graph.qq.com/user/get_user_info'
 const OPENID_URL = 'https://graph.qq.com/oauth2.0/me'
 const SCOPE = 'get_user_info'
+const OAUTH_FETCH_OPTIONS = { timeout: 10_000, retry: 0 } as const
 
 interface QqOpenIdResponse {
   client_id?: string
@@ -21,7 +22,7 @@ async function fetchOpenId(accessToken: string): Promise<{ openid: string, union
   url.searchParams.set('fmt', 'json')
   url.searchParams.set('unionid', '1')
 
-  const response = await $fetch<QqOpenIdResponse>(url.toString())
+  const response = await $fetch<QqOpenIdResponse>(url.toString(), OAUTH_FETCH_OPTIONS)
   if (!response || !response.openid) {
     throw createError({
       statusCode: 502,
@@ -76,7 +77,7 @@ export const qqProvider: OauthProviderModule = {
       access_token?: string
       error?: number | string
       error_description?: string
-    }>(url.toString(), { method: 'GET' })
+    }>(url.toString(), { method: 'GET', ...OAUTH_FETCH_OPTIONS })
 
     if (!response?.access_token) {
       throw createError({
@@ -98,7 +99,7 @@ export const qqProvider: OauthProviderModule = {
     url.searchParams.set('oauth_consumer_key', config.clientId)
     url.searchParams.set('openid', openid)
 
-    const profile = await $fetch<QqUserInfoResponse>(url.toString())
+    const profile = await $fetch<QqUserInfoResponse>(url.toString(), OAUTH_FETCH_OPTIONS)
     if (!profile || typeof profile !== 'object') {
       throw createError({ statusCode: 502, message: 'qq userinfo fetch failed' })
     }

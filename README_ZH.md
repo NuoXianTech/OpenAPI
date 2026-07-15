@@ -77,20 +77,22 @@ cp .env.example .env
 pnpm dev
 ```
 
-启动前必须替换 `.env` 中的两个示例密钥，并分别生成不同的随机值：
+启动前必须配置 `NUXT_AUTH_SECRET`。`NUXT_AUTH_API_KEY_SECRET` 只用于生成新密钥；API Key 本身会完整保存在数据库 `api_key` 字段中，所属用户可随时查看并复制。可使用以下命令分别生成独立随机值：
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-开发环境未配置数据库模式时会使用 PGlite。首次启动会自动执行迁移；如果数据库中没有管理员，服务端会创建初始管理员，并仅在控制台输出一次随机密码。请通过 `/login` 登录，然后完成强制的资料和密码初始化。
+开发环境未配置数据库模式时会使用 PGlite。首次启动会自动执行迁移；如果数据库中没有管理员，服务端会生成初始管理员，并仅在日志中输出一次随机密码。请立即登录并完成不可跳过的资料和密码初始化。
 
 ## 运行时配置
 
 | 变量 | 要求 | 说明 |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
-| `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 服务端密钥，必须使用独立值。 |
+| `NUXT_AUTH_API_KEY_SECRET` | 必填 | 新 API Key 的生成材料，不会加密数据库中的 `api_key` 完整值。 |
+| `NUXT_PROXY_TRUSTED_CIDRS` | 使用反向代理时必填 | 允许提供 `X-Forwarded-For` 的直连代理 CIDR。 |
+| `NUXT_PROXY_FORWARDED_HOPS` | 使用反向代理时配置 | 可信转发层数；单层 nginx 通常为 `1`。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |

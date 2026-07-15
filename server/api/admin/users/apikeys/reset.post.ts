@@ -20,7 +20,7 @@ export default defineAdminEventHandler(async (event: H3Event, admin) => {
     action: 'admin.api-key.reset',
     resourceType: 'api-key',
     resourceId: String(id),
-    detail: { updated }
+    detail: { keyId: updated.id }
   })
 
   return updated

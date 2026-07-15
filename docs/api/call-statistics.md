@@ -63,15 +63,15 @@
 | API Key 无效 | 否 | 否 |
 | API Key 已禁用（`isActive=false` 或 `revokedAt`） | 是，若能识别到 Key；`isCounted=false` | 否 |
 | API Key 已过期 | 是，若能识别到 Key；`isCounted=false` | 否 |
-| scope 不允许 | 是 | 否 |
-| IP 不在白名单 | 是 | 否 |
-| 触发限流 | 是 | 否 |
-| API 每日配额超限 | 是 | 否 |
+| scope 不允许 | 是；`isCounted=false` | 否 |
+| IP 不在白名单 | 是；`isCounted=false` | 否 |
+| 触发限流或限流服务不可用 | 是；`isCounted=false` | 否 |
+| API 每日配额超限或配额服务不可用 | 是；`isCounted=false` | 否 |
 | API Key 累计积分配额超限 | 是，但不更新日聚合统计 | 否 |
 | 余额不足 | 是；`isCounted=false` | 否 |
 | 公共接口被禁用（`isEnabled=false`） | 否（接口禁用时关闭全部日志/统计） | 否 |
 
-已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们没有进入 handler，所以不累加 `api_keys.totalCalls`。其中 API Key 已过期、API Key 累计积分配额超限、API Key 已禁用、余额不足会写入 `api_calls` 且标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。**公共接口禁用**（`apis.isEnabled=false`，gate outcome `disabled`）直接不写任何调用日志，与缺失/无效密钥同列。
+已识别到具体 Key 的拒绝请求会尽量写入 `api_calls`，并带上 `errorCode/errorMessage`，方便审计和排错；但它们没有进入 handler，所以不累加 `api_keys.totalCalls`。上述守卫规则拒绝（禁用/过期 Key、scope、IP、限流、每日配额、Key 配额、余额不足及相关服务不可用）均标记 `isCounted=false`，不更新 `api_call_stats`，因此不计入聚合调用次数和失败次数。**公共接口禁用**（`apis.isEnabled=false`，gate outcome `disabled`）直接不写任何调用日志，与缺失/无效密钥同列。
 
 ## 5. 成功与失败口径
 
