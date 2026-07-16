@@ -119,6 +119,15 @@ CREATE TABLE "api_categories" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "api_daily_quota_usage" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"api_id" integer NOT NULL,
+	"usage_date" timestamp with time zone NOT NULL,
+	"used_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "api_keys" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
@@ -327,6 +336,7 @@ CREATE TABLE "site_settings" (
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_call_stats" ADD CONSTRAINT "api_call_stats_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_daily_quota_usage" ADD CONSTRAINT "api_daily_quota_usage_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apis" ADD CONSTRAINT "apis_category_id_api_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_call_id_api_calls_id_fk" FOREIGN KEY ("api_call_id") REFERENCES "public"."api_calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -362,6 +372,8 @@ CREATE INDEX "api_calls_request_id_idx" ON "api_calls" USING btree ("request_id"
 CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code");--> statement-breakpoint
 CREATE INDEX "api_categories_parent_sort_idx" ON "api_categories" USING btree ("parent_id","sort_order");--> statement-breakpoint
 CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree ("is_enabled","sort_order");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_daily_quota_usage_api_id_date_uq" ON "api_daily_quota_usage" USING btree ("api_id","usage_date");--> statement-breakpoint
+CREATE INDEX "api_daily_quota_usage_date_idx" ON "api_daily_quota_usage" USING btree ("usage_date");--> statement-breakpoint
 CREATE INDEX "api_keys_user_idx" ON "api_keys" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "api_keys_active_idx" ON "api_keys" USING btree ("is_active");--> statement-breakpoint
 CREATE INDEX "api_keys_expires_idx" ON "api_keys" USING btree ("expires_at");--> statement-breakpoint
