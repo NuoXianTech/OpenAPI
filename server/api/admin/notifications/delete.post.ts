@@ -12,6 +12,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (!removed) throw createError({ statusCode: 404, message: 'message not found' })
 
   await operationLogService.addRequestLog(event, {
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.notification.delete',
     resourceType: 'notification-message',

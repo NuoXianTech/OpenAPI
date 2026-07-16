@@ -19,6 +19,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }, admin.id || null)
 
   await operationLogService.addRequestLog(event, {
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.announcement.create',
     resourceType: 'announcement',
