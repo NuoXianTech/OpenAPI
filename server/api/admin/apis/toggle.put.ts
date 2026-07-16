@@ -1,12 +1,11 @@
 import { createError } from 'h3'
-import type { H3Event } from 'h3'
 import { adminToggleApiSchema } from '~~/server/schemas/admin'
 import { apiService } from '~~/server/services/api-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { id, field, value } = await readZodBody(event, adminToggleApiSchema)
 
   const updated = await apiService.toggleApiField(id, field, value, admin.id || null)

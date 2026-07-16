@@ -1,4 +1,4 @@
-import { createError, getQuery, type H3Event } from 'h3'
+import { createError, getQuery } from 'h3'
 import type { AdminApiCapabilityResponse } from '#shared/types/api-capability'
 import { getApiCapabilityDefinition } from '~~/server/lib/api-capabilities/definition-registry'
 import {
@@ -14,7 +14,7 @@ function readRequiredQueryValue(value: unknown, label: string): string {
   return normalized
 }
 
-export default defineAdminEventHandler(async (event: H3Event): Promise<AdminApiCapabilityResponse> => {
+export default defineAdminEventHandler(async (event): Promise<AdminApiCapabilityResponse> => {
   const query = getQuery(event)
   const pathVersion = readRequiredQueryValue(query.pathVersion, '接口版本')
   const code = readRequiredQueryValue(query.code, '接口标识')
