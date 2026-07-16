@@ -37,7 +37,7 @@ import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-resp
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
-import { readQueryString } from '~~/server/utils/request-query'
+import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
 
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 
@@ -356,7 +356,7 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
       requestSize: toNullableNonNegativeInteger(getHeader(event, 'content-length')),
       userAgent: requestMeta.userAgent?.slice(0, 500) || null,
       referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
-      queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
+      queryString: sanitizeQueryStringForLog(requestUrl.search)
     }
     event.context.apiStatsTarget = {
       apiId: api.id,

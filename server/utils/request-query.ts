@@ -47,3 +47,32 @@ export function readQueryOption<TOption extends string>(
   const normalized = readQueryText(value)
   return normalized && options.includes(normalized as TOption) ? (normalized as TOption) : undefined
 }
+
+const SENSITIVE_QUERY_KEYS = new Set([
+  'apikey',
+  'authorization',
+  'accesstoken',
+  'refreshtoken',
+  'signature',
+  'token'
+])
+
+function normalizeQueryKey(value: string): string {
+  return value.toLowerCase().replace(/[-_]/g, '')
+}
+
+export function sanitizeQueryStringForLog(search: string, maxLength = 2_000): string | null {
+  const rawQuery = search.startsWith('?') ? search.slice(1) : search
+  if (!rawQuery) return null
+
+  const sanitizedQuery = new URLSearchParams()
+  for (const [key, value] of new URLSearchParams(rawQuery)) {
+    sanitizedQuery.append(
+      key,
+      SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key)) ? '[REDACTED]' : value
+    )
+  }
+
+  const serializedQuery = sanitizedQuery.toString()
+  return serializedQuery ? serializedQuery.slice(0, Math.max(Math.trunc(maxLength), 0)) : null
+}
