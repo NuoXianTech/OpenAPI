@@ -3,12 +3,10 @@
 // Drizzle migrations from the Nitro startup plugin.
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import postgres from 'postgres'
 import { drizzle } from 'drizzle-orm/postgres-js'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const MIGRATION_ADVISORY_LOCK_KEY = 'openapi:database-migrations'
 
 function loadProjectEnv() {
@@ -32,10 +30,7 @@ function findMigrationsFolder() {
   const candidates = [
     process.env.MIGRATIONS_DIR,
     path.resolve(process.cwd(), '.output/server/db/migrations/postgresql'),
-    path.resolve(process.cwd(), 'server/db/migrations/postgresql'),
-    path.resolve(process.cwd(), 'db/migrations/postgresql'),
-    path.resolve(__dirname, '../server/db/migrations/postgresql'),
-    path.resolve(__dirname, 'db/migrations/postgresql')
+    path.resolve(process.cwd(), 'server/db/migrations/postgresql')
   ].filter(Boolean)
 
   for (const candidate of candidates) {
@@ -77,13 +72,13 @@ if (configuredDriver && configuredDriver !== 'postgres' && configuredDriver !== 
   throw new Error('DATABASE_DRIVER must be either "postgres" or "pglite".')
 }
 
-const databaseUrl = process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || process.env.DATABASE_URL
+const databaseUrl = process.env.DATABASE_URL
 const shouldUsePglite = configuredDriver === 'pglite'
   || (!configuredDriver && !databaseUrl && process.env.NODE_ENV !== 'production')
 const pgliteDataDir = process.env.PGLITE_DATA_DIR || '.data/pglite'
 
 if (!databaseUrl && !shouldUsePglite) {
-  throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL, POSTGRES_URL, or POSTGRESQL_URL is required before running database migrations.')
+  throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL is required before running database migrations.')
 }
 
 const migrationsFolder = findMigrationsFolder()
