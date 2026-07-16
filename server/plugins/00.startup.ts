@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { API_MANIFEST as RAW_API_MANIFEST } from '#api-manifest'
 import { INITIAL_ADMIN_PROFILE } from '#shared/config/admin-defaults'
 import { apis } from '~~/server/db/schema'
-import { db } from '~~/server/db/client'
+import { closeDatabase, db } from '~~/server/db/client'
 import { runDatabaseMigrations } from '~~/server/db/migrate'
 import { DEFAULT_API_REGISTRATION } from '~~/server/config/api-guard'
 import { apiService } from '~~/server/services/api-service'
@@ -169,6 +169,13 @@ async function initializeServer(): Promise<void> {
   ])
 }
 
+async function closeServer(): Promise<void> {
+  await Promise.all([
+    closeRedis(),
+    closeDatabase()
+  ])
+}
+
 export default defineNitroPlugin((nitroApp) => {
   // 统一服务端未自定义的 Zod 校验消息，避免 API 返回英文默认文案。
   z.config(z.locales.zhCN())
@@ -188,5 +195,5 @@ export default defineNitroPlugin((nitroApp) => {
       process.exit(1)
     })
 
-  nitroApp.hooks.hook('close', closeRedis)
+  nitroApp.hooks.hook('close', closeServer)
 })
