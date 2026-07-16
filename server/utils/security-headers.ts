@@ -50,7 +50,15 @@ export interface SecurityHeadersOptions {
   isHtmlRoute: boolean
 }
 
-export function createSecurityHeaders(options: SecurityHeadersOptions): Record<string, string> {
+const securityHeadersCache = new Map<number, Readonly<Record<string, string>>>()
+
+export function getSecurityHeaders(options: SecurityHeadersOptions): Readonly<Record<string, string>> {
+  const cacheKey = Number(options.isProduction) << 2
+    | Number(options.isPlayerRoute) << 1
+    | Number(options.isHtmlRoute)
+  const cached = securityHeadersCache.get(cacheKey)
+  if (cached) return cached
+
   const headers: Record<string, string> = {
     ...COMMON_SECURITY_HEADERS,
     'Content-Security-Policy': options.isPlayerRoute ? PLAYER_CSP : APPLICATION_CSP
@@ -66,7 +74,9 @@ export function createSecurityHeaders(options: SecurityHeadersOptions): Record<s
     headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
   }
 
-  return headers
+  const resolvedHeaders = Object.freeze(headers)
+  securityHeadersCache.set(cacheKey, resolvedHeaders)
+  return resolvedHeaders
 }
 
 export function isPlayerHtmlRoute(pathname: string): boolean {

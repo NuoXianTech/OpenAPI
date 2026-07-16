@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
-  createSecurityHeaders,
+  getSecurityHeaders,
   isHtmlDocumentRoute,
   isPlayerHtmlRoute
 } from '~~/server/utils/security-headers'
 
 describe('security headers', () => {
   it('creates restrictive production application headers', () => {
-    const headers = createSecurityHeaders({
+    const headers = getSecurityHeaders({
       isProduction: true,
       isPlayerRoute: false,
       isHtmlRoute: true
@@ -20,7 +20,7 @@ describe('security headers', () => {
   })
 
   it('allows the dedicated player document to be embedded', () => {
-    const headers = createSecurityHeaders({
+    const headers = getSecurityHeaders({
       isProduction: true,
       isPlayerRoute: true,
       isHtmlRoute: true
@@ -29,6 +29,18 @@ describe('security headers', () => {
     expect(headers['Content-Security-Policy']).toContain('frame-ancestors *')
     expect(headers['Content-Security-Policy']).toContain('media-src blob: http: https:')
     expect(headers['X-Frame-Options']).toBeUndefined()
+  })
+
+  it('reuses immutable header variants', () => {
+    const options = {
+      isProduction: false,
+      isPlayerRoute: false,
+      isHtmlRoute: false
+    }
+    const headers = getSecurityHeaders(options)
+
+    expect(getSecurityHeaders(options)).toBe(headers)
+    expect(Object.isFrozen(headers)).toBe(true)
   })
 
   it('classifies document and player routes', () => {

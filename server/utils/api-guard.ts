@@ -330,22 +330,10 @@ function setGateRejectionContext(
 }
 
 async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
+  const startedAt = Date.now()
   const requestUrl = getRequestURL(event)
   const pathname = normalizePathname(requestUrl.pathname)
   const method = (event.method || 'GET').toUpperCase()
-  const requestMeta = readRequestMeta(event)
-  ensureRequestId(event)
-  event.context.apiStatsTracked = {
-    startedAt: Date.now(),
-    pathname,
-    method,
-    ip: requestMeta.ip,
-    requestSize: toNullableNonNegativeInteger(getHeader(event, 'content-length')),
-    userAgent: requestMeta.userAgent?.slice(0, 500) || null,
-    referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
-    queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
-  }
-
   const routeMatch = VERSION_CODE_PATTERN.exec(pathname)
   if (!routeMatch) return { status: 'unmatched' }
 
@@ -358,6 +346,18 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   if (!api) return rejectOpenApiGate(event, API_GUARD_ERROR.NOT_REGISTERED)
 
   if (api.isStatistics) {
+    const requestMeta = readRequestMeta(event)
+    ensureRequestId(event)
+    event.context.apiStatsTracked = {
+      startedAt,
+      pathname,
+      method,
+      ip: requestMeta.ip,
+      requestSize: toNullableNonNegativeInteger(getHeader(event, 'content-length')),
+      userAgent: requestMeta.userAgent?.slice(0, 500) || null,
+      referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
+      queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
+    }
     event.context.apiStatsTarget = {
       apiId: api.id,
       apiPath: api.apiPath

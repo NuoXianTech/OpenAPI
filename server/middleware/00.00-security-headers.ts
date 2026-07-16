@@ -1,19 +1,17 @@
-import { getRequestURL, setResponseHeader } from 'h3'
+import { getRequestURL, setResponseHeaders } from 'h3'
 import {
-  createSecurityHeaders,
+  getSecurityHeaders,
   isHtmlDocumentRoute,
   isPlayerHtmlRoute
 } from '~~/server/utils/security-headers'
 
+const isProduction = process.env.NODE_ENV === 'production'
+
 export default defineEventHandler((event) => {
   const pathname = getRequestURL(event).pathname
-  const headers = createSecurityHeaders({
-    isProduction: process.env.NODE_ENV === 'production',
+  setResponseHeaders(event, getSecurityHeaders({
+    isProduction,
     isPlayerRoute: isPlayerHtmlRoute(pathname),
     isHtmlRoute: isHtmlDocumentRoute(pathname)
-  })
-
-  for (const [name, value] of Object.entries(headers)) {
-    setResponseHeader(event, name, value)
-  }
+  }))
 })

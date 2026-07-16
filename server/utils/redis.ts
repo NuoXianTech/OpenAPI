@@ -17,6 +17,8 @@ export interface RedisConfig {
 let redisClient: Redis | null = null
 let redisClientUrl = ''
 let redisInitialization: Promise<Redis | null> | null = null
+// Nuxt 私有 runtimeConfig 在进程生命周期内保持稳定，避免缓存与限流热路径重复规范化。
+let redisConfig: RedisConfig | null = null
 
 function normalizeBoolean(value: unknown): boolean {
   return value === true || value === 'true' || value === '1'
@@ -33,15 +35,18 @@ function normalizeKeyPrefix(value: unknown): string {
 }
 
 export function getRedisConfig(): RedisConfig {
+  if (redisConfig) return redisConfig
+
   const runtimeConfig = useRuntimeConfig()
   const redis = runtimeConfig.redis as RedisRuntimeConfig
 
-  return {
+  redisConfig = Object.freeze({
     url: String(redis?.url ?? '').trim(),
     keyPrefix: normalizeKeyPrefix(redis?.keyPrefix),
     connectTimeoutMs: normalizePositiveInteger(redis?.connectTimeoutMs, 2_000),
     required: normalizeBoolean(redis?.required)
-  }
+  })
+  return redisConfig
 }
 
 export function createRedisUnavailableError(message: string, cause?: unknown): Error & {
