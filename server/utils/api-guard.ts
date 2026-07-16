@@ -32,12 +32,14 @@ import { apiKeyService } from '~~/server/services/api-key-service'
 import { apiService } from '~~/server/services/api-service'
 import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service'
 import { getAllowedMethods, getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
-import { toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
+import { clampInteger, toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
+import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
+import { runWithTimeout } from '~~/server/utils/timeout'
 
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 
@@ -72,12 +74,16 @@ type GateResult
   }
 
 type OpenApiGateResult
-  = | { status: 'passed' }
+  = | { status: 'passed', timeoutMs: number }
     | { status: 'rejected', response: OpenApiResponse }
     | { status: 'unmatched' }
 
+export interface OpenApiHandlerContext {
+  signal: AbortSignal
+}
+
 interface OpenApiEventHandler<TResult> {
-  (event: H3Event): TResult | Promise<TResult>
+  (event: H3Event, context: OpenApiHandlerContext): TResult | Promise<TResult>
 }
 
 function readApiKeyFromEvent(event: H3Event): string {
@@ -398,7 +404,10 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
     setResponseHeaders(event, result.rateLimitHeaders)
   }
 
-  return { status: 'passed' }
+  return {
+    status: 'passed',
+    timeoutMs: clampInteger(api.timeoutMs, 100, 120_000, 10_000)
+  }
 }
 
 export function defineOpenApiEventHandler<TResult>(handler: OpenApiEventHandler<TResult>) {
@@ -408,6 +417,12 @@ export function defineOpenApiEventHandler<TResult>(handler: OpenApiEventHandler<
     if (gate.status === 'unmatched') {
       return openApiFail(event, 503, 'API_CONFIGURATION_ERROR', '接口治理配置不可用')
     }
-    return handler(event)
+    return runWithTimeout(
+      signal => handler(event, { signal }),
+      {
+        timeoutMs: gate.timeoutMs,
+        onTimeout: () => openApiBizFail(event, 504, 'API_TIMEOUT', '接口处理超时')
+      }
+    )
   })
 }
