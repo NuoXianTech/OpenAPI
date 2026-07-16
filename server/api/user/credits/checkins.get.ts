@@ -12,5 +12,5 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
   }
 
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
-  return await checkinService.getMonthlyHistory(user.id, range)
+  return checkinService.getMonthlyHistory(user.id, range)
 })
