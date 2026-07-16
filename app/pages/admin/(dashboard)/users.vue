@@ -30,7 +30,7 @@ const {
   createUser
 } = useAdminUsersPage()
 
-const { page, pageSize, total, paginated } = useClientPagination(items, 10)
+const { page, pageSize, total, paginated } = useClientPagination(items, 20)
 watch([keyword, userIdFilter, roleFilter, activeFilter, banFilter, pageSize], () => {
   page.value = 1
 })
