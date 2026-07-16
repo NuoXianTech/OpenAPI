@@ -4,7 +4,7 @@ import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { getLocalMonthRange } from '~~/server/utils/local-time'
 import { readQueryString } from '~~/server/utils/request-query'
 
-export default defineAuthenticatedEventHandler(async (event, user) => {
+export default defineAuthenticatedEventHandler((event, user) => {
   const month = readQueryString(getQuery(event).month)
   const range = getLocalMonthRange(month)
   if (!range) {
