@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { apiCallService } from '~~/server/services/api-call-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
@@ -6,7 +5,7 @@ import { readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils
 
 const CALL_STATUSES = ['success', 'failure'] as const
 
-export default defineAuthenticatedEventHandler((event: H3Event, user) => {
+export default defineAuthenticatedEventHandler((event, user) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
   const apiId = readQueryNumber(query.apiId)
   const apiKeyId = readQueryNumber(query.apiKeyId)
