@@ -349,7 +349,6 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 
 .api-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px -10px rgba(17, 17, 19, 0.16);
 }
 
 .api-card.is-active {
@@ -362,10 +361,6 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 .api-card--status-warning { --api-card-status: var(--ui-warning); }
 .api-card--status-info { --api-card-status: var(--ui-info); }
 .api-card--status-neutral { --api-card-status: var(--ui-text-dimmed); }
-
-.api-card:hover {
-  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
-}
 
 .api-card__head {
   position: relative;
