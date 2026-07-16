@@ -1,11 +1,10 @@
-import type { H3Event } from 'h3'
 import { adminCreateFriendLinkSchema } from '~~/server/schemas/admin'
 import { friendLinkService } from '~~/server/services/friend-link-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminCreateFriendLinkSchema)
 
   const created = await friendLinkService.create({

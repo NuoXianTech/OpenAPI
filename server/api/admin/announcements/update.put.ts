@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/services/announcement-service'
@@ -7,7 +6,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminUpdateAnnouncementSchema)
   const { id } = body
 

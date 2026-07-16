@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateApiCategorySchema } from '~~/server/schemas/admin'
 import { apiCategoryService } from '~~/server/services/api-category-service'
@@ -7,7 +6,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { id, name, description, icon, color, parentId, sortOrder, isEnabled } = await readZodBody(event, adminUpdateApiCategorySchema)
 
   const patch: Record<string, unknown> = {}
