@@ -19,11 +19,11 @@ function handlePostgresNotice(notice: postgres.Notice) {
   console.log(notice)
 }
 
-export function getOptionalDatabaseUrl() {
-  return process.env.POSTGRES_URL || process.env.POSTGRESQL_URL || process.env.DATABASE_URL
+function getOptionalDatabaseUrl() {
+  return process.env.DATABASE_URL
 }
 
-export function hasDatabaseUrl() {
+function hasDatabaseUrl() {
   return Boolean(getOptionalDatabaseUrl())
 }
 
@@ -39,7 +39,7 @@ export function getDatabaseDriver(): DatabaseDriver {
   if (hasDatabaseUrl()) return 'postgres'
 
   if (process.env.NODE_ENV === 'production') {
-    throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL, POSTGRES_URL, or POSTGRESQL_URL is required in production.')
+    throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL is required in production.')
   }
 
   return 'pglite'
@@ -49,7 +49,7 @@ export function getDatabaseUrl() {
   const databaseUrl = getOptionalDatabaseUrl()
 
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL, POSTGRES_URL, or POSTGRESQL_URL is required.')
+    throw new Error('DATABASE_URL is required.')
   }
 
   return databaseUrl
