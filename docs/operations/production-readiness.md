@@ -22,8 +22,9 @@ pnpm build
 | 数据库迁移 | 已基于当前 Drizzle schema 生成迁移；`.output/server/db/migrations/postgresql` 随构建产物发布，生产启动时自动应用到 PostgreSQL 或 PGlite |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_AUTH_API_KEY_SECRET` 已独立生成 |
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
-| 管理员账号 | 首次启动后从服务端控制台记录自动生成的 `admin` 随机密码，并通过 `/login` 登录后完成一次初始化弹窗 |
-| 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入 |
+| 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的资料和密码初始化 |
+| 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
+| API Key 数据 | 确认数据库与备份按敏感凭据保护；`api_keys.api_key` 保存完整可复制 Key，不允许出现在操作日志或普通应用日志中 |
 | 部署产物 | 完整发布 `.output`；跨系统部署优先使用 Linux CI/Docker，不能遗漏 `node_modules/.nitro` |
 | 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `PGLITE_DATA_DIR` |
@@ -55,6 +56,8 @@ curl -fsS http://127.0.0.1:3000/api/list
 - 一个低风险公开 API 可被 API Key 调用，调用日志和统计写入正常。
 - PM2 日志无鉴权密钥错误、数据库连接错误或 `[db:migrate]` 失败记录。
 - `pending_charges` 没有异常增长，调用日志和积分流水符合预期。
+- 静态资源在 `Accept-Encoding: br, gzip` 下返回 `Content-Encoding: br` 或 `gzip`。
+- HTML 响应包含 CSP、HSTS、`X-Content-Type-Options`、Referrer Policy 和 Permissions Policy。
 
 ## Web Vitals 基线
 

@@ -145,7 +145,7 @@ export function isCidr(input: string): boolean {
 }
 
 /** 检查 IP 是否落在指定 CIDR 范围内 */
-function ipInCidr(ip: string, cidr: string): boolean {
+export function ipInCidr(ip: string, cidr: string): boolean {
   const parsed = parseCidr(cidr)
   if (!parsed.ok) return false
 
@@ -176,7 +176,7 @@ function ipInCidr(ip: string, cidr: string): boolean {
 }
 
 /** 白名单空 = 不限；非空 = IP 必须命中其中至少一条 CIDR */
-export function ipInAnyCidr(ip: string | null, whitelist: string[] | null | undefined): boolean {
+export function ipInAnyCidr(ip: string | null, whitelist: readonly string[] | null | undefined): boolean {
   if (!whitelist || whitelist.length === 0) return true
   if (!ip) return false
   for (const cidr of whitelist) {

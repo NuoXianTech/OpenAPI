@@ -35,6 +35,10 @@ function getSecret() {
   return cachedSecret
 }
 
+export function assertApiKeySecretConfigured(): void {
+  getSecret()
+}
+
 function generateApiKey() {
   const nonce = randomBytes(24)
   return `op_${createHmacSignature(nonce, getSecret())}`

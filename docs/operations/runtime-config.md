@@ -16,7 +16,7 @@
 | --- | --- | --- |
 | `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 必填其一 | PostgreSQL 连接串；或显式选择 PGlite 文件数据库 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
-| `NUXT_AUTH_API_KEY_SECRET` | 必填 | API Key 相关服务端密钥 |
+| `NUXT_AUTH_API_KEY_SECRET` | 必填 | 仅用于生成新的随机 API Key，不加密数据库中的完整 `api_key` 值 |
 
 ## 推荐变量
 
@@ -35,6 +35,8 @@
 | `NUXT_REDIS_KEY_PREFIX` | `openapi:` | Redis key 命名空间；同一 Redis 服务部署多个环境时必须区分 |
 | `NUXT_REDIS_CONNECT_TIMEOUT_MS` | `2000` | Redis 首次连接超时毫秒数 |
 | `NUXT_REDIS_REQUIRED` | `false` | `true` 时限流或分布式协调所需 Redis 缺失/不可用会 fail-closed；不改变公开缓存的数据库回源策略 |
+| `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供 `X-Forwarded-For` 的直连反向代理 CIDR，多个值用逗号分隔 |
+| `NUXT_PROXY_FORWARDED_HOPS` | `1` | 从 `X-Forwarded-For` 右侧计算的可信代理层数，最多 10 层 |
 
 `.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
 
@@ -44,7 +46,7 @@ Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防
 
 单实例开发可以不配置 Redis。多 Node 实例生产必须使用 PostgreSQL，并同时配置 `NUXT_REDIS_URL` 与 `NUXT_REDIS_REQUIRED=true`；PGlite 数据目录只允许一个 Node 进程。PostgreSQL 迁移另有数据库 advisory lock，即使多个实例同时启动也会串行执行。
 
-管理员账号与用户共用 `users` 表，通过 `users.role='admin'` 区分，并统一从 `/login` 登录。启动时如果不存在任何管理员账号，服务端会自动创建用户名为 `admin`、邮箱为 `admin@openapi.com` 的管理员，并将随机密码输出到控制台。
+管理员账号与用户共用 `users` 表，通过 `users.role='admin'` 区分，并统一从 `/login` 登录。启动时如果不存在任何管理员账号，服务端会创建默认管理员并仅输出一次随机初始密码。管理员登录后必须完成不可关闭的资料和密码初始化。
 
 首次登录后，如果管理员仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码。后续用户名不再作为常规资料项修改，以保证登录日志、操作日志和审计链路稳定。
 
@@ -64,7 +66,9 @@ Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-生产密钥最少 32 bytes 随机值。`NUXT_AUTH_SECRET` 泄露后立即轮换，并观察登录、邮箱验证与 OAuth 相关异常；`NUXT_AUTH_API_KEY_SECRET` 泄露后立即轮换，并评估 API Key 相关影响。
+生产密钥最少 32 bytes 随机值。`NUXT_AUTH_SECRET` 泄露后立即轮换，并观察登录、邮箱验证与 OAuth 相关异常。`NUXT_AUTH_API_KEY_SECRET` 仅参与新 Key 生成，轮换不会使数据库中已有 API Key 失效。
+
+API Key 按产品要求完整存储在 `api_keys.api_key`，用户可随时查看和复制。因此数据库、备份、只读副本和管理员数据库账号都必须按“可直接使用的凭据”保护；应用操作日志不会额外复制完整 Key。
 
 ## PM2 示例
 
@@ -109,4 +113,6 @@ pm2 start server/index.mjs --name openapi --update-env
 | Redis 故障后限流失效 | 正式生产设置 `NUXT_REDIS_REQUIRED=true`，并监控 `/api/ready` |
 | Redis 故障后后台任务重复 | 多实例必须设置 `NUXT_REDIS_REQUIRED=true`；租约不可用时任务 fail-closed |
 | Redis 缓存命中率下降 | 检查 Redis 延迟、内存和淘汰统计；应用会回源数据库，但数据库负载会升高 |
+| 数据库或备份泄露 API Key | 严格限制数据库与备份访问、启用静态加密和审计；`api_keys.api_key` 是可直接使用的完整凭据 |
+| 伪造 `X-Forwarded-For` | 仅配置真实直连代理的 `NUXT_PROXY_TRUSTED_CIDRS`，并设置正确的 `NUXT_PROXY_FORWARDED_HOPS` |
 | 配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令 |

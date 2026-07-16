@@ -40,7 +40,10 @@ function buildTransport(config: SmtpConfig, pool: boolean): Transporter {
     auth: config.user && config.pass
       ? { user: config.user, pass: config.pass }
       : undefined,
-    name: ehloName
+    name: ehloName,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 30_000
   }
   // pool 必须是字面量 true 才能命中 nodemailer 的连接池重载，故拆成两个分支
   return pool
@@ -82,6 +85,8 @@ export async function sendSmtpMail(config: SmtpConfig, input: SendMailInput) {
       to: input.to,
       subject: input.subject,
       html: input.html,
+      disableFileAccess: true,
+      disableUrlAccess: true,
       ...(config.replyTo ? { replyTo: config.replyTo } : {})
     })
   } finally {

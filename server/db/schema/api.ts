@@ -207,6 +207,24 @@ export const apiCallStats = pgTable('api_call_stats', {
 ])
 
 // ------------------------------------------------------------------
+// API Daily Quota Usage（每日配额原子计数器）
+//
+// 与 apiCallStats 分离：配额在 handler 执行前原子预占，而调用统计在响应后写入。
+// 这样即使关闭统计或运行多个实例，每日配额仍能严格执行且不会竞态超发。
+// ------------------------------------------------------------------
+export const apiDailyQuotaUsage = pgTable('api_daily_quota_usage', {
+  id: serial('id').primaryKey(),
+  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
+  usageDate: timestamp('usage_date', { withTimezone: true }).notNull(),
+  usedCount: integer('used_count').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
+}, table => [
+  uniqueIndex('api_daily_quota_usage_api_id_date_uq').on(table.apiId, table.usageDate),
+  index('api_daily_quota_usage_date_idx').on(table.usageDate)
+])
+
+// ------------------------------------------------------------------
 // Pending Charges（扣费补偿队列）
 //
 // charge 失败时入队，pendingChargesRetry 定时重试。

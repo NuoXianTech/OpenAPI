@@ -10,8 +10,11 @@
  */
 
 import { createDoubaoError } from './types'
+import { readLimitedText, safeFetch } from '~~/server/utils/safe-fetch'
 
 const DEFAULT_TIMEOUT_MS = 15000
+const MAX_RESPONSE_BYTES = 4 * 1024 * 1024
+const ALLOWED_UPSTREAM_HOSTS = ['doubao.com', 'qianwen.com', 'jianying.com'] as const
 
 export interface UpstreamRequest {
   method?: string
@@ -38,30 +41,46 @@ async function request(url: string, opts: UpstreamRequest = {}): Promise<Respons
   }
 
   try {
-    return await fetch(buildUrl(url, opts.query), {
+    const response = await safeFetch(buildUrl(url, opts.query), {
+      allowedHosts: ALLOWED_UPSTREAM_HOSTS,
       method: opts.method ?? 'GET',
       headers,
       body,
-      redirect: 'follow',
       signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
     })
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err)
-    throw createDoubaoError('business', 502, 'UPSTREAM_ERROR', `上游请求失败，请稍后重试：${reason}`)
+    if (!response.ok) {
+      await response.body?.cancel()
+      throw new Error(`upstream responded with HTTP ${response.status}`)
+    }
+    return response
+  } catch (error) {
+    console.warn('[doubao] upstream request failed', {
+      hostname: safeHostname(url),
+      error: error instanceof Error ? error.message : String(error)
+    })
+    throw createDoubaoError('business', 502, 'UPSTREAM_ERROR', '上游请求失败，请稍后重试')
+  }
+}
+
+function safeHostname(value: string): string {
+  try {
+    return new URL(value).hostname
+  } catch {
+    return 'invalid'
   }
 }
 
 /** 取上游 HTML / 文本原文。 */
 export async function fetchText(url: string, opts: UpstreamRequest = {}): Promise<string> {
   const res = await request(url, opts)
-  return res.text()
+  return readLimitedText(res, MAX_RESPONSE_BYTES)
 }
 
 /** 取上游 JSON；解析失败按业务错误处理。 */
 export async function fetchJson<T = unknown>(url: string, opts: UpstreamRequest = {}): Promise<T> {
   const res = await request(url, opts)
   try {
-    return (await res.json()) as T
+    return JSON.parse(await readLimitedText(res, MAX_RESPONSE_BYTES)) as T
   } catch {
     throw createDoubaoError('business', 502, 'PARSE_FAILED', '上游返回数据格式异常，可能链接已失效')
   }

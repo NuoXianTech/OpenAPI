@@ -76,20 +76,22 @@ cp .env.example .env
 pnpm dev
 ```
 
-Before starting, replace both example secrets in `.env`. Generate independent values with:
+Before starting, configure `NUXT_AUTH_SECRET`. `NUXT_AUTH_API_KEY_SECRET` is only key-generation material; API keys themselves are stored in the `api_key` column in full and remain available to their owner for copying. Generate independent values with:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-The development server uses PGlite when no database mode is configured. On first startup, the server applies migrations and creates an administrator if none exists. The generated password is printed once to the server console; sign in at `/login` and complete the mandatory profile/password initialization.
+The development server uses PGlite when no database mode is configured. On first startup, the server applies migrations and creates an administrator if none exists. A generated initial password is printed once to the server log; sign in and complete the mandatory profile and password initialization immediately.
 
 ## Runtime configuration
 
 | Variable | Requirement | Description |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
-| `NUXT_AUTH_API_KEY_SECRET` | Required | Server-side API key secret. Use a distinct value. |
+| `NUXT_AUTH_API_KEY_SECRET` | Required | Generation material for new random API keys; it does not encrypt the stored `api_key` value. |
+| `NUXT_PROXY_TRUSTED_CIDRS` | Behind a reverse proxy | Direct proxy CIDRs that are allowed to supply `X-Forwarded-For`. |
+| `NUXT_PROXY_FORWARDED_HOPS` | Behind a reverse proxy | Number of trusted forwarded hops, normally `1` for one nginx proxy. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |
 | `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
 | `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |

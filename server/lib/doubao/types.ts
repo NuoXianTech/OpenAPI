@@ -1,4 +1,5 @@
 import { readQueryString } from '~~/server/utils/request-query'
+import { isHostnameWithin } from '~~/server/utils/safe-fetch'
 
 export interface DoubaoImage {
   url: string
@@ -28,11 +29,17 @@ export const VIDEO_SOURCE_LABELS = {
 type VideoSource = keyof typeof VIDEO_SOURCE_LABELS
 
 export function detectImageSource(url: string): ImageSource {
-  return url.includes('doubao.com') ? 'doubao' : 'qianwen'
+  const hostname = new URL(url).hostname
+  if (isHostnameWithin(hostname, 'doubao.com')) return 'doubao'
+  if (isHostnameWithin(hostname, 'qianwen.com')) return 'qianwen'
+  throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '仅支持豆包或千问分享链接')
 }
 
 export function detectVideoSource(url: string): VideoSource {
-  return url.includes('doubao.com') ? 'doubao' : 'yunque'
+  const hostname = new URL(url).hostname
+  if (isHostnameWithin(hostname, 'doubao.com')) return 'doubao'
+  if (isHostnameWithin(hostname, 'jianying.com')) return 'yunque'
+  throw createDoubaoError('input', 400, 'INVALID_PARAMETER', '仅支持豆包或剪映分享链接')
 }
 
 export interface DoubaoError extends Error {
@@ -93,8 +100,13 @@ export function parseMediaQuery(query: Record<string, unknown>): MediaQuery {
   if (!url) {
     throw createDoubaoError('input', 400, 'MISSING_PARAMETER', '缺少参数 url')
   }
-  if (!/^https?:\/\//i.test(url)) {
-    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', 'url 必须是合法的 http(s) 链接')
+  try {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.protocol !== 'https:' || parsedUrl.username || parsedUrl.password || (parsedUrl.port && parsedUrl.port !== '443')) {
+      throw new Error('unsafe URL')
+    }
+  } catch {
+    throw createDoubaoError('input', 400, 'INVALID_PARAMETER', 'url 必须是合法的 HTTPS 链接')
   }
   return { url, raw: isTruthy(query.raw) }
 }

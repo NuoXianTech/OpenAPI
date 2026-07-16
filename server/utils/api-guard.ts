@@ -7,16 +7,16 @@
 
 import type { H3Event } from 'h3'
 import { getHeader, getQuery, getRequestIP } from 'h3'
-import { and, eq, gte } from 'drizzle-orm'
-import { apiCallStats, apiKeys, users } from '~~/server/db/schema'
+import { eq } from 'drizzle-orm'
+import { apiKeys, users } from '~~/server/db/schema'
 import type { RateLimitWindow } from '~~/server/config/api-guard'
 import { API_GUARD_ERROR } from '~~/server/config/api-guard'
 import type { ApiGuardConfig, EndpointMatch, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { isRedisUnavailableError } from '~~/server/utils/redis'
-import { getLocalDayStart } from '~~/server/utils/local-time'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
+import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service'
 import { toNumber } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString } from '~~/server/utils/request-query'
@@ -50,9 +50,6 @@ type GateResult
     apiKey: ApiKeyRecord | null
   }
 
-const QUOTA_CACHE_TTL_MS = 1_000
-const quotaCache = new Map<number, { value: number, expiresAt: number }>()
-
 function readApiKeyFromEvent(event: H3Event): string {
   const headerKey = (getHeader(event, 'x-api-key') || '').toString().trim()
   if (headerKey) return headerKey
@@ -70,21 +67,6 @@ async function loadApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null
   const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, rawKey)).limit(1)
   return firstRow(res)
-}
-
-async function getTodayQuotaUsage(apiId: number): Promise<number> {
-  const cached = quotaCache.get(apiId)
-  const now = Date.now()
-  if (cached && cached.expiresAt > now) return cached.value
-
-  const todayStart = getLocalDayStart()
-  const rows = await db.select({ total: apiCallStats.totalCount })
-    .from(apiCallStats)
-    .where(and(eq(apiCallStats.apiId, apiId), gte(apiCallStats.statDate, todayStart)))
-    .limit(1)
-  const value = rows[0]?.total ?? 0
-  quotaCache.set(apiId, { value, expiresAt: now + QUOTA_CACHE_TTL_MS })
-  return value
 }
 
 function rateLimitHeaders(results: RateLimitResult[]): GateDeniedHeaders {
@@ -212,20 +194,6 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
     }
   }
 
-  if (api.dailyQuota > 0) {
-    try {
-      const used = await getTodayQuotaUsage(api.id)
-      if (used >= api.dailyQuota) {
-        return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED, apiKey }
-      }
-    } catch (err) {
-      console.error('[api-guard] quota check failed', {
-        apiId: api.id,
-        error: (err as Error).message
-      })
-    }
-  }
-
   if (effectiveCost > 0 && apiKey) {
     try {
       const userRow = await db.select({ credits: users.credits })
@@ -257,6 +225,35 @@ export async function runApiGuard({ event, api, match: _match, effectiveCost }: 
     quotaReservation = {
       apiKeyId: apiKey.id,
       amount: effectiveCost
+    }
+  }
+
+  if (api.dailyQuota > 0) {
+    try {
+      const reserved = await reserveApiDailyQuota(api.id, api.dailyQuota)
+      if (!reserved) {
+        if (quotaReservation) {
+          await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount)
+          quotaReservation = null
+        }
+        return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED, apiKey }
+      }
+    } catch (err) {
+      if (quotaReservation) {
+        await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount).catch((releaseError) => {
+          console.error('[api-guard] failed to release API key quota reservation', {
+            apiId: api.id,
+            apiKeyId: quotaReservation?.apiKeyId,
+            error: (releaseError as Error).message
+          })
+        })
+        quotaReservation = null
+      }
+      console.error('[api-guard] daily quota reservation failed', {
+        apiId: api.id,
+        error: (err as Error).message
+      })
+      return { passed: false, outcome: 'quota_unavailable', error: API_GUARD_ERROR.QUOTA_UNAVAILABLE, apiKey }
     }
   }
 

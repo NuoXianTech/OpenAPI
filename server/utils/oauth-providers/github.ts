@@ -6,6 +6,7 @@ const TOKEN_URL = 'https://github.com/login/oauth/access_token'
 const USERINFO_URL = 'https://api.github.com/user'
 const EMAILS_URL = 'https://api.github.com/user/emails'
 const SCOPES = ['read:user', 'user:email']
+const OAUTH_FETCH_OPTIONS = { timeout: 10_000, retry: 0 } as const
 
 /**
  * GitHub OAuth provider 实现。
@@ -39,7 +40,8 @@ export const githubProvider: OauthProviderModule = {
     }>(TOKEN_URL, {
       method: 'POST',
       body,
-      headers: { Accept: 'application/json' }
+      headers: { Accept: 'application/json' },
+      ...OAUTH_FETCH_OPTIONS
     })
 
     if (!response?.access_token) {
@@ -58,7 +60,7 @@ export const githubProvider: OauthProviderModule = {
       'User-Agent': 'OpenAPI-Auth'
     }
 
-    const profile = await $fetch<Record<string, unknown>>(USERINFO_URL, { headers })
+    const profile = await $fetch<Record<string, unknown>>(USERINFO_URL, { headers, ...OAUTH_FETCH_OPTIONS })
     if (!profile || typeof profile !== 'object') {
       throw createError({ statusCode: 502, message: 'github userinfo fetch failed' })
     }
@@ -66,7 +68,7 @@ export const githubProvider: OauthProviderModule = {
     let email = typeof profile.email === 'string' && profile.email ? profile.email : null
     if (!email) {
       try {
-        const emails = await $fetch<Array<{ email: string, primary: boolean, verified: boolean }>>(EMAILS_URL, { headers })
+        const emails = await $fetch<Array<{ email: string, primary: boolean, verified: boolean }>>(EMAILS_URL, { headers, ...OAUTH_FETCH_OPTIONS })
         const primary = emails.find(item => item.primary && item.verified) || emails.find(item => item.verified) || emails[0]
         email = primary?.email || null
       } catch {

@@ -43,6 +43,10 @@ export default defineNuxtConfig({
       secret: '',
       apiKeySecret: '',
     },
+    proxy: {
+      trustedCidrs: '',
+      forwardedHops: 1
+    },
     redis: {
       url: '',
       keyPrefix: 'openapi:',
@@ -67,6 +71,10 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-06-30',
   nitro: {
     preset: 'node-server',
+    compressPublicAssets: {
+      gzip: true,
+      brotli: true
+    },
     hooks: {
       async compiled(nitro) {
         await cp(
