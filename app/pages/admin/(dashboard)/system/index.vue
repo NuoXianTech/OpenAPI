@@ -183,11 +183,9 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="basicInformationSection.dirty.value"
-        :changed-count="basicInformationSection.changedCount.value"
         :saving="basicInformationSection.saving.value"
         :disabled="basicInformationSection.disabled.value"
         @save="basicInformationSection.save"
-        @reset="basicInformationSection.reset"
       />
     </DashboardSettingsSection>
 
@@ -307,11 +305,9 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="checkinSection.dirty.value"
-        :changed-count="checkinSection.changedCount.value"
         :saving="checkinSection.saving.value"
         :disabled="checkinSection.disabled.value || minMaxInvalid || fixedTimeInvalid"
         @save="checkinSection.save"
-        @reset="checkinSection.reset"
       />
     </DashboardSettingsSection>
   </div>

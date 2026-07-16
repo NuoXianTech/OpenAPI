@@ -199,11 +199,9 @@ async function submitTest() {
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="emailSection.dirty.value"
-        :changed-count="emailSection.changedCount.value"
         :saving="emailSection.saving.value"
         :disabled="emailSection.disabled.value"
         @save="emailSection.save"
-        @reset="emailSection.reset"
       />
     </DashboardSettingsSection>
 

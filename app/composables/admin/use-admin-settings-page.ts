@@ -475,11 +475,6 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
   const isOauthDirty = computed(() => oauthChangedCount.value > 0)
   const isOauthReady = computed(() => !providerFetch.loading.value && items.value.length === supportedProviders.length)
 
-  function resetOauthSettings(): void {
-    oauthPolicySection.reset()
-    syncAdminOauthProviderFormsFromItems(forms, items.value)
-  }
-
   async function saveOauthSettings(): Promise<void> {
     if (!isOauthReady.value || !isOauthDirty.value || isOauthSaving.value) return
     isOauthSaving.value = true
@@ -534,7 +529,6 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     oauthChangedCount,
     isOauthSaving,
     saveOauthSettings,
-    resetOauthSettings,
     copyCallback
   }
 }
