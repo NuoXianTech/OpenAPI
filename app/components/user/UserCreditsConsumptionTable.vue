@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import { VisArea, VisAxis, VisCrosshair, VisLine, VisTooltip, VisXYContainer } from '@unovis/vue'
 import type { UserCreditConsumptionDailyRow } from '#shared/types/user-credits'
 
 interface UserCreditsConsumptionTableProps {
@@ -7,74 +7,106 @@ interface UserCreditsConsumptionTableProps {
   loading?: boolean
 }
 
-withDefaults(defineProps<UserCreditsConsumptionTableProps>(), {
-  loading: false
-})
+const props = withDefaults(defineProps<UserCreditsConsumptionTableProps>(), { loading: false })
+const chartRef = useTemplateRef<HTMLElement | null>('chartRef')
+const { width } = useElementSize(chartRef)
 
-const columns: TableColumn<UserCreditConsumptionDailyRow>[] = [
-  { accessorKey: 'date', header: '日期' },
-  { accessorKey: 'consumedCredits', header: '消耗积分' },
-  { accessorKey: 'transactionCount', header: '消耗次数' },
-  { id: 'averageConsumption', header: '单次平均消耗' }
-]
-
-function formatConsumptionDate(date: string): string {
-  return new Intl.DateTimeFormat('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short'
-  }).format(new Date(`${date}T00:00:00`))
+interface TrendRow extends UserCreditConsumptionDailyRow {
+  label: string
+  fullLabel: string
 }
 
-function getAverageConsumption(row: UserCreditConsumptionDailyRow): number {
-  if (row.transactionCount === 0) return 0
-  return row.consumedCredits / row.transactionCount
-}
+const rows = computed<TrendRow[]>(() => props.rows.map(row => ({
+  ...row,
+  label: new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(`${row.date}T00:00:00`)),
+  fullLabel: new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(`${row.date}T00:00:00`))
+})))
+
+const x = (_row: TrendRow, index: number) => index
+const consumedAccessor = (row: TrendRow) => row.consumedCredits
+const xTickFormat = createChartIndexedTickFormatter(() => rows.value, row => row.label)
+const tooltipTemplate = (row: TrendRow | undefined) => row
+  ? renderChartTooltip({
+      title: row.fullLabel,
+      rows: [
+        { color: 'var(--ui-error)', label: '消耗积分', value: row.consumedCredits.toLocaleString() },
+        { color: 'var(--ui-primary)', label: '消耗次数', value: row.transactionCount.toLocaleString() }
+      ],
+      footer: [{ label: '单次平均', value: row.transactionCount ? (row.consumedCredits / row.transactionCount).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) : '0' }]
+    })
+  : ''
 </script>
 
 <template>
   <DashboardTableCard
     title="近 7 天积分消耗"
-    description="按自然日统计全部负向积分变动，无消耗日期以 0 补齐"
+    description="按自然日统计全部负向积分变动"
     icon="i-mdi-chart-timeline-variant"
   >
-    <DashboardDataTable
-      :data="rows"
-      :columns="columns"
-      :loading="loading"
-      :skeleton-rows="7"
-      empty-title="暂无积分消耗数据"
-      empty-description="最近 7 天还没有发生积分消耗"
-      empty-icon="i-mdi-chart-timeline-variant"
+    <div
+      ref="chartRef"
+      class="relative rounded-lg border border-default p-3 sm:p-4"
     >
-      <template #date-cell="{ row }">
-        <div class="flex flex-col">
-          <span class="font-medium text-highlighted">
-            {{ formatConsumptionDate(row.original.date) }}
-          </span>
-          <span class="text-xs text-muted tabular-nums">
-            {{ row.original.date }}
-          </span>
+      <div
+        v-if="rows.length === 0 && !loading"
+        class="flex h-72 items-center justify-center text-sm text-muted"
+      >
+        最近 7 天还没有发生积分消耗
+      </div>
+      <template v-else>
+        <VisXYContainer
+          :data="rows"
+          :width="width"
+          :padding="{ top: 20, right: 16, bottom: 28, left: 8 }"
+          class="h-72"
+        >
+          <VisArea
+            :x="x"
+            :y="consumedAccessor"
+            color="var(--ui-error)"
+            :opacity="0.1"
+          />
+          <VisLine
+            :x="x"
+            :y="consumedAccessor"
+            color="var(--ui-error)"
+            :line-width="2.5"
+          />
+          <VisAxis
+            type="y"
+            :tick-line="false"
+            :domain-line="false"
+            :grid-line="true"
+            :tick-format="formatChartIntegerTick"
+            :num-ticks="4"
+          />
+          <VisAxis
+            type="x"
+            :tick-line="false"
+            :domain-line="false"
+            :grid-line="false"
+            :tick-format="xTickFormat"
+            :num-ticks="7"
+          />
+          <VisCrosshair
+            :x="x"
+            :y="[consumedAccessor]"
+            :color="['var(--ui-error)']"
+            :template="tooltipTemplate"
+          />
+          <VisTooltip />
+        </VisXYContainer>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <UBadge
+            variant="soft"
+            color="error"
+            icon="i-mdi-circle"
+            class="rounded-md"
+          >
+            消耗积分
+          </UBadge>
         </div>
       </template>
-
-      <template #consumedCredits-cell="{ row }">
-        <span class="font-semibold text-error tabular-nums">
-          {{ row.original.consumedCredits.toLocaleString() }}
-        </span>
-      </template>
-
-      <template #transactionCount-cell="{ row }">
-        <span class="tabular-nums">
-          {{ row.original.transactionCount.toLocaleString() }} 笔
-        </span>
-      </template>
-
-      <template #averageConsumption-cell="{ row }">
-        <span class="tabular-nums text-muted">
-          {{ getAverageConsumption(row.original).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) }}
-        </span>
-      </template>
-    </DashboardDataTable>
+    </div>
   </DashboardTableCard>
 </template>
