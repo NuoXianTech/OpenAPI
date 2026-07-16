@@ -328,6 +328,7 @@ export function useAdminLoginLogList(
 interface AdminOperationLogRow {
   id: number
   userId: number | null
+  actorRole: 'user' | 'admin' | null
   actor: string | null
   action: string
   resourceType: string | null
@@ -372,7 +373,7 @@ interface UseAdminOperationLogListReturn {
   pageSize: Ref<number>
   refresh: () => Promise<void>
   reset: () => Promise<void>
-  resolveActorLabel: (action: string, userId: number | null) => string
+  resolveActorLabel: (action: string, userId: number | null, actorRole: AdminOperationLogRow['actorRole']) => string
   resolveActionLabel: (action: string) => string
   statusItems: Array<{ label: string, value: AdminOperationLogFilters['status'] }>
   total: Ref<number>
@@ -496,8 +497,11 @@ function resolveOperationLogActionLabel(action: string): string {
 
 export function resolveOperationLogActorLabel(
   action: string,
-  userId: number | null
+  userId: number | null,
+  actorRole: AdminOperationLogRow['actorRole'] = null
 ): string {
+  if (actorRole === 'admin') return userId ? formatAdminIdentity(userId) : '管理员'
+  if (actorRole === 'user') return userId ? formatUserIdentity(userId) : '用户'
   if (action.startsWith('admin.')) return userId ? formatAdminIdentity(userId) : '管理员'
   if (action.startsWith('user.')) return userId ? formatUserIdentity(userId) : '用户'
   return userId ? formatUserIdentity(userId) : '系统'

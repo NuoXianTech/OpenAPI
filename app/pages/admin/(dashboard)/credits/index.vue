@@ -104,6 +104,14 @@ function amountClass(amount: number): string {
       ? 'font-semibold tabular-nums text-error'
       : 'font-semibold tabular-nums text-muted'
 }
+
+function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): string {
+  if (!transaction.userId) return '-'
+
+  return transaction.userRole === 'admin'
+    ? formatAdminIdentity(transaction.userId)
+    : formatUserIdentity(transaction.userId)
+}
 </script>
 
 <template>
@@ -201,7 +209,7 @@ function amountClass(amount: number): string {
         <template #userId-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span>{{ row.original.userName || '已删除用户' }}</span>
-            <span class="text-muted">{{ row.original.userId ? formatUserIdentity(row.original.userId) : '-' }}</span>
+            <span class="text-muted">{{ formatCreditUserIdentity(row.original) }}</span>
           </div>
         </template>
         <template #reason-cell="{ row }">

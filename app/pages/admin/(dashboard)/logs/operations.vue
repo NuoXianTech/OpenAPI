@@ -153,7 +153,9 @@ const {
         <template #actor-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
-            <span class="text-muted">{{ resolveActorLabel(row.original.action, row.original.userId) }}</span>
+            <span class="text-muted">
+              {{ resolveActorLabel(row.original.action, row.original.userId, row.original.actorRole) }}
+            </span>
           </div>
         </template>
         <template #action-cell="{ row }">
@@ -243,7 +245,7 @@ const {
               <div>
                 {{ detailRow.actor || '匿名' }}
                 <span class="text-muted text-xs">
-                  · {{ resolveActorLabel(detailRow.action, detailRow.userId) }}
+                  · {{ resolveActorLabel(detailRow.action, detailRow.userId, detailRow.actorRole) }}
                 </span>
               </div>
             </div>

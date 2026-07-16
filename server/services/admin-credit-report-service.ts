@@ -41,6 +41,7 @@ async function getOverview(): Promise<AdminCreditOverview> {
       id: creditTransactions.id,
       userId: creditTransactions.userId,
       userName: users.username,
+      userRole: users.role,
       amount: creditTransactions.amount,
       balanceAfter: creditTransactions.balanceAfter,
       reason: creditTransactions.reason,
