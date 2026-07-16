@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION } from '#shared/config/admin-defaults'
 import { adminInitialProfileSchema } from '~~/server/schemas/admin'
@@ -8,7 +7,7 @@ import { createUserSession, defineAdminEventHandler, hashPassword } from '~~/ser
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminInitialProfileSchema)
   const current = await usersService.getById(admin.id)
 

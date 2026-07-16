@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
@@ -7,7 +6,7 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { id, email, displayName, role, isActive, isBanned, password } = await readZodBody(event, adminUpdateUserSchema)
   const target = await usersService.getById(id)
   if (!target) {

@@ -8,7 +8,6 @@
  *   - remark?: string                         备注
  */
 
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminAdjustCreditsSchema } from '~~/server/schemas/admin'
 import { creditService } from '~~/server/services/credit-service'
@@ -16,7 +15,7 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { userIds, operation, amount, remark } = await readZodBody(event, adminAdjustCreditsSchema)
 
   if (operation !== 'reset' && amount <= 0) {

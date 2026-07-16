@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import { apis } from '~~/server/db/schema'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
@@ -15,7 +14,7 @@ import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
  *   - scope：写入 apiKeys.scopes 的字符串，格式 `${pathVersion}.${code}`
  *   - 其它字段仅用于前端展示分组
  */
-export default defineAuthenticatedEventHandler(async (_event: H3Event) => {
+export default defineAuthenticatedEventHandler(async () => {
   const rows = await db.select({
     id: apis.id,
     code: apis.code,
