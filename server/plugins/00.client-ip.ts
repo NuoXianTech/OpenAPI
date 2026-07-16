@@ -9,19 +9,20 @@ import { ipInAnyCidr } from '#shared/utils/cidr'
 // 写入 event.context.clientAddress 后，全站 getRequestIP() 会短路返回它（见 h3 源码），
 // 无需改动任何调用点。注：此处假设恰好一层可信反代；若再叠 Cloudflare 等需另议。
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('request', (event: H3Event) => {
-    const runtimeConfig = useRuntimeConfig()
-    const proxyConfig = runtimeConfig.proxy as { trustedCidrs?: unknown, forwardedHops?: unknown }
-    const trustedCidrs = String(proxyConfig?.trustedCidrs ?? '')
-      .split(',')
-      .map(value => value.trim())
-      .filter(Boolean)
-    if (trustedCidrs.length === 0) return
+  const runtimeConfig = useRuntimeConfig()
+  const proxyConfig = runtimeConfig.proxy as { trustedCidrs?: unknown, forwardedHops?: unknown }
+  const trustedCidrs = String(proxyConfig?.trustedCidrs ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean)
+  if (trustedCidrs.length === 0) return
 
+  const forwardedHops = Math.min(Math.max(Number(proxyConfig?.forwardedHops) || 1, 1), 10)
+
+  nitroApp.hooks.hook('request', (event: H3Event) => {
     const remoteAddress = event.node.req.socket.remoteAddress || null
     if (!ipInAnyCidr(remoteAddress, trustedCidrs)) return
 
-    const forwardedHops = Math.min(Math.max(Number(proxyConfig?.forwardedHops) || 1, 1), 10)
     const forwardedAddresses = (getHeader(event, 'x-forwarded-for') || '')
       .split(',')
       .map(value => value.trim())

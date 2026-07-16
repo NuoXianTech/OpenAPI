@@ -2,6 +2,7 @@
 /// <reference path="../../.nuxt/types/api-manifest.d.ts" />
 
 import { randomBytes } from 'node:crypto'
+import { z } from 'zod'
 import { API_MANIFEST as RAW_API_MANIFEST } from '#api-manifest'
 import { INITIAL_ADMIN_PROFILE } from '#shared/config/admin-defaults'
 import { apis } from '~~/server/db/schema'
@@ -15,6 +16,7 @@ import type { ManifestApi } from '~~/server/types/api-guard'
 import { hashPassword } from '~~/server/utils/auth'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { getSqlState } from '~~/server/utils/database-error'
+import { closeRedis, getRedisConfig, initializeRedis } from '~~/server/utils/redis'
 
 const API_MANIFEST = RAW_API_MANIFEST as readonly ManifestApi[]
 
@@ -140,15 +142,36 @@ async function syncApiManifest(): Promise<void> {
   }
 }
 
-async function initializeServer(): Promise<void> {
-  getAuthSecret()
-  assertApiKeySecretConfigured()
+async function initializeRedisService(): Promise<void> {
+  const config = getRedisConfig()
+
+  try {
+    const client = await initializeRedis()
+    console.info(client ? '[redis] Connection ready.' : '[redis] Not configured; memory fallback active.')
+  } catch (error) {
+    if (config.required) throw error
+    console.warn('[redis] Initial connection failed; optional memory fallback remains active')
+  }
+}
+
+async function initializeDatabaseState(): Promise<void> {
   await migrateDatabase()
   await ensureInitialAdmin()
   await syncApiManifest()
 }
 
+async function initializeServer(): Promise<void> {
+  getAuthSecret()
+  assertApiKeySecretConfigured()
+  await Promise.all([
+    initializeRedisService(),
+    initializeDatabaseState()
+  ])
+}
+
 export default defineNitroPlugin((nitroApp) => {
+  // 统一服务端未自定义的 Zod 校验消息，避免 API 返回英文默认文案。
+  z.config(z.locales.zhCN())
   const initialization = initializeServer()
 
   // Nitro 会先开始监听，再执行异步插件任务。所有请求统一等待初始化完成，
@@ -164,4 +187,6 @@ export default defineNitroPlugin((nitroApp) => {
       console.error('[startup] Server initialization failed.', error)
       process.exit(1)
     })
+
+  nitroApp.hooks.hook('close', closeRedis)
 })

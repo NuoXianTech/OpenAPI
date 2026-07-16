@@ -32,8 +32,10 @@ import { apiKeyService } from '~~/server/services/api-key-service'
 import { apiService } from '~~/server/services/api-service'
 import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service'
 import { getAllowedMethods, getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
-import { toNumber } from '~~/server/utils/number'
+import { toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
+import { ensureRequestId } from '~~/server/utils/request-id'
+import { readRequestMeta } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString } from '~~/server/utils/request-query'
 
@@ -328,7 +330,22 @@ function setGateRejectionContext(
 }
 
 async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
-  const pathname = normalizePathname(getRequestURL(event).pathname)
+  const requestUrl = getRequestURL(event)
+  const pathname = normalizePathname(requestUrl.pathname)
+  const method = (event.method || 'GET').toUpperCase()
+  const requestMeta = readRequestMeta(event)
+  ensureRequestId(event)
+  event.context.apiStatsTracked = {
+    startedAt: Date.now(),
+    pathname,
+    method,
+    ip: requestMeta.ip,
+    requestSize: toNullableNonNegativeInteger(getHeader(event, 'content-length')),
+    userAgent: requestMeta.userAgent?.slice(0, 500) || null,
+    referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
+    queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
+  }
+
   const routeMatch = VERSION_CODE_PATTERN.exec(pathname)
   if (!routeMatch) return { status: 'unmatched' }
 
@@ -347,7 +364,6 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
     }
   }
 
-  const method = (event.method || 'GET').toUpperCase()
   const endpointMatch = matchEndpoint(pathVersion, code, pathname, method)
   if (!endpointMatch) {
     const allowedMethods = getAllowedMethods(pathVersion, code, pathname)
