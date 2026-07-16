@@ -1,5 +1,4 @@
 // 申请密码重置：发邮件到注册邮箱。无论邮箱是否存在都返回 200，避免泄露用户存在性。
-import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { requestPasswordResetSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
@@ -11,7 +10,7 @@ import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity
 import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '~~/server/utils/ban'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const settings = await siteSettingsService.getOrCreate()
 
   if (!settings.passwordResetEnabled) {

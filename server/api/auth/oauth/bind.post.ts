@@ -1,5 +1,4 @@
 // OAuth 待绑定身份 → 绑定到「已有账号」：窗口内账密验证账号归属后再 link，然后登录。
-import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { oauthBindSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
@@ -12,7 +11,7 @@ import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const pending = readPendingOauth(event)
   if (!pending) {
     throw createError({ statusCode: 410, message: '绑定会话已过期，请重新发起第三方登录' })

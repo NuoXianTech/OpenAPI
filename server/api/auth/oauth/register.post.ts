@@ -1,6 +1,5 @@
 // OAuth 待绑定身份 → 「新注册」：用户在窗口确认/填写邮箱后建号并绑定三方身份，
 // 随后按站点邮件激活策略：关闭激活则直接登录，开启则发验证邮件、账号待激活。
-import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { randomBytes } from 'node:crypto'
 import { oauthRegisterSchema } from '~~/server/schemas/auth'
@@ -33,7 +32,7 @@ async function pickAvailableUsername(base: string) {
   return `${sanitized}_${randomBytes(4).toString('hex')}`
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const pending = readPendingOauth(event)
   if (!pending) {
     throw createError({ statusCode: 410, message: '注册会话已过期，请重新发起第三方登录' })

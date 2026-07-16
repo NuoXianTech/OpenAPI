@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError, getHeader, getRequestIP } from 'h3'
 import { loginSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
@@ -9,7 +8,7 @@ import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity
 import { readZodBody } from '~~/server/utils/zod'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const body = await readZodBody(event, loginSchema)
   const emailOrUsername = body.email || body.username || ''
   const { password } = body
