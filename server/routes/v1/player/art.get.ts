@@ -21,7 +21,7 @@ import { openApiFail } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { isPlayerEngineEnabled } from '~~/server/lib/player/capability-config'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   if (!await isPlayerEngineEnabled('artplayer')) {
     return openApiFail(event, 403, 'PLAYER_ENGINE_DISABLED', 'ArtPlayer 播放器已被管理员关闭')
   }

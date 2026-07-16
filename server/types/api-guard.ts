@@ -73,8 +73,6 @@ export type GateOutcome
 export interface ApiStatsTarget {
   apiId: number
   apiPath: string
-  pathVersion: string
-  code: string
 }
 
 export interface ApiStatsTracked {
@@ -88,19 +86,10 @@ export interface ApiStatsTracked {
   queryString: string | null
 }
 
-interface ApiMetaContext {
-  api: ApiGuardConfig
-  manifest: ManifestApi
-  endpoint: ManifestEndpoint
-  params: Record<string, string>
-  startedAt: number
-}
-
 interface ApiKeyContext {
   id: number
   userId: number
   name: string
-  scopes: string[] | null
 }
 
 interface ApiKeyQuotaReservationContext {
@@ -130,7 +119,6 @@ declare module 'h3' {
   interface H3EventContext {
     apiStatsTarget?: ApiStatsTarget
     apiStatsTracked?: ApiStatsTracked
-    apiMeta?: ApiMetaContext
     apiKey?: ApiKeyContext | null
     apiBilling?: ApiBillingContext
     apiGateRejection?: ApiGateRejectionContext

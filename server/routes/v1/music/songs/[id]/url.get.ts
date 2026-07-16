@@ -18,4 +18,4 @@ async function handleMusicUrl(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMusicUrl)
+export default defineOpenApiEventHandler(handleMusicUrl)

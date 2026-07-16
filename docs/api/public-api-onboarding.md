@@ -11,7 +11,7 @@
 > | [公共接口业务能力声明规范](./public-api-capabilities.md) | **能力扩展**：接口自声明、平台配置与运行时读取 | 接口需要管理员控制业务行为时 |
 > | **本文** | **接入流程**：选形态 → 实现业务层 → 接路由 → 配计费 → 注册启用 → 验证 | 接一个新接口时 |
 
-「公共接口」特指 `server/routes/v{N}/<code>/**` 下、被 [modules/api-manifest.ts](../../modules/api-manifest.ts) 扫描、被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类对外 HTTP 接口。后台内部 API（`server/api/admin/**`、`server/api/user/**`）**不属于**本文范围。
+「公共接口」特指 `server/routes/v{N}/<code>/**` 下、被 [modules/api-manifest.ts](../../modules/api-manifest.ts) 扫描、被 [`defineOpenApiEventHandler`](../../server/utils/api-guard.ts) 治理（鉴权 / 限流 / 配额 / 计费）的那一类对外 HTTP 接口。后台内部 API（`server/api/admin/**`、`server/api/user/**`）**不属于**本文范围。
 
 ---
 
@@ -211,7 +211,7 @@ handler 应保持薄——把逻辑委托给 [§3](#3-业务实现层-serverlib-
 
 ## 5. 计费与失败标记
 
-扣费由 [api-gate](../../server/middleware/00.api-gate.ts#L89-L130) 按本次请求 method 在 `apis.methodCosts` 里查到金额，挂到 `event.context.apiBilling`，响应发出后结算。你在 handler 里要做的只是**正确表达成功 / 失败**，扣费会自动跟随：
+扣费由 [`defineOpenApiEventHandler`](../../server/utils/api-guard.ts) 按本次请求 method 在 `apis.methodCosts` 里查到金额，挂到 `event.context.apiBilling`，响应发出后结算。你在 handler 里要做的只是**正确表达成功 / 失败**，扣费会自动跟随：
 
 ```
 成功                       → openApiOk

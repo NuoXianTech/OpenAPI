@@ -9,4 +9,4 @@ async function handleMusicProviders(event: H3Event) {
   return openApiOk(event, { items, total: items.length })
 }
 
-export default defineEventHandler(handleMusicProviders)
+export default defineOpenApiEventHandler(handleMusicProviders)

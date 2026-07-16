@@ -24,4 +24,4 @@ async function handleMaoyanGlobalMovie(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMaoyanGlobalMovie)
+export default defineOpenApiEventHandler(handleMaoyanGlobalMovie)

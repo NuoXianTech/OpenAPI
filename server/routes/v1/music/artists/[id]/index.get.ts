@@ -19,4 +19,4 @@ async function handleArtistSongs(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleArtistSongs)
+export default defineOpenApiEventHandler(handleArtistSongs)

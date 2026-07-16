@@ -38,7 +38,7 @@ function parseBingImageType(query: Record<string, unknown>): BingImageType {
   return isBingImageType(rawType) ? rawType : DEFAULT_BING_IMAGE_TYPE
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   const query = getQuery(event) as Record<string, unknown>
   const encode = parseBingEncode(query)
   const type = parseBingImageType(query)

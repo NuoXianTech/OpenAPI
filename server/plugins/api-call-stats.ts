@@ -15,7 +15,7 @@ import { creditService } from '~~/server/services/credit-service'
 import { pendingChargeService } from '~~/server/services/pending-charge-service'
 import { shouldCharge } from '~~/server/utils/api-call-outcome'
 import { ensureRequestId } from '~~/server/utils/request-id'
-import { isGuardedPath, normalizePathname } from '~~/server/config/api-guard'
+import { VERSION_CODE_PATTERN, normalizePathname } from '~~/server/config/api-guard'
 import type { ApiStatsTracked } from '~~/server/types/api-guard'
 
 // 调用日志写入规则：
@@ -214,7 +214,7 @@ export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('request', (event: H3Event) => {
     const requestUrl = getRequestURL(event)
     const pathname = normalizePathname(requestUrl.pathname)
-    if (!isGuardedPath(pathname)) {
+    if (!VERSION_CODE_PATTERN.test(pathname)) {
       return
     }
 

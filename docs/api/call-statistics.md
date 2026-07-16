@@ -1,6 +1,6 @@
 # API 请求调用统计规范
 
-适用范围：`server/routes/v{N}/**` 下所有被 [server/middleware/00.api-gate.ts](../../server/middleware/00.api-gate.ts) 治理的对外 API。后台内部接口（`server/api/admin/**`、`server/api/user/**` 等）不在本规范覆盖范围内。
+适用范围：`server/routes/v{N}/**` 下所有被 [`defineOpenApiEventHandler`](../../server/utils/api-guard.ts) 治理的对外 API。后台内部接口（`server/api/admin/**`、`server/api/user/**` 等）不在本规范覆盖范围内。
 
 本文只定义“调用统计”口径，不定义扣费规则。扣费链路见 [API 计费规则](../platform/billing-rules.md)，对外 API 目录与注册规范见 [对外接口落地规范](./public-api-conventions.md)。
 

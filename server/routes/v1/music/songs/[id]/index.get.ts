@@ -17,4 +17,4 @@ async function handleRequest(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleRequest)
+export default defineOpenApiEventHandler(handleRequest)

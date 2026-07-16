@@ -12,7 +12,7 @@ import {
   getEnabledDoubaoVideoSources
 } from '~~/server/lib/doubao/capability-config'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   const [enabledImageSources, enabledVideoSources] = await Promise.all([
     getEnabledDoubaoImageSources(),
     getEnabledDoubaoVideoSources()

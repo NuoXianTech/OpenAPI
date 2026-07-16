@@ -32,4 +32,4 @@ async function handleMaoyanRealtime(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMaoyanRealtime)
+export default defineOpenApiEventHandler(handleMaoyanRealtime)

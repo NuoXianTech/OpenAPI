@@ -26,7 +26,7 @@ import {
 import { doubaoVideoParse, yunqueVideoParse } from '~~/server/lib/doubao/video'
 import { getEnabledDoubaoVideoSources } from '~~/server/lib/doubao/capability-config'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   try {
     const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
     const source = detectVideoSource(url)

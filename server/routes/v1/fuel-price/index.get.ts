@@ -36,7 +36,7 @@ function readBooleanFlag(value: unknown): boolean {
   return ['1', 'true', 'yes', 'y', 'on'].includes(normalized)
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   const query = getQuery(event) as Record<string, unknown>
   const regionKeyword = readQueryString(query.region, DEFAULT_FUEL_PRICE_REGION).trim() || DEFAULT_FUEL_PRICE_REGION
   const region = findFuelRegion(regionKeyword)

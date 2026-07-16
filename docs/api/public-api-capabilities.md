@@ -106,10 +106,11 @@ export async function getExampleCapabilities() {
 
 ```ts [server/routes/v1/example/index.get.ts]
 import { getExampleCapabilities } from '~~/server/lib/example/capability-config'
+import { openApiOk } from '~~/server/utils/open-api-response'
 
-export default defineEventHandler(async () => {
+export default defineOpenApiEventHandler(async (event) => {
   const capabilities = await getExampleCapabilities()
-  return { isPreviewEnabled: capabilities.isPreviewEnabled }
+  return openApiOk(event, { isPreviewEnabled: capabilities.isPreviewEnabled })
 })
 ```
 
