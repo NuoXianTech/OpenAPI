@@ -1,9 +1,8 @@
-import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
 import { apiService } from '~~/server/services/api-service'
 import { readQueryNumber, readQueryString } from '~~/server/utils/request-query'
 
-export default defineEventHandler((event: H3Event) => {
+export default defineEventHandler((event) => {
   const query = getQuery(event)
   return apiService.listPublicApis({
     keyword: readQueryString(query.keyword).trim(),
