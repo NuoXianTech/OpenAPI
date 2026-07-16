@@ -11,7 +11,7 @@ export type CreditReason
 
 export type CreditReasonFilter = CreditReason | 'all'
 
-export interface CreditReasonMeta {
+interface CreditReasonMeta {
   label: string
   color: 'success' | 'error' | 'warning' | 'info' | 'neutral'
 }

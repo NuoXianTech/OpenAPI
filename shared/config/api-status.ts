@@ -21,7 +21,7 @@ export const API_AUTO_STATUS_CACHE_TTL_MS = 30_000
 export const API_AUTO_STATUS_WINDOW_MS = 24 * 60 * 60 * 1_000
 export const API_AUTO_STATUS_MIN_SUCCESS_RATE = 0.8
 
-export interface ApiStatusSelectItem {
+interface ApiStatusSelectItem {
   label: string
   value: number
 }
