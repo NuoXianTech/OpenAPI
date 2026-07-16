@@ -10,7 +10,7 @@ const MAX_BATCH_COUNT = 5
 
 function parseSecret(raw: string): Buffer {
   if (!raw) {
-    throw new Error('API_KEY_SECRET is not configured')
+    throw new Error('NUXT_AUTH_API_KEY_SECRET is required')
   }
   if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === SECRET_BYTES * 2) {
     return Buffer.from(raw, 'hex')
@@ -23,7 +23,7 @@ function parseSecret(raw: string): Buffer {
   if (utf8.length === SECRET_BYTES) {
     return utf8
   }
-  throw new Error(`API_KEY_SECRET must be ${SECRET_BYTES} bytes (hex / base64url / utf-8)`)
+  throw new Error(`NUXT_AUTH_API_KEY_SECRET must be ${SECRET_BYTES} bytes (hex / base64url / utf-8)`)
 }
 
 let cachedSecret: Buffer | null = null
