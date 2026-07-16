@@ -29,23 +29,29 @@ export interface FriendLinkItem {
   isActive: boolean
 }
 
-const MESSAGE_LEVEL_STYLE: Record<MessageLevel, { color: MessageLevelMeta['color'], icon: string }> = {
+const MESSAGE_LEVEL_META: Record<MessageLevel, Omit<MessageLevelMeta, 'label'>> = {
   info: { color: 'info', icon: 'i-mdi-information-outline' },
   success: { color: 'success', icon: 'i-mdi-check-circle-outline' },
   warning: { color: 'warning', icon: 'i-mdi-alert-outline' },
   critical: { color: 'error', icon: 'i-mdi-alert-circle-outline' }
 }
 
-export const NOTIFICATION_LEVEL_META: Record<MessageLevel, MessageLevelMeta> = {
-  info: { ...MESSAGE_LEVEL_STYLE.info, label: '通知' },
-  success: { ...MESSAGE_LEVEL_STYLE.success, label: '成功' },
-  warning: { ...MESSAGE_LEVEL_STYLE.warning, label: '提醒' },
-  critical: { ...MESSAGE_LEVEL_STYLE.critical, label: '紧急' }
+function createMessageLevelMeta(labels: Record<MessageLevel, string>): Record<MessageLevel, MessageLevelMeta> {
+  return Object.fromEntries(
+    MESSAGE_LEVELS.map(level => [level, { ...MESSAGE_LEVEL_META[level], label: labels[level] }])
+  ) as Record<MessageLevel, MessageLevelMeta>
 }
 
-export const ANNOUNCEMENT_LEVEL_META: Record<MessageLevel, MessageLevelMeta> = {
-  info: { ...MESSAGE_LEVEL_STYLE.info, label: '公告' },
-  success: { ...MESSAGE_LEVEL_STYLE.success, label: '通知' },
-  warning: { ...MESSAGE_LEVEL_STYLE.warning, label: '提醒' },
-  critical: { ...MESSAGE_LEVEL_STYLE.critical, label: '紧急' }
-}
+export const NOTIFICATION_LEVEL_META = createMessageLevelMeta({
+  info: '通知',
+  success: '成功',
+  warning: '提醒',
+  critical: '紧急'
+})
+
+export const ANNOUNCEMENT_LEVEL_META = createMessageLevelMeta({
+  info: '公告',
+  success: '通知',
+  warning: '提醒',
+  critical: '紧急'
+})
