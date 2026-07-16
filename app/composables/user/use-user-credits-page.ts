@@ -103,7 +103,7 @@ export function useUserCreditsPage() {
 
   const {
     data: checkin,
-    loading: checkinLoading,
+    status: checkinStatus,
     refresh: fetchCheckinStatus
   } = usePrivateResource<CheckinStatus | null>({
     path: '/api/user/credits/checkin',
@@ -195,7 +195,7 @@ export function useUserCreditsPage() {
     resetFilters: txns.reset,
     // 签到兑换 tab
     checkin,
-    checkinLoading,
+    checkinStatus,
     isCheckingIn,
     performCheckin,
     fetchCheckinStatus,
