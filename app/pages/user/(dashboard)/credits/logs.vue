@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import { useUserCreditsPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/use-user-credits-page'
+import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 const {
   filters,
@@ -55,45 +56,59 @@ function amountClass(amt: number) {
   if (amt < 0) return 'text-error font-semibold tabular-nums'
   return 'text-muted tabular-nums'
 }
+
+async function resetCreditFilters() {
+  await resetFilters()
+}
 </script>
 
 <template>
   <div class="space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-1.5">
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        @apply="applyFilters"
+        @reset="resetCreditFilters"
+      >
+        <UFormField label="类型">
+          <USelect
+            v-model="filters.reason"
+            :items="reasonItems"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField label="方向">
+          <USelect
+            v-model="filters.direction"
+            :items="directionItems"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
+      <UButton
+        icon="i-mdi-refresh"
+        color="neutral"
+        variant="outline"
+        :loading="loading"
+        @click="fetchTransactions"
+      >
+        刷新
+      </UButton>
+    </div>
+
     <DashboardTableCard
       title="积分流水"
       icon="i-mdi-format-list-bulleted"
       :total="total"
     >
-      <template #actions>
-        <AdminFilterPopover
-          :active-count="activeFilterCount"
-          @apply="applyFilters"
-          @reset="resetFilters"
-        >
-          <UFormField label="类型">
-            <USelect
-              v-model="filters.reason"
-              :items="reasonItems"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField label="方向">
-            <USelect
-              v-model="filters.direction"
-              :items="directionItems"
-              class="w-full"
-            />
-          </UFormField>
-        </AdminFilterPopover>
-      </template>
-
       <DashboardDataTable
         v-model:page="page"
+        v-model:page-size="pageSize"
         :data="items"
         :columns="columns"
         :loading="loading"
-        :page-size="pageSize"
         :total="total"
+        :page-size-items="PAGE_SIZE_ITEMS"
         :fixed="false"
         empty-title="暂无流水记录"
         empty-icon="i-mdi-format-list-bulleted"
