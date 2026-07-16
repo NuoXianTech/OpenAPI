@@ -1,12 +1,11 @@
 // 解绑当前用户的第三方账号绑定
-import type { H3Event } from 'h3'
 import { createError, getRouterParam } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
+export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
   if (!provider || !isSupportedOauthProvider(provider)) {
     throw createError({ statusCode: 404, message: 'provider not supported' })

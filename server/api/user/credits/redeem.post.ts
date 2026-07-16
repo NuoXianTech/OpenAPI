@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { userRedeemCodeSchema } from '~~/server/schemas/user'
 import { isRedemptionError, redemptionService } from '~~/server/services/redemption-service'
@@ -16,7 +15,7 @@ const REDEEM_ERROR_STATUS: Record<string, number> = {
   USER_NOT_FOUND: 404
 }
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
+export default defineAuthenticatedEventHandler(async (event, user) => {
   const { code } = await readZodBody(event, userRedeemCodeSchema)
 
   const ip = getRequestIP(event) || null

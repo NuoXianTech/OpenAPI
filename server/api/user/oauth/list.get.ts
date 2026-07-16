@@ -1,5 +1,4 @@
 // 列出当前用户的所有第三方绑定 + 站点上启用的 provider 元信息（供前端渲染绑定/解绑按钮）
-import type { H3Event } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
@@ -20,7 +19,7 @@ interface BoundOauthAccount {
   lastLoginAt: Date | string | null
 }
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
+export default defineAuthenticatedEventHandler(async (_event, authUser) => {
   const [bound, enabled] = await Promise.all([
     oauthAccountService.listSafeByUserId(authUser.id),
     oauthProviderService.listEnabledProviders()
