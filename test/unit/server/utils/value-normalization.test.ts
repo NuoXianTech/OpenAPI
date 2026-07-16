@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { getSqlState } from '~~/server/utils/database-error'
 import { toIsoString, toNullableIsoString } from '~~/server/utils/date'
-import { clampInteger, toInteger, toNullableNumber, toNumber } from '~~/server/utils/number'
+import {
+  clampInteger,
+  toInteger,
+  toNullableNonNegativeInteger,
+  toNullableNumber,
+  toNumber
+} from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
 
 describe('getSqlState', () => {
@@ -62,6 +68,13 @@ describe('number utilities', () => {
     expect(toInteger('bad', 3)).toBe(3)
     expect(clampInteger(99, 1, 10, 5)).toBe(10)
     expect(clampInteger('bad', 1, 10, 5)).toBe(5)
+  })
+
+  it('normalizes optional non-negative integers', () => {
+    expect(toNullableNonNegativeInteger(['12.8'])).toBe(12)
+    expect(toNullableNonNegativeInteger('')).toBeNull()
+    expect(toNullableNonNegativeInteger(-1)).toBeNull()
+    expect(toNullableNonNegativeInteger('bad')).toBeNull()
   })
 })
 

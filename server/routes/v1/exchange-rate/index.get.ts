@@ -50,4 +50,4 @@ async function handleExchangeRate(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleExchangeRate)
+export default defineOpenApiEventHandler(handleExchangeRate)

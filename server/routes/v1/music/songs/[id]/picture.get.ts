@@ -18,4 +18,4 @@ async function handleMusicPicture(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMusicPicture)
+export default defineOpenApiEventHandler(handleMusicPicture)

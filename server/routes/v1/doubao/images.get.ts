@@ -26,7 +26,7 @@ import {
 import { doubaoImageParse, qianwenImageParse } from '~~/server/lib/doubao/image'
 import { getEnabledDoubaoImageSources } from '~~/server/lib/doubao/capability-config'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   try {
     const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
     const source = detectImageSource(url)

@@ -11,7 +11,7 @@ import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { listAlgorithms } from '~~/server/lib/crypto/registry'
 import { getEnabledCryptoAlgorithmNames } from '~~/server/lib/crypto/capability-config'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   ensureCryptoRegistered()
   const enabledAlgorithmNames = await getEnabledCryptoAlgorithmNames()
   const algorithms = listAlgorithms()

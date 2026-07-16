@@ -102,6 +102,20 @@ let sqlClient: PostgresClient | undefined
 let pgliteClient: PgliteClient | undefined
 let database: Database | undefined
 
+export async function closeDatabase(): Promise<void> {
+  const activeSqlClient = sqlClient
+  const activePgliteClient = pgliteClient
+
+  sqlClient = undefined
+  pgliteClient = undefined
+  database = undefined
+
+  await Promise.all([
+    activeSqlClient?.end({ timeout: 5 }),
+    activePgliteClient?.close()
+  ])
+}
+
 function getDb() {
   const driver = getDatabaseDriver()
 

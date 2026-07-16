@@ -16,7 +16,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:unit": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:run": "pnpm test:unit && pnpm test:integration"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.5.4",
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@iconify-json/mdi": "^1.2.3",
     "@nuxt/eslint": "1.16.0",
+    "@nuxt/test-utils": "^4.0.3",
     "@types/fontkit": "^2.0.9",
     "@types/node": "^24.13.2",
     "@types/nodemailer": "^8.0.1",

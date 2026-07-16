@@ -71,6 +71,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2026-06-30',
   nitro: {
     preset: 'node-server',
+    errorHandler: '~~/server/error.ts',
     compressPublicAssets: {
       gzip: true,
       brotli: true

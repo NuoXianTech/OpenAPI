@@ -27,4 +27,4 @@ async function handleMusicSearch(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMusicSearch)
+export default defineOpenApiEventHandler(handleMusicSearch)

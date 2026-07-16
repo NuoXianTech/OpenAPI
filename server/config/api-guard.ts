@@ -2,10 +2,6 @@ import { API_STATUS } from '../../shared/config/api-status'
 
 export const VERSION_CODE_PATTERN = /^\/(v\d+)\/([^/?#]+)/
 
-export function isGuardedPath(pathname: string): boolean {
-  return VERSION_CODE_PATTERN.test(pathname)
-}
-
 export function normalizePathname(pathname: string): string {
   if (pathname.length > 1 && pathname.endsWith('/')) return pathname.slice(0, -1)
   return pathname

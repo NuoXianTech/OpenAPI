@@ -34,7 +34,7 @@ function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED'
   return openApiBizFail(event, 422, bizCode, message)
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   ensureCryptoRegistered()
   const name = (getRouterParam(event, 'name') || '').trim().toLowerCase()
   if (!name) {

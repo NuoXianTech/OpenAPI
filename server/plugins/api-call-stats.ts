@@ -8,15 +8,13 @@
  */
 
 import type { H3Event } from 'h3'
-import { getHeader, getRequestIP, getRequestURL } from 'h3'
 import { apiCallService } from '~~/server/services/api-call-service'
 import { apiKeyService } from '~~/server/services/api-key-service'
 import { creditService } from '~~/server/services/credit-service'
 import { pendingChargeService } from '~~/server/services/pending-charge-service'
 import { shouldCharge } from '~~/server/utils/api-call-outcome'
-import { ensureRequestId } from '~~/server/utils/request-id'
-import { isGuardedPath, normalizePathname } from '~~/server/config/api-guard'
 import type { ApiStatsTracked } from '~~/server/types/api-guard'
+import { toNullableNonNegativeInteger } from '~~/server/utils/number'
 
 // 调用日志写入规则：
 //   - DO_NOT_WRITE_LOG_OUTCOMES：完全不写 apiCalls 行
@@ -43,25 +41,10 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'scope_denied'
 ])
 
-function parseOptionalInt(value: string | string[] | number | null | undefined) {
-  const normalized = Array.isArray(value) ? value[0] : value
-  if (normalized === null || normalized === undefined || normalized === '') {
-    return null
-  }
-
-  const parsed = Number(normalized)
-  if (!Number.isFinite(parsed)) {
-    return null
-  }
-
-  const intValue = Math.trunc(parsed)
-  return intValue >= 0 ? intValue : null
-}
-
 async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
   const response = event.node?.res
   const statusCode = Math.trunc(response?.statusCode || 200)
-  const responseSize = parseOptionalInt(
+  const responseSize = toNullableNonNegativeInteger(
     response?.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
@@ -211,27 +194,6 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 }
 
 export default defineNitroPlugin((nitroApp) => {
-  nitroApp.hooks.hook('request', (event: H3Event) => {
-    const requestUrl = getRequestURL(event)
-    const pathname = normalizePathname(requestUrl.pathname)
-    if (!isGuardedPath(pathname)) {
-      return
-    }
-
-    ensureRequestId(event)
-
-    event.context.apiStatsTracked = {
-      startedAt: Date.now(),
-      pathname,
-      method: (event.method || 'GET').toUpperCase(),
-      ip: getRequestIP(event) || null,
-      requestSize: parseOptionalInt(getHeader(event, 'content-length')),
-      userAgent: (getHeader(event, 'user-agent') || null)?.slice(0, 500) || null,
-      referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
-      queryString: requestUrl.search ? requestUrl.search.slice(1, 2001) : null
-    }
-  })
-
   nitroApp.hooks.hook('afterResponse', (event: H3Event) => {
     const tracked = event.context.apiStatsTracked
     if (!tracked) {

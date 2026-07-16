@@ -50,7 +50,7 @@ type OpenApiBodyResult<T>
  * ```
  *
  * code 默认 'INVALID_REQUEST_BODY'，可经 opts.code 覆盖；message 取 zod 第一个 issue
- * （全局 zhCN locale 下已是中文，见 plugins 的 z.config(z.locales.zhCN())）。
+ * （全局 zhCN locale 下已是中文，见启动插件中的 z.config(z.locales.zhCN())）。
  */
 export async function readOpenApiBody<S extends z.ZodType>(
   event: H3Event,

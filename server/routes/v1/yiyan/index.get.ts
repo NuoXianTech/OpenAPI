@@ -18,7 +18,7 @@
  *   - charset 只决定字节编码（gbk 走 iconv），不改变结构
  *   - 参数错误（400）/ 未命中（404）一律走 openApiFail 标准壳，不受 encode 影响
  *
- * 注：gate 中间件要求后台已登记 (v1, yiyan)，否则 403 API_NOT_REGISTERED；
+ * 注：gate handler 要求后台已登记 (v1, yiyan)，否则 403 API_NOT_REGISTERED；
  * 作为公共接口应配 isApiKey=false 且 methodCosts.GET=0（免鉴权免扣费）。
  */
 
@@ -57,7 +57,7 @@ function parseLength(value: unknown, fallback: number): number {
   return normalized !== undefined && normalized >= 0 ? Math.floor(normalized) : fallback
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event) => {
   const query = getQuery(event)
 
   const typeRaw = readQueryString(query.type).trim().toLowerCase()

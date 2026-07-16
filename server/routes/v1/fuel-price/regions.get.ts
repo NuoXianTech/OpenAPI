@@ -8,7 +8,7 @@ import { openApiOk } from '~~/server/utils/open-api-response'
 import { readQueryString } from '~~/server/utils/request-query'
 import { listFuelRegions } from '~~/server/lib/fuel-price/price'
 
-export default defineEventHandler((event: H3Event) => {
+export default defineOpenApiEventHandler((event: H3Event) => {
   const query = getQuery(event) as Record<string, unknown>
   const keyword = readQueryString(query.keyword).trim()
   const regions = listFuelRegions()

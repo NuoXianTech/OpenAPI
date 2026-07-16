@@ -5,7 +5,8 @@ import {
   readQueryNumber,
   readQueryOption,
   readQueryString,
-  readQueryText
+  readQueryText,
+  sanitizeQueryStringForLog
 } from '~~/server/utils/request-query'
 
 describe('request query utilities', () => {
@@ -40,5 +41,19 @@ describe('request query utilities', () => {
     expect(readQueryOption('bind', options)).toBe('bind')
     expect(readQueryOption('logout', options)).toBeUndefined()
     expect(readQueryOption(' bind ', options)).toBe('bind')
+  })
+
+  it('redacts sensitive values before persisting query logs', () => {
+    const sanitized = sanitizeQueryStringForLog(
+      '?keyword=music&apikey=secret&access_token=access&API-KEY=second&keyword=video'
+    )
+    const query = new URLSearchParams(sanitized ?? '')
+
+    expect(query.getAll('keyword')).toEqual(['music', 'video'])
+    expect(query.get('apikey')).toBe('[REDACTED]')
+    expect(query.get('access_token')).toBe('[REDACTED]')
+    expect(query.get('API-KEY')).toBe('[REDACTED]')
+    expect(sanitized).not.toContain('secret')
+    expect(sanitizeQueryStringForLog('')).toBeNull()
   })
 })

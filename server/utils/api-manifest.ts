@@ -75,6 +75,21 @@ export function matchEndpoint(
   return null
 }
 
+export function getAllowedMethods(
+  pathVersion: string,
+  code: string,
+  pathname: string
+): string[] {
+  const compiled = ensureIndex().get(`${pathVersion}:${code}`)
+  if (!compiled) return []
+
+  return Array.from(new Set(
+    compiled.endpoints
+      .filter(item => item.endpoint.method !== 'ANY' && item.regex.test(pathname))
+      .map(item => item.endpoint.method)
+  )).sort()
+}
+
 function toEndpointMatch(endpoint: ManifestEndpoint, match: RegExpExecArray): EndpointMatch {
   const params: Record<string, string> = {}
   endpoint.paramNames.forEach((name, i) => {

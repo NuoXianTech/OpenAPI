@@ -21,4 +21,4 @@ async function handleMusicLyrics(event: H3Event) {
   }
 }
 
-export default defineEventHandler(handleMusicLyrics)
+export default defineOpenApiEventHandler(handleMusicLyrics)
