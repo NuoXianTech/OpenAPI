@@ -38,6 +38,7 @@ CREATE TABLE "users" (
 	"display_name" varchar(100),
 	"email" varchar(255) NOT NULL,
 	"password_hash" varchar(255) NOT NULL,
+	"locale" varchar(16),
 	"credits" integer DEFAULT 0 NOT NULL,
 	"is_active" boolean DEFAULT false NOT NULL,
 	"is_banned" boolean DEFAULT false NOT NULL,
