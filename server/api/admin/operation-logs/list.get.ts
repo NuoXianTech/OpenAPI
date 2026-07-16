@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { operationLogService, type OperationLogStatus } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
@@ -7,7 +6,7 @@ import { readQueryDate, readQueryNumber, readQueryOption, readQueryText } from '
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
 const ACTOR_KINDS = ['admin', 'user'] as const
 
-export default defineAdminEventHandler((event: H3Event) => {
+export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const actorKind = readQueryOption(query.actorKind, ACTOR_KINDS)

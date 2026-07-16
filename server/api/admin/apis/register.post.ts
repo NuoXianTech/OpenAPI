@@ -6,7 +6,6 @@
  * - 不存在则使用 DEFAULT_API_REGISTRATION + overrides 入库
  */
 
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminRegisterApiSchema } from '~~/server/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
@@ -17,7 +16,7 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { pathVersion, code, overrides } = await readZodBody(event, adminRegisterApiSchema)
 
   const manifestApi = API_MANIFEST.find(a => a.pathVersion === pathVersion && a.code === code)

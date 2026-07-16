@@ -1,5 +1,4 @@
 // 登录用户请求变更邮箱：发确认链接到"新"邮箱。
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { userRequestEmailChangeSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
@@ -9,7 +8,7 @@ import { sendEmailChangeEmail } from '~~/server/utils/email'
 import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
+export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const { currentPassword, newEmail } = await readZodBody(event, userRequestEmailChangeSchema)
 
   if (newEmail === authUser.email.toLowerCase()) {

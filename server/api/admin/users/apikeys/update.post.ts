@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateUserApiKeySchema } from '~~/server/schemas/admin'
 import { apiKeyService } from '~~/server/services/api-key-service'
@@ -6,7 +5,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const input = await readZodBody(event, adminUpdateUserApiKeySchema)
   const { id, ...patch } = input
 

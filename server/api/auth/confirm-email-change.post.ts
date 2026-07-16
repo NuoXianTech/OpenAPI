@@ -1,12 +1,11 @@
 // 消费 change_email token，更新用户 email。POST 携带 userId / token，避免邮件预扫描或浏览器预取误触发副作用。
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { confirmEmailChangeSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const { userId, token } = await readZodBody(event, confirmEmailChangeSchema)
 
   const user = await usersService.getById(userId)

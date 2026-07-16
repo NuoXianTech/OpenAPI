@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import {
   adminCreditReportService,
   type AdminCreditBalanceFilter
@@ -9,7 +8,7 @@ import { readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils
 
 const BALANCE_FILTERS: AdminCreditBalanceFilter[] = ['all', 'positive', 'zero', 'negative']
 
-export default defineAdminEventHandler((event: H3Event) => {
+export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
   const userId = readQueryNumber(query.userId)
 

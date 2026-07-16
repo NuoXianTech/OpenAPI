@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError, getQuery, getRouterParam, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
@@ -12,7 +11,7 @@ import { readQueryOption, readQueryString } from '~~/server/utils/request-query'
 
 const OAUTH_FLOW_MODES = ['login', 'bind'] as const
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const provider = (getRouterParam(event, 'provider') || '').toLowerCase()
   if (!provider || !isSupportedOauthProvider(provider)) {
     throw createError({ statusCode: 404, message: 'provider not supported' })

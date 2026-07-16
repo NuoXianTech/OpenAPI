@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '~~/server/db/schema'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
@@ -8,7 +7,7 @@ import type { UserDashboardData, UserDashboardHourlyPoint, UserDashboardTrendPoi
 
 const TREND_DAYS = 7
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, user): Promise<UserDashboardData> => {
+export default defineAuthenticatedEventHandler(async (event, user): Promise<UserDashboardData> => {
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
 
   const userId = user.id

@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { and, eq } from 'drizzle-orm'
 import { apis } from '~~/server/db/schema'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
@@ -10,7 +9,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
  * 不再按 status=1 过滤：status 是运行状态（维护/废弃/未知），不应限制 Key 配置面。
  * orphan 接口（源文件已被物理删除）自动被 isEnabled=false 排除。
  */
-export default defineAdminEventHandler(async (_event: H3Event) => {
+export default defineAdminEventHandler(async () => {
   const rows = await db.select({
     id: apis.id,
     code: apis.code,

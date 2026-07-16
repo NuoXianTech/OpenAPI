@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminUpdateOauthProviderSchema } from '~~/server/schemas/admin'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
@@ -8,7 +7,7 @@ import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminUpdateOauthProviderSchema)
   const { provider } = body
   if (!isSupportedOauthProvider(provider)) {

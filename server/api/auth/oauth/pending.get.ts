@@ -1,6 +1,5 @@
 // 回读「待处理 OAuth 身份」供 /oauth/complete 窗口渲染。
 // 仅暴露展示用字段，不返回 providerUserId；由持有签名 pending cookie 者（刚走完 OAuth 流程）访问。
-import type { H3Event } from 'h3'
 import { readPendingOauth } from '~~/server/utils/oauth-pending'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { usersService } from '~~/server/services/user-service'
@@ -10,7 +9,7 @@ function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
 }
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const pending = readPendingOauth(event)
   if (!pending) {
     return { pending: false as const }

@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError, getRequestIP } from 'h3'
 import { registerSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
@@ -17,7 +16,7 @@ import { rollbackCreatedUser } from '~~/server/utils/registration'
 // 响应里的 verificationRequired 取决于站点是否开启邮件激活：同一激活模式下所有分支返回值一致，
 // 不会因"是否需要验证"泄露账号是否存在。
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const settings = await siteSettingsService.getOrCreate()
 
   // 邮件激活总开关：开启=注册后须邮件验证；关闭=注册即激活、不发验证邮件

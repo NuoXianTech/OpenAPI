@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { adminSendNotificationSchema } from '~~/server/schemas/admin'
 import { notificationService } from '~~/server/services/notification-service'
@@ -6,7 +5,7 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminSendNotificationSchema)
   const { title, content } = body
   const audience = body.audience ?? 'specific'

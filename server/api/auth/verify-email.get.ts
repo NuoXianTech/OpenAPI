@@ -1,11 +1,10 @@
-import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { usersService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
 import { readQueryString, readRequiredQueryNumber } from '~~/server/utils/request-query'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const query = getQuery(event)
   const userId = readRequiredQueryNumber(query, 'user', 'Invalid verification link')
   const token = readQueryString(query.token)

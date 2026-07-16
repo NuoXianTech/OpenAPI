@@ -1,5 +1,4 @@
 // 消费 reset_password token 并设置新密码。
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { resetPasswordSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
@@ -8,7 +7,7 @@ import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { hashPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineEventHandler(async (event: H3Event) => {
+export default defineEventHandler(async (event) => {
   const settings = await siteSettingsService.getOrCreate()
   if (!settings.passwordResetEnabled) {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })

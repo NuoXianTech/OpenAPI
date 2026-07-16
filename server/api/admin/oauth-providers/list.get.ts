@@ -1,10 +1,9 @@
-import type { H3Event } from 'h3'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { buildCallbackUrl, oauthProviderService, toAdminOauthProviderSafe, type OauthProviderRow } from '~~/server/services/oauth-provider-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
 
-export default defineAdminEventHandler(async (_event: H3Event) => {
+export default defineAdminEventHandler(async () => {
   const [rows, settings] = await Promise.all([
     oauthProviderService.list(),
     siteSettingsService.getOrCreate()

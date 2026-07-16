@@ -1,11 +1,10 @@
-import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
 import { checkinService } from '~~/server/services/checkin-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { getLocalMonthRange } from '~~/server/utils/local-time'
 import { readQueryString } from '~~/server/utils/request-query'
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
+export default defineAuthenticatedEventHandler((event, user) => {
   const month = readQueryString(getQuery(event).month)
   const range = getLocalMonthRange(month)
   if (!range) {
@@ -13,5 +12,5 @@ export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
   }
 
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
-  return await checkinService.getMonthlyHistory(user.id, range)
+  return checkinService.getMonthlyHistory(user.id, range)
 })

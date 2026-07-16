@@ -8,7 +8,6 @@
  *   - offset?     : 默认 0
  */
 
-import type { H3Event } from 'h3'
 import { creditService, type CreditReason } from '~~/server/services/credit-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
@@ -31,7 +30,7 @@ const CREDIT_REASON_OPTIONS: CreditReason[] = [
 ]
 const DIRECTION_OPTIONS = ['in', 'out'] as const
 
-export default defineAdminEventHandler((event: H3Event) => {
+export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const userId = readQueryNumber(query.userId)

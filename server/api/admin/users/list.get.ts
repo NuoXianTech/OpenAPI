@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { getQuery } from 'h3'
 import { USER_ROLES, usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
@@ -18,7 +17,7 @@ function readUserIdFilter(value: unknown): number | undefined {
   return userId !== undefined && Number.isInteger(userId) && userId > 0 ? userId : undefined
 }
 
-export default defineAdminEventHandler((event: H3Event) => {
+export default defineAdminEventHandler((event) => {
   const query = getQuery(event)
 
   return usersService.list({

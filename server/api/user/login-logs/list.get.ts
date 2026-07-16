@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
@@ -10,7 +9,7 @@ import type { LoginLogRow } from '#shared/types/login-log'
  * 用户「最近登录活动」：只返回当前登录用户本人的登录日志（成功 + 失败）。
  * 让用户能察觉异常登录 / 盗号尝试。userId 强制取自会话，不接受 query 传入。
  */
-export default defineAuthenticatedEventHandler(async (event: H3Event, user) => {
+export default defineAuthenticatedEventHandler(async (event, user) => {
   const { limit, offset } = readPaginationQuery(event, { defaultLimit: 10 })
 
   const { items, total } = await loginLogService.list({

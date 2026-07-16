@@ -1,4 +1,3 @@
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { messageIdSchema } from '~~/server/schemas/common'
 import { notificationService } from '~~/server/services/notification-service'
@@ -6,7 +5,7 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const { messageId } = await readZodBody(event, messageIdSchema)
 
   const removed = await notificationService.softDeleteMessage(messageId)

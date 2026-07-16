@@ -1,5 +1,4 @@
 // 已登录用户修改密码：校验旧密码 → 设新密码 → 令所有旧 token 失效并重签当前设备
-import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { userChangePasswordSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
@@ -7,7 +6,7 @@ import { hashPassword, verifyPassword, defineAuthenticatedEventHandler, createUs
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
-export default defineAuthenticatedEventHandler(async (event: H3Event, authUser) => {
+export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const { currentPassword, newPassword } = await readZodBody(event, userChangePasswordSchema)
 
   // 拉数据库行（不能用 authUser，里面没有 passwordHash）

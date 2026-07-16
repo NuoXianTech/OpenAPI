@@ -1,4 +1,4 @@
-import { createError, type H3Event } from 'h3'
+import { createError } from 'h3'
 import { z } from 'zod'
 import {
   isApiCapabilityConfigError,
@@ -18,7 +18,7 @@ const updateApiCapabilitiesSchema = z.object({
   values: z.record(z.string(), z.unknown())
 })
 
-export default defineAdminEventHandler(async (event: H3Event, admin) => {
+export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, updateApiCapabilitiesSchema)
 
   try {
