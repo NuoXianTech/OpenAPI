@@ -1,5 +1,5 @@
 import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
-import { loginLogs } from '~~/server/db/schema'
+import { loginLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
@@ -23,6 +23,7 @@ interface AdminLoginLogRecord {
   id: number
   userId: number
   username: string
+  role: 'user' | 'admin'
   method: string
   success: boolean
   failureReason: string | null
@@ -113,6 +114,7 @@ export const loginLogService = {
       id: loginLogs.id,
       userId: loginLogs.userId,
       username: loginLogs.username,
+      role: users.role,
       method: loginLogs.method,
       success: loginLogs.success,
       failureReason: loginLogs.failureReason,
@@ -121,6 +123,7 @@ export const loginLogService = {
       createdAt: loginLogs.createdAt
     })
       .from(loginLogs)
+      .innerJoin(users, eq(users.id, loginLogs.userId))
 
     const countQuery = db.select({ value: count() }).from(loginLogs)
 

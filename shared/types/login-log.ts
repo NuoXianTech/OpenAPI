@@ -33,6 +33,7 @@ export interface AdminLoginLogRow extends LoginLogRow {
   userId: number
   /** 登录发生时的 username 快照，不使用 displayName */
   username: string
+  role: 'user' | 'admin'
 }
 
 export type LoginLogBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
