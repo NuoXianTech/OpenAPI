@@ -11,6 +11,7 @@ import {
   check
 } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
+import type { SupportedLocale } from '../../../shared/config/locale-defaults'
 
 // ------------------------------------------------------------------
 // Users（用户主表 · 硬删除）
@@ -33,6 +34,8 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   // 头像统一由 auth 工具通过 email 派生，不落库
+  // 语言偏好：null 表示跟随 Cookie、浏览器语言或站点默认语言。
+  locale: varchar('locale', { length: 16 }).$type<SupportedLocale>(),
   credits: integer('credits').notNull().default(0),
   isActive: boolean('is_active').default(false).notNull(),
   isBanned: boolean('is_banned').default(false).notNull(),

@@ -7,3 +7,23 @@ export const PUBLIC_SITE_DEFAULTS = {
   startTime: '2026-01-01 00:00:00',
   passwordResetEnabled: true
 } as const
+
+export const SITE_SETTINGS_DEFAULTS = {
+  ...PUBLIC_SITE_DEFAULTS,
+  sessionMaxAgeSeconds: 60 * 60 * 24,
+  sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
+  sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
+  registrationMode: 'open', defaultRegisterCredits: 0,
+  registerEmailFilterMode: 'off', registerEmailFilterList: '',
+  emailVerifyExpiresInMinutes: 30, emailActivationEnabled: true,
+  passwordResetExpiresInMinutes: 30, smtpHost: 'smtp.example.com', smtpPort: 465,
+  smtpSecure: true, smtpUser: '', smtpPass: '', smtpFrom: 'no-reply@example.com',
+  smtpFromName: '', smtpReplyTo: '', smtpPoolMaxAgeSeconds: 0,
+  oauthForceBinding: false, oauthGithubClientId: '', oauthGithubClientSecret: '', oauthGithubEnabled: false,
+  oauthQqClientId: '', oauthQqClientSecret: '', oauthQqEnabled: false,
+  turnstileSiteKey: '', turnstileSecretKey: '', turnstileLoginEnabled: false,
+  turnstileRegisterEnabled: false, turnstilePasswordResetEnabled: false, turnstileCheckinEnabled: false,
+  checkinEnabled: true, checkinCooldownMode: 'hours', checkinRefreshHours: 24,
+  checkinFixedRefreshTime: '00:00', checkinMode: 'fixed', checkinAmountFixed: 10,
+  checkinAmountMin: 5, checkinAmountMax: 20
+} as const

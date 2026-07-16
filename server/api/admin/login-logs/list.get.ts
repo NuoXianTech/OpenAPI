@@ -36,6 +36,7 @@ export default defineAdminEventHandler(async (event) => {
     id: r.id,
     userId: r.userId,
     username: r.username,
+    role: r.role,
     method: r.method,
     success: r.success,
     failureReason: r.failureReason,

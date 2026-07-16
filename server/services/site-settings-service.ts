@@ -3,7 +3,7 @@ import type {
   PublicSiteSettings,
   PublicTurnstileSettings
 } from '#shared/types/site-settings'
-import { PUBLIC_SITE_DEFAULTS } from '#shared/config/site-defaults'
+import { SITE_SETTINGS_DEFAULTS } from '#shared/config/site-defaults'
 import { siteSettings } from '~~/server/db/schema/system'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 
@@ -71,19 +71,7 @@ export interface SiteSettingsUpsertInput {
 function buildInitialDefaults() {
   return {
     scope: DEFAULT_SCOPE,
-    ...PUBLIC_SITE_DEFAULTS,
-    sessionMaxAgeSeconds: 60 * 60 * 24,
-    sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
-    sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
-    registerEmailFilterMode: 'off',
-    registerEmailFilterList: '',
-    emailVerifyExpiresInMinutes: 30,
-    smtpHost: 'smtp.example.com',
-    smtpPort: 465,
-    smtpSecure: true,
-    smtpUser: '',
-    smtpPass: '',
-    smtpFrom: 'no-reply@example.com'
+    ...SITE_SETTINGS_DEFAULTS
   }
 }
 

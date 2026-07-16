@@ -4,7 +4,7 @@ import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
   status: CheckinStatus | null
-  loading: boolean
+  hasError: boolean
   submitting: boolean
   onCheckin: (turnstileToken?: string) => Promise<unknown>
 }>()
@@ -149,7 +149,7 @@ function onTurnstileError(message: string) {
     </template>
 
     <div
-      v-if="loading && !status"
+      v-if="!status && !hasError"
       class="text-sm text-muted py-4 text-center"
     >
       加载中...

@@ -42,7 +42,7 @@ watch(() => props.target, (val) => {
     role: val.role || 'user',
     isActive: val.isActive ?? false
   })
-})
+}, { immediate: true })
 
 watch(() => props.open, async (opened) => {
   if (!opened || !props.target) {

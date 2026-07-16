@@ -1,5 +1,5 @@
 {
-  "id": "3bab3d09-be79-4163-8c83-23cb15f6599f",
+  "id": "bb2e44f8-870c-4e97-8939-ec335c822ff2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -418,6 +418,12 @@
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
         },
         "credits": {
           "name": "credits",

@@ -218,7 +218,6 @@ interface UseAdminUsersDisplayMetaOptions {
   openBan: (row: AdminUserItem) => void | Promise<void>
   openUnban: (row: AdminUserItem) => void | Promise<void>
   openKeys: (row: AdminUserItem) => void | Promise<void>
-  openCreditForOne: (row: AdminUserItem) => void | Promise<void>
   openDelete: (row: AdminUserItem) => void | Promise<void>
 }
 
@@ -251,21 +250,17 @@ export function useAdminUsersDisplayMeta(
 ): UseAdminUsersDisplayMetaReturn {
   function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
     return [{
-      label: '编辑',
+      label: '编辑用户',
       icon: 'i-mdi-pencil-outline',
       onSelect: () => options.openEdit(row)
     }, {
-      label: row.isBanned ? '解封' : '封禁',
+      label: row.isBanned ? '解封用户' : '封禁用户',
       icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
       onSelect: () => row.isBanned ? options.openUnban(row) : options.openBan(row)
     }, {
-      label: 'API Keys',
+      label: 'API 密钥',
       icon: 'i-mdi-key-variant',
       onSelect: () => options.openKeys(row)
-    }, {
-      label: '积分管理',
-      icon: 'i-mdi-cash-multiple',
-      onSelect: () => options.openCreditForOne(row)
     }, {
       type: 'separator'
     }, {

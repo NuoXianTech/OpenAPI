@@ -30,7 +30,7 @@ const {
   createUser
 } = useAdminUsersPage()
 
-const { page, pageSize, total, paginated } = useClientPagination(items, 10)
+const { page, pageSize, total, paginated } = useClientPagination(items, 20)
 watch([keyword, userIdFilter, roleFilter, activeFilter, banFilter, pageSize], () => {
   page.value = 1
 })
@@ -41,7 +41,7 @@ const confirm = useConfirmDialog()
 async function openDelete(item: AdminUserItem) {
   await confirm({
     title: `删除用户: ${item.username}`,
-    description: '删除用户后，其所有数据（API Keys、会话等）将被永久移除。',
+    description: '删除用户后，其所有数据（API 密钥、会话等）将被永久移除。',
     onConfirm: async () => {
       const ok = await deleteUser(item.id)
       if (!ok) throw new Error('delete failed')
@@ -83,20 +83,6 @@ function openKeys(item: AdminUserItem) {
   keysOpen.value = true
 }
 
-const creditOpen = ref(false)
-const creditUserIds = ref<number[]>([])
-const creditSelectionLabel = ref('')
-
-function openCreditForOne(item: AdminUserItem) {
-  creditUserIds.value = [item.id]
-  creditSelectionLabel.value = `${item.username} (#${item.id})`
-  creditOpen.value = true
-}
-
-async function onCreditSaved() {
-  await refresh()
-}
-
 const {
   columns,
   banTooltip,
@@ -106,7 +92,6 @@ const {
   openBan,
   openUnban,
   openKeys,
-  openCreditForOne,
   openDelete
 })
 
@@ -347,14 +332,6 @@ const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
           v-if="keysOpen"
           v-model:open="keysOpen"
           :target="keysTarget"
-        />
-
-        <LazyAdminCreditModal
-          v-if="creditOpen"
-          v-model:open="creditOpen"
-          :user-ids="creditUserIds"
-          :selection-label="creditSelectionLabel"
-          @saved="onCreditSaved"
         />
       </div>
     </template>

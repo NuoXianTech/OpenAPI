@@ -9,7 +9,7 @@ import {
   timestamp,
   index
 } from 'drizzle-orm/pg-core'
-import { PUBLIC_SITE_DEFAULTS } from '../../../shared/config/site-defaults'
+import { SITE_SETTINGS_DEFAULTS } from '../../../shared/config/site-defaults'
 import { users } from './user'
 
 // ------------------------------------------------------------------
@@ -20,36 +20,36 @@ export const siteSettings = pgTable('site_settings', {
   scope: varchar('scope', { length: 32 }).notNull().default('default').unique(),
 
   // 基础信息
-  siteUrl: varchar('site_url', { length: 1000 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteUrl),
-  siteImg: varchar('site_img', { length: 1000 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteImg),
-  siteName: varchar('site_name', { length: 140 }).notNull().default(PUBLIC_SITE_DEFAULTS.siteName),
-  siteDescription: text('site_description').notNull().default(PUBLIC_SITE_DEFAULTS.siteDescription),
-  startTime: varchar('start_time', { length: 32 }).notNull().default(PUBLIC_SITE_DEFAULTS.startTime),
+  siteUrl: varchar('site_url', { length: 1000 }).notNull().default(SITE_SETTINGS_DEFAULTS.siteUrl),
+  siteImg: varchar('site_img', { length: 1000 }).notNull().default(SITE_SETTINGS_DEFAULTS.siteImg),
+  siteName: varchar('site_name', { length: 140 }).notNull().default(SITE_SETTINGS_DEFAULTS.siteName),
+  siteDescription: text('site_description').notNull().default(SITE_SETTINGS_DEFAULTS.siteDescription),
+  startTime: varchar('start_time', { length: 32 }).notNull().default(SITE_SETTINGS_DEFAULTS.startTime),
 
   // 注册
-  registrationMode: varchar('registration_mode', { length: 20 }).notNull().default('open'), // open / invite / closed
+  registrationMode: varchar('registration_mode', { length: 20 }).notNull().default(SITE_SETTINGS_DEFAULTS.registrationMode), // open / invite / closed
   // 新注册用户的默认积分。> 0 时激活流程会发一条 reason='signup_bonus' 的积分流水。
-  defaultRegisterCredits: integer('default_register_credits').notNull().default(0),
+  defaultRegisterCredits: integer('default_register_credits').notNull().default(SITE_SETTINGS_DEFAULTS.defaultRegisterCredits),
   // 注册邮箱域名过滤：off=不过滤；whitelist=只允许列表内域名；blacklist=拒绝列表内域名
-  registerEmailFilterMode: varchar('register_email_filter_mode', { length: 20 }).notNull().default('off'),
+  registerEmailFilterMode: varchar('register_email_filter_mode', { length: 20 }).notNull().default(SITE_SETTINGS_DEFAULTS.registerEmailFilterMode),
   // 注册邮箱域名过滤列表（逗号或换行分隔，例如：163.com,qq.com）。filterMode=off 时此字段被忽略；
   // filterMode=whitelist 时作为白名单使用；filterMode=blacklist 时作为黑名单使用。
-  registerEmailFilterList: text('register_email_filter_list').notNull().default(''),
+  registerEmailFilterList: text('register_email_filter_list').notNull().default(SITE_SETTINGS_DEFAULTS.registerEmailFilterList),
 
   // 会话 / 验证
   // 默认会话有效期：未勾选「记住我」时使用，按秒；登录后会随活跃滑动续期
-  sessionMaxAgeSeconds: integer('session_max_age_seconds').notNull().default(60 * 60 * 24),
+  sessionMaxAgeSeconds: integer('session_max_age_seconds').notNull().default(SITE_SETTINGS_DEFAULTS.sessionMaxAgeSeconds),
   // 滑动会话的绝对硬顶：从首次登录算，超过此值无论是否活跃都强制重新登录
   // 仅约束未勾选「记住我」的会话；勾选后由 sessionRememberMaxAgeSeconds 自身充当上限
-  sessionAbsoluteMaxAgeSeconds: integer('session_absolute_max_age_seconds').notNull().default(60 * 60 * 24 * 7),
+  sessionAbsoluteMaxAgeSeconds: integer('session_absolute_max_age_seconds').notNull().default(SITE_SETTINGS_DEFAULTS.sessionAbsoluteMaxAgeSeconds),
   // 「记住我」会话有效期：勾选后使用，按秒；不滑动续期，到期重新登录
-  sessionRememberMaxAgeSeconds: integer('session_remember_max_age_seconds').notNull().default(60 * 60 * 24 * 30),
-  emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(30),
+  sessionRememberMaxAgeSeconds: integer('session_remember_max_age_seconds').notNull().default(SITE_SETTINGS_DEFAULTS.sessionRememberMaxAgeSeconds),
+  emailVerifyExpiresInMinutes: integer('email_verify_expires_in_minutes').notNull().default(SITE_SETTINGS_DEFAULTS.emailVerifyExpiresInMinutes),
   // 邮件激活总开关：开启=注册后须点邮件链接激活（isActive=false 起步）；关闭=注册即激活、不发验证邮件
-  emailActivationEnabled: boolean('email_activation_enabled').notNull().default(true),
-  passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(30),
+  emailActivationEnabled: boolean('email_activation_enabled').notNull().default(SITE_SETTINGS_DEFAULTS.emailActivationEnabled),
+  passwordResetExpiresInMinutes: integer('password_reset_expires_in_minutes').notNull().default(SITE_SETTINGS_DEFAULTS.passwordResetExpiresInMinutes),
   // 忘记密码功能总开关：关闭后，请求重置邮件 / 消费重置 token 都会被拒，登录页也不展示入口
-  passwordResetEnabled: boolean('password_reset_enabled').notNull().default(PUBLIC_SITE_DEFAULTS.passwordResetEnabled),
+  passwordResetEnabled: boolean('password_reset_enabled').notNull().default(SITE_SETTINGS_DEFAULTS.passwordResetEnabled),
 
   // 备案与法务
   icpBeian: varchar('icp_beian', { length: 100 }),
@@ -58,21 +58,21 @@ export const siteSettings = pgTable('site_settings', {
   privacyUrl: varchar('privacy_url', { length: 1000 }),
 
   // SMTP
-  smtpHost: varchar('smtp_host', { length: 255 }).notNull().default('smtp.example.com'),
-  smtpPort: integer('smtp_port').notNull().default(465),
-  smtpSecure: boolean('smtp_secure').notNull().default(true),
-  smtpUser: varchar('smtp_user', { length: 255 }).notNull().default(''),
-  smtpPass: varchar('smtp_pass', { length: 255 }).notNull().default(''),
-  smtpFrom: varchar('smtp_from', { length: 255 }).notNull().default('no-reply@example.com'),
+  smtpHost: varchar('smtp_host', { length: 255 }).notNull().default(SITE_SETTINGS_DEFAULTS.smtpHost),
+  smtpPort: integer('smtp_port').notNull().default(SITE_SETTINGS_DEFAULTS.smtpPort),
+  smtpSecure: boolean('smtp_secure').notNull().default(SITE_SETTINGS_DEFAULTS.smtpSecure),
+  smtpUser: varchar('smtp_user', { length: 255 }).notNull().default(SITE_SETTINGS_DEFAULTS.smtpUser),
+  smtpPass: varchar('smtp_pass', { length: 255 }).notNull().default(SITE_SETTINGS_DEFAULTS.smtpPass),
+  smtpFrom: varchar('smtp_from', { length: 255 }).notNull().default(SITE_SETTINGS_DEFAULTS.smtpFrom),
   // 发件人昵称：非空时发信头形如 "昵称 <smtpFrom>"；留空则只用地址
-  smtpFromName: varchar('smtp_from_name', { length: 255 }).notNull().default(''),
+  smtpFromName: varchar('smtp_from_name', { length: 255 }).notNull().default(SITE_SETTINGS_DEFAULTS.smtpFromName),
   // 回信邮箱（Reply-To）：留空则不设置，用户回信默认回到 smtpFrom
   smtpReplyTo: varchar('smtp_reply_to', { length: 255 }).notNull().default(''),
   // SMTP 连接复用窗口（秒）：>0 时启用连接池并在该秒数后重建连接；0=每封新建即关闭（不复用）
-  smtpPoolMaxAgeSeconds: integer('smtp_pool_max_age_seconds').notNull().default(0),
+  smtpPoolMaxAgeSeconds: integer('smtp_pool_max_age_seconds').notNull().default(SITE_SETTINGS_DEFAULTS.smtpPoolMaxAgeSeconds),
 
   // 强制绑定：开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册
-  oauthForceBinding: boolean('oauth_force_binding').notNull().default(false),
+  oauthForceBinding: boolean('oauth_force_binding').notNull().default(SITE_SETTINGS_DEFAULTS.oauthForceBinding),
 
   // 第三方登录 · 各 provider 应用配置
   // clientSecret 明文存储（与 turnstileSecretKey / smtpPass 一致，后台 UI 写时覆盖）。
@@ -102,14 +102,14 @@ export const siteSettings = pgTable('site_settings', {
   // checkinFixedRefreshTime: 'HH:mm'，仅 cooldownMode='fixed_time' 时使用
   // checkinMode: 'fixed' 固定积分；'range' 在 [min, max] 之间随机取整
   // ----------------------------------------------------------------
-  checkinEnabled: boolean('checkin_enabled').notNull().default(true),
-  checkinCooldownMode: varchar('checkin_cooldown_mode', { length: 20 }).notNull().default('hours'),
-  checkinRefreshHours: integer('checkin_refresh_hours').notNull().default(24),
-  checkinFixedRefreshTime: varchar('checkin_fixed_refresh_time', { length: 8 }).notNull().default('00:00'),
-  checkinMode: varchar('checkin_mode', { length: 20 }).notNull().default('fixed'),
-  checkinAmountFixed: integer('checkin_amount_fixed').notNull().default(10),
-  checkinAmountMin: integer('checkin_amount_min').notNull().default(5),
-  checkinAmountMax: integer('checkin_amount_max').notNull().default(20),
+  checkinEnabled: boolean('checkin_enabled').notNull().default(SITE_SETTINGS_DEFAULTS.checkinEnabled),
+  checkinCooldownMode: varchar('checkin_cooldown_mode', { length: 20 }).notNull().default(SITE_SETTINGS_DEFAULTS.checkinCooldownMode),
+  checkinRefreshHours: integer('checkin_refresh_hours').notNull().default(SITE_SETTINGS_DEFAULTS.checkinRefreshHours),
+  checkinFixedRefreshTime: varchar('checkin_fixed_refresh_time', { length: 8 }).notNull().default(SITE_SETTINGS_DEFAULTS.checkinFixedRefreshTime),
+  checkinMode: varchar('checkin_mode', { length: 20 }).notNull().default(SITE_SETTINGS_DEFAULTS.checkinMode),
+  checkinAmountFixed: integer('checkin_amount_fixed').notNull().default(SITE_SETTINGS_DEFAULTS.checkinAmountFixed),
+  checkinAmountMin: integer('checkin_amount_min').notNull().default(SITE_SETTINGS_DEFAULTS.checkinAmountMin),
+  checkinAmountMax: integer('checkin_amount_max').notNull().default(SITE_SETTINGS_DEFAULTS.checkinAmountMax),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())

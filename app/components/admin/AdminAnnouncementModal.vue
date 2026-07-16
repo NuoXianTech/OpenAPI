@@ -95,24 +95,28 @@ async function onSubmit() {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑公告' : '新建公告'"
+    :description="isEdit ? '更新公告内容、展示状态与排序设置。' : '发布一条面向用户的站内公告。'"
+    :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
     <template #body>
-      <div class="space-y-3">
-        <div class="grid grid-cols-3 gap-3">
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <UFormField
             label="标题"
-            class="col-span-2"
+            class="sm:col-span-2"
           >
             <UInput
               v-model="form.title"
               placeholder="公告标题（最多 200 字）"
+              class="w-full"
             />
           </UFormField>
           <UFormField label="级别">
             <USelect
               v-model="form.level"
               :items="levelOptions"
+              class="w-full"
             />
           </UFormField>
         </div>
@@ -122,26 +126,28 @@ async function onSubmit() {
             v-model="form.content"
             :rows="6"
             placeholder="支持纯文本，换行将保留"
-            class="w-full sm:max-w-lg"
+            class="w-full"
           />
         </UFormField>
 
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <UFormField label="详情链接（可选）">
             <UInput
               v-model="form.linkUrl"
               placeholder="https://example.com/post/xx"
+              class="w-full"
             />
           </UFormField>
           <UFormField label="排序值（小在前）">
             <UInput
               v-model.number="form.sortOrder"
               type="number"
+              class="w-full"
             />
           </UFormField>
         </div>
 
-        <div class="flex flex-wrap gap-6 pt-2 border-t border-default">
+        <div class="flex flex-wrap gap-6 border-t border-default pt-3">
           <USwitch
             v-model="form.isEnabled"
             label="启用"

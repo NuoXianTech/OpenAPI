@@ -1,5 +1,6 @@
 import type { ComputedRef, Ref } from 'vue'
 import { SUPPORTED_OAUTH_PROVIDERS } from '#shared/types/oauth'
+import { SITE_SETTINGS_DEFAULTS } from '#shared/config/site-defaults'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
@@ -131,6 +132,7 @@ const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
 
 function defaultForm(): AdminSettingsForm {
   return {
+    ...SITE_SETTINGS_DEFAULTS,
     siteName: '',
     siteUrl: '',
     siteImg: '',
@@ -140,41 +142,14 @@ function defaultForm(): AdminSettingsForm {
     policeBeian: '',
     termsUrl: '',
     privacyUrl: '',
-    sessionMaxAgeSeconds: 86400,
-    sessionAbsoluteMaxAgeSeconds: 604800,
-    sessionRememberMaxAgeSeconds: 2592000,
-    registrationMode: 'open',
-    registerEmailFilterMode: 'off',
     registerEmailFilterList: '',
-    defaultRegisterCredits: 0,
-    emailVerifyExpiresInMinutes: 30,
-    emailActivationEnabled: true,
-    passwordResetExpiresInMinutes: 30,
-    passwordResetEnabled: true,
     smtpHost: '',
-    smtpPort: 465,
-    smtpSecure: true,
     smtpUser: '',
     smtpPass: '',
     smtpFrom: '',
-    smtpFromName: '',
     smtpReplyTo: '',
-    smtpPoolMaxAgeSeconds: 0,
-    oauthForceBinding: false,
-    turnstileSiteKey: '',
     turnstileSecretKey: '',
-    turnstileLoginEnabled: false,
-    turnstileRegisterEnabled: false,
-    turnstilePasswordResetEnabled: false,
-    checkinEnabled: true,
-    turnstileCheckinEnabled: false,
-    checkinCooldownMode: 'hours',
-    checkinRefreshHours: 24,
-    checkinFixedRefreshTime: '00:00',
-    checkinMode: 'fixed',
-    checkinAmountFixed: 10,
-    checkinAmountMin: 5,
-    checkinAmountMax: 20
+    turnstileSiteKey: ''
   }
 }
 
@@ -475,11 +450,6 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
   const isOauthDirty = computed(() => oauthChangedCount.value > 0)
   const isOauthReady = computed(() => !providerFetch.loading.value && items.value.length === supportedProviders.length)
 
-  function resetOauthSettings(): void {
-    oauthPolicySection.reset()
-    syncAdminOauthProviderFormsFromItems(forms, items.value)
-  }
-
   async function saveOauthSettings(): Promise<void> {
     if (!isOauthReady.value || !isOauthDirty.value || isOauthSaving.value) return
     isOauthSaving.value = true
@@ -534,7 +504,6 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     oauthChangedCount,
     isOauthSaving,
     saveOauthSettings,
-    resetOauthSettings,
     copyCallback
   }
 }

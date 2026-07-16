@@ -167,7 +167,8 @@ async function listTransactions(filters: ListTransactionsFilters = {}) {
   const [items, totalRows] = await Promise.all([
     db.select({
       ...transactionColumns,
-      userName: users.username
+      userName: users.username,
+      userRole: users.role
     })
       .from(creditTransactions)
       .leftJoin(users, eq(users.id, creditTransactions.userId))

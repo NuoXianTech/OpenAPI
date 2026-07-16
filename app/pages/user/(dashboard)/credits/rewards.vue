@@ -3,7 +3,7 @@ import { useUserCreditsPage } from '~/composables/user/use-user-credits-page'
 
 const {
   checkin,
-  checkinLoading,
+  checkinStatus,
   isCheckingIn,
   performCheckin,
   fetchCheckinStatus,
@@ -25,7 +25,7 @@ onMounted(() => {
   <div class="space-y-6">
     <UserCreditsCheckinCard
       :status="checkin"
-      :loading="checkinLoading"
+      :has-error="checkinStatus === 'error'"
       :submitting="isCheckingIn"
       :on-checkin="performCheckin"
     />

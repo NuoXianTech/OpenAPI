@@ -16,6 +16,7 @@ interface CreditTxnRow {
   id: number
   userId: number
   userName: string | null
+  userRole: 'user' | 'admin' | null
   amount: number
   balanceAfter: number
   reason: string
@@ -243,7 +244,11 @@ function amountClass(amt: number) {
         <template #userId-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span>{{ row.original.userName || '-' }}</span>
-            <span class="text-muted">{{ formatUserIdentity(row.original.userId) }}</span>
+            <span class="text-muted">
+              {{ row.original.userRole === 'admin'
+                ? formatAdminIdentity(row.original.userId)
+                : formatUserIdentity(row.original.userId) }}
+            </span>
           </div>
         </template>
         <template #reason-cell="{ row }">

@@ -1,4 +1,4 @@
-// 当前用户的可编辑资料（含 displayName/bio）。me.get.ts 只返回登录态摘要，
+// 当前用户的可编辑资料（含 displayName）。me.get.ts 只返回登录态摘要，
 // profile 页需要额外字段
 import { createError } from 'h3'
 import { usersService } from '~~/server/services/user-service'

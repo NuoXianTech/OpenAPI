@@ -15,6 +15,7 @@ export interface AdminCreditRecentTransaction {
   id: number
   userId: number | null
   userName: string | null
+  userRole: 'user' | 'admin' | null
   amount: number
   balanceAfter: number
   reason: string

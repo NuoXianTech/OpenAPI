@@ -117,7 +117,7 @@ function openDetail(row: AdminLogRow) {
             <div class="grid gap-3 md:grid-cols-3">
               <UFormField
                 label="密钥名称"
-                hint="按 API Key ID 筛选"
+                hint="按 API 密钥 筛选"
               >
                 <UInput
                   v-model.number="filters.apiKeyId"

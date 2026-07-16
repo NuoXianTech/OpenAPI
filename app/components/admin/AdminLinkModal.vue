@@ -59,14 +59,16 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
   <UModal
     v-model:open="open"
     :title="isEdit ? '编辑链接' : '新增链接'"
-    :ui="adminModalUi()"
+    :description="isEdit ? '更新友情链接信息与展示状态。' : '添加一个展示在站点友情链接区域的站点。'"
+    :dismissible="!loading"
+    :ui="adminModalUi({ content: 'sm:max-w-xl' })"
   >
     <template #body>
       <UForm
         ref="form"
         :validate="validateFriendLinkForm"
         :state="state"
-        class="space-y-3"
+        class="space-y-4"
         @submit="onSubmit"
       >
         <UFormField
@@ -76,6 +78,7 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
           <UInput
             v-model="state.title"
             placeholder="站点名称"
+            class="w-full"
           />
         </UFormField>
         <UFormField
@@ -85,6 +88,7 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
           <UInput
             v-model="state.url"
             placeholder="https://example.com"
+            class="w-full"
           />
         </UFormField>
         <UFormField
@@ -94,13 +98,15 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
           <UTextarea
             v-model="state.description"
             :rows="3"
-            class="w-full sm:max-w-lg"
+            class="w-full"
           />
         </UFormField>
-        <USwitch
-          v-model="state.isActive"
-          label="启用"
-        />
+        <div class="border-t border-default pt-3">
+          <USwitch
+            v-model="state.isActive"
+            label="启用"
+          />
+        </div>
       </UForm>
     </template>
 

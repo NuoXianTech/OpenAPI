@@ -328,6 +328,7 @@ export function useAdminLoginLogList(
 interface AdminOperationLogRow {
   id: number
   userId: number | null
+  actorRole: 'user' | 'admin' | null
   actor: string | null
   action: string
   resourceType: string | null
@@ -372,7 +373,7 @@ interface UseAdminOperationLogListReturn {
   pageSize: Ref<number>
   refresh: () => Promise<void>
   reset: () => Promise<void>
-  resolveActorLabel: (action: string, userId: number | null) => string
+  resolveActorLabel: (action: string, userId: number | null, actorRole: AdminOperationLogRow['actorRole']) => string
   resolveActionLabel: (action: string) => string
   statusItems: Array<{ label: string, value: AdminOperationLogFilters['status'] }>
   total: Ref<number>
@@ -433,6 +434,7 @@ const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
   'admin.api-key.create': '创建 API 密钥',
   'admin.api-key.update': '更新 API 密钥',
   'admin.api-key.reset': '重置 API 密钥',
+  'admin.api-key.delete': '删除 API 密钥',
   'admin.profile.onboarding.update': '更新初始管理员资料',
   'admin.user.create': '创建用户',
   'admin.user.update': '更新用户',
@@ -453,6 +455,10 @@ const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
   'admin.settings.update': '更新系统设置',
   'admin.settings.smtp.test': '测试邮件发送',
   'user.checkin': '每日签到',
+  'user.api-key.create': '创建 API 密钥',
+  'user.api-key.update': '更新 API 密钥',
+  'user.api-key.reset': '重置 API 密钥',
+  'user.api-key.delete': '删除 API 密钥',
   'user.password.change': '修改密码',
   'user.oauth.unbind': '解绑第三方账号',
   'user.redemption-code.redeem': '兑换码兑换'
@@ -496,8 +502,11 @@ function resolveOperationLogActionLabel(action: string): string {
 
 export function resolveOperationLogActorLabel(
   action: string,
-  userId: number | null
+  userId: number | null,
+  actorRole: AdminOperationLogRow['actorRole'] = null
 ): string {
+  if (actorRole === 'admin') return userId ? formatAdminIdentity(userId) : '管理员'
+  if (actorRole === 'user') return userId ? formatUserIdentity(userId) : '用户'
   if (action.startsWith('admin.')) return userId ? formatAdminIdentity(userId) : '管理员'
   if (action.startsWith('user.')) return userId ? formatUserIdentity(userId) : '用户'
   return userId ? formatUserIdentity(userId) : '系统'

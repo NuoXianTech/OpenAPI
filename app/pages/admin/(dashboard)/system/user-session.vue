@@ -12,10 +12,8 @@ const {
   getForm,
   isOauthDirty,
   isOauthReady,
-  oauthChangedCount,
   isOauthSaving,
   saveOauthSettings,
-  resetOauthSettings,
   copyCallback
 } = useAdminUserSessionSettings()
 
@@ -101,11 +99,9 @@ const sessionSection = createSection(sessionKeys)
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="registrationSection.dirty.value"
-        :changed-count="registrationSection.changedCount.value"
         :saving="registrationSection.saving.value"
         :disabled="registrationSection.disabled.value"
         @save="registrationSection.save"
-        @reset="registrationSection.reset"
       />
     </DashboardSettingsSection>
 
@@ -180,11 +176,9 @@ const sessionSection = createSection(sessionKeys)
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="sessionSection.dirty.value"
-        :changed-count="sessionSection.changedCount.value"
         :saving="sessionSection.saving.value"
         :disabled="sessionSection.disabled.value"
         @save="sessionSection.save"
-        @reset="sessionSection.reset"
       />
     </DashboardSettingsSection>
 
@@ -338,11 +332,9 @@ const sessionSection = createSection(sessionKeys)
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="isOauthDirty"
-        :changed-count="oauthChangedCount"
         :saving="isOauthSaving"
         :disabled="!isOauthReady"
         @save="saveOauthSettings"
-        @reset="resetOauthSettings"
       />
     </DashboardSettingsSection>
   </div>

@@ -123,7 +123,9 @@ const {
         <template #user-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span class="font-medium">{{ row.original.username }}</span>
-            <span class="text-muted">{{ formatUserIdentity(row.original.userId) }}</span>
+            <span class="text-muted">
+              {{ row.original.role === 'admin' ? '管理员' : '用户' }} #{{ row.original.userId }}
+            </span>
           </div>
         </template>
         <template #method-cell="{ row }">

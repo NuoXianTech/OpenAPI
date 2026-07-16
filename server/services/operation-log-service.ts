@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
-import { and, count, desc, eq, gte, ilike, like, lte, type SQL } from 'drizzle-orm'
-import { operationLogs } from '~~/server/db/schema'
+import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, or, type SQL } from 'drizzle-orm'
+import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { readRequestMeta } from '~~/server/utils/request-meta'
@@ -35,7 +35,7 @@ interface OperationLogListFilters {
 }
 
 interface OperationLogListResult {
-  items: Array<typeof operationLogs.$inferSelect>
+  items: Array<typeof operationLogs.$inferSelect & { actorRole: 'user' | 'admin' | null }>
   total: number
 }
 
@@ -74,9 +74,15 @@ export const operationLogService = {
       conditions.push(eq(operationLogs.userId, filters.userId))
     }
     if (filters.actorKind === 'admin') {
-      conditions.push(like(operationLogs.action, 'admin.%'))
+      conditions.push(or(
+        eq(users.role, 'admin'),
+        and(isNull(users.id), like(operationLogs.action, 'admin.%'))
+      )!)
     } else if (filters.actorKind === 'user') {
-      conditions.push(like(operationLogs.action, 'user.%'))
+      conditions.push(or(
+        eq(users.role, 'user'),
+        and(isNull(users.id), like(operationLogs.action, 'user.%'))
+      )!)
     }
     if (filters.actor) {
       conditions.push(ilike(operationLogs.actor, `%${filters.actor}%`))
@@ -100,8 +106,16 @@ export const operationLogService = {
     const { limit, offset } = normalizePagination(filters)
     const where = conditions.length ? and(...conditions) : undefined
 
-    const baseQuery = db.select().from(operationLogs)
-    const countQuery = db.select({ value: count() }).from(operationLogs)
+    const operationLogColumns = getTableColumns(operationLogs)
+    const baseQuery = db.select({
+      ...operationLogColumns,
+      actorRole: users.role
+    })
+      .from(operationLogs)
+      .leftJoin(users, eq(users.id, operationLogs.userId))
+    const countQuery = db.select({ value: count() })
+      .from(operationLogs)
+      .leftJoin(users, eq(users.id, operationLogs.userId))
 
     const [items, totalRows] = await Promise.all([
       (where ? baseQuery.where(where) : baseQuery)

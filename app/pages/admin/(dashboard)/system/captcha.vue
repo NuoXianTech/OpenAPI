@@ -70,11 +70,9 @@ const captchaType = ref('Cloudflare Turnstile')
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="captchaCredentialSection.dirty.value"
-        :changed-count="captchaCredentialSection.changedCount.value"
         :saving="captchaCredentialSection.saving.value"
         :disabled="captchaCredentialSection.disabled.value"
         @save="captchaCredentialSection.save"
-        @reset="captchaCredentialSection.reset"
       />
     </DashboardSettingsSection>
 
@@ -122,11 +120,9 @@ const captchaType = ref('Cloudflare Turnstile')
       <USeparator />
       <AdminSettingsSectionActions
         :dirty="captchaSceneSection.dirty.value"
-        :changed-count="captchaSceneSection.changedCount.value"
         :saving="captchaSceneSection.saving.value"
         :disabled="captchaSceneSection.disabled.value"
         @save="captchaSceneSection.save"
-        @reset="captchaSceneSection.reset"
       />
     </DashboardSettingsSection>
   </div>
