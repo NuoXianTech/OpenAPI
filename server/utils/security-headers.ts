@@ -1,7 +1,10 @@
 const COMMON_SECURITY_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Content-Type-Options': 'nosniff',
-  'X-Permitted-Cross-Domain-Policies': 'none',
+  'X-Permitted-Cross-Domain-Policies': 'none'
+} as const
+
+const HTML_DOCUMENT_SECURITY_HEADERS = {
   'Permissions-Policy': [
     'accelerometer=()',
     'camera=()',
@@ -60,14 +63,18 @@ export function getSecurityHeaders(options: SecurityHeadersOptions): Readonly<Re
   if (cached) return cached
 
   const headers: Record<string, string> = {
-    ...COMMON_SECURITY_HEADERS,
-    'Content-Security-Policy': options.isPlayerRoute ? PLAYER_CSP : APPLICATION_CSP
+    ...COMMON_SECURITY_HEADERS
   }
 
-  if (options.isHtmlRoute && !options.isPlayerRoute) {
-    headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
-    headers['Origin-Agent-Cluster'] = '?1'
-    headers['X-Frame-Options'] = 'DENY'
+  if (options.isHtmlRoute) {
+    Object.assign(headers, HTML_DOCUMENT_SECURITY_HEADERS)
+    headers['Content-Security-Policy'] = options.isPlayerRoute ? PLAYER_CSP : APPLICATION_CSP
+
+    if (!options.isPlayerRoute) {
+      headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+      headers['Origin-Agent-Cluster'] = '?1'
+      headers['X-Frame-Options'] = 'DENY'
+    }
   }
 
   if (options.isProduction) {
@@ -80,12 +87,15 @@ export function getSecurityHeaders(options: SecurityHeadersOptions): Readonly<Re
 }
 
 export function isPlayerHtmlRoute(pathname: string): boolean {
-  return pathname === '/v1/player' || pathname === '/v1/player/art'
+  return /^\/v\d+\/player(?:\/art)?\/?$/.test(pathname)
 }
 
 export function isHtmlDocumentRoute(pathname: string): boolean {
+  if (isPlayerHtmlRoute(pathname)) return true
+
   return !pathname.startsWith('/api/')
     && !pathname.startsWith('/_nuxt/')
     && !pathname.startsWith('/player/lib/')
+    && !/^\/v\d+(?:\/|$)/.test(pathname)
     && !/\.[a-z0-9]{2,8}$/i.test(pathname)
 }

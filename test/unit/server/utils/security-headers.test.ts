@@ -43,6 +43,21 @@ describe('security headers', () => {
     expect(Object.isFrozen(headers)).toBe(true)
   })
 
+  it('keeps API and asset responses lightweight', () => {
+    const headers = getSecurityHeaders({
+      isProduction: true,
+      isPlayerRoute: false,
+      isHtmlRoute: false
+    })
+
+    expect(headers['X-Content-Type-Options']).toBe('nosniff')
+    expect(headers['Strict-Transport-Security']).toContain('max-age=31536000')
+    expect(headers['Content-Security-Policy']).toBeUndefined()
+    expect(headers['Permissions-Policy']).toBeUndefined()
+    expect(headers['Cross-Origin-Opener-Policy']).toBeUndefined()
+    expect(headers['X-Frame-Options']).toBeUndefined()
+  })
+
   it('classifies document and player routes', () => {
     expect(isPlayerHtmlRoute('/v1/player')).toBe(true)
     expect(isPlayerHtmlRoute('/v1/player/art')).toBe(true)
@@ -51,5 +66,9 @@ describe('security headers', () => {
     expect(isHtmlDocumentRoute('/admin/users')).toBe(true)
     expect(isHtmlDocumentRoute('/api/health')).toBe(false)
     expect(isHtmlDocumentRoute('/_nuxt/app.js')).toBe(false)
+    expect(isHtmlDocumentRoute('/v1/bing')).toBe(false)
+    expect(isHtmlDocumentRoute('/v1/not-found')).toBe(false)
+    expect(isHtmlDocumentRoute('/v1/player')).toBe(true)
+    expect(isHtmlDocumentRoute('/v2/player/art/')).toBe(true)
   })
 })

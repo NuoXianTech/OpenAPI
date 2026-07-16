@@ -87,10 +87,17 @@ describe('Nitro server routes', () => {
   })
 
   it('applies production security headers without disclosing the server stack', async () => {
-    const response = await fetch('/api/health')
+    const apiResponse = await fetch('/api/health')
+    const documentResponse = await fetch('/')
 
-    expect(response.headers.get('x-content-type-options')).toBe('nosniff')
-    expect(response.headers.get('strict-transport-security')).toContain('max-age=31536000')
-    expect(response.headers.has('x-powered-by')).toBe(false)
+    expect(apiResponse.headers.get('x-content-type-options')).toBe('nosniff')
+    expect(apiResponse.headers.get('strict-transport-security')).toContain('max-age=31536000')
+    expect(apiResponse.headers.has('content-security-policy')).toBe(false)
+    expect(apiResponse.headers.has('permissions-policy')).toBe(false)
+    expect(apiResponse.headers.has('x-powered-by')).toBe(false)
+
+    expect(documentResponse.headers.get('content-security-policy')).toContain(`frame-ancestors 'none'`)
+    expect(documentResponse.headers.get('permissions-policy')).toContain('camera=()')
+    expect(documentResponse.headers.get('x-frame-options')).toBe('DENY')
   })
 })
