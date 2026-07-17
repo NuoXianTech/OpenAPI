@@ -1,5 +1,31 @@
 {
   "public": {
+    "home": {
+      "defaultDescription": "免费为用户提供网络数据接口调用的服务平台",
+      "publicNavigation": "公开导航",
+      "stats": "调用统计",
+      "friendLinks": "友情链接",
+      "adminDashboard": "管理后台",
+      "userDashboard": "用户后台",
+      "logout": "退出登录",
+      "totalApis": "接口总数",
+      "availableApis": "可用接口",
+      "totalCalls": "调用次数",
+      "searchPlaceholder": "搜索 API 名称或描述...",
+      "statusFilter": "接口状态",
+      "statusFilterAria": "API 状态筛选",
+      "categoryFilter": "接口分类",
+      "categorySearch": "搜索分类",
+      "categoryEmpty": "未找到分类",
+      "categoryFilterAria": "API 分类筛选",
+      "loadingDescription": "正在拉取最新的 API 列表",
+      "emptyTitle": "未找到匹配的 API",
+      "emptyDescription": "尝试调整搜索关键词或切换筛选标签",
+      "totalCount": "共 {count} 个接口",
+      "clickHint": "点击卡片查看详情",
+      "pagination": "第 {page} / {totalPages} 页",
+      "announcementLoading": "公告加载中"
+    },
     "friendLinks": {
       "title": "友情链接",
       "description": "每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。",

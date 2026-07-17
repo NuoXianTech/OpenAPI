@@ -22,7 +22,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   startTime: '2026-02-02 00:00:00',
   siteName: 'OpenAPI',
-  siteDescription: '免费为用户提供网络数据接口调用的服务平台',
+  siteDescription: '',
   totalCount: 0,
   normalCount: 0,
   callCount: 0,
@@ -30,6 +30,7 @@ const props = withDefaults(defineProps<Props>(), {
   apiListError: false
 })
 
+const { t, locale } = useI18n()
 const { user, logout } = useAuth()
 
 // 实时时钟依赖"当前时刻"：SSR 渲染时刻与客户端 hydrate 时刻必然不同（秒级字段几乎必错），
@@ -38,6 +39,7 @@ const nowTime = ref('')
 const upTime = ref('')
 const startTimestamp = computed(() => parseStartTimestamp(props.startTime))
 const compactCallCount = computed(() => formatCompactCount(props.callCount))
+const resolvedDescription = computed(() => props.siteDescription || t('public.home.defaultDescription'))
 const dashboardMeta = computed(() => getDashboardMeta(user.value?.role))
 const dashboardPath = computed(() => dashboardMeta.value.path)
 const dashboardLabel = computed(() => dashboardMeta.value.label)
@@ -60,12 +62,12 @@ function formatUpTime(ms: number): string {
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const parts: string[] = []
 
-  if (years > 0) parts.push(`${years}年`)
-  if (days > 0 || years > 0) parts.push(`${days}天`)
-  if (hours > 0 || days > 0 || years > 0) parts.push(`${hours}时`)
-  if (minutes > 0 || hours > 0 || days > 0 || years > 0) parts.push(`${minutes}分`)
+  if (years > 0) parts.push(t('common.duration.years', { count: years }))
+  if (days > 0 || years > 0) parts.push(t('common.duration.days', { count: days }))
+  if (hours > 0 || days > 0 || years > 0) parts.push(t('common.duration.hours', { count: hours }))
+  if (minutes > 0 || hours > 0 || days > 0 || years > 0) parts.push(t('common.duration.minutes', { count: minutes }))
 
-  return parts.join('') || '0分'
+  return parts.join('') || t('common.duration.minutes', { count: 0 })
 }
 
 function parseStartTimestamp(startTime: string | undefined): number {
@@ -77,14 +79,14 @@ function getDashboardMeta(userRole: string | null | undefined): HomeHeroDashboar
   if (userRole === 'admin') {
     return {
       path: ADMIN_OVERVIEW_PATH,
-      label: '管理后台',
+      label: t('public.home.adminDashboard'),
       icon: 'i-mdi-shield-crown-outline'
     }
   }
 
   return {
     path: USER_OVERVIEW_PATH,
-    label: '用户后台',
+    label: t('public.home.userDashboard'),
     icon: 'i-mdi-view-dashboard-outline'
   }
 }
@@ -126,7 +128,7 @@ async function handleLogout() {
             {{ siteName }}
           </h1>
           <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
-            {{ siteDescription }}
+            {{ resolvedDescription }}
           </p>
 
           <div class="hero-meta flex flex-wrap items-center gap-2.5 text-xs text-muted">
@@ -159,7 +161,7 @@ async function handleLogout() {
           <div class="hero-actions">
             <div
               class="hero-nav"
-              aria-label="公开导航"
+              :aria-label="t('public.home.publicNavigation')"
             >
               <UButton
                 to="/stats"
@@ -169,7 +171,7 @@ async function handleLogout() {
                 size="sm"
                 class="hero-nav__item"
               >
-                调用统计
+                {{ $t('public.home.stats') }}
               </UButton>
               <UButton
                 to="/friend-links"
@@ -179,7 +181,7 @@ async function handleLogout() {
                 size="sm"
                 class="hero-nav__item"
               >
-                友情链接
+                {{ $t('public.home.friendLinks') }}
               </UButton>
             </div>
 
@@ -200,7 +202,7 @@ async function handleLogout() {
                     size="sm"
                     @click="handleLogout"
                   >
-                    退出登录
+                    {{ $t('public.home.logout') }}
                   </UButton>
                 </div>
               </template>
@@ -211,7 +213,7 @@ async function handleLogout() {
                     icon="i-mdi-login"
                     size="sm"
                   >
-                    登录
+                    {{ $t('auth.login.title') }}
                   </UButton>
                   <UButton
                     to="/register"
@@ -220,7 +222,7 @@ async function handleLogout() {
                     variant="outline"
                     size="sm"
                   >
-                    注册
+                    {{ $t('auth.register.title') }}
                   </UButton>
                 </div>
               </template>
@@ -241,7 +243,7 @@ async function handleLogout() {
               <template #value>
                 {{ totalCount }}
               </template>
-              接口总数
+              {{ $t('public.home.totalApis') }}
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
@@ -251,18 +253,18 @@ async function handleLogout() {
               <template #value>
                 {{ normalCount }}
               </template>
-              可用接口
+              {{ $t('public.home.availableApis') }}
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
               icon="i-mdi-counter"
               icon-tone="primary"
-              :value-title="callCount.toLocaleString('zh-CN')"
+              :value-title="callCount.toLocaleString(locale)"
             >
               <template #value>
                 {{ compactCallCount }}
               </template>
-              调用次数
+              {{ $t('public.home.totalCalls') }}
             </CommonHeroStatCard>
           </div>
         </div>

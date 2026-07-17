@@ -7,9 +7,11 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  placeholder: '搜索 API 名称或描述...',
+  placeholder: '',
   size: 'md'
 })
+const { t } = useI18n()
+const resolvedPlaceholder = computed(() => props.placeholder || t('public.home.searchPlaceholder'))
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
@@ -60,7 +62,7 @@ defineShortcuts({
   <UInput
     ref="inputComp"
     :model-value="props.modelValue"
-    :placeholder="props.placeholder"
+    :placeholder="resolvedPlaceholder"
     :size="props.size"
     icon="i-mdi-magnify"
     color="neutral"
@@ -78,7 +80,7 @@ defineShortcuts({
         variant="link"
         size="sm"
         icon="i-mdi-close"
-        aria-label="清除搜索"
+        :aria-label="t('common.search.clear')"
         @click="clear"
       />
       <UKbd

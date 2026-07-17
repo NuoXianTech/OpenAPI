@@ -16,7 +16,10 @@
       "loading": "加载中...",
       "loadFailed": "加载失败",
       "active": "正常",
-      "inactive": "异常"
+      "inactive": "异常",
+      "maintenance": "维护",
+      "deprecated": "废弃",
+      "unknown": "未知"
     },
     "filters": {
       "all": "全部",
@@ -24,6 +27,15 @@
     },
     "content": {
       "noDescription": "暂无描述"
+    },
+    "duration": {
+      "years": "{count}年",
+      "days": "{count}天",
+      "hours": "{count}时",
+      "minutes": "{count}分"
+    },
+    "search": {
+      "clear": "清除搜索"
     },
     "dialog": {
       "confirmTitle": "确认操作"
