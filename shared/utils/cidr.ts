@@ -11,9 +11,12 @@
 
 const IPV4_LITERAL_RE = /^\d{1,3}(\.\d{1,3}){3}$/
 
-type CidrParseResult
-  = | { ok: true, family: 4 | 6, network: bigint, prefix: number, total: number }
-    | { ok: false, reason: string }
+interface ParsedCidr {
+  family: 4 | 6
+  network: bigint
+  prefix: number
+  total: number
+}
 
 function isValidIPv4(input: string): boolean {
   if (!IPV4_LITERAL_RE.test(input)) return false
@@ -107,47 +110,43 @@ function applyMask(addr: bigint, prefix: number, total: number): bigint {
   return addr & mask
 }
 
-/** 解析单条 CIDR；失败时返回带原因的错误对象 */
-function parseCidr(input: string): CidrParseResult {
+/** 解析单条 CIDR；失败时返回 null */
+function parseCidr(input: string): ParsedCidr | null {
   const trimmed = input.trim()
-  if (!trimmed) return { ok: false, reason: '不能为空' }
+  if (!trimmed) return null
 
   const slashIdx = trimmed.indexOf('/')
-  if (slashIdx === -1) {
-    return { ok: false, reason: '必须使用 CIDR 格式（例：10.0.0.0/8 或 192.168.1.1/32）' }
-  }
+  if (slashIdx === -1) return null
 
   const ipPart = trimmed.slice(0, slashIdx)
   const prefixPart = trimmed.slice(slashIdx + 1)
-  if (!/^\d+$/.test(prefixPart)) {
-    return { ok: false, reason: '掩码必须为非负整数' }
-  }
+  if (!/^\d+$/.test(prefixPart)) return null
   const prefix = Number(prefixPart)
 
   if (isValidIPv4(ipPart)) {
-    if (prefix > 32) return { ok: false, reason: 'IPv4 掩码不能超过 32' }
+    if (prefix > 32) return null
     const addr = ipv4ToBigint(ipPart)
-    if (addr === null) return { ok: false, reason: '无效的 IPv4 地址' }
-    return { ok: true, family: 4, network: applyMask(addr, prefix, 32), prefix, total: 32 }
+    if (addr === null) return null
+    return { family: 4, network: applyMask(addr, prefix, 32), prefix, total: 32 }
   }
   if (isValidIPv6(ipPart)) {
-    if (prefix > 128) return { ok: false, reason: 'IPv6 掩码不能超过 128' }
+    if (prefix > 128) return null
     const addr = ipv6ToBigint(ipPart)
-    if (addr === null) return { ok: false, reason: '无效的 IPv6 地址' }
-    return { ok: true, family: 6, network: applyMask(addr, prefix, 128), prefix, total: 128 }
+    if (addr === null) return null
+    return { family: 6, network: applyMask(addr, prefix, 128), prefix, total: 128 }
   }
-  return { ok: false, reason: '无效的 IP 地址' }
+  return null
 }
 
 /** 单条 CIDR 是否合法 */
 export function isCidr(input: string): boolean {
-  return parseCidr(input).ok
+  return parseCidr(input) !== null
 }
 
 /** 检查 IP 是否落在指定 CIDR 范围内 */
 export function ipInCidr(ip: string, cidr: string): boolean {
   const parsed = parseCidr(cidr)
-  if (!parsed.ok) return false
+  if (!parsed) return false
 
   let addr: bigint | null = null
   let family: 4 | 6 | null = null
