@@ -3,6 +3,7 @@ import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-pa
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
 const { form, createSection } = useAdminSettingsPage()
+const { t } = useI18n()
 
 const captchaCredentialKeys = [
   'turnstileSiteKey',
@@ -20,19 +21,21 @@ const captchaCredentialSection = createSection(captchaCredentialKeys)
 const captchaSceneSection = createSection(captchaSceneKeys)
 
 // 目前仅实现 Cloudflare Turnstile，下拉保留以便后续扩展其他验证码服务
-const captchaTypeItems = ['Cloudflare Turnstile']
-const captchaType = ref('Cloudflare Turnstile')
+const captchaTypeItems = computed(() => [
+  { label: t('admin.system.captcha.providers.turnstile'), value: 'turnstile' }
+])
+const captchaType = ref('turnstile')
 </script>
 
 <template>
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
-      title="验证码"
+      :title="t('admin.system.captcha.credentials.title')"
     >
       <UFormField
         name="captchaType"
-        label="验证码类型"
-        description="选择验证码服务提供商。目前仅支持 Cloudflare Turnstile。"
+        :label="t('admin.system.captcha.credentials.type.label')"
+        :description="t('admin.system.captcha.credentials.type.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USelect
@@ -43,8 +46,8 @@ const captchaType = ref('Cloudflare Turnstile')
       </UFormField>
       <UFormField
         name="turnstileSiteKey"
-        label="站点密钥 (Site Key)"
-        description="Cloudflare Turnstile 应用页获取到的 Site Key。"
+        :label="t('admin.system.captcha.credentials.siteKey.label')"
+        :description="t('admin.system.captcha.credentials.siteKey.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -56,8 +59,8 @@ const captchaType = ref('Cloudflare Turnstile')
       </UFormField>
       <UFormField
         name="turnstileSecretKey"
-        label="密钥 (Secret Key)"
-        description="Cloudflare Turnstile 应用页获取到的 Secret Key。"
+        :label="t('admin.system.captcha.credentials.secretKey.label')"
+        :description="t('admin.system.captcha.credentials.secretKey.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -77,28 +80,28 @@ const captchaType = ref('Cloudflare Turnstile')
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
-      title="验证场景"
+      :title="t('admin.system.captcha.scenes.title')"
     >
       <UFormField
         name="turnstileLoginEnabled"
-        label="登录验证码"
-        description="/login 提交时校验。"
+        :label="t('admin.system.captcha.scenes.login.label')"
+        :description="t('admin.system.captcha.scenes.login.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.turnstileLoginEnabled" />
       </UFormField>
       <UFormField
         name="turnstileRegisterEnabled"
-        label="注册验证码"
-        description="/register 提交时校验。"
+        :label="t('admin.system.captcha.scenes.register.label')"
+        :description="t('admin.system.captcha.scenes.register.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.turnstileRegisterEnabled" />
       </UFormField>
       <UFormField
         name="turnstilePasswordResetEnabled"
-        label="找回密码验证码"
-        description="/forgot-password 申请重置链接时校验，避免邮件接口被刷。需同时开启「忘记密码」功能。"
+        :label="t('admin.system.captcha.scenes.passwordReset.label')"
+        :description="t('admin.system.captcha.scenes.passwordReset.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch
@@ -108,8 +111,8 @@ const captchaType = ref('Cloudflare Turnstile')
       </UFormField>
       <UFormField
         name="turnstileCheckinEnabled"
-        label="每日签到验证码"
-        description="积分页点击签到时弹出验证窗口，通过后自动签到。需同时开启「每日签到」功能。"
+        :label="t('admin.system.captcha.scenes.checkin.label')"
+        :description="t('admin.system.captcha.scenes.checkin.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch
