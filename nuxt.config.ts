@@ -105,7 +105,7 @@ export default defineNuxtConfig({
       code: DEFAULT_LOCALE,
       language: DEFAULT_LOCALE,
       name: '简体中文',
-      files: ['zh-CN/common.json', 'zh-CN/auth.json', 'zh-CN/public.json']
+      files: ['zh-CN/common.json', 'zh-CN/auth.json', 'zh-CN/public.json', 'zh-CN/user.json']
     }],
     detectBrowserLanguage: {
       useCookie: true,

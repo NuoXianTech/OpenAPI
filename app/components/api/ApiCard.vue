@@ -24,7 +24,7 @@ interface ApiCardStatusMeta {
 }
 
 const props = withDefaults(defineProps<ApiCardProps>(), {
-  name: '这是标题',
+  name: '',
   status: API_STATUS.unknown,
   shortDesc: '',
   description: '',
@@ -35,6 +35,7 @@ const props = withDefaults(defineProps<ApiCardProps>(), {
   methodCosts: () => ({}),
   totalCalls: 0
 })
+const { t, locale } = useI18n()
 const {
   name,
   shortDesc,
@@ -44,6 +45,7 @@ const {
   isApiKey,
   totalCalls
 } = toRefs(props)
+const resolvedName = computed(() => name.value || t('public.api.defaultTitle'))
 const popoverDetailsOpen = ref(false)
 const modalDetailsOpen = ref(false)
 const methods = computed(() => parseMethods(props.httpMethod))
@@ -55,19 +57,21 @@ const aggregateCost = computed(() => {
   return prices.every(price => price === first) ? first : -1
 })
 const pricingTooltip = computed(() => {
-  if (aggregateCost.value > 0) return `每次调用消耗 ${aggregateCost.value} 积分`
-  if (aggregateCost.value === -1) return isAllPaid.value ? '不同请求方法采用不同价格' : '部分请求方法需要消耗积分'
-  return '所有请求方法均可免费调用'
+  if (aggregateCost.value > 0) return t('public.api.pricing.perCall', { count: aggregateCost.value })
+  if (aggregateCost.value === -1) {
+    return isAllPaid.value ? t('public.api.pricing.byMethodDescription') : t('public.api.pricing.partiallyPaidDescription')
+  }
+  return t('public.api.pricing.freeDescription')
 })
 const isDetailsOpen = computed(() => popoverDetailsOpen.value || modalDetailsOpen.value)
-const detailSummary = computed(() => shortDesc.value || description.value || '暂无简介')
+const detailSummary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
 const radarMeta = computed(() => getSuccessRadar(props.status))
 const radarClass = computed(() => radarMeta.value.className)
 const radarTitle = computed(() => radarMeta.value.title)
 const statusMeta = computed(() => getStatusMeta(props.status))
 const statusSurfaceClass = computed(() => `api-card--status-${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
-  name: name.value,
+  name: resolvedName.value,
   shortDesc: shortDesc.value,
   description: description.value,
   apiPath: apiPath.value,
@@ -94,28 +98,28 @@ function costFor(method: string): number {
 function getSuccessRadar(status = -1): { className: string, title: string } {
   switch (status) {
     case API_STATUS.normal:
-      return { className: '', title: '正常' }
+      return { className: '', title: t('common.states.active') }
     case API_STATUS.abnormal:
-      return { className: 'is-error', title: '异常' }
+      return { className: 'is-error', title: t('common.states.inactive') }
     default:
-      return { className: 'is-unknown', title: '未知' }
+      return { className: 'is-unknown', title: t('common.states.unknown') }
   }
 }
 
 function getStatusMeta(status = -1): ApiCardStatusMeta {
   switch (status) {
     case API_STATUS.normal:
-      return { label: '正常', color: 'success', icon: 'i-mdi-check-circle-outline' }
+      return { label: t('common.states.active'), color: 'success', icon: 'i-mdi-check-circle-outline' }
     case API_STATUS.abnormal:
-      return { label: '异常', color: 'error', icon: 'i-mdi-alert-circle-outline' }
+      return { label: t('common.states.inactive'), color: 'error', icon: 'i-mdi-alert-circle-outline' }
     case API_STATUS.maintenance:
-      return { label: '维护', color: 'warning', icon: 'i-mdi-wrench-outline' }
+      return { label: t('common.states.maintenance'), color: 'warning', icon: 'i-mdi-wrench-outline' }
     case API_STATUS.deprecated:
-      return { label: '废弃', color: 'neutral', icon: 'i-mdi-archive-outline' }
+      return { label: t('common.states.deprecated'), color: 'neutral', icon: 'i-mdi-archive-outline' }
     case API_STATUS.automatic:
-      return { label: '自动', color: 'info', icon: 'i-mdi-sync' }
+      return { label: t('common.states.automatic'), color: 'info', icon: 'i-mdi-sync' }
     default:
-      return { label: '未知', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
+      return { label: t('common.states.unknown'), color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }
 }
 </script>
@@ -129,7 +133,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   >
     <header class="api-card__head">
       <h3 class="api-card__title">
-        {{ name }}
+        {{ resolvedName }}
       </h3>
       <span
         class="api-card__radar"
@@ -139,7 +143,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
     </header>
 
     <p class="api-card__short">
-      {{ shortDesc || '暂无简介' }}
+      {{ shortDesc || $t('public.api.noSummary') }}
     </p>
 
     <div class="api-card__toggle-row">
@@ -157,19 +161,19 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             :class="{ 'api-card__price-badge api-card__price-badge--free': aggregateCost === 0 }"
           >
             <template v-if="aggregateCost > 0">
-              {{ aggregateCost }} 积分/次
+              {{ $t('public.api.pricing.pointsPerCall', { count: aggregateCost }) }}
             </template>
             <template v-else-if="aggregateCost === -1">
-              {{ isAllPaid ? '按方法定价' : '部分收费' }}
+              {{ isAllPaid ? $t('public.api.pricing.byMethod') : $t('public.api.pricing.partiallyPaid') }}
             </template>
             <template v-else>
-              免费
+              {{ $t('public.api.pricing.free') }}
             </template>
           </UBadge>
         </UTooltip>
         <UTooltip
           v-if="isApiKey"
-          text="调用此接口需要提供 API密钥"
+          :text="$t('public.api.apiKeyRequiredDescription')"
           :content="{ side: 'top' }"
         >
           <UBadge
@@ -179,11 +183,11 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             icon="i-mdi-shield-key-outline"
             class="api-card__key-badge rounded-full"
           >
-            API密钥
+            {{ $t('public.api.apiKey') }}
           </UBadge>
         </UTooltip>
         <UTooltip
-          :text="`累计调用 ${totalCalls.toLocaleString('zh-CN')} 次`"
+          :text="$t('public.api.totalCallsDescription', { count: totalCalls.toLocaleString(locale) })"
           :content="{ side: 'top' }"
         >
           <span class="api-card__calls">
@@ -196,14 +200,14 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
                 class="size-3"
               />
             </span>
-            <span class="api-card__calls-num">{{ formatCompactCount(totalCalls) }} 次</span>
+            <span class="api-card__calls-num">{{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}</span>
           </span>
         </UTooltip>
       </div>
       <div class="api-card__actions">
         <UTooltip
           v-if="docUrl"
-          text="打开接口文档"
+          :text="$t('public.api.openDocumentation')"
           :content="{ side: 'top' }"
         >
           <UButton
@@ -216,7 +220,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             icon="i-mdi-file-document-outline"
             class="api-card__action-button"
           >
-            文档
+            {{ $t('public.api.documentation') }}
           </UButton>
         </UTooltip>
 
@@ -228,7 +232,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             :ui="{ content: 'p-0 overflow-hidden' }"
           >
             <UTooltip
-              :text="popoverDetailsOpen ? '收起接口详情' : '查看接口详情'"
+              :text="popoverDetailsOpen ? $t('public.api.collapseDetails') : $t('public.api.viewDetails')"
               :content="{ side: 'top' }"
             >
               <UButton
@@ -238,7 +242,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
                 :icon="popoverDetailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-arrow-top-right'"
                 class="api-card__action-button"
               >
-                {{ popoverDetailsOpen ? '收起' : '详情' }}
+                {{ popoverDetailsOpen ? $t('public.api.collapse') : $t('public.api.details') }}
               </UButton>
             </UTooltip>
 
@@ -271,7 +275,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
               trailing-icon="i-mdi-chevron-right"
               class="api-card__action-button"
             >
-              详情
+              {{ $t('public.api.details') }}
             </UButton>
 
             <template #title>
@@ -285,7 +289,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
                     class="size-4"
                   />
                 </span>
-                <span class="api-card__modal-title">{{ name }}</span>
+                <span class="api-card__modal-title">{{ resolvedName }}</span>
                 <UBadge
                   :color="statusMeta.color"
                   variant="soft"

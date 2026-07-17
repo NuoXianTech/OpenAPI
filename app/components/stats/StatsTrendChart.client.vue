@@ -29,7 +29,7 @@ interface TrendRow {
 
 const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
   label: formatTrendShortDate(item.date),
-  fullLabel: formatTrendFullDate(item.date),
+  fullLabel: formatTrendFullDate(item.date, locale.value),
   success: item.successCalls,
   failure: item.failureCalls
 })))

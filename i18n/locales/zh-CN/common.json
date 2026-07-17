@@ -7,6 +7,7 @@
       "create": "创建",
       "edit": "编辑",
       "delete": "删除",
+      "copy": "复制",
       "retry": "重试",
       "visit": "访问",
       "backHome": "返回首页",
@@ -19,6 +20,7 @@
       "inactive": "异常",
       "maintenance": "维护",
       "deprecated": "废弃",
+      "automatic": "自动",
       "unknown": "未知"
     },
     "filters": {

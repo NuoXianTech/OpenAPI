@@ -26,6 +26,53 @@
       "pagination": "第 {page} / {totalPages} 页",
       "announcementLoading": "公告加载中"
     },
+    "api": {
+      "defaultTitle": "接口标题",
+      "noSummary": "暂无简介",
+      "endpoint": "接口地址",
+      "callCount": "调用次数",
+      "callCountDescription": "调用次数 {count}",
+      "totalCallsDescription": "累计调用 {count} 次",
+      "times": "{count} 次",
+      "authentication": "鉴权要求",
+      "apiKey": "API 密钥",
+      "noApiKey": "无需密钥",
+      "apiKeyRequiredDescription": "调用此接口需要提供 API 密钥",
+      "requestMethod": "请求方法",
+      "documentation": "文档",
+      "openDocumentation": "打开接口文档",
+      "details": "详情",
+      "viewDetails": "查看接口详情",
+      "collapse": "收起",
+      "collapseDetails": "收起接口详情",
+      "pricing": {
+        "label": "调用计费",
+        "free": "免费",
+        "pointsPerCall": "{count} 积分/次",
+        "perCall": "每次调用消耗 {count} 积分",
+        "byMethod": "按方法定价",
+        "byMethodDescription": "不同请求方法采用不同价格",
+        "partiallyPaid": "部分收费",
+        "partiallyPaidDescription": "部分请求方法需要消耗积分",
+        "freeDescription": "所有请求方法均可免费调用"
+      }
+    },
+    "announcements": {
+      "title": "站点公告",
+      "summary": "共 {count} 条 · 最新动态与重要通知",
+      "empty": "暂无公告",
+      "viewDetails": "查看详情",
+      "pinned": "置顶",
+      "reminderHint": "新公告发布后会再次提醒",
+      "dismiss": "不再提醒",
+      "acknowledge": "我知道了",
+      "levels": {
+        "info": "公告",
+        "success": "通知",
+        "warning": "提醒",
+        "critical": "紧急"
+      }
+    },
     "stats": {
       "pageTitle": "数据统计",
       "seoTitle": "调用统计",

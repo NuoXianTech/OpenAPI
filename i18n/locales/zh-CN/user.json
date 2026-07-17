@@ -1,0 +1,55 @@
+{
+  "user": {
+    "apiKey": "API 密钥",
+    "units": {
+      "points": "积分",
+      "times": "次"
+    },
+    "states": {
+      "success": "成功",
+      "failure": "失败"
+    },
+    "overview": {
+      "pageTitle": "个人中心",
+      "title": "概览",
+      "loadFailed": "加载概览失败",
+      "copySuccess": "已复制示例请求",
+      "copyFailed": "复制失败",
+      "hero": {
+        "title": "几分钟内开始使用你的 API 网关",
+        "description": "你好。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。",
+        "descriptionWithName": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。"
+      },
+      "actions": {
+        "createApiKey": "创建 API 密钥",
+        "manageCredits": "管理积分",
+        "viewCredits": "查看积分",
+        "viewLogs": "查看调用日志"
+      },
+      "firstRequest": {
+        "title": "首个 API 请求",
+        "ready": "已就绪",
+        "notCreated": "未创建"
+      },
+      "usage": {
+        "title": "用量概览",
+        "description": "监控余额、用量和请求量"
+      },
+      "metrics": {
+        "spent24h": "近 24 小时消耗",
+        "totalSpent": "历史累计消耗",
+        "totalCalls": "请求计数",
+        "balance": "剩余额度"
+      },
+      "chart": {
+        "title": "最近 24 小时 API 请求",
+        "description": "按小时统计成功与失败请求，仅包含计入统计的调用",
+        "legend": "图例",
+        "successRequests": "成功请求",
+        "failureRequests": "失败请求",
+        "emptyTitle": "最近 24 小时暂无请求",
+        "emptyDescription": "发起 API 请求后，成功与失败趋势会显示在这里。"
+      }
+    }
+  }
+}

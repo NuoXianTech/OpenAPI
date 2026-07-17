@@ -2,7 +2,9 @@
 import type { UserDashboardData } from '#shared/types/user-dashboard'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
-useHead({ title: '个人中心' })
+const { t, locale } = useI18n()
+
+useHead({ title: () => t('user.overview.pageTitle') })
 
 const { user } = useAuth()
 const toast = useToast()
@@ -28,7 +30,7 @@ const { data, error } = usePrivateResource<UserDashboardData>({
 
 watch(error, (err) => {
   if (err) {
-    toast.add({ title: '加载概览失败', color: 'error' })
+    toast.add({ title: t('user.overview.loadFailed'), color: 'error' })
   }
 })
 
@@ -40,6 +42,9 @@ const hourlyTrend24h = computed(() => data.value.hourlyTrend24h)
 const callsTrendValues = computed(() => trend.value.map(point => point.totalCalls))
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
+const introDescription = computed(() => user.value?.username
+  ? t('user.overview.hero.descriptionWithName', { username: user.value.username })
+  : t('user.overview.hero.description'))
 const sampleCurl = computed(() => [
   `curl -X GET '${origin}/v1/your-endpoint' \\`,
   `  -H 'x-api-key: <your-api-key>'`
@@ -67,9 +72,9 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
   return [
     {
       key: 'spent24h',
-      label: '近 24 小时消耗',
-      value: credits.value.spent24h.toLocaleString(),
-      unit: '积分',
+      label: t('user.overview.metrics.spent24h'),
+      value: credits.value.spent24h.toLocaleString(locale.value),
+      unit: t('user.units.points'),
       icon: 'i-mdi-fire',
       tone: 'warning',
       sparklineValues: spendTrendValues.value,
@@ -77,9 +82,9 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
     },
     {
       key: 'totalSpent',
-      label: '历史累计消耗',
-      value: credits.value.totalSpent.toLocaleString(),
-      unit: '积分',
+      label: t('user.overview.metrics.totalSpent'),
+      value: credits.value.totalSpent.toLocaleString(locale.value),
+      unit: t('user.units.points'),
       icon: 'i-mdi-chart-line',
       tone: 'neutral',
       sparklineValues: spendTrendValues.value,
@@ -87,9 +92,9 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
     },
     {
       key: 'totalCalls',
-      label: '请求计数',
-      value: calls.value.total.toLocaleString(),
-      unit: '次',
+      label: t('user.overview.metrics.totalCalls'),
+      value: calls.value.total.toLocaleString(locale.value),
+      unit: t('user.units.times'),
       icon: 'i-mdi-heart-pulse',
       tone: 'info',
       sparklineValues: callsTrendValues.value,
@@ -97,12 +102,12 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
     },
     {
       key: 'balance',
-      label: '剩余额度',
-      value: credits.value.balance.toLocaleString(),
-      unit: '积分',
+      label: t('user.overview.metrics.balance'),
+      value: credits.value.balance.toLocaleString(locale.value),
+      unit: t('user.units.points'),
       icon: 'i-mdi-cash-multiple',
       tone: 'success',
-      action: { label: '查看积分', to: '/user/credits', icon: 'i-mdi-arrow-right' }
+      action: { label: t('user.overview.actions.viewCredits'), to: '/user/credits', icon: 'i-mdi-arrow-right' }
     }
   ]
 })
@@ -110,9 +115,9 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
 async function copyCurl() {
   try {
     await navigator.clipboard.writeText(sampleCurl.value)
-    toast.add({ title: '已复制示例请求', color: 'success' })
+    toast.add({ title: t('user.overview.copySuccess'), color: 'success' })
   } catch {
-    toast.add({ title: '复制失败', color: 'error' })
+    toast.add({ title: t('user.overview.copyFailed'), color: 'error' })
   }
 }
 </script>
@@ -120,7 +125,7 @@ async function copyCurl() {
 <template>
   <UDashboardPanel id="user-overview">
     <template #header>
-      <DashboardPageNavbar title="概览" />
+      <DashboardPageNavbar :title="$t('user.overview.title')" />
     </template>
 
     <template #body>
@@ -131,10 +136,10 @@ async function copyCurl() {
             <div class="lg:col-span-3 space-y-5">
               <div class="space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
-                  几分钟内开始使用你的 API 网关
+                  {{ $t('user.overview.hero.title') }}
                 </h2>
                 <p class="text-sm sm:text-base text-toned max-w-xl">
-                  你好<span v-if="user?.username">，{{ user.username }}</span>。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。
+                  {{ introDescription }}
                 </p>
               </div>
 
@@ -145,7 +150,7 @@ async function copyCurl() {
                   size="md"
                   icon="i-mdi-key-plus"
                 >
-                  创建 API 密钥
+                  {{ $t('user.overview.actions.createApiKey') }}
                 </UButton>
                 <UButton
                   to="/user/credits"
@@ -154,7 +159,7 @@ async function copyCurl() {
                   size="md"
                   icon="i-mdi-cash-multiple"
                 >
-                  管理积分
+                  {{ $t('user.overview.actions.manageCredits') }}
                 </UButton>
               </div>
             </div>
@@ -167,7 +172,7 @@ async function copyCurl() {
                       name="i-mdi-console-line"
                       class="size-4 text-muted"
                     />
-                    <span class="text-sm font-medium">首个 API 请求</span>
+                    <span class="text-sm font-medium">{{ $t('user.overview.firstRequest.title') }}</span>
                   </div>
                   <UButton
                     size="xs"
@@ -176,27 +181,27 @@ async function copyCurl() {
                     icon="i-mdi-content-copy"
                     @click="copyCurl"
                   >
-                    复制
+                    {{ $t('common.actions.copy') }}
                   </UButton>
                 </div>
                 <pre class="font-mono text-[11px] leading-relaxed text-toned bg-elevated/50 rounded-md p-3 overflow-x-auto"><code>{{ sampleCurl }}</code></pre>
 
                 <div class="border-t border-default pt-3 space-y-2.5">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">API 密钥</span>
+                    <span class="text-muted">{{ $t('user.apiKey') }}</span>
                     <span
                       v-if="hasKeys"
                       class="inline-flex items-center gap-1.5 text-success font-medium"
                     >
                       <span class="size-1.5 rounded-full bg-success" />
-                      已就绪
+                      {{ $t('user.overview.firstRequest.ready') }}
                     </span>
                     <span
                       v-else
                       class="inline-flex items-center gap-1.5 text-warning font-medium"
                     >
                       <span class="size-1.5 rounded-full bg-warning" />
-                      未创建
+                      {{ $t('user.overview.firstRequest.notCreated') }}
                     </span>
                   </div>
                 </div>
@@ -210,10 +215,10 @@ async function copyCurl() {
           <div class="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h3 class="text-lg font-semibold text-highlighted">
-                用量概览
+                {{ $t('user.overview.usage.title') }}
               </h3>
               <p class="text-sm text-muted">
-                监控余额、用量和请求量
+                {{ $t('user.overview.usage.description') }}
               </p>
             </div>
             <UButton
@@ -223,7 +228,7 @@ async function copyCurl() {
               variant="ghost"
               trailing-icon="i-mdi-chevron-right"
             >
-              查看调用日志
+              {{ $t('user.overview.actions.viewLogs') }}
             </UButton>
           </div>
 
@@ -261,15 +266,15 @@ async function copyCurl() {
           <div class="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h3 class="text-lg font-semibold text-highlighted">
-                最近 24 小时 API 请求
+                {{ $t('user.overview.chart.title') }}
               </h3>
               <p class="text-sm text-muted">
-                按小时统计成功与失败请求，仅包含计入统计的调用
+                {{ $t('user.overview.chart.description') }}
               </p>
             </div>
-            <div class="flex items-center gap-4 text-xs text-muted" aria-label="图例">
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />成功</span>
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />失败</span>
+            <div class="flex items-center gap-4 text-xs text-muted" :aria-label="$t('user.overview.chart.legend')">
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />{{ $t('user.states.success') }}</span>
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />{{ $t('user.states.failure') }}</span>
             </div>
           </div>
 
