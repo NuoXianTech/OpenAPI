@@ -3,7 +3,8 @@ import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 
-useHead({ title: '操作日志' })
+const { t, locale } = useI18n()
+useHead({ title: () => t('admin.logs.operations.pageTitle') })
 const {
   actorKindItems,
   activeFilterCount,
@@ -33,10 +34,10 @@ const {
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            操作日志
+            {{ $t('admin.logs.operations.title') }}
           </h2>
           <p class="mt-1 text-sm text-toned">
-            后台动作、资源变更与操作者审计轨迹
+            {{ $t('admin.logs.operations.description') }}
           </p>
         </div>
       </div>
@@ -45,23 +46,23 @@ const {
     <div class="flex flex-wrap items-center gap-2">
       <AdminFilterPopover
         :active-count="activeFilterCount"
-        title="操作日志筛选"
+        :title="$t('admin.logs.operations.filterTitle')"
         panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
         @apply="applyFilters"
         @reset="reset"
       >
         <div class="grid gap-3 md:grid-cols-2">
           <UFormField
-            label="时间范围"
+            :label="$t('admin.logs.operations.filters.timeRange')"
             class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
               v-model:end="filters.endAt"
-              placeholder="全部时间"
+              :placeholder="$t('admin.logs.operations.filters.allTime')"
             />
           </UFormField>
-          <UFormField label="来源">
+          <UFormField :label="$t('admin.logs.operations.filters.source')">
             <USelect
               v-model="filters.actorKind"
               :items="actorKindItems"
@@ -69,16 +70,16 @@ const {
             />
           </UFormField>
           <UFormField
-            label="操作者"
-            hint="名称模糊匹配"
+            :label="$t('admin.logs.operations.filters.actor')"
+            :hint="$t('admin.logs.operations.filters.actorHint')"
           >
             <UInput
               v-model="filters.actor"
-              placeholder="留空查全部"
+              :placeholder="$t('admin.logs.operations.filters.emptyAll')"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="状态">
+          <UFormField :label="$t('admin.logs.operations.filters.status')">
             <USelect
               v-model="filters.status"
               :items="statusItems"
@@ -87,31 +88,31 @@ const {
           </UFormField>
           <div class="border-t border-default pt-3 md:col-span-2">
             <p class="mb-3 text-xs font-medium text-muted">
-              精确筛选
+              {{ $t('admin.logs.operations.filters.exact') }}
             </p>
             <div class="grid gap-3 md:grid-cols-3">
-              <UFormField label="用户 ID">
+              <UFormField :label="$t('admin.logs.operations.filters.userId')">
                 <UInput
                   v-model.number="filters.userId"
                   type="number"
-                  placeholder="留空查全部"
+                  :placeholder="$t('admin.logs.operations.filters.emptyAll')"
                   class="w-full"
                 />
               </UFormField>
               <UFormField
-                label="动作前缀"
-                hint="例如 admin.user."
+                :label="$t('admin.logs.operations.filters.actionPrefix')"
+                :hint="$t('admin.logs.operations.filters.actionPrefixHint')"
               >
                 <UInput
                   v-model="filters.action"
-                  placeholder="留空查全部"
+                  :placeholder="$t('admin.logs.operations.filters.emptyAll')"
                   class="w-full"
                 />
               </UFormField>
-              <UFormField label="资源类型">
+              <UFormField :label="$t('admin.logs.operations.filters.resourceType')">
                 <UInput
                   v-model="filters.resourceType"
-                  placeholder="如 api / user"
+                  :placeholder="$t('admin.logs.operations.filters.resourceTypePlaceholder')"
                   class="w-full"
                 />
               </UFormField>
@@ -127,12 +128,12 @@ const {
         :loading="loading"
         @click="refresh"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
     <DashboardTableCard
-      title="操作明细"
+      :title="$t('admin.logs.operations.detailsTitle')"
       icon="i-mdi-clipboard-text-clock-outline"
       :total="total"
     >
@@ -144,15 +145,15 @@ const {
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无操作日志"
+        :empty-title="$t('admin.logs.operations.empty')"
         empty-icon="i-mdi-clipboard-text-clock-outline"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #actor-cell="{ row }">
           <div class="flex flex-col text-xs">
-            <span class="font-medium">{{ row.original.actor || '匿名' }}</span>
+            <span class="font-medium">{{ row.original.actor || $t('common.identities.anonymous') }}</span>
             <span class="text-muted">
               {{ resolveActorLabel(row.original.action, row.original.userId, row.original.actorRole) }}
             </span>
@@ -189,7 +190,7 @@ const {
             variant="subtle"
             size="sm"
           >
-            {{ row.original.status === 'success' ? '成功' : '失败' }}
+            {{ row.original.status === 'success' ? $t('common.states.success') : $t('common.states.failure') }}
           </UBadge>
         </template>
         <template #ip-cell="{ row }">
@@ -201,7 +202,7 @@ const {
             color="neutral"
             variant="ghost"
             icon="i-mdi-eye-outline"
-            aria-label="查看详情"
+            :aria-label="$t('common.actions.viewDetails')"
             @click="openDetail(row.original)"
           />
         </template>
@@ -210,7 +211,7 @@ const {
 
     <UModal
       v-model:open="detailOpen"
-      title="操作详情"
+      :title="$t('admin.logs.operations.detail.title')"
       :ui="adminModalUi({ content: 'max-w-2xl' })"
     >
       <template #body>
@@ -221,13 +222,13 @@ const {
           <div class="grid grid-cols-2 gap-3">
             <div>
               <div class="text-xs text-muted">
-                时间
+                {{ $t('admin.logs.operations.detail.time') }}
               </div>
-              <div>{{ formatDateTime(detailRow.createdAt) }}</div>
+              <div>{{ formatDateTime(detailRow.createdAt, '-', locale) }}</div>
             </div>
             <div>
               <div class="text-xs text-muted">
-                状态
+                {{ $t('admin.logs.operations.detail.status') }}
               </div>
               <UBadge
                 :color="detailRow.status === 'success' ? 'success' : 'error'"
@@ -235,15 +236,15 @@ const {
                 size="sm"
                 class="w-fit"
               >
-                {{ detailRow.status === 'success' ? '成功' : '失败' }}
+                {{ detailRow.status === 'success' ? $t('common.states.success') : $t('common.states.failure') }}
               </UBadge>
             </div>
             <div>
               <div class="text-xs text-muted">
-                操作者
+                {{ $t('admin.logs.operations.detail.actor') }}
               </div>
               <div>
-                {{ detailRow.actor || '匿名' }}
+                {{ detailRow.actor || $t('common.identities.anonymous') }}
                 <span class="text-muted text-xs">
                   · {{ resolveActorLabel(detailRow.action, detailRow.userId, detailRow.actorRole) }}
                 </span>
@@ -251,7 +252,7 @@ const {
             </div>
             <div>
               <div class="text-xs text-muted">
-                动作
+                {{ $t('admin.logs.operations.detail.action') }}
               </div>
               <div>{{ resolveActionLabel(detailRow.action) }}</div>
               <div class="font-mono text-xs text-muted break-all">
@@ -260,7 +261,7 @@ const {
             </div>
             <div>
               <div class="text-xs text-muted">
-                资源类型
+                {{ $t('admin.logs.operations.detail.resourceType') }}
               </div>
               <div class="font-mono text-xs">
                 {{ detailRow.resourceType || '-' }}
@@ -268,7 +269,7 @@ const {
             </div>
             <div>
               <div class="text-xs text-muted">
-                资源 ID
+                {{ $t('admin.logs.operations.detail.resourceId') }}
               </div>
               <div class="font-mono text-xs break-all">
                 {{ detailRow.resourceId || '-' }}
@@ -280,7 +281,7 @@ const {
             :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
           >
             <template #header>
-              <span class="text-xs font-semibold text-muted">客户端</span>
+              <span class="text-xs font-semibold text-muted">{{ $t('admin.logs.operations.detail.client') }}</span>
             </template>
             <div class="space-y-1 text-xs">
               <div>
@@ -299,7 +300,7 @@ const {
             :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
           >
             <template #header>
-              <span class="text-xs font-semibold text-muted">详情</span>
+              <span class="text-xs font-semibold text-muted">{{ $t('admin.logs.operations.detail.payload') }}</span>
             </template>
             <pre class="font-mono text-xs whitespace-pre-wrap break-all">{{ detailJson }}</pre>
           </UCard>

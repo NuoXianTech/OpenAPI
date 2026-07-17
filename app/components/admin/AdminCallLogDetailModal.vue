@@ -6,6 +6,7 @@ import { ADMIN_CALL_LOG_TYPE_META } from '~/composables/admin/use-admin-call-log
 const props = defineProps<{
   row: AdminLogRow | null
 }>()
+const { locale } = useI18n()
 
 function formatBytes(value: number | null) {
   if (value == null) return '-'
@@ -17,7 +18,7 @@ function formatBytes(value: number | null) {
 
 <template>
   <UModal
-    title="调用详情"
+    :title="$t('admin.logs.call.detail.title')"
     :ui="adminModalUi({ content: 'max-w-2xl' })"
   >
     <template #body>
@@ -28,13 +29,13 @@ function formatBytes(value: number | null) {
         <div class="grid grid-cols-2 gap-3">
           <div>
             <div class="text-xs text-muted">
-              时间
+              {{ $t('admin.logs.call.detail.time') }}
             </div>
-            <div>{{ formatDateTime(props.row.createdAt) }}</div>
+            <div>{{ formatDateTime(props.row.createdAt, '-', locale) }}</div>
           </div>
           <div>
             <div class="text-xs text-muted">
-              类型
+              {{ $t('admin.logs.call.detail.type') }}
             </div>
             <UBadge
               :color="ADMIN_CALL_LOG_TYPE_META[props.row.type].color"
@@ -43,12 +44,12 @@ function formatBytes(value: number | null) {
               size="sm"
               class="w-fit"
             >
-              {{ ADMIN_CALL_LOG_TYPE_META[props.row.type].label }}
+              {{ $t(ADMIN_CALL_LOG_TYPE_META[props.row.type].messageKey) }}
             </UBadge>
           </div>
           <div>
             <div class="text-xs text-muted">
-              请求 ID
+              {{ $t('admin.logs.call.detail.requestId') }}
             </div>
             <div class="font-mono text-xs break-all">
               {{ props.row.requestId || '-' }}
@@ -56,22 +57,22 @@ function formatBytes(value: number | null) {
           </div>
           <div>
             <div class="text-xs text-muted">
-              用户
+              {{ $t('admin.logs.call.detail.user') }}
             </div>
             <div
               v-if="props.row.userId"
               class="flex flex-col"
             >
               <span>{{ props.row.userName || '-' }}</span>
-              <span class="text-xs text-muted">{{ formatUserIdentity(props.row.userId) }}</span>
+              <span class="text-xs text-muted">{{ $t('common.identities.userWithId', { id: props.row.userId }) }}</span>
             </div>
             <div v-else>
-              匿名
+              {{ $t('common.identities.anonymous') }}
             </div>
           </div>
           <div>
             <div class="text-xs text-muted">
-              密钥
+              {{ $t('admin.logs.call.detail.key') }}
             </div>
             <div>
               {{ props.row.apiKeyName || (props.row.apiKeyId ? `#${props.row.apiKeyId}` : '-') }}
@@ -79,7 +80,7 @@ function formatBytes(value: number | null) {
           </div>
           <div>
             <div class="text-xs text-muted">
-              接口
+              {{ $t('admin.logs.call.detail.api') }}
             </div>
             <div>
               {{ props.row.apiName || '-' }}
@@ -93,7 +94,7 @@ function formatBytes(value: number | null) {
 
         <UCard :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }">
           <template #header>
-            <span class="text-xs font-semibold text-muted">请求</span>
+            <span class="text-xs font-semibold text-muted">{{ $t('admin.logs.call.detail.request') }}</span>
           </template>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
@@ -113,14 +114,14 @@ function formatBytes(value: number | null) {
               ?{{ props.row.queryString }}
             </div>
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">
-              <span>状态码 <span
+              <span>{{ $t('admin.logs.call.detail.statusCode') }} <span
                 class="tabular-nums"
                 :class="props.row.statusCode >= 400 ? 'text-error' : 'text-default'"
               >{{ props.row.statusCode }}</span></span>
-              <span>耗时 <span class="tabular-nums text-default">{{ props.row.latencyMs }}ms</span></span>
-              <span>费用 <span class="tabular-nums text-default">{{ props.row.cost > 0 ? `-${props.row.cost}` : '免费' }}</span></span>
-              <span>请求体 <span class="text-default">{{ formatBytes(props.row.requestSize) }}</span></span>
-              <span>响应体 <span class="text-default">{{ formatBytes(props.row.responseSize) }}</span></span>
+              <span>{{ $t('admin.logs.call.detail.latency') }} <span class="tabular-nums text-default">{{ $t('admin.logs.call.milliseconds', { value: props.row.latencyMs }) }}</span></span>
+              <span>{{ $t('admin.logs.call.detail.cost') }} <span class="tabular-nums text-default">{{ props.row.cost > 0 ? `-${props.row.cost}` : $t('admin.logs.call.free') }}</span></span>
+              <span>{{ $t('admin.logs.call.detail.requestBody') }} <span class="text-default">{{ formatBytes(props.row.requestSize) }}</span></span>
+              <span>{{ $t('admin.logs.call.detail.responseBody') }} <span class="text-default">{{ formatBytes(props.row.responseSize) }}</span></span>
             </div>
           </div>
         </UCard>
@@ -130,7 +131,7 @@ function formatBytes(value: number | null) {
           :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
         >
           <template #header>
-            <span class="text-xs font-semibold text-error">错误</span>
+            <span class="text-xs font-semibold text-error">{{ $t('admin.logs.call.detail.error') }}</span>
           </template>
           <div class="space-y-1 text-xs">
             <div v-if="props.row.errorCode">
@@ -148,7 +149,7 @@ function formatBytes(value: number | null) {
 
         <UCard :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }">
           <template #header>
-            <span class="text-xs font-semibold text-muted">客户端</span>
+            <span class="text-xs font-semibold text-muted">{{ $t('admin.logs.call.detail.client') }}</span>
           </template>
           <div class="space-y-1 text-xs">
             <div>

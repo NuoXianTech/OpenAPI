@@ -6,11 +6,10 @@ import {
   type AdminLogType,
   type AdminLogsFilterOptions
 } from '#shared/types/admin'
-import {
-  LOGIN_METHOD_META,
-  type AdminLoginLogRow,
-  type LoginLogBadgeColor,
-  type LoginMethod
+import type {
+  AdminLoginLogRow,
+  LoginLogBadgeColor,
+  LoginMethod
 } from '#shared/types/login-log'
 import {
   createNumberQueryCodec,
@@ -21,7 +20,7 @@ import {
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
-import { formatAdminIdentity, formatUserIdentity } from '~/utils/log-identity'
+import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
 interface AdminCallLogsFilters {
   startAt: string
@@ -52,12 +51,20 @@ const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
 }
 
 export const ADMIN_CALL_LOG_TYPE_META: Record<AdminLogType, {
-  label: string
+  messageKey: string
   color: 'success' | 'error' | 'primary'
   icon: string
 }> = {
-  consume: { label: '请求', color: 'primary', icon: 'i-mdi-swap-horizontal-circle-outline' },
-  error: { label: '错误', color: 'error', icon: 'i-mdi-alert-circle-outline' }
+  consume: {
+    messageKey: 'admin.logs.call.types.request',
+    color: 'primary',
+    icon: 'i-mdi-swap-horizontal-circle-outline'
+  },
+  error: {
+    messageKey: 'admin.logs.call.types.error',
+    color: 'error',
+    icon: 'i-mdi-alert-circle-outline'
+  }
 }
 
 function createOptionalNumberQueryCodec(): DashboardQueryCodec<number | ''> {
@@ -74,6 +81,7 @@ function createOptionalNumberQueryCodec(): DashboardQueryCodec<number | ''> {
 }
 
 export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) {
+  const { t } = useI18n()
   const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
@@ -113,31 +121,31 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     })
   })
 
-  const typeSelectItems = ADMIN_LOG_TYPES.map(type => ({
-    label: ADMIN_CALL_LOG_TYPE_META[type].label,
+  const typeSelectItems = computed(() => ADMIN_LOG_TYPES.map(type => ({
+    label: t(ADMIN_CALL_LOG_TYPE_META[type].messageKey),
     value: type,
     icon: ADMIN_CALL_LOG_TYPE_META[type].icon
-  }))
+  })))
   const apiSelectItems = computed(() => [
-    { label: '全部接口', value: 0 },
+    { label: t('admin.logs.call.filters.allApis'), value: 0 },
     ...filterOptions.value.apis.map(api => ({ label: `${api.name}（${api.apiPath}）`, value: api.id }))
   ])
   const categorySelectItems = computed(() => [
-    { label: '全部分类', value: 0 },
+    { label: t('admin.logs.call.filters.allCategories'), value: 0 },
     ...filterOptions.value.categories.map(category => ({ label: category.name, value: category.id }))
   ])
   const hasAdvancedFilters = computed(
     () => listState.filters.apiKeyId !== '' || listState.filters.userId !== '' || !!listState.filters.requestId
   )
-  const columns: TableColumn<AdminLogRow>[] = [
-    { accessorKey: 'createdAt', header: '时间' },
-    { accessorKey: 'userName', header: '用户' },
-    { accessorKey: 'apiKeyName', header: '密钥' },
-    { accessorKey: 'apiName', header: '接口' },
-    { accessorKey: 'cost', header: '费用' },
-    { id: 'summary', header: '摘要' },
+  const columns = computed<TableColumn<AdminLogRow>[]>(() => [
+    { accessorKey: 'createdAt', header: t('admin.logs.call.columns.time') },
+    { accessorKey: 'userName', header: t('admin.logs.call.columns.user') },
+    { accessorKey: 'apiKeyName', header: t('admin.logs.call.columns.key') },
+    { accessorKey: 'apiName', header: t('admin.logs.call.columns.api') },
+    { accessorKey: 'cost', header: t('admin.logs.call.columns.cost') },
+    { id: 'summary', header: t('admin.logs.call.columns.summary') },
     { id: 'actions', header: '' }
-  ]
+  ])
 
   async function loadFilterOptions() {
     try {
@@ -203,18 +211,18 @@ interface UseAdminLoginLogListOptions {
 interface UseAdminLoginLogListReturn {
   activeFilterCount: ComputedRef<number>
   applyFilters: () => Promise<void>
-  columns: TableColumn<AdminLoginLogRow>[]
+  columns: ComputedRef<TableColumn<AdminLoginLogRow>[]>
   filters: AdminLoginLogFilters
   items: Ref<AdminLoginLogRow[]>
   loading: ComputedRef<boolean>
   methodColor: (method: string) => LoginLogBadgeColor
   methodIcon: (method: string) => string | undefined
-  methodItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>
+  methodItems: ComputedRef<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>>
   page: Ref<number>
   pageSize: Ref<number>
   refresh: () => Promise<void>
   reset: () => Promise<void>
-  successItems: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>
+  successItems: ComputedRef<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>>
   total: Ref<number>
 }
 
@@ -227,28 +235,6 @@ const ADMIN_LOGIN_LOG_DEFAULT_FILTERS: AdminLoginLogFilters = {
   success: 'all',
   userId: ''
 }
-
-const ADMIN_LOGIN_LOG_METHOD_ITEMS: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>> = [
-  { label: '全部方式', value: 'all' },
-  { label: LOGIN_METHOD_META.password.label, value: 'password' },
-  { label: LOGIN_METHOD_META.oauth_github.label, value: 'oauth_github' },
-  { label: LOGIN_METHOD_META.oauth_qq.label, value: 'oauth_qq' }
-]
-
-const ADMIN_LOGIN_LOG_SUCCESS_ITEMS: Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>> = [
-  { label: '全部结果', value: 'all' },
-  { label: '成功', value: 'success' },
-  { label: '失败', value: 'failure' }
-]
-
-const ADMIN_LOGIN_LOG_COLUMNS: TableColumn<AdminLoginLogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { id: 'user', header: '用户' },
-  { accessorKey: 'method', header: '方式' },
-  { accessorKey: 'success', header: '结果' },
-  { accessorKey: 'device', header: '设备' },
-  { accessorKey: 'ip', header: 'IP' }
-]
 
 function optionalDateIso(value: string): string | undefined {
   return value ? new Date(value).toISOString() : undefined
@@ -269,17 +255,15 @@ function buildAdminLoginLogQuery(
   }
 }
 
-function resolveAdminLoginLogMethodColor(method: string): LoginLogBadgeColor {
-  return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
-}
-
-function resolveAdminLoginLogMethodIcon(method: string): string | undefined {
-  return LOGIN_METHOD_META[method as LoginMethod]?.icon
-}
-
 export function useAdminLoginLogList(
   options: UseAdminLoginLogListOptions = {}
 ): UseAdminLoginLogListReturn {
+  const { t } = useI18n()
+  const {
+    getLoginMethodColor,
+    getLoginMethodIcon,
+    getLoginMethodLabel
+  } = useLoginLogMeta()
   const {
     filters,
     page,
@@ -305,22 +289,41 @@ export function useAdminLoginLogList(
     filters.success !== 'all',
     filters.userId !== ''
   ].filter(Boolean).length)
+  const methodItems = computed<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>>(() => [
+    { label: t('admin.logs.login.filters.allMethods'), value: 'all' },
+    { label: getLoginMethodLabel('password'), value: 'password' },
+    { label: getLoginMethodLabel('oauth_github'), value: 'oauth_github' },
+    { label: getLoginMethodLabel('oauth_qq'), value: 'oauth_qq' }
+  ])
+  const successItems = computed<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>>(() => [
+    { label: t('admin.logs.login.filters.allResults'), value: 'all' },
+    { label: t('common.states.success'), value: 'success' },
+    { label: t('common.states.failure'), value: 'failure' }
+  ])
+  const columns = computed<TableColumn<AdminLoginLogRow>[]>(() => [
+    { accessorKey: 'createdAt', header: t('admin.logs.login.columns.time') },
+    { id: 'user', header: t('admin.logs.login.columns.user') },
+    { accessorKey: 'method', header: t('admin.logs.login.columns.method') },
+    { accessorKey: 'success', header: t('admin.logs.login.columns.result') },
+    { accessorKey: 'device', header: t('admin.logs.login.columns.device') },
+    { accessorKey: 'ip', header: 'IP' }
+  ])
 
   return {
     activeFilterCount,
     applyFilters,
-    columns: ADMIN_LOGIN_LOG_COLUMNS,
+    columns,
     filters,
     items,
     loading,
-    methodColor: resolveAdminLoginLogMethodColor,
-    methodIcon: resolveAdminLoginLogMethodIcon,
-    methodItems: ADMIN_LOGIN_LOG_METHOD_ITEMS,
+    methodColor: getLoginMethodColor,
+    methodIcon: getLoginMethodIcon,
+    methodItems,
     page,
     pageSize,
     refresh,
     reset,
-    successItems: ADMIN_LOGIN_LOG_SUCCESS_ITEMS,
+    successItems,
     total
   }
 }
@@ -356,10 +359,10 @@ interface UseAdminOperationLogListOptions {
 }
 
 interface UseAdminOperationLogListReturn {
-  actorKindItems: Array<{ label: string, value: AdminOperationLogFilters['actorKind'] }>
+  actorKindItems: ComputedRef<Array<{ label: string, value: AdminOperationLogFilters['actorKind'] }>>
   activeFilterCount: ComputedRef<number>
   applyFilters: () => Promise<void>
-  columns: TableColumn<AdminOperationLogRow>[]
+  columns: ComputedRef<TableColumn<AdminOperationLogRow>[]>
   detailJson: ComputedRef<string>
   detailOpen: Ref<boolean>
   detailRow: Ref<AdminOperationLogRow | null>
@@ -375,7 +378,7 @@ interface UseAdminOperationLogListReturn {
   reset: () => Promise<void>
   resolveActorLabel: (action: string, userId: number | null, actorRole: AdminOperationLogRow['actorRole']) => string
   resolveActionLabel: (action: string) => string
-  statusItems: Array<{ label: string, value: AdminOperationLogFilters['status'] }>
+  statusItems: ComputedRef<Array<{ label: string, value: AdminOperationLogFilters['status'] }>>
   total: Ref<number>
 }
 
@@ -390,78 +393,6 @@ const ADMIN_OPERATION_LOG_DEFAULT_FILTERS: AdminOperationLogFilters = {
   action: '',
   resourceType: '',
   status: 'all'
-}
-
-const ADMIN_OPERATION_LOG_ACTOR_KIND_ITEMS: UseAdminOperationLogListReturn['actorKindItems'] = [
-  { label: '全部来源', value: 'all' },
-  { label: '管理员操作', value: 'admin' },
-  { label: '用户操作', value: 'user' }
-]
-
-const ADMIN_OPERATION_LOG_STATUS_ITEMS: UseAdminOperationLogListReturn['statusItems'] = [
-  { label: '全部状态', value: 'all' },
-  { label: '成功', value: 'success' },
-  { label: '失败', value: 'failure' }
-]
-
-const ADMIN_OPERATION_LOG_COLUMNS: TableColumn<AdminOperationLogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { id: 'actor', header: '操作者' },
-  { accessorKey: 'action', header: '动作' },
-  { id: 'resource', header: '资源' },
-  { accessorKey: 'status', header: '状态' },
-  { accessorKey: 'ip', header: 'IP' },
-  { id: 'actions', header: '' }
-]
-
-const OPERATION_LOG_ACTION_LABELS: Record<string, string> = {
-  'admin.api-category.create': '创建接口分类',
-  'admin.api-category.update': '更新接口分类',
-  'admin.api-category.delete': '删除接口分类',
-  'admin.api.register': '注册接口',
-  'admin.api.update': '更新接口',
-  'admin.api.delete': '删除接口',
-  'admin.api.toggle.isEnabled': '切换接口启用状态',
-  'admin.api.toggle.isStatistics': '切换接口统计状态',
-  'admin.friend-link.create': '创建友情链接',
-  'admin.friend-link.update': '更新友情链接',
-  'admin.friend-link.delete': '删除友情链接',
-  'admin.announcement.create': '创建公告',
-  'admin.announcement.update': '更新公告',
-  'admin.announcement.delete': '删除公告',
-  'admin.notification.send': '发送通知',
-  'admin.notification.delete': '删除通知',
-  'admin.api-key.create': '创建 API 密钥',
-  'admin.api-key.update': '更新 API 密钥',
-  'admin.api-key.reset': '重置 API 密钥',
-  'admin.api-key.delete': '删除 API 密钥',
-  'admin.profile.onboarding.update': '更新初始管理员资料',
-  'admin.user.create': '创建用户',
-  'admin.user.update': '更新用户',
-  'admin.user.delete': '删除用户',
-  'admin.user.ban': '封禁用户',
-  'admin.user.unban': '解封用户',
-  'admin.credit.grant': '发放积分',
-  'admin.credit.revoke': '扣除积分',
-  'admin.credit.reset': '重置积分',
-  'admin.redemption-code.generate': '生成兑换码',
-  'admin.redemption-code.delete': '删除兑换码',
-  'admin.redemption-code.batch-delete': '批量删除兑换码',
-  'admin.redemption-code.enable': '启用兑换码',
-  'admin.redemption-code.disable': '停用兑换码',
-  'admin.redemption-code.batch-enable': '批量启用兑换码',
-  'admin.redemption-code.batch-disable': '批量停用兑换码',
-  'admin.oauth-provider.update': '更新 OAuth 配置',
-  'admin.settings.update': '更新系统设置',
-  'admin.settings.smtp.test': '测试邮件发送',
-  'user.checkin': '每日签到',
-  'user.api-key.create': '创建 API 密钥',
-  'user.api-key.update': '更新 API 密钥',
-  'user.api-key.reset': '重置 API 密钥',
-  'user.api-key.delete': '删除 API 密钥',
-  'user.password.change': '修改密码',
-  'user.oauth.unbind': '解绑第三方账号',
-  'user.redemption-code.redeem': '兑换码兑换'
 }
 
 function trimmedOrUndefined(value: string): string | undefined {
@@ -496,25 +427,14 @@ function stringifyOperationLogDetail(detail: Record<string, unknown> | null | un
   }
 }
 
-function resolveOperationLogActionLabel(action: string): string {
-  return OPERATION_LOG_ACTION_LABELS[action] ?? action
-}
-
-export function resolveOperationLogActorLabel(
-  action: string,
-  userId: number | null,
-  actorRole: AdminOperationLogRow['actorRole'] = null
-): string {
-  if (actorRole === 'admin') return userId ? formatAdminIdentity(userId) : '管理员'
-  if (actorRole === 'user') return userId ? formatUserIdentity(userId) : '用户'
-  if (action.startsWith('admin.')) return userId ? formatAdminIdentity(userId) : '管理员'
-  if (action.startsWith('user.')) return userId ? formatUserIdentity(userId) : '用户'
-  return userId ? formatUserIdentity(userId) : '系统'
+function getOperationLogActionMessageKey(action: string): string {
+  return `admin.logs.operations.actionLabels.${action.replaceAll(/[.-]/g, '_')}`
 }
 
 export function useAdminOperationLogList(
   options: UseAdminOperationLogListOptions = {}
 ): UseAdminOperationLogListReturn {
+  const { t, te } = useI18n()
   const {
     filters,
     page,
@@ -556,6 +476,51 @@ export function useAdminOperationLogList(
   const detailRow = ref<AdminOperationLogRow | null>(null)
   const detailOpen = ref(false)
   const detailJson = computed(() => stringifyOperationLogDetail(detailRow.value?.detail))
+  const actorKindItems = computed<UseAdminOperationLogListReturn['actorKindItems']['value']>(() => [
+    { label: t('admin.logs.operations.filters.allSources'), value: 'all' },
+    { label: t('admin.logs.operations.filters.adminActions'), value: 'admin' },
+    { label: t('admin.logs.operations.filters.userActions'), value: 'user' }
+  ])
+  const statusItems = computed<UseAdminOperationLogListReturn['statusItems']['value']>(() => [
+    { label: t('admin.logs.operations.filters.allStatuses'), value: 'all' },
+    { label: t('common.states.success'), value: 'success' },
+    { label: t('common.states.failure'), value: 'failure' }
+  ])
+  const columns = computed<TableColumn<AdminOperationLogRow>[]>(() => [
+    { accessorKey: 'createdAt', header: t('admin.logs.operations.columns.time') },
+    { id: 'actor', header: t('admin.logs.operations.columns.actor') },
+    { accessorKey: 'action', header: t('admin.logs.operations.columns.action') },
+    { id: 'resource', header: t('admin.logs.operations.columns.resource') },
+    { accessorKey: 'status', header: t('admin.logs.operations.columns.status') },
+    { accessorKey: 'ip', header: 'IP' },
+    { id: 'actions', header: '' }
+  ])
+
+  function resolveActorLabel(
+    action: string,
+    userId: number | null,
+    actorRole: AdminOperationLogRow['actorRole'] = null
+  ): string {
+    const isAdmin = actorRole === 'admin' || (!actorRole && action.startsWith('admin.'))
+    const isUser = actorRole === 'user' || (!actorRole && action.startsWith('user.'))
+
+    if (isAdmin) {
+      return userId
+        ? t('common.identities.adminWithId', { id: userId })
+        : t('common.identities.admin')
+    }
+    if (isUser || userId) {
+      return userId
+        ? t('common.identities.userWithId', { id: userId })
+        : t('common.identities.user')
+    }
+    return t('common.identities.system')
+  }
+
+  function resolveActionLabel(action: string): string {
+    const messageKey = getOperationLogActionMessageKey(action)
+    return te(messageKey) ? t(messageKey) : action
+  }
 
   function openDetail(row: AdminOperationLogRow) {
     detailRow.value = row
@@ -563,10 +528,10 @@ export function useAdminOperationLogList(
   }
 
   return {
-    actorKindItems: ADMIN_OPERATION_LOG_ACTOR_KIND_ITEMS,
+    actorKindItems,
     activeFilterCount,
     applyFilters,
-    columns: ADMIN_OPERATION_LOG_COLUMNS,
+    columns,
     detailJson,
     detailOpen,
     detailRow,
@@ -580,9 +545,9 @@ export function useAdminOperationLogList(
     pageSize,
     refresh,
     reset,
-    resolveActorLabel: resolveOperationLogActorLabel,
-    resolveActionLabel: resolveOperationLogActionLabel,
-    statusItems: ADMIN_OPERATION_LOG_STATUS_ITEMS,
+    resolveActorLabel,
+    resolveActionLabel,
+    statusItems,
     total
   }
 }

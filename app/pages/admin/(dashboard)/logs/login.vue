@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-page'
-import {
-  loginFailureReasonLabel,
-  loginMethodLabel
-} from '#shared/types/login-log'
+import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
-useHead({ title: '登录日志' })
+const { t, locale } = useI18n()
+const { getLoginFailureLabel, getLoginMethodLabel } = useLoginLogMeta()
+useHead({ title: () => t('admin.logs.login.pageTitle') })
 const {
   filters,
   page,
@@ -32,10 +31,10 @@ const {
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            登录日志
+            {{ $t('admin.logs.login.title') }}
           </h2>
           <p class="mt-1 text-sm text-toned">
-            已识别用户的登录尝试（成功 + 失败）、登录方式与客户端来源
+            {{ $t('admin.logs.login.description') }}
           </p>
         </div>
       </div>
@@ -44,23 +43,23 @@ const {
     <div class="flex flex-wrap items-center gap-2">
       <AdminFilterPopover
         :active-count="activeFilterCount"
-        title="登录日志筛选"
+        :title="$t('admin.logs.login.filterTitle')"
         panel-class="w-[min(calc(100vw-2rem),38rem)] p-3"
         @apply="applyFilters"
         @reset="reset"
       >
         <div class="grid gap-3 md:grid-cols-2">
           <UFormField
-            label="时间范围"
+            :label="$t('admin.logs.login.filters.timeRange')"
             class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
               v-model:end="filters.endAt"
-              placeholder="全部时间"
+              :placeholder="$t('admin.logs.login.filters.allTime')"
             />
           </UFormField>
-          <UFormField label="登录方式">
+          <UFormField :label="$t('admin.logs.login.filters.method')">
             <USelect
               v-model="filters.method"
               :items="methodItems"
@@ -68,7 +67,7 @@ const {
               class="w-full"
             />
           </UFormField>
-          <UFormField label="结果">
+          <UFormField :label="$t('admin.logs.login.filters.result')">
             <USelect
               v-model="filters.success"
               :items="successItems"
@@ -77,13 +76,13 @@ const {
             />
           </UFormField>
           <UFormField
-            label="用户 ID"
-            hint="留空查全部"
+            :label="$t('admin.logs.login.filters.userId')"
+            :hint="$t('admin.logs.login.filters.emptyAll')"
           >
             <UInput
               v-model.number="filters.userId"
               type="number"
-              placeholder="留空查全部"
+              :placeholder="$t('admin.logs.login.filters.emptyAll')"
               class="w-full"
             />
           </UFormField>
@@ -97,12 +96,12 @@ const {
         :loading="loading"
         @click="refresh"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
     <DashboardTableCard
-      title="登录明细"
+      :title="$t('admin.logs.login.detailsTitle')"
       icon="i-mdi-login-variant"
       :total="total"
     >
@@ -114,17 +113,19 @@ const {
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无登录日志"
+        :empty-title="$t('admin.logs.login.empty')"
         empty-icon="i-mdi-login-variant"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #user-cell="{ row }">
           <div class="flex flex-col text-xs">
             <span class="font-medium">{{ row.original.username }}</span>
             <span class="text-muted">
-              {{ row.original.role === 'admin' ? '管理员' : '用户' }} #{{ row.original.userId }}
+              {{ row.original.role === 'admin'
+                ? $t('common.identities.adminWithId', { id: row.original.userId })
+                : $t('common.identities.userWithId', { id: row.original.userId }) }}
             </span>
           </div>
         </template>
@@ -135,7 +136,7 @@ const {
             variant="subtle"
             size="sm"
           >
-            {{ loginMethodLabel(row.original.method) }}
+            {{ getLoginMethodLabel(row.original.method) }}
           </UBadge>
         </template>
         <template #success-cell="{ row }">
@@ -144,7 +145,7 @@ const {
             variant="subtle"
             size="sm"
           >
-            {{ row.original.success ? '成功' : loginFailureReasonLabel(row.original.failureReason) }}
+            {{ row.original.success ? $t('common.states.success') : getLoginFailureLabel(row.original.failureReason) }}
           </UBadge>
         </template>
         <template #device-cell="{ row }">

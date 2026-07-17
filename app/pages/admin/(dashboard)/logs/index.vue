@@ -7,7 +7,8 @@ import {
 } from '~/composables/admin/use-admin-call-logs-page'
 import type { AdminLogRow } from '#shared/types/admin'
 
-useHead({ title: '调用日志' })
+const { t, locale } = useI18n()
+useHead({ title: () => t('admin.logs.call.pageTitle') })
 const route = useRoute()
 const router = useRouter()
 const {
@@ -54,10 +55,10 @@ function openDetail(row: AdminLogRow) {
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            调用日志
+            {{ $t('admin.logs.call.title') }}
           </h2>
           <p class="mt-1 text-sm text-toned">
-            公共接口调用流水、扣费结果与客户端上下文
+            {{ $t('admin.logs.call.description') }}
           </p>
         </div>
       </div>
@@ -66,33 +67,33 @@ function openDetail(row: AdminLogRow) {
     <div class="flex flex-wrap items-center gap-2">
       <AdminFilterPopover
         :active-count="activeFilterCount"
-        title="调用日志筛选"
+        :title="$t('admin.logs.call.filterTitle')"
         panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
         @apply="applyFilters"
         @reset="resetFilters"
       >
         <div class="grid gap-3 md:grid-cols-2">
           <UFormField
-            label="时间范围"
+            :label="$t('admin.logs.call.filters.timeRange')"
             class="md:col-span-2"
           >
             <CommonDateRangePicker
               v-model:start="filters.startAt"
               v-model:end="filters.endAt"
-              placeholder="全部时间"
+              :placeholder="$t('admin.logs.call.filters.allTime')"
             />
           </UFormField>
-          <UFormField label="接口名称">
+          <UFormField :label="$t('admin.logs.call.filters.apiName')">
             <USelectMenu
               v-model="filters.apiId"
               :items="apiSelectItems"
               value-key="value"
               searchable
-              placeholder="全部接口"
+              :placeholder="$t('admin.logs.call.filters.allApis')"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="分类">
+          <UFormField :label="$t('admin.logs.call.filters.category')">
             <USelect
               v-model="filters.categoryId"
               :items="categorySelectItems"
@@ -100,47 +101,47 @@ function openDetail(row: AdminLogRow) {
               class="w-full"
             />
           </UFormField>
-          <UFormField label="类型">
+          <UFormField :label="$t('admin.logs.call.filters.type')">
             <USelectMenu
               v-model="filters.types"
               :items="typeSelectItems"
               value-key="value"
               multiple
-              placeholder="所有类型"
+              :placeholder="$t('admin.logs.call.filters.allTypes')"
               class="w-full"
             />
           </UFormField>
           <div class="border-t border-default pt-3 md:col-span-2">
             <p class="mb-3 text-xs font-medium text-muted">
-              精确筛选
+              {{ $t('admin.logs.call.filters.exact') }}
             </p>
             <div class="grid gap-3 md:grid-cols-3">
               <UFormField
-                label="密钥名称"
-                hint="按 API 密钥 筛选"
+                :label="$t('admin.logs.call.filters.keyName')"
+                :hint="$t('admin.logs.call.filters.keyHint')"
               >
                 <UInput
                   v-model.number="filters.apiKeyId"
                   type="number"
-                  placeholder="留空查全部"
+                  :placeholder="$t('admin.logs.call.filters.emptyAll')"
                   class="w-full"
                 />
               </UFormField>
               <UFormField
-                label="用户"
-                hint="按用户 ID 筛选"
+                :label="$t('admin.logs.call.filters.user')"
+                :hint="$t('admin.logs.call.filters.userHint')"
               >
                 <UInput
                   v-model.number="filters.userId"
                   type="number"
-                  placeholder="留空查全部"
+                  :placeholder="$t('admin.logs.call.filters.emptyAll')"
                   class="w-full"
                 />
               </UFormField>
-              <UFormField label="请求 ID">
+              <UFormField :label="$t('admin.logs.call.filters.requestId')">
                 <UInput
                   v-model="filters.requestId"
-                  placeholder="UUID，精确匹配"
+                  :placeholder="$t('admin.logs.call.filters.requestIdPlaceholder')"
                   class="w-full"
                 />
               </UFormField>
@@ -156,12 +157,12 @@ function openDetail(row: AdminLogRow) {
         :loading="loading"
         @click="refresh"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
     <DashboardTableCard
-      title="调用明细"
+      :title="$t('admin.logs.call.detailsTitle')"
       icon="i-mdi-text-box-search-outline"
       :total="total"
     >
@@ -173,13 +174,13 @@ function openDetail(row: AdminLogRow) {
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无日志"
+        :empty-title="$t('admin.logs.call.empty')"
         empty-icon="i-mdi-text-box-search-outline"
       >
         <template #createdAt-cell="{ row }">
           <div class="flex flex-col gap-1 min-w-[150px]">
             <span class="text-xs whitespace-nowrap">
-              {{ formatDateTime(row.original.createdAt) }}
+              {{ formatDateTime(row.original.createdAt, '-', locale) }}
             </span>
             <UBadge
               :color="ADMIN_CALL_LOG_TYPE_META[row.original.type].color"
@@ -188,7 +189,7 @@ function openDetail(row: AdminLogRow) {
               size="sm"
               class="w-fit"
             >
-              {{ ADMIN_CALL_LOG_TYPE_META[row.original.type].label }}
+              {{ $t(ADMIN_CALL_LOG_TYPE_META[row.original.type].messageKey) }}
             </UBadge>
           </div>
         </template>
@@ -199,12 +200,12 @@ function openDetail(row: AdminLogRow) {
             class="flex flex-col text-xs"
           >
             <span>{{ row.original.userName || '-' }}</span>
-            <span class="text-muted">{{ formatUserIdentity(row.original.userId) }}</span>
+            <span class="text-muted">{{ $t('common.identities.userWithId', { id: row.original.userId }) }}</span>
           </div>
           <span
             v-else
             class="text-xs text-muted italic"
-          >匿名</span>
+          >{{ $t('common.identities.anonymous') }}</span>
         </template>
 
         <template #apiKeyName-cell="{ row }">
@@ -237,7 +238,7 @@ function openDetail(row: AdminLogRow) {
             class="tabular-nums text-sm"
             :class="row.original.cost > 0 ? 'text-warning font-medium' : 'text-muted'"
           >
-            {{ row.original.cost > 0 ? `-${row.original.cost}` : '免费' }}
+            {{ row.original.cost > 0 ? `-${row.original.cost}` : $t('admin.logs.call.free') }}
           </span>
         </template>
 
@@ -259,16 +260,16 @@ function openDetail(row: AdminLogRow) {
                 {{ row.original.statusCode }}
               </span>
               <span class="text-muted tabular-nums">
-                · {{ row.original.latencyMs }}ms
+                · {{ $t('admin.logs.call.milliseconds', { value: row.original.latencyMs }) }}
               </span>
               <UBadge
                 v-if="!row.original.isCounted"
                 color="warning"
                 variant="subtle"
                 size="sm"
-                title="未计入统计"
+                :title="$t('admin.logs.call.outcomes.notCounted')"
               >
-                拒绝
+                {{ $t('admin.logs.call.outcomes.rejected') }}
               </UBadge>
             </div>
             <span
@@ -287,7 +288,7 @@ function openDetail(row: AdminLogRow) {
             color="neutral"
             variant="ghost"
             icon="i-mdi-eye-outline"
-            aria-label="查看详情"
+            :aria-label="$t('common.actions.viewDetails')"
             @click="openDetail(row.original)"
           />
         </template>

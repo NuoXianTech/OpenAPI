@@ -76,6 +76,14 @@
       "times": "次",
       "records": "笔"
     },
+    "identities": {
+      "anonymous": "匿名",
+      "admin": "管理员",
+      "adminWithId": "管理员 #{id}",
+      "user": "用户",
+      "userWithId": "用户 #{id}",
+      "system": "系统"
+    },
     "credits": {
       "reasons": {
         "adminGrant": "管理员加",
