@@ -6,6 +6,7 @@ interface AdminSettingsSectionActionsProps {
 }
 
 defineProps<AdminSettingsSectionActionsProps>()
+const { t } = useI18n()
 
 const emit = defineEmits<{
   save: []
@@ -22,7 +23,7 @@ const emit = defineEmits<{
         :disabled="!dirty || disabled"
         @click="emit('save')"
       >
-        保存
+        {{ t('common.actions.save') }}
       </UButton>
     </div>
   </div>
