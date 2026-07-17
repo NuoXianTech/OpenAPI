@@ -1,6 +1,25 @@
 {
   "user": {
     "apiKey": "API 密钥",
+    "apiKeys": {
+      "pageTitle": "API 密钥",
+      "title": "API 密钥",
+      "loadFailed": "加载 API 密钥失败",
+      "createdOne": "已生成新 API 密钥",
+      "createdMany": "已生成 {count} 个 API 密钥",
+      "searchPlaceholder": "搜索名称、密钥、IP...",
+      "createAction": "生成新密钥",
+      "showColumns": "显示列",
+      "listTitle": "API 密钥列表",
+      "empty": "暂无 API 密钥",
+      "createTitle": "生成新 API 密钥",
+      "editTitle": "编辑 API 密钥",
+      "generate": "生成",
+      "filters": {
+        "allStatuses": "全部状态",
+        "allScopes": "全部范围"
+      }
+    },
     "credits": {
       "balanceAfter": "当前积分 {balance}",
       "overview": {

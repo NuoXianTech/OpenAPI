@@ -4,14 +4,24 @@ import { parseFetchError } from '~/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
+import { useApiKeyDisplay } from '~/composables/api/use-api-key-display'
 import { DEFAULT_PAGE_SIZE, useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import type { ApiKeyItem } from '#shared/types/api'
 
-useHead({ title: 'API 密钥' })
+const { t, locale } = useI18n()
+
+useHead({ title: () => t('user.apiKeys.pageTitle') })
 
 const toast = useToast()
+const {
+  getIpText,
+  getQuotaText,
+  getScopesText,
+  getStatus,
+  getStatusCode
+} = useApiKeyDisplay()
 
 const {
   data: items,
@@ -25,7 +35,7 @@ const {
 
 watch(error, (err) => {
   if (!err) return
-  toast.add({ title: parseFetchError(err, '加载 API 密钥 失败'), color: 'error' })
+  toast.add({ title: parseFetchError(err, t('user.apiKeys.loadFailed')), color: 'error' })
 })
 
 // 数据层：接口范围下拉 + CRUD（成功后自动 refresh 列表）
@@ -81,12 +91,14 @@ async function submitCreate() {
   try {
     const res = await createKeys({ ...buildCreatePayload(), count: createFormState.count })
     toast.add({
-      title: res.count > 1 ? `已生成 ${res.count} 个 API 密钥` : '已生成新 API 密钥',
+      title: res.count > 1
+        ? t('user.apiKeys.createdMany', { count: res.count.toLocaleString(locale.value) })
+        : t('user.apiKeys.createdOne'),
       color: 'success'
     })
     createOpen.value = false
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '创建失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.createFailed')), color: 'error' })
   } finally {
     creating.value = false
   }
@@ -116,10 +128,10 @@ async function submitEdit() {
   isEditing.value = true
   try {
     await updateKey(editTargetId.value, buildEditPayload())
-    toast.add({ title: '已更新', color: 'success' })
+    toast.add({ title: t('common.feedback.updated'), color: 'success' })
     editOpen.value = false
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '更新失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.updateFailed')), color: 'error' })
   } finally {
     isEditing.value = false
   }
@@ -146,22 +158,22 @@ const confirm = useConfirmDialog()
 async function toggleActive(row: ApiKeyItem) {
   try {
     await updateKey(row.id, { isActive: !row.isActive })
-    toast.add({ title: row.isActive ? '已停用' : '已启用', color: 'success' })
+    toast.add({ title: row.isActive ? t('common.apiKeys.feedback.disabled') : t('common.apiKeys.feedback.enabled'), color: 'success' })
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   }
 }
 
 async function openDelete(row: ApiKeyItem) {
   await confirm({
-    title: `删除 API 密钥: ${row.name || ''}`,
-    description: '删除后该密钥立即失效且不可恢复。',
+    title: t('common.apiKeys.delete.title', { name: row.name || t('common.apiKeys.defaultName') }),
+    description: t('common.apiKeys.delete.description'),
     onConfirm: async () => {
       try {
         await removeKey(row.id)
-        toast.add({ title: '已删除', color: 'success' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
       } catch (err) {
-        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
         throw err
       }
     }
@@ -171,19 +183,19 @@ async function openDelete(row: ApiKeyItem) {
 // ------------------------------------------------------------
 // 展示辅助
 // ------------------------------------------------------------
-const columns: TableColumn<ApiKeyItem>[] = [
-  { accessorKey: 'name', header: '名称' },
-  { accessorKey: 'apiKey', header: 'API 密钥' },
-  { id: 'quota', header: '配额（已用/总额）' },
-  { id: 'scopes', header: '接口范围' },
-  { id: 'ipWhitelist', header: 'IP 白名单' },
-  { accessorKey: 'totalCalls', header: '调用次数' },
-  { accessorKey: 'lastUsedAt', header: '最后使用' },
-  { accessorKey: 'createdAt', header: '创建时间' },
-  { accessorKey: 'expiresAt', header: '过期时间' },
-  { id: 'status', header: '状态' },
+const columns = computed<TableColumn<ApiKeyItem>[]>(() => [
+  { accessorKey: 'name', header: t('common.apiKeys.columns.name') },
+  { accessorKey: 'apiKey', header: t('user.apiKey') },
+  { id: 'quota', header: t('common.apiKeys.columns.quota') },
+  { id: 'scopes', header: t('common.apiKeys.columns.scopes') },
+  { id: 'ipWhitelist', header: t('common.apiKeys.columns.ipWhitelist') },
+  { accessorKey: 'totalCalls', header: t('common.apiKeys.columns.totalCalls') },
+  { accessorKey: 'lastUsedAt', header: t('common.apiKeys.columns.lastUsedAt') },
+  { accessorKey: 'createdAt', header: t('common.apiKeys.columns.createdAt') },
+  { accessorKey: 'expiresAt', header: t('common.apiKeys.columns.expiresAt') },
+  { id: 'status', header: t('common.apiKeys.columns.status') },
   { id: 'actions', header: '' }
-]
+])
 const showFullKeyId = ref<number | null>(null)
 const keyword = ref('')
 const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired' | 'revoked'>('all')
@@ -209,19 +221,19 @@ function readToggleableColumn(column: TableColumn<ApiKeyItem>): ToggleableColumn
   return { id, header }
 }
 
-const statusItems = [
-  { label: '全部状态', value: 'all' },
-  { label: '启用', value: 'enabled' },
-  { label: '停用', value: 'disabled' },
-  { label: '已过期', value: 'expired' },
-  { label: '已撤销', value: 'revoked' }
-]
+const statusItems = computed(() => [
+  { label: t('user.apiKeys.filters.allStatuses'), value: 'all' },
+  { label: t('common.apiKeys.statuses.enabled'), value: 'enabled' },
+  { label: t('common.apiKeys.statuses.disabled'), value: 'disabled' },
+  { label: t('common.apiKeys.statuses.expired'), value: 'expired' },
+  { label: t('common.apiKeys.statuses.revoked'), value: 'revoked' }
+])
 
-const scopeFilterItems = [
-  { label: '全部范围', value: 'all' },
-  { label: '全部接口', value: 'full' },
-  { label: '指定接口', value: 'limited' }
-]
+const scopeFilterItems = computed(() => [
+  { label: t('user.apiKeys.filters.allScopes'), value: 'all' },
+  { label: t('common.apiKeys.scopes.all'), value: 'full' },
+  { label: t('common.apiKeys.scopes.selected'), value: 'limited' }
+])
 
 const activeFilterCount = computed(() => [
   statusFilter.value !== 'all',
@@ -231,22 +243,19 @@ const activeFilterCount = computed(() => [
 const filteredItems = computed(() => {
   const q = keyword.value.trim().toLowerCase()
   return items.value.filter((item) => {
-    const status = apiKeyStatus(item).label
+    const status = getStatus(item)
     const hasLimitedScopes = !!item.scopes?.length
     const matchesKeyword = !q || [
-      item.name || '默认密钥',
+      item.name || t('common.apiKeys.defaultName'),
       item.apiKey,
-      status,
+      status.label,
       item.lastUsedIp || '',
       ...(item.scopes || []),
       ...(item.ipWhitelist || [])
     ].some(value => value.toLowerCase().includes(q))
 
     const matchesStatus = statusFilter.value === 'all'
-      || (statusFilter.value === 'enabled' && status === '启用')
-      || (statusFilter.value === 'disabled' && status === '停用')
-      || (statusFilter.value === 'expired' && status === '已过期')
-      || (statusFilter.value === 'revoked' && status === '已撤销')
+      || statusFilter.value === getStatusCode(item)
 
     const matchesScope = scopeFilter.value === 'all'
       || (scopeFilter.value === 'full' && !hasLimitedScopes)
@@ -259,7 +268,7 @@ const filteredItems = computed(() => {
 const { page, pageSize, total, paginated } = useClientPagination(filteredItems, DEFAULT_PAGE_SIZE)
 
 const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
-  columns
+  columns.value
     .map(readToggleableColumn)
     .filter((column): column is ToggleableColumn => column != null)
     .map(column => ({
@@ -288,9 +297,9 @@ function resetFilters() {
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
-    toast.add({ title: '已复制到剪贴板', color: 'success' })
+    toast.add({ title: t('common.feedback.copied'), color: 'success' })
   } catch {
-    toast.add({ title: '复制失败', color: 'error' })
+    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
   }
 }
 
@@ -300,16 +309,16 @@ function toggleReveal(id: number) {
 
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
-    { label: '编辑配置', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '复制密钥', icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
+    { label: t('common.apiKeys.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: t('common.apiKeys.actions.copy'), icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     {
-      label: row.isActive ? '停用密钥' : '启用密钥',
+      label: row.isActive ? t('common.apiKeys.actions.disable') : t('common.apiKeys.actions.enable'),
       icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
       onSelect: () => toggleActive(row)
     },
-    { label: '重置密钥', icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
+    { label: t('common.apiKeys.actions.reset'), icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
     {
-      label: '删除密钥',
+      label: t('common.apiKeys.actions.delete'),
       icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => openDelete(row)
@@ -321,7 +330,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 <template>
   <UDashboardPanel id="user-apikeys">
     <template #header>
-      <DashboardPageNavbar title="API 密钥" />
+      <DashboardPageNavbar :title="$t('user.apiKeys.title')" />
     </template>
 
     <template #body>
@@ -330,21 +339,21 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
           <UInput
             v-model="keyword"
             icon="i-mdi-magnify"
-            placeholder="搜索名称、密钥、IP..."
+            :placeholder="$t('user.apiKeys.searchPlaceholder')"
             class="w-full sm:w-72"
           />
           <AdminFilterPopover
             :active-count="activeFilterCount"
             @reset="resetFilters"
           >
-            <UFormField label="状态">
+            <UFormField :label="$t('common.apiKeys.columns.status')">
               <USelect
                 v-model="statusFilter"
                 :items="statusItems"
                 class="w-full"
               />
             </UFormField>
-            <UFormField label="接口范围">
+            <UFormField :label="$t('common.apiKeys.columns.scopes')">
               <USelect
                 v-model="scopeFilter"
                 :items="scopeFilterItems"
@@ -358,14 +367,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               icon="i-mdi-plus"
               @click="openCreate"
             >
-              生成新密钥
+              {{ $t('user.apiKeys.createAction') }}
             </UButton>
             <UDropdownMenu
               :items="columnVisibilityItems"
               :content="{ align: 'end' }"
             >
               <UButton
-                label="显示列"
+                :label="$t('user.apiKeys.showColumns')"
                 color="neutral"
                 variant="outline"
                 icon="i-mdi-view-column-outline"
@@ -375,7 +384,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         </div>
 
         <DashboardTableCard
-          title="API 密钥列表"
+          :title="$t('user.apiKeys.listTitle')"
           icon="i-mdi-key-outline"
           :total="total"
         >
@@ -390,11 +399,11 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :page-size-items="PAGE_SIZE_ITEMS"
             always-show-pagination
             :fixed="false"
-            empty-title="暂无 API 密钥"
+            :empty-title="$t('user.apiKeys.empty')"
             empty-icon="i-mdi-key-outline"
           >
             <template #name-cell="{ row }">
-              <span class="font-medium">{{ row.original.name || '默认密钥' }}</span>
+              <span class="font-medium">{{ row.original.name || $t('common.apiKeys.defaultName') }}</span>
             </template>
 
             <template #apiKey-cell="{ row }">
@@ -423,7 +432,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               <span
                 class="tabular-nums text-xs"
                 :class="row.original.totalQuota === null ? 'text-muted' : ''"
-              >{{ apiKeyQuotaText(row.original) }}</span>
+              >{{ getQuotaText(row.original) }}</span>
             </template>
 
             <template #scopes-cell="{ row }">
@@ -437,13 +446,13 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
                   color="neutral"
                   class="cursor-help"
                 >
-                  {{ apiKeyScopesText(row.original.scopes, scopeLabelMap) }}
+                  {{ getScopesText(row.original.scopes, scopeLabelMap) }}
                 </UBadge>
               </UTooltip>
               <span
                 v-else
                 class="text-xs text-muted"
-              >全部接口</span>
+              >{{ $t('common.apiKeys.scopes.all') }}</span>
             </template>
 
             <template #ipWhitelist-cell="{ row }">
@@ -457,22 +466,22 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
                   color="neutral"
                   class="cursor-help font-mono"
                 >
-                  {{ apiKeyIpText(row.original.ipWhitelist) }}
+                  {{ getIpText(row.original.ipWhitelist) }}
                 </UBadge>
               </UTooltip>
               <span
                 v-else
                 class="text-xs text-muted"
-              >全部 IP</span>
+              >{{ $t('common.apiKeys.display.allIps') }}</span>
             </template>
 
             <template #totalCalls-cell="{ row }">
-              <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString() }}</span>
+              <span class="tabular-nums">{{ (row.original.totalCalls || 0).toLocaleString(locale) }}</span>
             </template>
 
             <template #lastUsedAt-cell="{ row }">
               <div class="flex flex-col text-xs">
-                <span>{{ formatDateTime(row.original.lastUsedAt, '从未使用') }}</span>
+                <span>{{ formatDateTime(row.original.lastUsedAt, $t('common.apiKeys.display.neverUsed'), locale) }}</span>
                 <span
                   v-if="row.original.lastUsedIp"
                   class="text-muted font-mono"
@@ -481,22 +490,22 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #createdAt-cell="{ row }">
-              <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+              <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
             </template>
 
             <template #expiresAt-cell="{ row }">
               <span
                 class="text-xs"
                 :class="isApiKeyExpired(row.original) ? 'text-warning' : 'text-muted'"
-              >{{ formatDateTime(row.original.expiresAt, '—') }}</span>
+              >{{ formatDateTime(row.original.expiresAt, '—', locale) }}</span>
             </template>
 
             <template #status-cell="{ row }">
               <UBadge
-                :color="apiKeyStatus(row.original).color"
+                :color="getStatus(row.original).color"
                 variant="subtle"
               >
-                {{ apiKeyStatus(row.original).label }}
+                {{ getStatus(row.original).label }}
               </UBadge>
             </template>
 
@@ -522,7 +531,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <!-- 创建 Key -->
       <UModal
         v-model:open="createOpen"
-        title="生成新 API 密钥"
+        :title="$t('user.apiKeys.createTitle')"
         :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
@@ -543,14 +552,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               color="neutral"
               @click="() => { createOpen = false }"
             >
-              取消
+              {{ $t('common.actions.cancel') }}
             </UButton>
             <UButton
               :loading="creating"
               :disabled="!!createError"
               @click="submitCreate"
             >
-              生成
+              {{ $t('user.apiKeys.generate') }}
             </UButton>
           </div>
         </template>
@@ -559,7 +568,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       <!-- 编辑 Key -->
       <UModal
         v-model:open="editOpen"
-        title="编辑 API 密钥"
+        :title="$t('user.apiKeys.editTitle')"
         :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
@@ -580,14 +589,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               color="neutral"
               @click="() => { editOpen = false }"
             >
-              取消
+              {{ $t('common.actions.cancel') }}
             </UButton>
             <UButton
               :loading="isEditing"
               :disabled="!!editError"
               @click="submitEdit"
             >
-              保存
+              {{ $t('common.actions.save') }}
             </UButton>
           </div>
         </template>

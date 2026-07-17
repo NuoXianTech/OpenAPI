@@ -35,8 +35,15 @@
       "noDescription": "暂无描述"
     },
     "feedback": {
+      "copied": "已复制到剪贴板",
+      "copyFailed": "复制失败",
       "saveFailed": "保存失败",
       "sendFailed": "发送失败",
+      "createFailed": "创建失败",
+      "operationFailed": "操作失败",
+      "deleted": "已删除",
+      "deleteFailed": "删除失败",
+      "updated": "已更新",
       "updateFailed": "修改失败"
     },
     "duration": {
@@ -60,6 +67,100 @@
         "signupBonus": "注册赠送",
         "redemptionCode": "兑换码",
         "checkin": "每日签到"
+      }
+    },
+    "apiKeys": {
+      "defaultName": "默认密钥",
+      "loadScopesFailed": "加载接口列表失败",
+      "expiry": {
+        "never": "永不过期",
+        "oneHour": "1 小时",
+        "oneDay": "1 天",
+        "oneMonth": "1 个月",
+        "custom": "自定义"
+      },
+      "scopes": {
+        "all": "全部接口",
+        "selected": "指定接口"
+      },
+      "statuses": {
+        "enabled": "启用",
+        "disabled": "停用",
+        "expired": "已过期",
+        "revoked": "已撤销"
+      },
+      "columns": {
+        "name": "名称",
+        "quota": "配额（已用/总额）",
+        "scopes": "接口范围",
+        "ipWhitelist": "IP 白名单",
+        "totalCalls": "调用次数",
+        "lastUsedAt": "最后使用",
+        "createdAt": "创建时间",
+        "expiresAt": "过期时间",
+        "status": "状态"
+      },
+      "display": {
+        "unlimited": "无限",
+        "scopeCount": "{count} 个接口",
+        "allIps": "全部 IP",
+        "cidrCount": "{count} 条 CIDR",
+        "neverUsed": "从未使用"
+      },
+      "actions": {
+        "edit": "编辑配置",
+        "copy": "复制密钥",
+        "enable": "启用密钥",
+        "disable": "停用密钥",
+        "reset": "重置密钥",
+        "delete": "删除密钥"
+      },
+      "feedback": {
+        "enabled": "已启用",
+        "disabled": "已停用"
+      },
+      "delete": {
+        "title": "删除 API 密钥：{name}",
+        "description": "删除后该密钥立即失效且不可恢复。"
+      },
+      "validation": {
+        "expiryRequired": "请填写过期时间",
+        "invalidQuota": "请填写有效的积分上限",
+        "scopeRequired": "请至少选择一个接口，或切回“全部接口”",
+        "invalidIpLines": "IP 白名单第 {lines} 行格式错误"
+      },
+      "form": {
+        "name": "名称",
+        "namePlaceholder": "例如：默认密钥 / 生产密钥",
+        "batchNameHelp": "批量生成 > 1 个时，首个使用此名称，其余自动追加后缀",
+        "editNameHelp": "仅展示用，不影响密钥字符串本身",
+        "count": "生成数量",
+        "countHelp": "一次最多 5 个",
+        "expiry": "过期时间",
+        "selectExpiry": "选择过期时间",
+        "expiryEditHelp": "选择“永不过期”会清空过期时间；选择预设会从当前时间起算。",
+        "expiryCreateHelp": "过期后密钥不会被删除或禁用，调用接口时会返回到期信息。",
+        "quota": "积分配额",
+        "unlimitedQuota": "无限配额",
+        "quotaPlaceholder": "累计可消耗积分上限",
+        "quotaEditHelp": "修改上限不会重置已消耗积分；若新上限低于已消耗，密钥将立即停止可用直至再次提高。",
+        "quotaCreateHelp": "该密钥累计消耗积分达到上限后将拒绝调用；资金仍从钱包扣除。",
+        "scopes": "接口范围",
+        "selectScopes": "选择允许调用的接口",
+        "ipWhitelist": "IP 白名单（CIDR）",
+        "invalidIpLines": "第 {lines} 行格式错误",
+        "ipHelpDetailed": "每行一条 CIDR，例如 1.2.3.4/32 / 10.0.0.0/8；留空 = 不限",
+        "ipHelpCompact": "每行一条；留空 = 不限"
+      },
+      "reset": {
+        "success": "已重置，旧密钥立即失效",
+        "failed": "重置失败",
+        "saveNewTitle": "已重置，请保存新密钥",
+        "confirmTitle": "确认重置 API 密钥",
+        "warningTitle": "重置将立即让旧密钥失效",
+        "warningDescription": "将重置“{name}”，所有正在使用旧密钥的调用方会立刻失败，请确认后再继续。",
+        "confirmAction": "确认重置",
+        "savedAction": "我已保存"
       }
     },
     "loginLogs": {

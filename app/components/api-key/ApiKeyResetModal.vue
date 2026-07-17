@@ -13,6 +13,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const { t } = useI18n()
 const loading = ref(false)
 const result = ref<ApiKeyItem | null>(null)
 
@@ -31,9 +32,9 @@ async function confirmReset() {
     const next = await props.onReset(props.target.id)
     result.value = next || null
     emit('saved')
-    toast.add({ title: '已重置，旧密钥立即失效', color: 'success' })
+    toast.add({ title: t('common.apiKeys.reset.success'), color: 'success' })
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '重置失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.apiKeys.reset.failed')), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -42,16 +43,16 @@ async function confirmReset() {
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
-    toast.add({ title: '已复制到剪贴板', color: 'success' })
+    toast.add({ title: t('common.feedback.copied'), color: 'success' })
   } catch {
-    toast.add({ title: '复制失败', color: 'error' })
+    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
   }
 }
 </script>
 
 <template>
   <UModal
-    :title="result ? '已重置，请保存新密钥' : '确认重置 API 密钥'"
+    :title="result ? $t('common.apiKeys.reset.saveNewTitle') : $t('common.apiKeys.reset.confirmTitle')"
     :ui="{ content: 'sm:max-w-md' }"
   >
     <template #body>
@@ -59,8 +60,8 @@ async function copy(text: string) {
         v-if="!result"
         color="warning"
         variant="subtle"
-        title="重置将立即让旧密钥失效"
-        :description="`将重置「${props.target?.name || '默认密钥'}」，所有正在使用旧密钥的调用方会立刻失败，请确认后再继续。`"
+        :title="$t('common.apiKeys.reset.warningTitle')"
+        :description="$t('common.apiKeys.reset.warningDescription', { name: props.target?.name || $t('common.apiKeys.defaultName') })"
         icon="i-mdi-alert-outline"
       />
       <code
@@ -81,14 +82,14 @@ async function copy(text: string) {
           color="neutral"
           @click="close"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           color="warning"
           :loading="loading"
           @click="confirmReset"
         >
-          确认重置
+          {{ $t('common.apiKeys.reset.confirmAction') }}
         </UButton>
       </div>
       <div
@@ -101,10 +102,10 @@ async function copy(text: string) {
           icon="i-mdi-content-copy"
           @click="copy(result.apiKey)"
         >
-          复制
+          {{ $t('common.actions.copy') }}
         </UButton>
         <UButton @click="close">
-          我已保存
+          {{ $t('common.apiKeys.reset.savedAction') }}
         </UButton>
       </div>
     </template>

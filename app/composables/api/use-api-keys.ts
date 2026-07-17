@@ -36,6 +36,7 @@ const ENDPOINTS = {
 export function useApiKeys(options: UseApiKeysOptions) {
   const ep = ENDPOINTS[options.scope]
   const toast = useToast()
+  const { t } = useI18n()
 
   // 接口范围下拉（按需懒加载一次）
   const scopeOptions = ref<ApiKeyScopeOption[]>([])
@@ -46,7 +47,7 @@ export function useApiKeys(options: UseApiKeysOptions) {
       scopeOptions.value = (await $fetch<ApiKeyScopeOption[]>(ep.apisList)) || []
       scopesLoaded = true
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '加载接口列表失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.apiKeys.loadScopesFailed')), color: 'error' })
     }
   }
 
