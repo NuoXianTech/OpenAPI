@@ -17,6 +17,8 @@
     "states": {
       "loading": "加载中...",
       "loadFailed": "加载失败",
+      "success": "成功",
+      "failure": "失败",
       "active": "正常",
       "inactive": "异常",
       "maintenance": "维护",
@@ -31,6 +33,11 @@
     },
     "content": {
       "noDescription": "暂无描述"
+    },
+    "feedback": {
+      "saveFailed": "保存失败",
+      "sendFailed": "发送失败",
+      "updateFailed": "修改失败"
     },
     "duration": {
       "years": "{count}年",
@@ -53,6 +60,19 @@
         "signupBonus": "注册赠送",
         "redemptionCode": "兑换码",
         "checkin": "每日签到"
+      }
+    },
+    "loginLogs": {
+      "methods": {
+        "password": "账号密码",
+        "github": "GitHub",
+        "qq": "QQ"
+      },
+      "failures": {
+        "invalidPassword": "密码错误",
+        "banned": "账号被封禁",
+        "notActive": "邮箱未验证",
+        "oauthUserUnavailable": "账号不可用"
       }
     },
     "search": {

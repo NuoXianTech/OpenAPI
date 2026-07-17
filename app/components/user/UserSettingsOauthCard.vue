@@ -12,11 +12,12 @@ const emit = defineEmits<{
   bind: [provider: string]
   unbind: [provider: string]
 }>()
+const { locale } = useI18n()
 </script>
 
 <template>
   <DashboardSettingsSection
-    title="第三方账号"
+    :title="$t('user.settings.oauth.title')"
   >
     <template #actions>
       <UButton
@@ -33,13 +34,13 @@ const emit = defineEmits<{
       v-if="!enabled && list.length === 0"
       class="text-sm text-muted py-4 text-center"
     >
-      站点已关闭第三方登录功能
+      {{ $t('user.settings.oauth.disabled') }}
     </div>
     <div
       v-else-if="list.length === 0"
       class="text-sm text-muted py-4 text-center"
     >
-      暂无可用的第三方登录提供方
+      {{ $t('user.settings.oauth.empty') }}
     </div>
     <template v-else>
       <div
@@ -65,7 +66,7 @@ const emit = defineEmits<{
                 variant="subtle"
                 size="sm"
               >
-                已绑定
+                {{ $t('user.settings.oauth.status.bound') }}
               </UBadge>
               <UBadge
                 v-else-if="item.enabled"
@@ -73,7 +74,7 @@ const emit = defineEmits<{
                 variant="subtle"
                 size="sm"
               >
-                未绑定
+                {{ $t('user.settings.oauth.status.unbound') }}
               </UBadge>
               <UBadge
                 v-else
@@ -81,7 +82,7 @@ const emit = defineEmits<{
                 variant="subtle"
                 size="sm"
               >
-                站点已关闭
+                {{ $t('user.settings.oauth.status.disabled') }}
               </UBadge>
             </div>
             <div
@@ -96,7 +97,7 @@ const emit = defineEmits<{
               <span
                 v-if="item.linkedAt"
                 class="ml-1"
-              >· 绑定于 {{ formatDateTime(item.linkedAt) }}</span>
+              >· {{ $t('user.settings.oauth.linkedAt', { time: formatDateTime(item.linkedAt, '-', locale) }) }}</span>
             </div>
           </div>
         </div>
@@ -108,7 +109,7 @@ const emit = defineEmits<{
             variant="outline"
             @click="emit('unbind', item.provider)"
           >
-            解绑
+            {{ $t('user.settings.oauth.actions.unbind') }}
           </UButton>
           <UButton
             v-else-if="item.enabled"
@@ -116,7 +117,7 @@ const emit = defineEmits<{
             variant="outline"
             @click="emit('bind', item.provider)"
           >
-            绑定
+            {{ $t('user.settings.oauth.actions.bind') }}
           </UButton>
         </div>
       </div>

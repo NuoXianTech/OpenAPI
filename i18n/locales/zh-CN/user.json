@@ -1,10 +1,6 @@
 {
   "user": {
     "apiKey": "API 密钥",
-    "states": {
-      "success": "成功",
-      "failure": "失败"
-    },
     "credits": {
       "balanceAfter": "当前积分 {balance}",
       "overview": {
@@ -101,6 +97,95 @@
           "balanceAfter": "操作后积分",
           "related": "关联",
           "remark": "备注"
+        }
+      }
+    },
+    "settings": {
+      "profile": {
+        "title": "基本信息",
+        "avatar": "头像",
+        "avatarAlt": "用户头像",
+        "avatarDescription": "头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新。",
+        "username": "用户名",
+        "usernameDescription": "用户名不可修改。",
+        "displayName": "昵称",
+        "displayNameDescription": "用于公开展示的名字，可使用真实姓名或昵称",
+        "save": "保存资料",
+        "updated": "资料已更新"
+      },
+      "email": {
+        "title": "绑定邮箱",
+        "currentEmail": "当前邮箱",
+        "currentEmailDescription": "当前账号绑定并用于接收系统邮件的邮箱。",
+        "verified": "已验证",
+        "unverified": "未验证",
+        "currentPasswordDescription": "为保护账号安全，修改邮箱需先验证当前密码。",
+        "newEmail": "新邮箱",
+        "newEmailDescription": "将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。",
+        "enterNewEmail": "请输入新邮箱",
+        "sameAsCurrent": "新邮箱与当前邮箱相同",
+        "sendVerification": "发送验证",
+        "verificationSent": "验证邮件已发送",
+        "verificationSentDescription": "请到 {email} 邮箱点击确认链接完成更改",
+        "pendingTitle": "已发送验证邮件到 {email}",
+        "pendingDescription": "请到该邮箱点击确认链接以完成更改。链接的有效期由站点配置决定。"
+      },
+      "security": {
+        "title": "修改密码",
+        "currentPassword": "当前密码",
+        "currentPasswordDescription": "验证身份所需的现有密码。",
+        "newPassword": "新密码",
+        "newPasswordDescription": "至少 8 位，建议混合大小写字母与数字。",
+        "confirmPassword": "确认新密码",
+        "confirmPasswordDescription": "再次输入新密码以确认无误。",
+        "enterCurrentPassword": "请输入当前密码",
+        "passwordTooShort": "新密码至少 8 位",
+        "passwordMismatch": "两次输入的新密码不一致",
+        "updatePassword": "更新密码",
+        "passwordUpdated": "密码已更新",
+        "otherSessionsRevoked": "其他设备的登录已被注销"
+      },
+      "loginActivity": {
+        "title": "最近登录活动",
+        "records": "登录记录",
+        "empty": "暂无登录记录",
+        "hint": "仅展示最近 {count} 条。若发现非本人登录，请尽快修改密码。",
+        "columns": {
+          "time": "时间",
+          "method": "方式",
+          "result": "结果",
+          "device": "设备"
+        }
+      },
+      "oauth": {
+        "title": "第三方账号",
+        "disabled": "站点已关闭第三方登录功能",
+        "empty": "暂无可用的第三方登录提供方",
+        "linkedAt": "绑定于 {time}",
+        "status": {
+          "bound": "已绑定",
+          "unbound": "未绑定",
+          "disabled": "站点已关闭"
+        },
+        "actions": {
+          "bind": "绑定",
+          "unbind": "解绑"
+        },
+        "unbindTitle": "解绑 {provider} 账号",
+        "unbindDescription": "解绑后将无法使用该方式登录。",
+        "unbound": "已解绑",
+        "unbindFailed": "解绑失败",
+        "bound": "已绑定 {provider}",
+        "bindFailed": "绑定失败",
+        "errors": {
+          "stateMismatch": "state 已失效，请重试",
+          "loginRequired": "需要先登录用户",
+          "alreadyBoundByOther": "该第三方账号已被其他用户绑定",
+          "alreadyBoundSameProvider": "你已绑定该平台的另一个账号，请先解绑后再绑定",
+          "callbackFailed": "回调处理失败",
+          "providerUnavailable": "provider 当前不可用",
+          "oauthDisabled": "站点已关闭第三方登录",
+          "missingCode": "未收到授权 code"
         }
       }
     },

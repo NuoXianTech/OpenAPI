@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import type { LoginLogRow, LoginMethod } from '#shared/types/login-log'
-import {
-  LOGIN_METHOD_META,
-  loginFailureReasonLabel,
-  loginMethodLabel
-} from '#shared/types/login-log'
+import type { LoginLogRow } from '#shared/types/login-log'
+import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
 defineProps<{
   items: LoginLogRow[]
@@ -13,26 +9,26 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{ refresh: [] }>()
+const { t, locale } = useI18n()
+const {
+  getLoginFailureLabel,
+  getLoginMethodColor,
+  getLoginMethodIcon,
+  getLoginMethodLabel
+} = useLoginLogMeta()
 
-function methodColor(method: string) {
-  return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
-}
-function methodIcon(method: string) {
-  return LOGIN_METHOD_META[method as LoginMethod]?.icon
-}
-
-const columns: TableColumn<LoginLogRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'method', header: '方式' },
-  { accessorKey: 'success', header: '结果' },
-  { accessorKey: 'device', header: '设备' },
+const columns = computed<TableColumn<LoginLogRow>[]>(() => [
+  { accessorKey: 'createdAt', header: t('user.settings.loginActivity.columns.time') },
+  { accessorKey: 'method', header: t('user.settings.loginActivity.columns.method') },
+  { accessorKey: 'success', header: t('user.settings.loginActivity.columns.result') },
+  { accessorKey: 'device', header: t('user.settings.loginActivity.columns.device') },
   { accessorKey: 'ip', header: 'IP' }
-]
+])
 </script>
 
 <template>
   <DashboardSettingsSection
-    title="最近登录活动"
+    :title="$t('user.settings.loginActivity.title')"
   >
     <template #actions>
       <UButton
@@ -46,7 +42,7 @@ const columns: TableColumn<LoginLogRow>[] = [
     </template>
 
     <DashboardTableCard
-      title="登录记录"
+      :title="$t('user.settings.loginActivity.records')"
       icon="i-mdi-login-variant"
       :total="items.length"
       embedded
@@ -56,20 +52,20 @@ const columns: TableColumn<LoginLogRow>[] = [
         :columns="columns"
         :loading="loading"
         :fixed="false"
-        empty-title="暂无登录记录"
+        :empty-title="$t('user.settings.loginActivity.empty')"
         empty-icon="i-mdi-login-variant"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #method-cell="{ row }">
           <UBadge
-            :color="methodColor(row.original.method)"
-            :icon="methodIcon(row.original.method)"
+            :color="getLoginMethodColor(row.original.method)"
+            :icon="getLoginMethodIcon(row.original.method)"
             variant="subtle"
             size="sm"
           >
-            {{ loginMethodLabel(row.original.method) }}
+            {{ getLoginMethodLabel(row.original.method) }}
           </UBadge>
         </template>
         <template #success-cell="{ row }">
@@ -78,7 +74,7 @@ const columns: TableColumn<LoginLogRow>[] = [
             variant="subtle"
             size="sm"
           >
-            {{ row.original.success ? '成功' : loginFailureReasonLabel(row.original.failureReason) }}
+            {{ row.original.success ? $t('common.states.success') : getLoginFailureLabel(row.original.failureReason) }}
           </UBadge>
         </template>
         <template #device-cell="{ row }">
@@ -96,7 +92,7 @@ const columns: TableColumn<LoginLogRow>[] = [
       v-if="items.length > 0"
       class="mt-3 text-xs text-muted"
     >
-      仅展示最近 {{ items.length }} 条。若发现非本人登录，请尽快修改密码。
+      {{ $t('user.settings.loginActivity.hint', { count: items.length.toLocaleString(locale) }) }}
     </p>
   </DashboardSettingsSection>
 </template>

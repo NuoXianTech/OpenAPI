@@ -273,8 +273,8 @@ async function copyCurl() {
               </p>
             </div>
             <div class="flex items-center gap-4 text-xs text-muted" :aria-label="$t('user.overview.chart.legend')">
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />{{ $t('user.states.success') }}</span>
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />{{ $t('user.states.failure') }}</span>
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />{{ $t('common.states.success') }}</span>
+              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />{{ $t('common.states.failure') }}</span>
             </div>
           </div>
 

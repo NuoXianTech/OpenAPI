@@ -8,6 +8,7 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const { t } = useI18n()
 const newEmail = ref('')
 const currentPassword = ref('')
 const isSaving = ref(false)
@@ -16,15 +17,15 @@ const pending = ref<string | null>(null)
 async function submit() {
   const v = newEmail.value.trim().toLowerCase()
   if (!v) {
-    toast.add({ title: '请输入新邮箱', color: 'warning' })
+    toast.add({ title: t('user.settings.email.enterNewEmail'), color: 'warning' })
     return
   }
   if (!currentPassword.value) {
-    toast.add({ title: '请输入当前密码', color: 'warning' })
+    toast.add({ title: t('user.settings.security.enterCurrentPassword'), color: 'warning' })
     return
   }
   if (v === (props.profile?.email || '').toLowerCase()) {
-    toast.add({ title: '新邮箱与当前邮箱相同', color: 'warning' })
+    toast.add({ title: t('user.settings.email.sameAsCurrent'), color: 'warning' })
     return
   }
   isSaving.value = true
@@ -33,7 +34,7 @@ async function submit() {
     newEmail.value = ''
     currentPassword.value = ''
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.sendFailed')), color: 'error' })
   } finally {
     isSaving.value = false
   }
@@ -43,11 +44,11 @@ async function submit() {
 <template>
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
-      title="绑定邮箱"
+      :title="$t('user.settings.email.title')"
     >
       <UFormField
-        label="当前邮箱"
-        description="当前账号绑定并用于接收系统邮件的邮箱。"
+        :label="$t('user.settings.email.currentEmail')"
+        :description="$t('user.settings.email.currentEmailDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <div class="flex min-w-0 max-w-full items-center gap-2 sm:max-w-80">
@@ -58,7 +59,7 @@ async function submit() {
             variant="subtle"
             size="sm"
           >
-            已验证
+            {{ $t('user.settings.email.verified') }}
           </UBadge>
           <UBadge
             v-else
@@ -66,14 +67,14 @@ async function submit() {
             variant="subtle"
             size="sm"
           >
-            未验证
+            {{ $t('user.settings.email.unverified') }}
           </UBadge>
         </div>
       </UFormField>
       <UFormField
         name="currentPassword"
-        label="当前密码"
-        description="为保护账号安全，修改邮箱需先验证当前密码。"
+        :label="$t('user.settings.security.currentPassword')"
+        :description="$t('user.settings.email.currentPasswordDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -86,8 +87,8 @@ async function submit() {
       </UFormField>
       <UFormField
         name="newEmail"
-        label="新邮箱"
-        description="将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。"
+        :label="$t('user.settings.email.newEmail')"
+        :description="$t('user.settings.email.newEmailDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -103,7 +104,7 @@ async function submit() {
           :loading="isSaving"
           @click="submit"
         >
-          发送验证
+          {{ $t('user.settings.email.sendVerification') }}
         </UButton>
       </div>
     </DashboardSettingsSection>
@@ -114,8 +115,8 @@ async function submit() {
       variant="subtle"
       icon="i-mdi-email-fast-outline"
       class="mt-4"
-      :title="`已发送验证邮件到 ${pending}`"
-      description="请到该邮箱点击确认链接以完成更改。链接的有效期由站点配置决定。"
+      :title="$t('user.settings.email.pendingTitle', { email: pending })"
+      :description="$t('user.settings.email.pendingDescription')"
     />
   </div>
 </template>
