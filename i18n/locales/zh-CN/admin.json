@@ -602,6 +602,80 @@
           "pinned": "置顶",
           "requiredContent": "标题和内容必填"
         }
+      },
+      "notifications": {
+        "searchPlaceholder": "搜索发送历史标题或发送人",
+        "historyTitle": "发送历史",
+        "emptyHistory": "暂无发送历史",
+        "filters": {
+          "audience": "范围",
+          "allAudiences": "全部范围",
+          "level": "级别",
+          "allLevels": "全部级别"
+        },
+        "audiences": {
+          "labels": {
+            "specific": "指定",
+            "allCurrent": "全员",
+            "allWithFuture": "全员+未来"
+          },
+          "options": {
+            "specific": "指定用户（仅选中收件人）",
+            "allCurrent": "当前所有用户（不含未来注册）",
+            "allWithFuture": "当前及未来注册用户（新用户激活时自动补发）"
+          }
+        },
+        "levelOptions": {
+          "info": "通知 (info)",
+          "success": "成功 (success)",
+          "warning": "提醒 (warning)",
+          "critical": "紧急 (critical)"
+        },
+        "columns": {
+          "title": "标题",
+          "delivery": "投递 / 已读",
+          "sender": "发送人",
+          "sentAt": "发送时间"
+        },
+        "actions": {
+          "send": "发送通知",
+          "viewDeliveries": "查看接收详情"
+        },
+        "delivery": {
+          "delivered": "投递 {count} 人",
+          "read": "已读 {count} 人"
+        },
+        "delete": {
+          "title": "删除通知：{title}",
+          "description": "软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
+        },
+        "detail": {
+          "title": "接收详情",
+          "description": "{title} · {time} · 范围 {audience} · 已投递 {delivered} / 已读 {read}",
+          "loadFailed": "加载接收详情失败",
+          "empty": "暂无投递记录",
+          "readAt": "已读 · {time}",
+          "unread": "未读"
+        },
+        "feedback": {
+          "sent": "已发送（投递 {count} 人）"
+        },
+        "form": {
+          "title": "发送通知",
+          "description": "向指定用户、当前全员或当前及未来注册用户发送站内通知。",
+          "audience": "发送范围",
+          "futureDeliveryHint": "新注册用户首次激活时将自动补发本条通知。",
+          "recipients": "收件人（可多选）",
+          "recipientsPlaceholder": "搜索用户名或邮箱",
+          "messageTitle": "标题",
+          "titlePlaceholder": "通知标题（最多 200 字）",
+          "level": "级别",
+          "content": "内容",
+          "contentPlaceholder": "支持纯文本，换行将保留",
+          "linkUrl": "附加链接（可选）",
+          "requiredContent": "标题和内容必填",
+          "recipientRequired": "请选择收件人或改为全员发送"
+        }
       }
     },
     "overview": {

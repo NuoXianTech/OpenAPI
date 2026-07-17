@@ -218,41 +218,14 @@ interface UseAdminNotificationsDisplayMetaOptions {
 interface UseAdminNotificationsDisplayMetaReturn {
   users: ComputedRef<AdminNotificationUserItem[]>
   userOptions: ComputedRef<Array<AdminNotificationSelectItem<number>>>
-  audienceOptions: Array<AdminNotificationSelectItem<AdminNotificationAudience>>
-  levelOptions: Array<AdminNotificationSelectItem<MessageLevel>>
-  audienceMeta: Record<AdminNotificationAudience, AdminNotificationAudienceMeta>
-  columns: TableColumn<AdminNotificationMessageRow>[]
+  audienceOptions: ComputedRef<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>
+  levelOptions: ComputedRef<Array<AdminNotificationSelectItem<MessageLevel>>>
+  getAudienceMeta: (audience: AdminNotificationAudience) => AdminNotificationAudienceMeta
+  columns: ComputedRef<TableColumn<AdminNotificationMessageRow>[]>
   getRowItems: (row: AdminNotificationMessageRow) => DropdownMenuItem[]
 }
 
 export type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
-
-export const ADMIN_NOTIFICATION_AUDIENCE_OPTIONS: Array<AdminNotificationSelectItem<AdminNotificationAudience>> = [
-  { label: '指定用户（仅选中收件人）', value: 'specific' },
-  { label: '当前所有用户（不含未来注册）', value: 'all_current' },
-  { label: '当前及未来注册用户（新用户激活时自动补发）', value: 'all_with_future' }
-]
-
-export const ADMIN_NOTIFICATION_LEVEL_OPTIONS: Array<AdminNotificationSelectItem<MessageLevel>> = [
-  { label: '通知 (info)', value: 'info' },
-  { label: '成功 (success)', value: 'success' },
-  { label: '提醒 (warning)', value: 'warning' },
-  { label: '紧急 (critical)', value: 'critical' }
-]
-
-const ADMIN_NOTIFICATION_AUDIENCE_META: Record<AdminNotificationAudience, AdminNotificationAudienceMeta> = {
-  specific: { color: 'neutral', label: '指定' },
-  all_current: { color: 'info', label: '全员' },
-  all_with_future: { color: 'warning', label: '全员+未来' }
-}
-
-const ADMIN_NOTIFICATION_TABLE_COLUMNS: TableColumn<AdminNotificationMessageRow>[] = [
-  { accessorKey: 'title', header: '标题' },
-  { id: 'delivery', header: '投递 / 已读' },
-  { accessorKey: 'senderActor', header: '发送人' },
-  { accessorKey: 'createdAt', header: '发送时间' },
-  { id: 'actions', header: '' }
-]
 
 export function createAdminNotificationForm(): AdminNotificationForm {
   return {
@@ -268,26 +241,68 @@ export function createAdminNotificationForm(): AdminNotificationForm {
 export function useAdminNotificationsDisplayMeta(
   options: UseAdminNotificationsDisplayMetaOptions
 ): UseAdminNotificationsDisplayMetaReturn {
+  const { t } = useI18n()
   const users = computed(() => options.users.value.filter(user => !user.isBanned))
   const userOptions = computed(() => users.value.map(user => ({
     label: `${user.username}${user.email ? ` <${user.email}>` : ''}`,
     value: user.id
   })))
+  const audienceOptions = computed<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>(() => [
+    { label: t('admin.content.notifications.audiences.options.specific'), value: 'specific' },
+    { label: t('admin.content.notifications.audiences.options.allCurrent'), value: 'all_current' },
+    { label: t('admin.content.notifications.audiences.options.allWithFuture'), value: 'all_with_future' }
+  ])
+  const levelOptions = computed<Array<AdminNotificationSelectItem<MessageLevel>>>(() => [
+    { label: t('admin.content.notifications.levelOptions.info'), value: 'info' },
+    { label: t('admin.content.notifications.levelOptions.success'), value: 'success' },
+    { label: t('admin.content.notifications.levelOptions.warning'), value: 'warning' },
+    { label: t('admin.content.notifications.levelOptions.critical'), value: 'critical' }
+  ])
+  const columns = computed<TableColumn<AdminNotificationMessageRow>[]>(() => [
+    { accessorKey: 'title', header: t('admin.content.notifications.columns.title') },
+    { id: 'delivery', header: t('admin.content.notifications.columns.delivery') },
+    { accessorKey: 'senderActor', header: t('admin.content.notifications.columns.sender') },
+    { accessorKey: 'createdAt', header: t('admin.content.notifications.columns.sentAt') },
+    { id: 'actions', header: '' }
+  ])
+
+  function getAudienceMeta(audience: AdminNotificationAudience): AdminNotificationAudienceMeta {
+    const colors: Record<AdminNotificationAudience, AdminNotificationAudienceMeta['color']> = {
+      specific: 'neutral',
+      all_current: 'info',
+      all_with_future: 'warning'
+    }
+    const messageKeys: Record<AdminNotificationAudience, string> = {
+      specific: 'admin.content.notifications.audiences.labels.specific',
+      all_current: 'admin.content.notifications.audiences.labels.allCurrent',
+      all_with_future: 'admin.content.notifications.audiences.labels.allWithFuture'
+    }
+    return { color: colors[audience], label: t(messageKeys[audience]) }
+  }
 
   function getRowItems(row: AdminNotificationMessageRow): DropdownMenuItem[] {
     return [
-      { label: '查看接收详情', icon: 'i-mdi-account-multiple-outline', onSelect: () => options.openDetail(row) },
-      { label: '删除', icon: 'i-mdi-delete-outline', color: 'error', onSelect: () => options.openDelete(row) }
+      {
+        label: t('admin.content.notifications.actions.viewDeliveries'),
+        icon: 'i-mdi-account-multiple-outline',
+        onSelect: () => options.openDetail(row)
+      },
+      {
+        label: t('common.actions.delete'),
+        icon: 'i-mdi-delete-outline',
+        color: 'error',
+        onSelect: () => options.openDelete(row)
+      }
     ]
   }
 
   return {
     users,
     userOptions,
-    audienceOptions: ADMIN_NOTIFICATION_AUDIENCE_OPTIONS,
-    levelOptions: ADMIN_NOTIFICATION_LEVEL_OPTIONS,
-    audienceMeta: ADMIN_NOTIFICATION_AUDIENCE_META,
-    columns: ADMIN_NOTIFICATION_TABLE_COLUMNS,
+    audienceOptions,
+    levelOptions,
+    getAudienceMeta,
+    columns,
     getRowItems
   }
 }

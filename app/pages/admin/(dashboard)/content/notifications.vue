@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MESSAGE_LEVELS, NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
+import { NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import {
@@ -20,6 +20,7 @@ type AdminNotificationAudienceFilter = 'all' | AdminNotificationMessageRow['audi
 type AdminNotificationLevelFilter = 'all' | MessageLevel
 
 const toast = useToast()
+const { t, locale } = useI18n()
 
 const { data: usersData } = usePrivateResource<AdminNotificationUserItem[]>({
   path: '/api/admin/users/list',
@@ -42,7 +43,9 @@ function openSendModal(): void {
 }
 
 const {
-  audienceMeta,
+  audienceOptions,
+  levelOptions,
+  getAudienceMeta,
   columns,
   getRowItems
 } = useAdminNotificationsDisplayMeta({
@@ -52,17 +55,12 @@ const {
 })
 
 const historyAudienceFilterOptions = computed<Array<AdminNotificationFilterOption<AdminNotificationAudienceFilter>>>(() => [
-  { label: '全部范围', value: 'all' },
-  { label: audienceMeta.specific.label, value: 'specific' },
-  { label: audienceMeta.all_current.label, value: 'all_current' },
-  { label: audienceMeta.all_with_future.label, value: 'all_with_future' }
+  { label: t('admin.content.notifications.filters.allAudiences'), value: 'all' },
+  ...audienceOptions.value
 ])
 const historyLevelFilterOptions = computed<Array<AdminNotificationFilterOption<AdminNotificationLevelFilter>>>(() => [
-  { label: '全部级别', value: 'all' },
-  ...MESSAGE_LEVELS.map(level => ({
-    label: levelMeta[level].label,
-    value: level
-  }))
+  { label: t('admin.content.notifications.filters.allLevels'), value: 'all' },
+  ...levelOptions.value
 ])
 const activeHistoryFilterCount = computed(() => [
   historyAudienceFilter.value !== 'all',
@@ -105,7 +103,10 @@ async function openDetail(row: AdminNotificationMessageRow) {
     const res = await $fetch<{ deliveries?: typeof detailRows.value }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
     detailRows.value = res?.deliveries || []
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '加载接收详情失败'), color: 'error' })
+    toast.add({
+      title: parseFetchError(err, t('admin.content.notifications.detail.loadFailed')),
+      color: 'error'
+    })
   } finally {
     detailLoading.value = false
   }
@@ -115,23 +116,34 @@ const confirm = useConfirmDialog()
 
 async function openDelete(row: AdminNotificationMessageRow) {
   await confirm({
-    title: `删除通知: ${row.title || ''}`,
-    description: '软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。',
+    title: t('admin.content.notifications.delete.title', { title: row.title || '' }),
+    description: t('admin.content.notifications.delete.description'),
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/notifications/delete', {
           method: 'POST',
           body: { messageId: row.id }
         })
-        toast.add({ title: '已删除', color: 'success' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await refresh()
       } catch (err: unknown) {
-        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
         throw err
       }
     }
   })
 }
+
+const detailDescription = computed(() => {
+  if (!detailMessage.value) return undefined
+  return t('admin.content.notifications.detail.description', {
+    title: detailMessage.value.title,
+    time: formatDateTime(detailMessage.value.createdAt, '-', locale.value),
+    audience: getAudienceMeta(detailMessage.value.audience).label,
+    delivered: detailMessage.value.deliveredCount.toLocaleString(locale.value),
+    read: detailMessage.value.readCount.toLocaleString(locale.value)
+  })
+})
 </script>
 
 <template>
@@ -141,21 +153,21 @@ async function openDelete(row: AdminNotificationMessageRow) {
         <UInput
           v-model="historyKeyword"
           icon="i-mdi-magnify"
-          placeholder="搜索发送历史标题或发送人"
+          :placeholder="$t('admin.content.notifications.searchPlaceholder')"
           class="w-full sm:w-72"
         />
         <AdminFilterPopover
           :active-count="activeHistoryFilterCount"
           @reset="resetHistoryFilters"
         >
-          <UFormField label="范围">
+          <UFormField :label="$t('admin.content.notifications.filters.audience')">
             <USelect
               v-model="historyAudienceFilter"
               :items="historyAudienceFilterOptions"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="级别">
+          <UFormField :label="$t('admin.content.notifications.filters.level')">
             <USelect
               v-model="historyLevelFilter"
               :items="historyLevelFilterOptions"
@@ -169,7 +181,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
           icon="i-mdi-send"
           @click="openSendModal"
         >
-          发送通知
+          {{ $t('admin.content.notifications.actions.send') }}
         </UButton>
         <UButton
           color="neutral"
@@ -178,13 +190,13 @@ async function openDelete(row: AdminNotificationMessageRow) {
           :loading="loading"
           @click="refresh()"
         >
-          刷新
+          {{ $t('common.actions.refresh') }}
         </UButton>
       </div>
     </div>
 
     <DashboardTableCard
-      title="发送历史"
+      :title="$t('admin.content.notifications.historyTitle')"
       icon="i-mdi-history"
       :total="total"
     >
@@ -196,7 +208,7 @@ async function openDelete(row: AdminNotificationMessageRow) {
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无发送历史"
+        :empty-title="$t('admin.content.notifications.emptyHistory')"
         empty-icon="i-mdi-history"
       >
         <template #title-cell="{ row }">
@@ -206,26 +218,34 @@ async function openDelete(row: AdminNotificationMessageRow) {
               variant="subtle"
               size="sm"
             >
-              {{ levelMeta[row.original.level].label }}
+              {{ $t(`common.notifications.levels.${row.original.level}`) }}
             </UBadge>
             <UBadge
-              :color="audienceMeta[row.original.audience].color"
+              :color="getAudienceMeta(row.original.audience).color"
               variant="soft"
               size="sm"
             >
-              {{ audienceMeta[row.original.audience].label }}
+              {{ getAudienceMeta(row.original.audience).label }}
             </UBadge>
             <span class="font-medium truncate max-w-[260px]">{{ row.original.title }}</span>
           </div>
         </template>
         <template #delivery-cell="{ row }">
           <div class="flex flex-col text-xs">
-            <span class="tabular-nums">投递 {{ row.original.deliveredCount }} 人</span>
-            <span class="text-muted tabular-nums">已读 {{ row.original.readCount }} 人</span>
+            <span class="tabular-nums">
+              {{ $t('admin.content.notifications.delivery.delivered', {
+                count: row.original.deliveredCount.toLocaleString(locale)
+              }) }}
+            </span>
+            <span class="text-muted tabular-nums">
+              {{ $t('admin.content.notifications.delivery.read', {
+                count: row.original.readCount.toLocaleString(locale)
+              }) }}
+            </span>
           </div>
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="text-right">
@@ -254,8 +274,8 @@ async function openDelete(row: AdminNotificationMessageRow) {
 
     <UModal
       v-model:open="detailOpen"
-      title="接收详情"
-      :description="detailMessage ? `${detailMessage.title} · ${formatDateTime(detailMessage.createdAt)} · 范围 ${audienceMeta[detailMessage.audience].label} · 已投递 ${detailMessage.deliveredCount} / 已读 ${detailMessage.readCount}` : undefined"
+      :title="$t('admin.content.notifications.detail.title')"
+      :description="detailDescription"
       :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
     >
       <template #body>
@@ -263,13 +283,13 @@ async function openDelete(row: AdminNotificationMessageRow) {
           v-if="detailLoading"
           class="text-center text-sm text-muted py-8"
         >
-          加载中...
+          {{ $t('common.states.loading') }}
         </div>
         <div
           v-else-if="detailRows.length === 0"
           class="text-center text-sm text-muted py-8"
         >
-          暂无投递记录
+          {{ $t('admin.content.notifications.detail.empty') }}
         </div>
         <div
           v-else
@@ -289,7 +309,11 @@ async function openDelete(row: AdminNotificationMessageRow) {
               {{ r.recipientUsername || `#${r.recipientUserId}` }}
             </span>
             <span class="text-xs text-muted">
-              {{ r.isRead ? `已读 · ${formatDateTime(r.readAt)}` : '未读' }}
+              {{ r.isRead
+                ? $t('admin.content.notifications.detail.readAt', {
+                  time: formatDateTime(r.readAt, '-', locale)
+                })
+                : $t('admin.content.notifications.detail.unread') }}
             </span>
           </div>
         </div>

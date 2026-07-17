@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import {
-  ADMIN_NOTIFICATION_AUDIENCE_OPTIONS,
-  ADMIN_NOTIFICATION_LEVEL_OPTIONS,
   createAdminNotificationForm,
   type AdminNotificationUserItem
 } from '~/composables/admin/use-admin-display-meta'
@@ -16,12 +14,22 @@ const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<Props>()
 const emit = defineEmits<{ sent: [] }>()
 const toast = useToast()
+const { t } = useI18n()
 
 const form = reactive(createAdminNotificationForm())
 const isSending = ref(false)
 
-const audienceOptions = ADMIN_NOTIFICATION_AUDIENCE_OPTIONS
-const levelOptions = ADMIN_NOTIFICATION_LEVEL_OPTIONS
+const audienceOptions = computed(() => [
+  { label: t('admin.content.notifications.audiences.options.specific'), value: 'specific' },
+  { label: t('admin.content.notifications.audiences.options.allCurrent'), value: 'all_current' },
+  { label: t('admin.content.notifications.audiences.options.allWithFuture'), value: 'all_with_future' }
+])
+const levelOptions = computed(() => [
+  { label: t('admin.content.notifications.levelOptions.info'), value: 'info' },
+  { label: t('admin.content.notifications.levelOptions.success'), value: 'success' },
+  { label: t('admin.content.notifications.levelOptions.warning'), value: 'warning' },
+  { label: t('admin.content.notifications.levelOptions.critical'), value: 'critical' }
+])
 const userOptions = computed(() => props.users
   .filter(user => !user.isBanned)
   .map(user => ({
@@ -40,11 +48,11 @@ function closeModal(): void {
 
 async function submitSend(): Promise<void> {
   if (!form.title.trim() || !form.content.trim()) {
-    toast.add({ title: '标题和内容必填', color: 'warning' })
+    toast.add({ title: t('admin.content.notifications.form.requiredContent'), color: 'warning' })
     return
   }
   if (form.audience === 'specific' && form.recipientUserIds.length === 0) {
-    toast.add({ title: '请选择收件人或改为全员发送', color: 'warning' })
+    toast.add({ title: t('admin.content.notifications.form.recipientRequired'), color: 'warning' })
     return
   }
 
@@ -61,11 +69,14 @@ async function submitSend(): Promise<void> {
         linkUrl: form.linkUrl.trim() || null
       }
     })
-    toast.add({ title: `已发送（投递 ${response.deliveredCount ?? 0} 人）`, color: 'success' })
+    toast.add({
+      title: t('admin.content.notifications.feedback.sent', { count: response.deliveredCount ?? 0 }),
+      color: 'success'
+    })
     open.value = false
     emit('sent')
   } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, '发送失败'), color: 'error' })
+    toast.add({ title: parseFetchError(error, t('common.feedback.sendFailed')), color: 'error' })
   } finally {
     isSending.value = false
   }
@@ -75,14 +86,14 @@ async function submitSend(): Promise<void> {
 <template>
   <UModal
     v-model:open="open"
-    title="发送通知"
-    description="向指定用户、当前全员或当前及未来注册用户发送站内通知。"
+    :title="$t('admin.content.notifications.form.title')"
+    :description="$t('admin.content.notifications.form.description')"
     :dismissible="!isSending"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
     <template #body>
       <div class="space-y-4">
-        <UFormField label="发送范围">
+        <UFormField :label="$t('admin.content.notifications.form.audience')">
           <USelect
             v-model="form.audience"
             :items="audienceOptions"
@@ -92,13 +103,13 @@ async function submitSend(): Promise<void> {
             v-if="form.audience === 'all_with_future'"
             class="mt-1.5 text-xs text-muted"
           >
-            新注册用户首次激活时将自动补发本条通知。
+            {{ $t('admin.content.notifications.form.futureDeliveryHint') }}
           </p>
         </UFormField>
 
         <UFormField
           v-if="form.audience === 'specific'"
-          label="收件人（可多选）"
+          :label="$t('admin.content.notifications.form.recipients')"
         >
           <USelectMenu
             v-model="form.recipientUserIds"
@@ -106,23 +117,23 @@ async function submitSend(): Promise<void> {
             multiple
             searchable
             value-key="value"
-            placeholder="搜索用户名或邮箱"
+            :placeholder="$t('admin.content.notifications.form.recipientsPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <UFormField
-            label="标题"
+            :label="$t('admin.content.notifications.form.messageTitle')"
             class="sm:col-span-2"
           >
             <UInput
               v-model="form.title"
-              placeholder="通知标题（最多 200 字）"
+              :placeholder="$t('admin.content.notifications.form.titlePlaceholder')"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="级别">
+          <UFormField :label="$t('admin.content.notifications.form.level')">
             <USelect
               v-model="form.level"
               :items="levelOptions"
@@ -131,16 +142,16 @@ async function submitSend(): Promise<void> {
           </UFormField>
         </div>
 
-        <UFormField label="内容">
+        <UFormField :label="$t('admin.content.notifications.form.content')">
           <UTextarea
             v-model="form.content"
             :rows="6"
-            placeholder="支持纯文本，换行将保留"
+            :placeholder="$t('admin.content.notifications.form.contentPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
-        <UFormField label="附加链接（可选）">
+        <UFormField :label="$t('admin.content.notifications.form.linkUrl')">
           <UInput
             v-model="form.linkUrl"
             placeholder="https://example.com/post/xx"
@@ -158,14 +169,14 @@ async function submitSend(): Promise<void> {
           :disabled="isSending"
           @click="closeModal"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           icon="i-mdi-send"
           :loading="isSending"
           @click="submitSend"
         >
-          发送通知
+          {{ $t('admin.content.notifications.actions.send') }}
         </UButton>
       </div>
     </template>
