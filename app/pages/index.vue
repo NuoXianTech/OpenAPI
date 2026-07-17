@@ -3,6 +3,8 @@ import { useApiList } from '~/composables/api/use-api-list'
 import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { API_STATUS } from '#shared/config/api-status'
 
+const { t } = useI18n()
+
 const {
   query,
   currentTab,
@@ -32,6 +34,13 @@ watch([query, currentTab, currentCategory], () => {
 })
 
 const hasPagination = computed(() => total.value > pageSize.value)
+const retryActions = computed(() => [{
+  label: t('common.actions.retry'),
+  color: 'neutral' as const,
+  variant: 'outline' as const,
+  icon: 'i-mdi-refresh',
+  onClick: fetchList
+}])
 
 const heroStats = computed(() => ({
   total: allItems.value.length,
@@ -80,13 +89,13 @@ useSeoMeta({
                 name="i-mdi-filter-variant"
                 class="size-3"
               />
-              接口状态
+              {{ $t('public.home.statusFilter') }}
             </div>
             <CommonFilterTabs
               v-model="currentTab"
               :tabs="statusTabs"
               :enable-collapse="false"
-              aria-label="API 状态筛选"
+              :aria-label="t('public.home.statusFilterAria')"
             />
           </div>
 
@@ -96,15 +105,15 @@ useSeoMeta({
                 name="i-mdi-tag-multiple-outline"
                 class="size-3"
               />
-              接口分类
+              {{ $t('public.home.categoryFilter') }}
             </div>
             <CommonFilterTabs
               v-model="currentCategory"
               :tabs="categoryTabs"
               :max-visible="10"
-              search-placeholder="搜索分类"
-              empty-text="未找到分类"
-              aria-label="API 分类筛选"
+              :search-placeholder="t('public.home.categorySearch')"
+              :empty-text="t('public.home.categoryEmpty')"
+              :aria-label="t('public.home.categoryFilterAria')"
             />
           </div>
         </div>
@@ -122,8 +131,8 @@ useSeoMeta({
         >
           <UEmpty
             icon="i-mdi-loading"
-            title="加载中..."
-            description="正在拉取最新的 API 列表"
+            :title="t('common.states.loading')"
+            :description="t('public.home.loadingDescription')"
             variant="naked"
             size="lg"
           />
@@ -137,11 +146,11 @@ useSeoMeta({
         >
           <UEmpty
             icon="i-mdi-alert-circle-outline"
-            title="加载失败"
+            :title="t('common.states.loadFailed')"
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: fetchList }]"
+            :actions="retryActions"
           />
         </section>
 
@@ -153,8 +162,8 @@ useSeoMeta({
         >
           <UEmpty
             icon="i-mdi-magnify-close"
-            title="未找到匹配的 API"
-            description="尝试调整搜索关键词或切换筛选标签"
+            :title="t('public.home.emptyTitle')"
+            :description="t('public.home.emptyDescription')"
             variant="naked"
             size="lg"
           />
@@ -172,14 +181,14 @@ useSeoMeta({
                 name="i-mdi-format-list-bulleted"
                 class="size-3.5"
               />
-              共 <span class="font-mono font-semibold text-default">{{ total }}</span> 个接口
+              {{ $t('public.home.totalCount', { count: total }) }}
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
                 name="i-mdi-cursor-default-click-outline"
                 class="size-3.5"
               />
-              点击卡片查看详情
+              {{ $t('public.home.clickHint') }}
             </span>
           </div>
           <ApiList
@@ -190,7 +199,7 @@ useSeoMeta({
             class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-default pt-4 sm:flex-row"
           >
             <span class="text-xs text-muted tabular-nums">
-              第 {{ page }} / {{ totalPages }} 页
+              {{ $t('public.home.pagination', { page, totalPages }) }}
             </span>
             <UPagination
               v-model:page="page"
@@ -207,7 +216,7 @@ useSeoMeta({
     <Suspense>
       <LazyCommonAnnouncementPopup />
       <template #fallback>
-        <span class="sr-only">公告加载中</span>
+        <span class="sr-only">{{ $t('public.home.announcementLoading') }}</span>
       </template>
     </Suspense>
   </div>

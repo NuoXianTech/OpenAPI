@@ -9,9 +9,11 @@ import {
   usernameError
 } from '~/utils/form-validation'
 
-useHead({ title: '注册' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
+useHead(() => ({ title: t('auth.register.title') }))
 
 const { register } = useAuth()
 const { turnstile, settings } = useSiteSettings()
@@ -25,10 +27,15 @@ interface RegisterFormState {
 
 function validateRegisterForm(state: Partial<RegisterFormState>): FormError<string>[] {
   return compactFormErrors(
-    usernameError('username', state.username),
-    emailError('email', state.email),
-    passwordError('password', state.password),
-    confirmationError('confirm', state.confirm, state.password ?? '')
+    usernameError('username', state.username, validationMessages.value.username),
+    emailError('email', state.email, validationMessages.value.email),
+    passwordError('password', state.password, validationMessages.value.password),
+    confirmationError(
+      'confirm',
+      state.confirm,
+      state.password ?? '',
+      validationMessages.value.confirmation
+    )
   )
 }
 
@@ -51,9 +58,9 @@ const fields = computed(() => [
   {
     name: 'username',
     type: 'text' as const,
-    label: '用户名',
+    label: t('auth.fields.username'),
     placeholder: 'openapi_user',
-    help: '3-32 位，可包含字母、数字、下划线和短横线',
+    help: t('auth.register.usernameHelp'),
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
     defaultValue: '',
@@ -64,7 +71,7 @@ const fields = computed(() => [
   {
     name: 'email',
     type: 'email' as const,
-    label: '邮箱',
+    label: t('auth.fields.email'),
     placeholder: 'you@example.com',
     autocomplete: 'email',
     icon: 'i-mdi-email-outline',
@@ -75,8 +82,8 @@ const fields = computed(() => [
   {
     name: 'password',
     type: 'password' as const,
-    label: '密码',
-    placeholder: '设置不少于 8 位的登录密码',
+    label: t('auth.fields.password'),
+    placeholder: t('auth.placeholders.newPassword'),
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-outline',
     defaultValue: '',
@@ -86,8 +93,8 @@ const fields = computed(() => [
   {
     name: 'confirm',
     type: 'password' as const,
-    label: '确认密码',
-    placeholder: '再次输入密码',
+    label: t('auth.fields.confirmPassword'),
+    placeholder: t('auth.placeholders.confirmPassword'),
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-check-outline',
     defaultValue: '',
@@ -96,13 +103,24 @@ const fields = computed(() => [
   }
 ])
 
-const REGISTER_ERROR_CODES: Record<number, string> = {
-  403: '当前未开放注册或邮箱不被允许',
-  409: '该邮箱或用户名已被占用，请更换后重试',
-  429: '操作过于频繁，请稍后再试',
-  503: '验证邮件服务暂不可用，请稍后再试或联系管理员',
-  500: '服务器暂时无法响应，请稍后再试'
-}
+const registerErrorCodes = computed<Record<number, string>>(() => ({
+  403: t('auth.register.errors.forbidden'),
+  409: t('auth.register.errors.conflict'),
+  429: t('auth.register.errors.tooManyRequests'),
+  503: t('auth.register.errors.mailUnavailable'),
+  500: t('auth.register.errors.server')
+}))
+
+const submitConfig = computed(() => ({
+  label: t('auth.register.submit'),
+  size: 'lg' as const,
+  disabled: (turnstileRequired.value && !turnstileToken.value) || (consentRequired.value && !consent.value)
+}))
+
+const footerLinks = computed(() => [
+  { label: t('auth.register.loginDirectly'), to: '/login' },
+  { label: t('common.actions.backHome'), to: '/' }
+])
 
 async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
   errorMessage.value = ''
@@ -110,12 +128,12 @@ async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
   turnstileError.value = ''
 
   if (consentRequired.value && !consent.value) {
-    errorMessage.value = '请先阅读并同意服务条款和隐私政策'
+    errorMessage.value = t('auth.validation.consentRequired')
     return
   }
 
   if (turnstileRequired.value && !turnstileToken.value) {
-    errorMessage.value = '请先完成人机验证'
+    errorMessage.value = t('auth.validation.turnstileRequired')
     return
   }
 
@@ -128,15 +146,15 @@ async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
     })
     successMessage.value = res.verificationRequired
-      ? '账号已创建，请查收邮箱完成验证后再登录。'
-      : '账号创建成功，可以直接登录。'
+      ? t('auth.register.successActivation')
+      : t('auth.register.successDirect')
     if (authForm.value?.state) {
       authForm.value.state.password = ''
       authForm.value.state.confirm = ''
     }
     turnstileWidget.value?.reset()
   } catch (error: unknown) {
-    errorMessage.value = parseFetchError(error, '注册失败', REGISTER_ERROR_CODES)
+    errorMessage.value = parseFetchError(error, t('auth.register.failed'), registerErrorCodes.value)
     turnstileWidget.value?.reset()
   } finally {
     isSubmitting.value = false
@@ -156,8 +174,8 @@ function clearTurnstileError() {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-account-plus-outline"
-      :title="`创建 ${settings.siteName} 账号`"
-      subtitle="注册完成后将通过邮箱进行验证，验证通过即可使用"
+      :title="t('auth.register.heading', { siteName: settings.siteName })"
+      :subtitle="t('auth.register.subtitle')"
     />
 
     <UCard
@@ -170,7 +188,7 @@ function clearTurnstileError() {
         :validate="validateRegisterForm"
         :fields="fields"
         :loading="isSubmitting"
-        :submit="{ label: '创建账号', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
+        :submit="submitConfig"
         @submit="onSubmit"
       >
         <template #password-help>
@@ -238,11 +256,8 @@ function clearTurnstileError() {
     </UCard>
 
     <AuthFooterLinks
-      prefix="已有账号？"
-      :links="[
-        { label: '直接登录', to: '/login' },
-        { label: '返回首页', to: '/' }
-      ]"
+      :prefix="t('auth.register.hasAccount')"
+      :links="footerLinks"
     />
   </CommonAppAuthShell>
 </template>

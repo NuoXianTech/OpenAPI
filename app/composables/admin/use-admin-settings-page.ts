@@ -213,6 +213,7 @@ function snapshot(form: AdminSettingsForm): AdminSettingsForm {
 
 export function useAdminSettingsPage() {
   const toast = useToast()
+  const { t } = useI18n()
 
   const form = reactive<AdminSettingsForm>(defaultForm())
   const pristine = ref<AdminSettingsForm>(defaultForm())
@@ -299,9 +300,9 @@ export function useAdminSettingsPage() {
         nextPristine[key] = savedValue as never
       }
       pristine.value = nextPristine
-      toast.add({ title: '保存成功', color: 'success' })
+      toast.add({ title: t('admin.system.feedback.saved'), color: 'success' })
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('admin.system.feedback.saveFailed')), color: 'error' })
     } finally {
       saving.value = false
       savingKeys.value = []
@@ -324,12 +325,6 @@ export function useAdminSettingsPage() {
 
   return { form, saving, loading, save, dirty, changedKeys, reset, commit, createSection }
 }
-
-const ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS = [
-  { label: '不开启', value: 'off' },
-  { label: '白名单', value: 'whitelist' },
-  { label: '黑名单', value: 'blacklist' }
-]
 
 function createAdminOauthProviderForm(): AdminOauthProviderForm {
   return {
@@ -412,6 +407,7 @@ function scheduleDefaultCopiedReset(callback: () => void): void {
 
 export function useAdminUserSessionSettings(options: UseAdminUserSessionSettingsOptions = {}) {
   const toast = options.toast ?? useToast()
+  const { t } = useI18n()
   const settings = options.useSettingsPage?.() ?? useAdminSettingsPage()
   const providerFetch = options.useProviderFetch?.() ?? useDefaultProviderFetch()
   const updateOauthSettings = options.updateOauthSettings ?? updateDefaultOauthSettings
@@ -431,6 +427,11 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
       settings.form.registrationMode = value ? 'open' : 'closed'
     }
   })
+  const emailFilterModeItems = computed(() => [
+    { label: t('admin.system.session.emailFilter.options.off'), value: 'off' },
+    { label: t('admin.system.session.emailFilter.options.whitelist'), value: 'whitelist' },
+    { label: t('admin.system.session.emailFilter.options.blacklist'), value: 'blacklist' }
+  ])
 
   watch(items, (list) => {
     syncAdminOauthProviderFormsFromItems(forms, list)
@@ -463,9 +464,12 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
         getForm(item.provider).clientSecret = ''
       }
       await providerFetch.refresh()
-      toast.add({ title: '第三方登录设置保存成功', color: 'success' })
+      toast.add({ title: t('admin.system.session.oauth.feedback.saved'), color: 'success' })
     } catch (err: unknown) {
-      toast.add({ title: parseFetchError(err, '第三方登录设置保存失败'), color: 'error' })
+      toast.add({
+        title: parseFetchError(err, t('admin.system.session.oauth.feedback.saveFailed')),
+        color: 'error'
+      })
     } finally {
       isOauthSaving.value = false
     }
@@ -480,7 +484,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
         providerForm.copied = false
       })
     } catch {
-      toast.add({ title: '复制失败，请手动选中复制', color: 'error' })
+      toast.add({ title: t('admin.system.session.oauth.feedback.copyFailed'), color: 'error' })
     }
   }
 
@@ -493,7 +497,7 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
     reset: settings.reset,
     createSection: settings.createSection,
     allowRegistration,
-    emailFilterModeItems: ADMIN_USER_SESSION_EMAIL_FILTER_MODE_ITEMS,
+    emailFilterModeItems,
     loading: providerFetch.loading,
     refresh: providerFetch.refresh,
     items,

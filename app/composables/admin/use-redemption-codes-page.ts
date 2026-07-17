@@ -55,6 +55,7 @@ interface RedemptionFilters extends Record<string, unknown> {
 export function useRedemptionCodesPage() {
   const toast = useToast()
   const confirm = useConfirmDialog()
+  const { t } = useI18n()
 
   // 兑换码列表分页：后台敏感数据统一走 usePrivatePagedList（$fetch，不进 payload）。
   // immediate:false —— 由 init() 与 batches 一起并发首拉。
@@ -88,7 +89,10 @@ export function useRedemptionCodesPage() {
       method: 'POST',
       body: payload
     })
-    toast.add({ title: `已生成 ${res.generated} 张兑换码`, color: 'success' })
+    toast.add({
+      title: t('admin.credits.redemptionCodes.feedback.generated', { count: res.generated }),
+      color: 'success'
+    })
     await Promise.all([fetchBatches(), paged.refresh()])
     return res
   }
@@ -99,27 +103,32 @@ export function useRedemptionCodesPage() {
         method: 'POST',
         body: { id: item.id, enabled: !item.isEnabled }
       })
-      toast.add({ title: item.isEnabled ? '已禁用' : '已启用', color: 'success' })
+      toast.add({
+        title: item.isEnabled
+          ? t('admin.credits.redemptionCodes.feedback.disabled')
+          : t('admin.credits.redemptionCodes.feedback.enabled'),
+        color: 'success'
+      })
       await paged.refresh()
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
     }
   }
 
   async function remove(item: RedemptionCode) {
     await confirm({
-      title: `删除兑换码 ${item.code}`,
-      description: '删除后该兑换码立即失效，操作不可恢复。',
+      title: t('admin.credits.redemptionCodes.deleteCode.title', { code: item.code }),
+      description: t('admin.credits.redemptionCodes.deleteCode.description'),
       onConfirm: async () => {
         try {
           await $fetch('/api/admin/redemption-codes/delete', {
             method: 'POST',
             body: { id: item.id }
           })
-          toast.add({ title: '已删除', color: 'success' })
+          toast.add({ title: t('common.feedback.deleted'), color: 'success' })
           await paged.refresh()
         } catch (err) {
-          toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+          toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
           throw err
         }
       }
@@ -132,19 +141,24 @@ export function useRedemptionCodesPage() {
         method: 'POST',
         body: { batchId, enabled }
       })
-      toast.add({ title: `已${enabled ? '启用' : '禁用'} ${res.affected} 张兑换码`, color: 'success' })
+      toast.add({
+        title: enabled
+          ? t('admin.credits.redemptionCodes.feedback.batchEnabled', { count: res.affected })
+          : t('admin.credits.redemptionCodes.feedback.batchDisabled', { count: res.affected }),
+        color: 'success'
+      })
       await Promise.all([fetchBatches(), paged.refresh()])
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
     }
   }
 
   async function deleteBatch(batchId: string, includeUsed: boolean) {
     const description = includeUsed
-      ? `将删除批次 ${batchId} 的全部兑换码（含已被兑换过的），此操作不可恢复。`
-      : `将删除批次 ${batchId} 中未被使用过的兑换码。`
+      ? t('admin.credits.redemptionCodes.deleteBatch.includeUsedDescription', { batchId })
+      : t('admin.credits.redemptionCodes.deleteBatch.unusedDescription', { batchId })
     await confirm({
-      title: `删除批次 ${batchId}`,
+      title: t('admin.credits.redemptionCodes.deleteBatch.title', { batchId }),
       description,
       onConfirm: async () => {
         try {
@@ -152,27 +166,39 @@ export function useRedemptionCodesPage() {
             method: 'POST',
             body: { batchId, includeUsed }
           })
-          toast.add({ title: `已删除 ${res.affected} 张兑换码`, color: 'success' })
+          toast.add({
+            title: t('admin.credits.redemptionCodes.feedback.batchDeleted', { count: res.affected }),
+            color: 'success'
+          })
           await Promise.all([fetchBatches(), paged.refresh()])
         } catch (err) {
-          toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+          toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
           throw err
         }
       }
     })
   }
 
-  function copyOne(code: string) {
-    navigator.clipboard.writeText(code).then(() => {
-      toast.add({ title: `已复制 ${code}`, color: 'success' })
-    })
+  async function copyOne(code: string) {
+    try {
+      await navigator.clipboard.writeText(code)
+      toast.add({
+        title: t('admin.credits.redemptionCodes.feedback.codeCopied', { code }),
+        color: 'success'
+      })
+    } catch {
+      toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
+    }
   }
 
-  function copyAll(codes: Array<{ code: string }>) {
+  async function copyAll(codes: Array<{ code: string }>) {
     const text = codes.map(c => c.code).join('\n')
-    navigator.clipboard.writeText(text).then(() => {
-      toast.add({ title: '已复制全部兑换码到剪贴板', color: 'success' })
-    })
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.add({ title: t('admin.credits.redemptionCodes.feedback.allCopied'), color: 'success' })
+    } catch {
+      toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
+    }
   }
 
   async function init() {
@@ -229,72 +255,76 @@ interface UseAdminRedemptionCodesDisplayMetaOptions {
 }
 
 interface UseAdminRedemptionCodesDisplayMetaReturn {
-  statusItems: AdminRedemptionCodeSelectItem[]
+  statusItems: ComputedRef<AdminRedemptionCodeSelectItem[]>
   batchItems: ComputedRef<AdminRedemptionCodeSelectItem[]>
-  columns: TableColumn<RedemptionCode>[]
+  columns: ComputedRef<TableColumn<RedemptionCode>[]>
   statusOf: (item: RedemptionCode) => AdminRedemptionCodeStatusMeta
   getRowItems: (row: RedemptionCode) => DropdownMenuItem[]
   onBatchFilter: (batchId: string) => void
 }
 
-const ADMIN_REDEMPTION_CODE_STATUS_ITEMS: AdminRedemptionCodeSelectItem[] = [
-  { label: '全部', value: 'all' },
-  { label: '可用', value: 'available' },
-  { label: '已禁用', value: 'disabled' },
-  { label: '已用完', value: 'used_up' },
-  { label: '已过期', value: 'expired' }
-]
-
-const ADMIN_REDEMPTION_CODE_TABLE_COLUMNS: TableColumn<RedemptionCode>[] = [
-  { accessorKey: 'code', header: '兑换码' },
-  { accessorKey: 'amount', header: '面额' },
-  { id: 'usage', header: '使用' },
-  { accessorKey: 'note', header: '备注' },
-  { accessorKey: 'expiresAt', header: '过期时间' },
-  { id: 'status', header: '状态' },
-  { accessorKey: 'createdAt', header: '创建时间' },
-  { id: 'actions', header: '' }
-]
-
-function getAdminRedemptionCodeStatus(item: RedemptionCode): AdminRedemptionCodeStatusMeta {
-  if (!item.isEnabled) return { label: '已禁用', color: 'neutral' }
-  if (item.usedCount >= item.maxUses) return { label: '已用完', color: 'warning' }
-  if (item.expiresAt && new Date(item.expiresAt).getTime() <= Date.now()) {
-    return { label: '已过期', color: 'error' }
-  }
-  return { label: '可用', color: 'success' }
-}
-
-function buildAdminRedemptionCodeBatchItems(
-  batches: BatchSummary[]
-): AdminRedemptionCodeSelectItem[] {
-  return [
-    { label: '全部批次', value: 'all' },
-    ...batches.map(batch => ({
-      label: `${batch.batchId} (${batch.usedTotal}/${batch.maxUsesTotal} 用 · ${batch.amount} 积分)`,
-      value: batch.batchId
-    }))
-  ]
-}
-
 export function useAdminRedemptionCodesDisplayMeta(
   options: UseAdminRedemptionCodesDisplayMetaOptions
 ): UseAdminRedemptionCodesDisplayMetaReturn {
-  const batchItems = computed(() => buildAdminRedemptionCodeBatchItems(options.batches.value))
+  const { t, locale } = useI18n()
+  const statusItems = computed<AdminRedemptionCodeSelectItem[]>(() => [
+    { label: t('common.filters.all'), value: 'all' },
+    { label: t('admin.credits.redemptionCodes.statuses.available'), value: 'available' },
+    { label: t('admin.credits.redemptionCodes.statuses.disabled'), value: 'disabled' },
+    { label: t('admin.credits.redemptionCodes.statuses.usedUp'), value: 'used_up' },
+    { label: t('admin.credits.redemptionCodes.statuses.expired'), value: 'expired' }
+  ])
+  const batchItems = computed<AdminRedemptionCodeSelectItem[]>(() => [
+    { label: t('admin.credits.redemptionCodes.filters.allBatches'), value: 'all' },
+    ...options.batches.value.map(batch => ({
+      label: t('admin.credits.redemptionCodes.filters.batchOption', {
+        batchId: batch.batchId,
+        used: batch.usedTotal.toLocaleString(locale.value),
+        total: batch.maxUsesTotal.toLocaleString(locale.value),
+        amount: batch.amount.toLocaleString(locale.value)
+      }),
+      value: batch.batchId
+    }))
+  ])
+  const columns = computed<TableColumn<RedemptionCode>[]>(() => [
+    { accessorKey: 'code', header: t('admin.credits.redemptionCodes.columns.code') },
+    { accessorKey: 'amount', header: t('admin.credits.redemptionCodes.columns.amount') },
+    { id: 'usage', header: t('admin.credits.redemptionCodes.columns.usage') },
+    { accessorKey: 'note', header: t('admin.credits.redemptionCodes.columns.note') },
+    { accessorKey: 'expiresAt', header: t('admin.credits.redemptionCodes.columns.expiresAt') },
+    { id: 'status', header: t('admin.credits.redemptionCodes.columns.status') },
+    { accessorKey: 'createdAt', header: t('admin.credits.redemptionCodes.columns.createdAt') },
+    { id: 'actions', header: '' }
+  ])
+
+  function statusOf(item: RedemptionCode): AdminRedemptionCodeStatusMeta {
+    if (!item.isEnabled) {
+      return { label: t('admin.credits.redemptionCodes.statuses.disabled'), color: 'neutral' }
+    }
+    if (item.usedCount >= item.maxUses) {
+      return { label: t('admin.credits.redemptionCodes.statuses.usedUp'), color: 'warning' }
+    }
+    if (item.expiresAt && new Date(item.expiresAt).getTime() <= Date.now()) {
+      return { label: t('admin.credits.redemptionCodes.statuses.expired'), color: 'error' }
+    }
+    return { label: t('admin.credits.redemptionCodes.statuses.available'), color: 'success' }
+  }
 
   function getRowItems(row: RedemptionCode): DropdownMenuItem[] {
     return [{
-      label: row.isEnabled ? '禁用' : '启用',
+      label: row.isEnabled
+        ? t('admin.credits.redemptionCodes.actions.disable')
+        : t('admin.credits.redemptionCodes.actions.enable'),
       icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
       onSelect: () => options.toggle(row)
     }, {
-      label: '复制兑换码',
+      label: t('admin.credits.redemptionCodes.actions.copyCode'),
       icon: 'i-mdi-content-copy',
       onSelect: () => options.copyOne(row.code)
     }, {
       type: 'separator'
     }, {
-      label: '删除',
+      label: t('common.actions.delete'),
       icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => options.remove(row)
@@ -307,10 +337,10 @@ export function useAdminRedemptionCodesDisplayMeta(
   }
 
   return {
-    statusItems: ADMIN_REDEMPTION_CODE_STATUS_ITEMS,
+    statusItems,
     batchItems,
-    columns: ADMIN_REDEMPTION_CODE_TABLE_COLUMNS,
-    statusOf: getAdminRedemptionCodeStatus,
+    columns,
+    statusOf,
     getRowItems,
     onBatchFilter
   }

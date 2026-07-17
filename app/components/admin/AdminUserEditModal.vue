@@ -22,12 +22,13 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
+const { t, locale } = useI18n()
 
 const form = reactive({ username: '', email: '', displayName: '', role: 'user' as 'user' | 'admin', isActive: false, password: '' })
-const roleOptions = [
-  { label: '用户', value: 'user' },
-  { label: '管理员', value: 'admin' }
-]
+const roleOptions = computed(() => [
+  { label: t('common.identities.user'), value: 'user' },
+  { label: t('common.identities.admin'), value: 'admin' }
+])
 const loading = ref(false)
 
 const bindings = ref<OAuthBinding[]>([])
@@ -83,7 +84,7 @@ async function submit() {
 <template>
   <UModal
     :open="open"
-    title="编辑用户"
+    :title="$t('admin.users.edit.title')"
     :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
@@ -93,27 +94,27 @@ async function submit() {
         @submit.prevent="submit"
       >
         <UFormField
-          label="用户名"
-          help="用户名创建后不可修改，用于保持审计记录稳定。"
+          :label="$t('admin.users.fields.username')"
+          :help="$t('admin.users.edit.usernameHelp')"
         >
           <UInput
             v-model="form.username"
             disabled
           />
         </UFormField>
-        <UFormField label="邮箱">
+        <UFormField :label="$t('admin.users.fields.email')">
           <UInput
             v-model="form.email"
             type="email"
           />
         </UFormField>
-        <UFormField label="昵称">
+        <UFormField :label="$t('admin.users.fields.displayName')">
           <UInput
             v-model="form.displayName"
             :maxlength="32"
           />
         </UFormField>
-        <UFormField label="账号类型">
+        <UFormField :label="$t('admin.users.fields.role')">
           <USelect
             v-model="form.role"
             :items="roleOptions"
@@ -122,17 +123,17 @@ async function submit() {
         </UFormField>
         <USwitch
           v-model="form.isActive"
-          label="已激活"
+          :label="$t('common.accounts.active')"
         />
 
         <UFormField
-          label="重置密码"
-          help="留空则不修改；填写后将强制该用户重新登录（至少 8 位）"
+          :label="$t('admin.users.edit.resetPassword')"
+          :help="$t('admin.users.edit.resetPasswordHelp')"
         >
           <UInput
             v-model="form.password"
             type="password"
-            placeholder="留空表示不修改"
+            :placeholder="$t('admin.users.edit.passwordPlaceholder')"
             autocomplete="new-password"
           />
         </UFormField>
@@ -143,20 +144,20 @@ async function submit() {
               name="i-mdi-shield-key-outline"
               class="size-4 text-muted"
             />
-            <span class="text-sm font-medium">已绑定第三方</span>
-            <span class="text-xs text-muted">（只读）</span>
+            <span class="text-sm font-medium">{{ $t('admin.users.edit.oauthBindings') }}</span>
+            <span class="text-xs text-muted">{{ $t('admin.users.edit.readOnly') }}</span>
           </div>
           <div
             v-if="bindingsLoading"
             class="text-xs text-muted py-2"
           >
-            加载中...
+            {{ $t('common.states.loading') }}
           </div>
           <div
             v-else-if="bindings.length === 0"
             class="text-xs text-muted italic py-2"
           >
-            该用户未绑定任何第三方账号
+            {{ $t('admin.users.edit.noOauthBindings') }}
           </div>
           <div
             v-else
@@ -174,7 +175,9 @@ async function submit() {
                 {{ b.provider }}
               </UBadge>
               <span class="font-mono">{{ b.nickname || b.email || `#${b.providerUserId}` }}</span>
-              <span class="ml-auto text-muted">最近登录 {{ formatDateTime(b.lastLoginAt) }}</span>
+              <span class="ml-auto text-muted">
+                {{ $t('admin.users.edit.lastLogin', { time: formatDateTime(b.lastLoginAt, '-', locale) }) }}
+              </span>
             </div>
           </div>
         </div>
@@ -188,13 +191,13 @@ async function submit() {
           color="neutral"
           @click="emit('update:open', false)"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="submit"
         >
-          保存
+          {{ $t('common.actions.save') }}
         </UButton>
       </div>
     </template>

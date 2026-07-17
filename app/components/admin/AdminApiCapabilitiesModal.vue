@@ -10,6 +10,7 @@ import { parseFetchError } from '~/utils/client-error'
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ target: DiscoveredApi | null }>()
 const toast = useToast()
+const { t } = useI18n()
 
 const response = ref<AdminApiCapabilityResponse | null>(null)
 const values = ref<Record<string, unknown>>({})
@@ -19,8 +20,11 @@ const loadError = ref('')
 let requestSequence = 0
 
 const modalTitle = computed(() => {
-  if (!props.target) return '接口配置'
-  return `接口配置：${props.target.pathVersion} / ${props.target.code}`
+  if (!props.target) return t('admin.apis.capabilities.modal.title')
+  return t('admin.apis.capabilities.modal.titleWithTarget', {
+    version: props.target.pathVersion,
+    code: props.target.code
+  })
 })
 
 function cloneValues(source: Record<string, unknown>): Record<string, unknown> {
@@ -69,7 +73,7 @@ async function loadCapabilities(): Promise<void> {
   } catch (error) {
     if (currentRequest !== requestSequence) return
     response.value = null
-    loadError.value = parseFetchError(error, '读取接口配置失败')
+    loadError.value = parseFetchError(error, t('admin.apis.capabilities.feedback.loadFailed'))
   } finally {
     if (currentRequest === requestSequence) isLoading.value = false
   }
@@ -93,10 +97,13 @@ async function saveCapabilities(): Promise<void> {
     })
     response.value = { ...current, config }
     values.value = cloneValues(config.values)
-    toast.add({ title: '接口配置已保存', color: 'success' })
+    toast.add({ title: t('admin.apis.capabilities.feedback.saved'), color: 'success' })
     open.value = false
   } catch (error) {
-    toast.add({ title: parseFetchError(error, '保存接口配置失败'), color: 'error' })
+    toast.add({
+      title: parseFetchError(error, t('admin.apis.capabilities.feedback.saveFailed')),
+      color: 'error'
+    })
   } finally {
     isSaving.value = false
   }
@@ -141,16 +148,20 @@ watch(
           icon="i-mdi-refresh"
           @click="loadCapabilities"
         >
-          重新加载
+          {{ t('admin.apis.capabilities.actions.reload') }}
         </UButton>
       </div>
 
       <div v-else-if="response" class="space-y-5">
         <div class="flex flex-wrap items-center gap-2">
           <UBadge :color="response.config.isConfigured ? 'success' : 'neutral'" variant="subtle">
-            {{ response.config.isConfigured ? `已配置 · v${response.config.revision}` : '使用声明默认值' }}
+            {{ response.config.isConfigured
+              ? t('admin.apis.capabilities.status.configuredRevision', { revision: response.config.revision })
+              : t('admin.apis.capabilities.status.declarationDefault') }}
           </UBadge>
-          <span class="text-xs text-muted">配置由平台统一存储，所有服务实例共享</span>
+          <span class="text-xs text-muted">
+            {{ t('admin.apis.capabilities.status.sharedStorage') }}
+          </span>
         </div>
 
         <UFormField
@@ -188,7 +199,7 @@ watch(
             :type="field.isSecret ? 'password' : 'text'"
             :model-value="getStringValue(field.key)"
             :placeholder="field.isSecret && response.config.configuredSecretKeys?.includes(field.key)
-              ? '已配置，留空保持不变'
+              ? t('admin.apis.capabilities.form.configuredSecretPlaceholder')
               : field.placeholder"
             :minlength="field.minLength"
             :maxlength="field.maxLength"
@@ -224,10 +235,10 @@ watch(
     <template #footer>
       <div class="flex w-full justify-end gap-2">
         <UButton color="neutral" variant="outline" @click="closeModal">
-          取消
+          {{ t('common.actions.cancel') }}
         </UButton>
         <UButton :loading="isSaving" :disabled="isLoading || !response" @click="saveCapabilities">
-          保存能力配置
+          {{ t('admin.apis.capabilities.actions.save') }}
         </UButton>
       </div>
     </template>

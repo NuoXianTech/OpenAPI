@@ -1,20 +1,29 @@
 <script setup lang="ts">
-import { ADMIN_API_STATUS_ITEMS } from '#shared/config/api-status'
+import { API_STATUS } from '#shared/config/api-status'
+import type { AdminApiFormState } from '#shared/types/api'
 import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const state = useAdminApiForm()
+const { t } = useI18n()
 
 const { data: categoriesData } = usePrivateResource<Array<{ id: number, name: string, code: string }>>({
   path: '/api/admin/api-categories/list',
   defaultData: () => []
 })
 const categoryOptions = computed(() => [
-  { label: '未分类', value: null },
+  { label: t('admin.apis.form.basic.uncategorized'), value: null },
   ...categoriesData.value.map(c => ({ label: c.name, value: c.id }))
 ])
 
-const statusOptions = ADMIN_API_STATUS_ITEMS
+const statusOptions = computed<Array<{ label: string, value: AdminApiFormState['status'] }>>(() => [
+  { label: t('common.states.automatic'), value: API_STATUS.automatic },
+  { label: t('common.states.active'), value: API_STATUS.normal },
+  { label: t('common.states.inactive'), value: API_STATUS.abnormal },
+  { label: t('common.states.unknown'), value: API_STATUS.unknown },
+  { label: t('common.states.maintenance'), value: API_STATUS.maintenance },
+  { label: t('common.states.deprecated'), value: API_STATUS.deprecated }
+])
 </script>
 
 <template>
@@ -25,26 +34,26 @@ const statusOptions = ADMIN_API_STATUS_ITEMS
       </span>
       <div>
         <h3 class="text-sm font-semibold text-highlighted">
-          基础信息
+          {{ $t('admin.apis.form.basic.title') }}
         </h3>
         <p class="text-xs text-muted">
-          配置接口在前台展示的名称、描述与分类
+          {{ $t('admin.apis.form.basic.description') }}
         </p>
       </div>
     </div>
     <div class="grid gap-3 sm:grid-cols-2">
       <UFormField
-        label="名称"
+        :label="$t('admin.apis.form.basic.name')"
         name="name"
       >
         <UInput
           v-model="state.name"
           class="w-full"
-          placeholder="对外展示名称"
+          :placeholder="$t('admin.apis.form.basic.namePlaceholder')"
         />
       </UFormField>
       <UFormField
-        label="状态"
+        :label="$t('admin.apis.form.basic.status')"
         name="status"
       >
         <USelect
@@ -55,17 +64,17 @@ const statusOptions = ADMIN_API_STATUS_ITEMS
       </UFormField>
     </div>
     <UFormField
-      label="简短描述"
+      :label="$t('admin.apis.form.basic.shortDescription')"
       name="shortDesc"
     >
       <UInput
         v-model="state.shortDesc"
         class="w-full"
-        placeholder="最多50字"
+        :placeholder="$t('admin.apis.form.basic.shortDescriptionPlaceholder')"
       />
     </UFormField>
     <UFormField
-      label="详细描述"
+      :label="$t('admin.apis.form.basic.fullDescription')"
       name="description"
     >
       <UTextarea
@@ -76,7 +85,7 @@ const statusOptions = ADMIN_API_STATUS_ITEMS
     </UFormField>
     <div class="grid gap-3 sm:grid-cols-2">
       <UFormField
-        label="文档地址"
+        :label="$t('admin.apis.form.basic.documentationUrl')"
         name="docUrl"
       >
         <UInput
@@ -86,7 +95,7 @@ const statusOptions = ADMIN_API_STATUS_ITEMS
         />
       </UFormField>
       <UFormField
-        label="分类"
+        :label="$t('admin.apis.form.basic.category')"
         name="categoryId"
       >
         <USelect

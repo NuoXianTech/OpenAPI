@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { NOTIFICATION_LEVEL_META as levelMeta, type MessageLevel } from '#shared/types/content'
+import type { MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 /**
  * 后台站内信通知中心（admin / user 两端共用）
  *
@@ -28,6 +29,11 @@ const unread = ref(0)
 const loading = ref(false)
 const onlyUnread = ref(false)
 const expandedId = ref<number | null>(null)
+const { t, locale } = useI18n()
+
+function getNotificationLevelLabel(level: MessageLevel): string {
+  return t(`common.notifications.levels.${level}`)
+}
 
 async function fetchUnreadCount() {
   try {
@@ -91,7 +97,7 @@ onMounted(() => {
 <template>
   <USlideover
     v-model:open="open"
-    title="消息通知"
+    :title="$t('common.notifications.title')"
     :ui="{ body: 'p-0 sm:p-0' }"
   >
     <UButton
@@ -99,7 +105,7 @@ onMounted(() => {
       color="neutral"
       square
       class="relative"
-      aria-label="消息通知"
+      :aria-label="$t('common.notifications.title')"
     >
       <UIcon
         name="i-mdi-bell-outline"
@@ -120,7 +126,7 @@ onMounted(() => {
         variant="subtle"
         size="sm"
       >
-        {{ unread }} 未读
+        {{ $t('common.notifications.unreadCount', { count: unread.toLocaleString(locale) }) }}
       </UBadge>
       <UButton
         v-if="unread > 0"
@@ -130,7 +136,7 @@ onMounted(() => {
         icon="i-mdi-check-all"
         @click="markAllRead"
       >
-        全部已读
+        {{ $t('common.notifications.markAllRead') }}
       </UButton>
     </template>
 
@@ -138,7 +144,7 @@ onMounted(() => {
       <div class="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-default bg-default/80 px-4 py-2.5 backdrop-blur">
         <USwitch
           v-model="onlyUnread"
-          label="只看未读"
+          :label="$t('common.notifications.onlyUnread')"
           size="sm"
         />
         <UButton
@@ -147,7 +153,7 @@ onMounted(() => {
           variant="ghost"
           icon="i-mdi-refresh"
           :loading="loading"
-          aria-label="刷新"
+          :aria-label="$t('common.actions.refresh')"
           @click="fetchList"
         />
       </div>
@@ -156,14 +162,14 @@ onMounted(() => {
         v-if="loading && items.length === 0"
         class="py-12 text-center text-sm text-muted"
       >
-        加载中…
+        {{ $t('common.states.loading') }}
       </div>
       <UEmpty
         v-else-if="items.length === 0"
         variant="naked"
         icon="i-mdi-bell-outline"
-        :title="onlyUnread ? '没有未读消息' : '暂无消息'"
-        description="新的通知会显示在这里"
+        :title="onlyUnread ? $t('common.notifications.noUnread') : $t('common.notifications.empty')"
+        :description="$t('common.notifications.emptyDescription')"
         class="py-12"
       />
 
@@ -189,22 +195,22 @@ onMounted(() => {
                 :name="levelMeta[n.level].icon"
                 class="size-3"
               />
-              <span class="ml-1">{{ levelMeta[n.level].label }}</span>
+              <span class="ml-1">{{ getNotificationLevelLabel(n.level) }}</span>
             </UBadge>
             <span
               v-if="!n.isRead"
               class="size-2 shrink-0 rounded-full bg-primary"
-              aria-label="未读"
+              :aria-label="$t('common.notifications.unread')"
             />
             <span class="flex-1 truncate text-sm font-medium">
               {{ n.title }}
             </span>
             <span class="shrink-0 text-xs text-muted">
-              {{ formatDateTime(n.createdAt) }}
+              {{ formatDateTime(n.createdAt, '-', locale) }}
             </span>
           </div>
           <div class="text-xs text-muted">
-            来自：{{ n.senderActor || '系统' }}
+            {{ $t('common.notifications.from', { sender: n.senderActor || $t('common.notifications.system') }) }}
           </div>
           <div
             v-if="expandedId === n.id"
@@ -224,7 +230,7 @@ onMounted(() => {
                 trailing
                 @click.stop
               >
-                查看详情
+                {{ $t('common.actions.viewDetails') }}
               </UButton>
             </div>
           </div>

@@ -7,6 +7,7 @@ const {
   profileLoading,
   loadProfile,
   updateProfile,
+  updateLanguagePreference,
   requestEmailChange
 } = useUserSettingsPage()
 
@@ -26,6 +27,12 @@ onMounted(async () => {
       :profile-loading="profileLoading"
       :avatar-url="avatarUrl"
       :on-save="updateProfile"
+    />
+
+    <UserSettingsLanguageCard
+      :profile="profile"
+      :profile-loading="profileLoading"
+      :on-save="updateLanguagePreference"
     />
 
     <UserSettingsEmailCard

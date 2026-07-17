@@ -45,7 +45,8 @@ const {
   statusMeta,
   variant
 } = toRefs(props)
-const summary = computed(() => shortDesc.value || description.value || '暂无简介')
+const { t, locale } = useI18n()
+const summary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
 
 function costFor(method: string): number {
   const value = methodCosts.value[method.toUpperCase()]
@@ -86,7 +87,7 @@ function costFor(method: string): number {
       <div class="api-card-detail__endpoint">
         <span class="api-card-detail__endpoint-label">
           <UIcon name="i-mdi-routes" class="size-3.5" />
-          接口地址
+          {{ $t('public.api.endpoint') }}
         </span>
         <a
           :href="apiPath"
@@ -101,7 +102,7 @@ function costFor(method: string): number {
       <div class="api-card-detail__grid">
         <div
           class="api-card-detail__cell api-card-detail__cell--calls"
-          :title="`调用次数 ${totalCalls.toLocaleString('zh-CN')}`"
+          :title="$t('public.api.callCountDescription', { count: totalCalls.toLocaleString(locale) })"
         >
           <span
             class="api-card-detail__icon"
@@ -113,8 +114,8 @@ function costFor(method: string): number {
             />
           </span>
           <div class="api-card-detail__cell-content">
-            <span>调用次数</span>
-            <strong>{{ formatCompactCount(totalCalls) }}</strong>
+            <span>{{ $t('public.api.callCount') }}</span>
+            <strong>{{ formatCompactCount(totalCalls, locale) }}</strong>
           </div>
         </div>
 
@@ -132,8 +133,8 @@ function costFor(method: string): number {
             />
           </span>
           <div class="api-card-detail__cell-content">
-            <span>鉴权要求</span>
-            <strong>{{ isApiKey ? 'API密钥' : '无需密钥' }}</strong>
+            <span>{{ $t('public.api.authentication') }}</span>
+            <strong>{{ isApiKey ? $t('public.api.apiKey') : $t('public.api.noApiKey') }}</strong>
           </div>
         </div>
       </div>
@@ -141,7 +142,7 @@ function costFor(method: string): number {
       <div class="api-card-detail__section">
         <span class="api-card-detail__label api-card-detail__section-label">
           <UIcon name="i-mdi-code-braces" class="size-3.5" />
-          请求方法
+          {{ $t('public.api.requestMethod') }}
         </span>
         <div class="api-card-detail__badges">
           <UBadge
@@ -160,7 +161,7 @@ function costFor(method: string): number {
       <div class="api-card-detail__section">
         <span class="api-card-detail__label api-card-detail__section-label">
           <UIcon name="i-mdi-wallet-outline" class="size-3.5" />
-          调用计费
+          {{ $t('public.api.pricing.label') }}
         </span>
         <div class="api-card-detail__badges">
           <UBadge
@@ -172,7 +173,7 @@ function costFor(method: string): number {
             :icon="costFor(method) > 0 ? 'i-mdi-coins' : 'i-mdi-check-circle-outline'"
             class="rounded-full"
           >
-            {{ method }} · {{ costFor(method) > 0 ? `${costFor(method)}` : '免费' }}
+            {{ method }} · {{ costFor(method) > 0 ? costFor(method) : $t('public.api.pricing.free') }}
           </UBadge>
         </div>
       </div>
@@ -195,7 +196,7 @@ function costFor(method: string): number {
         trailing-icon="i-mdi-arrow-top-right"
         block
       >
-        打开接口文档
+        {{ $t('public.api.openDocumentation') }}
       </UButton>
     </div>
   </div>

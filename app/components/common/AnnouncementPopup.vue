@@ -1,9 +1,6 @@
 <script setup lang="ts">
-import {
-  ANNOUNCEMENT_LEVEL_META as levelMeta,
-  type Announcement,
-  type MessageLevelMeta
-} from '#shared/types/content'
+import type { Announcement, MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVEL_META as levelMeta, type MessageLevelMeta } from '~/constants/message-level'
 import {
   getLatestAnnouncementRevision,
   hasNewerAnnouncement
@@ -37,6 +34,7 @@ interface AnnouncementItem {
 const open = ref(false)
 const expandedIds = ref<string[]>([])
 const dismissedRevision = useLocalStorage('openapi:announcement-popup:dismissed-revision', '')
+const { t, locale } = useI18n()
 
 // useFetch 全局唯一 key，多个组件实例共用一份缓存。
 // lazy + server: false：不阻塞 SSR、不影响首屏 LCP，hydrate 后再拉。
@@ -59,12 +57,16 @@ const accordionItems = computed<AnnouncementItem[]>(() => items.value.map(a => (
   label: a.title,
   color: levelMeta[a.level].color,
   levelIcon: levelMeta[a.level].icon,
-  levelLabel: levelMeta[a.level].label,
+  levelLabel: getAnnouncementLevelLabel(a.level),
   isPinned: a.isPinned,
   text: a.content,
   linkUrl: a.linkUrl,
-  date: formatDateTime(a.createdAt)
+  date: formatDateTime(a.createdAt, '-', locale.value)
 })))
+
+function getAnnouncementLevelLabel(level: MessageLevel): string {
+  return t(`public.announcements.levels.${level}`)
+}
 
 // 数据为 lazy 拉取：挂载时若缓存已有公告立即弹，否则等数据到来再弹。
 function openIfHasAnnouncements() {
@@ -111,10 +113,10 @@ function dismissCurrentAnnouncements() {
         </span>
         <div class="min-w-0">
           <h3 class="text-lg leading-tight font-semibold text-highlighted">
-            站点公告
+            {{ $t('public.announcements.title') }}
           </h3>
           <p class="mt-0.5 text-xs text-muted">
-            共 {{ items.length }} 条 · 最新动态与重要通知
+            {{ $t('public.announcements.summary', { count: items.length }) }}
           </p>
         </div>
       </div>
@@ -125,7 +127,7 @@ function dismissCurrentAnnouncements() {
         v-if="items.length === 0"
         class="py-10 text-center text-sm text-muted"
       >
-        暂无公告
+        {{ $t('public.announcements.empty') }}
       </div>
 
       <UAccordion
@@ -163,8 +165,8 @@ function dismissCurrentAnnouncements() {
                   target="_blank"
                   rel="noopener noreferrer"
                   class="announce-link"
-                  title="查看详情"
-                  aria-label="查看详情"
+                  :title="$t('public.announcements.viewDetails')"
+                  :aria-label="$t('public.announcements.viewDetails')"
                   @click.stop
                   @keydown.enter.stop
                 >
@@ -177,7 +179,7 @@ function dismissCurrentAnnouncements() {
                   v-if="item.isPinned"
                   name="i-mdi-pin"
                   class="size-3.5 shrink-0 text-warning"
-                  title="置顶"
+                  :title="$t('public.announcements.pinned')"
                 />
               </div>
               <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
@@ -207,7 +209,7 @@ function dismissCurrentAnnouncements() {
     <template #footer>
       <div class="flex w-full items-center gap-3">
         <p class="hidden text-xs text-muted sm:block">
-          新公告发布后会再次提醒
+          {{ $t('public.announcements.reminderHint') }}
         </p>
         <div class="ml-auto flex items-center gap-2">
           <UButton
@@ -215,14 +217,14 @@ function dismissCurrentAnnouncements() {
             variant="ghost"
             @click="dismissCurrentAnnouncements"
           >
-            不再提醒
+            {{ $t('public.announcements.dismiss') }}
           </UButton>
           <UButton
             color="neutral"
             icon="i-mdi-check"
             @click="() => { open = false }"
           >
-            我知道了
+            {{ $t('public.announcements.acknowledge') }}
           </UButton>
         </div>
       </div>

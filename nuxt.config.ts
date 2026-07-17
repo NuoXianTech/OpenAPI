@@ -1,6 +1,7 @@
 import { cp } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME } from './shared/config/locale-defaults'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const require = createRequire(import.meta.url)
@@ -17,12 +18,14 @@ const privatePageRouteRule = {
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
+    '@nuxtjs/i18n',
     '@nuxt/ui',
     '@vueuse/nuxt',
   ],
   devtools: {
     enabled: !isProduction,
   },
+
   css: ['~/assets/css/main.css'],
   ui: {
     fonts: false,
@@ -94,6 +97,27 @@ export default defineNuxtConfig({
       },
     },
   },
+  i18n: {
+    defaultLocale: DEFAULT_LOCALE,
+    strategy: 'no_prefix',
+    langDir: 'locales',
+    bundle: {
+      fullInstall: false,
+      runtimeOnly: true
+    },
+    locales: [{
+      code: DEFAULT_LOCALE,
+      language: DEFAULT_LOCALE,
+      name: '简体中文',
+      files: ['zh-CN/common.json', 'zh-CN/auth.json', 'zh-CN/public.json', 'zh-CN/user.json', 'zh-CN/admin.json']
+    }],
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: LOCALE_COOKIE_NAME,
+      redirectOn: 'root'
+    }
+  },
+
   icon: {
     serverBundle: { collections: ['mdi'] },
   },

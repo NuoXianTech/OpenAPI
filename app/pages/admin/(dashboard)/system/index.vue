@@ -3,6 +3,7 @@ import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-pa
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
 const { form, createSection } = useAdminSettingsPage()
+const { t } = useI18n()
 
 const basicInformationKeys = [
   'siteName',
@@ -30,15 +31,15 @@ const checkinKeys = [
 const basicInformationSection = createSection(basicInformationKeys)
 const checkinSection = createSection(checkinKeys)
 
-const cooldownItems = [
-  { label: '按小时冷却', value: 'hours' },
-  { label: '每日固定时间刷新', value: 'fixed_time' }
-]
+const cooldownItems = computed(() => [
+  { label: t('admin.system.site.checkin.cooldown.options.hours'), value: 'hours' },
+  { label: t('admin.system.site.checkin.cooldown.options.fixedTime'), value: 'fixed_time' }
+])
 
-const modeItems = [
-  { label: '固定积分', value: 'fixed' },
-  { label: '区间随机', value: 'range' }
-]
+const modeItems = computed(() => [
+  { label: t('admin.system.site.checkin.reward.options.fixed'), value: 'fixed' },
+  { label: t('admin.system.site.checkin.reward.options.range'), value: 'range' }
+])
 
 // 区间随机时最小值不能大于最大值
 const minMaxInvalid = computed(() => {
@@ -56,12 +57,12 @@ const fixedTimeInvalid = computed(() => {
 <template>
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
-      title="基本信息"
+      :title="t('admin.system.site.basic.title')"
     >
       <UFormField
         name="siteName"
-        label="站点名称"
-        description="展示在浏览器标题、登录注册页与邮件中的站点名。"
+        :label="t('admin.system.site.basic.siteName.label')"
+        :description="t('admin.system.site.basic.siteName.description')"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
@@ -73,8 +74,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="siteDescription"
-        label="站点描述"
-        description="站点描述信息，站点描述将显示在网页代码的头部与首页卡片中。"
+        :label="t('admin.system.site.basic.siteDescription.label')"
+        :description="t('admin.system.site.basic.siteDescription.description')"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
         :ui="{ container: 'w-full sm:max-w-lg' }"
@@ -89,8 +90,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="siteUrl"
-        label="站点 URL"
-        description="站点对外访问地址，用于拼接邮件链接与 OAuth 回调，须以 http:// 或 https:// 开头。"
+        :label="t('admin.system.site.basic.siteUrl.label')"
+        :description="t('admin.system.site.basic.siteUrl.description')"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
@@ -103,8 +104,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="siteImg"
-        label="站点图标"
-        description="浏览器标签页与站点 Logo 使用的图标地址。"
+        :label="t('admin.system.site.basic.siteImage.label')"
+        :description="t('admin.system.site.basic.siteImage.description')"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
@@ -117,22 +118,22 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="startTime"
-        label="运行时间"
-        description="站点上线时间，用于前台展示已稳定运行的天数。"
+        :label="t('admin.system.site.basic.startTime.label')"
+        :description="t('admin.system.site.basic.startTime.description')"
         required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <CommonDateTimePicker
           v-model="form.startTime"
           :block="false"
-          placeholder="选择上线时间"
+          :placeholder="t('admin.system.site.basic.startTime.placeholder')"
         />
       </UFormField>
       <USeparator />
       <UFormField
         name="termsUrl"
-        label="使用条款链接"
-        description="留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+        :label="t('admin.system.site.basic.termsUrl.label')"
+        :description="t('admin.system.site.basic.termsUrl.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -144,8 +145,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="privacyUrl"
-        label="隐私政策链接"
-        description="留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+        :label="t('admin.system.site.basic.privacyUrl.label')"
+        :description="t('admin.system.site.basic.privacyUrl.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -157,26 +158,26 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="icpBeian"
-        label="ICP 备案号"
-        description="留空则页脚不展示。填写后展示在页脚，点击跳转工信部备案系统。"
+        :label="t('admin.system.site.basic.icpBeian.label')"
+        :description="t('admin.system.site.basic.icpBeian.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="form.icpBeian"
-          placeholder="京ICP备00000000号"
+          :placeholder="t('admin.system.site.basic.icpBeian.placeholder')"
           autocomplete="off"
         />
       </UFormField>
       <USeparator />
       <UFormField
         name="policeBeian"
-        label="公安备案号"
-        description="留空则页脚不展示。填写后展示在页脚，点击跳转公安备案系统。"
+        :label="t('admin.system.site.basic.policeBeian.label')"
+        :description="t('admin.system.site.basic.policeBeian.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
           v-model="form.policeBeian"
-          placeholder="京公网安备00000000000000号"
+          :placeholder="t('admin.system.site.basic.policeBeian.placeholder')"
           autocomplete="off"
         />
       </UFormField>
@@ -190,12 +191,12 @@ const fixedTimeInvalid = computed(() => {
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
-      title="每日签到"
+      :title="t('admin.system.site.checkin.title')"
     >
       <UFormField
         name="checkinEnabled"
-        label="启用每日签到"
-        description="关闭后用户积分页的签到按钮会显示「已关闭」，签到接口也会拒绝请求。"
+        :label="t('admin.system.site.checkin.enabled.label')"
+        :description="t('admin.system.site.checkin.enabled.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <USwitch v-model="form.checkinEnabled" />
@@ -203,8 +204,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="checkinCooldownMode"
-        label="冷却方式"
-        description="按小时 = 距上次签到 N 小时后可签；每日固定时间 = 到达设定时刻后刷新可签状态。"
+        :label="t('admin.system.site.checkin.cooldown.label')"
+        :description="t('admin.system.site.checkin.cooldown.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <USelect
@@ -218,8 +219,8 @@ const fixedTimeInvalid = computed(() => {
       <UFormField
         v-if="form.checkinCooldownMode === 'hours'"
         name="checkinRefreshHours"
-        label="冷却间隔（小时）"
-        description="两次签到的最小间隔，默认 24 小时。"
+        :label="t('admin.system.site.checkin.refreshHours.label')"
+        :description="t('admin.system.site.checkin.refreshHours.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -232,9 +233,9 @@ const fixedTimeInvalid = computed(() => {
       <UFormField
         v-else
         name="checkinFixedRefreshTime"
-        label="刷新时间（HH:mm）"
-        description="每天到达该时刻后可再次签到，例如 00:00 表示每日 0 点刷新。"
-        :error="fixedTimeInvalid ? '请按 HH:mm 格式填写，例如 00:00' : undefined"
+        :label="t('admin.system.site.checkin.fixedRefreshTime.label')"
+        :description="t('admin.system.site.checkin.fixedRefreshTime.description')"
+        :error="fixedTimeInvalid ? t('admin.system.site.checkin.validation.fixedTime') : undefined"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -246,8 +247,8 @@ const fixedTimeInvalid = computed(() => {
       <USeparator />
       <UFormField
         name="checkinMode"
-        label="奖励模式"
-        description="固定 = 每次签到固定积分；区间随机 = 在 [最少, 最多] 之间随机取整。"
+        :label="t('admin.system.site.checkin.reward.label')"
+        :description="t('admin.system.site.checkin.reward.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <USelect
@@ -261,8 +262,8 @@ const fixedTimeInvalid = computed(() => {
       <UFormField
         v-if="form.checkinMode === 'fixed'"
         name="checkinAmountFixed"
-        label="固定奖励积分"
-        description="每次签到固定发放的积分数量。"
+        :label="t('admin.system.site.checkin.fixedAmount.label')"
+        :description="t('admin.system.site.checkin.fixedAmount.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -275,9 +276,9 @@ const fixedTimeInvalid = computed(() => {
       <template v-else>
         <UFormField
           name="checkinAmountMin"
-          label="最少积分"
-          description="区间随机的下限。"
-          :error="minMaxInvalid ? '最少积分必须 ≤ 最多积分' : undefined"
+          :label="t('admin.system.site.checkin.minAmount.label')"
+          :description="t('admin.system.site.checkin.minAmount.description')"
+          :error="minMaxInvalid ? t('admin.system.site.checkin.validation.amountRange') : undefined"
           class="flex max-sm:flex-col justify-between items-start gap-4"
         >
           <UInput
@@ -290,8 +291,8 @@ const fixedTimeInvalid = computed(() => {
         <USeparator />
         <UFormField
           name="checkinAmountMax"
-          label="最多积分"
-          description="区间随机的上限。"
+          :label="t('admin.system.site.checkin.maxAmount.label')"
+          :description="t('admin.system.site.checkin.maxAmount.description')"
           class="flex max-sm:flex-col justify-between items-start gap-4"
         >
           <UInput

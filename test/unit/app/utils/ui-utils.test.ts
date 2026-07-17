@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { getLatestAnnouncementRevision, hasNewerAnnouncement } from '@/utils/announcement-dismissal'
 import { createChartIndexedTickFormatter, formatChartIntegerTick, truncateChartAxisLabel } from '@/utils/chart-axis'
 import { confirmationError, emailError, integerRangeError, passwordError, usernameError } from '@/utils/form-validation'
-import { formatAdminIdentity, formatUserIdentity } from '@/utils/log-identity'
 import { formatCompactCount, formatCount, formatPercent } from '@/utils/number-format'
 
 describe('announcement dismissal', () => {
@@ -48,28 +47,33 @@ describe('chart axis utilities', () => {
 
 describe('form validation utilities', () => {
   it('validates authentication fields with user-facing errors', () => {
-    expect(usernameError('username', '')?.message).toBe('用户名不能为空')
-    expect(usernameError('username', 'valid_user')).toBeNull()
-    expect(emailError('email', 'invalid')?.message).toBe('请输入有效的邮箱地址')
-    expect(emailError('email', 'user@example.com')).toBeNull()
-    expect(passwordError('password', 'short')?.message).toBe('密码至少 8 位')
-    expect(confirmationError('confirm', 'different', 'password')?.message)
-      .toBe('两次输入的密码不一致')
+    const messages = {
+      email: { required: 'email required', invalid: 'email invalid' },
+      username: {
+        required: 'username required',
+        tooShort: 'username too short',
+        tooLong: 'username too long',
+        invalidCharacters: 'username invalid'
+      },
+      password: { required: 'password required', tooShort: 'password too short' },
+      confirmation: { required: 'confirmation required', mismatch: 'password mismatch' }
+    }
+
+    expect(usernameError('username', '', messages.username)?.message).toBe('username required')
+    expect(usernameError('username', 'valid_user', messages.username)).toBeNull()
+    expect(emailError('email', 'invalid', messages.email)?.message).toBe('email invalid')
+    expect(emailError('email', 'user@example.com', messages.email)).toBeNull()
+    expect(passwordError('password', 'short', messages.password)?.message).toBe('password too short')
+    expect(confirmationError('confirm', 'different', 'password', messages.confirmation)?.message)
+      .toBe('password mismatch')
   })
 
   it('validates integer ranges without coercing invalid values', () => {
-    expect(integerRangeError('timeoutMs', 100, '超时时间', 100, 120_000)).toBeNull()
-    expect(integerRangeError('timeoutMs', 0, '超时时间', 100, 120_000)?.message)
+    expect(integerRangeError('timeoutMs', 100, '超时时间必须是 100 到 120000 之间的整数', 100, 120_000)).toBeNull()
+    expect(integerRangeError('timeoutMs', 0, '超时时间必须是 100 到 120000 之间的整数', 100, 120_000)?.message)
       .toBe('超时时间必须是 100 到 120000 之间的整数')
-    expect(integerRangeError('limit', 1.5, '限流', 0)?.message)
+    expect(integerRangeError('limit', 1.5, '限流必须是不小于 0 的整数', 0)?.message)
       .toBe('限流必须是不小于 0 的整数')
-  })
-})
-
-describe('log identity labels', () => {
-  it('keeps business users distinct from administrator audit actors', () => {
-    expect(formatUserIdentity(1)).toBe('用户 #1')
-    expect(formatAdminIdentity(1)).toBe('管理员 #1')
   })
 })
 

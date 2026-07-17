@@ -9,6 +9,7 @@ import type { ApiKeyFormModel, ApiKeyItem, ApiKeyPayload } from '#shared/types/a
  * 过期时间的「预设 ⇄ datetime-local ⇄ ISO」互转、CIDR 行校验均下沉到 utils/api-key。
  */
 export function useApiKeyForm() {
+  const { t } = useI18n()
   const form = reactive<ApiKeyFormModel>({
     name: '',
     expiryPreset: 'never',
@@ -57,17 +58,17 @@ export function useApiKeyForm() {
   const ipLineErrors = computed(() => findCidrLineErrors(form.ipWhitelistText))
 
   const error = computed<string | null>(() => {
-    if (form.expiryPreset === 'custom' && !form.expiresAtCustom) return '请填写过期时间'
+    if (form.expiryPreset === 'custom' && !form.expiresAtCustom) return t('common.apiKeys.validation.expiryRequired')
     if (!form.unlimitedQuota) {
       if (form.totalQuota === null || form.totalQuota === undefined || Number(form.totalQuota) < 0) {
-        return '请填写有效的积分上限'
+        return t('common.apiKeys.validation.invalidQuota')
       }
     }
     if (form.scopesMode === 'pick' && form.scopesSelected.length === 0) {
-      return '请至少选择一个接口，或切回"全部接口"'
+      return t('common.apiKeys.validation.scopeRequired')
     }
     if (ipLineErrors.value.length > 0) {
-      return `IP 白名单第 ${ipLineErrors.value.map(e => e.index).join(', ')} 行格式错误`
+      return t('common.apiKeys.validation.invalidIpLines', { lines: ipLineErrors.value.map(e => e.index).join(', ') })
     }
     return null
   })
@@ -76,7 +77,7 @@ export function useApiKeyForm() {
   function buildPayload(): ApiKeyPayload {
     const ipList = parseCidrLines(form.ipWhitelistText)
     return {
-      name: form.name.trim() || '默认密钥',
+      name: form.name.trim() || t('common.apiKeys.defaultName'),
       expiresAt: expiryToIso(form.expiryPreset, form.expiresAtCustom),
       totalQuota: form.unlimitedQuota ? null : Number(form.totalQuota),
       scopes: form.scopesMode === 'all' ? null : form.scopesSelected,

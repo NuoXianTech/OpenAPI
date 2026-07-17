@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { userSettingsSection } from '~/constants/dashboard-sections'
+import { createUserSettingsSection } from '~/constants/dashboard-sections'
+
+const { t } = useI18n()
+const userSettingsSection = computed(() => createUserSettingsSection({ t }))
 </script>
 
 <template>

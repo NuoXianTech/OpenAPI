@@ -1,24 +1,24 @@
 import { CalendarDateTime } from '@internationalized/date'
+import { DEFAULT_LOCALE } from '#shared/config/locale-defaults'
 
 /**
- * 统一的本地时间格式化(zh-CN，24 小时制)。
+ * 统一的本地时间格式化（默认站点语言，24 小时制）。
  *
  * 全站日期展示的唯一入口：解析失败或空值返回 fallback(默认 '-')，
- * 取代各页面/组件里重复的 `new Date(x).toLocaleString('zh-CN', { hour12: false })`
+ * 取代各页面/组件里重复的 `new Date(x).toLocaleString(locale, { hour12: false })`
  * + try/catch 或 NaN 判断样板。
  */
 export function formatDateTime(
   value: string | number | Date | null | undefined,
-  fallback = '-'
+  fallback = '-',
+  locale = DEFAULT_LOCALE
 ): string {
   if (value === null || value === undefined || value === '') return fallback
   const date = value instanceof Date ? value : new Date(value)
   return Number.isNaN(date.getTime())
     ? fallback
-    : date.toLocaleString('zh-CN', { hour12: false })
+    : date.toLocaleString(locale, { hour12: false })
 }
-
-const WEEKDAY_LABELS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'] as const
 
 /** 解析趋势数据点的日期：优先按本地零点解析 YYYY-MM-DD（避免 UTC 偏移串天），否则交给 Date */
 function parseTrendDate(value: string): Date | null {
@@ -40,12 +40,13 @@ export function formatTrendShortDate(value: string): string {
 }
 
 /** tooltip 用完整日期 "YYYY-MM-DD 周X"（解析失败回退原值） */
-export function formatTrendFullDate(value: string): string {
+export function formatTrendFullDate(value: string, locale = DEFAULT_LOCALE): string {
   const date = parseTrendDate(value)
   if (!date) return value
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
-  return `${date.getFullYear()}-${month}-${day} ${WEEKDAY_LABELS[date.getDay()]}`
+  const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(date)
+  return `${date.getFullYear()}-${month}-${day} ${weekday}`
 }
 
 const pad2 = (value: number) => `${value}`.padStart(2, '0')

@@ -9,6 +9,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
+const { t } = useI18n()
 
 const form = reactive({
   username: '',
@@ -18,10 +19,10 @@ const form = reactive({
   role: 'user' as 'user' | 'admin',
   isActive: true
 })
-const roleOptions = [
-  { label: '用户', value: 'user' },
-  { label: '管理员', value: 'admin' }
-]
+const roleOptions = computed(() => [
+  { label: t('common.identities.user'), value: 'user' },
+  { label: t('common.identities.admin'), value: 'admin' }
+])
 const loading = ref(false)
 
 function resetForm() {
@@ -48,8 +49,8 @@ async function submit() {
 <template>
   <UModal
     :open="open"
-    title="添加用户"
-    description="直接创建用户账户，跳过邮箱验证流程"
+    :title="$t('admin.users.create.title')"
+    :description="$t('admin.users.create.description')"
     :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
@@ -59,18 +60,18 @@ async function submit() {
         @submit.prevent="submit"
       >
         <UFormField
-          label="用户名"
+          :label="$t('admin.users.fields.username')"
           required
-          help="3-32 位，仅限字母、数字、下划线和短横线"
+          :help="$t('admin.users.create.usernameHelp')"
         >
           <UInput
             v-model="form.username"
-            placeholder="例如：alice_2026"
+            :placeholder="$t('admin.users.create.usernamePlaceholder')"
             autocomplete="off"
           />
         </UFormField>
         <UFormField
-          label="邮箱"
+          :label="$t('admin.users.fields.email')"
           required
         >
           <UInput
@@ -81,27 +82,27 @@ async function submit() {
           />
         </UFormField>
         <UFormField
-          label="初始密码"
+          :label="$t('admin.users.create.initialPassword')"
           required
-          help="至少 8 位"
+          :help="$t('admin.users.create.passwordHelp')"
         >
           <UInput
             v-model="form.password"
             type="password"
-            placeholder="至少 8 位"
+            :placeholder="$t('admin.users.create.passwordHelp')"
             autocomplete="new-password"
           />
         </UFormField>
         <UFormField
-          label="昵称（可选）"
-          help="留空时默认与用户名一致"
+          :label="$t('admin.users.create.displayName')"
+          :help="$t('admin.users.create.displayNameHelp')"
         >
           <UInput
             v-model="form.displayName"
             :maxlength="32"
           />
         </UFormField>
-        <UFormField label="账号类型">
+        <UFormField :label="$t('admin.users.fields.role')">
           <USelect
             v-model="form.role"
             :items="roleOptions"
@@ -110,7 +111,7 @@ async function submit() {
         </UFormField>
         <USwitch
           v-model="form.isActive"
-          label="创建后立即激活"
+          :label="$t('admin.users.create.activateImmediately')"
         />
       </form>
     </template>
@@ -122,13 +123,13 @@ async function submit() {
           color="neutral"
           @click="emit('update:open', false)"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="submit"
         >
-          创建
+          {{ $t('common.actions.create') }}
         </UButton>
       </div>
     </template>

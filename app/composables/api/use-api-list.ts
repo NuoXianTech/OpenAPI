@@ -1,7 +1,8 @@
-import { PUBLIC_API_STATUS_FILTER_ITEMS } from '#shared/config/api-status'
+import { API_STATUS } from '#shared/config/api-status'
 import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
 
 export function useApiList() {
+  const { t } = useI18n()
   const { data: listData, pending: listPending, error: listError, refresh: refreshList } = useFetch<ApiCatalogItem[]>(
     '/api/list',
     {
@@ -16,10 +17,14 @@ export function useApiList() {
   const currentCategory = ref<string | number>('all')
   const catalogItems = computed(() => listData.value || [])
 
-  const statusTabs = [
-    { label: '全部', value: 'all' },
-    ...PUBLIC_API_STATUS_FILTER_ITEMS
-  ]
+  const statusTabs = computed(() => [
+    { label: t('common.filters.all'), value: 'all' },
+    { label: t('common.states.active'), value: API_STATUS.normal },
+    { label: t('common.states.inactive'), value: API_STATUS.abnormal },
+    { label: t('common.states.maintenance'), value: API_STATUS.maintenance },
+    { label: t('common.states.deprecated'), value: API_STATUS.deprecated },
+    { label: t('common.states.unknown'), value: API_STATUS.unknown }
+  ])
 
   const { data: categoriesData, pending: categoriesPending, error: categoriesError, refresh: refreshCategories } = useFetch<ApiCategoryItem[]>(
     '/api/api-categories/list',
@@ -55,7 +60,7 @@ export function useApiList() {
     })
 
     return [
-      { label: '全部', value: 'all' },
+      { label: t('common.filters.all'), value: 'all' },
       ...categories.value
         .filter(cat => referenced.has(cat.id))
         .map(cat => ({ label: cat.name, value: cat.id }))

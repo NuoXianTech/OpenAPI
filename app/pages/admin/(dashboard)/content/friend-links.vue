@@ -3,6 +3,7 @@ import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '#shared/types/content'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { parseFetchError } from '~/utils/client-error'
 
 interface FriendLinkFilterOption<TValue extends string = string> {
   label: string
@@ -13,6 +14,7 @@ type FriendLinkStatusFilter = 'all' | 'active' | 'inactive'
 
 const toast = useToast()
 const confirm = useConfirmDialog()
+const { t } = useI18n()
 
 const { data, loading, refresh } = usePrivateResource<FriendLinkItem[]>({
   path: '/api/admin/friend-links/list',
@@ -21,11 +23,11 @@ const { data, loading, refresh } = usePrivateResource<FriendLinkItem[]>({
 
 const keyword = ref('')
 const statusFilter = ref<FriendLinkStatusFilter>('all')
-const statusFilterOptions: Array<FriendLinkFilterOption<FriendLinkStatusFilter>> = [
-  { label: '全部状态', value: 'all' },
-  { label: '正常', value: 'active' },
-  { label: '停用', value: 'inactive' }
-]
+const statusFilterOptions = computed<Array<FriendLinkFilterOption<FriendLinkStatusFilter>>>(() => [
+  { label: t('admin.content.friendLinks.filters.allStatuses'), value: 'all' },
+  { label: t('admin.content.friendLinks.statuses.active'), value: 'active' },
+  { label: t('admin.content.friendLinks.statuses.inactive'), value: 'inactive' }
+])
 const activeFilterCount = computed(() => [
   statusFilter.value !== 'all'
 ].filter(Boolean).length)
@@ -67,14 +69,15 @@ function openEdit(item: FriendLinkItem) {
 }
 async function openDelete(item: FriendLinkItem) {
   await confirm({
-    title: `删除: ${item.title}`,
+    title: t('admin.content.friendLinks.delete.title', { title: item.title }),
+    description: t('admin.content.friendLinks.delete.description'),
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/friend-links/delete', { method: 'POST', body: { id: item.id } })
-        toast.add({ title: '删除成功', color: 'success' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await refresh()
-      } catch (err) {
-        toast.add({ title: '删除失败', color: 'error' })
+      } catch (err: unknown) {
+        toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
         throw err
       }
     }
@@ -83,18 +86,18 @@ async function openDelete(item: FriendLinkItem) {
 
 function getRowItems(row: FriendLinkItem): DropdownMenuItem[] {
   return [
-    { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
+    { label: t('common.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: t('common.actions.delete'), icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
-const columns: TableColumn<FriendLinkItem>[] = [
-  { accessorKey: 'title', header: '标题' },
+const columns = computed<TableColumn<FriendLinkItem>[]>(() => [
+  { accessorKey: 'title', header: t('admin.content.friendLinks.columns.title') },
   { accessorKey: 'url', header: 'URL' },
-  { accessorKey: 'description', header: '描述' },
-  { accessorKey: 'isActive', header: '状态' },
+  { accessorKey: 'description', header: t('admin.content.friendLinks.columns.description') },
+  { accessorKey: 'isActive', header: t('admin.content.friendLinks.columns.status') },
   { id: 'actions', header: '' }
-]
+])
 </script>
 
 <template>
@@ -104,14 +107,14 @@ const columns: TableColumn<FriendLinkItem>[] = [
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
-          placeholder="搜索名称、URL 或描述"
+          :placeholder="$t('admin.content.friendLinks.searchPlaceholder')"
           class="w-full sm:w-72"
         />
         <AdminFilterPopover
           :active-count="activeFilterCount"
           @reset="resetFilters"
         >
-          <UFormField label="状态">
+          <UFormField :label="$t('admin.content.friendLinks.filters.status')">
             <USelect
               v-model="statusFilter"
               :items="statusFilterOptions"
@@ -125,7 +128,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
           icon="i-mdi-plus"
           @click="openAdd"
         >
-          新增链接
+          {{ $t('admin.content.friendLinks.actions.create') }}
         </UButton>
         <UButton
           color="neutral"
@@ -134,13 +137,13 @@ const columns: TableColumn<FriendLinkItem>[] = [
           :loading="loading"
           @click="refresh()"
         >
-          刷新
+          {{ $t('common.actions.refresh') }}
         </UButton>
       </div>
     </div>
 
     <DashboardTableCard
-      title="友链列表"
+      :title="$t('admin.content.friendLinks.listTitle')"
       icon="i-mdi-link-variant"
       :total="total"
     >
@@ -152,7 +155,7 @@ const columns: TableColumn<FriendLinkItem>[] = [
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无友链"
+        :empty-title="$t('admin.content.friendLinks.empty')"
         empty-icon="i-mdi-link-variant"
       >
         <template #isActive-cell="{ row }">
@@ -160,7 +163,9 @@ const columns: TableColumn<FriendLinkItem>[] = [
             :color="row.original.isActive ? 'success' : 'neutral'"
             variant="subtle"
           >
-            {{ row.original.isActive ? '正常' : '停用' }}
+            {{ row.original.isActive
+              ? $t('admin.content.friendLinks.statuses.active')
+              : $t('admin.content.friendLinks.statuses.inactive') }}
           </UBadge>
         </template>
         <template #actions-cell="{ row }">

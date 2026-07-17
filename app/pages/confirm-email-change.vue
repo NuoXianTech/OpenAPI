@@ -2,9 +2,10 @@
 import type { ConfirmEmailChangeInput } from '#shared/types/auth'
 import { parseFetchError } from '~/utils/client-error'
 
-useHead({ title: '确认邮箱变更' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+useHead(() => ({ title: t('auth.confirmEmailChange.title') }))
 
 const route = useRoute()
 const { fetchMe } = useAuth()
@@ -19,12 +20,12 @@ const newEmail = ref('')
 
 const headerSubtitle = computed(() => {
   if (status.value === 'success') {
-    return '邮箱已更新，可继续使用账号'
+    return t('auth.confirmEmailChange.successSubtitle')
   }
   if (status.value === 'error') {
-    return '确认链接可能已失效，请重新发起变更'
+    return t('auth.confirmEmailChange.errorSubtitle')
   }
-  return '点击下方按钮完成邮箱变更'
+  return t('auth.confirmEmailChange.idleSubtitle')
 })
 
 async function onConfirm() {
@@ -45,7 +46,7 @@ async function onConfirm() {
     void fetchMe(true)
   } catch (error: unknown) {
     status.value = 'error'
-    errorMessage.value = parseFetchError(error, '确认失败，链接可能已失效')
+    errorMessage.value = parseFetchError(error, t('auth.confirmEmailChange.failed'))
   }
 }
 </script>
@@ -54,7 +55,7 @@ async function onConfirm() {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-email-sync-outline"
-      title="确认邮箱变更"
+      :title="t('auth.confirmEmailChange.title')"
       :subtitle="headerSubtitle"
     />
 
@@ -72,7 +73,7 @@ async function onConfirm() {
             name="i-mdi-link-variant-off"
             class="auth-message__icon size-4"
           />
-          <span>确认链接无效或已损坏，请重新发起变更。</span>
+          <span>{{ $t('auth.confirmEmailChange.invalidLink') }}</span>
         </div>
         <UButton
           to="/user/settings"
@@ -80,7 +81,7 @@ async function onConfirm() {
           size="lg"
           icon="i-mdi-account-cog-outline"
         >
-          返回账号设置
+          {{ $t('auth.confirmEmailChange.backSettings') }}
         </UButton>
       </div>
 
@@ -96,10 +97,10 @@ async function onConfirm() {
         </div>
         <div>
           <h3 class="text-base font-semibold text-highlighted">
-            邮箱已更新
+            {{ $t('auth.confirmEmailChange.successTitle') }}
           </h3>
           <p class="text-sm text-muted mt-1.5">
-            当前邮箱：{{ newEmail }}
+            {{ $t('auth.confirmEmailChange.currentEmail', { email: newEmail }) }}
           </p>
         </div>
         <UButton
@@ -107,7 +108,7 @@ async function onConfirm() {
           block
           size="lg"
         >
-          返回账号设置
+          {{ $t('auth.confirmEmailChange.backSettings') }}
         </UButton>
       </div>
 
@@ -116,7 +117,7 @@ async function onConfirm() {
         class="space-y-4"
       >
         <p class="text-sm text-muted">
-          请点击下方按钮确认本次邮箱变更。确认后旧邮箱将立即失效，新邮箱开始接收账号相关通知。
+          {{ $t('auth.confirmEmailChange.description') }}
         </p>
         <Transition name="state-fade">
           <div
@@ -138,15 +139,15 @@ async function onConfirm() {
           icon="i-mdi-email-check-outline"
           @click="onConfirm"
         >
-          确认变更
+          {{ $t('auth.confirmEmailChange.submit') }}
         </UButton>
       </div>
     </UCard>
 
     <AuthFooterLinks
       :links="[
-        { label: '返回登录', to: '/login' },
-        { label: '返回首页', to: '/' }
+        { label: t('common.actions.backLogin'), to: '/login' },
+        { label: t('common.actions.backHome'), to: '/' }
       ]"
     />
   </CommonAppAuthShell>

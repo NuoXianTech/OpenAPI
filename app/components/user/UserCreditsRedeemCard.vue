@@ -8,13 +8,14 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const { t, locale } = useI18n()
 const code = ref('')
 const redeeming = ref(false)
 
 async function submit() {
   const value = code.value.trim().toUpperCase()
   if (!value) {
-    toast.add({ title: '请输入兑换码', color: 'warning' })
+    toast.add({ title: t('user.credits.redeem.enterCode'), color: 'warning' })
     return
   }
   redeeming.value = true
@@ -22,7 +23,7 @@ async function submit() {
     await props.onRedeem(value)
     code.value = ''
   } catch (error) {
-    toast.add({ title: parseFetchError(error, '兑换失败'), color: 'error' })
+    toast.add({ title: parseFetchError(error, t('user.credits.redeem.failed')), color: 'error' })
   } finally {
     redeeming.value = false
   }
@@ -38,21 +39,21 @@ async function submit() {
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
-          兑换码
+          {{ $t('user.credits.redeem.code') }}
         </h3>
       </div>
     </template>
     <div>
       <UFormField
-        label="兑换码"
+        :label="$t('user.credits.redeem.code')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
-        hint="输入后点「兑换」即可加入积分，不区分大小写"
+        :hint="$t('user.credits.redeem.hint')"
         :ui="{ label: 'sr-only', container: 'w-full sm:max-w-md' }"
       >
         <div class="flex w-full max-sm:flex-col gap-2">
           <UInput
             v-model="code"
-            placeholder="例如 WELCOME-XXXXXXXXXXXXXXXX"
+            :placeholder="$t('user.credits.redeem.placeholder')"
             class="min-w-0 flex-1 font-mono uppercase"
             :ui="{ base: 'uppercase' }"
             @keydown.enter="submit"
@@ -63,7 +64,7 @@ async function submit() {
             class="max-sm:w-full sm:shrink-0"
             @click="submit"
           >
-            兑换
+            {{ $t('user.credits.redeem.action') }}
           </UButton>
         </div>
       </UFormField>
@@ -73,7 +74,7 @@ async function submit() {
       class="mt-4 pt-3 border-t border-default"
     >
       <div class="text-xs text-muted mb-2">
-        最近兑换
+        {{ $t('user.credits.redeem.recent') }}
       </div>
       <div class="flex flex-wrap gap-2">
         <div
@@ -83,9 +84,9 @@ async function submit() {
         >
           <span class="font-mono text-muted">{{ record.code || `#${record.codeId}` }}</span>
           <span class="font-semibold text-success tabular-nums">
-            +{{ record.amount.toLocaleString() }}
+            +{{ record.amount.toLocaleString(locale) }}
           </span>
-          <span class="text-muted">{{ formatDateTime(record.redeemedAt) }}</span>
+          <span class="text-muted">{{ formatDateTime(record.redeemedAt, '-', locale) }}</span>
         </div>
       </div>
     </div>

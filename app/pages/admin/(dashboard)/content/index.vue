@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ANNOUNCEMENT_LEVEL_META as levelMeta, MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/types/content'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 import { parseFetchError } from '~/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
@@ -16,6 +17,7 @@ type AnnouncementPinnedFilter = 'all' | 'pinned' | 'normal'
 
 const toast = useToast()
 const confirm = useConfirmDialog()
+const { t, locale } = useI18n()
 
 const { data, loading, refresh } = usePrivateResource<Announcement[]>({
   path: '/api/admin/announcements/list',
@@ -28,22 +30,22 @@ const statusFilter = ref<AnnouncementStatusFilter>('all')
 const pinnedFilter = ref<AnnouncementPinnedFilter>('all')
 
 const levelFilterOptions = computed<Array<AnnouncementFilterOption<AnnouncementLevelFilter>>>(() => [
-  { label: '全部级别', value: 'all' },
+  { label: t('admin.content.announcements.filters.allLevels'), value: 'all' },
   ...MESSAGE_LEVELS.map(level => ({
-    label: levelMeta[level].label,
+    label: t(`admin.content.announcements.levels.${level}`),
     value: level
   }))
 ])
-const statusFilterOptions: Array<AnnouncementFilterOption<AnnouncementStatusFilter>> = [
-  { label: '全部状态', value: 'all' },
-  { label: '已启用', value: 'enabled' },
-  { label: '已停用', value: 'disabled' }
-]
-const pinnedFilterOptions: Array<AnnouncementFilterOption<AnnouncementPinnedFilter>> = [
-  { label: '全部置顶', value: 'all' },
-  { label: '已置顶', value: 'pinned' },
-  { label: '未置顶', value: 'normal' }
-]
+const statusFilterOptions = computed<Array<AnnouncementFilterOption<AnnouncementStatusFilter>>>(() => [
+  { label: t('admin.content.announcements.filters.allStatuses'), value: 'all' },
+  { label: t('admin.content.announcements.filters.enabled'), value: 'enabled' },
+  { label: t('admin.content.announcements.filters.disabled'), value: 'disabled' }
+])
+const pinnedFilterOptions = computed<Array<AnnouncementFilterOption<AnnouncementPinnedFilter>>>(() => [
+  { label: t('admin.content.announcements.filters.allPinned'), value: 'all' },
+  { label: t('admin.content.announcements.filters.pinned'), value: 'pinned' },
+  { label: t('admin.content.announcements.filters.notPinned'), value: 'normal' }
+])
 const activeFilterCount = computed(() => [
   levelFilter.value !== 'all',
   statusFilter.value !== 'all',
@@ -93,18 +95,18 @@ function openEdit(item: Announcement) {
 }
 async function openDelete(item: Announcement) {
   await confirm({
-    title: `删除公告: ${item.title}`,
-    description: '删除后该公告不再展示，且不可恢复。',
+    title: t('admin.content.announcements.delete.title', { title: item.title }),
+    description: t('admin.content.announcements.delete.description'),
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/announcements/delete', {
           method: 'POST',
           body: { id: item.id }
         })
-        toast.add({ title: '删除成功', color: 'success' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await refresh()
       } catch (err: unknown) {
-        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
         throw err
       }
     }
@@ -119,25 +121,25 @@ async function quickToggle(row: Announcement, field: 'isEnabled' | 'isPinned', v
     })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   }
 }
 
 function getRowItems(row: Announcement): DropdownMenuItem[] {
   return [
-    { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
+    { label: t('common.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: t('common.actions.delete'), icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
-const columns: TableColumn<Announcement>[] = [
-  { accessorKey: 'title', header: '标题' },
-  { accessorKey: 'sortOrder', header: '排序' },
-  { id: 'isEnabled', header: '启用' },
-  { id: 'isPinned', header: '置顶' },
-  { accessorKey: 'createdAt', header: '创建时间' },
+const columns = computed<TableColumn<Announcement>[]>(() => [
+  { accessorKey: 'title', header: t('admin.content.announcements.columns.title') },
+  { accessorKey: 'sortOrder', header: t('admin.content.announcements.columns.sortOrder') },
+  { id: 'isEnabled', header: t('admin.content.announcements.columns.enabled') },
+  { id: 'isPinned', header: t('admin.content.announcements.columns.pinned') },
+  { accessorKey: 'createdAt', header: t('admin.content.announcements.columns.createdAt') },
   { id: 'actions', header: '' }
-]
+])
 </script>
 
 <template>
@@ -147,28 +149,28 @@ const columns: TableColumn<Announcement>[] = [
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
-          placeholder="搜索标题、内容或链接"
+          :placeholder="$t('admin.content.announcements.searchPlaceholder')"
           class="w-full sm:w-64"
         />
         <AdminFilterPopover
           :active-count="activeFilterCount"
           @reset="resetFilters"
         >
-          <UFormField label="级别">
+          <UFormField :label="$t('admin.content.announcements.filters.level')">
             <USelect
               v-model="levelFilter"
               :items="levelFilterOptions"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="状态">
+          <UFormField :label="$t('admin.content.announcements.filters.status')">
             <USelect
               v-model="statusFilter"
               :items="statusFilterOptions"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="置顶">
+          <UFormField :label="$t('admin.content.announcements.filters.pinnedState')">
             <USelect
               v-model="pinnedFilter"
               :items="pinnedFilterOptions"
@@ -182,7 +184,7 @@ const columns: TableColumn<Announcement>[] = [
           icon="i-mdi-plus"
           @click="openAdd"
         >
-          新建公告
+          {{ $t('admin.content.announcements.actions.create') }}
         </UButton>
         <UButton
           color="neutral"
@@ -191,13 +193,13 @@ const columns: TableColumn<Announcement>[] = [
           :loading="loading"
           @click="refresh()"
         >
-          刷新
+          {{ $t('common.actions.refresh') }}
         </UButton>
       </div>
     </div>
 
     <DashboardTableCard
-      title="公告列表"
+      :title="$t('admin.content.announcements.listTitle')"
       icon="i-mdi-bullhorn-outline"
       :total="total"
     >
@@ -209,7 +211,7 @@ const columns: TableColumn<Announcement>[] = [
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无公告"
+        :empty-title="$t('admin.content.announcements.empty')"
         empty-icon="i-mdi-bullhorn-outline"
       >
         <template #title-cell="{ row }">
@@ -218,7 +220,7 @@ const columns: TableColumn<Announcement>[] = [
               :color="levelMeta[row.original.level].color"
               variant="subtle"
             >
-              {{ levelMeta[row.original.level].label }}
+              {{ $t(`admin.content.announcements.levels.${row.original.level}`) }}
             </UBadge>
             <span class="font-medium truncate max-w-[300px]">{{ row.original.title }}</span>
             <UBadge
@@ -226,7 +228,7 @@ const columns: TableColumn<Announcement>[] = [
               color="warning"
               variant="soft"
             >
-              置顶
+              {{ $t('admin.content.announcements.pinnedBadge') }}
             </UBadge>
           </div>
         </template>
@@ -243,7 +245,7 @@ const columns: TableColumn<Announcement>[] = [
           />
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="text-right">

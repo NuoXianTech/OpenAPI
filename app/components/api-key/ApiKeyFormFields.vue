@@ -28,35 +28,43 @@ const props = withDefaults(defineProps<{
   hints: false,
   size: 'md'
 })
+const { t } = useI18n()
 
-const expiryItems: Array<{ label: string, value: ExpiryPreset }> = [
-  { label: '永不过期', value: 'never' },
-  { label: '1 小时', value: '1h' },
-  { label: '1 天', value: '1d' },
-  { label: '1 个月', value: '1mo' },
-  { label: '自定义', value: 'custom' }
-]
+const expiryItems = computed<Array<{ label: string, value: ExpiryPreset }>>(() => [
+  { label: t('common.apiKeys.expiry.never'), value: 'never' },
+  { label: t('common.apiKeys.expiry.oneHour'), value: '1h' },
+  { label: t('common.apiKeys.expiry.oneDay'), value: '1d' },
+  { label: t('common.apiKeys.expiry.oneMonth'), value: '1mo' },
+  { label: t('common.apiKeys.expiry.custom'), value: 'custom' }
+])
 
-const scopesModeItems = [
-  { label: '全部接口', value: 'all' },
-  { label: '指定接口', value: 'pick' }
-]
+const scopesModeItems = computed(() => [
+  { label: t('common.apiKeys.scopes.all'), value: 'all' },
+  { label: t('common.apiKeys.scopes.selected'), value: 'pick' }
+])
 
 const nameHelp = computed(() => {
   if (!props.hints) return undefined
-  if (props.showCount) return '批量生成 > 1 个时，首个使用此名称，其余自动追加后缀'
-  if (props.editing) return '仅展示用，不影响密钥字符串本身'
+  if (props.showCount) return t('common.apiKeys.form.batchNameHelp')
+  if (props.editing) return t('common.apiKeys.form.editNameHelp')
   return undefined
 })
 
 const ipHelp = computed(() => {
   if (props.ipLineErrors.length > 0) {
-    return `第 ${props.ipLineErrors.map(e => e.index).join(', ')} 行格式错误`
+    return t('common.apiKeys.form.invalidIpLines', { lines: props.ipLineErrors.map(e => e.index).join(', ') })
   }
   return props.hints
-    ? '每行一条 CIDR，例如 1.2.3.4/32 / 10.0.0.0/8；留空 = 不限'
-    : '每行一条；留空 = 不限'
+    ? t('common.apiKeys.form.ipHelpDetailed')
+    : t('common.apiKeys.form.ipHelpCompact')
 })
+
+const expiryHelp = computed(() => props.editing
+  ? t('common.apiKeys.form.expiryEditHelp')
+  : t('common.apiKeys.form.expiryCreateHelp'))
+const quotaHelp = computed(() => props.editing
+  ? t('common.apiKeys.form.quotaEditHelp')
+  : t('common.apiKeys.form.quotaCreateHelp'))
 </script>
 
 <template>
@@ -67,21 +75,21 @@ const ipHelp = computed(() => {
       :class="showCount ? 'grid-cols-3' : 'grid-cols-1'"
     >
       <UFormField
-        label="名称"
+        :label="$t('common.apiKeys.form.name')"
         :class="showCount ? 'col-span-2' : ''"
         :help="nameHelp"
       >
         <UInput
           v-model="form.name"
-          placeholder="例如：默认密钥 / 生产密钥"
+          :placeholder="$t('common.apiKeys.form.namePlaceholder')"
           :maxlength="80"
           :size="size"
         />
       </UFormField>
       <UFormField
         v-if="showCount"
-        label="生成数量"
-        :help="hints ? '一次最多 5 个' : undefined"
+        :label="$t('common.apiKeys.form.count')"
+        :help="hints ? $t('common.apiKeys.form.countHelp') : undefined"
       >
         <UInput
           v-model.number="form.count"
@@ -94,7 +102,7 @@ const ipHelp = computed(() => {
     </div>
 
     <!-- 过期时间 -->
-    <UFormField label="过期时间">
+    <UFormField :label="$t('common.apiKeys.form.expiry')">
       <URadioGroup
         v-model="form.expiryPreset"
         orientation="horizontal"
@@ -105,31 +113,29 @@ const ipHelp = computed(() => {
         v-model="form.expiresAtCustom"
         class="mt-2"
         :size="size"
-        placeholder="选择过期时间"
+        :placeholder="$t('common.apiKeys.form.selectExpiry')"
       />
       <p
         v-if="hints"
         class="text-xs text-muted mt-1"
       >
-        {{ editing
-          ? '选择「永不过期」会清空过期时间；选择预设会从当前时间起算。'
-          : '过期后密钥不会被删除或禁用，调用接口时会返回到期信息。' }}
+        {{ expiryHelp }}
       </p>
     </UFormField>
 
     <!-- 积分配额 -->
-    <UFormField label="积分配额">
+    <UFormField :label="$t('common.apiKeys.form.quota')">
       <div class="flex items-center gap-3">
         <USwitch
           v-model="form.unlimitedQuota"
-          label="无限配额"
+          :label="$t('common.apiKeys.form.unlimitedQuota')"
         />
         <UInput
           v-if="!form.unlimitedQuota"
           v-model.number="form.totalQuota"
           type="number"
           :min="0"
-          placeholder="累计可消耗积分上限"
+          :placeholder="$t('common.apiKeys.form.quotaPlaceholder')"
           class="flex-1"
           :size="size"
         />
@@ -138,14 +144,12 @@ const ipHelp = computed(() => {
         v-if="hints"
         class="text-xs text-muted mt-1"
       >
-        {{ editing
-          ? '修改上限不会重置已消耗积分；若新上限低于已消耗，密钥将立即停止可用直至再次提高。'
-          : '该密钥累计消耗积分达到上限后将拒绝调用；资金仍从钱包扣除。' }}
+        {{ quotaHelp }}
       </p>
     </UFormField>
 
     <!-- 接口范围 -->
-    <UFormField label="接口范围">
+    <UFormField :label="$t('common.apiKeys.form.scopes')">
       <URadioGroup
         v-model="form.scopesMode"
         orientation="horizontal"
@@ -158,7 +162,7 @@ const ipHelp = computed(() => {
         multiple
         searchable
         value-key="value"
-        placeholder="选择允许调用的接口"
+        :placeholder="$t('common.apiKeys.form.selectScopes')"
         class="mt-2 w-full"
         :size="size"
       />
@@ -166,7 +170,7 @@ const ipHelp = computed(() => {
 
     <!-- IP 白名单 -->
     <UFormField
-      label="IP 白名单（CIDR）"
+      :label="$t('common.apiKeys.form.ipWhitelist')"
       :help="ipHelp"
       :error="ipLineErrors.length > 0"
     >

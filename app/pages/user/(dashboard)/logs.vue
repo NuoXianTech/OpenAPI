@@ -4,13 +4,16 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import {
   useUserCallLogsPage,
+  useUserCallOutcomeMeta,
   userCallOutcomeColor,
   userCallOutcomeIcon,
-  userCallOutcomeLabel,
   type UserCallLogRow
 } from '~/composables/user/use-user-call-logs-page'
 
-useHead({ title: '调用日志' })
+const { t, locale } = useI18n()
+const { getOutcomeLabel } = useUserCallOutcomeMeta()
+
+useHead({ title: () => t('user.logs.title') })
 
 const {
   filters,
@@ -52,7 +55,7 @@ function readToggleableColumn(column: TableColumn<UserCallLogRow>): ToggleableCo
 }
 
 const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
-  columns
+  columns.value
     .map(readToggleableColumn)
     .filter((column): column is ToggleableColumn => column != null)
     .map(column => ({
@@ -84,7 +87,7 @@ function openDetail(row: UserCallLogRow) {
 <template>
   <UDashboardPanel id="user-logs">
     <template #header>
-      <DashboardPageNavbar title="调用日志" />
+      <DashboardPageNavbar :title="$t('user.logs.title')" />
     </template>
 
     <template #body>
@@ -93,7 +96,7 @@ function openDetail(row: UserCallLogRow) {
           <UInput
             v-model="filters.keyword"
             icon="i-mdi-magnify"
-            placeholder="搜索接口、Key、状态码..."
+            :placeholder="$t('user.logs.searchPlaceholder')"
             class="w-full sm:w-72"
             @keyup.enter="applyFilters"
           />
@@ -102,17 +105,17 @@ function openDetail(row: UserCallLogRow) {
             @apply="applyFilters"
             @reset="resetFilters"
           >
-            <UFormField label="服务（API）">
+            <UFormField :label="$t('user.logs.filters.api')">
               <USelectMenu
                 v-model="filters.apiId"
                 :items="apiSelectItems"
                 value-key="value"
                 searchable
-                placeholder="全部 API"
+                :placeholder="$t('user.logs.filters.allApis')"
                 class="w-full"
               />
             </UFormField>
-            <UFormField label="API Key">
+            <UFormField :label="$t('user.apiKeys.title')">
               <USelect
                 v-model="filters.apiKeyId"
                 :items="keySelectItems"
@@ -120,7 +123,7 @@ function openDetail(row: UserCallLogRow) {
                 class="w-full"
               />
             </UFormField>
-            <UFormField label="状态">
+            <UFormField :label="$t('user.logs.filters.status')">
               <USelect
                 v-model="filters.status"
                 :items="statusSelectItems"
@@ -136,7 +139,7 @@ function openDetail(row: UserCallLogRow) {
               :content="{ align: 'end' }"
             >
               <UButton
-                label="显示列"
+                :label="$t('user.logs.showColumns')"
                 color="neutral"
                 variant="outline"
                 icon="i-mdi-view-column-outline"
@@ -146,7 +149,7 @@ function openDetail(row: UserCallLogRow) {
         </div>
 
         <DashboardTableCard
-          title="调用明细"
+          :title="$t('user.logs.detailsTitle')"
           icon="i-mdi-text-box-search-outline"
           :total="total"
         >
@@ -160,13 +163,13 @@ function openDetail(row: UserCallLogRow) {
             :total="total"
             :page-size-items="PAGE_SIZE_ITEMS"
             always-show-pagination
-            empty-title="暂无调用记录"
+            :empty-title="$t('user.logs.empty')"
             empty-icon="i-mdi-text-box-search-outline"
           >
             <template #createdAt-cell="{ row }">
               <div class="flex flex-col gap-1 min-w-[150px]">
                 <span class="text-xs whitespace-nowrap">
-                  {{ formatDateTime(row.original.createdAt) }}
+                  {{ formatDateTime(row.original.createdAt, '-', locale) }}
                 </span>
                 <UBadge
                   :color="userCallOutcomeColor(row.original)"
@@ -175,7 +178,7 @@ function openDetail(row: UserCallLogRow) {
                   size="sm"
                   class="w-fit"
                 >
-                  {{ userCallOutcomeLabel(row.original) }}
+                  {{ getOutcomeLabel(row.original) }}
                 </UBadge>
               </div>
             </template>
@@ -188,7 +191,7 @@ function openDetail(row: UserCallLogRow) {
               <span
                 v-else
                 class="text-xs text-muted italic"
-              >未携带</span>
+              >{{ $t('user.logs.noApiKey') }}</span>
             </template>
 
             <template #apiName-cell="{ row }">
@@ -210,7 +213,7 @@ function openDetail(row: UserCallLogRow) {
                 class="tabular-nums text-sm"
                 :class="row.original.creditsCost > 0 ? 'text-warning font-medium' : 'text-muted'"
               >
-                {{ row.original.creditsCost > 0 ? `-${row.original.creditsCost}` : '免费' }}
+                {{ row.original.creditsCost > 0 ? `-${row.original.creditsCost.toLocaleString(locale)}` : $t('user.logs.free') }}
               </span>
             </template>
 
@@ -232,7 +235,7 @@ function openDetail(row: UserCallLogRow) {
                     {{ row.original.statusCode }}
                   </span>
                   <span class="text-muted tabular-nums">
-                    · {{ row.original.latencyMs }}ms
+                    · {{ $t('user.logs.milliseconds', { value: row.original.latencyMs.toLocaleString(locale) }) }}
                   </span>
                 </div>
                 <span
@@ -251,7 +254,7 @@ function openDetail(row: UserCallLogRow) {
                 color="neutral"
                 variant="ghost"
                 icon="i-mdi-eye-outline"
-                aria-label="查看详情"
+                :aria-label="$t('user.logs.viewDetails')"
                 @click="openDetail(row.original)"
               />
             </template>

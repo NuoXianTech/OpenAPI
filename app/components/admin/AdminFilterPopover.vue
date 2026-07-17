@@ -8,10 +8,9 @@ interface AdminFilterPopoverProps {
 
 const props = withDefaults(defineProps<AdminFilterPopoverProps>(), {
   activeCount: 0,
-  buttonLabel: '筛选',
-  panelClass: 'w-72 p-3 sm:w-80',
-  title: '筛选条件'
+  panelClass: 'w-72 p-3 sm:w-80'
 })
+const { t } = useI18n()
 
 const emit = defineEmits<{
   apply: []
@@ -21,8 +20,11 @@ const emit = defineEmits<{
 const open = ref(false)
 
 const displayLabel = computed(() => {
-  return props.activeCount > 0 ? `${props.activeCount} 项筛选` : props.buttonLabel
+  return props.activeCount > 0
+    ? t('common.filters.activeCount', { count: props.activeCount })
+    : props.buttonLabel || t('common.filters.button')
 })
+const displayTitle = computed(() => props.title || t('common.filters.title'))
 
 function closePopover() {
   open.value = false
@@ -63,7 +65,7 @@ function resetFilters() {
               name="i-mdi-filter-variant"
               class="size-4 shrink-0 text-muted"
             />
-            <span class="truncate text-sm font-medium text-highlighted">{{ props.title }}</span>
+            <span class="truncate text-sm font-medium text-highlighted">{{ displayTitle }}</span>
           </div>
           <UBadge
             v-if="props.activeCount > 0"
@@ -87,13 +89,13 @@ function resetFilters() {
             :disabled="props.activeCount === 0"
             @click="resetFilters"
           >
-            重置
+            {{ $t('common.actions.reset') }}
           </UButton>
           <UButton
             size="sm"
             @click="applyFilters"
           >
-            完成
+            {{ $t('common.actions.done') }}
           </UButton>
         </div>
       </div>

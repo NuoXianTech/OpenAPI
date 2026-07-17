@@ -7,6 +7,7 @@ const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{ item: Announcement | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
+const { t } = useI18n()
 
 const form = reactive({
   title: '',
@@ -21,12 +22,12 @@ const form = reactive({
 const loading = ref(false)
 const isEdit = computed(() => !!props.item)
 
-const levelOptions = [
-  { label: '公告 (info)', value: 'info' },
-  { label: '通知 (success)', value: 'success' },
-  { label: '提醒 (warning)', value: 'warning' },
-  { label: '紧急 (critical)', value: 'critical' }
-]
+const levelOptions = computed(() => [
+  { label: t('admin.content.announcements.levelOptions.info'), value: 'info' },
+  { label: t('admin.content.announcements.levelOptions.success'), value: 'success' },
+  { label: t('admin.content.announcements.levelOptions.warning'), value: 'warning' },
+  { label: t('admin.content.announcements.levelOptions.critical'), value: 'critical' }
+])
 
 watch(() => [props.item, open.value], () => {
   if (!open.value) return
@@ -55,7 +56,7 @@ watch(() => [props.item, open.value], () => {
 
 async function onSubmit() {
   if (!form.title.trim() || !form.content.trim()) {
-    toast.add({ title: '标题和内容必填', color: 'warning' })
+    toast.add({ title: t('admin.content.announcements.form.requiredContent'), color: 'warning' })
     return
   }
   loading.value = true
@@ -80,11 +81,14 @@ async function onSubmit() {
         body
       })
     }
-    toast.add({ title: isEdit.value ? '已更新' : '已创建', color: 'success' })
+    toast.add({
+      title: isEdit.value ? t('common.feedback.updated') : t('admin.content.announcements.feedback.created'),
+      color: 'success'
+    })
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.saveFailed')), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -94,8 +98,10 @@ async function onSubmit() {
 <template>
   <UModal
     v-model:open="open"
-    :title="isEdit ? '编辑公告' : '新建公告'"
-    :description="isEdit ? '更新公告内容、展示状态与排序设置。' : '发布一条面向用户的站内公告。'"
+    :title="isEdit ? $t('admin.content.announcements.form.editTitle') : $t('admin.content.announcements.form.createTitle')"
+    :description="isEdit
+      ? $t('admin.content.announcements.form.editDescription')
+      : $t('admin.content.announcements.form.createDescription')"
     :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
@@ -103,16 +109,16 @@ async function onSubmit() {
       <div class="space-y-4">
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <UFormField
-            label="标题"
+            :label="$t('admin.content.announcements.form.title')"
             class="sm:col-span-2"
           >
             <UInput
               v-model="form.title"
-              placeholder="公告标题（最多 200 字）"
+              :placeholder="$t('admin.content.announcements.form.titlePlaceholder')"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="级别">
+          <UFormField :label="$t('admin.content.announcements.form.level')">
             <USelect
               v-model="form.level"
               :items="levelOptions"
@@ -121,24 +127,24 @@ async function onSubmit() {
           </UFormField>
         </div>
 
-        <UFormField label="内容">
+        <UFormField :label="$t('admin.content.announcements.form.content')">
           <UTextarea
             v-model="form.content"
             :rows="6"
-            placeholder="支持纯文本，换行将保留"
+            :placeholder="$t('admin.content.announcements.form.contentPlaceholder')"
             class="w-full"
           />
         </UFormField>
 
         <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <UFormField label="详情链接（可选）">
+          <UFormField :label="$t('admin.content.announcements.form.linkUrl')">
             <UInput
               v-model="form.linkUrl"
               placeholder="https://example.com/post/xx"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="排序值（小在前）">
+          <UFormField :label="$t('admin.content.announcements.form.sortOrder')">
             <UInput
               v-model.number="form.sortOrder"
               type="number"
@@ -150,11 +156,11 @@ async function onSubmit() {
         <div class="flex flex-wrap gap-6 border-t border-default pt-3">
           <USwitch
             v-model="form.isEnabled"
-            label="启用"
+            :label="$t('admin.content.announcements.form.enabled')"
           />
           <USwitch
             v-model="form.isPinned"
-            label="置顶"
+            :label="$t('admin.content.announcements.form.pinned')"
           />
         </div>
       </div>
@@ -167,13 +173,13 @@ async function onSubmit() {
           color="neutral"
           @click="() => { open = false }"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="onSubmit"
         >
-          {{ isEdit ? '保存' : '创建' }}
+          {{ isEdit ? $t('common.actions.save') : $t('common.actions.create') }}
         </UButton>
       </div>
     </template>

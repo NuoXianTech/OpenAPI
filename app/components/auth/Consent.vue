@@ -1,6 +1,7 @@
 <script setup lang="ts">
 // 登录 / 注册时的「同意条款」勾选框。仅当后台配置了服务条款或隐私政策链接时才会被父级渲染。
 const modelValue = defineModel<boolean>({ default: false })
+const { t } = useI18n()
 
 const { settings } = useSiteSettings()
 const termsUrl = computed(() => settings.value.termsUrl || '')
@@ -11,7 +12,7 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
   <UCheckbox
     v-model="modelValue"
     size="md"
-    aria-label="同意服务条款与隐私政策"
+    :aria-label="t('auth.consent.ariaLabel')"
     :ui="{
       root: 'w-full',
       wrapper: 'min-w-0',
@@ -20,7 +21,7 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
   >
     <template #label>
       <span>
-        我已阅读并同意
+        {{ $t('auth.consent.prefix') }}
         <ULink
           v-if="termsUrl"
           :to="termsUrl"
@@ -29,10 +30,10 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
           class="text-primary font-medium hover:underline"
           @click.stop
         >
-          《服务条款》
+          {{ $t('auth.consent.terms') }}
         </ULink>
         <template v-if="termsUrl && privacyUrl">
-          和
+          {{ $t('auth.consent.and') }}
         </template>
         <ULink
           v-if="privacyUrl"
@@ -42,7 +43,7 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
           class="text-primary font-medium hover:underline"
           @click.stop
         >
-          《隐私政策》
+          {{ $t('auth.consent.privacy') }}
         </ULink>
       </span>
     </template>

@@ -12,9 +12,10 @@ interface UserSettingsBasicCardProps {
 const props = defineProps<UserSettingsBasicCardProps>()
 
 const toast = useToast()
+const { t } = useI18n()
 const isSaving = ref(false)
 const displayName = ref('')
-const avatarAlt = computed(() => props.profile?.displayName || props.profile?.username || '用户头像')
+const avatarAlt = computed(() => props.profile?.displayName || props.profile?.username || t('user.settings.profile.avatarAlt'))
 
 watch(() => props.profile, (val) => {
   if (val) displayName.value = val.displayName || ''
@@ -25,7 +26,7 @@ async function submit() {
   try {
     await props.onSave(displayName.value)
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '保存失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.saveFailed')), color: 'error' })
   } finally {
     isSaving.value = false
   }
@@ -34,18 +35,18 @@ async function submit() {
 
 <template>
   <DashboardSettingsSection
-    title="基本信息"
+    :title="$t('user.settings.profile.title')"
   >
     <div
       v-if="profileLoading && !profile"
       class="text-sm text-muted py-4 text-center"
     >
-      加载中...
+      {{ $t('common.states.loading') }}
     </div>
     <template v-else>
       <UFormField
-        label="头像"
-        description="头像由邮箱自动获取（Cravatar），修改邮箱后会同步更新。"
+        :label="$t('user.settings.profile.avatar')"
+        :description="$t('user.settings.profile.avatarDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UAvatar
@@ -55,8 +56,8 @@ async function submit() {
         />
       </UFormField>
       <UFormField
-        label="用户名"
-        description="用户名不可修改。"
+        :label="$t('user.settings.profile.username')"
+        :description="$t('user.settings.profile.usernameDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -66,8 +67,8 @@ async function submit() {
         />
       </UFormField>
       <UFormField
-        label="昵称"
-        description="用于公开展示的名字，可使用真实姓名或昵称"
+        :label="$t('user.settings.profile.displayName')"
+        :description="$t('user.settings.profile.displayNameDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -82,7 +83,7 @@ async function submit() {
           icon="i-mdi-content-save-outline"
           @click="submit"
         >
-          保存资料
+          {{ $t('user.settings.profile.save') }}
         </UButton>
       </div>
     </template>

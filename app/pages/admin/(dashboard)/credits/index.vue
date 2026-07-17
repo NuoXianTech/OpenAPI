@@ -4,7 +4,7 @@ import type {
   AdminCreditOverview,
   AdminCreditRecentTransaction
 } from '#shared/types/admin-credits'
-import { creditReasonColor, creditReasonLabel } from '#shared/types/credit-reason'
+import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import {
   ADMIN_CREDIT_TRANSACTIONS_PATH,
@@ -12,7 +12,9 @@ import {
   ADMIN_REDEMPTION_CODES_PATH
 } from '~/constants/dashboard-sections'
 
-useHead({ title: '积分概览' })
+const { t, locale } = useI18n()
+const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
+useHead({ title: () => t('admin.credits.overview.pageTitle') })
 
 interface OverviewCard {
   key: string
@@ -49,53 +51,63 @@ const { data: overview, loading, error, refresh } = usePrivateResource<AdminCred
 
 const overviewCards = computed<OverviewCard[]>(() => [{
   key: 'balance',
-  label: '用户积分总余额',
-  value: overview.value.summary.totalBalance.toLocaleString(),
+  label: t('admin.credits.overview.cards.totalBalance'),
+  value: overview.value.summary.totalBalance.toLocaleString(locale.value),
   icon: 'i-mdi-wallet-outline',
-  meta: `${overview.value.summary.usersWithBalance.toLocaleString()} 位用户持有积分`,
+  meta: t('admin.credits.overview.cards.usersWithBalance', {
+    count: overview.value.summary.usersWithBalance.toLocaleString(locale.value)
+  }),
   tone: 'primary'
 }, {
   key: 'income',
-  label: '近 24 小时发放',
-  value: overview.value.summary.income24h.toLocaleString(),
+  label: t('admin.credits.overview.cards.income24h'),
+  value: overview.value.summary.income24h.toLocaleString(locale.value),
   icon: 'i-mdi-trending-up',
-  meta: `共 ${overview.value.summary.transactionCount24h.toLocaleString()} 笔变动`,
+  meta: t('admin.credits.overview.cards.transactionCount24h', {
+    count: overview.value.summary.transactionCount24h.toLocaleString(locale.value)
+  }),
   tone: 'success'
 }, {
   key: 'expense',
-  label: '近 24 小时消耗',
-  value: overview.value.summary.expense24h.toLocaleString(),
+  label: t('admin.credits.overview.cards.expense24h'),
+  value: overview.value.summary.expense24h.toLocaleString(locale.value),
   icon: 'i-mdi-trending-down',
-  meta: `净变化 ${overview.value.summary.netChange24h >= 0 ? '+' : ''}${overview.value.summary.netChange24h.toLocaleString()}`,
+  meta: t('admin.credits.overview.cards.netChange24h', {
+    amount: `${overview.value.summary.netChange24h >= 0 ? '+' : ''}${overview.value.summary.netChange24h.toLocaleString(locale.value)}`
+  }),
   tone: 'error'
 }, {
   key: 'average',
-  label: '用户平均余额',
-  value: overview.value.summary.averageBalance.toLocaleString(),
+  label: t('admin.credits.overview.cards.averageBalance'),
+  value: overview.value.summary.averageBalance.toLocaleString(locale.value),
   icon: 'i-mdi-chart-donut',
-  meta: `共 ${overview.value.summary.userCount.toLocaleString()} 位用户`,
+  meta: t('admin.credits.overview.cards.userCount', {
+    count: overview.value.summary.userCount.toLocaleString(locale.value)
+  }),
   tone: 'info'
 }, {
   key: 'codes',
-  label: '可用兑换码',
-  value: overview.value.summary.activeRedemptionCodes.toLocaleString(),
+  label: t('admin.credits.overview.cards.activeRedemptionCodes'),
+  value: overview.value.summary.activeRedemptionCodes.toLocaleString(locale.value),
   icon: 'i-mdi-ticket-percent-outline',
-  meta: `最多可发放 ${overview.value.summary.redemptionPotential.toLocaleString()} 积分`,
+  meta: t('admin.credits.overview.cards.redemptionPotential', {
+    amount: overview.value.summary.redemptionPotential.toLocaleString(locale.value)
+  }),
   tone: 'warning'
 }])
 
-const columns: TableColumn<AdminCreditRecentTransaction>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'userId', header: '用户' },
-  { accessorKey: 'reason', header: '原因' },
-  { accessorKey: 'amount', header: '变动' },
-  { accessorKey: 'balanceAfter', header: '余额' },
-  { accessorKey: 'remark', header: '备注' }
-]
+const columns = computed<TableColumn<AdminCreditRecentTransaction>[]>(() => [
+  { accessorKey: 'createdAt', header: t('admin.credits.overview.columns.time') },
+  { accessorKey: 'userId', header: t('admin.credits.overview.columns.user') },
+  { accessorKey: 'reason', header: t('admin.credits.overview.columns.reason') },
+  { accessorKey: 'amount', header: t('admin.credits.overview.columns.change') },
+  { accessorKey: 'balanceAfter', header: t('admin.credits.overview.columns.balance') },
+  { accessorKey: 'remark', header: t('admin.credits.overview.columns.remark') }
+])
 
 const generatedAtLabel = computed(() => overview.value.generatedAt
-  ? formatDateTime(overview.value.generatedAt)
-  : '等待刷新')
+  ? formatDateTime(overview.value.generatedAt, '-', locale.value)
+  : t('admin.credits.overview.waitingRefresh'))
 
 function amountClass(amount: number): string {
   return amount > 0
@@ -109,8 +121,8 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
   if (!transaction.userId) return '-'
 
   return transaction.userRole === 'admin'
-    ? formatAdminIdentity(transaction.userId)
-    : formatUserIdentity(transaction.userId)
+    ? t('common.identities.adminWithId', { id: transaction.userId })
+    : t('common.identities.userWithId', { id: transaction.userId })
 }
 </script>
 
@@ -120,10 +132,10 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
       <div class="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
-            积分运营概览
+            {{ $t('admin.credits.overview.title') }}
           </h2>
           <p class="mt-1 text-sm text-toned">
-            汇总用户余额、近期收支和兑换码发放能力
+            {{ $t('admin.credits.overview.description') }}
           </p>
         </div>
         <div class="flex flex-wrap gap-2">
@@ -133,13 +145,13 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
             color="neutral"
             variant="outline"
           >
-            用户积分
+            {{ $t('admin.credits.overview.actions.userCredits') }}
           </UButton>
           <UButton
             :to="ADMIN_REDEMPTION_CODES_PATH"
             icon="i-mdi-ticket-percent-outline"
           >
-            兑换码管理
+            {{ $t('admin.credits.overview.actions.redemptionCodes') }}
           </UButton>
         </div>
       </div>
@@ -147,7 +159,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="text-xs text-muted">
-        更新于 {{ generatedAtLabel }}
+        {{ $t('admin.credits.overview.updatedAt', { time: generatedAtLabel }) }}
       </p>
       <UButton
         icon="i-mdi-refresh"
@@ -156,7 +168,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
         :loading="loading"
         @click="refresh"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
@@ -165,8 +177,8 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
       color="error"
       variant="subtle"
       icon="i-mdi-alert-circle-outline"
-      title="积分概览加载失败"
-      description="请稍后刷新重试。"
+      :title="$t('admin.credits.overview.loadFailed')"
+      :description="$t('admin.credits.overview.loadFailedDescription')"
     />
 
     <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
@@ -183,7 +195,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
     </div>
 
     <DashboardTableCard
-      title="最近积分变动"
+      :title="$t('admin.credits.overview.recentTitle')"
       icon="i-mdi-history"
       :total="overview.recentTransactions.length"
     >
@@ -194,7 +206,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
           variant="ghost"
           trailing-icon="i-mdi-arrow-right"
         >
-          查看全部
+          {{ $t('admin.credits.overview.actions.viewAll') }}
         </UButton>
       </template>
 
@@ -204,29 +216,29 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
         :loading="loading"
       >
         <template #createdAt-cell="{ row }">
-          <span class="whitespace-nowrap text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="whitespace-nowrap text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #userId-cell="{ row }">
           <div class="flex flex-col text-xs">
-            <span>{{ row.original.userName || '已删除用户' }}</span>
+            <span>{{ row.original.userName || $t('common.accounts.deletedUser') }}</span>
             <span class="text-muted">{{ formatCreditUserIdentity(row.original) }}</span>
           </div>
         </template>
         <template #reason-cell="{ row }">
           <UBadge
-            :color="creditReasonColor(row.original.reason)"
+            :color="getReasonColor(row.original.reason)"
             variant="subtle"
           >
-            {{ creditReasonLabel(row.original.reason) }}
+            {{ getReasonLabel(row.original.reason) }}
           </UBadge>
         </template>
         <template #amount-cell="{ row }">
           <span :class="amountClass(row.original.amount)">
-            {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString() }}
+            {{ row.original.amount > 0 ? '+' : '' }}{{ row.original.amount.toLocaleString(locale) }}
           </span>
         </template>
         <template #balanceAfter-cell="{ row }">
-          <span class="tabular-nums text-sm">{{ row.original.balanceAfter.toLocaleString() }}</span>
+          <span class="tabular-nums text-sm">{{ row.original.balanceAfter.toLocaleString(locale) }}</span>
         </template>
         <template #remark-cell="{ row }">
           <span class="block max-w-64 truncate text-xs text-muted">{{ row.original.remark || '-' }}</span>

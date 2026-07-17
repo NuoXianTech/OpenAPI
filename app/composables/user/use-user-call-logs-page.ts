@@ -59,11 +59,6 @@ function isUserCallSuccess(row: UserCallLogRow) {
   return row.isCounted && row.statusCode >= 200 && row.statusCode < 400 && !row.errorCode
 }
 
-export function userCallOutcomeLabel(row: UserCallLogRow) {
-  if (!row.isCounted) return '未计数'
-  return isUserCallSuccess(row) ? '成功' : '失败'
-}
-
 export function userCallOutcomeColor(row: UserCallLogRow): 'success' | 'error' | 'neutral' {
   if (!row.isCounted) return 'neutral'
   return isUserCallSuccess(row) ? 'success' : 'error'
@@ -74,7 +69,19 @@ export function userCallOutcomeIcon(row: UserCallLogRow) {
   return isUserCallSuccess(row) ? 'i-mdi-check-circle-outline' : 'i-mdi-alert-circle-outline'
 }
 
+export function useUserCallOutcomeMeta() {
+  const { t } = useI18n()
+
+  function getOutcomeLabel(row: UserCallLogRow): string {
+    if (!row.isCounted) return t('user.logs.outcomes.notCounted')
+    return isUserCallSuccess(row) ? t('common.states.success') : t('common.states.failure')
+  }
+
+  return { getOutcomeLabel }
+}
+
 export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
+  const { t } = useI18n()
   const filterOptions = ref<UserCallLogFilterOptions>({ apis: [], apiKeys: [] })
   const listState = useDashboardListState<UserCallLogFilters>({
     defaultFilters: USER_CALL_LOG_DEFAULT_FILTERS,
@@ -108,27 +115,27 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   })
 
   const apiSelectItems = computed(() => [
-    { label: '全部 API', value: 0 },
+    { label: t('user.logs.filters.allApis'), value: 0 },
     ...filterOptions.value.apis.map(api => ({ label: `${api.name}（${api.apiPath}）`, value: api.id }))
   ])
   const keySelectItems = computed(() => [
-    { label: '全部 Key', value: 0 },
+    { label: t('user.logs.filters.allKeys'), value: 0 },
     ...filterOptions.value.apiKeys.map(key => ({ label: key.name || `#${key.id}`, value: key.id }))
   ])
-  const statusSelectItems = [
-    { label: '全部状态', value: 'all' },
-    { label: '成功', value: 'success' },
-    { label: '失败', value: 'failure' }
-  ]
+  const statusSelectItems = computed(() => [
+    { label: t('user.logs.filters.allStatuses'), value: 'all' },
+    { label: t('common.states.success'), value: 'success' },
+    { label: t('common.states.failure'), value: 'failure' }
+  ])
   const lastAppliedKeyword = ref(listState.filters.keyword.trim())
-  const columns: TableColumn<UserCallLogRow>[] = [
-    { accessorKey: 'createdAt', header: '时间' },
-    { accessorKey: 'apiKeyName', header: '密钥' },
-    { accessorKey: 'apiName', header: '接口' },
-    { accessorKey: 'creditsCost', header: '费用' },
-    { id: 'summary', header: '摘要' },
+  const columns = computed<TableColumn<UserCallLogRow>[]>(() => [
+    { accessorKey: 'createdAt', header: t('user.logs.columns.time') },
+    { accessorKey: 'apiKeyName', header: t('user.logs.columns.key') },
+    { accessorKey: 'apiName', header: t('user.logs.columns.api') },
+    { accessorKey: 'creditsCost', header: t('user.logs.columns.cost') },
+    { id: 'summary', header: t('user.logs.columns.summary') },
     { id: 'actions', header: '' }
-  ]
+  ])
 
   async function loadFilterOptions() {
     filterOptions.value = await $fetch<UserCallLogFilterOptions>('/api/user/calls/filters')

@@ -11,7 +11,8 @@ interface CreditUserFilters extends Record<string, unknown> {
   balance: 'all' | 'positive' | 'zero' | 'negative'
 }
 
-useHead({ title: '用户积分' })
+const { t, locale } = useI18n()
+useHead({ title: () => t('admin.credits.users.title') })
 
 const {
   filters,
@@ -36,21 +37,21 @@ const {
   })
 })
 
-const balanceItems = [
-  { label: '全部余额', value: 'all' },
-  { label: '有积分', value: 'positive' },
-  { label: '零积分', value: 'zero' },
-  { label: '负积分（异常）', value: 'negative' }
-]
+const balanceItems = computed(() => [
+  { label: t('admin.credits.users.filters.allBalances'), value: 'all' },
+  { label: t('admin.credits.users.filters.positive'), value: 'positive' },
+  { label: t('admin.credits.users.filters.zero'), value: 'zero' },
+  { label: t('admin.credits.users.filters.negative'), value: 'negative' }
+])
 
-const columns: TableColumn<AdminCreditUser>[] = [
+const columns = computed<TableColumn<AdminCreditUser>[]>(() => [
   { id: 'select', header: '' },
-  { accessorKey: 'id', header: '用户' },
-  { accessorKey: 'credits', header: '积分余额' },
-  { id: 'status', header: '账号状态' },
-  { accessorKey: 'createdAt', header: '注册时间' },
+  { accessorKey: 'id', header: t('admin.credits.users.columns.user') },
+  { accessorKey: 'credits', header: t('admin.credits.users.columns.balance') },
+  { id: 'status', header: t('admin.credits.users.columns.status') },
+  { accessorKey: 'createdAt', header: t('admin.credits.users.columns.createdAt') },
   { id: 'actions', header: '' }
-]
+])
 
 const rowSelection = ref<Record<string, boolean>>({})
 const creditOpen = ref(false)
@@ -86,13 +87,13 @@ function openCreditForUser(user: AdminCreditUser) {
 
 function openCreditForSelection() {
   if (selectedIds.value.length === 0) return
-  openCreditModal(selectedIds.value, `已选择 ${selectedIds.value.length} 位用户`)
+  openCreditModal(selectedIds.value, t('admin.credits.users.selectedUsers', { count: selectedIds.value.length }))
 }
 
 function formatCreditUserIdentity(user: AdminCreditUser): string {
   return user.role === 'admin'
-    ? formatAdminIdentity(user.id)
-    : formatUserIdentity(user.id)
+    ? t('common.identities.adminWithId', { id: user.id })
+    : t('common.identities.userWithId', { id: user.id })
 }
 
 async function applyFilters() {
@@ -116,10 +117,10 @@ async function onCreditSaved() {
     <section class="dashboard-hero-surface dashboard-hero-surface-success relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10">
         <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
-          用户积分
+          {{ $t('admin.credits.users.title') }}
         </h2>
         <p class="mt-1 text-sm text-toned">
-          查询用户余额，对单个或选中的用户发放、扣除和重置积分
+          {{ $t('admin.credits.users.description') }}
         </p>
       </div>
     </section>
@@ -128,26 +129,26 @@ async function onCreditSaved() {
       <UInput
         v-model="filters.keyword"
         icon="i-mdi-magnify"
-        placeholder="搜索用户名、昵称或邮箱..."
+        :placeholder="$t('admin.credits.users.searchPlaceholder')"
         class="w-full sm:w-80"
       />
       <AdminFilterPopover
         :active-count="activeFilterCount"
-        title="用户积分筛选"
+        :title="$t('admin.credits.users.filterTitle')"
         @apply="applyFilters"
         @reset="resetFilters"
       >
         <div class="grid gap-3">
-          <UFormField label="用户 ID">
+          <UFormField :label="$t('admin.credits.users.filters.userId')">
             <UInput
               v-model.number="filters.userId"
               type="number"
               min="1"
-              placeholder="留空查询全部"
+              :placeholder="$t('admin.credits.users.filters.emptyAll')"
               class="w-full"
             />
           </UFormField>
-          <UFormField label="积分余额">
+          <UFormField :label="$t('admin.credits.users.filters.balance')">
             <USelect
               v-model="filters.balance"
               :items="balanceItems"
@@ -158,14 +159,14 @@ async function onCreditSaved() {
       </AdminFilterPopover>
       <div class="ml-auto flex flex-wrap items-center gap-2">
         <span class="text-xs text-muted">
-          已选 {{ selectedIds.length }} 位
+          {{ $t('admin.credits.users.selectedCount', { count: selectedIds.length }) }}
         </span>
         <UButton
           icon="i-mdi-cash-edit"
           :disabled="selectedIds.length === 0"
           @click="openCreditForSelection"
         >
-          批量调整积分
+          {{ $t('admin.credits.users.actions.batchAdjust') }}
         </UButton>
         <UButton
           icon="i-mdi-refresh"
@@ -174,13 +175,13 @@ async function onCreditSaved() {
           :loading="loading"
           @click="refresh"
         >
-          刷新
+          {{ $t('common.actions.refresh') }}
         </UButton>
       </div>
     </div>
 
     <DashboardTableCard
-      title="用户余额"
+      :title="$t('admin.credits.users.listTitle')"
       icon="i-mdi-account-cash-outline"
       :total="total"
     >
@@ -194,7 +195,7 @@ async function onCreditSaved() {
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         :get-row-id="(row: AdminCreditUser) => String(row.id)"
-        empty-title="暂无符合条件的用户"
+        :empty-title="$t('admin.credits.users.empty')"
         empty-icon="i-mdi-account-off-outline"
       >
         <template #select-header="{ table }">
@@ -222,7 +223,7 @@ async function onCreditSaved() {
             variant="subtle"
             class="font-mono tabular-nums"
           >
-            {{ row.original.credits.toLocaleString() }}
+            {{ row.original.credits.toLocaleString(locale) }}
           </UBadge>
         </template>
         <template #status-cell="{ row }">
@@ -231,19 +232,19 @@ async function onCreditSaved() {
               :color="row.original.isActive ? 'success' : 'neutral'"
               variant="subtle"
             >
-              {{ row.original.isActive ? '已激活' : '未激活' }}
+              {{ row.original.isActive ? $t('common.accounts.active') : $t('common.accounts.inactive') }}
             </UBadge>
             <UBadge
               v-if="row.original.isBanned"
               color="error"
               variant="subtle"
             >
-              已封禁
+              {{ $t('common.accounts.banned') }}
             </UBadge>
           </div>
         </template>
         <template #createdAt-cell="{ row }">
-          <span class="whitespace-nowrap text-xs text-muted">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="whitespace-nowrap text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #actions-cell="{ row }">
           <div class="text-right">
@@ -254,7 +255,7 @@ async function onCreditSaved() {
               size="sm"
               @click="openCreditForUser(row.original)"
             >
-              调整
+              {{ $t('admin.credits.users.actions.adjust') }}
             </UButton>
           </div>
         </template>

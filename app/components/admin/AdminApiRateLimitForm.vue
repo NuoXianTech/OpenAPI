@@ -12,16 +12,16 @@ const state = useAdminApiForm()
       </span>
       <div>
         <h3 class="text-sm font-semibold text-highlighted">
-          限流与配额
+          {{ $t('admin.apis.form.rateLimits.title') }}
         </h3>
         <p class="text-xs text-muted">
-          数值为 0 表示不限制
+          {{ $t('admin.apis.form.rateLimits.description') }}
         </p>
       </div>
     </div>
     <div class="grid grid-cols-2 gap-3">
       <UFormField
-        label="每秒"
+        :label="$t('admin.apis.form.rateLimits.perSecond')"
         name="rateLimitPerSecond"
       >
         <UInput
@@ -32,7 +32,7 @@ const state = useAdminApiForm()
         />
       </UFormField>
       <UFormField
-        label="每分钟"
+        :label="$t('admin.apis.form.rateLimits.perMinute')"
         name="rateLimitPerMinute"
       >
         <UInput
@@ -43,7 +43,7 @@ const state = useAdminApiForm()
         />
       </UFormField>
       <UFormField
-        label="每小时"
+        :label="$t('admin.apis.form.rateLimits.perHour')"
         name="rateLimitPerHour"
       >
         <UInput
@@ -54,7 +54,7 @@ const state = useAdminApiForm()
         />
       </UFormField>
       <UFormField
-        label="每天"
+        :label="$t('admin.apis.form.rateLimits.perDay')"
         name="rateLimitPerDay"
       >
         <UInput
@@ -65,7 +65,7 @@ const state = useAdminApiForm()
         />
       </UFormField>
       <UFormField
-        label="日配额"
+        :label="$t('admin.apis.form.rateLimits.dailyQuota')"
         name="dailyQuota"
       >
         <UInput
@@ -76,7 +76,7 @@ const state = useAdminApiForm()
         />
       </UFormField>
       <UFormField
-        label="超时(ms)"
+        :label="$t('admin.apis.form.rateLimits.timeoutMs')"
         name="timeoutMs"
       >
         <UInput

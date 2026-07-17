@@ -7,6 +7,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t, locale } = useI18n()
 const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
 
@@ -23,8 +24,8 @@ function tooltipTemplate(point: UserDashboardHourlyPoint): string {
   return renderChartTooltip({
     title: point.label,
     rows: [
-      { color: 'var(--ui-success)', label: '成功请求', value: point.successCalls.toLocaleString() },
-      { color: 'var(--ui-error)', label: '失败请求', value: point.failureCalls.toLocaleString() }
+      { color: 'var(--ui-success)', label: t('user.overview.chart.successRequests'), value: point.successCalls.toLocaleString(locale.value) },
+      { color: 'var(--ui-error)', label: t('user.overview.chart.failureRequests'), value: point.failureCalls.toLocaleString(locale.value) }
     ]
   })
 }
@@ -35,8 +36,8 @@ function tooltipTemplate(point: UserDashboardHourlyPoint): string {
     <UEmpty
       v-if="!hasData"
       icon="i-mdi-chart-timeline-variant-shimmer"
-      title="最近 24 小时暂无请求"
-      description="发起 API 请求后，成功与失败趋势会显示在这里。"
+      :title="$t('user.overview.chart.emptyTitle')"
+      :description="$t('user.overview.chart.emptyDescription')"
       class="h-64"
     />
 

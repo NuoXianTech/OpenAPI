@@ -10,6 +10,7 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const { t, locale } = useI18n()
 const { turnstile } = useSiteSettings()
 
 const now = ref(Date.now())
@@ -36,30 +37,37 @@ const remainingMs = computed(() => {
 
 const remainingText = computed(() => {
   const ms = remainingMs.value
-  if (ms <= 0) return '现在可签到'
+  if (ms <= 0) return t('user.credits.checkin.availableNow')
   const total = Math.ceil(ms / 1000)
   const days = Math.floor(total / 86400)
   const hours = Math.floor((total % 86400) / 3600)
   const minutes = Math.floor((total % 3600) / 60)
   const seconds = total % 60
-  if (days > 0) return `${days} 天 ${hours} 小时 ${minutes} 分 ${seconds} 秒`
-  if (hours > 0) return `${hours} 小时 ${minutes} 分 ${seconds} 秒`
-  if (minutes > 0) return `${minutes} 分 ${seconds} 秒`
-  return `${seconds} 秒`
+  if (days > 0) return t('user.credits.checkin.duration.days', { days, hours, minutes, seconds })
+  if (hours > 0) return t('user.credits.checkin.duration.hours', { hours, minutes, seconds })
+  if (minutes > 0) return t('user.credits.checkin.duration.minutes', { minutes, seconds })
+  return t('user.credits.checkin.duration.seconds', { seconds })
 })
 
 const amountText = computed(() => {
   const status = props.status
   if (!status) return ''
-  if (status.mode === 'range') return `${status.amountMin} ~ ${status.amountMax} 积分`
-  return `${status.amountFixed} 积分`
+  if (status.mode === 'range') {
+    return t('user.credits.checkin.amount.range', {
+      min: status.amountMin.toLocaleString(locale.value),
+      max: status.amountMax.toLocaleString(locale.value)
+    })
+  }
+  return t('user.credits.checkin.amount.fixed', { amount: status.amountFixed.toLocaleString(locale.value) })
 })
 
 const cooldownText = computed(() => {
   const status = props.status
   if (!status) return ''
-  if (status.cooldownMode === 'fixed_time') return `每日 ${status.fixedRefreshTime} 刷新`
-  return `每 ${status.refreshHours} 小时刷新`
+  if (status.cooldownMode === 'fixed_time') {
+    return t('user.credits.checkin.cooldown.fixedTime', { time: status.fixedRefreshTime })
+  }
+  return t('user.credits.checkin.cooldown.hours', { hours: status.refreshHours })
 })
 
 const canCheckin = computed(() => {
@@ -99,7 +107,7 @@ async function doCheckin(token?: string) {
     await props.onCheckin(token)
     closeModal()
   } catch (error) {
-    toast.add({ title: parseFetchError(error, '签到失败'), color: 'error' })
+    toast.add({ title: parseFetchError(error, t('user.credits.checkin.failed')), color: 'error' })
     turnstileWidget.value?.reset()
     turnstileToken.value = ''
   }
@@ -139,12 +147,12 @@ function onTurnstileError(message: string) {
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
-          每日签到
+          {{ $t('user.credits.checkin.title') }}
         </h3>
         <span
           v-if="status && !status.enabled"
           class="ml-2 text-xs text-muted"
-        >已关闭</span>
+        >{{ $t('common.states.disabled') }}</span>
       </div>
     </template>
 
@@ -152,14 +160,14 @@ function onTurnstileError(message: string) {
       v-if="!status && !hasError"
       class="text-sm text-muted py-4 text-center"
     >
-      加载中...
+      {{ $t('common.states.loading') }}
     </div>
 
     <div
       v-else-if="status && !status.enabled"
       class="text-sm text-muted py-2"
     >
-      管理员未开启签到功能。
+      {{ $t('user.credits.checkin.disabledDescription') }}
     </div>
 
     <div
@@ -168,7 +176,7 @@ function onTurnstileError(message: string) {
     >
       <div class="flex-1 min-w-[200px]">
         <p class="text-xs text-muted">
-          签到奖励
+          {{ $t('user.credits.checkin.reward') }}
         </p>
         <p class="text-2xl font-semibold tabular-nums mt-1 text-success">
           + {{ amountText }}
@@ -179,7 +187,7 @@ function onTurnstileError(message: string) {
       </div>
       <div class="flex-1 min-w-[200px]">
         <p class="text-xs text-muted">
-          {{ canCheckin ? '现在可签到' : '下次签到' }}
+          {{ canCheckin ? $t('user.credits.checkin.availableNow') : $t('user.credits.checkin.nextCheckin') }}
         </p>
         <p class="text-base font-medium tabular-nums mt-1">
           {{ remainingText }}
@@ -188,7 +196,7 @@ function onTurnstileError(message: string) {
           v-if="status.lastCheckinAt"
           class="text-xs text-muted mt-1"
         >
-          上次签到：{{ formatDateTime(status.lastCheckinAt) }}
+          {{ $t('user.credits.checkin.lastCheckin', { time: formatDateTime(status.lastCheckinAt, '-', locale) }) }}
         </p>
       </div>
       <UButton
@@ -198,7 +206,7 @@ function onTurnstileError(message: string) {
         :disabled="!canCheckin"
         @click="onClickCheckin"
       >
-        {{ canCheckin ? '立即签到' : '冷却中' }}
+        {{ canCheckin ? $t('user.credits.checkin.action') : $t('user.credits.checkin.coolingDown') }}
       </UButton>
     </div>
 
@@ -206,20 +214,20 @@ function onTurnstileError(message: string) {
       v-else
       class="text-sm text-error py-2"
     >
-      签到状态加载失败。
+      {{ $t('user.credits.checkin.loadFailed') }}
     </div>
 
     <UModal
       v-model:open="modalOpen"
       :ui="{ content: 'max-w-sm' }"
       :dismissible="!submitting && !verifying"
-      title="人机验证"
-      description="完成下方人机验证后将自动签到"
+      :title="$t('user.credits.checkin.captcha.title')"
+      :description="$t('user.credits.checkin.captcha.description')"
     >
       <template #body>
         <div class="space-y-3">
           <p class="text-sm text-muted">
-            为防止刷量，签到前需要完成 Cloudflare Turnstile 人机验证。验证通过后会自动签到。
+            {{ $t('user.credits.checkin.captcha.instructions') }}
           </p>
 
           <CommonTurnstileWidget
@@ -235,7 +243,7 @@ function onTurnstileError(message: string) {
             v-else
             class="text-sm text-error"
           >
-            Turnstile siteKey 未配置，请联系管理员。
+            {{ $t('user.credits.checkin.captcha.missingSiteKey') }}
           </p>
 
           <p
@@ -253,7 +261,7 @@ function onTurnstileError(message: string) {
               name="i-mdi-loading"
               class="size-4 animate-spin"
             />
-            正在提交签到...
+            {{ $t('user.credits.checkin.submitting') }}
           </div>
         </div>
       </template>
@@ -265,7 +273,7 @@ function onTurnstileError(message: string) {
             :disabled="submitting || verifying"
             @click="closeModal"
           >
-            取消
+            {{ $t('common.actions.cancel') }}
           </UButton>
         </div>
       </template>

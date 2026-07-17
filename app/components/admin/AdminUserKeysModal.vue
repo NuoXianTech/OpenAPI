@@ -4,6 +4,7 @@ import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
+import { useApiKeyDisplay } from '~/composables/api/use-api-key-display'
 import type { ApiKeyItem } from '#shared/types/api'
 
 const props = defineProps<{
@@ -16,6 +17,13 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const { t, locale } = useI18n()
+const {
+  getIpText,
+  getQuotaText,
+  getScopesText,
+  getStatus
+} = useApiKeyDisplay()
 const keys = ref<ApiKeyItem[]>([])
 const loading = ref(false)
 
@@ -24,8 +32,12 @@ async function load() {
   loading.value = true
   try {
     keys.value = (await $fetch<ApiKeyItem[]>('/api/admin/users/apikeys', { query: { userId: props.target.id } })) || []
-  } catch {
+  } catch (error) {
     keys.value = []
+    toast.add({
+      title: parseFetchError(error, t('admin.users.apiKeys.loadFailed')),
+      color: 'error'
+    })
   } finally {
     loading.value = false
   }
@@ -95,11 +107,13 @@ async function submitForm() {
   try {
     if (editingId.value) {
       await updateKey(editingId.value, buildPayload())
-      toast.add({ title: '已更新', color: 'success' })
+      toast.add({ title: t('common.feedback.updated'), color: 'success' })
     } else {
       const res = await createKey({ ...buildPayload(), count: form.count })
       toast.add({
-        title: res.count > 1 ? `已生成 ${res.count} 个 API Key` : '已生成新 API Key',
+        title: res.count > 1
+          ? t('admin.users.apiKeys.feedback.createdMany', { count: res.count })
+          : t('admin.users.apiKeys.feedback.createdOne'),
         color: 'success'
       })
     }
@@ -107,7 +121,13 @@ async function submitForm() {
     editingId.value = null
     resetForm()
   } catch (err) {
-    toast.add({ title: parseFetchError(err, editingId.value ? '更新失败' : '创建失败'), color: 'error' })
+    toast.add({
+      title: parseFetchError(
+        err,
+        editingId.value ? t('common.feedback.updateFailed') : t('common.feedback.createFailed')
+      ),
+      color: 'error'
+    })
   } finally {
     creating.value = false
   }
@@ -116,36 +136,41 @@ async function submitForm() {
 async function resetKeyAction(id: number) {
   try {
     await resetKey(id)
-    toast.add({ title: 'API Key 已重置', color: 'success' })
+    toast.add({ title: t('common.apiKeys.reset.success'), color: 'success' })
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '重置失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.apiKeys.reset.failed')), color: 'error' })
   }
 }
 
 async function toggleActive(key: ApiKeyItem) {
   try {
     await updateKey(key.id, { isActive: !key.isActive })
-    toast.add({ title: key.isActive ? 'API Key 已停用' : 'API Key 已启用', color: 'success' })
+    toast.add({
+      title: key.isActive
+        ? t('common.apiKeys.feedback.disabled')
+        : t('common.apiKeys.feedback.enabled'),
+      color: 'success'
+    })
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   }
 }
 
 async function removeKeyAction(id: number) {
   try {
     await removeKey(id)
-    toast.add({ title: 'API Key 已删除', color: 'success' })
+    toast.add({ title: t('common.feedback.deleted'), color: 'success' })
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
   }
 }
 
 async function copy(text: string) {
   try {
     await navigator.clipboard.writeText(text)
-    toast.add({ title: '已复制到剪贴板', color: 'success' })
+    toast.add({ title: t('common.feedback.copied'), color: 'success' })
   } catch {
-    toast.add({ title: '复制失败', color: 'error' })
+    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
   }
 }
 
@@ -158,7 +183,7 @@ function toggleReveal(id: number) {
 <template>
   <UModal
     :open="open"
-    :title="`${target?.username ?? ''} 的 API Keys`"
+    :title="$t('admin.users.apiKeys.title', { username: target?.username ?? '' })"
     :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
     @update:open="emit('update:open', $event)"
   >
@@ -170,7 +195,7 @@ function toggleReveal(id: number) {
           :variant="formOpen ? 'outline' : 'solid'"
           @click="toggleForm"
         >
-          {{ formOpen ? '收起' : '新增' }}
+          {{ formOpen ? $t('admin.users.apiKeys.actions.collapse') : $t('admin.users.apiKeys.actions.add') }}
         </UButton>
       </div>
 
@@ -183,7 +208,7 @@ function toggleReveal(id: number) {
           v-if="editingId"
           class="text-xs text-muted"
         >
-          编辑 Key #{{ editingId }} · 不会更换 Key 字符串本身
+          {{ $t('admin.users.apiKeys.editingHint', { id: editingId }) }}
         </div>
 
         <ApiKeyFormFields
@@ -192,6 +217,7 @@ function toggleReveal(id: number) {
           :ip-line-errors="ipLineErrors"
           :error="formError"
           :show-count="!editingId"
+          :editing="!!editingId"
           size="sm"
         />
 
@@ -202,7 +228,7 @@ function toggleReveal(id: number) {
             size="sm"
             @click="() => { formOpen = false }"
           >
-            取消
+            {{ $t('common.actions.cancel') }}
           </UButton>
           <UButton
             size="sm"
@@ -210,7 +236,7 @@ function toggleReveal(id: number) {
             :disabled="!!formError"
             @click="submitForm"
           >
-            {{ editingId ? '保存' : '生成' }}
+            {{ editingId ? $t('common.actions.save') : $t('admin.users.apiKeys.actions.generate') }}
           </UButton>
         </div>
       </div>
@@ -219,13 +245,13 @@ function toggleReveal(id: number) {
         v-if="loading"
         class="text-sm text-muted py-4 text-center"
       >
-        加载中...
+        {{ $t('common.states.loading') }}
       </div>
       <div
         v-else-if="keys.length === 0"
         class="text-sm text-muted py-4 text-center"
       >
-        暂无 API Key
+        {{ $t('admin.users.apiKeys.empty') }}
       </div>
       <div
         v-else
@@ -241,20 +267,12 @@ function toggleReveal(id: number) {
               <div class="flex items-center gap-2 mb-1">
                 <span class="text-sm font-medium">{{ key.name }}</span>
                 <UBadge
-                  v-if="isApiKeyExpired(key)"
-                  color="warning"
+                  v-if="getStatus(key).code !== 'enabled'"
+                  :color="getStatus(key).color"
                   variant="subtle"
                   size="xs"
                 >
-                  已过期
-                </UBadge>
-                <UBadge
-                  v-else-if="!key.isActive"
-                  color="neutral"
-                  variant="subtle"
-                  size="xs"
-                >
-                  停用
+                  {{ getStatus(key).label }}
                 </UBadge>
               </div>
               <div class="flex items-center gap-1">
@@ -266,6 +284,9 @@ function toggleReveal(id: number) {
                   size="xs"
                   color="neutral"
                   variant="ghost"
+                  :aria-label="showFullKeyId === key.id
+                    ? $t('admin.users.apiKeys.actions.hide')
+                    : $t('admin.users.apiKeys.actions.reveal')"
                   @click="toggleReveal(key.id)"
                 />
                 <UButton
@@ -273,6 +294,7 @@ function toggleReveal(id: number) {
                   size="xs"
                   color="neutral"
                   variant="ghost"
+                  :aria-label="$t('common.apiKeys.actions.copy')"
                   @click="copy(key.apiKey)"
                 />
               </div>
@@ -284,7 +306,7 @@ function toggleReveal(id: number) {
                 color="neutral"
                 @click="openEditForm(key)"
               >
-                编辑
+                {{ $t('common.actions.edit') }}
               </UButton>
               <UButton
                 size="xs"
@@ -292,7 +314,7 @@ function toggleReveal(id: number) {
                 color="neutral"
                 @click="toggleActive(key)"
               >
-                {{ key.isActive ? '停用' : '启用' }}
+                {{ key.isActive ? $t('common.apiKeys.actions.disable') : $t('common.apiKeys.actions.enable') }}
               </UButton>
               <UButton
                 size="xs"
@@ -300,7 +322,7 @@ function toggleReveal(id: number) {
                 color="neutral"
                 @click="resetKeyAction(key.id)"
               >
-                重置
+                {{ $t('common.apiKeys.actions.reset') }}
               </UButton>
               <UButton
                 size="xs"
@@ -308,15 +330,15 @@ function toggleReveal(id: number) {
                 color="error"
                 @click="removeKeyAction(key.id)"
               >
-                删除
+                {{ $t('common.actions.delete') }}
               </UButton>
             </div>
           </div>
           <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted">
-            <div>过期：{{ formatDateTime(key.expiresAt, '永不过期') }}</div>
-            <div>配额：{{ apiKeyQuotaText(key) }}</div>
-            <div>接口：{{ apiKeyScopesText(key.scopes, scopeLabelMap) }}</div>
-            <div>IP：{{ apiKeyIpText(key.ipWhitelist) }}</div>
+            <div>{{ $t('admin.users.apiKeys.summary.expiry') }}：{{ formatDateTime(key.expiresAt, $t('common.apiKeys.expiry.never'), locale) }}</div>
+            <div>{{ $t('admin.users.apiKeys.summary.quota') }}：{{ getQuotaText(key) }}</div>
+            <div>{{ $t('admin.users.apiKeys.summary.scopes') }}：{{ getScopesText(key.scopes, scopeLabelMap) }}</div>
+            <div>{{ $t('admin.users.apiKeys.summary.ip') }}：{{ getIpText(key.ipWhitelist) }}</div>
           </div>
         </div>
       </div>

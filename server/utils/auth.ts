@@ -2,6 +2,7 @@ import { createHash, randomBytes, scrypt as scryptCallback } from 'node:crypto'
 import type { BinaryLike, ScryptOptions } from 'node:crypto'
 import { promisify } from 'node:util'
 import type { H3Event } from 'h3'
+import { isSupportedLocale } from '#shared/config/locale-defaults'
 import { createError, defineEventHandler, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/services/user-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
@@ -211,7 +212,8 @@ export async function getAuthUser(event: H3Event) {
     displayName: user.displayName,
     email: user.email,
     avatarUrl: getCravatarUrl(user.email),
-    role: user.role as 'user' | 'admin'
+    role: user.role as 'user' | 'admin',
+    locale: isSupportedLocale(user.locale) ? user.locale : null
   }
 }
 

@@ -1,0 +1,1362 @@
+{
+  "admin": {
+    "units": {
+      "people": "人",
+      "items": "个"
+    },
+    "initialProfile": {
+      "title": "完善管理员账号",
+      "description": "确认用户名和邮箱，并设置新的管理员密码。",
+      "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
+      "newPassword": "新密码",
+      "passwordHelp": "至少 8 位",
+      "feedback": {
+        "updated": "管理员账号已更新",
+        "saveFailed": "保存失败"
+      }
+    },
+    "logs": {
+      "call": {
+        "title": "调用日志",
+        "description": "公共接口调用流水、扣费结果与客户端上下文",
+        "filterTitle": "调用日志筛选",
+        "detailsTitle": "调用明细",
+        "empty": "暂无日志",
+        "free": "免费",
+        "milliseconds": "{value}ms",
+        "types": {
+          "request": "请求",
+          "error": "错误"
+        },
+        "filters": {
+          "timeRange": "时间范围",
+          "allTime": "全部时间",
+          "apiName": "接口名称",
+          "allApis": "全部接口",
+          "category": "分类",
+          "allCategories": "全部分类",
+          "type": "类型",
+          "allTypes": "所有类型",
+          "exact": "精确筛选",
+          "keyName": "密钥名称",
+          "keyHint": "按 API 密钥筛选",
+          "user": "用户",
+          "userHint": "按用户 ID 筛选",
+          "emptyAll": "留空查全部",
+          "requestId": "请求 ID",
+          "requestIdPlaceholder": "UUID，精确匹配"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "key": "密钥",
+          "api": "接口",
+          "cost": "费用",
+          "summary": "摘要"
+        },
+        "outcomes": {
+          "notCounted": "未计入统计",
+          "rejected": "拒绝"
+        },
+        "detail": {
+          "title": "调用详情",
+          "time": "时间",
+          "type": "类型",
+          "requestId": "请求 ID",
+          "user": "用户",
+          "key": "密钥",
+          "api": "接口",
+          "request": "请求",
+          "statusCode": "状态码",
+          "latency": "耗时",
+          "cost": "费用",
+          "requestBody": "请求体",
+          "responseBody": "响应体",
+          "error": "错误",
+          "client": "客户端"
+        }
+      },
+      "login": {
+        "title": "登录日志",
+        "description": "已识别用户的登录尝试（成功 + 失败）、登录方式与客户端来源",
+        "filterTitle": "登录日志筛选",
+        "detailsTitle": "登录明细",
+        "empty": "暂无登录日志",
+        "filters": {
+          "timeRange": "时间范围",
+          "allTime": "全部时间",
+          "method": "登录方式",
+          "result": "结果",
+          "userId": "用户 ID",
+          "emptyAll": "留空查全部",
+          "allMethods": "全部方式",
+          "allResults": "全部结果"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "method": "方式",
+          "result": "结果",
+          "device": "设备"
+        }
+      },
+      "operations": {
+        "title": "操作日志",
+        "description": "后台动作、资源变更与操作者审计轨迹",
+        "filterTitle": "操作日志筛选",
+        "detailsTitle": "操作明细",
+        "empty": "暂无操作日志",
+        "filters": {
+          "timeRange": "时间范围",
+          "allTime": "全部时间",
+          "source": "来源",
+          "allSources": "全部来源",
+          "adminActions": "管理员操作",
+          "userActions": "用户操作",
+          "actor": "操作者",
+          "actorHint": "名称模糊匹配",
+          "status": "状态",
+          "allStatuses": "全部状态",
+          "exact": "精确筛选",
+          "userId": "用户 ID",
+          "actionPrefix": "动作前缀",
+          "actionPrefixHint": "例如 admin.user.",
+          "resourceType": "资源类型",
+          "resourceTypePlaceholder": "如 api / user",
+          "emptyAll": "留空查全部"
+        },
+        "columns": {
+          "time": "时间",
+          "actor": "操作者",
+          "action": "动作",
+          "resource": "资源",
+          "status": "状态"
+        },
+        "detail": {
+          "title": "操作详情",
+          "time": "时间",
+          "status": "状态",
+          "actor": "操作者",
+          "action": "动作",
+          "resourceType": "资源类型",
+          "resourceId": "资源 ID",
+          "client": "客户端",
+          "payload": "详情"
+        },
+        "actionLabels": {
+          "admin_api_category_create": "创建接口分类",
+          "admin_api_category_update": "更新接口分类",
+          "admin_api_category_delete": "删除接口分类",
+          "admin_api_register": "注册接口",
+          "admin_api_update": "更新接口",
+          "admin_api_delete": "删除接口",
+          "admin_api_toggle_isEnabled": "切换接口启用状态",
+          "admin_api_toggle_isStatistics": "切换接口统计状态",
+          "admin_friend_link_create": "创建友情链接",
+          "admin_friend_link_update": "更新友情链接",
+          "admin_friend_link_delete": "删除友情链接",
+          "admin_announcement_create": "创建公告",
+          "admin_announcement_update": "更新公告",
+          "admin_announcement_delete": "删除公告",
+          "admin_notification_send": "发送通知",
+          "admin_notification_delete": "删除通知",
+          "admin_api_key_create": "创建 API 密钥",
+          "admin_api_key_update": "更新 API 密钥",
+          "admin_api_key_reset": "重置 API 密钥",
+          "admin_api_key_delete": "删除 API 密钥",
+          "admin_profile_onboarding_update": "更新初始管理员资料",
+          "admin_user_create": "创建用户",
+          "admin_user_update": "更新用户",
+          "admin_user_delete": "删除用户",
+          "admin_user_ban": "封禁用户",
+          "admin_user_unban": "解封用户",
+          "admin_credit_grant": "发放积分",
+          "admin_credit_revoke": "扣除积分",
+          "admin_credit_reset": "重置积分",
+          "admin_redemption_code_generate": "生成兑换码",
+          "admin_redemption_code_delete": "删除兑换码",
+          "admin_redemption_code_batch_delete": "批量删除兑换码",
+          "admin_redemption_code_enable": "启用兑换码",
+          "admin_redemption_code_disable": "停用兑换码",
+          "admin_redemption_code_batch_enable": "批量启用兑换码",
+          "admin_redemption_code_batch_disable": "批量停用兑换码",
+          "admin_oauth_provider_update": "更新 OAuth 配置",
+          "admin_settings_update": "更新系统设置",
+          "admin_settings_smtp_test": "测试邮件发送",
+          "user_checkin": "每日签到",
+          "user_api_key_create": "创建 API 密钥",
+          "user_api_key_update": "更新 API 密钥",
+          "user_api_key_reset": "重置 API 密钥",
+          "user_api_key_delete": "删除 API 密钥",
+          "user_password_change": "修改密码",
+          "user_oauth_unbind": "解绑第三方账号",
+          "user_redemption_code_redeem": "兑换码兑换"
+        }
+      }
+    },
+    "credits": {
+      "overview": {
+        "pageTitle": "积分概览",
+        "title": "积分运营概览",
+        "description": "汇总用户余额、近期收支和兑换码发放能力",
+        "updatedAt": "更新于 {time}",
+        "waitingRefresh": "等待刷新",
+        "loadFailed": "积分概览加载失败",
+        "loadFailedDescription": "请稍后刷新重试。",
+        "recentTitle": "最近积分变动",
+        "actions": {
+          "userCredits": "用户积分",
+          "redemptionCodes": "兑换码管理",
+          "viewAll": "查看全部"
+        },
+        "cards": {
+          "totalBalance": "用户积分总余额",
+          "usersWithBalance": "{count} 位用户持有积分",
+          "income24h": "近 24 小时发放",
+          "transactionCount24h": "共 {count} 笔变动",
+          "expense24h": "近 24 小时消耗",
+          "netChange24h": "净变化 {amount}",
+          "averageBalance": "用户平均余额",
+          "userCount": "共 {count} 位用户",
+          "activeRedemptionCodes": "可用兑换码",
+          "redemptionPotential": "最多可发放 {amount} 积分"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "reason": "原因",
+          "change": "变动",
+          "balance": "余额",
+          "remark": "备注"
+        }
+      },
+      "users": {
+        "title": "用户积分",
+        "description": "查询用户余额，对单个或选中的用户发放、扣除和重置积分",
+        "searchPlaceholder": "搜索用户名、昵称或邮箱...",
+        "filterTitle": "用户积分筛选",
+        "selectedUsers": "已选择 {count} 位用户",
+        "selectedCount": "已选 {count} 位",
+        "listTitle": "用户余额",
+        "empty": "暂无符合条件的用户",
+        "filters": {
+          "userId": "用户 ID",
+          "emptyAll": "留空查询全部",
+          "balance": "积分余额",
+          "allBalances": "全部余额",
+          "positive": "有积分",
+          "zero": "零积分",
+          "negative": "负积分（异常）"
+        },
+        "columns": {
+          "user": "用户",
+          "balance": "积分余额",
+          "status": "账号状态",
+          "createdAt": "注册时间"
+        },
+        "actions": {
+          "batchAdjust": "批量调整积分",
+          "adjust": "调整"
+        }
+      },
+      "transactions": {
+        "title": "积分流水",
+        "description": "查看用户积分变动，并快速进入用户积分调整与兑换码管理",
+        "filterTitle": "积分流水筛选",
+        "detailsTitle": "积分明细",
+        "empty": "暂无积分日志",
+        "filters": {
+          "userId": "用户 ID",
+          "emptyAll": "留空查全部",
+          "reason": "原因",
+          "allReasons": "全部原因",
+          "direction": "收支方向",
+          "allDirections": "全部方向",
+          "income": "收入",
+          "expense": "支出",
+          "operator": "操作人",
+          "operatorPlaceholder": "管理员名称",
+          "startAt": "开始时间",
+          "endAt": "结束时间",
+          "minAmount": "最小变动金额",
+          "minAmountPlaceholder": "例如 -100",
+          "maxAmount": "最大变动金额",
+          "maxAmountPlaceholder": "例如 1000"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "reason": "原因",
+          "amount": "金额",
+          "balance": "余额",
+          "operator": "操作人",
+          "remark": "备注"
+        }
+      },
+      "redemptionCodes": {
+        "title": "兑换码",
+        "description": "生成和管理积分兑换码，控制可用状态、使用次数与有效期限",
+        "searchPlaceholder": "搜索兑换码 / 备注...",
+        "detailsTitle": "兑换码明细",
+        "empty": "暂无兑换码",
+        "neverExpires": "永不过期",
+        "filters": {
+          "status": "状态",
+          "batch": "批次",
+          "allBatches": "全部批次",
+          "batchOption": "{batchId}（{used}/{total} 用 · {amount} 积分）"
+        },
+        "columns": {
+          "code": "兑换码",
+          "amount": "面额",
+          "usage": "使用",
+          "note": "备注",
+          "expiresAt": "过期时间",
+          "status": "状态",
+          "createdAt": "创建时间"
+        },
+        "statuses": {
+          "available": "可用",
+          "disabled": "已禁用",
+          "usedUp": "已用完",
+          "expired": "已过期"
+        },
+        "actions": {
+          "generate": "生成兑换码",
+          "generateMore": "继续生成",
+          "done": "完成",
+          "enable": "启用",
+          "disable": "禁用",
+          "copyCode": "复制兑换码",
+          "copyAll": "复制全部",
+          "clickToCopy": "点击复制"
+        },
+        "feedback": {
+          "generated": "已生成 {count} 张兑换码",
+          "enabled": "已启用",
+          "disabled": "已禁用",
+          "batchEnabled": "已启用 {count} 张兑换码",
+          "batchDisabled": "已禁用 {count} 张兑换码",
+          "batchDeleted": "已删除 {count} 张兑换码",
+          "codeCopied": "已复制 {code}",
+          "allCopied": "已复制全部兑换码到剪贴板"
+        },
+        "deleteCode": {
+          "title": "删除兑换码 {code}",
+          "description": "删除后该兑换码立即失效，操作不可恢复。"
+        },
+        "deleteBatch": {
+          "title": "删除批次 {batchId}",
+          "includeUsedDescription": "将删除批次 {batchId} 的全部兑换码（含已被兑换过的），此操作不可恢复。",
+          "unusedDescription": "将删除批次 {batchId} 中未被使用过的兑换码。"
+        },
+        "batch": {
+          "title": "最近批次",
+          "count": "{count} 个批次",
+          "perCode": "/ 张",
+          "total": "{count} 张",
+          "usage": "使用 {used}/{total}",
+          "actions": {
+            "filter": "只看本批次",
+            "disable": "禁用整批",
+            "enable": "启用整批",
+            "deleteUnused": "删除未使用",
+            "deleteAll": "删除全部"
+          }
+        },
+        "generate": {
+          "title": "生成兑换码",
+          "amount": "单张面额（必填）",
+          "amountPlaceholder": "例如 100",
+          "count": "生成数量",
+          "length": "码长度",
+          "lengthHint": "不含前缀，8 - 48",
+          "prefix": "前缀（可选）",
+          "prefixHint": "如 WELCOME",
+          "maxUses": "单张可被兑换次数",
+          "maxUsesHint": ">1 表示同一码可被多个用户共享，每人 1 次",
+          "expiresInDays": "过期时间（天）",
+          "expiresInDaysHint": "0 = 永不过期",
+          "note": "备注（可选）",
+          "notePlaceholder": "例如：双十一活动",
+          "failed": "生成失败",
+          "resultTitle": "已生成 {count} 张兑换码",
+          "resultDescription": "批次 {batchId}",
+          "partialResultDescription": "批次 {batchId} · 申请 {requested} 张，因冲突实际生成 {generated} 张",
+          "validation": {
+            "positiveAmount": "amount 必须 > 0"
+          }
+        }
+      },
+      "adjust": {
+        "title": "积分管理",
+        "target": "目标：{target}",
+        "userCount": "{count} 个用户",
+        "operationType": "操作类型",
+        "targetAmount": "目标积分",
+        "amount": "积分",
+        "amountPlaceholder": "请输入积分",
+        "remark": "备注（可选）",
+        "remarkPlaceholder": "例如：促销发放 / 违规扣除",
+        "success": "积分调整成功",
+        "operations": {
+          "grant": "加积分（grant）",
+          "revoke": "减积分（revoke）",
+          "reset": "重置积分（reset）"
+        },
+        "help": {
+          "grant": "将指定积分加到目标用户的积分上。",
+          "revoke": "从目标用户积分中扣除指定数量；不足时扣到 0。",
+          "reset": "将目标用户积分重置为指定数量（默认 0）。"
+        },
+        "validation": {
+          "positiveAmount": "积分必须大于 0"
+        }
+      }
+    },
+    "users": {
+      "title": "用户管理",
+      "searchPlaceholder": "搜索用户名、邮箱或昵称",
+      "filterTitle": "用户筛选",
+      "listTitle": "用户列表",
+      "empty": "暂无用户",
+      "filters": {
+        "userId": "用户 ID",
+        "exactMatch": "精确匹配",
+        "userIdPlaceholder": "输入用户 ID",
+        "role": "角色",
+        "allRoles": "全部角色",
+        "activeStatus": "激活状态",
+        "allActiveStatuses": "全部激活状态",
+        "banStatus": "封禁状态",
+        "allBanStatuses": "全部封禁状态"
+      },
+      "columns": {
+        "username": "用户名",
+        "role": "类型",
+        "email": "邮箱",
+        "credits": "积分",
+        "status": "状态",
+        "ban": "封禁",
+        "createdAt": "注册时间"
+      },
+      "actions": {
+        "add": "添加用户",
+        "showColumns": "显示列",
+        "edit": "编辑用户",
+        "ban": "封禁用户",
+        "unban": "解封用户",
+        "apiKeys": "API 密钥"
+      },
+      "feedback": {
+        "banned": "已封禁",
+        "banFailed": "封禁失败",
+        "unbanned": "已解封",
+        "unbanFailed": "解封失败",
+        "updated": "更新成功",
+        "created": "创建成功"
+      },
+      "delete": {
+        "title": "删除用户：{username}",
+        "description": "删除用户后，其所有数据（API 密钥、会话等）将被永久移除。"
+      },
+      "unban": {
+        "title": "解封用户：{username}",
+        "description": "解封后该用户可立即重新登录。"
+      },
+      "banTooltip": {
+        "reason": "原因：{reason}",
+        "noReason": "原因：未填写",
+        "until": "解封时间：{time}"
+      },
+      "fields": {
+        "username": "用户名",
+        "email": "邮箱",
+        "displayName": "昵称",
+        "role": "账号类型"
+      },
+      "create": {
+        "title": "添加用户",
+        "description": "直接创建用户账户，跳过邮箱验证流程",
+        "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
+        "usernamePlaceholder": "例如：alice_2026",
+        "initialPassword": "初始密码",
+        "passwordHelp": "至少 8 位",
+        "displayName": "昵称（可选）",
+        "displayNameHelp": "留空时默认与用户名一致",
+        "activateImmediately": "创建后立即激活"
+      },
+      "edit": {
+        "title": "编辑用户",
+        "usernameHelp": "用户名创建后不可修改，用于保持审计记录稳定。",
+        "resetPassword": "重置密码",
+        "resetPasswordHelp": "留空则不修改；填写后将强制该用户重新登录（至少 8 位）",
+        "passwordPlaceholder": "留空表示不修改",
+        "oauthBindings": "已绑定第三方",
+        "readOnly": "（只读）",
+        "noOauthBindings": "该用户未绑定任何第三方账号",
+        "lastLogin": "最近登录 {time}"
+      },
+      "ban": {
+        "title": "封禁用户：{username}",
+        "reason": "封禁原因",
+        "reasonHint": "可选，将展示给被封禁用户",
+        "reasonPlaceholder": "例如：违反社区规范、滥用接口等",
+        "duration": "封禁时长",
+        "untilPlaceholder": "选择解封时间",
+        "description": "到期后用户将被自动解封；封禁后该用户的所有会话会立即失效。",
+        "confirm": "确认封禁",
+        "durations": {
+          "permanent": "永久",
+          "oneDay": "1 天",
+          "sevenDays": "7 天",
+          "thirtyDays": "30 天",
+          "custom": "自定义"
+        },
+        "validation": {
+          "requiredUntil": "请填写解封时间",
+          "invalidUntil": "解封时间格式不正确",
+          "futureUntil": "解封时间必须晚于当前时间"
+        }
+      },
+      "apiKeys": {
+        "title": "{username} 的 API 密钥",
+        "loadFailed": "加载 API 密钥失败",
+        "empty": "暂无 API 密钥",
+        "editingHint": "编辑密钥 #{id} · 不会更换密钥字符串本身",
+        "actions": {
+          "collapse": "收起",
+          "add": "新增",
+          "generate": "生成",
+          "reveal": "显示完整密钥",
+          "hide": "隐藏完整密钥"
+        },
+        "feedback": {
+          "createdOne": "已生成新 API 密钥",
+          "createdMany": "已生成 {count} 个 API 密钥"
+        },
+        "summary": {
+          "expiry": "过期",
+          "quota": "配额",
+          "scopes": "接口",
+          "ip": "IP"
+        }
+      }
+    },
+    "content": {
+      "announcements": {
+        "searchPlaceholder": "搜索标题、内容或链接",
+        "listTitle": "公告列表",
+        "empty": "暂无公告",
+        "pinnedBadge": "置顶",
+        "levels": {
+          "info": "公告",
+          "success": "通知",
+          "warning": "提醒",
+          "critical": "紧急"
+        },
+        "levelOptions": {
+          "info": "公告 (info)",
+          "success": "通知 (success)",
+          "warning": "提醒 (warning)",
+          "critical": "紧急 (critical)"
+        },
+        "filters": {
+          "level": "级别",
+          "allLevels": "全部级别",
+          "status": "状态",
+          "allStatuses": "全部状态",
+          "enabled": "已启用",
+          "disabled": "已停用",
+          "pinnedState": "置顶",
+          "allPinned": "全部置顶",
+          "pinned": "已置顶",
+          "notPinned": "未置顶"
+        },
+        "columns": {
+          "title": "标题",
+          "sortOrder": "排序",
+          "enabled": "启用",
+          "pinned": "置顶",
+          "createdAt": "创建时间"
+        },
+        "actions": {
+          "create": "新建公告"
+        },
+        "delete": {
+          "title": "删除公告：{title}",
+          "description": "删除后该公告不再展示，且不可恢复。"
+        },
+        "feedback": {
+          "created": "已创建"
+        },
+        "form": {
+          "editTitle": "编辑公告",
+          "createTitle": "新建公告",
+          "editDescription": "更新公告内容、展示状态与排序设置。",
+          "createDescription": "发布一条面向用户的站内公告。",
+          "title": "标题",
+          "titlePlaceholder": "公告标题（最多 200 字）",
+          "level": "级别",
+          "content": "内容",
+          "contentPlaceholder": "支持纯文本，换行将保留",
+          "linkUrl": "详情链接（可选）",
+          "sortOrder": "排序值（小在前）",
+          "enabled": "启用",
+          "pinned": "置顶",
+          "requiredContent": "标题和内容必填"
+        }
+      },
+      "notifications": {
+        "searchPlaceholder": "搜索发送历史标题或发送人",
+        "historyTitle": "发送历史",
+        "emptyHistory": "暂无发送历史",
+        "filters": {
+          "audience": "范围",
+          "allAudiences": "全部范围",
+          "level": "级别",
+          "allLevels": "全部级别"
+        },
+        "audiences": {
+          "labels": {
+            "specific": "指定",
+            "allCurrent": "全员",
+            "allWithFuture": "全员+未来"
+          },
+          "options": {
+            "specific": "指定用户（仅选中收件人）",
+            "allCurrent": "当前所有用户（不含未来注册）",
+            "allWithFuture": "当前及未来注册用户（新用户激活时自动补发）"
+          }
+        },
+        "levelOptions": {
+          "info": "通知 (info)",
+          "success": "成功 (success)",
+          "warning": "提醒 (warning)",
+          "critical": "紧急 (critical)"
+        },
+        "columns": {
+          "title": "标题",
+          "delivery": "投递 / 已读",
+          "sender": "发送人",
+          "sentAt": "发送时间"
+        },
+        "actions": {
+          "send": "发送通知",
+          "viewDeliveries": "查看接收详情"
+        },
+        "delivery": {
+          "delivered": "投递 {count} 人",
+          "read": "已读 {count} 人"
+        },
+        "delete": {
+          "title": "删除通知：{title}",
+          "description": "软删除后，所有收件人将不再看到此条通知；发送历史不可恢复。"
+        },
+        "detail": {
+          "title": "接收详情",
+          "description": "{title} · {time} · 范围 {audience} · 已投递 {delivered} / 已读 {read}",
+          "loadFailed": "加载接收详情失败",
+          "empty": "暂无投递记录",
+          "readAt": "已读 · {time}",
+          "unread": "未读"
+        },
+        "feedback": {
+          "sent": "已发送（投递 {count} 人）"
+        },
+        "form": {
+          "title": "发送通知",
+          "description": "向指定用户、当前全员或当前及未来注册用户发送站内通知。",
+          "audience": "发送范围",
+          "futureDeliveryHint": "新注册用户首次激活时将自动补发本条通知。",
+          "recipients": "收件人（可多选）",
+          "recipientsPlaceholder": "搜索用户名或邮箱",
+          "messageTitle": "标题",
+          "titlePlaceholder": "通知标题（最多 200 字）",
+          "level": "级别",
+          "content": "内容",
+          "contentPlaceholder": "支持纯文本，换行将保留",
+          "linkUrl": "附加链接（可选）",
+          "requiredContent": "标题和内容必填",
+          "recipientRequired": "请选择收件人或改为全员发送"
+        }
+      },
+      "friendLinks": {
+        "searchPlaceholder": "搜索名称、URL 或描述",
+        "listTitle": "友链列表",
+        "empty": "暂无友链",
+        "filters": {
+          "status": "状态",
+          "allStatuses": "全部状态"
+        },
+        "statuses": {
+          "active": "正常",
+          "inactive": "停用"
+        },
+        "columns": {
+          "title": "标题",
+          "description": "描述",
+          "status": "状态"
+        },
+        "actions": {
+          "create": "新增链接"
+        },
+        "delete": {
+          "title": "删除链接：{title}",
+          "description": "删除后该友情链接将不再展示，且不可恢复。"
+        },
+        "feedback": {
+          "updated": "更新成功",
+          "created": "创建成功"
+        },
+        "validation": {
+          "titleRequired": "链接标题不能为空",
+          "urlRequired": "链接地址不能为空"
+        },
+        "form": {
+          "editTitle": "编辑链接",
+          "createTitle": "新增链接",
+          "editDescription": "更新友情链接信息与展示状态。",
+          "createDescription": "添加一个展示在站点友情链接区域的站点。",
+          "title": "标题",
+          "titlePlaceholder": "站点名称",
+          "description": "描述",
+          "enabled": "启用"
+        }
+      }
+    },
+    "apis": {
+      "categories": {
+        "searchPlaceholder": "搜索编码、名称或描述",
+        "listTitle": "分类列表",
+        "empty": "暂无分类",
+        "columns": {
+          "code": "编码",
+          "name": "名称",
+          "description": "描述",
+          "sortOrder": "排序",
+          "color": "颜色",
+          "enabled": "启用"
+        },
+        "actions": {
+          "create": "新建分类"
+        },
+        "delete": {
+          "title": "删除分类：{name}",
+          "description": "删除后该分类将不再可选；若仍有接口绑定该分类，将无法删除。"
+        },
+        "feedback": {
+          "updated": "更新成功",
+          "created": "创建成功"
+        },
+        "validation": {
+          "codeRequired": "分类标识不能为空",
+          "codeMaxLength": "分类标识最多 64 字",
+          "nameRequired": "分类名称不能为空",
+          "nameMaxLength": "分类名称最多 64 字",
+          "sortOrderInteger": "排序必须是整数"
+        },
+        "form": {
+          "editTitle": "编辑分类",
+          "createTitle": "新增分类",
+          "code": "编码 (code)",
+          "codeHelp": "作为分类唯一键，创建后不可修改",
+          "codePlaceholder": "如 ai-tools",
+          "name": "名称",
+          "namePlaceholder": "如 AI 工具",
+          "description": "描述",
+          "icon": "图标 (i-mdi-*)",
+          "color": "颜色标识",
+          "sortOrder": "排序",
+          "sortOrderHelp": "数字越小越靠前",
+          "enabled": "启用"
+        }
+      },
+      "registry": {
+        "searchPlaceholder": "搜索 code / 名称...",
+        "listTitle": "接口列表",
+        "empty": "该版本暂无接口",
+        "noVersions": "未发现任何 vN 版本目录。请在 server/routes/v1/ 下创建接口目录后重启开发服务。",
+        "versionOption": "{version} ({registered}/{total})",
+        "filters": {
+          "version": "版本"
+        },
+        "columns": {
+          "code": "编码 / 名称",
+          "endpoints": "端点",
+          "category": "分类",
+          "enabled": "启用",
+          "statistics": "统计",
+          "apiKey": "API 密钥"
+        },
+        "statuses": {
+          "unregistered": "未登记",
+          "codeDeleted": "代码已删除",
+          "disabledByDefault": "默认停用"
+        },
+        "apiKey": {
+          "required": "必需",
+          "optional": "可选"
+        },
+        "actions": {
+          "edit": "编辑接口",
+          "capabilities": "接口配置",
+          "sync": "同步路由",
+          "register": "登记接口"
+        },
+        "feedback": {
+          "enableBeforeStatistics": "请先启用接口，再开启统计",
+          "statisticsDisabled": "已同时关闭调用统计",
+          "toggleFailed": "切换失败",
+          "synced": "已同步 manifest",
+          "syncFailed": "同步失败"
+        }
+      },
+      "capabilities": {
+        "modal": {
+          "title": "接口配置",
+          "titleWithTarget": "接口配置：{version} / {code}"
+        },
+        "actions": {
+          "reload": "重新加载",
+          "save": "保存能力配置"
+        },
+        "feedback": {
+          "loadFailed": "读取接口配置失败",
+          "saved": "接口配置已保存",
+          "saveFailed": "保存接口配置失败"
+        },
+        "status": {
+          "configuredRevision": "已配置 · v{revision}",
+          "declarationDefault": "使用声明默认值",
+          "sharedStorage": "配置由平台统一存储，所有服务实例共享"
+        },
+        "form": {
+          "configuredSecretPlaceholder": "已配置，留空保持不变"
+        }
+      },
+      "form": {
+        "modal": {
+          "editTitle": "编辑配置：{version} / {code}",
+          "registerTitle": "登记接口：{version} / {code}",
+          "endpointCount": "{count} 个端点",
+          "defaultDescription": "{version} {code} 接口"
+        },
+        "actions": {
+          "register": "登记"
+        },
+        "feedback": {
+          "apiKeyAutoEnabled": "已自动开启「API 密钥」",
+          "apiKeyAutoEnabledDescription": "设置扣费后必须通过 API 密钥鉴权扣款账户。",
+          "updated": "更新成功",
+          "registered": "登记成功"
+        },
+        "validation": {
+          "nameRequired": "接口名称不能为空",
+          "nameMaxLength": "接口名称最多 100 字",
+          "shortDescriptionRequired": "接口短描述不能为空",
+          "shortDescriptionMaxLength": "接口短描述最多 50 字",
+          "descriptionRequired": "接口描述不能为空",
+          "perSecond": "每秒限流必须是不小于 0 的整数",
+          "perMinute": "每分钟限流必须是不小于 0 的整数",
+          "perHour": "每小时限流必须是不小于 0 的整数",
+          "perDay": "每天限流必须是不小于 0 的整数",
+          "dailyQuota": "日配额必须是不小于 0 的整数",
+          "timeout": "超时时间必须是 100 到 120000 之间的整数",
+          "methodCosts": "方法积分必须是非负整数"
+        },
+        "basic": {
+          "title": "基础信息",
+          "description": "配置接口在前台展示的名称、描述与分类",
+          "name": "名称",
+          "namePlaceholder": "对外展示名称",
+          "status": "状态",
+          "shortDescription": "简短描述",
+          "shortDescriptionPlaceholder": "最多 50 字",
+          "fullDescription": "详细描述",
+          "documentationUrl": "文档地址",
+          "category": "分类",
+          "uncategorized": "未分类"
+        },
+        "access": {
+          "title": "访问控制",
+          "description": "控制接口可用性、鉴权与调用统计",
+          "enabled": "启用接口",
+          "apiKey": "API 密钥",
+          "statistics": "调用统计",
+          "statisticsRequiresEnabled": "启用接口后才能开启调用统计。",
+          "disablingApiKeyClearsCosts": "关闭「API 密钥」会清空所有方法的扣费配置（无法定位扣款账户）。"
+        },
+        "rateLimits": {
+          "title": "限流与配额",
+          "description": "数值为 0 表示不限制",
+          "perSecond": "每秒",
+          "perMinute": "每分钟",
+          "perHour": "每小时",
+          "perDay": "每天",
+          "dailyQuota": "日配额",
+          "timeoutMs": "超时 (ms)"
+        },
+        "costs": {
+          "title": "调用计费",
+          "description": "按 HTTP 方法设置单次积分",
+          "requiresApiKey": "需先开启「API 密钥」",
+          "hasPaidMethods": "含收费方法",
+          "allFree": "整组免费",
+          "pointsPerCall": "单次调用消耗积分",
+          "freePlaceholder": "0 = 免费",
+          "costPerCall": "{amount} / 次",
+          "free": "免费",
+          "help": "逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API 密钥」后才能配置扣费。调用成功才扣，失败或业务标记失败时不扣。"
+        },
+        "endpoints": {
+          "title": "自动发现的端点",
+          "description": "路径与方法由文件结构决定",
+          "dynamic": "动态"
+        }
+      }
+    },
+    "system": {
+      "feedback": {
+        "saved": "保存成功",
+        "saveFailed": "保存失败"
+      },
+      "site": {
+        "basic": {
+          "title": "基本信息",
+          "siteName": {
+            "label": "站点名称",
+            "description": "展示在浏览器标题、登录注册页与邮件中的站点名。"
+          },
+          "siteDescription": {
+            "label": "站点描述",
+            "description": "站点描述信息，站点描述将显示在网页代码的头部与首页卡片中。"
+          },
+          "siteUrl": {
+            "label": "站点 URL",
+            "description": "站点对外访问地址，用于拼接邮件链接与 OAuth 回调，须以 http:// 或 https:// 开头。"
+          },
+          "siteImage": {
+            "label": "站点图标",
+            "description": "浏览器标签页与站点 Logo 使用的图标地址。"
+          },
+          "startTime": {
+            "label": "运行时间",
+            "description": "站点上线时间，用于前台展示已稳定运行的天数。",
+            "placeholder": "选择上线时间"
+          },
+          "termsUrl": {
+            "label": "使用条款链接",
+            "description": "留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+          },
+          "privacyUrl": {
+            "label": "隐私政策链接",
+            "description": "留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+          },
+          "icpBeian": {
+            "label": "ICP 备案号",
+            "description": "留空则页脚不展示。填写后展示在页脚，点击跳转工信部备案系统。",
+            "placeholder": "京ICP备00000000号"
+          },
+          "policeBeian": {
+            "label": "公安备案号",
+            "description": "留空则页脚不展示。填写后展示在页脚，点击跳转公安备案系统。",
+            "placeholder": "京公网安备00000000000000号"
+          }
+        },
+        "checkin": {
+          "title": "每日签到",
+          "enabled": {
+            "label": "启用每日签到",
+            "description": "关闭后用户积分页的签到按钮会显示「已关闭」，签到接口也会拒绝请求。"
+          },
+          "cooldown": {
+            "label": "冷却方式",
+            "description": "按小时 = 距上次签到 N 小时后可签；每日固定时间 = 到达设定时刻后刷新可签状态。",
+            "options": {
+              "hours": "按小时冷却",
+              "fixedTime": "每日固定时间刷新"
+            }
+          },
+          "refreshHours": {
+            "label": "冷却间隔（小时）",
+            "description": "两次签到的最小间隔，默认 24 小时。"
+          },
+          "fixedRefreshTime": {
+            "label": "刷新时间（HH:mm）",
+            "description": "每天到达该时刻后可再次签到，例如 00:00 表示每日 0 点刷新。"
+          },
+          "reward": {
+            "label": "奖励模式",
+            "description": "固定 = 每次签到固定积分；区间随机 = 在 [最少, 最多] 之间随机取整。",
+            "options": {
+              "fixed": "固定积分",
+              "range": "区间随机"
+            }
+          },
+          "fixedAmount": {
+            "label": "固定奖励积分",
+            "description": "每次签到固定发放的积分数量。"
+          },
+          "minAmount": {
+            "label": "最少积分",
+            "description": "区间随机的下限。"
+          },
+          "maxAmount": {
+            "label": "最多积分",
+            "description": "区间随机的上限。"
+          },
+          "validation": {
+            "fixedTime": "请按 HH:mm 格式填写，例如 00:00",
+            "amountRange": "最少积分必须 ≤ 最多积分"
+          }
+        }
+      },
+      "session": {
+        "registration": {
+          "title": "登录与注册",
+          "enabled": {
+            "label": "允许新用户注册",
+            "description": "关闭后，前台注册入口与注册接口都会被拒绝（等同注册模式「关闭」）。"
+          },
+          "passwordReset": {
+            "label": "启用「忘记密码」功能",
+            "description": "关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。"
+          },
+          "emailActivation": {
+            "label": "邮件激活",
+            "description": "开启后，新用户注册需点击邮件中的激活链接才能完成；关闭则注册即激活、不发验证邮件。请确认邮件发信设置正确，否则激活邮件无法送达。"
+          }
+        },
+        "emailFilter": {
+          "label": "注册邮箱过滤模式",
+          "description": "不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。",
+          "rulesLabel": "邮箱域过滤规则",
+          "disabledDescription": "当前模式为「不开启」，此列表不会生效。",
+          "rulesDescription": "逗号或换行分隔，仅写域名（不带 {'@'}）。例如：163.com, qq.com、gmail.com。",
+          "options": {
+            "off": "不开启",
+            "whitelist": "白名单",
+            "blacklist": "黑名单"
+          }
+        },
+        "expiry": {
+          "title": "用户会话时效",
+          "defaultSession": {
+            "label": "默认会话有效期 (秒)",
+            "description": "未勾选「记住我」时使用，默认 86400=1 天，期间活跃会自动滑动续期。"
+          },
+          "absoluteSession": {
+            "label": "会话绝对硬顶 (秒)",
+            "description": "未勾选「记住我」时滑动续期的绝对上限，从首次登录算，默认 604800=7 天。到顶后强制重新登录。"
+          },
+          "rememberSession": {
+            "label": "「记住我」会话有效期 (秒)",
+            "description": "勾选「记住我」时使用，默认 2592000=30 天，到期后必须重新登录。"
+          },
+          "emailVerification": {
+            "label": "邮箱验证过期 (分钟)",
+            "description": "注册 / 换绑邮箱的验证链接有效时长，默认 30 分钟。"
+          },
+          "passwordReset": {
+            "label": "密码重置链接过期 (分钟)",
+            "description": "找回密码邮件中的重置链接有效时长，默认 30 分钟。"
+          }
+        },
+        "oauth": {
+          "title": "第三方登录",
+          "provider": "provider: {provider}",
+          "forceBinding": {
+            "label": "强制绑定已有账号",
+            "description": "开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册。"
+          },
+          "status": {
+            "enabled": "已启用",
+            "disabled": "未启用"
+          },
+          "clientId": {
+            "label": "Client ID",
+            "placeholder": "填写 OAuth App 的 Client ID"
+          },
+          "clientSecret": {
+            "label": "Client Secret",
+            "savedDescription": "已保存。留空则保持不变，填写则覆盖。",
+            "initialDescription": "首次保存，必填。",
+            "show": "显示密钥",
+            "hide": "隐藏密钥"
+          },
+          "callbackUrl": {
+            "label": "Callback URL",
+            "description": "由站点地址自动拼接，不可修改。请把该地址填到 OAuth App 的回调白名单。"
+          },
+          "scopes": {
+            "label": "Scopes",
+            "description": "已按 provider 固定，无需配置。",
+            "empty": "（无）"
+          },
+          "enableProvider": "启用该登录方式",
+          "feedback": {
+            "saved": "第三方登录设置保存成功",
+            "saveFailed": "第三方登录设置保存失败",
+            "copyFailed": "复制失败，请手动选中复制"
+          }
+        }
+      },
+      "captcha": {
+        "providers": {
+          "turnstile": "Cloudflare Turnstile"
+        },
+        "credentials": {
+          "title": "验证码",
+          "type": {
+            "label": "验证码类型",
+            "description": "选择验证码服务提供商。目前仅支持 Cloudflare Turnstile。"
+          },
+          "siteKey": {
+            "label": "站点密钥 (Site Key)",
+            "description": "Cloudflare Turnstile 应用页获取到的 Site Key。"
+          },
+          "secretKey": {
+            "label": "密钥 (Secret Key)",
+            "description": "Cloudflare Turnstile 应用页获取到的 Secret Key。"
+          }
+        },
+        "scenes": {
+          "title": "验证场景",
+          "login": {
+            "label": "登录验证码",
+            "description": "/login 提交时校验。"
+          },
+          "register": {
+            "label": "注册验证码",
+            "description": "/register 提交时校验。"
+          },
+          "passwordReset": {
+            "label": "找回密码验证码",
+            "description": "/forgot-password 申请重置链接时校验，避免邮件接口被刷。需同时开启「忘记密码」功能。"
+          },
+          "checkin": {
+            "label": "每日签到验证码",
+            "description": "积分页点击签到时弹出验证窗口，通过后自动签到。需同时开启「每日签到」功能。"
+          }
+        }
+      },
+      "email": {
+        "settings": {
+          "title": "发信",
+          "fromName": {
+            "label": "发件人名",
+            "description": "邮件中展示的发件人姓名，留空则只显示发件邮箱地址。"
+          },
+          "fromAddress": {
+            "label": "发件人邮箱",
+            "description": "发件邮箱的地址，也作为 EHLO 域名来源。"
+          },
+          "host": {
+            "label": "SMTP 服务器",
+            "description": "发件服务器地址，不含端口号。"
+          },
+          "port": {
+            "label": "SMTP 端口",
+            "description": "发件服务器端口号，常见 465（SSL）/ 587（STARTTLS）。"
+          },
+          "username": {
+            "label": "SMTP 用户名",
+            "description": "发信邮箱用户名，一般与邮箱地址相同。"
+          },
+          "password": {
+            "label": "SMTP 密码",
+            "description": "发信邮箱密码或授权码。"
+          },
+          "replyTo": {
+            "label": "回信邮箱",
+            "description": "用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。"
+          },
+          "secure": {
+            "label": "强制使用 SSL 连接",
+            "description": "是否强制使用 SSL 加密连接（465 端口）。若无法发送邮件，可关闭后改用 587 STARTTLS。"
+          },
+          "poolMaxAge": {
+            "label": "SMTP 连接有效期 (秒)",
+            "description": "有效期内建立的 SMTP 连接会被新邮件发送请求复用。0 = 不复用，每封新建即关闭。"
+          },
+          "test": {
+            "label": "测试发信",
+            "description": "使用当前已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。"
+          }
+        },
+        "actions": {
+          "sendTest": "发送测试邮件",
+          "send": "发送"
+        },
+        "feedback": {
+          "recipientRequired": "请输入收件邮箱",
+          "sent": "测试邮件已发送",
+          "sentDescription": "请到 {email} 查收",
+          "sendFailed": "发送失败"
+        },
+        "testModal": {
+          "title": "SMTP 测试发信",
+          "description": "将使用已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。",
+          "recipient": "收件邮箱"
+        }
+      },
+      "about": {
+        "pageTitle": "关于",
+        "project": {
+          "title": "项目",
+          "description": "OpenAPI 是一个面向 API 开放、运营管理与用户自助使用的全栈平台。",
+          "items": {
+            "name": {
+              "label": "项目名称"
+            },
+            "applicationType": {
+              "label": "应用类型",
+              "value": "API 服务聚合与开放平台"
+            },
+            "managementModel": {
+              "label": "管理模型",
+              "value": "多管理员 + 多用户"
+            },
+            "runtime": {
+              "label": "运行形态",
+              "value": "Nuxt 全栈应用"
+            }
+          }
+        },
+        "capabilities": {
+          "title": "能力",
+          "description": "项目围绕 API 管理、用户自助、运营配置与审计追踪组织功能。",
+          "items": {
+            "accounts": {
+              "label": "账号与权限",
+              "description": "统一登录入口，基于用户角色区分管理能力与用户能力。"
+            },
+            "apis": {
+              "label": "API 管理",
+              "description": "维护接口、分类、调用成本、启用状态与统计口径。"
+            },
+            "audit": {
+              "label": "日志与审计",
+              "description": "集中查看调用、登录、积分与操作日志，保留关键操作者信息。"
+            },
+            "operations": {
+              "label": "运营能力",
+              "description": "支持公告、通知、友情链接、兑换码与积分体系。"
+            },
+            "configuration": {
+              "label": "系统配置",
+              "description": "集中管理站点、邮件、验证码、会话与安全相关配置。"
+            }
+          }
+        },
+        "stack": {
+          "title": "技术栈",
+          "description": "当前项目以 Nuxt 全栈能力为核心，结合类型安全、组件化 UI 与结构化数据校验。",
+          "items": {
+            "nuxt": {
+              "label": "Nuxt 4 / Vue 3",
+              "description": "使用 Composition API 与文件路由组织前后端能力。"
+            },
+            "ui": {
+              "label": "Nuxt UI / Tailwind CSS",
+              "description": "构建一致、响应式、适合后台工作流的界面。"
+            },
+            "nitro": {
+              "label": "Nitro / H3",
+              "description": "提供服务端 API、鉴权中间件与运行时能力。"
+            },
+            "database": {
+              "label": "Drizzle ORM / PostgreSQL",
+              "description": "以类型安全方式维护数据库 schema、查询与迁移。"
+            },
+            "tooling": {
+              "label": "VueUse / Zod",
+              "description": "复用组合式工具，并对输入数据做结构化校验。"
+            }
+          }
+        },
+        "production": {
+          "title": "生产约定",
+          "description": "这些约定用于保持多管理员、多用户环境中的可维护性和可追踪性。",
+          "items": {
+            "configuration": {
+              "label": "配置优先",
+              "description": "站点、邮件、验证码、OAuth 等运行参数集中在系统设置与环境变量中维护。"
+            },
+            "audit": {
+              "label": "审计优先",
+              "description": "管理动作和用户关键行为写入日志，便于追踪变更来源。"
+            },
+            "roles": {
+              "label": "角色清晰",
+              "description": "管理员可访问用户能力与管理能力，用户仅访问自身工作区。"
+            },
+            "migrations": {
+              "label": "迁移可控",
+              "description": "数据库迁移随构建产物发布，并在生产进程接受请求前自动执行。"
+            }
+          }
+        }
+      }
+    },
+    "overview": {
+      "pageTitle": "管理中心",
+      "title": "概览",
+      "platformTitle": "平台概览",
+      "hero": {
+        "title": "平台运营总览",
+        "description": "你好。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。",
+        "descriptionWithName": "你好，{username}。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。"
+      },
+      "snapshot": {
+        "title": "今日快照",
+        "todayCalls": "今日调用",
+        "comparedYesterday": "较昨日"
+      },
+      "metrics": {
+        "users": "注册用户",
+        "usersDescription": "当前平台注册账号总量",
+        "enabledApis": "启用 API",
+        "totalApis": "共 {count} 个接口",
+        "totalCalls": "总调用",
+        "successRate": "成功率"
+      },
+      "actions": {
+        "viewCallLogs": "查看调用日志",
+        "viewFullLogs": "查看完整日志"
+      },
+      "trend": {
+        "title": "API 调用趋势",
+        "description": "按天聚合总调用、成功与失败次数",
+        "empty": "暂无调用数据"
+      },
+      "distribution": {
+        "title": "API 使用分布",
+        "description": "Top 5 高频调用接口",
+        "empty": "暂无分布数据"
+      },
+      "hourly": {
+        "title": "调用趋势（24 小时）",
+        "description": "按小时聚合已计入统计的 API 请求次数",
+        "calls": "调用次数",
+        "empty": "近 24 小时暂无调用"
+      },
+      "ranking": {
+        "title": "调用次数排行",
+        "description": "Top {count} 高频调用接口及成功率"
+      },
+      "recent": {
+        "title": "最新 API 请求",
+        "empty": "暂无请求日志",
+        "milliseconds": "{value} ms",
+        "columns": {
+          "time": "时间",
+          "method": "方法",
+          "status": "状态",
+          "latency": "耗时"
+        }
+      }
+    }
+  }
+}

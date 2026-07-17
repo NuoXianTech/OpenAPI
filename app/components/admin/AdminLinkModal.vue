@@ -10,6 +10,7 @@ const props = defineProps<{ item?: FriendLinkItem | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const form = useTemplateRef('form')
+const { t } = useI18n()
 
 const isEdit = computed(() => !!props.item)
 
@@ -22,8 +23,8 @@ interface FriendLinkFormState {
 
 function validateFriendLinkForm(state: Partial<FriendLinkFormState>): FormError<string>[] {
   return compactFormErrors(
-    requiredTextError('title', state.title, '链接标题不能为空'),
-    requiredTextError('url', state.url, '链接地址不能为空')
+    requiredTextError('title', state.title, t('admin.content.friendLinks.validation.titleRequired')),
+    requiredTextError('url', state.url, t('admin.content.friendLinks.validation.urlRequired'))
   )
 }
 
@@ -46,11 +47,14 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
     } else {
       await $fetch('/api/admin/friend-links/add', { method: 'POST', body: event.data })
     }
-    toast.add({ title: isEdit.value ? '更新成功' : '创建成功', color: 'success' })
+    toast.add({
+      title: isEdit.value ? t('admin.content.friendLinks.feedback.updated') : t('admin.content.friendLinks.feedback.created'),
+      color: 'success'
+    })
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   } finally { loading.value = false }
 }
 </script>
@@ -58,8 +62,10 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
 <template>
   <UModal
     v-model:open="open"
-    :title="isEdit ? '编辑链接' : '新增链接'"
-    :description="isEdit ? '更新友情链接信息与展示状态。' : '添加一个展示在站点友情链接区域的站点。'"
+    :title="isEdit ? $t('admin.content.friendLinks.form.editTitle') : $t('admin.content.friendLinks.form.createTitle')"
+    :description="isEdit
+      ? $t('admin.content.friendLinks.form.editDescription')
+      : $t('admin.content.friendLinks.form.createDescription')"
     :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-xl' })"
   >
@@ -72,12 +78,12 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
         @submit="onSubmit"
       >
         <UFormField
-          label="标题"
+          :label="$t('admin.content.friendLinks.form.title')"
           name="title"
         >
           <UInput
             v-model="state.title"
-            placeholder="站点名称"
+            :placeholder="$t('admin.content.friendLinks.form.titlePlaceholder')"
             class="w-full"
           />
         </UFormField>
@@ -92,7 +98,7 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
           />
         </UFormField>
         <UFormField
-          label="描述"
+          :label="$t('admin.content.friendLinks.form.description')"
           name="description"
         >
           <UTextarea
@@ -104,7 +110,7 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
         <div class="border-t border-default pt-3">
           <USwitch
             v-model="state.isActive"
-            label="启用"
+            :label="$t('admin.content.friendLinks.form.enabled')"
           />
         </div>
       </UForm>
@@ -117,13 +123,13 @@ async function onSubmit(event: FormSubmitEvent<FriendLinkFormState>) {
           color="neutral"
           @click="() => { open = false }"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="() => { form?.submit() }"
         >
-          {{ isEdit ? '保存' : '创建' }}
+          {{ isEdit ? $t('common.actions.save') : $t('common.actions.create') }}
         </UButton>
       </div>
     </template>

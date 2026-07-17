@@ -11,8 +11,8 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
   >
     <div class="mb-3 flex items-center gap-2 text-xs text-muted">
       <UIcon name="i-mdi-source-branch" class="size-4" />
-      <span>自动发现的端点</span>
-      <span class="ms-auto">路径与方法由文件结构决定</span>
+      <span>{{ $t('admin.apis.form.endpoints.title') }}</span>
+      <span class="ms-auto">{{ $t('admin.apis.form.endpoints.description') }}</span>
     </div>
     <div class="flex flex-col gap-1">
       <div
@@ -36,7 +36,7 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
           variant="subtle"
           size="sm"
         >
-          动态
+          {{ $t('admin.apis.form.endpoints.dynamic') }}
         </UBadge>
       </div>
     </div>

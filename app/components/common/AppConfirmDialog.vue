@@ -12,6 +12,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{ close: [value: boolean] }>()
+const { t } = useI18n()
 
 const loading = ref(false)
 
@@ -34,7 +35,7 @@ async function handleConfirm() {
 
 <template>
   <UModal
-    :title="props.title || '确认操作'"
+    :title="props.title || t('common.dialog.confirmTitle')"
     :description="props.description"
     :dismissible="!loading"
     :close="!loading"
@@ -47,14 +48,14 @@ async function handleConfirm() {
           :disabled="loading"
           @click="emit('close', false)"
         >
-          {{ props.cancelLabel || '取消' }}
+          {{ props.cancelLabel || $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :color="props.confirmColor || 'error'"
           :loading="loading"
           @click="handleConfirm"
         >
-          {{ props.confirmLabel || '删除' }}
+          {{ props.confirmLabel || $t('common.actions.delete') }}
         </UButton>
       </div>
     </template>

@@ -12,6 +12,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), { loading: false })
+const { t, locale } = useI18n()
 
 // 宽度响应式喂给容器：unovis 首挂载测得 0 时不绘轴，宽度由 0→真实值的变更驱动重绘出刻度
 const cardRef = useTemplateRef<HTMLElement | null>('cardRef')
@@ -27,13 +28,13 @@ interface TrendRow {
 
 const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
   label: formatTrendShortDate(item.date),
-  fullLabel: formatTrendFullDate(item.date),
+  fullLabel: formatTrendFullDate(item.date, locale.value),
   total: item.totalCalls,
   success: item.successCalls,
   failure: item.failureCalls
 })))
 
-const formatCount = (value: number) => value.toLocaleString()
+const formatCount = (value: number) => value.toLocaleString(locale.value)
 
 const x = (_row: TrendRow, index: number) => index
 const totalAccessor = (row: TrendRow) => row.total
@@ -52,12 +53,12 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
   return renderChartTooltip({
     title: d.fullLabel,
     rows: [
-      { color: 'var(--ui-primary)', label: '总调用', value: formatCount(d.total) },
-      { color: 'var(--ui-success)', label: '成功', value: formatCount(d.success) },
-      { color: 'var(--ui-error)', label: '失败', value: formatCount(d.failure) }
+      { color: 'var(--ui-primary)', label: t('admin.overview.metrics.totalCalls'), value: formatCount(d.total) },
+      { color: 'var(--ui-success)', label: t('common.states.success'), value: formatCount(d.success) },
+      { color: 'var(--ui-error)', label: t('common.states.failure'), value: formatCount(d.failure) }
     ],
     footer: [
-      { label: '成功率', value: rate }
+      { label: t('admin.overview.metrics.successRate'), value: rate }
     ]
   })
 }
@@ -72,7 +73,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
       v-if="rows.length === 0 && !loading"
       class="flex h-72 items-center justify-center rounded-lg border border-dashed border-default text-sm text-muted"
     >
-      暂无调用数据
+      {{ $t('admin.overview.trend.empty') }}
     </div>
 
     <template v-else>
@@ -138,7 +139,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
           icon="i-mdi-circle"
           class="rounded-md"
         >
-          总调用
+          {{ $t('admin.overview.metrics.totalCalls') }}
         </UBadge>
         <UBadge
           variant="soft"
@@ -146,7 +147,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
           icon="i-mdi-circle"
           class="rounded-md"
         >
-          成功
+          {{ $t('common.states.success') }}
         </UBadge>
         <UBadge
           variant="soft"
@@ -154,7 +155,7 @@ const tooltipTemplate = (d: TrendRow | undefined) => {
           icon="i-mdi-circle"
           class="rounded-md"
         >
-          失败
+          {{ $t('common.states.failure') }}
         </UBadge>
       </div>
     </template>

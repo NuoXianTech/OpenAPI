@@ -3,7 +3,6 @@ import type { UserCheckinCalendarMonth, UserCreditSummary } from '#shared/types/
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
-export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
 export type { UserCreditSummary as CreditSummary } from '#shared/types/user-credits'
 
 export interface TransactionRow {
@@ -74,6 +73,7 @@ function createEmptyCreditSummary(): UserCreditSummary {
 
 export function useUserCreditsPage() {
   const toast = useToast()
+  const { t, locale } = useI18n()
 
   const {
     data: summary,
@@ -151,8 +151,8 @@ export function useUserCreditsPage() {
         body: turnstileToken ? { turnstileToken } : {}
       })
       toast.add({
-        title: `签到成功 +${res.amount.toLocaleString()}`,
-        description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
+        title: t('user.credits.checkin.success', { amount: res.amount.toLocaleString(locale.value) }),
+        description: t('user.credits.balanceAfter', { balance: res.balanceAfter.toLocaleString(locale.value) }),
         color: 'success'
       })
       await fetchCheckinStatus()
@@ -169,8 +169,8 @@ export function useUserCreditsPage() {
       body: { code }
     })
     toast.add({
-      title: `兑换成功 +${res.amount.toLocaleString()}`,
-      description: `当前积分 ${res.balanceAfter.toLocaleString()}`,
+      title: t('user.credits.redeem.success', { amount: res.amount.toLocaleString(locale.value) }),
+      description: t('user.credits.balanceAfter', { balance: res.balanceAfter.toLocaleString(locale.value) }),
       color: 'success'
     })
     await fetchRedeemRecords()

@@ -13,14 +13,15 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:open': [value: boolean]
 }>()
+const { t } = useI18n()
 
-const durationItems: Array<{ label: string, value: DurationPreset }> = [
-  { label: '永久', value: 'permanent' },
-  { label: '1 天', value: '1d' },
-  { label: '7 天', value: '7d' },
-  { label: '30 天', value: '30d' },
-  { label: '自定义', value: 'custom' }
-]
+const durationItems = computed<Array<{ label: string, value: DurationPreset }>>(() => [
+  { label: t('admin.users.ban.durations.permanent'), value: 'permanent' },
+  { label: t('admin.users.ban.durations.oneDay'), value: '1d' },
+  { label: t('admin.users.ban.durations.sevenDays'), value: '7d' },
+  { label: t('admin.users.ban.durations.thirtyDays'), value: '30d' },
+  { label: t('admin.users.ban.durations.custom'), value: 'custom' }
+])
 
 function defaultCustomUntil() {
   const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -60,10 +61,10 @@ function computeBannedUntil(): string | null {
 
 const formError = computed(() => {
   if (form.duration === 'custom') {
-    if (!form.customUntil) return '请填写解封时间'
+    if (!form.customUntil) return t('admin.users.ban.validation.requiredUntil')
     const d = new Date(form.customUntil)
-    if (Number.isNaN(d.getTime())) return '解封时间格式不正确'
-    if (d.getTime() <= Date.now()) return '解封时间必须晚于当前时间'
+    if (Number.isNaN(d.getTime())) return t('admin.users.ban.validation.invalidUntil')
+    if (d.getTime() <= Date.now()) return t('admin.users.ban.validation.futureUntil')
   }
   return null
 })
@@ -89,7 +90,7 @@ async function submit() {
 <template>
   <UModal
     :open="open"
-    :title="`封禁用户: ${target?.username ?? ''}`"
+    :title="$t('admin.users.ban.title', { username: target?.username ?? '' })"
     :ui="adminModalUi()"
     @update:open="emit('update:open', $event)"
   >
@@ -99,19 +100,19 @@ async function submit() {
         @submit.prevent="submit"
       >
         <UFormField
-          label="封禁原因"
-          hint="可选，将展示给被封禁用户"
+          :label="$t('admin.users.ban.reason')"
+          :hint="$t('admin.users.ban.reasonHint')"
         >
           <UTextarea
             v-model="form.reason"
             :rows="3"
             :maxlength="500"
-            placeholder="例如：违反社区规范、滥用接口等"
+            :placeholder="$t('admin.users.ban.reasonPlaceholder')"
             class="w-full sm:max-w-lg"
           />
         </UFormField>
 
-        <UFormField label="封禁时长">
+        <UFormField :label="$t('admin.users.ban.duration')">
           <URadioGroup
             v-model="form.duration"
             orientation="horizontal"
@@ -122,7 +123,7 @@ async function submit() {
             v-model="form.customUntil"
             class="mt-2"
             size="sm"
-            placeholder="选择解封时间"
+            :placeholder="$t('admin.users.ban.untilPlaceholder')"
           />
           <p
             v-if="formError"
@@ -134,7 +135,7 @@ async function submit() {
             v-else
             class="text-xs text-muted mt-1.5"
           >
-            到期后用户将被自动解封；封禁后该用户的所有会话会立即失效。
+            {{ $t('admin.users.ban.description') }}
           </p>
         </UFormField>
       </form>
@@ -147,14 +148,14 @@ async function submit() {
           color="neutral"
           @click="emit('update:open', false)"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           color="error"
           :loading="loading"
           @click="submit"
         >
-          确认封禁
+          {{ $t('admin.users.ban.confirm') }}
         </UButton>
       </div>
     </template>

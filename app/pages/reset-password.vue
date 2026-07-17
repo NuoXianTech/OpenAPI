@@ -8,9 +8,11 @@ import {
   passwordError
 } from '~/utils/form-validation'
 
-useHead({ title: '重置密码' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
+useHead(() => ({ title: t('auth.resetPassword.title') }))
 
 const route = useRoute()
 const toast = useToast()
@@ -26,8 +28,13 @@ interface ResetPasswordFormState {
 
 function validateResetPasswordForm(state: Partial<ResetPasswordFormState>): FormError<string>[] {
   return compactFormErrors(
-    passwordError('password', state.password),
-    confirmationError('confirm', state.confirm, state.password ?? '')
+    passwordError('password', state.password, validationMessages.value.password),
+    confirmationError(
+      'confirm',
+      state.confirm,
+      state.password ?? '',
+      validationMessages.value.confirmation
+    )
   )
 }
 
@@ -42,8 +49,8 @@ const fields = computed(() => [
   {
     name: 'password',
     type: 'password' as const,
-    label: '新密码',
-    placeholder: '设置新密码（至少 8 位）',
+    label: t('auth.resetPassword.newPassword'),
+    placeholder: t('auth.resetPassword.newPasswordPlaceholder'),
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-outline',
     defaultValue: '',
@@ -54,8 +61,8 @@ const fields = computed(() => [
   {
     name: 'confirm',
     type: 'password' as const,
-    label: '确认新密码',
-    placeholder: '再次输入新密码',
+    label: t('auth.resetPassword.confirmNewPassword'),
+    placeholder: t('auth.resetPassword.confirmNewPasswordPlaceholder'),
     autocomplete: 'new-password',
     icon: 'i-mdi-lock-check-outline',
     defaultValue: '',
@@ -78,11 +85,11 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
       } satisfies ResetPasswordInput
     })
     success.value = true
-    toast.add({ title: '密码已重置，请使用新密码登录', color: 'success' })
+    toast.add({ title: t('auth.resetPassword.successToast'), color: 'success' })
     await new Promise(resolve => setTimeout(resolve, 800))
     await navigateTo('/login')
   } catch (error: unknown) {
-    errorMessage.value = parseFetchError(error, '重置失败，链接可能已失效')
+    errorMessage.value = parseFetchError(error, t('auth.resetPassword.failed'))
   } finally {
     isSubmitting.value = false
   }
@@ -93,8 +100,8 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-lock-reset"
-      title="重置密码"
-      subtitle="请为账号设置新的登录密码，密码至少 8 位"
+      :title="t('auth.resetPassword.title')"
+      :subtitle="t('auth.resetPassword.subtitle')"
     />
 
     <UCard
@@ -111,7 +118,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
             name="i-mdi-link-variant-off"
             class="auth-message__icon size-4"
           />
-          <span>重置链接无效或已损坏，请重新申请。</span>
+          <span>{{ $t('auth.resetPassword.invalidLink') }}</span>
         </div>
         <UButton
           to="/forgot-password"
@@ -119,7 +126,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
           size="lg"
           icon="i-mdi-refresh"
         >
-          重新申请
+          {{ $t('auth.resetPassword.requestAgain') }}
         </UButton>
       </div>
 
@@ -135,10 +142,10 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
         </div>
         <div>
           <h3 class="text-base font-semibold text-highlighted">
-            重置成功
+            {{ $t('auth.resetPassword.successTitle') }}
           </h3>
           <p class="text-sm text-muted mt-1.5">
-            密码已更新，正在跳转到登录页...
+            {{ $t('auth.resetPassword.successMessage') }}
           </p>
         </div>
       </div>
@@ -149,7 +156,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
         :validate="validateResetPasswordForm"
         :fields="fields"
         :loading="isSubmitting"
-        :submit="{ label: '重置密码', size: 'lg' }"
+        :submit="{ label: t('auth.resetPassword.submit'), size: 'lg' }"
         @submit="onSubmit"
       >
         <template #password-help>
@@ -175,8 +182,8 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
 
     <AuthFooterLinks
       :links="[
-        { label: '返回登录', to: '/login' },
-        { label: '返回首页', to: '/' }
+        { label: t('common.actions.backLogin'), to: '/login' },
+        { label: t('common.actions.backHome'), to: '/' }
       ]"
     />
   </CommonAppAuthShell>

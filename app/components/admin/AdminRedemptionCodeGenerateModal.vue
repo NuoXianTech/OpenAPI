@@ -15,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const { t } = useI18n()
 
 const form = reactive({
   amount: 100,
@@ -48,7 +49,7 @@ watch(() => props.open, (v) => {
 
 async function submit() {
   if (!Number.isFinite(form.amount) || form.amount <= 0) {
-    toast.add({ title: 'amount 必须 > 0', color: 'warning' })
+    toast.add({ title: t('admin.credits.redemptionCodes.generate.validation.positiveAmount'), color: 'warning' })
     return
   }
   generating.value = true
@@ -69,7 +70,10 @@ async function submit() {
       note: form.note.trim() || null
     })
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '生成失败'), color: 'error' })
+    toast.add({
+      title: parseFetchError(err, t('admin.credits.redemptionCodes.generate.failed')),
+      color: 'error'
+    })
   } finally {
     generating.value = false
   }
@@ -83,7 +87,7 @@ function close() {
 <template>
   <UModal
     :open="open"
-    title="生成兑换码"
+    :title="$t('admin.credits.redemptionCodes.generate.title')"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
     @update:open="emit('update:open', $event)"
   >
@@ -93,15 +97,15 @@ function close() {
         class="space-y-3"
       >
         <div class="grid grid-cols-2 gap-3">
-          <UFormField label="单张面额（必填）">
+          <UFormField :label="$t('admin.credits.redemptionCodes.generate.amount')">
             <UInput
               v-model.number="form.amount"
               type="number"
               min="1"
-              placeholder="例如 100"
+              :placeholder="$t('admin.credits.redemptionCodes.generate.amountPlaceholder')"
             />
           </UFormField>
-          <UFormField label="生成数量">
+          <UFormField :label="$t('admin.credits.redemptionCodes.generate.count')">
             <UInput
               v-model.number="form.count"
               type="number"
@@ -112,8 +116,8 @@ function close() {
         </div>
         <div class="grid grid-cols-2 gap-3">
           <UFormField
-            label="码长度"
-            hint="不含前缀，8 - 48"
+            :label="$t('admin.credits.redemptionCodes.generate.length')"
+            :hint="$t('admin.credits.redemptionCodes.generate.lengthHint')"
           >
             <UInput
               v-model.number="form.length"
@@ -123,8 +127,8 @@ function close() {
             />
           </UFormField>
           <UFormField
-            label="前缀（可选）"
-            hint="如 WELCOME"
+            :label="$t('admin.credits.redemptionCodes.generate.prefix')"
+            :hint="$t('admin.credits.redemptionCodes.generate.prefixHint')"
           >
             <UInput
               v-model="form.prefix"
@@ -134,8 +138,8 @@ function close() {
         </div>
         <div class="grid grid-cols-2 gap-3">
           <UFormField
-            label="单张可被兑换次数"
-            hint=">1 表示同一码可被多个用户共享，每人 1 次"
+            :label="$t('admin.credits.redemptionCodes.generate.maxUses')"
+            :hint="$t('admin.credits.redemptionCodes.generate.maxUsesHint')"
           >
             <UInput
               v-model.number="form.maxUses"
@@ -144,8 +148,8 @@ function close() {
             />
           </UFormField>
           <UFormField
-            label="过期时间（天）"
-            hint="0 = 永不过期"
+            :label="$t('admin.credits.redemptionCodes.generate.expiresInDays')"
+            :hint="$t('admin.credits.redemptionCodes.generate.expiresInDaysHint')"
           >
             <UInput
               v-model.number="form.expiresInDays"
@@ -154,10 +158,10 @@ function close() {
             />
           </UFormField>
         </div>
-        <UFormField label="备注（可选）">
+        <UFormField :label="$t('admin.credits.redemptionCodes.generate.note')">
           <UInput
             v-model="form.note"
-            placeholder="例如：双十一活动"
+            :placeholder="$t('admin.credits.redemptionCodes.generate.notePlaceholder')"
           />
         </UFormField>
       </div>
@@ -170,9 +174,14 @@ function close() {
           color="success"
           variant="subtle"
           icon="i-mdi-check-circle-outline"
-          :title="`已生成 ${result.generated} 张兑换码`"
-          :description="`批次 ${result.batchId}` + (result.generated < result.requested
-            ? ` · 申请 ${result.requested} 张，因冲突实际生成 ${result.generated} 张` : '')"
+          :title="$t('admin.credits.redemptionCodes.generate.resultTitle', { count: result.generated })"
+          :description="result.generated < result.requested
+            ? $t('admin.credits.redemptionCodes.generate.partialResultDescription', {
+              batchId: result.batchId,
+              requested: result.requested,
+              generated: result.generated
+            })
+            : $t('admin.credits.redemptionCodes.generate.resultDescription', { batchId: result.batchId })"
         />
         <div class="flex justify-end">
           <UButton
@@ -181,7 +190,7 @@ function close() {
             icon="i-mdi-content-copy"
             @click="onCopyAll(result.codes)"
           >
-            复制全部
+            {{ $t('admin.credits.redemptionCodes.actions.copyAll') }}
           </UButton>
         </div>
         <div class="rounded-lg border border-default p-3 bg-elevated/30 max-h-72 overflow-auto">
@@ -215,13 +224,13 @@ function close() {
           color="neutral"
           @click="close"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="generating"
           @click="submit"
         >
-          生成
+          {{ $t('admin.credits.redemptionCodes.actions.generate') }}
         </UButton>
       </div>
       <div
@@ -233,10 +242,10 @@ function close() {
           color="neutral"
           @click="() => { result = null }"
         >
-          继续生成
+          {{ $t('admin.credits.redemptionCodes.actions.generateMore') }}
         </UButton>
         <UButton @click="close">
-          完成
+          {{ $t('admin.credits.redemptionCodes.actions.done') }}
         </UButton>
       </div>
     </template>

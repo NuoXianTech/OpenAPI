@@ -4,6 +4,7 @@ import type { CreditSummary } from '~/composables/user/use-user-credits-page'
 const props = defineProps<{
   summary: CreditSummary
 }>()
+const { t, locale } = useI18n()
 
 interface CreditOverviewCard {
   key: string
@@ -19,37 +20,37 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
   return [
     {
       key: 'balance',
-      label: '当前积分',
-      value: props.summary.balance.toLocaleString(),
-      unit: '积分',
-      meta: '可用于 API 调用',
+      label: t('user.credits.overview.balance'),
+      value: props.summary.balance.toLocaleString(locale.value),
+      unit: t('common.units.points'),
+      meta: t('user.credits.overview.balanceDescription'),
       icon: 'i-mdi-cash-multiple',
       tone: 'neutral'
     },
     {
       key: 'in',
-      label: '累计收入',
-      value: props.summary.totalIn.toLocaleString(),
-      unit: '积分',
-      meta: '签到、兑换与后台发放',
+      label: t('user.credits.overview.totalIncome'),
+      value: props.summary.totalIn.toLocaleString(locale.value),
+      unit: t('common.units.points'),
+      meta: t('user.credits.overview.totalIncomeDescription'),
       icon: 'i-mdi-arrow-down-bold-circle-outline',
       tone: 'success'
     },
     {
       key: 'out',
-      label: '累计支出',
-      value: props.summary.totalOut.toLocaleString(),
-      unit: '积分',
-      meta: 'API 调用扣费合计',
+      label: t('user.credits.overview.totalExpenses'),
+      value: props.summary.totalOut.toLocaleString(locale.value),
+      unit: t('common.units.points'),
+      meta: t('user.credits.overview.totalExpensesDescription'),
       icon: 'i-mdi-arrow-up-bold-circle-outline',
       tone: 'error'
     },
     {
       key: 'count',
-      label: '流水笔数',
-      value: props.summary.totalCount.toLocaleString(),
-      unit: '笔',
-      meta: '全部积分变动记录',
+      label: t('user.credits.overview.transactionCount'),
+      value: props.summary.totalCount.toLocaleString(locale.value),
+      unit: t('common.units.records'),
+      meta: t('user.credits.overview.transactionCountDescription'),
       icon: 'i-mdi-format-list-numbered',
       tone: 'info'
     }

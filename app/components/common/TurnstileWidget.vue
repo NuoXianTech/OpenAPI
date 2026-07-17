@@ -23,7 +23,12 @@ const SCRIPT_URL = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render
 const SCRIPT_SRC_PREFIX = SCRIPT_URL.split('?')[0]!
 const SCRIPT_LOAD_TIMEOUT_MS = 12_000
 
-function loadScript(): Promise<void> {
+interface TurnstileScriptMessages {
+  loadFailed: string
+  loadTimeout: string
+}
+
+function loadScript(messages: TurnstileScriptMessages): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.resolve()
   }
@@ -58,7 +63,7 @@ function loadScript(): Promise<void> {
       document.head.appendChild(script)
     }
     script.addEventListener('error', () => {
-      finish(() => reject(new Error('Turnstile 脚本加载失败：无法访问 challenges.cloudflare.com')))
+      finish(() => reject(new Error(messages.loadFailed)))
     }, { once: true })
 
     // 网络被墙/丢包时浏览器既不会触发 onload 也不会触发 error，
@@ -68,7 +73,7 @@ function loadScript(): Promise<void> {
         finish(() => resolve())
         return
       }
-      finish(() => reject(new Error(`Turnstile 脚本加载超时（>${SCRIPT_LOAD_TIMEOUT_MS / 1000}s），请检查网络是否能访问 challenges.cloudflare.com`)))
+      finish(() => reject(new Error(messages.loadTimeout)))
     }, SCRIPT_LOAD_TIMEOUT_MS)
   }).catch((err) => {
     // 失败后清空缓存，允许后续重试
@@ -95,6 +100,7 @@ const emit = defineEmits<{
   expired: []
   error: [message: string]
 }>()
+const { t } = useI18n()
 
 const token = defineModel<string>('token', { default: '' })
 const isNarrowViewport = useMediaQuery('(max-width: 359px)')
@@ -130,7 +136,7 @@ function renderWidget() {
     return
   }
   if (!props.siteKey) {
-    reportError('Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置')
+    reportError(t('common.turnstile.emptySiteKey'))
     return
   }
   // 已有 widget 时先移除避免重复
@@ -159,7 +165,7 @@ function renderWidget() {
       hasRenderedWidget.value = true
       const message = String(err ?? 'turnstile_error')
       // Cloudflare 错误码参考 https://developers.cloudflare.com/turnstile/troubleshooting/client-side-errors/
-      reportError(`Turnstile 校验失败：${message}`)
+      reportError(t('common.turnstile.verificationFailed', { message }))
     }
   }
   if (props.action) {
@@ -169,7 +175,7 @@ function renderWidget() {
   widgetId.value = id
   hasRenderedWidget.value = Boolean(id) || container.value.childElementCount > 0
   if (!hasRenderedWidget.value) {
-    reportError('Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配')
+    reportError(t('common.turnstile.renderFailed'))
   } else {
     clearError()
   }
@@ -187,10 +193,13 @@ defineExpose({ reset: resetWidget })
 
 onMounted(async () => {
   try {
-    await loadScript()
+    await loadScript({
+      loadFailed: t('common.turnstile.loadFailedWithHost'),
+      loadTimeout: t('common.turnstile.loadTimeout', { seconds: SCRIPT_LOAD_TIMEOUT_MS / 1000 })
+    })
     renderWidget()
   } catch (err) {
-    reportError(err instanceof Error ? err.message : 'Turnstile 脚本加载失败')
+    reportError(err instanceof Error ? err.message : t('common.turnstile.loadFailed'))
   }
 })
 

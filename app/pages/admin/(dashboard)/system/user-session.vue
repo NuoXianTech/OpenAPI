@@ -16,6 +16,7 @@ const {
   saveOauthSettings,
   copyCallback
 } = useAdminUserSessionSettings()
+const { t } = useI18n()
 
 const registrationKeys = [
   'registrationMode',
@@ -40,36 +41,36 @@ const sessionSection = createSection(sessionKeys)
 <template>
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
-      title="登录与注册"
+      :title="t('admin.system.session.registration.title')"
     >
       <UFormField
         name="registrationMode"
-        label="允许新用户注册"
-        description="关闭后，前台注册入口与注册接口都会被拒绝（等同注册模式「关闭」）。"
+        :label="t('admin.system.session.registration.enabled.label')"
+        :description="t('admin.system.session.registration.enabled.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="allowRegistration" />
       </UFormField>
       <UFormField
         name="passwordResetEnabled"
-        label="启用「忘记密码」功能"
-        description="关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。"
+        :label="t('admin.system.session.registration.passwordReset.label')"
+        :description="t('admin.system.session.registration.passwordReset.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.passwordResetEnabled" />
       </UFormField>
       <UFormField
         name="emailActivationEnabled"
-        label="邮件激活"
-        description="开启后，新用户注册需点击邮件中的激活链接才能完成；关闭则注册即激活、不发验证邮件。请确认 邮件发信设置 正确，否则激活邮件无法送达。"
+        :label="t('admin.system.session.registration.emailActivation.label')"
+        :description="t('admin.system.session.registration.emailActivation.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.emailActivationEnabled" />
       </UFormField>
       <UFormField
         name="registerEmailFilterMode"
-        label="注册邮箱过滤模式"
-        description="不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。"
+        :label="t('admin.system.session.emailFilter.label')"
+        :description="t('admin.system.session.emailFilter.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USelect
@@ -80,10 +81,10 @@ const sessionSection = createSection(sessionKeys)
       </UFormField>
       <UFormField
         name="registerEmailFilterList"
-        label="邮箱域过滤规则"
+        :label="t('admin.system.session.emailFilter.rulesLabel')"
         :description="form.registerEmailFilterMode === 'off'
-          ? '当前模式为「不开启」，此列表不会生效。'
-          : '逗号或换行分隔，仅写域名（不带 @）。例如：163.com, qq.com、gmail.com。'"
+          ? t('admin.system.session.emailFilter.disabledDescription')
+          : t('admin.system.session.emailFilter.rulesDescription')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
         :ui="{ container: 'w-full sm:max-w-lg' }"
       >
@@ -106,12 +107,12 @@ const sessionSection = createSection(sessionKeys)
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
-      title="用户会话时效"
+      :title="t('admin.system.session.expiry.title')"
     >
       <UFormField
         name="sessionMaxAgeSeconds"
-        label="默认会话有效期 (秒)"
-        description="未勾选「记住我」时使用，默认 86400=1 天，期间活跃会自动滑动续期。"
+        :label="t('admin.system.session.expiry.defaultSession.label')"
+        :description="t('admin.system.session.expiry.defaultSession.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -123,8 +124,8 @@ const sessionSection = createSection(sessionKeys)
       </UFormField>
       <UFormField
         name="sessionAbsoluteMaxAgeSeconds"
-        label="会话绝对硬顶 (秒)"
-        description="未勾选「记住我」时滑动续期的绝对上限，从首次登录算，默认 604800=7 天。到顶后强制重新登录。"
+        :label="t('admin.system.session.expiry.absoluteSession.label')"
+        :description="t('admin.system.session.expiry.absoluteSession.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -136,8 +137,8 @@ const sessionSection = createSection(sessionKeys)
       </UFormField>
       <UFormField
         name="sessionRememberMaxAgeSeconds"
-        label="「记住我」会话有效期 (秒)"
-        description="勾选「记住我」时使用，默认 2592000=30 天，到期后必须重新登录。"
+        :label="t('admin.system.session.expiry.rememberSession.label')"
+        :description="t('admin.system.session.expiry.rememberSession.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -149,8 +150,8 @@ const sessionSection = createSection(sessionKeys)
       </UFormField>
       <UFormField
         name="emailVerifyExpiresInMinutes"
-        label="邮箱验证过期 (分钟)"
-        description="注册 / 换绑邮箱的验证链接有效时长，默认 30 分钟。"
+        :label="t('admin.system.session.expiry.emailVerification.label')"
+        :description="t('admin.system.session.expiry.emailVerification.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -162,8 +163,8 @@ const sessionSection = createSection(sessionKeys)
       </UFormField>
       <UFormField
         name="passwordResetExpiresInMinutes"
-        label="密码重置链接过期 (分钟)"
-        description="找回密码邮件中的重置链接有效时长，默认 30 分钟。"
+        :label="t('admin.system.session.expiry.passwordReset.label')"
+        :description="t('admin.system.session.expiry.passwordReset.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
@@ -183,12 +184,12 @@ const sessionSection = createSection(sessionKeys)
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
-      title="第三方登录"
+      :title="t('admin.system.session.oauth.title')"
     >
       <UFormField
         name="oauthForceBinding"
-        label="强制绑定已有账号"
-        description="开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册。"
+        :label="t('admin.system.session.oauth.forceBinding.label')"
+        :description="t('admin.system.session.oauth.forceBinding.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <USwitch v-model="form.oauthForceBinding" />
@@ -225,14 +226,18 @@ const sessionSection = createSection(sessionKeys)
             />
             <div class="flex flex-col min-w-0">
               <span class="font-medium truncate">{{ item.displayName }}</span>
-              <span class="text-xs text-muted truncate">provider: {{ item.provider }}</span>
+              <span class="text-xs text-muted truncate">
+                {{ t('admin.system.session.oauth.provider', { provider: item.provider }) }}
+              </span>
             </div>
             <UBadge
               class="ml-auto shrink-0"
               :color="getForm(item.provider).isEnabled ? 'success' : 'neutral'"
               variant="subtle"
             >
-              {{ getForm(item.provider).isEnabled ? '已启用' : '未启用' }}
+              {{ getForm(item.provider).isEnabled
+                ? t('admin.system.session.oauth.status.enabled')
+                : t('admin.system.session.oauth.status.disabled') }}
             </UBadge>
             <UIcon
               name="i-mdi-chevron-down"
@@ -243,17 +248,19 @@ const sessionSection = createSection(sessionKeys)
 
           <template #content>
             <div class="dashboard-oauth-provider-divider border-t p-4 space-y-4">
-              <UFormField label="Client ID">
+              <UFormField :label="t('admin.system.session.oauth.clientId.label')">
                 <UInput
                   v-model="getForm(item.provider).clientId"
-                  placeholder="填写 OAuth App 的 Client ID"
+                  :placeholder="t('admin.system.session.oauth.clientId.placeholder')"
                   icon="i-mdi-identifier"
                   class="w-full"
                 />
               </UFormField>
               <UFormField
-                label="Client Secret"
-                :description="item.clientSecret ? '已保存。留空则保持不变，填写则覆盖。' : '首次保存，必填。'"
+                :label="t('admin.system.session.oauth.clientSecret.label')"
+                :description="item.clientSecret
+                  ? t('admin.system.session.oauth.clientSecret.savedDescription')
+                  : t('admin.system.session.oauth.clientSecret.initialDescription')"
               >
                 <UInput
                   v-model="getForm(item.provider).clientSecret"
@@ -271,15 +278,17 @@ const sessionSection = createSection(sessionKeys)
                       size="xs"
                       square
                       :icon="getForm(item.provider).secretVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                      :aria-label="getForm(item.provider).secretVisible ? '隐藏密钥' : '显示密钥'"
+                      :aria-label="getForm(item.provider).secretVisible
+                        ? t('admin.system.session.oauth.clientSecret.hide')
+                        : t('admin.system.session.oauth.clientSecret.show')"
                       @click="() => { getForm(item.provider).secretVisible = !getForm(item.provider).secretVisible }"
                     />
                   </template>
                 </UInput>
               </UFormField>
               <UFormField
-                label="Callback URL"
-                description="由站点地址自动拼接，不可修改。请把该地址填到 OAuth App 的回调白名单。"
+                :label="t('admin.system.session.oauth.callbackUrl.label')"
+                :description="t('admin.system.session.oauth.callbackUrl.description')"
               >
                 <div class="flex min-w-0 flex-col gap-2 sm:flex-row">
                   <UInput
@@ -294,13 +303,15 @@ const sessionSection = createSection(sessionKeys)
                     variant="outline"
                     @click="copyCallback(item)"
                   >
-                    {{ getForm(item.provider).copied ? '已复制' : '复制' }}
+                    {{ getForm(item.provider).copied
+                      ? t('common.feedback.copied')
+                      : t('common.actions.copy') }}
                   </UButton>
                 </div>
               </UFormField>
               <UFormField
-                label="Scopes"
-                description="已按 provider 固定，无需配置。"
+                :label="t('admin.system.session.oauth.scopes.label')"
+                :description="t('admin.system.session.oauth.scopes.description')"
               >
                 <div class="flex flex-wrap gap-1">
                   <UBadge
@@ -314,14 +325,14 @@ const sessionSection = createSection(sessionKeys)
                   <span
                     v-if="!item.scopes.length"
                     class="text-xs text-muted"
-                  >（无）</span>
+                  >{{ t('admin.system.session.oauth.scopes.empty') }}</span>
                 </div>
               </UFormField>
 
               <div class="dashboard-oauth-provider-divider flex items-center justify-between gap-2 pt-2 border-t">
                 <USwitch
                   v-model="getForm(item.provider).isEnabled"
-                  label="启用该登录方式"
+                  :label="t('admin.system.session.oauth.enableProvider')"
                 />
               </div>
             </div>

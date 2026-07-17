@@ -1,4 +1,5 @@
 import type { LoginInput, RegisterInput } from '#shared/types/auth'
+import type { SupportedLocale } from '#shared/config/locale-defaults'
 
 interface AuthUser {
   id: number
@@ -7,6 +8,7 @@ interface AuthUser {
   email: string
   avatarUrl: string
   role: 'user' | 'admin'
+  locale: SupportedLocale | null
   credits?: number
 }
 
@@ -126,12 +128,24 @@ export function useAuth() {
     if (import.meta.client) clientFetchedAt = Date.now()
   }
 
+  const updateLocalePreference = async (locale: SupportedLocale) => {
+    const result = await $fetch<{ locale: SupportedLocale }>('/api/user/preferences', {
+      method: 'PUT',
+      body: { locale }
+    })
+    if (user.value) {
+      user.value = { ...user.value, locale: result.locale }
+    }
+    return result.locale
+  }
+
   return {
     user,
     loading,
     fetchMe,
     login,
     register,
-    logout
+    logout,
+    updateLocalePreference
   }
 }

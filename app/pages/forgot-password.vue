@@ -4,9 +4,11 @@ import { parseFetchError } from '~/utils/client-error'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { compactFormErrors, emailError } from '~/utils/form-validation'
 
-useHead({ title: '找回密码' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
+useHead(() => ({ title: t('auth.forgotPassword.title') }))
 
 const { turnstile, passwordResetEnabled } = useSiteSettings()
 
@@ -15,7 +17,7 @@ interface ForgotPasswordFormState {
 }
 
 function validateForgotPasswordForm(state: Partial<ForgotPasswordFormState>): FormError<string>[] {
-  return compactFormErrors(emailError('email', state.email))
+  return compactFormErrors(emailError('email', state.email, validationMessages.value.email))
 }
 
 const authForm = ref<{ state: ForgotPasswordFormState } | null>(null)
@@ -33,7 +35,7 @@ const fields = computed(() => [
   {
     name: 'email',
     type: 'email' as const,
-    label: '邮箱',
+    label: t('auth.fields.email'),
     placeholder: 'you@example.com',
     autocomplete: 'email',
     icon: 'i-mdi-email-outline',
@@ -44,18 +46,29 @@ const fields = computed(() => [
   }
 ])
 
-const FORGOT_PASSWORD_ERROR_CODES: Record<number, string> = {
-  403: '该功能已被管理员关闭',
-  429: '操作过于频繁，请稍后再试',
-  500: '服务器暂时无法响应，请稍后再试'
-}
+const forgotPasswordErrorCodes = computed<Record<number, string>>(() => ({
+  403: t('auth.forgotPassword.errors.disabled'),
+  429: t('auth.forgotPassword.errors.tooManyRequests'),
+  500: t('auth.forgotPassword.errors.server')
+}))
+
+const submitConfig = computed(() => ({
+  label: t('auth.forgotPassword.submit'),
+  size: 'lg' as const,
+  disabled: turnstileRequired.value && !turnstileToken.value
+}))
+
+const footerLinks = computed(() => [
+  { label: t('common.actions.backLogin'), to: '/login' },
+  { label: t('common.actions.backHome'), to: '/' }
+])
 
 async function onSubmit(event: FormSubmitEvent<ForgotPasswordFormState>) {
   errorMessage.value = ''
   turnstileError.value = ''
 
   if (turnstileRequired.value && !turnstileToken.value) {
-    errorMessage.value = '请先完成人机验证'
+    errorMessage.value = t('auth.validation.turnstileRequired')
     return
   }
 
@@ -71,7 +84,7 @@ async function onSubmit(event: FormSubmitEvent<ForgotPasswordFormState>) {
     submittedEmail.value = event.data.email
     submitted.value = true
   } catch (error: unknown) {
-    errorMessage.value = parseFetchError(error, '提交失败，请稍后重试', FORGOT_PASSWORD_ERROR_CODES)
+    errorMessage.value = parseFetchError(error, t('auth.forgotPassword.submitFailed'), forgotPasswordErrorCodes.value)
     turnstileWidget.value?.reset()
   } finally {
     isSubmitting.value = false
@@ -91,8 +104,8 @@ function clearTurnstileError() {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-lock-reset"
-      title="找回密码"
-      subtitle="输入注册时使用的邮箱，我们会发送重置链接到该邮箱"
+      :title="t('auth.forgotPassword.title')"
+      :subtitle="t('auth.forgotPassword.subtitle')"
     />
 
     <UCard
@@ -109,7 +122,7 @@ function clearTurnstileError() {
             name="i-mdi-alert-circle-outline"
             class="auth-message__icon size-4"
           />
-          <span>该功能已被管理员关闭，请联系管理员协助处理。</span>
+          <span>{{ $t('auth.forgotPassword.disabled') }}</span>
         </div>
         <UButton
           to="/login"
@@ -119,7 +132,7 @@ function clearTurnstileError() {
           size="lg"
           icon="i-mdi-arrow-left"
         >
-          返回登录
+          {{ $t('common.actions.backLogin') }}
         </UButton>
       </div>
 
@@ -135,11 +148,10 @@ function clearTurnstileError() {
         </div>
         <div>
           <h3 class="text-base font-semibold text-highlighted">
-            邮件已发送
+            {{ $t('auth.forgotPassword.sentTitle') }}
           </h3>
           <p class="text-sm text-muted mt-1.5 leading-relaxed">
-            如果 <span class="font-medium text-default">{{ submittedEmail }}</span> 已注册，<br>
-            我们已向其发送了密码重置链接，请在 30 分钟内查收并完成重置。
+            {{ $t('auth.forgotPassword.sentMessage', { email: submittedEmail }) }}
           </p>
         </div>
         <UButton
@@ -148,7 +160,7 @@ function clearTurnstileError() {
           size="lg"
           icon="i-mdi-arrow-left"
         >
-          返回登录
+          {{ $t('common.actions.backLogin') }}
         </UButton>
       </div>
 
@@ -158,7 +170,7 @@ function clearTurnstileError() {
         :validate="validateForgotPasswordForm"
         :fields="fields"
         :loading="isSubmitting"
-        :submit="{ label: '发送重置链接', size: 'lg', disabled: turnstileRequired && !turnstileToken }"
+        :submit="submitConfig"
         @submit="onSubmit"
       >
         <template #validation>
@@ -202,10 +214,7 @@ function clearTurnstileError() {
     </UCard>
 
     <AuthFooterLinks
-      :links="[
-        { label: '返回登录', to: '/login' },
-        { label: '返回首页', to: '/' }
-      ]"
+      :links="footerLinks"
     />
   </CommonAppAuthShell>
 </template>

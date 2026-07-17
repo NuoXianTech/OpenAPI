@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { reasonLabel, reasonColor, type CreditSummary } from '~/composables/user/use-user-credits-page'
+import type { CreditSummary } from '~/composables/user/use-user-credits-page'
+import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
 
 defineProps<{
   byReason: CreditSummary['byReason']
 }>()
+const { locale } = useI18n()
+const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
 </script>
 
 <template>
@@ -15,7 +18,7 @@ defineProps<{
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
-          收支分布
+          {{ $t('user.credits.distribution.title') }}
         </h3>
       </div>
     </template>
@@ -27,21 +30,21 @@ defineProps<{
       >
         <div class="flex items-center gap-2 min-w-0">
           <UBadge
-            :color="reasonColor(r.reason)"
+            :color="getReasonColor(r.reason)"
             variant="subtle"
             size="sm"
           >
-            {{ reasonLabel(r.reason) }}
+            {{ getReasonLabel(r.reason) }}
           </UBadge>
           <span class="text-xs text-muted">
-            {{ r.count }} 笔
+            {{ $t('user.credits.distribution.records', { count: r.count.toLocaleString(locale) }) }}
           </span>
         </div>
         <span
           class="font-semibold tabular-nums shrink-0"
           :class="r.sum > 0 ? 'text-success' : r.sum < 0 ? 'text-error' : 'text-muted'"
         >
-          {{ r.sum > 0 ? '+' : '' }}{{ r.sum.toLocaleString() }}
+          {{ r.sum > 0 ? '+' : '' }}{{ r.sum.toLocaleString(locale) }}
         </span>
       </div>
     </div>

@@ -20,6 +20,7 @@ interface ApiCategoryItem {
 
 const toast = useToast()
 const confirm = useConfirmDialog()
+const { t } = useI18n()
 
 const { data, loading, refresh } = usePrivateResource<ApiCategoryItem[]>({
   path: '/api/admin/api-categories/list',
@@ -56,18 +57,18 @@ function openEdit(item: ApiCategoryItem) {
 }
 async function openDelete(item: ApiCategoryItem) {
   await confirm({
-    title: `删除分类: ${item.name}`,
-    description: '删除后该分类将不再可选；若仍有接口绑定该分类，将无法删除。',
+    title: t('admin.apis.categories.delete.title', { name: item.name }),
+    description: t('admin.apis.categories.delete.description'),
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/api-categories/delete', {
           method: 'POST',
           body: { id: item.id }
         })
-        toast.add({ title: '已删除', color: 'success' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await refresh()
       } catch (err: unknown) {
-        toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+        toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
         throw err
       }
     }
@@ -82,26 +83,26 @@ async function quickToggle(row: ApiCategoryItem, value: boolean) {
     })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   }
 }
 
 function getRowItems(row: ApiCategoryItem): DropdownMenuItem[] {
   return [
-    { label: '编辑', icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: '删除', icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
+    { label: t('common.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: t('common.actions.delete'), icon: 'i-mdi-delete-outline', color: 'error' as const, onSelect: () => openDelete(row) }
   ]
 }
 
-const columns: TableColumn<ApiCategoryItem>[] = [
-  { accessorKey: 'code', header: '编码' },
-  { accessorKey: 'name', header: '名称' },
-  { accessorKey: 'description', header: '描述' },
-  { accessorKey: 'sortOrder', header: '排序' },
-  { accessorKey: 'color', header: '颜色' },
-  { id: 'isEnabled', header: '启用' },
+const columns = computed<TableColumn<ApiCategoryItem>[]>(() => [
+  { accessorKey: 'code', header: t('admin.apis.categories.columns.code') },
+  { accessorKey: 'name', header: t('admin.apis.categories.columns.name') },
+  { accessorKey: 'description', header: t('admin.apis.categories.columns.description') },
+  { accessorKey: 'sortOrder', header: t('admin.apis.categories.columns.sortOrder') },
+  { accessorKey: 'color', header: t('admin.apis.categories.columns.color') },
+  { id: 'isEnabled', header: t('admin.apis.categories.columns.enabled') },
   { id: 'actions', header: '' }
-]
+])
 </script>
 
 <template>
@@ -110,7 +111,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
       <UInput
         v-model="keyword"
         icon="i-mdi-magnify"
-        placeholder="搜索编码、名称或描述"
+        :placeholder="$t('admin.apis.categories.searchPlaceholder')"
         class="w-full sm:w-64"
       />
       <div class="ml-auto flex items-center gap-2 flex-wrap">
@@ -118,7 +119,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
           icon="i-mdi-plus"
           @click="openAdd"
         >
-          新建分类
+          {{ $t('admin.apis.categories.actions.create') }}
         </UButton>
         <UButton
           color="neutral"
@@ -127,13 +128,13 @@ const columns: TableColumn<ApiCategoryItem>[] = [
           :loading="loading"
           @click="refresh()"
         >
-          刷新
+          {{ $t('common.actions.refresh') }}
         </UButton>
       </div>
     </div>
 
     <DashboardTableCard
-      title="分类列表"
+      :title="$t('admin.apis.categories.listTitle')"
       icon="i-mdi-shape-outline"
       :total="total"
     >
@@ -145,7 +146,7 @@ const columns: TableColumn<ApiCategoryItem>[] = [
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="暂无分类"
+        :empty-title="$t('admin.apis.categories.empty')"
         empty-icon="i-mdi-shape-outline"
       >
         <template #code-cell="{ row }">

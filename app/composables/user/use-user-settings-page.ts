@@ -1,5 +1,6 @@
 import { parseFetchError } from '~/utils/client-error'
 import type { LoginLogRow } from '#shared/types/login-log'
+import { isSupportedLocale, type SupportedLocale } from '#shared/config/locale-defaults'
 
 export interface ProfileData {
   id: number
@@ -7,6 +8,7 @@ export interface ProfileData {
   email: string
   avatarUrl: string
   displayName: string | null
+  locale: SupportedLocale | null
   emailVerifiedAt: string | null
   createdAt: string
 }
@@ -24,20 +26,21 @@ export interface OauthBinding {
   linkedAt: string | null
 }
 
-const OAUTH_BIND_ERRORS: Record<string, string> = {
-  state_mismatch: 'state 已失效，请重试',
-  login_required: '需要先登录用户',
-  already_bound_by_other: '该第三方账号已被其他用户绑定',
-  already_bound_same_provider: '你已绑定该平台的另一个账号，请先解绑后再绑定',
-  callback_failed: '回调处理失败',
-  provider_unavailable: 'provider 当前不可用',
-  oauth_disabled: '站点已关闭第三方登录',
-  missing_code: '未收到授权 code'
+const OAUTH_BIND_ERROR_KEYS: Record<string, string> = {
+  state_mismatch: 'user.settings.oauth.errors.stateMismatch',
+  login_required: 'user.settings.oauth.errors.loginRequired',
+  already_bound_by_other: 'user.settings.oauth.errors.alreadyBoundByOther',
+  already_bound_same_provider: 'user.settings.oauth.errors.alreadyBoundSameProvider',
+  callback_failed: 'user.settings.oauth.errors.callbackFailed',
+  provider_unavailable: 'user.settings.oauth.errors.providerUnavailable',
+  oauth_disabled: 'user.settings.oauth.errors.oauthDisabled',
+  missing_code: 'user.settings.oauth.errors.missingCode'
 }
 
 export function useUserSettingsPage() {
   const toast = useToast()
-  const { fetchMe } = useAuth()
+  const { t, locale, setLocale } = useI18n()
+  const { fetchMe, updateLocalePreference } = useAuth()
   const confirm = useConfirmDialog()
 
   const profile = ref<ProfileData | null>(null)
@@ -66,8 +69,25 @@ export function useUserSettingsPage() {
       method: 'PUT',
       body: { displayName: displayName.trim() }
     })
-    toast.add({ title: '资料已更新', color: 'success' })
+    toast.add({ title: t('user.settings.profile.updated'), color: 'success' })
     await Promise.all([loadProfile(), fetchMe(true)])
+  }
+
+  async function updateLanguagePreference(nextLocale: SupportedLocale) {
+    const previousLocale = locale.value
+    await setLocale(nextLocale)
+    try {
+      const savedLocale = await updateLocalePreference(nextLocale)
+      if (profile.value) {
+        profile.value = { ...profile.value, locale: savedLocale }
+      }
+      toast.add({ title: t('user.settings.language.updated'), color: 'success' })
+    } catch (error) {
+      if (isSupportedLocale(previousLocale)) {
+        await setLocale(previousLocale)
+      }
+      throw error
+    }
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {
@@ -76,8 +96,8 @@ export function useUserSettingsPage() {
       body: { currentPassword, newPassword }
     })
     toast.add({
-      title: '密码已更新',
-      description: '其他设备的登录已被注销',
+      title: t('user.settings.security.passwordUpdated'),
+      description: t('user.settings.security.otherSessionsRevoked'),
       color: 'success'
     })
   }
@@ -88,8 +108,8 @@ export function useUserSettingsPage() {
       body: { currentPassword, newEmail }
     })
     toast.add({
-      title: '验证邮件已发送',
-      description: `请到 ${res.pendingEmail} 邮箱点击确认链接完成更改`,
+      title: t('user.settings.email.verificationSent'),
+      description: t('user.settings.email.verificationSentDescription', { email: res.pendingEmail }),
       color: 'success'
     })
     return res.pendingEmail
@@ -127,15 +147,15 @@ export function useUserSettingsPage() {
 
   async function unbind(provider: string) {
     await confirm({
-      title: `解绑 ${provider} 账号`,
-      description: '解绑后将无法使用该方式登录。',
+      title: t('user.settings.oauth.unbindTitle', { provider }),
+      description: t('user.settings.oauth.unbindDescription'),
       onConfirm: async () => {
         try {
           await $fetch(`/api/user/oauth/${provider}/unbind`, { method: 'POST' })
-          toast.add({ title: '已解绑', color: 'success' })
+          toast.add({ title: t('user.settings.oauth.unbound'), color: 'success' })
           await loadOauth()
         } catch (err) {
-          toast.add({ title: parseFetchError(err, '解绑失败'), color: 'error' })
+          toast.add({ title: parseFetchError(err, t('user.settings.oauth.unbindFailed')), color: 'error' })
           throw err
         }
       }
@@ -145,15 +165,15 @@ export function useUserSettingsPage() {
   function notifyOauthCallback(query: Record<string, unknown>) {
     if (query.oauth_bound) {
       toast.add({
-        title: `已绑定 ${query.oauth_bound}`,
+        title: t('user.settings.oauth.bound', { provider: String(query.oauth_bound) }),
         color: 'success'
       })
     }
     if (query.oauth_error) {
       const code = String(query.oauth_error)
       toast.add({
-        title: '绑定失败',
-        description: OAUTH_BIND_ERRORS[code] || code,
+        title: t('user.settings.oauth.bindFailed'),
+        description: OAUTH_BIND_ERROR_KEYS[code] ? t(OAUTH_BIND_ERROR_KEYS[code]) : code,
         color: 'error'
       })
     }
@@ -169,6 +189,7 @@ export function useUserSettingsPage() {
     loginActivityLoading,
     loadProfile,
     updateProfile,
+    updateLanguagePreference,
     changePassword,
     requestEmailChange,
     loadOauth,

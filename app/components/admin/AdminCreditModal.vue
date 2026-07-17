@@ -11,26 +11,27 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
+const { t } = useI18n()
 
 const operation = ref<'grant' | 'revoke' | 'reset'>('grant')
 const amount = ref<number>(0)
 const remark = ref<string>('')
 const loading = ref(false)
 
-const operationItems = [
-  { label: '加积分（grant）', value: 'grant' },
-  { label: '减积分（revoke）', value: 'revoke' },
-  { label: '重置积分（reset）', value: 'reset' }
-]
+const operationItems = computed(() => [
+  { label: t('admin.credits.adjust.operations.grant'), value: 'grant' },
+  { label: t('admin.credits.adjust.operations.revoke'), value: 'revoke' },
+  { label: t('admin.credits.adjust.operations.reset'), value: 'reset' }
+])
 
 const operationHelp = computed(() => {
   switch (operation.value) {
     case 'grant':
-      return '将指定积分加到目标用户的积分上。'
+      return t('admin.credits.adjust.help.grant')
     case 'revoke':
-      return '从目标用户积分中扣除指定数量；不足时扣到 0。'
+      return t('admin.credits.adjust.help.revoke')
     case 'reset':
-      return '将目标用户积分重置为指定数量（默认 0）。'
+      return t('admin.credits.adjust.help.reset')
     default:
       return ''
   }
@@ -38,7 +39,7 @@ const operationHelp = computed(() => {
 
 const targetSummary = computed(() => {
   if (props.userIds.length === 1) return props.selectionLabel
-  return `${props.userIds.length} 个用户`
+  return t('admin.credits.adjust.userCount', { count: props.userIds.length })
 })
 
 watch(open, (val) => {
@@ -51,7 +52,7 @@ watch(open, (val) => {
 
 async function submit() {
   if (operation.value !== 'reset' && amount.value <= 0) {
-    toast.add({ title: '积分必须大于 0', color: 'warning' })
+    toast.add({ title: t('admin.credits.adjust.validation.positiveAmount'), color: 'warning' })
     return
   }
   loading.value = true
@@ -65,11 +66,11 @@ async function submit() {
         remark: remark.value.trim() || undefined
       }
     })
-    toast.add({ title: '积分调整成功', color: 'success' })
+    toast.add({ title: t('admin.credits.adjust.success'), color: 'success' })
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -79,13 +80,13 @@ async function submit() {
 <template>
   <UModal
     v-model:open="open"
-    title="积分管理"
-    :description="`目标：${targetSummary}`"
+    :title="$t('admin.credits.adjust.title')"
+    :description="$t('admin.credits.adjust.target', { target: targetSummary })"
     :ui="adminModalUi()"
   >
     <template #body>
       <div class="space-y-4">
-        <UFormField label="操作类型">
+        <UFormField :label="$t('admin.credits.adjust.operationType')">
           <USelect
             v-model="operation"
             :items="operationItems"
@@ -95,20 +96,20 @@ async function submit() {
           </p>
         </UFormField>
 
-        <UFormField :label="operation === 'reset' ? '目标积分' : '积分'">
+        <UFormField :label="operation === 'reset' ? $t('admin.credits.adjust.targetAmount') : $t('admin.credits.adjust.amount')">
           <UInput
             v-model.number="amount"
             type="number"
             min="0"
-            placeholder="请输入积分"
+            :placeholder="$t('admin.credits.adjust.amountPlaceholder')"
           />
         </UFormField>
 
-        <UFormField label="备注（可选）">
+        <UFormField :label="$t('admin.credits.adjust.remark')">
           <UTextarea
             v-model="remark"
             :rows="2"
-            placeholder="例如：促销发放 / 违规扣除"
+            :placeholder="$t('admin.credits.adjust.remarkPlaceholder')"
             class="w-full sm:max-w-lg"
           />
         </UFormField>
@@ -122,13 +123,13 @@ async function submit() {
           color="neutral"
           @click="() => { open = false }"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="submit"
         >
-          确认
+          {{ $t('common.actions.confirm') }}
         </UButton>
       </div>
     </template>

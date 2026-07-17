@@ -8,6 +8,7 @@ interface UserCreditsConsumptionTableProps {
 }
 
 const props = withDefaults(defineProps<UserCreditsConsumptionTableProps>(), { loading: false })
+const { t, locale } = useI18n()
 const chartRef = useTemplateRef<HTMLElement | null>('chartRef')
 const { width } = useElementSize(chartRef)
 
@@ -18,8 +19,8 @@ interface TrendRow extends UserCreditConsumptionDailyRow {
 
 const rows = computed<TrendRow[]>(() => props.rows.map(row => ({
   ...row,
-  label: new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(`${row.date}T00:00:00`)),
-  fullLabel: new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(`${row.date}T00:00:00`))
+  label: new Intl.DateTimeFormat(locale.value, { month: '2-digit', day: '2-digit' }).format(new Date(`${row.date}T00:00:00`)),
+  fullLabel: new Intl.DateTimeFormat(locale.value, { dateStyle: 'medium' }).format(new Date(`${row.date}T00:00:00`))
 })))
 
 const x = (_row: TrendRow, index: number) => index
@@ -29,18 +30,18 @@ const tooltipTemplate = (row: TrendRow | undefined) => row
   ? renderChartTooltip({
       title: row.fullLabel,
       rows: [
-        { color: 'var(--ui-error)', label: '消耗积分', value: row.consumedCredits.toLocaleString() },
-        { color: 'var(--ui-primary)', label: '消耗次数', value: row.transactionCount.toLocaleString() }
+        { color: 'var(--ui-error)', label: t('user.credits.consumption.consumedPoints'), value: row.consumedCredits.toLocaleString(locale.value) },
+        { color: 'var(--ui-primary)', label: t('user.credits.consumption.transactionCount'), value: row.transactionCount.toLocaleString(locale.value) }
       ],
-      footer: [{ label: '单次平均', value: row.transactionCount ? (row.consumedCredits / row.transactionCount).toLocaleString('zh-CN', { maximumFractionDigits: 2 }) : '0' }]
+      footer: [{ label: t('user.credits.consumption.averagePerTransaction'), value: row.transactionCount ? (row.consumedCredits / row.transactionCount).toLocaleString(locale.value, { maximumFractionDigits: 2 }) : '0' }]
     })
   : ''
 </script>
 
 <template>
   <DashboardTableCard
-    title="近 7 天积分消耗"
-    description="按自然日统计全部负向积分变动"
+    :title="$t('user.credits.consumption.title')"
+    :description="$t('user.credits.consumption.description')"
     icon="i-mdi-chart-timeline-variant"
   >
     <div
@@ -51,7 +52,7 @@ const tooltipTemplate = (row: TrendRow | undefined) => row
         v-if="rows.length === 0 && !loading"
         class="flex h-72 items-center justify-center text-sm text-muted"
       >
-        最近 7 天还没有发生积分消耗
+        {{ $t('user.credits.consumption.empty') }}
       </div>
       <template v-else>
         <VisXYContainer
@@ -103,7 +104,7 @@ const tooltipTemplate = (row: TrendRow | undefined) => row
             icon="i-mdi-circle"
             class="rounded-md"
           >
-            消耗积分
+            {{ $t('user.credits.consumption.consumedPoints') }}
           </UBadge>
         </div>
       </template>

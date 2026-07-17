@@ -6,20 +6,21 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const { t } = useI18n()
 const form = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const isSaving = ref(false)
 
 async function submit() {
   if (!form.currentPassword) {
-    toast.add({ title: '请输入当前密码', color: 'warning' })
+    toast.add({ title: t('user.settings.security.enterCurrentPassword'), color: 'warning' })
     return
   }
   if (form.newPassword.length < 8) {
-    toast.add({ title: '新密码至少 8 位', color: 'warning' })
+    toast.add({ title: t('user.settings.security.passwordTooShort'), color: 'warning' })
     return
   }
   if (form.newPassword !== form.confirmPassword) {
-    toast.add({ title: '两次输入的新密码不一致', color: 'warning' })
+    toast.add({ title: t('user.settings.security.passwordMismatch'), color: 'warning' })
     return
   }
   isSaving.value = true
@@ -29,7 +30,7 @@ async function submit() {
     form.newPassword = ''
     form.confirmPassword = ''
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '修改失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.updateFailed')), color: 'error' })
   } finally {
     isSaving.value = false
   }
@@ -38,11 +39,11 @@ async function submit() {
 
 <template>
   <DashboardSettingsSection
-    title="修改密码"
+    :title="$t('user.settings.security.title')"
   >
     <UFormField
-      label="当前密码"
-      description="验证身份所需的现有密码。"
+      :label="$t('user.settings.security.currentPassword')"
+      :description="$t('user.settings.security.currentPasswordDescription')"
       class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
@@ -54,8 +55,8 @@ async function submit() {
       />
     </UFormField>
     <UFormField
-      label="新密码"
-      description="至少 8 位，建议混合大小写字母与数字。"
+      :label="$t('user.settings.security.newPassword')"
+      :description="$t('user.settings.security.newPasswordDescription')"
       class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
@@ -67,8 +68,8 @@ async function submit() {
       />
     </UFormField>
     <UFormField
-      label="确认新密码"
-      description="再次输入新密码以确认无误。"
+      :label="$t('user.settings.security.confirmPassword')"
+      :description="$t('user.settings.security.confirmPasswordDescription')"
       class="flex max-sm:flex-col justify-between items-start gap-4"
     >
       <UInput
@@ -85,7 +86,7 @@ async function submit() {
         icon="i-mdi-content-save-outline"
         @click="submit"
       >
-        更新密码
+        {{ $t('user.settings.security.updatePassword') }}
       </UButton>
     </div>
   </DashboardSettingsSection>

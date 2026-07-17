@@ -4,7 +4,6 @@ interface DashboardTableCardProps {
   icon?: string
   description?: string
   total?: number
-  totalLabel?: string
   embedded?: boolean
 }
 
@@ -12,13 +11,13 @@ const props = withDefaults(defineProps<DashboardTableCardProps>(), {
   icon: undefined,
   description: undefined,
   total: undefined,
-  totalLabel: '共',
   embedded: false
 })
+const { t, locale } = useI18n()
 
 const totalText = computed(() => {
   if (props.total === undefined) return undefined
-  return `${props.totalLabel} ${props.total.toLocaleString()} 条`
+  return t('common.pagination.totalRecords', { count: props.total.toLocaleString(locale.value) })
 })
 </script>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {
-  adminDashboardConfig,
-  userDashboardConfig,
+  createAdminDashboardConfig,
+  createUserDashboardConfig,
   type DashboardConfig,
   type DashboardStaticConfig
 } from '~/constants/dashboard-config'
@@ -12,15 +12,20 @@ interface DashboardLayoutProps {
 
 const props = defineProps<DashboardLayoutProps>()
 const { user } = useAuth()
+const { t } = useI18n()
 
 const dashboardConfig = computed<DashboardStaticConfig>(() => resolveDashboardConfig(props.dashboardId))
 
 function resolveDashboardConfig(dashboardId: DashboardConfig['id']): DashboardStaticConfig {
+  const context = { t }
+
   if (dashboardId === 'user' && user.value?.role === 'admin') {
-    return adminDashboardConfig
+    return createAdminDashboardConfig(context)
   }
 
-  return dashboardId === 'admin' ? adminDashboardConfig : userDashboardConfig
+  return dashboardId === 'admin'
+    ? createAdminDashboardConfig(context)
+    : createUserDashboardConfig(context)
 }
 </script>
 

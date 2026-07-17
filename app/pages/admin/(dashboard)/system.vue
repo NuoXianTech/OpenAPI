@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { adminSystemSection } from '~/constants/dashboard-sections'
+import { createAdminSystemSection } from '~/constants/dashboard-sections'
+
+const { t } = useI18n()
+const adminSystemSection = computed(() => createAdminSystemSection({ t }))
 </script>
 
 <template>

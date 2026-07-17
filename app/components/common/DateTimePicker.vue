@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<{
   /** 触发按钮是否撑满容器宽度 */
   block?: boolean
 }>(), {
-  placeholder: '选择日期时间',
+  placeholder: '',
   size: 'md',
   disabled: false,
   clearable: true,
@@ -26,11 +26,13 @@ const props = withDefaults(defineProps<{
 })
 
 const value = defineModel<string>({ default: '' })
+const { t, locale } = useI18n()
+const resolvedPlaceholder = computed(() => props.placeholder || t('common.dateTime.selectDateTime'))
 
 const open = ref(false)
 const tz = getLocalTimeZone()
 
-const labelFormatter = new DateFormatter('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
+const labelFormatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'medium', timeStyle: 'short' }))
 
 // 字符串 → 日历态（拆成日期、时间两段分别驱动 UCalendar / UInputTime）
 const calendarDate = ref<CalendarDate>()
@@ -77,7 +79,7 @@ const timeProxy = computed({
 
 const displayLabel = computed(() => {
   const dt = dateTimeLocalToCalendar(value.value)
-  return dt ? labelFormatter.format(dt.toDate(tz)) : ''
+  return dt ? labelFormatter.value.format(dt.toDate(tz)) : ''
 })
 
 function setNow() {
@@ -110,7 +112,7 @@ function clear() {
       class="data-[state=open]:bg-elevated group justify-start font-normal"
       :class="{ 'text-dimmed': !displayLabel }"
     >
-      <span class="truncate">{{ displayLabel || props.placeholder }}</span>
+      <span class="truncate">{{ displayLabel || resolvedPlaceholder }}</span>
 
       <template #trailing>
         <span class="ms-auto flex items-center gap-1">
@@ -120,7 +122,7 @@ function clear() {
             class="size-4 text-dimmed hover:text-default transition-colors"
             role="button"
             tabindex="-1"
-            aria-label="清除"
+            :aria-label="$t('common.actions.clear')"
             @click.stop="clear"
           />
           <UIcon
@@ -150,7 +152,7 @@ function clear() {
             class="flex-1"
           />
           <UButton
-            label="此刻"
+            :label="$t('common.dateTime.now')"
             color="neutral"
             variant="ghost"
             size="sm"

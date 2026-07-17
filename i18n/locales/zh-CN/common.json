@@ -1,0 +1,314 @@
+{
+  "common": {
+    "actions": {
+      "confirm": "确认",
+      "cancel": "取消",
+      "save": "保存",
+      "create": "创建",
+      "edit": "编辑",
+      "delete": "删除",
+      "copy": "复制",
+      "clear": "清除",
+      "reset": "重置",
+      "done": "完成",
+      "refresh": "刷新",
+      "retry": "重试",
+      "visit": "访问",
+      "viewDetails": "查看详情",
+      "logout": "退出登录",
+      "backHome": "返回首页",
+      "backLogin": "返回登录"
+    },
+    "states": {
+      "loading": "加载中...",
+      "loadFailed": "加载失败",
+      "success": "成功",
+      "failure": "失败",
+      "active": "正常",
+      "inactive": "异常",
+      "maintenance": "维护",
+      "deprecated": "废弃",
+      "automatic": "自动",
+      "disabled": "已关闭",
+      "unknown": "未知"
+    },
+    "filters": {
+      "all": "全部",
+      "current": "当前",
+      "button": "筛选",
+      "title": "筛选条件",
+      "activeCount": "{count} 项筛选",
+      "tabsAria": "筛选标签",
+      "searchOptions": "搜索选项",
+      "noOptions": "未找到选项",
+      "more": "更多 {count}"
+    },
+    "pagination": {
+      "perPage": "{count} / 页",
+      "totalRecords": "共 {count} 条"
+    },
+    "table": {
+      "empty": "暂无数据"
+    },
+    "dateTime": {
+      "selectDateTime": "选择日期时间",
+      "selectRange": "选择时间范围",
+      "now": "此刻",
+      "presets": {
+        "last7Days": "最近 7 天",
+        "last14Days": "最近 14 天",
+        "last30Days": "最近 30 天",
+        "last3Months": "最近 3 个月",
+        "last6Months": "最近 6 个月",
+        "lastYear": "最近 1 年"
+      }
+    },
+    "content": {
+      "noDescription": "暂无描述"
+    },
+    "feedback": {
+      "copied": "已复制到剪贴板",
+      "copyFailed": "复制失败",
+      "saveFailed": "保存失败",
+      "sendFailed": "发送失败",
+      "createFailed": "创建失败",
+      "operationFailed": "操作失败",
+      "deleted": "已删除",
+      "deleteFailed": "删除失败",
+      "updated": "已更新",
+      "updateFailed": "修改失败"
+    },
+    "duration": {
+      "years": "{count}年",
+      "days": "{count}天",
+      "hours": "{count}时",
+      "minutes": "{count}分"
+    },
+    "units": {
+      "points": "积分",
+      "times": "次",
+      "records": "笔"
+    },
+    "identities": {
+      "anonymous": "匿名",
+      "admin": "管理员",
+      "adminWithId": "管理员 #{id}",
+      "user": "用户",
+      "userWithId": "用户 #{id}",
+      "system": "系统"
+    },
+    "accounts": {
+      "active": "已激活",
+      "inactive": "未激活",
+      "banned": "已封禁",
+      "unbanned": "未封禁",
+      "permanentBan": "永久封禁",
+      "bannedUntil": "封禁至 {time}",
+      "deletedUser": "已删除用户"
+    },
+    "credits": {
+      "reasons": {
+        "adminGrant": "管理员加",
+        "adminRevoke": "管理员扣",
+        "adminReset": "管理员重置",
+        "apiCharge": "API 扣费",
+        "apiRefund": "API 退款",
+        "signupBonus": "注册赠送",
+        "redemptionCode": "兑换码",
+        "checkin": "每日签到"
+      }
+    },
+    "apiKeys": {
+      "defaultName": "默认密钥",
+      "loadScopesFailed": "加载接口列表失败",
+      "expiry": {
+        "never": "永不过期",
+        "oneHour": "1 小时",
+        "oneDay": "1 天",
+        "oneMonth": "1 个月",
+        "custom": "自定义"
+      },
+      "scopes": {
+        "all": "全部接口",
+        "selected": "指定接口"
+      },
+      "statuses": {
+        "enabled": "启用",
+        "disabled": "停用",
+        "expired": "已过期",
+        "revoked": "已撤销"
+      },
+      "columns": {
+        "name": "名称",
+        "quota": "配额（已用/总额）",
+        "scopes": "接口范围",
+        "ipWhitelist": "IP 白名单",
+        "totalCalls": "调用次数",
+        "lastUsedAt": "最后使用",
+        "createdAt": "创建时间",
+        "expiresAt": "过期时间",
+        "status": "状态"
+      },
+      "display": {
+        "unlimited": "无限",
+        "scopeCount": "{count} 个接口",
+        "allIps": "全部 IP",
+        "cidrCount": "{count} 条 CIDR",
+        "neverUsed": "从未使用"
+      },
+      "actions": {
+        "edit": "编辑配置",
+        "copy": "复制密钥",
+        "enable": "启用密钥",
+        "disable": "停用密钥",
+        "reset": "重置密钥",
+        "delete": "删除密钥"
+      },
+      "feedback": {
+        "enabled": "已启用",
+        "disabled": "已停用"
+      },
+      "delete": {
+        "title": "删除 API 密钥：{name}",
+        "description": "删除后该密钥立即失效且不可恢复。"
+      },
+      "validation": {
+        "expiryRequired": "请填写过期时间",
+        "invalidQuota": "请填写有效的积分上限",
+        "scopeRequired": "请至少选择一个接口，或切回“全部接口”",
+        "invalidIpLines": "IP 白名单第 {lines} 行格式错误"
+      },
+      "form": {
+        "name": "名称",
+        "namePlaceholder": "例如：默认密钥 / 生产密钥",
+        "batchNameHelp": "批量生成 > 1 个时，首个使用此名称，其余自动追加后缀",
+        "editNameHelp": "仅展示用，不影响密钥字符串本身",
+        "count": "生成数量",
+        "countHelp": "一次最多 5 个",
+        "expiry": "过期时间",
+        "selectExpiry": "选择过期时间",
+        "expiryEditHelp": "选择“永不过期”会清空过期时间；选择预设会从当前时间起算。",
+        "expiryCreateHelp": "过期后密钥不会被删除或禁用，调用接口时会返回到期信息。",
+        "quota": "积分配额",
+        "unlimitedQuota": "无限配额",
+        "quotaPlaceholder": "累计可消耗积分上限",
+        "quotaEditHelp": "修改上限不会重置已消耗积分；若新上限低于已消耗，密钥将立即停止可用直至再次提高。",
+        "quotaCreateHelp": "该密钥累计消耗积分达到上限后将拒绝调用；资金仍从钱包扣除。",
+        "scopes": "接口范围",
+        "selectScopes": "选择允许调用的接口",
+        "ipWhitelist": "IP 白名单（CIDR）",
+        "invalidIpLines": "第 {lines} 行格式错误",
+        "ipHelpDetailed": "每行一条 CIDR，例如 1.2.3.4/32 / 10.0.0.0/8；留空 = 不限",
+        "ipHelpCompact": "每行一条；留空 = 不限"
+      },
+      "reset": {
+        "success": "已重置，旧密钥立即失效",
+        "failed": "重置失败",
+        "saveNewTitle": "已重置，请保存新密钥",
+        "confirmTitle": "确认重置 API 密钥",
+        "warningTitle": "重置将立即让旧密钥失效",
+        "warningDescription": "将重置“{name}”，所有正在使用旧密钥的调用方会立刻失败，请确认后再继续。",
+        "confirmAction": "确认重置",
+        "savedAction": "我已保存"
+      }
+    },
+    "loginLogs": {
+      "methods": {
+        "password": "账号密码",
+        "github": "GitHub",
+        "qq": "QQ"
+      },
+      "failures": {
+        "invalidPassword": "密码错误",
+        "banned": "账号被封禁",
+        "notActive": "邮箱未验证",
+        "oauthUserUnavailable": "账号不可用"
+      }
+    },
+    "notifications": {
+      "title": "消息通知",
+      "unread": "未读",
+      "unreadCount": "{count} 未读",
+      "markAllRead": "全部已读",
+      "onlyUnread": "只看未读",
+      "noUnread": "没有未读消息",
+      "empty": "暂无消息",
+      "emptyDescription": "新的通知会显示在这里",
+      "from": "来自：{sender}",
+      "system": "系统",
+      "levels": {
+        "info": "通知",
+        "success": "成功",
+        "warning": "提醒",
+        "critical": "紧急"
+      }
+    },
+    "turnstile": {
+      "loadFailed": "Turnstile 脚本加载失败",
+      "loadFailedWithHost": "Turnstile 脚本加载失败：无法访问 challenges.cloudflare.com",
+      "loadTimeout": "Turnstile 脚本加载超时（>{seconds}s），请检查网络是否能访问 challenges.cloudflare.com",
+      "emptySiteKey": "Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置",
+      "verificationFailed": "Turnstile 校验失败：{message}",
+      "renderFailed": "Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配"
+    },
+    "search": {
+      "clear": "清除搜索"
+    },
+    "dialog": {
+      "confirmTitle": "确认操作"
+    },
+    "dashboard": {
+      "groups": {
+        "general": "常规",
+        "personal": "个人",
+        "management": "管理",
+        "operations": "运营",
+        "system": "系统"
+      },
+      "navigation": {
+        "overview": "概览",
+        "apiKeys": "API 密钥",
+        "usageLogs": "使用日志",
+        "credits": "积分",
+        "settings": "设置",
+        "logCenter": "日志中心",
+        "creditManagement": "积分管理",
+        "contentManagement": "内容管理",
+        "apiManagement": "接口管理",
+        "userManagement": "用户管理",
+        "systemSettings": "系统设置",
+        "profileSettings": "个人设置",
+        "siteSettings": "站点设置",
+        "backToSite": "返回前台"
+      },
+      "sections": {
+        "announcements": "公告",
+        "notifications": "通知",
+        "friendLinks": "友情链接",
+        "categoryManagement": "分类管理",
+        "callLogs": "调用日志",
+        "loginLogs": "登录日志",
+        "operationLogs": "操作日志",
+        "userCredits": "用户积分",
+        "creditTransactions": "积分流水",
+        "redemptionCodes": "兑换码",
+        "userSessions": "用户会话",
+        "captcha": "验证码",
+        "email": "邮件",
+        "about": "关于",
+        "checkinAndRedeem": "签到兑换",
+        "transactionDetails": "流水明细",
+        "profile": "个人资料",
+        "passwordAndSecurity": "密码和安全",
+        "oauthAccounts": "第三方账号"
+      }
+    },
+    "dashboardRanking": {
+      "empty": "暂无调用数据",
+      "api": "接口",
+      "calls": "调用次数",
+      "successRate": "成功率",
+      "times": "次"
+    }
+  }
+}

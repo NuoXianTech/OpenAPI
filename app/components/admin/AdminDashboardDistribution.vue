@@ -7,6 +7,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), { loading: false })
+const { locale } = useI18n()
 
 const totalCalls = computed(() => props.distribution.reduce((sum, item) => sum + item.totalCalls, 0))
 
@@ -20,7 +21,7 @@ const rows = computed(() => {
   }))
 })
 
-const formatNumber = (val: number) => val.toLocaleString()
+const formatNumber = (val: number) => val.toLocaleString(locale.value)
 </script>
 
 <template>
@@ -29,7 +30,7 @@ const formatNumber = (val: number) => val.toLocaleString()
       v-if="rows.length === 0"
       class="flex h-56 items-center justify-center rounded-lg border border-dashed border-default text-sm text-muted"
     >
-      暂无分布数据
+      {{ $t('admin.overview.distribution.empty') }}
     </div>
 
     <ul

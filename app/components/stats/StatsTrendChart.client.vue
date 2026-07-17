@@ -12,6 +12,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t, locale } = useI18n()
 
 // 把容器宽度响应式地喂给 VisXYContainer（官方仪表盘模板同款）：
 // unovis 首次挂载时内部测得的宽度可能为 0、不绘制坐标轴，必须等一次尺寸变化才补画。
@@ -28,14 +29,14 @@ interface TrendRow {
 
 const rows = computed<TrendRow[]>(() => props.trend.map(item => ({
   label: formatTrendShortDate(item.date),
-  fullLabel: formatTrendFullDate(item.date),
+  fullLabel: formatTrendFullDate(item.date, locale.value),
   success: item.successCalls,
   failure: item.failureCalls
 })))
 
 const hasData = computed(() => rows.value.some(row => row.success + row.failure > 0))
 
-const formatCount = (value: number) => value.toLocaleString()
+const formatCount = (value: number) => value.toLocaleString(locale.value)
 
 const x = (_row: TrendRow, index: number) => index
 const successAccessor = (row: TrendRow) => row.success
@@ -56,12 +57,12 @@ function tooltipTemplate(datum: TrendRow | undefined) {
   return renderChartTooltip({
     title: datum.fullLabel,
     rows: [
-      { color: 'var(--ui-success)', label: '成功', value: formatCount(datum.success) },
-      { color: 'var(--ui-error)', label: '失败', value: formatCount(datum.failure) }
+      { color: 'var(--ui-success)', label: t('public.stats.chart.success'), value: formatCount(datum.success) },
+      { color: 'var(--ui-error)', label: t('public.stats.chart.failure'), value: formatCount(datum.failure) }
     ],
     footer: [
-      { label: '合计', value: formatCount(total) },
-      { label: '成功率', value: rate }
+      { label: t('public.stats.chart.total'), value: formatCount(total) },
+      { label: t('public.stats.chart.successRate'), value: rate }
     ]
   })
 }
@@ -75,8 +76,8 @@ function tooltipTemplate(datum: TrendRow | undefined) {
     <UEmpty
       v-if="!hasData"
       icon="i-mdi-chart-line"
-      title="暂无趋势数据"
-      description="近 7 天还没有可展示的调用趋势。"
+      :title="t('public.stats.chart.emptyTitle')"
+      :description="t('public.stats.chart.emptyDescription')"
       class="h-[320px]"
     />
 
@@ -136,7 +137,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
           icon="i-mdi-circle"
           class="rounded-md"
         >
-          成功次数
+          {{ $t('public.stats.chart.successCount') }}
         </UBadge>
         <UBadge
           variant="soft"
@@ -144,7 +145,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
           icon="i-mdi-circle"
           class="rounded-md"
         >
-          失败次数
+          {{ $t('public.stats.chart.failureCount') }}
         </UBadge>
       </div>
     </template>

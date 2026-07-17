@@ -10,8 +10,11 @@ const props = defineProps<{
 const config = useDashboardConfig()
 const { user, loading, logout } = useAuth()
 const router = useRouter()
+const { t } = useI18n()
 
-const fallbackName = computed(() => config.value.id === 'admin' ? 'Admin' : 'User')
+const fallbackName = computed(() => config.value.id === 'admin'
+  ? t('common.identities.admin')
+  : t('common.identities.user'))
 const displayName = computed(() => user.value?.displayName || user.value?.username || '')
 const userButtonLabel = computed(() => displayName.value || fallbackName.value)
 const avatarSrc = computed(() => user.value?.avatarUrl || undefined)
@@ -23,7 +26,7 @@ const userMenuItems = computed<DropdownMenuItem[][]>(() => {
     [{ type: 'label', label: user.value?.email || userButtonLabel.value }],
     ...extra,
     [{
-      label: '退出登录',
+      label: t('common.actions.logout'),
       icon: 'i-mdi-logout',
       color: 'error',
       async onSelect() {
@@ -48,7 +51,7 @@ async function handleRefresh() {
       color="neutral"
       icon="i-mdi-refresh"
       :loading="refreshing"
-      aria-label="刷新"
+      :aria-label="t('common.actions.refresh')"
       @click="handleRefresh"
     />
 
