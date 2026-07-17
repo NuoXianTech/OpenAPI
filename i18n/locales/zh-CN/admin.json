@@ -1040,7 +1040,7 @@
           "description": "不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。",
           "rulesLabel": "邮箱域过滤规则",
           "disabledDescription": "当前模式为「不开启」，此列表不会生效。",
-          "rulesDescription": "逗号或换行分隔，仅写域名（不带 @）。例如：163.com, qq.com、gmail.com。",
+          "rulesDescription": "逗号或换行分隔，仅写域名（不带 {'@'}）。例如：163.com, qq.com、gmail.com。",
           "options": {
             "off": "不开启",
             "whitelist": "白名单",

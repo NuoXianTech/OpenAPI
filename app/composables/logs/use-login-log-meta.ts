@@ -1,8 +1,17 @@
-import {
-  LOGIN_METHOD_META,
-  type LoginFailureReason,
-  type LoginMethod
-} from '#shared/types/login-log'
+import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
+
+export type LoginMethodColor = 'info' | 'neutral'
+
+interface LoginMethodMeta {
+  icon: string
+  color: LoginMethodColor
+}
+
+const LOGIN_METHOD_META: Record<LoginMethod, LoginMethodMeta> = {
+  password: { icon: 'i-mdi-form-textbox-password', color: 'neutral' },
+  oauth_github: { icon: 'i-mdi-github', color: 'neutral' },
+  oauth_qq: { icon: 'i-mdi-qqchat', color: 'info' }
+}
 
 const LOGIN_METHOD_MESSAGE_KEYS = {
   password: 'common.loginLogs.methods.password',
@@ -31,8 +40,8 @@ export function useLoginLogMeta() {
     return messageKey ? t(messageKey) : reason
   }
 
-  function getLoginMethodColor(method: string) {
-    return LOGIN_METHOD_META[method as LoginMethod]?.color || 'neutral'
+  function getLoginMethodColor(method: string): LoginMethodColor {
+    return LOGIN_METHOD_META[method as LoginMethod]?.color ?? 'neutral'
   }
 
   function getLoginMethodIcon(method: string): string | undefined {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { zh_cn } from '@nuxt/ui/locale'
+import { DEFAULT_LOCALE } from '#shared/config/locale-defaults'
 
 // 站点元信息（标题模板、favicon、描述）统一由 siteSettings 提供，
 // 各 page 通过 useHead({ title }) 声明本页标题，模板自动拼上 siteName。
@@ -13,7 +14,7 @@ useHead({
   titleTemplate: title => (typeof title === 'string' && title.length)
     ? `${title} - ${settings.value.siteName}`
     : settings.value.siteName,
-  htmlAttrs: { lang: 'zh-CN' },
+  htmlAttrs: { lang: DEFAULT_LOCALE },
   meta: [
     { name: 'description', content: () => settings.value.siteDescription }
   ],

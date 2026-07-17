@@ -1,10 +1,6 @@
 <script setup lang="ts">
-import {
-  ANNOUNCEMENT_LEVEL_META as levelMeta,
-  type Announcement,
-  type MessageLevel,
-  type MessageLevelMeta
-} from '#shared/types/content'
+import type { Announcement, MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVEL_META as levelMeta, type MessageLevelMeta } from '~/constants/message-level'
 import {
   getLatestAnnouncementRevision,
   hasNewerAnnouncement

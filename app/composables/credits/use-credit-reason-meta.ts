@@ -1,4 +1,17 @@
-import { creditReasonColor, type CreditReason } from '#shared/types/credit-reason'
+import type { CreditReason } from '#shared/types/credit-reason'
+
+type CreditReasonColor = 'success' | 'error' | 'warning' | 'info' | 'neutral'
+
+const CREDIT_REASON_COLORS: Record<CreditReason, CreditReasonColor> = {
+  admin_grant: 'success',
+  admin_revoke: 'error',
+  admin_reset: 'warning',
+  api_charge: 'error',
+  api_refund: 'success',
+  signup_bonus: 'info',
+  redemption_code: 'success',
+  checkin: 'success'
+}
 
 const CREDIT_REASON_MESSAGE_KEYS = {
   admin_grant: 'common.credits.reasons.adminGrant',
@@ -19,8 +32,12 @@ export function useCreditReasonMeta() {
     return messageKey ? t(messageKey) : reason
   }
 
+  function getReasonColor(reason: string): CreditReasonColor {
+    return CREDIT_REASON_COLORS[reason as CreditReason] ?? 'neutral'
+  }
+
   return {
-    getReasonColor: creditReasonColor,
+    getReasonColor,
     getReasonLabel
   }
 }

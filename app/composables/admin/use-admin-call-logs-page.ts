@@ -8,7 +8,6 @@ import {
 } from '#shared/types/admin'
 import type {
   AdminLoginLogRow,
-  LoginLogBadgeColor,
   LoginMethod
 } from '#shared/types/login-log'
 import {
@@ -20,7 +19,7 @@ import {
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
-import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
+import { useLoginLogMeta, type LoginMethodColor } from '~/composables/logs/use-login-log-meta'
 
 interface AdminCallLogsFilters {
   startAt: string
@@ -215,7 +214,7 @@ interface UseAdminLoginLogListReturn {
   filters: AdminLoginLogFilters
   items: Ref<AdminLoginLogRow[]>
   loading: ComputedRef<boolean>
-  methodColor: (method: string) => LoginLogBadgeColor
+  methodColor: (method: string) => LoginMethodColor
   methodIcon: (method: string) => string | undefined
   methodItems: ComputedRef<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>>
   page: Ref<number>
@@ -431,6 +430,16 @@ function getOperationLogActionMessageKey(action: string): string {
   return `admin.logs.operations.actionLabels.${action.replaceAll(/[.-]/g, '_')}`
 }
 
+export function resolveOperationLogActorKind(
+  action: string,
+  userId: number | null,
+  actorRole: AdminOperationLogRow['actorRole'] = null
+): 'admin' | 'user' | 'system' {
+  if (actorRole === 'admin' || (!actorRole && action.startsWith('admin.'))) return 'admin'
+  if (actorRole === 'user' || (!actorRole && action.startsWith('user.')) || userId) return 'user'
+  return 'system'
+}
+
 export function useAdminOperationLogList(
   options: UseAdminOperationLogListOptions = {}
 ): UseAdminOperationLogListReturn {
@@ -501,15 +510,13 @@ export function useAdminOperationLogList(
     userId: number | null,
     actorRole: AdminOperationLogRow['actorRole'] = null
   ): string {
-    const isAdmin = actorRole === 'admin' || (!actorRole && action.startsWith('admin.'))
-    const isUser = actorRole === 'user' || (!actorRole && action.startsWith('user.'))
-
-    if (isAdmin) {
+    const actorKind = resolveOperationLogActorKind(action, userId, actorRole)
+    if (actorKind === 'admin') {
       return userId
         ? t('common.identities.adminWithId', { id: userId })
         : t('common.identities.admin')
     }
-    if (isUser || userId) {
+    if (actorKind === 'user') {
       return userId
         ? t('common.identities.userWithId', { id: userId })
         : t('common.identities.user')

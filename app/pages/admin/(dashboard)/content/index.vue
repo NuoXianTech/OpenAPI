@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ANNOUNCEMENT_LEVEL_META as levelMeta, MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/types/content'
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
+import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 import { parseFetchError } from '~/utils/client-error'
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'

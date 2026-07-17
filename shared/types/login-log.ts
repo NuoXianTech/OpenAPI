@@ -35,16 +35,3 @@ export interface AdminLoginLogRow extends LoginLogRow {
   username: string
   role: 'user' | 'admin'
 }
-
-export type LoginLogBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
-
-export interface LoginMethodMeta {
-  icon: string
-  color: LoginLogBadgeColor
-}
-
-export const LOGIN_METHOD_META: Record<LoginMethod, LoginMethodMeta> = {
-  password: { icon: 'i-mdi-form-textbox-password', color: 'neutral' },
-  oauth_github: { icon: 'i-mdi-github', color: 'neutral' },
-  oauth_qq: { icon: 'i-mdi-qqchat', color: 'info' }
-}
