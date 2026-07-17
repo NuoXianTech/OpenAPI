@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { userCreditsSection } from '~/constants/dashboard-sections'
+import { createUserCreditsSection } from '~/constants/dashboard-sections'
+
+const { t } = useI18n()
+const userCreditsSection = computed(() => createUserCreditsSection({ t }))
 </script>
 
 <template>

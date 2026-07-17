@@ -10,7 +10,7 @@ interface DashboardSectionShellProps {
 
 const props = defineProps<DashboardSectionShellProps>()
 
-useHead({ title: props.title })
+useHead({ title: () => props.title })
 </script>
 
 <template>

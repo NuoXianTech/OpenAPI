@@ -36,11 +36,74 @@
       "hours": "{count}时",
       "minutes": "{count}分"
     },
+    "units": {
+      "points": "积分",
+      "times": "次",
+      "records": "笔"
+    },
+    "credits": {
+      "reasons": {
+        "adminGrant": "管理员加",
+        "adminRevoke": "管理员扣",
+        "adminReset": "管理员重置",
+        "apiCharge": "API 扣费",
+        "apiRefund": "API 退款",
+        "signupBonus": "注册赠送",
+        "redemptionCode": "兑换码",
+        "checkin": "每日签到"
+      }
+    },
     "search": {
       "clear": "清除搜索"
     },
     "dialog": {
       "confirmTitle": "确认操作"
+    },
+    "dashboard": {
+      "groups": {
+        "general": "常规",
+        "personal": "个人",
+        "management": "管理",
+        "operations": "运营",
+        "system": "系统"
+      },
+      "navigation": {
+        "overview": "概览",
+        "apiKeys": "API 密钥",
+        "usageLogs": "使用日志",
+        "credits": "积分",
+        "settings": "设置",
+        "logCenter": "日志中心",
+        "creditManagement": "积分管理",
+        "contentManagement": "内容管理",
+        "apiManagement": "接口管理",
+        "userManagement": "用户管理",
+        "systemSettings": "系统设置",
+        "profileSettings": "个人设置",
+        "siteSettings": "站点设置",
+        "backToSite": "返回前台"
+      },
+      "sections": {
+        "announcements": "公告",
+        "notifications": "通知",
+        "friendLinks": "友情链接",
+        "categoryManagement": "分类管理",
+        "callLogs": "调用日志",
+        "loginLogs": "登录日志",
+        "operationLogs": "操作日志",
+        "userCredits": "用户积分",
+        "creditTransactions": "积分流水",
+        "redemptionCodes": "兑换码",
+        "userSessions": "用户会话",
+        "captcha": "验证码",
+        "email": "邮件",
+        "about": "关于",
+        "checkinAndRedeem": "签到兑换",
+        "transactionDetails": "流水明细",
+        "profile": "个人资料",
+        "passwordAndSecurity": "密码和安全",
+        "oauthAccounts": "第三方账号"
+      }
     }
   }
 }

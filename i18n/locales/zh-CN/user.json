@@ -1,13 +1,40 @@
 {
   "user": {
     "apiKey": "API 密钥",
-    "units": {
-      "points": "积分",
-      "times": "次"
-    },
     "states": {
       "success": "成功",
       "failure": "失败"
+    },
+    "credits": {
+      "balanceAfter": "当前积分 {balance}",
+      "overview": {
+        "balance": "当前积分",
+        "balanceDescription": "可用于 API 调用",
+        "totalIncome": "累计收入",
+        "totalIncomeDescription": "签到、兑换与后台发放",
+        "totalExpenses": "累计支出",
+        "totalExpensesDescription": "API 调用扣费合计",
+        "transactionCount": "流水笔数",
+        "transactionCountDescription": "全部积分变动记录"
+      },
+      "distribution": {
+        "title": "收支分布",
+        "records": "{count} 笔"
+      },
+      "consumption": {
+        "title": "近 7 天积分消耗",
+        "description": "按自然日统计全部负向积分变动",
+        "empty": "最近 7 天还没有发生积分消耗",
+        "consumedPoints": "消耗积分",
+        "transactionCount": "消耗次数",
+        "averagePerTransaction": "单次平均"
+      },
+      "checkin": {
+        "success": "签到成功 +{amount}"
+      },
+      "redeem": {
+        "success": "兑换成功 +{amount}"
+      }
     },
     "overview": {
       "pageTitle": "个人中心",
