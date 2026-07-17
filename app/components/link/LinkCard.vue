@@ -5,17 +5,18 @@ interface LinkCardProps {
   url?: string
   status?: number
 }
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<LinkCardProps>(), {
-  title: '链接标题',
-  description: '站点描述',
+  title: '',
+  description: '',
   url: '#',
   status: -1
 })
 
 const displayDescription = computed(() => {
   const value = props.description?.trim()
-  return value || '暂无描述'
+  return value || t('common.content.noDescription')
 })
 
 const displayHost = computed(() => {
@@ -64,13 +65,13 @@ const isActive = computed(() => props.status === 1)
           class="link-card__dot"
           :class="isActive ? 'link-card__dot--ok' : 'link-card__dot--err'"
         />
-        {{ isActive ? '正常' : '异常' }}
+        {{ isActive ? $t('common.states.active') : $t('common.states.inactive') }}
       </UBadge>
     </div>
 
     <div class="link-card__body">
       <h3 class="link-card__title">
-        {{ props.title }}
+        {{ props.title || $t('public.friendLinks.defaultTitle') }}
       </h3>
       <p
         class="link-card__desc"
@@ -92,7 +93,7 @@ const isActive = computed(() => props.status === 1)
         {{ displayHost }}
       </span>
       <span class="link-card__cta">
-        访问
+        {{ $t('common.actions.visit') }}
         <UIcon
           name="i-mdi-arrow-top-right"
           class="size-3.5"

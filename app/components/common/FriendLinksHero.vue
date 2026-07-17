@@ -8,6 +8,7 @@ const props = withDefaults(defineProps<Props>(), {
   totalCount: 0,
   activeCount: 0
 })
+const { t } = useI18n()
 
 const inactiveCount = computed(() => Math.max(0, props.totalCount - props.activeCount))
 const ratio = computed(() => {
@@ -27,17 +28,17 @@ const ratio = computed(() => {
       <div class="links-hero__layout">
         <div class="links-hero__copy">
           <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
-            友情链接
+            {{ $t('public.friendLinks.title') }}
           </h1>
           <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
-            每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。
+            {{ $t('public.friendLinks.description') }}
           </p>
         </div>
 
         <div class="links-hero__aside">
           <div
             class="links-hero__actions"
-            aria-label="友情链接导航"
+            :aria-label="t('public.friendLinks.navigationAria')"
           >
             <UButton
               to="/"
@@ -47,7 +48,7 @@ const ratio = computed(() => {
               size="sm"
               class="links-hero__nav-item"
             >
-              返回首页
+              {{ $t('common.actions.backHome') }}
             </UButton>
           </div>
 
@@ -59,7 +60,7 @@ const ratio = computed(() => {
               <template #value>
                 {{ totalCount }}
               </template>
-              收录数
+              {{ $t('public.friendLinks.collected') }}
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
@@ -69,7 +70,7 @@ const ratio = computed(() => {
               <template #value>
                 {{ ratio }}<span class="text-base text-muted">%</span>
               </template>
-              可达率
+              {{ $t('public.friendLinks.availability') }}
             </CommonHeroStatCard>
 
             <CommonHeroStatCard
@@ -79,7 +80,7 @@ const ratio = computed(() => {
               <template #value>
                 {{ inactiveCount }}
               </template>
-              异常数
+              {{ $t('public.friendLinks.inactiveCount') }}
             </CommonHeroStatCard>
           </div>
         </div>

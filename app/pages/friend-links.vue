@@ -1,21 +1,30 @@
 <script setup lang="ts">
 import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
 
-useHead({ title: '友情链接' })
+const { t } = useI18n()
+useHead(() => ({ title: t('public.friendLinks.title') }))
 useSeoMeta({
-  description: '友情链接 — 每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。',
-  ogTitle: '友情链接',
-  ogDescription: '友情链接 — 每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。'
+  description: () => t('public.friendLinks.seoDescription'),
+  ogTitle: () => t('public.friendLinks.title'),
+  ogDescription: () => t('public.friendLinks.seoDescription')
 })
 
 const query = ref('')
 const currentStatus = ref<string | number>('all')
 
-const statusTabs = [
-  { label: '全部', value: 'all' },
-  { label: '正常', value: 1 },
-  { label: '异常', value: 0 }
-]
+const statusTabs = computed(() => [
+  { label: t('common.filters.all'), value: 'all' },
+  { label: t('common.states.active'), value: 1 },
+  { label: t('common.states.inactive'), value: 0 }
+])
+
+const retryActions = computed(() => [{
+  label: t('common.actions.retry'),
+  color: 'neutral' as const,
+  variant: 'outline' as const,
+  icon: 'i-mdi-refresh',
+  onClick: fetchFriendLinks
+}])
 
 const {
   items,
@@ -63,7 +72,7 @@ const visibleCount = computed(() => filteredItems.value.length)
         <div class="border-b border-default px-4 py-3 sm:px-5">
           <CommonSearchBar
             v-model="query"
-            placeholder="搜索友情链接名称或描述..."
+            :placeholder="t('public.friendLinks.searchPlaceholder')"
             class="!mt-0 !mb-0"
           />
         </div>
@@ -75,28 +84,28 @@ const visibleCount = computed(() => filteredItems.value.length)
                 name="i-mdi-filter-variant"
                 class="size-3"
               />
-              状态筛选
+              {{ $t('public.friendLinks.statusFilter') }}
             </div>
             <CommonFilterTabs
               v-model="currentStatus"
               :tabs="statusTabs"
               :enable-collapse="false"
-              aria-label="友情链接状态筛选"
+              :aria-label="t('public.friendLinks.statusFilterAria')"
             />
           </div>
 
           <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
             <div class="grid grid-cols-3 gap-2.5">
               <div class="friend-filter-stat">
-                <span>全部</span>
+                <span>{{ $t('common.filters.all') }}</span>
                 <strong>{{ totalCount }}</strong>
               </div>
               <div class="friend-filter-stat">
-                <span>正常</span>
+                <span>{{ $t('common.states.active') }}</span>
                 <strong>{{ activeCount }}</strong>
               </div>
               <div class="friend-filter-stat">
-                <span>当前</span>
+                <span>{{ $t('common.filters.current') }}</span>
                 <strong>{{ visibleCount }}</strong>
               </div>
             </div>
@@ -115,8 +124,8 @@ const visibleCount = computed(() => filteredItems.value.length)
         >
           <UEmpty
             icon="i-mdi-loading"
-            title="加载中..."
-            description="正在拉取友情链接"
+            :title="t('common.states.loading')"
+            :description="t('public.friendLinks.loadingDescription')"
             variant="naked"
             size="lg"
           />
@@ -129,11 +138,11 @@ const visibleCount = computed(() => filteredItems.value.length)
         >
           <UEmpty
             icon="i-mdi-alert-circle-outline"
-            title="加载失败"
+            :title="t('common.states.loadFailed')"
             :description="error"
             variant="naked"
             size="lg"
-            :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: fetchFriendLinks }]"
+            :actions="retryActions"
           />
         </section>
 
@@ -144,8 +153,8 @@ const visibleCount = computed(() => filteredItems.value.length)
         >
           <UEmpty
             icon="i-mdi-link-variant-off"
-            title="暂无友情链接"
-            description="暂无可展示的友情链接"
+            :title="t('public.friendLinks.emptyTitle')"
+            :description="t('public.friendLinks.emptyDescription')"
             variant="naked"
             size="lg"
           />
@@ -158,8 +167,8 @@ const visibleCount = computed(() => filteredItems.value.length)
         >
           <UEmpty
             icon="i-mdi-magnify-close"
-            title="无匹配结果"
-            description="当前筛选条件没有匹配结果，试试其他关键词或状态"
+            :title="t('public.friendLinks.noMatchTitle')"
+            :description="t('public.friendLinks.noMatchDescription')"
             variant="naked"
             size="lg"
           />
@@ -176,14 +185,14 @@ const visibleCount = computed(() => filteredItems.value.length)
                 name="i-mdi-format-list-bulleted"
                 class="size-3.5"
               />
-              当前展示 <span class="font-mono font-semibold text-default">{{ visibleCount }}</span> 个站点
+              {{ $t('public.friendLinks.visibleCount', { count: visibleCount }) }}
             </span>
             <span class="hidden items-center gap-1.5 sm:inline-flex">
               <UIcon
                 name="i-mdi-cursor-default-click-outline"
                 class="size-3.5"
               />
-              点击卡片访问站点
+              {{ $t('public.friendLinks.clickHint') }}
             </span>
           </div>
           <LinkList :items="filteredItems" />

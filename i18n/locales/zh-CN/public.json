@@ -1,0 +1,25 @@
+{
+  "public": {
+    "friendLinks": {
+      "title": "友情链接",
+      "description": "每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。",
+      "seoDescription": "友情链接 — 每一个独立站点都是一个信息孤岛，交换友情链接就是一种很棒的架桥方式。",
+      "searchPlaceholder": "搜索友情链接名称或描述...",
+      "statusFilter": "状态筛选",
+      "statusFilterAria": "友情链接状态筛选",
+      "loadingDescription": "正在拉取友情链接",
+      "emptyTitle": "暂无友情链接",
+      "emptyDescription": "暂无可展示的友情链接",
+      "noMatchTitle": "无匹配结果",
+      "noMatchDescription": "当前筛选条件没有匹配结果，试试其他关键词或状态",
+      "visibleCount": "当前展示 {count} 个站点",
+      "clickHint": "点击卡片访问站点",
+      "collected": "收录数",
+      "availability": "可达率",
+      "inactiveCount": "异常数",
+      "navigationAria": "友情链接导航",
+      "defaultTitle": "链接标题",
+      "defaultDescription": "站点描述"
+    }
+  }
+}

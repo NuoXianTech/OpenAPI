@@ -7,11 +7,23 @@
       "create": "创建",
       "edit": "编辑",
       "delete": "删除",
+      "retry": "重试",
+      "visit": "访问",
       "backHome": "返回首页",
       "backLogin": "返回登录"
     },
     "states": {
-      "loading": "加载中"
+      "loading": "加载中...",
+      "loadFailed": "加载失败",
+      "active": "正常",
+      "inactive": "异常"
+    },
+    "filters": {
+      "all": "全部",
+      "current": "当前"
+    },
+    "content": {
+      "noDescription": "暂无描述"
     },
     "dialog": {
       "confirmTitle": "确认操作"
