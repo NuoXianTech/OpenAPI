@@ -40,20 +40,10 @@ interface UseAdminApisDisplayMetaReturn {
   keyword: Ref<string>
   filteredApis: ComputedRef<AdminDiscoveredApi[]>
   versionItems: ComputedRef<AdminApiVersionSelectItem[]>
-  columns: TableColumn<AdminDiscoveredApi>[]
+  columns: ComputedRef<TableColumn<AdminDiscoveredApi>[]>
   categoryLabel: (row: AdminDiscoveredApi) => string
   getRowItems: (row: AdminDiscoveredApi) => DropdownMenuItem[]
 }
-
-const ADMIN_APIS_TABLE_COLUMNS: TableColumn<AdminDiscoveredApi>[] = [
-  { accessorKey: 'code', header: '编码 / 名称' },
-  { id: 'endpoints', header: '端点' },
-  { id: 'category', header: '分类' },
-  { id: 'isEnabled', header: '启用' },
-  { id: 'isStatistics', header: '统计' },
-  { id: 'isApiKey', header: 'API密钥' },
-  { id: 'actions', header: '' }
-]
 
 function filterAdminDiscoveredApis(
   versions: AdminVersionGroup[],
@@ -72,18 +62,10 @@ function filterAdminDiscoveredApis(
   ))
 }
 
-function buildAdminApiVersionItems(
-  versions: AdminVersionGroup[]
-): AdminApiVersionSelectItem[] {
-  return versions.map(version => ({
-    label: `${version.pathVersion} (${version.stats.registered}/${version.stats.total})`,
-    value: version.pathVersion
-  }))
-}
-
 export function useAdminApisDisplayMeta(
   options: UseAdminApisDisplayMetaOptions
 ): UseAdminApisDisplayMetaReturn {
+  const { t, locale } = useI18n()
   const activeVersion = ref('')
   const keyword = ref('')
 
@@ -108,7 +90,23 @@ export function useAdminApisDisplayMeta(
     activeVersion.value,
     keyword.value
   ))
-  const versionItems = computed(() => buildAdminApiVersionItems(options.versions.value))
+  const versionItems = computed<AdminApiVersionSelectItem[]>(() => options.versions.value.map(version => ({
+    label: t('admin.apis.registry.versionOption', {
+      version: version.pathVersion,
+      registered: version.stats.registered.toLocaleString(locale.value),
+      total: version.stats.total.toLocaleString(locale.value)
+    }),
+    value: version.pathVersion
+  })))
+  const columns = computed<TableColumn<AdminDiscoveredApi>[]>(() => [
+    { accessorKey: 'code', header: t('admin.apis.registry.columns.code') },
+    { id: 'endpoints', header: t('admin.apis.registry.columns.endpoints') },
+    { id: 'category', header: t('admin.apis.registry.columns.category') },
+    { id: 'isEnabled', header: t('admin.apis.registry.columns.enabled') },
+    { id: 'isStatistics', header: t('admin.apis.registry.columns.statistics') },
+    { id: 'isApiKey', header: t('admin.apis.registry.columns.apiKey') },
+    { id: 'actions', header: '' }
+  ])
 
   function categoryLabel(row: AdminDiscoveredApi): string {
     const id = row.registered?.categoryId
@@ -120,28 +118,28 @@ export function useAdminApisDisplayMeta(
     const items: DropdownMenuItem[] = []
     if (row.registered && !row.orphaned) {
       items.push({
-        label: '编辑接口',
+        label: t('admin.apis.registry.actions.edit'),
         icon: 'i-mdi-pencil-outline',
         onSelect: () => options.openEdit(row)
       })
     }
     if (row.registered && row.hasCapabilities && !row.orphaned) {
       items.push({
-        label: '接口配置',
+        label: t('admin.apis.registry.actions.capabilities'),
         icon: 'i-mdi-tune-variant',
         onSelect: () => options.openCapabilities(row)
       })
     }
     if (row.registered && !row.orphaned) {
       items.push({
-        label: '同步路由',
+        label: t('admin.apis.registry.actions.sync'),
         icon: 'i-mdi-sync',
         onSelect: () => options.resyncManifest(row)
       })
     }
     if (!row.registered) {
       items.push({
-        label: '登记接口',
+        label: t('admin.apis.registry.actions.register'),
         icon: 'i-mdi-plus-circle-outline',
         onSelect: () => options.openRegister(row)
       })
@@ -154,7 +152,7 @@ export function useAdminApisDisplayMeta(
     keyword,
     filteredApis,
     versionItems,
-    columns: ADMIN_APIS_TABLE_COLUMNS,
+    columns,
     categoryLabel,
     getRowItems
   }

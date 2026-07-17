@@ -10,6 +10,7 @@ import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/us
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const toast = useToast()
+const { t } = useI18n()
 
 const { data, loading, refresh } = usePrivateResource<{ versions: AdminVersionGroup[] }>({
   path: '/api/admin/apis/discover',
@@ -49,7 +50,7 @@ function openCapabilities(row: AdminDiscoveredApi) {
 async function handleToggle(row: AdminDiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
   if (!row.registered) return
   if (field === 'isStatistics' && value && !row.registered.isEnabled) {
-    toast.add({ title: '请先启用接口，再开启统计', color: 'warning' })
+    toast.add({ title: t('admin.apis.registry.feedback.enableBeforeStatistics'), color: 'warning' })
     return
   }
   try {
@@ -58,11 +59,11 @@ async function handleToggle(row: AdminDiscoveredApi, field: 'isEnabled' | 'isSta
       body: { id: row.registered.id, field, value }
     })
     if (field === 'isEnabled' && !value && row.registered.isStatistics) {
-      toast.add({ title: '已同时关闭调用统计', color: 'info' })
+      toast.add({ title: t('admin.apis.registry.feedback.statisticsDisabled'), color: 'info' })
     }
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '切换失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('admin.apis.registry.feedback.toggleFailed')), color: 'error' })
   }
 }
 
@@ -72,10 +73,10 @@ async function resyncManifest(row: AdminDiscoveredApi) {
       method: 'POST',
       body: { pathVersion: row.pathVersion, code: row.code }
     })
-    toast.add({ title: '已同步 manifest', color: 'success' })
+    toast.add({ title: t('admin.apis.registry.feedback.synced'), color: 'success' })
     await refresh()
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '同步失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('admin.apis.registry.feedback.syncFailed')), color: 'error' })
   }
 }
 
@@ -118,7 +119,7 @@ function resetApiFilters() {
       <UInput
         v-model="keyword"
         icon="i-mdi-magnify"
-        placeholder="搜索 code / 名称..."
+        :placeholder="$t('admin.apis.registry.searchPlaceholder')"
         class="w-full sm:w-64"
       />
       <AdminFilterPopover
@@ -126,7 +127,7 @@ function resetApiFilters() {
         :active-count="activeFilterCount"
         @reset="resetApiFilters"
       >
-        <UFormField label="版本">
+        <UFormField :label="$t('admin.apis.registry.filters.version')">
           <USelect
             v-model="activeVersion"
             :items="versionItems"
@@ -143,7 +144,7 @@ function resetApiFilters() {
         :loading="loading"
         @click="refresh()"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
@@ -151,12 +152,12 @@ function resetApiFilters() {
       v-if="versions.length === 0 && !loading"
       class="text-center py-12 text-muted"
     >
-      未发现任何 v{N} 版本目录。请在 server/routes/v1/ 下创建接口目录后重启 dev 服务。
+      {{ $t('admin.apis.registry.noVersions') }}
     </div>
 
     <DashboardTableCard
       v-else
-      title="接口列表"
+      :title="$t('admin.apis.registry.listTitle')"
       icon="i-mdi-api"
       :total="total"
     >
@@ -168,7 +169,7 @@ function resetApiFilters() {
         :loading="loading"
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
-        empty-title="该版本暂无接口"
+        :empty-title="$t('admin.apis.registry.empty')"
         empty-icon="i-mdi-api"
       >
         <template #code-cell="{ row }">
@@ -183,7 +184,7 @@ function resetApiFilters() {
               <span
                 v-else
                 class="italic opacity-60"
-              >未登记</span>
+              >{{ $t('admin.apis.registry.statuses.unregistered') }}</span>
             </div>
           </div>
         </template>
@@ -191,7 +192,7 @@ function resetApiFilters() {
           <span
             v-if="row.original.endpoints.length === 0"
             class="text-xs text-muted italic"
-          >代码已删除</span>
+          >{{ $t('admin.apis.registry.statuses.codeDeleted') }}</span>
           <div
             v-else
             class="flex flex-col gap-1"
@@ -228,7 +229,7 @@ function resetApiFilters() {
             color="neutral"
             variant="subtle"
           >
-            默认停用
+            {{ $t('admin.apis.registry.statuses.disabledByDefault') }}
           </UBadge>
         </template>
         <template #isStatistics-cell="{ row }">
@@ -249,7 +250,9 @@ function resetApiFilters() {
             :color="row.original.registered.isApiKey ? 'warning' : 'neutral'"
             variant="subtle"
           >
-            {{ row.original.registered.isApiKey ? '必需' : '可选' }}
+            {{ row.original.registered.isApiKey
+              ? $t('admin.apis.registry.apiKey.required')
+              : $t('admin.apis.registry.apiKey.optional') }}
           </UBadge>
           <span
             v-else
