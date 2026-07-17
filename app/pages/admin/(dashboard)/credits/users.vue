@@ -12,7 +12,7 @@ interface CreditUserFilters extends Record<string, unknown> {
 }
 
 const { t, locale } = useI18n()
-useHead({ title: () => t('admin.credits.users.pageTitle') })
+useHead({ title: () => t('admin.credits.users.title') })
 
 const {
   filters,

@@ -5,7 +5,7 @@ import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
 const { t, locale } = useI18n()
 const { getLoginFailureLabel, getLoginMethodLabel } = useLoginLogMeta()
-useHead({ title: () => t('admin.logs.login.pageTitle') })
+useHead({ title: () => t('admin.logs.login.title') })
 const {
   filters,
   page,

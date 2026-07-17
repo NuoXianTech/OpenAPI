@@ -4,7 +4,7 @@ import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-log
 import { adminModalUi } from '~/utils/admin-modal-ui'
 
 const { t, locale } = useI18n()
-useHead({ title: () => t('admin.logs.operations.pageTitle') })
+useHead({ title: () => t('admin.logs.operations.title') })
 const {
   actorKindItems,
   activeFilterCount,

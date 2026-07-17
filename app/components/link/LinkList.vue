@@ -8,7 +8,6 @@ interface LinkListProps {
 const props = withDefaults(defineProps<LinkListProps>(), {
   items: () => []
 })
-const { t } = useI18n()
 </script>
 
 <template>
@@ -22,7 +21,7 @@ const { t } = useI18n()
       v-for="(item, index) in props.items"
       :key="item.id ?? index"
       :title="item.title"
-      :description="item.description || t('common.content.noDescription')"
+      :description="item.description || undefined"
       :url="item.url"
       :status="item.isActive ? 1 : 0"
       class="link-card-item"

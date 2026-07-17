@@ -12,7 +12,7 @@ import type { ApiKeyItem } from '#shared/types/api'
 
 const { t, locale } = useI18n()
 
-useHead({ title: () => t('user.apiKeys.pageTitle') })
+useHead({ title: () => t('user.apiKeys.title') })
 
 const toast = useToast()
 const {

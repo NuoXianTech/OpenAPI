@@ -2,7 +2,6 @@
   "user": {
     "apiKey": "API 密钥",
     "apiKeys": {
-      "pageTitle": "API 密钥",
       "title": "API 密钥",
       "loadFailed": "加载 API 密钥失败",
       "createdOne": "已生成新 API 密钥",
@@ -120,7 +119,6 @@
       }
     },
     "logs": {
-      "pageTitle": "调用日志",
       "title": "调用日志",
       "detailsTitle": "调用明细",
       "searchPlaceholder": "搜索接口、密钥、状态码...",

@@ -7,7 +7,7 @@ import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-l
 
 const { t, locale } = useI18n()
 const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
-useHead({ title: () => t('admin.credits.transactions.pageTitle') })
+useHead({ title: () => t('admin.credits.transactions.title') })
 
 function toIsoDateTime(value: string): string | undefined {
   if (!value) return undefined

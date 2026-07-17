@@ -6,7 +6,7 @@ import {
 } from '~/composables/admin/use-redemption-codes-page'
 
 const { t, locale } = useI18n()
-useHead({ title: () => t('admin.credits.redemptionCodes.pageTitle') })
+useHead({ title: () => t('admin.credits.redemptionCodes.title') })
 const {
   filters,
   page,

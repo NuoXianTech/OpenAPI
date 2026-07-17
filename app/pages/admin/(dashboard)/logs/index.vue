@@ -8,7 +8,7 @@ import {
 import type { AdminLogRow } from '#shared/types/admin'
 
 const { t, locale } = useI18n()
-useHead({ title: () => t('admin.logs.call.pageTitle') })
+useHead({ title: () => t('admin.logs.call.title') })
 const route = useRoute()
 const router = useRouter()
 const {

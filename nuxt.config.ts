@@ -101,6 +101,10 @@ export default defineNuxtConfig({
     defaultLocale: DEFAULT_LOCALE,
     strategy: 'no_prefix',
     langDir: 'locales',
+    bundle: {
+      fullInstall: false,
+      runtimeOnly: true
+    },
     locales: [{
       code: DEFAULT_LOCALE,
       language: DEFAULT_LOCALE,

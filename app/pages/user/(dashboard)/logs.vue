@@ -13,7 +13,7 @@ import {
 const { t, locale } = useI18n()
 const { getOutcomeLabel } = useUserCallOutcomeMeta()
 
-useHead({ title: () => t('user.logs.pageTitle') })
+useHead({ title: () => t('user.logs.title') })
 
 const {
   filters,

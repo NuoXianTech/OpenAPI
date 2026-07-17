@@ -17,7 +17,6 @@
     },
     "logs": {
       "call": {
-        "pageTitle": "调用日志",
         "title": "调用日志",
         "description": "公共接口调用流水、扣费结果与客户端上下文",
         "filterTitle": "调用日志筛选",
@@ -78,7 +77,6 @@
         }
       },
       "login": {
-        "pageTitle": "登录日志",
         "title": "登录日志",
         "description": "已识别用户的登录尝试（成功 + 失败）、登录方式与客户端来源",
         "filterTitle": "登录日志筛选",
@@ -103,7 +101,6 @@
         }
       },
       "operations": {
-        "pageTitle": "操作日志",
         "title": "操作日志",
         "description": "后台动作、资源变更与操作者审计轨迹",
         "filterTitle": "操作日志筛选",
@@ -234,7 +231,6 @@
         }
       },
       "users": {
-        "pageTitle": "用户积分",
         "title": "用户积分",
         "description": "查询用户余额，对单个或选中的用户发放、扣除和重置积分",
         "searchPlaceholder": "搜索用户名、昵称或邮箱...",
@@ -264,7 +260,6 @@
         }
       },
       "transactions": {
-        "pageTitle": "积分流水",
         "title": "积分流水",
         "description": "查看用户积分变动，并快速进入用户积分调整与兑换码管理",
         "filterTitle": "积分流水筛选",
@@ -299,7 +294,6 @@
         }
       },
       "redemptionCodes": {
-        "pageTitle": "兑换码",
         "title": "兑换码",
         "description": "生成和管理积分兑换码，控制可用状态、使用次数与有效期限",
         "searchPlaceholder": "搜索兑换码 / 备注...",
@@ -421,7 +415,6 @@
       }
     },
     "users": {
-      "pageTitle": "用户管理",
       "title": "用户管理",
       "searchPlaceholder": "搜索用户名、邮箱或昵称",
       "filterTitle": "用户筛选",

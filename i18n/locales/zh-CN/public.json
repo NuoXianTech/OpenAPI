@@ -139,8 +139,7 @@
       "availability": "可达率",
       "inactiveCount": "异常数",
       "navigationAria": "友情链接导航",
-      "defaultTitle": "链接标题",
-      "defaultDescription": "站点描述"
+      "defaultTitle": "链接标题"
     }
   }
 }

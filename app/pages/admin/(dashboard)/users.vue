@@ -8,7 +8,7 @@ import {
 import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 
 const { t, locale } = useI18n()
-useHead({ title: () => t('admin.users.pageTitle') })
+useHead({ title: () => t('admin.users.title') })
 
 const {
   keyword,
