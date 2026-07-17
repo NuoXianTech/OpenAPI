@@ -514,6 +514,29 @@
           "invalidUntil": "解封时间格式不正确",
           "futureUntil": "解封时间必须晚于当前时间"
         }
+      },
+      "apiKeys": {
+        "title": "{username} 的 API 密钥",
+        "loadFailed": "加载 API 密钥失败",
+        "empty": "暂无 API 密钥",
+        "editingHint": "编辑密钥 #{id} · 不会更换密钥字符串本身",
+        "actions": {
+          "collapse": "收起",
+          "add": "新增",
+          "generate": "生成",
+          "reveal": "显示完整密钥",
+          "hide": "隐藏完整密钥"
+        },
+        "feedback": {
+          "createdOne": "已生成新 API 密钥",
+          "createdMany": "已生成 {count} 个 API 密钥"
+        },
+        "summary": {
+          "expiry": "过期",
+          "quota": "配额",
+          "scopes": "接口",
+          "ip": "IP"
+        }
       }
     },
     "overview": {
