@@ -2,15 +2,16 @@
 const props = defineProps<{
   password: string
 }>()
+const { t } = useI18n()
 
-const requirements = [
-  { regex: /.{8,}/, text: '至少 8 个字符' },
-  { regex: /\d/, text: '至少 1 个数字' },
-  { regex: /[a-z]/, text: '至少 1 个小写字母' },
-  { regex: /[A-Z]/, text: '至少 1 个大写字母' }
-]
+const requirements = computed(() => [
+  { regex: /.{8,}/, text: t('auth.passwordStrength.requirements.length') },
+  { regex: /\d/, text: t('auth.passwordStrength.requirements.number') },
+  { regex: /[a-z]/, text: t('auth.passwordStrength.requirements.lowercase') },
+  { regex: /[A-Z]/, text: t('auth.passwordStrength.requirements.uppercase') }
+])
 
-const strength = computed(() => requirements.map(req => ({
+const strength = computed(() => requirements.value.map(req => ({
   met: req.regex.test(props.password),
   text: req.text
 })))
@@ -26,9 +27,9 @@ const color = computed<'neutral' | 'error' | 'warning' | 'success'>(() => {
 
 const text = computed(() => {
   if (!props.password) return ''
-  if (score.value <= 2) return '弱'
-  if (score.value === 3) return '中'
-  return '强'
+  if (score.value <= 2) return t('auth.passwordStrength.weak')
+  if (score.value === 3) return t('auth.passwordStrength.medium')
+  return t('auth.passwordStrength.strong')
 })
 </script>
 
@@ -45,7 +46,7 @@ const text = computed(() => {
         size="xs"
       />
       <p class="auth-password-strength__label">
-        密码强度：<span :class="`auth-password-strength__value auth-password-strength__value--${color}`">{{ text }}</span>
+        {{ $t('auth.passwordStrength.title') }}<span :class="`auth-password-strength__value auth-password-strength__value--${color}`">{{ text }}</span>
       </p>
     </div>
   </Transition>

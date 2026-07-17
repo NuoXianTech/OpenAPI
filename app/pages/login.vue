@@ -4,9 +4,10 @@ import { parseFetchError } from '~/utils/client-error'
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import { compactFormErrors, requiredTextError } from '~/utils/form-validation'
 
-useHead({ title: '登录' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+useHead(() => ({ title: t('auth.login.title') }))
 
 const { fetchMe, user, login } = useAuth()
 const { turnstile, passwordResetEnabled, settings } = useSiteSettings()
@@ -19,8 +20,8 @@ interface LoginFormState {
 
 function validateLoginForm(state: Partial<LoginFormState>): FormError<string>[] {
   return compactFormErrors(
-    requiredTextError('identifier', state.identifier, '请输入邮箱或用户名'),
-    requiredTextError('password', state.password, '请输入密码')
+    requiredTextError('identifier', state.identifier, t('auth.validation.identifierRequired')),
+    requiredTextError('password', state.password, t('auth.validation.passwordRequired'))
   )
 }
 
@@ -42,7 +43,7 @@ const { data: providersData } = useLazyFetch<Array<{ provider: string, displayNa
 })
 
 const providers = computed(() => (providersData.value || []).map(p => ({
-  label: `使用 ${p.displayName} 登录`,
+  label: t('auth.login.oauthButton', { provider: p.displayName }),
   icon: p.icon || 'i-mdi-account-circle-outline',
   color: 'neutral' as const,
   variant: 'outline' as const,
@@ -54,7 +55,7 @@ const fields = computed(() => [
   {
     name: 'identifier',
     type: 'text' as const,
-    label: '邮箱或用户名',
+    label: t('auth.fields.identifier'),
     placeholder: 'you@example.com',
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
@@ -66,8 +67,8 @@ const fields = computed(() => [
   {
     name: 'password',
     type: 'password' as const,
-    label: '密码',
-    placeholder: '请输入登录密码',
+    label: t('auth.fields.password'),
+    placeholder: t('auth.placeholders.loginPassword'),
     autocomplete: 'current-password',
     icon: 'i-mdi-lock-outline',
     defaultValue: '',
@@ -82,26 +83,37 @@ const oauthError = computed(() => {
     return ''
   }
   const map: Record<string, string> = {
-    state_mismatch: 'OAuth 状态校验失败，请重试',
-    missing_code: '未拿到授权码，请重试',
-    provider_unavailable: 'Provider 不可用',
-    provider_not_supported: '暂不支持该 Provider，仅支持 GitHub / QQ',
-    provider_not_implemented: '暂不支持该 Provider',
-    oauth_disabled: '第三方登录已关闭',
-    account_inactive: '账号尚未激活，请先完成邮箱验证后再登录',
-    user_banned: '该用户已被封禁',
-    user_unavailable: '用户不可用',
-    callback_failed: 'OAuth 回调失败，请重试'
+    state_mismatch: t('auth.login.errors.stateMismatch'),
+    missing_code: t('auth.login.errors.missingCode'),
+    provider_unavailable: t('auth.login.errors.providerUnavailable'),
+    provider_not_supported: t('auth.login.errors.providerNotSupported'),
+    provider_not_implemented: t('auth.login.errors.providerNotImplemented'),
+    oauth_disabled: t('auth.login.errors.oauthDisabled'),
+    account_inactive: t('auth.login.errors.accountInactive'),
+    user_banned: t('auth.login.errors.userBanned'),
+    user_unavailable: t('auth.login.errors.userUnavailable'),
+    callback_failed: t('auth.login.errors.callbackFailed')
   }
-  return map[code] || `登录失败：${code}`
+  return map[code] || t('auth.login.failedWithCode', { code })
 })
 
-const LOGIN_ERROR_CODES: Record<number, string> = {
-  401: '账号或密码错误',
-  403: '当前账号无法登录，请确认账号状态',
-  429: '尝试次数过多，请稍后再试',
-  500: '服务器暂时无法响应，请稍后再试'
-}
+const loginErrorCodes = computed<Record<number, string>>(() => ({
+  401: t('auth.login.errors.unauthorized'),
+  403: t('auth.login.errors.forbidden'),
+  429: t('auth.login.errors.tooManyRequests'),
+  500: t('auth.login.errors.server')
+}))
+
+const submitConfig = computed(() => ({
+  label: t('auth.login.submit'),
+  size: 'lg' as const,
+  disabled: (turnstileRequired.value && !turnstileToken.value) || (consentRequired.value && !consent.value)
+}))
+
+const footerLinks = computed(() => [
+  { label: t('auth.login.createAccount'), to: '/register' },
+  { label: t('common.actions.backHome'), to: '/' }
+])
 
 onMounted(async () => {
   await fetchMe()
@@ -117,12 +129,12 @@ async function onSubmit(event: FormSubmitEvent<LoginFormState>) {
   turnstileError.value = ''
 
   if (consentRequired.value && !consent.value) {
-    errorMessage.value = '请先阅读并同意服务条款和隐私政策'
+    errorMessage.value = t('auth.validation.consentRequired')
     return
   }
 
   if (turnstileRequired.value && !turnstileToken.value) {
-    errorMessage.value = '请先完成人机验证'
+    errorMessage.value = t('auth.validation.turnstileRequired')
     return
   }
 
@@ -139,7 +151,7 @@ async function onSubmit(event: FormSubmitEvent<LoginFormState>) {
     const authUser = await login(payload)
     await navigateTo(authUser.role === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
   } catch (error: unknown) {
-    errorMessage.value = parseFetchError(error, '登录失败', LOGIN_ERROR_CODES)
+    errorMessage.value = parseFetchError(error, t('auth.login.failed'), loginErrorCodes.value)
     turnstileWidget.value?.reset()
   } finally {
     isSubmitting.value = false
@@ -164,8 +176,8 @@ function clearTurnstileError() {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-account-circle-outline"
-      :title="`欢迎回到 ${settings.siteName}`"
-      subtitle="使用邮箱或用户名登录，进入你的工作台"
+      :title="t('auth.login.welcome', { siteName: settings.siteName })"
+      :subtitle="t('auth.login.subtitle')"
     />
 
     <UCard
@@ -188,8 +200,8 @@ function clearTurnstileError() {
         :fields="fields"
         :providers="providers"
         :loading="isSubmitting"
-        :submit="{ label: '登录', size: 'lg', disabled: (turnstileRequired && !turnstileToken) || (consentRequired && !consent) }"
-        separator="或使用第三方登录"
+        :submit="submitConfig"
+        :separator="t('auth.login.oauthSeparator')"
         @submit="onSubmit"
       >
         <template #password-hint>
@@ -201,7 +213,7 @@ function clearTurnstileError() {
             to="/forgot-password"
             class="text-muted px-0"
           >
-            忘记密码？
+            {{ $t('auth.login.forgotPassword') }}
           </UButton>
         </template>
 
@@ -209,7 +221,7 @@ function clearTurnstileError() {
           <div class="auth-form-options">
             <UCheckbox
               v-model="remember"
-              label="记住我"
+              :label="t('auth.login.rememberMe')"
               size="md"
               :ui="{
                 root: 'w-full',
@@ -277,11 +289,8 @@ function clearTurnstileError() {
     </UCard>
 
     <AuthFooterLinks
-      prefix="还没有账号？"
-      :links="[
-        { label: '创建账号', to: '/register' },
-        { label: '返回首页', to: '/' }
-      ]"
+      :prefix="t('auth.login.noAccount')"
+      :links="footerLinks"
     />
   </CommonAppAuthShell>
 </template>

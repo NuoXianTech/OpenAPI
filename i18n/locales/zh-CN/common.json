@@ -1,0 +1,20 @@
+{
+  "common": {
+    "actions": {
+      "confirm": "确认",
+      "cancel": "取消",
+      "save": "保存",
+      "create": "创建",
+      "edit": "编辑",
+      "delete": "删除",
+      "backHome": "返回首页",
+      "backLogin": "返回登录"
+    },
+    "states": {
+      "loading": "加载中"
+    },
+    "dialog": {
+      "confirmTitle": "确认操作"
+    }
+  }
+}
