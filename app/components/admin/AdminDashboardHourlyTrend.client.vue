@@ -11,6 +11,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const { t, locale } = useI18n()
 
 const rootRef = useTemplateRef<HTMLElement | null>('rootRef')
 const { width } = useElementSize(rootRef)
@@ -41,7 +42,7 @@ const yTickFormat = formatChartIntegerTick
 const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
   title: d.label,
   rows: [
-    { color: 'var(--ui-info)', label: '调用次数', value: d.totalCalls.toLocaleString() }
+    { color: 'var(--ui-info)', label: t('admin.overview.hourly.calls'), value: d.totalCalls.toLocaleString(locale.value) }
   ]
 })
 </script>
@@ -54,7 +55,7 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
     <UEmpty
       v-if="!hasData"
       icon="i-mdi-clock-time-eight-outline"
-      title="近 24 小时暂无调用"
+      :title="$t('admin.overview.hourly.empty')"
       class="h-64"
     />
 

@@ -119,13 +119,6 @@
         "emptyDescription": "近 7 天还没有可展示的调用趋势。",
         "successCount": "成功次数",
         "failureCount": "失败次数"
-      },
-      "ranking": {
-        "empty": "暂无调用数据",
-        "api": "接口",
-        "calls": "调用次数",
-        "successRate": "成功率",
-        "times": "次"
       }
     },
     "friendLinks": {

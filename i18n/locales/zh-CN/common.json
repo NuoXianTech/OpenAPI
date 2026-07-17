@@ -272,6 +272,13 @@
         "passwordAndSecurity": "密码和安全",
         "oauthAccounts": "第三方账号"
       }
+    },
+    "dashboardRanking": {
+      "empty": "暂无调用数据",
+      "api": "接口",
+      "calls": "调用次数",
+      "successRate": "成功率",
+      "times": "次"
     }
   }
 }

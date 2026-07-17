@@ -16,7 +16,7 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
   <UEmpty
     v-if="ranking.length === 0"
     icon="i-mdi-trophy-outline"
-    :title="t('public.stats.ranking.empty')"
+    :title="t('common.dashboardRanking.empty')"
     class="h-64"
   />
 
@@ -26,9 +26,9 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
   >
     <div class="rank-header hidden sm:grid">
       <span>#</span>
-      <span>{{ $t('public.stats.ranking.api') }}</span>
-      <span class="text-right">{{ $t('public.stats.ranking.calls') }}</span>
-      <span class="text-right">{{ $t('public.stats.ranking.successRate') }}</span>
+      <span>{{ $t('common.dashboardRanking.api') }}</span>
+      <span class="text-right">{{ $t('common.dashboardRanking.calls') }}</span>
+      <span class="text-right">{{ $t('common.dashboardRanking.successRate') }}</span>
     </div>
 
     <ol>
@@ -62,7 +62,7 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
 
         <div class="text-right text-sm font-semibold tabular-nums text-highlighted">
           {{ formatCount(item.totalCalls) }}
-          <span class="ml-0.5 text-[11px] font-normal text-muted">{{ $t('public.stats.ranking.times') }}</span>
+          <span class="ml-0.5 text-[11px] font-normal text-muted">{{ $t('common.dashboardRanking.times') }}</span>
         </div>
 
         <div class="text-right text-sm tabular-nums text-muted">

@@ -11,25 +11,30 @@ import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { formatCount, formatPercent } from '~/utils/number-format'
 
-useHead({ title: '管理中心' })
+const { t, locale } = useI18n()
+
+useHead({ title: () => t('admin.overview.pageTitle') })
 
 type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
 const { user } = useAuth()
+const introDescription = computed(() => user.value?.username
+  ? t('admin.overview.hero.descriptionWithName', { username: user.value.username })
+  : t('admin.overview.hero.description'))
 const OVERVIEW_SPARKLINE_RANGE: AdminDashboardRange = 7
 const selectedTrendRange = ref<AdminDashboardRange>(OVERVIEW_SPARKLINE_RANGE)
-const rangeOptions: Array<{ label: string, value: AdminDashboardRange }> = [
-  { label: '近 7 天', value: 7 },
-  { label: '近 14 天', value: 14 },
-  { label: '近 30 天', value: 30 }
-]
-const recentColumns: TableColumn<AdminDashboardRecentCall>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'method', header: '方法' },
+const rangeOptions = computed<Array<{ label: string, value: AdminDashboardRange }>>(() => [
+  { label: t('common.dateTime.presets.last7Days'), value: 7 },
+  { label: t('common.dateTime.presets.last14Days'), value: 14 },
+  { label: t('common.dateTime.presets.last30Days'), value: 30 }
+])
+const recentColumns = computed<TableColumn<AdminDashboardRecentCall>[]>(() => [
+  { accessorKey: 'createdAt', header: t('admin.overview.recent.columns.time') },
+  { accessorKey: 'method', header: t('admin.overview.recent.columns.method') },
   { accessorKey: 'apiName', header: 'API' },
-  { accessorKey: 'statusCode', header: '状态' },
-  { accessorKey: 'latencyMs', header: '耗时' }
-]
+  { accessorKey: 'statusCode', header: t('admin.overview.recent.columns.status') },
+  { accessorKey: 'latencyMs', header: t('admin.overview.recent.columns.latency') }
+])
 
 function createEmptyDashboardData(): AdminDashboardData {
   return {
@@ -91,7 +96,7 @@ const distribution = computed(() => data.value.distribution)
 const hourlyTrend24h = computed(() => insightsData.value.hourlyTrend24h)
 const ranking = computed(() => insightsData.value.ranking)
 const recentCalls = computed(() => data.value.recentCalls)
-const generatedAt = computed(() => formatDateTime(data.value.generatedAt))
+const generatedAt = computed(() => formatDateTime(data.value.generatedAt, '-', locale.value))
 const callsTrendValues = computed(() => getCallsTrendValues(overviewTrend.value))
 const successRateTrendValues = computed(() => getSuccessRateTrendValues(overviewTrend.value))
 
@@ -116,27 +121,27 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
   return [
     {
       key: 'users',
-      label: '注册用户',
-      value: formatCount(overview.value.userCount),
-      unit: '人',
-      meta: '当前平台注册账号总量',
+      label: t('admin.overview.metrics.users'),
+      value: formatCount(overview.value.userCount, locale.value),
+      unit: t('admin.units.people'),
+      meta: t('admin.overview.metrics.usersDescription'),
       icon: 'i-mdi-account-group-outline',
       tone: 'neutral'
     },
     {
       key: 'apis',
-      label: '启用 API',
-      value: formatCount(overview.value.enabledApiCount),
-      unit: '个',
-      meta: `共 ${formatCount(overview.value.totalApiCount)} 个接口`,
+      label: t('admin.overview.metrics.enabledApis'),
+      value: formatCount(overview.value.enabledApiCount, locale.value),
+      unit: t('admin.units.items'),
+      meta: t('admin.overview.metrics.totalApis', { count: formatCount(overview.value.totalApiCount, locale.value) }),
       icon: 'i-mdi-api',
       tone: 'info'
     },
     {
       key: 'calls',
-      label: '总调用',
-      value: formatCount(overview.value.totalCalls),
-      unit: '次',
+      label: t('admin.overview.metrics.totalCalls'),
+      value: formatCount(overview.value.totalCalls, locale.value),
+      unit: t('common.units.times'),
       icon: 'i-mdi-chart-line',
       tone: 'warning',
       sparklineValues: callsTrendValues.value,
@@ -144,7 +149,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
     },
     {
       key: 'success-rate',
-      label: '成功率',
+      label: t('admin.overview.metrics.successRate'),
       value: formatPercent(overview.value.successRate),
       icon: 'i-mdi-shield-check-outline',
       tone: 'success',
@@ -179,7 +184,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 <template>
   <UDashboardPanel id="admin-home">
     <template #header>
-      <DashboardPageNavbar title="概览" />
+      <DashboardPageNavbar :title="$t('admin.overview.title')" />
     </template>
 
     <template #body>
@@ -190,10 +195,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             <div class="lg:col-span-3 space-y-5">
               <div class="space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
-                  平台运营总览
+                  {{ $t('admin.overview.hero.title') }}
                 </h2>
                 <p class="text-sm sm:text-base text-toned max-w-xl">
-                  你好<span v-if="user?.username">，{{ user.username }}</span>。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。
+                  {{ introDescription }}
                 </p>
               </div>
 
@@ -204,7 +209,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   size="md"
                   icon="i-mdi-account-group-outline"
                 >
-                  用户管理
+                  {{ $t('common.dashboard.navigation.userManagement') }}
                 </UButton>
                 <UButton
                   :to="ADMIN_APIS_PATH"
@@ -213,7 +218,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                   size="md"
                   icon="i-mdi-api"
                 >
-                  接口管理
+                  {{ $t('common.dashboard.navigation.apiManagement') }}
                 </UButton>
               </div>
             </div>
@@ -226,7 +231,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                       name="i-mdi-pulse"
                       class="size-4 text-muted"
                     />
-                    <span class="text-sm font-medium">今日快照</span>
+                    <span class="text-sm font-medium">{{ $t('admin.overview.snapshot.title') }}</span>
                   </div>
                   <span class="text-[11px] text-muted tabular-nums">{{ generatedAt }}</span>
                 </div>
@@ -234,15 +239,15 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                 <div class="grid grid-cols-2 gap-3">
                   <div class="space-y-1">
                     <div class="text-xs text-muted">
-                      今日调用
+                      {{ $t('admin.overview.snapshot.todayCalls') }}
                     </div>
                     <div class="text-xl font-semibold tabular-nums">
-                      {{ formatCount(overview.todayCalls) }}
+                      {{ formatCount(overview.todayCalls, locale) }}
                     </div>
                   </div>
                   <div class="space-y-1">
                     <div class="text-xs text-muted">
-                      成功率
+                      {{ $t('admin.overview.metrics.successRate') }}
                     </div>
                     <div class="text-xl font-semibold tabular-nums">
                       {{ formatPercent(overview.successRate) }}
@@ -252,7 +257,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 
                 <div class="border-t border-default pt-3">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">较昨日</span>
+                    <span class="text-muted">{{ $t('admin.overview.snapshot.comparedYesterday') }}</span>
                     <span
                       :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
                       class="inline-flex items-center gap-1 font-medium"
@@ -275,7 +280,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           <div class="flex flex-wrap items-end justify-between gap-2">
             <div>
               <h3 class="text-lg font-semibold text-highlighted">
-                平台概览
+                {{ $t('admin.overview.platformTitle') }}
               </h3>
             </div>
             <UButton
@@ -285,7 +290,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               variant="ghost"
               trailing-icon="i-mdi-chevron-right"
             >
-              查看调用日志
+              {{ $t('admin.overview.actions.viewCallLogs') }}
             </UButton>
           </div>
 
@@ -312,10 +317,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               <div class="flex items-center justify-between gap-3">
                 <div>
                   <h3 class="text-lg font-semibold text-highlighted">
-                    API 调用趋势
+                    {{ $t('admin.overview.trend.title') }}
                   </h3>
                   <p class="mt-1 text-sm text-muted">
-                    按天聚合总调用、成功与失败次数
+                    {{ $t('admin.overview.trend.description') }}
                   </p>
                 </div>
                 <USelect
@@ -338,10 +343,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             <template #header>
               <div>
                 <h3 class="text-lg font-semibold text-highlighted">
-                  API 使用分布
+                  {{ $t('admin.overview.distribution.title') }}
                 </h3>
                 <p class="mt-1 text-sm text-muted">
-                  Top 5 高频调用接口
+                  {{ $t('admin.overview.distribution.description') }}
                 </p>
               </div>
             </template>
@@ -357,10 +362,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           <template #header>
             <div>
               <h3 class="text-lg font-semibold text-highlighted">
-                调用趋势（24 小时）
+                {{ $t('admin.overview.hourly.title') }}
               </h3>
               <p class="mt-1 text-sm text-muted">
-                按小时聚合已计入统计的 API 请求次数
+                {{ $t('admin.overview.hourly.description') }}
               </p>
             </div>
           </template>
@@ -386,10 +391,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
           <template #header>
             <div>
               <h3 class="text-lg font-semibold text-highlighted">
-                调用次数排行
+                {{ $t('admin.overview.ranking.title') }}
               </h3>
               <p class="mt-1 text-sm text-muted">
-                Top {{ ranking.length || 10 }} 高频调用接口及成功率
+                {{ $t('admin.overview.ranking.description', { count: ranking.length || 10 }) }}
               </p>
             </div>
           </template>
@@ -411,7 +416,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
         </UCard>
 
         <DashboardTableCard
-          title="最新 API 请求"
+          :title="$t('admin.overview.recent.title')"
           icon="i-mdi-history"
           :total="recentCalls.length"
         >
@@ -422,7 +427,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               size="sm"
               trailing-icon="i-mdi-arrow-right"
             >
-              查看完整日志
+              {{ $t('admin.overview.actions.viewFullLogs') }}
             </UButton>
           </template>
 
@@ -430,12 +435,12 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             :data="recentCalls"
             :columns="recentColumns"
             :loading="loading && recentCalls.length === 0"
-            empty-title="暂无请求日志"
+            :empty-title="$t('admin.overview.recent.empty')"
             empty-icon="i-mdi-history"
           >
             <template #createdAt-cell="{ row }">
               <span class="whitespace-nowrap text-xs tabular-nums text-muted">
-                {{ formatDateTime(row.original.createdAt) }}
+                {{ formatDateTime(row.original.createdAt, '-', locale) }}
               </span>
             </template>
             <template #method-cell="{ row }">
@@ -468,7 +473,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               </UBadge>
             </template>
             <template #latencyMs-cell="{ row }">
-              <span class="whitespace-nowrap tabular-nums text-xs">{{ row.original.latencyMs }} ms</span>
+              <span class="whitespace-nowrap tabular-nums text-xs">{{ $t('admin.overview.recent.milliseconds', { value: row.original.latencyMs.toLocaleString(locale) }) }}</span>
             </template>
           </DashboardDataTable>
         </DashboardTableCard>
