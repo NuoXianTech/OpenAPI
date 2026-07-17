@@ -88,6 +88,9 @@
       "active": "已激活",
       "inactive": "未激活",
       "banned": "已封禁",
+      "unbanned": "未封禁",
+      "permanentBan": "永久封禁",
+      "bannedUntil": "封禁至 {time}",
       "deletedUser": "已删除用户"
     },
     "credits": {

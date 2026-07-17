@@ -1,6 +1,6 @@
 import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type ComputedRef } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { formatDateTime } from '~/utils/datetime'
@@ -28,24 +28,6 @@ export interface AdminUserFilterOption<TValue extends string> {
   value: TValue
 }
 
-export const ADMIN_USER_ROLE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserRoleFilter>> = [
-  { label: '全部角色', value: 'all' },
-  { label: '管理员', value: 'admin' },
-  { label: '用户', value: 'user' }
-]
-
-export const ADMIN_USER_ACTIVE_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserActiveFilter>> = [
-  { label: '全部激活状态', value: 'all' },
-  { label: '已激活', value: 'active' },
-  { label: '未激活', value: 'inactive' }
-]
-
-export const ADMIN_USER_BAN_FILTER_OPTIONS: Array<AdminUserFilterOption<AdminUserBanFilter>> = [
-  { label: '全部封禁状态', value: 'all' },
-  { label: '已封禁', value: 'banned' },
-  { label: '未封禁', value: 'unbanned' }
-]
-
 function serializeBooleanFilter<TValue extends string>(
   value: TValue,
   trueValue: TValue,
@@ -69,6 +51,7 @@ function createSilentToast(): ToastLike {
 }
 
 export function useAdminUsersPage() {
+  const { t } = useI18n()
   const toast = (() => {
     try {
       if (typeof useToast === 'function') return useToast()
@@ -115,11 +98,11 @@ export function useAdminUsersPage() {
   async function deleteUser(id: number): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
-      toast.add({ title: '删除成功', color: 'success' })
+      toast.add({ title: t('common.feedback.deleted'), color: 'success' })
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '删除失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
       return false
     }
   }
@@ -135,11 +118,11 @@ export function useAdminUsersPage() {
           bannedUntil: payload.bannedUntil
         }
       })
-      toast.add({ title: '已封禁', color: 'success' })
+      toast.add({ title: t('admin.users.feedback.banned'), color: 'success' })
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '封禁失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('admin.users.feedback.banFailed')), color: 'error' })
       return false
     }
   }
@@ -150,10 +133,10 @@ export function useAdminUsersPage() {
         method: 'POST',
         body: { id: item.id, isBanned: false }
       })
-      toast.add({ title: '已解封', color: 'success' })
+      toast.add({ title: t('admin.users.feedback.unbanned'), color: 'success' })
       await refresh()
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '解封失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('admin.users.feedback.unbanFailed')), color: 'error' })
     }
   }
 
@@ -163,11 +146,11 @@ export function useAdminUsersPage() {
         method: 'PUT',
         body: { id, ...payload }
       })
-      toast.add({ title: '更新成功', color: 'success' })
+      toast.add({ title: t('admin.users.feedback.updated'), color: 'success' })
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '更新失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.feedback.updateFailed')), color: 'error' })
       return false
     }
   }
@@ -185,11 +168,11 @@ export function useAdminUsersPage() {
           isActive: payload.isActive
         }
       })
-      toast.add({ title: '创建成功', color: 'success' })
+      toast.add({ title: t('admin.users.feedback.created'), color: 'success' })
       await refresh()
       return true
     } catch (err) {
-      toast.add({ title: parseFetchError(err, '创建失败'), color: 'error' })
+      toast.add({ title: parseFetchError(err, t('common.feedback.createFailed')), color: 'error' })
       return false
     }
   }
@@ -222,49 +205,73 @@ interface UseAdminUsersDisplayMetaOptions {
 }
 
 interface UseAdminUsersDisplayMetaReturn {
-  columns: TableColumn<AdminUserItem>[]
+  roleFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserRoleFilter>>>
+  activeFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserActiveFilter>>>
+  banFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserBanFilter>>>
+  columns: ComputedRef<TableColumn<AdminUserItem>[]>
   banTooltip: (row: AdminUserItem) => string
   getRowItems: (row: AdminUserItem) => DropdownMenuItem[]
-}
-
-const ADMIN_USER_TABLE_COLUMNS: TableColumn<AdminUserItem>[] = [
-  { accessorKey: 'username', header: '用户名' },
-  { accessorKey: 'role', header: '类型' },
-  { accessorKey: 'email', header: '邮箱' },
-  { accessorKey: 'credits', header: '积分' },
-  { accessorKey: 'isActive', header: '状态' },
-  { accessorKey: 'isBanned', header: '封禁' },
-  { accessorKey: 'createdAt', header: '注册时间' },
-  { id: 'actions', header: '' }
-]
-
-function buildAdminUserBanTooltip(row: AdminUserItem): string {
-  const parts: string[] = []
-  parts.push(row.bannedReason ? `原因：${row.bannedReason}` : '原因：未填写')
-  parts.push(row.bannedUntil ? `解封时间：${formatDateTime(row.bannedUntil)}` : '永久封禁')
-  return parts.join('\n')
 }
 
 export function useAdminUsersDisplayMeta(
   options: UseAdminUsersDisplayMetaOptions
 ): UseAdminUsersDisplayMetaReturn {
+  const { t, locale } = useI18n()
+  const roleFilterOptions = computed<Array<AdminUserFilterOption<AdminUserRoleFilter>>>(() => [
+    { label: t('admin.users.filters.allRoles'), value: 'all' },
+    { label: t('common.identities.admin'), value: 'admin' },
+    { label: t('common.identities.user'), value: 'user' }
+  ])
+  const activeFilterOptions = computed<Array<AdminUserFilterOption<AdminUserActiveFilter>>>(() => [
+    { label: t('admin.users.filters.allActiveStatuses'), value: 'all' },
+    { label: t('common.accounts.active'), value: 'active' },
+    { label: t('common.accounts.inactive'), value: 'inactive' }
+  ])
+  const banFilterOptions = computed<Array<AdminUserFilterOption<AdminUserBanFilter>>>(() => [
+    { label: t('admin.users.filters.allBanStatuses'), value: 'all' },
+    { label: t('common.accounts.banned'), value: 'banned' },
+    { label: t('common.accounts.unbanned'), value: 'unbanned' }
+  ])
+  const columns = computed<TableColumn<AdminUserItem>[]>(() => [
+    { accessorKey: 'username', header: t('admin.users.columns.username') },
+    { accessorKey: 'role', header: t('admin.users.columns.role') },
+    { accessorKey: 'email', header: t('admin.users.columns.email') },
+    { accessorKey: 'credits', header: t('admin.users.columns.credits') },
+    { accessorKey: 'isActive', header: t('admin.users.columns.status') },
+    { accessorKey: 'isBanned', header: t('admin.users.columns.ban') },
+    { accessorKey: 'createdAt', header: t('admin.users.columns.createdAt') },
+    { id: 'actions', header: '' }
+  ])
+
+  function banTooltip(row: AdminUserItem): string {
+    const reason = row.bannedReason
+      ? t('admin.users.banTooltip.reason', { reason: row.bannedReason })
+      : t('admin.users.banTooltip.noReason')
+    const duration = row.bannedUntil
+      ? t('admin.users.banTooltip.until', {
+          time: formatDateTime(row.bannedUntil, '-', locale.value)
+        })
+      : t('common.accounts.permanentBan')
+    return `${reason}\n${duration}`
+  }
+
   function getRowItems(row: AdminUserItem): DropdownMenuItem[] {
     return [{
-      label: '编辑用户',
+      label: t('admin.users.actions.edit'),
       icon: 'i-mdi-pencil-outline',
       onSelect: () => options.openEdit(row)
     }, {
-      label: row.isBanned ? '解封用户' : '封禁用户',
+      label: row.isBanned ? t('admin.users.actions.unban') : t('admin.users.actions.ban'),
       icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
       onSelect: () => row.isBanned ? options.openUnban(row) : options.openBan(row)
     }, {
-      label: 'API 密钥',
+      label: t('admin.users.actions.apiKeys'),
       icon: 'i-mdi-key-variant',
       onSelect: () => options.openKeys(row)
     }, {
       type: 'separator'
     }, {
-      label: '删除',
+      label: t('common.actions.delete'),
       icon: 'i-mdi-delete-outline',
       color: 'error',
       onSelect: () => options.openDelete(row)
@@ -272,8 +279,11 @@ export function useAdminUsersDisplayMeta(
   }
 
   return {
-    columns: ADMIN_USER_TABLE_COLUMNS,
-    banTooltip: buildAdminUserBanTooltip,
+    roleFilterOptions,
+    activeFilterOptions,
+    banFilterOptions,
+    columns,
+    banTooltip,
     getRowItems
   }
 }
