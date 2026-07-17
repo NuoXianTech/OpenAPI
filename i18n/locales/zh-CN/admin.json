@@ -539,6 +539,71 @@
         }
       }
     },
+    "content": {
+      "announcements": {
+        "searchPlaceholder": "搜索标题、内容或链接",
+        "listTitle": "公告列表",
+        "empty": "暂无公告",
+        "pinnedBadge": "置顶",
+        "levels": {
+          "info": "公告",
+          "success": "通知",
+          "warning": "提醒",
+          "critical": "紧急"
+        },
+        "levelOptions": {
+          "info": "公告 (info)",
+          "success": "通知 (success)",
+          "warning": "提醒 (warning)",
+          "critical": "紧急 (critical)"
+        },
+        "filters": {
+          "level": "级别",
+          "allLevels": "全部级别",
+          "status": "状态",
+          "allStatuses": "全部状态",
+          "enabled": "已启用",
+          "disabled": "已停用",
+          "pinnedState": "置顶",
+          "allPinned": "全部置顶",
+          "pinned": "已置顶",
+          "notPinned": "未置顶"
+        },
+        "columns": {
+          "title": "标题",
+          "sortOrder": "排序",
+          "enabled": "启用",
+          "pinned": "置顶",
+          "createdAt": "创建时间"
+        },
+        "actions": {
+          "create": "新建公告"
+        },
+        "delete": {
+          "title": "删除公告：{title}",
+          "description": "删除后该公告不再展示，且不可恢复。"
+        },
+        "feedback": {
+          "created": "已创建"
+        },
+        "form": {
+          "editTitle": "编辑公告",
+          "createTitle": "新建公告",
+          "editDescription": "更新公告内容、展示状态与排序设置。",
+          "createDescription": "发布一条面向用户的站内公告。",
+          "title": "标题",
+          "titlePlaceholder": "公告标题（最多 200 字）",
+          "level": "级别",
+          "content": "内容",
+          "contentPlaceholder": "支持纯文本，换行将保留",
+          "linkUrl": "详情链接（可选）",
+          "sortOrder": "排序值（小在前）",
+          "enabled": "启用",
+          "pinned": "置顶",
+          "requiredContent": "标题和内容必填"
+        }
+      }
+    },
     "overview": {
       "pageTitle": "管理中心",
       "title": "概览",
