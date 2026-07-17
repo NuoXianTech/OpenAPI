@@ -6,6 +6,7 @@ import { parseFetchError } from '~/utils/client-error'
 
 const { form, createSection } = useAdminSettingsPage()
 const toast = useToast()
+const { t } = useI18n()
 
 const emailKeys = [
   'smtpFromName',
@@ -25,15 +26,15 @@ const testOpen = ref(false)
 const testEmail = ref('')
 const sending = ref(false)
 
-function openTest() {
+function openTest(): void {
   testEmail.value = ''
   testOpen.value = true
 }
 
-async function submitTest() {
+async function submitTest(): Promise<void> {
   const to = testEmail.value.trim()
   if (!to) {
-    toast.add({ title: '请输入收件邮箱', color: 'warning' })
+    toast.add({ title: t('admin.system.email.feedback.recipientRequired'), color: 'warning' })
     return
   }
   sending.value = true
@@ -42,10 +43,17 @@ async function submitTest() {
       method: 'POST',
       body: { to }
     })
-    toast.add({ title: '测试邮件已发送', description: `请到 ${to} 查收`, color: 'success' })
+    toast.add({
+      title: t('admin.system.email.feedback.sent'),
+      description: t('admin.system.email.feedback.sentDescription', { email: to }),
+      color: 'success'
+    })
     testOpen.value = false
   } catch (err) {
-    toast.add({ title: parseFetchError(err, '发送失败'), color: 'error' })
+    toast.add({
+      title: parseFetchError(err, t('admin.system.email.feedback.sendFailed')),
+      color: 'error'
+    })
   } finally {
     sending.value = false
   }
@@ -55,12 +63,12 @@ async function submitTest() {
 <template>
   <div class="dashboard-settings-page">
     <DashboardSettingsSection
-      title="发信"
+      :title="t('admin.system.email.settings.title')"
     >
       <UFormField
         name="smtpFromName"
-        label="发件人名"
-        description="邮件中展示的发件人姓名，留空则只显示发件邮箱地址。"
+        :label="t('admin.system.email.settings.fromName.label')"
+        :description="t('admin.system.email.settings.fromName.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -73,8 +81,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpFrom"
-        label="发件人邮箱"
-        description="发件邮箱的地址，也作为 EHLO 域名来源。"
+        :label="t('admin.system.email.settings.fromAddress.label')"
+        :description="t('admin.system.email.settings.fromAddress.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -87,8 +95,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpHost"
-        label="SMTP 服务器"
-        description="发件服务器地址，不含端口号。"
+        :label="t('admin.system.email.settings.host.label')"
+        :description="t('admin.system.email.settings.host.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -101,8 +109,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpPort"
-        label="SMTP 端口"
-        description="发件服务器端口号，常见 465（SSL）/ 587（STARTTLS）。"
+        :label="t('admin.system.email.settings.port.label')"
+        :description="t('admin.system.email.settings.port.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -117,8 +125,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpUser"
-        label="SMTP 用户名"
-        description="发信邮箱用户名，一般与邮箱地址相同。"
+        :label="t('admin.system.email.settings.username.label')"
+        :description="t('admin.system.email.settings.username.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -131,8 +139,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpPass"
-        label="SMTP 密码"
-        description="发信邮箱密码或授权码。"
+        :label="t('admin.system.email.settings.password.label')"
+        :description="t('admin.system.email.settings.password.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -146,8 +154,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpReplyTo"
-        label="回信邮箱"
-        description="用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。"
+        :label="t('admin.system.email.settings.replyTo.label')"
+        :description="t('admin.system.email.settings.replyTo.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -160,8 +168,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpSecure"
-        label="强制使用 SSL 连接"
-        description="是否强制使用 SSL 加密连接（465 端口）。若无法发送邮件，可关闭后改用 587 STARTTLS。"
+        :label="t('admin.system.email.settings.secure.label')"
+        :description="t('admin.system.email.settings.secure.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <USwitch v-model="form.smtpSecure" />
@@ -169,8 +177,8 @@ async function submitTest() {
       <USeparator />
       <UFormField
         name="smtpPoolMaxAgeSeconds"
-        label="SMTP 连接有效期 (秒)"
-        description="有效期内建立的 SMTP 连接会被新邮件发送请求复用。0 = 不复用，每封新建即关闭。"
+        :label="t('admin.system.email.settings.poolMaxAge.label')"
+        :description="t('admin.system.email.settings.poolMaxAge.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput
@@ -183,8 +191,8 @@ async function submitTest() {
       </UFormField>
       <USeparator />
       <UFormField
-        label="测试发信"
-        description="使用当前已保存的 SMTP 配置发送一封测试邮件。若刚改了上方表单，请先点保存再测试。"
+        :label="t('admin.system.email.settings.test.label')"
+        :description="t('admin.system.email.settings.test.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UButton
@@ -193,7 +201,7 @@ async function submitTest() {
           class="max-sm:w-full justify-center"
           @click="openTest"
         >
-          发送测试邮件
+          {{ t('admin.system.email.actions.sendTest') }}
         </UButton>
       </UFormField>
       <USeparator />
@@ -207,12 +215,12 @@ async function submitTest() {
 
     <UModal
       v-model:open="testOpen"
-      title="SMTP 测试发信"
-      description="将使用已保存的 SMTP 配置发送一封测试邮件。若你刚修改了上方表单，请先点「保存设置」再测试。"
+      :title="t('admin.system.email.testModal.title')"
+      :description="t('admin.system.email.testModal.description')"
       :ui="adminModalUi()"
     >
       <template #body>
-        <UFormField label="收件邮箱">
+        <UFormField :label="t('admin.system.email.testModal.recipient')">
           <UInput
             v-model="testEmail"
             type="email"
@@ -232,14 +240,14 @@ async function submitTest() {
             :disabled="sending"
             @click="() => { testOpen = false }"
           >
-            取消
+            {{ t('common.actions.cancel') }}
           </UButton>
           <UButton
             :loading="sending"
             icon="i-mdi-send-outline"
             @click="submitTest"
           >
-            发送
+            {{ t('admin.system.email.actions.send') }}
           </UButton>
         </div>
       </template>

@@ -1136,6 +1136,66 @@
             "description": "积分页点击签到时弹出验证窗口，通过后自动签到。需同时开启「每日签到」功能。"
           }
         }
+      },
+      "email": {
+        "settings": {
+          "title": "发信",
+          "fromName": {
+            "label": "发件人名",
+            "description": "邮件中展示的发件人姓名，留空则只显示发件邮箱地址。"
+          },
+          "fromAddress": {
+            "label": "发件人邮箱",
+            "description": "发件邮箱的地址，也作为 EHLO 域名来源。"
+          },
+          "host": {
+            "label": "SMTP 服务器",
+            "description": "发件服务器地址，不含端口号。"
+          },
+          "port": {
+            "label": "SMTP 端口",
+            "description": "发件服务器端口号，常见 465（SSL）/ 587（STARTTLS）。"
+          },
+          "username": {
+            "label": "SMTP 用户名",
+            "description": "发信邮箱用户名，一般与邮箱地址相同。"
+          },
+          "password": {
+            "label": "SMTP 密码",
+            "description": "发信邮箱密码或授权码。"
+          },
+          "replyTo": {
+            "label": "回信邮箱",
+            "description": "用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。"
+          },
+          "secure": {
+            "label": "强制使用 SSL 连接",
+            "description": "是否强制使用 SSL 加密连接（465 端口）。若无法发送邮件，可关闭后改用 587 STARTTLS。"
+          },
+          "poolMaxAge": {
+            "label": "SMTP 连接有效期 (秒)",
+            "description": "有效期内建立的 SMTP 连接会被新邮件发送请求复用。0 = 不复用，每封新建即关闭。"
+          },
+          "test": {
+            "label": "测试发信",
+            "description": "使用当前已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。"
+          }
+        },
+        "actions": {
+          "sendTest": "发送测试邮件",
+          "send": "发送"
+        },
+        "feedback": {
+          "recipientRequired": "请输入收件邮箱",
+          "sent": "测试邮件已发送",
+          "sentDescription": "请到 {email} 查收",
+          "sendFailed": "发送失败"
+        },
+        "testModal": {
+          "title": "SMTP 测试发信",
+          "description": "将使用已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。",
+          "recipient": "收件邮箱"
+        }
       }
     },
     "overview": {
