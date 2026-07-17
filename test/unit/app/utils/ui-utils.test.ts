@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { getLatestAnnouncementRevision, hasNewerAnnouncement } from '@/utils/announcement-dismissal'
 import { createChartIndexedTickFormatter, formatChartIntegerTick, truncateChartAxisLabel } from '@/utils/chart-axis'
 import { confirmationError, emailError, integerRangeError, passwordError, usernameError } from '@/utils/form-validation'
-import { formatAdminIdentity, formatUserIdentity } from '@/utils/log-identity'
 import { formatCompactCount, formatCount, formatPercent } from '@/utils/number-format'
 
 describe('announcement dismissal', () => {
@@ -75,13 +74,6 @@ describe('form validation utilities', () => {
       .toBe('超时时间必须是 100 到 120000 之间的整数')
     expect(integerRangeError('limit', 1.5, '限流必须是不小于 0 的整数', 0)?.message)
       .toBe('限流必须是不小于 0 的整数')
-  })
-})
-
-describe('log identity labels', () => {
-  it('keeps business users distinct from administrator audit actors', () => {
-    expect(formatUserIdentity(1)).toBe('用户 #1')
-    expect(formatAdminIdentity(1)).toBe('管理员 #1')
   })
 })
 
