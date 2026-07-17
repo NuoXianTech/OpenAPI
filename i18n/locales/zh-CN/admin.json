@@ -186,6 +186,98 @@
         }
       }
     },
+    "credits": {
+      "overview": {
+        "pageTitle": "积分概览",
+        "title": "积分运营概览",
+        "description": "汇总用户余额、近期收支和兑换码发放能力",
+        "updatedAt": "更新于 {time}",
+        "waitingRefresh": "等待刷新",
+        "loadFailed": "积分概览加载失败",
+        "loadFailedDescription": "请稍后刷新重试。",
+        "recentTitle": "最近积分变动",
+        "actions": {
+          "userCredits": "用户积分",
+          "redemptionCodes": "兑换码管理",
+          "viewAll": "查看全部"
+        },
+        "cards": {
+          "totalBalance": "用户积分总余额",
+          "usersWithBalance": "{count} 位用户持有积分",
+          "income24h": "近 24 小时发放",
+          "transactionCount24h": "共 {count} 笔变动",
+          "expense24h": "近 24 小时消耗",
+          "netChange24h": "净变化 {amount}",
+          "averageBalance": "用户平均余额",
+          "userCount": "共 {count} 位用户",
+          "activeRedemptionCodes": "可用兑换码",
+          "redemptionPotential": "最多可发放 {amount} 积分"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "reason": "原因",
+          "change": "变动",
+          "balance": "余额",
+          "remark": "备注"
+        }
+      },
+      "users": {
+        "pageTitle": "用户积分",
+        "title": "用户积分",
+        "description": "查询用户余额，对单个或选中的用户发放、扣除和重置积分",
+        "searchPlaceholder": "搜索用户名、昵称或邮箱...",
+        "filterTitle": "用户积分筛选",
+        "selectedUsers": "已选择 {count} 位用户",
+        "selectedCount": "已选 {count} 位",
+        "listTitle": "用户余额",
+        "empty": "暂无符合条件的用户",
+        "filters": {
+          "userId": "用户 ID",
+          "emptyAll": "留空查询全部",
+          "balance": "积分余额",
+          "allBalances": "全部余额",
+          "positive": "有积分",
+          "zero": "零积分",
+          "negative": "负积分（异常）"
+        },
+        "columns": {
+          "user": "用户",
+          "balance": "积分余额",
+          "status": "账号状态",
+          "createdAt": "注册时间"
+        },
+        "actions": {
+          "batchAdjust": "批量调整积分",
+          "adjust": "调整"
+        }
+      },
+      "adjust": {
+        "title": "积分管理",
+        "target": "目标：{target}",
+        "userCount": "{count} 个用户",
+        "operationType": "操作类型",
+        "targetAmount": "目标积分",
+        "amount": "积分",
+        "amountPlaceholder": "请输入积分",
+        "remark": "备注（可选）",
+        "remarkPlaceholder": "例如：促销发放 / 违规扣除",
+        "success": "积分调整成功",
+        "operations": {
+          "grant": "加积分（grant）",
+          "revoke": "减积分（revoke）",
+          "reset": "重置积分（reset）"
+        },
+        "help": {
+          "grant": "将指定积分加到目标用户的积分上。",
+          "revoke": "从目标用户积分中扣除指定数量；不足时扣到 0。",
+          "reset": "将目标用户积分重置为指定数量（默认 0）。"
+        },
+        "validation": {
+          "positiveAmount": "积分必须大于 0"
+        }
+      }
+    },
     "overview": {
       "pageTitle": "管理中心",
       "title": "概览",

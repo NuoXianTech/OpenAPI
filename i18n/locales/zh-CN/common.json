@@ -84,6 +84,12 @@
       "userWithId": "用户 #{id}",
       "system": "系统"
     },
+    "accounts": {
+      "active": "已激活",
+      "inactive": "未激活",
+      "banned": "已封禁",
+      "deletedUser": "已删除用户"
+    },
     "credits": {
       "reasons": {
         "adminGrant": "管理员加",
