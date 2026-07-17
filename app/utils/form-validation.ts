@@ -77,7 +77,7 @@ export function confirmationError(
 export function integerRangeError(
   name: string,
   value: unknown,
-  label: string,
+  message: string,
   minimum: number,
   maximum?: number
 ): FormError<string> | null {
@@ -89,9 +89,7 @@ export function integerRangeError(
 
   return {
     name,
-    message: maximum === undefined
-      ? `${label}必须是不小于 ${minimum} 的整数`
-      : `${label}必须是 ${minimum} 到 ${maximum} 之间的整数`
+    message
   }
 }
 

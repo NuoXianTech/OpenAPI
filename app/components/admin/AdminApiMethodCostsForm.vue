@@ -7,6 +7,7 @@ defineProps<{
 }>()
 
 const state = useAdminApiForm()
+const { locale } = useI18n()
 
 function getMethodCost(method: string): number {
   const v = state.methodCosts?.[method.toUpperCase()]
@@ -40,10 +41,10 @@ function setMethodCost(method: string, value: number | string | null | undefined
       </span>
       <div class="me-auto">
         <h3 class="text-sm font-semibold text-highlighted">
-          调用计费
+          {{ $t('admin.apis.form.costs.title') }}
         </h3>
         <p class="text-xs text-muted">
-          按 HTTP 方法设置单次积分
+          {{ $t('admin.apis.form.costs.description') }}
         </p>
       </div>
       <UBadge
@@ -52,7 +53,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
         variant="subtle"
         size="sm"
       >
-        需先开启「API密钥」
+        {{ $t('admin.apis.form.costs.requiresApiKey') }}
       </UBadge>
       <UBadge
         v-else-if="hasChargedMethod"
@@ -60,7 +61,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
         variant="subtle"
         size="sm"
       >
-        含收费方法
+        {{ $t('admin.apis.form.costs.hasPaidMethods') }}
       </UBadge>
       <UBadge
         v-else
@@ -68,11 +69,11 @@ function setMethodCost(method: string, value: number | string | null | undefined
         variant="subtle"
         size="sm"
       >
-        整组免费
+        {{ $t('admin.apis.form.costs.allFree') }}
       </UBadge>
     </div>
     <UFormField
-      label="单次调用消耗积分"
+      :label="$t('admin.apis.form.costs.pointsPerCall')"
       name="methodCosts"
     >
       <div class="flex flex-col gap-2">
@@ -94,7 +95,9 @@ function setMethodCost(method: string, value: number | string | null | undefined
             min="0"
             :model-value="getMethodCost(method)"
             :disabled="!state.isApiKey"
-            :placeholder="state.isApiKey ? '0 = 免费' : '请先开启「API密钥」'"
+            :placeholder="state.isApiKey
+              ? $t('admin.apis.form.costs.freePlaceholder')
+              : $t('admin.apis.form.costs.requiresApiKey')"
             class="flex-1"
             @update:model-value="(v: number | string) => setMethodCost(method, v)"
           />
@@ -102,12 +105,16 @@ function setMethodCost(method: string, value: number | string | null | undefined
             class="text-xs w-12 text-right"
             :class="getMethodCost(method) > 0 ? 'text-warning' : 'text-success'"
           >
-            {{ getMethodCost(method) > 0 ? `${getMethodCost(method)} / 次` : '免费' }}
+            {{ getMethodCost(method) > 0
+              ? $t('admin.apis.form.costs.costPerCall', {
+                amount: getMethodCost(method).toLocaleString(locale)
+              })
+              : $t('admin.apis.form.costs.free') }}
           </span>
         </div>
       </div>
       <p class="text-xs text-muted mt-2">
-        逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API密钥」后才能配置扣费。调用成功才扣，失败/业务标记失败时不扣。
+        {{ $t('admin.apis.form.costs.help') }}
       </p>
     </UFormField>
   </section>

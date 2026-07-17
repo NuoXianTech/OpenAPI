@@ -20,24 +20,25 @@ const props = defineProps<{
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const form = useTemplateRef('form')
+const { t, locale } = useI18n()
 
 function validateApiForm(state: Partial<AdminApiFormState>): FormError<string>[] {
   const methodCostsAreValid = Object.values(state.methodCosts ?? {})
     .every(value => Number.isInteger(value) && value >= 0)
 
   return compactFormErrors(
-    requiredTextError('name', state.name, '接口名称不能为空'),
-    maxLengthError('name', state.name, 100, '接口名称最多 100 字'),
-    requiredTextError('shortDesc', state.shortDesc, '接口短描述不能为空'),
-    maxLengthError('shortDesc', state.shortDesc, 50, '接口短描述最多 50 字'),
-    requiredTextError('description', state.description, '接口描述不能为空'),
-    integerRangeError('rateLimitPerSecond', state.rateLimitPerSecond, '每秒限流', 0),
-    integerRangeError('rateLimitPerMinute', state.rateLimitPerMinute, '每分钟限流', 0),
-    integerRangeError('rateLimitPerHour', state.rateLimitPerHour, '每小时限流', 0),
-    integerRangeError('rateLimitPerDay', state.rateLimitPerDay, '每天限流', 0),
-    integerRangeError('dailyQuota', state.dailyQuota, '日配额', 0),
-    integerRangeError('timeoutMs', state.timeoutMs, '超时时间', 100, 120_000),
-    !methodCostsAreValid && { name: 'methodCosts', message: '方法积分必须是非负整数' }
+    requiredTextError('name', state.name, t('admin.apis.form.validation.nameRequired')),
+    maxLengthError('name', state.name, 100, t('admin.apis.form.validation.nameMaxLength')),
+    requiredTextError('shortDesc', state.shortDesc, t('admin.apis.form.validation.shortDescriptionRequired')),
+    maxLengthError('shortDesc', state.shortDesc, 50, t('admin.apis.form.validation.shortDescriptionMaxLength')),
+    requiredTextError('description', state.description, t('admin.apis.form.validation.descriptionRequired')),
+    integerRangeError('rateLimitPerSecond', state.rateLimitPerSecond, t('admin.apis.form.validation.perSecond'), 0),
+    integerRangeError('rateLimitPerMinute', state.rateLimitPerMinute, t('admin.apis.form.validation.perMinute'), 0),
+    integerRangeError('rateLimitPerHour', state.rateLimitPerHour, t('admin.apis.form.validation.perHour'), 0),
+    integerRangeError('rateLimitPerDay', state.rateLimitPerDay, t('admin.apis.form.validation.perDay'), 0),
+    integerRangeError('dailyQuota', state.dailyQuota, t('admin.apis.form.validation.dailyQuota'), 0),
+    integerRangeError('timeoutMs', state.timeoutMs, t('admin.apis.form.validation.timeout'), 100, 120_000),
+    !methodCostsAreValid && { name: 'methodCosts', message: t('admin.apis.form.validation.methodCosts') }
   )
 }
 
@@ -45,7 +46,10 @@ function defaultsForRegister(target: DiscoveredApi): AdminApiFormState {
   return {
     name: target.code,
     shortDesc: `${target.pathVersion} ${target.code}`,
-    description: `${target.pathVersion} ${target.code} 接口`,
+    description: t('admin.apis.form.modal.defaultDescription', {
+      version: target.pathVersion,
+      code: target.code
+    }),
     docUrl: '',
     status: API_STATUS.automatic,
     categoryId: null,
@@ -132,8 +136,8 @@ watch(hasChargedMethod, (val) => {
   if (val && !state.isApiKey) {
     state.isApiKey = true
     toast.add({
-      title: '已自动开启「API密钥」',
-      description: '设置扣费后必须通过 API密钥 鉴权扣款账户。',
+      title: t('admin.apis.form.feedback.apiKeyAutoEnabled'),
+      description: t('admin.apis.form.feedback.apiKeyAutoEnabledDescription'),
       color: 'info'
     })
   }
@@ -154,9 +158,20 @@ watch(() => state.isStatistics, (val) => {
 const headerLabel = computed(() => {
   if (!props.target) return ''
   return props.mode === 'edit'
-    ? `编辑配置：${props.target.pathVersion} / ${props.target.code}`
-    : `登记接口：${props.target.pathVersion} / ${props.target.code}`
+    ? t('admin.apis.form.modal.editTitle', {
+        version: props.target.pathVersion,
+        code: props.target.code
+      })
+    : t('admin.apis.form.modal.registerTitle', {
+        version: props.target.pathVersion,
+        code: props.target.code
+      })
 })
+const endpointDescription = computed(() => props.target
+  ? t('admin.apis.form.modal.endpointCount', {
+      count: props.target.endpointCount.toLocaleString(locale.value)
+    })
+  : undefined)
 
 async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
   if (!props.target) return
@@ -184,13 +199,15 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
       })
     }
     toast.add({
-      title: props.mode === 'edit' ? '更新成功' : '登记成功',
+      title: props.mode === 'edit'
+        ? t('admin.apis.form.feedback.updated')
+        : t('admin.apis.form.feedback.registered'),
       color: 'success'
     })
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -201,7 +218,7 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
   <UModal
     v-model:open="open"
     :title="headerLabel"
-    :description="target ? `${target.endpointCount} 端点` : undefined"
+    :description="endpointDescription"
     :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
   >
     <template #body>
@@ -236,13 +253,13 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
           color="neutral"
           @click="() => { open = false }"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="() => { form?.submit() }"
         >
-          {{ mode === 'edit' ? '保存' : '登记' }}
+          {{ mode === 'edit' ? $t('common.actions.save') : $t('admin.apis.form.actions.register') }}
         </UButton>
       </div>
     </template>

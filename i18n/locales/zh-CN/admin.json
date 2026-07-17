@@ -807,6 +807,86 @@
           "synced": "已同步 manifest",
           "syncFailed": "同步失败"
         }
+      },
+      "form": {
+        "modal": {
+          "editTitle": "编辑配置：{version} / {code}",
+          "registerTitle": "登记接口：{version} / {code}",
+          "endpointCount": "{count} 个端点",
+          "defaultDescription": "{version} {code} 接口"
+        },
+        "actions": {
+          "register": "登记"
+        },
+        "feedback": {
+          "apiKeyAutoEnabled": "已自动开启「API 密钥」",
+          "apiKeyAutoEnabledDescription": "设置扣费后必须通过 API 密钥鉴权扣款账户。",
+          "updated": "更新成功",
+          "registered": "登记成功"
+        },
+        "validation": {
+          "nameRequired": "接口名称不能为空",
+          "nameMaxLength": "接口名称最多 100 字",
+          "shortDescriptionRequired": "接口短描述不能为空",
+          "shortDescriptionMaxLength": "接口短描述最多 50 字",
+          "descriptionRequired": "接口描述不能为空",
+          "perSecond": "每秒限流必须是不小于 0 的整数",
+          "perMinute": "每分钟限流必须是不小于 0 的整数",
+          "perHour": "每小时限流必须是不小于 0 的整数",
+          "perDay": "每天限流必须是不小于 0 的整数",
+          "dailyQuota": "日配额必须是不小于 0 的整数",
+          "timeout": "超时时间必须是 100 到 120000 之间的整数",
+          "methodCosts": "方法积分必须是非负整数"
+        },
+        "basic": {
+          "title": "基础信息",
+          "description": "配置接口在前台展示的名称、描述与分类",
+          "name": "名称",
+          "namePlaceholder": "对外展示名称",
+          "status": "状态",
+          "shortDescription": "简短描述",
+          "shortDescriptionPlaceholder": "最多 50 字",
+          "fullDescription": "详细描述",
+          "documentationUrl": "文档地址",
+          "category": "分类",
+          "uncategorized": "未分类"
+        },
+        "access": {
+          "title": "访问控制",
+          "description": "控制接口可用性、鉴权与调用统计",
+          "enabled": "启用接口",
+          "apiKey": "API 密钥",
+          "statistics": "调用统计",
+          "statisticsRequiresEnabled": "启用接口后才能开启调用统计。",
+          "disablingApiKeyClearsCosts": "关闭「API 密钥」会清空所有方法的扣费配置（无法定位扣款账户）。"
+        },
+        "rateLimits": {
+          "title": "限流与配额",
+          "description": "数值为 0 表示不限制",
+          "perSecond": "每秒",
+          "perMinute": "每分钟",
+          "perHour": "每小时",
+          "perDay": "每天",
+          "dailyQuota": "日配额",
+          "timeoutMs": "超时 (ms)"
+        },
+        "costs": {
+          "title": "调用计费",
+          "description": "按 HTTP 方法设置单次积分",
+          "requiresApiKey": "需先开启「API 密钥」",
+          "hasPaidMethods": "含收费方法",
+          "allFree": "整组免费",
+          "pointsPerCall": "单次调用消耗积分",
+          "freePlaceholder": "0 = 免费",
+          "costPerCall": "{amount} / 次",
+          "free": "免费",
+          "help": "逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API 密钥」后才能配置扣费。调用成功才扣，失败或业务标记失败时不扣。"
+        },
+        "endpoints": {
+          "title": "自动发现的端点",
+          "description": "路径与方法由文件结构决定",
+          "dynamic": "动态"
+        }
       }
     },
     "overview": {
