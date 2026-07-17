@@ -13,12 +13,16 @@ const props = withDefaults(defineProps<{
   searchPlaceholder?: string
   emptyText?: string
 }>(), {
-  ariaLabel: '筛选标签',
+  ariaLabel: '',
   maxVisible: 8,
   enableCollapse: true,
-  searchPlaceholder: '搜索选项',
-  emptyText: '未找到选项'
+  searchPlaceholder: '',
+  emptyText: ''
 })
+const { t } = useI18n()
+const resolvedAriaLabel = computed(() => props.ariaLabel || t('common.filters.tabsAria'))
+const resolvedSearchPlaceholder = computed(() => props.searchPlaceholder || t('common.filters.searchOptions'))
+const resolvedEmptyText = computed(() => props.emptyText || t('common.filters.noOptions'))
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | number]
@@ -83,7 +87,7 @@ function selectFromPopover(value: string | number) {
 
 <template>
   <section
-    :aria-label="props.ariaLabel"
+    :aria-label="resolvedAriaLabel"
     class="filter-tabs"
   >
     <div class="filter-tabs__list">
@@ -114,7 +118,7 @@ function selectFromPopover(value: string | number) {
           class="filter-tab filter-tab--more cursor-pointer"
           trailing-icon="i-mdi-chevron-down"
         >
-          更多 {{ hiddenCount }}
+          {{ $t('common.filters.more', { count: hiddenCount }) }}
         </UButton>
 
         <template #content>
@@ -126,7 +130,7 @@ function selectFromPopover(value: string | number) {
                 color="neutral"
                 variant="outline"
                 size="sm"
-                :placeholder="searchPlaceholder"
+                :placeholder="resolvedSearchPlaceholder"
                 autocomplete="off"
                 autofocus
               />
@@ -153,7 +157,7 @@ function selectFromPopover(value: string | number) {
                 v-if="filteredPopoverTabs.length === 0"
                 class="filter-tabs-empty"
               >
-                {{ emptyText }}
+                {{ resolvedEmptyText }}
               </div>
             </div>
           </div>

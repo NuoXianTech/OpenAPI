@@ -8,9 +8,11 @@
       "edit": "编辑",
       "delete": "删除",
       "copy": "复制",
+      "clear": "清除",
       "refresh": "刷新",
       "retry": "重试",
       "visit": "访问",
+      "viewDetails": "查看详情",
       "backHome": "返回首页",
       "backLogin": "返回登录"
     },
@@ -29,7 +31,24 @@
     },
     "filters": {
       "all": "全部",
-      "current": "当前"
+      "current": "当前",
+      "tabsAria": "筛选标签",
+      "searchOptions": "搜索选项",
+      "noOptions": "未找到选项",
+      "more": "更多 {count}"
+    },
+    "dateTime": {
+      "selectDateTime": "选择日期时间",
+      "selectRange": "选择时间范围",
+      "now": "此刻",
+      "presets": {
+        "last7Days": "最近 7 天",
+        "last14Days": "最近 14 天",
+        "last30Days": "最近 30 天",
+        "last3Months": "最近 3 个月",
+        "last6Months": "最近 6 个月",
+        "lastYear": "最近 1 年"
+      }
     },
     "content": {
       "noDescription": "暂无描述"
@@ -175,6 +194,32 @@
         "notActive": "邮箱未验证",
         "oauthUserUnavailable": "账号不可用"
       }
+    },
+    "notifications": {
+      "title": "消息通知",
+      "unread": "未读",
+      "unreadCount": "{count} 未读",
+      "markAllRead": "全部已读",
+      "onlyUnread": "只看未读",
+      "noUnread": "没有未读消息",
+      "empty": "暂无消息",
+      "emptyDescription": "新的通知会显示在这里",
+      "from": "来自：{sender}",
+      "system": "系统",
+      "levels": {
+        "info": "通知",
+        "success": "成功",
+        "warning": "提醒",
+        "critical": "紧急"
+      }
+    },
+    "turnstile": {
+      "loadFailed": "Turnstile 脚本加载失败",
+      "loadFailedWithHost": "Turnstile 脚本加载失败：无法访问 challenges.cloudflare.com",
+      "loadTimeout": "Turnstile 脚本加载超时（>{seconds}s），请检查网络是否能访问 challenges.cloudflare.com",
+      "emptySiteKey": "Turnstile siteKey 为空，请到后台设置中检查 Turnstile 配置",
+      "verificationFailed": "Turnstile 校验失败：{message}",
+      "renderFailed": "Turnstile widget 渲染失败，请检查 siteKey 是否与当前域名匹配"
     },
     "search": {
       "clear": "清除搜索"

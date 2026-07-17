@@ -15,7 +15,7 @@ const props = withDefaults(defineProps<{
   icon?: string
   block?: boolean
 }>(), {
-  placeholder: '选择时间范围',
+  placeholder: '',
   size: 'md',
   disabled: false,
   clearable: true,
@@ -25,11 +25,13 @@ const props = withDefaults(defineProps<{
 
 const start = defineModel<string>('start', { default: '' })
 const end = defineModel<string>('end', { default: '' })
+const { t, locale } = useI18n()
+const resolvedPlaceholder = computed(() => props.placeholder || t('common.dateTime.selectRange'))
 
 const open = ref(false)
 const tz = getLocalTimeZone()
 
-const labelFormatter = new DateFormatter('zh-CN', { dateStyle: 'medium', timeStyle: 'short' })
+const labelFormatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'medium', timeStyle: 'short' }))
 
 const startDate = ref<CalendarDate>()
 const startTime = ref<Time>()
@@ -88,8 +90,8 @@ const displayLabel = computed(() => {
   const s = dateTimeLocalToCalendar(start.value)
   const e = dateTimeLocalToCalendar(end.value)
   if (!s) return ''
-  const startText = labelFormatter.format(s.toDate(tz))
-  return e ? `${startText} ~ ${labelFormatter.format(e.toDate(tz))}` : startText
+  const startText = labelFormatter.value.format(s.toDate(tz))
+  return e ? `${startText} ~ ${labelFormatter.value.format(e.toDate(tz))}` : startText
 })
 
 interface RangePreset {
@@ -99,14 +101,14 @@ interface RangePreset {
   years?: number
 }
 
-const presets: RangePreset[] = [
-  { label: '最近 7 天', days: 7 },
-  { label: '最近 14 天', days: 14 },
-  { label: '最近 30 天', days: 30 },
-  { label: '最近 3 个月', months: 3 },
-  { label: '最近 6 个月', months: 6 },
-  { label: '最近 1 年', years: 1 }
-]
+const presets = computed<RangePreset[]>(() => [
+  { label: t('common.dateTime.presets.last7Days'), days: 7 },
+  { label: t('common.dateTime.presets.last14Days'), days: 14 },
+  { label: t('common.dateTime.presets.last30Days'), days: 30 },
+  { label: t('common.dateTime.presets.last3Months'), months: 3 },
+  { label: t('common.dateTime.presets.last6Months'), months: 6 },
+  { label: t('common.dateTime.presets.lastYear'), years: 1 }
+])
 
 function presetStart(preset: RangePreset) {
   const base = today(tz)
@@ -156,7 +158,7 @@ function clear() {
       class="data-[state=open]:bg-elevated group justify-start font-normal"
       :class="{ 'text-dimmed': !displayLabel }"
     >
-      <span class="truncate">{{ displayLabel || props.placeholder }}</span>
+      <span class="truncate">{{ displayLabel || resolvedPlaceholder }}</span>
 
       <template #trailing>
         <span class="ms-auto flex items-center gap-1">
@@ -166,7 +168,7 @@ function clear() {
             class="size-4 text-dimmed hover:text-default transition-colors"
             role="button"
             tabindex="-1"
-            aria-label="清除"
+            :aria-label="$t('common.actions.clear')"
             @click.stop="clear"
           />
           <UIcon
