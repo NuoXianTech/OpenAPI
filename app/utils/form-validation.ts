@@ -98,9 +98,9 @@ export function integerRangeError(
 export function integerError(
   name: string,
   value: unknown,
-  label: string
+  message: string
 ): FormError<string> | null {
   return typeof value === 'number' && Number.isInteger(value)
     ? null
-    : { name, message: `${label}必须是整数` }
+    : { name, message }
 }

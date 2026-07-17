@@ -721,6 +721,54 @@
         }
       }
     },
+    "apis": {
+      "categories": {
+        "searchPlaceholder": "搜索编码、名称或描述",
+        "listTitle": "分类列表",
+        "empty": "暂无分类",
+        "columns": {
+          "code": "编码",
+          "name": "名称",
+          "description": "描述",
+          "sortOrder": "排序",
+          "color": "颜色",
+          "enabled": "启用"
+        },
+        "actions": {
+          "create": "新建分类"
+        },
+        "delete": {
+          "title": "删除分类：{name}",
+          "description": "删除后该分类将不再可选；若仍有接口绑定该分类，将无法删除。"
+        },
+        "feedback": {
+          "updated": "更新成功",
+          "created": "创建成功"
+        },
+        "validation": {
+          "codeRequired": "分类标识不能为空",
+          "codeMaxLength": "分类标识最多 64 字",
+          "nameRequired": "分类名称不能为空",
+          "nameMaxLength": "分类名称最多 64 字",
+          "sortOrderInteger": "排序必须是整数"
+        },
+        "form": {
+          "editTitle": "编辑分类",
+          "createTitle": "新增分类",
+          "code": "编码 (code)",
+          "codeHelp": "作为分类唯一键，创建后不可修改",
+          "codePlaceholder": "如 ai-tools",
+          "name": "名称",
+          "namePlaceholder": "如 AI 工具",
+          "description": "描述",
+          "icon": "图标 (i-mdi-*)",
+          "color": "颜色标识",
+          "sortOrder": "排序",
+          "sortOrderHelp": "数字越小越靠前",
+          "enabled": "启用"
+        }
+      }
+    },
     "overview": {
       "pageTitle": "管理中心",
       "title": "概览",

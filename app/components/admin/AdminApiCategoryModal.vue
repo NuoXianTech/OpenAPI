@@ -25,6 +25,7 @@ const props = defineProps<{ item?: ApiCategoryItem | null }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const form = useTemplateRef('form')
+const { t } = useI18n()
 
 const isEdit = computed(() => !!props.item)
 
@@ -40,11 +41,11 @@ interface ApiCategoryFormState {
 
 function validateCategoryForm(state: Partial<ApiCategoryFormState>): FormError<string>[] {
   return compactFormErrors(
-    requiredTextError('code', state.code, '分类标识不能为空'),
-    maxLengthError('code', state.code, 64, '分类标识最多 64 字'),
-    requiredTextError('name', state.name, '分类名称不能为空'),
-    maxLengthError('name', state.name, 64, '分类名称最多 64 字'),
-    integerError('sortOrder', state.sortOrder, '排序')
+    requiredTextError('code', state.code, t('admin.apis.categories.validation.codeRequired')),
+    maxLengthError('code', state.code, 64, t('admin.apis.categories.validation.codeMaxLength')),
+    requiredTextError('name', state.name, t('admin.apis.categories.validation.nameRequired')),
+    maxLengthError('name', state.name, 64, t('admin.apis.categories.validation.nameMaxLength')),
+    integerError('sortOrder', state.sortOrder, t('admin.apis.categories.validation.sortOrderInteger'))
   )
 }
 
@@ -79,11 +80,14 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
     } else {
       await $fetch('/api/admin/api-categories/add', { method: 'POST', body: event.data })
     }
-    toast.add({ title: isEdit.value ? '更新成功' : '创建成功', color: 'success' })
+    toast.add({
+      title: isEdit.value ? t('admin.apis.categories.feedback.updated') : t('admin.apis.categories.feedback.created'),
+      color: 'success'
+    })
     open.value = false
     emit('saved')
   } catch (err: unknown) {
-    toast.add({ title: parseFetchError(err, '操作失败'), color: 'error' })
+    toast.add({ title: parseFetchError(err, t('common.feedback.operationFailed')), color: 'error' })
   } finally {
     loading.value = false
   }
@@ -93,7 +97,7 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
 <template>
   <UModal
     v-model:open="open"
-    :title="isEdit ? '编辑分类' : '新增分类'"
+    :title="isEdit ? $t('admin.apis.categories.form.editTitle') : $t('admin.apis.categories.form.createTitle')"
     :ui="adminModalUi()"
   >
     <template #body>
@@ -105,27 +109,27 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
         @submit="onSubmit"
       >
         <UFormField
-          label="编码 (code)"
+          :label="$t('admin.apis.categories.form.code')"
           name="code"
-          help="作为分类唯一键，创建后不可修改"
+          :help="$t('admin.apis.categories.form.codeHelp')"
         >
           <UInput
             v-model="state.code"
             :disabled="isEdit"
-            placeholder="如 ai-tools"
+            :placeholder="$t('admin.apis.categories.form.codePlaceholder')"
           />
         </UFormField>
         <UFormField
-          label="名称"
+          :label="$t('admin.apis.categories.form.name')"
           name="name"
         >
           <UInput
             v-model="state.name"
-            placeholder="如 AI 工具"
+            :placeholder="$t('admin.apis.categories.form.namePlaceholder')"
           />
         </UFormField>
         <UFormField
-          label="描述"
+          :label="$t('admin.apis.categories.form.description')"
           name="description"
         >
           <UTextarea
@@ -136,7 +140,7 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
         </UFormField>
         <div class="grid grid-cols-2 gap-3">
           <UFormField
-            label="图标 (i-mdi-*)"
+            :label="$t('admin.apis.categories.form.icon')"
             name="icon"
           >
             <UInput
@@ -145,7 +149,7 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
             />
           </UFormField>
           <UFormField
-            label="颜色标识"
+            :label="$t('admin.apis.categories.form.color')"
             name="color"
           >
             <UInput
@@ -155,9 +159,9 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
           </UFormField>
         </div>
         <UFormField
-          label="排序"
+          :label="$t('admin.apis.categories.form.sortOrder')"
           name="sortOrder"
-          help="数字越小越靠前"
+          :help="$t('admin.apis.categories.form.sortOrderHelp')"
         >
           <UInput
             v-model.number="state.sortOrder"
@@ -166,7 +170,7 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
         </UFormField>
         <USwitch
           v-model="state.isEnabled"
-          label="启用"
+          :label="$t('admin.apis.categories.form.enabled')"
         />
       </UForm>
     </template>
@@ -178,13 +182,13 @@ async function onSubmit(event: FormSubmitEvent<ApiCategoryFormState>) {
           color="neutral"
           @click="() => { open = false }"
         >
-          取消
+          {{ $t('common.actions.cancel') }}
         </UButton>
         <UButton
           :loading="loading"
           @click="() => { form?.submit() }"
         >
-          {{ isEdit ? '保存' : '创建' }}
+          {{ isEdit ? $t('common.actions.save') : $t('common.actions.create') }}
         </UButton>
       </div>
     </template>
