@@ -12,7 +12,8 @@ import {
 } from '~/utils/form-validation'
 
 definePageMeta({ layout: false })
-useHead({ title: '完成第三方登录' })
+const { t } = useI18n()
+useHead(() => ({ title: t('auth.oauthComplete.title') }))
 
 interface PendingInfo {
   pending: boolean
@@ -58,8 +59,8 @@ const allowRegister = computed(() => Boolean(info.value?.allowRegister))
 
 function validateBindForm(state: Partial<OauthBindFormState>): FormError<string>[] {
   return compactFormErrors(
-    requiredTextError('identifier', state.identifier, '请输入邮箱或用户名'),
-    requiredTextError('password', state.password, '请输入密码')
+    requiredTextError('identifier', state.identifier, t('auth.validation.identifierRequired')),
+    requiredTextError('password', state.password, t('auth.validation.passwordRequired'))
   )
 }
 
@@ -96,7 +97,7 @@ async function submitBind() {
     })
     await navigateTo(USER_OVERVIEW_PATH)
   } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, '绑定失败'), color: 'error' })
+    toast.add({ title: parseFetchError(error, t('auth.oauthComplete.bindFailed')), color: 'error' })
   } finally {
     submitting.value = false
   }
@@ -118,11 +119,11 @@ async function submitRegister() {
       sentToEmail.value = registerState.email
       emailSent.value = true
     } else {
-      toast.add({ title: '注册成功', color: 'success' })
+      toast.add({ title: t('auth.oauthComplete.registerSuccess'), color: 'success' })
       await navigateTo(USER_OVERVIEW_PATH)
     }
   } catch (error: unknown) {
-    toast.add({ title: parseFetchError(error, '注册失败'), color: 'error' })
+    toast.add({ title: parseFetchError(error, t('auth.oauthComplete.registerFailed')), color: 'error' })
   } finally {
     submitting.value = false
   }
@@ -133,8 +134,8 @@ async function submitRegister() {
   <CommonAppAuthShell>
     <AuthBrandHeader
       icon="i-mdi-link-variant"
-      title="完成第三方登录"
-      subtitle="该第三方账号还未关联本站用户，请选择绑定已有账号或新注册"
+      :title="t('auth.oauthComplete.title')"
+      :subtitle="t('auth.oauthComplete.subtitle')"
     />
 
     <UCard
@@ -162,14 +163,14 @@ async function submitRegister() {
           class="mx-auto size-10 text-muted"
         />
         <p class="text-sm text-muted">
-          绑定会话已过期或无效，请重新发起第三方登录。
+          {{ $t('auth.oauthComplete.expired') }}
         </p>
         <UButton
           block
           size="lg"
           to="/login"
         >
-          返回登录
+          {{ $t('common.actions.backLogin') }}
         </UButton>
       </div>
 
@@ -186,11 +187,10 @@ async function submitRegister() {
         </div>
         <div class="space-y-1">
           <p class="font-medium">
-            验证邮件已发送
+            {{ $t('auth.oauthComplete.emailSentTitle') }}
           </p>
           <p class="text-sm text-muted">
-            已向 <span class="font-medium text-default">{{ sentToEmail }}</span> 发送激活邮件。
-            请点击邮件中的链接完成激活，激活后将自动登录并进入用户中心。
+            {{ $t('auth.oauthComplete.emailSentMessage', { email: sentToEmail }) }}
           </p>
         </div>
         <UButton
@@ -200,7 +200,7 @@ async function submitRegister() {
           color="neutral"
           to="/login"
         >
-          返回登录
+          {{ $t('common.actions.backLogin') }}
         </UButton>
       </div>
 
@@ -221,7 +221,7 @@ async function submitRegister() {
               {{ info?.nickname || info?.displayName }}
             </p>
             <p class="truncate text-xs text-muted">
-              来自 {{ info?.displayName }}{{ info?.email ? ` · ${info?.email}` : '' }}
+              {{ $t('auth.oauthComplete.providerSource', { provider: info?.displayName }) }}{{ info?.email ? ` · ${info?.email}` : '' }}
             </p>
           </div>
         </div>
@@ -231,8 +231,8 @@ async function submitRegister() {
           color="info"
           variant="subtle"
           icon="i-mdi-information-outline"
-          title="检测到该邮箱已注册"
-          description="建议直接「绑定已有账号」，把这个第三方登录方式关联到你的现有账号。"
+          :title="t('auth.oauthComplete.existingEmailTitle')"
+          :description="t('auth.oauthComplete.existingEmailDescription')"
         />
 
         <!-- 模式切换（仅在允许新注册时显示） -->
@@ -246,7 +246,7 @@ async function submitRegister() {
             block
             @click="() => { mode = 'bind' }"
           >
-            绑定已有账号
+            {{ $t('auth.oauthComplete.bindMode') }}
           </UButton>
           <UButton
             :variant="mode === 'register' ? 'solid' : 'outline'"
@@ -254,7 +254,7 @@ async function submitRegister() {
             block
             @click="() => { mode = 'register' }"
           >
-            新注册
+            {{ $t('auth.oauthComplete.registerMode') }}
           </UButton>
         </div>
 
@@ -268,7 +268,7 @@ async function submitRegister() {
         >
           <UFormField
             name="identifier"
-            label="邮箱或用户名"
+            :label="t('auth.fields.identifier')"
           >
             <UInput
               v-model="bindState.identifier"
@@ -281,12 +281,12 @@ async function submitRegister() {
           </UFormField>
           <UFormField
             name="password"
-            label="密码"
+            :label="t('auth.fields.password')"
           >
             <UInput
               v-model="bindState.password"
               type="password"
-              placeholder="请输入登录密码"
+              :placeholder="t('auth.placeholders.loginPassword')"
               icon="i-mdi-lock-outline"
               size="lg"
               autocomplete="current-password"
@@ -299,7 +299,7 @@ async function submitRegister() {
             size="lg"
             :loading="submitting"
           >
-            验证并绑定
+            {{ $t('auth.oauthComplete.bindSubmit') }}
           </UButton>
         </UForm>
 
@@ -313,8 +313,8 @@ async function submitRegister() {
         >
           <UFormField
             name="email"
-            label="邮箱"
-            :description="info?.email ? '已从第三方资料预填，可修改。' : '该第三方未提供邮箱，请填写你的常用邮箱。'"
+            :label="t('auth.fields.email')"
+            :description="info?.email ? t('auth.oauthComplete.emailPrefilled') : t('auth.oauthComplete.emailRequired')"
           >
             <UInput
               v-model="registerState.email"
@@ -328,12 +328,12 @@ async function submitRegister() {
           </UFormField>
           <UFormField
             name="username"
-            label="用户名"
-            description="留空将自动生成，可自定义（字母、数字、下划线、短横线）。"
+            :label="t('auth.fields.username')"
+            :description="t('auth.oauthComplete.usernameDescription')"
           >
             <UInput
               v-model="registerState.username"
-              placeholder="留空自动生成"
+              :placeholder="t('auth.oauthComplete.usernamePlaceholder')"
               icon="i-mdi-account-outline"
               size="lg"
               class="w-full"
@@ -341,12 +341,12 @@ async function submitRegister() {
           </UFormField>
           <UFormField
             name="password"
-            label="密码"
+            :label="t('auth.fields.password')"
           >
             <UInput
               v-model="registerState.password"
               type="password"
-              placeholder="设置不少于 8 位的登录密码"
+              :placeholder="t('auth.placeholders.newPassword')"
               icon="i-mdi-lock-outline"
               size="lg"
               autocomplete="new-password"
@@ -356,12 +356,12 @@ async function submitRegister() {
           </UFormField>
           <UFormField
             name="confirmPassword"
-            label="确认密码"
+            :label="t('auth.fields.confirmPassword')"
           >
             <UInput
               v-model="registerState.confirmPassword"
               type="password"
-              placeholder="再次输入密码"
+              :placeholder="t('auth.placeholders.confirmPassword')"
               icon="i-mdi-lock-check-outline"
               size="lg"
               autocomplete="new-password"
@@ -374,17 +374,17 @@ async function submitRegister() {
             size="lg"
             :loading="submitting"
           >
-            创建账号
+            {{ $t('auth.register.submit') }}
           </UButton>
         </UForm>
       </div>
     </UCard>
 
     <AuthFooterLinks
-      prefix="不是你？"
+      :prefix="t('auth.oauthComplete.notYou')"
       :links="[
-        { label: '返回登录', to: '/login' },
-        { label: '返回首页', to: '/' }
+        { label: t('common.actions.backLogin'), to: '/login' },
+        { label: t('common.actions.backHome'), to: '/' }
       ]"
     />
   </CommonAppAuthShell>

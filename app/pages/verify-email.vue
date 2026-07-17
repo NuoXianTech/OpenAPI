@@ -2,9 +2,10 @@
 import { parseFetchError } from '~/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
-useHead({ title: '邮箱验证' })
-
 definePageMeta({ layout: false })
+
+const { t } = useI18n()
+useHead(() => ({ title: t('auth.verifyEmail.title') }))
 
 const route = useRoute()
 const token = computed(() => (route.query.token || '').toString())
@@ -12,7 +13,7 @@ const user = computed(() => (route.query.user || '').toString())
 const { fetchMe } = useAuth()
 
 const status = ref<'pending' | 'success' | 'error'>('pending')
-const message = ref('正在验证，请稍候...')
+const message = ref(t('auth.verifyEmail.pendingMessage'))
 const verifying = ref(false)
 const alreadyVerified = ref(false)
 
@@ -28,22 +29,22 @@ const headerIcon = computed(() => {
 
 const headerTitle = computed(() => {
   if (status.value === 'success') {
-    return '验证成功'
+    return t('auth.verifyEmail.successTitle')
   }
   if (status.value === 'error') {
-    return '验证失败'
+    return t('auth.verifyEmail.errorTitle')
   }
-  return '邮箱验证'
+  return t('auth.verifyEmail.title')
 })
 
 const headerSubtitle = computed(() => {
   if (status.value === 'success') {
-    return alreadyVerified.value ? '邮箱已验证，请前往登录' : '已自动登录，正在跳转用户中心'
+    return alreadyVerified.value ? t('auth.verifyEmail.alreadyVerified') : t('auth.verifyEmail.successSubtitle')
   }
   if (status.value === 'error') {
-    return '验证链接可能已失效，请重新获取'
+    return t('auth.verifyEmail.errorSubtitle')
   }
-  return '正在校验验证链接，请稍候'
+  return t('auth.verifyEmail.pendingSubtitle')
 })
 
 onMounted(async () => {
@@ -54,13 +55,13 @@ onMounted(async () => {
 
   if (!token.value || !user.value) {
     status.value = 'error'
-    message.value = '验证链接无效'
+    message.value = t('auth.verifyEmail.invalidLink')
     verifying.value = false
     return
   }
 
   status.value = 'pending'
-  message.value = '正在验证，请稍候...'
+  message.value = t('auth.verifyEmail.pendingMessage')
 
   try {
     const result = await $fetch<{ alreadyVerified?: boolean }>('/api/auth/verify-email', {
@@ -69,18 +70,18 @@ onMounted(async () => {
     status.value = 'success'
     if (result?.alreadyVerified) {
       alreadyVerified.value = true
-      message.value = '邮箱已验证，请前往登录'
+      message.value = t('auth.verifyEmail.alreadyVerified')
       await new Promise(resolve => setTimeout(resolve, 3000))
       await navigateTo('/login')
     } else {
-      message.value = '验证成功，已自动登录，正在跳转到用户中心...'
+      message.value = t('auth.verifyEmail.successMessage')
       await fetchMe(true)
       await new Promise(resolve => setTimeout(resolve, 3000))
       await navigateTo(USER_OVERVIEW_PATH)
     }
   } catch (error: unknown) {
     status.value = 'error'
-    message.value = parseFetchError(error, '验证失败')
+    message.value = parseFetchError(error, t('auth.verifyEmail.failed'))
   } finally {
     verifying.value = false
   }
@@ -144,7 +145,7 @@ onMounted(async () => {
           block
           size="lg"
         >
-          {{ alreadyVerified ? '去登录' : '进入用户中心' }}
+          {{ alreadyVerified ? $t('auth.verifyEmail.login') : $t('auth.verifyEmail.enterDashboard') }}
         </UButton>
       </div>
 
@@ -165,7 +166,7 @@ onMounted(async () => {
           size="lg"
           icon="i-mdi-account-plus-outline"
         >
-          重新注册
+          {{ $t('auth.verifyEmail.registerAgain') }}
         </UButton>
         <UButton
           to="/login"
@@ -175,7 +176,7 @@ onMounted(async () => {
           size="lg"
           icon="i-mdi-login"
         >
-          去登录
+          {{ $t('auth.verifyEmail.login') }}
         </UButton>
       </div>
     </UCard>
@@ -187,7 +188,7 @@ onMounted(async () => {
         to="/login"
         class="px-0"
       >
-        去登录
+        {{ $t('auth.verifyEmail.login') }}
       </UButton>
       <span class="text-dimmed">·</span>
       <UButton
@@ -196,7 +197,7 @@ onMounted(async () => {
         to="/"
         class="px-0"
       >
-        返回首页
+        {{ $t('common.actions.backHome') }}
       </UButton>
     </div>
   </CommonAppAuthShell>
