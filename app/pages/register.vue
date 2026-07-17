@@ -12,6 +12,7 @@ import {
 definePageMeta({ layout: false })
 
 const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.register.title') }))
 
 const { register } = useAuth()
@@ -26,10 +27,15 @@ interface RegisterFormState {
 
 function validateRegisterForm(state: Partial<RegisterFormState>): FormError<string>[] {
   return compactFormErrors(
-    usernameError('username', state.username),
-    emailError('email', state.email),
-    passwordError('password', state.password),
-    confirmationError('confirm', state.confirm, state.password ?? '')
+    usernameError('username', state.username, validationMessages.value.username),
+    emailError('email', state.email, validationMessages.value.email),
+    passwordError('password', state.password, validationMessages.value.password),
+    confirmationError(
+      'confirm',
+      state.confirm,
+      state.password ?? '',
+      validationMessages.value.confirmation
+    )
   )
 }
 

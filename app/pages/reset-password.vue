@@ -11,6 +11,7 @@ import {
 definePageMeta({ layout: false })
 
 const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.resetPassword.title') }))
 
 const route = useRoute()
@@ -27,8 +28,13 @@ interface ResetPasswordFormState {
 
 function validateResetPasswordForm(state: Partial<ResetPasswordFormState>): FormError<string>[] {
   return compactFormErrors(
-    passwordError('password', state.password),
-    confirmationError('confirm', state.confirm, state.password ?? '')
+    passwordError('password', state.password, validationMessages.value.password),
+    confirmationError(
+      'confirm',
+      state.confirm,
+      state.password ?? '',
+      validationMessages.value.confirmation
+    )
   )
 }
 

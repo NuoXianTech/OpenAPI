@@ -7,6 +7,7 @@ import { compactFormErrors, emailError } from '~/utils/form-validation'
 definePageMeta({ layout: false })
 
 const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.forgotPassword.title') }))
 
 const { turnstile, passwordResetEnabled } = useSiteSettings()
@@ -16,7 +17,7 @@ interface ForgotPasswordFormState {
 }
 
 function validateForgotPasswordForm(state: Partial<ForgotPasswordFormState>): FormError<string>[] {
-  return compactFormErrors(emailError('email', state.email))
+  return compactFormErrors(emailError('email', state.email, validationMessages.value.email))
 }
 
 const authForm = ref<{ state: ForgotPasswordFormState } | null>(null)

@@ -7,6 +7,35 @@ import {
   USERNAME_PATTERN
 } from '#shared/config/auth-validation'
 
+export interface EmailValidationMessages {
+  required: string
+  invalid: string
+}
+
+export interface UsernameValidationMessages {
+  required: string
+  tooShort: string
+  tooLong: string
+  invalidCharacters: string
+}
+
+export interface PasswordValidationMessages {
+  required: string
+  tooShort: string
+}
+
+export interface ConfirmationValidationMessages {
+  required: string
+  mismatch: string
+}
+
+export interface AuthValidationMessages {
+  email: EmailValidationMessages
+  username: UsernameValidationMessages
+  password: PasswordValidationMessages
+  confirmation: ConfirmationValidationMessages
+}
+
 export function compactFormErrors(
   ...errors: Array<FormError<string> | null | undefined | false>
 ): FormError<string>[] {
@@ -34,44 +63,54 @@ export function maxLengthError(
     : null
 }
 
-export function emailError(name: string, value: unknown): FormError<string> | null {
-  if (typeof value !== 'string' || !value.trim()) return { name, message: '邮箱不能为空' }
-  return isValidEmail(value.trim()) ? null : { name, message: '请输入有效的邮箱地址' }
+export function emailError(
+  name: string,
+  value: unknown,
+  messages: EmailValidationMessages
+): FormError<string> | null {
+  if (typeof value !== 'string' || !value.trim()) return { name, message: messages.required }
+  return isValidEmail(value.trim()) ? null : { name, message: messages.invalid }
 }
 
 export function usernameError(
   name: string,
   value: unknown,
+  messages: UsernameValidationMessages,
   required = true
 ): FormError<string> | null {
   const username = typeof value === 'string' ? value.trim() : ''
-  if (!username) return required ? { name, message: '用户名不能为空' } : null
+  if (!username) return required ? { name, message: messages.required } : null
   if (username.length < USERNAME_MIN_LENGTH) {
-    return { name, message: `用户名至少 ${USERNAME_MIN_LENGTH} 位` }
+    return { name, message: messages.tooShort }
   }
   if (username.length > USERNAME_MAX_LENGTH) {
-    return { name, message: `用户名最多 ${USERNAME_MAX_LENGTH} 位` }
+    return { name, message: messages.tooLong }
   }
   return USERNAME_PATTERN.test(username)
     ? null
-    : { name, message: '只能包含字母、数字、下划线和短横线' }
+    : { name, message: messages.invalidCharacters }
 }
 
-export function passwordError(name: string, value: unknown): FormError<string> | null {
+export function passwordError(
+  name: string,
+  value: unknown,
+  messages: PasswordValidationMessages
+): FormError<string> | null {
   const password = typeof value === 'string' ? value : ''
-  if (!password) return { name, message: '密码不能为空' }
+  if (!password) return { name, message: messages.required }
   return password.length >= PASSWORD_MIN_LENGTH
     ? null
-    : { name, message: `密码至少 ${PASSWORD_MIN_LENGTH} 位` }
+    : { name, message: messages.tooShort }
 }
 
 export function confirmationError(
   name: string,
   value: unknown,
-  expected: string
+  expected: string,
+  messages: ConfirmationValidationMessages
 ): FormError<string> | null {
-  if (typeof value !== 'string' || !value) return { name, message: '请再次输入密码' }
-  return value === expected ? null : { name, message: '两次输入的密码不一致' }
+  if (typeof value !== 'string' || !value) return { name, message: messages.required }
+  return value === expected ? null : { name, message: messages.mismatch }
 }
 
 export function integerRangeError(

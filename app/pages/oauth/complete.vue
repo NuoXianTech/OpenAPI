@@ -13,6 +13,7 @@ import {
 
 definePageMeta({ layout: false })
 const { t } = useI18n()
+const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.oauthComplete.title') }))
 
 interface PendingInfo {
@@ -66,10 +67,15 @@ function validateBindForm(state: Partial<OauthBindFormState>): FormError<string>
 
 function validateRegisterForm(state: Partial<OauthRegisterFormState>): FormError<string>[] {
   return compactFormErrors(
-    emailError('email', state.email),
-    usernameError('username', state.username, false),
-    passwordError('password', state.password),
-    confirmationError('confirmPassword', state.confirmPassword, state.password ?? '')
+    emailError('email', state.email, validationMessages.value.email),
+    usernameError('username', state.username, validationMessages.value.username, false),
+    passwordError('password', state.password, validationMessages.value.password),
+    confirmationError(
+      'confirmPassword',
+      state.confirmPassword,
+      state.password ?? '',
+      validationMessages.value.confirmation
+    )
   )
 }
 
