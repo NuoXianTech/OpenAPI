@@ -61,6 +61,7 @@ function roundPercent(value: number): number {
 }
 
 export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions = {}): UsePublicStatsDashboardReturn {
+  const { t, locale } = useI18n()
   const data = ref<PublicCallStatsDashboard | null>(null)
   const isPending = ref(false)
   const error = ref<unknown>(null)
@@ -76,7 +77,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     const date = new Date(data.value.generatedAt)
     return Number.isNaN(date.getTime())
       ? ''
-      : date.toLocaleString('zh-CN', { hour12: false })
+      : date.toLocaleString(locale.value, { hour12: false })
   })
 
   const todayDelta = computed(() => {
@@ -91,10 +92,10 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
   })
 
   const todayDeltaLabel = computed(() => {
-    if (!overview.value) return '等待统计同步'
-    if (todayDelta.value === 0) return '较昨日持平'
+    if (!overview.value) return t('public.stats.waitingSync')
+    if (todayDelta.value === 0) return t('public.stats.sameAsYesterday')
     const prefix = todayDelta.value > 0 ? '+' : ''
-    return `较昨日 ${prefix}${formatCount(todayDelta.value)}`
+    return t('public.stats.comparedYesterday', { value: `${prefix}${formatCount(todayDelta.value)}` })
   })
 
   const successRateProgress = computed(() => roundPercent(clampPercent(overview.value?.successRate ?? 0)))
@@ -105,8 +106,8 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
   })
 
   const trackedApiRatioLabel = computed(() => {
-    if (!overview.value?.trackedApiCount) return '暂无接口纳入统计'
-    return `${formatPercent(trackedApiRatio.value)} 已启用`
+    if (!overview.value?.trackedApiCount) return t('public.stats.noTrackedApis')
+    return t('public.stats.enabledRatio', { value: formatPercent(trackedApiRatio.value) })
   })
 
   const trendTotalCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.totalCalls, 0))
@@ -121,16 +122,16 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     return [
       {
         key: 'total',
-        label: '累计调用',
+        label: t('public.stats.totalCalls'),
         value: formatCount(overview.value.totalCalls),
-        helper: '全站历史请求总量',
+        helper: t('public.stats.cards.totalHelper'),
         icon: 'i-mdi-counter',
         tone: 'primary',
         accent: 'var(--ui-primary)'
       },
       {
         key: 'today',
-        label: '今日调用',
+        label: t('public.stats.cards.today'),
         value: formatCount(overview.value.todayCalls),
         helper: todayDeltaLabel.value,
         icon: 'i-mdi-calendar-today-outline',
@@ -139,52 +140,52 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
       },
       {
         key: 'yesterday',
-        label: '昨日调用',
+        label: t('public.stats.cards.yesterday'),
         value: formatCount(overview.value.yesterdayCalls),
-        helper: '自然日聚合',
+        helper: t('public.stats.cards.yesterdayHelper'),
         icon: 'i-mdi-calendar-arrow-left',
         tone: 'neutral',
         accent: 'var(--ui-text-muted)'
       },
       {
         key: 'successRate',
-        label: '请求成功率',
+        label: t('public.stats.successRate'),
         value: formatPercent(overview.value.successRate),
-        helper: `失败率 ${formatPercent(failureRate.value)}`,
+        helper: t('public.stats.cards.failureRate', { value: formatPercent(failureRate.value) }),
         icon: 'i-mdi-chart-donut',
         tone: 'success',
         accent: 'var(--ui-success)'
       },
       {
         key: 'success',
-        label: '成功调用',
+        label: t('public.stats.successCalls'),
         value: formatCount(overview.value.successCalls),
-        helper: 'HTTP 成功响应',
+        helper: t('public.stats.cards.successHelper'),
         icon: 'i-mdi-check-circle-outline',
         tone: 'success',
         accent: 'var(--ui-success)'
       },
       {
         key: 'failure',
-        label: '失败调用',
+        label: t('public.stats.failureCalls'),
         value: formatCount(overview.value.failureCalls),
-        helper: overview.value.failureCalls > 0 ? '需要关注的异常请求' : '暂无失败记录',
+        helper: overview.value.failureCalls > 0 ? t('public.stats.cards.failureAttention') : t('public.stats.cards.noFailures'),
         icon: 'i-mdi-close-circle-outline',
         tone: overview.value.failureCalls > 0 ? 'error' : 'neutral',
         accent: 'var(--ui-error)'
       },
       {
         key: 'users',
-        label: '注册用户',
+        label: t('public.stats.cards.users'),
         value: formatCount(overview.value.userCount),
-        helper: '平台账户规模',
+        helper: t('public.stats.cards.usersHelper'),
         icon: 'i-mdi-account-group-outline',
         tone: 'info',
         accent: 'var(--ui-info)'
       },
       {
         key: 'enabledStatsApis',
-        label: '统计接口',
+        label: t('public.stats.cards.trackedApis'),
         value: formatCount(overview.value.enabledTrackedApiCount),
         helper: trackedApiRatioLabel.value,
         icon: 'i-mdi-api',

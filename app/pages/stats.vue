@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { usePublicStatsDashboard } from '~/composables/stats/use-public-stats-dashboard'
 
-useHead({ title: '数据统计' })
+const { t } = useI18n()
+useHead(() => ({ title: t('public.stats.pageTitle') }))
 useSeoMeta({
-  description: '公开 API 调用统计：累计调用次数、成功率、近 7 日趋势及调用排行。',
-  ogTitle: '调用统计',
-  ogDescription: '公开 API 调用统计：累计调用次数、成功率、近 7 日趋势及调用排行。'
+  description: () => t('public.stats.seoDescription'),
+  ogTitle: () => t('public.stats.seoTitle'),
+  ogDescription: () => t('public.stats.seoDescription')
 })
 
 definePageMeta({ layout: false })
@@ -29,6 +30,14 @@ const {
   trendSuccessCalls,
   trendTotalCalls
 } = usePublicStatsDashboard()
+
+const retryActions = computed(() => [{
+  label: t('common.actions.retry'),
+  color: 'neutral' as const,
+  variant: 'outline' as const,
+  icon: 'i-mdi-refresh',
+  onClick: reloadStats
+}])
 </script>
 
 <template>
@@ -43,10 +52,10 @@ const {
         <div class="stats-hero__layout">
           <div class="stats-hero__copy">
             <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
-              公共调用统计
+              {{ $t('public.stats.heroTitle') }}
             </h1>
             <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
-              实时聚合公开 API 的调用规模、请求质量和热门接口，方便快速判断服务活跃度与稳定性。
+              {{ $t('public.stats.heroDescription') }}
             </p>
             <div
               v-if="generatedAtLabel"
@@ -73,7 +82,7 @@ const {
                 :loading="isPending"
                 @click="reloadStats"
               >
-                刷新
+                {{ $t('public.stats.refresh') }}
               </UButton>
               <UButton
                 icon="i-mdi-home-outline"
@@ -83,7 +92,7 @@ const {
                 to="/"
                 class="stats-hero__nav-item"
               >
-                返回首页
+                {{ $t('common.actions.backHome') }}
               </UButton>
             </div>
 
@@ -105,7 +114,7 @@ const {
                   <template #value>
                     {{ overview ? formatCompact(overview.totalCalls) : '--' }}
                   </template>
-                  累计调用
+                  {{ $t('public.stats.totalCalls') }}
                 </CommonHeroStatCard>
 
                 <CommonHeroStatCard
@@ -115,7 +124,7 @@ const {
                   <template #value>
                     {{ overview ? formatRate(overview.successRate) : '--' }}
                   </template>
-                  请求成功率
+                  {{ $t('public.stats.successRate') }}
                 </CommonHeroStatCard>
 
                 <CommonHeroStatCard
@@ -127,7 +136,7 @@ const {
                   <template #value>
                     {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
                   </template>
-                  {{ topApi?.name || '近 30 日热门接口' }}
+                  {{ topApi?.name || $t('public.stats.popularApi') }}
                 </CommonHeroStatCard>
               </template>
             </div>
@@ -142,10 +151,10 @@ const {
         color="error"
         variant="soft"
         icon="i-mdi-alert-circle-outline"
-        title="统计加载失败"
-        description="请稍后重试，或检查网络连接。"
+        :title="t('public.stats.loadFailed')"
+        :description="t('public.stats.loadFailedDescription')"
         class="mb-4"
-        :actions="[{ label: '重试', color: 'neutral', variant: 'outline', icon: 'i-mdi-refresh', onClick: reloadStats }]"
+        :actions="retryActions"
       />
 
       <div
@@ -182,10 +191,10 @@ const {
               <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h2 class="text-base font-semibold text-highlighted">
-                    近 7 日趋势
+                    {{ $t('public.stats.trendTitle') }}
                   </h2>
                   <p class="mt-0.5 text-sm text-muted">
-                    按天聚合成功与失败调用次数
+                    {{ $t('public.stats.trendDescription') }}
                   </p>
                 </div>
                 <div class="flex flex-wrap gap-2">
@@ -211,15 +220,15 @@ const {
 
             <div class="mb-4 grid gap-3 sm:grid-cols-3">
               <div class="stats-mini-metric">
-                <span>7 日总调用</span>
+                <span>{{ $t('public.stats.trendTotal') }}</span>
                 <strong>{{ formatCount(trendTotalCalls) }}</strong>
               </div>
               <div class="stats-mini-metric">
-                <span>成功调用</span>
+                <span>{{ $t('public.stats.successCalls') }}</span>
                 <strong>{{ formatCount(trendSuccessCalls) }}</strong>
               </div>
               <div class="stats-mini-metric">
-                <span>失败调用</span>
+                <span>{{ $t('public.stats.failureCalls') }}</span>
                 <strong>{{ formatCount(trendFailureCalls) }}</strong>
               </div>
             </div>
@@ -245,10 +254,10 @@ const {
             <template #header>
               <div>
                 <h2 class="text-base font-semibold text-highlighted">
-                  近 30 日调用排行
+                  {{ $t('public.stats.rankingTitle') }}
                 </h2>
                 <p class="mt-0.5 text-sm text-muted">
-                  Top {{ rankingLast30d.length || 10 }} 高频调用接口及成功率
+                  {{ $t('public.stats.rankingDescription', { count: rankingLast30d.length || 10 }) }}
                 </p>
               </div>
             </template>
