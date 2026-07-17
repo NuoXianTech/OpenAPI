@@ -5,9 +5,9 @@
 export const DEFAULT_PAGE_SIZE = 20
 
 export const PAGE_SIZE_ITEMS = [
-  { label: '10 / 页', value: 10 },
-  { label: '20 / 页', value: 20 },
-  { label: '50 / 页', value: 50 }
+  { label: '10', value: 10 },
+  { label: '20', value: 20 },
+  { label: '50', value: 50 }
 ]
 
 export function useClientPagination<T>(source: Ref<T[]>, defaultPageSize = 10) {

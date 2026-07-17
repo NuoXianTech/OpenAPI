@@ -15,6 +15,7 @@
       "retry": "重试",
       "visit": "访问",
       "viewDetails": "查看详情",
+      "logout": "退出登录",
       "backHome": "返回首页",
       "backLogin": "返回登录"
     },
@@ -41,6 +42,13 @@
       "searchOptions": "搜索选项",
       "noOptions": "未找到选项",
       "more": "更多 {count}"
+    },
+    "pagination": {
+      "perPage": "{count} / 页",
+      "totalRecords": "共 {count} 条"
+    },
+    "table": {
+      "empty": "暂无数据"
     },
     "dateTime": {
       "selectDateTime": "选择日期时间",

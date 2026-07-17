@@ -45,7 +45,7 @@ const {
   data,
   columns,
   loading = false,
-  emptyTitle = '暂无数据',
+  emptyTitle,
   emptyIcon = 'i-mdi-inbox-outline',
   page = 1,
   pageSize = 0,
@@ -61,6 +61,7 @@ const {
 } = defineProps<DashboardDataTableProps<T>>()
 
 const emit = defineEmits<DashboardDataTableEmits>()
+const { t, locale } = useI18n()
 
 // 后台表格统一外观：圆角描边 + 行分隔线。原先散落在各列表页的同款 :ui 收敛到此。
 const DEFAULT_TABLE_UI = {
@@ -79,6 +80,10 @@ const tableUi = computed(() => ({
 }))
 
 const hasPageSizeSelect = computed(() => !!pageSizeItems?.length)
+const localizedPageSizeItems = computed(() => pageSizeItems?.map(item => ({
+  ...item,
+  label: t('common.pagination.perPage', { count: item.value })
+})))
 const showSkeleton = computed(() => loading && data.length === 0)
 const hasPaginationData = computed(() => pageSize > 0 && total > 0)
 const showPagination = computed(() => hasPaginationData.value && (alwaysShowPagination || total > pageSize))
@@ -167,7 +172,7 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
           />
           <div>
             <p class="text-sm font-medium text-highlighted">
-              {{ emptyTitle }}
+              {{ emptyTitle || t('common.table.empty') }}
             </p>
             <p
               v-if="emptyDescription"
@@ -203,12 +208,12 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
     >
       <div class="flex items-center gap-2">
         <span class="text-xs text-muted tabular-nums">
-          共 {{ total.toLocaleString() }} 条
+          {{ t('common.pagination.totalRecords', { count: total.toLocaleString(locale) }) }}
         </span>
         <USelect
           v-if="hasPageSizeSelect"
           :model-value="pageSize"
-          :items="pageSizeItems"
+          :items="localizedPageSizeItems"
           value-key="value"
           size="sm"
           class="w-24"
