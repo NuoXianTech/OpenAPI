@@ -8,6 +8,7 @@
       "edit": "编辑",
       "delete": "删除",
       "copy": "复制",
+      "refresh": "刷新",
       "retry": "重试",
       "visit": "访问",
       "backHome": "返回首页",
@@ -21,6 +22,7 @@
       "maintenance": "维护",
       "deprecated": "废弃",
       "automatic": "自动",
+      "disabled": "已关闭",
       "unknown": "未知"
     },
     "filters": {

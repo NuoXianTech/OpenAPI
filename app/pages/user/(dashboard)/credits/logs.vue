@@ -1,7 +1,11 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useUserCreditsPage, reasonLabel, reasonColor, type TransactionRow } from '~/composables/user/use-user-credits-page'
+import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
+import { useUserCreditsPage, type TransactionRow } from '~/composables/user/use-user-credits-page'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+
+const { t, locale } = useI18n()
+const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
 
 const {
   filters,
@@ -19,37 +23,37 @@ onMounted(() => {
   void fetchTransactions()
 })
 
-const reasonItems = [
-  { label: '全部类型', value: 'all' },
-  { label: 'API 扣费', value: 'api_charge' },
-  { label: 'API 退款', value: 'api_refund' },
-  { label: '兑换码', value: 'redemption_code' },
-  { label: '每日签到', value: 'checkin' },
-  { label: '管理员加积分', value: 'admin_grant' },
-  { label: '管理员扣积分', value: 'admin_revoke' },
-  { label: '管理员重置', value: 'admin_reset' },
-  { label: '注册赠送', value: 'signup_bonus' }
-]
+const reasonItems = computed(() => [
+  { label: t('user.credits.logs.filters.allTypes'), value: 'all' },
+  { label: getReasonLabel('api_charge'), value: 'api_charge' },
+  { label: getReasonLabel('api_refund'), value: 'api_refund' },
+  { label: getReasonLabel('redemption_code'), value: 'redemption_code' },
+  { label: getReasonLabel('checkin'), value: 'checkin' },
+  { label: getReasonLabel('admin_grant'), value: 'admin_grant' },
+  { label: getReasonLabel('admin_revoke'), value: 'admin_revoke' },
+  { label: getReasonLabel('admin_reset'), value: 'admin_reset' },
+  { label: getReasonLabel('signup_bonus'), value: 'signup_bonus' }
+])
 
-const directionItems = [
-  { label: '全部方向', value: 'all' },
-  { label: '收入（+）', value: 'in' },
-  { label: '支出（−）', value: 'out' }
-]
+const directionItems = computed(() => [
+  { label: t('user.credits.logs.filters.allDirections'), value: 'all' },
+  { label: t('user.credits.logs.filters.income'), value: 'in' },
+  { label: t('user.credits.logs.filters.expense'), value: 'out' }
+])
 
 const activeFilterCount = computed(() => [
   filters.reason !== 'all',
   filters.direction !== 'all'
 ].filter(Boolean).length)
 
-const columns: TableColumn<TransactionRow>[] = [
-  { accessorKey: 'createdAt', header: '时间' },
-  { accessorKey: 'reason', header: '类型' },
-  { accessorKey: 'amount', header: '变动' },
-  { accessorKey: 'balanceAfter', header: '操作后积分' },
-  { id: 'detail', header: '关联' },
-  { accessorKey: 'remark', header: '备注' }
-]
+const columns = computed<TableColumn<TransactionRow>[]>(() => [
+  { accessorKey: 'createdAt', header: t('user.credits.logs.columns.time') },
+  { accessorKey: 'reason', header: t('user.credits.logs.columns.type') },
+  { accessorKey: 'amount', header: t('user.credits.logs.columns.change') },
+  { accessorKey: 'balanceAfter', header: t('user.credits.logs.columns.balanceAfter') },
+  { id: 'detail', header: t('user.credits.logs.columns.related') },
+  { accessorKey: 'remark', header: t('user.credits.logs.columns.remark') }
+])
 
 function amountClass(amt: number) {
   if (amt > 0) return 'text-success font-semibold tabular-nums'
@@ -70,14 +74,14 @@ async function resetCreditFilters() {
         @apply="applyFilters"
         @reset="resetCreditFilters"
       >
-        <UFormField label="类型">
+        <UFormField :label="$t('user.credits.logs.filters.type')">
           <USelect
             v-model="filters.reason"
             :items="reasonItems"
             class="w-full"
           />
         </UFormField>
-        <UFormField label="方向">
+        <UFormField :label="$t('user.credits.logs.filters.direction')">
           <USelect
             v-model="filters.direction"
             :items="directionItems"
@@ -92,12 +96,12 @@ async function resetCreditFilters() {
         :loading="loading"
         @click="fetchTransactions"
       >
-        刷新
+        {{ $t('common.actions.refresh') }}
       </UButton>
     </div>
 
     <DashboardTableCard
-      title="积分流水"
+      :title="$t('user.credits.logs.title')"
       icon="i-mdi-format-list-bulleted"
       :total="total"
     >
@@ -110,28 +114,28 @@ async function resetCreditFilters() {
         :total="total"
         :page-size-items="PAGE_SIZE_ITEMS"
         :fixed="false"
-        empty-title="暂无流水记录"
+        :empty-title="$t('user.credits.logs.empty')"
         empty-icon="i-mdi-format-list-bulleted"
       >
         <template #createdAt-cell="{ row }">
-          <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDateTime(row.original.createdAt) }}</span>
+          <span class="text-xs text-muted whitespace-nowrap tabular-nums">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
         </template>
         <template #reason-cell="{ row }">
           <UBadge
-            :color="reasonColor(row.original.reason)"
+            :color="getReasonColor(row.original.reason)"
             variant="subtle"
             size="sm"
           >
-            {{ reasonLabel(row.original.reason) }}
+            {{ getReasonLabel(row.original.reason) }}
           </UBadge>
         </template>
         <template #amount-cell="{ row }">
           <span :class="amountClass(Number(row.original.amount) || 0)">
-            {{ (Number(row.original.amount) || 0) > 0 ? '+' : '' }}{{ (Number(row.original.amount) || 0).toLocaleString() }}
+            {{ (Number(row.original.amount) || 0) > 0 ? '+' : '' }}{{ (Number(row.original.amount) || 0).toLocaleString(locale) }}
           </span>
         </template>
         <template #balanceAfter-cell="{ row }">
-          <span class="tabular-nums">{{ Number(row.original.balanceAfter).toLocaleString() }}</span>
+          <span class="tabular-nums">{{ Number(row.original.balanceAfter).toLocaleString(locale) }}</span>
         </template>
         <template #detail-cell="{ row }">
           <div
@@ -143,20 +147,20 @@ async function resetCreditFilters() {
             <span
               v-if="row.original.apiCallId"
               class="text-muted text-[10px]"
-            >调用 #{{ row.original.apiCallId }}</span>
+            >{{ $t('user.credits.logs.callNumber', { id: row.original.apiCallId }) }}</span>
           </div>
           <div
             v-else-if="row.original.reason === 'redemption_code' && (row.original.code || row.original.codeId)"
             class="flex flex-col text-xs"
           >
-            <span class="text-muted">兑换码</span>
+            <span class="text-muted">{{ $t('user.credits.redeem.code') }}</span>
             <span class="font-mono">{{ row.original.code || `#${row.original.codeId}` }}</span>
           </div>
           <div
             v-else-if="row.original.operatorName"
             class="flex flex-col text-xs"
           >
-            <span class="text-muted">操作人</span>
+            <span class="text-muted">{{ $t('user.credits.logs.operator') }}</span>
             <span>{{ row.original.operatorName }}</span>
           </div>
           <span

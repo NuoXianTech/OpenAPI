@@ -30,10 +30,78 @@
         "averagePerTransaction": "单次平均"
       },
       "checkin": {
-        "success": "签到成功 +{amount}"
+        "title": "每日签到",
+        "success": "签到成功 +{amount}",
+        "failed": "签到失败",
+        "disabledDescription": "管理员未开启签到功能。",
+        "reward": "签到奖励",
+        "availableNow": "现在可签到",
+        "nextCheckin": "下次签到",
+        "lastCheckin": "上次签到：{time}",
+        "action": "立即签到",
+        "coolingDown": "冷却中",
+        "loadFailed": "签到状态加载失败。",
+        "submitting": "正在提交签到...",
+        "amount": {
+          "fixed": "{amount} 积分",
+          "range": "{min} ~ {max} 积分"
+        },
+        "cooldown": {
+          "fixedTime": "每日 {time} 刷新",
+          "hours": "每 {hours} 小时刷新"
+        },
+        "duration": {
+          "days": "{days} 天 {hours} 小时 {minutes} 分 {seconds} 秒",
+          "hours": "{hours} 小时 {minutes} 分 {seconds} 秒",
+          "minutes": "{minutes} 分 {seconds} 秒",
+          "seconds": "{seconds} 秒"
+        },
+        "captcha": {
+          "title": "人机验证",
+          "description": "完成下方人机验证后将自动签到",
+          "instructions": "为防止刷量，签到前需要完成 Cloudflare Turnstile 人机验证。验证通过后会自动签到。",
+          "missingSiteKey": "Turnstile siteKey 未配置，请联系管理员。"
+        }
       },
       "redeem": {
-        "success": "兑换成功 +{amount}"
+        "success": "兑换成功 +{amount}",
+        "code": "兑换码",
+        "enterCode": "请输入兑换码",
+        "failed": "兑换失败",
+        "hint": "输入后点「兑换」即可加入积分，不区分大小写",
+        "placeholder": "例如 WELCOME-XXXXXXXXXXXXXXXX",
+        "action": "兑换",
+        "recent": "最近兑换"
+      },
+      "calendar": {
+        "title": "签到日历",
+        "description": "切换月份可查看历史签到日期",
+        "days": "{count} 天",
+        "points": "+{amount} 积分",
+        "checkedIn": "已签到",
+        "monthlyTotal": "当月累计签到 {count} 天"
+      },
+      "logs": {
+        "title": "积分流水",
+        "empty": "暂无流水记录",
+        "operator": "操作人",
+        "callNumber": "调用 #{id}",
+        "filters": {
+          "type": "类型",
+          "direction": "方向",
+          "allTypes": "全部类型",
+          "allDirections": "全部方向",
+          "income": "收入（+）",
+          "expense": "支出（−）"
+        },
+        "columns": {
+          "time": "时间",
+          "type": "类型",
+          "change": "变动",
+          "balanceAfter": "操作后积分",
+          "related": "关联",
+          "remark": "备注"
+        }
       }
     },
     "overview": {

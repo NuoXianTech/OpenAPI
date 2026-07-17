@@ -3,7 +3,6 @@ import type { UserCheckinCalendarMonth, UserCreditSummary } from '#shared/types/
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
-export { creditReasonLabel as reasonLabel, creditReasonColor as reasonColor } from '#shared/types/credit-reason'
 export type { UserCreditSummary as CreditSummary } from '#shared/types/user-credits'
 
 export interface TransactionRow {

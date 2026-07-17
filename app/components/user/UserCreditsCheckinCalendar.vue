@@ -9,6 +9,7 @@ interface UserCreditsCheckinCalendarProps {
 }
 
 const props = defineProps<UserCreditsCheckinCalendarProps>()
+const { locale } = useI18n()
 
 const now = new Date()
 const today = new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
@@ -57,10 +58,10 @@ function isCheckedDay(day: DateValue): boolean {
           />
           <div>
             <h3 class="text-lg font-semibold text-highlighted">
-              签到日历
+              {{ $t('user.credits.calendar.title') }}
             </h3>
             <p class="mt-0.5 text-xs text-muted">
-              切换月份可查看历史签到日期
+              {{ $t('user.credits.calendar.description') }}
             </p>
           </div>
         </div>
@@ -70,13 +71,13 @@ function isCheckedDay(day: DateValue): boolean {
             color="success"
             variant="subtle"
           >
-            {{ checkedDayCount }} 天
+            {{ $t('user.credits.calendar.days', { count: checkedDayCount.toLocaleString(locale) }) }}
           </UBadge>
           <UBadge
             color="primary"
             variant="subtle"
           >
-            +{{ totalAmount.toLocaleString() }} 积分
+            {{ $t('user.credits.calendar.points', { amount: totalAmount.toLocaleString(locale) }) }}
           </UBadge>
         </div>
       </div>
@@ -119,7 +120,7 @@ function isCheckedDay(day: DateValue): boolean {
             name="i-mdi-loading"
             class="size-4 animate-spin"
           />
-          加载中
+          {{ $t('common.states.loading') }}
         </div>
       </div>
     </div>
@@ -127,9 +128,9 @@ function isCheckedDay(day: DateValue): boolean {
     <div class="mt-3 flex items-center justify-center gap-4 border-t border-default pt-3 text-xs text-muted">
       <span class="inline-flex items-center gap-1.5">
         <span class="size-3 rounded-sm bg-success/15 ring-1 ring-success/25" />
-        已签到
+        {{ $t('user.credits.calendar.checkedIn') }}
       </span>
-      <span>当月累计签到 {{ checkedDayCount }} 天</span>
+      <span>{{ $t('user.credits.calendar.monthlyTotal', { count: checkedDayCount.toLocaleString(locale) }) }}</span>
     </div>
   </UCard>
 </template>
