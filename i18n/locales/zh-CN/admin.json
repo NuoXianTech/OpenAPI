@@ -676,6 +676,49 @@
           "requiredContent": "标题和内容必填",
           "recipientRequired": "请选择收件人或改为全员发送"
         }
+      },
+      "friendLinks": {
+        "searchPlaceholder": "搜索名称、URL 或描述",
+        "listTitle": "友链列表",
+        "empty": "暂无友链",
+        "filters": {
+          "status": "状态",
+          "allStatuses": "全部状态"
+        },
+        "statuses": {
+          "active": "正常",
+          "inactive": "停用"
+        },
+        "columns": {
+          "title": "标题",
+          "description": "描述",
+          "status": "状态"
+        },
+        "actions": {
+          "create": "新增链接"
+        },
+        "delete": {
+          "title": "删除链接：{title}",
+          "description": "删除后该友情链接将不再展示，且不可恢复。"
+        },
+        "feedback": {
+          "updated": "更新成功",
+          "created": "创建成功"
+        },
+        "validation": {
+          "titleRequired": "链接标题不能为空",
+          "urlRequired": "链接地址不能为空"
+        },
+        "form": {
+          "editTitle": "编辑链接",
+          "createTitle": "新增链接",
+          "editDescription": "更新友情链接信息与展示状态。",
+          "createDescription": "添加一个展示在站点友情链接区域的站点。",
+          "title": "标题",
+          "titlePlaceholder": "站点名称",
+          "description": "描述",
+          "enabled": "启用"
+        }
       }
     },
     "overview": {
