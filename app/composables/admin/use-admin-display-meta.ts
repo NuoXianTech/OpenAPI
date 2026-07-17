@@ -1,7 +1,7 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, ref, watchEffect, type ComputedRef, type Ref } from 'vue'
 import type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
-import type { MessageLevel } from '#shared/types/content'
+import { MESSAGE_LEVELS, type MessageLevel } from '#shared/types/content'
 
 export type { DiscoveredApi as AdminDiscoveredApi } from '#shared/types/api'
 
@@ -225,6 +225,17 @@ interface UseAdminNotificationsDisplayMetaReturn {
 
 export type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
+const ADMIN_NOTIFICATION_AUDIENCES: AdminNotificationAudience[] = ['specific', 'all_current', 'all_with_future']
+const ADMIN_NOTIFICATION_AUDIENCE_META = {
+  specific: { color: 'neutral', labelKey: 'admin.content.notifications.audiences.labels.specific', optionKey: 'admin.content.notifications.audiences.options.specific' },
+  all_current: { color: 'info', labelKey: 'admin.content.notifications.audiences.labels.allCurrent', optionKey: 'admin.content.notifications.audiences.options.allCurrent' },
+  all_with_future: { color: 'warning', labelKey: 'admin.content.notifications.audiences.labels.allWithFuture', optionKey: 'admin.content.notifications.audiences.options.allWithFuture' }
+} as const satisfies Record<AdminNotificationAudience, {
+  color: AdminNotificationAudienceMeta['color']
+  labelKey: string
+  optionKey: string
+}>
+
 export function createAdminNotificationForm(): AdminNotificationForm {
   return {
     audience: 'specific',
@@ -245,17 +256,16 @@ export function useAdminNotificationsDisplayMeta(
     label: `${user.username}${user.email ? ` <${user.email}>` : ''}`,
     value: user.id
   })))
-  const audienceOptions = computed<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>(() => [
-    { label: t('admin.content.notifications.audiences.options.specific'), value: 'specific' },
-    { label: t('admin.content.notifications.audiences.options.allCurrent'), value: 'all_current' },
-    { label: t('admin.content.notifications.audiences.options.allWithFuture'), value: 'all_with_future' }
-  ])
-  const levelOptions = computed<Array<AdminNotificationSelectItem<MessageLevel>>>(() => [
-    { label: t('admin.content.notifications.levelOptions.info'), value: 'info' },
-    { label: t('admin.content.notifications.levelOptions.success'), value: 'success' },
-    { label: t('admin.content.notifications.levelOptions.warning'), value: 'warning' },
-    { label: t('admin.content.notifications.levelOptions.critical'), value: 'critical' }
-  ])
+  const audienceOptions = computed<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>(() => (
+    ADMIN_NOTIFICATION_AUDIENCES.map(audience => ({
+      label: t(ADMIN_NOTIFICATION_AUDIENCE_META[audience].optionKey),
+      value: audience
+    }))
+  ))
+  const levelOptions = computed<Array<AdminNotificationSelectItem<MessageLevel>>>(() => MESSAGE_LEVELS.map(level => ({
+    label: t(`admin.content.notifications.levelOptions.${level}`),
+    value: level
+  })))
   const columns = computed<TableColumn<AdminNotificationMessageRow>[]>(() => [
     { accessorKey: 'title', header: t('admin.content.notifications.columns.title') },
     { id: 'delivery', header: t('admin.content.notifications.columns.delivery') },
@@ -265,17 +275,8 @@ export function useAdminNotificationsDisplayMeta(
   ])
 
   function getAudienceMeta(audience: AdminNotificationAudience): AdminNotificationAudienceMeta {
-    const colors: Record<AdminNotificationAudience, AdminNotificationAudienceMeta['color']> = {
-      specific: 'neutral',
-      all_current: 'info',
-      all_with_future: 'warning'
-    }
-    const messageKeys: Record<AdminNotificationAudience, string> = {
-      specific: 'admin.content.notifications.audiences.labels.specific',
-      all_current: 'admin.content.notifications.audiences.labels.allCurrent',
-      all_with_future: 'admin.content.notifications.audiences.labels.allWithFuture'
-    }
-    return { color: colors[audience], label: t(messageKeys[audience]) }
+    const meta = ADMIN_NOTIFICATION_AUDIENCE_META[audience]
+    return { color: meta.color, label: t(meta.labelKey) }
   }
 
   function getRowItems(row: AdminNotificationMessageRow): DropdownMenuItem[] {

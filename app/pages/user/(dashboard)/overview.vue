@@ -188,7 +188,7 @@ async function copyCurl() {
 
                 <div class="border-t border-default pt-3 space-y-2.5">
                   <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">{{ $t('user.apiKey') }}</span>
+                    <span class="text-muted">{{ $t('user.apiKeys.title') }}</span>
                     <span
                       v-if="hasKeys"
                       class="inline-flex items-center gap-1.5 text-success font-medium"

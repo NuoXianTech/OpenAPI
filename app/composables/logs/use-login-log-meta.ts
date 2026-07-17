@@ -5,19 +5,14 @@ export type LoginMethodColor = 'info' | 'neutral'
 interface LoginMethodMeta {
   icon: string
   color: LoginMethodColor
+  messageKey: string
 }
 
 const LOGIN_METHOD_META: Record<LoginMethod, LoginMethodMeta> = {
-  password: { icon: 'i-mdi-form-textbox-password', color: 'neutral' },
-  oauth_github: { icon: 'i-mdi-github', color: 'neutral' },
-  oauth_qq: { icon: 'i-mdi-qqchat', color: 'info' }
+  password: { icon: 'i-mdi-form-textbox-password', color: 'neutral', messageKey: 'common.loginLogs.methods.password' },
+  oauth_github: { icon: 'i-mdi-github', color: 'neutral', messageKey: 'common.loginLogs.methods.github' },
+  oauth_qq: { icon: 'i-mdi-qqchat', color: 'info', messageKey: 'common.loginLogs.methods.qq' }
 }
-
-const LOGIN_METHOD_MESSAGE_KEYS = {
-  password: 'common.loginLogs.methods.password',
-  oauth_github: 'common.loginLogs.methods.github',
-  oauth_qq: 'common.loginLogs.methods.qq'
-} as const satisfies Record<LoginMethod, string>
 
 const LOGIN_FAILURE_MESSAGE_KEYS = {
   invalid_password: 'common.loginLogs.failures.invalidPassword',
@@ -30,8 +25,8 @@ export function useLoginLogMeta() {
   const { t } = useI18n()
 
   function getLoginMethodLabel(method: string): string {
-    const messageKey = LOGIN_METHOD_MESSAGE_KEYS[method as LoginMethod]
-    return messageKey ? t(messageKey) : method
+    const meta = LOGIN_METHOD_META[method as LoginMethod]
+    return meta ? t(meta.messageKey) : method
   }
 
   function getLoginFailureLabel(reason: string | null): string {

@@ -115,7 +115,7 @@ function openDetail(row: UserCallLogRow) {
                 class="w-full"
               />
             </UFormField>
-            <UFormField :label="$t('user.apiKey')">
+            <UFormField :label="$t('user.apiKeys.title')">
               <USelect
                 v-model="filters.apiKeyId"
                 :items="keySelectItems"

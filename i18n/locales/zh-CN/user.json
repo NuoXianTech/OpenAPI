@@ -1,6 +1,5 @@
 {
   "user": {
-    "apiKey": "API 密钥",
     "apiKeys": {
       "title": "API 密钥",
       "loadFailed": "加载 API 密钥失败",

@@ -185,7 +185,7 @@ async function openDelete(row: ApiKeyItem) {
 // ------------------------------------------------------------
 const columns = computed<TableColumn<ApiKeyItem>[]>(() => [
   { accessorKey: 'name', header: t('common.apiKeys.columns.name') },
-  { accessorKey: 'apiKey', header: t('user.apiKey') },
+  { accessorKey: 'apiKey', header: t('user.apiKeys.title') },
   { id: 'quota', header: t('common.apiKeys.columns.quota') },
   { id: 'scopes', header: t('common.apiKeys.columns.scopes') },
   { id: 'ipWhitelist', header: t('common.apiKeys.columns.ipWhitelist') },
