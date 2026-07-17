@@ -4,6 +4,17 @@
       "people": "人",
       "items": "个"
     },
+    "initialProfile": {
+      "title": "完善管理员账号",
+      "description": "确认用户名和邮箱，并设置新的管理员密码。",
+      "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
+      "newPassword": "新密码",
+      "passwordHelp": "至少 8 位",
+      "feedback": {
+        "updated": "管理员账号已更新",
+        "saveFailed": "保存失败"
+      }
+    },
     "logs": {
       "call": {
         "pageTitle": "调用日志",

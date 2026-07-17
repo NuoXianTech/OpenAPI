@@ -26,6 +26,7 @@ function canSaveProfile(form: AdminInitialProfileForm): boolean {
 
 export function useAdminInitialProfile() {
   const toast = useToast()
+  const { t } = useI18n()
   const { user, fetchMe } = useAuth()
   const open = ref(false)
   const saving = ref(false)
@@ -66,7 +67,7 @@ export function useAdminInitialProfile() {
 
   const canSubmit = computed(() => canSaveProfile(form) && !saving.value && !checking.value)
 
-  async function submit() {
+  async function submit(): Promise<void> {
     if (!canSubmit.value) return
 
     saving.value = true
@@ -82,9 +83,9 @@ export function useAdminInitialProfile() {
       })
       await fetchMe(true)
       open.value = false
-      toast.add({ title: '管理员账号已更新', color: 'success' })
+      toast.add({ title: t('admin.initialProfile.feedback.updated'), color: 'success' })
     } catch (error: unknown) {
-      errorMessage.value = parseFetchError(error, '保存失败')
+      errorMessage.value = parseFetchError(error, t('admin.initialProfile.feedback.saveFailed'))
     } finally {
       saving.value = false
     }

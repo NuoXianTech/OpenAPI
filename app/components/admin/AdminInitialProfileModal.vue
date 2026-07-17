@@ -10,13 +10,14 @@ const {
   canSubmit,
   submit
 } = useAdminInitialProfile()
+const { t } = useI18n()
 </script>
 
 <template>
   <UModal
     :open="open"
-    title="完善管理员账号"
-    description="确认用户名和邮箱，并设置新的管理员密码。"
+    :title="t('admin.initialProfile.title')"
+    :description="t('admin.initialProfile.description')"
     :dismissible="false"
     :close="false"
     :ui="adminModalUi({ content: 'sm:max-w-md' })"
@@ -27,9 +28,9 @@ const {
         @submit.prevent="submit"
       >
         <UFormField
-          label="用户名"
+          :label="t('auth.fields.username')"
           required
-          help="3-32 位，仅限字母、数字、下划线和短横线"
+          :help="t('admin.initialProfile.usernameHelp')"
         >
           <UInput
             v-model="form.username"
@@ -40,7 +41,7 @@ const {
         </UFormField>
 
         <UFormField
-          label="邮箱"
+          :label="t('auth.fields.email')"
           required
         >
           <UInput
@@ -52,9 +53,9 @@ const {
         </UFormField>
 
         <UFormField
-          label="新密码"
+          :label="t('admin.initialProfile.newPassword')"
           required
-          help="至少 8 位"
+          :help="t('admin.initialProfile.passwordHelp')"
         >
           <UInput
             v-model="form.password"
@@ -65,7 +66,7 @@ const {
         </UFormField>
 
         <UFormField
-          label="确认密码"
+          :label="t('auth.fields.confirmPassword')"
           required
         >
           <UInput
@@ -95,7 +96,7 @@ const {
           :disabled="!canSubmit"
           @click="submit"
         >
-          保存
+          {{ t('common.actions.save') }}
         </UButton>
       </div>
     </template>
