@@ -252,6 +252,41 @@
           "adjust": "调整"
         }
       },
+      "transactions": {
+        "pageTitle": "积分流水",
+        "title": "积分流水",
+        "description": "查看用户积分变动，并快速进入用户积分调整与兑换码管理",
+        "filterTitle": "积分流水筛选",
+        "detailsTitle": "积分明细",
+        "empty": "暂无积分日志",
+        "filters": {
+          "userId": "用户 ID",
+          "emptyAll": "留空查全部",
+          "reason": "原因",
+          "allReasons": "全部原因",
+          "direction": "收支方向",
+          "allDirections": "全部方向",
+          "income": "收入",
+          "expense": "支出",
+          "operator": "操作人",
+          "operatorPlaceholder": "管理员名称",
+          "startAt": "开始时间",
+          "endAt": "结束时间",
+          "minAmount": "最小变动金额",
+          "minAmountPlaceholder": "例如 -100",
+          "maxAmount": "最大变动金额",
+          "maxAmountPlaceholder": "例如 1000"
+        },
+        "columns": {
+          "time": "时间",
+          "user": "用户",
+          "reason": "原因",
+          "amount": "金额",
+          "balance": "余额",
+          "operator": "操作人",
+          "remark": "备注"
+        }
+      },
       "adjust": {
         "title": "积分管理",
         "target": "目标：{target}",

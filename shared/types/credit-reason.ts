@@ -12,23 +12,18 @@ export type CreditReason
 export type CreditReasonFilter = CreditReason | 'all'
 
 interface CreditReasonMeta {
-  label: string
   color: 'success' | 'error' | 'warning' | 'info' | 'neutral'
 }
 
 const CREDIT_REASON_META: Record<CreditReason, CreditReasonMeta> = {
-  admin_grant: { label: '管理员加', color: 'success' },
-  admin_revoke: { label: '管理员扣', color: 'error' },
-  admin_reset: { label: '管理员重置', color: 'warning' },
-  api_charge: { label: 'API 扣费', color: 'error' },
-  api_refund: { label: 'API 退款', color: 'success' },
-  signup_bonus: { label: '注册赠送', color: 'info' },
-  redemption_code: { label: '兑换码', color: 'success' },
-  checkin: { label: '每日签到', color: 'success' }
-}
-
-export function creditReasonLabel(reason: string): string {
-  return CREDIT_REASON_META[reason as CreditReason]?.label ?? reason
+  admin_grant: { color: 'success' },
+  admin_revoke: { color: 'error' },
+  admin_reset: { color: 'warning' },
+  api_charge: { color: 'error' },
+  api_refund: { color: 'success' },
+  signup_bonus: { color: 'info' },
+  redemption_code: { color: 'success' },
+  checkin: { color: 'success' }
 }
 
 export function creditReasonColor(reason: string): CreditReasonMeta['color'] {
