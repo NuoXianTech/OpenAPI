@@ -100,6 +100,44 @@
         }
       }
     },
+    "logs": {
+      "pageTitle": "调用日志",
+      "title": "调用日志",
+      "detailsTitle": "调用明细",
+      "searchPlaceholder": "搜索接口、密钥、状态码...",
+      "showColumns": "显示列",
+      "empty": "暂无调用记录",
+      "noApiKey": "未携带",
+      "free": "免费",
+      "milliseconds": "{value}ms",
+      "viewDetails": "查看详情",
+      "outcomes": {
+        "notCounted": "未计数"
+      },
+      "filters": {
+        "api": "服务（API）",
+        "status": "状态",
+        "allApis": "全部 API",
+        "allKeys": "全部密钥",
+        "allStatuses": "全部状态"
+      },
+      "columns": {
+        "time": "时间",
+        "key": "密钥",
+        "api": "接口",
+        "cost": "费用",
+        "summary": "摘要"
+      },
+      "detail": {
+        "title": "调用详情",
+        "result": "结果",
+        "request": "请求",
+        "statusCode": "状态码",
+        "latency": "耗时",
+        "error": "错误",
+        "client": "客户端"
+      }
+    },
     "settings": {
       "profile": {
         "title": "基本信息",

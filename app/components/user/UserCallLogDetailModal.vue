@@ -2,18 +2,20 @@
 import {
   userCallOutcomeColor,
   userCallOutcomeIcon,
-  userCallOutcomeLabel,
+  useUserCallOutcomeMeta,
   type UserCallLogRow
 } from '~/composables/user/use-user-call-logs-page'
 
 const props = defineProps<{
   row: UserCallLogRow | null
 }>()
+const { locale } = useI18n()
+const { getOutcomeLabel } = useUserCallOutcomeMeta()
 </script>
 
 <template>
   <UModal
-    title="调用详情"
+    :title="$t('user.logs.detail.title')"
     :ui="{ content: 'max-w-2xl' }"
   >
     <template #body>
@@ -24,13 +26,13 @@ const props = defineProps<{
         <div class="grid grid-cols-2 gap-3">
           <div>
             <div class="text-xs text-muted">
-              时间
+              {{ $t('user.logs.columns.time') }}
             </div>
-            <div>{{ formatDateTime(props.row.createdAt) }}</div>
+            <div>{{ formatDateTime(props.row.createdAt, '-', locale) }}</div>
           </div>
           <div>
             <div class="text-xs text-muted">
-              结果
+              {{ $t('user.logs.detail.result') }}
             </div>
             <UBadge
               :color="userCallOutcomeColor(props.row)"
@@ -39,28 +41,28 @@ const props = defineProps<{
               size="sm"
               class="w-fit"
             >
-              {{ userCallOutcomeLabel(props.row) }}
+              {{ getOutcomeLabel(props.row) }}
             </UBadge>
           </div>
           <div>
             <div class="text-xs text-muted">
-              接口
+              {{ $t('user.logs.columns.api') }}
             </div>
             <div>{{ props.row.apiName || '-' }}</div>
           </div>
           <div>
             <div class="text-xs text-muted">
-              密钥
+              {{ $t('user.logs.columns.key') }}
             </div>
             <div>
-              {{ props.row.apiKeyName || (props.row.apiKeyId ? `#${props.row.apiKeyId}` : '未携带') }}
+              {{ props.row.apiKeyName || (props.row.apiKeyId ? `#${props.row.apiKeyId}` : $t('user.logs.noApiKey')) }}
             </div>
           </div>
         </div>
 
         <UCard :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }">
           <template #header>
-            <span class="text-xs font-semibold text-muted">请求</span>
+            <span class="text-xs font-semibold text-muted">{{ $t('user.logs.detail.request') }}</span>
           </template>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
@@ -74,12 +76,12 @@ const props = defineProps<{
               <span class="font-mono break-all">{{ props.row.apiPath }}</span>
             </div>
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">
-              <span>状态码 <span
+              <span>{{ $t('user.logs.detail.statusCode') }} <span
                 class="tabular-nums"
                 :class="props.row.statusCode >= 400 ? 'text-error' : 'text-default'"
               >{{ props.row.statusCode }}</span></span>
-              <span>耗时 <span class="tabular-nums text-default">{{ props.row.latencyMs }}ms</span></span>
-              <span>费用 <span class="tabular-nums text-default">{{ props.row.creditsCost > 0 ? `-${props.row.creditsCost}` : '免费' }}</span></span>
+              <span>{{ $t('user.logs.detail.latency') }} <span class="tabular-nums text-default">{{ $t('user.logs.milliseconds', { value: props.row.latencyMs.toLocaleString(locale) }) }}</span></span>
+              <span>{{ $t('user.logs.columns.cost') }} <span class="tabular-nums text-default">{{ props.row.creditsCost > 0 ? `-${props.row.creditsCost.toLocaleString(locale)}` : $t('user.logs.free') }}</span></span>
             </div>
           </div>
         </UCard>
@@ -89,7 +91,7 @@ const props = defineProps<{
           :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }"
         >
           <template #header>
-            <span class="text-xs font-semibold text-error">错误</span>
+            <span class="text-xs font-semibold text-error">{{ $t('user.logs.detail.error') }}</span>
           </template>
           <div class="space-y-1 text-xs">
             <div v-if="props.row.errorCode">
@@ -107,7 +109,7 @@ const props = defineProps<{
 
         <UCard :ui="{ root: 'rounded-md', header: 'px-3 py-2', body: 'px-3 py-2' }">
           <template #header>
-            <span class="text-xs font-semibold text-muted">客户端</span>
+            <span class="text-xs font-semibold text-muted">{{ $t('user.logs.detail.client') }}</span>
           </template>
           <div class="space-y-1 text-xs">
             <div>
