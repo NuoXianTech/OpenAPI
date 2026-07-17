@@ -808,6 +808,29 @@
           "syncFailed": "同步失败"
         }
       },
+      "capabilities": {
+        "modal": {
+          "title": "接口配置",
+          "titleWithTarget": "接口配置：{version} / {code}"
+        },
+        "actions": {
+          "reload": "重新加载",
+          "save": "保存能力配置"
+        },
+        "feedback": {
+          "loadFailed": "读取接口配置失败",
+          "saved": "接口配置已保存",
+          "saveFailed": "保存接口配置失败"
+        },
+        "status": {
+          "configuredRevision": "已配置 · v{revision}",
+          "declarationDefault": "使用声明默认值",
+          "sharedStorage": "配置由平台统一存储，所有服务实例共享"
+        },
+        "form": {
+          "configuredSecretPlaceholder": "已配置，留空保持不变"
+        }
+      },
       "form": {
         "modal": {
           "editTitle": "编辑配置：{version} / {code}",
