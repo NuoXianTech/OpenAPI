@@ -6,10 +6,15 @@ import {
 } from './api-key'
 import { displayNameSchema } from './common'
 import { atLeastOneFieldMessage, minMessage, positiveInt, requiredMessage } from './validation'
+import { SUPPORTED_LOCALES } from '#shared/config/locale-defaults'
 
 // Profile
 export const userUpdateProfileSchema = z.object({
   displayName: displayNameSchema
+})
+
+export const userUpdatePreferencesSchema = z.object({
+  locale: z.enum(SUPPORTED_LOCALES)
 })
 
 export const userChangePasswordSchema = z

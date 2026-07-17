@@ -1,5 +1,6 @@
 import { parseFetchError } from '~/utils/client-error'
 import type { LoginLogRow } from '#shared/types/login-log'
+import { isSupportedLocale, type SupportedLocale } from '#shared/config/locale-defaults'
 
 export interface ProfileData {
   id: number
@@ -7,6 +8,7 @@ export interface ProfileData {
   email: string
   avatarUrl: string
   displayName: string | null
+  locale: SupportedLocale | null
   emailVerifiedAt: string | null
   createdAt: string
 }
@@ -37,8 +39,8 @@ const OAUTH_BIND_ERROR_KEYS: Record<string, string> = {
 
 export function useUserSettingsPage() {
   const toast = useToast()
-  const { t } = useI18n()
-  const { fetchMe } = useAuth()
+  const { t, locale, setLocale } = useI18n()
+  const { fetchMe, updateLocalePreference } = useAuth()
   const confirm = useConfirmDialog()
 
   const profile = ref<ProfileData | null>(null)
@@ -69,6 +71,23 @@ export function useUserSettingsPage() {
     })
     toast.add({ title: t('user.settings.profile.updated'), color: 'success' })
     await Promise.all([loadProfile(), fetchMe(true)])
+  }
+
+  async function updateLanguagePreference(nextLocale: SupportedLocale) {
+    const previousLocale = locale.value
+    await setLocale(nextLocale)
+    try {
+      const savedLocale = await updateLocalePreference(nextLocale)
+      if (profile.value) {
+        profile.value = { ...profile.value, locale: savedLocale }
+      }
+      toast.add({ title: t('user.settings.language.updated'), color: 'success' })
+    } catch (error) {
+      if (isSupportedLocale(previousLocale)) {
+        await setLocale(previousLocale)
+      }
+      throw error
+    }
   }
 
   async function changePassword(currentPassword: string, newPassword: string) {
@@ -170,6 +189,7 @@ export function useUserSettingsPage() {
     loginActivityLoading,
     loadProfile,
     updateProfile,
+    updateLanguagePreference,
     changePassword,
     requestEmailChange,
     loadOauth,

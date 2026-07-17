@@ -5,6 +5,7 @@ import { expectFirstRow, firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
 import { siteSettingsService } from './site-settings-service'
 import type { DatabaseTransaction } from '~~/server/db/client'
+import type { SupportedLocale } from '#shared/config/locale-defaults'
 
 export const USER_ROLES = {
   user: 'user',
@@ -148,6 +149,7 @@ export const usersService = {
     role: UserRole
     email: string
     displayName: string | null
+    locale: SupportedLocale | null
     isActive: boolean
     isBanned: boolean
     passwordHash: string
