@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
 import type { BatchSummary } from '~/composables/admin/use-redemption-codes-page'
 
 defineProps<{
@@ -10,6 +11,39 @@ const emit = defineEmits<{
   toggle: [batchId: string, enabled: boolean]
   delete: [batchId: string, includeUsed: boolean]
 }>()
+const { t, locale } = useI18n()
+
+function getBatchMenuItems(batch: BatchSummary): DropdownMenuItem[][] {
+  return [[
+    {
+      label: t('admin.credits.redemptionCodes.batch.actions.filter'),
+      icon: 'i-mdi-filter-variant',
+      onSelect: () => emit('filter', batch.batchId)
+    },
+    {
+      label: t('admin.credits.redemptionCodes.batch.actions.disable'),
+      icon: 'i-mdi-toggle-switch-off-outline',
+      onSelect: () => emit('toggle', batch.batchId, false)
+    },
+    {
+      label: t('admin.credits.redemptionCodes.batch.actions.enable'),
+      icon: 'i-mdi-toggle-switch-outline',
+      onSelect: () => emit('toggle', batch.batchId, true)
+    }
+  ], [
+    {
+      label: t('admin.credits.redemptionCodes.batch.actions.deleteUnused'),
+      icon: 'i-mdi-delete-outline',
+      onSelect: () => emit('delete', batch.batchId, false)
+    },
+    {
+      label: t('admin.credits.redemptionCodes.batch.actions.deleteAll'),
+      icon: 'i-mdi-delete-alert-outline',
+      color: 'error',
+      onSelect: () => emit('delete', batch.batchId, true)
+    }
+  ]]
+}
 </script>
 
 <template>
@@ -21,10 +55,10 @@ const emit = defineEmits<{
           class="size-5 text-muted"
         />
         <h3 class="text-lg font-semibold text-highlighted">
-          最近批次
+          {{ $t('admin.credits.redemptionCodes.batch.title') }}
         </h3>
         <span class="ml-auto text-xs text-muted">
-          {{ batches.length }} 个批次
+          {{ $t('admin.credits.redemptionCodes.batch.count', { count: batches.length.toLocaleString(locale) }) }}
         </span>
       </div>
     </template>
@@ -39,14 +73,7 @@ const emit = defineEmits<{
             {{ b.batchId }}
           </span>
           <UDropdownMenu
-            :items="[[
-              { label: '只看本批次', icon: 'i-mdi-filter-variant', onSelect: () => emit('filter', b.batchId) },
-              { label: '禁用整批', icon: 'i-mdi-toggle-switch-off-outline', onSelect: () => emit('toggle', b.batchId, false) },
-              { label: '启用整批', icon: 'i-mdi-toggle-switch-outline', onSelect: () => emit('toggle', b.batchId, true) }
-            ], [
-              { label: '删除未使用', icon: 'i-mdi-delete-outline', onSelect: () => emit('delete', b.batchId, false) },
-              { label: '删除全部', icon: 'i-mdi-delete-alert-outline', color: 'error' as const, onSelect: () => emit('delete', b.batchId, true) }
-            ]]"
+            :items="getBatchMenuItems(b)"
           >
             <UButton
               icon="i-mdi-dots-vertical"
@@ -58,14 +85,17 @@ const emit = defineEmits<{
         </div>
         <div class="mt-2 flex items-baseline gap-2">
           <span class="text-xl font-semibold tabular-nums text-success">
-            +{{ b.amount.toLocaleString() }}
+            +{{ b.amount.toLocaleString(locale) }}
           </span>
-          <span class="text-xs text-muted">/ 张</span>
+          <span class="text-xs text-muted">{{ $t('admin.credits.redemptionCodes.batch.perCode') }}</span>
         </div>
         <div class="mt-2 flex items-center justify-between text-xs text-muted">
-          <span>{{ b.total }} 张</span>
+          <span>{{ $t('admin.credits.redemptionCodes.batch.total', { count: b.total.toLocaleString(locale) }) }}</span>
           <span class="tabular-nums">
-            使用 {{ b.usedTotal }}/{{ b.maxUsesTotal }}
+            {{ $t('admin.credits.redemptionCodes.batch.usage', {
+              used: b.usedTotal.toLocaleString(locale),
+              total: b.maxUsesTotal.toLocaleString(locale)
+            }) }}
           </span>
         </div>
         <div

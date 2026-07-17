@@ -287,6 +287,102 @@
           "remark": "备注"
         }
       },
+      "redemptionCodes": {
+        "pageTitle": "兑换码",
+        "title": "兑换码",
+        "description": "生成和管理积分兑换码，控制可用状态、使用次数与有效期限",
+        "searchPlaceholder": "搜索兑换码 / 备注...",
+        "detailsTitle": "兑换码明细",
+        "empty": "暂无兑换码",
+        "neverExpires": "永不过期",
+        "filters": {
+          "status": "状态",
+          "batch": "批次",
+          "allBatches": "全部批次",
+          "batchOption": "{batchId}（{used}/{total} 用 · {amount} 积分）"
+        },
+        "columns": {
+          "code": "兑换码",
+          "amount": "面额",
+          "usage": "使用",
+          "note": "备注",
+          "expiresAt": "过期时间",
+          "status": "状态",
+          "createdAt": "创建时间"
+        },
+        "statuses": {
+          "available": "可用",
+          "disabled": "已禁用",
+          "usedUp": "已用完",
+          "expired": "已过期"
+        },
+        "actions": {
+          "generate": "生成兑换码",
+          "generateMore": "继续生成",
+          "done": "完成",
+          "enable": "启用",
+          "disable": "禁用",
+          "copyCode": "复制兑换码",
+          "copyAll": "复制全部",
+          "clickToCopy": "点击复制"
+        },
+        "feedback": {
+          "generated": "已生成 {count} 张兑换码",
+          "enabled": "已启用",
+          "disabled": "已禁用",
+          "batchEnabled": "已启用 {count} 张兑换码",
+          "batchDisabled": "已禁用 {count} 张兑换码",
+          "batchDeleted": "已删除 {count} 张兑换码",
+          "codeCopied": "已复制 {code}",
+          "allCopied": "已复制全部兑换码到剪贴板"
+        },
+        "deleteCode": {
+          "title": "删除兑换码 {code}",
+          "description": "删除后该兑换码立即失效，操作不可恢复。"
+        },
+        "deleteBatch": {
+          "title": "删除批次 {batchId}",
+          "includeUsedDescription": "将删除批次 {batchId} 的全部兑换码（含已被兑换过的），此操作不可恢复。",
+          "unusedDescription": "将删除批次 {batchId} 中未被使用过的兑换码。"
+        },
+        "batch": {
+          "title": "最近批次",
+          "count": "{count} 个批次",
+          "perCode": "/ 张",
+          "total": "{count} 张",
+          "usage": "使用 {used}/{total}",
+          "actions": {
+            "filter": "只看本批次",
+            "disable": "禁用整批",
+            "enable": "启用整批",
+            "deleteUnused": "删除未使用",
+            "deleteAll": "删除全部"
+          }
+        },
+        "generate": {
+          "title": "生成兑换码",
+          "amount": "单张面额（必填）",
+          "amountPlaceholder": "例如 100",
+          "count": "生成数量",
+          "length": "码长度",
+          "lengthHint": "不含前缀，8 - 48",
+          "prefix": "前缀（可选）",
+          "prefixHint": "如 WELCOME",
+          "maxUses": "单张可被兑换次数",
+          "maxUsesHint": ">1 表示同一码可被多个用户共享，每人 1 次",
+          "expiresInDays": "过期时间（天）",
+          "expiresInDaysHint": "0 = 永不过期",
+          "note": "备注（可选）",
+          "notePlaceholder": "例如：双十一活动",
+          "failed": "生成失败",
+          "resultTitle": "已生成 {count} 张兑换码",
+          "resultDescription": "批次 {batchId}",
+          "partialResultDescription": "批次 {batchId} · 申请 {requested} 张，因冲突实际生成 {generated} 张",
+          "validation": {
+            "positiveAmount": "amount 必须 > 0"
+          }
+        }
+      },
       "adjust": {
         "title": "积分管理",
         "target": "目标：{target}",
