@@ -70,7 +70,7 @@ export type GateOutcome
     | 'api_key_quota_exceeded'
     | 'insufficient_credits'
 
-export interface ApiStatsTarget {
+interface ApiStatsTarget {
   apiId: number
   apiPath: string
 }
