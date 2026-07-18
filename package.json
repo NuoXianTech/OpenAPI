@@ -23,7 +23,7 @@
   "dependencies": {
     "@electric-sql/pglite": "0.5.4",
     "@internationalized/date": "3.12.2",
-    "@nuxt/ui": "^4.9.0",
+    "@nuxt/ui": "^4.10.0",
     "@tanstack/table-core": "^8.21.3",
     "@unovis/ts": "^1.6.7",
     "@unovis/vue": "^1.6.7",
@@ -36,11 +36,11 @@
     "h3": "1.15.11",
     "iconv-lite": "^0.6.0",
     "ioredis": "5.11.1",
-    "nodemailer": "^9.0.1",
+    "nodemailer": "^9.0.3",
     "nuxt": "^4.4.8",
     "postgres": "^3.4.9",
-    "tailwindcss": "^4.3.2",
-    "vue": "^3.5.39",
+    "tailwindcss": "^4.3.3",
+    "vue": "^3.5.40",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -49,13 +49,13 @@
     "@nuxt/test-utils": "^4.0.3",
     "@nuxtjs/i18n": "^10.4.1",
     "@types/fontkit": "^2.0.9",
-    "@types/node": "^24.13.2",
+    "@types/node": "^24.13.3",
     "@types/nodemailer": "^8.0.1",
     "drizzle-kit": "^0.31.10",
-    "eslint": "^10.6.0",
+    "eslint": "^10.7.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9",
-    "vue-tsc": "^3.3.5"
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.7"
   },
   "packageManager": "pnpm@11.12.0"
 }
