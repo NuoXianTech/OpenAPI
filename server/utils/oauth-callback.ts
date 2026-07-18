@@ -5,6 +5,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { consumeState } from '~~/server/utils/oauth-state'
 import { issuePendingOauth } from '~~/server/utils/oauth-pending'
 import { createUserSession, getAuthUser } from '~~/server/utils/auth'
@@ -101,7 +102,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         return redirectError(event, 'already_bound_same_provider', 'bind')
       }
 
-      await oauthAccountService.upsertAccount({
+      const linkedAccount = await oauthAccountService.upsertAccount({
         userId: authUser.id,
         provider,
         providerUserId: profile.providerUserId,
@@ -109,6 +110,15 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         avatarUrl: profile.avatarUrl,
         email: profile.email,
         lastLoginIp: ip
+      })
+
+      await operationLogService.addRequestLog(event, {
+        userId: authUser.id,
+        actor: authUser.username,
+        action: 'user.oauth.bind',
+        resourceType: 'oauth-account',
+        resourceId: linkedAccount?.id ?? provider,
+        detail: { provider }
       })
 
       const target = consumed.returnTo && consumed.returnTo.startsWith('/')

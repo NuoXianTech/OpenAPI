@@ -176,7 +176,7 @@ const {
           >
             <span
               v-if="row.original.resourceType"
-              class="font-mono"
+              class="font-medium"
             >{{ row.original.resourceType }}</span>
             <span
               v-if="row.original.resourceId"

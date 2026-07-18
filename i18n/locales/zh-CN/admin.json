@@ -183,6 +183,7 @@
           "admin_oauth_provider_update": "更新 OAuth 配置",
           "admin_settings_update": "更新系统设置",
           "admin_settings_smtp_test": "测试邮件发送",
+          "admin_oauth_settings_update": "更新 OAuth 设置",
           "user_checkin": "每日签到",
           "user_api_key_create": "创建 API 密钥",
           "user_api_key_update": "更新 API 密钥",
@@ -194,6 +195,7 @@
           "user_email_change_request": "申请变更邮箱",
           "user_email_change_confirm": "确认变更邮箱",
           "user_oauth_bind": "绑定第三方账号",
+          "user_oauth_register": "通过 OAuth 注册并绑定账号",
           "user_oauth_unbind": "解绑第三方账号",
           "user_redemption_code_redeem": "兑换码兑换"
         }
