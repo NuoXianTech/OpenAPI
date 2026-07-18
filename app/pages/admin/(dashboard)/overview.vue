@@ -192,7 +192,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
         <!-- Hero / 运营总览 -->
         <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
           <div class="grid gap-6 lg:grid-cols-5 relative z-10">
-            <div class="lg:col-span-3 space-y-5">
+            <div class="flex flex-col lg:col-span-3">
               <div class="space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   {{ $t('admin.overview.hero.title') }}
@@ -205,7 +205,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                 </p>
               </div>
 
-              <div class="flex flex-wrap gap-2">
+              <div class="mt-7 flex flex-wrap gap-2 lg:mt-auto lg:pt-6">
                 <UButton
                   :to="ADMIN_USERS_PATH"
                   color="neutral"
