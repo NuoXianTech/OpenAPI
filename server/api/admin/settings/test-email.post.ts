@@ -13,7 +13,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   } catch (error) {
     const message = (error as Error)?.message || '发信失败'
     await operationLogService.addRequestLog(event, {
-      userId: admin.id || null,
+      userId: admin.id,
       actor: admin.username,
       action: 'admin.settings.smtp.test',
       resourceType: 'site-settings',
@@ -24,7 +24,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.settings.smtp.test',
     resourceType: 'site-settings',

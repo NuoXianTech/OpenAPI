@@ -7,6 +7,7 @@ import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pendi
 import { usersService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { loginLogService } from '~~/server/services/login-log-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
@@ -60,7 +61,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 409, message: '你已绑定该平台的另一个账号，请先解绑后再绑定' })
   }
 
-  await oauthAccountService.upsertAccount({
+  const linkedAccount = await oauthAccountService.upsertAccount({
     userId: user.id,
     provider: pending.provider,
     providerUserId: pending.providerUserId,
@@ -68,6 +69,15 @@ export default defineEventHandler(async (event) => {
     avatarUrl: pending.avatarUrl,
     email: pending.email,
     lastLoginIp: ip
+  })
+
+  await operationLogService.addRequestLog(event, {
+    userId: user.id,
+    actor: user.username,
+    action: 'user.oauth.bind',
+    resourceType: 'oauth-account',
+    resourceId: linkedAccount?.id ?? pending.provider,
+    detail: { provider: pending.provider, providerUserId: pending.providerUserId }
   })
 
   clearPendingOauth(event)

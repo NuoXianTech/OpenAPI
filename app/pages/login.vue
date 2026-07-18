@@ -56,7 +56,7 @@ const fields = computed(() => [
     name: 'identifier',
     type: 'text' as const,
     label: t('auth.fields.identifier'),
-    placeholder: 'you@example.com',
+    placeholder: t('auth.placeholders.email'),
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
     defaultValue: '',
@@ -177,7 +177,6 @@ function clearTurnstileError() {
     <AuthBrandHeader
       icon="i-mdi-account-circle-outline"
       :title="t('auth.login.welcome', { siteName: settings.siteName })"
-      :subtitle="t('auth.login.subtitle')"
     />
 
     <UCard

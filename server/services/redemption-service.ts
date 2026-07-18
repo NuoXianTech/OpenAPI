@@ -369,7 +369,7 @@ export interface RedemptionError extends Error {
   readonly cause?: unknown
 }
 
-export function createRedemptionError(code: string, message: string, cause?: unknown): RedemptionError {
+function createRedemptionError(code: string, message: string, cause?: unknown): RedemptionError {
   return Object.assign(new Error(message), {
     name: 'RedemptionError',
     code,

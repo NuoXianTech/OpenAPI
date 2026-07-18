@@ -278,7 +278,7 @@ async function submitRegister() {
           >
             <UInput
               v-model="bindState.identifier"
-              placeholder="you@example.com"
+              :placeholder="t('auth.placeholders.email')"
               icon="i-mdi-account-outline"
               size="lg"
               autocomplete="username"
@@ -325,7 +325,7 @@ async function submitRegister() {
             <UInput
               v-model="registerState.email"
               type="email"
-              placeholder="you@example.com"
+              :placeholder="t('auth.placeholders.email')"
               icon="i-mdi-email-outline"
               size="lg"
               autocomplete="email"

@@ -27,7 +27,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
       actor: user.username,
       action: 'user.redemption-code.redeem',
       resourceType: 'redemption-code',
-      resourceId: String(data.codeId),
+      resourceId: data.codeId,
       detail: { amount: data.amount, batchId: data.batchId }
     })
     return data

@@ -1,5 +1,5 @@
 // OAuth 待绑定身份 → 「新注册」：用户在窗口确认/填写邮箱后建号并绑定三方身份，
-// 随后按站点邮件激活策略：关闭激活则直接登录，开启则发验证邮件、账号待激活。
+// 随后按站点邮件激活策略：关闭激活则立即登录，开启则发验证邮件、账号待激活。
 import { createError, getHeader, getRequestIP } from 'h3'
 import { randomBytes } from 'node:crypto'
 import { oauthRegisterSchema } from '~~/server/schemas/auth'
@@ -11,6 +11,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { loginLogService } from '~~/server/services/login-log-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
@@ -97,7 +98,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // 立即把三方身份绑到新账号（用户硬删 / 回滚时 cascade 一并清除）
-  await oauthAccountService.upsertAccount({
+  const linkedAccount = await oauthAccountService.upsertAccount({
     userId: created.id,
     provider: pending.provider,
     providerUserId: pending.providerUserId,
@@ -107,7 +108,16 @@ export default defineEventHandler(async (event) => {
     lastLoginIp: ip
   })
 
-  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并直接登录
+  await operationLogService.addRequestLog(event, {
+    userId: created.id,
+    actor: created.username,
+    action: 'user.oauth.register',
+    resourceType: 'oauth-account',
+    resourceId: linkedAccount?.id ?? pending.provider,
+    detail: { provider: pending.provider }
+  })
+
+  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并立即登录
   if (!activationRequired) {
     try {
       await usersService.activateUser(created.id)

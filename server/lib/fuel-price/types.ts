@@ -1,4 +1,4 @@
-export const FUEL_PRICE_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
+const FUEL_PRICE_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
 export const DEFAULT_FUEL_PRICE_ENCODING: FuelPriceEncoding = 'json'
 export const DEFAULT_FUEL_PRICE_REGION = '北京'
 

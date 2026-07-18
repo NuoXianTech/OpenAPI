@@ -16,7 +16,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.notification.delete',
     resourceType: 'notification-message',
-    resourceId: String(messageId),
+    resourceId: messageId,
     detail: { title: removed.title }
   })
 

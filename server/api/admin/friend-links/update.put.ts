@@ -15,11 +15,11 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.friend-link.update',
     resourceType: 'friend-link',
-    resourceId: String(id),
+    resourceId: id,
     detail: { updated }
   })
 

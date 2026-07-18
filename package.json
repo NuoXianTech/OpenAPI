@@ -24,7 +24,6 @@
     "@electric-sql/pglite": "0.5.4",
     "@internationalized/date": "3.12.2",
     "@nuxt/ui": "^4.10.0",
-    "@tanstack/table-core": "^8.21.3",
     "@unovis/ts": "^1.6.7",
     "@unovis/vue": "^1.6.7",
     "@vueuse/core": "^14.3.0",

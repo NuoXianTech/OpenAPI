@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ProfileData } from '~/composables/user/use-user-settings-page'
+import type { UserProfileData } from '~/types/user-settings'
 import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
-  profile: ProfileData | null
+  profile: UserProfileData | null
   onRequestChange: (currentPassword: string, newEmail: string) => Promise<string>
 }>()
 
@@ -13,6 +13,11 @@ const newEmail = ref('')
 const currentPassword = ref('')
 const isSaving = ref(false)
 const pending = ref<string | null>(null)
+const canSubmit = computed(() => {
+  const candidate = newEmail.value.trim().toLowerCase()
+  const current = (props.profile?.email || '').toLowerCase()
+  return Boolean(candidate && currentPassword.value && candidate !== current)
+})
 
 async function submit() {
   const v = newEmail.value.trim().toLowerCase()
@@ -94,7 +99,7 @@ async function submit() {
         <UInput
           v-model="newEmail"
           type="email"
-          placeholder="new@example.com"
+          :placeholder="t('user.settings.email.newEmailPlaceholder')"
           class="w-full sm:w-60"
         />
       </UFormField>
@@ -102,6 +107,7 @@ async function submit() {
         <UButton
           icon="i-mdi-email-arrow-right-outline"
           :loading="isSaving"
+          :disabled="!canSubmit || isSaving || !profile"
           @click="submit"
         >
           {{ $t('user.settings.email.sendVerification') }}

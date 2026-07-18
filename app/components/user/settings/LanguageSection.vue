@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from '#shared/config/locale-defaults'
-import type { ProfileData } from '~/composables/user/use-user-settings-page'
+import type { UserProfileData } from '~/types/user-settings'
 import { parseFetchError } from '~/utils/client-error'
 
-interface UserSettingsLanguageCardProps {
-  profile: ProfileData | null
+interface UserSettingsLanguageSectionProps {
+  profile: UserProfileData | null
   profileLoading: boolean
   onSave: (locale: SupportedLocale) => Promise<void>
 }
@@ -14,7 +14,7 @@ interface LanguageOption {
   value: SupportedLocale
 }
 
-const props = defineProps<UserSettingsLanguageCardProps>()
+const props = defineProps<UserSettingsLanguageSectionProps>()
 const { locale, locales, t } = useI18n()
 const toast = useToast()
 const isSaving = ref(false)
@@ -59,7 +59,6 @@ async function submit(): Promise<void> {
 <template>
   <DashboardSettingsSection
     :title="$t('user.settings.language.title')"
-    :description="$t('user.settings.language.description')"
   >
     <UFormField
       name="locale"

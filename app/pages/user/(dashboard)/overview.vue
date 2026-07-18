@@ -43,8 +43,8 @@ const callsTrendValues = computed(() => trend.value.map(point => point.totalCall
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
 const introDescription = computed(() => user.value?.username
-  ? t('user.overview.hero.descriptionWithName', { username: user.value.username })
-  : t('user.overview.hero.description'))
+  ? t('user.overview.hero.description', { username: user.value.username })
+  : '')
 const sampleCurl = computed(() => [
   `curl -X GET '${origin}/v1/your-endpoint' \\`,
   `  -H 'x-api-key: <your-api-key>'`
@@ -133,17 +133,20 @@ async function copyCurl() {
         <!-- Hero / Onboarding -->
         <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
           <div class="grid gap-6 lg:grid-cols-5 relative z-10">
-            <div class="lg:col-span-3 space-y-5">
+            <div class="flex flex-col lg:col-span-3">
               <div class="space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   {{ $t('user.overview.hero.title') }}
                 </h2>
-                <p class="text-sm sm:text-base text-toned max-w-xl">
+                <p
+                  v-if="introDescription"
+                  class="text-sm sm:text-base text-toned max-w-xl"
+                >
                   {{ introDescription }}
                 </p>
               </div>
 
-              <div class="flex flex-wrap gap-2">
+              <div class="mt-7 flex flex-wrap gap-2 lg:mt-auto lg:pt-6">
                 <UButton
                   to="/user/apikeys"
                   color="neutral"

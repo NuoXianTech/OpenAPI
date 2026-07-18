@@ -3,7 +3,6 @@ import { adminUpdateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService, type AnnouncementInput } from '~~/server/services/announcement-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -19,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl?.trim() || null
   if (body.sortOrder !== undefined) patch.sortOrder = body.sortOrder
 
-  const updated = await announcementService.update(id, patch, admin.id || null)
+  const updated = await announcementService.update(id, patch, admin.id)
   if (!updated) {
     throw createError({ statusCode: 404, message: 'announcement not found' })
   }
@@ -30,7 +29,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.announcement.update',
     resourceType: 'announcement',
     resourceId: id,
-    ...readRequestMeta(event),
     detail: { patch }
   })
 

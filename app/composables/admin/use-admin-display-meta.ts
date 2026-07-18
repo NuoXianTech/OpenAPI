@@ -223,7 +223,7 @@ interface UseAdminNotificationsDisplayMetaReturn {
   getRowItems: (row: AdminNotificationMessageRow) => DropdownMenuItem[]
 }
 
-export type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
+type AdminNotificationAudience = 'specific' | 'all_current' | 'all_with_future'
 
 const ADMIN_NOTIFICATION_AUDIENCES: AdminNotificationAudience[] = ['specific', 'all_current', 'all_with_future']
 const ADMIN_NOTIFICATION_AUDIENCE_META = {

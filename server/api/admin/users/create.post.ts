@@ -3,7 +3,6 @@ import { adminCreateUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -33,7 +32,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.user.create',
     resourceType: 'user',
     resourceId: created.id,
-    ...readRequestMeta(event),
     detail: { username: created.username, email: created.email, role: created.role, isActive: created.isActive }
   })
 

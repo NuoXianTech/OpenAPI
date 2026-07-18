@@ -23,7 +23,7 @@ export type AdminUserRoleFilter = 'all' | AdminUserItem['role']
 export type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
 export type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
 
-export interface AdminUserFilterOption<TValue extends string> {
+interface AdminUserFilterOption<TValue extends string> {
   label: string
   value: TValue
 }

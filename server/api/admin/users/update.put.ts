@@ -3,7 +3,6 @@ import { adminUpdateUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -53,7 +52,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.user.update',
     resourceType: 'user',
     resourceId: id,
-    ...readRequestMeta(event),
     // 仅记录是否改过密码，绝不落明文 / hash
     detail: { patch: { email, displayName, role, isActive, isBanned, passwordChanged: Boolean(password) } }
   })

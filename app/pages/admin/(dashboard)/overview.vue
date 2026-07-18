@@ -19,8 +19,8 @@ type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
 const { user } = useAuth()
 const introDescription = computed(() => user.value?.username
-  ? t('admin.overview.hero.descriptionWithName', { username: user.value.username })
-  : t('admin.overview.hero.description'))
+  ? t('admin.overview.hero.description', { username: user.value.username })
+  : '')
 const OVERVIEW_SPARKLINE_RANGE: AdminDashboardRange = 7
 const selectedTrendRange = ref<AdminDashboardRange>(OVERVIEW_SPARKLINE_RANGE)
 const rangeOptions = computed<Array<{ label: string, value: AdminDashboardRange }>>(() => [
@@ -192,17 +192,20 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
         <!-- Hero / 运营总览 -->
         <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
           <div class="grid gap-6 lg:grid-cols-5 relative z-10">
-            <div class="lg:col-span-3 space-y-5">
+            <div class="flex flex-col lg:col-span-3">
               <div class="space-y-3">
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   {{ $t('admin.overview.hero.title') }}
                 </h2>
-                <p class="text-sm sm:text-base text-toned max-w-xl">
+                <p
+                  v-if="introDescription"
+                  class="text-sm sm:text-base text-toned max-w-xl"
+                >
                   {{ introDescription }}
                 </p>
               </div>
 
-              <div class="flex flex-wrap gap-2">
+              <div class="mt-7 flex flex-wrap gap-2 lg:mt-auto lg:pt-6">
                 <UButton
                   :to="ADMIN_USERS_PATH"
                   color="neutral"

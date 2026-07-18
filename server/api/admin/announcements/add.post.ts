@@ -2,7 +2,6 @@ import { adminCreateAnnouncementSchema } from '~~/server/schemas/admin'
 import { announcementService } from '~~/server/services/announcement-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -16,7 +15,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     isEnabled: body.isEnabled ?? true,
     linkUrl: body.linkUrl?.trim() || null,
     sortOrder: body.sortOrder ?? 0
-  }, admin.id || null)
+  }, admin.id)
 
   await operationLogService.addRequestLog(event, {
     userId: admin.id,
@@ -24,7 +23,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.announcement.create',
     resourceType: 'announcement',
     resourceId: created?.id,
-    ...readRequestMeta(event),
     detail: { title: body.title, level: body.level ?? 'info' }
   })
 

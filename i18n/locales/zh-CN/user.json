@@ -169,7 +169,6 @@
       },
       "language": {
         "title": "语言偏好",
-        "description": "登录用户的选择会同步到账号；未登录访客根据浏览器语言偏好显示。",
         "label": "界面语言",
         "fieldDescription": "选择后保存，页面文案与日期、数字格式将使用该语言。",
         "updated": "语言偏好已更新"
@@ -183,6 +182,7 @@
         "currentPasswordDescription": "为保护账号安全，修改邮箱需先验证当前密码。",
         "newEmail": "新邮箱",
         "newEmailDescription": "将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。",
+        "newEmailPlaceholder": "new{'@'}example.com",
         "enterNewEmail": "请输入新邮箱",
         "sameAsCurrent": "新邮箱与当前邮箱相同",
         "sendVerification": "发送验证",
@@ -258,8 +258,7 @@
       "copyFailed": "复制失败",
       "hero": {
         "title": "几分钟内开始使用你的 API 网关",
-        "description": "你好。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。",
-        "descriptionWithName": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。"
+        "description": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用情况。"
       },
       "actions": {
         "createApiKey": "创建 API 密钥",

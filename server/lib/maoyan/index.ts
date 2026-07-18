@@ -1,14 +1,14 @@
 import { getSharedCache } from '~~/server/utils/shared-cache'
 import { fetchBoxOfficeByType } from './realtime'
 
-export const MAOYAN_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
+const MAOYAN_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
 export const MAOYAN_REALTIME_TYPES = ['movie', 'tv', 'web'] as const
 
 export type MaoyanEncoding = typeof MAOYAN_ENCODINGS[number]
 export type MaoyanRealtimeType = typeof MAOYAN_REALTIME_TYPES[number]
 export type MaoyanRealtimeData = Awaited<ReturnType<typeof fetchBoxOfficeByType>>
 
-export interface MaoyanGlobalMovieItem {
+interface MaoyanGlobalMovieItem {
   rank: number
   maoyan_id: number
   movie_name: string

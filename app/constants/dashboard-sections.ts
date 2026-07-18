@@ -9,11 +9,11 @@ interface DashboardSectionConfig {
 
 export const ADMIN_OVERVIEW_PATH = '/admin/overview'
 export const ADMIN_LOGS_PATH = '/admin/logs'
-export const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
+const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
 export const ADMIN_CREDITS_PATH = '/admin/credits'
 export const ADMIN_CREDIT_USERS_PATH = `${ADMIN_CREDITS_PATH}/users`
 export const ADMIN_CREDIT_TRANSACTIONS_PATH = `${ADMIN_CREDITS_PATH}/transactions`
-export const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
+const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
 export const ADMIN_REDEMPTION_CODES_PATH = `${ADMIN_CREDITS_PATH}/redemption-codes`
 export const ADMIN_CONTENT_PATH = '/admin/content'
 export const ADMIN_APIS_PATH = '/admin/apis'
@@ -24,7 +24,7 @@ export const USER_OVERVIEW_PATH = '/user/overview'
 export const USER_API_KEYS_PATH = '/user/apikeys'
 export const USER_LOGS_PATH = '/user/logs'
 export const USER_CREDITS_PATH = '/user/credits'
-export const USER_CREDITS_REWARDS_PATH = `${USER_CREDITS_PATH}/rewards`
+const USER_CREDITS_REWARDS_PATH = `${USER_CREDITS_PATH}/rewards`
 export const USER_SETTINGS_PATH = '/user/settings'
 
 export function createAdminContentSection({ t }: DashboardConfigFactoryContext): DashboardSectionConfig {

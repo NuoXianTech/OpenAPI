@@ -83,7 +83,7 @@ export function createBingMarkdown(record: BingImageRecord): string {
   return lines.join('\n')
 }
 
-export function isMobileUserAgent(userAgent: string): boolean {
+function isMobileUserAgent(userAgent: string): boolean {
   return /\b(mobile|android|iphone|ipod|ipad|blackberry|webos|opera mini|windows phone|iemobile|symbian)\b/i.test(userAgent)
 }
 

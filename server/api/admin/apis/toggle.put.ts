@@ -8,17 +8,17 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAdminEventHandler(async (event, admin) => {
   const { id, field, value } = await readZodBody(event, adminToggleApiSchema)
 
-  const updated = await apiService.toggleApiField(id, field, value, admin.id || null)
+  const updated = await apiService.toggleApiField(id, field, value, admin.id)
     .catch((err: unknown) => {
       throw createError({ statusCode: 400, message: err instanceof Error ? err.message : 'api toggle failed' })
     })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: `admin.api.toggle.${field}`,
     resourceType: 'api',
-    resourceId: String(id),
+    resourceId: id,
     detail: { updated }
   })
 

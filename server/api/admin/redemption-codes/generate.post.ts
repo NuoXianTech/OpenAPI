@@ -25,11 +25,11 @@ export default defineAdminEventHandler(async (event, admin) => {
     maxUses,
     expiresAt,
     note: body.note || null,
-    createdBy: admin.id || null
+    createdBy: admin.id
   })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.redemption-code.generate',
     resourceType: 'redemption-code',

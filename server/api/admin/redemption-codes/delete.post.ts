@@ -12,11 +12,11 @@ export default defineAdminEventHandler(async (event, admin) => {
     const removed = await redemptionService.remove(id)
     if (!removed) throw createError({ statusCode: 404, message: '兑换码不存在' })
     await operationLogService.addRequestLog(event, {
-      userId: admin.id || null,
+      userId: admin.id,
       actor: admin.username,
       action: 'admin.redemption-code.delete',
       resourceType: 'redemption-code',
-      resourceId: String(id)
+      resourceId: id
     })
     return removed
   }
@@ -24,7 +24,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   // refine 已保证 id 或 batchId 至少一个非空
   const res = await redemptionService.removeBatch(batchId!, !!includeUsed)
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.redemption-code.batch-delete',
     resourceType: 'redemption-code-batch',

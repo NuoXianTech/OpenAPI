@@ -2,7 +2,7 @@ import { load } from 'cheerio'
 import regionsJson from './regions.json'
 import type { FuelPriceData, FuelPriceItem, FuelRegion, FuelRegionOption, FuelTrend } from './types'
 
-export const FUEL_PRICE_BASE_URL = 'http://www.qiyoujiage.com'
+const FUEL_PRICE_BASE_URL = 'http://www.qiyoujiage.com'
 
 const CACHE_TTL_MS = 60 * 60 * 1000
 const FUEL_PRICE_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36'

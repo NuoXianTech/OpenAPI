@@ -6,6 +6,7 @@ import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import { useApiKeyDisplay } from '~/composables/api/use-api-key-display'
 import { DEFAULT_PAGE_SIZE, useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import type { ApiKeyItem } from '#shared/types/api'
@@ -200,26 +201,6 @@ const showFullKeyId = ref<number | null>(null)
 const keyword = ref('')
 const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired' | 'revoked'>('all')
 const scopeFilter = ref<'all' | 'full' | 'limited'>('all')
-const columnVisibility = ref<Record<string, boolean>>({})
-
-interface ToggleableColumn {
-  id: string
-  header: string
-}
-
-function readToggleableColumn(column: TableColumn<ApiKeyItem>): ToggleableColumn | undefined {
-  const header = 'header' in column && typeof column.header === 'string' ? column.header : ''
-  if (!header) return undefined
-
-  const id = 'id' in column && typeof column.id === 'string'
-    ? column.id
-    : 'accessorKey' in column
-      ? String(column.accessorKey)
-      : ''
-  if (!id) return undefined
-
-  return { id, header }
-}
 
 const statusItems = computed(() => [
   { label: t('user.apiKeys.filters.allStatuses'), value: 'all' },
@@ -267,22 +248,7 @@ const filteredItems = computed(() => {
 
 const { page, pageSize, total, paginated } = useClientPagination(filteredItems, DEFAULT_PAGE_SIZE)
 
-const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
-  columns.value
-    .map(readToggleableColumn)
-    .filter((column): column is ToggleableColumn => column != null)
-    .map(column => ({
-      label: column.header,
-      type: 'checkbox' as const,
-      checked: columnVisibility.value[column.id] !== false,
-      onUpdateChecked(checked: boolean) {
-        columnVisibility.value = { ...columnVisibility.value, [column.id]: checked }
-      },
-      onSelect(event: Event) {
-        event.preventDefault()
-      }
-    }))
-)
+const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility(columns)
 
 watch([keyword, statusFilter, scopeFilter, pageSize], () => {
   page.value = 1

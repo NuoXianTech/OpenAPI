@@ -6,6 +6,7 @@ import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
 import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAuthenticatedEventHandler(async (event, authUser) => {
@@ -43,6 +44,15 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     expiresInMinutes
   })
   await sendEmailChangeEmail(newEmail, confirmUrl)
+
+  await operationLogService.addRequestLog(event, {
+    userId: authUser.id,
+    actor: authUser.username,
+    action: 'user.email.change.request',
+    resourceType: 'user',
+    resourceId: authUser.id,
+    detail: { verificationSent: true }
+  })
 
   return { pendingEmail: newEmail }
 })

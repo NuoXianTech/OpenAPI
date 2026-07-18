@@ -183,12 +183,19 @@
           "admin_oauth_provider_update": "更新 OAuth 配置",
           "admin_settings_update": "更新系统设置",
           "admin_settings_smtp_test": "测试邮件发送",
+          "admin_oauth_settings_update": "更新 OAuth 设置",
           "user_checkin": "每日签到",
           "user_api_key_create": "创建 API 密钥",
           "user_api_key_update": "更新 API 密钥",
           "user_api_key_reset": "重置 API 密钥",
           "user_api_key_delete": "删除 API 密钥",
           "user_password_change": "修改密码",
+          "user_profile_update": "更新个人资料",
+          "user_preferences_update": "更新偏好设置",
+          "user_email_change_request": "申请变更邮箱",
+          "user_email_change_confirm": "确认变更邮箱",
+          "user_oauth_bind": "绑定第三方账号",
+          "user_oauth_register": "通过 OAuth 注册并绑定账号",
           "user_oauth_unbind": "解绑第三方账号",
           "user_redemption_code_redeem": "兑换码兑换"
         }
@@ -480,6 +487,7 @@
         "description": "直接创建用户账户，跳过邮箱验证流程",
         "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
         "usernamePlaceholder": "例如：alice_2026",
+        "emailPlaceholder": "user{'@'}example.com",
         "initialPassword": "初始密码",
         "passwordHelp": "至少 8 位",
         "displayName": "昵称（可选）",
@@ -1150,7 +1158,8 @@
           },
           "fromAddress": {
             "label": "发件人邮箱",
-            "description": "发件邮箱的地址，也作为 EHLO 域名来源。"
+            "description": "发件邮箱的地址，也作为 EHLO 域名来源。",
+            "placeholder": "no-reply{'@'}example.com"
           },
           "host": {
             "label": "SMTP 服务器",
@@ -1162,7 +1171,8 @@
           },
           "username": {
             "label": "SMTP 用户名",
-            "description": "发信邮箱用户名，一般与邮箱地址相同。"
+            "description": "发信邮箱用户名，一般与邮箱地址相同。",
+            "placeholder": "user{'@'}example.com"
           },
           "password": {
             "label": "SMTP 密码",
@@ -1170,7 +1180,8 @@
           },
           "replyTo": {
             "label": "回信邮箱",
-            "description": "用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。"
+            "description": "用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。",
+            "placeholder": "support{'@'}example.com"
           },
           "secure": {
             "label": "强制使用 SSL 连接",
@@ -1198,7 +1209,8 @@
         "testModal": {
           "title": "SMTP 测试发信",
           "description": "将使用已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。",
-          "recipient": "收件邮箱"
+          "recipient": "收件邮箱",
+          "recipientPlaceholder": "you{'@'}example.com"
         }
       },
       "about": {
@@ -1306,8 +1318,7 @@
       "platformTitle": "平台概览",
       "hero": {
         "title": "平台运营总览",
-        "description": "你好。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。",
-        "descriptionWithName": "你好，{username}。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。"
+        "description": "你好，{username}。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。"
       },
       "snapshot": {
         "title": "今日快照",

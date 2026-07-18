@@ -36,7 +36,7 @@ const fields = computed(() => [
     name: 'email',
     type: 'email' as const,
     label: t('auth.fields.email'),
-    placeholder: 'you@example.com',
+    placeholder: t('auth.placeholders.email'),
     autocomplete: 'email',
     icon: 'i-mdi-email-outline',
     defaultValue: '',

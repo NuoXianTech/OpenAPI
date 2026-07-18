@@ -18,7 +18,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
     actor: user.username,
     action: 'user.api-key.reset',
     resourceType: 'api-key',
-    resourceId: String(updated.id),
+    resourceId: updated.id,
     detail: { keyName: updated.name }
   })
 
