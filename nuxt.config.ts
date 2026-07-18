@@ -106,6 +106,11 @@ export default defineNuxtConfig({
       runtimeOnly: true
     },
     locales: [{
+      code: 'en-US',
+      language: 'en-US',
+      name: 'English',
+      files: ['en-US/common.json', 'en-US/auth.json', 'en-US/public.json', 'en-US/user.json', 'en-US/admin.json']
+    }, {
       code: DEFAULT_LOCALE,
       language: DEFAULT_LOCALE,
       name: '简体中文',
