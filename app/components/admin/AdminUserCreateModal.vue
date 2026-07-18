@@ -77,7 +77,7 @@ async function submit() {
           <UInput
             v-model="form.email"
             type="email"
-            placeholder="user@example.com"
+            :placeholder="t('admin.users.create.emailPlaceholder')"
             autocomplete="off"
           />
         </UFormField>

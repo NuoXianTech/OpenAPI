@@ -1,5 +1,5 @@
 // OAuth 待绑定身份 → 「新注册」：用户在窗口确认/填写邮箱后建号并绑定三方身份，
-// 随后按站点邮件激活策略：关闭激活则直接登录，开启则发验证邮件、账号待激活。
+// 随后按站点邮件激活策略：关闭激活则立即登录，开启则发验证邮件、账号待激活。
 import { createError, getHeader, getRequestIP } from 'h3'
 import { randomBytes } from 'node:crypto'
 import { oauthRegisterSchema } from '~~/server/schemas/auth'
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
     lastLoginIp: ip
   })
 
-  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并直接登录
+  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并立即登录
   if (!activationRequired) {
     try {
       await usersService.activateUser(created.id)

@@ -183,6 +183,7 @@
         "currentPasswordDescription": "为保护账号安全，修改邮箱需先验证当前密码。",
         "newEmail": "新邮箱",
         "newEmailDescription": "将向该邮箱发送验证邮件，点击邮件中的链接后才会生效。",
+        "newEmailPlaceholder": "new{'@'}example.com",
         "enterNewEmail": "请输入新邮箱",
         "sameAsCurrent": "新邮箱与当前邮箱相同",
         "sendVerification": "发送验证",
@@ -258,8 +259,8 @@
       "copyFailed": "复制失败",
       "hero": {
         "title": "几分钟内开始使用你的 API 网关",
-        "description": "你好。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。",
-        "descriptionWithName": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用量，监控服务健康状态。"
+        "description": "你好。在这里你可以管理 API 密钥、查看余额与调用情况，监控服务健康状态。",
+        "descriptionWithName": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用情况。"
       },
       "actions": {
         "createApiKey": "创建 API 密钥",

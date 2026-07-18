@@ -120,7 +120,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
 
     // ============ login 模式 ============
 
-    // 该三方身份已绑定某用户 → 直接登录
+    // 该三方身份已绑定某用户 → 立即登录
     const existingAccount = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
     if (existingAccount) {
       const user = await usersService.getById(existingAccount.userId)

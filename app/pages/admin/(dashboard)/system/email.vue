@@ -87,7 +87,7 @@ async function submitTest(): Promise<void> {
       >
         <UInput
           v-model="form.smtpFrom"
-          placeholder="no-reply@example.com"
+          :placeholder="t('admin.system.email.settings.fromAddress.placeholder')"
           autocomplete="off"
           class="w-full sm:min-w-64"
         />
@@ -131,7 +131,7 @@ async function submitTest(): Promise<void> {
       >
         <UInput
           v-model="form.smtpUser"
-          placeholder="user@example.com"
+          :placeholder="t('admin.system.email.settings.username.placeholder')"
           autocomplete="off"
           class="w-full sm:min-w-64"
         />
@@ -160,7 +160,7 @@ async function submitTest(): Promise<void> {
       >
         <UInput
           v-model="form.smtpReplyTo"
-          placeholder="support@example.com"
+          :placeholder="t('admin.system.email.settings.replyTo.placeholder')"
           autocomplete="off"
           class="w-full sm:min-w-64"
         />
@@ -224,7 +224,7 @@ async function submitTest(): Promise<void> {
           <UInput
             v-model="testEmail"
             type="email"
-            placeholder="you@example.com"
+            :placeholder="t('admin.system.email.testModal.recipientPlaceholder')"
             autofocus
             class="w-full"
             @keydown.enter="submitTest"

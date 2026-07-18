@@ -94,7 +94,7 @@ async function submit() {
         <UInput
           v-model="newEmail"
           type="email"
-          placeholder="new@example.com"
+          :placeholder="t('user.settings.email.newEmailPlaceholder')"
           class="w-full sm:w-60"
         />
       </UFormField>
