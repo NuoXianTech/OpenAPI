@@ -2,7 +2,6 @@ import { adminCreateApiCategorySchema } from '~~/server/schemas/admin'
 import { apiCategoryService } from '~~/server/services/api-category-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -24,7 +23,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.api-category.create',
     resourceType: 'api-category',
     resourceId: created?.id,
-    ...readRequestMeta(event),
     detail: { code: body.code, name: body.name }
   })
 

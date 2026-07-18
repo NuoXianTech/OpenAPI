@@ -3,7 +3,6 @@ import { adminBanUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -28,7 +27,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',
     resourceType: 'user',
     resourceId: id,
-    ...readRequestMeta(event),
     detail: {
       isBanned,
       username: updated?.username,

@@ -7,7 +7,6 @@ import { operationLogService } from '~~/server/services/operation-log-service'
 import { siteSettingsService } from '~~/server/services/site-settings-service'
 import { createOauthSettingsAuditDetail } from '~~/server/utils/oauth-audit'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -29,7 +28,6 @@ export default defineAdminEventHandler(async (event, admin) => {
       action: 'admin.oauth-settings.update',
       resourceType: 'oauth-settings',
       resourceId: 'global',
-      ...readRequestMeta(event),
       detail
     })
   }

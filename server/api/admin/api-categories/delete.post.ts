@@ -3,7 +3,6 @@ import { idSchema } from '~~/server/schemas/common'
 import { apiCategoryService } from '~~/server/services/api-category-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -19,7 +18,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.api-category.delete',
     resourceType: 'api-category',
     resourceId: id,
-    ...readRequestMeta(event),
     detail: { code: removed.code, name: removed.name }
   })
 

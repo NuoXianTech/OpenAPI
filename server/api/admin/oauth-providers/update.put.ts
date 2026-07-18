@@ -4,7 +4,6 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/services/oauth-provider-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -42,7 +41,6 @@ export default defineAdminEventHandler(async (event, admin) => {
       action: 'admin.oauth-provider.update',
       resourceType: 'oauth-provider',
       resourceId: updated.provider,
-      ...readRequestMeta(event),
       detail: { provider: updated.provider, changedFields }
     })
   }

@@ -4,7 +4,6 @@ import { adminInitialProfileSchema } from '~~/server/schemas/admin'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { usersService } from '~~/server/services/user-service'
 import { createUserSession, defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -42,7 +41,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION,
     resourceType: 'user',
     resourceId: admin.id,
-    ...readRequestMeta(event),
     detail: {
       patch: {
         username: body.username,
