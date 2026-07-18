@@ -81,7 +81,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.api.register',
     resourceType: 'api',
-    resourceId: String(saved?.id || ''),
+    resourceId: saved?.id ?? null,
     detail: { pathVersion, code }
   })
 
