@@ -1,5 +1,3 @@
 import { apiCategoryService } from '~~/server/services/api-category-service'
 
-export default defineEventHandler(() => {
-  return apiCategoryService.listEnabled()
-})
+export default defineEventHandler(() => apiCategoryService.listEnabled())
