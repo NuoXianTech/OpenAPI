@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { useUserSettingsPage } from '~/composables/user/use-user-settings-page'
+import { useUserProfileSettings } from '~/composables/user/use-user-profile-settings'
 
 const { user, fetchMe } = useAuth()
 const {
   profile,
-  profileLoading,
+  isProfileLoading,
   loadProfile,
   updateProfile,
   updateLanguagePreference,
   requestEmailChange
-} = useUserSettingsPage()
+} = useUserProfileSettings()
 
 const avatarUrl = computed(() => profile.value?.avatarUrl || user.value?.avatarUrl || null)
 
@@ -22,20 +22,20 @@ onMounted(async () => {
 
 <template>
   <div class="space-y-8">
-    <UserSettingsBasicCard
+    <UserSettingsProfileSection
       :profile="profile"
-      :profile-loading="profileLoading"
+      :profile-loading="isProfileLoading"
       :avatar-url="avatarUrl"
       :on-save="updateProfile"
     />
 
-    <UserSettingsLanguageCard
+    <UserSettingsLanguageSection
       :profile="profile"
-      :profile-loading="profileLoading"
+      :profile-loading="isProfileLoading"
       :on-save="updateLanguagePreference"
     />
 
-    <UserSettingsEmailCard
+    <UserSettingsEmailSection
       :profile="profile"
       :on-request-change="requestEmailChange"
     />

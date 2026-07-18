@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ProfileData } from '~/composables/user/use-user-settings-page'
+import type { UserProfileData } from '~/types/user-settings'
 import { parseFetchError } from '~/utils/client-error'
 
 const props = defineProps<{
-  profile: ProfileData | null
+  profile: UserProfileData | null
   onRequestChange: (currentPassword: string, newEmail: string) => Promise<string>
 }>()
 

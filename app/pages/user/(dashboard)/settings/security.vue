@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useUserSettingsPage } from '~/composables/user/use-user-settings-page'
+import { useUserSecuritySettings } from '~/composables/user/use-user-security-settings'
 
 const {
   loginActivity,
-  loginActivityLoading,
+  isLoginActivityLoading,
   changePassword,
   loadLoginActivity
-} = useUserSettingsPage()
+} = useUserSecuritySettings()
 
 onMounted(() => {
   void loadLoginActivity()
@@ -15,11 +15,11 @@ onMounted(() => {
 
 <template>
   <div class="space-y-8">
-    <UserSettingsPasswordCard :on-submit="changePassword" />
+    <UserSettingsPasswordSection :on-submit="changePassword" />
 
-    <UserSettingsLoginActivityCard
+    <UserSettingsLoginActivitySection
       :items="loginActivity"
-      :loading="loginActivityLoading"
+      :loading="isLoginActivityLoading"
       @refresh="loadLoginActivity"
     />
   </div>

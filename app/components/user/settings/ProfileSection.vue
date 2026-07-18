@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { ProfileData } from '~/composables/user/use-user-settings-page'
+import type { UserProfileData } from '~/types/user-settings'
 import { parseFetchError } from '~/utils/client-error'
 
-interface UserSettingsBasicCardProps {
-  profile: ProfileData | null
+interface UserSettingsProfileSectionProps {
+  profile: UserProfileData | null
   profileLoading: boolean
   avatarUrl?: string | null
   onSave: (displayName: string) => Promise<void>
 }
 
-const props = defineProps<UserSettingsBasicCardProps>()
+const props = defineProps<UserSettingsProfileSectionProps>()
 
 const toast = useToast()
 const { t } = useI18n()
