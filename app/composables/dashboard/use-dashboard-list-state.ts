@@ -13,7 +13,7 @@ export interface DashboardQueryCodec<TValue> {
   serialize: (value: TValue) => string | number | undefined
 }
 
-export type DashboardListQueryCodecs<TFilters extends object> = {
+type DashboardListQueryCodecs<TFilters extends object> = {
   [K in keyof TFilters]?: DashboardQueryCodec<TFilters[K]>
 }
 
