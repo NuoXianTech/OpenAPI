@@ -20,9 +20,6 @@ importers:
       '@nuxt/ui':
         specifier: ^4.10.0
         version: 4.10.0(47c3eb0010dbe43a7bee8a85b4864ee6)
-      '@tanstack/table-core':
-        specifier: ^8.21.3
-        version: 8.21.3
       '@unovis/ts':
         specifier: ^1.6.7
         version: 1.6.7
@@ -10106,7 +10103,7 @@ snapshots:
       '@babel/types': 7.29.7
       '@vue/babel-helper-vue-transform-on': 2.0.1
       '@vue/babel-plugin-resolve-type': 2.0.1(@babel/core@7.29.7)
-      '@vue/shared': 3.5.39
+      '@vue/shared': 3.5.40
     optionalDependencies:
       '@babel/core': 7.29.7
     transitivePeerDependencies:
@@ -10207,8 +10204,8 @@ snapshots:
   '@vue/language-core@3.3.7':
     dependencies:
       '@volar/language-core': 2.4.28
-      '@vue/compiler-dom': 3.5.39
-      '@vue/shared': 3.5.39
+      '@vue/compiler-dom': 3.5.40
+      '@vue/shared': 3.5.40
       alien-signals: 3.2.1
       muggle-string: 0.4.1
       path-browserify: 1.0.1
