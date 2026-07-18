@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (body.linkUrl !== undefined) patch.linkUrl = body.linkUrl?.trim() || null
   if (body.sortOrder !== undefined) patch.sortOrder = body.sortOrder
 
-  const updated = await announcementService.update(id, patch, admin.id || null)
+  const updated = await announcementService.update(id, patch, admin.id)
   if (!updated) {
     throw createError({ statusCode: 404, message: 'announcement not found' })
   }

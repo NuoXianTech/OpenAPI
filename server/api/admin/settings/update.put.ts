@@ -16,7 +16,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     .map(([key]) => key)
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.settings.update',
     resourceType: 'site-settings',

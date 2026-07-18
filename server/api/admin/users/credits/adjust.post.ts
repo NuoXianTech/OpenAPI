@@ -26,13 +26,13 @@ export default defineAdminEventHandler(async (event, admin) => {
     userIds,
     operation,
     amount,
-    operatorId: admin.id || null,
+    operatorId: admin.id,
     operatorName: admin.username,
     remark: remark || null
   })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: `admin.credit.${operation}`,
     resourceType: 'user',

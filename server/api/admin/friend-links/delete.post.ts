@@ -14,7 +14,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.friend-link.delete',
     resourceType: 'friend-link',

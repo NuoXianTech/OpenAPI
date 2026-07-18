@@ -28,7 +28,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   const { passwordHash: _ph, tokenVersion: _tv, ...safe } = deleted
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.user.delete',
     resourceType: 'user',

@@ -27,10 +27,10 @@ export default defineAdminEventHandler(async (event, admin) => {
       body.code,
       body.revision,
       body.values,
-      admin.id || null
+      admin.id
     )
     await operationLogService.addRequestLog(event, {
-      userId: admin.id || null,
+      userId: admin.id,
       actor: admin.username,
       action: 'admin.api.capabilities.update',
       resourceType: 'api',

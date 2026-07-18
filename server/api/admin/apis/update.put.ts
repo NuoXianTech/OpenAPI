@@ -25,7 +25,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     })
   }
 
-  const updated = await apiService.updateApi(id, admin.id || null, {
+  const updated = await apiService.updateApi(id, admin.id, {
     name: body.name,
     status: body.status,
     categoryId: body.categoryId,
@@ -47,7 +47,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.api.update',
     resourceType: 'api',

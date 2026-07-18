@@ -36,7 +36,7 @@ export default defineAdminEventHandler(async (event, admin) => {
 
   if (changedFields.length > 0) {
     await operationLogService.addRequestLog(event, {
-      userId: admin.id || null,
+      userId: admin.id,
       actor: admin.username,
       action: 'admin.oauth-provider.update',
       resourceType: 'oauth-provider',

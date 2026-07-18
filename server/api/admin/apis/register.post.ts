@@ -72,12 +72,12 @@ export default defineAdminEventHandler(async (event, admin) => {
     apiPath,
     httpMethod,
     endpointCount: manifestApi.endpoints.length,
-    createdBy: admin.id || null,
+    createdBy: admin.id,
     defaults
   })
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.api.register',
     resourceType: 'api',

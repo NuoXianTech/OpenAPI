@@ -15,7 +15,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     isEnabled: body.isEnabled ?? true,
     linkUrl: body.linkUrl?.trim() || null,
     sortOrder: body.sortOrder ?? 0
-  }, admin.id || null)
+  }, admin.id)
 
   await operationLogService.addRequestLog(event, {
     userId: admin.id,

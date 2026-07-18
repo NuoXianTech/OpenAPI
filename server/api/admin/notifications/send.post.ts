@@ -22,7 +22,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     content,
     level,
     linkUrl: body.linkUrl?.trim() || null,
-    senderUserId: admin.id || null,
+    senderUserId: admin.id,
     senderActor: admin.username
   })
 

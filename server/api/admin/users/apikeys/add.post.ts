@@ -11,7 +11,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   const created = await apiKeyService.createForUser(userId, payload)
 
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.api-key.create',
     resourceType: 'api-key',

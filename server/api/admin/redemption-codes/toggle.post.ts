@@ -14,7 +14,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     const updated = await redemptionService.toggle(id, enabled)
     if (!updated) throw createError({ statusCode: 404, message: '兑换码不存在' })
     await operationLogService.addRequestLog(event, {
-      userId: admin.id || null,
+      userId: admin.id,
       actor: admin.username,
       action: enabled ? 'admin.redemption-code.enable' : 'admin.redemption-code.disable',
       resourceType: 'redemption-code',
@@ -26,7 +26,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   // refine 已保证 id 或 batchId 至少一个非空
   const res = await redemptionService.toggleBatch(batchId!, enabled)
   await operationLogService.addRequestLog(event, {
-    userId: admin.id || null,
+    userId: admin.id,
     actor: admin.username,
     action: enabled ? 'admin.redemption-code.batch-enable' : 'admin.redemption-code.batch-disable',
     resourceType: 'redemption-code-batch',
