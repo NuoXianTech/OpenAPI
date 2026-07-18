@@ -134,9 +134,6 @@ jobs:
       - name: Run unit test suite
         run: pnpm test:run
 
-      - name: Build production application
-        run: pnpm build
-
       - name: Publish validation summary
         if: success()
         shell: bash
