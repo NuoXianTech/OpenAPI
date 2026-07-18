@@ -1,5 +1,5 @@
 /** 与 @nuxtjs/i18n 的 locales 配置保持一致。 */
-export const SUPPORTED_LOCALES = ['zh-CN', 'en-US'] as const
+export const SUPPORTED_LOCALES = ['en-US', 'zh-CN'] as const
 
 export type SupportedLocale = typeof SUPPORTED_LOCALES[number]
 
