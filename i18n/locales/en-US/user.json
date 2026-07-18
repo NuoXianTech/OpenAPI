@@ -1,0 +1,287 @@
+{
+  "user": {
+    "apiKeys": {
+      "title": "API keys",
+      "loadFailed": "Failed to load API keys",
+      "createdOne": "A new API key was generated",
+      "createdMany": "{count} API keys were generated",
+      "searchPlaceholder": "Search names, keys, IPs...",
+      "createAction": "Generate API key",
+      "showColumns": "Show columns",
+      "listTitle": "API key list",
+      "empty": "No API keys",
+      "createTitle": "Generate API key",
+      "editTitle": "Edit API key",
+      "generate": "Generate",
+      "filters": { "allStatuses": "All statuses", "allScopes": "All scopes" }
+    },
+    "credits": {
+      "balanceAfter": "Current balance {balance}",
+      "overview": {
+        "balance": "Current balance",
+        "balanceDescription": "Available for API calls",
+        "totalIncome": "Total income",
+        "totalIncomeDescription": "Check-ins, redemptions, and admin grants",
+        "totalExpenses": "Total expenses",
+        "totalExpensesDescription": "Total API call charges",
+        "transactionCount": "Transactions",
+        "transactionCountDescription": "All credit changes"
+      },
+      "distribution": {
+        "title": "Income and expenses",
+        "records": "{count} records"
+      },
+      "consumption": {
+        "title": "Credit usage over the last 7 days",
+        "description": "All negative credit changes grouped by day",
+        "empty": "No credit usage in the last 7 days",
+        "consumedPoints": "Credits used",
+        "transactionCount": "Transactions",
+        "averagePerTransaction": "Average per transaction"
+      },
+      "checkin": {
+        "title": "Daily check-in",
+        "success": "Check-in successful +{amount}",
+        "failed": "Check-in failed",
+        "disabledDescription": "Daily check-in is disabled by the administrator.",
+        "reward": "Check-in reward",
+        "availableNow": "Available now",
+        "nextCheckin": "Next check-in",
+        "lastCheckin": "Last check-in: {time}",
+        "action": "Check in now",
+        "coolingDown": "Cooling down",
+        "loadFailed": "Failed to load check-in status.",
+        "submitting": "Submitting check-in...",
+        "amount": {
+          "fixed": "{amount} credits",
+          "range": "{min} ~ {max} credits"
+        },
+        "cooldown": {
+          "fixedTime": "Refreshes daily at {time}",
+          "hours": "Refreshes every {hours} hours"
+        },
+        "duration": {
+          "days": "{days} days {hours} hours {minutes} minutes {seconds} seconds",
+          "hours": "{hours} hours {minutes} minutes {seconds} seconds",
+          "minutes": "{minutes} minutes {seconds} seconds",
+          "seconds": "{seconds} seconds"
+        },
+        "captcha": {
+          "title": "Human verification",
+          "description": "Complete the verification below to check in automatically",
+          "instructions": "Cloudflare Turnstile verification is required before checking in.",
+          "missingSiteKey": "Turnstile site key is not configured. Contact an administrator."
+        }
+      },
+      "redeem": {
+        "success": "Redeemed successfully +{amount}",
+        "code": "Redemption code",
+        "enterCode": "Enter a redemption code",
+        "failed": "Redemption failed",
+        "hint": "Enter a code and select Redeem. Letter case does not matter.",
+        "placeholder": "For example, WELCOME-XXXXXXXXXXXXXXXX",
+        "action": "Redeem",
+        "recent": "Recent redemptions"
+      },
+      "calendar": {
+        "title": "Check-in calendar",
+        "description": "Switch months to view previous check-ins",
+        "days": "{count} days",
+        "points": "+{amount} credits",
+        "checkedIn": "Checked in",
+        "monthlyTotal": "{count} check-ins this month"
+      },
+      "logs": {
+        "title": "Credit transactions",
+        "empty": "No credit transactions",
+        "operator": "Operator",
+        "callNumber": "Call #{id}",
+        "filters": {
+          "type": "Type",
+          "direction": "Direction",
+          "allTypes": "All types",
+          "allDirections": "All directions",
+          "income": "Income (+)",
+          "expense": "Expense (−)"
+        },
+        "columns": {
+          "time": "Time",
+          "type": "Type",
+          "change": "Change",
+          "balanceAfter": "Balance after",
+          "related": "Related",
+          "remark": "Remark"
+        }
+      }
+    },
+    "logs": {
+      "title": "API call logs",
+      "detailsTitle": "Call details",
+      "searchPlaceholder": "Search APIs, keys, status codes...",
+      "showColumns": "Show columns",
+      "empty": "No call records",
+      "noApiKey": "None",
+      "free": "Free",
+      "milliseconds": "{value} ms",
+      "viewDetails": "View details",
+      "outcomes": { "notCounted": "Not counted" },
+      "filters": {
+        "api": "API",
+        "status": "Status",
+        "allApis": "All APIs",
+        "allKeys": "All keys",
+        "allStatuses": "All statuses"
+      },
+      "columns": {
+        "time": "Time",
+        "key": "Key",
+        "api": "API",
+        "cost": "Cost",
+        "summary": "Summary"
+      },
+      "detail": {
+        "title": "Call details",
+        "result": "Result",
+        "request": "Request",
+        "statusCode": "Status code",
+        "latency": "Latency",
+        "error": "Error",
+        "client": "Client"
+      }
+    },
+    "settings": {
+      "profile": {
+        "title": "Profile",
+        "avatar": "Avatar",
+        "avatarAlt": "User avatar",
+        "avatarDescription": "Your avatar is provided by Cravatar based on your email.",
+        "username": "Username",
+        "usernameDescription": "Username cannot be changed.",
+        "displayName": "Display name",
+        "displayNameDescription": "The name shown publicly.",
+        "save": "Save profile",
+        "updated": "Profile updated"
+      },
+      "language": {
+        "title": "Language preference",
+        "label": "Interface language",
+        "fieldDescription": "Save to apply this language to text, dates, and numbers.",
+        "updated": "Language preference updated"
+      },
+      "email": {
+        "title": "Email address",
+        "currentEmail": "Current email",
+        "currentEmailDescription": "The email linked to your account and used for system messages.",
+        "verified": "Verified",
+        "unverified": "Not verified",
+        "currentPasswordDescription": "For account security, verify your current password before changing email.",
+        "newEmail": "New email",
+        "newEmailDescription": "A verification email will be sent. The change takes effect after you follow its link.",
+        "newEmailPlaceholder": "new{'@'}example.com",
+        "enterNewEmail": "Enter a new email",
+        "sameAsCurrent": "The new email matches the current email",
+        "sendVerification": "Send verification",
+        "verificationSent": "Verification email sent",
+        "verificationSentDescription": "Open the link sent to {email} to complete the change",
+        "pendingTitle": "Verification email sent to {email}",
+        "pendingDescription": "Open the link in that mailbox to complete the change. The link lifetime is configured by the site."
+      },
+      "security": {
+        "title": "Change password",
+        "currentPassword": "Current password",
+        "currentPasswordDescription": "Your existing password is required for verification.",
+        "newPassword": "New password",
+        "newPasswordDescription": "At least 8 characters; a mix of letters and numbers is recommended.",
+        "confirmPassword": "Confirm new password",
+        "confirmPasswordDescription": "Enter the new password again.",
+        "enterCurrentPassword": "Enter your current password",
+        "passwordTooShort": "The new password must be at least 8 characters",
+        "passwordMismatch": "The new passwords do not match",
+        "updatePassword": "Update password",
+        "passwordUpdated": "Password updated",
+        "otherSessionsRevoked": "Other sessions have been signed out"
+      },
+      "loginActivity": {
+        "title": "Recent login activity",
+        "records": "Login records",
+        "empty": "No login records",
+        "hint": "Showing the latest {count}. If you see an unfamiliar login, change your password immediately.",
+        "columns": {
+          "time": "Time",
+          "method": "Method",
+          "result": "Result",
+          "device": "Device"
+        }
+      },
+      "oauth": {
+        "title": "Connected accounts",
+        "disabled": "Third-party login is disabled",
+        "empty": "No OAuth providers are available",
+        "linkedAt": "Connected {time}",
+        "status": {
+          "bound": "Connected",
+          "unbound": "Not connected",
+          "disabled": "Disabled"
+        },
+        "actions": { "bind": "Connect", "unbind": "Disconnect" },
+        "unbindTitle": "Disconnect {provider}",
+        "unbindDescription": "You will no longer be able to sign in with this provider.",
+        "unbound": "Disconnected",
+        "unbindFailed": "Failed to disconnect",
+        "bound": "Connected {provider}",
+        "bindFailed": "Failed to connect",
+        "errors": {
+          "stateMismatch": "The OAuth state expired. Try again.",
+          "loginRequired": "You must be logged in first",
+          "alreadyBoundByOther": "This account is already connected to another user",
+          "alreadyBoundSameProvider": "You already connected another account from this provider. Disconnect it first.",
+          "callbackFailed": "Callback processing failed",
+          "providerUnavailable": "The provider is unavailable",
+          "oauthDisabled": "Third-party login is disabled",
+          "missingCode": "No authorization code was received"
+        }
+      }
+    },
+    "overview": {
+      "pageTitle": "Account overview",
+      "title": "Overview",
+      "loadFailed": "Failed to load overview",
+      "copySuccess": "Example request copied",
+      "copyFailed": "Copy failed",
+      "hero": {
+        "title": "Start using your API gateway in minutes",
+        "description": "Hello, {username}. Manage API keys, credits, and usage from here."
+      },
+      "actions": {
+        "createApiKey": "Create API key",
+        "manageCredits": "Manage credits",
+        "viewCredits": "View credits",
+        "viewLogs": "View call logs"
+      },
+      "firstRequest": {
+        "title": "First API request",
+        "ready": "Ready",
+        "notCreated": "Not created"
+      },
+      "usage": {
+        "title": "Usage overview",
+        "description": "Monitor balance, usage, and request volume"
+      },
+      "metrics": {
+        "spent24h": "Spent in 24 hours",
+        "totalSpent": "Total spent",
+        "totalCalls": "Requests",
+        "balance": "Remaining balance"
+      },
+      "chart": {
+        "title": "API requests in the last 24 hours",
+        "description": "Successful and failed counted requests by hour",
+        "legend": "Legend",
+        "successRequests": "Successful requests",
+        "failureRequests": "Failed requests",
+        "emptyTitle": "No requests in the last 24 hours",
+        "emptyDescription": "Request trends will appear here after you use the API."
+      }
+    }
+  }
+}

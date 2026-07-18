@@ -1,0 +1,292 @@
+{
+  "common": {
+    "actions": {
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "save": "Save",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "copy": "Copy",
+      "clear": "Clear",
+      "reset": "Reset",
+      "done": "Done",
+      "refresh": "Refresh",
+      "retry": "Retry",
+      "visit": "Visit",
+      "viewDetails": "View details",
+      "logout": "Log out",
+      "backHome": "Back to home",
+      "backLogin": "Back to login"
+    },
+    "states": {
+      "loading": "Loading...",
+      "loadFailed": "Failed to load",
+      "success": "Success",
+      "failure": "Failure",
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Maintenance",
+      "deprecated": "Deprecated",
+      "automatic": "Automatic",
+      "disabled": "Disabled",
+      "unknown": "Unknown"
+    },
+    "filters": {
+      "all": "All",
+      "current": "Current",
+      "button": "Filter",
+      "title": "Filters",
+      "activeCount": "{count} filters",
+      "tabsAria": "Filter tabs",
+      "searchOptions": "Search options",
+      "noOptions": "No options found",
+      "more": "More {count}"
+    },
+    "pagination": {
+      "perPage": "{count} / page",
+      "totalRecords": "{count} records"
+    },
+    "table": { "empty": "No data" },
+    "dateTime": {
+      "selectDateTime": "Select date and time",
+      "selectRange": "Select time range",
+      "now": "Now",
+      "presets": {
+        "last7Days": "Last 7 days",
+        "last14Days": "Last 14 days",
+        "last30Days": "Last 30 days",
+        "last3Months": "Last 3 months",
+        "last6Months": "Last 6 months",
+        "lastYear": "Last year"
+      }
+    },
+    "content": { "noDescription": "No description" },
+    "feedback": {
+      "copied": "Copied to clipboard",
+      "copyFailed": "Copy failed",
+      "saveFailed": "Save failed",
+      "sendFailed": "Send failed",
+      "createFailed": "Creation failed",
+      "operationFailed": "Operation failed",
+      "deleted": "Deleted",
+      "deleteFailed": "Delete failed",
+      "updated": "Updated",
+      "updateFailed": "Update failed"
+    },
+    "duration": {
+      "years": "{count} years",
+      "days": "{count} days",
+      "hours": "{count} hours",
+      "minutes": "{count} minutes"
+    },
+    "units": { "points": "credits", "times": "times", "records": "records" },
+    "identities": {
+      "anonymous": "Anonymous",
+      "admin": "Administrator",
+      "adminWithId": "Administrator #{id}",
+      "user": "User",
+      "userWithId": "User #{id}",
+      "system": "System"
+    },
+    "accounts": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "banned": "Banned",
+      "unbanned": "Not banned",
+      "permanentBan": "Permanently banned",
+      "bannedUntil": "Banned until {time}",
+      "deletedUser": "Deleted user"
+    },
+    "credits": {
+      "reasons": {
+        "adminGrant": "Admin grant",
+        "adminRevoke": "Admin deduction",
+        "adminReset": "Admin reset",
+        "apiCharge": "API charge",
+        "apiRefund": "API refund",
+        "signupBonus": "Sign-up bonus",
+        "redemptionCode": "Redemption code",
+        "checkin": "Daily check-in"
+      }
+    },
+    "apiKeys": {
+      "defaultName": "Default key",
+      "loadScopesFailed": "Failed to load API list",
+      "expiry": {
+        "never": "Never",
+        "oneHour": "1 hour",
+        "oneDay": "1 day",
+        "oneMonth": "1 month",
+        "custom": "Custom"
+      },
+      "scopes": { "all": "All APIs", "selected": "Selected APIs" },
+      "statuses": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "expired": "Expired",
+        "revoked": "Revoked"
+      },
+      "columns": {
+        "name": "Name",
+        "quota": "Quota (used/total)",
+        "scopes": "API scope",
+        "ipWhitelist": "IP allowlist",
+        "totalCalls": "Calls",
+        "lastUsedAt": "Last used",
+        "createdAt": "Created",
+        "expiresAt": "Expires",
+        "status": "Status"
+      },
+      "display": {
+        "unlimited": "Unlimited",
+        "scopeCount": "{count} APIs",
+        "allIps": "All IPs",
+        "cidrCount": "{count} CIDRs",
+        "neverUsed": "Never used"
+      },
+      "actions": {
+        "edit": "Edit configuration",
+        "copy": "Copy key",
+        "enable": "Enable key",
+        "disable": "Disable key",
+        "reset": "Reset key",
+        "delete": "Delete key"
+      },
+      "feedback": { "enabled": "Enabled", "disabled": "Disabled" },
+      "delete": {
+        "title": "Delete API key: {name}",
+        "description": "The key will stop working immediately and cannot be recovered."
+      },
+      "validation": {
+        "expiryRequired": "Enter an expiration time",
+        "invalidQuota": "Enter a valid credit limit",
+        "scopeRequired": "Select at least one API or choose All APIs",
+        "invalidIpLines": "Invalid IP allowlist entries on lines {lines}"
+      },
+      "form": {
+        "name": "Name",
+        "namePlaceholder": "For example: Default key / Production key",
+        "batchNameHelp": "When generating multiple keys, the first uses this name and the rest receive suffixes",
+        "editNameHelp": "Display only; this does not change the key itself",
+        "count": "Quantity",
+        "countHelp": "Up to 5 at a time",
+        "expiry": "Expiration",
+        "selectExpiry": "Select expiration",
+        "expiryEditHelp": "Selecting Never clears the expiration time; presets are calculated from now.",
+        "expiryCreateHelp": "Expired keys remain stored but API calls will be rejected.",
+        "quota": "Credit quota",
+        "unlimitedQuota": "Unlimited quota",
+        "quotaPlaceholder": "Maximum cumulative credit usage",
+        "quotaEditHelp": "Changing the limit does not reset usage. A limit below current usage disables the key until raised.",
+        "quotaCreateHelp": "Calls are rejected after this key reaches its limit; charges still come from the account balance.",
+        "scopes": "API scope",
+        "selectScopes": "Select allowed APIs",
+        "ipWhitelist": "IP allowlist (CIDR)",
+        "invalidIpLines": "Invalid entries on lines {lines}",
+        "ipHelpDetailed": "One CIDR per line, for example 1.2.3.4/32 or 10.0.0.0/8; leave empty for no restriction",
+        "ipHelpCompact": "One entry per line; leave empty for no restriction"
+      },
+      "reset": {
+        "success": "Reset complete; the old key is invalid",
+        "failed": "Reset failed",
+        "saveNewTitle": "Reset complete — save the new key",
+        "confirmTitle": "Reset API key",
+        "warningTitle": "Resetting immediately invalidates the old key",
+        "warningDescription": "The key “{name}” will be reset and all clients using the old key will fail.",
+        "confirmAction": "Reset key",
+        "savedAction": "I saved it"
+      }
+    },
+    "loginLogs": {
+      "methods": { "password": "Password", "github": "GitHub", "qq": "QQ" },
+      "failures": {
+        "invalidPassword": "Incorrect password",
+        "banned": "Account banned",
+        "notActive": "Email not verified",
+        "oauthUserUnavailable": "Account unavailable"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "unread": "Unread",
+      "unreadCount": "{count} unread",
+      "markAllRead": "Mark all read",
+      "onlyUnread": "Unread only",
+      "noUnread": "No unread notifications",
+      "empty": "No notifications",
+      "emptyDescription": "New notifications will appear here",
+      "from": "From: {sender}",
+      "system": "System",
+      "levels": {
+        "info": "Notice",
+        "success": "Success",
+        "warning": "Warning",
+        "critical": "Critical"
+      }
+    },
+    "turnstile": {
+      "loadFailed": "Failed to load the Turnstile script",
+      "loadFailedWithHost": "Failed to load Turnstile: challenges.cloudflare.com is unreachable",
+      "loadTimeout": "Turnstile loading timed out after {seconds}s. Check access to challenges.cloudflare.com",
+      "emptySiteKey": "Turnstile site key is empty. Check the administrator settings.",
+      "verificationFailed": "Turnstile verification failed: {message}",
+      "renderFailed": "Failed to render the Turnstile widget. Verify that the site key matches this domain."
+    },
+    "search": { "clear": "Clear search" },
+    "dialog": { "confirmTitle": "Confirm action" },
+    "dashboard": {
+      "groups": {
+        "general": "General",
+        "personal": "Personal",
+        "management": "Management",
+        "operations": "Operations",
+        "system": "System"
+      },
+      "navigation": {
+        "overview": "Overview",
+        "apiKeys": "API keys",
+        "usageLogs": "Usage logs",
+        "credits": "Credits",
+        "settings": "Settings",
+        "logCenter": "Log center",
+        "creditManagement": "Credit management",
+        "contentManagement": "Content management",
+        "apiManagement": "API management",
+        "userManagement": "User management",
+        "systemSettings": "System settings",
+        "profileSettings": "Profile settings",
+        "siteSettings": "Site settings",
+        "backToSite": "Back to site"
+      },
+      "sections": {
+        "announcements": "Announcements",
+        "notifications": "Notifications",
+        "friendLinks": "Friend links",
+        "categoryManagement": "Category management",
+        "callLogs": "Call logs",
+        "loginLogs": "Login logs",
+        "operationLogs": "Operation logs",
+        "userCredits": "User credits",
+        "creditTransactions": "Credit transactions",
+        "redemptionCodes": "Redemption codes",
+        "userSessions": "User sessions",
+        "captcha": "CAPTCHA",
+        "email": "Email",
+        "about": "About",
+        "checkinAndRedeem": "Check in and redeem",
+        "transactionDetails": "Transaction details",
+        "profile": "Profile",
+        "passwordAndSecurity": "Password and security",
+        "oauthAccounts": "Connected accounts"
+      }
+    },
+    "dashboardRanking": {
+      "empty": "No call data",
+      "api": "API",
+      "calls": "Calls",
+      "successRate": "Success rate",
+      "times": "times"
+    }
+  }
+}
