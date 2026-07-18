@@ -1,4 +1,4 @@
-export const EXCHANGE_RATE_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
+const EXCHANGE_RATE_ENCODINGS = ['json', 'text', 'markdown', 'md'] as const
 export const DEFAULT_EXCHANGE_RATE_CURRENCY = 'CNY'
 export const DEFAULT_EXCHANGE_RATE_ENCODING: ExchangeRateEncoding = 'json'
 

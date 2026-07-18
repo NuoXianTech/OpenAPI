@@ -1,5 +1,5 @@
-export const BING_ENCODES = ['image', 'json', 'text', 'markdown', 'md'] as const
-export const BING_IMAGE_TYPES = ['auto', 'pc', 'mobile'] as const
+const BING_ENCODES = ['image', 'json', 'text', 'markdown', 'md'] as const
+const BING_IMAGE_TYPES = ['auto', 'pc', 'mobile'] as const
 
 export const DEFAULT_BING_ENCODE: BingEncode = 'image'
 export const DEFAULT_BING_IMAGE_TYPE: BingImageType = 'auto'
@@ -34,7 +34,7 @@ export interface BingArchiveResponse {
   images?: BingArchiveImage[]
 }
 
-export interface BingPrimaryImageContent {
+interface BingPrimaryImageContent {
   Description?: string
   Headline?: string
   Title?: string
@@ -51,7 +51,7 @@ export interface BingPrimaryImageContent {
   }
 }
 
-export interface BingPrimaryMediaContent {
+interface BingPrimaryMediaContent {
   ImageContent?: BingPrimaryImageContent
 }
 
