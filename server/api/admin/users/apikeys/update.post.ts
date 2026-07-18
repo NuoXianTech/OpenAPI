@@ -20,7 +20,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.api-key.update',
     resourceType: 'api-key',
-    resourceId: String(updated.id),
+    resourceId: updated.id,
     detail: { patch }
   })
 

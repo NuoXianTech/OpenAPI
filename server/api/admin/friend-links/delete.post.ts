@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.friend-link.delete',
     resourceType: 'friend-link',
-    resourceId: String(id),
+    resourceId: id,
     detail: { deleted }
   })
 

@@ -21,7 +21,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     actor: authUser.username,
     action: 'user.oauth.unbind',
     resourceType: 'oauth-account',
-    resourceId: String(removed.id),
+    resourceId: removed.id,
     detail: { provider, providerUserId: removed.providerUserId }
   })
 

@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
       actor: admin.username,
       action: enabled ? 'admin.redemption-code.enable' : 'admin.redemption-code.disable',
       resourceType: 'redemption-code',
-      resourceId: String(id)
+      resourceId: id
     })
     return updated
   }

@@ -16,7 +16,7 @@ export default defineAdminEventHandler(async (event, admin) => {
       actor: admin.username,
       action: 'admin.redemption-code.delete',
       resourceType: 'redemption-code',
-      resourceId: String(id)
+      resourceId: id
     })
     return removed
   }

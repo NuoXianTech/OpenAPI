@@ -18,7 +18,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
     actor: user.username,
     action: 'user.api-key.delete',
     resourceType: 'api-key',
-    resourceId: String(deleted.id),
+    resourceId: deleted.id,
     detail: { keyName: deleted.name }
   })
 

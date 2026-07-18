@@ -21,8 +21,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
       actor: user.username,
       action: 'user.checkin',
       resourceType: 'credit',
-      resourceId: String(user.id),
-      ip,
+      resourceId: user.id,
       detail: { amount: data.amount, balanceAfter: data.balanceAfter, nextCheckinAt: data.nextCheckinAt }
     })
     return data

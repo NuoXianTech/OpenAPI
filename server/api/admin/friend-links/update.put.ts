@@ -19,7 +19,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.friend-link.update',
     resourceType: 'friend-link',
-    resourceId: String(id),
+    resourceId: id,
     detail: { updated }
   })
 

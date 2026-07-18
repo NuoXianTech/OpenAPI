@@ -31,7 +31,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.notification.send',
     resourceType: 'notification-message',
-    resourceId: String(result.message.id),
+    resourceId: result.message.id,
     detail: {
       title,
       level,

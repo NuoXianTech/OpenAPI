@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.api-key.reset',
     resourceType: 'api-key',
-    resourceId: String(id),
+    resourceId: id,
     detail: { keyId: updated.id }
   })
 

@@ -24,7 +24,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.api.delete',
     resourceType: 'api',
-    resourceId: String(id),
+    resourceId: id,
     detail: { deleted }
   })
 

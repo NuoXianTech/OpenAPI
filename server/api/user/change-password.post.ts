@@ -34,7 +34,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     actor: authUser.username,
     action: 'user.password.change',
     resourceType: 'user',
-    resourceId: String(authUser.id)
+    resourceId: authUser.id
   })
 
   return null

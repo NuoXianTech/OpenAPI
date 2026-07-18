@@ -20,7 +20,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.settings.update',
     resourceType: 'site-settings',
-    resourceId: String(data.id),
+    resourceId: data.id,
     detail: { changedFields }
   })
 

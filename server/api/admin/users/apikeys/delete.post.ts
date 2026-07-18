@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.api-key.delete',
     resourceType: 'api-key',
-    resourceId: String(deleted.id),
+    resourceId: deleted.id,
     detail: { keyName: deleted.name, ownerUserId: deleted.userId }
   })
 
