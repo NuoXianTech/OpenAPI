@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { LazyUserCallLogDetailModal } from '#components'
-import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 import {
   useUserCallLogsPage,
   useUserCallOutcomeMeta,
@@ -33,43 +33,7 @@ const {
 } = useUserCallLogsPage()
 
 const overlay = useOverlay()
-const columnVisibility = ref<Record<string, boolean>>({})
-
-interface ToggleableColumn {
-  id: string
-  header: string
-}
-
-function readToggleableColumn(column: TableColumn<UserCallLogRow>): ToggleableColumn | undefined {
-  const header = 'header' in column && typeof column.header === 'string' ? column.header : ''
-  if (!header) return undefined
-
-  const id = 'id' in column && typeof column.id === 'string'
-    ? column.id
-    : 'accessorKey' in column
-      ? String(column.accessorKey)
-      : ''
-  if (!id) return undefined
-
-  return { id, header }
-}
-
-const columnVisibilityItems = computed<DropdownMenuItem[]>(() =>
-  columns.value
-    .map(readToggleableColumn)
-    .filter((column): column is ToggleableColumn => column != null)
-    .map(column => ({
-      label: column.header,
-      type: 'checkbox' as const,
-      checked: columnVisibility.value[column.id] !== false,
-      onUpdateChecked(checked: boolean) {
-        columnVisibility.value = { ...columnVisibility.value, [column.id]: checked }
-      },
-      onSelect(event: Event) {
-        event.preventDefault()
-      }
-    }))
-)
+const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility(columns)
 
 onMounted(() => {
   void loadFilterOptions()
