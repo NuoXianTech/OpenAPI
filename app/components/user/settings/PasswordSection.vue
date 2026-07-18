@@ -9,6 +9,7 @@ const toast = useToast()
 const { t } = useI18n()
 const form = reactive({ currentPassword: '', newPassword: '', confirmPassword: '' })
 const isSaving = ref(false)
+const hasChanges = computed(() => Object.values(form).some(Boolean))
 
 async function submit() {
   if (!form.currentPassword) {
@@ -83,6 +84,7 @@ async function submit() {
     <div class="flex justify-end pt-4">
       <UButton
         :loading="isSaving"
+        :disabled="!hasChanges || isSaving"
         icon="i-mdi-content-save-outline"
         @click="submit"
       >

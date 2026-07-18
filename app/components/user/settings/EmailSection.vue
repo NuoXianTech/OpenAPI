@@ -13,6 +13,11 @@ const newEmail = ref('')
 const currentPassword = ref('')
 const isSaving = ref(false)
 const pending = ref<string | null>(null)
+const canSubmit = computed(() => {
+  const candidate = newEmail.value.trim().toLowerCase()
+  const current = (props.profile?.email || '').toLowerCase()
+  return Boolean(candidate && currentPassword.value && candidate !== current)
+})
 
 async function submit() {
   const v = newEmail.value.trim().toLowerCase()
@@ -102,6 +107,7 @@ async function submit() {
         <UButton
           icon="i-mdi-email-arrow-right-outline"
           :loading="isSaving"
+          :disabled="!canSubmit || isSaving || !profile"
           @click="submit"
         >
           {{ $t('user.settings.email.sendVerification') }}

@@ -16,6 +16,8 @@ const { t } = useI18n()
 const isSaving = ref(false)
 const displayName = ref('')
 const avatarAlt = computed(() => props.profile?.displayName || props.profile?.username || t('user.settings.profile.avatarAlt'))
+const hasChanges = computed(() => Boolean(props.profile)
+  && displayName.value.trim() !== (props.profile?.displayName || '').trim())
 
 watch(() => props.profile, (val) => {
   if (val) displayName.value = val.displayName || ''
@@ -80,6 +82,7 @@ async function submit() {
       <div class="flex justify-end pt-4">
         <UButton
           :loading="isSaving"
+          :disabled="!hasChanges || isSaving || profileLoading || !profile"
           icon="i-mdi-content-save-outline"
           @click="submit"
         >
