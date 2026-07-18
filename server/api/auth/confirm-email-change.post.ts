@@ -2,6 +2,7 @@
 import { createError } from 'h3'
 import { confirmEmailChangeSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
+import { operationLogService } from '~~/server/services/operation-log-service'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -29,6 +30,15 @@ export default defineEventHandler(async (event) => {
   if (!updated) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
+
+  await operationLogService.addRequestLog(event, {
+    userId: user.id,
+    actor: user.username,
+    action: 'user.email.change.confirm',
+    resourceType: 'user',
+    resourceId: user.id,
+    detail: { emailChanged: true }
+  })
 
   const { passwordHash: _, ...safe } = updated
   return safe

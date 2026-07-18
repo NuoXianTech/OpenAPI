@@ -189,6 +189,11 @@
           "user_api_key_reset": "重置 API 密钥",
           "user_api_key_delete": "删除 API 密钥",
           "user_password_change": "修改密码",
+          "user_profile_update": "更新个人资料",
+          "user_preferences_update": "更新偏好设置",
+          "user_email_change_request": "申请变更邮箱",
+          "user_email_change_confirm": "确认变更邮箱",
+          "user_oauth_bind": "绑定第三方账号",
           "user_oauth_unbind": "解绑第三方账号",
           "user_redemption_code_redeem": "兑换码兑换"
         }
