@@ -19,8 +19,8 @@ type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
 const { user } = useAuth()
 const introDescription = computed(() => user.value?.username
-  ? t('admin.overview.hero.descriptionWithName', { username: user.value.username })
-  : t('admin.overview.hero.description'))
+  ? t('admin.overview.hero.description', { username: user.value.username })
+  : '')
 const OVERVIEW_SPARKLINE_RANGE: AdminDashboardRange = 7
 const selectedTrendRange = ref<AdminDashboardRange>(OVERVIEW_SPARKLINE_RANGE)
 const rangeOptions = computed<Array<{ label: string, value: AdminDashboardRange }>>(() => [
@@ -197,7 +197,10 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   {{ $t('admin.overview.hero.title') }}
                 </h2>
-                <p class="text-sm sm:text-base text-toned max-w-xl">
+                <p
+                  v-if="introDescription"
+                  class="text-sm sm:text-base text-toned max-w-xl"
+                >
                   {{ introDescription }}
                 </p>
               </div>

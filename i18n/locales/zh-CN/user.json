@@ -258,8 +258,7 @@
       "copyFailed": "复制失败",
       "hero": {
         "title": "几分钟内开始使用你的 API 网关",
-        "description": "你好。在这里你可以管理 API 密钥、查看余额与调用情况，监控服务健康状态。",
-        "descriptionWithName": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用情况。"
+        "description": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用情况。"
       },
       "actions": {
         "createApiKey": "创建 API 密钥",

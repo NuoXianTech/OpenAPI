@@ -43,8 +43,8 @@ const callsTrendValues = computed(() => trend.value.map(point => point.totalCall
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
 const introDescription = computed(() => user.value?.username
-  ? t('user.overview.hero.descriptionWithName', { username: user.value.username })
-  : t('user.overview.hero.description'))
+  ? t('user.overview.hero.description', { username: user.value.username })
+  : '')
 const sampleCurl = computed(() => [
   `curl -X GET '${origin}/v1/your-endpoint' \\`,
   `  -H 'x-api-key: <your-api-key>'`
@@ -138,7 +138,10 @@ async function copyCurl() {
                 <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
                   {{ $t('user.overview.hero.title') }}
                 </h2>
-                <p class="text-sm sm:text-base text-toned max-w-xl">
+                <p
+                  v-if="introDescription"
+                  class="text-sm sm:text-base text-toned max-w-xl"
+                >
                   {{ introDescription }}
                 </p>
               </div>

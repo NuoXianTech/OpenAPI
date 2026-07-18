@@ -1311,8 +1311,7 @@
       "platformTitle": "平台概览",
       "hero": {
         "title": "平台运营总览",
-        "description": "你好。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。",
-        "descriptionWithName": "你好，{username}。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。"
+        "description": "你好，{username}。在这里管理用户、API 与系统配置，实时监控调用量与服务健康状态。"
       },
       "snapshot": {
         "title": "今日快照",
