@@ -9,7 +9,7 @@ export interface OauthProviderPatch {
   isEnabled?: boolean
 }
 
-export interface OauthProviderBatchItem {
+interface OauthProviderBatchItem {
   provider: SupportedOauthProvider
   clientId: string
   clientSecret?: string

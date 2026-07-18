@@ -10,7 +10,7 @@ export interface CreatePostgresClientOptions {
   max?: number
 }
 
-export type PostgresClient = ReturnType<typeof postgres>
+type PostgresClient = ReturnType<typeof postgres>
 export type PgliteClient = PGlite
 export type DatabaseDriver = 'postgres' | 'pglite'
 
@@ -55,7 +55,7 @@ export function getDatabaseUrl() {
   return databaseUrl
 }
 
-export function getDatabasePoolSize() {
+function getDatabasePoolSize() {
   const parsed = Number.parseInt(process.env.DATABASE_POOL_SIZE || '10', 10)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 10
 }
@@ -87,7 +87,7 @@ export function createPgliteClient() {
   return new PGlite(dataDir)
 }
 
-export function createDatabase(client: PostgresClient) {
+function createDatabase(client: PostgresClient) {
   return drizzlePostgres(client, { schema })
 }
 

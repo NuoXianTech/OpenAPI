@@ -12,7 +12,7 @@ import {
 
 const FIELD_KEY_PATTERN = /^[a-z][A-Za-z0-9]*$/
 
-export interface ApiCapabilityValueError extends Error {
+interface ApiCapabilityValueError extends Error {
   statusCode: number
   errorCode: string
 }
