@@ -17,7 +17,7 @@ import { rc4Process } from './cryptojs-openssl'
 export type BytesEncoding = 'hex' | 'base64' | 'utf8'
 export type CipherEncoding = 'hex' | 'base64'
 
-export function decodeBytes(value: string, encoding: BytesEncoding, fieldName: string): Buffer {
+function decodeBytes(value: string, encoding: BytesEncoding, fieldName: string): Buffer {
   if (encoding === 'hex') {
     const cleaned = value.replace(/\s+/g, '')
     if (!/^[0-9a-fA-F]*$/.test(cleaned) || cleaned.length % 2 !== 0) {

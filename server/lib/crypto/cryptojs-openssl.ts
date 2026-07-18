@@ -16,7 +16,7 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:
 
 const SALT_MAGIC = Buffer.from('Salted__', 'utf8')
 
-export function evpBytesToKey(password: Buffer, salt: Buffer, keyLen: number, ivLen: number): { key: Buffer, iv: Buffer } {
+function evpBytesToKey(password: Buffer, salt: Buffer, keyLen: number, ivLen: number): { key: Buffer, iv: Buffer } {
   const total = keyLen + ivLen
   const blocks: Buffer[] = []
   let last = Buffer.alloc(0)
