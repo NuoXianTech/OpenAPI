@@ -1,6 +1,6 @@
 // OAuth 待绑定身份 → 「新注册」：用户在窗口确认/填写邮箱后建号并绑定三方身份，
 // 随后按站点邮件激活策略：关闭激活则立即登录，开启则发验证邮件、账号待激活。
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError, getHeader } from 'h3'
 import { randomBytes } from 'node:crypto'
 import { oauthRegisterSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
@@ -17,6 +17,7 @@ import { sendVerificationEmail } from '~~/server/utils/email'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
+import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 
 function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
@@ -49,12 +50,12 @@ export default defineEventHandler(async (event) => {
 
   const body = await readZodBody(event, oauthRegisterSchema)
   const email = body.email
-  const ip = getRequestIP(event) || '0.0.0.0'
+  const ip = readClientIp(event)
   const userAgent = getHeader(event, 'user-agent') || null
   const method: LoginMethod = pending.provider === 'github' ? 'oauth_github' : 'oauth_qq'
 
   const limiter = getRateLimiter()
-  const limit = await limiter.consume(`oauth-register:ip:${ip}`, 10, 'hour')
+  const limit = await limiter.consume(`oauth-register:ip:${toClientIpRateLimitValue(ip)}`, 10, 'hour')
   if (!limit.allowed) {
     throw createError({ statusCode: 429, message: '尝试次数过多，请稍后再试' })
   }

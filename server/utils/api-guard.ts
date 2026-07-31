@@ -10,7 +10,6 @@ import {
   defineEventHandler,
   getHeader,
   getQuery,
-  getRequestIP,
   getRequestURL,
   setResponseHeader,
   setResponseHeaders
@@ -36,7 +35,7 @@ import { clampInteger, toNullableNonNegativeInteger, toNumber } from '~~/server/
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
-import { readRequestMeta } from '~~/server/utils/request-meta'
+import { readClientIp, readRequestMeta, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
 import { runWithTimeout } from '~~/server/utils/timeout'
@@ -171,6 +170,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
   }
 
   const rawKey = readApiKeyFromEvent(event)
+  const clientIp = readClientIp(event)
   let apiKey: ApiKeyRecord | null = null
   let quotaReservation: ApiKeyQuotaReservation | null = null
 
@@ -205,8 +205,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
     if (!hasScope(apiKey.scopes, api)) {
       return { passed: false, outcome: 'scope_denied', error: API_GUARD_ERROR.SCOPE_DENIED, apiKey }
     }
-    const ip = getRequestIP(event) || null
-    if (!ipInAnyCidr(ip, apiKey.ipWhitelist)) {
+    if (!ipInAnyCidr(clientIp, apiKey.ipWhitelist)) {
       return { passed: false, outcome: 'ip_denied', error: API_GUARD_ERROR.IP_DENIED, apiKey }
     }
   } else if (api.isApiKey || effectiveCost > 0) {
@@ -215,7 +214,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
 
   const subjectKey = apiKey
     ? `apikey:${apiKey.id}`
-    : `ip:${getRequestIP(event) || 'unknown'}`
+    : `ip:${toClientIpRateLimitValue(clientIp)}`
   let rateResult: Awaited<ReturnType<typeof checkRateLimit>>
   try {
     rateResult = await checkRateLimit(api, subjectKey)

@@ -1,4 +1,4 @@
-import { createError, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { registerSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { hashPassword } from '~~/server/utils/auth'
@@ -10,6 +10,7 @@ import { systemSettingsService } from '~~/server/services/system-settings-servic
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
+import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
 // 防止匿名访问者用接口差异遍历账号库。真实分支信号只走邮件通道。
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
   const { username, email, password } = body
   const turnstileToken = body.turnstileToken ?? ''
 
-  const ip = getRequestIP(event) || null
+  const ip = readClientIp(event)
 
   // 先校验 Turnstile：失败时直接抛错，与"邮箱/用户名是否存在"无关，不会构成枚举信号。
   await assertTurnstileForPage('register', turnstileToken, ip)
@@ -43,7 +44,7 @@ export default defineEventHandler(async (event) => {
     namespace: 'register',
     buckets: [
       { name: 'email', value: email, limit: 1, window: 'minute' },
-      { name: 'ip', value: ip, limit: 10, window: 'hour' }
+      { name: 'ip', value: toClientIpRateLimitValue(ip), limit: 10, window: 'hour' }
     ]
   })
   if (!canRegister) return neutralResponse

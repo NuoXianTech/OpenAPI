@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { getHeader, getQuery, getRequestIP, sendRedirect } from 'h3'
+import { getHeader, getQuery, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
@@ -16,6 +16,7 @@ import type { ProviderConfig, ProviderProfile, TokenResult } from '~~/server/uti
 import type { LoginMethod } from '#shared/types/login-log'
 import type { SupportedOauthProvider } from '#shared/types/oauth'
 import { isBanActive } from '~~/server/utils/ban'
+import { readClientIp } from '~~/server/utils/request-meta'
 
 function methodFromProvider(provider: SupportedOauthProvider): LoginMethod {
   return provider === 'github' ? 'oauth_github' : 'oauth_qq'
@@ -79,7 +80,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
       profile = await qqProvider.fetchUserInfo(providerConfig, token.accessToken, token)
     }
 
-    const ip = getRequestIP(event) || null
+    const ip = readClientIp(event)
     const userAgent = getHeader(event, 'user-agent') || null
     const method = methodFromProvider(provider)
 
@@ -160,7 +161,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         lastLoginIp: ip
       })
       await createUserSession(event, { id: user.id, role: user.role })
-      await usersService.updateLastLogin(user.id, ip || '0.0.0.0', userAgent)
+      await usersService.updateLastLogin(user.id, ip, userAgent)
       await loginLogService.record({ userId: user.id, username: user.username, method, success: true, ip, userAgent })
       return sendRedirect(event, consumed.returnTo || '/', 302)
     }

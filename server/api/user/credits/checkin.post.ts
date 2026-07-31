@@ -1,8 +1,9 @@
-import { createError, getRequestIP, readBody } from 'h3'
+import { createError, readBody } from 'h3'
 import { checkinService, isCheckinError } from '~~/server/services/checkin-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
+import { readClientIp } from '~~/server/utils/request-meta'
 
 const CHECKIN_ERROR_STATUS: Record<string, number> = {
   DISABLED: 403,
@@ -10,7 +11,7 @@ const CHECKIN_ERROR_STATUS: Record<string, number> = {
 }
 
 export default defineAuthenticatedEventHandler(async (event, user) => {
-  const ip = getRequestIP(event) || null
+  const ip = readClientIp(event)
   const body = await readBody<{ turnstileToken?: string }>(event).catch(() => ({} as { turnstileToken?: string }))
   await assertTurnstileForPage('checkin', body?.turnstileToken ?? '', ip)
 

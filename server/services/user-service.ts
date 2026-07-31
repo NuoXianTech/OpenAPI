@@ -226,7 +226,7 @@ export const usersService = {
     return expectFirstRow(res, 'Failed to create user.')
   },
 
-  async updateLastLogin(id: number, ip: string, userAgent?: string | null) {
+  async updateLastLogin(id: number, ip: string | null, userAgent?: string | null) {
     const res = await db.update(users)
       .set({
         lastLoginAt: new Date(),

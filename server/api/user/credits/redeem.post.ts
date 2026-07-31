@@ -1,9 +1,10 @@
-import { createError, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { userRedeemCodeSchema } from '~~/server/schemas/user'
 import { isRedemptionError, redemptionService } from '~~/server/services/redemption-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { readClientIp } from '~~/server/utils/request-meta'
 
 const REDEEM_ERROR_STATUS: Record<string, number> = {
   INVALID_CODE: 400,
@@ -18,7 +19,7 @@ const REDEEM_ERROR_STATUS: Record<string, number> = {
 export default defineAuthenticatedEventHandler(async (event, user) => {
   const { code } = await readZodBody(event, userRedeemCodeSchema)
 
-  const ip = getRequestIP(event) || null
+  const ip = readClientIp(event)
 
   try {
     const data = await redemptionService.redeem({ userId: user.id, code, ip })

@@ -1,5 +1,5 @@
 // 申请密码重置：发邮件到注册邮箱。无论邮箱是否存在都返回 200，避免泄露用户存在性。
-import { createError, getRequestIP } from 'h3'
+import { createError } from 'h3'
 import { requestPasswordResetSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
@@ -9,6 +9,7 @@ import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '~~/server/utils/ban'
+import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 
 export default defineEventHandler(async (event) => {
   const settings = await systemSettingsService.getSettings()
@@ -21,7 +22,7 @@ export default defineEventHandler(async (event) => {
   const { email } = body
   const turnstileToken = body.turnstileToken ?? ''
 
-  const ip = getRequestIP(event) || null
+  const ip = readClientIp(event)
 
   // 先校验 Turnstile：失败时直接抛错，与“邮箱是否存在”无关，不会构成枚举信号。
   await assertTurnstileForPage('passwordReset', turnstileToken, ip)
@@ -31,7 +32,7 @@ export default defineEventHandler(async (event) => {
     namespace: 'password-reset',
     buckets: [
       { name: 'email', value: email, limit: 1, window: 'minute' },
-      { name: 'ip', value: ip, limit: 10, window: 'hour' }
+      { name: 'ip', value: toClientIpRateLimitValue(ip), limit: 10, window: 'hour' }
     ]
   })
   if (!canRequestReset) return null

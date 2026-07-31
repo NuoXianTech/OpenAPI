@@ -1,4 +1,4 @@
-import { createError, getHeader, getRequestIP } from 'h3'
+import { createError, getHeader } from 'h3'
 import { loginSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
@@ -7,6 +7,7 @@ import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readZodBody } from '~~/server/utils/zod'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
+import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 
 export default defineEventHandler(async (event) => {
   const body = await readZodBody(event, loginSchema)
@@ -15,13 +16,13 @@ export default defineEventHandler(async (event) => {
   const turnstileToken = body.turnstileToken ?? ''
   const remember = body.remember === true
 
-  const ip = getRequestIP(event) || '0.0.0.0'
+  const ip = readClientIp(event)
   const userAgent = getHeader(event, 'user-agent') || null
   const canAttemptLogin = await canConsumeIdentityRateLimit({
     namespace: 'login',
     buckets: [
       { name: 'account', value: emailOrUsername, limit: 5, window: 'minute' },
-      { name: 'ip', value: ip, limit: 30, window: 'minute' }
+      { name: 'ip', value: toClientIpRateLimitValue(ip), limit: 30, window: 'minute' }
     ]
   })
   if (!canAttemptLogin) {
