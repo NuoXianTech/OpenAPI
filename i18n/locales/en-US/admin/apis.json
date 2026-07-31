@@ -73,6 +73,13 @@
           "required": "Required",
           "optional": "Optional"
         },
+        "toggleHints": {
+          "enableApi": "Enable the API and allow external calls",
+          "disableApi": "Disable the API and stop serving external calls; enabled call statistics will also be turned off",
+          "enableStatistics": "Enable call statistics for this API",
+          "disableStatistics": "Disable call statistics for this API",
+          "statisticsRequiresEnabled": "Enable the API before enabling call statistics"
+        },
         "actions": {
           "edit": "Edit API",
           "capabilities": "API capabilities",
@@ -81,7 +88,11 @@
         },
         "feedback": {
           "enableBeforeStatistics": "Enable the API before enabling statistics",
-          "statisticsDisabled": "Call statistics were also disabled",
+          "apiEnabled": "API \"{name}\" enabled",
+          "apiDisabled": "API \"{name}\" disabled",
+          "statisticsEnabled": "Call statistics enabled for \"{name}\"",
+          "statisticsDisabled": "Call statistics disabled for \"{name}\"",
+          "statisticsAlsoDisabled": "Call statistics for this API were also disabled",
           "toggleFailed": "Toggle failed",
           "synced": "Manifest synchronized",
           "syncFailed": "Synchronization failed"

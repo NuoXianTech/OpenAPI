@@ -73,6 +73,13 @@
           "required": "必需",
           "optional": "可选"
         },
+        "toggleHints": {
+          "enableApi": "启用接口并允许外部调用",
+          "disableApi": "关闭接口并停止对外提供服务；已开启的调用统计也会同时关闭",
+          "enableStatistics": "开启该接口的调用统计",
+          "disableStatistics": "关闭该接口的调用统计",
+          "statisticsRequiresEnabled": "请先启用接口，再开启调用统计"
+        },
         "actions": {
           "edit": "编辑接口",
           "capabilities": "接口配置",
@@ -81,7 +88,11 @@
         },
         "feedback": {
           "enableBeforeStatistics": "请先启用接口，再开启统计",
-          "statisticsDisabled": "已同时关闭调用统计",
+          "apiEnabled": "已启用接口「{name}」",
+          "apiDisabled": "已停用接口「{name}」",
+          "statisticsEnabled": "已开启「{name}」的调用统计",
+          "statisticsDisabled": "已关闭「{name}」的调用统计",
+          "statisticsAlsoDisabled": "该接口的调用统计已同时关闭",
           "toggleFailed": "切换失败",
           "synced": "已同步 manifest",
           "syncFailed": "同步失败"

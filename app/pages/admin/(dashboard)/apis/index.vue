@@ -32,6 +32,8 @@ const modalTarget = ref<AdminDiscoveredApi | null>(null)
 const capabilitiesModalOpen = ref(false)
 const capabilitiesModalTarget = ref<AdminDiscoveredApi | null>(null)
 
+type AdminApiToggleField = 'isEnabled' | 'isStatistics'
+
 function openRegister(row: AdminDiscoveredApi) {
   modalMode.value = 'register'
   modalTarget.value = row
@@ -49,20 +51,48 @@ function openCapabilities(row: AdminDiscoveredApi) {
   capabilitiesModalOpen.value = true
 }
 
-async function handleToggle(row: AdminDiscoveredApi, field: 'isEnabled' | 'isStatistics', value: boolean) {
+function isStatisticsToggleDisabled(row: AdminDiscoveredApi): boolean {
+  return !!row.registered && !row.registered.isEnabled && !row.registered.isStatistics
+}
+
+function getToggleHint(row: AdminDiscoveredApi, field: AdminApiToggleField): string {
+  const api = row.registered
+  if (!api) return ''
+
+  if (field === 'isEnabled') {
+    return t(`admin.apis.registry.toggleHints.${api.isEnabled ? 'disableApi' : 'enableApi'}`)
+  }
+  if (isStatisticsToggleDisabled(row)) {
+    return t('admin.apis.registry.toggleHints.statisticsRequiresEnabled')
+  }
+  return t(`admin.apis.registry.toggleHints.${api.isStatistics ? 'disableStatistics' : 'enableStatistics'}`)
+}
+
+async function handleToggle(row: AdminDiscoveredApi, field: AdminApiToggleField, value: boolean) {
   if (!row.registered) return
   if (field === 'isStatistics' && value && !row.registered.isEnabled) {
     toast.add({ title: t('admin.apis.registry.feedback.enableBeforeStatistics'), color: 'warning' })
     return
   }
+  const alsoDisablesStatistics = field === 'isEnabled' && !value && row.registered.isStatistics
   try {
     await $fetch('/api/admin/apis/toggle', {
       method: 'PUT',
       body: { id: row.registered.id, field, value }
     })
-    if (field === 'isEnabled' && !value && row.registered.isStatistics) {
-      toast.add({ title: t('admin.apis.registry.feedback.statisticsDisabled'), color: 'info' })
-    }
+    const feedbackKey = field === 'isEnabled'
+      ? (value ? 'apiEnabled' : 'apiDisabled')
+      : (value ? 'statisticsEnabled' : 'statisticsDisabled')
+    toast.add({
+      title: t(`admin.apis.registry.feedback.${feedbackKey}`, {
+        name: row.registered.name || row.code
+      }),
+      description: alsoDisablesStatistics
+        ? t('admin.apis.registry.feedback.statisticsAlsoDisabled')
+        : undefined,
+      color: 'success',
+      icon: 'i-mdi-check-circle-outline'
+    })
     await refresh()
   } catch (err: unknown) {
     toast.add({ title: parseFetchError(err, t('admin.apis.registry.feedback.toggleFailed')), color: 'error' })
@@ -203,11 +233,17 @@ function resetApiFilters() {
           {{ categoryLabel(row.original) }}
         </template>
         <template #isEnabled-cell="{ row }">
-          <USwitch
+          <UTooltip
             v-if="row.original.registered"
-            :model-value="row.original.registered.isEnabled"
-            @update:model-value="(val: boolean) => handleToggle(row.original, 'isEnabled', val)"
-          />
+            :text="getToggleHint(row.original, 'isEnabled')"
+            :content="{ side: 'top' }"
+          >
+            <USwitch
+              :model-value="row.original.registered.isEnabled"
+              :aria-label="getToggleHint(row.original, 'isEnabled')"
+              @update:model-value="(val: boolean) => handleToggle(row.original, 'isEnabled', val)"
+            />
+          </UTooltip>
           <UBadge
             v-else
             color="neutral"
@@ -217,12 +253,36 @@ function resetApiFilters() {
           </UBadge>
         </template>
         <template #isStatistics-cell="{ row }">
-          <USwitch
-            v-if="row.original.registered"
-            :model-value="row.original.registered.isStatistics"
-            :disabled="!row.original.registered.isEnabled && !row.original.registered.isStatistics"
-            @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
-          />
+          <template v-if="row.original.registered">
+            <UTooltip
+              v-if="isStatisticsToggleDisabled(row.original)"
+              :text="getToggleHint(row.original, 'isStatistics')"
+              :content="{ side: 'top' }"
+            >
+              <span
+                class="inline-flex cursor-not-allowed"
+                tabindex="0"
+                :aria-label="getToggleHint(row.original, 'isStatistics')"
+              >
+                <USwitch
+                  :model-value="row.original.registered.isStatistics"
+                  disabled
+                  :aria-label="getToggleHint(row.original, 'isStatistics')"
+                />
+              </span>
+            </UTooltip>
+            <UTooltip
+              v-else
+              :text="getToggleHint(row.original, 'isStatistics')"
+              :content="{ side: 'top' }"
+            >
+              <USwitch
+                :model-value="row.original.registered.isStatistics"
+                :aria-label="getToggleHint(row.original, 'isStatistics')"
+                @update:model-value="(val: boolean) => handleToggle(row.original, 'isStatistics', val)"
+              />
+            </UTooltip>
+          </template>
           <span
             v-else
             class="text-muted"
