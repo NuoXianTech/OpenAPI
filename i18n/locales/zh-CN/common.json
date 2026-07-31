@@ -258,19 +258,22 @@
       "confirmTitle": "确认操作"
     },
     "dashboard": {
+      "workspaces": {
+        "developer": "开发者控制台",
+        "admin": "管理控制台"
+      },
       "groups": {
-        "general": "常规",
-        "personal": "个人",
+        "workspace": "工作台",
+        "account": "账户",
         "management": "管理",
-        "operations": "运营",
         "system": "系统"
       },
       "navigation": {
         "overview": "概览",
         "apiKeys": "API 密钥",
-        "usageLogs": "使用日志",
-        "credits": "积分",
-        "settings": "设置",
+        "usageLogs": "调用记录",
+        "credits": "我的积分",
+        "settings": "账户设置",
         "logCenter": "日志中心",
         "creditManagement": "积分管理",
         "contentManagement": "内容管理",
@@ -279,7 +282,9 @@
         "systemSettings": "系统设置",
         "profileSettings": "个人设置",
         "siteSettings": "站点设置",
-        "backToSite": "返回前台"
+        "switchToUser": "切换到开发者控制台",
+        "switchToAdmin": "切换到管理控制台",
+        "backToSite": "返回接口平台"
       },
       "sections": {
         "announcements": "公告",

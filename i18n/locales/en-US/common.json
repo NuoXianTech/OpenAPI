@@ -236,19 +236,22 @@
     "search": { "clear": "Clear search" },
     "dialog": { "confirmTitle": "Confirm action" },
     "dashboard": {
+      "workspaces": {
+        "developer": "Developer console",
+        "admin": "Admin console"
+      },
       "groups": {
-        "general": "General",
-        "personal": "Personal",
+        "workspace": "Workspace",
+        "account": "Account",
         "management": "Management",
-        "operations": "Operations",
         "system": "System"
       },
       "navigation": {
         "overview": "Overview",
         "apiKeys": "API keys",
-        "usageLogs": "Usage logs",
-        "credits": "Credits",
-        "settings": "Settings",
+        "usageLogs": "API activity",
+        "credits": "My credits",
+        "settings": "Account settings",
         "logCenter": "Log center",
         "creditManagement": "Credit management",
         "contentManagement": "Content management",
@@ -257,7 +260,9 @@
         "systemSettings": "System settings",
         "profileSettings": "Profile settings",
         "siteSettings": "Site settings",
-        "backToSite": "Back to site"
+        "switchToUser": "Switch to developer console",
+        "switchToAdmin": "Switch to admin console",
+        "backToSite": "Back to API platform"
       },
       "sections": {
         "announcements": "Announcements",

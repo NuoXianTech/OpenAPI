@@ -17,11 +17,7 @@ const { t } = useI18n()
 const dashboardConfig = computed<DashboardStaticConfig>(() => resolveDashboardConfig(props.dashboardId))
 
 function resolveDashboardConfig(dashboardId: DashboardConfig['id']): DashboardStaticConfig {
-  const context = { t }
-
-  if (dashboardId === 'user' && user.value?.role === 'admin') {
-    return createAdminDashboardConfig(context)
-  }
+  const context = { t, isAdmin: user.value?.role === 'admin' }
 
   return dashboardId === 'admin'
     ? createAdminDashboardConfig(context)
