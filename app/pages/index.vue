@@ -58,66 +58,65 @@ useSeoMeta({
 </script>
 
 <template>
-  <div>
-    <main class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
-      <CommonHomeHero
-        :start-time="settings.startTime"
-        :site-name="settings.siteName"
-        :site-description="settings.siteDescription"
-        :total-count="heroStats.total"
-        :normal-count="heroStats.normal"
-        :call-count="heroStats.calls"
-        :api-list-loading="loading"
-        :api-list-error="!!error"
-      />
+  <div class="public-page">
+    <CommonSiteHeader />
+    <CommonHomeHero
+      :start-time="settings.startTime"
+      :site-name="settings.siteName"
+      :site-description="settings.siteDescription"
+      :total-count="heroStats.total"
+      :normal-count="heroStats.normal"
+      :call-count="heroStats.calls"
+      :api-list-loading="loading"
+      :api-list-error="!!error"
+    />
 
-      <UCard
-        :ui="{ root: 'mb-4 overflow-hidden', body: 'p-0 sm:p-0' }"
-        variant="subtle"
-      >
-        <div class="border-b border-default px-4 py-3 sm:px-5">
-          <CommonSearchBar
-            v-model="query"
-            class="!mt-0 !mb-0"
+    <main id="api-catalog" class="catalog-shell">
+      <header class="catalog-heading">
+        <div>
+          <div class="catalog-heading__kicker">
+            API CATALOG
+          </div>
+          <h2>{{ $t('public.navigation.catalog') }}</h2>
+          <p>{{ $t('public.home.catalogDescription') }}</p>
+        </div>
+        <div class="catalog-heading__count">
+          <strong>{{ total }}</strong>
+          <span>{{ $t('public.home.totalApis') }}</span>
+        </div>
+      </header>
+
+      <section class="catalog-controls" :aria-label="$t('public.home.statusFilterAria')">
+        <div class="catalog-search">
+          <CommonSearchBar v-model="query" size="lg" />
+        </div>
+        <div class="catalog-filter">
+          <span class="catalog-filter__label">
+            <UIcon name="i-mdi-pulse" class="size-3.5" />
+            {{ $t('public.home.statusFilter') }}
+          </span>
+          <CommonFilterTabs
+            v-model="currentTab"
+            :tabs="statusTabs"
+            :enable-collapse="false"
+            :aria-label="t('public.home.statusFilterAria')"
           />
         </div>
-
-        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(220px,0.58fr)_1fr]">
-          <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
-            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
-              <UIcon
-                name="i-mdi-filter-variant"
-                class="size-3"
-              />
-              {{ $t('public.home.statusFilter') }}
-            </div>
-            <CommonFilterTabs
-              v-model="currentTab"
-              :tabs="statusTabs"
-              :enable-collapse="false"
-              :aria-label="t('public.home.statusFilterAria')"
-            />
-          </div>
-
-          <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
-            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
-              <UIcon
-                name="i-mdi-tag-multiple-outline"
-                class="size-3"
-              />
-              {{ $t('public.home.categoryFilter') }}
-            </div>
-            <CommonFilterTabs
-              v-model="currentCategory"
-              :tabs="categoryTabs"
-              :max-visible="10"
-              :search-placeholder="t('public.home.categorySearch')"
-              :empty-text="t('public.home.categoryEmpty')"
-              :aria-label="t('public.home.categoryFilterAria')"
-            />
-          </div>
+        <div class="catalog-filter catalog-filter--wide">
+          <span class="catalog-filter__label">
+            <UIcon name="i-mdi-shape-outline" class="size-3.5" />
+            {{ $t('public.home.categoryFilter') }}
+          </span>
+          <CommonFilterTabs
+            v-model="currentCategory"
+            :tabs="categoryTabs"
+            :max-visible="10"
+            :search-placeholder="t('public.home.categorySearch')"
+            :empty-text="t('public.home.categoryEmpty')"
+            :aria-label="t('public.home.categoryFilterAria')"
+          />
         </div>
-      </UCard>
+      </section>
 
       <Transition
         name="state-fade"
@@ -173,9 +172,9 @@ useSeoMeta({
           v-else
           id="contentState"
           key="content"
-          class="py-2"
+          class="pt-5"
         >
-          <div class="mb-3 flex items-center justify-between text-xs text-muted">
+          <div class="catalog-result-meta">
             <span class="inline-flex items-center gap-1.5">
               <UIcon
                 name="i-mdi-format-list-bulleted"
@@ -196,7 +195,7 @@ useSeoMeta({
           />
           <div
             v-if="hasPagination"
-            class="mt-4 flex flex-col items-center justify-between gap-3 border-t border-default pt-4 sm:flex-row"
+            class="mt-6 flex flex-col items-center justify-between gap-3 border-t border-default pt-5 sm:flex-row"
           >
             <span class="text-xs text-muted tabular-nums">
               {{ $t('public.home.pagination', { page, totalPages }) }}
@@ -221,3 +220,102 @@ useSeoMeta({
     </Suspense>
   </div>
 </template>
+
+<style scoped>
+.public-page { min-height: 100dvh; background: var(--ui-bg); }
+
+.catalog-shell {
+  width: calc(100% - 2rem);
+  max-width: 1180px;
+  margin-inline: auto;
+  padding-block: 4.5rem 1rem;
+  scroll-margin-top: 5rem;
+}
+
+.catalog-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.catalog-heading__kicker {
+  margin-bottom: 0.35rem;
+  color: var(--ui-primary);
+  font-family: var(--font-code);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.catalog-heading h2 {
+  color: var(--ui-text-highlighted);
+  font-size: clamp(1.65rem, 4vw, 2.25rem);
+  font-weight: 650;
+}
+
+.catalog-heading p {
+  max-width: 36rem;
+  margin-top: 0.45rem;
+  color: var(--ui-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.catalog-heading__count {
+  display: none;
+  min-width: 5rem;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.catalog-heading__count strong { font-family: var(--font-code); font-size: 1.5rem; }
+.catalog-heading__count span { color: var(--ui-text-dimmed); font-size: 0.68rem; }
+
+.catalog-controls {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+  background: var(--ui-bg-elevated);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 4%, transparent);
+}
+
+.catalog-search,
+.catalog-filter { padding: 0.875rem; }
+.catalog-search,
+.catalog-filter:not(:last-child) { border-bottom: 1px solid var(--ui-border); }
+
+.catalog-filter__label {
+  display: inline-flex;
+  margin-bottom: 0.45rem;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ui-text-dimmed);
+  font-family: var(--font-code);
+  font-size: 0.62rem;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.catalog-result-meta {
+  display: flex;
+  margin-bottom: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ui-text-muted);
+  font-size: 0.72rem;
+}
+
+@media (width >= 640px) {
+  .catalog-heading__count { display: flex; }
+  .catalog-search,
+  .catalog-filter { padding: 1rem; }
+}
+
+@media (width >= 960px) {
+  .catalog-controls { grid-template-columns: minmax(260px, 0.78fr) minmax(240px, 0.58fr) minmax(0, 1.5fr); }
+  .catalog-search,
+  .catalog-filter:not(:last-child) { border-right: 1px solid var(--ui-border); border-bottom: 0; }
+}
+</style>

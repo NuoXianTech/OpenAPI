@@ -1,204 +1,222 @@
+<script setup lang="ts">
+const { settings } = useSiteSettings()
+</script>
+
 <template>
-  <div class="auth-shell">
-    <main class="auth-panel">
+  <main class="auth-shell">
+    <div class="auth-shell__grid" aria-hidden="true" />
+
+    <section class="auth-panel">
+      <NuxtLink to="/" class="auth-home" :aria-label="settings.siteName">
+        <span class="auth-home__mark" aria-hidden="true">
+          <UIcon name="i-lucide-zap" class="size-4" />
+        </span>
+        <span>{{ settings.siteName }}</span>
+      </NuxtLink>
+
       <div class="auth-form-wrap">
         <slot />
       </div>
-    </main>
-  </div>
+    </section>
+  </main>
 </template>
 
 <style>
 .auth-shell {
+  position: relative;
+  display: grid;
   min-height: 100vh;
   min-height: 100dvh;
-  display: grid;
-  align-items: start;
-  justify-items: center;
-  background:
-    radial-gradient(1200px 600px at 15% 20%, rgba(17, 17, 19, 0.06), transparent 60%),
-    radial-gradient(900px 420px at 85% 30%, rgba(35, 197, 94, 0.10), transparent 55%),
-    linear-gradient(180deg, oklch(0.989 0.003 286.351) 0%, oklch(0.972 0.005 274.966) 100%);
+  overflow: hidden;
+  background: var(--ui-bg);
+}
+
+.auth-shell__grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, color-mix(in oklab, var(--ui-border) 48%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--ui-border) 48%, transparent) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 62% 55% at 50% 36%, black 0%, transparent 78%);
+  opacity: 0.72;
 }
 
 .auth-panel {
-  display: grid;
-  place-items: center;
+  position: relative;
+  z-index: 1;
+  display: flex;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  padding: max(20px, env(safe-area-inset-top)) 12px max(20px, env(safe-area-inset-bottom));
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: max(2rem, env(safe-area-inset-top)) 1rem max(2rem, env(safe-area-inset-bottom));
+}
+
+.auth-home {
+  display: inline-flex;
+  margin-bottom: 1.75rem;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--ui-text-highlighted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.auth-home__mark {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 8px;
+  color: white;
+  background: var(--ui-primary);
+  box-shadow: 0 5px 16px -9px color-mix(in oklab, var(--ui-primary) 70%, transparent);
 }
 
 .auth-form-wrap {
   width: 100%;
   min-width: 0;
-  max-width: 400px;
-  animation: authFadeInUp 0.45s ease-out;
+  max-width: 430px;
+  box-sizing: border-box;
+  animation: auth-fade-in 320ms ease-out;
 }
 
 .auth-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 0.625rem;
+  margin-bottom: 1.375rem;
   text-align: center;
 }
 
 .auth-brand__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--ui-bg-elevated);
-  border: 1px solid var(--ui-border);
-  box-shadow: 0 4px 12px rgba(17, 17, 19, 0.04), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  display: grid;
+  width: 2.625rem;
+  height: 2.625rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--ui-primary) 20%, var(--ui-border));
+  border-radius: 9px;
+  color: var(--ui-primary);
+  background: color-mix(in oklab, var(--ui-primary) 8%, var(--ui-bg-elevated));
 }
 
 .auth-brand__title {
-  font-size: 22px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  max-width: 25rem;
   margin: 0;
   color: var(--ui-text-highlighted);
+  font-size: 1.625rem;
+  font-weight: 650;
+  line-height: 1.25;
 }
 
 .auth-brand__subtitle {
-  margin: 0;
-  font-size: 13.5px;
+  max-width: 23rem;
+  margin: 0.15rem 0 0;
   color: var(--ui-text-muted);
-  line-height: 1.55;
-  max-width: 320px;
+  font-size: 0.8125rem;
+  line-height: 1.6;
 }
 
 .auth-card {
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--ui-bg-elevated) 92%, transparent);
-  backdrop-filter: blur(10px);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 10px;
   border-color: var(--ui-border);
-  box-shadow: 0 10px 30px -12px rgba(17, 17, 19, 0.10);
+  background: color-mix(in oklab, var(--ui-bg-elevated) 96%, transparent);
+  box-shadow: 0 18px 48px -38px color-mix(in oklab, var(--brand-ink) 42%, transparent);
 }
 
 .auth-divider {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  gap: 0.75rem;
   color: var(--ui-text-dimmed);
+  font-size: 0.68rem;
 }
 
 .auth-divider::before,
 .auth-divider::after {
-  content: "";
-  flex: 1;
+  width: 100%;
   height: 1px;
+  content: "";
   background: var(--ui-border);
 }
 
 .auth-footer-links {
   display: flex;
+  margin-top: 1rem;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 18px;
-  font-size: 13px;
+  gap: 0.4rem;
   color: var(--ui-text-muted);
-}
-
-.auth-footer-links a,
-.auth-footer-links button {
-  color: var(--ui-text-muted);
-  transition: color 160ms ease;
+  font-size: 0.78rem;
 }
 
 .auth-footer-links a:hover,
-.auth-footer-links button:hover {
-  color: var(--ui-text);
-}
+.auth-footer-links button:hover { color: var(--ui-primary); }
 
 .auth-form-options {
   display: grid;
-  gap: 10px;
-  padding: 12px;
+  gap: 0.625rem;
   border: 1px solid var(--ui-border-muted);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--ui-bg-muted) 55%, transparent);
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: var(--ui-bg-muted);
 }
 
 .auth-message {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.5;
+  gap: 0.5rem;
   border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 .auth-message--error {
-  color: var(--ui-color-error-500);
-  background: color-mix(in srgb, var(--ui-color-error-500) 8%, transparent);
-  border-color: color-mix(in srgb, var(--ui-color-error-500) 18%, transparent);
+  border-color: color-mix(in oklab, var(--ui-error) 20%, transparent);
+  color: var(--ui-error);
+  background: color-mix(in oklab, var(--ui-error) 7%, transparent);
 }
 
 .auth-message--success {
-  color: var(--ui-color-success-500);
-  background: color-mix(in srgb, var(--ui-color-success-500) 8%, transparent);
-  border-color: color-mix(in srgb, var(--ui-color-success-500) 20%, transparent);
-}
-
-.auth-message__icon {
-  flex-shrink: 0;
-  margin-top: 1px;
+  border-color: color-mix(in oklab, var(--ui-success) 20%, transparent);
+  color: var(--ui-success);
+  background: color-mix(in oklab, var(--ui-success) 7%, transparent);
 }
 
 .auth-success-illustration {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  margin: 0 auto 4px;
-  color: var(--ui-color-success-500);
-  background: color-mix(in srgb, var(--ui-color-success-500) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ui-color-success-500) 22%, transparent);
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  margin: 0 auto 0.25rem;
+  place-items: center;
+  border: 1px solid color-mix(in oklab, var(--ui-success) 24%, transparent);
+  border-radius: 50%;
+  color: var(--ui-success);
+  background: color-mix(in oklab, var(--ui-success) 10%, transparent);
 }
 
-.dark .auth-shell {
-  background:
-    radial-gradient(1200px 600px at 15% 20%, rgba(255, 255, 255, 0.06), transparent 60%),
-    radial-gradient(900px 420px at 85% 30%, rgba(35, 197, 94, 0.14), transparent 55%),
-    linear-gradient(180deg, oklch(0.201 0.008 274.503) 0%, oklch(0.173 0.006 271.029) 100%);
+@media (width < 520px) {
+  .auth-panel { justify-content: flex-start; padding-top: max(1.5rem, env(safe-area-inset-top)); }
+  .auth-home { margin-bottom: 1.25rem; }
+  .auth-brand__title { font-size: 1.4rem; }
 }
 
-.dark .auth-brand__logo {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-wrap { animation: none; }
 }
 
-.dark .auth-card {
-  background: color-mix(in srgb, var(--ui-bg-elevated) 82%, transparent);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.32);
-}
-
-@media (min-width: 640px) {
-  .auth-shell {
-    align-items: center;
-  }
-
-  .auth-panel {
-    padding: 32px 20px;
-  }
-}
-
-@keyframes authFadeInUp {
-  0% { opacity: 0; transform: translateY(10px); }
-  100% { opacity: 1; transform: translateY(0); }
+@keyframes auth-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 </style>

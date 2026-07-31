@@ -1,7 +1,20 @@
 {
   "public": {
+    "navigation": {
+      "catalog": "API catalog",
+      "getStarted": "Get started",
+      "openMenu": "Open navigation menu"
+    },
     "home": {
       "defaultDescription": "A free platform providing network data APIs",
+      "heroTitle": "Reliable public APIs",
+      "catalogDescription": "Find APIs by capability, status, and access cost, then inspect the request contract.",
+      "liveExample": "Live request example",
+      "requestAddress": "Request URL",
+      "sendRequest": "Send request",
+      "requesting": "Requesting...",
+      "responsePreview": "Response preview",
+      "runExample": "Run example",
       "publicNavigation": "Public navigation",
       "stats": "Usage statistics",
       "friendLinks": "Friend links",

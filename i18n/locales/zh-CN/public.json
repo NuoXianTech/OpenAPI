@@ -1,7 +1,20 @@
 {
   "public": {
+    "navigation": {
+      "catalog": "接口目录",
+      "getStarted": "开始使用",
+      "openMenu": "打开导航菜单"
+    },
     "home": {
       "defaultDescription": "免费为用户提供网络数据接口调用的服务平台",
+      "heroTitle": "可靠的公共接口服务",
+      "catalogDescription": "按能力、状态和接入成本查找接口，打开详情即可查看请求契约。",
+      "liveExample": "实时请求示例",
+      "requestAddress": "请求地址",
+      "sendRequest": "发送请求",
+      "requesting": "请求中...",
+      "responsePreview": "响应预览",
+      "runExample": "运行示例",
       "publicNavigation": "公开导航",
       "stats": "调用统计",
       "friendLinks": "友情链接",

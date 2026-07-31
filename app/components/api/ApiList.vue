@@ -37,16 +37,10 @@ const { items = [] } = defineProps<ApiListProps>()
 
 <style scoped>
 .api-card-grid {
-  /*
-   * Do not use `contain: content` here: it includes paint containment and
-   * clips the first row when ApiCard moves upward on hover.
-   * Layout/style containment keeps the useful isolation without clipping
-   * transformed borders and shadows outside the grid's top edge.
-   */
   contain: layout style;
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   align-items: stretch;
 }
 
@@ -58,7 +52,7 @@ const { items = [] } = defineProps<ApiListProps>()
 
 @media (min-width: 1024px) {
   .api-card-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -74,7 +68,7 @@ const { items = [] } = defineProps<ApiListProps>()
 .api-card-enter-from,
 .api-card-leave-to {
   opacity: 0;
-  transform: translateY(8px) scale(0.985);
+  transform: translateY(6px);
 }
 
 .api-card-move {

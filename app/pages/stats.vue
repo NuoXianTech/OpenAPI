@@ -41,269 +41,260 @@ const retryActions = computed(() => [{
 </script>
 
 <template>
-  <UPage class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
-    <section class="stats-hero">
-      <div
-        class="stats-hero__pattern"
-        aria-hidden="true"
-      />
+  <div class="public-page">
+    <CommonSiteHeader />
+    <UPage class="mx-auto w-full max-w-295 flex-1 px-4 pt-8 pb-6 sm:px-6 sm:pt-10">
+      <section class="stats-hero">
+        <div
+          class="stats-hero__pattern"
+          aria-hidden="true"
+        />
 
-      <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-        <div class="stats-hero__layout">
-          <div class="stats-hero__copy">
-            <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
-              {{ $t('public.stats.heroTitle') }}
-            </h1>
-            <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
-              {{ $t('public.stats.heroDescription') }}
-            </p>
-            <div
-              v-if="generatedAtLabel"
-              class="stats-hero__meta"
-            >
-              <span class="inline-flex items-center gap-1.5">
-                <UIcon
-                  name="i-mdi-clock-outline"
-                  class="size-3.5"
-                />
-                <span class="font-mono text-default/85">{{ generatedAtLabel }}</span>
-              </span>
-            </div>
-          </div>
-
-          <div class="stats-hero__aside">
-            <div class="stats-hero__actions">
-              <UButton
-                icon="i-mdi-refresh"
-                variant="ghost"
-                color="neutral"
-                size="sm"
-                class="stats-hero__nav-item"
-                :loading="isPending"
-                @click="reloadStats"
+        <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+          <div class="stats-hero__layout">
+            <div class="stats-hero__copy">
+              <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
+                {{ $t('public.stats.heroTitle') }}
+              </h1>
+              <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
+                {{ $t('public.stats.heroDescription') }}
+              </p>
+              <div
+                v-if="generatedAtLabel"
+                class="stats-hero__meta"
               >
-                {{ $t('public.stats.refresh') }}
-              </UButton>
-              <UButton
-                icon="i-mdi-home-outline"
-                variant="ghost"
-                color="neutral"
-                size="sm"
-                to="/"
-                class="stats-hero__nav-item"
-              >
-                {{ $t('common.actions.backHome') }}
-              </UButton>
+                <span class="inline-flex items-center gap-1.5">
+                  <UIcon
+                    name="i-mdi-clock-outline"
+                    class="size-3.5"
+                  />
+                  <span class="font-mono text-default/85">{{ generatedAtLabel }}</span>
+                </span>
+              </div>
             </div>
 
-            <div class="stats-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
-              <template v-if="isInitialLoading">
-                <CommonHeroStatCard
-                  v-for="n in 3"
-                  :key="n"
-                  loading
-                />
-              </template>
-
-              <template v-else>
-                <CommonHeroStatCard
-                  icon="i-mdi-counter"
-                  icon-tone="primary"
-                  :value-title="overview ? formatCount(overview.totalCalls) : undefined"
+            <div class="stats-hero__aside">
+              <div class="stats-hero__actions">
+                <UButton
+                  icon="i-mdi-refresh"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  class="stats-hero__nav-item"
+                  :loading="isPending"
+                  @click="reloadStats"
                 >
-                  <template #value>
-                    {{ overview ? formatCompact(overview.totalCalls) : '--' }}
-                  </template>
-                  {{ $t('public.stats.totalCalls') }}
-                </CommonHeroStatCard>
-
-                <CommonHeroStatCard
-                  icon="i-mdi-check-decagram-outline"
-                  icon-tone="success"
+                  {{ $t('public.stats.refresh') }}
+                </UButton>
+                <UButton
+                  icon="i-mdi-home-outline"
+                  variant="ghost"
+                  color="neutral"
+                  size="sm"
+                  to="/"
+                  class="stats-hero__nav-item"
                 >
-                  <template #value>
-                    {{ overview ? formatRate(overview.successRate) : '--' }}
-                  </template>
-                  {{ $t('public.stats.successRate') }}
-                </CommonHeroStatCard>
+                  {{ $t('common.actions.backHome') }}
+                </UButton>
+              </div>
 
-                <CommonHeroStatCard
-                  icon="i-mdi-trophy-outline"
-                  icon-tone="info"
-                  :value-title="topApi?.name"
-                  :label-title="topApi?.name"
-                >
-                  <template #value>
-                    {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
-                  </template>
-                  {{ topApi?.name || $t('public.stats.popularApi') }}
-                </CommonHeroStatCard>
-              </template>
+              <div class="stats-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
+                <template v-if="isInitialLoading">
+                  <CommonHeroStatCard
+                    v-for="n in 3"
+                    :key="n"
+                    loading
+                  />
+                </template>
+
+                <template v-else>
+                  <CommonHeroStatCard
+                    icon="i-mdi-counter"
+                    icon-tone="primary"
+                    :value-title="overview ? formatCount(overview.totalCalls) : undefined"
+                  >
+                    <template #value>
+                      {{ overview ? formatCompact(overview.totalCalls) : '--' }}
+                    </template>
+                    {{ $t('public.stats.totalCalls') }}
+                  </CommonHeroStatCard>
+
+                  <CommonHeroStatCard
+                    icon="i-mdi-check-decagram-outline"
+                    icon-tone="success"
+                  >
+                    <template #value>
+                      {{ overview ? formatRate(overview.successRate) : '--' }}
+                    </template>
+                    {{ $t('public.stats.successRate') }}
+                  </CommonHeroStatCard>
+
+                  <CommonHeroStatCard
+                    icon="i-mdi-trophy-outline"
+                    icon-tone="info"
+                    :value-title="topApi?.name"
+                    :label-title="topApi?.name"
+                  >
+                    <template #value>
+                      {{ topApi ? formatCompact(topApi.totalCalls) : '--' }}
+                    </template>
+                    {{ topApi?.name || $t('public.stats.popularApi') }}
+                  </CommonHeroStatCard>
+                </template>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <UPageBody class="mt-4 pb-0">
-      <UAlert
-        v-if="error"
-        color="error"
-        variant="soft"
-        icon="i-mdi-alert-circle-outline"
-        :title="t('public.stats.loadFailed')"
-        :description="t('public.stats.loadFailedDescription')"
-        class="mb-4"
-        :actions="retryActions"
-      />
-
-      <div
-        v-if="isInitialLoading"
-        class="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <USkeleton
-          v-for="n in 8"
-          :key="n"
-          class="h-34 w-full rounded-lg"
+      <UPageBody class="mt-4 pb-0">
+        <UAlert
+          v-if="error"
+          color="error"
+          variant="soft"
+          icon="i-mdi-alert-circle-outline"
+          :title="t('public.stats.loadFailed')"
+          :description="t('public.stats.loadFailedDescription')"
+          class="mb-4"
+          :actions="retryActions"
         />
-      </div>
 
-      <template v-else-if="hasData">
-        <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DashboardMetricCard
-            v-for="item in overviewCards"
-            :key="item.key"
-            :label="item.label"
-            :value="item.value"
-            :icon="item.icon"
-            :tone="item.tone"
-            :style="{ '--dashboard-metric-accent': item.accent }"
+        <div
+          v-if="isInitialLoading"
+          class="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+        >
+          <USkeleton
+            v-for="n in 8"
+            :key="n"
+            class="h-34 w-full rounded-lg"
           />
         </div>
 
-        <div class="space-y-4">
-          <UCard
-            variant="subtle"
-            class="stats-panel"
-            :ui="{ body: 'p-4 sm:p-5' }"
-          >
-            <template #header>
-              <div class="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 class="text-base font-semibold text-highlighted">
-                    {{ $t('public.stats.trendTitle') }}
-                  </h2>
-                  <p class="mt-0.5 text-sm text-muted">
-                    {{ $t('public.stats.trendDescription') }}
-                  </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                  <UBadge
-                    variant="soft"
-                    color="success"
-                    icon="i-mdi-check-circle-outline"
-                    class="rounded-md"
-                  >
-                    {{ formatCompact(trendSuccessCalls) }}
-                  </UBadge>
-                  <UBadge
-                    variant="soft"
-                    color="error"
-                    icon="i-mdi-close-circle-outline"
-                    class="rounded-md"
-                  >
-                    {{ formatCompact(trendFailureCalls) }}
-                  </UBadge>
-                </div>
-              </div>
-            </template>
+        <template v-else-if="hasData">
+          <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <DashboardMetricCard
+              v-for="item in overviewCards"
+              :key="item.key"
+              :label="item.label"
+              :value="item.value"
+              :icon="item.icon"
+              :tone="item.tone"
+              :style="{ '--dashboard-metric-accent': item.accent }"
+            />
+          </div>
 
-            <div class="mb-4 grid gap-3 sm:grid-cols-3">
-              <div class="stats-mini-metric">
-                <span>{{ $t('public.stats.trendTotal') }}</span>
-                <strong>{{ formatCount(trendTotalCalls) }}</strong>
-              </div>
-              <div class="stats-mini-metric">
-                <span>{{ $t('public.stats.successCalls') }}</span>
-                <strong>{{ formatCount(trendSuccessCalls) }}</strong>
-              </div>
-              <div class="stats-mini-metric">
-                <span>{{ $t('public.stats.failureCalls') }}</span>
-                <strong>{{ formatCount(trendFailureCalls) }}</strong>
-              </div>
-            </div>
+          <div class="space-y-4">
+            <UCard
+              variant="subtle"
+              class="stats-panel"
+              :ui="{ body: 'p-4 sm:p-5' }"
+            >
+              <template #header>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 class="text-base font-semibold text-highlighted">
+                      {{ $t('public.stats.trendTitle') }}
+                    </h2>
+                    <p class="mt-0.5 text-sm text-muted">
+                      {{ $t('public.stats.trendDescription') }}
+                    </p>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    <UBadge
+                      variant="soft"
+                      color="success"
+                      icon="i-mdi-check-circle-outline"
+                      class="rounded-md"
+                    >
+                      {{ formatCompact(trendSuccessCalls) }}
+                    </UBadge>
+                    <UBadge
+                      variant="soft"
+                      color="error"
+                      icon="i-mdi-close-circle-outline"
+                      class="rounded-md"
+                    >
+                      {{ formatCompact(trendFailureCalls) }}
+                    </UBadge>
+                  </div>
+                </div>
+              </template>
 
-            <ClientOnly>
-              <Suspense>
-                <LazyStatsTrendChart :trend="trend7d" />
+              <div class="mb-4 grid gap-3 sm:grid-cols-3">
+                <div class="stats-mini-metric">
+                  <span>{{ $t('public.stats.trendTotal') }}</span>
+                  <strong>{{ formatCount(trendTotalCalls) }}</strong>
+                </div>
+                <div class="stats-mini-metric">
+                  <span>{{ $t('public.stats.successCalls') }}</span>
+                  <strong>{{ formatCount(trendSuccessCalls) }}</strong>
+                </div>
+                <div class="stats-mini-metric">
+                  <span>{{ $t('public.stats.failureCalls') }}</span>
+                  <strong>{{ formatCount(trendFailureCalls) }}</strong>
+                </div>
+              </div>
+
+              <ClientOnly>
+                <Suspense>
+                  <LazyStatsTrendChart :trend="trend7d" />
+                  <template #fallback>
+                    <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
+                  </template>
+                </Suspense>
                 <template #fallback>
                   <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
                 </template>
-              </Suspense>
-              <template #fallback>
-                <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
+              </ClientOnly>
+            </UCard>
+
+            <UCard
+              variant="subtle"
+              class="stats-panel"
+              :ui="{ body: 'p-4 sm:p-5' }"
+            >
+              <template #header>
+                <div>
+                  <h2 class="text-base font-semibold text-highlighted">
+                    {{ $t('public.stats.rankingTitle') }}
+                  </h2>
+                  <p class="mt-0.5 text-sm text-muted">
+                    {{ $t('public.stats.rankingDescription', { count: rankingLast30d.length || 10 }) }}
+                  </p>
+                </div>
               </template>
-            </ClientOnly>
-          </UCard>
 
-          <UCard
-            variant="subtle"
-            class="stats-panel"
-            :ui="{ body: 'p-4 sm:p-5' }"
-          >
-            <template #header>
-              <div>
-                <h2 class="text-base font-semibold text-highlighted">
-                  {{ $t('public.stats.rankingTitle') }}
-                </h2>
-                <p class="mt-0.5 text-sm text-muted">
-                  {{ $t('public.stats.rankingDescription', { count: rankingLast30d.length || 10 }) }}
-                </p>
-              </div>
-            </template>
-
-            <DashboardCallRanking :ranking="rankingLast30d" />
-          </UCard>
-        </div>
-      </template>
-    </UPageBody>
-
+              <DashboardCallRanking :ranking="rankingLast30d" />
+            </UCard>
+          </div>
+        </template>
+      </UPageBody>
+    </UPage>
     <CommonAppFooter />
-  </UPage>
+  </div>
 </template>
 
 <style scoped>
 .stats-hero {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--ui-border);
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 92%, var(--ui-primary) 8%) 0%,
-      var(--ui-bg-elevated) 46%,
-      color-mix(in srgb, var(--ui-bg) 86%, var(--ui-info) 14%) 100%);
-  border-radius: 8px;
-  margin-bottom: 16px;
+  border-bottom: 1px solid var(--ui-border);
+  margin-bottom: 20px;
   isolation: isolate;
 }
 
 .dark .stats-hero {
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 90%, var(--ui-primary) 10%) 0%,
-      var(--ui-bg-elevated) 48%,
-      color-mix(in srgb, var(--ui-bg) 84%, var(--ui-info) 10%) 100%);
+  background: transparent;
 }
 
 .stats-hero__pattern {
   position: absolute;
-  inset: 0;
-  background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
-  background-size: 18px 18px;
-  color: var(--ui-text);
-  opacity: 0.045;
-  mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
-  -webkit-mask-image: radial-gradient(ellipse at top right, black 10%, transparent 70%);
+  top: 1.5rem;
+  bottom: 1.5rem;
+  left: 0;
+  width: 3px;
+  background: var(--ui-primary);
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -346,11 +337,6 @@ const retryActions = computed(() => [{
   align-items: center;
   justify-content: flex-start;
   gap: 4px;
-  padding: 3px;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
-  backdrop-filter: blur(8px);
 }
 
 .stats-hero__stats {

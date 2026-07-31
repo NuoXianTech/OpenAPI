@@ -69,7 +69,7 @@ export function createAdminDashboardConfig(context: DashboardConfigFactoryContex
     id: 'admin',
     brand: siteName => ({
       label: siteName || 'OpenAPI',
-      icon: 'i-mdi-shield-crown-outline',
+      icon: 'i-mdi-transit-connection-variant',
       to: ADMIN_OVERVIEW_PATH
     }),
     groups: [
@@ -116,7 +116,7 @@ export function createUserDashboardConfig(context: DashboardConfigFactoryContext
     id: 'user',
     brand: siteName => ({
       label: siteName || 'OpenAPI',
-      icon: 'i-mdi-account-circle-outline',
+      icon: 'i-mdi-transit-connection-variant',
       to: USER_OVERVIEW_PATH
     }),
     groups: createUserDashboardGroups(context),

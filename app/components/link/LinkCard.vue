@@ -110,11 +110,7 @@ const isActive = computed(() => props.status === 1)
   flex-direction: column;
   gap: 12px;
   border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 94%, var(--ui-primary) 6%) 0%,
-      var(--ui-bg-elevated) 42%,
-      color-mix(in srgb, var(--ui-bg) 88%, transparent) 100%);
+  background: var(--ui-bg-elevated);
   border-radius: 8px;
   padding: 16px;
   text-decoration: none;
@@ -122,40 +118,22 @@ const isActive = computed(() => props.status === 1)
   overflow: hidden;
   isolation: isolate;
   min-height: 168px;
-  transition: transform 240ms ease, border-color 240ms ease, box-shadow 240ms ease;
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 .dark .link-card {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg-elevated) 92%, var(--ui-primary) 8%) 0%,
-      var(--ui-bg-elevated) 48%,
-      color-mix(in srgb, var(--ui-bg) 90%, transparent) 100%);
+  background: var(--ui-bg-elevated);
 }
 
-.link-card::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 90px;
-  height: 90px;
-  background:
-    radial-gradient(circle at top right,
-      color-mix(in srgb, var(--ui-info) 10%, transparent),
-      transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+.link-card::after { display: none; }
 
 .link-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--ui-border-accented);
-  box-shadow: 0 10px 24px -10px rgba(17, 17, 19, 0.18);
+  border-color: color-mix(in oklab, var(--ui-primary) 32%, var(--ui-border));
+  background: color-mix(in oklab, var(--ui-primary) 3%, var(--ui-bg-elevated));
 }
 
 .dark .link-card:hover {
-  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.55);
+  box-shadow: none;
 }
 
 .link-card__spotlight {
@@ -163,10 +141,7 @@ const isActive = computed(() => props.status === 1)
   inset: -1px;
   pointer-events: none;
   border-radius: inherit;
-  background:
-    linear-gradient(135deg,
-      color-mix(in srgb, var(--ui-primary) 10%, transparent),
-      transparent 56%);
+  background: transparent;
   opacity: 0;
   transition: opacity 240ms ease;
   z-index: 0;
@@ -186,14 +161,14 @@ const isActive = computed(() => props.status === 1)
 }
 
 .link-card__avatar {
-  transition: transform 240ms ease;
+  transition: border-color 160ms ease;
   background: color-mix(in srgb, var(--ui-primary) 12%, transparent) !important;
   color: var(--ui-text) !important;
   border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
 }
 
 .link-card:hover .link-card__avatar {
-  transform: rotate(-4deg);
+  border-color: color-mix(in oklab, var(--ui-primary) 38%, var(--ui-border));
 }
 
 .link-card__dot {

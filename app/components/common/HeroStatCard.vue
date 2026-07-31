@@ -53,26 +53,17 @@ const { icon = '', iconTone = 'neutral', loading = false, valueTitle, labelTitle
   padding: 12px 12px 14px;
   border: 1px solid color-mix(in srgb, var(--ui-border) 86%, transparent);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 8%) 0%,
-      color-mix(in srgb, var(--ui-bg) 82%, transparent) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
-  backdrop-filter: blur(8px);
-  transition: transform 220ms ease, border-color 220ms ease;
+  background: color-mix(in oklab, var(--ui-bg) 62%, var(--ui-bg-elevated));
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
 .hero-stat-card:hover {
-  transform: translateY(-2px);
   border-color: var(--ui-border-accented);
+  background: var(--ui-bg-elevated);
 }
 
 .dark .hero-stat-card {
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--ui-bg) 72%, white 5%) 0%,
-      color-mix(in srgb, var(--ui-bg) 86%, transparent) 100%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 8%, transparent);
+  background: color-mix(in oklab, var(--ui-bg) 60%, var(--ui-bg-elevated));
 }
 
 .hero-stat-card__icon {

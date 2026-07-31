@@ -58,7 +58,8 @@ const visibleCount = computed(() => filteredItems.value.length)
 
 <template>
   <div>
-    <main class="mx-auto max-w-275 px-5 pt-5 pb-6 sm:pt-6">
+    <CommonSiteHeader />
+    <main class="mx-auto w-full max-w-275 flex-1 px-5 pt-5 pb-6 sm:pt-6">
       <CommonFriendLinksHero
         :total-count="totalCount"
         :active-count="activeCount"

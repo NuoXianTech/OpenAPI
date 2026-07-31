@@ -132,19 +132,28 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
     :ui="{ root: 'gap-0', body: '!p-0' }"
   >
     <header class="api-card__head">
-      <h3 class="api-card__title">
-        {{ resolvedName }}
-      </h3>
-      <span
-        class="api-card__radar"
-        :class="radarClass"
-        :title="radarTitle"
-      />
+      <div class="min-w-0">
+        <div class="api-card__overline">
+          PUBLIC ENDPOINT
+        </div>
+        <h3 class="api-card__title">
+          {{ resolvedName }}
+        </h3>
+      </div>
+      <span class="api-card__status" :class="radarClass">
+        <span class="api-card__radar" aria-hidden="true" />
+        {{ radarTitle }}
+      </span>
     </header>
 
     <p class="api-card__short">
       {{ shortDesc || $t('public.api.noSummary') }}
     </p>
+
+    <div class="api-card__endpoint">
+      <span class="api-card__method">{{ methods.join(' / ') }}</span>
+      <code>{{ apiPath }}</code>
+    </div>
 
     <div class="api-card__toggle-row">
       <div class="api-card__footer-meta">
@@ -157,7 +166,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             variant="soft"
             size="sm"
             :icon="aggregateCost === 0 ? 'i-mdi-check-circle-outline' : 'i-mdi-coins'"
-            class="rounded-full"
+            class="rounded-md"
             :class="{ 'api-card__price-badge api-card__price-badge--free': aggregateCost === 0 }"
           >
             <template v-if="aggregateCost > 0">
@@ -181,7 +190,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             variant="soft"
             size="sm"
             icon="i-mdi-shield-key-outline"
-            class="api-card__key-badge rounded-full"
+            class="api-card__key-badge rounded-md"
           >
             {{ $t('public.api.apiKey') }}
           </UBadge>
@@ -259,7 +268,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
           <UModal
             v-model:open="modalDetailsOpen"
             :ui="{
-              content: 'max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-2xl max-sm:max-h-[88dvh] sm:max-w-md overflow-hidden',
+              content: 'max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-lg max-sm:max-h-[88dvh] sm:max-w-md overflow-hidden',
               header: 'items-start gap-3 border-b border-default py-3 ps-4 pe-12 sm:ps-5 sm:pe-12',
               wrapper: 'min-w-0',
               title: 'min-w-0',
@@ -607,5 +616,121 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 @keyframes radarPulse {
   0% { transform: scale(1); opacity: 0.8; }
   100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* Route-console treatment: information stays visible before opening details. */
+.api-card {
+  border-radius: 8px;
+  transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.api-card::after { display: none; }
+
+.api-card:hover {
+  transform: none;
+  border-color: color-mix(in oklab, var(--ui-primary) 32%, var(--ui-border));
+  box-shadow: 0 8px 28px -24px color-mix(in oklab, var(--ui-primary) 45%, transparent);
+}
+
+.api-card__head {
+  align-items: flex-start;
+  padding: 1rem 1rem 0;
+}
+
+.api-card__overline {
+  margin-bottom: 0.3rem;
+  color: var(--ui-text-dimmed);
+  font-family: var(--font-code);
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
+.api-card__title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0;
+}
+
+.api-card__status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  padding: 0.25rem 0.45rem;
+  color: var(--ui-text-muted);
+  font-size: 0.62rem;
+}
+
+.api-card__status .api-card__radar {
+  width: 0.4rem;
+  height: 0.4rem;
+  box-shadow: none;
+}
+
+.api-card__status .api-card__radar::before,
+.api-card__status .api-card__radar::after { display: none; }
+.api-card__status.is-error .api-card__radar { --radar-color: var(--ui-error); }
+.api-card__status.is-unknown .api-card__radar { --radar-color: var(--ui-text-dimmed); }
+
+.api-card__short {
+  min-height: 2.75rem;
+  margin: 0.75rem 1rem 0.8rem;
+  font-size: 0.78rem;
+}
+
+.api-card__endpoint {
+  display: flex;
+  min-width: 0;
+  margin: 0 1rem 1rem;
+  align-items: center;
+  gap: 0.625rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  padding: 0.55rem 0.625rem;
+  background: color-mix(in oklab, var(--ui-bg-muted) 58%, transparent);
+}
+
+.api-card__endpoint code {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ui-text-toned);
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-card__method {
+  flex: 0 0 auto;
+  color: var(--ui-primary);
+  font-family: var(--font-code);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+
+.api-card__toggle-row {
+  padding: 0.75rem 1rem;
+  background: color-mix(in oklab, var(--ui-bg) 42%, transparent);
+}
+
+.api-card__action-button {
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.api-card__calls {
+  border: 0;
+  padding-right: 0.25rem;
+  background: transparent;
+  box-shadow: none;
+}
+
+.api-card__calls-icon { background: transparent; }
+
+@media (max-width: 520px) {
+  .api-card__toggle-row { align-items: flex-end; }
+  .api-card__footer-meta { gap: 4px; }
+  .api-card__action-button :deep(span:not([class])) { display: none; }
 }
 </style>

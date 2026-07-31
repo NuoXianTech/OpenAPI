@@ -51,8 +51,8 @@ const valueClass = computed(() => props.compact
   ? 'dashboard-metric-card-value text-xl font-semibold tabular-nums text-highlighted'
   : 'dashboard-metric-card-value text-2xl font-semibold tabular-nums text-highlighted')
 const iconClass = computed(() => props.compact
-  ? 'dashboard-metric-card-icon flex size-8 shrink-0 items-center justify-center rounded-lg'
-  : 'dashboard-metric-card-icon flex size-9 shrink-0 items-center justify-center rounded-lg')
+  ? 'dashboard-metric-card-icon flex size-8 shrink-0 items-center justify-center rounded-md'
+  : 'dashboard-metric-card-icon flex size-9 shrink-0 items-center justify-center rounded-md')
 const sparklineHeight = computed(() => props.compact ? 36 : SPARKLINE_HEIGHT)
 
 const SPARKLINE_VIEW_W = 200
@@ -176,6 +176,8 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
 <style scoped>
 .dashboard-metric-card {
   --dashboard-metric-accent: var(--ui-primary);
+  border-color: var(--dashboard-border);
+  box-shadow: inset 0 2px 0 color-mix(in oklab, var(--dashboard-metric-accent) 72%, transparent);
 }
 
 .dashboard-metric-card-neutral {
@@ -204,8 +206,8 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
 
 .dashboard-metric-card-icon {
   color: var(--dashboard-metric-accent);
-  border: 1px solid var(--ui-border);
-  background: var(--ui-bg-muted);
+  border: 1px solid color-mix(in oklab, var(--dashboard-metric-accent) 18%, var(--ui-border));
+  background: color-mix(in oklab, var(--dashboard-metric-accent) 7%, var(--ui-bg-elevated));
 }
 
 .dashboard-metric-card-value {
