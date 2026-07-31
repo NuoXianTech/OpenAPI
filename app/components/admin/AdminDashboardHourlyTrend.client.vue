@@ -56,6 +56,7 @@ const tooltipTemplate = (d: TrendRow) => renderChartTooltip({
       v-if="!hasData"
       icon="i-mdi-clock-time-eight-outline"
       :title="$t('admin.overview.hourly.empty')"
+      variant="naked"
       class="h-64"
     />
 

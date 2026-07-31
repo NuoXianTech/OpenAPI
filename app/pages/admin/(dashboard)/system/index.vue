@@ -181,13 +181,14 @@ const fixedTimeInvalid = computed(() => {
           autocomplete="off"
         />
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="basicInformationSection.dirty.value"
-        :saving="basicInformationSection.saving.value"
-        :disabled="basicInformationSection.disabled.value"
-        @save="basicInformationSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="basicInformationSection.dirty.value"
+          :saving="basicInformationSection.saving.value"
+          :disabled="basicInformationSection.disabled.value"
+          @save="basicInformationSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -303,13 +304,14 @@ const fixedTimeInvalid = computed(() => {
           />
         </UFormField>
       </template>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="checkinSection.dirty.value"
-        :saving="checkinSection.saving.value"
-        :disabled="checkinSection.disabled.value || minMaxInvalid || fixedTimeInvalid"
-        @save="checkinSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="checkinSection.dirty.value"
+          :saving="checkinSection.saving.value"
+          :disabled="checkinSection.disabled.value || minMaxInvalid || fixedTimeInvalid"
+          @save="checkinSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
   </div>
 </template>

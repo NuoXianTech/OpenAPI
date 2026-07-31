@@ -110,12 +110,36 @@ export default defineNuxtConfig({
       code: 'en-US',
       language: 'en-US',
       name: 'English',
-      files: ['en-US/common.json', 'en-US/auth.json', 'en-US/public.json', 'en-US/user.json', 'en-US/admin.json']
+      files: [
+        'en-US/common.json',
+        'en-US/auth.json',
+        'en-US/public.json',
+        'en-US/user.json',
+        'en-US/admin/core.json',
+        'en-US/admin/logs.json',
+        'en-US/admin/credits.json',
+        'en-US/admin/users.json',
+        'en-US/admin/content.json',
+        'en-US/admin/apis.json',
+        'en-US/admin/system.json'
+      ]
     }, {
       code: DEFAULT_LOCALE,
       language: DEFAULT_LOCALE,
       name: '简体中文',
-      files: ['zh-CN/common.json', 'zh-CN/auth.json', 'zh-CN/public.json', 'zh-CN/user.json', 'zh-CN/admin.json']
+      files: [
+        'zh-CN/common.json',
+        'zh-CN/auth.json',
+        'zh-CN/public.json',
+        'zh-CN/user.json',
+        'zh-CN/admin/core.json',
+        'zh-CN/admin/logs.json',
+        'zh-CN/admin/credits.json',
+        'zh-CN/admin/users.json',
+        'zh-CN/admin/content.json',
+        'zh-CN/admin/apis.json',
+        'zh-CN/admin/system.json'
+      ]
     }],
     detectBrowserLanguage: {
       useCookie: true,

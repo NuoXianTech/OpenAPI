@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { LazyAdminCallLogDetailModal } from '#components'
 import {
@@ -51,7 +52,7 @@ function openDetail(row: AdminLogRow) {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface dashboard-hero-surface-info relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
@@ -245,14 +246,7 @@ function openDetail(row: AdminLogRow) {
         <template #summary-cell="{ row }">
           <div class="flex flex-col text-xs gap-0.5">
             <div class="flex items-center gap-1.5">
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                size="sm"
-                class="font-mono"
-              >
-                {{ row.original.method }}
-              </UBadge>
+              <ApiHttpMethodBadge :method="row.original.method" />
               <span
                 class="tabular-nums"
                 :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"

@@ -1,4 +1,5 @@
 import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { notificationDeliveries, notificationMessages, users } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
 import { toNumber } from '~~/server/utils/number'
@@ -173,11 +174,13 @@ export const notificationService = {
       senderActor: notificationMessages.senderActor,
       createdAt: notificationMessages.createdAt,
       deletedAt: notificationMessages.deletedAt,
-      deliveredCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id})`,
-      readCount: sql<number>`(select count(*) from ${notificationDeliveries} where ${notificationDeliveries.messageId} = ${notificationMessages.id} and ${notificationDeliveries.isRead} = true)`
+      deliveredCount: count(notificationDeliveries.id),
+      readCount: count(sql`case when ${notificationDeliveries.isRead} = true then 1 end`)
     })
       .from(notificationMessages)
+      .leftJoin(notificationDeliveries, eq(notificationDeliveries.messageId, notificationMessages.id))
       .where(isNull(notificationMessages.deletedAt))
+      .groupBy(notificationMessages.id)
       .orderBy(desc(notificationMessages.createdAt))
       .limit(limit)
       .offset(offset)

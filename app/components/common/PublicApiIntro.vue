@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import { formatCompactCount } from '~/utils/number-format'
+import {
+  formatExchangeRateResponseExample,
+  PUBLIC_API_EXAMPLE_TIMESTAMP
+} from '~/utils/public-api-example'
 
 interface Props {
   siteDescription?: string
   totalCount?: number
+  availabilityRate?: number
   callCount?: number
   successRate?: number
   userCount?: number
@@ -15,6 +21,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   siteDescription: '',
   totalCount: 0,
+  availabilityRate: 0,
   callCount: 0,
   successRate: 0,
   userCount: 0,
@@ -30,6 +37,9 @@ const requestUrl = useRequestURL()
 const resolvedDescription = computed(() => props.siteDescription || t('public.home.defaultDescription'))
 const compactCallCount = computed(() => formatCompactCount(props.callCount, locale.value))
 const compactUserCount = computed(() => formatCompactCount(props.userCount, locale.value))
+const formattedAvailabilityRate = computed(() => props.totalCount > 0
+  ? `${props.availabilityRate.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
+  : '--')
 const formattedSuccessRate = computed(() => props.callCount > 0
   ? `${props.successRate.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
   : '--')
@@ -37,34 +47,35 @@ const samplePath = '/v1/exchange-rate?currency=CNY&encoding=json'
 const sampleUrl = computed(() => `${requestUrl.origin}${samplePath}`)
 const isRunning = ref(false)
 const hasResponse = ref(true)
+const responseLatency = ref(42)
+const responseTimestamp = ref(PUBLIC_API_EXAMPLE_TIMESTAMP)
 
 const primaryAction = computed(() => user.value
-  ? { label: t('public.home.userDashboard'), to: USER_OVERVIEW_PATH, icon: 'i-lucide-layout-dashboard' }
-  : { label: t('public.navigation.getStarted'), to: '/register', icon: 'i-lucide-key-round' })
+  ? { label: t('public.home.userDashboard'), to: USER_OVERVIEW_PATH, icon: 'i-mdi-account-circle-outline' }
+  : { label: t('public.navigation.getStarted'), to: '/register', icon: 'i-mdi-key-outline' })
 
-const responsePreview = computed(() => locale.value.startsWith('zh')
-  ? `{
-  "code": "OK",
-  "message": "获取汇率成功",
-  "data": {
-    "base": "CNY",
-    "rates": { "USD": 0.1392, "JPY": 20.61 }
-  }
-}`
-  : `{
-  "code": "OK",
-  "message": "Exchange rates retrieved",
-  "data": {
-    "base": "CNY",
-    "rates": { "USD": 0.1392, "JPY": 20.61 }
-  }
-}`)
+const responsePreview = computed(() => formatExchangeRateResponseExample(
+  t('public.home.sampleResponseMessage'),
+  responseTimestamp.value
+))
+
+function createSimulatedLatency(): number {
+  return Math.floor(Math.random() * 45) + 24
+}
+
+onMounted(() => {
+  responseLatency.value = createSimulatedLatency()
+  responseTimestamp.value = Date.now()
+})
 
 async function runSample(): Promise<void> {
   if (isRunning.value) return
   isRunning.value = true
   hasResponse.value = false
-  await new Promise(resolve => setTimeout(resolve, 620))
+  const nextLatency = createSimulatedLatency()
+  await new Promise(resolve => setTimeout(resolve, Math.max(180, nextLatency * 4)))
+  responseLatency.value = nextLatency
+  responseTimestamp.value = Date.now()
   hasResponse.value = true
   isRunning.value = false
 }
@@ -87,14 +98,13 @@ async function copyRequest(): Promise<void> {
       <div class="public-api-intro__content">
         <div class="public-api-intro__status" role="status">
           <UIcon
-            :name="summaryError ? 'i-lucide-circle-alert' : summaryLoading ? 'i-lucide-loader-circle' : 'i-lucide-circle-check'"
+            :name="summaryError ? 'i-mdi-alert-circle-outline' : summaryLoading ? 'i-mdi-loading' : 'i-mdi-check-circle-outline'"
             class="size-3.5"
             :class="{ 'is-error': summaryError, 'is-loading': summaryLoading }"
           />
           <span v-if="summaryError">{{ $t('common.states.loadFailed') }}</span>
           <span v-else-if="summaryLoading">{{ $t('common.states.loading') }}</span>
-          <span v-else-if="callCount > 0">{{ $t('public.home.serviceSummaryWithRate', { rate: formattedSuccessRate, users: compactUserCount }) }}</span>
-          <span v-else>{{ $t('public.home.serviceSummary', { users: compactUserCount }) }}</span>
+          <span v-else>{{ $t('public.home.availabilitySummary', { rate: formattedAvailabilityRate, users: compactUserCount }) }}</span>
         </div>
 
         <h1 id="public-api-intro-title" class="public-api-intro__title">
@@ -114,7 +124,7 @@ async function copyRequest(): Promise<void> {
             size="lg"
             color="neutral"
             variant="outline"
-            icon="i-lucide-book-open"
+            icon="i-mdi-book-open-page-variant-outline"
           >
             {{ $t('public.navigation.catalog') }}
           </UButton>
@@ -144,11 +154,11 @@ async function copyRequest(): Promise<void> {
         </dl>
       </div>
 
-      <div class="api-request-demo" :aria-label="$t('public.home.liveExample')">
+      <div class="api-request-demo" :aria-label="$t('public.home.simulatedExample')">
         <div class="api-request-demo__header">
           <div class="api-request-demo__title">
             <span class="api-request-demo__status" aria-hidden="true" />
-            <span>{{ $t('public.home.liveExample') }}</span>
+            <span>{{ $t('public.home.simulatedExample') }}</span>
           </div>
           <span class="api-request-demo__endpoint">exchange-rate</span>
         </div>
@@ -156,7 +166,7 @@ async function copyRequest(): Promise<void> {
         <div class="api-request-demo__request">
           <span class="api-request-demo__label">{{ $t('public.home.requestAddress') }}</span>
           <div class="api-request-demo__address">
-            <span>GET</span>
+            <ApiHttpMethodBadge method="GET" size="xs" />
             <code>{{ sampleUrl }}</code>
             <UTooltip :text="$t('common.actions.copy')">
               <UButton
@@ -164,7 +174,7 @@ async function copyRequest(): Promise<void> {
                 variant="ghost"
                 size="xs"
                 square
-                icon="i-lucide-copy"
+                icon="i-mdi-content-copy"
                 :aria-label="$t('common.actions.copy')"
                 @click="copyRequest"
               />
@@ -172,7 +182,7 @@ async function copyRequest(): Promise<void> {
           </div>
           <UButton
             size="sm"
-            icon="i-lucide-play"
+            icon="i-mdi-play"
             :loading="isRunning"
             :disabled="isRunning"
             class="self-start"
@@ -185,7 +195,7 @@ async function copyRequest(): Promise<void> {
         <div class="api-request-demo__response">
           <div class="api-request-demo__response-head">
             <span>{{ $t('public.home.responsePreview') }}</span>
-            <span v-if="hasResponse && !isRunning" class="api-request-demo__ok">200 OK · 86ms</span>
+            <span v-if="hasResponse && !isRunning" class="api-request-demo__ok">200 OK · {{ responseLatency }}ms</span>
           </div>
           <pre><code>{{ isRunning ? $t('public.home.requesting') : responsePreview }}</code></pre>
         </div>
@@ -237,7 +247,7 @@ async function copyRequest(): Promise<void> {
   font-size: 0.75rem;
 }
 
-.public-api-intro__status .iconify { color: var(--ui-success); }
+.public-api-intro__status .iconify { color: var(--ui-text-highlighted); }
 .public-api-intro__status .is-error { color: var(--ui-error); }
 .public-api-intro__status .is-loading { color: var(--ui-warning); animation: spin 1s linear infinite; }
 
@@ -307,18 +317,17 @@ async function copyRequest(): Promise<void> {
 }
 
 .api-request-demo__title { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; font-weight: 650; }
-.api-request-demo__status { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ui-success); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ui-success) 12%, transparent); }
+.api-request-demo__status { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--ui-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ui-primary) 10%, transparent); }
 .api-request-demo__endpoint { overflow: hidden; border: 1px solid var(--ui-border); border-radius: 6px; padding: 0.25rem 0.5rem; color: var(--ui-text-muted); background: var(--ui-bg-muted); font: 0.65rem var(--font-code); text-overflow: ellipsis; white-space: nowrap; }
 
 .api-request-demo__request { display: flex; flex-direction: column; gap: 0.75rem; border-bottom: 1px solid var(--ui-border); padding: 1rem; background: color-mix(in oklab, var(--ui-bg-muted) 60%, var(--ui-bg-elevated)); }
 .api-request-demo__label { color: var(--ui-text-muted); font-size: 0.7rem; }
 .api-request-demo__address { display: flex; min-width: 0; min-height: 2.5rem; align-items: center; gap: 0.65rem; border: 1px solid var(--ui-border); border-radius: 7px; padding: 0.25rem 0.35rem 0.25rem 0.75rem; background: var(--ui-bg-elevated); }
-.api-request-demo__address > span { color: var(--ui-text-highlighted); font: 700 0.7rem var(--font-code); }
 .api-request-demo__address code { min-width: 0; flex: 1; overflow-x: auto; color: var(--ui-text-toned); font-size: 0.68rem; white-space: nowrap; scrollbar-width: none; }
 
 .api-request-demo__response { padding: 1rem; }
 .api-request-demo__response-head { margin-bottom: 0.625rem; color: var(--ui-text-muted); font-size: 0.7rem; }
-.api-request-demo__ok { color: var(--ui-success); font-family: var(--font-code); }
+.api-request-demo__ok { color: var(--ui-text-highlighted); font-family: var(--font-code); }
 .api-request-demo pre { height: 15rem; margin: 0; overflow: auto; border-radius: 7px; padding: 0.875rem; color: var(--ui-text-toned); background: var(--ui-bg-muted); font-size: 0.7rem; line-height: 1.65; }
 
 @media (width >= 960px) {

@@ -12,13 +12,9 @@ defineProps<DashboardPageNavbarProps>()
   >
     <template #leading>
       <UDashboardSidebarCollapse />
-      <div class="flex min-w-0 items-center gap-2.5">
-        <span class="hidden font-mono text-[10px] font-semibold text-primary sm:inline">CONSOLE</span>
-        <span class="hidden h-3 w-px bg-default sm:block" />
-        <h1 class="truncate text-base font-semibold text-highlighted">
-          {{ title }}
-        </h1>
-      </div>
+      <h1 class="min-w-0 truncate text-base leading-5 font-semibold text-highlighted">
+        {{ title }}
+      </h1>
       <slot name="leading" />
     </template>
     <template #right>

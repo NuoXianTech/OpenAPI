@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { LazyUserCallLogDetailModal } from '#components'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
@@ -184,14 +185,7 @@ function openDetail(row: UserCallLogRow) {
             <template #summary-cell="{ row }">
               <div class="flex flex-col text-xs gap-0.5">
                 <div class="flex items-center gap-1.5">
-                  <UBadge
-                    color="neutral"
-                    variant="subtle"
-                    size="sm"
-                    class="font-mono"
-                  >
-                    {{ row.original.method }}
-                  </UBadge>
+                  <ApiHttpMethodBadge :method="row.original.method" />
                   <span
                     class="tabular-nums"
                     :class="row.original.statusCode >= 400 ? 'text-error' : 'text-default'"

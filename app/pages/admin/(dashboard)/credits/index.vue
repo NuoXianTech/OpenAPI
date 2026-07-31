@@ -6,6 +6,7 @@ import type {
 } from '#shared/types/admin-credits'
 import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import {
   ADMIN_CREDIT_TRANSACTIONS_PATH,
   ADMIN_CREDIT_USERS_PATH,
@@ -22,7 +23,7 @@ interface OverviewCard {
   value: string
   icon: string
   meta: string
-  tone: 'primary' | 'neutral' | 'info' | 'warning' | 'success' | 'error'
+  tone: DashboardMetricTone
 }
 
 function createEmptyOverview(): AdminCreditOverview {
@@ -57,7 +58,7 @@ const overviewCards = computed<OverviewCard[]>(() => [{
   meta: t('admin.credits.overview.cards.usersWithBalance', {
     count: overview.value.summary.usersWithBalance.toLocaleString(locale.value)
   }),
-  tone: 'primary'
+  tone: 'ink'
 }, {
   key: 'income',
   label: t('admin.credits.overview.cards.income24h'),
@@ -66,7 +67,7 @@ const overviewCards = computed<OverviewCard[]>(() => [{
   meta: t('admin.credits.overview.cards.transactionCount24h', {
     count: overview.value.summary.transactionCount24h.toLocaleString(locale.value)
   }),
-  tone: 'success'
+  tone: 'blue'
 }, {
   key: 'expense',
   label: t('admin.credits.overview.cards.expense24h'),
@@ -75,7 +76,7 @@ const overviewCards = computed<OverviewCard[]>(() => [{
   meta: t('admin.credits.overview.cards.netChange24h', {
     amount: `${overview.value.summary.netChange24h >= 0 ? '+' : ''}${overview.value.summary.netChange24h.toLocaleString(locale.value)}`
   }),
-  tone: 'error'
+  tone: 'rose'
 }, {
   key: 'average',
   label: t('admin.credits.overview.cards.averageBalance'),
@@ -84,7 +85,7 @@ const overviewCards = computed<OverviewCard[]>(() => [{
   meta: t('admin.credits.overview.cards.userCount', {
     count: overview.value.summary.userCount.toLocaleString(locale.value)
   }),
-  tone: 'info'
+  tone: 'violet'
 }, {
   key: 'codes',
   label: t('admin.credits.overview.cards.activeRedemptionCodes'),
@@ -93,7 +94,7 @@ const overviewCards = computed<OverviewCard[]>(() => [{
   meta: t('admin.credits.overview.cards.redemptionPotential', {
     amount: overview.value.summary.redemptionPotential.toLocaleString(locale.value)
   }),
-  tone: 'warning'
+  tone: 'bronze'
 }])
 
 const columns = computed<TableColumn<AdminCreditRecentTransaction>[]>(() => [
@@ -128,7 +129,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface dashboard-hero-surface-success relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
@@ -210,10 +211,11 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
         </UButton>
       </template>
 
-      <UTable
+      <DashboardDataTable
         :data="overview.recentTransactions"
         :columns="columns"
         :loading="loading"
+        :fixed="false"
       >
         <template #createdAt-cell="{ row }">
           <span class="whitespace-nowrap text-xs text-muted">{{ formatDateTime(row.original.createdAt, '-', locale) }}</span>
@@ -243,7 +245,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
         <template #remark-cell="{ row }">
           <span class="block max-w-64 truncate text-xs text-muted">{{ row.original.remark || '-' }}</span>
         </template>
-      </UTable>
+      </DashboardDataTable>
     </DashboardTableCard>
   </div>
 </template>

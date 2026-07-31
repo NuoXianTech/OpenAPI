@@ -1,0 +1,195 @@
+{
+  "admin": {
+    "apis": {
+      "categories": {
+        "searchPlaceholder": "Search codes, names, or descriptions",
+        "listTitle": "Categories",
+        "empty": "No categories",
+        "columns": {
+          "code": "Code",
+          "name": "Name",
+          "description": "Description",
+          "sortOrder": "Sort order",
+          "color": "Color",
+          "enabled": "Enabled"
+        },
+        "actions": {
+          "create": "New category"
+        },
+        "delete": {
+          "title": "Delete category: {name}",
+          "description": "The category will no longer be selectable. Categories assigned to APIs cannot be deleted."
+        },
+        "feedback": {
+          "updated": "Updated",
+          "created": "Created"
+        },
+        "validation": {
+          "codeRequired": "Category code is required",
+          "codeMaxLength": "Category code must be at most 64 characters",
+          "nameRequired": "Category name is required",
+          "nameMaxLength": "Category name must be at most 64 characters",
+          "sortOrderInteger": "Sort order must be an integer"
+        },
+        "form": {
+          "editTitle": "Edit category",
+          "createTitle": "Add category",
+          "code": "Code",
+          "codeHelp": "Unique category key; cannot be changed after creation",
+          "codePlaceholder": "For example, ai-tools",
+          "name": "Name",
+          "namePlaceholder": "For example, AI Tools",
+          "description": "Description",
+          "icon": "Icon (i-mdi-*)",
+          "color": "Color",
+          "sortOrder": "Sort order",
+          "sortOrderHelp": "Lower numbers appear first",
+          "enabled": "Enabled"
+        }
+      },
+      "registry": {
+        "searchPlaceholder": "Search code or name...",
+        "listTitle": "APIs",
+        "empty": "No APIs in this version",
+        "noVersions": "No vN route directory was found. Create an API under server/routes/v1 and restart the development server.",
+        "versionOption": "{version} ({registered}/{total})",
+        "filters": {
+          "version": "Version"
+        },
+        "columns": {
+          "code": "Code / name",
+          "endpoints": "Endpoints",
+          "category": "Category",
+          "enabled": "Enabled",
+          "statistics": "Statistics",
+          "apiKey": "API key"
+        },
+        "statuses": {
+          "unregistered": "Not registered",
+          "codeDeleted": "Code deleted",
+          "disabledByDefault": "Disabled by default"
+        },
+        "apiKey": {
+          "required": "Required",
+          "optional": "Optional"
+        },
+        "actions": {
+          "edit": "Edit API",
+          "capabilities": "API capabilities",
+          "sync": "Sync routes",
+          "register": "Register API"
+        },
+        "feedback": {
+          "enableBeforeStatistics": "Enable the API before enabling statistics",
+          "statisticsDisabled": "Call statistics were also disabled",
+          "toggleFailed": "Toggle failed",
+          "synced": "Manifest synchronized",
+          "syncFailed": "Synchronization failed"
+        }
+      },
+      "capabilities": {
+        "modal": {
+          "title": "API capabilities",
+          "titleWithTarget": "API capabilities: {version} / {code}"
+        },
+        "actions": {
+          "reload": "Reload",
+          "save": "Save capabilities"
+        },
+        "feedback": {
+          "loadFailed": "Failed to load API capabilities",
+          "saved": "API capabilities saved",
+          "saveFailed": "Failed to save API capabilities"
+        },
+        "status": {
+          "configuredRevision": "Configured · v{revision}",
+          "declarationDefault": "Using declaration defaults",
+          "sharedStorage": "Configuration is stored centrally and shared by all service instances"
+        },
+        "form": {
+          "configuredSecretPlaceholder": "Configured; leave empty to keep unchanged"
+        }
+      },
+      "form": {
+        "modal": {
+          "editTitle": "Edit configuration: {version} / {code}",
+          "registerTitle": "Register API: {version} / {code}",
+          "endpointCount": "{count} endpoints",
+          "defaultDescription": "{version} {code} API"
+        },
+        "actions": {
+          "register": "Register"
+        },
+        "feedback": {
+          "apiKeyAutoEnabled": "API key authentication was enabled automatically",
+          "apiKeyAutoEnabledDescription": "Paid calls require an API key to identify the account being charged.",
+          "updated": "Updated",
+          "registered": "Registered"
+        },
+        "validation": {
+          "nameRequired": "API name is required",
+          "nameMaxLength": "API name must be at most 100 characters",
+          "shortDescriptionRequired": "Short description is required",
+          "shortDescriptionMaxLength": "Short description must be at most 50 characters",
+          "descriptionRequired": "Description is required",
+          "perSecond": "Per-second limit must be a non-negative integer",
+          "perMinute": "Per-minute limit must be a non-negative integer",
+          "perHour": "Per-hour limit must be a non-negative integer",
+          "perDay": "Daily limit must be a non-negative integer",
+          "dailyQuota": "Daily quota must be a non-negative integer",
+          "timeout": "Timeout must be an integer between 100 and 120000",
+          "methodCosts": "Method costs must be non-negative integers"
+        },
+        "basic": {
+          "title": "Basic information",
+          "description": "Configure the public name, description, and category",
+          "name": "Name",
+          "namePlaceholder": "Public API name",
+          "status": "Status",
+          "shortDescription": "Short description",
+          "shortDescriptionPlaceholder": "Up to 50 characters",
+          "fullDescription": "Full description",
+          "documentationUrl": "Documentation URL",
+          "category": "Category",
+          "uncategorized": "Uncategorized"
+        },
+        "access": {
+          "title": "Access control",
+          "description": "Control availability, authentication, and call statistics",
+          "enabled": "Enable API",
+          "apiKey": "API key",
+          "statistics": "Call statistics",
+          "statisticsRequiresEnabled": "Enable the API before enabling call statistics.",
+          "disablingApiKeyClearsCosts": "Disabling API keys clears all method charges because the account can no longer be identified."
+        },
+        "rateLimits": {
+          "title": "Rate limits and quotas",
+          "description": "A value of 0 means unlimited",
+          "perSecond": "Per second",
+          "perMinute": "Per minute",
+          "perHour": "Per hour",
+          "perDay": "Per day",
+          "dailyQuota": "Daily quota",
+          "timeoutMs": "Timeout (ms)"
+        },
+        "costs": {
+          "title": "Call pricing",
+          "description": "Set credits per HTTP method",
+          "requiresApiKey": "Enable API key authentication first",
+          "hasPaidMethods": "Includes paid methods",
+          "allFree": "All methods are free",
+          "pointsPerCall": "Credits per call",
+          "freePlaceholder": "0 = free",
+          "costPerCall": "{amount} / call",
+          "free": "Free",
+          "help": "Enter the credits used by each method. Zero or empty means free. Charges require API key authentication and apply only to successful calls."
+        },
+        "endpoints": {
+          "title": "Discovered endpoints",
+          "description": "Paths and methods are determined by the file structure",
+          "dynamic": "Dynamic"
+        }
+      }
+    }
+  }
+}

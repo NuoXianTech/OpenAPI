@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { CreditSummary } from '~/composables/user/use-user-credits-page'
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
 
 const props = defineProps<{
   summary: CreditSummary
@@ -13,7 +14,7 @@ interface CreditOverviewCard {
   unit: string
   meta: string
   icon: string
-  tone: 'neutral' | 'info' | 'success' | 'error'
+  tone: DashboardMetricTone
 }
 
 const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
@@ -25,7 +26,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       unit: t('common.units.points'),
       meta: t('user.credits.overview.balanceDescription'),
       icon: 'i-mdi-cash-multiple',
-      tone: 'neutral'
+      tone: 'ink'
     },
     {
       key: 'in',
@@ -34,7 +35,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       unit: t('common.units.points'),
       meta: t('user.credits.overview.totalIncomeDescription'),
       icon: 'i-mdi-arrow-down-bold-circle-outline',
-      tone: 'success'
+      tone: 'blue'
     },
     {
       key: 'out',
@@ -43,7 +44,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       unit: t('common.units.points'),
       meta: t('user.credits.overview.totalExpensesDescription'),
       icon: 'i-mdi-arrow-up-bold-circle-outline',
-      tone: 'error'
+      tone: 'rose'
     },
     {
       key: 'count',
@@ -52,7 +53,7 @@ const cards = computed<CreditOverviewCard[]>(function getCreditOverviewCards() {
       unit: t('common.units.records'),
       meta: t('user.credits.overview.transactionCountDescription'),
       icon: 'i-mdi-format-list-numbered',
-      tone: 'info'
+      tone: 'violet'
     }
   ]
 })

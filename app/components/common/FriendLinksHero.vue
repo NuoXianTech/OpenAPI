@@ -8,7 +8,6 @@ const props = withDefaults(defineProps<Props>(), {
   totalCount: 0,
   activeCount: 0
 })
-const { t } = useI18n()
 
 const inactiveCount = computed(() => Math.max(0, props.totalCount - props.activeCount))
 const ratio = computed(() => {
@@ -19,11 +18,6 @@ const ratio = computed(() => {
 
 <template>
   <section class="links-hero">
-    <div
-      class="links-hero__pattern"
-      aria-hidden="true"
-    />
-
     <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
       <div class="links-hero__layout">
         <div class="links-hero__copy">
@@ -36,26 +30,10 @@ const ratio = computed(() => {
         </div>
 
         <div class="links-hero__aside">
-          <div
-            class="links-hero__actions"
-            :aria-label="t('public.friendLinks.navigationAria')"
-          >
-            <UButton
-              to="/"
-              icon="i-mdi-home-outline"
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              class="links-hero__nav-item"
-            >
-              {{ $t('common.actions.backHome') }}
-            </UButton>
-          </div>
-
           <div class="links-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
             <CommonHeroStatCard
               icon="i-mdi-bookmark-outline"
-              icon-tone="info"
+              icon-tone="violet"
             >
               <template #value>
                 {{ totalCount }}
@@ -65,7 +43,7 @@ const ratio = computed(() => {
 
             <CommonHeroStatCard
               icon="i-mdi-check-circle-outline"
-              icon-tone="success"
+              icon-tone="blue"
             >
               <template #value>
                 {{ ratio }}<span class="text-base text-muted">%</span>
@@ -75,7 +53,7 @@ const ratio = computed(() => {
 
             <CommonHeroStatCard
               icon="i-mdi-close-circle-outline"
-              icon-tone="error"
+              icon-tone="rose"
             >
               <template #value>
                 {{ inactiveCount }}
@@ -91,26 +69,8 @@ const ratio = computed(() => {
 
 <style scoped>
 .links-hero {
-  position: relative;
-  overflow: hidden;
   border-bottom: 1px solid var(--ui-border);
-  margin-bottom: 20px;
-  isolation: isolate;
-}
-
-.dark .links-hero {
-  background: transparent;
-}
-
-.links-hero__pattern {
-  position: absolute;
-  top: 1.5rem;
-  bottom: 1.5rem;
-  left: 0;
-  width: 3px;
-  background: var(--brand-amber);
-  opacity: 1;
-  pointer-events: none;
+  margin-bottom: 16px;
 }
 
 .links-hero__layout {
@@ -133,15 +93,7 @@ const ratio = computed(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.links-hero__actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
+  justify-content: center;
 }
 
 .links-hero__stats {
@@ -162,10 +114,6 @@ const ratio = computed(() => {
   font-size: 20px;
 }
 
-.links-hero__nav-item {
-  color: var(--ui-text-muted);
-}
-
 @media (min-width: 1024px) {
   .links-hero__layout {
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -174,16 +122,5 @@ const ratio = computed(() => {
     align-items: stretch;
   }
 
-  .links-hero__actions {
-    justify-content: flex-end;
-    align-self: flex-end;
-  }
-}
-
-@media (max-width: 640px) {
-  .links-hero__actions {
-    justify-content: flex-start;
-    width: 100%;
-  }
 }
 </style>

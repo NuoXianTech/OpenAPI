@@ -103,7 +103,7 @@ async function submit() {
           class="w-full sm:w-60"
         />
       </UFormField>
-      <div class="flex justify-end pt-4">
+      <template #footer>
         <UButton
           icon="i-mdi-email-arrow-right-outline"
           :loading="isSaving"
@@ -112,7 +112,7 @@ async function submit() {
         >
           {{ $t('user.settings.email.sendVerification') }}
         </UButton>
-      </div>
+      </template>
     </DashboardSettingsSection>
 
     <UAlert

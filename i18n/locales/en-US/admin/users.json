@@ -1,0 +1,134 @@
+{
+  "admin": {
+    "users": {
+      "title": "User management",
+      "searchPlaceholder": "Search username, email, or display name",
+      "filterTitle": "User filters",
+      "listTitle": "Users",
+      "empty": "No users",
+      "filters": {
+        "userId": "User ID",
+        "exactMatch": "Exact match",
+        "userIdPlaceholder": "Enter user ID",
+        "role": "Role",
+        "allRoles": "All roles",
+        "activeStatus": "Activation status",
+        "allActiveStatuses": "All activation statuses",
+        "banStatus": "Ban status",
+        "allBanStatuses": "All ban statuses"
+      },
+      "columns": {
+        "username": "Username",
+        "role": "Type",
+        "email": "Email",
+        "credits": "Credits",
+        "status": "Status",
+        "ban": "Ban",
+        "createdAt": "Registered"
+      },
+      "actions": {
+        "add": "Add user",
+        "showColumns": "Show columns",
+        "edit": "Edit user",
+        "ban": "Ban user",
+        "unban": "Unban user",
+        "apiKeys": "API keys"
+      },
+      "feedback": {
+        "banned": "User banned",
+        "banFailed": "Failed to ban user",
+        "unbanned": "User unbanned",
+        "unbanFailed": "Failed to unban user",
+        "updated": "User updated",
+        "created": "User created"
+      },
+      "delete": {
+        "title": "Delete user: {username}",
+        "description": "All user data, including API keys and sessions, will be permanently removed."
+      },
+      "unban": {
+        "title": "Unban user: {username}",
+        "description": "The user will be able to log in immediately."
+      },
+      "banTooltip": {
+        "reason": "Reason: {reason}",
+        "noReason": "Reason: Not provided",
+        "until": "Unban time: {time}"
+      },
+      "fields": {
+        "username": "Username",
+        "email": "Email",
+        "displayName": "Display name",
+        "role": "Account type"
+      },
+      "create": {
+        "title": "Add user",
+        "description": "Create an account directly without email verification",
+        "usernameHelp": "3–32 characters; letters, numbers, underscores, and hyphens only",
+        "usernamePlaceholder": "For example: alice_2026",
+        "emailPlaceholder": "user{'@'}example.com",
+        "initialPassword": "Initial password",
+        "passwordHelp": "At least 8 characters",
+        "displayName": "Display name (optional)",
+        "displayNameHelp": "Defaults to the username when empty",
+        "activateImmediately": "Activate immediately"
+      },
+      "edit": {
+        "title": "Edit user",
+        "usernameHelp": "Username cannot be changed after creation to keep audit records stable.",
+        "resetPassword": "Reset password",
+        "resetPasswordHelp": "Leave empty to keep the current password. A new password signs the user out everywhere.",
+        "passwordPlaceholder": "Leave empty for no change",
+        "oauthBindings": "Connected accounts",
+        "readOnly": "(read only)",
+        "noOauthBindings": "This user has no connected accounts",
+        "lastLogin": "Last login {time}"
+      },
+      "ban": {
+        "title": "Ban user: {username}",
+        "reason": "Reason",
+        "reasonHint": "Optional; shown to the banned user",
+        "reasonPlaceholder": "For example: policy violation or API abuse",
+        "duration": "Duration",
+        "untilPlaceholder": "Select unban time",
+        "description": "The user is unbanned automatically when the ban expires. All current sessions are revoked immediately.",
+        "confirm": "Ban user",
+        "durations": {
+          "permanent": "Permanent",
+          "oneDay": "1 day",
+          "sevenDays": "7 days",
+          "thirtyDays": "30 days",
+          "custom": "Custom"
+        },
+        "validation": {
+          "requiredUntil": "Enter an unban time",
+          "invalidUntil": "Invalid unban time",
+          "futureUntil": "The unban time must be in the future"
+        }
+      },
+      "apiKeys": {
+        "title": "API keys for {username}",
+        "loadFailed": "Failed to load API keys",
+        "empty": "No API keys",
+        "editingHint": "Editing key #{id}; the key string will not change",
+        "actions": {
+          "collapse": "Collapse",
+          "add": "Add",
+          "generate": "Generate",
+          "reveal": "Reveal full key",
+          "hide": "Hide full key"
+        },
+        "feedback": {
+          "createdOne": "A new API key was generated",
+          "createdMany": "{count} API keys were generated"
+        },
+        "summary": {
+          "expiry": "Expiration",
+          "quota": "Quota",
+          "scopes": "APIs",
+          "ip": "IP"
+        }
+      }
+    }
+  }
+}

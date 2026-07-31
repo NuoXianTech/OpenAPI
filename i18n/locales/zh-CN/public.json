@@ -1,6 +1,7 @@
 {
   "public": {
     "navigation": {
+      "home": "首页",
       "catalog": "接口目录",
       "getStarted": "开始使用",
       "language": "切换语言",
@@ -9,8 +10,7 @@
     "home": {
       "defaultDescription": "免费为用户提供网络数据接口调用的服务平台",
       "introTitle": "开发者需要的公共接口，一站式免费调用",
-      "serviceSummary": "平台服务正常 · 已服务 {users} 位开发者",
-      "serviceSummaryWithRate": "请求成功率 {rate} · 已服务 {users} 位开发者",
+      "availabilitySummary": "全站可用率 {rate} · 已服务 {users} 位开发者",
       "catalogDescription": "按能力、状态和接入成本查找接口，打开详情即可查看请求契约。",
       "popularKicker": "MOST USED",
       "popularTitle": "热门接口",
@@ -31,7 +31,8 @@
       },
       "curlExample": "cURL 请求",
       "responseExample": "统一返回结构",
-      "liveExample": "实时请求示例",
+      "simulatedExample": "模拟请求示例",
+      "sampleResponseMessage": "获取汇率成功",
       "requestAddress": "请求地址",
       "sendRequest": "发送请求",
       "requesting": "请求中...",
@@ -194,7 +195,6 @@
       "collected": "收录数",
       "availability": "可达率",
       "inactiveCount": "异常数",
-      "navigationAria": "友情链接导航",
       "defaultTitle": "链接标题"
     }
   }

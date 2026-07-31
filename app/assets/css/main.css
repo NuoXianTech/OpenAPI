@@ -10,14 +10,23 @@
 
   --brand-ink: #09090b;
   --brand-primary: #18181b;
-  --brand-cyan: #0f7b8d;
   --brand-amber: #b7791f;
   --brand-coral: #d84f64;
   --brand-canvas: #ffffff;
   --brand-paper: #ffffff;
 
+  --api-spectrum-blue: #3f6f8f;
+  --api-spectrum-violet: #756287;
+  --api-spectrum-amber: #866b49;
+  --api-spectrum-rose: #a54f5c;
+
+  --dashboard-accent-blue: #486f87;
+  --dashboard-accent-violet: #71657f;
+  --dashboard-accent-bronze: #806a50;
+  --dashboard-accent-rose: #9e5863;
+
   --ui-primary: var(--brand-primary);
-  --ui-secondary: var(--brand-cyan);
+  --ui-secondary: var(--brand-primary);
   --ui-info: #256f88;
   --ui-success: #21806b;
   --ui-warning: var(--brand-amber);
@@ -46,8 +55,8 @@
   --dashboard-surface-muted: color-mix(in oklab, var(--ui-text) 1.8%, var(--ui-bg));
   --dashboard-border: color-mix(in oklab, var(--ui-border) 86%, transparent);
   --dashboard-shadow: 0 1px 2px color-mix(in oklab, var(--brand-ink) 5%, transparent);
-  --dashboard-table-header: color-mix(in oklab, var(--ui-text) 1.6%, var(--ui-bg-elevated));
-  --dashboard-table-header-hover: color-mix(in oklab, var(--ui-text) 3.2%, var(--ui-bg-elevated));
+  --dashboard-table-header: color-mix(in oklab, var(--ui-bg-muted) 72%, var(--ui-bg-elevated));
+  --dashboard-table-row-hover: color-mix(in oklab, var(--ui-bg-muted) 58%, var(--ui-bg-elevated));
   --dashboard-table-row: var(--ui-bg-elevated);
   --dashboard-skeleton-base: #ededf0;
   --dashboard-skeleton-highlight: #fafafa;
@@ -56,14 +65,23 @@
 .dark {
   --brand-ink: #fafafa;
   --brand-primary: #f4f4f5;
-  --brand-cyan: #58b7c5;
   --brand-amber: #d9a24a;
   --brand-coral: #e67582;
   --brand-canvas: #09090b;
   --brand-paper: #111113;
 
+  --api-spectrum-blue: #7fa9c2;
+  --api-spectrum-violet: #b3a0c4;
+  --api-spectrum-amber: #c0a17c;
+  --api-spectrum-rose: #d38a94;
+
+  --dashboard-accent-blue: #86a8bc;
+  --dashboard-accent-violet: #b3a5c0;
+  --dashboard-accent-bronze: #bca58a;
+  --dashboard-accent-rose: #d0949c;
+
   --ui-primary: var(--brand-primary);
-  --ui-secondary: var(--brand-cyan);
+  --ui-secondary: var(--brand-primary);
   --ui-info: #68a9bd;
   --ui-success: #58aa95;
   --ui-warning: var(--brand-amber);
@@ -89,8 +107,8 @@
   --dashboard-surface-muted: color-mix(in oklab, white 4%, var(--ui-bg));
   --dashboard-border: color-mix(in oklab, white 10%, transparent);
   --dashboard-shadow: 0 1px 2px color-mix(in oklab, black 18%, transparent);
-  --dashboard-table-header: color-mix(in oklab, white 5.5%, var(--ui-bg));
-  --dashboard-table-header-hover: color-mix(in oklab, white 8%, var(--ui-bg));
+  --dashboard-table-header: color-mix(in oklab, var(--ui-bg-muted) 72%, var(--ui-bg-elevated));
+  --dashboard-table-row-hover: color-mix(in oklab, var(--ui-bg-muted) 58%, var(--ui-bg-elevated));
   --dashboard-table-row: var(--ui-bg-elevated);
   --dashboard-skeleton-base: #34353a;
   --dashboard-skeleton-highlight: #46474d;
@@ -191,32 +209,6 @@ kbd,
     color-mix(in oklab, var(--ui-bg-elevated) 92%, var(--ui-info) 4%);
 }
 
-.dashboard-hero-surface {
-  --dashboard-hero-accent: var(--ui-primary);
-  --dashboard-hero-accent-secondary: var(--dashboard-hero-accent);
-  background: var(--ui-bg-elevated);
-}
-
-.dashboard-hero-surface-info {
-  --dashboard-hero-accent: var(--ui-info);
-  --dashboard-hero-accent-secondary: var(--ui-primary);
-}
-
-.dashboard-hero-surface-success {
-  --dashboard-hero-accent: var(--ui-success);
-  --dashboard-hero-accent-secondary: var(--ui-primary);
-}
-
-.dashboard-hero-surface-warning {
-  --dashboard-hero-accent: var(--ui-warning);
-  --dashboard-hero-accent-secondary: var(--ui-primary);
-}
-
-.dashboard-hero-surface-mixed {
-  --dashboard-hero-accent: var(--ui-warning);
-  --dashboard-hero-accent-secondary: var(--ui-success);
-}
-
 .dashboard-data-table {
   overflow-x: auto;
 }
@@ -230,7 +222,7 @@ kbd,
 }
 
 .dashboard-table-native tbody tr:hover td:not([data-slot="empty"]) {
-  background-color: var(--dashboard-table-header-hover);
+  background-color: var(--dashboard-table-row-hover);
 }
 
 .dashboard-table-skeleton {
@@ -292,43 +284,6 @@ kbd,
   gap: 1.25rem;
 }
 
-.dashboard-settings-section {
-  display: grid;
-  gap: 0.625rem;
-}
-
-.dashboard-settings-section-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.dashboard-settings-section-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.dashboard-settings-section-card {
-  overflow: hidden;
-  border-radius: var(--dashboard-radius);
-  border: 1px solid var(--dashboard-border);
-  background: var(--dashboard-surface);
-  box-shadow: var(--dashboard-shadow);
-}
-
-.dashboard-settings-section-card > :where(:not([role="separator"])) {
-  padding: 0.875rem;
-}
-
-.dashboard-settings-section-card > :where(:not([role="separator"])) + :where(:not([role="separator"])) {
-  border-top: 1px solid var(--dashboard-border);
-}
-
 .dashboard-oauth-provider-card {
   overflow: hidden;
   border: 1px solid var(--dashboard-border);
@@ -339,12 +294,6 @@ kbd,
 
 .dashboard-oauth-provider-divider {
   border-color: var(--dashboard-border);
-}
-
-@media (width >= 640px) {
-  .dashboard-settings-section-card > :where(:not([role="separator"])) {
-    padding: 0.875rem 1rem;
-  }
 }
 
 .admin-modal-overlay {
@@ -512,13 +461,29 @@ kbd,
 .dashboard-toolbar { background: color-mix(in oklab, var(--ui-bg-elevated) 72%, var(--ui-bg) 28%); }
 .dashboard-action-bar,
 .dashboard-table-card,
-.dashboard-settings-section-card,
 .dashboard-oauth-provider-card { box-shadow: none; }
 
 .dashboard-hero-surface {
+  isolation: isolate;
   border-color: var(--dashboard-border);
-  background: var(--ui-bg-elevated);
-  box-shadow: inset 3px 0 0 var(--dashboard-hero-accent);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in oklab, var(--dashboard-surface-muted) 72%, var(--dashboard-surface)) 0%,
+      var(--dashboard-surface) 46%,
+      var(--dashboard-surface) 100%
+    );
+  box-shadow:
+    var(--dashboard-shadow),
+    inset 0 1px 0 color-mix(in oklab, white 62%, transparent),
+    0 24px 48px -46px color-mix(in oklab, var(--ui-text) 42%, transparent);
+}
+
+.dark .dashboard-hero-surface {
+  box-shadow:
+    var(--dashboard-shadow),
+    inset 0 1px 0 color-mix(in oklab, white 7%, transparent),
+    0 24px 48px -44px color-mix(in oklab, black 64%, transparent);
 }
 
 .rounded-xl,

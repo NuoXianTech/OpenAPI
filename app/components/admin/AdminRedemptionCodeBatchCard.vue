@@ -47,20 +47,15 @@ function getBatchMenuItems(batch: BatchSummary): DropdownMenuItem[][] {
 </script>
 
 <template>
-  <UCard v-if="batches.length > 0">
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-package-variant"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          {{ $t('admin.credits.redemptionCodes.batch.title') }}
-        </h3>
-        <span class="ml-auto text-xs text-muted">
-          {{ $t('admin.credits.redemptionCodes.batch.count', { count: batches.length.toLocaleString(locale) }) }}
-        </span>
-      </div>
+  <DashboardContentCard
+    v-if="batches.length > 0"
+    :title="$t('admin.credits.redemptionCodes.batch.title')"
+    icon="i-mdi-package-variant"
+  >
+    <template #actions>
+      <span class="text-xs text-muted">
+        {{ $t('admin.credits.redemptionCodes.batch.count', { count: batches.length.toLocaleString(locale) }) }}
+      </span>
     </template>
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       <div
@@ -107,5 +102,5 @@ function getBatchMenuItems(batch: BatchSummary): DropdownMenuItem[][] {
         </div>
       </div>
     </div>
-  </UCard>
+  </DashboardContentCard>
 </template>

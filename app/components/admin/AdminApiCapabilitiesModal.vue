@@ -154,7 +154,7 @@ watch(
 
       <div v-else-if="response" class="space-y-5">
         <div class="flex flex-wrap items-center gap-2">
-          <UBadge :color="response.config.isConfigured ? 'success' : 'neutral'" variant="subtle">
+          <UBadge color="neutral" variant="subtle">
             {{ response.config.isConfigured
               ? t('admin.apis.capabilities.status.configuredRevision', { revision: response.config.revision })
               : t('admin.apis.capabilities.status.declarationDefault') }}

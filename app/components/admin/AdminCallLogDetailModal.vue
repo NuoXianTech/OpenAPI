@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminLogRow } from '#shared/types/admin'
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { ADMIN_CALL_LOG_TYPE_META } from '~/composables/admin/use-admin-call-logs-page'
 
@@ -98,13 +99,7 @@ function formatBytes(value: number | null) {
           </template>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                class="font-mono"
-              >
-                {{ props.row.method }}
-              </UBadge>
+              <ApiHttpMethodBadge :method="props.row.method" />
               <span class="font-mono break-all">{{ props.row.apiPath }}</span>
             </div>
             <div

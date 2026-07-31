@@ -1,0 +1,186 @@
+{
+  "admin": {
+    "content": {
+      "announcements": {
+        "searchPlaceholder": "Search titles, content, or links",
+        "listTitle": "Announcements",
+        "empty": "No announcements",
+        "pinnedBadge": "Pinned",
+        "levels": {
+          "info": "Announcement",
+          "success": "Notice",
+          "warning": "Reminder",
+          "critical": "Urgent"
+        },
+        "levelOptions": {
+          "info": "Announcement (info)",
+          "success": "Notice (success)",
+          "warning": "Reminder (warning)",
+          "critical": "Urgent (critical)"
+        },
+        "filters": {
+          "level": "Level",
+          "allLevels": "All levels",
+          "status": "Status",
+          "allStatuses": "All statuses",
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "pinnedState": "Pinned",
+          "allPinned": "All",
+          "pinned": "Pinned",
+          "notPinned": "Not pinned"
+        },
+        "columns": {
+          "title": "Title",
+          "sortOrder": "Sort order",
+          "enabled": "Enabled",
+          "pinned": "Pinned",
+          "createdAt": "Created"
+        },
+        "actions": {
+          "create": "New announcement"
+        },
+        "delete": {
+          "title": "Delete announcement: {title}",
+          "description": "The announcement will be removed permanently."
+        },
+        "feedback": {
+          "created": "Created"
+        },
+        "form": {
+          "editTitle": "Edit announcement",
+          "createTitle": "New announcement",
+          "editDescription": "Update content, visibility, and sorting.",
+          "createDescription": "Publish an announcement for users.",
+          "title": "Title",
+          "titlePlaceholder": "Announcement title (up to 200 characters)",
+          "level": "Level",
+          "content": "Content",
+          "contentPlaceholder": "Plain text; line breaks are preserved",
+          "linkUrl": "Details link (optional)",
+          "sortOrder": "Sort order (lower first)",
+          "enabled": "Enabled",
+          "pinned": "Pinned",
+          "requiredContent": "Title and content are required"
+        }
+      },
+      "notifications": {
+        "searchPlaceholder": "Search titles or senders",
+        "historyTitle": "Send history",
+        "emptyHistory": "No send history",
+        "filters": {
+          "audience": "Audience",
+          "allAudiences": "All audiences",
+          "level": "Level",
+          "allLevels": "All levels"
+        },
+        "audiences": {
+          "labels": {
+            "specific": "Specific",
+            "allCurrent": "All users",
+            "allWithFuture": "All + future"
+          },
+          "options": {
+            "specific": "Selected recipients only",
+            "allCurrent": "All current users",
+            "allWithFuture": "Current and future users"
+          }
+        },
+        "levelOptions": {
+          "info": "Notice (info)",
+          "success": "Success (success)",
+          "warning": "Warning (warning)",
+          "critical": "Critical (critical)"
+        },
+        "columns": {
+          "title": "Title",
+          "delivery": "Delivered / read",
+          "sender": "Sender",
+          "sentAt": "Sent"
+        },
+        "actions": {
+          "send": "Send notification",
+          "viewDeliveries": "View recipients"
+        },
+        "delivery": {
+          "delivered": "Delivered to {count}",
+          "read": "Read by {count}"
+        },
+        "delete": {
+          "title": "Delete notification: {title}",
+          "description": "Recipients will no longer see this notification. Send history cannot be restored."
+        },
+        "detail": {
+          "title": "Recipient details",
+          "description": "{title} · {time} · Audience {audience} · Delivered {delivered} / Read {read}",
+          "loadFailed": "Failed to load recipient details",
+          "empty": "No delivery records",
+          "readAt": "Read · {time}",
+          "unread": "Unread"
+        },
+        "feedback": {
+          "sent": "Sent to {count} recipients"
+        },
+        "form": {
+          "title": "Send notification",
+          "description": "Send an in-app notification to selected, current, or future users.",
+          "audience": "Audience",
+          "futureDeliveryHint": "This notification will be delivered when future users activate their accounts.",
+          "recipients": "Recipients",
+          "recipientsPlaceholder": "Search username or email",
+          "messageTitle": "Title",
+          "titlePlaceholder": "Notification title (up to 200 characters)",
+          "level": "Level",
+          "content": "Content",
+          "contentPlaceholder": "Plain text; line breaks are preserved",
+          "linkUrl": "Additional link (optional)",
+          "requiredContent": "Title and content are required",
+          "recipientRequired": "Select recipients or send to all users"
+        }
+      },
+      "friendLinks": {
+        "searchPlaceholder": "Search names, URLs, or descriptions",
+        "listTitle": "Friend links",
+        "empty": "No friend links",
+        "filters": {
+          "status": "Status",
+          "allStatuses": "All statuses"
+        },
+        "statuses": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "columns": {
+          "title": "Title",
+          "description": "Description",
+          "status": "Status"
+        },
+        "actions": {
+          "create": "Add link"
+        },
+        "delete": {
+          "title": "Delete link: {title}",
+          "description": "The friend link will be removed permanently."
+        },
+        "feedback": {
+          "updated": "Updated",
+          "created": "Created"
+        },
+        "validation": {
+          "titleRequired": "Link title is required",
+          "urlRequired": "Link URL is required"
+        },
+        "form": {
+          "editTitle": "Edit link",
+          "createTitle": "Add link",
+          "editDescription": "Update the friend link and visibility.",
+          "createDescription": "Add a site to the friend links section.",
+          "title": "Title",
+          "titlePlaceholder": "Site name",
+          "description": "Description",
+          "enabled": "Enabled"
+        }
+      }
+    }
+  }
+}

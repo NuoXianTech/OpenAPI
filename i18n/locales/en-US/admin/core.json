@@ -1,0 +1,76 @@
+{
+  "admin": {
+    "units": {
+      "people": "people",
+      "items": "items"
+    },
+    "initialProfile": {
+      "title": "Complete administrator account",
+      "description": "Confirm your username and email, then set a new administrator password.",
+      "usernameHelp": "3–32 characters; letters, numbers, underscores, and hyphens only",
+      "newPassword": "New password",
+      "passwordHelp": "At least 8 characters",
+      "feedback": {
+        "updated": "Administrator account updated",
+        "saveFailed": "Save failed"
+      }
+    },
+    "overview": {
+      "pageTitle": "Admin center",
+      "title": "Overview",
+      "platformTitle": "Platform overview",
+      "hero": {
+        "title": "Platform operations overview",
+        "description": "Manage users, APIs, and system settings in one place, monitor call trends, API usage, and service health, and quickly spot issues that need attention."
+      },
+      "snapshot": {
+        "title": "Today's snapshot",
+        "todayCalls": "Calls today",
+        "comparedYesterday": "Compared with yesterday"
+      },
+      "metrics": {
+        "users": "Registered users",
+        "usersDescription": "Total platform accounts",
+        "enabledApis": "Enabled APIs",
+        "totalApis": "{count} APIs total",
+        "totalCalls": "Total calls",
+        "successRate": "Success rate"
+      },
+      "actions": {
+        "viewCallLogs": "View call logs",
+        "viewFullLogs": "View full logs"
+      },
+      "trend": {
+        "title": "API call trend",
+        "description": "Daily total, successful, and failed calls",
+        "empty": "No call data"
+      },
+      "distribution": {
+        "title": "API usage distribution",
+        "description": "Top 5 APIs by call volume",
+        "empty": "No distribution data"
+      },
+      "hourly": {
+        "title": "24-hour call trend",
+        "description": "Tracked API requests grouped by hour",
+        "calls": "Calls",
+        "empty": "No calls in the last 24 hours"
+      },
+      "ranking": {
+        "title": "Call ranking",
+        "description": "Top {count} APIs by volume and success rate"
+      },
+      "recent": {
+        "title": "Latest API requests",
+        "empty": "No request logs",
+        "milliseconds": "{value} ms",
+        "columns": {
+          "time": "Time",
+          "method": "Method",
+          "status": "Status",
+          "latency": "Latency"
+        }
+      }
+    }
+  }
+}

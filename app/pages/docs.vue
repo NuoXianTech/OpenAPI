@@ -39,7 +39,7 @@ const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
   variant: 'outline' as const,
-  icon: 'i-lucide-refresh-cw',
+  icon: 'i-mdi-refresh',
   onClick: refreshCatalog
 }])
 
@@ -93,7 +93,7 @@ useSeoMeta({
 
           <div class="api-directory__statuses">
             <span class="api-directory__filter-label">
-              <UIcon name="i-lucide-activity" class="size-3.5" />
+              <UIcon name="i-mdi-pulse" class="size-3.5" />
               {{ $t('public.home.statusFilter') }}
             </span>
             <CommonFilterTabs
@@ -106,7 +106,7 @@ useSeoMeta({
 
           <div class="api-directory__categories">
             <span class="api-directory__filter-label">
-              <UIcon name="i-lucide-shapes" class="size-3.5" />
+              <UIcon name="i-mdi-shape-outline" class="size-3.5" />
               {{ $t('public.directory.categoryLabel') }}
             </span>
             <CommonFilterTabs
@@ -122,11 +122,11 @@ useSeoMeta({
 
         <div id="api-directory-results" class="api-directory__result-meta">
           <span>
-            <UIcon name="i-lucide-list-filter" class="size-3.5" />
+            <UIcon name="i-mdi-filter-variant" class="size-3.5" />
             {{ $t('public.directory.resultSummary', { count: filteredApis.length }) }}
           </span>
           <span class="api-directory__hint">
-            <UIcon name="i-lucide-mouse-pointer-click" class="size-3.5" />
+            <UIcon name="i-mdi-cursor-default-click-outline" class="size-3.5" />
             {{ $t('public.directory.resultHint') }}
           </span>
         </div>
@@ -141,7 +141,7 @@ useSeoMeta({
 
         <UEmpty
           v-else-if="loadError"
-          icon="i-lucide-circle-alert"
+          icon="i-mdi-alert-circle-outline"
           :title="$t('common.states.loadFailed')"
           :description="loadError"
           variant="naked"
@@ -152,7 +152,7 @@ useSeoMeta({
 
         <UEmpty
           v-else-if="isEmpty"
-          icon="i-lucide-search-x"
+          icon="i-mdi-magnify-remove-outline"
           :title="$t('public.directory.emptyTitle')"
           :description="$t('public.directory.emptyDescription')"
           variant="naked"
@@ -224,7 +224,7 @@ useSeoMeta({
 .api-directory__kicker {
   display: block;
   margin-bottom: 0.5rem;
-  color: var(--ui-secondary);
+  color: var(--ui-text-highlighted);
   font-family: var(--font-code);
   font-size: 0.65rem;
   font-weight: 700;

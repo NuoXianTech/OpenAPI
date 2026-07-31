@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LazyApiKeyResetModal } from '#components'
+import { LazyApiKeyResetModal, LazyApiKeyRevealModal } from '#components'
 import { parseFetchError } from '~/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
@@ -143,12 +143,17 @@ async function submitEdit() {
 // ------------------------------------------------------------
 const overlay = useOverlay()
 const resetModal = overlay.create(LazyApiKeyResetModal, { destroyOnClose: true })
+const revealModal = overlay.create(LazyApiKeyRevealModal, { destroyOnClose: true })
 
 function openReset(row: ApiKeyItem) {
   resetModal.open({
     target: row,
     onReset: resetKey
   })
+}
+
+function openReveal(row: ApiKeyItem) {
+  revealModal.open({ target: row })
 }
 
 // ------------------------------------------------------------
@@ -197,7 +202,6 @@ const columns = computed<TableColumn<ApiKeyItem>[]>(() => [
   { id: 'status', header: t('common.apiKeys.columns.status') },
   { id: 'actions', header: '' }
 ])
-const showFullKeyId = ref<number | null>(null)
 const keyword = ref('')
 const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired' | 'revoked'>('all')
 const scopeFilter = ref<'all' | 'full' | 'limited'>('all')
@@ -252,7 +256,6 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
 
 watch([keyword, statusFilter, scopeFilter, pageSize], () => {
   page.value = 1
-  showFullKeyId.value = null
 })
 
 function resetFilters() {
@@ -269,13 +272,10 @@ async function copy(text: string) {
   }
 }
 
-function toggleReveal(id: number) {
-  showFullKeyId.value = showFullKeyId.value === id ? null : id
-}
-
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
     { label: t('common.apiKeys.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
+    { label: t('common.apiKeys.actions.view'), icon: 'i-mdi-eye-outline', onSelect: () => openReveal(row) },
     { label: t('common.apiKeys.actions.copy'), icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     {
       label: row.isActive ? t('common.apiKeys.actions.disable') : t('common.apiKeys.actions.enable'),
@@ -373,19 +373,24 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #apiKey-cell="{ row }">
-              <div class="flex items-center gap-2">
-                <code class="font-mono text-xs px-2 py-1 rounded bg-elevated">
-                  {{ showFullKeyId === row.original.id ? row.original.apiKey : maskApiKey(row.original.apiKey) }}
+              <div class="flex min-w-0 items-center gap-1.5">
+                <code
+                  class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned"
+                  :title="maskApiKey(row.original.apiKey)"
+                >
+                  {{ maskApiKey(row.original.apiKey) }}
                 </code>
                 <UButton
-                  :icon="showFullKeyId === row.original.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                  icon="i-mdi-eye-outline"
+                  :aria-label="$t('common.apiKeys.actions.view')"
                   size="xs"
                   color="neutral"
                   variant="ghost"
-                  @click="toggleReveal(row.original.id)"
+                  @click="openReveal(row.original)"
                 />
                 <UButton
                   icon="i-mdi-content-copy"
+                  :aria-label="$t('common.apiKeys.actions.copy')"
                   size="xs"
                   color="neutral"
                   variant="ghost"

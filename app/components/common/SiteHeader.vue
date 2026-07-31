@@ -11,15 +11,19 @@ const toast = useToast()
 const isChangingLocale = ref(false)
 
 const navigation = computed(() => [
-  { label: t('public.navigation.catalog'), to: '/docs', icon: 'i-lucide-blocks' },
-  { label: t('public.home.stats'), to: '/stats', icon: 'i-lucide-chart-no-axes-combined' },
-  { label: t('public.home.friendLinks'), to: '/friend-links', icon: 'i-lucide-link' }
+  { label: t('public.navigation.home'), to: '/', icon: 'i-mdi-home-outline' },
+  { label: t('public.navigation.catalog'), to: '/docs', icon: 'i-mdi-view-grid-outline' },
+  { label: t('public.home.stats'), to: '/stats', icon: 'i-mdi-chart-line' },
+  { label: t('public.home.friendLinks'), to: '/friend-links', icon: 'i-mdi-link-variant' }
 ])
 
 const dashboardPath = computed(() => user.value?.role === 'admin' ? ADMIN_OVERVIEW_PATH : USER_OVERVIEW_PATH)
 const dashboardLabel = computed(() => user.value?.role === 'admin'
   ? t('public.home.adminDashboard')
   : t('public.home.userDashboard'))
+const dashboardIcon = computed(() => user.value?.role === 'admin'
+  ? 'i-mdi-shield-account-outline'
+  : 'i-mdi-account-circle-outline')
 
 const languageItems = computed<DropdownMenuItem[]>(() => locales.value.flatMap((item) => {
   const code = typeof item === 'string' ? item : item.code
@@ -27,7 +31,7 @@ const languageItems = computed<DropdownMenuItem[]>(() => locales.value.flatMap((
   return [{
     label: typeof item === 'string' ? item : item.name || item.code,
     active: code === locale.value,
-    trailingIcon: code === locale.value ? 'i-lucide-check' : undefined,
+    trailingIcon: code === locale.value ? 'i-mdi-check' : undefined,
     onSelect: () => void handleLocaleChange(code)
   }]
 }))
@@ -39,10 +43,10 @@ const mobileItems = computed<DropdownMenuItem[][]>(() => [
     to: item.to
   })),
   user.value
-    ? [{ label: dashboardLabel.value, icon: 'i-lucide-layout-dashboard', to: dashboardPath.value }]
+    ? [{ label: dashboardLabel.value, icon: dashboardIcon.value, to: dashboardPath.value }]
     : [
-        { label: t('auth.login.title'), icon: 'i-lucide-log-in', to: '/login' },
-        { label: t('auth.register.title'), icon: 'i-lucide-user-round-plus', to: '/register' }
+        { label: t('auth.login.title'), icon: 'i-mdi-login', to: '/login' },
+        { label: t('auth.register.title'), icon: 'i-mdi-account-plus-outline', to: '/register' }
       ]
 ])
 
@@ -81,7 +85,13 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
         :aria-label="settings.siteName"
       >
         <span class="site-brand__mark" aria-hidden="true">
-          <UIcon name="i-lucide-zap" class="size-4.5" />
+          <img
+            :src="settings.siteImg || '/favicon.ico'"
+            alt=""
+            width="20"
+            height="20"
+            decoding="async"
+          >
         </span>
         <span class="site-brand__copy">
           <strong>{{ settings.siteName }}</strong>
@@ -107,7 +117,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
             variant="ghost"
             size="sm"
             square
-            icon="i-lucide-languages"
+            icon="i-mdi-translate"
             :loading="isChangingLocale"
             :aria-label="$t('public.navigation.language')"
           />
@@ -122,7 +132,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
               size="sm"
               square
               disabled
-              icon="i-lucide-sun-moon"
+              icon="i-mdi-theme-light-dark"
             />
           </template>
         </ClientOnly>
@@ -134,7 +144,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
               color="neutral"
               variant="ghost"
               size="sm"
-              icon="i-lucide-layout-dashboard"
+              :icon="dashboardIcon"
               class="hidden sm:inline-flex"
             >
               {{ dashboardLabel }}
@@ -145,7 +155,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
                 variant="ghost"
                 size="sm"
                 square
-                icon="i-lucide-log-out"
+                icon="i-mdi-logout"
                 :aria-label="$t('public.home.logout')"
                 class="hidden sm:inline-flex"
                 @click="handleLogout"
@@ -165,7 +175,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
             <UButton
               to="/register"
               size="sm"
-              icon="i-lucide-rocket"
+              icon="i-mdi-rocket-launch-outline"
               class="hidden sm:inline-flex"
             >
               {{ $t('public.navigation.getStarted') }}
@@ -184,7 +194,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
             <UButton
               to="/register"
               size="sm"
-              icon="i-lucide-rocket"
+              icon="i-mdi-rocket-launch-outline"
               class="hidden sm:inline-flex"
             >
               {{ $t('public.navigation.getStarted') }}
@@ -198,7 +208,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
             variant="outline"
             size="sm"
             square
-            icon="i-lucide-menu"
+            icon="i-mdi-menu"
             :aria-label="$t('public.navigation.openMenu')"
             class="md:hidden"
           />
@@ -243,9 +253,16 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
   flex: 0 0 auto;
   place-items: center;
   border-radius: 7px;
-  color: white;
-  background: var(--ui-primary);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, white 18%, transparent);
+  border: 1px solid color-mix(in oklab, var(--ui-border) 88%, transparent);
+  background: color-mix(in oklab, var(--ui-bg-elevated) 94%, transparent);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 7%, transparent);
+  overflow: hidden;
+}
+
+.site-brand__mark img {
+  width: 1.25rem;
+  height: 1.25rem;
+  object-fit: contain;
 }
 
 .site-brand__copy {

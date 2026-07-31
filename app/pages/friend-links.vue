@@ -57,7 +57,7 @@ const visibleCount = computed(() => filteredItems.value.length)
 </script>
 
 <template>
-  <div>
+  <div class="public-page">
     <CommonSiteHeader />
     <main class="mx-auto w-full max-w-275 flex-1 px-5 pt-5 pb-6 sm:pt-6">
       <CommonFriendLinksHero
@@ -96,20 +96,20 @@ const visibleCount = computed(() => filteredItems.value.length)
           </div>
 
           <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
-            <div class="grid grid-cols-3 gap-2.5">
-              <div class="friend-filter-stat">
-                <span>{{ $t('common.filters.all') }}</span>
-                <strong>{{ totalCount }}</strong>
+            <dl class="friend-filter-summary">
+              <div>
+                <dt>{{ $t('common.filters.all') }}</dt>
+                <dd>{{ totalCount }}</dd>
               </div>
-              <div class="friend-filter-stat">
-                <span>{{ $t('common.states.active') }}</span>
-                <strong>{{ activeCount }}</strong>
+              <div>
+                <dt>{{ $t('common.states.active') }}</dt>
+                <dd>{{ activeCount }}</dd>
               </div>
-              <div class="friend-filter-stat">
-                <span>{{ $t('common.filters.current') }}</span>
-                <strong>{{ visibleCount }}</strong>
+              <div>
+                <dt>{{ $t('common.filters.current') }}</dt>
+                <dd>{{ visibleCount }}</dd>
               </div>
-            </div>
+            </dl>
           </div>
         </div>
       </UCard>
@@ -206,21 +206,37 @@ const visibleCount = computed(() => filteredItems.value.length)
 </template>
 
 <style scoped>
-.friend-filter-stat {
-  min-width: 0;
-  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg) 58%, transparent);
-  padding: 9px 10px;
+.friend-filter-summary {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
 }
 
-.friend-filter-stat span {
+.friend-filter-summary > div {
+  min-width: 0;
+  padding-inline: 12px;
+}
+
+.friend-filter-summary > div:first-child {
+  padding-left: 0;
+}
+
+.friend-filter-summary > div:last-child {
+  padding-right: 0;
+}
+
+.friend-filter-summary > div + div {
+  border-left: 1px solid var(--ui-border-muted);
+}
+
+.friend-filter-summary dt {
   display: block;
   font-size: 11px;
   color: var(--ui-text-muted);
 }
 
-.friend-filter-stat strong {
+.friend-filter-summary dd {
   display: block;
   margin-top: 2px;
   overflow: hidden;

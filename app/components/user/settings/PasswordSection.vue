@@ -81,7 +81,7 @@ async function submit() {
         class="w-full sm:w-60"
       />
     </UFormField>
-    <div class="flex justify-end pt-4">
+    <template #footer>
       <UButton
         :loading="isSaving"
         :disabled="!hasChanges || isSaving"
@@ -90,6 +90,6 @@ async function submit() {
       >
         {{ $t('user.settings.security.updatePassword') }}
       </UButton>
-    </div>
+    </template>
   </DashboardSettingsSection>
 </template>

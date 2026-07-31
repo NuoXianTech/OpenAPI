@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { useAdminApiForm } from '~/composables/admin/use-admin-api-form'
 
 defineProps<{
@@ -37,7 +38,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
   <section class="rounded-xl border border-default bg-elevated/30 p-4">
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <span class="inline-flex size-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
-        <UIcon name="i-mdi-coins" class="size-4" />
+        <UIcon name="i-mdi-cash-multiple" class="size-4" />
       </span>
       <div class="me-auto">
         <h3 class="text-sm font-semibold text-highlighted">
@@ -65,7 +66,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
       </UBadge>
       <UBadge
         v-else
-        color="success"
+        color="neutral"
         variant="subtle"
         size="sm"
       >
@@ -82,14 +83,10 @@ function setMethodCost(method: string, value: number | string | null | undefined
           :key="method"
           class="flex items-center gap-2"
         >
-          <UBadge
-            :color="httpMethodColor(method)"
-            variant="subtle"
-            size="sm"
-            class="font-mono w-16 justify-center"
-          >
-            {{ method }}
-          </UBadge>
+          <ApiHttpMethodBadge
+            :method="method"
+            class="w-16 justify-center"
+          />
           <UInput
             type="number"
             min="0"
@@ -103,7 +100,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
           />
           <span
             class="text-xs w-12 text-right"
-            :class="getMethodCost(method) > 0 ? 'text-warning' : 'text-success'"
+            :class="getMethodCost(method) > 0 ? 'text-warning' : 'text-toned'"
           >
             {{ getMethodCost(method) > 0
               ? $t('admin.apis.form.costs.costPerCall', {

@@ -1,0 +1,195 @@
+{
+  "admin": {
+    "apis": {
+      "categories": {
+        "searchPlaceholder": "搜索编码、名称或描述",
+        "listTitle": "分类列表",
+        "empty": "暂无分类",
+        "columns": {
+          "code": "编码",
+          "name": "名称",
+          "description": "描述",
+          "sortOrder": "排序",
+          "color": "颜色",
+          "enabled": "启用"
+        },
+        "actions": {
+          "create": "新建分类"
+        },
+        "delete": {
+          "title": "删除分类：{name}",
+          "description": "删除后该分类将不再可选；若仍有接口绑定该分类，将无法删除。"
+        },
+        "feedback": {
+          "updated": "更新成功",
+          "created": "创建成功"
+        },
+        "validation": {
+          "codeRequired": "分类标识不能为空",
+          "codeMaxLength": "分类标识最多 64 字",
+          "nameRequired": "分类名称不能为空",
+          "nameMaxLength": "分类名称最多 64 字",
+          "sortOrderInteger": "排序必须是整数"
+        },
+        "form": {
+          "editTitle": "编辑分类",
+          "createTitle": "新增分类",
+          "code": "编码 (code)",
+          "codeHelp": "作为分类唯一键，创建后不可修改",
+          "codePlaceholder": "如 ai-tools",
+          "name": "名称",
+          "namePlaceholder": "如 AI 工具",
+          "description": "描述",
+          "icon": "图标 (i-mdi-*)",
+          "color": "颜色标识",
+          "sortOrder": "排序",
+          "sortOrderHelp": "数字越小越靠前",
+          "enabled": "启用"
+        }
+      },
+      "registry": {
+        "searchPlaceholder": "搜索 code / 名称...",
+        "listTitle": "接口列表",
+        "empty": "该版本暂无接口",
+        "noVersions": "未发现任何 vN 版本目录。请在 server/routes/v1/ 下创建接口目录后重启开发服务。",
+        "versionOption": "{version} ({registered}/{total})",
+        "filters": {
+          "version": "版本"
+        },
+        "columns": {
+          "code": "编码 / 名称",
+          "endpoints": "端点",
+          "category": "分类",
+          "enabled": "启用",
+          "statistics": "统计",
+          "apiKey": "API 密钥"
+        },
+        "statuses": {
+          "unregistered": "未登记",
+          "codeDeleted": "代码已删除",
+          "disabledByDefault": "默认停用"
+        },
+        "apiKey": {
+          "required": "必需",
+          "optional": "可选"
+        },
+        "actions": {
+          "edit": "编辑接口",
+          "capabilities": "接口配置",
+          "sync": "同步路由",
+          "register": "登记接口"
+        },
+        "feedback": {
+          "enableBeforeStatistics": "请先启用接口，再开启统计",
+          "statisticsDisabled": "已同时关闭调用统计",
+          "toggleFailed": "切换失败",
+          "synced": "已同步 manifest",
+          "syncFailed": "同步失败"
+        }
+      },
+      "capabilities": {
+        "modal": {
+          "title": "接口配置",
+          "titleWithTarget": "接口配置：{version} / {code}"
+        },
+        "actions": {
+          "reload": "重新加载",
+          "save": "保存能力配置"
+        },
+        "feedback": {
+          "loadFailed": "读取接口配置失败",
+          "saved": "接口配置已保存",
+          "saveFailed": "保存接口配置失败"
+        },
+        "status": {
+          "configuredRevision": "已配置 · v{revision}",
+          "declarationDefault": "使用声明默认值",
+          "sharedStorage": "配置由平台统一存储，所有服务实例共享"
+        },
+        "form": {
+          "configuredSecretPlaceholder": "已配置，留空保持不变"
+        }
+      },
+      "form": {
+        "modal": {
+          "editTitle": "编辑配置：{version} / {code}",
+          "registerTitle": "登记接口：{version} / {code}",
+          "endpointCount": "{count} 个端点",
+          "defaultDescription": "{version} {code} 接口"
+        },
+        "actions": {
+          "register": "登记"
+        },
+        "feedback": {
+          "apiKeyAutoEnabled": "已自动开启「API 密钥」",
+          "apiKeyAutoEnabledDescription": "设置扣费后必须通过 API 密钥鉴权扣款账户。",
+          "updated": "更新成功",
+          "registered": "登记成功"
+        },
+        "validation": {
+          "nameRequired": "接口名称不能为空",
+          "nameMaxLength": "接口名称最多 100 字",
+          "shortDescriptionRequired": "接口短描述不能为空",
+          "shortDescriptionMaxLength": "接口短描述最多 50 字",
+          "descriptionRequired": "接口描述不能为空",
+          "perSecond": "每秒限流必须是不小于 0 的整数",
+          "perMinute": "每分钟限流必须是不小于 0 的整数",
+          "perHour": "每小时限流必须是不小于 0 的整数",
+          "perDay": "每天限流必须是不小于 0 的整数",
+          "dailyQuota": "日配额必须是不小于 0 的整数",
+          "timeout": "超时时间必须是 100 到 120000 之间的整数",
+          "methodCosts": "方法积分必须是非负整数"
+        },
+        "basic": {
+          "title": "基础信息",
+          "description": "配置接口在前台展示的名称、描述与分类",
+          "name": "名称",
+          "namePlaceholder": "对外展示名称",
+          "status": "状态",
+          "shortDescription": "简短描述",
+          "shortDescriptionPlaceholder": "最多 50 字",
+          "fullDescription": "详细描述",
+          "documentationUrl": "文档地址",
+          "category": "分类",
+          "uncategorized": "未分类"
+        },
+        "access": {
+          "title": "访问控制",
+          "description": "控制接口可用性、鉴权与调用统计",
+          "enabled": "启用接口",
+          "apiKey": "API 密钥",
+          "statistics": "调用统计",
+          "statisticsRequiresEnabled": "启用接口后才能开启调用统计。",
+          "disablingApiKeyClearsCosts": "关闭「API 密钥」会清空所有方法的扣费配置（无法定位扣款账户）。"
+        },
+        "rateLimits": {
+          "title": "限流与配额",
+          "description": "数值为 0 表示不限制",
+          "perSecond": "每秒",
+          "perMinute": "每分钟",
+          "perHour": "每小时",
+          "perDay": "每天",
+          "dailyQuota": "日配额",
+          "timeoutMs": "超时 (ms)"
+        },
+        "costs": {
+          "title": "调用计费",
+          "description": "按 HTTP 方法设置单次积分",
+          "requiresApiKey": "需先开启「API 密钥」",
+          "hasPaidMethods": "含收费方法",
+          "allFree": "整组免费",
+          "pointsPerCall": "单次调用消耗积分",
+          "freePlaceholder": "0 = 免费",
+          "costPerCall": "{amount} / 次",
+          "free": "免费",
+          "help": "逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API 密钥」后才能配置扣费。调用成功才扣，失败或业务标记失败时不扣。"
+        },
+        "endpoints": {
+          "title": "自动发现的端点",
+          "description": "路径与方法由文件结构决定",
+          "dynamic": "动态"
+        }
+      }
+    }
+  }
+}

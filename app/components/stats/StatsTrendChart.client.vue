@@ -78,6 +78,7 @@ function tooltipTemplate(datum: TrendRow | undefined) {
       icon="i-mdi-chart-line"
       :title="t('public.stats.chart.emptyTitle')"
       :description="t('public.stats.chart.emptyDescription')"
+      variant="naked"
       class="h-[320px]"
     />
 
@@ -130,23 +131,15 @@ function tooltipTemplate(datum: TrendRow | undefined) {
         <VisTooltip />
       </VisXYContainer>
 
-      <div class="mt-4 flex flex-wrap gap-2">
-        <UBadge
-          variant="soft"
-          color="success"
-          icon="i-mdi-circle"
-          class="rounded-md"
-        >
+      <div class="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted">
+        <span class="inline-flex items-center gap-1.5">
+          <span class="size-2 rounded-full bg-success" />
           {{ $t('public.stats.chart.successCount') }}
-        </UBadge>
-        <UBadge
-          variant="soft"
-          color="error"
-          icon="i-mdi-circle"
-          class="rounded-md"
-        >
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <span class="size-2 rounded-full bg-error" />
           {{ $t('public.stats.chart.failureCount') }}
-        </UBadge>
+        </span>
       </div>
     </template>
   </div>

@@ -139,21 +139,15 @@ function onTurnstileError(message: string) {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-calendar-check-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          {{ $t('user.credits.checkin.title') }}
-        </h3>
-        <span
-          v-if="status && !status.enabled"
-          class="ml-2 text-xs text-muted"
-        >{{ $t('common.states.disabled') }}</span>
-      </div>
+  <DashboardContentCard
+    :title="$t('user.credits.checkin.title')"
+    icon="i-mdi-calendar-check-outline"
+  >
+    <template
+      v-if="status && !status.enabled"
+      #actions
+    >
+      <span class="text-xs text-muted">{{ $t('common.states.disabled') }}</span>
     </template>
 
     <div
@@ -278,5 +272,5 @@ function onTurnstileError(message: string) {
         </div>
       </template>
     </UModal>
-  </UCard>
+  </DashboardContentCard>
 </template>

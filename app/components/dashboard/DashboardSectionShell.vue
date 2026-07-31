@@ -20,7 +20,7 @@ useHead({ title: () => props.title })
         <template #leading>
           <UDashboardSidebarCollapse />
           <div class="dashboard-section-title min-w-0">
-            <h1 class="truncate text-base font-semibold text-highlighted sm:text-lg">
+            <h1 class="truncate text-base leading-5 font-semibold text-highlighted">
               {{ title }}
             </h1>
           </div>

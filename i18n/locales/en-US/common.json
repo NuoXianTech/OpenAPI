@@ -147,6 +147,7 @@
       },
       "actions": {
         "edit": "Edit configuration",
+        "view": "View key",
         "copy": "Copy key",
         "enable": "Enable key",
         "disable": "Disable key",
@@ -209,6 +210,7 @@
     },
     "notifications": {
       "title": "Notifications",
+      "description": "Account activity, service alerts, and important updates",
       "unread": "Unread",
       "unreadCount": "{count} unread",
       "markAllRead": "Mark all read",

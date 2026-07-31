@@ -76,7 +76,7 @@ async function submit(): Promise<void> {
       />
     </UFormField>
 
-    <div class="flex justify-end pt-4">
+    <template #footer>
       <UButton
         icon="i-mdi-content-save-outline"
         :loading="isSaving"
@@ -85,6 +85,6 @@ async function submit(): Promise<void> {
       >
         {{ $t('common.actions.save') }}
       </UButton>
-    </div>
+    </template>
   </DashboardSettingsSection>
 </template>

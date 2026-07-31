@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import {
   userCallOutcomeColor,
   userCallOutcomeIcon,
@@ -66,13 +67,7 @@ const { getOutcomeLabel } = useUserCallOutcomeMeta()
           </template>
           <div class="space-y-2 text-xs">
             <div class="flex items-center gap-2">
-              <UBadge
-                color="neutral"
-                variant="subtle"
-                class="font-mono"
-              >
-                {{ props.row.method }}
-              </UBadge>
+              <ApiHttpMethodBadge :method="props.row.method" />
               <span class="font-mono break-all">{{ props.row.apiPath }}</span>
             </div>
             <div class="flex flex-wrap gap-x-4 gap-y-1 text-muted">

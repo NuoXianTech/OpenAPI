@@ -26,7 +26,7 @@ const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
   variant: 'outline' as const,
-  icon: 'i-lucide-refresh-cw',
+  icon: 'i-mdi-refresh',
   onClick: () => emit('retry')
 }])
 </script>
@@ -50,7 +50,7 @@ const retryActions = computed(() => [{
         to="/docs"
         color="neutral"
         variant="outline"
-        trailing-icon="i-lucide-arrow-right"
+        trailing-icon="i-mdi-arrow-right"
       >
         {{ $t('public.home.viewAllApis', { count: props.totalApiCount }) }}
       </UButton>
@@ -66,7 +66,7 @@ const retryActions = computed(() => [{
 
     <UEmpty
       v-else-if="props.loadError"
-      icon="i-lucide-circle-alert"
+      icon="i-mdi-alert-circle-outline"
       :title="$t('common.states.loadFailed')"
       :description="props.loadError"
       variant="naked"
@@ -77,7 +77,7 @@ const retryActions = computed(() => [{
 
     <UEmpty
       v-else-if="props.apis.length === 0"
-      icon="i-lucide-blocks"
+      icon="i-mdi-view-grid-outline"
       :title="$t('public.home.popularEmptyTitle')"
       :description="$t('public.home.popularEmptyDescription')"
       variant="naked"
@@ -112,7 +112,7 @@ const retryActions = computed(() => [{
 .popular-apis__kicker {
   display: block;
   margin-bottom: 0.4rem;
-  color: var(--ui-secondary);
+  color: var(--ui-text-highlighted);
   font-family: var(--font-code);
   font-size: 0.65rem;
   font-weight: 700;

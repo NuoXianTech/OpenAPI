@@ -9,7 +9,7 @@ const { settings } = useSiteSettings()
     <section class="auth-panel">
       <NuxtLink to="/" class="auth-home" :aria-label="settings.siteName">
         <span class="auth-home__mark" aria-hidden="true">
-          <UIcon name="i-lucide-zap" class="size-4" />
+          <UIcon name="i-mdi-lightning-bolt" class="size-4" />
         </span>
         <span>{{ settings.siteName }}</span>
       </NuxtLink>

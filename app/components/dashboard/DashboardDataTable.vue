@@ -63,14 +63,14 @@ const {
 const emit = defineEmits<DashboardDataTableEmits>()
 const { t, locale } = useI18n()
 
-// 后台表格统一外观：圆角描边 + 行分隔线。原先散落在各列表页的同款 :ui 收敛到此。
+// 后台表格统一外观：中性灰阶、稳定字号与紧凑行高。
 const DEFAULT_TABLE_UI = {
   base: 'dashboard-table-native table-fixed border-separate border-spacing-0',
   thead: '[&>tr]:[background-color:var(--dashboard-table-header)] [&>tr]:after:content-none',
   tbody: '[&>tr]:last:[&>td]:border-b-0',
-  th: 'py-2 text-[10px] font-medium uppercase tracking-wider text-muted first:rounded-tl-md last:rounded-tr-md border-b border-default',
-  td: 'py-2.5 text-sm border-b border-default [background-color:var(--dashboard-table-row)]',
-  empty: 'py-9 border-b border-default rounded-b-md [background-color:var(--dashboard-table-row)]',
+  th: 'h-10 px-3 py-2 text-xs font-semibold tracking-[0.01em] text-toned first:rounded-tl-md last:rounded-tr-md border-b border-muted',
+  td: 'px-3 py-3 text-[13px] leading-5 text-default border-b border-muted [background-color:var(--dashboard-table-row)]',
+  empty: 'py-9 border-b border-muted rounded-b-md [background-color:var(--dashboard-table-row)]',
   separator: 'h-0'
 }
 const tableUi = computed(() => ({

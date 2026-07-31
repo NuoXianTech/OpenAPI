@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const { t, locale } = useI18n()
+import { formatExchangeRateResponseExample } from '~/utils/public-api-example'
+
+const { t } = useI18n()
 const toast = useToast()
 const gatewayOrigin = useRequestURL().origin
 
@@ -26,27 +28,9 @@ const curlSnippet = computed(() => [
   '  -H "x-api-key: <your-api-key>"'
 ].join('\n'))
 
-const responseSnippet = computed(() => locale.value.startsWith('zh')
-  ? [
-      '{',
-      '  "code": "OK",',
-      '  "message": "请求成功",',
-      '  "data": {',
-      '    "base": "CNY",',
-      '    "rates": { "USD": 0.1392 }',
-      '  }',
-      '}'
-    ].join('\n')
-  : [
-      '{',
-      '  "code": "OK",',
-      '  "message": "Request completed",',
-      '  "data": {',
-      '    "base": "CNY",',
-      '    "rates": { "USD": 0.1392 }',
-      '  }',
-      '}'
-    ].join('\n'))
+const responseSnippet = computed(() => formatExchangeRateResponseExample(
+  t('public.home.sampleResponseMessage')
+))
 
 async function copyCodeSnippet(value: string): Promise<void> {
   try {
@@ -102,7 +86,7 @@ async function copyCodeSnippet(value: string): Promise<void> {
                 variant="ghost"
                 size="xs"
                 square
-                icon="i-lucide-copy"
+                icon="i-mdi-content-copy"
                 :aria-label="$t('common.actions.copy')"
                 @click="copyCodeSnippet(curlSnippet)"
               />
@@ -123,7 +107,7 @@ async function copyCodeSnippet(value: string): Promise<void> {
                 variant="ghost"
                 size="xs"
                 square
-                icon="i-lucide-copy"
+                icon="i-mdi-content-copy"
                 :aria-label="$t('common.actions.copy')"
                 @click="copyCodeSnippet(responseSnippet)"
               />
@@ -158,7 +142,7 @@ async function copyCodeSnippet(value: string): Promise<void> {
 .api-onboarding__kicker {
   display: block;
   margin-bottom: 0.4rem;
-  color: var(--ui-secondary);
+  color: var(--ui-text-highlighted);
   font-family: var(--font-code);
   font-size: 0.65rem;
   font-weight: 700;
@@ -196,7 +180,7 @@ async function copyCodeSnippet(value: string): Promise<void> {
   bottom: 1.1rem;
   left: 1.05rem;
   width: 1px;
-  background: color-mix(in oklab, var(--ui-secondary) 32%, var(--ui-border));
+  background: var(--ui-border-accented);
   content: "";
 }
 
@@ -213,10 +197,10 @@ async function copyCodeSnippet(value: string): Promise<void> {
   width: 2.15rem;
   height: 2.15rem;
   place-items: center;
-  border: 1px solid color-mix(in oklab, var(--ui-secondary) 26%, var(--ui-border));
+  border: 1px solid var(--ui-primary);
   border-radius: 7px;
-  color: var(--ui-secondary);
-  background: var(--ui-bg-elevated);
+  color: var(--ui-bg);
+  background: var(--ui-primary);
   font-family: var(--font-code);
   font-size: 0.72rem;
   font-weight: 700;
@@ -274,8 +258,8 @@ async function copyCodeSnippet(value: string): Promise<void> {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 999px;
-  background: var(--ui-secondary);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ui-secondary) 12%, transparent);
+  background: var(--ui-primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ui-primary) 10%, transparent);
 }
 
 .api-onboarding-code pre {

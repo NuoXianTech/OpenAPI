@@ -31,18 +31,10 @@ async function submit() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-ticket-percent-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          {{ $t('user.credits.redeem.code') }}
-        </h3>
-      </div>
-    </template>
+  <DashboardContentCard
+    :title="$t('user.credits.redeem.code')"
+    icon="i-mdi-ticket-percent-outline"
+  >
     <div>
       <UFormField
         :label="$t('user.credits.redeem.code')"
@@ -90,5 +82,5 @@ async function submit() {
         </div>
       </div>
     </div>
-  </UCard>
+  </DashboardContentCard>
 </template>

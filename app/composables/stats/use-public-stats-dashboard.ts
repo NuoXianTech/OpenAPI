@@ -5,9 +5,8 @@ import type {
   PublicCallStatsTrendPoint
 } from '#shared/types/public-stats'
 import type { DashboardCallRankItem } from '#shared/types/dashboard'
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import { formatCompactCount, formatCount, formatPercent } from '~/utils/number-format'
-
-type PublicStatTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
 
 interface PublicStatsOverviewCard {
   key: string
@@ -15,8 +14,7 @@ interface PublicStatsOverviewCard {
   value: string
   helper: string
   icon: string
-  tone: PublicStatTone
-  accent: string
+  tone: DashboardMetricTone
 }
 
 interface UsePublicStatsDashboardReturn {
@@ -30,7 +28,6 @@ interface UsePublicStatsDashboardReturn {
   isInitialLoading: ComputedRef<boolean>
   generatedAtLabel: ComputedRef<string>
   todayDelta: ComputedRef<number>
-  todayDeltaTone: ComputedRef<PublicStatTone>
   todayDeltaLabel: ComputedRef<string>
   successRateProgress: ComputedRef<number>
   failureRate: ComputedRef<number>
@@ -85,12 +82,6 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     return overview.value.todayCalls - overview.value.yesterdayCalls
   })
 
-  const todayDeltaTone = computed<PublicStatTone>(() => {
-    if (todayDelta.value > 0) return 'success'
-    if (todayDelta.value < 0) return 'warning'
-    return 'neutral'
-  })
-
   const todayDeltaLabel = computed(() => {
     if (!overview.value) return t('public.stats.waitingSync')
     if (todayDelta.value === 0) return t('public.stats.sameAsYesterday')
@@ -126,8 +117,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.totalCalls),
         helper: t('public.stats.cards.totalHelper'),
         icon: 'i-mdi-counter',
-        tone: 'primary',
-        accent: 'var(--ui-primary)'
+        tone: 'ink'
       },
       {
         key: 'today',
@@ -135,8 +125,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.todayCalls),
         helper: todayDeltaLabel.value,
         icon: 'i-mdi-calendar-today-outline',
-        tone: todayDeltaTone.value,
-        accent: 'var(--ui-info)'
+        tone: 'blue'
       },
       {
         key: 'yesterday',
@@ -144,8 +133,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.yesterdayCalls),
         helper: t('public.stats.cards.yesterdayHelper'),
         icon: 'i-mdi-calendar-arrow-left',
-        tone: 'neutral',
-        accent: 'var(--ui-text-muted)'
+        tone: 'violet'
       },
       {
         key: 'successRate',
@@ -153,8 +141,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatPercent(overview.value.successRate),
         helper: t('public.stats.cards.failureRate', { value: formatPercent(failureRate.value) }),
         icon: 'i-mdi-chart-donut',
-        tone: 'success',
-        accent: 'var(--ui-success)'
+        tone: 'blue'
       },
       {
         key: 'success',
@@ -162,8 +149,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.successCalls),
         helper: t('public.stats.cards.successHelper'),
         icon: 'i-mdi-check-circle-outline',
-        tone: 'success',
-        accent: 'var(--ui-success)'
+        tone: 'blue'
       },
       {
         key: 'failure',
@@ -171,8 +157,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.failureCalls),
         helper: overview.value.failureCalls > 0 ? t('public.stats.cards.failureAttention') : t('public.stats.cards.noFailures'),
         icon: 'i-mdi-close-circle-outline',
-        tone: overview.value.failureCalls > 0 ? 'error' : 'neutral',
-        accent: 'var(--ui-error)'
+        tone: overview.value.failureCalls > 0 ? 'rose' : 'ink'
       },
       {
         key: 'users',
@@ -180,8 +165,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.userCount),
         helper: t('public.stats.cards.usersHelper'),
         icon: 'i-mdi-account-group-outline',
-        tone: 'info',
-        accent: 'var(--ui-info)'
+        tone: 'ink'
       },
       {
         key: 'enabledStatsApis',
@@ -189,8 +173,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         value: formatCount(overview.value.enabledTrackedApiCount),
         helper: trackedApiRatioLabel.value,
         icon: 'i-mdi-api',
-        tone: 'primary',
-        accent: 'var(--ui-primary)'
+        tone: 'violet'
       }
     ]
   })
@@ -229,7 +212,6 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     isInitialLoading,
     generatedAtLabel,
     todayDelta,
-    todayDeltaTone,
     todayDeltaLabel,
     successRateProgress,
     failureRate,

@@ -1,6 +1,7 @@
 {
   "public": {
     "navigation": {
+      "home": "Home",
       "catalog": "API catalog",
       "getStarted": "Get started",
       "language": "Change language",
@@ -9,8 +10,7 @@
     "home": {
       "defaultDescription": "A free platform providing network data APIs",
       "introTitle": "Stable, clear, ready-to-use public APIs",
-      "serviceSummary": "All systems operational · {users} developers served",
-      "serviceSummaryWithRate": "{rate} request success · {users} developers served",
+      "availabilitySummary": "Platform availability {rate} · {users} developers served",
       "catalogDescription": "Find APIs by capability, status, and access cost, then inspect the request contract.",
       "popularKicker": "MOST USED",
       "popularTitle": "Popular APIs",
@@ -31,7 +31,8 @@
       },
       "curlExample": "cURL request",
       "responseExample": "Standard response",
-      "liveExample": "Live request example",
+      "simulatedExample": "Simulated request example",
+      "sampleResponseMessage": "Exchange rates retrieved",
       "requestAddress": "Request URL",
       "sendRequest": "Send request",
       "requesting": "Requesting...",
@@ -194,7 +195,6 @@
       "collected": "Links",
       "availability": "Availability",
       "inactiveCount": "Unavailable",
-      "navigationAria": "Friend link navigation",
       "defaultTitle": "Link title"
     }
   }

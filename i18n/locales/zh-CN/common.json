@@ -158,6 +158,7 @@
       },
       "actions": {
         "edit": "编辑配置",
+        "view": "查看密钥",
         "copy": "复制密钥",
         "enable": "启用密钥",
         "disable": "停用密钥",
@@ -226,10 +227,11 @@
       }
     },
     "notifications": {
-      "title": "消息通知",
+      "title": "通知中心",
+      "description": "账号动态、服务提醒与重要通知",
       "unread": "未读",
       "unreadCount": "{count} 未读",
-      "markAllRead": "全部已读",
+      "markAllRead": "全部标为已读",
       "onlyUnread": "只看未读",
       "noUnread": "没有未读消息",
       "empty": "暂无消息",

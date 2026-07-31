@@ -1,0 +1,76 @@
+{
+  "admin": {
+    "units": {
+      "people": "人",
+      "items": "个"
+    },
+    "initialProfile": {
+      "title": "完善管理员账号",
+      "description": "确认用户名和邮箱，并设置新的管理员密码。",
+      "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
+      "newPassword": "新密码",
+      "passwordHelp": "至少 8 位",
+      "feedback": {
+        "updated": "管理员账号已更新",
+        "saveFailed": "保存失败"
+      }
+    },
+    "overview": {
+      "pageTitle": "管理中心",
+      "title": "概览",
+      "platformTitle": "平台概览",
+      "hero": {
+        "title": "平台运营总览",
+        "description": "从这里统一管理用户、API 与系统配置，持续查看调用趋势、接口使用分布和服务运行状态，及时发现需要处理的异常。"
+      },
+      "snapshot": {
+        "title": "今日快照",
+        "todayCalls": "今日调用",
+        "comparedYesterday": "较昨日"
+      },
+      "metrics": {
+        "users": "注册用户",
+        "usersDescription": "当前平台注册账号总量",
+        "enabledApis": "启用 API",
+        "totalApis": "共 {count} 个接口",
+        "totalCalls": "总调用",
+        "successRate": "成功率"
+      },
+      "actions": {
+        "viewCallLogs": "查看调用日志",
+        "viewFullLogs": "查看完整日志"
+      },
+      "trend": {
+        "title": "API 调用趋势",
+        "description": "按天聚合总调用、成功与失败次数",
+        "empty": "暂无调用数据"
+      },
+      "distribution": {
+        "title": "API 使用分布",
+        "description": "Top 5 高频调用接口",
+        "empty": "暂无分布数据"
+      },
+      "hourly": {
+        "title": "调用趋势（24 小时）",
+        "description": "按小时聚合已计入统计的 API 请求次数",
+        "calls": "调用次数",
+        "empty": "近 24 小时暂无调用"
+      },
+      "ranking": {
+        "title": "调用次数排行",
+        "description": "Top {count} 高频调用接口及成功率"
+      },
+      "recent": {
+        "title": "最新 API 请求",
+        "empty": "暂无请求日志",
+        "milliseconds": "{value} ms",
+        "columns": {
+          "time": "时间",
+          "method": "方法",
+          "status": "状态",
+          "latency": "耗时"
+        }
+      }
+    }
+  }
+}

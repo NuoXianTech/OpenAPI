@@ -114,7 +114,7 @@ async function onCreditSaved() {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface dashboard-hero-surface-success relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10">
         <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
           {{ $t('admin.credits.users.title') }}
@@ -213,8 +213,7 @@ async function onCreditSaved() {
         <template #id-cell="{ row }">
           <div class="flex flex-col">
             <span class="text-sm font-medium text-highlighted">{{ row.original.displayName || row.original.username }}</span>
-            <span class="text-xs text-muted">{{ row.original.username }} · {{ formatCreditUserIdentity(row.original) }}</span>
-            <span class="max-w-64 truncate text-xs text-muted">{{ row.original.email }}</span>
+            <span class="text-xs text-muted">{{ formatCreditUserIdentity(row.original) }}</span>
           </div>
         </template>
         <template #credits-cell="{ row }">
@@ -251,7 +250,7 @@ async function onCreditSaved() {
             <UButton
               icon="i-mdi-cash-edit"
               color="neutral"
-              variant="ghost"
+              variant="outline"
               size="sm"
               @click="openCreditForUser(row.original)"
             >

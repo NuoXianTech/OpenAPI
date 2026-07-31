@@ -97,13 +97,14 @@ const sessionSection = createSection(sessionKeys)
           class="w-full"
         />
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="registrationSection.dirty.value"
-        :saving="registrationSection.saving.value"
-        :disabled="registrationSection.disabled.value"
-        @save="registrationSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="registrationSection.dirty.value"
+          :saving="registrationSection.saving.value"
+          :disabled="registrationSection.disabled.value"
+          @save="registrationSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -174,13 +175,14 @@ const sessionSection = createSection(sessionKeys)
           class="w-full sm:w-40"
         />
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="sessionSection.dirty.value"
-        :saving="sessionSection.saving.value"
-        :disabled="sessionSection.disabled.value"
-        @save="sessionSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="sessionSection.dirty.value"
+          :saving="sessionSection.saving.value"
+          :disabled="sessionSection.disabled.value"
+          @save="sessionSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -340,13 +342,14 @@ const sessionSection = createSection(sessionKeys)
         </UCollapsible>
       </div>
 
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="isOauthDirty"
-        :saving="isOauthSaving"
-        :disabled="!isOauthReady"
-        @save="saveOauthSettings"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="isOauthDirty"
+          :saving="isOauthSaving"
+          :disabled="!isOauthReady"
+          @save="saveOauthSettings"
+        />
+      </template>
     </DashboardSettingsSection>
   </div>
 </template>

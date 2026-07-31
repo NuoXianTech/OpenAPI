@@ -13,6 +13,11 @@
       "createTitle": "生成新 API 密钥",
       "editTitle": "编辑 API 密钥",
       "generate": "生成",
+      "view": {
+        "title": "查看 API 密钥",
+        "description": "{name} 的完整密钥",
+        "hint": "请勿在公开页面、聊天记录或代码仓库中共享此密钥。"
+      },
       "filters": {
         "allStatuses": "全部状态",
         "allScopes": "全部范围"
@@ -258,7 +263,7 @@
       "copyFailed": "复制失败",
       "hero": {
         "title": "几分钟内开始使用你的 API 网关",
-        "description": "你好，{username}。在这里你可以管理 API 密钥、查看余额与调用情况。"
+        "description": "在这里集中管理 API 密钥与积分额度，快速完成首次调用，并随时查看请求趋势、成功率和最近的使用情况。"
       },
       "actions": {
         "createApiKey": "创建 API 密钥",

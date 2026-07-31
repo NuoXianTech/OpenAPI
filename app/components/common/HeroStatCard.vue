@@ -1,9 +1,9 @@
 <script setup lang="ts">
-type IconTone = 'primary' | 'info' | 'success' | 'warning' | 'error' | 'neutral'
+type HeroStatTone = 'ink' | 'blue' | 'violet' | 'bronze' | 'rose'
 
-const { icon = '', iconTone = 'neutral', loading = false, valueTitle, labelTitle } = defineProps<{
+const { icon = '', iconTone = 'ink', loading = false, valueTitle, labelTitle } = defineProps<{
   icon?: string
-  iconTone?: IconTone
+  iconTone?: HeroStatTone
   loading?: boolean
   valueTitle?: string
   labelTitle?: string
@@ -67,40 +67,27 @@ const { icon = '', iconTone = 'neutral', loading = false, valueTitle, labelTitle
 }
 
 .hero-stat-card__icon {
+  --hero-stat-accent: var(--ui-text-toned);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
   margin-bottom: 4px;
+  border: 1px solid color-mix(in oklab, var(--hero-stat-accent) 20%, var(--ui-border));
   border-radius: 6px;
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
+  background: color-mix(in oklab, var(--hero-stat-accent) 7%, var(--ui-bg-elevated));
+  color: var(--hero-stat-accent);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 44%, transparent);
 }
 
-.hero-stat-card__icon.is-primary {
-  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
-  color: var(--ui-text);
-}
+.hero-stat-card__icon.is-blue { --hero-stat-accent: var(--dashboard-accent-blue); }
+.hero-stat-card__icon.is-violet { --hero-stat-accent: var(--dashboard-accent-violet); }
+.hero-stat-card__icon.is-bronze { --hero-stat-accent: var(--dashboard-accent-bronze); }
+.hero-stat-card__icon.is-rose { --hero-stat-accent: var(--dashboard-accent-rose); }
 
-.hero-stat-card__icon.is-info {
-  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
-  color: var(--ui-info);
-}
-
-.hero-stat-card__icon.is-success {
-  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
-  color: var(--ui-success);
-}
-
-.hero-stat-card__icon.is-warning {
-  background: color-mix(in srgb, var(--ui-warning) 15%, transparent);
-  color: var(--ui-warning);
-}
-
-.hero-stat-card__icon.is-error {
-  background: color-mix(in srgb, var(--ui-error) 13%, transparent);
-  color: var(--ui-error);
+.dark .hero-stat-card__icon {
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
 }
 
 .hero-stat-card__value {

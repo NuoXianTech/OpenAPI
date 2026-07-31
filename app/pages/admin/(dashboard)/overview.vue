@@ -7,8 +7,10 @@ import type {
   AdminDashboardRecentCall,
   AdminDashboardTrendPoint
 } from '#shared/types/admin'
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-sections'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import { formatCount, formatPercent } from '~/utils/number-format'
 
 const { t, locale } = useI18n()
@@ -17,10 +19,6 @@ useHead({ title: () => t('admin.overview.pageTitle') })
 
 type HttpStatusColor = 'success' | 'warning' | 'error' | 'neutral'
 
-const { user } = useAuth()
-const introDescription = computed(() => user.value?.username
-  ? t('admin.overview.hero.description', { username: user.value.username })
-  : '')
 const OVERVIEW_SPARKLINE_RANGE: AdminDashboardRange = 7
 const selectedTrendRange = ref<AdminDashboardRange>(OVERVIEW_SPARKLINE_RANGE)
 const rangeOptions = computed<Array<{ label: string, value: AdminDashboardRange }>>(() => [
@@ -112,9 +110,8 @@ interface OverviewMetricCard {
   unit?: string
   meta?: string
   icon: string
-  tone: 'neutral' | 'info' | 'warning' | 'success'
+  tone: DashboardMetricTone
   sparklineValues?: number[]
-  sparklineColor?: string
 }
 
 const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewMetricCards() {
@@ -126,7 +123,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       unit: t('admin.units.people'),
       meta: t('admin.overview.metrics.usersDescription'),
       icon: 'i-mdi-account-group-outline',
-      tone: 'neutral'
+      tone: 'ink'
     },
     {
       key: 'apis',
@@ -135,7 +132,7 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       unit: t('admin.units.items'),
       meta: t('admin.overview.metrics.totalApis', { count: formatCount(overview.value.totalApiCount, locale.value) }),
       icon: 'i-mdi-api',
-      tone: 'info'
+      tone: 'violet'
     },
     {
       key: 'calls',
@@ -143,18 +140,16 @@ const overviewMetricCards = computed<OverviewMetricCard[]>(function getOverviewM
       value: formatCount(overview.value.totalCalls, locale.value),
       unit: t('common.units.times'),
       icon: 'i-mdi-chart-line',
-      tone: 'warning',
-      sparklineValues: callsTrendValues.value,
-      sparklineColor: 'var(--ui-warning)'
+      tone: 'blue',
+      sparklineValues: callsTrendValues.value
     },
     {
       key: 'success-rate',
       label: t('admin.overview.metrics.successRate'),
       value: formatPercent(overview.value.successRate),
       icon: 'i-mdi-shield-check-outline',
-      tone: 'success',
-      sparklineValues: successRateTrendValues.value,
-      sparklineColor: 'var(--ui-success)'
+      tone: 'blue',
+      sparklineValues: successRateTrendValues.value
     }
   ]
 })
@@ -189,94 +184,78 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
 
     <template #body>
       <div class="space-y-6">
-        <!-- Hero / 运营总览 -->
-        <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
-          <div class="grid gap-6 lg:grid-cols-5 relative z-10">
-            <div class="flex flex-col lg:col-span-3">
-              <div class="space-y-3">
-                <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
-                  {{ $t('admin.overview.hero.title') }}
-                </h2>
-                <p
-                  v-if="introDescription"
-                  class="text-sm sm:text-base text-toned max-w-xl"
-                >
-                  {{ introDescription }}
-                </p>
-              </div>
+        <DashboardOverviewHero
+          :title="$t('admin.overview.hero.title')"
+          :description="$t('admin.overview.hero.description')"
+        >
+          <template #actions>
+            <UButton
+              :to="ADMIN_USERS_PATH"
+              color="neutral"
+              size="md"
+              icon="i-mdi-account-group-outline"
+            >
+              {{ $t('common.dashboard.navigation.userManagement') }}
+            </UButton>
+            <UButton
+              :to="ADMIN_APIS_PATH"
+              color="neutral"
+              variant="outline"
+              size="md"
+              icon="i-mdi-api"
+            >
+              {{ $t('common.dashboard.navigation.apiManagement') }}
+            </UButton>
+          </template>
 
-              <div class="mt-7 flex flex-wrap gap-2 lg:mt-auto lg:pt-6">
-                <UButton
-                  :to="ADMIN_USERS_PATH"
-                  color="neutral"
-                  size="md"
-                  icon="i-mdi-account-group-outline"
-                >
-                  {{ $t('common.dashboard.navigation.userManagement') }}
-                </UButton>
-                <UButton
-                  :to="ADMIN_APIS_PATH"
-                  color="neutral"
-                  variant="outline"
-                  size="md"
-                  icon="i-mdi-api"
-                >
-                  {{ $t('common.dashboard.navigation.apiManagement') }}
-                </UButton>
+          <div class="flex h-full flex-col gap-4 rounded-lg border border-default bg-elevated p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <UIcon
+                  name="i-mdi-pulse"
+                  class="size-4 text-muted"
+                />
+                <span class="text-sm font-medium">{{ $t('admin.overview.snapshot.title') }}</span>
+              </div>
+              <span class="text-[11px] text-muted tabular-nums">{{ generatedAt }}</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1">
+                <div class="text-xs text-muted">
+                  {{ $t('admin.overview.snapshot.todayCalls') }}
+                </div>
+                <div class="text-xl font-semibold tabular-nums">
+                  {{ formatCount(overview.todayCalls, locale) }}
+                </div>
+              </div>
+              <div class="space-y-1">
+                <div class="text-xs text-muted">
+                  {{ $t('admin.overview.metrics.successRate') }}
+                </div>
+                <div class="text-xl font-semibold tabular-nums">
+                  {{ formatPercent(overview.successRate) }}
+                </div>
               </div>
             </div>
 
-            <div class="lg:col-span-2 min-w-0">
-              <div class="rounded-lg border border-default bg-elevated p-4 space-y-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <UIcon
-                      name="i-mdi-pulse"
-                      class="size-4 text-muted"
-                    />
-                    <span class="text-sm font-medium">{{ $t('admin.overview.snapshot.title') }}</span>
-                  </div>
-                  <span class="text-[11px] text-muted tabular-nums">{{ generatedAt }}</span>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                  <div class="space-y-1">
-                    <div class="text-xs text-muted">
-                      {{ $t('admin.overview.snapshot.todayCalls') }}
-                    </div>
-                    <div class="text-xl font-semibold tabular-nums">
-                      {{ formatCount(overview.todayCalls, locale) }}
-                    </div>
-                  </div>
-                  <div class="space-y-1">
-                    <div class="text-xs text-muted">
-                      {{ $t('admin.overview.metrics.successRate') }}
-                    </div>
-                    <div class="text-xl font-semibold tabular-nums">
-                      {{ formatPercent(overview.successRate) }}
-                    </div>
-                  </div>
-                </div>
-
-                <div class="border-t border-default pt-3">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">{{ $t('admin.overview.snapshot.comparedYesterday') }}</span>
-                    <span
-                      :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
-                      class="inline-flex items-center gap-1 font-medium"
-                    >
-                      <UIcon
-                        :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
-                        class="size-3.5"
-                      />
-                      {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
-                    </span>
-                  </div>
-                </div>
+            <div class="mt-auto border-t border-default pt-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted">{{ $t('admin.overview.snapshot.comparedYesterday') }}</span>
+                <span
+                  :class="overview.todayChangeRate >= 0 ? 'text-success' : 'text-error'"
+                  class="inline-flex items-center gap-1 font-medium"
+                >
+                  <UIcon
+                    :name="overview.todayChangeRate >= 0 ? 'i-mdi-trending-up' : 'i-mdi-trending-down'"
+                    class="size-3.5"
+                  />
+                  {{ overview.todayChangeRate >= 0 ? '+' : '' }}{{ overview.todayChangeRate.toFixed(1) }}%
+                </span>
               </div>
             </div>
           </div>
-        </div>
+        </DashboardOverviewHero>
 
         <!-- 平台概览 -->
         <section class="space-y-4">
@@ -308,71 +287,52 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               :icon="card.icon"
               :tone="card.tone"
               :sparkline-values="card.sparklineValues"
-              :sparkline-color="card.sparklineColor"
               compact
             />
           </div>
         </section>
 
         <div class="grid gap-4 xl:grid-cols-5">
-          <UCard class="xl:col-span-3">
-            <template #header>
-              <div class="flex items-center justify-between gap-3">
-                <div>
-                  <h3 class="text-lg font-semibold text-highlighted">
-                    {{ $t('admin.overview.trend.title') }}
-                  </h3>
-                  <p class="mt-1 text-sm text-muted">
-                    {{ $t('admin.overview.trend.description') }}
-                  </p>
-                </div>
-                <USelect
-                  v-model="selectedTrendRange"
-                  :items="rangeOptions"
-                  value-key="value"
-                  size="sm"
-                  class="w-32"
-                />
-              </div>
+          <DashboardContentCard
+            class="xl:col-span-3"
+            :title="$t('admin.overview.trend.title')"
+            :description="$t('admin.overview.trend.description')"
+            icon="i-mdi-chart-line"
+          >
+            <template #actions>
+              <USelect
+                v-model="selectedTrendRange"
+                :items="rangeOptions"
+                value-key="value"
+                size="sm"
+                class="w-32"
+              />
             </template>
 
             <AdminDashboardTrend
               :trend="chartTrend"
               :loading="chartLoading"
             />
-          </UCard>
+          </DashboardContentCard>
 
-          <UCard class="xl:col-span-2">
-            <template #header>
-              <div>
-                <h3 class="text-lg font-semibold text-highlighted">
-                  {{ $t('admin.overview.distribution.title') }}
-                </h3>
-                <p class="mt-1 text-sm text-muted">
-                  {{ $t('admin.overview.distribution.description') }}
-                </p>
-              </div>
-            </template>
-
+          <DashboardContentCard
+            class="xl:col-span-2"
+            :title="$t('admin.overview.distribution.title')"
+            :description="$t('admin.overview.distribution.description')"
+            icon="i-mdi-chart-donut"
+          >
             <AdminDashboardDistribution
               :distribution="distribution"
               :loading="loading"
             />
-          </UCard>
+          </DashboardContentCard>
         </div>
 
-        <UCard>
-          <template #header>
-            <div>
-              <h3 class="text-lg font-semibold text-highlighted">
-                {{ $t('admin.overview.hourly.title') }}
-              </h3>
-              <p class="mt-1 text-sm text-muted">
-                {{ $t('admin.overview.hourly.description') }}
-              </p>
-            </div>
-          </template>
-
+        <DashboardContentCard
+          :title="$t('admin.overview.hourly.title')"
+          :description="$t('admin.overview.hourly.description')"
+          icon="i-mdi-clock-outline"
+        >
           <div
             v-if="insightsLoading"
             class="h-64 w-full animate-pulse rounded-lg bg-elevated/50"
@@ -388,20 +348,13 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               <div class="h-64 w-full animate-pulse rounded-lg bg-elevated/50" />
             </template>
           </ClientOnly>
-        </UCard>
+        </DashboardContentCard>
 
-        <UCard>
-          <template #header>
-            <div>
-              <h3 class="text-lg font-semibold text-highlighted">
-                {{ $t('admin.overview.ranking.title') }}
-              </h3>
-              <p class="mt-1 text-sm text-muted">
-                {{ $t('admin.overview.ranking.description', { count: ranking.length || 10 }) }}
-              </p>
-            </div>
-          </template>
-
+        <DashboardContentCard
+          :title="$t('admin.overview.ranking.title')"
+          :description="$t('admin.overview.ranking.description', { count: ranking.length || 10 })"
+          icon="i-mdi-podium"
+        >
           <div
             v-if="insightsLoading && ranking.length === 0"
             class="space-y-3"
@@ -416,7 +369,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
             v-else
             :ranking="ranking"
           />
-        </UCard>
+        </DashboardContentCard>
 
         <DashboardTableCard
           :title="$t('admin.overview.recent.title')"
@@ -447,14 +400,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               </span>
             </template>
             <template #method-cell="{ row }">
-              <UBadge
-                :color="httpMethodColor(row.original.method)"
-                variant="subtle"
-                size="sm"
-                class="font-mono"
-              >
-                {{ row.original.method }}
-              </UBadge>
+              <ApiHttpMethodBadge :method="row.original.method" />
             </template>
             <template #apiName-cell="{ row }">
               <div class="min-w-0">

@@ -1,0 +1,392 @@
+{
+  "admin": {
+    "system": {
+      "feedback": {
+        "saved": "Saved",
+        "saveFailed": "Save failed"
+      },
+      "site": {
+        "basic": {
+          "title": "Basic information",
+          "siteName": {
+            "label": "Site name",
+            "description": "Shown in browser titles, authentication pages, and emails."
+          },
+          "siteDescription": {
+            "label": "Site description",
+            "description": "Shown in page metadata and the home page."
+          },
+          "siteUrl": {
+            "label": "Site URL",
+            "description": "Public URL used for email links and OAuth callbacks. Must start with http:// or https://."
+          },
+          "siteImage": {
+            "label": "Site icon",
+            "description": "Icon URL used for the browser tab and site logo."
+          },
+          "startTime": {
+            "label": "Launch time",
+            "description": "Used to display how long the service has been running.",
+            "placeholder": "Select launch time"
+          },
+          "termsUrl": {
+            "label": "Terms of Service URL",
+            "description": "Leave empty to hide it. Supports a full URL or internal path."
+          },
+          "privacyUrl": {
+            "label": "Privacy Policy URL",
+            "description": "Leave empty to hide it. Supports a full URL or internal path."
+          },
+          "icpBeian": {
+            "label": "ICP filing number",
+            "description": "Leave empty to hide it from the footer.",
+            "placeholder": "ICP filing number"
+          },
+          "policeBeian": {
+            "label": "Public security filing number",
+            "description": "Leave empty to hide it from the footer.",
+            "placeholder": "Public security filing number"
+          }
+        },
+        "checkin": {
+          "title": "Daily check-in",
+          "enabled": {
+            "label": "Enable daily check-in",
+            "description": "When disabled, the user action is unavailable and the API rejects requests."
+          },
+          "cooldown": {
+            "label": "Cooldown mode",
+            "description": "Hourly cooldown starts after the last check-in; fixed time refreshes availability daily.",
+            "options": {
+              "hours": "Hourly cooldown",
+              "fixedTime": "Fixed daily refresh"
+            }
+          },
+          "refreshHours": {
+            "label": "Cooldown interval (hours)",
+            "description": "Minimum time between check-ins. Default: 24 hours."
+          },
+          "fixedRefreshTime": {
+            "label": "Refresh time (HH:mm)",
+            "description": "The daily time when check-in becomes available again."
+          },
+          "reward": {
+            "label": "Reward mode",
+            "description": "Fixed grants the same amount; range selects a random integer between minimum and maximum.",
+            "options": {
+              "fixed": "Fixed credits",
+              "range": "Random range"
+            }
+          },
+          "fixedAmount": {
+            "label": "Fixed reward",
+            "description": "Credits granted for each check-in."
+          },
+          "minAmount": {
+            "label": "Minimum credits",
+            "description": "Lower bound for random rewards."
+          },
+          "maxAmount": {
+            "label": "Maximum credits",
+            "description": "Upper bound for random rewards."
+          },
+          "validation": {
+            "fixedTime": "Use the HH:mm format, for example 00:00",
+            "amountRange": "Minimum credits must not exceed maximum credits"
+          }
+        }
+      },
+      "session": {
+        "registration": {
+          "title": "Login and registration",
+          "enabled": {
+            "label": "Allow new registrations",
+            "description": "When disabled, the registration page and API reject new accounts."
+          },
+          "passwordReset": {
+            "label": "Enable forgot password",
+            "description": "Controls the login link and password reset APIs."
+          },
+          "emailActivation": {
+            "label": "Email activation",
+            "description": "Require new users to activate their account through email."
+          }
+        },
+        "emailFilter": {
+          "label": "Registration email filter",
+          "description": "Off allows all domains; allowlist permits listed domains; blocklist rejects listed domains.",
+          "rulesLabel": "Email domain rules",
+          "disabledDescription": "Rules are ignored while filtering is off.",
+          "rulesDescription": "Separate domains with commas or new lines and omit {'@'}.",
+          "options": {
+            "off": "Off",
+            "whitelist": "Allowlist",
+            "blacklist": "Blocklist"
+          }
+        },
+        "expiry": {
+          "title": "Session lifetime",
+          "defaultSession": {
+            "label": "Default session lifetime (seconds)",
+            "description": "Used without Remember me; activity renews the session."
+          },
+          "absoluteSession": {
+            "label": "Absolute session limit (seconds)",
+            "description": "Maximum lifetime from the first login before reauthentication is required."
+          },
+          "rememberSession": {
+            "label": "Remember me lifetime (seconds)",
+            "description": "Used when Remember me is selected."
+          },
+          "emailVerification": {
+            "label": "Email verification expiration (minutes)",
+            "description": "Lifetime of registration and email-change verification links."
+          },
+          "passwordReset": {
+            "label": "Password reset expiration (minutes)",
+            "description": "Lifetime of password reset links."
+          }
+        },
+        "oauth": {
+          "title": "Third-party login",
+          "provider": "Provider: {provider}",
+          "forceBinding": {
+            "label": "Require linking an existing account",
+            "description": "Unregistered OAuth identities may only link to an existing account."
+          },
+          "status": {
+            "enabled": "Enabled",
+            "disabled": "Disabled"
+          },
+          "clientId": {
+            "label": "Client ID",
+            "placeholder": "Enter the OAuth app Client ID"
+          },
+          "clientSecret": {
+            "label": "Client Secret",
+            "savedDescription": "Saved. Leave empty to keep unchanged.",
+            "initialDescription": "Required for the first save.",
+            "show": "Show secret",
+            "hide": "Hide secret"
+          },
+          "callbackUrl": {
+            "label": "Callback URL",
+            "description": "Generated from the site URL. Add it to the OAuth app allowlist."
+          },
+          "scopes": {
+            "label": "Scopes",
+            "description": "Fixed by provider; no configuration is required.",
+            "empty": "(none)"
+          },
+          "enableProvider": "Enable this provider",
+          "feedback": {
+            "saved": "Third-party login settings saved",
+            "saveFailed": "Failed to save third-party login settings",
+            "copyFailed": "Copy failed. Select and copy manually."
+          }
+        }
+      },
+      "captcha": {
+        "providers": {
+          "turnstile": "Cloudflare Turnstile"
+        },
+        "credentials": {
+          "title": "CAPTCHA",
+          "type": {
+            "label": "CAPTCHA provider",
+            "description": "Select a provider. Cloudflare Turnstile is currently supported."
+          },
+          "siteKey": {
+            "label": "Site Key",
+            "description": "Site Key from the Cloudflare Turnstile application."
+          },
+          "secretKey": {
+            "label": "Secret Key",
+            "description": "Secret Key from the Cloudflare Turnstile application."
+          }
+        },
+        "scenes": {
+          "title": "Verification scenes",
+          "login": {
+            "label": "Login CAPTCHA",
+            "description": "Validated when /login is submitted."
+          },
+          "register": {
+            "label": "Registration CAPTCHA",
+            "description": "Validated when /register is submitted."
+          },
+          "passwordReset": {
+            "label": "Password reset CAPTCHA",
+            "description": "Validated when requesting a reset link."
+          },
+          "checkin": {
+            "label": "Daily check-in CAPTCHA",
+            "description": "Shown before a user checks in."
+          }
+        }
+      },
+      "email": {
+        "settings": {
+          "title": "Email delivery",
+          "fromName": {
+            "label": "Sender name",
+            "description": "Name shown as the sender; leave empty to show only the address."
+          },
+          "fromAddress": {
+            "label": "Sender email",
+            "description": "Address used to send email and as the EHLO domain.",
+            "placeholder": "no-reply{'@'}example.com"
+          },
+          "host": {
+            "label": "SMTP server",
+            "description": "SMTP host without a port."
+          },
+          "port": {
+            "label": "SMTP port",
+            "description": "Common ports are 465 (SSL) and 587 (STARTTLS)."
+          },
+          "username": {
+            "label": "SMTP username",
+            "description": "Usually the same as the sender email.",
+            "placeholder": "user{'@'}example.com"
+          },
+          "password": {
+            "label": "SMTP password",
+            "description": "Mailbox password or application password."
+          },
+          "replyTo": {
+            "label": "Reply-to email",
+            "description": "Address that receives replies; defaults to the sender.",
+            "placeholder": "support{'@'}example.com"
+          },
+          "secure": {
+            "label": "Force SSL",
+            "description": "Use an SSL connection, commonly with port 465."
+          },
+          "poolMaxAge": {
+            "label": "SMTP connection lifetime (seconds)",
+            "description": "Connections are reused during this period. Zero disables reuse."
+          },
+          "test": {
+            "label": "Test email",
+            "description": "Send a test message using the saved SMTP configuration."
+          }
+        },
+        "actions": {
+          "sendTest": "Send test email",
+          "send": "Send"
+        },
+        "feedback": {
+          "recipientRequired": "Enter a recipient email",
+          "sent": "Test email sent",
+          "sentDescription": "Check {email}",
+          "sendFailed": "Send failed"
+        },
+        "testModal": {
+          "title": "SMTP test email",
+          "description": "A test message will be sent using the saved SMTP configuration.",
+          "recipient": "Recipient email",
+          "recipientPlaceholder": "you{'@'}example.com"
+        }
+      },
+      "about": {
+        "pageTitle": "About",
+        "project": {
+          "title": "Project",
+          "description": "OpenAPI is a full-stack platform for publishing APIs, operations, and user self-service.",
+          "items": {
+            "name": {
+              "label": "Project name"
+            },
+            "applicationType": {
+              "label": "Application type",
+              "value": "API aggregation and publishing platform"
+            },
+            "managementModel": {
+              "label": "Management model",
+              "value": "Multiple administrators and users"
+            },
+            "runtime": {
+              "label": "Runtime",
+              "value": "Nuxt full-stack application"
+            }
+          }
+        },
+        "capabilities": {
+          "title": "Capabilities",
+          "description": "Features are organized around API management, user self-service, operations, and auditing.",
+          "items": {
+            "accounts": {
+              "label": "Accounts and permissions",
+              "description": "Unified login with role-based administrator and user capabilities."
+            },
+            "apis": {
+              "label": "API management",
+              "description": "Manage APIs, categories, call costs, availability, and statistics."
+            },
+            "audit": {
+              "label": "Logs and auditing",
+              "description": "Review call, login, credit, and operation logs."
+            },
+            "operations": {
+              "label": "Operations",
+              "description": "Announcements, notifications, friend links, redemption codes, and credits."
+            },
+            "configuration": {
+              "label": "System configuration",
+              "description": "Manage site, email, CAPTCHA, sessions, and security settings."
+            }
+          }
+        },
+        "stack": {
+          "title": "Technology stack",
+          "description": "Built around Nuxt full-stack capabilities, type safety, component UI, and structured validation.",
+          "items": {
+            "nuxt": {
+              "label": "Nuxt 4 / Vue 3",
+              "description": "Composition API and file-based routing for client and server features."
+            },
+            "ui": {
+              "label": "Nuxt UI / Tailwind CSS",
+              "description": "Consistent responsive interfaces for administrative workflows."
+            },
+            "nitro": {
+              "label": "Nitro / H3",
+              "description": "Server APIs, authentication middleware, and runtime features."
+            },
+            "database": {
+              "label": "Drizzle ORM / PostgreSQL",
+              "description": "Type-safe schemas, queries, and migrations."
+            },
+            "tooling": {
+              "label": "VueUse / Zod",
+              "description": "Reusable composables and structured input validation."
+            }
+          }
+        },
+        "production": {
+          "title": "Production conventions",
+          "description": "Conventions for maintainability and traceability in multi-user environments.",
+          "items": {
+            "configuration": {
+              "label": "Configuration first",
+              "description": "Runtime settings are maintained in system settings and environment variables."
+            },
+            "audit": {
+              "label": "Audit first",
+              "description": "Administrative and critical user actions are recorded."
+            },
+            "roles": {
+              "label": "Clear roles",
+              "description": "Administrators access management and user capabilities; users access only their workspace."
+            },
+            "migrations": {
+              "label": "Controlled migrations",
+              "description": "Database migrations ship with the build and run before production traffic is accepted."
+            }
+          }
+        }
+      }
+    }
+  }
+}

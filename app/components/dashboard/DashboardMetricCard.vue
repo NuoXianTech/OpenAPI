@@ -1,12 +1,13 @@
 <script setup lang="ts">
-const metricToneClasses = {
-  primary: 'dashboard-metric-card-primary',
-  neutral: 'dashboard-metric-card-neutral',
-  info: 'dashboard-metric-card-info',
-  warning: 'dashboard-metric-card-warning',
-  success: 'dashboard-metric-card-success',
-  error: 'dashboard-metric-card-error'
-} as const
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
+
+const metricToneClasses: Record<DashboardMetricTone, string> = {
+  ink: 'is-ink',
+  blue: 'is-blue',
+  violet: 'is-violet',
+  bronze: 'is-bronze',
+  rose: 'is-rose'
+}
 
 interface DashboardMetricCardProps {
   label: string
@@ -14,10 +15,9 @@ interface DashboardMetricCardProps {
   icon: string
   unit?: string
   meta?: string
-  tone?: keyof typeof metricToneClasses
+  tone?: DashboardMetricTone
   compact?: boolean
   sparklineValues?: number[]
-  sparklineColor?: string
 }
 
 interface SparklinePathState {
@@ -27,26 +27,27 @@ interface SparklinePathState {
 }
 
 const props = withDefaults(defineProps<DashboardMetricCardProps>(), {
-  tone: 'neutral',
   unit: undefined,
   meta: undefined,
+  tone: 'ink',
   compact: false,
-  sparklineValues: undefined,
-  sparklineColor: undefined
+  sparklineValues: undefined
 })
 
 const slots = useSlots()
 const hasFooter = computed(() => Boolean(
   slots.footer
   || props.meta
-  || (props.sparklineValues?.length && props.sparklineColor)
+  || props.sparklineValues?.length
 ))
-const bodyClass = computed(() => [
-  'relative z-10 flex flex-col',
-  props.compact ? 'gap-3 p-3 sm:p-4' : 'gap-4 p-4 sm:p-5',
-  hasFooter.value ? props.compact ? 'min-h-28' : 'min-h-32' : undefined
+const contentClass = computed(() => [
+  'dashboard-metric-card__content relative z-10 flex flex-1 flex-col',
+  props.compact ? 'gap-3 p-3 sm:p-4' : 'gap-4 p-4 sm:p-5'
 ])
-const footerClass = computed(() => props.compact ? 'mt-auto min-h-6' : 'mt-auto min-h-8')
+const footerClass = computed(() => [
+  'dashboard-metric-card__footer relative z-10',
+  props.compact ? 'px-3 py-2 sm:px-4' : 'px-4 py-2.5 sm:px-5'
+])
 const valueClass = computed(() => props.compact
   ? 'dashboard-metric-card-value text-xl font-semibold tabular-nums text-highlighted'
   : 'dashboard-metric-card-value text-2xl font-semibold tabular-nums text-highlighted')
@@ -91,32 +92,37 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
   <UCard
     variant="outline"
     class="dashboard-metric-card"
-    :class="metricToneClasses[props.tone]"
-    :ui="{ body: bodyClass }"
+    :class="[metricToneClasses[props.tone], { 'is-compact': props.compact }]"
+    :ui="{
+      root: 'h-full',
+      body: 'flex h-full flex-col !p-0 sm:!p-0'
+    }"
   >
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0 space-y-1">
-        <p class="truncate text-xs font-medium text-muted">
-          {{ label }}
-        </p>
-        <div class="flex items-baseline gap-1.5">
-          <span :class="valueClass">
-            {{ value }}
-          </span>
-          <span
-            v-if="unit"
-            class="text-xs font-medium text-muted"
-          >
-            {{ unit }}
-          </span>
+    <div :class="contentClass">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 space-y-1">
+          <p class="dashboard-metric-card__label truncate text-xs font-medium text-muted">
+            {{ label }}
+          </p>
+          <div class="flex items-baseline gap-1.5">
+            <span :class="valueClass">
+              {{ value }}
+            </span>
+            <span
+              v-if="unit"
+              class="text-xs font-medium text-muted"
+            >
+              {{ unit }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div :class="iconClass">
-        <UIcon
-          :name="icon"
-          class="size-4.5"
-        />
+        <div :class="iconClass">
+          <UIcon
+            :name="icon"
+            class="size-4.5"
+          />
+        </div>
       </div>
     </div>
 
@@ -126,11 +132,11 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
     >
       <slot name="footer">
         <svg
-          v-if="sparklineValues && sparklineColor"
+          v-if="sparklineValues?.length"
           :viewBox="`0 0 ${SPARKLINE_VIEW_W} ${SPARKLINE_VIEW_H}`"
           preserveAspectRatio="none"
           :style="{ height: `${sparklineHeight}px`, width: '100%' }"
-          class="block overflow-visible"
+          class="dashboard-metric-card__sparkline block overflow-visible"
           aria-hidden="true"
         >
           <line
@@ -139,7 +145,7 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
             :x2="SPARKLINE_VIEW_W - SPARKLINE_PAD"
             :y1="SPARKLINE_VIEW_H / 2"
             :y2="SPARKLINE_VIEW_H / 2"
-            :stroke="sparklineColor"
+            stroke="var(--dashboard-metric-accent)"
             stroke-width="1.5"
             stroke-dasharray="3 4"
             opacity="0.5"
@@ -148,13 +154,13 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
           <template v-else>
             <path
               :d="sparkline.areaPath"
-              :fill="sparklineColor"
+              fill="var(--dashboard-metric-accent)"
               opacity="0.12"
             />
             <path
               :d="sparkline.linePath"
               fill="none"
-              :stroke="sparklineColor"
+              stroke="var(--dashboard-metric-accent)"
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -175,39 +181,36 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
 
 <style scoped>
 .dashboard-metric-card {
-  --dashboard-metric-accent: var(--ui-primary);
+  --dashboard-metric-accent: var(--ui-text-toned);
   border-color: var(--dashboard-border);
-  box-shadow: inset 0 2px 0 color-mix(in oklab, var(--dashboard-metric-accent) 72%, transparent);
+  background: var(--dashboard-surface);
+  box-shadow:
+    var(--dashboard-shadow),
+    0 18px 34px -34px color-mix(in oklab, var(--ui-text) 38%, transparent);
 }
 
-.dashboard-metric-card-neutral {
-  --dashboard-metric-accent: var(--ui-primary);
+.dashboard-metric-card.is-blue { --dashboard-metric-accent: var(--dashboard-accent-blue); }
+.dashboard-metric-card.is-violet { --dashboard-metric-accent: var(--dashboard-accent-violet); }
+.dashboard-metric-card.is-bronze { --dashboard-metric-accent: var(--dashboard-accent-bronze); }
+.dashboard-metric-card.is-rose { --dashboard-metric-accent: var(--dashboard-accent-rose); }
+
+.dashboard-metric-card__content {
+  min-height: 6.75rem;
 }
 
-.dashboard-metric-card-primary {
-  --dashboard-metric-accent: var(--ui-primary);
+.dashboard-metric-card.is-compact .dashboard-metric-card__content {
+  min-height: 5.5rem;
 }
 
-.dashboard-metric-card-info {
-  --dashboard-metric-accent: var(--ui-info);
-}
-
-.dashboard-metric-card-warning {
-  --dashboard-metric-accent: var(--ui-warning);
-}
-
-.dashboard-metric-card-success {
-  --dashboard-metric-accent: var(--ui-success);
-}
-
-.dashboard-metric-card-error {
-  --dashboard-metric-accent: var(--ui-error);
+.dashboard-metric-card__label {
+  letter-spacing: 0.01em;
 }
 
 .dashboard-metric-card-icon {
   color: var(--dashboard-metric-accent);
-  border: 1px solid color-mix(in oklab, var(--dashboard-metric-accent) 18%, var(--ui-border));
-  background: color-mix(in oklab, var(--dashboard-metric-accent) 7%, var(--ui-bg-elevated));
+  border: 1px solid color-mix(in oklab, var(--dashboard-metric-accent) 24%, var(--ui-border));
+  background: color-mix(in oklab, var(--dashboard-metric-accent) 8%, var(--ui-bg-elevated));
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 46%, transparent);
 }
 
 .dashboard-metric-card-value {
@@ -216,5 +219,24 @@ const sparkline = computed(() => buildSparklinePath(props.sparklineValues ?? [])
 
 .dashboard-metric-card-meta {
   line-height: 1.5;
+}
+
+.dashboard-metric-card__footer {
+  min-height: 2.5rem;
+  margin-top: auto;
+  border-top: 1px solid color-mix(in oklab, var(--ui-border-muted) 78%, transparent);
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--dashboard-metric-accent) 3%, var(--dashboard-surface-muted)),
+    color-mix(in oklab, var(--dashboard-surface-muted) 68%, var(--dashboard-surface))
+  );
+}
+
+.dashboard-metric-card__sparkline {
+  filter: saturate(0.86);
+}
+
+.dark .dashboard-metric-card-icon {
+  box-shadow: inset 0 1px 0 color-mix(in oklab, white 8%, transparent);
 }
 </style>

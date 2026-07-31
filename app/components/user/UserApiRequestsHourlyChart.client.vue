@@ -38,6 +38,7 @@ function tooltipTemplate(point: UserDashboardHourlyPoint): string {
       icon="i-mdi-chart-timeline-variant-shimmer"
       :title="$t('user.overview.chart.emptyTitle')"
       :description="$t('user.overview.chart.emptyDescription')"
+      variant="naked"
       class="h-64"
     />
 

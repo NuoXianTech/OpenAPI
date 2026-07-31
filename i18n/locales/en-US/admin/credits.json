@@ -1,0 +1,224 @@
+{
+  "admin": {
+    "credits": {
+      "overview": {
+        "pageTitle": "Credits overview",
+        "title": "Credit operations overview",
+        "description": "User balances, recent income and expenses, and redemption code capacity",
+        "updatedAt": "Updated {time}",
+        "waitingRefresh": "Waiting for refresh",
+        "loadFailed": "Failed to load credit overview",
+        "loadFailedDescription": "Refresh and try again.",
+        "recentTitle": "Recent credit changes",
+        "actions": {
+          "userCredits": "User credits",
+          "redemptionCodes": "Redemption code management",
+          "viewAll": "View all"
+        },
+        "cards": {
+          "totalBalance": "Total user balance",
+          "usersWithBalance": "{count} users with credits",
+          "income24h": "Granted in 24 hours",
+          "transactionCount24h": "{count} changes",
+          "expense24h": "Spent in 24 hours",
+          "netChange24h": "Net change {amount}",
+          "averageBalance": "Average user balance",
+          "userCount": "{count} users",
+          "activeRedemptionCodes": "Available redemption codes",
+          "redemptionPotential": "Up to {amount} credits"
+        },
+        "columns": {
+          "time": "Time",
+          "user": "User",
+          "reason": "Reason",
+          "change": "Change",
+          "balance": "Balance",
+          "remark": "Remark"
+        }
+      },
+      "users": {
+        "title": "User credits",
+        "description": "View balances and grant, deduct, or reset credits for selected users",
+        "searchPlaceholder": "Search username, display name, or email...",
+        "filterTitle": "User credit filters",
+        "selectedUsers": "{count} users selected",
+        "selectedCount": "{count} selected",
+        "listTitle": "User balances",
+        "empty": "No users match the filters",
+        "filters": {
+          "userId": "User ID",
+          "emptyAll": "Leave empty for all",
+          "balance": "Balance",
+          "allBalances": "All balances",
+          "positive": "Has credits",
+          "zero": "Zero credits",
+          "negative": "Negative credits (abnormal)"
+        },
+        "columns": {
+          "user": "User",
+          "balance": "Credit balance",
+          "status": "Account status",
+          "createdAt": "Registered"
+        },
+        "actions": {
+          "batchAdjust": "Adjust credits in batch",
+          "adjust": "Adjust"
+        }
+      },
+      "transactions": {
+        "title": "Credit transactions",
+        "description": "Review credit changes and jump to user credit or redemption code management",
+        "filterTitle": "Credit transaction filters",
+        "detailsTitle": "Credit details",
+        "empty": "No credit logs",
+        "filters": {
+          "userId": "User ID",
+          "emptyAll": "Leave empty for all",
+          "reason": "Reason",
+          "allReasons": "All reasons",
+          "direction": "Direction",
+          "allDirections": "All directions",
+          "income": "Income",
+          "expense": "Expense",
+          "operator": "Operator",
+          "operatorPlaceholder": "Administrator name",
+          "startAt": "Start time",
+          "endAt": "End time",
+          "minAmount": "Minimum change",
+          "minAmountPlaceholder": "For example, -100",
+          "maxAmount": "Maximum change",
+          "maxAmountPlaceholder": "For example, 1000"
+        },
+        "columns": {
+          "time": "Time",
+          "user": "User",
+          "reason": "Reason",
+          "amount": "Amount",
+          "balance": "Balance",
+          "operator": "Operator",
+          "remark": "Remark"
+        }
+      },
+      "redemptionCodes": {
+        "title": "Redemption codes",
+        "description": "Generate and manage credit redemption codes, availability, usage limits, and expiration",
+        "searchPlaceholder": "Search code or remark...",
+        "detailsTitle": "Redemption code details",
+        "empty": "No redemption codes",
+        "neverExpires": "Never expires",
+        "filters": {
+          "status": "Status",
+          "batch": "Batch",
+          "allBatches": "All batches",
+          "batchOption": "{batchId} ({used}/{total} used · {amount} credits)"
+        },
+        "columns": {
+          "code": "Code",
+          "amount": "Value",
+          "usage": "Usage",
+          "note": "Remark",
+          "expiresAt": "Expires",
+          "status": "Status",
+          "createdAt": "Created"
+        },
+        "statuses": {
+          "available": "Available",
+          "disabled": "Disabled",
+          "usedUp": "Used up",
+          "expired": "Expired"
+        },
+        "actions": {
+          "generate": "Generate codes",
+          "generateMore": "Generate more",
+          "done": "Done",
+          "enable": "Enable",
+          "disable": "Disable",
+          "copyCode": "Copy code",
+          "copyAll": "Copy all",
+          "clickToCopy": "Select to copy"
+        },
+        "feedback": {
+          "generated": "Generated {count} codes",
+          "enabled": "Enabled",
+          "disabled": "Disabled",
+          "batchEnabled": "Enabled {count} codes",
+          "batchDisabled": "Disabled {count} codes",
+          "batchDeleted": "Deleted {count} codes",
+          "codeCopied": "Copied {code}",
+          "allCopied": "All codes copied to clipboard"
+        },
+        "deleteCode": {
+          "title": "Delete code {code}",
+          "description": "The code will stop working immediately and cannot be recovered."
+        },
+        "deleteBatch": {
+          "title": "Delete batch {batchId}",
+          "includeUsedDescription": "Delete every code in batch {batchId}, including redeemed codes. This cannot be undone.",
+          "unusedDescription": "Delete unused codes from batch {batchId}."
+        },
+        "batch": {
+          "title": "Recent batches",
+          "count": "{count} batches",
+          "perCode": "/ code",
+          "total": "{count} codes",
+          "usage": "Used {used}/{total}",
+          "actions": {
+            "filter": "Show this batch",
+            "disable": "Disable batch",
+            "enable": "Enable batch",
+            "deleteUnused": "Delete unused",
+            "deleteAll": "Delete all"
+          }
+        },
+        "generate": {
+          "title": "Generate redemption codes",
+          "amount": "Value per code (required)",
+          "amountPlaceholder": "For example, 100",
+          "count": "Quantity",
+          "length": "Code length",
+          "lengthHint": "Excluding prefix, 8–48",
+          "prefix": "Prefix (optional)",
+          "prefixHint": "For example, WELCOME",
+          "maxUses": "Uses per code",
+          "maxUsesHint": "Values above 1 allow multiple users to share a code, once per user",
+          "expiresInDays": "Expiration (days)",
+          "expiresInDaysHint": "0 = never expires",
+          "note": "Remark (optional)",
+          "notePlaceholder": "For example: holiday campaign",
+          "failed": "Generation failed",
+          "resultTitle": "Generated {count} codes",
+          "resultDescription": "Batch {batchId}",
+          "partialResultDescription": "Batch {batchId} · Requested {requested}; generated {generated} due to conflicts",
+          "validation": {
+            "positiveAmount": "Amount must be greater than 0"
+          }
+        }
+      },
+      "adjust": {
+        "title": "Credit management",
+        "target": "Target: {target}",
+        "userCount": "{count} users",
+        "operationType": "Operation",
+        "targetAmount": "Target balance",
+        "amount": "Credits",
+        "amountPlaceholder": "Enter credits",
+        "remark": "Remark (optional)",
+        "remarkPlaceholder": "For example: promotion / policy deduction",
+        "success": "Credits adjusted",
+        "operations": {
+          "grant": "Grant credits",
+          "revoke": "Deduct credits",
+          "reset": "Reset credits"
+        },
+        "help": {
+          "grant": "Add the specified credits to the target users.",
+          "revoke": "Deduct the specified credits, stopping at zero.",
+          "reset": "Set the target users to the specified balance (default 0)."
+        },
+        "validation": {
+          "positiveAmount": "Credits must be greater than 0"
+        }
+      }
+    }
+  }
+}

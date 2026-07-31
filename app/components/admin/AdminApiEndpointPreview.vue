@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DiscoveredEndpoint } from '#shared/types/api'
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 
 defineProps<{ endpoints: DiscoveredEndpoint[] }>()
 </script>
@@ -20,13 +21,10 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
         :key="`${ep.method}-${ep.apiPath}`"
         class="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-default/60 bg-default px-3 py-2.5"
       >
-        <UBadge
-          color="neutral"
-          variant="soft"
-          class="w-fit min-w-12 justify-center font-mono text-[11px] font-semibold"
-        >
-          {{ ep.method.toUpperCase() }}
-        </UBadge>
+        <ApiHttpMethodBadge
+          :method="ep.method"
+          class="w-fit min-w-12 justify-center"
+        />
         <code class="min-w-0 truncate font-mono text-xs font-medium text-highlighted">
           {{ ep.apiPath }}
         </code>

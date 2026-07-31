@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminOperationResourceSummary from '~/components/admin/AdminOperationResourceSummary.vue'
 import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
 import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
@@ -30,7 +31,7 @@ const {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface dashboard-hero-surface-warning relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 space-y-3">
         <div>
           <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
@@ -166,23 +167,11 @@ const {
           </div>
         </template>
         <template #resource-cell="{ row }">
-          <span
-            v-if="!row.original.resourceType && !row.original.resourceId"
-            class="text-muted"
-          >-</span>
-          <div
-            v-else
-            class="flex flex-col text-xs"
-          >
-            <span
-              v-if="row.original.resourceType"
-              class="font-medium"
-            >{{ row.original.resourceType }}</span>
-            <span
-              v-if="row.original.resourceId"
-              class="font-mono text-muted"
-            >#{{ row.original.resourceId }}</span>
-          </div>
+          <AdminOperationResourceSummary
+            :resource-type="row.original.resourceType"
+            :resource-id="row.original.resourceId"
+            :detail="row.original.detail"
+          />
         </template>
         <template #status-cell="{ row }">
           <UBadge
@@ -194,7 +183,9 @@ const {
           </UBadge>
         </template>
         <template #ip-cell="{ row }">
-          <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>
+          <span class="font-mono text-xs text-muted">
+            {{ row.original.ip || $t('admin.logs.operations.ipNotRecorded') }}
+          </span>
         </template>
         <template #actions-cell="{ row }">
           <UButton
@@ -259,21 +250,16 @@ const {
                 {{ detailRow.action }}
               </div>
             </div>
-            <div>
+            <div class="col-span-2">
               <div class="text-xs text-muted">
-                {{ $t('admin.logs.operations.detail.resourceType') }}
+                {{ $t('admin.logs.operations.detail.resource') }}
               </div>
-              <div class="font-mono text-xs">
-                {{ detailRow.resourceType || '-' }}
-              </div>
-            </div>
-            <div>
-              <div class="text-xs text-muted">
-                {{ $t('admin.logs.operations.detail.resourceId') }}
-              </div>
-              <div class="font-mono text-xs break-all">
-                {{ detailRow.resourceId || '-' }}
-              </div>
+              <AdminOperationResourceSummary
+                class="mt-1"
+                :resource-type="detailRow.resourceType"
+                :resource-id="detailRow.resourceId"
+                :detail="detailRow.detail"
+              />
             </div>
           </div>
 
@@ -286,7 +272,7 @@ const {
             <div class="space-y-1 text-xs">
               <div>
                 <span class="text-muted">IP </span>
-                <span class="font-mono">{{ detailRow.ip || '-' }}</span>
+                <span class="font-mono">{{ detailRow.ip || $t('admin.logs.operations.ipNotRecorded') }}</span>
               </div>
               <div>
                 <span class="text-muted">User-Agent </span>

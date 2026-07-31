@@ -48,38 +48,25 @@ function isCheckedDay(day: DateValue): boolean {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex flex-wrap items-center gap-2">
-        <div class="flex min-w-0 items-center gap-2">
-          <UIcon
-            name="i-mdi-calendar-month-outline"
-            class="size-5 shrink-0 text-muted"
-          />
-          <div>
-            <h3 class="text-lg font-semibold text-highlighted">
-              {{ $t('user.credits.calendar.title') }}
-            </h3>
-            <p class="mt-0.5 text-xs text-muted">
-              {{ $t('user.credits.calendar.description') }}
-            </p>
-          </div>
-        </div>
-
-        <div class="ml-auto flex items-center gap-2">
-          <UBadge
-            color="success"
-            variant="subtle"
-          >
-            {{ $t('user.credits.calendar.days', { count: checkedDayCount.toLocaleString(locale) }) }}
-          </UBadge>
-          <UBadge
-            color="primary"
-            variant="subtle"
-          >
-            {{ $t('user.credits.calendar.points', { amount: totalAmount.toLocaleString(locale) }) }}
-          </UBadge>
-        </div>
+  <DashboardContentCard
+    :title="$t('user.credits.calendar.title')"
+    :description="$t('user.credits.calendar.description')"
+    icon="i-mdi-calendar-month-outline"
+  >
+    <template #actions>
+      <div class="flex items-center gap-2">
+        <UBadge
+          color="success"
+          variant="subtle"
+        >
+          {{ $t('user.credits.calendar.days', { count: checkedDayCount.toLocaleString(locale) }) }}
+        </UBadge>
+        <UBadge
+          color="primary"
+          variant="subtle"
+        >
+          {{ $t('user.credits.calendar.points', { amount: totalAmount.toLocaleString(locale) }) }}
+        </UBadge>
       </div>
     </template>
 
@@ -132,5 +119,5 @@ function isCheckedDay(day: DateValue): boolean {
       </span>
       <span>{{ $t('user.credits.calendar.monthlyTotal', { count: checkedDayCount.toLocaleString(locale) }) }}</span>
     </div>
-  </UCard>
+  </DashboardContentCard>
 </template>

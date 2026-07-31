@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { API_STATUS } from '#shared/config/api-status'
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import {
   areAllApiMethodsPaid,
   getAggregateApiMethodCost,
@@ -48,7 +49,9 @@ const {
 } = toRefs(props)
 const resolvedName = computed(() => name.value || t('public.api.defaultTitle'))
 const resolvedCategoryName = computed(() => categoryName.value || t('public.api.publicCategory'))
+const detailTriggerLabel = computed(() => `${t('public.api.viewDetails')} · ${resolvedName.value}`)
 const detailsOpen = ref(false)
+const detailTriggerElement = shallowRef<HTMLElement | null>(null)
 const methods = computed(() => parseApiMethods(props.httpMethod))
 const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, props.methodCosts))
 const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, props.methodCosts))
@@ -71,6 +74,19 @@ const detailContentProps = computed(() => ({
   methodCosts: props.methodCosts,
   totalCalls: totalCalls.value
 }))
+
+function openDetails(event: Event) {
+  if (event.currentTarget instanceof HTMLElement) {
+    detailTriggerElement.value = event.currentTarget
+  }
+  detailsOpen.value = true
+}
+
+function restoreDetailTriggerFocus() {
+  if (detailTriggerElement.value?.isConnected) {
+    detailTriggerElement.value.focus()
+  }
+}
 </script>
 
 <template>
@@ -82,14 +98,12 @@ const detailContentProps = computed(() => ({
     <div class="api-card__content">
       <header class="api-card__meta-row">
         <div class="api-card__badges">
-          <span
+          <ApiHttpMethodBadge
             v-for="method in methods"
             :key="method"
-            class="api-card__method"
-            :class="`api-card__method--${method.toLowerCase()}`"
-          >
-            {{ method }}
-          </span>
+            :method="method"
+            size="xs"
+          />
           <span class="api-card__category">
             {{ resolvedCategoryName }}
           </span>
@@ -102,18 +116,21 @@ const detailContentProps = computed(() => ({
 
       <div class="api-card__copy">
         <h3 class="api-card__title">
-          <ULink
-            v-if="docUrl"
-            :to="docUrl"
-            target="_blank"
-            rel="noopener"
-            class="api-card__title-link"
+          <button
+            type="button"
+            class="api-card__title-trigger"
+            :aria-label="detailTriggerLabel"
+            aria-haspopup="dialog"
+            :aria-expanded="detailsOpen"
+            @click="openDetails"
           >
-            {{ resolvedName }}
-          </ULink>
-          <template v-else>
-            {{ resolvedName }}
-          </template>
+            <span class="api-card__title-trigger-label">{{ resolvedName }}</span>
+            <UIcon
+              name="i-mdi-arrow-right"
+              class="api-card__title-trigger-icon"
+              aria-hidden="true"
+            />
+          </button>
         </h3>
         <p class="api-card__short">
           {{ detailSummary }}
@@ -125,14 +142,14 @@ const detailContentProps = computed(() => ({
       </div>
     </div>
 
-    <div class="api-card__toggle-row">
+    <div class="api-card__footer">
       <div class="api-card__footer-meta">
         <UTooltip
           :text="$t('public.api.totalCallsDescription', { count: totalCalls.toLocaleString(locale) })"
           :content="{ side: 'top' }"
         >
           <span class="api-card__metric">
-            <UIcon name="i-lucide-trending-up" class="size-3.5" />
+            <UIcon name="i-mdi-trending-up" class="size-3.5" />
             {{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}
           </span>
         </UTooltip>
@@ -141,7 +158,7 @@ const detailContentProps = computed(() => ({
           :content="{ side: 'top' }"
         >
           <span class="api-card__metric">
-            <UIcon :name="aggregateCost === 0 ? 'i-lucide-circle-check' : 'i-lucide-coins'" class="size-3.5" />
+            <UIcon :name="aggregateCost === 0 ? 'i-mdi-check-circle-outline' : 'i-mdi-cash-multiple'" class="size-3.5" />
             <template v-if="aggregateCost > 0">
               {{ $t('public.api.pricing.pointsPerCall', { count: aggregateCost }) }}
             </template>
@@ -154,65 +171,54 @@ const detailContentProps = computed(() => ({
           </span>
         </UTooltip>
       </div>
-      <div class="api-card__actions">
-        <UModal
-          v-model:open="detailsOpen"
-          :ui="{
-            content: 'sm:max-w-xl overflow-hidden',
-            header: 'items-start gap-3 border-b border-default py-4 ps-4 pe-12 sm:ps-6 sm:pe-14',
-            wrapper: 'min-w-0',
-            title: 'min-w-0',
-            description: 'block',
-            close: 'top-4 end-4',
-            body: 'p-0 sm:p-0'
-          }"
-        >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="xs"
-            trailing-icon="i-lucide-maximize-2"
-            :aria-label="$t('public.api.viewDetails')"
-            class="api-card__detail-button"
-          >
-            {{ $t('public.api.details') }}
-          </UButton>
-
-          <template #title>
-            <div class="api-card__modal-title-row">
-              <span
-                class="api-card__modal-icon"
-                aria-hidden="true"
-              >
-                <UIcon
-                  name="i-lucide-braces"
-                  class="size-4"
-                />
-              </span>
-              <span class="api-card__modal-title">{{ resolvedName }}</span>
-              <UBadge
-                :color="statusMeta.color"
-                variant="soft"
-                size="sm"
-                :icon="statusMeta.icon"
-                class="shrink-0 rounded-full"
-              >
-                {{ statusMeta.label }}
-              </UBadge>
-            </div>
-          </template>
-
-          <template #description>
-            <span class="api-card__modal-summary">{{ detailSummary }}</span>
-          </template>
-
-          <template #body>
-            <ApiDetailContent v-bind="detailContentProps" />
-          </template>
-        </UModal>
-      </div>
     </div>
   </UCard>
+
+  <UModal
+    v-model:open="detailsOpen"
+    :ui="{
+      content: 'sm:max-w-xl overflow-hidden',
+      header: 'items-start gap-3 border-b border-default py-4 ps-4 pe-12 sm:ps-6 sm:pe-14',
+      wrapper: 'min-w-0',
+      title: 'min-w-0',
+      description: 'block',
+      close: 'top-4 end-4',
+      body: 'p-0 sm:p-0'
+    }"
+    @after:leave="restoreDetailTriggerFocus"
+  >
+    <template #title>
+      <div class="api-card__modal-title-row">
+        <span
+          class="api-card__modal-icon"
+          aria-hidden="true"
+        >
+          <UIcon
+            name="i-mdi-code-braces"
+            class="size-4"
+          />
+        </span>
+        <span class="api-card__modal-title">{{ resolvedName }}</span>
+        <UBadge
+          :color="statusMeta.color"
+          variant="soft"
+          size="sm"
+          :icon="statusMeta.icon"
+          class="shrink-0 rounded-full"
+        >
+          {{ statusMeta.label }}
+        </UBadge>
+      </div>
+    </template>
+
+    <template #description>
+      <span class="api-card__modal-summary">{{ detailSummary }}</span>
+    </template>
+
+    <template #body>
+      <ApiDetailContent v-bind="detailContentProps" />
+    </template>
+  </UModal>
 </template>
 
 <style scoped>
@@ -243,7 +249,6 @@ const detailContentProps = computed(() => ({
   overflow: hidden;
 }
 
-.api-card__method,
 .api-card__category,
 .api-card__status {
   display: inline-flex;
@@ -256,37 +261,6 @@ const detailContentProps = computed(() => ({
   font-size: 0.625rem;
   line-height: 1;
   white-space: nowrap;
-}
-
-.api-card__method {
-  color: var(--ui-text-toned);
-  font-family: var(--font-code);
-  font-weight: 750;
-}
-
-.api-card__method--get {
-  border-color: color-mix(in srgb, var(--ui-secondary) 34%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-secondary) 8%, transparent);
-  color: var(--ui-secondary);
-}
-
-.api-card__method--post {
-  border-color: color-mix(in srgb, var(--ui-secondary) 36%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-secondary) 8%, transparent);
-  color: var(--ui-secondary);
-}
-
-.api-card__method--put,
-.api-card__method--patch {
-  border-color: color-mix(in srgb, var(--ui-warning) 36%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-warning) 8%, transparent);
-  color: var(--ui-warning);
-}
-
-.api-card__method--delete {
-  border-color: color-mix(in srgb, var(--ui-error) 34%, var(--ui-border));
-  background: color-mix(in srgb, var(--ui-error) 7%, transparent);
-  color: var(--ui-error);
 }
 
 .api-card__category {
@@ -313,10 +287,8 @@ const detailContentProps = computed(() => ({
   background: var(--ui-text-dimmed);
 }
 
-.api-card__status--success .api-card__status-dot { background: var(--ui-success); }
 .api-card__status--error .api-card__status-dot { background: var(--ui-error); }
 .api-card__status--warning .api-card__status-dot { background: var(--ui-warning); }
-.api-card__status--info .api-card__status-dot { background: var(--ui-info); }
 
 .api-card__copy {
   margin-top: 0.75rem;
@@ -331,19 +303,51 @@ const detailContentProps = computed(() => ({
   font-weight: 650;
   letter-spacing: 0;
   line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.api-card__title-link {
+.api-card__title-trigger {
+  appearance: none;
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.4rem;
+  border: 0;
+  border-radius: 4px;
+  padding: 0;
+  background: transparent;
   color: inherit;
-  text-decoration: none;
-  transition: color 160ms ease;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-align: left;
 }
 
-.api-card__title-link:hover {
-  color: var(--ui-secondary);
+.api-card__title-trigger-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-card__title-trigger-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 auto;
+  color: var(--ui-text-dimmed);
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.api-card__title-trigger:hover .api-card__title-trigger-icon {
+  color: var(--ui-text-highlighted);
+  transform: translateX(2px);
+}
+
+.api-card__title-trigger:focus-visible {
+  outline: 1px solid var(--ui-border-accented);
+  outline-offset: 4px;
 }
 
 .api-card__short {
@@ -377,10 +381,9 @@ const detailContentProps = computed(() => ({
   white-space: nowrap;
 }
 
-.api-card__toggle-row {
+.api-card__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.625rem;
   margin-top: auto;
   padding: 0.7rem 1.25rem 0.85rem;
@@ -407,26 +410,6 @@ const detailContentProps = computed(() => ({
 
 .api-card__metric :deep(svg) {
   color: var(--ui-text-dimmed);
-}
-
-.api-card__actions {
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.api-card__detail-button {
-  border: 1px solid transparent;
-  border-radius: 6px;
-  background: transparent;
-  font-weight: 500;
-  box-shadow: none;
-}
-
-.api-card__detail-button:hover {
-  border-color: var(--ui-border);
-  background: var(--ui-bg-muted);
 }
 
 .api-card__modal-icon {
@@ -474,7 +457,13 @@ const detailContentProps = computed(() => ({
 
 @media (max-width: 520px) {
   .api-card__content { padding-inline: 1rem; }
-  .api-card__toggle-row { padding-inline: 1rem; }
+  .api-card__footer { padding-inline: 1rem; }
   .api-card__footer-meta { gap: 0.75rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .api-card__title-trigger-icon {
+    transition: none;
+  }
 }
 </style>

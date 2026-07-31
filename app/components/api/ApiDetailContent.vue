@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { httpMethodColor } from '~/utils/http-method'
+import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { formatCompactCount } from '~/utils/number-format'
 import { getApiMethodCost } from '~/utils/api-presentation'
 
@@ -39,7 +39,7 @@ function costFor(method: string): number {
     <div class="api-detail__body">
       <div class="api-detail__endpoint">
         <span class="api-detail__endpoint-label">
-          <UIcon name="i-lucide-route" class="size-3.5" />
+          <UIcon name="i-mdi-routes" class="size-3.5" />
           {{ $t('public.api.endpoint') }}
         </span>
         <a
@@ -62,7 +62,7 @@ function costFor(method: string): number {
             aria-hidden="true"
           >
             <UIcon
-              name="i-lucide-activity"
+              name="i-mdi-pulse"
               class="size-3.5"
             />
           </span>
@@ -72,16 +72,13 @@ function costFor(method: string): number {
           </div>
         </div>
 
-        <div
-          class="api-detail__cell"
-          :class="isApiKey ? 'api-detail__cell--key' : 'api-detail__cell--free'"
-        >
+        <div class="api-detail__cell">
           <span
             class="api-detail__icon"
             aria-hidden="true"
           >
             <UIcon
-              :name="isApiKey ? 'i-lucide-key-round' : 'i-lucide-lock-open'"
+              :name="isApiKey ? 'i-mdi-key-outline' : 'i-mdi-lock-open-outline'"
               class="size-3.5"
             />
           </span>
@@ -94,36 +91,31 @@ function costFor(method: string): number {
 
       <div class="api-detail__section">
         <span class="api-detail__label api-detail__section-label">
-          <UIcon name="i-lucide-code-xml" class="size-3.5" />
+          <UIcon name="i-mdi-xml" class="size-3.5" />
           {{ $t('public.api.requestMethod') }}
         </span>
         <div class="api-detail__badges">
-          <UBadge
+          <ApiHttpMethodBadge
             v-for="method in methods"
             :key="method"
-            :color="httpMethodColor(method)"
-            variant="soft"
-            size="sm"
-            class="rounded-full"
-          >
-            {{ method }}
-          </UBadge>
+            :method="method"
+          />
         </div>
       </div>
 
       <div class="api-detail__section">
         <span class="api-detail__label api-detail__section-label">
-          <UIcon name="i-lucide-coins" class="size-3.5" />
+          <UIcon name="i-mdi-cash-multiple" class="size-3.5" />
           {{ $t('public.api.pricing.label') }}
         </span>
         <div class="api-detail__badges">
           <UBadge
             v-for="method in methods"
             :key="`cost-${method}`"
-            :color="costFor(method) > 0 ? 'warning' : 'success'"
+            :color="costFor(method) > 0 ? 'warning' : 'neutral'"
             variant="soft"
             size="sm"
-            :icon="costFor(method) > 0 ? 'i-lucide-coins' : 'i-lucide-circle-check'"
+            :icon="costFor(method) > 0 ? 'i-mdi-cash-multiple' : 'i-mdi-check-circle-outline'"
             class="rounded-full"
           >
             {{ method }} · {{ costFor(method) > 0 ? costFor(method) : $t('public.api.pricing.free') }}
@@ -146,7 +138,7 @@ function costFor(method: string): number {
         color="neutral"
         variant="outline"
         size="sm"
-        trailing-icon="i-lucide-external-link"
+        trailing-icon="i-mdi-open-in-new"
         block
       >
         {{ $t('public.api.openDocumentation') }}
@@ -244,21 +236,6 @@ function costFor(method: string): number {
   color: var(--ui-text-highlighted);
   background: color-mix(in srgb, var(--ui-bg-elevated) 76%, transparent);
   border: 1px solid color-mix(in srgb, var(--ui-border) 74%, transparent);
-}
-
-.api-detail__cell--calls .api-detail__icon {
-  color: var(--ui-info);
-  background: color-mix(in srgb, var(--ui-info) 10%, var(--ui-bg-elevated));
-}
-
-.api-detail__cell--free .api-detail__icon {
-  color: var(--ui-success);
-  background: color-mix(in srgb, var(--ui-success) 10%, var(--ui-bg-elevated));
-}
-
-.api-detail__cell--key .api-detail__icon {
-  color: var(--ui-primary);
-  background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg-elevated));
 }
 
 .api-detail__cell-content {

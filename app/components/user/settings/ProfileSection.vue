@@ -79,16 +79,18 @@ async function submit() {
           class="w-full sm:w-60"
         />
       </UFormField>
-      <div class="flex justify-end pt-4">
-        <UButton
-          :loading="isSaving"
-          :disabled="!hasChanges || isSaving || profileLoading || !profile"
-          icon="i-mdi-content-save-outline"
-          @click="submit"
-        >
-          {{ $t('user.settings.profile.save') }}
-        </UButton>
-      </div>
+    </template>
+
+    <template #footer>
+      <UButton
+        v-if="profile"
+        :loading="isSaving"
+        :disabled="!hasChanges || isSaving || profileLoading"
+        icon="i-mdi-content-save-outline"
+        @click="submit"
+      >
+        {{ $t('user.settings.profile.save') }}
+      </UButton>
     </template>
   </DashboardSettingsSection>
 </template>

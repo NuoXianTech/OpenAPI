@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminApiEndpointSummary from '~/components/admin/AdminApiEndpointSummary.vue'
 import { parseFetchError } from '~/utils/client-error'
 import {
   useAdminApisDisplayMeta,
@@ -193,27 +194,10 @@ function resetApiFilters() {
             v-if="row.original.endpoints.length === 0"
             class="text-xs text-muted italic"
           >{{ $t('admin.apis.registry.statuses.codeDeleted') }}</span>
-          <div
+          <AdminApiEndpointSummary
             v-else
-            class="flex flex-col gap-1"
-          >
-            <div
-              v-for="ep in row.original.endpoints"
-              :key="`${ep.method}-${ep.apiPath}`"
-              class="flex items-center gap-2"
-            >
-              <UBadge
-                :color="httpMethodColor(ep.method)"
-                variant="subtle"
-                class="font-mono"
-              >
-                {{ ep.method }}
-              </UBadge>
-              <code class="font-mono text-xs font-medium text-highlighted">
-                {{ ep.apiPath }}
-              </code>
-            </div>
-          </div>
+            :endpoints="row.original.endpoints"
+          />
         </template>
         <template #category-cell="{ row }">
           {{ categoryLabel(row.original) }}

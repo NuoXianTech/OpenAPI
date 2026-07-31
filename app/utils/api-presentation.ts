@@ -1,6 +1,6 @@
 import { API_STATUS } from '#shared/config/api-status'
 
-export type ApiStatusColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
+export type ApiStatusColor = 'warning' | 'error' | 'neutral'
 
 export interface ApiStatusMeta {
   label: string
@@ -51,17 +51,17 @@ export function areAllApiMethodsPaid(
 function getApiStatusDescriptor(status: number): ApiStatusDescriptor {
   switch (status) {
     case API_STATUS.normal:
-      return { labelKey: 'common.states.active', color: 'success', icon: 'i-lucide-circle-check' }
+      return { labelKey: 'common.states.active', color: 'neutral', icon: 'i-mdi-check-circle-outline' }
     case API_STATUS.abnormal:
-      return { labelKey: 'common.states.inactive', color: 'error', icon: 'i-lucide-circle-alert' }
+      return { labelKey: 'common.states.inactive', color: 'error', icon: 'i-mdi-alert-circle-outline' }
     case API_STATUS.maintenance:
-      return { labelKey: 'common.states.maintenance', color: 'warning', icon: 'i-lucide-wrench' }
+      return { labelKey: 'common.states.maintenance', color: 'warning', icon: 'i-mdi-wrench-outline' }
     case API_STATUS.deprecated:
-      return { labelKey: 'common.states.deprecated', color: 'neutral', icon: 'i-lucide-archive' }
+      return { labelKey: 'common.states.deprecated', color: 'neutral', icon: 'i-mdi-archive-outline' }
     case API_STATUS.automatic:
-      return { labelKey: 'common.states.automatic', color: 'info', icon: 'i-lucide-refresh-cw' }
+      return { labelKey: 'common.states.automatic', color: 'neutral', icon: 'i-mdi-refresh' }
     default:
-      return { labelKey: 'common.states.unknown', color: 'neutral', icon: 'i-lucide-circle-help' }
+      return { labelKey: 'common.states.unknown', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }
 }
 

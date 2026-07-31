@@ -10,18 +10,11 @@ const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
 </script>
 
 <template>
-  <UCard v-if="byReason.length > 0">
-    <template #header>
-      <div class="flex items-center gap-2">
-        <UIcon
-          name="i-mdi-chart-pie-outline"
-          class="size-5 text-muted"
-        />
-        <h3 class="text-lg font-semibold text-highlighted">
-          {{ $t('user.credits.distribution.title') }}
-        </h3>
-      </div>
-    </template>
+  <DashboardContentCard
+    v-if="byReason.length > 0"
+    :title="$t('user.credits.distribution.title')"
+    icon="i-mdi-chart-pie-outline"
+  >
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <div
         v-for="r in byReason"
@@ -48,5 +41,5 @@ const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
         </span>
       </div>
     </div>
-  </UCard>
+  </DashboardContentCard>
 </template>

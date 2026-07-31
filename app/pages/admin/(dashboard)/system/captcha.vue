@@ -70,13 +70,14 @@ const captchaType = ref('turnstile')
           class="w-full sm:min-w-64"
         />
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="captchaCredentialSection.dirty.value"
-        :saving="captchaCredentialSection.saving.value"
-        :disabled="captchaCredentialSection.disabled.value"
-        @save="captchaCredentialSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="captchaCredentialSection.dirty.value"
+          :saving="captchaCredentialSection.saving.value"
+          :disabled="captchaCredentialSection.disabled.value"
+          @save="captchaCredentialSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
 
     <DashboardSettingsSection
@@ -120,13 +121,14 @@ const captchaType = ref('turnstile')
           :disabled="!form.checkinEnabled"
         />
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="captchaSceneSection.dirty.value"
-        :saving="captchaSceneSection.saving.value"
-        :disabled="captchaSceneSection.disabled.value"
-        @save="captchaSceneSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="captchaSceneSection.dirty.value"
+          :saving="captchaSceneSection.saving.value"
+          :disabled="captchaSceneSection.disabled.value"
+          @save="captchaSceneSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
   </div>
 </template>

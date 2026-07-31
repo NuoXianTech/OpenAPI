@@ -1,0 +1,392 @@
+{
+  "admin": {
+    "system": {
+      "feedback": {
+        "saved": "保存成功",
+        "saveFailed": "保存失败"
+      },
+      "site": {
+        "basic": {
+          "title": "基本信息",
+          "siteName": {
+            "label": "站点名称",
+            "description": "展示在浏览器标题、登录注册页与邮件中的站点名。"
+          },
+          "siteDescription": {
+            "label": "站点描述",
+            "description": "站点描述信息，站点描述将显示在网页代码的头部与首页卡片中。"
+          },
+          "siteUrl": {
+            "label": "站点 URL",
+            "description": "站点对外访问地址，用于拼接邮件链接与 OAuth 回调，须以 http:// 或 https:// 开头。"
+          },
+          "siteImage": {
+            "label": "站点图标",
+            "description": "浏览器标签页与站点 Logo 使用的图标地址。"
+          },
+          "startTime": {
+            "label": "运行时间",
+            "description": "站点上线时间，用于前台展示已稳定运行的天数。",
+            "placeholder": "选择上线时间"
+          },
+          "termsUrl": {
+            "label": "使用条款链接",
+            "description": "留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+          },
+          "privacyUrl": {
+            "label": "隐私政策链接",
+            "description": "留空则不展示。填写后展示在登录 / 注册页，可填完整 URL 或站内路径。"
+          },
+          "icpBeian": {
+            "label": "ICP 备案号",
+            "description": "留空则页脚不展示。填写后展示在页脚，点击跳转工信部备案系统。",
+            "placeholder": "京ICP备00000000号"
+          },
+          "policeBeian": {
+            "label": "公安备案号",
+            "description": "留空则页脚不展示。填写后展示在页脚，点击跳转公安备案系统。",
+            "placeholder": "京公网安备00000000000000号"
+          }
+        },
+        "checkin": {
+          "title": "每日签到",
+          "enabled": {
+            "label": "启用每日签到",
+            "description": "关闭后用户积分页的签到按钮会显示「已关闭」，签到接口也会拒绝请求。"
+          },
+          "cooldown": {
+            "label": "冷却方式",
+            "description": "按小时 = 距上次签到 N 小时后可签；每日固定时间 = 到达设定时刻后刷新可签状态。",
+            "options": {
+              "hours": "按小时冷却",
+              "fixedTime": "每日固定时间刷新"
+            }
+          },
+          "refreshHours": {
+            "label": "冷却间隔（小时）",
+            "description": "两次签到的最小间隔，默认 24 小时。"
+          },
+          "fixedRefreshTime": {
+            "label": "刷新时间（HH:mm）",
+            "description": "每天到达该时刻后可再次签到，例如 00:00 表示每日 0 点刷新。"
+          },
+          "reward": {
+            "label": "奖励模式",
+            "description": "固定 = 每次签到固定积分；区间随机 = 在 [最少, 最多] 之间随机取整。",
+            "options": {
+              "fixed": "固定积分",
+              "range": "区间随机"
+            }
+          },
+          "fixedAmount": {
+            "label": "固定奖励积分",
+            "description": "每次签到固定发放的积分数量。"
+          },
+          "minAmount": {
+            "label": "最少积分",
+            "description": "区间随机的下限。"
+          },
+          "maxAmount": {
+            "label": "最多积分",
+            "description": "区间随机的上限。"
+          },
+          "validation": {
+            "fixedTime": "请按 HH:mm 格式填写，例如 00:00",
+            "amountRange": "最少积分必须 ≤ 最多积分"
+          }
+        }
+      },
+      "session": {
+        "registration": {
+          "title": "登录与注册",
+          "enabled": {
+            "label": "允许新用户注册",
+            "description": "关闭后，前台注册入口与注册接口都会被拒绝（等同注册模式「关闭」）。"
+          },
+          "passwordReset": {
+            "label": "启用「忘记密码」功能",
+            "description": "关闭后，登录页不再展示「忘记密码？」入口，重置邮件申请与重置接口也会被拒绝。"
+          },
+          "emailActivation": {
+            "label": "邮件激活",
+            "description": "开启后，新用户注册需点击邮件中的激活链接才能完成；关闭则注册即激活、不发验证邮件。请确认邮件发信设置正确，否则激活邮件无法送达。"
+          }
+        },
+        "emailFilter": {
+          "label": "注册邮箱过滤模式",
+          "description": "不开启=任何邮箱都可注册；白名单=仅允许列表内域名注册；黑名单=拒绝列表内域名注册。",
+          "rulesLabel": "邮箱域过滤规则",
+          "disabledDescription": "当前模式为「不开启」，此列表不会生效。",
+          "rulesDescription": "逗号或换行分隔，仅写域名（不带 {'@'}）。例如：163.com, qq.com、gmail.com。",
+          "options": {
+            "off": "不开启",
+            "whitelist": "白名单",
+            "blacklist": "黑名单"
+          }
+        },
+        "expiry": {
+          "title": "用户会话时效",
+          "defaultSession": {
+            "label": "默认会话有效期 (秒)",
+            "description": "未勾选「记住我」时使用，默认 86400=1 天，期间活跃会自动滑动续期。"
+          },
+          "absoluteSession": {
+            "label": "会话绝对硬顶 (秒)",
+            "description": "未勾选「记住我」时滑动续期的绝对上限，从首次登录算，默认 604800=7 天。到顶后强制重新登录。"
+          },
+          "rememberSession": {
+            "label": "「记住我」会话有效期 (秒)",
+            "description": "勾选「记住我」时使用，默认 2592000=30 天，到期后必须重新登录。"
+          },
+          "emailVerification": {
+            "label": "邮箱验证过期 (分钟)",
+            "description": "注册 / 换绑邮箱的验证链接有效时长，默认 30 分钟。"
+          },
+          "passwordReset": {
+            "label": "密码重置链接过期 (分钟)",
+            "description": "找回密码邮件中的重置链接有效时长，默认 30 分钟。"
+          }
+        },
+        "oauth": {
+          "title": "第三方登录",
+          "provider": "provider: {provider}",
+          "forceBinding": {
+            "label": "强制绑定已有账号",
+            "description": "开启后，第三方登录遇到未注册的身份只允许「绑定已有账号」，不允许新注册。"
+          },
+          "status": {
+            "enabled": "已启用",
+            "disabled": "未启用"
+          },
+          "clientId": {
+            "label": "Client ID",
+            "placeholder": "填写 OAuth App 的 Client ID"
+          },
+          "clientSecret": {
+            "label": "Client Secret",
+            "savedDescription": "已保存。留空则保持不变，填写则覆盖。",
+            "initialDescription": "首次保存，必填。",
+            "show": "显示密钥",
+            "hide": "隐藏密钥"
+          },
+          "callbackUrl": {
+            "label": "Callback URL",
+            "description": "由站点地址自动拼接，不可修改。请把该地址填到 OAuth App 的回调白名单。"
+          },
+          "scopes": {
+            "label": "Scopes",
+            "description": "已按 provider 固定，无需配置。",
+            "empty": "（无）"
+          },
+          "enableProvider": "启用该登录方式",
+          "feedback": {
+            "saved": "第三方登录设置保存成功",
+            "saveFailed": "第三方登录设置保存失败",
+            "copyFailed": "复制失败，请手动选中复制"
+          }
+        }
+      },
+      "captcha": {
+        "providers": {
+          "turnstile": "Cloudflare Turnstile"
+        },
+        "credentials": {
+          "title": "验证码",
+          "type": {
+            "label": "验证码类型",
+            "description": "选择验证码服务提供商。目前仅支持 Cloudflare Turnstile。"
+          },
+          "siteKey": {
+            "label": "站点密钥 (Site Key)",
+            "description": "Cloudflare Turnstile 应用页获取到的 Site Key。"
+          },
+          "secretKey": {
+            "label": "密钥 (Secret Key)",
+            "description": "Cloudflare Turnstile 应用页获取到的 Secret Key。"
+          }
+        },
+        "scenes": {
+          "title": "验证场景",
+          "login": {
+            "label": "登录验证码",
+            "description": "/login 提交时校验。"
+          },
+          "register": {
+            "label": "注册验证码",
+            "description": "/register 提交时校验。"
+          },
+          "passwordReset": {
+            "label": "找回密码验证码",
+            "description": "/forgot-password 申请重置链接时校验，避免邮件接口被刷。需同时开启「忘记密码」功能。"
+          },
+          "checkin": {
+            "label": "每日签到验证码",
+            "description": "积分页点击签到时弹出验证窗口，通过后自动签到。需同时开启「每日签到」功能。"
+          }
+        }
+      },
+      "email": {
+        "settings": {
+          "title": "发信",
+          "fromName": {
+            "label": "发件人名",
+            "description": "邮件中展示的发件人姓名，留空则只显示发件邮箱地址。"
+          },
+          "fromAddress": {
+            "label": "发件人邮箱",
+            "description": "发件邮箱的地址，也作为 EHLO 域名来源。",
+            "placeholder": "no-reply{'@'}example.com"
+          },
+          "host": {
+            "label": "SMTP 服务器",
+            "description": "发件服务器地址，不含端口号。"
+          },
+          "port": {
+            "label": "SMTP 端口",
+            "description": "发件服务器端口号，常见 465（SSL）/ 587（STARTTLS）。"
+          },
+          "username": {
+            "label": "SMTP 用户名",
+            "description": "发信邮箱用户名，一般与邮箱地址相同。",
+            "placeholder": "user{'@'}example.com"
+          },
+          "password": {
+            "label": "SMTP 密码",
+            "description": "发信邮箱密码或授权码。"
+          },
+          "replyTo": {
+            "label": "回信邮箱",
+            "description": "用户回复系统邮件时用于接收回信的邮箱。留空则回信默认回到发件人邮箱。",
+            "placeholder": "support{'@'}example.com"
+          },
+          "secure": {
+            "label": "强制使用 SSL 连接",
+            "description": "是否强制使用 SSL 加密连接（465 端口）。若无法发送邮件，可关闭后改用 587 STARTTLS。"
+          },
+          "poolMaxAge": {
+            "label": "SMTP 连接有效期 (秒)",
+            "description": "有效期内建立的 SMTP 连接会被新邮件发送请求复用。0 = 不复用，每封新建即关闭。"
+          },
+          "test": {
+            "label": "测试发信",
+            "description": "使用当前已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。"
+          }
+        },
+        "actions": {
+          "sendTest": "发送测试邮件",
+          "send": "发送"
+        },
+        "feedback": {
+          "recipientRequired": "请输入收件邮箱",
+          "sent": "测试邮件已发送",
+          "sentDescription": "请到 {email} 查收",
+          "sendFailed": "发送失败"
+        },
+        "testModal": {
+          "title": "SMTP 测试发信",
+          "description": "将使用已保存的 SMTP 配置发送一封测试邮件。若刚修改了上方表单，请先点击「保存」再测试。",
+          "recipient": "收件邮箱",
+          "recipientPlaceholder": "you{'@'}example.com"
+        }
+      },
+      "about": {
+        "pageTitle": "关于",
+        "project": {
+          "title": "项目",
+          "description": "OpenAPI 是一个面向 API 开放、运营管理与用户自助使用的全栈平台。",
+          "items": {
+            "name": {
+              "label": "项目名称"
+            },
+            "applicationType": {
+              "label": "应用类型",
+              "value": "API 服务聚合与开放平台"
+            },
+            "managementModel": {
+              "label": "管理模型",
+              "value": "多管理员 + 多用户"
+            },
+            "runtime": {
+              "label": "运行形态",
+              "value": "Nuxt 全栈应用"
+            }
+          }
+        },
+        "capabilities": {
+          "title": "能力",
+          "description": "项目围绕 API 管理、用户自助、运营配置与审计追踪组织功能。",
+          "items": {
+            "accounts": {
+              "label": "账号与权限",
+              "description": "统一登录入口，基于用户角色区分管理能力与用户能力。"
+            },
+            "apis": {
+              "label": "API 管理",
+              "description": "维护接口、分类、调用成本、启用状态与统计口径。"
+            },
+            "audit": {
+              "label": "日志与审计",
+              "description": "集中查看调用、登录、积分与操作日志，保留关键操作者信息。"
+            },
+            "operations": {
+              "label": "运营能力",
+              "description": "支持公告、通知、友情链接、兑换码与积分体系。"
+            },
+            "configuration": {
+              "label": "系统配置",
+              "description": "集中管理站点、邮件、验证码、会话与安全相关配置。"
+            }
+          }
+        },
+        "stack": {
+          "title": "技术栈",
+          "description": "当前项目以 Nuxt 全栈能力为核心，结合类型安全、组件化 UI 与结构化数据校验。",
+          "items": {
+            "nuxt": {
+              "label": "Nuxt 4 / Vue 3",
+              "description": "使用 Composition API 与文件路由组织前后端能力。"
+            },
+            "ui": {
+              "label": "Nuxt UI / Tailwind CSS",
+              "description": "构建一致、响应式、适合后台工作流的界面。"
+            },
+            "nitro": {
+              "label": "Nitro / H3",
+              "description": "提供服务端 API、鉴权中间件与运行时能力。"
+            },
+            "database": {
+              "label": "Drizzle ORM / PostgreSQL",
+              "description": "以类型安全方式维护数据库 schema、查询与迁移。"
+            },
+            "tooling": {
+              "label": "VueUse / Zod",
+              "description": "复用组合式工具，并对输入数据做结构化校验。"
+            }
+          }
+        },
+        "production": {
+          "title": "生产约定",
+          "description": "这些约定用于保持多管理员、多用户环境中的可维护性和可追踪性。",
+          "items": {
+            "configuration": {
+              "label": "配置优先",
+              "description": "站点、邮件、验证码、OAuth 等运行参数集中在系统设置与环境变量中维护。"
+            },
+            "audit": {
+              "label": "审计优先",
+              "description": "管理动作和用户关键行为写入日志，便于追踪变更来源。"
+            },
+            "roles": {
+              "label": "角色清晰",
+              "description": "管理员可访问用户能力与管理能力，用户仅访问自身工作区。"
+            },
+            "migrations": {
+              "label": "迁移可控",
+              "description": "数据库迁移随构建产物发布，并在生产进程接受请求前自动执行。"
+            }
+          }
+        }
+      }
+    }
+  }
+}

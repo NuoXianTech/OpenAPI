@@ -17,6 +17,7 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
     v-if="ranking.length === 0"
     icon="i-mdi-trophy-outline"
     :title="t('common.dashboardRanking.empty')"
+    variant="naked"
     class="h-64"
   />
 

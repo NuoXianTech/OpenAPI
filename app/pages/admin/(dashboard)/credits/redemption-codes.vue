@@ -65,7 +65,7 @@ const {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface dashboard-hero-surface-success relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
+    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
       <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">

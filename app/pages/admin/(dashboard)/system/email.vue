@@ -204,13 +204,14 @@ async function submitTest(): Promise<void> {
           {{ t('admin.system.email.actions.sendTest') }}
         </UButton>
       </UFormField>
-      <USeparator />
-      <AdminSettingsSectionActions
-        :dirty="emailSection.dirty.value"
-        :saving="emailSection.saving.value"
-        :disabled="emailSection.disabled.value"
-        @save="emailSection.save"
-      />
+      <template #footer>
+        <AdminSettingsSectionActions
+          :dirty="emailSection.dirty.value"
+          :saving="emailSection.saving.value"
+          :disabled="emailSection.disabled.value"
+          @save="emailSection.save"
+        />
+      </template>
     </DashboardSettingsSection>
 
     <UModal

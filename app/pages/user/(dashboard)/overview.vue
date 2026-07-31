@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { UserDashboardData } from '#shared/types/user-dashboard'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import type { DashboardMetricTone } from '~/types/dashboard-metric'
 
 const { t, locale } = useI18n()
 
 useHead({ title: () => t('user.overview.pageTitle') })
 
-const { user } = useAuth()
 const toast = useToast()
 
 const requestURL = useRequestURL()
@@ -42,9 +42,6 @@ const hourlyTrend24h = computed(() => data.value.hourlyTrend24h)
 const callsTrendValues = computed(() => trend.value.map(point => point.totalCalls))
 const spendTrendValues = computed(() => trend.value.map(point => point.creditsSpent))
 const hasKeys = computed(() => apiKeys.value.total > 0)
-const introDescription = computed(() => user.value?.username
-  ? t('user.overview.hero.description', { username: user.value.username })
-  : '')
 const sampleCurl = computed(() => [
   `curl -X GET '${origin}/v1/your-endpoint' \\`,
   `  -H 'x-api-key: <your-api-key>'`
@@ -62,9 +59,8 @@ interface UserOverviewMetricCard {
   value: string
   unit?: string
   icon: string
-  tone: 'neutral' | 'info' | 'warning' | 'success'
+  tone: DashboardMetricTone
   sparklineValues?: number[]
-  sparklineColor?: string
   action?: UserOverviewMetricAction
 }
 
@@ -76,9 +72,8 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       value: credits.value.spent24h.toLocaleString(locale.value),
       unit: t('common.units.points'),
       icon: 'i-mdi-fire',
-      tone: 'warning',
-      sparklineValues: spendTrendValues.value,
-      sparklineColor: 'var(--ui-warning)'
+      tone: 'bronze',
+      sparklineValues: spendTrendValues.value
     },
     {
       key: 'totalSpent',
@@ -86,9 +81,8 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       value: credits.value.totalSpent.toLocaleString(locale.value),
       unit: t('common.units.points'),
       icon: 'i-mdi-chart-line',
-      tone: 'neutral',
-      sparklineValues: spendTrendValues.value,
-      sparklineColor: 'var(--ui-primary)'
+      tone: 'violet',
+      sparklineValues: spendTrendValues.value
     },
     {
       key: 'totalCalls',
@@ -96,9 +90,8 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       value: calls.value.total.toLocaleString(locale.value),
       unit: t('common.units.times'),
       icon: 'i-mdi-heart-pulse',
-      tone: 'info',
-      sparklineValues: callsTrendValues.value,
-      sparklineColor: 'var(--ui-info)'
+      tone: 'blue',
+      sparklineValues: callsTrendValues.value
     },
     {
       key: 'balance',
@@ -106,7 +99,7 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
       value: credits.value.balance.toLocaleString(locale.value),
       unit: t('common.units.points'),
       icon: 'i-mdi-cash-multiple',
-      tone: 'success',
+      tone: 'ink',
       action: { label: t('user.overview.actions.viewCredits'), to: '/user/credits', icon: 'i-mdi-arrow-right' }
     }
   ]
@@ -130,88 +123,72 @@ async function copyCurl() {
 
     <template #body>
       <div class="space-y-6">
-        <!-- Hero / Onboarding -->
-        <div class="overview-hero dashboard-hero-surface dashboard-hero-surface-mixed relative overflow-hidden rounded-lg border border-default p-6 sm:p-8">
-          <div class="grid gap-6 lg:grid-cols-5 relative z-10">
-            <div class="flex flex-col lg:col-span-3">
-              <div class="space-y-3">
-                <h2 class="text-2xl sm:text-3xl font-semibold tracking-tight text-highlighted">
-                  {{ $t('user.overview.hero.title') }}
-                </h2>
-                <p
-                  v-if="introDescription"
-                  class="text-sm sm:text-base text-toned max-w-xl"
-                >
-                  {{ introDescription }}
-                </p>
-              </div>
+        <DashboardOverviewHero
+          :title="$t('user.overview.hero.title')"
+          :description="$t('user.overview.hero.description')"
+        >
+          <template #actions>
+            <UButton
+              to="/user/apikeys"
+              color="neutral"
+              size="md"
+              icon="i-mdi-key-plus"
+            >
+              {{ $t('user.overview.actions.createApiKey') }}
+            </UButton>
+            <UButton
+              to="/user/credits"
+              color="neutral"
+              variant="outline"
+              size="md"
+              icon="i-mdi-cash-multiple"
+            >
+              {{ $t('user.overview.actions.manageCredits') }}
+            </UButton>
+          </template>
 
-              <div class="mt-7 flex flex-wrap gap-2 lg:mt-auto lg:pt-6">
-                <UButton
-                  to="/user/apikeys"
-                  color="neutral"
-                  size="md"
-                  icon="i-mdi-key-plus"
-                >
-                  {{ $t('user.overview.actions.createApiKey') }}
-                </UButton>
-                <UButton
-                  to="/user/credits"
-                  color="neutral"
-                  variant="outline"
-                  size="md"
-                  icon="i-mdi-cash-multiple"
-                >
-                  {{ $t('user.overview.actions.manageCredits') }}
-                </UButton>
+          <div class="flex h-full flex-col gap-4 rounded-lg border border-default bg-elevated p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <UIcon
+                  name="i-mdi-console-line"
+                  class="size-4 text-muted"
+                />
+                <span class="text-sm font-medium">{{ $t('user.overview.firstRequest.title') }}</span>
               </div>
+              <UButton
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                icon="i-mdi-content-copy"
+                @click="copyCurl"
+              >
+                {{ $t('common.actions.copy') }}
+              </UButton>
             </div>
+            <pre class="font-mono text-[11px] leading-relaxed text-toned bg-elevated/50 rounded-md p-3 overflow-x-auto"><code>{{ sampleCurl }}</code></pre>
 
-            <div class="lg:col-span-2 min-w-0">
-              <div class="rounded-lg border border-default bg-elevated p-4 space-y-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
-                    <UIcon
-                      name="i-mdi-console-line"
-                      class="size-4 text-muted"
-                    />
-                    <span class="text-sm font-medium">{{ $t('user.overview.firstRequest.title') }}</span>
-                  </div>
-                  <UButton
-                    size="xs"
-                    color="neutral"
-                    variant="ghost"
-                    icon="i-mdi-content-copy"
-                    @click="copyCurl"
-                  >
-                    {{ $t('common.actions.copy') }}
-                  </UButton>
-                </div>
-                <pre class="font-mono text-[11px] leading-relaxed text-toned bg-elevated/50 rounded-md p-3 overflow-x-auto"><code>{{ sampleCurl }}</code></pre>
-
-                <div class="border-t border-default pt-3 space-y-2.5">
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="text-muted">{{ $t('user.apiKeys.title') }}</span>
-                    <span
-                      v-if="hasKeys"
-                      class="inline-flex items-center gap-1.5 text-success font-medium"
-                    >
-                      <span class="size-1.5 rounded-full bg-success" />
-                      {{ $t('user.overview.firstRequest.ready') }}
-                    </span>
-                    <span
-                      v-else
-                      class="inline-flex items-center gap-1.5 text-warning font-medium"
-                    >
-                      <span class="size-1.5 rounded-full bg-warning" />
-                      {{ $t('user.overview.firstRequest.notCreated') }}
-                    </span>
-                  </div>
-                </div>
+            <div class="mt-auto space-y-2.5 border-t border-default pt-3">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted">{{ $t('user.apiKeys.title') }}</span>
+                <span
+                  v-if="hasKeys"
+                  class="inline-flex items-center gap-1.5 text-success font-medium"
+                >
+                  <span class="size-1.5 rounded-full bg-success" />
+                  {{ $t('user.overview.firstRequest.ready') }}
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1.5 text-warning font-medium"
+                >
+                  <span class="size-1.5 rounded-full bg-warning" />
+                  {{ $t('user.overview.firstRequest.notCreated') }}
+                </span>
               </div>
             </div>
           </div>
-        </div>
+        </DashboardOverviewHero>
 
         <!-- Usage Overview -->
         <section class="space-y-4">
@@ -246,7 +223,6 @@ async function copyCurl() {
               :icon="card.icon"
               :tone="card.tone"
               :sparkline-values="card.sparklineValues"
-              :sparkline-color="card.sparklineColor"
             >
               <template
                 v-if="card.action"
@@ -265,30 +241,27 @@ async function copyCurl() {
           </div>
         </section>
 
-        <section class="space-y-4">
-          <div class="flex flex-wrap items-end justify-between gap-2">
-            <div>
-              <h3 class="text-lg font-semibold text-highlighted">
-                {{ $t('user.overview.chart.title') }}
-              </h3>
-              <p class="text-sm text-muted">
-                {{ $t('user.overview.chart.description') }}
-              </p>
-            </div>
-            <div class="flex items-center gap-4 text-xs text-muted" :aria-label="$t('user.overview.chart.legend')">
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />{{ $t('common.states.success') }}</span>
-              <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />{{ $t('common.states.failure') }}</span>
-            </div>
-          </div>
+        <section>
+          <DashboardContentCard
+            :title="$t('user.overview.chart.title')"
+            :description="$t('user.overview.chart.description')"
+            icon="i-mdi-chart-areaspline"
+            body-class="p-4 sm:p-6"
+          >
+            <template #actions>
+              <div class="flex items-center gap-4 text-xs text-muted" :aria-label="$t('user.overview.chart.legend')">
+                <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-success" />{{ $t('common.states.success') }}</span>
+                <span class="inline-flex items-center gap-1.5"><span class="size-2 rounded-full bg-error" />{{ $t('common.states.failure') }}</span>
+              </div>
+            </template>
 
-          <UCard :ui="{ body: 'p-4 sm:p-6' }">
             <Suspense>
               <UserApiRequestsHourlyChart :trend="hourlyTrend24h" />
               <template #fallback>
                 <USkeleton class="h-64 w-full" />
               </template>
             </Suspense>
-          </UCard>
+          </DashboardContentCard>
         </section>
       </div>
     </template>

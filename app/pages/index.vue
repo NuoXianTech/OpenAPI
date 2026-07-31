@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { API_STATUS } from '#shared/config/api-status'
 import type { ApiCatalogItem } from '#shared/types/api'
 import type { PublicCallStatsDashboard } from '#shared/types/public-stats'
 import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
@@ -20,13 +21,20 @@ const {
   key: 'home-public-stats'
 })
 
-const introMetrics = computed(() => ({
-  total: allApis.value.length,
-  calls: publicStats.value?.overview.totalCalls
-    ?? allApis.value.reduce((sum, api) => sum + (Number(api.totalCalls) || 0), 0),
-  successRate: publicStats.value?.overview.successRate ?? 0,
-  users: publicStats.value?.overview.userCount ?? 0
-}))
+const introMetrics = computed(() => {
+  const apis = allApis.value
+  const total = apis.length
+  const available = apis.filter(api => api.status === API_STATUS.normal).length
+
+  return {
+    total,
+    availabilityRate: total > 0 ? Number((available / total * 100).toFixed(2)) : 0,
+    calls: publicStats.value?.overview.totalCalls
+      ?? apis.reduce((sum, api) => sum + (Number(api.totalCalls) || 0), 0),
+    successRate: publicStats.value?.overview.successRate ?? 0,
+    users: publicStats.value?.overview.userCount ?? 0
+  }
+})
 
 const popularApis = computed<ApiCatalogItem[]>(() => {
   const apiById = new Map(allApis.value.map(api => [api.id, api]))
@@ -63,6 +71,7 @@ useSeoMeta({
     <CommonPublicApiIntro
       :site-description="settings.siteDescription"
       :total-count="introMetrics.total"
+      :availability-rate="introMetrics.availabilityRate"
       :call-count="introMetrics.calls"
       :success-rate="introMetrics.successRate"
       :user-count="introMetrics.users"

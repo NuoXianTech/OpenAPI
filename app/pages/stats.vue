@@ -45,11 +45,6 @@ const retryActions = computed(() => [{
     <CommonSiteHeader />
     <UPage class="mx-auto w-full max-w-295 flex-1 px-4 pt-8 pb-6 sm:px-6 sm:pt-10">
       <section class="stats-hero">
-        <div
-          class="stats-hero__pattern"
-          aria-hidden="true"
-        />
-
         <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
           <div class="stats-hero__layout">
             <div class="stats-hero__copy">
@@ -59,45 +54,31 @@ const retryActions = computed(() => [{
               <p class="mt-2 max-w-xl text-sm leading-relaxed text-muted sm:text-[15px]">
                 {{ $t('public.stats.heroDescription') }}
               </p>
-              <div
-                v-if="generatedAtLabel"
-                class="stats-hero__meta"
-              >
-                <span class="inline-flex items-center gap-1.5">
+              <div class="stats-hero__meta">
+                <span
+                  v-if="generatedAtLabel"
+                  class="inline-flex items-center gap-1.5"
+                >
                   <UIcon
                     name="i-mdi-clock-outline"
                     class="size-3.5"
                   />
                   <span class="font-mono text-default/85">{{ generatedAtLabel }}</span>
                 </span>
-              </div>
-            </div>
-
-            <div class="stats-hero__aside">
-              <div class="stats-hero__actions">
                 <UButton
                   icon="i-mdi-refresh"
-                  variant="ghost"
+                  variant="subtle"
                   color="neutral"
                   size="sm"
-                  class="stats-hero__nav-item"
                   :loading="isPending"
                   @click="reloadStats"
                 >
                   {{ $t('public.stats.refresh') }}
                 </UButton>
-                <UButton
-                  icon="i-mdi-home-outline"
-                  variant="ghost"
-                  color="neutral"
-                  size="sm"
-                  to="/"
-                  class="stats-hero__nav-item"
-                >
-                  {{ $t('common.actions.backHome') }}
-                </UButton>
               </div>
+            </div>
 
+            <div class="stats-hero__aside">
               <div class="stats-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
                 <template v-if="isInitialLoading">
                   <CommonHeroStatCard
@@ -110,7 +91,7 @@ const retryActions = computed(() => [{
                 <template v-else>
                   <CommonHeroStatCard
                     icon="i-mdi-counter"
-                    icon-tone="primary"
+                    icon-tone="ink"
                     :value-title="overview ? formatCount(overview.totalCalls) : undefined"
                   >
                     <template #value>
@@ -121,7 +102,7 @@ const retryActions = computed(() => [{
 
                   <CommonHeroStatCard
                     icon="i-mdi-check-decagram-outline"
-                    icon-tone="success"
+                    icon-tone="blue"
                   >
                     <template #value>
                       {{ overview ? formatRate(overview.successRate) : '--' }}
@@ -131,7 +112,7 @@ const retryActions = computed(() => [{
 
                   <CommonHeroStatCard
                     icon="i-mdi-trophy-outline"
-                    icon-tone="info"
+                    icon-tone="violet"
                     :value-title="topApi?.name"
                     :label-title="topApi?.name"
                   >
@@ -179,7 +160,8 @@ const retryActions = computed(() => [{
               :value="item.value"
               :icon="item.icon"
               :tone="item.tone"
-              :style="{ '--dashboard-metric-accent': item.accent }"
+              :meta="item.helper"
+              compact
             />
           </div>
 
@@ -190,50 +172,30 @@ const retryActions = computed(() => [{
               :ui="{ body: 'p-4 sm:p-5' }"
             >
               <template #header>
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h2 class="text-base font-semibold text-highlighted">
-                      {{ $t('public.stats.trendTitle') }}
-                    </h2>
-                    <p class="mt-0.5 text-sm text-muted">
-                      {{ $t('public.stats.trendDescription') }}
-                    </p>
-                  </div>
-                  <div class="flex flex-wrap gap-2">
-                    <UBadge
-                      variant="soft"
-                      color="success"
-                      icon="i-mdi-check-circle-outline"
-                      class="rounded-md"
-                    >
-                      {{ formatCompact(trendSuccessCalls) }}
-                    </UBadge>
-                    <UBadge
-                      variant="soft"
-                      color="error"
-                      icon="i-mdi-close-circle-outline"
-                      class="rounded-md"
-                    >
-                      {{ formatCompact(trendFailureCalls) }}
-                    </UBadge>
-                  </div>
+                <div>
+                  <h2 class="text-base font-semibold text-highlighted">
+                    {{ $t('public.stats.trendTitle') }}
+                  </h2>
+                  <p class="mt-0.5 text-sm text-muted">
+                    {{ $t('public.stats.trendDescription') }}
+                  </p>
                 </div>
               </template>
 
-              <div class="mb-4 grid gap-3 sm:grid-cols-3">
-                <div class="stats-mini-metric">
-                  <span>{{ $t('public.stats.trendTotal') }}</span>
-                  <strong>{{ formatCount(trendTotalCalls) }}</strong>
+              <dl class="stats-summary-strip mb-4">
+                <div>
+                  <dt>{{ $t('public.stats.trendTotal') }}</dt>
+                  <dd>{{ formatCount(trendTotalCalls) }}</dd>
                 </div>
-                <div class="stats-mini-metric">
-                  <span>{{ $t('public.stats.successCalls') }}</span>
-                  <strong>{{ formatCount(trendSuccessCalls) }}</strong>
+                <div>
+                  <dt>{{ $t('public.stats.successCalls') }}</dt>
+                  <dd>{{ formatCount(trendSuccessCalls) }}</dd>
                 </div>
-                <div class="stats-mini-metric">
-                  <span>{{ $t('public.stats.failureCalls') }}</span>
-                  <strong>{{ formatCount(trendFailureCalls) }}</strong>
+                <div>
+                  <dt>{{ $t('public.stats.failureCalls') }}</dt>
+                  <dd>{{ formatCount(trendFailureCalls) }}</dd>
                 </div>
-              </div>
+              </dl>
 
               <ClientOnly>
                 <Suspense>
@@ -279,23 +241,7 @@ const retryActions = computed(() => [{
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--ui-border);
-  margin-bottom: 20px;
   isolation: isolate;
-}
-
-.dark .stats-hero {
-  background: transparent;
-}
-
-.stats-hero__pattern {
-  position: absolute;
-  top: 1.5rem;
-  bottom: 1.5rem;
-  left: 0;
-  width: 3px;
-  background: var(--ui-primary);
-  opacity: 1;
-  pointer-events: none;
 }
 
 .stats-hero__layout {
@@ -318,7 +264,7 @@ const retryActions = computed(() => [{
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-size: 12px;
   color: var(--ui-text-muted);
 }
@@ -328,15 +274,7 @@ const retryActions = computed(() => [{
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-}
-
-.stats-hero__actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
+  justify-content: center;
 }
 
 .stats-hero__stats {
@@ -357,28 +295,31 @@ const retryActions = computed(() => [{
   font-size: 20px;
 }
 
-.stats-hero__nav-item {
-  color: var(--ui-text-muted);
-}
-
 .stats-panel {
   overflow: hidden;
 }
 
-.stats-mini-metric {
-  border: 1px solid color-mix(in srgb, var(--ui-border) 78%, transparent);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-bg) 56%, transparent);
-  padding: 10px 12px;
+.stats-summary-strip {
+  display: grid;
+  border-block: 1px solid var(--ui-border-muted);
 }
 
-.stats-mini-metric span {
+.stats-summary-strip > div {
+  min-width: 0;
+  padding-block: 12px;
+}
+
+.stats-summary-strip > div + div {
+  border-top: 1px solid var(--ui-border-muted);
+}
+
+.stats-summary-strip dt {
   display: block;
   font-size: 12px;
   color: var(--ui-text-muted);
 }
 
-.stats-mini-metric strong {
+.stats-summary-strip dd {
   display: block;
   margin-top: 4px;
   overflow: hidden;
@@ -391,6 +332,29 @@ const retryActions = computed(() => [{
   font-variant-numeric: tabular-nums;
 }
 
+@media (min-width: 640px) {
+  .stats-summary-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .stats-summary-strip > div {
+    padding-inline: 16px;
+  }
+
+  .stats-summary-strip > div:first-child {
+    padding-left: 0;
+  }
+
+  .stats-summary-strip > div:last-child {
+    padding-right: 0;
+  }
+
+  .stats-summary-strip > div + div {
+    border-top: 0;
+    border-left: 1px solid var(--ui-border-muted);
+  }
+}
+
 @media (min-width: 1024px) {
   .stats-hero__layout {
     grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
@@ -399,21 +363,9 @@ const retryActions = computed(() => [{
     align-items: stretch;
   }
 
-  .stats-hero__actions {
-    justify-content: flex-end;
-    align-self: flex-end;
-  }
-
   .stats-hero__meta {
     margin-top: auto;
     padding-top: 24px;
-  }
-}
-
-@media (max-width: 640px) {
-  .stats-hero__actions {
-    justify-content: flex-start;
-    width: 100%;
   }
 }
 </style>
