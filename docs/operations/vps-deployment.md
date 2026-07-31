@@ -141,7 +141,7 @@ pm2 restart openapi --update-env
 ```bash
 curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:3000/api/ready
-curl -fsS http://127.0.0.1:3000/api/list
+curl -fsS http://127.0.0.1:3000/api/catalog
 pm2 logs openapi --lines 80
 ```
 

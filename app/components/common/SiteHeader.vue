@@ -11,7 +11,7 @@ const toast = useToast()
 const isChangingLocale = ref(false)
 
 const navigation = computed(() => [
-  { label: t('public.navigation.catalog'), to: '/', icon: 'i-lucide-blocks' },
+  { label: t('public.navigation.catalog'), to: '/docs', icon: 'i-lucide-blocks' },
   { label: t('public.home.stats'), to: '/stats', icon: 'i-lucide-chart-no-axes-combined' },
   { label: t('public.home.friendLinks'), to: '/friend-links', icon: 'i-lucide-link' }
 ])

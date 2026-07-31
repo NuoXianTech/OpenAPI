@@ -16,7 +16,7 @@ export function useFriendLinkList() {
   })
   const isEmpty = computed(() => !pending.value && !error.value && items.value.length === 0)
 
-  // 包装为无参函数：吃掉 onClick 透传的事件对象，对齐 useApiList().fetchList 的调用契约
+  // 包装为无参函数，避免操作按钮透传的点击事件被误当成 refresh 参数。
   const fetchFriendLinks = async () => {
     await refresh()
   }

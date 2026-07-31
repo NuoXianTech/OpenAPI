@@ -45,7 +45,7 @@ pnpm build
 ```bash
 curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:3000/api/ready
-curl -fsS http://127.0.0.1:3000/api/list
+curl -fsS http://127.0.0.1:3000/api/catalog
 ```
 
 随后人工验证：

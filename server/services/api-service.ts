@@ -23,9 +23,9 @@ function escapeLikePattern(value: string) {
   return value.replace(/[\\%_]/g, '\\$&')
 }
 
-const PUBLIC_API_LIST_TTL_SECONDS = 15
+const PUBLIC_API_CATALOG_TTL_SECONDS = 15
 const API_GUARD_TTL_SECONDS = 15
-const PUBLIC_API_LIST_VERSION = 'public-apis'
+const PUBLIC_API_CATALOG_VERSION = 'public-apis'
 const PUBLIC_STATS_VERSION = 'public-stats'
 
 function toContainsPattern(value: string) {
@@ -54,7 +54,7 @@ async function loadApiStats() {
   }, {})
 }
 
-interface ApiListFilters {
+interface PublicApiCatalogFilters {
   keyword?: string
   status?: number
   categoryId?: number
@@ -63,7 +63,7 @@ interface ApiListFilters {
   isOrphaned?: boolean
 }
 
-function buildApiFilters(filters: ApiListFilters) {
+function buildPublicApiCatalogFilters(filters: PublicApiCatalogFilters) {
   const conditions: SQL[] = []
 
   if (filters.keyword) {
@@ -133,7 +133,7 @@ interface ApiManifestRegistration {
   }
 }
 
-function createPublicApiListCacheKey(filters: ApiListFilters, version: number): string {
+function createPublicApiCatalogCacheKey(filters: PublicApiCatalogFilters, version: number): string {
   const digest = createHash('sha256').update(JSON.stringify(filters)).digest('hex')
   return `cache:public:apis:v${version}:${digest}`
 }
@@ -141,7 +141,7 @@ function createPublicApiListCacheKey(filters: ApiListFilters, version: number): 
 async function invalidateApiCaches(api: Pick<ApiGuardConfig, 'pathVersion' | 'code'>): Promise<void> {
   await Promise.all([
     deleteSharedCache([createGuardCacheKey(api.pathVersion, api.code)]),
-    incrementSharedCacheVersion(PUBLIC_API_LIST_VERSION),
+    incrementSharedCacheVersion(PUBLIC_API_CATALOG_VERSION),
     incrementSharedCacheVersion(PUBLIC_STATS_VERSION)
   ])
 }
@@ -209,8 +209,8 @@ async function updateManifestProjection(
 }
 
 export const apiService = {
-  async listPublicApis(filters: ApiListFilters = {}) {
-    const normalizedFilters: ApiListFilters = {
+  async listPublicApis(filters: PublicApiCatalogFilters = {}) {
+    const normalizedFilters: PublicApiCatalogFilters = {
       keyword: filters.keyword?.trim() || undefined,
       status: filters.status,
       categoryId: filters.categoryId,
@@ -218,14 +218,14 @@ export const apiService = {
       isStatistics: filters.isStatistics,
       isOrphaned: filters.isOrphaned
     }
-    const version = await getSharedCacheVersion(PUBLIC_API_LIST_VERSION)
+    const version = await getSharedCacheVersion(PUBLIC_API_CATALOG_VERSION)
 
     return getSharedCache<ApiCatalogItem[]>({
-      key: createPublicApiListCacheKey(normalizedFilters, version),
-      ttlSeconds: PUBLIC_API_LIST_TTL_SECONDS,
+      key: createPublicApiCatalogCacheKey(normalizedFilters, version),
+      ttlSeconds: PUBLIC_API_CATALOG_TTL_SECONDS,
       async loader() {
         const requestedStatus = normalizedFilters.status
-        const conditions = buildApiFilters({ ...normalizedFilters, status: undefined })
+        const conditions = buildPublicApiCatalogFilters({ ...normalizedFilters, status: undefined })
         const where = conditions.length ? and(...conditions) : undefined
         const [rows, statsMap] = await Promise.all([
           (where

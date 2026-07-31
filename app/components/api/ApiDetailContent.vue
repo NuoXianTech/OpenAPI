@@ -1,17 +1,11 @@
 <script setup lang="ts">
-import { formatCompactCount } from '~/utils/number-format'
 import { httpMethodColor } from '~/utils/http-method'
+import { formatCompactCount } from '~/utils/number-format'
+import { getApiMethodCost, type ApiStatusMeta } from '~/utils/api-presentation'
 
-type ApiCardDetailBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
-type ApiCardDetailVariant = 'popover' | 'modal'
+type ApiDetailVariant = 'popover' | 'modal'
 
-interface ApiCardDetailStatusMeta {
-  label: string
-  color: ApiCardDetailBadgeColor
-  icon: string
-}
-
-interface ApiCardDetailContentProps {
+interface ApiDetailContentProps {
   name: string
   shortDesc?: string
   description?: string
@@ -21,11 +15,11 @@ interface ApiCardDetailContentProps {
   methods: string[]
   methodCosts: Record<string, number>
   totalCalls: number
-  statusMeta: ApiCardDetailStatusMeta
-  variant?: ApiCardDetailVariant
+  statusMeta: ApiStatusMeta
+  variant?: ApiDetailVariant
 }
 
-const props = withDefaults(defineProps<ApiCardDetailContentProps>(), {
+const props = withDefaults(defineProps<ApiDetailContentProps>(), {
   shortDesc: '',
   description: '',
   docUrl: '',
@@ -49,21 +43,20 @@ const { t, locale } = useI18n()
 const summary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
 
 function costFor(method: string): number {
-  const value = methodCosts.value[method.toUpperCase()]
-  return typeof value === 'number' && value > 0 ? value : 0
+  return getApiMethodCost(method, methodCosts.value)
 }
 </script>
 
 <template>
   <div
-    class="api-card-detail"
-    :class="`api-card-detail--${variant}`"
+    class="api-detail"
+    :class="`api-detail--${variant}`"
   >
     <div
       v-if="variant === 'popover'"
-      class="api-card-detail__head"
+      class="api-detail__head"
     >
-      <div class="api-card-detail__badges">
+      <div class="api-detail__badges">
         <UBadge
           :color="statusMeta.color"
           variant="soft"
@@ -75,17 +68,17 @@ function costFor(method: string): number {
         </UBadge>
       </div>
 
-      <h4 class="api-card-detail__title">
+      <h4 class="api-detail__title">
         {{ name }}
       </h4>
-      <p class="api-card-detail__summary">
+      <p class="api-detail__summary">
         {{ summary }}
       </p>
     </div>
 
-    <div class="api-card-detail__body">
-      <div class="api-card-detail__endpoint">
-        <span class="api-card-detail__endpoint-label">
+    <div class="api-detail__body">
+      <div class="api-detail__endpoint">
+        <span class="api-detail__endpoint-label">
           <UIcon name="i-mdi-routes" class="size-3.5" />
           {{ $t('public.api.endpoint') }}
         </span>
@@ -99,13 +92,13 @@ function costFor(method: string): number {
         </a>
       </div>
 
-      <div class="api-card-detail__grid">
+      <div class="api-detail__grid">
         <div
-          class="api-card-detail__cell api-card-detail__cell--calls"
+          class="api-detail__cell api-detail__cell--calls"
           :title="$t('public.api.callCountDescription', { count: totalCalls.toLocaleString(locale) })"
         >
           <span
-            class="api-card-detail__icon"
+            class="api-detail__icon"
             aria-hidden="true"
           >
             <UIcon
@@ -113,18 +106,18 @@ function costFor(method: string): number {
               class="size-3.5"
             />
           </span>
-          <div class="api-card-detail__cell-content">
+          <div class="api-detail__cell-content">
             <span>{{ $t('public.api.callCount') }}</span>
             <strong>{{ formatCompactCount(totalCalls, locale) }}</strong>
           </div>
         </div>
 
         <div
-          class="api-card-detail__cell"
-          :class="isApiKey ? 'api-card-detail__cell--key' : 'api-card-detail__cell--free'"
+          class="api-detail__cell"
+          :class="isApiKey ? 'api-detail__cell--key' : 'api-detail__cell--free'"
         >
           <span
-            class="api-card-detail__icon"
+            class="api-detail__icon"
             aria-hidden="true"
           >
             <UIcon
@@ -132,19 +125,19 @@ function costFor(method: string): number {
               class="size-3.5"
             />
           </span>
-          <div class="api-card-detail__cell-content">
+          <div class="api-detail__cell-content">
             <span>{{ $t('public.api.authentication') }}</span>
             <strong>{{ isApiKey ? $t('public.api.apiKey') : $t('public.api.noApiKey') }}</strong>
           </div>
         </div>
       </div>
 
-      <div class="api-card-detail__section">
-        <span class="api-card-detail__label api-card-detail__section-label">
+      <div class="api-detail__section">
+        <span class="api-detail__label api-detail__section-label">
           <UIcon name="i-mdi-code-braces" class="size-3.5" />
           {{ $t('public.api.requestMethod') }}
         </span>
-        <div class="api-card-detail__badges">
+        <div class="api-detail__badges">
           <UBadge
             v-for="method in methods"
             :key="method"
@@ -158,12 +151,12 @@ function costFor(method: string): number {
         </div>
       </div>
 
-      <div class="api-card-detail__section">
-        <span class="api-card-detail__label api-card-detail__section-label">
+      <div class="api-detail__section">
+        <span class="api-detail__label api-detail__section-label">
           <UIcon name="i-mdi-wallet-outline" class="size-3.5" />
           {{ $t('public.api.pricing.label') }}
         </span>
-        <div class="api-card-detail__badges">
+        <div class="api-detail__badges">
           <UBadge
             v-for="method in methods"
             :key="`cost-${method}`"
@@ -180,7 +173,7 @@ function costFor(method: string): number {
 
       <p
         v-if="description"
-        class="api-card-detail__description"
+        class="api-detail__description"
       >
         {{ description }}
       </p>
@@ -203,27 +196,27 @@ function costFor(method: string): number {
 </template>
 
 <style scoped>
-.api-card-detail {
+.api-detail {
   background: var(--ui-bg-elevated);
 }
 
-.api-card-detail--popover {
+.api-detail--popover {
   width: min(360px, calc(100vw - 28px));
 }
 
-.api-card-detail--modal {
+.api-detail--modal {
   width: 100%;
   background: var(--ui-bg-elevated);
 }
 
-.api-card-detail__head {
+.api-detail__head {
   display: grid;
   gap: 8px;
   padding: 16px 16px 14px;
   border-bottom: 1px solid var(--ui-border);
 }
 
-.api-card-detail__badges {
+.api-detail__badges {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -231,7 +224,7 @@ function costFor(method: string): number {
   min-width: 0;
 }
 
-.api-card-detail__title {
+.api-detail__title {
   margin: 0;
   color: var(--ui-text);
   font-size: 14px;
@@ -239,7 +232,7 @@ function costFor(method: string): number {
   line-height: 1.35;
 }
 
-.api-card-detail__summary {
+.api-detail__summary {
   margin: 0;
   color: var(--ui-text-muted);
   font-size: 12.5px;
@@ -250,20 +243,20 @@ function costFor(method: string): number {
   overflow: hidden;
 }
 
-.api-card-detail__body {
+.api-detail__body {
   display: grid;
   gap: 14px;
   padding: 14px 16px 16px;
 }
 
-.api-card-detail--modal .api-card-detail__body {
+.api-detail--modal .api-detail__body {
   max-height: calc(86dvh - 86px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
 }
 
-.api-card-detail__endpoint {
+.api-detail__endpoint {
   display: grid;
   gap: 5px;
   min-width: 0;
@@ -273,22 +266,22 @@ function costFor(method: string): number {
   background: color-mix(in srgb, var(--ui-primary) 4%, var(--ui-bg-muted));
 }
 
-.api-card-detail__endpoint span,
-.api-card-detail__label,
-.api-card-detail__cell span {
+.api-detail__endpoint span,
+.api-detail__label,
+.api-detail__cell span {
   color: var(--ui-text-muted);
   font-size: 11px;
   line-height: 1;
 }
 
-.api-card-detail__endpoint-label,
-.api-card-detail__section-label {
+.api-detail__endpoint-label,
+.api-detail__section-label {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
 
-.api-card-detail__endpoint a {
+.api-detail__endpoint a {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -299,14 +292,14 @@ function costFor(method: string): number {
   text-decoration: none;
 }
 
-.api-card-detail--modal .api-card-detail__endpoint a {
+.api-detail--modal .api-detail__endpoint a {
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
   overflow-wrap: anywhere;
 }
 
-.api-card-detail__grid {
+.api-detail__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
@@ -315,7 +308,7 @@ function costFor(method: string): number {
   border-radius: 10px;
 }
 
-.api-card-detail__cell {
+.api-detail__cell {
   min-width: 0;
   display: flex;
   align-items: center;
@@ -326,19 +319,11 @@ function costFor(method: string): number {
   background: color-mix(in srgb, var(--ui-bg-muted) 30%, transparent);
 }
 
-.api-card-detail__cell--calls {
+.api-detail__cell--calls {
   border-right: 1px solid var(--ui-border);
 }
 
-.api-card-detail__cell--free {
-
-}
-
-.api-card-detail__cell--key {
-
-}
-
-.api-card-detail__icon {
+.api-detail__icon {
   width: 28px;
   height: 28px;
   border-radius: 8px;
@@ -351,46 +336,46 @@ function costFor(method: string): number {
   border: 1px solid color-mix(in srgb, var(--ui-border) 74%, transparent);
 }
 
-.api-card-detail__cell--calls .api-card-detail__icon {
+.api-detail__cell--calls .api-detail__icon {
   color: var(--ui-info);
   background: color-mix(in srgb, var(--ui-info) 10%, var(--ui-bg-elevated));
 }
 
-.api-card-detail__cell--free .api-card-detail__icon {
+.api-detail__cell--free .api-detail__icon {
   color: var(--ui-success);
   background: color-mix(in srgb, var(--ui-success) 10%, var(--ui-bg-elevated));
 }
 
-.api-card-detail__cell--key .api-card-detail__icon {
+.api-detail__cell--key .api-detail__icon {
   color: var(--ui-primary);
   background: color-mix(in srgb, var(--ui-primary) 8%, var(--ui-bg-elevated));
 }
 
-.api-card-detail__cell-content {
+.api-detail__cell-content {
   display: grid;
   gap: 4px;
   min-width: 0;
 }
 
-.api-card-detail__cell-content strong {
+.api-detail__cell-content strong {
   color: var(--ui-text);
   font-size: 14px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 
-.api-card-detail__section {
+.api-detail__section {
   display: grid;
   gap: 8px;
   padding-top: 2px;
 }
 
-.api-card-detail__section + .api-card-detail__section {
+.api-detail__section + .api-detail__section {
   padding-top: 10px;
   border-top: 1px solid color-mix(in srgb, var(--ui-border) 72%, transparent);
 }
 
-.api-card-detail__description {
+.api-detail__description {
   max-height: 7.2em;
   overflow: auto;
   margin: 0;
@@ -400,7 +385,7 @@ function costFor(method: string): number {
   white-space: pre-wrap;
 }
 
-.api-card-detail--modal .api-card-detail__description {
+.api-detail--modal .api-detail__description {
   max-height: none;
 }
 </style>

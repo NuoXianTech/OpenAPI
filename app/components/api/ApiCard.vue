@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { API_STATUS } from '#shared/config/api-status'
+import {
+  areAllApiMethodsPaid,
+  getAggregateApiMethodCost,
+  parseApiMethods,
+  resolveApiStatusMeta
+} from '~/utils/api-presentation'
 import { formatCompactCount } from '~/utils/number-format'
-
-type ApiCardBadgeColor = 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 interface ApiCardProps {
   name?: string
@@ -16,12 +20,6 @@ interface ApiCardProps {
   isApiKey?: boolean
   methodCosts?: Record<string, number>
   totalCalls?: number
-}
-
-interface ApiCardStatusMeta {
-  label: string
-  color: ApiCardBadgeColor
-  icon: string
 }
 
 const props = withDefaults(defineProps<ApiCardProps>(), {
@@ -52,14 +50,9 @@ const resolvedName = computed(() => name.value || t('public.api.defaultTitle'))
 const resolvedCategoryName = computed(() => categoryName.value || t('public.api.publicCategory'))
 const popoverDetailsOpen = ref(false)
 const modalDetailsOpen = ref(false)
-const methods = computed(() => parseMethods(props.httpMethod))
-const isAllPaid = computed(() => methods.value.length > 0 && methods.value.every(method => costFor(method) > 0))
-const aggregateCost = computed(() => {
-  if (methods.value.length === 0) return 0
-  const prices = methods.value.map(costFor)
-  const first = prices[0]!
-  return prices.every(price => price === first) ? first : -1
-})
+const methods = computed(() => parseApiMethods(props.httpMethod))
+const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, props.methodCosts))
+const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, props.methodCosts))
 const pricingTooltip = computed(() => {
   if (aggregateCost.value > 0) return t('public.api.pricing.perCall', { count: aggregateCost.value })
   if (aggregateCost.value === -1) {
@@ -68,7 +61,7 @@ const pricingTooltip = computed(() => {
   return t('public.api.pricing.freeDescription')
 })
 const detailSummary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
-const statusMeta = computed(() => getStatusMeta(props.status))
+const statusMeta = computed(() => resolveApiStatusMeta(props.status, key => t(key)))
 const statusClass = computed(() => `api-card__status--${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
   name: resolvedName.value,
@@ -82,35 +75,6 @@ const detailContentProps = computed(() => ({
   totalCalls: totalCalls.value,
   statusMeta: statusMeta.value
 }))
-
-function parseMethods(value = 'GET'): string[] {
-  return value
-    .split(',')
-    .map(method => method.trim())
-    .filter(Boolean)
-}
-
-function costFor(method: string): number {
-  const value = props.methodCosts?.[method.toUpperCase()]
-  return typeof value === 'number' && value > 0 ? value : 0
-}
-
-function getStatusMeta(status = -1): ApiCardStatusMeta {
-  switch (status) {
-    case API_STATUS.normal:
-      return { label: t('common.states.active'), color: 'success', icon: 'i-lucide-circle-check' }
-    case API_STATUS.abnormal:
-      return { label: t('common.states.inactive'), color: 'error', icon: 'i-lucide-circle-alert' }
-    case API_STATUS.maintenance:
-      return { label: t('common.states.maintenance'), color: 'warning', icon: 'i-lucide-wrench' }
-    case API_STATUS.deprecated:
-      return { label: t('common.states.deprecated'), color: 'neutral', icon: 'i-lucide-archive' }
-    case API_STATUS.automatic:
-      return { label: t('common.states.automatic'), color: 'info', icon: 'i-lucide-refresh-cw' }
-    default:
-      return { label: t('common.states.unknown'), color: 'neutral', icon: 'i-lucide-circle-help' }
-  }
-}
 </script>
 
 <template>
@@ -218,7 +182,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             </UTooltip>
 
             <template #content>
-              <ApiCardDetailContent
+              <ApiDetailContent
                 v-bind="detailContentProps"
                 variant="popover"
               />
@@ -278,7 +242,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             </template>
 
             <template #body>
-              <ApiCardDetailContent
+              <ApiDetailContent
                 v-bind="detailContentProps"
                 variant="modal"
               />

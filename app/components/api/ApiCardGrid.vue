@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
 
-interface ApiListProps {
-  items?: ApiCatalogItem[]
+interface ApiCardGridProps {
+  apis?: ApiCatalogItem[]
   categoryMap?: Record<number, ApiCategoryItem>
 }
 
-const { items = [], categoryMap = {} } = defineProps<ApiListProps>()
+const { apis = [], categoryMap = {} } = defineProps<ApiCardGridProps>()
 </script>
 
 <template>
@@ -18,20 +18,19 @@ const { items = [], categoryMap = {} } = defineProps<ApiListProps>()
       appear
     >
       <ApiCard
-        v-for="(item, index) in items"
-        :key="item.id ?? index"
-        :name="item.name"
-        :status="item.status"
-        :category-name="item.categoryId == null ? '' : categoryMap[item.categoryId]?.name"
-        :short-desc="item.shortDesc"
-        :description="item.description"
-        :http-method="item.httpMethod"
-        :api-path="item.apiPath"
-        :doc-url="item.docUrl"
-        :is-api-key="item.isApiKey"
-        :method-costs="item.methodCosts"
-        :total-calls="item.totalCalls"
-        class="api-card-item"
+        v-for="api in apis"
+        :key="api.id"
+        :name="api.name"
+        :status="api.status"
+        :category-name="api.categoryId == null ? '' : categoryMap[api.categoryId]?.name"
+        :short-desc="api.shortDesc"
+        :description="api.description"
+        :http-method="api.httpMethod"
+        :api-path="api.apiPath"
+        :doc-url="api.docUrl"
+        :is-api-key="api.isApiKey"
+        :method-costs="api.methodCosts"
+        :total-calls="api.totalCalls"
       />
     </TransitionGroup>
   </div>
@@ -58,10 +57,6 @@ const { items = [], categoryMap = {} } = defineProps<ApiListProps>()
   }
 }
 
-.api-card-item {
-  will-change: transform, opacity;
-}
-
 .api-card-enter-active,
 .api-card-leave-active {
   transition: opacity 180ms ease, transform 180ms ease;
@@ -75,5 +70,13 @@ const { items = [], categoryMap = {} } = defineProps<ApiListProps>()
 
 .api-card-move {
   transition: transform 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .api-card-enter-active,
+  .api-card-leave-active,
+  .api-card-move {
+    transition: none;
+  }
 }
 </style>

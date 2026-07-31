@@ -22,7 +22,7 @@ pm2 status openapi
 pm2 logs openapi --lines 120
 curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:3000/api/ready
-curl -fsS http://127.0.0.1:3000/api/list
+curl -fsS http://127.0.0.1:3000/api/catalog
 ```
 
 数据库侧重点：

@@ -110,7 +110,7 @@ async function copyRequest(): Promise<void> {
             {{ primaryAction.label }}
           </UButton>
           <UButton
-            to="#api-catalog"
+            to="/docs"
             size="lg"
             color="neutral"
             variant="outline"
