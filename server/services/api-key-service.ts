@@ -3,50 +3,44 @@ import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys } from '~~/server/db/schema'
 import { firstRow } from '~~/server/utils/row'
 import type { DatabaseTransaction } from '~~/server/db/client'
-import { createHmacSignature, decodeBase64Url } from '~~/server/utils/secure-token'
+import { createHmacSignature } from '~~/server/utils/secure-token'
+import {
+  createStoredSecretPreview,
+  decryptStoredSecret,
+  digestStoredSecret,
+  encryptStoredSecret,
+  getApiKeySecret
+} from '~~/server/utils/stored-secret'
 
-const SECRET_BYTES = 32
 const MAX_BATCH_COUNT = 5
-
-function parseSecret(raw: string): Buffer {
-  if (!raw) {
-    throw new Error('NUXT_AUTH_API_KEY_SECRET is required')
-  }
-  if (/^[0-9a-fA-F]+$/.test(raw) && raw.length === SECRET_BYTES * 2) {
-    return Buffer.from(raw, 'hex')
-  }
-  const decoded = decodeBase64Url(raw)
-  if (decoded.length === SECRET_BYTES) {
-    return decoded
-  }
-  const utf8 = Buffer.from(raw, 'utf8')
-  if (utf8.length === SECRET_BYTES) {
-    return utf8
-  }
-  throw new Error(`NUXT_AUTH_API_KEY_SECRET must be ${SECRET_BYTES} bytes (hex / base64url / utf-8)`)
-}
-
-let cachedSecret: Buffer | null = null
-
-function getSecret() {
-  if (cachedSecret) return cachedSecret
-  const raw = useRuntimeConfig().auth.apiKeySecret as string
-  cachedSecret = parseSecret(raw)
-  return cachedSecret
-}
-
-export function assertApiKeySecretConfigured(): void {
-  getSecret()
-}
 
 function generateApiKey() {
   const nonce = randomBytes(24)
-  return `op_${createHmacSignature(nonce, getSecret())}`
+  return `op_${createHmacSignature(nonce, getApiKeySecret())}`
 }
 
 /** 给批量创建的 key 名追加随机后缀，避免重名扎堆 */
 function randomNameSuffix() {
   return randomBytes(3).toString('hex')
+}
+
+type StoredApiKeyRecord = typeof apiKeys.$inferSelect
+type ApiKeyRecord = Omit<StoredApiKeyRecord, 'keyDigest' | 'keyCiphertext' | 'keyPreview'> & { apiKey: string }
+
+function encodeApiKey(apiKey: string) {
+  return {
+    keyDigest: digestStoredSecret(apiKey, 'api-key'),
+    keyCiphertext: encryptStoredSecret(apiKey, 'api-key'),
+    keyPreview: createStoredSecretPreview(apiKey)
+  }
+}
+
+function decodeApiKeyRecord(row: StoredApiKeyRecord): ApiKeyRecord {
+  const { keyDigest: _keyDigest, keyCiphertext, keyPreview: _keyPreview, ...record } = row
+  return {
+    ...record,
+    apiKey: decryptStoredSecret(keyCiphertext, 'api-key')
+  }
 }
 
 function keyWhere(id: number, userId?: number) {
@@ -78,19 +72,21 @@ async function deleteKey(tx: DatabaseTransaction, id: number, userId?: number) {
   const deleted = await tx.delete(apiKeys)
     .where(eq(apiKeys.id, key.id))
     .returning()
-  return firstRow(deleted)
+  const row = firstRow(deleted)
+  return row ? decodeApiKeyRecord(row) : null
 }
 
 async function resetKey(id: number, userId?: number) {
   const nextKey = generateApiKey()
   const res = await db.update(apiKeys)
     .set({
-      apiKey: nextKey,
+      ...encodeApiKey(nextKey),
       updatedAt: new Date()
     })
     .where(activeKeyWhere(id, userId))
     .returning()
-  return firstRow(res)
+  const row = firstRow(res)
+  return row ? decodeApiKeyRecord(row) : null
 }
 
 /** 用户创建 API Key 的入参 */
@@ -108,13 +104,12 @@ interface CreateApiKeyInput {
   count?: number
 }
 
-type ApiKeyRecord = typeof apiKeys.$inferSelect
-
 export const apiKeyService = {
   async listByUser(userId: number) {
-    return db.select().from(apiKeys)
+    const rows = await db.select().from(apiKeys)
       .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
       .orderBy(desc(apiKeys.createdAt))
+    return rows.map(decodeApiKeyRecord)
   },
 
   /**
@@ -133,17 +128,18 @@ export const apiKeyService = {
       const created: ApiKeyRecord[] = []
       for (let i = 0; i < count; i++) {
         const name = i === 0 ? baseName : `${baseName}-${randomNameSuffix()}`
+        const apiKey = generateApiKey()
         const row = await tx.insert(apiKeys).values({
           userId,
           name,
-          apiKey: generateApiKey(),
+          ...encodeApiKey(apiKey),
           isActive: true,
           expiresAt: input.expiresAt ?? null,
           totalQuota: input.totalQuota ?? null,
           scopes: input.scopes ?? null,
           ipWhitelist: input.ipWhitelist ?? null
         }).returning()
-        if (row[0]) created.push(row[0])
+        if (row[0]) created.push(decodeApiKeyRecord(row[0]))
       }
       return created
     })
@@ -184,11 +180,13 @@ export const apiKeyService = {
 
     if (Object.keys(set).length === 0) {
       const cur = await db.select().from(apiKeys).where(activeKeyWhere(id, opts.userId)).limit(1)
-      return firstRow(cur)
+      const row = firstRow(cur)
+      return row ? decodeApiKeyRecord(row) : null
     }
 
     const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(activeKeyWhere(id, opts.userId)).returning()
-    return firstRow(res)
+    const row = firstRow(res)
+    return row ? decodeApiKeyRecord(row) : null
   },
 
   async resetForUser(userId: number, id: number) {

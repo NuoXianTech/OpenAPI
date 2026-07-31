@@ -32,7 +32,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | `pending_charges` | 持续增长、出现大量 `dead_letter` |
 | `api_calls` | 失败率突然升高、某 API 调用量异常 |
 | `api_call_stats` | 日聚合缺失或延迟明显 |
-| `login_logs` | 管理员登录失败集中爆发 |
+| `operation_logs` 中的 `auth.login.*` 事件 | 管理员登录失败集中爆发 |
 | `operation_logs` | 敏感配置被频繁修改 |
 
 ## 日志定位
@@ -46,7 +46,7 @@ curl -fsS http://127.0.0.1:3000/api/list
 | 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[pending-charges]` 日志 |
 | 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
-| API Key 全部失效 | `api_keys.api_key` 记录是否存在、是否被禁用/吊销、网关是否连接了预期数据库；生成密钥的 secret 变化不会让已有 Key 失效 |
+| API Key 全部失效 | `NUXT_API_KEY_SECRET` 是否与加密时一致、`api_keys.key_digest` 是否存在、Key 是否被禁用/吊销、网关是否连接了预期数据库 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
 | 公开 API 429 增多 | API 配置、Redis/进程内限流窗口、调用方 IP 或 Key |
 | 数据库读取突增 | Redis 可用性、命令延迟、内存、淘汰数和公开缓存命中情况 |

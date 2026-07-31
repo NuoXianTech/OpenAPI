@@ -20,7 +20,7 @@ vi.mock('~~/server/db/client', () => ({
   }
 }))
 
-vi.mock('~~/server/services/api-key-service', () => ({
+vi.mock('~~/server/utils/stored-secret', () => ({
   assertApiKeySecretConfigured() {
     if (mocks.apiKeyError) throw mocks.apiKeyError
   }
@@ -65,7 +65,7 @@ describe('runtime environment validation', () => {
 
   it('collects all missing required values in one error', () => {
     mocks.authError = new Error('NUXT_AUTH_SECRET must contain at least 32 bytes')
-    mocks.apiKeyError = new Error('NUXT_AUTH_API_KEY_SECRET is required')
+    mocks.apiKeyError = new Error('NUXT_API_KEY_SECRET is required')
     mocks.databaseDriver = 'postgres'
     mocks.databaseError = new Error('DATABASE_URL is required')
     mocks.redisRequired = true
@@ -74,7 +74,7 @@ describe('runtime environment validation', () => {
       [
         'Invalid runtime environment:',
         '- NUXT_AUTH_SECRET must contain at least 32 bytes',
-        '- NUXT_AUTH_API_KEY_SECRET is required',
+        '- NUXT_API_KEY_SECRET is required',
         '- DATABASE_URL is required',
         '- NUXT_REDIS_URL is required when NUXT_REDIS_REQUIRED=true'
       ].join('\n')

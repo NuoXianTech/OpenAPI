@@ -17,7 +17,7 @@ import type { SupportedLocale } from '../../../shared/config/locale-defaults'
 // Users（用户主表 · 硬删除）
 //
 // 删除用户走真正的 DELETE：users 行物理消失，FK 级联自动清理
-// oauthAccounts / apiKeys / notificationDeliveries / loginLogs 等"账号级"附属表。
+// oauthAccounts / apiKeys / notificationDeliveries 等"账号级"附属表。
 //
 // 与之相对，"审计型"日志表（creditTransactions / apiCalls / operationLogs）
 // 通过解除外键约束，仅以 userId 整数快照保存历史归属，
@@ -111,6 +111,7 @@ export const creditTransactions = pgTable('credit_transactions', {
 // Redemption Codes（兑换码 · admin 生成）
 //
 // 单次性（maxUses=1）或多次性（maxUses>1，被多个用户共享）。
+// 明文不落库：codeDigest 用于精确兑换，codeCiphertext 用于授权后重复查看。
 // 同一用户对同一兑换码只能兑换一次，由 creditTransactions 上
 // (codeId, userId) where reason='redemption_code' 部分唯一索引保证。
 // 并发：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING
@@ -118,7 +119,9 @@ export const creditTransactions = pgTable('credit_transactions', {
 // ------------------------------------------------------------------
 export const redemptionCodes = pgTable('redemption_codes', {
   id: serial('id').primaryKey(),
-  code: varchar('code', { length: 64 }).notNull().unique(),
+  codeDigest: varchar('code_digest', { length: 64 }).notNull().unique(),
+  codeCiphertext: varchar('code_ciphertext', { length: 512 }).notNull(),
+  codePreview: varchar('code_preview', { length: 32 }).notNull(),
   amount: integer('amount').notNull(),
   batchId: varchar('batch_id', { length: 64 }),
   note: varchar('note', { length: 500 }),

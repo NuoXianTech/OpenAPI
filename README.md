@@ -76,7 +76,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Before starting, configure `NUXT_AUTH_SECRET`. `NUXT_AUTH_API_KEY_SECRET` is only key-generation material; API keys themselves are stored in the `api_key` column in full and remain available to their owner for copying. Generate independent values with:
+Before starting, configure `NUXT_AUTH_SECRET` and `NUXT_API_KEY_SECRET`. API keys and redemption codes are stored as HMAC lookup digests plus AES-256-GCM ciphertext, so authorized users can view them again without plaintext being stored in the database. Generate independent values with:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
@@ -89,7 +89,7 @@ The development server uses PGlite when no database mode is configured. On first
 | Variable | Requirement | Description |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
-| `NUXT_AUTH_API_KEY_SECRET` | Required | Generation material for new random API keys; it does not encrypt the stored `api_key` value. |
+| `NUXT_API_KEY_SECRET` | Required | Generates API keys and protects encrypted API keys and redemption codes stored in the database. |
 | `NUXT_PROXY_TRUSTED_CIDRS` | Behind a reverse proxy | Direct proxy CIDRs that are allowed to supply `X-Forwarded-For`. |
 | `NUXT_PROXY_FORWARDED_HOPS` | Behind a reverse proxy | Number of trusted forwarded hops, normally `1` for one nginx proxy. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |

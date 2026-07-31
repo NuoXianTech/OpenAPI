@@ -33,7 +33,7 @@ await setup({
     PGLITE_DATA_DIR: pgliteDataDir,
     DB_AUTO_MIGRATE: 'true',
     NUXT_AUTH_SECRET: 'integration-auth-secret-with-32-bytes',
-    NUXT_AUTH_API_KEY_SECRET: '0123456789abcdef0123456789abcdef'
+    NUXT_API_KEY_SECRET: '0123456789abcdef0123456789abcdef'
   }
 })
 

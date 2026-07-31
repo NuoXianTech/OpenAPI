@@ -22,8 +22,13 @@ interface NormalizedRedemptionGeneration {
   createdBy: number | null
 }
 
-interface RedemptionCodeRow {
-  code: string
+interface EncodedRedemptionCode {
+  codeDigest: string
+  codeCiphertext: string
+  codePreview: string
+}
+
+interface RedemptionCodeRow extends EncodedRedemptionCode {
   amount: number
   batchId: string
   note: string | null
@@ -35,7 +40,7 @@ interface RedemptionCodeRow {
 }
 
 interface BuildRedemptionCodeRowsInput {
-  codes: string[]
+  codes: EncodedRedemptionCode[]
   amount: number
   batchId: string
   note: string | null
@@ -95,7 +100,7 @@ export function normalizeRedemptionGeneration(
 
 export function buildRedemptionCodeRows(input: BuildRedemptionCodeRowsInput): RedemptionCodeRow[] {
   return input.codes.map(code => ({
-    code,
+    ...code,
     amount: input.amount,
     batchId: input.batchId,
     note: input.note,

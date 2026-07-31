@@ -105,12 +105,15 @@ export const apis = pgTable('apis', {
 // API Keys（用户 API 密钥）
 //
 // userId cascade：用户硬删时自动清除该用户所有密钥。
+// 明文不落库：keyDigest 用于鉴权查询，keyCiphertext 用于授权后重复查看。
 // ------------------------------------------------------------------
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 100 }).notNull(),
-  apiKey: varchar('api_key', { length: 120 }).notNull().unique(),
+  keyDigest: varchar('key_digest', { length: 64 }).notNull().unique(),
+  keyCiphertext: text('key_ciphertext').notNull(),
+  keyPreview: varchar('key_preview', { length: 32 }).notNull(),
   isActive: boolean('is_active').notNull().default(true),
 
   scopes: jsonb('scopes').$type<string[]>(),

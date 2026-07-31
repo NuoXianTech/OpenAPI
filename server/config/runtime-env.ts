@@ -1,7 +1,7 @@
 import { getDatabaseDriver, getDatabaseUrl } from '~~/server/db/client'
-import { assertApiKeySecretConfigured } from '~~/server/services/api-key-service'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { getRedisConfig } from '~~/server/utils/redis'
+import { assertApiKeySecretConfigured } from '~~/server/utils/stored-secret'
 
 function readErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)

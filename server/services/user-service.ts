@@ -1,5 +1,5 @@
-import { and, desc, eq, ilike, isNull, or, sql } from 'drizzle-orm'
-import { creditTransactions, users } from '~~/server/db/schema'
+import { and, desc, eq, ilike, isNull, like, or, sql } from 'drizzle-orm'
+import { creditTransactions, operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
@@ -45,9 +45,10 @@ async function countAvailableAdmins() {
 }
 
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
-//   - oauthAccounts / apiKeys / notificationDeliveries / loginLogs
+//   - oauthAccounts / apiKeys / notificationDeliveries
 //     全部 cascade 一并清除（账号级数据）
 //   - pendingCharges cascade 清除（待重试扣费在用户消失后无意义）
+// 登录事件已并入 operationLogs，删除用户时显式清理 auth.login.* 事件；
 // 日志类表（creditTransactions / apiCalls / operationLogs）
 // 已通过解除外键约束保留为整数快照，不会随用户消失。
 export const usersService = {
@@ -167,15 +168,21 @@ export const usersService = {
 
   /**
    * 硬删除：物理 DELETE，FK cascade 自动清理 apiKeys / oauthAccounts /
-   * notificationDeliveries / loginLogs / pendingCharges。
+   * notificationDeliveries / pendingCharges；auth.login.* 事件显式删除。
    * creditTransactions / apiCalls / operationLogs 已解除 FK，
    * 自动以 userId 整数快照保留历史。
    */
   async deleteUser(id: number) {
-    const res = await db.delete(users)
-      .where(eq(users.id, id))
-      .returning()
-    return firstRow(res)
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      await tx.delete(operationLogs).where(and(
+        eq(operationLogs.userId, id),
+        like(operationLogs.action, 'auth.login.%')
+      ))
+      const res = await tx.delete(users)
+        .where(eq(users.id, id))
+        .returning()
+      return firstRow(res)
+    })
   },
 
   async addUser(data: {

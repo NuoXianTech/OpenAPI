@@ -1,8 +1,8 @@
 /**
  * 登录日志共享契约。
  *
- * 数据源 `login_logs` 表（server/db/schema/system.ts），写入由
- * server/services/login-log-service.ts 完成。
+ * 数据源是 `operation_logs` 中的 `auth.login.*` 审计事件，写入由
+ * server/services/login-log-service.ts 提供专用适配。
  */
 export type LoginMethod = 'password' | 'oauth_github' | 'oauth_qq'
 

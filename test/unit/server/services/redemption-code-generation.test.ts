@@ -56,7 +56,10 @@ describe('insertRedemptionCodesUntilComplete', () => {
 describe('buildRedemptionCodeRows', () => {
   it('creates rows with one batch id and normalized metadata', () => {
     const rows = buildRedemptionCodeRows({
-      codes: ['A', 'B'],
+      codes: [
+        { codeDigest: 'digest-a', codeCiphertext: 'cipher-a', codePreview: 'A••••A' },
+        { codeDigest: 'digest-b', codeCiphertext: 'cipher-b', codePreview: 'B••••B' }
+      ],
       amount: 10,
       batchId: 'BATCH',
       note: 'note',
@@ -66,8 +69,8 @@ describe('buildRedemptionCodeRows', () => {
     })
 
     expect(rows).toEqual([
-      { code: 'A', amount: 10, batchId: 'BATCH', note: 'note', maxUses: 2, usedCount: 0, expiresAt: null, isEnabled: true, createdBy: 1 },
-      { code: 'B', amount: 10, batchId: 'BATCH', note: 'note', maxUses: 2, usedCount: 0, expiresAt: null, isEnabled: true, createdBy: 1 }
+      { codeDigest: 'digest-a', codeCiphertext: 'cipher-a', codePreview: 'A••••A', amount: 10, batchId: 'BATCH', note: 'note', maxUses: 2, usedCount: 0, expiresAt: null, isEnabled: true, createdBy: 1 },
+      { codeDigest: 'digest-b', codeCiphertext: 'cipher-b', codePreview: 'B••••B', amount: 10, batchId: 'BATCH', note: 'note', maxUses: 2, usedCount: 0, expiresAt: null, isEnabled: true, createdBy: 1 }
     ])
   })
 })

@@ -20,11 +20,11 @@ pnpm build
 | --- | --- |
 | 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：设置 `DATABASE_DRIVER=pglite` 并确认 `PGLITE_DATA_DIR` 是持久化目录 |
 | 数据库迁移 | 已基于当前 Drizzle schema 生成迁移；`.output/server/db/migrations/postgresql` 随构建产物发布，生产启动时自动应用到 PostgreSQL 或 PGlite |
-| 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_AUTH_API_KEY_SECRET` 已独立生成 |
+| 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_API_KEY_SECRET` 已独立生成并完成安全备份 |
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
 | 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的资料和密码初始化 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
-| API Key 数据 | 确认数据库与备份按敏感凭据保护；`api_keys.api_key` 保存完整可复制 Key，不允许出现在操作日志或普通应用日志中 |
+| API Key 数据 | 确认数据库仅保存摘要、密文与掩码预览；`NUXT_API_KEY_SECRET` 与数据库备份分开保存，明文不进入操作日志或普通应用日志 |
 | 部署产物 | 完整发布 `.output`；跨系统部署优先使用 Linux CI/Docker，不能遗漏 `node_modules/.nitro` |
 | 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `PGLITE_DATA_DIR` |

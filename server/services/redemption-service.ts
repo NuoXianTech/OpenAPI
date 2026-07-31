@@ -1,4 +1,5 @@
-import { and, count, desc, eq, gte, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
+import { randomInt } from 'node:crypto'
+import { and, count, desc, eq, gte, ilike, isNull, lt, or, sql, type SQL } from 'drizzle-orm'
 import { creditTransactions, redemptionCodes, users } from '~~/server/db/schema'
 import {
   buildRedemptionCodeRows,
@@ -10,6 +11,12 @@ import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 import type { DatabaseTransaction } from '~~/server/db/client'
+import {
+  createStoredSecretPreview,
+  decryptStoredSecret,
+  digestStoredSecret,
+  encryptStoredSecret
+} from '~~/server/utils/stored-secret'
 
 /**
  * 兑换码服务
@@ -39,7 +46,7 @@ interface GenerateInput {
 export interface ListFilters {
   batchId?: string
   status?: RedemptionStatus | 'all'
-  keyword?: string // 模糊匹配 code / note
+  keyword?: string // 精确匹配完整 code，或模糊匹配掩码预览 / note
   limit?: number
   offset?: number
 }
@@ -52,9 +59,8 @@ interface RedeemInput {
 
 function randomCode(length: number): string {
   let out = ''
-  // 用 Math.random 简单生成；批量生成时通过 DB unique 兜底冲突
   for (let i = 0; i < length; i++) {
-    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]
+    out += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]
   }
   return out
 }
@@ -82,6 +88,28 @@ function normalizeCode(raw: string): string {
   return (raw || '').trim().toUpperCase().replace(/\s+/g, '')
 }
 
+type StoredRedemptionCodeRecord = typeof redemptionCodes.$inferSelect
+type RedemptionCodeRecord = Omit<
+  StoredRedemptionCodeRecord,
+  'codeDigest' | 'codeCiphertext' | 'codePreview'
+> & { code: string }
+
+function encodeRedemptionCode(code: string) {
+  return {
+    codeDigest: digestStoredSecret(code, 'redemption-code'),
+    codeCiphertext: encryptStoredSecret(code, 'redemption-code'),
+    codePreview: createStoredSecretPreview(code)
+  }
+}
+
+function decodeRedemptionCodeRecord(row: StoredRedemptionCodeRecord): RedemptionCodeRecord {
+  const { codeDigest: _codeDigest, codeCiphertext, codePreview: _codePreview, ...record } = row
+  return {
+    ...record,
+    code: decryptStoredSecret(codeCiphertext, 'redemption-code')
+  }
+}
+
 export const redemptionService = {
   /**
    * 批量生成兑换码。返回所有生成的码（明文，仅生成时返回）。
@@ -97,7 +125,7 @@ export const redemptionService = {
     >({
       requestedCount: normalized.count,
       createRows: count => buildRedemptionCodeRows({
-        codes: createCodeStrings(count, normalized.length, normalized.prefix),
+        codes: createCodeStrings(count, normalized.length, normalized.prefix).map(encodeRedemptionCode),
         amount: normalized.amount,
         batchId,
         note: normalized.note,
@@ -112,7 +140,10 @@ export const redemptionService = {
       batchId,
       generated: inserted.length,
       requested: normalized.count,
-      codes: inserted.map((r: typeof redemptionCodes.$inferSelect) => ({ id: r.id, code: r.code, amount: r.amount })),
+      codes: inserted.map((row: StoredRedemptionCodeRecord) => {
+        const code = decryptStoredSecret(row.codeCiphertext, 'redemption-code')
+        return { id: row.id, code, amount: row.amount }
+      }),
       amount: normalized.amount,
       maxUses: normalized.maxUses,
       expiresAt: normalized.expiresAt,
@@ -143,11 +174,14 @@ export const redemptionService = {
       )!)
     }
 
-    if (filters.keyword) {
-      const kw = `%${filters.keyword.trim().toUpperCase()}%`
+    if (filters.keyword?.trim()) {
+      const keyword = filters.keyword.trim()
+      const normalizedCode = normalizeCode(keyword)
+      const kw = `%${keyword}%`
       conditions.push(or(
-        sql`upper(${redemptionCodes.code}) like ${kw}`,
-        sql`upper(coalesce(${redemptionCodes.note}, '')) like ${kw}`
+        normalizedCode ? eq(redemptionCodes.codeDigest, digestStoredSecret(normalizedCode, 'redemption-code')) : undefined,
+        ilike(redemptionCodes.codePreview, kw),
+        ilike(redemptionCodes.note, kw)
       )!)
     }
 
@@ -163,7 +197,7 @@ export const redemptionService = {
     ])
 
     return {
-      items,
+      items: items.map(decodeRedemptionCodeRecord),
       total: toNumber(totalRows[0]?.value)
     }
   },
@@ -211,7 +245,8 @@ export const redemptionService = {
       .set({ isEnabled: enabled, updatedAt: new Date() })
       .where(eq(redemptionCodes.id, id))
       .returning()
-    return firstRow(res)
+    const row = firstRow(res)
+    return row ? decodeRedemptionCodeRecord(row) : null
   },
 
   /** 批量启用/禁用整个批次 */
@@ -225,7 +260,8 @@ export const redemptionService = {
 
   async remove(id: number) {
     const res = await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id)).returning()
-    return firstRow(res)
+    const row = firstRow(res)
+    return row ? decodeRedemptionCodeRecord(row) : null
   },
 
   /** 删除整个批次（仅未被使用过的码会被删除，已被使用的保留以保证审计） */
@@ -252,7 +288,8 @@ export const redemptionService = {
     const code = normalizeCode(input.code)
     if (!code) throw createRedemptionError('INVALID_CODE', '兑换码不能为空')
 
-    const found = await db.select().from(redemptionCodes).where(eq(redemptionCodes.code, code)).limit(1)
+    const codeDigest = digestStoredSecret(code, 'redemption-code')
+    const found = await db.select().from(redemptionCodes).where(eq(redemptionCodes.codeDigest, codeDigest)).limit(1)
     const target = found[0]
     if (!target) throw createRedemptionError('NOT_FOUND', '兑换码不存在')
     if (!target.isEnabled) throw createRedemptionError('DISABLED', '兑换码已被禁用')
@@ -303,7 +340,7 @@ export const redemptionService = {
       const balanceAfter = toNumber(userUpdated[0].credits)
 
       // 写流水（兑换记录已并入 credit_transactions）：codeId 关联兑换码、ip 记录来源，
-      // meta 保留 code/batchId 快照以便删码后仍可显示。
+      // meta 保留加密 code/batchId 快照，删码后仍可授权解密显示。
       // (codeId, userId) 部分唯一索引兜底重复兑换 —— 冲突即事务回滚，usedCount 与积分一并撤销。
       try {
         await tx.insert(creditTransactions).values({
@@ -319,7 +356,8 @@ export const redemptionService = {
           ip: input.ip ?? null,
           remark: target.note || null,
           meta: {
-            code: target.code,
+            codeCiphertext: target.codeCiphertext,
+            codePreview: target.codePreview,
             batchId: target.batchId
           }
         })
@@ -331,7 +369,7 @@ export const redemptionService = {
         amount: grantAmount,
         balanceAfter,
         codeId: target.id,
-        code: target.code,
+        code,
         batchId: target.batchId
       }
     })
@@ -348,7 +386,7 @@ export const redemptionService = {
       db.select({
         id: creditTransactions.id,
         codeId: creditTransactions.codeId,
-        code: sql<string | null>`${creditTransactions.meta}->>'code'`, // meta 快照，删码后仍可显示
+        meta: creditTransactions.meta,
         amount: creditTransactions.amount,
         redeemedAt: creditTransactions.createdAt,
         note: creditTransactions.remark // redeem 时 remark = 兑换码 note 快照
@@ -360,7 +398,32 @@ export const redemptionService = {
         .offset(pagination.offset),
       db.select({ value: count() }).from(creditTransactions).where(where)
     ])
-    return { items, total: toNumber(totalRows[0]?.value) }
+    return {
+      items: items.map((item: {
+        id: number
+        codeId: number | null
+        meta: Record<string, unknown> | null
+        amount: number
+        redeemedAt: Date
+        note: string | null
+      }) => {
+        const ciphertext = typeof item.meta?.codeCiphertext === 'string'
+          ? item.meta.codeCiphertext
+          : null
+        const preview = typeof item.meta?.codePreview === 'string'
+          ? item.meta.codePreview
+          : null
+        return {
+          id: item.id,
+          codeId: item.codeId,
+          code: ciphertext ? decryptStoredSecret(ciphertext, 'redemption-code') : preview,
+          amount: item.amount,
+          redeemedAt: item.redeemedAt,
+          note: item.note
+        }
+      }),
+      total: toNumber(totalRows[0]?.value)
+    }
   }
 }
 

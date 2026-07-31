@@ -1,35 +1,25 @@
-import { and, count, desc, eq, gte, lte, type SQL } from 'drizzle-orm'
-import { loginLogs, users } from '~~/server/db/schema'
+import { and, count, desc, eq, gte, isNotNull, like, lte, sql, type SQL } from 'drizzle-orm'
+import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
 
-/**
- * 登录日志服务（对应需求 #7）
- *
- * 只记录"已识别用户"的登录尝试（success=true / false）：
- *   - 已识别 = 用户名 / 邮箱已命中 users 表中真实存在的行
- *   - 未识别（用户输入的账号不存在）→ 不写日志，仅依赖 rate limit / Turnstile 抗扫
- *
- * userId 与 users 表 FK cascade，用户硬删时该用户全部登录历史一并清除。
- *
- * LoginMethod / LoginFailureReason 的权威定义在 shared/types/login-log.ts。
- */
-/** login_logs 整行（list 返回的元素类型） */
-type LoginLogRecord = typeof loginLogs.$inferSelect
+const LOGIN_ACTION_PREFIX = 'auth.login.'
 
-/** listForAdmin 返回的元素：login_logs 行投影 + 用户名快照 */
-interface AdminLoginLogRecord {
+interface LoginLogRecord {
   id: number
   userId: number
   username: string
-  role: 'user' | 'admin'
   method: string
   success: boolean
   failureReason: string | null
   ip: string | null
   userAgent: string | null
   createdAt: Date
+}
+
+interface AdminLoginLogRecord extends LoginLogRecord {
+  role: 'user' | 'admin'
 }
 
 interface RecordLoginInput {
@@ -53,86 +43,93 @@ interface ListFilters {
 }
 
 function buildConditions(filters: ListFilters): SQL[] {
-  const conditions: SQL[] = []
-  if (typeof filters.userId === 'number') conditions.push(eq(loginLogs.userId, filters.userId))
-  if (filters.method) conditions.push(eq(loginLogs.method, filters.method))
-  if (typeof filters.success === 'boolean') conditions.push(eq(loginLogs.success, filters.success))
-  if (filters.startAt) conditions.push(gte(loginLogs.createdAt, filters.startAt))
-  if (filters.endAt) conditions.push(lte(loginLogs.createdAt, filters.endAt))
+  const conditions: SQL[] = [
+    like(operationLogs.action, `${LOGIN_ACTION_PREFIX}%`),
+    isNotNull(operationLogs.userId)
+  ]
+  if (typeof filters.userId === 'number') conditions.push(eq(operationLogs.userId, filters.userId))
+  if (filters.method) conditions.push(eq(operationLogs.action, `${LOGIN_ACTION_PREFIX}${filters.method}`))
+  if (typeof filters.success === 'boolean') {
+    conditions.push(eq(operationLogs.status, filters.success ? 'success' : 'failure'))
+  }
+  if (filters.startAt) conditions.push(gte(operationLogs.createdAt, filters.startAt))
+  if (filters.endAt) conditions.push(lte(operationLogs.createdAt, filters.endAt))
   return conditions
 }
 
+function loginLogSelection() {
+  return {
+    id: operationLogs.id,
+    userId: sql<number>`${operationLogs.userId}`,
+    username: sql<string>`coalesce(${operationLogs.actor}, '')`,
+    method: sql<string>`${operationLogs.detail}->>'method'`,
+    success: sql<boolean>`${operationLogs.status} = 'success'`,
+    failureReason: sql<string | null>`${operationLogs.detail}->>'failureReason'`,
+    ip: operationLogs.ip,
+    userAgent: operationLogs.userAgent,
+    createdAt: operationLogs.createdAt
+  }
+}
+
 export const loginLogService = {
-  /**
-   * 写入一条登录日志。失败不抛错，不阻塞登录流程。
-   */
+  /** 登录日志写入统一审计表；失败不阻塞登录流程。 */
   async record(input: RecordLoginInput) {
     try {
-      await db.insert(loginLogs).values({
+      await db.insert(operationLogs).values({
         userId: input.userId,
-        username: input.username,
-        method: input.method,
-        success: input.success,
-        failureReason: input.failureReason ?? null,
+        actor: input.username.slice(0, 140),
+        action: `${LOGIN_ACTION_PREFIX}${input.method}`,
+        resourceType: 'user',
+        resourceId: String(input.userId),
         ip: input.ip ?? null,
-        userAgent: input.userAgent?.slice(0, 500) ?? null
+        userAgent: input.userAgent?.slice(0, 500) ?? null,
+        detail: {
+          method: input.method,
+          failureReason: input.failureReason ?? null
+        },
+        status: input.success ? 'success' : 'failure'
       })
     } catch (err) {
       console.error('failed to write login log', { input, err })
     }
   },
 
-  /**
-   * 单表查询登录日志。user 端「最近登录活动」用：传 userId 只取本人记录。
-   */
   async list(filters: ListFilters = {}): Promise<{ items: LoginLogRecord[], total: number }> {
-    const conditions = buildConditions(filters)
+    const where = and(...buildConditions(filters))
     const { limit, offset } = normalizePagination(filters)
-    const where = conditions.length ? and(...conditions) : undefined
 
     const [items, totalRows] = await Promise.all([
-      where
-        ? db.select().from(loginLogs).where(where).orderBy(desc(loginLogs.createdAt)).limit(limit).offset(offset)
-        : db.select().from(loginLogs).orderBy(desc(loginLogs.createdAt)).limit(limit).offset(offset),
-      where
-        ? db.select({ value: count() }).from(loginLogs).where(where)
-        : db.select({ value: count() }).from(loginLogs)
+      db.select(loginLogSelection())
+        .from(operationLogs)
+        .where(where)
+        .orderBy(desc(operationLogs.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() }).from(operationLogs).where(where)
     ])
 
     return { items, total: toNumber(totalRows[0]?.value) }
   },
 
-  /**
-   * 管理后台登录日志列表：username 为登录发生时的用户名快照，不使用 displayName。
-   */
   async listForAdmin(filters: ListFilters = {}): Promise<{ items: AdminLoginLogRecord[], total: number }> {
-    const conditions = buildConditions(filters)
+    const where = and(...buildConditions(filters))
     const { limit, offset } = normalizePagination(filters)
-    const where = conditions.length ? and(...conditions) : undefined
-
-    const baseSelect = db.select({
-      id: loginLogs.id,
-      userId: loginLogs.userId,
-      username: loginLogs.username,
-      role: users.role,
-      method: loginLogs.method,
-      success: loginLogs.success,
-      failureReason: loginLogs.failureReason,
-      ip: loginLogs.ip,
-      userAgent: loginLogs.userAgent,
-      createdAt: loginLogs.createdAt
-    })
-      .from(loginLogs)
-      .innerJoin(users, eq(users.id, loginLogs.userId))
-
-    const countQuery = db.select({ value: count() }).from(loginLogs)
 
     const [items, totalRows] = await Promise.all([
-      (where ? baseSelect.where(where) : baseSelect)
-        .orderBy(desc(loginLogs.createdAt))
+      db.select({
+        ...loginLogSelection(),
+        role: users.role
+      })
+        .from(operationLogs)
+        .innerJoin(users, eq(users.id, operationLogs.userId))
+        .where(where)
+        .orderBy(desc(operationLogs.createdAt))
         .limit(limit)
         .offset(offset),
-      where ? countQuery.where(where) : countQuery
+      db.select({ value: count() })
+        .from(operationLogs)
+        .innerJoin(users, eq(users.id, operationLogs.userId))
+        .where(where)
     ])
 
     return { items, total: toNumber(totalRows[0]?.value) }

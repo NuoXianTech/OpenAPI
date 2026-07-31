@@ -17,7 +17,9 @@ CREATE TABLE "credit_transactions" (
 --> statement-breakpoint
 CREATE TABLE "redemption_codes" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"code" varchar(64) NOT NULL,
+	"code_digest" varchar(64) NOT NULL,
+	"code_ciphertext" varchar(512) NOT NULL,
+	"code_preview" varchar(32) NOT NULL,
 	"amount" integer NOT NULL,
 	"batch_id" varchar(64),
 	"note" varchar(500),
@@ -28,7 +30,7 @@ CREATE TABLE "redemption_codes" (
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "redemption_codes_code_unique" UNIQUE("code")
+	CONSTRAINT "redemption_codes_code_digest_unique" UNIQUE("code_digest")
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -133,7 +135,9 @@ CREATE TABLE "api_keys" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer NOT NULL,
 	"name" varchar(100) NOT NULL,
-	"api_key" varchar(120) NOT NULL,
+	"key_digest" varchar(64) NOT NULL,
+	"key_ciphertext" text NOT NULL,
+	"key_preview" varchar(32) NOT NULL,
 	"is_active" boolean DEFAULT true NOT NULL,
 	"scopes" jsonb,
 	"ip_whitelist" jsonb,
@@ -146,7 +150,7 @@ CREATE TABLE "api_keys" (
 	"revoked_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "api_keys_api_key_unique" UNIQUE("api_key")
+	CONSTRAINT "api_keys_key_digest_unique" UNIQUE("key_digest")
 );
 --> statement-breakpoint
 CREATE TABLE "apis" (
@@ -250,18 +254,6 @@ CREATE TABLE "notification_messages" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "login_logs" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"username" varchar(50) NOT NULL,
-	"method" varchar(32) NOT NULL,
-	"success" boolean NOT NULL,
-	"failure_reason" varchar(100),
-	"ip" varchar(45),
-	"user_agent" varchar(500),
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "operation_logs" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
@@ -296,7 +288,6 @@ ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_user_id_users_id_f
 ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_message_id_notification_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_recipient_user_id_users_id_fk" FOREIGN KEY ("recipient_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "login_logs" ADD CONSTRAINT "login_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "credit_transactions_created_at_idx" ON "credit_transactions" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "credit_transactions_reason_idx" ON "credit_transactions" USING btree ("reason");--> statement-breakpoint
@@ -346,12 +337,9 @@ CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliver
 CREATE INDEX "notification_deliveries_user_unread_idx" ON "notification_deliveries" USING btree ("recipient_user_id","is_read");--> statement-breakpoint
 CREATE INDEX "notification_messages_audience_idx" ON "notification_messages" USING btree ("audience");--> statement-breakpoint
 CREATE INDEX "notification_messages_created_at_idx" ON "notification_messages" USING btree ("created_at");--> statement-breakpoint
-CREATE INDEX "login_logs_user_created_idx" ON "login_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE INDEX "login_logs_username_idx" ON "login_logs" USING btree ("username");--> statement-breakpoint
-CREATE INDEX "login_logs_created_at_idx" ON "login_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE INDEX "login_logs_method_idx" ON "login_logs" USING btree ("method");--> statement-breakpoint
 CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "operation_logs_user_action_created_idx" ON "operation_logs" USING btree ("user_id","action","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint
 CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
 CREATE INDEX "system_settings_secret_idx" ON "system_settings" USING btree ("is_secret");

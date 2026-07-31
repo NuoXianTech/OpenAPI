@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 必填其一 | PostgreSQL 连接串；或显式选择 PGlite 文件数据库 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
-| `NUXT_AUTH_API_KEY_SECRET` | 必填 | 仅用于生成新的随机 API Key，不加密数据库中的完整 `api_key` 值 |
+| `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并派生 API Key/兑换码的 HMAC 查询摘要与 AES-256-GCM 加密密钥 |
 
 ## 推荐变量
 
@@ -68,9 +68,9 @@ Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-生产密钥最少 32 bytes 随机值。`NUXT_AUTH_SECRET` 泄露后立即轮换，并观察登录、邮箱验证与 OAuth 相关异常。`NUXT_AUTH_API_KEY_SECRET` 仅参与新 Key 生成，轮换不会使数据库中已有 API Key 失效。
+生产密钥最少 32 bytes 随机值。`NUXT_AUTH_SECRET` 泄露后立即轮换，并观察登录、邮箱验证与 OAuth 相关异常。`NUXT_API_KEY_SECRET` 用于查询和解密数据库中的 API Key/兑换码；直接更换会使现有凭据不可查询、不可解密，因此应妥善备份，轮换时先处理已有凭据。
 
-API Key 按产品要求完整存储在 `api_keys.api_key`，用户可随时查看和复制。因此数据库、备份、只读副本和管理员数据库账号都必须按“可直接使用的凭据”保护；应用操作日志不会额外复制完整 Key。
+API Key 和兑换码明文不会落库。数据库只保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；服务端在授权列表接口中解密后返回，以保留重复查看和复制体验。
 
 ## PM2 示例
 
@@ -84,7 +84,7 @@ DATABASE_URL='postgresql://user:password@127.0.0.1:5432/openapi' \
 NUXT_REDIS_URL='redis://127.0.0.1:6379' \
 NUXT_REDIS_REQUIRED=true \
 NUXT_AUTH_SECRET='replace-with-random-hex' \
-NUXT_AUTH_API_KEY_SECRET='replace-with-random-hex' \
+NUXT_API_KEY_SECRET='replace-with-random-hex' \
 pm2 start server/index.mjs --name openapi --update-env
 ```
 
@@ -99,7 +99,7 @@ TZ=Asia/Shanghai \
 DATABASE_DRIVER=pglite \
 PGLITE_DATA_DIR=/var/lib/openapi/pglite \
 NUXT_AUTH_SECRET='replace-with-random-hex' \
-NUXT_AUTH_API_KEY_SECRET='replace-with-random-hex' \
+NUXT_API_KEY_SECRET='replace-with-random-hex' \
 pm2 start server/index.mjs --name openapi --update-env
 ```
 
@@ -115,6 +115,6 @@ pm2 start server/index.mjs --name openapi --update-env
 | Redis 故障后限流失效 | 正式生产设置 `NUXT_REDIS_REQUIRED=true`，并监控 `/api/ready` |
 | Redis 故障后后台任务重复 | 多实例必须设置 `NUXT_REDIS_REQUIRED=true`；租约不可用时任务 fail-closed |
 | Redis 缓存命中率下降 | 检查 Redis 延迟、内存和淘汰统计；应用会回源数据库，但数据库负载会升高 |
-| 数据库或备份泄露 API Key | 严格限制数据库与备份访问、启用静态加密和审计；`api_keys.api_key` 是可直接使用的完整凭据 |
+| 数据库或备份泄露 API Key | 数据库字段已使用 AES-256-GCM 加密；仍需隔离应用运行密钥并限制数据库、备份和服务端权限 |
 | 伪造 `X-Forwarded-For` | 仅配置真实直连代理的 `NUXT_PROXY_TRUSTED_CIDRS`，并设置正确的 `NUXT_PROXY_FORWARDED_HOPS` |
 | 配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令 |

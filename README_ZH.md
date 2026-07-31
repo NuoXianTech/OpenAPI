@@ -77,7 +77,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-启动前必须配置 `NUXT_AUTH_SECRET`。`NUXT_AUTH_API_KEY_SECRET` 只用于生成新密钥；API Key 本身会完整保存在数据库 `api_key` 字段中，所属用户可随时查看并复制。可使用以下命令分别生成独立随机值：
+启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 与兑换码在数据库中保存为 HMAC 查询摘要和 AES-256-GCM 密文，因此授权用户仍可重复查看，但数据库不保存明文。可使用以下命令分别生成独立随机值：
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
@@ -90,7 +90,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | 变量 | 要求 | 说明 |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
-| `NUXT_AUTH_API_KEY_SECRET` | 必填 | 新 API Key 的生成材料，不会加密数据库中的 `api_key` 完整值。 |
+| `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并保护数据库中的 API Key 与兑换码密文。 |
 | `NUXT_PROXY_TRUSTED_CIDRS` | 使用反向代理时必填 | 允许提供 `X-Forwarded-For` 的直连代理 CIDR。 |
 | `NUXT_PROXY_FORWARDED_HOPS` | 使用反向代理时配置 | 可信转发层数；单层 nginx 通常为 `1`。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |

@@ -40,6 +40,7 @@ import { readRequestMeta } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
 import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
 import { runWithTimeout } from '~~/server/utils/timeout'
+import { digestStoredSecret } from '~~/server/utils/stored-secret'
 
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 
@@ -101,7 +102,8 @@ function hasScope(scopes: string[] | null | undefined, api: ApiGuardConfig): boo
 
 async function loadApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null
-  const res = await db.select().from(apiKeys).where(eq(apiKeys.apiKey, rawKey)).limit(1)
+  const digest = digestStoredSecret(rawKey, 'api-key')
+  const res = await db.select().from(apiKeys).where(eq(apiKeys.keyDigest, digest)).limit(1)
   return firstRow(res)
 }
 

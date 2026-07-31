@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, or, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, notLike, or, type SQL } from 'drizzle-orm'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -69,7 +69,8 @@ export const operationLogService = {
   },
 
   async list(filters: OperationLogListFilters = {}): Promise<OperationLogListResult> {
-    const conditions: SQL[] = []
+    // 登录事件与其他审计事件共用一张表，但继续由专门的登录日志页面展示。
+    const conditions: SQL[] = [notLike(operationLogs.action, 'auth.login.%')]
     if (typeof filters.userId === 'number') {
       conditions.push(eq(operationLogs.userId, filters.userId))
     }

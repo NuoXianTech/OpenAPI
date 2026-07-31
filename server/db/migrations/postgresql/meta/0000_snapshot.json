@@ -1,5 +1,5 @@
 {
-  "id": "33b588f3-9184-421d-81dd-d3d4a39c9713",
+  "id": "6e384940-f091-4930-b5ac-67b6e5cf8caf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -238,9 +238,21 @@
           "primaryKey": true,
           "notNull": true
         },
-        "code": {
-          "name": "code",
+        "code_digest": {
+          "name": "code_digest",
           "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code_ciphertext": {
+          "name": "code_ciphertext",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "code_preview": {
+          "name": "code_preview",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
         },
@@ -366,11 +378,11 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "redemption_codes_code_unique": {
-          "name": "redemption_codes_code_unique",
+        "redemption_codes_code_digest_unique": {
+          "name": "redemption_codes_code_digest_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "code"
+            "code_digest"
           ]
         }
       },
@@ -1391,9 +1403,21 @@
           "primaryKey": false,
           "notNull": true
         },
-        "api_key": {
-          "name": "api_key",
-          "type": "varchar(120)",
+        "key_digest": {
+          "name": "key_digest",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key_ciphertext": {
+          "name": "key_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "key_preview": {
+          "name": "key_preview",
+          "type": "varchar(32)",
           "primaryKey": false,
           "notNull": true
         },
@@ -1539,11 +1563,11 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "api_keys_api_key_unique": {
-          "name": "api_keys_api_key_unique",
+        "api_keys_key_digest_unique": {
+          "name": "api_keys_key_digest_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "api_key"
+            "key_digest"
           ]
         }
       },
@@ -2554,155 +2578,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.login_logs": {
-      "name": "login_logs",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "username": {
-          "name": "username",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "method": {
-          "name": "method",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "success": {
-          "name": "success",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "failure_reason": {
-          "name": "failure_reason",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ip": {
-          "name": "ip",
-          "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_agent": {
-          "name": "user_agent",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "login_logs_user_created_idx": {
-          "name": "login_logs_user_created_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "login_logs_username_idx": {
-          "name": "login_logs_username_idx",
-          "columns": [
-            {
-              "expression": "username",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "login_logs_created_at_idx": {
-          "name": "login_logs_created_at_idx",
-          "columns": [
-            {
-              "expression": "created_at",
-              "isExpression": false,
-              "asc": false,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "login_logs_method_idx": {
-          "name": "login_logs_method_idx",
-          "columns": [
-            {
-              "expression": "method",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "login_logs_user_id_users_id_fk": {
-          "name": "login_logs_user_id_users_id_fk",
-          "tableFrom": "login_logs",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.operation_logs": {
       "name": "operation_logs",
       "schema": "",
@@ -2797,6 +2672,33 @@
           "columns": [
             {
               "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "operation_logs_user_action_created_idx": {
+          "name": "operation_logs_user_action_created_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "action",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

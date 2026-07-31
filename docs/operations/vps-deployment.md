@@ -82,7 +82,7 @@ DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
 # PGLITE_DATA_DIR=/var/lib/openapi/pglite
 
 NUXT_AUTH_SECRET=change-me
-NUXT_AUTH_API_KEY_SECRET=change-me
+NUXT_API_KEY_SECRET=change-me
 
 # 单层本机 Nginx 示例：
 NUXT_PROXY_TRUSTED_CIDRS=127.0.0.1/32,::1/128

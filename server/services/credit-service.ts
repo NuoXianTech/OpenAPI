@@ -9,6 +9,7 @@ import {
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
+import { decryptStoredSecret } from '~~/server/utils/stored-secret'
 import type { CreditReason } from '#shared/types/credit-reason'
 import type { UserCreditConsumptionDailyRow, UserCreditSummary } from '#shared/types/user-credits'
 import type { DatabaseTransaction } from '~~/server/db/client'
@@ -208,7 +209,7 @@ async function listUserTransactions(
       apiPath: apis.apiPath,
       apiCallId: creditTransactions.apiCallId,
       codeId: creditTransactions.codeId,
-      code: sql<string | null>`${creditTransactions.meta}->>'code'`,
+      meta: creditTransactions.meta,
       operatorName: creditTransactions.operatorName,
       remark: creditTransactions.remark,
       createdAt: creditTransactions.createdAt
@@ -223,7 +224,14 @@ async function listUserTransactions(
   ])
 
   return {
-    items,
+    items: items.map(({ meta, ...item }: typeof items[number]) => {
+      const ciphertext = typeof meta?.codeCiphertext === 'string' ? meta.codeCiphertext : null
+      const preview = typeof meta?.codePreview === 'string' ? meta.codePreview : null
+      return {
+        ...item,
+        code: ciphertext ? decryptStoredSecret(ciphertext, 'redemption-code') : preview
+      }
+    }),
     total: toNumber(totalRows[0]?.value)
   }
 }
