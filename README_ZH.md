@@ -177,7 +177,7 @@ docs/                        项目特有标准与生产流程
 ## 项目文档
 
 - [文档入口](docs/index.md)
-- [公共接口接入指南](docs/api/public-api-onboarding.md)
+- [新增公共接口开发指南](docs/api/public-api-development.md)
 - [对外接口规范](docs/api/public-api-conventions.md)
 - [前端工程标准](docs/standards.md)
 - [API 计费规则](docs/platform/billing-rules.md)

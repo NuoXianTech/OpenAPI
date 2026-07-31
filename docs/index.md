@@ -6,7 +6,7 @@
 
 ### 新增公开 API
 
-1. 阅读 [公共接口接入指南](./api/public-api-onboarding.md)，选择接入形态并完成业务实现。
+1. 阅读 [新增公共接口开发指南](./api/public-api-development.md)，完成接口设计、业务实现、后台启用和真实路径验证。
 2. 按 [对外接口规范](./api/public-api-conventions.md) 添加路由、验证、响应和计费标记。
 3. 如需管理员控制接口业务功能，按 [公共接口业务能力声明规范](./api/public-api-capabilities.md) 声明能力并接入平台配置。
 4. 用 [RESTful 设计指南](./api/design-style.md) 检查路径、方法、状态码和错误码。

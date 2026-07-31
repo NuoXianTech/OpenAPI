@@ -176,7 +176,7 @@ docs/                        Project-specific standards and operational workflow
 ## Documentation
 
 - [Documentation index](docs/index.md)
-- [Public API onboarding](docs/api/public-api-onboarding.md)
+- [Public API development guide](docs/api/public-api-development.md)
 - [Public API conventions](docs/api/public-api-conventions.md)
 - [Frontend engineering standards](docs/standards.md)
 - [Billing rules](docs/platform/billing-rules.md)
