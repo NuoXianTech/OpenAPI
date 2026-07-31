@@ -34,7 +34,7 @@ if (import.meta.client) {
 <template>
   <UApp :locale="zh_cn">
     <NuxtLoadingIndicator
-      color="#3f63dd"
+      color="#18181b"
       :height="3"
     />
     <NuxtLayout>

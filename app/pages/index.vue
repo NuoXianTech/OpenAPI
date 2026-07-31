@@ -242,7 +242,7 @@ useSeoMeta({
 
 .catalog-heading__kicker {
   margin-bottom: 0.35rem;
-  color: var(--ui-primary);
+  color: var(--ui-text-muted);
   font-family: var(--font-code);
   font-size: 0.65rem;
   font-weight: 700;
@@ -274,17 +274,11 @@ useSeoMeta({
 
 .catalog-controls {
   display: grid;
-  overflow: hidden;
-  border: 1px solid var(--ui-border);
-  border-radius: 8px;
-  background: var(--ui-bg-elevated);
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 4%, transparent);
+  gap: 1rem;
 }
 
 .catalog-search,
-.catalog-filter { padding: 0.875rem; }
-.catalog-search,
-.catalog-filter:not(:last-child) { border-bottom: 1px solid var(--ui-border); }
+.catalog-filter { min-width: 0; }
 
 .catalog-filter__label {
   display: inline-flex;
@@ -309,13 +303,9 @@ useSeoMeta({
 
 @media (width >= 640px) {
   .catalog-heading__count { display: flex; }
-  .catalog-search,
-  .catalog-filter { padding: 1rem; }
 }
 
 @media (width >= 960px) {
   .catalog-controls { grid-template-columns: minmax(260px, 0.78fr) minmax(240px, 0.58fr) minmax(0, 1.5fr); }
-  .catalog-search,
-  .catalog-filter:not(:last-child) { border-right: 1px solid var(--ui-border); border-bottom: 0; }
 }
 </style>

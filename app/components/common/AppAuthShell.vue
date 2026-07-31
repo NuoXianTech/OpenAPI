@@ -32,15 +32,7 @@ const { settings } = useSiteSettings()
 }
 
 .auth-shell__grid {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--ui-border) 48%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--ui-border) 48%, transparent) 1px, transparent 1px);
-  background-size: 52px 52px;
-  mask-image: radial-gradient(ellipse 62% 55% at 50% 36%, black 0%, transparent 78%);
-  opacity: 0.72;
+  display: none;
 }
 
 .auth-panel {

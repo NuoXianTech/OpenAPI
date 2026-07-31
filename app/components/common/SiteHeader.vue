@@ -55,7 +55,6 @@ async function handleLogout(): Promise<void> {
         </span>
         <span class="site-brand__copy">
           <strong>{{ settings.siteName }}</strong>
-          <small>PUBLIC API NETWORK</small>
         </span>
       </NuxtLink>
 
@@ -154,8 +153,8 @@ async function handleLogout(): Promise<void> {
   top: 0;
   z-index: 40;
   border-bottom: 1px solid color-mix(in oklab, var(--ui-border) 86%, transparent);
-  background: color-mix(in oklab, var(--ui-bg) 88%, transparent);
-  backdrop-filter: blur(18px) saturate(125%);
+  background: color-mix(in oklab, var(--ui-bg) 94%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .site-header__inner {
@@ -189,8 +188,8 @@ async function handleLogout(): Promise<void> {
 }
 
 .site-brand__copy {
-  display: grid;
-  gap: 0.1rem;
+  display: flex;
+  align-items: center;
   line-height: 1;
 }
 
@@ -202,12 +201,6 @@ async function handleLogout(): Promise<void> {
   font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.site-brand__copy small {
-  color: var(--ui-text-dimmed);
-  font-family: var(--font-code);
-  font-size: 0.55rem;
 }
 
 .site-nav {
@@ -231,8 +224,8 @@ async function handleLogout(): Promise<void> {
 }
 
 .site-nav__link.is-active {
-  color: var(--ui-primary);
-  background: color-mix(in oklab, var(--ui-primary) 9%, transparent);
+  color: var(--ui-text-highlighted);
+  background: transparent;
   font-weight: 650;
 }
 

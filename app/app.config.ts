@@ -1,9 +1,9 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      primary: 'indigo',
+      primary: 'zinc',
       secondary: 'cyan',
-      neutral: 'slate'
+      neutral: 'zinc'
     },
     card: {
       slots: {

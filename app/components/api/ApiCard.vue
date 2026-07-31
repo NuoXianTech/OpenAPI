@@ -109,17 +109,17 @@ function getSuccessRadar(status = -1): { className: string, title: string } {
 function getStatusMeta(status = -1): ApiCardStatusMeta {
   switch (status) {
     case API_STATUS.normal:
-      return { label: t('common.states.active'), color: 'success', icon: 'i-mdi-check-circle-outline' }
+      return { label: t('common.states.active'), color: 'success', icon: 'i-lucide-circle-check' }
     case API_STATUS.abnormal:
-      return { label: t('common.states.inactive'), color: 'error', icon: 'i-mdi-alert-circle-outline' }
+      return { label: t('common.states.inactive'), color: 'error', icon: 'i-lucide-circle-alert' }
     case API_STATUS.maintenance:
-      return { label: t('common.states.maintenance'), color: 'warning', icon: 'i-mdi-wrench-outline' }
+      return { label: t('common.states.maintenance'), color: 'warning', icon: 'i-lucide-wrench' }
     case API_STATUS.deprecated:
-      return { label: t('common.states.deprecated'), color: 'neutral', icon: 'i-mdi-archive-outline' }
+      return { label: t('common.states.deprecated'), color: 'neutral', icon: 'i-lucide-archive' }
     case API_STATUS.automatic:
-      return { label: t('common.states.automatic'), color: 'info', icon: 'i-mdi-sync' }
+      return { label: t('common.states.automatic'), color: 'info', icon: 'i-lucide-refresh-cw' }
     default:
-      return { label: t('common.states.unknown'), color: 'neutral', icon: 'i-mdi-help-circle-outline' }
+      return { label: t('common.states.unknown'), color: 'neutral', icon: 'i-lucide-circle-help' }
   }
 }
 </script>
@@ -165,7 +165,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             color="warning"
             variant="soft"
             size="sm"
-            :icon="aggregateCost === 0 ? 'i-mdi-check-circle-outline' : 'i-mdi-coins'"
+            :icon="aggregateCost === 0 ? 'i-lucide-circle-check' : 'i-lucide-coins'"
             class="rounded-md"
             :class="{ 'api-card__price-badge api-card__price-badge--free': aggregateCost === 0 }"
           >
@@ -189,7 +189,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             color="neutral"
             variant="soft"
             size="sm"
-            icon="i-mdi-shield-key-outline"
+            icon="i-lucide-shield-keyhole"
             class="api-card__key-badge rounded-md"
           >
             {{ $t('public.api.apiKey') }}
@@ -205,7 +205,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
               aria-hidden="true"
             >
               <UIcon
-                name="i-mdi-pulse"
+                name="i-lucide-activity"
                 class="size-3"
               />
             </span>
@@ -224,13 +224,13 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             target="_blank"
             rel="noopener"
             color="neutral"
-            variant="soft"
+            variant="ghost"
             size="xs"
-            icon="i-mdi-file-document-outline"
+            square
+            icon="i-lucide-book-open"
+            :aria-label="$t('public.api.documentation')"
             class="api-card__action-button"
-          >
-            {{ $t('public.api.documentation') }}
-          </UButton>
+          />
         </UTooltip>
 
         <div class="api-card__detail-desktop">
@@ -246,13 +246,13 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
             >
               <UButton
                 color="neutral"
-                variant="soft"
+                variant="ghost"
                 size="xs"
-                :icon="popoverDetailsOpen ? 'i-mdi-chevron-up' : 'i-mdi-arrow-top-right'"
+                square
+                :icon="popoverDetailsOpen ? 'i-lucide-chevron-up' : 'i-lucide-ellipsis'"
+                :aria-label="popoverDetailsOpen ? $t('public.api.collapseDetails') : $t('public.api.viewDetails')"
                 class="api-card__action-button"
-              >
-                {{ popoverDetailsOpen ? $t('public.api.collapse') : $t('public.api.details') }}
-              </UButton>
+              />
             </UTooltip>
 
             <template #content>
@@ -281,7 +281,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
               color="neutral"
               variant="soft"
               size="xs"
-              trailing-icon="i-mdi-chevron-right"
+              trailing-icon="i-lucide-chevron-right"
               class="api-card__action-button"
             >
               {{ $t('public.api.details') }}
@@ -294,7 +294,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
                   aria-hidden="true"
                 >
                   <UIcon
-                    name="i-mdi-api"
+                    name="i-lucide-braces"
                     class="size-4"
                   />
                 </span>
@@ -628,8 +628,8 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 
 .api-card:hover {
   transform: none;
-  border-color: color-mix(in oklab, var(--ui-primary) 32%, var(--ui-border));
-  box-shadow: 0 8px 28px -24px color-mix(in oklab, var(--ui-primary) 45%, transparent);
+  border-color: var(--ui-border-accented);
+  box-shadow: 0 10px 30px -28px color-mix(in oklab, var(--ui-text) 28%, transparent);
 }
 
 .api-card__head {
@@ -638,11 +638,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 }
 
 .api-card__overline {
-  margin-bottom: 0.3rem;
-  color: var(--ui-text-dimmed);
-  font-family: var(--font-code);
-  font-size: 0.56rem;
-  font-weight: 700;
+  display: none;
 }
 
 .api-card__title {
@@ -686,10 +682,10 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
   margin: 0 1rem 1rem;
   align-items: center;
   gap: 0.625rem;
-  border: 1px solid var(--ui-border);
+  border: 0;
   border-radius: 6px;
   padding: 0.55rem 0.625rem;
-  background: color-mix(in oklab, var(--ui-bg-muted) 58%, transparent);
+  background: var(--ui-bg-muted);
 }
 
 .api-card__endpoint code {
@@ -703,7 +699,7 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 
 .api-card__method {
   flex: 0 0 auto;
-  color: var(--ui-primary);
+  color: var(--ui-text-highlighted);
   font-family: var(--font-code);
   font-size: 0.62rem;
   font-weight: 750;
@@ -711,11 +707,13 @@ function getStatusMeta(status = -1): ApiCardStatusMeta {
 
 .api-card__toggle-row {
   padding: 0.75rem 1rem;
-  background: color-mix(in oklab, var(--ui-bg) 42%, transparent);
+  background: transparent;
 }
 
 .api-card__action-button {
+  border-color: transparent;
   border-radius: 6px;
+  background: transparent;
   box-shadow: none;
 }
 

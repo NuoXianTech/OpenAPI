@@ -84,6 +84,8 @@ async function copyRequest(): Promise<void> {
     <div class="platform-hero__inner">
       <div class="platform-hero__copy">
         <div class="platform-hero__availability">
+          <strong>{{ siteName }}</strong>
+          <span aria-hidden="true">·</span>
           <UIcon
             :name="apiListError ? 'i-lucide-circle-alert' : apiListLoading ? 'i-lucide-loader-circle' : 'i-lucide-circle-check'"
             class="size-3.5"
@@ -95,7 +97,6 @@ async function copyRequest(): Promise<void> {
         </div>
 
         <h1>
-          <span>{{ siteName }}</span>
           {{ $t('public.home.heroTitle') }}
         </h1>
 
@@ -195,15 +196,7 @@ async function copyRequest(): Promise<void> {
 }
 
 .platform-hero__grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, color-mix(in oklab, var(--ui-border) 52%, transparent) 1px, transparent 1px),
-    linear-gradient(to bottom, color-mix(in oklab, var(--ui-border) 52%, transparent) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: radial-gradient(ellipse 76% 68% at 48% 0%, black, transparent 80%);
-  opacity: 0.72;
+  display: none;
 }
 
 .platform-hero__inner {
@@ -226,18 +219,16 @@ async function copyRequest(): Promise<void> {
 
 .platform-hero__availability {
   display: inline-flex;
-  min-height: 1.75rem;
+  min-height: 1.25rem;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid var(--ui-border);
-  border-radius: 999px;
-  padding: 0.25rem 0.75rem;
+  padding: 0;
   color: var(--ui-text-muted);
-  background: color-mix(in oklab, var(--ui-bg-elevated) 92%, transparent);
   font-size: 0.75rem;
 }
 
 .platform-hero__availability .iconify { color: var(--ui-success); }
+.platform-hero__availability strong { color: var(--ui-text-highlighted); font-weight: 650; }
 .platform-hero__availability .is-error { color: var(--ui-error); }
 .platform-hero__availability .is-loading { color: var(--ui-warning); animation: spin 1s linear infinite; }
 
@@ -245,12 +236,10 @@ async function copyRequest(): Promise<void> {
   max-width: 40rem;
   margin-top: 1.5rem;
   color: var(--ui-text-highlighted);
-  font-size: 3.25rem;
+  font-size: 2.65rem;
   font-weight: 650;
   line-height: 1.1;
 }
-
-.platform-hero h1 span { display: block; color: var(--ui-primary); }
 
 .platform-hero__description {
   max-width: 35rem;
@@ -286,9 +275,11 @@ async function copyRequest(): Promise<void> {
   min-width: 0;
   overflow: hidden;
   border: 1px solid var(--ui-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--ui-bg-elevated);
-  box-shadow: 0 20px 54px -42px color-mix(in oklab, var(--brand-ink) 48%, transparent);
+  box-shadow:
+    0 0 0 16px var(--ui-bg-muted),
+    0 20px 48px -42px color-mix(in oklab, var(--brand-ink) 32%, transparent);
 }
 
 .api-playground__header,
@@ -312,7 +303,7 @@ async function copyRequest(): Promise<void> {
 .api-playground__request { display: flex; flex-direction: column; gap: 0.75rem; border-bottom: 1px solid var(--ui-border); padding: 1rem; background: color-mix(in oklab, var(--ui-bg-muted) 60%, var(--ui-bg-elevated)); }
 .api-playground__label { color: var(--ui-text-muted); font-size: 0.7rem; }
 .api-playground__address { display: flex; min-width: 0; min-height: 2.5rem; align-items: center; gap: 0.65rem; border: 1px solid var(--ui-border); border-radius: 7px; padding: 0.25rem 0.35rem 0.25rem 0.75rem; background: var(--ui-bg-elevated); }
-.api-playground__address > span { color: var(--ui-primary); font: 700 0.7rem var(--font-code); }
+.api-playground__address > span { color: var(--ui-text-highlighted); font: 700 0.7rem var(--font-code); }
 .api-playground__address code { min-width: 0; flex: 1; overflow-x: auto; color: var(--ui-text-toned); font-size: 0.68rem; white-space: nowrap; scrollbar-width: none; }
 
 .api-playground__response { padding: 1rem; }
@@ -326,11 +317,12 @@ async function copyRequest(): Promise<void> {
 
 @media (width < 640px) {
   .platform-hero__inner { gap: 2.25rem; padding-block: 2.75rem; }
-  .platform-hero h1 { margin-top: 1.25rem; font-size: 2.2rem; }
+  .platform-hero h1 { margin-top: 1.25rem; font-size: 2rem; }
   .platform-hero__description { margin-top: 1rem; font-size: 0.875rem; line-height: 1.65; }
   .platform-hero__actions { width: 100%; margin-top: 1.35rem; }
   .platform-hero__actions :deep(a) { flex: 1 1 auto; }
   .platform-hero__metrics { width: 100%; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
+  .api-playground { box-shadow: 0 0 0 8px var(--ui-bg-muted); }
   .api-playground pre { height: 12rem; }
 }
 
