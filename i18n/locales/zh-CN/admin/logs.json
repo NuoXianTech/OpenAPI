@@ -91,7 +91,6 @@
         "filterTitle": "操作日志筛选",
         "detailsTitle": "操作明细",
         "empty": "暂无操作日志",
-        "ipNotRecorded": "未记录",
         "filters": {
           "timeRange": "时间范围",
           "allTime": "全部时间",

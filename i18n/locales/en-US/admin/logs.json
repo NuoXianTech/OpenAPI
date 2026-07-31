@@ -91,7 +91,6 @@
         "filterTitle": "Operation log filters",
         "detailsTitle": "Operation details",
         "empty": "No operation logs",
-        "ipNotRecorded": "Not recorded",
         "filters": {
           "timeRange": "Time range",
           "allTime": "All time",

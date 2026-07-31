@@ -183,7 +183,7 @@ const {
         </template>
         <template #ip-cell="{ row }">
           <span class="font-mono text-xs text-muted">
-            {{ row.original.ip || $t('admin.logs.operations.ipNotRecorded') }}
+            {{ row.original.ip || '-' }}
           </span>
         </template>
         <template #actions-cell="{ row }">
@@ -271,7 +271,7 @@ const {
             <div class="space-y-1 text-xs">
               <div>
                 <span class="text-muted">IP </span>
-                <span class="font-mono">{{ detailRow.ip || $t('admin.logs.operations.ipNotRecorded') }}</span>
+                <span class="font-mono">{{ detailRow.ip || '-' }}</span>
               </div>
               <div>
                 <span class="text-muted">User-Agent </span>

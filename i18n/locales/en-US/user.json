@@ -208,9 +208,8 @@
       },
       "loginActivity": {
         "title": "Recent login activity",
-        "records": "Login records",
         "empty": "No login records",
-        "hint": "Showing the latest {count}. If you see an unfamiliar login, change your password immediately.",
+        "hint": "Showing the 10 most recent sign-ins. If you see an unfamiliar login, change your password immediately.",
         "columns": {
           "time": "Time",
           "method": "Method",
