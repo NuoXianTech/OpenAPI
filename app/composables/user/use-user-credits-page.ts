@@ -189,7 +189,6 @@ export function useUserCreditsPage() {
     items: txns.items,
     total: txns.total,
     loading: txns.loading,
-    totalPages: txns.totalPages,
     fetchTransactions: txns.refresh,
     applyFilters: txns.applyFilters,
     resetFilters: txns.reset,

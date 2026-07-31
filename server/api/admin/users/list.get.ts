@@ -1,6 +1,6 @@
-import { getQuery } from 'h3'
 import { USER_ROLES, usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
 
 const USER_ROLE_OPTIONS = Object.values(USER_ROLES)
@@ -18,13 +18,15 @@ function readUserIdFilter(value: unknown): number | undefined {
 }
 
 export default defineAdminEventHandler((event) => {
-  const query = getQuery(event)
+  const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   return usersService.list({
     keyword: readQueryString(query.keyword),
     userId: readUserIdFilter(query.userId),
     role: readQueryOption(query.role, USER_ROLE_OPTIONS),
     isActive: readBooleanFilter(query.isActive),
-    isBanned: readBooleanFilter(query.isBanned)
+    isBanned: readBooleanFilter(query.isBanned),
+    limit,
+    offset
   })
 })

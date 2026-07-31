@@ -1,6 +1,7 @@
-import { and, desc, eq, ilike, isNull, like, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, isNull, like, or, sql } from 'drizzle-orm'
 import { creditTransactions, operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
+import { normalizePagination } from '~~/server/utils/pagination'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
 import { systemSettingsService } from './system-settings-service'
@@ -32,6 +33,8 @@ interface AdminUserListOptions {
   role?: UserRole
   isActive?: boolean
   isBanned?: boolean
+  limit?: number
+  offset?: number
 }
 
 function isAvailableAdmin(user: AdminAvailabilityUser) {
@@ -69,6 +72,7 @@ export const usersService = {
       typeof opts.isActive === 'boolean' ? eq(users.isActive, opts.isActive) : undefined,
       typeof opts.isBanned === 'boolean' ? eq(users.isBanned, opts.isBanned) : undefined
     )
+    const { limit, offset } = normalizePagination(opts, { defaultLimit: 20 })
 
     const base = db.select({
       id: users.id,
@@ -81,15 +85,26 @@ export const usersService = {
       isBanned: users.isBanned,
       bannedReason: users.bannedReason,
       bannedUntil: users.bannedUntil,
-      lastLoginAt: users.lastLoginAt,
-      lastLoginIp: users.lastLoginIp,
-      lastLoginUserAgent: users.lastLoginUserAgent,
-      emailVerifiedAt: users.emailVerifiedAt,
-      createdAt: users.createdAt,
-      updatedAt: users.updatedAt
+      createdAt: users.createdAt
     }).from(users)
 
-    return base.where(where).orderBy(desc(users.createdAt))
+    const [items, totalRows] = await Promise.all([
+      base.where(where).orderBy(desc(users.createdAt)).limit(limit).offset(offset),
+      db.select({ value: count() }).from(users).where(where)
+    ])
+
+    return { items, total: toNumber(totalRows[0]?.value) }
+  },
+
+  async listNotificationRecipients() {
+    return db.select({
+      id: users.id,
+      username: users.username,
+      email: users.email
+    })
+      .from(users)
+      .where(eq(users.isBanned, false))
+      .orderBy(asc(users.username))
   },
 
   async findByEmail(email: string, opts: { role?: UserRole } = {}) {

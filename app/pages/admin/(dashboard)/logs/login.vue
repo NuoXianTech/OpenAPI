@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-page'
 import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
@@ -103,7 +103,6 @@ const {
     <DashboardTableCard
       :title="$t('admin.logs.login.detailsTitle')"
       icon="i-mdi-login-variant"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -112,7 +111,7 @@ const {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.logs.login.empty')"
         empty-icon="i-mdi-login-variant"
       >

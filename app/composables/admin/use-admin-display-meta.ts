@@ -158,21 +158,11 @@ export function useAdminApisDisplayMeta(
   }
 }
 
-export interface AdminNotificationUserItem {
-  id: number
-  username: string
-  email: string
-  displayName: string | null
-  isActive: boolean
-  isBanned: boolean
-}
-
 export interface AdminNotificationMessageRow {
   id: number
   title: string
   level: MessageLevel
   audience: AdminNotificationAudience
-  recipientCount: number
   senderActor: string | null
   createdAt: string
   deliveredCount: number
@@ -208,14 +198,11 @@ interface AdminNotificationAudienceMeta {
 }
 
 interface UseAdminNotificationsDisplayMetaOptions {
-  users: Readonly<Ref<AdminNotificationUserItem[]>>
   openDetail: (row: AdminNotificationMessageRow) => void | Promise<void>
   openDelete: (row: AdminNotificationMessageRow) => void | Promise<void>
 }
 
 interface UseAdminNotificationsDisplayMetaReturn {
-  users: ComputedRef<AdminNotificationUserItem[]>
-  userOptions: ComputedRef<Array<AdminNotificationSelectItem<number>>>
   audienceOptions: ComputedRef<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>
   levelOptions: ComputedRef<Array<AdminNotificationSelectItem<MessageLevel>>>
   getAudienceMeta: (audience: AdminNotificationAudience) => AdminNotificationAudienceMeta
@@ -251,11 +238,6 @@ export function useAdminNotificationsDisplayMeta(
   options: UseAdminNotificationsDisplayMetaOptions
 ): UseAdminNotificationsDisplayMetaReturn {
   const { t } = useI18n()
-  const users = computed(() => options.users.value.filter(user => !user.isBanned))
-  const userOptions = computed(() => users.value.map(user => ({
-    label: `${user.username}${user.email ? ` <${user.email}>` : ''}`,
-    value: user.id
-  })))
   const audienceOptions = computed<Array<AdminNotificationSelectItem<AdminNotificationAudience>>>(() => (
     ADMIN_NOTIFICATION_AUDIENCES.map(audience => ({
       label: t(ADMIN_NOTIFICATION_AUDIENCE_META[audience].optionKey),
@@ -296,8 +278,6 @@ export function useAdminNotificationsDisplayMeta(
   }
 
   return {
-    users,
-    userOptions,
     audienceOptions,
     levelOptions,
     getAudienceMeta,

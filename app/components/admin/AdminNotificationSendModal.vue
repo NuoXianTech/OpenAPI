@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import {
-  createAdminNotificationForm,
-  type AdminNotificationUserItem
-} from '~/composables/admin/use-admin-display-meta'
+import { createAdminNotificationForm } from '~/composables/admin/use-admin-display-meta'
+import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
-interface Props {
-  users: AdminNotificationUserItem[]
+interface AdminNotificationRecipient {
+  id: number
+  username: string
+  email: string | null
 }
 
 const open = defineModel<boolean>('open', { default: false })
-const props = defineProps<Props>()
 const emit = defineEmits<{ sent: [] }>()
 const toast = useToast()
 const { t } = useI18n()
 
 const form = reactive(createAdminNotificationForm())
 const isSending = ref(false)
+const { data: recipients, loading: recipientsLoading } = usePrivateResource<AdminNotificationRecipient[]>({
+  path: '/api/admin/users/notification-recipients',
+  defaultData: () => []
+})
 
 const audienceOptions = computed(() => [
   { label: t('admin.content.notifications.audiences.options.specific'), value: 'specific' },
@@ -30,12 +33,10 @@ const levelOptions = computed(() => [
   { label: t('admin.content.notifications.levelOptions.warning'), value: 'warning' },
   { label: t('admin.content.notifications.levelOptions.critical'), value: 'critical' }
 ])
-const userOptions = computed(() => props.users
-  .filter(user => !user.isBanned)
-  .map(user => ({
-    label: `${user.username}${user.email ? ` <${user.email}>` : ''}`,
-    value: user.id
-  })))
+const userOptions = computed(() => recipients.value.map(user => ({
+  label: `${user.username}${user.email ? ` <${user.email}>` : ''}`,
+  value: user.id
+})))
 
 watch(open, (isOpen) => {
   if (!isOpen) return
@@ -116,6 +117,7 @@ async function submitSend(): Promise<void> {
             :items="userOptions"
             multiple
             searchable
+            :loading="recipientsLoading"
             value-key="value"
             :placeholder="$t('admin.content.notifications.form.recipientsPlaceholder')"
             class="w-full"

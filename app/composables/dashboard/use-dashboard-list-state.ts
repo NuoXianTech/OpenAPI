@@ -7,6 +7,7 @@ import {
   type MaybeRefOrGetter,
   type Ref
 } from 'vue'
+import { DEFAULT_PAGE_SIZE } from '~/constants/pagination'
 
 export interface DashboardQueryCodec<TValue> {
   parse: (value: unknown) => TValue
@@ -33,7 +34,6 @@ interface UseDashboardListStateReturn<TFilters extends object> {
   filters: TFilters
   page: Ref<number>
   pageSize: Ref<number>
-  activeQuery: Readonly<Ref<Record<string, string | number>>>
   activeFilterCount: Readonly<Ref<number>>
   syncQuery: () => Promise<void>
 }
@@ -121,7 +121,7 @@ export function useDashboardListState<TFilters extends object>(
   const {
     defaultFilters,
     defaultPage = 1,
-    defaultPageSize = 50,
+    defaultPageSize = DEFAULT_PAGE_SIZE,
     filterCountKeys,
     pageQueryKey = 'page',
     pageSizeQueryKey = 'pageSize',
@@ -183,7 +183,6 @@ export function useDashboardListState<TFilters extends object>(
     filters,
     page,
     pageSize,
-    activeQuery,
     activeFilterCount,
     syncQuery
   }

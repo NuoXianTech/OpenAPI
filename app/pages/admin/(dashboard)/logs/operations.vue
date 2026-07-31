@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import AdminOperationResourceSummary from '~/components/admin/AdminOperationResourceSummary.vue'
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 
@@ -136,7 +136,6 @@ const {
     <DashboardTableCard
       :title="$t('admin.logs.operations.detailsTitle')"
       icon="i-mdi-clipboard-text-clock-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -145,7 +144,7 @@ const {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.logs.operations.empty')"
         empty-icon="i-mdi-clipboard-text-clock-outline"
       >

@@ -2,15 +2,9 @@
 // 不改服务端接口（与 customers.vue 模板用 tanstack 客户端分页同思路）。
 // 适用于数据量可控、列表一次拿全的页面；服务端分页请用 usePrivatePagedList。
 
-export const DEFAULT_PAGE_SIZE = 20
+import { DEFAULT_PAGE_SIZE } from '~/constants/pagination'
 
-export const PAGE_SIZE_ITEMS = [
-  { label: '10', value: 10 },
-  { label: '20', value: 20 },
-  { label: '50', value: 50 }
-]
-
-export function useClientPagination<T>(source: Ref<T[]>, defaultPageSize = 10) {
+export function useClientPagination<T>(source: Ref<T[]>, defaultPageSize = DEFAULT_PAGE_SIZE) {
   const page = ref(1)
   const pageSize = ref(defaultPageSize)
 

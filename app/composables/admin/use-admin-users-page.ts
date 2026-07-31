@@ -1,8 +1,8 @@
 import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { computed, ref, watch, type ComputedRef } from 'vue'
+import { computed, toRef, type ComputedRef } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
-import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
@@ -23,23 +23,22 @@ export type AdminUserRoleFilter = 'all' | AdminUserItem['role']
 export type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
 export type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
 
+interface AdminUserFilters extends Record<string, unknown> {
+  keyword: string
+  userId: number | ''
+  role: AdminUserRoleFilter
+  active: AdminUserActiveFilter
+  ban: AdminUserBanFilter
+}
+
 interface AdminUserFilterOption<TValue extends string> {
   label: string
   value: TValue
 }
 
-function serializeBooleanFilter<TValue extends string>(
-  value: TValue,
-  trueValue: TValue,
-  falseValue: TValue
-): boolean | undefined {
-  if (value === trueValue) return true
-  if (value === falseValue) return false
-  return undefined
-}
-
-function normalizeUserIdFilter(value: number | undefined): number | undefined {
-  return Number.isInteger(value) && Number(value) > 0 ? value : undefined
+function normalizeUserIdFilter(value: number | '' | undefined): number | undefined {
+  const numericValue = Number(value)
+  return Number.isInteger(numericValue) && numericValue > 0 ? numericValue : undefined
 }
 
 interface ToastLike {
@@ -60,46 +59,66 @@ export function useAdminUsersPage() {
     }
     return createSilentToast()
   })()
-  const keyword = ref('')
-  const userIdFilter = ref<number>()
-  const roleFilter = ref<AdminUserRoleFilter>('all')
-  const activeFilter = ref<AdminUserActiveFilter>('all')
-  const banFilter = ref<AdminUserBanFilter>('all')
+  const paged = usePrivatePagedList<AdminUserFilters, AdminUserItem>({
+    path: '/api/admin/users/list',
+    defaultFilters: {
+      keyword: '',
+      userId: '',
+      role: 'all',
+      active: 'all',
+      ban: 'all'
+    },
+    buildQuery: (filters, pagination) => ({
+      keyword: filters.keyword.trim() || undefined,
+      userId: normalizeUserIdFilter(filters.userId),
+      role: filters.role === 'all' ? undefined : filters.role,
+      isActive: filters.active === 'all' ? undefined : filters.active === 'active',
+      isBanned: filters.ban === 'all' ? undefined : filters.ban === 'banned',
+      limit: pagination.limit,
+      offset: pagination.offset
+    })
+  })
+  const keyword = toRef(paged.filters, 'keyword')
+  const userIdFilter = toRef(paged.filters, 'userId')
+  const roleFilter = toRef(paged.filters, 'role')
+  const activeFilter = toRef(paged.filters, 'active')
+  const banFilter = toRef(paged.filters, 'ban')
   const activeFilterCount = computed(() => [
     normalizeUserIdFilter(userIdFilter.value) !== undefined,
     roleFilter.value !== 'all',
     activeFilter.value !== 'all',
     banFilter.value !== 'all'
   ].filter(Boolean).length)
+  let lastAppliedKeyword = ''
 
-  const { data, loading, refresh } = usePrivateResource<AdminUserItem[]>({
-    path: '/api/admin/users/list',
-    defaultData: () => [],
-    query: computed(() => ({
-      keyword: keyword.value.trim() || undefined,
-      userId: normalizeUserIdFilter(userIdFilter.value),
-      role: roleFilter.value === 'all' ? undefined : roleFilter.value,
-      isActive: serializeBooleanFilter(activeFilter.value, 'active', 'inactive'),
-      isBanned: serializeBooleanFilter(banFilter.value, 'banned', 'unbanned')
-    }))
-  })
+  watchDebounced(
+    () => keyword.value.trim(),
+    (value) => {
+      if (value === lastAppliedKeyword) return
+      lastAppliedKeyword = value
+      void paged.applyFilters()
+    },
+    { debounce: 250, maxWait: 1000 }
+  )
 
-  watchDebounced(keyword, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
-  watchDebounced(userIdFilter, () => { void refresh() }, { debounce: 250, maxWait: 1000 })
-  watch([roleFilter, activeFilter, banFilter], () => { void refresh() })
+  async function applyFilters() {
+    lastAppliedKeyword = keyword.value.trim()
+    await paged.applyFilters()
+  }
 
-  function resetFilters() {
-    userIdFilter.value = undefined
+  async function resetFilters() {
+    userIdFilter.value = ''
     roleFilter.value = 'all'
     activeFilter.value = 'all'
     banFilter.value = 'all'
+    await applyFilters()
   }
 
   async function deleteUser(id: number): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/delete', { method: 'POST', body: { id } })
       toast.add({ title: t('common.feedback.deleted'), color: 'success' })
-      await refresh()
+      await paged.refresh()
       return true
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
@@ -119,7 +138,7 @@ export function useAdminUsersPage() {
         }
       })
       toast.add({ title: t('admin.users.feedback.banned'), color: 'success' })
-      await refresh()
+      await paged.refresh()
       return true
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('admin.users.feedback.banFailed')), color: 'error' })
@@ -134,7 +153,7 @@ export function useAdminUsersPage() {
         body: { id: item.id, isBanned: false }
       })
       toast.add({ title: t('admin.users.feedback.unbanned'), color: 'success' })
-      await refresh()
+      await paged.refresh()
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('admin.users.feedback.unbanFailed')), color: 'error' })
     }
@@ -147,7 +166,7 @@ export function useAdminUsersPage() {
         body: { id, ...payload }
       })
       toast.add({ title: t('admin.users.feedback.updated'), color: 'success' })
-      await refresh()
+      await paged.refresh()
       return true
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('common.feedback.updateFailed')), color: 'error' })
@@ -169,7 +188,7 @@ export function useAdminUsersPage() {
         }
       })
       toast.add({ title: t('admin.users.feedback.created'), color: 'success' })
-      await refresh()
+      await paged.refresh()
       return true
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('common.feedback.createFailed')), color: 'error' })
@@ -184,10 +203,14 @@ export function useAdminUsersPage() {
     activeFilter,
     banFilter,
     activeFilterCount,
+    applyFilters,
     resetFilters,
-    loading,
-    items: data,
-    refresh,
+    page: paged.page,
+    pageSize: paged.pageSize,
+    total: paged.total,
+    loading: paged.loading,
+    items: paged.items,
+    refresh: paged.refresh,
     deleteUser,
     banUser,
     unbanUser,

@@ -64,9 +64,9 @@ afterAll(async () => {
 
 describe('notification service', () => {
   it('counts deliveries and reads per message instead of across all messages', async () => {
-    const rows = await notificationService.listMessagesForAdmin()
+    const result = await notificationService.listMessagesForAdmin()
 
-    expect(rows.map(row => ({
+    expect(result.items.map(row => ({
       title: row.title,
       deliveredCount: row.deliveredCount,
       readCount: row.readCount
@@ -74,5 +74,19 @@ describe('notification service', () => {
       { title: 'Second notification', deliveredCount: 1, readCount: 0 },
       { title: 'First notification', deliveredCount: 1, readCount: 1 }
     ])
+    expect(result.total).toBe(2)
+  })
+
+  it('filters and paginates notification history with an accurate total', async () => {
+    const result = await notificationService.listMessagesForAdmin({
+      keyword: 'notification',
+      audience: 'all_current',
+      limit: 1,
+      offset: 1
+    })
+
+    expect(result.total).toBe(2)
+    expect(result.items).toHaveLength(1)
+    expect(result.items[0]?.title).toBe('First notification')
   })
 })

@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import { notificationDeliveries, notificationMessages, users } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
@@ -162,28 +162,49 @@ export const notificationService = {
   // ---------- Admin ----------
 
   /** Admin 列表：每条 message + 当前已投递数 + 已读数 */
-  async listMessagesForAdmin(opts: { limit?: number, offset?: number } = {}) {
+  async listMessagesForAdmin(opts: {
+    limit?: number
+    offset?: number
+    keyword?: string
+    audience?: NotificationAudience
+    level?: NotificationLevel
+  } = {}) {
     const { limit, offset } = normalizePagination(opts)
+    const keyword = opts.keyword?.trim()
+    const where = and(
+      isNull(notificationMessages.deletedAt),
+      keyword
+        ? or(
+            ilike(notificationMessages.title, `%${keyword}%`),
+            ilike(notificationMessages.senderActor, `%${keyword}%`)
+          )
+        : undefined,
+      opts.audience ? eq(notificationMessages.audience, opts.audience) : undefined,
+      opts.level ? eq(notificationMessages.level, opts.level) : undefined
+    )
 
-    return db.select({
-      id: notificationMessages.id,
-      title: notificationMessages.title,
-      level: notificationMessages.level,
-      audience: notificationMessages.audience,
-      recipientCount: notificationMessages.recipientCount,
-      senderActor: notificationMessages.senderActor,
-      createdAt: notificationMessages.createdAt,
-      deletedAt: notificationMessages.deletedAt,
-      deliveredCount: count(notificationDeliveries.id),
-      readCount: count(sql`case when ${notificationDeliveries.isRead} = true then 1 end`)
-    })
-      .from(notificationMessages)
-      .leftJoin(notificationDeliveries, eq(notificationDeliveries.messageId, notificationMessages.id))
-      .where(isNull(notificationMessages.deletedAt))
-      .groupBy(notificationMessages.id)
-      .orderBy(desc(notificationMessages.createdAt))
-      .limit(limit)
-      .offset(offset)
+    const [items, totalRows] = await Promise.all([
+      db.select({
+        id: notificationMessages.id,
+        title: notificationMessages.title,
+        level: notificationMessages.level,
+        audience: notificationMessages.audience,
+        senderActor: notificationMessages.senderActor,
+        createdAt: notificationMessages.createdAt,
+        deliveredCount: count(notificationDeliveries.id),
+        readCount: count(sql`case when ${notificationDeliveries.isRead} = true then 1 end`)
+      })
+        .from(notificationMessages)
+        .leftJoin(notificationDeliveries, eq(notificationDeliveries.messageId, notificationMessages.id))
+        .where(where)
+        .groupBy(notificationMessages.id)
+        .orderBy(desc(notificationMessages.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ value: count() }).from(notificationMessages).where(where)
+    ])
+
+    return { items, total: toNumber(totalRows[0]?.value) }
   },
 
   async getMessageDetail(messageId: number) {

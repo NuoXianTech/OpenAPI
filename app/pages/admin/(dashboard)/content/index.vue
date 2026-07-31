@@ -3,7 +3,8 @@ import { MESSAGE_LEVELS, type Announcement, type MessageLevel } from '#shared/ty
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 import { parseFetchError } from '~/utils/client-error'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 interface AnnouncementFilterOption<TValue extends string = string> {
@@ -53,7 +54,7 @@ const activeFilterCount = computed(() => [
 ].filter(Boolean).length)
 
 const filteredData = computed(() => data.value.filter(item => isAnnouncementVisible(item)))
-const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
+const { page, pageSize, total, paginated } = useClientPagination(filteredData)
 
 const modalOpen = ref(false)
 const editItem = ref<Announcement | null>(null)
@@ -201,7 +202,6 @@ const columns = computed<TableColumn<Announcement>[]>(() => [
     <DashboardTableCard
       :title="$t('admin.content.announcements.listTitle')"
       icon="i-mdi-bullhorn-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -210,7 +210,7 @@ const columns = computed<TableColumn<Announcement>[]>(() => [
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.content.announcements.empty')"
         empty-icon="i-mdi-bullhorn-outline"
       >

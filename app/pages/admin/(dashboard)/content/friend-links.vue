@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import type { FriendLinkItem } from '#shared/types/content'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { parseFetchError } from '~/utils/client-error'
 
@@ -33,7 +34,7 @@ const activeFilterCount = computed(() => [
 ].filter(Boolean).length)
 
 const filteredData = computed(() => data.value.filter(item => isFriendLinkVisible(item)))
-const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
+const { page, pageSize, total, paginated } = useClientPagination(filteredData)
 
 const modalOpen = ref(false)
 const editItem = ref<FriendLinkItem | null>(null)
@@ -145,7 +146,6 @@ const columns = computed<TableColumn<FriendLinkItem>[]>(() => [
     <DashboardTableCard
       :title="$t('admin.content.friendLinks.listTitle')"
       icon="i-mdi-link-variant"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -154,7 +154,7 @@ const columns = computed<TableColumn<FriendLinkItem>[]>(() => [
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.content.friendLinks.empty')"
         empty-icon="i-mdi-link-variant"
       >

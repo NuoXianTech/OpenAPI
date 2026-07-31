@@ -1,11 +1,6 @@
 <script setup lang="ts" generic="T">
 import type { TableColumn } from '@nuxt/ui'
 
-interface DashboardDataTablePageSizeItem {
-  label: string
-  value: number
-}
-
 interface DashboardDataTableProps<T> {
   data: T[]
   columns: TableColumn<T>[]
@@ -16,10 +11,8 @@ interface DashboardDataTableProps<T> {
   page?: number
   pageSize?: number
   total?: number
-  /** 传入后底部显示“每页条数”下拉（配合 v-model:page-size）；不传则只显示计数 + 分页 */
-  pageSizeItems?: DashboardDataTablePageSizeItem[]
-  /** 数据只有一页时仍显示页码与上一页/下一页控件 */
-  alwaysShowPagination?: boolean
+  /** 传入后底部显示“每页条数”下拉（配合 v-model:page-size） */
+  pageSizeOptions?: number[]
   /** 行选择状态（配合 v-model:row-selection）；不传则禁用行选择 */
   rowSelection?: Record<string, boolean>
   /** 列可见性状态（配合 v-model:column-visibility）；不传则全部列可见 */
@@ -50,8 +43,7 @@ const {
   page = 1,
   pageSize = 0,
   total = 0,
-  pageSizeItems,
-  alwaysShowPagination = false,
+  pageSizeOptions,
   rowSelection,
   columnVisibility,
   getRowId,
@@ -79,17 +71,18 @@ const tableUi = computed(() => ({
   ...ui
 }))
 
-const hasPageSizeSelect = computed(() => !!pageSizeItems?.length)
-const localizedPageSizeItems = computed(() => pageSizeItems?.map(item => ({
-  ...item,
-  label: t('common.pagination.perPage', { count: item.value })
+const hasPageSizeSelect = computed(() => !!pageSizeOptions?.length)
+const localizedPageSizeItems = computed(() => pageSizeOptions?.map(value => ({
+  value,
+  label: t('common.pagination.perPage', { count: value })
 })))
 const showSkeleton = computed(() => loading && data.length === 0)
-const hasPaginationData = computed(() => pageSize > 0 && total > 0)
-const showPagination = computed(() => hasPaginationData.value && (alwaysShowPagination || total > pageSize))
+// 只要页面提供了“每页条数”，分页控件就是列表操作的一部分：即使当前只有一页，
+// 也保留禁用态的首页 / 上一页 / 下一页 / 末页，避免不同列表的底部结构忽隐忽现。
+const showPagination = computed(() => pageSize > 0 && total > 0 && (
+  hasPageSizeSelect.value || total > pageSize
+))
 const skeletonColumnCount = computed(() => Math.max(columns.length || 0, 3))
-// 带每页条数下拉时，只要有数据就展示底部（计数/下拉常驻）；否则沿用“仅多页时显示分页”。
-const showFooter = computed(() => hasPageSizeSelect.value ? total > 0 : showPagination.value)
 
 function skeletonWidth(rowIndex: number, columnIndex: number) {
   const widths = ['72%', '48%', '84%', '56%', '66%', '38%', '76%', '52%']
@@ -203,10 +196,10 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
     </UTable>
 
     <div
-      v-if="showFooter"
-      class="flex items-center justify-between gap-3 border-t border-default px-3 py-2.5"
+      v-if="showPagination"
+      class="flex flex-col gap-2.5 border-t border-default px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
     >
-      <div class="flex items-center gap-2">
+      <div class="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-start">
         <span class="text-xs text-muted tabular-nums">
           {{ t('common.pagination.totalRecords', { count: total.toLocaleString(locale) }) }}
         </span>
@@ -221,11 +214,13 @@ function onColumnVisibilityChange(value: Record<string, boolean> | undefined) {
         />
       </div>
       <UPagination
-        v-if="showPagination"
         :page="page"
         :items-per-page="pageSize"
         :total="total"
+        :sibling-count="1"
         size="sm"
+        class="max-w-full self-end sm:self-auto"
+        :ui="{ first: 'hidden sm:flex', last: 'hidden sm:flex' }"
         @update:page="emit('update:page', $event)"
       />
     </div>

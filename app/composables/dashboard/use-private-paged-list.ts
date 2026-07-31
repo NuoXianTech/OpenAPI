@@ -8,6 +8,7 @@ import {
   type ComputedRef,
   type Ref
 } from 'vue'
+import { DEFAULT_PAGE_SIZE } from '~/constants/pagination'
 
 export interface PrivatePagedPagination {
   page: number
@@ -15,10 +16,7 @@ export interface PrivatePagedPagination {
   offset: number
 }
 
-interface UsePrivatePagedListOptions<
-  TFilters extends object,
-  TItem
-> {
+interface UsePrivatePagedListOptions<TFilters extends object> {
   path: string
   defaultFilters: TFilters
   defaultPageSize?: number
@@ -30,8 +28,6 @@ interface UsePrivatePagedListOptions<
   pageSize?: Ref<number>
   // 把 filters + 分页拼成最终 query；缺省直接展开 filters 并附加 limit/offset。
   buildQuery?: (filters: TFilters, pagination: PrivatePagedPagination) => Record<string, unknown>
-  // 把响应映射成 { items, total }；缺省：数组 → items=数组、total=length；对象 → 取 { items, total }。
-  transform?: (resp: unknown) => { items: TItem[], total: number }
 }
 
 interface UsePrivatePagedListReturn<TFilters, TItem> {
@@ -40,19 +36,12 @@ interface UsePrivatePagedListReturn<TFilters, TItem> {
   pageSize: Ref<number>
   items: Ref<TItem[]>
   total: Ref<number>
-  totalPages: ComputedRef<number>
   status: Ref<AsyncDataRequestStatus>
   loading: ComputedRef<boolean>
   error: Ref<unknown>
   refresh: () => Promise<void>
   applyFilters: () => Promise<void>
   reset: () => Promise<void>
-}
-
-function defaultTransform<TItem>(resp: unknown): { items: TItem[], total: number } {
-  if (Array.isArray(resp)) return { items: resp as TItem[], total: resp.length }
-  const r = resp as { items?: TItem[], total?: number } | null
-  return { items: r?.items ?? [], total: r?.total ?? 0 }
 }
 
 /**
@@ -70,20 +59,17 @@ function defaultTransform<TItem>(resp: unknown): { items: TItem[], total: number
 export function usePrivatePagedList<
   TFilters extends object,
   TItem = unknown
->(options: UsePrivatePagedListOptions<TFilters, TItem>): UsePrivatePagedListReturn<TFilters, TItem> {
+>(options: UsePrivatePagedListOptions<TFilters>): UsePrivatePagedListReturn<TFilters, TItem> {
   const {
     path,
     defaultFilters,
-    defaultPageSize = 50,
+    defaultPageSize = DEFAULT_PAGE_SIZE,
     immediate = true,
     filters: externalFilters,
     page: externalPage,
     pageSize: externalPageSize,
-    buildQuery,
-    transform
+    buildQuery
   } = options
-
-  const doTransform = transform ?? defaultTransform<TItem>
 
   const filters = externalFilters ?? (reactive({ ...defaultFilters }) as TFilters)
   const page = externalPage ?? ref(1)
@@ -94,7 +80,6 @@ export function usePrivatePagedList<
   const error = ref<unknown>(null)
 
   const loading = computed(() => status.value === 'pending')
-  const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize.value)))
 
   // 请求序号：并发 / 快慢乱序时只采用最新一次请求的结果，避免旧响应覆盖新数据。
   let requestSeq = 0
@@ -106,7 +91,7 @@ export function usePrivatePagedList<
     page.value = 1
   }
 
-  async function refresh() {
+  async function refresh(): Promise<void> {
     const seq = ++requestSeq
     status.value = 'pending'
     error.value = null
@@ -116,9 +101,22 @@ export function usePrivatePagedList<
       ? buildQuery(filters, { page: page.value, limit, offset })
       : { ...filters, limit, offset }
     try {
-      const resp = await $fetch(path, { query })
+      const result = await $fetch<{ items: TItem[], total: number }>(path, { query })
       if (seq !== requestSeq) return
-      const result = doTransform(resp)
+      if (!Array.isArray(result.items) || !Number.isFinite(result.total)) {
+        throw new TypeError(`Invalid paged response from ${path}`)
+      }
+
+      // 删除当前页最后一条数据、筛选结果收缩等场景可能令页码越界。
+      // 服务端分页不能像客户端切片那样自行回收到末页，因此在这里统一修正并重拉。
+      const lastPage = Math.max(1, Math.ceil(result.total / pageSize.value))
+      if (page.value > lastPage) {
+        skipNextPageRefresh = true
+        page.value = lastPage
+        await refresh()
+        return
+      }
+
       items.value = result.items
       total.value = result.total
       status.value = 'success'
@@ -166,7 +164,6 @@ export function usePrivatePagedList<
     pageSize,
     items,
     total,
-    totalPages,
     status,
     loading,
     error,

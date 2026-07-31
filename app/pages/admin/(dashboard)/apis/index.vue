@@ -7,7 +7,8 @@ import {
   type AdminDiscoveredApi,
   type AdminVersionGroup
 } from '~/composables/admin/use-admin-display-meta'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 const toast = useToast()
@@ -98,7 +99,7 @@ const {
   resyncManifest
 })
 
-const { page, pageSize, total, paginated } = useClientPagination(filteredApis, 10)
+const { page, pageSize, total, paginated } = useClientPagination(filteredApis)
 const firstVersion = computed(() => versionItems.value[0]?.value ?? '')
 const activeFilterCount = computed(() => [
   !!firstVersion.value && activeVersion.value !== firstVersion.value
@@ -160,7 +161,6 @@ function resetApiFilters() {
       v-else
       :title="$t('admin.apis.registry.listTitle')"
       icon="i-mdi-api"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -169,7 +169,7 @@ function resetApiFilters() {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.apis.registry.empty')"
         empty-icon="i-mdi-api"
       >

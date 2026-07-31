@@ -1,7 +1,6 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
 import { computed, ref, type ComputedRef, type Ref } from 'vue'
-import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 interface RedemptionCode {
@@ -62,7 +61,6 @@ export function useRedemptionCodesPage() {
   const paged = usePrivatePagedList<RedemptionFilters, RedemptionCode>({
     path: '/api/admin/redemption-codes/list',
     defaultFilters: { status: 'all', batchId: 'all', keyword: '' },
-    defaultPageSize: DEFAULT_PAGE_SIZE,
     immediate: false,
     buildQuery: (f, p) => ({
       status: f.status === 'all' ? undefined : f.status,
@@ -212,7 +210,6 @@ export function useRedemptionCodesPage() {
     items: paged.items,
     total: paged.total,
     loading: paged.loading,
-    totalPages: paged.totalPages,
     batches,
     fetchList: paged.refresh,
     fetchBatches,

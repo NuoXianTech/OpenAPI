@@ -5,7 +5,8 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
 import { useApiKeyForm } from '~/composables/api/use-api-key-form'
 import { useApiKeyDisplay } from '~/composables/api/use-api-key-display'
-import { DEFAULT_PAGE_SIZE, useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
@@ -250,7 +251,7 @@ const filteredItems = computed(() => {
   })
 })
 
-const { page, pageSize, total, paginated } = useClientPagination(filteredItems, DEFAULT_PAGE_SIZE)
+const { page, pageSize, total, paginated } = useClientPagination(filteredItems)
 
 const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility(columns)
 
@@ -352,7 +353,6 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         <DashboardTableCard
           :title="$t('user.apiKeys.listTitle')"
           icon="i-mdi-key-outline"
-          :total="total"
         >
           <DashboardDataTable
             v-model:page="page"
@@ -362,8 +362,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             :columns="columns"
             :loading="loading"
             :total="total"
-            :page-size-items="PAGE_SIZE_ITEMS"
-            always-show-pagination
+            :page-size-options="PAGE_SIZE_OPTIONS"
             :fixed="false"
             :empty-title="$t('user.apiKeys.empty')"
             empty-icon="i-mdi-key-outline"

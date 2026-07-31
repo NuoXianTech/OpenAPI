@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { LazyAdminCallLogDetailModal } from '#components'
 import {
   ADMIN_CALL_LOG_TYPE_META,
@@ -165,7 +165,6 @@ function openDetail(row: AdminLogRow) {
     <DashboardTableCard
       :title="$t('admin.logs.call.detailsTitle')"
       icon="i-mdi-text-box-search-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -174,7 +173,7 @@ function openDetail(row: AdminLogRow) {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.logs.call.empty')"
         empty-icon="i-mdi-text-box-search-outline"
       >

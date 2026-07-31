@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import {
   useAdminRedemptionCodesDisplayMeta,
   useRedemptionCodesPage
@@ -141,7 +141,6 @@ const {
     <DashboardTableCard
       :title="$t('admin.credits.redemptionCodes.detailsTitle')"
       icon="i-mdi-ticket-percent-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -150,7 +149,7 @@ const {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.credits.redemptionCodes.empty')"
         empty-icon="i-mdi-ticket-percent-outline"
       >

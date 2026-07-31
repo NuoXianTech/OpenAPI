@@ -29,7 +29,6 @@ const {
   totalPages,
   paginated: paginatedApis
 } = useClientPagination(filteredApis, DIRECTORY_PAGE_SIZE)
-const hasPagination = computed(() => total.value > pageSize.value)
 
 watch([searchQuery, selectedStatus, selectedCategory], () => {
   page.value = 1
@@ -178,8 +177,8 @@ useSeoMeta({
               :items-per-page="pageSize"
               :total="total"
               :sibling-count="1"
-              :show-controls="hasPagination"
               size="sm"
+              :ui="{ first: 'hidden sm:flex', last: 'hidden sm:flex' }"
               @update:page="handlePageChange"
             />
           </nav>

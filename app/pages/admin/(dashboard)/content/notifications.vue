@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watchDebounced } from '@vueuse/core'
 import type { MessageLevel } from '#shared/types/content'
 import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 import { adminModalUi } from '~/utils/admin-modal-ui'
@@ -6,11 +7,10 @@ import { parseFetchError } from '~/utils/client-error'
 import {
   useAdminNotificationsDisplayMeta,
   type AdminNotificationDeliveryRow,
-  type AdminNotificationMessageRow,
-  type AdminNotificationUserItem
+  type AdminNotificationMessageRow
 } from '~/composables/admin/use-admin-display-meta'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
-import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 interface AdminNotificationFilterOption<TValue extends string = string> {
   label: string
@@ -20,22 +20,37 @@ interface AdminNotificationFilterOption<TValue extends string = string> {
 type AdminNotificationAudienceFilter = 'all' | AdminNotificationMessageRow['audience']
 type AdminNotificationLevelFilter = 'all' | MessageLevel
 
+interface AdminNotificationHistoryFilters extends Record<string, unknown> {
+  keyword: string
+  audience: AdminNotificationAudienceFilter
+  level: AdminNotificationLevelFilter
+}
+
 const toast = useToast()
 const { t, locale } = useI18n()
 
-const { data: usersData } = usePrivateResource<AdminNotificationUserItem[]>({
-  path: '/api/admin/users/list',
-  defaultData: () => []
-})
-
-const { data: messagesData, loading, refresh } = usePrivateResource<AdminNotificationMessageRow[]>({
+const history = usePrivatePagedList<AdminNotificationHistoryFilters, AdminNotificationMessageRow>({
   path: '/api/admin/notifications/list',
-  defaultData: () => []
+  defaultFilters: { keyword: '', audience: 'all', level: 'all' },
+  buildQuery: (filters, pagination) => ({
+    keyword: filters.keyword.trim() || undefined,
+    audience: filters.audience === 'all' ? undefined : filters.audience,
+    level: filters.level === 'all' ? undefined : filters.level,
+    limit: pagination.limit,
+    offset: pagination.offset
+  })
 })
-
-const historyKeyword = ref('')
-const historyAudienceFilter = ref<AdminNotificationAudienceFilter>('all')
-const historyLevelFilter = ref<AdminNotificationLevelFilter>('all')
+const historyKeyword = toRef(history.filters, 'keyword')
+const historyAudienceFilter = toRef(history.filters, 'audience')
+const historyLevelFilter = toRef(history.filters, 'level')
+const {
+  page,
+  pageSize,
+  items: messagesData,
+  total,
+  loading,
+  refresh
+} = history
 
 const sendModalOpen = ref(false)
 
@@ -50,7 +65,6 @@ const {
   columns,
   getRowItems
 } = useAdminNotificationsDisplayMeta({
-  users: usersData,
   openDetail,
   openDelete
 })
@@ -67,27 +81,27 @@ const activeHistoryFilterCount = computed(() => [
   historyAudienceFilter.value !== 'all',
   historyLevelFilter.value !== 'all'
 ].filter(Boolean).length)
-const filteredMessagesData = computed(() => messagesData.value.filter(row => isNotificationMessageVisible(row)))
-const { page, pageSize, total, paginated } = useClientPagination(filteredMessagesData, 10)
+let lastAppliedHistoryKeyword = ''
 
-watch([historyKeyword, historyAudienceFilter, historyLevelFilter], () => {
-  page.value = 1
-})
+watchDebounced(
+  () => historyKeyword.value.trim(),
+  (value) => {
+    if (value === lastAppliedHistoryKeyword) return
+    lastAppliedHistoryKeyword = value
+    void history.applyFilters()
+  },
+  { debounce: 250, maxWait: 1000 }
+)
 
-function isNotificationMessageVisible(row: AdminNotificationMessageRow): boolean {
-  const normalizedKeyword = historyKeyword.value.trim().toLowerCase()
-  const matchesKeyword = !normalizedKeyword
-    || row.title.toLowerCase().includes(normalizedKeyword)
-    || (row.senderActor || '').toLowerCase().includes(normalizedKeyword)
-  const matchesAudience = historyAudienceFilter.value === 'all' || row.audience === historyAudienceFilter.value
-  const matchesLevel = historyLevelFilter.value === 'all' || row.level === historyLevelFilter.value
-
-  return matchesKeyword && matchesAudience && matchesLevel
+async function applyHistoryFilters() {
+  lastAppliedHistoryKeyword = historyKeyword.value.trim()
+  await history.applyFilters()
 }
 
-function resetHistoryFilters() {
+async function resetHistoryFilters() {
   historyAudienceFilter.value = 'all'
   historyLevelFilter.value = 'all'
+  await applyHistoryFilters()
 }
 
 const detailOpen = ref(false)
@@ -156,9 +170,11 @@ const detailDescription = computed(() => {
           icon="i-mdi-magnify"
           :placeholder="$t('admin.content.notifications.searchPlaceholder')"
           class="w-full sm:w-72"
+          @keyup.enter="applyHistoryFilters"
         />
         <AdminFilterPopover
           :active-count="activeHistoryFilterCount"
+          @apply="applyHistoryFilters"
           @reset="resetHistoryFilters"
         >
           <UFormField :label="$t('admin.content.notifications.filters.audience')">
@@ -199,16 +215,15 @@ const detailDescription = computed(() => {
     <DashboardTableCard
       :title="$t('admin.content.notifications.historyTitle')"
       icon="i-mdi-history"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
         v-model:page-size="pageSize"
-        :data="paginated"
+        :data="messagesData"
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.content.notifications.emptyHistory')"
         empty-icon="i-mdi-history"
       >
@@ -269,8 +284,7 @@ const detailDescription = computed(() => {
     <LazyAdminNotificationSendModal
       v-if="sendModalOpen"
       v-model:open="sendModalOpen"
-      :users="usersData"
-      @sent="refresh()"
+      @sent="applyHistoryFilters"
     />
 
     <UModal

@@ -79,4 +79,35 @@ describe('usePrivatePagedList', () => {
     expect(list.status.value).toBe('error')
     expect(list.error.value).toBeInstanceOf(Error)
   })
+
+  it('moves back to the last available page when refreshed data shrinks', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ items: [], total: 20 })
+      .mockResolvedValueOnce({ items: [{ id: 20 }], total: 20 })
+    vi.stubGlobal('$fetch', fetchMock)
+
+    const page = ref(3)
+    const pageSize = ref(10)
+    const list = usePrivatePagedList<TestFilters, TestRow>({
+      path: '/api/example',
+      defaultFilters: { keyword: '' },
+      immediate: false,
+      page,
+      pageSize
+    })
+
+    await list.refresh()
+    await nextTick()
+
+    expect(page.value).toBe(2)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/example', {
+      query: { keyword: '', limit: 10, offset: 20 }
+    })
+    expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/example', {
+      query: { keyword: '', limit: 10, offset: 10 }
+    })
+    expect(list.items.value).toEqual([{ id: 20 }])
+    expect(list.total.value).toBe(20)
+  })
 })

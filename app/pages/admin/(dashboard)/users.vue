@@ -4,7 +4,7 @@ import {
   useAdminUsersPage,
   type AdminUserItem
 } from '~/composables/admin/use-admin-users-page'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 
 const { t, locale } = useI18n()
@@ -17,7 +17,11 @@ const {
   activeFilter,
   banFilter,
   activeFilterCount,
+  applyFilters,
   resetFilters,
+  page,
+  pageSize,
+  total,
   loading,
   items,
   refresh,
@@ -27,11 +31,6 @@ const {
   updateUser,
   createUser
 } = useAdminUsersPage()
-
-const { page, pageSize, total, paginated } = useClientPagination(items, 20)
-watch([keyword, userIdFilter, roleFilter, activeFilter, banFilter, pageSize], () => {
-  page.value = 1
-})
 
 const confirm = useConfirmDialog()
 
@@ -112,10 +111,12 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
             icon="i-mdi-magnify"
             :placeholder="$t('admin.users.searchPlaceholder')"
             class="w-full sm:w-64"
+            @keyup.enter="applyFilters"
           />
           <AdminFilterPopover
             :active-count="activeFilterCount"
             :title="$t('admin.users.filterTitle')"
+            @apply="applyFilters"
             @reset="resetFilters"
           >
             <UFormField
@@ -191,17 +192,16 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
         <DashboardTableCard
           :title="$t('admin.users.listTitle')"
           icon="i-mdi-account-group-outline"
-          :total="total"
         >
           <DashboardDataTable
             v-model:page="page"
             v-model:page-size="pageSize"
             v-model:column-visibility="columnVisibility"
-            :data="paginated"
+            :data="items"
             :columns="columns"
             :loading="loading"
             :total="total"
-            :page-size-items="PAGE_SIZE_ITEMS"
+            :page-size-options="PAGE_SIZE_OPTIONS"
             :get-row-id="(row: AdminUserItem) => String(row.id)"
             :empty-title="$t('admin.users.empty')"
             empty-icon="i-mdi-account-off-outline"

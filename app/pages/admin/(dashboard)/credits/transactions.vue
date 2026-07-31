@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import type { TableColumn } from '@nuxt/ui'
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
 import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
@@ -67,7 +67,6 @@ const {
     minAmount: '',
     maxAmount: ''
   },
-  defaultPageSize: DEFAULT_PAGE_SIZE,
   buildQuery: (f, p) => ({
     userId: f.userId || undefined,
     reason: f.reason === 'all' ? undefined : f.reason,
@@ -228,7 +227,6 @@ function amountClass(amt: number) {
     <DashboardTableCard
       :title="$t('admin.credits.transactions.detailsTitle')"
       icon="i-mdi-cash-multiple"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -237,7 +235,7 @@ function amountClass(amt: number) {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.credits.transactions.empty')"
         empty-icon="i-mdi-cash-multiple"
       >

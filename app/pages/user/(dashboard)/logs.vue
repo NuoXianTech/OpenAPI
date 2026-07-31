@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { LazyUserCallLogDetailModal } from '#components'
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 import {
   useUserCallLogsPage,
@@ -116,7 +116,6 @@ function openDetail(row: UserCallLogRow) {
         <DashboardTableCard
           :title="$t('user.logs.detailsTitle')"
           icon="i-mdi-text-box-search-outline"
-          :total="total"
         >
           <DashboardDataTable
             v-model:page="page"
@@ -126,8 +125,7 @@ function openDetail(row: UserCallLogRow) {
             :columns="columns"
             :loading="loading"
             :total="total"
-            :page-size-items="PAGE_SIZE_ITEMS"
-            always-show-pagination
+            :page-size-options="PAGE_SIZE_OPTIONS"
             :empty-title="$t('user.logs.empty')"
             empty-icon="i-mdi-text-box-search-outline"
           >

@@ -2,7 +2,7 @@
 import { watchDebounced } from '@vueuse/core'
 import type { TableColumn } from '@nuxt/ui'
 import type { AdminCreditUser } from '#shared/types/admin-credits'
-import { DEFAULT_PAGE_SIZE, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 interface CreditUserFilters extends Record<string, unknown> {
@@ -27,7 +27,6 @@ const {
 } = usePrivatePagedList<CreditUserFilters, AdminCreditUser>({
   path: '/api/admin/credits/users',
   defaultFilters: { keyword: '', userId: '', balance: 'all' },
-  defaultPageSize: DEFAULT_PAGE_SIZE,
   buildQuery: (currentFilters, pagination) => ({
     keyword: currentFilters.keyword.trim() || undefined,
     userId: currentFilters.userId || undefined,
@@ -183,7 +182,6 @@ async function onCreditSaved() {
     <DashboardTableCard
       :title="$t('admin.credits.users.listTitle')"
       icon="i-mdi-account-cash-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -193,7 +191,7 @@ async function onCreditSaved() {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :get-row-id="(row: AdminCreditUser) => String(row.id)"
         :empty-title="$t('admin.credits.users.empty')"
         empty-icon="i-mdi-account-off-outline"

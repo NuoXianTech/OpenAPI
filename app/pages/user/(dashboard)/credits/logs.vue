@@ -2,7 +2,7 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
 import { useUserCreditsPage, type TransactionRow } from '~/composables/user/use-user-credits-page'
-import { PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 
 const { t, locale } = useI18n()
 const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
@@ -103,7 +103,6 @@ async function resetCreditFilters() {
     <DashboardTableCard
       :title="$t('user.credits.logs.title')"
       icon="i-mdi-format-list-bulleted"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -112,7 +111,7 @@ async function resetCreditFilters() {
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :fixed="false"
         :empty-title="$t('user.credits.logs.empty')"
         empty-icon="i-mdi-format-list-bulleted"

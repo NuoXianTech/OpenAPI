@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { TableColumn, DropdownMenuItem } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
-import { useClientPagination, PAGE_SIZE_ITEMS } from '~/composables/dashboard/use-client-pagination'
+import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
 interface ApiCategoryItem {
@@ -29,7 +30,7 @@ const { data, loading, refresh } = usePrivateResource<ApiCategoryItem[]>({
 
 const keyword = ref('')
 const filteredData = computed(() => data.value.filter(item => isApiCategoryVisible(item)))
-const { page, pageSize, total, paginated } = useClientPagination(filteredData, 10)
+const { page, pageSize, total, paginated } = useClientPagination(filteredData)
 
 const modalOpen = ref(false)
 const editItem = ref<ApiCategoryItem | null>(null)
@@ -136,7 +137,6 @@ const columns = computed<TableColumn<ApiCategoryItem>[]>(() => [
     <DashboardTableCard
       :title="$t('admin.apis.categories.listTitle')"
       icon="i-mdi-shape-outline"
-      :total="total"
     >
       <DashboardDataTable
         v-model:page="page"
@@ -145,7 +145,7 @@ const columns = computed<TableColumn<ApiCategoryItem>[]>(() => [
         :columns="columns"
         :loading="loading"
         :total="total"
-        :page-size-items="PAGE_SIZE_ITEMS"
+        :page-size-options="PAGE_SIZE_OPTIONS"
         :empty-title="$t('admin.apis.categories.empty')"
         empty-icon="i-mdi-shape-outline"
       >

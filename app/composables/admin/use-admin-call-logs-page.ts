@@ -17,7 +17,6 @@ import {
   type DashboardQueryCodec,
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
-import { DEFAULT_PAGE_SIZE } from '~/composables/dashboard/use-client-pagination'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 import { useLoginLogMeta, type LoginMethodColor } from '~/composables/logs/use-login-log-meta'
 
@@ -84,7 +83,6 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
-    defaultPageSize: DEFAULT_PAGE_SIZE,
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
@@ -133,9 +131,6 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     { label: t('admin.logs.call.filters.allCategories'), value: 0 },
     ...filterOptions.value.categories.map(category => ({ label: category.name, value: category.id }))
   ])
-  const hasAdvancedFilters = computed(
-    () => listState.filters.apiKeyId !== '' || listState.filters.userId !== '' || !!listState.filters.requestId
-  )
   const columns = computed<TableColumn<AdminLogRow>[]>(() => [
     { accessorKey: 'createdAt', header: t('admin.logs.call.columns.time') },
     { accessorKey: 'userName', header: t('admin.logs.call.columns.user') },
@@ -169,13 +164,9 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     filters: listState.filters,
     page: listState.page,
     pageSize: listState.pageSize,
-    activeQuery: listState.activeQuery,
     items: list.items,
     total: list.total,
-    totalPages: list.totalPages,
-    status: list.status,
     loading: list.loading,
-    error: list.error,
     refresh: list.refresh,
     applyFilters,
     resetFilters,
@@ -183,7 +174,6 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     typeSelectItems,
     apiSelectItems,
     categorySelectItems,
-    hasAdvancedFilters,
     activeFilterCount: listState.activeFilterCount,
     columns,
     loadFilterOptions
@@ -224,8 +214,6 @@ interface UseAdminLoginLogListReturn {
   successItems: ComputedRef<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['success']>>>
   total: Ref<number>
 }
-
-const ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 const ADMIN_LOGIN_LOG_DEFAULT_FILTERS: AdminLoginLogFilters = {
   startAt: '',
@@ -276,7 +264,6 @@ export function useAdminLoginLogList(
   } = usePrivatePagedList<AdminLoginLogFilters, AdminLoginLogRow>({
     path: '/api/admin/login-logs/list',
     defaultFilters: ADMIN_LOGIN_LOG_DEFAULT_FILTERS,
-    defaultPageSize: ADMIN_LOGIN_LOG_DEFAULT_PAGE_SIZE,
     immediate: options.immediate ?? true,
     buildQuery: buildAdminLoginLogQuery
   })
@@ -365,9 +352,7 @@ interface UseAdminOperationLogListReturn {
   detailJson: ComputedRef<string>
   detailOpen: Ref<boolean>
   detailRow: Ref<AdminOperationLogRow | null>
-  expandedFilters: Ref<boolean>
   filters: AdminOperationLogFilters
-  hasAdvancedFilters: ComputedRef<boolean>
   items: Ref<AdminOperationLogRow[]>
   loading: ComputedRef<boolean>
   openDetail: (row: AdminOperationLogRow) => void
@@ -380,8 +365,6 @@ interface UseAdminOperationLogListReturn {
   statusItems: ComputedRef<Array<{ label: string, value: AdminOperationLogFilters['status'] }>>
   total: Ref<number>
 }
-
-const ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE = DEFAULT_PAGE_SIZE
 
 const ADMIN_OPERATION_LOG_DEFAULT_FILTERS: AdminOperationLogFilters = {
   startAt: '',
@@ -457,20 +440,10 @@ export function useAdminOperationLogList(
   } = usePrivatePagedList<AdminOperationLogFilters, AdminOperationLogRow>({
     path: '/api/admin/operation-logs/list',
     defaultFilters: ADMIN_OPERATION_LOG_DEFAULT_FILTERS,
-    defaultPageSize: ADMIN_OPERATION_LOG_DEFAULT_PAGE_SIZE,
     immediate: options.immediate ?? true,
     buildQuery: buildAdminOperationLogQuery
   })
 
-  const expandedFilters = ref(false)
-  const hasAdvancedFilters = computed(
-    () => filters.actorKind !== 'all'
-      || !!filters.actor
-      || filters.status !== 'all'
-      || filters.userId !== ''
-      || !!filters.action
-      || !!filters.resourceType
-  )
   const activeFilterCount = computed(() => [
     !!filters.startAt,
     !!filters.endAt,
@@ -542,9 +515,7 @@ export function useAdminOperationLogList(
     detailJson,
     detailOpen,
     detailRow,
-    expandedFilters,
     filters,
-    hasAdvancedFilters,
     items,
     loading,
     openDetail,
