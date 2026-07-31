@@ -41,6 +41,7 @@ const { apis = [], categoryMap = {} } = defineProps<ApiCardGridProps>()
   contain: layout style;
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 16px;
   align-items: stretch;
 }

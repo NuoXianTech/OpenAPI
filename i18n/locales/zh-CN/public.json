@@ -76,6 +76,8 @@
       "categoryLabel": "接口分类",
       "resultSummary": "共 {count} 个接口",
       "resultHint": "打开详情查看接入信息",
+      "pagination": "第 {page} / {totalPages} 页",
+      "paginationAria": "接口目录分页",
       "emptyTitle": "没有匹配的接口",
       "emptyDescription": "尝试更换关键词，或切换到全部分类重新查找。"
     },

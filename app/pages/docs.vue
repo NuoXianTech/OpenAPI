@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
+import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: false })
 
+const DIRECTORY_PAGE_SIZE = 12
 const { t } = useI18n()
 const gatewayOrigin = useRequestURL().origin
 const {
   searchQuery,
+  selectedStatus,
   selectedCategory,
+  statusTabs,
   categoryTabs,
   categoryMap,
   allApis,
@@ -18,6 +22,19 @@ const {
   refreshCatalog
 } = usePublicApiCatalog()
 
+const {
+  page,
+  pageSize,
+  total,
+  totalPages,
+  paginated: paginatedApis
+} = useClientPagination(filteredApis, DIRECTORY_PAGE_SIZE)
+const hasPagination = computed(() => total.value > pageSize.value)
+
+watch([searchQuery, selectedStatus, selectedCategory], () => {
+  page.value = 1
+})
+
 const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
@@ -25,6 +42,12 @@ const retryActions = computed(() => [{
   icon: 'i-lucide-refresh-cw',
   onClick: refreshCatalog
 }])
+
+async function handlePageChange(nextPage: number): Promise<void> {
+  page.value = nextPage
+  await nextTick()
+  document.getElementById('api-directory-results')?.scrollIntoView({ block: 'start' })
+}
 
 useHead(() => ({ title: t('public.directory.pageTitle') }))
 useSeoMeta({
@@ -68,6 +91,19 @@ useSeoMeta({
             size="lg"
           />
 
+          <div class="api-directory__statuses">
+            <span class="api-directory__filter-label">
+              <UIcon name="i-lucide-activity" class="size-3.5" />
+              {{ $t('public.home.statusFilter') }}
+            </span>
+            <CommonFilterTabs
+              v-model="selectedStatus"
+              :tabs="statusTabs"
+              :enable-collapse="false"
+              :aria-label="t('public.home.statusFilterAria')"
+            />
+          </div>
+
           <div class="api-directory__categories">
             <span class="api-directory__filter-label">
               <UIcon name="i-lucide-shapes" class="size-3.5" />
@@ -84,7 +120,7 @@ useSeoMeta({
           </div>
         </div>
 
-        <div class="api-directory__result-meta">
+        <div id="api-directory-results" class="api-directory__result-meta">
           <span>
             <UIcon name="i-lucide-list-filter" class="size-3.5" />
             {{ $t('public.directory.resultSummary', { count: filteredApis.length }) }}
@@ -97,9 +133,9 @@ useSeoMeta({
 
         <div v-if="isLoading" class="api-directory__skeletons" aria-hidden="true">
           <USkeleton
-            v-for="index in 5"
+            v-for="index in DIRECTORY_PAGE_SIZE"
             :key="index"
-            class="h-36 w-full rounded-lg"
+            class="h-52 w-full rounded-lg"
           />
         </div>
 
@@ -124,11 +160,30 @@ useSeoMeta({
           class="api-directory__state"
         />
 
-        <ApiDirectoryList
-          v-else
-          :apis="filteredApis"
-          :category-map="categoryMap"
-        />
+        <div v-else class="api-directory__results">
+          <ApiCardGrid
+            :apis="paginatedApis"
+            :category-map="categoryMap"
+          />
+
+          <nav
+            class="api-directory__pagination"
+            :aria-label="$t('public.directory.paginationAria')"
+          >
+            <span>
+              {{ $t('public.directory.pagination', { page, totalPages }) }}
+            </span>
+            <UPagination
+              :page="page"
+              :items-per-page="pageSize"
+              :total="total"
+              :sibling-count="1"
+              :show-controls="hasPagination"
+              size="sm"
+              @update:page="handlePageChange"
+            />
+          </nav>
+        </div>
       </section>
     </main>
 
@@ -252,6 +307,7 @@ useSeoMeta({
   gap: 1rem;
 }
 
+.api-directory__statuses,
 .api-directory__categories {
   min-width: 0;
 }
@@ -277,6 +333,7 @@ useSeoMeta({
   gap: 1rem;
   color: var(--ui-text-muted);
   font-size: 0.72rem;
+  scroll-margin-top: 5.5rem;
 }
 
 .api-directory__result-meta span {
@@ -287,17 +344,61 @@ useSeoMeta({
 
 .api-directory__skeletons {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
 }
 
 .api-directory__state {
   padding-block: 3rem;
 }
 
+.api-directory__pagination {
+  display: flex;
+  margin-top: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--ui-border);
+  padding-top: 1.25rem;
+}
+
+.api-directory__pagination > span {
+  color: var(--ui-text-muted);
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (width >= 640px) {
+  .api-directory__skeletons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 1024px) {
+  .api-directory__skeletons {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 @media (width >= 800px) {
   .api-directory__controls {
     grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
     align-items: end;
+  }
+
+  .api-directory__categories {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width >= 1120px) {
+  .api-directory__controls {
+    grid-template-columns: minmax(240px, 0.72fr) minmax(340px, 1fr) minmax(0, 1.15fr);
+  }
+
+  .api-directory__categories {
+    grid-column: auto;
   }
 }
 
@@ -320,6 +421,11 @@ useSeoMeta({
 
   .api-directory__hint {
     display: none !important;
+  }
+
+  .api-directory__pagination {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

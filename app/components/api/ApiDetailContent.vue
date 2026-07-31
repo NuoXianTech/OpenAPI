@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { httpMethodColor } from '~/utils/http-method'
 import { formatCompactCount } from '~/utils/number-format'
-import { getApiMethodCost, type ApiStatusMeta } from '~/utils/api-presentation'
-
-type ApiDetailVariant = 'popover' | 'modal'
+import { getApiMethodCost } from '~/utils/api-presentation'
 
 interface ApiDetailContentProps {
-  name: string
-  shortDesc?: string
   description?: string
   apiPath: string
   docUrl?: string
@@ -15,32 +11,23 @@ interface ApiDetailContentProps {
   methods: string[]
   methodCosts: Record<string, number>
   totalCalls: number
-  statusMeta: ApiStatusMeta
-  variant?: ApiDetailVariant
 }
 
 const props = withDefaults(defineProps<ApiDetailContentProps>(), {
-  shortDesc: '',
   description: '',
-  docUrl: '',
-  variant: 'popover'
+  docUrl: ''
 })
 
 const {
-  name,
-  shortDesc,
   description,
   apiPath,
   docUrl,
   isApiKey,
   methods,
   methodCosts,
-  totalCalls,
-  statusMeta,
-  variant
+  totalCalls
 } = toRefs(props)
-const { t, locale } = useI18n()
-const summary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
+const { locale } = useI18n()
 
 function costFor(method: string): number {
   return getApiMethodCost(method, methodCosts.value)
@@ -48,38 +35,11 @@ function costFor(method: string): number {
 </script>
 
 <template>
-  <div
-    class="api-detail"
-    :class="`api-detail--${variant}`"
-  >
-    <div
-      v-if="variant === 'popover'"
-      class="api-detail__head"
-    >
-      <div class="api-detail__badges">
-        <UBadge
-          :color="statusMeta.color"
-          variant="soft"
-          size="sm"
-          :icon="statusMeta.icon"
-          class="rounded-full"
-        >
-          {{ statusMeta.label }}
-        </UBadge>
-      </div>
-
-      <h4 class="api-detail__title">
-        {{ name }}
-      </h4>
-      <p class="api-detail__summary">
-        {{ summary }}
-      </p>
-    </div>
-
+  <div class="api-detail">
     <div class="api-detail__body">
       <div class="api-detail__endpoint">
         <span class="api-detail__endpoint-label">
-          <UIcon name="i-mdi-routes" class="size-3.5" />
+          <UIcon name="i-lucide-route" class="size-3.5" />
           {{ $t('public.api.endpoint') }}
         </span>
         <a
@@ -102,7 +62,7 @@ function costFor(method: string): number {
             aria-hidden="true"
           >
             <UIcon
-              name="i-mdi-pulse"
+              name="i-lucide-activity"
               class="size-3.5"
             />
           </span>
@@ -121,7 +81,7 @@ function costFor(method: string): number {
             aria-hidden="true"
           >
             <UIcon
-              :name="isApiKey ? 'i-mdi-shield-key-outline' : 'i-mdi-lock-open-variant-outline'"
+              :name="isApiKey ? 'i-lucide-key-round' : 'i-lucide-lock-open'"
               class="size-3.5"
             />
           </span>
@@ -134,7 +94,7 @@ function costFor(method: string): number {
 
       <div class="api-detail__section">
         <span class="api-detail__label api-detail__section-label">
-          <UIcon name="i-mdi-code-braces" class="size-3.5" />
+          <UIcon name="i-lucide-code-xml" class="size-3.5" />
           {{ $t('public.api.requestMethod') }}
         </span>
         <div class="api-detail__badges">
@@ -153,7 +113,7 @@ function costFor(method: string): number {
 
       <div class="api-detail__section">
         <span class="api-detail__label api-detail__section-label">
-          <UIcon name="i-mdi-wallet-outline" class="size-3.5" />
+          <UIcon name="i-lucide-coins" class="size-3.5" />
           {{ $t('public.api.pricing.label') }}
         </span>
         <div class="api-detail__badges">
@@ -163,7 +123,7 @@ function costFor(method: string): number {
             :color="costFor(method) > 0 ? 'warning' : 'success'"
             variant="soft"
             size="sm"
-            :icon="costFor(method) > 0 ? 'i-mdi-coins' : 'i-mdi-check-circle-outline'"
+            :icon="costFor(method) > 0 ? 'i-lucide-coins' : 'i-lucide-circle-check'"
             class="rounded-full"
           >
             {{ method }} · {{ costFor(method) > 0 ? costFor(method) : $t('public.api.pricing.free') }}
@@ -186,7 +146,7 @@ function costFor(method: string): number {
         color="neutral"
         variant="outline"
         size="sm"
-        trailing-icon="i-mdi-arrow-top-right"
+        trailing-icon="i-lucide-external-link"
         block
       >
         {{ $t('public.api.openDocumentation') }}
@@ -200,22 +160,6 @@ function costFor(method: string): number {
   background: var(--ui-bg-elevated);
 }
 
-.api-detail--popover {
-  width: min(360px, calc(100vw - 28px));
-}
-
-.api-detail--modal {
-  width: 100%;
-  background: var(--ui-bg-elevated);
-}
-
-.api-detail__head {
-  display: grid;
-  gap: 8px;
-  padding: 16px 16px 14px;
-  border-bottom: 1px solid var(--ui-border);
-}
-
 .api-detail__badges {
   display: flex;
   align-items: center;
@@ -224,36 +168,10 @@ function costFor(method: string): number {
   min-width: 0;
 }
 
-.api-detail__title {
-  margin: 0;
-  color: var(--ui-text);
-  font-size: 14px;
-  font-weight: 650;
-  line-height: 1.35;
-}
-
-.api-detail__summary {
-  margin: 0;
-  color: var(--ui-text-muted);
-  font-size: 12.5px;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .api-detail__body {
   display: grid;
   gap: 14px;
-  padding: 14px 16px 16px;
-}
-
-.api-detail--modal .api-detail__body {
-  max-height: calc(86dvh - 86px);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+  padding: 1rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom));
 }
 
 .api-detail__endpoint {
@@ -283,18 +201,10 @@ function costFor(method: string): number {
 
 .api-detail__endpoint a {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   color: var(--ui-text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
   text-decoration: none;
-}
-
-.api-detail--modal .api-detail__endpoint a {
-  overflow: visible;
-  text-overflow: clip;
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -376,16 +286,10 @@ function costFor(method: string): number {
 }
 
 .api-detail__description {
-  max-height: 7.2em;
-  overflow: auto;
   margin: 0;
   color: var(--ui-text-toned);
   font-size: 12.5px;
   line-height: 1.65;
   white-space: pre-wrap;
-}
-
-.api-detail--modal .api-detail__description {
-  max-height: none;
 }
 </style>

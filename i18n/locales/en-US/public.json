@@ -76,6 +76,8 @@
       "categoryLabel": "API category",
       "resultSummary": "{count} APIs",
       "resultHint": "Open details for integration information",
+      "pagination": "Page {page} of {totalPages}",
+      "paginationAria": "API directory pagination",
       "emptyTitle": "No matching APIs",
       "emptyDescription": "Try another keyword or switch back to all categories."
     },

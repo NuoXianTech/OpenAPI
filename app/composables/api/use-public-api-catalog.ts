@@ -1,3 +1,4 @@
+import { API_STATUS } from '#shared/config/api-status'
 import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
 
 export function usePublicApiCatalog() {
@@ -23,6 +24,7 @@ export function usePublicApiCatalog() {
   })
 
   const searchQuery = ref('')
+  const selectedStatus = ref<string | number>('all')
   const selectedCategory = ref<string | number>('all')
   const allApis = computed(() => apiData.value || [])
   const categories = computed(() => categoryData.value || [])
@@ -57,6 +59,15 @@ export function usePublicApiCatalog() {
     ]
   })
 
+  const statusTabs = computed(() => [
+    { label: t('common.filters.all'), value: 'all' },
+    { label: t('common.states.active'), value: API_STATUS.normal },
+    { label: t('common.states.inactive'), value: API_STATUS.abnormal },
+    { label: t('common.states.maintenance'), value: API_STATUS.maintenance },
+    { label: t('common.states.deprecated'), value: API_STATUS.deprecated },
+    { label: t('common.states.unknown'), value: API_STATUS.unknown }
+  ])
+
   const filteredApis = computed(() => {
     const query = searchQuery.value.toLowerCase().trim()
     return allApis.value.filter((api) => {
@@ -67,8 +78,10 @@ export function usePublicApiCatalog() {
         || (api.shortDesc || '').toLowerCase().includes(query)
       const matchesCategory = selectedCategory.value === 'all'
         || api.categoryId === Number(selectedCategory.value)
+      const matchesStatus = selectedStatus.value === 'all'
+        || api.status === Number(selectedStatus.value)
 
-      return matchesQuery && matchesCategory
+      return matchesQuery && matchesStatus && matchesCategory
     })
   })
 
@@ -80,7 +93,9 @@ export function usePublicApiCatalog() {
 
   return {
     searchQuery,
+    selectedStatus,
     selectedCategory,
+    statusTabs,
     categoryTabs,
     categoryMap,
     categories,

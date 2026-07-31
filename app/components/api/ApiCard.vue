@@ -48,8 +48,7 @@ const {
 } = toRefs(props)
 const resolvedName = computed(() => name.value || t('public.api.defaultTitle'))
 const resolvedCategoryName = computed(() => categoryName.value || t('public.api.publicCategory'))
-const popoverDetailsOpen = ref(false)
-const modalDetailsOpen = ref(false)
+const detailsOpen = ref(false)
 const methods = computed(() => parseApiMethods(props.httpMethod))
 const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, props.methodCosts))
 const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, props.methodCosts))
@@ -64,16 +63,13 @@ const detailSummary = computed(() => shortDesc.value || description.value || t('
 const statusMeta = computed(() => resolveApiStatusMeta(props.status, key => t(key)))
 const statusClass = computed(() => `api-card__status--${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
-  name: resolvedName.value,
-  shortDesc: shortDesc.value,
   description: description.value,
   apiPath: apiPath.value,
   docUrl: docUrl.value,
   isApiKey: isApiKey.value,
   methods: methods.value,
   methodCosts: props.methodCosts,
-  totalCalls: totalCalls.value,
-  statusMeta: statusMeta.value
+  totalCalls: totalCalls.value
 }))
 </script>
 
@@ -120,7 +116,7 @@ const detailContentProps = computed(() => ({
           </template>
         </h3>
         <p class="api-card__short">
-          {{ shortDesc || $t('public.api.noSummary') }}
+          {{ detailSummary }}
         </p>
       </div>
 
@@ -159,96 +155,61 @@ const detailContentProps = computed(() => ({
         </UTooltip>
       </div>
       <div class="api-card__actions">
-        <div class="api-card__detail-desktop">
-          <UPopover
-            v-model:open="popoverDetailsOpen"
-            arrow
-            :content="{ align: 'end', side: 'bottom', sideOffset: 8, collisionPadding: 12 }"
-            :ui="{ content: 'p-0 overflow-hidden' }"
+        <UModal
+          v-model:open="detailsOpen"
+          :ui="{
+            content: 'sm:max-w-xl overflow-hidden',
+            header: 'items-start gap-3 border-b border-default py-4 ps-4 pe-12 sm:ps-6 sm:pe-14',
+            wrapper: 'min-w-0',
+            title: 'min-w-0',
+            description: 'block',
+            close: 'top-4 end-4',
+            body: 'p-0 sm:p-0'
+          }"
+        >
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="xs"
+            trailing-icon="i-lucide-maximize-2"
+            :aria-label="$t('public.api.viewDetails')"
+            class="api-card__detail-button"
           >
-            <UTooltip
-              :text="popoverDetailsOpen ? $t('public.api.collapseDetails') : $t('public.api.viewDetails')"
-              :content="{ side: 'top' }"
-            >
-              <UButton
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                square
-                :icon="popoverDetailsOpen ? 'i-lucide-chevron-up' : 'i-lucide-ellipsis'"
-                :aria-label="popoverDetailsOpen ? $t('public.api.collapseDetails') : $t('public.api.viewDetails')"
-                class="api-card__action-button"
-              />
-            </UTooltip>
+            {{ $t('public.api.details') }}
+          </UButton>
 
-            <template #content>
-              <ApiDetailContent
-                v-bind="detailContentProps"
-                variant="popover"
-              />
-            </template>
-          </UPopover>
-        </div>
+          <template #title>
+            <div class="api-card__modal-title-row">
+              <span
+                class="api-card__modal-icon"
+                aria-hidden="true"
+              >
+                <UIcon
+                  name="i-lucide-braces"
+                  class="size-4"
+                />
+              </span>
+              <span class="api-card__modal-title">{{ resolvedName }}</span>
+              <UBadge
+                :color="statusMeta.color"
+                variant="soft"
+                size="sm"
+                :icon="statusMeta.icon"
+                class="shrink-0 rounded-full"
+              >
+                {{ statusMeta.label }}
+              </UBadge>
+            </div>
+          </template>
 
-        <div class="api-card__detail-mobile">
-          <UModal
-            v-model:open="modalDetailsOpen"
-            :ui="{
-              content: 'max-sm:left-0 max-sm:top-auto max-sm:bottom-0 max-sm:w-full max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:rounded-t-lg max-sm:max-h-[88dvh] sm:max-w-md overflow-hidden',
-              header: 'items-start gap-3 border-b border-default py-3 ps-4 pe-12 sm:ps-5 sm:pe-12',
-              wrapper: 'min-w-0',
-              title: 'min-w-0',
-              description: 'block',
-              close: 'top-3 end-3',
-              body: 'p-0 sm:p-0 overflow-hidden'
-            }"
-          >
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="xs"
-              square
-              icon="i-lucide-ellipsis"
-              :aria-label="$t('public.api.viewDetails')"
-              class="api-card__action-button"
-            />
+          <template #description>
+            <span class="api-card__modal-summary">{{ detailSummary }}</span>
+          </template>
 
-            <template #title>
-              <div class="api-card__modal-title-row">
-                <span
-                  class="api-card__modal-icon"
-                  aria-hidden="true"
-                >
-                  <UIcon
-                    name="i-lucide-braces"
-                    class="size-4"
-                  />
-                </span>
-                <span class="api-card__modal-title">{{ resolvedName }}</span>
-                <UBadge
-                  :color="statusMeta.color"
-                  variant="soft"
-                  size="sm"
-                  :icon="statusMeta.icon"
-                  class="shrink-0 rounded-full"
-                >
-                  {{ statusMeta.label }}
-                </UBadge>
-              </div>
-            </template>
-
-            <template #description>
-              <span class="api-card__modal-summary">{{ detailSummary }}</span>
-            </template>
-
-            <template #body>
-              <ApiDetailContent
-                v-bind="detailContentProps"
-                variant="modal"
-              />
-            </template>
-          </UModal>
-        </div>
+          <template #body>
+            <ApiDetailContent v-bind="detailContentProps" />
+          </template>
+        </UModal>
       </div>
     </div>
   </UCard>
@@ -386,7 +347,6 @@ const detailContentProps = computed(() => ({
 }
 
 .api-card__short {
-  min-height: 2.8rem;
   margin: 0.35rem 0 0;
   overflow: hidden;
   color: var(--ui-text-muted);
@@ -456,15 +416,7 @@ const detailContentProps = computed(() => ({
   gap: 0.25rem;
 }
 
-.api-card__detail-desktop {
-  display: none;
-}
-
-.api-card__detail-mobile {
-  display: block;
-}
-
-.api-card__action-button {
+.api-card__detail-button {
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
@@ -472,7 +424,7 @@ const detailContentProps = computed(() => ({
   box-shadow: none;
 }
 
-.api-card__action-button:hover {
+.api-card__detail-button:hover {
   border-color: var(--ui-border);
   background: var(--ui-bg-muted);
 }
@@ -518,16 +470,6 @@ const detailContentProps = computed(() => ({
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-@media (min-width: 640px) {
-  .api-card__detail-desktop {
-    display: block;
-  }
-
-  .api-card__detail-mobile {
-    display: none;
-  }
 }
 
 @media (max-width: 520px) {
