@@ -5,7 +5,7 @@
  * 源自 api_demo/taiji-encode/src/*。
  *
  * - base64 字符表与 taiji 字符表一一对应，'=' 永远映射为 ☯
- * - pwd 决定 RC4 风格置换；为空时为恒等映射
+ * - key 决定 RC4 风格置换；为空时为恒等映射
  * - convMapping 状态依赖调用顺序，加/解密各自创建独立实例
  */
 
@@ -48,9 +48,9 @@ function convMapping(key: string | undefined): (idx: number) => number {
   }
 }
 
-export function taijiEncode(text: string, pwd?: string): string {
+export function taijiEncode(text: string, key?: string): string {
   const base64 = base64Encode(text)
-  const map = convMapping(pwd)
+  const map = convMapping(key)
   let out = ''
   for (const ch of base64) {
     const idx = BASE64_INDEX.get(ch)
@@ -60,8 +60,8 @@ export function taijiEncode(text: string, pwd?: string): string {
   return out
 }
 
-function taijiDecode(text: string, pwd?: string): string {
-  const map = convMapping(pwd)
+function taijiDecode(text: string, key?: string): string {
+  const map = convMapping(key)
   let base64 = ''
   for (const ch of text) {
     const idx = TAIJI_INDEX.get(ch)
@@ -77,16 +77,17 @@ register({
   name: 'taiji',
   title: '太极编码',
   description: '把任意文本编码为「六十四卦 + ☯」太极字符串，支持可选密码做置换增强。',
+  summary: '把普通文本转换成六十四卦字符，也可以还原。',
   modes: ['encrypt', 'decrypt'],
-  params: [
+  options: [
     {
-      name: 'pwd',
+      name: 'key',
       type: 'string',
       description: '可选密码，长度建议 ≤ 64；为空时为恒等映射。加/解密需使用相同密码。'
     }
   ],
-  exec({ mode, text, params }) {
-    const pwd = (params.pwd as string | undefined) || undefined
-    return { text: mode === 'encrypt' ? taijiEncode(text, pwd) : taijiDecode(text, pwd) }
+  exec({ mode, text, options }) {
+    const key = (options.key as string | undefined) || undefined
+    return { text: mode === 'encrypt' ? taijiEncode(text, key) : taijiDecode(text, key) }
   }
 })

@@ -15,7 +15,7 @@ server/routes/
 └── v1/                          ← 版本目录（必须匹配 /^v\d+$/）
     └── crypto/                  ← 第一层 = apis.code，必须是静态目录名
         ├── index.get.ts         → GET  /v1/crypto
-        └── [name].post.ts       → POST /v1/crypto/{name}
+        └── index.post.ts        → POST /v1/crypto
 ```
 
 **第一层那个静态名字 = `apis.code`**（数据库 `apis` 表的业务编码），是 manifest 聚合与后台治理配置的关联键。改名等同于"删一个接口 + 新建一个接口"，会丢失既有调用统计、API Key 关联、限流配置。
@@ -106,21 +106,25 @@ import { z } from 'zod'
 import { readOpenApiBody } from '~~/server/utils/zod'
 import { openApiOk } from '~~/server/utils/open-api-response'
 
-const BODY_MODES = ['encrypt', 'decrypt'] as const
-const BodySchema = z.object({ mode: z.enum(BODY_MODES), text: z.string() })
+const BODY_ACTIONS = ['encode', 'decode'] as const
+const BodySchema = z.object({
+  algorithm: z.string(),
+  action: z.enum(BODY_ACTIONS),
+  input: z.string()
+})
 
 async function handleCryptoRequest(event: H3Event) {
   const parsed = await readOpenApiBody(event, BodySchema)
   if (!parsed.ok) return parsed.response   // 400 INVALID_REQUEST_BODY，已是标准壳、data 恒 null
-  const { mode, text } = parsed.data       // 类型安全
+  const { algorithm, action, input } = parsed.data // 类型安全
 
-  return openApiOk(event, await run(mode, text))
+  return openApiOk(event, await run(algorithm, action, input))
 }
 
 export default defineOpenApiEventHandler(handleCryptoRequest)
 ```
 
-静态 schema 放 `shared/schemas/`（与现有 `readZodBody` 一致）。若入参 schema 随请求动态变化（如 crypto 按算法 `params` 决定校验规则），沿用 handler 内自定义校验（crypto 的 `normalizeParams`）即可，不必硬套 zod。
+静态 schema 放 `shared/schemas/`（与现有 `readZodBody` 一致）。若入参规则随请求动态变化（如 crypto 按算法内部 `options` 定义校验），沿用 handler 内自定义校验（crypto 的 `normalizeOptions`）即可，不必硬套 zod。
 
 ## 5. 计费标记
 
@@ -178,14 +182,14 @@ import { openApiOk } from '~~/server/utils/open-api-response'
 function listCryptoAlgorithms(event: H3Event) {
   return openApiOk(event, {
     total: 2,
-    items: [{ name: 'aes' }, { name: 'rsa' }]
+    items: [{ algorithm: 'aes' }, { algorithm: 'rsa' }]
   })
 }
 
 export default defineOpenApiEventHandler(listCryptoAlgorithms)
 ```
 
-**`server/routes/v1/crypto/[name].post.ts`** — 动态路由 + body + 业务失败标记，完整版见 [server/routes/v1/crypto/[name].post.ts](../../server/routes/v1/crypto/%5Bname%5D.post.ts)。
+**`server/routes/v1/crypto/index.post.ts`** — 统一 body + 动态算法分发 + 业务失败标记，完整版见 [server/routes/v1/crypto/index.post.ts](../../server/routes/v1/crypto/index.post.ts)。
 
 ## 7. 后台启用与配置（必做）
 

@@ -77,9 +77,10 @@ register({
   name: 'emoji-aes',
   title: 'Emoji-AES',
   description: 'AES-256-CBC 加密后把 Base64 输出替换为 emoji 表情，支持 0~64 的轮转偏移。',
-  needsKey: true,
+  summary: '使用密钥把文本转换成 Emoji 密文，也可以还原。',
+  requiresKey: true,
   modes: ['encrypt', 'decrypt'],
-  params: [
+  options: [
     { name: 'key', type: 'string', required: true, description: 'AES 密钥（任意长度字符串）' },
     {
       name: 'rotation',
@@ -90,12 +91,12 @@ register({
       description: 'emoji 表轮转偏移；加/解密需使用相同值，默认 0'
     }
   ],
-  exec({ mode, text, params }) {
-    const key = String(params.key ?? '')
-    const rotation = (params.rotation as number | undefined) ?? 0
+  exec({ mode, text, options }) {
+    const key = String(options.key ?? '')
+    const rotation = (options.rotation as number | undefined) ?? 0
     const result = mode === 'encrypt'
       ? emojiAesEncrypt(text, key, rotation)
       : emojiAesDecrypt(text, key, rotation)
-    return { text: result, meta: { rotation } }
+    return { text: result }
   }
 })

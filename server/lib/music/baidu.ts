@@ -19,7 +19,7 @@ function normalizeBaidu(value: unknown): MusicTrack | null {
   const id = readString(value.song_id || value.songid)
   const name = readString(value.title)
   if (!id || !name) return null
-  return { id, name, artist: splitArtists(value.author, /,|，/), album: readString(value.album_title), pic_id: id, url_id: id, lyric_id: id, source: 'baidu' }
+  return { id, name, artists: splitArtists(value.author, /,|，/), album: readString(value.album_title), pictureId: id, audioId: id, lyricsId: id, platform: 'baidu' }
 }
 
 async function get(params: Record<string, string | number>): Promise<unknown> {

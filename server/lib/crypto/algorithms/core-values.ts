@@ -94,6 +94,7 @@ register({
   name: 'core-values',
   title: '社会主义核心价值观编码',
   description: '把任意文本编码为「富强民主…」十二词汉字串。源自 Core-Values-Encoder。',
+  summary: '把普通文本转换成核心价值观词组，也可以还原。',
   modes: ['encrypt', 'decrypt'],
   exec({ mode, text }) {
     return { text: mode === 'encrypt' ? coreValuesEncode(text) : coreValuesDecode(text) }

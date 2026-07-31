@@ -21,11 +21,11 @@ describe('exchange rate helpers', () => {
     expect(normalizeCurrencyCode('12A')).toBeNull()
   })
 
-  it('formats the 60s-compatible text response', () => {
+  it('formats the plain-text response', () => {
     expect(formatExchangeRateText(data)).toBe('2026-07-14 的 CNY 汇率\n\nCNY => 1\nUSD => 0.1395')
   })
 
-  it('formats the 60s-compatible markdown response', () => {
+  it('formats the markdown response', () => {
     const markdown = formatExchangeRateMarkdown(data)
     expect(markdown).toContain('# CNY 汇率')
     expect(markdown).toContain('| **USD** | 0.1395 |')

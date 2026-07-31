@@ -54,6 +54,7 @@ register({
   name: 'beast',
   title: '兽语',
   description: '把任意文本编码为「嗷呜啊~」四字组成的兽语。',
+  summary: '把普通文本转换成「嗷呜啊~」组成的兽语，也可以还原。',
   modes: ['encrypt', 'decrypt'],
   exec({ mode, text }) {
     return { text: mode === 'encrypt' ? beastEncode(text) : beastDecode(text) }

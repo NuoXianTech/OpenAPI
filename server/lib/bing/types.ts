@@ -1,7 +1,7 @@
 const BING_ENCODES = ['image', 'json', 'text', 'markdown', 'md'] as const
 const BING_IMAGE_TYPES = ['auto', 'pc', 'mobile'] as const
 
-export const DEFAULT_BING_ENCODE: BingEncode = 'image'
+export const DEFAULT_BING_ENCODE: BingEncode = 'json'
 export const DEFAULT_BING_IMAGE_TYPE: BingImageType = 'auto'
 export const BING_PRIMARY_URL = 'https://global.bing.com/?setmkt=zh-cn'
 export const BING_ARCHIVE_URL = 'https://global.bing.com/HPImageArchive.aspx?format=js&idx=0&n=1&setmkt=zh-cn'

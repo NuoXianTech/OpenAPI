@@ -40,9 +40,10 @@ register({
   name: 'rc4',
   title: 'RC4',
   description: 'RC4 流密码，默认输出 CryptoJS 兼容的 OpenSSL Salted__ base64 格式；设 format=raw 可与 anycript / cryptii 等通用在线 RC4 工具互通。',
-  needsKey: true,
+  summary: '使用密钥加密文本，或解密已有的 RC4 密文。',
+  requiresKey: true,
   modes: ['encrypt', 'decrypt'],
-  params: [
+  options: [
     { name: 'key', type: 'string', required: true, description: 'RC4 密钥' },
     {
       name: 'format',
@@ -66,20 +67,19 @@ register({
       description: '仅 format=raw 生效：密文编码（encrypt 输出 / decrypt 输入），默认 hex'
     }
   ],
-  exec({ mode, text, params }) {
-    const key = String(params.key ?? '')
-    const format = (params.format as 'cryptojs' | 'raw' | undefined) ?? 'cryptojs'
+  exec({ mode, text, options }) {
+    const key = String(options.key ?? '')
+    const format = (options.format as 'cryptojs' | 'raw' | undefined) ?? 'cryptojs'
     if (format === 'cryptojs') {
       return {
-        text: mode === 'encrypt' ? rc4Encrypt(text, key) : rc4Decrypt(text, key),
-        meta: { format }
+        text: mode === 'encrypt' ? rc4Encrypt(text, key) : rc4Decrypt(text, key)
       }
     }
-    const keyEncoding = (params.keyEncoding as BytesEncoding | undefined) ?? 'utf8'
-    const cipherEncoding = (params.cipherEncoding as CipherEncoding | undefined) ?? 'hex'
+    const keyEncoding = (options.keyEncoding as BytesEncoding | undefined) ?? 'utf8'
+    const cipherEncoding = (options.cipherEncoding as CipherEncoding | undefined) ?? 'hex'
     const result = mode === 'encrypt'
       ? rc4RawEncryptFromStrings(text, key, keyEncoding, cipherEncoding)
       : rc4RawDecryptFromStrings(text, key, keyEncoding, cipherEncoding)
-    return { text: result, meta: { format } }
+    return { text: result }
   }
 })

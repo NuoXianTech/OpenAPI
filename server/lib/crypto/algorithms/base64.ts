@@ -24,6 +24,7 @@ register({
   name: 'base64',
   title: 'Base64',
   description: 'UTF-8 文本与 Base64 的标准互转，作为大多数其他编码的基础。',
+  summary: '在普通文本和 Base64 字符串之间转换。',
   modes: ['encrypt', 'decrypt'],
   exec({ mode, text }) {
     return { text: mode === 'encrypt' ? base64Encode(text) : base64Decode(text) }

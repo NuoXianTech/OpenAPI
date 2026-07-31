@@ -1,6 +1,6 @@
 # 猫眼公共接口
 
-猫眼接口兼容 `60s-api` 的猫眼模块，并按当前项目的公共 API 规范提供全球电影票房、实时电影票房、电视收视率和网播热度。
+猫眼接口按当前项目的公共 API 规范提供全球电影票房、实时电影票房、电视收视率和网播热度。
 
 ## 接口
 
@@ -23,7 +23,7 @@ GET /v1/maoyan/movie?date=2026-07-14&encoding=json
 | --- | --- | --- | --- |
 | `date` | 实时榜单 | 当日 | 有效的 `YYYY-MM-DD` 日期；具体可查询范围由猫眼上游决定 |
 | `encoding` | 全部 | `json` | `json`、`text`、`markdown` 或 `md` |
-| `encode` | 全部 | - | `encoding` 的兼容别名 |
+| `encode` | 全部 | - | `encoding` 的等价别名 |
 
 JSON 成功响应使用项目标准 OpenAPI 响应壳。`text` 和 `markdown` 成功响应返回裸文本并设置相应的 `Content-Type`；参数错误和上游错误仍返回标准 JSON 错误响应。
 

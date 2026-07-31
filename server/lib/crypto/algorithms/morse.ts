@@ -74,6 +74,7 @@ register({
   name: 'morse',
   title: '摩斯密码',
   description: 'ITU 国际摩斯码表；字母间 1 空格，词间用 / 分隔。覆盖 A-Z / 0-9 / 常用标点。',
+  summary: '在字母、数字和摩斯密码之间转换。',
   modes: ['encrypt', 'decrypt'],
   exec({ mode, text }) {
     return { text: mode === 'encrypt' ? morseEncode(text) : morseDecode(text) }

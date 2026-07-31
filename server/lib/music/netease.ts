@@ -62,12 +62,12 @@ function normalizeTrack(value: unknown): MusicTrack | null {
   return {
     id,
     name: track.name,
-    artist: artists.map(item => isRecord(item) ? (item as NeteaseArtist).name : '').filter((name): name is string => typeof name === 'string'),
+    artists: artists.map(item => isRecord(item) ? (item as NeteaseArtist).name : '').filter((name): name is string => typeof name === 'string'),
     album: typeof album.name === 'string' ? album.name : '',
-    pic_id: typeof pictureId === 'string' || typeof pictureId === 'number' ? pictureId : '',
-    url_id: id,
-    lyric_id: id,
-    source: 'netease'
+    pictureId: typeof pictureId === 'string' || typeof pictureId === 'number' ? pictureId : '',
+    audioId: id,
+    lyricsId: id,
+    platform: 'netease'
   }
 }
 
@@ -76,8 +76,8 @@ function normalizeTracks(payload: unknown, path: string): MusicTrack[] {
   return Array.isArray(values) ? values.map(normalizeTrack).filter((track): track is MusicTrack => track !== null) : []
 }
 
-export async function searchNetease(keyword: string, type: number, page: number, limit: number): Promise<MusicTrack[]> {
-  const payload = await requestNetease({ path: '/api/cloudsearch/pc', body: { s: keyword, type, limit, total: 'true', offset: (page - 1) * limit } })
+export async function searchNetease(keyword: string, page: number, limit: number): Promise<MusicTrack[]> {
+  const payload = await requestNetease({ path: '/api/cloudsearch/pc', body: { s: keyword, type: 1, limit, total: 'true', offset: (page - 1) * limit } })
   return normalizeTracks(payload, 'result.songs')
 }
 

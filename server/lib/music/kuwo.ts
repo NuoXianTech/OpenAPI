@@ -18,7 +18,7 @@ function normalizeKuwo(value: unknown): MusicTrack | null {
   const id = readString(value.rid || value.musicrid).replace(/^MUSIC_/, '')
   const name = readString(value.name || value.songName)
   if (!id || !name) return null
-  return { id, name, artist: splitArtists(value.artist, '&'), album: readString(value.album), pic_id: id, url_id: id, lyric_id: id, source: 'kuwo' }
+  return { id, name, artists: splitArtists(value.artist, '&'), album: readString(value.album), pictureId: id, audioId: id, lyricsId: id, platform: 'kuwo' }
 }
 
 async function get(path: string, params: Record<string, string | number>): Promise<unknown> {

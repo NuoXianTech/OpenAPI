@@ -2,7 +2,7 @@
  * GET /v1/bing · 获取必应每日壁纸。
  *
  * Query:
- *   encode|encoding  image|json|text|markdown|md，默认 image；encoding 兼容 60s-api
+ *   encode|encoding  image|json|text|markdown|md，默认 json；两者均可选择输出格式
  *   type             auto|pc|mobile，默认 auto；auto 按 User-Agent 选择桌面 / 移动端壁纸
  *
  * 内容协商:

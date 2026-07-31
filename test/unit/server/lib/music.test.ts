@@ -2,8 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { mergeCookieHeader, parseJsonResponseText } from '~~/server/lib/music/common'
 import { getNeteasePicture } from '~~/server/lib/music/netease'
 import { getTencentPicture } from '~~/server/lib/music/tencent'
-import { isMusicPlatform, listMusicProviders } from '~~/server/lib/music/client'
+import { isMusicPlatform } from '~~/server/lib/music/client'
 import { getKugouUrl } from '~~/server/lib/music/kugou'
+import { formatMusicLyrics, normalizeMusicRedirectUrl, toPublicMusicTracks } from '~~/server/lib/music/public-contract'
+import { parseMusicRequestQuery } from '~~/server/lib/music/request'
+import { MUSIC_PLATFORMS } from '~~/server/lib/music/types'
 
 const musicCapabilityMocks = vi.hoisted(() => ({
   getMusicPlatformCookie: vi.fn().mockResolvedValue('')
@@ -15,21 +18,76 @@ vi.mock('~~/server/lib/music/capability-config', () => ({
   isMusicPlatformEnabled: vi.fn().mockResolvedValue(true)
 }))
 
-const expectedCapabilities = ['search', 'song', 'album', 'artist', 'playlist', 'url', 'lyrics', 'picture']
-
 afterEach(() => {
   vi.restoreAllMocks()
   musicCapabilityMocks.getMusicPlatformCookie.mockReset().mockResolvedValue('')
 })
 
 describe('music API helpers', () => {
-  it('exposes all Meting platforms and capabilities', () => {
-    const providers = listMusicProviders()
-    expect(providers.map(provider => provider.code)).toEqual(['netease', 'tencent', 'kugou', 'baidu', 'kuwo'])
-    expect(providers).toHaveLength(5)
-    providers.forEach(provider => expect(provider.capabilities).toEqual(expectedCapabilities))
-    providers.forEach(provider => expect(isMusicPlatform(provider.code)).toBe(true))
+  it('recognizes all supported Meting platforms', () => {
+    expect(MUSIC_PLATFORMS).toEqual(['netease', 'tencent', 'kugou', 'baidu', 'kuwo'])
+    MUSIC_PLATFORMS.forEach(platform => expect(isMusicPlatform(platform)).toBe(true))
     expect(isMusicPlatform('unknown')).toBe(false)
+  })
+
+  it('parses the unified server/type/id request contract', () => {
+    expect(parseMusicRequestQuery({ id: '周杰伦' })).toEqual({
+      ok: true,
+      data: {
+        platform: 'netease',
+        operation: 'search',
+        id: '周杰伦',
+        page: 1,
+        limit: 30
+      }
+    })
+    expect(parseMusicRequestQuery({ server: 'tencent', type: 'artist', id: '42', limit: '20' })).toEqual({
+      ok: true,
+      data: {
+        platform: 'tencent',
+        operation: 'artist',
+        id: '42',
+        page: 1,
+        limit: 20
+      }
+    })
+    expect(parseMusicRequestQuery({ q: '旧参数' })).toMatchObject({ ok: false, code: 'UNSUPPORTED_PARAMETER' })
+    expect(parseMusicRequestQuery({ type: '1', id: '旧搜索类型' })).toMatchObject({ ok: false, code: 'INVALID_TYPE' })
+  })
+
+  it('hides provider resource IDs behind directly callable links', () => {
+    const [track] = toPublicMusicTracks([{
+      id: 1,
+      name: '晴天',
+      artists: ['周杰伦'],
+      album: '叶惠美',
+      pictureId: 'picture-id',
+      audioId: 'audio-id',
+      lyricsId: 'lyrics-id',
+      platform: 'netease'
+    }], new URL('https://api.example.com/v1/music?server=netease&type=search&id=test'))
+
+    expect(track).toEqual({
+      title: '晴天',
+      artist: '周杰伦',
+      album: '叶惠美',
+      url: 'https://api.example.com/v1/music?server=netease&type=url&id=audio-id',
+      pic: 'https://api.example.com/v1/music?server=netease&type=pic&id=picture-id',
+      lrc: 'https://api.example.com/v1/music?server=netease&type=lrc&id=lyrics-id'
+    })
+    expect(track).not.toHaveProperty('audioId')
+    expect(track).not.toHaveProperty('pictureId')
+    expect(track).not.toHaveProperty('lyricsId')
+  })
+
+  it('merges translated lyrics and normalizes redirect URLs', () => {
+    expect(formatMusicLyrics({
+      lyric: '[00:01.00]Hello\n[00:02.00]World',
+      tlyric: '[00:01.000]你好'
+    })).toBe('[00:01.00]Hello (你好)\n[00:02.00]World')
+    expect(normalizeMusicRedirectUrl('tencent', 'http://ws.stream.qqmusic.qq.com/test.mp3'))
+      .toBe('https://dl.stream.qqmusic.qq.com/test.mp3')
+    expect(normalizeMusicRedirectUrl('netease', 'javascript:alert(1)')).toBeNull()
   })
 
   it('parses JSON, JSONP, BOM and trailing non-JSON content', () => {

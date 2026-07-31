@@ -3,7 +3,7 @@
  *
  * Query:
  *   currency         ISO 4217 三位货币代码，默认 CNY
- *   encode|encoding  json|text|markdown|md，默认 json；encoding 兼容 60s-api
+ *   encode|encoding  json|text|markdown|md，默认 json；两者均可选择输出格式
  */
 
 import type { H3Event } from 'h3'

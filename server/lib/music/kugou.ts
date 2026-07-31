@@ -39,7 +39,7 @@ function normalizeKugou(value: unknown): MusicTrack | null {
   const name = readString(value.songName, parts[1] || filename)
   if (!id || !name) return null
   const authors = Array.isArray(value.authors) ? value.authors.map(item => isRecord(item) ? readString(item.author_name) : '').filter(Boolean) : splitArtists(parts[0], '、')
-  return { id, name, artist: authors, album: readString(value.album_name), pic_id: id, url_id: readString(value.encode_album_audio_id, id), lyric_id: id, source: 'kugou' }
+  return { id, name, artists: authors, album: readString(value.album_name), pictureId: id, audioId: readString(value.encode_album_audio_id, id), lyricsId: id, platform: 'kugou' }
 }
 
 async function get(url: string, params: Record<string, string | number>): Promise<unknown> {

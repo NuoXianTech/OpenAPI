@@ -35,6 +35,11 @@
 - 单实例可使用 Node/Nitro；多实例生产环境必须使用 PostgreSQL、共享 Redis 和一致的运行时密钥。
 - 计费规则以 [API 计费规则](./platform/billing-rules.md) 为准。
 
+## 内置接口契约
+
+- [音乐公共接口](./api/music.md)
+- [加密与解密公共接口](./api/crypto.md)
+
 ## 质量门禁
 
 ```bash

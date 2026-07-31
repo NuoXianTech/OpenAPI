@@ -3,7 +3,7 @@
  *
  * Query:
  *   region               查询地区，默认 北京；支持省 / 市 / 区县简称，如 北京、杭州、西湖
- *   encode|encoding      json|text|markdown|md，默认 json；encoding 兼容 60s-api
+ *   encode|encoding      json|text|markdown|md，默认 json；两者均可选择输出格式
  *   force-update         传 1/true/yes 时跳过 60 分钟缓存，重新抓取上游
  */
 

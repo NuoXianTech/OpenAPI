@@ -19,7 +19,7 @@ function normalizeTencent(value: unknown): MusicTrack | null {
   const name = readString(data.name || data.songname)
   if (!id || !name) return null
   const singers = Array.isArray(data.singer) ? data.singer : []
-  return { id, name, artist: singers.map(item => isRecord(item) ? readString(item.name) : '').filter(Boolean), album: readString(album.title || data.albumname).trim(), pic_id: readString(album.mid || data.albummid), url_id: id, lyric_id: id, source: 'tencent' }
+  return { id, name, artists: singers.map(item => isRecord(item) ? readString(item.name) : '').filter(Boolean), album: readString(album.title || data.albumname).trim(), pictureId: readString(album.mid || data.albummid), audioId: id, lyricsId: id, platform: 'tencent' }
 }
 
 async function get(path: string, params: Record<string, string | number>): Promise<unknown> {

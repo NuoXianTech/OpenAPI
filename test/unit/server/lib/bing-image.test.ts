@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { createBingImageUrl, createBingMarkdown, resolveBingCoverUrl } from '~~/server/lib/bing/image'
-import type { BingImageRecord } from '~~/server/lib/bing/types'
+import { DEFAULT_BING_ENCODE, type BingImageRecord } from '~~/server/lib/bing/types'
 
 describe('bing image helpers', () => {
   const sourceUrl = 'https://bing.com/th?id=OHR.Example_ZH-CN1234567890_1366x768.jpg&rf=LaDigue_1920x1080.jpg&pid=hp'
+
+  it('uses JSON as the default response format', () => {
+    expect(DEFAULT_BING_ENCODE).toBe('json')
+  })
 
   it('normalizes Bing image urls to requested sizes', () => {
     expect(createBingImageUrl(sourceUrl)).toBe('https://bing.com/th?id=OHR.Example_ZH-CN1234567890_1920x1080.jpg')

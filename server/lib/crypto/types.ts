@@ -5,9 +5,9 @@
  * dispatcher 仅与本文件定义的接口耦合，新增算法不需要改动路由。
  */
 
-/** 算法支持的某个参数的元数据，用于 GET /v1/crypto 暴露给前端动态生成表单 */
-export interface CryptoParamSchema {
-  /** 参数名（也是 body / 返回结构中的 key） */
+/** 算法内部选项定义，仅用于服务端校验与补齐默认值。 */
+export interface CryptoOptionDefinition {
+  /** options 中的字段名。key 是统一请求体中的保留字段。 */
   name: string
   type: 'string' | 'number' | 'boolean'
   /** 是否必填；缺省时尝试取 default */
@@ -26,34 +26,35 @@ export interface CryptoParamSchema {
 }
 
 export type CryptoMode = 'encrypt' | 'decrypt'
+export type CryptoAction = 'encode' | 'decode'
 
 /** 算法运行结果统一形态 */
 interface CryptoExecResult {
   text: string
-  /** 算法侧附加信息（如 emoji-aes 的实际 rotation） */
-  meta?: Record<string, unknown>
 }
 
 interface CryptoExecInput {
   mode: CryptoMode
   text: string
-  /** 经 normalizeParams 校验/补默认后的参数集 */
-  params: Record<string, unknown>
+  /** 经 normalizeOptions 校验并补齐默认值后的算法选项。 */
+  options: Record<string, unknown>
 }
 
 export interface CryptoAlgorithm {
-  /** URL 段，同时是 registry 主键；小写连字符 */
+  /** 公共请求体的 algorithm，同时是 registry 主键；使用小写连字符。 */
   name: string
   /** 展示名（中文） */
   title: string
-  /** 简介 */
+  /** 面向维护者的技术说明。 */
   description: string
-  /** 是否需要密钥（仅用于 UI 提示，校验由 params 描述） */
-  needsKey?: boolean
+  /** 面向公共调用方的通俗说明。 */
+  summary: string
+  /** 是否必须提供统一请求字段 key。 */
+  requiresKey?: boolean
   /** 显式描述哪些 mode 可用；通常 ['encrypt','decrypt'] */
   modes: CryptoMode[]
-  /** 入参 schema；text 字段不在此列，统一由 dispatcher 注入 */
-  params?: CryptoParamSchema[]
+  /** 服务端内部选项定义；不会原样暴露给公共接口。 */
+  options?: CryptoOptionDefinition[]
   exec: (input: CryptoExecInput) => Promise<CryptoExecResult> | CryptoExecResult
 }
 

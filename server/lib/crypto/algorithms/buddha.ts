@@ -83,9 +83,10 @@ register({
   name: 'buddha',
   title: '与佛论禅',
   description: 'AES 加密后映射为佛经字符，输出以「佛又曰：」开头。',
-  needsKey: false,
+  summary: '把普通文本转换成佛语字符，也可以还原。',
+  requiresKey: false,
   modes: ['encrypt', 'decrypt'],
-  params: [
+  options: [
     {
       name: 'key',
       type: 'string',
@@ -93,8 +94,8 @@ register({
       description: `AES 密钥，留空则使用默认密钥`
     }
   ],
-  exec({ mode, text, params }) {
-    const key = String(params.key ?? DEFAULT_KEY)
+  exec({ mode, text, options }) {
+    const key = String(options.key ?? DEFAULT_KEY)
     return {
       text: mode === 'encrypt' ? buddhaEncrypt(text, key) : buddhaDecrypt(text, key)
     }
