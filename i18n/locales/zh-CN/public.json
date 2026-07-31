@@ -3,11 +3,14 @@
     "navigation": {
       "catalog": "接口目录",
       "getStarted": "开始使用",
+      "language": "切换语言",
       "openMenu": "打开导航菜单"
     },
     "home": {
       "defaultDescription": "免费为用户提供网络数据接口调用的服务平台",
-      "heroTitle": "开发者需要的公共接口，一站式免费调用",
+      "introTitle": "开发者需要的公共接口，一站式免费调用",
+      "serviceSummary": "平台服务正常 · 已服务 {users} 位开发者",
+      "serviceSummaryWithRate": "请求成功率 {rate} · 已服务 {users} 位开发者",
       "catalogDescription": "按能力、状态和接入成本查找接口，打开详情即可查看请求契约。",
       "liveExample": "实时请求示例",
       "requestAddress": "请求地址",
@@ -23,7 +26,12 @@
       "logout": "退出登录",
       "totalApis": "接口总数",
       "availableApis": "可用接口",
-      "totalCalls": "调用次数",
+      "totalCalls": "累计调用",
+      "callCountValue": "{count} 次",
+      "apiCountValue": "{count} 个",
+      "successRate": "请求成功率",
+      "developersServed": "注册开发者",
+      "developerCountValue": "{count} 位",
       "searchPlaceholder": "搜索 API 名称或描述...",
       "statusFilter": "接口状态",
       "statusFilterAria": "API 状态筛选",
@@ -41,6 +49,7 @@
     },
     "api": {
       "defaultTitle": "接口标题",
+      "publicCategory": "公共接口",
       "noSummary": "暂无简介",
       "endpoint": "接口地址",
       "callCount": "调用次数",

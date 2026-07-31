@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { ApiCatalogItem } from '#shared/types/api'
+import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
 
 interface ApiListProps {
   items?: ApiCatalogItem[]
+  categoryMap?: Record<number, ApiCategoryItem>
 }
 
-const { items = [] } = defineProps<ApiListProps>()
+const { items = [], categoryMap = {} } = defineProps<ApiListProps>()
 </script>
 
 <template>
@@ -21,6 +22,7 @@ const { items = [] } = defineProps<ApiListProps>()
         :key="item.id ?? index"
         :name="item.name"
         :status="item.status"
+        :category-name="item.categoryId == null ? '' : categoryMap[item.categoryId]?.name"
         :short-desc="item.shortDesc"
         :description="item.description"
         :http-method="item.httpMethod"
@@ -40,7 +42,7 @@ const { items = [] } = defineProps<ApiListProps>()
   contain: layout style;
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
   align-items: stretch;
 }
 

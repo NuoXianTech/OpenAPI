@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from '#shared/config/locale-defaults'
 
 const route = useRoute()
 const { settings } = useSiteSettings()
-const { user, logout } = useAuth()
-const { t } = useI18n()
+const { user, logout, updateLocalePreference } = useAuth()
+const { t, locale, locales, setLocale } = useI18n()
+const toast = useToast()
+const isChangingLocale = ref(false)
 
 const navigation = computed(() => [
   { label: t('public.navigation.catalog'), to: '/', icon: 'i-lucide-blocks' },
@@ -17,6 +20,17 @@ const dashboardPath = computed(() => user.value?.role === 'admin' ? ADMIN_OVERVI
 const dashboardLabel = computed(() => user.value?.role === 'admin'
   ? t('public.home.adminDashboard')
   : t('public.home.userDashboard'))
+
+const languageItems = computed<DropdownMenuItem[]>(() => locales.value.flatMap((item) => {
+  const code = typeof item === 'string' ? item : item.code
+  if (!isSupportedLocale(code)) return []
+  return [{
+    label: typeof item === 'string' ? item : item.name || item.code,
+    active: code === locale.value,
+    trailingIcon: code === locale.value ? 'i-lucide-check' : undefined,
+    onSelect: () => void handleLocaleChange(code)
+  }]
+}))
 
 const mobileItems = computed<DropdownMenuItem[][]>(() => [
   navigation.value.map(item => ({
@@ -39,6 +53,22 @@ function isActive(path: string): boolean {
 async function handleLogout(): Promise<void> {
   await logout()
   await navigateTo('/')
+}
+
+async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
+  if (nextLocale === locale.value || isChangingLocale.value) return
+
+  const previousLocale = isSupportedLocale(locale.value) ? locale.value : DEFAULT_LOCALE
+  isChangingLocale.value = true
+  try {
+    await setLocale(nextLocale)
+    if (user.value) await updateLocalePreference(nextLocale)
+  } catch {
+    await setLocale(previousLocale)
+    toast.add({ title: t('common.feedback.updateFailed'), color: 'error' })
+  } finally {
+    isChangingLocale.value = false
+  }
 }
 </script>
 
@@ -71,6 +101,18 @@ async function handleLogout(): Promise<void> {
       </nav>
 
       <div class="site-header__actions">
+        <UDropdownMenu :items="languageItems" :content="{ align: 'end' }" :ui="{ content: 'w-40' }">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            square
+            icon="i-lucide-languages"
+            :loading="isChangingLocale"
+            :aria-label="$t('public.navigation.language')"
+          />
+        </UDropdownMenu>
+
         <ClientOnly>
           <UColorModeButton color="neutral" variant="ghost" size="sm" />
           <template #fallback>
@@ -111,6 +153,25 @@ async function handleLogout(): Promise<void> {
             </UTooltip>
           </template>
           <template v-else>
+            <UButton
+              to="/login"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              class="hidden sm:inline-flex"
+            >
+              {{ $t('auth.login.title') }}
+            </UButton>
+            <UButton
+              to="/register"
+              size="sm"
+              icon="i-lucide-rocket"
+              class="hidden sm:inline-flex"
+            >
+              {{ $t('public.navigation.getStarted') }}
+            </UButton>
+          </template>
+          <template #fallback>
             <UButton
               to="/login"
               color="neutral"

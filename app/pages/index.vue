@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useApiList } from '~/composables/api/use-api-list'
 import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
-import { API_STATUS } from '#shared/config/api-status'
+import type { PublicCallStatsDashboard } from '#shared/types/public-stats'
 
 const { t } = useI18n()
 
@@ -11,6 +11,7 @@ const {
   currentCategory,
   statusTabs,
   categoryTabs,
+  categoryMap,
   allItems,
   loading,
   error,
@@ -20,6 +21,13 @@ const {
 } = useApiList()
 
 const { settings } = useSiteSettings()
+const {
+  data: publicStats,
+  pending: publicStatsLoading,
+  error: publicStatsError
+} = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
+  key: 'home-public-stats'
+})
 
 const {
   page,
@@ -42,10 +50,12 @@ const retryActions = computed(() => [{
   onClick: fetchList
 }])
 
-const heroStats = computed(() => ({
+const introMetrics = computed(() => ({
   total: allItems.value.length,
-  normal: allItems.value.filter((i: { status: number }) => i.status === API_STATUS.normal).length,
-  calls: allItems.value.reduce((sum: number, item: { totalCalls?: number }) => sum + (Number(item.totalCalls) || 0), 0)
+  calls: publicStats.value?.overview.totalCalls
+    ?? allItems.value.reduce((sum: number, item: { totalCalls?: number }) => sum + (Number(item.totalCalls) || 0), 0),
+  successRate: publicStats.value?.overview.successRate ?? 0,
+  users: publicStats.value?.overview.userCount ?? 0
 }))
 
 useSeoMeta({
@@ -60,15 +70,14 @@ useSeoMeta({
 <template>
   <div class="public-page">
     <CommonSiteHeader />
-    <CommonHomeHero
-      :start-time="settings.startTime"
-      :site-name="settings.siteName"
+    <CommonPublicApiIntro
       :site-description="settings.siteDescription"
-      :total-count="heroStats.total"
-      :normal-count="heroStats.normal"
-      :call-count="heroStats.calls"
-      :api-list-loading="loading"
-      :api-list-error="!!error"
+      :total-count="introMetrics.total"
+      :call-count="introMetrics.calls"
+      :success-rate="introMetrics.successRate"
+      :user-count="introMetrics.users"
+      :summary-loading="loading || publicStatsLoading"
+      :summary-error="!!error || !!publicStatsError"
     />
 
     <main id="api-catalog" class="catalog-shell">
@@ -192,6 +201,7 @@ useSeoMeta({
           </div>
           <ApiList
             :items="paginatedItems"
+            :category-map="categoryMap"
           />
           <div
             v-if="hasPagination"

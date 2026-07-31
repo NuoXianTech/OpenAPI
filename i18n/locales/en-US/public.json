@@ -3,11 +3,14 @@
     "navigation": {
       "catalog": "API catalog",
       "getStarted": "Get started",
+      "language": "Change language",
       "openMenu": "Open navigation menu"
     },
     "home": {
       "defaultDescription": "A free platform providing network data APIs",
-      "heroTitle": "Stable, clear, ready-to-use public APIs",
+      "introTitle": "Stable, clear, ready-to-use public APIs",
+      "serviceSummary": "All systems operational · {users} developers served",
+      "serviceSummaryWithRate": "{rate} request success · {users} developers served",
       "catalogDescription": "Find APIs by capability, status, and access cost, then inspect the request contract.",
       "liveExample": "Live request example",
       "requestAddress": "Request URL",
@@ -24,6 +27,11 @@
       "totalApis": "Total APIs",
       "availableApis": "Available APIs",
       "totalCalls": "Total calls",
+      "callCountValue": "{count} calls",
+      "apiCountValue": "{count} APIs",
+      "successRate": "Request success",
+      "developersServed": "Registered developers",
+      "developerCountValue": "{count}",
       "searchPlaceholder": "Search API names or descriptions...",
       "statusFilter": "API status",
       "statusFilterAria": "Filter by API status",
@@ -41,6 +49,7 @@
     },
     "api": {
       "defaultTitle": "API title",
+      "publicCategory": "Public API",
       "noSummary": "No summary",
       "endpoint": "Endpoint",
       "callCount": "Calls",
