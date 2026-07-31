@@ -1,8 +1,8 @@
 import { sendSmtpMail } from './smtp'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 
 async function getSmtpConfig() {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   return {
     smtp: {
       host: settings.smtpHost,

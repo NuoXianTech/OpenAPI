@@ -2,7 +2,7 @@
 import { createError, getRequestIP } from 'h3'
 import { requestPasswordResetSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
@@ -11,7 +11,7 @@ import { readZodBody } from '~~/server/utils/zod'
 import { isBanActive } from '~~/server/utils/ban'
 
 export default defineEventHandler(async (event) => {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
 
   if (!settings.passwordResetEnabled) {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })

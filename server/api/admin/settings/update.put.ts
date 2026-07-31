@@ -1,15 +1,16 @@
 import { adminUpdateSiteSettingsSchema } from '~~/server/schemas/admin'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { siteSettingsService, toAdminSiteSettings, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
+import type { SystemSettingsPatch } from '#shared/types/site-settings'
+import { systemSettingsService, toAdminSystemSettings } from '~~/server/services/system-settings-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminUpdateSiteSettingsSchema)
 
-  const updateInput: SiteSettingsUpsertInput = body
+  const updateInput: SystemSettingsPatch = body
 
-  const data = await siteSettingsService.update(updateInput)
+  const data = await systemSettingsService.update(updateInput)
 
   const changedFields = Object.entries(updateInput)
     .filter(([, value]) => value !== undefined)
@@ -20,13 +21,13 @@ export default defineAdminEventHandler(async (event, admin) => {
     actor: admin.username,
     action: 'admin.settings.update',
     resourceType: 'site-settings',
-    resourceId: data.id,
+    resourceId: 'global',
     detail: { changedFields }
   })
 
   // 同时返回 public shape：前端用它原地刷新 useFetch('/api/settings/public') 缓存，避免再发一次 GET。
   return {
-    ...toAdminSiteSettings(data),
-    public: siteSettingsService.toPublicSettings(data)
+    ...toAdminSystemSettings(data),
+    public: systemSettingsService.toPublicSettings(data)
   }
 })

@@ -4,14 +4,14 @@ import {
   toAdminOauthProviderSafe
 } from '~~/server/services/oauth-provider-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { createOauthSettingsAuditDetail } from '~~/server/utils/oauth-audit'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminUpdateOauthProvidersSchema)
-  const currentSettings = await siteSettingsService.getOrCreate()
+  const currentSettings = await systemSettingsService.getSettings()
   const beforeProviders = await oauthProviderService.list()
   const providers = await oauthProviderService.updateAll(body)
   const detail = createOauthSettingsAuditDetail(

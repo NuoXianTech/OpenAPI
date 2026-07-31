@@ -1,6 +1,6 @@
 // Cloudflare Turnstile 服务端验证。参见 https://developers.cloudflare.com/turnstile/
 import { createError } from 'h3'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 
 export type TurnstilePageKey = 'login' | 'register' | 'passwordReset' | 'checkin'
 
@@ -19,7 +19,7 @@ interface SiteVerifyResponse {
 
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
-function pageToggleOf(settings: Awaited<ReturnType<typeof siteSettingsService.getOrCreate>>, page: TurnstilePageKey) {
+function pageToggleOf(settings: Awaited<ReturnType<typeof systemSettingsService.getSettings>>, page: TurnstilePageKey) {
   switch (page) {
     case 'login': return settings.turnstileLoginEnabled
     case 'register': return settings.turnstileRegisterEnabled
@@ -33,7 +33,7 @@ async function verifyTurnstileForPage(
   token: string | undefined | null,
   remoteIp?: string | null
 ): Promise<TurnstileCheck> {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   const required = pageToggleOf(settings, page)
 
   // 未配置密钥：完全跳过，不视为失败（无总开关，是否校验由各场景开关决定）

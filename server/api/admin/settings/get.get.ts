@@ -1,10 +1,10 @@
 import { setResponseHeader } from 'h3'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 
 export default defineAdminEventHandler((event) => {
-  // 返回明文 SMTP 密码与 Turnstile secret，禁止任何 CDN / 反向代理 / 浏览器磁盘缓存留存该响应。
+  // 管理端只返回敏感配置的“是否已配置”状态，仍禁止任何中间缓存留存响应。
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
 
-  return siteSettingsService.getForAdmin()
+  return systemSettingsService.getForAdmin()
 })

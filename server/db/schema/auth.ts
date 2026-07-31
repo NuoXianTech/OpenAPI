@@ -13,7 +13,7 @@ import { users } from './user'
 // User third-party account binding（用户三方绑定）
 //
 // OAuth 各 provider 的应用配置（clientId / clientSecret / 启用开关）已并入
-// siteSettings 的扁平列（明文），由 oauthProviderService 适配读写，不再单列一张
+// OAuth 应用配置由 system_settings 键值表保存，oauthProviderService 负责适配读写。
 // oauth_providers 表。
 //
 // 一个用户每个 provider 至多一个绑定（见下方 (userId, provider) 唯一约束）。

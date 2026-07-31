@@ -3,7 +3,7 @@ import { creditTransactions, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
 import { notificationService } from './notification-service'
-import { siteSettingsService } from './site-settings-service'
+import { systemSettingsService } from './system-settings-service'
 import type { DatabaseTransaction } from '~~/server/db/client'
 import type { SupportedLocale } from '#shared/config/locale-defaults'
 
@@ -228,7 +228,7 @@ export const usersService = {
    * 通知补发（audience='all_with_future'）也只在首次激活时触发。
    */
   async activateUser(id: number) {
-    const settings = await siteSettingsService.getOrCreate()
+    const settings = await systemSettingsService.getSettings()
     const grantAmount = Math.max(Math.trunc(settings.defaultRegisterCredits || 0), 0)
 
     const activated = await db.transaction(async (tx: DatabaseTransaction) => {

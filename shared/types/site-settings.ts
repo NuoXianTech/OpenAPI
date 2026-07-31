@@ -1,10 +1,58 @@
-/**
- * 站点公开设置类型（/api/settings/public 返回结构）。
- *
- * - server: siteSettingsService.toPublicSettings 返回此结构
- * - client: useSiteSettings() 读取此结构
- * 双端必须保持同源，避免新增字段时只改一边。
- */
+/** 全站系统配置的强类型应用视图。数据库使用命名空间 key + JSONB 分行存储。 */
+export interface SystemSettings {
+  siteUrl: string
+  siteImg: string
+  siteName: string
+  siteDescription: string
+  startTime: string
+  registrationMode: 'open' | 'invite' | 'closed'
+  defaultRegisterCredits: number
+  registerEmailFilterMode: 'off' | 'whitelist' | 'blacklist'
+  registerEmailFilterList: string
+  sessionMaxAgeSeconds: number
+  sessionAbsoluteMaxAgeSeconds: number
+  sessionRememberMaxAgeSeconds: number
+  emailVerifyExpiresInMinutes: number
+  emailActivationEnabled: boolean
+  passwordResetExpiresInMinutes: number
+  passwordResetEnabled: boolean
+  icpBeian: string
+  policeBeian: string
+  termsUrl: string
+  privacyUrl: string
+  smtpHost: string
+  smtpPort: number
+  smtpSecure: boolean
+  smtpUser: string
+  smtpPass: string
+  smtpFrom: string
+  smtpFromName: string
+  smtpReplyTo: string
+  smtpPoolMaxAgeSeconds: number
+  oauthForceBinding: boolean
+  oauthGithubClientId: string
+  oauthGithubClientSecret: string
+  oauthGithubEnabled: boolean
+  oauthQqClientId: string
+  oauthQqClientSecret: string
+  oauthQqEnabled: boolean
+  turnstileSiteKey: string
+  turnstileSecretKey: string
+  turnstileLoginEnabled: boolean
+  turnstileRegisterEnabled: boolean
+  turnstilePasswordResetEnabled: boolean
+  turnstileCheckinEnabled: boolean
+  checkinEnabled: boolean
+  checkinCooldownMode: 'hours' | 'fixed_time'
+  checkinRefreshHours: number
+  checkinFixedRefreshTime: string
+  checkinMode: 'fixed' | 'range'
+  checkinAmountFixed: number
+  checkinAmountMin: number
+  checkinAmountMax: number
+}
+
+export type SystemSettingsPatch = Partial<SystemSettings>
 
 export interface PublicTurnstileSettings {
   enabled: boolean
@@ -15,6 +63,13 @@ export interface PublicTurnstileSettings {
   checkin: boolean
 }
 
+/**
+ * 站点公开设置类型（/api/settings/public 返回结构）。
+ *
+ * - server: systemSettingsService.toPublicSettings 返回此结构
+ * - client: useSiteSettings() 读取此结构
+ * 双端必须保持同源，避免新增字段时只改一边。
+ */
 export interface PublicSiteSettings {
   siteUrl: string
   siteImg: string

@@ -5,7 +5,7 @@ import type { H3Event } from 'h3'
 import { isSupportedLocale } from '#shared/config/locale-defaults'
 import { createError, defineEventHandler, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/services/user-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { decodeBase64Url, encodeBase64Url, isTimingSafeEqual } from '~~/server/utils/secure-token'
@@ -89,7 +89,7 @@ export async function verifyPassword(stored: string, password: string) {
 }
 
 async function getSessionMaxAgesSeconds() {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   return {
     defaultMaxAge: Number(settings.sessionMaxAgeSeconds),
     absoluteMaxAge: Number(settings.sessionAbsoluteMaxAgeSeconds),

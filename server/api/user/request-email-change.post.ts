@@ -2,7 +2,7 @@
 import { createError } from 'h3'
 import { userRequestEmailChangeSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
 import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
@@ -32,7 +32,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     throw createError({ statusCode: 409, message: 'Email already in use' })
   }
 
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
 
   // binding 取「当前(旧)」邮箱（userRow.email）；payload.email 存「新」邮箱，确认时写入 users.email。

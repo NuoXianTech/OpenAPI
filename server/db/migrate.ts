@@ -35,8 +35,8 @@ async function hasJournal(folder: string) {
 async function findFilesystemMigrationsFolder() {
   const candidates = [
     process.env.MIGRATIONS_DIR,
-    path.resolve(process.cwd(), '.output/server/db/migrations/postgresql'),
     path.resolve(process.cwd(), 'server/db/migrations/postgresql'),
+    path.resolve(process.cwd(), '.output/server/db/migrations/postgresql'),
   ].filter((candidate): candidate is string => Boolean(candidate))
 
   for (const candidate of candidates) {

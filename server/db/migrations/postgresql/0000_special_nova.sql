@@ -276,62 +276,13 @@ CREATE TABLE "operation_logs" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "site_settings" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"scope" varchar(32) DEFAULT 'default' NOT NULL,
-	"site_url" varchar(1000) DEFAULT 'http://localhost:3000' NOT NULL,
-	"site_img" varchar(1000) DEFAULT '/favicon.ico' NOT NULL,
-	"site_name" varchar(140) DEFAULT 'OpenAPI' NOT NULL,
-	"site_description" text DEFAULT 'OpenAPI是免费为用户提供网络数据接口调用的服务平台，我们致力于为用户提供稳定、快速的免费API数据接口服务。' NOT NULL,
-	"start_time" varchar(32) DEFAULT '2026-01-01 00:00:00' NOT NULL,
-	"registration_mode" varchar(20) DEFAULT 'open' NOT NULL,
-	"default_register_credits" integer DEFAULT 0 NOT NULL,
-	"register_email_filter_mode" varchar(20) DEFAULT 'off' NOT NULL,
-	"register_email_filter_list" text DEFAULT '' NOT NULL,
-	"session_max_age_seconds" integer DEFAULT 86400 NOT NULL,
-	"session_absolute_max_age_seconds" integer DEFAULT 604800 NOT NULL,
-	"session_remember_max_age_seconds" integer DEFAULT 2592000 NOT NULL,
-	"email_verify_expires_in_minutes" integer DEFAULT 30 NOT NULL,
-	"email_activation_enabled" boolean DEFAULT true NOT NULL,
-	"password_reset_expires_in_minutes" integer DEFAULT 30 NOT NULL,
-	"password_reset_enabled" boolean DEFAULT true NOT NULL,
-	"icp_beian" varchar(100),
-	"police_beian" varchar(100),
-	"terms_url" varchar(1000),
-	"privacy_url" varchar(1000),
-	"smtp_host" varchar(255) DEFAULT 'smtp.example.com' NOT NULL,
-	"smtp_port" integer DEFAULT 465 NOT NULL,
-	"smtp_secure" boolean DEFAULT true NOT NULL,
-	"smtp_user" varchar(255) DEFAULT '' NOT NULL,
-	"smtp_pass" varchar(255) DEFAULT '' NOT NULL,
-	"smtp_from" varchar(255) DEFAULT 'no-reply@example.com' NOT NULL,
-	"smtp_from_name" varchar(255) DEFAULT '' NOT NULL,
-	"smtp_reply_to" varchar(255) DEFAULT '' NOT NULL,
-	"smtp_pool_max_age_seconds" integer DEFAULT 0 NOT NULL,
-	"oauth_force_binding" boolean DEFAULT false NOT NULL,
-	"oauth_github_client_id" varchar(255) DEFAULT '' NOT NULL,
-	"oauth_github_client_secret" varchar(255) DEFAULT '' NOT NULL,
-	"oauth_github_enabled" boolean DEFAULT false NOT NULL,
-	"oauth_qq_client_id" varchar(255) DEFAULT '' NOT NULL,
-	"oauth_qq_client_secret" varchar(255) DEFAULT '' NOT NULL,
-	"oauth_qq_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_site_key" varchar(200) DEFAULT '' NOT NULL,
-	"turnstile_secret_key" varchar(200) DEFAULT '' NOT NULL,
-	"turnstile_login_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_register_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_password_reset_enabled" boolean DEFAULT false NOT NULL,
-	"turnstile_checkin_enabled" boolean DEFAULT false NOT NULL,
-	"checkin_enabled" boolean DEFAULT true NOT NULL,
-	"checkin_cooldown_mode" varchar(20) DEFAULT 'hours' NOT NULL,
-	"checkin_refresh_hours" integer DEFAULT 24 NOT NULL,
-	"checkin_fixed_refresh_time" varchar(8) DEFAULT '00:00' NOT NULL,
-	"checkin_mode" varchar(20) DEFAULT 'fixed' NOT NULL,
-	"checkin_amount_fixed" integer DEFAULT 10 NOT NULL,
-	"checkin_amount_min" integer DEFAULT 5 NOT NULL,
-	"checkin_amount_max" integer DEFAULT 20 NOT NULL,
+CREATE TABLE "system_settings" (
+	"setting_key" varchar(150) PRIMARY KEY NOT NULL,
+	"value" jsonb NOT NULL,
+	"is_secret" boolean DEFAULT false NOT NULL,
+	"description" varchar(500) DEFAULT '' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "site_settings_scope_unique" UNIQUE("scope")
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -402,4 +353,5 @@ CREATE INDEX "login_logs_method_idx" ON "login_logs" USING btree ("method");--> 
 CREATE INDEX "operation_logs_created_at_idx" ON "operation_logs" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint
-CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");
+CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
+CREATE INDEX "system_settings_secret_idx" ON "system_settings" USING btree ("is_secret");

@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { getHeader, getQuery, getRequestIP, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
@@ -37,7 +37,7 @@ async function redirectError(event: H3Event, code: string, mode: 'login' | 'bind
  * 「绑定已有账号」或「新注册」。
  */
 export async function handleOauthCallback(event: H3Event, provider: SupportedOauthProvider) {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
 
   const query = getQuery(event)
   const stateParam = readQueryString(query.state) || null

@@ -1,5 +1,5 @@
 {
-  "id": "bb2e44f8-870c-4e97-8939-ec335c822ff2",
+  "id": "33b588f3-9184-421d-81dd-d3d4a39c9713",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2857,368 +2857,35 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.site_settings": {
-      "name": "site_settings",
+    "public.system_settings": {
+      "name": "system_settings",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
+        "setting_key": {
+          "name": "setting_key",
+          "type": "varchar(150)",
           "primaryKey": true,
           "notNull": true
         },
-        "scope": {
-          "name": "scope",
-          "type": "varchar(32)",
+        "value": {
+          "name": "value",
+          "type": "jsonb",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'default'"
+          "notNull": true
         },
-        "site_url": {
-          "name": "site_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'http://localhost:3000'"
-        },
-        "site_img": {
-          "name": "site_img",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'/favicon.ico'"
-        },
-        "site_name": {
-          "name": "site_name",
-          "type": "varchar(140)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'OpenAPI'"
-        },
-        "site_description": {
-          "name": "site_description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'OpenAPI是免费为用户提供网络数据接口调用的服务平台，我们致力于为用户提供稳定、快速的免费API数据接口服务。'"
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "varchar(32)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'2026-01-01 00:00:00'"
-        },
-        "registration_mode": {
-          "name": "registration_mode",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'open'"
-        },
-        "default_register_credits": {
-          "name": "default_register_credits",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "register_email_filter_mode": {
-          "name": "register_email_filter_mode",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'off'"
-        },
-        "register_email_filter_list": {
-          "name": "register_email_filter_list",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "session_max_age_seconds": {
-          "name": "session_max_age_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 86400
-        },
-        "session_absolute_max_age_seconds": {
-          "name": "session_absolute_max_age_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 604800
-        },
-        "session_remember_max_age_seconds": {
-          "name": "session_remember_max_age_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 2592000
-        },
-        "email_verify_expires_in_minutes": {
-          "name": "email_verify_expires_in_minutes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 30
-        },
-        "email_activation_enabled": {
-          "name": "email_activation_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "password_reset_expires_in_minutes": {
-          "name": "password_reset_expires_in_minutes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 30
-        },
-        "password_reset_enabled": {
-          "name": "password_reset_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "icp_beian": {
-          "name": "icp_beian",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "police_beian": {
-          "name": "police_beian",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "terms_url": {
-          "name": "terms_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "privacy_url": {
-          "name": "privacy_url",
-          "type": "varchar(1000)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "smtp_host": {
-          "name": "smtp_host",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'smtp.example.com'"
-        },
-        "smtp_port": {
-          "name": "smtp_port",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 465
-        },
-        "smtp_secure": {
-          "name": "smtp_secure",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "smtp_user": {
-          "name": "smtp_user",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "smtp_pass": {
-          "name": "smtp_pass",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "smtp_from": {
-          "name": "smtp_from",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'no-reply@example.com'"
-        },
-        "smtp_from_name": {
-          "name": "smtp_from_name",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "smtp_reply_to": {
-          "name": "smtp_reply_to",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "smtp_pool_max_age_seconds": {
-          "name": "smtp_pool_max_age_seconds",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "oauth_force_binding": {
-          "name": "oauth_force_binding",
+        "is_secret": {
+          "name": "is_secret",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
           "default": false
         },
-        "oauth_github_client_id": {
-          "name": "oauth_github_client_id",
-          "type": "varchar(255)",
+        "description": {
+          "name": "description",
+          "type": "varchar(500)",
           "primaryKey": false,
           "notNull": true,
           "default": "''"
-        },
-        "oauth_github_client_secret": {
-          "name": "oauth_github_client_secret",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "oauth_github_enabled": {
-          "name": "oauth_github_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "oauth_qq_client_id": {
-          "name": "oauth_qq_client_id",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "oauth_qq_client_secret": {
-          "name": "oauth_qq_client_secret",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "oauth_qq_enabled": {
-          "name": "oauth_qq_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "turnstile_site_key": {
-          "name": "turnstile_site_key",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "turnstile_secret_key": {
-          "name": "turnstile_secret_key",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "turnstile_login_enabled": {
-          "name": "turnstile_login_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "turnstile_register_enabled": {
-          "name": "turnstile_register_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "turnstile_password_reset_enabled": {
-          "name": "turnstile_password_reset_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "turnstile_checkin_enabled": {
-          "name": "turnstile_checkin_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "checkin_enabled": {
-          "name": "checkin_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "checkin_cooldown_mode": {
-          "name": "checkin_cooldown_mode",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'hours'"
-        },
-        "checkin_refresh_hours": {
-          "name": "checkin_refresh_hours",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 24
-        },
-        "checkin_fixed_refresh_time": {
-          "name": "checkin_fixed_refresh_time",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'00:00'"
-        },
-        "checkin_mode": {
-          "name": "checkin_mode",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'fixed'"
-        },
-        "checkin_amount_fixed": {
-          "name": "checkin_amount_fixed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 10
-        },
-        "checkin_amount_min": {
-          "name": "checkin_amount_min",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 5
-        },
-        "checkin_amount_max": {
-          "name": "checkin_amount_max",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 20
         },
         "created_at": {
           "name": "created_at",
@@ -3235,18 +2902,26 @@
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "site_settings_scope_unique": {
-          "name": "site_settings_scope_unique",
-          "nullsNotDistinct": false,
+      "indexes": {
+        "system_settings_secret_idx": {
+          "name": "system_settings_secret_idx",
           "columns": [
-            "scope"
-          ]
+            {
+              "expression": "is_secret",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

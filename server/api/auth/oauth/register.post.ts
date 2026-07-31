@@ -9,7 +9,7 @@ import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pendi
 import { usersService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 410, message: '注册会话已过期，请重新发起第三方登录' })
   }
 
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   if (settings.oauthForceBinding) {
     throw createError({ statusCode: 403, message: '站点已设为强制绑定，请绑定已有账号' })
   }

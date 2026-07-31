@@ -1,7 +1,8 @@
 import { createError } from 'h3'
 import { SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '#shared/types/oauth'
+import type { SystemSettingsPatch } from '#shared/types/site-settings'
 import { isSupportedOauthProvider, providerIndex } from '~~/server/utils/oauth-provider-id'
-import { siteSettingsService, type SiteSettingsUpsertInput } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 
 export interface OauthProviderPatch {
   clientId?: string
@@ -21,8 +22,7 @@ export interface OauthProviderBatchUpdate {
   providers: OauthProviderBatchItem[]
 }
 
-// provider 配置视图。数据实际落在 siteSettings 的扁平列里（明文），此处合成成统一形状，
-// 让 oauthCallback / start / admin 端点无需感知存储细节（曾是独立的 oauth_providers 表）。
+// provider 配置视图。数据落在 system_settings 的命名空间键中，敏感值加密存储。
 export interface OauthProviderRow {
   provider: SupportedOauthProvider
   clientId: string
@@ -37,10 +37,9 @@ interface AdminOauthProviderSafe {
   isEnabled: boolean
 }
 
-type SiteSettingsRow = Awaited<ReturnType<typeof siteSettingsService.getOrCreate>>
+type SystemSettingsSnapshot = Awaited<ReturnType<typeof systemSettingsService.getSettings>>
 
-// provider → siteSettings 列名映射，集中一处。
-// 扩 provider 时：① schema/system.ts 加 3 列 ② 此表加一行 ③ SiteSettingsUpsertInput 加字段。
+// provider → 强类型配置名映射，集中一处。扩 provider 时只需注册配置并在此声明映射。
 interface ProviderColumns {
   clientId: 'oauthGithubClientId' | 'oauthQqClientId'
   clientSecret: 'oauthGithubClientSecret' | 'oauthQqClientSecret'
@@ -51,7 +50,7 @@ const PROVIDER_COLUMNS: Record<SupportedOauthProvider, ProviderColumns> = {
   qq: { clientId: 'oauthQqClientId', clientSecret: 'oauthQqClientSecret', isEnabled: 'oauthQqEnabled' }
 }
 
-function rowFromSettings(settings: SiteSettingsRow, provider: SupportedOauthProvider): OauthProviderRow {
+function rowFromSettings(settings: SystemSettingsSnapshot, provider: SupportedOauthProvider): OauthProviderRow {
   const cols = PROVIDER_COLUMNS[provider]
   return {
     provider,
@@ -83,13 +82,13 @@ export function buildCallbackUrl(siteUrl: string, provider: string) {
 export const oauthProviderService = {
   /** 列出全部受支持 provider 的配置（github / qq，固定两条），admin 列表用 */
   async list(): Promise<OauthProviderRow[]> {
-    const settings = await siteSettingsService.getOrCreate()
+    const settings = await systemSettingsService.getSettings()
     return SUPPORTED_OAUTH_PROVIDERS.map(p => rowFromSettings(settings, p))
   },
 
   /** 已启用的 provider（按各 provider 自己的启用开关；无全局总开关） */
   async listEnabledProviders(): Promise<SupportedOauthProvider[]> {
-    const settings = await siteSettingsService.getOrCreate()
+    const settings = await systemSettingsService.getSettings()
     return SUPPORTED_OAUTH_PROVIDERS.filter(p => settings[PROVIDER_COLUMNS[p].isEnabled])
   },
 
@@ -97,7 +96,7 @@ export const oauthProviderService = {
     if (!isSupportedOauthProvider(provider)) {
       return null
     }
-    const settings = await siteSettingsService.getOrCreate()
+    const settings = await systemSettingsService.getSettings()
     return rowFromSettings(settings, provider)
   },
 
@@ -119,18 +118,18 @@ export const oauthProviderService = {
       throw createError({ statusCode: 400, message: 'clientId 和 clientSecret 都需要配置后才能启用' })
     }
 
-    const input: SiteSettingsUpsertInput = provider === 'github'
+    const input: SystemSettingsPatch = provider === 'github'
       ? { oauthGithubClientId: nextClientId, oauthGithubClientSecret: nextSecret, oauthGithubEnabled: nextEnabled }
       : { oauthQqClientId: nextClientId, oauthQqClientSecret: nextSecret, oauthQqEnabled: nextEnabled }
-    await siteSettingsService.update(input)
+    await systemSettingsService.update(input)
 
     return { provider, clientId: nextClientId, clientSecret: nextSecret, isEnabled: nextEnabled }
   },
 
   /** 将绑定策略和全部 provider 配置作为一次数据库更新提交，避免部分保存成功。 */
   async updateAll(batch: OauthProviderBatchUpdate): Promise<OauthProviderRow[]> {
-    const currentSettings = await siteSettingsService.getOrCreate()
-    const input: SiteSettingsUpsertInput = { oauthForceBinding: batch.oauthForceBinding }
+    const currentSettings = await systemSettingsService.getSettings()
+    const input: SystemSettingsPatch = { oauthForceBinding: batch.oauthForceBinding }
     const rows: OauthProviderRow[] = []
 
     for (const provider of SUPPORTED_OAUTH_PROVIDERS) {
@@ -159,7 +158,7 @@ export const oauthProviderService = {
       rows.push({ provider, clientId, clientSecret, isEnabled: submitted.isEnabled })
     }
 
-    await siteSettingsService.update(input)
+    await systemSettingsService.update(input)
     return rows
   }
 }

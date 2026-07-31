@@ -44,7 +44,7 @@ export const users = pgTable('users', {
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   lastLoginIp: varchar('last_login_ip', { length: 45 }),
   lastLoginUserAgent: varchar('last_login_user_agent', { length: 500 }),
-  // 上次签到时间。配合 siteSettings.checkinRefreshHours 决定下次可签到时刻；签到流水另存于 creditTransactions(reason='checkin')。
+  // 上次签到时间。配合 systemSettings.checkinRefreshHours 决定下次可签到时刻；签到流水另存于 creditTransactions(reason='checkin')。
   lastCheckinAt: timestamp('last_checkin_at', { withTimezone: true }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),
   // 会话失效版本号：改密 / 重置 / 全局登出时自增，令该账号所有已签发 JWT 立即失效（见 server/utils/jwt.ts）
@@ -65,7 +65,7 @@ export const users = pgTable('users', {
 //   - admin 调整：reason='admin_grant' / 'admin_revoke' / 'admin_reset'
 //   - API 调用扣费：reason='api_charge'，apiCallId 关联具体调用
 //   - 调用失败退款：reason='api_refund'
-//   - 注册赠送：reason='signup_bonus'，金额取自 siteSettings.defaultRegisterCredits
+//   - 注册赠送：reason='signup_bonus'，金额取自 systemSettings.defaultRegisterCredits
 //   - 兑换码兑换：reason='redemption_code'，codeId 关联兑换码、ip 记录兑换来源；
 //     (codeId, userId) 部分唯一索引保证同一用户对同一码只兑换一次（接管原 redemptionRecords 职责）
 //

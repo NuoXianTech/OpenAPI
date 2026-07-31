@@ -6,7 +6,7 @@ import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDoma
 import { readZodBody } from '~~/server/utils/zod'
 import { issueVerificationTokenUrl, normalizeSiteUrl } from '~~/server/utils/verification-token'
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { rollbackCreatedUser } from '~~/server/utils/registration'
@@ -17,7 +17,7 @@ import { rollbackCreatedUser } from '~~/server/utils/registration'
 // 不会因"是否需要验证"泄露账号是否存在。
 
 export default defineEventHandler(async (event) => {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
 
   // 邮件激活总开关：开启=注册后须邮件验证；关闭=注册即激活、不发验证邮件
   const activationRequired = settings.emailActivationEnabled !== false

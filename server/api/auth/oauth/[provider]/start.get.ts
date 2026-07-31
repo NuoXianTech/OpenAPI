@@ -1,6 +1,6 @@
 import { createError, getQuery, getRouterParam, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/services/oauth-provider-service'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { issueState, type OauthFlowMode } from '~~/server/utils/oauth-state'
 import { githubProvider } from '~~/server/utils/oauth-providers/github'
 import { qqProvider } from '~~/server/utils/oauth-providers/qq'
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, message: 'provider not supported' })
   }
 
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
 
   const row = await oauthProviderService.getByProvider(provider)
   if (!row || !row.isEnabled || !row.clientId) {

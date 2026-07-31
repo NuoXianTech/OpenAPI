@@ -3,12 +3,12 @@ import { createError } from 'h3'
 import { resetPasswordSchema } from '~~/server/schemas/auth'
 import { usersService } from '~~/server/services/user-service'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { hashPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event) => {
-  const settings = await siteSettingsService.getOrCreate()
+  const settings = await systemSettingsService.getSettings()
   if (!settings.passwordResetEnabled) {
     throw createError({ statusCode: 403, message: '密码重置功能已关闭' })
   }

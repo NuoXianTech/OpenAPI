@@ -3,6 +3,7 @@ import {
   adminAdjustCreditsSchema,
   adminInitialProfileSchema,
   adminUpdateApiSchema,
+  adminUpdateSiteSettingsSchema,
   adminUpdateUserSchema
 } from '~~/server/schemas/admin'
 import { API_STATUS } from '#shared/config/api-status'
@@ -72,5 +73,32 @@ describe('admin schemas', () => {
       email: 'owner@example.com',
       password: 'new-admin-password'
     }).success).toBe(true)
+  })
+
+  it('validates general settings without accepting OAuth-owned fields', () => {
+    expect(adminUpdateSiteSettingsSchema.safeParse({
+      siteName: 'OpenAPI Platform',
+      checkinMode: 'range',
+      checkinAmountMin: 5,
+      checkinAmountMax: 20
+    }).success).toBe(true)
+
+    expect(adminUpdateSiteSettingsSchema.safeParse({
+      oauthGithubEnabled: true
+    }).success).toBe(false)
+
+    expect(adminUpdateSiteSettingsSchema.safeParse({
+      oauthForceBinding: true
+    }).success).toBe(false)
+
+    expect(adminUpdateSiteSettingsSchema.safeParse({
+      unknownSetting: true
+    }).success).toBe(false)
+
+    expect(adminUpdateSiteSettingsSchema.safeParse({
+      checkinMode: 'range',
+      checkinAmountMin: 20,
+      checkinAmountMax: 5
+    }).success).toBe(false)
   })
 })

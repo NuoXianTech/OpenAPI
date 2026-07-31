@@ -1,55 +1,11 @@
 import type { ComputedRef, Ref } from 'vue'
 import { SUPPORTED_OAUTH_PROVIDERS } from '#shared/types/oauth'
+import type { SystemSettings } from '#shared/types/site-settings'
 import { SITE_SETTINGS_DEFAULTS } from '#shared/config/site-defaults'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 
-export interface AdminSettingsForm {
-  siteName: string
-  siteUrl: string
-  siteImg: string
-  siteDescription: string
-  startTime: string
-  icpBeian: string
-  policeBeian: string
-  termsUrl: string
-  privacyUrl: string
-  sessionMaxAgeSeconds: number
-  sessionAbsoluteMaxAgeSeconds: number
-  sessionRememberMaxAgeSeconds: number
-  registrationMode: 'open' | 'invite' | 'closed'
-  registerEmailFilterMode: 'off' | 'whitelist' | 'blacklist'
-  registerEmailFilterList: string
-  defaultRegisterCredits: number
-  emailVerifyExpiresInMinutes: number
-  emailActivationEnabled: boolean
-  passwordResetExpiresInMinutes: number
-  passwordResetEnabled: boolean
-  smtpHost: string
-  smtpPort: number
-  smtpSecure: boolean
-  smtpUser: string
-  smtpPass: string
-  smtpFrom: string
-  smtpFromName: string
-  smtpReplyTo: string
-  smtpPoolMaxAgeSeconds: number
-  oauthForceBinding: boolean
-  turnstileSiteKey: string
-  turnstileSecretKey: string
-  turnstileLoginEnabled: boolean
-  turnstileRegisterEnabled: boolean
-  turnstilePasswordResetEnabled: boolean
-  turnstileCheckinEnabled: boolean
-  checkinEnabled: boolean
-  checkinCooldownMode: 'hours' | 'fixed_time'
-  checkinRefreshHours: number
-  checkinFixedRefreshTime: string
-  checkinMode: 'fixed' | 'range'
-  checkinAmountFixed: number
-  checkinAmountMin: number
-  checkinAmountMax: number
-}
+export type AdminSettingsForm = SystemSettings
 
 export type AdminSettingsKey = keyof AdminSettingsForm
 
@@ -131,80 +87,18 @@ interface UseAdminUserSessionSettingsOptions {
 const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
 
 function defaultForm(): AdminSettingsForm {
-  return {
-    ...SITE_SETTINGS_DEFAULTS,
-    siteName: '',
-    siteUrl: '',
-    siteImg: '',
-    siteDescription: '',
-    startTime: '',
-    icpBeian: '',
-    policeBeian: '',
-    termsUrl: '',
-    privacyUrl: '',
-    registerEmailFilterList: '',
-    smtpHost: '',
-    smtpUser: '',
-    smtpPass: '',
-    smtpFrom: '',
-    smtpReplyTo: '',
-    turnstileSecretKey: '',
-    turnstileSiteKey: ''
-  }
+  return { ...SITE_SETTINGS_DEFAULTS }
 }
 
 function normalizeForm(val: Partial<AdminSettingsForm>): AdminSettingsForm {
-  const d = defaultForm()
-  return {
-    siteName: val.siteName || d.siteName,
-    siteUrl: val.siteUrl || d.siteUrl,
-    siteImg: val.siteImg || d.siteImg,
-    siteDescription: val.siteDescription || d.siteDescription,
-    startTime: val.startTime || d.startTime,
-    icpBeian: val.icpBeian || d.icpBeian,
-    policeBeian: val.policeBeian || d.policeBeian,
-    termsUrl: val.termsUrl || d.termsUrl,
-    privacyUrl: val.privacyUrl || d.privacyUrl,
-    sessionMaxAgeSeconds: val.sessionMaxAgeSeconds ?? d.sessionMaxAgeSeconds,
-    sessionAbsoluteMaxAgeSeconds: val.sessionAbsoluteMaxAgeSeconds ?? d.sessionAbsoluteMaxAgeSeconds,
-    sessionRememberMaxAgeSeconds: val.sessionRememberMaxAgeSeconds ?? d.sessionRememberMaxAgeSeconds,
-    registrationMode: (val.registrationMode === 'invite' || val.registrationMode === 'closed')
-      ? val.registrationMode
-      : 'open',
-    registerEmailFilterMode: (val.registerEmailFilterMode === 'whitelist' || val.registerEmailFilterMode === 'blacklist')
-      ? val.registerEmailFilterMode
-      : 'off',
-    registerEmailFilterList: val.registerEmailFilterList ?? d.registerEmailFilterList,
-    defaultRegisterCredits: val.defaultRegisterCredits ?? d.defaultRegisterCredits,
-    emailVerifyExpiresInMinutes: val.emailVerifyExpiresInMinutes ?? d.emailVerifyExpiresInMinutes,
-    emailActivationEnabled: val.emailActivationEnabled ?? d.emailActivationEnabled,
-    passwordResetExpiresInMinutes: val.passwordResetExpiresInMinutes ?? d.passwordResetExpiresInMinutes,
-    passwordResetEnabled: val.passwordResetEnabled ?? d.passwordResetEnabled,
-    smtpHost: val.smtpHost || d.smtpHost,
-    smtpPort: val.smtpPort ?? d.smtpPort,
-    smtpSecure: val.smtpSecure ?? d.smtpSecure,
-    smtpUser: val.smtpUser || d.smtpUser,
-    smtpPass: val.smtpPass || d.smtpPass,
-    smtpFrom: val.smtpFrom || d.smtpFrom,
-    smtpFromName: val.smtpFromName ?? d.smtpFromName,
-    smtpReplyTo: val.smtpReplyTo ?? d.smtpReplyTo,
-    smtpPoolMaxAgeSeconds: val.smtpPoolMaxAgeSeconds ?? d.smtpPoolMaxAgeSeconds,
-    oauthForceBinding: val.oauthForceBinding ?? d.oauthForceBinding,
-    turnstileSiteKey: val.turnstileSiteKey || d.turnstileSiteKey,
-    turnstileSecretKey: val.turnstileSecretKey || d.turnstileSecretKey,
-    turnstileLoginEnabled: val.turnstileLoginEnabled ?? d.turnstileLoginEnabled,
-    turnstileRegisterEnabled: val.turnstileRegisterEnabled ?? d.turnstileRegisterEnabled,
-    turnstilePasswordResetEnabled: val.turnstilePasswordResetEnabled ?? d.turnstilePasswordResetEnabled,
-    turnstileCheckinEnabled: val.turnstileCheckinEnabled ?? d.turnstileCheckinEnabled,
-    checkinEnabled: val.checkinEnabled ?? d.checkinEnabled,
-    checkinCooldownMode: val.checkinCooldownMode === 'fixed_time' ? 'fixed_time' : 'hours',
-    checkinRefreshHours: val.checkinRefreshHours ?? d.checkinRefreshHours,
-    checkinFixedRefreshTime: val.checkinFixedRefreshTime || d.checkinFixedRefreshTime,
-    checkinMode: val.checkinMode === 'range' ? 'range' : 'fixed',
-    checkinAmountFixed: val.checkinAmountFixed ?? d.checkinAmountFixed,
-    checkinAmountMin: val.checkinAmountMin ?? d.checkinAmountMin,
-    checkinAmountMax: val.checkinAmountMax ?? d.checkinAmountMax
+  const normalized = defaultForm()
+  for (const key of Object.keys(normalized) as AdminSettingsKey[]) {
+    const value = val[key]
+    if (value !== undefined && value !== null) {
+      normalized[key] = value as never
+    }
   }
+  return normalized
 }
 
 function snapshot(form: AdminSettingsForm): AdminSettingsForm {

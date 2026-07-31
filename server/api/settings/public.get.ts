@@ -1,3 +1,3 @@
-import { siteSettingsService } from '~~/server/services/site-settings-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 
-export default defineEventHandler(() => siteSettingsService.getPublicSettings())
+export default defineEventHandler(() => systemSettingsService.getPublicSettings())

@@ -1,3 +1,5 @@
+import type { SystemSettings } from '../types/site-settings'
+
 // Public site defaults shared by DB schema, service fallback, and frontend fallback.
 export const PUBLIC_SITE_DEFAULTS = {
   siteUrl: 'http://localhost:3000',
@@ -17,6 +19,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   registerEmailFilterMode: 'off', registerEmailFilterList: '',
   emailVerifyExpiresInMinutes: 30, emailActivationEnabled: true,
   passwordResetExpiresInMinutes: 30, smtpHost: 'smtp.example.com', smtpPort: 465,
+  icpBeian: '', policeBeian: '', termsUrl: '', privacyUrl: '',
   smtpSecure: true, smtpUser: '', smtpPass: '', smtpFrom: 'no-reply@example.com',
   smtpFromName: '', smtpReplyTo: '', smtpPoolMaxAgeSeconds: 0,
   oauthForceBinding: false, oauthGithubClientId: '', oauthGithubClientSecret: '', oauthGithubEnabled: false,
@@ -26,4 +29,4 @@ export const SITE_SETTINGS_DEFAULTS = {
   checkinEnabled: true, checkinCooldownMode: 'hours', checkinRefreshHours: 24,
   checkinFixedRefreshTime: '00:00', checkinMode: 'fixed', checkinAmountFixed: 10,
   checkinAmountMin: 5, checkinAmountMax: 20
-} as const
+} as const satisfies SystemSettings

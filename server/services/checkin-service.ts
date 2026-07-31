@@ -2,7 +2,7 @@ import { and, asc, eq, gte, sql, lt, isNull, or } from 'drizzle-orm'
 import { creditTransactions, users } from '~~/server/db/schema'
 import { APP_TIME_ZONE, toLocalDateKey, type LocalMonthRange } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
-import { siteSettingsService } from './site-settings-service'
+import { systemSettingsService } from './system-settings-service'
 import type { UserCheckinCalendarMonth } from '#shared/types/user-credits'
 import type { DatabaseTransaction } from '~~/server/db/client'
 
@@ -143,7 +143,7 @@ export const checkinService = {
   },
   async getStatus(userId: number): Promise<CheckinStatus> {
     const [settings, userRow] = await Promise.all([
-      siteSettingsService.getOrCreate(),
+      systemSettingsService.getSettings(),
       db.select({ lastCheckinAt: users.lastCheckinAt }).from(users).where(eq(users.id, userId)).limit(1)
     ])
     const last = userRow[0]?.lastCheckinAt ?? null
@@ -183,7 +183,7 @@ export const checkinService = {
    *   4. INSERT credit_transactions
    */
   async checkin(userId: number): Promise<CheckinResult> {
-    const settings = await siteSettingsService.getOrCreate()
+    const settings = await systemSettingsService.getSettings()
     if (!settings.checkinEnabled) {
       const err = new Error('签到功能已关闭') as Error & { code: string }
       err.code = 'DISABLED'
