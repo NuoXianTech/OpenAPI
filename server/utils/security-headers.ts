@@ -17,22 +17,27 @@ const HTML_DOCUMENT_SECURITY_HEADERS = {
   ].join(', ')
 } as const
 
-const APPLICATION_CSP = [
-  `default-src 'self'`,
-  `base-uri 'self'`,
-  `object-src 'none'`,
-  `frame-ancestors 'none'`,
-  `form-action 'self'`,
-  `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com`,
-  `style-src 'self' 'unsafe-inline'`,
-  `img-src 'self' data: blob: https:`,
-  `font-src 'self' data:`,
-  `connect-src 'self' https://challenges.cloudflare.com`,
-  `frame-src https://challenges.cloudflare.com`,
-  `media-src 'self' blob: https:`,
-  `worker-src 'self' blob:`,
-  `manifest-src 'self'`
-].join('; ')
+function createApplicationCsp(frameSources: string): string {
+  return [
+    `default-src 'self'`,
+    `base-uri 'self'`,
+    `object-src 'none'`,
+    `frame-ancestors 'none'`,
+    `form-action 'self'`,
+    `script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com`,
+    `style-src 'self' 'unsafe-inline'`,
+    `img-src 'self' data: blob: https:`,
+    `font-src 'self' data:`,
+    `connect-src 'self' https://challenges.cloudflare.com`,
+    `frame-src ${frameSources}`,
+    `media-src 'self' blob: https:`,
+    `worker-src 'self' blob:`,
+    `manifest-src 'self'`
+  ].join('; ')
+}
+
+const PRODUCTION_APPLICATION_CSP = createApplicationCsp('https://challenges.cloudflare.com')
+const DEVELOPMENT_APPLICATION_CSP = createApplicationCsp(`'self' https://challenges.cloudflare.com`)
 
 const PLAYER_CSP = [
   `default-src 'none'`,
@@ -68,7 +73,9 @@ export function getSecurityHeaders(options: SecurityHeadersOptions): Readonly<Re
 
   if (options.isHtmlRoute) {
     Object.assign(headers, HTML_DOCUMENT_SECURITY_HEADERS)
-    headers['Content-Security-Policy'] = options.isPlayerRoute ? PLAYER_CSP : APPLICATION_CSP
+    headers['Content-Security-Policy'] = options.isPlayerRoute
+      ? PLAYER_CSP
+      : options.isProduction ? PRODUCTION_APPLICATION_CSP : DEVELOPMENT_APPLICATION_CSP
 
     if (!options.isPlayerRoute) {
       headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'

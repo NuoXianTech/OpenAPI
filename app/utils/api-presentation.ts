@@ -1,6 +1,6 @@
 import { API_STATUS } from '#shared/config/api-status'
 
-export type ApiStatusColor = 'warning' | 'error' | 'neutral'
+export type ApiStatusColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
 export interface ApiStatusMeta {
   label: string
@@ -51,7 +51,7 @@ export function areAllApiMethodsPaid(
 function getApiStatusDescriptor(status: number): ApiStatusDescriptor {
   switch (status) {
     case API_STATUS.normal:
-      return { labelKey: 'common.states.active', color: 'neutral', icon: 'i-mdi-check-circle-outline' }
+      return { labelKey: 'common.states.active', color: 'success', icon: 'i-mdi-check-circle-outline' }
     case API_STATUS.abnormal:
       return { labelKey: 'common.states.inactive', color: 'error', icon: 'i-mdi-alert-circle-outline' }
     case API_STATUS.maintenance:
@@ -59,7 +59,7 @@ function getApiStatusDescriptor(status: number): ApiStatusDescriptor {
     case API_STATUS.deprecated:
       return { labelKey: 'common.states.deprecated', color: 'neutral', icon: 'i-mdi-archive-outline' }
     case API_STATUS.automatic:
-      return { labelKey: 'common.states.automatic', color: 'neutral', icon: 'i-mdi-refresh' }
+      return { labelKey: 'common.states.automatic', color: 'info', icon: 'i-mdi-refresh' }
     default:
       return { labelKey: 'common.states.unknown', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }

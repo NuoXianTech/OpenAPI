@@ -40,6 +40,7 @@ const methodTone = computed(() => {
 .http-method-badge {
   --http-method-accent: var(--ui-text-toned);
   display: inline-flex;
+  width: fit-content;
   flex: 0 0 auto;
   align-items: center;
   border: 1px solid color-mix(in oklab, var(--http-method-accent) 30%, var(--ui-border));

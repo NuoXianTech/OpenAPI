@@ -56,7 +56,7 @@ const fields = computed(() => [
     name: 'identifier',
     type: 'text' as const,
     label: t('auth.fields.identifier'),
-    placeholder: t('auth.placeholders.email'),
+    placeholder: t('auth.placeholders.identifier'),
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
     defaultValue: '',
@@ -175,7 +175,6 @@ function clearTurnstileError() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-mdi-account-circle-outline"
       :title="t('auth.login.welcome', { siteName: settings.siteName })"
     />
 
@@ -225,7 +224,7 @@ function clearTurnstileError() {
               :ui="{
                 root: 'w-full',
                 wrapper: 'min-w-0',
-                label: 'cursor-pointer text-sm leading-5 font-normal text-muted'
+                label: 'cursor-pointer text-sm leading-5 font-medium text-default'
               }"
             />
 

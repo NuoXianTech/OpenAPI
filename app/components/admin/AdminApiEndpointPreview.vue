@@ -23,7 +23,6 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
       >
         <ApiHttpMethodBadge
           :method="ep.method"
-          class="w-fit min-w-12 justify-center"
         />
         <code class="min-w-0 truncate font-mono text-xs font-medium text-highlighted">
           {{ ep.apiPath }}

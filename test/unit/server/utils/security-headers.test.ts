@@ -19,6 +19,26 @@ describe('security headers', () => {
     expect(headers['X-Frame-Options']).toBe('DENY')
   })
 
+  it('allows the same-origin Nuxt DevTools frame only in development', () => {
+    const developmentHeaders = getSecurityHeaders({
+      isProduction: false,
+      isPlayerRoute: false,
+      isHtmlRoute: true
+    })
+    const productionHeaders = getSecurityHeaders({
+      isProduction: true,
+      isPlayerRoute: false,
+      isHtmlRoute: true
+    })
+
+    expect(developmentHeaders['Content-Security-Policy'])
+      .toContain(`frame-src 'self' https://challenges.cloudflare.com`)
+    expect(productionHeaders['Content-Security-Policy'])
+      .toContain('frame-src https://challenges.cloudflare.com')
+    expect(productionHeaders['Content-Security-Policy'])
+      .not.toContain(`frame-src 'self'`)
+  })
+
   it('allows the dedicated player document to be embedded', () => {
     const headers = getSecurityHeaders({
       isProduction: true,

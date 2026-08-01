@@ -22,8 +22,7 @@ interface DashboardNavGroup {
 interface DashboardBrand {
   label: string
   workspaceLabel: string
-  workspaceCode: string
-  icon: string
+  workspaceIcon: string
   to: string
 }
 
@@ -43,6 +42,15 @@ export interface DashboardStaticConfig extends Omit<DashboardConfig, 'brand'> {
 export interface DashboardConfigFactoryContext {
   t: (key: string) => string
   isAdmin?: boolean
+}
+
+function createBackHomeItem({ t }: DashboardConfigFactoryContext) {
+  return {
+    label: t('common.dashboard.navigation.backToSite'),
+    icon: 'i-mdi-arrow-left',
+    to: '/',
+    exact: true
+  }
 }
 
 function createUserDashboardGroups({ t }: DashboardConfigFactoryContext): DashboardNavGroup[] {
@@ -67,14 +75,14 @@ function createUserDashboardGroups({ t }: DashboardConfigFactoryContext): Dashbo
 
 export function createAdminDashboardConfig(context: DashboardConfigFactoryContext): DashboardStaticConfig {
   const { t } = context
+  const backHomeItem = createBackHomeItem(context)
 
   return {
     id: 'admin',
     brand: siteName => ({
       label: siteName || 'OpenAPI',
       workspaceLabel: t('common.dashboard.workspaces.admin'),
-      workspaceCode: 'ADMIN',
-      icon: 'i-mdi-api',
+      workspaceIcon: 'i-mdi-shield-crown-outline',
       to: ADMIN_OVERVIEW_PATH
     }),
     groups: [
@@ -98,12 +106,12 @@ export function createAdminDashboardConfig(context: DashboardConfigFactoryContex
     ],
     footerLinks: [
       { label: t('common.dashboard.navigation.switchToUser'), icon: 'i-mdi-console', to: USER_OVERVIEW_PATH },
-      { label: t('common.dashboard.navigation.backToSite'), icon: 'i-mdi-arrow-left', to: '/', exact: true }
+      backHomeItem
     ],
     userMenuExtra: () => [[
       { label: t('common.dashboard.navigation.profileSettings'), icon: 'i-mdi-account-cog-outline', to: USER_SETTINGS_PATH },
       { label: t('common.dashboard.navigation.siteSettings'), icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH },
-      { label: t('common.dashboard.navigation.backToSite'), icon: 'i-mdi-arrow-left', to: '/', exact: true }
+      backHomeItem
     ]],
     loginRedirect: '/login'
   }
@@ -111,14 +119,14 @@ export function createAdminDashboardConfig(context: DashboardConfigFactoryContex
 
 export function createUserDashboardConfig(context: DashboardConfigFactoryContext): DashboardStaticConfig {
   const { t, isAdmin = false } = context
+  const backHomeItem = createBackHomeItem(context)
 
   return {
     id: 'user',
     brand: siteName => ({
       label: siteName || 'OpenAPI',
       workspaceLabel: t('common.dashboard.workspaces.developer'),
-      workspaceCode: 'DEV',
-      icon: 'i-mdi-api',
+      workspaceIcon: 'i-mdi-console',
       to: USER_OVERVIEW_PATH
     }),
     groups: createUserDashboardGroups(context),
@@ -126,11 +134,11 @@ export function createUserDashboardConfig(context: DashboardConfigFactoryContext
       ...(isAdmin
         ? [{ label: t('common.dashboard.navigation.switchToAdmin'), icon: 'i-mdi-shield-crown-outline', to: ADMIN_OVERVIEW_PATH }]
         : []),
-      { label: t('common.dashboard.navigation.backToSite'), icon: 'i-mdi-arrow-left', to: '/', exact: true }
+      backHomeItem
     ],
     userMenuExtra: () => [[
       { label: t('common.dashboard.navigation.profileSettings'), icon: 'i-mdi-account-cog-outline', to: USER_SETTINGS_PATH },
-      { label: t('common.dashboard.navigation.backToSite'), icon: 'i-mdi-arrow-left', to: '/', exact: true }
+      backHomeItem
     ]],
     loginRedirect: '/login'
   }

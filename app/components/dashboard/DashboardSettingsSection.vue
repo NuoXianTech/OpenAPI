@@ -14,7 +14,8 @@ defineProps<DashboardSettingsSectionProps>()
       variant="subtle"
       :ui="{
         header: 'dashboard-settings-section-header',
-        body: 'dashboard-settings-section-body p-0 sm:p-0'
+        body: 'dashboard-settings-section-body p-0 sm:p-0',
+        footer: 'dashboard-settings-section-footer p-0 sm:p-0'
       }"
     >
       <template #header>
@@ -39,21 +40,22 @@ defineProps<DashboardSettingsSectionProps>()
       </template>
 
       <slot />
-    </UCard>
 
-    <div
-      v-if="$slots.footer"
-      class="dashboard-settings-section-footer"
-    >
-      <slot name="footer" />
-    </div>
+      <template
+        v-if="$slots.footer"
+        #footer
+      >
+        <div class="dashboard-settings-section-footer-content">
+          <slot name="footer" />
+        </div>
+      </template>
+    </UCard>
   </section>
 </template>
 
 <style scoped>
 .dashboard-settings-section {
-  display: grid;
-  gap: 0.625rem;
+  min-width: 0;
 }
 
 .dashboard-settings-section-card {
@@ -107,13 +109,18 @@ defineProps<DashboardSettingsSectionProps>()
   border-top: 1px solid var(--dashboard-border);
 }
 
-.dashboard-settings-section-footer {
+.dashboard-settings-section-card :deep(.dashboard-settings-section-footer) {
+  background: color-mix(in oklab, var(--dashboard-surface-muted) 54%, var(--dashboard-surface));
+}
+
+.dashboard-settings-section-footer-content {
   display: flex;
-  min-height: 2rem;
+  width: 100%;
+  min-height: 3.125rem;
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  padding-inline: 0.125rem;
+  padding: 0.625rem 0.875rem;
 }
 
 :global(.dark) .dashboard-settings-section-card :deep(.dashboard-settings-section-header) {
@@ -127,6 +134,21 @@ defineProps<DashboardSettingsSectionProps>()
 
   .dashboard-settings-section-card :deep(.dashboard-settings-section-body > :where(:not([role="separator"]))) {
     padding: 0.875rem 1rem;
+  }
+
+  .dashboard-settings-section-footer-content {
+    padding-inline: 1rem;
+  }
+}
+
+@media (width < 640px) {
+  .dashboard-settings-section-footer-content {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .dashboard-settings-section-footer-content :deep(button) {
+    width: 100%;
+    justify-content: center;
   }
 }
 </style>

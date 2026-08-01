@@ -16,7 +16,7 @@ const privacyUrl = computed(() => settings.value.privacyUrl || '')
     :ui="{
       root: 'w-full',
       wrapper: 'min-w-0',
-      label: 'cursor-pointer text-sm leading-5 font-normal text-muted'
+      label: 'cursor-pointer text-[13px] leading-5 font-normal text-muted'
     }"
   >
     <template #label>
