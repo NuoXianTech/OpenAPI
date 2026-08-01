@@ -157,6 +157,7 @@
           "name": "名称",
           "namePlaceholder": "对外展示名称",
           "status": "状态",
+          "statusDescription": "自动状态只根据最近调用中的服务端错误（5xx）判断可用性；参数错误、鉴权失败和其他 4xx 不会使接口变为异常。未开启调用统计或暂无样本时显示未知。",
           "shortDescription": "简短描述",
           "shortDescriptionPlaceholder": "最多 50 字",
           "fullDescription": "详细描述",

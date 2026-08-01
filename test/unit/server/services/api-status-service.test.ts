@@ -6,10 +6,8 @@ import {
   type ApiAutoStatusSample
 } from '~~/server/services/api-status-service'
 
-function samples(...values: Array<number | [number, string]>): ApiAutoStatusSample[] {
-  return values.map(value => Array.isArray(value)
-    ? { statusCode: value[0], errorCode: value[1] }
-    : { statusCode: value, errorCode: null })
+function samples(...statusCodes: number[]): ApiAutoStatusSample[] {
+  return statusCodes.map(statusCode => ({ statusCode }))
 }
 
 describe('resolveApiAutoStatus', () => {
@@ -17,15 +15,16 @@ describe('resolveApiAutoStatus', () => {
     expect(resolveApiAutoStatus([])).toBe(API_STATUS.unknown)
   })
 
-  it('accepts successful HTTP responses without business errors', () => {
-    expect(resolveApiAutoStatus(samples(200, 201, 204, 302))).toBe(API_STATUS.normal)
+  it('treats valid 2xx, 3xx and 4xx responses as available', () => {
+    expect(resolveApiAutoStatus(samples(200, 204, 302, 400, 404, 422)))
+      .toBe(API_STATUS.normal)
   })
 
-  it('treats explicit business errors as failures', () => {
-    expect(resolveApiAutoStatus(samples([200, 'BUSINESS_FAILED']))).toBe(API_STATUS.abnormal)
+  it('treats server errors as unavailable', () => {
+    expect(resolveApiAutoStatus(samples(500, 502, 504))).toBe(API_STATUS.abnormal)
   })
 
-  it('uses an eighty percent success threshold', () => {
+  it('uses an eighty percent availability threshold', () => {
     expect(resolveApiAutoStatus(samples(200, 200, 200, 200, 500))).toBe(API_STATUS.normal)
     expect(resolveApiAutoStatus(samples(200, 200, 200, 500, 500))).toBe(API_STATUS.abnormal)
   })

@@ -54,6 +54,7 @@ const statusOptions = computed<Array<{ label: string, value: AdminApiFormState['
       </UFormField>
       <UFormField
         :label="$t('admin.apis.form.basic.status')"
+        :description="$t('admin.apis.form.basic.statusDescription')"
         name="status"
       >
         <USelect
