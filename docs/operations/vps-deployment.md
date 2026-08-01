@@ -40,10 +40,10 @@ docker run -d --name openapi --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi:latest
 ```
 
-仓库也提供直接引用 GHCR 镜像的 `compose.yml`：
+仓库也提供直接引用 GHCR 镜像的 `docker-compose.yml`：
 
 ```bash
-# 服务器只需准备 compose.yml 和 .env，无需下载源码
+# 服务器只需准备 docker-compose.yml 和 .env，无需下载源码
 docker compose pull
 docker compose up -d
 ```

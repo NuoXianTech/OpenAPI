@@ -151,3 +151,25 @@ jobs:
           while IFS= read -r tag; do
             docker buildx imagetools inspect "$tag"
           done < <(jq -r '.tags[]' <<< "$IMAGE_TAGS_JSON")
+
+  cleanup:
+    name: Clean up stale container images
+    needs: merge
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: ghcr-cleanup-${{ github.repository }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Delete untagged and legacy SHA images
+        uses: dataaxiom/ghcr-cleanup-action@v1.2.2
+        with:
+          owner: ${{ github.repository_owner }}
+          package: openapi
+          delete-untagged: 'true'
+          delete-tags: 'sha-*'
+          validate: 'true'
