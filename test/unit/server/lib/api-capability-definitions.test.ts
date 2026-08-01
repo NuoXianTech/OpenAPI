@@ -28,4 +28,9 @@ describe('public API capability definitions', () => {
       expect(new Set(keys).size).toBe(keys.length)
     }
   })
+
+  it('keeps the unavailable Qianqian provider disabled by default', () => {
+    const enabledPlatforms = musicDefinition.fields.find(field => field.key === 'enabledPlatforms')
+    expect(enabledPlatforms?.defaultValue).toEqual(['netease', 'tencent', 'kugou', 'kuwo'])
+  })
 })
