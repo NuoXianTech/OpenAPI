@@ -40,12 +40,32 @@ docker run -d --name openapi --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi:latest
 ```
 
+启用 IP 归属地接口时，CZDB 数据库必须由服务器单独准备并只读挂载，不能打进镜像：
+
+```bash
+mkdir -p /var/lib/openapi/data/ip
+
+docker run -d --name openapi --restart unless-stopped \
+  -p 3000:3000 --env-file .env \
+  -v openapi-data:/app/.data \
+  -v /var/lib/openapi/data/ip:/app/data/ip:ro \
+  ghcr.io/nuoxiantech/openapi:latest
+```
+
+将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `data/ip` 目录。容器内读取路径固定为 `/app/data/ip`，配套密钥在管理后台的接口配置中填写。具体见 [IP 归属地公共接口](../api/ip.md)。
+
 仓库也提供直接引用 GHCR 镜像的 `docker-compose.yml`：
 
 ```bash
 # 服务器只需准备 docker-compose.yml 和 .env，无需下载源码
 docker compose pull
 docker compose up -d
+```
+
+使用 Compose 启用 IP 归属地接口时，在 `services.openapi.volumes` 中追加同一条只读挂载：
+
+```yaml
+- /var/lib/openapi/data/ip:/app/data/ip:ro
 ```
 
 `main` 分支发布 `latest`。版本镜像只由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v1.2.3` 会生成自动选择架构的 `1.2.3`，以及显式架构标签 `1.2.3-amd64`、`1.2.3-arm64`。`main` 分支对应发布 `latest`、`latest-amd64`、`latest-arm64`。镜像标签按容器生态惯例不保留 Git 标签的 `v` 前缀；不要创建不带 `v` 的 Git 标签。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：

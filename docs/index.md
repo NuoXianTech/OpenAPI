@@ -45,6 +45,7 @@
 - [Epic 免费游戏公共接口](./api/epic.md)
 - [贵金属价格公共接口](./api/gold-price.md)
 - [密码强度检测公共接口](./api/password-check.md)
+- [IP 归属地公共接口](./api/ip.md)
 
 ## 质量门禁
 

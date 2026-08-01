@@ -12,6 +12,9 @@ node_modules
 # Logs
 *.log
 
+# Local IP database files
+/data/ip/
+
 # Misc
 .DS_Store
 .fleet
