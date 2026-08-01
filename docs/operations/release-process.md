@@ -56,6 +56,38 @@ Git 标签必须满足以下条件：
 
 `pnpm build` 应在开发机或 CI 执行，不能转移到生产服务器执行。
 
+## 主分支同步约束
+
+本流程将本地 `main` 视为 `origin/main` 的只读镜像。功能开发和版本准备都应在功能分支或 `release/*` 分支完成，不要把尚未进入远端的提交长期保留在本地 `main`。
+
+切换到 `main` 后，使用以下命令同步并检查两端提交数量：
+
+```bash
+git switch main
+git fetch origin
+git merge --ff-only origin/main
+git rev-list --left-right --count HEAD...origin/main
+```
+
+最后一条命令必须输出 `0 0`。左侧数字表示只存在于本地 `main` 的提交数，右侧数字表示只存在于 `origin/main` 的提交数。
+
+- 如果 `git merge --ff-only origin/main` 失败，说明两端已经分叉，必须立即停止发布。
+- 如果左侧数字不为 `0`，说明本地 `main` 含有尚未进入远端的提交。先创建分支保留这些提交，再让本地 `main` 重新对齐 `origin/main`。
+- 不要用普通 `git pull`、`git merge origin/main` 或编辑器的“同步更改”绕过失败，否则 Squash Merge 后可能产生额外合并提交，后续标签也会落到该合并提交上。
+
+如果改动已经误提交到本地 `main`，且工作区干净，可以先保留分支再恢复主分支：
+
+```bash
+git switch -c release/v0.3.0
+git switch main
+git reset --hard origin/main
+git switch release/v0.3.0
+```
+
+`git reset --hard` 只能在确认工作区干净且提交已经由新分支保留后执行。若两端均有独立提交，应先创建备份分支，再从更新后的 `origin/main` 上选择需要的提交，不要直接合并两条历史。
+
+完成上述恢复后已经位于 `release/v0.3.0`，可以直接继续修改版本号，不要再次创建同名分支。
+
 ## 推荐：通过 Release PR 发布
 
 Release PR 将版本变更和最终发布标签分开，便于审查，也能避免标签指向尚未合并的提交。以下以从 `0.2.0` 发布 `0.3.0` 为例。
@@ -64,10 +96,14 @@ Release PR 将版本变更和最终发布标签分开，便于审查，也能避
 
 ```bash
 git switch main
-git pull --ff-only
+git fetch origin
+git merge --ff-only origin/main
+git rev-list --left-right --count HEAD...origin/main
 git switch -c release/v0.3.0
 pnpm version 0.3.0 --no-git-tag-version
 ```
+
+创建版本分支前，`git rev-list` 的输出必须是 `0 0`。如果不是，按照上文“主分支同步约束”处理后再继续。
 
 `--no-git-tag-version` 只更新项目版本，不会在本地提前创建发布提交和标签。检查实际改动后再提交：
 
@@ -86,11 +122,20 @@ PR 合并后重新同步本地分支：
 
 ```bash
 git switch main
-git pull --ff-only
+git fetch origin
+git merge --ff-only origin/main
+git rev-list --left-right --count HEAD...origin/main
 node -p "require('./package.json').version"
-git tag -a v0.3.0 -m "OpenAPI v0.3.0"
-git push origin v0.3.0
+git log -1 --oneline origin/main
+git tag -a v0.3.0 origin/main -m "OpenAPI v0.3.0"
+git rev-parse "v0.3.0^{}"
+git rev-parse origin/main
+git push origin refs/tags/v0.3.0
 ```
+
+`git rev-list` 必须输出 `0 0`，两个 `git rev-parse` 也必须输出相同的提交哈希。标签命令显式指定 `origin/main`，避免当前 `HEAD` 因意外合并或分支切换而指向错误提交。
+
+如果同步时出现无法 fast-forward，不要继续创建标签，也不要执行普通 merge。先保留本地提交并恢复干净的 `main`，再重新检查远端的 Release PR 合并提交。
 
 不要在 PR 合并前推送版本标签。标签推送后，两条 GitHub Actions 工作流会并行构建 GitHub Release 产物和 GHCR 镜像。
 
@@ -100,13 +145,15 @@ git push origin v0.3.0
 
 ```bash
 git switch main
-git pull --ff-only
+git fetch origin
+git merge --ff-only origin/main
+git rev-list --left-right --count HEAD...origin/main
 pnpm version minor --message "chore(release): v%s"
 git push origin main
 git push origin v0.3.0
 ```
 
-上例假设 `minor` 将当前版本更新为 `0.3.0`。推送前应以 `package.json` 和 `git tag --points-at HEAD` 的结果为准，不要照抄不匹配的标签名。
+执行 `pnpm version` 前，`git rev-list` 的输出同样必须是 `0 0`。上例假设 `minor` 将当前版本更新为 `0.3.0`。推送前应以 `package.json` 和 `git tag --points-at HEAD` 的结果为准，不要照抄不匹配的标签名。
 
 直接推送和 PR 合并产生的提交都会进入 Release Notes。工作流读取上一个版本标签到当前标签之间、位于 `main` 第一父级历史上的提交标题，因此提交信息应清楚描述用户可感知的变化。Squash Merge 时，PR 标题通常会成为这条提交信息。
 
@@ -215,6 +262,8 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 | `Invalid release tag` | 标签不符合 `vX.Y.Z` 或预发布格式，修正版本命名后重新发布 |
 | 标签与 `package.json` 不一致 | 在 `main` 提交正确版本号，使用新的匹配标签 |
 | 标签不在 `main` | Release PR 尚未合并或标签指向错误提交；从更新后的 `main` 创建新标签 |
+| 标签指向意外的 merge 提交 | 本地 `main` 含有被 Squash Merge 的原始提交，随后又普通合并了 `origin/main`；不要移动已经发布的标签，后续发布前确保 `HEAD...origin/main` 为 `0 0` 并显式给 `origin/main` 打标签 |
+| `git merge --ff-only origin/main` 失败 | 本地与远端已经分叉；保留本地提交到新分支并重新对齐 `main`，不要改用普通 merge 或编辑器同步 |
 | Release Notes 内容缺失 | 检查版本之间是否存在第一父级提交，并确认直接提交或 PR 的提交标题有意义 |
 | lint、类型检查、测试或 build 失败 | 工作流不会发布不完整产物；修复后提交并发布新的版本 |
 | 只有一种 CPU 架构成功 | 查看对应 amd64/arm64 构建任务；两者成功后才会创建多架构清单 |
