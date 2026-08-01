@@ -9,7 +9,7 @@ const { locale, setLocale } = useI18n()
 const { user } = useAuth()
 
 const link = computed(() => [
-  { rel: 'icon', type: 'image/x-icon', href: settings.value.siteImg || '/favicon.ico' }
+  { rel: 'icon' as const, type: 'image/x-icon', href: settings.value.siteImg || '/favicon.ico' }
 ])
 
 useHead({
