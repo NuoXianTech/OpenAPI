@@ -46,6 +46,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 | Maoyan | `GET /v1/maoyan/**` | Query global movie box office, realtime movie box office, TV ratings, and web-series heat. |
 | Music | `GET /v1/music` | Search and resolve songs through one NetEase, Tencent, KuGou, Baidu, or Kuwo entry point. |
 | Player | `GET /v1/player`, `/art` | Music player data and cover art. |
+| Short video | `GET /v1/short-video` | Resolve supported video, image, or live-photo shares with one `url` parameter. |
 | Yiyan | `GET /v1/yiyan` | Random sentences in several negotiated output formats. |
 
 Availability and authentication depend on the database configuration set by an administrator.

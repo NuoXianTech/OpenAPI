@@ -40,6 +40,7 @@
 
 - [音乐公共接口](./api/music.md)
 - [加密与解密公共接口](./api/crypto.md)
+- [短视频解析公共接口](./api/short-video.md)
 
 ## 质量门禁
 

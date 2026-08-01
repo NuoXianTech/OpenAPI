@@ -46,6 +46,7 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 | Maoyan | `GET /v1/maoyan/**` | 查询全球电影票房、实时电影票房、电视收视率和网播热度。 |
 | Music | `GET /v1/music` | 通过统一入口查询网易云、QQ、酷狗、百度和酷我音乐。 |
 | Player | `GET /v1/player`、`/art` | 获取音乐播放器数据和封面。 |
+| Short video | `GET /v1/short-video` | 通过一个 `url` 参数解析受支持平台的视频、图集或实况分享链接。 |
 | Yiyan | `GET /v1/yiyan` | 按内容协商返回多种格式的随机语句。 |
 
 接口是否可用、是否要求 API Key，以管理员在数据库中的实际配置为准。
