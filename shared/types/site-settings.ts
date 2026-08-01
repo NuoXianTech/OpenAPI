@@ -1,3 +1,5 @@
+import type { ClientIpSource } from './client-ip'
+
 /** 全站系统配置的强类型应用视图。数据库使用命名空间 key + JSONB 分行存储。 */
 export interface SystemSettings {
   siteUrl: string
@@ -20,6 +22,9 @@ export interface SystemSettings {
   policeBeian: string
   termsUrl: string
   privacyUrl: string
+  clientIpSource: ClientIpSource
+  trustedProxyCidrs: string
+  clientIpForwardedHops: number
   smtpHost: string
   smtpPort: number
   smtpSecure: boolean

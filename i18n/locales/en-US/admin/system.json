@@ -186,6 +186,86 @@
           }
         }
       },
+      "network": {
+        "pageTitle": "Network & proxy",
+        "diagnostics": {
+          "title": "Current request resolution",
+          "description": "Resolve this admin request with the active configuration to verify the proxy chain and headers.",
+          "refresh": "Refresh",
+          "loadFailed": "Unable to load client IP diagnostics",
+          "peer": "Connected peer",
+          "resolved": "Resolved client IP",
+          "ignoredHeader": "Proxy header",
+          "ignored": "Ignored in direct mode",
+          "reasons": {
+            "direct": "Direct mode uses the connected peer IP",
+            "trusted_proxy": "The peer is trusted and the client IP was read from its header",
+            "untrusted_proxy": "The peer is not trusted, so the proxy header was ignored",
+            "missing_header": "The trusted proxy did not provide the selected header; the peer IP was used",
+            "invalid_header": "The header contains an invalid IP; the peer IP was used",
+            "insufficient_forwarded_hops": "X-Forwarded-For does not contain enough hops; the peer IP was used",
+            "peer_unavailable": "The connected peer IP is unavailable"
+          },
+          "safeFallback": {
+            "title": "Safely fell back to direct mode",
+            "description": "The database proxy configuration is incomplete or invalid. Fix the trusted proxy list to activate the selected proxy mode."
+          }
+        },
+        "management": {
+          "database": "Admin settings",
+          "environment": "Managed by environment",
+          "lockedTitle": "This configuration is managed by environment variables",
+          "lockedDescription": "NUXT_PROXY_SOURCE or the legacy NUXT_PROXY_TRUSTED_CIDRS is configured. The effective values are shown here; update the deployment environment and restart the service to change them."
+        },
+        "settings": {
+          "title": "Client IP source",
+          "description": "Controls which address is used by rate limits, API key IP allowlists, login history, and audit logs. Invalid proxy data always falls back to the connected peer."
+        },
+        "source": {
+          "label": "Resolution mode",
+          "description": "Choose the mode that matches the actual network topology. Direct mode never reads proxy headers.",
+          "options": {
+            "direct": {
+              "label": "Direct",
+              "description": "Use the socket peer IP when the application is directly exposed."
+            },
+            "cloudflare": {
+              "label": "Cloudflare",
+              "description": "Read CF-Connecting-IP only from a trusted connected proxy."
+            },
+            "xForwardedFor": {
+              "label": "X-Forwarded-For",
+              "description": "Resolve X-Forwarded-For from the right using the configured trusted hop count."
+            }
+          }
+        },
+        "trusted": {
+          "label": "Trusted proxy IP / CIDR",
+          "description": "Separate entries with lines or commas. A single IPv4 / IPv6 address becomes /32 or /128. Use 0.0.0.0/0 and ::/0 for all IPv4 and IPv6 addresses.",
+          "shortcuts": {
+            "localProxy": "Local IPv4 / IPv6",
+            "allIpv4": "All IPv4",
+            "allIpv6": "All IPv6"
+          },
+          "validation": {
+            "required": "Proxy modes require at least one trusted proxy IP or CIDR",
+            "invalid": "Invalid IP or CIDR entries: {entries}",
+            "tooMany": "A maximum of 256 trusted proxies is allowed"
+          },
+          "allWarning": {
+            "title": "An entire address family is trusted",
+            "description": "0.0.0.0/0 or ::/0 lets any peer in that address family supply the client IP header. Use this only when the application port is fully isolated by a firewall or private proxy network."
+          }
+        },
+        "cloudflare": {
+          "title": "Cloudflare headers still require origin isolation",
+          "description": "Ensure the trusted reverse proxy overwrites CF-Connecting-IP and prevent external traffic from bypassing Cloudflare to reach the origin."
+        },
+        "forwardedHops": {
+          "label": "Trusted forwarded hops",
+          "description": "Counted from the right side of X-Forwarded-For, from 1 to 10. A single Nginx proxy normally uses 1."
+        }
+      },
       "captcha": {
         "providers": {
           "turnstile": "Cloudflare Turnstile"

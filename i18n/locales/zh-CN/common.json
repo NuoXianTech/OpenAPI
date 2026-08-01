@@ -300,6 +300,7 @@
         "creditTransactions": "积分流水",
         "redemptionCodes": "兑换码",
         "userSessions": "用户会话",
+        "networkAndProxy": "网络与代理",
         "captcha": "验证码",
         "email": "邮件",
         "about": "关于",

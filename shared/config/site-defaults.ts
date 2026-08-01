@@ -20,6 +20,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   emailVerifyExpiresInMinutes: 30, emailActivationEnabled: true,
   passwordResetExpiresInMinutes: 30, smtpHost: 'smtp.example.com', smtpPort: 465,
   icpBeian: '', policeBeian: '', termsUrl: '', privacyUrl: '',
+  clientIpSource: 'direct', trustedProxyCidrs: '', clientIpForwardedHops: 1,
   smtpSecure: true, smtpUser: '', smtpPass: '', smtpFrom: 'no-reply@example.com',
   smtpFromName: '', smtpReplyTo: '', smtpPoolMaxAgeSeconds: 0,
   oauthForceBinding: false, oauthGithubClientId: '', oauthGithubClientSecret: '', oauthGithubEnabled: false,

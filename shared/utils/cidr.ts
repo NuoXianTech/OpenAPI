@@ -76,7 +76,8 @@ function parseIPv6Groups(input: string): string[] | null {
     const left = leftPart === '' ? [] : leftPart.split(':')
     const right = rightPart === '' ? [] : rightPart.split(':')
     const missing = 8 - left.length - right.length
-    if (missing < 0) return null
+    // IPv6 中的 :: 必须实际压缩至少一个 0 分组。
+    if (missing <= 0) return null
     groups = [...left, ...Array(missing).fill('0'), ...right]
   }
 
@@ -89,6 +90,14 @@ function parseIPv6Groups(input: string): string[] | null {
 
 function isValidIPv6(input: string): boolean {
   return parseIPv6Groups(input) !== null
+}
+
+/** 返回合法 IP 字面量的地址族；非法值返回 null。 */
+export function getIpAddressFamily(input: string): 4 | 6 | null {
+  const value = input.trim()
+  if (isValidIPv4(value)) return 4
+  if (isValidIPv6(value)) return 6
+  return null
 }
 
 function ipv6ToBigint(ip: string): bigint | null {

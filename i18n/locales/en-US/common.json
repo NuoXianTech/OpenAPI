@@ -278,6 +278,7 @@
         "creditTransactions": "Credit transactions",
         "redemptionCodes": "Redemption codes",
         "userSessions": "User sessions",
+        "networkAndProxy": "Network & proxy",
         "captcha": "CAPTCHA",
         "email": "Email",
         "about": "About",

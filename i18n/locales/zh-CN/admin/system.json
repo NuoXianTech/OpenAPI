@@ -186,6 +186,86 @@
           }
         }
       },
+      "network": {
+        "pageTitle": "网络与代理",
+        "diagnostics": {
+          "title": "当前请求解析",
+          "description": "使用当前生效配置还原这次后台请求，便于确认代理链和请求头是否正确。",
+          "refresh": "刷新",
+          "loadFailed": "无法读取客户端 IP 诊断信息",
+          "peer": "连接端 IP",
+          "resolved": "最终客户端 IP",
+          "ignoredHeader": "代理请求头",
+          "ignored": "直连模式已忽略",
+          "reasons": {
+            "direct": "直连模式使用连接端 IP",
+            "trusted_proxy": "请求来自可信代理，已采用请求头中的客户端 IP",
+            "untrusted_proxy": "连接端不在可信列表，请求头已忽略",
+            "missing_header": "可信代理未提供对应请求头，已回退到连接端 IP",
+            "invalid_header": "请求头包含无效 IP，已回退到连接端 IP",
+            "insufficient_forwarded_hops": "X-Forwarded-For 层数不足，已回退到连接端 IP",
+            "peer_unavailable": "未能读取连接端 IP"
+          },
+          "safeFallback": {
+            "title": "已安全回退到直连模式",
+            "description": "数据库中的代理配置不完整或无效。修正可信代理列表后，所选代理模式才会生效。"
+          }
+        },
+        "management": {
+          "database": "后台设置",
+          "environment": "环境变量接管",
+          "lockedTitle": "当前配置由环境变量接管",
+          "lockedDescription": "NUXT_PROXY_SOURCE 或旧版 NUXT_PROXY_TRUSTED_CIDRS 已配置。这里展示实际生效值，但需要修改部署环境并重启服务后才能变更。"
+        },
+        "settings": {
+          "title": "客户端 IP 来源",
+          "description": "决定限流、API Key IP 白名单、登录记录与操作审计使用哪个地址。配置异常时始终优先回退到真实连接端。"
+        },
+        "source": {
+          "label": "解析方式",
+          "description": "选择与实际网络拓扑一致的来源。直连模式不会读取任何代理请求头。",
+          "options": {
+            "direct": {
+              "label": "直连",
+              "description": "使用 Socket 连接端 IP，适合应用直接对外提供服务。"
+            },
+            "cloudflare": {
+              "label": "Cloudflare",
+              "description": "从可信代理提供的 CF-Connecting-IP 读取客户端地址。"
+            },
+            "xForwardedFor": {
+              "label": "X-Forwarded-For",
+              "description": "从可信反向代理提供的 X-Forwarded-For 右侧按层数还原。"
+            }
+          }
+        },
+        "trusted": {
+          "label": "可信代理 IP / CIDR",
+          "description": "每行或逗号分隔。单个 IPv4 / IPv6 会自动转成 /32 或 /128；全部 IPv4 / IPv6 请使用 0.0.0.0/0 与 ::/0。",
+          "shortcuts": {
+            "localProxy": "本机 IPv4 / IPv6",
+            "allIpv4": "全部 IPv4",
+            "allIpv6": "全部 IPv6"
+          },
+          "validation": {
+            "required": "代理模式至少需要一个可信代理 IP 或 CIDR",
+            "invalid": "存在无效 IP 或 CIDR：{entries}",
+            "tooMany": "可信代理最多配置 256 条"
+          },
+          "allWarning": {
+            "title": "正在信任整个地址族",
+            "description": "0.0.0.0/0 或 ::/0 会允许对应地址族中的任何连接端提供客户端 IP 请求头。只有应用端口已被防火墙或内网代理完全隔离时才应使用。"
+          }
+        },
+        "cloudflare": {
+          "title": "Cloudflare 头仍依赖源站隔离",
+          "description": "请确保可信反向代理会覆盖 CF-Connecting-IP，并阻止外部请求绕过 Cloudflare 直接访问源站。"
+        },
+        "forwardedHops": {
+          "label": "可信转发层数",
+          "description": "从 X-Forwarded-For 右侧计算，范围 1–10。单层 Nginx 通常填写 1。"
+        }
+      },
       "captcha": {
         "providers": {
           "turnstile": "Cloudflare Turnstile"

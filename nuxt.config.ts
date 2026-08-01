@@ -48,6 +48,7 @@ export default defineNuxtConfig({
       secret: ''
     },
     proxy: {
+      source: '',
       trustedCidrs: '',
       forwardedHops: 1
     },

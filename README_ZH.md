@@ -91,8 +91,6 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并保护数据库中的 API Key 与兑换码密文。 |
-| `NUXT_PROXY_TRUSTED_CIDRS` | 使用反向代理时必填 | 允许提供 `X-Forwarded-For` 的直连代理 CIDR。 |
-| `NUXT_PROXY_FORWARDED_HOPS` | 使用反向代理时配置 | 可信转发层数；单层 nginx 通常为 `1`。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |

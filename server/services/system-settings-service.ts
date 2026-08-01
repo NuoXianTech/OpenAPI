@@ -4,6 +4,7 @@ import type {
   SystemSettings,
   SystemSettingsPatch
 } from '#shared/types/site-settings'
+import { createError } from 'h3'
 import {
   SYSTEM_SETTING_DEFINITIONS,
   SYSTEM_SETTING_NAMES,
@@ -125,6 +126,22 @@ function cacheSettings(value: SystemSettings): SystemSettings {
   return value
 }
 
+function assertClientIpSettings(settings: SystemSettings): void {
+  if (settings.clientIpSource === 'direct') return
+  if (settings.trustedProxyCidrs.trim()) return
+
+  throw createError({
+    statusCode: 400,
+    message: 'Cloudflare 或 X-Forwarded-For 模式必须至少配置一个可信代理 IP 或 CIDR'
+  })
+}
+
+function updatesClientIpSettings(patch: SystemSettingsPatch): boolean {
+  return patch.clientIpSource !== undefined
+    || patch.trustedProxyCidrs !== undefined
+    || patch.clientIpForwardedHops !== undefined
+}
+
 function toPublicTurnstile(settings: SystemSettings): PublicTurnstileSettings {
   const enabled = Boolean(settings.turnstileSiteKey) && Boolean(settings.turnstileSecretKey)
   return {
@@ -228,8 +245,9 @@ export const systemSettingsService = {
       normalizedPatch[name] = SYSTEM_SETTING_DEFINITIONS[name].schema.parse(value) as never
     }
 
-    await upsertSettings(normalizedPatch)
     const next = { ...current, ...normalizedPatch }
+    if (updatesClientIpSettings(normalizedPatch)) assertClientIpSettings(next)
+    await upsertSettings(normalizedPatch)
     cacheSettings(next)
     await deleteSharedCache([PUBLIC_SYSTEM_SETTINGS_CACHE_KEY])
     return next

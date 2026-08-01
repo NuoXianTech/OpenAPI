@@ -90,8 +90,6 @@ The development server uses PGlite when no database mode is configured. On first
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
 | `NUXT_API_KEY_SECRET` | Required | Generates API keys and protects encrypted API keys and redemption codes stored in the database. |
-| `NUXT_PROXY_TRUSTED_CIDRS` | Behind a reverse proxy | Direct proxy CIDRs that are allowed to supply `X-Forwarded-For`. |
-| `NUXT_PROXY_FORWARDED_HOPS` | Behind a reverse proxy | Number of trusted forwarded hops, normally `1` for one nginx proxy. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |
 | `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
 | `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |

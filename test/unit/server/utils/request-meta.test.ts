@@ -23,6 +23,9 @@ describe('request IP metadata', () => {
     expect(normalizeClientIp('::ffff:127.0.0.1')).toBe('127.0.0.1')
     expect(normalizeClientIp('::FFFF:192.0.2.10')).toBe('192.0.2.10')
     expect(normalizeClientIp('2001:db8::1')).toBe('2001:db8::1')
+    expect(normalizeClientIp('[2001:db8::1]:443')).toBe('2001:db8::1')
+    expect(normalizeClientIp('fe80::1%12')).toBe('fe80::1')
+    expect(normalizeClientIp('192.0.2.10:8443')).toBe('192.0.2.10')
   })
 
   it('treats unspecified and invalid addresses as unknown', () => {

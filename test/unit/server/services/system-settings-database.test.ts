@@ -90,13 +90,24 @@ describe('system settings database service', () => {
     const updated = await systemSettingsService.update({
       siteName: 'Updated OpenAPI',
       smtpPort: 2525,
-      smtpPass: 'smtp-plaintext-secret'
+      smtpPass: 'smtp-plaintext-secret',
+      clientIpSource: 'x_forwarded_for',
+      trustedProxyCidrs: '127.0.0.1, ::1/128',
+      clientIpForwardedHops: 2
     })
     expect(updated).toMatchObject({
       siteName: 'Updated OpenAPI',
       smtpPort: 2525,
-      smtpPass: 'smtp-plaintext-secret'
+      smtpPass: 'smtp-plaintext-secret',
+      clientIpSource: 'x_forwarded_for',
+      trustedProxyCidrs: '127.0.0.1/32\n::1/128',
+      clientIpForwardedHops: 2
     })
+
+    await expect(systemSettingsService.update({
+      clientIpSource: 'cloudflare',
+      trustedProxyCidrs: ''
+    })).rejects.toMatchObject({ statusCode: 400 })
 
     const secretRows = await client.query<{ value: string, is_secret: boolean }>(`
       SELECT value, is_secret
