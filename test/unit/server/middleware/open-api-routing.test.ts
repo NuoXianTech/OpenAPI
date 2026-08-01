@@ -9,7 +9,7 @@ const manifestMocks = vi.hoisted(() => ({
 vi.mock('~~/server/utils/api-manifest', () => manifestMocks)
 vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 
-const { default: handleOpenApiRouting } = await import('~~/server/middleware/00.10-open-api-routing')
+const { default: handleOpenApiRouting } = await import('~~/server/middleware/01-open-api-routing')
 
 interface MockEventResult {
   event: H3Event

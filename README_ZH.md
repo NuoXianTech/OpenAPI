@@ -28,9 +28,10 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 
 1. `modules/api-manifest.ts` 在构建期发现带版本的公共路由。
 2. `server/plugins/00.startup.ts` 执行 Drizzle 迁移、按需创建初始管理员并同步接口清单。
-3. `server/middleware/00.api-gate.ts` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
-4. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
-5. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
+3. `server/middleware/01-open-api-routing.ts` 在进入 Nuxt 页面渲染前拒绝未知公共路径和不支持的请求方法。
+4. `server/utils/api-guard.ts` 中的 `defineOpenApiEventHandler` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
+5. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
+6. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
 
 新发现的公共 API 默认处于禁用状态，必须先在管理后台完成配置并启用。
 
@@ -166,7 +167,7 @@ server/routes/v{N}/          受网关治理的公共 API
 server/lib/                  公共 API 业务实现
 server/services/             事务和跨领域业务规则
 server/db/                   Drizzle 客户端、schema 与迁移
-server/middleware/           公共 API 网关和服务端请求守卫
+server/middleware/           安全响应头与公共路由守卫
 server/plugins/              启动初始化、统计和重试任务
 modules/api-manifest.ts      构建期公共 API 清单
 shared/                      客户端安全的 schema、契约与配置

@@ -28,9 +28,10 @@ OpenAPI turns versioned Nitro routes into governed public services. It discovers
 
 1. `modules/api-manifest.ts` discovers versioned public routes during build.
 2. `server/plugins/00.startup.ts` applies Drizzle migrations, creates the first administrator when necessary, and synchronizes the manifest.
-3. `server/middleware/00.api-gate.ts` validates API configuration, credentials, scopes, IP rules, limits, quotas, and available credits.
-4. Thin route handlers call implementations from `server/lib/` and return the shared response envelope.
-5. Response hooks persist call statistics and credit transactions; failed post-response charges enter an idempotent retry queue.
+3. `server/middleware/01-open-api-routing.ts` rejects unknown public paths and unsupported methods before Nuxt page rendering.
+4. `defineOpenApiEventHandler` in `server/utils/api-guard.ts` validates API configuration, credentials, scopes, IP rules, limits, quotas, and available credits.
+5. Thin route handlers call implementations from `server/lib/` and return the shared response envelope.
+6. Response hooks persist call statistics and credit transactions; failed post-response charges enter an idempotent retry queue.
 
 Newly discovered APIs are disabled by default. Configure and enable them in the admin dashboard before exposing them.
 
@@ -165,7 +166,7 @@ server/routes/v{N}/          Governed public APIs
 server/lib/                  Public API business implementations
 server/services/             Transactions and cross-domain business rules
 server/db/                   Drizzle client, schema, and migrations
-server/middleware/           Public gateway and server-side request guards
+server/middleware/           Security headers and public route guards
 server/plugins/              Startup initialization, statistics, and retry workers
 modules/api-manifest.ts      Build-time public API manifest
 shared/                      Client-safe schemas, contracts, and configuration
