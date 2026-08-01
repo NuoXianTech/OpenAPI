@@ -27,9 +27,17 @@ export function splitArtists(value: unknown, separator: string | RegExp): string
 }
 
 export function mergeCookieHeader(defaultCookie: string, configuredCookie: string): string {
-  return [defaultCookie.trim().replace(/;+\s*$/, ''), configuredCookie.trim().replace(/^;+\s*/, '')]
-    .filter(Boolean)
-    .join('; ')
+  const cookies = new Map<string, string>()
+  for (const source of [defaultCookie, configuredCookie]) {
+    for (const entry of source.split(';')) {
+      const separatorIndex = entry.indexOf('=')
+      if (separatorIndex <= 0) continue
+      const name = entry.slice(0, separatorIndex).trim()
+      if (!name) continue
+      cookies.set(name, entry.slice(separatorIndex + 1).trim())
+    }
+  }
+  return [...cookies].map(([name, value]) => `${name}=${value}`).join('; ')
 }
 
 function extractJsonValue(text: string): string | null {
@@ -65,10 +73,35 @@ export function parseJsonResponseText(text: string): unknown {
   try { return JSON.parse(extracted) as unknown } catch { throw new Error('音乐上游返回了无效 JSON 数据') }
 }
 
+function readRequestErrorCode(error: unknown): string {
+  for (const candidate of [error, isRecord(error) ? error.cause : undefined]) {
+    if (!isRecord(candidate)) continue
+    const code = candidate.code
+    if (typeof code === 'string' || typeof code === 'number') return String(code)
+  }
+  return ''
+}
+
+function readUpstreamHostname(url: string): string {
+  try { return new URL(url).hostname } catch { return 'unknown-host' }
+}
+
+export async function requestText(url: string, options: RequestInit = {}): Promise<string> {
+  const hostname = readUpstreamHostname(url)
+  let response: Response
+  try {
+    response = await fetch(url, { ...options, signal: options.signal ?? AbortSignal.timeout(15_000) })
+  } catch (error) {
+    const code = readRequestErrorCode(error)
+    const detail = code || (error instanceof Error ? error.message : String(error))
+    throw new Error(`音乐上游 ${hostname} 请求失败${detail ? `（${detail}）` : ''}`, { cause: error })
+  }
+  if (!response.ok) throw new Error(`音乐上游 ${hostname} 返回 HTTP ${response.status}`)
+  return response.text()
+}
+
 export async function requestJson(url: string, options: RequestInit = {}): Promise<unknown> {
-  const response = await fetch(url, { ...options, signal: options.signal || AbortSignal.timeout(15_000) })
-  if (!response.ok) throw new Error(`音乐上游返回 HTTP ${response.status}`)
-  return parseJsonResponseText(await response.text())
+  return parseJsonResponseText(await requestText(url, options))
 }
 
 export function buildUrl(baseUrl: string, params: Record<string, string | number>): string {

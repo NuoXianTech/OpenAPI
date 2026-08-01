@@ -1,5 +1,19 @@
 export const PUBLIC_API_EXAMPLE_TIMESTAMP = 1_785_542_400_000
 
+export function formatStandardResponseExample(
+  message: string,
+  timestamp = PUBLIC_API_EXAMPLE_TIMESTAMP
+): string {
+  return [
+    '{',
+    '  "code": "OK",',
+    `  "message": ${JSON.stringify(message)},`,
+    '  "data": null,',
+    `  "timestamp": ${timestamp}`,
+    '}'
+  ].join('\n')
+}
+
 export function formatExchangeRateResponseExample(
   message: string,
   timestamp = PUBLIC_API_EXAMPLE_TIMESTAMP

@@ -2,6 +2,7 @@ import { adminUpdateSiteSettingsSchema } from '~~/server/schemas/admin'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import type { SystemSettingsPatch } from '#shared/types/site-settings'
 import { systemSettingsService, toAdminSystemSettings } from '~~/server/services/system-settings-service'
+import { clientIpConfigService } from '~~/server/services/client-ip-config-service'
 import { operationLogService } from '~~/server/services/operation-log-service'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -11,6 +12,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   const updateInput: SystemSettingsPatch = body
 
   const data = await systemSettingsService.update(updateInput)
+  clientIpConfigService.refreshFromSettings(data)
 
   const changedFields = Object.entries(updateInput)
     .filter(([, value]) => value !== undefined)

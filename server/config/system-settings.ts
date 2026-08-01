@@ -1,6 +1,8 @@
 import { z } from 'zod'
+import { CLIENT_IP_SOURCES } from '#shared/types/client-ip'
 import type { SystemSettings } from '#shared/types/site-settings'
 import { SITE_SETTINGS_DEFAULTS } from '#shared/config/site-defaults'
+import { parseTrustedProxyCidrs } from '#shared/utils/proxy-cidrs'
 import {
   enumMessage,
   intRange,
@@ -27,6 +29,21 @@ function text(max: number, trim = true) {
   const schema = trim ? z.string().trim() : z.string()
   return schema.max(max)
 }
+
+const trustedProxyCidrsSchema = z.string().max(10_000, '可信代理列表最多 10000 字符')
+  .superRefine((value, ctx) => {
+    const parsed = parseTrustedProxyCidrs(value)
+    if (parsed.invalidEntries.length > 0) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `存在无效 IP 或 CIDR：${parsed.invalidEntries.slice(0, 5).join(', ')}`
+      })
+    }
+    if (parsed.cidrs.length > 256) {
+      ctx.addIssue({ code: 'custom', message: '可信代理最多配置 256 条' })
+    }
+  })
+  .transform(value => parseTrustedProxyCidrs(value).normalized)
 
 export const SYSTEM_SETTING_DEFINITIONS = {
   siteUrl: {
@@ -188,6 +205,30 @@ export const SYSTEM_SETTING_DEFINITIONS = {
     public: true,
     secret: false,
     description: '隐私政策链接'
+  },
+  clientIpSource: {
+    key: 'network.client_ip.source',
+    schema: z.enum(CLIENT_IP_SOURCES, enumMessage('客户端 IP 来源', CLIENT_IP_SOURCES)),
+    default: SITE_SETTINGS_DEFAULTS.clientIpSource,
+    public: false,
+    secret: false,
+    description: '客户端 IP 的解析来源'
+  },
+  trustedProxyCidrs: {
+    key: 'network.client_ip.trusted_proxy_cidrs',
+    schema: trustedProxyCidrsSchema,
+    default: SITE_SETTINGS_DEFAULTS.trustedProxyCidrs,
+    public: false,
+    secret: false,
+    description: '允许提供客户端 IP 请求头的直连代理 IP 或 CIDR'
+  },
+  clientIpForwardedHops: {
+    key: 'network.client_ip.forwarded_hops',
+    schema: intRange('可信转发层数', 1, 10),
+    default: SITE_SETTINGS_DEFAULTS.clientIpForwardedHops,
+    public: false,
+    secret: false,
+    description: '从 X-Forwarded-For 右侧计算的可信代理层数'
   },
   smtpHost: {
     key: 'smtp.host',

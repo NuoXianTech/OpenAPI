@@ -28,9 +28,10 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 
 1. `modules/api-manifest.ts` 在构建期发现带版本的公共路由。
 2. `server/plugins/00.startup.ts` 执行 Drizzle 迁移、按需创建初始管理员并同步接口清单。
-3. `server/middleware/00.api-gate.ts` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
-4. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
-5. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
+3. `server/middleware/01-open-api-routing.ts` 在进入 Nuxt 页面渲染前拒绝未知公共路径和不支持的请求方法。
+4. `server/utils/api-guard.ts` 中的 `defineOpenApiEventHandler` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
+5. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
+6. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
 
 新发现的公共 API 默认处于禁用状态，必须先在管理后台完成配置并启用。
 
@@ -46,6 +47,7 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 | Maoyan | `GET /v1/maoyan/**` | 查询全球电影票房、实时电影票房、电视收视率和网播热度。 |
 | Music | `GET /v1/music` | 通过统一入口查询网易云、QQ、酷狗、百度和酷我音乐。 |
 | Player | `GET /v1/player`、`/art` | 获取音乐播放器数据和封面。 |
+| Short video | `GET /v1/short-video` | 通过一个 `url` 参数解析受支持平台的视频、图集或实况分享链接。 |
 | Yiyan | `GET /v1/yiyan` | 按内容协商返回多种格式的随机语句。 |
 
 接口是否可用、是否要求 API Key，以管理员在数据库中的实际配置为准。
@@ -91,8 +93,6 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并保护数据库中的 API Key 与兑换码密文。 |
-| `NUXT_PROXY_TRUSTED_CIDRS` | 使用反向代理时必填 | 允许提供 `X-Forwarded-For` 的直连代理 CIDR。 |
-| `NUXT_PROXY_FORWARDED_HOPS` | 使用反向代理时配置 | 可信转发层数；单层 nginx 通常为 `1`。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
@@ -167,7 +167,7 @@ server/routes/v{N}/          受网关治理的公共 API
 server/lib/                  公共 API 业务实现
 server/services/             事务和跨领域业务规则
 server/db/                   Drizzle 客户端、schema 与迁移
-server/middleware/           公共 API 网关和服务端请求守卫
+server/middleware/           安全响应头与公共路由守卫
 server/plugins/              启动初始化、统计和重试任务
 modules/api-manifest.ts      构建期公共 API 清单
 shared/                      客户端安全的 schema、契约与配置

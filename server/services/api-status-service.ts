@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { apiCalls } from '~~/server/db/schema'
 import {
   API_AUTO_STATUS_CACHE_TTL_MS,
-  API_AUTO_STATUS_MIN_SUCCESS_RATE,
+  API_AUTO_STATUS_MIN_AVAILABILITY_RATE,
   API_AUTO_STATUS_SAMPLE_SIZE,
   API_AUTO_STATUS_WINDOW_MS,
   API_STATUS,
@@ -18,20 +18,20 @@ const apiAutoStatusCache = new Map<number, ApiAutoStatusCacheEntry>()
 
 export interface ApiAutoStatusSample {
   statusCode: number
-  errorCode: string | null
 }
 
-function isSuccessfulSample(sample: ApiAutoStatusSample): boolean {
+function isAvailableSample(sample: ApiAutoStatusSample): boolean {
   return sample.statusCode >= 200
-    && sample.statusCode < 400
-    && !sample.errorCode
+    && sample.statusCode < 500
 }
 
 export function resolveApiAutoStatus(samples: ApiAutoStatusSample[]): number {
   if (samples.length === 0) return API_STATUS.unknown
 
-  const successCount = samples.filter(isSuccessfulSample).length
-  return successCount / samples.length >= API_AUTO_STATUS_MIN_SUCCESS_RATE
+  // 自动状态表示服务可用性，而不是业务成功率。参数、鉴权、资源不存在等 4xx
+  // 说明接口仍能正常响应；只有 5xx/超时等服务端失败会降低可用率。
+  const availableCount = samples.filter(isAvailableSample).length
+  return availableCount / samples.length >= API_AUTO_STATUS_MIN_AVAILABILITY_RATE
     ? API_STATUS.normal
     : API_STATUS.abnormal
 }
@@ -74,7 +74,6 @@ export async function resolveApiAutoStatuses(apiIds: number[]): Promise<Record<n
   const recentCalls = db.select({
     apiId: apiCalls.apiId,
     statusCode: apiCalls.statusCode,
-    errorCode: apiCalls.errorCode,
     rowIndex: sql<number>`row_number() over (
       partition by ${apiCalls.apiId}
       order by ${apiCalls.createdAt} desc, ${apiCalls.id} desc
@@ -90,8 +89,7 @@ export async function resolveApiAutoStatuses(apiIds: number[]): Promise<Record<n
 
   const rows = await db.select({
     apiId: recentCalls.apiId,
-    statusCode: recentCalls.statusCode,
-    errorCode: recentCalls.errorCode
+    statusCode: recentCalls.statusCode
   })
     .from(recentCalls)
     .where(lte(recentCalls.rowIndex, API_AUTO_STATUS_SAMPLE_SIZE))
@@ -102,8 +100,7 @@ export async function resolveApiAutoStatuses(apiIds: number[]): Promise<Record<n
   }
   for (const row of rows) {
     samplesByApiId.get(row.apiId)?.push({
-      statusCode: row.statusCode,
-      errorCode: row.errorCode
+      statusCode: row.statusCode
     })
   }
 

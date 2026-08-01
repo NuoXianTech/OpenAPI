@@ -262,9 +262,9 @@
         "systemSettings": "System settings",
         "profileSettings": "Profile settings",
         "siteSettings": "Site settings",
-        "switchToUser": "Switch to developer console",
-        "switchToAdmin": "Switch to admin console",
-        "backToSite": "Back to API platform"
+        "switchToUser": "User dashboard",
+        "switchToAdmin": "Admin dashboard",
+        "backToSite": "Back to home"
       },
       "sections": {
         "announcements": "Announcements",
@@ -278,6 +278,7 @@
         "creditTransactions": "Credit transactions",
         "redemptionCodes": "Redemption codes",
         "userSessions": "User sessions",
+        "networkAndProxy": "Network & proxy",
         "captcha": "CAPTCHA",
         "email": "Email",
         "about": "About",

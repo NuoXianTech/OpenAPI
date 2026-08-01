@@ -12,6 +12,8 @@
 | `page` | 否 | `1` | 仅用于 `search`，范围 `1~1000` |
 | `limit` | 否 | 搜索 `30`、歌手 `50` | 仅用于 `search` 或 `artist`，范围 `1~100` |
 
+后台默认启用 `netease`、`tencent`、`kugou` 和 `kuwo`。`baidu` 保留为千千音乐兼容标识，但旧上游域名已经失效，新接口需要尚未接入的签名协议，因此默认关闭；完成正式签名接入前不建议手动开启。
+
 ```bash
 # 搜索
 curl 'http://127.0.0.1:3000/v1/music?server=netease&type=search&id=周杰伦'
@@ -58,6 +60,7 @@ curl 'http://127.0.0.1:3000/v1/music?server=netease&type=playlist&id=歌单ID'
 - `type=url`：成功时 `302` 跳转到音频地址。
 - `type=pic`：成功时 `302` 跳转到封面地址。
 - `type=lrc`：成功时直出 `text/plain; charset=utf-8` 的 LRC，存在翻译歌词时会合并到对应时间行。
+- `song`、`album`、`artist`、`playlist` 或歌词不存在时返回 `404`，搜索无结果仍返回空的成功列表。
 - 参数错误、资源不存在或上游失败：返回标准 JSON 错误响应。
 
 第三方平台可能因版权、区域、会员或登录状态返回空资源，接口不会绕过上游访问控制。

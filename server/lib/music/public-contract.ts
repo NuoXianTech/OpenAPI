@@ -68,6 +68,7 @@ function readLrcTimestamp(line: string): { key: number, text: string } | null {
 }
 
 export function formatMusicLyrics({ lyric, tlyric }: MusicLyrics): string {
+  if (!lyric.trim()) return tlyric
   if (!tlyric.trim()) return lyric
 
   const translations = new Map<number, string>()

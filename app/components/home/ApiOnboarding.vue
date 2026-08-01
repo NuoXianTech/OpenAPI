@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { formatExchangeRateResponseExample } from '~/utils/public-api-example'
+import { formatStandardResponseExample } from '~/utils/public-api-example'
 
 const { t } = useI18n()
 const toast = useToast()
@@ -28,8 +28,8 @@ const curlSnippet = computed(() => [
   '  -H "x-api-key: <your-api-key>"'
 ].join('\n'))
 
-const responseSnippet = computed(() => formatExchangeRateResponseExample(
-  t('public.home.sampleResponseMessage')
+const responseSnippet = computed(() => formatStandardResponseExample(
+  t('public.home.standardResponseMessage')
 ))
 
 async function copyCodeSnippet(value: string): Promise<void> {

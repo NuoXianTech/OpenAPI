@@ -157,6 +157,7 @@
           "name": "Name",
           "namePlaceholder": "Public API name",
           "status": "Status",
+          "statusDescription": "Automatic status measures availability from recent server errors (5xx). Validation, authentication, and other 4xx responses do not mark the API as unhealthy. It remains unknown when statistics are disabled or no samples exist.",
           "shortDescription": "Short description",
           "shortDescriptionPlaceholder": "Up to 50 characters",
           "fullDescription": "Full description",

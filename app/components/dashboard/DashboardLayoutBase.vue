@@ -72,19 +72,38 @@ const navigationMenuUi = {
           >
             <template #leading>
               <span class="dashboard-brand-mark">
-                <UIcon
-                  :name="resolved.brand.icon"
-                  class="dashboard-brand-icon size-[18px]"
-                />
+                <img
+                  :src="settings.siteImg || '/favicon.ico'"
+                  alt=""
+                  width="26"
+                  height="26"
+                  decoding="async"
+                  class="dashboard-brand-logo"
+                >
+                <span
+                  v-if="collapsed"
+                  class="dashboard-brand-context-mark"
+                  aria-hidden="true"
+                >
+                  <UIcon
+                    :name="resolved.brand.workspaceIcon"
+                    class="dashboard-brand-context-icon"
+                  />
+                </span>
               </span>
             </template>
 
             <template v-if="!collapsed" #default>
               <span class="dashboard-brand-copy">
                 <span class="dashboard-brand-name">{{ resolved.brand.label }}</span>
-                <span class="dashboard-brand-workspace">{{ resolved.brand.workspaceLabel }}</span>
+                <span class="dashboard-brand-workspace">
+                  <UIcon
+                    :name="resolved.brand.workspaceIcon"
+                    class="dashboard-brand-workspace-icon"
+                  />
+                  <span>{{ resolved.brand.workspaceLabel }}</span>
+                </span>
               </span>
-              <span class="dashboard-brand-badge">{{ resolved.brand.workspaceCode }}</span>
             </template>
           </UButton>
         </div>
@@ -144,12 +163,6 @@ const navigationMenuUi = {
   --dashboard-sidebar-hover: var(--ui-bg-muted);
   --dashboard-sidebar-active: var(--ui-bg-accented);
   --dashboard-sidebar-accent: var(--ui-primary);
-  --dashboard-sidebar-mark-bg: var(--ui-primary);
-  --dashboard-sidebar-mark-border: color-mix(in oklab, var(--ui-primary) 82%, var(--ui-border));
-  --dashboard-sidebar-mark-text: var(--ui-bg);
-  --dashboard-sidebar-badge-bg: var(--ui-bg-muted);
-  --dashboard-sidebar-badge-border: var(--ui-border-muted);
-  --dashboard-sidebar-badge-text: var(--ui-text-toned);
 }
 
 .dashboard-shell-refined :deep(.dashboard-sidebar) {
@@ -159,22 +172,26 @@ const navigationMenuUi = {
   backdrop-filter: none;
 }
 
-.dashboard-shell-refined :deep(.dashboard-sidebar-brand) {
+:global(.dashboard-sidebar-brand) {
+  --dashboard-brand-hover: var(--ui-bg-muted);
+  --dashboard-brand-mark-bg: color-mix(in oklab, var(--ui-bg-elevated) 94%, transparent);
+  --dashboard-brand-mark-border: color-mix(in oklab, var(--ui-border) 88%, transparent);
+
   display: grid;
   flex: 1;
   min-width: 0;
   width: 100%;
 }
 
-.dashboard-shell-refined :deep(.dashboard-sidebar-brand-collapsed) {
+:global(.dashboard-sidebar-brand-collapsed) {
   place-items: center;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-trigger) {
-  min-height: 3.25rem;
+:global(.dashboard-sidebar-brand .dashboard-brand-trigger) {
+  min-height: 3.5rem;
   justify-content: flex-start;
-  gap: 0.625rem;
-  padding: 0.375rem 0.5rem;
+  gap: 0.75rem;
+  padding: 0.375rem;
   border: 1px solid transparent;
   border-radius: 0.75rem;
   background: transparent;
@@ -182,26 +199,56 @@ const navigationMenuUi = {
   box-shadow: none;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-trigger:hover) {
-  background: var(--dashboard-sidebar-hover);
+:global(.dashboard-sidebar-brand .dashboard-brand-trigger:hover) {
+  background: var(--dashboard-brand-hover);
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-mark) {
+:global(.dashboard-sidebar-brand .dashboard-brand-mark) {
+  position: relative;
   display: grid;
   flex: none;
-  width: 2.125rem;
-  height: 2.125rem;
+  width: 2.375rem;
+  height: 2.375rem;
   place-items: center;
-  border: 1px solid var(--dashboard-sidebar-mark-border);
-  border-radius: 0.625rem;
-  background: var(--dashboard-sidebar-mark-bg);
+  border: 1px solid var(--dashboard-brand-mark-border);
+  border-radius: 0.6875rem;
+  background: var(--dashboard-brand-mark-bg);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 7%, transparent);
+  transition: border-color 160ms ease, background-color 160ms ease;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-icon) {
-  color: var(--dashboard-sidebar-mark-text);
+:global(.dashboard-sidebar-brand .dashboard-brand-trigger:hover .dashboard-brand-mark) {
+  border-color: color-mix(in oklab, var(--ui-primary) 32%, var(--ui-border));
+  background: color-mix(in oklab, var(--ui-primary) 5%, var(--ui-bg-elevated));
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-copy) {
+:global(.dashboard-sidebar-brand .dashboard-brand-logo) {
+  width: 1.625rem;
+  height: 1.625rem;
+  object-fit: contain;
+}
+
+:global(.dashboard-sidebar-brand .dashboard-brand-context-mark) {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.25rem;
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: var(--ui-bg-elevated);
+  color: var(--ui-primary);
+  box-shadow: 0 0 0 2px var(--ui-bg);
+}
+
+:global(.dashboard-sidebar-brand .dashboard-brand-context-icon) {
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+:global(.dashboard-sidebar-brand .dashboard-brand-copy) {
   display: grid;
   flex: 1;
   min-width: 0;
@@ -209,38 +256,35 @@ const navigationMenuUi = {
   text-align: start;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-name) {
+:global(.dashboard-sidebar-brand .dashboard-brand-name) {
   overflow: hidden;
-  font-size: 0.875rem;
-  font-weight: 650;
-  line-height: 1.1rem;
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.125rem;
   color: var(--ui-text-highlighted);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-workspace) {
+:global(.dashboard-sidebar-brand .dashboard-brand-workspace) {
+  display: flex;
   overflow: hidden;
-  font-size: 0.6875rem;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
   font-weight: 500;
-  line-height: 0.9rem;
-  color: var(--ui-text-muted);
+  line-height: 1rem;
+  color: var(--ui-text-toned);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.dashboard-shell-refined :deep(.dashboard-brand-badge) {
+:global(.dashboard-sidebar-brand .dashboard-brand-workspace-icon) {
   flex: none;
-  padding: 0.1875rem 0.3125rem;
-  border: 1px solid var(--dashboard-sidebar-badge-border);
-  border-radius: 0.3125rem;
-  background: var(--dashboard-sidebar-badge-bg);
-  font-family: var(--font-code);
-  font-size: 0.5625rem;
-  font-weight: 700;
-  line-height: 0.75rem;
-  color: var(--dashboard-sidebar-badge-text);
-  letter-spacing: 0.06em;
+  width: 0.75rem;
+  height: 0.75rem;
+  color: var(--ui-primary);
 }
 
 .dashboard-shell-refined :deep(.dashboard-sidebar-nav-group) {
@@ -331,7 +375,7 @@ const navigationMenuUi = {
   width: 100%;
 }
 
-.dashboard-shell-refined :deep(.dashboard-sidebar[data-collapsed="true"] .dashboard-brand-trigger),
+:global(.dashboard-sidebar[data-collapsed="true"] .dashboard-brand-trigger),
 .dashboard-shell-refined :deep(.dashboard-sidebar[data-collapsed="true"] .dashboard-sidebar-link) {
   justify-content: center;
   padding-inline: 0.5rem;
@@ -346,11 +390,35 @@ const navigationMenuUi = {
   scrollbar-color: var(--ui-border) transparent;
 }
 
+@media (width < 1024px) {
+  :global(.dashboard-sidebar-brand .dashboard-brand-trigger) {
+    min-height: 3rem;
+    gap: 0.625rem;
+    padding: 0.25rem;
+  }
+
+  :global(.dashboard-sidebar-brand .dashboard-brand-mark) {
+    width: 2.125rem;
+    height: 2.125rem;
+    border-radius: 0.625rem;
+  }
+
+  :global(.dashboard-sidebar-brand .dashboard-brand-logo) {
+    width: 1.4375rem;
+    height: 1.4375rem;
+  }
+
+  :global(.dashboard-sidebar-brand .dashboard-brand-name) {
+    font-size: 0.875rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dashboard-shell-refined :deep(.dashboard-sidebar-link),
   .dashboard-shell-refined :deep(.dashboard-sidebar-link)::before,
   .dashboard-shell-refined :deep(.dashboard-sidebar-link)::after,
-  .dashboard-shell-refined :deep(.dashboard-sidebar-link-icon) {
+  .dashboard-shell-refined :deep(.dashboard-sidebar-link-icon),
+  :global(.dashboard-sidebar-brand .dashboard-brand-mark) {
     transition: none;
   }
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { settings } = useSiteSettings()
+import SiteBrand from './SiteBrand.vue'
 </script>
 
 <template>
@@ -7,12 +7,10 @@ const { settings } = useSiteSettings()
     <div class="auth-shell__grid" aria-hidden="true" />
 
     <section class="auth-panel">
-      <NuxtLink to="/" class="auth-home" :aria-label="settings.siteName">
-        <span class="auth-home__mark" aria-hidden="true">
-          <UIcon name="i-mdi-lightning-bolt" class="size-4" />
-        </span>
-        <span>{{ settings.siteName }}</span>
-      </NuxtLink>
+      <SiteBrand
+        size="auth"
+        class="auth-home"
+      />
 
       <div class="auth-form-wrap">
         <slot />
@@ -49,24 +47,7 @@ const { settings } = useSiteSettings()
 }
 
 .auth-home {
-  display: inline-flex;
   margin-bottom: 1.75rem;
-  align-items: center;
-  gap: 0.625rem;
-  color: var(--ui-text-highlighted);
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-
-.auth-home__mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  place-items: center;
-  border-radius: 8px;
-  color: white;
-  background: var(--ui-primary);
-  box-shadow: 0 5px 16px -9px color-mix(in oklab, var(--ui-primary) 70%, transparent);
 }
 
 .auth-form-wrap {
@@ -124,6 +105,10 @@ const { settings } = useSiteSettings()
   box-shadow: 0 18px 48px -38px color-mix(in oklab, var(--brand-ink) 42%, transparent);
 }
 
+.auth-card input:focus-visible {
+  outline: none;
+}
+
 .auth-divider {
   display: flex;
   align-items: center;
@@ -154,12 +139,15 @@ const { settings } = useSiteSettings()
 .auth-footer-links button:hover { color: var(--ui-primary); }
 
 .auth-form-options {
-  display: grid;
-  gap: 0.625rem;
-  border: 1px solid var(--ui-border-muted);
-  border-radius: 8px;
-  padding: 0.75rem;
-  background: var(--ui-bg-muted);
+  display: flex;
+  flex-direction: column;
+  padding-block: 0.125rem;
+}
+
+.auth-form-options > * + * {
+  margin-top: 0.75rem;
+  border-top: 1px solid var(--ui-border-muted);
+  padding-top: 0.75rem;
 }
 
 .auth-message {

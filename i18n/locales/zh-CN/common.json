@@ -284,9 +284,9 @@
         "systemSettings": "系统设置",
         "profileSettings": "个人设置",
         "siteSettings": "站点设置",
-        "switchToUser": "切换到开发者控制台",
-        "switchToAdmin": "切换到管理控制台",
-        "backToSite": "返回接口平台"
+        "switchToUser": "用户后台",
+        "switchToAdmin": "管理后台",
+        "backToSite": "返回首页"
       },
       "sections": {
         "announcements": "公告",
@@ -300,6 +300,7 @@
         "creditTransactions": "积分流水",
         "redemptionCodes": "兑换码",
         "userSessions": "用户会话",
+        "networkAndProxy": "网络与代理",
         "captcha": "验证码",
         "email": "邮件",
         "about": "关于",

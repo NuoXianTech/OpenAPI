@@ -59,7 +59,7 @@ const fields = computed(() => [
     name: 'username',
     type: 'text' as const,
     label: t('auth.fields.username'),
-    placeholder: 'openapi_user',
+    placeholder: t('auth.placeholders.username'),
     help: t('auth.register.usernameHelp'),
     autocomplete: 'username',
     icon: 'i-mdi-account-outline',
@@ -173,7 +173,6 @@ function clearTurnstileError() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      icon="i-mdi-account-plus-outline"
       :title="t('auth.register.heading', { siteName: settings.siteName })"
     />
 

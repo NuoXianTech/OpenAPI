@@ -63,10 +63,14 @@ const pricingTooltip = computed(() => {
   return t('public.api.pricing.freeDescription')
 })
 const detailSummary = computed(() => shortDesc.value || description.value || t('public.api.noSummary'))
+const detailBodyDescription = computed(() => {
+  const value = description.value.trim()
+  return value && value !== detailSummary.value.trim() ? value : ''
+})
 const statusMeta = computed(() => resolveApiStatusMeta(props.status, key => t(key)))
 const statusClass = computed(() => `api-card__status--${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
-  description: description.value,
+  description: detailBodyDescription.value,
   apiPath: apiPath.value,
   docUrl: docUrl.value,
   isApiKey: isApiKey.value,
@@ -86,6 +90,10 @@ function restoreDetailTriggerFocus() {
   if (detailTriggerElement.value?.isConnected) {
     detailTriggerElement.value.focus()
   }
+}
+
+function preventDetailsAutoFocus(event: Event) {
+  event.preventDefault()
 }
 </script>
 
@@ -176,38 +184,42 @@ function restoreDetailTriggerFocus() {
 
   <UModal
     v-model:open="detailsOpen"
+    :content="{ onOpenAutoFocus: preventDetailsAutoFocus }"
+    :close="{
+      size: 'sm',
+      color: 'neutral',
+      variant: 'ghost',
+      class: 'rounded-md focus-visible:ring-0 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-primary/35'
+    }"
     :ui="{
-      content: 'sm:max-w-xl overflow-hidden',
-      header: 'items-start gap-3 border-b border-default py-4 ps-4 pe-12 sm:ps-6 sm:pe-14',
-      wrapper: 'min-w-0',
-      title: 'min-w-0',
-      description: 'block',
-      close: 'top-4 end-4',
+      overlay: 'bg-elevated/70 backdrop-blur-[2px]',
+      content: 'sm:max-w-2xl overflow-hidden rounded-xl divide-y-0',
+      header: 'items-start gap-3 border-b border-default py-5 ps-4 pe-14 sm:py-6 sm:ps-6 sm:pe-16',
+      wrapper: 'min-w-0 flex-1',
+      title: 'block min-w-0',
+      description: 'mt-2 block min-w-0',
+      close: 'top-4 end-4 sm:top-5 sm:end-5',
       body: 'p-0 sm:p-0'
     }"
     @after:leave="restoreDetailTriggerFocus"
   >
     <template #title>
-      <div class="api-card__modal-title-row">
-        <span
-          class="api-card__modal-icon"
-          aria-hidden="true"
-        >
-          <UIcon
-            name="i-mdi-code-braces"
-            class="size-4"
-          />
+      <div class="api-card__modal-heading">
+        <span class="api-card__modal-kicker">
+          <span
+            class="api-card__modal-category"
+            :title="resolvedCategoryName"
+          >{{ resolvedCategoryName }}</span>
+          <span aria-hidden="true">/</span>
+          <span
+            class="api-card__modal-status"
+            :class="statusClass"
+          >
+            <span class="api-card__status-dot" aria-hidden="true" />
+            {{ statusMeta.label }}
+          </span>
         </span>
         <span class="api-card__modal-title">{{ resolvedName }}</span>
-        <UBadge
-          :color="statusMeta.color"
-          variant="soft"
-          size="sm"
-          :icon="statusMeta.icon"
-          class="shrink-0 rounded-full"
-        >
-          {{ statusMeta.label }}
-        </UBadge>
       </div>
     </template>
 
@@ -273,10 +285,17 @@ function restoreDetailTriggerFocus() {
   text-overflow: ellipsis;
 }
 
+.api-card__status,
+.api-card__modal-status {
+  --api-status-color: var(--ui-text-muted);
+}
+
 .api-card__status {
   gap: 0.35rem;
-  color: var(--ui-text-muted);
-  font-weight: 450;
+  border-color: color-mix(in oklab, var(--api-status-color) 28%, var(--ui-border));
+  background: color-mix(in oklab, var(--api-status-color) 7%, var(--ui-bg-elevated));
+  color: color-mix(in oklab, var(--api-status-color) 82%, var(--ui-text-highlighted));
+  font-weight: 550;
 }
 
 .api-card__status-dot {
@@ -284,11 +303,14 @@ function restoreDetailTriggerFocus() {
   height: 0.38rem;
   flex: 0 0 auto;
   border-radius: 999px;
-  background: var(--ui-text-dimmed);
+  background: var(--api-status-color);
 }
 
-.api-card__status--error .api-card__status-dot { background: var(--ui-error); }
-.api-card__status--warning .api-card__status-dot { background: var(--ui-warning); }
+.api-card__status--success { --api-status-color: var(--ui-success); }
+.api-card__status--info { --api-status-color: var(--ui-info); }
+.api-card__status--warning { --api-status-color: var(--ui-warning); }
+.api-card__status--error { --api-status-color: var(--ui-error); }
+.api-card__status--neutral { --api-status-color: var(--ui-text-muted); }
 
 .api-card__copy {
   margin-top: 0.75rem;
@@ -412,53 +434,68 @@ function restoreDetailTriggerFocus() {
   color: var(--ui-text-dimmed);
 }
 
-.api-card__modal-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--ui-primary);
-  background: color-mix(in srgb, var(--ui-primary) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ui-primary) 16%, var(--ui-border));
+.api-card__modal-heading {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
 }
 
-.api-card__modal-title-row {
+.api-card__modal-kicker {
   display: flex;
-  align-items: center;
-  gap: 8px;
   min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ui-text-dimmed);
+  font-family: var(--font-code);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  letter-spacing: 0.045em;
+  line-height: 1rem;
+  text-transform: uppercase;
 }
 
-.api-card__modal-title {
-  margin: 0;
+.api-card__modal-category {
   min-width: 0;
-  color: var(--ui-text);
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.api-card__modal-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.35rem;
+  color: color-mix(in oklab, var(--api-status-color) 82%, var(--ui-text-highlighted));
+}
+
+.api-card__modal-title {
+  display: block;
+  min-width: 0;
+  color: var(--ui-text-highlighted);
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 720;
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .api-card__modal-summary {
-  margin: 0;
-  color: var(--ui-text-muted);
-  font-size: 12.5px;
-  line-height: 1.55;
   display: -webkit-box;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 @media (max-width: 520px) {
   .api-card__content { padding-inline: 1rem; }
   .api-card__footer { padding-inline: 1rem; }
   .api-card__footer-meta { gap: 0.75rem; }
+  .api-card__modal-title { font-size: 1.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

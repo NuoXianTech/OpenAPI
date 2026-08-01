@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
+import SiteBrand from './SiteBrand.vue'
 import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from '#shared/config/locale-defaults'
 
 const route = useRoute()
-const { settings } = useSiteSettings()
 const { user, logout, updateLocalePreference } = useAuth()
 const { t, locale, locales, setLocale } = useI18n()
 const toast = useToast()
@@ -79,24 +79,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
 <template>
   <header class="site-header">
     <div class="site-header__inner">
-      <NuxtLink
-        to="/"
-        class="site-brand"
-        :aria-label="settings.siteName"
-      >
-        <span class="site-brand__mark" aria-hidden="true">
-          <img
-            :src="settings.siteImg || '/favicon.ico'"
-            alt=""
-            width="20"
-            height="20"
-            decoding="async"
-          >
-        </span>
-        <span class="site-brand__copy">
-          <strong>{{ settings.siteName }}</strong>
-        </span>
-      </NuxtLink>
+      <SiteBrand />
 
       <nav class="site-nav" :aria-label="$t('public.home.publicNavigation')">
         <NuxtLink
@@ -236,49 +219,6 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
   margin-inline: auto;
   align-items: center;
   gap: 1.5rem;
-}
-
-.site-brand {
-  display: inline-flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.625rem;
-  color: var(--ui-text-highlighted);
-}
-
-.site-brand__mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 7px;
-  border: 1px solid color-mix(in oklab, var(--ui-border) 88%, transparent);
-  background: color-mix(in oklab, var(--ui-bg-elevated) 94%, transparent);
-  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 7%, transparent);
-  overflow: hidden;
-}
-
-.site-brand__mark img {
-  width: 1.25rem;
-  height: 1.25rem;
-  object-fit: contain;
-}
-
-.site-brand__copy {
-  display: flex;
-  align-items: center;
-  line-height: 1;
-}
-
-.site-brand__copy strong {
-  max-width: 13rem;
-  overflow: hidden;
-  font-family: var(--font-display);
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .site-nav {

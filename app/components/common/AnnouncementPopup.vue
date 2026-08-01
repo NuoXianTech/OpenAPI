@@ -9,7 +9,7 @@ import {
  * 公告弹窗：自动加载生效中的公告，按 isPinned > sortOrder > createdAt 排序，
  * 默认展开第一条，其余收起。
  *
- * 视觉沿用首页语义色体系：等级图标用语义色 chip，卡片化每条公告。
+ * 视觉沿用首页的技术面板语言：连续列表、语义状态点与代码字体时间。
  * 公告数量无上限，body 限高 60dvh 后内部滚动，头/尾固定。
  * 暗色由 --ui-* 语义变量自动适配。
  *
@@ -18,17 +18,17 @@ import {
  */
 
 // 预解析为展示项：把等级元数据与日期格式化提前算好，模板保持声明式无逻辑。
-// 字段刻意避开 UAccordion 内建的 `icon` / `content`（会被组件自动渲染），改用 levelIcon / text。
+// 字段刻意避开 UAccordion 内建的 `content`（会被组件自动渲染），改用 text。
 interface AnnouncementItem {
   value: string
   label: string
   color: MessageLevelMeta['color']
-  levelIcon: string
   levelLabel: string
   isPinned: boolean
   text: string
   linkUrl: string | null
   date: string
+  dateTime: string
 }
 
 const open = ref(false)
@@ -56,12 +56,12 @@ const accordionItems = computed<AnnouncementItem[]>(() => items.value.map(a => (
   value: String(a.id),
   label: a.title,
   color: levelMeta[a.level].color,
-  levelIcon: levelMeta[a.level].icon,
   levelLabel: getAnnouncementLevelLabel(a.level),
   isPinned: a.isPinned,
   text: a.content,
   linkUrl: a.linkUrl,
-  date: formatDateTime(a.createdAt, '-', locale.value)
+  date: formatDateTime(a.createdAt, '-', locale.value),
+  dateTime: a.createdAt
 })))
 
 function getAnnouncementLevelLabel(level: MessageLevel): string {
@@ -97,29 +97,31 @@ function dismissCurrentAnnouncements() {
 <template>
   <UModal
     v-model:open="open"
+    :title="$t('public.announcements.title')"
+    :description="$t('public.announcements.summary', { count: items.length })"
     :content="{ onOpenAutoFocus: preventAutoFocus }"
     :ui="{
-      content: 'sm:max-w-xl',
-      body: 'p-4 sm:p-5 max-h-[60dvh]'
+      overlay: 'bg-elevated/70 backdrop-blur-[2px]',
+      content: 'announcement-dialog rounded-xl sm:max-w-2xl',
+      header: 'gap-3 ps-4 pe-14 pb-4 pt-5 sm:ps-5 sm:pe-14',
+      wrapper: 'min-w-0 flex-1',
+      title: 'font-display text-lg leading-tight font-semibold text-highlighted',
+      description: 'mt-1 text-xs leading-5 text-muted',
+      body: 'max-h-[58dvh] p-4 sm:max-h-[62dvh] sm:p-5',
+      footer: 'p-4 sm:px-5'
     }"
   >
-    <template #header>
-      <div class="flex items-center gap-3">
-        <span class="announce-icon">
-          <UIcon
-            name="i-mdi-bullhorn-outline"
-            class="size-5"
-          />
-        </span>
-        <div class="min-w-0">
-          <h3 class="text-lg leading-tight font-semibold text-highlighted">
-            {{ $t('public.announcements.title') }}
-          </h3>
-          <p class="mt-0.5 text-xs text-muted">
-            {{ $t('public.announcements.summary', { count: items.length }) }}
-          </p>
-        </div>
-      </div>
+    <template #actions>
+      <span
+        class="announcement-heading-mark order-first"
+        aria-hidden="true"
+      >
+        <UIcon
+          name="i-mdi-bullhorn-outline"
+          class="size-5"
+        />
+        <span class="announcement-heading-mark__signal" />
+      </span>
     </template>
 
     <template #body>
@@ -136,93 +138,91 @@ function dismissCurrentAnnouncements() {
         :items="accordionItems"
         type="multiple"
         :ui="{
-          root: 'flex flex-col gap-2.5',
-          item: 'rounded-lg border border-default last:border-b transition-colors hover:bg-elevated/30',
-          trigger: 'px-3 py-3 gap-3',
+          root: 'overflow-hidden rounded-xl border border-default bg-elevated',
+          item: 'border-b border-default last:border-b-0',
+          trigger: 'gap-2 rounded-none px-4 py-3.5 hover:bg-muted/70 focus-visible:bg-accented focus-visible:outline-none',
           trailingIcon: 'size-4 text-dimmed',
-          body: 'px-3 pb-3 pt-0'
+          body: 'px-4 pb-4 pt-0'
         }"
       >
         <template #default="{ item }">
-          <div class="flex min-w-0 flex-1 items-center gap-3 text-left">
-            <span
-              class="level-chip"
-              :class="`is-${item.color}`"
-            >
-              <UIcon
-                :name="item.levelIcon"
-                class="size-4"
+          <div class="announcement-summary">
+            <div class="announcement-summary__title-row">
+              <span
+                class="announcement-level-signal"
+                :class="`is-${item.color}`"
+                aria-hidden="true"
               />
-            </span>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
-                <span class="truncate text-sm font-medium text-highlighted">
-                  {{ item.label }}
-                </span>
-                <a
-                  v-if="item.linkUrl"
-                  :href="item.linkUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="announce-link"
-                  :title="$t('public.announcements.viewDetails')"
-                  :aria-label="$t('public.announcements.viewDetails')"
-                  @click.stop
-                  @keydown.enter.stop
-                >
-                  <UIcon
-                    name="i-mdi-open-in-new"
-                    class="size-3.5"
-                  />
-                </a>
-                <UIcon
-                  v-if="item.isPinned"
-                  name="i-mdi-pin"
-                  class="size-3.5 shrink-0 text-warning"
-                  :title="$t('public.announcements.pinned')"
-                />
-              </div>
-              <div class="mt-1 flex items-center gap-1.5 text-xs text-muted">
-                <span>{{ item.levelLabel }}</span>
-                <span class="text-dimmed">·</span>
-                <UIcon
-                  name="i-mdi-clock-outline"
-                  class="size-3 shrink-0"
-                />
-                <span class="font-mono">{{ item.date }}</span>
-              </div>
+              <span class="announcement-summary__title">
+                {{ item.label }}
+              </span>
+              <UBadge
+                v-if="item.isPinned"
+                color="warning"
+                variant="soft"
+                size="sm"
+                icon="i-mdi-pin"
+              >
+                {{ $t('public.announcements.pinned') }}
+              </UBadge>
+            </div>
+
+            <div class="announcement-summary__meta">
+              <span
+                class="announcement-level-label"
+                :class="`is-${item.color}`"
+              >
+                {{ item.levelLabel }}
+              </span>
+              <span aria-hidden="true">·</span>
+              <time
+                :datetime="item.dateTime"
+                class="announcement-summary__date"
+              >
+                {{ item.date }}
+              </time>
             </div>
           </div>
         </template>
 
-        <!-- 用 #body 而非 #content：#content 会替换掉带 px-3/pb-3 的 body padding 容器，
-             导致正文顶死卡片左下边框。#body 落进 ui.body 容器，再加 pl-11(44px=chip 32+gap 12)
-             让正文与上方标题文字左对齐。 -->
         <template #body="{ item }">
-          <p class="pl-11 text-sm leading-6 whitespace-pre-wrap break-words text-default">
-            {{ item.text }}
-          </p>
+          <div class="announcement-detail">
+            <p>{{ item.text }}</p>
+            <a
+              v-if="item.linkUrl"
+              :href="item.linkUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="announcement-detail__link"
+            >
+              <span>{{ $t('public.announcements.viewDetails') }}</span>
+              <UIcon
+                name="i-mdi-arrow-top-right"
+                class="size-3.5"
+              />
+            </a>
+          </div>
         </template>
       </UAccordion>
     </template>
 
     <template #footer>
-      <div class="flex w-full items-center gap-3">
-        <p class="hidden text-xs text-muted sm:block">
-          {{ $t('public.announcements.reminderHint') }}
-        </p>
-        <div class="ml-auto flex items-center gap-2">
+      <div class="announcement-footer">
+        <div class="announcement-footer__actions">
           <UButton
             color="neutral"
             variant="ghost"
+            size="sm"
+            class="flex-1 justify-center sm:flex-none"
             @click="dismissCurrentAnnouncements"
           >
             {{ $t('public.announcements.dismiss') }}
           </UButton>
           <UButton
-            color="neutral"
+            size="sm"
             icon="i-mdi-check"
-            @click="() => { open = false }"
+            class="flex-1 justify-center sm:flex-none"
+            @click="open = false"
           >
             {{ $t('public.announcements.acknowledge') }}
           </UButton>
@@ -233,63 +233,169 @@ function dismissCurrentAnnouncements() {
 </template>
 
 <style scoped>
-.announce-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 auto;
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--ui-info) 12%, transparent);
-  color: var(--ui-info);
+:global(.announcement-dialog::before) {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: var(--ui-primary);
+  content: '';
 }
 
-.announce-link {
+.announcement-heading-mark {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  padding: 2px;
-  border-radius: 6px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: var(--ui-bg-elevated);
+  color: var(--ui-text-highlighted);
+  box-shadow: 0 1px 2px color-mix(in oklab, var(--ui-text) 7%, transparent);
+}
+
+.announcement-heading-mark__signal {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--ui-bg);
+  border-radius: 999px;
+  background: var(--ui-primary);
+}
+
+.announcement-summary {
+  min-width: 0;
+  flex: 1;
+  text-align: start;
+}
+
+.announcement-summary__title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.announcement-summary__title {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  color: var(--ui-text-highlighted);
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.25rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.announcement-level-signal {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--announcement-level-color, var(--ui-text-muted));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--announcement-level-color, var(--ui-text-muted)) 11%, transparent);
+}
+
+.announcement-summary__meta {
+  display: flex;
+  margin-top: 0.375rem;
+  margin-left: 1rem;
+  align-items: center;
+  gap: 0.375rem;
+  overflow: hidden;
   color: var(--ui-text-dimmed);
-  transition: color 150ms ease, background-color 150ms ease;
+  font-size: 0.6875rem;
+  line-height: 1rem;
 }
 
-.announce-link:hover {
-  color: var(--ui-info);
-  background: color-mix(in srgb, var(--ui-info) 12%, transparent);
-}
-
-.level-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
+.announcement-level-label {
   flex: 0 0 auto;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ui-text) 7%, transparent);
-  color: var(--ui-text-muted);
+  color: var(--announcement-level-color, var(--ui-text-muted));
+  font-weight: 650;
 }
 
-.level-chip.is-info {
-  background: color-mix(in srgb, var(--ui-info) 13%, transparent);
-  color: var(--ui-info);
+.announcement-summary__date {
+  overflow: hidden;
+  font-family: var(--font-code);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.level-chip.is-success {
-  background: color-mix(in srgb, var(--ui-success) 13%, transparent);
-  color: var(--ui-success);
+.is-info { --announcement-level-color: var(--ui-info); }
+.is-success { --announcement-level-color: var(--ui-success); }
+.is-warning { --announcement-level-color: var(--ui-warning); }
+.is-error { --announcement-level-color: var(--ui-error); }
+
+.announcement-detail {
+  margin-top: 0.125rem;
+  margin-left: 1rem;
+  border-top: 1px solid color-mix(in oklab, var(--ui-border) 84%, transparent);
+  padding-top: 0.875rem;
 }
 
-.level-chip.is-warning {
-  background: color-mix(in srgb, var(--ui-warning) 15%, transparent);
-  color: var(--ui-warning);
+.announcement-detail p {
+  margin: 0;
+  color: var(--ui-text-toned);
+  font-size: 0.875rem;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.level-chip.is-error {
-  background: color-mix(in srgb, var(--ui-error) 13%, transparent);
-  color: var(--ui-error);
+.announcement-detail__link {
+  display: inline-flex;
+  margin-top: 0.875rem;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 4px;
+  color: var(--ui-primary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  transition: color 150ms ease;
+}
+
+.announcement-detail__link:hover {
+  color: color-mix(in oklab, var(--ui-primary) 76%, var(--ui-text-highlighted));
+}
+
+.announcement-detail__link:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ui-primary) 32%, transparent);
+  outline-offset: 3px;
+}
+
+.announcement-footer {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.announcement-footer__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (width < 640px) {
+  .announcement-heading-mark {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+  }
+
+  .announcement-footer__actions {
+    width: 100%;
+  }
+
+  .announcement-detail {
+    margin-left: 0;
+  }
 }
 </style>

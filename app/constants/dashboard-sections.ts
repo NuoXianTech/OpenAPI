@@ -82,6 +82,7 @@ export function createAdminSystemSection({ t }: DashboardConfigFactoryContext): 
     items: [
       { label: t('common.dashboard.navigation.siteSettings'), icon: 'i-mdi-cog-outline', to: ADMIN_SYSTEM_PATH, exact: true },
       { label: t('common.dashboard.sections.userSessions'), icon: 'i-mdi-account-clock-outline', to: `${ADMIN_SYSTEM_PATH}/user-session` },
+      { label: t('common.dashboard.sections.networkAndProxy'), icon: 'i-mdi-ip-network-outline', to: `${ADMIN_SYSTEM_PATH}/network` },
       { label: t('common.dashboard.sections.captcha'), icon: 'i-mdi-shield-key-outline', to: `${ADMIN_SYSTEM_PATH}/captcha` },
       { label: t('common.dashboard.sections.email'), icon: 'i-mdi-email-outline', to: `${ADMIN_SYSTEM_PATH}/email` },
       { label: t('common.dashboard.sections.about'), icon: 'i-mdi-information-outline', to: `${ADMIN_SYSTEM_PATH}/about` }

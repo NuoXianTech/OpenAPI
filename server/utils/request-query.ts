@@ -52,6 +52,7 @@ const SENSITIVE_QUERY_KEYS = new Set([
   'apikey',
   'authorization',
   'accesstoken',
+  'password',
   'refreshtoken',
   'signature',
   'token'

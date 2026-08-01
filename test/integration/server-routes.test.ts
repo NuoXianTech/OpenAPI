@@ -74,12 +74,24 @@ describe('Nitro server routes', () => {
   })
 
   it('returns 405 and Allow for unsupported public API methods', async () => {
-    const response = await fetch('/v1/bing', { method: 'POST' })
-    const body = await readJson<OpenApiErrorResponse>(response)
+    const postResponse = await fetch('/v1/bing', { method: 'POST' })
+    const postBody = await readJson<OpenApiErrorResponse>(postResponse)
 
-    expect(response.status).toBe(405)
-    expect(response.headers.get('allow')).toBe('GET')
-    expect(body).toMatchObject({
+    expect(postResponse.status).toBe(405)
+    expect(postResponse.headers.get('allow')).toBe('GET')
+    expect(postBody).toMatchObject({
+      code: 'METHOD_NOT_ALLOWED',
+      message: '请求方法不受支持',
+      data: null
+    })
+
+    const getResponse = await fetch('/v1/password/check')
+    const getBody = await readJson<OpenApiErrorResponse>(getResponse)
+
+    expect(getResponse.status).toBe(405)
+    expect(getResponse.headers.get('allow')).toBe('POST')
+    expect(getResponse.headers.get('cache-control')).toBe('no-store')
+    expect(getBody).toMatchObject({
       code: 'METHOD_NOT_ALLOWED',
       message: '请求方法不受支持',
       data: null

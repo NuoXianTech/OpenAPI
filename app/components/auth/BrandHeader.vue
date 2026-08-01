@@ -1,6 +1,6 @@
 <script setup lang="ts">
 defineProps<{
-  icon: string
+  icon?: string
   title: string
   subtitle?: string
 }>()
@@ -8,7 +8,10 @@ defineProps<{
 
 <template>
   <div class="auth-brand">
-    <div class="auth-brand__logo">
+    <div
+      v-if="icon"
+      class="auth-brand__logo"
+    >
       <UIcon
         :name="icon"
         class="size-6"

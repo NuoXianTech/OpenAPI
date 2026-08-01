@@ -45,15 +45,17 @@ describe('request query utilities', () => {
 
   it('redacts sensitive values before persisting query logs', () => {
     const sanitized = sanitizeQueryStringForLog(
-      '?keyword=music&apikey=secret&access_token=access&API-KEY=second&keyword=video'
+      '?keyword=music&apikey=secret&access_token=access&password=plain&API-KEY=second&keyword=video'
     )
     const query = new URLSearchParams(sanitized ?? '')
 
     expect(query.getAll('keyword')).toEqual(['music', 'video'])
     expect(query.get('apikey')).toBe('[REDACTED]')
     expect(query.get('access_token')).toBe('[REDACTED]')
+    expect(query.get('password')).toBe('[REDACTED]')
     expect(query.get('API-KEY')).toBe('[REDACTED]')
     expect(sanitized).not.toContain('secret')
+    expect(sanitized).not.toContain('plain')
     expect(sanitizeQueryStringForLog('')).toBeNull()
   })
 })

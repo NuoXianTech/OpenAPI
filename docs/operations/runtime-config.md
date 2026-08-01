@@ -10,7 +10,7 @@
 - `.env.example` 只能放示例值；真实生产值配置在服务器面板、PM2 ecosystem、容器 secret 或 CI/CD secret 中。
 - 修改配置后重启 Node/Nitro 进程，确保运行时读取新值。
 
-`.env.example` 按 HTTP 服务、安全密钥、数据库、Redis、反向代理分组。常用默认值保持展开，复制后只需选择数据库模式并填写两个独立密钥。启动阶段会集中校验必填配置；如果存在多项错误，会一次性列出全部错误并停止进程，不会带着不完整配置继续提供服务。
+`.env.example` 按 HTTP 服务、安全密钥、数据库和 Redis 分组。常用默认值保持展开，复制后只需选择数据库模式并填写两个独立密钥。启动阶段会集中校验必填配置；如果存在多项错误，会一次性列出全部错误并停止进程，不会带着不完整配置继续提供服务。
 
 ## 必填变量
 
@@ -37,7 +37,8 @@
 | `NUXT_REDIS_KEY_PREFIX` | `openapi:` | Redis key 命名空间；同一 Redis 服务部署多个环境时必须区分 |
 | `NUXT_REDIS_CONNECT_TIMEOUT_MS` | `2000` | Redis 首次连接超时毫秒数 |
 | `NUXT_REDIS_REQUIRED` | `false` | `true` 时限流或分布式协调所需 Redis 缺失/不可用会 fail-closed；不改变公开缓存的数据库回源策略 |
-| `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供 `X-Forwarded-For` 的直连反向代理 CIDR，多个值用逗号分隔 |
+| `NUXT_PROXY_SOURCE` | 留空 | 留空时由管理后台配置；可设 `direct`、`cloudflare`、`x_forwarded_for`。一旦设置，环境变量优先并锁定后台对应表单 |
+| `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供客户端 IP 请求头的直连代理 IP/CIDR，多个值用逗号分隔；支持 IPv4、IPv6、`0.0.0.0/0` 与 `::/0` |
 | `NUXT_PROXY_FORWARDED_HOPS` | `1` | 从 `X-Forwarded-For` 右侧计算的可信代理层数，最多 10 层 |
 
 `.env.example` 为直接启动和本地调试保留 `NITRO_HOST=0.0.0.0`。生产如果前面有 Nginx、Caddy 或面板反向代理，应覆盖为 `127.0.0.1`，避免 Nitro 直接暴露到公网。
@@ -116,5 +117,5 @@ pm2 start server/index.mjs --name openapi --update-env
 | Redis 故障后后台任务重复 | 多实例必须设置 `NUXT_REDIS_REQUIRED=true`；租约不可用时任务 fail-closed |
 | Redis 缓存命中率下降 | 检查 Redis 延迟、内存和淘汰统计；应用会回源数据库，但数据库负载会升高 |
 | 数据库或备份泄露 API Key | 数据库字段已使用 AES-256-GCM 加密；仍需隔离应用运行密钥并限制数据库、备份和服务端权限 |
-| 伪造 `X-Forwarded-For` | 仅配置真实直连代理的 `NUXT_PROXY_TRUSTED_CIDRS`，并设置正确的 `NUXT_PROXY_FORWARDED_HOPS` |
-| 配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令 |
+| 伪造客户端 IP 请求头 | 优先使用后台的直连模式；启用 Cloudflare/XFF 时仅配置真实直连代理，避免使用 `0.0.0.0/0` 或 `::/0`，并阻止绕过代理直连源站 |
+| 环境变量配置变更未生效 | 使用 `pm2 restart openapi --update-env` 或等价重启命令；后台数据库配置无需重启 |

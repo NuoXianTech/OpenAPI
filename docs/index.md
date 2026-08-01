@@ -21,10 +21,11 @@
 
 ### 发布生产
 
-1. 根据 [运行时配置](./operations/runtime-config.md) 核对变量和密钥。
-2. 按 [生产就绪清单](./operations/production-readiness.md) 执行质量门禁、迁移和回滚准备。
-3. 使用 [VPS 部署指南](./operations/vps-deployment.md) 构建和启动。
-4. 发布后按 [生产运行手册](./operations/production-runbook.md) 完成健康检查、观察和巡检。
+1. 按 [发布流程](./operations/release-process.md) 更新版本并触发 GitHub Release 与 GHCR 构建。
+2. 根据 [运行时配置](./operations/runtime-config.md) 核对变量和密钥。
+3. 按 [生产就绪清单](./operations/production-readiness.md) 执行质量门禁、迁移和回滚准备。
+4. 使用 [VPS 部署指南](./operations/vps-deployment.md) 部署已经构建好的产物或容器镜像。
+5. 发布后按 [生产运行手册](./operations/production-runbook.md) 完成健康检查、观察和巡检。
 
 ## 核心规则
 
@@ -39,6 +40,13 @@
 
 - [音乐公共接口](./api/music.md)
 - [加密与解密公共接口](./api/crypto.md)
+- [短视频解析公共接口](./api/short-video.md)
+- [历史上的今天公共接口](./api/today-in-history.md)
+- [Epic 免费游戏公共接口](./api/epic.md)
+- [贵金属价格公共接口](./api/gold-price.md)
+- [随机密码生成公共接口](./api/password-generator.md)
+- [密码强度检测公共接口](./api/password-check.md)
+- [IP 归属地公共接口](./api/ip.md)
 
 ## 质量门禁
 
