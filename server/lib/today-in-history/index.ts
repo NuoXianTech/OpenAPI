@@ -240,7 +240,7 @@ export function formatTodayInHistoryText(data: TodayInHistoryData): string {
 }
 
 function escapeMarkdownText(value: string): string {
-  return value.replace(/([\\`*_[\]{}()#+\-.!|>])/g, '\\$1')
+  return value.replace(/([\\`*_[\]{}()#+\-.!|<>])/g, '\\$1')
 }
 
 export function formatTodayInHistoryMarkdown(data: TodayInHistoryData): string {
