@@ -44,6 +44,7 @@
 - [历史上的今天公共接口](./api/today-in-history.md)
 - [Epic 免费游戏公共接口](./api/epic.md)
 - [贵金属价格公共接口](./api/gold-price.md)
+- [随机密码生成公共接口](./api/password-generator.md)
 - [密码强度检测公共接口](./api/password-check.md)
 - [IP 归属地公共接口](./api/ip.md)
 
