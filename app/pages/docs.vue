@@ -187,12 +187,6 @@ useSeoMeta({
     </main>
 
     <CommonAppFooter />
-    <Suspense>
-      <LazyCommonAnnouncementPopup />
-      <template #fallback>
-        <span class="sr-only">{{ $t('public.home.announcementLoading') }}</span>
-      </template>
-    </Suspense>
   </div>
 </template>
 
