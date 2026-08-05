@@ -16,10 +16,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (admin.id === id && willRemoveAdminAccess) {
     throw createError({ statusCode: 400, message: '不能移除当前登录管理员的管理权限' })
   }
-  if (willRemoveAdminAccess && await usersService.isOnlyAvailableAdmin(target)) {
-    throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
-  }
-
   if (email !== undefined) {
     const existing = await usersService.findByEmail(email)
     if (existing && existing.id !== id) {
@@ -41,11 +37,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (!updated) {
     throw createError({ statusCode: 404, message: 'user not found' })
   }
-  // 管理员重置密码后，自增 tokenVersion 令该用户所有已签发 JWT 失效，强制重新登录
-  if (password) {
-    await usersService.bumpTokenVersion(id)
-  }
-
   await operationLogService.addRequestLog(event, {
     userId: admin.id,
     actor: admin.username,

@@ -32,7 +32,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (!updated) {
     throw createError({ statusCode: 404, message: '管理员账号不存在' })
   }
-  await usersService.bumpTokenVersion(admin.id)
   await createUserSession(event, { id: admin.id, role: admin.role })
 
   await operationLogService.addRequestLog(event, {

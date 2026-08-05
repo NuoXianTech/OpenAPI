@@ -1,5 +1,39 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isHostnameWithin, readLimitedText, safeFetch } from '../../../../server/utils/safe-fetch'
+
+type PinnedLookup = (
+  hostname: string,
+  options: Record<string, unknown>,
+  callback: (error: Error | null, address: string, family: number) => void
+) => void
+
+const networkMocks = vi.hoisted(() => ({
+  agentOptions: null as { connect?: { lookup?: PinnedLookup } } | null,
+  lookup: vi.fn()
+}))
+
+vi.mock('node:dns/promises', () => ({ lookup: networkMocks.lookup }))
+vi.mock('undici', () => ({
+  Agent: class {
+    constructor(options: { connect?: { lookup?: PinnedLookup } }) {
+      networkMocks.agentOptions = options
+    }
+
+    async close() {}
+  }
+}))
+
+beforeEach(() => {
+  networkMocks.agentOptions = null
+  networkMocks.lookup.mockImplementation(async (hostname: string) => [{
+    address: hostname,
+    family: hostname.includes(':') ? 6 : 4
+  }])
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('isHostnameWithin', () => {
   it('accepts the configured hostname and its subdomains', () => {
@@ -30,6 +64,29 @@ describe('safeFetch', () => {
     await expect(safeFetch('https://10.0.0.1/resource', {
       allowedHosts: ['10.0.0.1']
     })).rejects.toThrow('upstream hostname resolved to a blocked network')
+  })
+
+  it('pins the verified DNS address for the connection', async () => {
+    networkMocks.lookup.mockResolvedValue([{ address: '93.184.216.34', family: 4 }])
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (_input, init) => {
+      const pinnedLookup = networkMocks.agentOptions?.connect?.lookup
+      expect(pinnedLookup).toBeTypeOf('function')
+
+      const resolved = await new Promise<{ address: string, family: number }>((resolve, reject) => {
+        pinnedLookup?.('example.com', {}, (error: Error | null, address: string, family: number) => {
+          if (error) reject(error)
+          else resolve({ address, family })
+        })
+      })
+      expect(resolved).toEqual({ address: '93.184.216.34', family: 4 })
+      expect((init as RequestInit & { dispatcher?: unknown }).dispatcher).toBeDefined()
+      return new Response('ok')
+    })
+
+    await expect(safeFetch('https://example.com/resource', {
+      allowedHosts: ['example.com']
+    })).resolves.toBeInstanceOf(Response)
+    expect(fetchMock).toHaveBeenCalledOnce()
   })
 })
 

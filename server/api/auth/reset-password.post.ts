@@ -26,10 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const passwordHash = await hashPassword(newPassword)
-  await usersService.updatePasswordHash(userId, passwordHash)
-
-  // 密码改动后，tokenVersion 自增令所有旧 token 失效（用户此时未登录，无需重签）。
-  await usersService.bumpTokenVersion(userId)
+  await usersService.updatePasswordAndInvalidateSessions(userId, passwordHash)
 
   return null
 })

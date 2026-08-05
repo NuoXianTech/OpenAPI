@@ -23,8 +23,14 @@ const serverPort = 30_000 + process.pid % 10_000
 
 await setup({
   rootDir: process.cwd(),
+  build: false,
   browser: false,
   port: serverPort,
+  nuxtConfig: {
+    nitro: {
+      output: { dir: join(process.cwd(), '.output') }
+    }
+  },
   env: {
     NODE_ENV: 'production',
     NITRO_HOST: '127.0.0.1',

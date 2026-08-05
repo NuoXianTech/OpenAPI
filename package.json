@@ -17,7 +17,8 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "test:unit": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:integration": "pnpm build && pnpm test:integration:built",
+    "test:integration:built": "vitest run --config vitest.integration.config.ts",
     "test:run": "pnpm test:unit && pnpm test:integration"
   },
   "dependencies": {
@@ -39,10 +40,12 @@
     "nuxt": "^4.5.1",
     "postgres": "^3.4.9",
     "tailwindcss": "^4.3.3",
+    "undici": "^8.10.0",
     "vue": "^3.5.40",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.121",
     "@iconify-json/mdi": "^1.2.3",
     "@nuxt/eslint": "1.16.0",
     "@nuxt/test-utils": "^4.0.3",

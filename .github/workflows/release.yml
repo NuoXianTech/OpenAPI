@@ -87,10 +87,13 @@ jobs:
         run: pnpm typecheck
 
       - name: Run unit tests
-        run: pnpm test:run
+        run: pnpm test:unit
 
       - name: Build production server
         run: pnpm build
+
+      - name: Run integration tests
+        run: pnpm test:integration:built
 
       - name: Package application
         shell: bash

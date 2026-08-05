@@ -129,10 +129,13 @@ jobs:
         run: pnpm typecheck
 
       - name: Run unit test suite
-        run: pnpm test:run
+        run: pnpm test:unit
 
       - name: Build production application
         run: pnpm build
+
+      - name: Run integration test suite
+        run: pnpm test:integration:built
 
       - name: Publish validation summary
         if: success()

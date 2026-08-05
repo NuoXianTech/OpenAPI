@@ -6,7 +6,7 @@ import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSign
 //
 // 本项目会话完全由 JWT 承载，无服务端会话表。撤销靠 users.tokenVersion：
 // JWT 内嵌签发时的 ver，鉴权时与 DB 当前 tokenVersion 比对；改密 / 重置 / 全局登出
-// 时 version+1 即令所有旧 token 立即失效（见 server/utils/auth.ts、userService.bumpTokenVersion）。
+// 时 version+1 即令所有旧 token 立即失效（见 server/utils/auth.ts）。
 //
 // 手搓 HS256（node:crypto），无 jose / jsonwebtoken 依赖。
 // 安全约束：算法硬编码 HS256（防 alg=none / 混淆）、timingSafeEqual 比签名、

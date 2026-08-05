@@ -1,4 +1,6 @@
-import { and, asc, count, desc, eq, ilike, isNull, like, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, isNull, like, lte, or, sql } from 'drizzle-orm'
+import { createError } from 'h3'
+import { db } from '~~/server/db/client'
 import { creditTransactions, operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -41,10 +43,15 @@ function isAvailableAdmin(user: AdminAvailabilityUser) {
   return user.role === USER_ROLES.admin && user.isActive && !user.isBanned
 }
 
-async function countAvailableAdmins() {
-  const res = await db.select({ count: sql<number>`count(*)` }).from(users)
+async function lockAvailableAdmins(tx: DatabaseTransaction) {
+  return tx.select({ id: users.id }).from(users)
     .where(and(eq(users.role, USER_ROLES.admin), eq(users.isActive, true), eq(users.isBanned, false)))
-  return toNumber(res[0]?.count)
+    .orderBy(asc(users.id))
+    .for('update')
+}
+
+function throwAvailableAdminRequired() {
+  throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
 }
 
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：
@@ -140,17 +147,9 @@ export const usersService = {
     return toNumber(res[0]?.count)
   },
 
-  async countAvailableAdmins() {
-    return countAvailableAdmins()
-  },
-
   willRemoveAdminAccess(user: AdminAvailabilityUser, patch: AdminAccessPatch) {
     return user.role === USER_ROLES.admin
       && (patch.role === USER_ROLES.user || patch.isActive === false || patch.isBanned === true)
-  },
-
-  async isOnlyAvailableAdmin(user: AdminAvailabilityUser) {
-    return isAvailableAdmin(user) && await countAvailableAdmins() <= 1
   },
 
   async getById(id: number) {
@@ -170,15 +169,41 @@ export const usersService = {
     isBanned: boolean
     passwordHash: string
   }>) {
-    const res = await db.update(users)
-      .set({
-        ...data,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, id))
-      .returning()
+    const removesAdminAccess = data.role === USER_ROLES.user || data.isActive === false || data.isBanned === true
+    const values = {
+      ...data,
+      ...(data.passwordHash ? { tokenVersion: sql`${users.tokenVersion} + 1` } : {}),
+      updatedAt: new Date()
+    }
 
-    return firstRow(res)
+    if (!removesAdminAccess) {
+      const res = await db.update(users)
+        .set(values)
+        .where(eq(users.id, id))
+        .returning()
+      return firstRow(res)
+    }
+
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      const availableAdmins = await lockAvailableAdmins(tx)
+      const currentRows = await tx.select().from(users)
+        .where(eq(users.id, id))
+        .limit(1)
+        .for('update')
+      const current = firstRow(currentRows)
+      if (!current) return undefined
+
+      if (removesAdminAccess && isAvailableAdmin(current) && availableAdmins.length <= 1) {
+        throwAvailableAdminRequired()
+      }
+
+      const res = await tx.update(users)
+        .set(values)
+        .where(eq(users.id, id))
+        .returning()
+
+      return firstRow(res)
+    })
   },
 
   /**
@@ -189,6 +214,17 @@ export const usersService = {
    */
   async deleteUser(id: number) {
     return db.transaction(async (tx: DatabaseTransaction) => {
+      const availableAdmins = await lockAvailableAdmins(tx)
+      const currentRows = await tx.select().from(users)
+        .where(eq(users.id, id))
+        .limit(1)
+        .for('update')
+      const current = firstRow(currentRows)
+      if (!current) return undefined
+      if (isAvailableAdmin(current) && availableAdmins.length <= 1) {
+        throwAvailableAdminRequired()
+      }
+
       await tx.delete(operationLogs).where(and(
         eq(operationLogs.userId, id),
         like(operationLogs.action, 'auth.login.%')
@@ -303,10 +339,11 @@ export const usersService = {
     return activated
   },
 
-  async updatePasswordHash(id: number, passwordHash: string) {
+  async updatePasswordAndInvalidateSessions(id: number, passwordHash: string) {
     const res = await db.update(users)
       .set({
         passwordHash,
+        tokenVersion: sql`${users.tokenVersion} + 1`,
         updatedAt: new Date()
       })
       .where(eq(users.id, id))
@@ -332,21 +369,45 @@ export const usersService = {
    * - 解封：清空 isBanned 及 bannedReason / bannedUntil，避免遗留过期数据
    */
   async banUser(id: number, isBanned: boolean, opts?: { reason?: string | null, bannedUntil?: Date | null }) {
-    const res = await db.update(users)
-      .set({
-        isBanned,
-        bannedReason: isBanned ? (opts?.reason?.trim() || null) : null,
-        bannedUntil: isBanned ? (opts?.bannedUntil ?? null) : null,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, id))
-      .returning()
+    const values = {
+      isBanned,
+      bannedReason: isBanned ? (opts?.reason?.trim() || null) : null,
+      bannedUntil: isBanned ? (opts?.bannedUntil ?? null) : null,
+      updatedAt: new Date()
+    }
 
-    return firstRow(res)
+    if (!isBanned) {
+      const res = await db.update(users)
+        .set(values)
+        .where(eq(users.id, id))
+        .returning()
+      return firstRow(res)
+    }
+
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      const availableAdmins = await lockAvailableAdmins(tx)
+      const currentRows = await tx.select().from(users)
+        .where(eq(users.id, id))
+        .limit(1)
+        .for('update')
+      const current = firstRow(currentRows)
+      if (!current) return undefined
+      if (isBanned && isAvailableAdmin(current) && availableAdmins.length <= 1) {
+        throwAvailableAdminRequired()
+      }
+
+      const res = await tx.update(users)
+        .set(values)
+        .where(eq(users.id, id))
+        .returning()
+
+      return firstRow(res)
+    })
   },
 
   /** 封禁已到期 → 惰性解封：清除 isBanned / bannedReason / bannedUntil。 */
   async clearExpiredBan(id: number) {
+    const now = new Date()
     const res = await db.update(users)
       .set({
         isBanned: false,
@@ -354,22 +415,13 @@ export const usersService = {
         bannedUntil: null,
         updatedAt: new Date()
       })
-      .where(eq(users.id, id))
+      .where(and(
+        eq(users.id, id),
+        eq(users.isBanned, true),
+        lte(users.bannedUntil, now)
+      ))
       .returning()
 
     return firstRow(res)
   },
-
-  /** 令该用户所有已签发 JWT 失效（改密 / 重置 / 全局登出）：tokenVersion 自增。 */
-  async bumpTokenVersion(id: number) {
-    const res = await db.update(users)
-      .set({
-        tokenVersion: sql`${users.tokenVersion} + 1`,
-        updatedAt: new Date()
-      })
-      .where(eq(users.id, id))
-      .returning()
-
-    return firstRow(res)
-  }
 }

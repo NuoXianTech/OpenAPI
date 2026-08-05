@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { zh_cn } from '@nuxt/ui/locale'
+import { en, zh_cn } from '@nuxt/ui/locale'
 import { DEFAULT_LOCALE } from '#shared/config/locale-defaults'
 
 // 站点元信息（标题模板、favicon、描述）统一由 siteSettings 提供，
@@ -7,6 +7,7 @@ import { DEFAULT_LOCALE } from '#shared/config/locale-defaults'
 const { settings } = useSiteSettings()
 const { locale, setLocale } = useI18n()
 const { user } = useAuth()
+const uiLocale = computed(() => locale.value === 'en-US' ? en : zh_cn)
 
 const link = computed(() => [
   { rel: 'icon' as const, type: 'image/x-icon', href: settings.value.siteImg || '/favicon.ico' }
@@ -32,7 +33,7 @@ if (import.meta.client) {
 </script>
 
 <template>
-  <UApp :locale="zh_cn">
+  <UApp :locale="uiLocale">
     <NuxtLoadingIndicator
       color="#18181b"
       :height="3"

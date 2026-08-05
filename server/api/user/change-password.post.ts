@@ -21,12 +21,11 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   }
 
   const newHash = await hashPassword(newPassword)
-  await usersService.updatePasswordHash(authUser.id, newHash)
+  await usersService.updatePasswordAndInvalidateSessions(authUser.id, newHash)
 
   // tokenVersion 自增 → 该账号所有已签发 JWT（含当前设备）立即失效；
   // 随即为当前设备重签新 token（createUserSession 内部读到 bump 后的新 ver），
   // 实现「下线其他设备、保留当前设备」。
-  await usersService.bumpTokenVersion(authUser.id)
   await createUserSession(event, { id: authUser.id, role: authUser.role })
 
   await operationLogService.addRequestLog(event, {

@@ -10,7 +10,7 @@ import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSign
 // 验签自然失败：
 //   - verify         binding=email；单次性由 usersService.activateUser 的
 //                    WHERE emailVerifiedAt IS NULL 幂等保证（不重复赠分）
-//   - reset_password binding=email + tokenVersion；重置后 bumpTokenVersion
+//   - reset_password binding=email + tokenVersion；重置密码时同步递增 tokenVersion
 //                    令 tokenVersion 变化 → 旧链接失效
 //   - change_email   binding=当前(旧) email；确认后 updateEmail 改 email →
 //                    旧链接失效（payload.email 存的是「新」邮箱）

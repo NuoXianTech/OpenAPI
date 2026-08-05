@@ -131,7 +131,7 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload, o
 }
 
 export function destroyCurrentSession(event: H3Event) {
-  // 无状态：登出仅清本机 cookie；该 token 无法被服务端撤销（需全局失效用 usersService.bumpTokenVersion）。
+  // 无状态：登出仅清本机 cookie；服务端全局失效需要自增该用户的 tokenVersion。
   clearAuthCookie(event)
 }
 

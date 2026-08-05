@@ -108,15 +108,23 @@ const detailOpen = ref(false)
 const detailLoading = ref(false)
 const detailMessage = ref<AdminNotificationMessageRow | null>(null)
 const detailRows = ref<AdminNotificationDeliveryRow[]>([])
+const detailPage = ref(1)
+const detailPageSize = 50
+const detailTotal = ref(0)
 
-async function openDetail(row: AdminNotificationMessageRow) {
-  detailMessage.value = row
-  detailOpen.value = true
+async function loadDetailPage(page: number) {
+  const messageId = detailMessage.value?.id
+  if (!messageId) return
+
+  detailPage.value = page
   detailLoading.value = true
   detailRows.value = []
   try {
-    const res = await $fetch<{ deliveries?: typeof detailRows.value }>('/api/admin/notifications/detail', { query: { messageId: row.id } })
+    const res = await $fetch<{ deliveries?: typeof detailRows.value, total?: number }>('/api/admin/notifications/detail', {
+      query: { messageId, limit: detailPageSize, offset: (page - 1) * detailPageSize }
+    })
     detailRows.value = res?.deliveries || []
+    detailTotal.value = res?.total || 0
   } catch (err: unknown) {
     toast.add({
       title: parseFetchError(err, t('admin.content.notifications.detail.loadFailed')),
@@ -125,6 +133,13 @@ async function openDetail(row: AdminNotificationMessageRow) {
   } finally {
     detailLoading.value = false
   }
+}
+
+async function openDetail(row: AdminNotificationMessageRow) {
+  detailMessage.value = row
+  detailOpen.value = true
+  detailTotal.value = 0
+  await loadDetailPage(1)
 }
 
 const confirm = useConfirmDialog()
@@ -308,29 +323,40 @@ const detailDescription = computed(() => {
         </div>
         <div
           v-else
-          class="divide-y divide-default"
+          class="space-y-4"
         >
-          <div
-            v-for="r in detailRows"
-            :key="r.id"
-            class="flex items-center gap-3 py-2 text-sm"
-          >
-            <UIcon
-              :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
-              :class="r.isRead ? 'text-success' : 'text-muted'"
-              class="size-4"
-            />
-            <span class="flex-1 font-medium">
-              {{ r.recipientUsername || `#${r.recipientUserId}` }}
-            </span>
-            <span class="text-xs text-muted">
-              {{ r.isRead
-                ? $t('admin.content.notifications.detail.readAt', {
-                  time: formatDateTime(r.readAt, '-', locale)
-                })
-                : $t('admin.content.notifications.detail.unread') }}
-            </span>
+          <div class="divide-y divide-default">
+            <div
+              v-for="r in detailRows"
+              :key="r.id"
+              class="flex items-center gap-3 py-2 text-sm"
+            >
+              <UIcon
+                :name="r.isRead ? 'i-mdi-email-open-outline' : 'i-mdi-email-outline'"
+                :class="r.isRead ? 'text-success' : 'text-muted'"
+                class="size-4"
+              />
+              <span class="flex-1 font-medium">
+                {{ r.recipientUsername || `#${r.recipientUserId}` }}
+              </span>
+              <span class="text-xs text-muted">
+                {{ r.isRead
+                  ? $t('admin.content.notifications.detail.readAt', {
+                    time: formatDateTime(r.readAt, '-', locale)
+                  })
+                  : $t('admin.content.notifications.detail.unread') }}
+              </span>
+            </div>
           </div>
+          <UPagination
+            v-if="detailTotal > detailPageSize"
+            :page="detailPage"
+            :items-per-page="detailPageSize"
+            :total="detailTotal"
+            size="sm"
+            class="justify-center"
+            @update:page="loadDetailPage"
+          />
         </div>
       </template>
     </UModal>

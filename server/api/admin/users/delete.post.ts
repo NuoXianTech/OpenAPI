@@ -11,14 +11,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (admin.id === id) {
     throw createError({ statusCode: 400, message: '不能删除当前登录管理员' })
   }
-  const target = await usersService.getById(id)
-  if (!target) {
-    throw createError({ statusCode: 404, message: 'user not found' })
-  }
-  if (await usersService.isOnlyAvailableAdmin(target)) {
-    throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
-  }
-
   const deleted = await usersService.deleteUser(id)
   if (!deleted) {
     throw createError({ statusCode: 404, message: 'user not found' })

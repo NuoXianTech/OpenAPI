@@ -40,7 +40,16 @@ beforeAll(async () => {
       recipient_user_id integer NOT NULL,
       is_read boolean NOT NULL DEFAULT false,
       read_at timestamptz,
-      created_at timestamptz NOT NULL DEFAULT now()
+      created_at timestamptz NOT NULL DEFAULT now(),
+      UNIQUE (message_id, recipient_user_id),
+      CHECK (recipient_user_id <> 99)
+    );
+
+    CREATE TABLE users (
+      id serial PRIMARY KEY,
+      username varchar(50) NOT NULL,
+      is_active boolean NOT NULL DEFAULT true,
+      is_banned boolean NOT NULL DEFAULT false
     );
 
     INSERT INTO notification_messages
@@ -54,6 +63,9 @@ beforeAll(async () => {
     VALUES
       (1, 1, true, '2026-01-01T01:00:00Z'),
       (2, 1, false, null);
+
+    INSERT INTO users (id, username, is_active, is_banned)
+    VALUES (1, 'first-user', true, false), (99, 'invalid-delivery', true, false);
   `)
   testContext.database = drizzle(client, { schema })
 })
@@ -88,5 +100,25 @@ describe('notification service', () => {
     expect(result.total).toBe(2)
     expect(result.items).toHaveLength(1)
     expect(result.items[0]?.title).toBe('First notification')
+  })
+
+  it('paginates delivery details with an accurate total', async () => {
+    const result = await notificationService.getMessageDetail(1, { limit: 1, offset: 0 })
+
+    expect(result.total).toBe(1)
+    expect(result.deliveries).toHaveLength(1)
+    expect(result.deliveries[0]?.recipientUsername).toBe('first-user')
+  })
+
+  it('rolls back the message when delivery creation fails', async () => {
+    await expect(notificationService.send({
+      title: 'Rollback notification',
+      content: 'Must not remain without a delivery',
+      audience: 'specific',
+      recipientUserIds: [99]
+    })).rejects.toThrow()
+
+    const result = await notificationService.listMessagesForAdmin()
+    expect(result.total).toBe(2)
   })
 })

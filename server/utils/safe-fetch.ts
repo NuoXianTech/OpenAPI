@@ -1,5 +1,6 @@
 import { lookup } from 'node:dns/promises'
-import { isIP } from 'node:net'
+import { isIP, type LookupFunction } from 'node:net'
+import { Agent } from 'undici'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 
 const BLOCKED_NETWORKS = [
@@ -26,15 +27,20 @@ const BLOCKED_NETWORKS = [
 ] as const
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308])
+type ResolvedAddress = { address: string, family: number }
 
 export interface SafeFetchOptions extends RequestInit {
   allowedHosts: readonly string[]
   maxRedirects?: number
 }
 
+function normalizeHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/\.$/, '')
+}
+
 export function isHostnameWithin(hostname: string, allowedHost: string): boolean {
-  const normalizedHostname = hostname.toLowerCase().replace(/\.$/, '')
-  const normalizedAllowedHost = allowedHost.toLowerCase().replace(/\.$/, '')
+  const normalizedHostname = normalizeHostname(hostname)
+  const normalizedAllowedHost = normalizeHostname(allowedHost)
   return normalizedHostname === normalizedAllowedHost
     || normalizedHostname.endsWith(`.${normalizedAllowedHost}`)
 }
@@ -51,7 +57,11 @@ function assertPublicAddress(address: string): void {
   }
 }
 
-async function assertSafeUrl(input: string | URL, allowedHosts: readonly string[]): Promise<URL> {
+async function assertSafeUrl(
+  input: string | URL,
+  allowedHosts: readonly string[],
+  pinnedAddresses: Map<string, ResolvedAddress[]>
+): Promise<URL> {
   const url = input instanceof URL ? new URL(input) : new URL(input)
   if (url.protocol !== 'https:') throw new Error('upstream URL must use HTTPS')
   if (url.username || url.password) throw new Error('upstream URL credentials are not allowed')
@@ -62,8 +72,24 @@ async function assertSafeUrl(input: string | URL, allowedHosts: readonly string[
   const addresses = await lookup(url.hostname, { all: true, verbatim: true })
   if (addresses.length === 0) throw new Error('upstream hostname did not resolve')
   for (const { address } of addresses) assertPublicAddress(address)
+  pinnedAddresses.set(normalizeHostname(url.hostname), addresses)
 
   return url
+}
+
+function createPinnedDispatcher(pinnedAddresses: Map<string, ResolvedAddress[]>) {
+  const pinnedLookup: LookupFunction = (hostname, options, callback) => {
+    const addresses = pinnedAddresses.get(normalizeHostname(hostname))
+    const family = typeof options === 'number' ? options : options.family
+    const selected = addresses?.find(address => !family || address.family === family) ?? addresses?.[0]
+    if (!selected) {
+      callback(new Error('upstream hostname has no verified address'), '', 0)
+      return
+    }
+    callback(null, selected.address, selected.family)
+  }
+
+  return new Agent({ connect: { lookup: pinnedLookup } })
 }
 
 function redirectedRequestInit(status: number, options: RequestInit): RequestInit {
@@ -79,27 +105,40 @@ function redirectedRequestInit(status: number, options: RequestInit): RequestIni
 
 export async function safeFetch(input: string | URL, options: SafeFetchOptions): Promise<Response> {
   const { allowedHosts, maxRedirects = 5, ...requestOptions } = options
-  let currentUrl = await assertSafeUrl(input, allowedHosts)
+  const pinnedAddresses = new Map<string, ResolvedAddress[]>()
+  let currentUrl = await assertSafeUrl(input, allowedHosts, pinnedAddresses)
   let currentOptions: RequestInit = { ...requestOptions, redirect: 'manual' }
+  const dispatcher = createPinnedDispatcher(pinnedAddresses)
 
-  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
-    const response = await fetch(currentUrl, currentOptions)
-    if (!REDIRECT_STATUS_CODES.has(response.status)) return response
+  try {
+    for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+      const response = await fetch(currentUrl, { ...currentOptions, dispatcher } as RequestInit & { dispatcher: Agent })
+      if (!REDIRECT_STATUS_CODES.has(response.status)) {
+        void dispatcher.close()
+        return response
+      }
 
-    const location = response.headers.get('location')
-    if (!location) return response
-    if (redirectCount === maxRedirects) {
+      const location = response.headers.get('location')
+      if (!location) {
+        void dispatcher.close()
+        return response
+      }
+      if (redirectCount === maxRedirects) {
+        await response.body?.cancel()
+        throw new Error('upstream redirect limit exceeded')
+      }
+
+      const nextUrl = await assertSafeUrl(new URL(location, currentUrl), allowedHosts, pinnedAddresses)
       await response.body?.cancel()
-      throw new Error('upstream redirect limit exceeded')
+      currentOptions = redirectedRequestInit(response.status, currentOptions)
+      currentUrl = nextUrl
     }
 
-    const nextUrl = await assertSafeUrl(new URL(location, currentUrl), allowedHosts)
-    await response.body?.cancel()
-    currentOptions = redirectedRequestInit(response.status, currentOptions)
-    currentUrl = nextUrl
+    throw new Error('upstream redirect limit exceeded')
+  } catch (error) {
+    await dispatcher.close()
+    throw error
   }
-
-  throw new Error('upstream redirect limit exceeded')
 }
 
 export async function readLimitedText(response: Response, maxBytes: number): Promise<string> {
