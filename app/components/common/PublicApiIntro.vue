@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { TransitionPresets, usePreferredReducedMotion, useTransition } from '@vueuse/core'
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import { formatCompactCount } from '~/utils/number-format'
@@ -11,7 +12,6 @@ interface Props {
   siteDescription?: string
   uptimeDays?: number | null
   totalCount?: number
-  availabilityRate?: number
   callCount?: number
   successRate?: number
   userCount?: number
@@ -23,7 +23,6 @@ const props = withDefaults(defineProps<Props>(), {
   siteDescription: '',
   uptimeDays: null,
   totalCount: 0,
-  availabilityRate: 0,
   callCount: 0,
   successRate: 0,
   userCount: 0,
@@ -35,17 +34,88 @@ const { t, locale } = useI18n()
 const { user } = useAuth()
 const toast = useToast()
 const requestUrl = useRequestURL()
+const preferredReducedMotion = usePreferredReducedMotion()
+const metricsMounted = ref(false)
+const transitionDisabled = computed(() => preferredReducedMotion.value === 'reduce')
+
+function createAnimatedMetric() {
+  const target = ref(0)
+  const isAnimating = ref(false)
+  const value = useTransition(target, {
+    duration: 900,
+    transition: TransitionPresets.easeOutCubic,
+    disabled: transitionDisabled,
+    onStarted: () => {
+      isAnimating.value = true
+    },
+    onFinished: () => {
+      isAnimating.value = false
+    }
+  })
+
+  return { target, value, isAnimating }
+}
+
+const {
+  target: callCountTarget,
+  value: animatedCallCount,
+  isAnimating: isCallCountAnimating
+} = createAnimatedMetric()
+const {
+  target: totalCountTarget,
+  value: animatedTotalCount,
+  isAnimating: isTotalCountAnimating
+} = createAnimatedMetric()
+const {
+  target: successRateTarget,
+  value: animatedSuccessRate,
+  isAnimating: isSuccessRateAnimating
+} = createAnimatedMetric()
+const {
+  target: userCountTarget,
+  value: animatedUserCount,
+  isAnimating: isUserCountAnimating
+} = createAnimatedMetric()
+
+function syncAnimatedMetrics(): void {
+  callCountTarget.value = Math.max(0, props.callCount)
+  totalCountTarget.value = Math.max(0, props.totalCount)
+  successRateTarget.value = Math.min(100, Math.max(0, props.successRate))
+  userCountTarget.value = Math.max(0, props.userCount)
+}
+
+watch(
+  [
+    () => props.callCount,
+    () => props.totalCount,
+    () => props.successRate,
+    () => props.userCount,
+    () => props.summaryLoading,
+    () => props.summaryError
+  ],
+  () => {
+    if (!metricsMounted.value || props.summaryLoading || props.summaryError) return
+    syncAnimatedMetrics()
+  }
+)
+
+watch(preferredReducedMotion, (value) => {
+  if (value !== 'reduce') return
+  isCallCountAnimating.value = false
+  isTotalCountAnimating.value = false
+  isSuccessRateAnimating.value = false
+  isUserCountAnimating.value = false
+})
 
 const resolvedDescription = computed(() => props.siteDescription || t('public.home.defaultDescription'))
-const compactCallCount = computed(() => formatCompactCount(props.callCount, locale.value))
-const compactUserCount = computed(() => formatCompactCount(props.userCount, locale.value))
-const formattedAvailabilityRate = computed(() => props.totalCount > 0
-  ? `${props.availabilityRate.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
-  : '--')
+const compactCallCount = computed(() => formatCompactCount(Math.round(animatedCallCount.value), locale.value))
+const animatedApiCount = computed(() => Math.round(animatedTotalCount.value))
+const compactUserCount = computed(() => formatCompactCount(Math.round(animatedUserCount.value), locale.value))
 const formattedSuccessRate = computed(() => props.callCount > 0
-  ? `${props.successRate.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
+  ? `${animatedSuccessRate.value.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
   : '--')
-const uptimeLabel = computed(() => {
+const metricsStateLoading = computed(() => !metricsMounted.value || props.summaryLoading)
+const uptimeDuration = computed(() => {
   const days = props.uptimeDays
   if (days === null) return ''
   if (days === 0) return t('public.home.uptimeLessThanDay')
@@ -55,7 +125,7 @@ const uptimeLabel = computed(() => {
     unit: 'day',
     unitDisplay: 'long'
   }).format(days)
-  return t('public.home.uptimeSummary', { duration })
+  return duration
 })
 const samplePath = '/v1/exchange-rate?currency=CNY&encoding=json'
 const sampleUrl = computed(() => `${requestUrl.origin}${samplePath}`)
@@ -78,6 +148,9 @@ function createSimulatedLatency(): number {
 }
 
 onMounted(() => {
+  metricsMounted.value = true
+  if (!props.summaryLoading && !props.summaryError) syncAnimatedMetrics()
+
   responseLatency.value = createSimulatedLatency()
   responseTimestamp.value = Date.now()
 })
@@ -110,21 +183,12 @@ async function copyRequest(): Promise<void> {
 
     <div class="public-api-intro__layout">
       <div class="public-api-intro__content">
-        <div class="public-api-intro__status-row">
+        <div v-if="uptimeDuration" class="public-api-intro__status-row">
           <div class="public-api-intro__status" role="status">
-            <UIcon
-              :name="summaryError ? 'i-mdi-alert-circle-outline' : summaryLoading ? 'i-mdi-loading' : 'i-mdi-check-circle-outline'"
-              class="size-3.5"
-              :class="{ 'is-error': summaryError, 'is-loading': summaryLoading }"
-            />
-            <span v-if="summaryError">{{ $t('common.states.loadFailed') }}</span>
-            <span v-else-if="summaryLoading">{{ $t('common.states.loading') }}</span>
-            <span v-else>{{ $t('public.home.availabilitySummary', { rate: formattedAvailabilityRate, users: compactUserCount }) }}</span>
-          </div>
-
-          <div v-if="uptimeLabel" class="public-api-intro__status">
             <UIcon name="i-mdi-clock-outline" class="size-3.5" />
-            <span>{{ uptimeLabel }}</span>
+            <span>{{ $t('public.home.uptimeLabel') }}</span>
+            <span class="public-api-intro__status-separator" aria-hidden="true">·</span>
+            <strong>{{ uptimeDuration }}</strong>
           </div>
         </div>
 
@@ -151,34 +215,104 @@ async function copyRequest(): Promise<void> {
           </UButton>
         </div>
 
-        <dl class="public-api-intro__metrics">
-          <div>
-            <dt>{{ $t('public.home.totalCalls') }}</dt>
-            <UTooltip
-              :text="callCount.toLocaleString(locale)"
-              :content="{ side: 'top' }"
-            >
-              <dd>{{ $t('public.home.callCountValue', { count: compactCallCount }) }}</dd>
-            </UTooltip>
-          </div>
-          <div>
-            <dt>{{ $t('public.home.totalApis') }}</dt>
-            <dd>{{ $t('public.home.apiCountValue', { count: totalCount }) }}</dd>
-          </div>
-          <div>
-            <dt>{{ $t('public.home.successRate') }}</dt>
-            <dd>{{ formattedSuccessRate }}</dd>
-          </div>
-          <div>
-            <dt>{{ $t('public.home.developersServed') }}</dt>
-            <UTooltip
-              :text="userCount.toLocaleString(locale)"
-              :content="{ side: 'top' }"
-            >
-              <dd>{{ $t('public.home.developerCountValue', { count: compactUserCount }) }}</dd>
-            </UTooltip>
-          </div>
-        </dl>
+        <div
+          class="public-api-intro__metrics-shell"
+          :aria-busy="metricsStateLoading"
+        >
+          <dl class="public-api-intro__metrics">
+            <div>
+              <dt>{{ $t('public.home.totalCalls') }}</dt>
+              <dd
+                v-if="metricsStateLoading"
+                class="dashboard-skeleton public-api-intro__metric-skeleton"
+                aria-hidden="true"
+              />
+              <dd v-else-if="summaryError">
+                --
+              </dd>
+              <UTooltip
+                v-else
+                :text="callCount.toLocaleString(locale)"
+                :content="{ side: 'top' }"
+              >
+                <dd
+                  class="public-api-intro__metric-value"
+                  :class="{ 'is-updating': isCallCountAnimating }"
+                >
+                  {{ $t('public.home.callCountValue', { count: compactCallCount }) }}
+                </dd>
+              </UTooltip>
+            </div>
+            <div>
+              <dt>{{ $t('public.home.totalApis') }}</dt>
+              <dd
+                v-if="metricsStateLoading"
+                class="dashboard-skeleton public-api-intro__metric-skeleton"
+                aria-hidden="true"
+              />
+              <dd v-else-if="summaryError">
+                --
+              </dd>
+              <dd
+                v-else
+                class="public-api-intro__metric-value"
+                :class="{ 'is-updating': isTotalCountAnimating }"
+              >
+                {{ $t('public.home.apiCountValue', { count: animatedApiCount }) }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ $t('public.home.successRate') }}</dt>
+              <dd
+                v-if="metricsStateLoading"
+                class="dashboard-skeleton public-api-intro__metric-skeleton"
+                aria-hidden="true"
+              />
+              <dd v-else-if="summaryError">
+                --
+              </dd>
+              <dd
+                v-else
+                class="public-api-intro__metric-value"
+                :class="{ 'is-updating': isSuccessRateAnimating }"
+              >
+                {{ formattedSuccessRate }}
+              </dd>
+            </div>
+            <div>
+              <dt>{{ $t('public.home.developersServed') }}</dt>
+              <dd
+                v-if="metricsStateLoading"
+                class="dashboard-skeleton public-api-intro__metric-skeleton"
+                aria-hidden="true"
+              />
+              <dd v-else-if="summaryError">
+                --
+              </dd>
+              <UTooltip
+                v-else
+                :text="userCount.toLocaleString(locale)"
+                :content="{ side: 'top' }"
+              >
+                <dd
+                  class="public-api-intro__metric-value"
+                  :class="{ 'is-updating': isUserCountAnimating }"
+                >
+                  {{ $t('public.home.developerCountValue', { count: compactUserCount }) }}
+                </dd>
+              </UTooltip>
+            </div>
+          </dl>
+
+          <p
+            v-if="summaryError && !metricsStateLoading"
+            class="public-api-intro__metrics-error"
+            role="alert"
+          >
+            <UIcon name="i-mdi-alert-circle-outline" class="size-3.5" />
+            <span>{{ $t('common.states.loadFailed') }}</span>
+          </p>
+        </div>
       </div>
 
       <div class="api-request-demo" :aria-label="$t('public.home.simulatedExample')">
@@ -281,18 +415,20 @@ async function copyRequest(): Promise<void> {
 }
 
 .public-api-intro__status .iconify { color: var(--ui-text-highlighted); }
-.public-api-intro__status .is-error { color: var(--ui-error); }
-.public-api-intro__status .is-loading { color: var(--ui-warning); animation: spin 1s linear infinite; }
+.public-api-intro__status-separator { color: var(--ui-text-dimmed); }
+.public-api-intro__status strong { color: var(--ui-text-highlighted); font: 650 0.75rem var(--font-code); }
 
 .public-api-intro__title {
   width: 100%;
   max-width: 11.5em;
-  margin-top: 1.5rem;
+  margin-top: 0;
   color: var(--ui-text-highlighted);
   font-size: 2.65rem;
   font-weight: 650;
   line-height: 1.1;
 }
+
+.public-api-intro__status-row + .public-api-intro__title { margin-top: 1.5rem; }
 
 .public-api-intro__description {
   max-width: 35rem;
@@ -309,17 +445,42 @@ async function copyRequest(): Promise<void> {
   margin-top: 1.75rem;
 }
 
+.public-api-intro__metrics-shell {
+  position: relative;
+  width: 100%;
+  min-height: 3.5rem;
+  margin-top: 2rem;
+}
+
 .public-api-intro__metrics {
   display: flex;
   flex-wrap: wrap;
   gap: 2.5rem;
-  margin-top: 2rem;
   padding-top: 0.25rem;
 }
 
 .public-api-intro__metrics div { min-width: 4.5rem; }
 .public-api-intro__metrics dt { color: var(--ui-text-muted); font-size: 0.7rem; }
 .public-api-intro__metrics dd { margin-top: 0.25rem; color: var(--ui-text-highlighted); font: 650 1.05rem var(--font-code); }
+.public-api-intro__metric-value { display: inline-block; transform-origin: left center; font-variant-numeric: tabular-nums; }
+.public-api-intro__metric-value.is-updating { color: var(--ui-primary); animation: metric-tick 900ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+.public-api-intro__metric-skeleton {
+  display: block;
+  width: 4.5rem;
+  height: 1.05rem;
+  margin-top: 0.45rem;
+  border-radius: 4px;
+}
+
+.public-api-intro__metrics-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  color: var(--ui-error);
+  font-size: 0.75rem;
+}
 
 .api-request-demo {
   width: 100%;
@@ -369,13 +530,22 @@ async function copyRequest(): Promise<void> {
 
 @media (width < 640px) {
   .public-api-intro__layout { gap: 2.25rem; padding-block: 2.75rem; }
-  .public-api-intro__title { margin-top: 1.25rem; font-size: 2rem; }
+  .public-api-intro__title { font-size: 2rem; }
+  .public-api-intro__status-row + .public-api-intro__title { margin-top: 1.25rem; }
   .public-api-intro__description { margin-top: 1rem; font-size: 0.875rem; line-height: 1.65; }
   .public-api-intro__actions { margin-top: 1.35rem; }
-  .public-api-intro__metrics { width: 100%; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
+  .public-api-intro__metrics-shell { margin-top: 1.5rem; }
+  .public-api-intro__metrics { width: 100%; justify-content: space-between; gap: 1rem; }
   .api-request-demo { box-shadow: 0 0 0 8px var(--ui-bg-muted); }
   .api-request-demo pre { height: 12rem; }
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .public-api-intro__metric-value.is-updating { animation: none; }
+}
+
+@keyframes metric-tick {
+  0%, 100% { transform: translateY(0) scale(1); }
+  42% { transform: translateY(-0.18rem) scale(1.035); }
+}
 </style>

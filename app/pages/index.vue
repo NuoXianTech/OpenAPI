@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { API_STATUS } from '#shared/config/api-status'
 import type { ApiCatalogItem } from '#shared/types/api'
-import type { PublicCallStatsDashboard } from '#shared/types/public-stats'
+import type {
+  PublicCallStatsDashboard,
+  PublicCallStatsSummary
+} from '#shared/types/public-stats'
 import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
+
+const LIVE_STATS_REFRESH_INTERVAL_MS = 10_000
 
 const {
   categoryMap,
@@ -20,19 +24,57 @@ const {
 } = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
   key: 'home-public-stats'
 })
+const liveStats = shallowRef<PublicCallStatsSummary | null>(null)
+let liveStatsRefreshTimer: ReturnType<typeof setInterval> | undefined
+let liveStatsRefreshPending = false
+
+const introSummaryLoading = computed(() =>
+  isLoading.value || (publicStatsLoading.value && !liveStats.value)
+)
+const introSummaryError = computed(() =>
+  Boolean(loadError.value) || (Boolean(publicStatsError.value) && !liveStats.value)
+)
+
+async function refreshLiveStats(): Promise<void> {
+  if (liveStatsRefreshPending || document.visibilityState !== 'visible') return
+
+  liveStatsRefreshPending = true
+  try {
+    liveStats.value = await $fetch<PublicCallStatsSummary>('/api/stats/public/summary')
+  } catch {
+    // Background refreshes keep the last valid snapshot on transient failures.
+  } finally {
+    liveStatsRefreshPending = false
+  }
+}
+
+onMounted(() => {
+  if (publicStatsError.value) void refreshLiveStats()
+
+  liveStatsRefreshTimer = setInterval(() => {
+    void refreshLiveStats()
+  }, LIVE_STATS_REFRESH_INTERVAL_MS)
+})
+
+onBeforeUnmount(() => {
+  if (liveStatsRefreshTimer) clearInterval(liveStatsRefreshTimer)
+})
 
 const introMetrics = computed(() => {
   const apis = allApis.value
   const total = apis.length
-  const available = apis.filter(api => api.status === API_STATUS.normal).length
 
   return {
     total,
-    availabilityRate: total > 0 ? Number((available / total * 100).toFixed(2)) : 0,
-    calls: publicStats.value?.overview.totalCalls
+    calls: liveStats.value?.totalCalls
+      ?? publicStats.value?.overview.totalCalls
       ?? apis.reduce((sum, api) => sum + (Number(api.totalCalls) || 0), 0),
-    successRate: publicStats.value?.overview.successRate ?? 0,
-    users: publicStats.value?.overview.userCount ?? 0
+    successRate: liveStats.value?.successRate
+      ?? publicStats.value?.overview.successRate
+      ?? 0,
+    users: liveStats.value?.userCount
+      ?? publicStats.value?.overview.userCount
+      ?? 0
   }
 })
 
@@ -72,12 +114,11 @@ useSeoMeta({
       :site-description="settings.siteDescription"
       :uptime-days="settings.uptimeDays"
       :total-count="introMetrics.total"
-      :availability-rate="introMetrics.availabilityRate"
       :call-count="introMetrics.calls"
       :success-rate="introMetrics.successRate"
       :user-count="introMetrics.users"
-      :summary-loading="isLoading || publicStatsLoading"
-      :summary-error="!!loadError || !!publicStatsError"
+      :summary-loading="introSummaryLoading"
+      :summary-error="introSummaryError"
     />
 
     <main>

@@ -12,6 +12,12 @@ export interface PublicCallStatsOverview {
   trackedApiCount: number
 }
 
+export interface PublicCallStatsSummary {
+  totalCalls: number
+  successRate: number
+  userCount: number
+}
+
 export interface PublicCallStatsTrendPoint {
   date: string
   totalCalls: number
