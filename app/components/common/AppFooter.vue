@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import SiteBrand from './SiteBrand.vue'
+
 const { settings } = useSiteSettings()
 
 const currentYear = new Date().getFullYear()
@@ -25,17 +27,10 @@ const footerLinks = [
   <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">
-        <span class="site-footer__mark" aria-hidden="true">
-          <UIcon name="i-mdi-transit-connection-variant" class="size-4" />
-        </span>
-        <div class="min-w-0">
-          <div class="truncate text-sm font-semibold text-highlighted">
-            {{ settings.siteName }}
-          </div>
-          <div class="mt-1 max-w-md text-xs leading-relaxed text-muted">
-            {{ settings.siteDescription }}
-          </div>
-        </div>
+        <SiteBrand />
+        <p class="site-footer__description">
+          {{ settings.siteDescription }}
+        </p>
       </div>
 
       <nav class="site-footer__nav" aria-label="Footer">
@@ -86,21 +81,18 @@ const footerLinks = [
 }
 
 .site-footer__brand {
-  display: flex;
+  display: grid;
   min-width: 0;
-  align-items: flex-start;
-  gap: 0.75rem;
+  gap: 0.2rem;
 }
 
-.site-footer__mark {
-  display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 auto;
-  place-items: center;
-  border-radius: 7px;
-  color: white;
-  background: var(--ui-primary);
+.site-footer__description {
+  max-width: 28rem;
+  margin: 0;
+  padding-inline-start: 2.625rem;
+  color: var(--ui-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
 }
 
 .site-footer__nav {
