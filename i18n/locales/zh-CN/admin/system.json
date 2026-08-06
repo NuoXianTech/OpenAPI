@@ -370,99 +370,81 @@
         }
       },
       "about": {
-        "pageTitle": "关于",
+        "pageTitle": "关于 OpenAPI",
         "project": {
-          "title": "项目",
-          "description": "OpenAPI 是一个面向 API 开放、运营管理与用户自助使用的全栈平台。",
+          "eyebrow": "开源 API 平台",
+          "description": "面向接口发布、统一接入和运营管理的一体化平台，为接口开发者与使用者提供清晰、可靠的工作流。",
+          "version": "当前版本 {version}",
+          "github": "查看 GitHub",
+          "githubAriaLabel": "在 GitHub 上查看 OpenAPI，链接将在新窗口打开",
           "items": {
-            "name": {
-              "label": "项目名称"
-            },
             "applicationType": {
-              "label": "应用类型",
+              "label": "产品定位",
               "value": "API 服务聚合与开放平台"
             },
             "managementModel": {
-              "label": "管理模型",
-              "value": "多管理员 + 多用户"
+              "label": "使用角色",
+              "value": "管理员与平台用户"
             },
             "runtime": {
-              "label": "运行形态",
-              "value": "Nuxt 全栈应用"
+              "label": "应用架构",
+              "value": "Nuxt 全栈单体应用"
+            },
+            "license": {
+              "label": "开源许可",
+              "value": "MIT License"
             }
           }
         },
         "capabilities": {
-          "title": "能力",
-          "description": "项目围绕 API 管理、用户自助、运营配置与审计追踪组织功能。",
+          "title": "核心能力",
+          "description": "围绕公共 API 的接入、发布、使用和运营，提供一套完整但直接的管理流程。",
           "items": {
             "accounts": {
               "label": "账号与权限",
-              "description": "统一登录入口，基于用户角色区分管理能力与用户能力。"
+              "description": "统一处理登录、角色权限、API 密钥与用户自助服务。"
             },
             "apis": {
               "label": "API 管理",
-              "description": "维护接口、分类、调用成本、启用状态与统计口径。"
+              "description": "管理接口、分类、请求方法、计费规则、可用状态与统计口径。"
             },
             "audit": {
               "label": "日志与审计",
-              "description": "集中查看调用、登录、积分与操作日志，保留关键操作者信息。"
+              "description": "集中记录调用、登录、积分和管理操作，保留可追踪的操作者身份。"
             },
             "operations": {
-              "label": "运营能力",
-              "description": "支持公告、通知、友情链接、兑换码与积分体系。"
+              "label": "平台运营",
+              "description": "覆盖公告、通知、友情链接、兑换码及积分运营。"
             },
             "configuration": {
               "label": "系统配置",
-              "description": "集中管理站点、邮件、验证码、会话与安全相关配置。"
+              "description": "集中维护站点、邮件、验证码、会话、安全与网络配置。"
             }
           }
         },
         "stack": {
-          "title": "技术栈",
-          "description": "当前项目以 Nuxt 全栈能力为核心，结合类型安全、组件化 UI 与结构化数据校验。",
+          "title": "技术基础",
+          "description": "选用成熟直接的工具，保持端到端类型安全和可控的维护成本。",
           "items": {
             "nuxt": {
               "label": "Nuxt 4 / Vue 3",
-              "description": "使用 Composition API 与文件路由组织前后端能力。"
+              "description": "通过 Composition API 与文件路由组织客户端和服务端能力。"
             },
             "ui": {
               "label": "Nuxt UI / Tailwind CSS",
-              "description": "构建一致、响应式、适合后台工作流的界面。"
+              "description": "构建一致、响应式且适合管理工作流的界面。"
             },
             "nitro": {
               "label": "Nitro / H3",
-              "description": "提供服务端 API、鉴权中间件与运行时能力。"
+              "description": "承载服务端 API、鉴权中间件与 Node.js 运行时能力。"
             },
             "database": {
               "label": "Drizzle ORM / PostgreSQL",
-              "description": "以类型安全方式维护数据库 schema、查询与迁移。"
+              "description": "以类型安全的方式维护数据结构、查询与迁移。"
             },
             "tooling": {
               "label": "VueUse / Zod",
-              "description": "复用组合式工具，并对输入数据做结构化校验。"
-            }
-          }
-        },
-        "production": {
-          "title": "生产约定",
-          "description": "这些约定用于保持多管理员、多用户环境中的可维护性和可追踪性。",
-          "items": {
-            "configuration": {
-              "label": "配置优先",
-              "description": "站点、邮件、验证码、OAuth 等运行参数集中在系统设置与环境变量中维护。"
-            },
-            "audit": {
-              "label": "审计优先",
-              "description": "管理动作和用户关键行为写入日志，便于追踪变更来源。"
-            },
-            "roles": {
-              "label": "角色清晰",
-              "description": "管理员可访问用户能力与管理能力，用户仅访问自身工作区。"
-            },
-            "migrations": {
-              "label": "迁移可控",
-              "description": "数据库迁移随构建产物发布，并在生产进程接受请求前自动执行。"
+              "description": "复用组合式能力，并对边界输入进行结构化校验。"
             }
           }
         }

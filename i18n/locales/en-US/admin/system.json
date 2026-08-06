@@ -370,99 +370,81 @@
         }
       },
       "about": {
-        "pageTitle": "About",
+        "pageTitle": "About OpenAPI",
         "project": {
-          "title": "Project",
-          "description": "OpenAPI is a full-stack platform for publishing APIs, running platform operations, and supporting user self-service.",
+          "eyebrow": "Open-source API platform",
+          "description": "An integrated platform for publishing, connecting, and operating public APIs, with clear workflows for both API providers and consumers.",
+          "version": "Current version: {version}",
+          "github": "View on GitHub",
+          "githubAriaLabel": "View OpenAPI on GitHub; opens in a new window",
           "items": {
-            "name": {
-              "label": "Project name"
-            },
             "applicationType": {
-              "label": "Application type",
+              "label": "Product",
               "value": "API aggregation and publishing platform"
             },
             "managementModel": {
-              "label": "Management model",
-              "value": "Multiple administrators and users"
+              "label": "User model",
+              "value": "Administrators and platform users"
             },
             "runtime": {
-              "label": "Runtime",
-              "value": "Nuxt full-stack application"
+              "label": "Architecture",
+              "value": "Nuxt full-stack monolith"
+            },
+            "license": {
+              "label": "License",
+              "value": "MIT License"
             }
           }
         },
         "capabilities": {
-          "title": "Capabilities",
-          "description": "Features are organized around API management, user self-service, platform operations, and auditing.",
+          "title": "Core capabilities",
+          "description": "A complete but direct workflow for onboarding, publishing, consuming, and operating public APIs.",
           "items": {
             "accounts": {
               "label": "Accounts and permissions",
-              "description": "Unified sign-in with separate administrator and user capabilities based on role."
+              "description": "Handles sign-in, role-based access, API keys, and user self-service in one place."
             },
             "apis": {
               "label": "API management",
-              "description": "Manage APIs, categories, call costs, availability, and statistics."
+              "description": "Manages APIs, categories, HTTP methods, pricing rules, availability, and reporting behavior."
             },
             "audit": {
               "label": "Logs and auditing",
-              "description": "Review call, login, credit, and audit logs."
+              "description": "Records API calls, sign-ins, credit changes, and administrative actions with clear actor identities."
             },
             "operations": {
-              "label": "Operations",
-              "description": "Announcements, notifications, partner links, redemption codes, and credits."
+              "label": "Platform operations",
+              "description": "Supports announcements, notifications, partner links, redemption codes, and credit programs."
             },
             "configuration": {
               "label": "System configuration",
-              "description": "Manage site, email, CAPTCHA, sessions, and security settings."
+              "description": "Centralizes site, email, CAPTCHA, session, security, and network settings."
             }
           }
         },
         "stack": {
-          "title": "Technology stack",
-          "description": "Built around Nuxt full-stack capabilities, type safety, component-based UI, and structured validation.",
+          "title": "Technical foundation",
+          "description": "A focused set of mature tools keeps the application type-safe and maintainable end to end.",
           "items": {
             "nuxt": {
               "label": "Nuxt 4 / Vue 3",
-              "description": "Composition API and file-based routing for client and server features."
+              "description": "Composition API and file-based routing organize client and server features."
             },
             "ui": {
               "label": "Nuxt UI / Tailwind CSS",
-              "description": "Consistent responsive interfaces for administrative workflows."
+              "description": "Provides consistent, responsive interfaces for administrative workflows."
             },
             "nitro": {
               "label": "Nitro / H3",
-              "description": "Server APIs, authentication middleware, and runtime features."
+              "description": "Runs server APIs, authentication middleware, and the Node.js application runtime."
             },
             "database": {
               "label": "Drizzle ORM / PostgreSQL",
-              "description": "Type-safe schemas, queries, and migrations."
+              "description": "Keeps schemas, queries, and migrations type-safe."
             },
             "tooling": {
               "label": "VueUse / Zod",
-              "description": "Reusable composables and structured input validation."
-            }
-          }
-        },
-        "production": {
-          "title": "Production conventions",
-          "description": "Conventions for maintainability and traceability in multi-user environments.",
-          "items": {
-            "configuration": {
-              "label": "Configuration first",
-              "description": "Runtime settings are maintained in system settings and environment variables."
-            },
-            "audit": {
-              "label": "Audit first",
-              "description": "Administrative and critical user actions are recorded."
-            },
-            "roles": {
-              "label": "Clear roles",
-              "description": "Administrators can access management and user capabilities; users can access only their own workspace."
-            },
-            "migrations": {
-              "label": "Controlled migrations",
-              "description": "Database migrations ship with the build and run before production traffic is accepted."
+              "description": "Supplies reusable composables and structured validation at system boundaries."
             }
           }
         }
