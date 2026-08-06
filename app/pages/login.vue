@@ -224,7 +224,7 @@ function clearTurnstileError() {
               :ui="{
                 root: 'w-full',
                 wrapper: 'min-w-0',
-                label: 'cursor-pointer text-sm leading-5 font-medium text-default'
+                label: 'cursor-pointer text-[13px] leading-5 font-normal text-muted'
               }"
             />
 

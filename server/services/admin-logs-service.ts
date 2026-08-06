@@ -15,6 +15,13 @@ import type {
 } from '#shared/types/admin'
 import type { DashboardCallRankItem } from '#shared/types/dashboard'
 
+const HOURLY_LABEL_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  timeZone: APP_TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+})
+
 // ─────────────────────────────────────────────────────────────────────
 // 类型映射 SQL 表达式
 // ─────────────────────────────────────────────────────────────────────
@@ -246,17 +253,12 @@ export const adminLogsService = {
       hourMap.set(date.toISOString(), toNumber(row.totalCalls))
     }
 
-    const hourLabelFormatter = new Intl.DateTimeFormat('zh-CN', {
-      timeZone: APP_TIME_ZONE,
-      hour: '2-digit',
-      hourCycle: 'h23'
-    })
     const nowHour = new Date()
     nowHour.setMinutes(0, 0, 0)
     const hourlyTrend24h: AdminDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
       const date = new Date(nowHour.getTime() - (23 - index) * 60 * 60 * 1000)
       const hour = date.toISOString()
-      const label = `${hourLabelFormatter.format(date)}:00`
+      const label = HOURLY_LABEL_FORMATTER.format(date)
       return { hour, label, totalCalls: hourMap.get(hour) ?? 0 }
     })
 

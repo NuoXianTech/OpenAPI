@@ -141,13 +141,8 @@ import SiteBrand from './SiteBrand.vue'
 .auth-form-options {
   display: flex;
   flex-direction: column;
+  gap: 0.625rem;
   padding-block: 0.125rem;
-}
-
-.auth-form-options > * + * {
-  margin-top: 0.75rem;
-  border-top: 1px solid var(--ui-border-muted);
-  padding-top: 0.75rem;
 }
 
 .auth-message {
