@@ -6,6 +6,12 @@ import { toNumber } from '~~/server/utils/number'
 import type { UserDashboardData, UserDashboardHourlyPoint, UserDashboardTrendPoint } from '#shared/types/user-dashboard'
 
 const TREND_DAYS = 7
+const HOURLY_LABEL_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+  timeZone: APP_TIME_ZONE,
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+})
 
 export default defineAuthenticatedEventHandler(async (event, user): Promise<UserDashboardData> => {
   setResponseHeader(event, 'Cache-Control', 'private, no-store')
@@ -135,11 +141,6 @@ export default defineAuthenticatedEventHandler(async (event, user): Promise<User
       failureCalls: toNumber(row.failureCalls)
     })
   }
-  const hourLabelFormatter = new Intl.DateTimeFormat('zh-CN', {
-    timeZone: APP_TIME_ZONE,
-    hour: '2-digit',
-    hourCycle: 'h23'
-  })
   const nowHour = new Date(now)
   nowHour.setMinutes(0, 0, 0)
   const hourlyTrend24h: UserDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
@@ -148,7 +149,7 @@ export default defineAuthenticatedEventHandler(async (event, user): Promise<User
     const counts = hourlyMap.get(hour) || { successCalls: 0, failureCalls: 0 }
     return {
       hour,
-      label: `${hourLabelFormatter.format(date)}:00`,
+      label: HOURLY_LABEL_FORMATTER.format(date),
       ...counts
     }
   })
