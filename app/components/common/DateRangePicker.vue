@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { CalendarDate, CalendarDateTime, Time, DateFormatter, getLocalTimeZone, today } from '@internationalized/date'
+import {
+  CalendarDate,
+  CalendarDateTime,
+  DateFormatter,
+  getLocalTimeZone,
+  Time,
+  today
+} from '@internationalized/date'
+import { useMediaQuery } from '@vueuse/core'
 
-/**
- * 「日期时间区间」选择器：左侧快捷预设 + 右侧双月日历 + 起止时间。
- *
- * 对外暴露 `start` / `end` 两个字符串 model（`YYYY-MM-DDTHH:mm`，与
- * datetime-local 同格式），用于替换日志筛选等「开始 / 结束时间」成对输入。
- */
 const props = withDefaults(defineProps<{
   placeholder?: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
@@ -19,9 +21,13 @@ const props = withDefaults(defineProps<{
   size: 'md',
   disabled: false,
   clearable: true,
-  icon: 'i-mdi-calendar-outline',
+  icon: 'i-mdi-calendar-range-outline',
   block: true
 })
+
+const emit = defineEmits<{
+  apply: []
+}>()
 
 const start = defineModel<string>('start', { default: '' })
 const end = defineModel<string>('end', { default: '' })
@@ -29,69 +35,139 @@ const { t, locale } = useI18n()
 const resolvedPlaceholder = computed(() => props.placeholder || t('common.dateTime.selectRange'))
 
 const open = ref(false)
-const tz = getLocalTimeZone()
+const timeZone = getLocalTimeZone()
+const showTwoMonths = useMediaQuery('(min-width: 640px)')
 
-const labelFormatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'medium', timeStyle: 'short' }))
+const dateFormatter = computed(() => new DateFormatter(locale.value, {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric'
+}))
+const dateTimeFormatter = computed(() => new DateFormatter(locale.value, {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+}))
+const timeFormatter = computed(() => new DateFormatter(locale.value, {
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23'
+}))
 
-const startDate = ref<CalendarDate>()
-const startTime = ref<Time>()
-const endDate = ref<CalendarDate>()
-const endTime = ref<Time>()
+const draftStartDate = ref<CalendarDate>()
+const draftStartTime = ref<Time>()
+const draftEndDate = ref<CalendarDate>()
+const draftEndTime = ref<Time>()
 
-watch([start, end], ([nextStart, nextEnd]) => {
-  const s = dateTimeLocalToCalendar(nextStart)
-  const e = dateTimeLocalToCalendar(nextEnd)
-  startDate.value = s ? new CalendarDate(s.year, s.month, s.day) : undefined
-  startTime.value = s ? new Time(s.hour, s.minute) : undefined
-  endDate.value = e ? new CalendarDate(e.year, e.month, e.day) : undefined
-  endTime.value = e ? new Time(e.hour, e.minute) : undefined
-}, { immediate: true })
+function syncDraft() {
+  const startValue = dateTimeLocalToCalendar(start.value)
+  const endValue = dateTimeLocalToCalendar(end.value)
 
-function toLocal(date: CalendarDate | undefined, time: Time | undefined, fallbackTime: Time) {
-  if (!date) return ''
-  const t = time ?? fallbackTime
-  return calendarToDateTimeLocal(new CalendarDateTime(date.year, date.month, date.day, t.hour, t.minute))
+  draftStartDate.value = startValue
+    ? new CalendarDate(startValue.year, startValue.month, startValue.day)
+    : undefined
+  draftStartTime.value = startValue
+    ? new Time(startValue.hour, startValue.minute)
+    : undefined
+  draftEndDate.value = endValue
+    ? new CalendarDate(endValue.year, endValue.month, endValue.day)
+    : undefined
+  draftEndTime.value = endValue
+    ? new Time(endValue.hour, endValue.minute)
+    : undefined
 }
 
-// 区间默认起点取当天 00:00、终点取当天 23:59，符合「整天范围」直觉
-function commit() {
-  start.value = toLocal(startDate.value, startTime.value, new Time(0, 0))
-  end.value = toLocal(endDate.value, endTime.value, new Time(23, 59))
+watch([start, end], () => {
+  if (!open.value) syncDraft()
+}, { immediate: true })
+
+watch(open, (isOpen) => {
+  if (isOpen) syncDraft()
+})
+
+function toDateTime(
+  date: CalendarDate | undefined,
+  time: Time | undefined,
+  fallbackTime: Time
+): CalendarDateTime | undefined {
+  if (!date) return undefined
+  const resolvedTime = time ?? fallbackTime
+  return new CalendarDateTime(
+    date.year,
+    date.month,
+    date.day,
+    resolvedTime.hour,
+    resolvedTime.minute
+  )
 }
 
 const rangeProxy = computed({
-  get: () => ({ start: startDate.value, end: endDate.value }),
+  get: () => ({ start: draftStartDate.value, end: draftEndDate.value }),
   set: (range: { start: CalendarDate | null, end: CalendarDate | null }) => {
-    startDate.value = range.start ?? undefined
-    endDate.value = range.end ?? undefined
-    if (range.start && !startTime.value) startTime.value = new Time(0, 0)
-    if (range.end && !endTime.value) endTime.value = new Time(23, 59)
-    commit()
+    draftStartDate.value = range.start ?? undefined
+    draftEndDate.value = range.end ?? undefined
+
+    if (range.start && !draftStartTime.value) draftStartTime.value = new Time(0, 0)
+    if (range.end && !draftEndTime.value) draftEndTime.value = new Time(23, 59)
+    if (!range.start) draftStartTime.value = undefined
+    if (!range.end) draftEndTime.value = undefined
   }
 })
 
 const startTimeProxy = computed({
-  get: () => startTime.value ?? new Time(0, 0),
-  set: (next: Time) => {
-    startTime.value = next
-    commit()
+  get: () => draftStartTime.value ?? new Time(0, 0),
+  set: (value: Time) => {
+    draftStartTime.value = value
   }
 })
 
 const endTimeProxy = computed({
-  get: () => endTime.value ?? new Time(23, 59),
-  set: (next: Time) => {
-    endTime.value = next
-    commit()
+  get: () => draftEndTime.value ?? new Time(23, 59),
+  set: (value: Time) => {
+    draftEndTime.value = value
   }
 })
 
+const hasDraftValue = computed(() => Boolean(draftStartDate.value || draftEndDate.value))
+const canApply = computed(() => {
+  if (!draftStartDate.value || !draftEndDate.value) return true
+
+  const startValue = toDateTime(draftStartDate.value, draftStartTime.value, new Time(0, 0))
+  const endValue = toDateTime(draftEndDate.value, draftEndTime.value, new Time(23, 59))
+  return Boolean(startValue && endValue && startValue.compare(endValue) <= 0)
+})
+
 const displayLabel = computed(() => {
-  const s = dateTimeLocalToCalendar(start.value)
-  const e = dateTimeLocalToCalendar(end.value)
-  if (!s) return ''
-  const startText = labelFormatter.value.format(s.toDate(tz))
-  return e ? `${startText} ~ ${labelFormatter.value.format(e.toDate(tz))}` : startText
+  const startValue = dateTimeLocalToCalendar(start.value)
+  const endValue = dateTimeLocalToCalendar(end.value)
+  if (!startValue) {
+    return endValue
+      ? `≤ ${dateTimeFormatter.value.format(endValue.toDate(timeZone))}`
+      : ''
+  }
+  if (!endValue) return `≥ ${dateTimeFormatter.value.format(startValue.toDate(timeZone))}`
+
+  const startDate = startValue.toDate(timeZone)
+  const endDate = endValue.toDate(timeZone)
+  const sameDay = startValue.year === endValue.year
+    && startValue.month === endValue.month
+    && startValue.day === endValue.day
+  const coversWholeDays = startValue.hour === 0
+    && startValue.minute === 0
+    && endValue.hour === 23
+    && endValue.minute === 59
+
+  if (coversWholeDays) {
+    const startText = dateFormatter.value.format(startDate)
+    return sameDay
+      ? startText
+      : `${startText} – ${dateFormatter.value.format(endDate)}`
+  }
+
+  if (sameDay) {
+    return `${dateFormatter.value.format(startDate)} · ${timeFormatter.value.format(startDate)}–${timeFormatter.value.format(endDate)}`
+  }
+
+  return `${dateTimeFormatter.value.format(startDate)} – ${dateTimeFormatter.value.format(endDate)}`
 })
 
 interface RangePreset {
@@ -111,122 +187,159 @@ const presets = computed<RangePreset[]>(() => [
 ])
 
 function presetStart(preset: RangePreset) {
-  const base = today(tz)
-  if (preset.days) return base.subtract({ days: preset.days })
-  if (preset.months) return base.subtract({ months: preset.months })
-  if (preset.years) return base.subtract({ years: preset.years })
-  return base
+  const currentDate = today(timeZone)
+  if (preset.days) return currentDate.subtract({ days: preset.days - 1 })
+  if (preset.months) return currentDate.subtract({ months: preset.months })
+  if (preset.years) return currentDate.subtract({ years: preset.years })
+  return currentDate
 }
 
 function isPresetActive(preset: RangePreset) {
-  if (!startDate.value || !endDate.value) return false
-  return startDate.value.compare(presetStart(preset)) === 0
-    && endDate.value.compare(today(tz)) === 0
+  if (!draftStartDate.value || !draftEndDate.value) return false
+  return draftStartDate.value.compare(presetStart(preset)) === 0
+    && draftEndDate.value.compare(today(timeZone)) === 0
+    && draftStartTime.value?.hour === 0
+    && draftStartTime.value?.minute === 0
+    && draftEndTime.value?.hour === 23
+    && draftEndTime.value?.minute === 59
 }
 
-function applyPreset(preset: RangePreset) {
-  startDate.value = presetStart(preset)
-  endDate.value = today(tz)
-  startTime.value = new Time(0, 0)
-  endTime.value = new Time(23, 59)
-  commit()
+function selectPreset(preset: RangePreset) {
+  draftStartDate.value = presetStart(preset)
+  draftEndDate.value = today(timeZone)
+  draftStartTime.value = new Time(0, 0)
+  draftEndTime.value = new Time(23, 59)
 }
 
-function clear() {
-  startDate.value = undefined
-  startTime.value = undefined
-  endDate.value = undefined
-  endTime.value = undefined
-  start.value = ''
-  end.value = ''
+function clearDraft() {
+  draftStartDate.value = undefined
+  draftStartTime.value = undefined
+  draftEndDate.value = undefined
+  draftEndTime.value = undefined
+}
+
+function cancel() {
+  syncDraft()
+  open.value = false
+}
+
+function applyDraft() {
+  if (!canApply.value) return
+
+  const startValue = toDateTime(draftStartDate.value, draftStartTime.value, new Time(0, 0))
+  const endValue = toDateTime(draftEndDate.value, draftEndTime.value, new Time(23, 59))
+  start.value = startValue ? calendarToDateTimeLocal(startValue) : ''
+  end.value = endValue ? calendarToDateTimeLocal(endValue) : ''
+  open.value = false
+  emit('apply')
 }
 </script>
 
 <template>
-  <UPopover
-    v-model:open="open"
-    :content="{ align: 'start' }"
-    :ui="{ content: 'w-auto' }"
-  >
-    <UButton
-      color="neutral"
-      variant="outline"
-      :size="props.size"
-      :disabled="props.disabled"
-      :icon="props.icon"
-      :block="props.block"
-      class="data-[state=open]:bg-elevated group justify-start font-normal"
-      :class="{ 'text-dimmed': !displayLabel }"
+  <div :class="props.block ? 'w-full' : 'inline-flex'">
+    <UPopover
+      v-model:open="open"
+      :content="{ align: 'start', side: 'bottom', sideOffset: 8, collisionPadding: 16 }"
+      :ui="{ content: 'overflow-hidden p-0' }"
     >
-      <span class="truncate">{{ displayLabel || resolvedPlaceholder }}</span>
+      <UButton
+        color="neutral"
+        :variant="displayLabel ? 'soft' : 'outline'"
+        :size="props.size"
+        :disabled="props.disabled"
+        :icon="props.icon"
+        :block="props.block"
+        :aria-label="displayLabel || resolvedPlaceholder"
+        class="group justify-start font-normal"
+        :class="displayLabel ? 'text-default' : 'text-dimmed'"
+      >
+        <span class="min-w-0 flex-1 truncate text-left">
+          {{ displayLabel || resolvedPlaceholder }}
+        </span>
 
-      <template #trailing>
-        <span class="ms-auto flex items-center gap-1">
-          <UIcon
-            v-if="props.clearable && displayLabel && !props.disabled"
-            name="i-mdi-close"
-            class="size-4 text-dimmed hover:text-default transition-colors"
-            role="button"
-            tabindex="-1"
-            :aria-label="$t('common.actions.clear')"
-            @click.stop="clear"
-          />
+        <template #trailing>
           <UIcon
             name="i-mdi-chevron-down"
             class="size-4 shrink-0 text-dimmed transition-transform duration-200 group-data-[state=open]:rotate-180"
           />
-        </span>
-      </template>
-    </UButton>
+        </template>
+      </UButton>
 
-    <template #content>
-      <div class="flex items-stretch divide-default sm:divide-x">
-        <div class="hidden flex-col py-2 sm:flex">
-          <UButton
-            v-for="preset in presets"
-            :key="preset.label"
-            :label="preset.label"
-            color="neutral"
-            variant="ghost"
-            class="rounded-none px-4 font-normal"
-            :class="isPresetActive(preset) ? 'bg-elevated' : 'hover:bg-elevated/50'"
-            truncate
-            @click="applyPreset(preset)"
-          />
-        </div>
-
-        <div class="flex flex-col">
-          <UCalendar
-            v-model="rangeProxy"
-            class="p-2"
-            :number-of-months="2"
-            range
-          />
-
-          <div class="flex items-center gap-2 border-t border-default p-2">
-            <UIcon
-              name="i-mdi-clock-outline"
-              class="size-4 shrink-0 text-dimmed"
-            />
-            <UInputTime
-              v-model="startTimeProxy"
-              :hour-cycle="24"
-              size="sm"
-              class="flex-1"
-            />
-            <UIcon
-              name="i-mdi-arrow-right"
-              class="size-4 shrink-0 text-dimmed"
-            />
-            <UInputTime
-              v-model="endTimeProxy"
-              :hour-cycle="24"
-              size="sm"
-              class="flex-1"
+      <template #content>
+        <div class="w-[min(calc(100vw-2rem),40rem)]">
+          <div class="flex flex-wrap gap-1 border-b border-default bg-elevated/40 p-2">
+            <UButton
+              v-for="preset in presets"
+              :key="preset.label"
+              :label="preset.label"
+              :color="isPresetActive(preset) ? 'primary' : 'neutral'"
+              :variant="isPresetActive(preset) ? 'soft' : 'ghost'"
+              size="xs"
+              class="font-normal"
+              @click="selectPreset(preset)"
             />
           </div>
+
+          <UCalendar
+            v-model="rangeProxy"
+            :number-of-months="showTwoMonths ? 2 : 1"
+            :disabled="props.disabled"
+            range
+            size="sm"
+            class="mx-auto p-3"
+          />
+
+          <div class="grid grid-cols-2 gap-3 border-t border-default px-3 py-2.5">
+            <UFormField :label="$t('common.dateTime.startTime')">
+              <UInputTime
+                v-model="startTimeProxy"
+                :hour-cycle="24"
+                :disabled="props.disabled || !draftStartDate"
+                size="sm"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField :label="$t('common.dateTime.endTime')">
+              <UInputTime
+                v-model="endTimeProxy"
+                :hour-cycle="24"
+                :disabled="props.disabled || !draftEndDate"
+                size="sm"
+                class="w-full"
+              />
+            </UFormField>
+          </div>
+
+          <div class="flex items-center justify-between gap-2 border-t border-default p-2">
+            <UButton
+              v-if="props.clearable"
+              :label="$t('common.actions.clear')"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :disabled="!hasDraftValue"
+              @click="clearDraft"
+            />
+            <span v-else />
+
+            <div class="flex items-center gap-2">
+              <UButton
+                :label="$t('common.actions.cancel')"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="cancel"
+              />
+              <UButton
+                :label="$t('common.actions.done')"
+                size="sm"
+                :disabled="!canApply"
+                @click="applyDraft"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </template>
-  </UPopover>
+      </template>
+    </UPopover>
+  </div>
 </template>

@@ -1,165 +1,214 @@
 <script setup lang="ts">
-import { CalendarDate, CalendarDateTime, Time, DateFormatter, getLocalTimeZone, now, toCalendarDate } from '@internationalized/date'
+import {
+  CalendarDate,
+  CalendarDateTime,
+  DateFormatter,
+  getLocalTimeZone,
+  now,
+  Time,
+  toCalendarDate
+} from '@internationalized/date'
 
-/**
- * 统一的「日期 + 时间」选择器，取代浏览器原生 `type="datetime-local"`。
- *
- * 对外保持纯字符串契约（`YYYY-MM-DDTHH:mm`，与 datetime-local 同格式），
- * 因此可直接 drop-in 替换原 `<UInput type="datetime-local">`，消费方
- * `new Date(value)` 的本地时间解析逻辑零改动。
- */
 const props = withDefaults(defineProps<{
   placeholder?: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   disabled?: boolean
   clearable?: boolean
   icon?: string
-  /** 触发按钮是否撑满容器宽度 */
   block?: boolean
 }>(), {
   placeholder: '',
   size: 'md',
   disabled: false,
   clearable: true,
-  icon: 'i-mdi-calendar-outline',
+  icon: 'i-mdi-calendar-clock-outline',
   block: true
 })
+
+const emit = defineEmits<{
+  apply: []
+}>()
 
 const value = defineModel<string>({ default: '' })
 const { t, locale } = useI18n()
 const resolvedPlaceholder = computed(() => props.placeholder || t('common.dateTime.selectDateTime'))
 
 const open = ref(false)
-const tz = getLocalTimeZone()
+const timeZone = getLocalTimeZone()
+const labelFormatter = computed(() => new DateFormatter(locale.value, {
+  dateStyle: 'medium',
+  timeStyle: 'short'
+}))
 
-const labelFormatter = computed(() => new DateFormatter(locale.value, { dateStyle: 'medium', timeStyle: 'short' }))
+const draftDate = ref<CalendarDate>()
+const draftTime = ref<Time>()
 
-// 字符串 → 日历态（拆成日期、时间两段分别驱动 UCalendar / UInputTime）
-const calendarDate = ref<CalendarDate>()
-const time = ref<Time>()
-
-watch(value, (next) => {
-  const dt = dateTimeLocalToCalendar(next)
-  calendarDate.value = dt ? new CalendarDate(dt.year, dt.month, dt.day) : undefined
-  time.value = dt ? new Time(dt.hour, dt.minute) : undefined
-}, { immediate: true })
-
-function commit() {
-  if (!calendarDate.value) {
-    value.value = ''
-    return
-  }
-  const t = time.value ?? new Time(0, 0)
-  value.value = calendarToDateTimeLocal(new CalendarDateTime(
-    calendarDate.value.year,
-    calendarDate.value.month,
-    calendarDate.value.day,
-    t.hour,
-    t.minute
-  ))
+function syncDraft() {
+  const dateTime = dateTimeLocalToCalendar(value.value)
+  draftDate.value = dateTime
+    ? new CalendarDate(dateTime.year, dateTime.month, dateTime.day)
+    : undefined
+  draftTime.value = dateTime
+    ? new Time(dateTime.hour, dateTime.minute)
+    : undefined
 }
 
+watch(value, () => {
+  if (!open.value) syncDraft()
+}, { immediate: true })
+
+watch(open, (isOpen) => {
+  if (isOpen) syncDraft()
+})
+
 const calendarProxy = computed({
-  get: () => calendarDate.value,
-  set: (next: CalendarDate | undefined) => {
-    calendarDate.value = next ?? undefined
-    if (next && !time.value) time.value = new Time(0, 0)
-    commit()
+  get: () => draftDate.value,
+  set: (date: CalendarDate | undefined) => {
+    draftDate.value = date ?? undefined
+    if (date && !draftTime.value) draftTime.value = new Time(0, 0)
+    if (!date) draftTime.value = undefined
   }
 })
 
 const timeProxy = computed({
-  get: () => time.value ?? new Time(0, 0),
-  set: (next: Time) => {
-    time.value = next
-    if (!calendarDate.value) calendarDate.value = toCalendarDate(now(tz))
-    commit()
+  get: () => draftTime.value ?? new Time(0, 0),
+  set: (time: Time) => {
+    draftTime.value = time
   }
 })
 
 const displayLabel = computed(() => {
-  const dt = dateTimeLocalToCalendar(value.value)
-  return dt ? labelFormatter.value.format(dt.toDate(tz)) : ''
+  const dateTime = dateTimeLocalToCalendar(value.value)
+  return dateTime ? labelFormatter.value.format(dateTime.toDate(timeZone)) : ''
 })
 
-function setNow() {
-  const current = now(tz)
-  calendarDate.value = toCalendarDate(current)
-  time.value = new Time(current.hour, current.minute)
-  commit()
+const hasDraftValue = computed(() => Boolean(draftDate.value || draftTime.value))
+
+function selectNow() {
+  const currentDateTime = now(timeZone)
+  draftDate.value = toCalendarDate(currentDateTime)
+  draftTime.value = new Time(currentDateTime.hour, currentDateTime.minute)
 }
 
-function clear() {
-  calendarDate.value = undefined
-  time.value = undefined
-  value.value = ''
+function clearDraft() {
+  draftDate.value = undefined
+  draftTime.value = undefined
+}
+
+function cancel() {
+  syncDraft()
+  open.value = false
+}
+
+function applyDraft() {
+  if (!draftDate.value) {
+    value.value = ''
+  } else {
+    const time = draftTime.value ?? new Time(0, 0)
+    value.value = calendarToDateTimeLocal(new CalendarDateTime(
+      draftDate.value.year,
+      draftDate.value.month,
+      draftDate.value.day,
+      time.hour,
+      time.minute
+    ))
+  }
+
+  open.value = false
+  emit('apply')
 }
 </script>
 
 <template>
-  <UPopover
-    v-model:open="open"
-    :content="{ align: 'start' }"
-    :ui="{ content: 'w-auto' }"
-  >
-    <UButton
-      color="neutral"
-      variant="outline"
-      :size="props.size"
-      :disabled="props.disabled"
-      :icon="props.icon"
-      :block="props.block"
-      class="data-[state=open]:bg-elevated group justify-start font-normal"
-      :class="{ 'text-dimmed': !displayLabel }"
+  <div :class="props.block ? 'w-full' : 'inline-flex'">
+    <UPopover
+      v-model:open="open"
+      :content="{ align: 'start', side: 'bottom', sideOffset: 8, collisionPadding: 16 }"
+      :ui="{ content: 'overflow-hidden p-0' }"
     >
-      <span class="truncate">{{ displayLabel || resolvedPlaceholder }}</span>
+      <UButton
+        color="neutral"
+        variant="outline"
+        :size="props.size"
+        :disabled="props.disabled"
+        :icon="props.icon"
+        :block="props.block"
+        :aria-label="displayLabel || resolvedPlaceholder"
+        class="group justify-start font-normal"
+        :class="displayLabel ? 'text-default' : 'text-dimmed'"
+      >
+        <span class="min-w-0 flex-1 truncate text-left">
+          {{ displayLabel || resolvedPlaceholder }}
+        </span>
 
-      <template #trailing>
-        <span class="ms-auto flex items-center gap-1">
-          <UIcon
-            v-if="props.clearable && displayLabel && !props.disabled"
-            name="i-mdi-close"
-            class="size-4 text-dimmed hover:text-default transition-colors"
-            role="button"
-            tabindex="-1"
-            :aria-label="$t('common.actions.clear')"
-            @click.stop="clear"
-          />
+        <template #trailing>
           <UIcon
             name="i-mdi-chevron-down"
             class="size-4 shrink-0 text-dimmed transition-transform duration-200 group-data-[state=open]:rotate-180"
           />
-        </span>
-      </template>
-    </UButton>
+        </template>
+      </UButton>
 
-    <template #content>
-      <div class="flex flex-col">
-        <UCalendar
-          v-model="calendarProxy"
-          class="p-2"
-        />
+      <template #content>
+        <div class="w-[min(calc(100vw-2rem),20rem)]">
+          <UCalendar
+            v-model="calendarProxy"
+            :disabled="props.disabled"
+            size="sm"
+            class="mx-auto p-3"
+          />
 
-        <div class="flex items-center gap-2 border-t border-default p-2">
-          <UIcon
-            name="i-mdi-clock-outline"
-            class="size-4 shrink-0 text-dimmed"
-          />
-          <UInputTime
-            v-model="timeProxy"
-            :hour-cycle="24"
-            size="sm"
-            class="flex-1"
-          />
-          <UButton
-            :label="$t('common.dateTime.now')"
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            @click="setNow"
-          />
+          <div class="flex items-end gap-2 border-t border-default px-3 py-2.5">
+            <UFormField
+              :label="$t('common.dateTime.time')"
+              class="min-w-0 flex-1"
+            >
+              <UInputTime
+                v-model="timeProxy"
+                :hour-cycle="24"
+                :disabled="props.disabled || !draftDate"
+                size="sm"
+                class="w-full"
+              />
+            </UFormField>
+            <UButton
+              :label="$t('common.dateTime.now')"
+              color="neutral"
+              variant="soft"
+              size="sm"
+              @click="selectNow"
+            />
+          </div>
+
+          <div class="flex items-center justify-between gap-2 border-t border-default p-2">
+            <UButton
+              v-if="props.clearable"
+              :label="$t('common.actions.clear')"
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              :disabled="!hasDraftValue"
+              @click="clearDraft"
+            />
+            <span v-else />
+
+            <div class="flex items-center gap-2">
+              <UButton
+                :label="$t('common.actions.cancel')"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                @click="cancel"
+              />
+              <UButton
+                :label="$t('common.actions.done')"
+                size="sm"
+                @click="applyDraft"
+              />
+            </div>
+          </div>
         </div>
-      </div>
-    </template>
-  </UPopover>
+      </template>
+    </UPopover>
+  </div>
 </template>

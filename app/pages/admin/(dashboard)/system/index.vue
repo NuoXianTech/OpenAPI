@@ -124,8 +124,8 @@ const fixedTimeInvalid = computed(() => {
       >
         <CommonDateTimePicker
           v-model="form.startTime"
-          :block="false"
           :placeholder="t('admin.system.site.basic.startTime.placeholder')"
+          class="w-full sm:w-72"
         />
       </UFormField>
       <USeparator />

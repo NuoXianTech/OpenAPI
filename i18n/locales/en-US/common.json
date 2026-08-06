@@ -50,6 +50,9 @@
     "dateTime": {
       "selectDateTime": "Select date and time",
       "selectRange": "Select time range",
+      "time": "Time",
+      "startTime": "Start time",
+      "endTime": "End time",
       "now": "Now",
       "presets": {
         "last7Days": "Last 7 days",

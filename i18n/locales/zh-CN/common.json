@@ -52,6 +52,9 @@
     "dateTime": {
       "selectDateTime": "选择日期时间",
       "selectRange": "选择时间范围",
+      "time": "时间",
+      "startTime": "开始时间",
+      "endTime": "结束时间",
       "now": "此刻",
       "presets": {
         "last7Days": "最近 7 天",

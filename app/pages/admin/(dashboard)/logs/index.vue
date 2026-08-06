@@ -21,11 +21,10 @@ const {
   loading,
   refresh,
   applyFilters,
-  resetFilters,
   typeSelectItems,
   apiSelectItems,
   categorySelectItems,
-  activeFilterCount,
+  advancedFilterCount,
   columns,
   loadFilterOptions
 } = useAdminCallLogsPage({
@@ -47,6 +46,16 @@ function openDetail(row: AdminLogRow) {
     props: { row }
   })
   void detailModal.open()
+}
+
+async function resetAdvancedFilters() {
+  filters.apiId = 0
+  filters.categoryId = 0
+  filters.types = []
+  filters.apiKeyId = ''
+  filters.userId = ''
+  filters.requestId = ''
+  await applyFilters()
 }
 </script>
 
@@ -75,24 +84,21 @@ function openDetail(row: AdminLogRow) {
         class="w-full sm:w-80"
         @keyup.enter="applyFilters"
       />
-      <AdminFilterPopover
-        :active-count="activeFilterCount"
-        :title="$t('admin.logs.call.filterTitle')"
-        panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
+      <CommonDateRangePicker
+        v-model:start="filters.startAt"
+        v-model:end="filters.endAt"
+        :placeholder="$t('admin.logs.call.filters.allTime')"
+        class="w-full sm:w-80"
         @apply="applyFilters"
-        @reset="resetFilters"
+      />
+      <AdminFilterPopover
+        :active-count="advancedFilterCount"
+        :title="$t('admin.logs.call.filterTitle')"
+        panel-class="w-[min(calc(100vw-2rem),38rem)] p-3"
+        @apply="applyFilters"
+        @reset="resetAdvancedFilters"
       >
         <div class="grid gap-3 md:grid-cols-2">
-          <UFormField
-            :label="$t('admin.logs.call.filters.timeRange')"
-            class="md:col-span-2"
-          >
-            <CommonDateRangePicker
-              v-model:start="filters.startAt"
-              v-model:end="filters.endAt"
-              :placeholder="$t('admin.logs.call.filters.allTime')"
-            />
-          </UFormField>
           <UFormField :label="$t('admin.logs.call.filters.apiName')">
             <USelectMenu
               v-model="filters.apiId"

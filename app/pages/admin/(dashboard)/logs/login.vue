@@ -15,14 +15,20 @@ const {
   loading,
   refresh,
   applyFilters,
-  reset,
-  activeFilterCount,
+  advancedFilterCount,
   methodItems,
   successItems,
   methodColor,
   methodIcon,
   columns
 } = useAdminLoginLogList()
+
+async function resetAdvancedFilters() {
+  filters.method = 'all'
+  filters.success = 'all'
+  filters.userId = ''
+  await applyFilters()
+}
 </script>
 
 <template>
@@ -50,24 +56,21 @@ const {
         class="w-full sm:w-80"
         @keyup.enter="applyFilters"
       />
-      <AdminFilterPopover
-        :active-count="activeFilterCount"
-        :title="$t('admin.logs.login.filterTitle')"
-        panel-class="w-[min(calc(100vw-2rem),38rem)] p-3"
+      <CommonDateRangePicker
+        v-model:start="filters.startAt"
+        v-model:end="filters.endAt"
+        :placeholder="$t('admin.logs.login.filters.allTime')"
+        class="w-full sm:w-80"
         @apply="applyFilters"
-        @reset="reset"
+      />
+      <AdminFilterPopover
+        :active-count="advancedFilterCount"
+        :title="$t('admin.logs.login.filterTitle')"
+        panel-class="w-[min(calc(100vw-2rem),34rem)] p-3"
+        @apply="applyFilters"
+        @reset="resetAdvancedFilters"
       >
         <div class="grid gap-3 md:grid-cols-2">
-          <UFormField
-            :label="$t('admin.logs.login.filters.timeRange')"
-            class="md:col-span-2"
-          >
-            <CommonDateRangePicker
-              v-model:start="filters.startAt"
-              v-model:end="filters.endAt"
-              :placeholder="$t('admin.logs.login.filters.allTime')"
-            />
-          </UFormField>
           <UFormField :label="$t('admin.logs.login.filters.method')">
             <USelect
               v-model="filters.method"

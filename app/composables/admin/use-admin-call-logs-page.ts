@@ -86,16 +86,6 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
-    filterCountKeys: [
-      'startAt',
-      'endAt',
-      'apiId',
-      'categoryId',
-      'types',
-      'apiKeyId',
-      'userId',
-      'requestId'
-    ],
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
@@ -147,6 +137,14 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     ...filterOptions.value.categories.map(category => ({ label: category.name, value: category.id }))
   ])
   const lastAppliedKeyword = ref(listState.filters.keyword.trim())
+  const advancedFilterCount = computed(() => [
+    listState.filters.apiId !== 0,
+    listState.filters.categoryId !== 0,
+    listState.filters.types.length > 0,
+    listState.filters.apiKeyId !== '',
+    listState.filters.userId !== '',
+    listState.filters.requestId.trim() !== ''
+  ].filter(Boolean).length)
   const columns = computed<TableColumn<AdminLogRow>[]>(() => [
     { accessorKey: 'createdAt', header: t('admin.logs.call.columns.time') },
     { accessorKey: 'userName', header: t('admin.logs.call.columns.user') },
@@ -203,7 +201,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     typeSelectItems,
     apiSelectItems,
     categorySelectItems,
-    activeFilterCount: listState.activeFilterCount,
+    advancedFilterCount,
     columns,
     loadFilterOptions
   }
@@ -228,7 +226,7 @@ interface UseAdminLoginLogListOptions {
 }
 
 interface UseAdminLoginLogListReturn {
-  activeFilterCount: ComputedRef<number>
+  advancedFilterCount: ComputedRef<number>
   applyFilters: () => Promise<void>
   columns: ComputedRef<TableColumn<AdminLoginLogRow>[]>
   filters: AdminLoginLogFilters
@@ -300,9 +298,7 @@ export function useAdminLoginLogList(
     buildQuery: buildAdminLoginLogQuery
   })
 
-  const activeFilterCount = computed(() => [
-    !!filters.startAt,
-    !!filters.endAt,
+  const advancedFilterCount = computed(() => [
     filters.method !== 'all',
     filters.success !== 'all',
     filters.userId !== ''
@@ -349,7 +345,7 @@ export function useAdminLoginLogList(
   )
 
   return {
-    activeFilterCount,
+    advancedFilterCount,
     applyFilters,
     columns,
     filters,
@@ -400,7 +396,7 @@ interface UseAdminOperationLogListOptions {
 
 interface UseAdminOperationLogListReturn {
   actorKindItems: ComputedRef<Array<{ label: string, value: AdminOperationLogFilters['actorKind'] }>>
-  activeFilterCount: ComputedRef<number>
+  advancedFilterCount: ComputedRef<number>
   applyFilters: () => Promise<void>
   columns: ComputedRef<TableColumn<AdminOperationLogRow>[]>
   detailJson: ComputedRef<string>
@@ -500,14 +496,12 @@ export function useAdminOperationLogList(
     buildQuery: buildAdminOperationLogQuery
   })
 
-  const activeFilterCount = computed(() => [
-    !!filters.startAt,
-    !!filters.endAt,
+  const advancedFilterCount = computed(() => [
     filters.userId !== '',
     filters.actorKind !== 'all',
-    !!filters.actor,
-    !!filters.action,
-    !!filters.resourceType,
+    filters.actor.trim() !== '',
+    filters.action.trim() !== '',
+    filters.resourceType.trim() !== '',
     filters.status !== 'all'
   ].filter(Boolean).length)
   const lastAppliedKeyword = ref(filters.keyword.trim())
@@ -586,7 +580,7 @@ export function useAdminOperationLogList(
 
   return {
     actorKindItems,
-    activeFilterCount,
+    advancedFilterCount,
     applyFilters,
     columns,
     detailJson,

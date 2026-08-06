@@ -8,7 +8,7 @@ const { t, locale } = useI18n()
 useHead({ title: () => t('admin.logs.operations.title') })
 const {
   actorKindItems,
-  activeFilterCount,
+  advancedFilterCount,
   applyFilters,
   columns,
   detailJson,
@@ -21,12 +21,21 @@ const {
   openDetail,
   page,
   pageSize,
-  reset,
   resolveActorLabel,
   resolveActionLabel,
   statusItems,
   total,
 } = useAdminOperationLogList()
+
+async function resetAdvancedFilters() {
+  filters.userId = ''
+  filters.actorKind = 'all'
+  filters.actor = ''
+  filters.action = ''
+  filters.resourceType = ''
+  filters.status = 'all'
+  await applyFilters()
+}
 </script>
 
 <template>
@@ -54,24 +63,21 @@ const {
         class="w-full sm:w-80"
         @keyup.enter="applyFilters"
       />
+      <CommonDateRangePicker
+        v-model:start="filters.startAt"
+        v-model:end="filters.endAt"
+        :placeholder="$t('admin.logs.operations.filters.allTime')"
+        class="w-full sm:w-80"
+        @apply="applyFilters"
+      />
       <AdminFilterPopover
-        :active-count="activeFilterCount"
+        :active-count="advancedFilterCount"
         :title="$t('admin.logs.operations.filterTitle')"
         panel-class="w-[min(calc(100vw-2rem),42rem)] p-3"
         @apply="applyFilters"
-        @reset="reset"
+        @reset="resetAdvancedFilters"
       >
         <div class="grid gap-3 md:grid-cols-2">
-          <UFormField
-            :label="$t('admin.logs.operations.filters.timeRange')"
-            class="md:col-span-2"
-          >
-            <CommonDateRangePicker
-              v-model:start="filters.startAt"
-              v-model:end="filters.endAt"
-              :placeholder="$t('admin.logs.operations.filters.allTime')"
-            />
-          </UFormField>
           <UFormField :label="$t('admin.logs.operations.filters.source')">
             <USelect
               v-model="filters.actorKind"

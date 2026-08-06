@@ -53,8 +53,7 @@ const {
   total,
   loading,
   refresh,
-  applyFilters: apply,
-  reset
+  applyFilters: apply
 } = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
   path: '/api/admin/users/credits/transactions',
   defaultFilters: {
@@ -81,13 +80,11 @@ const {
   })
 })
 
-const activeFilterCount = computed(() => [
+const advancedFilterCount = computed(() => [
   filters.userId !== '',
   filters.reason !== 'all',
   filters.direction !== 'all',
   filters.operatorName.trim() !== '',
-  filters.startAt !== '',
-  filters.endAt !== '',
   filters.minAmount !== '',
   filters.maxAmount !== ''
 ].filter(Boolean).length)
@@ -124,6 +121,16 @@ function amountClass(amt: number) {
   const color = amt > 0 ? 'text-success' : amt < 0 ? 'text-error' : 'text-muted'
   return `tabular-nums font-semibold ${color}`
 }
+
+async function resetAdvancedFilters() {
+  filters.userId = ''
+  filters.reason = 'all'
+  filters.direction = 'all'
+  filters.operatorName = ''
+  filters.minAmount = ''
+  filters.maxAmount = ''
+  await apply()
+}
 </script>
 
 <template>
@@ -142,12 +149,18 @@ function amountClass(amt: number) {
     </section>
 
     <div class="flex flex-wrap items-center gap-2">
-      <AdminFilterPopover
-        :active-count="activeFilterCount"
-        :title="$t('admin.credits.transactions.filterTitle')"
-        panel-class="w-[calc(100vw-2rem)] max-w-2xl p-3"
+      <CommonDateRangePicker
+        v-model:start="filters.startAt"
+        v-model:end="filters.endAt"
+        class="w-full sm:w-80"
         @apply="apply"
-        @reset="reset"
+      />
+      <AdminFilterPopover
+        :active-count="advancedFilterCount"
+        :title="$t('admin.credits.transactions.filterTitle')"
+        panel-class="w-[calc(100vw-2rem)] max-w-xl p-3"
+        @apply="apply"
+        @reset="resetAdvancedFilters"
       >
         <div class="grid gap-3 sm:grid-cols-2">
           <UFormField :label="$t('admin.credits.transactions.filters.userId')">
@@ -177,20 +190,6 @@ function amountClass(amt: number) {
             <UInput
               v-model="filters.operatorName"
               :placeholder="$t('admin.credits.transactions.filters.operatorPlaceholder')"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.credits.transactions.filters.startAt')">
-            <UInput
-              v-model="filters.startAt"
-              type="datetime-local"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.credits.transactions.filters.endAt')">
-            <UInput
-              v-model="filters.endAt"
-              type="datetime-local"
               class="w-full"
             />
           </UFormField>
