@@ -41,7 +41,6 @@ const filteredItems = computed(() => {
       || item.title.toLowerCase().includes(keyword)
       || (item.description || '').toLowerCase().includes(keyword)
       || item.url.toLowerCase().includes(keyword)
-
     const statusMatched = currentStatus.value === 'all'
       || Number(item.isActive) === Number(currentStatus.value)
 
@@ -59,34 +58,30 @@ const visibleCount = computed(() => filteredItems.value.length)
 <template>
   <div class="public-page">
     <CommonSiteHeader />
-    <main class="mx-auto w-full max-w-275 flex-1 px-5 pt-5 pb-6 sm:pt-6">
+    <main class="friend-links-main">
       <CommonFriendLinksHero
         :total-count="totalCount"
         :active-count="activeCount"
       />
 
-      <UCard
-        class="friend-filter-card"
-        :ui="{ root: 'mb-4 overflow-hidden', body: 'p-0 sm:p-0' }"
-        variant="subtle"
-      >
-        <div class="border-b border-default px-4 py-3 sm:px-5">
-          <CommonSearchBar
-            v-model="query"
-            :placeholder="t('public.friendLinks.searchPlaceholder')"
-            class="!mt-0 !mb-0"
-          />
-        </div>
+      <section class="friend-links-browser">
+        <div class="friend-links-toolbar">
+          <div class="friend-links-search">
+            <CommonSearchBar
+              v-model="query"
+              :placeholder="t('public.friendLinks.searchPlaceholder')"
+              size="lg"
+            />
+          </div>
 
-        <div class="grid grid-cols-1 gap-0 lg:grid-cols-[minmax(220px,0.48fr)_1fr]">
-          <div class="px-4 py-3.5 sm:px-5 lg:border-r lg:border-default lg:py-4">
-            <div class="mb-2 flex items-center gap-2 text-xs font-medium text-muted">
+          <div class="friend-links-status-filter">
+            <span class="friend-links-filter-label">
               <UIcon
-                name="i-mdi-filter-variant"
-                class="size-3"
+                name="i-mdi-pulse"
+                class="size-3.5"
               />
               {{ $t('public.friendLinks.statusFilter') }}
-            </div>
+            </span>
             <CommonFilterTabs
               v-model="currentStatus"
               :tabs="statusTabs"
@@ -94,111 +89,101 @@ const visibleCount = computed(() => filteredItems.value.length)
               :aria-label="t('public.friendLinks.statusFilterAria')"
             />
           </div>
-
-          <div class="border-t border-default px-4 py-3.5 sm:px-5 lg:border-t-0 lg:py-4">
-            <dl class="friend-filter-summary">
-              <div>
-                <dt>{{ $t('common.filters.all') }}</dt>
-                <dd>{{ totalCount }}</dd>
-              </div>
-              <div>
-                <dt>{{ $t('common.states.active') }}</dt>
-                <dd>{{ activeCount }}</dd>
-              </div>
-              <div>
-                <dt>{{ $t('common.filters.current') }}</dt>
-                <dd>{{ visibleCount }}</dd>
-              </div>
-            </dl>
-          </div>
         </div>
-      </UCard>
 
-      <Transition
-        name="state-fade"
-        mode="out-in"
-      >
-        <section
-          v-if="loading"
-          key="loading"
-          class="py-8"
+        <div
+          v-if="!loading && !error && !isEmpty"
+          class="friend-links-result-meta"
         >
-          <UEmpty
-            icon="i-mdi-loading"
-            :title="t('common.states.loading')"
-            :description="t('public.friendLinks.loadingDescription')"
-            variant="naked"
-            size="lg"
-          />
-        </section>
+          <span>
+            <UIcon
+              name="i-mdi-format-list-bulleted"
+              class="size-3.5"
+            />
+            {{ $t('public.friendLinks.visibleCount', { count: visibleCount }) }}
+          </span>
+          <span
+            v-if="!isFilteredEmpty"
+            class="friend-links-result-hint"
+          >
+            <UIcon
+              name="i-mdi-cursor-default-click-outline"
+              class="size-3.5"
+            />
+            {{ $t('public.friendLinks.clickHint') }}
+          </span>
+        </div>
 
-        <section
-          v-else-if="error"
-          key="error"
-          class="py-2"
+        <Transition
+          name="state-fade"
+          mode="out-in"
         >
-          <UEmpty
-            icon="i-mdi-alert-circle-outline"
-            :title="t('common.states.loadFailed')"
-            :description="error"
-            variant="naked"
-            size="lg"
-            :actions="retryActions"
-          />
-        </section>
+          <section
+            v-if="loading"
+            key="loading"
+            class="friend-links-state"
+          >
+            <UEmpty
+              icon="i-mdi-loading"
+              :title="t('common.states.loading')"
+              :description="t('public.friendLinks.loadingDescription')"
+              variant="naked"
+              size="lg"
+            />
+          </section>
 
-        <section
-          v-else-if="isEmpty"
-          key="empty"
-          class="py-2"
-        >
-          <UEmpty
-            icon="i-mdi-link-variant-off"
-            :title="t('public.friendLinks.emptyTitle')"
-            :description="t('public.friendLinks.emptyDescription')"
-            variant="naked"
-            size="lg"
-          />
-        </section>
+          <section
+            v-else-if="error"
+            key="error"
+            class="friend-links-state"
+          >
+            <UEmpty
+              icon="i-mdi-alert-circle-outline"
+              :title="t('common.states.loadFailed')"
+              :description="error"
+              variant="naked"
+              size="lg"
+              :actions="retryActions"
+            />
+          </section>
 
-        <section
-          v-else-if="isFilteredEmpty"
-          key="filtered-empty"
-          class="py-2"
-        >
-          <UEmpty
-            icon="i-mdi-magnify-close"
-            :title="t('public.friendLinks.noMatchTitle')"
-            :description="t('public.friendLinks.noMatchDescription')"
-            variant="naked"
-            size="lg"
-          />
-        </section>
+          <section
+            v-else-if="isEmpty"
+            key="empty"
+            class="friend-links-state"
+          >
+            <UEmpty
+              icon="i-mdi-link-variant-off"
+              :title="t('public.friendLinks.emptyTitle')"
+              :description="t('public.friendLinks.emptyDescription')"
+              variant="naked"
+              size="lg"
+            />
+          </section>
 
-        <section
-          v-else
-          key="content"
-          class="py-2"
-        >
-          <div class="mb-3 flex items-center justify-between text-xs text-muted">
-            <span class="inline-flex items-center gap-1.5">
-              <UIcon
-                name="i-mdi-format-list-bulleted"
-                class="size-3.5"
-              />
-              {{ $t('public.friendLinks.visibleCount', { count: visibleCount }) }}
-            </span>
-            <span class="hidden items-center gap-1.5 sm:inline-flex">
-              <UIcon
-                name="i-mdi-cursor-default-click-outline"
-                class="size-3.5"
-              />
-              {{ $t('public.friendLinks.clickHint') }}
-            </span>
-          </div>
-          <LinkList :items="filteredItems" />
-        </section>
-      </Transition>
+          <section
+            v-else-if="isFilteredEmpty"
+            key="filtered-empty"
+            class="friend-links-state"
+          >
+            <UEmpty
+              icon="i-mdi-magnify-close"
+              :title="t('public.friendLinks.noMatchTitle')"
+              :description="t('public.friendLinks.noMatchDescription')"
+              variant="naked"
+              size="lg"
+            />
+          </section>
+
+          <section
+            v-else
+            key="content"
+            class="friend-links-results"
+          >
+            <LinkList :items="filteredItems" />
+          </section>
+        </Transition>
+      </section>
     </main>
 
     <CommonAppFooter />
@@ -206,46 +191,86 @@ const visibleCount = computed(() => filteredItems.value.length)
 </template>
 
 <style scoped>
-.friend-filter-summary {
+.friend-links-main {
+  width: calc(100% - 2rem);
+  max-width: 73.75rem;
+  flex: 1;
+  margin-inline: auto;
+  padding-block: 3.5rem 2rem;
+}
+
+.friend-links-browser {
+  margin-top: 3rem;
+}
+
+.friend-links-toolbar {
   display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: center;
+  gap: 1rem;
 }
 
-.friend-filter-summary > div {
+.friend-links-search {
   min-width: 0;
-  padding-inline: 12px;
 }
 
-.friend-filter-summary > div:first-child {
-  padding-left: 0;
+.friend-links-status-filter {
+  min-width: 0;
 }
 
-.friend-filter-summary > div:last-child {
-  padding-right: 0;
+.friend-links-filter-label {
+  display: inline-flex;
+  margin-bottom: 0.45rem;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ui-text-dimmed);
+  font-family: var(--font-code);
+  font-size: 0.62rem;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.friend-filter-summary > div + div {
-  border-left: 1px solid var(--ui-border-muted);
-}
-
-.friend-filter-summary dt {
-  display: block;
-  font-size: 11px;
+.friend-links-result-meta {
+  display: flex;
+  margin-block: 1.25rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   color: var(--ui-text-muted);
+  font-size: 0.72rem;
 }
 
-.friend-filter-summary dd {
-  display: block;
-  margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--ui-text-highlighted);
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.15;
-  font-variant-numeric: tabular-nums;
+.friend-links-result-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.friend-links-results {
+  min-width: 0;
+}
+
+.friend-links-state {
+  padding-block: 3rem;
+}
+
+@media (width >= 800px) {
+  .friend-links-toolbar {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 22rem);
+    align-items: end;
+  }
+}
+
+@media (width < 640px) {
+  .friend-links-main {
+    padding-top: 2.75rem;
+  }
+
+  .friend-links-browser {
+    margin-top: 2.25rem;
+  }
+
+  .friend-links-result-hint {
+    display: none !important;
+  }
 }
 </style>

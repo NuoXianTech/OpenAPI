@@ -34,7 +34,6 @@
     },
     "filters": {
       "all": "全部",
-      "current": "当前",
       "button": "筛选",
       "title": "筛选条件",
       "activeCount": "{count} 项筛选",

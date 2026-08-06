@@ -34,7 +34,6 @@
     },
     "filters": {
       "all": "All",
-      "current": "Current",
       "button": "Filter",
       "title": "Filters",
       "activeCount": "{count} filters",

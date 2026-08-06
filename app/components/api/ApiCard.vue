@@ -293,11 +293,13 @@ function preventDetailsAutoFocus(event: Event) {
 }
 
 .api-card__status {
+  width: 5.5rem;
   gap: 0.35rem;
   border-color: color-mix(in oklab, var(--api-status-color) 28%, var(--ui-border));
   background: color-mix(in oklab, var(--api-status-color) 7%, var(--ui-bg-elevated));
   color: color-mix(in oklab, var(--api-status-color) 82%, var(--ui-text-highlighted));
   font-weight: 550;
+  justify-content: center;
 }
 
 .api-card__status-dot {

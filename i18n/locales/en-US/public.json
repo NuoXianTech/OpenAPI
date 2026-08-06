@@ -185,19 +185,18 @@
       "title": "Partner links",
       "description": "Independent sites are information islands; partner links help connect them.",
       "seoDescription": "Partner links connecting independent websites.",
-      "searchPlaceholder": "Search link names or descriptions...",
+      "searchPlaceholder": "Search site names, domains, or descriptions...",
       "statusFilter": "Status filter",
       "statusFilterAria": "Filter partner links by status",
       "loadingDescription": "Loading partner links",
       "emptyTitle": "No partner links",
       "emptyDescription": "There are no partner links to display",
       "noMatchTitle": "No matches",
-      "noMatchDescription": "No links match the current filters. Try another keyword or status.",
+      "noMatchDescription": "No sites match the current search or status filter. Try another keyword or status.",
       "visibleCount": "Showing {count} sites",
       "clickHint": "Select a card to visit the site",
       "collected": "Links",
       "availability": "Availability",
-      "inactiveCount": "Unavailable",
       "defaultTitle": "Link title"
     }
   }

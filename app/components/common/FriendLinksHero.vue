@@ -9,118 +9,124 @@ const props = withDefaults(defineProps<Props>(), {
   activeCount: 0
 })
 
-const inactiveCount = computed(() => Math.max(0, props.totalCount - props.activeCount))
 const ratio = computed(() => {
   if (props.totalCount <= 0) return 0
   return Math.round((props.activeCount / props.totalCount) * 100)
 })
+const formattedRatio = computed(() => props.totalCount > 0 ? `${ratio.value}%` : '--')
 </script>
 
 <template>
-  <section class="links-hero">
-    <div class="relative px-5 py-5 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-      <div class="links-hero__layout">
-        <div class="links-hero__copy">
-          <h1 class="m-0 text-[28px] leading-tight font-semibold text-default sm:text-[34px]">
-            {{ $t('public.friendLinks.title') }}
-          </h1>
-          <p class="mt-2 max-w-lg text-sm leading-relaxed text-muted sm:text-[15px]">
-            {{ $t('public.friendLinks.description') }}
-          </p>
-        </div>
+  <header
+    class="links-hero"
+    aria-labelledby="friend-links-title"
+  >
+    <div class="links-hero__copy">
+      <h1 id="friend-links-title">
+        {{ $t('public.friendLinks.title') }}
+      </h1>
+      <p>{{ $t('public.friendLinks.description') }}</p>
 
-        <div class="links-hero__aside">
-          <div class="links-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
-            <CommonHeroStatCard
-              icon="i-mdi-bookmark-outline"
-              icon-tone="violet"
-            >
-              <template #value>
-                {{ totalCount }}
-              </template>
-              {{ $t('public.friendLinks.collected') }}
-            </CommonHeroStatCard>
-
-            <CommonHeroStatCard
-              icon="i-mdi-check-circle-outline"
-              icon-tone="blue"
-            >
-              <template #value>
-                {{ ratio }}<span class="text-base text-muted">%</span>
-              </template>
-              {{ $t('public.friendLinks.availability') }}
-            </CommonHeroStatCard>
-
-            <CommonHeroStatCard
-              icon="i-mdi-close-circle-outline"
-              icon-tone="rose"
-            >
-              <template #value>
-                {{ inactiveCount }}
-              </template>
-              {{ $t('public.friendLinks.inactiveCount') }}
-            </CommonHeroStatCard>
-          </div>
-        </div>
+      <div
+        v-if="totalCount > 0"
+        class="links-hero__availability"
+      >
+        <span>{{ $t('public.friendLinks.availability') }}</span>
+        <code>{{ formattedRatio }}</code>
       </div>
     </div>
-  </section>
+
+    <div
+      class="links-hero__count"
+      :aria-label="$t('public.friendLinks.collected')"
+    >
+      <strong>{{ totalCount }}</strong>
+      <span>{{ $t('public.friendLinks.collected') }}</span>
+    </div>
+  </header>
 </template>
 
 <style scoped>
 .links-hero {
-  border-bottom: 1px solid var(--ui-border);
-  margin-bottom: 16px;
-}
-
-.links-hero__layout {
-  display: grid;
-  grid-template-areas:
-    "copy"
-    "aside";
-  gap: 16px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
 }
 
 .links-hero__copy {
-  grid-area: copy;
   min-width: 0;
+}
+
+.links-hero h1 {
+  margin: 0;
+  color: var(--ui-text-highlighted);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 650;
+  line-height: 1.15;
+}
+
+.links-hero p {
+  max-width: 42rem;
+  margin: 0.75rem 0 0;
+  color: var(--ui-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+.links-hero__availability {
   display: flex;
-  flex-direction: column;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 1.25rem;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  padding: 0.5rem 0.65rem;
+  background: var(--ui-bg-muted);
 }
 
-.links-hero__aside {
-  grid-area: aside;
-  min-width: 0;
+.links-hero__availability span {
+  color: var(--ui-text-dimmed);
+  font-size: 0.68rem;
+}
+
+.links-hero__availability code {
+  color: var(--ui-text-toned);
+  font-size: 0.72rem;
+}
+
+.links-hero__count {
   display: flex;
+  min-width: 7rem;
+  flex: 0 0 auto;
   flex-direction: column;
-  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 0.25rem;
 }
 
-.links-hero__stats {
-  min-width: 0;
+.links-hero__count strong {
+  color: var(--ui-text-highlighted);
+  font-family: var(--font-code);
+  font-size: 2rem;
+  font-weight: 650;
+  line-height: 1;
 }
 
-.links-hero__stats :deep(.hero-stat-card) {
-  padding: 10px 10px 11px;
+.links-hero__count span {
+  margin-top: 0.4rem;
+  color: var(--ui-text-dimmed);
+  font-size: 0.7rem;
 }
 
-.links-hero__stats :deep(.hero-stat-card__icon) {
-  width: 24px;
-  height: 24px;
-  margin-bottom: 3px;
-}
-
-.links-hero__stats :deep(.hero-stat-card__value) {
-  font-size: 20px;
-}
-
-@media (min-width: 1024px) {
-  .links-hero__layout {
-    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-    grid-template-areas: "copy aside";
-    gap: 36px;
-    align-items: stretch;
+@media (width < 640px) {
+  .links-hero {
+    align-items: flex-start;
   }
 
+  .links-hero__count {
+    display: none;
+  }
 }
 </style>
