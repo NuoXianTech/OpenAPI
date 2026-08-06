@@ -171,14 +171,15 @@ export function parseKuaishouPage(html: string, resolvedUrl: URL): unknown | nul
   return content ? parseKuaishouApolloState(html, content) : null
 }
 
-export async function parseKuaishou(sourceUrl: URL): Promise<unknown> {
+export async function parseKuaishou(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   const response = await requestPlatformText(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
     headers: {
       'accept': 'text/html,application/xhtml+xml,*/*',
       'accept-language': 'zh-CN,zh;q=0.9',
       'cache-control': 'no-cache',
       'user-agent': DESKTOP_BROWSER_USER_AGENT
-    }
+    },
+    signal
   })
   const result = parseKuaishouPage(response.text, response.url)
   if (!result) {

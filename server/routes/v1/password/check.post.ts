@@ -9,7 +9,7 @@
  */
 
 import type { H3Event } from 'h3'
-import { getQuery, readBody, setResponseHeader, setResponseHeaders } from 'h3'
+import { getQuery, setResponseHeader, setResponseHeaders } from 'h3'
 import {
   checkPasswordStrength,
   formatPasswordCheckMarkdown,
@@ -21,6 +21,7 @@ import {
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readQueryString } from '~~/server/utils/request-query'
+import { readOpenApiJsonBody } from '~~/server/utils/zod'
 
 function parseEncoding(query: Record<string, unknown>): PasswordCheckEncoding {
   const value = readQueryString(query.encode || query.encoding).trim().toLowerCase()
@@ -35,7 +36,7 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
 
   const query = getQuery(event) as Record<string, unknown>
   const encoding = parseEncoding(query)
-  const body = await readBody(event).catch(() => null)
+  const body = await readOpenApiJsonBody(event, 32 * 1024)
   const parsed = parsePasswordCheckBody(body)
   if (!parsed.ok) return openApiFail(event, 400, parsed.code, parsed.message)
 

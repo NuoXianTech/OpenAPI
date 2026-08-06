@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery, setResponseHeader } from 'h3'
 import { getMaoyanRealtime, isMaoyanRealtimeType, isValidMaoyanDate } from '~~/server/lib/maoyan'
 import { formatMaoyanRealtimeMarkdown, formatMaoyanRealtimeText } from '~~/server/lib/maoyan/format'
@@ -8,7 +9,7 @@ import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { readQueryString } from '~~/server/utils/request-query'
 import { isMaoyanRankingEnabled } from '~~/server/lib/maoyan/capability-config'
 
-async function handleMaoyanRealtime(event: H3Event) {
+async function handleMaoyanRealtime(event: H3Event, { signal }: OpenApiHandlerContext) {
   const type = getRouterParam(event, 'type') || ''
   if (!isMaoyanRealtimeType(type)) return openApiFail(event, 404, 'NOT_FOUND', '仅支持 movie、tv 或 web 类型')
   if (!await isMaoyanRankingEnabled(type)) {
@@ -18,7 +19,7 @@ async function handleMaoyanRealtime(event: H3Event) {
   const date = readQueryString(query.date).trim()
   if (date && !isValidMaoyanDate(date)) return openApiFail(event, 400, 'INVALID_DATE', 'date 必须是 YYYY-MM-DD 格式的有效日期')
   try {
-    const data = await getMaoyanRealtime(type, date || undefined)
+    const data = await getMaoyanRealtime(type, date || undefined, signal)
     const encoding = readMaoyanEncoding(event)
     if (encoding === 'text') { setMaoyanTextHeaders(event, 'text/plain', 60); return formatMaoyanRealtimeText(type, data) }
     if (encoding === 'markdown' || encoding === 'md') { setMaoyanTextHeaders(event, 'text/markdown', 60); return formatMaoyanRealtimeMarkdown(type, data) }

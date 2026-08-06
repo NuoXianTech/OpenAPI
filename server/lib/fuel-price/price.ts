@@ -1,6 +1,7 @@
 import { load } from 'cheerio'
 import regionsJson from './regions.json'
 import type { FuelPriceData, FuelPriceItem, FuelRegion, FuelRegionOption, FuelTrend } from './types'
+import { waitForAbort } from '~~/server/utils/shared-cache'
 
 const FUEL_PRICE_BASE_URL = 'http://www.qiyoujiage.com'
 
@@ -128,12 +129,12 @@ export function parseFuelTrend(html: string): FuelTrend | null {
   }
 }
 
-async function fetchFuelPriceHtml(region: FuelRegion): Promise<string> {
+async function fetchFuelPriceHtml(region: FuelRegion, signal?: AbortSignal): Promise<string> {
   const response = await fetch(`${FUEL_PRICE_BASE_URL}${region.url}`, {
     headers: {
       'user-agent': FUEL_PRICE_USER_AGENT
     },
-    signal: AbortSignal.timeout(15_000)
+    signal: signal ?? AbortSignal.timeout(15_000)
   })
 
   if (!response.ok) {
@@ -143,8 +144,8 @@ async function fetchFuelPriceHtml(region: FuelRegion): Promise<string> {
   return response.text()
 }
 
-async function fetchFuelPriceEntry(region: FuelRegion): Promise<FuelPriceCacheEntry> {
-  const html = await fetchFuelPriceHtml(region)
+async function fetchFuelPriceEntry(region: FuelRegion, signal?: AbortSignal): Promise<FuelPriceCacheEntry> {
+  const html = await fetchFuelPriceHtml(region, signal)
   const items = parseFuelPrices(html)
   if (items.length === 0) {
     throw new Error('油价页面结构异常，未解析到价格列表')
@@ -157,16 +158,20 @@ async function fetchFuelPriceEntry(region: FuelRegion): Promise<FuelPriceCacheEn
   }
 }
 
-async function getFuelPriceEntry(region: FuelRegion, forceUpdate = false): Promise<FuelPriceCacheEntry> {
+async function getFuelPriceEntry(region: FuelRegion, forceUpdate = false, signal?: AbortSignal): Promise<FuelPriceCacheEntry> {
   const cacheKey = `FUEL_PRICE_${region.url}`
   if (forceUpdate) cache.delete(cacheKey)
 
   const cached = cache.get(cacheKey)
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached
+  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+    return waitForAbort(Promise.resolve(cached), signal)
+  }
 
   const pendingEntry = pending.get(cacheKey)
-  if (pendingEntry) return pendingEntry.promise
+  if (pendingEntry) return waitForAbort(pendingEntry.promise, signal)
 
+  // The shared producer uses its own upstream timeout. A request timeout only
+  // cancels that request's wait and must not abort other callers.
   const promise = fetchFuelPriceEntry(region)
     .then((entry) => {
       cache.set(cacheKey, entry)
@@ -177,11 +182,11 @@ async function getFuelPriceEntry(region: FuelRegion, forceUpdate = false): Promi
     })
 
   pending.set(cacheKey, { promise })
-  return promise
+  return waitForAbort(promise, signal)
 }
 
-export async function getFuelPriceData(region: FuelRegion, forceUpdate = false): Promise<FuelPriceData> {
-  const { items, trend, ts } = await getFuelPriceEntry(region, forceUpdate)
+export async function getFuelPriceData(region: FuelRegion, forceUpdate = false, signal?: AbortSignal): Promise<FuelPriceData> {
+  const { items, trend, ts } = await getFuelPriceEntry(region, forceUpdate, signal)
 
   return {
     region: region.region,

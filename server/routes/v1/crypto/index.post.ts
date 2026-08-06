@@ -12,7 +12,6 @@
  */
 
 import type { H3Event } from 'h3'
-import { readBody } from 'h3'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { isCryptoAlgorithmEnabled } from '~~/server/lib/crypto/capability-config'
 import { parseCryptoRequestBody, toCryptoMode } from '~~/server/lib/crypto/request'
@@ -20,13 +19,14 @@ import { getAlgorithm, normalizeOptions } from '~~/server/lib/crypto/registry'
 import { isCryptoBusinessError } from '~~/server/lib/crypto/types'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
+import { readOpenApiJsonBody } from '~~/server/utils/zod'
 
 function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED') {
   return openApiBizFail(event, 422, bizCode, message)
 }
 
 export default defineOpenApiEventHandler(async (event: H3Event) => {
-  const body = await readBody(event).catch(() => null)
+  const body = await readOpenApiJsonBody(event)
   const parsed = parseCryptoRequestBody(body)
   if (!parsed.ok) return openApiFail(event, 400, parsed.code, parsed.message)
 

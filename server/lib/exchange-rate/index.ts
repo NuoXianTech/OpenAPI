@@ -59,10 +59,10 @@ function normalizeExchangeRateResponse(payload: ExchangeRateUpstreamResponse): E
   }
 }
 
-async function fetchExchangeRates(currency: string): Promise<ExchangeRateData> {
+async function fetchExchangeRates(currency: string, signal?: AbortSignal): Promise<ExchangeRateData> {
   const response = await fetch(`${EXCHANGE_RATE_API_URL}/${encodeURIComponent(currency)}`, {
     headers: { accept: 'application/json' },
-    signal: AbortSignal.timeout(10_000)
+    signal: signal ?? AbortSignal.timeout(10_000)
   })
   if (!response.ok) throw new Error(`汇率上游返回 HTTP ${response.status}`)
 
@@ -75,10 +75,11 @@ export function normalizeCurrencyCode(value: string): string | null {
   return CURRENCY_CODE_PATTERN.test(currency) ? currency : null
 }
 
-export function getExchangeRates(currency: string): Promise<ExchangeRateData> {
+export function getExchangeRates(currency: string, signal?: AbortSignal): Promise<ExchangeRateData> {
   return getSharedCache({
     key: `cache:exchange-rate:${currency}`,
     ttlSeconds: EXCHANGE_RATE_CACHE_TTL_SECONDS,
+    signal,
     loader: () => fetchExchangeRates(currency)
   })
 }

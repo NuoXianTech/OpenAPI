@@ -64,8 +64,8 @@ const YUNQUE_REDIRECT_HEADERS: Record<string, string> = {
 /** 豆包 HTML 内嵌的 vid 形如 {\&quot;vid\&quot;:\&quot;xxx\&quot；去重返回。 */
 const DOUBAO_VID_RE = /\{\\&quot;vid\\&quot;:\\&quot;(.*?)\\&quot/g
 
-async function getDoubaoVids(url: string): Promise<string[]> {
-  const html = await fetchText(url, { headers: DOUBAO_HTML_HEADERS })
+async function getDoubaoVids(url: string, signal?: AbortSignal): Promise<string[]> {
+  const html = await fetchText(url, { headers: DOUBAO_HTML_HEADERS, signal })
   const vids = new Set<string>()
   for (const match of html.matchAll(DOUBAO_VID_RE)) {
     if (match[1]) vids.add(match[1])
@@ -74,10 +74,10 @@ async function getDoubaoVids(url: string): Promise<string[]> {
 }
 
 /** 解析豆包视频。raw=true 时返回首个 vid 的 get_play_info 原始响应。 */
-export async function doubaoVideoParse(url: string, raw = false): Promise<DoubaoVideo[] | unknown> {
+export async function doubaoVideoParse(url: string, raw = false, signal?: AbortSignal): Promise<DoubaoVideo[] | unknown> {
   let vids: string[]
   if (url.includes('/thread/')) {
-    vids = await getDoubaoVids(url)
+    vids = await getDoubaoVids(url, signal)
   } else if (url.includes('video_id=')) {
     vids = new URL(url).searchParams.getAll('video_id')
   } else {
@@ -90,7 +90,8 @@ export async function doubaoVideoParse(url: string, raw = false): Promise<Doubao
       method: 'POST',
       query: DOUBAO_PLAY_PARAMS,
       headers: DOUBAO_PLAY_HEADERS,
-      body: { key: vid }
+      body: { key: vid },
+      signal
     })
 
     const root = asRecord(result)
@@ -116,8 +117,8 @@ export async function doubaoVideoParse(url: string, raw = false): Promise<Doubao
 }
 
 /** 解析云雀（剪映）分享视频。raw=true 时返回 landing_page 原始响应。 */
-export async function yunqueVideoParse(url: string, raw = false): Promise<DoubaoVideo[] | unknown> {
-  const finalUrl = await resolveRedirect(url, { headers: YUNQUE_REDIRECT_HEADERS })
+export async function yunqueVideoParse(url: string, raw = false, signal?: AbortSignal): Promise<DoubaoVideo[] | unknown> {
+  const finalUrl = await resolveRedirect(url, { headers: YUNQUE_REDIRECT_HEADERS, signal })
   const params = new URL(finalUrl).searchParams
   const shareId = params.get('share_id')
   const shareSecDid = params.get('share_sec_did')
@@ -141,7 +142,8 @@ export async function yunqueVideoParse(url: string, raw = false): Promise<Doubao
           share_sec_did: shareSecDid,
           share_sec_uid: shareSecUid
         }
-      }
+      },
+      signal
     }
   )
 

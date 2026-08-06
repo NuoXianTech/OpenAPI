@@ -100,5 +100,8 @@ describe('admin schemas', () => {
       checkinAmountMin: 20,
       checkinAmountMax: 5
     }).success).toBe(false)
+
+    expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'javascript:alert(1)' }).success).toBe(false)
+    expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'https://example.com/docs' }).success).toBe(true)
   })
 })

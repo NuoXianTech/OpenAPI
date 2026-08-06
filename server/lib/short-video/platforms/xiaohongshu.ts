@@ -148,7 +148,7 @@ export function formatXiaohongshuNote(note: Record<string, unknown>): unknown {
   }
 }
 
-export async function parseXiaohongshu(sourceUrl: URL): Promise<unknown> {
+export async function parseXiaohongshu(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   const normalizedSource = new URL(sourceUrl)
   if (normalizedSource.hostname === 'xhs.com' || normalizedSource.hostname.endsWith('.xhs.com')) {
     normalizedSource.hostname = 'xhslink.com'
@@ -159,7 +159,7 @@ export async function parseXiaohongshu(sourceUrl: URL): Promise<unknown> {
   if (!noteId) {
     resolvedUrl = await resolvePlatformUrl(PLATFORM, normalizedSource, ALLOWED_HOSTS, {
       'user-agent': MOBILE_BROWSER_USER_AGENT
-    })
+    }, signal)
     noteId = extractXiaohongshuId(resolvedUrl)
   }
   if (!noteId) {
@@ -190,7 +190,8 @@ export async function parseXiaohongshu(sourceUrl: URL): Promise<unknown> {
           'accept-language': 'zh-CN,zh;q=0.9',
           'referer': 'https://www.xiaohongshu.com/',
           'user-agent': userAgent
-        }
+        },
+        signal
       }).catch(() => null)
       if (!response) continue
 

@@ -4,6 +4,92 @@ import { ZodError } from 'zod'
 import type { z } from 'zod'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 
+const OPEN_API_BODY_LIMIT_BYTES = 256 * 1024
+const RAW_BODY_SYMBOL = Symbol.for('h3RawBody')
+
+async function readLimitedRawBody(event: H3Event, maxBytes: number): Promise<Buffer | undefined> {
+  const request = event.node.req
+  const declaredLength = Number(request.headers['content-length'])
+  if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
+    throw createError({ statusCode: 413, message: '请求体过大' })
+  }
+
+  const preloaded = Reflect.get(request, RAW_BODY_SYMBOL) ?? Reflect.get(request, 'rawBody')
+  if (preloaded !== undefined) {
+    const value = await Promise.resolve(preloaded)
+    const body = Buffer.isBuffer(value)
+      ? value
+      : Buffer.from(typeof value === 'string' ? value : JSON.stringify(value))
+    if (body.length > maxBytes) throw createError({ statusCode: 413, message: '请求体过大' })
+    return body
+  }
+
+  if (!declaredLength && !/\bchunked\b/i.test(String(request.headers['transfer-encoding'] ?? ''))) {
+    return undefined
+  }
+
+  const body = new Promise<Buffer>((resolve, reject) => {
+    const chunks: Buffer[] = []
+    let total = 0
+    let settled = false
+    const cleanup = () => {
+      request.off('data', onData)
+      request.off('end', onEnd)
+      request.off('error', onError)
+    }
+    const failTooLarge = () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      request.resume()
+      reject(createError({ statusCode: 413, message: '请求体过大' }))
+    }
+    const onData = (chunk: Buffer | string) => {
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+      total += buffer.length
+      if (total > maxBytes) {
+        failTooLarge()
+        return
+      }
+      chunks.push(buffer)
+    }
+    const onEnd = () => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(Buffer.concat(chunks, total))
+    }
+    const onError = (error: Error) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      reject(error)
+    }
+    request.on('data', onData)
+    request.on('end', onEnd)
+    request.on('error', onError)
+  })
+  Reflect.set(request, RAW_BODY_SYMBOL, body)
+  return body
+}
+
+export async function readOpenApiJsonBody(event: H3Event, maxBytes = OPEN_API_BODY_LIMIT_BYTES): Promise<unknown> {
+  const body = await readLimitedRawBody(event, maxBytes)
+  if (!body || body.length === 0) return undefined
+
+  const contentType = String(event.node.req.headers['content-type'] || '')
+  if (contentType.startsWith('text/')) return body.toString('utf8')
+  if (contentType.startsWith('application/x-www-form-urlencoded')) {
+    return Object.fromEntries(new URLSearchParams(body.toString('utf8')))
+  }
+
+  try {
+    return JSON.parse(body.toString('utf8'))
+  } catch {
+    return undefined
+  }
+}
+
 /**
  * 用 zod schema 校验请求体；失败抛 400，message 取第一个 issue。
  * 与 h3 原生 readValidatedBody 签名对齐，仅在抛错时把 ZodError 翻译成 HTTP 错误。

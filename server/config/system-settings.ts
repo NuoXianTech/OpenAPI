@@ -8,7 +8,7 @@ import {
   intRange,
   nonNegativeInt,
   positiveInt,
-  requiredHttpUrl,
+  requiredSiteOrigin,
   requiredString
 } from '~~/server/schemas/validation'
 
@@ -48,7 +48,7 @@ const trustedProxyCidrsSchema = z.string().max(10_000, '可信代理列表最多
 export const SYSTEM_SETTING_DEFINITIONS = {
   siteUrl: {
     key: 'site.url',
-    schema: requiredHttpUrl('站点 URL'),
+    schema: requiredSiteOrigin('站点 URL'),
     default: SITE_SETTINGS_DEFAULTS.siteUrl,
     public: true,
     secret: false,

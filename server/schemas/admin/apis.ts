@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { isApiStatusValue } from '#shared/config/api-status'
-import { enumMessage, nonNegativeInt, positiveInt, requiredString } from '../validation'
+import { enumMessage, nonNegativeInt, optionalPublicUrl, positiveInt, requiredString } from '../validation'
 
 const methodCostsSchema = z.preprocess(
   (v) => {
@@ -26,7 +26,7 @@ export const adminRegisterApiSchema = z.object({
     name: z.string().optional(),
     shortDesc: z.string().optional(),
     description: z.string().optional(),
-    docUrl: z.string().optional(),
+    docUrl: optionalPublicUrl('文档地址', 200),
     status: apiStatusSchema.optional(),
     categoryId: z.number().nullable().optional(),
     isEnabled: z.boolean().optional(),
@@ -52,7 +52,7 @@ export const adminUpdateApiSchema = z.object({
   ),
   shortDesc: z.string().trim().optional(),
   description: z.string().trim().optional(),
-  docUrl: z.string().trim().optional(),
+  docUrl: optionalPublicUrl('文档地址', 200),
   isEnabled: z.boolean().optional(),
   isApiKey: z.boolean().optional(),
   isStatistics: z.boolean().optional(),

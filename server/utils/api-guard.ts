@@ -20,6 +20,7 @@ import type { RateLimitWindow } from '~~/server/config/api-guard'
 import {
   API_GUARD_ERROR,
   VERSION_CODE_PATTERN,
+  hasAnyChargedMethod,
   normalizePathname,
   resolveMethodCost
 } from '~~/server/config/api-guard'
@@ -351,6 +352,13 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
 
   const api = await apiService.loadGuardConfig(pathVersion, code)
   if (!api) return rejectOpenApiGate(event, API_GUARD_ERROR.NOT_REGISTERED)
+
+  // A paid endpoint must have both API-key auth and statistics enabled.
+  // Statistics owns the post-response charge and reservation release path;
+  // reject legacy or externally-written invalid rows before reserving credits.
+  if (api.isEnabled && hasAnyChargedMethod(api.methodCosts) && (!api.isApiKey || !api.isStatistics)) {
+    return rejectOpenApiGate(event, API_GUARD_ERROR.INVALID_CONFIGURATION)
+  }
 
   if (api.isStatistics) {
     const requestMeta = readRequestMeta(event)

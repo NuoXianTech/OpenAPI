@@ -23,6 +23,7 @@ export interface UpstreamRequest {
   body?: unknown
   /** 追加到 URL 的查询串 */
   query?: Record<string, string>
+  signal?: AbortSignal
 }
 
 function buildUrl(url: string, query?: Record<string, string>): string {
@@ -46,7 +47,7 @@ async function request(url: string, opts: UpstreamRequest = {}): Promise<Respons
       method: opts.method ?? 'GET',
       headers,
       body,
-      signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
+      signal: opts.signal ?? AbortSignal.timeout(DEFAULT_TIMEOUT_MS)
     })
     if (!response.ok) {
       await response.body?.cancel()

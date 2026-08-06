@@ -341,14 +341,17 @@ export const apiService = {
       }
     }
 
-    // 合并后的 effective methodCosts / isApiKey 校验
-    if (patch.methodCosts !== undefined || patch.isApiKey !== undefined) {
+    // 付费接口必须同时开启 API Key 与统计，统计插件承载扣费和预占释放。
+    // 已禁用接口可以保留治理配置，重新启用时会再次经过此校验。
+    if (patch.methodCosts !== undefined || patch.isApiKey !== undefined || patch.isStatistics !== undefined || patch.isEnabled !== undefined) {
       const effectiveCosts = patch.methodCosts !== undefined
         ? (patch.methodCosts as Record<string, number>)
         : existing.methodCosts
       const effectiveIsApiKey = patch.isApiKey !== undefined ? patch.isApiKey : existing.isApiKey
-      if (hasAnyChargedMethod(effectiveCosts) && !effectiveIsApiKey) {
-        throw new Error('设置扣费金额时必须开启「API密钥」')
+      const effectiveIsEnabled = patch.isEnabled !== undefined ? patch.isEnabled : existing.isEnabled
+      const effectiveIsStatistics = patch.isStatistics !== undefined ? patch.isStatistics : existing.isStatistics
+      if (effectiveIsEnabled && hasAnyChargedMethod(effectiveCosts) && (!effectiveIsApiKey || !effectiveIsStatistics)) {
+        throw new Error('启用付费接口时必须同时开启「API密钥」和「统计」')
       }
     }
 
@@ -398,6 +401,14 @@ export const apiService = {
       if (field === 'isStatistics' && !existing.isEnabled) {
         throw new Error('启用统计前必须先启用接口')
       }
+      if (field === 'isEnabled' && hasAnyChargedMethod(existing.methodCosts) && !existing.isStatistics) {
+        throw new Error('启用付费接口前必须先开启「统计」')
+      }
+    } else {
+      const existing = await findApiById(id)
+      if (existing?.isEnabled && field === 'isStatistics' && hasAnyChargedMethod(existing.methodCosts)) {
+        throw new Error('付费接口不能关闭「统计」')
+      }
     }
 
     const patch: {
@@ -429,6 +440,10 @@ export const apiService = {
   async registerFromManifest(data: ApiManifestRegistration) {
     if (data.defaults.isStatistics && !data.defaults.isEnabled) {
       throw new Error('启用统计前必须先启用接口')
+    }
+    if (data.defaults.isEnabled && hasAnyChargedMethod(data.defaults.methodCosts)
+      && (!data.defaults.isApiKey || !data.defaults.isStatistics)) {
+      throw new Error('启用付费接口时必须同时开启「API密钥」和「统计」')
     }
 
     const existing = await findApiByVersionCode(data.pathVersion, data.code)

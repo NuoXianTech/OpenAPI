@@ -13,12 +13,12 @@ export function extractPipigxParams(url: URL): { pid: string, mid: string } | nu
   return pid && mid ? { pid, mid } : null
 }
 
-export async function parsePipigx(sourceUrl: URL): Promise<unknown> {
+export async function parsePipigx(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   let params = extractPipigxParams(sourceUrl)
   if (!params) {
     const resolvedUrl = await resolvePlatformUrl(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
       'user-agent': DESKTOP_BROWSER_USER_AGENT
-    })
+    }, signal)
     params = extractPipigxParams(resolvedUrl)
   }
   if (!params) {
@@ -39,7 +39,8 @@ export async function parsePipigx(sourceUrl: URL): Promise<unknown> {
         pid: Number(params.pid),
         mid: Number(params.mid),
         type: 'post'
-      })
+      }),
+      signal
     }
   )
 

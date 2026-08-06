@@ -5,7 +5,7 @@
  * 若不提前终止，请求会落到 Vue Router 并产生“找不到页面路由”的警告。
  */
 
-import { getRequestURL, setResponseHeader } from 'h3'
+import { getRequestURL, sendNoContent, setResponseHeader } from 'h3'
 import {
   API_GUARD_ERROR,
   VERSION_CODE_PATTERN,
@@ -13,6 +13,7 @@ import {
 } from '~~/server/config/api-guard'
 import { getAllowedMethods, matchEndpoint } from '~~/server/utils/api-manifest'
 import { openApiFail } from '~~/server/utils/open-api-response'
+import { setPublicApiCors } from '~~/server/utils/public-api-cors'
 
 export default defineEventHandler((event) => {
   const pathname = normalizePathname(getRequestURL(event).pathname)
@@ -22,12 +23,24 @@ export default defineEventHandler((event) => {
   const pathVersion = routeMatch[1]!
   const code = routeMatch[2]!
   const method = (event.method || 'GET').toUpperCase()
+
+  if (method === 'OPTIONS') {
+    const allowedMethods = getAllowedMethods(pathVersion, code, pathname)
+    setPublicApiCors(event, allowedMethods)
+    if (allowedMethods.length > 0) return sendNoContent(event)
+  }
+
   const endpoint = matchEndpoint(pathVersion, code, pathname, method)
     ?? (method === 'HEAD' ? matchEndpoint(pathVersion, code, pathname, 'GET') : null)
-  if (endpoint) return
+  if (endpoint) {
+    setPublicApiCors(event, [endpoint.endpoint.method === 'ANY' ? method : endpoint.endpoint.method])
+    return
+  }
+
+  const allowedMethods = getAllowedMethods(pathVersion, code, pathname)
+  setPublicApiCors(event, allowedMethods)
 
   setResponseHeader(event, 'cache-control', 'no-store')
-  const allowedMethods = getAllowedMethods(pathVersion, code, pathname)
   if (allowedMethods.length > 0) {
     setResponseHeader(event, 'allow', allowedMethods.join(', '))
     return openApiFail(

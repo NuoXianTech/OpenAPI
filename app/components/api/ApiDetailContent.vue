@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isSafePublicUrl } from '#shared/utils/safe-url'
+
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { formatCompactCount } from '~/utils/number-format'
 import {
@@ -22,10 +24,11 @@ const props = withDefaults(defineProps<ApiDetailContentProps>(), {
   docUrl: ''
 })
 
+const safeDocUrl = computed(() => isSafePublicUrl(props.docUrl, { allowRelative: true }) ? props.docUrl : '')
+
 const {
   description,
   apiPath,
-  docUrl,
   isApiKey,
   methods,
   methodCosts,
@@ -174,11 +177,11 @@ async function copyEndpoint() {
     </section>
 
     <footer
-      v-if="docUrl"
+      v-if="safeDocUrl"
       class="api-detail__footer"
     >
       <UButton
-        :to="docUrl"
+        :to="safeDocUrl"
         target="_blank"
         rel="noopener noreferrer"
         size="md"

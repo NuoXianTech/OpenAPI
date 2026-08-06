@@ -6,6 +6,7 @@
  */
 
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery, setResponseHeader } from 'h3'
 import {
   detectShortVideoPlatform,
@@ -17,14 +18,14 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { readQueryString } from '~~/server/utils/request-query'
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
   setResponseHeader(event, 'cache-control', 'no-store')
 
   try {
     const query = getQuery(event) as Record<string, unknown>
     const sourceUrl = parseShortVideoUrl(readQueryString(query.url))
     const platform = detectShortVideoPlatform(sourceUrl)
-    const data = await parseShortVideo(sourceUrl, platform)
+    const data = await parseShortVideo(sourceUrl, platform, signal)
     return openApiOk(event, data, '短视频解析成功')
   } catch (error) {
     const failure = classifyShortVideoError(error)

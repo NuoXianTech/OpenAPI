@@ -7,6 +7,7 @@
  */
 
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery, setResponseHeader } from 'h3'
 import { formatExchangeRateMarkdown, formatExchangeRateText, getExchangeRates, normalizeCurrencyCode } from '~~/server/lib/exchange-rate'
 import { DEFAULT_EXCHANGE_RATE_CURRENCY, DEFAULT_EXCHANGE_RATE_ENCODING, isExchangeRateEncoding, type ExchangeRateEncoding } from '~~/server/lib/exchange-rate/types'
@@ -20,7 +21,7 @@ function parseEncoding(query: Record<string, unknown>): ExchangeRateEncoding {
   return isExchangeRateEncoding(value) ? value : DEFAULT_EXCHANGE_RATE_ENCODING
 }
 
-async function handleExchangeRate(event: H3Event) {
+async function handleExchangeRate(event: H3Event, { signal }: OpenApiHandlerContext) {
   const query = getQuery(event) as Record<string, unknown>
   const currency = normalizeCurrencyCode(readQueryString(query.currency, DEFAULT_EXCHANGE_RATE_CURRENCY))
   if (!currency) return openApiFail(event, 400, 'INVALID_CURRENCY', 'currency 必须是 ISO 4217 三位货币代码')
@@ -28,7 +29,7 @@ async function handleExchangeRate(event: H3Event) {
   const encoding = parseEncoding(query)
 
   try {
-    const data = await getExchangeRates(currency)
+    const data = await getExchangeRates(currency, signal)
     setResponseHeader(event, 'cache-control', 'public, max-age=3600')
 
     if (encoding === 'text') {

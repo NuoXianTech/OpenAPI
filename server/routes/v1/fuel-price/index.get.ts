@@ -8,6 +8,7 @@
  */
 
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery, setResponseHeader } from 'h3'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
@@ -36,7 +37,7 @@ function readBooleanFlag(value: unknown): boolean {
   return ['1', 'true', 'yes', 'y', 'on'].includes(normalized)
 }
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
   const query = getQuery(event) as Record<string, unknown>
   const regionKeyword = readQueryString(query.region, DEFAULT_FUEL_PRICE_REGION).trim() || DEFAULT_FUEL_PRICE_REGION
   const region = findFuelRegion(regionKeyword)
@@ -49,7 +50,7 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
   const forceUpdate = readBooleanFlag(query['force-update'])
 
   try {
-    const data = await getFuelPriceData(region, forceUpdate)
+    const data = await getFuelPriceData(region, forceUpdate, signal)
 
     setResponseHeader(event, 'access-control-allow-origin', '*')
     setResponseHeader(event, 'cache-control', forceUpdate ? 'no-store' : 'public, max-age=3600')

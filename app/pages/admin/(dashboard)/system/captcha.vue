@@ -52,7 +52,6 @@ const captchaType = ref('turnstile')
       >
         <UInput
           v-model="form.turnstileSiteKey"
-          placeholder="0x4AAAAAA..."
           autocomplete="off"
           class="w-full sm:min-w-64"
         />
@@ -65,7 +64,6 @@ const captchaType = ref('turnstile')
       >
         <UInput
           v-model="form.turnstileSecretKey"
-          placeholder="0x4AAAAAA..."
           autocomplete="off"
           class="w-full sm:min-w-64"
         />

@@ -63,32 +63,32 @@ export function detectShortVideoPlatform(url: URL): ShortVideoPlatform {
   throw createShortVideoError('input', 422, 'UNSUPPORTED_PLATFORM', '暂不支持该短视频平台')
 }
 
-export async function parseShortVideo(sourceUrl: URL, platform: ShortVideoPlatform): Promise<ShortVideoData> {
+export async function parseShortVideo(sourceUrl: URL, platform: ShortVideoPlatform, signal?: AbortSignal): Promise<ShortVideoData> {
   let payload: unknown
   switch (platform) {
     case 'douyin':
-      payload = await parseDouyin(sourceUrl)
+      payload = await parseDouyin(sourceUrl, signal)
       break
     case 'kuaishou':
-      payload = await parseKuaishou(sourceUrl)
+      payload = await parseKuaishou(sourceUrl, signal)
       break
     case 'xiaohongshu':
-      payload = await parseXiaohongshu(sourceUrl)
+      payload = await parseXiaohongshu(sourceUrl, signal)
       break
     case 'bilibili':
-      payload = await parseBilibili(sourceUrl)
+      payload = await parseBilibili(sourceUrl, signal)
       break
     case 'weibo':
-      payload = await parseWeibo(sourceUrl)
+      payload = await parseWeibo(sourceUrl, signal)
       break
     case 'pipixia':
-      payload = await parsePipixia(sourceUrl)
+      payload = await parsePipixia(sourceUrl, signal)
       break
     case 'pipigx':
-      payload = await parsePipigx(sourceUrl)
+      payload = await parsePipigx(sourceUrl, signal)
       break
     case 'toutiao':
-      payload = await parseToutiao(sourceUrl)
+      payload = await parseToutiao(sourceUrl, signal)
       break
   }
   return normalizeShortVideoPayload(payload, platform)

@@ -36,9 +36,13 @@ async function verifyTurnstileForPage(
   const settings = await systemSettingsService.getSettings()
   const required = pageToggleOf(settings, page)
 
-  // 未配置密钥：完全跳过，不视为失败（无总开关，是否校验由各场景开关决定）
-  if (!settings.turnstileSiteKey || !settings.turnstileSecretKey || !required) {
+  if (!required) {
     return { required: false, valid: true }
+  }
+
+  // 场景已开启但凭据不完整时必须失败关闭，避免后台显示“已开启”而实际跳过校验。
+  if (!settings.turnstileSiteKey || !settings.turnstileSecretKey) {
+    return { required: true, valid: false, reason: 'misconfigured' }
   }
 
   if (!token) {
@@ -79,6 +83,7 @@ const FAILURE_MESSAGE: Record<string, string> = {
   'missing-input-response': '请先完成人机验证',
   'timeout-or-duplicate': '人机验证已过期，请刷新重试',
   'verify_failed': '人机验证失败，请重试',
+  'misconfigured': 'Turnstile 配置不完整，请联系管理员',
   'verify_exception': '人机验证服务不可用，请稍后重试'
 }
 

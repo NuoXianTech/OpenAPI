@@ -122,11 +122,13 @@ export async function resolvePlatformUrl(
   platform: ShortVideoPlatform,
   input: URL,
   allowedHosts: readonly string[],
-  headers: HeadersInit = {}
+  headers: HeadersInit = {},
+  signal?: AbortSignal
 ): Promise<URL> {
   const response = await platformFetch(platform, input, allowedHosts, {
     headers,
-    method: 'GET'
+    method: 'GET',
+    signal
   })
   throwForStatus(platform, response)
   const resolvedUrl = new URL(response.url)

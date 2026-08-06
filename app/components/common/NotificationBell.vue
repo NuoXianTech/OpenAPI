@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { MessageLevel } from '#shared/types/content'
+import { isSafePublicUrl } from '#shared/utils/safe-url'
 import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 /**
  * 后台站内信通知中心（admin / user 两端共用）
@@ -331,11 +332,11 @@ onMounted(() => {
           </button>
 
           <div
-            v-if="expandedId === n.id && n.linkUrl"
+            v-if="expandedId === n.id && isSafePublicUrl(n.linkUrl, { allowRelative: true })"
             class="notification-item__footer"
           >
             <UButton
-              :to="n.linkUrl"
+              :to="n.linkUrl!"
               target="_blank"
               size="xs"
               color="neutral"

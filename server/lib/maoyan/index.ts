@@ -69,13 +69,13 @@ export function formatBoxOffice(boxOffice: number | string, decimals = 2): strin
   return `${formatNumber(amount / 10 ** 12)}万亿元`
 }
 
-async function fetchGlobalBoxOffice(): Promise<MaoyanGlobalData> {
+async function fetchGlobalBoxOffice(signal?: AbortSignal): Promise<MaoyanGlobalData> {
   const response = await fetch('https://piaofang.maoyan.com/i/globalBox/historyRank', {
     headers: {
       'referer': 'https://piaofang.maoyan.com/',
       'user-agent': 'Mozilla/5.0 Chrome/133.0.0.0 Safari/537.36'
     },
-    signal: AbortSignal.timeout(15_000)
+    signal: signal ?? AbortSignal.timeout(15_000)
   })
   if (!response.ok) throw new Error(`猫眼上游返回 HTTP ${response.status}`)
   const html = await response.text()
@@ -119,14 +119,14 @@ export function isValidMaoyanDate(value: string): boolean {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
-export function getMaoyanGlobalBoxOffice(): Promise<MaoyanGlobalData> {
-  return getSharedCache({ key: 'cache:maoyan:global:movie', ttlSeconds: 6 * 60 * 60, loader: fetchGlobalBoxOffice })
+export function getMaoyanGlobalBoxOffice(signal?: AbortSignal): Promise<MaoyanGlobalData> {
+  return getSharedCache({ key: 'cache:maoyan:global:movie', ttlSeconds: 6 * 60 * 60, loader: () => fetchGlobalBoxOffice(signal) })
 }
 
-export function getMaoyanRealtime(type: MaoyanRealtimeType, date?: string): Promise<MaoyanRealtimeData> {
+export function getMaoyanRealtime(type: MaoyanRealtimeType, date?: string, signal?: AbortSignal): Promise<MaoyanRealtimeData> {
   return getSharedCache({
     key: `cache:maoyan:realtime:${type}:${date || 'today'}`,
     ttlSeconds: date ? 60 * 60 : 60,
-    loader: () => fetchBoxOfficeByType(type, date)
+    loader: () => fetchBoxOfficeByType(type, date, signal)
   })
 }

@@ -23,6 +23,7 @@ export const DEFAULT_API_REGISTRATION = {
 
 export const API_GUARD_ERROR = {
   NOT_REGISTERED: { status: 403, code: 'API_NOT_REGISTERED', msg: '接口未登记，请联系管理员' },
+  INVALID_CONFIGURATION: { status: 503, code: 'API_CONFIGURATION_ERROR', msg: '接口治理配置无效，请联系管理员' },
   DISABLED: { status: 503, code: 'API_DISABLED', msg: '接口已停用' },
   METHOD_NOT_ALLOWED: { status: 405, code: 'METHOD_NOT_ALLOWED', msg: '请求方法不受支持' },
   MISSING_API_KEY: { status: 401, code: 'MISSING_API_KEY', msg: '缺少 x-api-key 请求头' },

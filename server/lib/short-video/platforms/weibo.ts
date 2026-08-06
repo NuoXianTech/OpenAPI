@@ -30,12 +30,12 @@ function qualityPriority(label: string): number {
   return 0
 }
 
-export async function parseWeibo(sourceUrl: URL): Promise<unknown> {
+export async function parseWeibo(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   let videoId = extractWeiboVideoId(sourceUrl)
   if (!videoId) {
     const resolvedUrl = await resolvePlatformUrl(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
       'user-agent': DESKTOP_BROWSER_USER_AGENT
-    })
+    }, signal)
     videoId = extractWeiboVideoId(resolvedUrl)
   }
   if (!videoId) {
@@ -62,7 +62,8 @@ export async function parseWeibo(sourceUrl: URL): Promise<unknown> {
         'referer': `https://weibo.com${page}`,
         'user-agent': DESKTOP_BROWSER_USER_AGENT
       },
-      body
+      body,
+      signal
     }
   )
 

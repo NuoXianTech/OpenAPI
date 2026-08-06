@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { messageLevelSchema } from '../common'
-import { requiredString } from '../validation'
+import { nullablePublicUrl, requiredPublicUrl, requiredString } from '../validation'
 
 export const adminCreateAnnouncementSchema = z.object({
   title: requiredString('公告标题'),
@@ -8,7 +8,7 @@ export const adminCreateAnnouncementSchema = z.object({
   level: messageLevelSchema.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
-  linkUrl: z.string().nullable().optional(),
+  linkUrl: nullablePublicUrl('公告链接'),
   sortOrder: z.coerce.number().int().optional()
 })
 
@@ -19,13 +19,13 @@ export const adminUpdateAnnouncementSchema = z.object({
   level: messageLevelSchema.catch('info').optional(),
   isPinned: z.boolean().optional(),
   isEnabled: z.boolean().optional(),
-  linkUrl: z.string().nullable().optional(),
+  linkUrl: nullablePublicUrl('公告链接'),
   sortOrder: z.coerce.number().int().optional()
 })
 
 export const adminCreateFriendLinkSchema = z.object({
   title: requiredString('链接标题'),
-  url: requiredString('链接地址'),
+  url: requiredPublicUrl('链接地址'),
   description: z.string().optional(),
   isActive: z.boolean().default(true)
 })
@@ -33,7 +33,7 @@ export const adminCreateFriendLinkSchema = z.object({
 export const adminUpdateFriendLinkSchema = z.object({
   id: z.coerce.number().int().positive('友情链接 ID 必填'),
   title: z.string().trim().optional(),
-  url: z.string().trim().optional(),
+  url: requiredPublicUrl('链接地址').optional(),
   description: z.string().optional(),
   isActive: z.boolean().optional()
 })

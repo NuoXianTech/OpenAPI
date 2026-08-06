@@ -87,6 +87,29 @@ describe('shared cache', () => {
     expect(loader).toHaveBeenCalledOnce()
   })
 
+  it('lets an aborted caller leave the shared producer running', async () => {
+    const cache = createTestCache(null)
+    let resolveLoad!: (value: { id: number }) => void
+    const loader = vi.fn(() => new Promise<{ id: number }>((resolve) => {
+      resolveLoad = resolve
+    }))
+    const controller = new AbortController()
+    const first = cache.get({
+      key: 'cache:item',
+      ttlSeconds: 10,
+      loader,
+      signal: controller.signal
+    })
+    const second = cache.get({ key: 'cache:item', ttlSeconds: 10, loader })
+
+    controller.abort()
+    await expect(first).rejects.toMatchObject({ name: 'AbortError' })
+
+    resolveLoad({ id: 1 })
+    await expect(second).resolves.toEqual({ id: 1 })
+    expect(loader).toHaveBeenCalledOnce()
+  })
+
   it('coalesces and caches loads when Redis reads fail', async () => {
     const loader = vi.fn(async () => ({ id: 1 }))
     const client = createFakeRedis().client

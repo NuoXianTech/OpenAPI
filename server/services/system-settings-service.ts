@@ -247,6 +247,16 @@ export const systemSettingsService = {
 
     const next = { ...current, ...normalizedPatch }
     if (updatesClientIpSettings(normalizedPatch)) assertClientIpSettings(next)
+    const turnstileSceneEnabled = next.turnstileLoginEnabled
+      || next.turnstileRegisterEnabled
+      || next.turnstilePasswordResetEnabled
+      || next.turnstileCheckinEnabled
+    if (turnstileSceneEnabled && (!next.turnstileSiteKey || !next.turnstileSecretKey)) {
+      throw createError({
+        statusCode: 400,
+        message: '启用 Turnstile 场景前必须同时配置 Site Key 和 Secret Key'
+      })
+    }
     await upsertSettings(normalizedPatch)
     cacheSettings(next)
     await deleteSharedCache([PUBLIC_SYSTEM_SETTINGS_CACHE_KEY])

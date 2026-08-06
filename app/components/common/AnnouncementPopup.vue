@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Announcement, MessageLevel } from '#shared/types/content'
+import { isSafePublicUrl } from '#shared/utils/safe-url'
 import { MESSAGE_LEVEL_META as levelMeta, type MessageLevelMeta } from '~/constants/message-level'
 import {
   getLatestAnnouncementRevision,
@@ -59,7 +60,7 @@ const accordionItems = computed<AnnouncementItem[]>(() => items.value.map(a => (
   levelLabel: getAnnouncementLevelLabel(a.level),
   isPinned: a.isPinned,
   text: a.content,
-  linkUrl: a.linkUrl,
+  linkUrl: isSafePublicUrl(a.linkUrl, { allowRelative: true }) ? a.linkUrl : null,
   date: formatDateTime(a.createdAt, '-', locale.value),
   dateTime: a.createdAt
 })))

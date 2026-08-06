@@ -23,12 +23,12 @@ function findPipixiaItem(payload: Record<string, unknown>): Record<string, unkno
   return {}
 }
 
-export async function parsePipixia(sourceUrl: URL): Promise<unknown> {
+export async function parsePipixia(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   const resolvedUrl = extractPipixiaItemId(sourceUrl)
     ? sourceUrl
     : await resolvePlatformUrl(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
         'user-agent': DESKTOP_BROWSER_USER_AGENT
-      })
+      }, signal)
   const itemId = extractPipixiaItemId(resolvedUrl)
   if (!itemId) {
     throw createShortVideoError('business', 422, 'PARSE_FAILED', '无法从皮皮虾链接提取内容 ID')
@@ -49,7 +49,8 @@ export async function parsePipixia(sourceUrl: URL): Promise<unknown> {
       headers: {
         'referer': resolvedUrl.toString(),
         'user-agent': DESKTOP_BROWSER_USER_AGENT
-      }
+      },
+      signal
     }
   )
 

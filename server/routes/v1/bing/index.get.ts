@@ -13,6 +13,7 @@
  */
 
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery, getRequestHeader, sendRedirect, setResponseHeader } from 'h3'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiOk } from '~~/server/utils/open-api-response'
@@ -38,14 +39,14 @@ function parseBingImageType(query: Record<string, unknown>): BingImageType {
   return isBingImageType(rawType) ? rawType : DEFAULT_BING_IMAGE_TYPE
 }
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
   const query = getQuery(event) as Record<string, unknown>
   const encode = parseBingEncode(query)
   const type = parseBingImageType(query)
   const userAgent = getRequestHeader(event, 'user-agent') || ''
 
   try {
-    const data = await getBingImage()
+    const data = await getBingImage(signal)
     const cover = resolveBingCoverUrl(data.cover, type, userAgent)
     const record = {
       ...data,

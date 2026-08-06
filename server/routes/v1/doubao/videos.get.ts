@@ -13,6 +13,7 @@
  */
 
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { getQuery } from 'h3'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
@@ -26,7 +27,7 @@ import {
 import { doubaoVideoParse, yunqueVideoParse } from '~~/server/lib/doubao/video'
 import { getEnabledDoubaoVideoSources } from '~~/server/lib/doubao/capability-config'
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
   try {
     const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
     const source = detectVideoSource(url)
@@ -34,8 +35,8 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
       throw createDoubaoError('business', 403, 'DOUBAO_SOURCE_DISABLED', `视频来源 ${source} 已被管理员关闭`)
     }
     const result = source === 'doubao'
-      ? await doubaoVideoParse(url, raw)
-      : await yunqueVideoParse(url, raw)
+      ? await doubaoVideoParse(url, raw, signal)
+      : await yunqueVideoParse(url, raw, signal)
 
     if (raw) return openApiOk(event, { source, raw: result }, '解析成功（原始数据）')
 

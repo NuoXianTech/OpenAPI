@@ -207,13 +207,13 @@ export function formatDouyinDetail(detail: Record<string, unknown>, videoId: str
   }
 }
 
-export async function parseDouyin(sourceUrl: URL): Promise<unknown> {
+export async function parseDouyin(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   let resolvedUrl = sourceUrl
   let videoId = extractDouyinId(resolvedUrl)
   if (!videoId) {
     resolvedUrl = await resolvePlatformUrl(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
       'user-agent': MOBILE_BROWSER_USER_AGENT
-    })
+    }, signal)
     videoId = extractDouyinId(resolvedUrl)
   }
   if (!videoId) {
@@ -233,7 +233,8 @@ export async function parseDouyin(sourceUrl: URL): Promise<unknown> {
         'accept-language': 'zh-CN,zh;q=0.9',
         'referer': resolvedUrl.toString(),
         'user-agent': candidate.includes('iesdouyin.com') ? MOBILE_BROWSER_USER_AGENT : DESKTOP_BROWSER_USER_AGENT
-      }
+      },
+      signal
     }).catch(() => null)
     if (!response) continue
 

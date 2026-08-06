@@ -53,7 +53,7 @@ const getParams = () => {
   return new URLSearchParams({ ...signData, signKey })
 }
 
-export const fetchBoxOfficeByType = async (type: 'movie' | 'tv' | 'web', date?: string) => {
+export const fetchBoxOfficeByType = async (type: 'movie' | 'tv' | 'web', date?: string, signal?: AbortSignal) => {
   const params = getParams()
 
   if (date) {
@@ -70,14 +70,14 @@ export const fetchBoxOfficeByType = async (type: 'movie' | 'tv' | 'web', date?: 
 
   const res = await fetch(url, {
     headers: { mygsig: getMygsig(PATH_MAP[type], params.toString()) },
-    signal: AbortSignal.timeout(15_000),
+    signal: signal ?? AbortSignal.timeout(15_000),
   })
   if (!res.ok) throw new Error(`猫眼上游返回 HTTP ${res.status}`)
   const payload = await res.json() as unknown
   if (!isRecord(payload)) throw new Error('猫眼上游返回了无效数据')
   const data = transformRes(payload) as DashboardRes
 
-  return transformFormat(await processFontEncoding(data))
+  return transformFormat(await processFontEncoding(data, signal))
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -179,14 +179,14 @@ function transformFormat(data: Partial<DashboardRes>) {
   }
 }
 
-async function processFontEncoding(data: DashboardRes): Promise<DashboardRes> {
+async function processFontEncoding(data: DashboardRes, signal?: AbortSignal): Promise<DashboardRes> {
   const fontUrl = extractWoffUrl(data.fontStyle)
 
   if (!fontUrl) {
     return data
   }
 
-  const response = await fetch(fontUrl, { signal: AbortSignal.timeout(10_000) })
+  const response = await fetch(fontUrl, { signal: signal ?? AbortSignal.timeout(10_000) })
   if (!response.ok) throw new Error(`猫眼字体上游返回 HTTP ${response.status}`)
   const buffer = Buffer.from(await response.arrayBuffer())
   const font = create(buffer)

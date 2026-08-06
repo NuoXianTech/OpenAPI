@@ -10,6 +10,7 @@ import {
   type BingImageType,
   type BingPrimaryModel
 } from './types'
+import { waitForAbort } from '~~/server/utils/shared-cache'
 
 interface BingCacheEntry {
   dayKey: string
@@ -87,7 +88,7 @@ function isMobileUserAgent(userAgent: string): boolean {
   return /\b(mobile|android|iphone|ipod|ipad|blackberry|webos|opera mini|windows phone|iemobile|symbian)\b/i.test(userAgent)
 }
 
-function createBingFetchOptions(): RequestInit {
+function createBingFetchOptions(signal?: AbortSignal): RequestInit {
   return {
     headers: {
       'user-agent': BING_CHROME_USER_AGENT,
@@ -95,7 +96,7 @@ function createBingFetchOptions(): RequestInit {
       'x-forwarded-for': BING_CN_EDGE_IP,
       'accept': 'application/json,text/html,text/plain,*/*'
     },
-    signal: AbortSignal.timeout(15_000)
+    signal: signal ?? AbortSignal.timeout(15_000)
   }
 }
 
@@ -138,8 +139,8 @@ function toBingPrimaryRecord(model: BingPrimaryModel, fetchedAt = new Date()): B
   }
 }
 
-async function fetchBingImageFromPrimary(): Promise<BingImageRecord | null> {
-  const response = await fetch(BING_PRIMARY_URL, createBingFetchOptions())
+async function fetchBingImageFromPrimary(signal?: AbortSignal): Promise<BingImageRecord | null> {
+  const response = await fetch(BING_PRIMARY_URL, createBingFetchOptions(signal))
   if (!response.ok) return null
 
   const html = await response.text()
@@ -153,8 +154,8 @@ async function fetchBingImageFromPrimary(): Promise<BingImageRecord | null> {
   }
 }
 
-async function fetchBingImageFromArchive(): Promise<BingImageRecord> {
-  const response = await fetch(BING_ARCHIVE_URL, createBingFetchOptions())
+async function fetchBingImageFromArchive(signal?: AbortSignal): Promise<BingImageRecord> {
+  const response = await fetch(BING_ARCHIVE_URL, createBingFetchOptions(signal))
 
   if (!response.ok) {
     throw new Error(`Bing archive responded with HTTP ${response.status}`)
@@ -169,16 +170,17 @@ async function fetchBingImageFromArchive(): Promise<BingImageRecord> {
   return toBingImageRecord(image)
 }
 
-async function fetchBingImage(): Promise<BingImageRecord> {
-  const primaryRecord = await fetchBingImageFromPrimary().catch(() => null)
-  return primaryRecord || fetchBingImageFromArchive()
+async function fetchBingImage(signal?: AbortSignal): Promise<BingImageRecord> {
+  const primaryRecord = await fetchBingImageFromPrimary(signal).catch(() => null)
+  return primaryRecord || fetchBingImageFromArchive(signal)
 }
 
-export async function getBingImage(): Promise<BingImageRecord> {
+export async function getBingImage(signal?: AbortSignal): Promise<BingImageRecord> {
   const dayKey = formatLocalDayKey()
-  if (bingCache?.dayKey === dayKey) return bingCache.data
-  if (pendingBingFetch) return pendingBingFetch
+  if (bingCache?.dayKey === dayKey) return waitForAbort(Promise.resolve(bingCache.data), signal)
+  if (pendingBingFetch) return waitForAbort(pendingBingFetch, signal)
 
+  // Keep the daily producer independent from an individual request timeout.
   pendingBingFetch = fetchBingImage()
     .then((record) => {
       bingCache = {
@@ -195,5 +197,5 @@ export async function getBingImage(): Promise<BingImageRecord> {
       pendingBingFetch = null
     })
 
-  return pendingBingFetch
+  return waitForAbort(pendingBingFetch, signal)
 }

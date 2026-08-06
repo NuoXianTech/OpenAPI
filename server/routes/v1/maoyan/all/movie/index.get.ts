@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
 import { setResponseHeader } from 'h3'
 import { getMaoyanGlobalBoxOffice } from '~~/server/lib/maoyan'
 import { formatMaoyanGlobalMarkdown, formatMaoyanGlobalText } from '~~/server/lib/maoyan/format'
@@ -7,12 +8,12 @@ import { openApiBizFail } from '~~/server/utils/api-call-outcome'
 import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import { isMaoyanRankingEnabled } from '~~/server/lib/maoyan/capability-config'
 
-async function handleMaoyanGlobalMovie(event: H3Event) {
+async function handleMaoyanGlobalMovie(event: H3Event, { signal }: OpenApiHandlerContext) {
   if (!await isMaoyanRankingEnabled('globalMovie')) {
     return openApiFail(event, 403, 'MAOYAN_RANKING_DISABLED', '猫眼全球电影票房榜已被管理员关闭')
   }
   try {
-    const data = await getMaoyanGlobalBoxOffice()
+    const data = await getMaoyanGlobalBoxOffice(signal)
     const encoding = readMaoyanEncoding(event)
     if (encoding === 'text') { setMaoyanTextHeaders(event, 'text/plain', 3600); return formatMaoyanGlobalText(data) }
     if (encoding === 'markdown' || encoding === 'md') { setMaoyanTextHeaders(event, 'text/markdown', 3600); return formatMaoyanGlobalMarkdown(data) }

@@ -36,12 +36,12 @@ function decodeVideoUrl(value: unknown): string {
   }
 }
 
-export async function parseToutiao(sourceUrl: URL): Promise<unknown> {
+export async function parseToutiao(sourceUrl: URL, signal?: AbortSignal): Promise<unknown> {
   let videoId = extractToutiaoVideoId(sourceUrl)
   if (!videoId) {
     const resolvedUrl = await resolvePlatformUrl(PLATFORM, sourceUrl, ALLOWED_HOSTS, {
       'user-agent': DESKTOP_BROWSER_USER_AGENT
-    })
+    }, signal)
     videoId = extractToutiaoVideoId(resolvedUrl)
   }
   if (!videoId) {
@@ -54,7 +54,8 @@ export async function parseToutiao(sourceUrl: URL): Promise<unknown> {
       'accept': 'text/html,application/xhtml+xml,*/*',
       'referer': 'https://www.toutiao.com/',
       'user-agent': DESKTOP_BROWSER_USER_AGENT
-    }
+    },
+    signal
   })
   const renderData = extractToutiaoRenderData(response.text)
   const data = asRecord(renderData?.data)

@@ -12,6 +12,7 @@ export interface SharedCacheOptions<TValue> {
   key: string
   ttlSeconds: number
   loader: () => Promise<TValue>
+  signal?: AbortSignal
 }
 
 export interface SharedCacheDependencies {
@@ -51,6 +52,38 @@ end
 redis.call('SET', KEYS[1], 2)
 return 2
 `
+
+function createAbortError(signal: AbortSignal): Error {
+  if (signal.reason instanceof Error) return signal.reason
+  const error = new Error('The operation was aborted')
+  error.name = 'AbortError'
+  return error
+}
+
+export async function waitForAbort<TValue>(promise: Promise<TValue>, signal?: AbortSignal): Promise<TValue> {
+  if (!signal) return promise
+  if (signal.aborted) throw createAbortError(signal)
+
+  return new Promise<TValue>((resolve, reject) => {
+    const onAbort = () => {
+      cleanup()
+      reject(createAbortError(signal))
+    }
+    const cleanup = () => signal.removeEventListener('abort', onAbort)
+
+    signal.addEventListener('abort', onAbort, { once: true })
+    promise.then(
+      (value) => {
+        cleanup()
+        resolve(value)
+      },
+      (error) => {
+        cleanup()
+        reject(error)
+      }
+    )
+  })
+}
 
 export function createSharedCache(
   dependencies: Partial<SharedCacheDependencies> = {}
@@ -210,27 +243,31 @@ export function createSharedCache(
   }
 
   async function get<TValue>(options: SharedCacheOptions<TValue>): Promise<TValue> {
-    const key = toFullKey(options.key)
-    const ttlMs = createTtlMs(options.ttlSeconds)
-    let client: SharedCacheClient | null
-    try {
-      client = resolvedDependencies.getClient()
-    } catch (error) {
-      warnOnce('client', error)
-      client = null
+    const load = async (): Promise<TValue> => {
+      const key = toFullKey(options.key)
+      const ttlMs = createTtlMs(options.ttlSeconds)
+      let client: SharedCacheClient | null
+      try {
+        client = resolvedDependencies.getClient()
+      } catch (error) {
+        warnOnce('client', error)
+        client = null
+      }
+
+      if (!client) return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
+
+      try {
+        const cached = await readRedis<TValue>(client, key)
+        if (cached.hit) return cached.value as TValue
+      } catch (error) {
+        warnOnce('read', error)
+        return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
+      }
+
+      return coalesce(key, () => loadRedis(client, key, ttlMs, options.loader))
     }
 
-    if (!client) return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
-
-    try {
-      const cached = await readRedis<TValue>(client, key)
-      if (cached.hit) return cached.value as TValue
-    } catch (error) {
-      warnOnce('read', error)
-      return coalesce(key, () => loadMemory(key, ttlMs, options.loader))
-    }
-
-    return coalesce(key, () => loadRedis(client, key, ttlMs, options.loader))
+    return waitForAbort(load(), options.signal)
   }
 
   async function deleteKeys(keys: string[]): Promise<void> {

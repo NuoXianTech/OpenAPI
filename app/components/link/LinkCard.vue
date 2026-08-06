@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isSafePublicUrl } from '#shared/utils/safe-url'
+
 interface LinkCardProps {
   title?: string
   description?: string
@@ -19,12 +21,14 @@ const displayDescription = computed(() => {
   return value || t('common.content.noDescription')
 })
 
+const safeUrl = computed(() => isSafePublicUrl(props.url) ? props.url : '#')
+
 const displayHost = computed(() => {
   try {
-    const url = new URL(props.url)
+    const url = new URL(safeUrl.value)
     return url.hostname.replace(/^www\./, '')
   } catch {
-    return props.url
+    return safeUrl.value
   }
 })
 
@@ -38,7 +42,7 @@ const isActive = computed(() => props.status === 1)
 
 <template>
   <a
-    :href="props.url"
+    :href="safeUrl"
     target="_blank"
     rel="noopener"
     class="link-card group"
@@ -84,7 +88,7 @@ const isActive = computed(() => props.status === 1)
     <div class="link-card__footer">
       <span
         class="link-card__host"
-        :title="props.url"
+        :title="safeUrl"
       >
         <UIcon
           name="i-mdi-earth"
