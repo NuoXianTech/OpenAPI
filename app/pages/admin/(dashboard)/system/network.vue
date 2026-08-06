@@ -11,6 +11,14 @@ import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-pag
 const { form, createSection, save, reset } = useAdminSettingsPage()
 const { t } = useI18n()
 
+const inlineNoticeUi = {
+  root: 'rounded-none bg-transparent p-0 ring-0',
+  wrapper: 'gap-0.5',
+  title: 'text-sm font-medium text-highlighted',
+  description: 'text-sm leading-5 text-muted opacity-100',
+  icon: 'mt-0.5 size-4'
+} as const
+
 useHead({ title: () => t('admin.system.network.pageTitle') })
 
 const networkKeys = [
@@ -177,9 +185,10 @@ onMounted(() => {
       <UAlert
         v-if="statusFailed"
         color="error"
-        variant="subtle"
+        variant="soft"
         icon="i-mdi-alert-circle-outline"
         :title="t('admin.system.network.diagnostics.loadFailed')"
+        :ui="inlineNoticeUi"
       />
 
       <div
@@ -240,10 +249,11 @@ onMounted(() => {
       <UAlert
         v-if="status?.effective.safeFallback"
         color="warning"
-        variant="subtle"
+        variant="soft"
         icon="i-mdi-shield-alert-outline"
         :title="t('admin.system.network.diagnostics.safeFallback.title')"
         :description="t('admin.system.network.diagnostics.safeFallback.description')"
+        :ui="inlineNoticeUi"
       />
     </DashboardSettingsSection>
 
@@ -254,10 +264,11 @@ onMounted(() => {
       <UAlert
         v-if="environmentManaged"
         color="warning"
-        variant="subtle"
+        variant="soft"
         icon="i-mdi-lock-outline"
         :title="t('admin.system.network.management.lockedTitle')"
         :description="t('admin.system.network.management.lockedDescription')"
+        :ui="inlineNoticeUi"
       />
 
       <UFormField
@@ -291,67 +302,77 @@ onMounted(() => {
           class="flex flex-col items-stretch gap-4"
           :ui="{ container: 'w-full' }"
         >
-          <div class="mb-2 flex flex-wrap gap-2">
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="xs"
-              icon="i-mdi-server-network-outline"
+          <div class="space-y-3">
+            <div class="flex flex-wrap gap-2">
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="xs"
+                icon="i-mdi-server-network-outline"
+                :disabled="environmentManaged"
+                @click="addLocalProxyCidrs"
+              >
+                {{ t('admin.system.network.trusted.shortcuts.localProxy') }}
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="xs"
+                icon="i-mdi-ip-outline"
+                :disabled="environmentManaged"
+                @click="addTrustedCidr('0.0.0.0/0')"
+              >
+                {{ t('admin.system.network.trusted.shortcuts.allIpv4') }}
+              </UButton>
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="xs"
+                icon="i-mdi-ip-network-outline"
+                :disabled="environmentManaged"
+                @click="addTrustedCidr('::/0')"
+              >
+                {{ t('admin.system.network.trusted.shortcuts.allIpv6') }}
+              </UButton>
+            </div>
+
+            <UTextarea
+              v-model="activeTrustedCidrs"
+              :rows="6"
+              autoresize
+              :maxrows="12"
               :disabled="environmentManaged"
-              @click="addLocalProxyCidrs"
+              class="w-full font-mono text-sm"
+              placeholder="127.0.0.1/32&#10;::1/128"
+              @blur="normalizeTrustedCidrs"
+            />
+
+            <div
+              v-if="trustsEveryAddress || activeSource === 'cloudflare'"
+              class="grid gap-3 pt-1"
             >
-              {{ t('admin.system.network.trusted.shortcuts.localProxy') }}
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="xs"
-              icon="i-mdi-ip-outline"
-              :disabled="environmentManaged"
-              @click="addTrustedCidr('0.0.0.0/0')"
-            >
-              {{ t('admin.system.network.trusted.shortcuts.allIpv4') }}
-            </UButton>
-            <UButton
-              color="neutral"
-              variant="outline"
-              size="xs"
-              icon="i-mdi-ip-network-outline"
-              :disabled="environmentManaged"
-              @click="addTrustedCidr('::/0')"
-            >
-              {{ t('admin.system.network.trusted.shortcuts.allIpv6') }}
-            </UButton>
+              <UAlert
+                v-if="trustsEveryAddress"
+                color="warning"
+                variant="soft"
+                icon="i-mdi-alert-outline"
+                :title="t('admin.system.network.trusted.allWarning.title')"
+                :description="t('admin.system.network.trusted.allWarning.description')"
+                :ui="inlineNoticeUi"
+              />
+
+              <UAlert
+                v-if="activeSource === 'cloudflare'"
+                color="info"
+                variant="soft"
+                icon="i-mdi-cloud-lock-outline"
+                :title="t('admin.system.network.cloudflare.title')"
+                :description="t('admin.system.network.cloudflare.description')"
+                :ui="inlineNoticeUi"
+              />
+            </div>
           </div>
-          <UTextarea
-            v-model="activeTrustedCidrs"
-            :rows="6"
-            autoresize
-            :maxrows="12"
-            :disabled="environmentManaged"
-            class="w-full font-mono text-sm"
-            placeholder="127.0.0.1/32&#10;::1/128"
-            @blur="normalizeTrustedCidrs"
-          />
         </UFormField>
-
-        <UAlert
-          v-if="trustsEveryAddress"
-          color="warning"
-          variant="subtle"
-          icon="i-mdi-alert-outline"
-          :title="t('admin.system.network.trusted.allWarning.title')"
-          :description="t('admin.system.network.trusted.allWarning.description')"
-        />
-
-        <UAlert
-          v-if="activeSource === 'cloudflare'"
-          color="info"
-          variant="subtle"
-          icon="i-mdi-cloud-lock-outline"
-          :title="t('admin.system.network.cloudflare.title')"
-          :description="t('admin.system.network.cloudflare.description')"
-        />
       </template>
 
       <template v-if="activeSource === 'x_forwarded_for'">
@@ -399,10 +420,8 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   gap: 0.35rem;
-  padding: 0.75rem;
-  border: 1px solid var(--dashboard-border);
-  border-radius: calc(var(--dashboard-radius) - 0.2rem);
-  background: color-mix(in oklab, var(--dashboard-surface-muted) 46%, var(--dashboard-surface));
+  min-height: 3rem;
+  padding-block: 0.25rem;
 }
 
 .client-ip-flow-node code {
@@ -414,9 +433,11 @@ onMounted(() => {
 }
 
 .client-ip-flow-result {
-  border-color: color-mix(in oklab, var(--ui-primary) 38%, var(--dashboard-border));
-  background: color-mix(in oklab, var(--ui-primary) 7%, var(--dashboard-surface));
+  color: var(--ui-primary);
 }
+
+.client-ip-flow-result code,
+.client-ip-flow-result .client-ip-flow-label { color: currentColor; }
 
 .client-ip-flow-label {
   color: var(--ui-text-muted);
