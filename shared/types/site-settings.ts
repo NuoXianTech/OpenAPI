@@ -81,6 +81,7 @@ export interface PublicSiteSettings {
   siteName: string
   siteDescription: string
   startTime: string
+  uptimeDays: number | null
   icpBeian: string | null
   policeBeian: string | null
   termsUrl: string | null

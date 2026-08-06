@@ -11,6 +11,8 @@
       "defaultDescription": "免费为用户提供网络数据接口调用的服务平台",
       "introTitle": "开发者需要的公共接口，一站式免费调用",
       "availabilitySummary": "全站可用率 {rate} · 已服务 {users} 位开发者",
+      "uptimeSummary": "已运行 {duration}",
+      "uptimeLessThanDay": "已运行不足 1 天",
       "catalogDescription": "按能力、状态和接入成本查找接口，打开详情即可查看请求契约。",
       "popularKicker": "MOST USED",
       "popularTitle": "热门接口",

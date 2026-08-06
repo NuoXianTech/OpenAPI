@@ -22,6 +22,7 @@ import {
 const PUBLIC_SYSTEM_SETTINGS_CACHE_KEY = 'cache:public:settings'
 const PUBLIC_SYSTEM_SETTINGS_TTL_SECONDS = 30
 const SYSTEM_SETTINGS_CACHE_TTL_MS = 10_000
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 export type { PublicSiteSettings, PublicTurnstileSettings, SystemSettings, SystemSettingsPatch }
 
@@ -154,6 +155,16 @@ function toPublicTurnstile(settings: SystemSettings): PublicTurnstileSettings {
   }
 }
 
+function calculateUptimeDays(startTime: string): number | null {
+  if (!startTime) return null
+
+  // startTime is validated as local ISO time; Node interprets it in the process TZ.
+  const elapsed = Date.now() - new Date(startTime).getTime()
+  return Number.isFinite(elapsed) && elapsed >= 0
+    ? Math.floor(elapsed / MILLISECONDS_PER_DAY)
+    : null
+}
+
 export function toAdminSystemSettings(settings: SystemSettings): AdminSystemSettings {
   const safe = Object.fromEntries(
     NON_SECRET_SETTING_NAMES.map(name => [name, settings[name]])
@@ -221,6 +232,7 @@ export const systemSettingsService = {
       siteName: settings.siteName,
       siteDescription: settings.siteDescription,
       startTime: settings.startTime,
+      uptimeDays: calculateUptimeDays(settings.startTime),
       icpBeian: settings.icpBeian || null,
       policeBeian: settings.policeBeian || null,
       termsUrl: settings.termsUrl || null,

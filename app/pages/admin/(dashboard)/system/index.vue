@@ -120,7 +120,6 @@ const fixedTimeInvalid = computed(() => {
         name="startTime"
         :label="t('admin.system.site.basic.startTime.label')"
         :description="t('admin.system.site.basic.startTime.description')"
-        required
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <CommonDateTimePicker

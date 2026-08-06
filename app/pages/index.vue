@@ -70,6 +70,7 @@ useSeoMeta({
     <CommonSiteHeader />
     <CommonPublicApiIntro
       :site-description="settings.siteDescription"
+      :uptime-days="settings.uptimeDays"
       :total-count="introMetrics.total"
       :availability-rate="introMetrics.availabilityRate"
       :call-count="introMetrics.calls"

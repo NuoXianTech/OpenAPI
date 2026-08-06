@@ -30,6 +30,11 @@ function text(max: number, trim = true) {
   return schema.max(max)
 }
 
+const optionalStartTimeSchema = z.string().trim().pipe(z.union([
+  z.literal(''),
+  z.iso.datetime({ local: true, precision: -1 })
+], { error: '运行时间必须使用 YYYY-MM-DDTHH:mm 格式' }))
+
 const trustedProxyCidrsSchema = z.string().max(10_000, '可信代理列表最多 10000 字符')
   .superRefine((value, ctx) => {
     const parsed = parseTrustedProxyCidrs(value)
@@ -80,7 +85,7 @@ export const SYSTEM_SETTING_DEFINITIONS = {
   },
   startTime: {
     key: 'site.start_time',
-    schema: requiredString('运行时间', { max: 32 }),
+    schema: optionalStartTimeSchema,
     default: SITE_SETTINGS_DEFAULTS.startTime,
     public: true,
     secret: false,

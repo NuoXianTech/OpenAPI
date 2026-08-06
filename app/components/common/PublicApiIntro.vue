@@ -9,6 +9,7 @@ import {
 
 interface Props {
   siteDescription?: string
+  uptimeDays?: number | null
   totalCount?: number
   availabilityRate?: number
   callCount?: number
@@ -20,6 +21,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   siteDescription: '',
+  uptimeDays: null,
   totalCount: 0,
   availabilityRate: 0,
   callCount: 0,
@@ -43,6 +45,18 @@ const formattedAvailabilityRate = computed(() => props.totalCount > 0
 const formattedSuccessRate = computed(() => props.callCount > 0
   ? `${props.successRate.toLocaleString(locale.value, { maximumFractionDigits: 2 })}%`
   : '--')
+const uptimeLabel = computed(() => {
+  const days = props.uptimeDays
+  if (days === null) return ''
+  if (days === 0) return t('public.home.uptimeLessThanDay')
+
+  const duration = new Intl.NumberFormat(locale.value, {
+    style: 'unit',
+    unit: 'day',
+    unitDisplay: 'long'
+  }).format(days)
+  return t('public.home.uptimeSummary', { duration })
+})
 const samplePath = '/v1/exchange-rate?currency=CNY&encoding=json'
 const sampleUrl = computed(() => `${requestUrl.origin}${samplePath}`)
 const isRunning = ref(false)
@@ -96,15 +110,22 @@ async function copyRequest(): Promise<void> {
 
     <div class="public-api-intro__layout">
       <div class="public-api-intro__content">
-        <div class="public-api-intro__status" role="status">
-          <UIcon
-            :name="summaryError ? 'i-mdi-alert-circle-outline' : summaryLoading ? 'i-mdi-loading' : 'i-mdi-check-circle-outline'"
-            class="size-3.5"
-            :class="{ 'is-error': summaryError, 'is-loading': summaryLoading }"
-          />
-          <span v-if="summaryError">{{ $t('common.states.loadFailed') }}</span>
-          <span v-else-if="summaryLoading">{{ $t('common.states.loading') }}</span>
-          <span v-else>{{ $t('public.home.availabilitySummary', { rate: formattedAvailabilityRate, users: compactUserCount }) }}</span>
+        <div class="public-api-intro__status-row">
+          <div class="public-api-intro__status" role="status">
+            <UIcon
+              :name="summaryError ? 'i-mdi-alert-circle-outline' : summaryLoading ? 'i-mdi-loading' : 'i-mdi-check-circle-outline'"
+              class="size-3.5"
+              :class="{ 'is-error': summaryError, 'is-loading': summaryLoading }"
+            />
+            <span v-if="summaryError">{{ $t('common.states.loadFailed') }}</span>
+            <span v-else-if="summaryLoading">{{ $t('common.states.loading') }}</span>
+            <span v-else>{{ $t('public.home.availabilitySummary', { rate: formattedAvailabilityRate, users: compactUserCount }) }}</span>
+          </div>
+
+          <div v-if="uptimeLabel" class="public-api-intro__status">
+            <UIcon name="i-mdi-clock-outline" class="size-3.5" />
+            <span>{{ uptimeLabel }}</span>
+          </div>
         </div>
 
         <h1 id="public-api-intro-title" class="public-api-intro__title">
@@ -238,6 +259,12 @@ async function copyRequest(): Promise<void> {
   min-width: 0;
   flex-direction: column;
   align-items: flex-start;
+}
+
+.public-api-intro__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .public-api-intro__status {

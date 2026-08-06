@@ -21,6 +21,7 @@ const EMPTY_TURNSTILE: PublicTurnstileSettings = {
 // 基础字段（siteUrl/siteName 等）从 shared/config/site-defaults 取，与 schema 默认值同源。
 const FALLBACK_SETTINGS: PublicSiteSettings = {
   ...PUBLIC_SITE_DEFAULTS,
+  uptimeDays: null,
   icpBeian: null,
   policeBeian: null,
   termsUrl: null,

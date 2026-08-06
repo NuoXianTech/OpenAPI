@@ -11,6 +11,8 @@
       "defaultDescription": "A free platform for network data APIs",
       "introTitle": "Reliable, straightforward public APIs, ready to use",
       "availabilitySummary": "Platform availability: {rate} · Serving {users} developers",
+      "uptimeSummary": "Uptime: {duration}",
+      "uptimeLessThanDay": "Uptime: less than a day",
       "catalogDescription": "Find APIs by capability, status, and access cost, then inspect the request contract.",
       "popularKicker": "MOST USED",
       "popularTitle": "Popular APIs",

@@ -26,7 +26,7 @@
           },
           "startTime": {
             "label": "Launch time",
-            "description": "Used to display how long the service has been running.",
+            "description": "Optional. When set, the home page displays the service uptime.",
             "placeholder": "Select launch time"
           },
           "termsUrl": {

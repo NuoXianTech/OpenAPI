@@ -5,7 +5,7 @@ import {
   SYSTEM_SETTING_NAMES,
   createSystemSettingsDefaults
 } from '~~/server/config/system-settings'
-import { toAdminSystemSettings } from '~~/server/services/system-settings-service'
+import { systemSettingsService, toAdminSystemSettings } from '~~/server/services/system-settings-service'
 import { toAdminOauthProviderSafe } from '~~/server/services/oauth-provider-service'
 
 vi.mock('h3', () => ({
@@ -26,6 +26,33 @@ describe('system settings', () => {
       expect(definition.key.length, name).toBeLessThanOrEqual(150)
       expect(definition.description.length, name).toBeLessThanOrEqual(500)
       expect(definition.secret && definition.public, name).toBe(false)
+    }
+  })
+
+  it('allows an unset launch time and validates configured values', () => {
+    const schema = SYSTEM_SETTING_DEFINITIONS.startTime.schema
+
+    expect(SITE_SETTINGS_DEFAULTS.startTime).toBe('')
+    expect(schema.safeParse('').success).toBe(true)
+    expect(schema.safeParse('2026-08-07T12:30').success).toBe(true)
+    expect(schema.safeParse('2026-02-30T12:30').success).toBe(false)
+    expect(schema.safeParse('2026-08-07 12:30:00').success).toBe(false)
+  })
+
+  it('calculates public uptime in the application time zone', () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(new Date(2026, 7, 7, 12, 30).getTime())
+
+    try {
+      expect(systemSettingsService.toPublicSettings({
+        ...createSystemSettingsDefaults(),
+        startTime: '2026-08-05T12:30'
+      }).uptimeDays).toBe(2)
+      expect(systemSettingsService.toPublicSettings({
+        ...createSystemSettingsDefaults(),
+        startTime: '2026-08-08T12:30'
+      }).uptimeDays).toBeNull()
+    } finally {
+      now.mockRestore()
     }
   })
 

@@ -26,7 +26,7 @@
           },
           "startTime": {
             "label": "运行时间",
-            "description": "站点上线时间，用于前台展示已稳定运行的天数。",
+            "description": "可选。设置后，首页会显示站点已运行天数。",
             "placeholder": "选择上线时间"
           },
           "termsUrl": {

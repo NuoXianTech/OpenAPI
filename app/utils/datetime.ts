@@ -1,4 +1,5 @@
-import { CalendarDateTime } from '@internationalized/date'
+import { parseDateTime } from '@internationalized/date'
+import type { CalendarDateTime } from '@internationalized/date'
 import { DEFAULT_LOCALE } from '#shared/config/locale-defaults'
 
 /**
@@ -57,16 +58,11 @@ const pad2 = (value: number) => `${value}`.padStart(2, '0')
  */
 export function dateTimeLocalToCalendar(value: string | null | undefined): CalendarDateTime | undefined {
   if (!value) return undefined
-  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/.exec(value)
-  if (!match) return undefined
-  return new CalendarDateTime(
-    Number(match[1]),
-    Number(match[2]),
-    Number(match[3]),
-    Number(match[4]),
-    Number(match[5]),
-    match[6] ? Number(match[6]) : 0
-  )
+  try {
+    return parseDateTime(value)
+  } catch {
+    return undefined
+  }
 }
 
 /**
