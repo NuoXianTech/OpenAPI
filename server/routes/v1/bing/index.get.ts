@@ -48,7 +48,8 @@ export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerConte
     const cover = resolveBingCoverUrl(data.cover, type, userAgent)
     const record = {
       ...data,
-      cover
+      cover,
+      cover_4k: data.cover_4k
     }
 
     api.setHeaders({

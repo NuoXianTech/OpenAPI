@@ -16,6 +16,15 @@ describe('bing image helpers', () => {
     expect(createBingImageUrl(sourceUrl, 'UHD')).toBe('https://bing.com/th?id=OHR.Example_ZH-CN1234567890_UHD.jpg')
   })
 
+  it('keeps the UHD URL as a separate public response field', () => {
+    const cover = createBingImageUrl(sourceUrl)
+    const cover4k = createBingImageUrl(cover, 'UHD')
+
+    expect(cover).toContain('_1920x1080.jpg')
+    expect(cover4k).toContain('_UHD.jpg')
+    expect(cover4k).not.toBe(cover)
+  })
+
   it('selects mobile wallpaper for mobile user agents in auto mode', () => {
     const mobileUserAgent = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148'
 
