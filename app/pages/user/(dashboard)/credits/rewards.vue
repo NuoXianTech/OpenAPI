@@ -22,23 +22,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <UserCreditsCheckinCard
-      :status="checkin"
-      :has-error="checkinStatus === 'error'"
-      :submitting="isCheckingIn"
-      :on-checkin="performCheckin"
-    />
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(22rem,0.58fr)] xl:items-start">
+    <div class="space-y-6">
+      <UserCreditsCheckinCard
+        :status="checkin"
+        :has-error="checkinStatus === 'error'"
+        :submitting="isCheckingIn"
+        :on-checkin="performCheckin"
+      />
+
+      <UserCreditsRedeemCard
+        :records="redeemRecords"
+        :on-redeem="redeem"
+      />
+    </div>
 
     <UserCreditsCheckinCalendar
       :history="checkinCalendar"
       :loading="checkinCalendarLoading"
       :on-month-change="fetchCheckinCalendar"
-    />
-
-    <UserCreditsRedeemCard
-      :records="redeemRecords"
-      :on-redeem="redeem"
     />
   </div>
 </template>

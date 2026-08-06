@@ -84,6 +84,7 @@
       "redeem": {
         "success": "兑换成功 +{amount}",
         "code": "兑换码",
+        "description": "输入管理员提供的兑换码，将奖励加入积分余额。",
         "enterCode": "请输入兑换码",
         "failed": "兑换失败",
         "hint": "输入后点「兑换」即可加入积分，不区分大小写",
@@ -93,11 +94,13 @@
       },
       "calendar": {
         "title": "签到日历",
-        "description": "切换月份可查看历史签到日期",
+        "description": "切换月份查看历史签到记录。",
+        "earnedThisMonth": "本月签到所得",
+        "checkinsThisMonth": "本月签到",
         "days": "{count} 天",
         "points": "+{amount} 积分",
         "checkedIn": "已签到",
-        "monthlyTotal": "当月累计签到 {count} 天"
+        "today": "今天"
       },
       "logs": {
         "title": "积分流水",

@@ -81,6 +81,7 @@
       "redeem": {
         "success": "Redeemed successfully +{amount}",
         "code": "Redemption code",
+        "description": "Enter a code from an administrator to add the reward to your credit balance.",
         "enterCode": "Enter a redemption code",
         "failed": "Redemption failed",
         "hint": "Enter a code and select Redeem. Letter case does not matter.",
@@ -90,11 +91,13 @@
       },
       "calendar": {
         "title": "Check-in calendar",
-        "description": "Switch months to view your previous check-ins",
+        "description": "Switch months to review your check-in history.",
+        "earnedThisMonth": "Earned this month",
+        "checkinsThisMonth": "Check-ins this month",
         "days": "{count} days",
         "points": "+{amount} credits",
         "checkedIn": "Checked in",
-        "monthlyTotal": "{count} check-ins this month"
+        "today": "Today"
       },
       "logs": {
         "title": "Credit transactions",

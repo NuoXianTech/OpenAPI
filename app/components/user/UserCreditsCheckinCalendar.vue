@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDate, parseDate, type DateValue } from '@internationalized/date'
+import { CalendarDate, getLocalTimeZone, parseDate, today, type DateValue } from '@internationalized/date'
 import type { UserCheckinCalendarMonth } from '#shared/types/user-credits'
 
 interface UserCreditsCheckinCalendarProps {
@@ -11,20 +11,18 @@ interface UserCreditsCheckinCalendarProps {
 const props = defineProps<UserCreditsCheckinCalendarProps>()
 const { locale } = useI18n()
 
-const now = new Date()
-const today = new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
-const placeholder = shallowRef<DateValue>(new CalendarDate(today.year, today.month, 1))
-
-const checkedDates = computed<DateValue[]>(() =>
-  (props.history?.days ?? []).map(day => parseDate(day.date))
-)
-const checkedDayNumbers = computed(() => new Set(
-  (props.history?.days ?? []).map(day => Number(day.date.slice(-2)))
-))
-const checkedDayCount = computed(() => props.history?.checkedDayCount ?? 0)
-const totalAmount = computed(() => props.history?.totalAmount ?? 0)
+const todayDate = today(getLocalTimeZone())
+const placeholder = shallowRef<DateValue>(new CalendarDate(todayDate.year, todayDate.month, 1))
 
 const visibleMonth = computed(() => toMonthKey(placeholder.value))
+const hasVisibleHistory = computed(() => props.history?.month === visibleMonth.value)
+const checkedDates = computed<DateValue[]>(() =>
+  hasVisibleHistory.value
+    ? (props.history?.days ?? []).map(day => parseDate(day.date))
+    : []
+)
+const checkedDayCount = computed(() => hasVisibleHistory.value ? props.history?.checkedDayCount ?? 0 : 0)
+const totalAmount = computed(() => hasVisibleHistory.value ? props.history?.totalAmount ?? 0 : 0)
 
 onMounted(() => {
   void props.onMonthChange(visibleMonth.value)
@@ -38,13 +36,6 @@ watch(visibleMonth, (month, previousMonth) => {
 function toMonthKey(date: DateValue): string {
   return `${String(date.year).padStart(4, '0')}-${String(date.month).padStart(2, '0')}`
 }
-
-function isCheckedDay(day: DateValue): boolean {
-  return props.history?.month === visibleMonth.value
-    && day.year === placeholder.value.year
-    && day.month === placeholder.value.month
-    && checkedDayNumbers.value.has(day.day)
-}
 </script>
 
 <template>
@@ -54,70 +45,73 @@ function isCheckedDay(day: DateValue): boolean {
     icon="i-mdi-calendar-month-outline"
   >
     <template #actions>
-      <div class="flex items-center gap-2">
-        <UBadge
-          color="success"
-          variant="subtle"
-        >
-          {{ $t('user.credits.calendar.days', { count: checkedDayCount.toLocaleString(locale) }) }}
-        </UBadge>
-        <UBadge
-          color="primary"
-          variant="subtle"
-        >
-          {{ $t('user.credits.calendar.points', { amount: totalAmount.toLocaleString(locale) }) }}
-        </UBadge>
-      </div>
+      <span
+        v-if="loading"
+        class="inline-flex items-center gap-1.5 text-xs text-muted"
+      >
+        <UIcon
+          name="i-mdi-loading"
+          class="size-4 animate-spin"
+        />
+        {{ $t('common.states.loading') }}
+      </span>
     </template>
 
-    <div class="relative py-1">
-      <UCalendar
-        v-model:placeholder="placeholder"
-        multiple
-        readonly
-        fixed-weeks
-        disable-days-outside-current-view
-        :model-value="checkedDates"
-        :max-value="today"
-        :view-control="false"
-        class="w-full"
-        :ui="{
-          root: 'w-full',
-          body: 'w-full',
-          grid: 'w-full',
-          cellTrigger: 'relative w-full transition-none hover:not-data-selected:bg-transparent data-highlighted:bg-transparent data-selected:bg-transparent data-selected:text-inherit data-selected:ring-0 data-selected:shadow-none'
-        }"
-      >
-        <template #day="{ day }">
-          <span
-            class="flex size-8 items-center justify-center rounded-md sm:size-9"
-            :class="isCheckedDay(day) ? 'bg-success/15 font-semibold text-success ring-1 ring-success/25' : ''"
-          >
-            {{ day.day }}
-          </span>
-        </template>
-      </UCalendar>
+    <div class="grid grid-cols-2 divide-x divide-default border-b border-default pb-4">
+      <div class="pe-4">
+        <p class="text-xs font-medium text-muted">
+          {{ $t('user.credits.calendar.earnedThisMonth') }}
+        </p>
+        <p class="mt-1.5 text-lg font-bold text-success tabular-nums">
+          <template v-if="hasVisibleHistory">
+            {{ $t('user.credits.calendar.points', { amount: totalAmount.toLocaleString(locale) }) }}
+          </template>
+          <template v-else>
+            —
+          </template>
+        </p>
+      </div>
 
-      <div
-        v-if="loading"
-        class="pointer-events-none absolute right-2 top-2"
-      >
-        <div class="flex items-center gap-1.5 rounded-md bg-default/90 px-2 py-1 text-xs text-muted ring-1 ring-default">
-          <UIcon
-            name="i-mdi-loading"
-            class="size-4 animate-spin"
-          />
-          {{ $t('common.states.loading') }}
-        </div>
+      <div class="ps-4">
+        <p class="text-xs font-medium text-muted">
+          {{ $t('user.credits.calendar.checkinsThisMonth') }}
+        </p>
+        <p class="mt-1.5 text-lg font-bold text-highlighted tabular-nums">
+          <template v-if="hasVisibleHistory">
+            {{ $t('user.credits.calendar.days', { count: checkedDayCount.toLocaleString(locale) }) }}
+          </template>
+          <template v-else>
+            —
+          </template>
+        </p>
       </div>
     </div>
 
-    <div class="mt-3 flex items-center justify-center gap-4 border-t border-default pt-3 text-xs text-muted">
+    <UCalendar
+      v-model:placeholder="placeholder"
+      multiple
+      readonly
+      fixed-weeks
+      disable-days-outside-current-view
+      color="success"
+      variant="subtle"
+      size="xl"
+      :locale="locale"
+      :model-value="checkedDates"
+      :max-value="todayDate"
+      :view-control="false"
+      class="mx-auto mt-4 max-w-sm"
+    />
+
+    <div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 border-t border-default pt-3 text-xs text-muted">
       <span class="inline-flex items-center gap-1.5">
-        <span class="size-3 rounded-sm bg-success/15 ring-1 ring-success/25" />
+        <span class="size-3 rounded-full bg-success/15 ring-1 ring-success/30" />
         {{ $t('user.credits.calendar.checkedIn') }}
       </span>
-      <span>{{ $t('user.credits.calendar.monthlyTotal', { count: checkedDayCount.toLocaleString(locale) }) }}</span>
+      <span class="inline-flex items-center gap-1.5">
+        <span class="text-sm font-bold text-success">{{ todayDate.day }}</span>
+        {{ $t('user.credits.calendar.today') }}
+      </span>
     </div>
   </DashboardContentCard>
 </template>

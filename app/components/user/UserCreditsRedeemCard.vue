@@ -33,34 +33,33 @@ async function submit() {
 <template>
   <DashboardContentCard
     :title="$t('user.credits.redeem.code')"
+    :description="$t('user.credits.redeem.description')"
     icon="i-mdi-ticket-percent-outline"
   >
-    <div>
-      <UFormField
-        :label="$t('user.credits.redeem.code')"
-        class="flex max-sm:flex-col justify-between items-start gap-4"
-        :hint="$t('user.credits.redeem.hint')"
-        :ui="{ label: 'sr-only', container: 'w-full sm:max-w-md' }"
-      >
-        <div class="flex w-full max-sm:flex-col gap-2">
-          <UInput
-            v-model="code"
-            :placeholder="$t('user.credits.redeem.placeholder')"
-            class="min-w-0 flex-1 font-mono uppercase"
-            :ui="{ base: 'uppercase' }"
-            @keydown.enter="submit"
-          />
-          <UButton
-            icon="i-mdi-gift-outline"
-            :loading="redeeming"
-            class="max-sm:w-full sm:shrink-0"
-            @click="submit"
-          >
-            {{ $t('user.credits.redeem.action') }}
-          </UButton>
-        </div>
-      </UFormField>
-    </div>
+    <UFormField
+      :label="$t('user.credits.redeem.code')"
+      :hint="$t('user.credits.redeem.hint')"
+      class="flex items-start justify-between gap-4 max-sm:flex-col"
+      :ui="{ label: 'sr-only', container: 'w-full sm:max-w-md' }"
+    >
+      <div class="flex w-full gap-2 max-sm:flex-col">
+        <UInput
+          v-model="code"
+          :placeholder="$t('user.credits.redeem.placeholder')"
+          class="min-w-0 flex-1 font-mono uppercase"
+          :ui="{ base: 'uppercase' }"
+          @keydown.enter="submit"
+        />
+        <UButton
+          icon="i-mdi-gift-outline"
+          :loading="redeeming"
+          class="max-sm:w-full sm:shrink-0"
+          @click="submit"
+        >
+          {{ $t('user.credits.redeem.action') }}
+        </UButton>
+      </div>
+    </UFormField>
     <div
       v-if="records.length > 0"
       class="mt-4 pt-3 border-t border-default"
