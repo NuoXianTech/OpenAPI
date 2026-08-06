@@ -197,6 +197,7 @@ Some built-in public APIs are based on or inspired by:
 - [60s](https://github.com/vikiboss/60s)
 - [Meting](https://github.com/metowolf/Meting)
 - [Meting-API](https://github.com/metowolf/Meting-API)
+- [short_videos](https://github.com/jiuhunwl/short_videos)
 
 ## Contributing
 
