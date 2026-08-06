@@ -1,4 +1,5 @@
 import type { TableColumn } from '@nuxt/ui'
+import { watchDebounced } from '@vueuse/core'
 import { computed, ref, type ComputedRef, type MaybeRefOrGetter, type Ref } from 'vue'
 import {
   ADMIN_LOG_TYPES,
@@ -21,6 +22,7 @@ import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/
 import { useLoginLogMeta, type LoginMethodColor } from '~/composables/logs/use-login-log-meta'
 
 interface AdminCallLogsFilters {
+  keyword: string
   startAt: string
   endAt: string
   apiId: number
@@ -38,6 +40,7 @@ interface UseAdminCallLogsPageOptions {
 }
 
 const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
+  keyword: '',
   startAt: '',
   endAt: '',
   apiId: 0,
@@ -83,9 +86,20 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
+    filterCountKeys: [
+      'startAt',
+      'endAt',
+      'apiId',
+      'categoryId',
+      'types',
+      'apiKeyId',
+      'userId',
+      'requestId'
+    ],
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
+      keyword: createStringQueryCodec(''),
       startAt: createStringQueryCodec(''),
       endAt: createStringQueryCodec(''),
       apiId: createNumberQueryCodec(0),
@@ -105,6 +119,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     pageSize: listState.pageSize,
     immediate: options.immediate ?? true,
     buildQuery: (filters, pagination) => ({
+      keyword: filters.keyword.trim() || undefined,
       startAt: filters.startAt ? new Date(filters.startAt).toISOString() : undefined,
       endAt: filters.endAt ? new Date(filters.endAt).toISOString() : undefined,
       apiId: filters.apiId || undefined,
@@ -131,6 +146,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     { label: t('admin.logs.call.filters.allCategories'), value: 0 },
     ...filterOptions.value.categories.map(category => ({ label: category.name, value: category.id }))
   ])
+  const lastAppliedKeyword = ref(listState.filters.keyword.trim())
   const columns = computed<TableColumn<AdminLogRow>[]>(() => [
     { accessorKey: 'createdAt', header: t('admin.logs.call.columns.time') },
     { accessorKey: 'userName', header: t('admin.logs.call.columns.user') },
@@ -151,14 +167,27 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   }
 
   async function applyFilters() {
+    lastAppliedKeyword.value = listState.filters.keyword.trim()
     await list.applyFilters()
     await listState.syncQuery()
   }
 
   async function resetFilters() {
+    lastAppliedKeyword.value = ADMIN_CALL_LOG_DEFAULT_FILTERS.keyword
     await list.reset()
     await listState.syncQuery()
   }
+
+  watchDebounced(
+    () => listState.filters.keyword.trim(),
+    async (keyword) => {
+      if (keyword === lastAppliedKeyword.value) return
+      lastAppliedKeyword.value = keyword
+      await list.applyFilters()
+      await listState.syncQuery()
+    },
+    { debounce: 250, maxWait: 1000 }
+  )
 
   return {
     filters: listState.filters,
@@ -181,6 +210,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
 }
 
 interface AdminLoginLogFilters {
+  keyword: string
   startAt: string
   endAt: string
   method: 'all' | LoginMethod
@@ -216,6 +246,7 @@ interface UseAdminLoginLogListReturn {
 }
 
 const ADMIN_LOGIN_LOG_DEFAULT_FILTERS: AdminLoginLogFilters = {
+  keyword: '',
   startAt: '',
   endAt: '',
   method: 'all',
@@ -232,6 +263,7 @@ function buildAdminLoginLogQuery(
   pagination: PrivatePagedPagination
 ): Record<string, unknown> {
   return {
+    keyword: filters.keyword.trim() || undefined,
     startAt: optionalDateIso(filters.startAt),
     endAt: optionalDateIso(filters.endAt),
     method: filters.method === 'all' ? undefined : filters.method,
@@ -259,8 +291,8 @@ export function useAdminLoginLogList(
     total,
     loading,
     refresh,
-    applyFilters,
-    reset
+    applyFilters: applyListFilters,
+    reset: resetList
   } = usePrivatePagedList<AdminLoginLogFilters, AdminLoginLogRow>({
     path: '/api/admin/login-logs/list',
     defaultFilters: ADMIN_LOGIN_LOG_DEFAULT_FILTERS,
@@ -275,6 +307,7 @@ export function useAdminLoginLogList(
     filters.success !== 'all',
     filters.userId !== ''
   ].filter(Boolean).length)
+  const lastAppliedKeyword = ref(filters.keyword.trim())
   const methodItems = computed<Array<AdminLoginLogSelectItem<AdminLoginLogFilters['method']>>>(() => [
     { label: t('admin.logs.login.filters.allMethods'), value: 'all' },
     { label: getLoginMethodLabel('password'), value: 'password' },
@@ -294,6 +327,26 @@ export function useAdminLoginLogList(
     { accessorKey: 'device', header: t('admin.logs.login.columns.device') },
     { accessorKey: 'ip', header: 'IP' }
   ])
+
+  async function applyFilters() {
+    lastAppliedKeyword.value = filters.keyword.trim()
+    await applyListFilters()
+  }
+
+  async function reset() {
+    lastAppliedKeyword.value = ADMIN_LOGIN_LOG_DEFAULT_FILTERS.keyword
+    await resetList()
+  }
+
+  watchDebounced(
+    () => filters.keyword.trim(),
+    async (keyword) => {
+      if (keyword === lastAppliedKeyword.value) return
+      lastAppliedKeyword.value = keyword
+      await applyListFilters()
+    },
+    { debounce: 250, maxWait: 1000 }
+  )
 
   return {
     activeFilterCount,
@@ -330,6 +383,7 @@ interface AdminOperationLogRow {
 }
 
 interface AdminOperationLogFilters extends Record<string, unknown> {
+  keyword: string
   startAt: string
   endAt: string
   userId: number | ''
@@ -367,6 +421,7 @@ interface UseAdminOperationLogListReturn {
 }
 
 const ADMIN_OPERATION_LOG_DEFAULT_FILTERS: AdminOperationLogFilters = {
+  keyword: '',
   startAt: '',
   endAt: '',
   userId: '',
@@ -387,6 +442,7 @@ function buildAdminOperationLogQuery(
   pagination: PrivatePagedPagination
 ): Record<string, unknown> {
   return {
+    keyword: trimmedOrUndefined(filters.keyword),
     startAt: optionalDateIso(filters.startAt),
     endAt: optionalDateIso(filters.endAt),
     userId: filters.userId || undefined,
@@ -435,8 +491,8 @@ export function useAdminOperationLogList(
     total,
     loading,
     refresh,
-    applyFilters,
-    reset
+    applyFilters: applyListFilters,
+    reset: resetList
   } = usePrivatePagedList<AdminOperationLogFilters, AdminOperationLogRow>({
     path: '/api/admin/operation-logs/list',
     defaultFilters: ADMIN_OPERATION_LOG_DEFAULT_FILTERS,
@@ -454,6 +510,7 @@ export function useAdminOperationLogList(
     !!filters.resourceType,
     filters.status !== 'all'
   ].filter(Boolean).length)
+  const lastAppliedKeyword = ref(filters.keyword.trim())
 
   const detailRow = ref<AdminOperationLogRow | null>(null)
   const detailOpen = ref(false)
@@ -506,6 +563,26 @@ export function useAdminOperationLogList(
     detailRow.value = row
     detailOpen.value = true
   }
+
+  async function applyFilters() {
+    lastAppliedKeyword.value = filters.keyword.trim()
+    await applyListFilters()
+  }
+
+  async function reset() {
+    lastAppliedKeyword.value = ADMIN_OPERATION_LOG_DEFAULT_FILTERS.keyword
+    await resetList()
+  }
+
+  watchDebounced(
+    () => filters.keyword.trim(),
+    async (keyword) => {
+      if (keyword === lastAppliedKeyword.value) return
+      lastAppliedKeyword.value = keyword
+      await applyListFilters()
+    },
+    { debounce: 250, maxWait: 1000 }
+  )
 
   return {
     actorKindItems,

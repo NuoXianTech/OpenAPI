@@ -2,7 +2,7 @@ import { loginLogService } from '~~/server/services/login-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { toIsoString } from '~~/server/utils/date'
 import { readPaginationQuery } from '~~/server/utils/pagination'
-import { readQueryDate, readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
+import { readQueryDate, readQueryNumber, readQueryOption, readQueryString, readQueryText } from '~~/server/utils/request-query'
 import { summarizeUserAgent } from '~~/server/utils/user-agent'
 import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
 
@@ -23,6 +23,7 @@ export default defineAdminEventHandler(async (event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const { items, total } = await loginLogService.listForAdmin({
+    keyword: readQueryText(query.keyword),
     startAt: readQueryDate(query.startAt),
     endAt: readQueryDate(query.endAt),
     method: parseMethod(query.method),

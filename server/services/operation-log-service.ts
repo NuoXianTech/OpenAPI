@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, notLike, or, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, notLike, or, sql, type SQL } from 'drizzle-orm'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -20,6 +20,7 @@ interface OperationLogInput {
 }
 
 interface OperationLogListFilters {
+  keyword?: string
   userId?: number
   // 管理员也是真实 users 账号，来源按 action 前缀区分，而不是按 userId 是否为空区分。
   actorKind?: 'admin' | 'user'
@@ -71,6 +72,19 @@ export const operationLogService = {
   async list(filters: OperationLogListFilters = {}): Promise<OperationLogListResult> {
     // 登录事件与其他审计事件共用一张表，但继续由专门的登录日志页面展示。
     const conditions: SQL[] = [notLike(operationLogs.action, 'auth.login.%')]
+    const keyword = filters.keyword?.trim()
+    if (keyword) {
+      const keywordPattern = `%${keyword}%`
+      conditions.push(or(
+        ilike(operationLogs.actor, keywordPattern),
+        ilike(operationLogs.action, keywordPattern),
+        ilike(operationLogs.resourceType, keywordPattern),
+        ilike(operationLogs.resourceId, keywordPattern),
+        ilike(operationLogs.ip, keywordPattern),
+        ilike(operationLogs.userAgent, keywordPattern),
+        sql`${operationLogs.userId}::text ilike ${keywordPattern}`
+      )!)
+    }
     if (typeof filters.userId === 'number') {
       conditions.push(eq(operationLogs.userId, filters.userId))
     }

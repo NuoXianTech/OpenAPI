@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
+import { and, asc, eq, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
@@ -35,6 +35,7 @@ const apiCallTypeExpr = sql<AdminLogType>`
 // ─────────────────────────────────────────────────────────────────────
 
 interface ListLogsInput {
+  keyword?: string
   startAt?: Date
   endAt?: Date
   apiId?: number
@@ -58,6 +59,24 @@ export const adminLogsService = {
     const { limit, offset } = normalizePagination(input)
 
     const conds: SQL[] = []
+    const keyword = input.keyword?.trim()
+    if (keyword) {
+      const keywordPattern = `%${keyword}%`
+      conds.push(or(
+        ilike(apis.name, keywordPattern),
+        ilike(apiCalls.path, keywordPattern),
+        ilike(apiCalls.method, keywordPattern),
+        ilike(apiCalls.apiKeyName, keywordPattern),
+        ilike(apiKeys.name, keywordPattern),
+        ilike(users.username, keywordPattern),
+        ilike(apiCategories.name, keywordPattern),
+        ilike(apiCalls.ip, keywordPattern),
+        ilike(apiCalls.errorCode, keywordPattern),
+        ilike(apiCalls.errorMessage, keywordPattern),
+        sql`${apiCalls.statusCode}::text ilike ${keywordPattern}`,
+        sql`${apiCalls.requestId}::text ilike ${keywordPattern}`
+      )!)
+    }
     if (input.startAt) conds.push(gte(apiCalls.createdAt, input.startAt))
     if (input.endAt) conds.push(lt(apiCalls.createdAt, input.endAt))
     if (input.apiId && input.apiId > 0) conds.push(eq(apiCalls.apiId, input.apiId))
@@ -79,6 +98,7 @@ export const adminLogsService = {
       createdAt: apiCalls.createdAt,
       userId: apiCalls.userId,
       userName: users.username,
+      userRole: users.role,
       apiKeyId: apiCalls.apiKeyId,
       apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
       requestId: sql<string | null>`${apiCalls.requestId}::text`,
@@ -110,6 +130,9 @@ export const adminLogsService = {
     const countQuery = db.select({ value: sql<number>`count(*)` })
       .from(apiCalls)
       .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+      .leftJoin(apiCategories, eq(apiCategories.id, apis.categoryId))
+      .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+      .leftJoin(users, eq(users.id, apiCalls.userId))
 
     const [items, totalRows] = await Promise.all([
       (where ? baseSelect.where(where) : baseSelect)
@@ -125,6 +148,7 @@ export const adminLogsService = {
       createdAt: toIsoString(r.createdAt),
       userId: r.userId,
       userName: r.userName,
+      userRole: r.userRole,
       apiKeyId: r.apiKeyId,
       apiKeyName: r.apiKeyName,
       requestId: r.requestId,

@@ -45,6 +45,15 @@ const {
     </section>
 
     <div class="flex flex-wrap items-center gap-2">
+      <UInput
+        v-model="filters.keyword"
+        type="search"
+        icon="i-mdi-magnify"
+        :placeholder="$t('admin.logs.operations.searchPlaceholder')"
+        :aria-label="$t('admin.logs.operations.searchPlaceholder')"
+        class="w-full sm:w-80"
+        @keyup.enter="applyFilters"
+      />
       <AdminFilterPopover
         :active-count="activeFilterCount"
         :title="$t('admin.logs.operations.filterTitle')"

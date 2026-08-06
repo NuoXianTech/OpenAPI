@@ -70,6 +70,7 @@ export interface AdminLogRow {
   createdAt: string
   userId: number | null
   userName: string | null
+  userRole: 'user' | 'admin' | null
   apiKeyId: number | null
   apiKeyName: string | null
   requestId: string | null

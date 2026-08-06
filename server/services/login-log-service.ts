@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, isNotNull, like, lte, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, ilike, isNotNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -33,6 +33,7 @@ interface RecordLoginInput {
 }
 
 interface ListFilters {
+  keyword?: string
   userId?: number
   method?: LoginMethod
   success?: boolean
@@ -47,6 +48,19 @@ function buildConditions(filters: ListFilters): SQL[] {
     like(operationLogs.action, `${LOGIN_ACTION_PREFIX}%`),
     isNotNull(operationLogs.userId)
   ]
+  const keyword = filters.keyword?.trim()
+  if (keyword) {
+    const keywordPattern = `%${keyword}%`
+    conditions.push(or(
+      ilike(operationLogs.actor, keywordPattern),
+      ilike(operationLogs.action, keywordPattern),
+      ilike(operationLogs.ip, keywordPattern),
+      ilike(operationLogs.userAgent, keywordPattern),
+      sql`${operationLogs.detail}->>'method' ilike ${keywordPattern}`,
+      sql`${operationLogs.detail}->>'failureReason' ilike ${keywordPattern}`,
+      sql`${operationLogs.userId}::text ilike ${keywordPattern}`
+    )!)
+  }
   if (typeof filters.userId === 'number') conditions.push(eq(operationLogs.userId, filters.userId))
   if (filters.method) conditions.push(eq(operationLogs.action, `${LOGIN_ACTION_PREFIX}${filters.method}`))
   if (typeof filters.success === 'boolean') {

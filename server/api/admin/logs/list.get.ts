@@ -17,6 +17,7 @@ export default defineAdminEventHandler(async (event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
   const data = await adminLogsService.listLogs({
+    keyword: readQueryText(query.keyword),
     startAt: readQueryDate(query.startAt),
     endAt: readQueryDate(query.endAt),
     apiId: readQueryNumber(query.apiId),

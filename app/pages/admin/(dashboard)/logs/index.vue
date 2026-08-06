@@ -66,6 +66,15 @@ function openDetail(row: AdminLogRow) {
     </section>
 
     <div class="flex flex-wrap items-center gap-2">
+      <UInput
+        v-model="filters.keyword"
+        type="search"
+        icon="i-mdi-magnify"
+        :placeholder="$t('admin.logs.call.searchPlaceholder')"
+        :aria-label="$t('admin.logs.call.searchPlaceholder')"
+        class="w-full sm:w-80"
+        @keyup.enter="applyFilters"
+      />
       <AdminFilterPopover
         :active-count="activeFilterCount"
         :title="$t('admin.logs.call.filterTitle')"
@@ -200,7 +209,11 @@ function openDetail(row: AdminLogRow) {
             class="flex flex-col text-xs"
           >
             <span>{{ row.original.userName || '-' }}</span>
-            <span class="text-muted">{{ $t('common.identities.userWithId', { id: row.original.userId }) }}</span>
+            <span class="text-muted">
+              {{ row.original.userRole === 'admin'
+                ? $t('common.identities.adminWithId', { id: row.original.userId })
+                : $t('common.identities.userWithId', { id: row.original.userId }) }}
+            </span>
           </div>
           <span
             v-else

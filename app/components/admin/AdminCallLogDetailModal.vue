@@ -291,7 +291,11 @@ async function copyText(value: string): Promise<void> {
                 <dd class="min-w-0 text-end">
                   <template v-if="props.row.userId">
                     <span>{{ props.row.userName || '-' }}</span>
-                    <span class="ms-1 text-muted">{{ $t('common.identities.userWithId', { id: props.row.userId }) }}</span>
+                    <span class="ms-1 text-muted">
+                      {{ props.row.userRole === 'admin'
+                        ? $t('common.identities.adminWithId', { id: props.row.userId })
+                        : $t('common.identities.userWithId', { id: props.row.userId }) }}
+                    </span>
                   </template>
                   <span v-else>{{ $t('common.identities.anonymous') }}</span>
                 </dd>

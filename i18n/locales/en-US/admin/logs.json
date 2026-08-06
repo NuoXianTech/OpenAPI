@@ -4,6 +4,7 @@
       "call": {
         "title": "Call logs",
         "description": "Public API requests, charges, and client context",
+        "searchPlaceholder": "Search APIs, accounts, keys, status codes, or request IDs...",
         "filterTitle": "Call log filters",
         "detailsTitle": "Call details",
         "empty": "No logs",
@@ -25,15 +26,15 @@
           "exact": "Exact match",
           "keyName": "Key name",
           "keyHint": "Filter by API key",
-          "user": "User",
-          "userHint": "Filter by user ID",
+          "user": "Caller",
+          "userHint": "Filter by account ID",
           "emptyAll": "Leave empty for all",
           "requestId": "Request ID",
           "requestIdPlaceholder": "UUID, exact match"
         },
         "columns": {
           "time": "Time",
-          "user": "User",
+          "user": "Caller",
           "key": "Key",
           "api": "API",
           "cost": "Cost",
@@ -48,7 +49,7 @@
           "time": "Time",
           "type": "Type",
           "requestId": "Request ID",
-          "user": "User",
+          "user": "Caller",
           "key": "Key",
           "api": "API",
           "statusCode": "Status code",
@@ -76,6 +77,7 @@
       "login": {
         "title": "Login logs",
         "description": "Recognized login attempts, methods, and client sources",
+        "searchPlaceholder": "Search usernames, methods, IP addresses, or devices...",
         "filterTitle": "Login log filters",
         "detailsTitle": "Login details",
         "empty": "No login logs",
@@ -100,6 +102,7 @@
       "operations": {
         "title": "Audit logs",
         "description": "Track administrative actions, target changes, outcomes, and client information",
+        "searchPlaceholder": "Search actors, actions, targets, or IP addresses...",
         "filterTitle": "Audit log filters",
         "detailsTitle": "Audit details",
         "empty": "No audit logs",

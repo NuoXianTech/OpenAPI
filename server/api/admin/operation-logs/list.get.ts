@@ -13,6 +13,7 @@ export default defineAdminEventHandler((event) => {
   const status = readQueryOption(query.status, STATUSES)
 
   return operationLogService.list({
+    keyword: readQueryText(query.keyword),
     userId: readQueryNumber(query.userId),
     actorKind,
     actor: readQueryText(query.actor),

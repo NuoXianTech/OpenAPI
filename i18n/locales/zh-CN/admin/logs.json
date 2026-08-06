@@ -4,6 +4,7 @@
       "call": {
         "title": "调用日志",
         "description": "公共接口调用流水、扣费结果与客户端上下文",
+        "searchPlaceholder": "搜索接口、账号、密钥、状态码或请求 ID...",
         "filterTitle": "调用日志筛选",
         "detailsTitle": "调用明细",
         "empty": "暂无日志",
@@ -25,15 +26,15 @@
           "exact": "精确筛选",
           "keyName": "密钥名称",
           "keyHint": "按 API 密钥筛选",
-          "user": "用户",
-          "userHint": "按用户 ID 筛选",
+          "user": "调用者",
+          "userHint": "按账号 ID 筛选",
           "emptyAll": "留空查全部",
           "requestId": "请求 ID",
           "requestIdPlaceholder": "UUID，精确匹配"
         },
         "columns": {
           "time": "时间",
-          "user": "用户",
+          "user": "调用者",
           "key": "密钥",
           "api": "接口",
           "cost": "费用",
@@ -48,7 +49,7 @@
           "time": "时间",
           "type": "类型",
           "requestId": "请求 ID",
-          "user": "用户",
+          "user": "调用者",
           "key": "密钥",
           "api": "接口",
           "statusCode": "状态码",
@@ -76,6 +77,7 @@
       "login": {
         "title": "登录日志",
         "description": "已识别用户的登录尝试（成功 + 失败）、登录方式与客户端来源",
+        "searchPlaceholder": "搜索用户名、登录方式、IP 或设备...",
         "filterTitle": "登录日志筛选",
         "detailsTitle": "登录明细",
         "empty": "暂无登录日志",
@@ -100,6 +102,7 @@
       "operations": {
         "title": "操作日志",
         "description": "记录后台操作、对象变更、执行结果与客户端信息",
+        "searchPlaceholder": "搜索操作者、动作、操作对象或 IP...",
         "filterTitle": "操作日志筛选",
         "detailsTitle": "操作明细",
         "empty": "暂无操作日志",
