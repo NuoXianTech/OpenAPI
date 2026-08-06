@@ -66,8 +66,8 @@
       },
       "notifications": {
         "searchPlaceholder": "Search titles or senders",
-        "historyTitle": "Send history",
-        "emptyHistory": "No send history",
+        "historyTitle": "Delivery history",
+        "emptyHistory": "No delivery history",
         "filters": {
           "audience": "Audience",
           "allAudiences": "All audiences",
@@ -78,7 +78,7 @@
           "labels": {
             "specific": "Specific",
             "allCurrent": "All users",
-            "allWithFuture": "All + future"
+            "allWithFuture": "All current + future"
           },
           "options": {
             "specific": "Selected recipients only",
@@ -87,7 +87,7 @@
           }
         },
         "levelOptions": {
-          "info": "Notice (info)",
+          "info": "Information (info)",
           "success": "Success (success)",
           "warning": "Warning (warning)",
           "critical": "Critical (critical)"
@@ -108,14 +108,14 @@
         },
         "delete": {
           "title": "Delete notification: {title}",
-          "description": "Recipients will no longer see this notification. Send history cannot be restored."
+          "description": "Recipients will no longer see this notification. Delivery history cannot be restored."
         },
         "detail": {
           "title": "Recipient details",
-          "description": "{title} · {time} · Audience {audience} · Delivered {delivered} / Read {read}",
+          "description": "{title} · {time} · Audience: {audience} · Delivered: {delivered} · Read: {read}",
           "loadFailed": "Failed to load recipient details",
           "empty": "No delivery records",
-          "readAt": "Read · {time}",
+          "readAt": "Read at {time}",
           "unread": "Unread"
         },
         "feedback": {
@@ -140,8 +140,8 @@
       },
       "friendLinks": {
         "searchPlaceholder": "Search names, URLs, or descriptions",
-        "listTitle": "Friend links",
-        "empty": "No friend links",
+        "listTitle": "Partner links",
+        "empty": "No partner links",
         "filters": {
           "status": "Status",
           "allStatuses": "All statuses"
@@ -160,7 +160,7 @@
         },
         "delete": {
           "title": "Delete link: {title}",
-          "description": "The friend link will be removed permanently."
+          "description": "The partner link will be removed permanently."
         },
         "feedback": {
           "updated": "Updated",
@@ -173,8 +173,8 @@
         "form": {
           "editTitle": "Edit link",
           "createTitle": "Add link",
-          "editDescription": "Update the friend link and visibility.",
-          "createDescription": "Add a site to the friend links section.",
+          "editDescription": "Update the partner link and its visibility.",
+          "createDescription": "Add a site to the partner links section.",
           "title": "Title",
           "titlePlaceholder": "Site name",
           "description": "Description",

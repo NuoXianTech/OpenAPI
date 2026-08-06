@@ -3,8 +3,8 @@
     "credits": {
       "overview": {
         "pageTitle": "Credits overview",
-        "title": "Credit operations overview",
-        "description": "User balances, recent income and expenses, and redemption code capacity",
+        "title": "Credit management overview",
+        "description": "User balances, recent credit activity, and redemption code inventory",
         "updatedAt": "Updated {time}",
         "waitingRefresh": "Waiting for refresh",
         "loadFailed": "Failed to load credit overview",
@@ -18,9 +18,9 @@
         "cards": {
           "totalBalance": "Total user balance",
           "usersWithBalance": "{count} users with credits",
-          "income24h": "Granted in 24 hours",
-          "transactionCount24h": "{count} changes",
-          "expense24h": "Spent in 24 hours",
+          "income24h": "Granted in the last 24 hours",
+          "transactionCount24h": "{count} transactions",
+          "expense24h": "Spent in the last 24 hours",
           "netChange24h": "Net change {amount}",
           "averageBalance": "Average user balance",
           "userCount": "{count} users",
@@ -33,7 +33,7 @@
           "reason": "Reason",
           "change": "Change",
           "balance": "Balance",
-          "remark": "Remark"
+          "remark": "Note"
         }
       },
       "users": {
@@ -67,10 +67,10 @@
       },
       "transactions": {
         "title": "Credit transactions",
-        "description": "Review credit changes and jump to user credit or redemption code management",
+        "description": "Review credit changes and open user credit or redemption code management",
         "filterTitle": "Credit transaction filters",
         "detailsTitle": "Credit details",
-        "empty": "No credit logs",
+        "empty": "No credit transactions",
         "filters": {
           "userId": "User ID",
           "emptyAll": "Leave empty for all",
@@ -96,13 +96,13 @@
           "amount": "Amount",
           "balance": "Balance",
           "operator": "Operator",
-          "remark": "Remark"
+          "remark": "Note"
         }
       },
       "redemptionCodes": {
         "title": "Redemption codes",
         "description": "Generate and manage credit redemption codes, availability, usage limits, and expiration",
-        "searchPlaceholder": "Search code or remark...",
+          "searchPlaceholder": "Search code or note...",
         "detailsTitle": "Redemption code details",
         "empty": "No redemption codes",
         "neverExpires": "Never expires",
@@ -116,7 +116,7 @@
           "code": "Code",
           "amount": "Value",
           "usage": "Usage",
-          "note": "Remark",
+          "note": "Note",
           "expiresAt": "Expires",
           "status": "Status",
           "createdAt": "Created"
@@ -124,7 +124,7 @@
         "statuses": {
           "available": "Available",
           "disabled": "Disabled",
-          "usedUp": "Used up",
+          "usedUp": "Fully used",
           "expired": "Expired"
         },
         "actions": {
@@ -135,7 +135,7 @@
           "disable": "Disable",
           "copyCode": "Copy code",
           "copyAll": "Copy all",
-          "clickToCopy": "Select to copy"
+          "clickToCopy": "Click to copy"
         },
         "feedback": {
           "generated": "Generated {count} codes",
@@ -159,7 +159,7 @@
         "batch": {
           "title": "Recent batches",
           "count": "{count} batches",
-          "perCode": "/ code",
+          "perCode": "per code",
           "total": "{count} codes",
           "usage": "Used {used}/{total}",
           "actions": {
@@ -180,10 +180,10 @@
           "prefix": "Prefix (optional)",
           "prefixHint": "For example, WELCOME",
           "maxUses": "Uses per code",
-          "maxUsesHint": "Values above 1 allow multiple users to share a code, once per user",
+          "maxUsesHint": "Values above 1 let multiple users share a code, with one redemption per user",
           "expiresInDays": "Expiration (days)",
           "expiresInDaysHint": "0 = never expires",
-          "note": "Remark (optional)",
+          "note": "Note (optional)",
           "notePlaceholder": "For example: holiday campaign",
           "failed": "Generation failed",
           "resultTitle": "Generated {count} codes",
@@ -202,7 +202,7 @@
         "targetAmount": "Target balance",
         "amount": "Credits",
         "amountPlaceholder": "Enter credits",
-        "remark": "Remark (optional)",
+        "remark": "Note (optional)",
         "remarkPlaceholder": "For example: promotion / policy deduction",
         "success": "Credits adjusted",
         "operations": {

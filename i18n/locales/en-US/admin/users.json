@@ -19,7 +19,7 @@
       },
       "columns": {
         "username": "Username",
-        "role": "Type",
+        "role": "Account type",
         "email": "Email",
         "credits": "Credits",
         "status": "Status",
@@ -63,7 +63,7 @@
       },
       "create": {
         "title": "Add user",
-        "description": "Create an account directly without email verification",
+        "description": "Create an account directly without requiring email verification",
         "usernameHelp": "3–32 characters; letters, numbers, underscores, and hyphens only",
         "usernamePlaceholder": "For example: alice_2026",
         "emailPlaceholder": "user{'@'}example.com",

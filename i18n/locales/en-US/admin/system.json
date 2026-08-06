@@ -52,7 +52,7 @@
           "title": "Daily check-in",
           "enabled": {
             "label": "Enable daily check-in",
-            "description": "When disabled, the user action is unavailable and the API rejects requests."
+            "description": "When disabled, the check-in action is unavailable and the API rejects requests."
           },
           "cooldown": {
             "label": "Cooldown mode",
@@ -72,7 +72,7 @@
           },
           "reward": {
             "label": "Reward mode",
-            "description": "Fixed grants the same amount; range selects a random integer between minimum and maximum.",
+            "description": "Fixed mode grants the same amount each time; range mode selects a random integer between the minimum and maximum.",
             "options": {
               "fixed": "Fixed credits",
               "range": "Random range"
@@ -104,7 +104,7 @@
             "description": "When disabled, the registration page and API reject new accounts."
           },
           "passwordReset": {
-            "label": "Enable forgot password",
+            "label": "Enable password reset",
             "description": "Controls the login link and password reset APIs."
           },
           "emailActivation": {
@@ -128,11 +128,11 @@
           "title": "Session lifetime",
           "defaultSession": {
             "label": "Default session lifetime (seconds)",
-            "description": "Used without Remember me; activity renews the session."
+            "description": "Applies when Remember me is not selected; activity renews the session."
           },
           "absoluteSession": {
             "label": "Absolute session limit (seconds)",
-            "description": "Maximum lifetime from the first login before reauthentication is required."
+            "description": "Maximum lifetime from the first login before you must sign in again."
           },
           "rememberSession": {
             "label": "Remember me lifetime (seconds)",
@@ -151,7 +151,7 @@
           "title": "Third-party login",
           "provider": "Provider: {provider}",
           "forceBinding": {
-            "label": "Require linking an existing account",
+            "label": "Require an existing account",
             "description": "Unregistered OAuth identities may only link to an existing account."
           },
           "status": {
@@ -160,7 +160,7 @@
           },
           "clientId": {
             "label": "Client ID",
-            "placeholder": "Enter the OAuth app Client ID"
+            "placeholder": "Enter the OAuth app client ID"
           },
           "clientSecret": {
             "label": "Client Secret",
@@ -187,10 +187,10 @@
         }
       },
       "network": {
-        "pageTitle": "Network & proxy",
+        "pageTitle": "Network and proxy",
         "diagnostics": {
           "title": "Current request resolution",
-          "description": "Resolve this admin request with the active configuration to verify the proxy chain and headers.",
+          "description": "Resolve the current admin request with the active configuration to verify the proxy chain and headers.",
           "refresh": "Refresh",
           "loadFailed": "Unable to load client IP diagnostics",
           "peer": "Connected peer",
@@ -207,13 +207,13 @@
             "peer_unavailable": "The connected peer IP is unavailable"
           },
           "safeFallback": {
-            "title": "Safely fell back to direct mode",
-            "description": "The database proxy configuration is incomplete or invalid. Fix the trusted proxy list to activate the selected proxy mode."
+            "title": "Fell back to direct mode",
+            "description": "The saved proxy configuration is incomplete or invalid. Fix the trusted proxy list to activate the selected proxy mode."
           }
         },
         "management": {
           "database": "Admin settings",
-          "environment": "Managed by environment",
+          "environment": "Managed by environment variables",
           "lockedTitle": "This configuration is managed by environment variables",
           "lockedDescription": "NUXT_PROXY_SOURCE or the legacy NUXT_PROXY_TRUSTED_CIDRS is configured. The effective values are shown here; update the deployment environment and restart the service to change them."
         },
@@ -241,9 +241,9 @@
         },
         "trusted": {
           "label": "Trusted proxy IP / CIDR",
-          "description": "Separate entries with lines or commas. A single IPv4 / IPv6 address becomes /32 or /128. Use 0.0.0.0/0 and ::/0 for all IPv4 and IPv6 addresses.",
+          "description": "Separate entries with commas or new lines. A single IPv4 / IPv6 address becomes /32 or /128. Use 0.0.0.0/0 and ::/0 for all IPv4 and IPv6 addresses.",
           "shortcuts": {
-            "localProxy": "Local IPv4 / IPv6",
+            "localProxy": "Local IPv4 and IPv6",
             "allIpv4": "All IPv4",
             "allIpv6": "All IPv6"
           },
@@ -263,7 +263,7 @@
         },
         "forwardedHops": {
           "label": "Trusted forwarded hops",
-          "description": "Counted from the right side of X-Forwarded-For, from 1 to 10. A single Nginx proxy normally uses 1."
+          "description": "Count hops from the right side of X-Forwarded-For, from 1 to 10. A single Nginx proxy normally uses 1."
         }
       },
       "captcha": {
@@ -277,12 +277,12 @@
             "description": "Select a provider. Cloudflare Turnstile is currently supported."
           },
           "siteKey": {
-            "label": "Site Key",
-            "description": "Site Key from the Cloudflare Turnstile application."
+            "label": "Site key",
+            "description": "Site key from the Cloudflare Turnstile application."
           },
           "secretKey": {
-            "label": "Secret Key",
-            "description": "Secret Key from the Cloudflare Turnstile application."
+            "label": "Secret key",
+            "description": "Secret key from the Cloudflare Turnstile application."
           }
         },
         "scenes": {
@@ -314,7 +314,7 @@
           },
           "fromAddress": {
             "label": "Sender email",
-            "description": "Address used to send email and as the EHLO domain.",
+            "description": "Address used to send email; it is also used as the EHLO domain.",
             "placeholder": "no-reply{'@'}example.com"
           },
           "host": {
@@ -335,7 +335,7 @@
             "description": "Mailbox password or application password."
           },
           "replyTo": {
-            "label": "Reply-to email",
+            "label": "Reply-to address",
             "description": "Address that receives replies; defaults to the sender.",
             "placeholder": "support{'@'}example.com"
           },
@@ -373,7 +373,7 @@
         "pageTitle": "About",
         "project": {
           "title": "Project",
-          "description": "OpenAPI is a full-stack platform for publishing APIs, operations, and user self-service.",
+          "description": "OpenAPI is a full-stack platform for publishing APIs, running platform operations, and supporting user self-service.",
           "items": {
             "name": {
               "label": "Project name"
@@ -394,11 +394,11 @@
         },
         "capabilities": {
           "title": "Capabilities",
-          "description": "Features are organized around API management, user self-service, operations, and auditing.",
+          "description": "Features are organized around API management, user self-service, platform operations, and auditing.",
           "items": {
             "accounts": {
               "label": "Accounts and permissions",
-              "description": "Unified login with role-based administrator and user capabilities."
+              "description": "Unified sign-in with separate administrator and user capabilities based on role."
             },
             "apis": {
               "label": "API management",
@@ -406,11 +406,11 @@
             },
             "audit": {
               "label": "Logs and auditing",
-              "description": "Review call, login, credit, and operation logs."
+              "description": "Review call, login, credit, and audit logs."
             },
             "operations": {
               "label": "Operations",
-              "description": "Announcements, notifications, friend links, redemption codes, and credits."
+              "description": "Announcements, notifications, partner links, redemption codes, and credits."
             },
             "configuration": {
               "label": "System configuration",
@@ -420,7 +420,7 @@
         },
         "stack": {
           "title": "Technology stack",
-          "description": "Built around Nuxt full-stack capabilities, type safety, component UI, and structured validation.",
+          "description": "Built around Nuxt full-stack capabilities, type safety, component-based UI, and structured validation.",
           "items": {
             "nuxt": {
               "label": "Nuxt 4 / Vue 3",
@@ -458,7 +458,7 @@
             },
             "roles": {
               "label": "Clear roles",
-              "description": "Administrators access management and user capabilities; users access only their workspace."
+              "description": "Administrators can access management and user capabilities; users can access only their own workspace."
             },
             "migrations": {
               "label": "Controlled migrations",

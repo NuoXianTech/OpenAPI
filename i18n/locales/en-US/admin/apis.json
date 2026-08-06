@@ -75,7 +75,7 @@
         },
         "toggleHints": {
           "enableApi": "Enable the API and allow external calls",
-          "disableApi": "Disable the API and stop serving external calls; enabled call statistics will also be turned off",
+          "disableApi": "Disable the API and stop serving external calls; call statistics will also be disabled",
           "enableStatistics": "Enable call statistics for this API",
           "disableStatistics": "Disable call statistics for this API",
           "statisticsRequiresEnabled": "Enable the API before enabling call statistics"
@@ -93,9 +93,9 @@
           "statisticsEnabled": "Call statistics enabled for \"{name}\"",
           "statisticsDisabled": "Call statistics disabled for \"{name}\"",
           "statisticsAlsoDisabled": "Call statistics for this API were also disabled",
-          "toggleFailed": "Toggle failed",
+          "toggleFailed": "Failed to update setting",
           "synced": "Manifest synchronized",
-          "syncFailed": "Synchronization failed"
+          "syncFailed": "Failed to synchronize manifest"
         }
       },
       "capabilities": {
@@ -157,7 +157,7 @@
           "name": "Name",
           "namePlaceholder": "Public API name",
           "status": "Status",
-          "statusDescription": "Automatic status measures availability from recent server errors (5xx). Validation, authentication, and other 4xx responses do not mark the API as unhealthy. It remains unknown when statistics are disabled or no samples exist.",
+          "statusDescription": "Automatic status measures availability from recent counted requests. Validation, authentication, and other 4xx responses do not mark the API as unhealthy; 5xx responses do. Status remains unknown when statistics are disabled or no samples exist.",
           "shortDescription": "Short description",
           "shortDescriptionPlaceholder": "Up to 50 characters",
           "fullDescription": "Full description",
@@ -192,7 +192,7 @@
           "allFree": "All methods are free",
           "pointsPerCall": "Credits per call",
           "freePlaceholder": "0 = free",
-          "help": "Enter the credits used by each method. Zero or empty means free. Charges require API key authentication and apply only to successful calls."
+          "help": "Enter the credits charged for each method. Zero or empty means free. Charges require API key authentication and apply only to successful calls."
         },
         "endpoints": {
           "title": "Discovered endpoints",

@@ -1,8 +1,8 @@
 {
   "admin": {
     "units": {
-      "people": "people",
-      "items": "items"
+      "people": "users",
+      "items": "APIs"
     },
     "initialProfile": {
       "title": "Complete administrator account",
@@ -21,7 +21,7 @@
       "platformTitle": "Platform overview",
       "hero": {
         "title": "Platform operations overview",
-        "description": "Manage users, APIs, and system settings in one place, monitor call trends, API usage, and service health, and quickly spot issues that need attention."
+        "description": "Manage users, APIs, and system settings in one place. Monitor call trends, API usage, and service health, and quickly spot issues that need attention."
       },
       "snapshot": {
         "title": "Today's snapshot",
@@ -57,8 +57,8 @@
         "empty": "No calls in the last 24 hours"
       },
       "ranking": {
-        "title": "Call ranking",
-        "description": "Top {count} APIs by volume and success rate"
+        "title": "API call ranking",
+        "description": "Top {count} APIs ranked by call volume and success rate"
       },
       "recent": {
         "title": "Latest API requests",

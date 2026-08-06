@@ -24,8 +24,8 @@
       "loadFailed": "Failed to load",
       "success": "Success",
       "failure": "Failure",
-      "active": "Active",
-      "inactive": "Inactive",
+      "active": "Available",
+      "inactive": "Unavailable",
       "maintenance": "Maintenance",
       "deprecated": "Deprecated",
       "automatic": "Automatic",
@@ -44,7 +44,7 @@
       "more": "More {count}"
     },
     "pagination": {
-      "perPage": "{count} / page",
+      "perPage": "{count} per page",
       "totalRecords": "{count} records"
     },
     "table": { "empty": "No data" },
@@ -67,7 +67,7 @@
       "copyFailed": "Copy failed",
       "saveFailed": "Save failed",
       "sendFailed": "Send failed",
-      "createFailed": "Creation failed",
+      "createFailed": "Failed to create",
       "operationFailed": "Operation failed",
       "deleted": "Deleted",
       "deleteFailed": "Delete failed",
@@ -100,9 +100,9 @@
     },
     "credits": {
       "reasons": {
-        "adminGrant": "Admin grant",
-        "adminRevoke": "Admin deduction",
-        "adminReset": "Admin reset",
+        "adminGrant": "Administrator grant",
+        "adminRevoke": "Administrator deduction",
+        "adminReset": "Administrator reset",
         "apiCharge": "API charge",
         "apiRefund": "API refund",
         "signupBonus": "Sign-up bonus",
@@ -112,7 +112,7 @@
     },
     "apiKeys": {
       "defaultName": "Default key",
-      "loadScopesFailed": "Failed to load API list",
+      "loadScopesFailed": "Failed to load APIs",
       "expiry": {
         "never": "Never",
         "oneHour": "1 hour",
@@ -128,7 +128,7 @@
       },
       "columns": {
         "name": "Name",
-        "quota": "Quota (used/total)",
+        "quota": "Quota (used / limit)",
         "scopes": "API scope",
         "ipWhitelist": "IP allowlist",
         "totalCalls": "Calls",
@@ -179,7 +179,7 @@
         "unlimitedQuota": "Unlimited quota",
         "quotaPlaceholder": "Maximum cumulative credit usage",
         "quotaEditHelp": "Changing the limit does not reset usage. A limit below current usage disables the key until raised.",
-        "quotaCreateHelp": "Calls are rejected after this key reaches its limit; charges still come from the account balance.",
+        "quotaCreateHelp": "Calls are rejected after this key reaches its limit; charges are still deducted from the account balance.",
         "scopes": "API scope",
         "selectScopes": "Select allowed APIs",
         "ipWhitelist": "IP allowlist (CIDR)",
@@ -188,12 +188,12 @@
         "ipHelpCompact": "One entry per line; leave empty for no restriction"
       },
       "reset": {
-        "success": "Reset complete; the old key is invalid",
+        "success": "API key reset. The old key is no longer valid.",
         "failed": "Reset failed",
         "saveNewTitle": "Reset complete — save the new key",
         "confirmTitle": "Reset API key",
         "warningTitle": "Resetting immediately invalidates the old key",
-        "warningDescription": "The key “{name}” will be reset and all clients using the old key will fail.",
+        "warningDescription": "The key “{name}” will be reset. Clients using the old key will stop working.",
         "confirmAction": "Reset key",
         "savedAction": "I saved it"
       }
@@ -212,7 +212,7 @@
       "description": "Account activity, service alerts, and important updates",
       "unread": "Unread",
       "unreadCount": "{count} unread",
-      "markAllRead": "Mark all read",
+      "markAllRead": "Mark all as read",
       "onlyUnread": "Unread only",
       "noUnread": "No unread notifications",
       "empty": "No notifications",
@@ -220,7 +220,7 @@
       "from": "From: {sender}",
       "system": "System",
       "levels": {
-        "info": "Notice",
+        "info": "Information",
         "success": "Success",
         "warning": "Warning",
         "critical": "Critical"
@@ -268,20 +268,20 @@
       "sections": {
         "announcements": "Announcements",
         "notifications": "Notifications",
-        "friendLinks": "Friend links",
+        "friendLinks": "Partner links",
         "categoryManagement": "Category management",
         "callLogs": "Call logs",
         "loginLogs": "Login logs",
-        "operationLogs": "Operation logs",
+        "operationLogs": "Audit logs",
         "userCredits": "User credits",
         "creditTransactions": "Credit transactions",
         "redemptionCodes": "Redemption codes",
         "userSessions": "User sessions",
-        "networkAndProxy": "Network & proxy",
+        "networkAndProxy": "Network and proxy",
         "captcha": "CAPTCHA",
         "email": "Email",
         "about": "About",
-        "checkinAndRedeem": "Check in and redeem",
+        "checkinAndRedeem": "Check-in and redemption",
         "transactionDetails": "Transaction details",
         "profile": "Profile",
         "passwordAndSecurity": "Password and security",

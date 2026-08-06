@@ -48,7 +48,7 @@
         "title": "Daily check-in",
         "success": "Check-in successful +{amount}",
         "failed": "Check-in failed",
-        "disabledDescription": "Daily check-in is disabled by the administrator.",
+        "disabledDescription": "Daily check-in has been disabled by an administrator.",
         "reward": "Check-in reward",
         "availableNow": "Available now",
         "nextCheckin": "Next check-in",
@@ -62,8 +62,8 @@
           "range": "{min} ~ {max} credits"
         },
         "cooldown": {
-          "fixedTime": "Refreshes daily at {time}",
-          "hours": "Refreshes every {hours} hours"
+          "fixedTime": "Available again daily at {time}",
+          "hours": "Available again every {hours} hours"
         },
         "duration": {
           "days": "{days} days {hours} hours {minutes} minutes {seconds} seconds",
@@ -90,7 +90,7 @@
       },
       "calendar": {
         "title": "Check-in calendar",
-        "description": "Switch months to view previous check-ins",
+        "description": "Switch months to view your previous check-ins",
         "days": "{count} days",
         "points": "+{amount} credits",
         "checkedIn": "Checked in",
@@ -115,7 +115,7 @@
           "change": "Change",
           "balanceAfter": "Balance after",
           "related": "Related",
-          "remark": "Remark"
+          "remark": "Note"
         }
       }
     },
@@ -272,7 +272,7 @@
         "description": "Monitor balance, usage, and request volume"
       },
       "metrics": {
-        "spent24h": "Spent in 24 hours",
+        "spent24h": "Spent in the last 24 hours",
         "totalSpent": "Total spent",
         "totalCalls": "Requests",
         "balance": "Remaining balance"
