@@ -13,26 +13,24 @@
  *   flip/playbackrate/aspectratio/setting/hotkey/pip/mutex/fullscreen/fullscreenweb/miniprogressbar/playsinline
  */
 
-import type { H3Event } from 'h3'
-import { getQuery, setResponseHeader } from 'h3'
 import { parseArtplayerOptions } from '~~/server/lib/player/query'
 import { renderArtplayerHtml } from '~~/server/lib/player/html'
-import { openApiFail } from '~~/server/utils/open-api-response'
-import { ensureRequestId } from '~~/server/utils/request-id'
 import { isPlayerEngineEnabled } from '~~/server/lib/player/capability-config'
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
+export default defineOpenApiEventHandler(async (_event, api) => {
   if (!await isPlayerEngineEnabled('artplayer')) {
-    return openApiFail(event, 403, 'PLAYER_ENGINE_DISABLED', 'ArtPlayer 播放器已被管理员关闭')
+    return api.fail(403, 'PLAYER_ENGINE_DISABLED', 'ArtPlayer 播放器已被管理员关闭')
   }
-  const options = parseArtplayerOptions(getQuery(event) as Record<string, unknown>)
+  const options = parseArtplayerOptions(api.query)
   if (!options) {
-    return openApiFail(event, 400, 'INVALID_PARAMETER', '视频地址无效，请传入 http/https url')
+    return api.fail(400, 'INVALID_PARAMETER', '视频地址无效，请传入 http/https url')
   }
 
-  setResponseHeader(event, 'access-control-allow-origin', '*')
-  setResponseHeader(event, 'cache-control', 'no-store')
-  setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
-  setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-  return renderArtplayerHtml(options)
+  return api.raw(renderArtplayerHtml(options), {
+    contentType: 'text/html; charset=utf-8',
+    headers: {
+      'access-control-allow-origin': '*',
+      'cache-control': 'no-store'
+    }
+  })
 })

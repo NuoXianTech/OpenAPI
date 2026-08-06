@@ -87,6 +87,16 @@
 - `markApiCallFailed(event, code, message)`：即使最终 HTTP 是 2xx，也让 `api_call_stats` 按失败计，并把 `code/message` 写入 `api_calls.errorCode/errorMessage`。
 - `markApiCallSuccess(event)`：极少使用；用于 handler 抛错或返回非 2xx，但业务实际已完成且需要按成功处理的场景。
 
+如果某个接口的特定状态码只是业务结果说明，并不代表服务不可用，可以在 handler 声明 `ignoreStatisticsStatusCodes`：
+
+```ts
+export default defineOpenApiEventHandler(handleRequest, {
+  ignoreStatisticsStatusCodes: [422]
+})
+```
+
+声明的状态码仍会写入 `api_calls`，保留真实 `statusCode`、`errorCode` 和 `errorMessage`，但该调用标记为 `isCounted=false`，不会更新 `api_call_stats`，也不会影响用户成功率、公开统计或自动可用率。该选项只作用于已通过 gate 并实际执行 handler 的响应，不影响网关拒绝；也不改变扣费规则。状态码列表只接受 `100..599` 的整数，重复或无效值会被忽略。
+
 注意：`api_calls.statusCode` 始终保存真实 HTTP 状态码。`markApiCallFailed` 只修正日聚合成功/失败口径，不篡改单次调用日志里的真实状态码。
 
 ## 6. 数据字段规范

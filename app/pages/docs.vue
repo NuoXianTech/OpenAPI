@@ -6,7 +6,9 @@ definePageMeta({ layout: false })
 
 const DIRECTORY_PAGE_SIZE = 12
 const { t } = useI18n()
-const gatewayOrigin = useRequestURL().origin
+const requestUrl = useRequestURL()
+const { settings } = useSiteSettings()
+const gatewayOrigin = computed(() => settings.value.siteUrl || requestUrl.origin)
 const {
   searchQuery,
   selectedStatus,

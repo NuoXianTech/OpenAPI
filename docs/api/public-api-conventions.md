@@ -169,6 +169,8 @@ async function handleAlgorithmRequest(event: H3Event, input: string) {
 
 极少数业务流程必须返回 2xx 但仍要跳过扣费（罕见）时，单独调 `markApiCallFailed(event, bizCode, message)`。详见 [server/utils/api-call-outcome.ts](../../server/utils/api-call-outcome.ts) 的 `shouldCharge` 规则。
 
+如果某个状态码只是业务结果说明、不应影响成功率或自动可用率，可在 `defineOpenApiEventHandler` 的第二个参数中声明 `ignoreStatisticsStatusCodes`。响应仍保留调用日志和真实状态码，但按 `isCounted=false` 处理，不进入日聚合；该配置不改变扣费规则，也不影响 gate 拒绝请求。
+
 ## 6. 最小完整示例
 
 参考已有的 `/v1/crypto`：

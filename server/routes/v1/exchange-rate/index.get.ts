@@ -6,48 +6,27 @@
  *   encode|encoding  json|text|markdown|md，默认 json；两者均可选择输出格式
  */
 
-import type { H3Event } from 'h3'
-import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
-import { getQuery, setResponseHeader } from 'h3'
+import type { OpenApiHandlerContext } from '~~/server/utils/open-api-handler-context'
 import { formatExchangeRateMarkdown, formatExchangeRateText, getExchangeRates, normalizeCurrencyCode } from '~~/server/lib/exchange-rate'
-import { DEFAULT_EXCHANGE_RATE_CURRENCY, DEFAULT_EXCHANGE_RATE_ENCODING, isExchangeRateEncoding, type ExchangeRateEncoding } from '~~/server/lib/exchange-rate/types'
-import { openApiBizFail } from '~~/server/utils/api-call-outcome'
-import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
-import { ensureRequestId } from '~~/server/utils/request-id'
+import { DEFAULT_EXCHANGE_RATE_CURRENCY } from '~~/server/lib/exchange-rate/types'
 import { readQueryString } from '~~/server/utils/request-query'
 
-function parseEncoding(query: Record<string, unknown>): ExchangeRateEncoding {
-  const value = readQueryString(query.encode || query.encoding).trim().toLowerCase()
-  return isExchangeRateEncoding(value) ? value : DEFAULT_EXCHANGE_RATE_ENCODING
-}
-
-async function handleExchangeRate(event: H3Event, { signal }: OpenApiHandlerContext) {
-  const query = getQuery(event) as Record<string, unknown>
+async function handleExchangeRate(_event: unknown, api: OpenApiHandlerContext) {
+  const query = api.query
   const currency = normalizeCurrencyCode(readQueryString(query.currency, DEFAULT_EXCHANGE_RATE_CURRENCY))
-  if (!currency) return openApiFail(event, 400, 'INVALID_CURRENCY', 'currency 必须是 ISO 4217 三位货币代码')
-
-  const encoding = parseEncoding(query)
+  if (!currency) return api.fail(400, 'INVALID_CURRENCY', 'currency 必须是 ISO 4217 三位货币代码')
 
   try {
-    const data = await getExchangeRates(currency, signal)
-    setResponseHeader(event, 'cache-control', 'public, max-age=3600')
-
-    if (encoding === 'text') {
-      setResponseHeader(event, 'content-type', 'text/plain; charset=utf-8')
-      setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-      return formatExchangeRateText(data)
-    }
-
-    if (encoding === 'markdown' || encoding === 'md') {
-      setResponseHeader(event, 'content-type', 'text/markdown; charset=utf-8')
-      setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-      return formatExchangeRateMarkdown(data)
-    }
-
-    return openApiOk(event, data, '获取汇率成功')
+    const data = await getExchangeRates(currency, api.signal)
+    return api.respond(data, {
+      message: '获取汇率成功',
+      text: formatExchangeRateText,
+      markdown: formatExchangeRateMarkdown,
+      headers: { 'cache-control': 'public, max-age=3600' }
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : '获取汇率失败'
-    return openApiBizFail(event, 502, 'UPSTREAM_ERROR', `获取汇率失败：${message}`)
+    return api.businessFail(502, 'UPSTREAM_ERROR', `获取汇率失败：${message}`)
   }
 }
 

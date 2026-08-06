@@ -12,11 +12,6 @@
  * handler 保持薄：解析入参 → 调 server/lib/doubao 业务层 → 套响应壳。
  */
 
-import type { H3Event } from 'h3'
-import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
-import { getQuery } from 'h3'
-import { openApiBizFail } from '~~/server/utils/api-call-outcome'
-import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
 import {
   classifyDoubaoError,
   createDoubaoError,
@@ -27,25 +22,25 @@ import {
 import { doubaoImageParse, qianwenImageParse } from '~~/server/lib/doubao/image'
 import { getEnabledDoubaoImageSources } from '~~/server/lib/doubao/capability-config'
 
-export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
+export default defineOpenApiEventHandler(async (_event, api) => {
   try {
-    const { url, raw } = parseMediaQuery(getQuery(event) as Record<string, unknown>)
+    const { url, raw } = parseMediaQuery(api.query)
     const source = detectImageSource(url)
     if (!(await getEnabledDoubaoImageSources()).has(source)) {
       throw createDoubaoError('business', 403, 'DOUBAO_SOURCE_DISABLED', `图片来源 ${source} 已被管理员关闭`)
     }
     const result = source === 'doubao'
-      ? await doubaoImageParse(url, raw, signal)
-      : await qianwenImageParse(url, raw, signal)
+      ? await doubaoImageParse(url, raw, api.signal)
+      : await qianwenImageParse(url, raw, api.signal)
 
-    if (raw) return openApiOk(event, { source, raw: result }, '解析成功（原始数据）')
+    if (raw) return api.ok({ source, raw: result }, '解析成功（原始数据）')
 
     const images = result as DoubaoImage[]
-    return openApiOk(event, { source, count: images.length, images }, '图片解析成功')
+    return api.ok({ source, count: images.length, images }, '图片解析成功')
   } catch (err) {
     const fail = classifyDoubaoError(err, '图片解析失败，请检查链接是否正确')
     return fail.biz
-      ? openApiBizFail(event, fail.status, fail.code, fail.message)
-      : openApiFail(event, fail.status, fail.code, fail.message)
+      ? api.businessFail(fail.status, fail.code, fail.message)
+      : api.fail(fail.status, fail.code, fail.message)
   }
 })

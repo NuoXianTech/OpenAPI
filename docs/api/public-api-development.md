@@ -57,6 +57,53 @@ server/routes/
 2. 文件名后缀表达 method，例如 `index.get.ts`、`[id].post.ts`。
 3. handler 使用 `defineOpenApiEventHandler`，成功和失败返回统一公共接口响应。
 
+`defineOpenApiEventHandler` 的 handler 第二个参数提供当前请求的内置上下文，适合直接接入新接口：
+
+```ts
+import type { H3Event } from 'h3'
+
+export default defineOpenApiEventHandler(async (event: H3Event, api) => {
+  const keyword = String(api.query.keyword || '').trim()
+  if (!keyword) return api.fail(400, 'MISSING_KEYWORD', 'keyword 不能为空')
+
+  try {
+    const data = await search(keyword, api.signal)
+    return api.respond(data, {
+      message: '查询成功',
+      text: value => `结果：${JSON.stringify(value)}`,
+      markdown: value => `# 查询结果\n\n\`${JSON.stringify(value)}\``
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '查询失败'
+    return api.businessFail(502, 'UPSTREAM_ERROR', message)
+  }
+})
+```
+
+上下文包含：
+
+- `signal`：由平台超时治理控制的 `AbortSignal`。
+- `url` / `header(name)`：当前请求 URL 和请求头读取能力。
+- `setHeaders(headers)`：设置缓存、CORS、Retry-After 等响应头。
+- `query` / `params`：已解析的查询参数和动态路由参数。
+- `clientIp` / `apiKey` / `requestId`：可信客户端 IP、已通过鉴权的 Key 元数据和请求追踪 ID；不会暴露原始密钥。
+- `readBody<T>(maxBytes?)`：按公共接口限制读取 JSON、文本或表单请求体；请求体解析仍由业务模块负责。
+- `ok` / `fail` / `businessFail`：统一响应壳；`businessFail` 同时写入调用日志并跳过扣费。
+- `respond`：默认返回标准 JSON；当 `encode` 或 `encoding` 为 `text`、`markdown` 或 `md` 时，调用对应格式化函数并统一设置内容类型。
+- `raw` / `redirect`：内容协商接口的直出响应和重定向，自动补齐 `Content-Type` 与 `X-Request-Id`。
+
+`event` 仍然保留给少数需要使用 H3 特有能力的场景。业务抓取、解析和缓存继续放在 `server/lib/<code>/`，不要把业务逻辑塞进上下文。
+
+如果某个 HTTP 状态码只是业务结果说明，不应影响成功率、失败率或自动可用率，可以在 handler 后声明：
+
+```ts
+export default defineOpenApiEventHandler(handleRequest, {
+  ignoreStatisticsStatusCodes: [422]
+})
+```
+
+这些响应仍会保留调用日志、真实状态码和错误信息，但不会进入日聚合统计；该选项不改变扣费规则。只声明确实不代表服务故障的状态码，网关拒绝和未进入 handler 的请求不受此选项影响。
+
 响应与校验工具按场景选择：
 
 | 场景 | 使用 |
@@ -64,6 +111,7 @@ server/routes/
 | 成功 | `openApiOk` |
 | 参数或协议失败 | `openApiFail` |
 | 需要记录错误并跳过扣费的业务失败 | `openApiBizFail` |
+| JSON / text / Markdown 内容协商 | `api.respond` |
 | Zod body 校验 | `readOpenApiBody` |
 
 详细约束和最小示例见 [对外接口落地规范](./public-api-conventions.md)。

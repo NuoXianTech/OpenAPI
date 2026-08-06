@@ -84,9 +84,11 @@ export interface ApiStatsTracked {
   userAgent: string | null
   referer: string | null
   queryString: string | null
+  /** Handler-declared statuses excluded from aggregate statistics. */
+  ignoredStatisticsStatusCodes?: number[]
 }
 
-interface ApiKeyContext {
+export interface ApiKeyContext {
   id: number
   userId: number
   name: string

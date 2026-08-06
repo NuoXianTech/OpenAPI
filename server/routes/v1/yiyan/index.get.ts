@@ -22,10 +22,7 @@
  * 作为公共接口应配 isApiKey=false 且 methodCosts.GET=0（免鉴权免扣费）。
  */
 
-import type { H3Event } from 'h3'
-import { getQuery, setResponseHeader } from 'h3'
-import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
-import { ensureRequestId } from '~~/server/utils/request-id'
+import type { OpenApiHandlerContext } from '~~/server/utils/open-api-handler-context'
 import { readQueryNumber, readQueryString } from '~~/server/utils/request-query'
 import {
   DEFAULT_MAX_LENGTH,
@@ -57,8 +54,8 @@ function parseLength(value: unknown, fallback: number): number {
   return normalized !== undefined && normalized >= 0 ? Math.floor(normalized) : fallback
 }
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
-  const query = getQuery(event)
+export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerContext) => {
+  const query = api.query
 
   const typeRaw = readQueryString(query.type).trim().toLowerCase()
   const type: YiyanType = isYiyanType(typeRaw) ? typeRaw : DEFAULT_YIYAN_TYPE
@@ -77,40 +74,42 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
   const id = readQueryString(query.id).trim() || null
 
   if (minLength > maxLength) {
-    return openApiFail(event, 400, 'INVALID_PARAMETER', `min_length(${minLength}) 不能大于 max_length(${maxLength})`)
+    return api.fail(400, 'INVALID_PARAMETER', `min_length(${minLength}) 不能大于 max_length(${maxLength})`)
   }
 
   const useJsonp = callback.length > 0
   if (useJsonp) {
     if (!isValidCallback(callback)) {
-      return openApiFail(event, 400, 'INVALID_PARAMETER', 'callback 必须是合法的 JS 函数名')
+      return api.fail(400, 'INVALID_PARAMETER', 'callback 必须是合法的 JS 函数名')
     }
     if (charset === 'gbk') {
-      return openApiFail(event, 400, 'INVALID_PARAMETER', 'charset=gbk 不支持与 callback（异步函数）同用')
+      return api.fail(400, 'INVALID_PARAMETER', 'charset=gbk 不支持与 callback（异步函数）同用')
     }
   }
 
   const sentence = await pickSentence({ type, minLength, maxLength, id })
   if (!sentence) {
     const message = id ? `未找到一言` : `暂无符合条件的一言`
-    return openApiFail(event, 404, 'YIYAN_NOT_FOUND', message)
+    return api.fail(404, 'YIYAN_NOT_FOUND', message)
   }
 
   const record = toRecord(sentence, type)
 
   // 每次随机，禁止 CDN / 浏览器缓存固定同一句
-  setResponseHeader(event, 'cache-control', 'no-store')
+  api.setHeaders({ 'cache-control': 'no-store' })
 
   // encode=json（含默认）→ 标准 openApiResponse 壳；JSONP 包裹同一个壳。
   if (useJsonp || encode === 'json') {
-    const envelope = openApiOk(event, record, '获取一言成功') // 设置 200 + X-Request-Id，返回标准壳对象
+    const envelope = api.ok(record, '获取一言成功')
     if (useJsonp) {
-      setResponseHeader(event, 'content-type', contentTypeFor('jsonp', charset))
-      return encodeBody(wrapJsonp(callback, JSON.stringify(envelope)), charset)
+      return api.raw(encodeBody(wrapJsonp(callback, JSON.stringify(envelope)), charset), {
+        contentType: contentTypeFor('jsonp', charset)
+      })
     }
     if (charset === 'gbk') {
-      setResponseHeader(event, 'content-type', contentTypeFor('json', charset))
-      return encodeBody(JSON.stringify(envelope), charset)
+      return api.raw(encodeBody(JSON.stringify(envelope), charset), {
+        contentType: contentTypeFor('json', charset)
+      })
     }
     return envelope // utf-8 标准路径：交由 Nitro 序列化为 application/json
   }
@@ -127,7 +126,7 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
     default: // 'md'（'json' 已在上方返回）
       body = formatMd(record)
   }
-  setResponseHeader(event, 'content-type', contentTypeFor(encode, charset))
-  setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-  return encodeBody(body, charset)
+  return api.raw(encodeBody(body, charset), {
+    contentType: contentTypeFor(encode, charset)
+  })
 })

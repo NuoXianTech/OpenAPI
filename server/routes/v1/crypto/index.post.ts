@@ -11,38 +11,34 @@
  *   }
  */
 
-import type { H3Event } from 'h3'
 import { ensureCryptoRegistered } from '~~/server/lib/crypto'
 import { isCryptoAlgorithmEnabled } from '~~/server/lib/crypto/capability-config'
 import { parseCryptoRequestBody, toCryptoMode } from '~~/server/lib/crypto/request'
 import { getAlgorithm, normalizeOptions } from '~~/server/lib/crypto/registry'
 import { isCryptoBusinessError } from '~~/server/lib/crypto/types'
-import { openApiBizFail } from '~~/server/utils/api-call-outcome'
-import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
-import { readOpenApiJsonBody } from '~~/server/utils/zod'
+import type { OpenApiHandlerContext } from '~~/server/utils/open-api-handler-context'
 
-function failBusiness(event: H3Event, message: string, bizCode = 'CRYPTO_FAILED') {
-  return openApiBizFail(event, 422, bizCode, message)
+function failBusiness(api: OpenApiHandlerContext, message: string, bizCode = 'CRYPTO_FAILED') {
+  return api.businessFail(422, bizCode, message)
 }
 
-export default defineOpenApiEventHandler(async (event: H3Event) => {
-  const body = await readOpenApiJsonBody(event)
+export default defineOpenApiEventHandler(async (_event, api) => {
+  const body = await api.readBody()
   const parsed = parseCryptoRequestBody(body)
-  if (!parsed.ok) return openApiFail(event, 400, parsed.code, parsed.message)
+  if (!parsed.ok) return api.fail(400, parsed.code, parsed.message)
 
   ensureCryptoRegistered()
   const request = parsed.data
   const algorithm = getAlgorithm(request.algorithm)
   if (!algorithm) {
-    return openApiFail(event, 404, 'ALGORITHM_NOT_FOUND', `未知算法 "${request.algorithm}"，请通过 GET /v1/crypto 查看可用列表`)
+    return api.fail(404, 'ALGORITHM_NOT_FOUND', `未知算法 "${request.algorithm}"，请通过 GET /v1/crypto 查看可用列表`)
   }
   if (!await isCryptoAlgorithmEnabled(algorithm.name)) {
-    return openApiFail(event, 403, 'CRYPTO_ALGORITHM_DISABLED', `算法 "${algorithm.name}" 已被管理员关闭`)
+    return api.fail(403, 'CRYPTO_ALGORITHM_DISABLED', `算法 "${algorithm.name}" 已被管理员关闭`)
   }
   const mode = toCryptoMode(request.action)
   if (!algorithm.modes.includes(mode)) {
-    return openApiFail(
-      event,
+    return api.fail(
       422,
       'UNSUPPORTED_ACTION',
       `算法 "${algorithm.name}" 不支持 ${request.action} 操作`
@@ -58,18 +54,18 @@ export default defineOpenApiEventHandler(async (event: H3Event) => {
   try {
     options = normalizeOptions(algorithm.options, mode, rawOptions)
   } catch (error) {
-    if (isCryptoBusinessError(error)) return failBusiness(event, error.message, error.bizCode)
+    if (isCryptoBusinessError(error)) return failBusiness(api, error.message, error.bizCode)
     throw error
   }
 
   try {
     const result = await algorithm.exec({ mode, text: request.input, options })
-    return openApiOk(event, {
+    return api.ok({
       result: result.text
     }, '处理成功')
   } catch (error) {
-    if (isCryptoBusinessError(error)) return failBusiness(event, error.message, error.bizCode)
+    if (isCryptoBusinessError(error)) return failBusiness(api, error.message, error.bizCode)
     const message = error instanceof Error ? error.message : '处理失败'
-    return failBusiness(event, message)
+    return failBusiness(api, message)
   }
 })

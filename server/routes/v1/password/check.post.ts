@@ -8,50 +8,27 @@
  *   encode|encoding  json|text|markdown|md，默认 json
  */
 
-import type { H3Event } from 'h3'
-import { getQuery, setResponseHeader, setResponseHeaders } from 'h3'
 import {
   checkPasswordStrength,
   formatPasswordCheckMarkdown,
   formatPasswordCheckText,
-  isPasswordCheckEncoding,
-  parsePasswordCheckBody,
-  type PasswordCheckEncoding
+  parsePasswordCheckBody
 } from '~~/server/lib/password-check'
-import { openApiFail, openApiOk } from '~~/server/utils/open-api-response'
-import { ensureRequestId } from '~~/server/utils/request-id'
-import { readQueryString } from '~~/server/utils/request-query'
-import { readOpenApiJsonBody } from '~~/server/utils/zod'
 
-function parseEncoding(query: Record<string, unknown>): PasswordCheckEncoding {
-  const value = readQueryString(query.encode || query.encoding).trim().toLowerCase()
-  return isPasswordCheckEncoding(value) ? value : 'json'
-}
-
-export default defineOpenApiEventHandler(async (event: H3Event) => {
-  setResponseHeaders(event, {
+export default defineOpenApiEventHandler(async (_event, api) => {
+  api.setHeaders({
     'cache-control': 'no-store',
     'pragma': 'no-cache'
   })
 
-  const query = getQuery(event) as Record<string, unknown>
-  const encoding = parseEncoding(query)
-  const body = await readOpenApiJsonBody(event, 32 * 1024)
+  const body = await api.readBody(32 * 1024)
   const parsed = parsePasswordCheckBody(body)
-  if (!parsed.ok) return openApiFail(event, 400, parsed.code, parsed.message)
+  if (!parsed.ok) return api.fail(400, parsed.code, parsed.message)
 
   const result = checkPasswordStrength(parsed.password)
-  if (encoding === 'text') {
-    setResponseHeader(event, 'content-type', 'text/plain; charset=utf-8')
-    setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-    return formatPasswordCheckText(result)
-  }
-
-  if (encoding === 'markdown' || encoding === 'md') {
-    setResponseHeader(event, 'content-type', 'text/markdown; charset=utf-8')
-    setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-    return formatPasswordCheckMarkdown(result)
-  }
-
-  return openApiOk(event, result, '密码强度检测成功')
+  return api.respond(result, {
+    message: '密码强度检测成功',
+    text: formatPasswordCheckText,
+    markdown: formatPasswordCheckMarkdown
+  })
 })

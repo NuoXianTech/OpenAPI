@@ -12,12 +12,7 @@
  *   - markdown|md → 直出 Markdown
  */
 
-import type { H3Event } from 'h3'
-import type { OpenApiHandlerContext } from '~~/server/utils/api-guard'
-import { getQuery, getRequestHeader, sendRedirect, setResponseHeader } from 'h3'
-import { openApiBizFail } from '~~/server/utils/api-call-outcome'
-import { openApiOk } from '~~/server/utils/open-api-response'
-import { ensureRequestId } from '~~/server/utils/request-id'
+import type { OpenApiHandlerContext } from '~~/server/utils/open-api-handler-context'
 import { readQueryString } from '~~/server/utils/request-query'
 import {
   DEFAULT_BING_ENCODE,
@@ -39,14 +34,14 @@ function parseBingImageType(query: Record<string, unknown>): BingImageType {
   return isBingImageType(rawType) ? rawType : DEFAULT_BING_IMAGE_TYPE
 }
 
-export default defineOpenApiEventHandler(async (event: H3Event, { signal }: OpenApiHandlerContext) => {
-  const query = getQuery(event) as Record<string, unknown>
+export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerContext) => {
+  const query = api.query
   const encode = parseBingEncode(query)
   const type = parseBingImageType(query)
-  const userAgent = getRequestHeader(event, 'user-agent') || ''
+  const userAgent = api.header('user-agent') || ''
 
   try {
-    const data = await getBingImage(signal)
+    const data = await getBingImage(api.signal)
     const cover = resolveBingCoverUrl(data.cover, type, userAgent)
     const record = {
       ...data,
@@ -54,29 +49,22 @@ export default defineOpenApiEventHandler(async (event: H3Event, { signal }: Open
       cover_4k: createBingImageUrl(data.cover, 'UHD')
     }
 
-    setResponseHeader(event, 'access-control-allow-origin', '*')
-    setResponseHeader(event, 'cache-control', 'public, max-age=3600')
+    api.setHeaders({
+      'access-control-allow-origin': '*',
+      'cache-control': 'public, max-age=3600'
+    })
 
     if (encode === 'image') {
-      setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-      return sendRedirect(event, record.cover, 302)
+      return api.redirect(record.cover)
     }
 
-    if (encode === 'text') {
-      setResponseHeader(event, 'content-type', 'text/plain; charset=utf-8')
-      setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-      return record.cover
-    }
-
-    if (encode === 'markdown' || encode === 'md') {
-      setResponseHeader(event, 'content-type', 'text/markdown; charset=utf-8')
-      setResponseHeader(event, 'x-request-id', ensureRequestId(event))
-      return createBingMarkdown(record)
-    }
-
-    return openApiOk(event, record, '获取必应每日壁纸成功')
+    return api.respond(record, {
+      message: '获取必应每日壁纸成功',
+      text: () => record.cover,
+      markdown: createBingMarkdown
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : '获取必应每日壁纸失败'
-    return openApiBizFail(event, 502, 'UPSTREAM_ERROR', `获取必应每日壁纸失败：${message}`)
+    return api.businessFail(502, 'UPSTREAM_ERROR', `获取必应每日壁纸失败：${message}`)
   }
 })

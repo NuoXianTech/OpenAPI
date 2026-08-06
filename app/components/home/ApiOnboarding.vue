@@ -3,7 +3,9 @@ import { formatStandardResponseExample } from '~/utils/public-api-example'
 
 const { t } = useI18n()
 const toast = useToast()
-const gatewayOrigin = useRequestURL().origin
+const requestUrl = useRequestURL()
+const { settings } = useSiteSettings()
+const gatewayOrigin = computed(() => settings.value.siteUrl || requestUrl.origin)
 
 const onboardingSteps = computed(() => [
   {
@@ -24,7 +26,7 @@ const onboardingSteps = computed(() => [
 ])
 
 const curlSnippet = computed(() => [
-  'curl "' + gatewayOrigin + '/v1/exchange-rate?currency=CNY&encoding=json" \\',
+  'curl "' + gatewayOrigin.value + '/v1/exchange-rate?currency=CNY&encoding=json" \\',
   '  -H "x-api-key: <your-api-key>"'
 ].join('\n'))
 

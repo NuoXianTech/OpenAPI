@@ -66,7 +66,9 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       return
     }
 
-    const isCounted = !rejection || !NON_COUNTED_REJECTION_OUTCOMES.has(rejection.outcome)
+    const ignoredStatus = tracked.ignoredStatisticsStatusCodes?.includes(statusCode) ?? false
+    const isCounted = !ignoredStatus
+      && (!rejection || !NON_COUNTED_REJECTION_OUTCOMES.has(rejection.outcome))
 
     const apiKeyId = event.context.apiKey?.id
       ?? rejection?.apiKeyId

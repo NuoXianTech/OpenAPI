@@ -34,6 +34,10 @@ import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service
 import { getAllowedMethods, getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
 import { clampInteger, toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
 import { openApiBizFail } from '~~/server/utils/api-call-outcome'
+import {
+  createOpenApiHandlerContext,
+  type OpenApiHandlerContext
+} from '~~/server/utils/open-api-handler-context'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readClientIp, readRequestMeta, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
@@ -41,6 +45,7 @@ import { firstRow } from '~~/server/utils/row'
 import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
 import { runWithTimeout } from '~~/server/utils/timeout'
 import { digestStoredSecret } from '~~/server/utils/stored-secret'
+import { normalizeIgnoredStatisticsStatusCodes } from '~~/server/utils/api-statistics'
 
 type ApiKeyRecord = typeof apiKeys.$inferSelect
 
@@ -79,12 +84,13 @@ type OpenApiGateResult
     | { status: 'rejected', response: OpenApiResponse }
     | { status: 'unmatched' }
 
-export interface OpenApiHandlerContext {
-  signal: AbortSignal
-}
-
 interface OpenApiEventHandler<TResult> {
   (event: H3Event, context: OpenApiHandlerContext): TResult | Promise<TResult>
+}
+
+export interface OpenApiHandlerOptions {
+  /** HTTP statuses that remain in the audit log but do not enter statistics. */
+  ignoreStatisticsStatusCodes?: readonly number[]
 }
 
 function readApiKeyFromEvent(event: H3Event): string {
@@ -419,15 +425,22 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   }
 }
 
-export function defineOpenApiEventHandler<TResult>(handler: OpenApiEventHandler<TResult>) {
+export function defineOpenApiEventHandler<TResult>(
+  handler: OpenApiEventHandler<TResult>,
+  options: OpenApiHandlerOptions = {}
+) {
+  const ignoredStatisticsStatusCodes = normalizeIgnoredStatisticsStatusCodes(options.ignoreStatisticsStatusCodes)
   return defineEventHandler(async (event): Promise<TResult | OpenApiResponse> => {
     const gate = await runOpenApiGate(event)
     if (gate.status === 'rejected') return gate.response
     if (gate.status === 'unmatched') {
       return openApiFail(event, 503, 'API_CONFIGURATION_ERROR', '接口治理配置不可用')
     }
+    if (ignoredStatisticsStatusCodes.length > 0 && event.context.apiStatsTracked) {
+      event.context.apiStatsTracked.ignoredStatisticsStatusCodes = ignoredStatisticsStatusCodes
+    }
     return runWithTimeout(
-      signal => handler(event, { signal }),
+      signal => handler(event, createOpenApiHandlerContext(event, signal)),
       {
         timeoutMs: gate.timeoutMs,
         onTimeout: () => openApiBizFail(event, 504, 'API_TIMEOUT', '接口处理超时')
