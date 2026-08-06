@@ -6,11 +6,11 @@ import type {
   PublicCallStatsTrendPoint
 } from '#shared/types/public-stats'
 import type { DashboardCallRankItem } from '#shared/types/dashboard'
+import { PUBLIC_STATS_DASHBOARD_CACHE_TTL_SECONDS } from '#shared/config/public-stats'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
 import { getSharedCache, getSharedCacheVersion } from '~~/server/utils/shared-cache'
 
-const PUBLIC_STATS_TTL_SECONDS = 30
 const PUBLIC_STATS_SUMMARY_TTL_SECONDS = 10
 const PUBLIC_STATS_HISTORY_TTL_SECONDS = 2 * 24 * 60 * 60
 const PUBLIC_USER_COUNT_TTL_SECONDS = 60
@@ -264,7 +264,7 @@ export const apiCallStatsService = {
 
     return getSharedCache<PublicCallStatsDashboard>({
       key: `cache:public:stats:s${PUBLIC_STATS_CACHE_SCHEMA_VERSION}:v${version}:${days}:${topLimit}`,
-      ttlSeconds: PUBLIC_STATS_TTL_SECONDS,
+      ttlSeconds: PUBLIC_STATS_DASHBOARD_CACHE_TTL_SECONDS,
       loader: () => loadPublicDashboard(days, topLimit)
     })
   }

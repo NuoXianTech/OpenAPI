@@ -59,8 +59,9 @@ function roundPercent(value: number): number {
 
 export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions = {}): UsePublicStatsDashboardReturn {
   const { t, locale } = useI18n()
+  const immediate = options.immediate ?? true
   const data = ref<PublicCallStatsDashboard | null>(null)
-  const isPending = ref(false)
+  const isPending = ref(immediate)
   const error = ref<unknown>(null)
 
   const overview = computed(() => data.value?.overview ?? null)
@@ -195,7 +196,7 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     await fetchStats()
   }
 
-  if (options.immediate ?? true) {
+  if (immediate) {
     onMounted(() => {
       void fetchStats()
     })
