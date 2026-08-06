@@ -38,7 +38,6 @@ export interface ApiKeyItem {
   lastUsedAt: string | null
   lastUsedIp: string | null
   expiresAt: string | null
-  revokedAt: string | null
   createdAt: string
 }
 

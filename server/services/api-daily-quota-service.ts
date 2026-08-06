@@ -1,7 +1,7 @@
 import { and, eq, lt, sql } from 'drizzle-orm'
 import { apiDailyQuotaUsage } from '~~/server/db/schema'
 import type { DatabaseTransaction } from '~~/server/db/client'
-import { getLocalDayStart } from '~~/server/utils/local-time'
+import { toLocalDateKey } from '~~/server/utils/local-time'
 
 /**
  * 原子预占一次 API 每日配额。
@@ -13,7 +13,7 @@ export async function reserveApiDailyQuota(apiId: number, limit: number, value =
   const normalizedLimit = Math.max(Math.trunc(limit), 0)
   if (normalizedLimit === 0) return true
 
-  const usageDate = getLocalDayStart(value)
+  const usageDate = toLocalDateKey(value)
   return db.transaction(async (tx: DatabaseTransaction) => {
     await tx.insert(apiDailyQuotaUsage).values({
       apiId,
@@ -33,7 +33,7 @@ export async function reserveApiDailyQuota(apiId: number, limit: number, value =
         eq(apiDailyQuotaUsage.usageDate, usageDate),
         lt(apiDailyQuotaUsage.usedCount, normalizedLimit)
       ))
-      .returning({ id: apiDailyQuotaUsage.id })
+      .returning({ apiId: apiDailyQuotaUsage.apiId })
 
     return Boolean(reserved[0])
   })

@@ -204,15 +204,14 @@ const columns = computed<TableColumn<ApiKeyItem>[]>(() => [
   { id: 'actions', header: '' }
 ])
 const keyword = ref('')
-const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired' | 'revoked'>('all')
+const statusFilter = ref<'all' | 'enabled' | 'disabled' | 'expired'>('all')
 const scopeFilter = ref<'all' | 'full' | 'limited'>('all')
 
 const statusItems = computed(() => [
   { label: t('user.apiKeys.filters.allStatuses'), value: 'all' },
   { label: t('common.apiKeys.statuses.enabled'), value: 'enabled' },
   { label: t('common.apiKeys.statuses.disabled'), value: 'disabled' },
-  { label: t('common.apiKeys.statuses.expired'), value: 'expired' },
-  { label: t('common.apiKeys.statuses.revoked'), value: 'revoked' }
+  { label: t('common.apiKeys.statuses.expired'), value: 'expired' }
 ])
 
 const scopeFilterItems = computed(() => [

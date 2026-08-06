@@ -23,9 +23,11 @@ export default defineAdminEventHandler(async (event): Promise<AdminDashboardData
   const recentLimit = clampInteger(readQueryNumber(query.recent), 1, 50, 10)
 
   const todayStart = getLocalDayStart(new Date())
+  const todayKey = toLocalDateKey(todayStart)
   const yesterdayStart = addLocalDays(todayStart, -1)
   const rangeStart = addLocalDays(todayStart, -(days - 1))
   const tomorrowStart = addLocalDays(todayStart, 1)
+  const tomorrowKey = toLocalDateKey(tomorrowStart)
 
   const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
   const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
@@ -52,12 +54,10 @@ export default defineAdminEventHandler(async (event): Promise<AdminDashboardData
       failureCalls: failureExpr
     }).from(apiCallStats),
     db.select({ todayCalls: totalExpr }).from(apiCallStats).where(and(
-      gte(apiCallStats.statDate, todayStart),
-      lt(apiCallStats.statDate, tomorrowStart)
+      eq(apiCallStats.statDate, todayKey)
     )),
     db.select({ yesterdayCalls: totalExpr }).from(apiCallStats).where(and(
-      gte(apiCallStats.statDate, yesterdayStart),
-      lt(apiCallStats.statDate, todayStart)
+      eq(apiCallStats.statDate, toLocalDateKey(yesterdayStart))
     )),
     db.select({
       statDate: apiCallStats.statDate,
@@ -66,8 +66,8 @@ export default defineAdminEventHandler(async (event): Promise<AdminDashboardData
       failureCalls: failureExpr
     }).from(apiCallStats)
       .where(and(
-        gte(apiCallStats.statDate, rangeStart),
-        lt(apiCallStats.statDate, tomorrowStart)
+        gte(apiCallStats.statDate, toLocalDateKey(rangeStart)),
+        lt(apiCallStats.statDate, tomorrowKey)
       ))
       .groupBy(apiCallStats.statDate)
       .orderBy(asc(apiCallStats.statDate)),
@@ -79,8 +79,8 @@ export default defineAdminEventHandler(async (event): Promise<AdminDashboardData
     }).from(apiCallStats)
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
-        gte(apiCallStats.statDate, rangeStart),
-        lt(apiCallStats.statDate, tomorrowStart)
+        gte(apiCallStats.statDate, toLocalDateKey(rangeStart)),
+        lt(apiCallStats.statDate, tomorrowKey)
       ))
       .groupBy(apiCallStats.apiId, apis.name, apis.apiPath)
       .orderBy(desc(totalExpr), asc(apis.name))
@@ -113,7 +113,7 @@ export default defineAdminEventHandler(async (event): Promise<AdminDashboardData
 
   const trendMap = new Map<string, AdminDashboardTrendPoint>()
   for (const row of trendRows) {
-    const key = toLocalDateKey(row.statDate)
+    const key = row.statDate
     trendMap.set(key, {
       date: key,
       totalCalls: toNumber(row.totalCalls),

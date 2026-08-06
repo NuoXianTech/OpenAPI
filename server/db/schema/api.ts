@@ -1,17 +1,22 @@
 import {
   pgTable,
   serial,
+  bigserial,
+  bigint,
   varchar,
   integer,
   text,
   boolean,
   jsonb,
   timestamp,
+  date,
   uuid,
   index,
   uniqueIndex,
-  check
+  check,
+  primaryKey
 } from 'drizzle-orm/pg-core'
+import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { users } from './user'
 
@@ -28,7 +33,7 @@ export const apiCategories = pgTable('api_categories', {
   description: text('description'),
   icon: varchar('icon', { length: 120 }),
   color: varchar('color', { length: 20 }),
-  parentId: integer('parent_id'),
+  parentId: integer('parent_id').references((): AnyPgColumn => apiCategories.id, { onDelete: 'set null' }),
   sortOrder: integer('sort_order').notNull().default(0),
   isEnabled: boolean('is_enabled').notNull().default(true),
   deletedAt: timestamp('deleted_at', { withTimezone: true }),
@@ -95,10 +100,13 @@ export const apis = pgTable('apis', {
 }, table => [
   uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
   index('apis_category_idx').on(table.categoryId),
-  index('apis_enabled_idx').on(table.isEnabled),
-  index('apis_status_idx').on(table.status),
-  index('apis_orphaned_idx').on(table.isOrphaned),
-  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled)
+  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
+  check('apis_status_chk', sql`${table.status} in (-1, 0, 1, 2, 3, 4)`),
+  check('apis_endpoint_count_chk', sql`${table.endpointCount} >= 0`),
+  check('apis_rate_limits_chk', sql`${table.rateLimitPerSecond} >= 0 and ${table.rateLimitPerMinute} >= 0 and ${table.rateLimitPerHour} >= 0 and ${table.rateLimitPerDay} >= 0`),
+  check('apis_capability_revision_chk', sql`${table.capabilityRevision} >= 0`),
+  check('apis_daily_quota_chk', sql`${table.dailyQuota} >= 0`),
+  check('apis_timeout_ms_chk', sql`${table.timeoutMs} between 100 and 120000`)
 ])
 
 // ------------------------------------------------------------------
@@ -125,14 +133,13 @@ export const apiKeys = pgTable('api_keys', {
   lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
   lastUsedIp: varchar('last_used_ip', { length: 45 }),
   expiresAt: timestamp('expires_at', { withTimezone: true }),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
   index('api_keys_user_idx').on(table.userId),
-  index('api_keys_active_idx').on(table.isActive),
-  index('api_keys_expires_idx').on(table.expiresAt)
+  check('api_keys_total_quota_chk', sql`${table.totalQuota} is null or ${table.totalQuota} >= 0`),
+  check('api_keys_used_credits_chk', sql`${table.usedCredits} >= 0`),
+  check('api_keys_total_calls_chk', sql`${table.totalCalls} >= 0`)
 ])
 
 // ------------------------------------------------------------------
@@ -148,11 +155,11 @@ export const apiKeys = pgTable('api_keys', {
 //   - 接口未开启 isStatistics → 不写
 //   - 接口被禁用（isEnabled=false / API_DISABLED）→ 不写
 //   - 密钥无效（INVALID_API_KEY / MISSING_API_KEY）→ 不写
-//   - 其他场景（成功 + 业务失败 + 配额/积分/到期/吊销拒绝）→ 写入，
+//   - 其他场景（成功 + 业务失败 + 配额/积分/到期/禁用拒绝）→ 写入，
 //     其中"业务可见拒绝"的 isCounted=false（不参与统计聚合）
 // ------------------------------------------------------------------
 export const apiCalls = pgTable('api_calls', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
   requestId: uuid('request_id').defaultRandom().notNull(),
   apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
   apiKeyId: integer('api_key_id'), // 快照，无 FK
@@ -185,8 +192,12 @@ export const apiCalls = pgTable('api_calls', {
   index('api_calls_api_id_created_at_idx').on(table.apiId, table.createdAt.desc()),
   index('api_calls_user_created_at_idx').on(table.userId, table.createdAt.desc()),
   index('api_calls_api_key_created_at_idx').on(table.apiKeyId, table.createdAt.desc()),
-  index('api_calls_status_idx').on(table.statusCode),
-  index('api_calls_request_id_idx').on(table.requestId)
+  index('api_calls_request_id_idx').on(table.requestId),
+  check('api_calls_status_code_chk', sql`${table.statusCode} between 100 and 599`),
+  check('api_calls_latency_ms_chk', sql`${table.latencyMs} >= 0`),
+  check('api_calls_request_size_chk', sql`${table.requestSize} is null or ${table.requestSize} >= 0`),
+  check('api_calls_response_size_chk', sql`${table.responseSize} is null or ${table.responseSize} >= 0`),
+  check('api_calls_credits_cost_chk', sql`${table.creditsCost} >= 0`)
 ])
 
 // ------------------------------------------------------------------
@@ -196,17 +207,17 @@ export const apiCalls = pgTable('api_calls', {
 // 的接口完全不会进入本表。dashboard / 单接口日统计/总统计聚合均基于本表。
 // ------------------------------------------------------------------
 export const apiCallStats = pgTable('api_call_stats', {
-  id: serial('id').primaryKey(),
-  apiId: integer('api_id').notNull().references(() => apis.id),
-  statDate: timestamp('stat_date', { withTimezone: true }).notNull(),
+  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'restrict' }),
+  statDate: date('stat_date').notNull(),
   totalCount: integer('total_count').notNull().default(0),
   successCount: integer('success_count').notNull().default(0),
   failureCount: integer('failure_count').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('api_call_stats_api_id_stat_date_uq').on(table.apiId, table.statDate),
-  index('api_call_stats_stat_date_idx').on(table.statDate)
+  primaryKey({ columns: [table.apiId, table.statDate] }),
+  index('api_call_stats_stat_date_idx').on(table.statDate),
+  check('api_call_stats_counts_chk', sql`${table.totalCount} >= 0 and ${table.successCount} >= 0 and ${table.failureCount} >= 0 and ${table.successCount} + ${table.failureCount} = ${table.totalCount}`)
 ])
 
 // ------------------------------------------------------------------
@@ -216,15 +227,15 @@ export const apiCallStats = pgTable('api_call_stats', {
 // 这样即使关闭统计或运行多个实例，每日配额仍能严格执行且不会竞态超发。
 // ------------------------------------------------------------------
 export const apiDailyQuotaUsage = pgTable('api_daily_quota_usage', {
-  id: serial('id').primaryKey(),
   apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
-  usageDate: timestamp('usage_date', { withTimezone: true }).notNull(),
+  usageDate: date('usage_date').notNull(),
   usedCount: integer('used_count').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('api_daily_quota_usage_api_id_date_uq').on(table.apiId, table.usageDate),
-  index('api_daily_quota_usage_date_idx').on(table.usageDate)
+  primaryKey({ columns: [table.apiId, table.usageDate] }),
+  index('api_daily_quota_usage_date_idx').on(table.usageDate),
+  check('api_daily_quota_usage_count_chk', sql`${table.usedCount} >= 0`)
 ])
 
 // ------------------------------------------------------------------
@@ -235,7 +246,7 @@ export const apiDailyQuotaUsage = pgTable('api_daily_quota_usage', {
 // ------------------------------------------------------------------
 export const pendingCharges = pgTable('pending_charges', {
   id: serial('id').primaryKey(),
-  apiCallId: integer('api_call_id').notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),
+  apiCallId: bigint('api_call_id', { mode: 'number' }).notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
   amount: integer('amount').notNull(),
@@ -251,5 +262,7 @@ export const pendingCharges = pgTable('pending_charges', {
   uniqueIndex('pending_charges_api_call_uq').on(table.apiCallId),
   index('pending_charges_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
   index('pending_charges_user_idx').on(table.userId),
-  check('pending_charges_status_chk', sql`${table.status} in ('pending', 'dead_letter')`)
+  check('pending_charges_status_chk', sql`${table.status} in ('pending', 'dead_letter')`),
+  check('pending_charges_amount_chk', sql`${table.amount} > 0`),
+  check('pending_charges_attempts_chk', sql`${table.attempts} >= 0`)
 ])

@@ -1,4 +1,5 @@
 import { and, asc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
+import { z } from 'zod'
 import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
 import { APP_TIME_ZONE } from '~~/server/utils/local-time'
@@ -63,7 +64,10 @@ export const adminLogsService = {
     if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
     if (input.userId && input.userId > 0) conds.push(eq(apiCalls.userId, input.userId))
     if (input.apiKeyId && input.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, input.apiKeyId))
-    if (input.requestId) conds.push(sql`${apiCalls.requestId}::text = ${input.requestId}`)
+    if (input.requestId) {
+      const requestId = z.uuid().safeParse(input.requestId)
+      conds.push(requestId.success ? eq(apiCalls.requestId, requestId.data) : sql`false`)
+    }
     if (input.types && input.types.length > 0 && input.types.length < 2) {
       conds.push(sql`(${apiCallTypeExpr}) in ${input.types}`)
     }

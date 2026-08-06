@@ -27,7 +27,7 @@
 | `NITRO_HOST` | `127.0.0.1` | VPS + Nginx 反向代理时只监听本机 |
 | `NITRO_PORT` | `3000` | Nitro 服务端口 |
 | `NODE_ENV` | `production` | 让 Nuxt、Vue Router 和相关依赖使用生产分支，减少开发警告和日志噪声 |
-| `TZ` | `Asia/Shanghai` | 统一日志、统计和运维时间 |
+| `TZ` | `Asia/Shanghai` | 统一日志、统计、运维时间以及数据库迁移中的自然日转换 |
 | `DATABASE_POOL_SIZE` | `10` | `postgres-js` 连接池上限，启动迁移会单独使用 `max=1` 的连接 |
 | `DATABASE_DRIVER` | 留空或 `pglite` | 留空时有 `DATABASE_URL` 使用 PostgreSQL；生产无 PostgreSQL 时必须显式设为 `pglite` |
 | `PGLITE_DATA_DIR` | `.data/pglite` | PGlite 数据目录；生产使用 PGlite 时必须纳入备份 |
@@ -54,6 +54,8 @@ Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防
 首次登录后，如果管理员仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码。后续用户名不再作为常规资料项修改，以保证登录日志、操作日志和审计链路稳定。
 
 发布前必须基于当前 Drizzle schema 生成数据库迁移。构建时迁移目录会复制到 `.output/server/db/migrations/postgresql`，生产 Node 进程启动时自动应用；`pnpm db:migrate` 仅作为手动修复或演练入口。PGlite 使用同一套 PostgreSQL 方言迁移。
+
+`0001_database_integrity` 会把旧的 `api_call_stats.stat_date` 和 `api_daily_quota_usage.usage_date` 从带时区时间戳转换为自然日。启动迁移和 `pnpm db:migrate` 都会将数据库迁移会话设置为 Node 的 `TZ`；升级已有数据时，`TZ` 必须保持为历史数据写入时使用的应用时区，不能在迁移前顺手切换时区。
 
 数据库建议：
 

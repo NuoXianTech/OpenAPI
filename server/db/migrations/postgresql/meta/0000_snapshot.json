@@ -1,5 +1,5 @@
 {
-  "id": "6260be49-ecd0-4745-9437-508f9309d507",
+  "id": "da60125e-79b2-42f9-9875-79d9ced2f22e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -10,7 +10,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -46,7 +46,7 @@
         },
         "api_call_id": {
           "name": "api_call_id",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": false
         },
@@ -136,36 +136,6 @@
           "columns": [
             {
               "expression": "reason",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "credit_transactions_api_call_idx": {
-          "name": "credit_transactions_api_call_idx",
-          "columns": [
-            {
-              "expression": "api_call_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "credit_transactions_code_idx": {
-          "name": "credit_transactions_code_idx",
-          "columns": [
-            {
-              "expression": "code_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -387,7 +357,20 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "redemption_codes_amount_chk": {
+          "name": "redemption_codes_amount_chk",
+          "value": "\"redemption_codes\".\"amount\" > 0"
+        },
+        "redemption_codes_max_uses_chk": {
+          "name": "redemption_codes_max_uses_chk",
+          "value": "\"redemption_codes\".\"max_uses\" > 0"
+        },
+        "redemption_codes_used_count_chk": {
+          "name": "redemption_codes_used_count_chk",
+          "value": "\"redemption_codes\".\"used_count\" >= 0 and \"redemption_codes\".\"used_count\" <= \"redemption_codes\".\"max_uses\""
+        }
+      },
       "isRLSEnabled": false
     },
     "public.users": {
@@ -709,21 +692,6 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "oauth_accounts_provider_idx": {
-          "name": "oauth_accounts_provider_idx",
-          "columns": [
-            {
-              "expression": "provider",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
@@ -751,12 +719,6 @@
       "name": "api_call_stats",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
         "api_id": {
           "name": "api_id",
           "type": "integer",
@@ -765,7 +727,7 @@
         },
         "stat_date": {
           "name": "stat_date",
-          "type": "timestamp with time zone",
+          "type": "date",
           "primaryKey": false,
           "notNull": true
         },
@@ -806,27 +768,6 @@
         }
       },
       "indexes": {
-        "api_call_stats_api_id_stat_date_uq": {
-          "name": "api_call_stats_api_id_stat_date_uq",
-          "columns": [
-            {
-              "expression": "api_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "stat_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "api_call_stats_stat_date_idx": {
           "name": "api_call_stats_stat_date_idx",
           "columns": [
@@ -854,14 +795,27 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "restrict",
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "api_call_stats_api_id_stat_date_pk": {
+          "name": "api_call_stats_api_id_stat_date_pk",
+          "columns": [
+            "api_id",
+            "stat_date"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "api_call_stats_counts_chk": {
+          "name": "api_call_stats_counts_chk",
+          "value": "\"api_call_stats\".\"total_count\" >= 0 and \"api_call_stats\".\"success_count\" >= 0 and \"api_call_stats\".\"failure_count\" >= 0 and \"api_call_stats\".\"success_count\" + \"api_call_stats\".\"failure_count\" = \"api_call_stats\".\"total_count\""
+        }
+      },
       "isRLSEnabled": false
     },
     "public.api_calls": {
@@ -870,7 +824,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -1079,21 +1033,6 @@
           "method": "btree",
           "with": {}
         },
-        "api_calls_status_idx": {
-          "name": "api_calls_status_idx",
-          "columns": [
-            {
-              "expression": "status_code",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "api_calls_request_id_idx": {
           "name": "api_calls_request_id_idx",
           "columns": [
@@ -1128,7 +1067,28 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "api_calls_status_code_chk": {
+          "name": "api_calls_status_code_chk",
+          "value": "\"api_calls\".\"status_code\" between 100 and 599"
+        },
+        "api_calls_latency_ms_chk": {
+          "name": "api_calls_latency_ms_chk",
+          "value": "\"api_calls\".\"latency_ms\" >= 0"
+        },
+        "api_calls_request_size_chk": {
+          "name": "api_calls_request_size_chk",
+          "value": "\"api_calls\".\"request_size\" is null or \"api_calls\".\"request_size\" >= 0"
+        },
+        "api_calls_response_size_chk": {
+          "name": "api_calls_response_size_chk",
+          "value": "\"api_calls\".\"response_size\" is null or \"api_calls\".\"response_size\" >= 0"
+        },
+        "api_calls_credits_cost_chk": {
+          "name": "api_calls_credits_cost_chk",
+          "value": "\"api_calls\".\"credits_cost\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.api_categories": {
@@ -1271,7 +1231,21 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "api_categories_parent_id_api_categories_id_fk": {
+          "name": "api_categories_parent_id_api_categories_id_fk",
+          "tableFrom": "api_categories",
+          "tableTo": "api_categories",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1282,12 +1256,6 @@
       "name": "api_daily_quota_usage",
       "schema": "",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
         "api_id": {
           "name": "api_id",
           "type": "integer",
@@ -1296,7 +1264,7 @@
         },
         "usage_date": {
           "name": "usage_date",
-          "type": "timestamp with time zone",
+          "type": "date",
           "primaryKey": false,
           "notNull": true
         },
@@ -1323,27 +1291,6 @@
         }
       },
       "indexes": {
-        "api_daily_quota_usage_api_id_date_uq": {
-          "name": "api_daily_quota_usage_api_id_date_uq",
-          "columns": [
-            {
-              "expression": "api_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "usage_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "api_daily_quota_usage_date_idx": {
           "name": "api_daily_quota_usage_date_idx",
           "columns": [
@@ -1375,10 +1322,23 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "api_daily_quota_usage_api_id_usage_date_pk": {
+          "name": "api_daily_quota_usage_api_id_usage_date_pk",
+          "columns": [
+            "api_id",
+            "usage_date"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "api_daily_quota_usage_count_chk": {
+          "name": "api_daily_quota_usage_count_chk",
+          "value": "\"api_daily_quota_usage\".\"used_count\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.api_keys": {
@@ -1478,12 +1438,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "revoked_at": {
-          "name": "revoked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1505,36 +1459,6 @@
           "columns": [
             {
               "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_keys_active_idx": {
-          "name": "api_keys_active_idx",
-          "columns": [
-            {
-              "expression": "is_active",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_keys_expires_idx": {
-          "name": "api_keys_expires_idx",
-          "columns": [
-            {
-              "expression": "expires_at",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1572,7 +1496,20 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "api_keys_total_quota_chk": {
+          "name": "api_keys_total_quota_chk",
+          "value": "\"api_keys\".\"total_quota\" is null or \"api_keys\".\"total_quota\" >= 0"
+        },
+        "api_keys_used_credits_chk": {
+          "name": "api_keys_used_credits_chk",
+          "value": "\"api_keys\".\"used_credits\" >= 0"
+        },
+        "api_keys_total_calls_chk": {
+          "name": "api_keys_total_calls_chk",
+          "value": "\"api_keys\".\"total_calls\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.apis": {
@@ -1815,51 +1752,6 @@
           "method": "btree",
           "with": {}
         },
-        "apis_enabled_idx": {
-          "name": "apis_enabled_idx",
-          "columns": [
-            {
-              "expression": "is_enabled",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "apis_status_idx": {
-          "name": "apis_status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "apis_orphaned_idx": {
-          "name": "apis_orphaned_idx",
-          "columns": [
-            {
-              "expression": "is_orphaned",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "apis_path_version_enabled_idx": {
           "name": "apis_path_version_enabled_idx",
           "columns": [
@@ -1900,7 +1792,32 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "apis_status_chk": {
+          "name": "apis_status_chk",
+          "value": "\"apis\".\"status\" in (-1, 0, 1, 2, 3, 4)"
+        },
+        "apis_endpoint_count_chk": {
+          "name": "apis_endpoint_count_chk",
+          "value": "\"apis\".\"endpoint_count\" >= 0"
+        },
+        "apis_rate_limits_chk": {
+          "name": "apis_rate_limits_chk",
+          "value": "\"apis\".\"rate_limit_per_second\" >= 0 and \"apis\".\"rate_limit_per_minute\" >= 0 and \"apis\".\"rate_limit_per_hour\" >= 0 and \"apis\".\"rate_limit_per_day\" >= 0"
+        },
+        "apis_capability_revision_chk": {
+          "name": "apis_capability_revision_chk",
+          "value": "\"apis\".\"capability_revision\" >= 0"
+        },
+        "apis_daily_quota_chk": {
+          "name": "apis_daily_quota_chk",
+          "value": "\"apis\".\"daily_quota\" >= 0"
+        },
+        "apis_timeout_ms_chk": {
+          "name": "apis_timeout_ms_chk",
+          "value": "\"apis\".\"timeout_ms\" between 100 and 120000"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.pending_charges": {
@@ -1915,7 +1832,7 @@
         },
         "api_call_id": {
           "name": "api_call_id",
-          "type": "integer",
+          "type": "bigint",
           "primaryKey": false,
           "notNull": true
         },
@@ -2092,6 +2009,14 @@
         "pending_charges_status_chk": {
           "name": "pending_charges_status_chk",
           "value": "\"pending_charges\".\"status\" in ('pending', 'dead_letter')"
+        },
+        "pending_charges_amount_chk": {
+          "name": "pending_charges_amount_chk",
+          "value": "\"pending_charges\".\"amount\" > 0"
+        },
+        "pending_charges_attempts_chk": {
+          "name": "pending_charges_attempts_chk",
+          "value": "\"pending_charges\".\"attempts\" >= 0"
         }
       },
       "isRLSEnabled": false
@@ -2218,7 +2143,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "announcements_level_chk": {
+          "name": "announcements_level_chk",
+          "value": "\"announcements\".\"level\" in ('info', 'success', 'warning', 'critical')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.friend_links": {
@@ -2283,23 +2213,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "friend_links_active_idx": {
-          "name": "friend_links_active_idx",
-          "columns": [
-            {
-              "expression": "is_active",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
@@ -2313,7 +2227,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -2368,21 +2282,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "notification_deliveries_message_idx": {
-          "name": "notification_deliveries_message_idx",
-          "columns": [
-            {
-              "expression": "message_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2575,7 +2474,20 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "notification_messages_level_chk": {
+          "name": "notification_messages_level_chk",
+          "value": "\"notification_messages\".\"level\" in ('info', 'success', 'warning', 'critical')"
+        },
+        "notification_messages_audience_chk": {
+          "name": "notification_messages_audience_chk",
+          "value": "\"notification_messages\".\"audience\" in ('specific', 'all_current', 'all_with_future')"
+        },
+        "notification_messages_recipient_count_chk": {
+          "name": "notification_messages_recipient_count_chk",
+          "value": "\"notification_messages\".\"recipient_count\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.operation_logs": {
@@ -2584,7 +2496,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "bigserial",
           "primaryKey": true,
           "notNull": true
         },
@@ -2756,7 +2668,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "operation_logs_status_chk": {
+          "name": "operation_logs_status_chk",
+          "value": "\"operation_logs\".\"status\" in ('success', 'failure')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.system_settings": {
@@ -2804,23 +2721,7 @@
           "default": "now()"
         }
       },
-      "indexes": {
-        "system_settings_secret_idx": {
-          "name": "system_settings_secret_idx",
-          "columns": [
-            {
-              "expression": "is_secret",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},

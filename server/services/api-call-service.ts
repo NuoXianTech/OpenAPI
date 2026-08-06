@@ -1,6 +1,6 @@
-import { count, desc, eq, sql, and, ilike, isNull, or } from 'drizzle-orm'
+import { count, desc, eq, sql, and, ilike, or } from 'drizzle-orm'
 import { apiCallStats, apiCalls, apiKeys, apis } from '~~/server/db/schema'
-import { getLocalDayStart } from '~~/server/utils/local-time'
+import { toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { DatabaseTransaction } from '~~/server/db/client'
@@ -166,7 +166,7 @@ export const apiCallService = {
       name: apiKeys.name
     })
       .from(apiKeys)
-      .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
+      .where(eq(apiKeys.userId, userId))
       .orderBy(desc(apiKeys.createdAt))
 
     return { apis: apiOptionsRaw, apiKeys: keyOptionsRaw }
@@ -186,7 +186,7 @@ export const apiCallService = {
   }) {
     const normalizedStatusCode = Math.trunc(data.statusCode)
     const normalizedLatencyMs = Math.max(Math.trunc(data.latencyMs), 0)
-    const statDate = getLocalDayStart(data.statDate || new Date())
+    const statDate = toLocalDateKey(data.statDate || new Date())
     const statStatusCode = Math.trunc(data.statusCodeForStats ?? normalizedStatusCode)
     const successDelta = statStatusCode >= 200 && statStatusCode < 400 && !data.errorCode ? 1 : 0
     const failureDelta = successDelta ? 0 : 1

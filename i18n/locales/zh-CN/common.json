@@ -135,8 +135,7 @@
       "statuses": {
         "enabled": "启用",
         "disabled": "停用",
-        "expired": "已过期",
-        "revoked": "已撤销"
+        "expired": "已过期"
       },
       "columns": {
         "name": "名称",

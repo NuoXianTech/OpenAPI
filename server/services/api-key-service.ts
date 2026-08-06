@@ -49,12 +49,6 @@ function keyWhere(id: number, userId?: number) {
     : and(eq(apiKeys.id, id), eq(apiKeys.userId, userId))
 }
 
-function activeKeyWhere(id: number, userId?: number) {
-  return userId === undefined
-    ? and(eq(apiKeys.id, id), isNull(apiKeys.revokedAt))
-    : and(eq(apiKeys.id, id), eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt))
-}
-
 async function deleteKey(tx: DatabaseTransaction, id: number, userId?: number) {
   const rows = await tx.select().from(apiKeys)
     .where(keyWhere(id, userId))
@@ -83,7 +77,7 @@ async function resetKey(id: number, userId?: number) {
       ...encodeApiKey(nextKey),
       updatedAt: new Date()
     })
-    .where(activeKeyWhere(id, userId))
+    .where(keyWhere(id, userId))
     .returning()
   const row = firstRow(res)
   return row ? decodeApiKeyRecord(row) : null
@@ -107,7 +101,7 @@ interface CreateApiKeyInput {
 export const apiKeyService = {
   async listByUser(userId: number) {
     const rows = await db.select().from(apiKeys)
-      .where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
+      .where(eq(apiKeys.userId, userId))
       .orderBy(desc(apiKeys.createdAt))
     return rows.map(decodeApiKeyRecord)
   },
@@ -179,12 +173,12 @@ export const apiKeyService = {
     if (patch.isActive !== undefined) set.isActive = patch.isActive
 
     if (Object.keys(set).length === 0) {
-      const cur = await db.select().from(apiKeys).where(activeKeyWhere(id, opts.userId)).limit(1)
+      const cur = await db.select().from(apiKeys).where(keyWhere(id, opts.userId)).limit(1)
       const row = firstRow(cur)
       return row ? decodeApiKeyRecord(row) : null
     }
 
-    const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(activeKeyWhere(id, opts.userId)).returning()
+    const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(keyWhere(id, opts.userId)).returning()
     const row = firstRow(res)
     return row ? decodeApiKeyRecord(row) : null
   },
@@ -218,7 +212,6 @@ export const apiKeyService = {
       })
       .where(and(
         eq(apiKeys.id, id),
-        isNull(apiKeys.revokedAt),
         eq(apiKeys.isActive, true),
         or(
           isNull(apiKeys.totalQuota),

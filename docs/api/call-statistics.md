@@ -49,7 +49,7 @@
 
 缺失 Key 和无效 Key 特别容易误判：它们会被 gate 拒绝，但不会进入调用日志，也不会进入日聚合。这是为了避免攻击流量或客户端配置错误制造大量不可归属的噪声数据。
 
-> 接口禁用与密钥禁用的行为差异：**接口禁用**（`apis.isEnabled=false`，对应 outcome `disabled`）直接不写任何日志；**API Key 禁用**（`apiKeys.isActive=false` 或 `revokedAt != null`，对应 outcome `disabled_api_key`）仍会写一条 `isCounted=false` 的日志。
+> 接口禁用与密钥禁用的行为差异：**接口禁用**（`apis.isEnabled=false`，对应 outcome `disabled`）直接不写任何日志；**API Key 禁用**（`apiKeys.isActive=false`，对应 outcome `disabled_api_key`）仍会写一条 `isCounted=false` 的日志。
 
 ## 4. 哪些请求不计入调用次数
 
@@ -61,7 +61,7 @@
 | --- | --- | --- |
 | 缺失 API Key | 否 | 否 |
 | API Key 无效 | 否 | 否 |
-| API Key 已禁用（`isActive=false` 或 `revokedAt`） | 是，若能识别到 Key；`isCounted=false` | 否 |
+| API Key 已禁用（`isActive=false`） | 是，若能识别到 Key；`isCounted=false` | 否 |
 | API Key 已过期 | 是，若能识别到 Key；`isCounted=false` | 否 |
 | scope 不允许 | 是；`isCounted=false` | 否 |
 | IP 不在白名单 | 是；`isCounted=false` | 否 |

@@ -1,13 +1,15 @@
 import {
   pgTable,
-  serial,
+  bigserial,
   varchar,
   integer,
   boolean,
   jsonb,
   timestamp,
-  index
+  index,
+  check
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 
 // ------------------------------------------------------------------
 // System Settings（全站强类型键值配置）
@@ -23,9 +25,7 @@ export const systemSettings = pgTable('system_settings', {
   description: varchar('description', { length: 500 }).notNull().default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  index('system_settings_secret_idx').on(table.isSecret)
-])
+})
 
 // ------------------------------------------------------------------
 // Audit Logs（统一审计日志 · 审计不可变）
@@ -38,7 +38,7 @@ export const systemSettings = pgTable('system_settings', {
 // 登录日志页面由 loginLogService 对该命名空间提供专用视图。
 // ------------------------------------------------------------------
 export const operationLogs = pgTable('operation_logs', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: integer('user_id'),
   actor: varchar('actor', { length: 140 }),
   action: varchar('action', { length: 80 }).notNull(),
@@ -54,5 +54,6 @@ export const operationLogs = pgTable('operation_logs', {
   index('operation_logs_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('operation_logs_user_action_created_idx').on(table.userId, table.action, table.createdAt.desc()),
   index('operation_logs_action_idx').on(table.action),
-  index('operation_logs_resource_idx').on(table.resourceType, table.resourceId)
+  index('operation_logs_resource_idx').on(table.resourceType, table.resourceId),
+  check('operation_logs_status_chk', sql`${table.status} in ('success', 'failure')`)
 ])

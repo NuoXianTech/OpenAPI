@@ -16,9 +16,11 @@ const PUBLIC_STATS_CACHE_SCHEMA_VERSION = 2
 
 async function loadPublicDashboard(days: number, topLimit: number): Promise<PublicCallStatsDashboard> {
   const todayStart = getLocalDayStart(new Date())
+  const todayKey = toLocalDateKey(todayStart)
   const yesterdayStart = addLocalDays(todayStart, -1)
   const rangeStart = addLocalDays(todayStart, -(days - 1))
   const tomorrowStart = addLocalDays(todayStart, 1)
+  const tomorrowKey = toLocalDateKey(tomorrowStart)
   // 调用排行固定按最近 30 个自然日聚合，与趋势图的 days 解耦
   const ranking30dStart = addLocalDays(todayStart, -(PUBLIC_RANKING_WINDOW_DAYS - 1))
 
@@ -45,8 +47,7 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         publicApiCondition,
-        gte(apiCallStats.statDate, todayStart),
-        lt(apiCallStats.statDate, tomorrowStart)
+        eq(apiCallStats.statDate, todayKey)
       )),
     db.select({
       yesterdayCalls: totalExpr
@@ -54,8 +55,7 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         publicApiCondition,
-        gte(apiCallStats.statDate, yesterdayStart),
-        lt(apiCallStats.statDate, todayStart)
+        eq(apiCallStats.statDate, toLocalDateKey(yesterdayStart))
       )),
     db.select({
       enabledTrackedApiCount: sql<number>`count(*)`
@@ -77,8 +77,8 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         publicApiCondition,
-        gte(apiCallStats.statDate, rangeStart),
-        lt(apiCallStats.statDate, tomorrowStart)
+        gte(apiCallStats.statDate, toLocalDateKey(rangeStart)),
+        lt(apiCallStats.statDate, tomorrowKey)
       ))
       .groupBy(apiCallStats.statDate)
       .orderBy(asc(apiCallStats.statDate)),
@@ -92,8 +92,8 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
       .where(and(
         publicApiCondition,
-        gte(apiCallStats.statDate, ranking30dStart),
-        lt(apiCallStats.statDate, tomorrowStart)
+        gte(apiCallStats.statDate, toLocalDateKey(ranking30dStart)),
+        lt(apiCallStats.statDate, tomorrowKey)
       ))
       .groupBy(
         apiCallStats.apiId,
@@ -123,7 +123,7 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
 
   const trendMap = new Map<string, PublicCallStatsTrendPoint>()
   for (const row of trendRows) {
-    const key = toLocalDateKey(row.statDate)
+    const key = row.statDate
     trendMap.set(key, {
       date: key,
       totalCalls: toNumber(row.totalCalls),

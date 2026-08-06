@@ -180,7 +180,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
     if (!apiKey) {
       return { passed: false, outcome: 'invalid_api_key', error: API_GUARD_ERROR.INVALID_API_KEY, apiKey: null }
     }
-    if (!apiKey.isActive || apiKey.revokedAt) {
+    if (!apiKey.isActive) {
       return { passed: false, outcome: 'disabled_api_key', error: API_GUARD_ERROR.DISABLED_API_KEY, apiKey }
     }
 

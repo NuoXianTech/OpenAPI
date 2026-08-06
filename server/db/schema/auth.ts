@@ -4,7 +4,6 @@ import {
   integer,
   varchar,
   timestamp,
-  index,
   uniqueIndex
 } from 'drizzle-orm/pg-core'
 import { users } from './user'
@@ -40,6 +39,5 @@ export const oauthAccounts = pgTable('oauth_accounts', {
   // 一个用户每个 provider 至多一个绑定（对应 oauthAccountService.unbind(userId, provider) 语义；
   // 借鉴 Cloudreve open_ids 的 openid_user_id_provider）。该唯一索引的 userId 前缀亦覆盖按 userId 的查询，
   // 故无需再单列 userId 索引。
-  uniqueIndex('oauth_accounts_user_provider_uq').on(table.userId, table.provider),
-  index('oauth_accounts_provider_idx').on(table.provider)
+  uniqueIndex('oauth_accounts_user_provider_uq').on(table.userId, table.provider)
 ])

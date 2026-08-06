@@ -1,6 +1,8 @@
 import {
   pgTable,
   serial,
+  bigserial,
+  bigint,
   varchar,
   boolean,
   timestamp,
@@ -74,13 +76,13 @@ export const users = pgTable('users', {
 // operatorId 记录操作者 users.id 快照；null 表示系统任务或无操作者快照。
 // ------------------------------------------------------------------
 export const creditTransactions = pgTable('credit_transactions', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: integer('user_id'), // users.id 快照，无 FK
   amount: integer('amount').notNull(), // 正=入账，负=出账
   balanceAfter: integer('balance_after').notNull(),
   reason: varchar('reason', { length: 50 }).notNull(),
   apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
-  apiCallId: integer('api_call_id'), // 关联 apiCalls.id 快照
+  apiCallId: bigint('api_call_id', { mode: 'number' }), // 关联 apiCalls.id 快照
   codeId: integer('code_id'), // 仅 reason=redemption_code 有值，关联 redemptionCodes.id 快照（无 FK）
   operatorId: integer('operator_id'), // users.id 快照；null = 系统任务或无操作者快照
   operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照
@@ -92,8 +94,6 @@ export const creditTransactions = pgTable('credit_transactions', {
   index('credit_transactions_created_at_idx').on(table.createdAt.desc()),
   index('credit_transactions_user_created_idx').on(table.userId, table.createdAt.desc()),
   index('credit_transactions_reason_idx').on(table.reason),
-  index('credit_transactions_api_call_idx').on(table.apiCallId),
-  index('credit_transactions_code_idx').on(table.codeId),
   // 防御重复扣费/退款：(apiCallId, reason) 在 apiCallId 非空时唯一。
   // 即使补偿队列双调度，第二次 INSERT 被这条索引拒绝、事务回滚，余额不会被双扣。
   uniqueIndex('credit_transactions_api_call_reason_uq')
@@ -135,5 +135,8 @@ export const redemptionCodes = pgTable('redemption_codes', {
 }, table => [
   index('redemption_codes_batch_idx').on(table.batchId),
   index('redemption_codes_enabled_expires_idx').on(table.isEnabled, table.expiresAt),
-  index('redemption_codes_created_at_idx').on(table.createdAt.desc())
+  index('redemption_codes_created_at_idx').on(table.createdAt.desc()),
+  check('redemption_codes_amount_chk', sql`${table.amount} > 0`),
+  check('redemption_codes_max_uses_chk', sql`${table.maxUses} > 0`),
+  check('redemption_codes_used_count_chk', sql`${table.usedCount} >= 0 and ${table.usedCount} <= ${table.maxUses}`)
 ])

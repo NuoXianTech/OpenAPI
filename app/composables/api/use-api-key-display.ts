@@ -1,13 +1,12 @@
 import type { ApiKeyItem } from '#shared/types/api'
 
-type ApiKeyStatus = 'enabled' | 'disabled' | 'expired' | 'revoked'
-type ApiKeyStatusColor = 'success' | 'warning' | 'neutral' | 'error'
+type ApiKeyStatus = 'enabled' | 'disabled' | 'expired'
+type ApiKeyStatusColor = 'success' | 'warning' | 'neutral'
 
 const API_KEY_STATUS_COLORS: Record<ApiKeyStatus, ApiKeyStatusColor> = {
   enabled: 'success',
   disabled: 'neutral',
-  expired: 'warning',
-  revoked: 'error'
+  expired: 'warning'
 }
 
 interface ApiKeyStatusMeta {
@@ -20,7 +19,6 @@ export function useApiKeyDisplay() {
   const { t, locale } = useI18n()
 
   function getStatusCode(row: ApiKeyItem): ApiKeyStatus {
-    if (row.revokedAt) return 'revoked'
     if (!row.isActive) return 'disabled'
     if (isApiKeyExpired(row)) return 'expired'
     return 'enabled'

@@ -1,14 +1,17 @@
 import {
   pgTable,
   serial,
+  bigserial,
   varchar,
   text,
   boolean,
   integer,
   timestamp,
   index,
-  uniqueIndex
+  uniqueIndex,
+  check
 } from 'drizzle-orm/pg-core'
+import { sql } from 'drizzle-orm'
 import { users } from './user'
 
 // ------------------------------------------------------------------
@@ -27,9 +30,7 @@ export const friendLinks = pgTable('friend_links', {
   createdBy: integer('created_by'), // 操作者快照，null=admin
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  index('friend_links_active_idx').on(table.isActive)
-])
+})
 
 // ------------------------------------------------------------------
 // Announcements（站点公告）
@@ -52,7 +53,8 @@ export const announcements = pgTable('announcements', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder)
+  index('announcements_enabled_pin_sort_idx').on(table.isEnabled, table.isPinned, table.sortOrder),
+  check('announcements_level_chk', sql`${table.level} in ('info', 'success', 'warning', 'critical')`)
 ])
 
 // ------------------------------------------------------------------
@@ -89,11 +91,14 @@ export const notificationMessages = pgTable('notification_messages', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('notification_messages_audience_idx').on(table.audience),
-  index('notification_messages_created_at_idx').on(table.createdAt)
+  index('notification_messages_created_at_idx').on(table.createdAt),
+  check('notification_messages_level_chk', sql`${table.level} in ('info', 'success', 'warning', 'critical')`),
+  check('notification_messages_audience_chk', sql`${table.audience} in ('specific', 'all_current', 'all_with_future')`),
+  check('notification_messages_recipient_count_chk', sql`${table.recipientCount} >= 0`)
 ])
 
 export const notificationDeliveries = pgTable('notification_deliveries', {
-  id: serial('id').primaryKey(),
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
   messageId: integer('message_id').notNull().references(() => notificationMessages.id, { onDelete: 'cascade' }),
   recipientUserId: integer('recipient_user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   isRead: boolean('is_read').notNull().default(false),
@@ -101,7 +106,6 @@ export const notificationDeliveries = pgTable('notification_deliveries', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   uniqueIndex('notification_deliveries_msg_user_uq').on(table.messageId, table.recipientUserId),
-  index('notification_deliveries_message_idx').on(table.messageId),
   index('notification_deliveries_user_created_idx').on(table.recipientUserId, table.createdAt),
   index('notification_deliveries_user_unread_idx').on(table.recipientUserId, table.isRead)
 ])

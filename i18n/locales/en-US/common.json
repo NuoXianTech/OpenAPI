@@ -124,8 +124,7 @@
       "statuses": {
         "enabled": "Enabled",
         "disabled": "Disabled",
-        "expired": "Expired",
-        "revoked": "Revoked"
+        "expired": "Expired"
       },
       "columns": {
         "name": "Name",

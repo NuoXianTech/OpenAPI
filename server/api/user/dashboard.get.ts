@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, lt, sql } from 'drizzle-orm'
 import { apiCalls, apiKeys, users } from '~~/server/db/schema'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
@@ -98,7 +98,7 @@ export default defineAuthenticatedEventHandler(async (event, user): Promise<User
     db.select({
       total: sql<number>`count(*)`,
       active: sql<number>`count(*) filter (where ${apiKeys.isActive})`
-    }).from(apiKeys).where(and(eq(apiKeys.userId, userId), isNull(apiKeys.revokedAt)))
+    }).from(apiKeys).where(eq(apiKeys.userId, userId))
   ])
 
   const balance = toNumber(balanceRows[0]?.credits)

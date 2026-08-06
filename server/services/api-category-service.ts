@@ -33,6 +33,24 @@ async function countBoundApis(categoryId: number): Promise<number> {
   return row?.value ?? 0
 }
 
+async function validateParent(parentId: number | null | undefined, categoryId?: number) {
+  if (parentId === undefined || parentId === null) return
+  const seen = new Set<number>(categoryId ? [categoryId] : [])
+  let currentId: number | null = parentId
+  while (currentId !== null) {
+    if (seen.has(currentId)) throw createError({ statusCode: 400, message: 'category parent cycle is not allowed' })
+    seen.add(currentId)
+    const parent = await db.select({ parentId: apiCategories.parentId, deletedAt: apiCategories.deletedAt })
+      .from(apiCategories)
+      .where(eq(apiCategories.id, currentId))
+      .limit(1)
+    if (!parent[0] || parent[0].deletedAt) {
+      throw createError({ statusCode: 400, message: 'parent category not found or deleted' })
+    }
+    currentId = parent[0].parentId
+  }
+}
+
 export const apiCategoryService = {
   async listAll() {
     return db.select().from(apiCategories)
@@ -68,6 +86,7 @@ export const apiCategoryService = {
 
     const existing = await findCategoryByCode(code)
     if (existing) throw createError({ statusCode: 409, message: 'category code already exists' })
+    await validateParent(input.parentId)
 
     const res = await db.insert(apiCategories).values({
       code,
@@ -87,6 +106,7 @@ export const apiCategoryService = {
 
   async update(id: number, patch: Partial<ApiCategoryInput>) {
     const { code: _code, ...rest } = patch
+    await validateParent(rest.parentId, id)
     const res = await db.update(apiCategories)
       .set({ ...rest, updatedAt: new Date() })
       .where(eq(apiCategories.id, id))

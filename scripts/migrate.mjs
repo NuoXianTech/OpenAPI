@@ -67,6 +67,7 @@ function ensurePgliteDataDir(dataDir) {
 
 loadProjectEnv()
 
+const APP_TIME_ZONE = process.env.TZ || Intl.DateTimeFormat().resolvedOptions().timeZone
 const configuredDriver = process.env.DATABASE_DRIVER
 if (configuredDriver && configuredDriver !== 'postgres' && configuredDriver !== 'pglite') {
   throw new Error('DATABASE_DRIVER must be either "postgres" or "pglite".')
@@ -128,6 +129,7 @@ async function migrateOnce() {
   let hasMigrationLock = false
 
   try {
+    await client`select set_config('TimeZone', ${APP_TIME_ZONE}, false)`
     await client`SELECT pg_advisory_lock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`
     hasMigrationLock = true
     await migrate(db, {
@@ -157,6 +159,7 @@ async function migratePgliteOnce() {
   await client.waitReady
 
   try {
+    await client.query('select set_config($1, $2, false)', ['TimeZone', APP_TIME_ZONE])
     await migratePglite(drizzlePglite(client), {
       migrationsFolder,
       migrationsSchema: 'drizzle',

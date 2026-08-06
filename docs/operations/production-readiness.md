@@ -26,7 +26,7 @@ pnpm build
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
 | API Key 数据 | 确认数据库仅保存摘要、密文与掩码预览；`NUXT_API_KEY_SECRET` 与数据库备份分开保存，明文不进入操作日志或普通应用日志 |
 | 部署产物 | 完整发布 `.output`；跨系统部署优先使用 Linux CI/Docker，不能遗漏 `node_modules/.nitro` |
-| 时区 | `TZ=Asia/Shanghai`，数据库和应用日志时间口径一致 |
+| 时区 | `TZ=Asia/Shanghai`；启动迁移会将数据库迁移会话设置为同一时区，数据库默认时区无需额外修改 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `PGLITE_DATA_DIR` |
 | 巡检 | 发布负责人已阅读 [生产运行手册](./production-runbook.md) 的回滚和异常处置 |
 

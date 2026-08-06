@@ -14,6 +14,7 @@ import {
   getPgliteDataDir
 } from './client'
 import { getSqlState } from '../utils/database-error'
+import { APP_TIME_ZONE } from '../utils/local-time'
 
 interface MigrationFolder {
   path: string
@@ -122,6 +123,7 @@ async function migrateOnce(migrationsFolder: string) {
   let hasMigrationLock = false
 
   try {
+    await client`select set_config('TimeZone', ${APP_TIME_ZONE}, false)`
     await client`SELECT pg_advisory_lock(hashtext(${MIGRATION_ADVISORY_LOCK_KEY}))`
     hasMigrationLock = true
     await migrate(database, {
@@ -146,6 +148,7 @@ async function migratePgliteOnce(migrationsFolder: string) {
   await client.waitReady
 
   try {
+    await client.query('select set_config($1, $2, false)', ['TimeZone', APP_TIME_ZONE])
     await migratePglite(createPgliteDatabase(client), {
       migrationsFolder,
       migrationsSchema: 'drizzle',
