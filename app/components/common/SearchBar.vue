@@ -1,14 +1,18 @@
 <script setup lang="ts">
+import type { InputProps } from '@nuxt/ui'
+
 interface Props {
   modelValue?: string
   placeholder?: string
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
+  size?: InputProps['size']
+  variant?: InputProps['variant']
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
   placeholder: '',
-  size: 'md'
+  size: 'md',
+  variant: 'outline'
 })
 const { t } = useI18n()
 const resolvedPlaceholder = computed(() => props.placeholder || t('public.home.searchPlaceholder'))
@@ -64,9 +68,9 @@ defineShortcuts({
     :model-value="props.modelValue"
     :placeholder="resolvedPlaceholder"
     :size="props.size"
+    :variant="props.variant"
     icon="i-mdi-magnify"
     color="neutral"
-    variant="outline"
     class="w-full"
     :ui="searchInputUi"
     autocomplete="off"

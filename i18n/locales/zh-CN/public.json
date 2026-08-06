@@ -76,6 +76,7 @@
       "description": "集中查看平台当前开放的所有接口，按名称、请求路径或分类快速筛选，并打开详情确认鉴权与调用成本。",
       "seoDescription": "浏览平台全部公共接口，查看请求路径、接口状态、鉴权方式和调用成本。",
       "gateway": "统一网关",
+      "searchLabel": "搜索接口",
       "categoryLabel": "接口分类",
       "resultSummary": "共 {count} 个接口",
       "resultHint": "打开详情查看接入信息",

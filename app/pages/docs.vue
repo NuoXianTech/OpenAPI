@@ -86,11 +86,20 @@ useSeoMeta({
         :aria-label="$t('public.navigation.catalog')"
       >
         <div class="api-directory__controls">
-          <CommonSearchBar
-            v-model="searchQuery"
-            :placeholder="$t('public.home.searchPlaceholder')"
-            size="lg"
-          />
+          <div class="api-directory__search">
+            <span class="api-directory__filter-label">
+              <UIcon name="i-mdi-magnify" class="size-3.5" />
+              {{ $t('public.directory.searchLabel') }}
+            </span>
+            <div class="api-directory__search-control">
+              <CommonSearchBar
+                v-model="searchQuery"
+                :placeholder="$t('public.home.searchPlaceholder')"
+                size="sm"
+                variant="none"
+              />
+            </div>
+          </div>
 
           <div class="api-directory__statuses">
             <span class="api-directory__filter-label">
@@ -303,8 +312,29 @@ useSeoMeta({
 }
 
 .api-directory__statuses,
+.api-directory__search,
 .api-directory__categories {
   min-width: 0;
+}
+
+.api-directory__search-control {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--ui-border) 82%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ui-bg-elevated) 64%, transparent);
+  transition: background-color 160ms ease;
+}
+
+.api-directory__search-control:focus-within {
+  background: var(--ui-bg);
+}
+
+.api-directory__search-control :deep([data-slot="base"]) {
+  height: 30px;
+  border-radius: 6px;
 }
 
 .api-directory__filter-label {
@@ -379,7 +409,7 @@ useSeoMeta({
 @media (width >= 800px) {
   .api-directory__controls {
     grid-template-columns: minmax(260px, 0.7fr) minmax(0, 1.3fr);
-    align-items: end;
+    align-items: start;
   }
 
   .api-directory__categories {

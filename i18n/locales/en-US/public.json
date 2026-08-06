@@ -76,6 +76,7 @@
       "description": "Browse every published endpoint, filter by name, request path, or category, and open details to review authentication and call cost.",
       "seoDescription": "Browse all public APIs with request paths, service status, authentication, and call cost.",
       "gateway": "Gateway",
+      "searchLabel": "Search APIs",
       "categoryLabel": "API category",
       "resultSummary": "{count} APIs",
       "resultHint": "Open the details to view integration information",
