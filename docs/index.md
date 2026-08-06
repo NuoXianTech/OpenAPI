@@ -2,6 +2,8 @@
 
 文档按实际工作流程组织。框架通用能力以 Nuxt 4 和 Nuxt UI 4 官方文档为准；这里记录项目特有的接入、统计、计费、后台与生产流程。
 
+目录约定：`docs/apis/` 只放可直接调用的具体公共接口契约；`docs/api/` 放公共接口开发指南、响应规范、能力配置、统计、计费和 RESTful 设计等跨接口规则。
+
 ## 开发流程
 
 ### 新增公开 API
@@ -38,15 +40,22 @@
 
 ## 内置接口契约
 
-- [音乐公共接口](./api/music.md)
-- [加密与解密公共接口](./api/crypto.md)
-- [短视频解析公共接口](./api/short-video.md)
-- [历史上的今天公共接口](./api/today-in-history.md)
-- [Epic 免费游戏公共接口](./api/epic.md)
-- [贵金属价格公共接口](./api/gold-price.md)
-- [随机密码生成公共接口](./api/password-generator.md)
-- [密码强度检测公共接口](./api/password-check.md)
-- [IP 归属地公共接口](./api/ip.md)
+- [Bing 每日壁纸公共接口](./apis/bing.md)
+- [豆包资源解析公共接口](./apis/doubao.md)
+- [音乐公共接口](./apis/music.md)
+- [加密与解密公共接口](./apis/crypto.md)
+- [短视频解析公共接口](./apis/short-video.md)
+- [历史上的今天公共接口](./apis/today-in-history.md)
+- [Epic 免费游戏公共接口](./apis/epic.md)
+- [汇率公共接口](./apis/exchange-rate.md)
+- [油价公共接口](./apis/fuel-price.md)
+- [贵金属价格公共接口](./apis/gold-price.md)
+- [随机密码生成公共接口](./apis/password-generator.md)
+- [密码强度检测公共接口](./apis/password-check.md)
+- [IP 归属地公共接口](./apis/ip.md)
+- [猫眼数据公共接口](./apis/maoyan.md)
+- [播放器 HTML 公共接口](./apis/player.md)
+- [一言公共接口](./apis/yiyan.md)
 
 ## 质量门禁
 

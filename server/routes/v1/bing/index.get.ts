@@ -2,11 +2,14 @@
  * GET /v1/bing · 获取必应每日壁纸。
  *
  * Query:
- *   encode|encoding  image|json|text|markdown|md，默认 json；两者均可选择输出格式
+ *   encode|encoding  image|image-4k|json|text|markdown|md，默认 json；两者均可选择输出格式
  *   type             auto|pc|mobile，默认 auto；auto 按 User-Agent 选择桌面 / 移动端壁纸
  *
+ * JSON data includes both the selected cover URL and the original 4K UHD URL.
+ *
  * 内容协商:
- *   - image → 302 跳转到图片 URL
+ *   - image → 302 跳转到按 type 选择的图片 URL
+ *   - image-4k → 302 跳转到 UHD 图片 URL
  *   - json → 标准 openApiResponse 壳，data 为壁纸元数据
  *   - text → 直出图片 URL
  *   - markdown|md → 直出 Markdown
@@ -22,7 +25,7 @@ import {
   type BingEncode,
   type BingImageType
 } from '~~/server/lib/bing/types'
-import { createBingImageUrl, createBingMarkdown, getBingImage, resolveBingCoverUrl } from '~~/server/lib/bing/image'
+import { createBingMarkdown, getBingImage, resolveBingCoverUrl } from '~~/server/lib/bing/image'
 
 function parseBingEncode(query: Record<string, unknown>): BingEncode {
   const rawEncode = readQueryString(query.encode || query.encoding).trim().toLowerCase()
@@ -45,8 +48,7 @@ export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerConte
     const cover = resolveBingCoverUrl(data.cover, type, userAgent)
     const record = {
       ...data,
-      cover,
-      cover_4k: createBingImageUrl(data.cover, 'UHD')
+      cover
     }
 
     api.setHeaders({
@@ -54,8 +56,8 @@ export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerConte
       'cache-control': 'public, max-age=3600'
     })
 
-    if (encode === 'image') {
-      return api.redirect(record.cover)
+    if (encode === 'image' || encode === 'image-4k') {
+      return api.redirect(encode === 'image-4k' ? data.cover_4k : record.cover)
     }
 
     return api.respond(record, {

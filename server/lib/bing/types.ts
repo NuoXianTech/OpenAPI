@@ -1,4 +1,4 @@
-const BING_ENCODES = ['image', 'json', 'text', 'markdown', 'md'] as const
+const BING_ENCODES = ['image', 'image-4k', 'json', 'text', 'markdown', 'md'] as const
 const BING_IMAGE_TYPES = ['auto', 'pc', 'mobile'] as const
 
 export const DEFAULT_BING_ENCODE: BingEncode = 'json'

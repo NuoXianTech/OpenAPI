@@ -52,7 +52,7 @@ docker run -d --name openapi --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi:latest
 ```
 
-将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `data/ip` 目录。容器内读取路径固定为 `/app/data/ip`，配套密钥在管理后台的接口配置中填写。具体见 [IP 归属地公共接口](../api/ip.md)。
+将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `data/ip` 目录。容器内读取路径固定为 `/app/data/ip`，配套密钥在管理后台的接口配置中填写。具体见 [IP 归属地公共接口](../apis/ip.md)。
 
 仓库也提供直接引用 GHCR 镜像的 `docker-compose.yml`：
 

@@ -39,7 +39,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 
 | API | Endpoints | Purpose |
 | --- | --- | --- |
-| Bing | `GET /v1/bing` | Bing daily image metadata. |
+| Bing | `GET /v1/bing` | Bing daily image metadata, including standard and 4K UHD image URLs. |
 | Crypto | `GET /v1/crypto`, `POST /v1/crypto` | Discover and run registered encoders or ciphers. |
 | Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
 | Exchange rate | `GET /v1/exchange-rate` | Query exchange rates with JSON, text, or Markdown output. |
