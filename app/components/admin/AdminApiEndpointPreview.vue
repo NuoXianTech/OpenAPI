@@ -8,18 +8,18 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
 <template>
   <div
     v-if="endpoints.length"
-    class="mb-4 rounded-xl border border-default bg-muted/30 p-4"
+    class="mb-4 overflow-hidden rounded-lg border border-default"
   >
-    <div class="mb-3 flex items-center gap-2 text-xs text-muted">
+    <div class="flex items-center gap-2 border-b border-default bg-muted/30 px-3 py-2.5 text-xs text-muted">
       <UIcon name="i-mdi-source-branch" class="size-4" />
       <span>{{ $t('admin.apis.form.endpoints.title') }}</span>
-      <span class="ms-auto">{{ $t('admin.apis.form.endpoints.description') }}</span>
+      <span class="ms-auto hidden sm:inline">{{ $t('admin.apis.form.endpoints.description') }}</span>
     </div>
-    <div class="flex flex-col gap-1">
+    <div class="divide-y divide-default">
       <div
         v-for="ep in endpoints"
         :key="`${ep.method}-${ep.apiPath}`"
-        class="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-default/60 bg-default px-3 py-2.5"
+        class="grid min-w-0 grid-cols-[3.75rem_minmax(0,1fr)_auto] items-center gap-2 px-3 py-2.5"
       >
         <ApiHttpMethodBadge
           :method="ep.method"
@@ -31,7 +31,7 @@ defineProps<{ endpoints: DiscoveredEndpoint[] }>()
           v-if="ep.isDynamic"
           color="primary"
           variant="subtle"
-          size="sm"
+          size="xs"
         >
           {{ $t('admin.apis.form.endpoints.dynamic') }}
         </UBadge>

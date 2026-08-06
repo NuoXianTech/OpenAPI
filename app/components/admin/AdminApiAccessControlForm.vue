@@ -7,7 +7,7 @@ const state = useAdminApiForm()
 </script>
 
 <template>
-  <section class="rounded-xl border border-default bg-elevated/30 p-4 lg:col-span-2">
+  <section class="rounded-lg border border-default bg-elevated/30 p-4">
     <div class="mb-4 flex items-center gap-2">
       <span class="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <UIcon name="i-mdi-shield-key-outline" class="size-4" />
@@ -38,13 +38,13 @@ const state = useAdminApiForm()
     </div>
     <p
       v-if="!state.isEnabled"
-      class="text-xs text-muted mt-2"
+      class="mt-3 border-t border-default pt-3 text-xs text-muted"
     >
       {{ $t('admin.apis.form.access.statisticsRequiresEnabled') }}
     </p>
     <p
       v-if="!state.isApiKey && hasChargedMethod"
-      class="text-xs text-warning mt-2"
+      class="mt-3 border-t border-default pt-3 text-xs text-warning"
     >
       {{ $t('admin.apis.form.access.disablingApiKeyClearsCosts') }}
     </p>

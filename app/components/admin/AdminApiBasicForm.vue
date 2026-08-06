@@ -27,7 +27,7 @@ const statusOptions = computed<Array<{ label: string, value: AdminApiFormState['
 </script>
 
 <template>
-  <section class="space-y-4 rounded-xl border border-default bg-elevated/30 p-4 lg:col-span-2">
+  <section class="space-y-4 rounded-lg border border-default bg-elevated/30 p-4">
     <div class="flex items-center gap-2">
       <span class="inline-flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <UIcon name="i-mdi-api" class="size-4" />
@@ -53,10 +53,30 @@ const statusOptions = computed<Array<{ label: string, value: AdminApiFormState['
         />
       </UFormField>
       <UFormField
-        :label="$t('admin.apis.form.basic.status')"
-        :description="$t('admin.apis.form.basic.statusDescription')"
         name="status"
       >
+        <template #label>
+          <span class="inline-flex items-center gap-1">
+            {{ $t('admin.apis.form.basic.status') }}
+            <UTooltip
+              :text="$t('admin.apis.form.basic.statusDescription')"
+              :ui="{
+                content: 'h-auto max-w-xs py-2',
+                text: 'whitespace-normal leading-5'
+              }"
+            >
+              <UButton
+                icon="i-mdi-information-outline"
+                color="neutral"
+                variant="link"
+                size="xs"
+                square
+                class="size-4 p-0 text-muted"
+                :aria-label="$t('admin.apis.form.basic.statusDescription')"
+              />
+            </UTooltip>
+          </span>
+        </template>
         <USelect
           v-model="state.status"
           class="w-full"

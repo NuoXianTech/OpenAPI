@@ -5,7 +5,7 @@ const state = useAdminApiForm()
 </script>
 
 <template>
-  <section class="rounded-xl border border-default bg-elevated/30 p-4">
+  <section class="rounded-lg border border-default bg-elevated/30 p-4">
     <div class="mb-4 flex items-center gap-2">
       <span class="inline-flex size-8 items-center justify-center rounded-lg bg-info/10 text-info">
         <UIcon name="i-mdi-speedometer" class="size-4" />
@@ -19,7 +19,7 @@ const state = useAdminApiForm()
         </p>
       </div>
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <UFormField
         :label="$t('admin.apis.form.rateLimits.perSecond')"
         name="rateLimitPerSecond"

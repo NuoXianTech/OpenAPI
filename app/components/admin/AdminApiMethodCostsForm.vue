@@ -8,7 +8,6 @@ defineProps<{
 }>()
 
 const state = useAdminApiForm()
-const { locale } = useI18n()
 
 function getMethodCost(method: string): number {
   const v = state.methodCosts?.[method.toUpperCase()]
@@ -35,7 +34,7 @@ function setMethodCost(method: string, value: number | string | null | undefined
 </script>
 
 <template>
-  <section class="rounded-xl border border-default bg-elevated/30 p-4">
+  <section class="rounded-lg border border-default bg-elevated/30 p-4">
     <div class="mb-4 flex flex-wrap items-center gap-2">
       <span class="inline-flex size-8 items-center justify-center rounded-lg bg-warning/10 text-warning">
         <UIcon name="i-mdi-cash-multiple" class="size-4" />
@@ -77,11 +76,11 @@ function setMethodCost(method: string, value: number | string | null | undefined
       :label="$t('admin.apis.form.costs.pointsPerCall')"
       name="methodCosts"
     >
-      <div class="flex flex-col gap-2">
+      <div class="grid gap-x-5 gap-y-2 sm:grid-cols-2">
         <div
           v-for="method in availableMethods"
           :key="method"
-          class="flex items-center gap-2"
+          class="grid min-w-0 grid-cols-[4rem_minmax(0,1fr)] items-center gap-2"
         >
           <ApiHttpMethodBadge
             :method="method"
@@ -98,16 +97,6 @@ function setMethodCost(method: string, value: number | string | null | undefined
             class="flex-1"
             @update:model-value="(v: number | string) => setMethodCost(method, v)"
           />
-          <span
-            class="text-xs w-12 text-right"
-            :class="getMethodCost(method) > 0 ? 'text-warning' : 'text-toned'"
-          >
-            {{ getMethodCost(method) > 0
-              ? $t('admin.apis.form.costs.costPerCall', {
-                amount: getMethodCost(method).toLocaleString(locale)
-              })
-              : $t('admin.apis.form.costs.free') }}
-          </span>
         </div>
       </div>
       <p class="text-xs text-muted mt-2">

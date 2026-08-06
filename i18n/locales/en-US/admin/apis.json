@@ -192,8 +192,6 @@
           "allFree": "All methods are free",
           "pointsPerCall": "Credits per call",
           "freePlaceholder": "0 = free",
-          "costPerCall": "{amount} / call",
-          "free": "Free",
           "help": "Enter the credits used by each method. Zero or empty means free. Charges require API key authentication and apply only to successful calls."
         },
         "endpoints": {

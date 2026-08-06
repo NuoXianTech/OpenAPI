@@ -231,7 +231,7 @@ async function onSubmit(event: FormSubmitEvent<AdminApiFormState>) {
         ref="form"
         :validate="validateApiForm"
         :state="state"
-        class="grid gap-4 lg:grid-cols-2"
+        class="space-y-4"
         @submit="onSubmit"
       >
         <AdminApiBasicForm />

@@ -192,8 +192,6 @@
           "allFree": "整组免费",
           "pointsPerCall": "单次调用消耗积分",
           "freePlaceholder": "0 = 免费",
-          "costPerCall": "{amount} / 次",
-          "free": "免费",
           "help": "逐方法填写本次调用消耗的积分。0 / 留空 = 该方法免费。开启「API 密钥」后才能配置扣费。调用成功才扣，失败或业务标记失败时不扣。"
         },
         "endpoints": {
