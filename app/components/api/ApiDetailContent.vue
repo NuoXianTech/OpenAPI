@@ -93,19 +93,28 @@ async function copyEndpoint() {
         </div>
 
         <div class="api-detail__request-target">
-          <code :title="endpointUrl">{{ apiPath }}</code>
-          <UButton
-            color="neutral"
-            variant="ghost"
-            size="sm"
-            icon="i-mdi-content-copy"
-            class="api-detail__copy-button"
-            :aria-label="$t('public.api.copyEndpoint')"
-            :title="$t('public.api.copyEndpoint')"
-            @click="copyEndpoint"
+          <UTooltip
+            :text="endpointUrl"
+            :content="{ side: 'top' }"
           >
-            {{ $t('common.actions.copy') }}
-          </UButton>
+            <code>{{ apiPath }}</code>
+          </UTooltip>
+          <UTooltip
+            :text="$t('public.api.copyEndpoint')"
+            :content="{ side: 'top' }"
+          >
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              icon="i-mdi-content-copy"
+              class="api-detail__copy-button"
+              :aria-label="$t('public.api.copyEndpoint')"
+              @click="copyEndpoint"
+            >
+              {{ $t('common.actions.copy') }}
+            </UButton>
+          </UTooltip>
         </div>
       </div>
     </section>
@@ -122,16 +131,18 @@ async function copyEndpoint() {
         <strong>{{ isApiKey ? $t('public.api.apiKey') : $t('public.api.noApiKey') }}</strong>
       </div>
 
-      <div
-        class="api-detail__fact"
-        :title="$t('public.api.callCountDescription', { count: totalCalls.toLocaleString(locale) })"
+      <UTooltip
+        :text="$t('public.api.callCountDescription', { count: totalCalls.toLocaleString(locale) })"
+        :content="{ side: 'top' }"
       >
-        <span class="api-detail__fact-label">
-          <UIcon name="i-mdi-pulse" class="size-3.5" />
-          {{ $t('public.api.callCount') }}
-        </span>
-        <strong>{{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}</strong>
-      </div>
+        <div class="api-detail__fact">
+          <span class="api-detail__fact-label">
+            <UIcon name="i-mdi-pulse" class="size-3.5" />
+            {{ $t('public.api.callCount') }}
+          </span>
+          <strong>{{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}</strong>
+        </div>
+      </UTooltip>
     </div>
 
     <section class="api-detail__section">

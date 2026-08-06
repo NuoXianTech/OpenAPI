@@ -206,10 +206,12 @@ function preventDetailsAutoFocus(event: Event) {
     <template #title>
       <div class="api-card__modal-heading">
         <span class="api-card__modal-kicker">
-          <span
-            class="api-card__modal-category"
-            :title="resolvedCategoryName"
-          >{{ resolvedCategoryName }}</span>
+          <UTooltip
+            :text="resolvedCategoryName"
+            :content="{ side: 'top' }"
+          >
+            <span class="api-card__modal-category">{{ resolvedCategoryName }}</span>
+          </UTooltip>
           <span aria-hidden="true">/</span>
           <span
             class="api-card__modal-status"

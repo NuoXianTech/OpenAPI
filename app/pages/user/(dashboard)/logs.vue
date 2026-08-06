@@ -194,13 +194,15 @@ function openDetail(row: UserCallLogRow) {
                     · {{ $t('user.logs.milliseconds', { value: row.original.latencyMs.toLocaleString(locale) }) }}
                   </span>
                 </div>
-                <span
+                <UTooltip
                   v-if="row.original.errorMessage"
-                  class="text-muted truncate max-w-[280px]"
-                  :title="row.original.errorMessage"
+                  :text="row.original.errorMessage"
+                  :content="{ side: 'top' }"
                 >
-                  {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
-                </span>
+                  <span class="text-muted truncate max-w-[280px]">
+                    {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
+                  </span>
+                </UTooltip>
               </div>
             </template>
 

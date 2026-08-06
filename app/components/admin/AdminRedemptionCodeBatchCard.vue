@@ -93,13 +93,15 @@ function getBatchMenuItems(batch: BatchSummary): DropdownMenuItem[][] {
             }) }}
           </span>
         </div>
-        <div
+        <UTooltip
           v-if="b.note"
-          class="mt-1 text-xs text-muted truncate"
-          :title="b.note"
+          :text="b.note"
+          :content="{ side: 'top' }"
         >
-          {{ b.note }}
-        </div>
+          <div class="mt-1 text-xs text-muted truncate">
+            {{ b.note }}
+          </div>
+        </UTooltip>
       </div>
     </div>
   </DashboardContentCard>

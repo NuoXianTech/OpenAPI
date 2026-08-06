@@ -372,12 +372,14 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
 
             <template #apiKey-cell="{ row }">
               <div class="flex min-w-0 items-center gap-1.5">
-                <code
-                  class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned"
-                  :title="maskApiKey(row.original.apiKey)"
+                <UTooltip
+                  :text="maskApiKey(row.original.apiKey)"
+                  :content="{ side: 'top' }"
                 >
-                  {{ maskApiKey(row.original.apiKey) }}
-                </code>
+                  <code class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned">
+                    {{ maskApiKey(row.original.apiKey) }}
+                  </code>
+                </UTooltip>
                 <UButton
                   icon="i-mdi-eye-outline"
                   :aria-label="$t('common.apiKeys.actions.view')"

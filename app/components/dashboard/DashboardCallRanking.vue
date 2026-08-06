@@ -47,18 +47,22 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
         </UBadge>
 
         <div class="min-w-0 flex-1">
-          <div
-            class="truncate text-sm font-medium text-default"
-            :title="item.name"
+          <UTooltip
+            :text="item.name"
+            :content="{ side: 'top' }"
           >
-            {{ item.name }}
-          </div>
-          <div
-            class="truncate font-mono text-xs text-muted"
-            :title="item.apiPath"
+            <div class="truncate text-sm font-medium text-default">
+              {{ item.name }}
+            </div>
+          </UTooltip>
+          <UTooltip
+            :text="item.apiPath"
+            :content="{ side: 'top' }"
           >
-            {{ item.apiPath }}
-          </div>
+            <div class="truncate font-mono text-xs text-muted">
+              {{ item.apiPath }}
+            </div>
+          </UTooltip>
         </div>
 
         <div class="text-right text-sm font-semibold tabular-nums text-highlighted">

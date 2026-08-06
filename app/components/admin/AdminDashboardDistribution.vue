@@ -43,12 +43,14 @@ const formatNumber = (val: number) => val.toLocaleString(locale.value)
         class="space-y-1.5"
       >
         <div class="flex items-baseline justify-between gap-3 text-sm">
-          <span
-            class="truncate font-medium"
-            :title="item.name"
+          <UTooltip
+            :text="item.name"
+            :content="{ side: 'top' }"
           >
-            {{ item.name }}
-          </span>
+            <span class="truncate font-medium">
+              {{ item.name }}
+            </span>
+          </UTooltip>
           <span class="shrink-0 text-xs tabular-nums text-muted">
             {{ formatNumber(item.totalCalls) }}
             <span class="ml-1 text-xs">{{ item.percent.toFixed(1) }}%</span>
@@ -60,13 +62,15 @@ const formatNumber = (val: number) => val.toLocaleString(locale.value)
             :style="{ width: `${item.width}%` }"
           />
         </div>
-        <div
+        <UTooltip
           v-if="item.apiPath"
-          class="truncate text-xs font-mono text-muted"
-          :title="item.apiPath"
+          :text="item.apiPath"
+          :content="{ side: 'top' }"
         >
-          {{ item.apiPath }}
-        </div>
+          <div class="truncate text-xs font-mono text-muted">
+            {{ item.apiPath }}
+          </div>
+        </UTooltip>
       </li>
     </ul>
   </div>

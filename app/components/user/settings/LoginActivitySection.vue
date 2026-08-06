@@ -76,10 +76,13 @@ const columns = computed<TableColumn<LoginLogRow>[]>(() => [
         </UBadge>
       </template>
       <template #device-cell="{ row }">
-        <span
-          class="text-xs"
-          :title="row.original.userAgent || ''"
-        >{{ row.original.device }}</span>
+        <UTooltip
+          :text="row.original.userAgent || ''"
+          :content="{ side: 'top' }"
+          :disabled="!row.original.userAgent"
+        >
+          <span class="text-xs">{{ row.original.device }}</span>
+        </UTooltip>
       </template>
       <template #ip-cell="{ row }">
         <span class="font-mono text-xs text-muted">{{ row.original.ip || '-' }}</span>

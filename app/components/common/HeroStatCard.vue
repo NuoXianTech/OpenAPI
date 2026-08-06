@@ -27,18 +27,24 @@ const { icon = '', iconTone = 'ink', loading = false, valueTitle, labelTitle } =
           class="size-4"
         />
       </div>
-      <div
-        class="hero-stat-card__value"
-        :title="valueTitle"
+      <UTooltip
+        :text="valueTitle"
+        :content="{ side: 'top' }"
+        :disabled="!valueTitle"
       >
-        <slot name="value" />
-      </div>
-      <div
-        class="hero-stat-card__label"
-        :title="labelTitle"
+        <div class="hero-stat-card__value">
+          <slot name="value" />
+        </div>
+      </UTooltip>
+      <UTooltip
+        :text="labelTitle"
+        :content="{ side: 'top' }"
+        :disabled="!labelTitle"
       >
-        <slot />
-      </div>
+        <div class="hero-stat-card__label">
+          <slot />
+        </div>
+      </UTooltip>
     </template>
   </div>
 </template>

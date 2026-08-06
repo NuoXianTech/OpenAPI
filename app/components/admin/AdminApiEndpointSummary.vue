@@ -19,12 +19,14 @@ const remainingCount = computed(() => Math.max(0, props.endpoints.length - 1))
       :method="firstEndpoint.method"
       size="xs"
     />
-    <code
-      class="min-w-0 flex-1 truncate font-mono text-xs font-medium text-highlighted"
-      :title="firstEndpoint.apiPath"
+    <UTooltip
+      :text="firstEndpoint.apiPath"
+      :content="{ side: 'top' }"
     >
-      {{ firstEndpoint.apiPath }}
-    </code>
+      <code class="min-w-0 flex-1 truncate font-mono text-xs font-medium text-highlighted">
+        {{ firstEndpoint.apiPath }}
+      </code>
+    </UTooltip>
 
     <UPopover
       v-if="remainingCount"
@@ -60,12 +62,14 @@ const remainingCount = computed(() => Math.max(0, props.endpoints.length - 1))
                 :method="endpoint.method"
                 size="xs"
               />
-              <code
-                class="min-w-0 truncate font-mono text-xs text-toned"
-                :title="endpoint.apiPath"
+              <UTooltip
+                :text="endpoint.apiPath"
+                :content="{ side: 'top' }"
               >
-                {{ endpoint.apiPath }}
-              </code>
+                <code class="min-w-0 truncate font-mono text-xs text-toned">
+                  {{ endpoint.apiPath }}
+                </code>
+              </UTooltip>
               <UBadge
                 v-if="endpoint.isDynamic"
                 color="neutral"

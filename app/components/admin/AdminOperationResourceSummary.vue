@@ -102,16 +102,23 @@ const isEmpty = computed(() => !primaryLabel.value && !secondaryLabel.value)
       <UIcon :name="resourceIcon" class="size-3.5" />
     </span>
     <span class="operation-resource__copy">
-      <span class="operation-resource__primary" :title="primaryLabel">
-        {{ primaryLabel }}
-      </span>
-      <span
-        v-if="secondaryLabel"
-        class="operation-resource__secondary"
-        :title="secondaryLabel"
+      <UTooltip
+        :text="primaryLabel"
+        :content="{ side: 'top' }"
       >
-        {{ secondaryLabel }}
-      </span>
+        <span class="operation-resource__primary">
+          {{ primaryLabel }}
+        </span>
+      </UTooltip>
+      <UTooltip
+        v-if="secondaryLabel"
+        :text="secondaryLabel"
+        :content="{ side: 'top' }"
+      >
+        <span class="operation-resource__secondary">
+          {{ secondaryLabel }}
+        </span>
+      </UTooltip>
     </span>
   </div>
 </template>

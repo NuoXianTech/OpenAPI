@@ -155,13 +155,17 @@ const {
       >
         <template #code-cell="{ row }">
           <div class="flex flex-col gap-0.5">
-            <span
-              class="font-mono text-sm cursor-pointer hover:text-primary"
-              :title="$t('admin.credits.redemptionCodes.actions.clickToCopy')"
-              @click="copyOne(row.original.code)"
+            <UTooltip
+              :text="$t('admin.credits.redemptionCodes.actions.clickToCopy')"
+              :content="{ side: 'top' }"
             >
-              {{ row.original.code }}
-            </span>
+              <span
+                class="font-mono text-sm cursor-pointer hover:text-primary"
+                @click="copyOne(row.original.code)"
+              >
+                {{ row.original.code }}
+              </span>
+            </UTooltip>
             <span
               v-if="row.original.batchId"
               class="text-[11px] text-muted font-mono"

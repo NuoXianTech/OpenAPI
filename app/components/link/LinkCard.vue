@@ -77,25 +77,29 @@ const isActive = computed(() => props.status === 1)
       <h3 class="link-card__title">
         {{ props.title || $t('public.friendLinks.defaultTitle') }}
       </h3>
-      <p
-        class="link-card__desc"
-        :title="displayDescription"
+      <UTooltip
+        :text="displayDescription"
+        :content="{ side: 'top' }"
       >
-        {{ displayDescription }}
-      </p>
+        <p class="link-card__desc">
+          {{ displayDescription }}
+        </p>
+      </UTooltip>
     </div>
 
     <div class="link-card__footer">
-      <span
-        class="link-card__host"
-        :title="safeUrl"
+      <UTooltip
+        :text="safeUrl"
+        :content="{ side: 'top' }"
       >
-        <UIcon
-          name="i-mdi-earth"
-          class="size-3"
-        />
-        {{ displayHost }}
-      </span>
+        <span class="link-card__host">
+          <UIcon
+            name="i-mdi-earth"
+            class="size-3"
+          />
+          {{ displayHost }}
+        </span>
+      </UTooltip>
       <span class="link-card__cta">
         {{ $t('common.actions.visit') }}
         <UIcon

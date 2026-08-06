@@ -133,9 +133,12 @@ async function copyRequest(): Promise<void> {
         <dl class="public-api-intro__metrics">
           <div>
             <dt>{{ $t('public.home.totalCalls') }}</dt>
-            <dd :title="callCount.toLocaleString(locale)">
-              {{ $t('public.home.callCountValue', { count: compactCallCount }) }}
-            </dd>
+            <UTooltip
+              :text="callCount.toLocaleString(locale)"
+              :content="{ side: 'top' }"
+            >
+              <dd>{{ $t('public.home.callCountValue', { count: compactCallCount }) }}</dd>
+            </UTooltip>
           </div>
           <div>
             <dt>{{ $t('public.home.totalApis') }}</dt>
@@ -147,9 +150,12 @@ async function copyRequest(): Promise<void> {
           </div>
           <div>
             <dt>{{ $t('public.home.developersServed') }}</dt>
-            <dd :title="userCount.toLocaleString(locale)">
-              {{ $t('public.home.developerCountValue', { count: compactUserCount }) }}
-            </dd>
+            <UTooltip
+              :text="userCount.toLocaleString(locale)"
+              :content="{ side: 'top' }"
+            >
+              <dd>{{ $t('public.home.developerCountValue', { count: compactUserCount }) }}</dd>
+            </UTooltip>
           </div>
         </dl>
       </div>

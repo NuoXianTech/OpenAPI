@@ -255,23 +255,29 @@ function openDetail(row: AdminLogRow) {
               <span class="text-muted tabular-nums">
                 · {{ $t('admin.logs.call.milliseconds', { value: row.original.latencyMs }) }}
               </span>
-              <UBadge
+              <UTooltip
                 v-if="!row.original.isCounted"
-                color="warning"
-                variant="subtle"
-                size="sm"
-                :title="$t('admin.logs.call.outcomes.notCounted')"
+                :text="$t('admin.logs.call.outcomes.notCounted')"
+                :content="{ side: 'top' }"
               >
-                {{ $t('admin.logs.call.outcomes.rejected') }}
-              </UBadge>
+                <UBadge
+                  color="warning"
+                  variant="subtle"
+                  size="sm"
+                >
+                  {{ $t('admin.logs.call.outcomes.rejected') }}
+                </UBadge>
+              </UTooltip>
             </div>
-            <span
+            <UTooltip
               v-if="row.original.errorMessage"
-              class="text-muted truncate max-w-[280px]"
-              :title="row.original.errorMessage"
+              :text="row.original.errorMessage"
+              :content="{ side: 'top' }"
             >
-              {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
-            </span>
+              <span class="text-muted truncate max-w-[280px]">
+                {{ row.original.errorCode ? `${row.original.errorCode}: ` : '' }}{{ row.original.errorMessage }}
+              </span>
+            </UTooltip>
           </div>
         </template>
 
