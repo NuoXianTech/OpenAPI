@@ -1,6 +1,6 @@
 import { lookup } from 'node:dns/promises'
 import { isIP, type LookupFunction } from 'node:net'
-import { Agent } from 'undici'
+import { Agent, fetch as undiciFetch, type RequestInit as UndiciRequestInit } from 'undici'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 
 const BLOCKED_NETWORKS = [
@@ -80,12 +80,16 @@ async function assertSafeUrl(
 function createPinnedDispatcher(pinnedAddresses: Map<string, ResolvedAddress[]>) {
   const pinnedLookup: LookupFunction = (hostname, options, callback) => {
     const addresses = pinnedAddresses.get(normalizeHostname(hostname))
-    const family = typeof options === 'number' ? options : options.family
-    const selected = addresses?.find(address => !family || address.family === family) ?? addresses?.[0]
-    if (!selected) {
+    const matchingAddresses = addresses?.filter(address => !options.family || address.family === options.family) ?? []
+    if (matchingAddresses.length === 0) {
       callback(new Error('upstream hostname has no verified address'), '', 0)
       return
     }
+    if (options.all) {
+      callback(null, matchingAddresses)
+      return
+    }
+    const selected = matchingAddresses[0]!
     callback(null, selected.address, selected.family)
   }
 
@@ -112,16 +116,19 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
 
   try {
     for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
-      const response = await fetch(currentUrl, { ...currentOptions, dispatcher } as RequestInit & { dispatcher: Agent })
+      const response = await undiciFetch(currentUrl, {
+        ...currentOptions,
+        dispatcher
+      } as unknown as UndiciRequestInit)
       if (!REDIRECT_STATUS_CODES.has(response.status)) {
         void dispatcher.close()
-        return response
+        return response as unknown as Response
       }
 
       const location = response.headers.get('location')
       if (!location) {
         void dispatcher.close()
-        return response
+        return response as unknown as Response
       }
       if (redirectCount === maxRedirects) {
         await response.body?.cancel()

@@ -4,7 +4,7 @@ import { isHostnameWithin, readLimitedText, safeFetch } from '../../../../server
 type PinnedLookup = (
   hostname: string,
   options: Record<string, unknown>,
-  callback: (error: Error | null, address: string, family: number) => void
+  callback: (error: Error | null, address: string | Array<{ address: string, family: number }>, family?: number) => void
 ) => void
 
 const networkMocks = vi.hoisted(() => ({
@@ -20,7 +20,8 @@ vi.mock('undici', () => ({
     }
 
     async close() {}
-  }
+  },
+  fetch: (...args: Parameters<typeof globalThis.fetch>) => globalThis.fetch(...args)
 }))
 
 beforeEach(() => {
@@ -73,12 +74,22 @@ describe('safeFetch', () => {
       expect(pinnedLookup).toBeTypeOf('function')
 
       const resolved = await new Promise<{ address: string, family: number }>((resolve, reject) => {
-        pinnedLookup?.('example.com', {}, (error: Error | null, address: string, family: number) => {
+        pinnedLookup?.('example.com', {}, (error, address, family) => {
           if (error) reject(error)
-          else resolve({ address, family })
+          else if (typeof address === 'string' && family) resolve({ address, family })
+          else reject(new Error('expected one pinned address'))
         })
       })
       expect(resolved).toEqual({ address: '93.184.216.34', family: 4 })
+
+      const resolvedAll = await new Promise<Array<{ address: string, family: number }>>((resolve, reject) => {
+        pinnedLookup?.('example.com', { all: true }, (error, addresses) => {
+          if (error) reject(error)
+          else if (Array.isArray(addresses)) resolve(addresses)
+          else reject(new Error('expected all pinned addresses'))
+        })
+      })
+      expect(resolvedAll).toEqual([{ address: '93.184.216.34', family: 4 }])
       expect((init as RequestInit & { dispatcher?: unknown }).dispatcher).toBeDefined()
       return new Response('ok')
     })
