@@ -8,6 +8,7 @@ const { t, locale } = useI18n()
 useHead({ title: () => t('user.overview.pageTitle') })
 
 const toast = useToast()
+const { copyText } = useCopyFeedback()
 
 const requestURL = useRequestURL()
 const origin = requestURL.origin || ''
@@ -106,12 +107,10 @@ const overviewMetricCards = computed<UserOverviewMetricCard[]>(function getUserO
 })
 
 async function copyCurl() {
-  try {
-    await navigator.clipboard.writeText(sampleCurl.value)
-    toast.add({ title: t('user.overview.copySuccess'), color: 'success' })
-  } catch {
-    toast.add({ title: t('user.overview.copyFailed'), color: 'error' })
-  }
+  await copyText(sampleCurl.value, {
+    successTitle: t('user.overview.copySuccess'),
+    errorTitle: t('user.overview.copyFailed')
+  })
 }
 </script>
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { watchDebounced } from '@vueuse/core'
 import type { MessageLevel } from '#shared/types/content'
 import { MESSAGE_LEVEL_META as levelMeta } from '~/constants/message-level'
 import { adminModalUi } from '~/utils/admin-modal-ui'
@@ -8,9 +7,10 @@ import {
   useAdminNotificationsDisplayMeta,
   type AdminNotificationDeliveryRow,
   type AdminNotificationMessageRow
-} from '~/composables/admin/use-admin-display-meta'
+} from '~/composables/admin/use-admin-notifications-display-meta'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 
 interface AdminNotificationFilterOption<TValue extends string = string> {
   label: string
@@ -81,21 +81,13 @@ const activeHistoryFilterCount = computed(() => [
   historyAudienceFilter.value !== 'all',
   historyLevelFilter.value !== 'all'
 ].filter(Boolean).length)
-let lastAppliedHistoryKeyword = ''
-
-watchDebounced(
+const historyKeywordApply = useDebouncedListKeyword(
   () => historyKeyword.value.trim(),
-  (value) => {
-    if (value === lastAppliedHistoryKeyword) return
-    lastAppliedHistoryKeyword = value
-    void history.applyFilters()
-  },
-  { debounce: 250, maxWait: 1000 }
+  history.applyFilters
 )
 
 async function applyHistoryFilters() {
-  lastAppliedHistoryKeyword = historyKeyword.value.trim()
-  await history.applyFilters()
+  await historyKeywordApply.applyNow()
 }
 
 async function resetHistoryFilters() {

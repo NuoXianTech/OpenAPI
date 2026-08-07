@@ -35,7 +35,7 @@ const {
   totalCalls
 } = toRefs(props)
 const { t, locale } = useI18n()
-const toast = useToast()
+const { copyText } = useCopyFeedback()
 const requestUrl = useRequestURL()
 const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, methodCosts.value))
 const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, methodCosts.value))
@@ -63,12 +63,7 @@ function costFor(method: string): number {
 }
 
 async function copyEndpoint() {
-  try {
-    await navigator.clipboard.writeText(endpointUrl.value)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(endpointUrl.value)
 }
 </script>
 

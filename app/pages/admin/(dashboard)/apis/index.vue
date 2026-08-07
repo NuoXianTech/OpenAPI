@@ -6,7 +6,7 @@ import {
   type AdminApiCategoryItem,
   type AdminDiscoveredApi,
   type AdminVersionGroup
-} from '~/composables/admin/use-admin-display-meta'
+} from '~/composables/admin/use-admin-apis-display-meta'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'

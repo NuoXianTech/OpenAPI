@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createAdminNotificationForm } from '~/composables/admin/use-admin-display-meta'
+import { createAdminNotificationForm } from '~/composables/admin/use-admin-notifications-display-meta'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'

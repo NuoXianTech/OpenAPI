@@ -17,6 +17,7 @@ const { t, locale } = useI18n()
 useHead({ title: () => t('user.apiKeys.title') })
 
 const toast = useToast()
+const { copyText } = useCopyFeedback()
 const {
   getIpText,
   getQuotaText,
@@ -264,12 +265,7 @@ function resetFilters() {
 }
 
 async function copy(text: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(text)
 }
 
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {

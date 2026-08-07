@@ -129,34 +129,27 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
-            {{ $t('admin.credits.overview.title') }}
-          </h2>
-          <p class="mt-1 text-sm text-toned">
-            {{ $t('admin.credits.overview.description') }}
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <UButton
-            :to="ADMIN_CREDIT_USERS_PATH"
-            icon="i-mdi-account-cash-outline"
-            color="neutral"
-            variant="outline"
-          >
-            {{ $t('admin.credits.overview.actions.userCredits') }}
-          </UButton>
-          <UButton
-            :to="ADMIN_REDEMPTION_CODES_PATH"
-            icon="i-mdi-ticket-percent-outline"
-          >
-            {{ $t('admin.credits.overview.actions.redemptionCodes') }}
-          </UButton>
-        </div>
-      </div>
-    </section>
+    <DashboardPageIntro
+      :title="$t('admin.credits.overview.title')"
+      :description="$t('admin.credits.overview.description')"
+    >
+      <template #actions>
+        <UButton
+          :to="ADMIN_CREDIT_USERS_PATH"
+          icon="i-mdi-account-cash-outline"
+          color="neutral"
+          variant="outline"
+        >
+          {{ $t('admin.credits.overview.actions.userCredits') }}
+        </UButton>
+        <UButton
+          :to="ADMIN_REDEMPTION_CODES_PATH"
+          icon="i-mdi-ticket-percent-outline"
+        >
+          {{ $t('admin.credits.overview.actions.redemptionCodes') }}
+        </UButton>
+      </template>
+    </DashboardPageIntro>
 
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="text-xs text-muted">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveOperationLogActorKind } from '@/composables/admin/use-admin-call-logs-page'
+import { resolveOperationLogActorKind } from '@/composables/admin/use-admin-operation-logs-page'
 
 describe('operation log actor kind', () => {
   it('classifies actor kind by action namespace instead of user id presence', () => {

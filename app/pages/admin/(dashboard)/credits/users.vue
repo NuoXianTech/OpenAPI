@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { watchDebounced } from '@vueuse/core'
 import type { TableColumn } from '@nuxt/ui'
 import type { AdminCreditUser } from '#shared/types/admin-credits'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 
 interface CreditUserFilters extends Record<string, unknown> {
   keyword: string
@@ -68,10 +68,10 @@ watch([page, pageSize], () => {
   rowSelection.value = {}
 })
 
-watchDebounced(
+const keywordApply = useDebouncedListKeyword(
   () => filters.keyword,
-  () => { void applyFilters() },
-  { debounce: 300, maxWait: 1000 }
+  applyFilters,
+  { debounce: 300 }
 )
 
 function openCreditModal(userIds: number[], label: string) {
@@ -103,6 +103,7 @@ async function applyFilters() {
 async function resetFilters() {
   rowSelection.value = {}
   await reset()
+  keywordApply.markApplied()
 }
 
 async function onCreditSaved() {
@@ -113,16 +114,10 @@ async function onCreditSaved() {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10">
-        <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
-          {{ $t('admin.credits.users.title') }}
-        </h2>
-        <p class="mt-1 text-sm text-toned">
-          {{ $t('admin.credits.users.description') }}
-        </p>
-      </div>
-    </section>
+    <DashboardPageIntro
+      :title="$t('admin.credits.users.title')"
+      :description="$t('admin.credits.users.description')"
+    />
 
     <div class="flex flex-wrap items-center gap-2">
       <UInput

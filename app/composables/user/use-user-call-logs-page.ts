@@ -1,5 +1,4 @@
 import type { TableColumn } from '@nuxt/ui'
-import { watchDebounced } from '@vueuse/core'
 import { computed, ref, type MaybeRefOrGetter } from 'vue'
 import {
   createEnumQueryCodec,
@@ -8,6 +7,7 @@ import {
   useDashboardListState
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 
 export interface UserCallLogRow {
   id: number
@@ -125,7 +125,15 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     { label: t('common.states.success'), value: 'success' },
     { label: t('common.states.failure'), value: 'failure' }
   ])
-  const lastAppliedKeyword = ref(listState.filters.keyword.trim())
+  async function applyListFilters() {
+    await list.applyFilters()
+    await listState.syncQuery()
+  }
+
+  const keywordApply = useDebouncedListKeyword(
+    () => listState.filters.keyword,
+    applyListFilters
+  )
   const columns = computed<TableColumn<UserCallLogRow>[]>(() => [
     { accessorKey: 'createdAt', header: t('user.logs.columns.time') },
     { accessorKey: 'apiKeyName', header: t('user.logs.columns.key') },
@@ -140,28 +148,11 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
       || { apis: [], apiKeys: [] }
   }
 
-  async function applyFilters() {
-    lastAppliedKeyword.value = listState.filters.keyword.trim()
-    await list.applyFilters()
-    await listState.syncQuery()
-  }
-
   async function resetFilters() {
-    lastAppliedKeyword.value = USER_CALL_LOG_DEFAULT_FILTERS.keyword
     await list.reset()
+    keywordApply.markApplied()
     await listState.syncQuery()
   }
-
-  watchDebounced(
-    () => listState.filters.keyword.trim(),
-    async (keyword) => {
-      if (keyword === lastAppliedKeyword.value) return
-      lastAppliedKeyword.value = keyword
-      await list.applyFilters()
-      await listState.syncQuery()
-    },
-    { debounce: 250, maxWait: 1000 }
-  )
 
   return {
     filters: listState.filters,
@@ -171,7 +162,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     total: list.total,
     loading: list.loading,
     refresh: list.refresh,
-    applyFilters,
+    applyFilters: keywordApply.applyNow,
     resetFilters,
     filterOptions,
     apiSelectItems,

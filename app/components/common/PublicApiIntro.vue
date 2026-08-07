@@ -32,7 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t, locale } = useI18n()
 const { user } = useAuth()
-const toast = useToast()
+const { copyText } = useCopyFeedback()
 const requestUrl = useRequestURL()
 const preferredReducedMotion = usePreferredReducedMotion()
 const metricsMounted = ref(false)
@@ -168,12 +168,7 @@ async function runSample(): Promise<void> {
 }
 
 async function copyRequest(): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(sampleUrl.value)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(sampleUrl.value)
 }
 </script>
 

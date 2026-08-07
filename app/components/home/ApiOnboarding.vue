@@ -2,7 +2,7 @@
 import { formatStandardResponseExample } from '~/utils/public-api-example'
 
 const { t } = useI18n()
-const toast = useToast()
+const { copyText } = useCopyFeedback()
 const requestUrl = useRequestURL()
 const { settings } = useSiteSettings()
 const gatewayOrigin = computed(() => settings.value.siteUrl || requestUrl.origin)
@@ -35,12 +35,7 @@ const responseSnippet = computed(() => formatStandardResponseExample(
 ))
 
 async function copyCodeSnippet(value: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(value)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(value)
 }
 </script>
 

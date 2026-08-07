@@ -14,6 +14,7 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const { t } = useI18n()
+const { copyText } = useCopyFeedback()
 const loading = ref(false)
 const result = ref<ApiKeyItem | null>(null)
 
@@ -41,12 +42,7 @@ async function confirmReset() {
 }
 
 async function copy(text: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(text)
 }
 </script>
 

@@ -65,18 +65,10 @@ const {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 class="text-xl font-semibold tracking-tight text-highlighted sm:text-2xl">
-            {{ $t('admin.credits.redemptionCodes.title') }}
-          </h2>
-          <p class="mt-1 text-sm text-toned">
-            {{ $t('admin.credits.redemptionCodes.description') }}
-          </p>
-        </div>
-      </div>
-    </section>
+    <DashboardPageIntro
+      :title="$t('admin.credits.redemptionCodes.title')"
+      :description="$t('admin.credits.redemptionCodes.description')"
+    />
 
     <div class="flex flex-wrap items-center justify-between gap-1.5">
       <div class="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">

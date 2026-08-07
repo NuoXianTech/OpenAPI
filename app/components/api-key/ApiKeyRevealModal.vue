@@ -5,17 +5,11 @@ const props = defineProps<{
   target: ApiKeyItem | null
 }>()
 
-const toast = useToast()
-const { t } = useI18n()
+const { copyText } = useCopyFeedback()
 
 async function copyKey() {
   if (!props.target?.apiKey) return
-  try {
-    await navigator.clipboard.writeText(props.target.apiKey)
-    toast.add({ title: t('common.feedback.copied'), color: 'success' })
-  } catch {
-    toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-  }
+  await copyText(props.target.apiKey)
 }
 </script>
 

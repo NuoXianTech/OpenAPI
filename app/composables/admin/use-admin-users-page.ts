@@ -1,8 +1,8 @@
-import { watchDebounced } from '@vueuse/core'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, toRef, type ComputedRef } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
@@ -89,21 +89,13 @@ export function useAdminUsersPage() {
     activeFilter.value !== 'all',
     banFilter.value !== 'all'
   ].filter(Boolean).length)
-  let lastAppliedKeyword = ''
-
-  watchDebounced(
+  const keywordApply = useDebouncedListKeyword(
     () => keyword.value.trim(),
-    (value) => {
-      if (value === lastAppliedKeyword) return
-      lastAppliedKeyword = value
-      void paged.applyFilters()
-    },
-    { debounce: 250, maxWait: 1000 }
+    paged.applyFilters
   )
 
   async function applyFilters() {
-    lastAppliedKeyword = keyword.value.trim()
-    await paged.applyFilters()
+    await keywordApply.applyNow()
   }
 
   async function resetFilters() {

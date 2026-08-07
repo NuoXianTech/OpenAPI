@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
-import { useAdminLoginLogList } from '~/composables/admin/use-admin-call-logs-page'
+import { useAdminLoginLogList } from '~/composables/admin/use-admin-login-logs-page'
 import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
 
 const { t, locale } = useI18n()
@@ -33,18 +33,10 @@ async function resetAdvancedFilters() {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10 space-y-3">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            {{ $t('admin.logs.login.title') }}
-          </h2>
-          <p class="mt-1 text-sm text-toned">
-            {{ $t('admin.logs.login.description') }}
-          </p>
-        </div>
-      </div>
-    </section>
+    <DashboardPageIntro
+      :title="$t('admin.logs.login.title')"
+      :description="$t('admin.logs.login.description')"
+    />
 
     <div class="flex flex-wrap items-center gap-2">
       <UInput

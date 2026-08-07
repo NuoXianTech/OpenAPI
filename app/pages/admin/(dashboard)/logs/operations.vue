@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AdminOperationResourceSummary from '~/components/admin/AdminOperationResourceSummary.vue'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
-import { useAdminOperationLogList } from '~/composables/admin/use-admin-call-logs-page'
+import { useAdminOperationLogList } from '~/composables/admin/use-admin-operation-logs-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 
 const { t, locale } = useI18n()
@@ -40,18 +40,10 @@ async function resetAdvancedFilters() {
 
 <template>
   <div class="space-y-6">
-    <section class="dashboard-hero-surface relative overflow-hidden rounded-lg border border-default p-5 sm:p-6">
-      <div class="relative z-10 space-y-3">
-        <div>
-          <h2 class="text-xl sm:text-2xl font-semibold tracking-tight text-highlighted">
-            {{ $t('admin.logs.operations.title') }}
-          </h2>
-          <p class="mt-1 text-sm text-toned">
-            {{ $t('admin.logs.operations.description') }}
-          </p>
-        </div>
-      </div>
-    </section>
+    <DashboardPageIntro
+      :title="$t('admin.logs.operations.title')"
+      :description="$t('admin.logs.operations.description')"
+    />
 
     <div class="flex flex-wrap items-center gap-2">
       <UInput

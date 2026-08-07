@@ -53,6 +53,7 @@ interface RedemptionFilters extends Record<string, unknown> {
 
 export function useRedemptionCodesPage() {
   const toast = useToast()
+  const { copyText } = useCopyFeedback()
   const confirm = useConfirmDialog()
   const { t } = useI18n()
 
@@ -178,25 +179,16 @@ export function useRedemptionCodesPage() {
   }
 
   async function copyOne(code: string) {
-    try {
-      await navigator.clipboard.writeText(code)
-      toast.add({
-        title: t('admin.credits.redemptionCodes.feedback.codeCopied', { code }),
-        color: 'success'
-      })
-    } catch {
-      toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-    }
+    await copyText(code, {
+      successTitle: t('admin.credits.redemptionCodes.feedback.codeCopied', { code })
+    })
   }
 
   async function copyAll(codes: Array<{ code: string }>) {
     const text = codes.map(c => c.code).join('\n')
-    try {
-      await navigator.clipboard.writeText(text)
-      toast.add({ title: t('admin.credits.redemptionCodes.feedback.allCopied'), color: 'success' })
-    } catch {
-      toast.add({ title: t('common.feedback.copyFailed'), color: 'error' })
-    }
+    await copyText(text, {
+      successTitle: t('admin.credits.redemptionCodes.feedback.allCopied')
+    })
   }
 
   async function init() {

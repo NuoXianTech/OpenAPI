@@ -17,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const { t, locale } = useI18n()
-const toast = useToast()
+const { copyText: copyWithFeedback } = useCopyFeedback()
 const queryView = ref<QueryView>('parameters')
 
 const requestTarget = computed(() => {
@@ -67,21 +67,10 @@ function statusColor(statusCode: number): 'neutral' | 'success' | 'info' | 'erro
 
 async function copyText(value: string): Promise<void> {
   if (!value) return
-
-  try {
-    await navigator.clipboard.writeText(value)
-    toast.add({
-      title: t('common.feedback.copied'),
-      icon: 'i-mdi-clipboard-check-outline',
-      color: 'success'
-    })
-  } catch {
-    toast.add({
-      title: t('common.feedback.copyFailed'),
-      icon: 'i-mdi-alert-circle-outline',
-      color: 'error'
-    })
-  }
+  await copyWithFeedback(value, {
+    successIcon: 'i-mdi-clipboard-check-outline',
+    errorIcon: 'i-mdi-alert-circle-outline'
+  })
 }
 </script>
 
