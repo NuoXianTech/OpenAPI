@@ -42,6 +42,7 @@
 
 - [每日 60 秒公共接口](./apis/60s.md)
 - [蓝奏云链接解析公共接口](./apis/lanzou.md)
+- [Minecraft 玩家资料公共接口](./apis/minecraft.md)
 - [Bing 每日壁纸公共接口](./apis/bing.md)
 - [豆包资源解析公共接口](./apis/doubao.md)
 - [音乐公共接口](./apis/music.md)
