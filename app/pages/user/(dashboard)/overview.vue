@@ -121,7 +121,7 @@ async function copyCurl() {
     </template>
 
     <template #body>
-      <div class="space-y-6">
+      <div class="dashboard-section-page space-y-6">
         <DashboardOverviewHero
           :title="$t('user.overview.hero.title')"
           :description="$t('user.overview.hero.description')"

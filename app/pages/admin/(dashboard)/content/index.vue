@@ -145,8 +145,8 @@ const columns = computed<TableColumn<Announcement>[]>(() => [
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center gap-2 flex-wrap">
-      <div class="flex items-center gap-2 flex-wrap">
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
         <UInput
           v-model="keyword"
           icon="i-mdi-magnify"
@@ -180,7 +180,7 @@ const columns = computed<TableColumn<Announcement>[]>(() => [
           </UFormField>
         </AdminFilterPopover>
       </div>
-      <div class="ml-auto flex items-center gap-2 flex-wrap">
+      <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
         <UButton
           icon="i-mdi-plus"
           @click="openAdd"

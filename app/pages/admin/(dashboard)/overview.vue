@@ -183,7 +183,7 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
     </template>
 
     <template #body>
-      <div class="space-y-6">
+      <div class="dashboard-section-page space-y-6">
         <DashboardOverviewHero
           :title="$t('admin.overview.hero.title')"
           :description="$t('admin.overview.hero.description')"

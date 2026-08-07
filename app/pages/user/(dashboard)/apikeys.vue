@@ -254,6 +254,12 @@ const filteredItems = computed(() => {
 const { page, pageSize, total, paginated } = useClientPagination(filteredItems)
 
 const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility(columns)
+columnVisibility.value = {
+  quota: false,
+  scopes: false,
+  ipWhitelist: false,
+  expiresAt: false
+}
 
 watch([keyword, statusFilter, scopeFilter, pageSize], () => {
   page.value = 1

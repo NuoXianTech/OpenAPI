@@ -141,12 +141,6 @@ async function resetAdvancedFilters() {
     />
 
     <div class="flex flex-wrap items-center gap-2">
-      <CommonDateRangePicker
-        v-model:start="filters.startAt"
-        v-model:end="filters.endAt"
-        class="w-full sm:w-80"
-        @apply="apply"
-      />
       <AdminFilterPopover
         :active-count="advancedFilterCount"
         :title="$t('admin.credits.transactions.filterTitle')"
@@ -203,16 +197,23 @@ async function resetAdvancedFilters() {
           </UFormField>
         </div>
       </AdminFilterPopover>
-      <UButton
-        class="ml-auto"
-        icon="i-mdi-refresh"
-        color="neutral"
-        variant="outline"
-        :loading="loading"
-        @click="refresh"
-      >
-        {{ $t('common.actions.refresh') }}
-      </UButton>
+      <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+        <CommonDateRangePicker
+          v-model:start="filters.startAt"
+          v-model:end="filters.endAt"
+          class="w-full sm:w-64"
+          @apply="apply"
+        />
+        <UButton
+          icon="i-mdi-refresh"
+          color="neutral"
+          variant="outline"
+          :loading="loading"
+          @click="refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard

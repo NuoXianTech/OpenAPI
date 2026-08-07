@@ -139,7 +139,7 @@ const retryActions = computed(() => [{
             </div>
 
             <div class="stats-hero__aside">
-              <div class="stats-hero__stats grid grid-cols-3 gap-2.5 sm:gap-3">
+              <div class="stats-hero__stats grid grid-cols-1 gap-2.5 min-[360px]:grid-cols-3 sm:gap-3">
                 <template v-if="isInitialLoading">
                   <CommonHeroStatCard
                     v-for="n in 3"

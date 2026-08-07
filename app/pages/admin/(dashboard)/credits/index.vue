@@ -130,6 +130,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
 <template>
   <div class="space-y-6">
     <DashboardPageIntro
+      surface
       :title="$t('admin.credits.overview.title')"
       :description="$t('admin.credits.overview.description')"
     >

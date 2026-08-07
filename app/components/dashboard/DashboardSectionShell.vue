@@ -37,8 +37,10 @@ useHead({ title: () => props.title })
           highlight
           color="neutral"
           variant="pill"
-          class="dashboard-section-tabs -mx-1 flex-1"
+          class="dashboard-section-tabs -mx-1 min-w-0 flex-1 overflow-x-auto"
           :ui="{
+            list: 'min-w-full w-max',
+            item: 'shrink-0',
             link: 'px-2.5 py-1.5 rounded-lg text-sm',
             linkLeadingIcon: 'size-4',
             linkLabel: 'font-medium'
