@@ -3,6 +3,7 @@
     "system": {
       "feedback": {
         "saved": "Saved",
+        "loadFailed": "Failed to load settings. Refresh and try again.",
         "saveFailed": "Save failed"
       },
       "site": {
@@ -164,7 +165,7 @@
           },
           "clientSecret": {
             "label": "Client Secret",
-            "savedDescription": "Saved. Leave empty to keep unchanged.",
+            "savedDescription": "Configured. Leave empty to keep unchanged.",
             "initialDescription": "Required for the first save.",
             "show": "Show secret",
             "hide": "Hide secret"
@@ -278,11 +279,12 @@
           },
           "siteKey": {
             "label": "Site key",
-            "description": "Site key from the Cloudflare Turnstile application."
+            "description": "Site key from the Cloudflare Turnstile application. It is a public identifier and is shown in plain text."
           },
           "secretKey": {
             "label": "Secret key",
-            "description": "Secret key from the Cloudflare Turnstile application."
+            "description": "Secret key from the Cloudflare Turnstile application.",
+            "configuredDescription": "Configured. Leave empty to keep unchanged."
           }
         },
         "scenes": {
@@ -332,7 +334,8 @@
           },
           "password": {
             "label": "SMTP password",
-            "description": "Mailbox password or application password."
+            "description": "Mailbox password or application password.",
+            "configuredDescription": "Configured. Leave empty to keep unchanged."
           },
           "replyTo": {
             "label": "Reply-to address",

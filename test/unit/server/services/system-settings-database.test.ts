@@ -59,13 +59,16 @@ describe('system settings database service', () => {
   it('materializes registered defaults and stores updates as typed JSONB', async () => {
     await client.query(
       `INSERT INTO system_settings (setting_key, value, description)
-       VALUES ($1, $2::jsonb, $3)`,
-      ['internal.unregistered', JSON.stringify('private'), 'not registered']
+       VALUES ($1, $2::jsonb, $3), ($4, $5::jsonb, $6)`,
+      [
+        'internal.unregistered', JSON.stringify('private'), 'not registered',
+        'turnstile.site_key', JSON.stringify(123), 'legacy numeric site key'
+      ]
     )
 
     const settings = await systemSettingsService.getSettings()
 
-    expect(settings).toEqual(SITE_SETTINGS_DEFAULTS)
+    expect(settings).toEqual({ ...SITE_SETTINGS_DEFAULTS, turnstileSiteKey: '123' })
     expect(Object.keys(settings)).toHaveLength(SYSTEM_SETTING_NAMES.length)
 
     const registeredRows = await client.query<{ count: number }>(`
@@ -91,6 +94,9 @@ describe('system settings database service', () => {
       siteName: 'Updated OpenAPI',
       smtpPort: 2525,
       smtpPass: 'smtp-plaintext-secret',
+      turnstileSiteKey: 'turnstile-site-key',
+      turnstileSecretKey: 'turnstile-secret-key',
+      turnstileLoginEnabled: true,
       clientIpSource: 'x_forwarded_for',
       trustedProxyCidrs: '127.0.0.1, ::1/128',
       clientIpForwardedHops: 2
@@ -129,13 +135,38 @@ describe('system settings database service', () => {
     expect(storedSecret?.value).toMatch(/^enc:system-setting:v1:/)
     expect(storedSecret?.value).not.toContain('smtp-plaintext-secret')
 
+    const siteKeyRows = await client.query<{ value: string, is_secret: boolean }>(`
+      SELECT value, is_secret
+      FROM system_settings
+      WHERE setting_key = 'turnstile.site_key'
+    `)
+    const storedSiteKey = siteKeyRows.rows[0]
+    expect(storedSiteKey?.is_secret).toBe(false)
+    expect(storedSiteKey?.value).toBe('turnstile-site-key')
+
+    const turnstileSecretRows = await client.query<{ value: string, is_secret: boolean }>(`
+      SELECT value, is_secret
+      FROM system_settings
+      WHERE setting_key = 'turnstile.secret_key'
+    `)
+    const storedTurnstileSecret = turnstileSecretRows.rows[0]
+    expect(storedTurnstileSecret?.is_secret).toBe(true)
+    expect(storedTurnstileSecret?.value).toMatch(/^enc:system-setting:v1:/)
+    expect(storedTurnstileSecret?.value).not.toContain('turnstile-secret-key')
+
     const safeAdminSettings = await systemSettingsService.getForAdmin()
     expect('smtpPass' in safeAdminSettings).toBe(false)
     expect(safeAdminSettings.secrets.hasSmtpPass).toBe(true)
+    expect(safeAdminSettings.secrets.hasTurnstileSecretKey).toBe(true)
     expect(testContext.deletedCacheKeys).toContain('cache:public:settings')
 
     const publicSettings = await systemSettingsService.getPublicSettings()
     expect(publicSettings.siteName).toBe('Updated by another process')
+    expect(publicSettings.turnstile).toMatchObject({
+      enabled: true,
+      siteKey: 'turnstile-site-key',
+      login: true
+    })
     expect('internal.unregistered' in publicSettings).toBe(false)
 
     expect(systemSettingsService.registeredKeys()).toEqual(

@@ -74,7 +74,13 @@ function decodeValue<TName extends SystemSettingName>(
     throw new Error(`系统配置 ${definition.key} 的敏感标记与注册表不一致`)
   }
 
-  const parsed = definition.schema.safeParse(value)
+  let parsed = definition.schema.safeParse(value)
+  // Older JSONB rows may contain a numeric/boolean scalar for a text setting.
+  // Coerce only this lossless storage mismatch; request validation remains strict.
+  if (!parsed.success && typeof definition.default === 'string'
+    && (typeof value === 'number' || typeof value === 'boolean')) {
+    parsed = definition.schema.safeParse(String(value))
+  }
   if (!parsed.success) {
     throw new Error(`系统配置 ${definition.key} 的值不合法：${parsed.error.issues[0]?.message || 'unknown error'}`)
   }

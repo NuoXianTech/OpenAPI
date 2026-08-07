@@ -9,6 +9,13 @@ export type AdminSettingsForm = SystemSettings
 
 export type AdminSettingsKey = keyof AdminSettingsForm
 
+export interface AdminSettingsSecrets {
+  hasSmtpPass: boolean
+  hasOauthGithubClientSecret: boolean
+  hasOauthQqClientSecret: boolean
+  hasTurnstileSecretKey: boolean
+}
+
 export interface AdminSettingsSectionState {
   dirty: ComputedRef<boolean>
   changedCount: ComputedRef<number>
@@ -84,7 +91,18 @@ interface UseAdminUserSessionSettingsOptions {
   scheduleCopiedReset?: (callback: () => void) => void
 }
 
+interface AdminSettingsResponse extends Partial<AdminSettingsForm> {
+  secrets?: Partial<AdminSettingsSecrets>
+}
+
 const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
+
+const EMPTY_SETTINGS_SECRETS: AdminSettingsSecrets = {
+  hasSmtpPass: false,
+  hasOauthGithubClientSecret: false,
+  hasOauthQqClientSecret: false,
+  hasTurnstileSecretKey: false
+}
 
 function defaultForm(): AdminSettingsForm {
   return { ...SITE_SETTINGS_DEFAULTS }
@@ -111,6 +129,7 @@ export function useAdminSettingsPage() {
 
   const form = reactive<AdminSettingsForm>(defaultForm())
   const pristine = ref<AdminSettingsForm>(defaultForm())
+  const secrets = reactive<AdminSettingsSecrets>({ ...EMPTY_SETTINGS_SECRETS })
   const saving = ref(false)
   const savingKeys = ref<readonly AdminSettingsKey[]>([])
   const loading = ref(false)
@@ -120,13 +139,15 @@ export function useAdminSettingsPage() {
   async function load() {
     loading.value = true
     try {
-      const val = await $fetch<Partial<AdminSettingsForm> | null>('/api/admin/settings/get')
+      const val = await $fetch<AdminSettingsResponse | null>('/api/admin/settings/get')
       if (!val) return
       const next = normalizeForm(val)
       Object.assign(form, next)
       pristine.value = snapshot(next)
-    } catch {
+      if (val.secrets) Object.assign(secrets, val.secrets)
+    } catch (err) {
       // 保持当前表单值，避免失败请求覆盖用户正在编辑的内容。
+      toast.add({ title: parseFetchError(err, t('admin.system.feedback.loadFailed')), color: 'error' })
     } finally {
       loading.value = false
     }
@@ -180,7 +201,7 @@ export function useAdminSettingsPage() {
         }
         return accumulator
       }, {})
-      const res = await $fetch<Partial<AdminSettingsForm> & { public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body })
+      const res = await $fetch<AdminSettingsResponse & { public: PublicSiteSettings }>('/api/admin/settings/update', { method: 'PUT', body })
       // 用 update 接口返回的 public shape 原地刷新全站 useSiteSettings() 缓存，省一次 GET。
       const cached = useNuxtData<PublicSiteSettings>(PUBLIC_SITE_SETTINGS_KEY)
       cached.data.value = res.public
@@ -194,6 +215,7 @@ export function useAdminSettingsPage() {
         nextPristine[key] = savedValue as never
       }
       pristine.value = nextPristine
+      if (res.secrets) Object.assign(secrets, res.secrets)
       toast.add({ title: t('admin.system.feedback.saved'), color: 'success' })
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('admin.system.feedback.saveFailed')), color: 'error' })
@@ -217,7 +239,7 @@ export function useAdminSettingsPage() {
     }
   }
 
-  return { form, saving, loading, save, dirty, changedKeys, reset, commit, createSection }
+  return { form, secrets, saving, loading, save, dirty, changedKeys, reset, commit, createSection }
 }
 
 function createAdminOauthProviderForm(): AdminOauthProviderForm {

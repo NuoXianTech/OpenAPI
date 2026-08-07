@@ -2,7 +2,7 @@
 import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
 import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-page'
 
-const { form, createSection } = useAdminSettingsPage()
+const { form, secrets, createSection } = useAdminSettingsPage()
 const { t } = useI18n()
 
 const captchaCredentialKeys = [
@@ -18,7 +18,7 @@ const captchaSceneKeys = [
 ] as const satisfies readonly AdminSettingsKey[]
 
 const captchaCredentialSection = createSection(captchaCredentialKeys)
-const captchaSceneSection = createSection(captchaSceneKeys)
+const captchaConfigurationSection = createSection([...captchaCredentialKeys, ...captchaSceneKeys])
 
 // 目前仅实现 Cloudflare Turnstile，下拉保留以便后续扩展其他验证码服务
 const captchaTypeItems = computed(() => [
@@ -59,12 +59,15 @@ const captchaType = ref('turnstile')
       <UFormField
         name="turnstileSecretKey"
         :label="t('admin.system.captcha.credentials.secretKey.label')"
-        :description="t('admin.system.captcha.credentials.secretKey.description')"
+        :description="secrets.hasTurnstileSecretKey
+          ? t('admin.system.captcha.credentials.secretKey.configuredDescription')
+          : t('admin.system.captcha.credentials.secretKey.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
         <UInput
           v-model="form.turnstileSecretKey"
-          autocomplete="off"
+          type="password"
+          autocomplete="new-password"
           class="w-full sm:min-w-64"
         />
       </UFormField>
@@ -121,10 +124,10 @@ const captchaType = ref('turnstile')
       </UFormField>
       <template #footer>
         <AdminSettingsSectionActions
-          :dirty="captchaSceneSection.dirty.value"
-          :saving="captchaSceneSection.saving.value"
-          :disabled="captchaSceneSection.disabled.value"
-          @save="captchaSceneSection.save"
+          :dirty="captchaConfigurationSection.dirty.value"
+          :saving="captchaConfigurationSection.saving.value"
+          :disabled="captchaConfigurationSection.disabled.value"
+          @save="captchaConfigurationSection.save"
         />
       </template>
     </DashboardSettingsSection>

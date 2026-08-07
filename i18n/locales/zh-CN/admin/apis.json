@@ -118,7 +118,7 @@
           "sharedStorage": "配置由平台统一存储，所有服务实例共享"
         },
         "form": {
-          "configuredSecretPlaceholder": "已配置，留空保持不变"
+          "configuredSecretPlaceholder": "已配置，留空不修改"
         }
       },
       "form": {

@@ -4,7 +4,7 @@ import { useAdminSettingsPage } from '~/composables/admin/use-admin-settings-pag
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 
-const { form, createSection } = useAdminSettingsPage()
+const { form, secrets, createSection } = useAdminSettingsPage()
 const toast = useToast()
 const { t } = useI18n()
 
@@ -140,7 +140,9 @@ async function submitTest(): Promise<void> {
       <UFormField
         name="smtpPass"
         :label="t('admin.system.email.settings.password.label')"
-        :description="t('admin.system.email.settings.password.description')"
+        :description="secrets.hasSmtpPass
+          ? t('admin.system.email.settings.password.configuredDescription')
+          : t('admin.system.email.settings.password.description')"
         class="flex max-sm:flex-col justify-between items-start gap-4"
       >
         <UInput

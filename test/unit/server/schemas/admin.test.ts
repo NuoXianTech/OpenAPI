@@ -111,6 +111,17 @@ describe('admin schemas', () => {
       checkinAmountMax: 20
     }).success).toBe(true)
 
+    const turnstile = adminUpdateSiteSettingsSchema.safeParse({
+      turnstileSiteKey: '  1x00000000000000000000AA  ',
+      turnstileSecretKey: '  1x0000000000000000000000000000000AA  '
+    })
+    expect(turnstile.success).toBe(true)
+    if (turnstile.success) {
+      expect(turnstile.data.turnstileSiteKey).toBe('1x00000000000000000000AA')
+      expect(turnstile.data.turnstileSecretKey).toBe('1x0000000000000000000000000000000AA')
+    }
+    expect(adminUpdateSiteSettingsSchema.safeParse({ turnstileSiteKey: 123 }).success).toBe(false)
+
     expect(adminUpdateSiteSettingsSchema.safeParse({
       oauthGithubEnabled: true
     }).success).toBe(false)

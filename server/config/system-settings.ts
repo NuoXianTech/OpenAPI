@@ -365,7 +365,7 @@ export const SYSTEM_SETTING_DEFINITIONS = {
   },
   turnstileSiteKey: {
     key: 'turnstile.site_key',
-    schema: text(200, false),
+    schema: text(200),
     default: SITE_SETTINGS_DEFAULTS.turnstileSiteKey,
     public: true,
     secret: false,
@@ -373,7 +373,7 @@ export const SYSTEM_SETTING_DEFINITIONS = {
   },
   turnstileSecretKey: {
     key: 'turnstile.secret_key',
-    schema: z.string().max(2000),
+    schema: z.string().trim().max(2000),
     default: SITE_SETTINGS_DEFAULTS.turnstileSecretKey,
     public: false,
     secret: true,

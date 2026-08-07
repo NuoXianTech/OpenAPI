@@ -118,7 +118,7 @@
           "sharedStorage": "Configuration is stored centrally and shared by all service instances"
         },
         "form": {
-          "configuredSecretPlaceholder": "Configured; leave empty to keep unchanged"
+          "configuredSecretPlaceholder": "Configured. Leave empty to keep unchanged."
         }
       },
       "form": {

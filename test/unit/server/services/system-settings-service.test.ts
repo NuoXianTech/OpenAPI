@@ -72,6 +72,7 @@ describe('system settings', () => {
     expect('oauthGithubClientSecret' in safe).toBe(false)
     expect('oauthQqClientSecret' in safe).toBe(false)
     expect('turnstileSecretKey' in safe).toBe(false)
+    expect(safe.turnstileSiteKey).toBe('site-key')
     expect(safe.secrets).toEqual({
       hasSmtpPass: true,
       hasOauthGithubClientSecret: true,
