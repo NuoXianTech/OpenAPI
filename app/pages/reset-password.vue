@@ -124,7 +124,7 @@ async function onSubmit(event: FormSubmitEvent<ResetPasswordFormState>) {
           to="/forgot-password"
           block
           size="lg"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
         >
           {{ $t('auth.resetPassword.requestAgain') }}
         </UButton>

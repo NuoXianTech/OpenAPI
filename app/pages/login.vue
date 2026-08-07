@@ -181,14 +181,22 @@ function clearTurnstileError() {
     <UCard
       variant="outline"
       class="auth-card"
-      :ui="{ body: 'p-4 sm:p-7' }"
+      :ui="{ body: 'min-h-[280px] p-4 sm:p-7' }"
     >
       <div
         v-if="checkingAuth"
-        class="space-y-3"
+        class="space-y-4"
+        aria-hidden="true"
       >
-        <USkeleton class="h-11 w-full rounded-lg" />
-        <USkeleton class="h-11 w-full rounded-lg" />
+        <div class="space-y-2">
+          <USkeleton class="h-4 w-24 rounded" />
+          <USkeleton class="h-11 w-full rounded-lg" />
+        </div>
+        <div class="space-y-2">
+          <USkeleton class="h-4 w-20 rounded" />
+          <USkeleton class="h-11 w-full rounded-lg" />
+        </div>
+        <USkeleton class="h-5 w-32 rounded" />
         <USkeleton class="h-11 w-full rounded-lg" />
       </div>
 

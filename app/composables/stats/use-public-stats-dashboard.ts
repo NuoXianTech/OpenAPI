@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, type ComputedRef, type Ref } from 'vue'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsOverview,
@@ -18,7 +18,7 @@ interface PublicStatsOverviewCard {
 }
 
 interface UsePublicStatsDashboardReturn {
-  data: Ref<PublicCallStatsDashboard | null>
+  data: ComputedRef<PublicCallStatsDashboard | null>
   isPending: Ref<boolean>
   error: Ref<unknown>
   overview: ComputedRef<PublicCallStatsOverview | null>
@@ -60,9 +60,17 @@ function roundPercent(value: number): number {
 export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions = {}): UsePublicStatsDashboardReturn {
   const { t, locale } = useI18n()
   const immediate = options.immediate ?? true
-  const data = ref<PublicCallStatsDashboard | null>(null)
-  const isPending = ref(immediate)
-  const error = ref<unknown>(null)
+  const {
+    data: requestData,
+    pending: isPending,
+    error: requestError,
+    refresh
+  } = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
+    key: 'public-stats-dashboard',
+    immediate
+  })
+  const data = computed<PublicCallStatsDashboard | null>(() => requestData.value ?? null)
+  const error = computed<unknown>(() => requestError.value)
 
   const overview = computed(() => data.value?.overview ?? null)
   const trend7d = computed(() => data.value?.trend7d ?? [])
@@ -180,26 +188,11 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
   })
 
   async function fetchStats() {
-    isPending.value = true
-    error.value = null
-    try {
-      data.value = await $fetch<PublicCallStatsDashboard>('/api/stats/public')
-    } catch (err) {
-      error.value = err
-    } finally {
-      isPending.value = false
-    }
+    await refresh()
   }
 
   async function reloadStats() {
-    error.value = null
-    await fetchStats()
-  }
-
-  if (immediate) {
-    onMounted(() => {
-      void fetchStats()
-    })
+    await refresh()
   }
 
   return {

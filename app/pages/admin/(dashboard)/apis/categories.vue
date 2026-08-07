@@ -125,7 +125,7 @@ const columns = computed<TableColumn<ApiCategoryItem>[]>(() => [
         <UButton
           color="neutral"
           variant="outline"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           :loading="loading"
           @click="refresh()"
         >

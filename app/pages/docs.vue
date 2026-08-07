@@ -40,7 +40,7 @@ const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
   variant: 'outline' as const,
-  icon: 'i-mdi-refresh',
+  icon: 'i-lucide-refresh-cw',
   onClick: refreshCatalog
 }])
 

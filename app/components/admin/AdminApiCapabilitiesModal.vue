@@ -145,7 +145,7 @@ watch(
           class="mt-3"
           color="error"
           variant="soft"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           @click="loadCapabilities"
         >
           {{ t('admin.apis.capabilities.actions.reload') }}

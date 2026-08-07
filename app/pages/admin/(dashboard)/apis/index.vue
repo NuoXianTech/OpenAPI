@@ -172,7 +172,7 @@ function resetApiFilters() {
         class="w-full sm:ml-auto sm:w-auto"
         color="neutral"
         variant="outline"
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         :loading="loading"
         @click="refresh()"
       >

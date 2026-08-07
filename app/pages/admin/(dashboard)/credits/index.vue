@@ -157,7 +157,7 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
         {{ $t('admin.credits.overview.updatedAt', { time: generatedAtLabel }) }}
       </p>
       <UButton
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         color="neutral"
         variant="outline"
         :loading="loading"

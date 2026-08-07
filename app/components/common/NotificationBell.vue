@@ -211,7 +211,7 @@ onMounted(() => {
               color="neutral"
               variant="soft"
               square
-              icon="i-mdi-refresh"
+              icon="i-lucide-refresh-cw"
               :loading="loading"
               :aria-label="$t('common.actions.refresh')"
               @click="fetchList"
@@ -251,7 +251,7 @@ onMounted(() => {
           size="sm"
           color="neutral"
           variant="outline"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           @click="fetchList"
         >
           {{ $t('common.actions.retry') }}

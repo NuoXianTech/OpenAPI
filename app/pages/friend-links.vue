@@ -22,7 +22,7 @@ const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
   variant: 'outline' as const,
-  icon: 'i-mdi-refresh',
+  icon: 'i-lucide-refresh-cw',
   onClick: fetchFriendLinks
 }])
 
@@ -124,7 +124,7 @@ const visibleCount = computed(() => filteredItems.value.length)
             class="friend-links-state"
           >
             <UEmpty
-              icon="i-mdi-loading"
+              icon="i-lucide-loader-circle"
               :title="t('common.states.loading')"
               :description="t('public.friendLinks.loadingDescription')"
               variant="naked"

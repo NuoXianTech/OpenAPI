@@ -174,7 +174,7 @@ onMounted(() => {
           color="neutral"
           variant="ghost"
           size="sm"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           :loading="statusLoading"
           @click="refreshStatus"
         >

@@ -90,7 +90,7 @@ async function resetCreditFilters() {
         </UFormField>
       </AdminFilterPopover>
       <UButton
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         color="neutral"
         variant="outline"
         :loading="loading"

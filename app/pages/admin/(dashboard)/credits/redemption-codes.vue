@@ -112,7 +112,7 @@ const {
           {{ $t('admin.credits.redemptionCodes.actions.generate') }}
         </UButton>
         <UButton
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           color="neutral"
           variant="outline"
           :loading="loading"

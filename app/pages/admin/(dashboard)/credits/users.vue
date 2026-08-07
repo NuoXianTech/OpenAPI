@@ -163,7 +163,7 @@ async function onCreditSaved() {
           {{ $t('admin.credits.users.actions.batchAdjust') }}
         </UButton>
         <UButton
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           color="neutral"
           variant="outline"
           :loading="loading"

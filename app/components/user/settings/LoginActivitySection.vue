@@ -37,7 +37,7 @@ const columns = computed<TableColumn<LoginLogRow>[]>(() => [
         size="sm"
         variant="outline"
         color="neutral"
-        icon="i-mdi-refresh"
+        icon="i-lucide-refresh-cw"
         :loading="loading"
         @click="emit('refresh')"
       >

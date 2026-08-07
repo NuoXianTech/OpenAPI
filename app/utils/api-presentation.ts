@@ -59,7 +59,7 @@ function getApiStatusDescriptor(status: number): ApiStatusDescriptor {
     case API_STATUS.deprecated:
       return { labelKey: 'common.states.deprecated', color: 'neutral', icon: 'i-mdi-archive-outline' }
     case API_STATUS.automatic:
-      return { labelKey: 'common.states.automatic', color: 'info', icon: 'i-mdi-refresh' }
+      return { labelKey: 'common.states.automatic', color: 'info', icon: 'i-lucide-refresh-cw' }
     default:
       return { labelKey: 'common.states.unknown', color: 'neutral', icon: 'i-mdi-help-circle-outline' }
   }

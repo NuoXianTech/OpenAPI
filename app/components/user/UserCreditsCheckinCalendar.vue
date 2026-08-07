@@ -50,7 +50,7 @@ function toMonthKey(date: DateValue): string {
         class="inline-flex items-center gap-1.5 text-xs text-muted"
       >
         <UIcon
-          name="i-mdi-loading"
+          name="i-lucide-loader-circle"
           class="size-4 animate-spin"
         />
         {{ $t('common.states.loading') }}

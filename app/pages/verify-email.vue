@@ -118,7 +118,7 @@ onMounted(async () => {
       >
         <div class="flex items-center gap-2 text-sm text-muted">
           <UIcon
-            name="i-mdi-loading"
+            name="i-lucide-loader-circle"
             class="size-4 animate-spin"
           />
           <span>{{ message }}</span>

@@ -284,7 +284,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
       icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
       onSelect: () => toggleActive(row)
     },
-    { label: t('common.apiKeys.actions.reset'), icon: 'i-mdi-refresh', onSelect: () => openReset(row) },
+    { label: t('common.apiKeys.actions.reset'), icon: 'i-lucide-refresh-cw', onSelect: () => openReset(row) },
     {
       label: t('common.apiKeys.actions.delete'),
       icon: 'i-mdi-delete-outline',

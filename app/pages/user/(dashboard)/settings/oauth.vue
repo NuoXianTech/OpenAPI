@@ -28,7 +28,7 @@ onMounted(async () => {
           size="xs"
           variant="ghost"
           color="neutral"
-          icon="i-mdi-refresh"
+          icon="i-lucide-refresh-cw"
           :loading="isOauthLoading"
           @click="loadOauthBindings"
         />

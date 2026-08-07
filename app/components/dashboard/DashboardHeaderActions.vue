@@ -49,7 +49,7 @@ async function handleRefresh() {
       v-if="onRefresh"
       variant="ghost"
       color="neutral"
-      icon="i-mdi-refresh"
+      icon="i-lucide-refresh-cw"
       :loading="refreshing"
       :aria-label="t('common.actions.refresh')"
       @click="handleRefresh"

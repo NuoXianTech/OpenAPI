@@ -51,6 +51,16 @@ const refreshButtonLabel = computed(() => refreshCooldownSeconds.value > 0
   : t('public.stats.refresh'))
 
 const refreshDisabled = computed(() => isPending.value || refreshCooldownSeconds.value > 0)
+const trendChartContainer = useTemplateRef<HTMLElement>('trendChartContainer')
+const shouldLoadTrendChart = ref(false)
+
+useIntersectionObserver(
+  trendChartContainer,
+  ([entry]) => {
+    if (entry?.isIntersecting) shouldLoadTrendChart.value = true
+  },
+  { rootMargin: '240px' }
+)
 
 async function handleRefresh(): Promise<void> {
   if (refreshDisabled.value) return
@@ -83,7 +93,7 @@ const retryActions = computed(() => [{
   label: t('common.actions.retry'),
   color: 'neutral' as const,
   variant: 'outline' as const,
-  icon: 'i-mdi-refresh',
+  icon: 'i-lucide-refresh-cw',
   onClick: reloadStats
 }])
 </script>
@@ -125,7 +135,7 @@ const retryActions = computed(() => [{
                   <USkeleton class="h-3.5 w-36" />
                 </span>
                 <UButton
-                  icon="i-mdi-refresh"
+                  icon="i-lucide-refresh-cw"
                   variant="subtle"
                   color="neutral"
                   size="sm"
@@ -250,17 +260,26 @@ const retryActions = computed(() => [{
                 </div>
               </dl>
 
-              <ClientOnly>
-                <Suspense>
-                  <LazyStatsTrendChart :trend="trend7d" />
+              <div
+                ref="trendChartContainer"
+                class="min-h-[352px]"
+              >
+                <ClientOnly>
+                  <Suspense v-if="shouldLoadTrendChart">
+                    <LazyStatsTrendChart :trend="trend7d" />
+                    <template #fallback>
+                      <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
+                    </template>
+                  </Suspense>
+                  <div
+                    v-else
+                    class="h-[320px] w-full rounded-lg bg-elevated/50"
+                  />
                   <template #fallback>
                     <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
                   </template>
-                </Suspense>
-                <template #fallback>
-                  <div class="h-[320px] w-full rounded-lg bg-elevated/50" />
-                </template>
-              </ClientOnly>
+                </ClientOnly>
+              </div>
             </UCard>
 
             <UCard
