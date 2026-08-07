@@ -7,6 +7,7 @@ import type {
 import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
 
 const LIVE_STATS_REFRESH_INTERVAL_MS = 10_000
+const POPULAR_API_LIMIT = 6
 
 const {
   categoryMap,
@@ -22,7 +23,11 @@ const {
   pending: publicStatsLoading,
   error: publicStatsError
 } = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
-  key: 'home-public-stats'
+  key: 'home-public-stats',
+  query: {
+    days: 1,
+    top: POPULAR_API_LIMIT
+  }
 })
 const liveStats = shallowRef<PublicCallStatsSummary | null>(null)
 let liveStatsRefreshTimer: ReturnType<typeof setInterval> | undefined
@@ -88,14 +93,14 @@ const popularApis = computed<ApiCatalogItem[]>(() => {
     if (!api || selectedApiIds.has(api.id)) continue
     selectedApis.push(api)
     selectedApiIds.add(api.id)
-    if (selectedApis.length === 6) return selectedApis
+    if (selectedApis.length === POPULAR_API_LIMIT) return selectedApis
   }
 
   const fallbackApis = [...allApis.value]
     .filter(api => !selectedApiIds.has(api.id))
     .sort((left, right) => right.totalCalls - left.totalCalls || left.id - right.id)
 
-  return [...selectedApis, ...fallbackApis].slice(0, 6)
+  return [...selectedApis, ...fallbackApis].slice(0, POPULAR_API_LIMIT)
 })
 
 useSeoMeta({

@@ -9,7 +9,6 @@ interface AuthUser {
   avatarUrl: string
   role: 'user' | 'admin'
   locale: SupportedLocale | null
-  credits?: number
 }
 
 // 登录态新鲜期：超过这个时长后，下一次 fetchMe()（中间件导航 / 插件定时器）会重新打 /api/auth/me，

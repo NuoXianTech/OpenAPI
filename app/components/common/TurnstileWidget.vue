@@ -42,39 +42,52 @@ function loadScript(messages: TurnstileScriptMessages): Promise<void> {
 
   scriptLoadPromise = new Promise<void>((resolve, reject) => {
     let settled = false
-    const finish = (fn: () => void) => {
-      if (settled) {
-        return
-      }
+    let script: HTMLScriptElement | null = null
+
+    function handleLoad() {
+      finish(resolve)
+    }
+    function handleError() {
+      finish(() => {
+        script?.remove()
+        reject(new Error(messages.loadFailed))
+      })
+    }
+    function cleanup() {
+      clearTimeout(timeout)
+      script?.removeEventListener('error', handleError)
+      if (w.__turnstileOnLoad === handleLoad) delete w.__turnstileOnLoad
+    }
+    function finish(fn: () => void) {
+      if (settled) return
       settled = true
+      cleanup()
       fn()
     }
 
-    w.__turnstileOnLoad = () => {
-      finish(() => resolve())
-    }
+    // Some network failures emit neither load nor error, so keep retries bounded.
+    const timeout = setTimeout(() => {
+      if ((window as TurnstileWindow).turnstile) {
+        finish(resolve)
+        return
+      }
+      finish(() => {
+        script?.remove()
+        reject(new Error(messages.loadTimeout))
+      })
+    }, SCRIPT_LOAD_TIMEOUT_MS)
+
+    w.__turnstileOnLoad = handleLoad
 
     const existing = document.querySelector<HTMLScriptElement>(`script[src^="${SCRIPT_SRC_PREFIX}"]`)
-    const script = existing ?? document.createElement('script')
+    script = existing ?? document.createElement('script')
+    script.addEventListener('error', handleError, { once: true })
     if (!existing) {
       script.src = SCRIPT_URL
       script.async = true
       script.defer = true
       document.head.appendChild(script)
     }
-    script.addEventListener('error', () => {
-      finish(() => reject(new Error(messages.loadFailed)))
-    }, { once: true })
-
-    // 网络被墙/丢包时浏览器既不会触发 onload 也不会触发 error，
-    // 用一个超时兜底，避免 UI 永远空白卡住。
-    setTimeout(() => {
-      if ((window as TurnstileWindow).turnstile) {
-        finish(() => resolve())
-        return
-      }
-      finish(() => reject(new Error(messages.loadTimeout)))
-    }, SCRIPT_LOAD_TIMEOUT_MS)
   }).catch((err) => {
     // 失败后清空缓存，允许后续重试
     scriptLoadPromise = null

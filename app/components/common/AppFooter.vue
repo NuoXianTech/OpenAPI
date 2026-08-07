@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import SiteBrand from './SiteBrand.vue'
-import { dateTimeLocalToCalendar } from '~/utils/datetime'
 
 const { settings } = useSiteSettings()
 
 const currentYear = new Date().getFullYear()
 const startYear = computed(() => {
-  const year = dateTimeLocalToCalendar(settings.value.startTime)?.year
-  return year && year <= currentYear ? year : currentYear
+  const year = Number.parseInt(settings.value.startTime.slice(0, 4), 10)
+  return Number.isInteger(year) && year > 0 && year <= currentYear ? year : currentYear
 })
 const yearLabel = computed(() =>
   startYear.value < currentYear ? `${startYear.value}-${currentYear}` : `${currentYear}`

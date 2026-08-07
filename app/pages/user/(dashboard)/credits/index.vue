@@ -12,7 +12,7 @@ onMounted(() => {
   <div class="space-y-6">
     <UserCreditsOverviewCards :summary="summary" />
 
-    <UserCreditsConsumptionTable
+    <UserCreditsConsumptionCard
       :rows="summary.consumptionLast7Days"
       :loading="summaryLoading"
     />
