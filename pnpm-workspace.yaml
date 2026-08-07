@@ -6,4 +6,3 @@ allowBuilds:
   vue-demi: false
 overrides:
   fontless>esbuild: 0.28.1
-  cheerio>undici: 7.29.0
