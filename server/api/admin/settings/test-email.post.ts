@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { adminTestSmtpSchema } from '~~/server/schemas/admin'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { sendTestEmail } from '~~/server/utils/email'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -12,7 +12,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     await sendTestEmail(to, admin.username)
   } catch (error) {
     const message = (error as Error)?.message || '发信失败'
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
       action: 'admin.settings.smtp.test',
@@ -23,7 +23,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 500, message: `SMTP 发送失败：${message}` })
   }
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.settings.smtp.test',

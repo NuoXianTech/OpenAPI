@@ -1,7 +1,7 @@
 import { createError } from 'h3'
 import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION } from '#shared/config/admin-defaults'
 import { adminInitialProfileSchema } from '~~/server/schemas/admin'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { usersService } from '~~/server/services/user-service'
 import { createUserSession, defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -34,7 +34,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
   await createUserSession(event, { id: admin.id, role: admin.role })
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION,

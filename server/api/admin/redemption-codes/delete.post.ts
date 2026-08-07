@@ -1,7 +1,7 @@
 import { createError } from 'h3'
 import { adminDeleteRedemptionCodeSchema } from '~~/server/schemas/admin'
 import { redemptionService } from '~~/server/services/redemption-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -11,7 +11,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (id) {
     const removed = await redemptionService.remove(id)
     if (!removed) throw createError({ statusCode: 404, message: '兑换码不存在' })
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
       action: 'admin.redemption-code.delete',
@@ -23,7 +23,7 @@ export default defineAdminEventHandler(async (event, admin) => {
 
   // refine 已保证 id 或 batchId 至少一个非空
   const res = await redemptionService.removeBatch(batchId!, !!includeUsed)
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.redemption-code.batch-delete',

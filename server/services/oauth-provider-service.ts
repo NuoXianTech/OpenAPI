@@ -1,6 +1,6 @@
-import { createError } from 'h3'
 import { SUPPORTED_OAUTH_PROVIDERS, type SupportedOauthProvider } from '#shared/types/oauth'
 import type { SystemSettingsPatch } from '#shared/types/site-settings'
+import { createApplicationError } from '~~/server/errors/application-error'
 import { isSupportedOauthProvider, providerIndex } from '~~/server/utils/oauth-provider-id'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 
@@ -102,7 +102,7 @@ export const oauthProviderService = {
 
   async update(provider: string, patch: OauthProviderPatch): Promise<OauthProviderRow | null> {
     if (!isSupportedOauthProvider(provider)) {
-      throw createError({ statusCode: 400, message: 'provider not supported, only github and qq are allowed' })
+      throw createApplicationError({ statusCode: 400, message: 'provider not supported, only github and qq are allowed' })
     }
     const current = await this.getByProvider(provider)
     if (!current) {
@@ -115,7 +115,7 @@ export const oauthProviderService = {
     const nextEnabled = patch.isEnabled !== undefined ? patch.isEnabled : current.isEnabled
 
     if (nextEnabled && (!nextClientId || !nextSecret)) {
-      throw createError({ statusCode: 400, message: 'clientId 和 clientSecret 都需要配置后才能启用' })
+      throw createApplicationError({ statusCode: 400, message: 'clientId 和 clientSecret 都需要配置后才能启用' })
     }
 
     const input: SystemSettingsPatch = provider === 'github'
@@ -135,7 +135,7 @@ export const oauthProviderService = {
     for (const provider of SUPPORTED_OAUTH_PROVIDERS) {
       const submitted = batch.providers.find(item => item.provider === provider)
       if (!submitted) {
-        throw createError({ statusCode: 400, message: `缺少 ${provider} 登录配置` })
+        throw createApplicationError({ statusCode: 400, message: `缺少 ${provider} 登录配置` })
       }
 
       const current = rowFromSettings(currentSettings, provider)
@@ -145,7 +145,7 @@ export const oauthProviderService = {
         : current.clientSecret
 
       if (submitted.isEnabled && (!clientId || !clientSecret)) {
-        throw createError({
+        throw createApplicationError({
           statusCode: 400,
           message: `${provider} 的 Client ID 和 Client Secret 都配置后才能启用`
         })

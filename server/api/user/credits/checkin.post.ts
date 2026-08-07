@@ -1,6 +1,6 @@
 import { createError, readBody } from 'h3'
 import { checkinService, isCheckinError } from '~~/server/services/checkin-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { readClientIp } from '~~/server/utils/request-meta'
@@ -17,7 +17,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
 
   try {
     const data = await checkinService.checkin(user.id)
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: user.id,
       actor: user.username,
       action: 'user.checkin',

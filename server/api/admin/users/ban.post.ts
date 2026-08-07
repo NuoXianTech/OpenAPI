@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { adminBanUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -17,7 +17,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
 
   // 封禁立即生效由 getAuthUser 的 isBanned 检查保证（每次鉴权都查 users 表），无需额外撤销操作。
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: isBanned ? 'admin.user.ban' : 'admin.user.unban',

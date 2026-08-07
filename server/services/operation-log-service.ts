@@ -1,13 +1,11 @@
-import type { H3Event } from 'h3'
 import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, notLike, or, sql, type SQL } from 'drizzle-orm'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
-import { readRequestMeta } from '~~/server/utils/request-meta'
 
 export type OperationLogStatus = 'success' | 'failure'
 
-interface OperationLogInput {
+export interface OperationLogInput {
   userId?: number | null
   actor?: string | null
   action: string
@@ -58,15 +56,6 @@ export const operationLogService = {
       // 审计日志落库失败不应阻塞主业务流程，仅记录控制台。
       console.error('failed to write operation log', { input, error })
     }
-  },
-
-  async addRequestLog(event: H3Event, input: OperationLogInput) {
-    const requestMeta = readRequestMeta(event)
-    await operationLogService.addLog({
-      ...input,
-      ip: input.ip ?? requestMeta.ip,
-      userAgent: input.userAgent ?? requestMeta.userAgent
-    })
   },
 
   async list(filters: OperationLogListFilters = {}): Promise<OperationLogListResult> {

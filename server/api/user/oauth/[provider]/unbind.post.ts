@@ -1,7 +1,7 @@
 // 解绑当前用户的第三方账号绑定
 import { createError, getRouterParam } from 'h3'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 
@@ -16,7 +16,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     throw createError({ statusCode: 404, message: '当前账号未绑定该第三方' })
   }
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.oauth.unbind',

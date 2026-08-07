@@ -11,7 +11,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { loginLogService } from '~~/server/services/login-log-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { createUserSession, hashPassword } from '~~/server/utils/auth'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
@@ -109,7 +109,7 @@ export default defineEventHandler(async (event) => {
     lastLoginIp: ip
   })
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: created.id,
     actor: created.username,
     action: 'user.oauth.register',

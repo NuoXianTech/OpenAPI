@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { adminUpdateOauthProviderSchema } from '~~/server/schemas/admin'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { oauthProviderService, toAdminOauthProviderSafe, type OauthProviderPatch } from '~~/server/services/oauth-provider-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -35,7 +35,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   ].filter((field): field is string => Boolean(field))
 
   if (changedFields.length > 0) {
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
       action: 'admin.oauth-provider.update',

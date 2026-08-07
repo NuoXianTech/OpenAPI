@@ -14,6 +14,7 @@ import {
   type OpenApiResponse
 } from '~~/server/utils/open-api-response'
 import { ensureRequestId } from '~~/server/utils/request-id'
+import { getAppEventContext } from '~~/server/utils/event-context'
 import { readClientIp } from '~~/server/utils/request-meta'
 import { readOpenApiJsonBody } from '~~/server/utils/zod'
 
@@ -41,6 +42,7 @@ export function createOpenApiHandlerContext(
   signal: AbortSignal
 ): OpenApiHandlerContext {
   const query = getQuery(event) as Record<string, unknown>
+  const eventContext = getAppEventContext(event)
   return {
     signal,
     url: getRequestURL(event),
@@ -49,7 +51,7 @@ export function createOpenApiHandlerContext(
     query,
     params: getRouterParams(event),
     clientIp: readClientIp(event),
-    apiKey: event.context.apiKey ?? null,
+    apiKey: eventContext.apiKey ?? null,
     requestId: ensureRequestId(event),
     readBody: <T>(maxBytes?: number) => readOpenApiJsonBody(event, maxBytes) as Promise<T | undefined>,
     ok: (data, message) => openApiOk(event, data, message),

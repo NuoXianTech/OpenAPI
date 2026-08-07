@@ -3,7 +3,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import type { SystemSettingsPatch } from '#shared/types/site-settings'
 import { systemSettingsService, toAdminSystemSettings } from '~~/server/services/system-settings-service'
 import { clientIpConfigService } from '~~/server/services/client-ip-config-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     .filter(([, value]) => value !== undefined)
     .map(([key]) => key)
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.settings.update',

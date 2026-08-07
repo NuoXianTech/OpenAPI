@@ -4,7 +4,6 @@ import type {
   SystemSettings,
   SystemSettingsPatch
 } from '#shared/types/site-settings'
-import { createError } from 'h3'
 import {
   SYSTEM_SETTING_DEFINITIONS,
   SYSTEM_SETTING_NAMES,
@@ -13,6 +12,7 @@ import {
 } from '~~/server/config/system-settings'
 import { db } from '~~/server/db/client'
 import { systemSettings } from '~~/server/db/schema/system'
+import { createApplicationError } from '~~/server/errors/application-error'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import {
   decodeSystemSettingSecret,
@@ -131,7 +131,7 @@ function assertClientIpSettings(settings: SystemSettings): void {
   if (settings.clientIpSource === 'direct') return
   if (settings.trustedProxyCidrs.trim()) return
 
-  throw createError({
+  throw createApplicationError({
     statusCode: 400,
     message: 'Cloudflare 或 X-Forwarded-For 模式必须至少配置一个可信代理 IP 或 CIDR'
   })
@@ -264,7 +264,7 @@ export const systemSettingsService = {
       || next.turnstilePasswordResetEnabled
       || next.turnstileCheckinEnabled
     if (turnstileSceneEnabled && (!next.turnstileSiteKey || !next.turnstileSecretKey)) {
-      throw createError({
+      throw createApplicationError({
         statusCode: 400,
         message: '启用 Turnstile 场景前必须同时配置 Site Key 和 Secret Key'
       })

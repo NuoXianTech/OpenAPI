@@ -1,6 +1,6 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
-import { createError } from 'h3'
 import { apiCategories, apis } from '~~/server/db/schema'
+import { createApplicationError } from '~~/server/errors/application-error'
 import type { ApiCategoryItem } from '#shared/types/api'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import { firstRow } from '~~/server/utils/row'
@@ -38,14 +38,14 @@ async function validateParent(parentId: number | null | undefined, categoryId?: 
   const seen = new Set<number>(categoryId ? [categoryId] : [])
   let currentId: number | null = parentId
   while (currentId !== null) {
-    if (seen.has(currentId)) throw createError({ statusCode: 400, message: 'category parent cycle is not allowed' })
+    if (seen.has(currentId)) throw createApplicationError({ statusCode: 400, message: 'category parent cycle is not allowed' })
     seen.add(currentId)
     const parent = await db.select({ parentId: apiCategories.parentId, deletedAt: apiCategories.deletedAt })
       .from(apiCategories)
       .where(eq(apiCategories.id, currentId))
       .limit(1)
     if (!parent[0] || parent[0].deletedAt) {
-      throw createError({ statusCode: 400, message: 'parent category not found or deleted' })
+      throw createApplicationError({ statusCode: 400, message: 'parent category not found or deleted' })
     }
     currentId = parent[0].parentId
   }
@@ -82,10 +82,10 @@ export const apiCategoryService = {
 
   async create(input: ApiCategoryInput) {
     const code = input.code.trim()
-    if (!code) throw createError({ statusCode: 400, message: 'code is required' })
+    if (!code) throw createApplicationError({ statusCode: 400, message: 'code is required' })
 
     const existing = await findCategoryByCode(code)
-    if (existing) throw createError({ statusCode: 409, message: 'category code already exists' })
+    if (existing) throw createApplicationError({ statusCode: 409, message: 'category code already exists' })
     await validateParent(input.parentId)
 
     const res = await db.insert(apiCategories).values({
@@ -123,7 +123,7 @@ export const apiCategoryService = {
   async softDelete(id: number) {
     const boundCount = await countBoundApis(id)
     if (boundCount > 0) {
-      throw createError({
+      throw createApplicationError({
         statusCode: 409,
         message: `仍有 ${boundCount} 个接口绑定该分类，请先调整这些接口的分类后再删除`
       })

@@ -3,7 +3,7 @@ import {
   oauthProviderService,
   toAdminOauthProviderSafe
 } from '~~/server/services/oauth-provider-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { createOauthSettingsAuditDetail } from '~~/server/utils/oauth-audit'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
@@ -22,7 +22,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   )
 
   if (detail) {
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
       action: 'admin.oauth-settings.update',

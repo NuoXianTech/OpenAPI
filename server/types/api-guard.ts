@@ -70,7 +70,7 @@ export type GateOutcome
     | 'api_key_quota_exceeded'
     | 'insufficient_credits'
 
-interface ApiStatsTarget {
+export interface ApiStatsTarget {
   apiId: number
   apiPath: string
 }
@@ -94,12 +94,12 @@ export interface ApiKeyContext {
   name: string
 }
 
-interface ApiKeyQuotaReservationContext {
+export interface ApiKeyQuotaReservationContext {
   apiKeyId: number
   amount: number
 }
 
-interface ApiBillingContext {
+export interface ApiBillingContext {
   costCredits: number
   apiKeyUserId: number | null
   apiKeyQuotaReservation: ApiKeyQuotaReservationContext | null
@@ -108,7 +108,7 @@ interface ApiBillingContext {
   failedMessage: string | null
 }
 
-interface ApiGateRejectionContext {
+export interface ApiGateRejectionContext {
   outcome: GateOutcome
   errorCode: string
   errorMessage: string
@@ -117,13 +117,11 @@ interface ApiGateRejectionContext {
   apiKeyUserId: number | null
 }
 
-declare module 'h3' {
-  interface H3EventContext {
-    apiStatsTarget?: ApiStatsTarget
-    apiStatsTracked?: ApiStatsTracked
-    apiKey?: ApiKeyContext | null
-    apiBilling?: ApiBillingContext
-    apiGateRejection?: ApiGateRejectionContext
-    requestId?: string
-  }
+export interface AppEventContext {
+  apiStatsTarget?: ApiStatsTarget
+  apiStatsTracked?: ApiStatsTracked
+  apiKey?: ApiKeyContext | null
+  apiBilling?: ApiBillingContext
+  apiGateRejection?: ApiGateRejectionContext
+  requestId?: string
 }

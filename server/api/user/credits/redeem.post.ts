@@ -1,7 +1,7 @@
 import { createError } from 'h3'
 import { userRedeemCodeSchema } from '~~/server/schemas/user'
 import { isRedemptionError, redemptionService } from '~~/server/services/redemption-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 import { readClientIp } from '~~/server/utils/request-meta'
@@ -23,7 +23,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
 
   try {
     const data = await redemptionService.redeem({ userId: user.id, code, ip })
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: user.id,
       actor: user.username,
       action: 'user.redemption-code.redeem',

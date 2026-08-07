@@ -7,7 +7,7 @@ import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pendi
 import { usersService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { loginLogService } from '~~/server/services/login-log-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { createUserSession, verifyPassword } from '~~/server/utils/auth'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
     lastLoginIp: ip
   })
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: user.id,
     actor: user.username,
     action: 'user.oauth.bind',

@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { idSchema } from '~~/server/schemas/common'
 import { apiKeyService } from '~~/server/services/api-key-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -13,7 +13,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 404, message: 'API Key 不存在' })
   }
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.api-key.reset',

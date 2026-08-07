@@ -6,6 +6,7 @@ import { isSupportedLocale } from '#shared/config/locale-defaults'
 import { createError, defineEventHandler, getCookie, setCookie } from 'h3'
 import { usersService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
+import { toHttpError } from '~~/server/utils/http-error'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { decodeBase64Url, encodeBase64Url, isTimingSafeEqual } from '~~/server/utils/secure-token'
@@ -240,7 +241,13 @@ function defineAuthorizedEventHandler<TUser, TResult>(
   authorize: (event: H3Event) => Promise<TUser>,
   handler: AuthorizedEventHandler<TUser, TResult>
 ) {
-  return defineEventHandler(async event => handler(event, await authorize(event)))
+  return defineEventHandler(async (event) => {
+    try {
+      return await handler(event, await authorize(event))
+    } catch (error) {
+      throw toHttpError(error)
+    }
+  })
 }
 
 export function defineAuthenticatedEventHandler<TResult>(

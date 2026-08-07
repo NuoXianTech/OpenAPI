@@ -6,7 +6,7 @@ import { systemSettingsService } from '~~/server/services/system-settings-servic
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
 import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAuthenticatedEventHandler(async (event, authUser) => {
@@ -45,7 +45,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   })
   await sendEmailChangeEmail(newEmail, confirmUrl)
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.email.change.request',

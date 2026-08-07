@@ -7,11 +7,12 @@
  * 保证 apiCalls.requestId（apiCallStats plugin 在请求阶段写）与响应头 X-Request-Id
  * （openApiResponse 在响应阶段写）是同一个值，便于客户端报错时反查调用日志。
  *
- * event.context.requestId 的类型声明集中在 server/types/api-guard.ts。
+ * 应用自有的请求上下文字段集中在 server/types/api-guard.ts。
  */
 
 import type { H3Event } from 'h3'
 import { getHeader } from 'h3'
+import { getAppEventContext } from '~~/server/utils/event-context'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -21,9 +22,10 @@ export function normalizeRequestId(value: string | null | undefined): string | n
 }
 
 export function ensureRequestId(event: H3Event): string {
-  if (!event.context.requestId) {
+  const context = getAppEventContext(event)
+  if (!context.requestId) {
     const incoming = normalizeRequestId(getHeader(event, 'x-request-id')?.toString())
-    event.context.requestId = incoming ?? globalThis.crypto.randomUUID()
+    context.requestId = incoming ?? globalThis.crypto.randomUUID()
   }
-  return event.context.requestId
+  return context.requestId
 }

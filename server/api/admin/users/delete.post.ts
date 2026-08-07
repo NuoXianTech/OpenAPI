@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { idSchema } from '~~/server/schemas/common'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -19,7 +19,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   // passwordHash / tokenVersion 是敏感字段，不能进审计日志、也不应回给前端
   const { passwordHash: _ph, tokenVersion: _tv, ...safe } = deleted
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.user.delete',

@@ -31,21 +31,24 @@
 
 import type { H3Event } from 'h3'
 import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-response'
+import { getAppEventContext } from '~~/server/utils/event-context'
 
 /** 标记本次调用业务成功 · finish 时按成功扣费 */
 export function markApiCallSuccess(event: H3Event) {
-  if (!event.context.apiBilling) return
-  event.context.apiBilling.forcedOutcome = 'success'
-  event.context.apiBilling.failedCode = null
-  event.context.apiBilling.failedMessage = null
+  const billing = getAppEventContext(event).apiBilling
+  if (!billing) return
+  billing.forcedOutcome = 'success'
+  billing.failedCode = null
+  billing.failedMessage = null
 }
 
 /** 标记本次调用业务失败 · finish 时跳过扣费，并将错误明细写入 apiCalls */
 export function markApiCallFailed(event: H3Event, code?: string | null, message?: string | null) {
-  if (!event.context.apiBilling) return
-  event.context.apiBilling.forcedOutcome = 'failed'
-  event.context.apiBilling.failedCode = (code || '').slice(0, 50) || null
-  event.context.apiBilling.failedMessage = (message || '').slice(0, 500) || null
+  const billing = getAppEventContext(event).apiBilling
+  if (!billing) return
+  billing.forcedOutcome = 'failed'
+  billing.failedCode = (code || '').slice(0, 50) || null
+  billing.failedMessage = (message || '').slice(0, 500) || null
 }
 
 /**

@@ -14,6 +14,7 @@ import { creditService } from '~~/server/services/credit-service'
 import { pendingChargeService } from '~~/server/services/pending-charge-service'
 import { shouldCharge } from '~~/server/utils/api-call-outcome'
 import type { ApiStatsTracked } from '~~/server/types/api-guard'
+import { getAppEventContext } from '~~/server/utils/event-context'
 import { toNullableNonNegativeInteger } from '~~/server/utils/number'
 
 // 调用日志写入规则：
@@ -42,6 +43,7 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
 ])
 
 async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
+  const eventContext = getAppEventContext(event)
   const response = event.node?.res
   const statusCode = Math.trunc(response?.statusCode || 200)
   const responseSize = toNullableNonNegativeInteger(
@@ -53,14 +55,14 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
   let hasCallRecord = false
 
   try {
-    const target = event.context.apiStatsTarget
-      ? { apiId: event.context.apiStatsTarget.apiId, apiPath: event.context.apiStatsTarget.apiPath }
+    const target = eventContext.apiStatsTarget
+      ? { apiId: eventContext.apiStatsTarget.apiId, apiPath: eventContext.apiStatsTarget.apiPath }
       : null
     if (!target) {
       return
     }
 
-    const rejection = event.context.apiGateRejection ?? null
+    const rejection = eventContext.apiGateRejection ?? null
 
     if (rejection && DO_NOT_WRITE_LOG_OUTCOMES.has(rejection.outcome)) {
       return
@@ -70,16 +72,16 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     const isCounted = !ignoredStatus
       && (!rejection || !NON_COUNTED_REJECTION_OUTCOMES.has(rejection.outcome))
 
-    const apiKeyId = event.context.apiKey?.id
+    const apiKeyId = eventContext.apiKey?.id
       ?? rejection?.apiKeyId
       ?? null
-    const apiKeyName = event.context.apiKey?.name
+    const apiKeyName = eventContext.apiKey?.name
       ?? rejection?.apiKeyName
       ?? null
-    const apiKeyUserId = event.context.apiKey?.userId
+    const apiKeyUserId = eventContext.apiKey?.userId
       ?? rejection?.apiKeyUserId
       ?? null
-    const billing = event.context.apiBilling
+    const billing = eventContext.apiBilling
 
     willCharge = billing
       ? shouldCharge({
@@ -107,7 +109,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       apiKeyId,
       apiKeyName,
       userId: apiKeyUserId,
-      requestId: event.context.requestId ?? null,
+      requestId: eventContext.requestId ?? null,
       path: tracked.pathname,
       method: tracked.method,
       statusCode,
@@ -197,7 +199,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
 
 export default defineNitroPlugin((nitroApp) => {
   nitroApp.hooks.hook('afterResponse', (event: H3Event) => {
-    const tracked = event.context.apiStatsTracked
+    const tracked = getAppEventContext(event).apiStatsTracked
     if (!tracked) {
       return
     }

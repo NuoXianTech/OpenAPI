@@ -5,7 +5,7 @@ import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { usersService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { consumeState } from '~~/server/utils/oauth-state'
 import { issuePendingOauth } from '~~/server/utils/oauth-pending'
 import { createUserSession, getAuthUser } from '~~/server/utils/auth'
@@ -113,7 +113,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         lastLoginIp: ip
       })
 
-      await operationLogService.addRequestLog(event, {
+      await addRequestOperationLog(event, {
         userId: authUser.id,
         actor: authUser.username,
         action: 'user.oauth.bind',

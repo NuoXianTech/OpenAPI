@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getAppEventContext } from '~~/server/utils/event-context'
 
 vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 
@@ -101,8 +102,8 @@ describe('open API handler context', () => {
       message: 'invalid',
       data: null
     })
-    expect(event.context.apiBilling?.forcedOutcome).toBe('failed')
-    expect(event.context.apiBilling?.failedCode).toBe('INVALID_DEMO')
+    expect(getAppEventContext(event).apiBilling?.forcedOutcome).toBe('failed')
+    expect(getAppEventContext(event).apiBilling?.failedCode).toBe('INVALID_DEMO')
   })
 
   it('negotiates standard JSON, text, and markdown responses', () => {

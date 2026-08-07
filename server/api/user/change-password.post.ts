@@ -3,7 +3,7 @@ import { createError } from 'h3'
 import { userChangePasswordSchema } from '~~/server/schemas/user'
 import { usersService } from '~~/server/services/user-service'
 import { hashPassword, verifyPassword, defineAuthenticatedEventHandler, createUserSession } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAuthenticatedEventHandler(async (event, authUser) => {
@@ -28,7 +28,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   // 实现「下线其他设备、保留当前设备」。
   await createUserSession(event, { id: authUser.id, role: authUser.role })
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: authUser.id,
     actor: authUser.username,
     action: 'user.password.change',

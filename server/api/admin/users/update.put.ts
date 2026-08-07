@@ -2,7 +2,7 @@ import { createError } from 'h3'
 import { adminUpdateUserSchema } from '~~/server/schemas/admin'
 import { usersService } from '~~/server/services/user-service'
 import { defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
@@ -37,7 +37,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (!updated) {
     throw createError({ statusCode: 404, message: 'user not found' })
   }
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.user.update',

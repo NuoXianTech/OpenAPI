@@ -8,10 +8,6 @@ import {
 import { systemSettingsService, toAdminSystemSettings } from '~~/server/services/system-settings-service'
 import { toAdminOauthProviderSafe } from '~~/server/services/oauth-provider-service'
 
-vi.mock('h3', () => ({
-  createError: (input: unknown) => Object.assign(new Error('h3 error'), input)
-}))
-
 describe('system settings', () => {
   it('keeps the registry complete and database keys unique', () => {
     const defaults = createSystemSettingsDefaults()

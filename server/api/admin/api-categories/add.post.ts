@@ -1,6 +1,6 @@
 import { adminCreateApiCategorySchema } from '~~/server/schemas/admin'
 import { apiCategoryService } from '~~/server/services/api-category-service'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -18,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     isEnabled: body.isEnabled ?? true
   })
 
-  await operationLogService.addRequestLog(event, {
+  await addRequestOperationLog(event, {
     actor: admin.username,
     action: 'admin.api-category.create',
     resourceType: 'api-category',

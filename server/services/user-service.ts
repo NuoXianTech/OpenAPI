@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, ilike, isNull, like, lte, or, sql } from 'drizzle-orm'
-import { createError } from 'h3'
 import { db } from '~~/server/db/client'
 import { creditTransactions, operationLogs, users } from '~~/server/db/schema'
+import { createApplicationError } from '~~/server/errors/application-error'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
@@ -51,7 +51,7 @@ async function lockAvailableAdmins(tx: DatabaseTransaction) {
 }
 
 function throwAvailableAdminRequired() {
-  throw createError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
+  throw createApplicationError({ statusCode: 400, message: '至少需要保留一个管理员账号' })
 }
 
 // 删除用户走真正的 DELETE：users 行物理消失，附属表通过 FK 级联自动清理：

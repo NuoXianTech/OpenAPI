@@ -42,6 +42,7 @@ import { openApiFail, type OpenApiResponse } from '~~/server/utils/open-api-resp
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readClientIp, readRequestMeta, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 import { firstRow } from '~~/server/utils/row'
+import { getAppEventContext } from '~~/server/utils/event-context'
 import { readQueryString, sanitizeQueryStringForLog } from '~~/server/utils/request-query'
 import { runWithTimeout } from '~~/server/utils/timeout'
 import { digestStoredSecret } from '~~/server/utils/stored-secret'
@@ -333,7 +334,7 @@ function setGateRejectionContext(
   error: ErrorDefinition,
   apiKey: ApiKeyRecord | null
 ): void {
-  event.context.apiGateRejection = {
+  getAppEventContext(event).apiGateRejection = {
     outcome,
     errorCode: error.code,
     errorMessage: error.msg,
@@ -345,6 +346,7 @@ function setGateRejectionContext(
 
 async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   const startedAt = Date.now()
+  const eventContext = getAppEventContext(event)
   const requestUrl = getRequestURL(event)
   const pathname = normalizePathname(requestUrl.pathname)
   const method = (event.method || 'GET').toUpperCase()
@@ -369,7 +371,7 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   if (api.isStatistics) {
     const requestMeta = readRequestMeta(event)
     ensureRequestId(event)
-    event.context.apiStatsTracked = {
+    eventContext.apiStatsTracked = {
       startedAt,
       pathname,
       method,
@@ -379,7 +381,7 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
       referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
       queryString: sanitizeQueryStringForLog(requestUrl.search)
     }
-    event.context.apiStatsTarget = {
+    eventContext.apiStatsTarget = {
       apiId: api.id,
       apiPath: api.apiPath
     }
@@ -403,10 +405,10 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
     return rejectOpenApiGate(event, result.error, result.detail ?? null)
   }
 
-  event.context.apiKey = result.apiKey
+  eventContext.apiKey = result.apiKey
     ? { id: result.apiKey.id, userId: result.apiKey.userId, name: result.apiKey.name }
     : null
-  event.context.apiBilling = {
+  eventContext.apiBilling = {
     costCredits: effectiveCost,
     apiKeyUserId: result.apiKey?.userId ?? null,
     apiKeyQuotaReservation: result.quotaReservation,
@@ -436,8 +438,9 @@ export function defineOpenApiEventHandler<TResult>(
     if (gate.status === 'unmatched') {
       return openApiFail(event, 503, 'API_CONFIGURATION_ERROR', '接口治理配置不可用')
     }
-    if (ignoredStatisticsStatusCodes.length > 0 && event.context.apiStatsTracked) {
-      event.context.apiStatsTracked.ignoredStatisticsStatusCodes = ignoredStatisticsStatusCodes
+    const eventContext = getAppEventContext(event)
+    if (ignoredStatisticsStatusCodes.length > 0 && eventContext.apiStatsTracked) {
+      eventContext.apiStatsTracked.ignoredStatisticsStatusCodes = ignoredStatisticsStatusCodes
     }
     return runWithTimeout(
       signal => handler(event, createOpenApiHandlerContext(event, signal)),

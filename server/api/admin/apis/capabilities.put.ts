@@ -8,7 +8,7 @@ import {
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
 import { nonNegativeInt, requiredString } from '~~/server/schemas/validation'
-import { operationLogService } from '~~/server/services/operation-log-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { getApiCapabilityDefinition } from '~~/server/lib/api-capabilities/definition-registry'
 
 const updateApiCapabilitiesSchema = z.object({
@@ -29,7 +29,7 @@ export default defineAdminEventHandler(async (event, admin) => {
       body.values,
       admin.id
     )
-    await operationLogService.addRequestLog(event, {
+    await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
       action: 'admin.api.capabilities.update',
