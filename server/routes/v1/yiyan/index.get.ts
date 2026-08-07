@@ -8,7 +8,7 @@
  *   callback    JSONP 异步函数名（合法 JS 标识符）；给定即走 JSONP，优先级高于 encode
  *   select      encode=js 时注入文本的 CSS 选择器，默认 .yiyan
  *   min_length  句子最小长度（含），默认 0
- *   max_length  句子最大长度（含），默认 30
+ *   max_length  句子最大长度（含），默认 30；v50 文案默认不限
  *   id          指定复合 id（如 a1）查看该句完整信息；未命中 → 404
  *
  * 响应分工（见 docs/api/public-api-conventions.md §4.0 内容协商型接口）：
@@ -70,7 +70,10 @@ export default defineOpenApiEventHandler(async (_event, api: OpenApiHandlerConte
   const callback = readQueryString(query.callback).trim()
   const select = readQueryString(query.select).trim() || DEFAULT_YIYAN_SELECT
   const minLength = parseLength(query.min_length, DEFAULT_MIN_LENGTH)
-  const maxLength = parseLength(query.max_length, DEFAULT_MAX_LENGTH)
+  const maxLength = parseLength(
+    query.max_length,
+    type === 'i' ? Number.MAX_SAFE_INTEGER : DEFAULT_MAX_LENGTH
+  )
   const id = readQueryString(query.id).trim() || null
 
   if (minLength > maxLength) {

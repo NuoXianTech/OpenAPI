@@ -11,7 +11,7 @@
 | `charset` | `utf-8` | `utf-8` 或 `gbk` |
 | `callback` | 空 | 合法 JavaScript 标识符；存在时返回 JSONP，优先于 `encode` |
 | `select` | `.yiyan` | `encode=js` 时写入句子的 CSS 选择器 |
-| `min_length` / `max_length` | `0` / `30` | 句子长度范围，`min_length` 不能大于 `max_length` |
+| `min_length` / `max_length` | `0` / `30` | 句子长度范围，`type=i` 默认不限制最大长度；`min_length` 不能大于 `max_length` |
 | `id` | 空 | 指定复合 ID，例如 `a1`；找不到时返回 404 |
 
 JSON（默认）返回标准响应壳，`data` 结构如下：

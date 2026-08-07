@@ -201,6 +201,7 @@ docs/                        项目特有标准与生产流程
 - [short_videos](https://github.com/jiuhunwl/short_videos)
 - [60s-static-host](https://github.com/vikiboss/60s-static-host)
 - [LanzouAPI](https://github.com/hanximeng/LanzouAPI)
+- [v50](https://github.com/vikiboss/v50)
 
 ## 贡献
 
