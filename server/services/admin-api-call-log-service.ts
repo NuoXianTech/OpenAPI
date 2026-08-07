@@ -1,5 +1,6 @@
-import { and, eq, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, eq, gte, ilike, inArray, lt, or, sql, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
+import { db } from '~~/server/db/client'
 import { apiCalls, apiCategories, apiKeys, apis, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
 import { toNullableNumber, toNumber } from '~~/server/utils/number'
@@ -30,7 +31,7 @@ const apiCallTypeExpr = sql<AdminLogType>`
 // 调用日志查询
 // ─────────────────────────────────────────────────────────────────────
 
-interface ListLogsInput {
+export interface AdminApiCallLogFilters {
   keyword?: string
   startAt?: Date
   endAt?: Date
@@ -40,8 +41,58 @@ interface ListLogsInput {
   userId?: number
   apiKeyId?: number
   requestId?: string
+}
+
+interface ListAdminApiCallLogsInput extends AdminApiCallLogFilters {
   limit?: number
   offset?: number
+}
+
+function buildConditions(input: AdminApiCallLogFilters): SQL[] {
+  const conditions: SQL[] = []
+  const keyword = input.keyword?.trim()
+  if (keyword) {
+    const keywordPattern = `%${keyword}%`
+    conditions.push(or(
+      ilike(apis.name, keywordPattern),
+      ilike(apiCalls.path, keywordPattern),
+      ilike(apiCalls.method, keywordPattern),
+      ilike(apiCalls.apiKeyName, keywordPattern),
+      ilike(apiKeys.name, keywordPattern),
+      ilike(users.username, keywordPattern),
+      ilike(apiCategories.name, keywordPattern),
+      ilike(apiCalls.ip, keywordPattern),
+      ilike(apiCalls.errorCode, keywordPattern),
+      ilike(apiCalls.errorMessage, keywordPattern),
+      sql`${apiCalls.statusCode}::text ilike ${keywordPattern}`,
+      sql`${apiCalls.requestId}::text ilike ${keywordPattern}`
+    )!)
+  }
+  if (input.startAt) conditions.push(gte(apiCalls.createdAt, input.startAt))
+  if (input.endAt) conditions.push(lt(apiCalls.createdAt, input.endAt))
+  if (input.apiId && input.apiId > 0) conditions.push(eq(apiCalls.apiId, input.apiId))
+  if (input.categoryId && input.categoryId > 0) conditions.push(eq(apis.categoryId, input.categoryId))
+  if (input.userId && input.userId > 0) conditions.push(eq(apiCalls.userId, input.userId))
+  if (input.apiKeyId && input.apiKeyId > 0) conditions.push(eq(apiCalls.apiKeyId, input.apiKeyId))
+  if (input.requestId) {
+    const requestId = z.uuid().safeParse(input.requestId)
+    conditions.push(requestId.success ? eq(apiCalls.requestId, requestId.data) : sql`false`)
+  }
+  if (input.types && input.types.length > 0 && input.types.length < 2) {
+    conditions.push(sql`(${apiCallTypeExpr}) in ${input.types}`)
+  }
+  return conditions
+}
+
+function matchingCallIds(input: AdminApiCallLogFilters) {
+  const conditions = buildConditions(input)
+  return db.select({ id: apiCalls.id })
+    .from(apiCalls)
+    .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+    .leftJoin(apiCategories, eq(apiCategories.id, apis.categoryId))
+    .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
+    .leftJoin(users, eq(users.id, apiCalls.userId))
+    .where(conditions.length ? and(...conditions) : undefined)
 }
 
 export const adminApiCallLogService = {
@@ -51,42 +102,11 @@ export const adminApiCallLogService = {
    * 数据源仅 api_calls：积分流水请走 /admin/logs/credits，
    * 管理 / 系统操作请走 /admin/logs/operations。
    */
-  async listLogs(input: ListLogsInput = {}): Promise<AdminLogsListResponse> {
+  async listLogs(input: ListAdminApiCallLogsInput = {}): Promise<AdminLogsListResponse> {
     const { limit, offset } = normalizePagination(input)
 
-    const conds: SQL[] = []
-    const keyword = input.keyword?.trim()
-    if (keyword) {
-      const keywordPattern = `%${keyword}%`
-      conds.push(or(
-        ilike(apis.name, keywordPattern),
-        ilike(apiCalls.path, keywordPattern),
-        ilike(apiCalls.method, keywordPattern),
-        ilike(apiCalls.apiKeyName, keywordPattern),
-        ilike(apiKeys.name, keywordPattern),
-        ilike(users.username, keywordPattern),
-        ilike(apiCategories.name, keywordPattern),
-        ilike(apiCalls.ip, keywordPattern),
-        ilike(apiCalls.errorCode, keywordPattern),
-        ilike(apiCalls.errorMessage, keywordPattern),
-        sql`${apiCalls.statusCode}::text ilike ${keywordPattern}`,
-        sql`${apiCalls.requestId}::text ilike ${keywordPattern}`
-      )!)
-    }
-    if (input.startAt) conds.push(gte(apiCalls.createdAt, input.startAt))
-    if (input.endAt) conds.push(lt(apiCalls.createdAt, input.endAt))
-    if (input.apiId && input.apiId > 0) conds.push(eq(apiCalls.apiId, input.apiId))
-    if (input.categoryId && input.categoryId > 0) conds.push(eq(apis.categoryId, input.categoryId))
-    if (input.userId && input.userId > 0) conds.push(eq(apiCalls.userId, input.userId))
-    if (input.apiKeyId && input.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, input.apiKeyId))
-    if (input.requestId) {
-      const requestId = z.uuid().safeParse(input.requestId)
-      conds.push(requestId.success ? eq(apiCalls.requestId, requestId.data) : sql`false`)
-    }
-    if (input.types && input.types.length > 0 && input.types.length < 2) {
-      conds.push(sql`(${apiCallTypeExpr}) in ${input.types}`)
-    }
-    const where = conds.length ? and(...conds) : undefined
+    const conditions = buildConditions(input)
+    const where = conditions.length ? and(...conditions) : undefined
 
     const baseSelect = db.select({
       id: apiCalls.id,
@@ -186,5 +206,17 @@ export const adminApiCallLogService = {
         .orderBy(apiCategories.sortOrder, apiCategories.name)
     ])
     return { apis: apiRows, categories: categoryRows }
+  },
+
+  async deleteMatching(input: AdminApiCallLogFilters): Promise<number> {
+    const deletedLogs = db.$with('deleted_call_logs').as(
+      db.delete(apiCalls)
+        .where(inArray(apiCalls.id, matchingCallIds(input)))
+        .returning({ id: apiCalls.id })
+    )
+    const rows = await db.with(deletedLogs)
+      .select({ value: count() })
+      .from(deletedLogs)
+    return toNumber(rows[0]?.value)
   }
 }

@@ -15,6 +15,7 @@ import {
 } from '~/composables/dashboard/use-dashboard-list-state'
 import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import { useAdminLogCleanup } from '~/composables/admin/use-admin-log-cleanup'
 
 interface AdminCallLogsFilters {
   keyword: string
@@ -44,6 +45,20 @@ const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
   apiKeyId: '',
   userId: '',
   requestId: ''
+}
+
+function buildAdminCallLogRequestFilters(filters: AdminCallLogsFilters) {
+  return {
+    keyword: filters.keyword.trim() || undefined,
+    startAt: filters.startAt ? new Date(filters.startAt).toISOString() : undefined,
+    endAt: filters.endAt ? new Date(filters.endAt).toISOString() : undefined,
+    apiId: filters.apiId || undefined,
+    categoryId: filters.categoryId || undefined,
+    types: filters.types.length === 1 ? [...filters.types] : undefined,
+    apiKeyId: filters.apiKeyId || undefined,
+    userId: filters.userId || undefined,
+    requestId: filters.requestId.trim() || undefined
+  }
 }
 
 export const ADMIN_CALL_LOG_TYPE_META: Record<AdminLogType, {
@@ -103,19 +118,15 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     page: listState.page,
     pageSize: listState.pageSize,
     immediate: options.immediate ?? true,
-    buildQuery: (filters, pagination) => ({
-      keyword: filters.keyword.trim() || undefined,
-      startAt: filters.startAt ? new Date(filters.startAt).toISOString() : undefined,
-      endAt: filters.endAt ? new Date(filters.endAt).toISOString() : undefined,
-      apiId: filters.apiId || undefined,
-      categoryId: filters.categoryId || undefined,
-      types: filters.types.length ? filters.types.join(',') : undefined,
-      apiKeyId: filters.apiKeyId || undefined,
-      userId: filters.userId || undefined,
-      requestId: filters.requestId.trim() || undefined,
-      limit: pagination.limit,
-      offset: pagination.offset
-    })
+    buildQuery: (filters, pagination) => {
+      const requestFilters = buildAdminCallLogRequestFilters(filters)
+      return {
+        ...requestFilters,
+        types: requestFilters.types?.join(','),
+        limit: pagination.limit,
+        offset: pagination.offset
+      }
+    }
   })
 
   async function applyListFilters() {
@@ -127,6 +138,13 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     () => listState.filters.keyword,
     applyListFilters
   )
+  const cleanup = useAdminLogCleanup({
+    endpoint: '/api/admin/logs/cleanup',
+    total: list.total,
+    applyFilters: keywordApply.applyNow,
+    refresh: list.refresh,
+    buildFilters: () => buildAdminCallLogRequestFilters(listState.filters)
+  })
   const typeSelectItems = computed(() => ADMIN_LOG_TYPES.map(type => ({
     label: t(ADMIN_CALL_LOG_TYPE_META[type].messageKey),
     value: type,
@@ -189,6 +207,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     categorySelectItems,
     advancedFilterCount,
     columns,
-    loadFilterOptions
+    loadFilterOptions,
+    ...cleanup
   }
 }

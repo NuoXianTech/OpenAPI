@@ -2,6 +2,7 @@ import type { TableColumn } from '@nuxt/ui'
 import { computed, ref } from 'vue'
 import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
+import { useAdminLogCleanup } from '~/composables/admin/use-admin-log-cleanup'
 
 interface AdminOperationLogRow {
   id: number
@@ -51,10 +52,7 @@ function trimmedOrUndefined(value: string): string | undefined {
   return trimmed || undefined
 }
 
-function buildAdminOperationLogQuery(
-  filters: AdminOperationLogFilters,
-  pagination: PrivatePagedPagination
-): Record<string, unknown> {
+function buildAdminOperationLogRequestFilters(filters: AdminOperationLogFilters) {
   return {
     keyword: trimmedOrUndefined(filters.keyword),
     startAt: optionalDateIso(filters.startAt),
@@ -64,7 +62,16 @@ function buildAdminOperationLogQuery(
     actor: trimmedOrUndefined(filters.actor),
     action: trimmedOrUndefined(filters.action),
     resourceType: trimmedOrUndefined(filters.resourceType),
-    status: filters.status === 'all' ? undefined : filters.status,
+    status: filters.status === 'all' ? undefined : filters.status
+  }
+}
+
+function buildAdminOperationLogQuery(
+  filters: AdminOperationLogFilters,
+  pagination: PrivatePagedPagination
+): Record<string, unknown> {
+  return {
+    ...buildAdminOperationLogRequestFilters(filters),
     limit: pagination.limit,
     offset: pagination.offset
   }
@@ -105,6 +112,13 @@ export function useAdminOperationLogList(options: { immediate?: boolean } = {}) 
     () => list.filters.keyword,
     list.applyFilters
   )
+  const cleanup = useAdminLogCleanup({
+    endpoint: '/api/admin/operation-logs/cleanup',
+    total: list.total,
+    applyFilters: keywordApply.applyNow,
+    refresh: list.refresh,
+    buildFilters: () => buildAdminOperationLogRequestFilters(list.filters)
+  })
 
   const advancedFilterCount = computed(() => [
     list.filters.userId !== '',
@@ -190,6 +204,7 @@ export function useAdminOperationLogList(options: { immediate?: boolean } = {}) 
     resolveActorLabel,
     resolveActionLabel,
     statusItems,
-    total: list.total
+    total: list.total,
+    ...cleanup
   }
 }

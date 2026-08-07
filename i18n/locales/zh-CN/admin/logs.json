@@ -1,6 +1,19 @@
 {
   "admin": {
     "logs": {
+      "cleanup": {
+        "button": "清理日志",
+        "title": "清理{type}",
+        "warningTitle": "此操作不可撤销",
+        "warning": "日志删除后无法恢复，请确认筛选范围无误。",
+        "filteredDescription": "将删除当前筛选条件匹配的 {count} 条日志。",
+        "allDescription": "当前没有筛选条件，将删除全部 {count} 条日志。",
+        "allConfirm": "我确认清理全部日志",
+        "confirm": "确认清理",
+        "success": "已清理 {count} 条日志",
+        "failed": "清理日志失败",
+        "noMatching": "当前条件下没有可清理的日志"
+      },
       "call": {
         "title": "调用日志",
         "description": "公共接口调用流水、扣费结果与客户端上下文",
@@ -10,6 +23,7 @@
         "empty": "暂无日志",
         "free": "免费",
         "milliseconds": "{value}ms",
+        "cleanupNote": "仅清理原始调用明细，不影响聚合统计和积分流水。",
         "types": {
           "request": "请求",
           "error": "错误"
@@ -106,6 +120,7 @@
         "filterTitle": "操作日志筛选",
         "detailsTitle": "操作明细",
         "empty": "暂无操作日志",
+        "cleanupNote": "本次清理操作会作为一条新的审计记录保留。",
         "filters": {
           "timeRange": "时间范围",
           "allTime": "全部时间",
@@ -144,15 +159,18 @@
         },
         "resourceTypes": {
           "api": "接口",
+          "api_call_log": "调用日志",
           "api_category": "接口分类",
           "api_key": "API 密钥",
           "announcement": "公告",
           "credit": "积分账户",
           "friend_link": "友情链接",
+          "login_log": "登录日志",
           "notification_message": "通知消息",
           "oauth_account": "第三方账号",
           "oauth_provider": "OAuth 提供商",
           "oauth_settings": "OAuth 设置",
+          "operation_log": "操作日志",
           "redemption_code": "兑换码",
           "redemption_code_batch": "兑换码批次",
           "site_settings": "站点设置",
@@ -207,6 +225,9 @@
           "admin_settings_update": "更新系统设置",
           "admin_settings_smtp_test": "测试邮件发送",
           "admin_oauth_settings_update": "更新 OAuth 设置",
+          "admin_call_log_cleanup": "清理调用日志",
+          "admin_login_log_cleanup": "清理登录日志",
+          "admin_operation_log_cleanup": "清理操作日志",
           "user_checkin": "每日签到",
           "user_api_key_create": "创建 API 密钥",
           "user_api_key_update": "更新 API 密钥",

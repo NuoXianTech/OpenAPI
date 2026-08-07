@@ -1,6 +1,19 @@
 {
   "admin": {
     "logs": {
+      "cleanup": {
+        "button": "Clean up logs",
+        "title": "Clean up {type}",
+        "warningTitle": "This action cannot be undone",
+        "warning": "Deleted logs cannot be recovered. Verify the filter scope before continuing.",
+        "filteredDescription": "This will delete {count} logs matching the current filters.",
+        "allDescription": "No filters are active. This will delete all {count} logs.",
+        "allConfirm": "I confirm that I want to delete all logs",
+        "confirm": "Clean up",
+        "success": "Cleaned up {count} logs",
+        "failed": "Failed to clean up logs",
+        "noMatching": "There are no logs to clean up for the current filters"
+      },
       "call": {
         "title": "Call logs",
         "description": "Public API requests, charges, and client context",
@@ -10,6 +23,7 @@
         "empty": "No logs",
         "free": "Free",
         "milliseconds": "{value} ms",
+        "cleanupNote": "Only raw call details are deleted. Aggregated statistics and credit transactions are not affected.",
         "types": {
           "request": "Request",
           "error": "Error"
@@ -106,6 +120,7 @@
         "filterTitle": "Audit log filters",
         "detailsTitle": "Audit details",
         "empty": "No audit logs",
+        "cleanupNote": "This cleanup is retained as a new audit record.",
         "filters": {
           "timeRange": "Time range",
           "allTime": "All time",
@@ -144,15 +159,18 @@
         },
         "resourceTypes": {
           "api": "API",
+          "api_call_log": "Call log",
           "api_category": "API category",
           "api_key": "API key",
           "announcement": "Announcement",
           "credit": "Credit account",
           "friend_link": "Partner link",
+          "login_log": "Login log",
           "notification_message": "Notification",
           "oauth_account": "OAuth account",
           "oauth_provider": "OAuth provider",
           "oauth_settings": "OAuth settings",
+          "operation_log": "Audit log",
           "redemption_code": "Redemption code",
           "redemption_code_batch": "Redemption code batch",
           "site_settings": "Site settings",
@@ -207,6 +225,9 @@
           "admin_settings_update": "Update settings",
           "admin_settings_smtp_test": "Test SMTP settings",
           "admin_oauth_settings_update": "Update OAuth settings",
+          "admin_call_log_cleanup": "Clean up call logs",
+          "admin_login_log_cleanup": "Clean up login logs",
+          "admin_operation_log_cleanup": "Clean up audit logs",
           "user_checkin": "Daily check-in",
           "user_api_key_create": "Create API key",
           "user_api_key_update": "Update API key",

@@ -4,6 +4,7 @@ import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
 import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
+import { useAdminLogCleanup } from '~/composables/admin/use-admin-log-cleanup'
 
 interface AdminLoginLogFilters {
   keyword: string
@@ -27,17 +28,29 @@ function optionalDateIso(value: string): string | undefined {
   return value ? new Date(value).toISOString() : undefined
 }
 
-function buildAdminLoginLogQuery(
-  filters: AdminLoginLogFilters,
-  pagination: PrivatePagedPagination
-): Record<string, unknown> {
+function buildAdminLoginLogRequestFilters(filters: AdminLoginLogFilters) {
   return {
     keyword: filters.keyword.trim() || undefined,
     startAt: optionalDateIso(filters.startAt),
     endAt: optionalDateIso(filters.endAt),
     method: filters.method === 'all' ? undefined : filters.method,
-    success: filters.success === 'all' ? undefined : filters.success,
-    userId: filters.userId || undefined,
+    success: filters.success === 'all'
+      ? undefined
+      : filters.success === 'success',
+    userId: filters.userId || undefined
+  }
+}
+
+function buildAdminLoginLogQuery(
+  filters: AdminLoginLogFilters,
+  pagination: PrivatePagedPagination
+): Record<string, unknown> {
+  const requestFilters = buildAdminLoginLogRequestFilters(filters)
+  return {
+    ...requestFilters,
+    success: requestFilters.success === undefined
+      ? undefined
+      : requestFilters.success ? 'success' : 'failure',
     limit: pagination.limit,
     offset: pagination.offset
   }
@@ -60,6 +73,13 @@ export function useAdminLoginLogList(options: { immediate?: boolean } = {}) {
     () => list.filters.keyword,
     list.applyFilters
   )
+  const cleanup = useAdminLogCleanup({
+    endpoint: '/api/admin/login-logs/cleanup',
+    total: list.total,
+    applyFilters: keywordApply.applyNow,
+    refresh: list.refresh,
+    buildFilters: () => buildAdminLoginLogRequestFilters(list.filters)
+  })
 
   const advancedFilterCount = computed(() => [
     list.filters.method !== 'all',
@@ -106,6 +126,7 @@ export function useAdminLoginLogList(options: { immediate?: boolean } = {}) {
     refresh: list.refresh,
     reset,
     successItems,
-    total: list.total
+    total: list.total,
+    ...cleanup
   }
 }

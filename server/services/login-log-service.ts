@@ -1,4 +1,5 @@
 import { and, count, desc, eq, gte, ilike, isNotNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -32,18 +33,21 @@ interface RecordLoginInput {
   userAgent?: string | null
 }
 
-interface ListFilters {
+export interface LoginLogFilters {
   keyword?: string
   userId?: number
   method?: LoginMethod
   success?: boolean
   startAt?: Date
   endAt?: Date
+}
+
+interface ListLoginLogsInput extends LoginLogFilters {
   limit?: number
   offset?: number
 }
 
-function buildConditions(filters: ListFilters): SQL[] {
+function buildConditions(filters: LoginLogFilters): SQL[] {
   const conditions: SQL[] = [
     like(operationLogs.action, `${LOGIN_ACTION_PREFIX}%`),
     isNotNull(operationLogs.userId)
@@ -108,7 +112,7 @@ export const loginLogService = {
     }
   },
 
-  async list(filters: ListFilters = {}): Promise<{ items: LoginLogRecord[], total: number }> {
+  async list(filters: ListLoginLogsInput = {}): Promise<{ items: LoginLogRecord[], total: number }> {
     const where = and(...buildConditions(filters))
     const { limit, offset } = normalizePagination(filters)
 
@@ -125,7 +129,7 @@ export const loginLogService = {
     return { items, total: toNumber(totalRows[0]?.value) }
   },
 
-  async listForAdmin(filters: ListFilters = {}): Promise<{ items: AdminLoginLogRecord[], total: number }> {
+  async listForAdmin(filters: ListLoginLogsInput = {}): Promise<{ items: AdminLoginLogRecord[], total: number }> {
     const where = and(...buildConditions(filters))
     const { limit, offset } = normalizePagination(filters)
 
@@ -147,5 +151,17 @@ export const loginLogService = {
     ])
 
     return { items, total: toNumber(totalRows[0]?.value) }
+  },
+
+  async deleteMatching(filters: LoginLogFilters): Promise<number> {
+    const deletedLogs = db.$with('deleted_login_logs').as(
+      db.delete(operationLogs)
+        .where(and(...buildConditions(filters)))
+        .returning({ id: operationLogs.id })
+    )
+    const rows = await db.with(deletedLogs)
+      .select({ value: count() })
+      .from(deletedLogs)
+    return toNumber(rows[0]?.value)
   }
 }

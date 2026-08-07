@@ -26,7 +26,13 @@ const {
   categorySelectItems,
   advancedFilterCount,
   columns,
-  loadFilterOptions
+  loadFilterOptions,
+  cleanupHasFilters,
+  cleanupLoading,
+  cleanupMatchCount,
+  cleanupOpen,
+  confirmCleanup,
+  openCleanup
 } = useAdminCallLogsPage({
   routeQuery: computed(() => route.query),
   replaceQuery: async (query) => {
@@ -157,16 +163,27 @@ async function resetAdvancedFilters() {
           </div>
         </div>
       </AdminFilterPopover>
-      <UButton
-        class="ml-auto"
-        icon="i-mdi-refresh"
-        color="neutral"
-        variant="outline"
-        :loading="loading"
-        @click="refresh"
-      >
-        {{ $t('common.actions.refresh') }}
-      </UButton>
+      <div class="ml-auto flex items-center gap-2">
+        <UButton
+          color="error"
+          variant="soft"
+          icon="i-lucide-trash-2"
+          :loading="loading && !cleanupOpen"
+          :disabled="cleanupLoading"
+          @click="openCleanup"
+        >
+          {{ $t('admin.logs.cleanup.button') }}
+        </UButton>
+        <UButton
+          icon="i-mdi-refresh"
+          color="neutral"
+          variant="outline"
+          :loading="loading"
+          @click="refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard
@@ -304,5 +321,15 @@ async function resetAdvancedFilters() {
         </template>
       </DashboardDataTable>
     </DashboardTableCard>
+
+    <AdminLogCleanupModal
+      v-model:open="cleanupOpen"
+      :log-type-label="$t('admin.logs.call.title')"
+      :match-count="cleanupMatchCount"
+      :has-filters="cleanupHasFilters"
+      :loading="cleanupLoading"
+      :note="$t('admin.logs.call.cleanupNote')"
+      :on-confirm="confirmCleanup"
+    />
   </div>
 </template>

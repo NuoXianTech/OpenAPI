@@ -1,4 +1,5 @@
-import { and, count, desc, eq, getTableColumns, gte, ilike, isNull, like, lte, notLike, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, getTableColumns, gte, ilike, inArray, isNull, like, lte, notLike, or, sql, type SQL } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
@@ -17,7 +18,7 @@ export interface OperationLogInput {
   status?: OperationLogStatus
 }
 
-interface OperationLogListFilters {
+export interface OperationLogFilters {
   keyword?: string
   userId?: number
   // 管理员也是真实 users 账号，来源按 action 前缀区分，而不是按 userId 是否为空区分。
@@ -29,8 +30,54 @@ interface OperationLogListFilters {
   status?: OperationLogStatus
   startAt?: Date
   endAt?: Date
+}
+
+interface ListOperationLogsInput extends OperationLogFilters {
   limit?: number
   offset?: number
+}
+
+function buildConditions(filters: OperationLogFilters): SQL[] {
+  const conditions: SQL[] = [notLike(operationLogs.action, 'auth.login.%')]
+  const keyword = filters.keyword?.trim()
+  if (keyword) {
+    const keywordPattern = `%${keyword}%`
+    conditions.push(or(
+      ilike(operationLogs.actor, keywordPattern),
+      ilike(operationLogs.action, keywordPattern),
+      ilike(operationLogs.resourceType, keywordPattern),
+      ilike(operationLogs.resourceId, keywordPattern),
+      ilike(operationLogs.ip, keywordPattern),
+      ilike(operationLogs.userAgent, keywordPattern),
+      sql`${operationLogs.userId}::text ilike ${keywordPattern}`
+    )!)
+  }
+  if (typeof filters.userId === 'number') conditions.push(eq(operationLogs.userId, filters.userId))
+  if (filters.actorKind === 'admin') {
+    conditions.push(or(
+      eq(users.role, 'admin'),
+      and(isNull(users.id), like(operationLogs.action, 'admin.%'))
+    )!)
+  } else if (filters.actorKind === 'user') {
+    conditions.push(or(
+      eq(users.role, 'user'),
+      and(isNull(users.id), like(operationLogs.action, 'user.%'))
+    )!)
+  }
+  if (filters.actor) conditions.push(ilike(operationLogs.actor, `%${filters.actor}%`))
+  if (filters.action) conditions.push(like(operationLogs.action, `${filters.action}%`))
+  if (filters.resourceType) conditions.push(eq(operationLogs.resourceType, filters.resourceType))
+  if (filters.status) conditions.push(eq(operationLogs.status, filters.status))
+  if (filters.startAt) conditions.push(gte(operationLogs.createdAt, filters.startAt))
+  if (filters.endAt) conditions.push(lte(operationLogs.createdAt, filters.endAt))
+  return conditions
+}
+
+function matchingOperationLogIds(filters: OperationLogFilters) {
+  return db.select({ id: operationLogs.id })
+    .from(operationLogs)
+    .leftJoin(users, eq(users.id, operationLogs.userId))
+    .where(and(...buildConditions(filters)))
 }
 
 interface OperationLogListResult {
@@ -58,54 +105,9 @@ export const operationLogService = {
     }
   },
 
-  async list(filters: OperationLogListFilters = {}): Promise<OperationLogListResult> {
+  async list(filters: ListOperationLogsInput = {}): Promise<OperationLogListResult> {
     // 登录事件与其他审计事件共用一张表，但继续由专门的登录日志页面展示。
-    const conditions: SQL[] = [notLike(operationLogs.action, 'auth.login.%')]
-    const keyword = filters.keyword?.trim()
-    if (keyword) {
-      const keywordPattern = `%${keyword}%`
-      conditions.push(or(
-        ilike(operationLogs.actor, keywordPattern),
-        ilike(operationLogs.action, keywordPattern),
-        ilike(operationLogs.resourceType, keywordPattern),
-        ilike(operationLogs.resourceId, keywordPattern),
-        ilike(operationLogs.ip, keywordPattern),
-        ilike(operationLogs.userAgent, keywordPattern),
-        sql`${operationLogs.userId}::text ilike ${keywordPattern}`
-      )!)
-    }
-    if (typeof filters.userId === 'number') {
-      conditions.push(eq(operationLogs.userId, filters.userId))
-    }
-    if (filters.actorKind === 'admin') {
-      conditions.push(or(
-        eq(users.role, 'admin'),
-        and(isNull(users.id), like(operationLogs.action, 'admin.%'))
-      )!)
-    } else if (filters.actorKind === 'user') {
-      conditions.push(or(
-        eq(users.role, 'user'),
-        and(isNull(users.id), like(operationLogs.action, 'user.%'))
-      )!)
-    }
-    if (filters.actor) {
-      conditions.push(ilike(operationLogs.actor, `%${filters.actor}%`))
-    }
-    if (filters.action) {
-      conditions.push(like(operationLogs.action, `${filters.action}%`))
-    }
-    if (filters.resourceType) {
-      conditions.push(eq(operationLogs.resourceType, filters.resourceType))
-    }
-    if (filters.status) {
-      conditions.push(eq(operationLogs.status, filters.status))
-    }
-    if (filters.startAt) {
-      conditions.push(gte(operationLogs.createdAt, filters.startAt))
-    }
-    if (filters.endAt) {
-      conditions.push(lte(operationLogs.createdAt, filters.endAt))
-    }
+    const conditions = buildConditions(filters)
 
     const { limit, offset } = normalizePagination(filters)
     const where = conditions.length ? and(...conditions) : undefined
@@ -130,5 +132,17 @@ export const operationLogService = {
     ])
 
     return { items, total: toNumber(totalRows[0]?.value) }
+  },
+
+  async deleteMatching(filters: OperationLogFilters): Promise<number> {
+    const deletedLogs = db.$with('deleted_operation_logs').as(
+      db.delete(operationLogs)
+        .where(inArray(operationLogs.id, matchingOperationLogIds(filters)))
+        .returning({ id: operationLogs.id })
+    )
+    const rows = await db.with(deletedLogs)
+      .select({ value: count() })
+      .from(deletedLogs)
+    return toNumber(rows[0]?.value)
   }
 }

@@ -20,7 +20,13 @@ const {
   successItems,
   methodColor,
   methodIcon,
-  columns
+  columns,
+  cleanupHasFilters,
+  cleanupLoading,
+  cleanupMatchCount,
+  cleanupOpen,
+  confirmCleanup,
+  openCleanup
 } = useAdminLoginLogList()
 
 async function resetAdvancedFilters() {
@@ -92,16 +98,27 @@ async function resetAdvancedFilters() {
           </UFormField>
         </div>
       </AdminFilterPopover>
-      <UButton
-        class="ml-auto"
-        icon="i-mdi-refresh"
-        color="neutral"
-        variant="outline"
-        :loading="loading"
-        @click="refresh"
-      >
-        {{ $t('common.actions.refresh') }}
-      </UButton>
+      <div class="ml-auto flex items-center gap-2">
+        <UButton
+          color="error"
+          variant="soft"
+          icon="i-lucide-trash-2"
+          :loading="loading && !cleanupOpen"
+          :disabled="cleanupLoading"
+          @click="openCleanup"
+        >
+          {{ $t('admin.logs.cleanup.button') }}
+        </UButton>
+        <UButton
+          icon="i-mdi-refresh"
+          color="neutral"
+          variant="outline"
+          :loading="loading"
+          @click="refresh"
+        >
+          {{ $t('common.actions.refresh') }}
+        </UButton>
+      </div>
     </div>
 
     <DashboardTableCard
@@ -165,5 +182,14 @@ async function resetAdvancedFilters() {
         </template>
       </DashboardDataTable>
     </DashboardTableCard>
+
+    <AdminLogCleanupModal
+      v-model:open="cleanupOpen"
+      :log-type-label="$t('admin.logs.login.title')"
+      :match-count="cleanupMatchCount"
+      :has-filters="cleanupHasFilters"
+      :loading="cleanupLoading"
+      :on-confirm="confirmCleanup"
+    />
   </div>
 </template>

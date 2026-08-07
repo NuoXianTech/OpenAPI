@@ -10,15 +10,18 @@ const { t, te } = useI18n()
 
 const RESOURCE_ICON_BY_TYPE: Record<string, string> = {
   'api': 'i-mdi-api',
+  'api-call-log': 'i-mdi-api',
   'api-category': 'i-mdi-shape-outline',
   'api-key': 'i-mdi-key-outline',
   'announcement': 'i-mdi-bullhorn-outline',
   'credit': 'i-mdi-wallet-outline',
   'friend-link': 'i-mdi-link-variant',
+  'login-log': 'i-mdi-login-variant',
   'notification-message': 'i-mdi-bell-outline',
   'oauth-account': 'i-mdi-account-key-outline',
   'oauth-provider': 'i-mdi-connection',
   'oauth-settings': 'i-mdi-account-cog-outline',
+  'operation-log': 'i-mdi-clipboard-text-clock-outline',
   'redemption-code': 'i-mdi-ticket-percent-outline',
   'redemption-code-batch': 'i-mdi-ticket-confirmation-outline',
   'site-settings': 'i-mdi-cog-outline',

@@ -4,6 +4,9 @@ import {
   adminCreateApiCategorySchema,
   adminCreateAnnouncementSchema,
   adminCreateFriendLinkSchema,
+  adminCleanupApiCallLogsSchema,
+  adminCleanupLoginLogsSchema,
+  adminCleanupOperationLogsSchema,
   adminInitialProfileSchema,
   adminRegisterApiSchema,
   adminUpdateAnnouncementSchema,
@@ -147,5 +150,43 @@ describe('admin schemas', () => {
     expect(adminUpdateAnnouncementSchema.safeParse({ id: 1, title: '   ' }).success).toBe(false)
     expect(adminUpdateAnnouncementSchema.safeParse({ id: 1, content: '' }).success).toBe(false)
     expect(adminUpdateFriendLinkSchema.safeParse({ id: 1, title: '   ' }).success).toBe(false)
+  })
+
+  it('requires explicit all-log confirmation when cleanup has no filters', () => {
+    for (const schema of [
+      adminCleanupApiCallLogsSchema,
+      adminCleanupLoginLogsSchema,
+      adminCleanupOperationLogsSchema
+    ]) {
+      expect(schema.safeParse({ confirm: true }).success).toBe(false)
+      expect(schema.safeParse({ confirm: true, deleteAll: true }).success).toBe(true)
+    }
+
+    expect(adminCleanupLoginLogsSchema.safeParse({
+      confirm: true,
+      startAt: '2026-02-01T00:00:00Z',
+      endAt: '2026-01-01T00:00:00Z'
+    }).success).toBe(false)
+    expect(adminCleanupApiCallLogsSchema.safeParse({
+      confirm: true,
+      types: ['error']
+    }).success).toBe(true)
+    expect(adminCleanupApiCallLogsSchema.safeParse({
+      confirm: true,
+      types: ['consume', 'error']
+    }).success).toBe(false)
+    expect(adminCleanupLoginLogsSchema.safeParse({
+      confirm: true,
+      deleteAll: true,
+      success: false
+    }).success).toBe(false)
+    expect(adminCleanupLoginLogsSchema.safeParse({
+      confirm: true,
+      startAt: null
+    }).success).toBe(false)
+    expect(adminCleanupOperationLogsSchema.safeParse({
+      confirm: true,
+      userId: true
+    }).success).toBe(false)
   })
 })
