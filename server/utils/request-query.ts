@@ -53,6 +53,7 @@ const SENSITIVE_QUERY_KEYS = new Set([
   'authorization',
   'accesstoken',
   'password',
+  'pwd',
   'refreshtoken',
   'signature',
   'token'
@@ -60,6 +61,22 @@ const SENSITIVE_QUERY_KEYS = new Set([
 
 function normalizeQueryKey(value: string): string {
   return value.toLowerCase().replace(/[-_]/g, '')
+}
+
+function sanitizeNestedUrlForLog(value: string): string {
+  if (!/^https?:\/\//i.test(value)) return value
+
+  try {
+    const url = new URL(value)
+    for (const key of [...url.searchParams.keys()]) {
+      if (SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key))) {
+        url.searchParams.set(key, '[REDACTED]')
+      }
+    }
+    return url.toString()
+  } catch {
+    return value
+  }
 }
 
 export function sanitizeQueryStringForLog(search: string, maxLength = 2_000): string | null {
@@ -70,7 +87,7 @@ export function sanitizeQueryStringForLog(search: string, maxLength = 2_000): st
   for (const [key, value] of new URLSearchParams(rawQuery)) {
     sanitizedQuery.append(
       key,
-      SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key)) ? '[REDACTED]' : value
+      SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key)) ? '[REDACTED]' : sanitizeNestedUrlForLog(value)
     )
   }
 

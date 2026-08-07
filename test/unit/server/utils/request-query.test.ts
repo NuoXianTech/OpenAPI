@@ -45,7 +45,7 @@ describe('request query utilities', () => {
 
   it('redacts sensitive values before persisting query logs', () => {
     const sanitized = sanitizeQueryStringForLog(
-      '?keyword=music&apikey=secret&access_token=access&password=plain&API-KEY=second&keyword=video'
+      '?keyword=music&apikey=secret&access_token=access&password=plain&pwd=1234&API-KEY=second&url=https%3A%2F%2Fexample.com%2Fshare%3Fpwd%3Dnested%26page%3D1&keyword=video'
     )
     const query = new URLSearchParams(sanitized ?? '')
 
@@ -53,9 +53,12 @@ describe('request query utilities', () => {
     expect(query.get('apikey')).toBe('[REDACTED]')
     expect(query.get('access_token')).toBe('[REDACTED]')
     expect(query.get('password')).toBe('[REDACTED]')
+    expect(query.get('pwd')).toBe('[REDACTED]')
     expect(query.get('API-KEY')).toBe('[REDACTED]')
+    expect(query.get('url')).toBe('https://example.com/share?pwd=%5BREDACTED%5D&page=1')
     expect(sanitized).not.toContain('secret')
     expect(sanitized).not.toContain('plain')
+    expect(sanitized).not.toContain('nested')
     expect(sanitizeQueryStringForLog('')).toBeNull()
   })
 })
