@@ -6,18 +6,24 @@ import { oauthRegisterSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
 import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pending'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
-import { createUserSession, hashPassword } from '~~/server/utils/auth'
+import { createUserSession } from '~~/server/utils/auth'
+import { hashPassword } from '~~/server/utils/password'
 import { sendVerificationEmail } from '~~/server/utils/email'
-import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
+import {
+  isEmailAllowedForRegistration,
+  normalizeEmailFilterMode,
+  parseEmailDomainList,
+  rollbackCreatedUser
+} from '~~/server/utils/registration'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
-import { rollbackCreatedUser } from '~~/server/utils/registration'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
+import { getSqlState } from '~~/server/utils/database-error'
 
 function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
@@ -27,7 +33,7 @@ async function pickAvailableUsername(base: string) {
   const sanitized = sanitizeUsername(base)
   for (let i = 0; i < 5; i++) {
     const candidate = i === 0 ? sanitized : `${sanitized}_${randomBytes(2).toString('hex')}`
-    if (!(await usersService.findByUsername(candidate))) {
+    if (!(await userService.findByUsername(candidate))) {
       return candidate
     }
   }
@@ -69,14 +75,17 @@ export default defineEventHandler(async (event) => {
   }
 
   // 邮箱已注册：持有效 pending 的用户应改走「绑定已有账号」
-  if (await usersService.findByEmail(email)) {
+  if (await userService.findByEmail(email)) {
     throw createError({ statusCode: 409, message: '该邮箱已注册，请改用「绑定已有账号」' })
+  }
+  if (await oauthAccountService.findByProviderUserId(pending.provider, pending.providerUserId)) {
+    throw createError({ statusCode: 409, message: '该第三方账号已被绑定，请重新发起登录' })
   }
 
   // 用户名：提供则校验可用，未提供则由昵称派生
   let username: string
   if (body.username) {
-    if (await usersService.findByUsername(body.username)) {
+    if (await userService.findByUsername(body.username)) {
       throw createError({ statusCode: 409, message: '该用户名已被占用' })
     }
     username = body.username
@@ -87,27 +96,38 @@ export default defineEventHandler(async (event) => {
   const activationRequired = settings.emailActivationEnabled !== false
   const passwordHash = await hashPassword(body.password)
 
-  const created = await usersService.addUser({
-    username,
-    email,
-    passwordHash,
-    displayName: pending.nickname || username,
-    isActive: false
-  })
-  if (!created) {
-    throw createError({ statusCode: 503, message: '注册失败，请稍后重试' })
+  let created: Awaited<ReturnType<typeof userService.addUser>>
+  try {
+    created = await userService.addUser({
+      username,
+      email,
+      passwordHash,
+      displayName: pending.nickname || username,
+      isActive: false
+    })
+  } catch (error) {
+    if (getSqlState(error) === '23505') {
+      throw createError({ statusCode: 409, message: '邮箱或用户名已被占用，请重新填写' })
+    }
+    throw error
   }
 
   // 立即把三方身份绑到新账号（用户硬删 / 回滚时 cascade 一并清除）
-  const linkedAccount = await oauthAccountService.upsertAccount({
-    userId: created.id,
-    provider: pending.provider,
-    providerUserId: pending.providerUserId,
-    nickname: pending.nickname,
-    avatarUrl: pending.avatarUrl,
-    email: pending.email,
-    lastLoginIp: ip
-  })
+  let linkedAccount: Awaited<ReturnType<typeof oauthAccountService.upsertAccount>>
+  try {
+    linkedAccount = await oauthAccountService.upsertAccount({
+      userId: created.id,
+      provider: pending.provider,
+      providerUserId: pending.providerUserId,
+      nickname: pending.nickname,
+      avatarUrl: pending.avatarUrl,
+      email: pending.email,
+      lastLoginIp: ip
+    })
+  } catch (error) {
+    await rollbackCreatedUser({ userId: created.id, reason: 'oauth binding failed', error })
+    throw error
+  }
 
   await addRequestOperationLog(event, {
     userId: created.id,
@@ -121,14 +141,14 @@ export default defineEventHandler(async (event) => {
   // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并立即登录
   if (!activationRequired) {
     try {
-      await usersService.activateUser(created.id)
+      await userService.activateUser(created.id)
     } catch (error) {
       await rollbackCreatedUser({ userId: created.id, reason: 'oauth auto-activation failed', error })
       throw createError({ statusCode: 503, message: '注册失败，请稍后重试或联系管理员' })
     }
     clearPendingOauth(event)
     await createUserSession(event, { id: created.id, role: 'user' })
-    await usersService.updateLastLogin(created.id, ip, userAgent)
+    await userService.updateLastLogin(created.id, ip, userAgent)
     await loginLogService.record({ userId: created.id, username: created.username, method, success: true, ip, userAgent })
     return { ok: true, verificationRequired: false }
   }

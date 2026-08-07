@@ -1,7 +1,7 @@
 import { createError } from 'h3'
 import { adminUpdateApiSchema } from '~~/server/schemas/admin'
 import { hasAnyChargedMethod } from '~~/server/config/api-guard'
-import { apiService } from '~~/server/services/api-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
@@ -25,7 +25,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     })
   }
 
-  const updated = await apiService.updateApi(id, admin.id, {
+  const updated = await apiRegistryService.updateApi(id, admin.id, {
     name: body.name,
     status: body.status,
     categoryId: body.categoryId,
@@ -42,9 +42,10 @@ export default defineAdminEventHandler(async (event, admin) => {
     dailyQuota: body.dailyQuota,
     methodCosts,
     timeoutMs: body.timeoutMs
-  }).catch((err: unknown) => {
-    throw createError({ statusCode: 400, message: err instanceof Error ? err.message : 'api update failed' })
   })
+  if (!updated) {
+    throw createError({ statusCode: 404, message: 'API 不存在' })
+  }
 
   await addRequestOperationLog(event, {
     userId: admin.id,

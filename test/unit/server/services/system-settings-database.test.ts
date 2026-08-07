@@ -104,6 +104,16 @@ describe('system settings database service', () => {
       clientIpForwardedHops: 2
     })
 
+    await client.query(
+      `UPDATE system_settings SET value = $1::jsonb WHERE setting_key = 'site.name'`,
+      [JSON.stringify('Updated by another process')]
+    )
+    const reloaded = await systemSettingsService.update({ smtpPort: 2526 })
+    expect(reloaded).toMatchObject({
+      siteName: 'Updated by another process',
+      smtpPort: 2526
+    })
+
     await expect(systemSettingsService.update({
       clientIpSource: 'cloudflare',
       trustedProxyCidrs: ''
@@ -125,7 +135,7 @@ describe('system settings database service', () => {
     expect(testContext.deletedCacheKeys).toContain('cache:public:settings')
 
     const publicSettings = await systemSettingsService.getPublicSettings()
-    expect(publicSettings.siteName).toBe('Updated OpenAPI')
+    expect(publicSettings.siteName).toBe('Updated by another process')
     expect('internal.unregistered' in publicSettings).toBe(false)
 
     expect(systemSettingsService.registeredKeys()).toEqual(

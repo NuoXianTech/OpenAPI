@@ -1,6 +1,6 @@
 import { createError } from 'h3'
 import { idSchema } from '~~/server/schemas/common'
-import { apiService } from '~~/server/services/api-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
@@ -8,13 +8,7 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAdminEventHandler(async (event, admin) => {
   const { id } = await readZodBody(event, idSchema)
 
-  let deleted: Awaited<ReturnType<typeof apiService.deleteApi>>
-  try {
-    deleted = await apiService.deleteApi(id)
-  } catch (err) {
-    // apiCalls.apiId restrict 阻止删除：接口有历史调用日志，不允许真删（保留日志可 join 到接口名）
-    throw createError({ statusCode: 409, message: (err as Error).message })
-  }
+  const deleted = await apiRegistryService.deleteApi(id)
   if (!deleted) {
     throw createError({ statusCode: 404, message: 'api not found' })
   }

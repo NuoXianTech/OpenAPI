@@ -1,26 +1,15 @@
-import { and, asc, eq, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
+import { and, eq, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
 import { z } from 'zod'
-import { apiCalls, apiCategories, apiKeys, apiCallStats, apis, users } from '~~/server/db/schema'
+import { apiCalls, apiCategories, apiKeys, apis, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
-import { APP_TIME_ZONE } from '~~/server/utils/local-time'
-import { clampInteger, toNullableNumber, toNumber } from '~~/server/utils/number'
+import { toNullableNumber, toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type {
-  AdminDashboardHourlyPoint,
-  AdminDashboardInsightsData,
   AdminLogRow,
   AdminLogType,
   AdminLogsFilterOptions,
   AdminLogsListResponse
 } from '#shared/types/admin'
-import type { DashboardCallRankItem } from '#shared/types/dashboard'
-
-const HOURLY_LABEL_FORMATTER = new Intl.DateTimeFormat('en-GB', {
-  timeZone: APP_TIME_ZONE,
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23'
-})
 
 // ─────────────────────────────────────────────────────────────────────
 // 类型映射 SQL 表达式
@@ -55,7 +44,7 @@ interface ListLogsInput {
   offset?: number
 }
 
-export const adminLogsService = {
+export const adminApiCallLogService = {
   /**
    * 调用日志列表 · 单表查询 api_calls。
    *
@@ -197,95 +186,5 @@ export const adminLogsService = {
         .orderBy(apiCategories.sortOrder, apiCategories.name)
     ])
     return { apis: apiRows, categories: categoryRows }
-  },
-
-  // ─────────────────────────────────────────────────────────────────
-  // 管理概览 · 近 24 小时趋势与调用排行
-  // ─────────────────────────────────────────────────────────────────
-
-  async getDashboardInsights(options: { rankingLimit?: number } = {}): Promise<AdminDashboardInsightsData> {
-    const rankingLimit = clampInteger(options.rankingLimit ?? 10, 1, 50, 10)
-    const last24hStart = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    const publicApiCondition = and(
-      eq(apis.isEnabled, true),
-      eq(apis.isStatistics, true)
-    )
-    const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
-    const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
-
-    const hourlySource = db
-      .select({
-        hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`.as('hour')
-      })
-      .from(apiCalls)
-      .innerJoin(apis, eq(apis.id, apiCalls.apiId))
-      .where(and(
-        publicApiCondition,
-        gte(apiCalls.createdAt, last24hStart),
-        eq(apiCalls.isCounted, true)
-      ))
-      .as('hourly_source')
-
-    const [hourlyRows, rankingRows] = await Promise.all([
-      db.select({
-        hour: hourlySource.hour,
-        totalCalls: sql<number>`count(*)`
-      }).from(hourlySource)
-        .groupBy(hourlySource.hour)
-        .orderBy(asc(hourlySource.hour)),
-      db.select({
-        apiId: apis.id,
-        name: apis.name,
-        apiPath: apis.apiPath,
-        totalCalls: totalExpr,
-        successCalls: successExpr
-      }).from(apiCallStats)
-        .innerJoin(apis, eq(apis.id, apiCallStats.apiId))
-        .where(publicApiCondition)
-        .groupBy(apis.id, apis.name, apis.apiPath)
-        .orderBy(sql`coalesce(sum(${apiCallStats.totalCount}), 0) desc`, apis.name)
-        .limit(rankingLimit)
-    ])
-
-    const hourMap = new Map<string, number>()
-    for (const row of hourlyRows) {
-      const date = row.hour instanceof Date ? row.hour : new Date(row.hour)
-      hourMap.set(date.toISOString(), toNumber(row.totalCalls))
-    }
-
-    const nowHour = new Date()
-    nowHour.setMinutes(0, 0, 0)
-    const hourlyTrend24h: AdminDashboardHourlyPoint[] = Array.from({ length: 24 }, (_, index) => {
-      const date = new Date(nowHour.getTime() - (23 - index) * 60 * 60 * 1000)
-      const hour = date.toISOString()
-      const label = HOURLY_LABEL_FORMATTER.format(date)
-      return { hour, label, totalCalls: hourMap.get(hour) ?? 0 }
-    })
-
-    interface RankingRow {
-      apiId: number
-      name: string
-      apiPath: string
-      totalCalls: number
-      successCalls: number
-    }
-
-    const ranking: DashboardCallRankItem[] = rankingRows.map((row: RankingRow, index: number) => {
-      const totalCalls = toNumber(row.totalCalls)
-      const successCalls = toNumber(row.successCalls)
-      return {
-        rank: index + 1,
-        apiId: row.apiId,
-        name: row.name,
-        apiPath: row.apiPath,
-        totalCalls,
-        successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0
-      }
-    })
-
-    return {
-      hourlyTrend24h,
-      ranking
-    }
   }
 }

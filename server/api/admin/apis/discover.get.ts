@@ -10,7 +10,7 @@
 import { API_MANIFEST } from '#api-manifest'
 import type { DiscoveredApi, DiscoveredEndpoint, RegisteredApi } from '#shared/types/api'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { apiService } from '~~/server/services/api-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { hasApiCapabilityDefinition } from '~~/server/lib/api-capabilities/definition-registry'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
 
@@ -29,7 +29,7 @@ export default defineAdminEventHandler(async () => {
   const versions = Array.from(new Set(API_MANIFEST.map(a => a.pathVersion)))
   const registeredMap = new Map<string, RegisteredApi>()
   for (const version of versions) {
-    const rows = await apiService.listByVersion(version)
+    const rows = await apiRegistryService.listByVersion(version)
     for (const row of rows) registeredMap.set(`${row.pathVersion}:${row.code}`, row)
   }
 

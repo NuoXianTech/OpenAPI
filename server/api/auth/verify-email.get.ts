@@ -1,6 +1,6 @@
 import { createError, getQuery } from 'h3'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
 import { readQueryString, readRequiredQueryNumber } from '~~/server/utils/request-query'
 
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid verification link' })
   }
 
-  const user = await usersService.getById(userId)
+  const user = await userService.getById(userId)
   if (!user) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     return { alreadyVerified: true }
   }
 
-  const updated = await usersService.activateUser(userId)
+  const updated = await userService.activateUser(userId)
   if (!updated) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }

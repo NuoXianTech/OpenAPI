@@ -1,23 +1,25 @@
 import { createError } from 'h3'
 import { adminUpdateUserSchema } from '~~/server/schemas/admin'
-import { usersService } from '~~/server/services/user-service'
-import { defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
+import { userService } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { hashPassword } from '~~/server/utils/password'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const { id, email, displayName, role, isActive, isBanned, password } = await readZodBody(event, adminUpdateUserSchema)
-  const target = await usersService.getById(id)
+  const target = await userService.getById(id)
   if (!target) {
     throw createError({ statusCode: 404, message: 'user not found' })
   }
 
-  const willRemoveAdminAccess = usersService.willRemoveAdminAccess(target, { role, isActive, isBanned })
+  const willRemoveAdminAccess = adminUserService.willRemoveAdminAccess(target, { role, isActive, isBanned })
   if (admin.id === id && willRemoveAdminAccess) {
     throw createError({ statusCode: 400, message: '不能移除当前登录管理员的管理权限' })
   }
   if (email !== undefined) {
-    const existing = await usersService.findByEmail(email)
+    const existing = await userService.findByEmail(email)
     if (existing && existing.id !== id) {
       throw createError({ statusCode: 409, message: '该邮箱已被注册' })
     }
@@ -26,7 +28,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   // 提供 password 才重置；否则 passwordHash 保持 undefined，drizzle 不会触碰该列
   const passwordHash = password ? await hashPassword(password) : undefined
 
-  const updated = await usersService.updateUser(id, {
+  const updated = await adminUserService.updateUser(id, {
     role,
     email,
     displayName: displayName !== undefined ? (displayName || null) : undefined,

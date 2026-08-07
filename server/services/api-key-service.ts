@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto'
 import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiCalls, apiKeys } from '~~/server/db/schema'
+import { clampInteger } from '~~/server/utils/number'
 import { firstRow } from '~~/server/utils/row'
-import type { DatabaseTransaction } from '~~/server/db/client'
 import { createHmacSignature } from '~~/server/utils/secure-token'
 import {
   createStoredSecretPreview,
@@ -13,6 +14,8 @@ import {
 } from '~~/server/utils/stored-secret'
 
 const MAX_BATCH_COUNT = 5
+const MAX_API_KEY_NAME_LENGTH = 100
+const RANDOM_NAME_SUFFIX_LENGTH = 7
 
 function generateApiKey() {
   const nonce = randomBytes(24)
@@ -22,6 +25,15 @@ function generateApiKey() {
 /** 给批量创建的 key 名追加随机后缀，避免重名扎堆 */
 function randomNameSuffix() {
   return randomBytes(3).toString('hex')
+}
+
+function truncateName(value: string, maxLength: number) {
+  return Array.from(value).slice(0, maxLength).join('')
+}
+
+function createKeyName(baseName: string, index: number) {
+  if (index === 0) return truncateName(baseName, MAX_API_KEY_NAME_LENGTH)
+  return `${truncateName(baseName, MAX_API_KEY_NAME_LENGTH - RANDOM_NAME_SUFFIX_LENGTH)}-${randomNameSuffix()}`
 }
 
 type StoredApiKeyRecord = typeof apiKeys.$inferSelect
@@ -115,13 +127,13 @@ export const apiKeyService = {
    * 注意：每条 key 各自生成 nonce，所以即使批量也必须逐行 insert（不能合并 values）。
    */
   async createForUser(userId: number, input: CreateApiKeyInput): Promise<ApiKeyRecord[]> {
-    const count = Math.max(1, Math.min(Math.trunc(input.count ?? 1), MAX_BATCH_COUNT))
+    const count = clampInteger(input.count, 1, MAX_BATCH_COUNT)
     const baseName = (input.name || '').trim() || '默认密钥'
 
     return db.transaction(async (tx: DatabaseTransaction) => {
       const created: ApiKeyRecord[] = []
       for (let i = 0; i < count; i++) {
-        const name = i === 0 ? baseName : `${baseName}-${randomNameSuffix()}`
+        const name = createKeyName(baseName, i)
         const apiKey = generateApiKey()
         const row = await tx.insert(apiKeys).values({
           userId,

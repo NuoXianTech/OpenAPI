@@ -1,4 +1,5 @@
-import { USER_ROLES, usersService } from '~~/server/services/user-service'
+import { USER_ROLES } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryNumber, readQueryOption, readQueryString } from '~~/server/utils/request-query'
@@ -20,7 +21,7 @@ function readUserIdFilter(value: unknown): number | undefined {
 export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
-  return usersService.list({
+  return adminUserService.list({
     keyword: readQueryString(query.keyword),
     userId: readUserIdFilter(query.userId),
     role: readQueryOption(query.role, USER_ROLE_OPTIONS),

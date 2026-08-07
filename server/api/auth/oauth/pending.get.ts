@@ -2,7 +2,7 @@
 // 仅暴露展示用字段，不返回 providerUserId；由持有签名 pending cookie 者（刚走完 OAuth 流程）访问。
 import { readPendingOauth } from '~~/server/utils/oauth-pending'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
 
 function sanitizeUsername(base: string) {
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   // 该邮箱是否已有账号：仅用于在窗口里提示「看起来你已有账号，建议绑定」
   let emailHasAccount = false
   if (pending.email) {
-    const matched = await usersService.findByEmail(pending.email.toLowerCase())
+    const matched = await userService.findByEmail(pending.email.toLowerCase())
     emailHasAccount = Boolean(matched)
   }
 

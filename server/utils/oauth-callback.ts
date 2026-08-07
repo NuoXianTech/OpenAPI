@@ -3,7 +3,7 @@ import { getHeader, getQuery, sendRedirect } from 'h3'
 import { buildCallbackUrl, oauthProviderService } from '~~/server/services/oauth-provider-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { consumeState } from '~~/server/utils/oauth-state'
@@ -64,7 +64,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
 
   const providerConfig: ProviderConfig = {
     clientId: providerRow.clientId,
-    clientSecret: providerRow.clientSecret, // 明文存储，直接使用
+    clientSecret: providerRow.clientSecret,
     callbackUrl: buildCallbackUrl(settings.siteUrl, provider)
   }
 
@@ -134,7 +134,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
     // 该三方身份已绑定某用户 → 立即登录
     const existingAccount = await oauthAccountService.findByProviderUserId(provider, profile.providerUserId)
     if (existingAccount) {
-      const user = await usersService.getById(existingAccount.userId)
+      const user = await userService.getById(existingAccount.userId)
       if (!user) {
         // 用户已被硬删，oauthAccounts 通过 cascade 应已清理；保险起见仍 redirect
         return redirectError(event, 'user_unavailable')
@@ -144,7 +144,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         return redirectError(event, 'user_unavailable')
       }
       if (user.isBanned) {
-        await usersService.clearExpiredBan(user.id)
+        await userService.clearExpiredBan(user.id)
       }
       // 通过 OAuth 新注册但尚未完成邮箱验证的账号：绑定已建、账号仍未激活 → 拦住并提示去验证
       if (!user.isActive) {
@@ -161,7 +161,7 @@ export async function handleOauthCallback(event: H3Event, provider: SupportedOau
         lastLoginIp: ip
       })
       await createUserSession(event, { id: user.id, role: user.role })
-      await usersService.updateLastLogin(user.id, ip, userAgent)
+      await userService.updateLastLogin(user.id, ip, userAgent)
       await loginLogService.record({ userId: user.id, username: user.username, method, success: true, ip, userAgent })
       return sendRedirect(event, consumed.returnTo || '/', 302)
     }

@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   adminAdjustCreditsSchema,
+  adminCreateApiCategorySchema,
+  adminCreateAnnouncementSchema,
+  adminCreateFriendLinkSchema,
   adminInitialProfileSchema,
+  adminRegisterApiSchema,
+  adminUpdateAnnouncementSchema,
   adminUpdateApiSchema,
+  adminUpdateFriendLinkSchema,
   adminUpdateSiteSettingsSchema,
   adminUpdateUserSchema
 } from '~~/server/schemas/admin'
@@ -56,6 +62,25 @@ describe('admin schemas', () => {
     }).success).toBe(false)
   })
 
+  it('validates API registration fields before they reach database constraints', () => {
+    expect(adminRegisterApiSchema.safeParse({
+      pathVersion: 'version-too-long',
+      code: 'tool'
+    }).success).toBe(false)
+    expect(adminRegisterApiSchema.safeParse({
+      pathVersion: 'v1',
+      code: 'tool',
+      overrides: { rateLimitPerSecond: -1 }
+    }).success).toBe(false)
+    expect(adminRegisterApiSchema.safeParse({
+      pathVersion: 'v1',
+      code: 'tool',
+      overrides: { timeoutMs: 10 }
+    }).success).toBe(false)
+    expect(adminUpdateApiSchema.safeParse({ id: 1, name: '   ' }).success).toBe(false)
+    expect(adminUpdateApiSchema.safeParse({ id: 1, shortDesc: 'x'.repeat(51) }).success).toBe(false)
+  })
+
   it('requires initial admin password while accepting default or custom username and email', () => {
     expect(adminInitialProfileSchema.safeParse({
       username: 'admin',
@@ -103,5 +128,24 @@ describe('admin schemas', () => {
 
     expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'javascript:alert(1)' }).success).toBe(false)
     expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'https://example.com/docs' }).success).toBe(true)
+  })
+
+  it('keeps content mutations within required database constraints', () => {
+    expect(adminCreateApiCategorySchema.safeParse({
+      code: 'x'.repeat(51),
+      name: 'Category'
+    }).success).toBe(false)
+    expect(adminCreateAnnouncementSchema.safeParse({
+      title: 'x'.repeat(201),
+      content: 'Content'
+    }).success).toBe(false)
+    expect(adminCreateFriendLinkSchema.safeParse({
+      title: 'x'.repeat(141),
+      url: 'https://example.com'
+    }).success).toBe(false)
+
+    expect(adminUpdateAnnouncementSchema.safeParse({ id: 1, title: '   ' }).success).toBe(false)
+    expect(adminUpdateAnnouncementSchema.safeParse({ id: 1, content: '' }).success).toBe(false)
+    expect(adminUpdateFriendLinkSchema.safeParse({ id: 1, title: '   ' }).success).toBe(false)
   })
 })

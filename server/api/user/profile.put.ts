@@ -1,7 +1,7 @@
 // 用户更新自己的非敏感资料：displayName
 import { createError } from 'h3'
 import { userUpdateProfileSchema } from '~~/server/schemas/user'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -9,7 +9,7 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const { displayName } = await readZodBody(event, userUpdateProfileSchema)
 
-  const updated = await usersService.updateUser(authUser.id, {
+  const updated = await userService.updateProfile(authUser.id, {
     displayName: displayName || null
   })
   if (!updated) {

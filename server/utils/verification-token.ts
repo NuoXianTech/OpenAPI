@@ -8,7 +8,7 @@ import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSign
 // 「用完即废」不靠数据库标记，而是把「该操作成功后必然变化的用户字段」掺进
 // 签名材料（binding）。消费时用当前用户字段重算签名：字段一旦变化，旧链接
 // 验签自然失败：
-//   - verify         binding=email；单次性由 usersService.activateUser 的
+//   - verify         binding=email；单次性由 userService.activateUser 的
 //                    WHERE emailVerifiedAt IS NULL 幂等保证（不重复赠分）
 //   - reset_password binding=email + tokenVersion；重置密码时同步递增 tokenVersion
 //                    令 tokenVersion 变化 → 旧链接失效

@@ -1,7 +1,7 @@
 // 消费 change_email token，更新用户 email。POST 携带 userId / token，避免邮件预扫描或浏览器预取误触发副作用。
 import { createError } from 'h3'
 import { confirmEmailChangeSchema } from '~~/server/schemas/auth'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
@@ -9,7 +9,7 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineEventHandler(async (event) => {
   const { userId, token } = await readZodBody(event, confirmEmailChangeSchema)
 
-  const user = await usersService.getById(userId)
+  const user = await userService.getById(userId)
   if (!user) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
@@ -21,12 +21,12 @@ export default defineEventHandler(async (event) => {
 
   const newEmail = tokenPayload.email
   // 竞态保护：有人在等待期内注册了同邮箱
-  const collision = await usersService.findByEmail(newEmail)
+  const collision = await userService.findByEmail(newEmail)
   if (collision && collision.id !== userId) {
     throw createError({ statusCode: 409, message: 'Email already in use' })
   }
 
-  const updated = await usersService.updateEmail(userId, newEmail)
+  const updated = await userService.updateEmail(userId, newEmail)
   if (!updated) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }

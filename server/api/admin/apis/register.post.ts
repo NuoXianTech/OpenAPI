@@ -11,7 +11,7 @@ import { adminRegisterApiSchema } from '~~/server/schemas/admin'
 import { API_MANIFEST } from '#api-manifest'
 import { DEFAULT_API_REGISTRATION, hasAnyChargedMethod } from '~~/server/config/api-guard'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
-import { apiService } from '~~/server/services/api-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 import type { ManifestEndpoint } from '~~/server/types/api-guard'
@@ -66,7 +66,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     })
   }
 
-  const saved = await apiService.registerFromManifest({
+  const saved = await apiRegistryService.registerFromManifest({
     pathVersion,
     code,
     apiPath,

@@ -10,10 +10,11 @@ import { apis } from '~~/server/db/schema'
 import { closeDatabase, db } from '~~/server/db/client'
 import { runDatabaseMigrations } from '~~/server/db/migrate'
 import { DEFAULT_API_REGISTRATION } from '~~/server/config/api-guard'
-import { apiService } from '~~/server/services/api-service'
-import { usersService, USER_ROLES } from '~~/server/services/user-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
+import { userService, USER_ROLES } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
 import type { ManifestApi } from '~~/server/types/api-guard'
-import { hashPassword } from '~~/server/utils/auth'
+import { hashPassword } from '~~/server/utils/password'
 import { getSqlState } from '~~/server/utils/database-error'
 import { closeRedis, getRedisConfig, initializeRedis } from '~~/server/utils/redis'
 
@@ -70,12 +71,12 @@ async function migrateDatabase(): Promise<void> {
 }
 
 async function ensureInitialAdmin(): Promise<void> {
-  if (await usersService.hasAdmin()) return
+  if (await adminUserService.hasAdmin()) return
 
   const password = randomBytes(18).toString('base64url')
-  let admin: Awaited<ReturnType<typeof usersService.addUser>>
+  let admin: Awaited<ReturnType<typeof userService.addUser>>
   try {
-    admin = await usersService.addUser({
+    admin = await userService.addUser({
       role: USER_ROLES.admin,
       username: INITIAL_ADMIN_PROFILE.username,
       email: INITIAL_ADMIN_PROFILE.email,
@@ -85,7 +86,7 @@ async function ensureInitialAdmin(): Promise<void> {
       emailVerifiedAt: new Date()
     })
   } catch (error) {
-    if (getSqlState(error) === '23505' && await usersService.hasAdmin()) {
+    if (getSqlState(error) === '23505' && await adminUserService.hasAdmin()) {
       console.info('[startup] Initial administrator was created by another instance.')
       return
     }
@@ -112,7 +113,7 @@ async function syncApiManifest(): Promise<void> {
 
   for (const api of API_MANIFEST) {
     const key = `${api.pathVersion}:${api.code}`
-    await apiService.registerFromManifest(createManifestRegistration(api))
+    await apiRegistryService.registerFromManifest(createManifestRegistration(api))
     if (!databaseKeys.has(key)) registeredApis.push(`${api.pathVersion}/${api.code}`)
   }
 
@@ -123,7 +124,7 @@ async function syncApiManifest(): Promise<void> {
   ))
 
   for (const api of orphanedApis) {
-    await apiService.markOrphaned(api.id)
+    await apiRegistryService.markOrphaned(api.id)
   }
 
   if (registeredApis.length > 0) {

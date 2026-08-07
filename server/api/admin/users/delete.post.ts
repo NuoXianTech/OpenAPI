@@ -1,6 +1,6 @@
 import { createError } from 'h3'
 import { idSchema } from '~~/server/schemas/common'
-import { usersService } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
@@ -11,7 +11,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (admin.id === id) {
     throw createError({ statusCode: 400, message: '不能删除当前登录管理员' })
   }
-  const deleted = await usersService.deleteUser(id)
+  const deleted = await adminUserService.deleteUser(id)
   if (!deleted) {
     throw createError({ statusCode: 404, message: 'user not found' })
   }

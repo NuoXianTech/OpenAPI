@@ -29,7 +29,6 @@ export type { PublicSiteSettings, PublicTurnstileSettings, SystemSettings, Syste
 type SystemSettingRow = typeof systemSettings.$inferSelect
 type SystemSettingInsert = typeof systemSettings.$inferInsert
 
-const SECRET_SETTING_NAMES = SYSTEM_SETTING_NAMES.filter(name => SYSTEM_SETTING_DEFINITIONS[name].secret)
 const NON_SECRET_SETTING_NAMES = SYSTEM_SETTING_NAMES.filter(name => !SYSTEM_SETTING_DEFINITIONS[name].secret)
 
 interface AdminSystemSettingsSecrets {
@@ -212,7 +211,7 @@ export const systemSettingsService = {
   },
 
   async get<TName extends SystemSettingName>(name: TName): Promise<SystemSettings[TName]> {
-    return (await this.getSettings())[name]
+    return (await systemSettingsService.getSettings())[name]
   },
 
   async getPublicSettings(): Promise<PublicSiteSettings> {
@@ -244,11 +243,11 @@ export const systemSettingsService = {
   },
 
   async getForAdmin(): Promise<AdminSystemSettings> {
-    return toAdminSystemSettings(await this.getSettings())
+    return toAdminSystemSettings(await systemSettingsService.getSettings())
   },
 
   async update(input: SystemSettingsPatch): Promise<SystemSettings> {
-    const current = await this.getSettings()
+    const current = await systemSettingsService.getSettings()
     const normalizedPatch: SystemSettingsPatch = {}
 
     for (const name of Object.keys(input) as SystemSettingName[]) {
@@ -270,16 +269,12 @@ export const systemSettingsService = {
       })
     }
     await upsertSettings(normalizedPatch)
-    cacheSettings(next)
+    const persisted = cacheSettings(await loadSettingsFromDatabase())
     await deleteSharedCache([PUBLIC_SYSTEM_SETTINGS_CACHE_KEY])
-    return next
+    return persisted
   },
 
   registeredKeys(): readonly string[] {
     return SYSTEM_SETTING_NAMES.map(name => SYSTEM_SETTING_DEFINITIONS[name].key)
-  },
-
-  secretNames(): readonly SystemSettingName[] {
-    return SECRET_SETTING_NAMES
   }
 }

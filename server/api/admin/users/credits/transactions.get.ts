@@ -8,7 +8,8 @@
  *   - offset?     : 默认 0
  */
 
-import { creditService, type CreditReason } from '~~/server/services/credit-service'
+import { adminCreditService } from '~~/server/services/admin-credit-service'
+import type { CreditReason } from '#shared/types/credit-reason'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import {
@@ -36,7 +37,7 @@ export default defineAdminEventHandler((event) => {
   const userId = readQueryNumber(query.userId)
   const reason = readQueryOption(query.reason, CREDIT_REASON_OPTIONS)
 
-  return creditService.listTransactions({
+  return adminCreditService.listTransactions({
     userId,
     reason,
     direction: readQueryOption(query.direction, DIRECTION_OPTIONS),

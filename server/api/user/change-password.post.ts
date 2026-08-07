@@ -1,8 +1,9 @@
 // 已登录用户修改密码：校验旧密码 → 设新密码 → 令所有旧 token 失效并重签当前设备
 import { createError } from 'h3'
 import { userChangePasswordSchema } from '~~/server/schemas/user'
-import { usersService } from '~~/server/services/user-service'
-import { hashPassword, verifyPassword, defineAuthenticatedEventHandler, createUserSession } from '~~/server/utils/auth'
+import { userService } from '~~/server/services/user-service'
+import { defineAuthenticatedEventHandler, createUserSession } from '~~/server/utils/auth'
+import { hashPassword, verifyPassword } from '~~/server/utils/password'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -10,7 +11,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const { currentPassword, newPassword } = await readZodBody(event, userChangePasswordSchema)
 
   // 拉数据库行（不能用 authUser，里面没有 passwordHash）
-  const userRow = await usersService.getById(authUser.id)
+  const userRow = await userService.getById(authUser.id)
   if (!userRow) {
     throw createError({ statusCode: 404, message: '用户不存在' })
   }
@@ -21,7 +22,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   }
 
   const newHash = await hashPassword(newPassword)
-  await usersService.updatePasswordAndInvalidateSessions(authUser.id, newHash)
+  await userService.updatePasswordAndInvalidateSessions(authUser.id, newHash)
 
   // tokenVersion 自增 → 该账号所有已签发 JWT（含当前设备）立即失效；
   // 随即为当前设备重签新 token（createUserSession 内部读到 bump 后的新 ver），

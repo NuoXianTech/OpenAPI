@@ -1,11 +1,12 @@
 // 登录用户请求变更邮箱：发确认链接到"新"邮箱。
 import { createError } from 'h3'
 import { userRequestEmailChangeSchema } from '~~/server/schemas/user'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendEmailChangeEmail } from '~~/server/utils/email'
-import { defineAuthenticatedEventHandler, verifyPassword } from '~~/server/utils/auth'
+import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
+import { verifyPassword } from '~~/server/utils/password'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
@@ -17,7 +18,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   }
 
   // 校验当前密码，防止他人借未锁定浏览器把账号绑定到自己邮箱
-  const userRow = await usersService.getById(authUser.id)
+  const userRow = await userService.getById(authUser.id)
   if (!userRow) {
     throw createError({ statusCode: 404, message: '用户不存在' })
   }
@@ -27,7 +28,7 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
   }
 
   // 新邮箱不能被占用
-  const existing = await usersService.findByEmail(newEmail)
+  const existing = await userService.findByEmail(newEmail)
   if (existing) {
     throw createError({ statusCode: 409, message: 'Email already in use' })
   }

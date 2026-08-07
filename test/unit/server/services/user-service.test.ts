@@ -13,7 +13,8 @@ vi.mock('~~/server/db/client', () => ({
   }
 }))
 
-const { usersService } = await import('~~/server/services/user-service')
+const { userService } = await import('~~/server/services/user-service')
+const { adminUserService } = await import('~~/server/services/admin-user-service')
 
 let client: PGlite
 
@@ -64,27 +65,38 @@ afterAll(async () => {
 
 describe('user service security state', () => {
   it('keeps at least one available administrator', async () => {
-    await expect(usersService.updateUser(1, { role: 'user' })).rejects.toMatchObject({ statusCode: 400 })
+    await expect(adminUserService.updateUser(1, { role: 'user' })).rejects.toMatchObject({ statusCode: 400 })
 
-    await usersService.updateUser(2, { role: 'admin' })
-    const demoted = await usersService.updateUser(1, { role: 'user' })
+    await adminUserService.updateUser(2, { role: 'admin' })
+    const demoted = await adminUserService.updateUser(1, { role: 'user' })
 
     expect(demoted?.role).toBe('user')
   })
 
   it('updates the password hash and token version in one statement', async () => {
-    const updated = await usersService.updatePasswordAndInvalidateSessions(2, 'new-user-hash')
+    const updated = await userService.updatePasswordAndInvalidateSessions(2, 'new-user-hash')
 
     expect(updated).toMatchObject({ passwordHash: 'new-user-hash', tokenVersion: 1 })
   })
 
   it('only clears a ban that is still expired', async () => {
-    const cleared = await usersService.clearExpiredBan(3)
+    const cleared = await userService.clearExpiredBan(3)
     expect(cleared).toMatchObject({ isBanned: false, bannedUntil: null })
 
     const future = new Date(Date.now() + 60_000)
-    await usersService.banUser(3, true, { bannedUntil: future })
-    expect(await usersService.clearExpiredBan(3)).toBeNull()
-    await expect(usersService.getById(3)).resolves.toMatchObject({ isBanned: true, bannedUntil: future })
+    await adminUserService.banUser(3, true, { bannedUntil: future })
+    expect(await userService.clearExpiredBan(3)).toBeNull()
+    await expect(userService.getById(3)).resolves.toMatchObject({ isBanned: true, bannedUntil: future })
+  })
+
+  it('only rolls back users that are still pending', async () => {
+    await client.exec(`
+      INSERT INTO users (username, email, password_hash, is_active)
+      VALUES ('pending', 'pending@example.com', 'hash', false);
+    `)
+
+    expect(await userService.deletePendingUser(4)).toMatchObject({ id: 4, isActive: false })
+    expect(await userService.deletePendingUser(2)).toBeNull()
+    await expect(userService.getById(2)).resolves.toMatchObject({ id: 2, isActive: true })
   })
 })

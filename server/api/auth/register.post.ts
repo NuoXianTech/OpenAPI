@@ -1,16 +1,21 @@
 import { createError } from 'h3'
 import { registerSchema } from '~~/server/schemas/auth'
-import { usersService } from '~~/server/services/user-service'
-import { hashPassword } from '~~/server/utils/auth'
-import { isEmailAllowedForRegistration, normalizeEmailFilterMode, parseEmailDomainList } from '~~/server/utils/validation'
+import { userService } from '~~/server/services/user-service'
+import { hashPassword } from '~~/server/utils/password'
+import {
+  isEmailAllowedForRegistration,
+  normalizeEmailFilterMode,
+  parseEmailDomainList,
+  rollbackCreatedUser
+} from '~~/server/utils/registration'
 import { readZodBody } from '~~/server/utils/zod'
 import { issueVerificationTokenUrl, normalizeSiteUrl } from '~~/server/utils/verification-token'
 import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
-import { rollbackCreatedUser } from '~~/server/utils/registration'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
+import { getSqlState } from '~~/server/utils/database-error'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
 // 防止匿名访问者用接口差异遍历账号库。真实分支信号只走邮件通道。
@@ -63,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   // 邮箱已注册：投递"账号已存在"通知到该邮箱，外部返回中性响应。
   // 发信失败仅记录日志，不抛错，保持与"邮箱未注册"分支响应一致以防 timing/状态码枚举。
-  const existEmail = await usersService.findByEmail(email)
+  const existEmail = await userService.findByEmail(email)
   if (existEmail) {
     try {
       await sendDuplicateRegistrationEmail(email, `${normalizeSiteUrl(settings.siteUrl)}/login`)
@@ -75,25 +80,31 @@ export default defineEventHandler(async (event) => {
 
   // 用户名已被占用：静默返回中性响应。不向用户填写的邮箱发"用户名冲突"通知，
   // 避免攻击者控制邮箱后通过邮件内容反推目标用户名是否存在。
-  const existUser = await usersService.findByUsername(username)
+  const existUser = await userService.findByUsername(username)
   if (existUser) {
     return neutralResponse
   }
 
   const passwordHash = await hashPassword(password)
 
-  const created = await usersService.addUser({
-    username,
-    email,
-    passwordHash,
-    isActive: false
-  })
+  let created: Awaited<ReturnType<typeof userService.addUser>>
+  try {
+    created = await userService.addUser({
+      username,
+      email,
+      passwordHash,
+      isActive: false
+    })
+  } catch (error) {
+    if (getSqlState(error) === '23505') return neutralResponse
+    throw error
+  }
 
   // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知），不发验证邮件。
   // activateUser 失败则回滚刚建的账号，避免邮箱/用户名被占住无法重试。
   if (!activationRequired) {
     try {
-      await usersService.activateUser(created.id)
+      await userService.activateUser(created.id)
     } catch (error) {
       await rollbackCreatedUser({ userId: created.id, reason: 'auto-activation failed', error })
       throw createError({

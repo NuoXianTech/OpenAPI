@@ -1,4 +1,4 @@
-import { apiCallService } from '~~/server/services/api-call-service'
+import { userApiCallService } from '~~/server/services/user-api-call-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils/request-query'
@@ -12,5 +12,5 @@ export default defineAuthenticatedEventHandler((event, user) => {
   const status = readQueryOption(query.status, CALL_STATUSES)
   const keyword = readQueryText(query.keyword)
 
-  return apiCallService.listLogForUser(user.id, { keyword, apiId, apiKeyId, status, limit, offset })
+  return userApiCallService.list(user.id, { keyword, apiId, apiKeyId, status, limit, offset })
 })

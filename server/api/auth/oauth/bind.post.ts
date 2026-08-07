@@ -4,11 +4,12 @@ import { oauthBindSchema } from '~~/server/schemas/auth'
 import type { LoginMethod } from '#shared/types/login-log'
 import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pending'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
-import { createUserSession, verifyPassword } from '~~/server/utils/auth'
+import { createUserSession } from '~~/server/utils/auth'
+import { verifyPassword } from '~~/server/utils/password'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
@@ -33,8 +34,8 @@ export default defineEventHandler(async (event) => {
   }
 
   const user = identifier.includes('@')
-    ? await usersService.findByEmail(identifier.toLowerCase())
-    : await usersService.findByUsername(identifier)
+    ? await userService.findByEmail(identifier.toLowerCase())
+    : await userService.findByUsername(identifier)
 
   // 账号不存在与密码错误合并为同一响应，避免账号枚举
   if (!user || !(await verifyPassword(user.passwordHash, body.password))) {
@@ -45,7 +46,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 403, message: banMessage(user) })
   }
   if (user.isBanned) {
-    await usersService.clearExpiredBan(user.id)
+    await userService.clearExpiredBan(user.id)
   }
   if (!user.isActive) {
     throw createError({ statusCode: 403, message: '该账号尚未激活，请先完成邮箱验证后再绑定' })
@@ -83,7 +84,7 @@ export default defineEventHandler(async (event) => {
 
   clearPendingOauth(event)
   await createUserSession(event, { id: user.id, role: user.role })
-  await usersService.updateLastLogin(user.id, ip, userAgent)
+  await userService.updateLastLogin(user.id, ip, userAgent)
   await loginLogService.record({ userId: user.id, username: user.username, method, success: true, ip, userAgent })
 
   return { ok: true }

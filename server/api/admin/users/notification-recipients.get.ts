@@ -1,4 +1,4 @@
-import { usersService } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 
-export default defineAdminEventHandler(() => usersService.listNotificationRecipients())
+export default defineAdminEventHandler(() => adminUserService.listNotificationRecipients())

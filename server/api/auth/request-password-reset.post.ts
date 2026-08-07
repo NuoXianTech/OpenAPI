@@ -1,7 +1,7 @@
 // 申请密码重置：发邮件到注册邮箱。无论邮箱是否存在都返回 200，避免泄露用户存在性。
 import { createError } from 'h3'
 import { requestPasswordResetSchema } from '~~/server/schemas/auth'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { sendPasswordResetEmail } from '~~/server/utils/email'
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   })
   if (!canRequestReset) return null
 
-  const user = await usersService.findByEmail(email)
+  const user = await userService.findByEmail(email)
   if (user && user.isActive && !isBanActive(user)) {
     const expiresInMinutes = Number(settings.passwordResetExpiresInMinutes || 30)
     const resetUrl = issueVerificationTokenUrl(user, {

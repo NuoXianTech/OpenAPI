@@ -98,4 +98,10 @@ describe('system settings', () => {
       isEnabled: false
     }).clientSecret).toBe('')
   })
+
+  it('keeps pure service methods independent of an object receiver', () => {
+    const { toPublicSettings } = systemSettingsService
+
+    expect(toPublicSettings(createSystemSettingsDefaults()).siteName).toBe(SITE_SETTINGS_DEFAULTS.siteName)
+  })
 })

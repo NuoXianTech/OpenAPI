@@ -1,4 +1,4 @@
-import { adminLogsService } from '~~/server/services/admin-logs-service'
+import { adminApiCallLogService } from '~~/server/services/admin-api-call-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryDate, readQueryNumber, readQueryText } from '~~/server/utils/request-query'
@@ -16,7 +16,7 @@ function parseTypes(value: unknown): AdminLogType[] | undefined {
 export default defineAdminEventHandler(async (event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
-  const data = await adminLogsService.listLogs({
+  const data = await adminApiCallLogService.listLogs({
     keyword: readQueryText(query.keyword),
     startAt: readQueryDate(query.startAt),
     endAt: readQueryDate(query.endAt),

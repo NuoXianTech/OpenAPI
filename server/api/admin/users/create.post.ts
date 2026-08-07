@@ -1,23 +1,24 @@
 import { createError } from 'h3'
 import { adminCreateUserSchema } from '~~/server/schemas/admin'
-import { usersService } from '~~/server/services/user-service'
-import { defineAdminEventHandler, hashPassword } from '~~/server/utils/auth'
+import { userService } from '~~/server/services/user-service'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { hashPassword } from '~~/server/utils/password'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const { username, email, password, displayName, role, isActive } = await readZodBody(event, adminCreateUserSchema)
 
-  if (await usersService.findByEmail(email)) {
+  if (await userService.findByEmail(email)) {
     throw createError({ statusCode: 409, message: '该邮箱已被注册' })
   }
-  if (await usersService.findByUsername(username)) {
+  if (await userService.findByUsername(username)) {
     throw createError({ statusCode: 409, message: '该用户名已被占用' })
   }
 
   const passwordHash = await hashPassword(password)
 
-  const created = await usersService.addUser({
+  const created = await userService.addUser({
     role,
     username,
     email,

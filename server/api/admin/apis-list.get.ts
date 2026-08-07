@@ -1,5 +1,4 @@
-import { and, eq } from 'drizzle-orm'
-import { apis } from '~~/server/db/schema'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 
 /**
@@ -10,27 +9,5 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
  * orphan 接口（源文件已被物理删除）自动被 isEnabled=false 排除。
  */
 export default defineAdminEventHandler(async () => {
-  const rows = await db.select({
-    id: apis.id,
-    code: apis.code,
-    pathVersion: apis.pathVersion,
-    name: apis.name,
-    apiPath: apis.apiPath,
-    categoryId: apis.categoryId,
-    httpMethod: apis.httpMethod
-  })
-    .from(apis)
-    .where(and(eq(apis.isEnabled, true), eq(apis.isOrphaned, false)))
-    .orderBy(apis.pathVersion, apis.code)
-
-  return rows.map((r: typeof rows[number]) => ({
-    id: r.id,
-    scope: `${r.pathVersion}.${r.code}`,
-    code: r.code,
-    pathVersion: r.pathVersion,
-    name: r.name,
-    apiPath: r.apiPath,
-    categoryId: r.categoryId,
-    httpMethod: r.httpMethod
-  }))
+  return apiRegistryService.listEnabledScopeOptions()
 })

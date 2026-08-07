@@ -43,4 +43,4 @@
 
 ## 注册赠送积分
 
-当 `siteSettings.defaultRegisterCredits > 0` 时，`usersService.activateUser` 会在用户首次激活时自动写入 `signup_bonus`。邮箱验证和 OAuth 自动注册共用同一条激活路径；后续重复激活受 `users.emailVerifiedAt IS NULL` 保护，不会重复赠送积分。
+当 `siteSettings.defaultRegisterCredits > 0` 时，`userService.activateUser` 会在用户首次激活时自动写入 `signup_bonus`。邮箱验证和 OAuth 自动注册共用同一条激活路径；后续重复激活受 `users.emailVerifiedAt IS NULL` 保护，不会重复赠送积分。

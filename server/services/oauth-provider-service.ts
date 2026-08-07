@@ -104,7 +104,7 @@ export const oauthProviderService = {
     if (!isSupportedOauthProvider(provider)) {
       throw createApplicationError({ statusCode: 400, message: 'provider not supported, only github and qq are allowed' })
     }
-    const current = await this.getByProvider(provider)
+    const current = await oauthProviderService.getByProvider(provider)
     if (!current) {
       return null // provider 已校验，理论不可达
     }

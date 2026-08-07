@@ -1,7 +1,9 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { apiCategories, apis } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import type { ApiCategoryItem } from '#shared/types/api'
+import { getSqlState } from '~~/server/utils/database-error'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import { firstRow } from '~~/server/utils/row'
 
@@ -88,16 +90,22 @@ export const apiCategoryService = {
     if (existing) throw createApplicationError({ statusCode: 409, message: 'category code already exists' })
     await validateParent(input.parentId)
 
-    const res = await db.insert(apiCategories).values({
-      code,
-      name: input.name.trim(),
-      description: input.description ?? null,
-      icon: input.icon ?? null,
-      color: input.color ?? null,
-      parentId: input.parentId ?? null,
-      sortOrder: input.sortOrder ?? 0,
-      isEnabled: input.isEnabled ?? true
-    }).returning()
+    let res: Array<typeof apiCategories.$inferSelect>
+    try {
+      res = await db.insert(apiCategories).values({
+        code,
+        name: input.name.trim(),
+        description: input.description ?? null,
+        icon: input.icon ?? null,
+        color: input.color ?? null,
+        parentId: input.parentId ?? null,
+        sortOrder: input.sortOrder ?? 0,
+        isEnabled: input.isEnabled ?? true
+      }).returning()
+    } catch (error) {
+      if (getSqlState(error) !== '23505') throw error
+      throw createApplicationError({ statusCode: 409, message: 'category code already exists' })
+    }
 
     const created = res[0]
     if (created) await invalidatePublicApiCategories()

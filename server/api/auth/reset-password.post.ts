@@ -1,10 +1,10 @@
 // 消费 reset_password token 并设置新密码。
 import { createError } from 'h3'
 import { resetPasswordSchema } from '~~/server/schemas/auth'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
-import { hashPassword } from '~~/server/utils/auth'
+import { hashPassword } from '~~/server/utils/password'
 import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event) => {
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const { userId, token, newPassword } = await readZodBody(event, resetPasswordSchema)
 
-  const user = await usersService.getById(userId)
+  const user = await userService.getById(userId)
   if (!user) {
     throw createError({ statusCode: 404, message: 'User not found' })
   }
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const passwordHash = await hashPassword(newPassword)
-  await usersService.updatePasswordAndInvalidateSessions(userId, passwordHash)
+  await userService.updatePasswordAndInvalidateSessions(userId, passwordHash)
 
   return null
 })

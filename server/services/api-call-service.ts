@@ -1,8 +1,6 @@
-import { count, desc, eq, sql, and, ilike, or } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apiKeys, apis } from '~~/server/db/schema'
+import { eq, sql } from 'drizzle-orm'
+import { apiCallStats, apiCalls } from '~~/server/db/schema'
 import { toLocalDateKey } from '~~/server/utils/local-time'
-import { toNumber } from '~~/server/utils/number'
-import { normalizePagination } from '~~/server/utils/pagination'
 import type { DatabaseTransaction } from '~~/server/db/client'
 
 interface AddCallInput {
@@ -51,127 +49,7 @@ function normalizeCallRow(data: AddCallInput) {
   }
 }
 
-const callCountedCondition = sql`${apiCalls.isCounted} = true`
-const callHttpSuccessCondition = sql`${apiCalls.statusCode} >= 200 and ${apiCalls.statusCode} < 400 and ${apiCalls.errorCode} is null`
-const callSuccessCondition = sql`${callCountedCondition} and ${callHttpSuccessCondition}`
-const callFailureCondition = sql`${callCountedCondition} and not (${callHttpSuccessCondition})`
-
 export const apiCallService = {
-  /** 用户调用汇总（成功/失败/总数），按 apiCalls.userId 过滤 */
-  async getSummaryForUser(userId: number) {
-    const rows = await db.select({
-      total: sql<number>`count(*) filter (where ${callCountedCondition})`,
-      success: sql<number>`count(*) filter (where ${callSuccessCondition})`,
-      failure: sql<number>`count(*) filter (where ${callFailureCondition})`
-    }).from(apiCalls).where(eq(apiCalls.userId, userId))
-    const r = rows[0] || { total: 0, success: 0, failure: 0 }
-    return {
-      total: toNumber(r.total),
-      success: toNumber(r.success),
-      failure: toNumber(r.failure)
-    }
-  },
-
-  /**
-   * 用户的可筛选调用日志：按 apiId / apiKeyId / 成功失败 过滤；
-   * join apis & api_keys 携带名称给前端展示。
-   */
-  async listLogForUser(userId: number, opts: {
-    keyword?: string
-    apiId?: number
-    apiKeyId?: number
-    /** 'success' | 'failure' */
-    status?: 'success' | 'failure'
-    limit?: number
-    offset?: number
-  } = {}) {
-    const { limit, offset } = normalizePagination(opts)
-    const conds = [eq(apiCalls.userId, userId)]
-    if (opts.apiId && opts.apiId > 0) conds.push(eq(apiCalls.apiId, opts.apiId))
-    if (opts.apiKeyId && opts.apiKeyId > 0) conds.push(eq(apiCalls.apiKeyId, opts.apiKeyId))
-    if (opts.status === 'success') {
-      conds.push(callSuccessCondition)
-    } else if (opts.status === 'failure') {
-      conds.push(callFailureCondition)
-    }
-    const keyword = opts.keyword?.trim()
-    if (keyword) {
-      const keywordPattern = `%${keyword}%`
-      conds.push(or(
-        ilike(apis.name, keywordPattern),
-        ilike(apiCalls.path, keywordPattern),
-        ilike(apiCalls.method, keywordPattern),
-        ilike(apiCalls.ip, keywordPattern),
-        ilike(apiCalls.errorCode, keywordPattern),
-        ilike(apiCalls.errorMessage, keywordPattern),
-        ilike(apiCalls.apiKeyName, keywordPattern),
-        ilike(apiKeys.name, keywordPattern),
-        sql`${apiCalls.statusCode}::text ilike ${keywordPattern}`
-      )!)
-    }
-
-    const [items, totalRows] = await Promise.all([
-      db.select({
-        id: apiCalls.id,
-        apiId: apiCalls.apiId,
-        apiName: apis.name,
-        apiPath: apiCalls.path,
-        method: apiCalls.method,
-        statusCode: apiCalls.statusCode,
-        latencyMs: apiCalls.latencyMs,
-        ip: apiCalls.ip,
-        apiKeyId: apiCalls.apiKeyId,
-        apiKeyName: sql<string | null>`coalesce(${apiCalls.apiKeyName}, ${apiKeys.name})`,
-        errorCode: apiCalls.errorCode,
-        errorMessage: apiCalls.errorMessage,
-        creditsCost: apiCalls.creditsCost,
-        isCounted: apiCalls.isCounted,
-        createdAt: apiCalls.createdAt
-      })
-        .from(apiCalls)
-        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-        .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
-        .where(and(...conds))
-        .orderBy(desc(apiCalls.createdAt))
-        .limit(limit)
-        .offset(offset),
-      db.select({ value: count() })
-        .from(apiCalls)
-        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
-        .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
-        .where(and(...conds))
-    ])
-
-    return {
-      items,
-      total: toNumber(totalRows[0]?.value)
-    }
-  },
-
-  /** 用户视角的筛选选项：他用过的 API 列表 + 自己的 Keys */
-  async listFilterOptionsForUser(userId: number) {
-    const apiOptionsRaw = await db.select({
-      id: apis.id,
-      name: apis.name,
-      apiPath: apis.apiPath
-    })
-      .from(apis)
-      .innerJoin(apiCalls, eq(apiCalls.apiId, apis.id))
-      .where(eq(apiCalls.userId, userId))
-      .groupBy(apis.id, apis.name, apis.apiPath)
-      .orderBy(apis.name)
-
-    const keyOptionsRaw = await db.select({
-      id: apiKeys.id,
-      name: apiKeys.name
-    })
-      .from(apiKeys)
-      .where(eq(apiKeys.userId, userId))
-      .orderBy(desc(apiKeys.createdAt))
-
-    return { apis: apiOptionsRaw, apiKeys: keyOptionsRaw }
-  },
-
   async addCall(data: AddCallInput) {
     return db.insert(apiCalls).values(normalizeCallRow(data)).returning()
   },

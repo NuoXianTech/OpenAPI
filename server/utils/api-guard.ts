@@ -29,7 +29,7 @@ import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { isRedisUnavailableError } from '~~/server/utils/redis'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 import { apiKeyService } from '~~/server/services/api-key-service'
-import { apiService } from '~~/server/services/api-service'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service'
 import { getAllowedMethods, getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
 import { clampInteger, toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
@@ -358,7 +358,7 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   const manifest = getManifestApi(pathVersion, code)
   if (!manifest) return { status: 'unmatched' }
 
-  const api = await apiService.loadGuardConfig(pathVersion, code)
+  const api = await apiRegistryService.loadGuardConfig(pathVersion, code)
   if (!api) return rejectOpenApiGate(event, API_GUARD_ERROR.NOT_REGISTERED)
 
   // A paid endpoint must have both API-key auth and statistics enabled.

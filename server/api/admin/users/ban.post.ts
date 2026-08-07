@@ -1,6 +1,6 @@
 import { createError } from 'h3'
 import { adminBanUserSchema } from '~~/server/schemas/admin'
-import { usersService } from '~~/server/services/user-service'
+import { adminUserService } from '~~/server/services/admin-user-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readZodBody } from '~~/server/utils/zod'
@@ -11,7 +11,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 400, message: '不能封禁当前登录管理员' })
   }
 
-  const updated = await usersService.banUser(id, isBanned, { reason, bannedUntil })
+  const updated = await adminUserService.banUser(id, isBanned, { reason, bannedUntil })
   if (!updated) {
     throw createError({ statusCode: 404, message: 'user not found' })
   }

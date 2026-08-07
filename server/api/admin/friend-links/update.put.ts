@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import { adminUpdateFriendLinkSchema } from '~~/server/schemas/admin'
 import { friendLinkService } from '~~/server/services/friend-link-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
@@ -13,6 +14,9 @@ export default defineAdminEventHandler(async (event, admin) => {
     description: description?.trim() || null,
     isActive
   })
+  if (!updated) {
+    throw createError({ statusCode: 404, message: 'friend link not found' })
+  }
 
   await addRequestOperationLog(event, {
     userId: admin.id,

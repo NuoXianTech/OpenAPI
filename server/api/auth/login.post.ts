@@ -1,8 +1,9 @@
 import { createError, getHeader } from 'h3'
 import { loginSchema } from '~~/server/schemas/auth'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { loginLogService } from '~~/server/services/login-log-service'
-import { createUserSession, verifyPassword } from '~~/server/utils/auth'
+import { createUserSession } from '~~/server/utils/auth'
+import { verifyPassword } from '~~/server/utils/password'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readZodBody } from '~~/server/utils/zod'
@@ -32,8 +33,8 @@ export default defineEventHandler(async (event) => {
 
   // 支持通过 email 或 username 登录；用户和管理员共用 users 表，用 role 决定登录后的入口。
   const user = emailOrUsername.includes('@')
-    ? await usersService.findByEmail(emailOrUsername)
-    : await usersService.findByUsername(emailOrUsername)
+    ? await userService.findByEmail(emailOrUsername)
+    : await userService.findByUsername(emailOrUsername)
 
   // 未识别用户（账号不存在）：不写登录日志，避免攻击者通过日志枚举存在的用户
   if (!user) {
@@ -68,7 +69,7 @@ export default defineEventHandler(async (event) => {
   }
   if (user.isBanned) {
     // 封禁已到期 → 惰性解封后继续登录
-    await usersService.clearExpiredBan(user.id)
+    await userService.clearExpiredBan(user.id)
   }
 
   if (!user.isActive) {
@@ -89,7 +90,7 @@ export default defineEventHandler(async (event) => {
     role: user.role
   }, { remember })
 
-  await usersService.updateLastLogin(user.id, ip, userAgent)
+  await userService.updateLastLogin(user.id, ip, userAgent)
   await loginLogService.record({
     userId: user.id,
     username: user.username,

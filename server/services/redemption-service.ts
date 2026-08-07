@@ -7,6 +7,7 @@ import {
   normalizeRedemptionGeneration
 } from '~~/server/services/redemption-code-generation'
 import { toIsoString } from '~~/server/utils/date'
+import { getSqlState } from '~~/server/utils/database-error'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
@@ -361,8 +362,9 @@ export const redemptionService = {
             batchId: target.batchId
           }
         })
-      } catch (err) {
-        throw createRedemptionError('ALREADY_REDEEMED', '你已兑换过该兑换码', err)
+      } catch (error) {
+        if (getSqlState(error) !== '23505') throw error
+        throw createRedemptionError('ALREADY_REDEEMED', '你已兑换过该兑换码', error)
       }
 
       return {

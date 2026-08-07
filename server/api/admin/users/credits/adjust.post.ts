@@ -10,7 +10,7 @@
 
 import { createError } from 'h3'
 import { adminAdjustCreditsSchema } from '~~/server/schemas/admin'
-import { creditService } from '~~/server/services/credit-service'
+import { adminCreditService } from '~~/server/services/admin-credit-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
@@ -22,7 +22,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 400, message: 'amount 必须大于 0' })
   }
 
-  const result = await creditService.adminBatchAdjust({
+  const result = await adminCreditService.batchAdjust({
     userIds,
     operation,
     amount,

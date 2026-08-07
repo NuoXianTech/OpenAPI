@@ -1,5 +1,4 @@
-import { and, eq } from 'drizzle-orm'
-import { apis } from '~~/server/db/schema'
+import { apiRegistryService } from '~~/server/services/api-registry-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 
 /**
@@ -15,27 +14,5 @@ import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
  *   - 其它字段仅用于前端展示分组
  */
 export default defineAuthenticatedEventHandler(async () => {
-  const rows = await db.select({
-    id: apis.id,
-    code: apis.code,
-    pathVersion: apis.pathVersion,
-    name: apis.name,
-    apiPath: apis.apiPath,
-    categoryId: apis.categoryId,
-    httpMethod: apis.httpMethod
-  })
-    .from(apis)
-    .where(and(eq(apis.isEnabled, true), eq(apis.isOrphaned, false)))
-    .orderBy(apis.pathVersion, apis.code)
-
-  return rows.map((r: typeof rows[number]) => ({
-    id: r.id,
-    scope: `${r.pathVersion}.${r.code}`,
-    code: r.code,
-    pathVersion: r.pathVersion,
-    name: r.name,
-    apiPath: r.apiPath,
-    categoryId: r.categoryId,
-    httpMethod: r.httpMethod
-  }))
+  return apiRegistryService.listEnabledScopeOptions()
 })

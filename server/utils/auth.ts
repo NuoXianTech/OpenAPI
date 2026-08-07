@@ -1,92 +1,25 @@
-import { createHash, randomBytes, scrypt as scryptCallback } from 'node:crypto'
-import type { BinaryLike, ScryptOptions } from 'node:crypto'
-import { promisify } from 'node:util'
+import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { isSupportedLocale } from '#shared/config/locale-defaults'
 import { createError, defineEventHandler, getCookie, setCookie } from 'h3'
-import { usersService } from '~~/server/services/user-service'
+import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { toHttpError } from '~~/server/utils/http-error'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
-import { decodeBase64Url, encodeBase64Url, isTimingSafeEqual } from '~~/server/utils/secure-token'
 
 interface AuthUserPayload {
   id: number
   role?: 'user' | 'admin'
 }
 
-// util.promisify 只识别 scrypt(password, salt, keylen, cb) 这一个 overload，
-// 想传 options 必须断言成带 options 的签名。
-const scrypt = promisify(scryptCallback) as (
-  password: BinaryLike,
-  salt: BinaryLike,
-  keylen: number,
-  options?: ScryptOptions
-) => Promise<Buffer>
-
 // 会话完全由 JWT 承载、无服务端会话表；此 cookie 装签发的 JWT。
 const AUTH_COOKIE_NAME = 'app_token'
-const SALT_BYTES = 16
-const KEY_LENGTH = 64
-
-// 当前默认 scrypt 参数；调整这里相当于升级新注册用户的强度。
-const SCRYPT_DEFAULTS = { N: 16384, r: 8, p: 1 } as const
 
 function getCravatarUrl(email: string | null | undefined) {
   const normalized = (email ?? '').trim().toLowerCase()
   const hash = createHash('md5').update(normalized).digest('hex')
   return `https://cravatar.cn/avatar/${hash}`
-}
-
-function scryptOptions(params: { N: number, r: number, p: number }) {
-  const { N, r, p } = params
-  // Node 默认 maxmem=32MiB，调大 N/r 会超限；按公式预留两倍头空间
-  const memNeeded = 128 * N * r + 128 * r * p
-  return { N, r, p, maxmem: Math.max(memNeeded * 2, 32 << 20) }
-}
-
-function formatScryptParams(params: { N: number, r: number, p: number }) {
-  return `N=${params.N},r=${params.r},p=${params.p}`
-}
-
-function parseScryptParams(spec: string) {
-  const out: Partial<{ N: number, r: number, p: number }> = {}
-  for (const entry of spec.split(',')) {
-    const [key, value] = entry.split('=')
-    if (!key || !value) return null
-    const num = Number(value)
-    if (!Number.isFinite(num) || num <= 0) return null
-    if (key === 'N') out.N = num
-    else if (key === 'r') out.r = num
-    else if (key === 'p') out.p = num
-    else return null
-  }
-  if (!out.N || !out.r || !out.p) return null
-  return out as { N: number, r: number, p: number }
-}
-
-export async function hashPassword(password: string) {
-  const salt = randomBytes(SALT_BYTES)
-  const derived = await scrypt(password, salt, KEY_LENGTH, scryptOptions(SCRYPT_DEFAULTS)) as Buffer
-  return `scrypt$${formatScryptParams(SCRYPT_DEFAULTS)}$${encodeBase64Url(salt)}$${encodeBase64Url(derived)}`
-}
-
-export async function verifyPassword(stored: string, password: string) {
-  const parts = stored.split('$')
-  if (parts.length !== 4 || parts[0] !== 'scrypt') {
-    return false
-  }
-
-  const params = parseScryptParams(parts[1] ?? '')
-  if (!params || !parts[2] || !parts[3]) {
-    return false
-  }
-
-  const salt = decodeBase64Url(parts[2])
-  const hash = decodeBase64Url(parts[3])
-  const derived = await scrypt(password, salt, hash.length, scryptOptions(params)) as Buffer
-  return isTimingSafeEqual(hash, derived)
 }
 
 async function getSessionMaxAgesSeconds() {
@@ -123,7 +56,7 @@ export async function createUserSession(event: H3Event, user: AuthUserPayload, o
   const remember = Boolean(options.remember)
   const ttlSeconds = remember ? rememberMaxAge : defaultMaxAge
   // 从 DB 取当前 role/tokenVersion 嵌入 token，避免调用方传入过期角色导致会话降级或越权。
-  const row = await usersService.getById(user.id)
+  const row = await userService.getById(user.id)
   if (!row) {
     throw createError({ statusCode: 401, message: 'unauthorized' })
   }
@@ -169,7 +102,7 @@ export async function getAuthUser(event: H3Event) {
   }
 
   // user / admin 都在 users 表：查库拿最新 tokenVersion / 封禁状态 / 资料。
-  const user = await usersService.getById(payload.sub)
+  const user = await userService.getById(payload.sub)
   if (!user) {
     clearAuthCookie(event)
     return null
@@ -202,7 +135,7 @@ export async function getAuthUser(event: H3Event) {
       throw createError({ statusCode: 403, message: banMessage(user) })
     }
     // 封禁已到期 → 惰性解封后放行
-    await usersService.clearExpiredBan(user.id)
+    await userService.clearExpiredBan(user.id)
   }
 
   await maybeSlidingRenew(event, payload, user.tokenVersion)
