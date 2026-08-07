@@ -44,6 +44,7 @@
 - [蓝奏云链接解析公共接口](./apis/lanzou.md)
 - [Minecraft 玩家资料公共接口](./apis/minecraft.md)
 - [QQ 头像公共接口](./apis/qq-avatar.md)
+- [今日运势公共接口](./apis/luck.md)
 - [Bing 每日壁纸公共接口](./apis/bing.md)
 - [豆包资源解析公共接口](./apis/doubao.md)
 - [音乐公共接口](./apis/music.md)
