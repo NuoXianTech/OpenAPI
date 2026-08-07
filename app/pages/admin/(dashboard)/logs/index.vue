@@ -82,13 +82,6 @@ async function resetAdvancedFilters() {
         class="w-full sm:w-80"
         @keyup.enter="applyFilters"
       />
-      <CommonDateRangePicker
-        v-model:start="filters.startAt"
-        v-model:end="filters.endAt"
-        :placeholder="$t('admin.logs.call.filters.allTime')"
-        class="w-full sm:w-80"
-        @apply="applyFilters"
-      />
       <AdminFilterPopover
         :active-count="advancedFilterCount"
         :title="$t('admin.logs.call.filterTitle')"
@@ -163,7 +156,14 @@ async function resetAdvancedFilters() {
           </div>
         </div>
       </AdminFilterPopover>
-      <div class="ml-auto flex items-center gap-2">
+      <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 lg:w-auto">
+        <CommonDateRangePicker
+          v-model:start="filters.startAt"
+          v-model:end="filters.endAt"
+          :placeholder="$t('admin.logs.call.filters.allTime')"
+          class="w-full sm:w-64"
+          @apply="applyFilters"
+        />
         <UButton
           color="error"
           variant="soft"
