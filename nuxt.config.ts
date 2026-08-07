@@ -91,6 +91,14 @@ export default defineNuxtConfig({
       }
     }
   },
+  vite: {
+    optimizeDeps: {
+      include: [
+        '@internationalized/date',
+        '@unovis/vue'
+      ]
+    }
+  },
   eslint: {
     config: {
       stylistic: {
