@@ -1,5 +1,5 @@
 {
-  "id": "b9cf2d8a-c803-4c87-8c26-2708fdcc0947",
+  "id": "effd205b-3388-409f-bed5-a77153796602",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -46,6 +46,12 @@
         },
         "api_call_id": {
           "name": "api_call_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "credit_reservation_id": {
+          "name": "credit_reservation_id",
           "type": "bigint",
           "primaryKey": false,
           "notNull": false
@@ -164,6 +170,22 @@
           ],
           "isUnique": true,
           "where": "\"credit_transactions\".\"api_call_id\" IS NOT NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "credit_transactions_reservation_uq": {
+          "name": "credit_transactions_reservation_uq",
+          "columns": [
+            {
+              "expression": "credit_reservation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"credit_transactions\".\"credit_reservation_id\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -1252,6 +1274,221 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.api_credit_reservations": {
+      "name": "api_credit_reservations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "api_key_id": {
+          "name": "api_key_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "api_id": {
+          "name": "api_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "api_call_id": {
+          "name": "api_call_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_attempt_at": {
+          "name": "last_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "next_attempt_at": {
+          "name": "next_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "api_credit_reservations_user_status_idx": {
+          "name": "api_credit_reservations_user_status_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_credit_reservations_status_next_attempt_idx": {
+          "name": "api_credit_reservations_status_next_attempt_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "next_attempt_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_credit_reservations_created_idx": {
+          "name": "api_credit_reservations_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_credit_reservations_request_idx": {
+          "name": "api_credit_reservations_request_idx",
+          "columns": [
+            {
+              "expression": "request_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "api_credit_reservations_user_id_users_id_fk": {
+          "name": "api_credit_reservations_user_id_users_id_fk",
+          "tableFrom": "api_credit_reservations",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "api_credit_reservations_api_id_apis_id_fk": {
+          "name": "api_credit_reservations_api_id_apis_id_fk",
+          "tableFrom": "api_credit_reservations",
+          "tableTo": "apis",
+          "columnsFrom": [
+            "api_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "api_credit_reservations_amount_chk": {
+          "name": "api_credit_reservations_amount_chk",
+          "value": "\"api_credit_reservations\".\"amount\" > 0"
+        },
+        "api_credit_reservations_status_chk": {
+          "name": "api_credit_reservations_status_chk",
+          "value": "\"api_credit_reservations\".\"status\" in ('active', 'pending', 'dead_letter')"
+        },
+        "api_credit_reservations_attempts_chk": {
+          "name": "api_credit_reservations_attempts_chk",
+          "value": "\"api_credit_reservations\".\"attempts\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.api_daily_quota_usage": {
       "name": "api_daily_quota_usage",
       "schema": "",
@@ -1816,207 +2053,6 @@
         "apis_timeout_ms_chk": {
           "name": "apis_timeout_ms_chk",
           "value": "\"apis\".\"timeout_ms\" between 100 and 120000"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.pending_charges": {
-      "name": "pending_charges",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "api_call_id": {
-          "name": "api_call_id",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "remark": {
-          "name": "remark",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "attempts": {
-          "name": "attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "last_error": {
-          "name": "last_error",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_attempt_at": {
-          "name": "last_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "next_attempt_at": {
-          "name": "next_attempt_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'pending'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "pending_charges_api_call_uq": {
-          "name": "pending_charges_api_call_uq",
-          "columns": [
-            {
-              "expression": "api_call_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "pending_charges_status_next_attempt_idx": {
-          "name": "pending_charges_status_next_attempt_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "next_attempt_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "pending_charges_user_idx": {
-          "name": "pending_charges_user_idx",
-          "columns": [
-            {
-              "expression": "user_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "pending_charges_api_call_id_api_calls_id_fk": {
-          "name": "pending_charges_api_call_id_api_calls_id_fk",
-          "tableFrom": "pending_charges",
-          "tableTo": "api_calls",
-          "columnsFrom": [
-            "api_call_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "pending_charges_user_id_users_id_fk": {
-          "name": "pending_charges_user_id_users_id_fk",
-          "tableFrom": "pending_charges",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "pending_charges_api_id_apis_id_fk": {
-          "name": "pending_charges_api_id_apis_id_fk",
-          "tableFrom": "pending_charges",
-          "tableTo": "apis",
-          "columnsFrom": [
-            "api_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "pending_charges_status_chk": {
-          "name": "pending_charges_status_chk",
-          "value": "\"pending_charges\".\"status\" in ('pending', 'dead_letter')"
-        },
-        "pending_charges_amount_chk": {
-          "name": "pending_charges_amount_chk",
-          "value": "\"pending_charges\".\"amount\" > 0"
-        },
-        "pending_charges_attempts_chk": {
-          "name": "pending_charges_attempts_chk",
-          "value": "\"pending_charges\".\"attempts\" >= 0"
         }
       },
       "isRLSEnabled": false

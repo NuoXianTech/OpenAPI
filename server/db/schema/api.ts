@@ -239,30 +239,32 @@ export const apiDailyQuotaUsage = pgTable('api_daily_quota_usage', {
 ])
 
 // ------------------------------------------------------------------
-// Pending Charges（扣费补偿队列）
+// API Credit Reservations（付费调用的原子积分预留）
 //
-// charge 失败时入队，pendingChargesRetry 定时重试。
-// 用户硬删时 cascade 清理（无法对已删除用户扣费）。
+// active：handler 正在执行；pending：handler 已成功，必须结算；
+// dead_letter：重试耗尽，冻结额度等待人工处理。积分与 API Key 配额共用此生命周期。
 // ------------------------------------------------------------------
-export const pendingCharges = pgTable('pending_charges', {
-  id: serial('id').primaryKey(),
-  apiCallId: bigint('api_call_id', { mode: 'number' }).notNull().references(() => apiCalls.id, { onDelete: 'cascade' }),
+export const apiCreditReservations = pgTable('api_credit_reservations', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  apiKeyId: integer('api_key_id').notNull(), // 快照；Key 删除后仍可完成用户积分结算
   apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
+  apiCallId: bigint('api_call_id', { mode: 'number' }), // 响应日志落库后回填；崩溃恢复时可为空
+  requestId: uuid('request_id').notNull(),
   amount: integer('amount').notNull(),
-  remark: varchar('remark', { length: 500 }),
+  status: varchar('status', { length: 20 }).notNull().default('active'),
   attempts: integer('attempts').notNull().default(0),
   lastError: varchar('last_error', { length: 500 }),
   lastAttemptAt: timestamp('last_attempt_at', { withTimezone: true }),
   nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
-  status: varchar('status', { length: 20 }).notNull().default('pending'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('pending_charges_api_call_uq').on(table.apiCallId),
-  index('pending_charges_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
-  index('pending_charges_user_idx').on(table.userId),
-  check('pending_charges_status_chk', sql`${table.status} in ('pending', 'dead_letter')`),
-  check('pending_charges_amount_chk', sql`${table.amount} > 0`),
-  check('pending_charges_attempts_chk', sql`${table.attempts} >= 0`)
+  index('api_credit_reservations_user_status_idx').on(table.userId, table.status),
+  index('api_credit_reservations_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
+  index('api_credit_reservations_created_idx').on(table.createdAt),
+  index('api_credit_reservations_request_idx').on(table.requestId),
+  check('api_credit_reservations_amount_chk', sql`${table.amount} > 0`),
+  check('api_credit_reservations_status_chk', sql`${table.status} in ('active', 'pending', 'dead_letter')`),
+  check('api_credit_reservations_attempts_chk', sql`${table.attempts} >= 0`)
 ])

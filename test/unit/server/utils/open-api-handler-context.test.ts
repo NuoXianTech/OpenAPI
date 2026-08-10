@@ -37,7 +37,6 @@ function createEvent(): { event: H3Event, headers: Map<string, string> } {
       apiBilling: {
         costCredits: 1,
         apiKeyUserId: 11,
-        apiKeyQuotaReservation: null,
         forcedOutcome: null,
         failedCode: null,
         failedMessage: null

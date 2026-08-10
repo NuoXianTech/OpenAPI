@@ -1,24 +1,29 @@
-import { and, asc, count, desc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
-import { apis, creditTransactions, users } from '~~/server/db/schema'
+import { apiCalls, apiCreditReservations, apiKeys, apis, creditTransactions, users } from '~~/server/db/schema'
 import { normalizeCreditAmount } from './credit-adjustments'
-import { getSqlState } from '~~/server/utils/database-error'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
+import { firstRow } from '~~/server/utils/row'
 import { decryptStoredSecret } from '~~/server/utils/stored-secret'
 import type { CreditReason } from '#shared/types/credit-reason'
 import type { UserCreditConsumptionDailyRow, UserCreditSummary } from '#shared/types/user-credits'
 
 export type { CreditReason }
 
-interface ChargeInput {
+interface ReserveInput {
   userId: number
+  apiKeyId: number
+  apiId: number
+  requestId: string
   amount: number
-  apiId?: number | null
+}
+
+interface FinalizeReservationInput {
+  reservationId: number
   apiCallId?: number | null
   remark?: string | null
-  meta?: Record<string, unknown> | null
 }
 
 interface ListUserTransactionsFilters {
@@ -28,52 +33,255 @@ interface ListUserTransactionsFilters {
   offset?: number
 }
 
-async function forceCharge(input: ChargeInput) {
+const RESERVATION_RETRY_DELAY_MS = 60_000
+const RESERVATION_MAX_ATTEMPTS = 5
+const BACKOFF_SECONDS_SCHEDULE = [30, 60, 120, 300, 600]
+
+function nextAttemptAt(attempts: number): Date {
+  const index = Math.min(Math.max(attempts, 0), BACKOFF_SECONDS_SCHEDULE.length - 1)
+  return new Date(Date.now() + BACKOFF_SECONDS_SCHEDULE[index]! * 1000)
+}
+
+async function reserve(input: ReserveInput) {
   const amount = normalizeCreditAmount(input.amount)
-  if (amount === 0) return { charged: 0, balanceAfter: null }
+  if (amount === 0) return { status: 'insufficient_credits' as const }
 
-  try {
-    return await db.transaction(async (tx: DatabaseTransaction) => {
-      const updated = await tx.update(users)
-        .set({ credits: sql`${users.credits} - ${amount}`, updatedAt: new Date() })
-        .where(eq(users.id, input.userId))
-        .returning({ id: users.id, credits: users.credits })
-      if (!updated[0]) return { charged: 0, balanceAfter: null }
+  return db.transaction(async (tx: DatabaseTransaction) => {
+    const userRows = await tx.select({ credits: users.credits })
+      .from(users)
+      .where(eq(users.id, input.userId))
+      .limit(1)
+      .for('update')
+    const user = userRows[0]
+    if (!user) return { status: 'insufficient_credits' as const }
 
-      const balanceAfter = toNumber(updated[0].credits)
-      await tx.insert(creditTransactions).values({
-        userId: input.userId,
-        amount: -amount,
-        balanceAfter,
-        reason: 'api_charge',
-        apiId: input.apiId ?? null,
-        apiCallId: input.apiCallId ?? null,
-        remark: input.remark ?? null,
-        meta: input.meta ?? null
-      })
-      return { charged: amount, balanceAfter }
-    })
-  } catch (error) {
-    if (input.apiCallId === null || input.apiCallId === undefined || getSqlState(error) !== '23505') {
-      throw error
+    const reservedRows = await tx.select({
+      amount: sql<number>`coalesce(sum(${apiCreditReservations.amount}), 0)`
+    }).from(apiCreditReservations).where(eq(apiCreditReservations.userId, input.userId))
+    const reservedAmount = toNumber(reservedRows[0]?.amount)
+    if (toNumber(user.credits) - reservedAmount < amount) {
+      return { status: 'insufficient_credits' as const }
     }
 
-    const existing = await db.select({
-      amount: creditTransactions.amount,
-      balanceAfter: creditTransactions.balanceAfter
-    }).from(creditTransactions)
+    const quotaRows = await tx.update(apiKeys)
+      .set({
+        usedCredits: sql`${apiKeys.usedCredits} + ${amount}`,
+        updatedAt: new Date()
+      })
       .where(and(
-        eq(creditTransactions.apiCallId, input.apiCallId),
-        eq(creditTransactions.reason, 'api_charge')
+        eq(apiKeys.id, input.apiKeyId),
+        eq(apiKeys.userId, input.userId),
+        eq(apiKeys.isActive, true),
+        or(
+          isNull(apiKeys.totalQuota),
+          sql`${apiKeys.usedCredits} + ${amount} <= ${apiKeys.totalQuota}`
+        )!
+      ))
+      .returning({ id: apiKeys.id })
+    if (!quotaRows[0]) return { status: 'api_key_quota_exceeded' as const }
+
+    const rows = await tx.insert(apiCreditReservations).values({
+      userId: input.userId,
+      apiKeyId: input.apiKeyId,
+      apiId: input.apiId,
+      requestId: input.requestId,
+      amount
+    }).returning({
+      id: apiCreditReservations.id,
+      userId: apiCreditReservations.userId,
+      amount: apiCreditReservations.amount
+    })
+    return { status: 'reserved' as const, reservation: firstRow(rows)! }
+  })
+}
+
+async function releaseReservation(reservationId: number, userId?: number) {
+  return db.transaction(async (tx: DatabaseTransaction) => {
+    const conditions = [
+      eq(apiCreditReservations.id, reservationId),
+      inArray(apiCreditReservations.status, ['active', 'pending'])
+    ]
+    if (userId !== undefined) conditions.push(eq(apiCreditReservations.userId, userId))
+    const rows = await tx.select({
+      id: apiCreditReservations.id,
+      apiKeyId: apiCreditReservations.apiKeyId,
+      amount: apiCreditReservations.amount
+    }).from(apiCreditReservations)
+      .where(and(...conditions))
+      .limit(1)
+      .for('update')
+    const reservation = rows[0]
+    if (!reservation) return false
+
+    await tx.update(apiKeys).set({
+      usedCredits: sql`greatest(${apiKeys.usedCredits} - ${reservation.amount}, 0)`,
+      updatedAt: new Date()
+    }).where(eq(apiKeys.id, reservation.apiKeyId))
+    await tx.delete(apiCreditReservations).where(eq(apiCreditReservations.id, reservation.id))
+    return true
+  })
+}
+
+async function markReservationPending(reservationId: number, userId: number) {
+  const rows = await db.update(apiCreditReservations).set({
+    status: 'pending',
+    nextAttemptAt: new Date(Date.now() + RESERVATION_RETRY_DELAY_MS),
+    updatedAt: new Date()
+  }).where(and(
+    eq(apiCreditReservations.id, reservationId),
+    eq(apiCreditReservations.userId, userId),
+    eq(apiCreditReservations.status, 'active')
+  )).returning({ id: apiCreditReservations.id })
+  return Boolean(rows[0])
+}
+
+async function linkApiCall(reservationId: number, apiCallId: number) {
+  await db.update(apiCreditReservations).set({ apiCallId, updatedAt: new Date() }).where(and(
+    eq(apiCreditReservations.id, reservationId),
+    eq(apiCreditReservations.status, 'pending')
+  ))
+}
+
+async function finalizeReservation(input: FinalizeReservationInput) {
+  return db.transaction(async (tx: DatabaseTransaction) => {
+    const existingRows = await tx.select({
+      id: creditTransactions.id,
+      amount: creditTransactions.amount,
+      balanceAfter: creditTransactions.balanceAfter,
+      apiCallId: creditTransactions.apiCallId
+    }).from(creditTransactions)
+      .where(eq(creditTransactions.creditReservationId, input.reservationId))
+      .limit(1)
+    const existing = existingRows[0]
+    if (existing) {
+      const apiCallId = existing.apiCallId ?? input.apiCallId ?? null
+      if (apiCallId && existing.apiCallId === null) {
+        await tx.update(creditTransactions)
+          .set({ apiCallId })
+          .where(and(eq(creditTransactions.id, existing.id), isNull(creditTransactions.apiCallId)))
+      }
+      if (apiCallId) {
+        await tx.update(apiCalls)
+          .set({ creditsCost: Math.max(-toNumber(existing.amount), 0) })
+          .where(eq(apiCalls.id, apiCallId))
+      }
+      await tx.delete(apiCreditReservations).where(eq(apiCreditReservations.id, input.reservationId))
+      return {
+        charged: Math.max(-toNumber(existing.amount), 0),
+        balanceAfter: toNumber(existing.balanceAfter)
+      }
+    }
+
+    const reservations = await tx.select({
+      userId: apiCreditReservations.userId,
+      apiId: apiCreditReservations.apiId,
+      apiCallId: apiCreditReservations.apiCallId,
+      requestId: apiCreditReservations.requestId,
+      amount: apiCreditReservations.amount
+    })
+      .from(apiCreditReservations)
+      .where(and(
+        eq(apiCreditReservations.id, input.reservationId),
+        eq(apiCreditReservations.status, 'pending')
       ))
       .limit(1)
-    if (!existing[0]) throw error
+      .for('update')
+    const reservation = reservations[0]
+    if (!reservation) throw new Error('Credit reservation not found')
 
-    return {
-      charged: Math.max(-toNumber(existing[0].amount), 0),
-      balanceAfter: toNumber(existing[0].balanceAfter)
+    const updated = await tx.update(users)
+      .set({ credits: sql`${users.credits} - ${reservation.amount}`, updatedAt: new Date() })
+      .where(and(eq(users.id, reservation.userId), gte(users.credits, reservation.amount)))
+      .returning({ credits: users.credits })
+    if (!updated[0]) throw new Error('Reserved credit balance is no longer available')
+
+    const balanceAfter = toNumber(updated[0].credits)
+    const apiCallId = input.apiCallId ?? reservation.apiCallId ?? null
+    await tx.insert(creditTransactions).values({
+      userId: reservation.userId,
+      amount: -reservation.amount,
+      balanceAfter,
+      reason: 'api_charge',
+      apiId: reservation.apiId,
+      apiCallId,
+      creditReservationId: input.reservationId,
+      remark: input.remark ?? null,
+      meta: { requestId: reservation.requestId }
+    })
+    if (apiCallId) {
+      await tx.update(apiCalls)
+        .set({ creditsCost: reservation.amount })
+        .where(eq(apiCalls.id, apiCallId))
     }
-  }
+    await tx.delete(apiCreditReservations).where(eq(apiCreditReservations.id, input.reservationId))
+    return { charged: reservation.amount, balanceAfter }
+  })
+}
+
+async function claimDueReservations(limit: number) {
+  const max = Math.max(Math.trunc(limit), 1)
+  return db.select({
+    id: apiCreditReservations.id,
+    attempts: apiCreditReservations.attempts
+  }).from(apiCreditReservations)
+    .where(and(
+      eq(apiCreditReservations.status, 'pending'),
+      lte(apiCreditReservations.nextAttemptAt, new Date())
+    ))
+    .orderBy(asc(apiCreditReservations.nextAttemptAt))
+    .limit(max)
+}
+
+async function markReservationAttempt(id: number, error: string) {
+  return db.transaction(async (tx: DatabaseTransaction) => {
+    const rows = await tx.select({ attempts: apiCreditReservations.attempts })
+      .from(apiCreditReservations)
+      .where(and(eq(apiCreditReservations.id, id), eq(apiCreditReservations.status, 'pending')))
+      .limit(1)
+      .for('update')
+    if (!rows[0]) return
+
+    const attempts = rows[0].attempts + 1
+    await tx.update(apiCreditReservations).set({
+      attempts,
+      lastError: error.slice(0, 500),
+      lastAttemptAt: new Date(),
+      nextAttemptAt: nextAttemptAt(attempts),
+      status: attempts >= RESERVATION_MAX_ATTEMPTS ? 'dead_letter' : 'pending',
+      updatedAt: new Date()
+    }).where(eq(apiCreditReservations.id, id))
+  })
+}
+
+async function releaseExpiredReservations(cutoff: Date, limit = 100) {
+  return db.transaction(async (tx: DatabaseTransaction) => {
+    const rows = await tx.select({
+      id: apiCreditReservations.id,
+      apiKeyId: apiCreditReservations.apiKeyId,
+      amount: apiCreditReservations.amount
+    }).from(apiCreditReservations)
+      .where(and(
+        eq(apiCreditReservations.status, 'active'),
+        lt(apiCreditReservations.createdAt, cutoff)
+      ))
+      .orderBy(asc(apiCreditReservations.createdAt))
+      .limit(Math.max(Math.trunc(limit), 1))
+      .for('update')
+    if (rows.length === 0) return 0
+
+    const releasedByApiKey = new Map<number, number>()
+    for (const row of rows) {
+      releasedByApiKey.set(row.apiKeyId, (releasedByApiKey.get(row.apiKeyId) ?? 0) + row.amount)
+    }
+    for (const [apiKeyId, amount] of releasedByApiKey) {
+      await tx.update(apiKeys).set({
+        usedCredits: sql`greatest(${apiKeys.usedCredits} - ${amount}, 0)`,
+        updatedAt: new Date()
+      }).where(eq(apiKeys.id, apiKeyId))
+    }
+    await tx.delete(apiCreditReservations).where(inArray(apiCreditReservations.id, rows.map(row => row.id)))
+    return rows.length
+  })
 }
 
 async function getBalance(userId: number): Promise<number> {
@@ -195,7 +403,14 @@ async function getUserCreditsSummary(userId: number): Promise<UserCreditSummary>
 }
 
 export const creditService = {
-  forceCharge,
+  reserve,
+  releaseReservation,
+  markReservationPending,
+  linkApiCall,
+  finalizeReservation,
+  claimDueReservations,
+  markReservationAttempt,
+  releaseExpiredReservations,
   getBalance,
   listUserTransactions,
   getUserCreditsSummary

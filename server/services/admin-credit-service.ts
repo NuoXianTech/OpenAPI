@@ -1,9 +1,8 @@
 import { and, count, desc, eq, getTableColumns, gt, gte, ilike, lt, lte, sql, type SQL } from 'drizzle-orm'
-import { creditTransactions, users } from '~~/server/db/schema'
+import { apiCreditReservations, creditTransactions, users } from '~~/server/db/schema'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { createApplicationError } from '~~/server/errors/application-error'
 import {
-  calculateAdminRevokeAdjustment,
   getAdminCreditReason,
   normalizeCreditAmount,
   type AdminCreditOperation
@@ -58,6 +57,13 @@ function requirePositiveAmount(amount: number): number {
   throw createApplicationError({ statusCode: 400, message: 'amount must be > 0' })
 }
 
+async function getReservedCredits(tx: DatabaseTransaction, userId: number): Promise<number> {
+  const rows = await tx.select({
+    amount: sql<number>`coalesce(sum(${apiCreditReservations.amount}), 0)`
+  }).from(apiCreditReservations).where(eq(apiCreditReservations.userId, userId))
+  return toNumber(rows[0]?.amount)
+}
+
 async function grant(tx: DatabaseTransaction, input: AdminAdjustmentInput): Promise<CreditOperationResult | null> {
   const amount = requirePositiveAmount(input.amount)
   const updated = await tx.update(users)
@@ -87,25 +93,25 @@ async function revoke(tx: DatabaseTransaction, input: AdminAdjustmentInput): Pro
     .for('update')
   if (!current[0]) return null
 
-  const adjustment = calculateAdminRevokeAdjustment({
-    currentCredits: toNumber(current[0].credits),
-    requestedAmount: amount
-  })
-  if (adjustment.deductedAmount > 0) {
+  const currentCredits = toNumber(current[0].credits)
+  const reservedCredits = await getReservedCredits(tx, input.userId)
+  const deductedAmount = Math.min(Math.max(currentCredits - reservedCredits, 0), amount)
+  const balanceAfter = currentCredits - deductedAmount
+  if (deductedAmount > 0) {
     await tx.update(users)
-      .set({ credits: adjustment.balanceAfter, updatedAt: new Date() })
+      .set({ credits: balanceAfter, updatedAt: new Date() })
       .where(eq(users.id, input.userId))
   }
   await tx.insert(creditTransactions).values({
     userId: input.userId,
-    amount: adjustment.transactionAmount,
-    balanceAfter: adjustment.balanceAfter,
+    amount: deductedAmount === 0 ? 0 : -deductedAmount,
+    balanceAfter,
     reason: input.reason,
     operatorId: input.operatorId ?? null,
     operatorName: input.operatorName ?? null,
-    remark: input.remark ?? (adjustment.deductedAmount === 0 ? '积分不足，未实际扣减' : null)
+    remark: input.remark ?? (deductedAmount === 0 ? '可用积分不足，未实际扣减' : null)
   })
-  return { userId: input.userId, balanceAfter: adjustment.balanceAfter }
+  return { userId: input.userId, balanceAfter }
 }
 
 async function reset(tx: DatabaseTransaction, input: AdminResetInput): Promise<CreditOperationResult | null> {
@@ -115,6 +121,14 @@ async function reset(tx: DatabaseTransaction, input: AdminResetInput): Promise<C
     .limit(1)
     .for('update')
   if (!current[0]) return null
+
+  const reservedCredits = await getReservedCredits(tx, input.userId)
+  if (target < reservedCredits) {
+    throw createApplicationError({
+      statusCode: 409,
+      message: `cannot reset credits below reserved balance (${reservedCredits})`
+    })
+  }
 
   const updated = await tx.update(users)
     .set({ credits: target, updatedAt: new Date() })

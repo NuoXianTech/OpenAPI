@@ -37,6 +37,7 @@ export const API_GUARD_ERROR = {
   QUOTA_EXCEEDED: { status: 429, code: 'QUOTA_EXCEEDED', msg: '已达到当日配额上限' },
   QUOTA_UNAVAILABLE: { status: 503, code: 'QUOTA_UNAVAILABLE', msg: '配额服务暂不可用，请稍后再试' },
   API_KEY_QUOTA_EXCEEDED: { status: 429, code: 'API_KEY_QUOTA_EXCEEDED', msg: '积分配额超限' },
+  CREDITS_UNAVAILABLE: { status: 503, code: 'CREDITS_UNAVAILABLE', msg: '积分服务暂不可用，请稍后再试' },
   INSUFFICIENT_CREDITS: { status: 402, code: 'INSUFFICIENT_CREDITS', msg: '积分不足，请充值后再试' }
 } as const
 

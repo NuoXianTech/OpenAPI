@@ -11,7 +11,6 @@ import type { H3Event } from 'h3'
 import { apiCallService } from '~~/server/services/api-call-service'
 import { apiKeyService } from '~~/server/services/api-key-service'
 import { creditService } from '~~/server/services/credit-service'
-import { pendingChargeService } from '~~/server/services/pending-charge-service'
 import { shouldCharge } from '~~/server/utils/api-call-outcome'
 import type { ApiStatsTracked } from '~~/server/types/api-guard'
 import { getAppEventContext } from '~~/server/utils/event-context'
@@ -31,6 +30,7 @@ const DO_NOT_WRITE_LOG_OUTCOMES = new Set([
 
 const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'api_key_quota_exceeded',
+  'credits_unavailable',
   'disabled_api_key',
   'expired_api_key',
   'insufficient_credits',
@@ -50,9 +50,16 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     response?.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)
-  let quotaReservation: { apiKeyId: number, amount: number } | null = null
-  let willCharge = false
-  let hasCallRecord = false
+  const billingContext = eventContext.apiBilling
+  const creditReservation = billingContext?.creditReservation ?? null
+  const willCharge = billingContext
+    ? shouldCharge({
+        costCredits: billingContext.costCredits,
+        apiKeyUserId: billingContext.apiKeyUserId,
+        forcedOutcome: billingContext.forcedOutcome,
+        statusCode
+      })
+    : false
 
   try {
     const target = eventContext.apiStatsTarget
@@ -82,16 +89,6 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       ?? rejection?.apiKeyUserId
       ?? null
     const billing = eventContext.apiBilling
-
-    willCharge = billing
-      ? shouldCharge({
-          costCredits: billing.costCredits,
-          apiKeyUserId: billing.apiKeyUserId,
-          forcedOutcome: billing.forcedOutcome,
-          statusCode
-        })
-      : false
-    quotaReservation = billing?.apiKeyQuotaReservation ?? null
 
     const errorCode = rejection
       ? rejection.errorCode
@@ -130,47 +127,24 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
     const callId = !isCounted
       ? (await apiCallService.addCall(callInput))[0]?.id ?? null
       : await apiCallService.addCallAndUpsertDailyStat(callInput)
-    hasCallRecord = callId !== null
 
-    if (willCharge && billing && billing.apiKeyUserId && callId) {
+    if (willCharge && billing && billing.apiKeyUserId && billing.creditReservation && callId) {
       const remark = `API 调用扣费 · ${target.apiPath}`
       try {
-        // 调用已发生、上游成本已产生 → forceCharge 必扣（余额不足扣成负数，由 api-gate
-        // 挡住后续调用）。下面的 catch 只会捕获瞬时故障（如 DB 抖动），那种才值得进
-        // 重试队列；余额不足不再入队空转。
-        const r = await creditService.forceCharge({
-          userId: billing.apiKeyUserId,
-          amount: billing.costCredits,
-          apiId: target.apiId,
+        await creditService.linkApiCall(billing.creditReservation.id, callId)
+        await creditService.finalizeReservation({
+          reservationId: billing.creditReservation.id,
           apiCallId: callId,
           remark
         })
-        if (r.charged > 0) {
-          await apiCallService.patchCreditsCost(callId, r.charged)
-        }
       } catch (err) {
-        const error = (err as Error).message || 'charge failed'
-        console.error('failed to charge credits after api call, enqueuing for retry', {
+        console.error('failed to finalize billing reservation; background retry will continue', {
           callId,
+          reservationId: billing.creditReservation.id,
           userId: billing.apiKeyUserId,
           amount: billing.costCredits,
-          error
+          error: (err as Error).message || 'settlement failed'
         })
-        try {
-          await pendingChargeService.enqueue({
-            apiCallId: callId,
-            userId: billing.apiKeyUserId,
-            apiId: target.apiId,
-            amount: billing.costCredits,
-            remark,
-            error
-          })
-        } catch (enqueueErr) {
-          console.error('failed to enqueue pending charge', {
-            callId,
-            error: (enqueueErr as Error).message
-          })
-        }
       }
     }
 
@@ -185,11 +159,11 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       error
     })
   } finally {
-    if (quotaReservation && (!willCharge || !hasCallRecord)) {
-      await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount).catch((err) => {
-        console.error('failed to release apiKey quota reservation', {
-          apiKeyId: quotaReservation?.apiKeyId,
-          amount: quotaReservation?.amount,
+    if (creditReservation && !willCharge) {
+      await creditService.releaseReservation(creditReservation.id, creditReservation.userId).catch((err) => {
+        console.error('failed to release credit reservation', {
+          reservationId: creditReservation.id,
+          userId: creditReservation.userId,
           error: (err as Error).message
         })
       })

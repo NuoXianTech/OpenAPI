@@ -10,7 +10,7 @@
 | 数据库 | 单 PostgreSQL 实例，迁移由 Node/Nitro 启动插件在应用启动前自动执行 |
 | 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
 | 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
-| 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描 `pending_charges` |
+| 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描到期的 `api_credit_reservations` |
 | 代理 | 生产公网流量由 Nginx 或等价代理转发到 `127.0.0.1:<NITRO_PORT>` |
 
 ## 日常巡检
@@ -29,7 +29,7 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 
 | 检查项 | 异常信号 |
 | --- | --- |
-| `pending_charges` | 持续增长、出现大量 `dead_letter` |
+| `api_credit_reservations` | `pending` 持续增长、出现 `dead_letter`，或 `active` 长时间不释放 |
 | `api_calls` | 失败率突然升高、某 API 调用量异常 |
 | `api_call_stats` | 日聚合缺失或延迟明显 |
 | `operation_logs` 中的 `auth.login.*` 事件 | 管理员登录失败集中爆发 |
@@ -43,14 +43,14 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 | readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
 | 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
 | SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
-| 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[pending-charges]` 日志 |
+| 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[credit-reservations]` 日志 |
 | 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_API_KEY_SECRET` 是否与加密时一致、`api_keys.key_digest` 是否存在、Key 是否被禁用、网关是否连接了预期数据库 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
 | 公开 API 429 增多 | API 配置、Redis/进程内限流窗口、调用方 IP 或 Key |
 | 数据库读取突增 | Redis 可用性、命令延迟、内存、淘汰数和公开缓存命中情况 |
-| 扣费异常 | `api_calls`、`credit_transactions`、`pending_charges` |
+| 扣费异常 | `api_calls`、`credit_transactions`、`api_credit_reservations` |
 
 ## 备份策略
 
@@ -100,7 +100,7 @@ pm2 restart openapi --update-env
 1. 先确认影响范围：首页、统一登录页、管理后台、用户后台、公开 API、数据库、邮件、第三方 OAuth。
 2. 冻结变更：暂停发布、停止批量任务、保留日志。
 3. 读取 PM2 日志和数据库关键表，定位最近一次配置或代码变更。
-4. 如果影响公开 API 收费，检查 `pending_charges` 和 `credit_transactions` 是否需要人工补偿。
+4. 如果影响公开 API 收费，检查 `api_credit_reservations` 和 `credit_transactions`。`pending` 可等待或触发重试；`dead_letter` 必须先核对调用与流水再人工处理，不要直接删除。
 5. 能快速回滚应用时先回滚应用；涉及数据库结构时先备份当前状态。
 6. 恢复后补充事件记录：时间线、根因、影响、修复、预防项。
 

@@ -15,7 +15,8 @@ import {
   setResponseHeaders
 } from 'h3'
 import { eq } from 'drizzle-orm'
-import { apiKeys, users } from '~~/server/db/schema'
+import { db } from '~~/server/db/client'
+import { apiKeys } from '~~/server/db/schema'
 import type { RateLimitWindow } from '~~/server/config/api-guard'
 import {
   API_GUARD_ERROR,
@@ -24,16 +25,21 @@ import {
   normalizePathname,
   resolveMethodCost
 } from '~~/server/config/api-guard'
-import type { ApiGuardConfig, GateOutcome, RateLimitResult } from '~~/server/types/api-guard'
+import type {
+  ApiCreditReservationContext,
+  ApiGuardConfig,
+  GateOutcome,
+  RateLimitResult
+} from '~~/server/types/api-guard'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { isRedisUnavailableError } from '~~/server/utils/redis'
 import { ipInAnyCidr } from '#shared/utils/cidr'
-import { apiKeyService } from '~~/server/services/api-key-service'
 import { apiRegistryService } from '~~/server/services/api-registry-service'
+import { creditService } from '~~/server/services/credit-service'
 import { reserveApiDailyQuota } from '~~/server/services/api-daily-quota-service'
 import { getAllowedMethods, getManifestApi, matchEndpoint } from '~~/server/utils/api-manifest'
-import { clampInteger, toNullableNonNegativeInteger, toNumber } from '~~/server/utils/number'
-import { openApiBizFail } from '~~/server/utils/api-call-outcome'
+import { clampInteger, toNullableNonNegativeInteger } from '~~/server/utils/number'
+import { openApiBizFail, shouldCharge } from '~~/server/utils/api-call-outcome'
 import {
   createOpenApiHandlerContext,
   type OpenApiHandlerContext
@@ -56,11 +62,6 @@ interface ErrorDefinition {
   msg: string
 }
 
-interface ApiKeyQuotaReservation {
-  apiKeyId: number
-  amount: number
-}
-
 type GateResponseHeaders = Record<string, string>
 
 type GateResult
@@ -68,7 +69,7 @@ type GateResult
     passed: true
     outcome: 'passed'
     apiKey: ApiKeyRecord | null
-    quotaReservation: ApiKeyQuotaReservation | null
+    creditReservation: ApiCreditReservationContext | null
     rateLimitHeaders: GateResponseHeaders
   }
   | {
@@ -172,6 +173,17 @@ interface RunGuardInput {
   effectiveCost: number
 }
 
+async function releaseGateReservation(apiId: number, reservation: ApiCreditReservationContext | null) {
+  if (!reservation) return
+  await creditService.releaseReservation(reservation.id, reservation.userId).catch((error) => {
+    console.error('[api-guard] failed to release billing reservation', {
+      apiId,
+      reservationId: reservation.id,
+      error: (error as Error).message
+    })
+  })
+}
+
 async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promise<GateResult> {
   if (!api.isEnabled) {
     return { passed: false, outcome: 'disabled', error: API_GUARD_ERROR.DISABLED, apiKey: null }
@@ -180,7 +192,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
   const rawKey = readApiKeyFromEvent(event)
   const clientIp = readClientIp(event)
   let apiKey: ApiKeyRecord | null = null
-  let quotaReservation: ApiKeyQuotaReservation | null = null
+  let creditReservation: ApiCreditReservationContext | null = null
 
   if (rawKey) {
     apiKey = await loadApiKey(rawKey)
@@ -247,35 +259,36 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
 
   if (effectiveCost > 0 && apiKey) {
     try {
-      const userRow = await db.select({ credits: users.credits })
-        .from(users)
-        .where(eq(users.id, apiKey.userId))
-        .limit(1)
-      const balance = toNumber(userRow[0]?.credits)
-      if (balance < effectiveCost) {
+      const result = await creditService.reserve({
+        userId: apiKey.userId,
+        apiKeyId: apiKey.id,
+        apiId: api.id,
+        requestId: ensureRequestId(event),
+        amount: effectiveCost
+      })
+      if (result.status === 'insufficient_credits') {
         return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
       }
+      if (result.status === 'api_key_quota_exceeded') {
+        return {
+          passed: false,
+          outcome: 'api_key_quota_exceeded',
+          error: API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
+          apiKey
+        }
+      }
+      creditReservation = result.reservation
     } catch (err) {
-      console.error('[api-guard] credits check failed', {
+      console.error('[api-guard] billing reservation failed', {
         apiId: api.id,
         error: (err as Error).message
       })
-      return { passed: false, outcome: 'insufficient_credits', error: API_GUARD_ERROR.INSUFFICIENT_CREDITS, apiKey }
-    }
-
-    const reserved = await apiKeyService.reserveUsedCredits(apiKey.id, effectiveCost)
-    if (!reserved) {
       return {
         passed: false,
-        outcome: 'api_key_quota_exceeded',
-        error: API_GUARD_ERROR.API_KEY_QUOTA_EXCEEDED,
+        outcome: 'credits_unavailable',
+        error: API_GUARD_ERROR.CREDITS_UNAVAILABLE,
         apiKey
       }
-    }
-
-    quotaReservation = {
-      apiKeyId: apiKey.id,
-      amount: effectiveCost
     }
   }
 
@@ -283,23 +296,11 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
     try {
       const reserved = await reserveApiDailyQuota(api.id, api.dailyQuota)
       if (!reserved) {
-        if (quotaReservation) {
-          await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount)
-          quotaReservation = null
-        }
+        await releaseGateReservation(api.id, creditReservation)
         return { passed: false, outcome: 'quota_exceeded', error: API_GUARD_ERROR.QUOTA_EXCEEDED, apiKey }
       }
     } catch (err) {
-      if (quotaReservation) {
-        await apiKeyService.releaseReservedCredits(quotaReservation.apiKeyId, quotaReservation.amount).catch((releaseError) => {
-          console.error('[api-guard] failed to release API key quota reservation', {
-            apiId: api.id,
-            apiKeyId: quotaReservation?.apiKeyId,
-            error: (releaseError as Error).message
-          })
-        })
-        quotaReservation = null
-      }
+      await releaseGateReservation(api.id, creditReservation)
       console.error('[api-guard] daily quota reservation failed', {
         apiId: api.id,
         error: (err as Error).message
@@ -312,7 +313,7 @@ async function runApiGuard({ event, api, effectiveCost }: RunGuardInput): Promis
     passed: true,
     outcome: 'passed',
     apiKey,
-    quotaReservation,
+    creditReservation,
     rateLimitHeaders: rateLimitHeaders(rateResult)
   }
 }
@@ -411,7 +412,7 @@ async function runOpenApiGate(event: H3Event): Promise<OpenApiGateResult> {
   eventContext.apiBilling = {
     costCredits: effectiveCost,
     apiKeyUserId: result.apiKey?.userId ?? null,
-    apiKeyQuotaReservation: result.quotaReservation,
+    creditReservation: result.creditReservation,
     forcedOutcome: null,
     failedCode: null,
     failedMessage: null
@@ -442,12 +443,40 @@ export function defineOpenApiEventHandler<TResult>(
     if (ignoredStatisticsStatusCodes.length > 0 && eventContext.apiStatsTracked) {
       eventContext.apiStatsTracked.ignoredStatisticsStatusCodes = ignoredStatisticsStatusCodes
     }
-    return runWithTimeout(
+    const response = await runWithTimeout(
       signal => handler(event, createOpenApiHandlerContext(event, signal)),
       {
         timeoutMs: gate.timeoutMs,
         onTimeout: () => openApiBizFail(event, 504, 'API_TIMEOUT', '接口处理超时')
       }
     )
+    const billing = eventContext.apiBilling
+    const reservation = billing?.creditReservation
+    if (!billing || !reservation) return response
+
+    const charge = shouldCharge({
+      costCredits: billing.costCredits,
+      apiKeyUserId: billing.apiKeyUserId,
+      forcedOutcome: billing.forcedOutcome,
+      statusCode: Math.trunc(event.node.res.statusCode || 200)
+    })
+    try {
+      if (charge) {
+        const marked = await creditService.markReservationPending(reservation.id, reservation.userId)
+        if (!marked) throw new Error('Billing reservation is no longer active')
+      } else {
+        await creditService.releaseReservation(reservation.id, reservation.userId)
+        billing.creditReservation = null
+      }
+    } catch (error) {
+      console.error('[api-guard] failed to persist billing outcome before response', {
+        reservationId: reservation.id,
+        error: (error as Error).message
+      })
+      if (charge) {
+        return openApiBizFail(event, 503, 'BILLING_UNAVAILABLE', '计费服务暂不可用，请稍后再试')
+      }
+    }
+    return response
   })
 }

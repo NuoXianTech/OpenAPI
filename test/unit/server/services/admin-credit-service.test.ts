@@ -30,6 +30,7 @@ beforeAll(async () => {
       reason varchar(50) NOT NULL,
       api_id integer,
       api_call_id bigint,
+      credit_reservation_id bigint,
       code_id integer,
       operator_id integer,
       operator_name varchar(140),
@@ -38,13 +39,18 @@ beforeAll(async () => {
       meta jsonb,
       created_at timestamptz NOT NULL DEFAULT now()
     );
+    CREATE TABLE api_credit_reservations (
+      id bigserial PRIMARY KEY,
+      user_id integer NOT NULL,
+      amount integer NOT NULL
+    );
   `)
   testContext.database = drizzle(client, { schema })
 })
 
 beforeEach(async () => {
   await client.exec(`
-    TRUNCATE credit_transactions, users RESTART IDENTITY;
+    TRUNCATE api_credit_reservations, credit_transactions, users RESTART IDENTITY;
     INSERT INTO users (credits) VALUES (10), (3);
   `)
 })
@@ -76,6 +82,31 @@ describe('admin credit service', () => {
       operation: 'revoke',
       amount: 4
     })).rejects.toMatchObject({ statusCode: 404 })
+
+    const result = await client.query<{ credits: number }>('SELECT credits FROM users WHERE id = 1')
+    expect(result.rows[0]?.credits).toBe(10)
+  })
+
+  it('does not revoke credits reserved by in-flight API calls', async () => {
+    await client.query('INSERT INTO api_credit_reservations (user_id, amount) VALUES (1, 8)')
+
+    const result = await adminCreditService.batchAdjust({
+      userIds: [1],
+      operation: 'revoke',
+      amount: 5
+    })
+
+    expect(result.results).toEqual([{ userId: 1, balanceAfter: 8 }])
+  })
+
+  it('rejects resets below the reserved balance', async () => {
+    await client.query('INSERT INTO api_credit_reservations (user_id, amount) VALUES (1, 8)')
+
+    await expect(adminCreditService.batchAdjust({
+      userIds: [1],
+      operation: 'reset',
+      amount: 5
+    })).rejects.toMatchObject({ statusCode: 409 })
 
     const result = await client.query<{ credits: number }>('SELECT credits FROM users WHERE id = 1')
     expect(result.rows[0]?.credits).toBe(10)

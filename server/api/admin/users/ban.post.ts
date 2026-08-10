@@ -31,5 +31,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     }
   })
 
-  return updated
+  const { passwordHash: _passwordHash, tokenVersion: _tokenVersion, ...safe } = updated
+  return safe
 })

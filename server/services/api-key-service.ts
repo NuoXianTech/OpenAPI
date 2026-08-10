@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, desc, eq, isNull, or, sql } from 'drizzle-orm'
+import { and, desc, eq, sql } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiCalls, apiKeys } from '~~/server/db/schema'
 import { clampInteger } from '~~/server/utils/number'
@@ -201,53 +201,6 @@ export const apiKeyService = {
 
   async resetById(id: number, userId?: number) {
     return resetKey(id, userId)
-  },
-
-  /**
-   * 在 gate 阶段原子预占 API Key 使用额度。
-   *
-   * 这一步同时覆盖"无限配额"与"有限 totalQuota"两类 key：
-   * - totalQuota = null：直接累加 usedCredits，用作真实使用量统计
-   * - totalQuota 有值：只有 usedCredits + amount <= totalQuota 时才累加
-   *
-   * 预占成功后，成功调用无需再二次累加；业务失败 / 非扣费响应必须调用
-   * releaseReservedCredits 释放预占额度。
-   */
-  async reserveUsedCredits(id: number, amount: number): Promise<boolean> {
-    const delta = Math.max(Math.trunc(amount), 0)
-    if (delta === 0) return true
-
-    const rows = await db.update(apiKeys)
-      .set({
-        usedCredits: sql`${apiKeys.usedCredits} + ${delta}`,
-        updatedAt: new Date()
-      })
-      .where(and(
-        eq(apiKeys.id, id),
-        eq(apiKeys.isActive, true),
-        or(
-          isNull(apiKeys.totalQuota),
-          sql`${apiKeys.usedCredits} + ${delta} <= ${apiKeys.totalQuota}`
-        )!
-      ))
-      .returning({ id: apiKeys.id })
-
-    return Boolean(rows[0])
-  },
-
-  /**
-   * 释放 gate 阶段的额度预占。使用 greatest 防御重复释放或并发修正导致的负数。
-   */
-  async releaseReservedCredits(id: number, amount: number): Promise<void> {
-    const delta = Math.max(Math.trunc(amount), 0)
-    if (delta === 0) return
-
-    await db.update(apiKeys)
-      .set({
-        usedCredits: sql`greatest(${apiKeys.usedCredits} - ${delta}, 0)`,
-        updatedAt: new Date()
-      })
-      .where(eq(apiKeys.id, id))
   },
 
   /**

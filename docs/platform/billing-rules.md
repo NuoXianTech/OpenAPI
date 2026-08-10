@@ -6,27 +6,28 @@
 
 - `users.credits` 是用户余额的唯一事实来源。
 - `apis.method_costs` 按 HTTP 方法保存价格，结构为 `Record<UPPER_METHOD, number>`。
-- `credit_transactions` 记录每次余额变化，并保留 `balanceAfter` 审计快照。
-- `pending_charges` 保存响应后扣费失败的重试任务；多实例由 Redis lease 选出单个扫描者。
+- `api_credit_reservations` 是付费调用的持久状态机：`active` 表示 handler 正在执行，`pending` 表示成功响应必须结算，`dead_letter` 表示重试耗尽且积分继续冻结。可用余额为用户余额减去该用户的所有预留。
+- `credit_transactions` 记录每次余额变化，并保留 `balanceAfter` 审计快照；`creditReservationId` 是 API 扣费的持久幂等键。
 - 当前没有套餐、订阅、支付网关或月度额度系统。
 
 ## 请求链路
 
 1. `defineOpenApiEventHandler` 仅在公开 API handler 执行前解析 `(pathVersion, code)`、加载 API 配置、匹配 endpoint，并计算本次 method 的有效费用。
-2. `server/utils/api-guard.ts` 检查 API 状态、API Key 规则、限流、每日配额和用户余额。
+2. `server/utils/api-guard.ts` 检查 API 状态、API Key 规则和限流。付费请求在同一事务内通过用户行锁检查可用余额、预占 API Key 积分配额并创建 `active` 预留；后续每日配额拒绝时同时释放两项预留。
 3. 公开 API handler 执行业务逻辑，并返回标准 OpenAPI 响应结构。
-4. `server/plugins/api-call-stats.ts` 在响应发出后记录 `api_calls`，并更新 `api_call_stats`。
-5. 如果本次调用需要扣费，`creditService.forceCharge` 会在同一事务中扣减 `users.credits` 并插入 `credit_transactions`。由于上游工作已经发生，此处扣费是无条件的，可能把余额扣成负数；后续调用会被 api-gate 的 `balance < effectiveCost` 检查拒绝，直到用户充值。
-6. 此阶段的扣费失败只应来自瞬时故障（例如数据库错误）。失败时 `pendingChargeService.enqueue` 写入一条以 `apiCallId` 为键的重试记录；余额不足不再进入重试队列。
-7. `server/plugins/pending-charges-retry.ts` 每 30 秒尝试获取 Redis lease，持有者扫描到期的 `pending_charges` 并通过 `forceCharge` 重试；成功后删除记录，失败则退避，直到进入 `dead_letter`。未配置 Redis 的单实例使用进程内互斥。
+4. handler 返回成功时，网关必须先把预留改为 `pending` 才能返回响应；失败响应则原子恢复 API Key 配额并删除预留。成功结果无法持久化时返回 `503 BILLING_UNAVAILABLE`，避免成功调用逃逸扣费。
+5. `server/plugins/api-call-stats.ts` 在响应发出后记录 `api_calls`、更新 `api_call_stats`，关联调用日志并尝试立即结算。
+6. `creditService.finalizeReservation` 在同一事务内扣减余额、写入 `credit_transactions`、更新 `api_calls.credits_cost` 并删除预留。事务按 `creditReservationId` 幂等；即使进程在调用日志写入前退出，后台任务也能先完成扣费，再安全补挂调用日志。
+7. `server/plugins/credit-reservations-retry.ts` 每 30 秒在 Redis lease 下扫描到期的 `pending` 预留并退避重试；达到上限后进入 `dead_letter`。未配置 Redis 的单实例使用进程内 lease 回退。
+8. 后台任务会释放超过 10 分钟的 `active` 预留并恢复 API Key 配额。`pending` 和 `dead_letter` 预留不会被自动释放。
 
 ## 可靠性规则
 
 - 不要在 API handler 中扣费。handler 只表达成功或失败，扣费由插件统一处理。
 - 不要直接更新 `users.credits`。所有余额变化必须走 `creditService`，或走等价的单事务实现，并同时写入审计流水。
-- `credit_transactions(apiCallId, reason)` 在 `apiCallId` 存在时保持唯一，避免同一次 API 调用产生重复扣费或退款流水。
-- `pending_charges.apiCallId` 保持唯一，避免重复重试任务。
-- `pending_charges.status` 仅允许 `pending` 与 `dead_letter`。
+- `credit_transactions.creditReservationId` 在非空时保持唯一，避免同一预留产生重复扣费。
+- `api_credit_reservations.status` 仅允许 `active`、`pending` 与 `dead_letter`；只有 `pending` 可进入结算。
+- 管理员撤回积分只能消费未预留余额；重置余额低于预留总额时必须拒绝，避免后续结算把余额扣成负数。
 
 ## 限流模型
 
@@ -38,8 +39,7 @@
 ## 已知限制
 
 - `creditService.refund` 为未来流程预留，当前标准 API 计费链路不会调用。
-- `dead_letter` 扣费任务目前需要运维处理，后续可以补专用管理页。
-- 当前是后付费模型，api-gate 的余额检查只具备准入意义：并发中的多个请求可能都通过 gate，并在 `forceCharge` 时把余额扣成负数。这个结果在当前模型中可接受，负数余额会阻止后续调用直到充值。如果未来需要严格预付费，应在 gate 阶段做原子预留或冻结，并在 handler 结束后退还差额。
+- `dead_letter` 预留目前需要运维人工确认后处理，不能直接删除，否则会无审计地释放已成功调用的费用。
 
 ## 注册赠送积分
 

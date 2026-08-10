@@ -6,6 +6,7 @@ CREATE TABLE "credit_transactions" (
 	"reason" varchar(50) NOT NULL,
 	"api_id" integer,
 	"api_call_id" bigint,
+	"credit_reservation_id" bigint,
 	"code_id" integer,
 	"operator_id" integer,
 	"operator_name" varchar(140),
@@ -131,6 +132,26 @@ CREATE TABLE "api_categories" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "api_credit_reservations" (
+	"id" bigserial PRIMARY KEY NOT NULL,
+	"user_id" integer NOT NULL,
+	"api_key_id" integer NOT NULL,
+	"api_id" integer NOT NULL,
+	"api_call_id" bigint,
+	"request_id" uuid NOT NULL,
+	"amount" integer NOT NULL,
+	"status" varchar(20) DEFAULT 'active' NOT NULL,
+	"attempts" integer DEFAULT 0 NOT NULL,
+	"last_error" varchar(500),
+	"last_attempt_at" timestamp with time zone,
+	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "api_credit_reservations_amount_chk" CHECK ("api_credit_reservations"."amount" > 0),
+	CONSTRAINT "api_credit_reservations_status_chk" CHECK ("api_credit_reservations"."status" in ('active', 'pending', 'dead_letter')),
+	CONSTRAINT "api_credit_reservations_attempts_chk" CHECK ("api_credit_reservations"."attempts" >= 0)
+);
+--> statement-breakpoint
 CREATE TABLE "api_daily_quota_usage" (
 	"api_id" integer NOT NULL,
 	"usage_date" date NOT NULL,
@@ -202,25 +223,6 @@ CREATE TABLE "apis" (
 	CONSTRAINT "apis_capability_revision_chk" CHECK ("apis"."capability_revision" >= 0),
 	CONSTRAINT "apis_daily_quota_chk" CHECK ("apis"."daily_quota" >= 0),
 	CONSTRAINT "apis_timeout_ms_chk" CHECK ("apis"."timeout_ms" between 100 and 120000)
-);
---> statement-breakpoint
-CREATE TABLE "pending_charges" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"api_call_id" bigint NOT NULL,
-	"user_id" integer NOT NULL,
-	"api_id" integer NOT NULL,
-	"amount" integer NOT NULL,
-	"remark" varchar(500),
-	"attempts" integer DEFAULT 0 NOT NULL,
-	"last_error" varchar(500),
-	"last_attempt_at" timestamp with time zone,
-	"next_attempt_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"status" varchar(20) DEFAULT 'pending' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "pending_charges_status_chk" CHECK ("pending_charges"."status" in ('pending', 'dead_letter')),
-	CONSTRAINT "pending_charges_amount_chk" CHECK ("pending_charges"."amount" > 0),
-	CONSTRAINT "pending_charges_attempts_chk" CHECK ("pending_charges"."attempts" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "announcements" (
@@ -306,18 +308,18 @@ ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk"
 ALTER TABLE "api_call_stats" ADD CONSTRAINT "api_call_stats_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_calls" ADD CONSTRAINT "api_calls_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_categories" ADD CONSTRAINT "api_categories_parent_id_api_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_credit_reservations" ADD CONSTRAINT "api_credit_reservations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "api_credit_reservations" ADD CONSTRAINT "api_credit_reservations_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_daily_quota_usage" ADD CONSTRAINT "api_daily_quota_usage_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "apis" ADD CONSTRAINT "apis_category_id_api_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_call_id_api_calls_id_fk" FOREIGN KEY ("api_call_id") REFERENCES "public"."api_calls"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "pending_charges" ADD CONSTRAINT "pending_charges_api_id_apis_id_fk" FOREIGN KEY ("api_id") REFERENCES "public"."apis"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_message_id_notification_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_recipient_user_id_users_id_fk" FOREIGN KEY ("recipient_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "credit_transactions_created_at_idx" ON "credit_transactions" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "credit_transactions_user_created_idx" ON "credit_transactions" USING btree ("user_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "credit_transactions_reason_idx" ON "credit_transactions" USING btree ("reason");--> statement-breakpoint
 CREATE UNIQUE INDEX "credit_transactions_api_call_reason_uq" ON "credit_transactions" USING btree ("api_call_id","reason") WHERE "credit_transactions"."api_call_id" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "credit_transactions_reservation_uq" ON "credit_transactions" USING btree ("credit_reservation_id") WHERE "credit_transactions"."credit_reservation_id" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "credit_transactions_redemption_user_uq" ON "credit_transactions" USING btree ("code_id","user_id") WHERE "credit_transactions"."reason" = 'redemption_code' AND "credit_transactions"."code_id" IS NOT NULL;--> statement-breakpoint
 CREATE INDEX "redemption_codes_batch_idx" ON "redemption_codes" USING btree ("batch_id");--> statement-breakpoint
 CREATE INDEX "redemption_codes_enabled_expires_idx" ON "redemption_codes" USING btree ("is_enabled","expires_at");--> statement-breakpoint
@@ -336,14 +338,15 @@ CREATE INDEX "api_calls_request_id_idx" ON "api_calls" USING btree ("request_id"
 CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code");--> statement-breakpoint
 CREATE INDEX "api_categories_parent_sort_idx" ON "api_categories" USING btree ("parent_id","sort_order");--> statement-breakpoint
 CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree ("is_enabled","sort_order");--> statement-breakpoint
+CREATE INDEX "api_credit_reservations_user_status_idx" ON "api_credit_reservations" USING btree ("user_id","status");--> statement-breakpoint
+CREATE INDEX "api_credit_reservations_status_next_attempt_idx" ON "api_credit_reservations" USING btree ("status","next_attempt_at");--> statement-breakpoint
+CREATE INDEX "api_credit_reservations_created_idx" ON "api_credit_reservations" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "api_credit_reservations_request_idx" ON "api_credit_reservations" USING btree ("request_id");--> statement-breakpoint
 CREATE INDEX "api_daily_quota_usage_date_idx" ON "api_daily_quota_usage" USING btree ("usage_date");--> statement-breakpoint
 CREATE INDEX "api_keys_user_idx" ON "api_keys" USING btree ("user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "apis_version_code_uq" ON "apis" USING btree ("path_version","code");--> statement-breakpoint
 CREATE INDEX "apis_category_idx" ON "apis" USING btree ("category_id");--> statement-breakpoint
 CREATE INDEX "apis_path_version_enabled_idx" ON "apis" USING btree ("path_version","is_enabled");--> statement-breakpoint
-CREATE UNIQUE INDEX "pending_charges_api_call_uq" ON "pending_charges" USING btree ("api_call_id");--> statement-breakpoint
-CREATE INDEX "pending_charges_status_next_attempt_idx" ON "pending_charges" USING btree ("status","next_attempt_at");--> statement-breakpoint
-CREATE INDEX "pending_charges_user_idx" ON "pending_charges" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "announcements_enabled_pin_sort_idx" ON "announcements" USING btree ("is_enabled","is_pinned","sort_order");--> statement-breakpoint
 CREATE UNIQUE INDEX "notification_deliveries_msg_user_uq" ON "notification_deliveries" USING btree ("message_id","recipient_user_id");--> statement-breakpoint
 CREATE INDEX "notification_deliveries_user_created_idx" ON "notification_deliveries" USING btree ("recipient_user_id","created_at");--> statement-breakpoint

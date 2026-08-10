@@ -55,7 +55,7 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 - 用户登录、API Key 列表、公开 API 列表可用。
 - 一个低风险公开 API 可被 API Key 调用，调用日志和统计写入正常。
 - PM2 日志无鉴权密钥错误、数据库连接错误或 `[db:migrate]` 失败记录。
-- `pending_charges` 没有异常增长，调用日志和积分流水符合预期。
+- `api_credit_reservations` 没有积压的 `pending` 或 `dead_letter`，调用日志和积分流水符合预期。
 - 静态资源在 `Accept-Encoding: br, gzip` 下返回 `Content-Encoding: br` 或 `gzip`。
 - HTML 响应包含 CSP、HSTS、`X-Content-Type-Options`、Referrer Policy 和 Permissions Policy。
 
@@ -89,7 +89,7 @@ pm2 save
 | 观察项 | 异常信号 |
 | --- | --- |
 | PM2 日志 | 迁移失败、数据库连接失败、未配置 JWT secret |
-| 数据库 | `pending_charges` 持续增长、大量 `dead_letter`，或 PGlite 数据目录磁盘空间不足 |
+| 数据库 | `api_credit_reservations` 中 `pending` 持续增长、出现 `dead_letter`，或 PGlite 数据目录磁盘空间不足 |
 | API 网关 | 401/403/429 异常升高 |
 | 资源 | CPU、内存、连接数持续接近上限 |
 | 前端 | Lighthouse 分数下降，LCP/CLS/INP 超过目标 |

@@ -83,6 +83,7 @@ export const creditTransactions = pgTable('credit_transactions', {
   reason: varchar('reason', { length: 50 }).notNull(),
   apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
   apiCallId: bigint('api_call_id', { mode: 'number' }), // 关联 apiCalls.id 快照
+  creditReservationId: bigint('credit_reservation_id', { mode: 'number' }), // API 预留 id 快照，用于崩溃恢复幂等
   codeId: integer('code_id'), // 仅 reason=redemption_code 有值，关联 redemptionCodes.id 快照（无 FK）
   operatorId: integer('operator_id'), // users.id 快照；null = 系统任务或无操作者快照
   operatorName: varchar('operator_name', { length: 140 }), // 操作者名快照
@@ -99,6 +100,9 @@ export const creditTransactions = pgTable('credit_transactions', {
   uniqueIndex('credit_transactions_api_call_reason_uq')
     .on(table.apiCallId, table.reason)
     .where(sql`${table.apiCallId} IS NOT NULL`),
+  uniqueIndex('credit_transactions_reservation_uq')
+    .on(table.creditReservationId)
+    .where(sql`${table.creditReservationId} IS NOT NULL`),
   // 防止同一用户重复兑换同一兑换码：(codeId, userId) 在兑换行上唯一。
   // 接管原 redemptionRecords 的防重职责；并发重复兑换时第二条 INSERT 被拒、事务回滚，
   // usedCount 递增一并撤销。仅约束兑换行，不波及 api_charge 等其它 reason。

@@ -68,6 +68,7 @@ export type GateOutcome
     | 'quota_exceeded'
     | 'quota_unavailable'
     | 'api_key_quota_exceeded'
+    | 'credits_unavailable'
     | 'insufficient_credits'
 
 export interface ApiStatsTarget {
@@ -94,15 +95,16 @@ export interface ApiKeyContext {
   name: string
 }
 
-export interface ApiKeyQuotaReservationContext {
-  apiKeyId: number
+export interface ApiCreditReservationContext {
+  id: number
+  userId: number
   amount: number
 }
 
 export interface ApiBillingContext {
   costCredits: number
   apiKeyUserId: number | null
-  apiKeyQuotaReservation: ApiKeyQuotaReservationContext | null
+  creditReservation: ApiCreditReservationContext | null
   forcedOutcome: 'success' | 'failed' | null
   failedCode: string | null
   failedMessage: string | null
