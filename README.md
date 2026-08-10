@@ -35,23 +35,6 @@ OpenAPI turns versioned Nitro routes into governed public services. It discovers
 
 Newly discovered APIs are disabled by default. Configure and enable them in the admin dashboard before exposing them.
 
-## Built-in public APIs
-
-| API | Endpoints | Purpose |
-| --- | --- | --- |
-| Bing | `GET /v1/bing` | Bing daily image metadata, including standard and 4K UHD image URLs. |
-| Crypto | `GET /v1/crypto`, `POST /v1/crypto` | Discover and run registered encoders or ciphers. |
-| Doubao | `GET /v1/doubao`, `/images`, `/videos` | Extract supported share-link media. |
-| Exchange rate | `GET /v1/exchange-rate` | Query exchange rates with JSON, text, or Markdown output. |
-| Fuel price | `GET /v1/fuel-price`, `/regions` | Query regional fuel prices and supported regions. |
-| Maoyan | `GET /v1/maoyan/**` | Query global movie box office, realtime movie box office, TV ratings, and web-series heat. |
-| Music | `GET /v1/music` | Search and resolve songs through one NetEase, Tencent, KuGou, Baidu, or Kuwo entry point. |
-| Player | `GET /v1/player`, `/art` | Music player data and cover art. |
-| Short video | `GET /v1/short-video` | Resolve supported video, image, or live-photo shares with one `url` parameter. |
-| Yiyan | `GET /v1/yiyan` | Random sentences in several negotiated output formats. |
-
-Availability and authentication depend on the database configuration set by an administrator.
-
 ## Technology
 
 - Nuxt 4, Vue 3, TypeScript, Nitro, VueUse
