@@ -1,10 +1,14 @@
+import { createHash } from 'node:crypto'
+import { deflateSync } from 'node:zlib'
+import iconv from 'iconv-lite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { getBaiduLyrics, getBaiduTracks, getBaiduUrl, searchBaidu } from '~~/server/lib/music/baidu'
 import { mergeCookieHeader, parseJsonResponseText, requestJson } from '~~/server/lib/music/common'
 import { getNeteasePicture, getNeteaseUrl } from '~~/server/lib/music/netease'
 import { getTencentPicture, searchTencent } from '~~/server/lib/music/tencent'
 import { isMusicPlatform, searchMusic } from '~~/server/lib/music/client'
 import { getKugouUrl, searchKugou } from '~~/server/lib/music/kugou'
-import { getKuwoUrl, searchKuwo } from '~~/server/lib/music/kuwo'
+import { getKuwoLyrics, getKuwoTracks, getKuwoUrl, searchKuwo } from '~~/server/lib/music/kuwo'
 import { formatMusicLyrics, normalizeMusicRedirectUrl, toPublicMusicTracks } from '~~/server/lib/music/public-contract'
 import { parseMusicRequestQuery } from '~~/server/lib/music/request'
 import { MUSIC_PLATFORMS } from '~~/server/lib/music/types'
@@ -68,6 +72,16 @@ describe('music API helpers', () => {
         limit: 20
       }
     })
+    expect(parseMusicRequestQuery({ server: 'netease', type: 'song', id: '29732992' })).toEqual({
+      ok: true,
+      data: {
+        platform: 'netease',
+        operation: 'song',
+        id: '29732992',
+        page: 1,
+        limit: 30
+      }
+    })
     expect(parseMusicRequestQuery({ q: '旧参数' })).toMatchObject({ ok: false, code: 'UNSUPPORTED_PARAMETER' })
     expect(parseMusicRequestQuery({ type: '1', id: '旧搜索类型' })).toMatchObject({ ok: false, code: 'INVALID_TYPE' })
   })
@@ -85,6 +99,7 @@ describe('music API helpers', () => {
     }], new URL('https://api.example.com/v1/music?server=netease&type=search&id=test'))
 
     expect(track).toEqual({
+      id: '1',
       title: '晴天',
       artist: '周杰伦',
       album: '叶惠美',
@@ -203,11 +218,14 @@ describe('music API helpers', () => {
       status: 1,
       errcode: 0,
       data: {
-        info: [{ hash: 'song-hash', filename: '测试歌手 - 测试歌曲', album_name: '测试专辑' }]
+        info: [{ hash: 'song-hash', encode_album_audio_id: 'encoded-audio-id', filename: '测试歌手 - 测试歌曲', album_name: '测试专辑' }]
       }
     })))
 
-    await expect(searchKugou('测试', 1, 1)).resolves.toHaveLength(1)
+    await expect(searchKugou('测试', 1, 1)).resolves.toEqual([expect.objectContaining({
+      id: 'song-hash',
+      audioId: 'song-hash'
+    })])
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('https://mobileservice.kugou.com/api/v3/search/song?')
     expect(fetchMock.mock.calls[0]?.[1]?.headers).not.toHaveProperty('cookie')
   })
@@ -225,6 +243,111 @@ describe('music API helpers', () => {
     expect(fetchMock.mock.calls[0]?.[1]?.headers).not.toHaveProperty('cookie')
   })
 
+  it('signs Qianqian searches and normalizes the primary artist', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000)
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({
+      state: true,
+      errno: 22000,
+      data: {
+        typeTrack: [{
+          TSID: 'T10065400429',
+          title: '测试歌曲',
+          albumTitle: '测试专辑',
+          artist: [
+            { name: '伴唱', artistType: 2 },
+            { name: '主唱', artistType: 38 }
+          ]
+        }]
+      }
+    })))
+
+    await expect(searchBaidu('晴天', 2, 3)).resolves.toEqual([{
+      id: 'T10065400429',
+      name: '测试歌曲',
+      artists: ['主唱'],
+      album: '测试专辑',
+      pictureId: 'T10065400429',
+      audioId: 'T10065400429',
+      lyricsId: 'T10065400429',
+      platform: 'baidu'
+    }])
+
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]))
+    const canonical = 'appid=16073360&pageNo=2&pageSize=3&timestamp=1700000000&type=1&word=晴天'
+    const expectedSign = createHash('md5')
+      .update(`${canonical}0b50b02fd0d73a9c4c8c3a781c30845f`)
+      .digest('hex')
+    expect(`${url.origin}${url.pathname}`).toBe('https://music.91q.com/v1/search')
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      appid: '16073360',
+      pageNo: '2',
+      pageSize: '3',
+      timestamp: '1700000000',
+      type: '1',
+      word: '晴天',
+      sign: expectedSign
+    })
+  })
+
+  it('resolves numeric Qianqian album IDs before requesting album tracks', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        state: true,
+        errno: 22000,
+        data: [{ psid: 'P10004270661' }]
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        state: true,
+        errno: 22000,
+        data: {
+          albumAssetCode: 'P10004270661',
+          title: '测试专辑',
+          artist: [{ name: '专辑歌手', artistType: 38 }],
+          trackList: [{ assetId: 'T10065400429', title: '测试歌曲', artist: [] }]
+        }
+      })))
+
+    await expect(getBaiduTracks('album', '12345')).resolves.toEqual([expect.objectContaining({
+      id: 'T10065400429',
+      name: '测试歌曲',
+      artists: ['专辑歌手'],
+      album: '测试专辑'
+    })])
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/album/albumid2psid?')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('albumid=12345')
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/album/info?')
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('albumAssetCode=P10004270661')
+  })
+
+  it('uses Qianqian tracklink and downloads the lyric URL from song info', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        state: true,
+        errno: 22000,
+        data: { path: 'http://example.com/qianqian.mp3', size: 4096, rate: 320 }
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        state: true,
+        errno: 22000,
+        data: [{ lyric: 'https://lrc.91q.com/test.lrc' }]
+      })))
+      .mockResolvedValueOnce(new Response('[00:01.00]测试歌词'))
+
+    await expect(getBaiduUrl('T10065400429', 320)).resolves.toEqual({
+      url: 'https://example.com/qianqian.mp3',
+      size: 4096,
+      br: 320
+    })
+    await expect(getBaiduLyrics('T10065400429')).resolves.toEqual({
+      lyric: '[00:01.00]测试歌词',
+      tlyric: ''
+    })
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/song/tracklink?')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('rate=320')
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('/song/info?')
+    expect(String(fetchMock.mock.calls[2]?.[0])).toBe('https://lrc.91q.com/test.lrc')
+  })
+
   it('parses Kuwo single-quoted search responses without executing upstream code', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(
       '{\'abslist\':[{\'MUSICRID\':\'MUSIC_228908\',\'SONGNAME\':\'晴天&nbsp;(Live)\',\'ARTIST\':\'周杰伦&林俊杰\',\'ALBUM\':\'叶惠美\'}]}'
@@ -240,23 +363,73 @@ describe('music API helpers', () => {
       lyricsId: '228908',
       platform: 'kuwo'
     }])
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('https://search.kuwo.cn/r.s?')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('https://www.kuwo.cn/search/searchMusicBykeyWord?')
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('pn=1')
   })
 
-  it('uses the Kuwo anti-server playback endpoint', async () => {
+  it('uses the Kuwo mobile signed playback endpoint', async () => {
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(JSON.stringify({
       code: 200,
-      msg: 'success',
-      url: 'https://example.com/kuwo.mp3'
+      data: {
+        url: 'http://example.com/kuwo.mp3',
+        bitrate: 320,
+        format: 'mp3'
+      }
     })))
 
     await expect(getKuwoUrl('MUSIC_228908', 320)).resolves.toEqual({
       url: 'https://example.com/kuwo.mp3',
       br: 320
     })
-    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('rid=MUSIC_228908')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('https://mobi.kuwo.cn/mobi.s?')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('type=convert_url_with_sign')
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('rid=228908')
     expect(String(fetchMock.mock.calls[0]?.[0])).toContain('br=320kmp3')
+  })
+
+  it('keeps Kuwo album parameters ordered and accepts playlists without a result flag', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        musiclist: [{ musicrid: 'MUSIC_1', name: '专辑歌曲', artist: '歌手', album: '专辑' }]
+      })))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        musiclist: [{ musicrid: 'MUSIC_2', name: '歌单歌曲', artist: '歌手', album: '专辑' }]
+      })))
+
+    await expect(getKuwoTracks('album', '42')).resolves.toHaveLength(1)
+    await expect(getKuwoTracks('playlist', '43')).resolves.toHaveLength(1)
+
+    const albumUrl = String(fetchMock.mock.calls[0]?.[0])
+    expect(albumUrl).toContain('https://search.kuwo.cn/r.s?pn=0&rn=200&stype=albuminfo&albumid=42&')
+    const playlistUrl = String(fetchMock.mock.calls[1]?.[0])
+    expect(playlistUrl).toContain('https://nplserver.kuwo.cn/pl.svc?')
+    expect(playlistUrl).toContain('pn=0')
+    expect(playlistUrl).toContain('identity=kuwo')
+  })
+
+  it('decodes Kuwo zlib, Base64, XOR and GB18030 word-by-word lyrics', async () => {
+    const rawLyric = [
+      '[ti:sample]',
+      '[00:01.000]<0,300>か<300,300>ぜ',
+      '[00:02.000]<0,0>kaze',
+      '[00:03.000]<0,0>风'
+    ].join('\n')
+    const key = Buffer.from('yeelion')
+    const encoded = iconv.encode(rawLyric, 'gb18030')
+    const encrypted = Buffer.allocUnsafe(encoded.length)
+    for (let index = 0; index < encoded.length; index += 1) encrypted[index] = encoded[index]! ^ key[index % key.length]!
+    const response = Buffer.concat([
+      Buffer.from('tp=content\r\nserver=unit-test\r\n\r\n'),
+      deflateSync(Buffer.from(encrypted.toString('base64')))
+    ])
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(Uint8Array.from(response)))
+
+    await expect(getKuwoLyrics('228908')).resolves.toEqual({
+      lyric: '[ti:sample]\n[00:01.000]かぜ\n[00:01.000]kaze\n[00:01.000]风',
+      tlyric: ''
+    })
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('http://newlyric.kuwo.cn/newlyric.lrc?')
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).not.toHaveProperty('cookie')
   })
 
   it('uses the signed Kugou member endpoint when login cookies are configured', async () => {

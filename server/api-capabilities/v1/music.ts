@@ -38,8 +38,8 @@ export const apiCapabilityDefinition = defineApiCapabilities({
       key: MUSIC_CAPABILITY_KEY.enabledPlatforms,
       control: API_CAPABILITY_CONTROL.multiSelect,
       label: '可用音乐平台',
-      description: '关闭后，使用对应 server 参数的音乐请求会被拒绝。千千音乐旧接口已失效，因此默认关闭。',
-      defaultValue: MUSIC_PLATFORMS.filter(platform => platform !== 'baidu'),
+      description: '关闭后，使用对应 server 参数的音乐请求会被拒绝。',
+      defaultValue: [...MUSIC_PLATFORMS],
       options: MUSIC_PLATFORMS.map(platform => ({ value: platform, label: PLATFORM_LABELS[platform] }))
     },
     ...COOKIE_FIELDS

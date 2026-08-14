@@ -86,7 +86,7 @@ function readUpstreamHostname(url: string): string {
   try { return new URL(url).hostname } catch { return 'unknown-host' }
 }
 
-export async function requestText(url: string, options: RequestInit = {}): Promise<string> {
+async function requestUpstream(url: string, options: RequestInit): Promise<Response> {
   const hostname = readUpstreamHostname(url)
   let response: Response
   try {
@@ -97,7 +97,16 @@ export async function requestText(url: string, options: RequestInit = {}): Promi
     throw new Error(`音乐上游 ${hostname} 请求失败${detail ? `（${detail}）` : ''}`, { cause: error })
   }
   if (!response.ok) throw new Error(`音乐上游 ${hostname} 返回 HTTP ${response.status}`)
-  return response.text()
+  return response
+}
+
+export async function requestText(url: string, options: RequestInit = {}): Promise<string> {
+  return (await requestUpstream(url, options)).text()
+}
+
+export async function requestBuffer(url: string, options: RequestInit = {}): Promise<Buffer> {
+  const response = await requestUpstream(url, options)
+  return Buffer.from(await response.arrayBuffer())
 }
 
 export async function requestJson(url: string, options: RequestInit = {}): Promise<unknown> {

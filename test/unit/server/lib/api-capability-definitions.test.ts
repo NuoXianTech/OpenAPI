@@ -31,9 +31,9 @@ describe('public API capability definitions', () => {
     }
   })
 
-  it('keeps the unavailable Qianqian provider disabled by default', () => {
+  it('enables every supported music platform by default', () => {
     const enabledPlatforms = musicDefinition.fields.find(field => field.key === 'enabledPlatforms')
-    expect(enabledPlatforms?.defaultValue).toEqual(['netease', 'tencent', 'kugou', 'kuwo'])
+    expect(enabledPlatforms?.defaultValue).toEqual(['netease', 'tencent', 'kugou', 'baidu', 'kuwo'])
   })
 
   it('keeps the CZDB key secret and empty by default', () => {

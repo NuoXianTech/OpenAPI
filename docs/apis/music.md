@@ -8,15 +8,20 @@
 | --- | --- | --- | --- |
 | `server` | 否 | `netease` | `netease`、`tencent`、`kugou`、`baidu`、`kuwo` |
 | `type` | 否 | `search` | `search`、`song`、`album`、`artist`、`playlist`、`url`、`pic`、`lrc` |
-| `id` | 是 | - | 搜索时为关键词，其他类型为对应资源 ID |
+| `id` | 是 | - | `search` 时为关键词；`song` 等其他类型时为对应资源 ID |
 | `page` | 否 | `1` | 仅用于 `search`，范围 `1~1000` |
 | `limit` | 否 | 搜索 `30`、歌手 `50` | 仅用于 `search` 或 `artist`，范围 `1~100` |
 
-后台默认启用 `netease`、`tencent`、`kugou` 和 `kuwo`。`baidu` 保留为千千音乐兼容标识，但旧上游域名已经失效，新接口需要尚未接入的签名协议，因此默认关闭；完成正式签名接入前不建议手动开启。
+后台默认启用全部五个平台。`baidu` 是千千音乐的兼容平台代码，内部使用千千音乐当前的签名接口；保留该代码是为了兼容原 Meting 调用参数。
+
+`type` 省略时固定默认为 `search`。因此 `?id=29732992` 会搜索关键词 `29732992`，不会自动判断为歌曲 ID；按 ID 获取歌曲详情时必须显式传 `type=song`。这是为了避免数字歌名、专辑名和平台 ID 之间产生不可预测的自动判断。
 
 ```bash
 # 搜索
 curl 'http://127.0.0.1:3000/v1/music?server=netease&type=search&id=周杰伦'
+
+# 按歌曲 ID 获取详情
+curl 'http://127.0.0.1:3000/v1/music?server=netease&type=song&id=29732992'
 
 # 获取歌单
 curl 'http://127.0.0.1:3000/v1/music?server=netease&type=playlist&id=歌单ID'
@@ -37,6 +42,7 @@ curl 'http://127.0.0.1:3000/v1/music?server=netease&type=playlist&id=歌单ID'
     "type": "search",
     "items": [
       {
+        "id": "186016",
         "title": "晴天",
         "artist": "周杰伦",
         "album": "叶惠美",
@@ -52,6 +58,8 @@ curl 'http://127.0.0.1:3000/v1/music?server=netease&type=playlist&id=歌单ID'
   "timestamp": 1700000000000
 }
 ```
+
+搜索和集合结果中的 `id` 是平台主歌曲 ID，可继续用于 `type=song`。`url`、`pic`、`lrc` 可能分别依赖歌曲 hash、专辑图片 ID 等不同的上游标识，不要自行把主歌曲 ID 填入这三个类型；直接调用每首歌曲返回的 `url`、`pic`、`lrc` 链接即可。
 
 如果后台要求 API Key，继续调用 `url`、`pic` 或 `lrc` 链接时也应携带同一个 `x-api-key` 请求头；链接不会把密钥写入 URL。
 

@@ -17,6 +17,7 @@ function buildMusicResourceLink(
 
 export function toPublicMusicTracks(tracks: MusicTrack[], requestUrl: URL): PublicMusicTrack[] {
   return tracks.map(track => ({
+    id: String(track.id),
     title: track.name,
     artist: track.artists.join(' / '),
     album: track.album,
