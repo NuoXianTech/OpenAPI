@@ -137,5 +137,5 @@ export const adminUpdateServiceConfigurationSchema = z.object({
 })
 
 export const adminUpdateServiceTokenSchema = z.object({
-  serviceToken: z.string().min(32).max(4096)
+  serviceToken: z.string().trim().min(32).max(4096)
 })

@@ -5,6 +5,10 @@ import { eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/pglite'
 import { migrate } from 'drizzle-orm/pglite/migrator'
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import type {
+  ServiceDescription,
+  ServiceEndpointSummary
+} from '#shared/types/service-control'
 import * as schema from '~~/server/db/schema'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 
@@ -99,10 +103,20 @@ async function createDiscoveredService(options: {
   name?: string
   path?: string
   summary?: string
+  endpoints?: ServiceEndpointSummary[]
 }) {
   const slug = options.slug ?? 'catalog-service'
   const name = options.name ?? 'Catalog Service'
   const path = options.path ?? '/v1/catalog/{id}'
+  const endpoints = options.endpoints ?? [{
+    method: 'GET',
+    path,
+    operationId: `${slug}-get`,
+    summary: options.summary ?? 'Catalog endpoint',
+    tags: [],
+    system: false,
+    support: false
+  }]
   const upstream = await platformUpstreamService.create({
     workspaceId: defaults.workspace.id,
     slug,
@@ -121,26 +135,26 @@ async function createDiscoveredService(options: {
     specVersion: '3.1.0',
     content: {
       openapi: '3.1.0',
-      paths: {
-        [path]: {
-          get: {
-            operationId: `${slug}-get`,
-            summary: options.summary ?? 'Catalog endpoint'
+      paths: Object.fromEntries(endpoints.map(endpoint => [
+        endpoint.path,
+        {
+          [endpoint.method.toLowerCase()]: {
+            operationId: endpoint.operationId,
+            summary: endpoint.summary,
+            tags: endpoint.tags,
+            ...(endpoint.support
+              ? { 'x-openapi-platform': { support: true } }
+              : {})
           }
         }
-      }
+      ]))
     },
     contentHash: createHash('sha256').update(`${slug}:${path}`).digest('hex'),
     parsedSummary: {
-      endpointCount: 1,
-      endpoints: [{
-        method: 'GET',
-        path,
-        operationId: `${slug}-get`,
-        summary: options.summary ?? 'Catalog endpoint',
-        tags: [],
-        system: false
-      }]
+      endpointCount: endpoints.filter(endpoint => (
+        !endpoint.system && !endpoint.support
+      )).length,
+      endpoints
     },
     fetchedAt: new Date()
   }).returning()
@@ -148,7 +162,7 @@ async function createDiscoveredService(options: {
   await database.update(schema.upstreamServices)
     .set({ openapiDocumentId: document.id })
     .where(eq(schema.upstreamServices.id, upstream.id))
-  return { upstream, path }
+  return { upstream, path, endpoints }
 }
 
 describe('routing revision service', () => {
@@ -485,6 +499,283 @@ describe('routing revision service', () => {
       route: { route: { isStatistics: false, state: 'disabled' } }
     })
     expect(catalog.totals).toMatchObject({ live: 0, disabled: 1, pending: 0 })
+  })
+
+  it('groups tagged operations as one Product and manages support routes invisibly', async () => {
+    const service = await createDiscoveredService({
+      slug: 'player-catalog-service',
+      name: 'Player Catalog Service',
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/v1/player',
+          operationId: 'getDplayerHTML',
+          summary: 'DPlayer',
+          tags: ['Player'],
+          system: false,
+          support: false
+        },
+        {
+          method: 'GET',
+          path: '/v1/player/art',
+          operationId: 'getArtplayerHTML',
+          summary: 'ArtPlayer',
+          tags: ['Player'],
+          system: false,
+          support: false
+        },
+        {
+          method: 'GET',
+          path: '/v1/player/assets/{asset}',
+          operationId: 'getPlayerAsset',
+          summary: 'Player asset',
+          tags: ['Player'],
+          system: false,
+          support: true
+        }
+      ]
+    })
+
+    let catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    expect(catalog.services.find(entry => (
+      entry.upstream.id === service.upstream.id
+    ))?.endpoints.map(item => item.endpoint?.path)).toEqual([
+      '/v1/player',
+      '/v1/player/art'
+    ])
+
+    const dplayer = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: '/v1/player'
+    }, null)
+    let routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes).toHaveLength(2)
+    expect(new Set(routes.map(binding => binding.product.id)).size).toBe(1)
+    expect(routes[0]?.product).toMatchObject({
+      slug: 'player-catalog-service-player',
+      name: 'Player'
+    })
+    expect(routes.find(binding => (
+      binding.route.pathPattern === '/v1/player/assets/{asset}'
+    ))?.route).toMatchObject({
+      isApiKey: false,
+      isStatistics: false,
+      creditsCost: 0,
+      state: 'active'
+    })
+
+    catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    expect(catalog.services.find(entry => (
+      entry.upstream.id === service.upstream.id
+    ))?.endpoints).toHaveLength(2)
+
+    const artplayer = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: '/v1/player/art'
+    }, null)
+    routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes).toHaveLength(3)
+    expect(new Set(routes.map(binding => binding.product.id)).size).toBe(1)
+
+    await platformEndpointCatalogService.update(
+      dplayer.route.id,
+      { environmentId: defaults.environment.id, enabled: false },
+      null
+    )
+    routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes.find(binding => (
+      binding.route.pathPattern === '/v1/player/assets/{asset}'
+    ))?.route.state).toBe('active')
+
+    await platformEndpointCatalogService.update(
+      artplayer.route.id,
+      { environmentId: defaults.environment.id, enabled: false },
+      null
+    )
+    routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes.find(binding => (
+      binding.route.pathPattern === '/v1/player/assets/{asset}'
+    ))?.route.state).toBe('disabled')
+  })
+
+  it('keeps support routes inside their path version', async () => {
+    const service = await createDiscoveredService({
+      slug: 'versioned-player-service',
+      endpoints: [
+        {
+          method: 'GET',
+          path: '/v1/player',
+          operationId: 'getV1Player',
+          summary: 'Player v1',
+          tags: ['Player'],
+          system: false,
+          support: false
+        },
+        {
+          method: 'GET',
+          path: '/v1/player/assets/{asset}',
+          operationId: 'getV1PlayerAsset',
+          summary: 'Player asset v1',
+          tags: ['Player'],
+          system: false,
+          support: true
+        },
+        {
+          method: 'GET',
+          path: '/v2/player',
+          operationId: 'getV2Player',
+          summary: 'Player v2',
+          tags: ['Player'],
+          system: false,
+          support: false
+        },
+        {
+          method: 'GET',
+          path: '/v2/player/assets/{asset}',
+          operationId: 'getV2PlayerAsset',
+          summary: 'Player asset v2',
+          tags: ['Player'],
+          system: false,
+          support: true
+        }
+      ]
+    })
+
+    const v1 = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: '/v1/player'
+    }, null)
+    await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: '/v2/player'
+    }, null)
+
+    let routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes.filter(binding => (
+      binding.route.pathPattern.includes('/assets/')
+    )).map(binding => ({
+      path: binding.route.pathPattern,
+      state: binding.route.state,
+      version: binding.version.version
+    }))).toEqual([
+      {
+        path: '/v1/player/assets/{asset}',
+        state: 'active',
+        version: 'v1'
+      },
+      {
+        path: '/v2/player/assets/{asset}',
+        state: 'active',
+        version: 'v2'
+      }
+    ])
+
+    await platformEndpointCatalogService.update(
+      v1.route.id,
+      { environmentId: defaults.environment.id, enabled: false },
+      null
+    )
+    routes = (await platformRouteService.list(defaults.workspace.id))
+      .filter(binding => binding.route.upstreamServiceId === service.upstream.id)
+    expect(routes.filter(binding => (
+      binding.route.pathPattern.includes('/assets/')
+    )).map(binding => ({
+      path: binding.route.pathPattern,
+      state: binding.route.state,
+      version: binding.version.version
+    }))).toEqual([
+      {
+        path: '/v1/player/assets/{asset}',
+        state: 'disabled',
+        version: 'v1'
+      },
+      {
+        path: '/v2/player/assets/{asset}',
+        state: 'active',
+        version: 'v2'
+      }
+    ])
+  })
+
+  it('checks availability once while loading and skips it during publication', async () => {
+    const service = await createDiscoveredService({
+      slug: 'availability-catalog-service'
+    })
+    const description: ServiceDescription = {
+      schemaVersion: 1,
+      serviceId: 'availability-catalog-service',
+      name: 'Availability catalog Service',
+      version: '0.1.0',
+      commit: 'test',
+      openapi: '/openapi.json',
+      openapiSha256: '0'.repeat(64),
+      health: '/healthz',
+      readiness: '/readyz',
+      configuration: {
+        schema: '/.well-known/configuration-schema.json',
+        state: '/.well-known/configuration.json',
+        update: '/.well-known/configuration',
+        schemaSha256: '1'.repeat(64)
+      },
+      platformProtocol: 'openapi-platform-service/v1'
+    }
+    await database.update(schema.upstreamServiceConnections).set({
+      serviceId: description.serviceId,
+      serviceDescription: description
+    }).where(eq(
+      schema.upstreamServiceConnections.upstreamServiceId,
+      service.upstream.id
+    ))
+
+    const request = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 200 })
+    )
+    try {
+      const catalog = await platformEndpointCatalogService.list(
+        defaults.workspace.id,
+        defaults.environment.id
+      )
+
+      expect(catalog.services.find(item => (
+        item.upstream.id === service.upstream.id
+      ))?.upstream.connection).toMatchObject({
+        discovered: true,
+        availability: 'online'
+      })
+      expect(request).toHaveBeenCalledTimes(1)
+      expect(request.mock.calls[0]?.[0].toString())
+        .toBe('http://127.0.0.1:8090/readyz')
+
+      request.mockClear()
+      await platformEndpointCatalogService.publish({
+        environmentId: defaults.environment.id,
+        upstreamServiceId: service.upstream.id,
+        method: 'GET',
+        path: service.path
+      }, null)
+      expect(request).not.toHaveBeenCalled()
+    } finally {
+      request.mockRestore()
+    }
   })
 
   it('keeps the active release while a conflicting endpoint waits to be applied', async () => {

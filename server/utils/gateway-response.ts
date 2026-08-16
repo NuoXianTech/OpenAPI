@@ -22,6 +22,7 @@ export function gatewayFail<T = unknown>(
     errorMessage: message
   }
   setResponseHeader(event, 'cache-control', 'no-store')
+  setResponseHeader(event, 'content-type', 'application/json; charset=utf-8')
   setResponseHeader(event, 'X-Request-Id', ensureRequestId(event))
   setResponseStatus(event, status)
   return {

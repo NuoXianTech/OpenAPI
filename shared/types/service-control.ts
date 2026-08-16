@@ -108,6 +108,7 @@ export interface ServiceEndpointSummary {
   summary: string | null
   tags: string[]
   system: boolean
+  support: boolean
 }
 
 export interface ServiceTargetControlState {

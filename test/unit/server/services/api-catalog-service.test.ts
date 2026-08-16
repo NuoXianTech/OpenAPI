@@ -40,8 +40,13 @@ beforeAll(async () => {
       product_id uuid NOT NULL,
       state varchar(20) NOT NULL
     );
+    CREATE TABLE openapi_documents (
+      id uuid PRIMARY KEY,
+      parsed_summary jsonb NOT NULL DEFAULT '{}'::jsonb
+    );
     CREATE TABLE upstream_services (
       id uuid PRIMARY KEY,
+      openapi_document_id uuid,
       status varchar(20) NOT NULL,
       deleted_at timestamptz
     );
@@ -52,6 +57,7 @@ beforeAll(async () => {
       name varchar(160) NOT NULL,
       method varchar(10) NOT NULL,
       path_pattern varchar(1000) NOT NULL,
+      upstream_path_template varchar(1000) NOT NULL DEFAULT '',
       is_api_key boolean NOT NULL DEFAULT false,
       is_statistics boolean NOT NULL DEFAULT false,
       credits_cost integer NOT NULL DEFAULT 0,
@@ -93,16 +99,26 @@ beforeAll(async () => {
       ('00000000-0000-4000-8000-000000000003', 'private', 'Private', 'private', 'private', 'private', 'active', null),
       ('00000000-0000-4000-8000-000000000004', 'unpublished', 'Unpublished', 'unpublished', 'unpublished', 'public', 'active', null),
       ('00000000-0000-4000-8000-000000000005', 'unknown', 'Unknown', 'unknown', 'unknown', 'public', 'active', null),
-      ('00000000-0000-4000-8000-000000000006', 'abnormal', 'Abnormal', 'abnormal', 'abnormal', 'public', 'active', null);
+      ('00000000-0000-4000-8000-000000000006', 'abnormal', 'Abnormal', 'abnormal', 'abnormal', 'public', 'active', null),
+      ('00000000-0000-4000-8000-000000000007', 'support', 'Support', 'support', 'support', 'public', 'active', null);
     INSERT INTO api_versions (id, product_id, state) VALUES
       ('00000000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001', 'published'),
       ('00000000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000002', 'published'),
       ('00000000-0000-4000-8000-000000000013', '00000000-0000-4000-8000-000000000003', 'published'),
       ('00000000-0000-4000-8000-000000000014', '00000000-0000-4000-8000-000000000004', 'published'),
       ('00000000-0000-4000-8000-000000000015', '00000000-0000-4000-8000-000000000005', 'published'),
-      ('00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000006', 'published');
-    INSERT INTO upstream_services (id, status) VALUES
-      ('00000000-0000-4000-8000-000000000021', 'active');
+      ('00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000006', 'published'),
+      ('00000000-0000-4000-8000-000000000017', '00000000-0000-4000-8000-000000000007', 'published');
+    INSERT INTO openapi_documents (id, parsed_summary) VALUES (
+      '00000000-0000-4000-8000-000000000061',
+      '{"endpoints":[{
+        "method":"GET",
+        "path":"/v1/player/assets/{asset}",
+        "support":true
+      }]}'::jsonb
+    );
+    INSERT INTO upstream_services (id, openapi_document_id, status) VALUES
+      ('00000000-0000-4000-8000-000000000021', '00000000-0000-4000-8000-000000000061', 'active');
     INSERT INTO api_routes
       (id, api_version_id, upstream_service_id, name, method, path_pattern, is_statistics, state)
     VALUES
@@ -112,6 +128,10 @@ beforeAll(async () => {
       ('00000000-0000-4000-8000-000000000034', '00000000-0000-4000-8000-000000000014', '00000000-0000-4000-8000-000000000021', 'Unpublished', 'GET', '/v1/unpublished', true, 'active'),
       ('00000000-0000-4000-8000-000000000035', '00000000-0000-4000-8000-000000000015', '00000000-0000-4000-8000-000000000021', 'Unknown', 'GET', '/v1/unknown', true, 'active'),
       ('00000000-0000-4000-8000-000000000036', '00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000021', 'Abnormal', 'GET', '/v1/abnormal', true, 'active');
+    INSERT INTO api_routes
+      (id, api_version_id, upstream_service_id, name, method, path_pattern, upstream_path_template, is_statistics, state)
+    VALUES
+      ('00000000-0000-4000-8000-000000000037', '00000000-0000-4000-8000-000000000017', '00000000-0000-4000-8000-000000000021', 'Support', 'GET', '/v1/player/assets/{asset}', '/v1/player/assets/{path.asset}', false, 'active');
     INSERT INTO routing_revisions (id, status, config_payload) VALUES (
       '00000000-0000-4000-8000-000000000041',
       'published',
@@ -119,7 +139,8 @@ beforeAll(async () => {
         {"id":"00000000-0000-4000-8000-000000000031"},
         {"id":"00000000-0000-4000-8000-000000000033"},
         {"id":"00000000-0000-4000-8000-000000000035"},
-        {"id":"00000000-0000-4000-8000-000000000036"}
+        {"id":"00000000-0000-4000-8000-000000000036"},
+        {"id":"00000000-0000-4000-8000-000000000037"}
       ]}'::jsonb
     );
     INSERT INTO environments (id, active_revision_id, status) VALUES

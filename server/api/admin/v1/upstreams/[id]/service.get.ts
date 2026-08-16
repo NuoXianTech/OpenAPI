@@ -8,5 +8,8 @@ export default defineAdminEventHandler((event) => {
   if (!upstreamId.success) {
     throw createError({ statusCode: 400, message: 'upstream id is invalid' })
   }
-  return platformServiceControlService.get(upstreamId.data)
+  return platformServiceControlService.get(
+    upstreamId.data,
+    { checkAvailability: true }
+  )
 })

@@ -144,6 +144,8 @@ Platform 与 Service 的回滚互不要求同步。
 - 所有 Target 必须暴露相同 Service 身份和契约。
 - 配置更新发送到全部启用 Target。
 - 单个 Target 故障必须显示为部分失败或漂移。
+- 业务流量会短暂避开最近发生网络错误或 `502/503/504` 的 Target。
+- `GET`、`HEAD` 可以回退到同组其他 Target；写请求不会被 Gateway 自动重放。
 
 不同业务 Service 或不同契约版本应建立独立 Upstream，不能放入同一个 Target 集合。
 

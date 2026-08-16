@@ -53,6 +53,9 @@ const { platformRouteService } = await import(
 const { platformServiceControlService } = await import(
   '~~/server/services/platform-service-control-service'
 )
+const { serviceControlClient } = await import(
+  '~~/server/utils/service-control-client'
+)
 const { platformUpstreamService } = await import(
   '~~/server/services/platform-upstream-service'
 )
@@ -327,7 +330,8 @@ afterAll(async () => {
 describe('Platform to Node API Service acceptance', () => {
   it('discovers the Service contract and synchronizes redacted configuration', async () => {
     const discovered = await platformServiceControlService.get(
-      officialUpstreamId
+      officialUpstreamId,
+      { checkAvailability: true }
     )
     expect(discovered.connection).toMatchObject({
       discovered: true,
@@ -342,6 +346,12 @@ describe('Platform to Node API Service acceptance', () => {
         '/v1/yiyan'
       ])
     )
+    expect(discovered.endpoints.find(endpoint => (
+      endpoint.path === '/v1/player/assets/{asset}'
+    ))).toMatchObject({ support: true, system: false, tags: ['Player'] })
+    expect(discovered.endpoints.find(endpoint => (
+      endpoint.path === '/v1/player'
+    ))).toMatchObject({ support: false, system: false, tags: ['Player'] })
 
     const synchronized = await platformServiceControlService
       .updateConfiguration(officialUpstreamId, {
@@ -400,6 +410,103 @@ describe('Platform to Node API Service acceptance', () => {
     })
   })
 
+  it('rejects a configuration ACK for the wrong revision', async () => {
+    const updateConfiguration
+      = serviceControlClient.updateConfiguration.bind(serviceControlClient)
+    const updateSpy = vi.spyOn(
+      serviceControlClient,
+      'updateConfiguration'
+    ).mockImplementation(async (baseUrl, endpoint, token, input) => {
+      const response = await updateConfiguration(
+        baseUrl,
+        endpoint,
+        token,
+        input
+      )
+      return {
+        ...response,
+        data: {
+          ...response.data,
+          revision: response.data.revision + 1
+        }
+      }
+    })
+
+    try {
+      await expect(platformServiceControlService.synchronizeConfiguration(
+        officialUpstreamId
+      )).resolves.toMatchObject({
+        status: 'failed',
+        revision: 1,
+        targets: [{
+          configurationRevision: 2,
+          configurationStatus: 'drifted'
+        }]
+      })
+    } finally {
+      updateSpy.mockRestore()
+    }
+
+    await expect(platformServiceControlService.synchronizeConfiguration(
+      officialUpstreamId
+    )).resolves.toMatchObject({
+      status: 'synced',
+      revision: 1,
+      targets: [{ configurationStatus: 'synced' }]
+    })
+  })
+
+  it('rejects an OpenAPI response fingerprint header mismatch', async () => {
+    const getOpenAPI = serviceControlClient.getOpenAPI.bind(
+      serviceControlClient
+    )
+    const openAPISpy = vi.spyOn(
+      serviceControlClient,
+      'getOpenAPI'
+    ).mockImplementation(async (baseUrl, endpoint, token) => {
+      const response = await getOpenAPI(baseUrl, endpoint, token)
+      const headers = new Headers(response.headers)
+      headers.set('x-openapi-sha256', '0'.repeat(64))
+      return { ...response, headers }
+    })
+
+    try {
+      await expect(platformServiceControlService.discover(
+        officialUpstreamId
+      )).rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: 'SERVICE_OPENAPI_HASH_MISMATCH' }
+      })
+    } finally {
+      openAPISpy.mockRestore()
+    }
+  })
+
+  it('pins the discovered Service identity to the existing connection', async () => {
+    await databaseClient!.query(
+      `update upstream_service_connections
+       set service_id = $1
+       where upstream_service_id = $2`,
+      ['unexpected-replacement-service', officialUpstreamId]
+    )
+
+    try {
+      await expect(platformServiceControlService.discover(
+        officialUpstreamId
+      )).rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: 'SERVICE_IDENTITY_MISMATCH' }
+      })
+    } finally {
+      await databaseClient!.query(
+        `update upstream_service_connections
+         set service_id = $1
+         where upstream_service_id = $2`,
+        ['openapi-service', officialUpstreamId]
+      )
+    }
+  })
+
   it('reports a partial configuration sync when one target is unavailable', async () => {
     const upstream = await platformUpstreamService.create({
       workspaceId: (await platformWorkspaceService.ensureDefault()).workspace.id,
@@ -418,7 +525,10 @@ describe('Platform to Node API Service acceptance', () => {
       [upstream.id, `http://127.0.0.1:${offlinePort}/`, 1]
     )
 
-    await expect(platformServiceControlService.get(upstream.id))
+    await expect(platformServiceControlService.get(
+      upstream.id,
+      { checkAvailability: true }
+    ))
       .resolves.toMatchObject({
         connection: { availability: 'degraded' }
       })
@@ -499,6 +609,297 @@ describe('Platform to Node API Service acceptance', () => {
     expect(unchangedResponse.status).toBe(304)
     expect(await unchangedResponse.text()).toBe('')
     expect(unchangedResponse.headers.get('etag')).toBe(etag)
+  })
+
+  it('does not follow a Service redirect beyond the published Route', async () => {
+    let hiddenRequests = 0
+    const redirectServer = createServer((request, response) => {
+      if (request.url === '/redirect') {
+        response.statusCode = 302
+        response.setHeader('location', '/hidden')
+        response.end()
+        return
+      }
+      if (request.url === '/hidden') hiddenRequests += 1
+      response.statusCode = 200
+      response.end('hidden response')
+    })
+    const redirectPort = await listen(redirectServer)
+    let routeId: string | null = null
+
+    try {
+      const workspace = await platformWorkspaceService.ensureDefault()
+      const upstream = await platformUpstreamService.create({
+        workspaceId: workspace.workspace.id,
+        slug: 'redirect-boundary-service',
+        name: 'Redirect Boundary Service',
+        kind: 'internal',
+        serviceToken,
+        loadBalancing: 'round_robin',
+        targets: [{
+          baseUrl: `http://127.0.0.1:${redirectPort}`,
+          weight: 1
+        }]
+      })
+      routeId = await createRoute({
+        apiVersionId: officialVersionId,
+        upstreamServiceId: upstream.id,
+        name: 'Redirect boundary acceptance',
+        pathPattern: '/v1/redirect-boundary',
+        upstreamPathTemplate: '/redirect',
+        isStatistics: false
+      })
+      await routingRevisionService.publish(environmentId, null)
+
+      const response = await fetch(
+        `${gatewayBaseURL}/v1/redirect-boundary`,
+        { redirect: 'manual' }
+      )
+      expect(response.status).toBe(302)
+      expect(response.headers.get('location')).toBe('/hidden')
+      expect(hiddenRequests).toBe(0)
+      await response.arrayBuffer()
+    } finally {
+      if (routeId) await platformRouteService.remove(routeId)
+      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await closeServer(redirectServer)
+    }
+  })
+
+  it('fails over safe reads and temporarily avoids the failed Target', async () => {
+    const requestCounts = [0, 0]
+    let failedTarget: number | null = null
+    const servers = [0, 1].map(index => createServer((_request, response) => {
+      requestCounts[index] += 1
+      if (failedTarget === null) {
+        failedTarget = index
+        response.statusCode = 503
+        response.end('temporarily unavailable')
+        return
+      }
+      response.statusCode = 200
+      response.end(`target-${index}`)
+    }))
+    const ports = await Promise.all(servers.map(listen))
+    let routeId: string | null = null
+
+    try {
+      const workspace = await platformWorkspaceService.ensureDefault()
+      const upstream = await platformUpstreamService.create({
+        workspaceId: workspace.workspace.id,
+        slug: 'gateway-failover-service',
+        name: 'Gateway Failover Service',
+        kind: 'internal',
+        serviceToken,
+        loadBalancing: 'round_robin',
+        targets: ports.map(port => ({
+          baseUrl: `http://127.0.0.1:${port}`,
+          weight: 1
+        }))
+      })
+      routeId = await createRoute({
+        apiVersionId: officialVersionId,
+        upstreamServiceId: upstream.id,
+        name: 'Gateway failover acceptance',
+        pathPattern: '/v1/gateway-failover',
+        upstreamPathTemplate: '/read',
+        isStatistics: false
+      })
+      await routingRevisionService.publish(environmentId, null)
+
+      const first = await fetch(`${gatewayBaseURL}/v1/gateway-failover`)
+      expect(first.status).toBe(200)
+      await first.text()
+      const second = await fetch(`${gatewayBaseURL}/v1/gateway-failover`)
+      expect(second.status).toBe(200)
+      await second.text()
+
+      expect(requestCounts.reduce((sum, count) => sum + count, 0)).toBe(3)
+      expect(failedTarget).not.toBeNull()
+      expect(requestCounts[failedTarget!]).toBe(1)
+      expect(requestCounts[failedTarget === 0 ? 1 : 0]).toBe(2)
+    } finally {
+      if (routeId) await platformRouteService.remove(routeId)
+      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await Promise.all(servers.map(closeServer))
+    }
+  })
+
+  it('does not replay a write request across Targets', async () => {
+    let requests = 0
+    const servers = [0, 1].map(() => createServer((request, response) => {
+      requests += 1
+      request.resume()
+      response.statusCode = 503
+      response.end('write was not accepted')
+    }))
+    const ports = await Promise.all(servers.map(listen))
+    let routeId: string | null = null
+
+    try {
+      const workspace = await platformWorkspaceService.ensureDefault()
+      const upstream = await platformUpstreamService.create({
+        workspaceId: workspace.workspace.id,
+        slug: 'gateway-write-service',
+        name: 'Gateway Write Service',
+        kind: 'internal',
+        serviceToken,
+        loadBalancing: 'round_robin',
+        targets: ports.map(port => ({
+          baseUrl: `http://127.0.0.1:${port}`,
+          weight: 1
+        }))
+      })
+      routeId = await createRoute({
+        apiVersionId: officialVersionId,
+        upstreamServiceId: upstream.id,
+        name: 'Gateway write replay acceptance',
+        method: 'POST',
+        pathPattern: '/v1/gateway-write',
+        upstreamPathTemplate: '/write',
+        isStatistics: false,
+        maxRequestBytes: 16
+      })
+      await routingRevisionService.publish(environmentId, null)
+
+      const response = await fetch(`${gatewayBaseURL}/v1/gateway-write`, {
+        method: 'POST',
+        headers: { 'content-type': 'text/plain' },
+        body: 'write'
+      })
+      expect(response.status).toBe(503)
+      await response.text()
+      expect(requests).toBe(1)
+    } finally {
+      if (routeId) await platformRouteService.remove(routeId)
+      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await Promise.all(servers.map(closeServer))
+    }
+  })
+
+  it('enforces streaming body limits without Content-Length and releases billing', async () => {
+    const streamServer = createServer((request, response) => {
+      if (request.url === '/request-limit') {
+        request.on('data', () => undefined)
+        request.on('end', () => {
+          response.statusCode = 200
+          response.end('accepted')
+        })
+        return
+      }
+      if (request.url === '/response-limit') {
+        response.statusCode = 200
+        response.setHeader('content-type', 'application/octet-stream')
+        response.write(Buffer.alloc(64 * 1024, 120))
+        response.end()
+        return
+      }
+      response.statusCode = 404
+      response.end()
+    })
+    const streamPort = await listen(streamServer)
+    const routeIds: string[] = []
+
+    try {
+      const workspace = await platformWorkspaceService.ensureDefault()
+      const upstream = await platformUpstreamService.create({
+        workspaceId: workspace.workspace.id,
+        slug: 'gateway-stream-limit-service',
+        name: 'Gateway Stream Limit Service',
+        kind: 'internal',
+        serviceToken,
+        loadBalancing: 'round_robin',
+        targets: [{
+          baseUrl: `http://127.0.0.1:${streamPort}`,
+          weight: 1
+        }]
+      })
+      const requestRouteId = await createRoute({
+        apiVersionId: officialVersionId,
+        upstreamServiceId: upstream.id,
+        name: 'Chunked request limit acceptance',
+        method: 'POST',
+        pathPattern: '/v1/chunked-request-limit',
+        upstreamPathTemplate: '/request-limit',
+        isStatistics: true,
+        maxRequestBytes: 8
+      })
+      routeIds.push(requestRouteId)
+      const responseRouteId = await createRoute({
+        apiVersionId: officialVersionId,
+        upstreamServiceId: upstream.id,
+        name: 'Chunked response limit acceptance',
+        pathPattern: '/v1/chunked-response-limit',
+        upstreamPathTemplate: '/response-limit',
+        isApiKey: true,
+        isStatistics: true,
+        creditsCost: 2,
+        maxResponseBytes: 8
+      })
+      routeIds.push(responseRouteId)
+      const user = await queryOne<{ id: number }>(
+        `insert into users (
+          username, email, password_hash, credits, is_active
+        ) values ($1, $2, $3, $4, true)
+        returning id`,
+        [
+          'gateway-stream-limit-user',
+          'gateway-stream-limit@example.test',
+          'not-used-in-acceptance',
+          10
+        ]
+      )
+      const apiKey = (await apiKeyService.createForUser(user.id, {
+        name: 'Gateway stream limit acceptance',
+        scopes: [`route:${responseRouteId}`]
+      }))[0]!.apiKey
+      await routingRevisionService.publish(environmentId, null)
+
+      const encoder = new TextEncoder()
+      const requestStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(encoder.encode('12345'))
+          controller.enqueue(encoder.encode('67890'))
+          controller.close()
+        }
+      })
+      const oversizedRequest = await fetch(
+        `${gatewayBaseURL}/v1/chunked-request-limit`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'text/plain' },
+          body: requestStream,
+          duplex: 'half'
+        } as RequestInit & { duplex: 'half' }
+      )
+      expect(oversizedRequest.status).toBe(413)
+      expect(await readPublicEnvelope(oversizedRequest)).toMatchObject({
+        code: 'REQUEST_BODY_TOO_LARGE',
+        data: null
+      })
+
+      const oversizedResponse = await fetch(
+        `${gatewayBaseURL}/v1/chunked-response-limit`,
+        { headers: { 'x-api-key': apiKey } }
+      )
+      expect(oversizedResponse.status).toBe(502)
+      expect(await readPublicEnvelope(oversizedResponse)).toMatchObject({
+        code: 'UPSTREAM_RESPONSE_TOO_LARGE',
+        data: null
+      })
+      expect(await queryOne<{ credits: number }>(
+        'select credits from users where id = $1',
+        [user.id]
+      )).toEqual({ credits: 10 })
+      expect(await queryOne<{ count: number }>(
+        'select count(*)::int as count from api_credit_reservations where user_id = $1',
+        [user.id]
+      )).toEqual({ count: 0 })
+    } finally {
+      await Promise.all(routeIds.map(routeId => platformRouteService.remove(routeId)))
+      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await closeServer(streamServer)
+    }
   })
 
   it('answers a published Route CORS preflight before authentication or billing', async () => {
@@ -863,6 +1264,7 @@ async function createRoute(input: {
   isApiKey?: boolean
   isStatistics?: boolean
   creditsCost?: number
+  maxRequestBytes?: number
   maxResponseBytes?: number
   rateLimitPerMinute?: number
 }): Promise<string> {
@@ -882,7 +1284,7 @@ async function createRoute(input: {
     rateLimitPerHour: 0,
     rateLimitPerDay: 0,
     timeoutMs: 5_000,
-    maxRequestBytes: 0,
+    maxRequestBytes: input.maxRequestBytes ?? 0,
     maxResponseBytes: input.maxResponseBytes ?? 512 * 1024,
     state: 'active'
   })

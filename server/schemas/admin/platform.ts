@@ -31,7 +31,7 @@ export const adminCreateUpstreamSchema = z.object({
   slug: slugSchema,
   name: nameSchema,
   kind: z.enum(['internal', 'external']),
-  serviceToken: z.string().min(32).max(4096).optional(),
+  serviceToken: z.string().trim().min(32).max(4096).optional(),
   loadBalancing: z.enum(['round_robin', 'weighted']).default('round_robin'),
   targets: z.array(z.object({
     baseUrl: z.url().max(2000),

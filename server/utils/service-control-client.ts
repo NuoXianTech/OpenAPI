@@ -10,6 +10,8 @@ import { readLimitedText } from '~~/server/utils/safe-fetch'
 
 const CONTROL_TIMEOUT_MS = 10_000
 const MAX_CONTROL_RESPONSE_BYTES = 4 * 1024 * 1024
+const MAX_CONTROL_ERROR_BYTES = 64 * 1024
+const SERVICE_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,79}$/
 
 export class ServiceControlRequestError extends Error {
   constructor(
@@ -35,6 +37,47 @@ export function buildServiceControlUrl(
   base.search = endpointUrl.search
   base.hash = ''
   return base
+}
+
+function normalizedErrorCode(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const code = value.trim()
+  return SERVICE_ERROR_CODE_PATTERN.test(code) ? code : null
+}
+
+function normalizedErrorMessage(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const message = value.trim().replace(/\s+/g, ' ')
+  return message ? message.slice(0, 500) : null
+}
+
+async function describeErrorResponse(response: Response): Promise<string | null> {
+  const headerCode = normalizedErrorCode(
+    response.headers.get('x-openapi-error-code')
+  )
+  let raw: string
+  try {
+    raw = await readLimitedText(response, MAX_CONTROL_ERROR_BYTES)
+  } catch {
+    return headerCode ? `[${headerCode}]` : null
+  }
+
+  let body: unknown
+  try {
+    body = JSON.parse(raw)
+  } catch {
+    return headerCode ? `[${headerCode}]` : null
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return headerCode ? `[${headerCode}]` : null
+  }
+
+  const record = body as Record<string, unknown>
+  const code = normalizedErrorCode(record.code) ?? headerCode
+  const message = normalizedErrorMessage(record.message)
+  if (code && message) return `[${code}] ${message}`
+  if (code) return `[${code}]`
+  return message
 }
 
 async function requestJson<TSchema extends z.ZodType>(
@@ -73,11 +116,13 @@ async function requestJson<TSchema extends z.ZodType>(
   }
 
   if (!response.ok) {
-    await response.body?.cancel().catch(() => undefined)
+    const detail = await describeErrorResponse(response)
     throw new ServiceControlRequestError(
       response.status,
       endpoint,
-      `service control request returned HTTP ${response.status}`
+      `service control request returned HTTP ${response.status}${
+        detail ? `: ${detail}` : ''
+      }`
     )
   }
   const raw = await readLimitedText(response, MAX_CONTROL_RESPONSE_BYTES)

@@ -71,6 +71,18 @@ Platform 重新计算内容哈希并与 Service 描述和响应头比对。发�
 
 OpenAPI 指纹变化表示 Service 契约变化。新增 Endpoint 显示为“可发布”，缺失 Endpoint 会提示管理员处理；现有公开 Route 不会被静默改写。管理员确认发布、停用或治理变更后，Platform 自动生成新的 Routing Revision。
 
+Platform 按 Operation 的第一个非 `System` Tag 组织 Product。同一逻辑 API 的
+多个 Operation 应共享该 Tag。仅作为资产或内部依赖的 Operation 可以声明：
+
+```yaml
+x-openapi-platform:
+  support: true
+```
+
+支撑 Operation 不显示在接口目录，也不能独立配置。Platform 在同组任意公开
+Route 启用时自动创建或启用支撑 Route，并强制关闭 API Key、积分和统计；同组
+公开 Route 全部停用后自动停用支撑 Route。
+
 ## 5. 业务配置协议
 
 ### 5.1 Schema
@@ -172,20 +184,27 @@ Platform 只使用该受信响应 Header 关联调用日志，不以它替代 HT
 - 网络错误、超时和 Service 失败：释放积分预留。
 - 成功结果：结算积分并记录调用。
 
-响应已经开始流式发送后，不得再次修改状态码或重复计费。
+请求体和响应体限制按实际流式字节累计，不能依赖 `Content-Length`。响应已经
+开始流式发送后若超限或连接失败，Gateway 关闭连接而不伪造第二个 JSON 响应，
+同时释放积分预留且不得重复计费。
 
 ## 8. CORS 与预检
 
 动态 Route 的 `OPTIONS` 预检在 API Key、积分和 Upstream 调用前处理。成功预检返回 `204`，不写业务调用明细，也不消耗积分。
 
-播放器资产等浏览器子资源 Route 应按实际用途配置匿名访问和统计开关。
+声明为支撑 Operation 的播放器资产等浏览器子资源由 Platform 自动保持匿名、
+零积分且不记录业务统计。
 
 ## 9. 超时、取消与重试
 
 - Gateway 为每次 Upstream 请求创建 Deadline。
 - 客户端断开时应取消 Upstream 请求。
-- 默认不自动重试非幂等请求。
-- 是否重试必须由明确 Route/Upstream 策略控制，并保证计费只执行一次。
+- `GET` 和 `HEAD` 遇到网络错误或 `502/503/504` 时，可以在同一请求内尝试其余
+  非冷却 Target。
+- `POST`、`PUT`、`PATCH` 和 `DELETE` 不跨 Target 重放。
+- 失败 Target 进入短暂进程内冷却；如果全部 Target 都在冷却，Gateway 允许
+  重新探测全部 Target。
+- Target 回退共享同一个 Deadline，并保证鉴权、统计和计费只执行一次。
 - Service 来源客户端继续使用自己的更短超时和响应大小限制。
 
 ## 10. 追踪与日志

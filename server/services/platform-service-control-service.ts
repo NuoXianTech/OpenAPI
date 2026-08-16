@@ -55,6 +55,10 @@ interface ControlContext {
   targets: Array<typeof upstreamTargets.$inferSelect>
 }
 
+interface ServiceViewOptions {
+  checkAvailability?: boolean
+}
+
 async function loadControlContext(
   upstreamServiceId: string
 ): Promise<ControlContext> {
@@ -154,6 +158,13 @@ function endpointSummary(
       const tags = Array.isArray(value.tags)
         ? value.tags.filter((tag): tag is string => typeof tag === 'string')
         : []
+      const platformExtension = value['x-openapi-platform']
+      const support = Boolean(
+        platformExtension
+        && typeof platformExtension === 'object'
+        && !Array.isArray(platformExtension)
+        && (platformExtension as Record<string, unknown>).support === true
+      )
       endpoints.push({
         method: method.toUpperCase(),
         path,
@@ -162,12 +173,14 @@ function endpointSummary(
           : null,
         summary: typeof value.summary === 'string' ? value.summary : null,
         tags,
-        system: tags.includes('System')
+        system: tags.includes('System'),
+        support
       })
     }
   }
   return endpoints.sort((left, right) => (
     Number(left.system) - Number(right.system)
+    || Number(left.support) - Number(right.support)
     || left.path.localeCompare(right.path)
     || left.method.localeCompare(right.method)
   ))
@@ -197,7 +210,8 @@ function readStoredEndpoints(
         : null,
       summary: typeof value.summary === 'string' ? value.summary : null,
       tags: value.tags.filter((tag): tag is string => typeof tag === 'string'),
-      system: value.system
+      system: value.system,
+      support: value.support === true
     }]
   })
 }
@@ -219,7 +233,8 @@ function publicDesiredValues(
 }
 
 async function buildView(
-  context: ControlContext
+  context: ControlContext,
+  options: ServiceViewOptions = {}
 ): Promise<ServiceConfigurationView> {
   const document = context.service.openapiDocumentId
     ? firstRow(await db.select({
@@ -234,7 +249,8 @@ async function buildView(
   return {
     connection: connectionView(
       context.connection,
-      context.service.status === 'active'
+      options.checkAvailability === true
+      && context.service.status === 'active'
         ? await resolveServiceAvailability(
             context.connection.serviceDescription,
             context.targets
@@ -266,6 +282,8 @@ function assertMatchingDescriptions(
       || description.configuration.schema !== first.configuration.schema
       || description.configuration.state !== first.configuration.state
       || description.configuration.update !== first.configuration.update
+      || description.health !== first.health
+      || description.readiness !== first.readiness
     ) {
       throw createApplicationError({
         statusCode: 409,
@@ -281,12 +299,16 @@ async function persistOpenAPI(input: {
   context: ControlContext
   description: ServiceDescription
   document: Record<string, unknown>
+  reportedSha256: string | null
   sourceUrl: string
 }) {
   const calculatedHash = createHash('sha256')
     .update(canonicalJson(input.document))
     .digest('hex')
-  if (calculatedHash !== input.description.openapiSha256) {
+  if (
+    calculatedHash !== input.description.openapiSha256
+    || input.reportedSha256 !== calculatedHash
+  ) {
     throw createApplicationError({
       statusCode: 409,
       message: 'Service OpenAPI fingerprint does not match its document',
@@ -313,7 +335,9 @@ async function persistOpenAPI(input: {
       content: input.document,
       contentHash: calculatedHash,
       parsedSummary: {
-        endpointCount: endpoints.filter(endpoint => !endpoint.system).length,
+        endpointCount: endpoints.filter(endpoint => (
+          !endpoint.system && !endpoint.support
+        )).length,
         endpoints
       },
       fetchedAt: new Date()
@@ -325,7 +349,9 @@ async function persistOpenAPI(input: {
       upstreamServiceId: input.context.service.id,
       sourceUrl: input.sourceUrl,
       parsedSummary: {
-        endpointCount: endpoints.filter(endpoint => !endpoint.system).length,
+        endpointCount: endpoints.filter(endpoint => (
+          !endpoint.system && !endpoint.support
+        )).length,
         endpoints
       },
       fetchedAt: new Date()
@@ -417,10 +443,11 @@ async function pushConfiguration(
       )
       const matches = response.data.serviceId === serviceId
         && response.data.schemaSha256 === schemaSha256
+        && response.data.revision === revision
         && response.data.configurationSha256 === configurationHash
       const state = redactedStateFromValues({
-        serviceId,
-        schemaSha256,
+        serviceId: response.data.serviceId,
+        schemaSha256: response.data.schemaSha256,
         revision: response.data.revision,
         configurationSha256: response.data.configurationSha256,
         values,
@@ -557,8 +584,11 @@ async function configurationPlaintext(
 }
 
 export const platformServiceControlService = {
-  async get(upstreamServiceId: string) {
-    return buildView(await loadControlContext(upstreamServiceId))
+  async get(
+    upstreamServiceId: string,
+    options: ServiceViewOptions = {}
+  ) {
+    return buildView(await loadControlContext(upstreamServiceId), options)
   },
 
   async discover(upstreamServiceId: string) {
@@ -602,6 +632,16 @@ export const platformServiceControlService = {
           .update(canonicalJson(definition.data))
           .digest('hex')
         assertServiceConfigurationDefinition(definition.data)
+        if (
+          description.headers.get('x-openapi-sha256')
+          !== description.data.openapiSha256
+        ) {
+          throw createApplicationError({
+            statusCode: 409,
+            message: 'Service description fingerprint mismatch',
+            data: { code: 'SERVICE_OPENAPI_HASH_MISMATCH' }
+          })
+        }
         if (
           schemaSha256 !== description.data.configuration.schemaSha256
           || definition.headers.get('x-configuration-schema-sha256')
@@ -661,6 +701,16 @@ export const platformServiceControlService = {
     const description = assertMatchingDescriptions(
       discovered.map(item => item.description)
     )
+    if (
+      context.connection.serviceId
+      && context.connection.serviceId !== description.serviceId
+    ) {
+      throw createApplicationError({
+        statusCode: 409,
+        message: 'discovered Service identity differs from the existing connection',
+        data: { code: 'SERVICE_IDENTITY_MISMATCH' }
+      })
+    }
     const first = discovered[0]!
     const openapi = await serviceControlClient.getOpenAPI(
       first.target.baseUrl,
@@ -671,6 +721,7 @@ export const platformServiceControlService = {
       context,
       description,
       document: openapi.data,
+      reportedSha256: openapi.headers.get('x-openapi-sha256'),
       sourceUrl: openapi.url
     })
 
@@ -723,7 +774,10 @@ export const platformServiceControlService = {
         updatedAt: now
       }).where(eq(upstreamTargets.id, item.target.id))
     }))
-    return buildView(await loadControlContext(upstreamServiceId))
+    return buildView(
+      await loadControlContext(upstreamServiceId),
+      { checkAvailability: true }
+    )
   },
 
   async updateConfiguration(

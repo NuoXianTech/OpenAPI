@@ -23,7 +23,9 @@ const saving = ref(false)
 const rotatingToken = ref(false)
 const serviceToken = ref('')
 const businessEndpoints = computed(() =>
-  resource.data.value?.endpoints.filter(endpoint => !endpoint.system) ?? []
+  resource.data.value?.endpoints.filter(endpoint => (
+    !endpoint.system && !endpoint.support
+  )) ?? []
 )
 const connectionStatusColor = computed(() => {
   const connection = resource.data.value?.connection

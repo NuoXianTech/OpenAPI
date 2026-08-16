@@ -5,6 +5,7 @@ import type { ApiCatalogItem } from '#shared/types/api'
 import { db } from '~~/server/db/client'
 import {
   apiCallStats,
+  openapiDocuments,
   apiProducts,
   apiRoutes,
   apiVersions,
@@ -16,6 +17,7 @@ import {
   incrementSharedCacheVersion
 } from '~~/server/utils/shared-cache'
 import { toNumber } from '~~/server/utils/number'
+import { parseRoutePathPattern } from '~~/server/utils/route-pattern'
 import { resolveApiAutoStatuses, resolveEffectiveApiStatus } from './api-status-service'
 import { publicApiRouteCondition } from './public-api-query'
 
@@ -65,6 +67,41 @@ function createCacheKey(filters: PublicApiCatalogFilters): string {
   return `cache:public:apis:${digest}`
 }
 
+function routeShape(path: string): string | null {
+  try {
+    return parseRoutePathPattern(
+      path.replace(/\{path\.([A-Za-z][A-Za-z0-9_]*)\}/g, '{$1}')
+    ).normalizedShape
+  } catch {
+    return null
+  }
+}
+
+function supportRouteKey(method: string, path: string): string | null {
+  const shape = routeShape(path)
+  return shape ? `${method}:${shape}` : null
+}
+
+function supportRouteKeys(
+  summary: Record<string, unknown> | null
+): Set<string> {
+  const endpoints = summary?.endpoints
+  if (!Array.isArray(endpoints)) return new Set()
+  return new Set(endpoints.flatMap((endpoint) => {
+    if (!endpoint || typeof endpoint !== 'object' || Array.isArray(endpoint)) {
+      return []
+    }
+    const value = endpoint as Record<string, unknown>
+    if (
+      value.support !== true
+      || typeof value.method !== 'string'
+      || typeof value.path !== 'string'
+    ) return []
+    const key = supportRouteKey(value.method, value.path)
+    return key ? [key] : []
+  }))
+}
+
 export const apiCatalogService = {
   async listPublicApis(filters: PublicApiCatalogFilters = {}) {
     const normalizedFilters: PublicApiCatalogFilters = {
@@ -84,9 +121,11 @@ export const apiCatalogService = {
         const [rows, stats] = await Promise.all([
           db.select({
             routeId: apiRoutes.id,
+            upstreamServiceId: upstreamServices.id,
             routeName: apiRoutes.name,
             method: apiRoutes.method,
             path: apiRoutes.pathPattern,
+            upstreamPathTemplate: apiRoutes.upstreamPathTemplate,
             isApiKey: apiRoutes.isApiKey,
             isStatistics: apiRoutes.isStatistics,
             creditsCost: apiRoutes.creditsCost,
@@ -96,20 +135,38 @@ export const apiCatalogService = {
             description: apiProducts.description,
             productLifecycle: apiProducts.lifecycle,
             versionState: apiVersions.state,
+            openapiSummary: openapiDocuments.parsedSummary,
             updatedAt: apiRoutes.updatedAt
           }).from(apiRoutes)
             .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
             .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
             .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
+            .leftJoin(openapiDocuments, eq(
+              openapiDocuments.id,
+              upstreamServices.openapiDocumentId
+            ))
             .where(and(...conditions))
             .orderBy(desc(apiRoutes.updatedAt), apiProducts.name, apiRoutes.pathPattern),
           loadRouteStats()
         ])
+        const supportKeysByUpstream = new Map<string, Set<string>>()
+        const visibleRows = rows.filter((row) => {
+          let supportKeys = supportKeysByUpstream.get(row.upstreamServiceId)
+          if (!supportKeys) {
+            supportKeys = supportRouteKeys(row.openapiSummary)
+            supportKeysByUpstream.set(row.upstreamServiceId, supportKeys)
+          }
+          const routeKey = supportRouteKey(
+            row.method,
+            row.upstreamPathTemplate
+          )
+          return !routeKey || !supportKeys.has(routeKey)
+        })
         const autoStatuses = await resolveApiAutoStatuses(
-          rows.filter(row => row.isStatistics).map(row => row.routeId)
+          visibleRows.filter(row => row.isStatistics).map(row => row.routeId)
         )
 
-        return rows.map((row): ApiCatalogItem => {
+        return visibleRows.map((row): ApiCatalogItem => {
           const configuredStatus = row.productLifecycle === 'deprecated' || row.versionState === 'deprecated'
             ? API_STATUS.deprecated
             : API_STATUS.automatic

@@ -60,9 +60,10 @@ Internal Service 的标准流程是：
 
 1. Service 发现更新 OpenAPI 文档和 Endpoint 摘要，但不直接公开接口。
 2. 管理员在接口目录明确点击发布。
-3. Platform 按 Upstream 自动创建或复用 Product 与 Version，并创建公开 Route；默认公开 Path 与 Service Path 相同。
+3. Platform 按 Operation 的第一个业务 Tag 自动创建或复用 Product，并按路径版本创建 Version；默认公开 Path 与 Service Path 相同。
 4. 发布、停用以及 API Key、统计、积分、限流等治理变更保存后，Platform 自动应用运行配置；只有完整配置实际变化时才生成并激活新的 Routing Revision。
-5. 高级设置仍可编辑 Host、公开 Path、Upstream 模板、超时和大小限制，但保存动作同样自动发布。
+5. 标记为 `x-openapi-platform.support=true` 的支撑 Operation 不显示为独立接口，由同组公开 Route 自动带上或停用。
+6. 高级设置仍可编辑 Host、公开 Path、Upstream 模板、超时和大小限制，但保存动作同样自动发布。
 
 Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排的日常步骤。生成 Revision 时 Platform：
 
@@ -106,7 +107,7 @@ Route 支持：
 - Upstream Path 模板。
 - Query 和请求体转发。
 - 流式响应转发。
-- 请求超时、请求体和可缓冲响应体上限。
+- 请求超时，以及按实际流式字节执行的请求体和响应体上限。
 
 通用 Gateway 默认保留 Upstream 状态码、Content-Type 和响应体。Platform 只为自身产生的鉴权、限流、计费和路由错误使用平台错误契约。
 
@@ -134,7 +135,10 @@ External Upstream 用于普通 HTTP API：
 
 ### 7.3 Target 选择
 
-一个 Upstream 可以包含多个启用 Target。当前策略包括轮询和加权轮询。流量选择与配置同步相互独立：业务请求只选择一个 Target，而业务配置总是下发到全部启用 Target。
+一个 Upstream 可以包含多个启用 Target。当前策略包括轮询和加权轮询，权重只
+决定请求的首选 Target。网络错误或 `502/503/504` 会让该 Target 短暂冷却；
+`GET`、`HEAD` 可以在同一 Deadline 内安全尝试其余 Target，带写语义的请求不会
+重放。业务配置仍始终下发到全部启用 Target，与业务流量选择相互独立。
 
 ## 8. Service 控制面
 

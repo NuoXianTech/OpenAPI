@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { and, eq, sql } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import {
@@ -7,7 +8,10 @@ import {
   routingRevisions
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
-import { platformRouteService } from '~~/server/services/platform-route-service'
+import {
+  platformRouteService,
+  type RouteMutationInput
+} from '~~/server/services/platform-route-service'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
 import { platformUpstreamService } from '~~/server/services/platform-upstream-service'
 import { routingRevisionService } from '~~/server/services/routing-revision-service'
@@ -150,6 +154,47 @@ function defaultVersion(path: string): string {
   return /^\/(v[0-9]+(?:[._-][A-Za-z0-9]+)?)\//.exec(path)?.[1] ?? 'v1'
 }
 
+function endpointGroupName(endpoint: ServiceEndpointSummary): string | null {
+  return endpoint.tags.find(tag => tag !== 'System' && tag.trim())?.trim() ?? null
+}
+
+function normalizedProductSegment(value: string): string {
+  const normalized = value.normalize('NFKD')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  if (normalized) return normalized
+  return `group-${createHash('sha256').update(value).digest('hex').slice(0, 10)}`
+}
+
+function boundedProductSlug(value: string): string {
+  if (value.length <= 80) return value
+  const digest = createHash('sha256').update(value).digest('hex').slice(0, 8)
+  return `${value.slice(0, 71).replace(/-+$/g, '')}-${digest}`
+}
+
+function endpointProductDefinition(input: {
+  upstream: Pick<UpstreamView, 'slug'>
+  serviceName: string
+  endpoint: ServiceEndpointSummary
+}) {
+  const groupName = endpointGroupName(input.endpoint)
+  if (!groupName) {
+    return {
+      slug: input.upstream.slug,
+      name: input.serviceName,
+      summary: `由 ${input.serviceName} 提供的接口`
+    }
+  }
+  return {
+    slug: boundedProductSlug(
+      `${input.upstream.slug}-${normalizedProductSegment(groupName)}`
+    ),
+    name: groupName,
+    summary: `由 ${input.serviceName} 提供的 ${groupName} 接口`
+  }
+}
+
 function describePublicationError(error: unknown) {
   const message = error instanceof Error && error.message.trim()
     ? error.message
@@ -188,11 +233,15 @@ async function ensureEndpointVersion(input: {
   workspaceId: string
   upstream: UpstreamView
   serviceName: string
-  endpointPath: string
+  endpoint: ServiceEndpointSummary
   existingRoutes: RouteBinding[]
 }): Promise<string> {
+  const definition = endpointProductDefinition(input)
+  const versionName = defaultVersion(input.endpoint.path)
   const reusable = input.existingRoutes.find(binding => (
     binding.route.upstreamServiceId === input.upstream.id
+    && binding.product.slug === definition.slug
+    && binding.version.version === versionName
     && binding.product.lifecycle === 'active'
     && (binding.version.state === 'published'
       || binding.version.state === 'deprecated')
@@ -202,9 +251,9 @@ async function ensureEndpointVersion(input: {
   return db.transaction(async (tx) => {
     let product = firstRow(await tx.insert(apiProducts).values({
       workspaceId: input.workspaceId,
-      slug: input.upstream.slug,
-      name: input.serviceName,
-      summary: `由 ${input.serviceName} 提供的接口`,
+      slug: definition.slug,
+      name: definition.name,
+      summary: definition.summary,
       visibility: 'public',
       lifecycle: 'active'
     }).onConflictDoNothing({
@@ -213,11 +262,13 @@ async function ensureEndpointVersion(input: {
     if (!product) {
       const existing = firstRow(await tx.select().from(apiProducts).where(and(
         eq(apiProducts.workspaceId, input.workspaceId),
-        eq(apiProducts.slug, input.upstream.slug)
+        eq(apiProducts.slug, definition.slug)
       )).limit(1))
       if (existing?.deletedAt || (existing && existing.lifecycle !== 'active')) {
         product = firstRow(await tx.update(apiProducts).set({
-          name: input.serviceName,
+          name: definition.name,
+          summary: definition.summary,
+          visibility: 'public',
           lifecycle: 'active',
           deletedAt: null,
           updatedAt: new Date()
@@ -228,7 +279,6 @@ async function ensureEndpointVersion(input: {
     }
     if (!product) throw new Error('endpoint product could not be created')
 
-    const versionName = defaultVersion(input.endpointPath)
     const publishedAt = new Date()
     let version = firstRow(await tx.insert(apiVersions).values({
       productId: product.id,
@@ -254,6 +304,168 @@ async function ensureEndpointVersion(input: {
     if (!version) throw new Error('endpoint product version could not be created')
     return version.id
   })
+}
+
+function routeMutationFromBinding(
+  binding: RouteBinding,
+  patch: Partial<RouteMutationInput> = {}
+): RouteMutationInput {
+  return {
+    apiVersionId: binding.route.apiVersionId,
+    name: binding.route.name,
+    hosts: binding.route.hosts,
+    method: binding.route.method as HttpMethod,
+    pathPattern: binding.route.pathPattern,
+    upstreamServiceId: binding.route.upstreamServiceId,
+    upstreamPathTemplate: binding.route.upstreamPathTemplate,
+    isApiKey: binding.route.isApiKey,
+    isStatistics: binding.route.isStatistics,
+    creditsCost: binding.route.creditsCost,
+    rateLimitPerSecond: binding.route.rateLimitPerSecond,
+    rateLimitPerMinute: binding.route.rateLimitPerMinute,
+    rateLimitPerHour: binding.route.rateLimitPerHour,
+    rateLimitPerDay: binding.route.rateLimitPerDay,
+    timeoutMs: binding.route.timeoutMs,
+    maxRequestBytes: binding.route.maxRequestBytes,
+    maxResponseBytes: binding.route.maxResponseBytes,
+    state: binding.route.state as RouteMutationInput['state'],
+    ...patch
+  }
+}
+
+function supportRouteHosts(bindings: RouteBinding[]): string[] {
+  if (bindings.some(binding => binding.route.hosts.length === 0)) return []
+  return Array.from(new Set(bindings.flatMap(binding => binding.route.hosts))).sort()
+}
+
+function endpointBelongsToProduct(input: {
+  upstream: Pick<UpstreamView, 'slug'>
+  serviceName: string
+  endpoint: ServiceEndpointSummary
+  productSlug: string
+}): boolean {
+  return endpointProductDefinition(input).slug === input.productSlug
+}
+
+async function synchronizeSupportRoutes(input: {
+  workspaceId: string
+  upstream: Pick<UpstreamView, 'id' | 'slug'>
+  serviceName: string
+  endpoint: ServiceEndpointSummary
+  endpoints: ServiceEndpointSummary[]
+  preferredVersionId?: string
+}) {
+  const productSlug = endpointProductDefinition(input).slug
+  const versionName = defaultVersion(input.endpoint.path)
+  const groupedEndpoints = input.endpoints.filter(endpoint => (
+    !endpoint.system
+    && defaultVersion(endpoint.path) === versionName
+    && endpointBelongsToProduct({
+      upstream: input.upstream,
+      serviceName: input.serviceName,
+      endpoint,
+      productSlug
+    })
+  ))
+  const supportEndpoints = groupedEndpoints.filter(endpoint => endpoint.support)
+  if (supportEndpoints.length === 0) return
+
+  const routes = (await platformRouteService.list(input.workspaceId)).filter(
+    binding => binding.route.upstreamServiceId === input.upstream.id
+  )
+  const publicEndpoints = groupedEndpoints.filter(endpoint => !endpoint.support)
+  const activePublicRoutes = routes.filter(binding => (
+    binding.route.state === 'active'
+    && publicEndpoints.some(endpoint => routeMatchesEndpoint(binding, endpoint))
+  ))
+  const supportEnabled = activePublicRoutes.length > 0
+  const supportHosts = supportRouteHosts(activePublicRoutes)
+  const versionId = input.preferredVersionId
+    ?? activePublicRoutes[0]?.route.apiVersionId
+
+  for (const endpoint of supportEndpoints) {
+    const candidates = routes.filter(binding => routeMatchesEndpoint(binding, endpoint))
+    if (!supportEnabled) {
+      await Promise.all(candidates
+        .filter(binding => binding.route.state !== 'disabled')
+        .map(binding => platformRouteService.update(
+          binding.route.id,
+          routeMutationFromBinding(binding, {
+            isApiKey: false,
+            isStatistics: false,
+            creditsCost: 0,
+            rateLimitPerSecond: 0,
+            rateLimitPerMinute: 0,
+            rateLimitPerHour: 0,
+            rateLimitPerDay: 0,
+            state: 'disabled'
+          })
+        )))
+      continue
+    }
+
+    if (!versionId) {
+      throw new Error('support route requires an active endpoint version')
+    }
+    const selected = candidates.find(binding => (
+      binding.route.apiVersionId === versionId
+    ))
+    ?? candidates.find(binding => binding.route.state === 'active')
+    ?? candidates[0]
+    await Promise.all(candidates
+      .filter(binding => binding.route.id !== selected?.route.id)
+      .filter(binding => binding.route.state !== 'disabled')
+      .map(binding => platformRouteService.update(
+        binding.route.id,
+        routeMutationFromBinding(binding, { state: 'disabled' })
+      )))
+
+    const name = endpoint.summary
+      ?? endpoint.operationId
+      ?? `${endpoint.method} ${endpoint.path}`
+    if (selected) {
+      await platformRouteService.update(
+        selected.route.id,
+        routeMutationFromBinding(selected, {
+          apiVersionId: versionId,
+          name,
+          hosts: supportHosts,
+          method: endpoint.method as HttpMethod,
+          pathPattern: endpoint.path,
+          upstreamPathTemplate: endpointUpstreamTemplate(endpoint.path),
+          isApiKey: false,
+          isStatistics: false,
+          creditsCost: 0,
+          rateLimitPerSecond: 0,
+          rateLimitPerMinute: 0,
+          rateLimitPerHour: 0,
+          rateLimitPerDay: 0,
+          state: 'active'
+        })
+      )
+      continue
+    }
+    await platformRouteService.create({
+      apiVersionId: versionId,
+      name,
+      hosts: supportHosts,
+      method: endpoint.method as HttpMethod,
+      pathPattern: endpoint.path,
+      upstreamServiceId: input.upstream.id,
+      upstreamPathTemplate: endpointUpstreamTemplate(endpoint.path),
+      isApiKey: false,
+      isStatistics: false,
+      creditsCost: 0,
+      rateLimitPerSecond: 0,
+      rateLimitPerMinute: 0,
+      rateLimitPerHour: 0,
+      rateLimitPerDay: 0,
+      timeoutMs: 10_000,
+      maxRequestBytes: 1024 * 1024,
+      maxResponseBytes: 10 * 1024 * 1024,
+      state: 'active'
+    })
+  }
 }
 
 async function loadEnvironment(environmentId: string, workspaceId?: string) {
@@ -297,7 +509,10 @@ export const platformEndpointCatalogService = {
         try {
           serviceViews.set(
             upstream.id,
-            await platformServiceControlService.get(upstream.id)
+            await platformServiceControlService.get(
+              upstream.id,
+              { checkAvailability: false }
+            )
           )
         } catch {
           // An incomplete connection remains visible as an undiscovered Service.
@@ -313,7 +528,7 @@ export const platformEndpointCatalogService = {
         serviceViews.get(upstream.id)?.endpoints ?? []
       )
         .filter(endpoint => !endpoint.system)
-        .map((endpoint) => {
+        .flatMap((endpoint) => {
           const candidates = serviceRoutes
             .filter(binding => (
               !usedRouteIds.has(binding.route.id)
@@ -322,6 +537,12 @@ export const platformEndpointCatalogService = {
             .sort((left, right) => (
               routePriority(left, liveRoutes) - routePriority(right, liveRoutes)
             ))
+          if (endpoint.support) {
+            for (const candidate of candidates) {
+              usedRouteIds.add(candidate.route.id)
+            }
+            return []
+          }
           const binding = candidates[0] ?? null
           if (binding) usedRouteIds.add(binding.route.id)
           let publishable = true
@@ -330,14 +551,14 @@ export const platformEndpointCatalogService = {
           } catch {
             publishable = false
           }
-          return {
+          return [{
             key: `${upstream.id}:${endpoint.method}:${endpoint.path}:${binding?.route.id ?? 'source'}`,
             sourceKind: 'discovered' as const,
             endpoint,
             route: binding,
             status: publicationStatus(binding, liveRoutes),
             publishable
-          }
+          }]
         })
 
       for (const binding of serviceRoutes) {
@@ -397,9 +618,13 @@ export const platformEndpointCatalogService = {
       })
     }
     await loadEnvironment(input.environmentId, upstream.workspaceId)
-    const view = await platformServiceControlService.get(upstream.id)
+    const view = await platformServiceControlService.get(
+      upstream.id,
+      { checkAvailability: false }
+    )
     const endpoint = view.endpoints.find(item => (
       !item.system
+      && !item.support
       && item.method === input.method
       && item.path === input.path
     ))
@@ -427,21 +652,21 @@ export const platformEndpointCatalogService = {
     ))
       .find(item => item.id === upstream.id)
     if (!upstreamView) throw new Error('upstream view disappeared during publication')
-    const apiVersionId = existing?.route.apiVersionId
-      ?? await ensureEndpointVersion({
-        workspaceId: upstream.workspaceId,
-        upstream: upstreamView,
-        serviceName: view.connection.serviceName ?? upstream.name,
-        endpointPath: endpoint.path,
-        existingRoutes
-      })
+    const apiVersionId = await ensureEndpointVersion({
+      workspaceId: upstream.workspaceId,
+      upstream: upstreamView,
+      serviceName: view.connection.serviceName ?? upstream.name,
+      endpoint,
+      existingRoutes
+    })
     const route = existing
-      ? await platformRouteService.update(existing.route.id, {
-          ...existing.route,
-          hosts: existing.route.hosts,
-          method: existing.route.method as HttpMethod,
-          state: 'active'
-        })
+      ? await platformRouteService.update(
+          existing.route.id,
+          routeMutationFromBinding(existing, {
+            apiVersionId,
+            state: 'active'
+          })
+        )
       : await platformRouteService.create({
           apiVersionId,
           name: endpoint.summary
@@ -465,6 +690,14 @@ export const platformEndpointCatalogService = {
           state: 'active'
         })
     if (!route) throw new Error('endpoint route could not be created')
+    await synchronizeSupportRoutes({
+      workspaceId: upstream.workspaceId,
+      upstream: upstreamView,
+      serviceName: view.connection.serviceName ?? upstream.name,
+      endpoint,
+      endpoints: view.endpoints,
+      preferredVersionId: route.apiVersionId
+    })
     return {
       route,
       created: !existing,
@@ -479,6 +712,22 @@ export const platformEndpointCatalogService = {
   ) {
     const binding = await platformRouteService.get(routeId)
     await loadEnvironment(input.environmentId, binding.product.workspaceId)
+    const view = binding.upstream.kind === 'internal'
+      ? await platformServiceControlService.get(
+          binding.upstream.id,
+          { checkAvailability: false }
+        )
+      : null
+    const endpoint = view?.endpoints.find(item => (
+      !item.system && routeMatchesEndpoint(binding, item)
+    )) ?? null
+    if (endpoint?.support) {
+      throw createApplicationError({
+        statusCode: 404,
+        message: 'support routes are managed automatically',
+        data: { code: 'SUPPORT_ROUTE_NOT_MANAGEABLE' }
+      })
+    }
     const route = await platformRouteService.update(routeId, {
       apiVersionId: binding.route.apiVersionId,
       name: input.name ?? binding.route.name,
@@ -505,6 +754,16 @@ export const platformEndpointCatalogService = {
         ? binding.route.state as 'draft' | 'active' | 'disabled'
         : input.enabled ? 'active' : 'disabled'
     })
+    if (view && endpoint) {
+      await synchronizeSupportRoutes({
+        workspaceId: binding.product.workspaceId,
+        upstream: binding.upstream,
+        serviceName: view.connection.serviceName ?? binding.upstream.name,
+        endpoint,
+        endpoints: view.endpoints,
+        preferredVersionId: route.apiVersionId
+      })
+    }
     return {
       route,
       ...await applyDesiredRevision(input.environmentId, createdBy)

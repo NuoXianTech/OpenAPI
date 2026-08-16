@@ -7,8 +7,7 @@ import type {
   PlatformEndpointPublicationResult,
   PlatformEndpointCatalogService,
   PlatformProduct,
-  PlatformRouteBinding,
-  PlatformUpstream
+  PlatformRouteBinding
 } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import {
@@ -60,15 +59,6 @@ const productsResource = usePrivateResource<PlatformProduct[]>({
     ? { workspaceId: context.selectedWorkspaceId.value }
     : undefined
 })
-const upstreamsResource = usePrivateResource<PlatformUpstream[]>({
-  path: '/api/admin/v1/upstreams',
-  defaultData: () => [],
-  immediate: false,
-  query: () => context.selectedWorkspaceId.value
-    ? { workspaceId: context.selectedWorkspaceId.value }
-    : undefined
-})
-
 const search = ref('')
 const statusFilter = ref('all')
 const busyKeys = ref(new Set<string>())
@@ -78,8 +68,12 @@ const editingRoute = ref<PlatformRouteBinding | null>(null)
 const products = computed(() => productsResource.data.value.filter(
   product => product.workspaceId === context.selectedWorkspaceId.value
 ))
-const upstreams = computed(() => upstreamsResource.data.value.filter(
-  upstream => upstream.workspaceId === context.selectedWorkspaceId.value
+const upstreams = computed(() => (
+  catalogResource.data.value.services
+    .map(service => service.upstream)
+    .filter(
+      upstream => upstream.workspaceId === context.selectedWorkspaceId.value
+    )
 ))
 const internalUpstreams = computed(() => upstreams.value.filter(
   upstream => upstream.kind === 'internal' && upstream.status === 'active'
@@ -87,12 +81,10 @@ const internalUpstreams = computed(() => upstreams.value.filter(
 const loading = computed(() => (
   catalogResource.loading.value
   || productsResource.loading.value
-  || upstreamsResource.loading.value
 ))
 const resourceError = computed(() => (
   catalogResource.error.value
   || productsResource.error.value
-  || upstreamsResource.error.value
 ))
 const focusedUpstreamId = computed(() => (
   typeof route.query.upstreamId === 'string' ? route.query.upstreamId : ''
@@ -193,8 +185,7 @@ async function refresh() {
     || !context.selectedEnvironmentId.value) return
   await Promise.all([
     catalogResource.refresh(),
-    productsResource.refresh(),
-    upstreamsResource.refresh()
+    productsResource.refresh()
   ])
 }
 
@@ -202,8 +193,7 @@ async function refreshAfterMutation() {
   await Promise.all([
     context.refresh(),
     catalogResource.refresh(),
-    productsResource.refresh(),
-    upstreamsResource.refresh()
+    productsResource.refresh()
   ])
 }
 

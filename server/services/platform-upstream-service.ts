@@ -92,6 +92,18 @@ function normalizeTargetUrl(value: string, kind: CreateUpstreamInput['kind']): U
   return url
 }
 
+function normalizeServiceToken(value: string | undefined): string {
+  const token = value?.trim() ?? ''
+  if (token.length < 32 || token.length > 4096) {
+    throw createApplicationError({
+      statusCode: 400,
+      message: 'internal upstream requires a Service Token with 32 to 4096 characters',
+      data: { code: 'SERVICE_TOKEN_REQUIRED' }
+    })
+  }
+  return token
+}
+
 export const platformUpstreamService = {
   async list(
     workspaceId?: string,
@@ -144,13 +156,9 @@ export const platformUpstreamService = {
   },
 
   async create(input: CreateUpstreamInput) {
-    if (input.kind === 'internal' && (!input.serviceToken || input.serviceToken.length < 32)) {
-      throw createApplicationError({
-        statusCode: 400,
-        message: 'internal upstream requires a Service Token with at least 32 characters',
-        data: { code: 'SERVICE_TOKEN_REQUIRED' }
-      })
-    }
+    const serviceToken = input.kind === 'internal'
+      ? normalizeServiceToken(input.serviceToken)
+      : null
     const normalizedTargets = input.targets.map(target => ({
       ...target,
       url: normalizeTargetUrl(target.baseUrl, input.kind)
@@ -185,7 +193,7 @@ export const platformUpstreamService = {
           ? firstRow(await tx.insert(upstreamServiceConnections).values({
               upstreamServiceId: service.id,
               serviceTokenCiphertext: encryptStoredSecret(
-                input.serviceToken!,
+                serviceToken!,
                 'service-token'
               )
             }).returning())
@@ -214,10 +222,11 @@ export const platformUpstreamService = {
   },
 
   async updateServiceToken(id: string, serviceToken: string) {
+    const normalizedToken = normalizeServiceToken(serviceToken)
     const updated = firstRow(await db.update(upstreamServiceConnections)
       .set({
         serviceTokenCiphertext: encryptStoredSecret(
-          serviceToken,
+          normalizedToken,
           'service-token'
         ),
         lastDiscoveryError: null,
