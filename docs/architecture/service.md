@@ -36,7 +36,6 @@ src/
 ├── configuration/           业务配置定义、快照和热更新
 ├── contracts/               Service 与 OpenAPI 契约
 ├── http/                    Middleware、系统 Route 和错误映射
-├── infrastructure/          Fetch、并发、日志等通用基础设施
 ├── modules/                 具体业务模块
 ├── runtime/                 就绪状态和运行期状态
 └── shared/                  通用响应与 OpenAPI 工具
@@ -52,7 +51,7 @@ src/
 - `player`：生成 DPlayer/ArtPlayer 页面并提供固定版本的同源浏览器资产。
 - `ip`：读取本地挂载的 IPv4/IPv6 CZDB 数据库。
 
-新增模块应包含自己的 Route、Schema、领域逻辑、来源客户端、Fixture、测试和接口文档。跨模块重复能力进入 `infrastructure` 或 `shared`，但不得形成隐藏的业务注册系统。
+新增模块应包含自己的 Route、Schema、领域逻辑、来源客户端、Fixture、测试和接口文档。只有至少两个生产调用方共同使用的无业务语义能力才进入 `shared`，不得形成隐藏的业务注册系统。
 
 ## 5. HTTP 与 OpenAPI
 
@@ -105,7 +104,7 @@ HTML、JavaScript、文本、图片或流式内容按实际 Content-Type 返回�
 
 ## 8. 业务配置
 
-Service 在 `src/configuration/definition.ts` 声明可由 Platform 管理的字段。支持：
+需要配置的模块在自己的 `src/modules/<module>/configuration.ts` 声明字段，再由 `src/modules/index.ts` 显式组合。支持：
 
 - `boolean`
 - `text`

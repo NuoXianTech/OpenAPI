@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { setResponseHeader, setResponseStatus } from 'h3'
+import { getAppEventContext } from '~~/server/utils/event-context'
 import { ensureRequestId } from '~~/server/utils/request-id'
 
 export interface GatewayResponse<T = unknown> {
@@ -16,6 +17,11 @@ export function gatewayFail<T = unknown>(
   message: string,
   data: T | null = null
 ): GatewayResponse<T> {
+  getAppEventContext(event).apiFailure = {
+    errorCode: code,
+    errorMessage: message
+  }
+  setResponseHeader(event, 'cache-control', 'no-store')
   setResponseHeader(event, 'X-Request-Id', ensureRequestId(event))
   setResponseStatus(event, status)
   return {

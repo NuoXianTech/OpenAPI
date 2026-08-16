@@ -156,7 +156,15 @@ Service 只信任 Platform 重新生成的内部 Header。
 
 ## 7. 响应语义
 
-Upstream 响应默认保持原状态码、Content-Type 和响应体。Platform 产生的治理错误使用稳定平台错误码；Service 产生的业务错误由 Service 契约定义。
+Upstream 响应默认保持原状态码、Content-Type 和响应体。Internal Service 的业务 JSON 必须使用 `code/message/data/timestamp` 四字段响应壳；Platform 产生的治理错误使用相同结构和稳定平台错误码。External Upstream 不会被 Gateway 隐式包装。
+
+Service 的标准错误响应同时携带：
+
+```http
+X-OpenAPI-Error-Code: <stable-error-code>
+```
+
+Platform 只使用该受信响应 Header 关联调用日志，不以它替代 HTTP 状态码或 JSON 响应体。调用方不能伪造该值，因为进入 Internal Service 前所有 `x-openapi-*` 请求 Header 都会被清除。
 
 计费结果按状态分类：
 
@@ -182,7 +190,7 @@ Upstream 响应默认保持原状态码、Content-Type 和响应体。Platform �
 
 ## 10. 追踪与日志
 
-Platform 为每次公开请求生成或验证 Request ID，并贯穿调用明细、积分流水和 Service 日志。支持标准 Trace Context 时转发 `traceparent` 与 `tracestate`。
+Platform 为每次公开请求生成或验证 Request ID，并贯穿调用明细、积分流水和 Service 日志。Gateway 错误码以及 Service 返回的 `X-OpenAPI-Error-Code` 会写入调用明细。支持标准 Trace Context 时转发 `traceparent` 与 `tracestate`。
 
 日志不得包含：
 

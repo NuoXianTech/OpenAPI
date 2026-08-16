@@ -1,6 +1,6 @@
 export const API_ACCESS_ERROR = {
   METHOD_NOT_ALLOWED: { status: 405, code: 'METHOD_NOT_ALLOWED', msg: '请求方法不受支持' },
-  MISSING_API_KEY: { status: 401, code: 'MISSING_API_KEY', msg: '缺少 x-api-key 请求头' },
+  MISSING_API_KEY: { status: 401, code: 'MISSING_API_KEY', msg: '缺少 API Key，请使用 x-api-key 请求头或 apikey 查询参数' },
   INVALID_API_KEY: { status: 401, code: 'INVALID_API_KEY', msg: '无效的 API Key' },
   DISABLED_API_KEY: { status: 401, code: 'DISABLED_API_KEY', msg: 'API Key 已被禁用' },
   EXPIRED_API_KEY: { status: 401, code: 'EXPIRED_API_KEY', msg: 'API Key 已过期' },

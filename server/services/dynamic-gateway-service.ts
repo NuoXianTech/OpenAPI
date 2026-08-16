@@ -1,6 +1,5 @@
 import type { H3Event } from 'h3'
 import {
-  createError,
   getHeader,
   getProxyRequestHeaders,
   getRequestProtocol,
@@ -47,11 +46,29 @@ class BillingPersistenceError extends Error {
   }
 }
 
+class GatewayExecutionError extends Error {
+  readonly status: number
+  readonly code: string
+  readonly publicMessage: string
+
+  constructor(status: number, code: string, publicMessage: string) {
+    super(publicMessage)
+    this.name = 'GatewayExecutionError'
+    this.status = status
+    this.code = code
+    this.publicMessage = publicMessage
+  }
+}
+
+const UPSTREAM_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,79}$/
+
 const targetCounters = new Map<string, number>()
 
 function selectTarget(match: ResolvedDynamicRoute) {
   const targets = match.upstream.targets
-  if (targets.length === 0) throw createError({ statusCode: 503, message: 'upstream has no enabled targets' })
+  if (targets.length === 0) {
+    throw new GatewayExecutionError(503, 'UPSTREAM_NOT_CONFIGURED', '上游服务尚未配置')
+  }
 
   const counter = targetCounters.get(match.upstream.id) ?? 0
   targetCounters.set(match.upstream.id, (counter + 1) % Number.MAX_SAFE_INTEGER)
@@ -103,7 +120,7 @@ function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serv
 
   if (match.upstream.kind === 'internal') {
     if (!serviceToken) {
-      throw createError({ statusCode: 503, message: 'internal upstream service token is not configured' })
+      throw new GatewayExecutionError(503, 'UPSTREAM_AUTH_UNAVAILABLE', '上游服务凭证尚未配置')
     }
     headers.set('authorization', `Service ${serviceToken}`)
   }
@@ -153,11 +170,21 @@ async function persistBillingOutcome(event: H3Event, statusCode: number): Promis
 
 function assertRequestSize(event: H3Event, maximumBytes: number): void {
   if (maximumBytes === 0 && PAYLOAD_METHODS.has(event.method)) {
-    throw createError({ statusCode: 413, message: 'request body is not allowed for this route' })
+    throw new GatewayExecutionError(413, 'REQUEST_BODY_NOT_ALLOWED', '此接口不接受请求体')
   }
   const contentLength = Number(event.node.req.headers['content-length'])
   if (Number.isFinite(contentLength) && contentLength > maximumBytes) {
-    throw createError({ statusCode: 413, message: 'request body exceeds the route limit' })
+    throw new GatewayExecutionError(413, 'REQUEST_BODY_TOO_LARGE', '请求体超过接口限制')
+  }
+}
+
+function captureUpstreamFailure(event: H3Event, response: Response): void {
+  if (response.status < 400) return
+  const errorCode = response.headers.get('x-openapi-error-code')?.trim() ?? ''
+  if (!UPSTREAM_ERROR_CODE_PATTERN.test(errorCode)) return
+  getAppEventContext(event).apiFailure = {
+    errorCode,
+    errorMessage: null
   }
 }
 
@@ -191,43 +218,61 @@ export const dynamicGatewayService = {
 
     setPublicApiCors(event, [match.route.method])
     initializeStatistics(event, match)
-    assertRequestSize(event, match.route.maxRequestBytes)
-    const access = await dynamicGatewayAccessService.authorize(event, match)
-    if (!access.passed) return { matched: true, response: access.response }
-    const serviceToken = match.upstream.kind === 'internal'
-      ? await upstreamServiceTokenService.get(match.upstream.id)
-      : ''
-    const target = selectTarget(match)
-    const upstreamPath = renderUpstreamPath(match.route.upstreamPathTemplate, match.params)
-    const targetUrl = buildTargetUrl(target.baseUrl, upstreamPath, requestUrl.search)
-    const headers = createUpstreamHeaders(event, match, serviceToken)
-    const abortController = new AbortController()
-    const timeout = setTimeout(() => abortController.abort(new Error('upstream timeout')), match.route.timeoutMs)
-    const abort = () => abortController.abort(new Error('client disconnected'))
-    event.node.req.once('aborted', abort)
-
-    const body = PAYLOAD_METHODS.has(event.method) ? getRequestWebStream(event) : undefined
-    const proxyFetch = match.upstream.kind === 'external'
-      ? (input: RequestInfo | URL, init?: RequestInit) => safeFetch(input instanceof Request ? input.url : input, {
-          ...init,
-          allowedHosts: [targetUrl.hostname]
-        })
-      : undefined
+    let abortController: AbortController | null = null
+    let abortRequest: (() => void) | null = null
+    let timeout: ReturnType<typeof setTimeout> | null = null
+    let targetId: string | null = null
+    let proxyStarted = false
 
     try {
+      assertRequestSize(event, match.route.maxRequestBytes)
+      const access = await dynamicGatewayAccessService.authorize(event, match)
+      if (!access.passed) return { matched: true, response: access.response }
+
+      const serviceToken = match.upstream.kind === 'internal'
+        ? await upstreamServiceTokenService.get(match.upstream.id)
+        : ''
+      const target = selectTarget(match)
+      targetId = target.id
+      const upstreamPath = renderUpstreamPath(match.route.upstreamPathTemplate, match.params)
+      const targetUrl = buildTargetUrl(target.baseUrl, upstreamPath, requestUrl.search)
+      const headers = createUpstreamHeaders(event, match, serviceToken)
+      abortController = new AbortController()
+      timeout = setTimeout(
+        () => abortController?.abort(new Error('upstream timeout')),
+        match.route.timeoutMs
+      )
+      abortRequest = () => abortController?.abort(new Error('client disconnected'))
+      event.node.req.once('aborted', abortRequest)
+
+      const body = PAYLOAD_METHODS.has(event.method) ? getRequestWebStream(event) : undefined
+      const proxyFetch = match.upstream.kind === 'external'
+        ? (input: RequestInfo | URL, init?: RequestInit) => safeFetch(input instanceof Request ? input.url : input, {
+            ...init,
+            allowedHosts: [targetUrl.hostname]
+          })
+        : undefined
       let upstreamStatus = 502
+      proxyStarted = true
       const response = await sendProxy(event, targetUrl.toString(), {
         fetch: proxyFetch,
         sendStream: true,
         onResponse: async (_proxyEvent, upstreamResponse) => {
           upstreamStatus = upstreamResponse.status
+          if (match.upstream.kind === 'internal') {
+            captureUpstreamFailure(event, upstreamResponse)
+          }
           const contentLength = Number(upstreamResponse.headers.get('content-length'))
           if (
             Number.isFinite(contentLength)
             && match.route.maxResponseBytes >= 0
             && contentLength > match.route.maxResponseBytes
           ) {
-            throw createError({ statusCode: 502, message: 'upstream response exceeds the route limit' })
+            throw new GatewayExecutionError(
+              502,
+              'UPSTREAM_RESPONSE_TOO_LARGE',
+              '上游响应超过接口限制'
+            )
           }
           try {
             await persistBillingOutcome(event, upstreamStatus)
@@ -246,7 +291,7 @@ export const dynamicGatewayService = {
       })
       return { matched: true, response }
     } catch (error) {
-      if (abortController.signal.aborted) {
+      if (abortController?.signal.aborted) {
         return {
           matched: true,
           response: gatewayFail(event, 504, 'UPSTREAM_TIMEOUT', '上游服务响应超时')
@@ -262,18 +307,26 @@ export const dynamicGatewayService = {
           response: gatewayFail(event, 503, 'BILLING_UNAVAILABLE', '计费服务暂不可用，请稍后再试')
         }
       }
+      if (error instanceof GatewayExecutionError) {
+        return {
+          matched: true,
+          response: gatewayFail(event, error.status, error.code, error.publicMessage)
+        }
+      }
       console.error('[gateway] upstream request failed', {
         routeId: match.route.id,
-        target: target.id,
-        error: (error as Error).message
+        target: targetId,
+        error: error instanceof Error ? error.message : String(error)
       })
       return {
         matched: true,
-        response: gatewayFail(event, 502, 'UPSTREAM_UNAVAILABLE', '上游服务暂时不可用')
+        response: proxyStarted
+          ? gatewayFail(event, 502, 'UPSTREAM_UNAVAILABLE', '上游服务暂时不可用')
+          : gatewayFail(event, 503, 'GATEWAY_UNAVAILABLE', '网关服务暂不可用，请稍后再试')
       }
     } finally {
-      clearTimeout(timeout)
-      event.node.req.off('aborted', abort)
+      if (timeout) clearTimeout(timeout)
+      if (abortRequest) event.node.req.off('aborted', abortRequest)
     }
   }
 }

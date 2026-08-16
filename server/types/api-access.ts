@@ -72,11 +72,17 @@ interface ApiGateRejectionContext {
   apiKeyUserId: number | null
 }
 
+interface ApiFailureContext {
+  errorCode: string
+  errorMessage: string | null
+}
+
 export interface AppEventContext {
   apiStatsTarget?: ApiStatsTarget
   apiStatsTracked?: ApiStatsTracked
   apiKey?: ApiKeyContext | null
   apiBilling?: ApiBillingContext
   apiGateRejection?: ApiGateRejectionContext
+  apiFailure?: ApiFailureContext
   requestId?: string
 }

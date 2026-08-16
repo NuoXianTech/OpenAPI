@@ -89,8 +89,9 @@ export async function recordApiCall(event: H3Event, tracked: ApiStatsTracked) {
       ?? null
     const billing = eventContext.apiBilling
 
-    const errorCode = rejection?.errorCode ?? null
-    const errorMessage = rejection?.errorMessage ?? null
+    const failure = eventContext.apiFailure ?? null
+    const errorCode = rejection?.errorCode ?? failure?.errorCode ?? null
+    const errorMessage = rejection?.errorMessage ?? failure?.errorMessage ?? null
 
     const callInput = {
       routeId: target.routeId,

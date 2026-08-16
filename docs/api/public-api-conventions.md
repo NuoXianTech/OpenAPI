@@ -40,10 +40,11 @@ upstream: /v1/player/assets/{path.asset}
 - `data` 保存业务数据，可以为 `null`。
 - `timestamp` 是 Unix 毫秒时间戳。
 - HTTP 状态码仍表达真实成功或失败，不因响应壳统一而全部返回 200。
+- 官方 Internal Service 的成功 JSON 使用固定 `code=OK` 和默认 `message=请求成功`；错误 JSON 保持同一四字段结构并使用稳定错误码。
 
 HTML、图片、音频、视频、文件和流式响应按真实媒体类型返回，不套 JSON 壳。`/healthz`、`/readyz`、`/openapi.json` 和 `/.well-known/*` 是运行协议文档，也保持原始结构。
 
-Platform Gateway 默认字节保真转发，不为 External Upstream 强制包装响应。
+Platform Gateway 对 Internal Service 默认字节保真转发，因此 Service 必须在返回前生成规范响应壳；Gateway 自己产生的鉴权、限流、计费和上游错误也使用同一结构。External Upstream 不会被强制包装。
 
 ## 4. 错误
 

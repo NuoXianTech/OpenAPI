@@ -93,6 +93,7 @@ const routeIds = {
   playerAsset: '',
   ip: '',
   limitedYiyan: '',
+  bodyRejected: '',
   contract: '',
   lifecycle: ''
 }
@@ -234,6 +235,15 @@ beforeAll(async () => {
     isApiKey: true,
     isStatistics: false,
     rateLimitPerMinute: 1
+  })
+  routeIds.bodyRejected = await createRoute({
+    apiVersionId: versionId,
+    upstreamServiceId: upstream.id,
+    name: '请求体限制验收',
+    method: 'POST',
+    pathPattern: '/v1/body-not-allowed',
+    upstreamPathTemplate: '/v1/yiyan',
+    isStatistics: true
   })
   routeIds.contract = await createRoute({
     apiVersionId: versionId,
@@ -504,6 +514,39 @@ describe('Platform to Node API Service acceptance', () => {
     expect(await countCalls(routeIds.yiyan)).toBe(callsBefore)
   })
 
+  it('normalizes Gateway request failures and records their stable error code', async () => {
+    const callsBefore = await countCalls(routeIds.bodyRejected)
+    const response = await fetch(`${gatewayBaseURL}/v1/body-not-allowed`, {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain' },
+      body: 'not-allowed'
+    })
+    const body = await readPublicEnvelope(response)
+
+    expect(response.status).toBe(413)
+    expect(body).toMatchObject({
+      code: 'REQUEST_BODY_NOT_ALLOWED',
+      message: '此接口不接受请求体',
+      data: null
+    })
+    expect(await countCalls(routeIds.bodyRejected)).toBe(callsBefore + 1)
+    const call = await queryOne<{
+      status_code: number
+      error_code: string | null
+      credits_cost: number
+      is_counted: boolean
+    }>(
+      'select status_code, error_code, credits_cost, is_counted from api_calls where route_id = $1 order by id desc limit 1',
+      [routeIds.bodyRejected]
+    )
+    expect(call).toEqual({
+      status_code: 413,
+      error_code: 'REQUEST_BODY_NOT_ALLOWED',
+      credits_cost: 0,
+      is_counted: true
+    })
+  })
+
   it('applies Route edits and soft deletes only through a new Revision and can roll back', async () => {
     const oldPath = '/v1/yiyan-lifecycle'
     const newPath = '/v1/yiyan-lifecycle-updated'
@@ -551,16 +594,18 @@ describe('Platform to Node API Service acceptance', () => {
     const before = await countCalls(routeIds.yiyan)
 
     const missing = await fetch(`${gatewayBaseURL}/v1/yiyan?type=a&id=a1`)
-    const missingBody = await missing.json() as { code: string }
+    const missingBody = await readPublicEnvelope(missing)
     expect(missing.status).toBe(401)
     expect(missingBody.code).toBe('MISSING_API_KEY')
+    expect(missingBody.data).toBeNull()
 
     const invalid = await fetch(`${gatewayBaseURL}/v1/yiyan?type=a&id=a1`, {
       headers: { 'x-api-key': 'invalid-key' }
     })
-    const invalidBody = await invalid.json() as { code: string }
+    const invalidBody = await readPublicEnvelope(invalid)
     expect(invalid.status).toBe(401)
     expect(invalidBody.code).toBe('INVALID_API_KEY')
+    expect(invalidBody.data).toBeNull()
     expect(await countCalls(routeIds.yiyan)).toBe(before)
   })
 
@@ -571,14 +616,12 @@ describe('Platform to Node API Service acceptance', () => {
         'x-forwarded-for': '203.0.113.99'
       }
     })
-    const body = await response.json() as {
-      code: string
-      data: { id: string, yiyan: string }
-    }
+    const body = await readPublicEnvelope<{ id: string, yiyan: string }>(response)
 
     expect(response.status).toBe(200)
     expect(body.code).toBe('OK')
-    expect(body.data.id).toBe('a1')
+    expect(body.message).toBe('请求成功')
+    expect(body.data).toMatchObject({ id: 'a1' })
 
     const user = await queryOne<{ credits: number }>(
       'select credits from users where id = $1',
@@ -662,7 +705,7 @@ describe('Platform to Node API Service acceptance', () => {
     const response = await fetch(`${gatewayBaseURL}/v1/ip?ip=not-an-ip`, {
       headers: { 'x-api-key': paidApiKey }
     })
-    const body = await response.json() as { code: string }
+    const body = await readPublicEnvelope(response)
 
     expect(response.status).toBe(400)
     expect(body.code).toBe('INVALID_IP')
@@ -681,10 +724,11 @@ describe('Platform to Node API Service acceptance', () => {
     )
     const call = await queryOne<{
       status_code: number
+      error_code: string | null
       credits_cost: number
       is_counted: boolean
     }>(
-      'select status_code, credits_cost, is_counted from api_calls where route_id = $1 order by id desc limit 1',
+      'select status_code, error_code, credits_cost, is_counted from api_calls where route_id = $1 order by id desc limit 1',
       [routeIds.ip]
     )
 
@@ -693,8 +737,43 @@ describe('Platform to Node API Service acceptance', () => {
     expect(reservations.count).toBe(0)
     expect(call).toEqual({
       status_code: 400,
+      error_code: 'INVALID_IP',
       credits_cost: 0,
       is_counted: true
+    })
+  })
+
+  it('records a Service 5xx error code without charging the caller', async () => {
+    const response = await fetch(`${gatewayBaseURL}/v1/ip?ip=8.8.8.8`, {
+      headers: { 'x-api-key': paidApiKey }
+    })
+    const body = await readPublicEnvelope(response)
+
+    expect(response.status).toBe(503)
+    expect(body.code).toBe('IP_DATABASE_UNAVAILABLE')
+    const user = await queryOne<{ credits: number }>(
+      'select credits from users where id = $1',
+      [paidUserId]
+    )
+    const reservations = await queryOne<{ count: number }>(
+      'select count(*)::int as count from api_credit_reservations where user_id = $1',
+      [paidUserId]
+    )
+    const call = await queryOne<{
+      status_code: number
+      error_code: string | null
+      credits_cost: number
+    }>(
+      'select status_code, error_code, credits_cost from api_calls where route_id = $1 order by id desc limit 1',
+      [routeIds.ip]
+    )
+
+    expect(user.credits).toBe(8)
+    expect(reservations.count).toBe(0)
+    expect(call).toEqual({
+      status_code: 503,
+      error_code: 'IP_DATABASE_UNAVAILABLE',
+      credits_cost: 0
     })
   })
 
@@ -702,7 +781,7 @@ describe('Platform to Node API Service acceptance', () => {
     const response = await fetch(`${gatewayBaseURL}/v1/ip?ip=not-an-ip`, {
       headers: { 'x-api-key': poorApiKey }
     })
-    const body = await response.json() as { code: string }
+    const body = await readPublicEnvelope(response)
 
     expect(response.status).toBe(403)
     expect(body.code).toBe('SCOPE_DENIED')
@@ -728,7 +807,7 @@ describe('Platform to Node API Service acceptance', () => {
     await first.arrayBuffer()
 
     const limited = await request()
-    const body = await limited.json() as { code: string }
+    const body = await readPublicEnvelope(limited)
     expect(limited.status).toBe(429)
     expect(body.code).toBe('RATE_LIMITED')
     expect(Number(limited.headers.get('retry-after'))).toBeGreaterThan(0)
@@ -738,7 +817,7 @@ describe('Platform to Node API Service acceptance', () => {
     const response = await fetch(`${gatewayBaseURL}/v1/yiyan?type=a&id=a1`, {
       headers: { 'x-api-key': poorApiKey }
     })
-    const body = await response.json() as { code: string }
+    const body = await readPublicEnvelope(response)
 
     expect(response.status).toBe(402)
     expect(body.code).toBe('INSUFFICIENT_CREDITS')
@@ -772,6 +851,7 @@ async function createRoute(input: {
   apiVersionId: string
   upstreamServiceId: string
   name: string
+  method?: 'GET' | 'POST'
   pathPattern: string
   upstreamPathTemplate: string
   isApiKey?: boolean
@@ -784,7 +864,7 @@ async function createRoute(input: {
     apiVersionId: input.apiVersionId,
     name: input.name,
     hosts: [],
-    method: 'GET',
+    method: input.method ?? 'GET',
     pathPattern: input.pathPattern,
     upstreamServiceId: input.upstreamServiceId,
     upstreamPathTemplate: input.upstreamPathTemplate,
@@ -825,6 +905,30 @@ function lifecycleRouteInput(pathPattern: string) {
     maxResponseBytes: 512 * 1024,
     state: 'active' as const
   }
+}
+
+interface PublicEnvelope<T = unknown> {
+  code: string
+  message: string
+  data: T | null
+  timestamp: number
+}
+
+async function readPublicEnvelope<T = unknown>(
+  response: Response
+): Promise<PublicEnvelope<T>> {
+  const body = await response.json() as PublicEnvelope<T>
+  expect(Object.keys(body).sort()).toEqual(['code', 'data', 'message', 'timestamp'])
+  expect(typeof body.code).toBe('string')
+  expect(typeof body.message).toBe('string')
+  expect(Object.hasOwn(body, 'data')).toBe(true)
+  expect(Number.isSafeInteger(body.timestamp)).toBe(true)
+  expect(body.timestamp).toBeGreaterThan(0)
+  expect(body.timestamp).toBeLessThanOrEqual(Date.now())
+  expect(response.headers.get('content-type')).toContain('application/json')
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  expect(response.headers.get('x-request-id')).toBeTruthy()
+  return body
 }
 
 async function countCalls(routeId: string): Promise<number> {
