@@ -14,8 +14,9 @@ const {
   allApis,
   isLoading,
   loadError,
-  refreshCatalog
-} = usePublicApiCatalog()
+  refreshCatalog,
+  total: totalApiCount
+} = usePublicApiCatalog({ pageSize: 100 })
 
 const { settings } = useSiteSettings()
 const {
@@ -67,7 +68,7 @@ onBeforeUnmount(() => {
 
 const introMetrics = computed(() => {
   const apis = allApis.value
-  const total = apis.length
+  const total = totalApiCount.value
 
   return {
     total,
@@ -133,7 +134,7 @@ useSeoMeta({
       <HomePopularApis
         :apis="popularApis"
         :category-map="categoryMap"
-        :total-api-count="allApis.length"
+        :total-api-count="totalApiCount"
         :is-loading="isLoading"
         :load-error="loadError"
         @retry="refreshCatalog"

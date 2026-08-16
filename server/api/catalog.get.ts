@@ -7,6 +7,8 @@ export default defineEventHandler((event) => {
   return apiCatalogService.listPublicApis({
     keyword: readQueryString(query.keyword).trim(),
     status: readQueryNumber(query.status),
-    categoryId: readQueryNumber(query.categoryId)
+    categoryId: readQueryNumber(query.categoryId),
+    page: readQueryNumber(query.page),
+    pageSize: readQueryNumber(query.pageSize)
   })
 })

@@ -116,7 +116,7 @@ export const creditTransactions = pgTable('credit_transactions', {
 // Redemption Codes（兑换码 · admin 生成）
 //
 // 单次性（maxUses=1）或多次性（maxUses>1，被多个用户共享）。
-// 明文不落库：codeDigest 用于精确兑换，codeCiphertext 用于授权后重复查看。
+// 明文不落库：codeDigest 用于精确兑换，codeCiphertext 只用于生成事务返回。
 // 同一用户对同一兑换码只能兑换一次，由 creditTransactions 上
 // (codeId, userId) where reason='redemption_code' 部分唯一索引保证。
 // 并发：兑换在事务里用 UPDATE ... WHERE used_count < max_uses RETURNING

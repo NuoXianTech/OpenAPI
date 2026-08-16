@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignore": [
+    "dist/**",
+    "server/error.ts",
+    "app/components/admin/AdminCallLogDetailModal.vue",
+    "app/components/api-key/ApiKeyResetModal.vue",
+    "app/components/api-key/ApiKeySecretModal.vue",
+    "app/components/common/AppConfirmDialog.vue",
+    "app/components/user/UserCallLogDetailModal.vue"
+  ],
+  "ignoreDependencies": [
+    "@iconify-json/lucide",
+    "@iconify-json/mdi",
+    "vue-tsc"
+  ]
+}

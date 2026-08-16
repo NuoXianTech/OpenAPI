@@ -4,7 +4,7 @@ import { APP_TIME_ZONE, toLocalDateKey, type LocalMonthRange } from '~~/server/u
 import { toNumber } from '~~/server/utils/number'
 import { systemSettingsService } from './system-settings-service'
 import type { UserCheckinCalendarMonth } from '#shared/types/user-credits'
-import type { DatabaseTransaction } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 
 /**
  * 每日签到服务

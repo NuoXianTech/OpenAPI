@@ -1,5 +1,5 @@
 {
-  "id": "e06acd4d-f126-46d1-8a38-39175d9fc349",
+  "id": "2609397d-f301-4f8c-97ee-54b12e7cfe96",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2280,6 +2280,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"api_categories\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2450,6 +2451,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"api_products\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2664,6 +2666,34 @@
           "notNull": true,
           "default": 10485760
         },
+        "catalog_status": {
+          "name": "catalog_status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'automatic'"
+        },
+        "sensitive_query_parameters": {
+          "name": "sensitive_query_parameters",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "managed_by": {
+          "name": "managed_by",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'manual'"
+        },
+        "is_support_route": {
+          "name": "is_support_route",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "state": {
           "name": "state",
           "type": "varchar(20)",
@@ -2716,6 +2746,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"api_routes\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2791,7 +2822,7 @@
       "checkConstraints": {
         "api_routes_method_chk": {
           "name": "api_routes_method_chk",
-          "value": "\"api_routes\".\"method\" in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS')"
+          "value": "\"api_routes\".\"method\" in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE')"
         },
         "api_routes_credits_cost_chk": {
           "name": "api_routes_credits_cost_chk",
@@ -2816,6 +2847,18 @@
         "api_routes_response_bytes_chk": {
           "name": "api_routes_response_bytes_chk",
           "value": "\"api_routes\".\"max_response_bytes\" between 0 and 2147483647"
+        },
+        "api_routes_catalog_status_chk": {
+          "name": "api_routes_catalog_status_chk",
+          "value": "\"api_routes\".\"catalog_status\" in ('automatic', 'maintenance')"
+        },
+        "api_routes_managed_by_chk": {
+          "name": "api_routes_managed_by_chk",
+          "value": "\"api_routes\".\"managed_by\" in ('manual', 'service')"
+        },
+        "api_routes_support_management_chk": {
+          "name": "api_routes_support_management_chk",
+          "value": "\"api_routes\".\"is_support_route\" = false or \"api_routes\".\"managed_by\" = 'service'"
         },
         "api_routes_state_chk": {
           "name": "api_routes_state_chk",
@@ -3218,11 +3261,17 @@
           "method": "btree",
           "with": {}
         },
-        "openapi_documents_workspace_hash_uq": {
-          "name": "openapi_documents_workspace_hash_uq",
+        "openapi_documents_upstream_hash_uq": {
+          "name": "openapi_documents_upstream_hash_uq",
           "columns": [
             {
               "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "upstream_service_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3235,6 +3284,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"openapi_documents\".\"upstream_service_id\" IS NOT NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3373,6 +3423,22 @@
             }
           ],
           "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "routing_revisions_environment_published_uq": {
+          "name": "routing_revisions_environment_published_uq",
+          "columns": [
+            {
+              "expression": "environment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"routing_revisions\".\"status\" = 'published'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3707,6 +3773,7 @@
             }
           ],
           "isUnique": true,
+          "where": "\"upstream_services\".\"deleted_at\" IS NULL",
           "concurrently": false,
           "method": "btree",
           "with": {}

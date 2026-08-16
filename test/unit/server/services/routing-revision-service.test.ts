@@ -9,6 +9,7 @@ import type {
   ServiceDescription,
   ServiceEndpointSummary
 } from '#shared/types/service-control'
+import { API_STATUS } from '#shared/config/api-status'
 import * as schema from '~~/server/db/schema'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 
@@ -24,6 +25,7 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 }))
 
 const { platformProductService } = await import('~~/server/services/platform-product-service')
+const { apiCatalogService } = await import('~~/server/services/api-catalog-service')
 const { platformEndpointCatalogService } = await import('~~/server/services/platform-endpoint-catalog-service')
 const { platformRouteService } = await import('~~/server/services/platform-route-service')
 const { platformUpstreamService } = await import('~~/server/services/platform-upstream-service')
@@ -165,6 +167,31 @@ async function createDiscoveredService(options: {
   return { upstream, path, endpoints }
 }
 
+function routeMutationInput(route: typeof schema.apiRoutes.$inferSelect) {
+  return {
+    apiVersionId: route.apiVersionId,
+    name: route.name,
+    hosts: route.hosts,
+    method: route.method,
+    pathPattern: route.pathPattern,
+    upstreamServiceId: route.upstreamServiceId,
+    upstreamPathTemplate: route.upstreamPathTemplate,
+    isApiKey: route.isApiKey,
+    isStatistics: route.isStatistics,
+    creditsCost: route.creditsCost,
+    rateLimitPerSecond: route.rateLimitPerSecond,
+    rateLimitPerMinute: route.rateLimitPerMinute,
+    rateLimitPerHour: route.rateLimitPerHour,
+    rateLimitPerDay: route.rateLimitPerDay,
+    timeoutMs: route.timeoutMs,
+    maxRequestBytes: route.maxRequestBytes,
+    maxResponseBytes: route.maxResponseBytes,
+    catalogStatus: route.catalogStatus,
+    sensitiveQueryParameters: route.sensitiveQueryParameters,
+    state: route.state
+  }
+}
+
 describe('routing revision service', () => {
   it('creates the default workspace and environment idempotently', async () => {
     const workspaces = await platformWorkspaceService.list()
@@ -293,6 +320,63 @@ describe('routing revision service', () => {
     expect(changedRevision.configPayload.upstreams[0]?.targets[0]?.baseUrl)
       .toBe('http://127.0.0.1:8081')
     expect(revisions).toHaveLength(2)
+  })
+
+  it('serializes concurrent publication and preserves one active revision', async () => {
+    await createRoutingGraph({})
+
+    const published = await Promise.all(Array.from(
+      { length: 4 },
+      () => routingRevisionService.publish(defaults.environment.id, null)
+    ))
+    const revisions = await database.select().from(schema.routingRevisions)
+    const [environment] = await database.select().from(schema.environments)
+
+    expect(new Set(published.map(revision => revision.id)).size).toBe(1)
+    expect(revisions).toHaveLength(1)
+    expect(revisions[0]).toMatchObject({ sequence: 1, status: 'published' })
+    expect(environment?.activeRevisionId).toBe(revisions[0]?.id)
+  })
+
+  it('keeps deprecated products live and marks them deprecated in the catalog', async () => {
+    const graph = await createRoutingGraph({ productSlug: 'deprecated-product' })
+    const first = await routingRevisionService.publish(defaults.environment.id, null)
+
+    await platformProductService.update(graph.product.id, {
+      lifecycle: 'deprecated'
+    })
+    const [second] = await routingRevisionService.publishWorkspace(
+      defaults.workspace.id,
+      null
+    )
+    const catalog = await apiCatalogService.listPublicApis()
+
+    expect(second?.id).not.toBe(first.id)
+    expect(second?.configPayload.routes).toHaveLength(1)
+    expect(second?.configPayload.routes[0]).toMatchObject({
+      id: graph.route.id,
+      productLifecycle: 'deprecated'
+    })
+    expect(catalog.items).toContainEqual(expect.objectContaining({
+      id: graph.route.id,
+      status: API_STATUS.deprecated
+    }))
+  })
+
+  it('protects every object referenced by the active revision from deletion', async () => {
+    const graph = await createRoutingGraph({ productSlug: 'protected-graph' })
+    await routingRevisionService.publish(defaults.environment.id, null)
+
+    await expect(platformRouteService.remove(graph.route.id))
+      .rejects.toMatchObject({ data: { code: 'ROUTE_STILL_PUBLISHED' } })
+    await expect(platformProductService.remove(graph.product.id))
+      .rejects.toMatchObject({ data: { code: 'PRODUCT_STILL_PUBLISHED' } })
+    await expect(platformProductService.removeVersion(graph.product.versions[0]!.id))
+      .rejects.toMatchObject({ data: { code: 'VERSION_STILL_PUBLISHED' } })
+    await expect(platformUpstreamService.remove(graph.upstream.id))
+      .rejects.toMatchObject({ data: { code: 'UPSTREAM_STILL_PUBLISHED' } })
+    await expect(platformUpstreamService.removeTarget(graph.upstream.targets[0]!.id))
+      .rejects.toMatchObject({ data: { code: 'TARGET_STILL_PUBLISHED' } })
   })
 
   it('excludes routes whose API version is not published', async () => {
@@ -499,6 +583,25 @@ describe('routing revision service', () => {
       route: { route: { isStatistics: false, state: 'disabled' } }
     })
     expect(catalog.totals).toMatchObject({ live: 0, disabled: 1, pending: 0 })
+  })
+
+  it('rejects generic edits and deletion for Service-managed routes', async () => {
+    const service = await createDiscoveredService({
+      slug: 'managed-route-service'
+    })
+    const published = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: service.path
+    }, null)
+
+    await expect(platformRouteService.update(
+      published.route.id,
+      routeMutationInput(published.route)
+    )).rejects.toMatchObject({ data: { code: 'SERVICE_ROUTE_MANAGED' } })
+    await expect(platformRouteService.remove(published.route.id))
+      .rejects.toMatchObject({ data: { code: 'SERVICE_ROUTE_MANAGED' } })
   })
 
   it('groups tagged operations as one Product and manages support routes invisibly', async () => {

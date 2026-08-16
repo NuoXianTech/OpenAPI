@@ -1,6 +1,6 @@
 # OpenAPI Platform 发布流程
 
-本文说明 `openapi-platform` 的版本、Git Tag、GitHub Release、GHCR 镜像和生产部署流程。`openapi-service` 使用独立仓库、版本和发布流水线；两个项目不要求同步发布。
+本文说明 `openapi-platform` 的版本、Git Tag、GitHub Release、GHCR 镜像和生产部署流程。`openapi-service` 使用独立仓库、版本和发布流水线；日常可独立发布，首个 `0.1.0` 按同名版本协同发布。
 
 ## 1. 发布产物
 
@@ -44,23 +44,27 @@ Git Tag 必须：
 ## 4. 发布前门禁
 
 1. 确认 [版本与支持范围](../architecture/release-scope.md) 中适用于目标版本的要求已经完成。
-2. 审查数据库 Schema 和迁移。
+2. 审查数据库 Schema 和迁移；已经发布的 journal、SQL 和 snapshot 只能保留，新 Schema 必须追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
 4. 核对运行时变量、密钥和 Service Token 轮换计划。
-5. 完成质量门禁：
+5. 确认同名 `openapi-service` Tag 已经发布。Platform 版本工作流默认检出同名 Service Tag；需要验证其他兼容版本时，将 Repository Variable `OPENAPI_SERVICE_REF` 设为不可变 Tag 或 Commit。
+6. 完成质量门禁：
 
    ```bash
    pnpm install --frozen-lockfile
    pnpm lint
    pnpm typecheck
-   pnpm test:run
+   pnpm check:dead-code
+   pnpm test:unit
    pnpm build
+   pnpm test:integration:built
    ```
 
-6. 执行 [Platform 与 Service 集成测试](./service-integration-testing.md)。
-7. 按 [生产就绪清单](./production-readiness.md) 完成故障和回滚准备。
+7. 确认构建后集成测试已经实际执行 `.output/server/migrate.mjs`。
+8. 执行 [Platform 与 Service 集成测试](./service-integration-testing.md)。
+9. 按 [生产就绪清单](./production-readiness.md) 和[数据库迁移与版本升级](./database-migrations.md)完成备份、故障和回滚准备。
 
-当前数据库使用单一 `0000` 基线。不兼容该基线的数据库必须先完成经验证的数据导入或使用新数据库，不能依赖启动过程自动兼容未知旧结构。
+`0.1.0` 的 `0000` 是正式迁移链起点。从正式 `0.1.0` 升级时应用当前 Release 新增的迁移；更早的实验数据库必须先完成经验证的数据导入或使用新数据库。
 
 ## 5. 准备 Release PR
 
@@ -122,7 +126,7 @@ git push origin v0.1.0
 
 1. 检查 Tag 与 `package.json` 版本一致。
 2. 安装锁定依赖。
-3. 执行 lint、typecheck、测试和 build。
+3. 执行 lint、typecheck、死代码检查、测试和 build。
 4. 打包完整 `.output`。
 5. 构建非 root amd64/arm64 镜像。
 6. 扫描依赖漏洞和 Secret。

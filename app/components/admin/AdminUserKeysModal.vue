@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LazyApiKeyResetModal, LazyApiKeySecretModal } from '#components'
 import type { AdminUserItem } from '~/composables/admin/use-admin-users-page'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
@@ -17,8 +18,10 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const { copyText } = useCopyFeedback()
 const { t, locale } = useI18n()
+const overlay = useOverlay()
+const resetModal = overlay.create(LazyApiKeyResetModal, { destroyOnClose: true })
+const secretModal = overlay.create(LazyApiKeySecretModal, { destroyOnClose: true })
 const {
   getIpText,
   getQuotaText,
@@ -117,6 +120,7 @@ async function submitForm() {
           : t('admin.users.apiKeys.feedback.createdOne'),
         color: 'success'
       })
+      secretModal.open({ keys: res.keys })
     }
     formOpen.value = false
     editingId.value = null
@@ -134,13 +138,8 @@ async function submitForm() {
   }
 }
 
-async function resetKeyAction(id: number) {
-  try {
-    await resetKey(id)
-    toast.add({ title: t('common.apiKeys.reset.success'), color: 'success' })
-  } catch (err) {
-    toast.add({ title: parseFetchError(err, t('common.apiKeys.reset.failed')), color: 'error' })
-  }
+function openReset(key: ApiKeyItem) {
+  resetModal.open({ target: key, onReset: resetKey })
 }
 
 async function toggleActive(key: ApiKeyItem) {
@@ -164,15 +163,6 @@ async function removeKeyAction(id: number) {
   } catch (err) {
     toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
   }
-}
-
-async function copy(text: string) {
-  await copyText(text)
-}
-
-const showFullKeyId = ref<number | null>(null)
-function toggleReveal(id: number) {
-  showFullKeyId.value = showFullKeyId.value === id ? null : id
 }
 </script>
 
@@ -273,26 +263,8 @@ function toggleReveal(id: number) {
               </div>
               <div class="flex items-center gap-1">
                 <code class="font-mono text-xs px-2 py-1 rounded bg-elevated truncate">
-                  {{ showFullKeyId === key.id ? key.apiKey : maskApiKey(key.apiKey) }}
+                  {{ key.keyPreview }}
                 </code>
-                <UButton
-                  :icon="showFullKeyId === key.id ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  :aria-label="showFullKeyId === key.id
-                    ? $t('admin.users.apiKeys.actions.hide')
-                    : $t('admin.users.apiKeys.actions.reveal')"
-                  @click="toggleReveal(key.id)"
-                />
-                <UButton
-                  icon="i-mdi-content-copy"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  :aria-label="$t('common.apiKeys.actions.copy')"
-                  @click="copy(key.apiKey)"
-                />
               </div>
             </div>
             <div class="flex gap-1 shrink-0">
@@ -316,7 +288,7 @@ function toggleReveal(id: number) {
                 size="xs"
                 variant="outline"
                 color="neutral"
-                @click="resetKeyAction(key.id)"
+                @click="openReset(key)"
               >
                 {{ $t('common.apiKeys.actions.reset') }}
               </UButton>

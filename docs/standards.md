@@ -118,13 +118,15 @@ VueUse 组合式函数优先选择 SSR 友好的用法；涉及浏览器 API 的
 ```bash
 pnpm typecheck
 pnpm lint
-pnpm test:run
+pnpm check:dead-code
+pnpm test:unit
 ```
 
 发布前额外运行：
 
 ```bash
 pnpm build
+pnpm test:integration:built
 pnpm preview
 ```
 

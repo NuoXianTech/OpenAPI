@@ -25,13 +25,16 @@ export interface PlatformWorkspace {
   environments: PlatformEnvironment[]
 }
 
-interface PlatformApiVersion {
+export interface PlatformApiVersion {
   id: string
   productId: string
   version: string
   state: 'draft' | 'published' | 'deprecated' | 'retired'
+  changelog: string
   createdAt: string
   publishedAt: string | null
+  deprecatedAt: string | null
+  retiredAt: string | null
 }
 
 export interface PlatformProduct {
@@ -41,6 +44,7 @@ export interface PlatformProduct {
   name: string
   summary: string
   description: string
+  categoryId: number | null
   visibility: 'public' | 'private'
   lifecycle: 'active' | 'deprecated' | 'retired'
   createdAt: string
@@ -48,7 +52,7 @@ export interface PlatformProduct {
   versions: PlatformApiVersion[]
 }
 
-interface PlatformUpstreamTarget {
+export interface PlatformUpstreamTarget {
   id: string
   upstreamServiceId: string
   baseUrl: string
@@ -83,7 +87,7 @@ interface PlatformRoute {
   apiVersionId: string
   name: string
   hosts: string[]
-  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
+  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
   pathPattern: string
   normalizedShape: string
   upstreamServiceId: string
@@ -98,6 +102,10 @@ interface PlatformRoute {
   timeoutMs: number
   maxRequestBytes: number
   maxResponseBytes: number
+  catalogStatus: 'automatic' | 'maintenance'
+  sensitiveQueryParameters: string[]
+  managedBy: 'manual' | 'service'
+  isSupportRoute: boolean
   state: 'draft' | 'active' | 'disabled'
   createdAt: string
   updatedAt: string

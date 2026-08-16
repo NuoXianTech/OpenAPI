@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { and, desc, eq, inArray, isNull, max } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, max, ne } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import {
   apiProducts,
@@ -65,9 +65,14 @@ export const routingRevisionService = {
   async publish(environmentId: string, createdBy: number | null) {
     try {
       const revision = await db.transaction(async (tx) => {
-        const environment = firstRow(await tx.select().from(environments)
-          .where(and(eq(environments.id, environmentId), eq(environments.status, 'active')))
-          .limit(1))
+        // Every publisher locks the same ordered set before reading active
+        // snapshots. This serializes conflict validation across environments,
+        // while the partial unique index protects the per-environment invariant.
+        const activeEnvironments = await tx.select().from(environments)
+          .where(eq(environments.status, 'active'))
+          .orderBy(asc(environments.id))
+          .for('update')
+        const environment = activeEnvironments.find(item => item.id === environmentId)
         if (!environment) {
           throw createApplicationError({ statusCode: 404, message: 'environment not found', data: { code: 'ENVIRONMENT_NOT_FOUND' } })
         }
@@ -76,8 +81,11 @@ export const routingRevisionService = {
           id: apiRoutes.id,
           productId: apiProducts.id,
           productSlug: apiProducts.slug,
+          productVisibility: apiProducts.visibility,
+          productLifecycle: apiProducts.lifecycle,
           versionId: apiVersions.id,
           version: apiVersions.version,
+          versionState: apiVersions.state,
           name: apiRoutes.name,
           hosts: apiRoutes.hosts,
           method: apiRoutes.method,
@@ -95,6 +103,9 @@ export const routingRevisionService = {
           timeoutMs: apiRoutes.timeoutMs,
           maxRequestBytes: apiRoutes.maxRequestBytes,
           maxResponseBytes: apiRoutes.maxResponseBytes,
+          catalogStatus: apiRoutes.catalogStatus,
+          sensitiveQueryParameters: apiRoutes.sensitiveQueryParameters,
+          isSupportRoute: apiRoutes.isSupportRoute,
           upstreamKind: upstreamServices.kind,
           loadBalancing: upstreamServices.loadBalancing
         }).from(apiRoutes)
@@ -103,7 +114,7 @@ export const routingRevisionService = {
           .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
           .where(and(
             eq(apiProducts.workspaceId, environment.workspaceId),
-            eq(apiProducts.lifecycle, 'active'),
+            inArray(apiProducts.lifecycle, ['active', 'deprecated']),
             inArray(apiVersions.state, ['published', 'deprecated']),
             eq(apiRoutes.state, 'active'),
             eq(upstreamServices.status, 'active'),
@@ -116,8 +127,11 @@ export const routingRevisionService = {
           id: route.id,
           productId: route.productId,
           productSlug: route.productSlug,
+          productVisibility: route.productVisibility as RoutingRevisionRoute['productVisibility'],
+          productLifecycle: route.productLifecycle as RoutingRevisionRoute['productLifecycle'],
           versionId: route.versionId,
           version: route.version,
+          versionState: route.versionState as RoutingRevisionRoute['versionState'],
           name: route.name,
           hosts: [...route.hosts].sort(),
           method: route.method,
@@ -134,7 +148,10 @@ export const routingRevisionService = {
           rateLimitPerDay: route.rateLimitPerDay,
           timeoutMs: route.timeoutMs,
           maxRequestBytes: route.maxRequestBytes,
-          maxResponseBytes: route.maxResponseBytes
+          maxResponseBytes: route.maxResponseBytes,
+          catalogStatus: route.catalogStatus as RoutingRevisionRoute['catalogStatus'],
+          sensitiveQueryParameters: [...route.sensitiveQueryParameters].sort(),
+          isSupportRoute: route.isSupportRoute
         })).sort((left, right) => (
           left.pathPattern.localeCompare(right.pathPattern)
           || left.method.localeCompare(right.method)
@@ -227,11 +244,12 @@ export const routingRevisionService = {
           generatedAt: generatedAt.toISOString(),
         }
 
-        if (environment.activeRevisionId) {
-          await tx.update(routingRevisions)
-            .set({ status: 'superseded' })
-            .where(eq(routingRevisions.id, environment.activeRevisionId))
-        }
+        await tx.update(routingRevisions)
+          .set({ status: 'superseded' })
+          .where(and(
+            eq(routingRevisions.environmentId, environment.id),
+            eq(routingRevisions.status, 'published')
+          ))
 
         const created = firstRow(await tx.insert(routingRevisions).values({
           id: revisionId,
@@ -269,9 +287,11 @@ export const routingRevisionService = {
 
   async activate(environmentId: string, revisionId: string) {
     const revision = await db.transaction(async (tx) => {
-      const environment = firstRow(await tx.select().from(environments)
-        .where(eq(environments.id, environmentId))
-        .limit(1))
+      const activeEnvironments = await tx.select().from(environments)
+        .where(eq(environments.status, 'active'))
+        .orderBy(asc(environments.id))
+        .for('update')
+      const environment = activeEnvironments.find(item => item.id === environmentId)
       if (!environment) {
         throw createApplicationError({ statusCode: 404, message: 'environment not found', data: { code: 'ENVIRONMENT_NOT_FOUND' } })
       }
@@ -306,10 +326,15 @@ export const routingRevisionService = {
           }))
       ])
 
-      if (environment.activeRevisionId && environment.activeRevisionId !== target.id) {
-        await tx.update(routingRevisions).set({ status: 'superseded' })
-          .where(eq(routingRevisions.id, environment.activeRevisionId))
+      if (environment.activeRevisionId === target.id && target.status === 'published') {
+        return target
       }
+      await tx.update(routingRevisions).set({ status: 'superseded' })
+        .where(and(
+          eq(routingRevisions.environmentId, environment.id),
+          eq(routingRevisions.status, 'published'),
+          ne(routingRevisions.id, target.id)
+        ))
       const activated = firstRow(await tx.update(routingRevisions).set({ status: 'published' })
         .where(eq(routingRevisions.id, target.id))
         .returning())
@@ -321,5 +346,23 @@ export const routingRevisionService = {
     invalidateRoutingRuntimeCache()
     await invalidatePublicApiCatalogCache()
     return revision
+  },
+
+  async publishWorkspace(workspaceId: string, createdBy: number | null) {
+    const rows = await db.select({ id: environments.id }).from(environments)
+      .where(and(
+        eq(environments.workspaceId, workspaceId),
+        eq(environments.status, 'active')
+      ))
+      .orderBy(asc(environments.id))
+    const revisions = []
+    for (const environment of rows) {
+      revisions.push(await routingRevisionService.publish(environment.id, createdBy))
+    }
+    if (rows.length === 0) {
+      invalidateRoutingRuntimeCache()
+      await invalidatePublicApiCatalogCache()
+    }
+    return revisions
   }
 }

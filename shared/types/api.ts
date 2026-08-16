@@ -28,7 +28,7 @@ export type ExpiryPreset = 'never' | '1h' | '1d' | '1mo' | 'custom'
 export interface ApiKeyItem {
   id: number
   name: string
-  apiKey: string
+  keyPreview: string
   isActive: boolean
   scopes: string[] | null
   ipWhitelist: string[] | null
@@ -39,6 +39,17 @@ export interface ApiKeyItem {
   lastUsedIp: string | null
   expiresAt: string | null
   createdAt: string
+}
+
+export interface CreatedApiKeyItem extends ApiKeyItem {
+  apiKey: string
+}
+
+export interface ApiCatalogPage {
+  items: ApiCatalogItem[]
+  total: number
+  page: number
+  pageSize: number
 }
 
 export interface ApiKeyScopeOption {

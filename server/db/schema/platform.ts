@@ -36,7 +36,9 @@ export const apiCategories = pgTable('api_categories', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  uniqueIndex('api_categories_code_uq').on(table.code),
+  uniqueIndex('api_categories_code_uq')
+    .on(table.code)
+    .where(sql`${table.deletedAt} IS NULL`),
   index('api_categories_parent_sort_idx').on(table.parentId, table.sortOrder),
   index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
 ])
@@ -84,7 +86,9 @@ export const openapiDocuments = pgTable('openapi_documents', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('openapi_documents_workspace_created_idx').on(table.workspaceId, table.createdAt.desc()),
-  uniqueIndex('openapi_documents_workspace_hash_uq').on(table.workspaceId, table.contentHash),
+  uniqueIndex('openapi_documents_upstream_hash_uq')
+    .on(table.workspaceId, table.upstreamServiceId, table.contentHash)
+    .where(sql`${table.upstreamServiceId} IS NOT NULL`),
   check('openapi_documents_source_type_chk', sql`${table.sourceType} in ('upload', 'url')`),
   check('openapi_documents_format_chk', sql`${table.format} in ('json', 'yaml')`)
 ])
@@ -103,7 +107,9 @@ export const apiProducts = pgTable('api_products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('api_products_workspace_slug_uq').on(table.workspaceId, table.slug),
+  uniqueIndex('api_products_workspace_slug_uq')
+    .on(table.workspaceId, table.slug)
+    .where(sql`${table.deletedAt} IS NULL`),
   index('api_products_workspace_lifecycle_idx').on(table.workspaceId, table.lifecycle),
   index('api_products_category_idx').on(table.categoryId),
   check('api_products_visibility_chk', sql`${table.visibility} in ('public', 'private')`),
@@ -141,7 +147,9 @@ export const upstreamServices = pgTable('upstream_services', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('upstream_services_workspace_slug_uq').on(table.workspaceId, table.slug),
+  uniqueIndex('upstream_services_workspace_slug_uq')
+    .on(table.workspaceId, table.slug)
+    .where(sql`${table.deletedAt} IS NULL`),
   index('upstream_services_workspace_status_idx').on(table.workspaceId, table.status),
   check('upstream_services_kind_chk', sql`${table.kind} in ('internal', 'external')`),
   check('upstream_services_protocol_chk', sql`${table.protocol} in ('http', 'https')`),
@@ -215,21 +223,30 @@ export const apiRoutes = pgTable('api_routes', {
   timeoutMs: integer('timeout_ms').notNull().default(10000),
   maxRequestBytes: integer('max_request_bytes').notNull().default(1048576),
   maxResponseBytes: integer('max_response_bytes').notNull().default(10485760),
+  catalogStatus: varchar('catalog_status', { length: 20 }).notNull().default('automatic'),
+  sensitiveQueryParameters: jsonb('sensitive_query_parameters').$type<string[]>().notNull().default([]),
+  managedBy: varchar('managed_by', { length: 20 }).notNull().default('manual'),
+  isSupportRoute: boolean('is_support_route').notNull().default(false),
   state: varchar('state', { length: 20 }).notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('api_routes_version_method_shape_uq').on(table.apiVersionId, table.method, table.normalizedShape),
+  uniqueIndex('api_routes_version_method_shape_uq')
+    .on(table.apiVersionId, table.method, table.normalizedShape)
+    .where(sql`${table.deletedAt} IS NULL`),
   index('api_routes_version_state_idx').on(table.apiVersionId, table.state),
   index('api_routes_upstream_idx').on(table.upstreamServiceId),
-  check('api_routes_method_chk', sql`${table.method} in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS')`),
+  check('api_routes_method_chk', sql`${table.method} in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE')`),
   check('api_routes_credits_cost_chk', sql`${table.creditsCost} >= 0`),
   check('api_routes_rate_limits_chk', sql`${table.rateLimitPerSecond} >= 0 and ${table.rateLimitPerMinute} >= 0 and ${table.rateLimitPerHour} >= 0 and ${table.rateLimitPerDay} >= 0`),
   check('api_routes_paid_policy_chk', sql`${table.creditsCost} = 0 or (${table.isApiKey} = true and ${table.isStatistics} = true)`),
   check('api_routes_timeout_chk', sql`${table.timeoutMs} between 100 and 120000`),
   check('api_routes_request_bytes_chk', sql`${table.maxRequestBytes} between 0 and 1073741824`),
   check('api_routes_response_bytes_chk', sql`${table.maxResponseBytes} between 0 and 2147483647`),
+  check('api_routes_catalog_status_chk', sql`${table.catalogStatus} in ('automatic', 'maintenance')`),
+  check('api_routes_managed_by_chk', sql`${table.managedBy} in ('manual', 'service')`),
+  check('api_routes_support_management_chk', sql`${table.isSupportRoute} = false or ${table.managedBy} = 'service'`),
   check('api_routes_state_chk', sql`${table.state} in ('draft', 'active', 'disabled')`)
 ])
 
@@ -247,6 +264,9 @@ export const routingRevisions = pgTable('routing_revisions', {
   failureReason: text('failure_reason')
 }, table => [
   uniqueIndex('routing_revisions_environment_sequence_uq').on(table.environmentId, table.sequence),
+  uniqueIndex('routing_revisions_environment_published_uq')
+    .on(table.environmentId)
+    .where(sql`${table.status} = 'published'`),
   index('routing_revisions_environment_created_idx').on(table.environmentId, table.createdAt.desc()),
   index('routing_revisions_checksum_idx').on(table.checksum),
   check('routing_revisions_sequence_chk', sql`${table.sequence} > 0`),

@@ -137,8 +137,8 @@ Scope 应引用稳定 Product 或 Route 身份，而不是源码目录或业务�
 
 ## 10. 生命周期与删除
 
-- Route、Product 和 Upstream 优先软删除，避免破坏历史 Revision 和审计记录。
-- 活动 Revision 可以继续引用发布时的快照，不依赖草稿行仍处于活动状态。
+- Route、Product、Version、Upstream 和 Target 的删除必须先检查所有活动 Revision；仍被任一活动环境引用时拒绝删除。
+- 管理员应先停用相关 Route 并发布不再引用该对象的新 Revision。历史 Revision 保存不可变快照，可继续用于审计，但不能绕过当前活动引用保护。
 - Secret 清除必须是显式操作。
 - 调用明细和积分流水按保留策略归档，不与配置对象级联物理删除。
 - Service Endpoint 删除前，必须先发布不再引用它的 Routing Revision。

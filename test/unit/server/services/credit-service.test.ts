@@ -189,4 +189,43 @@ describe('credit service reservations', () => {
     )
     expect(row.rows).toEqual([{ status: 'dead_letter', attempts: 5 }])
   })
+
+  it('lets an administrator retry a dead-letter settlement', async () => {
+    const result = await reserve(2)
+    expect(result.status).toBe('reserved')
+    if (result.status !== 'reserved') return
+    await creditService.markReservationPending(result.reservation.id, 1)
+    for (let attempt = 0; attempt < 5; attempt++) {
+      await creditService.markReservationAttempt(result.reservation.id, 'database unavailable')
+    }
+
+    await expect(creditService.retryCreditReservation(result.reservation.id))
+      .resolves.toMatchObject({ status: 'pending', attempts: 0, lastError: null })
+  })
+
+  it('lets an administrator charge or release a dead-letter settlement', async () => {
+    const charge = await reserve(3)
+    const release = await reserve(2)
+    expect(charge.status).toBe('reserved')
+    expect(release.status).toBe('reserved')
+    if (charge.status !== 'reserved' || release.status !== 'reserved') return
+
+    for (const reservation of [charge.reservation, release.reservation]) {
+      await creditService.markReservationPending(reservation.id, 1)
+      await client.query(
+        'UPDATE api_credit_reservations SET status = \'dead_letter\' WHERE id = $1',
+        [reservation.id]
+      )
+    }
+
+    await expect(creditService.forceFinalizeCreditReservation(charge.reservation.id, 'manual charge'))
+      .resolves.toEqual({ charged: 3, balanceAfter: 7 })
+    await expect(creditService.forceReleaseCreditReservation(release.reservation.id))
+      .resolves.toBe(true)
+
+    const key = await client.query<{ used_credits: number }>('SELECT used_credits FROM api_keys WHERE id = 1')
+    const user = await client.query<{ credits: number }>('SELECT credits FROM users WHERE id = 1')
+    expect(key.rows[0]?.used_credits).toBe(3)
+    expect(user.rows[0]?.credits).toBe(7)
+  })
 })

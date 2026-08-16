@@ -110,7 +110,7 @@ jobs:
       - name: Set up pnpm
         uses: pnpm/action-setup@v5
         with:
-          version: 11.12.0
+          version: 11.20.0
           run_install: false
 
       - name: Set up Node.js
@@ -128,8 +128,32 @@ jobs:
       - name: Verify TypeScript types
         run: pnpm typecheck
 
+      - name: Check unused files and exports
+        run: pnpm check:dead-code
+
       - name: Run unit test suite
         run: pnpm test:unit
+
+      - name: Check out compatible API Service
+        uses: actions/checkout@v7
+        with:
+          repository: NuoXianTech/openapi-service
+          ref: ${{ vars.OPENAPI_SERVICE_REF || 'main' }}
+          path: openapi-service
+          persist-credentials: false
+
+      - name: Install API Service dependencies
+        working-directory: openapi-service
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build compatible API Service
+        working-directory: openapi-service
+        run: pnpm build
+
+      - name: Run Platform and API Service acceptance suite
+        env:
+          OPENAPI_SERVICE_REPO: ${{ github.workspace }}/openapi-service
+        run: pnpm test:api-service
 
       - name: Build production application
         run: pnpm build
@@ -143,7 +167,7 @@ jobs:
         run: |
           {
             echo "### Application quality"
-            echo "✅ Linting, type checking, unit tests, and the production build completed successfully."
+            echo "✅ Linting, type checking, dead-code analysis, unit and Service acceptance tests, and the production build completed successfully."
             echo
             echo "- Node.js: \`$(node --version)\`"
             echo "- pnpm: \`$(pnpm --version)\`"

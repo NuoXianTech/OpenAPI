@@ -1,24 +1,8 @@
-import { asc, eq } from 'drizzle-orm'
-import { db } from '~~/server/db/client'
-import { apiProducts, apiRoutes, apiVersions, upstreamServices } from '~~/server/db/schema'
-import { publicApiRouteCondition } from './public-api-query'
+import { activeRoutingCatalogService } from '~~/server/services/active-routing-catalog-service'
 
 export const apiScopeService = {
   async listPublishedProductScopes() {
-    const rows = await db.select({
-      productId: apiProducts.id,
-      productSlug: apiProducts.slug,
-      productName: apiProducts.name,
-      version: apiVersions.version,
-      method: apiRoutes.method,
-      path: apiRoutes.pathPattern
-    }).from(apiRoutes)
-      .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-      .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-      .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-      .where(publicApiRouteCondition)
-      .orderBy(asc(apiProducts.name), asc(apiRoutes.pathPattern), asc(apiRoutes.method))
-
+    const routes = await activeRoutingCatalogService.list()
     const products = new Map<string, {
       id: string
       scope: string
@@ -26,16 +10,17 @@ export const apiScopeService = {
       apiPath: string
       httpMethods: Set<string>
     }>()
-    for (const row of rows) {
-      const item = products.get(row.productId) ?? {
-        id: row.productId,
-        scope: `product:${row.productSlug}`,
-        name: row.productName,
-        apiPath: row.path,
+
+    for (const item of routes) {
+      const current = products.get(item.route.productId) ?? {
+        id: item.route.productId,
+        scope: `product:${item.route.productSlug}`,
+        name: item.product.name,
+        apiPath: item.route.pathPattern,
         httpMethods: new Set<string>()
       }
-      item.httpMethods.add(row.method)
-      products.set(row.productId, item)
+      current.httpMethods.add(item.route.method)
+      products.set(item.route.productId, current)
     }
 
     return Array.from(products.values()).map(item => ({

@@ -184,7 +184,8 @@ Platform 持有：
 
 - Platform 不接受管理员上传或执行任意业务代码。
 - 所有 Secret 使用分域密钥加密，日志只记录配置状态。
-- API Key 同时保存查询摘要和授权范围内可恢复密文，数据库不保存裸明文列。
+- API Key 保存查询摘要、受保护密文和掩码预览；完整值只在创建或重置响应中返回一次，普通读取接口不解密回显。
+- `NUXT_API_KEY_SECRET` 是数据密钥根；`0.1.0` 不支持 Keyring 或在线主密钥轮换，不能在已有数据库上直接替换。
 - External Upstream 必须经过 SSRF 防护。
 - Internal Upstream 不接收调用方认证凭据。
 - 发布、回滚、Token 和 Secret 变更必须写入审计日志。

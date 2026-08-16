@@ -19,8 +19,68 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  quality:
+    name: Release quality gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 11.20.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Check unused files and exports
+        run: pnpm check:dead-code
+
+      - name: Run unit tests
+        run: pnpm test:unit
+
+      - name: Check out compatible API Service
+        uses: actions/checkout@v7
+        with:
+          repository: NuoXianTech/openapi-service
+          ref: ${{ vars.OPENAPI_SERVICE_REF || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'main' }}
+          path: openapi-service
+          persist-credentials: false
+
+      - name: Install API Service dependencies
+        working-directory: openapi-service
+        run: pnpm install --frozen-lockfile --prefer-offline
+
+      - name: Build compatible API Service
+        working-directory: openapi-service
+        run: pnpm build
+
+      - name: Run API Service integration tests
+        env:
+          OPENAPI_SERVICE_REPO: ${{ github.workspace }}/openapi-service
+        run: pnpm test:api-service
+
   build:
     name: Build image (${{ matrix.arch }})
+    needs: quality
     strategy:
       fail-fast: false
       matrix:
@@ -42,6 +102,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Verify version tag is on main
         if: startsWith(github.ref, 'refs/tags/')

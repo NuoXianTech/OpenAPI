@@ -6,6 +6,7 @@ import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
+const props = defineProps<{ workspace?: PlatformWorkspace | null }>()
 const emit = defineEmits<{ saved: [workspace: PlatformWorkspace] }>()
 const toast = useToast()
 const { t } = useI18n()
@@ -18,10 +19,12 @@ interface WorkspaceFormState {
   defaultDomain: string
 }
 
+const isEditing = computed(() => Boolean(props.workspace))
+
 function initialState(): WorkspaceFormState {
   return {
-    slug: '',
-    name: '',
+    slug: props.workspace?.slug ?? '',
+    name: props.workspace?.name ?? '',
     environmentSlug: 'development',
     environmentName: 'Development',
     defaultDomain: ''
@@ -60,19 +63,27 @@ function validateWorkspaceForm(value: Partial<WorkspaceFormState>): FormError<st
 async function onSubmit(event: FormSubmitEvent<WorkspaceFormState>) {
   loading.value = true
   try {
-    const workspace = await $fetch<PlatformWorkspace>('/api/admin/v1/workspaces', {
-      method: 'POST',
-      body: {
-        slug: event.data.slug.trim(),
-        name: event.data.name.trim(),
-        environment: {
-          slug: event.data.environmentSlug.trim(),
-          name: event.data.environmentName.trim(),
-          defaultDomain: event.data.defaultDomain.trim() || null
-        }
+    const workspace = await $fetch<PlatformWorkspace>(
+      isEditing.value ? `/api/admin/v1/workspaces/${props.workspace!.id}` : '/api/admin/v1/workspaces',
+      {
+        method: isEditing.value ? 'PATCH' : 'POST',
+        body: isEditing.value
+          ? {
+              slug: event.data.slug.trim(),
+              name: event.data.name.trim()
+            }
+          : {
+              slug: event.data.slug.trim(),
+              name: event.data.name.trim(),
+              environment: {
+                slug: event.data.environmentSlug.trim(),
+                name: event.data.environmentName.trim(),
+                defaultDomain: event.data.defaultDomain.trim() || null
+              }
+            }
       }
-    })
-    toast.add({ title: t('admin.apis.routing.feedback.workspaceCreated'), color: 'success' })
+    )
+    toast.add({ title: t(isEditing.value ? 'admin.apis.routing.feedback.workspaceUpdated' : 'admin.apis.routing.feedback.workspaceCreated'), color: 'success' })
     open.value = false
     emit('saved', workspace)
   } catch (error: unknown) {
@@ -86,8 +97,8 @@ async function onSubmit(event: FormSubmitEvent<WorkspaceFormState>) {
 <template>
   <UModal
     v-model:open="open"
-    :title="$t('admin.apis.routing.workspaceForm.title')"
-    :description="$t('admin.apis.routing.workspaceForm.description')"
+    :title="$t(isEditing ? 'admin.apis.routing.workspaceForm.editTitle' : 'admin.apis.routing.workspaceForm.title')"
+    :description="$t(isEditing ? 'admin.apis.routing.workspaceForm.editDescription' : 'admin.apis.routing.workspaceForm.description')"
     :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
   >
@@ -125,7 +136,7 @@ async function onSubmit(event: FormSubmitEvent<WorkspaceFormState>) {
           </UFormField>
         </div>
 
-        <div class="rounded-lg border border-default bg-elevated/40 p-4">
+        <div v-if="!isEditing" class="rounded-lg border border-default bg-elevated/40 p-4">
           <div class="mb-4 flex items-start gap-3">
             <div class="flex size-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
               <UIcon
@@ -195,7 +206,7 @@ async function onSubmit(event: FormSubmitEvent<WorkspaceFormState>) {
           form="platform-workspace-form"
           :loading="loading"
         >
-          {{ $t('admin.apis.routing.actions.createWorkspace') }}
+          {{ $t(isEditing ? 'common.actions.save' : 'admin.apis.routing.actions.createWorkspace') }}
         </UButton>
       </div>
     </template>

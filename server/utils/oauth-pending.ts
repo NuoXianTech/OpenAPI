@@ -4,6 +4,7 @@ import type { SupportedOauthProvider } from '#shared/types/oauth'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature } from '~~/server/utils/secure-token'
+import { hostCookieName, hostCookieSecurityOptions } from '~~/server/utils/host-cookie'
 
 // ------------------------------------------------------------------
 // 「待处理 OAuth 身份」载体
@@ -17,7 +18,7 @@ import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSign
 // 邮箱以用户在窗口填写并经校验/验证的为准。
 // ------------------------------------------------------------------
 
-const PENDING_COOKIE = 'oauth_pending'
+const PENDING_COOKIE = hostCookieName('oauth_pending')
 const PENDING_TTL_SECONDS = 10 * 60
 
 interface PendingOauthProfile {
@@ -33,13 +34,15 @@ function sign(payload: string) {
 }
 
 export function issuePendingOauth(event: H3Event, profile: PendingOauthProfile): void {
-  const payload = encodeBase64Url(JSON.stringify(profile))
+  const payload = encodeBase64Url(JSON.stringify({
+    ...profile,
+    expiresAt: Math.floor(Date.now() / 1000) + PENDING_TTL_SECONDS
+  }))
   const cookieValue = `${payload}.${sign(payload)}`
   setCookie(event, PENDING_COOKIE, cookieValue, {
     httpOnly: true,
     sameSite: 'lax',
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    ...hostCookieSecurityOptions(),
     maxAge: PENDING_TTL_SECONDS
   })
 }
@@ -69,6 +72,11 @@ export function readPendingOauth(event: H3Event): PendingOauthProfile | null {
     if (!isSupportedOauthProvider(obj.provider) || typeof obj.providerUserId !== 'string' || !obj.providerUserId) {
       return null
     }
+    if (
+      typeof obj.expiresAt !== 'number'
+      || !Number.isSafeInteger(obj.expiresAt)
+      || obj.expiresAt < Math.floor(Date.now() / 1000)
+    ) return null
     return {
       provider: obj.provider,
       providerUserId: obj.providerUserId,
@@ -85,7 +93,7 @@ export function clearPendingOauth(event: H3Event): void {
   setCookie(event, PENDING_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',
-    path: '/',
+    ...hostCookieSecurityOptions(),
     maxAge: 0
   })
 }

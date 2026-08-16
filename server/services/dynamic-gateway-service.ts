@@ -1,33 +1,42 @@
 import type { H3Event } from 'h3'
 import {
-  getHeader,
   getProxyRequestHeaders,
   getRequestProtocol,
   getRequestURL,
-  getRequestWebStream,
   sendNoContent,
   sendProxy,
   setResponseHeader
 } from 'h3'
 import { dynamicGatewayAccessService } from '~~/server/services/dynamic-gateway-access-service'
 import { routingRuntimeService, type ResolvedDynamicRoute } from '~~/server/services/routing-runtime-service'
-import { creditService } from '~~/server/services/credit-service'
-import { shouldChargeGatewayCall } from '~~/server/utils/gateway-billing'
+import {
+  BillingPersistenceError,
+  findBillingPersistenceError,
+  findGatewayExecutionError,
+  GatewayExecutionError
+} from '~~/server/errors/gateway-error'
+import {
+  initializeGatewayStatistics,
+  persistGatewayBillingOutcome,
+  releaseGatewayBillingReservation
+} from '~~/server/services/dynamic-gateway-billing-service'
+import {
+  assertGatewayRequestSize,
+  createGatewayRequestBody
+} from '~~/server/services/dynamic-gateway-stream-service'
+import {
+  buildGatewayTargetUrl,
+  createGatewayProxyFetch,
+  orderedGatewayTargets
+} from '~~/server/services/dynamic-gateway-target-service'
 import { getAppEventContext } from '~~/server/utils/event-context'
 import { gatewayFail } from '~~/server/utils/gateway-response'
 import { setPublicApiCors } from '~~/server/utils/public-api-cors'
 import { ensureRequestId } from '~~/server/utils/request-id'
-import { readClientIp, readRequestMeta } from '~~/server/utils/request-meta'
-import { sanitizeQueryStringForLog } from '~~/server/utils/request-query'
-import { toNullableNonNegativeInteger } from '~~/server/utils/number'
+import { readClientIp } from '~~/server/utils/request-meta'
 import { renderUpstreamPath } from '~~/server/utils/route-pattern'
-import { safeFetch } from '~~/server/utils/safe-fetch'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 
-const PAYLOAD_METHODS = new Set(['PATCH', 'POST', 'PUT', 'DELETE'])
-const RETRYABLE_METHODS = new Set(['GET', 'HEAD'])
-const RETRYABLE_UPSTREAM_STATUSES = new Set([502, 503, 504])
-const TARGET_COOLDOWN_MS = 15_000
 const STRIPPED_REQUEST_HEADERS = new Set([
   'authorization',
   'cookie',
@@ -42,108 +51,7 @@ interface DynamicGatewayResult {
   response?: unknown
 }
 
-class BillingPersistenceError extends Error {
-  constructor(cause: unknown) {
-    super('billing outcome could not be persisted', { cause })
-    this.name = 'BillingPersistenceError'
-  }
-}
-
-class GatewayExecutionError extends Error {
-  readonly status: number
-  readonly code: string
-  readonly publicMessage: string
-
-  constructor(status: number, code: string, publicMessage: string) {
-    super(publicMessage)
-    this.name = 'GatewayExecutionError'
-    this.status = status
-    this.code = code
-    this.publicMessage = publicMessage
-  }
-}
-
 const UPSTREAM_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,79}$/
-
-const targetCounters = new Map<string, number>()
-const targetCooldowns = new Map<string, number>()
-type GatewayTarget = ResolvedDynamicRoute['upstream']['targets'][number]
-
-function targetStateKey(match: ResolvedDynamicRoute, target: GatewayTarget): string {
-  return `${match.upstream.id}:${target.id}`
-}
-
-function availableTargets(match: ResolvedDynamicRoute): GatewayTarget[] {
-  const targets = match.upstream.targets
-  if (targets.length === 0) {
-    throw new GatewayExecutionError(503, 'UPSTREAM_NOT_CONFIGURED', '上游服务尚未配置')
-  }
-
-  const now = Date.now()
-  const available = targets.filter((target) => {
-    const key = targetStateKey(match, target)
-    const retryAt = targetCooldowns.get(key)
-    if (!retryAt) return true
-    if (retryAt > now) return false
-    targetCooldowns.delete(key)
-    return true
-  })
-  return available.length > 0 ? available : targets
-}
-
-function orderedTargets(match: ResolvedDynamicRoute): GatewayTarget[] {
-  const targets = availableTargets(match)
-
-  const counter = targetCounters.get(match.upstream.id) ?? 0
-  targetCounters.set(match.upstream.id, (counter + 1) % Number.MAX_SAFE_INTEGER)
-  let selectedIndex = counter % targets.length
-  if (match.upstream.loadBalancing === 'weighted') {
-    const totalWeight = targets.reduce(
-      (sum, target) => sum + Math.max(1, target.weight),
-      0
-    )
-    let selectedWeight = counter % totalWeight
-    for (let index = 0; index < targets.length; index += 1) {
-      selectedWeight -= Math.max(1, targets[index]!.weight)
-      if (selectedWeight < 0) {
-        selectedIndex = index
-        break
-      }
-    }
-  }
-  return [
-    ...targets.slice(selectedIndex),
-    ...targets.slice(0, selectedIndex)
-  ]
-}
-
-function markTargetUnavailable(
-  match: ResolvedDynamicRoute,
-  target: GatewayTarget
-): void {
-  targetCooldowns.set(
-    targetStateKey(match, target),
-    Date.now() + TARGET_COOLDOWN_MS
-  )
-}
-
-function markTargetResponsive(
-  match: ResolvedDynamicRoute,
-  target: GatewayTarget
-): void {
-  targetCooldowns.delete(targetStateKey(match, target))
-}
-
-function buildTargetUrl(baseUrl: string, upstreamPath: string, search: string): URL {
-  const target = new URL(baseUrl)
-  const basePath = target.pathname === '/' ? '' : target.pathname.replace(/\/$/, '')
-  target.pathname = `${basePath}${upstreamPath}` || '/'
-  const query = new URLSearchParams(search)
-  query.delete('apikey')
-  target.search = query.toString()
-  target.hash = ''
-  return target
-}
 
 function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serviceToken: string): Headers {
   const headers = new Headers(getProxyRequestHeaders(event))
@@ -178,170 +86,6 @@ function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serv
   return headers
 }
 
-function initializeStatistics(event: H3Event, match: ResolvedDynamicRoute): void {
-  if (!match.route.isStatistics) return
-  const requestUrl = getRequestURL(event)
-  const requestMeta = readRequestMeta(event)
-  const context = getAppEventContext(event)
-  ensureRequestId(event)
-  context.apiStatsTarget = {
-    routeId: match.route.id,
-    targetName: match.route.name,
-    apiPath: match.route.pathPattern
-  }
-  context.apiStatsTracked = {
-    startedAt: Date.now(),
-    pathname: requestUrl.pathname,
-    method: event.method.toUpperCase(),
-    ip: requestMeta.ip,
-    requestSize: toNullableNonNegativeInteger(getHeader(event, 'content-length')),
-    userAgent: requestMeta.userAgent?.slice(0, 500) || null,
-    referer: (getHeader(event, 'referer') || getHeader(event, 'referrer') || null)?.slice(0, 1000) || null,
-    queryString: sanitizeQueryStringForLog(requestUrl.search)
-  }
-}
-
-async function persistBillingOutcome(event: H3Event, statusCode: number): Promise<void> {
-  const billing = getAppEventContext(event).apiBilling
-  const reservation = billing?.creditReservation
-  if (!billing || !reservation) return
-  const charge = shouldChargeGatewayCall({
-    costCredits: billing.costCredits,
-    apiKeyUserId: billing.apiKeyUserId,
-    statusCode
-  })
-  if (!charge) {
-    await creditService.releaseReservation(reservation.id, reservation.userId)
-    billing.creditReservation = null
-    return
-  }
-  const marked = await creditService.markReservationPending(reservation.id, reservation.userId)
-  if (!marked) throw new Error('Billing reservation is no longer active')
-}
-
-async function releaseBillingReservation(event: H3Event): Promise<void> {
-  const billing = getAppEventContext(event).apiBilling
-  const reservation = billing?.creditReservation
-  if (!billing || !reservation) return
-  const released = await creditService.releaseReservation(
-    reservation.id,
-    reservation.userId
-  )
-  if (!released) throw new Error('Billing reservation could not be released')
-  billing.creditReservation = null
-}
-
-function contentLength(value: string | string[] | null | undefined): number | null {
-  const normalized = Array.isArray(value) ? value[0] : value
-  if (!normalized || !/^\d+$/.test(normalized)) return null
-  const parsed = Number(normalized)
-  return Number.isSafeInteger(parsed) ? parsed : null
-}
-
-function assertRequestSize(event: H3Event, maximumBytes: number): void {
-  if (maximumBytes === 0 && PAYLOAD_METHODS.has(event.method.toUpperCase())) {
-    throw new GatewayExecutionError(413, 'REQUEST_BODY_NOT_ALLOWED', '此接口不接受请求体')
-  }
-  const declaredLength = contentLength(event.node.req.headers['content-length'])
-  if (declaredLength !== null && declaredLength > maximumBytes) {
-    throw new GatewayExecutionError(413, 'REQUEST_BODY_TOO_LARGE', '请求体超过接口限制')
-  }
-}
-
-function limitByteStream(
-  stream: ReadableStream<Uint8Array>,
-  maximumBytes: number,
-  error: () => GatewayExecutionError
-): ReadableStream<Uint8Array> {
-  let receivedBytes = 0
-  return stream.pipeThrough(new TransformStream<Uint8Array, Uint8Array>({
-    transform(chunk, controller) {
-      receivedBytes += chunk.byteLength
-      if (receivedBytes > maximumBytes) throw error()
-      controller.enqueue(chunk)
-    }
-  }))
-}
-
-function requestBody(
-  event: H3Event,
-  maximumBytes: number
-): ReadableStream<Uint8Array> | undefined {
-  if (!PAYLOAD_METHODS.has(event.method.toUpperCase())) return undefined
-  const stream = getRequestWebStream(event)
-  if (!stream) return undefined
-  return limitByteStream(
-    stream,
-    maximumBytes,
-    () => new GatewayExecutionError(
-      413,
-      'REQUEST_BODY_TOO_LARGE',
-      '请求体超过接口限制'
-    )
-  )
-}
-
-async function limitedUpstreamResponse(
-  response: Response,
-  maximumBytes: number
-): Promise<Response> {
-  const declaredLength = contentLength(response.headers.get('content-length'))
-  if (declaredLength !== null && declaredLength > maximumBytes) {
-    await response.body?.cancel().catch(() => undefined)
-    throw new GatewayExecutionError(
-      502,
-      'UPSTREAM_RESPONSE_TOO_LARGE',
-      '上游响应超过接口限制'
-    )
-  }
-  if (!response.body) return response
-  return new Response(
-    limitByteStream(
-      response.body,
-      maximumBytes,
-      () => new GatewayExecutionError(
-        502,
-        'UPSTREAM_RESPONSE_TOO_LARGE',
-        '上游响应超过接口限制'
-      )
-    ),
-    {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers
-    }
-  )
-}
-
-function wrappedError<TError extends Error>(
-  error: unknown,
-  match: (value: unknown) => value is TError
-): TError | null {
-  const seen = new Set<unknown>()
-  let current: unknown = error
-  while (current && !seen.has(current)) {
-    if (match(current)) return current
-    seen.add(current)
-    if (typeof current !== 'object' || !('cause' in current)) return null
-    current = current.cause
-  }
-  return null
-}
-
-function gatewayExecutionError(error: unknown): GatewayExecutionError | null {
-  return wrappedError(
-    error,
-    (value): value is GatewayExecutionError => value instanceof GatewayExecutionError
-  )
-}
-
-function billingPersistenceError(error: unknown): BillingPersistenceError | null {
-  return wrappedError(
-    error,
-    (value): value is BillingPersistenceError => value instanceof BillingPersistenceError
-  )
-}
-
 function captureUpstreamFailure(event: H3Event, response: Response): void {
   if (response.status < 400) return
   const errorCode = response.headers.get('x-openapi-error-code')?.trim() ?? ''
@@ -349,67 +93,6 @@ function captureUpstreamFailure(event: H3Event, response: Response): void {
   getAppEventContext(event).apiFailure = {
     errorCode,
     errorMessage: null
-  }
-}
-
-async function fetchTarget(
-  match: ResolvedDynamicRoute,
-  targetUrl: URL,
-  init: RequestInit | undefined
-): Promise<Response> {
-  if (match.upstream.kind === 'external') {
-    return safeFetch(targetUrl, {
-      ...init,
-      allowedHosts: [targetUrl.hostname]
-    })
-  }
-  return fetch(targetUrl, init)
-}
-
-function createProxyFetch(input: {
-  match: ResolvedDynamicRoute
-  targets: GatewayTarget[]
-  upstreamPath: string
-  search: string
-  maximumResponseBytes: number
-  onTarget: (target: GatewayTarget) => void
-}): typeof fetch {
-  return async (_request, init) => {
-    const method = (init?.method ?? 'GET').toUpperCase()
-    const mayRetry = RETRYABLE_METHODS.has(method)
-    const targets = mayRetry ? input.targets : input.targets.slice(0, 1)
-    let lastError: unknown = null
-
-    for (let index = 0; index < targets.length; index += 1) {
-      const target = targets[index]!
-      const targetUrl = buildTargetUrl(
-        target.baseUrl,
-        input.upstreamPath,
-        input.search
-      )
-      input.onTarget(target)
-      try {
-        const response = await fetchTarget(input.match, targetUrl, init)
-        const retryableStatus = RETRYABLE_UPSTREAM_STATUSES.has(response.status)
-        if (retryableStatus) markTargetUnavailable(input.match, target)
-        else markTargetResponsive(input.match, target)
-
-        if (retryableStatus && index < targets.length - 1) {
-          await response.body?.cancel().catch(() => undefined)
-          continue
-        }
-        return limitedUpstreamResponse(
-          response,
-          input.maximumResponseBytes
-        )
-      } catch (error) {
-        if (gatewayExecutionError(error)) throw error
-        markTargetUnavailable(input.match, target)
-        lastError = error
-        if (!mayRetry || index === targets.length - 1) throw error
-      }
-    }
-    throw lastError ?? new Error('upstream target selection failed')
   }
 }
 
@@ -464,26 +147,31 @@ export const dynamicGatewayService = {
     }
 
     setPublicApiCors(event, [match.route.method])
-    initializeStatistics(event, match)
+    initializeGatewayStatistics(event, match)
     let abortController: AbortController | null = null
     let abortRequest: (() => void) | null = null
+    let abortResponse: (() => void) | null = null
     let timeout: ReturnType<typeof setTimeout> | null = null
     let targetId: string | null = null
     let proxyStarted = false
 
     try {
-      assertRequestSize(event, match.route.maxRequestBytes)
+      assertGatewayRequestSize(event, match.route.maxRequestBytes)
       const access = await dynamicGatewayAccessService.authorize(event, match)
       if (!access.passed) return { matched: true, response: access.response }
 
       const serviceToken = match.upstream.kind === 'internal'
         ? await upstreamServiceTokenService.get(match.upstream.id)
         : ''
-      const targets = orderedTargets(match)
+      const targets = orderedGatewayTargets(match)
       const target = targets[0]!
       targetId = target.id
       const upstreamPath = renderUpstreamPath(match.route.upstreamPathTemplate, match.params)
-      const targetUrl = buildTargetUrl(target.baseUrl, upstreamPath, requestUrl.search)
+      const targetUrl = buildGatewayTargetUrl(
+        target.baseUrl,
+        upstreamPath,
+        requestUrl.search
+      )
       const headers = createUpstreamHeaders(event, match, serviceToken)
       abortController = new AbortController()
       timeout = setTimeout(
@@ -491,10 +179,16 @@ export const dynamicGatewayService = {
         match.route.timeoutMs
       )
       abortRequest = () => abortController?.abort(new Error('client disconnected'))
+      abortResponse = () => {
+        if (!event.node.res.writableEnded) {
+          abortController?.abort(new Error('client disconnected'))
+        }
+      }
       event.node.req.once('aborted', abortRequest)
+      event.node.res.once('close', abortResponse)
 
-      const body = requestBody(event, match.route.maxRequestBytes)
-      const proxyFetch = createProxyFetch({
+      const body = createGatewayRequestBody(event, match.route.maxRequestBytes)
+      const proxyFetch = createGatewayProxyFetch({
         match,
         targets,
         upstreamPath,
@@ -502,6 +196,10 @@ export const dynamicGatewayService = {
         maximumResponseBytes: match.route.maxResponseBytes,
         onTarget: (selected) => {
           targetId = selected.id
+        },
+        onResponseBytes: (receivedBytes) => {
+          const tracked = getAppEventContext(event).apiStatsTracked
+          if (tracked) tracked.responseSize = receivedBytes
         }
       })
       let upstreamStatus = 502
@@ -514,11 +212,6 @@ export const dynamicGatewayService = {
           if (match.upstream.kind === 'internal') {
             captureUpstreamFailure(event, upstreamResponse)
           }
-          try {
-            await persistBillingOutcome(event, upstreamStatus)
-          } catch (error) {
-            throw new BillingPersistenceError(error)
-          }
         },
         fetchOptions: {
           method: event.method,
@@ -529,15 +222,20 @@ export const dynamicGatewayService = {
           signal: abortController.signal
         }
       })
+      try {
+        await persistGatewayBillingOutcome(event, upstreamStatus)
+      } catch (error) {
+        throw new BillingPersistenceError(error)
+      }
       return { matched: true, response }
     } catch (caughtError) {
       let error = caughtError
       try {
-        await releaseBillingReservation(event)
+        await releaseGatewayBillingReservation(event)
       } catch (releaseError) {
         error = new BillingPersistenceError(releaseError)
       }
-      const billingError = billingPersistenceError(error)
+      const billingError = findBillingPersistenceError(error)
       if (billingError) {
         console.error('[gateway] failed to persist billing outcome', {
           routeId: match.route.id,
@@ -562,7 +260,7 @@ export const dynamicGatewayService = {
           error
         )
       }
-      const executionError = gatewayExecutionError(error)
+      const executionError = findGatewayExecutionError(error)
       if (executionError) {
         return gatewayFailureResult(
           event,
@@ -595,6 +293,7 @@ export const dynamicGatewayService = {
     } finally {
       if (timeout) clearTimeout(timeout)
       if (abortRequest) event.node.req.off('aborted', abortRequest)
+      if (abortResponse) event.node.res.off('close', abortResponse)
     }
   }
 }

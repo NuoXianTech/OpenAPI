@@ -46,7 +46,7 @@ export async function recordApiCall(event: H3Event, tracked: ApiStatsTracked) {
   const eventContext = getAppEventContext(event)
   const response = event.node?.res
   const statusCode = Math.trunc(response?.statusCode || 200)
-  const responseSize = toNullableNonNegativeInteger(
+  const responseSize = tracked.responseSize ?? toNullableNonNegativeInteger(
     response?.getHeader('content-length') as string | string[] | number | undefined
   )
   const latencyMs = Math.max(Date.now() - tracked.startedAt, 0)

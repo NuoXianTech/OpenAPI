@@ -1,6 +1,6 @@
 FROM node:24-bookworm-slim AS build
 
-ARG PNPM_VERSION=11.12.0
+ARG PNPM_VERSION=11.20.0
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -27,6 +27,8 @@ ENV NITRO_PORT=3000
 WORKDIR /app
 
 COPY --from=build --chown=node:node /app/.output ./
+RUN mkdir -p /app/.data \
+  && chown node:node /app/.data
 
 USER node
 

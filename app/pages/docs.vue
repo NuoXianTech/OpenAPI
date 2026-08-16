@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
-import { useClientPagination } from '~/composables/dashboard/use-client-pagination'
 
 definePageMeta({ layout: false })
 
@@ -16,25 +15,18 @@ const {
   statusTabs,
   categoryTabs,
   categoryMap,
-  allApis,
   filteredApis,
-  isLoading,
-  loadError,
-  isEmpty,
-  refreshCatalog
-} = usePublicApiCatalog()
-
-const {
   page,
   pageSize,
   total,
   totalPages,
-  paginated: paginatedApis
-} = useClientPagination(filteredApis, DIRECTORY_PAGE_SIZE)
+  isLoading,
+  loadError,
+  isEmpty,
+  refreshCatalog
+} = usePublicApiCatalog({ pageSize: DIRECTORY_PAGE_SIZE })
 
-watch([searchQuery, selectedStatus, selectedCategory], () => {
-  page.value = 1
-})
+const paginatedApis = filteredApis
 
 const retryActions = computed(() => [{
   label: t('common.actions.retry'),
@@ -76,7 +68,7 @@ useSeoMeta({
         </div>
 
         <div class="api-directory__count" :aria-label="$t('public.home.totalApis')">
-          <strong>{{ allApis.length }}</strong>
+          <strong>{{ total }}</strong>
           <span>{{ $t('public.home.totalApis') }}</span>
         </div>
       </header>
@@ -133,7 +125,7 @@ useSeoMeta({
         <div id="api-directory-results" class="api-directory__result-meta">
           <span>
             <UIcon name="i-mdi-filter-variant" class="size-3.5" />
-            {{ $t('public.directory.resultSummary', { count: filteredApis.length }) }}
+            {{ $t('public.directory.resultSummary', { count: total }) }}
           </span>
           <span class="api-directory__hint">
             <UIcon name="i-mdi-cursor-default-click-outline" class="size-3.5" />

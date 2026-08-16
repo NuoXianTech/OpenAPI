@@ -293,17 +293,24 @@ CREATE TABLE "api_routes" (
 	"timeout_ms" integer DEFAULT 10000 NOT NULL,
 	"max_request_bytes" integer DEFAULT 1048576 NOT NULL,
 	"max_response_bytes" integer DEFAULT 10485760 NOT NULL,
+	"catalog_status" varchar(20) DEFAULT 'automatic' NOT NULL,
+	"sensitive_query_parameters" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"managed_by" varchar(20) DEFAULT 'manual' NOT NULL,
+	"is_support_route" boolean DEFAULT false NOT NULL,
 	"state" varchar(20) DEFAULT 'active' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
-	CONSTRAINT "api_routes_method_chk" CHECK ("api_routes"."method" in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS')),
+	CONSTRAINT "api_routes_method_chk" CHECK ("api_routes"."method" in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE')),
 	CONSTRAINT "api_routes_credits_cost_chk" CHECK ("api_routes"."credits_cost" >= 0),
 	CONSTRAINT "api_routes_rate_limits_chk" CHECK ("api_routes"."rate_limit_per_second" >= 0 and "api_routes"."rate_limit_per_minute" >= 0 and "api_routes"."rate_limit_per_hour" >= 0 and "api_routes"."rate_limit_per_day" >= 0),
 	CONSTRAINT "api_routes_paid_policy_chk" CHECK ("api_routes"."credits_cost" = 0 or ("api_routes"."is_api_key" = true and "api_routes"."is_statistics" = true)),
 	CONSTRAINT "api_routes_timeout_chk" CHECK ("api_routes"."timeout_ms" between 100 and 120000),
 	CONSTRAINT "api_routes_request_bytes_chk" CHECK ("api_routes"."max_request_bytes" between 0 and 1073741824),
 	CONSTRAINT "api_routes_response_bytes_chk" CHECK ("api_routes"."max_response_bytes" between 0 and 2147483647),
+	CONSTRAINT "api_routes_catalog_status_chk" CHECK ("api_routes"."catalog_status" in ('automatic', 'maintenance')),
+	CONSTRAINT "api_routes_managed_by_chk" CHECK ("api_routes"."managed_by" in ('manual', 'service')),
+	CONSTRAINT "api_routes_support_management_chk" CHECK ("api_routes"."is_support_route" = false or "api_routes"."managed_by" = 'service'),
 	CONSTRAINT "api_routes_state_chk" CHECK ("api_routes"."state" in ('draft', 'active', 'disabled'))
 );
 --> statement-breakpoint
@@ -497,13 +504,13 @@ CREATE INDEX "operation_logs_user_created_idx" ON "operation_logs" USING btree (
 CREATE INDEX "operation_logs_user_action_created_idx" ON "operation_logs" USING btree ("user_id","action","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "operation_logs_action_idx" ON "operation_logs" USING btree ("action");--> statement-breakpoint
 CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("resource_type","resource_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code") WHERE "api_categories"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "api_categories_parent_sort_idx" ON "api_categories" USING btree ("parent_id","sort_order");--> statement-breakpoint
 CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree ("is_enabled","sort_order");--> statement-breakpoint
-CREATE UNIQUE INDEX "api_products_workspace_slug_uq" ON "api_products" USING btree ("workspace_id","slug");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_products_workspace_slug_uq" ON "api_products" USING btree ("workspace_id","slug") WHERE "api_products"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "api_products_workspace_lifecycle_idx" ON "api_products" USING btree ("workspace_id","lifecycle");--> statement-breakpoint
 CREATE INDEX "api_products_category_idx" ON "api_products" USING btree ("category_id");--> statement-breakpoint
-CREATE UNIQUE INDEX "api_routes_version_method_shape_uq" ON "api_routes" USING btree ("api_version_id","method","normalized_shape");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_routes_version_method_shape_uq" ON "api_routes" USING btree ("api_version_id","method","normalized_shape") WHERE "api_routes"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "api_routes_version_state_idx" ON "api_routes" USING btree ("api_version_id","state");--> statement-breakpoint
 CREATE INDEX "api_routes_upstream_idx" ON "api_routes" USING btree ("upstream_service_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_versions_product_version_uq" ON "api_versions" USING btree ("product_id","version");--> statement-breakpoint
@@ -511,11 +518,12 @@ CREATE INDEX "api_versions_product_state_idx" ON "api_versions" USING btree ("pr
 CREATE UNIQUE INDEX "environments_workspace_slug_uq" ON "environments" USING btree ("workspace_id","slug");--> statement-breakpoint
 CREATE INDEX "environments_active_revision_idx" ON "environments" USING btree ("active_revision_id");--> statement-breakpoint
 CREATE INDEX "openapi_documents_workspace_created_idx" ON "openapi_documents" USING btree ("workspace_id","created_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE UNIQUE INDEX "openapi_documents_workspace_hash_uq" ON "openapi_documents" USING btree ("workspace_id","content_hash");--> statement-breakpoint
+CREATE UNIQUE INDEX "openapi_documents_upstream_hash_uq" ON "openapi_documents" USING btree ("workspace_id","upstream_service_id","content_hash") WHERE "openapi_documents"."upstream_service_id" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "routing_revisions_environment_sequence_uq" ON "routing_revisions" USING btree ("environment_id","sequence");--> statement-breakpoint
+CREATE UNIQUE INDEX "routing_revisions_environment_published_uq" ON "routing_revisions" USING btree ("environment_id") WHERE "routing_revisions"."status" = 'published';--> statement-breakpoint
 CREATE INDEX "routing_revisions_environment_created_idx" ON "routing_revisions" USING btree ("environment_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "routing_revisions_checksum_idx" ON "routing_revisions" USING btree ("checksum");--> statement-breakpoint
-CREATE UNIQUE INDEX "upstream_services_workspace_slug_uq" ON "upstream_services" USING btree ("workspace_id","slug");--> statement-breakpoint
+CREATE UNIQUE INDEX "upstream_services_workspace_slug_uq" ON "upstream_services" USING btree ("workspace_id","slug") WHERE "upstream_services"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "upstream_services_workspace_status_idx" ON "upstream_services" USING btree ("workspace_id","status");--> statement-breakpoint
 CREATE UNIQUE INDEX "upstream_targets_service_url_uq" ON "upstream_targets" USING btree ("upstream_service_id","base_url");--> statement-breakpoint
 CREATE INDEX "upstream_targets_service_enabled_idx" ON "upstream_targets" USING btree ("upstream_service_id","enabled");--> statement-breakpoint

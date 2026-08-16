@@ -1,12 +1,12 @@
 import { and, asc, count, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
+import { createApplicationError } from '~~/server/errors/application-error'
 import { apiCalls, apiCreditReservations, apiKeys, apiProducts, apiRoutes, apiVersions, creditTransactions, users } from '~~/server/db/schema'
 import { normalizeCreditAmount } from './credit-adjustments'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
-import { decryptStoredSecret } from '~~/server/utils/stored-secret'
 import type { CreditReason } from '#shared/types/credit-reason'
 import type { UserCreditConsumptionDailyRow, UserCreditSummary } from '#shared/types/user-credits'
 
@@ -24,6 +24,15 @@ interface FinalizeReservationInput {
   reservationId: number
   apiCallId?: number | null
   remark?: string | null
+  allowedStatuses?: Array<'pending' | 'dead_letter'>
+}
+
+export type CreditReservationStatus = 'active' | 'pending' | 'dead_letter'
+
+interface ListCreditReservationsFilters {
+  status?: CreditReservationStatus
+  limit?: number
+  offset?: number
 }
 
 interface ListUserTransactionsFilters {
@@ -95,11 +104,18 @@ async function reserve(input: ReserveInput) {
   })
 }
 
-async function releaseReservation(reservationId: number, userId?: number) {
+async function releaseReservation(
+  reservationId: number,
+  userId?: number,
+  options: { includeDeadLetter?: boolean } = {}
+) {
   return db.transaction(async (tx: DatabaseTransaction) => {
+    const releasableStatuses: CreditReservationStatus[] = options.includeDeadLetter
+      ? ['active', 'pending', 'dead_letter']
+      : ['active', 'pending']
     const conditions = [
       eq(apiCreditReservations.id, reservationId),
-      inArray(apiCreditReservations.status, ['active', 'pending'])
+      inArray(apiCreditReservations.status, releasableStatuses)
     ]
     if (userId !== undefined) conditions.push(eq(apiCreditReservations.userId, userId))
     const rows = await tx.select({
@@ -182,7 +198,7 @@ async function finalizeReservation(input: FinalizeReservationInput) {
       .from(apiCreditReservations)
       .where(and(
         eq(apiCreditReservations.id, input.reservationId),
-        eq(apiCreditReservations.status, 'pending')
+        inArray(apiCreditReservations.status, input.allowedStatuses ?? ['pending'])
       ))
       .limit(1)
       .for('update')
@@ -216,6 +232,88 @@ async function finalizeReservation(input: FinalizeReservationInput) {
     await tx.delete(apiCreditReservations).where(eq(apiCreditReservations.id, input.reservationId))
     return { charged: reservation.amount, balanceAfter }
   })
+}
+
+async function listCreditReservations(filters: ListCreditReservationsFilters = {}) {
+  const conditions: SQL[] = []
+  if (filters.status) conditions.push(eq(apiCreditReservations.status, filters.status))
+  const where = conditions.length ? and(...conditions) : undefined
+  const { limit, offset } = normalizePagination(filters)
+  const baseQuery = db.select({
+    id: apiCreditReservations.id,
+    userId: apiCreditReservations.userId,
+    username: users.username,
+    apiKeyId: apiCreditReservations.apiKeyId,
+    apiKeyName: apiKeys.name,
+    routeId: apiCreditReservations.routeId,
+    routeName: apiRoutes.name,
+    routePath: apiRoutes.pathPattern,
+    apiCallId: apiCreditReservations.apiCallId,
+    requestId: apiCreditReservations.requestId,
+    amount: apiCreditReservations.amount,
+    status: apiCreditReservations.status,
+    attempts: apiCreditReservations.attempts,
+    lastError: apiCreditReservations.lastError,
+    lastAttemptAt: apiCreditReservations.lastAttemptAt,
+    nextAttemptAt: apiCreditReservations.nextAttemptAt,
+    createdAt: apiCreditReservations.createdAt,
+    updatedAt: apiCreditReservations.updatedAt
+  }).from(apiCreditReservations)
+    .leftJoin(users, eq(users.id, apiCreditReservations.userId))
+    .leftJoin(apiKeys, eq(apiKeys.id, apiCreditReservations.apiKeyId))
+    .leftJoin(apiRoutes, eq(apiRoutes.id, apiCreditReservations.routeId))
+  const countQuery = db.select({ value: count() }).from(apiCreditReservations)
+  const [items, totalRows] = await Promise.all([
+    (where ? baseQuery.where(where) : baseQuery)
+      .orderBy(desc(apiCreditReservations.createdAt))
+      .limit(limit)
+      .offset(offset),
+    where ? countQuery.where(where) : countQuery
+  ])
+  return { items, total: toNumber(totalRows[0]?.value) }
+}
+
+async function retryCreditReservation(id: number) {
+  return firstRow(await db.update(apiCreditReservations).set({
+    status: 'pending',
+    attempts: 0,
+    lastError: null,
+    nextAttemptAt: new Date(),
+    updatedAt: new Date()
+  }).where(and(
+    eq(apiCreditReservations.id, id),
+    eq(apiCreditReservations.status, 'dead_letter')
+  )).returning())
+}
+
+async function forceFinalizeCreditReservation(id: number, remark: string) {
+  try {
+    return await finalizeReservation({
+      reservationId: id,
+      remark,
+      allowedStatuses: ['pending', 'dead_letter']
+    })
+  } catch (error) {
+    if ((error as Error).message === 'Credit reservation not found') {
+      throw createApplicationError({
+        statusCode: 404,
+        message: 'credit reservation not found or already resolved',
+        data: { code: 'CREDIT_RESERVATION_NOT_FOUND' }
+      })
+    }
+    if ((error as Error).message === 'Reserved credit balance is no longer available') {
+      throw createApplicationError({
+        statusCode: 409,
+        message: 'reserved credit balance is no longer available',
+        data: { code: 'CREDIT_RESERVATION_BALANCE_UNAVAILABLE' }
+      })
+    }
+    throw error
+  }
+}
+
+async function forceReleaseCreditReservation(id: number) {
+  return releaseReservation(id, undefined, { includeDeadLetter: true })
 }
 
 async function claimDueReservations(limit: number) {
@@ -326,11 +424,10 @@ async function listUserTransactions(userId: number, filters: ListUserTransaction
 
   return {
     items: items.map(({ meta, ...item }) => {
-      const ciphertext = typeof meta?.codeCiphertext === 'string' ? meta.codeCiphertext : null
       const preview = typeof meta?.codePreview === 'string' ? meta.codePreview : null
       return {
         ...item,
-        code: ciphertext ? decryptStoredSecret(ciphertext, 'redemption-code') : preview
+        code: preview
       }
     }),
     total: toNumber(totalRows[0]?.value)
@@ -414,6 +511,10 @@ export const creditService = {
   claimDueReservations,
   markReservationAttempt,
   releaseExpiredReservations,
+  listCreditReservations,
+  retryCreditReservation,
+  forceFinalizeCreditReservation,
+  forceReleaseCreditReservation,
   getBalance,
   listUserTransactions,
   getUserCreditsSummary

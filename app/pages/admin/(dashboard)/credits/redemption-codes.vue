@@ -58,8 +58,7 @@ const {
   filters,
   applyFilters,
   toggle,
-  remove,
-  copyOne
+  remove
 })
 </script>
 
@@ -145,19 +144,11 @@ const {
         :empty-title="$t('admin.credits.redemptionCodes.empty')"
         empty-icon="i-mdi-ticket-percent-outline"
       >
-        <template #code-cell="{ row }">
+        <template #codePreview-cell="{ row }">
           <div class="flex flex-col gap-0.5">
-            <UTooltip
-              :text="$t('admin.credits.redemptionCodes.actions.clickToCopy')"
-              :content="{ side: 'top' }"
-            >
-              <span
-                class="font-mono text-sm cursor-pointer hover:text-primary"
-                @click="copyOne(row.original.code)"
-              >
-                {{ row.original.code }}
-              </span>
-            </UTooltip>
+            <span class="font-mono text-sm text-toned">
+              {{ row.original.codePreview }}
+            </span>
             <span
               v-if="row.original.batchId"
               class="text-[11px] text-muted font-mono"

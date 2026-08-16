@@ -36,12 +36,17 @@ beforeAll(async () => {
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     );
+    CREATE TABLE api_products (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      category_id integer REFERENCES api_categories(id),
+      deleted_at timestamptz
+    );
   `)
   testContext.database = drizzle(client, { schema })
 })
 
 beforeEach(async () => {
-  await client.exec('TRUNCATE api_categories RESTART IDENTITY CASCADE;')
+  await client.exec('TRUNCATE api_products, api_categories RESTART IDENTITY CASCADE;')
 })
 
 afterAll(async () => client.close())
@@ -52,5 +57,19 @@ describe('api category service', () => {
 
     await expect(apiCategoryService.create({ code: 'tools', name: 'Duplicate' }))
       .rejects.toMatchObject({ statusCode: 409 })
+  })
+
+  it('protects parents with live children and ignores soft-deleted products', async () => {
+    const parent = await apiCategoryService.create({ code: 'media', name: 'Media' })
+    await apiCategoryService.create({ code: 'music', name: 'Music', parentId: parent!.id })
+
+    await expect(apiCategoryService.softDelete(parent!.id))
+      .rejects.toMatchObject({ statusCode: 409 })
+
+    await client.query('UPDATE api_categories SET deleted_at = now() WHERE parent_id = $1', [parent!.id])
+    await client.query('INSERT INTO api_products (category_id, deleted_at) VALUES ($1, now())', [parent!.id])
+
+    await expect(apiCategoryService.softDelete(parent!.id))
+      .resolves.toMatchObject({ id: parent!.id, isEnabled: false })
   })
 })

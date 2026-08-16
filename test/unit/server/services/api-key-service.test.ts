@@ -77,4 +77,22 @@ describe('api key service', () => {
 
     expect(created).toHaveLength(1)
   })
+
+  it('only reveals a full key on create or reset', async () => {
+    const [created] = await apiKeyService.createForUser(1, { name: 'Production' })
+    expect(created?.apiKey).toMatch(/^op_/)
+
+    const [listed] = await apiKeyService.listByUser(1)
+    expect(listed?.keyPreview).toBe(created?.keyPreview)
+    expect(listed).not.toHaveProperty('apiKey')
+    expect(listed).not.toHaveProperty('keyCiphertext')
+    expect(listed).not.toHaveProperty('keyDigest')
+
+    const updated = await apiKeyService.updateConfig(created!.id, { name: 'Renamed' })
+    expect(updated).not.toHaveProperty('apiKey')
+
+    const reset = await apiKeyService.resetForUser(1, created!.id)
+    expect(reset?.apiKey).toMatch(/^op_/)
+    expect(reset?.apiKey).not.toBe(created?.apiKey)
+  })
 })

@@ -1,4 +1,5 @@
 import { desc, eq } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { friendLinks } from '~~/server/db/schema'
 import type { FriendLinkItem } from '#shared/types/content'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'

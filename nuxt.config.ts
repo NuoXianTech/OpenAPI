@@ -1,6 +1,6 @@
-import { cp } from 'node:fs/promises'
+import { copyFile, cp } from 'node:fs/promises'
 import { createRequire } from 'node:module'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME } from './shared/config/locale-defaults'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
@@ -9,6 +9,7 @@ const { version: appVersion } = require('./package.json') as { version: string }
 
 const isProduction = process.env.NODE_ENV === 'production'
 const databaseMigrationsDir = 'server/db/migrations/postgresql'
+const databaseMigrationScripts = ['scripts/migrate.mjs', 'scripts/database-migrator.mjs']
 const privatePageRouteRule = {
   headers: {
     'cache-control': 'private, no-store'
@@ -52,6 +53,10 @@ export default defineNuxtConfig({
       trustedCidrs: '',
       forwardedHops: 1
     },
+    hosts: {
+      console: '',
+      gateway: ''
+    },
     redis: {
       url: '',
       keyPrefix: 'openapi:',
@@ -83,11 +88,17 @@ export default defineNuxtConfig({
     },
     hooks: {
       async compiled(nitro) {
-        await cp(
-          resolve(databaseMigrationsDir),
-          resolve(nitro.options.output.serverDir, 'db/migrations/postgresql'),
-          { recursive: true, force: true }
-        )
+        await Promise.all([
+          cp(
+            resolve(databaseMigrationsDir),
+            resolve(nitro.options.output.serverDir, 'db/migrations/postgresql'),
+            { recursive: true, force: true }
+          ),
+          ...databaseMigrationScripts.map(script => copyFile(
+            resolve(script),
+            resolve(nitro.options.output.serverDir, basename(script))
+          ))
+        ])
       }
     }
   },

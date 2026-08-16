@@ -99,6 +99,45 @@
           "remark": "备注"
         }
       },
+      "reservations": {
+        "title": "计费待处理",
+        "description": "处理自动结算多次失败后进入死信状态的积分预留。确认上游调用结果后，可重新自动结算、人工确认扣费或释放额度。",
+        "empty": "暂无待处理计费预留",
+        "filterStatus": "状态",
+        "allStatuses": "全部状态",
+        "columns": {
+          "createdAt": "创建时间",
+          "user": "用户",
+          "api": "接口",
+          "amount": "预留积分",
+          "status": "状态",
+          "attempts": "尝试次数",
+          "error": "最近错误"
+        },
+        "statuses": {
+          "active": "调用中",
+          "pending": "等待结算",
+          "dead_letter": "需要人工处理"
+        },
+        "actions": {
+          "retry": "重新自动结算",
+          "charge": "确认扣费",
+          "release": "释放额度"
+        },
+        "confirmCharge": {
+          "title": "确认扣除 {amount} 积分",
+          "description": "仅在确认上游调用成功时执行。操作会写入积分流水且不可重复。"
+        },
+        "confirmRelease": {
+          "title": "释放 {amount} 积分额度",
+          "description": "仅在确认调用未成功或不应计费时执行。该预留将被删除。"
+        },
+        "feedback": {
+          "retried": "已重新加入自动结算队列",
+          "charged": "已确认扣费",
+          "released": "已释放预留额度"
+        }
+      },
       "redemptionCodes": {
         "title": "兑换码",
         "description": "生成和管理积分兑换码，控制可用状态、使用次数与有效期限",

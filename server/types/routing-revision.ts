@@ -15,8 +15,11 @@ export interface RoutingRevisionRoute {
   id: string
   productId: string
   productSlug: string
+  productVisibility: 'public' | 'private'
+  productLifecycle: 'active' | 'deprecated' | 'retired'
   versionId: string
   version: string
+  versionState: 'draft' | 'published' | 'deprecated' | 'retired'
   name: string
   hosts: string[]
   method: string
@@ -34,6 +37,9 @@ export interface RoutingRevisionRoute {
   timeoutMs: number
   maxRequestBytes: number
   maxResponseBytes: number
+  catalogStatus: 'automatic' | 'maintenance'
+  sensitiveQueryParameters: string[]
+  isSupportRoute: boolean
 }
 
 export interface RoutingRevisionPayload {

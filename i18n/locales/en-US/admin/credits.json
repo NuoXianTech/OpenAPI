@@ -99,6 +99,45 @@
           "remark": "Note"
         }
       },
+      "reservations": {
+        "title": "Billing recovery",
+        "description": "Resolve credit reservations that exhausted automatic settlement retries. After verifying the upstream outcome, retry settlement, confirm the charge, or release the quota.",
+        "empty": "No unresolved billing reservations",
+        "filterStatus": "Status",
+        "allStatuses": "All statuses",
+        "columns": {
+          "createdAt": "Created",
+          "user": "User",
+          "api": "API",
+          "amount": "Reserved credits",
+          "status": "Status",
+          "attempts": "Attempts",
+          "error": "Last error"
+        },
+        "statuses": {
+          "active": "In progress",
+          "pending": "Awaiting settlement",
+          "dead_letter": "Manual review"
+        },
+        "actions": {
+          "retry": "Retry automatically",
+          "charge": "Confirm charge",
+          "release": "Release quota"
+        },
+        "confirmCharge": {
+          "title": "Confirm a {amount}-credit charge",
+          "description": "Use only after confirming the upstream call succeeded. This writes an auditable transaction and is idempotent."
+        },
+        "confirmRelease": {
+          "title": "Release {amount} reserved credits",
+          "description": "Use only when the call failed or should not be billed. The reservation will be removed."
+        },
+        "feedback": {
+          "retried": "Returned to the automatic settlement queue",
+          "charged": "Charge confirmed",
+          "released": "Reserved quota released"
+        }
+      },
       "redemptionCodes": {
         "title": "Redemption codes",
         "description": "Generate and manage credit redemption codes, availability, usage limits, and expiration",

@@ -6,12 +6,12 @@ import { PGlite } from '@electric-sql/pglite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import * as schema from './schema'
 
-export interface CreatePostgresClientOptions {
+interface CreatePostgresClientOptions {
   max?: number
 }
 
 type PostgresClient = ReturnType<typeof postgres>
-export type PgliteClient = PGlite
+type PgliteClient = PGlite
 export type DatabaseDriver = 'postgres' | 'pglite'
 
 function handlePostgresNotice(notice: postgres.Notice) {
@@ -60,14 +60,14 @@ function getDatabasePoolSize() {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 10
 }
 
-export function createPostgresClient(options: CreatePostgresClientOptions = {}) {
+function createPostgresClient(options: CreatePostgresClientOptions = {}) {
   return postgres(getDatabaseUrl(), {
     max: options.max ?? getDatabasePoolSize(),
     onnotice: handlePostgresNotice
   })
 }
 
-export function getPgliteDataDir() {
+function getPgliteDataDir() {
   return process.env.PGLITE_DATA_DIR || '.data/pglite'
 }
 
@@ -81,7 +81,7 @@ export function ensurePgliteDataDir(dataDir = getPgliteDataDir()) {
   mkdirSync(resolve(dataDir), { recursive: true })
 }
 
-export function createPgliteClient() {
+function createPgliteClient() {
   const dataDir = getPgliteDataDir()
   ensurePgliteDataDir(dataDir)
   return new PGlite(dataDir)
@@ -91,7 +91,7 @@ function createDatabase(client: PostgresClient) {
   return drizzlePostgres(client, { schema })
 }
 
-export function createPgliteDatabase(client: PgliteClient) {
+function createPgliteDatabase(client: PgliteClient) {
   return drizzlePglite(client, { schema })
 }
 

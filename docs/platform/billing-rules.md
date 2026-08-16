@@ -36,10 +36,10 @@
 - 多实例生产必须同时设置 `NUXT_REDIS_REQUIRED=true`。Redis 不可用时限流链路 fail-closed，避免实例退回各自内存后绕过限制。
 - Route 的秒、分、时、日窗口由 `rateLimitPerSecond/Minute/Hour/Day` 控制；API Key 自身配额不等同于用户余额或 `totalCalls`。
 
-## 已知限制
+## 人工处置
 
 - `creditService.refund` 为未来流程预留，当前标准 API 计费链路不会调用。
-- `dead_letter` 预留目前需要运维人工确认后处理，不能直接删除，否则会无审计地释放已成功调用的费用。
+- 管理员在“积分 → 计费预留”查看 `active`、`pending` 和 `dead_letter`。`dead_letter` 可重试；核对上游调用、调用日志和积分流水后，可显式确认扣费或释放。三类动作都保留操作审计，禁止直接删除数据库行。
 
 ## 注册赠送积分
 

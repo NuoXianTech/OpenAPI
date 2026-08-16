@@ -13,10 +13,12 @@
       "createTitle": "生成新 API 密钥",
       "editTitle": "编辑 API 密钥",
       "generate": "生成",
-      "view": {
-        "title": "查看 API 密钥",
-        "description": "{name} 的完整密钥",
-        "hint": "请勿在公开页面、聊天记录或代码仓库中共享此密钥。"
+      "secret": {
+        "title": "保存新 API 密钥",
+        "description": "完整密钥只在本次创建时显示。",
+        "warningTitle": "关闭后无法再次查看",
+        "warningDescription": "请立即复制并保存到安全的密码管理器；列表以后只显示掩码预览。",
+        "copyAll": "复制全部"
       },
       "filters": {
         "allStatuses": "全部状态",

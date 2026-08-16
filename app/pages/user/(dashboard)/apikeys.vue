@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LazyApiKeyResetModal, LazyApiKeyRevealModal } from '#components'
+import { LazyApiKeyResetModal, LazyApiKeySecretModal } from '#components'
 import { parseFetchError } from '~/utils/client-error'
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useApiKeys } from '~/composables/api/use-api-keys'
@@ -17,7 +17,6 @@ const { t, locale } = useI18n()
 useHead({ title: () => t('user.apiKeys.title') })
 
 const toast = useToast()
-const { copyText } = useCopyFeedback()
 const {
   getIpText,
   getQuotaText,
@@ -99,6 +98,7 @@ async function submitCreate() {
         : t('user.apiKeys.createdOne'),
       color: 'success'
     })
+    secretModal.open({ keys: res.keys })
     createOpen.value = false
   } catch (err) {
     toast.add({ title: parseFetchError(err, t('common.feedback.createFailed')), color: 'error' })
@@ -145,17 +145,13 @@ async function submitEdit() {
 // ------------------------------------------------------------
 const overlay = useOverlay()
 const resetModal = overlay.create(LazyApiKeyResetModal, { destroyOnClose: true })
-const revealModal = overlay.create(LazyApiKeyRevealModal, { destroyOnClose: true })
+const secretModal = overlay.create(LazyApiKeySecretModal, { destroyOnClose: true })
 
 function openReset(row: ApiKeyItem) {
   resetModal.open({
     target: row,
     onReset: resetKey
   })
-}
-
-function openReveal(row: ApiKeyItem) {
-  revealModal.open({ target: row })
 }
 
 // ------------------------------------------------------------
@@ -193,7 +189,7 @@ async function openDelete(row: ApiKeyItem) {
 // ------------------------------------------------------------
 const columns = computed<TableColumn<ApiKeyItem>[]>(() => [
   { accessorKey: 'name', header: t('common.apiKeys.columns.name') },
-  { accessorKey: 'apiKey', header: t('user.apiKeys.title') },
+  { accessorKey: 'keyPreview', header: t('user.apiKeys.title') },
   { id: 'quota', header: t('common.apiKeys.columns.quota') },
   { id: 'scopes', header: t('common.apiKeys.columns.scopes') },
   { id: 'ipWhitelist', header: t('common.apiKeys.columns.ipWhitelist') },
@@ -233,7 +229,7 @@ const filteredItems = computed(() => {
     const hasLimitedScopes = !!item.scopes?.length
     const matchesKeyword = !q || [
       item.name || t('common.apiKeys.defaultName'),
-      item.apiKey,
+      item.keyPreview,
       status.label,
       item.lastUsedIp || '',
       ...(item.scopes || []),
@@ -270,15 +266,9 @@ function resetFilters() {
   scopeFilter.value = 'all'
 }
 
-async function copy(text: string) {
-  await copyText(text)
-}
-
 function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
   return [
     { label: t('common.apiKeys.actions.edit'), icon: 'i-mdi-pencil-outline', onSelect: () => openEdit(row) },
-    { label: t('common.apiKeys.actions.view'), icon: 'i-mdi-eye-outline', onSelect: () => openReveal(row) },
-    { label: t('common.apiKeys.actions.copy'), icon: 'i-mdi-content-copy', onSelect: () => copy(row.apiKey) },
     {
       label: row.isActive ? t('common.apiKeys.actions.disable') : t('common.apiKeys.actions.enable'),
       icon: row.isActive ? 'i-mdi-pause-circle-outline' : 'i-mdi-play-circle-outline',
@@ -372,33 +362,10 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
               <span class="font-medium">{{ row.original.name || $t('common.apiKeys.defaultName') }}</span>
             </template>
 
-            <template #apiKey-cell="{ row }">
-              <div class="flex min-w-0 items-center gap-1.5">
-                <UTooltip
-                  :text="maskApiKey(row.original.apiKey)"
-                  :content="{ side: 'top' }"
-                >
-                  <code class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned">
-                    {{ maskApiKey(row.original.apiKey) }}
-                  </code>
-                </UTooltip>
-                <UButton
-                  icon="i-mdi-eye-outline"
-                  :aria-label="$t('common.apiKeys.actions.view')"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  @click="openReveal(row.original)"
-                />
-                <UButton
-                  icon="i-mdi-content-copy"
-                  :aria-label="$t('common.apiKeys.actions.copy')"
-                  size="xs"
-                  color="neutral"
-                  variant="ghost"
-                  @click="copy(row.original.apiKey)"
-                />
-              </div>
+            <template #keyPreview-cell="{ row }">
+              <code class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned">
+                {{ row.original.keyPreview }}
+              </code>
             </template>
 
             <template #quota-cell="{ row }">

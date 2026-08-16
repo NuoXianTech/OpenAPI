@@ -5,7 +5,7 @@ import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-l
 
 interface RedemptionCode {
   id: number
-  code: string
+  codePreview: string
   amount: number
   batchId: string | null
   note: string | null
@@ -116,7 +116,7 @@ export function useRedemptionCodesPage() {
 
   async function remove(item: RedemptionCode) {
     await confirm({
-      title: t('admin.credits.redemptionCodes.deleteCode.title', { code: item.code }),
+      title: t('admin.credits.redemptionCodes.deleteCode.title', { code: item.codePreview }),
       description: t('admin.credits.redemptionCodes.deleteCode.description'),
       onConfirm: async () => {
         try {
@@ -240,7 +240,6 @@ interface UseAdminRedemptionCodesDisplayMetaOptions {
   applyFilters: () => void
   toggle: (row: RedemptionCode) => void | Promise<void>
   remove: (row: RedemptionCode) => void | Promise<void>
-  copyOne: (code: string) => void | Promise<void>
 }
 
 interface UseAdminRedemptionCodesDisplayMetaReturn {
@@ -276,7 +275,7 @@ export function useAdminRedemptionCodesDisplayMeta(
     }))
   ])
   const columns = computed<TableColumn<RedemptionCode>[]>(() => [
-    { accessorKey: 'code', header: t('admin.credits.redemptionCodes.columns.code') },
+    { accessorKey: 'codePreview', header: t('admin.credits.redemptionCodes.columns.code') },
     { accessorKey: 'amount', header: t('admin.credits.redemptionCodes.columns.amount') },
     { id: 'usage', header: t('admin.credits.redemptionCodes.columns.usage') },
     { accessorKey: 'note', header: t('admin.credits.redemptionCodes.columns.note') },
@@ -306,10 +305,6 @@ export function useAdminRedemptionCodesDisplayMeta(
         : t('admin.credits.redemptionCodes.actions.enable'),
       icon: row.isEnabled ? 'i-mdi-toggle-switch-off-outline' : 'i-mdi-toggle-switch-outline',
       onSelect: () => options.toggle(row)
-    }, {
-      label: t('admin.credits.redemptionCodes.actions.copyCode'),
-      icon: 'i-mdi-content-copy',
-      onSelect: () => options.copyOne(row.code)
     }, {
       type: 'separator'
     }, {

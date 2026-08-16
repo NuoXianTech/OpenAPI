@@ -14,8 +14,8 @@ node_modules
 # Logs
 *.log
 
-# Local IP database files
-/data/ip/
+# Local operator data never belongs to Platform source control.
+/data/
 
 # Misc
 .DS_Store

@@ -37,7 +37,8 @@ function createKeyName(baseName: string, index: number) {
 }
 
 type StoredApiKeyRecord = typeof apiKeys.$inferSelect
-type ApiKeyRecord = Omit<StoredApiKeyRecord, 'keyDigest' | 'keyCiphertext' | 'keyPreview'> & { apiKey: string }
+export type ApiKeyRecord = Omit<StoredApiKeyRecord, 'keyDigest' | 'keyCiphertext'>
+export type CreatedApiKeyRecord = ApiKeyRecord & { apiKey: string }
 
 function encodeApiKey(apiKey: string) {
   return {
@@ -47,11 +48,15 @@ function encodeApiKey(apiKey: string) {
   }
 }
 
-function decodeApiKeyRecord(row: StoredApiKeyRecord): ApiKeyRecord {
-  const { keyDigest: _keyDigest, keyCiphertext, keyPreview: _keyPreview, ...record } = row
+function presentApiKeyRecord(row: StoredApiKeyRecord): ApiKeyRecord {
+  const { keyDigest: _keyDigest, keyCiphertext: _keyCiphertext, ...record } = row
+  return record
+}
+
+function revealCreatedApiKeyRecord(row: StoredApiKeyRecord): CreatedApiKeyRecord {
   return {
-    ...record,
-    apiKey: decryptStoredSecret(keyCiphertext, 'api-key')
+    ...presentApiKeyRecord(row),
+    apiKey: decryptStoredSecret(row.keyCiphertext, 'api-key')
   }
 }
 
@@ -79,7 +84,7 @@ async function deleteKey(tx: DatabaseTransaction, id: number, userId?: number) {
     .where(eq(apiKeys.id, key.id))
     .returning()
   const row = firstRow(deleted)
-  return row ? decodeApiKeyRecord(row) : null
+  return row ? presentApiKeyRecord(row) : null
 }
 
 async function resetKey(id: number, userId?: number) {
@@ -92,7 +97,7 @@ async function resetKey(id: number, userId?: number) {
     .where(keyWhere(id, userId))
     .returning()
   const row = firstRow(res)
-  return row ? decodeApiKeyRecord(row) : null
+  return row ? revealCreatedApiKeyRecord(row) : null
 }
 
 /** 用户创建 API Key 的入参 */
@@ -115,7 +120,7 @@ export const apiKeyService = {
     const rows = await db.select().from(apiKeys)
       .where(eq(apiKeys.userId, userId))
       .orderBy(desc(apiKeys.createdAt))
-    return rows.map(decodeApiKeyRecord)
+    return rows.map(presentApiKeyRecord)
   },
 
   /**
@@ -126,12 +131,12 @@ export const apiKeyService = {
    *
    * 注意：每条 key 各自生成 nonce，所以即使批量也必须逐行 insert（不能合并 values）。
    */
-  async createForUser(userId: number, input: CreateApiKeyInput): Promise<ApiKeyRecord[]> {
+  async createForUser(userId: number, input: CreateApiKeyInput): Promise<CreatedApiKeyRecord[]> {
     const count = clampInteger(input.count, 1, MAX_BATCH_COUNT)
     const baseName = (input.name || '').trim() || '默认密钥'
 
     return db.transaction(async (tx: DatabaseTransaction) => {
-      const created: ApiKeyRecord[] = []
+      const created: CreatedApiKeyRecord[] = []
       for (let i = 0; i < count; i++) {
         const name = createKeyName(baseName, i)
         const apiKey = generateApiKey()
@@ -145,7 +150,7 @@ export const apiKeyService = {
           scopes: input.scopes ?? null,
           ipWhitelist: input.ipWhitelist ?? null
         }).returning()
-        if (row[0]) created.push(decodeApiKeyRecord(row[0]))
+        if (row[0]) created.push(revealCreatedApiKeyRecord(row[0]))
       }
       return created
     })
@@ -187,12 +192,12 @@ export const apiKeyService = {
     if (Object.keys(set).length === 0) {
       const cur = await db.select().from(apiKeys).where(keyWhere(id, opts.userId)).limit(1)
       const row = firstRow(cur)
-      return row ? decodeApiKeyRecord(row) : null
+      return row ? presentApiKeyRecord(row) : null
     }
 
     const res = await db.update(apiKeys).set({ ...set, updatedAt: new Date() }).where(keyWhere(id, opts.userId)).returning()
     const row = firstRow(res)
-    return row ? decodeApiKeyRecord(row) : null
+    return row ? presentApiKeyRecord(row) : null
   },
 
   async resetForUser(userId: number, id: number) {

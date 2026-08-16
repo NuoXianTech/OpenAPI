@@ -1,5 +1,5 @@
 import { parseFetchError } from '~/utils/client-error'
-import type { ApiKeyItem, ApiKeyPayload, ApiKeyScopeOption } from '#shared/types/api'
+import type { ApiKeyPayload, ApiKeyScopeOption, CreatedApiKeyItem } from '#shared/types/api'
 
 /**
  * API Key 数据层（user 与 admin 共用）：接口范围下拉的懒加载 + CRUD。
@@ -65,7 +65,7 @@ export function useApiKeys(options: UseApiKeysOptions) {
     const body = options.scope === 'admin'
       ? { userId: options.getUserId?.(), ...payload }
       : payload
-    const res = await $fetch<{ keys: ApiKeyItem[], count: number }>(ep.add, { method: 'POST', body })
+    const res = await $fetch<{ keys: CreatedApiKeyItem[], count: number }>(ep.add, { method: 'POST', body })
     await options.refresh()
     return res
   }
@@ -76,7 +76,7 @@ export function useApiKeys(options: UseApiKeysOptions) {
   }
 
   async function reset(id: number) {
-    const res = await $fetch<ApiKeyItem>(ep.reset, { method: 'POST', body: { id } })
+    const res = await $fetch<CreatedApiKeyItem>(ep.reset, { method: 'POST', body: { id } })
     await options.refresh()
     return res
   }

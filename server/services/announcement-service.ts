@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, isNull } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { announcements } from '~~/server/db/schema'
 import {
   MESSAGE_LEVELS,

@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
-import type { PlatformWorkspace } from '~/types/platform'
+import type { PlatformEnvironment, PlatformWorkspace } from '~/types/platform'
+import { parseFetchError } from '~/utils/client-error'
 import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const context = useAdminPlatformContext()
 const modalOpen = ref(false)
+const editingWorkspace = ref<PlatformWorkspace | null>(null)
+const environmentModalOpen = ref(false)
+const environmentWorkspace = ref<PlatformWorkspace | null>(null)
+const editingEnvironment = ref<PlatformEnvironment | null>(null)
+const toast = useToast()
+const confirm = useConfirmDialog()
 
 useHead({ title: () => t('admin.apis.routing.sections.workspacesTitle') })
 
@@ -19,8 +26,105 @@ const columns = computed<TableColumn<PlatformWorkspace>[]>(() => [
   { id: 'workspace', header: t('admin.apis.routing.columns.workspace') },
   { id: 'environments', header: t('admin.apis.routing.columns.environments') },
   { id: 'status', header: t('admin.apis.routing.columns.state') },
-  { id: 'createdAt', header: t('admin.apis.routing.columns.createdAt') }
+  { id: 'createdAt', header: t('admin.apis.routing.columns.createdAt') },
+  { id: 'actions', header: '' }
 ])
+
+function openCreateWorkspace() {
+  editingWorkspace.value = null
+  modalOpen.value = true
+}
+
+function openEditWorkspace(workspace: PlatformWorkspace) {
+  editingWorkspace.value = workspace
+  modalOpen.value = true
+}
+
+function openEnvironment(workspace: PlatformWorkspace, environment: PlatformEnvironment | null = null) {
+  environmentWorkspace.value = workspace
+  editingEnvironment.value = environment
+  environmentModalOpen.value = true
+}
+
+async function updateWorkspaceStatus(workspace: PlatformWorkspace) {
+  try {
+    await $fetch(`/api/admin/v1/workspaces/${workspace.id}`, {
+      method: 'PATCH',
+      body: { status: workspace.status === 'active' ? 'disabled' : 'active' }
+    })
+    await context.refresh()
+  } catch (error) {
+    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+  }
+}
+
+async function removeWorkspace(workspace: PlatformWorkspace) {
+  await confirm({
+    title: t('admin.apis.routing.deleteWorkspace.title', { name: workspace.name }),
+    description: t('admin.apis.routing.deleteWorkspace.description'),
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/workspaces/${workspace.id}`, { method: 'DELETE' })
+        await context.refresh()
+      } catch (error) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+      }
+    }
+  })
+}
+
+async function updateEnvironmentStatus(environment: PlatformEnvironment) {
+  try {
+    await $fetch(`/api/admin/v1/environments/${environment.id}`, {
+      method: 'PATCH',
+      body: { status: environment.status === 'active' ? 'disabled' : 'active' }
+    })
+    await context.refresh()
+  } catch (error) {
+    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+  }
+}
+
+async function removeEnvironment(environment: PlatformEnvironment) {
+  await confirm({
+    title: t('admin.apis.routing.deleteEnvironment.title', { name: environment.name }),
+    description: t('admin.apis.routing.deleteEnvironment.description'),
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/environments/${environment.id}`, { method: 'DELETE' })
+        await context.refresh()
+      } catch (error) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+      }
+    }
+  })
+}
+
+function workspaceItems(workspace: PlatformWorkspace): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEditWorkspace(workspace) },
+    { label: t('admin.apis.routing.actions.createEnvironment'), icon: 'i-lucide-plus', onSelect: () => openEnvironment(workspace) },
+    {
+      label: t(workspace.status === 'active' ? 'common.actions.disable' : 'common.actions.enable'),
+      icon: workspace.status === 'active' ? 'i-lucide-pause' : 'i-lucide-play',
+      onSelect: () => updateWorkspaceStatus(workspace)
+    }
+  ], [
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeWorkspace(workspace) }
+  ]]
+}
+
+function environmentItems(workspace: PlatformWorkspace, environment: PlatformEnvironment): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEnvironment(workspace, environment) },
+    {
+      label: t(environment.status === 'active' ? 'common.actions.disable' : 'common.actions.enable'),
+      icon: environment.status === 'active' ? 'i-lucide-pause' : 'i-lucide-play',
+      onSelect: () => updateEnvironmentStatus(environment)
+    },
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeEnvironment(environment) }
+  ]]
+}
 </script>
 
 <template>
@@ -44,7 +148,7 @@ const columns = computed<TableColumn<PlatformWorkspace>[]>(() => [
         >
           {{ $t('common.actions.refresh') }}
         </UButton>
-        <UButton icon="i-lucide-plus" @click="modalOpen = true">
+        <UButton icon="i-lucide-plus" @click="openCreateWorkspace">
           {{ $t('admin.apis.routing.actions.createWorkspace') }}
         </UButton>
       </div>
@@ -104,15 +208,20 @@ const columns = computed<TableColumn<PlatformWorkspace>[]>(() => [
         </template>
         <template #environments-cell="{ row }">
           <div class="flex flex-wrap gap-1.5">
-            <UBadge
+            <UDropdownMenu
               v-for="environment in row.original.environments"
               :key="environment.id"
-              :color="environment.activeRevisionId ? 'success' : 'neutral'"
-              variant="subtle"
-              size="sm"
+              :items="environmentItems(row.original, environment)"
             >
-              {{ environment.name }}
-            </UBadge>
+              <UBadge
+                :color="environment.status === 'disabled' ? 'neutral' : environment.activeRevisionId ? 'success' : 'warning'"
+                variant="subtle"
+                size="sm"
+                class="cursor-pointer"
+              >
+                {{ environment.name }}
+              </UBadge>
+            </UDropdownMenu>
           </div>
         </template>
         <template #status-cell="{ row }">
@@ -125,8 +234,20 @@ const columns = computed<TableColumn<PlatformWorkspace>[]>(() => [
             {{ formatPlatformDate(row.original.createdAt, locale) }}
           </span>
         </template>
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu :items="workspaceItems(row.original)" :content="{ align: 'end' }">
+              <UButton
+                icon="i-lucide-ellipsis"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
         <template #empty-actions>
-          <UButton size="sm" icon="i-lucide-plus" @click="modalOpen = true">
+          <UButton size="sm" icon="i-lucide-plus" @click="openCreateWorkspace">
             {{ $t('admin.apis.routing.actions.createWorkspace') }}
           </UButton>
         </template>
@@ -135,7 +256,15 @@ const columns = computed<TableColumn<PlatformWorkspace>[]>(() => [
 
     <AdminPlatformWorkspaceModal
       v-model:open="modalOpen"
+      :workspace="editingWorkspace"
       @saved="handleSaved"
+    />
+    <AdminPlatformEnvironmentModal
+      v-if="environmentWorkspace"
+      v-model:open="environmentModalOpen"
+      :workspace="environmentWorkspace"
+      :environment="editingEnvironment"
+      @saved="context.refresh"
     />
   </div>
 </template>

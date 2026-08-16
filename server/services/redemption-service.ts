@@ -11,7 +11,7 @@ import { getSqlState } from '~~/server/utils/database-error'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
-import type { DatabaseTransaction } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   createStoredSecretPreview,
   decryptStoredSecret,
@@ -92,8 +92,8 @@ function normalizeCode(raw: string): string {
 type StoredRedemptionCodeRecord = typeof redemptionCodes.$inferSelect
 type RedemptionCodeRecord = Omit<
   StoredRedemptionCodeRecord,
-  'codeDigest' | 'codeCiphertext' | 'codePreview'
-> & { code: string }
+  'codeDigest' | 'codeCiphertext'
+>
 
 function encodeRedemptionCode(code: string) {
   return {
@@ -103,12 +103,9 @@ function encodeRedemptionCode(code: string) {
   }
 }
 
-function decodeRedemptionCodeRecord(row: StoredRedemptionCodeRecord): RedemptionCodeRecord {
-  const { codeDigest: _codeDigest, codeCiphertext, codePreview: _codePreview, ...record } = row
-  return {
-    ...record,
-    code: decryptStoredSecret(codeCiphertext, 'redemption-code')
-  }
+function presentRedemptionCodeRecord(row: StoredRedemptionCodeRecord): RedemptionCodeRecord {
+  const { codeDigest: _codeDigest, codeCiphertext: _codeCiphertext, ...record } = row
+  return record
 }
 
 export const redemptionService = {
@@ -198,7 +195,7 @@ export const redemptionService = {
     ])
 
     return {
-      items: items.map(decodeRedemptionCodeRecord),
+      items: items.map(presentRedemptionCodeRecord),
       total: toNumber(totalRows[0]?.value)
     }
   },
@@ -247,7 +244,7 @@ export const redemptionService = {
       .where(eq(redemptionCodes.id, id))
       .returning()
     const row = firstRow(res)
-    return row ? decodeRedemptionCodeRecord(row) : null
+    return row ? presentRedemptionCodeRecord(row) : null
   },
 
   /** 批量启用/禁用整个批次 */
@@ -262,7 +259,7 @@ export const redemptionService = {
   async remove(id: number) {
     const res = await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id)).returning()
     const row = firstRow(res)
-    return row ? decodeRedemptionCodeRecord(row) : null
+    return row ? presentRedemptionCodeRecord(row) : null
   },
 
   /** 删除整个批次（仅未被使用过的码会被删除，已被使用的保留以保证审计） */
@@ -341,7 +338,7 @@ export const redemptionService = {
       const balanceAfter = toNumber(userUpdated[0].credits)
 
       // 写流水（兑换记录已并入 credit_transactions）：codeId 关联兑换码、ip 记录来源，
-      // meta 保留加密 code/batchId 快照，删码后仍可授权解密显示。
+      // meta 仅保留掩码与批次快照；完整兑换码只在生成时显示。
       // (codeId, userId) 部分唯一索引兜底重复兑换 —— 冲突即事务回滚，usedCount 与积分一并撤销。
       try {
         await tx.insert(creditTransactions).values({
@@ -356,7 +353,6 @@ export const redemptionService = {
           ip: input.ip ?? null,
           remark: target.note || null,
           meta: {
-            codeCiphertext: target.codeCiphertext,
             codePreview: target.codePreview,
             batchId: target.batchId
           }
@@ -408,16 +404,13 @@ export const redemptionService = {
         redeemedAt: Date
         note: string | null
       }) => {
-        const ciphertext = typeof item.meta?.codeCiphertext === 'string'
-          ? item.meta.codeCiphertext
-          : null
         const preview = typeof item.meta?.codePreview === 'string'
           ? item.meta.codePreview
           : null
         return {
           id: item.id,
           codeId: item.codeId,
-          code: ciphertext ? decryptStoredSecret(ciphertext, 'redemption-code') : preview,
+          code: preview,
           amount: item.amount,
           redeemedAt: item.redeemedAt,
           note: item.note

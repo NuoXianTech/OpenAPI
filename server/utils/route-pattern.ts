@@ -11,8 +11,17 @@ const RESERVED_PLATFORM_PREFIXES = [
   '/verify-email',
   '/confirm-email-change',
   '/forgot-password',
-  '/reset-password'
+  '/reset-password',
+  '/callback',
+  '/docs',
+  '/stats',
+  '/friend-links'
 ] as const
+const RESERVED_PLATFORM_EXACT_PATHS = new Set([
+  '/',
+  '/favicon.ico',
+  '/robots.txt'
+])
 
 export interface ParsedRoutePattern {
   pathPattern: string
@@ -42,7 +51,8 @@ export function normalizeRoutePath(value: string): string {
 
 export function isReservedPlatformPath(pathname: string): boolean {
   const normalized = normalizeRoutePath(pathname)
-  return RESERVED_PLATFORM_PREFIXES.some(prefix => normalized === prefix || normalized.startsWith(`${prefix}/`))
+  return RESERVED_PLATFORM_EXACT_PATHS.has(normalized)
+    || RESERVED_PLATFORM_PREFIXES.some(prefix => normalized === prefix || normalized.startsWith(`${prefix}/`))
 }
 
 export function parseRoutePathPattern(value: string): ParsedRoutePattern {

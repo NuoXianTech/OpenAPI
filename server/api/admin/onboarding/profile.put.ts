@@ -1,5 +1,5 @@
 import { createError } from 'h3'
-import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION } from '#shared/config/admin-defaults'
+import { ADMIN_PROFILE_ONBOARDING_UPDATE_ACTION, needsInitialAdminProfileSetup } from '#shared/config/admin-defaults'
 import { adminInitialProfileSchema } from '~~/server/schemas/admin'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { userService } from '~~/server/services/user-service'
@@ -10,6 +10,13 @@ import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminInitialProfileSchema)
+  if (needsInitialAdminProfileSetup(body)) {
+    throw createError({
+      statusCode: 400,
+      message: '初始用户名和邮箱都必须修改',
+      data: { code: 'INITIAL_ADMIN_IDENTITY_UNCHANGED' }
+    })
+  }
   const current = await userService.getById(admin.id)
 
   if (!current) {

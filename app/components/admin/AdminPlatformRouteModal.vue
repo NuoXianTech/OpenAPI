@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformProduct, PlatformRouteBinding, PlatformUpstream, PlatformWorkspace } from '~/types/platform'
+import type { PlatformEndpointPublicationResult, PlatformProduct, PlatformRouteBinding, PlatformUpstream, PlatformWorkspace } from '~/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
@@ -17,7 +17,7 @@ const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const { t } = useI18n()
 
-type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
+type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 type RouteState = 'draft' | 'active' | 'disabled'
 
 interface RouteFormState {
@@ -38,6 +38,8 @@ interface RouteFormState {
   timeoutMs: number
   maxRequestKiB: number
   maxResponseKiB: number
+  catalogStatus: 'automatic' | 'maintenance'
+  sensitiveQueryParameters: string[]
   state: RouteState
 }
 
@@ -62,6 +64,8 @@ function initialState(): RouteFormState {
       timeoutMs: 10_000,
       maxRequestKiB: 1024,
       maxResponseKiB: 10_240,
+      catalogStatus: 'automatic',
+      sensitiveQueryParameters: [],
       state: 'active'
     }
   }
@@ -85,6 +89,8 @@ function initialState(): RouteFormState {
     timeoutMs: route.timeoutMs,
     maxRequestKiB: route.maxRequestBytes / 1024,
     maxResponseKiB: route.maxResponseBytes / 1024,
+    catalogStatus: route.catalogStatus,
+    sensitiveQueryParameters: [...route.sensitiveQueryParameters],
     state: route.state
   }
 }
@@ -93,6 +99,7 @@ const state = reactive<RouteFormState>(initialState())
 const loading = ref(false)
 const advancedOpen = ref(false)
 const isEditing = computed(() => Boolean(props.routeBinding))
+const isServiceManaged = computed(() => props.routeBinding?.route.managedBy === 'service')
 const hostPattern = /^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i
 
 const versionItems = computed(() => props.products
@@ -111,11 +118,17 @@ const upstreamItems = computed(() => props.upstreams
     value: upstream.id,
     description: `${upstream.kind} · ${upstream.protocol}`
   })))
-const methodItems: HttpMethod[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+const methodItems: HttpMethod[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']
 const routeStateItems = computed(() => [
   { label: t('admin.apis.routing.routeStates.active'), value: 'active' },
-  { label: t('admin.apis.routing.routeStates.draft'), value: 'draft' },
+  ...(!isServiceManaged.value
+    ? [{ label: t('admin.apis.routing.routeStates.draft'), value: 'draft' as const }]
+    : []),
   { label: t('admin.apis.routing.routeStates.disabled'), value: 'disabled' }
+])
+const catalogStatusItems = computed(() => [
+  { label: t('admin.apis.routing.catalogStatuses.automatic'), value: 'automatic' },
+  { label: t('admin.apis.routing.catalogStatuses.maintenance'), value: 'maintenance' }
 ])
 
 watch(open, (isOpen) => {
@@ -174,6 +187,9 @@ function validateRouteForm(value: Partial<RouteFormState>): FormError<string>[] 
     integerRangeError('rateLimitPerDay', value.rateLimitPerDay, t('admin.apis.routing.validation.rateLimitInvalid'), 0, 1_000_000_000),
     value.creditsCost && value.creditsCost > 0 && (!value.isApiKey || !value.isStatistics)
       ? { name: 'creditsCost', message: t('admin.apis.routing.validation.paidRouteRequiresGovernance') }
+      : null,
+    value.sensitiveQueryParameters?.some(parameter => !/^[A-Za-z0-9_.-]+$/.test(parameter))
+      ? { name: 'sensitiveQueryParameters', message: t('admin.apis.routing.validation.sensitiveQueryInvalid') }
       : null
   )
 
@@ -205,9 +221,48 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
       timeoutMs: event.data.timeoutMs,
       maxRequestBytes: event.data.maxRequestKiB * 1024,
       maxResponseBytes: event.data.maxResponseKiB * 1024,
+      catalogStatus: event.data.catalogStatus,
+      sensitiveQueryParameters: Array.from(new Set(
+        event.data.sensitiveQueryParameters.map(item => item.trim()).filter(Boolean)
+      )),
       state: event.data.state
     }
     const routeId = props.routeBinding?.route.id
+    if (routeId && isServiceManaged.value) {
+      if (!props.environmentId) throw new Error('environment is required for a Service-managed Route')
+      const result = await $fetch<PlatformEndpointPublicationResult>(`/api/admin/v1/service-endpoints/${routeId}`, {
+        method: 'PATCH',
+        body: {
+          environmentId: props.environmentId,
+          enabled: event.data.state === 'active',
+          name: body.name,
+          isApiKey: body.isApiKey,
+          isStatistics: body.isStatistics,
+          creditsCost: body.creditsCost,
+          rateLimitPerSecond: body.rateLimitPerSecond,
+          rateLimitPerMinute: body.rateLimitPerMinute,
+          rateLimitPerHour: body.rateLimitPerHour,
+          rateLimitPerDay: body.rateLimitPerDay,
+          timeoutMs: body.timeoutMs,
+          maxRequestBytes: body.maxRequestBytes,
+          maxResponseBytes: body.maxResponseBytes,
+          catalogStatus: body.catalogStatus,
+          sensitiveQueryParameters: body.sensitiveQueryParameters
+        }
+      })
+      toast.add({
+        title: t('admin.apis.routing.feedback.routeUpdated'),
+        description: result.applied
+          ? t('admin.apis.routing.feedback.runtimeUpdated')
+          : t('admin.apis.routing.catalog.feedback.savedPendingDescription', {
+              reason: result.publicationError?.message ?? t('admin.apis.routing.feedback.publishFailed')
+            }),
+        color: result.applied ? 'success' : 'warning'
+      })
+      open.value = false
+      emit('saved')
+      return
+    }
     await $fetch(routeId ? `/api/admin/v1/routes/${routeId}` : '/api/admin/v1/routes', {
       method: routeId ? 'PATCH' : 'POST',
       body
@@ -284,7 +339,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
             :items="versionItems"
             value-key="value"
             class="w-full"
-            :disabled="versionItems.length === 0"
+            :disabled="versionItems.length === 0 || isServiceManaged"
           />
         </UFormField>
 
@@ -297,6 +352,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
               v-model="state.method"
               :items="methodItems"
               class="w-full font-mono"
+              :disabled="isServiceManaged"
             />
           </UFormField>
           <UFormField
@@ -309,6 +365,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
               v-model="state.pathPattern"
               placeholder="/v1/weather/{city}"
               class="w-full font-mono"
+              :disabled="isServiceManaged"
             />
           </UFormField>
         </div>
@@ -335,6 +392,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
             :rows="2"
             placeholder="api.example.com"
             class="w-full font-mono"
+            :disabled="isServiceManaged"
           />
         </UFormField>
 
@@ -367,7 +425,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
                 :items="upstreamItems"
                 value-key="value"
                 class="w-full"
-                :disabled="upstreamItems.length === 0"
+                :disabled="upstreamItems.length === 0 || isServiceManaged"
               />
             </UFormField>
             <UFormField
@@ -380,6 +438,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
                 v-model="state.upstreamPathTemplate"
                 placeholder="/weather/{path.city}"
                 class="w-full font-mono"
+                :disabled="isServiceManaged"
               />
             </UFormField>
           </div>
@@ -432,6 +491,32 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
                     v-model="state.creditsCost"
                     :min="0"
                     :max="1000000"
+                    class="w-full"
+                  />
+                </UFormField>
+              </div>
+
+              <div class="grid gap-4 sm:grid-cols-2">
+                <UFormField
+                  name="catalogStatus"
+                  :label="$t('admin.apis.routing.fields.catalogStatus')"
+                  :description="$t('admin.apis.routing.routeForm.catalogStatusHelp')"
+                >
+                  <USelect
+                    v-model="state.catalogStatus"
+                    :items="catalogStatusItems"
+                    value-key="value"
+                    class="w-full"
+                  />
+                </UFormField>
+                <UFormField
+                  name="sensitiveQueryParameters"
+                  :label="$t('admin.apis.routing.fields.sensitiveQueryParameters')"
+                  :description="$t('admin.apis.routing.routeForm.sensitiveQueryHelp')"
+                >
+                  <UInputTags
+                    v-model="state.sensitiveQueryParameters"
+                    :placeholder="$t('admin.apis.routing.routeForm.sensitiveQueryPlaceholder')"
                     class="w-full"
                   />
                 </UFormField>

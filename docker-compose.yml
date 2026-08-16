@@ -2,10 +2,16 @@ services:
   openapi-platform:
     image: ghcr.io/nuoxiantech/openapi-platform:latest
     restart: unless-stopped
-    env_file:
-      - .env
+    environment:
+      NUXT_AUTH_SECRET: "${NUXT_AUTH_SECRET:?NUXT_AUTH_SECRET must be set}"
+      NUXT_API_KEY_SECRET: "${NUXT_API_KEY_SECRET:?NUXT_API_KEY_SECRET must be set}"
+      NUXT_HOSTS_CONSOLE: "${NUXT_HOSTS_CONSOLE:?NUXT_HOSTS_CONSOLE must be set}"
+      NUXT_HOSTS_GATEWAY: "${NUXT_HOSTS_GATEWAY:?NUXT_HOSTS_GATEWAY must be set}"
+      DATABASE_DRIVER: "${DATABASE_DRIVER:-pglite}"
+      DATABASE_URL: "${DATABASE_URL:-}"
+      NUXT_REDIS_URL: "${NUXT_REDIS_URL:-}"
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - app_data:/app/.data
     healthcheck:
@@ -17,28 +23,11 @@ services:
     networks:
       - openapi
 
-  openapi-service:
-    image: ghcr.io/nuoxiantech/openapi-service:latest
-    restart: unless-stopped
-    environment:
-      LISTEN_ADDR: ":8080"
-      API_SERVICE_TOKEN: "${OPENAPI_SERVICE_TOKEN:?OPENAPI_SERVICE_TOKEN must be set}"
-      IP_DATABASE_DIRECTORY: "/app/data/ip"
-      SERVICE_CONFIG_FILE: "/app/data/runtime/service-configuration.enc"
-    volumes:
-      - "./data/ip:/app/data/ip:ro"
-      - service_runtime:/app/data/runtime
-    expose:
-      - "8080"
-    networks:
-      - openapi
-
 volumes:
   app_data:
     name: openapi-app-data
-  service_runtime:
-    name: openapi-service-runtime
 
 networks:
   openapi:
+    external: true
     name: openapi-network

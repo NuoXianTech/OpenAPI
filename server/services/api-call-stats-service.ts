@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, lt, sql, type SQL } from 'drizzle-orm'
+import { and, asc, desc, gte, inArray, lt, sql, type SQL } from 'drizzle-orm'
 import type {
   PublicCallStatsDashboard,
   PublicCallStatsSummary,
@@ -7,27 +7,17 @@ import type {
 import type { DashboardCallRankItem } from '#shared/types/dashboard'
 import { PUBLIC_STATS_DASHBOARD_CACHE_TTL_SECONDS } from '#shared/config/public-stats'
 import { db } from '~~/server/db/client'
-import {
-  apiCallStats,
-  apiProducts,
-  apiRoutes,
-  apiVersions,
-  upstreamServices,
-  users
-} from '~~/server/db/schema'
+import { apiCallStats, users } from '~~/server/db/schema'
+import { activeRoutingCatalogService } from '~~/server/services/active-routing-catalog-service'
 import { addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { clampInteger, toNumber } from '~~/server/utils/number'
 import { getSharedCache } from '~~/server/utils/shared-cache'
-import {
-  publicApiProductCondition,
-  publicTrackedApiRouteCondition
-} from './public-api-query'
 
 const PUBLIC_STATS_SUMMARY_TTL_SECONDS = 10
 const PUBLIC_USER_COUNT_TTL_SECONDS = 60
 const PUBLIC_RANKING_WINDOW_DAYS = 30
-const PUBLIC_STATS_CACHE_SCHEMA_VERSION = 4
-const PUBLIC_STATS_SUMMARY_CACHE_SCHEMA_VERSION = 3
+const PUBLIC_STATS_CACHE_SCHEMA_VERSION = 5
+const PUBLIC_STATS_SUMMARY_CACHE_SCHEMA_VERSION = 4
 
 interface CallStatsTotals {
   totalCalls: number
@@ -47,26 +37,19 @@ function normalizeTotals(row?: {
   }
 }
 
-function statsWhere(condition?: SQL) {
-  return condition
-    ? and(publicTrackedApiRouteCondition, condition)
-    : publicTrackedApiRouteCondition
+function statsWhere(routeIds: string[], condition?: SQL): SQL {
+  const routeCondition = routeIds.length > 0
+    ? inArray(apiCallStats.routeId, routeIds)
+    : sql`false`
+  return condition ? and(routeCondition, condition)! : routeCondition
 }
 
-function publicStatsBase() {
-  return db.select({
+async function loadTotals(routeIds: string[], condition?: SQL): Promise<CallStatsTotals> {
+  const rows = await db.select({
     totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`,
     successCalls: sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`,
     failureCalls: sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
-  }).from(apiCallStats)
-    .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
-    .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-    .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-    .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-}
-
-async function loadTotals(condition?: SQL): Promise<CallStatsTotals> {
-  const rows = await publicStatsBase().where(statsWhere(condition))
+  }).from(apiCallStats).where(statsWhere(routeIds, condition))
   return normalizeTotals(rows[0])
 }
 
@@ -82,7 +65,12 @@ async function getRegisteredUserCount(): Promise<number> {
 }
 
 async function loadPublicSummary(): Promise<PublicCallStatsSummary> {
-  const [totals, userCount] = await Promise.all([loadTotals(), getRegisteredUserCount()])
+  const routes = (await activeRoutingCatalogService.list())
+    .filter(item => item.route.isStatistics)
+  const [totals, userCount] = await Promise.all([
+    loadTotals(routes.map(item => item.route.id)),
+    getRegisteredUserCount()
+  ])
   return {
     totalCalls: totals.totalCalls,
     successRate: totals.totalCalls
@@ -93,6 +81,10 @@ async function loadPublicSummary(): Promise<PublicCallStatsSummary> {
 }
 
 async function loadPublicDashboard(days: number, topLimit: number): Promise<PublicCallStatsDashboard> {
+  const activeRoutes = (await activeRoutingCatalogService.list())
+    .filter(item => item.route.isStatistics)
+  const routeIds = activeRoutes.map(item => item.route.id)
+  const routeById = new Map(activeRoutes.map(item => [item.route.id, item.route]))
   const todayStart = getLocalDayStart(new Date())
   const todayKey = toLocalDateKey(todayStart)
   const yesterdayKey = toLocalDateKey(addLocalDays(todayStart, -1))
@@ -104,18 +96,8 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
   const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
   const failureExpr = sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
 
-  const [totals, apiCountRows, userCount, trendRows, rankingRows] = await Promise.all([
-    loadTotals(),
-    db.select({
-      trackedApiCount: sql<number>`count(*) filter (where ${apiRoutes.isStatistics} = true)`,
-      enabledTrackedApiCount: sql<number>`count(*) filter (
-        where ${apiRoutes.isStatistics} = true and ${apiRoutes.state} = 'active'
-      )`
-    }).from(apiRoutes)
-      .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-      .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-      .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-      .where(publicApiProductCondition),
+  const [totals, userCount, trendRows, rankingRows] = await Promise.all([
+    loadTotals(routeIds),
     getRegisteredUserCount(),
     db.select({
       statDate: apiCallStats.statDate,
@@ -123,11 +105,7 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       successCalls: successExpr,
       failureCalls: failureExpr
     }).from(apiCallStats)
-      .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
-      .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-      .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-      .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-      .where(statsWhere(and(
+      .where(statsWhere(routeIds, and(
         gte(apiCallStats.statDate, toLocalDateKey(trendStart)),
         lt(apiCallStats.statDate, tomorrowKey)
       )))
@@ -135,21 +113,15 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       .orderBy(asc(apiCallStats.statDate)),
     db.select({
       routeId: apiCallStats.routeId,
-      name: apiRoutes.name,
-      apiPath: apiRoutes.pathPattern,
       totalCalls: totalExpr,
       successCalls: successExpr
     }).from(apiCallStats)
-      .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
-      .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-      .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-      .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-      .where(statsWhere(and(
+      .where(statsWhere(routeIds, and(
         gte(apiCallStats.statDate, rankingStart),
         lt(apiCallStats.statDate, tomorrowKey)
       )))
-      .groupBy(apiCallStats.routeId, apiRoutes.name, apiRoutes.pathPattern)
-      .orderBy(desc(totalExpr), asc(apiRoutes.name))
+      .groupBy(apiCallStats.routeId)
+      .orderBy(desc(totalExpr))
       .limit(topLimit)
   ])
 
@@ -177,19 +149,22 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
       failureCalls: 0
     }
   })
-  const rankingLast30d: DashboardCallRankItem[] = rankingRows.map((row, index) => {
+  const rankingLast30d: DashboardCallRankItem[] = rankingRows.flatMap((row, index) => {
+    const route = routeById.get(row.routeId)
+    if (!route) return []
     const totalCalls = toNumber(row.totalCalls)
     const successCalls = toNumber(row.successCalls)
-    return {
+    return [{
       rank: index + 1,
       routeId: row.routeId,
-      name: row.name,
-      apiPath: row.apiPath,
+      name: route.name,
+      apiPath: route.pathPattern,
       totalCalls,
-      successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0
-    }
+      successRate: totalCalls
+        ? Number(((successCalls / totalCalls) * 100).toFixed(2))
+        : 0
+    }]
   })
-  const apiCounts = apiCountRows[0] ?? { trackedApiCount: 0, enabledTrackedApiCount: 0 }
 
   return {
     overview: {
@@ -202,8 +177,8 @@ async function loadPublicDashboard(days: number, topLimit: number): Promise<Publ
         ? Number(((totals.successCalls / totals.totalCalls) * 100).toFixed(2))
         : 0,
       userCount,
-      enabledTrackedApiCount: toNumber(apiCounts.enabledTrackedApiCount),
-      trackedApiCount: toNumber(apiCounts.trackedApiCount)
+      enabledTrackedApiCount: activeRoutes.length,
+      trackedApiCount: activeRoutes.length
     },
     trend7d,
     rankingLast30d,

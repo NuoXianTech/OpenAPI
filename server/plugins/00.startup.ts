@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto'
+import { getRequestURL } from 'h3'
 import { z } from 'zod'
 import { INITIAL_ADMIN_PROFILE } from '#shared/config/admin-defaults'
 import { assertRuntimeEnvironment } from '~~/server/config/runtime-env'
@@ -85,7 +86,10 @@ export default defineNitroPlugin((nitroApp) => {
   z.config(z.locales.zhCN())
   assertRuntimeEnvironment()
   const initialization = initializeServer()
-  const removeInitializationGate = nitroApp.hooks.hook('request', () => initialization)
+  const removeInitializationGate = nitroApp.hooks.hook('request', (event) => {
+    if (getRequestURL(event).pathname === '/api/health') return
+    return initialization
+  })
 
   void initialization
     .then(() => {

@@ -1,196 +1,173 @@
 import { createHash } from 'node:crypto'
-import { and, desc, eq, ilike, or, sql, type SQL } from 'drizzle-orm'
+import { inArray, sql } from 'drizzle-orm'
 import { API_STATUS } from '#shared/config/api-status'
-import type { ApiCatalogItem } from '#shared/types/api'
+import type { ApiCatalogItem, ApiCatalogPage } from '#shared/types/api'
 import { db } from '~~/server/db/client'
+import { apiCallStats } from '~~/server/db/schema'
+import { activeRoutingCatalogService, type ActiveCatalogRoute } from '~~/server/services/active-routing-catalog-service'
 import {
-  apiCallStats,
-  openapiDocuments,
-  apiProducts,
-  apiRoutes,
-  apiVersions,
-  upstreamServices
-} from '~~/server/db/schema'
+  resolveApiAutoStatuses,
+  resolveEffectiveApiStatus
+} from '~~/server/services/api-status-service'
 import {
   getSharedCache,
   getSharedCacheVersion,
   incrementSharedCacheVersion
 } from '~~/server/utils/shared-cache'
 import { toNumber } from '~~/server/utils/number'
-import { parseRoutePathPattern } from '~~/server/utils/route-pattern'
-import { resolveApiAutoStatuses, resolveEffectiveApiStatus } from './api-status-service'
-import { publicApiRouteCondition } from './public-api-query'
 
 const PUBLIC_API_CATALOG_TTL_SECONDS = 15
 const PUBLIC_API_CATALOG_CACHE_NAMESPACE = 'public-api-catalog'
+const DEFAULT_PAGE_SIZE = 24
+const MAX_PAGE_SIZE = 100
 
 export interface PublicApiCatalogFilters {
   keyword?: string
   status?: number
   categoryId?: number
+  page?: number
+  pageSize?: number
 }
 
-function toContainsPattern(value: string): string {
-  return `%${value.replace(/[\\%_]/g, '\\$&')}%`
+interface StatusRoute extends ActiveCatalogRoute {
+  status: number
 }
 
-function buildFilters(filters: PublicApiCatalogFilters): SQL[] {
-  const conditions: SQL[] = [publicApiRouteCondition]
-  if (filters.keyword) {
-    const pattern = toContainsPattern(filters.keyword)
-    const keywordCondition = or(
-      ilike(apiProducts.slug, pattern),
-      ilike(apiProducts.name, pattern),
-      ilike(apiProducts.summary, pattern),
-      ilike(apiRoutes.name, pattern),
-      ilike(apiRoutes.pathPattern, pattern)
+function normalizePositiveInteger(value: number | undefined, fallback: number, maximum: number): number {
+  if (!Number.isFinite(value)) return fallback
+  return Math.min(Math.max(Math.trunc(value!), 1), maximum)
+}
+
+function normalizeFilters(filters: PublicApiCatalogFilters): Required<Pick<PublicApiCatalogFilters, 'page' | 'pageSize'>> & PublicApiCatalogFilters {
+  return {
+    keyword: filters.keyword?.trim() || undefined,
+    status: filters.status,
+    categoryId: filters.categoryId && filters.categoryId > 0
+      ? Math.trunc(filters.categoryId)
+      : undefined,
+    page: normalizePositiveInteger(filters.page, 1, Number.MAX_SAFE_INTEGER),
+    pageSize: normalizePositiveInteger(filters.pageSize, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE)
+  }
+}
+
+function configuredStatus(item: ActiveCatalogRoute): number {
+  if (
+    item.route.productLifecycle === 'deprecated'
+    || item.route.versionState === 'deprecated'
+  ) return API_STATUS.deprecated
+  if (item.route.catalogStatus === 'maintenance') return API_STATUS.maintenance
+  return API_STATUS.automatic
+}
+
+function matchesText(item: ActiveCatalogRoute, keyword: string | undefined): boolean {
+  if (!keyword) return true
+  const value = keyword.toLocaleLowerCase()
+  return [
+    item.route.productSlug,
+    item.product.name,
+    item.product.summary,
+    item.route.name,
+    item.route.pathPattern
+  ].some(candidate => candidate.toLocaleLowerCase().includes(value))
+}
+
+function baseRoutes(
+  routes: ActiveCatalogRoute[],
+  filters: ReturnType<typeof normalizeFilters>
+): ActiveCatalogRoute[] {
+  return routes.filter(item => (
+    matchesText(item, filters.keyword)
+    && (
+      filters.categoryId === undefined
+      || item.product.categoryId === filters.categoryId
     )
-    if (keywordCondition) conditions.push(keywordCondition)
-  }
-  if (filters.categoryId && filters.categoryId > 0) {
-    conditions.push(eq(apiProducts.categoryId, filters.categoryId))
-  }
-  return conditions
+  )).sort((left, right) => (
+    (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0)
+    || left.product.name.localeCompare(right.product.name)
+    || left.route.pathPattern.localeCompare(right.route.pathPattern)
+    || left.route.method.localeCompare(right.route.method)
+  ))
 }
 
-async function loadRouteStats(): Promise<Record<string, number>> {
+async function addStatuses(routes: ActiveCatalogRoute[]): Promise<StatusRoute[]> {
+  const automaticRouteIds = routes
+    .filter(item => (
+      configuredStatus(item) === API_STATUS.automatic
+      && item.route.isStatistics
+    ))
+    .map(item => item.route.id)
+  const automaticStatuses = await resolveApiAutoStatuses(automaticRouteIds)
+  return routes.map(item => ({
+    ...item,
+    status: resolveEffectiveApiStatus(
+      configuredStatus(item),
+      item.route.isStatistics,
+      automaticStatuses[item.route.id]
+    )
+  }))
+}
+
+async function loadRouteStats(routeIds: string[]): Promise<Record<string, number>> {
+  if (routeIds.length === 0) return {}
   const rows = await db.select({
     routeId: apiCallStats.routeId,
     totalCalls: sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
-  }).from(apiCallStats).groupBy(apiCallStats.routeId)
-
+  }).from(apiCallStats)
+    .where(inArray(apiCallStats.routeId, routeIds))
+    .groupBy(apiCallStats.routeId)
   return Object.fromEntries(rows.map(row => [row.routeId, toNumber(row.totalCalls)]))
 }
 
-function createCacheKey(filters: PublicApiCatalogFilters): string {
+function createCacheKey(filters: ReturnType<typeof normalizeFilters>): string {
   const digest = createHash('sha256').update(JSON.stringify(filters)).digest('hex')
   return `cache:public:apis:${digest}`
 }
 
-function routeShape(path: string): string | null {
-  try {
-    return parseRoutePathPattern(
-      path.replace(/\{path\.([A-Za-z][A-Za-z0-9_]*)\}/g, '{$1}')
-    ).normalizedShape
-  } catch {
-    return null
+function catalogItem(item: StatusRoute, totalCalls: number): ApiCatalogItem {
+  return {
+    id: item.route.id,
+    name: item.route.name || item.product.name,
+    status: item.status,
+    categoryId: item.product.categoryId,
+    shortDesc: item.product.summary || item.route.name,
+    description: item.product.description || item.product.summary,
+    httpMethod: item.route.method,
+    apiPath: item.route.pathPattern,
+    docUrl: '',
+    isApiKey: item.route.isApiKey,
+    methodCosts: { [item.route.method]: item.route.creditsCost },
+    totalCalls
   }
 }
 
-function supportRouteKey(method: string, path: string): string | null {
-  const shape = routeShape(path)
-  return shape ? `${method}:${shape}` : null
-}
-
-function supportRouteKeys(
-  summary: Record<string, unknown> | null
-): Set<string> {
-  const endpoints = summary?.endpoints
-  if (!Array.isArray(endpoints)) return new Set()
-  return new Set(endpoints.flatMap((endpoint) => {
-    if (!endpoint || typeof endpoint !== 'object' || Array.isArray(endpoint)) {
-      return []
-    }
-    const value = endpoint as Record<string, unknown>
-    if (
-      value.support !== true
-      || typeof value.method !== 'string'
-      || typeof value.path !== 'string'
-    ) return []
-    const key = supportRouteKey(value.method, value.path)
-    return key ? [key] : []
-  }))
-}
-
 export const apiCatalogService = {
-  async listPublicApis(filters: PublicApiCatalogFilters = {}) {
-    const normalizedFilters: PublicApiCatalogFilters = {
-      keyword: filters.keyword?.trim() || undefined,
-      status: filters.status,
-      categoryId: filters.categoryId
-    }
-
-    const cacheVersion = await getSharedCacheVersion(
-      PUBLIC_API_CATALOG_CACHE_NAMESPACE
-    )
-    return getSharedCache<ApiCatalogItem[]>({
-      key: `${createCacheKey(normalizedFilters)}:v${cacheVersion}`,
+  async listPublicApis(filters: PublicApiCatalogFilters = {}): Promise<ApiCatalogPage> {
+    const normalized = normalizeFilters(filters)
+    const cacheVersion = await getSharedCacheVersion(PUBLIC_API_CATALOG_CACHE_NAMESPACE)
+    return getSharedCache<ApiCatalogPage>({
+      key: `${createCacheKey(normalized)}:v${cacheVersion}`,
       ttlSeconds: PUBLIC_API_CATALOG_TTL_SECONDS,
       async loader() {
-        const conditions = buildFilters(normalizedFilters)
-        const [rows, stats] = await Promise.all([
-          db.select({
-            routeId: apiRoutes.id,
-            upstreamServiceId: upstreamServices.id,
-            routeName: apiRoutes.name,
-            method: apiRoutes.method,
-            path: apiRoutes.pathPattern,
-            upstreamPathTemplate: apiRoutes.upstreamPathTemplate,
-            isApiKey: apiRoutes.isApiKey,
-            isStatistics: apiRoutes.isStatistics,
-            creditsCost: apiRoutes.creditsCost,
-            categoryId: apiProducts.categoryId,
-            productName: apiProducts.name,
-            summary: apiProducts.summary,
-            description: apiProducts.description,
-            productLifecycle: apiProducts.lifecycle,
-            versionState: apiVersions.state,
-            openapiSummary: openapiDocuments.parsedSummary,
-            updatedAt: apiRoutes.updatedAt
-          }).from(apiRoutes)
-            .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
-            .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
-            .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
-            .leftJoin(openapiDocuments, eq(
-              openapiDocuments.id,
-              upstreamServices.openapiDocumentId
-            ))
-            .where(and(...conditions))
-            .orderBy(desc(apiRoutes.updatedAt), apiProducts.name, apiRoutes.pathPattern),
-          loadRouteStats()
-        ])
-        const supportKeysByUpstream = new Map<string, Set<string>>()
-        const visibleRows = rows.filter((row) => {
-          let supportKeys = supportKeysByUpstream.get(row.upstreamServiceId)
-          if (!supportKeys) {
-            supportKeys = supportRouteKeys(row.openapiSummary)
-            supportKeysByUpstream.set(row.upstreamServiceId, supportKeys)
-          }
-          const routeKey = supportRouteKey(
-            row.method,
-            row.upstreamPathTemplate
-          )
-          return !routeKey || !supportKeys.has(routeKey)
-        })
-        const autoStatuses = await resolveApiAutoStatuses(
-          visibleRows.filter(row => row.isStatistics).map(row => row.routeId)
+        const candidates = baseRoutes(
+          await activeRoutingCatalogService.list(),
+          normalized
         )
+        const withStatus = normalized.status === undefined
+          ? null
+          : (await addStatuses(candidates)).filter(item => item.status === normalized.status)
+        const total = withStatus?.length ?? candidates.length
+        const start = Math.min((normalized.page - 1) * normalized.pageSize, total)
+        const pageRoutes = withStatus
+          ? withStatus.slice(start, start + normalized.pageSize)
+          : await addStatuses(candidates.slice(start, start + normalized.pageSize))
+        const stats = await loadRouteStats(pageRoutes.map(item => item.route.id))
 
-        return visibleRows.map((row): ApiCatalogItem => {
-          const configuredStatus = row.productLifecycle === 'deprecated' || row.versionState === 'deprecated'
-            ? API_STATUS.deprecated
-            : API_STATUS.automatic
-          return {
-            id: row.routeId,
-            name: row.routeName || row.productName,
-            status: resolveEffectiveApiStatus(
-              configuredStatus,
-              row.isStatistics,
-              autoStatuses[row.routeId]
-            ),
-            categoryId: row.categoryId,
-            shortDesc: row.summary || row.routeName,
-            description: row.description || row.summary,
-            httpMethod: row.method,
-            apiPath: row.path,
-            docUrl: '',
-            isApiKey: row.isApiKey,
-            methodCosts: { [row.method]: row.creditsCost },
-            totalCalls: stats[row.routeId] ?? 0
-          }
-        }).filter(item => (
-          normalizedFilters.status === undefined || item.status === normalizedFilters.status
-        ))
+        return {
+          items: pageRoutes.map(item => catalogItem(item, stats[item.route.id] ?? 0)),
+          total,
+          page: normalized.page,
+          pageSize: normalized.pageSize
+        }
       }
     })
   }

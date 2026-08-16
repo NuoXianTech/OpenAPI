@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformProduct } from '~/types/platform'
+import type { PlatformApiVersion, PlatformProduct } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const context = useAdminPlatformContext()
 const modalOpen = ref(false)
+const editingProduct = ref<PlatformProduct | null>(null)
+const versionModalOpen = ref(false)
+const versionProduct = ref<PlatformProduct | null>(null)
+const editingVersion = ref<PlatformApiVersion | null>(null)
+const toast = useToast()
+const confirm = useConfirmDialog()
 
 useHead({ title: () => t('admin.apis.routing.sections.productsTitle') })
 
@@ -33,8 +39,82 @@ const columns = computed<TableColumn<PlatformProduct>[]>(() => [
   { id: 'versions', header: t('admin.apis.routing.columns.versions') },
   { id: 'visibility', header: t('admin.apis.routing.columns.visibility') },
   { id: 'lifecycle', header: t('admin.apis.routing.columns.lifecycle') },
-  { id: 'createdAt', header: t('admin.apis.routing.columns.createdAt') }
+  { id: 'createdAt', header: t('admin.apis.routing.columns.createdAt') },
+  { id: 'actions', header: '' }
 ])
+
+function openCreateProduct() {
+  editingProduct.value = null
+  modalOpen.value = true
+}
+
+function openEditProduct(product: PlatformProduct) {
+  editingProduct.value = product
+  modalOpen.value = true
+}
+
+function openVersion(product: PlatformProduct, version: PlatformApiVersion | null = null) {
+  versionProduct.value = product
+  editingVersion.value = version
+  versionModalOpen.value = true
+}
+
+async function refreshProducts() {
+  await resource.refresh()
+  if (versionProduct.value) {
+    versionProduct.value = products.value.find(item => item.id === versionProduct.value?.id) ?? null
+  }
+}
+
+async function removeProduct(product: PlatformProduct) {
+  await confirm({
+    title: t('admin.apis.routing.deleteProduct.title', { name: product.name }),
+    description: t('admin.apis.routing.deleteProduct.description'),
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/products/${product.id}`, { method: 'DELETE' })
+        await refreshProducts()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
+        throw error
+      }
+    }
+  })
+}
+
+async function removeVersion(product: PlatformProduct, version: PlatformApiVersion) {
+  await confirm({
+    title: t('admin.apis.routing.deleteVersion.title', { version: version.version }),
+    description: t('admin.apis.routing.deleteVersion.description'),
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/versions/${version.id}`, { method: 'DELETE' })
+        await refreshProducts()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
+        throw error
+      }
+    }
+  })
+}
+
+function productItems(product: PlatformProduct): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEditProduct(product) },
+    { label: t('admin.apis.routing.actions.createVersion'), icon: 'i-lucide-git-branch-plus', onSelect: () => openVersion(product) }
+  ], [
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeProduct(product) }
+  ]]
+}
+
+function versionItems(product: PlatformProduct, version: PlatformApiVersion): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openVersion(product, version) },
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeVersion(product, version) }
+  ]]
+}
 </script>
 
 <template>
@@ -61,7 +141,7 @@ const columns = computed<TableColumn<PlatformProduct>[]>(() => [
         <UButton
           icon="i-lucide-plus"
           :disabled="!context.selectedWorkspace.value"
-          @click="modalOpen = true"
+          @click="openCreateProduct"
         >
           {{ $t('admin.apis.routing.actions.createProduct') }}
         </UButton>
@@ -117,15 +197,20 @@ const columns = computed<TableColumn<PlatformProduct>[]>(() => [
         </template>
         <template #versions-cell="{ row }">
           <div class="flex flex-wrap gap-1.5">
-            <UBadge
+            <UDropdownMenu
               v-for="version in row.original.versions"
               :key="version.id"
-              :color="platformStatusColor(version.state)"
-              variant="subtle"
-              size="sm"
+              :items="versionItems(row.original, version)"
             >
-              {{ version.version }}
-            </UBadge>
+              <UBadge
+                :color="platformStatusColor(version.state)"
+                variant="subtle"
+                size="sm"
+                class="cursor-pointer"
+              >
+                {{ version.version }}
+              </UBadge>
+            </UDropdownMenu>
           </div>
         </template>
         <template #visibility-cell="{ row }">
@@ -141,12 +226,24 @@ const columns = computed<TableColumn<PlatformProduct>[]>(() => [
             {{ formatPlatformDate(row.original.createdAt, locale) }}
           </span>
         </template>
+        <template #actions-cell="{ row }">
+          <div class="text-right">
+            <UDropdownMenu :items="productItems(row.original)" :content="{ align: 'end' }">
+              <UButton
+                icon="i-lucide-ellipsis"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+              />
+            </UDropdownMenu>
+          </div>
+        </template>
         <template #empty-actions>
           <UButton
             size="sm"
             icon="i-lucide-plus"
             :disabled="!context.selectedWorkspace.value"
-            @click="modalOpen = true"
+            @click="openCreateProduct"
           >
             {{ $t('admin.apis.routing.actions.createProduct') }}
           </UButton>
@@ -158,7 +255,15 @@ const columns = computed<TableColumn<PlatformProduct>[]>(() => [
       v-if="context.selectedWorkspace.value"
       v-model:open="modalOpen"
       :workspace="context.selectedWorkspace.value"
-      @saved="resource.refresh"
+      :product="editingProduct"
+      @saved="refreshProducts"
+    />
+    <AdminPlatformVersionModal
+      v-if="versionProduct"
+      v-model:open="versionModalOpen"
+      :product="versionProduct"
+      :version="editingVersion"
+      @saved="refreshProducts"
     />
   </div>
 </template>

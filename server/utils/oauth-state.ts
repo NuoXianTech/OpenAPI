@@ -3,8 +3,9 @@ import { randomBytes } from 'node:crypto'
 import { getCookie, setCookie } from 'h3'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSignature, isTimingSafeEqual } from '~~/server/utils/secure-token'
+import { hostCookieName, hostCookieSecurityOptions } from '~~/server/utils/host-cookie'
 
-const STATE_COOKIE = 'oauth_state'
+const STATE_COOKIE = hostCookieName('oauth_state')
 const STATE_TTL_SECONDS = 5 * 60
 
 export type OauthFlowMode = 'login' | 'bind'
@@ -22,16 +23,16 @@ export function issueState(event: H3Event, provider: string, returnTo: string, m
   const nonce = encodeBase64Url(randomBytes(16))
   const returnToEncoded = encodeBase64Url(returnTo || '/')
   const flowMode: OauthFlowMode = mode === 'bind' ? 'bind' : 'login'
-  // payload: nonce.provider.returnTo.mode
-  const payload = `${nonce}.${provider}.${returnToEncoded}.${flowMode}`
+  const expiresAt = Math.floor(Date.now() / 1000) + STATE_TTL_SECONDS
+  // payload: nonce.provider.returnTo.mode.expiresAt
+  const payload = `${nonce}.${provider}.${returnToEncoded}.${flowMode}.${expiresAt}`
   const sig = sign(payload)
   const cookieValue = `${payload}.${sig}`
 
   setCookie(event, STATE_COOKIE, cookieValue, {
     httpOnly: true,
     sameSite: 'lax',
-    path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    ...hostCookieSecurityOptions(),
     maxAge: STATE_TTL_SECONDS
   })
 
@@ -53,12 +54,12 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
   }
 
   const parts = cookie.split('.')
-  if (parts.length !== 5) {
+  if (parts.length !== 6) {
     return null
   }
 
-  const [nonce, cookieProvider, returnToEncoded, cookieMode, sig] = parts
-  if (!nonce || !cookieProvider || !returnToEncoded || !sig) {
+  const [nonce, cookieProvider, returnToEncoded, cookieMode, expiresAtRaw, sig] = parts
+  if (!nonce || !cookieProvider || !returnToEncoded || !expiresAtRaw || !sig) {
     return null
   }
   if (cookieMode !== 'bind' && cookieMode !== 'login') {
@@ -66,7 +67,7 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
   }
 
   if (!hasValidHmacSignature(
-    `${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}`,
+    `${nonce}.${cookieProvider}.${returnToEncoded}.${cookieMode}.${expiresAtRaw}`,
     sig,
     getAuthSecret()
   )) {
@@ -75,6 +76,8 @@ export function consumeState(event: H3Event, provider: string, stateFromQuery: s
   if (cookieProvider !== provider) {
     return null
   }
+  const expiresAt = Number(expiresAtRaw)
+  if (!Number.isSafeInteger(expiresAt) || expiresAt < Math.floor(Date.now() / 1000)) return null
 
   if (!isTimingSafeEqual(stateFromQuery, nonce)) {
     return null
@@ -92,7 +95,7 @@ function clearStateCookie(event: H3Event) {
   setCookie(event, STATE_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',
-    path: '/',
+    ...hostCookieSecurityOptions(),
     maxAge: 0
   })
 }

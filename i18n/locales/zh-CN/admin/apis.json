@@ -75,11 +75,14 @@
           "summary": "简短说明",
           "description": "详细说明",
           "version": "初始版本",
+          "versionState": "Version 状态",
+          "changelog": "变更说明",
           "visibility": "可见性",
           "upstreamKind": "Upstream 类型",
           "loadBalancing": "负载均衡",
           "baseUrl": "Base URL",
           "weight": "权重",
+          "targetEnabled": "参与流量",
           "serviceToken": "Service Token",
           "productVersion": "Product / Version",
           "method": "方法",
@@ -97,11 +100,15 @@
           "timeoutMs": "超时（ms）",
           "maxRequestKiB": "请求上限（KiB）",
           "maxResponseKiB": "响应上限（KiB）",
+          "catalogStatus": "目录状态",
+          "sensitiveQueryParameters": "敏感 Query 参数",
           "routeState": "Route 状态"
         },
         "actions": {
           "createWorkspace": "新建 Workspace",
+          "createEnvironment": "新建 Environment",
           "createProduct": "新建 Product",
+          "createVersion": "新建 Version",
           "createUpstream": "新建 Upstream",
           "createRoute": "新建 Route",
           "saveRoute": "保存 Route",
@@ -191,10 +198,20 @@
           "deprecated": "已废弃",
           "retired": "已退役"
         },
+        "versionStates": {
+          "draft": "草稿",
+          "published": "已发布",
+          "deprecated": "已废弃",
+          "retired": "已退役"
+        },
         "routeStates": {
           "active": "参与发布",
           "draft": "草稿",
           "disabled": "已停用"
+        },
+        "catalogStatuses": {
+          "automatic": "自动检测",
+          "maintenance": "维护中"
         },
         "serviceStatuses": {
           "active": "正常",
@@ -220,6 +237,8 @@
         "workspaceForm": {
           "title": "新建 Workspace",
           "description": "创建一个隔离的 API 管理空间，并同时初始化第一个 Environment。",
+          "editTitle": "编辑 Workspace",
+          "editDescription": "修改 Workspace 的名称与稳定标识。状态切换请从列表操作。",
           "namePlaceholder": "例如：核心 API",
           "environmentTitle": "首个 Environment",
           "environmentDescription": "每个 Environment 保存独立的活动运行快照。首版通常使用 development，后续再扩展 staging 与 production。",
@@ -227,17 +246,31 @@
           "boundaryTitle": "Workspace 是管理边界，不是额外服务",
           "boundaryDescription": "它只隔离 Product、Upstream、Route、Environment 与运行快照；不会新增需要部署的进程。"
         },
+        "environmentForm": {
+          "createTitle": "新建 Environment",
+          "editTitle": "编辑 Environment",
+          "description": "为 {workspace} 配置独立的域名与活动运行快照。"
+        },
         "productForm": {
           "title": "新建 API Product",
           "description": "创建 Product 与首个 Version，之后可将多个 Route 归入同一版本。",
+          "editTitle": "编辑 API Product",
+          "editDescription": "修改 Product 的展示信息、可见性与生命周期。",
           "namePlaceholder": "例如：天气服务",
           "summaryPlaceholder": "一句话说明该 Product 提供什么能力",
           "publishedTitle": "首个 Version 将直接可发布",
           "publishedDescription": "当前快速创建流程会把首个 Version 标记为 published，使其 Route 可以进入运行快照。"
         },
+        "versionForm": {
+          "createTitle": "新建 API Version",
+          "editTitle": "编辑 API Version",
+          "description": "管理 {product} 的版本标识、发布状态与变更说明。"
+        },
         "upstreamForm": {
           "title": "新建 Upstream",
           "description": "定义 Gateway 的实际请求目标。一个 Upstream 可以包含多个 Target。",
+          "editTitle": "编辑 Upstream",
+          "editDescription": "修改 Upstream 的名称、标识与负载均衡策略。Target 与 Token 分别独立管理。",
           "namePlaceholder": "例如：核心 API Service",
           "loadBalancingHelp": "首版运行时支持轮询与加权轮询；权重仅在加权模式下生效。",
           "internalTitle": "内部 Upstream 由 Platform 代为鉴权",
@@ -251,6 +284,11 @@
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "一个 Upstream 可以连接多个 Service 实例",
           "multiServiceDescription": "Target 可以位于不同服务器。轮询适合等规格实例；加权轮询可按服务器能力分配流量。同一 Upstream 的所有 Target 必须属于同一个逻辑 Service，并保持 OpenAPI 与配置 Schema 一致。"
+        },
+        "targetForm": {
+          "createTitle": "添加 Target",
+          "editTitle": "编辑 Target",
+          "description": "为 {upstream} 配置服务地址、权重与流量状态。"
         },
         "routeForm": {
           "createTitle": "新建动态 Route",
@@ -266,6 +304,9 @@
           "governanceTitle": "访问控制、统计与计费",
           "governanceDescription": "这些规则由 Platform Gateway 在转发前统一执行，API Service 不读取用户 API Key，也不处理积分。0 表示不限流或免费。",
           "creditsCostHelp": "只对 2xx/3xx 成功响应扣费；4xx、5xx、超时和网络失败会释放预留积分。",
+          "catalogStatusHelp": "自动检测会根据近期调用结果显示状态；维护中会在公开目录明确标记。",
+          "sensitiveQueryHelp": "这些 Query 参数在调用日志和 Referer 中始终脱敏。",
+          "sensitiveQueryPlaceholder": "例如 token，然后按回车",
           "stateHelp": "只有“参与发布”的 Route 会进入自动生成的运行快照。",
           "noVersionsHelp": "此 Workspace 没有可发布的 Product Version。",
           "noUpstreamsHelp": "此 Workspace 没有可用的 Upstream。"
@@ -283,10 +324,43 @@
           "title": "删除 Route {path}",
           "description": "Route 会从草稿配置中软删除。当前运行快照不会立即改变；应用新配置后下线，旧快照仍可用于回滚。"
         },
+        "deleteWorkspace": {
+          "title": "删除 Workspace：{name}",
+          "description": "仅空 Workspace 可以删除；默认 Workspace 以及仍有 Product、Upstream、文档或运行历史的 Workspace 会被拒绝。"
+        },
+        "deleteEnvironment": {
+          "title": "删除 Environment：{name}",
+          "description": "仅从未产生运行快照的 Environment 可以删除。已有运行历史时请停用并保留审计记录。"
+        },
+        "deleteProduct": {
+          "title": "删除 Product：{name}",
+          "description": "仅没有 Route 且未被活动运行快照引用的 Product 可以删除。"
+        },
+        "deleteVersion": {
+          "title": "删除 Version：{version}",
+          "description": "仅没有 Route 且未被活动运行快照引用的 Version 可以删除。"
+        },
+        "deleteUpstream": {
+          "title": "删除 Upstream：{name}",
+          "description": "仅没有 Route 且未被活动运行快照引用的 Upstream 可以删除。"
+        },
+        "deleteTarget": {
+          "title": "删除 Target",
+          "description": "请先确保 Target 未被活动运行快照引用，并为仍在使用的 Upstream 保留至少一个可用 Target。"
+        },
         "feedback": {
           "workspaceCreated": "Workspace 已创建",
+          "workspaceUpdated": "Workspace 已更新",
+          "environmentCreated": "Environment 已创建",
+          "environmentUpdated": "Environment 已更新",
           "productCreated": "Product 已创建",
+          "productUpdated": "Product 已更新",
+          "versionCreated": "Version 已创建",
+          "versionUpdated": "Version 已更新",
           "upstreamCreated": "Upstream 已创建",
+          "upstreamUpdated": "Upstream 已更新",
+          "targetCreated": "Target 已添加",
+          "targetUpdated": "Target 已更新",
           "routeCreated": "Route 已创建",
           "routeUpdated": "Route 已更新",
           "routeDeleted": "Route 已删除",
@@ -328,6 +402,7 @@
           "responseSizeInvalid": "响应上限必须是 0 到 2097151 之间的整数",
           "creditsCostInvalid": "积分必须是 0 到 1000000 之间的整数",
           "rateLimitInvalid": "限流值必须是不小于 0 的整数",
+          "sensitiveQueryInvalid": "参数名只能包含字母、数字、下划线、点和连字符",
           "paidRouteRequiresGovernance": "付费 Route 必须启用 API Key 和调用日志"
         },
         "serviceControl": {

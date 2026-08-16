@@ -1,4 +1,5 @@
 import { and, count, desc, eq, gt, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
+import { db } from '~~/server/db/client'
 import { creditTransactions, redemptionCodes, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'

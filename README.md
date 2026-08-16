@@ -67,7 +67,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Before starting, configure `NUXT_AUTH_SECRET` and `NUXT_API_KEY_SECRET`. API keys and redemption codes are stored as HMAC lookup digests plus AES-256-GCM ciphertext, so authorized users can view them again without plaintext being stored in the database. Generate independent values with:
+Before starting, configure `NUXT_AUTH_SECRET` and `NUXT_API_KEY_SECRET`. A complete API key is returned only after creation or reset, and complete redemption codes are returned only after generation. Lists and history expose masked previews only; the database has no plaintext secret columns. Generate independent values with:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
@@ -81,6 +81,8 @@ The development server uses PGlite when no database mode is configured. On first
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
 | `NUXT_API_KEY_SECRET` | Required | Generates API keys and domain-separates encryption for API keys, redemption codes, Upstream tokens, and Service business secrets. |
+| `NUXT_HOSTS_CONSOLE` | Production required | Hosts allowed to serve the Console and internal application APIs. |
+| `NUXT_HOSTS_GATEWAY` | Production required | Hosts dedicated to public Gateway Routes; must be separate from Console hosts. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |
 | `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
 | `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |
@@ -101,15 +103,17 @@ pnpm db:generate
 pnpm test:run
 ```
 
-The current database uses a single `0000` baseline. Development databases and volumes created before the `0.1.0` baseline cannot upgrade incrementally; back them up and use a fresh database or directory. Production migrations are bundled into `.output` and run automatically during startup.
+`0.1.0` establishes the immutable `0000` baseline. Later schema changes must append `0001`, `0002`, and subsequent migrations; never rewrite a migration that has shipped. Development databases and volumes created before the `0.1.0` baseline cannot upgrade incrementally, while a production `0.1.0` database can upgrade through the migrations bundled with `0.1.1` and later artifacts. See [database migrations and version upgrades](docs/operations/database-migrations.md).
 
 ## Quality checks
 
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test:run
+pnpm check:dead-code
+pnpm test:unit
 pnpm build
+pnpm test:integration:built
 ```
 
 A failed check must stop a production release. Run these build checks on a development machine or in CI, never on the production server.
@@ -121,8 +125,9 @@ A failed check must stop a production release. Run these build checks on a devel
 ```bash
 # Build only on a development machine or in CI
 pnpm build
-# The production server only runs the uploaded complete .output
-NODE_ENV=production pnpm start
+# The production server migrates and starts from the uploaded complete .output
+NODE_ENV=production node .output/server/migrate.mjs
+NODE_ENV=production node .output/server/index.mjs
 ```
 
 Deploy the complete prebuilt `.output` directory. The executable entry is `.output/server/index.mjs`; do not deploy only `.output/server` or omit its hidden Nitro dependencies. Production servers must not run `pnpm install`, Nuxt builds, or Docker builds.
@@ -132,14 +137,16 @@ Deploy the complete prebuilt `.output` directory. The executable entry is `.outp
 GitHub Actions builds tagged amd64 and arm64 images on pushes to `main` and version tags, then publishes a multi-platform image to GHCR. The server does not need to clone the source or run the Nuxt build:
 
 ```bash
+docker network inspect openapi-network >/dev/null 2>&1 || docker network create openapi-network
 docker pull ghcr.io/nuoxiantech/openapi-platform:latest
 docker run -d --name openapi-platform --restart unless-stopped \
+  --network openapi-network \
   -p 3000:3000 --env-file .env \
   -v openapi-data:/app/.data \
   ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-Alternatively, download `docker-compose.yml` and run `docker compose pull && docker compose up -d`. Production deployments should pin a release version such as `0.1.0`. The `main` branch publishes `latest`, `latest-amd64`, and `latest-arm64` for development tracking. Git tags matching `v*.*.*` produce multi-platform image tags without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
+Alternatively, create the external `openapi-network`, download `docker-compose.yml`, and run `docker compose pull && docker compose up -d`. This Compose file deploys Platform only; the API Service uses the deployment files from its own repository. Production deployments should pin a release version such as `0.1.0`. The `main` branch publishes `latest`, `latest-amd64`, and `latest-arm64` for development tracking. Git tags matching `v*.*.*` produce multi-platform image tags without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
 
 Useful probes:
 

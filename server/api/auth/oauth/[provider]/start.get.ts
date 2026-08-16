@@ -7,6 +7,7 @@ import { qqProvider } from '~~/server/utils/oauth-providers/qq'
 import type { ProviderConfig } from '~~/server/utils/oauth-providers/types'
 import { isSupportedOauthProvider } from '~~/server/utils/oauth-provider-id'
 import { getAuthUser } from '~~/server/utils/auth'
+import { normalizeLocalReturnTo } from '~~/server/utils/local-return-to'
 import { readQueryOption, readQueryString } from '~~/server/utils/request-query'
 
 const OAUTH_FLOW_MODES = ['login', 'bind'] as const
@@ -25,8 +26,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = getQuery(event)
-  const rawReturnTo = readQueryString(query.returnTo, '/')
-  const returnTo = rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/'
+  const returnTo = normalizeLocalReturnTo(readQueryString(query.returnTo, '/'))
 
   const mode: OauthFlowMode = readQueryOption(query.mode, OAUTH_FLOW_MODES) ?? 'login'
 

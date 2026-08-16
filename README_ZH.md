@@ -68,7 +68,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 与兑换码在数据库中保存为 HMAC 查询摘要和 AES-256-GCM 密文，因此授权用户仍可重复查看，但数据库不保存明文。可使用以下命令分别生成独立随机值：
+启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 仅在创建或重置成功时返回一次完整值，兑换码仅在批量生成成功时返回一次完整值；之后列表和历史记录只显示掩码预览。数据库不保存裸明文列，可使用以下命令分别生成独立随机值：
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
@@ -82,6 +82,8 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并分域保护 API Key、兑换码、Upstream Token 与 Service 业务 Secret。 |
+| `NUXT_HOSTS_CONSOLE` | 生产必填 | 只允许访问管理控制台和站内 API 的 Host。 |
+| `NUXT_HOSTS_GATEWAY` | 生产必填 | 只承载公开 Route 的 Gateway Host，必须与 Console Host 分离。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
@@ -102,15 +104,17 @@ pnpm db:generate
 pnpm test:run
 ```
 
-当前数据库使用单一 `0000` 基线。`0.1.0` 之前创建的开发数据库或 Volume 不支持直接增量升级，应先备份并使用全新数据库/目录。生产迁移会打包到 `.output`，并在应用启动时自动执行。
+`0.1.0` 建立不可修改的 `0000` 正式基线。后续 Schema 变化必须追加 `0001`、`0002` 等迁移，不能改写已经发布的迁移。`0.1.0` 之前创建的实验数据库或 Volume 不支持直接增量升级；正式 `0.1.0` 数据库则可以使用 `0.1.1` 及后续构建产物携带的迁移连续升级。详见[数据库迁移与版本升级](docs/operations/database-migrations.md)。
 
 ## 质量门禁
 
 ```bash
 pnpm lint
 pnpm typecheck
-pnpm test:run
+pnpm check:dead-code
+pnpm test:unit
 pnpm build
+pnpm test:integration:built
 ```
 
 任何命令失败都必须停止生产发布。这些构建检查在开发机或 CI 执行，不能放到生产服务器执行。
@@ -122,8 +126,9 @@ pnpm build
 ```bash
 # 仅在开发机或 CI 构建
 pnpm build
-# 生产服务器只运行上传后的完整 .output
-NODE_ENV=production pnpm start
+# 生产服务器直接使用完整 .output 迁移并启动
+NODE_ENV=production node .output/server/migrate.mjs
+NODE_ENV=production node .output/server/index.mjs
 ```
 
 必须部署完整的预构建 `.output`。生产入口是 `.output/server/index.mjs`，不要只部署 `.output/server`，也不能遗漏其中的隐藏 Nitro 依赖。生产服务器不执行 `pnpm install`、Nuxt Build 或 Docker Build。
@@ -133,14 +138,16 @@ NODE_ENV=production pnpm start
 GitHub Actions 会在推送到 `main` 或创建版本标签时构建带标签的 amd64/arm64 镜像，并发布合并后的多架构镜像到 GHCR。服务器无需克隆源码或执行 Nuxt 构建：
 
 ```bash
+docker network inspect openapi-network >/dev/null 2>&1 || docker network create openapi-network
 docker pull ghcr.io/nuoxiantech/openapi-platform:latest
 docker run -d --name openapi-platform --restart unless-stopped \
+  --network openapi-network \
   -p 3000:3000 --env-file .env \
   -v openapi-data:/app/.data \
   ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-也可以下载仓库中的 `docker-compose.yml` 后运行 `docker compose pull && docker compose up -d`。生产环境建议使用版本号（例如 `0.1.0`）锁定部署；`main` 发布 `latest`、`latest-amd64` 和 `latest-arm64`，用于跟踪开发版本。符合 `v*.*.*` 格式的 Git 标签会生成去掉 `v` 前缀的多架构镜像标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
+也可以先创建外部 `openapi-network`，再下载仓库中的 `docker-compose.yml` 并运行 `docker compose pull && docker compose up -d`；该 Compose 只部署 Platform，API Service 使用其独立仓库的部署文件。生产环境建议使用版本号（例如 `0.1.0`）锁定部署；`main` 发布 `latest`、`latest-amd64` 和 `latest-arm64`，用于跟踪开发版本。符合 `v*.*.*` 格式的 Git 标签会生成去掉 `v` 前缀的多架构镜像标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
 
 探针检查：
 

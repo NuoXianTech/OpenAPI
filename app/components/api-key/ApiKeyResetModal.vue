@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
-import type { ApiKeyItem } from '#shared/types/api'
+import type { ApiKeyItem, CreatedApiKeyItem } from '#shared/types/api'
 
 const props = defineProps<{
   target: ApiKeyItem | null
-  onReset: (id: number) => Promise<ApiKeyItem | undefined>
+  onReset: (id: number) => Promise<CreatedApiKeyItem | undefined>
 }>()
 
 const emit = defineEmits<{
@@ -16,7 +16,7 @@ const toast = useToast()
 const { t } = useI18n()
 const { copyText } = useCopyFeedback()
 const loading = ref(false)
-const result = ref<ApiKeyItem | null>(null)
+const result = ref<CreatedApiKeyItem | null>(null)
 
 watch(
   () => props.target,

@@ -39,6 +39,7 @@ export interface ApiStatsTracked {
   method: string
   ip: string | null
   requestSize: number | null
+  responseSize?: number | null
   userAgent: string | null
   referer: string | null
   queryString: string | null
@@ -78,6 +79,7 @@ interface ApiFailureContext {
 }
 
 export interface AppEventContext {
+  applicationHostRole?: 'console' | 'gateway' | 'combined' | 'unknown'
   apiStatsTarget?: ApiStatsTarget
   apiStatsTracked?: ApiStatsTracked
   apiKey?: ApiKeyContext | null

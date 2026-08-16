@@ -1,5 +1,6 @@
 import { and, count, desc, eq, ilike, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { db } from '~~/server/db/client'
 import { apiCalls, apiKeys, apiProducts, apiRoutes, apiVersions } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'

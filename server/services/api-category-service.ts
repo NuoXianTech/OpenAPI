@@ -33,7 +33,20 @@ async function findCategoryByCode(code: string) {
 async function countBoundProducts(categoryId: number): Promise<number> {
   const [row] = await db.select({ value: count() })
     .from(apiProducts)
-    .where(eq(apiProducts.categoryId, categoryId))
+    .where(and(
+      eq(apiProducts.categoryId, categoryId),
+      isNull(apiProducts.deletedAt)
+    ))
+  return row?.value ?? 0
+}
+
+async function countChildCategories(categoryId: number): Promise<number> {
+  const [row] = await db.select({ value: count() })
+    .from(apiCategories)
+    .where(and(
+      eq(apiCategories.parentId, categoryId),
+      isNull(apiCategories.deletedAt)
+    ))
   return row?.value ?? 0
 }
 
@@ -119,7 +132,7 @@ export const apiCategoryService = {
     await validateParent(rest.parentId, id)
     const res = await db.update(apiCategories)
       .set({ ...rest, updatedAt: new Date() })
-      .where(eq(apiCategories.id, id))
+      .where(and(eq(apiCategories.id, id), isNull(apiCategories.deletedAt)))
       .returning()
     const updated = firstRow(res)
     if (updated) await invalidatePublicApiCategories()
@@ -130,6 +143,13 @@ export const apiCategoryService = {
    * 软删分类。只要仍有 Product 绑定该分类，就要求管理员先调整 Product。
    */
   async softDelete(id: number) {
+    const childCount = await countChildCategories(id)
+    if (childCount > 0) {
+      throw createApplicationError({
+        statusCode: 409,
+        message: `仍有 ${childCount} 个子分类，请先调整其父分类后再删除`
+      })
+    }
     const boundCount = await countBoundProducts(id)
     if (boundCount > 0) {
       throw createApplicationError({
@@ -139,7 +159,7 @@ export const apiCategoryService = {
     }
     const res = await db.update(apiCategories)
       .set({ deletedAt: new Date(), isEnabled: false, updatedAt: new Date() })
-      .where(eq(apiCategories.id, id))
+      .where(and(eq(apiCategories.id, id), isNull(apiCategories.deletedAt)))
       .returning()
     const deleted = firstRow(res)
     if (deleted) await invalidatePublicApiCategories()

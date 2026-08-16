@@ -34,7 +34,7 @@ Service 默认只在私网监听，不直接接受公网调用。Platform 是公
 所有构建在开发机或 CI 完成：
 
 - Platform：安装依赖、lint、typecheck、测试、Nuxt build、镜像构建。
-- Service：安装依赖、许可证检查、typecheck、测试、TypeScript build、镜像构建。
+- Service：安装依赖、死代码检查、typecheck、测试、TypeScript build、运行资源预算和镜像构建。
 
 生产服务器只拉取并运行预构建产物，不执行：
 
@@ -51,18 +51,19 @@ Platform 的 Nuxt 构建资源消耗不会影响 Service 更新窗口。
 
 - `NUXT_AUTH_SECRET`
 - `NUXT_API_KEY_SECRET`
+- `NUXT_HOSTS_CONSOLE` 与 `NUXT_HOSTS_GATEWAY`
 - PostgreSQL 或 PGlite 配置
 - Redis 配置
 - 监听地址、可信代理和邮件/OAuth 等系统变量
 
 ### Service 部署配置
 
-- `API_SERVICE_TOKEN` 与轮换 Token
-- `SERVICE_ID`、名称、版本和 Commit
-- 监听地址
-- 配置快照文件
-- 业务数据目录
-- 来源网络、超时、并发和资源限制
+- `API_SERVICE_TOKEN`
+- 可选监听地址 `LISTEN_ADDR`
+- 可选统一数据根目录 `SERVICE_DATA_DIR`
+- 网络、TLS、反向代理和容器资源限制
+
+Service 快照固定写入 `SERVICE_DATA_DIR/runtime`；模块外挂文件固定读取 `SERVICE_DATA_DIR/assets/<module-id>`。Platform 不管理或下发服务器路径。
 
 ### Service 业务配置
 
@@ -111,9 +112,10 @@ Liveness 只表示进程存活；Readiness 应覆盖继续接收流量所需的�
 ### Platform 更新
 
 1. 在 CI 构建并验证 Platform 镜像。
-2. 备份数据库并确认迁移策略。
-3. 滚动替换 Platform。
-4. 验证登录、管理 API、活动 Revision 和公开 Route。
+2. 备份数据库并确认迁移兼容性。
+3. 使用新构建产物的独立迁移入口应用数据库迁移。
+4. 迁移成功后滚动替换 Platform；启动自动迁移只做幂等安全检查。
+5. 验证登录、管理 API、活动 Revision 和公开 Route。
 
 ### Service 更新
 
@@ -152,6 +154,8 @@ Platform 与 Service 的回滚互不要求同步。
 ## 11. Secret 与网络
 
 - Platform 和 Service 使用独立随机运行时密钥。
+- Console Host 与 Gateway Host 必须互斥，即使它们转发到同一个 Nitro 进程。
+- `NUXT_API_KEY_SECRET` 在 `0.1.0` 不支持在线轮换，已有数据库不能直接替换该值。
 - Service Token 按 Internal Upstream 保存，不使用全局 Platform Token。
 - 单机或 Compose 部署使用私有网络。
 - 跨不可信网络必须使用 TLS；高安全环境可以增加 mTLS。

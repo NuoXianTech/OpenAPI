@@ -13,10 +13,12 @@
       "createTitle": "Generate API key",
       "editTitle": "Edit API key",
       "generate": "Generate",
-      "view": {
-        "title": "View API key",
-        "description": "Full key for {name}",
-        "hint": "Do not share this key on public pages, in chat messages, or in source repositories."
+      "secret": {
+        "title": "Save new API keys",
+        "description": "Full keys are shown only once, immediately after creation.",
+        "warningTitle": "You cannot view them again",
+        "warningDescription": "Copy them now and store them in a password manager. Lists only show masked previews.",
+        "copyAll": "Copy all"
       },
       "filters": { "allStatuses": "All statuses", "allScopes": "All scopes" }
     },

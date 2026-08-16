@@ -14,6 +14,7 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
 
   await addRequestOperationLog(event, {
+    userId: admin.id,
     actor: admin.username,
     action: 'admin.api-category.delete',
     resourceType: 'api-category',

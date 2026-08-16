@@ -26,6 +26,7 @@ beforeAll(async () => {
   await client.exec(`
     CREATE TABLE api_products (
       id uuid PRIMARY KEY,
+      workspace_id uuid NOT NULL DEFAULT '00000000-0000-4000-8000-000000000099',
       slug varchar(80) NOT NULL,
       name varchar(160) NOT NULL,
       summary varchar(300) NOT NULL DEFAULT '',
@@ -33,6 +34,8 @@ beforeAll(async () => {
       category_id integer,
       visibility varchar(20) NOT NULL,
       lifecycle varchar(20) NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
       deleted_at timestamptz
     );
     CREATE TABLE api_versions (
@@ -84,7 +87,9 @@ beforeAll(async () => {
     CREATE TABLE routing_revisions (
       id uuid PRIMARY KEY,
       status varchar(20) NOT NULL,
-      config_payload jsonb NOT NULL
+      config_payload jsonb NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      published_at timestamptz
     );
     CREATE TABLE environments (
       id uuid PRIMARY KEY,
@@ -136,11 +141,11 @@ beforeAll(async () => {
       '00000000-0000-4000-8000-000000000041',
       'published',
       '{"routes":[
-        {"id":"00000000-0000-4000-8000-000000000031"},
-        {"id":"00000000-0000-4000-8000-000000000033"},
-        {"id":"00000000-0000-4000-8000-000000000035"},
-        {"id":"00000000-0000-4000-8000-000000000036"},
-        {"id":"00000000-0000-4000-8000-000000000037"}
+        {"id":"00000000-0000-4000-8000-000000000031","productId":"00000000-0000-4000-8000-000000000001","productSlug":"enabled","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Enabled","method":"GET","pathPattern":"/v1/enabled","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
+        {"id":"00000000-0000-4000-8000-000000000033","productId":"00000000-0000-4000-8000-000000000003","productSlug":"private","productVisibility":"private","productLifecycle":"active","versionState":"published","name":"Private","method":"GET","pathPattern":"/v1/private","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
+        {"id":"00000000-0000-4000-8000-000000000035","productId":"00000000-0000-4000-8000-000000000005","productSlug":"unknown","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Unknown","method":"GET","pathPattern":"/v1/unknown","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
+        {"id":"00000000-0000-4000-8000-000000000036","productId":"00000000-0000-4000-8000-000000000006","productSlug":"abnormal","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Abnormal","method":"GET","pathPattern":"/v1/abnormal","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
+        {"id":"00000000-0000-4000-8000-000000000037","productId":"00000000-0000-4000-8000-000000000007","productSlug":"support","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Support","method":"GET","pathPattern":"/v1/player/assets/{asset}","isApiKey":false,"isStatistics":false,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":true}
       ]}'::jsonb
     );
     INSERT INTO environments (id, active_revision_id, status) VALUES
@@ -159,7 +164,8 @@ afterAll(async () => client.close())
 
 describe('public API catalog', () => {
   it('only exposes public routes from the active routing revision', async () => {
-    const items = await apiCatalogService.listPublicApis()
+    const page = await apiCatalogService.listPublicApis()
+    const items = page.items
     const statuses = Object.fromEntries(items.map(item => [item.name, item.status]))
 
     expect(items.map(item => item.name).sort()).toEqual([
@@ -175,10 +181,11 @@ describe('public API catalog', () => {
   })
 
   it('filters the live catalog by its resolved status', async () => {
-    const items = await apiCatalogService.listPublicApis({
+    const page = await apiCatalogService.listPublicApis({
       status: API_STATUS.normal
     })
 
-    expect(items.map(item => item.name)).toEqual(['Enabled'])
+    expect(page.items.map(item => item.name)).toEqual(['Enabled'])
+    expect(page.total).toBe(1)
   })
 })

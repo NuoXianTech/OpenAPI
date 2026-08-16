@@ -75,11 +75,14 @@
           "summary": "Summary",
           "description": "Description",
           "version": "Initial version",
+          "versionState": "Version status",
+          "changelog": "Changelog",
           "visibility": "Visibility",
           "upstreamKind": "Upstream type",
           "loadBalancing": "Load balancing",
           "baseUrl": "Base URL",
           "weight": "Weight",
+          "targetEnabled": "Receive traffic",
           "serviceToken": "Service Token",
           "productVersion": "Product / Version",
           "method": "Method",
@@ -97,11 +100,15 @@
           "timeoutMs": "Timeout (ms)",
           "maxRequestKiB": "Request limit (KiB)",
           "maxResponseKiB": "Response limit (KiB)",
+          "catalogStatus": "Catalog status",
+          "sensitiveQueryParameters": "Sensitive query parameters",
           "routeState": "Route state"
         },
         "actions": {
           "createWorkspace": "New Workspace",
+          "createEnvironment": "New Environment",
           "createProduct": "New Product",
+          "createVersion": "New Version",
           "createUpstream": "New Upstream",
           "createRoute": "New Route",
           "saveRoute": "Save Route",
@@ -191,10 +198,20 @@
           "deprecated": "Deprecated",
           "retired": "Retired"
         },
+        "versionStates": {
+          "draft": "Draft",
+          "published": "Published",
+          "deprecated": "Deprecated",
+          "retired": "Retired"
+        },
         "routeStates": {
           "active": "Publishable",
           "draft": "Draft",
           "disabled": "Disabled"
+        },
+        "catalogStatuses": {
+          "automatic": "Automatic health",
+          "maintenance": "Maintenance"
         },
         "serviceStatuses": {
           "active": "Active",
@@ -220,6 +237,8 @@
         "workspaceForm": {
           "title": "Create Workspace",
           "description": "Create an isolated API management space and initialize its first Environment.",
+          "editTitle": "Edit Workspace",
+          "editDescription": "Update the Workspace name and stable slug. Change its status from the list.",
           "namePlaceholder": "For example, Core APIs",
           "environmentTitle": "First Environment",
           "environmentDescription": "Each Environment owns an independent active runtime snapshot. Start with development, then add staging and production later.",
@@ -227,17 +246,31 @@
           "boundaryTitle": "A Workspace is a management boundary, not another service",
           "boundaryDescription": "It only isolates Products, Upstreams, Routes, Environments, and runtime snapshots. It does not add another process to deploy."
         },
+        "environmentForm": {
+          "createTitle": "Create Environment",
+          "editTitle": "Edit Environment",
+          "description": "Configure an independent domain and active runtime snapshot for {workspace}."
+        },
         "productForm": {
           "title": "Create API Product",
           "description": "Create a Product and its first Version. Multiple Routes can later belong to the same Version.",
+          "editTitle": "Edit API Product",
+          "editDescription": "Update Product metadata, visibility, and lifecycle.",
           "namePlaceholder": "For example, Weather service",
           "summaryPlaceholder": "Describe the capability in one sentence",
           "publishedTitle": "The initial Version will be publishable immediately",
           "publishedDescription": "The current quick-create flow marks the initial Version as published so its Routes can enter a runtime snapshot."
         },
+        "versionForm": {
+          "createTitle": "Create API Version",
+          "editTitle": "Edit API Version",
+          "description": "Manage the version identifier, publication state, and changelog for {product}."
+        },
         "upstreamForm": {
           "title": "Create Upstream",
           "description": "Define where the Gateway sends real requests. One Upstream can contain multiple Targets.",
+          "editTitle": "Edit Upstream",
+          "editDescription": "Update the Upstream name, slug, and load-balancing strategy. Targets and tokens are managed separately.",
           "namePlaceholder": "For example, Core API Service",
           "loadBalancingHelp": "The initial runtime supports round robin and weighted round robin. Weights apply only in weighted mode.",
           "internalTitle": "The Platform authenticates internal Upstreams",
@@ -251,6 +284,11 @@
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "One Upstream can connect multiple Service instances",
           "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas."
+        },
+        "targetForm": {
+          "createTitle": "Add Target",
+          "editTitle": "Edit Target",
+          "description": "Configure the service URL, weight, and traffic state for {upstream}."
         },
         "routeForm": {
           "createTitle": "Create dynamic Route",
@@ -266,6 +304,9 @@
           "governanceTitle": "Access, statistics, and billing",
           "governanceDescription": "The Platform Gateway applies these rules before forwarding. The API Service never receives caller API keys or manages credits. Zero means unlimited or free.",
           "creditsCostHelp": "Only successful 2xx/3xx responses are charged. 4xx, 5xx, timeouts, and network failures release reserved credits.",
+          "catalogStatusHelp": "Automatic health uses recent calls; maintenance is shown explicitly in the public catalog.",
+          "sensitiveQueryHelp": "These query parameters are always redacted from call logs and referrers.",
+          "sensitiveQueryPlaceholder": "For example token, then press Enter",
           "stateHelp": "Only publishable Routes enter the automatically generated runtime snapshot.",
           "noVersionsHelp": "This Workspace has no publishable Product Versions.",
           "noUpstreamsHelp": "This Workspace has no available Upstreams."
@@ -283,10 +324,43 @@
           "title": "Delete Route {path}",
           "description": "The Route is soft-deleted from the draft configuration. The active runtime snapshot remains unchanged until the new configuration is applied, and an older snapshot can still restore it."
         },
+        "deleteWorkspace": {
+          "title": "Delete Workspace: {name}",
+          "description": "Only empty Workspaces can be deleted. The default Workspace and Workspaces with Products, Upstreams, documents, or runtime history are protected."
+        },
+        "deleteEnvironment": {
+          "title": "Delete Environment: {name}",
+          "description": "Only Environments that never produced a runtime snapshot can be deleted. Disable Environments with retained history instead."
+        },
+        "deleteProduct": {
+          "title": "Delete Product: {name}",
+          "description": "Only Products without Routes and without references from the active runtime snapshot can be deleted."
+        },
+        "deleteVersion": {
+          "title": "Delete Version: {version}",
+          "description": "Only Versions without Routes and without references from the active runtime snapshot can be deleted."
+        },
+        "deleteUpstream": {
+          "title": "Delete Upstream: {name}",
+          "description": "Only Upstreams without Routes and without references from the active runtime snapshot can be deleted."
+        },
+        "deleteTarget": {
+          "title": "Delete Target",
+          "description": "Ensure the Target is not referenced by an active runtime snapshot and keep at least one available Target for an Upstream that is still in use."
+        },
         "feedback": {
           "workspaceCreated": "Workspace created",
+          "workspaceUpdated": "Workspace updated",
+          "environmentCreated": "Environment created",
+          "environmentUpdated": "Environment updated",
           "productCreated": "Product created",
+          "productUpdated": "Product updated",
+          "versionCreated": "Version created",
+          "versionUpdated": "Version updated",
           "upstreamCreated": "Upstream created",
+          "upstreamUpdated": "Upstream updated",
+          "targetCreated": "Target added",
+          "targetUpdated": "Target updated",
           "routeCreated": "Route created",
           "routeUpdated": "Route updated",
           "routeDeleted": "Route deleted",
@@ -328,6 +402,7 @@
           "responseSizeInvalid": "Response limit must be an integer between 0 and 2097151",
           "creditsCostInvalid": "Credits must be an integer between 0 and 1000000",
           "rateLimitInvalid": "Rate limits must be non-negative integers",
+          "sensitiveQueryInvalid": "Parameter names may only contain letters, numbers, underscores, dots, and hyphens",
           "paidRouteRequiresGovernance": "Paid Routes require API key authentication and call logs"
         },
         "serviceControl": {

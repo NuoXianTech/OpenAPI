@@ -32,7 +32,7 @@ Service：
 ```powershell
 cd D:\Project\vscode\openapi-service
 $env:API_SERVICE_TOKEN = 'replace-with-independent-random-token'
-$env:SERVICE_CONFIG_FILE = '.data/runtime/integration-configuration.enc'
+$env:SERVICE_DATA_DIR = '.data/service-integration'
 pnpm dev
 ```
 
@@ -146,14 +146,17 @@ IP 模块提供以下配置示例：
 # openapi-platform
 pnpm lint
 pnpm typecheck
+pnpm check:dead-code
 pnpm test:unit
 pnpm test:api-service
 
 # openapi-service
-pnpm licenses:check
+pnpm check:unused
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
 测试数量会随功能变化，不应在文档中固定具体文件或用例数量。
+
+GitHub Actions 会把 `openapi-service` 检出到 Platform 工作区并先执行 Service build。日常 `main` 质量检查使用 Service `main`；Platform 版本 Tag 默认使用同名 Service Tag。Repository Variable `OPENAPI_SERVICE_REF` 可覆盖为其他兼容的不可变 Tag 或 Commit。

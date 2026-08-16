@@ -1,17 +1,37 @@
 import { API_STATUS } from '#shared/config/api-status'
-import type { ApiCatalogItem, ApiCategoryItem } from '#shared/types/api'
+import type { ApiCatalogPage, ApiCategoryItem } from '#shared/types/api'
 
-export function usePublicApiCatalog() {
+interface PublicApiCatalogOptions {
+  pageSize?: number
+}
+
+export function usePublicApiCatalog(options: PublicApiCatalogOptions = {}) {
   const { t } = useI18n()
+  const searchQuery = ref('')
+  const selectedStatus = ref<string | number>('all')
+  const selectedCategory = ref<string | number>('all')
+  const page = ref(1)
+  const pageSize = ref(options.pageSize ?? 24)
+  const debouncedSearch = refDebounced(searchQuery, 250)
+
+  const catalogQuery = computed(() => ({
+    keyword: debouncedSearch.value.trim() || undefined,
+    status: selectedStatus.value === 'all' ? undefined : Number(selectedStatus.value),
+    categoryId: selectedCategory.value === 'all' ? undefined : Number(selectedCategory.value),
+    page: page.value,
+    pageSize: pageSize.value
+  }))
+
   const {
     data: apiData,
     pending: apisPending,
     error: apisError,
     refresh: refreshApis
-  } = useFetch<ApiCatalogItem[]>('/api/catalog', {
-    key: 'public-api-catalog',
+  } = useFetch<ApiCatalogPage>('/api/catalog', {
+    key: `public-api-catalog-${pageSize.value}`,
     method: 'GET',
-    default: () => []
+    query: catalogQuery,
+    default: () => ({ items: [], total: 0, page: 1, pageSize: pageSize.value })
   })
   const {
     data: categoryData,
@@ -23,10 +43,14 @@ export function usePublicApiCatalog() {
     default: () => []
   })
 
-  const searchQuery = ref('')
-  const selectedStatus = ref<string | number>('all')
-  const selectedCategory = ref<string | number>('all')
-  const allApis = computed(() => apiData.value || [])
+  watch([debouncedSearch, selectedStatus, selectedCategory, pageSize], () => {
+    page.value = 1
+  })
+
+  const allApis = computed(() => apiData.value?.items ?? [])
+  const filteredApis = allApis
+  const total = computed(() => apiData.value?.total ?? 0)
+  const totalPages = computed(() => Math.max(Math.ceil(total.value / pageSize.value), 1))
   const categories = computed(() => categoryData.value || [])
   const isLoading = computed(() => apisPending.value || categoriesPending.value)
   const loadError = computed(() => {
@@ -35,30 +59,13 @@ export function usePublicApiCatalog() {
     return error instanceof Error ? error.message : String(error)
   })
 
-  const categoryMap = computed(() => {
-    const map: Record<number, ApiCategoryItem> = {}
-    categories.value.forEach((category) => {
-      map[category.id] = category
-    })
-    return map
-  })
-
-  const categoryTabs = computed(() => {
-    const referencedCategoryIds = new Set<number>()
-    allApis.value.forEach((api) => {
-      if (typeof api.categoryId === 'number') {
-        referencedCategoryIds.add(api.categoryId)
-      }
-    })
-
-    return [
-      { label: t('common.filters.all'), value: 'all' },
-      ...categories.value
-        .filter(category => referencedCategoryIds.has(category.id))
-        .map(category => ({ label: category.name, value: category.id }))
-    ]
-  })
-
+  const categoryMap = computed(() => Object.fromEntries(
+    categories.value.map(category => [category.id, category])
+  ))
+  const categoryTabs = computed(() => [
+    { label: t('common.filters.all'), value: 'all' },
+    ...categories.value.map(category => ({ label: category.name, value: category.id }))
+  ])
   const statusTabs = computed(() => [
     { label: t('common.filters.all'), value: 'all' },
     { label: t('common.states.active'), value: API_STATUS.normal },
@@ -67,25 +74,7 @@ export function usePublicApiCatalog() {
     { label: t('common.states.deprecated'), value: API_STATUS.deprecated },
     { label: t('common.states.unknown'), value: API_STATUS.unknown }
   ])
-
-  const filteredApis = computed(() => {
-    const query = searchQuery.value.toLowerCase().trim()
-    return allApis.value.filter((api) => {
-      const matchesQuery = query === ''
-        || (api.name || '').toLowerCase().includes(query)
-        || (api.apiPath || '').toLowerCase().includes(query)
-        || (api.description || '').toLowerCase().includes(query)
-        || (api.shortDesc || '').toLowerCase().includes(query)
-      const matchesCategory = selectedCategory.value === 'all'
-        || api.categoryId === Number(selectedCategory.value)
-      const matchesStatus = selectedStatus.value === 'all'
-        || api.status === Number(selectedStatus.value)
-
-      return matchesQuery && matchesStatus && matchesCategory
-    })
-  })
-
-  const isEmpty = computed(() => !isLoading.value && !loadError.value && filteredApis.value.length === 0)
+  const isEmpty = computed(() => !isLoading.value && !loadError.value && total.value === 0)
 
   async function refreshCatalog(): Promise<void> {
     await Promise.all([refreshApis(), refreshCategories()])
@@ -101,6 +90,10 @@ export function usePublicApiCatalog() {
     categories,
     allApis,
     filteredApis,
+    page,
+    pageSize,
+    total,
+    totalPages,
     isLoading,
     loadError,
     isEmpty,

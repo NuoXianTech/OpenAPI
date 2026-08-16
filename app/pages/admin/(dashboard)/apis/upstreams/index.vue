@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
+import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformUpstream } from '~/types/platform'
+import type { PlatformUpstream, PlatformUpstreamTarget } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import {
   platformStatusColor,
@@ -13,6 +13,12 @@ const { t } = useI18n()
 const route = useRoute()
 const context = useAdminPlatformContext()
 const modalOpen = ref(false)
+const editingUpstream = ref<PlatformUpstream | null>(null)
+const targetModalOpen = ref(false)
+const targetUpstream = ref<PlatformUpstream | null>(null)
+const editingTarget = ref<PlatformUpstreamTarget | null>(null)
+const toast = useToast()
+const confirm = useConfirmDialog()
 
 useHead({ title: () => t('admin.apis.routing.sections.upstreamsTitle') })
 
@@ -71,6 +77,113 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
   { id: 'status', header: t('admin.apis.routing.serviceControl.runtimeStatus') },
   { id: 'actions', header: '' }
 ])
+
+function openCreateUpstream() {
+  editingUpstream.value = null
+  modalOpen.value = true
+}
+
+function openEditUpstream(upstream: PlatformUpstream) {
+  editingUpstream.value = upstream
+  modalOpen.value = true
+}
+
+function openTarget(upstream: PlatformUpstream, target: PlatformUpstreamTarget | null = null) {
+  targetUpstream.value = upstream
+  editingTarget.value = target
+  targetModalOpen.value = true
+}
+
+async function refreshUpstreams() {
+  await resource.refresh()
+  if (targetUpstream.value) {
+    targetUpstream.value = upstreams.value.find(item => item.id === targetUpstream.value?.id) ?? null
+  }
+}
+
+async function updateUpstreamStatus(upstream: PlatformUpstream) {
+  try {
+    await $fetch(`/api/admin/v1/upstreams/${upstream.id}`, {
+      method: 'PATCH',
+      body: { status: upstream.status === 'active' ? 'disabled' : 'active' }
+    })
+    await refreshUpstreams()
+  } catch (error: unknown) {
+    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+  }
+}
+
+async function updateTargetStatus(target: PlatformUpstreamTarget) {
+  try {
+    await $fetch(`/api/admin/v1/targets/${target.id}`, {
+      method: 'PATCH',
+      body: { enabled: !target.enabled }
+    })
+    await refreshUpstreams()
+  } catch (error: unknown) {
+    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+  }
+}
+
+async function removeUpstream(upstream: PlatformUpstream) {
+  await confirm({
+    title: t('admin.apis.routing.deleteUpstream.title', { name: upstream.name }),
+    description: t('admin.apis.routing.deleteUpstream.description'),
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/upstreams/${upstream.id}`, { method: 'DELETE' })
+        await refreshUpstreams()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
+        throw error
+      }
+    }
+  })
+}
+
+async function removeTarget(target: PlatformUpstreamTarget) {
+  await confirm({
+    title: t('admin.apis.routing.deleteTarget.title'),
+    description: t('admin.apis.routing.deleteTarget.description'),
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/targets/${target.id}`, { method: 'DELETE' })
+        await refreshUpstreams()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
+        throw error
+      }
+    }
+  })
+}
+
+function upstreamItems(upstream: PlatformUpstream): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openEditUpstream(upstream) },
+    { label: t('admin.apis.routing.actions.addTarget'), icon: 'i-lucide-plus', onSelect: () => openTarget(upstream) },
+    {
+      label: t(upstream.status === 'active' ? 'common.actions.disable' : 'common.actions.enable'),
+      icon: upstream.status === 'active' ? 'i-lucide-pause' : 'i-lucide-play',
+      onSelect: () => updateUpstreamStatus(upstream)
+    }
+  ], [
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeUpstream(upstream) }
+  ]]
+}
+
+function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget): DropdownMenuItem[][] {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openTarget(upstream, target) },
+    {
+      label: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
+      icon: target.enabled ? 'i-lucide-pause' : 'i-lucide-play',
+      onSelect: () => updateTargetStatus(target)
+    },
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error', onSelect: () => removeTarget(target) }
+  ]]
+}
 </script>
 
 <template>
@@ -97,7 +210,7 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
         <UButton
           icon="i-lucide-plus"
           :disabled="!context.selectedWorkspace.value"
-          @click="modalOpen = true"
+          @click="openCreateUpstream"
         >
           {{ $t('admin.apis.routing.actions.createUpstream') }}
         </UButton>
@@ -169,23 +282,28 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
         </template>
         <template #targets-cell="{ row }">
           <div class="min-w-72 space-y-1.5">
-            <div
+            <UDropdownMenu
               v-for="target in row.original.targets"
               :key="target.id"
-              class="flex items-center gap-2"
+              :items="targetItems(row.original, target)"
             >
-              <span class="min-w-0 truncate font-mono text-xs text-highlighted">
-                {{ target.baseUrl }}
-              </span>
-              <UBadge
-                v-if="row.original.loadBalancing === 'weighted'"
-                color="neutral"
-                variant="subtle"
-                size="sm"
+              <div
+                class="flex cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 hover:bg-elevated"
+                :class="target.enabled ? '' : 'opacity-55'"
               >
-                {{ target.weight }}
-              </UBadge>
-            </div>
+                <span class="min-w-0 truncate font-mono text-xs text-highlighted">
+                  {{ target.baseUrl }}
+                </span>
+                <UBadge
+                  v-if="row.original.loadBalancing === 'weighted'"
+                  color="neutral"
+                  variant="subtle"
+                  size="sm"
+                >
+                  {{ target.weight }}
+                </UBadge>
+              </div>
+            </UDropdownMenu>
           </div>
         </template>
         <template #loadBalancing-cell="{ row }">
@@ -197,7 +315,7 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
           </UBadge>
         </template>
         <template #actions-cell="{ row }">
-          <div class="flex justify-end">
+          <div class="flex justify-end gap-1">
             <UButton
               v-if="row.original.kind === 'internal'"
               :to="{
@@ -211,6 +329,14 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
             >
               {{ $t('admin.apis.routing.serviceControl.manage') }}
             </UButton>
+            <UDropdownMenu :items="upstreamItems(row.original)" :content="{ align: 'end' }">
+              <UButton
+                icon="i-lucide-ellipsis"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+              />
+            </UDropdownMenu>
           </div>
         </template>
         <template #empty-actions>
@@ -218,7 +344,7 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
             size="sm"
             icon="i-lucide-plus"
             :disabled="!context.selectedWorkspace.value"
-            @click="modalOpen = true"
+            @click="openCreateUpstream"
           >
             {{ $t('admin.apis.routing.actions.createUpstream') }}
           </UButton>
@@ -230,7 +356,15 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
       v-if="context.selectedWorkspace.value"
       v-model:open="modalOpen"
       :workspace="context.selectedWorkspace.value"
-      @saved="resource.refresh"
+      :upstream="editingUpstream"
+      @saved="refreshUpstreams"
+    />
+    <AdminPlatformTargetModal
+      v-if="targetUpstream"
+      v-model:open="targetModalOpen"
+      :upstream="targetUpstream"
+      :target="editingTarget"
+      @saved="refreshUpstreams"
     />
   </div>
 </template>

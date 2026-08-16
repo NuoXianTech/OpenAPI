@@ -7,7 +7,7 @@
 | 项目 | 约束 |
 | --- | --- |
 | 应用进程 | 默认一个 Platform Node 进程和一个 API Service Node 进程；二者不共享 V8 Heap、环境变量或故障边界 |
-| 数据库 | 仅 Platform 访问 PostgreSQL/PGlite；迁移由 Node/Nitro 启动插件在 Platform 启动前自动执行，API Service 不运行数据库迁移 |
+| 数据库 | 仅 Platform 访问 PostgreSQL/PGlite；升级时由新 Platform 构建产物显式迁移，启动插件再幂等复查，API Service 不运行数据库迁移 |
 | 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
 | 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
 | 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描到期的 `api_credit_reservations` |
@@ -55,7 +55,7 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 | 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
 | SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
 | 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[credit-reservations]` 日志 |
-| 启动迁移失败 | PM2 日志中的 `[db:migrate]`、`DATABASE_URL` 权限、`.output/server/db/migrations/postgresql` 是否完整 |
+| 数据库迁移失败 | `node .output/server/migrate.mjs` 输出、`DATABASE_URL` 权限、迁移执行器和 `.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_API_KEY_SECRET` 是否与加密时一致、`api_keys.key_digest` 是否存在、Key 是否被禁用、网关是否连接了预期数据库 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
@@ -67,7 +67,7 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 
 生产数据库至少保留每日备份。发布数据库迁移前必须手动创建一次备份或快照。
 
-当前数据库使用单一 `0000` 基线。不兼容该基线的数据库和 PGlite Volume 不能依赖启动过程自动升级；必须使用全新数据库，或先执行经过演练的数据导入方案。
+`0.1.0` 的 `0000` 是不可修改的正式基线，后续版本只追加迁移。正式 `0.1.0` 数据库可以连续升级；更早的实验数据库和 PGlite Volume 必须使用全新数据库，或先执行经过演练的数据导入方案。
 
 ```bash
 pg_dump "$DATABASE_URL" --format=custom --file="backup-$(date +%Y%m%d-%H%M%S).dump"
@@ -95,7 +95,7 @@ cd .output
 pm2 restart openapi-platform --update-env
 ```
 
-如果迁移不可逆，优先回滚应用版本并评估数据修复脚本，不直接强行恢复旧库覆盖新业务数据。
+如果迁移不可逆，先判断新 Schema 是否仍兼容旧应用。兼容时可以回滚应用；不兼容时优先使用前向修复，只有在停止全部 Platform 写入后才能恢复发布前备份，不能让旧进程继续写入恢复中的数据库。
 
 ## 安全巡检
 
@@ -113,7 +113,7 @@ pm2 restart openapi-platform --update-env
 1. 先确认影响范围：首页、统一登录页、管理后台、用户后台、External Route、官方 API Service Route、数据库、邮件、第三方 OAuth。
 2. 冻结变更：暂停发布、停止批量任务、保留日志。
 3. 读取 PM2 日志和数据库关键表，定位最近一次配置或代码变更。
-4. 如果影响公开 API 收费，检查 `api_credit_reservations` 和 `credit_transactions`。`pending` 可等待或触发重试；`dead_letter` 必须先核对调用与流水再人工处理，不要直接删除。
+4. 如果影响公开 API 收费，检查 `api_credit_reservations` 和 `credit_transactions`。`pending` 可等待后台重试；`dead_letter` 在“积分 → 计费预留”中先核对请求、上游结果和流水，再选择重试、确认扣费或释放。不要直接删除数据库行。
 5. 能快速回滚应用时，只回滚异常服务；API Service 回滚不停止 Platform，也不运行 Platform 数据库迁移。涉及 Platform 数据库结构时先备份当前状态。
 6. 恢复后补充事件记录：时间线、根因、影响、修复、预防项。
 

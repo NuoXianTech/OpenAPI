@@ -50,6 +50,9 @@ const { platformProductService } = await import(
 const { platformRouteService } = await import(
   '~~/server/services/platform-route-service'
 )
+const { routeMutationFromBinding } = await import(
+  '~~/server/services/platform-endpoint-publication-service'
+)
 const { platformServiceControlService } = await import(
   '~~/server/services/platform-service-control-service'
 )
@@ -125,8 +128,7 @@ beforeAll(async () => {
         ...process.env,
         LISTEN_ADDR: `127.0.0.1:${servicePort}`,
         API_SERVICE_TOKEN: serviceToken,
-        SHUTDOWN_TIMEOUT: '2s',
-        SERVICE_CONFIG_FILE: join(serviceRuntimeDirectory, 'configuration.enc'),
+        SERVICE_DATA_DIR: serviceRuntimeDirectory,
         SERVICE_VERSION: 'gateway-acceptance',
         SERVICE_COMMIT: 'local'
       },
@@ -660,8 +662,8 @@ describe('Platform to Node API Service acceptance', () => {
       expect(hiddenRequests).toBe(0)
       await response.arrayBuffer()
     } finally {
-      if (routeId) await platformRouteService.remove(routeId)
       await routingRevisionService.activate(environmentId, initialRevisionId)
+      if (routeId) await platformRouteService.remove(routeId)
       await closeServer(redirectServer)
     }
   })
@@ -719,8 +721,8 @@ describe('Platform to Node API Service acceptance', () => {
       expect(requestCounts[failedTarget!]).toBe(1)
       expect(requestCounts[failedTarget === 0 ? 1 : 0]).toBe(2)
     } finally {
-      if (routeId) await platformRouteService.remove(routeId)
       await routingRevisionService.activate(environmentId, initialRevisionId)
+      if (routeId) await platformRouteService.remove(routeId)
       await Promise.all(servers.map(closeServer))
     }
   })
@@ -771,8 +773,8 @@ describe('Platform to Node API Service acceptance', () => {
       await response.text()
       expect(requests).toBe(1)
     } finally {
-      if (routeId) await platformRouteService.remove(routeId)
       await routingRevisionService.activate(environmentId, initialRevisionId)
+      if (routeId) await platformRouteService.remove(routeId)
       await Promise.all(servers.map(closeServer))
     }
   })
@@ -896,8 +898,8 @@ describe('Platform to Node API Service acceptance', () => {
         [user.id]
       )).toEqual({ count: 0 })
     } finally {
-      await Promise.all(routeIds.map(routeId => platformRouteService.remove(routeId)))
       await routingRevisionService.activate(environmentId, initialRevisionId)
+      await Promise.all(routeIds.map(routeId => platformRouteService.remove(routeId)))
       await closeServer(streamServer)
     }
   })
@@ -954,7 +956,7 @@ describe('Platform to Node API Service acceptance', () => {
     })
   })
 
-  it('applies Route edits and soft deletes only through a new Revision and can roll back', async () => {
+  it('requires an unpublished Route before soft delete and can roll back historical Revisions', async () => {
     const oldPath = '/v1/yiyan-lifecycle'
     const newPath = '/v1/yiyan-lifecycle-updated'
 
@@ -979,15 +981,26 @@ describe('Platform to Node API Service acceptance', () => {
     await afterPublishOld.arrayBuffer()
     await afterPublishNew.arrayBuffer()
 
-    await platformRouteService.remove(routeIds.lifecycle)
-    const beforeDeletePublish = await fetch(`${gatewayBaseURL}${newPath}?type=a&id=a1`)
-    expect(beforeDeletePublish.status).toBe(200)
-    await beforeDeletePublish.arrayBuffer()
+    await expect(platformRouteService.remove(routeIds.lifecycle))
+      .rejects.toMatchObject({ data: { code: 'ROUTE_STILL_PUBLISHED' } })
+    const binding = await platformRouteService.get(routeIds.lifecycle)
+    await platformRouteService.update(
+      routeIds.lifecycle,
+      routeMutationFromBinding(binding, { state: 'disabled' })
+    )
+    const beforeDisablePublish = await fetch(
+      `${gatewayBaseURL}${newPath}?type=a&id=a1`
+    )
+    expect(beforeDisablePublish.status).toBe(200)
+    await beforeDisablePublish.arrayBuffer()
 
     await routingRevisionService.publish(environmentId, null)
-    const afterDeletePublish = await fetch(`${gatewayBaseURL}${newPath}?type=a&id=a1`)
-    expect(afterDeletePublish.status).toBe(404)
-    await afterDeletePublish.arrayBuffer()
+    const afterDisablePublish = await fetch(
+      `${gatewayBaseURL}${newPath}?type=a&id=a1`
+    )
+    expect(afterDisablePublish.status).toBe(404)
+    await afterDisablePublish.arrayBuffer()
+    await platformRouteService.remove(routeIds.lifecycle)
 
     await routingRevisionService.activate(environmentId, updatedRevision.id)
     const rolledBack = await fetch(`${gatewayBaseURL}${newPath}?type=a&id=a1`)

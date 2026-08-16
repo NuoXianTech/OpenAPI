@@ -8,6 +8,7 @@ import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
   workspace: PlatformWorkspace
+  upstream?: PlatformUpstream | null
 }>()
 const emit = defineEmits<{ saved: [upstream: PlatformUpstream] }>()
 const toast = useToast()
@@ -29,17 +30,18 @@ interface UpstreamFormState {
 
 function initialState(): UpstreamFormState {
   return {
-    name: '',
-    slug: '',
-    kind: 'internal',
+    name: props.upstream?.name ?? '',
+    slug: props.upstream?.slug ?? '',
+    kind: props.upstream?.kind ?? 'internal',
     serviceToken: '',
-    loadBalancing: 'round_robin',
+    loadBalancing: props.upstream?.loadBalancing ?? 'round_robin',
     targets: [{ baseUrl: 'http://openapi-service:8080', weight: 1 }]
   }
 }
 
 const state = reactive<UpstreamFormState>(initialState())
 const loading = ref(false)
+const isEditing = computed(() => Boolean(props.upstream))
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const kindItems = computed(() => [
@@ -91,12 +93,14 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
     maxLengthError('slug', value.slug, 80, t('admin.apis.routing.validation.slugMaxLength'))
   )
 
-  if (value.kind === 'internal' && (value.serviceToken?.length ?? 0) < 32) {
+  if (!isEditing.value && value.kind === 'internal' && (value.serviceToken?.length ?? 0) < 32) {
     errors.push({
       name: 'serviceToken',
       message: t('admin.apis.routing.validation.serviceTokenInvalid')
     })
   }
+
+  if (isEditing.value) return errors
 
   const targets = value.targets ?? []
   if (targets.length === 0) {
@@ -134,24 +138,38 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
 async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
   loading.value = true
   try {
-    const upstream = await $fetch<PlatformUpstream>('/api/admin/v1/upstreams', {
-      method: 'POST',
-      body: {
-        workspaceId: props.workspace.id,
-        name: event.data.name.trim(),
-        slug: event.data.slug.trim(),
-        kind: event.data.kind,
-        serviceToken: event.data.kind === 'internal'
-          ? event.data.serviceToken
-          : undefined,
-        loadBalancing: event.data.loadBalancing,
-        targets: event.data.targets.map(target => ({
-          baseUrl: target.baseUrl.trim(),
-          weight: target.weight
-        }))
+    const upstream = await $fetch<PlatformUpstream>(
+      isEditing.value ? `/api/admin/v1/upstreams/${props.upstream!.id}` : '/api/admin/v1/upstreams',
+      {
+        method: isEditing.value ? 'PATCH' : 'POST',
+        body: isEditing.value
+          ? {
+              name: event.data.name.trim(),
+              slug: event.data.slug.trim(),
+              loadBalancing: event.data.loadBalancing
+            }
+          : {
+              workspaceId: props.workspace.id,
+              name: event.data.name.trim(),
+              slug: event.data.slug.trim(),
+              kind: event.data.kind,
+              serviceToken: event.data.kind === 'internal'
+                ? event.data.serviceToken
+                : undefined,
+              loadBalancing: event.data.loadBalancing,
+              targets: event.data.targets.map(target => ({
+                baseUrl: target.baseUrl.trim(),
+                weight: target.weight
+              }))
+            }
       }
+    )
+    toast.add({
+      title: t(isEditing.value
+        ? 'admin.apis.routing.feedback.upstreamUpdated'
+        : 'admin.apis.routing.feedback.upstreamCreated'),
+      color: 'success'
     })
-    toast.add({ title: t('admin.apis.routing.feedback.upstreamCreated'), color: 'success' })
     open.value = false
     emit('saved', upstream)
   } catch (error: unknown) {
@@ -165,8 +183,8 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
 <template>
   <UModal
     v-model:open="open"
-    :title="$t('admin.apis.routing.upstreamForm.title')"
-    :description="$t('admin.apis.routing.upstreamForm.description')"
+    :title="$t(isEditing ? 'admin.apis.routing.upstreamForm.editTitle' : 'admin.apis.routing.upstreamForm.title')"
+    :description="$t(isEditing ? 'admin.apis.routing.upstreamForm.editDescription' : 'admin.apis.routing.upstreamForm.description')"
     :dismissible="!loading"
     :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
   >
@@ -180,6 +198,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
       >
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField
+            v-if="!isEditing"
             name="kind"
             :label="$t('admin.apis.routing.fields.upstreamKind')"
           >
@@ -237,7 +256,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
         </UFormField>
 
         <UFormField
-          v-if="state.kind === 'internal'"
+          v-if="!isEditing && state.kind === 'internal'"
           name="serviceToken"
           :label="$t('admin.apis.routing.fields.serviceToken')"
           :description="$t('admin.apis.routing.upstreamForm.serviceTokenHelp')"
@@ -253,6 +272,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
         </UFormField>
 
         <UAlert
+          v-if="!isEditing"
           :color="state.kind === 'internal' ? 'info' : 'warning'"
           variant="subtle"
           :icon="state.kind === 'internal' ? 'i-lucide-shield-check' : 'i-lucide-shield-alert'"
@@ -264,7 +284,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
             : $t('admin.apis.routing.upstreamForm.externalDescription')"
         />
 
-        <div>
+        <div v-if="!isEditing">
           <div class="mb-3 flex items-center gap-3">
             <div>
               <h3 class="text-sm font-semibold text-highlighted">
@@ -360,7 +380,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
           form="platform-upstream-form"
           :loading="loading"
         >
-          {{ $t('admin.apis.routing.actions.createUpstream') }}
+          {{ $t(isEditing ? 'common.actions.save' : 'admin.apis.routing.actions.createUpstream') }}
         </UButton>
       </div>
     </template>

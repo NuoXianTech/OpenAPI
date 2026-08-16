@@ -58,18 +58,37 @@ const SENSITIVE_QUERY_KEYS = new Set([
   'signature',
   'token'
 ])
+const SENSITIVE_QUERY_FRAGMENTS = [
+  'authorization',
+  'credential',
+  'password',
+  'passwd',
+  'privatekey',
+  'secret',
+  'session',
+  'signature',
+  'token',
+  'cookie'
+] as const
 
 function normalizeQueryKey(value: string): string {
   return value.toLowerCase().replace(/[-_]/g, '')
 }
 
-function sanitizeNestedUrlForLog(value: string): string {
+function isSensitiveQueryKey(value: string, extraKeys: ReadonlySet<string>): boolean {
+  const normalized = normalizeQueryKey(value)
+  return SENSITIVE_QUERY_KEYS.has(normalized)
+    || extraKeys.has(normalized)
+    || SENSITIVE_QUERY_FRAGMENTS.some(fragment => normalized.includes(fragment))
+}
+
+function sanitizeNestedUrlForLog(value: string, extraKeys: ReadonlySet<string>): string {
   if (!/^https?:\/\//i.test(value)) return value
 
   try {
     const url = new URL(value)
     for (const key of [...url.searchParams.keys()]) {
-      if (SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key))) {
+      if (isSensitiveQueryKey(key, extraKeys)) {
         url.searchParams.set(key, '[REDACTED]')
       }
     }
@@ -79,18 +98,46 @@ function sanitizeNestedUrlForLog(value: string): string {
   }
 }
 
-export function sanitizeQueryStringForLog(search: string, maxLength = 2_000): string | null {
+export function sanitizeQueryStringForLog(
+  search: string,
+  maxLength = 2_000,
+  sensitiveKeys: readonly string[] = []
+): string | null {
   const rawQuery = search.startsWith('?') ? search.slice(1) : search
   if (!rawQuery) return null
 
+  const extraKeys = new Set(sensitiveKeys.map(normalizeQueryKey))
   const sanitizedQuery = new URLSearchParams()
   for (const [key, value] of new URLSearchParams(rawQuery)) {
     sanitizedQuery.append(
       key,
-      SENSITIVE_QUERY_KEYS.has(normalizeQueryKey(key)) ? '[REDACTED]' : sanitizeNestedUrlForLog(value)
+      isSensitiveQueryKey(key, extraKeys)
+        ? '[REDACTED]'
+        : sanitizeNestedUrlForLog(value, extraKeys)
     )
   }
 
   const serializedQuery = sanitizedQuery.toString()
   return serializedQuery ? serializedQuery.slice(0, Math.max(Math.trunc(maxLength), 0)) : null
+}
+
+export function sanitizeUrlForLog(
+  value: string | null | undefined,
+  maxLength = 1_000,
+  sensitiveKeys: readonly string[] = []
+): string | null {
+  const normalized = value?.trim()
+  if (!normalized) return null
+  try {
+    const url = new URL(normalized)
+    const sanitized = sanitizeQueryStringForLog(
+      url.search,
+      Math.max(maxLength, 0),
+      sensitiveKeys
+    )
+    url.search = sanitized ?? ''
+    return url.toString().slice(0, Math.max(Math.trunc(maxLength), 0)) || null
+  } catch {
+    return normalized.slice(0, Math.max(Math.trunc(maxLength), 0)) || null
+  }
 }
