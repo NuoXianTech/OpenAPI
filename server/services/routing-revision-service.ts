@@ -11,6 +11,7 @@ import {
   upstreamTargets
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
+import { invalidatePublicApiCatalogCache } from '~~/server/services/api-catalog-service'
 import { invalidateRoutingRuntimeCache } from '~~/server/services/routing-runtime-service'
 import type {
   RoutingRevisionPayload,
@@ -215,6 +216,7 @@ export const routingRevisionService = {
         return created
       })
       invalidateRoutingRuntimeCache()
+      await invalidatePublicApiCatalogCache()
       return revision
     } catch (error) {
       if (getSqlState(error) === '23505') {
@@ -280,6 +282,7 @@ export const routingRevisionService = {
       return activated
     })
     invalidateRoutingRuntimeCache()
+    await invalidatePublicApiCatalogCache()
     return revision
   }
 }

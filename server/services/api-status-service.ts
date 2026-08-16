@@ -1,5 +1,6 @@
 import { and, eq, gte, inArray, lte, sql } from 'drizzle-orm'
 import { apiCalls } from '~~/server/db/schema'
+import { db } from '~~/server/db/client'
 import {
   API_AUTO_STATUS_CACHE_TTL_MS,
   API_AUTO_STATUS_MIN_AVAILABILITY_RATE,
@@ -16,7 +17,7 @@ interface ApiAutoStatusCacheEntry {
 
 const routeStatusCache = new Map<string, ApiAutoStatusCacheEntry>()
 
-interface ApiAutoStatusSample {
+export interface ApiAutoStatusSample {
   statusCode: number
 }
 

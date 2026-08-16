@@ -10,12 +10,17 @@ import {
   apiVersions,
   upstreamServices
 } from '~~/server/db/schema'
-import { getSharedCache } from '~~/server/utils/shared-cache'
+import {
+  getSharedCache,
+  getSharedCacheVersion,
+  incrementSharedCacheVersion
+} from '~~/server/utils/shared-cache'
 import { toNumber } from '~~/server/utils/number'
 import { resolveApiAutoStatuses, resolveEffectiveApiStatus } from './api-status-service'
 import { publicApiRouteCondition } from './public-api-query'
 
 const PUBLIC_API_CATALOG_TTL_SECONDS = 15
+const PUBLIC_API_CATALOG_CACHE_NAMESPACE = 'public-api-catalog'
 
 export interface PublicApiCatalogFilters {
   keyword?: string
@@ -68,8 +73,11 @@ export const apiCatalogService = {
       categoryId: filters.categoryId
     }
 
+    const cacheVersion = await getSharedCacheVersion(
+      PUBLIC_API_CATALOG_CACHE_NAMESPACE
+    )
     return getSharedCache<ApiCatalogItem[]>({
-      key: createCacheKey(normalizedFilters),
+      key: `${createCacheKey(normalizedFilters)}:v${cacheVersion}`,
       ttlSeconds: PUBLIC_API_CATALOG_TTL_SECONDS,
       async loader() {
         const conditions = buildFilters(normalizedFilters)
@@ -129,4 +137,8 @@ export const apiCatalogService = {
       }
     })
   }
+}
+
+export function invalidatePublicApiCatalogCache(): Promise<number> {
+  return incrementSharedCacheVersion(PUBLIC_API_CATALOG_CACHE_NAMESPACE)
 }
