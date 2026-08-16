@@ -7,6 +7,7 @@ import { parseFetchError } from '~/utils/client-error'
 import { platformStatusColor } from '~/utils/platform-display'
 
 const { t } = useI18n()
+const route = useRoute()
 const context = useAdminPlatformContext()
 const modalOpen = ref(false)
 
@@ -184,7 +185,10 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
           <div class="flex justify-end">
             <UButton
               v-if="row.original.kind === 'internal'"
-              :to="`/admin/apis/upstreams/${row.original.id}`"
+              :to="{
+                path: `/admin/apis/upstreams/${row.original.id}`,
+                query: route.query
+              }"
               color="neutral"
               variant="ghost"
               size="xs"

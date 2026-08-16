@@ -12,7 +12,7 @@ const { t } = useI18n()
 const toast = useToast()
 const upstreamId = computed(() => String(route.params.id ?? ''))
 const resource = usePrivateResource<ServiceConfigurationView | null>({
-  path: `/api/admin/v1/upstreams/${upstreamId.value}/service`,
+  path: () => `/api/admin/v1/upstreams/${upstreamId.value}/service`,
   defaultData: () => null
 })
 
@@ -28,6 +28,12 @@ const businessEndpoints = computed(() =>
 useHead({
   title: () => resource.data.value?.connection.serviceName
     ?? t('admin.apis.routing.serviceControl.pageTitle')
+})
+
+watch(upstreamId, (id, previousId) => {
+  if (!id || id === previousId) return
+  resource.data.value = null
+  void resource.refresh()
 })
 
 function targetStatusColor(status: string) {
@@ -200,6 +206,24 @@ async function synchronizeConfiguration() {
 
     <AdminPlatformContextBar :show-environment="false" />
 
+    <div
+      v-if="resource.loading.value && !resource.data.value"
+      class="space-y-4"
+      aria-busy="true"
+    >
+      <UCard
+        v-for="index in 3"
+        :key="index"
+        variant="subtle"
+      >
+        <div class="space-y-4">
+          <USkeleton class="h-5 w-40" />
+          <USkeleton class="h-4 w-full" />
+          <USkeleton class="h-4 w-2/3" />
+        </div>
+      </UCard>
+    </div>
+
     <UAlert
       v-if="resource.error.value"
       color="error"
@@ -210,7 +234,18 @@ async function synchronizeConfiguration() {
         resource.error.value,
         $t('common.feedback.loadFailed')
       )"
-    />
+    >
+      <template #actions>
+        <UButton
+          color="error"
+          variant="soft"
+          size="xs"
+          @click="resource.refresh"
+        >
+          {{ $t('common.actions.retry') }}
+        </UButton>
+      </template>
+    </UAlert>
 
     <template v-if="resource.data.value">
       <UCard variant="subtle">
