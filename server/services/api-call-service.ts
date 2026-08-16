@@ -1,10 +1,11 @@
 import { eq, sql } from 'drizzle-orm'
 import { apiCallStats, apiCalls } from '~~/server/db/schema'
 import { toLocalDateKey } from '~~/server/utils/local-time'
-import type { DatabaseTransaction } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 
 interface AddCallInput {
-  apiId: number
+  routeId: string
+  targetName?: string | null
   apiKeyId?: number | null
   apiKeyName?: string | null
   userId?: number | null
@@ -27,15 +28,16 @@ interface AddCallInput {
 
 function normalizeCallRow(data: AddCallInput) {
   return {
-    apiId: data.apiId,
+    routeId: data.routeId,
+    targetName: data.targetName ?? null,
     apiKeyId: data.apiKeyId ?? null,
     apiKeyName: data.apiKeyName ?? null,
     userId: data.userId ?? null,
     ...(data.requestId ? { requestId: data.requestId } : {}),
     path: data.path,
     method: data.method,
-    statusCode: data.statusCode,
-    latencyMs: data.latencyMs,
+    statusCode: Math.trunc(data.statusCode),
+    latencyMs: Math.max(Math.trunc(data.latencyMs), 0),
     ip: data.ip ?? null,
     userAgent: data.userAgent ?? null,
     referer: data.referer ?? null,
@@ -54,38 +56,28 @@ export const apiCallService = {
     return db.insert(apiCalls).values(normalizeCallRow(data)).returning()
   },
 
-  /**
-   * 统计修正后的 status code（业务标记 forced=failed 时，HTTP 可能仍是 200，
-   * 但要让 daily stats 视为失败）。不传则使用 data.statusCode。
-   */
   async addCallAndUpsertDailyStat(data: AddCallInput & {
     statDate?: Date
     statusCodeForStats?: number
   }) {
-    const normalizedStatusCode = Math.trunc(data.statusCode)
-    const normalizedLatencyMs = Math.max(Math.trunc(data.latencyMs), 0)
+    const row = normalizeCallRow({ ...data, isCounted: true })
     const statDate = toLocalDateKey(data.statDate || new Date())
-    const statStatusCode = Math.trunc(data.statusCodeForStats ?? normalizedStatusCode)
+    const statStatusCode = Math.trunc(data.statusCodeForStats ?? row.statusCode)
     const successDelta = statStatusCode >= 200 && statStatusCode < 400 && !data.errorCode ? 1 : 0
     const failureDelta = successDelta ? 0 : 1
 
     return db.transaction(async (tx: DatabaseTransaction) => {
-      const inserted = await tx.insert(apiCalls).values({
-        ...normalizeCallRow({ ...data, isCounted: true }),
-        statusCode: normalizedStatusCode,
-        latencyMs: normalizedLatencyMs
-      }).returning({ id: apiCalls.id })
-
+      const inserted = await tx.insert(apiCalls).values(row).returning({ id: apiCalls.id })
       const callId = inserted[0]?.id ?? null
 
       await tx.insert(apiCallStats).values({
-        apiId: data.apiId,
+        routeId: data.routeId,
         statDate,
         totalCount: 1,
         successCount: successDelta,
         failureCount: failureDelta
       }).onConflictDoUpdate({
-        target: [apiCallStats.apiId, apiCallStats.statDate],
+        target: [apiCallStats.routeId, apiCallStats.statDate],
         set: {
           totalCount: sql`${apiCallStats.totalCount} + 1`,
           successCount: sql`${apiCallStats.successCount} + ${successDelta}`,
@@ -98,11 +90,9 @@ export const apiCallService = {
     })
   },
 
-  /** 扣费完成后回填 apiCalls.creditsCost */
   async patchCreditsCost(callId: number, creditsCost: number) {
-    const value = Math.max(Math.trunc(creditsCost), 0)
     await db.update(apiCalls)
-      .set({ creditsCost: value })
+      .set({ creditsCost: Math.max(Math.trunc(creditsCost), 0) })
       .where(eq(apiCalls.id, callId))
   }
 }

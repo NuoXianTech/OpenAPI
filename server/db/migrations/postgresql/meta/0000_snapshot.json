@@ -1,5 +1,5 @@
 {
-  "id": "effd205b-3388-409f-bed5-a77153796602",
+  "id": "e06acd4d-f126-46d1-8a38-39175d9fc349",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -38,9 +38,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -741,9 +741,9 @@
       "name": "api_call_stats",
       "schema": "",
       "columns": {
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -806,26 +806,12 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "api_call_stats_api_id_apis_id_fk": {
-          "name": "api_call_stats_api_id_apis_id_fk",
-          "tableFrom": "api_call_stats",
-          "tableTo": "apis",
-          "columnsFrom": [
-            "api_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {
-        "api_call_stats_api_id_stat_date_pk": {
-          "name": "api_call_stats_api_id_stat_date_pk",
+        "api_call_stats_route_id_stat_date_pk": {
+          "name": "api_call_stats_route_id_stat_date_pk",
           "columns": [
-            "api_id",
+            "route_id",
             "stat_date"
           ]
         }
@@ -857,11 +843,17 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
+        },
+        "target_name": {
+          "name": "target_name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
         },
         "api_key_id": {
           "name": "api_key_id",
@@ -992,11 +984,11 @@
           "method": "btree",
           "with": {}
         },
-        "api_calls_api_id_created_at_idx": {
-          "name": "api_calls_api_id_created_at_idx",
+        "api_calls_route_created_at_idx": {
+          "name": "api_calls_route_created_at_idx",
           "columns": [
             {
-              "expression": "api_id",
+              "expression": "route_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1071,21 +1063,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "api_calls_api_id_apis_id_fk": {
-          "name": "api_calls_api_id_apis_id_fk",
-          "tableFrom": "api_calls",
-          "tableTo": "apis",
-          "columnsFrom": [
-            "api_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "restrict",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -1113,167 +1091,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.api_categories": {
-      "name": "api_categories",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "code": {
-          "name": "code",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "icon": {
-          "name": "icon",
-          "type": "varchar(120)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "color": {
-          "name": "color",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "parent_id": {
-          "name": "parent_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "sort_order": {
-          "name": "sort_order",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "is_enabled": {
-          "name": "is_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "api_categories_code_uq": {
-          "name": "api_categories_code_uq",
-          "columns": [
-            {
-              "expression": "code",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_categories_parent_sort_idx": {
-          "name": "api_categories_parent_sort_idx",
-          "columns": [
-            {
-              "expression": "parent_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "api_categories_enabled_sort_idx": {
-          "name": "api_categories_enabled_sort_idx",
-          "columns": [
-            {
-              "expression": "is_enabled",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort_order",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "api_categories_parent_id_api_categories_id_fk": {
-          "name": "api_categories_parent_id_api_categories_id_fk",
-          "tableFrom": "api_categories",
-          "tableTo": "api_categories",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.api_credit_reservations": {
       "name": "api_credit_reservations",
       "schema": "",
@@ -1296,9 +1113,9 @@
           "primaryKey": false,
           "notNull": true
         },
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
+        "route_id": {
+          "name": "route_id",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
@@ -1440,6 +1257,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "api_credit_reservations_route_idx": {
+          "name": "api_credit_reservations_route_idx",
+          "columns": [
+            {
+              "expression": "route_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1449,19 +1281,6 @@
           "tableTo": "users",
           "columnsFrom": [
             "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "api_credit_reservations_api_id_apis_id_fk": {
-          "name": "api_credit_reservations_api_id_apis_id_fk",
-          "tableFrom": "api_credit_reservations",
-          "tableTo": "apis",
-          "columnsFrom": [
-            "api_id"
           ],
           "columnsTo": [
             "id"
@@ -1485,95 +1304,6 @@
         "api_credit_reservations_attempts_chk": {
           "name": "api_credit_reservations_attempts_chk",
           "value": "\"api_credit_reservations\".\"attempts\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.api_daily_quota_usage": {
-      "name": "api_daily_quota_usage",
-      "schema": "",
-      "columns": {
-        "api_id": {
-          "name": "api_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "usage_date": {
-          "name": "usage_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "used_count": {
-          "name": "used_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "api_daily_quota_usage_date_idx": {
-          "name": "api_daily_quota_usage_date_idx",
-          "columns": [
-            {
-              "expression": "usage_date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "api_daily_quota_usage_api_id_apis_id_fk": {
-          "name": "api_daily_quota_usage_api_id_apis_id_fk",
-          "tableFrom": "api_daily_quota_usage",
-          "tableTo": "apis",
-          "columnsFrom": [
-            "api_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "api_daily_quota_usage_api_id_usage_date_pk": {
-          "name": "api_daily_quota_usage_api_id_usage_date_pk",
-          "columns": [
-            "api_id",
-            "usage_date"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "api_daily_quota_usage_count_chk": {
-          "name": "api_daily_quota_usage_count_chk",
-          "value": "\"api_daily_quota_usage\".\"used_count\" >= 0"
         }
       },
       "isRLSEnabled": false
@@ -1745,314 +1475,6 @@
         "api_keys_total_calls_chk": {
           "name": "api_keys_total_calls_chk",
           "value": "\"api_keys\".\"total_calls\" >= 0"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.apis": {
-      "name": "apis",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "code": {
-          "name": "code",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "path_version": {
-          "name": "path_version",
-          "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'v1'"
-        },
-        "endpoint_count": {
-          "name": "endpoint_count",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 4
-        },
-        "category_id": {
-          "name": "category_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "short_desc": {
-          "name": "short_desc",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "http_method": {
-          "name": "http_method",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "api_path": {
-          "name": "api_path",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "doc_url": {
-          "name": "doc_url",
-          "type": "varchar(200)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "is_enabled": {
-          "name": "is_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_api_key": {
-          "name": "is_api_key",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_statistics": {
-          "name": "is_statistics",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "is_orphaned": {
-          "name": "is_orphaned",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "rate_limit_per_second": {
-          "name": "rate_limit_per_second",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "rate_limit_per_minute": {
-          "name": "rate_limit_per_minute",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "rate_limit_per_hour": {
-          "name": "rate_limit_per_hour",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "rate_limit_per_day": {
-          "name": "rate_limit_per_day",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "method_costs": {
-          "name": "method_costs",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "capability_config": {
-          "name": "capability_config",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::jsonb"
-        },
-        "capability_revision": {
-          "name": "capability_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "capability_updated_at": {
-          "name": "capability_updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "daily_quota": {
-          "name": "daily_quota",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "timeout_ms": {
-          "name": "timeout_ms",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 10000
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_by": {
-          "name": "updated_by",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "apis_version_code_uq": {
-          "name": "apis_version_code_uq",
-          "columns": [
-            {
-              "expression": "path_version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "code",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "apis_category_idx": {
-          "name": "apis_category_idx",
-          "columns": [
-            {
-              "expression": "category_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "apis_path_version_enabled_idx": {
-          "name": "apis_path_version_enabled_idx",
-          "columns": [
-            {
-              "expression": "path_version",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "is_enabled",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "apis_category_id_api_categories_id_fk": {
-          "name": "apis_category_id_api_categories_id_fk",
-          "tableFrom": "apis",
-          "tableTo": "api_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "apis_status_chk": {
-          "name": "apis_status_chk",
-          "value": "\"apis\".\"status\" in (-1, 0, 1, 2, 3, 4)"
-        },
-        "apis_endpoint_count_chk": {
-          "name": "apis_endpoint_count_chk",
-          "value": "\"apis\".\"endpoint_count\" >= 0"
-        },
-        "apis_rate_limits_chk": {
-          "name": "apis_rate_limits_chk",
-          "value": "\"apis\".\"rate_limit_per_second\" >= 0 and \"apis\".\"rate_limit_per_minute\" >= 0 and \"apis\".\"rate_limit_per_hour\" >= 0 and \"apis\".\"rate_limit_per_day\" >= 0"
-        },
-        "apis_capability_revision_chk": {
-          "name": "apis_capability_revision_chk",
-          "value": "\"apis\".\"capability_revision\" >= 0"
-        },
-        "apis_daily_quota_chk": {
-          "name": "apis_daily_quota_chk",
-          "value": "\"apis\".\"daily_quota\" >= 0"
-        },
-        "apis_timeout_ms_chk": {
-          "name": "apis_timeout_ms_chk",
-          "value": "\"apis\".\"timeout_ms\" between 100 and 120000"
         }
       },
       "isRLSEnabled": false
@@ -2763,6 +2185,1844 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.api_categories": {
+      "name": "api_categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon": {
+          "name": "icon",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "color": {
+          "name": "color",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_enabled": {
+          "name": "is_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "api_categories_code_uq": {
+          "name": "api_categories_code_uq",
+          "columns": [
+            {
+              "expression": "code",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_categories_parent_sort_idx": {
+          "name": "api_categories_parent_sort_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_categories_enabled_sort_idx": {
+          "name": "api_categories_enabled_sort_idx",
+          "columns": [
+            {
+              "expression": "is_enabled",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "api_categories_parent_id_api_categories_id_fk": {
+          "name": "api_categories_parent_id_api_categories_id_fk",
+          "tableFrom": "api_categories",
+          "tableTo": "api_categories",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.api_products": {
+      "name": "api_products",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary": {
+          "name": "summary",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "lifecycle": {
+          "name": "lifecycle",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "api_products_workspace_slug_uq": {
+          "name": "api_products_workspace_slug_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_products_workspace_lifecycle_idx": {
+          "name": "api_products_workspace_lifecycle_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "lifecycle",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_products_category_idx": {
+          "name": "api_products_category_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "api_products_workspace_id_workspaces_id_fk": {
+          "name": "api_products_workspace_id_workspaces_id_fk",
+          "tableFrom": "api_products",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "api_products_category_id_api_categories_id_fk": {
+          "name": "api_products_category_id_api_categories_id_fk",
+          "tableFrom": "api_products",
+          "tableTo": "api_categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "api_products_visibility_chk": {
+          "name": "api_products_visibility_chk",
+          "value": "\"api_products\".\"visibility\" in ('public', 'private')"
+        },
+        "api_products_lifecycle_chk": {
+          "name": "api_products_lifecycle_chk",
+          "value": "\"api_products\".\"lifecycle\" in ('active', 'deprecated', 'retired')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.api_routes": {
+      "name": "api_routes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "api_version_id": {
+          "name": "api_version_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hosts": {
+          "name": "hosts",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "method": {
+          "name": "method",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path_pattern": {
+          "name": "path_pattern",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "normalized_shape": {
+          "name": "normalized_shape",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upstream_service_id": {
+          "name": "upstream_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upstream_path_template": {
+          "name": "upstream_path_template",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_api_key": {
+          "name": "is_api_key",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_statistics": {
+          "name": "is_statistics",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "credits_cost": {
+          "name": "credits_cost",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_limit_per_second": {
+          "name": "rate_limit_per_second",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_limit_per_minute": {
+          "name": "rate_limit_per_minute",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_limit_per_hour": {
+          "name": "rate_limit_per_hour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rate_limit_per_day": {
+          "name": "rate_limit_per_day",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "timeout_ms": {
+          "name": "timeout_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10000
+        },
+        "max_request_bytes": {
+          "name": "max_request_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1048576
+        },
+        "max_response_bytes": {
+          "name": "max_response_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 10485760
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "api_routes_version_method_shape_uq": {
+          "name": "api_routes_version_method_shape_uq",
+          "columns": [
+            {
+              "expression": "api_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "method",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "normalized_shape",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_routes_version_state_idx": {
+          "name": "api_routes_version_state_idx",
+          "columns": [
+            {
+              "expression": "api_version_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_routes_upstream_idx": {
+          "name": "api_routes_upstream_idx",
+          "columns": [
+            {
+              "expression": "upstream_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "api_routes_api_version_id_api_versions_id_fk": {
+          "name": "api_routes_api_version_id_api_versions_id_fk",
+          "tableFrom": "api_routes",
+          "tableTo": "api_versions",
+          "columnsFrom": [
+            "api_version_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "api_routes_upstream_service_id_upstream_services_id_fk": {
+          "name": "api_routes_upstream_service_id_upstream_services_id_fk",
+          "tableFrom": "api_routes",
+          "tableTo": "upstream_services",
+          "columnsFrom": [
+            "upstream_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "api_routes_method_chk": {
+          "name": "api_routes_method_chk",
+          "value": "\"api_routes\".\"method\" in ('GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS')"
+        },
+        "api_routes_credits_cost_chk": {
+          "name": "api_routes_credits_cost_chk",
+          "value": "\"api_routes\".\"credits_cost\" >= 0"
+        },
+        "api_routes_rate_limits_chk": {
+          "name": "api_routes_rate_limits_chk",
+          "value": "\"api_routes\".\"rate_limit_per_second\" >= 0 and \"api_routes\".\"rate_limit_per_minute\" >= 0 and \"api_routes\".\"rate_limit_per_hour\" >= 0 and \"api_routes\".\"rate_limit_per_day\" >= 0"
+        },
+        "api_routes_paid_policy_chk": {
+          "name": "api_routes_paid_policy_chk",
+          "value": "\"api_routes\".\"credits_cost\" = 0 or (\"api_routes\".\"is_api_key\" = true and \"api_routes\".\"is_statistics\" = true)"
+        },
+        "api_routes_timeout_chk": {
+          "name": "api_routes_timeout_chk",
+          "value": "\"api_routes\".\"timeout_ms\" between 100 and 120000"
+        },
+        "api_routes_request_bytes_chk": {
+          "name": "api_routes_request_bytes_chk",
+          "value": "\"api_routes\".\"max_request_bytes\" between 0 and 1073741824"
+        },
+        "api_routes_response_bytes_chk": {
+          "name": "api_routes_response_bytes_chk",
+          "value": "\"api_routes\".\"max_response_bytes\" between 0 and 2147483647"
+        },
+        "api_routes_state_chk": {
+          "name": "api_routes_state_chk",
+          "value": "\"api_routes\".\"state\" in ('draft', 'active', 'disabled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.api_versions": {
+      "name": "api_versions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "openapi_document_id": {
+          "name": "openapi_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "changelog": {
+          "name": "changelog",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deprecated_at": {
+          "name": "deprecated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "retired_at": {
+          "name": "retired_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "api_versions_product_version_uq": {
+          "name": "api_versions_product_version_uq",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "api_versions_product_state_idx": {
+          "name": "api_versions_product_state_idx",
+          "columns": [
+            {
+              "expression": "product_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "state",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "api_versions_product_id_api_products_id_fk": {
+          "name": "api_versions_product_id_api_products_id_fk",
+          "tableFrom": "api_versions",
+          "tableTo": "api_products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "api_versions_openapi_document_id_openapi_documents_id_fk": {
+          "name": "api_versions_openapi_document_id_openapi_documents_id_fk",
+          "tableFrom": "api_versions",
+          "tableTo": "openapi_documents",
+          "columnsFrom": [
+            "openapi_document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "api_versions_state_chk": {
+          "name": "api_versions_state_chk",
+          "value": "\"api_versions\".\"state\" in ('draft', 'published', 'deprecated', 'retired')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.environments": {
+      "name": "environments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "default_domain": {
+          "name": "default_domain",
+          "type": "varchar(253)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active_revision_id": {
+          "name": "active_revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "environments_workspace_slug_uq": {
+          "name": "environments_workspace_slug_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "environments_active_revision_idx": {
+          "name": "environments_active_revision_idx",
+          "columns": [
+            {
+              "expression": "active_revision_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "environments_workspace_id_workspaces_id_fk": {
+          "name": "environments_workspace_id_workspaces_id_fk",
+          "tableFrom": "environments",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "environments_active_revision_id_routing_revisions_id_fk": {
+          "name": "environments_active_revision_id_routing_revisions_id_fk",
+          "tableFrom": "environments",
+          "tableTo": "routing_revisions",
+          "columnsFrom": [
+            "active_revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "environments_status_chk": {
+          "name": "environments_status_chk",
+          "value": "\"environments\".\"status\" in ('active', 'disabled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.openapi_documents": {
+      "name": "openapi_documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "upstream_service_id": {
+          "name": "upstream_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_type": {
+          "name": "source_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format": {
+          "name": "format",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "spec_version": {
+          "name": "spec_version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parsed_summary": {
+          "name": "parsed_summary",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "openapi_documents_workspace_created_idx": {
+          "name": "openapi_documents_workspace_created_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "openapi_documents_workspace_hash_uq": {
+          "name": "openapi_documents_workspace_hash_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "content_hash",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "openapi_documents_workspace_id_workspaces_id_fk": {
+          "name": "openapi_documents_workspace_id_workspaces_id_fk",
+          "tableFrom": "openapi_documents",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "openapi_documents_upstream_service_id_upstream_services_id_fk": {
+          "name": "openapi_documents_upstream_service_id_upstream_services_id_fk",
+          "tableFrom": "openapi_documents",
+          "tableTo": "upstream_services",
+          "columnsFrom": [
+            "upstream_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "openapi_documents_source_type_chk": {
+          "name": "openapi_documents_source_type_chk",
+          "value": "\"openapi_documents\".\"source_type\" in ('upload', 'url')"
+        },
+        "openapi_documents_format_chk": {
+          "name": "openapi_documents_format_chk",
+          "value": "\"openapi_documents\".\"format\" in ('json', 'yaml')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.routing_revisions": {
+      "name": "routing_revisions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "environment_id": {
+          "name": "environment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "config_payload": {
+          "name": "config_payload",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checksum": {
+          "name": "checksum",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "routing_revisions_environment_sequence_uq": {
+          "name": "routing_revisions_environment_sequence_uq",
+          "columns": [
+            {
+              "expression": "environment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sequence",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "routing_revisions_environment_created_idx": {
+          "name": "routing_revisions_environment_created_idx",
+          "columns": [
+            {
+              "expression": "environment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "routing_revisions_checksum_idx": {
+          "name": "routing_revisions_checksum_idx",
+          "columns": [
+            {
+              "expression": "checksum",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "routing_revisions_workspace_id_workspaces_id_fk": {
+          "name": "routing_revisions_workspace_id_workspaces_id_fk",
+          "tableFrom": "routing_revisions",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "routing_revisions_environment_id_environments_id_fk": {
+          "name": "routing_revisions_environment_id_environments_id_fk",
+          "tableFrom": "routing_revisions",
+          "tableTo": "environments",
+          "columnsFrom": [
+            "environment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "routing_revisions_sequence_chk": {
+          "name": "routing_revisions_sequence_chk",
+          "value": "\"routing_revisions\".\"sequence\" > 0"
+        },
+        "routing_revisions_status_chk": {
+          "name": "routing_revisions_status_chk",
+          "value": "\"routing_revisions\".\"status\" in ('building', 'published', 'failed', 'superseded')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.upstream_service_connections": {
+      "name": "upstream_service_connections",
+      "schema": "",
+      "columns": {
+        "upstream_service_id": {
+          "name": "upstream_service_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "service_token_ciphertext": {
+          "name": "service_token_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "service_id": {
+          "name": "service_id",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_name": {
+          "name": "service_name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_version": {
+          "name": "service_version",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_commit": {
+          "name": "service_commit",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "platform_protocol": {
+          "name": "platform_protocol",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_description": {
+          "name": "service_description",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "openapi_sha256": {
+          "name": "openapi_sha256",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_schema_sha256": {
+          "name": "configuration_schema_sha256",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_schema": {
+          "name": "configuration_schema",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_values": {
+          "name": "configuration_values",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"values\":{},\"secrets\":{}}'::jsonb"
+        },
+        "configuration_revision": {
+          "name": "configuration_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "configuration_hash": {
+          "name": "configuration_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_discovered_at": {
+          "name": "last_discovered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_configuration_sync_at": {
+          "name": "last_configuration_sync_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_discovery_error": {
+          "name": "last_discovery_error",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "upstream_service_connections_upstream_service_id_upstream_services_id_fk": {
+          "name": "upstream_service_connections_upstream_service_id_upstream_services_id_fk",
+          "tableFrom": "upstream_service_connections",
+          "tableTo": "upstream_services",
+          "columnsFrom": [
+            "upstream_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "upstream_service_connections_revision_chk": {
+          "name": "upstream_service_connections_revision_chk",
+          "value": "\"upstream_service_connections\".\"configuration_revision\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.upstream_services": {
+      "name": "upstream_services",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "workspace_id": {
+          "name": "workspace_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "protocol": {
+          "name": "protocol",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "openapi_document_id": {
+          "name": "openapi_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "load_balancing": {
+          "name": "load_balancing",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'round_robin'"
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "upstream_services_workspace_slug_uq": {
+          "name": "upstream_services_workspace_slug_uq",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "upstream_services_workspace_status_idx": {
+          "name": "upstream_services_workspace_status_idx",
+          "columns": [
+            {
+              "expression": "workspace_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upstream_services_workspace_id_workspaces_id_fk": {
+          "name": "upstream_services_workspace_id_workspaces_id_fk",
+          "tableFrom": "upstream_services",
+          "tableTo": "workspaces",
+          "columnsFrom": [
+            "workspace_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "upstream_services_openapi_document_id_openapi_documents_id_fk": {
+          "name": "upstream_services_openapi_document_id_openapi_documents_id_fk",
+          "tableFrom": "upstream_services",
+          "tableTo": "openapi_documents",
+          "columnsFrom": [
+            "openapi_document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "upstream_services_kind_chk": {
+          "name": "upstream_services_kind_chk",
+          "value": "\"upstream_services\".\"kind\" in ('internal', 'external')"
+        },
+        "upstream_services_protocol_chk": {
+          "name": "upstream_services_protocol_chk",
+          "value": "\"upstream_services\".\"protocol\" in ('http', 'https')"
+        },
+        "upstream_services_load_balancing_chk": {
+          "name": "upstream_services_load_balancing_chk",
+          "value": "\"upstream_services\".\"load_balancing\" in ('round_robin', 'weighted')"
+        },
+        "upstream_services_status_chk": {
+          "name": "upstream_services_status_chk",
+          "value": "\"upstream_services\".\"status\" in ('active', 'disabled')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.upstream_targets": {
+      "name": "upstream_targets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "upstream_service_id": {
+          "name": "upstream_service_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "base_url": {
+          "name": "base_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "enabled": {
+          "name": "enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_revision": {
+          "name": "configuration_revision",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_hash": {
+          "name": "configuration_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "configuration_status": {
+          "name": "configuration_status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "configuration_state": {
+          "name": "configuration_state",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_configuration_sync_at": {
+          "name": "last_configuration_sync_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "upstream_targets_service_url_uq": {
+          "name": "upstream_targets_service_url_uq",
+          "columns": [
+            {
+              "expression": "upstream_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "base_url",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "upstream_targets_service_enabled_idx": {
+          "name": "upstream_targets_service_enabled_idx",
+          "columns": [
+            {
+              "expression": "upstream_service_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "enabled",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "upstream_targets_upstream_service_id_upstream_services_id_fk": {
+          "name": "upstream_targets_upstream_service_id_upstream_services_id_fk",
+          "tableFrom": "upstream_targets",
+          "tableTo": "upstream_services",
+          "columnsFrom": [
+            "upstream_service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "upstream_targets_weight_chk": {
+          "name": "upstream_targets_weight_chk",
+          "value": "\"upstream_targets\".\"weight\" between 1 and 10000"
+        },
+        "upstream_targets_configuration_revision_chk": {
+          "name": "upstream_targets_configuration_revision_chk",
+          "value": "\"upstream_targets\".\"configuration_revision\" is null or \"upstream_targets\".\"configuration_revision\" >= 0"
+        },
+        "upstream_targets_configuration_status_chk": {
+          "name": "upstream_targets_configuration_status_chk",
+          "value": "\"upstream_targets\".\"configuration_status\" in ('unknown', 'synced', 'drifted', 'error')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.workspaces": {
+      "name": "workspaces",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "workspaces_slug_uq": {
+          "name": "workspaces_slug_uq",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "workspaces_status_chk": {
+          "name": "workspaces_status_chk",
+          "value": "\"workspaces\".\"status\" in ('active', 'disabled')"
+        }
+      },
       "isRLSEnabled": false
     }
   },

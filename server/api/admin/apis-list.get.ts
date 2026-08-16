@@ -1,13 +1,6 @@
-import { apiRegistryService } from '~~/server/services/api-registry-service'
+import { apiScopeService } from '~~/server/services/api-scope-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 
-/**
- * 管理员侧 · 获取所有"已启用且非 orphan"的接口（仅看 isEnabled），用于 admin 给用户配置
- * API Key 时的"接口范围"下拉选项。与 user/apis-list 字段一致。
- *
- * 不再按 status=1 过滤：status 是运行状态（维护/废弃/未知），不应限制 Key 配置面。
- * orphan 接口（源文件已被物理删除）自动被 isEnabled=false 排除。
- */
 export default defineAdminEventHandler(async () => {
-  return apiRegistryService.listEnabledScopeOptions()
+  return apiScopeService.listPublishedProductScopes()
 })

@@ -72,7 +72,7 @@ function openDetail(row: UserCallLogRow) {
           >
             <UFormField :label="$t('user.logs.filters.api')">
               <USelectMenu
-                v-model="filters.apiId"
+                v-model="filters.routeId"
                 :items="apiSelectItems"
                 value-key="value"
                 searchable

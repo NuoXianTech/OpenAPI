@@ -349,7 +349,6 @@ export const redemptionService = {
           amount: grantAmount,
           balanceAfter,
           reason: 'redemption_code',
-          apiId: null,
           apiCallId: null,
           codeId: target.id,
           operatorId: null,

@@ -7,7 +7,7 @@
  * 保证 apiCalls.requestId（apiCallStats plugin 在请求阶段写）与响应头 X-Request-Id
  * （openApiResponse 在响应阶段写）是同一个值，便于客户端报错时反查调用日志。
  *
- * 应用自有的请求上下文字段集中在 server/types/api-guard.ts。
+ * 应用自有的请求上下文字段集中在 server/types/api-access.ts。
  */
 
 import type { H3Event } from 'h3'

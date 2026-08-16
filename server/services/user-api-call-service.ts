@@ -1,5 +1,6 @@
 import { and, count, desc, eq, ilike, or, sql } from 'drizzle-orm'
-import { apiCalls, apiKeys, apis } from '~~/server/db/schema'
+import { z } from 'zod'
+import { apiCalls, apiKeys, apiProducts, apiRoutes, apiVersions } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 
@@ -12,7 +13,7 @@ const failureCondition = sql`${countedCondition} and not (${httpSuccessCondition
 
 interface UserApiCallFilters {
   keyword?: string
-  apiId?: number
+  routeId?: string
   apiKeyId?: number
   status?: 'success' | 'failure'
   limit?: number
@@ -37,7 +38,10 @@ export const userApiCallService = {
   async list(userId: number, filters: UserApiCallFilters = {}) {
     const { limit, offset } = normalizePagination(filters)
     const conditions = [eq(apiCalls.userId, userId)]
-    if (filters.apiId && filters.apiId > 0) conditions.push(eq(apiCalls.apiId, filters.apiId))
+    if (filters.routeId) {
+      const routeId = z.uuid().safeParse(filters.routeId)
+      conditions.push(routeId.success ? eq(apiCalls.routeId, routeId.data) : sql`false`)
+    }
     if (filters.apiKeyId && filters.apiKeyId > 0) conditions.push(eq(apiCalls.apiKeyId, filters.apiKeyId))
     if (filters.status === 'success') conditions.push(successCondition)
     if (filters.status === 'failure') conditions.push(failureCondition)
@@ -46,7 +50,9 @@ export const userApiCallService = {
     if (keyword) {
       const pattern = `%${keyword}%`
       conditions.push(or(
-        ilike(apis.name, pattern),
+        ilike(apiRoutes.name, pattern),
+        ilike(apiProducts.name, pattern),
+        ilike(apiCalls.targetName, pattern),
         ilike(apiCalls.path, pattern),
         ilike(apiCalls.method, pattern),
         ilike(apiCalls.ip, pattern),
@@ -62,8 +68,8 @@ export const userApiCallService = {
     const [items, totalRows] = await Promise.all([
       db.select({
         id: apiCalls.id,
-        apiId: apiCalls.apiId,
-        apiName: apis.name,
+        routeId: apiCalls.routeId,
+        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
         apiPath: apiCalls.path,
         method: apiCalls.method,
         statusCode: apiCalls.statusCode,
@@ -78,7 +84,9 @@ export const userApiCallService = {
         createdAt: apiCalls.createdAt
       })
         .from(apiCalls)
-        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+        .leftJoin(apiRoutes, eq(apiRoutes.id, apiCalls.routeId))
+        .leftJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
+        .leftJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
         .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
         .where(where)
         .orderBy(desc(apiCalls.createdAt))
@@ -86,7 +94,9 @@ export const userApiCallService = {
         .offset(offset),
       db.select({ value: count() })
         .from(apiCalls)
-        .leftJoin(apis, eq(apis.id, apiCalls.apiId))
+        .leftJoin(apiRoutes, eq(apiRoutes.id, apiCalls.routeId))
+        .leftJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
+        .leftJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
         .leftJoin(apiKeys, eq(apiKeys.id, apiCalls.apiKeyId))
         .where(where)
     ])
@@ -95,18 +105,18 @@ export const userApiCallService = {
   },
 
   async listFilterOptions(userId: number) {
-    const [apiOptions, apiKeyOptions] = await Promise.all([
-      db.select({ id: apis.id, name: apis.name, apiPath: apis.apiPath })
-        .from(apis)
-        .innerJoin(apiCalls, eq(apiCalls.apiId, apis.id))
+    const [routeOptions, apiKeyOptions] = await Promise.all([
+      db.select({ id: apiRoutes.id, name: apiRoutes.name, apiPath: apiRoutes.pathPattern })
+        .from(apiRoutes)
+        .innerJoin(apiCalls, eq(apiCalls.routeId, apiRoutes.id))
         .where(eq(apiCalls.userId, userId))
-        .groupBy(apis.id, apis.name, apis.apiPath)
-        .orderBy(apis.name),
+        .groupBy(apiRoutes.id, apiRoutes.name, apiRoutes.pathPattern)
+        .orderBy(apiRoutes.name, apiRoutes.pathPattern),
       db.select({ id: apiKeys.id, name: apiKeys.name })
         .from(apiKeys)
         .where(eq(apiKeys.userId, userId))
         .orderBy(desc(apiKeys.createdAt))
     ])
-    return { apis: apiOptions, apiKeys: apiKeyOptions }
+    return { routes: routeOptions, apiKeys: apiKeyOptions }
   }
 }

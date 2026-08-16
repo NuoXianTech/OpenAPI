@@ -4,7 +4,9 @@
 .nuxt
 .nitro
 .cache
-dist
+dist/*
+!dist/platform-public-apis/
+!dist/platform-public-apis/**
 
 # Node dependencies
 node_modules

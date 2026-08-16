@@ -7,10 +7,10 @@ const CALL_STATUSES = ['success', 'failure'] as const
 
 export default defineAuthenticatedEventHandler((event, user) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
-  const apiId = readQueryNumber(query.apiId)
+  const routeId = readQueryText(query.routeId)
   const apiKeyId = readQueryNumber(query.apiKeyId)
   const status = readQueryOption(query.status, CALL_STATUSES)
   const keyword = readQueryText(query.keyword)
 
-  return userApiCallService.list(user.id, { keyword, apiId, apiKeyId, status, limit, offset })
+  return userApiCallService.list(user.id, { keyword, routeId, apiKeyId, status, limit, offset })
 })

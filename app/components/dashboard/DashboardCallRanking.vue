@@ -35,7 +35,7 @@ const formatRate = (val: number) => `${val.toFixed(2)}%`
     <ol>
       <li
         v-for="item in ranking"
-        :key="item.apiId"
+        :key="item.routeId"
         class="rank-row"
       >
         <UBadge

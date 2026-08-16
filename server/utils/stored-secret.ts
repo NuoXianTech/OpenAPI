@@ -4,7 +4,11 @@ import { decodeBase64Url } from '~~/server/utils/secure-token'
 const SECRET_BYTES = 32
 const ENCRYPTION_VERSION = 'v1'
 
-export type StoredSecretDomain = 'api-key' | 'redemption-code'
+export type StoredSecretDomain
+  = | 'api-key'
+    | 'redemption-code'
+    | 'service-token'
+    | 'service-configuration'
 
 let cachedApiKeySecret: Buffer | null = null
 

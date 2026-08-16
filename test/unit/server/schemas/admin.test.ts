@@ -8,14 +8,11 @@ import {
   adminCleanupLoginLogsSchema,
   adminCleanupOperationLogsSchema,
   adminInitialProfileSchema,
-  adminRegisterApiSchema,
   adminUpdateAnnouncementSchema,
-  adminUpdateApiSchema,
   adminUpdateFriendLinkSchema,
   adminUpdateSiteSettingsSchema,
   adminUpdateUserSchema
 } from '~~/server/schemas/admin'
-import { API_STATUS } from '#shared/config/api-status'
 
 describe('admin schemas', () => {
   it('rejects unsafe admin mutations and requires explicit credit targets', () => {
@@ -33,13 +30,6 @@ describe('admin schemas', () => {
 
     expect(adminUpdateUserSchema.safeParse({ id: 1 }).success).toBe(false)
 
-    expect(adminUpdateApiSchema.safeParse({
-      id: 1,
-      rateLimitPerMinute: -1,
-      dailyQuota: -1,
-      timeoutMs: 0
-    }).success).toBe(false)
-
     expect(adminAdjustCreditsSchema.safeParse({
       userIds: [],
       operation: 'grant',
@@ -51,37 +41,6 @@ describe('admin schemas', () => {
       operation: 'grant',
       amount: 1
     }).success).toBe(true)
-  })
-
-  it('accepts automatic API status and rejects unknown status values', () => {
-    expect(adminUpdateApiSchema.safeParse({
-      id: 1,
-      status: API_STATUS.automatic
-    }).success).toBe(true)
-
-    expect(adminUpdateApiSchema.safeParse({
-      id: 1,
-      status: 999
-    }).success).toBe(false)
-  })
-
-  it('validates API registration fields before they reach database constraints', () => {
-    expect(adminRegisterApiSchema.safeParse({
-      pathVersion: 'version-too-long',
-      code: 'tool'
-    }).success).toBe(false)
-    expect(adminRegisterApiSchema.safeParse({
-      pathVersion: 'v1',
-      code: 'tool',
-      overrides: { rateLimitPerSecond: -1 }
-    }).success).toBe(false)
-    expect(adminRegisterApiSchema.safeParse({
-      pathVersion: 'v1',
-      code: 'tool',
-      overrides: { timeoutMs: 10 }
-    }).success).toBe(false)
-    expect(adminUpdateApiSchema.safeParse({ id: 1, name: '   ' }).success).toBe(false)
-    expect(adminUpdateApiSchema.safeParse({ id: 1, shortDesc: 'x'.repeat(51) }).success).toBe(false)
   })
 
   it('requires initial admin password while accepting default or custom username and email', () => {
@@ -139,9 +98,6 @@ describe('admin schemas', () => {
       checkinAmountMin: 20,
       checkinAmountMax: 5
     }).success).toBe(false)
-
-    expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'javascript:alert(1)' }).success).toBe(false)
-    expect(adminUpdateApiSchema.safeParse({ id: 1, docUrl: 'https://example.com/docs' }).success).toBe(true)
   })
 
   it('keeps content mutations within required database constraints', () => {

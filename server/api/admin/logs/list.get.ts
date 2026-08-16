@@ -20,7 +20,7 @@ export default defineAdminEventHandler(async (event) => {
     keyword: readQueryText(query.keyword),
     startAt: readQueryDate(query.startAt),
     endAt: readQueryDate(query.endAt),
-    apiId: readQueryNumber(query.apiId),
+    routeId: readQueryText(query.routeId),
     categoryId: readQueryNumber(query.categoryId),
     types: parseTypes(query.types),
     userId: readQueryNumber(query.userId),

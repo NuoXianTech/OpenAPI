@@ -8,6 +8,7 @@ import {
   timestamp,
   integer,
   jsonb,
+  uuid,
   index,
   uniqueIndex,
   check
@@ -81,7 +82,7 @@ export const creditTransactions = pgTable('credit_transactions', {
   amount: integer('amount').notNull(), // 正=入账，负=出账
   balanceAfter: integer('balance_after').notNull(),
   reason: varchar('reason', { length: 50 }).notNull(),
-  apiId: integer('api_id'), // 仅 reason=api_charge / api_refund 有值（无 FK 解耦）
+  routeId: uuid('route_id'), // 仅 API 扣费/退款有值；Route UUID 快照，无 FK
   apiCallId: bigint('api_call_id', { mode: 'number' }), // 关联 apiCalls.id 快照
   creditReservationId: bigint('credit_reservation_id', { mode: 'number' }), // API 预留 id 快照，用于崩溃恢复幂等
   codeId: integer('code_id'), // 仅 reason=redemption_code 有值，关联 redemptionCodes.id 快照（无 FK）

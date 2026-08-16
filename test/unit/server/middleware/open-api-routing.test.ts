@@ -1,43 +1,19 @@
 import type { H3Event } from 'h3'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const manifestMocks = vi.hoisted(() => ({
-  getAllowedMethods: vi.fn<(pathVersion: string, code: string, pathname: string) => string[]>(),
-  matchEndpoint: vi.fn()
+const dynamicGatewayMocks = vi.hoisted(() => ({
+  tryHandle: vi.fn()
 }))
 
-vi.mock('~~/server/utils/api-manifest', () => manifestMocks)
+vi.mock('~~/server/services/dynamic-gateway-service', () => ({
+  dynamicGatewayService: dynamicGatewayMocks
+}))
 vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 
 const { default: handleOpenApiRouting } = await import('~~/server/middleware/01-open-api-routing')
 
-interface MockEventResult {
-  event: H3Event
-  headers: Map<string, string>
-}
-
-function createMockEvent(path: string, method = 'GET'): MockEventResult {
-  const headers = new Map<string, string>()
-  const response = {
-    statusCode: 200,
-    setHeader(name: string, value: string) {
-      headers.set(name.toLowerCase(), String(value))
-    },
-    getHeader(name: string) {
-      return headers.get(name.toLowerCase())
-    },
-    removeHeader(name: string) {
-      headers.delete(name.toLowerCase())
-    },
-    writeHead(statusCode: number, responseHeaders?: Record<string, string>) {
-      response.statusCode = statusCode
-      for (const [name, value] of Object.entries(responseHeaders || {})) {
-        headers.set(name.toLowerCase(), String(value))
-      }
-    },
-    end() {}
-  }
-  const event = {
+function createMockEvent(path: string, method = 'GET'): H3Event {
+  return {
     path,
     method,
     context: {},
@@ -48,67 +24,43 @@ function createMockEvent(path: string, method = 'GET'): MockEventResult {
         method,
         headers: { host: 'localhost' }
       },
-      res: response
+      res: {
+        statusCode: 200,
+        setHeader() {},
+        getHeader() {},
+        removeHeader() {},
+        writeHead() {},
+        end() {}
+      }
     }
   } as unknown as H3Event
-
-  return { event, headers }
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  manifestMocks.matchEndpoint.mockReturnValue(null)
-  manifestMocks.getAllowedMethods.mockReturnValue([])
+  dynamicGatewayMocks.tryHandle.mockResolvedValue({ matched: false })
 })
 
-describe('open API routing middleware', () => {
-  it('returns 405 before a GET request reaches the Vue page router', () => {
-    manifestMocks.getAllowedMethods.mockReturnValue(['POST'])
-    const { event, headers } = createMockEvent('/v1/password/check')
+describe('dynamic API routing middleware', () => {
+  it('returns the response produced by the dynamic Gateway', async () => {
+    const response = { proxied: true }
+    dynamicGatewayMocks.tryHandle.mockResolvedValue({ matched: true, response })
+    const event = createMockEvent('/v1/proxy-smoke')
 
-    const result = handleOpenApiRouting(event)
-
-    expect(event.node.res.statusCode).toBe(405)
-    expect(headers.get('allow')).toBe('POST')
-    expect(headers.get('cache-control')).toBe('no-store')
-    expect(result).toMatchObject({
-      code: 'METHOD_NOT_ALLOWED',
-      message: '请求方法不受支持',
-      data: null
-    })
+    await expect(handleOpenApiRouting(event)).resolves.toBe(response)
   })
 
-  it('lets a matching endpoint continue to its Nitro route handler', () => {
-    manifestMocks.matchEndpoint.mockReturnValue({ endpoint: {}, params: {} })
-    const { event } = createMockEvent('/v1/password')
+  it('lets Nuxt continue when no published Route matches', async () => {
+    const event = createMockEvent('/v1/not-found')
 
-    expect(handleOpenApiRouting(event)).toBeUndefined()
-    expect(event.node.res.statusCode).toBe(200)
-    expect(manifestMocks.getAllowedMethods).not.toHaveBeenCalled()
+    await expect(handleOpenApiRouting(event)).resolves.toBeUndefined()
+    expect(dynamicGatewayMocks.tryHandle).toHaveBeenCalledOnce()
   })
 
-  it('returns the public API 404 contract for an unknown versioned path', () => {
-    const { event, headers } = createMockEvent('/v1/not-found')
+  it('never sends Platform control-plane paths to the dynamic Gateway', async () => {
+    const event = createMockEvent('/api/admin/v1/routes')
 
-    const result = handleOpenApiRouting(event)
-
-    expect(event.node.res.statusCode).toBe(404)
-    expect(headers.get('cache-control')).toBe('no-store')
-    expect(result).toMatchObject({
-      code: 'API_NOT_FOUND',
-      message: '接口不存在',
-      data: null
-    })
-  })
-
-  it('answers CORS preflight for a known endpoint without entering the page router', () => {
-    manifestMocks.getAllowedMethods.mockReturnValue(['POST'])
-    const { event, headers } = createMockEvent('/v1/password/check', 'OPTIONS')
-
-    expect(handleOpenApiRouting(event)).toBeUndefined()
-    expect(event.node.res.statusCode).toBe(204)
-    expect(headers.get('access-control-allow-origin')).toBe('*')
-    expect(headers.get('access-control-allow-methods')).toBe('POST, OPTIONS')
-    expect(headers.get('access-control-allow-headers')).toBe('content-type, x-api-key')
+    await expect(handleOpenApiRouting(event)).resolves.toBeUndefined()
+    expect(dynamicGatewayMocks.tryHandle).not.toHaveBeenCalled()
   })
 })

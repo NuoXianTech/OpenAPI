@@ -1,4 +1,4 @@
-import type { RateLimiter } from '~~/server/types/api-guard'
+import type { RateLimiter } from '~~/server/types/api-access'
 import { getMemoryRateLimiter } from '~~/server/utils/rate-limit/memory'
 import { getRedisRateLimiter } from '~~/server/utils/rate-limit/redis'
 

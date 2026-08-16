@@ -21,7 +21,7 @@ interface AdminCallLogsFilters {
   keyword: string
   startAt: string
   endAt: string
-  apiId: number
+  routeId: string
   categoryId: number
   types: AdminLogType[]
   apiKeyId: number | ''
@@ -39,7 +39,7 @@ const ADMIN_CALL_LOG_DEFAULT_FILTERS: AdminCallLogsFilters = {
   keyword: '',
   startAt: '',
   endAt: '',
-  apiId: 0,
+  routeId: '',
   categoryId: 0,
   types: [],
   apiKeyId: '',
@@ -52,7 +52,7 @@ function buildAdminCallLogRequestFilters(filters: AdminCallLogsFilters) {
     keyword: filters.keyword.trim() || undefined,
     startAt: filters.startAt ? new Date(filters.startAt).toISOString() : undefined,
     endAt: filters.endAt ? new Date(filters.endAt).toISOString() : undefined,
-    apiId: filters.apiId || undefined,
+    routeId: filters.routeId || undefined,
     categoryId: filters.categoryId || undefined,
     types: filters.types.length === 1 ? [...filters.types] : undefined,
     apiKeyId: filters.apiKeyId || undefined,
@@ -93,7 +93,7 @@ function createOptionalNumberQueryCodec(): DashboardQueryCodec<number | ''> {
 
 export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) {
   const { t } = useI18n()
-  const filterOptions = ref<AdminLogsFilterOptions>({ apis: [], categories: [] })
+  const filterOptions = ref<AdminLogsFilterOptions>({ routes: [], categories: [] })
   const listState = useDashboardListState<AdminCallLogsFilters>({
     defaultFilters: ADMIN_CALL_LOG_DEFAULT_FILTERS,
     routeQuery: options.routeQuery,
@@ -102,7 +102,7 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
       keyword: createStringQueryCodec(''),
       startAt: createStringQueryCodec(''),
       endAt: createStringQueryCodec(''),
-      apiId: createNumberQueryCodec(0),
+      routeId: createStringQueryCodec(''),
       categoryId: createNumberQueryCodec(0),
       types: createStringArrayQueryCodec<AdminLogType>([], ADMIN_LOG_TYPES),
       apiKeyId: createOptionalNumberQueryCodec(),
@@ -151,15 +151,15 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
     icon: ADMIN_CALL_LOG_TYPE_META[type].icon
   })))
   const apiSelectItems = computed(() => [
-    { label: t('admin.logs.call.filters.allApis'), value: 0 },
-    ...filterOptions.value.apis.map(api => ({ label: `${api.name}（${api.apiPath}）`, value: api.id }))
+    { label: t('admin.logs.call.filters.allApis'), value: '' },
+    ...filterOptions.value.routes.map(route => ({ label: `${route.name}（${route.apiPath}）`, value: route.id }))
   ])
   const categorySelectItems = computed(() => [
     { label: t('admin.logs.call.filters.allCategories'), value: 0 },
     ...filterOptions.value.categories.map(category => ({ label: category.name, value: category.id }))
   ])
   const advancedFilterCount = computed(() => [
-    listState.filters.apiId !== 0,
+    listState.filters.routeId !== '',
     listState.filters.categoryId !== 0,
     listState.filters.types.length > 0,
     listState.filters.apiKeyId !== '',
@@ -179,9 +179,9 @@ export function useAdminCallLogsPage(options: UseAdminCallLogsPageOptions = {}) 
   async function loadFilterOptions() {
     try {
       filterOptions.value = await $fetch<AdminLogsFilterOptions>('/api/admin/logs/filters')
-        || { apis: [], categories: [] }
+        || { routes: [], categories: [] }
     } catch {
-      filterOptions.value = { apis: [], categories: [] }
+      filterOptions.value = { routes: [], categories: [] }
     }
   }
 

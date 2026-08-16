@@ -19,9 +19,9 @@ export interface AdminUserItem {
   createdAt: string
 }
 
-export type AdminUserRoleFilter = 'all' | AdminUserItem['role']
-export type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
-export type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
+type AdminUserRoleFilter = 'all' | AdminUserItem['role']
+type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
+type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
 
 interface AdminUserFilters extends Record<string, unknown> {
   keyword: string

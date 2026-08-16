@@ -1,0 +1,19 @@
+import { adminRouteSchema } from '~~/server/schemas/admin'
+import { platformRouteService } from '~~/server/services/platform-route-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
+
+export default defineAdminEventHandler(async (event, admin) => {
+  const body = await readZodBody(event, adminRouteSchema)
+  const created = await platformRouteService.create(body)
+  await addRequestOperationLog(event, {
+    userId: admin.id,
+    actor: admin.username,
+    action: 'admin.platform.route.create',
+    resourceType: 'api-route',
+    resourceId: created?.id,
+    detail: { method: created?.method, pathPattern: created?.pathPattern }
+  })
+  return created
+})

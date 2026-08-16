@@ -30,11 +30,21 @@ beforeAll(async () => {
       sort_order integer NOT NULL DEFAULT 0,
       deleted_at timestamptz
     );
-    CREATE TABLE apis (
-      id serial PRIMARY KEY,
-      name varchar(100) NOT NULL,
-      api_path varchar(200) NOT NULL,
+    CREATE TABLE api_products (
+      id uuid PRIMARY KEY,
+      name varchar(160) NOT NULL,
       category_id integer
+    );
+    CREATE TABLE api_versions (
+      id uuid PRIMARY KEY,
+      product_id uuid NOT NULL
+    );
+    CREATE TABLE api_routes (
+      id uuid PRIMARY KEY,
+      api_version_id uuid NOT NULL,
+      name varchar(160) NOT NULL,
+      path_pattern varchar(1000) NOT NULL,
+      deleted_at timestamptz
     );
     CREATE TABLE api_keys (
       id serial PRIMARY KEY,
@@ -42,7 +52,7 @@ beforeAll(async () => {
     );
     CREATE TABLE api_calls (
       id bigserial PRIMARY KEY,
-      api_id integer,
+      route_id uuid NOT NULL,
       api_key_id integer,
       api_key_name varchar(100),
       user_id integer,
@@ -75,7 +85,7 @@ beforeAll(async () => {
 
 beforeEach(async () => {
   await client.exec(`
-    TRUNCATE api_calls, api_keys, apis, api_categories, operation_logs, users RESTART IDENTITY;
+    TRUNCATE api_calls, api_keys, api_routes, api_versions, api_products, api_categories, operation_logs, users RESTART IDENTITY;
     INSERT INTO users (username, role) VALUES ('owner', 'admin'), ('alice', 'user');
   `)
 })
@@ -86,12 +96,20 @@ describe('log cleanup services', () => {
   it('deletes only API calls matching joined filters and call type', async () => {
     await client.exec(`
       INSERT INTO api_categories (name) VALUES ('Tools'), ('Data');
-      INSERT INTO apis (name, api_path, category_id) VALUES ('Tool API', '/v1/tool', 1), ('Data API', '/v1/data', 2);
+      INSERT INTO api_products (id, name, category_id) VALUES
+        ('00000000-0000-4000-8000-000000000001', 'Tool API', 1),
+        ('00000000-0000-4000-8000-000000000002', 'Data API', 2);
+      INSERT INTO api_versions (id, product_id) VALUES
+        ('00000000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000001'),
+        ('00000000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000002');
+      INSERT INTO api_routes (id, api_version_id, name, path_pattern) VALUES
+        ('00000000-0000-4000-8000-000000000021', '00000000-0000-4000-8000-000000000011', 'Tool API', '/v1/tool'),
+        ('00000000-0000-4000-8000-000000000022', '00000000-0000-4000-8000-000000000012', 'Data API', '/v1/data');
       INSERT INTO api_keys (name) VALUES ('Production');
-      INSERT INTO api_calls (api_id, api_key_id, user_id, path, method, status_code, is_counted, error_code, request_id, created_at) VALUES
-        (1, 1, 2, '/v1/tool', 'GET', 200, true, null, '00000000-0000-4000-8000-000000000001', '2026-01-01T00:00:00Z'),
-        (1, 1, 2, '/v1/tool', 'GET', 500, true, 'UPSTREAM', '00000000-0000-4000-8000-000000000002', '2026-01-01T01:00:00Z'),
-        (2, 1, 2, '/v1/data', 'GET', 500, true, 'UPSTREAM', '00000000-0000-4000-8000-000000000003', '2026-01-01T02:00:00Z');
+      INSERT INTO api_calls (route_id, api_key_id, user_id, path, method, status_code, is_counted, error_code, request_id, created_at) VALUES
+        ('00000000-0000-4000-8000-000000000021', 1, 2, '/v1/tool', 'GET', 200, true, null, '00000000-0000-4000-8000-000000000031', '2026-01-01T00:00:00Z'),
+        ('00000000-0000-4000-8000-000000000021', 1, 2, '/v1/tool', 'GET', 500, true, 'UPSTREAM', '00000000-0000-4000-8000-000000000032', '2026-01-01T01:00:00Z'),
+        ('00000000-0000-4000-8000-000000000022', 1, 2, '/v1/data', 'GET', 500, true, 'UPSTREAM', '00000000-0000-4000-8000-000000000033', '2026-01-01T02:00:00Z');
     `)
 
     await expect(adminApiCallLogService.deleteMatching({

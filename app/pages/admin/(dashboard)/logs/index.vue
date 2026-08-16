@@ -55,7 +55,7 @@ function openDetail(row: AdminLogRow) {
 }
 
 async function resetAdvancedFilters() {
-  filters.apiId = 0
+  filters.routeId = ''
   filters.categoryId = 0
   filters.types = []
   filters.apiKeyId = ''
@@ -92,7 +92,7 @@ async function resetAdvancedFilters() {
         <div class="grid gap-3 md:grid-cols-2">
           <UFormField :label="$t('admin.logs.call.filters.apiName')">
             <USelectMenu
-              v-model="filters.apiId"
+              v-model="filters.routeId"
               :items="apiSelectItems"
               value-key="value"
               searchable

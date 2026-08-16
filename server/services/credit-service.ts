@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type SQL } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
-import { apiCalls, apiCreditReservations, apiKeys, apis, creditTransactions, users } from '~~/server/db/schema'
+import { apiCalls, apiCreditReservations, apiKeys, apiProducts, apiRoutes, apiVersions, creditTransactions, users } from '~~/server/db/schema'
 import { normalizeCreditAmount } from './credit-adjustments'
 import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
 import { toNumber } from '~~/server/utils/number'
@@ -15,7 +15,7 @@ export type { CreditReason }
 interface ReserveInput {
   userId: number
   apiKeyId: number
-  apiId: number
+  routeId: string
   requestId: string
   amount: number
 }
@@ -83,7 +83,7 @@ async function reserve(input: ReserveInput) {
     const rows = await tx.insert(apiCreditReservations).values({
       userId: input.userId,
       apiKeyId: input.apiKeyId,
-      apiId: input.apiId,
+      routeId: input.routeId,
       requestId: input.requestId,
       amount
     }).returning({
@@ -174,7 +174,7 @@ async function finalizeReservation(input: FinalizeReservationInput) {
 
     const reservations = await tx.select({
       userId: apiCreditReservations.userId,
-      apiId: apiCreditReservations.apiId,
+      routeId: apiCreditReservations.routeId,
       apiCallId: apiCreditReservations.apiCallId,
       requestId: apiCreditReservations.requestId,
       amount: apiCreditReservations.amount
@@ -202,7 +202,7 @@ async function finalizeReservation(input: FinalizeReservationInput) {
       amount: -reservation.amount,
       balanceAfter,
       reason: 'api_charge',
-      apiId: reservation.apiId,
+      routeId: reservation.routeId,
       apiCallId,
       creditReservationId: input.reservationId,
       remark: input.remark ?? null,
@@ -303,9 +303,9 @@ async function listUserTransactions(userId: number, filters: ListUserTransaction
       amount: creditTransactions.amount,
       balanceAfter: creditTransactions.balanceAfter,
       reason: creditTransactions.reason,
-      apiId: creditTransactions.apiId,
-      apiName: apis.name,
-      apiPath: apis.apiPath,
+      routeId: creditTransactions.routeId,
+      apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
+      apiPath: sql<string | null>`coalesce(${apiRoutes.pathPattern}, ${apiCalls.path})`,
       apiCallId: creditTransactions.apiCallId,
       codeId: creditTransactions.codeId,
       meta: creditTransactions.meta,
@@ -313,7 +313,10 @@ async function listUserTransactions(userId: number, filters: ListUserTransaction
       remark: creditTransactions.remark,
       createdAt: creditTransactions.createdAt
     }).from(creditTransactions)
-      .leftJoin(apis, eq(apis.id, creditTransactions.apiId))
+      .leftJoin(apiRoutes, eq(apiRoutes.id, creditTransactions.routeId))
+      .leftJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
+      .leftJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
+      .leftJoin(apiCalls, eq(apiCalls.id, creditTransactions.apiCallId))
       .where(where)
       .orderBy(desc(creditTransactions.createdAt))
       .limit(limit)

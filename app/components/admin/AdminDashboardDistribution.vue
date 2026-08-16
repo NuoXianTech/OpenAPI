@@ -39,7 +39,7 @@ const formatNumber = (val: number) => val.toLocaleString(locale.value)
     >
       <li
         v-for="item in rows"
-        :key="item.apiId"
+        :key="item.routeId"
         class="space-y-1.5"
       >
         <div class="flex items-baseline justify-between gap-3 text-sm">

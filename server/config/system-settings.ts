@@ -12,7 +12,7 @@ import {
   requiredString
 } from '~~/server/schemas/validation'
 
-export interface SystemSettingDefinition<TValue> {
+interface SystemSettingDefinition<TValue> {
   key: string
   schema: z.ZodType<TValue>
   default: TValue
@@ -493,7 +493,7 @@ export const OAUTH_SYSTEM_SETTING_NAMES = [
   'oauthQqEnabled'
 ] as const satisfies readonly SystemSettingName[]
 
-export const SYSTEM_SETTING_DEFINITION_BY_KEY = new Map(
+const SYSTEM_SETTING_DEFINITION_BY_KEY = new Map(
   SYSTEM_SETTING_NAMES.map(name => [SYSTEM_SETTING_DEFINITIONS[name].key, { name, definition: SYSTEM_SETTING_DEFINITIONS[name] }])
 )
 

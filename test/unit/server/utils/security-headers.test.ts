@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   getSecurityHeaders,
-  isHtmlDocumentRoute,
-  isPlayerHtmlRoute
+  isHtmlDocumentRoute
 } from '~~/server/utils/security-headers'
 
 describe('security headers', () => {
   it('creates restrictive production application headers', () => {
     const headers = getSecurityHeaders({
       isProduction: true,
-      isPlayerRoute: false,
       isHtmlRoute: true
     })
 
@@ -22,12 +20,10 @@ describe('security headers', () => {
   it('allows the same-origin Nuxt DevTools frame only in development', () => {
     const developmentHeaders = getSecurityHeaders({
       isProduction: false,
-      isPlayerRoute: false,
       isHtmlRoute: true
     })
     const productionHeaders = getSecurityHeaders({
       isProduction: true,
-      isPlayerRoute: false,
       isHtmlRoute: true
     })
 
@@ -39,22 +35,9 @@ describe('security headers', () => {
       .not.toContain(`frame-src 'self'`)
   })
 
-  it('allows the dedicated player document to be embedded', () => {
-    const headers = getSecurityHeaders({
-      isProduction: true,
-      isPlayerRoute: true,
-      isHtmlRoute: true
-    })
-
-    expect(headers['Content-Security-Policy']).toContain('frame-ancestors *')
-    expect(headers['Content-Security-Policy']).toContain('media-src blob: http: https:')
-    expect(headers['X-Frame-Options']).toBeUndefined()
-  })
-
   it('reuses immutable header variants', () => {
     const options = {
       isProduction: false,
-      isPlayerRoute: false,
       isHtmlRoute: false
     }
     const headers = getSecurityHeaders(options)
@@ -66,7 +49,6 @@ describe('security headers', () => {
   it('keeps API and asset responses lightweight', () => {
     const headers = getSecurityHeaders({
       isProduction: true,
-      isPlayerRoute: false,
       isHtmlRoute: false
     })
 
@@ -78,17 +60,14 @@ describe('security headers', () => {
     expect(headers['X-Frame-Options']).toBeUndefined()
   })
 
-  it('classifies document and player routes', () => {
-    expect(isPlayerHtmlRoute('/v1/player')).toBe(true)
-    expect(isPlayerHtmlRoute('/v1/player/art')).toBe(true)
-    expect(isPlayerHtmlRoute('/v1/music')).toBe(false)
+  it('classifies only Platform pages as HTML documents', () => {
     expect(isHtmlDocumentRoute('/')).toBe(true)
     expect(isHtmlDocumentRoute('/admin/users')).toBe(true)
     expect(isHtmlDocumentRoute('/api/health')).toBe(false)
     expect(isHtmlDocumentRoute('/_nuxt/app.js')).toBe(false)
     expect(isHtmlDocumentRoute('/v1/bing')).toBe(false)
     expect(isHtmlDocumentRoute('/v1/not-found')).toBe(false)
-    expect(isHtmlDocumentRoute('/v1/player')).toBe(true)
-    expect(isHtmlDocumentRoute('/v2/player/art/')).toBe(true)
+    expect(isHtmlDocumentRoute('/v1/player')).toBe(false)
+    expect(isHtmlDocumentRoute('/v2/player/art/')).toBe(false)
   })
 })

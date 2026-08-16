@@ -1,6 +1,6 @@
 export interface DashboardCallRankItem {
   rank: number
-  apiId: number
+  routeId: string
   name: string
   apiPath: string
   totalCalls: number

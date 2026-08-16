@@ -50,7 +50,7 @@ export const adminCleanupApiCallLogsSchema = z.object({
   keyword: optionalText,
   startAt: optionalDate,
   endAt: optionalDate,
-  apiId: optionalPositiveInteger,
+  routeId: z.uuid().optional(),
   categoryId: optionalPositiveInteger,
   types: z.array(z.enum(ADMIN_LOG_TYPES)).max(1).optional(),
   userId: optionalPositiveInteger,

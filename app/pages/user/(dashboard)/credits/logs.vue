@@ -138,7 +138,7 @@ async function resetCreditFilters() {
         </template>
         <template #detail-cell="{ row }">
           <div
-            v-if="row.original.apiId && row.original.apiName"
+            v-if="row.original.routeId && row.original.apiName"
             class="flex flex-col text-xs"
           >
             <span class="font-medium">{{ row.original.apiName }}</span>

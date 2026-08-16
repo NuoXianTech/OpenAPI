@@ -11,8 +11,8 @@ import type { H3Event } from 'h3'
 import { apiCallService } from '~~/server/services/api-call-service'
 import { apiKeyService } from '~~/server/services/api-key-service'
 import { creditService } from '~~/server/services/credit-service'
-import { shouldCharge } from '~~/server/utils/api-call-outcome'
-import type { ApiStatsTracked } from '~~/server/types/api-guard'
+import { shouldChargeGatewayCall } from '~~/server/utils/gateway-billing'
+import type { ApiStatsTracked } from '~~/server/types/api-access'
 import { getAppEventContext } from '~~/server/utils/event-context'
 import { toNullableNonNegativeInteger } from '~~/server/utils/number'
 
@@ -42,7 +42,7 @@ const NON_COUNTED_REJECTION_OUTCOMES = new Set([
   'scope_denied'
 ])
 
-async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
+export async function recordApiCall(event: H3Event, tracked: ApiStatsTracked) {
   const eventContext = getAppEventContext(event)
   const response = event.node?.res
   const statusCode = Math.trunc(response?.statusCode || 200)
@@ -53,17 +53,16 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
   const billingContext = eventContext.apiBilling
   const creditReservation = billingContext?.creditReservation ?? null
   const willCharge = billingContext
-    ? shouldCharge({
+    ? shouldChargeGatewayCall({
         costCredits: billingContext.costCredits,
         apiKeyUserId: billingContext.apiKeyUserId,
-        forcedOutcome: billingContext.forcedOutcome,
         statusCode
       })
     : false
 
   try {
     const target = eventContext.apiStatsTarget
-      ? { apiId: eventContext.apiStatsTarget.apiId, apiPath: eventContext.apiStatsTarget.apiPath }
+      ? eventContext.apiStatsTarget
       : null
     if (!target) {
       return
@@ -90,19 +89,12 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       ?? null
     const billing = eventContext.apiBilling
 
-    const errorCode = rejection
-      ? rejection.errorCode
-      : billing?.forcedOutcome === 'failed' ? (billing.failedCode || 'BUSINESS_FAILED') : null
-    const errorMessage = rejection
-      ? rejection.errorMessage
-      : billing?.forcedOutcome === 'failed' ? billing.failedMessage : null
-
-    const statStatusCode = billing?.forcedOutcome === 'failed' && statusCode < 400
-      ? 500
-      : statusCode
+    const errorCode = rejection?.errorCode ?? null
+    const errorMessage = rejection?.errorMessage ?? null
 
     const callInput = {
-      apiId: target.apiId,
+      routeId: target.routeId,
+      targetName: target.targetName,
       apiKeyId,
       apiKeyName,
       userId: apiKeyUserId,
@@ -122,7 +114,7 @@ async function recordCall(event: H3Event, tracked: ApiStatsTracked) {
       errorMessage,
       creditsCost: 0,
       isCounted,
-      statusCodeForStats: statStatusCode
+      statusCodeForStats: statusCode
     }
     const callId = !isCounted
       ? (await apiCallService.addCall(callInput))[0]?.id ?? null
@@ -177,6 +169,6 @@ export default defineNitroPlugin((nitroApp) => {
     if (!tracked) {
       return
     }
-    return recordCall(event, tracked)
+    return recordApiCall(event, tracked)
   })
 })

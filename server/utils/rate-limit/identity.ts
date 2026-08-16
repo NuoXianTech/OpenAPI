@@ -1,5 +1,5 @@
-import type { RateLimitWindow } from '~~/server/config/api-guard'
-import type { RateLimiter } from '~~/server/types/api-guard'
+import type { RateLimitWindow } from '~~/server/config/api-access'
+import type { RateLimiter } from '~~/server/types/api-access'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 
 interface IdentityRateLimitBucket {

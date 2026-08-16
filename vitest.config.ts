@@ -16,7 +16,10 @@ const aliases = {
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['test/unit/**/*.{test,spec}.ts']
+    include: ['test/unit/**/*.{test,spec}.ts'],
+    // Several database suites load PGlite's WASM runtime. Unbounded workers can
+    // exhaust memory on high-core development and CI machines.
+    maxWorkers: 2
   },
   resolve: {
     alias: aliases

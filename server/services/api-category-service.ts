@@ -1,6 +1,6 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
-import { apiCategories, apis } from '~~/server/db/schema'
+import { apiCategories, apiProducts } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import type { ApiCategoryItem } from '#shared/types/api'
 import { getSqlState } from '~~/server/utils/database-error'
@@ -30,8 +30,10 @@ async function findCategoryByCode(code: string) {
   return firstRow(rows)
 }
 
-async function countBoundApis(categoryId: number): Promise<number> {
-  const [row] = await db.select({ value: count() }).from(apis).where(eq(apis.categoryId, categoryId))
+async function countBoundProducts(categoryId: number): Promise<number> {
+  const [row] = await db.select({ value: count() })
+    .from(apiProducts)
+    .where(eq(apiProducts.categoryId, categoryId))
   return row?.value ?? 0
 }
 
@@ -125,15 +127,14 @@ export const apiCategoryService = {
   },
 
   /**
-   * 软删分类。删除前校验无接口绑定：只要仍有接口（含禁用 / orphan）的 categoryId
-   * 指向该分类，就拒绝删除并提示 admin 先改这些接口的分类，避免接口悬挂在不可见分类上。
+   * 软删分类。只要仍有 Product 绑定该分类，就要求管理员先调整 Product。
    */
   async softDelete(id: number) {
-    const boundCount = await countBoundApis(id)
+    const boundCount = await countBoundProducts(id)
     if (boundCount > 0) {
       throw createApplicationError({
         statusCode: 409,
-        message: `仍有 ${boundCount} 个接口绑定该分类，请先调整这些接口的分类后再删除`
+        message: `仍有 ${boundCount} 个 API Product 绑定该分类，请先调整分类后再删除`
       })
     }
     const res = await db.update(apiCategories)

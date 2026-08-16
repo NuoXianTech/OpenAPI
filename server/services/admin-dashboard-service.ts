@@ -1,9 +1,4 @@
-import { and, asc, desc, eq, gte, lt, sql } from 'drizzle-orm'
-import { apiCallStats, apiCalls, apis, users } from '~~/server/db/schema'
-import { db } from '~~/server/db/client'
-import { toIsoString } from '~~/server/utils/date'
-import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
-import { clampInteger, toNumber } from '~~/server/utils/number'
+import { and, asc, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm'
 import type {
   AdminDashboardData,
   AdminDashboardDistributionItem,
@@ -13,6 +8,11 @@ import type {
   AdminDashboardTrendPoint
 } from '#shared/types/admin'
 import type { DashboardCallRankItem } from '#shared/types/dashboard'
+import { db } from '~~/server/db/client'
+import { apiCallStats, apiCalls, apiProducts, apiRoutes, apiVersions, users } from '~~/server/db/schema'
+import { toIsoString } from '~~/server/utils/date'
+import { APP_TIME_ZONE, addLocalDays, getLocalDayStart, toLocalDateKey } from '~~/server/utils/local-time'
+import { clampInteger, toNumber } from '~~/server/utils/number'
 
 const HOURLY_LABEL_FORMATTER = new Intl.DateTimeFormat('en-GB', {
   timeZone: APP_TIME_ZONE,
@@ -28,38 +28,27 @@ export const adminDashboardService = {
     recentLimit?: number
   } = {}): Promise<AdminDashboardData> {
     const days = clampInteger(options.days, 1, 90, 7)
-    const distributionLimit = clampInteger(options.distributionLimit, 1, 20, 5)
-    const recentLimit = clampInteger(options.recentLimit, 1, 50, 10)
-    const todayStart = getLocalDayStart(new Date())
-    const todayKey = toLocalDateKey(todayStart)
-    const yesterdayStart = addLocalDays(todayStart, -1)
+    const distributionLimit = clampInteger(options.distributionLimit, 1, 50, 8)
+    const recentLimit = clampInteger(options.recentLimit, 1, 50, 8)
+    const todayStart = getLocalDayStart()
     const rangeStart = addLocalDays(todayStart, -(days - 1))
+    const yesterdayKey = toLocalDateKey(addLocalDays(todayStart, -1))
     const tomorrowKey = toLocalDateKey(addLocalDays(todayStart, 1))
     const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
     const failureExpr = sql<number>`coalesce(sum(${apiCallStats.failureCount}), 0)`
 
-    const [
-      userRows,
-      apiCountRows,
-      summaryRows,
-      todayRows,
-      yesterdayRows,
-      trendRows,
-      distributionRows,
-      recentRows
-    ] = await Promise.all([
+    const [userRows, routeCountRows, summaryRows, trendRows, distributionRows, recentRows] = await Promise.all([
       db.select({ userCount: sql<number>`count(*)` }).from(users),
       db.select({
-        enabledApiCount: sql<number>`coalesce(sum(case when ${apis.isEnabled} then 1 else 0 end), 0)`,
-        totalApiCount: sql<number>`count(*)`
-      }).from(apis),
-      db.select({ totalCalls: totalExpr, successCalls: successExpr, failureCalls: failureExpr })
-        .from(apiCallStats),
-      db.select({ todayCalls: totalExpr }).from(apiCallStats)
-        .where(eq(apiCallStats.statDate, todayKey)),
-      db.select({ yesterdayCalls: totalExpr }).from(apiCallStats)
-        .where(eq(apiCallStats.statDate, toLocalDateKey(yesterdayStart))),
+        totalApiCount: sql<number>`count(*)`,
+        enabledApiCount: sql<number>`count(*) filter (where ${apiRoutes.state} = 'active')`
+      }).from(apiRoutes).where(isNull(apiRoutes.deletedAt)),
+      db.select({
+        totalCalls: totalExpr,
+        successCalls: successExpr,
+        failureCalls: failureExpr
+      }).from(apiCallStats),
       db.select({
         statDate: apiCallStats.statDate,
         totalCalls: totalExpr,
@@ -67,28 +56,29 @@ export const adminDashboardService = {
         failureCalls: failureExpr
       }).from(apiCallStats)
         .where(and(
-          gte(apiCallStats.statDate, toLocalDateKey(rangeStart)),
+          gte(apiCallStats.statDate, toLocalDateKey(addLocalDays(rangeStart, -1))),
           lt(apiCallStats.statDate, tomorrowKey)
         ))
         .groupBy(apiCallStats.statDate)
         .orderBy(asc(apiCallStats.statDate)),
       db.select({
-        apiId: apiCallStats.apiId,
-        name: apis.name,
-        apiPath: apis.apiPath,
+        routeId: apiCallStats.routeId,
+        name: apiRoutes.name,
+        apiPath: apiRoutes.pathPattern,
         totalCalls: totalExpr
       }).from(apiCallStats)
-        .innerJoin(apis, eq(apiCallStats.apiId, apis.id))
+        .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
         .where(and(
+          isNull(apiRoutes.deletedAt),
           gte(apiCallStats.statDate, toLocalDateKey(rangeStart)),
           lt(apiCallStats.statDate, tomorrowKey)
         ))
-        .groupBy(apiCallStats.apiId, apis.name, apis.apiPath)
-        .orderBy(desc(totalExpr), asc(apis.name))
+        .groupBy(apiCallStats.routeId, apiRoutes.name, apiRoutes.pathPattern)
+        .orderBy(desc(totalExpr), asc(apiRoutes.name))
         .limit(distributionLimit),
       db.select({
         id: apiCalls.id,
-        apiName: apis.name,
+        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
         apiPath: apiCalls.path,
         method: apiCalls.method,
         statusCode: apiCalls.statusCode,
@@ -97,17 +87,14 @@ export const adminDashboardService = {
         latencyMs: apiCalls.latencyMs,
         createdAt: apiCalls.createdAt
       }).from(apiCalls)
-        .leftJoin(apis, eq(apiCalls.apiId, apis.id))
+        .leftJoin(apiRoutes, eq(apiRoutes.id, apiCalls.routeId))
+        .leftJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
+        .leftJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
         .orderBy(desc(apiCalls.createdAt))
         .limit(recentLimit)
     ])
 
-    const summary = summaryRows[0] || { totalCalls: 0, successCalls: 0, failureCalls: 0 }
-    const totalCalls = toNumber(summary.totalCalls)
-    const successCalls = toNumber(summary.successCalls)
-    const failureCalls = toNumber(summary.failureCalls)
-    const todayCalls = toNumber(todayRows[0]?.todayCalls)
-    const yesterdayCalls = toNumber(yesterdayRows[0]?.yesterdayCalls)
+    const summary = normalizeStats(summaryRows[0])
     const trendMap = new Map<string, AdminDashboardTrendPoint>()
     for (const row of trendRows) {
       trendMap.set(row.statDate, {
@@ -118,13 +105,15 @@ export const adminDashboardService = {
       })
     }
     const trend = Array.from({ length: days }, (_, index): AdminDashboardTrendPoint => {
-      const key = toLocalDateKey(addLocalDays(rangeStart, index))
-      return trendMap.get(key) || { date: key, totalCalls: 0, successCalls: 0, failureCalls: 0 }
+      const date = toLocalDateKey(addLocalDays(rangeStart, index))
+      return trendMap.get(date) ?? { date, totalCalls: 0, successCalls: 0, failureCalls: 0 }
     })
+    const todayCalls = trendMap.get(toLocalDateKey(todayStart))?.totalCalls ?? 0
+    const yesterdayCalls = trendMap.get(yesterdayKey)?.totalCalls ?? 0
     const distribution: AdminDashboardDistributionItem[] = distributionRows.map(row => ({
-      apiId: row.apiId,
-      name: row.name || '未命名接口',
-      apiPath: row.apiPath || '',
+      routeId: row.routeId,
+      name: row.name,
+      apiPath: row.apiPath,
       totalCalls: toNumber(row.totalCalls)
     }))
     const recentCalls: AdminDashboardRecentCall[] = recentRows.map(row => ({
@@ -136,12 +125,14 @@ export const adminDashboardService = {
     return {
       overview: {
         userCount: toNumber(userRows[0]?.userCount),
-        enabledApiCount: toNumber(apiCountRows[0]?.enabledApiCount),
-        totalApiCount: toNumber(apiCountRows[0]?.totalApiCount),
-        totalCalls,
-        successCalls,
-        failureCalls,
-        successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0,
+        enabledApiCount: toNumber(routeCountRows[0]?.enabledApiCount),
+        totalApiCount: toNumber(routeCountRows[0]?.totalApiCount),
+        totalCalls: summary.totalCalls,
+        successCalls: summary.successCalls,
+        failureCalls: summary.failureCalls,
+        successRate: summary.totalCalls
+          ? Number(((summary.successCalls / summary.totalCalls) * 100).toFixed(2))
+          : 0,
         todayCalls,
         yesterdayCalls,
         todayChangeRate: yesterdayCalls > 0
@@ -158,14 +149,12 @@ export const adminDashboardService = {
   async getInsights(options: { rankingLimit?: number } = {}): Promise<AdminDashboardInsightsData> {
     const rankingLimit = clampInteger(options.rankingLimit, 1, 50, 10)
     const last24hStart = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    const publicApiCondition = and(eq(apis.isEnabled, true), eq(apis.isStatistics, true))
     const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
     const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
     const hourlySource = db.select({
       hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`.as('hour')
     }).from(apiCalls)
-      .innerJoin(apis, eq(apis.id, apiCalls.apiId))
-      .where(and(publicApiCondition, gte(apiCalls.createdAt, last24hStart), eq(apiCalls.isCounted, true)))
+      .where(and(gte(apiCalls.createdAt, last24hStart), eq(apiCalls.isCounted, true)))
       .as('hourly_source')
 
     const [hourlyRows, rankingRows] = await Promise.all([
@@ -174,16 +163,16 @@ export const adminDashboardService = {
         .groupBy(hourlySource.hour)
         .orderBy(asc(hourlySource.hour)),
       db.select({
-        apiId: apis.id,
-        name: apis.name,
-        apiPath: apis.apiPath,
+        routeId: apiRoutes.id,
+        name: apiRoutes.name,
+        apiPath: apiRoutes.pathPattern,
         totalCalls: totalExpr,
         successCalls: successExpr
       }).from(apiCallStats)
-        .innerJoin(apis, eq(apis.id, apiCallStats.apiId))
-        .where(publicApiCondition)
-        .groupBy(apis.id, apis.name, apis.apiPath)
-        .orderBy(desc(totalExpr), asc(apis.name))
+        .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
+        .where(isNull(apiRoutes.deletedAt))
+        .groupBy(apiRoutes.id, apiRoutes.name, apiRoutes.pathPattern)
+        .orderBy(desc(totalExpr), asc(apiRoutes.name))
         .limit(rankingLimit)
     ])
 
@@ -204,7 +193,7 @@ export const adminDashboardService = {
       const successCalls = toNumber(row.successCalls)
       return {
         rank: index + 1,
-        apiId: row.apiId,
+        routeId: row.routeId,
         name: row.name,
         apiPath: row.apiPath,
         totalCalls,
@@ -212,5 +201,17 @@ export const adminDashboardService = {
       }
     })
     return { hourlyTrend24h, ranking }
+  }
+}
+
+function normalizeStats(row?: {
+  totalCalls?: number | string | null
+  successCalls?: number | string | null
+  failureCalls?: number | string | null
+}) {
+  return {
+    totalCalls: toNumber(row?.totalCalls),
+    successCalls: toNumber(row?.successCalls),
+    failureCalls: toNumber(row?.failureCalls)
   }
 }

@@ -28,7 +28,7 @@ beforeAll(async () => {
       amount integer NOT NULL,
       balance_after integer NOT NULL,
       reason varchar(50) NOT NULL,
-      api_id integer,
+      route_id uuid,
       api_call_id bigint,
       credit_reservation_id bigint,
       code_id integer,

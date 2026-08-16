@@ -1,0 +1,497 @@
+import { createHash } from 'node:crypto'
+import { resolve } from 'node:path'
+import { PGlite } from '@electric-sql/pglite'
+import { eq } from 'drizzle-orm'
+import { drizzle } from 'drizzle-orm/pglite'
+import { migrate } from 'drizzle-orm/pglite/migrator'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import * as schema from '~~/server/db/schema'
+import { canonicalJson } from '~~/server/utils/canonical-json'
+
+const testContext = vi.hoisted(() => ({ database: null as unknown }))
+
+vi.mock('~~/server/db/client', () => ({
+  get db() {
+    return testContext.database
+  }
+}))
+vi.stubGlobal('useRuntimeConfig', () => ({
+  apiKeySecret: '0123456789abcdef0123456789abcdef'
+}))
+
+const { platformProductService } = await import('~~/server/services/platform-product-service')
+const { platformEndpointCatalogService } = await import('~~/server/services/platform-endpoint-catalog-service')
+const { platformRouteService } = await import('~~/server/services/platform-route-service')
+const { platformUpstreamService } = await import('~~/server/services/platform-upstream-service')
+const { platformWorkspaceService } = await import('~~/server/services/platform-workspace-service')
+const { routingRevisionService } = await import('~~/server/services/routing-revision-service')
+const { routingRuntimeService } = await import('~~/server/services/routing-runtime-service')
+
+let client: PGlite
+let database: ReturnType<typeof drizzle<typeof schema>>
+let defaults: Awaited<ReturnType<typeof platformWorkspaceService.ensureDefault>>
+
+beforeAll(async () => {
+  client = new PGlite()
+  database = drizzle(client, { schema })
+  testContext.database = database
+  await migrate(database, {
+    migrationsFolder: resolve(process.cwd(), 'server/db/migrations/postgresql'),
+    migrationsSchema: 'drizzle',
+    migrationsTable: '__drizzle_migrations'
+  })
+})
+
+beforeEach(async () => {
+  await client.exec('TRUNCATE TABLE workspaces CASCADE;')
+  defaults = await platformWorkspaceService.ensureDefault()
+  await platformWorkspaceService.ensureDefault()
+})
+
+afterAll(async () => client.close())
+
+async function createRoutingGraph(options: {
+  workspaceId?: string
+  productSlug?: string
+  routeName?: string
+  hosts?: string[]
+  pathPattern?: string
+  upstreamPathTemplate?: string
+}) {
+  const workspaceId = options.workspaceId ?? defaults.workspace.id
+  const productSlug = options.productSlug ?? 'proxy-smoke'
+  const product = await platformProductService.create({
+    workspaceId,
+    slug: productSlug,
+    name: productSlug,
+    visibility: 'public',
+    version: 'v1'
+  })
+  const upstream = await platformUpstreamService.create({
+    workspaceId,
+    slug: `${productSlug}-service`,
+    name: `${productSlug} service`,
+    kind: 'internal',
+    serviceToken: 'revision-test-service-token-with-at-least-32-characters',
+    loadBalancing: 'round_robin',
+    targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
+  })
+  const route = await platformRouteService.create({
+    apiVersionId: product.versions[0]!.id,
+    name: options.routeName ?? 'Proxy smoke',
+    hosts: options.hosts ?? [],
+    method: 'GET',
+    pathPattern: options.pathPattern ?? '/v1/proxy-smoke/{id}',
+    upstreamServiceId: upstream.id,
+    upstreamPathTemplate: options.upstreamPathTemplate ?? '/healthz/{path.id}',
+    timeoutMs: 5_000,
+    maxRequestBytes: 1_048_576,
+    maxResponseBytes: 10_485_760,
+    state: 'active'
+  })
+  if (!route) throw new Error('route insert returned no row')
+
+  return { product, route, upstream }
+}
+
+async function createDiscoveredService(options: {
+  slug?: string
+  name?: string
+  path?: string
+  summary?: string
+}) {
+  const slug = options.slug ?? 'catalog-service'
+  const name = options.name ?? 'Catalog Service'
+  const path = options.path ?? '/v1/catalog/{id}'
+  const upstream = await platformUpstreamService.create({
+    workspaceId: defaults.workspace.id,
+    slug,
+    name,
+    kind: 'internal',
+    serviceToken: 'catalog-test-service-token-with-at-least-32-characters',
+    loadBalancing: 'round_robin',
+    targets: [{ baseUrl: 'http://127.0.0.1:8090', weight: 1 }]
+  })
+  const [document] = await database.insert(schema.openapiDocuments).values({
+    workspaceId: defaults.workspace.id,
+    upstreamServiceId: upstream.id,
+    sourceType: 'url',
+    sourceUrl: 'http://127.0.0.1:8090/openapi.json',
+    format: 'json',
+    specVersion: '3.1.0',
+    content: {
+      openapi: '3.1.0',
+      paths: {
+        [path]: {
+          get: {
+            operationId: `${slug}-get`,
+            summary: options.summary ?? 'Catalog endpoint'
+          }
+        }
+      }
+    },
+    contentHash: createHash('sha256').update(`${slug}:${path}`).digest('hex'),
+    parsedSummary: {
+      endpointCount: 1,
+      endpoints: [{
+        method: 'GET',
+        path,
+        operationId: `${slug}-get`,
+        summary: options.summary ?? 'Catalog endpoint',
+        tags: [],
+        system: false
+      }]
+    },
+    fetchedAt: new Date()
+  }).returning()
+  if (!document) throw new Error('OpenAPI test document was not created')
+  await database.update(schema.upstreamServices)
+    .set({ openapiDocumentId: document.id })
+    .where(eq(schema.upstreamServices.id, upstream.id))
+  return { upstream, path }
+}
+
+describe('routing revision service', () => {
+  it('creates the default workspace and environment idempotently', async () => {
+    const workspaces = await platformWorkspaceService.list()
+
+    expect(workspaces).toHaveLength(1)
+    expect(workspaces[0]).toMatchObject({
+      slug: 'default',
+      environments: [{ slug: 'development' }]
+    })
+  })
+
+  it('allows only one active environment without a default domain', async () => {
+    await expect(platformWorkspaceService.create({
+      slug: 'second',
+      name: 'Second workspace',
+      environment: {
+        slug: 'development',
+        name: 'Development',
+        defaultDomain: null
+      }
+    })).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: 'ENVIRONMENT_FALLBACK_CONFLICT' }
+    })
+
+    expect(await platformWorkspaceService.list()).toHaveLength(1)
+  })
+
+  it('publishes an immutable runtime payload and can roll back to it', async () => {
+    const graph = await createRoutingGraph({})
+    expect(graph.product.versions[0]).toMatchObject({ state: 'published' })
+    expect(graph.product.versions[0]?.publishedAt).toBeInstanceOf(Date)
+
+    const firstRevision = await routingRevisionService.publish(defaults.environment.id, null)
+    const payload = firstRevision.configPayload
+
+    expect(firstRevision).toMatchObject({ sequence: 1, status: 'published' })
+    expect(firstRevision.checksum).toBe(
+      createHash('sha256').update(canonicalJson(payload)).digest('hex')
+    )
+    expect(payload.routes).toHaveLength(1)
+    expect(payload.upstreams).toHaveLength(1)
+
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/proxy-smoke/42',
+      'api.example.test'
+    )).resolves.toMatchObject({
+      revisionId: firstRevision.id,
+      route: { id: graph.route.id },
+      params: { id: '42' }
+    })
+
+    await platformRouteService.create({
+      apiVersionId: graph.product.versions[0]!.id,
+      name: 'Second route',
+      hosts: [],
+      method: 'GET',
+      pathPattern: '/v1/revision-two-only',
+      upstreamServiceId: graph.upstream.id,
+      upstreamPathTemplate: '/readyz',
+      timeoutMs: 5_000,
+      maxRequestBytes: 1_048_576,
+      maxResponseBytes: 10_485_760,
+      state: 'active'
+    })
+
+    const secondRevision = await routingRevisionService.publish(defaults.environment.id, null)
+    expect(secondRevision).toMatchObject({ sequence: 2, status: 'published' })
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/revision-two-only',
+      'api.example.test'
+    )).resolves.toMatchObject({ revisionId: secondRevision.id })
+
+    const activated = await routingRevisionService.activate(defaults.environment.id, firstRevision.id)
+    expect(activated.status).toBe('published')
+
+    const environment = (await database.select().from(schema.environments))[0]!
+    const revisions = await database.select().from(schema.routingRevisions)
+    const revisionStatuses = new Map(revisions.map(revision => [revision.id, revision.status]))
+
+    expect(environment.activeRevisionId).toBe(firstRevision.id)
+    expect(revisionStatuses.get(firstRevision.id)).toBe('published')
+    expect(revisionStatuses.get(secondRevision.id)).toBe('superseded')
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/revision-two-only',
+      'api.example.test'
+    )).resolves.toBeNull()
+  })
+
+  it('excludes routes whose API version is not published', async () => {
+    const graph = await createRoutingGraph({})
+    await database.update(schema.apiVersions)
+      .set({ state: 'draft', publishedAt: null })
+      .where(eq(schema.apiVersions.id, graph.product.versions[0]!.id))
+
+    const revision = await routingRevisionService.publish(defaults.environment.id, null)
+
+    expect(revision.configPayload.routes).toHaveLength(0)
+    expect(revision.configPayload.upstreams).toHaveLength(0)
+  })
+
+  it('rejects ambiguous routes before changing the active revision', async () => {
+    const firstGraph = await createRoutingGraph({
+      productSlug: 'first',
+      pathPattern: '/v1/items/{id}',
+      upstreamPathTemplate: '/items/{path.id}'
+    })
+    const secondProduct = await platformProductService.create({
+      workspaceId: defaults.workspace.id,
+      slug: 'second',
+      name: 'Second',
+      visibility: 'public',
+      version: 'v1'
+    })
+    await platformRouteService.create({
+      apiVersionId: secondProduct.versions[0]!.id,
+      name: 'Conflicting route',
+      hosts: [],
+      method: 'GET',
+      pathPattern: '/v1/items/{itemId}',
+      upstreamServiceId: firstGraph.upstream.id,
+      upstreamPathTemplate: '/items/{path.itemId}',
+      timeoutMs: 5_000,
+      maxRequestBytes: 1_048_576,
+      maxResponseBytes: 10_485_760,
+      state: 'active'
+    })
+
+    await expect(routingRevisionService.publish(defaults.environment.id, null))
+      .rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: 'REVISION_ROUTE_CONFLICT' }
+      })
+
+    const environment = (await database.select().from(schema.environments))[0]!
+    const revisions = await database.select().from(schema.routingRevisions)
+    expect(environment.activeRevisionId).toBeNull()
+    expect(revisions).toHaveLength(0)
+  })
+
+  it('rejects the same effective route across active environments', async () => {
+    const firstGraph = await createRoutingGraph({
+      productSlug: 'first',
+      hosts: ['shared.example.test'],
+      pathPattern: '/v1/shared/{id}',
+      upstreamPathTemplate: '/shared/{path.id}'
+    })
+    await routingRevisionService.publish(defaults.environment.id, null)
+
+    const secondEnvironment = (await database.insert(schema.environments).values({
+      workspaceId: defaults.workspace.id,
+      slug: 'production',
+      name: 'Production',
+      defaultDomain: 'secondary.example.test'
+    }).returning())[0]!
+
+    await expect(routingRevisionService.publish(secondEnvironment.id, null))
+      .rejects.toMatchObject({
+        statusCode: 409,
+        data: {
+          code: 'REVISION_ROUTE_CONFLICT',
+          routeIds: [firstGraph.route.id, firstGraph.route.id],
+          environmentIds: expect.arrayContaining([defaults.environment.id, secondEnvironment.id])
+        }
+      })
+  })
+
+  it('selects routes globally by host and path specificity', async () => {
+    const fallbackGraph = await createRoutingGraph({
+      productSlug: 'fallback',
+      pathPattern: '/v1/items/{id}',
+      upstreamPathTemplate: '/items/{path.id}'
+    })
+    await routingRevisionService.publish(defaults.environment.id, null)
+
+    const exactWorkspace = await platformWorkspaceService.create({
+      slug: 'exact',
+      name: 'Exact workspace',
+      environment: {
+        slug: 'production',
+        name: 'Production',
+        defaultDomain: 'api.example.test'
+      }
+    })
+    const exactGraph = await createRoutingGraph({
+      workspaceId: exactWorkspace.id,
+      productSlug: 'exact',
+      pathPattern: '/v1/items/special',
+      upstreamPathTemplate: '/items/special'
+    })
+    await routingRevisionService.publish(exactWorkspace.environments[0]!.id, null)
+
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/items/special',
+      'api.example.test'
+    )).resolves.toMatchObject({
+      environmentId: exactWorkspace.environments[0]!.id,
+      route: { id: exactGraph.route.id }
+    })
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/items/special',
+      'other.example.test'
+    )).resolves.toMatchObject({
+      environmentId: defaults.environment.id,
+      route: { id: fallbackGraph.route.id }
+    })
+  })
+
+  it('publishes discovered Service endpoints and applies governance changes automatically', async () => {
+    const service = await createDiscoveredService({})
+
+    let catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    let item = catalog.services
+      .find(entry => entry.upstream.id === service.upstream.id)
+      ?.endpoints[0]
+    expect(item).toMatchObject({
+      sourceKind: 'discovered',
+      status: 'available',
+      route: null,
+      publishable: true
+    })
+
+    const published = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: service.path
+    }, null)
+    expect(published).toMatchObject({
+      created: true,
+      applied: true,
+      publicationError: null,
+      revision: { sequence: 1 }
+    })
+    expect(published.route).toMatchObject({
+      pathPattern: service.path,
+      upstreamPathTemplate: '/v1/catalog/{path.id}',
+      isApiKey: false,
+      isStatistics: true,
+      creditsCost: 0,
+      state: 'active'
+    })
+
+    const statistics = await platformEndpointCatalogService.update(
+      published.route.id,
+      { environmentId: defaults.environment.id, isStatistics: false },
+      null
+    )
+    expect(statistics).toMatchObject({
+      applied: true,
+      revision: { sequence: 2 },
+      route: { isStatistics: false }
+    })
+
+    const disabled = await platformEndpointCatalogService.update(
+      published.route.id,
+      { environmentId: defaults.environment.id, enabled: false },
+      null
+    )
+    expect(disabled).toMatchObject({
+      applied: true,
+      revision: { sequence: 3 },
+      route: { state: 'disabled' }
+    })
+
+    catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    item = catalog.services
+      .find(entry => entry.upstream.id === service.upstream.id)
+      ?.endpoints[0]
+    expect(item).toMatchObject({
+      status: 'disabled',
+      route: { route: { isStatistics: false, state: 'disabled' } }
+    })
+    expect(catalog.totals).toMatchObject({ live: 0, disabled: 1, pending: 0 })
+  })
+
+  it('keeps the active release while a conflicting endpoint waits to be applied', async () => {
+    const active = await createRoutingGraph({
+      productSlug: 'active-conflict',
+      pathPattern: '/v1/conflict/{id}',
+      upstreamPathTemplate: '/conflict/{path.id}'
+    })
+    const firstRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    const service = await createDiscoveredService({
+      slug: 'waiting-service',
+      path: '/v1/conflict/{itemId}'
+    })
+
+    const pending = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: service.path
+    }, null)
+    expect(pending).toMatchObject({
+      created: true,
+      applied: false,
+      revision: null,
+      publicationError: { code: 'REVISION_ROUTE_CONFLICT' }
+    })
+    const [environment] = await database.select().from(schema.environments)
+    expect(environment?.activeRevisionId).toBe(firstRevision.id)
+
+    let catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    expect(catalog.services
+      .find(entry => entry.upstream.id === service.upstream.id)
+      ?.endpoints[0]).toMatchObject({ status: 'pending' })
+
+    const resolved = await platformEndpointCatalogService.update(
+      active.route.id,
+      { environmentId: defaults.environment.id, enabled: false },
+      null
+    )
+    expect(resolved).toMatchObject({
+      applied: true,
+      revision: { sequence: 2 }
+    })
+
+    catalog = await platformEndpointCatalogService.list(
+      defaults.workspace.id,
+      defaults.environment.id
+    )
+    expect(catalog.services
+      .find(entry => entry.upstream.id === service.upstream.id)
+      ?.endpoints[0]).toMatchObject({ status: 'live' })
+  })
+})

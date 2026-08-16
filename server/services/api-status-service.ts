@@ -14,22 +14,19 @@ interface ApiAutoStatusCacheEntry {
   expiresAt: number
 }
 
-const apiAutoStatusCache = new Map<number, ApiAutoStatusCacheEntry>()
+const routeStatusCache = new Map<string, ApiAutoStatusCacheEntry>()
 
-export interface ApiAutoStatusSample {
+interface ApiAutoStatusSample {
   statusCode: number
 }
 
 function isAvailableSample(sample: ApiAutoStatusSample): boolean {
-  return sample.statusCode >= 200
-    && sample.statusCode < 500
+  return sample.statusCode >= 200 && sample.statusCode < 500
 }
 
 export function resolveApiAutoStatus(samples: ApiAutoStatusSample[]): number {
   if (samples.length === 0) return API_STATUS.unknown
 
-  // 自动状态表示服务可用性，而不是业务成功率。参数、鉴权、资源不存在等 4xx
-  // 说明接口仍能正常响应；只有 5xx/超时等服务端失败会降低可用率。
   const availableCount = samples.filter(isAvailableSample).length
   return availableCount / samples.length >= API_AUTO_STATUS_MIN_AVAILABILITY_RATE
     ? API_STATUS.normal
@@ -45,71 +42,59 @@ export function resolveEffectiveApiStatus(
   return isStatisticsEnabled ? automaticStatus : API_STATUS.unknown
 }
 
-function normalizeApiIds(apiIds: number[]): number[] {
-  return Array.from(new Set(
-    apiIds
-      .map(apiId => Math.trunc(apiId))
-      .filter(apiId => Number.isInteger(apiId) && apiId > 0)
-  ))
+function normalizeRouteIds(routeIds: string[]): string[] {
+  return Array.from(new Set(routeIds.map(id => id.trim()).filter(Boolean)))
 }
 
-export async function resolveApiAutoStatuses(apiIds: number[]): Promise<Record<number, number>> {
-  const normalizedIds = normalizeApiIds(apiIds)
-  const result: Record<number, number> = {}
-  const missingIds: number[] = []
+export async function resolveApiAutoStatuses(routeIds: string[]): Promise<Record<string, number>> {
+  const normalizedIds = normalizeRouteIds(routeIds)
+  const result: Record<string, number> = {}
+  const missingIds: string[] = []
   const now = Date.now()
 
-  for (const apiId of normalizedIds) {
-    const cached = apiAutoStatusCache.get(apiId)
-    if (cached && cached.expiresAt > now) {
-      result[apiId] = cached.value
-    } else {
-      missingIds.push(apiId)
-    }
+  for (const routeId of normalizedIds) {
+    const cached = routeStatusCache.get(routeId)
+    if (cached && cached.expiresAt > now) result[routeId] = cached.value
+    else missingIds.push(routeId)
   }
-
   if (missingIds.length === 0) return result
 
   const windowStart = new Date(now - API_AUTO_STATUS_WINDOW_MS)
   const recentCalls = db.select({
-    apiId: apiCalls.apiId,
+    routeId: apiCalls.routeId,
     statusCode: apiCalls.statusCode,
     rowIndex: sql<number>`row_number() over (
-      partition by ${apiCalls.apiId}
+      partition by ${apiCalls.routeId}
       order by ${apiCalls.createdAt} desc, ${apiCalls.id} desc
     )`.as('row_index')
   })
     .from(apiCalls)
     .where(and(
-      inArray(apiCalls.apiId, missingIds),
+      inArray(apiCalls.routeId, missingIds),
       eq(apiCalls.isCounted, true),
       gte(apiCalls.createdAt, windowStart)
     ))
     .as('recent_calls')
 
   const rows = await db.select({
-    apiId: recentCalls.apiId,
+    routeId: recentCalls.routeId,
     statusCode: recentCalls.statusCode
   })
     .from(recentCalls)
     .where(lte(recentCalls.rowIndex, API_AUTO_STATUS_SAMPLE_SIZE))
 
-  const samplesByApiId = new Map<number, ApiAutoStatusSample[]>()
-  for (const apiId of missingIds) {
-    samplesByApiId.set(apiId, [])
-  }
+  const samplesByRouteId = new Map<string, ApiAutoStatusSample[]>(
+    missingIds.map(routeId => [routeId, []])
+  )
   for (const row of rows) {
-    samplesByApiId.get(row.apiId)?.push({
-      statusCode: row.statusCode
-    })
+    samplesByRouteId.get(row.routeId)?.push({ statusCode: row.statusCode })
   }
 
   const expiresAt = Date.now() + API_AUTO_STATUS_CACHE_TTL_MS
-  for (const apiId of missingIds) {
-    const value = resolveApiAutoStatus(samplesByApiId.get(apiId) || [])
-    apiAutoStatusCache.set(apiId, { value, expiresAt })
-    result[apiId] = value
+  for (const routeId of missingIds) {
+    const value = resolveApiAutoStatus(samplesByRouteId.get(routeId) ?? [])
+    routeStatusCache.set(routeId, { value, expiresAt })
+    result[routeId] = value
   }
-
   return result
 }

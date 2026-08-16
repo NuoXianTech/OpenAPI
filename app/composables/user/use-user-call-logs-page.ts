@@ -11,7 +11,7 @@ import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-l
 
 export interface UserCallLogRow {
   id: number
-  apiId: number
+  routeId: string
   apiName: string | null
   apiPath: string
   method: string
@@ -28,13 +28,13 @@ export interface UserCallLogRow {
 }
 
 interface UserCallLogFilterOptions {
-  apis: Array<{ id: number, name: string, apiPath: string }>
+  routes: Array<{ id: string, name: string, apiPath: string }>
   apiKeys: Array<{ id: number, name: string }>
 }
 
 interface UserCallLogFilters {
   keyword: string
-  apiId: number
+  routeId: string
   apiKeyId: number
   status: 'all' | 'success' | 'failure'
 }
@@ -47,7 +47,7 @@ interface UseUserCallLogsPageOptions {
 
 const USER_CALL_LOG_DEFAULT_FILTERS: UserCallLogFilters = {
   keyword: '',
-  apiId: 0,
+  routeId: '',
   apiKeyId: 0,
   status: 'all'
 }
@@ -81,15 +81,15 @@ export function useUserCallOutcomeMeta() {
 
 export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   const { t } = useI18n()
-  const filterOptions = ref<UserCallLogFilterOptions>({ apis: [], apiKeys: [] })
+  const filterOptions = ref<UserCallLogFilterOptions>({ routes: [], apiKeys: [] })
   const listState = useDashboardListState<UserCallLogFilters>({
     defaultFilters: USER_CALL_LOG_DEFAULT_FILTERS,
-    filterCountKeys: ['apiId', 'apiKeyId', 'status'],
+    filterCountKeys: ['routeId', 'apiKeyId', 'status'],
     routeQuery: options.routeQuery,
     replaceQuery: options.replaceQuery,
     filterCodecs: {
       keyword: createStringQueryCodec(''),
-      apiId: createNumberQueryCodec(0),
+      routeId: createStringQueryCodec(''),
       apiKeyId: createNumberQueryCodec(0),
       status: createEnumQueryCodec(USER_CALL_STATUSES, 'all')
     }
@@ -104,7 +104,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
     immediate: options.immediate ?? true,
     buildQuery: (filters, pagination) => ({
       keyword: filters.keyword.trim() || undefined,
-      apiId: filters.apiId || undefined,
+      routeId: filters.routeId || undefined,
       apiKeyId: filters.apiKeyId || undefined,
       status: filters.status === 'all' ? undefined : filters.status,
       limit: pagination.limit,
@@ -113,8 +113,8 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
   })
 
   const apiSelectItems = computed(() => [
-    { label: t('user.logs.filters.allApis'), value: 0 },
-    ...filterOptions.value.apis.map(api => ({ label: `${api.name}（${api.apiPath}）`, value: api.id }))
+    { label: t('user.logs.filters.allApis'), value: '' },
+    ...filterOptions.value.routes.map(route => ({ label: `${route.name}（${route.apiPath}）`, value: route.id }))
   ])
   const keySelectItems = computed(() => [
     { label: t('user.logs.filters.allKeys'), value: 0 },
@@ -145,7 +145,7 @@ export function useUserCallLogsPage(options: UseUserCallLogsPageOptions = {}) {
 
   async function loadFilterOptions() {
     filterOptions.value = await $fetch<UserCallLogFilterOptions>('/api/user/calls/filters')
-      || { apis: [], apiKeys: [] }
+      || { routes: [], apiKeys: [] }
   }
 
   async function resetFilters() {

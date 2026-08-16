@@ -12,105 +12,14 @@ import {
   date,
   uuid,
   index,
-  uniqueIndex,
   check,
   primaryKey
 } from 'drizzle-orm/pg-core'
-import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 import { users } from './user'
 
 // ------------------------------------------------------------------
-// API Categories（公共接口分类）
-//
-// 分类可被 admin 软删（deletedAt），用以在 admin 列表中标记"已停用"，
-// 但与之关联的 apis.categoryId 在分类硬删时会被 set null。
-// ------------------------------------------------------------------
-export const apiCategories = pgTable('api_categories', {
-  id: serial('id').primaryKey(),
-  code: varchar('code', { length: 50 }).notNull(),
-  name: varchar('name', { length: 100 }).notNull(),
-  description: text('description'),
-  icon: varchar('icon', { length: 120 }),
-  color: varchar('color', { length: 20 }),
-  parentId: integer('parent_id').references((): AnyPgColumn => apiCategories.id, { onDelete: 'set null' }),
-  sortOrder: integer('sort_order').notNull().default(0),
-  isEnabled: boolean('is_enabled').notNull().default(true),
-  deletedAt: timestamp('deleted_at', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('api_categories_code_uq').on(table.code),
-  index('api_categories_parent_sort_idx').on(table.parentId, table.sortOrder),
-  index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
-])
-
-// ------------------------------------------------------------------
-// APIs（公共接口注册表 · 永不物理删除）
-//
-// 接口由 manifestSync 从 server/routes/v{N}/{code} 自动注册，
-// 治理字段（isEnabled / methodCosts / categoryId 等）由 admin 后台维护。
-//
-// 物理删除文件夹（orphan）行为：
-//   - manifestSync 检测到 manifest 中无对应文件夹时，把行标记为 isOrphaned=true
-//     并强制 isEnabled=false / isStatistics=false
-//   - admin 后台仍可修改 categoryId / 元数据，但不可重新启用
-//   - 文件夹回归（且同名 + endpoint 方法集匹配）时，manifestSync 自动清除 isOrphaned
-//
-// createdBy / updatedBy 用作"操作者快照"，无外键约束：
-//   - null = 系统任务或无操作者快照
-//   - 整数 = users.id 快照
-// ------------------------------------------------------------------
-export const apis = pgTable('apis', {
-  id: serial('id').primaryKey(),
-  code: varchar('code', { length: 50 }).notNull(),
-  pathVersion: varchar('path_version', { length: 8 }).notNull().default('v1'),
-  endpointCount: integer('endpoint_count').notNull().default(0),
-  name: varchar('name', { length: 100 }).notNull(),
-  status: integer('status').default(4).notNull(),
-  categoryId: integer('category_id').references(() => apiCategories.id, { onDelete: 'set null' }),
-  shortDesc: varchar('short_desc', { length: 50 }).notNull(),
-  description: text('description').notNull(),
-  httpMethod: varchar('http_method', { length: 50 }).notNull(),
-  apiPath: varchar('api_path', { length: 200 }).notNull(),
-  docUrl: varchar('doc_url', { length: 200 }).notNull(),
-
-  isEnabled: boolean('is_enabled').default(false).notNull(),
-  isApiKey: boolean('is_api_key').default(false).notNull(),
-  isStatistics: boolean('is_statistics').default(false).notNull(),
-  // 文件夹物理删除后被 manifestSync 置为 true；为 true 时拒绝启用，admin 仍可改分类
-  isOrphaned: boolean('is_orphaned').default(false).notNull(),
-
-  rateLimitPerSecond: integer('rate_limit_per_second').default(0).notNull(),
-  rateLimitPerMinute: integer('rate_limit_per_minute').default(0).notNull(),
-  rateLimitPerHour: integer('rate_limit_per_hour').default(0).notNull(),
-  rateLimitPerDay: integer('rate_limit_per_day').default(0).notNull(),
-
-  methodCosts: jsonb('method_costs').$type<Record<string, number>>().notNull().default({}),
-  capabilityConfig: jsonb('capability_config').$type<Record<string, unknown>>().notNull().default({}),
-  capabilityRevision: integer('capability_revision').notNull().default(0),
-  capabilityUpdatedAt: timestamp('capability_updated_at', { withTimezone: true }),
-  dailyQuota: integer('daily_quota').default(0).notNull(),
-  timeoutMs: integer('timeout_ms').default(10000).notNull(),
-
-  createdBy: integer('created_by'), // 操作者快照，null = admin
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedBy: integer('updated_by'), // 操作者快照，null = admin
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('apis_version_code_uq').on(table.pathVersion, table.code),
-  index('apis_category_idx').on(table.categoryId),
-  index('apis_path_version_enabled_idx').on(table.pathVersion, table.isEnabled),
-  check('apis_status_chk', sql`${table.status} in (-1, 0, 1, 2, 3, 4)`),
-  check('apis_endpoint_count_chk', sql`${table.endpointCount} >= 0`),
-  check('apis_rate_limits_chk', sql`${table.rateLimitPerSecond} >= 0 and ${table.rateLimitPerMinute} >= 0 and ${table.rateLimitPerHour} >= 0 and ${table.rateLimitPerDay} >= 0`),
-  check('apis_capability_revision_chk', sql`${table.capabilityRevision} >= 0`),
-  check('apis_daily_quota_chk', sql`${table.dailyQuota} >= 0`),
-  check('apis_timeout_ms_chk', sql`${table.timeoutMs} between 100 and 120000`)
-])
-
-// ------------------------------------------------------------------
-// API Keys（用户 API 密钥）
+// API Keys（用户访问 Platform Gateway 的密钥）
 //
 // userId cascade：用户硬删时自动清除该用户所有密钥。
 // 明文不落库：keyDigest 用于鉴权查询，keyCiphertext 用于授权后重复查看。
@@ -143,28 +52,19 @@ export const apiKeys = pgTable('api_keys', {
 ])
 
 // ------------------------------------------------------------------
-// API Calls（调用日志 · 审计不可变）
+// API Calls（Route 调用日志 · 审计不可变）
 //
-// userId / apiKeyId 是整数快照，无外键约束：
-//   - userId = null 表示匿名调用（接口未开启 isApiKey）
-//   - apiKeyId / apiKeyName：apiKeyId 整数快照，apiKeyName 名称快照
-//   - 用户硬删 / 密钥删除时本表行保留，对应需求 #5
-// apiId 保留外键：apis 行永不物理删除（最多被标记 isOrphaned），FK 仅做防御性约束。
-//
-// 调用日志写入规则（参见 docs/api/call-statistics.md）：
-//   - 接口未开启 isStatistics → 不写
-//   - 接口被禁用（isEnabled=false / API_DISABLED）→ 不写
-//   - 密钥无效（INVALID_API_KEY / MISSING_API_KEY）→ 不写
-//   - 其他场景（成功 + 业务失败 + 配额/积分/到期/禁用拒绝）→ 写入，
-//     其中"业务可见拒绝"的 isCounted=false（不参与统计聚合）
+// routeId / userId / apiKeyId 都是快照，不设外键。Route、用户或密钥删除后，
+// 调用记录仍然保留；targetName、apiKeyName 和 path 用于展示历史上下文。
 // ------------------------------------------------------------------
 export const apiCalls = pgTable('api_calls', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   requestId: uuid('request_id').defaultRandom().notNull(),
-  apiId: integer('api_id').references(() => apis.id, { onDelete: 'restrict' }).notNull(),
-  apiKeyId: integer('api_key_id'), // 快照，无 FK
-  apiKeyName: varchar('api_key_name', { length: 100 }), // 名称快照（删除密钥后仍可读）
-  userId: integer('user_id'), // 用户 id 快照，无 FK；null = 匿名
+  routeId: uuid('route_id').notNull(),
+  targetName: varchar('target_name', { length: 160 }),
+  apiKeyId: integer('api_key_id'),
+  apiKeyName: varchar('api_key_name', { length: 100 }),
+  userId: integer('user_id'),
   path: varchar('path', { length: 1000 }).notNull(),
   method: varchar('method', { length: 10 }).notNull(),
   queryString: varchar('query_string', { length: 2000 }),
@@ -183,13 +83,13 @@ export const apiCalls = pgTable('api_calls', {
   errorMessage: varchar('error_message', { length: 500 }),
 
   creditsCost: integer('credits_cost').notNull().default(0),
-  // false = 业务可见拒绝（配额/积分/密钥到期/密钥被禁用），写日志但不进 stats 聚合
+  // false = 业务可见拒绝，写日志但不进入成功率和调用量聚合。
   isCounted: boolean('is_counted').notNull().default(true),
 
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
   index('api_calls_created_at_idx').on(table.createdAt.desc()),
-  index('api_calls_api_id_created_at_idx').on(table.apiId, table.createdAt.desc()),
+  index('api_calls_route_created_at_idx').on(table.routeId, table.createdAt.desc()),
   index('api_calls_user_created_at_idx').on(table.userId, table.createdAt.desc()),
   index('api_calls_api_key_created_at_idx').on(table.apiKeyId, table.createdAt.desc()),
   index('api_calls_request_id_idx').on(table.requestId),
@@ -201,13 +101,12 @@ export const apiCalls = pgTable('api_calls', {
 ])
 
 // ------------------------------------------------------------------
-// API Call Stats（按 apiId × 自然日聚合 · 统计源）
+// API Call Stats（按 Route × 自然日聚合）
 //
-// 仅在 apiCalls.isCounted=true 时累加；orphan / disabled / isStatistics=false
-// 的接口完全不会进入本表。dashboard / 单接口日统计/总统计聚合均基于本表。
+// 只聚合 apiCalls.isCounted=true 的调用。routeId 是快照，不依赖 Route 生命周期。
 // ------------------------------------------------------------------
 export const apiCallStats = pgTable('api_call_stats', {
-  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'restrict' }),
+  routeId: uuid('route_id').notNull(),
   statDate: date('stat_date').notNull(),
   totalCount: integer('total_count').notNull().default(0),
   successCount: integer('success_count').notNull().default(0),
@@ -215,41 +114,23 @@ export const apiCallStats = pgTable('api_call_stats', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
-  primaryKey({ columns: [table.apiId, table.statDate] }),
+  primaryKey({ columns: [table.routeId, table.statDate] }),
   index('api_call_stats_stat_date_idx').on(table.statDate),
   check('api_call_stats_counts_chk', sql`${table.totalCount} >= 0 and ${table.successCount} >= 0 and ${table.failureCount} >= 0 and ${table.successCount} + ${table.failureCount} = ${table.totalCount}`)
 ])
 
 // ------------------------------------------------------------------
-// API Daily Quota Usage（每日配额原子计数器）
+// API Credit Reservations（付费 Route 的原子积分预留）
 //
-// 与 apiCallStats 分离：配额在 handler 执行前原子预占，而调用统计在响应后写入。
-// 这样即使关闭统计或运行多个实例，每日配额仍能严格执行且不会竞态超发。
-// ------------------------------------------------------------------
-export const apiDailyQuotaUsage = pgTable('api_daily_quota_usage', {
-  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
-  usageDate: date('usage_date').notNull(),
-  usedCount: integer('used_count').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  primaryKey({ columns: [table.apiId, table.usageDate] }),
-  index('api_daily_quota_usage_date_idx').on(table.usageDate),
-  check('api_daily_quota_usage_count_chk', sql`${table.usedCount} >= 0`)
-])
-
-// ------------------------------------------------------------------
-// API Credit Reservations（付费调用的原子积分预留）
-//
-// active：handler 正在执行；pending：handler 已成功，必须结算；
-// dead_letter：重试耗尽，冻结额度等待人工处理。积分与 API Key 配额共用此生命周期。
+// active：上游正在执行；pending：上游成功，等待持久化扣费；
+// dead_letter：重试耗尽，冻结额度等待人工处理。
 // ------------------------------------------------------------------
 export const apiCreditReservations = pgTable('api_credit_reservations', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  apiKeyId: integer('api_key_id').notNull(), // 快照；Key 删除后仍可完成用户积分结算
-  apiId: integer('api_id').notNull().references(() => apis.id, { onDelete: 'cascade' }),
-  apiCallId: bigint('api_call_id', { mode: 'number' }), // 响应日志落库后回填；崩溃恢复时可为空
+  apiKeyId: integer('api_key_id').notNull(),
+  routeId: uuid('route_id').notNull(),
+  apiCallId: bigint('api_call_id', { mode: 'number' }),
   requestId: uuid('request_id').notNull(),
   amount: integer('amount').notNull(),
   status: varchar('status', { length: 20 }).notNull().default('active'),
@@ -264,6 +145,7 @@ export const apiCreditReservations = pgTable('api_credit_reservations', {
   index('api_credit_reservations_status_next_attempt_idx').on(table.status, table.nextAttemptAt),
   index('api_credit_reservations_created_idx').on(table.createdAt),
   index('api_credit_reservations_request_idx').on(table.requestId),
+  index('api_credit_reservations_route_idx').on(table.routeId),
   check('api_credit_reservations_amount_chk', sql`${table.amount} > 0`),
   check('api_credit_reservations_status_chk', sql`${table.status} in ('active', 'pending', 'dead_letter')`),
   check('api_credit_reservations_attempts_chk', sql`${table.attempts} >= 0`)

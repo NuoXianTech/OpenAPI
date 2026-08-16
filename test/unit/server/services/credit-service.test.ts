@@ -13,12 +13,13 @@ vi.mock('~~/server/db/client', () => ({
 
 const { creditService } = await import('~~/server/services/credit-service')
 let client: PGlite
+const routeId = '00000000-0000-4000-8000-000000000001'
 
 function reserve(amount: number) {
   return creditService.reserve({
     userId: 1,
     apiKeyId: 1,
-    apiId: 1,
+    routeId,
     requestId: globalThis.crypto.randomUUID(),
     amount
   })
@@ -48,7 +49,7 @@ beforeAll(async () => {
       id bigserial PRIMARY KEY,
       user_id integer NOT NULL,
       api_key_id integer NOT NULL,
-      api_id integer NOT NULL,
+      route_id uuid NOT NULL,
       api_call_id bigint,
       request_id uuid NOT NULL,
       amount integer NOT NULL,
@@ -66,7 +67,7 @@ beforeAll(async () => {
       amount integer NOT NULL,
       balance_after integer NOT NULL,
       reason varchar(50) NOT NULL,
-      api_id integer,
+      route_id uuid,
       api_call_id bigint,
       credit_reservation_id bigint,
       code_id integer,

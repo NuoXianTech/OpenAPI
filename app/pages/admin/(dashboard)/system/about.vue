@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const GITHUB_REPOSITORY_URL = 'https://github.com/NuoXianTech/OpenAPI'
+const GITHUB_REPOSITORY_URL = 'https://github.com/NuoXianTech/openapi-platform'
 
 const { t } = useI18n()
 const runtimeConfig = useRuntimeConfig()

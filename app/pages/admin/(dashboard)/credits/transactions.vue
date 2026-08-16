@@ -23,7 +23,7 @@ interface CreditTxnRow {
   amount: number
   balanceAfter: number
   reason: string
-  apiId: number | null
+  routeId: string | null
   apiCallId: number | null
   codeId: number | null
   operatorId: number | null

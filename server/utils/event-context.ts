@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import type { AppEventContext } from '~~/server/types/api-guard'
+import type { AppEventContext } from '~~/server/types/api-access'
 
 export type OpenApiEventContext = H3Event['context'] & AppEventContext
 

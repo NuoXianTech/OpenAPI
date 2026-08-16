@@ -10,7 +10,7 @@ export interface TransactionRow {
   amount: number
   balanceAfter: number
   reason: string
-  apiId: number | null
+  routeId: string | null
   apiName: string | null
   apiPath: string | null
   apiCallId: number | null

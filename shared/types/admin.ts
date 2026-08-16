@@ -32,7 +32,7 @@ export interface AdminDashboardTrendPoint {
 }
 
 export interface AdminDashboardDistributionItem {
-  apiId: number
+  routeId: string
   name: string
   apiPath: string
   totalCalls: number
@@ -74,7 +74,7 @@ export interface AdminLogRow {
   apiKeyId: number | null
   apiKeyName: string | null
   requestId: string | null
-  apiId: number | null
+  routeId: string
   apiName: string | null
   apiPath: string
   categoryId: number | null
@@ -100,6 +100,6 @@ export interface AdminLogsListResponse {
 }
 
 export interface AdminLogsFilterOptions {
-  apis: Array<{ id: number, name: string, apiPath: string }>
+  routes: Array<{ id: string, name: string, apiPath: string }>
   categories: Array<{ id: number, name: string }>
 }

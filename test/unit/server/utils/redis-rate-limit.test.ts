@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { RateLimiter } from '~~/server/types/api-guard'
+import type { RateLimiter } from '~~/server/types/api-access'
 import { createRedisRateLimiter } from '~~/server/utils/rate-limit/redis'
 
 function createFallbackLimiter(): RateLimiter {

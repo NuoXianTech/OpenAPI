@@ -1,0 +1,23 @@
+import { adminPublishRevisionSchema } from '~~/server/schemas/admin'
+import { routingRevisionService } from '~~/server/services/routing-revision-service'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
+import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { readZodBody } from '~~/server/utils/zod'
+
+export default defineAdminEventHandler(async (event, admin) => {
+  const body = await readZodBody(event, adminPublishRevisionSchema)
+  const revision = await routingRevisionService.publish(body.environmentId, admin.id)
+  await addRequestOperationLog(event, {
+    userId: admin.id,
+    actor: admin.username,
+    action: 'admin.platform.revision.publish',
+    resourceType: 'routing-revision',
+    resourceId: revision.id,
+    detail: {
+      environmentId: revision.environmentId,
+      sequence: revision.sequence,
+      checksum: revision.checksum
+    }
+  })
+  return revision
+})

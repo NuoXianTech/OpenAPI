@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { RateLimiter } from '~~/server/types/api-guard'
+import type { RateLimiter } from '~~/server/types/api-access'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 
 function createRecordingLimiter(keys: string[], deniedKey?: string): RateLimiter {

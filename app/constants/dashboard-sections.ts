@@ -44,8 +44,11 @@ export function createAdminApisSection({ t }: DashboardConfigFactoryContext): Da
     id: 'admin-apis',
     title: t('common.dashboard.navigation.apiManagement'),
     items: [
-      { label: t('common.dashboard.navigation.apiManagement'), icon: 'i-mdi-api', to: ADMIN_APIS_PATH, exact: true },
-      { label: t('common.dashboard.sections.categoryManagement'), icon: 'i-mdi-shape-outline', to: `${ADMIN_APIS_PATH}/categories` }
+      { label: t('admin.apis.routing.tabs.routes'), icon: 'i-lucide-route', to: ADMIN_APIS_PATH, exact: true },
+      { label: t('admin.apis.routing.tabs.upstreams'), icon: 'i-lucide-server-cog', to: `${ADMIN_APIS_PATH}/upstreams` },
+      { label: t('admin.apis.routing.tabs.revisions'), icon: 'i-lucide-history', to: `${ADMIN_APIS_PATH}/revisions` },
+      { label: t('admin.apis.routing.tabs.products'), icon: 'i-lucide-package-open', to: `${ADMIN_APIS_PATH}/products` },
+      { label: t('admin.apis.routing.tabs.workspaces'), icon: 'i-lucide-panels-top-left', to: `${ADMIN_APIS_PATH}/workspaces` }
     ]
   }
 }

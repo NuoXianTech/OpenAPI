@@ -1,5 +1,5 @@
-import { RATE_LIMIT_WINDOW_SECONDS } from '~~/server/config/api-guard'
-import type { RateLimiter, RateLimitResult } from '~~/server/types/api-guard'
+import { RATE_LIMIT_WINDOW_SECONDS } from '~~/server/config/api-access'
+import type { RateLimiter, RateLimitResult } from '~~/server/types/api-access'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { createHmacSignature } from '~~/server/utils/secure-token'
 import {

@@ -7,7 +7,7 @@ import {
 } from '#shared/config/auth-validation'
 import { isSafePublicUrl, isSafeSiteOrigin } from '#shared/utils/safe-url'
 
-export interface TextSchemaOptions {
+interface TextSchemaOptions {
   max?: number
   trim?: boolean
   unit?: string
@@ -52,17 +52,12 @@ export function optionalString(label: string, options: TextSchemaOptions = {}) {
   return schema.optional()
 }
 
-export function requiredHttpUrl(label: string, options: TextSchemaOptions = {}) {
-  return requiredString(label, { max: 1000, ...options })
-    .regex(/^https?:\/\//, `${label}必须以 http:// 或 https:// 开头`)
-}
-
 export function requiredSiteOrigin(label: string) {
   return requiredString(label, { max: 1000 })
     .refine(isSafeSiteOrigin, `${label}必须是有效的 http:// 或 https:// 站点 origin`)
 }
 
-export function optionalPublicUrl(label: string, max = 1000) {
+function optionalPublicUrl(label: string, max = 1000) {
   return z.string().trim().max(max, maxMessage(label, max)).refine(
     value => value === '' || isSafePublicUrl(value, { allowRelative: true }),
     `${label}必须是 http://、https:// 或站内相对路径`

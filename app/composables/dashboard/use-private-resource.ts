@@ -51,7 +51,6 @@ export function usePrivateResource<TData>(
       status.value = 'success'
     } catch (err) {
       if (seq !== requestSeq) return
-      data.value = defaultData()
       error.value = err
       status.value = 'error'
     }
