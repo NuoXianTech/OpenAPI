@@ -120,6 +120,7 @@ Internal Upstream 用于受信 API Service：
 - 调用时注入 `Authorization: Service <token>`。
 - 删除调用方 `Authorization`、Cookie、API Key 和伪造内部头。
 - 可发现 Service 身份、OpenAPI 和业务配置 Schema。
+- 管理页面通过各启用 Target 的 `readiness` 探针显示在线、部分可用、离线或未知；曾经完成 Service 发现不等同于当前在线。
 - 多个 Target 必须属于同一逻辑 Service 并暴露相同契约。
 
 ### 7.2 External Upstream

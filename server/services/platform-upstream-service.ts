@@ -1,6 +1,7 @@
 import { isIP } from 'node:net'
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import { ipInAnyCidr } from '#shared/utils/cidr'
+import type { ServiceAvailability } from '#shared/types/service-control'
 import { db } from '~~/server/db/client'
 import {
   upstreamServiceConnections,
@@ -8,6 +9,7 @@ import {
   upstreamTargets
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
+import { resolveServiceAvailability } from '~~/server/services/service-availability-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { firstRow } from '~~/server/utils/row'
 import { encryptStoredSecret } from '~~/server/utils/stored-secret'
@@ -41,12 +43,14 @@ interface CreateUpstreamInput {
 }
 
 function publicConnection(
-  connection: typeof upstreamServiceConnections.$inferSelect | null
+  connection: typeof upstreamServiceConnections.$inferSelect | null,
+  availability: ServiceAvailability = 'unknown'
 ) {
   if (!connection) return null
   return {
     upstreamServiceId: connection.upstreamServiceId,
-    connected: Boolean(connection.serviceId),
+    discovered: Boolean(connection.serviceId),
+    availability,
     tokenConfigured: Boolean(connection.serviceTokenCiphertext),
     serviceId: connection.serviceId,
     serviceName: connection.serviceName,
@@ -89,7 +93,10 @@ function normalizeTargetUrl(value: string, kind: CreateUpstreamInput['kind']): U
 }
 
 export const platformUpstreamService = {
-  async list(workspaceId?: string) {
+  async list(
+    workspaceId?: string,
+    options: { checkAvailability?: boolean } = {}
+  ) {
     const rows = await db.select({
       service: upstreamServices,
       target: upstreamTargets,
@@ -109,18 +116,31 @@ export const platformUpstreamService = {
 
     const result = new Map<string, typeof upstreamServices.$inferSelect & {
       targets: Array<typeof upstreamTargets.$inferSelect>
-      connection: ReturnType<typeof publicConnection>
+      connectionRecord: typeof upstreamServiceConnections.$inferSelect | null
     }>()
     for (const row of rows) {
       const item = result.get(row.service.id) ?? {
         ...row.service,
         targets: [],
-        connection: publicConnection(row.connection)
+        connectionRecord: row.connection
       }
       if (row.target) item.targets.push(row.target)
       result.set(row.service.id, item)
     }
-    return Array.from(result.values())
+    return Promise.all(Array.from(result.values()).map(async (item) => {
+      const { connectionRecord, ...upstream } = item
+      const availability = options.checkAvailability !== true
+        || upstream.status !== 'active'
+        ? 'unknown'
+        : await resolveServiceAvailability(
+            connectionRecord?.serviceDescription ?? null,
+            upstream.targets
+          )
+      return {
+        ...upstream,
+        connection: publicConnection(connectionRecord, availability)
+      }
+    }))
   },
 
   async create(input: CreateUpstreamInput) {

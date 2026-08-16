@@ -4,7 +4,10 @@ import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { PlatformUpstream } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
-import { platformStatusColor } from '~/utils/platform-display'
+import {
+  platformStatusColor,
+  serviceAvailabilityColor
+} from '~/utils/platform-display'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -37,12 +40,35 @@ function loadBalancingLabel(upstream: PlatformUpstream): string {
   return t(`admin.apis.routing.loadBalancing.${upstream.loadBalancing === 'weighted' ? 'weighted' : 'roundRobin'}`)
 }
 
+function upstreamStateColor(upstream: PlatformUpstream) {
+  if (upstream.status !== 'active' || upstream.kind === 'external') {
+    return platformStatusColor(upstream.status)
+  }
+  if (!upstream.connection?.discovered) return 'warning' as const
+  return serviceAvailabilityColor(upstream.connection.availability)
+}
+
+function upstreamStateLabel(upstream: PlatformUpstream): string {
+  if (upstream.status !== 'active') {
+    return t(`admin.apis.routing.serviceStatuses.${upstream.status}`)
+  }
+  if (upstream.kind === 'external') {
+    return t('admin.apis.routing.serviceControl.enabled')
+  }
+  if (!upstream.connection?.discovered) {
+    return t('admin.apis.routing.serviceControl.notDiscovered')
+  }
+  return t(
+    `admin.apis.routing.serviceControl.availability.${upstream.connection.availability}`
+  )
+}
+
 const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
   { id: 'upstream', header: t('admin.apis.routing.columns.upstream') },
   { id: 'kind', header: t('admin.apis.routing.columns.kind') },
   { id: 'targets', header: t('admin.apis.routing.columns.targets') },
   { id: 'loadBalancing', header: t('admin.apis.routing.columns.loadBalancing') },
-  { id: 'status', header: t('admin.apis.routing.columns.state') },
+  { id: 'status', header: t('admin.apis.routing.serviceControl.runtimeStatus') },
   { id: 'actions', header: '' }
 ])
 </script>
@@ -131,17 +157,6 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
             <p class="font-mono text-xs text-muted">
               {{ row.original.slug }}
             </p>
-            <UBadge
-              v-if="row.original.kind === 'internal'"
-              class="mt-2"
-              :color="row.original.connection?.connected ? 'success' : 'warning'"
-              variant="subtle"
-              size="sm"
-            >
-              {{ row.original.connection?.connected
-                ? $t('admin.apis.routing.serviceControl.connected')
-                : $t('admin.apis.routing.serviceControl.notDiscovered') }}
-            </UBadge>
           </div>
         </template>
         <template #kind-cell="{ row }">
@@ -177,8 +192,8 @@ const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
           <span class="text-xs text-toned">{{ loadBalancingLabel(row.original) }}</span>
         </template>
         <template #status-cell="{ row }">
-          <UBadge :color="platformStatusColor(row.original.status)" variant="subtle">
-            {{ $t(`admin.apis.routing.serviceStatuses.${row.original.status}`) }}
+          <UBadge :color="upstreamStateColor(row.original)" variant="subtle">
+            {{ upstreamStateLabel(row.original) }}
           </UBadge>
         </template>
         <template #actions-cell="{ row }">

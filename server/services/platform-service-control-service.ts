@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import type {
   RedactedServiceConfigurationState,
+  ServiceAvailability,
   ServiceConfigurationDefinition,
   ServiceConfigurationSyncResult,
   ServiceConfigurationValue,
@@ -20,6 +21,7 @@ import {
   upstreamTargets
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
+import { resolveServiceAvailability } from '~~/server/services/service-availability-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { serviceControlClient } from '~~/server/utils/service-control-client'
@@ -82,11 +84,13 @@ async function loadControlContext(
 }
 
 function connectionView(
-  connection: typeof upstreamServiceConnections.$inferSelect
+  connection: typeof upstreamServiceConnections.$inferSelect,
+  availability: ServiceAvailability
 ): ServiceConnectionView {
   return {
     upstreamServiceId: connection.upstreamServiceId,
-    connected: Boolean(connection.serviceId && connection.serviceDescription),
+    discovered: Boolean(connection.serviceId && connection.serviceDescription),
+    availability,
     tokenConfigured: Boolean(connection.serviceTokenCiphertext),
     serviceId: connection.serviceId,
     serviceName: connection.serviceName,
@@ -228,7 +232,15 @@ async function buildView(
         .limit(1))
     : null
   return {
-    connection: connectionView(context.connection),
+    connection: connectionView(
+      context.connection,
+      context.service.status === 'active'
+        ? await resolveServiceAvailability(
+            context.connection.serviceDescription,
+            context.targets
+          )
+        : 'unknown'
+    ),
     definition: context.connection.configurationSchema ?? null,
     values: publicDesiredValues(
       context.connection.configurationSchema ?? null,

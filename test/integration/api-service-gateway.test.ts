@@ -330,7 +330,8 @@ describe('Platform to Node API Service acceptance', () => {
       officialUpstreamId
     )
     expect(discovered.connection).toMatchObject({
-      connected: true,
+      discovered: true,
+      availability: 'online',
       serviceId: 'openapi-service',
       configurationRevision: 0
     })
@@ -416,6 +417,11 @@ describe('Platform to Node API Service acceptance', () => {
        values ($1, $2, $3)`,
       [upstream.id, `http://127.0.0.1:${offlinePort}/`, 1]
     )
+
+    await expect(platformServiceControlService.get(upstream.id))
+      .resolves.toMatchObject({
+        connection: { availability: 'degraded' }
+      })
 
     const result = await platformServiceControlService.updateConfiguration(
       upstream.id,

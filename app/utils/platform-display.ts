@@ -1,9 +1,19 @@
 import type { BadgeProps } from '@nuxt/ui'
+import type { ServiceAvailability } from '#shared/types/service-control'
 
 export function platformStatusColor(status: string): BadgeProps['color'] {
   if (status === 'active' || status === 'published') return 'success'
   if (status === 'deprecated' || status === 'superseded') return 'warning'
   if (status === 'disabled' || status === 'retired' || status === 'failed') return 'error'
+  return 'neutral'
+}
+
+export function serviceAvailabilityColor(
+  availability: ServiceAvailability
+): BadgeProps['color'] {
+  if (availability === 'online') return 'success'
+  if (availability === 'degraded') return 'warning'
+  if (availability === 'offline') return 'error'
   return 'neutral'
 }
 

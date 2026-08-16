@@ -122,9 +122,12 @@ export interface ServiceTargetControlState {
   lastError: string | null
 }
 
+export type ServiceAvailability = 'online' | 'degraded' | 'offline' | 'unknown'
+
 export interface ServiceConnectionView {
   upstreamServiceId: string
-  connected: boolean
+  discovered: boolean
+  availability: ServiceAvailability
   tokenConfigured: boolean
   serviceId: string | null
   serviceName: string | null

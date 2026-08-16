@@ -11,6 +11,10 @@ import type {
   PlatformUpstream
 } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
+import {
+  platformStatusColor,
+  serviceAvailabilityColor
+} from '~/utils/platform-display'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -227,6 +231,7 @@ async function discoverService(upstreamId: string, quiet = false) {
         ),
         color: 'error'
       })
+      await refresh()
     }
     return false
   } finally {
@@ -376,6 +381,31 @@ function clearFocusedService() {
 
 function serviceName(service: PlatformEndpointCatalogService) {
   return service.upstream.connection?.serviceName ?? service.upstream.name
+}
+
+function serviceStateColor(service: PlatformEndpointCatalogService) {
+  const upstream = service.upstream
+  if (upstream.status !== 'active' || upstream.kind === 'external') {
+    return platformStatusColor(upstream.status)
+  }
+  if (!upstream.connection?.discovered) return 'warning' as const
+  return serviceAvailabilityColor(upstream.connection.availability)
+}
+
+function serviceStateLabel(service: PlatformEndpointCatalogService) {
+  const upstream = service.upstream
+  if (upstream.status !== 'active') {
+    return t(`admin.apis.routing.serviceStatuses.${upstream.status}`)
+  }
+  if (upstream.kind === 'external') {
+    return t('admin.apis.routing.serviceControl.enabled')
+  }
+  if (!upstream.connection?.discovered) {
+    return t('admin.apis.routing.serviceControl.notDiscovered')
+  }
+  return t(
+    `admin.apis.routing.serviceControl.availability.${upstream.connection.availability}`
+  )
 }
 
 function itemMethod(item: PlatformEndpointCatalogItem) {
@@ -579,7 +609,7 @@ function primaryActionIcon(item: PlatformEndpointCatalogItem) {
         :ui="{ body: 'p-0 sm:p-0' }"
       >
         <template #header>
-          <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div class="flex min-w-0 items-center gap-3">
               <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <UIcon
@@ -588,24 +618,9 @@ function primaryActionIcon(item: PlatformEndpointCatalogItem) {
                 />
               </div>
               <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h2 class="truncate text-base font-semibold text-highlighted">
-                    {{ serviceName(service) }}
-                  </h2>
-                  <UBadge
-                    :color="service.upstream.kind === 'internal'
-                      ? service.upstream.connection?.connected ? 'success' : 'warning'
-                      : 'neutral'"
-                    variant="subtle"
-                    size="sm"
-                  >
-                    {{ service.upstream.kind === 'internal'
-                      ? service.upstream.connection?.connected
-                        ? $t('admin.apis.routing.serviceControl.connected')
-                        : $t('admin.apis.routing.serviceControl.notDiscovered')
-                      : $t('admin.apis.routing.upstreamKinds.external') }}
-                  </UBadge>
-                </div>
+                <h2 class="truncate text-base font-semibold text-highlighted">
+                  {{ serviceName(service) }}
+                </h2>
                 <p class="mt-1 truncate font-mono text-xs text-muted">
                   {{ service.upstream.connection?.serviceId || service.upstream.slug }}
                   <template v-if="service.upstream.connection?.serviceVersion">
@@ -615,7 +630,14 @@ function primaryActionIcon(item: PlatformEndpointCatalogItem) {
                 </p>
               </div>
             </div>
-            <div class="flex flex-wrap gap-2 sm:ms-auto">
+            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+              <UBadge
+                :color="serviceStateColor(service)"
+                variant="subtle"
+                size="sm"
+              >
+                {{ serviceStateLabel(service) }}
+              </UBadge>
               <UButton
                 v-if="service.upstream.kind === 'internal'"
                 :to="{ path: `/admin/apis/upstreams/${service.upstream.id}`, query: route.query }"

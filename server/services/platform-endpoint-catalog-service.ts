@@ -281,7 +281,7 @@ export const platformEndpointCatalogService = {
   async list(workspaceId: string, environmentId: string) {
     const environment = await loadEnvironment(environmentId, workspaceId)
     const [upstreams, routes, revision] = await Promise.all([
-      platformUpstreamService.list(workspaceId),
+      platformUpstreamService.list(workspaceId, { checkAvailability: true }),
       platformRouteService.list(workspaceId),
       activeRevision(environment)
     ])
@@ -421,7 +421,10 @@ export const platformEndpointCatalogService = {
         Number(right.route.state === 'active')
         - Number(left.route.state === 'active')
       ))[0]
-    const upstreamView = (await platformUpstreamService.list(upstream.workspaceId))
+    const upstreamView = (await platformUpstreamService.list(
+      upstream.workspaceId,
+      { checkAvailability: false }
+    ))
       .find(item => item.id === upstream.id)
     if (!upstreamView) throw new Error('upstream view disappeared during publication')
     const apiVersionId = existing?.route.apiVersionId

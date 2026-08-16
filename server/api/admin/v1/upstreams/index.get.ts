@@ -7,5 +7,8 @@ const optionalWorkspaceId = z.uuid().optional()
 
 export default defineAdminEventHandler((event) => {
   const parsed = optionalWorkspaceId.safeParse(getQuery(event).workspaceId)
-  return platformUpstreamService.list(parsed.success ? parsed.data : undefined)
+  return platformUpstreamService.list(
+    parsed.success ? parsed.data : undefined,
+    { checkAvailability: true }
+  )
 })

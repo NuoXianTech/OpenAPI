@@ -6,6 +6,7 @@ import type {
   ServiceConfigurationView
 } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
+import { serviceAvailabilityColor } from '~/utils/platform-display'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -24,6 +25,20 @@ const serviceToken = ref('')
 const businessEndpoints = computed(() =>
   resource.data.value?.endpoints.filter(endpoint => !endpoint.system) ?? []
 )
+const connectionStatusColor = computed(() => {
+  const connection = resource.data.value?.connection
+  if (!connection?.discovered) return 'warning' as const
+  return serviceAvailabilityColor(connection.availability)
+})
+const connectionStatusLabel = computed(() => {
+  const connection = resource.data.value?.connection
+  if (!connection?.discovered) {
+    return t('admin.apis.routing.serviceControl.notDiscovered')
+  }
+  return t(
+    `admin.apis.routing.serviceControl.availability.${connection.availability}`
+  )
+})
 
 useHead({
   title: () => resource.data.value?.connection.serviceName
@@ -62,6 +77,7 @@ async function discover() {
       ),
       color: 'error'
     })
+    await resource.refresh()
   } finally {
     discovering.value = false
   }
@@ -261,12 +277,10 @@ async function synchronizeConfiguration() {
             </div>
             <UBadge
               class="sm:ms-auto"
-              :color="resource.data.value.connection.connected ? 'success' : 'warning'"
+              :color="connectionStatusColor"
               variant="subtle"
             >
-              {{ resource.data.value.connection.connected
-                ? $t('admin.apis.routing.serviceControl.connected')
-                : $t('admin.apis.routing.serviceControl.notDiscovered') }}
+              {{ connectionStatusLabel }}
             </UBadge>
           </div>
         </template>
@@ -336,7 +350,7 @@ async function synchronizeConfiguration() {
       </UCard>
 
       <UAlert
-        v-if="!resource.data.value.connection.connected"
+        v-if="!resource.data.value.connection.discovered"
         color="info"
         variant="subtle"
         icon="i-lucide-scan-search"
