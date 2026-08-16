@@ -1,13 +1,13 @@
 # 生产运行手册
 
-本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。默认部署模型为单个 Node/Nitro 进程；使用 PostgreSQL、共享 Redis 且启用强制 Redis 后可部署多个 Node 实例。
+本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。目标部署模型包含两个独立 Node.js 应用进程：Platform 使用 Nuxt/Nitro，API Service 使用轻量 Hono/TypeScript。两者分别升级和回滚；Platform 使用 PostgreSQL、共享 Redis 且启用强制 Redis 后可水平扩容，API Service 通过独立 Upstream Target 扩容。
 
 ## 运行边界
 
 | 项目 | 约束 |
 | --- | --- |
-| 应用进程 | 默认单实例；多实例必须使用 PostgreSQL、共享 Redis 和 `NUXT_REDIS_REQUIRED=true` |
-| 数据库 | 单 PostgreSQL 实例，迁移由 Node/Nitro 启动插件在应用启动前自动执行 |
+| 应用进程 | 默认一个 Platform Node 进程和一个 API Service Node 进程；二者不共享 V8 Heap、环境变量或故障边界 |
+| 数据库 | 仅 Platform 访问 PostgreSQL/PGlite；迁移由 Node/Nitro 启动插件在 Platform 启动前自动执行，API Service 不运行数据库迁移 |
 | 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
 | 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
 | 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描到期的 `api_credit_reservations` |
@@ -18,20 +18,30 @@
 每日或发布后检查：
 
 ```bash
-pm2 status openapi
-pm2 logs openapi --lines 120
+# PM2 部署查看对应进程；Compose 部署查看对应容器。
+pm2 status
+pm2 logs openapi-platform --lines 120
+pm2 logs openapi-service --lines 120
+docker compose ps openapi-platform openapi-service
+docker compose logs --tail=120 openapi-platform openapi-service
+
 curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:3000/api/ready
 curl -fsS http://127.0.0.1:3000/api/catalog
+docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/healthz').then(r=>{if(!r.ok)process.exit(1)})"
+docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/readyz').then(r=>{if(!r.ok)process.exit(1)})"
 ```
+
+只执行与实际部署方式对应的 PM2 或 Compose 命令。API Service 直接以 Node/PM2 运行时，可改用宿主机 `curl` 检查 `127.0.0.1:8080`。
 
 数据库侧重点：
 
 | 检查项 | 异常信号 |
 | --- | --- |
 | `api_credit_reservations` | `pending` 持续增长、出现 `dead_letter`，或 `active` 长时间不释放 |
-| `api_calls` | 失败率突然升高、某 API 调用量异常 |
-| `api_call_stats` | 日聚合缺失或延迟明显 |
+| `api_calls` | 动态 Route 的失败率突然升高、调用量异常或 `route_id` 缺失 |
+| `credit_transactions` | 收费 Route 调用成功但没有对应 `route_id`、`api_call_id` 或扣费金额不符 |
+| Route 每日聚合 | 检查 Route 聚合任务、聚合表和调用明细对账；兼容聚合数据不能替代 Route 统计 |
 | `operation_logs` 中的 `auth.login.*` 事件 | 管理员登录失败集中爆发 |
 | `operation_logs` | 敏感配置被频繁修改 |
 
@@ -41,6 +51,7 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
 | readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
+| 只有官方具体 API 返回 502/503 | 检查 `openapi-service` 容器、`/readyz`、Service Token、Internal Upstream Target 和来源级错误；Platform 与 External Route 不应一并停止 |
 | 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
 | SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
 | 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[credit-reservations]` 日志 |
@@ -56,11 +67,13 @@ curl -fsS http://127.0.0.1:3000/api/catalog
 
 生产数据库至少保留每日备份。发布数据库迁移前必须手动创建一次备份或快照。
 
+当前数据库使用单一 `0000` 基线。不兼容该基线的数据库和 PGlite Volume 不能依赖启动过程自动升级；必须使用全新数据库，或先执行经过演练的数据导入方案。
+
 ```bash
 pg_dump "$DATABASE_URL" --format=custom --file="backup-$(date +%Y%m%d-%H%M%S).dump"
 ```
 
-PGlite 部署不使用 `pg_dump`。先停止唯一的 Node 进程，再对整个 `PGLITE_DATA_DIR` 做一致性快照或归档；恢复时同样保持进程停止，并恢复到原权限与路径。不要在进程写入期间只复制其中单个文件。
+PGlite 部署不使用 `pg_dump`。先停止唯一访问该目录的 Platform Node 进程，再对整个 `PGLITE_DATA_DIR` 做一致性快照或归档；恢复时同样保持 Platform 停止，并恢复到原权限与路径。API Service 不访问该目录。不要在 Platform 写入期间只复制其中单个文件。
 
 备份文件应离开应用服务器保存，避免服务器磁盘故障时同时丢失应用和备份。Redis 只保存可重建缓存、限流计数和短期租约，不作为业务主数据备份来源。
 
@@ -76,10 +89,10 @@ pg_restore --dbname=openapi_restore_test --clean --if-exists backup-YYYYMMDD-HHM
 恢复生产前先停止应用进程，避免旧进程继续写入：
 
 ```bash
-pm2 stop openapi
+pm2 stop openapi-platform
 DB_AUTO_MIGRATE=false pg_restore --dbname="$DATABASE_URL" --clean --if-exists backup-YYYYMMDD-HHMMSS.dump
 cd .output
-pm2 restart openapi --update-env
+pm2 restart openapi-platform --update-env
 ```
 
 如果迁移不可逆，优先回滚应用版本并评估数据修复脚本，不直接强行恢复旧库覆盖新业务数据。
@@ -97,11 +110,11 @@ pm2 restart openapi --update-env
 
 ## 异常处置
 
-1. 先确认影响范围：首页、统一登录页、管理后台、用户后台、公开 API、数据库、邮件、第三方 OAuth。
+1. 先确认影响范围：首页、统一登录页、管理后台、用户后台、External Route、官方 API Service Route、数据库、邮件、第三方 OAuth。
 2. 冻结变更：暂停发布、停止批量任务、保留日志。
 3. 读取 PM2 日志和数据库关键表，定位最近一次配置或代码变更。
 4. 如果影响公开 API 收费，检查 `api_credit_reservations` 和 `credit_transactions`。`pending` 可等待或触发重试；`dead_letter` 必须先核对调用与流水再人工处理，不要直接删除。
-5. 能快速回滚应用时先回滚应用；涉及数据库结构时先备份当前状态。
+5. 能快速回滚应用时，只回滚异常服务；API Service 回滚不停止 Platform，也不运行 Platform 数据库迁移。涉及 Platform 数据库结构时先备份当前状态。
 6. 恢复后补充事件记录：时间线、根因、影响、修复、预防项。
 
 ## 性能观察
@@ -112,3 +125,4 @@ pm2 restart openapi --update-env
 - 图表页和日志页的交互延迟。
 - `.output` bundle 变化，发现大块依赖时按 [Nuxt 应用标准](../standards.md) 分析。
 - 第三方脚本和浏览器专属逻辑是否引入水合警告。
+- API Service 的 RSS、V8 Heap、Event Loop Delay、请求延迟和 5xx 比例；空闲 RSS 目标不高于 128 MiB，常规峰值不高于 256 MiB。模块只有在出现第二个真实调用方时才抽取共享来源客户端、并发控制或缓存工具。

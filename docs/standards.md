@@ -4,7 +4,7 @@
 
 ## Nuxt 应用标准
 
-本标准适用于 `app/`、`server/`、`shared/`、`modules/` 与 `scripts/` 下的 Nuxt 4 代码。目标是在保持开发速度的同时，让 SSR、类型、运行时配置和生产发布保持可预测。
+本标准适用于 `app/`、`server/`、`shared/` 与 `scripts/` 下的 Nuxt 4 代码。目标是在保持开发速度的同时，让 SSR、类型、运行时配置和生产发布保持可预测。
 
 ### 目录边界
 
@@ -15,10 +15,9 @@
 | `app/composables/` | 前端组合式函数 | 使用 `use` 前缀，返回稳定的状态、动作和派生值 |
 | `app/utils/` | 前端纯工具 | 使用具名导出，不读取运行时全局状态 |
 | `server/api/` | 内部 API | 使用 Nuxt/Nitro event handler，私有接口走鉴权守卫 |
-| `server/routes/v{N}/` | 公开 API | 由 manifest 扫描，对外契约遵循 [API 文档](./index.md) |
-| `server/services/` | 业务服务层 | 保持事务、权限、审计和跨表规则集中 |
+| `server/middleware/` | Gateway 与安全入口 | 只做通用路由、Header 和安全处理，不加入具体公共接口分支 |
+| `server/services/` | 服务层 | 保持路由、Service 控制面、事务、权限、审计和跨表规则集中 |
 | `shared/` | 前后端共享契约 | 类型、schema、静态配置必须可在客户端安全导入 |
-| `modules/` | 本地 Nuxt 模块 | 只放构建期或 Nuxt Kit 集成逻辑 |
 
 不要把服务端密钥、数据库连接或 Node-only 依赖放入 `app/` 或客户端可导入的 `shared/` 文件。
 

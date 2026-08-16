@@ -1,6 +1,8 @@
-# VPS 部署指南
+# OpenAPI Platform VPS 部署指南
 
-本项目推荐按单个 Node/Nitro 进程部署。数据库可选 PostgreSQL 或 PGlite：PostgreSQL 更适合常规生产和成熟备份，PGlite 更适合轻量、自包含、单进程部署。
+目标生产拓扑包含两个独立 Node.js 应用进程：`openapi-platform` 是 Nuxt/Nitro 管理平台与 Gateway，`openapi-service` 是轻量 Node.js + TypeScript 业务 API 服务。它们独立构建、更新和回滚；统一语言不代表合并进程。数据库可选 PostgreSQL 或 PGlite：PostgreSQL 更适合常规生产和成熟备份，PGlite 仅用于单 Platform 进程的轻量部署。
+
+> Platform 不包含具体公共接口 Handler，所有公开业务流量来自动态 Route。仓库内 Compose 部署 `openapi-platform` 与独立 `openapi-service` 两个应用服务。详见[系统概览](../architecture/system-overview.md)和[部署模型](../architecture/deployment.md)。
 
 发布前先完成 [生产就绪清单](./production-readiness.md)，运行时变量按 [运行时配置](./runtime-config.md) 准备。
 
@@ -16,7 +18,7 @@ pnpm build
 
 构建命令会生成 `.output/server/index.mjs`。生产启动入口使用 Nuxt/Nitro 官方 Node server 入口，不再通过自定义 `start.mjs` 包装应用启动。
 
-不要在资源较小的 VPS 上执行 `pnpm build`。Nuxt/Nitro 生产构建可能短时间占用数 GB 内存，推荐在 Linux CI 或项目提供的 Docker 构建阶段完成构建。
+不要在生产 VPS 上执行任何仓库的 `pnpm install`、`pnpm build` 或 `docker build`。Nuxt/Nitro 生产构建可能短时间占用 6～8 GB 内存；Platform 和 API Service 都必须在 Linux CI 或开发机构建并发布镜像，VPS 只负责拉取和运行。
 
 ## 部署入口与目录
 
@@ -33,26 +35,34 @@ Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工�
 GitHub Actions 使用仓库根目录的 `Dockerfile` 构建完整 Nitro 产物，分别发布带标签的 amd64/arm64 镜像，再生成自动匹配服务器架构的多架构镜像。VPS 只下载和运行已经构建好的镜像，不会执行 `pnpm install` 或 `pnpm build`，因此适合小内存服务器：
 
 ```bash
-docker pull ghcr.io/nuoxiantech/openapi:latest
-docker run -d --name openapi --restart unless-stopped \
+docker network create openapi-network
+docker pull ghcr.io/nuoxiantech/openapi-platform:latest
+docker run -d --name openapi-platform --restart unless-stopped \
+  --network openapi-network \
   -p 3000:3000 --env-file .env \
   -v openapi-data:/app/.data \
-  ghcr.io/nuoxiantech/openapi:latest
+  ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-启用 IP 归属地接口时，CZDB 数据库必须由服务器单独准备并只读挂载，不能打进镜像：
+`docker network create` 已存在时会返回错误但不会破坏现有网络；重复部署可先用 `docker network inspect openapi-network` 检查。Platform 数据库中的 Internal Upstream Target 使用 `http://openapi-service:8080`。
+
+启用 IP 归属地接口时，CZDB 数据库必须由服务器单独准备并只读挂载到 `openapi-service`，不能打进任一镜像：
 
 ```bash
 mkdir -p /var/lib/openapi/data/ip
 
-docker run -d --name openapi --restart unless-stopped \
-  -p 3000:3000 --env-file .env \
-  -v openapi-data:/app/.data \
+docker run -d --name openapi-service --restart unless-stopped \
+  --network openapi-network \
+  -e LISTEN_ADDR=:8080 \
+  -e API_SERVICE_TOKEN='replace-with-the-same-platform-service-token' \
+  -e IP_DATABASE_DIRECTORY=/app/data/ip \
+  -e SERVICE_CONFIG_FILE=/app/data/runtime/service-configuration.enc \
   -v /var/lib/openapi/data/ip:/app/data/ip:ro \
-  ghcr.io/nuoxiantech/openapi:latest
+  -v openapi-service-runtime:/app/data/runtime \
+  ghcr.io/nuoxiantech/openapi-service:latest
 ```
 
-将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `data/ip` 目录。容器内读取路径固定为 `/app/data/ip`，配套密钥在管理后台的接口配置中填写。具体见 [IP 归属地公共接口](../apis/ip.md)。
+将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机目录。容器内读取路径固定为 `/app/data/ip`。启动后在 Platform 创建 Internal Upstream，填写与 `API_SERVICE_TOKEN` 相同的 Token，执行发现，再在通用配置表单填写 `ip.databaseKey`。Platform 与 Service 快照都只保存密文，读取接口不回显密钥。
 
 仓库也提供直接引用 GHCR 镜像的 `docker-compose.yml`：
 
@@ -62,19 +72,39 @@ docker compose pull
 docker compose up -d
 ```
 
-使用 Compose 启用 IP 归属地接口时，在 `services.openapi.volumes` 中追加同一条只读挂载：
+两个服务可以独立更新。仅更新一言、播放器、IP 或其他具体公共接口时：
 
-```yaml
-- /var/lib/openapi/data/ip:/app/data/ip:ro
+```bash
+docker compose pull openapi-service
+docker compose up -d --no-deps openapi-service
+docker compose ps openapi-service openapi-platform
 ```
 
-`main` 分支发布 `latest`。版本镜像只由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v1.2.3` 会生成自动选择架构的 `1.2.3`，以及显式架构标签 `1.2.3-amd64`、`1.2.3-arm64`。`main` 分支对应发布 `latest`、`latest-amd64`、`latest-arm64`。镜像标签按容器生态惯例不保留 Git 标签的 `v` 前缀；不要创建不带 `v` 的 Git 标签。生产环境建议固定版本标签，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
+该操作不会停止 Platform、Console、管理 API 或 External Route。单实例 API Service 切换期间，指向它的 Route 可能短暂返回 `503 Service Unavailable`；Gateway 应附带 `Retry-After`、快速结束请求且不扣费，不能让连接排队数分钟。需要近零停机时，先启动新 Target，通过 `/readyz` 后发布 Routing Revision，再排空旧 Target。
+
+仅更新 Platform 时也不重建 API Service：
+
+```bash
+docker compose pull openapi-platform
+docker compose up -d --no-deps openapi-platform
+```
+
+使用 Compose 启用 IP 归属地接口时，在 `docker-compose.yml` 同目录准备数据：
+
+```bash
+mkdir -p data/ip
+# 将 cz88_public_v4.czdb、cz88_public_v6.czdb 放入 data/ip
+```
+
+仓库内 Compose 会把 `./data/ip` 只读挂载到 `services.openapi-service`，并为 `/app/data/runtime` 创建可写持久化 Volume。启动后在 Platform 保存 `ip.databaseKey`；该业务 Secret 不通过环境变量注入。
+
+`main` 分支发布 `latest`、`latest-amd64` 和 `latest-arm64`，用于跟踪开发版本。符合 `v*.*.*` 格式的 Git 标签会生成去掉 `v` 前缀的版本镜像及架构标签。生产环境建议固定版本标签或镜像 digest，升级时修改镜像版本后重新执行上述两个 Compose 命令。若 GHCR 包不是公开的，需要先用具有 `read:packages` 权限的 GitHub PAT 登录：
 
 ```bash
 echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
 ```
 
-镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。生产数据库和 Redis 地址仍通过运行时环境变量注入；使用 PGlite 时必须保留 `/app/.data` 数据卷。
+Platform 镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。目标 API Service 镜像直接运行预编译的 `dist/index.js`，不执行 TypeScript 或 Nuxt 构建。生产数据库和 Redis 地址仍只注入 Platform；使用 PGlite 时必须保留 `/app/.data` 数据卷。
 
 ## 上传文件
 
@@ -116,6 +146,8 @@ NUXT_REDIS_REQUIRED=true
 
 生产环境没有 `DATABASE_URL` 时，必须显式设置 `DATABASE_DRIVER=pglite`。这样可以避免 PostgreSQL 连接串漏配时，服务静默创建一个新的本地数据库。使用 PGlite 时，`PGLITE_DATA_DIR` 是生产数据目录，必须纳入服务器备份。首次创建管理员时，服务端日志只会输出一次随机初始密码；应立即登录并完成资料和密码初始化。
 
+IP 数据库目录只属于 Service 部署配置，不要注入 Platform 的 PM2 进程。`ip.databaseKey` 由 Platform 以 Service 业务 Secret 的形式分域加密保存。直接运行 Service 容器时还必须持久化 `SERVICE_CONFIG_FILE` 所在目录。
+
 生产密钥可用以下命令生成：
 
 ```bash
@@ -134,6 +166,8 @@ NODE_ENV=production node .output/server/index.mjs
 
 启动插件会在 Nitro 接受请求前运行 Drizzle 迁移。迁移执行器根据运行时配置连接 PostgreSQL 或 PGlite，并使用 Drizzle 的 `drizzle.__drizzle_migrations` 表，因此已经应用过的迁移会自动跳过。维护窗口需要临时禁止自动迁移时，可设置 `DB_AUTO_MIGRATE=false`。
 
+当前数据库使用单一 `0000` 基线。不兼容该基线的数据库或 PGlite Volume 不能依赖旧 journal 自动升级；部署前必须使用全新数据库，或先执行经过验证的一次性数据导入。
+
 发布含账号、OAuth、通知、积分或日志 schema 变更的版本前，先生成并随版本发布数据库迁移。当前账号模型要求管理员和用户共用 `users` 表，并通过 `users.role` 区分权限。
 
 ## 进程管理建议
@@ -142,7 +176,7 @@ PM2 是最简单的选择：
 
 ```bash
 cd .output
-NODE_ENV=production pm2 start server/index.mjs --name openapi --update-env
+NODE_ENV=production pm2 start server/index.mjs --name openapi-platform --update-env
 pm2 save
 ```
 
@@ -150,12 +184,12 @@ pm2 save
 
 ```bash
 cd .output
-pm2 restart openapi --update-env
+pm2 restart openapi-platform --update-env
 ```
 
 建议在 Node 进程前放置 Nginx，并反向代理到 `127.0.0.1:3000`。
 
-不要为同一个 PGlite 数据目录启动多个 Node 进程。需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。限流、缓存和扣费补偿扫描由 Redis 协调；Manifest 注册依靠数据库唯一约束保持幂等，PostgreSQL 迁移由 advisory lock 串行化。
+不要让多个 Platform Node 进程访问同一个 PGlite 数据目录。Platform 需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。API Service 是另一个 Node 进程，但不访问 PGlite、PostgreSQL 或 Redis；它可以通过多个 Upstream Target 独立扩容。限流、缓存和扣费补偿扫描由 Platform 的 Redis 协调；Routing Revision 依靠数据库唯一约束与事务保持一致，PostgreSQL 迁移由 advisory lock 串行化。
 
 ## 发布后检查
 
@@ -163,7 +197,12 @@ pm2 restart openapi --update-env
 curl -fsS http://127.0.0.1:3000/api/health
 curl -fsS http://127.0.0.1:3000/api/ready
 curl -fsS http://127.0.0.1:3000/api/catalog
-pm2 logs openapi --lines 80
+docker compose ps openapi-platform openapi-service
+docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/healthz').then(r=>{if(!r.ok)process.exit(1)})"
+docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/readyz').then(r=>{if(!r.ok)process.exit(1)})"
+pm2 logs openapi-platform --lines 80
 ```
 
-确认统一登录页、管理员后台、用户后台、公开 API 调用、调用日志、积分流水和统计均可用后，再按 [生产运行手册](./production-runbook.md) 观察日志和关键表，最后把发布标记为完成。
+只执行与实际部署方式对应的 Compose 或 PM2 检查。Service 直接运行在宿主机时，可用 `curl -fsS http://127.0.0.1:8080/healthz` 和 `/readyz`。
+
+确认统一登录页、管理员后台、用户后台、动态 Route 调用、详细调用日志和积分流水均可用后，再按 [生产运行手册](./production-runbook.md) 观察日志和关键表，最后把发布标记为完成。正式版本范围以 [版本与支持范围](../architecture/release-scope.md) 为准。

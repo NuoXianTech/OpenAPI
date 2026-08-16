@@ -2,7 +2,7 @@
 
 <img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI logo" />
 
-# OpenAPI
+# OpenAPI Platform
 
 A self-hosted API publishing, access control, usage metering, credit billing, and operations platform.
 
@@ -12,28 +12,33 @@ A self-hosted API publishing, access control, usage metering, credit billing, an
 
 </div>
 
-OpenAPI turns versioned Nitro routes into governed public services. It discovers endpoints at build time, synchronizes their manifest at startup, and lets operators configure access, pricing, quotas, statistics, and content from Nuxt UI dashboards.
+> [!IMPORTANT]
+> Platform and the business API Service are separate applications. Platform contains no concrete public API implementation; first-party business endpoints are provided by `openapi-service`. The first formal public release establishes the `0.1.0` baseline, and `latest` builds from `main` are development versions until then.
+
+The API management area is available at `/admin/apis`. After connecting and discovering a Service, operators can inspect its endpoints, publish or disable them in one action, and change statistics, API-key, credit, and limit policies immediately. Platform creates or reuses the Product, Version, Route, and immutable release snapshot behind the workflow.
+
+Platform does not run built-in public API handlers. Business endpoints live in an independent API Service or an External HTTP Upstream; Platform owns contract discovery, routing, access governance, credit billing, usage data, and operations.
 
 ## Features
 
-- **API lifecycle** — build-time discovery for `server/routes/v{N}/{code}`, startup registration, orphan detection, and admin-controlled activation.
+- **API management model** — Workspaces, Products, Versions, Routes, Upstreams, Targets, and rollback-capable Routing Revisions.
+- **Service control plane** — encrypted per-Upstream tokens, OpenAPI and generic configuration discovery, round-robin/weighted Targets, configuration synchronization, and drift status.
 - **Gateway governance** — API keys, scopes, IP allowlists, expiration, revocation, per-key quotas, API daily quotas, and second/minute/hour/day rate limits.
 - **Credit billing** — per-method pricing, auditable balance transactions, idempotent charging, and retryable pending charges.
-- **Observability** — immutable call details, daily aggregates, login history, admin operation logs, health and readiness probes.
+- **Observability** — immutable Route call details, login history, admin operation logs, health and readiness probes.
 - **Identity** — unified user/admin accounts, email verification, password recovery, session invalidation, GitHub and QQ OAuth binding, and Turnstile abuse protection.
-- **Operations** — users, API categories, redemption codes, daily rewards, announcements, notifications, friend links, mail, OAuth, CAPTCHA, and site settings.
+- **Operations** — users, redemption codes, daily rewards, announcements, notifications, friend links, mail, OAuth, CAPTCHA, and site settings.
 - **Production options** — PostgreSQL for normal production, PGlite for one-process lightweight deployments, and Redis for shared limits, short caches, and worker coordination.
 
 ## Request lifecycle
 
-1. `modules/api-manifest.ts` discovers versioned public routes during build.
-2. `server/plugins/00.startup.ts` applies Drizzle migrations, creates the first administrator when necessary, and synchronizes the manifest.
-3. `server/middleware/01-open-api-routing.ts` rejects unknown public paths and unsupported methods before Nuxt page rendering.
-4. `defineOpenApiEventHandler` in `server/utils/api-guard.ts` validates API configuration, credentials, scopes, IP rules, limits, quotas, and available credits.
-5. Thin route handlers call implementations from `server/lib/` and use the built-in public API handler context for query data, caller metadata, timeout signals, and standard responses.
-6. Response hooks persist call statistics and credit transactions; failed post-response charges enter an idempotent retry queue.
+1. The dynamic Gateway matches Host, Method, and Path from the active Routing Revision.
+2. Platform enforces API keys, scopes, IP rules, limits, and credit reservations while stripping caller authentication headers.
+3. Internal Routes receive the Service Token and proxy to `openapi-service`; External Routes use SSRF-protected standard HTTP upstreams.
+4. Chargeable outcomes are persisted before response streaming begins, failed outcomes release reservations, and response hooks write Route call logs and credit transactions.
+5. Unmatched requests return a stable `API_NOT_FOUND`; Platform never falls back to a built-in business handler.
 
-Newly discovered APIs are disabled by default. Configure and enable them in the admin dashboard before exposing them.
+Service discovery alone never exposes an endpoint publicly. Once an operator explicitly publishes it from the endpoint catalog, Platform creates the public Route and activates a new runtime snapshot automatically; release history is reserved for audit and rollback.
 
 ## Technology
 
@@ -42,6 +47,7 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 - Drizzle ORM with PostgreSQL or PGlite
 - Redis via ioredis for distributed coordination
 - Zod, Vitest, ESLint
+- Separate API Service: Node.js 24, TypeScript, Hono, Zod/OpenAPI, native Fetch, Vitest
 
 ## Quick start
 
@@ -53,8 +59,8 @@ Newly discovered APIs are disabled by default. Configure and enable them in the 
 - Redis is optional for development and required for coordinated multi-instance production
 
 ```bash
-git clone https://github.com/NuoXianTech/OpenAPI.git
-cd OpenAPI
+git clone https://github.com/NuoXianTech/openapi-platform.git
+cd openapi-platform
 corepack enable
 pnpm install
 cp .env.example .env
@@ -74,7 +80,7 @@ The development server uses PGlite when no database mode is configured. On first
 | Variable | Requirement | Description |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
-| `NUXT_API_KEY_SECRET` | Required | Generates API keys and protects encrypted API keys and redemption codes stored in the database. |
+| `NUXT_API_KEY_SECRET` | Required | Generates API keys and domain-separates encryption for API keys, redemption codes, Upstream tokens, and Service business secrets. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |
 | `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
 | `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |
@@ -83,6 +89,8 @@ The development server uses PGlite when no database mode is configured. On first
 | `NITRO_HOST`, `NITRO_PORT` | Deployment | Node server listen address and port. |
 
 Production must define either `DATABASE_URL` or `DATABASE_DRIVER=pglite`; it never silently falls back to a new local database. See [runtime configuration](docs/operations/runtime-config.md) for the complete behavior and security boundaries.
+
+API Service addresses and tokens are stored per Internal Upstream instead of in a global Platform environment variable. Business settings declared by a Service—such as source switches and credentials, database license keys, or feature allowlists—are rendered generically at `/admin/apis/upstreams/:id` and synchronized to every Target.
 
 ## Database workflow
 
@@ -93,7 +101,7 @@ pnpm db:generate
 pnpm test:run
 ```
 
-Review and commit the generated migration. Production migrations are bundled into `.output` and run automatically during startup. Use `pnpm db:migrate` as a manual repair or rehearsal command, not as a substitute for committed migrations.
+The current database uses a single `0000` baseline. Development databases and volumes created before the `0.1.0` baseline cannot upgrade incrementally; back them up and use a fresh database or directory. Production migrations are bundled into `.output` and run automatically during startup.
 
 ## Quality checks
 
@@ -104,32 +112,34 @@ pnpm test:run
 pnpm build
 ```
 
-A failed check must stop a production release.
+A failed check must stop a production release. Run these build checks on a development machine or in CI, never on the production server.
 
 ## Production
 
-### Node server
+### Prebuilt Node server artifact
 
 ```bash
+# Build only on a development machine or in CI
 pnpm build
+# The production server only runs the uploaded complete .output
 NODE_ENV=production pnpm start
 ```
 
-Deploy the complete `.output` directory. The executable entry is `.output/server/index.mjs`; do not deploy only `.output/server` or omit its hidden Nitro dependencies.
+Deploy the complete prebuilt `.output` directory. The executable entry is `.output/server/index.mjs`; do not deploy only `.output/server` or omit its hidden Nitro dependencies. Production servers must not run `pnpm install`, Nuxt builds, or Docker builds.
 
 ### Docker
 
 GitHub Actions builds tagged amd64 and arm64 images on pushes to `main` and version tags, then publishes a multi-platform image to GHCR. The server does not need to clone the source or run the Nuxt build:
 
 ```bash
-docker pull ghcr.io/nuoxiantech/openapi:latest
-docker run -d --name openapi --restart unless-stopped \
+docker pull ghcr.io/nuoxiantech/openapi-platform:latest
+docker run -d --name openapi-platform --restart unless-stopped \
   -p 3000:3000 --env-file .env \
   -v openapi-data:/app/.data \
-  ghcr.io/nuoxiantech/openapi:latest
+  ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-Alternatively, download `compose.yml` and run `docker compose pull && docker compose up -d`. Replace `latest` with a release version such as `0.1.0` to pin deployments. Versioned images are published only from Git tags matching `v*.*.*`: for example, Git tag `v0.1.0` produces multi-platform tag `0.1.0` plus architecture tags `0.1.0-amd64` and `0.1.0-arm64`. The `main` branch similarly publishes `latest`, `latest-amd64`, and `latest-arm64`. Image tags omit the Git tag’s leading `v` by container ecosystem convention; do not create the Git tag without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
+Alternatively, download `docker-compose.yml` and run `docker compose pull && docker compose up -d`. Production deployments should pin a release version such as `0.1.0`. The `main` branch publishes `latest`, `latest-amd64`, and `latest-arm64` for development tracking. Git tags matching `v*.*.*` produce multi-platform image tags without the leading `v`. If the GHCR package is private, run `docker login ghcr.io` first with a PAT that has `read:packages`.
 
 Useful probes:
 
@@ -145,13 +155,10 @@ curl -fsS http://127.0.0.1:3000/api/ready
 ```text
 app/                         Nuxt pages, components, composables, and UI assets
 server/api/                  Internal user/admin endpoints
-server/routes/v{N}/          Governed public APIs
-server/lib/                  Public API business implementations
-server/services/             Transactions and cross-domain business rules
+server/services/             Routing, Service control, billing, and cross-domain rules
 server/db/                   Drizzle client, schema, and migrations
-server/middleware/           Security headers and public route guards
+server/middleware/           Security headers and the dynamic Gateway entry
 server/plugins/              Startup initialization, statistics, and retry workers
-modules/api-manifest.ts      Build-time public API manifest
 shared/                      Client-safe schemas, contracts, and configuration
 docs/                        Project-specific standards and operational workflows
 ```
@@ -159,6 +166,12 @@ docs/                        Project-specific standards and operational workflow
 ## Documentation
 
 - [Documentation index](docs/index.md)
+- [Architecture documentation](docs/architecture/README.md)
+- [Platform architecture](docs/architecture/platform.md)
+- [Service architecture](docs/architecture/service.md)
+- [Runtime protocols](docs/architecture/runtime-protocols.md)
+- [Version and support scope](docs/architecture/release-scope.md)
+- [Platform and Service integration testing](docs/operations/service-integration-testing.md)
 - [Public API development guide](docs/api/public-api-development.md)
 - [Public API conventions](docs/api/public-api-conventions.md)
 - [Frontend engineering standards](docs/standards.md)
@@ -166,28 +179,9 @@ docs/                        Project-specific standards and operational workflow
 - [Runtime configuration](docs/operations/runtime-config.md)
 - [VPS deployment](docs/operations/vps-deployment.md)
 
-## Credits
-
-Some built-in public APIs are based on or inspired by:
-
-- [emoji-aes](https://github.com/a8763506128977812212307169331690/emoji-aes)
-- [taiji-encode](https://github.com/Cat7373/taiji-encode)
-- [beast_sdk](https://github.com/SycAlright/beast_sdk)
-- [Core-Values-Encoder](https://github.com/wTool/Core-Values-Encoder)
-- [talk-with-buddha](https://github.com/takuron/talk-with-buddha)
-- [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
-- [doubao-nomark](https://github.com/ihmily/doubao-nomark)
-- [60s](https://github.com/vikiboss/60s)
-- [Meting](https://github.com/metowolf/Meting)
-- [Meting-API](https://github.com/metowolf/Meting-API)
-- [short_videos](https://github.com/jiuhunwl/short_videos)
-- [60s-static-host](https://github.com/vikiboss/60s-static-host)
-- [LanzouAPI](https://github.com/hanximeng/LanzouAPI)
-- [v50](https://github.com/vikiboss/v50)
-
 ## Contributing
 
-Issues and pull requests are welcome. For a new public endpoint, follow the onboarding guide, keep handlers thin, add or update tests, generate migrations when the schema changes, and run all quality checks.
+Issues and pull requests are welcome. New first-party business APIs belong in the separate `openapi-service`; Platform owns Upstreams, Routes, governance, and operations. Generate migrations when the schema changes and run all quality checks.
 
 ## License
 

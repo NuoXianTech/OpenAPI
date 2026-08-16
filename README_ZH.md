@@ -2,7 +2,7 @@
 
 <img src="docs/assets/brand/logo-primary.png" width="136" alt="OpenAPI 标志" />
 
-# OpenAPI
+# OpenAPI Platform
 
 一个自托管的 API 发布、访问控制、调用统计、积分计费与运营管理平台。
 
@@ -12,28 +12,33 @@
 
 </div>
 
-OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建期发现接口，启动时同步清单，管理员可在 Nuxt UI 后台配置鉴权、价格、配额、统计与运营内容。
+> [!IMPORTANT]
+> Platform 与业务 API Service 是两个独立应用。Platform 不包含具体公共接口实现；官方业务接口由 `openapi-service` 提供。首个正式公开版本以 `0.1.0` 建立版本基线，`main` 分支发布的 `latest` 在此之前属于开发版本。
+
+接口管理区位于 `/admin/apis`。连接并发现 Service 后，管理员可以直接查看 Endpoint，一键发布或停用接口，并即时调整统计、API Key、积分和限流；Platform 会在后台自动创建或复用 Product、Version、Route 和不可变发布快照。
+
+Platform 不运行本地公共接口。具体业务接口位于独立 API Service 或 External HTTP Upstream；Platform 只负责发现契约、发布路由、访问治理、积分计费、统计和运营。
 
 ## 主要能力
 
-- **API 生命周期**：构建期发现 `server/routes/v{N}/{code}`，启动注册、孤儿接口检测和后台启停。
+- **API 管理模型**：Workspace、Product、Version、Route、Upstream、Target 与可回滚 Routing Revision。
+- **Service 控制面**：按 Internal Upstream 加密保存 Token，发现 OpenAPI 与通用配置 Schema，多 Target 轮询/权重、配置同步和漂移检测。
 - **网关治理**：API Key、作用域、IP 白名单、有效期、吊销、Key 配额、API 每日配额，以及秒/分/时/日限流。
 - **积分计费**：按 HTTP 方法定价、可审计余额流水、幂等扣费和失败扣费重试。
-- **可观测性**：不可变调用明细、每日聚合、登录日志、管理员操作日志、存活与就绪探针。
+- **可观测性**：不可变 Route 调用明细、登录日志、管理员操作日志、存活与就绪探针。
 - **账号体系**：用户和管理员统一账号、邮箱验证、密码找回、会话失效、GitHub/QQ OAuth 绑定和 Turnstile 防刷。
-- **运营后台**：用户、接口分类、兑换码、每日奖励、公告、站内通知、友情链接、邮件、OAuth、验证码和站点设置。
+- **运营后台**：用户、兑换码、每日奖励、公告、站内通知、友情链接、邮件、OAuth、验证码和站点设置。
 - **生产部署**：常规生产使用 PostgreSQL；单进程轻量部署可用 PGlite；Redis 提供共享限流、短缓存与后台任务协调。
 
 ## 请求链路
 
-1. `modules/api-manifest.ts` 在构建期发现带版本的公共路由。
-2. `server/plugins/00.startup.ts` 执行 Drizzle 迁移、按需创建初始管理员并同步接口清单。
-3. `server/middleware/01-open-api-routing.ts` 在进入 Nuxt 页面渲染前拒绝未知公共路径和不支持的请求方法。
-4. `server/utils/api-guard.ts` 中的 `defineOpenApiEventHandler` 检查接口配置、凭据、作用域、IP、限流、配额和积分余额。
-5. 薄路由调用 `server/lib/` 的业务实现，并返回统一响应壳。
-6. 响应钩子落库调用统计和积分流水；响应后扣费失败会进入幂等重试队列。
+1. 动态 Gateway 从活动 Routing Revision 匹配 Host、Method 和 Path。
+2. Platform 检查 API Key、Scope、IP、限流和积分，并清理调用方认证头。
+3. Internal Route 注入 Service Token 后代理到 `openapi-service`；External Route 使用 SSRF 防护访问标准 HTTP 上游。
+4. 成功结果在响应流开始前持久化计费状态，失败结果释放预留；响应后写入 Route 调用日志与积分流水。
+5. 未命中活动 Route 时返回稳定的 `API_NOT_FOUND`，Platform 不回退到本地业务 Handler。
 
-新发现的公共 API 默认处于禁用状态，必须先在管理后台完成配置并启用。
+Service 发现本身不会把接口公开到公网。管理员在接口目录明确点击发布后，Platform 才会创建公开 Route 并自动切换运行快照；发布历史只承担审计和回滚职责。
 
 ## 技术栈
 
@@ -42,6 +47,7 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 - Drizzle ORM、PostgreSQL 或 PGlite
 - ioredis 提供 Redis 分布式协调
 - Zod、Vitest、ESLint
+- 独立 API Service：Node.js 24、TypeScript、Hono、Zod/OpenAPI、原生 Fetch、Vitest
 
 ## 快速开始
 
@@ -54,8 +60,8 @@ OpenAPI 将带版本的 Nitro 路由转化为可治理的公共服务：构建�
 - Redis 在开发环境可选，在多实例生产环境必需
 
 ```bash
-git clone https://github.com/NuoXianTech/OpenAPI.git
-cd OpenAPI
+git clone https://github.com/NuoXianTech/openapi-platform.git
+cd openapi-platform
 corepack enable
 pnpm install
 cp .env.example .env
@@ -75,7 +81,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | 变量 | 要求 | 说明 |
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
-| `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并保护数据库中的 API Key 与兑换码密文。 |
+| `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并分域保护 API Key、兑换码、Upstream Token 与 Service 业务 Secret。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
@@ -84,6 +90,8 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | `NITRO_HOST`、`NITRO_PORT` | 部署配置 | Node 服务监听地址和端口。 |
 
 生产环境必须配置 `DATABASE_URL` 或 `DATABASE_DRIVER=pglite`，不会静默回退并创建新的本地数据库。完整语义和安全边界见[运行时配置](docs/operations/runtime-config.md)。
+
+API Service 地址和 Token 按 Internal Upstream 保存，不使用全局 Platform 环境变量。Service 声明的来源开关与凭据、数据库授权密钥、功能允许列表等业务配置会在 `/admin/apis/upstreams/:id` 自动生成表单并热更新全部 Target。
 
 ## 数据库流程
 
@@ -94,7 +102,7 @@ pnpm db:generate
 pnpm test:run
 ```
 
-审查并提交生成的迁移。生产迁移会打包到 `.output`，并在应用启动时自动执行。`pnpm db:migrate` 只作为手动修复或演练入口，不能代替提交迁移文件。
+当前数据库使用单一 `0000` 基线。`0.1.0` 之前创建的开发数据库或 Volume 不支持直接增量升级，应先备份并使用全新数据库/目录。生产迁移会打包到 `.output`，并在应用启动时自动执行。
 
 ## 质量门禁
 
@@ -105,32 +113,34 @@ pnpm test:run
 pnpm build
 ```
 
-任何命令失败都必须停止生产发布。
+任何命令失败都必须停止生产发布。这些构建检查在开发机或 CI 执行，不能放到生产服务器执行。
 
 ## 生产部署
 
-### Node Server
+### 预构建 Node Server 产物
 
 ```bash
+# 仅在开发机或 CI 构建
 pnpm build
+# 生产服务器只运行上传后的完整 .output
 NODE_ENV=production pnpm start
 ```
 
-必须部署完整的 `.output`。生产入口是 `.output/server/index.mjs`，不要只部署 `.output/server`，也不能遗漏其中的隐藏 Nitro 依赖。
+必须部署完整的预构建 `.output`。生产入口是 `.output/server/index.mjs`，不要只部署 `.output/server`，也不能遗漏其中的隐藏 Nitro 依赖。生产服务器不执行 `pnpm install`、Nuxt Build 或 Docker Build。
 
 ### Docker
 
 GitHub Actions 会在推送到 `main` 或创建版本标签时构建带标签的 amd64/arm64 镜像，并发布合并后的多架构镜像到 GHCR。服务器无需克隆源码或执行 Nuxt 构建：
 
 ```bash
-docker pull ghcr.io/nuoxiantech/openapi:latest
-docker run -d --name openapi --restart unless-stopped \
+docker pull ghcr.io/nuoxiantech/openapi-platform:latest
+docker run -d --name openapi-platform --restart unless-stopped \
   -p 3000:3000 --env-file .env \
   -v openapi-data:/app/.data \
-  ghcr.io/nuoxiantech/openapi:latest
+  ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-也可以下载仓库中的 `compose.yml` 后运行 `docker compose pull && docker compose up -d`。正式版本可将 `latest` 替换为版本号（例如 `0.1.0`）以锁定部署版本。版本镜像只会由符合 `v*.*.*` 格式的 Git 标签触发发布，例如 Git 标签 `v0.1.0` 会生成多架构标签 `0.1.0`，以及可显式选择架构的 `0.1.0-amd64`、`0.1.0-arm64`；`main` 同样发布 `latest`、`latest-amd64` 和 `latest-arm64`。镜像标签按容器生态惯例不保留 Git 标签的 `v` 前缀；不要使用不带 `v` 的 Git 标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
+也可以下载仓库中的 `docker-compose.yml` 后运行 `docker compose pull && docker compose up -d`。生产环境建议使用版本号（例如 `0.1.0`）锁定部署；`main` 发布 `latest`、`latest-amd64` 和 `latest-arm64`，用于跟踪开发版本。符合 `v*.*.*` 格式的 Git 标签会生成去掉 `v` 前缀的多架构镜像标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
 
 探针检查：
 
@@ -146,13 +156,10 @@ curl -fsS http://127.0.0.1:3000/api/ready
 ```text
 app/                         Nuxt 页面、组件、组合式函数与 UI 资源
 server/api/                  站内用户和管理员接口
-server/routes/v{N}/          受网关治理的公共 API
-server/lib/                  公共 API 业务实现
-server/services/             事务和跨领域业务规则
+server/services/             路由、Service 控制面、计费和跨领域规则
 server/db/                   Drizzle 客户端、schema 与迁移
-server/middleware/           安全响应头与公共路由守卫
+server/middleware/           安全响应头与动态 Gateway 入口
 server/plugins/              启动初始化、统计和重试任务
-modules/api-manifest.ts      构建期公共 API 清单
 shared/                      客户端安全的 schema、契约与配置
 docs/                        项目特有标准与生产流程
 ```
@@ -160,6 +167,12 @@ docs/                        项目特有标准与生产流程
 ## 项目文档
 
 - [文档入口](docs/index.md)
+- [架构文档](docs/architecture/README.md)
+- [Platform 架构](docs/architecture/platform.md)
+- [Service 架构](docs/architecture/service.md)
+- [运行时协议](docs/architecture/runtime-protocols.md)
+- [版本与支持范围](docs/architecture/release-scope.md)
+- [Platform 与 Service 集成测试](docs/operations/service-integration-testing.md)
 - [新增公共接口开发指南](docs/api/public-api-development.md)
 - [对外接口规范](docs/api/public-api-conventions.md)
 - [前端工程标准](docs/standards.md)
@@ -167,28 +180,9 @@ docs/                        项目特有标准与生产流程
 - [运行时配置](docs/operations/runtime-config.md)
 - [VPS 部署指南](docs/operations/vps-deployment.md)
 
-## 致谢
-
-部分内置公开 API 基于或参考了以下项目：
-
-- [emoji-aes](https://github.com/a8763506128977812212307169331690/emoji-aes)
-- [taiji-encode](https://github.com/Cat7373/taiji-encode)
-- [beast_sdk](https://github.com/SycAlright/beast_sdk)
-- [Core-Values-Encoder](https://github.com/wTool/Core-Values-Encoder)
-- [talk-with-buddha](https://github.com/takuron/talk-with-buddha)
-- [sentences-bundle](https://github.com/hitokoto-osc/sentences-bundle)
-- [doubao-nomark](https://github.com/ihmily/doubao-nomark)
-- [60s](https://github.com/vikiboss/60s)
-- [Meting](https://github.com/metowolf/Meting)
-- [Meting-API](https://github.com/metowolf/Meting-API)
-- [short_videos](https://github.com/jiuhunwl/short_videos)
-- [60s-static-host](https://github.com/vikiboss/60s-static-host)
-- [LanzouAPI](https://github.com/hanximeng/LanzouAPI)
-- [v50](https://github.com/vikiboss/v50)
-
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。新增公共 API 时，请遵循接入指南、保持 handler 简洁、补充或更新测试；修改数据库 schema 时必须生成迁移，并执行全部质量门禁。
+欢迎提交 Issue 和 Pull Request。新增官方具体 API 应在独立 `openapi-service` 中实现，Platform 只负责 Upstream、Route、治理和运营。修改数据库 schema 时必须生成迁移，并执行全部质量门禁。
 
 ## 许可证
 

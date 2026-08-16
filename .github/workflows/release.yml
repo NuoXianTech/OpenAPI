@@ -100,7 +100,7 @@ jobs:
         env:
           VERSION: ${{ steps.version.outputs.number }}
         run: |
-          package_name="openapi-${VERSION}"
+          package_name="openapi-platform-${VERSION}"
           archive_name="${package_name}.tar.gz"
           package_dir="${RUNNER_TEMP}/${package_name}"
 
@@ -145,7 +145,7 @@ jobs:
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v3
         with:
-          name: ${{ github.ref_name }}
+          name: OpenAPI Platform ${{ github.ref_name }}
           body_path: ${{ runner.temp }}/release-notes.md
           generate_release_notes: false
           prerelease: ${{ steps.version.outputs.prerelease }}

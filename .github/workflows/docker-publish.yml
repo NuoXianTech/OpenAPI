@@ -89,8 +89,8 @@ jobs:
           push: true
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          cache-from: type=gha,scope=openapi-${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=openapi-${{ matrix.arch }}
+          cache-from: type=gha,scope=openapi-platform-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=openapi-platform-${{ matrix.arch }}
           provenance: false
           sbom: false
 
@@ -169,7 +169,7 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1.2.2
         with:
           owner: ${{ github.repository_owner }}
-          package: openapi
+          package: openapi-platform
           delete-untagged: 'true'
           delete-tags: 'sha-*'
           validate: 'true'

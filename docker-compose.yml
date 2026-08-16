@@ -1,6 +1,6 @@
 services:
-  openapi:
-    image: ghcr.io/nuoxiantech/openapi:latest
+  openapi-platform:
+    image: ghcr.io/nuoxiantech/openapi-platform:latest
     restart: unless-stopped
     env_file:
       - .env
@@ -17,9 +17,27 @@ services:
     networks:
       - openapi
 
+  openapi-service:
+    image: ghcr.io/nuoxiantech/openapi-service:latest
+    restart: unless-stopped
+    environment:
+      LISTEN_ADDR: ":8080"
+      API_SERVICE_TOKEN: "${OPENAPI_SERVICE_TOKEN:?OPENAPI_SERVICE_TOKEN must be set}"
+      IP_DATABASE_DIRECTORY: "/app/data/ip"
+      SERVICE_CONFIG_FILE: "/app/data/runtime/service-configuration.enc"
+    volumes:
+      - "./data/ip:/app/data/ip:ro"
+      - service_runtime:/app/data/runtime
+    expose:
+      - "8080"
+    networks:
+      - openapi
+
 volumes:
   app_data:
     name: openapi-app-data
+  service_runtime:
+    name: openapi-service-runtime
 
 networks:
   openapi:
