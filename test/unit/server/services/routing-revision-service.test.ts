@@ -243,6 +243,44 @@ describe('routing revision service', () => {
     )).resolves.toBeNull()
   })
 
+  it('reuses the active revision when the runtime configuration is unchanged', async () => {
+    await createRoutingGraph({})
+
+    const firstRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    const repeatedRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    const revisions = await database.select().from(schema.routingRevisions)
+
+    expect(repeatedRevision.id).toBe(firstRevision.id)
+    expect(repeatedRevision.sequence).toBe(1)
+    expect(revisions).toHaveLength(1)
+  })
+
+  it('creates a new revision when an upstream target changes', async () => {
+    const graph = await createRoutingGraph({})
+    await routingRevisionService.publish(defaults.environment.id, null)
+
+    await database.update(schema.upstreamTargets)
+      .set({ baseUrl: 'http://127.0.0.1:8081' })
+      .where(eq(schema.upstreamTargets.upstreamServiceId, graph.upstream.id))
+
+    const changedRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    const revisions = await database.select().from(schema.routingRevisions)
+
+    expect(changedRevision.sequence).toBe(2)
+    expect(changedRevision.configPayload.upstreams[0]?.targets[0]?.baseUrl)
+      .toBe('http://127.0.0.1:8081')
+    expect(revisions).toHaveLength(2)
+  })
+
   it('excludes routes whose API version is not published', async () => {
     const graph = await createRoutingGraph({})
     await database.update(schema.apiVersions)
@@ -401,6 +439,17 @@ describe('routing revision service', () => {
       creditsCost: 0,
       state: 'active'
     })
+
+    const unchanged = await platformEndpointCatalogService.update(
+      published.route.id,
+      { environmentId: defaults.environment.id },
+      null
+    )
+    expect(unchanged).toMatchObject({
+      applied: true,
+      revision: { id: published.revision?.id, sequence: 1 }
+    })
+    expect(await database.select().from(schema.routingRevisions)).toHaveLength(1)
 
     const statistics = await platformEndpointCatalogService.update(
       published.route.id,

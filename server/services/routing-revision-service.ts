@@ -23,8 +23,25 @@ import { getSqlState } from '~~/server/utils/database-error'
 import { findRoutingRouteConflict, type RoutingConflictScope } from '~~/server/utils/routing-conflict'
 import { firstRow } from '~~/server/utils/row'
 
+type RoutingRuntimeConfiguration = Pick<
+  RoutingRevisionPayload,
+  'schemaVersion' | 'environmentId' | 'routes' | 'upstreams'
+>
+
 function revisionChecksum(payload: RoutingRevisionPayload): string {
   return createHash('sha256').update(canonicalJson(payload)).digest('hex')
+}
+
+function hasSameRuntimeConfiguration(
+  current: RoutingRevisionPayload,
+  desired: RoutingRuntimeConfiguration
+): boolean {
+  return canonicalJson({
+    schemaVersion: current.schemaVersion,
+    environmentId: current.environmentId,
+    routes: current.routes,
+    upstreams: current.upstreams
+  }) === canonicalJson(desired)
 }
 
 function validatePublishedRouteConflicts(scopes: RoutingConflictScope[]) {
@@ -175,6 +192,29 @@ export const routingRevisionService = {
           return { ...definition, targets }
         })
 
+        const desiredConfiguration: RoutingRuntimeConfiguration = {
+          schemaVersion: 1,
+          environmentId: environment.id,
+          routes,
+          upstreams
+        }
+        if (environment.activeRevisionId) {
+          const activeRevision = firstRow(await tx.select()
+            .from(routingRevisions)
+            .where(and(
+              eq(routingRevisions.id, environment.activeRevisionId),
+              eq(routingRevisions.status, 'published')
+            ))
+            .limit(1))
+          if (
+            activeRevision
+            && hasSameRuntimeConfiguration(
+              activeRevision.configPayload,
+              desiredConfiguration
+            )
+          ) return activeRevision
+        }
+
         const sequenceRow = firstRow(await tx.select({ value: max(routingRevisions.sequence) })
           .from(routingRevisions)
           .where(eq(routingRevisions.environmentId, environment.id)))
@@ -182,12 +222,9 @@ export const routingRevisionService = {
         const revisionId = randomUUID()
         const generatedAt = new Date()
         const payload: RoutingRevisionPayload = {
-          schemaVersion: 1,
+          ...desiredConfiguration,
           revisionId,
-          environmentId: environment.id,
           generatedAt: generatedAt.toISOString(),
-          routes,
-          upstreams
         }
 
         if (environment.activeRevisionId) {

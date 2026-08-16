@@ -61,7 +61,7 @@ Internal Service 的标准流程是：
 1. Service 发现更新 OpenAPI 文档和 Endpoint 摘要，但不直接公开接口。
 2. 管理员在接口目录明确点击发布。
 3. Platform 按 Upstream 自动创建或复用 Product 与 Version，并创建公开 Route；默认公开 Path 与 Service Path 相同。
-4. 发布、停用以及 API Key、统计、积分、限流等治理变更保存后，Platform 自动生成并激活新的 Routing Revision。
+4. 发布、停用以及 API Key、统计、积分、限流等治理变更保存后，Platform 自动应用运行配置；只有完整配置实际变化时才生成并激活新的 Routing Revision。
 5. 高级设置仍可编辑 Host、公开 Path、Upstream 模板、超时和大小限制，但保存动作同样自动发布。
 
 Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排的日常步骤。生成 Revision 时 Platform：
@@ -70,13 +70,13 @@ Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排�
 2. 校验 Route 冲突、引用完整性和治理约束。
 3. 生成规范化 JSON payload。
 4. 计算 SHA-256 checksum。
-5. 保存不可变 Routing Revision。
-6. 将 Revision 激活到指定 Environment。
+5. 与当前活动 Revision 比较；配置相同则直接复用，不产生重复历史。
+6. 配置变化时保存不可变 Routing Revision，并激活到指定 Environment。
 7. 通知 Gateway 刷新运行时缓存。
 
 Route 行保存期望状态，活动 Revision 保存实际流量状态。自动发布成功后两者一致并立即生效；如果冲突校验或引用校验失败，Route 期望状态仍会保留，活动 Revision 和现有流量保持不变，接口目录显示“待应用”或“待下线”并允许重试。
 
-发布历史页面只用于审计和回滚。管理员可以重新激活历史 Revision，而不需要恢复旧 Route 行或重启进程。
+后台将该技术概念显示为“运行快照”。运行快照页面只用于审计和回滚；管理员可以重新激活历史 Revision，而不需要恢复旧 Route 行或重启进程。
 
 ## 5. 动态 Gateway
 

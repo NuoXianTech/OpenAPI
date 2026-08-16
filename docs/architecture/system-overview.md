@@ -47,7 +47,7 @@ Administrator / API consumer
 
 ### 4.1 路由与治理变更
 
-公开路径、Method、Upstream、API Key、积分、限流、统计和启停属于 Platform 配置。接口目录保存变更后自动生成并激活 Routing Revision，不要求重新构建 Platform 或 Service。
+公开路径、Method、Upstream、API Key、积分、限流、统计和启停属于 Platform 配置。接口目录保存变更后自动应用运行配置；只有完整配置实际变化时才生成并激活新的 Routing Revision，相同配置复用当前快照。不要求重新构建 Platform 或 Service。
 
 ### 4.2 Service 业务配置变更
 

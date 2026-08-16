@@ -52,7 +52,7 @@
         "pageTitle": "接口管理",
         "eyebrow": "API 发布与治理",
         "title": "发现、配置并发布接口",
-        "description": "从 Service 获取接口契约，直接控制公开状态、统计、鉴权与积分。系统会在每次变更后自动生成安全的 Routing Revision。",
+        "description": "从 Service 获取接口契约，直接控制公开状态、统计、鉴权与积分。系统仅在运行配置实际变化时保存安全快照。",
         "selectWorkspace": "选择 Workspace",
         "selectEnvironment": "选择 Environment",
         "moreTargets": "另有 {count} 个 Target",
@@ -60,7 +60,7 @@
           "routes": "接口目录",
           "products": "接口分组",
           "upstreams": "Service",
-          "revisions": "发布历史",
+          "revisions": "运行快照",
           "workspaces": "工作空间"
         },
         "fields": {
@@ -108,8 +108,8 @@
           "saveAndPublish": "保存并发布",
           "addTarget": "添加 Target",
           "removeTarget": "移除 Target",
-          "publishRevision": "发布 Revision",
-          "activateRevision": "切换到此版本"
+          "publishRevision": "应用运行配置",
+          "activateRevision": "回滚到此快照"
         },
         "pipeline": {
           "title": "发布依赖链",
@@ -117,7 +117,7 @@
           "product": "Product",
           "upstream": "Upstream",
           "route": "Route",
-          "revision": "Revision",
+          "revision": "运行快照",
           "notSelected": "尚未选择",
           "createFirst": "先创建 Workspace",
           "itemCount": "{count} 项",
@@ -127,14 +127,14 @@
           "routeHint": "绑定公开路径与上游路径",
           "environmentHint": "先选择 Environment",
           "unpublished": "尚未发布",
-          "revisionSequence": "Revision #{sequence}"
+          "revisionSequence": "快照 #{sequence}"
         },
         "nextActions": {
           "workspace": "下一步：创建 Workspace",
           "product": "下一步：创建 Product",
           "upstream": "下一步：连接 Upstream",
           "route": "下一步：创建 Route",
-          "revision": "下一步：发布 Revision",
+          "revision": "下一步：应用运行配置",
           "ready": "运行配置已生效"
         },
         "sections": {
@@ -144,10 +144,10 @@
           "productsDescription": "用 Product 与 Version 组织可对外发布的 API 能力。",
           "upstreamsTitle": "Upstream Services",
           "upstreamsDescription": "管理 Gateway 可以访问的内部 API Service 与外部 HTTPS 服务。",
-          "revisionsTitle": "发布历史",
-          "revisionsDescription": "接口目录会在每次发布、停用或治理配置变更时自动生成不可变快照。本页只用于审计和回滚，不是日常发布步骤。",
+          "revisionsTitle": "运行快照",
+          "revisionsDescription": "公开流量配置实际变化时，Platform 才会保存新的不可变快照；相同配置直接复用当前快照。本页仅用于审计和回滚。",
           "workspacesTitle": "Workspaces",
-          "workspacesDescription": "隔离 API 产品、上游服务、环境和发布历史。"
+          "workspacesDescription": "隔离 API 产品、上游服务、环境和运行快照。"
         },
         "columns": {
           "method": "方法",
@@ -163,10 +163,10 @@
           "kind": "类型",
           "targets": "Targets",
           "loadBalancing": "负载均衡",
-          "revision": "发布版本",
+          "revision": "快照",
           "routeCount": "Routes",
           "checksum": "校验和",
-          "publishedAt": "发布时间",
+          "publishedAt": "生效时间",
           "workspace": "Workspace",
           "environments": "Environments"
         },
@@ -177,8 +177,8 @@
           "productsDescription": "创建第一个 API Product，首个 Version 会立即进入可发布状态。",
           "upstreamsTitle": "还没有 Upstream",
           "upstreamsDescription": "连接工作区中的 Node API Service，或添加受限制的外部 HTTPS 服务。",
-          "revisionsTitle": "还没有发布历史",
-          "revisionsDescription": "前往接口目录发布第一个 Service Endpoint，Platform 会自动生成首个运行快照。",
+          "revisionsTitle": "还没有运行快照",
+          "revisionsDescription": "前往接口目录发布第一个 Service Endpoint，Platform 会自动保存首个运行快照。",
           "workspacesTitle": "还没有 Workspace",
           "workspacesDescription": "创建 Workspace 与默认 Environment 后即可开始组织 API。"
         },
@@ -203,9 +203,9 @@
         "revisionStatuses": {
           "active": "当前生效",
           "building": "生成中",
-          "published": "已发布",
-          "failed": "发布失败",
-          "superseded": "历史版本"
+          "published": "可回滚",
+          "failed": "生成失败",
+          "superseded": "历史快照"
         },
         "upstreamKinds": {
           "internal": "内部服务",
@@ -222,10 +222,10 @@
           "description": "创建一个隔离的 API 管理空间，并同时初始化第一个 Environment。",
           "namePlaceholder": "例如：核心 API",
           "environmentTitle": "首个 Environment",
-          "environmentDescription": "Environment 保存独立的生效 Revision。首版通常使用 development，后续再扩展 staging 与 production。",
+          "environmentDescription": "每个 Environment 保存独立的活动运行快照。首版通常使用 development，后续再扩展 staging 与 production。",
           "defaultDomainHelp": "可选。没有单独配置 Host 的 Route 会使用此域名；全平台只允许一个 Environment 留空，作为最低优先级的任意 Host 兜底。",
           "boundaryTitle": "Workspace 是管理边界，不是额外服务",
-          "boundaryDescription": "它只隔离 Product、Upstream、Route、Environment 与发布历史；不会新增需要部署的进程。"
+          "boundaryDescription": "它只隔离 Product、Upstream、Route、Environment 与运行快照；不会新增需要部署的进程。"
         },
         "productForm": {
           "title": "新建 API Product",
@@ -233,7 +233,7 @@
           "namePlaceholder": "例如：天气服务",
           "summaryPlaceholder": "一句话说明该 Product 提供什么能力",
           "publishedTitle": "首个 Version 将直接可发布",
-          "publishedDescription": "当前快速创建流程会把首个 Version 标记为 published，使其 Route 可以进入下一次 Revision。"
+          "publishedDescription": "当前快速创建流程会把首个 Version 标记为 published，使其 Route 可以进入运行快照。"
         },
         "upstreamForm": {
           "title": "新建 Upstream",
@@ -242,7 +242,7 @@
           "loadBalancingHelp": "首版运行时支持轮询与加权轮询；权重仅在加权模式下生效。",
           "internalTitle": "内部 Upstream 由 Platform 代为鉴权",
           "internalDescription": "转发到内部服务时会移除调用方凭证，并注入当前 Upstream 独立保存的 Service Token。",
-          "serviceTokenHelp": "Token 会使用 Platform 主密钥加密保存，不进入 Routing Revision、普通响应或日志。",
+          "serviceTokenHelp": "Token 会使用 Platform 主密钥加密保存，不进入运行快照、普通响应或日志。",
           "serviceTokenPlaceholder": "至少 32 个随机字符",
           "externalTitle": "外部 Upstream 启用 SSRF 防护",
           "externalDescription": "仅允许 HTTPS，且禁止 localhost、私网、链路本地地址及包含凭证的 URL。",
@@ -271,17 +271,17 @@
           "noUpstreamsHelp": "此 Workspace 没有可用的 Upstream。"
         },
         "publish": {
-          "title": "发布到 {environment}",
-          "description": "将当前 {count} 条可发布 Route 生成一个完整 Revision，并立即切换该 Environment 的运行配置。",
+          "title": "应用到 {environment}",
+          "description": "将当前 {count} 条可发布 Route 生成一个完整运行快照，并立即切换该 Environment 的运行配置。",
           "descriptionSimple": "把当前 Workspace 中可发布的 Product、Route 与 Upstream 生成完整快照，并立即切换该 Environment 的运行配置。"
         },
         "rollback": {
-          "title": "切换到 Revision #{sequence}",
-          "description": "这会立即把 {environment} 的运行配置切换到该历史快照。当前 Revision 会保留并可再次激活。"
+          "title": "回滚到运行快照 #{sequence}",
+          "description": "这会立即把 {environment} 切换到该历史快照。当前快照会保留，之后仍可再次恢复。"
         },
         "deleteRoute": {
           "title": "删除 Route {path}",
-          "description": "Route 会从草稿配置中软删除。当前活动 Revision 不会立即改变；发布新 Revision 后下线，旧 Revision 仍可回滚恢复。"
+          "description": "Route 会从草稿配置中软删除。当前运行快照不会立即改变；应用新配置后下线，旧快照仍可用于回滚。"
         },
         "feedback": {
           "workspaceCreated": "Workspace 已创建",
@@ -290,16 +290,16 @@
           "routeCreated": "Route 已创建",
           "routeUpdated": "Route 已更新",
           "routeDeleted": "Route 已删除",
-          "publishToApply": "发布新的 Revision 后流量配置才会改变",
-          "revisionPublished": "Revision #{sequence} 已发布",
-          "revisionActivated": "已切换到 Revision #{sequence}",
+          "publishToApply": "应用新的运行配置后流量才会改变",
+          "revisionPublished": "运行快照 #{sequence} 已生成",
+          "revisionActivated": "已回滚到运行快照 #{sequence}",
           "runtimeUpdated": "Gateway 已即时加载新配置，无需重启",
           "savedPendingPublish": "配置已保存，但自动发布失败；当前流量继续使用上一版本，可在接口目录重试应用",
           "createFailed": "创建失败",
           "updateFailed": "更新 Route 失败",
           "deleteFailed": "删除 Route 失败",
-          "publishFailed": "Revision 发布失败",
-          "activateFailed": "Revision 切换失败"
+          "publishFailed": "运行配置应用失败",
+          "activateFailed": "运行快照回滚失败"
         },
         "validation": {
           "workspaceRequired": "请选择 Workspace",
@@ -388,9 +388,7 @@
         "catalog": {
           "eyebrow": "SERVICE → PUBLIC API",
           "title": "接口目录",
-          "description": "发现 Service 后即可直接发布接口。发布、停用或修改统计与鉴权时，Platform 会自动生成并激活 Revision；发布历史只用于审计和回滚。",
-          "activeRevision": "当前发布 #{sequence}",
-          "noRevision": "尚未发布",
+          "description": "发现 Service 后即可直接发布接口。发布、停用或修改治理配置时，Platform 会自动应用运行配置；仅在实际变化时保存新快照。",
           "endpointCount": "{count} 个接口",
           "contractMissing": "Service 契约中已找不到此接口，请确认后下线或调整 Route",
           "manualRoute": "手动创建的转发接口",
@@ -443,7 +441,7 @@
             "apiKeyEnabled": "API Key 已启用",
             "apiKeyDisabled": "API Key 已停用",
             "savedPending": "变更已保存，当前流量未切换",
-            "savedPendingDescription": "上一发布版本仍在正常服务。请处理发布冲突后点击“应用变更”重试：{reason}",
+            "savedPendingDescription": "现有运行快照仍在正常服务。请处理配置冲突后点击“应用变更”重试：{reason}",
             "publishFailed": "接口发布失败",
             "updateFailed": "接口变更失败"
           },

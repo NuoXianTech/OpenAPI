@@ -53,7 +53,7 @@ Platform 不运行具体业务 Handler。Service 不管理 Platform 用户、公
 - 同一 Internal Upstream 的全部 Target 必须返回相同 Service ID、OpenAPI 指纹、配置 Schema 指纹和控制协议版本。
 - 控制协议可以增加可选字段；破坏性协议变化必须发布新的协议版本。
 - OpenAPI 指纹变化必须由管理员审查，不能静默改变现有公开 Route。
-- Routing Revision 一经创建不可修改；日常运行时变更由接口目录自动发布新 Revision，回滚通过重新激活历史 Revision 完成。
+- Routing Revision 一经创建不可修改；日常运行时变更由接口目录自动应用，完整配置不变时复用当前 Revision，实际变化时才发布新 Revision。回滚通过重新激活历史 Revision 完成。
 - Platform 与 Service 可以独立升级，但目标版本必须满足双方声明的控制协议兼容范围。
 - `0.x` 软件版本允许破坏性变化；每次正式发布必须在 Release Notes 中说明数据库、配置、Route 和协议影响。
 

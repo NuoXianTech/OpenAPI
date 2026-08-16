@@ -467,14 +467,10 @@ function primaryActionIcon(item: PlatformEndpointCatalogItem) {
       <UButton
         to="/admin/apis/revisions"
         color="neutral"
-        variant="outline"
+        variant="ghost"
         icon="i-lucide-history"
       >
-        {{ catalogResource.data.value.activeRevisionSequence
-          ? $t('admin.apis.routing.catalog.activeRevision', {
-            sequence: catalogResource.data.value.activeRevisionSequence
-          })
-          : $t('admin.apis.routing.catalog.noRevision') }}
+        {{ $t('admin.apis.routing.sections.revisionsTitle') }}
       </UButton>
     </AdminPlatformContextBar>
 

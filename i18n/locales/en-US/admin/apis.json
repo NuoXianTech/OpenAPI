@@ -52,7 +52,7 @@
         "pageTitle": "API management",
         "eyebrow": "API publishing and governance",
         "title": "Discover, configure, and publish APIs",
-        "description": "Read contracts from Services and directly control public access, statistics, authentication, and credits. Every change automatically creates a safe Routing Revision.",
+        "description": "Read contracts from Services and directly control public access, statistics, authentication, and credits. A safe runtime snapshot is saved only when the effective configuration changes.",
         "selectWorkspace": "Select a Workspace",
         "selectEnvironment": "Select an Environment",
         "moreTargets": "{count} more Targets",
@@ -60,7 +60,7 @@
           "routes": "API catalog",
           "products": "API groups",
           "upstreams": "Services",
-          "revisions": "Publish history",
+          "revisions": "Runtime snapshots",
           "workspaces": "Workspaces"
         },
         "fields": {
@@ -108,8 +108,8 @@
           "saveAndPublish": "Save and publish",
           "addTarget": "Add Target",
           "removeTarget": "Remove Target",
-          "publishRevision": "Publish Revision",
-          "activateRevision": "Activate this Revision"
+          "publishRevision": "Apply runtime configuration",
+          "activateRevision": "Roll back to this snapshot"
         },
         "pipeline": {
           "title": "Publication dependency chain",
@@ -117,7 +117,7 @@
           "product": "Product",
           "upstream": "Upstream",
           "route": "Route",
-          "revision": "Revision",
+          "revision": "Runtime snapshot",
           "notSelected": "Not selected",
           "createFirst": "Create a Workspace first",
           "itemCount": "{count} items",
@@ -127,14 +127,14 @@
           "routeHint": "Bind a public path to an upstream path",
           "environmentHint": "Select an Environment first",
           "unpublished": "Not published",
-          "revisionSequence": "Revision #{sequence}"
+          "revisionSequence": "Snapshot #{sequence}"
         },
         "nextActions": {
           "workspace": "Next: create a Workspace",
           "product": "Next: create a Product",
           "upstream": "Next: connect an Upstream",
           "route": "Next: create a Route",
-          "revision": "Next: publish a Revision",
+          "revision": "Next: apply runtime configuration",
           "ready": "Runtime configuration is active"
         },
         "sections": {
@@ -144,10 +144,10 @@
           "productsDescription": "Organize publishable API capabilities with Products and Versions.",
           "upstreamsTitle": "Upstream Services",
           "upstreamsDescription": "Manage internal API Services and restricted external HTTPS services that the Gateway can reach.",
-          "revisionsTitle": "Release history",
-          "revisionsDescription": "The endpoint catalog automatically creates an immutable snapshot whenever an endpoint is published, disabled, or governed differently. This page is for audit and rollback, not routine publishing.",
+          "revisionsTitle": "Runtime snapshots",
+          "revisionsDescription": "Platform saves a new immutable snapshot only when the effective traffic configuration changes; identical configuration reuses the active snapshot. This page is for audit and rollback only.",
           "workspacesTitle": "Workspaces",
-          "workspacesDescription": "Isolate API Products, Upstreams, Environments, and publication history."
+          "workspacesDescription": "Isolate API Products, Upstreams, Environments, and runtime snapshots."
         },
         "columns": {
           "method": "Method",
@@ -163,10 +163,10 @@
           "kind": "Type",
           "targets": "Targets",
           "loadBalancing": "Load balancing",
-          "revision": "Release",
+          "revision": "Snapshot",
           "routeCount": "Routes",
           "checksum": "Checksum",
-          "publishedAt": "Published",
+          "publishedAt": "Activated",
           "workspace": "Workspace",
           "environments": "Environments"
         },
@@ -177,8 +177,8 @@
           "productsDescription": "Create the first API Product. Its initial Version becomes publishable immediately.",
           "upstreamsTitle": "No Upstreams yet",
           "upstreamsDescription": "Connect the Node API Service in this Workspace or add a restricted external HTTPS service.",
-          "revisionsTitle": "No release history yet",
-          "revisionsDescription": "Publish the first Service Endpoint from the endpoint catalog and Platform will create the initial runtime snapshot automatically.",
+          "revisionsTitle": "No runtime snapshots yet",
+          "revisionsDescription": "Publish the first Service Endpoint from the endpoint catalog and Platform will save the initial runtime snapshot automatically.",
           "workspacesTitle": "No Workspaces yet",
           "workspacesDescription": "Create a Workspace and its default Environment to begin organizing APIs."
         },
@@ -203,9 +203,9 @@
         "revisionStatuses": {
           "active": "Active",
           "building": "Building",
-          "published": "Published",
-          "failed": "Failed",
-          "superseded": "Historical"
+          "published": "Available",
+          "failed": "Generation failed",
+          "superseded": "Historical snapshot"
         },
         "upstreamKinds": {
           "internal": "Internal service",
@@ -222,10 +222,10 @@
           "description": "Create an isolated API management space and initialize its first Environment.",
           "namePlaceholder": "For example, Core APIs",
           "environmentTitle": "First Environment",
-          "environmentDescription": "Each Environment owns an independent active Revision. Start with development, then add staging and production later.",
+          "environmentDescription": "Each Environment owns an independent active runtime snapshot. Start with development, then add staging and production later.",
           "defaultDomainHelp": "Optional. Routes without their own Host use this domain. Only one Environment may leave it empty as the lowest-priority any-Host fallback.",
           "boundaryTitle": "A Workspace is a management boundary, not another service",
-          "boundaryDescription": "It only isolates Products, Upstreams, Routes, Environments, and release history. It does not add another process to deploy."
+          "boundaryDescription": "It only isolates Products, Upstreams, Routes, Environments, and runtime snapshots. It does not add another process to deploy."
         },
         "productForm": {
           "title": "Create API Product",
@@ -233,7 +233,7 @@
           "namePlaceholder": "For example, Weather service",
           "summaryPlaceholder": "Describe the capability in one sentence",
           "publishedTitle": "The initial Version will be publishable immediately",
-          "publishedDescription": "The current quick-create flow marks the initial Version as published so its Routes can enter the next Revision."
+          "publishedDescription": "The current quick-create flow marks the initial Version as published so its Routes can enter a runtime snapshot."
         },
         "upstreamForm": {
           "title": "Create Upstream",
@@ -242,7 +242,7 @@
           "loadBalancingHelp": "The initial runtime supports round robin and weighted round robin. Weights apply only in weighted mode.",
           "internalTitle": "The Platform authenticates internal Upstreams",
           "internalDescription": "Caller credentials are removed and the Service Token stored independently for this Upstream is injected before forwarding.",
-          "serviceTokenHelp": "The Token is encrypted with the Platform master key and never enters Routing Revisions, ordinary responses, or logs.",
+          "serviceTokenHelp": "The Token is encrypted with the Platform master key and never enters runtime snapshots, ordinary responses, or logs.",
           "serviceTokenPlaceholder": "At least 32 random characters",
           "externalTitle": "External Upstreams use SSRF protection",
           "externalDescription": "Only HTTPS is allowed. Localhost, private, link-local, and credential-bearing URLs are blocked.",
@@ -271,17 +271,17 @@
           "noUpstreamsHelp": "This Workspace has no available Upstreams."
         },
         "publish": {
-          "title": "Publish to {environment}",
-          "description": "Build a complete Revision from {count} publishable Routes and immediately activate it for this Environment.",
+          "title": "Apply to {environment}",
+          "description": "Build a complete runtime snapshot from {count} publishable Routes and immediately activate it for this Environment.",
           "descriptionSimple": "Build a complete snapshot from the Workspace's publishable Products, Routes, and Upstreams, then activate it for this Environment."
         },
         "rollback": {
-          "title": "Activate Revision #{sequence}",
-          "description": "This immediately switches {environment} to the historical snapshot. The current Revision remains available for reactivation."
+          "title": "Roll back to runtime snapshot #{sequence}",
+          "description": "This immediately switches {environment} to the historical snapshot. The current snapshot remains available and can be restored later."
         },
         "deleteRoute": {
           "title": "Delete Route {path}",
-          "description": "The Route is soft-deleted from the draft configuration. The active Revision remains unchanged until a new Revision is published, and an older Revision can still restore it."
+          "description": "The Route is soft-deleted from the draft configuration. The active runtime snapshot remains unchanged until the new configuration is applied, and an older snapshot can still restore it."
         },
         "feedback": {
           "workspaceCreated": "Workspace created",
@@ -290,16 +290,16 @@
           "routeCreated": "Route created",
           "routeUpdated": "Route updated",
           "routeDeleted": "Route deleted",
-          "publishToApply": "Publish a new Revision to change traffic",
-          "revisionPublished": "Revision #{sequence} published",
-          "revisionActivated": "Revision #{sequence} activated",
+          "publishToApply": "Apply the new runtime configuration to change traffic",
+          "revisionPublished": "Runtime snapshot #{sequence} created",
+          "revisionActivated": "Rolled back to runtime snapshot #{sequence}",
           "runtimeUpdated": "The Gateway loaded the new configuration without a restart",
           "savedPendingPublish": "The configuration was saved, but automatic publishing failed. Traffic is still using the previous version and the change can be retried from the API catalog",
           "createFailed": "Creation failed",
           "updateFailed": "Failed to update Route",
           "deleteFailed": "Failed to delete Route",
-          "publishFailed": "Failed to publish Revision",
-          "activateFailed": "Failed to activate Revision"
+          "publishFailed": "Failed to apply runtime configuration",
+          "activateFailed": "Failed to roll back the runtime snapshot"
         },
         "validation": {
           "workspaceRequired": "Select a Workspace",
@@ -388,9 +388,7 @@
         "catalog": {
           "eyebrow": "SERVICE → PUBLIC API",
           "title": "API catalog",
-          "description": "Publish an endpoint as soon as a Service is discovered. Publishing, disabling, statistics, and authentication changes automatically create and activate a Revision; publish history remains available for audit and rollback.",
-          "activeRevision": "Active publish #{sequence}",
-          "noRevision": "Not published yet",
+          "description": "Publish an endpoint as soon as a Service is discovered. Publishing, disabling, or governance changes automatically apply the runtime configuration; a new snapshot is saved only when it actually changes.",
           "endpointCount": "{count} endpoints",
           "contractMissing": "This endpoint is no longer present in the Service contract. Review it before disabling or adjusting the Route.",
           "manualRoute": "Manually configured proxy endpoint",
@@ -443,7 +441,7 @@
             "apiKeyEnabled": "API Key enabled",
             "apiKeyDisabled": "API Key disabled",
             "savedPending": "Changes saved; live traffic was not switched",
-            "savedPendingDescription": "The previous release is still serving traffic. Resolve the publication conflict, then retry Apply changes: {reason}",
+            "savedPendingDescription": "The active runtime snapshot is still serving traffic. Resolve the configuration conflict, then retry Apply changes: {reason}",
             "publishFailed": "Endpoint publishing failed",
             "updateFailed": "Endpoint update failed"
           },

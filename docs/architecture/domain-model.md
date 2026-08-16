@@ -18,7 +18,7 @@ service tokens / desired config
 
 ### Workspace
 
-Workspace 是 API 管理边界，隔离 Product、Upstream、Route、Environment 和发布历史。它不是新的运行进程，也不等同于租户计费账号。
+Workspace 是 API 管理边界，隔离 Product、Upstream、Route、Environment 和运行快照。它不是新的运行进程，也不等同于租户计费账号。
 
 核心属性：
 
