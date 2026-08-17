@@ -1,8 +1,9 @@
 import { API_STATUS } from '#shared/config/api-status'
+import type { ApiCatalogEndpoint } from '#shared/types/api'
 
-export type ApiStatusColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
+type ApiStatusColor = 'success' | 'info' | 'warning' | 'error' | 'neutral'
 
-export interface ApiStatusMeta {
+interface ApiStatusMeta {
   label: string
   color: ApiStatusColor
   icon: string
@@ -16,36 +17,20 @@ interface ApiStatusDescriptor {
 
 type TranslateStatusLabel = (key: string) => string
 
-export function parseApiMethods(value = 'GET'): string[] {
-  return value
-    .split(',')
-    .map(method => method.trim())
-    .filter(Boolean)
-}
-
-export function getApiMethodCost(
-  method: string,
-  methodCosts: Record<string, number> | undefined
+export function getAggregateEndpointCost(
+  endpoints: readonly Pick<ApiCatalogEndpoint, 'creditsCost'>[]
 ): number {
-  const value = methodCosts?.[method.toUpperCase()]
-  return typeof value === 'number' && value > 0 ? value : 0
-}
-
-export function getAggregateApiMethodCost(
-  methods: string[],
-  methodCosts: Record<string, number> | undefined
-): number {
-  if (methods.length === 0) return 0
-  const costs = methods.map(method => getApiMethodCost(method, methodCosts))
+  if (endpoints.length === 0) return 0
+  const costs = endpoints.map(endpoint => endpoint.creditsCost)
   const first = costs[0] ?? 0
   return costs.every(cost => cost === first) ? first : -1
 }
 
-export function areAllApiMethodsPaid(
-  methods: string[],
-  methodCosts: Record<string, number> | undefined
+export function areAllEndpointsPaid(
+  endpoints: readonly Pick<ApiCatalogEndpoint, 'creditsCost'>[]
 ): boolean {
-  return methods.length > 0 && methods.every(method => getApiMethodCost(method, methodCosts) > 0)
+  return endpoints.length > 0
+    && endpoints.every(endpoint => endpoint.creditsCost > 0)
 }
 
 function getApiStatusDescriptor(status: number): ApiStatusDescriptor {

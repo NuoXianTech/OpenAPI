@@ -388,6 +388,50 @@ describe('routing revision service', () => {
     expect(revisions).toHaveLength(2)
   })
 
+  it('keeps the last verified Targets of an unavailable Internal Upstream', async () => {
+    const unavailable = await createRoutingGraph({
+      productSlug: 'unavailable-service'
+    })
+    const changing = await createRoutingGraph({
+      productSlug: 'changing-service',
+      pathPattern: '/v1/changing-service',
+      upstreamPathTemplate: '/healthz'
+    })
+    const firstRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    const previousTargets = firstRevision.configPayload.upstreams.find(
+      upstream => upstream.id === unavailable.upstream.id
+    )!.targets
+
+    await database.update(schema.upstreamTargets).set({
+      configurationStatus: 'error'
+    }).where(eq(
+      schema.upstreamTargets.upstreamServiceId,
+      unavailable.upstream.id
+    ))
+    await database.update(schema.upstreamTargets).set({
+      baseUrl: 'http://127.0.0.1:8082'
+    }).where(eq(
+      schema.upstreamTargets.upstreamServiceId,
+      changing.upstream.id
+    ))
+
+    const secondRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+
+    expect(secondRevision.sequence).toBe(2)
+    expect(secondRevision.configPayload.upstreams.find(
+      upstream => upstream.id === unavailable.upstream.id
+    )?.targets).toEqual(previousTargets)
+    expect(secondRevision.configPayload.upstreams.find(
+      upstream => upstream.id === changing.upstream.id
+    )?.targets[0]?.baseUrl).toBe('http://127.0.0.1:8082')
+  })
+
   it('serializes concurrent publication and preserves one active revision', async () => {
     await createRoutingGraph({})
 
@@ -424,7 +468,7 @@ describe('routing revision service', () => {
       productLifecycle: 'deprecated'
     })
     expect(catalog.items).toContainEqual(expect.objectContaining({
-      id: graph.route.id,
+      id: graph.product.id,
       status: API_STATUS.deprecated
     }))
   })

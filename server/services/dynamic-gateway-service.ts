@@ -208,6 +208,11 @@ export const dynamicGatewayService = {
         maximumResponseBytes: match.route.maxResponseBytes,
         onTarget: (selected) => {
           targetId = selected.id
+          const statisticsTarget = getAppEventContext(event).apiStatsTarget
+          if (statisticsTarget) {
+            statisticsTarget.upstreamTargetId = selected.id
+            statisticsTarget.upstreamTargetUrl = selected.baseUrl
+          }
         },
         onResponseBytes: (receivedBytes) => {
           const tracked = getAppEventContext(event).apiStatsTracked

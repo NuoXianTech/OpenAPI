@@ -34,7 +34,7 @@ pnpm build
 | 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：设置 `DATABASE_DRIVER=pglite` 并确认 `PGLITE_DATA_DIR` 是持久化目录 |
 | 数据库迁移 | `0.1.0` 的 `0000` 基线保持不可修改，后续版本只追加迁移；已确认 `.output/server/migrate.mjs` 与对应 SQL 同时进入产物，并准备按[数据库升级流程](./database-migrations.md)执行 |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_API_KEY_SECRET` 已独立生成并完成安全备份；每个 Internal Upstream 使用独立 Service Token，并确认数据库中只保存密文 |
-| Host 隔离 | `NUXT_HOSTS_CONSOLE` 与 `NUXT_HOSTS_GATEWAY` 均已设置且互不重叠；反向代理按域名转发到同一 Nitro 进程 |
+| Platform 入口 | Console、站内 API 和动态 Gateway 共用一个入口；反向代理只将预期域名转发到 Nitro，公共 Route 不占用 Platform 保留路径 |
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
 | 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的资料和密码初始化 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |

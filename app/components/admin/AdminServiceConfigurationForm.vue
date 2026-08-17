@@ -27,6 +27,12 @@ const secretCleared = reactive<Record<string, boolean>>({})
 
 const definition = computed(() => props.view.definition)
 
+function cloneConfigurationValue(
+  value: ServiceConfigurationValue
+): ServiceConfigurationValue {
+  return Array.isArray(value) ? [...value] : value
+}
+
 function clearRecord(record: Record<string, unknown>) {
   for (const key of Object.keys(record)) {
     Reflect.deleteProperty(record, key)
@@ -51,8 +57,8 @@ watch(
         }
         const current = view.values[field.key]
         values[field.key] = isConfigurationValue(current)
-          ? structuredClone(current)
-          : structuredClone(field.default)
+          ? cloneConfigurationValue(current)
+          : cloneConfigurationValue(field.default)
       }
     }
   },
@@ -187,7 +193,12 @@ function onSubmit() {
   }
   emit('submit', {
     expectedRevision: props.view.connection.configurationRevision,
-    values: structuredClone(values),
+    values: Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [
+        key,
+        cloneConfigurationValue(value)
+      ])
+    ),
     secrets
   })
 }
@@ -197,132 +208,149 @@ function onSubmit() {
   <UForm
     :state="formState"
     :validate="validate"
-    class="space-y-5"
+    class="space-y-4"
     @submit="onSubmit"
   >
-    <UCard
-      v-for="group in definition?.groups ?? []"
-      :key="group.key"
-      variant="subtle"
-    >
-      <template #header>
-        <div>
+    <div class="overflow-hidden rounded-lg border border-default bg-default">
+      <section
+        v-for="group in definition?.groups ?? []"
+        :key="group.key"
+        class="grid border-b border-default last:border-b-0 lg:grid-cols-[minmax(12rem,15rem)_minmax(0,1fr)]"
+      >
+        <header class="bg-elevated/40 p-4 sm:p-5 lg:bg-transparent lg:p-6">
           <h3 class="text-sm font-semibold text-highlighted">
             {{ group.label }}
           </h3>
-          <p v-if="group.description" class="mt-1 text-xs leading-5 text-muted">
+          <p
+            v-if="group.description"
+            class="mt-1.5 max-w-prose text-xs leading-5 text-muted"
+          >
             {{ group.description }}
           </p>
-        </div>
-      </template>
+        </header>
 
-      <div class="grid gap-5 lg:grid-cols-2">
-        <UFormField
-          v-for="field in group.fields"
-          :key="field.key"
-          :name="field.key"
-          :label="field.label"
-          :description="field.description"
-          :required="field.required"
-          :class="field.type === 'textarea' ? 'lg:col-span-2' : undefined"
-        >
-          <USwitch
-            v-if="field.type === 'boolean'"
-            :model-value="booleanValue(field.key)"
-            @update:model-value="setValue(field.key, $event)"
-          />
-          <UInputNumber
-            v-else-if="field.type === 'number'"
-            :model-value="numberValue(field.key)"
-            :min="field.minimum"
-            :max="field.maximum"
-            :step="field.step"
-            class="w-full"
-            @update:model-value="setValue(field.key, $event ?? field.default)"
-          />
-          <USelect
-            v-else-if="field.type === 'single-select'"
-            :model-value="stringValue(field.key)"
-            :items="field.options"
-            value-key="value"
-            class="w-full"
-            @update:model-value="setValue(field.key, $event)"
-          />
-          <USelectMenu
-            v-else-if="field.type === 'multi-select'"
-            :model-value="stringArrayValue(field.key)"
-            :items="field.options"
-            value-key="value"
-            multiple
-            class="w-full"
-            @update:model-value="setValue(field.key, $event)"
-          />
-          <UTextarea
-            v-else-if="field.type === 'textarea'"
-            :model-value="stringValue(field.key)"
-            :placeholder="field.placeholder"
-            autoresize
-            :rows="3"
-            :maxrows="10"
-            class="w-full"
-            @update:model-value="setValue(field.key, $event)"
-          />
-          <div v-else-if="field.type === 'secret'" class="space-y-2">
-            <UInput
-              :model-value="secretValues[field.key]"
-              type="password"
-              autocomplete="new-password"
-              :placeholder="secretConfigured(field.key) && !secretDirty[field.key]
-                ? $t('admin.apis.routing.serviceControl.secretConfiguredPlaceholder')
-                : field.placeholder"
-              class="w-full font-mono"
-              @update:model-value="setSecret(field.key, $event)"
+        <div class="divide-y divide-default px-4 sm:px-5 lg:pe-6 lg:ps-0">
+          <UFormField
+            v-for="field in group.fields"
+            :key="field.key"
+            :name="field.key"
+            :label="field.label"
+            :description="field.description"
+            :required="field.required"
+            class="py-5 md:grid md:grid-cols-[minmax(11rem,16rem)_minmax(0,1fr)] md:items-start md:gap-6"
+            :ui="{ container: 'mt-2 min-w-0 md:mt-0' }"
+          >
+            <USwitch
+              v-if="field.type === 'boolean'"
+              :model-value="booleanValue(field.key)"
+              @update:model-value="setValue(field.key, $event)"
             />
-            <div class="flex flex-wrap items-center gap-2">
-              <UBadge
-                :color="secretConfigured(field.key) && !secretCleared[field.key]
-                  ? 'success'
-                  : 'neutral'"
-                variant="subtle"
-              >
-                {{ secretConfigured(field.key) && !secretCleared[field.key]
-                  ? $t('admin.apis.routing.serviceControl.secretConfigured')
-                  : $t('admin.apis.routing.serviceControl.secretNotConfigured') }}
-              </UBadge>
-              <UButton
-                v-if="secretConfigured(field.key) && !secretCleared[field.key]"
-                color="error"
-                variant="ghost"
-                size="xs"
-                type="button"
-                @click="clearSecret(field.key)"
-              >
-                {{ $t('admin.apis.routing.serviceControl.clearSecret') }}
-              </UButton>
-              <UButton
-                v-if="secretDirty[field.key]"
-                color="neutral"
-                variant="ghost"
-                size="xs"
-                type="button"
-                @click="keepSecret(field.key)"
-              >
-                {{ $t('admin.apis.routing.serviceControl.keepSecret') }}
-              </UButton>
+            <UInputNumber
+              v-else-if="field.type === 'number'"
+              :model-value="numberValue(field.key)"
+              :min="field.minimum"
+              :max="field.maximum"
+              :step="field.step"
+              class="w-full sm:max-w-xs"
+              @update:model-value="setValue(field.key, $event ?? field.default)"
+            />
+            <USelect
+              v-else-if="field.type === 'single-select'"
+              :model-value="stringValue(field.key)"
+              :items="field.options"
+              value-key="value"
+              class="w-full"
+              @update:model-value="setValue(field.key, $event)"
+            />
+            <USelectMenu
+              v-else-if="field.type === 'multi-select'"
+              :model-value="stringArrayValue(field.key)"
+              :items="field.options"
+              value-key="value"
+              multiple
+              class="w-full"
+              @update:model-value="setValue(field.key, $event)"
+            />
+            <UTextarea
+              v-else-if="field.type === 'textarea'"
+              :model-value="stringValue(field.key)"
+              :placeholder="field.placeholder"
+              autoresize
+              :rows="3"
+              :maxrows="10"
+              class="w-full"
+              @update:model-value="setValue(field.key, $event)"
+            />
+            <div v-else-if="field.type === 'secret'" class="space-y-2">
+              <div class="flex min-w-0 items-center gap-2">
+                <UInput
+                  :model-value="secretValues[field.key]"
+                  type="password"
+                  autocomplete="new-password"
+                  :placeholder="secretConfigured(field.key) && !secretDirty[field.key]
+                    ? $t('admin.apis.routing.serviceControl.secretConfiguredPlaceholder')
+                    : field.placeholder"
+                  class="min-w-0 flex-1 font-mono"
+                  @update:model-value="setSecret(field.key, $event)"
+                />
+                <UTooltip
+                  v-if="secretConfigured(field.key) && !secretCleared[field.key]"
+                  :text="$t('admin.apis.routing.serviceControl.clearSecret')"
+                >
+                  <UButton
+                    color="error"
+                    variant="ghost"
+                    size="sm"
+                    square
+                    type="button"
+                    icon="i-lucide-trash-2"
+                    :aria-label="$t('admin.apis.routing.serviceControl.clearSecret')"
+                    @click="clearSecret(field.key)"
+                  />
+                </UTooltip>
+                <UTooltip
+                  v-if="secretDirty[field.key]"
+                  :text="$t('admin.apis.routing.serviceControl.keepSecret')"
+                >
+                  <UButton
+                    color="neutral"
+                    variant="ghost"
+                    size="sm"
+                    square
+                    type="button"
+                    icon="i-lucide-undo-2"
+                    :aria-label="$t('admin.apis.routing.serviceControl.keepSecret')"
+                    @click="keepSecret(field.key)"
+                  />
+                </UTooltip>
+              </div>
+              <div class="flex items-center gap-2">
+                <UBadge
+                  :color="secretConfigured(field.key) && !secretCleared[field.key]
+                    ? 'success'
+                    : 'neutral'"
+                  variant="subtle"
+                  size="sm"
+                >
+                  {{ secretConfigured(field.key) && !secretCleared[field.key]
+                    ? $t('admin.apis.routing.serviceControl.secretConfigured')
+                    : $t('admin.apis.routing.serviceControl.secretNotConfigured') }}
+                </UBadge>
+              </div>
             </div>
-          </div>
-          <UInput
-            v-else
-            :model-value="stringValue(field.key)"
-            :placeholder="field.placeholder"
-            class="w-full"
-            @update:model-value="setValue(field.key, $event)"
-          />
-        </UFormField>
-      </div>
-    </UCard>
+            <UInput
+              v-else
+              :model-value="stringValue(field.key)"
+              :placeholder="field.placeholder"
+              class="w-full"
+              @update:model-value="setValue(field.key, $event)"
+            />
+          </UFormField>
+        </div>
+      </section>
+    </div>
 
-    <div class="flex justify-end">
+    <div class="sticky bottom-0 z-10 flex justify-end border-t border-default bg-default/95 py-4 backdrop-blur-sm">
       <UButton
         type="submit"
         icon="i-lucide-save"

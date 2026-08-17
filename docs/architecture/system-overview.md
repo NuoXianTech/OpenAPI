@@ -69,4 +69,4 @@ Administrator / API consumer
 
 ## 6. 官方 Service 当前能力
 
-`openapi-service` 当前提供一言、播放器和 IP 归属地模块。具体契约以 Service OpenAPI 和 `openapi-service/docs/apis/` 为准；不存在于 Service OpenAPI 的能力不属于当前产品契约。
+官方能力不在 Platform 文档中维护第二份易过期清单。当前可发现契约以 Service OpenAPI 为准，接口说明以 `openapi-service/docs/apis/` 为准；不存在于 Service OpenAPI 的源码、归档或实验实现不属于产品契约。

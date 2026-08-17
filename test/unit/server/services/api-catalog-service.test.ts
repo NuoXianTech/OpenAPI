@@ -132,7 +132,8 @@ beforeAll(async () => {
       ('00000000-0000-4000-8000-000000000033', '00000000-0000-4000-8000-000000000013', '00000000-0000-4000-8000-000000000021', 'Private', 'GET', '/v1/private', true, 'active'),
       ('00000000-0000-4000-8000-000000000034', '00000000-0000-4000-8000-000000000014', '00000000-0000-4000-8000-000000000021', 'Unpublished', 'GET', '/v1/unpublished', true, 'active'),
       ('00000000-0000-4000-8000-000000000035', '00000000-0000-4000-8000-000000000015', '00000000-0000-4000-8000-000000000021', 'Unknown', 'GET', '/v1/unknown', true, 'active'),
-      ('00000000-0000-4000-8000-000000000036', '00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000021', 'Abnormal', 'GET', '/v1/abnormal', true, 'active');
+      ('00000000-0000-4000-8000-000000000036', '00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000021', 'Abnormal', 'GET', '/v1/abnormal', true, 'active'),
+      ('00000000-0000-4000-8000-000000000038', '00000000-0000-4000-8000-000000000011', '00000000-0000-4000-8000-000000000021', 'Enabled action', 'POST', '/v1/enabled', true, 'active');
     INSERT INTO api_routes
       (id, api_version_id, upstream_service_id, name, method, path_pattern, upstream_path_template, is_statistics, state)
     VALUES
@@ -145,6 +146,7 @@ beforeAll(async () => {
         {"id":"00000000-0000-4000-8000-000000000033","productId":"00000000-0000-4000-8000-000000000003","productSlug":"private","productVisibility":"private","productLifecycle":"active","versionState":"published","name":"Private","method":"GET","pathPattern":"/v1/private","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
         {"id":"00000000-0000-4000-8000-000000000035","productId":"00000000-0000-4000-8000-000000000005","productSlug":"unknown","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Unknown","method":"GET","pathPattern":"/v1/unknown","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
         {"id":"00000000-0000-4000-8000-000000000036","productId":"00000000-0000-4000-8000-000000000006","productSlug":"abnormal","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Abnormal","method":"GET","pathPattern":"/v1/abnormal","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
+        {"id":"00000000-0000-4000-8000-000000000038","productId":"00000000-0000-4000-8000-000000000001","productSlug":"enabled","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Enabled action","method":"POST","pathPattern":"/v1/enabled","isApiKey":true,"isStatistics":true,"creditsCost":2,"catalogStatus":"automatic","isSupportRoute":false},
         {"id":"00000000-0000-4000-8000-000000000037","productId":"00000000-0000-4000-8000-000000000007","productSlug":"support","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Support","method":"GET","pathPattern":"/v1/player/assets/{asset}","isApiKey":false,"isStatistics":false,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":true}
       ]}'::jsonb
     );
@@ -154,6 +156,7 @@ beforeAll(async () => {
       ('00000000-0000-4000-8000-000000000031', 200, true),
       ('00000000-0000-4000-8000-000000000031', 404, true),
       ('00000000-0000-4000-8000-000000000031', 500, false),
+      ('00000000-0000-4000-8000-000000000038', 200, true),
       ('00000000-0000-4000-8000-000000000036', 500, true),
       ('00000000-0000-4000-8000-000000000036', 502, true);
   `)
@@ -178,6 +181,20 @@ describe('public API catalog', () => {
       Enabled: API_STATUS.normal,
       Unknown: API_STATUS.unknown
     })
+    expect(items.find(item => item.name === 'Enabled')?.endpoints).toEqual([
+      expect.objectContaining({
+        id: '00000000-0000-4000-8000-000000000031',
+        httpMethod: 'GET',
+        apiPath: '/v1/enabled'
+      }),
+      expect.objectContaining({
+        id: '00000000-0000-4000-8000-000000000038',
+        httpMethod: 'POST',
+        apiPath: '/v1/enabled',
+        isApiKey: true,
+        creditsCost: 2
+      })
+    ])
   })
 
   it('filters the live catalog by its resolved status', async () => {

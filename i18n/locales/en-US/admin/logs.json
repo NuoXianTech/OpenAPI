@@ -63,6 +63,8 @@
           "time": "Time",
           "type": "Type",
           "requestId": "Request ID",
+          "target": "Service Target",
+          "targetId": "Target ID",
           "user": "Caller",
           "key": "Key",
           "api": "API",

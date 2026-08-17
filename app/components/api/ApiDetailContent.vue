@@ -1,21 +1,19 @@
 <script setup lang="ts">
+import type { ApiCatalogEndpoint } from '#shared/types/api'
 import { isSafePublicUrl } from '#shared/utils/safe-url'
 
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
-import { formatCompactCount } from '~/utils/number-format'
 import {
-  areAllApiMethodsPaid,
-  getAggregateApiMethodCost,
-  getApiMethodCost
+  areAllEndpointsPaid,
+  getAggregateEndpointCost,
+  resolveApiStatusMeta
 } from '~/utils/api-presentation'
+import { formatCompactCount } from '~/utils/number-format'
 
 interface ApiDetailContentProps {
   description?: string
-  apiPath: string
   docUrl?: string
-  isApiKey: boolean
-  methods: string[]
-  methodCosts: Record<string, number>
+  endpoints: ApiCatalogEndpoint[]
   totalCalls: number
 }
 
@@ -24,174 +22,153 @@ const props = withDefaults(defineProps<ApiDetailContentProps>(), {
   docUrl: ''
 })
 
-const safeDocUrl = computed(() => isSafePublicUrl(props.docUrl, { allowRelative: true }) ? props.docUrl : '')
-
-const {
-  description,
-  apiPath,
-  isApiKey,
-  methods,
-  methodCosts,
-  totalCalls
-} = toRefs(props)
 const { t, locale } = useI18n()
 const { copyText } = useCopyFeedback()
 const requestUrl = useRequestURL()
-const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, methodCosts.value))
-const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, methodCosts.value))
-const endpointUrl = computed(() => {
-  try {
-    return new URL(apiPath.value, `${requestUrl.origin}/`).toString()
-  } catch {
-    return apiPath.value
+const safeDocUrl = computed(() => (
+  isSafePublicUrl(props.docUrl, { allowRelative: true }) ? props.docUrl : ''
+))
+const authenticationSummary = computed(() => {
+  if (props.endpoints.every(endpoint => endpoint.isApiKey)) {
+    return t('public.api.apiKey')
   }
+  if (props.endpoints.some(endpoint => endpoint.isApiKey)) {
+    return t('public.api.mixedAuthentication')
+  }
+  return t('public.api.noApiKey')
 })
 const pricingSummary = computed(() => {
-  if (aggregateCost.value > 0) {
-    return t('public.api.pricing.pointsPerCall', { count: aggregateCost.value })
+  const cost = getAggregateEndpointCost(props.endpoints)
+  if (cost === 0) return t('public.api.pricing.free')
+  if (cost > 0) {
+    return t('public.api.pricing.pointsPerCall', { count: cost })
   }
-  if (aggregateCost.value === -1) {
-    return isAllPaid.value
-      ? t('public.api.pricing.byMethod')
-      : t('public.api.pricing.partiallyPaid')
-  }
-  return t('public.api.pricing.free')
+  return areAllEndpointsPaid(props.endpoints)
+    ? t('public.api.pricing.byEndpoint')
+    : t('public.api.pricing.partiallyPaid')
 })
 
-function costFor(method: string): number {
-  return getApiMethodCost(method, methodCosts.value)
+function endpointUrl(endpoint: ApiCatalogEndpoint) {
+  try {
+    return new URL(endpoint.apiPath, `${requestUrl.origin}/`).toString()
+  } catch {
+    return endpoint.apiPath
+  }
 }
 
-async function copyEndpoint() {
-  await copyText(endpointUrl.value)
+function endpointStatus(endpoint: ApiCatalogEndpoint) {
+  return resolveApiStatusMeta(endpoint.status, key => t(key))
+}
+
+function endpointStatusClass(endpoint: ApiCatalogEndpoint) {
+  return `api-detail__endpoint-status--${endpointStatus(endpoint).color}`
+}
+
+async function copyEndpoint(endpoint: ApiCatalogEndpoint) {
+  await copyText(endpointUrl(endpoint))
 }
 </script>
 
 <template>
   <div class="api-detail">
-    <section class="api-detail__request">
-      <span class="api-detail__section-label">
-        <UIcon name="i-mdi-routes" class="size-3.5" />
-        {{ $t('public.api.endpoint') }}
-      </span>
-
-      <div class="api-detail__request-line">
-        <div
-          class="api-detail__request-methods"
-          :aria-label="$t('public.api.requestMethod')"
-        >
-          <ApiHttpMethodBadge
-            v-for="method in methods"
-            :key="`request-${method}`"
-            :method="method"
-          />
+    <section class="api-detail__section" aria-labelledby="api-detail-endpoints">
+      <header class="api-detail__section-heading">
+        <div>
+          <h3 id="api-detail-endpoints">
+            {{ $t('public.api.endpoint') }}
+          </h3>
+          <p>{{ $t('public.api.endpoints', { count: endpoints.length }) }}</p>
         </div>
-
-        <div class="api-detail__request-target">
-          <UTooltip
-            :text="endpointUrl"
-            :content="{ side: 'top' }"
-          >
-            <code>{{ apiPath }}</code>
-          </UTooltip>
-          <UTooltip
-            :text="$t('public.api.copyEndpoint')"
-            :content="{ side: 'top' }"
-          >
-            <UButton
-              color="neutral"
-              variant="ghost"
-              size="sm"
-              icon="i-mdi-content-copy"
-              class="api-detail__copy-button"
-              :aria-label="$t('public.api.copyEndpoint')"
-              @click="copyEndpoint"
-            >
-              {{ $t('common.actions.copy') }}
-            </UButton>
-          </UTooltip>
-        </div>
-      </div>
-    </section>
-
-    <div class="api-detail__facts">
-      <div class="api-detail__fact">
-        <span class="api-detail__fact-label">
-          <UIcon
-            :name="isApiKey ? 'i-mdi-key-outline' : 'i-mdi-lock-open-outline'"
-            class="size-3.5"
-          />
-          {{ $t('public.api.authentication') }}
-        </span>
-        <strong>{{ isApiKey ? $t('public.api.apiKey') : $t('public.api.noApiKey') }}</strong>
-      </div>
-
-      <UTooltip
-        :text="$t('public.api.callCountDescription', { count: totalCalls.toLocaleString(locale) })"
-        :content="{ side: 'top' }"
-      >
-        <div class="api-detail__fact">
-          <span class="api-detail__fact-label">
-            <UIcon name="i-mdi-pulse" class="size-3.5" />
-            {{ $t('public.api.callCount') }}
-          </span>
-          <strong>{{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}</strong>
-        </div>
-      </UTooltip>
-    </div>
-
-    <section class="api-detail__section">
-      <header class="api-detail__section-header">
-        <span class="api-detail__section-label">
-          <UIcon name="i-mdi-code-tags" class="size-3.5" />
-          {{ $t('public.api.methodPricing') }}
-        </span>
-        <span class="api-detail__pricing-summary">{{ pricingSummary }}</span>
       </header>
 
-      <div class="api-detail__method-list">
-        <div
-          v-for="method in methods"
-          :key="`pricing-${method}`"
-          class="api-detail__method-row"
+      <div class="api-detail__endpoint-list">
+        <article
+          v-for="endpoint in endpoints"
+          :key="endpoint.id"
+          class="api-detail__endpoint"
         >
-          <ApiHttpMethodBadge :method="method" />
-          <span class="api-detail__method-connector" aria-hidden="true" />
-          <span
-            class="api-detail__method-cost"
-            :class="{ 'is-paid': costFor(method) > 0 }"
-          >
-            {{ costFor(method) > 0
-              ? $t('public.api.pricing.pointsPerCall', { count: costFor(method) })
-              : $t('public.api.pricing.free') }}
-          </span>
-        </div>
+          <div class="api-detail__endpoint-request">
+            <ApiHttpMethodBadge :method="endpoint.httpMethod" />
+            <code :title="endpointUrl(endpoint)">
+              {{ endpointUrl(endpoint) }}
+            </code>
+            <UTooltip :text="$t('public.api.copyEndpoint')">
+              <UButton
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                icon="i-lucide-copy"
+                class="api-detail__copy-button"
+                :aria-label="$t('public.api.copyEndpoint')"
+                @click="copyEndpoint(endpoint)"
+              />
+            </UTooltip>
+          </div>
+
+          <div class="api-detail__endpoint-meta">
+            <span
+              class="api-detail__endpoint-status"
+              :class="endpointStatusClass(endpoint)"
+            >
+              <span aria-hidden="true" />
+              {{ endpointStatus(endpoint).label }}
+            </span>
+            <span>
+              <UIcon
+                :name="endpoint.isApiKey ? 'i-lucide-key-round' : 'i-lucide-lock-open'"
+                class="size-3.5"
+                aria-hidden="true"
+              />
+              {{ endpoint.isApiKey ? $t('public.api.apiKey') : $t('public.api.noApiKey') }}
+            </span>
+            <span>
+              <UIcon name="i-lucide-circle-dollar-sign" class="size-3.5" aria-hidden="true" />
+              {{ endpoint.creditsCost > 0
+                ? $t('public.api.pricing.pointsPerCall', { count: endpoint.creditsCost })
+                : $t('public.api.pricing.free') }}
+            </span>
+          </div>
+        </article>
       </div>
     </section>
 
-    <section
-      v-if="description"
-      class="api-detail__section api-detail__description-section"
-    >
-      <span class="api-detail__section-label">
-        <UIcon name="i-mdi-text-box-outline" class="size-3.5" />
-        {{ $t('public.api.descriptionLabel') }}
-      </span>
-      <p class="api-detail__description">
-        {{ description }}
-      </p>
+    <dl class="api-detail__facts">
+      <div>
+        <dt>{{ $t('public.api.endpointCount') }}</dt>
+        <dd>{{ endpoints.length }}</dd>
+      </div>
+      <div>
+        <dt>{{ $t('public.api.authentication') }}</dt>
+        <dd>{{ authenticationSummary }}</dd>
+      </div>
+      <div>
+        <dt>{{ $t('public.api.pricing.label') }}</dt>
+        <dd>{{ pricingSummary }}</dd>
+      </div>
+      <UTooltip
+        :text="$t('public.api.totalCallsDescription', { count: totalCalls.toLocaleString(locale) })"
+      >
+        <div>
+          <dt>{{ $t('public.api.callCount') }}</dt>
+          <dd>{{ $t('public.api.times', { count: formatCompactCount(totalCalls, locale) }) }}</dd>
+        </div>
+      </UTooltip>
+    </dl>
+
+    <section v-if="description" class="api-detail__description">
+      <h3>{{ $t('public.api.descriptionLabel') }}</h3>
+      <p>{{ description }}</p>
     </section>
 
-    <footer
-      v-if="safeDocUrl"
-      class="api-detail__footer"
-    >
+    <footer v-if="safeDocUrl" class="api-detail__footer">
       <UButton
         :to="safeDocUrl"
         target="_blank"
         rel="noopener noreferrer"
+        color="neutral"
+        variant="outline"
         size="md"
-        trailing-icon="i-mdi-arrow-top-right"
+        trailing-icon="i-lucide-external-link"
         class="api-detail__doc-button"
       >
         {{ $t('public.api.openDocumentation') }}
@@ -205,64 +182,62 @@ async function copyEndpoint() {
   background: var(--ui-bg-elevated);
 }
 
-.api-detail__request {
-  display: grid;
-  gap: 0.625rem;
-  padding: 1.25rem 1.5rem;
+.api-detail__section {
+  padding: 1.25rem 1.5rem 1.5rem;
 }
 
-.api-detail__section-label,
-.api-detail__fact-label {
+.api-detail__section-heading {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  color: var(--ui-text-muted);
-  font-size: 0.6875rem;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.875rem;
+}
+
+.api-detail__section-heading h3,
+.api-detail__description h3 {
+  margin: 0;
+  color: var(--ui-text-highlighted);
+  font-size: 0.8125rem;
   font-weight: 650;
-  letter-spacing: 0.035em;
-  line-height: 1rem;
-  text-transform: uppercase;
+  line-height: 1.25rem;
 }
 
-.api-detail__section-label :deep(svg),
-.api-detail__fact-label :deep(svg) {
-  color: var(--ui-text-dimmed);
+.api-detail__section-heading p {
+  margin: 0.125rem 0 0;
+  color: var(--ui-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
 }
 
-.api-detail__request-line {
-  display: flex;
+.api-detail__endpoint-list {
+  overflow: hidden;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+}
+
+.api-detail__endpoint {
   min-width: 0;
+  padding: 0.875rem 1rem;
+}
+
+.api-detail__endpoint + .api-detail__endpoint {
+  border-top: 1px solid var(--ui-border);
+}
+
+.api-detail__endpoint-request {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
-  border-radius: 0.625rem;
-  padding: 0.75rem;
-  background: var(--ui-bg-inverted);
-  color: var(--ui-text-inverted);
 }
 
-.api-detail__request-methods {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-}
-
-.api-detail__request-target {
-  display: flex;
+.api-detail__endpoint-request code {
   min-width: 0;
-  flex: 1;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.api-detail__request-target code {
-  min-width: 0;
-  flex: 1;
   overflow: hidden;
-  color: inherit;
+  color: var(--ui-text-toned);
   font-family: var(--font-code);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 520;
   line-height: 1.5rem;
   text-overflow: ellipsis;
@@ -271,119 +246,98 @@ async function copyEndpoint() {
 
 .api-detail__copy-button {
   flex: 0 0 auto;
-  background: color-mix(in oklab, var(--ui-text-inverted) 9%, transparent);
-  color: var(--ui-text-inverted);
+  color: var(--ui-text-muted);
 }
 
-.api-detail__copy-button:hover {
-  background: color-mix(in oklab, var(--ui-text-inverted) 15%, transparent);
+.api-detail__endpoint-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  padding-left: 3.7rem;
+  color: var(--ui-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1rem;
 }
 
-.api-detail__copy-button:focus-visible {
-  outline: 1px solid color-mix(in oklab, var(--ui-text-inverted) 48%, transparent);
-  outline-offset: 2px;
-  box-shadow: none;
+.api-detail__endpoint-meta > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
 }
+
+.api-detail__endpoint-meta :deep(svg) {
+  color: var(--ui-text-dimmed);
+}
+
+.api-detail__endpoint-status {
+  --endpoint-status-color: var(--ui-text-muted);
+}
+
+.api-detail__endpoint-status > span {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: var(--endpoint-status-color);
+}
+
+.api-detail__endpoint-status--success { --endpoint-status-color: var(--ui-success); }
+.api-detail__endpoint-status--info { --endpoint-status-color: var(--ui-info); }
+.api-detail__endpoint-status--warning { --endpoint-status-color: var(--ui-warning); }
+.api-detail__endpoint-status--error { --endpoint-status-color: var(--ui-error); }
+.api-detail__endpoint-status--neutral { --endpoint-status-color: var(--ui-text-muted); }
 
 .api-detail__facts {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
   border-block: 1px solid var(--ui-border);
-  background: color-mix(in oklab, var(--ui-bg-muted) 42%, transparent);
 }
 
-.api-detail__fact {
+.api-detail__facts > div {
   display: grid;
   min-width: 0;
-  gap: 0.35rem;
-  padding: 1rem 1.5rem;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
 }
 
-.api-detail__fact + .api-detail__fact {
+.api-detail__facts > div + div {
   border-left: 1px solid var(--ui-border);
 }
 
-.api-detail__fact strong {
+.api-detail__facts dt {
+  color: var(--ui-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.api-detail__facts dd {
+  min-width: 0;
+  margin: 0;
   overflow: hidden;
   color: var(--ui-text-highlighted);
-  font-family: var(--font-display);
-  font-size: 0.9375rem;
-  font-weight: 680;
+  font-size: 0.8125rem;
+  font-weight: 620;
   font-variant-numeric: tabular-nums;
-  line-height: 1.35;
+  line-height: 1.25rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.api-detail__section {
-  display: grid;
-  gap: 0.875rem;
+.api-detail__description {
   padding: 1.25rem 1.5rem;
 }
 
-.api-detail__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.api-detail__pricing-summary {
-  flex: 0 0 auto;
-  color: var(--ui-text-muted);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1rem;
-}
-
-.api-detail__method-list {
-  overflow: hidden;
-  border-block: 1px solid var(--ui-border);
-}
-
-.api-detail__method-row {
-  display: grid;
-  grid-template-columns: auto minmax(1.5rem, 1fr) auto;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 3rem;
-  padding-block: 0.625rem;
-}
-
-.api-detail__method-row + .api-detail__method-row {
-  border-top: 1px solid color-mix(in oklab, var(--ui-border) 72%, transparent);
-}
-
-.api-detail__method-connector {
-  height: 0;
-  border-top: 1px dashed color-mix(in oklab, var(--ui-border-accented) 72%, transparent);
-}
-
-.api-detail__method-cost {
-  color: var(--ui-text-toned);
-  font-family: var(--font-code);
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  line-height: 1rem;
-  white-space: nowrap;
-}
-
-.api-detail__method-cost.is-paid {
-  color: var(--ui-text-highlighted);
-}
-
-.api-detail__description-section {
-  border-top: 1px solid var(--ui-border);
-}
-
-.api-detail__description {
-  margin: 0;
+.api-detail__description p {
+  margin: 0.5rem 0 0;
   color: var(--ui-text-toned);
   font-size: 0.875rem;
   line-height: 1.75;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .api-detail__footer {
@@ -391,48 +345,40 @@ async function copyEndpoint() {
   justify-content: flex-end;
   border-top: 1px solid var(--ui-border);
   padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom));
-  background: color-mix(in oklab, var(--ui-bg-muted) 42%, transparent);
 }
 
 @media (max-width: 639px) {
-  .api-detail__request,
-  .api-detail__section {
-    padding: 1rem;
+  .api-detail__section,
+  .api-detail__description {
+    padding-inline: 1rem;
   }
 
-  .api-detail__request-line {
-    display: grid;
-    gap: 0.75rem;
+  .api-detail__endpoint {
+    padding-inline: 0.75rem;
   }
 
-  .api-detail__request-methods {
-    width: 100%;
+  .api-detail__endpoint-request {
+    gap: 0.5rem;
   }
 
-  .api-detail__request-target {
-    width: 100%;
-    border-top: 1px solid color-mix(in oklab, var(--ui-text-inverted) 18%, transparent);
-    padding-top: 0.75rem;
+  .api-detail__endpoint-meta {
+    padding-left: 0;
   }
 
-  .api-detail__copy-button {
-    padding-inline: 0.5rem;
+  .api-detail__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .api-detail__fact {
-    padding: 0.875rem 1rem;
+  .api-detail__facts > div:nth-child(odd) {
+    border-left: 0;
   }
 
-  .api-detail__section-header {
-    align-items: flex-start;
-  }
-
-  .api-detail__method-row {
-    gap: 0.625rem;
+  .api-detail__facts > div:nth-child(n + 3) {
+    border-top: 1px solid var(--ui-border);
   }
 
   .api-detail__footer {
-    padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+    padding-inline: 1rem;
   }
 
   .api-detail__doc-button {

@@ -78,7 +78,7 @@ export const adminDashboardService = {
         .limit(distributionLimit),
       db.select({
         id: apiCalls.id,
-        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
+        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.routeName})`,
         apiPath: apiCalls.path,
         method: apiCalls.method,
         statusCode: apiCalls.statusCode,

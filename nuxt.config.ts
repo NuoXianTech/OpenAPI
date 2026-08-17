@@ -54,10 +54,6 @@ export default defineNuxtConfig({
       trustedCidrs: '',
       forwardedHops: 1
     },
-    hosts: {
-      console: '',
-      gateway: ''
-    },
     redis: {
       url: '',
       keyPrefix: 'openapi:',

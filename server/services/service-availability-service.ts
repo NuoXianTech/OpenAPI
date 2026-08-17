@@ -1,15 +1,22 @@
 import { createHash } from 'node:crypto'
 import type {
   ServiceAvailability,
-  ServiceDescription
+  ServiceDescription,
+  ServiceTargetAvailability
 } from '#shared/types/service-control'
 import { buildServiceControlUrl } from '~~/server/utils/service-control-client'
 
 const AVAILABILITY_PROBE_TIMEOUT_MS = 1_500
 
 interface AvailabilityTarget {
+  id: string
   baseUrl: string
   enabled: boolean
+}
+
+interface ServiceAvailabilitySnapshot {
+  overall: ServiceAvailability
+  targets: Map<string, ServiceTargetAvailability>
 }
 
 const pendingAvailabilityRequests = new Map<string, Promise<boolean>>()
@@ -83,22 +90,30 @@ export async function resolveServiceAvailability(
   description: ServiceDescription | null,
   targets: readonly AvailabilityTarget[],
   serviceToken: string | null
-): Promise<ServiceAvailability> {
+): Promise<ServiceAvailabilitySnapshot> {
+  const targetStatuses = new Map<string, ServiceTargetAvailability>(
+    targets.map(target => [target.id, 'unknown'])
+  )
   const enabledTargets = targets.filter(target => target.enabled)
   if (!description || !serviceToken || enabledTargets.length === 0) {
-    return 'unknown'
+    return { overall: 'unknown', targets: targetStatuses }
   }
 
-  const availability = await Promise.all(enabledTargets.map(target =>
-    targetAvailability(
+  const availability = await Promise.all(enabledTargets.map(async target => ({
+    id: target.id,
+    online: await targetAvailability(
       target.baseUrl,
       description.readiness,
       description.configuration.state,
       serviceToken
     )
-  ))
-  const readyTargets = availability.filter(Boolean).length
-  if (readyTargets === enabledTargets.length) return 'online'
-  if (readyTargets > 0) return 'degraded'
-  return 'offline'
+  })))
+  for (const target of availability) {
+    targetStatuses.set(target.id, target.online ? 'online' : 'offline')
+  }
+  const readyTargets = availability.filter(target => target.online).length
+  const overall = readyTargets === enabledTargets.length
+    ? 'online'
+    : readyTargets > 0 ? 'degraded' : 'offline'
+  return { overall, targets: targetStatuses }
 }

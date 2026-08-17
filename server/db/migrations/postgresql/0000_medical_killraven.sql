@@ -93,6 +93,8 @@ CREATE TABLE "api_calls" (
 	"request_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"route_id" uuid NOT NULL,
 	"target_name" varchar(160),
+	"upstream_target_id" uuid,
+	"upstream_target_url" text,
 	"api_key_id" integer,
 	"api_key_name" varchar(100),
 	"user_id" integer,

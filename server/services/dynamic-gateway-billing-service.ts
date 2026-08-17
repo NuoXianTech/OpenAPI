@@ -23,8 +23,10 @@ export function initializeGatewayStatistics(
   ensureRequestId(event)
   context.apiStatsTarget = {
     routeId: match.route.id,
-    targetName: match.route.name,
-    apiPath: match.route.pathPattern
+    routeName: match.route.name,
+    apiPath: match.route.pathPattern,
+    upstreamTargetId: null,
+    upstreamTargetUrl: null
   }
   context.apiStatsTracked = {
     startedAt: Date.now(),

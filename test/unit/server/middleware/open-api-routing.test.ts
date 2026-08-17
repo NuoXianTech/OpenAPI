@@ -50,10 +50,15 @@ describe('dynamic API routing middleware', () => {
     await expect(handleOpenApiRouting(event)).resolves.toBe(response)
   })
 
-  it('lets Nuxt continue when no published Route matches', async () => {
+  it('returns the public API error contract when no published Route matches', async () => {
     const event = createMockEvent('/v1/not-found')
 
-    await expect(handleOpenApiRouting(event)).resolves.toBeUndefined()
+    await expect(handleOpenApiRouting(event)).resolves.toMatchObject({
+      code: 'API_NOT_FOUND',
+      message: '接口不存在',
+      data: null
+    })
+    expect(event.node.res.statusCode).toBe(404)
     expect(dynamicGatewayMocks.tryHandle).toHaveBeenCalledOnce()
   })
 

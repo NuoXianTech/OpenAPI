@@ -115,6 +115,7 @@ export interface ServiceTargetControlState {
   id: string
   baseUrl: string
   enabled: boolean
+  availability: ServiceTargetAvailability
   configurationRevision: number | null
   configurationHash: string | null
   configurationStatus: 'unknown' | 'synced' | 'drifted' | 'error'
@@ -124,6 +125,7 @@ export interface ServiceTargetControlState {
 }
 
 export type ServiceAvailability = 'online' | 'degraded' | 'offline' | 'unknown'
+export type ServiceTargetAvailability = 'online' | 'offline' | 'unknown'
 
 export interface ServiceConnectionView {
   upstreamServiceId: string

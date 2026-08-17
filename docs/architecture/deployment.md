@@ -51,7 +51,6 @@ Platform 的 Nuxt 构建资源消耗不会影响 Service 更新窗口。
 
 - `NUXT_AUTH_SECRET`
 - `NUXT_API_KEY_SECRET`
-- `NUXT_HOSTS_CONSOLE` 与 `NUXT_HOSTS_GATEWAY`
 - PostgreSQL 或 PGlite 配置
 - Redis 配置
 - 监听地址、可信代理和邮件/OAuth 等系统变量
@@ -151,10 +150,16 @@ Platform 与 Service 的回滚互不要求同步。
 
 不同业务 Service 或不同契约版本应建立独立 Upstream，不能放入同一个 Target 集合。
 
+Upstream 表示一组可互换的部署副本，不表示单个进程，也不按 Endpoint
+拆分。两个都提供 Lanzou 且契约、配置完全相同的实例应作为同一 Upstream
+的两个 Target；只提供另一套业务能力或使用不同契约的 Service 应创建另一
+Upstream。一个公开 Route 只绑定一个 Upstream，副本轮换和故障转移都在该
+Upstream 的 Target 集合内完成，避免再引入跨 Upstream 的第二层调度。
+
 ## 11. Secret 与网络
 
 - Platform 和 Service 使用独立随机运行时密钥。
-- Console Host 与 Gateway Host 必须互斥，即使它们转发到同一个 Nitro 进程。
+- Console、站内 API 和动态 Gateway 使用同一个 Platform 入口，按保留路径划分职责；公网域名限制由反向代理或云平台入口负责。
 - `NUXT_API_KEY_SECRET` 在 `0.1.0` 不支持在线轮换，已有数据库不能直接替换该值。
 - Service Token 按 Internal Upstream 保存，不使用全局 Platform Token。
 - 单机或 Compose 部署使用私有网络。

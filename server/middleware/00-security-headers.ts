@@ -1,9 +1,5 @@
 import { getRequestURL, setResponseHeaders } from 'h3'
-import {
-  isGatewayRequest,
-  resolveApplicationHostRole
-} from '~~/server/utils/application-hosts'
-import { getAppEventContext } from '~~/server/utils/event-context'
+import { isReservedPlatformPath } from '~~/server/utils/route-pattern'
 import {
   getSecurityHeaders,
   isHtmlDocumentRoute
@@ -13,11 +9,9 @@ const isProduction = process.env.NODE_ENV === 'production'
 
 export default defineEventHandler((event) => {
   const requestUrl = getRequestURL(event)
-  const role = getAppEventContext(event).applicationHostRole
-    ?? resolveApplicationHostRole(requestUrl.hostname)
   setResponseHeaders(event, getSecurityHeaders({
     isProduction,
-    isHtmlRoute: !isGatewayRequest(role, requestUrl.pathname)
+    isHtmlRoute: isReservedPlatformPath(requestUrl.pathname)
       && isHtmlDocumentRoute(requestUrl.pathname)
   }))
 })

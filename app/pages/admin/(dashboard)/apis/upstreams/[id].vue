@@ -60,6 +60,45 @@ function targetStatusColor(status: string) {
   return 'neutral' as const
 }
 
+function targetAvailabilityColor(
+  target: ServiceConfigurationView['targets'][number]
+) {
+  if (!target.enabled) return 'neutral' as const
+  return serviceAvailabilityColor(target.availability)
+}
+
+function targetAvailabilityLabel(
+  target: ServiceConfigurationView['targets'][number]
+) {
+  const status = target.enabled ? target.availability : 'disabled'
+  return t(`admin.apis.routing.serviceControl.targetAvailability.${status}`)
+}
+
+function desiredRevisionLabel(revision: number) {
+  return revision > 0
+    ? t('admin.apis.routing.serviceControl.revisionLabel', { revision })
+    : t('admin.apis.routing.serviceControl.configurationNotSaved')
+}
+
+function targetRevisionLabel(revision: number | null) {
+  return revision !== null && revision > 0
+    ? t('admin.apis.routing.serviceControl.revisionLabel', { revision })
+    : null
+}
+
+function targetStatusLabel(target: ServiceConfigurationView['targets'][number]) {
+  if (
+    target.configurationStatus === 'unknown'
+    && resource.data.value?.connection.configurationRevision === 0
+    && target.configurationRevision === 0
+  ) {
+    return t('admin.apis.routing.serviceControl.targetStatuses.initial')
+  }
+  return t(
+    `admin.apis.routing.serviceControl.targetStatuses.${target.configurationStatus}`
+  )
+}
+
 async function discover() {
   discovering.value = true
   try {
@@ -105,6 +144,7 @@ async function updateServiceToken() {
       description: t('admin.apis.routing.serviceControl.rediscoverAfterToken'),
       color: 'success'
     })
+    await resource.refresh()
   } catch (error: unknown) {
     toast.add({
       title: parseFetchError(
@@ -319,7 +359,9 @@ async function synchronizeConfiguration() {
               {{ $t('admin.apis.routing.serviceControl.desiredRevision') }}
             </p>
             <p class="mt-1 font-mono text-sm text-highlighted">
-              {{ resource.data.value.connection.configurationRevision }}
+              {{ desiredRevisionLabel(
+                resource.data.value.connection.configurationRevision
+              ) }}
             </p>
           </div>
         </div>
@@ -426,14 +468,23 @@ async function synchronizeConfiguration() {
                 </p>
               </div>
               <div class="flex items-center gap-2">
-                <span class="font-mono text-xs text-muted">
-                  r{{ target.configurationRevision ?? '—' }}
+                <UBadge
+                  :color="targetAvailabilityColor(target)"
+                  variant="subtle"
+                >
+                  {{ targetAvailabilityLabel(target) }}
+                </UBadge>
+                <span
+                  v-if="targetRevisionLabel(target.configurationRevision)"
+                  class="font-mono text-xs text-muted"
+                >
+                  {{ targetRevisionLabel(target.configurationRevision) }}
                 </span>
                 <UBadge
                   :color="targetStatusColor(target.configurationStatus)"
                   variant="subtle"
                 >
-                  {{ $t(`admin.apis.routing.serviceControl.targetStatuses.${target.configurationStatus}`) }}
+                  {{ targetStatusLabel(target) }}
                 </UBadge>
               </div>
             </div>

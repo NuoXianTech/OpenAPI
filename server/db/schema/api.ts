@@ -54,14 +54,16 @@ export const apiKeys = pgTable('api_keys', {
 // ------------------------------------------------------------------
 // API Calls（Route 调用日志 · 审计不可变）
 //
-// routeId / userId / apiKeyId 都是快照，不设外键。Route、用户或密钥删除后，
-// 调用记录仍然保留；targetName、apiKeyName 和 path 用于展示历史上下文。
+// routeId / userId / apiKeyId / upstreamTargetId 都是快照，不设外键。相关
+// 对象删除后调用记录仍然保留；名称和 URL 快照用于展示历史上下文。
 // ------------------------------------------------------------------
 export const apiCalls = pgTable('api_calls', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   requestId: uuid('request_id').defaultRandom().notNull(),
   routeId: uuid('route_id').notNull(),
-  targetName: varchar('target_name', { length: 160 }),
+  routeName: varchar('target_name', { length: 160 }),
+  upstreamTargetId: uuid('upstream_target_id'),
+  upstreamTargetUrl: text('upstream_target_url'),
   apiKeyId: integer('api_key_id'),
   apiKeyName: varchar('api_key_name', { length: 100 }),
   userId: integer('user_id'),

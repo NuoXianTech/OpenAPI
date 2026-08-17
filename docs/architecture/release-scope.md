@@ -46,11 +46,11 @@ Platform 不运行具体业务 Handler。Service 不管理 Platform 用户、公
 4. 可以由 Platform 发现，并从接口目录一键生成 Route 与 Routing Revision。
 5. 已验证鉴权、限流、积分、调用日志、超时、取消和回滚语义。
 
-当前官方 Service 提供一言、播放器和 IP 归属地模块。不存在于 Service OpenAPI 的源码归档、实验实现或未发布模块不属于产品契约。
+官方 Endpoint 清单以 Service 的确定性 OpenAPI 和 `openapi-service/docs/apis/` 为唯一来源，Platform 不复制维护模块清单。源码归档、实验实现或未进入 OpenAPI 的模块不属于产品契约。
 
 ## 5. 兼容性规则
 
-- 同一 Internal Upstream 的全部 Target 必须返回相同 Service ID、OpenAPI 指纹、配置 Schema 指纹和控制协议版本。
+- 同一 Internal Upstream 的全部 Target 必须返回相同 Service ID、Service 名称、OpenAPI 指纹、配置 Schema 指纹和控制协议版本。
 - 控制协议可以增加可选字段；破坏性协议变化必须发布新的协议版本。
 - OpenAPI 指纹变化必须由管理员审查，不能静默改变现有公开 Route。
 - Routing Revision 一经创建不可修改；日常运行时变更由接口目录自动应用，完整配置不变时复用当前 Revision，实际变化时才发布新 Revision。回滚通过重新激活历史 Revision 完成。

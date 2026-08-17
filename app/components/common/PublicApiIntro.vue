@@ -4,7 +4,7 @@ import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import { formatCompactCount } from '~/utils/number-format'
 import {
-  formatExchangeRateResponseExample,
+  formatYiyanResponseExample,
   PUBLIC_API_EXAMPLE_TIMESTAMP
 } from '~/utils/public-api-example'
 
@@ -127,7 +127,7 @@ const uptimeDuration = computed(() => {
   }).format(days)
   return duration
 })
-const samplePath = '/v1/exchange-rate?currency=CNY&encoding=json'
+const samplePath = '/v1/yiyan?type=a&id=a1'
 const sampleUrl = computed(() => `${requestUrl.origin}${samplePath}`)
 const isRunning = ref(false)
 const hasResponse = ref(true)
@@ -138,8 +138,8 @@ const primaryAction = computed(() => user.value
   ? { label: t('public.home.userDashboard'), to: USER_OVERVIEW_PATH, icon: 'i-mdi-account-circle-outline' }
   : { label: t('public.navigation.getStarted'), to: '/register', icon: 'i-mdi-key-outline' })
 
-const responsePreview = computed(() => formatExchangeRateResponseExample(
-  t('public.home.sampleResponseMessage'),
+const responsePreview = computed(() => formatYiyanResponseExample(
+  t('public.home.standardResponseMessage'),
   responseTimestamp.value
 ))
 
@@ -316,7 +316,7 @@ async function copyRequest(): Promise<void> {
             <span class="api-request-demo__status" aria-hidden="true" />
             <span>{{ $t('public.home.simulatedExample') }}</span>
           </div>
-          <span class="api-request-demo__endpoint">exchange-rate</span>
+          <span class="api-request-demo__endpoint">yiyan</span>
         </div>
 
         <div class="api-request-demo__request">

@@ -25,11 +25,8 @@ const { apis = [], categoryMap = {} } = defineProps<ApiCardGridProps>()
         :category-name="api.categoryId == null ? '' : categoryMap[api.categoryId]?.name"
         :short-desc="api.shortDesc"
         :description="api.description"
-        :http-method="api.httpMethod"
-        :api-path="api.apiPath"
         :doc-url="api.docUrl"
-        :is-api-key="api.isApiKey"
-        :method-costs="api.methodCosts"
+        :endpoints="api.endpoints"
         :total-calls="api.totalCalls"
       />
     </TransitionGroup>

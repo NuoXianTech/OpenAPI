@@ -4,6 +4,7 @@ import type {
   ServiceConfigurationDefinition,
   ServiceConfigurationValue,
   ServiceConfigurationView,
+  ServiceTargetAvailability,
   ServiceConnectionView,
   ServiceTargetControlState,
   StoredServiceConfigurationValues
@@ -85,12 +86,14 @@ function publicDesiredValues(
 }
 
 export function serviceTargetControlState(
-  target: typeof upstreamTargets.$inferSelect
+  target: typeof upstreamTargets.$inferSelect,
+  availability: ServiceTargetAvailability
 ): ServiceTargetControlState {
   return {
     id: target.id,
     baseUrl: target.baseUrl,
     enabled: target.enabled,
+    availability,
     configurationRevision: target.configurationRevision,
     configurationHash: target.configurationHash,
     configurationStatus: target.configurationStatus as
@@ -150,24 +153,28 @@ export async function buildServiceControlView(
         ))
         .limit(1))
     : null
+  const availability = options.checkAvailability === true
+    && context.service.status === 'active'
+    ? await resolveServiceAvailability(
+        context.connection.serviceDescription,
+        context.targets,
+        await upstreamServiceTokenService.get(context.service.id)
+      )
+    : { overall: 'unknown' as const, targets: new Map() }
   return {
     connection: connectionView(
       context.connection,
-      options.checkAvailability === true
-      && context.service.status === 'active'
-        ? await resolveServiceAvailability(
-            context.connection.serviceDescription,
-            context.targets,
-            await upstreamServiceTokenService.get(context.service.id)
-          )
-        : 'unknown'
+      availability.overall
     ),
     definition: context.connection.configurationSchema ?? null,
     values: publicDesiredValues(
       context.connection.configurationSchema ?? null,
       context.connection.configurationValues
     ),
-    targets: context.targets.map(serviceTargetControlState),
+    targets: context.targets.map(target => serviceTargetControlState(
+      target,
+      availability.targets.get(target.id) ?? 'unknown'
+    )),
     endpoints: document ? readStoredServiceEndpoints(document.summary) : []
   }
 }

@@ -14,7 +14,7 @@ export function formatStandardResponseExample(
   ].join('\n')
 }
 
-export function formatExchangeRateResponseExample(
+export function formatYiyanResponseExample(
   message: string,
   timestamp = PUBLIC_API_EXAMPLE_TIMESTAMP
 ): string {
@@ -23,11 +23,13 @@ export function formatExchangeRateResponseExample(
     '  "code": "OK",',
     `  "message": ${JSON.stringify(message)},`,
     '  "data": {',
-    '    "base_code": "CNY",',
-    '    "rates": [',
-    '      { "currency": "USD", "rate": 0.1392 },',
-    '      { "currency": "JPY", "rate": 20.61 }',
-    '    ]',
+    '    "id": "a1",',
+    '    "yiyan": "与众不同的生活方式很累人呢，因为找不到借口。",',
+    '    "type": "a",',
+    '    "from": "幸运星",',
+    '    "from_who": null,',
+    '    "created_at": "1468605909",',
+    '    "length": 22',
     '  },',
     `  "timestamp": ${timestamp}`,
     '}'

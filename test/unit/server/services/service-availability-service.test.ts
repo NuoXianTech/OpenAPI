@@ -31,14 +31,14 @@ describe('service availability service', () => {
     vi.stubGlobal('fetch', request)
 
     await expect(resolveServiceAvailability(null, [
-      { baseUrl: 'http://127.0.0.1:8100', enabled: true }
-    ], 'service-token')).resolves.toBe('unknown')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8100', enabled: true }
+    ], 'service-token')).resolves.toMatchObject({ overall: 'unknown' })
     await expect(resolveServiceAvailability(description, [
-      { baseUrl: 'http://127.0.0.1:8100', enabled: false }
-    ], 'service-token')).resolves.toBe('unknown')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8100', enabled: false }
+    ], 'service-token')).resolves.toMatchObject({ overall: 'unknown' })
     await expect(resolveServiceAvailability(description, [
-      { baseUrl: 'http://127.0.0.1:8100', enabled: true }
-    ], null)).resolves.toBe('unknown')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8100', enabled: true }
+    ], null)).resolves.toMatchObject({ overall: 'unknown' })
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -54,17 +54,23 @@ describe('service availability service', () => {
     vi.stubGlobal('fetch', request)
 
     await expect(resolveServiceAvailability(description, [
-      { baseUrl: 'http://127.0.0.1:8101', enabled: true },
-      { baseUrl: 'http://127.0.0.1:8102', enabled: true }
-    ], 'service-token')).resolves.toBe('online')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8101', enabled: true },
+      { id: 'target-2', baseUrl: 'http://127.0.0.1:8102', enabled: true }
+    ], 'service-token')).resolves.toMatchObject({ overall: 'online' })
     await expect(resolveServiceAvailability(description, [
-      { baseUrl: 'http://127.0.0.1:8201', enabled: true },
-      { baseUrl: 'http://127.0.0.1:8202', enabled: true }
-    ], 'service-token')).resolves.toBe('degraded')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8201', enabled: true },
+      { id: 'target-2', baseUrl: 'http://127.0.0.1:8202', enabled: true }
+    ], 'service-token')).resolves.toEqual({
+      overall: 'degraded',
+      targets: new Map([
+        ['target-1', 'online'],
+        ['target-2', 'offline']
+      ])
+    })
     await expect(resolveServiceAvailability(description, [
-      { baseUrl: 'http://127.0.0.1:8301', enabled: true },
-      { baseUrl: 'http://127.0.0.1:8302', enabled: true }
-    ], 'service-token')).resolves.toBe('offline')
+      { id: 'target-1', baseUrl: 'http://127.0.0.1:8301', enabled: true },
+      { id: 'target-2', baseUrl: 'http://127.0.0.1:8302', enabled: true }
+    ], 'service-token')).resolves.toMatchObject({ overall: 'offline' })
   })
 
   it('deduplicates concurrent Target readiness requests', async () => {
@@ -74,6 +80,7 @@ describe('service availability service', () => {
     })
     vi.stubGlobal('fetch', request)
     const targets = [{
+      id: 'target-1',
       baseUrl: 'http://127.0.0.1:8400/service',
       enabled: true
     }]
@@ -90,7 +97,16 @@ describe('service availability service', () => {
     )
 
     await expect(Promise.all([first, second]))
-      .resolves.toEqual(['online', 'online'])
+      .resolves.toEqual([
+        {
+          overall: 'online',
+          targets: new Map([['target-1', 'online']])
+        },
+        {
+          overall: 'online',
+          targets: new Map([['target-1', 'online']])
+        }
+      ])
 
     expect(request).toHaveBeenCalledTimes(2)
     expect(request.mock.calls[0]?.[0].toString())
@@ -110,8 +126,9 @@ describe('service availability service', () => {
     vi.stubGlobal('fetch', request)
 
     await expect(resolveServiceAvailability(description, [{
+      id: 'target-1',
       baseUrl: 'http://127.0.0.1:8500',
       enabled: true
-    }], 'wrong-service-token')).resolves.toBe('offline')
+    }], 'wrong-service-token')).resolves.toMatchObject({ overall: 'offline' })
   })
 })

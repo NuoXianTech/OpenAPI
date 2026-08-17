@@ -36,7 +36,7 @@ Service OpenAPI 变化不会在未经确认时暴露新 Endpoint，也不会静�
 
 ## 3. 业务配置
 
-模块开关、音乐 Cookie、IP 数据库密钥、Crypto 算法等字段在 Service 的 `src/configuration/definition.ts` 声明。Platform 只根据通用字段类型生成表单：
+模块开关、音乐 Cookie、IP 数据库密钥、Crypto 算法等字段在各自的 `src/modules/<module>/configuration.ts` 声明，并由 `src/modules/index.ts` 显式组合。Platform 只根据通用字段类型生成表单：
 
 - boolean
 - text / textarea

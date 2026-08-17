@@ -56,7 +56,7 @@ Authorization: Service <token>
 }
 ```
 
-同一 Internal Upstream 的全部 Target 必须返回相同 `serviceId`、OpenAPI 指纹、配置 Schema 指纹和控制端点。
+同一 Internal Upstream 的全部 Target 必须返回相同 `serviceId`、Service 名称、OpenAPI 指纹、配置 Schema 指纹和控制端点。
 
 Internal Target 只有在发现校验通过后才有资格进入新的 Routing Revision。Platform 已保存期望业务配置时，Target 还必须确认相同的配置 Revision 和哈希；未验证、漂移或同步失败的 Target 不接收新增流量。
 
@@ -70,6 +70,8 @@ X-OpenAPI-SHA256: <document-sha256>
 ```
 
 Platform 重新计算内容哈希并与 Service 描述和响应头比对。发现成功后保存文档和 Endpoint 摘要，并将业务 Endpoint 展示在接口目录；发现动作本身不会创建公开 Route，但会重新应用管理员此前已经明确发布、因 Internal Target 尚未验证而等待的运行配置。
+
+OpenAPI `info.version` 表示业务 API 契约版本，不使用 Service 镜像或软件发布版本。软件版本继续由 Service Description 的 `version` 字段报告，因此未改变契约的兼容版本可以同时存在于同一 Upstream 中完成滚动更新。
 
 OpenAPI 指纹变化表示 Service 契约变化。新增 Endpoint 显示为“可发布”，缺失 Endpoint 会提示管理员处理；现有公开 Route 不会被静默改写。管理员确认发布、停用或治理变更后，Platform 自动生成新的 Routing Revision。
 
@@ -143,7 +145,7 @@ Secret 只能返回：
 - 未声明字段和非法值返回验证错误。
 - Service 先持久化加密快照，再返回成功 ACK。
 
-Platform 向同一 Upstream 的全部启用 Target 下发相同 Revision 和快照，分别记录结果。部分失败保留期望状态，并允许之后重新同步。
+Platform 向同一 Upstream 的全部启用 Target 下发相同 Revision 和快照，分别记录结果。部分失败时立即生成只包含已同步 Target 的新 Routing Revision，失败或漂移 Target 不再接收新增流量；期望状态会保留，管理员可以在故障恢复后重新同步。如果某个 Upstream 的全部 Target 失败，Platform 不发布一个没有可用 Target 的定义，而是在后续 Revision 中沿用该 Upstream 最后验证通过的 Target 快照，因此不会阻断其他 Upstream 的独立更新。没有历史有效快照的新 Upstream 必须等待至少一个 Target 验证成功。
 
 ## 6. 公开请求转发
 
@@ -211,7 +213,7 @@ Platform 只使用该受信响应 Header 关联调用日志，不以它替代 HT
 
 ## 10. 追踪与日志
 
-Platform 为每次公开请求生成或验证 Request ID，并贯穿调用明细、积分流水和 Service 日志。Gateway 错误码以及 Service 返回的 `X-OpenAPI-Error-Code` 会写入调用明细。支持标准 Trace Context 时转发 `traceparent` 与 `tracestate`。
+Platform 为每次公开请求生成或验证 Request ID，并贯穿调用明细、积分流水和 Service 日志。调用明细记录最终实际请求的 Target ID 与 Base URL；发生安全回退时记录最后处理该请求的 Target。Gateway 错误码以及 Service 返回的 `X-OpenAPI-Error-Code` 会写入调用明细。支持标准 Trace Context 时转发 `traceparent` 与 `tracestate`。
 
 日志不得包含：
 

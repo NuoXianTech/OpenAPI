@@ -90,6 +90,7 @@ let poorUserId = 0
 let environmentId = ''
 let officialVersionId = ''
 let officialUpstreamId = ''
+let officialTargetId = ''
 let initialRevisionId = ''
 
 const routeIds = {
@@ -184,6 +185,7 @@ beforeAll(async () => {
   const versionId = product.versions[0]!.id
   officialVersionId = versionId
   officialUpstreamId = upstream.id
+  officialTargetId = upstream.targets[0]!.id
   await platformServiceControlService.discover(upstream.id)
 
   routeIds.yiyan = await createRoute({
@@ -606,6 +608,15 @@ describe('Platform to Node API Service acceptance', () => {
       targets: [{ baseUrl: serviceBaseURL, weight: 1 }]
     })
     await platformServiceControlService.discover(upstream.id)
+    await createRoute({
+      apiVersionId: officialVersionId,
+      upstreamServiceId: upstream.id,
+      name: 'Partial configuration sync',
+      pathPattern: '/v1/partial-configuration-sync',
+      upstreamPathTemplate: '/v1/yiyan',
+      isStatistics: false
+    })
+    await routingRevisionService.publish(environmentId, null)
     const offlinePort = await reservePort()
     await databaseClient!.query(
       `insert into upstream_targets (upstream_service_id, base_url, weight)
@@ -636,6 +647,24 @@ describe('Platform to Node API Service acceptance', () => {
     expect(result.targets.map(target => target.configurationStatus)).toEqual(
       expect.arrayContaining(['synced', 'error'])
     )
+
+    const active = await queryOne<{ config_payload: {
+      upstreams: Array<{
+        id: string
+        targets: Array<{ baseUrl: string }>
+      }>
+    } }>(
+      `select revision.config_payload
+       from environments environment
+       join routing_revisions revision
+         on revision.id = environment.active_revision_id
+       where environment.id = $1`,
+      [environmentId]
+    )
+    expect(
+      active.config_payload.upstreams.find(item => item.id === upstream.id)
+        ?.targets.map(target => target.baseUrl)
+    ).toEqual([`${serviceBaseURL}/`])
   })
 
   it('does not let an older configuration sync overwrite newer target state', async () => {
@@ -1226,8 +1255,15 @@ describe('Platform to Node API Service acceptance', () => {
       credits_cost: number
       ip: string | null
       query_string: string | null
+      upstream_target_id: string | null
+      upstream_target_url: string | null
     }>(
-      'select route_id, status_code, credits_cost, ip, query_string from api_calls where route_id = $1 order by id desc limit 1',
+      `select route_id, status_code, credits_cost, ip, query_string,
+              upstream_target_id, upstream_target_url
+       from api_calls
+       where route_id = $1
+       order by id desc
+       limit 1`,
       [routeIds.yiyan]
     )
     const stats = await queryOne<{
@@ -1253,7 +1289,9 @@ describe('Platform to Node API Service acceptance', () => {
       route_id: routeIds.yiyan,
       status_code: 200,
       credits_cost: 2,
-      ip: '127.0.0.1'
+      ip: '127.0.0.1',
+      upstream_target_id: officialTargetId,
+      upstream_target_url: `${serviceBaseURL}/`
     })
     expect(call.query_string).not.toContain(paidApiKey)
     expect(stats.total_count).toBeGreaterThan(0)

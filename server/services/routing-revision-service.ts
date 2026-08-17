@@ -16,7 +16,6 @@ import { invalidatePublicApiCatalogCache } from '~~/server/services/api-catalog-
 import { invalidateRoutingRuntimeCache } from '~~/server/services/routing-runtime-service'
 import type {
   RoutingRevisionPayload,
-  RoutingRevisionRoute,
   RoutingRevisionUpstream
 } from '~~/server/types/routing-revision'
 import { canonicalJson } from '~~/server/utils/canonical-json'
@@ -24,6 +23,7 @@ import { getSqlState } from '~~/server/utils/database-error'
 import { findRoutingRouteConflict, type RoutingConflictScope } from '~~/server/utils/routing-conflict'
 import { firstRow } from '~~/server/utils/row'
 import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
+import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
 type RoutingRuntimeConfiguration = Pick<
   RoutingRevisionPayload,
@@ -80,34 +80,9 @@ export const routingRevisionService = {
         }
 
         const routeRows = await tx.select({
-          id: apiRoutes.id,
-          productId: apiProducts.id,
-          productSlug: apiProducts.slug,
-          productVisibility: apiProducts.visibility,
-          productLifecycle: apiProducts.lifecycle,
-          versionId: apiVersions.id,
-          version: apiVersions.version,
-          versionState: apiVersions.state,
-          name: apiRoutes.name,
-          hosts: apiRoutes.hosts,
-          method: apiRoutes.method,
-          pathPattern: apiRoutes.pathPattern,
-          normalizedShape: apiRoutes.normalizedShape,
-          upstreamServiceId: apiRoutes.upstreamServiceId,
-          upstreamPathTemplate: apiRoutes.upstreamPathTemplate,
-          isApiKey: apiRoutes.isApiKey,
-          isStatistics: apiRoutes.isStatistics,
-          creditsCost: apiRoutes.creditsCost,
-          rateLimitPerSecond: apiRoutes.rateLimitPerSecond,
-          rateLimitPerMinute: apiRoutes.rateLimitPerMinute,
-          rateLimitPerHour: apiRoutes.rateLimitPerHour,
-          rateLimitPerDay: apiRoutes.rateLimitPerDay,
-          timeoutMs: apiRoutes.timeoutMs,
-          maxRequestBytes: apiRoutes.maxRequestBytes,
-          maxResponseBytes: apiRoutes.maxResponseBytes,
-          catalogStatus: apiRoutes.catalogStatus,
-          sensitiveQueryParameters: apiRoutes.sensitiveQueryParameters,
-          isSupportRoute: apiRoutes.isSupportRoute,
+          route: apiRoutes,
+          product: apiProducts,
+          version: apiVersions,
           upstreamKind: upstreamServices.kind,
           loadBalancing: upstreamServices.loadBalancing
         }).from(apiRoutes)
@@ -125,36 +100,7 @@ export const routingRevisionService = {
             isNull(upstreamServices.deletedAt)
           ))
 
-        const routes: RoutingRevisionRoute[] = routeRows.map(route => ({
-          id: route.id,
-          productId: route.productId,
-          productSlug: route.productSlug,
-          productVisibility: route.productVisibility as RoutingRevisionRoute['productVisibility'],
-          productLifecycle: route.productLifecycle as RoutingRevisionRoute['productLifecycle'],
-          versionId: route.versionId,
-          version: route.version,
-          versionState: route.versionState as RoutingRevisionRoute['versionState'],
-          name: route.name,
-          hosts: [...route.hosts].sort(),
-          method: route.method,
-          pathPattern: route.pathPattern,
-          normalizedShape: route.normalizedShape,
-          upstreamServiceId: route.upstreamServiceId,
-          upstreamPathTemplate: route.upstreamPathTemplate,
-          isApiKey: route.isApiKey,
-          isStatistics: route.isStatistics,
-          creditsCost: route.creditsCost,
-          rateLimitPerSecond: route.rateLimitPerSecond,
-          rateLimitPerMinute: route.rateLimitPerMinute,
-          rateLimitPerHour: route.rateLimitPerHour,
-          rateLimitPerDay: route.rateLimitPerDay,
-          timeoutMs: route.timeoutMs,
-          maxRequestBytes: route.maxRequestBytes,
-          maxResponseBytes: route.maxResponseBytes,
-          catalogStatus: route.catalogStatus as RoutingRevisionRoute['catalogStatus'],
-          sensitiveQueryParameters: [...route.sensitiveQueryParameters].sort(),
-          isSupportRoute: route.isSupportRoute
-        })).sort((left, right) => (
+        const routes = routeRows.map(toRoutingRevisionRoute).sort((left, right) => (
           left.pathPattern.localeCompare(right.pathPattern)
           || left.method.localeCompare(right.method)
           || left.id.localeCompare(right.id)
@@ -181,11 +127,18 @@ export const routingRevisionService = {
               routes: row.payload.routes
             }))
         ])
+        const activePayload = activeRevisionRows.find(row => (
+          row.environmentId === environment.id
+        ))?.payload
+        const activeUpstreams = new Map(
+          activePayload?.upstreams.map(upstream => [upstream.id, upstream])
+          ?? []
+        )
 
-        const upstreamDefinitions = new Map(routeRows.map(route => [route.upstreamServiceId, {
-          id: route.upstreamServiceId,
-          kind: route.upstreamKind as RoutingRevisionUpstream['kind'],
-          loadBalancing: route.loadBalancing as RoutingRevisionUpstream['loadBalancing']
+        const upstreamDefinitions = new Map(routeRows.map(row => [row.route.upstreamServiceId, {
+          id: row.route.upstreamServiceId,
+          kind: row.upstreamKind as RoutingRevisionUpstream['kind'],
+          loadBalancing: row.loadBalancing as RoutingRevisionUpstream['loadBalancing']
         }]))
         const upstreamIds = Array.from(upstreamDefinitions.keys()).sort()
         const targetRows = upstreamIds.length > 0
@@ -210,12 +163,20 @@ export const routingRevisionService = {
 
         const upstreams: RoutingRevisionUpstream[] = upstreamIds.map((id) => {
           const definition = upstreamDefinitions.get(id)!
-          const targets = targetRows
+          let targets = targetRows
             .filter(target => target.upstreamServiceId === id)
             .filter(target => definition.kind !== 'internal'
               || isInternalTargetReady(target, connections.get(id) ?? null))
             .map(target => ({ id: target.id, baseUrl: target.baseUrl, weight: target.weight }))
             .sort((left, right) => left.id.localeCompare(right.id))
+          if (definition.kind === 'internal' && targets.length === 0) {
+            const activeUpstream = activeUpstreams.get(id)
+            if (activeUpstream?.kind === 'internal') {
+              // Keep this Upstream's last verified Targets so an unrelated
+              // Service can publish without disrupting existing traffic.
+              targets = activeUpstream.targets.map(target => ({ ...target }))
+            }
+          }
           if (targets.length === 0) {
             throw createApplicationError({
               statusCode: 409,

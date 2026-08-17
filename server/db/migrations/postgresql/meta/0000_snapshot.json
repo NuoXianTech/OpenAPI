@@ -1,5 +1,5 @@
 {
-  "id": "2609397d-f301-4f8c-97ee-54b12e7cfe96",
+  "id": "4e7239a7-c9fe-45af-8ba4-ef00b2b4d57b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -852,6 +852,18 @@
         "target_name": {
           "name": "target_name",
           "type": "varchar(160)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "upstream_target_id": {
+          "name": "upstream_target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "upstream_target_url": {
+          "name": "upstream_target_url",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },

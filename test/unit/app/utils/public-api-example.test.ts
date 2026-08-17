@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  formatExchangeRateResponseExample,
-  formatStandardResponseExample
+  formatStandardResponseExample,
+  formatYiyanResponseExample
 } from '@/utils/public-api-example'
 
 describe('public API examples', () => {
@@ -14,10 +14,11 @@ describe('public API examples', () => {
     expect(response).not.toContain('rates')
   })
 
-  it('keeps endpoint data in the exchange-rate response example', () => {
-    const response = formatExchangeRateResponseExample('获取汇率成功', 123)
+  it('keeps endpoint data in the yiyan response example', () => {
+    const response = formatYiyanResponseExample('请求成功', 123)
 
-    expect(response).toContain('"base_code": "CNY"')
-    expect(response).toContain('"rates"')
+    expect(response).toContain('"id": "a1"')
+    expect(response).toContain('"yiyan": "与众不同的生活方式很累人呢，因为找不到借口。"')
+    expect(response).toContain('"from": "幸运星"')
   })
 })

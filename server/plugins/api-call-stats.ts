@@ -95,7 +95,9 @@ export async function recordApiCall(event: H3Event, tracked: ApiStatsTracked) {
 
     const callInput = {
       routeId: target.routeId,
-      targetName: target.targetName,
+      routeName: target.routeName,
+      upstreamTargetId: target.upstreamTargetId,
+      upstreamTargetUrl: target.upstreamTargetUrl,
       apiKeyId,
       apiKeyName,
       userId: apiKeyUserId,

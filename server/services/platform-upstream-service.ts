@@ -19,6 +19,7 @@ import {
   upstreamServiceTokenService
 } from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
+import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
 
 const BLOCKED_EXTERNAL_IPS = [
   '0.0.0.0/8',
@@ -143,16 +144,9 @@ async function findTargetBinding(id: string) {
 
 async function assertCanDisableLastTarget(
   serviceId: string,
+  serviceKind: CreateUpstreamInput['kind'],
   excludingTargetId?: string
 ): Promise<void> {
-  const enabledTargets = firstRow(await db.select({ value: count() })
-    .from(upstreamTargets)
-    .where(and(
-      eq(upstreamTargets.upstreamServiceId, serviceId),
-      eq(upstreamTargets.enabled, true),
-      excludingTargetId ? ne(upstreamTargets.id, excludingTargetId) : undefined
-    )))
-  if (Number(enabledTargets?.value ?? 0) > 0) return
   const activeRoutes = firstRow(await db.select({ value: count() })
     .from(apiRoutes)
     .where(and(
@@ -160,13 +154,32 @@ async function assertCanDisableLastTarget(
       eq(apiRoutes.state, 'active'),
       isNull(apiRoutes.deletedAt)
     )))
-  if (Number(activeRoutes?.value ?? 0) > 0) {
-    throw createApplicationError({
-      statusCode: 409,
-      message: 'an active upstream route requires at least one enabled target',
-      data: { code: 'UPSTREAM_LAST_TARGET_REQUIRED' }
-    })
+  if (Number(activeRoutes?.value ?? 0) === 0) return
+
+  const enabledTargets = await db.select()
+    .from(upstreamTargets)
+    .where(and(
+      eq(upstreamTargets.upstreamServiceId, serviceId),
+      eq(upstreamTargets.enabled, true),
+      excludingTargetId ? ne(upstreamTargets.id, excludingTargetId) : undefined
+    ))
+  if (serviceKind === 'external' && enabledTargets.length > 0) return
+  if (serviceKind === 'internal') {
+    const connection = firstRow(await db.select()
+      .from(upstreamServiceConnections)
+      .where(eq(upstreamServiceConnections.upstreamServiceId, serviceId))
+      .limit(1)) ?? null
+    if (enabledTargets.some(target => isInternalTargetReady(
+      target,
+      connection
+    ))) return
   }
+
+  throw createApplicationError({
+    statusCode: 409,
+    message: 'an active upstream route requires at least one ready target',
+    data: { code: 'UPSTREAM_LAST_TARGET_REQUIRED' }
+  })
 }
 
 export const platformUpstreamService = {
@@ -209,13 +222,13 @@ export const platformUpstreamService = {
       const availability = options.checkAvailability !== true
         || upstream.status !== 'active'
         ? 'unknown'
-        : await resolveServiceAvailability(
+        : (await resolveServiceAvailability(
             connectionRecord?.serviceDescription ?? null,
             upstream.targets,
             connectionRecord
               ? await upstreamServiceTokenService.get(upstream.id)
               : null
-          )
+          )).overall
       return {
         ...upstream,
         connection: publicConnection(connectionRecord, availability)
@@ -374,7 +387,11 @@ export const platformUpstreamService = {
       throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
     }
     if (binding.target.enabled && input.enabled === false) {
-      await assertCanDisableLastTarget(binding.service.id, binding.target.id)
+      await assertCanDisableLastTarget(
+        binding.service.id,
+        binding.service.kind as CreateUpstreamInput['kind'],
+        binding.target.id
+      )
     }
     const baseUrl = input.baseUrl === undefined
       ? binding.target.baseUrl
@@ -441,10 +458,14 @@ export const platformUpstreamService = {
       })
     }
     if (binding.target.enabled) {
-      await assertCanDisableLastTarget(binding.service.id, binding.target.id)
+      await assertCanDisableLastTarget(
+        binding.service.id,
+        binding.service.kind as CreateUpstreamInput['kind'],
+        binding.target.id
+      )
     }
     await db.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
-    return { target: binding.target, workspaceId: binding.service.workspaceId }
+    return binding.target
   },
 
   async updateServiceToken(id: string, serviceToken: string) {

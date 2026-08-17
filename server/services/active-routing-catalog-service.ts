@@ -21,7 +21,8 @@ export interface ActiveCatalogRoute {
  * Route behavior comes exclusively from active immutable revisions. Product
  * copy and category metadata stay editable and are joined by stable product id.
  * A route deployed to multiple environments is represented by the newest
- * active publication, matching the historical one-card-per-route catalog.
+ * active publication. The public catalog groups the resulting routes by
+ * product after this environment-level deduplication.
  */
 async function listActiveCatalogRoutes(): Promise<ActiveCatalogRoute[]> {
   const revisionRows = await db.select({

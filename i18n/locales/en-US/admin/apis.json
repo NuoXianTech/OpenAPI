@@ -423,6 +423,8 @@
             "unknown": "Unknown"
           },
           "desiredRevision": "Desired configuration Revision",
+          "revisionLabel": "Revision {revision}",
+          "configurationNotSaved": "Not saved",
           "replaceToken": "Replace Service Token",
           "replaceTokenDescription": "This version cannot accept old and new Tokens together. Coordinate the Service and Platform change in a maintenance window, then rediscover and synchronize configuration.",
           "updateToken": "Update Token",
@@ -450,8 +452,15 @@
           "clearSecret": "Clear",
           "keepSecret": "Keep current value",
           "targetsTitle": "Target configuration state",
-          "targetsDescription": "Business traffic uses weighting or round robin; configuration updates are always sent to every enabled Target.",
+          "targetsDescription": "Runtime status checks readiness and Service Token authentication. Configuration status shows whether the Target has applied the Platform's desired configuration.",
+          "targetAvailability": {
+            "online": "Runtime online",
+            "offline": "Runtime offline",
+            "unknown": "Runtime unknown",
+            "disabled": "Disabled"
+          },
           "targetStatuses": {
+            "initial": "Using initial configuration",
             "unknown": "Pending",
             "synced": "Synchronized",
             "drifted": "Drifted",

@@ -8,6 +8,7 @@ import { routingRevisionService } from '~~/server/services/routing-revision-serv
 import type { RoutingRevisionRoute } from '~~/server/types/routing-revision'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { parseRoutePathPattern } from '~~/server/utils/route-pattern'
+import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 export type RouteBinding = Awaited<
@@ -36,39 +37,6 @@ export interface PublicationApplication {
   } | null
 }
 
-function routeSnapshot(binding: RouteBinding): RoutingRevisionRoute {
-  return {
-    id: binding.route.id,
-    productId: binding.product.id,
-    productSlug: binding.product.slug,
-    productVisibility: binding.product.visibility as RoutingRevisionRoute['productVisibility'],
-    productLifecycle: binding.product.lifecycle as RoutingRevisionRoute['productLifecycle'],
-    versionId: binding.version.id,
-    version: binding.version.version,
-    versionState: binding.version.state as RoutingRevisionRoute['versionState'],
-    name: binding.route.name,
-    hosts: [...binding.route.hosts].sort(),
-    method: binding.route.method,
-    pathPattern: binding.route.pathPattern,
-    normalizedShape: binding.route.normalizedShape,
-    upstreamServiceId: binding.route.upstreamServiceId,
-    upstreamPathTemplate: binding.route.upstreamPathTemplate,
-    isApiKey: binding.route.isApiKey,
-    isStatistics: binding.route.isStatistics,
-    creditsCost: binding.route.creditsCost,
-    rateLimitPerSecond: binding.route.rateLimitPerSecond,
-    rateLimitPerMinute: binding.route.rateLimitPerMinute,
-    rateLimitPerHour: binding.route.rateLimitPerHour,
-    rateLimitPerDay: binding.route.rateLimitPerDay,
-    timeoutMs: binding.route.timeoutMs,
-    maxRequestBytes: binding.route.maxRequestBytes,
-    maxResponseBytes: binding.route.maxResponseBytes,
-    catalogStatus: binding.route.catalogStatus as RoutingRevisionRoute['catalogStatus'],
-    sensitiveQueryParameters: binding.route.sensitiveQueryParameters,
-    isSupportRoute: binding.route.isSupportRoute
-  }
-}
-
 export function endpointPublicationStatus(
   binding: RouteBinding | null,
   liveRoutes: ReadonlyMap<string, RoutingRevisionRoute>
@@ -79,7 +47,7 @@ export function endpointPublicationStatus(
   if (
     desiredActive
     && live
-    && canonicalJson(routeSnapshot(binding)) === canonicalJson(live)
+    && canonicalJson(toRoutingRevisionRoute(binding)) === canonicalJson(live)
   ) return 'live'
   if (desiredActive) return 'pending'
   if (live) return 'retiring'

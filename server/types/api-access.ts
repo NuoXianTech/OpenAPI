@@ -29,8 +29,10 @@ export type GateOutcome
 
 interface ApiStatsTarget {
   routeId: string
-  targetName: string
+  routeName: string
   apiPath: string
+  upstreamTargetId: string | null
+  upstreamTargetUrl: string | null
 }
 
 export interface ApiStatsTracked {
@@ -79,7 +81,6 @@ interface ApiFailureContext {
 }
 
 export interface AppEventContext {
-  applicationHostRole?: 'console' | 'gateway' | 'combined' | 'unknown'
   apiStatsTarget?: ApiStatsTarget
   apiStatsTracked?: ApiStatsTracked
   apiKey?: ApiKeyContext | null

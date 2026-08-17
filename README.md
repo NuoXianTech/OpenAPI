@@ -81,8 +81,6 @@ The development server uses PGlite when no database mode is configured. On first
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | Required | JWT, verification token, one-time token, and OAuth state signing secret. |
 | `NUXT_API_KEY_SECRET` | Required | Generates API keys and domain-separates encryption for API keys, redemption codes, Upstream tokens, and Service business secrets. |
-| `NUXT_HOSTS_CONSOLE` | Production required | Hosts allowed to serve the Console and internal application APIs. |
-| `NUXT_HOSTS_GATEWAY` | Production required | Hosts dedicated to public Gateway Routes; must be separate from Console hosts. |
 | `DATABASE_URL` | Production option | PostgreSQL connection URL. |
 | `DATABASE_DRIVER=pglite` | Production option | Explicitly selects PGlite when PostgreSQL is not used. |
 | `PGLITE_DATA_DIR` | PGlite production | Persistent directory; only one Node process may use it. |
@@ -91,6 +89,8 @@ The development server uses PGlite when no database mode is configured. On first
 | `NITRO_HOST`, `NITRO_PORT` | Deployment | Node server listen address and port. |
 
 Production must define either `DATABASE_URL` or `DATABASE_DRIVER=pglite`; it never silently falls back to a new local database. See [runtime configuration](docs/operations/runtime-config.md) for the complete behavior and security boundaries.
+
+Platform exposes the Console, internal APIs, and public Gateway Routes from one address. Platform-owned path prefixes such as `/api`, `/admin`, and `/user` are reserved; every other path is resolved by the dynamic Gateway. No hostname-role environment variables are required.
 
 API Service addresses and tokens are stored per Internal Upstream instead of in a global Platform environment variable. Business settings declared by a Service—such as source switches and credentials, database license keys, or feature allowlists—are rendered generically at `/admin/apis/upstreams/:id` and synchronized to every Target.
 

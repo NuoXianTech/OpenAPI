@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "ignore": [
-    "dist/**",
     "server/error.ts",
     "app/components/admin/AdminCallLogDetailModal.vue",
     "app/components/api-key/ApiKeyResetModal.vue",

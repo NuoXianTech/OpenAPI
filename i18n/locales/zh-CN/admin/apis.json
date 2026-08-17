@@ -423,6 +423,8 @@
             "unknown": "未知"
           },
           "desiredRevision": "期望配置 Revision",
+          "revisionLabel": "Revision {revision}",
+          "configurationNotSaved": "尚未保存",
           "replaceToken": "更换 Service Token",
           "replaceTokenDescription": "当前版本不支持新旧 Token 并行。请在维护窗口协调更换 Service 与 Platform 的 Token，然后重新发现并同步配置。",
           "updateToken": "更新 Token",
@@ -450,8 +452,15 @@
           "clearSecret": "清除",
           "keepSecret": "保留原值",
           "targetsTitle": "Target 配置状态",
-          "targetsDescription": "业务请求按权重或轮询选择 Target；配置更新则始终发送给全部启用 Target。",
+          "targetsDescription": "运行状态实时检查就绪探针与 Service Token；配置状态表示该 Target 是否已应用 Platform 的期望配置。",
+          "targetAvailability": {
+            "online": "运行正常",
+            "offline": "运行异常",
+            "unknown": "运行未知",
+            "disabled": "已停用"
+          },
           "targetStatuses": {
+            "initial": "使用初始配置",
             "unknown": "待同步",
             "synced": "已同步",
             "drifted": "配置漂移",

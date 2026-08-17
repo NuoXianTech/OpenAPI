@@ -333,6 +333,28 @@ async function copyText(value: string): Promise<void> {
                   {{ props.row.requestId || '-' }}
                 </dd>
               </div>
+              <div
+                v-if="props.row.upstreamTargetUrl || props.row.upstreamTargetId"
+                class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-2.5"
+              >
+                <dt class="text-muted">
+                  {{ $t('admin.logs.call.detail.target') }}
+                </dt>
+                <dd class="min-w-0 text-end font-mono break-all">
+                  {{ props.row.upstreamTargetUrl || '-' }}
+                </dd>
+              </div>
+              <div
+                v-if="props.row.upstreamTargetId"
+                class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-2.5"
+              >
+                <dt class="text-muted">
+                  {{ $t('admin.logs.call.detail.targetId') }}
+                </dt>
+                <dd class="min-w-0 text-end font-mono break-all">
+                  {{ props.row.upstreamTargetId }}
+                </dd>
+              </div>
               <div class="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-2.5">
                 <dt class="text-muted">
                   {{ $t('admin.logs.call.detail.type') }}

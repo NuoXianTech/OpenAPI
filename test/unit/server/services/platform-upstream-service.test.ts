@@ -79,6 +79,29 @@ async function createConfiguredTarget() {
   return configured
 }
 
+async function createActiveRoute(upstreamServiceId: string) {
+  const [product] = await database.insert(schema.apiProducts).values({
+    workspaceId,
+    slug: 'rolling-update-test',
+    name: 'Rolling Update Test'
+  }).returning()
+  const [version] = await database.insert(schema.apiVersions).values({
+    productId: product!.id,
+    version: 'v1',
+    state: 'published'
+  }).returning()
+  await database.insert(schema.apiRoutes).values({
+    apiVersionId: version!.id,
+    name: 'Rolling update route',
+    method: 'GET',
+    pathPattern: '/v1/rolling-update',
+    normalizedShape: '/v1/rolling-update',
+    upstreamServiceId,
+    upstreamPathTemplate: '/v1/rolling-update',
+    state: 'active'
+  })
+}
+
 describe('Platform upstream target state', () => {
   it('resets Service state when a Target address changes', async () => {
     const target = await createConfiguredTarget()
@@ -113,5 +136,29 @@ describe('Platform upstream target state', () => {
       lastConfigurationSyncAt: null,
       lastError: null
     })
+  })
+
+  it('keeps a ready Target online while another enabled Target is unverified', async () => {
+    const readyTarget = await createConfiguredTarget()
+    await platformUpstreamService.createTarget(
+      readyTarget.upstreamServiceId,
+      {
+        baseUrl: 'http://127.0.0.1:8081',
+        weight: 1,
+        enabled: true
+      }
+    )
+    await createActiveRoute(readyTarget.upstreamServiceId)
+
+    await expect(platformUpstreamService.updateTarget(readyTarget.id, {
+      enabled: false
+    })).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: 'UPSTREAM_LAST_TARGET_REQUIRED' }
+    })
+
+    expect(await database.query.upstreamTargets.findFirst({
+      where: eq(schema.upstreamTargets.id, readyTarget.id)
+    })).toMatchObject({ enabled: true })
   })
 })

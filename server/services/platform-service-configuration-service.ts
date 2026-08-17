@@ -190,8 +190,21 @@ async function pushConfiguration(
     status,
     revision,
     configurationHash,
-    targets: refreshed.targets.map(serviceTargetControlState)
+    targets: refreshed.targets.map(target => (
+      serviceTargetControlState(target, 'unknown')
+    ))
   }
+}
+
+async function publishRoutableConfigurationTargets(
+  workspaceId: string,
+  result: ServiceConfigurationSyncResult
+): Promise<void> {
+  // A partial sync still changes the safe Target set: synchronized Targets can
+  // serve the new configuration while failed or drifted Targets must be
+  // removed from the next immutable runtime snapshot.
+  if (result.status === 'failed') return
+  await routingRevisionService.publishWorkspace(workspaceId, null)
 }
 
 function reconstructConfiguration(input: {
@@ -363,12 +376,10 @@ export async function updatePlatformServiceConfiguration(
     values,
     configurationHash
   )
-  if (result.status === 'synced') {
-    await routingRevisionService.publishWorkspace(
-      context.service.workspaceId,
-      null
-    )
-  }
+  await publishRoutableConfigurationTargets(
+    context.service.workspaceId,
+    result
+  )
   return result
 }
 
@@ -413,11 +424,9 @@ export async function synchronizePlatformServiceConfiguration(
     values,
     configurationHash
   )
-  if (result.status === 'synced') {
-    await routingRevisionService.publishWorkspace(
-      context.service.workspaceId,
-      null
-    )
-  }
+  await publishRoutableConfigurationTargets(
+    context.service.workspaceId,
+    result
+  )
   return result
 }

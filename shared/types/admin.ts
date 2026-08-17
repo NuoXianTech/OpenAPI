@@ -77,6 +77,8 @@ export interface AdminLogRow {
   routeId: string
   apiName: string | null
   apiPath: string
+  upstreamTargetId: string | null
+  upstreamTargetUrl: string | null
   categoryId: number | null
   categoryName: string | null
   method: string

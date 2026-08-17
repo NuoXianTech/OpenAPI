@@ -53,7 +53,7 @@ export const userApiCallService = {
       conditions.push(or(
         ilike(apiRoutes.name, pattern),
         ilike(apiProducts.name, pattern),
-        ilike(apiCalls.targetName, pattern),
+        ilike(apiCalls.routeName, pattern),
         ilike(apiCalls.path, pattern),
         ilike(apiCalls.method, pattern),
         ilike(apiCalls.ip, pattern),
@@ -70,7 +70,7 @@ export const userApiCallService = {
       db.select({
         id: apiCalls.id,
         routeId: apiCalls.routeId,
-        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
+        apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.routeName})`,
         apiPath: apiCalls.path,
         method: apiCalls.method,
         statusCode: apiCalls.statusCode,

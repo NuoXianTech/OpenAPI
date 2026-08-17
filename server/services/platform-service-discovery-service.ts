@@ -32,6 +32,7 @@ function assertMatchingDescriptions(descriptions: ServiceDescription[]) {
   for (const description of descriptions.slice(1)) {
     if (
       description.serviceId !== first.serviceId
+      || description.name !== first.name
       || description.openapiSha256 !== first.openapiSha256
       || description.configuration.schemaSha256
       !== first.configuration.schemaSha256

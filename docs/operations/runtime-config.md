@@ -19,8 +19,6 @@
 | `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 必填其一 | PostgreSQL 连接串；或显式选择 PGlite 文件数据库 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并派生 API Key/兑换码的 HMAC 查询摘要与 AES-256-GCM 加密密钥 |
-| `NUXT_HOSTS_CONSOLE` | 生产必填 | Console、登录、用户后台与管理 API 允许使用的 Host，多个值用逗号分隔 |
-| `NUXT_HOSTS_GATEWAY` | 生产必填 | 动态 Gateway 允许使用的 Host，必须与 Console Host 集合互斥 |
 
 ## 推荐变量
 
@@ -44,6 +42,27 @@
 | `NUXT_PROXY_FORWARDED_HOPS` | `1` | 从 `X-Forwarded-For` 右侧计算的可信代理层数，最多 10 层 |
 
 生产如果前面有 Nginx、Caddy 或面板反向代理，应设置 `NITRO_HOST=127.0.0.1`，避免 Nitro 直接暴露到公网；容器部署可以使用镜像或 Compose 提供的监听默认值。
+
+Platform 使用一个访问地址同时提供 Console、站内 API 和动态 Gateway。`/api`、`/_nuxt`、`/admin`、`/user`、登录与公开页面等 Platform 路径固定保留，不能被公共 Route 覆盖；其他路径交给动态 Gateway 匹配。对公网允许哪些域名访问由 Nginx、Caddy 或云平台入口负责，不再通过 Platform 环境变量重复配置。
+
+多个 Service 的地址、Token、权重与轮询策略统一保存在 Platform 数据库的 Internal Upstream/Target 中，与 Platform 的访问域名无关。
+
+PostgreSQL 连接串使用标准 URI：
+
+```dotenv
+DATABASE_DRIVER=postgres
+DATABASE_URL=postgresql://openapi:change-me@127.0.0.1:5432/openapi?sslmode=disable
+```
+
+托管数据库通常要求 `sslmode=require`。用户名或密码中的 `@`、`:`、`/`、`#`、`?` 等保留字符必须进行百分号编码。`DATABASE_DRIVER=pglite` 与 `DATABASE_URL` 是两种部署选择，不应同时配置。
+
+Redis 连接串同样使用 URI；有密码时建议明确写出 ACL 用户名，Redis 默认用户为 `default`：
+
+```dotenv
+NUXT_REDIS_URL=redis://default:change-me@127.0.0.1:6379/0
+```
+
+末尾 `/0` 是 Redis 逻辑数据库编号。启用 TLS 时使用 `rediss://`。无认证的本机 Redis 可写为 `redis://127.0.0.1:6379/0`。连接串中的用户名和密码也必须进行百分号编码。
 
 Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，公开统计与内容短缓存，以及扣费补偿扫描的分布式互斥。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
 

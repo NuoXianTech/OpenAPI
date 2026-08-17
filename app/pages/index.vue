@@ -85,12 +85,14 @@ const introMetrics = computed(() => {
 })
 
 const popularApis = computed<ApiCatalogItem[]>(() => {
-  const apiById = new Map(allApis.value.map(api => [api.id, api]))
+  const apiByRouteId = new Map(allApis.value.flatMap(api => (
+    api.endpoints.map(endpoint => [endpoint.id, api] as const)
+  )))
   const selectedApis: ApiCatalogItem[] = []
   const selectedApiIds = new Set<string>()
 
   for (const rankingEntry of publicStats.value?.rankingLast30d ?? []) {
-    const api = apiById.get(rankingEntry.routeId)
+    const api = apiByRouteId.get(rankingEntry.routeId)
     if (!api || selectedApiIds.has(api.id)) continue
     selectedApis.push(api)
     selectedApiIds.add(api.id)
@@ -101,7 +103,7 @@ const popularApis = computed<ApiCatalogItem[]>(() => {
     .filter(api => !selectedApiIds.has(api.id))
     .sort((left, right) => (
       right.totalCalls - left.totalCalls
-      || left.apiPath.localeCompare(right.apiPath)
+      || left.name.localeCompare(right.name)
     ))
 
   return [...selectedApis, ...fallbackApis].slice(0, POPULAR_API_LIMIT)

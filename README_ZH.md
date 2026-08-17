@@ -82,8 +82,6 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并分域保护 API Key、兑换码、Upstream Token 与 Service 业务 Secret。 |
-| `NUXT_HOSTS_CONSOLE` | 生产必填 | 只允许访问管理控制台和站内 API 的 Host。 |
-| `NUXT_HOSTS_GATEWAY` | 生产必填 | 只承载公开 Route 的 Gateway Host，必须与 Console Host 分离。 |
 | `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
 | `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
 | `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
@@ -92,6 +90,8 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | `NITRO_HOST`、`NITRO_PORT` | 部署配置 | Node 服务监听地址和端口。 |
 
 生产环境必须配置 `DATABASE_URL` 或 `DATABASE_DRIVER=pglite`，不会静默回退并创建新的本地数据库。完整语义和安全边界见[运行时配置](docs/operations/runtime-config.md)。
+
+Platform 使用同一个访问地址提供 Console、站内 API 和公开 Gateway Route。`/api`、`/admin`、`/user` 等 Platform 路径前缀固定保留，其余路径交给动态 Gateway 匹配，不再需要配置 Host 角色环境变量。
 
 API Service 地址和 Token 按 Internal Upstream 保存，不使用全局 Platform 环境变量。Service 声明的来源开关与凭据、数据库授权密钥、功能允许列表等业务配置会在 `/admin/apis/upstreams/:id` 自动生成表单并热更新全部 Target。
 

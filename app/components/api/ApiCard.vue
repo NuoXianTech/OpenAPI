@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { API_STATUS } from '#shared/config/api-status'
+import type { ApiCatalogEndpoint } from '#shared/types/api'
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
 import {
-  areAllApiMethodsPaid,
-  getAggregateApiMethodCost,
-  parseApiMethods,
+  areAllEndpointsPaid,
+  getAggregateEndpointCost,
   resolveApiStatusMeta
 } from '~/utils/api-presentation'
 import { formatCompactCount } from '~/utils/number-format'
@@ -15,11 +15,8 @@ interface ApiCardProps {
   categoryName?: string
   shortDesc?: string
   description?: string
-  httpMethod?: string
-  apiPath?: string
   docUrl?: string
-  isApiKey?: boolean
-  methodCosts?: Record<string, number>
+  endpoints?: ApiCatalogEndpoint[]
   totalCalls?: number
 }
 
@@ -29,11 +26,8 @@ const props = withDefaults(defineProps<ApiCardProps>(), {
   categoryName: '',
   shortDesc: '',
   description: '',
-  httpMethod: 'GET',
-  apiPath: '/v1/path',
   docUrl: '',
-  isApiKey: false,
-  methodCosts: () => ({}),
+  endpoints: () => [],
   totalCalls: 0
 })
 const { t, locale } = useI18n()
@@ -42,9 +36,7 @@ const {
   categoryName,
   shortDesc,
   description,
-  apiPath,
   docUrl,
-  isApiKey,
   totalCalls
 } = toRefs(props)
 const resolvedName = computed(() => name.value || t('public.api.defaultTitle'))
@@ -52,13 +44,16 @@ const resolvedCategoryName = computed(() => categoryName.value || t('public.api.
 const detailTriggerLabel = computed(() => `${t('public.api.viewDetails')} · ${resolvedName.value}`)
 const detailsOpen = ref(false)
 const detailTriggerElement = shallowRef<HTMLElement | null>(null)
-const methods = computed(() => parseApiMethods(props.httpMethod))
-const isAllPaid = computed(() => areAllApiMethodsPaid(methods.value, props.methodCosts))
-const aggregateCost = computed(() => getAggregateApiMethodCost(methods.value, props.methodCosts))
+const methods = computed(() => Array.from(new Set(
+  props.endpoints.map(endpoint => endpoint.httpMethod)
+)))
+const primaryEndpoint = computed(() => props.endpoints[0] ?? null)
+const aggregateCost = computed(() => getAggregateEndpointCost(props.endpoints))
+const isAllPaid = computed(() => areAllEndpointsPaid(props.endpoints))
 const pricingTooltip = computed(() => {
   if (aggregateCost.value > 0) return t('public.api.pricing.perCall', { count: aggregateCost.value })
   if (aggregateCost.value === -1) {
-    return isAllPaid.value ? t('public.api.pricing.byMethodDescription') : t('public.api.pricing.partiallyPaidDescription')
+    return isAllPaid.value ? t('public.api.pricing.byEndpointDescription') : t('public.api.pricing.partiallyPaidDescription')
   }
   return t('public.api.pricing.freeDescription')
 })
@@ -71,11 +66,8 @@ const statusMeta = computed(() => resolveApiStatusMeta(props.status, key => t(ke
 const statusClass = computed(() => `api-card__status--${statusMeta.value.color}`)
 const detailContentProps = computed(() => ({
   description: detailBodyDescription.value,
-  apiPath: apiPath.value,
   docUrl: docUrl.value,
-  isApiKey: isApiKey.value,
-  methods: methods.value,
-  methodCosts: props.methodCosts,
+  endpoints: props.endpoints,
   totalCalls: totalCalls.value
 }))
 
@@ -145,8 +137,11 @@ function preventDetailsAutoFocus(event: Event) {
         </p>
       </div>
 
-      <div class="api-card__endpoint">
-        <code>{{ apiPath }}</code>
+      <div v-if="primaryEndpoint" class="api-card__endpoint">
+        <code>{{ primaryEndpoint.apiPath }}</code>
+        <span v-if="endpoints.length > 1" class="api-card__endpoint-count">
+          {{ $t('public.api.endpointAddressCount', { count: endpoints.length }) }}
+        </span>
       </div>
     </div>
 
@@ -171,7 +166,7 @@ function preventDetailsAutoFocus(event: Event) {
               {{ $t('public.api.pricing.pointsPerCall', { count: aggregateCost }) }}
             </template>
             <template v-else-if="aggregateCost === -1">
-              {{ isAllPaid ? $t('public.api.pricing.byMethod') : $t('public.api.pricing.partiallyPaid') }}
+              {{ isAllPaid ? $t('public.api.pricing.byEndpoint') : $t('public.api.pricing.partiallyPaid') }}
             </template>
             <template v-else>
               {{ $t('public.api.pricing.free') }}
@@ -192,27 +187,26 @@ function preventDetailsAutoFocus(event: Event) {
       class: 'rounded-md focus-visible:ring-0 focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-primary/35'
     }"
     :ui="{
-      overlay: 'bg-elevated/70 backdrop-blur-[2px]',
-      content: 'sm:max-w-2xl overflow-hidden rounded-xl divide-y-0',
-      header: 'items-start gap-3 border-b border-default py-5 ps-4 pe-14 sm:py-6 sm:ps-6 sm:pe-16',
+      overlay: 'bg-elevated/75',
+      content: 'sm:max-w-2xl overflow-hidden rounded-lg divide-y-0 bg-elevated',
+      header: 'items-start gap-3 border-b border-default py-4 ps-4 pe-14 sm:px-6 sm:pe-16',
       wrapper: 'min-w-0 flex-1',
       title: 'block min-w-0',
-      description: 'mt-2 block min-w-0',
-      close: 'top-4 end-4 sm:top-5 sm:end-5',
+      description: 'mt-1.5 block min-w-0',
+      close: 'top-3.5 end-4',
       body: 'p-0 sm:p-0'
     }"
     @after:leave="restoreDetailTriggerFocus"
   >
     <template #title>
       <div class="api-card__modal-heading">
-        <span class="api-card__modal-kicker">
+        <span class="api-card__modal-context">
           <UTooltip
             :text="resolvedCategoryName"
             :content="{ side: 'top' }"
           >
             <span class="api-card__modal-category">{{ resolvedCategoryName }}</span>
           </UTooltip>
-          <span aria-hidden="true">/</span>
           <span
             class="api-card__modal-status"
             :class="statusClass"
@@ -392,6 +386,7 @@ function preventDetailsAutoFocus(event: Event) {
   min-width: 0;
   margin-top: 0.75rem;
   align-items: center;
+  gap: 0.75rem;
   border-radius: 6px;
   padding: 0.5rem 0.7rem;
   background: var(--ui-bg-muted);
@@ -399,11 +394,20 @@ function preventDetailsAutoFocus(event: Event) {
 
 .api-card__endpoint code {
   min-width: 0;
+  flex: 1;
   overflow: hidden;
   color: var(--ui-text-toned);
   font-family: var(--font-code);
   font-size: 0.75rem;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.api-card__endpoint-count {
+  flex: 0 0 auto;
+  color: var(--ui-text-dimmed);
+  font-size: 0.6875rem;
+  line-height: 1rem;
   white-space: nowrap;
 }
 
@@ -440,22 +444,19 @@ function preventDetailsAutoFocus(event: Event) {
 
 .api-card__modal-heading {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.3rem;
   min-width: 0;
 }
 
-.api-card__modal-kicker {
+.api-card__modal-context {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.45rem;
-  color: var(--ui-text-dimmed);
-  font-family: var(--font-code);
-  font-size: 0.6875rem;
-  font-weight: 650;
-  letter-spacing: 0.045em;
+  gap: 0.75rem;
+  color: var(--ui-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
   line-height: 1rem;
-  text-transform: uppercase;
 }
 
 .api-card__modal-category {
@@ -470,7 +471,7 @@ function preventDetailsAutoFocus(event: Event) {
   flex: 0 0 auto;
   align-items: center;
   gap: 0.35rem;
-  color: color-mix(in oklab, var(--api-status-color) 82%, var(--ui-text-highlighted));
+  color: var(--ui-text-muted);
 }
 
 .api-card__modal-title {
@@ -478,9 +479,9 @@ function preventDetailsAutoFocus(event: Event) {
   min-width: 0;
   color: var(--ui-text-highlighted);
   font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 720;
-  letter-spacing: -0.015em;
+  font-size: 1.25rem;
+  font-weight: 680;
+  letter-spacing: 0;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }

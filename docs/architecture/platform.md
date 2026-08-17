@@ -153,7 +153,7 @@ External Upstream 用于普通 HTTP API：
 
 业务配置保存后，Platform 使用乐观锁生成更高 Revision，分别向全部启用 Target 下发同一完整快照，并记录 `synced`、`drifted`、`error` 或 `unknown` 状态。部分 Target 失败不会被视为全部成功。
 
-发现或全量配置同步通过后，Platform 自动重新计算 Workspace 的运行配置。相同配置复用当前 Revision；只有验证通过的 Target 集合实际变化时才生成新 Revision。发现不会自行创建公开 Route，但可以应用管理员此前已经明确发布、因 Internal Target 尚未验证而等待的 Route。
+发现成功，或配置同步至少有一个 Target 成功后，Platform 自动重新计算 Workspace 的运行配置。相同配置复用当前 Revision；只有验证通过的 Target 集合实际变化时才生成新 Revision。部分同步生成只包含成功 Target 的快照；如果某个 Upstream 的全部 Target 同步失败，则该 Upstream 在后续 Revision 中继续使用最后一个有效 Target 快照，其他 Upstream 仍可独立更新。没有历史有效快照的新 Upstream 会保持待发布状态，直到至少一个 Target 验证成功。期望配置与实际运行状态会保持可见差异，等待管理员修复后重试。发现不会自行创建公开 Route，但可以应用管理员此前已经明确发布、因 Internal Target 尚未验证而等待的 Route。
 
 Secret 使用独立存储域加密。管理 API 只返回是否已配置，浏览器和普通日志永远不会收到明文。
 

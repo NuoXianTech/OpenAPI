@@ -63,6 +63,8 @@
           "time": "时间",
           "type": "类型",
           "requestId": "请求 ID",
+          "target": "Service Target",
+          "targetId": "Target ID",
           "user": "调用者",
           "key": "密钥",
           "api": "接口",

@@ -2,7 +2,6 @@ import { getDatabaseDriver, getDatabaseUrl } from '~~/server/db/client'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
 import { getRedisConfig } from '~~/server/utils/redis'
 import { assertApiKeySecretConfigured } from '~~/server/utils/stored-secret'
-import { getApplicationHostErrors } from '~~/server/utils/application-hosts'
 
 function readErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
@@ -44,7 +43,6 @@ export function getRuntimeEnvironmentErrors(): string[] {
   collectValidationError(errors, assertApiKeySecretConfigured)
   validateDatabaseConfiguration(errors)
   validateRedisConfiguration(errors)
-  errors.push(...getApplicationHostErrors())
 
   return errors
 }

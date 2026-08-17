@@ -1,12 +1,8 @@
 import type { H3Error } from 'h3'
 import { getRequestURL, send } from 'h3'
 import { defineNitroErrorHandler } from 'nitropack/runtime'
-import {
-  isGatewayRequest,
-  resolveApplicationHostRole
-} from '~~/server/utils/application-hosts'
-import { getAppEventContext } from '~~/server/utils/event-context'
 import { gatewayFail } from '~~/server/utils/gateway-response'
+import { isReservedPlatformPath } from '~~/server/utils/route-pattern'
 
 const PUBLIC_ERROR_BY_STATUS: Record<number, { code: string, message: string }> = {
   400: { code: 'BAD_REQUEST', message: '请求参数有误' },
@@ -32,10 +28,7 @@ function resolvePublicError(status: number): { code: string, message: string } {
 }
 
 export default defineNitroErrorHandler(function handlePublicApiRouteError(error: H3Error, event) {
-  const requestUrl = getRequestURL(event)
-  const role = getAppEventContext(event).applicationHostRole
-    ?? resolveApplicationHostRole(requestUrl.hostname)
-  if (!isGatewayRequest(role, requestUrl.pathname)) return
+  if (isReservedPlatformPath(getRequestURL(event).pathname)) return
   const status = error.statusCode >= 400 && error.statusCode <= 599
     ? error.statusCode
     : 500

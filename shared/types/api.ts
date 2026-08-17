@@ -1,3 +1,14 @@
+export interface ApiCatalogEndpoint {
+  id: string
+  name: string
+  status: number
+  httpMethod: string
+  apiPath: string
+  isApiKey: boolean
+  creditsCost: number
+  totalCalls: number
+}
+
 export interface ApiCatalogItem {
   id: string
   name: string
@@ -5,11 +16,8 @@ export interface ApiCatalogItem {
   categoryId: number | null
   shortDesc: string
   description: string
-  httpMethod: string
-  apiPath: string
   docUrl: string
-  isApiKey: boolean
-  methodCosts: Record<string, number>
+  endpoints: ApiCatalogEndpoint[]
   totalCalls: number
 }
 

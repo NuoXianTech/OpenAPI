@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto'
 import { inArray, sql } from 'drizzle-orm'
 import { API_STATUS } from '#shared/config/api-status'
-import type { ApiCatalogItem, ApiCatalogPage } from '#shared/types/api'
+import type {
+  ApiCatalogEndpoint,
+  ApiCatalogItem,
+  ApiCatalogPage
+} from '#shared/types/api'
 import { db } from '~~/server/db/client'
 import { apiCallStats } from '~~/server/db/schema'
 import { activeRoutingCatalogService, type ActiveCatalogRoute } from '~~/server/services/active-routing-catalog-service'
@@ -33,6 +37,16 @@ interface StatusRoute extends ActiveCatalogRoute {
   status: number
 }
 
+interface CatalogProduct {
+  id: string
+  routes: ActiveCatalogRoute[]
+}
+
+interface StatusProduct {
+  id: string
+  routes: StatusRoute[]
+}
+
 function normalizePositiveInteger(value: number | undefined, fallback: number, maximum: number): number {
   if (!Number.isFinite(value)) return fallback
   return Math.min(Math.max(Math.trunc(value!), 1), maximum)
@@ -59,34 +73,55 @@ function configuredStatus(item: ActiveCatalogRoute): number {
   return API_STATUS.automatic
 }
 
-function matchesText(item: ActiveCatalogRoute, keyword: string | undefined): boolean {
+function matchesText(item: CatalogProduct, keyword: string | undefined): boolean {
   if (!keyword) return true
   const value = keyword.toLocaleLowerCase()
-  return [
-    item.route.productSlug,
-    item.product.name,
-    item.product.summary,
-    item.route.name,
-    item.route.pathPattern
-  ].some(candidate => candidate.toLocaleLowerCase().includes(value))
+  const first = item.routes[0]
+  if (!first) return false
+  return [first.route.productSlug, first.product.name, first.product.summary]
+    .some(candidate => candidate.toLocaleLowerCase().includes(value))
+    || item.routes.some(route => (
+      route.route.name.toLocaleLowerCase().includes(value)
+      || route.route.pathPattern.toLocaleLowerCase().includes(value)
+      || route.route.method.toLocaleLowerCase().includes(value)
+    ))
 }
 
-function baseRoutes(
+function baseProducts(
   routes: ActiveCatalogRoute[],
   filters: ReturnType<typeof normalizeFilters>
-): ActiveCatalogRoute[] {
-  return routes.filter(item => (
-    matchesText(item, filters.keyword)
-    && (
-      filters.categoryId === undefined
-      || item.product.categoryId === filters.categoryId
-    )
-  )).sort((left, right) => (
-    (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0)
-    || left.product.name.localeCompare(right.product.name)
-    || left.route.pathPattern.localeCompare(right.route.pathPattern)
-    || left.route.method.localeCompare(right.route.method)
-  ))
+): CatalogProduct[] {
+  const grouped = new Map<string, CatalogProduct>()
+  for (const route of routes) {
+    const current = grouped.get(route.route.productId)
+    if (current) current.routes.push(route)
+    else grouped.set(route.route.productId, {
+      id: route.route.productId,
+      routes: [route]
+    })
+  }
+  return Array.from(grouped.values())
+    .filter((item) => {
+      const first = item.routes[0]
+      return Boolean(
+        first
+        && matchesText(item, filters.keyword)
+        && (
+          filters.categoryId === undefined
+          || first.product.categoryId === filters.categoryId
+        )
+      )
+    })
+    .sort((left, right) => {
+      const leftFirst = left.routes[0]!
+      const rightFirst = right.routes[0]!
+      return (
+        Math.max(...right.routes.map(route => route.publishedAt?.getTime() ?? 0))
+        - Math.max(...left.routes.map(route => route.publishedAt?.getTime() ?? 0))
+        || leftFirst.product.name.localeCompare(rightFirst.product.name)
+        || leftFirst.route.productSlug.localeCompare(rightFirst.route.productSlug)
+      )
+    })
 }
 
 async function addStatuses(routes: ActiveCatalogRoute[]): Promise<StatusRoute[]> {
@@ -107,6 +142,20 @@ async function addStatuses(routes: ActiveCatalogRoute[]): Promise<StatusRoute[]>
   }))
 }
 
+async function addProductStatuses(
+  products: CatalogProduct[]
+): Promise<StatusProduct[]> {
+  const routes = await addStatuses(products.flatMap(product => product.routes))
+  const routesById = new Map(routes.map(route => [route.route.id, route]))
+  return products.map(product => ({
+    id: product.id,
+    routes: product.routes.flatMap((route) => {
+      const statusRoute = routesById.get(route.route.id)
+      return statusRoute ? [statusRoute] : []
+    })
+  }))
+}
+
 async function loadRouteStats(routeIds: string[]): Promise<Record<string, number>> {
   if (routeIds.length === 0) return {}
   const rows = await db.select({
@@ -123,20 +172,53 @@ function createCacheKey(filters: ReturnType<typeof normalizeFilters>): string {
   return `cache:public:apis:${digest}`
 }
 
-function catalogItem(item: StatusRoute, totalCalls: number): ApiCatalogItem {
+function aggregateStatus(routes: StatusRoute[]): number {
+  const statuses = new Set(routes.map(route => route.status))
+  if (statuses.size === 1) return routes[0]?.status ?? API_STATUS.unknown
+  if (statuses.has(API_STATUS.maintenance)) return API_STATUS.maintenance
+  if (statuses.has(API_STATUS.abnormal)) return API_STATUS.abnormal
+  if (statuses.has(API_STATUS.deprecated)) return API_STATUS.deprecated
+  if (statuses.has(API_STATUS.unknown)) return API_STATUS.unknown
+  return API_STATUS.normal
+}
+
+function catalogEndpoint(
+  item: StatusRoute,
+  totalCalls: number
+): ApiCatalogEndpoint {
   return {
     id: item.route.id,
-    name: item.route.name || item.product.name,
+    name: item.route.name,
     status: item.status,
-    categoryId: item.product.categoryId,
-    shortDesc: item.product.summary || item.route.name,
-    description: item.product.description || item.product.summary,
     httpMethod: item.route.method,
     apiPath: item.route.pathPattern,
-    docUrl: '',
     isApiKey: item.route.isApiKey,
-    methodCosts: { [item.route.method]: item.route.creditsCost },
+    creditsCost: item.route.creditsCost,
     totalCalls
+  }
+}
+
+function catalogItem(
+  item: StatusProduct,
+  routeStats: Record<string, number>
+): ApiCatalogItem {
+  const first = item.routes[0]!
+  const endpoints = item.routes
+    .sort((left, right) => (
+      left.route.pathPattern.localeCompare(right.route.pathPattern)
+      || left.route.method.localeCompare(right.route.method)
+    ))
+    .map(route => catalogEndpoint(route, routeStats[route.route.id] ?? 0))
+  return {
+    id: item.id,
+    name: first.product.name,
+    status: aggregateStatus(item.routes),
+    categoryId: first.product.categoryId,
+    shortDesc: first.product.summary || first.product.name,
+    description: first.product.description || first.product.summary,
+    docUrl: '',
+    endpoints,
+    totalCalls: endpoints.reduce((sum, endpoint) => sum + endpoint.totalCalls, 0)
   }
 }
 
@@ -148,22 +230,28 @@ export const apiCatalogService = {
       key: `${createCacheKey(normalized)}:v${cacheVersion}`,
       ttlSeconds: PUBLIC_API_CATALOG_TTL_SECONDS,
       async loader() {
-        const candidates = baseRoutes(
+        const candidates = baseProducts(
           await activeRoutingCatalogService.list(),
           normalized
         )
         const withStatus = normalized.status === undefined
           ? null
-          : (await addStatuses(candidates)).filter(item => item.status === normalized.status)
+          : (await addProductStatuses(candidates)).filter(
+              item => aggregateStatus(item.routes) === normalized.status
+            )
         const total = withStatus?.length ?? candidates.length
         const start = Math.min((normalized.page - 1) * normalized.pageSize, total)
-        const pageRoutes = withStatus
+        const pageProducts = withStatus
           ? withStatus.slice(start, start + normalized.pageSize)
-          : await addStatuses(candidates.slice(start, start + normalized.pageSize))
-        const stats = await loadRouteStats(pageRoutes.map(item => item.route.id))
+          : await addProductStatuses(
+              candidates.slice(start, start + normalized.pageSize)
+            )
+        const stats = await loadRouteStats(pageProducts.flatMap(
+          item => item.routes.map(route => route.route.id)
+        ))
 
         return {
-          items: pageRoutes.map(item => catalogItem(item, stats[item.route.id] ?? 0)),
+          items: pageProducts.map(item => catalogItem(item, stats)),
           total,
           page: normalized.page,
           pageSize: normalized.pageSize

@@ -5,7 +5,9 @@ import { db, type DatabaseTransaction } from '~~/server/db/client'
 
 interface AddCallInput {
   routeId: string
-  targetName?: string | null
+  routeName?: string | null
+  upstreamTargetId?: string | null
+  upstreamTargetUrl?: string | null
   apiKeyId?: number | null
   apiKeyName?: string | null
   userId?: number | null
@@ -29,7 +31,9 @@ interface AddCallInput {
 function normalizeCallRow(data: AddCallInput) {
   return {
     routeId: data.routeId,
-    targetName: data.targetName ?? null,
+    routeName: data.routeName ?? null,
+    upstreamTargetId: data.upstreamTargetId ?? null,
+    upstreamTargetUrl: data.upstreamTargetUrl ?? null,
     apiKeyId: data.apiKeyId ?? null,
     apiKeyName: data.apiKeyName ?? null,
     userId: data.userId ?? null,

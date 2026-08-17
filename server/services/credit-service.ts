@@ -402,7 +402,7 @@ async function listUserTransactions(userId: number, filters: ListUserTransaction
       balanceAfter: creditTransactions.balanceAfter,
       reason: creditTransactions.reason,
       routeId: creditTransactions.routeId,
-      apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.targetName})`,
+      apiName: sql<string | null>`coalesce(${apiRoutes.name}, ${apiProducts.name}, ${apiCalls.routeName})`,
       apiPath: sql<string | null>`coalesce(${apiRoutes.pathPattern}, ${apiCalls.path})`,
       apiCallId: creditTransactions.apiCallId,
       codeId: creditTransactions.codeId,

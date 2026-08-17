@@ -48,7 +48,7 @@ describe('database migration runner', () => {
     await client.close()
 
     expect(result.rows[0]?.count).toBe(journal.entries.length)
-  })
+  }, 20_000)
 
   it('rejects an incomplete configured migration directory', async () => {
     const dataDir = await createTemporaryDirectory()

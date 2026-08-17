@@ -96,4 +96,33 @@ describe('usePrivateResource', () => {
     expect(resource.status.value).toBe('error')
     expect(resource.error.value).toBeInstanceOf(Error)
   })
+
+  it('leaves the loading state when a request times out', async () => {
+    vi.useFakeTimers()
+    const fetchMock = vi.fn((
+      _path: string,
+      options: { signal: AbortSignal, timeout: number }
+    ) => new Promise((_resolve, reject) => {
+      setTimeout(() => {
+        reject(new DOMException('Request timed out', 'TimeoutError'))
+      }, options.timeout)
+    }))
+    vi.stubGlobal('$fetch', fetchMock)
+
+    const resource = usePrivateResource({
+      path: '/api/pending',
+      defaultData: () => null,
+      immediate: false,
+      timeoutMs: 100
+    })
+
+    const refresh = resource.refresh()
+    await vi.advanceTimersByTimeAsync(100)
+    await refresh
+
+    expect(resource.loading.value).toBe(false)
+    expect(resource.status.value).toBe('error')
+    expect(resource.error.value).toMatchObject({ name: 'TimeoutError' })
+    vi.useRealTimers()
+  })
 })
