@@ -10,6 +10,7 @@ const { version: appVersion } = require('./package.json') as { version: string }
 const isProduction = process.env.NODE_ENV === 'production'
 const databaseMigrationsDir = 'server/db/migrations/postgresql'
 const databaseMigrationScripts = ['scripts/migrate.mjs', 'scripts/database-migrator.mjs']
+const databaseMigratorModule = resolve('scripts/database-migrator.mjs')
 const privatePageRouteRule = {
   headers: {
     'cache-control': 'private, no-store'
@@ -82,6 +83,11 @@ export default defineNuxtConfig({
   nitro: {
     preset: 'node-server',
     errorHandler: '~~/server/error.ts',
+    externals: {
+      // This module lives outside server/, so Nitro otherwise emits a broken
+      // relative import for it from .nuxt/dev on Windows.
+      inline: [databaseMigratorModule]
+    },
     compressPublicAssets: {
       gzip: true,
       brotli: true

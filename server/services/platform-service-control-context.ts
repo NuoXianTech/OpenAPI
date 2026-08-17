@@ -17,6 +17,7 @@ import {
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import { resolveServiceAvailability } from '~~/server/services/service-availability-service'
+import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { readStoredServiceEndpoints } from '~~/server/services/platform-service-openapi-service'
 import {
   defaultServiceConfigurationValues,
@@ -156,7 +157,8 @@ export async function buildServiceControlView(
       && context.service.status === 'active'
         ? await resolveServiceAvailability(
             context.connection.serviceDescription,
-            context.targets
+            context.targets,
+            await upstreamServiceTokenService.get(context.service.id)
           )
         : 'unknown'
     ),

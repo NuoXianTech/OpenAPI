@@ -32,6 +32,7 @@ import {
   encryptStoredSecret
 } from '~~/server/utils/stored-secret'
 import { firstRow } from '~~/server/utils/row'
+import { routingRevisionService } from '~~/server/services/routing-revision-service'
 
 function redactedStateFromValues(input: {
   serviceId: string
@@ -356,12 +357,19 @@ export async function updatePlatformServiceConfiguration(
     eq(upstreamTargets.upstreamServiceId, upstreamServiceId),
     eq(upstreamTargets.enabled, true)
   ))
-  return pushConfiguration(
+  const result = await pushConfiguration(
     { ...context, connection: updated },
     revision,
     values,
     configurationHash
   )
+  if (result.status === 'synced') {
+    await routingRevisionService.publishWorkspace(
+      context.service.workspaceId,
+      null
+    )
+  }
+  return result
 }
 
 export async function synchronizePlatformServiceConfiguration(
@@ -399,10 +407,17 @@ export async function synchronizePlatformServiceConfiguration(
       data: { code: 'SERVICE_CONFIGURATION_STORAGE_INVALID' }
     })
   }
-  return pushConfiguration(
+  const result = await pushConfiguration(
     context,
     context.connection.configurationRevision,
     values,
     configurationHash
   )
+  if (result.status === 'synced') {
+    await routingRevisionService.publishWorkspace(
+      context.service.workspaceId,
+      null
+    )
+  }
+  return result
 }

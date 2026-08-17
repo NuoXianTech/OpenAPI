@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ResolvedDynamicRoute } from '~~/server/services/routing-runtime-service'
 import {
   buildGatewayTargetUrl,
+  createGatewayProxyFetch,
   orderedGatewayTargets
 } from '~~/server/services/dynamic-gateway-target-service'
 
@@ -25,6 +26,9 @@ function match(
 }
 
 describe('dynamic gateway target selection', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
   it('rotates round-robin targets for each request', () => {
     const route = match('round-robin-test', 'round_robin', [1, 1, 1])
 
@@ -61,5 +65,61 @@ describe('dynamic gateway target selection', () => {
       '/v1/player',
       '?apikey=secret&id=42'
     ).toString()).toBe('http://127.0.0.1:8080/base/v1/player?id=42')
+  })
+
+  it('converts only explicit Service Token rejection into a gateway error', async () => {
+    const route = match('service-auth-test', 'round_robin', [1])
+    const request = vi.fn().mockResolvedValue(new Response(null, {
+      status: 401,
+      headers: {
+        'x-openapi-error-code': 'UNAUTHORIZED',
+        'www-authenticate': 'Service realm="openapi-service"'
+      }
+    }))
+    vi.stubGlobal('fetch', request)
+    const proxyFetch = createGatewayProxyFetch({
+      match: route,
+      targets: route.upstream.targets,
+      upstreamPath: '/v1/player',
+      search: '',
+      maximumResponseBytes: 1024,
+      onTarget: vi.fn(),
+      onResponseBytes: vi.fn()
+    })
+
+    await expect(proxyFetch(new Request('http://gateway.invalid'), {
+      headers: { authorization: 'Service wrong-token' }
+    })).rejects.toMatchObject({
+      status: 502,
+      code: 'UPSTREAM_AUTH_FAILED',
+      publicMessage: '上游服务认证失败'
+    })
+  })
+
+  it('preserves an internal business endpoint 401 response', async () => {
+    const route = match('business-auth-test', 'round_robin', [1])
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ code: 'UNAUTHORIZED' }),
+      {
+        status: 401,
+        headers: {
+          'content-type': 'application/json',
+          'x-openapi-error-code': 'UNAUTHORIZED'
+        }
+      }
+    )))
+    const proxyFetch = createGatewayProxyFetch({
+      match: route,
+      targets: route.upstream.targets,
+      upstreamPath: '/v1/private',
+      search: '',
+      maximumResponseBytes: 1024,
+      onTarget: vi.fn(),
+      onResponseBytes: vi.fn()
+    })
+
+    const response = await proxyFetch(new Request('http://gateway.invalid'))
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ code: 'UNAUTHORIZED' })
   })
 })

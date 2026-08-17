@@ -46,7 +46,7 @@ Git Tag 必须：
 1. 确认 [版本与支持范围](../architecture/release-scope.md) 中适用于目标版本的要求已经完成。
 2. 审查数据库 Schema 和迁移；已经发布的 journal、SQL 和 snapshot 只能保留，新 Schema 必须追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
-4. 核对运行时变量、密钥和 Service Token 轮换计划。
+4. 核对运行时变量、密钥和 Service Token 维护计划；`0.1.0` 不支持双 Token 在线轮换。
 5. 确认同名 `openapi-service` Tag 已经发布。Platform 版本工作流默认检出同名 Service Tag；需要验证其他兼容版本时，将 Repository Variable `OPENAPI_SERVICE_REF` 设为不可变 Tag 或 Commit。
 6. 完成质量门禁：
 

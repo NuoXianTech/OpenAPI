@@ -63,6 +63,7 @@ async function createRoutingGraph(options: {
   hosts?: string[]
   pathPattern?: string
   upstreamPathTemplate?: string
+  verified?: boolean
 }) {
   const workspaceId = options.workspaceId ?? defaults.workspace.id
   const productSlug = options.productSlug ?? 'proxy-smoke'
@@ -82,6 +83,21 @@ async function createRoutingGraph(options: {
     loadBalancing: 'round_robin',
     targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
   })
+  if (options.verified !== false) {
+    await database.update(schema.upstreamTargets).set({
+      configurationRevision: 0,
+      configurationHash: '0'.repeat(64),
+      configurationState: {
+        schemaVersion: 1,
+        serviceId: `${productSlug}-service`,
+        schemaSha256: '1'.repeat(64),
+        revision: 0,
+        configurationSha256: '0'.repeat(64),
+        values: {},
+        updatedAt: null
+      }
+    }).where(eq(schema.upstreamTargets.upstreamServiceId, upstream.id))
+  }
   const route = await platformRouteService.create({
     apiVersionId: product.versions[0]!.id,
     name: options.routeName ?? 'Proxy smoke',
@@ -164,6 +180,19 @@ async function createDiscoveredService(options: {
   await database.update(schema.upstreamServices)
     .set({ openapiDocumentId: document.id })
     .where(eq(schema.upstreamServices.id, upstream.id))
+  await database.update(schema.upstreamTargets).set({
+    configurationRevision: 0,
+    configurationHash: '0'.repeat(64),
+    configurationState: {
+      schemaVersion: 1,
+      serviceId: slug,
+      schemaSha256: '1'.repeat(64),
+      revision: 0,
+      configurationSha256: '0'.repeat(64),
+      values: {},
+      updatedAt: null
+    }
+  }).where(eq(schema.upstreamTargets.upstreamServiceId, upstream.id))
   return { upstream, path, endpoints }
 }
 
@@ -193,6 +222,43 @@ function routeMutationInput(route: typeof schema.apiRoutes.$inferSelect) {
 }
 
 describe('routing revision service', () => {
+  it('keeps an unverified internal Target out of published routing', async () => {
+    const graph = await createRoutingGraph({ verified: false })
+
+    await expect(routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )).rejects.toMatchObject({
+      statusCode: 409,
+      data: {
+        code: 'INTERNAL_UPSTREAM_NOT_READY',
+        upstreamServiceId: graph.upstream.id
+      }
+    })
+
+    await database.update(schema.upstreamTargets).set({
+      configurationRevision: 0,
+      configurationHash: '0'.repeat(64),
+      configurationState: {
+        schemaVersion: 1,
+        serviceId: 'verified-service',
+        schemaSha256: '1'.repeat(64),
+        revision: 0,
+        configurationSha256: '0'.repeat(64),
+        values: {},
+        updatedAt: null
+      }
+    }).where(eq(
+      schema.upstreamTargets.upstreamServiceId,
+      graph.upstream.id
+    ))
+
+    await expect(routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )).resolves.toMatchObject({ sequence: 1 })
+  })
+
   it('creates the default workspace and environment idempotently', async () => {
     const workspaces = await platformWorkspaceService.list()
 
@@ -864,9 +930,11 @@ describe('routing revision service', () => {
         discovered: true,
         availability: 'online'
       })
-      expect(request).toHaveBeenCalledTimes(1)
+      expect(request).toHaveBeenCalledTimes(2)
       expect(request.mock.calls[0]?.[0].toString())
         .toBe('http://127.0.0.1:8090/readyz')
+      expect(request.mock.calls[1]?.[0].toString())
+        .toBe('http://127.0.0.1:8090/.well-known/configuration.json')
 
       request.mockClear()
       await platformEndpointCatalogService.publish({

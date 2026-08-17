@@ -343,6 +343,22 @@ describe('Platform to Node API Service acceptance', () => {
     })
     expect(discovered.endpoints.map(endpoint => endpoint.path)).toEqual(
       expect.arrayContaining([
+        '/v1/60s',
+        '/v1/bing',
+        '/v1/crypto',
+        '/v1/epic',
+        '/v1/exchange-rate',
+        '/v1/fuel-price',
+        '/v1/gold-price',
+        '/v1/lanzou',
+        '/v1/luck',
+        '/v1/minecraft',
+        '/v1/music',
+        '/v1/password/check',
+        '/v1/password',
+        '/v1/qq-avatar',
+        '/v1/short-video',
+        '/v1/today-in-history',
         '/v1/ip',
         '/v1/player',
         '/v1/yiyan'
@@ -545,6 +561,40 @@ describe('Platform to Node API Service acceptance', () => {
     }
   })
 
+  it('normalizes a Service Token mismatch at the public Gateway boundary', async () => {
+    await platformUpstreamService.updateServiceToken(
+      officialUpstreamId,
+      'wrong-gateway-service-token-with-at-least-32-characters'
+    )
+
+    try {
+      await expect(platformServiceControlService.get(
+        officialUpstreamId,
+        { checkAvailability: true }
+      )).resolves.toMatchObject({
+        connection: {
+          availability: 'offline',
+          lastDiscoveryError: expect.stringContaining('Token changed')
+        }
+      })
+
+      const response = await fetch(`${gatewayBaseURL}/v1/player`)
+      expect(response.status).toBe(502)
+      expect(response.headers.get('www-authenticate')).toBeNull()
+      await expect(readPublicEnvelope(response)).resolves.toMatchObject({
+        code: 'UPSTREAM_AUTH_FAILED',
+        message: '上游服务认证失败',
+        data: null
+      })
+    } finally {
+      await platformUpstreamService.updateServiceToken(
+        officialUpstreamId,
+        serviceToken
+      )
+      await platformServiceControlService.discover(officialUpstreamId)
+    }
+  })
+
   it('reports a partial configuration sync when one target is unavailable', async () => {
     const upstream = await platformUpstreamService.create({
       workspaceId: (await platformWorkspaceService.ensureDefault()).workspace.id,
@@ -688,9 +738,14 @@ describe('Platform to Node API Service acceptance', () => {
       '/v1/player',
       '/v1/player/art',
       '/v1/player/assets/{asset}',
+      '/v1/music',
+      '/v1/password/check',
+      '/v1/password',
+      '/v1/qq-avatar',
+      '/v1/short-video',
+      '/v1/today-in-history',
       '/v1/yiyan'
     ]))
-    expect(Object.keys(document.paths).some(path => path.startsWith('/v1/music'))).toBe(false)
   })
 
   it('forwards conditional contract requests as 304', async () => {
@@ -749,6 +804,7 @@ describe('Platform to Node API Service acceptance', () => {
           weight: 1
         }]
       })
+      await markTestTargetsVerified(upstream.id)
       routeId = await createRoute({
         apiVersionId: officialVersionId,
         upstreamServiceId: upstream.id,
@@ -805,6 +861,7 @@ describe('Platform to Node API Service acceptance', () => {
           weight: 1
         }))
       })
+      await markTestTargetsVerified(upstream.id)
       routeId = await createRoute({
         apiVersionId: officialVersionId,
         upstreamServiceId: upstream.id,
@@ -858,6 +915,7 @@ describe('Platform to Node API Service acceptance', () => {
           weight: 1
         }))
       })
+      await markTestTargetsVerified(upstream.id)
       routeId = await createRoute({
         apiVersionId: officialVersionId,
         upstreamServiceId: upstream.id,
@@ -922,6 +980,7 @@ describe('Platform to Node API Service acceptance', () => {
           weight: 1
         }]
       })
+      await markTestTargetsVerified(upstream.id)
       const requestRouteId = await createRoute({
         apiVersionId: officialVersionId,
         upstreamServiceId: upstream.id,
@@ -1409,6 +1468,30 @@ async function createRoute(input: {
   })
   if (!route) throw new Error(`route was not created: ${input.pathPattern}`)
   return route.id
+}
+
+async function markTestTargetsVerified(upstreamServiceId: string) {
+  const configurationHash = '0'.repeat(64)
+  await databaseClient!.query(
+    `update upstream_targets
+     set configuration_revision = 0,
+         configuration_hash = $1,
+         configuration_state = $2::jsonb
+     where upstream_service_id = $3`,
+    [
+      configurationHash,
+      JSON.stringify({
+        schemaVersion: 1,
+        serviceId: 'gateway-test-double',
+        schemaSha256: '1'.repeat(64),
+        revision: 0,
+        configurationSha256: configurationHash,
+        values: {},
+        updatedAt: null
+      }),
+      upstreamServiceId
+    ]
+  )
 }
 
 function lifecycleRouteInput(pathPattern: string) {

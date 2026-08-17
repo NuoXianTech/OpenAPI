@@ -10,7 +10,9 @@ export default defineAdminEventHandler(async (event, admin) => {
   const id = readUuidRouterParam(event)
   const body = await readZodBody(event, adminUpdateTargetSchema)
   const updated = await platformUpstreamService.updateTarget(id, body)
-  await routingRevisionService.publishWorkspace(updated.workspaceId, admin.id)
+  if (updated.publishRouting) {
+    await routingRevisionService.publishWorkspace(updated.workspaceId, admin.id)
+  }
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,

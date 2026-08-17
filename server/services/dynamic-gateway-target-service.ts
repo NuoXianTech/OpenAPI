@@ -122,6 +122,15 @@ async function fetchTarget(
   return fetch(targetUrl, init)
 }
 
+function isServiceTokenRejection(response: Response): boolean {
+  return response.status === 401
+    && response.headers.get('x-openapi-error-code') === 'UNAUTHORIZED'
+    && response.headers.get('www-authenticate')
+      ?.trim()
+      .toLowerCase()
+      .startsWith('service ') === true
+}
+
 export function createGatewayProxyFetch(input: {
   match: ResolvedDynamicRoute
   targets: GatewayTarget[]
@@ -150,6 +159,18 @@ export function createGatewayProxyFetch(input: {
         const retryableStatus = RETRYABLE_UPSTREAM_STATUSES.has(response.status)
         if (retryableStatus) markTargetUnavailable(input.match, target)
         else markTargetResponsive(input.match, target)
+
+        if (
+          input.match.upstream.kind === 'internal'
+          && isServiceTokenRejection(response)
+        ) {
+          await response.body?.cancel().catch(() => undefined)
+          throw new GatewayExecutionError(
+            502,
+            'UPSTREAM_AUTH_FAILED',
+            '上游服务认证失败'
+          )
+        }
 
         if (retryableStatus && index < targets.length - 1) {
           await response.body?.cancel().catch(() => undefined)

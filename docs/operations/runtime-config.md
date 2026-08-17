@@ -85,6 +85,8 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Internal Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
 
+`0.1.0` 的 Service Token 是单值配置，不支持新旧 Token 并行或无停机轮换。需要更换时，应在维护窗口协调停止 Service、按 Service 运维文档处理旧配置快照、设置并启动新 Token，再在 Platform 更新 Token、重新发现并同步配置。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
+
 API Key 和兑换码没有裸明文数据库列。数据库保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；完整 API Key 仅在创建或重置响应中返回一次，完整兑换码仅在生成响应中返回一次，普通列表、历史记录、操作日志和积分流水都只返回预览。
 
 ### `NUXT_API_KEY_SECRET` 轮换边界

@@ -32,10 +32,13 @@ describe('service availability service', () => {
 
     await expect(resolveServiceAvailability(null, [
       { baseUrl: 'http://127.0.0.1:8100', enabled: true }
-    ])).resolves.toBe('unknown')
+    ], 'service-token')).resolves.toBe('unknown')
     await expect(resolveServiceAvailability(description, [
       { baseUrl: 'http://127.0.0.1:8100', enabled: false }
-    ])).resolves.toBe('unknown')
+    ], 'service-token')).resolves.toBe('unknown')
+    await expect(resolveServiceAvailability(description, [
+      { baseUrl: 'http://127.0.0.1:8100', enabled: true }
+    ], null)).resolves.toBe('unknown')
     expect(request).not.toHaveBeenCalled()
   })
 
@@ -53,15 +56,15 @@ describe('service availability service', () => {
     await expect(resolveServiceAvailability(description, [
       { baseUrl: 'http://127.0.0.1:8101', enabled: true },
       { baseUrl: 'http://127.0.0.1:8102', enabled: true }
-    ])).resolves.toBe('online')
+    ], 'service-token')).resolves.toBe('online')
     await expect(resolveServiceAvailability(description, [
       { baseUrl: 'http://127.0.0.1:8201', enabled: true },
       { baseUrl: 'http://127.0.0.1:8202', enabled: true }
-    ])).resolves.toBe('degraded')
+    ], 'service-token')).resolves.toBe('degraded')
     await expect(resolveServiceAvailability(description, [
       { baseUrl: 'http://127.0.0.1:8301', enabled: true },
       { baseUrl: 'http://127.0.0.1:8302', enabled: true }
-    ])).resolves.toBe('offline')
+    ], 'service-token')).resolves.toBe('offline')
   })
 
   it('deduplicates concurrent Target readiness requests', async () => {
@@ -75,14 +78,40 @@ describe('service availability service', () => {
       enabled: true
     }]
 
-    const first = resolveServiceAvailability(description, targets)
-    const second = resolveServiceAvailability(description, targets)
+    const first = resolveServiceAvailability(
+      description,
+      targets,
+      'service-token'
+    )
+    const second = resolveServiceAvailability(
+      description,
+      targets,
+      'service-token'
+    )
 
     await expect(Promise.all([first, second]))
       .resolves.toEqual(['online', 'online'])
 
-    expect(request).toHaveBeenCalledTimes(1)
+    expect(request).toHaveBeenCalledTimes(2)
     expect(request.mock.calls[0]?.[0].toString())
       .toBe('http://127.0.0.1:8400/service/readyz')
+    expect(request.mock.calls[1]?.[0].toString())
+      .toBe('http://127.0.0.1:8400/service/.well-known/configuration/state.json')
+    expect(new Headers(request.mock.calls[1]?.[1]?.headers).get('authorization'))
+      .toBe('Service service-token')
+  })
+
+  it('does not report a ready Target as online when Service authentication fails', async () => {
+    const request = vi.fn(async (input: string | URL | Request) => (
+      input.toString().endsWith('/readyz')
+        ? new Response(null, { status: 200 })
+        : new Response(null, { status: 401 })
+    ))
+    vi.stubGlobal('fetch', request)
+
+    await expect(resolveServiceAvailability(description, [{
+      baseUrl: 'http://127.0.0.1:8500',
+      enabled: true
+    }], 'wrong-service-token')).resolves.toBe('offline')
   })
 })

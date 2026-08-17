@@ -7,6 +7,7 @@ import {
   apiVersions,
   environments,
   routingRevisions,
+  upstreamServiceConnections,
   upstreamServices,
   upstreamTargets
 } from '~~/server/db/schema'
@@ -22,6 +23,7 @@ import { canonicalJson } from '~~/server/utils/canonical-json'
 import { getSqlState } from '~~/server/utils/database-error'
 import { findRoutingRouteConflict, type RoutingConflictScope } from '~~/server/utils/routing-conflict'
 import { firstRow } from '~~/server/utils/row'
+import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
 
 type RoutingRuntimeConfiguration = Pick<
   RoutingRevisionPayload,
@@ -192,18 +194,40 @@ export const routingRevisionService = {
               eq(upstreamTargets.enabled, true)
             ))
           : []
+        const internalUpstreamIds = upstreamIds.filter(id => (
+          upstreamDefinitions.get(id)?.kind === 'internal'
+        ))
+        const connectionRows = internalUpstreamIds.length > 0
+          ? await tx.select().from(upstreamServiceConnections).where(inArray(
+              upstreamServiceConnections.upstreamServiceId,
+              internalUpstreamIds
+            ))
+          : []
+        const connections = new Map(connectionRows.map(connection => [
+          connection.upstreamServiceId,
+          connection
+        ]))
 
         const upstreams: RoutingRevisionUpstream[] = upstreamIds.map((id) => {
           const definition = upstreamDefinitions.get(id)!
           const targets = targetRows
             .filter(target => target.upstreamServiceId === id)
+            .filter(target => definition.kind !== 'internal'
+              || isInternalTargetReady(target, connections.get(id) ?? null))
             .map(target => ({ id: target.id, baseUrl: target.baseUrl, weight: target.weight }))
             .sort((left, right) => left.id.localeCompare(right.id))
           if (targets.length === 0) {
             throw createApplicationError({
               statusCode: 409,
-              message: 'active route references an upstream without enabled targets',
-              data: { code: 'UPSTREAM_HAS_NO_TARGETS', upstreamServiceId: id }
+              message: definition.kind === 'internal'
+                ? 'active route references an internal upstream without verified targets'
+                : 'active route references an upstream without enabled targets',
+              data: {
+                code: definition.kind === 'internal'
+                  ? 'INTERNAL_UPSTREAM_NOT_READY'
+                  : 'UPSTREAM_HAS_NO_TARGETS',
+                upstreamServiceId: id
+              }
             })
           }
           return { ...definition, targets }

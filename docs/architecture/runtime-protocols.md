@@ -30,7 +30,7 @@ PUT /.well-known/configuration.json
 Authorization: Service <token>
 ```
 
-失败返回 `401`，不得说明 Token 是否存在、长度是否正确或命中了轮换 Token。
+失败返回 `401`，不得说明 Token 是否存在、长度是否正确或具体的校验细节。
 
 ## 3. Service 描述
 
@@ -58,6 +58,8 @@ Authorization: Service <token>
 
 同一 Internal Upstream 的全部 Target 必须返回相同 `serviceId`、OpenAPI 指纹、配置 Schema 指纹和控制端点。
 
+Internal Target 只有在发现校验通过后才有资格进入新的 Routing Revision。Platform 已保存期望业务配置时，Target 还必须确认相同的配置 Revision 和哈希；未验证、漂移或同步失败的 Target 不接收新增流量。
+
 ## 4. OpenAPI 发现
 
 `GET /openapi.json` 返回确定性 OpenAPI 3.1 文档，并提供：
@@ -67,7 +69,7 @@ ETag: "<document-sha256>"
 X-OpenAPI-SHA256: <document-sha256>
 ```
 
-Platform 重新计算内容哈希并与 Service 描述和响应头比对。发现成功后保存文档和 Endpoint 摘要，并将业务 Endpoint 展示在接口目录；发现动作本身不会创建公开 Route。
+Platform 重新计算内容哈希并与 Service 描述和响应头比对。发现成功后保存文档和 Endpoint 摘要，并将业务 Endpoint 展示在接口目录；发现动作本身不会创建公开 Route，但会重新应用管理员此前已经明确发布、因 Internal Target 尚未验证而等待的运行配置。
 
 OpenAPI 指纹变化表示 Service 契约变化。新增 Endpoint 显示为“可发布”，缺失 Endpoint 会提示管理员处理；现有公开 Route 不会被静默改写。管理员确认发布、停用或治理变更后，Platform 自动生成新的 Routing Revision。
 

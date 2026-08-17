@@ -22,7 +22,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.platform.service.token.update',
     resourceType: 'upstream-service',
     resourceId: upstreamId.data,
-    detail: { rotated: true }
+    detail: { updated: true }
   })
   return result
 })

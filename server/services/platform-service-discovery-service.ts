@@ -13,11 +13,13 @@ import {
   safeServiceControlError
 } from '~~/server/services/platform-service-control-context'
 import { persistServiceOpenApi } from '~~/server/services/platform-service-openapi-service'
+import { routingRevisionService } from '~~/server/services/routing-revision-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { firstRow } from '~~/server/utils/row'
 import { serviceControlClient } from '~~/server/utils/service-control-client'
 import { assertServiceConfigurationDefinition } from '~~/server/utils/service-configuration-values'
+import { areEnabledInternalTargetsReady } from '~~/server/utils/internal-upstream-readiness'
 
 const activeDiscoveries = new Map<
   string,
@@ -239,6 +241,15 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
       eq(upstreamTargets.enabled, true)
     ))
     refreshed = await loadServiceControlContext(upstreamServiceId)
+  }
+  if (areEnabledInternalTargetsReady(
+    refreshed.targets,
+    refreshed.connection
+  )) {
+    await routingRevisionService.publishWorkspace(
+      refreshed.service.workspaceId,
+      null
+    )
   }
   return buildServiceControlView(
     refreshed,

@@ -20,7 +20,7 @@ const resource = usePrivateResource<ServiceConfigurationView | null>({
 const discovering = ref(false)
 const synchronizing = ref(false)
 const saving = ref(false)
-const rotatingToken = ref(false)
+const updatingToken = ref(false)
 const serviceToken = ref('')
 const businessEndpoints = computed(() =>
   resource.data.value?.endpoints.filter(endpoint => (
@@ -85,7 +85,7 @@ async function discover() {
   }
 }
 
-async function rotateServiceToken() {
+async function updateServiceToken() {
   if (serviceToken.value.length < 32) {
     toast.add({
       title: t('admin.apis.routing.validation.serviceTokenInvalid'),
@@ -93,7 +93,7 @@ async function rotateServiceToken() {
     })
     return
   }
-  rotatingToken.value = true
+  updatingToken.value = true
   try {
     await $fetch(`/api/admin/v1/upstreams/${upstreamId.value}/token`, {
       method: 'PUT',
@@ -114,7 +114,7 @@ async function rotateServiceToken() {
       color: 'error'
     })
   } finally {
-    rotatingToken.value = false
+    updatingToken.value = false
   }
 }
 
@@ -328,8 +328,8 @@ async function synchronizeConfiguration() {
 
         <UFormField
           name="serviceToken"
-          :label="$t('admin.apis.routing.serviceControl.rotateToken')"
-          :description="$t('admin.apis.routing.serviceControl.rotateTokenDescription')"
+          :label="$t('admin.apis.routing.serviceControl.replaceToken')"
+          :description="$t('admin.apis.routing.serviceControl.replaceTokenDescription')"
         >
           <div class="flex flex-col gap-2 sm:flex-row">
             <UInput
@@ -342,8 +342,8 @@ async function synchronizeConfiguration() {
             <UButton
               color="neutral"
               variant="outline"
-              :loading="rotatingToken"
-              @click="rotateServiceToken"
+              :loading="updatingToken"
+              @click="updateServiceToken"
             >
               {{ $t('admin.apis.routing.serviceControl.updateToken') }}
             </UButton>

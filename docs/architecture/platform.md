@@ -121,8 +121,9 @@ Internal Upstream 用于受信 API Service：
 - 调用时注入 `Authorization: Service <token>`。
 - 删除调用方 `Authorization`、Cookie、API Key 和伪造内部头。
 - 可发现 Service 身份、OpenAPI 和业务配置 Schema。
-- 管理页面通过各启用 Target 的 `readiness` 探针显示在线、部分可用、离线或未知；曾经完成 Service 发现不等同于当前在线。
+- 管理页面同时检查各启用 Target 的 `readiness` 探针和带 Service Token 的只读控制端点，显示在线、部分可用、离线或未知；曾经完成 Service 发现不等同于当前在线，Token 不匹配也不能显示为在线。
 - 多个 Target 必须属于同一逻辑 Service 并暴露相同契约。
+- 新增、修改地址或重新启用的 Internal Target 在完成发现前不会进入新的 Routing Revision；存在 Platform 期望配置时，还必须同步到对应 Revision 和哈希。
 
 ### 7.2 External Upstream
 
@@ -151,6 +152,8 @@ External Upstream 用于普通 HTTP API：
 5. 为通用字段生成管理表单。
 
 业务配置保存后，Platform 使用乐观锁生成更高 Revision，分别向全部启用 Target 下发同一完整快照，并记录 `synced`、`drifted`、`error` 或 `unknown` 状态。部分 Target 失败不会被视为全部成功。
+
+发现或全量配置同步通过后，Platform 自动重新计算 Workspace 的运行配置。相同配置复用当前 Revision；只有验证通过的 Target 集合实际变化时才生成新 Revision。发现不会自行创建公开 Route，但可以应用管理员此前已经明确发布、因 Internal Target 尚未验证而等待的 Route。
 
 Secret 使用独立存储域加密。管理 API 只返回是否已配置，浏览器和普通日志永远不会收到明文。
 

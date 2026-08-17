@@ -14,7 +14,10 @@ import { resolveServiceAvailability } from '~~/server/services/service-availabil
 import { getSqlState } from '~~/server/utils/database-error'
 import { firstRow } from '~~/server/utils/row'
 import { encryptStoredSecret } from '~~/server/utils/stored-secret'
-import { invalidateUpstreamServiceToken } from '~~/server/services/upstream-service-token-service'
+import {
+  invalidateUpstreamServiceToken,
+  upstreamServiceTokenService
+} from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
 
 const BLOCKED_EXTERNAL_IPS = [
@@ -208,7 +211,10 @@ export const platformUpstreamService = {
         ? 'unknown'
         : await resolveServiceAvailability(
             connectionRecord?.serviceDescription ?? null,
-            upstream.targets
+            upstream.targets,
+            connectionRecord
+              ? await upstreamServiceTokenService.get(upstream.id)
+              : null
           )
       return {
         ...upstream,
@@ -349,7 +355,11 @@ export const platformUpstreamService = {
         enabled: input.enabled
       }).returning())
       if (!target) throw new Error('target insert returned no row')
-      return { target, workspaceId: service.workspaceId }
+      return {
+        target,
+        workspaceId: service.workspaceId,
+        publishRouting: service.kind === 'external' && target.enabled
+      }
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'target URL already exists for this upstream', data: { code: 'TARGET_CONFLICT' } })
@@ -397,7 +407,19 @@ export const platformUpstreamService = {
         updatedAt: new Date()
       }).where(eq(upstreamTargets.id, id)).returning())
       if (!target) throw new Error('target update returned no row')
-      return { target, workspaceId: binding.service.workspaceId }
+      const disablingPublishedTarget = binding.target.enabled
+        && target.enabled === false
+      const updatingPublishedTarget = !resetServiceState
+        && target.enabled
+        && input.weight !== undefined
+        && input.weight !== binding.target.weight
+      return {
+        target,
+        workspaceId: binding.service.workspaceId,
+        publishRouting: binding.service.kind === 'external'
+          || disablingPublishedTarget
+          || updatingPublishedTarget
+      }
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'target URL already exists for this upstream', data: { code: 'TARGET_CONFLICT' } })
@@ -433,7 +455,7 @@ export const platformUpstreamService = {
           normalizedToken,
           'service-token'
         ),
-        lastDiscoveryError: null,
+        lastDiscoveryError: 'Service Token changed; run discovery to verify the connection',
         updatedAt: new Date()
       })
       .where(eq(upstreamServiceConnections.upstreamServiceId, id))
