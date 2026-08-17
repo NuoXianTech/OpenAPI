@@ -127,13 +127,16 @@ git push origin v0.1.0
 1. 检查 Tag 与 `package.json` 版本一致。
 2. 安装锁定依赖。
 3. 执行 lint、typecheck、死代码检查、测试和 build。
-4. 打包完整 `.output`。
+4. 打包并校验完整 `.output`、数据库迁移执行器和迁移文件。
 5. 构建非 root amd64/arm64 镜像。
-6. 扫描依赖漏洞和 Secret。
-7. 创建 GitHub Release 和校验和。
-8. 发布 GHCR 多架构镜像。
+6. 创建 GitHub Release 和校验和。
+7. 发布 GHCR 多架构镜像。
 
-任何步骤失败都不得产生可标记为正式的部分产物。
+仓库还应在 GitHub Security 中启用 Secret scanning 与 Push protection；
+这属于仓库安全设置，不由构建脚本伪装实现。GitHub Release 与 GHCR
+由两条独立的 Tag 工作流发布，只有两者都成功时版本才算完成。基础设施
+故障可以在不移动 Tag 的前提下重跑；源码或产物问题必须修复后发布新的
+patch 版本。
 
 ## 8. 生产部署
 
