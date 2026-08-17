@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { setResponseHeader, setResponseStatus } from 'h3'
+import { db } from '~~/server/db/client'
 import { readRedisReadiness } from '~~/server/utils/redis'
 
 async function readDatabaseReadiness(): Promise<{ ready: boolean }> {

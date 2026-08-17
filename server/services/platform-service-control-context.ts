@@ -24,6 +24,7 @@ import {
   defaultServiceConfigurationValues,
   serviceConfigurationFields
 } from '~~/server/utils/service-configuration-values'
+import { toNullableIsoString } from '~~/server/utils/date'
 import { firstRow } from '~~/server/utils/row'
 
 export interface PlatformServiceControlContext {
@@ -36,13 +37,9 @@ export interface ServiceViewOptions {
   checkAvailability?: boolean
 }
 
-function toISOString(value: Date | null): string | null {
-  return value?.toISOString() ?? null
-}
-
-function connectionView(
+export function toServiceConnectionView(
   connection: typeof upstreamServiceConnections.$inferSelect,
-  availability: ServiceAvailability
+  availability: ServiceAvailability = 'unknown'
 ): ServiceConnectionView {
   return {
     upstreamServiceId: connection.upstreamServiceId,
@@ -58,8 +55,8 @@ function connectionView(
     configurationSchemaSha256: connection.configurationSchemaSha256,
     configurationRevision: connection.configurationRevision,
     configurationHash: connection.configurationHash,
-    lastDiscoveredAt: toISOString(connection.lastDiscoveredAt),
-    lastConfigurationSyncAt: toISOString(
+    lastDiscoveredAt: toNullableIsoString(connection.lastDiscoveredAt),
+    lastConfigurationSyncAt: toNullableIsoString(
       connection.lastConfigurationSyncAt
     ),
     lastDiscoveryError: connection.lastDiscoveryError
@@ -99,7 +96,7 @@ export function serviceTargetControlState(
     configurationStatus: target.configurationStatus as
       ServiceTargetControlState['configurationStatus'],
     configurationState: target.configurationState ?? null,
-    lastConfigurationSyncAt: toISOString(
+    lastConfigurationSyncAt: toNullableIsoString(
       target.lastConfigurationSyncAt
     ),
     lastError: target.lastError
@@ -162,7 +159,7 @@ export async function buildServiceControlView(
       )
     : { overall: 'unknown' as const, targets: new Map() }
   return {
-    connection: connectionView(
+    connection: toServiceConnectionView(
       context.connection,
       availability.overall
     ),

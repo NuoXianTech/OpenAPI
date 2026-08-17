@@ -1,7 +1,6 @@
 import { isIP } from 'node:net'
 import { and, asc, count, eq, isNull, ne } from 'drizzle-orm'
 import { ipInAnyCidr } from '#shared/utils/cidr'
-import type { ServiceAvailability } from '#shared/types/service-control'
 import { db } from '~~/server/db/client'
 import {
   upstreamServiceConnections,
@@ -10,6 +9,7 @@ import {
   apiRoutes
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
+import { toServiceConnectionView } from '~~/server/services/platform-service-control-context'
 import { resolveServiceAvailability } from '~~/server/services/service-availability-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { firstRow } from '~~/server/utils/row'
@@ -65,31 +65,6 @@ interface UpdateTargetInput {
   baseUrl?: string
   weight?: number
   enabled?: boolean
-}
-
-function publicConnection(
-  connection: typeof upstreamServiceConnections.$inferSelect | null,
-  availability: ServiceAvailability = 'unknown'
-) {
-  if (!connection) return null
-  return {
-    upstreamServiceId: connection.upstreamServiceId,
-    discovered: Boolean(connection.serviceId),
-    availability,
-    tokenConfigured: Boolean(connection.serviceTokenCiphertext),
-    serviceId: connection.serviceId,
-    serviceName: connection.serviceName,
-    serviceVersion: connection.serviceVersion,
-    serviceCommit: connection.serviceCommit,
-    platformProtocol: connection.platformProtocol,
-    openapiSha256: connection.openapiSha256,
-    configurationSchemaSha256: connection.configurationSchemaSha256,
-    configurationRevision: connection.configurationRevision,
-    configurationHash: connection.configurationHash,
-    lastDiscoveredAt: connection.lastDiscoveredAt,
-    lastConfigurationSyncAt: connection.lastConfigurationSyncAt,
-    lastDiscoveryError: connection.lastDiscoveryError
-  }
 }
 
 function normalizeTargetUrl(value: string, kind: CreateUpstreamInput['kind']): URL {
@@ -231,7 +206,9 @@ export const platformUpstreamService = {
           )).overall
       return {
         ...upstream,
-        connection: publicConnection(connectionRecord, availability)
+        connection: connectionRecord
+          ? toServiceConnectionView(connectionRecord, availability)
+          : null
       }
     }))
   },
@@ -282,7 +259,9 @@ export const platformUpstreamService = {
         return {
           ...service,
           targets,
-          connection: publicConnection(connection)
+          connection: connection
+            ? toServiceConnectionView(connection)
+            : null
         }
       })
     } catch (error) {
@@ -489,6 +468,6 @@ export const platformUpstreamService = {
       })
     }
     invalidateUpstreamServiceToken(id)
-    return publicConnection(updated)
+    return toServiceConnectionView(updated)
   }
 }
