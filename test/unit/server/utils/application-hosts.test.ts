@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   getApplicationHostErrors,
+  isGatewayRequest,
   resolveApplicationHostRole
 } from '~~/server/utils/application-hosts'
 
@@ -15,6 +16,13 @@ afterEach(() => {
 })
 
 describe('application hosts', () => {
+  it('classifies arbitrary non-Platform paths as Gateway traffic', () => {
+    expect(isGatewayRequest('gateway', '/weather')).toBe(true)
+    expect(isGatewayRequest('combined', '/weather')).toBe(true)
+    expect(isGatewayRequest('combined', '/admin/users')).toBe(false)
+    expect(isGatewayRequest('console', '/v1/player')).toBe(false)
+  })
+
   it('keeps development combined when no hosts are configured', () => {
     process.env.NODE_ENV = 'development'
     delete process.env.NUXT_HOSTS_CONSOLE

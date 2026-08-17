@@ -65,6 +65,14 @@ describe('safeFetch', () => {
     await expect(safeFetch('https://10.0.0.1/resource', {
       allowedHosts: ['10.0.0.1']
     })).rejects.toThrow('upstream hostname resolved to a blocked network')
+
+    networkMocks.lookup.mockResolvedValueOnce([{
+      address: '::ffff:7f00:1',
+      family: 6
+    }])
+    await expect(safeFetch('https://[::ffff:7f00:1]/resource', {
+      allowedHosts: ['[::ffff:7f00:1]']
+    })).rejects.toThrow('upstream hostname resolved to a blocked network')
   })
 
   it('pins the verified DNS address for the connection', async () => {
@@ -97,6 +105,24 @@ describe('safeFetch', () => {
     await expect(safeFetch('https://example.com/resource', {
       allowedHosts: ['example.com']
     })).resolves.toBeInstanceOf(Response)
+    expect(fetchMock).toHaveBeenCalledOnce()
+  })
+
+  it('allows a public IPv4-mapped IPv6 destination', async () => {
+    networkMocks.lookup.mockResolvedValueOnce([{
+      address: '::ffff:5db8:d822',
+      family: 6
+    }])
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('ok'))
+
+    await expect(safeFetch('https://[::ffff:5db8:d822]/resource', {
+      allowedHosts: ['::ffff:5db8:d822']
+    })).resolves.toBeInstanceOf(Response)
+    expect(networkMocks.lookup).toHaveBeenCalledWith(
+      '::ffff:5db8:d822',
+      { all: true, verbatim: true }
+    )
     expect(fetchMock).toHaveBeenCalledOnce()
   })
 })

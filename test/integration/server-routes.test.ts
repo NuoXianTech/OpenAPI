@@ -66,17 +66,19 @@ describe('Nitro server routes', () => {
   })
 
   it('keeps public API 404 responses on the documented contract', async () => {
-    const response = await fetch('/v1/not-found')
-    const body = await readJson<OpenApiErrorResponse>(response)
+    for (const path of ['/v1/not-found', '/weather-not-found']) {
+      const response = await fetch(path)
+      const body = await readJson<OpenApiErrorResponse>(response)
 
-    expect(response.status).toBe(404)
-    expect(body).toMatchObject({
-      code: 'API_NOT_FOUND',
-      message: '接口不存在',
-      data: null
-    })
-    expect(body.timestamp).toEqual(expect.any(Number))
-    expect(response.headers.get('x-request-id')).toBeTruthy()
+      expect(response.status).toBe(404)
+      expect(body).toMatchObject({
+        code: 'API_NOT_FOUND',
+        message: '接口不存在',
+        data: null
+      })
+      expect(body.timestamp).toEqual(expect.any(Number))
+      expect(response.headers.get('x-request-id')).toBeTruthy()
+    }
   })
 
   it('returns 405 and Allow for unsupported public API methods', async () => {

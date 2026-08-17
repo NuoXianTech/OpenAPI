@@ -29,7 +29,9 @@ vi.mock('h3', async (importOriginal) => {
     sendProxy: mocks.sendProxy,
     setResponseHeader: vi.fn(),
     setResponseHeaders: vi.fn(),
-    setResponseStatus: vi.fn()
+    setResponseStatus: (event: H3Event, status: number) => {
+      event.node.res.statusCode = status
+    }
   }
 })
 
@@ -200,5 +202,10 @@ describe('dynamic gateway streaming billing', () => {
     expect(mocks.releaseReservation).toHaveBeenCalledWith(11, 7)
     expect(mocks.markReservationPending).not.toHaveBeenCalled()
     expect(event.context.apiBilling?.creditReservation).toBeNull()
+    expect(event.node.res.statusCode).toBe(499)
+    expect(event.context.apiFailure).toEqual({
+      errorCode: 'CLIENT_DISCONNECTED',
+      errorMessage: '客户端已断开连接'
+    })
   })
 })

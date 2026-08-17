@@ -60,14 +60,13 @@ describe('security headers', () => {
     expect(headers['X-Frame-Options']).toBeUndefined()
   })
 
-  it('classifies only Platform pages as HTML documents', () => {
+  it('classifies document-like paths without assuming API version prefixes', () => {
     expect(isHtmlDocumentRoute('/')).toBe(true)
     expect(isHtmlDocumentRoute('/admin/users')).toBe(true)
     expect(isHtmlDocumentRoute('/api/health')).toBe(false)
     expect(isHtmlDocumentRoute('/_nuxt/app.js')).toBe(false)
-    expect(isHtmlDocumentRoute('/v1/bing')).toBe(false)
-    expect(isHtmlDocumentRoute('/v1/not-found')).toBe(false)
-    expect(isHtmlDocumentRoute('/v1/player')).toBe(false)
-    expect(isHtmlDocumentRoute('/v2/player/art/')).toBe(false)
+    expect(isHtmlDocumentRoute('/v1/bing')).toBe(true)
+    expect(isHtmlDocumentRoute('/weather')).toBe(true)
+    expect(isHtmlDocumentRoute('/download.json')).toBe(false)
   })
 })

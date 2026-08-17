@@ -78,6 +78,5 @@ export function getSecurityHeaders(options: SecurityHeadersOptions): Readonly<Re
 export function isHtmlDocumentRoute(pathname: string): boolean {
   return !pathname.startsWith('/api/')
     && !pathname.startsWith('/_nuxt/')
-    && !/^\/v\d+(?:\/|$)/.test(pathname)
     && !/\.[a-z0-9]{2,8}$/i.test(pathname)
 }

@@ -1,4 +1,8 @@
-import { normalizeRouteHost, routeHostMatches } from '~~/server/utils/route-pattern'
+import {
+  isReservedPlatformPath,
+  normalizeRouteHost,
+  routeHostMatches
+} from '~~/server/utils/route-pattern'
 
 export type ApplicationHostRole = 'console' | 'gateway' | 'combined' | 'unknown'
 
@@ -58,4 +62,12 @@ export function resolveApplicationHostRole(requestHost: string): ApplicationHost
   if (hosts.console.includes(normalized)) return 'console'
   if (hosts.gateway.some(host => host === '*' || routeHostMatches(host, normalized))) return 'gateway'
   return 'unknown'
+}
+
+export function isGatewayRequest(
+  role: ApplicationHostRole,
+  pathname: string
+): boolean {
+  return role === 'gateway'
+    || (role === 'combined' && !isReservedPlatformPath(pathname))
 }

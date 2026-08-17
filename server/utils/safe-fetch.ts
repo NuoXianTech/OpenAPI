@@ -35,7 +35,11 @@ export interface SafeFetchOptions extends RequestInit {
 }
 
 function normalizeHostname(hostname: string): string {
-  return hostname.toLowerCase().replace(/\.$/, '')
+  return hostname
+    .trim()
+    .toLowerCase()
+    .replace(/^\[|\]$/g, '')
+    .replace(/\.$/, '')
 }
 
 export function isHostnameWithin(hostname: string, allowedHost: string): boolean {
@@ -69,10 +73,11 @@ async function assertSafeUrl(
 
   assertAllowedHostname(url.hostname, allowedHosts)
 
-  const addresses = await lookup(url.hostname, { all: true, verbatim: true })
+  const hostname = normalizeHostname(url.hostname)
+  const addresses = await lookup(hostname, { all: true, verbatim: true })
   if (addresses.length === 0) throw new Error('upstream hostname did not resolve')
   for (const { address } of addresses) assertPublicAddress(address)
-  pinnedAddresses.set(normalizeHostname(url.hostname), addresses)
+  pinnedAddresses.set(hostname, addresses)
 
   return url
 }

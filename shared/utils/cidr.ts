@@ -110,6 +110,18 @@ function ipv6ToBigint(ip: string): bigint | null {
   return result
 }
 
+function mappedIpv4ToBigint(ip: string): bigint | null {
+  const groups = parseIPv6Groups(ip)
+  if (
+    !groups
+    || groups.slice(0, 5).some(group => Number.parseInt(group, 16) !== 0)
+    || Number.parseInt(groups[5]!, 16) !== 0xffff
+  ) return null
+
+  return (BigInt(Number.parseInt(groups[6]!, 16)) << BigInt(16))
+    | BigInt(Number.parseInt(groups[7]!, 16))
+}
+
 function applyMask(addr: bigint, prefix: number, total: number): bigint {
   if (prefix === total) return addr
   if (prefix === 0) return BigInt(0)
@@ -166,12 +178,8 @@ export function ipInCidr(ip: string, cidr: string): boolean {
   } else if (isValidIPv6(ip)) {
     // IPv4-mapped IPv6 也允许匹配 IPv4 CIDR
     if (parsed.family === 4) {
-      const lastColon = ip.lastIndexOf(':')
-      const tail = ip.slice(lastColon + 1)
-      if (IPV4_LITERAL_RE.test(tail) && isValidIPv4(tail)) {
-        addr = ipv4ToBigint(tail)
-        family = 4
-      }
+      addr = mappedIpv4ToBigint(ip)
+      if (addr !== null) family = 4
     }
     if (addr === null) {
       addr = ipv6ToBigint(ip)

@@ -31,6 +31,8 @@ describe('CIDR utilities', () => {
 
   it('matches IPv4-mapped IPv6 addresses against IPv4 networks', () => {
     expect(ipInCidr('::ffff:192.168.1.42', '192.168.1.0/24')).toBe(true)
+    expect(ipInCidr('::ffff:c0a8:12a', '192.168.1.0/24')).toBe(true)
+    expect(ipInCidr('::ffff:5db8:d822', '10.0.0.0/8')).toBe(false)
   })
 
   it('treats an empty whitelist as unrestricted', () => {

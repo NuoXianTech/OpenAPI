@@ -484,6 +484,42 @@ describe('Platform to Node API Service acceptance', () => {
     }
   })
 
+  it('coalesces concurrent discovery requests for the same Service', async () => {
+    const getDescription = serviceControlClient.getDescription.bind(
+      serviceControlClient
+    )
+    let release!: () => void
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let requests = 0
+    const descriptionSpy = vi.spyOn(
+      serviceControlClient,
+      'getDescription'
+    ).mockImplementation(async (...args) => {
+      requests += 1
+      await blocked
+      return getDescription(...args)
+    })
+
+    try {
+      const first = platformServiceControlService.discover(officialUpstreamId)
+      await vi.waitFor(() => expect(requests).toBe(1))
+      const second = platformServiceControlService.discover(officialUpstreamId)
+      expect(requests).toBe(1)
+      release()
+
+      const [firstResult, secondResult] = await Promise.all([first, second])
+      expect(firstResult.connection.openapiSha256).toBe(
+        secondResult.connection.openapiSha256
+      )
+      expect(requests).toBe(1)
+    } finally {
+      release()
+      descriptionSpy.mockRestore()
+    }
+  })
+
   it('pins the discovered Service identity to the existing connection', async () => {
     await databaseClient!.query(
       `update upstream_service_connections
@@ -550,6 +586,76 @@ describe('Platform to Node API Service acceptance', () => {
     expect(result.targets.map(target => target.configurationStatus)).toEqual(
       expect.arrayContaining(['synced', 'error'])
     )
+  })
+
+  it('does not let an older configuration sync overwrite newer target state', async () => {
+    const current = await platformServiceControlService.get(officialUpstreamId)
+    const firstRevision = current.connection.configurationRevision + 1
+    const updateConfiguration
+      = serviceControlClient.updateConfiguration.bind(serviceControlClient)
+    let release!: () => void
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let firstAcknowledged = false
+    const updateSpy = vi.spyOn(
+      serviceControlClient,
+      'updateConfiguration'
+    ).mockImplementation(async (baseUrl, endpoint, token, input) => {
+      const response = await updateConfiguration(
+        baseUrl,
+        endpoint,
+        token,
+        input
+      )
+      if (input.revision === firstRevision) {
+        firstAcknowledged = true
+        await blocked
+      }
+      return response
+    })
+
+    try {
+      const first = platformServiceControlService.updateConfiguration(
+        officialUpstreamId,
+        {
+          expectedRevision: current.connection.configurationRevision,
+          values: { 'ip.enabled': false },
+          secrets: {}
+        }
+      )
+      await vi.waitFor(() => expect(firstAcknowledged).toBe(true))
+      const second = await platformServiceControlService.updateConfiguration(
+        officialUpstreamId,
+        {
+          expectedRevision: firstRevision,
+          values: { 'ip.enabled': true },
+          secrets: {}
+        }
+      )
+      release()
+      await first
+
+      expect(second).toMatchObject({
+        status: 'synced',
+        revision: firstRevision + 1,
+        targets: [{
+          configurationRevision: firstRevision + 1,
+          configurationStatus: 'synced'
+        }]
+      })
+      await expect(platformServiceControlService.get(officialUpstreamId))
+        .resolves.toMatchObject({
+          connection: { configurationRevision: firstRevision + 1 },
+          targets: [{
+            configurationRevision: firstRevision + 1,
+            configurationStatus: 'synced'
+          }]
+        })
+    } finally {
+      release()
+      updateSpy.mockRestore()
+    }
   })
 
   it('publishes an Internal Route, replaces caller auth, and exposes only the first migrated APIs', async () => {

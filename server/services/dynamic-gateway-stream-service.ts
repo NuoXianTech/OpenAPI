@@ -6,6 +6,20 @@ import { sanitizeGatewayResponseHeaders } from '~~/server/utils/gateway-response
 
 const PAYLOAD_METHODS = new Set(['PATCH', 'POST', 'PUT', 'DELETE'])
 
+function requestBodyLimitError(maximumBytes: number): GatewayExecutionError {
+  return maximumBytes === 0
+    ? new GatewayExecutionError(
+        413,
+        'REQUEST_BODY_NOT_ALLOWED',
+        '此接口不接受请求体'
+      )
+    : new GatewayExecutionError(
+        413,
+        'REQUEST_BODY_TOO_LARGE',
+        '请求体超过接口限制'
+      )
+}
+
 function contentLength(
   value: string | string[] | null | undefined
 ): number | null {
@@ -19,20 +33,9 @@ export function assertGatewayRequestSize(
   event: H3Event,
   maximumBytes: number
 ): void {
-  if (maximumBytes === 0 && PAYLOAD_METHODS.has(event.method.toUpperCase())) {
-    throw new GatewayExecutionError(
-      413,
-      'REQUEST_BODY_NOT_ALLOWED',
-      '此接口不接受请求体'
-    )
-  }
   const declaredLength = contentLength(event.node.req.headers['content-length'])
   if (declaredLength !== null && declaredLength > maximumBytes) {
-    throw new GatewayExecutionError(
-      413,
-      'REQUEST_BODY_TOO_LARGE',
-      '请求体超过接口限制'
-    )
+    throw requestBodyLimitError(maximumBytes)
   }
 }
 
@@ -63,11 +66,7 @@ export function createGatewayRequestBody(
   return limitGatewayByteStream(
     stream,
     maximumBytes,
-    () => new GatewayExecutionError(
-      413,
-      'REQUEST_BODY_TOO_LARGE',
-      '请求体超过接口限制'
-    ),
+    () => requestBodyLimitError(maximumBytes),
     (receivedBytes) => {
       const tracked = getAppEventContext(event).apiStatsTracked
       if (tracked) tracked.requestSize = receivedBytes
@@ -80,21 +79,24 @@ export async function limitGatewayUpstreamResponse(
   maximumBytes: number,
   onBytes?: (receivedBytes: number) => void
 ): Promise<Response> {
+  const headers = sanitizeGatewayResponseHeaders(response.headers)
+  if (!response.body) {
+    onBytes?.(0)
+    return new Response(null, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    })
+  }
   const declaredLength = contentLength(response.headers.get('content-length'))
   if (declaredLength !== null && declaredLength > maximumBytes) {
-    await response.body?.cancel().catch(() => undefined)
+    await response.body.cancel().catch(() => undefined)
     throw new GatewayExecutionError(
       502,
       'UPSTREAM_RESPONSE_TOO_LARGE',
       '上游响应超过接口限制'
     )
   }
-  const headers = sanitizeGatewayResponseHeaders(response.headers)
-  if (!response.body) return new Response(null, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
-  })
   return new Response(
     limitGatewayByteStream(
       response.body,

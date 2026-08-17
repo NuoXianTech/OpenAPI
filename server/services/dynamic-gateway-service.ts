@@ -149,6 +149,7 @@ export const dynamicGatewayService = {
     setPublicApiCors(event, [match.route.method])
     initializeGatewayStatistics(event, match)
     let abortController: AbortController | null = null
+    let abortReason: 'client_disconnected' | 'timeout' | null = null
     let abortRequest: (() => void) | null = null
     let abortResponse: (() => void) | null = null
     let timeout: ReturnType<typeof setTimeout> | null = null
@@ -174,14 +175,25 @@ export const dynamicGatewayService = {
       )
       const headers = createUpstreamHeaders(event, match, serviceToken)
       abortController = new AbortController()
+      const abortUpstream = (
+        reason: NonNullable<typeof abortReason>,
+        message: string
+      ) => {
+        if (!abortController || abortController.signal.aborted) return
+        abortReason = reason
+        abortController.abort(new Error(message))
+      }
       timeout = setTimeout(
-        () => abortController?.abort(new Error('upstream timeout')),
+        () => abortUpstream('timeout', 'upstream timeout'),
         match.route.timeoutMs
       )
-      abortRequest = () => abortController?.abort(new Error('client disconnected'))
+      abortRequest = () => abortUpstream(
+        'client_disconnected',
+        'client disconnected'
+      )
       abortResponse = () => {
         if (!event.node.res.writableEnded) {
-          abortController?.abort(new Error('client disconnected'))
+          abortUpstream('client_disconnected', 'client disconnected')
         }
       }
       event.node.req.once('aborted', abortRequest)
@@ -251,12 +263,21 @@ export const dynamicGatewayService = {
           billingError
         )
       }
-      if (abortController?.signal.aborted) {
+      if (abortReason === 'timeout') {
         return gatewayFailureResult(
           event,
           504,
           'UPSTREAM_TIMEOUT',
           '上游服务响应超时',
+          error
+        )
+      }
+      if (abortReason === 'client_disconnected') {
+        return gatewayFailureResult(
+          event,
+          499,
+          'CLIENT_DISCONNECTED',
+          '客户端已断开连接',
           error
         )
       }

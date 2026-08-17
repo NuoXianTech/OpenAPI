@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { ServiceDescription } from '#shared/types/service-control'
 import { db } from '~~/server/db/client'
 import {
@@ -15,8 +15,14 @@ import {
 import { persistServiceOpenApi } from '~~/server/services/platform-service-openapi-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
+import { firstRow } from '~~/server/utils/row'
 import { serviceControlClient } from '~~/server/utils/service-control-client'
 import { assertServiceConfigurationDefinition } from '~~/server/utils/service-configuration-values'
+
+const activeDiscoveries = new Map<
+  string,
+  ReturnType<typeof performPlatformServiceDiscovery>
+>()
 
 function assertMatchingDescriptions(descriptions: ServiceDescription[]) {
   const first = descriptions[0]
@@ -44,7 +50,7 @@ function assertMatchingDescriptions(descriptions: ServiceDescription[]) {
   return first
 }
 
-export async function discoverPlatformService(upstreamServiceId: string) {
+async function performPlatformServiceDiscovery(upstreamServiceId: string) {
   const context = await loadServiceControlContext(upstreamServiceId)
   const enabledTargets = context.targets.filter(target => target.enabled)
   if (enabledTargets.length === 0) {
@@ -131,13 +137,6 @@ export async function discoverPlatformService(upstreamServiceId: string) {
   }).where(eq(upstreamTargets.id, entry.target.id))))
   if (failed.length > 0) {
     const error = failed[0]!.result.reason
-    await db.update(upstreamServiceConnections).set({
-      lastDiscoveryError: safeServiceControlError(error),
-      updatedAt: new Date()
-    }).where(eq(
-      upstreamServiceConnections.upstreamServiceId,
-      upstreamServiceId
-    ))
     throw createApplicationError({
       statusCode: 502,
       message: `one or more Service targets could not be discovered: ${safeServiceControlError(error)}`,
@@ -185,51 +184,90 @@ export async function discoverPlatformService(upstreamServiceId: string) {
     && context.connection.configurationSchemaSha256
     !== description.configuration.schemaSha256
   )
-  await db.update(upstreamServiceConnections).set({
-    serviceId: description.serviceId,
-    serviceName: description.name,
-    serviceVersion: description.version,
-    serviceCommit: description.commit,
-    platformProtocol: description.platformProtocol,
-    serviceDescription: description,
-    openapiSha256: description.openapiSha256,
-    configurationSchemaSha256: description.configuration.schemaSha256,
-    configurationSchema: first.definition,
-    configurationHash: schemaChanged
-      ? null
-      : context.connection.configurationHash,
-    lastDiscoveredAt: now,
-    lastDiscoveryError: null,
-    updatedAt: now
-  }).where(eq(
-    upstreamServiceConnections.upstreamServiceId,
-    upstreamServiceId
-  ))
+  const updatedConnection = firstRow(
+    await db.update(upstreamServiceConnections).set({
+      serviceId: description.serviceId,
+      serviceName: description.name,
+      serviceVersion: description.version,
+      serviceCommit: description.commit,
+      platformProtocol: description.platformProtocol,
+      serviceDescription: description,
+      openapiSha256: description.openapiSha256,
+      configurationSchemaSha256: description.configuration.schemaSha256,
+      configurationSchema: first.definition,
+      ...(schemaChanged ? { configurationHash: null } : {}),
+      lastDiscoveredAt: now,
+      lastDiscoveryError: null,
+      updatedAt: now
+    }).where(eq(
+      upstreamServiceConnections.upstreamServiceId,
+      upstreamServiceId
+    )).returning()
+  ) ?? context.connection
 
   await Promise.all(discovered.map((item) => {
-    const matchesDesired = !schemaChanged
-      && context.connection.configurationRevision > 0
-      && item.state.revision === context.connection.configurationRevision
+    const matchesDesired = updatedConnection.configurationHash !== null
+      && updatedConnection.configurationRevision > 0
+      && item.state.revision === updatedConnection.configurationRevision
       && item.state.configurationSha256
-      === context.connection.configurationHash
+      === updatedConnection.configurationHash
     return db.update(upstreamTargets).set({
       configurationRevision: item.state.revision,
       configurationHash: item.state.configurationSha256,
-      configurationStatus: matchesDesired
-        ? 'synced'
-        : (
-            context.connection.configurationRevision > 0
-              ? 'drifted'
-              : 'unknown'
-          ),
+      configurationStatus: !updatedConnection.configurationHash
+        ? 'unknown'
+        : matchesDesired ? 'synced' : 'drifted',
       configurationState: item.state,
       lastConfigurationSyncAt: now,
       lastError: null,
       updatedAt: now
     }).where(eq(upstreamTargets.id, item.target.id))
   }))
+
+  let refreshed = await loadServiceControlContext(upstreamServiceId)
+  if (
+    refreshed.connection.configurationRevision
+    !== updatedConnection.configurationRevision
+    || refreshed.connection.configurationHash
+    !== updatedConnection.configurationHash
+  ) {
+    await db.update(upstreamTargets).set({
+      configurationStatus: 'unknown',
+      updatedAt: new Date()
+    }).where(and(
+      eq(upstreamTargets.upstreamServiceId, upstreamServiceId),
+      eq(upstreamTargets.enabled, true)
+    ))
+    refreshed = await loadServiceControlContext(upstreamServiceId)
+  }
   return buildServiceControlView(
-    await loadServiceControlContext(upstreamServiceId),
+    refreshed,
     { checkAvailability: true }
   )
+}
+
+async function runPlatformServiceDiscovery(upstreamServiceId: string) {
+  try {
+    return await performPlatformServiceDiscovery(upstreamServiceId)
+  } catch (error) {
+    await db.update(upstreamServiceConnections).set({
+      lastDiscoveryError: safeServiceControlError(error),
+      updatedAt: new Date()
+    }).where(eq(
+      upstreamServiceConnections.upstreamServiceId,
+      upstreamServiceId
+    )).catch(() => undefined)
+    throw error
+  } finally {
+    activeDiscoveries.delete(upstreamServiceId)
+  }
+}
+
+export function discoverPlatformService(upstreamServiceId: string) {
+  const active = activeDiscoveries.get(upstreamServiceId)
+  if (active) return active
+
+  const discovery = runPlatformServiceDiscovery(upstreamServiceId)
+  activeDiscoveries.set(upstreamServiceId, discovery)
+  return discovery
 }

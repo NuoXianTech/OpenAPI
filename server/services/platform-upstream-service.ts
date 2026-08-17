@@ -97,7 +97,10 @@ function normalizeTargetUrl(value: string, kind: CreateUpstreamInput['kind']): U
     throw createApplicationError({ statusCode: 400, message: 'upstream target must not contain credentials, query, or fragment', data: { code: 'UPSTREAM_URL_INVALID' } })
   }
   if (kind === 'external') {
-    const hostname = url.hostname.toLowerCase().replace(/\.$/, '')
+    const hostname = url.hostname
+      .toLowerCase()
+      .replace(/^\[|\]$/g, '')
+      .replace(/\.$/, '')
     if (url.protocol !== 'https:') {
       throw createApplicationError({ statusCode: 400, message: 'external upstream must use HTTPS', data: { code: 'EXTERNAL_UPSTREAM_REQUIRES_HTTPS' } })
     }
@@ -372,10 +375,25 @@ export const platformUpstreamService = {
     if (new URL(baseUrl).protocol.slice(0, -1) !== binding.service.protocol) {
       throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
     }
+    const resetServiceState = binding.service.kind === 'internal'
+      && (
+        baseUrl !== binding.target.baseUrl
+        || (!binding.target.enabled && input.enabled === true)
+      )
     try {
       const target = firstRow(await db.update(upstreamTargets).set({
         ...input,
         baseUrl,
+        ...(resetServiceState
+          ? {
+              configurationRevision: null,
+              configurationHash: null,
+              configurationStatus: 'unknown',
+              configurationState: null,
+              lastConfigurationSyncAt: null,
+              lastError: null
+            }
+          : {}),
         updatedAt: new Date()
       }).where(eq(upstreamTargets.id, id)).returning())
       if (!target) throw new Error('target update returned no row')

@@ -119,40 +119,71 @@ async function pushConfiguration(
         definition,
         updatedAt: response.data.updatedAt
       })
-      await db.update(upstreamTargets).set({
-        configurationRevision: response.data.revision,
-        configurationHash: response.data.configurationSha256,
-        configurationStatus: matches ? 'synced' : 'drifted',
-        configurationState: state,
-        lastConfigurationSyncAt: new Date(),
-        lastError: matches ? null : 'Service configuration ACK mismatch',
-        updatedAt: new Date()
-      }).where(eq(upstreamTargets.id, target.id))
-      return matches
+      return { ok: true as const, targetId: target.id, matches, state }
     } catch (error) {
-      await db.update(upstreamTargets).set({
-        configurationStatus: 'error',
-        lastConfigurationSyncAt: new Date(),
-        lastError: safeServiceControlError(error),
-        updatedAt: new Date()
-      }).where(eq(upstreamTargets.id, target.id))
-      return false
+      return {
+        ok: false as const,
+        targetId: target.id,
+        matches: false as const,
+        error: safeServiceControlError(error)
+      }
     }
   }))
 
-  const successful = results.filter(Boolean).length
+  const successful = results.filter(result => result.ok && result.matches).length
   const status = successful === enabledTargets.length
     ? 'synced'
     : successful > 0 ? 'partial' : 'failed'
-  if (status === 'synced') {
-    await db.update(upstreamServiceConnections).set({
-      lastConfigurationSyncAt: new Date(),
-      updatedAt: new Date()
-    }).where(eq(
-      upstreamServiceConnections.upstreamServiceId,
-      context.service.id
-    ))
-  }
+  await db.transaction(async (tx) => {
+    const current = firstRow(await tx.select({
+      revision: upstreamServiceConnections.configurationRevision,
+      hash: upstreamServiceConnections.configurationHash
+    }).from(upstreamServiceConnections)
+      .where(eq(
+        upstreamServiceConnections.upstreamServiceId,
+        context.service.id
+      ))
+      .limit(1)
+      .for('update'))
+    if (
+      current?.revision !== revision
+      || current.hash !== configurationHash
+    ) return
+
+    const synchronizedAt = new Date()
+    for (const result of results) {
+      if (result.ok) {
+        await tx.update(upstreamTargets).set({
+          configurationRevision: result.state.revision,
+          configurationHash: result.state.configurationSha256,
+          configurationStatus: result.matches ? 'synced' : 'drifted',
+          configurationState: result.state,
+          lastConfigurationSyncAt: synchronizedAt,
+          lastError: result.matches
+            ? null
+            : 'Service configuration ACK mismatch',
+          updatedAt: synchronizedAt
+        }).where(eq(upstreamTargets.id, result.targetId))
+      } else {
+        await tx.update(upstreamTargets).set({
+          configurationStatus: 'error',
+          lastConfigurationSyncAt: synchronizedAt,
+          lastError: result.error,
+          updatedAt: synchronizedAt
+        }).where(eq(upstreamTargets.id, result.targetId))
+      }
+    }
+
+    if (status === 'synced') {
+      await tx.update(upstreamServiceConnections).set({
+        lastConfigurationSyncAt: synchronizedAt,
+        updatedAt: synchronizedAt
+      }).where(eq(
+        upstreamServiceConnections.upstreamServiceId,
+        context.service.id
+      ))
+    }
+  })
   const refreshed = await loadServiceControlContext(context.service.id)
   return {
     status,
@@ -304,6 +335,10 @@ export async function updatePlatformServiceConfiguration(
       eq(
         upstreamServiceConnections.configurationRevision,
         input.expectedRevision
+      ),
+      eq(
+        upstreamServiceConnections.configurationSchemaSha256,
+        schemaSha256
       )
     ))
     .returning())

@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { getHeader } from 'h3'
+import { getHeader, getRequestURL } from 'h3'
 import { clientIpConfigService } from '~~/server/services/client-ip-config-service'
 import { resolveClientIp } from '~~/server/utils/client-ip'
 import { normalizeClientIp } from '~~/server/utils/request-meta'
@@ -10,6 +10,8 @@ export default defineNitroPlugin((nitroApp) => {
   clientIpConfigService.configureEnvironment(runtimeConfig.proxy)
 
   nitroApp.hooks.hook('request', async (event: H3Event) => {
+    if (getRequestURL(event).pathname === '/api/health') return
+
     // node-server preset 下 socket.remoteAddress 是最可靠的直连端；
     // 仅在平台未提供 socket 地址时回退到 Nitro context。
     const peerIp = normalizeClientIp(event.node.req.socket?.remoteAddress)
