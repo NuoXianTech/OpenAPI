@@ -1117,6 +1117,22 @@ describe('Platform to Node API Service acceptance', () => {
     expect(await countCalls(routeIds.yiyan)).toBe(callsBefore)
   })
 
+  it('returns 405 and Allow before authenticating an unsupported Route method', async () => {
+    const callsBefore = await countCalls(routeIds.yiyan)
+    const response = await fetch(`${gatewayBaseURL}/v1/yiyan`, {
+      method: 'POST'
+    })
+
+    expect(response.status).toBe(405)
+    expect(response.headers.get('allow')).toBe('GET, HEAD')
+    expect(await readPublicEnvelope(response)).toMatchObject({
+      code: 'METHOD_NOT_ALLOWED',
+      message: '请求方法不受支持',
+      data: null
+    })
+    expect(await countCalls(routeIds.yiyan)).toBe(callsBefore)
+  })
+
   it('normalizes Gateway request failures and records their stable error code', async () => {
     const callsBefore = await countCalls(routeIds.bodyRejected)
     const response = await fetch(`${gatewayBaseURL}/v1/body-not-allowed`, {

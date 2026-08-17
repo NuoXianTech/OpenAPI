@@ -9,6 +9,9 @@ on:
       - synchronize
       - reopened
       - edited
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
