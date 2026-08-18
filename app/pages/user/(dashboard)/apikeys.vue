@@ -10,13 +10,16 @@ import { useClientPagination } from '~/composables/dashboard/use-client-paginati
 import { useDashboardColumnVisibility } from '~/composables/dashboard/use-dashboard-column-visibility'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import { adminModalUi } from '~/utils/admin-modal-ui'
-import type { ApiKeyItem } from '#shared/types/api'
+import type { ApiKeyItem, CreatedApiKeyItem } from '#shared/types/api'
 
 const { t, locale } = useI18n()
 
 useHead({ title: () => t('user.apiKeys.title') })
 
 const toast = useToast()
+const { copyText } = useCopyFeedback()
+const revealedKeys = ref<Record<number, string>>({})
+const revealingKeyId = ref<number | null>(null)
 const {
   getIpText,
   getQuotaText,
@@ -150,8 +153,48 @@ const secretModal = overlay.create(LazyApiKeySecretModal, { destroyOnClose: true
 function openReset(row: ApiKeyItem) {
   resetModal.open({
     target: row,
-    onReset: resetKey
+    onReset: async (id: number) => {
+      const result = await resetKey(id)
+      forgetRevealedKey(id)
+      return result
+    }
   })
+}
+
+function forgetRevealedKey(id: number) {
+  const { [id]: _forgotten, ...remaining } = revealedKeys.value
+  revealedKeys.value = remaining
+}
+
+async function toggleKeyVisibility(row: ApiKeyItem) {
+  if (revealedKeys.value[row.id]) {
+    forgetRevealedKey(row.id)
+    return
+  }
+
+  revealingKeyId.value = row.id
+  try {
+    const revealed = await $fetch<CreatedApiKeyItem>(
+      '/api/user/apikeys/reveal',
+      { method: 'POST', body: { id: row.id } }
+    )
+    revealedKeys.value = {
+      ...revealedKeys.value,
+      [row.id]: revealed.apiKey
+    }
+  } catch (err) {
+    toast.add({
+      title: parseFetchError(err, t('user.apiKeys.revealFailed')),
+      color: 'error'
+    })
+  } finally {
+    revealingKeyId.value = null
+  }
+}
+
+async function copyRevealedKey(id: number) {
+  const apiKey = revealedKeys.value[id]
+  if (apiKey) await copyText(apiKey)
 }
 
 // ------------------------------------------------------------
@@ -175,6 +218,7 @@ async function openDelete(row: ApiKeyItem) {
     onConfirm: async () => {
       try {
         await removeKey(row.id)
+        forgetRevealedKey(row.id)
         toast.add({ title: t('common.feedback.deleted'), color: 'success' })
       } catch (err) {
         toast.add({ title: parseFetchError(err, t('common.feedback.deleteFailed')), color: 'error' })
@@ -363,9 +407,37 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             </template>
 
             <template #keyPreview-cell="{ row }">
-              <code class="block w-48 min-w-0 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned">
-                {{ row.original.keyPreview }}
-              </code>
+              <div class="flex w-64 min-w-0 items-center gap-1">
+                <code class="block min-w-0 flex-1 truncate rounded-md border border-muted bg-muted px-2.5 py-1.5 font-mono text-xs text-toned">
+                  {{ revealedKeys[row.original.id] || row.original.keyPreview }}
+                </code>
+                <UTooltip
+                  :text="$t(revealedKeys[row.original.id] ? 'common.apiKeys.actions.hide' : 'common.apiKeys.actions.view')"
+                >
+                  <UButton
+                    :icon="revealedKeys[row.original.id] ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+                    :loading="revealingKeyId === row.original.id"
+                    :aria-label="$t(revealedKeys[row.original.id] ? 'common.apiKeys.actions.hide' : 'common.apiKeys.actions.view')"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="toggleKeyVisibility(row.original)"
+                  />
+                </UTooltip>
+                <UTooltip
+                  v-if="revealedKeys[row.original.id]"
+                  :text="$t('common.apiKeys.actions.copy')"
+                >
+                  <UButton
+                    icon="i-lucide-copy"
+                    :aria-label="$t('common.apiKeys.actions.copy')"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="copyRevealedKey(row.original.id)"
+                  />
+                </UTooltip>
+              </div>
             </template>
 
             <template #quota-cell="{ row }">

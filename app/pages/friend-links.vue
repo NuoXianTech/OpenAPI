@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useFriendLinkList } from '~/composables/link/use-friend-link-list'
+import { useFriendLinkList } from '~/composables/use-friend-link-list'
 
 const { t } = useI18n()
 useHead(() => ({ title: t('public.friendLinks.title') }))

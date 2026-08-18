@@ -13,9 +13,9 @@ vi.mock('~~/server/db/client', () => ({
 
 vi.mock('~~/server/utils/stored-secret', () => ({
   createStoredSecretPreview: (value: string) => value.slice(0, 12),
-  decryptStoredSecret: (value: string) => value,
+  decryptStoredSecret: (value: string) => value.replace(/^encrypted:/, ''),
   digestStoredSecret: (value: string) => value,
-  encryptStoredSecret: (value: string) => value,
+  encryptStoredSecret: (value: string) => `encrypted:${value}`,
   getApiKeySecret: () => Buffer.alloc(32, 1)
 }))
 
@@ -78,7 +78,7 @@ describe('api key service', () => {
     expect(created).toHaveLength(1)
   })
 
-  it('only reveals a full key on create or reset', async () => {
+  it('reveals a full key only through owner-authorized operations', async () => {
     const [created] = await apiKeyService.createForUser(1, { name: 'Production' })
     expect(created?.apiKey).toMatch(/^op_/)
 
@@ -87,6 +87,10 @@ describe('api key service', () => {
     expect(listed).not.toHaveProperty('apiKey')
     expect(listed).not.toHaveProperty('keyCiphertext')
     expect(listed).not.toHaveProperty('keyDigest')
+
+    const revealed = await apiKeyService.revealForUser(1, created!.id)
+    expect(revealed?.apiKey).toBe(created?.apiKey)
+    expect(await apiKeyService.revealForUser(2, created!.id)).toBeNull()
 
     const updated = await apiKeyService.updateConfig(created!.id, { name: 'Renamed' })
     expect(updated).not.toHaveProperty('apiKey')

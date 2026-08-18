@@ -40,7 +40,7 @@ pnpm build
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
 | API Service | `openapi-service` 是独立 Node 进程，只连接内部网络且不映射公网业务端口；Internal Upstream 使用 `http://openapi-service:8080` 或等价私网地址 |
 | API Service 资源 | 容器空闲 RSS 不高于 128 MiB、常规业务测试峰值不高于 256 MiB、启动到 ready 不高于 2 秒；缓存和来源并发均有上限 |
-| API Key 数据 | 确认创建/重置后只显示一次完整值，普通列表仅返回掩码预览；`NUXT_API_KEY_SECRET` 与数据库备份分开保存，明文不进入操作日志或普通应用日志 |
+| API Key 数据 | 确认普通列表仅返回掩码预览，只有 Key 所有者可按需查看完整值且查看行为写入操作日志；`NUXT_API_KEY_SECRET` 与数据库备份分开保存，明文不进入操作日志或普通应用日志 |
 | 主密钥边界 | 已确认 `0.1.0` 不支持 `NUXT_API_KEY_SECRET` 在线轮换；现有数据库不得直接替换该值 |
 | 部署产物 | Platform 完整发布 `.output`，API Service 发布预编译 `dist`；优先使用各自 Linux CI 生成的独立镜像，不能遗漏 `node_modules/.nitro` |
 | 时区 | `TZ=Asia/Shanghai`；启动迁移会将数据库迁移会话设置为同一时区，数据库默认时区无需额外修改 |

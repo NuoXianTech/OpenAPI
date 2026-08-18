@@ -2,7 +2,7 @@
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import type { TableColumn } from '@nuxt/ui'
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
-import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
+import { useCreditReasonMeta } from '~/composables/use-credit-reason-meta'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 const { t, locale } = useI18n()

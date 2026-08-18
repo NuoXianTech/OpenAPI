@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { PUBLIC_STATS_DASHBOARD_CACHE_TTL_SECONDS } from '#shared/config/public-stats'
-import { usePublicStatsDashboard } from '~/composables/stats/use-public-stats-dashboard'
+import { usePublicStatsDashboard } from '~/composables/use-public-stats-dashboard'
 
 const { t } = useI18n()
 const toast = useToast()

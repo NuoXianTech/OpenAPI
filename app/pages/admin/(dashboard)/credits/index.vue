@@ -4,7 +4,7 @@ import type {
   AdminCreditOverview,
   AdminCreditRecentTransaction
 } from '#shared/types/admin-credits'
-import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
+import { useCreditReasonMeta } from '~/composables/use-credit-reason-meta'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import {

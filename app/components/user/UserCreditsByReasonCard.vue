@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CreditSummary } from '~/composables/user/use-user-credits-page'
-import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
+import { useCreditReasonMeta } from '~/composables/use-credit-reason-meta'
 
 defineProps<{
   byReason: CreditSummary['byReason']

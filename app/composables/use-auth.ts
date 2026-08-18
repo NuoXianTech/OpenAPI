@@ -40,8 +40,12 @@ export function useAuth() {
     return serverEvent ? (serverEvent.context as AuthContext) : null
   }
 
-  const clientUser = import.meta.client ? useState<AuthUser | null>('auth-user', () => null) : null
-  const clientLoading = import.meta.client ? useState<boolean>('auth-loading', () => false) : null
+  const clientUser = !import.meta.server
+    ? useState<AuthUser | null>('auth-user', () => null)
+    : null
+  const clientLoading = !import.meta.server
+    ? useState<boolean>('auth-loading', () => false)
+    : null
 
   const user = computed<AuthUser | null>({
     get() {
@@ -84,14 +88,11 @@ export function useAuth() {
       // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
       const res = await $fetch<AuthUser | null>('/api/auth/me', { headers: serverCookieHeaders })
       user.value = res ?? null
-    } catch {
-      // /api/auth/me 异常一律视为未登录，让中间件去重定向
-      user.value = null
+      if (import.meta.client) clientFetchedAt = Date.now()
+      return user.value
     } finally {
       loading.value = false
-      if (import.meta.client) clientFetchedAt = Date.now()
     }
-    return user.value
   }
 
   const fetchMe = async (force = false) => {

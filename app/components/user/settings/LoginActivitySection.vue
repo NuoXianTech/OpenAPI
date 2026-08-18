@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
 import type { LoginLogRow } from '#shared/types/login-log'
-import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
+import { useLoginLogMeta } from '~/composables/use-login-log-meta'
 
 defineProps<{
   items: LoginLogRow[]

@@ -3,6 +3,7 @@
     "apiKeys": {
       "title": "API 密钥",
       "loadFailed": "加载 API 密钥失败",
+      "revealFailed": "查看 API 密钥失败",
       "createdOne": "已生成新 API 密钥",
       "createdMany": "已生成 {count} 个 API 密钥",
       "searchPlaceholder": "搜索名称、密钥、IP...",
@@ -15,9 +16,9 @@
       "generate": "生成",
       "secret": {
         "title": "保存新 API 密钥",
-        "description": "完整密钥只在本次创建时显示。",
-        "warningTitle": "关闭后无法再次查看",
-        "warningDescription": "请立即复制并保存到安全的密码管理器；列表以后只显示掩码预览。",
+        "description": "使用这些密钥对 API 请求进行身份验证。",
+        "warningTitle": "请妥善保管密钥",
+        "warningDescription": "任何持有密钥的人都可以使用其权限和配额。",
         "copyAll": "复制全部"
       },
       "filters": {

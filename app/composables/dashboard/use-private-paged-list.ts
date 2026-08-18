@@ -1,7 +1,9 @@
 import type { AsyncDataRequestStatus } from '#app'
 import {
   computed,
+  getCurrentScope,
   onMounted,
+  onScopeDispose,
   reactive,
   ref,
   watch,
@@ -28,6 +30,7 @@ interface UsePrivatePagedListOptions<TFilters extends object> {
   pageSize?: Ref<number>
   // 把 filters + 分页拼成最终 query；缺省直接展开 filters 并附加 limit/offset。
   buildQuery?: (filters: TFilters, pagination: PrivatePagedPagination) => Record<string, unknown>
+  timeoutMs?: number
 }
 
 interface UsePrivatePagedListReturn<TFilters, TItem> {
@@ -68,7 +71,8 @@ export function usePrivatePagedList<
     filters: externalFilters,
     page: externalPage,
     pageSize: externalPageSize,
-    buildQuery
+    buildQuery,
+    timeoutMs = 15_000
   } = options
 
   const filters = externalFilters ?? (reactive({ ...defaultFilters }) as TFilters)
@@ -84,6 +88,7 @@ export function usePrivatePagedList<
   // 请求序号：并发 / 快慢乱序时只采用最新一次请求的结果，避免旧响应覆盖新数据。
   let requestSeq = 0
   let skipNextPageRefresh = false
+  let activeController: AbortController | null = null
 
   function resetPageWithoutAutoRefresh() {
     if (page.value === 1) return
@@ -93,6 +98,9 @@ export function usePrivatePagedList<
 
   async function refresh(): Promise<void> {
     const seq = ++requestSeq
+    activeController?.abort()
+    const controller = new AbortController()
+    activeController = controller
     status.value = 'pending'
     error.value = null
     const limit = pageSize.value
@@ -101,7 +109,11 @@ export function usePrivatePagedList<
       ? buildQuery(filters, { page: page.value, limit, offset })
       : { ...filters, limit, offset }
     try {
-      const result = await $fetch<{ items: TItem[], total: number }>(path, { query })
+      const result = await $fetch<{ items: TItem[], total: number }>(path, {
+        query,
+        signal: controller.signal,
+        timeout: timeoutMs
+      })
       if (seq !== requestSeq) return
       if (!Array.isArray(result.items) || !Number.isFinite(result.total)) {
         throw new TypeError(`Invalid paged response from ${path}`)
@@ -126,6 +138,10 @@ export function usePrivatePagedList<
       total.value = 0
       error.value = err
       status.value = 'error'
+    } finally {
+      if (seq === requestSeq && activeController === controller) {
+        activeController = null
+      }
     }
   }
 
@@ -156,6 +172,14 @@ export function usePrivatePagedList<
   if (immediate) {
     // onMounted 天然只在客户端触发，保证私有数据不在 SSR 阶段拉取 / 落入 HTML。
     onMounted(() => { void refresh() })
+  }
+
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      requestSeq += 1
+      activeController?.abort()
+      activeController = null
+    })
   }
 
   return {

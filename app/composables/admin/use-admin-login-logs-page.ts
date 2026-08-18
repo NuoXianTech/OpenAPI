@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { AdminLoginLogRow, LoginMethod } from '#shared/types/login-log'
 import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
-import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
+import { useLoginLogMeta } from '~/composables/use-login-log-meta'
 import { useAdminLogCleanup } from '~/composables/admin/use-admin-log-cleanup'
 
 interface AdminLoginLogFilters {

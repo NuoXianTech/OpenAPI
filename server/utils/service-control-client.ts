@@ -5,7 +5,7 @@ import {
   serviceConfigurationDefinitionSchema,
   serviceConfigurationUpdateResponseSchema,
   serviceDescriptionSchema
-} from '~~/server/schemas/service-control'
+} from '#shared/service-control'
 import { readLimitedText } from '~~/server/utils/safe-fetch'
 
 const CONTROL_TIMEOUT_MS = 10_000

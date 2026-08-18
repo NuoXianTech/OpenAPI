@@ -1,5 +1,5 @@
 import { nextTick, ref } from 'vue'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { usePrivatePagedList } from '@/composables/dashboard/use-private-paged-list'
 
 interface TestFilters extends Record<string, unknown> {
@@ -19,6 +19,10 @@ function deferred<T>() {
   })
   return { promise, resolve, reject }
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
 
 describe('usePrivatePagedList', () => {
   it('refreshes with a page reset when page size changes', async () => {
@@ -42,7 +46,9 @@ describe('usePrivatePagedList', () => {
     expect(page.value).toBe(1)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock).toHaveBeenLastCalledWith('/api/example', {
-      query: { keyword: '', limit: 20, offset: 0 }
+      query: { keyword: '', limit: 20, offset: 0 },
+      signal: expect.any(AbortSignal),
+      timeout: 15_000
     })
     expect(list.items.value).toEqual([{ id: 1 }])
   })
@@ -80,6 +86,39 @@ describe('usePrivatePagedList', () => {
     expect(list.error.value).toBeInstanceOf(Error)
   })
 
+  it('aborts an obsolete request', async () => {
+    let firstSignal: AbortSignal | undefined
+    const fetchMock = vi.fn()
+      .mockImplementationOnce((
+        _path: string,
+        options: { signal: AbortSignal }
+      ) => {
+        firstSignal = options.signal
+        return new Promise((_resolve, reject) => {
+          options.signal.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'))
+          }, { once: true })
+        })
+      })
+      .mockResolvedValueOnce({ items: [{ id: 2 }], total: 1 })
+    vi.stubGlobal('$fetch', fetchMock)
+
+    const list = usePrivatePagedList<TestFilters, TestRow>({
+      path: '/api/example',
+      defaultFilters: { keyword: '' },
+      immediate: false
+    })
+
+    const obsoleteRefresh = list.refresh()
+    const latestRefresh = list.refresh()
+    await Promise.all([obsoleteRefresh, latestRefresh])
+
+    expect(firstSignal?.aborted).toBe(true)
+    expect(list.items.value).toEqual([{ id: 2 }])
+    expect(list.status.value).toBe('success')
+    expect(list.error.value).toBeNull()
+  })
+
   it('moves back to the last available page when refreshed data shrinks', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ items: [], total: 20 })
@@ -102,10 +141,14 @@ describe('usePrivatePagedList', () => {
     expect(page.value).toBe(2)
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(fetchMock).toHaveBeenNthCalledWith(1, '/api/example', {
-      query: { keyword: '', limit: 10, offset: 20 }
+      query: { keyword: '', limit: 10, offset: 20 },
+      signal: expect.any(AbortSignal),
+      timeout: 15_000
     })
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/example', {
-      query: { keyword: '', limit: 10, offset: 10 }
+      query: { keyword: '', limit: 10, offset: 10 },
+      signal: expect.any(AbortSignal),
+      timeout: 15_000
     })
     expect(list.items.value).toEqual([{ id: 20 }])
     expect(list.total.value).toBe(20)

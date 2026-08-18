@@ -53,7 +53,7 @@ function presentApiKeyRecord(row: StoredApiKeyRecord): ApiKeyRecord {
   return record
 }
 
-function revealCreatedApiKeyRecord(row: StoredApiKeyRecord): CreatedApiKeyRecord {
+function revealApiKeyRecord(row: StoredApiKeyRecord): CreatedApiKeyRecord {
   return {
     ...presentApiKeyRecord(row),
     apiKey: decryptStoredSecret(row.keyCiphertext, 'api-key')
@@ -97,7 +97,7 @@ async function resetKey(id: number, userId?: number) {
     .where(keyWhere(id, userId))
     .returning()
   const row = firstRow(res)
-  return row ? revealCreatedApiKeyRecord(row) : null
+  return row ? revealApiKeyRecord(row) : null
 }
 
 /** 用户创建 API Key 的入参 */
@@ -150,7 +150,7 @@ export const apiKeyService = {
           scopes: input.scopes ?? null,
           ipWhitelist: input.ipWhitelist ?? null
         }).returning()
-        if (row[0]) created.push(revealCreatedApiKeyRecord(row[0]))
+        if (row[0]) created.push(revealApiKeyRecord(row[0]))
       }
       return created
     })
@@ -202,6 +202,14 @@ export const apiKeyService = {
 
   async resetForUser(userId: number, id: number) {
     return resetKey(id, userId)
+  },
+
+  async revealForUser(userId: number, id: number) {
+    const rows = await db.select().from(apiKeys)
+      .where(keyWhere(id, userId))
+      .limit(1)
+    const row = firstRow(rows)
+    return row ? revealApiKeyRecord(row) : null
   },
 
   async resetById(id: number, userId?: number) {

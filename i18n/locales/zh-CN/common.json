@@ -162,6 +162,7 @@
       "actions": {
         "edit": "编辑配置",
         "view": "查看密钥",
+        "hide": "隐藏密钥",
         "copy": "复制密钥",
         "enable": "启用密钥",
         "disable": "停用密钥",

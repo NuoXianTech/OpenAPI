@@ -151,6 +151,7 @@
       "actions": {
         "edit": "Edit configuration",
         "view": "View key",
+        "hide": "Hide key",
         "copy": "Copy key",
         "enable": "Enable key",
         "disable": "Disable key",

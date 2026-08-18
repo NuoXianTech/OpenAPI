@@ -5,9 +5,9 @@ const fieldKeySchema = z.string()
   .max(160)
   .regex(/^[a-z][A-Za-z0-9]*(?:[._-][a-z][A-Za-z0-9]*)*$/)
 
-const optionSchema = z.object({
+const serviceConfigurationOptionSchema = z.object({
   label: z.string().min(1).max(300),
-  value: z.string().max(500),
+  value: z.string().min(1).max(500),
   description: z.string().max(1000).optional()
 })
 
@@ -53,13 +53,13 @@ const serviceConfigurationFieldSchema = z.discriminatedUnion(
       ...fieldBase,
       type: z.literal('single-select'),
       default: z.string(),
-      options: z.array(optionSchema).min(1).max(500)
+      options: z.array(serviceConfigurationOptionSchema).min(1).max(500)
     }),
     z.object({
       ...fieldBase,
       type: z.literal('multi-select'),
       default: z.array(z.string()).max(500),
-      options: z.array(optionSchema).min(1).max(500)
+      options: z.array(serviceConfigurationOptionSchema).min(1).max(500)
     })
   ]
 )
@@ -93,7 +93,7 @@ export const serviceDescriptionSchema = z.object({
   platformProtocol: z.literal('openapi-platform-service/v1')
 })
 
-const configurationValueSchema = z.union([
+const serviceConfigurationValueSchema = z.union([
   z.boolean(),
   z.number(),
   z.string(),
@@ -109,7 +109,7 @@ export const redactedServiceConfigurationStateSchema = z.object({
   values: z.record(
     z.string(),
     z.union([
-      configurationValueSchema,
+      serviceConfigurationValueSchema,
       z.object({ configured: z.boolean() })
     ])
   ),
@@ -127,15 +127,16 @@ export const serviceConfigurationUpdateResponseSchema = z.object({
 
 export const openapiDocumentSchema = z.record(z.string(), z.unknown())
 
-export const adminUpdateServiceConfigurationSchema = z.object({
-  expectedRevision: z.number().int().nonnegative(),
-  values: z.record(z.string(), z.unknown()).default({}),
-  secrets: z.record(
-    z.string(),
-    z.string().max(100_000).nullable()
-  ).default({})
-})
-
-export const adminUpdateServiceTokenSchema = z.object({
-  serviceToken: z.string().trim().min(32).max(4096)
-})
+export type ServiceConfigurationValue
+  = z.infer<typeof serviceConfigurationValueSchema>
+export type ServiceConfigurationOption
+  = z.infer<typeof serviceConfigurationOptionSchema>
+export type ServiceConfigurationField
+  = z.infer<typeof serviceConfigurationFieldSchema>
+export type ServiceConfigurationGroup
+  = z.infer<typeof serviceConfigurationDefinitionSchema>['groups'][number]
+export type ServiceConfigurationDefinition
+  = z.infer<typeof serviceConfigurationDefinitionSchema>
+export type ServiceDescription = z.infer<typeof serviceDescriptionSchema>
+export type RedactedServiceConfigurationState
+  = z.infer<typeof redactedServiceConfigurationStateSchema>

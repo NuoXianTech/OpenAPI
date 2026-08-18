@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { serviceConfigurationDefinitionSchema } from '#shared/service-control'
 import type { ServiceConfigurationDefinition } from '#shared/types/service-control'
-import { serviceConfigurationDefinitionSchema } from '~~/server/schemas/service-control'
 import {
   assertServiceConfigurationDefinition,
   calculateServiceConfigurationHash,

@@ -67,7 +67,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Before starting, configure `NUXT_AUTH_SECRET` and `NUXT_API_KEY_SECRET`. A complete API key is returned only after creation or reset, and complete redemption codes are returned only after generation. Lists and history expose masked previews only; the database has no plaintext secret columns. Generate independent values with:
+Before starting, configure `NUXT_AUTH_SECRET` and `NUXT_API_KEY_SECRET`. API key owners can reveal their complete keys on demand; ordinary lists and history expose masked previews only. Complete redemption codes are returned only after generation. The database has no plaintext secret columns. Generate independent values with:
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"

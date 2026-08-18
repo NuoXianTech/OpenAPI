@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui'
-import { useCreditReasonMeta } from '~/composables/credits/use-credit-reason-meta'
+import { useCreditReasonMeta } from '~/composables/use-credit-reason-meta'
 import { useUserCreditsPage, type TransactionRow } from '~/composables/user/use-user-credits-page'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 

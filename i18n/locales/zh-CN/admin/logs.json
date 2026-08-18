@@ -234,6 +234,7 @@
           "user_api_key_create": "创建 API 密钥",
           "user_api_key_update": "更新 API 密钥",
           "user_api_key_reset": "重置 API 密钥",
+          "user_api_key_reveal": "查看 API 密钥",
           "user_api_key_delete": "删除 API 密钥",
           "user_password_change": "修改密码",
           "user_profile_update": "更新个人资料",

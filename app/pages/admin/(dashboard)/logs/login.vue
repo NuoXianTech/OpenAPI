@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { useAdminLoginLogList } from '~/composables/admin/use-admin-login-logs-page'
-import { useLoginLogMeta } from '~/composables/logs/use-login-log-meta'
+import { useLoginLogMeta } from '~/composables/use-login-log-meta'
 
 const { t, locale } = useI18n()
 const { getLoginFailureLabel, getLoginMethodLabel } = useLoginLogMeta()

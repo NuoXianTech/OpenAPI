@@ -1,6 +1,6 @@
 import { createError, getRouterParam } from 'h3'
 import { z } from 'zod'
-import { adminUpdateServiceTokenSchema } from '~~/server/schemas/service-control'
+import { adminUpdateServiceTokenSchema } from '~~/server/schemas/admin'
 import { platformUpstreamService } from '~~/server/services/platform-upstream-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'

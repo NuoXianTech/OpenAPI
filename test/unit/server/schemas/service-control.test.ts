@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { adminCreateUpstreamSchema } from '~~/server/schemas/admin'
-import { adminUpdateServiceTokenSchema } from '~~/server/schemas/service-control'
+import { serviceConfigurationDefinitionSchema } from '#shared/service-control'
+import {
+  adminCreateUpstreamSchema,
+  adminUpdateServiceTokenSchema
+} from '~~/server/schemas/admin'
 
 const token = 't'.repeat(32)
 
 describe('Service control schemas', () => {
+  it('rejects definitions outside the Service control bounds', () => {
+    expect(serviceConfigurationDefinitionSchema.safeParse({
+      schemaVersion: 1,
+      groups: [{ key: 'source', label: 'x'.repeat(301), fields: [] }]
+    }).success).toBe(false)
+  })
+
   it('normalizes Service Tokens at Platform boundaries', () => {
     expect(adminUpdateServiceTokenSchema.parse({
       serviceToken: `  ${token}  `

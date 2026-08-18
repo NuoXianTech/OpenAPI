@@ -22,7 +22,7 @@ import { users } from './user'
 // API Keys（用户访问 Platform Gateway 的密钥）
 //
 // userId cascade：用户硬删时自动清除该用户所有密钥。
-// 明文不落库：keyDigest 用于鉴权查询，keyCiphertext 只用于创建/重置事务返回。
+// 明文不落库：keyDigest 用于鉴权查询，keyCiphertext 用于用户按需查看。
 // ------------------------------------------------------------------
 export const apiKeys = pgTable('api_keys', {
   id: serial('id').primaryKey(),

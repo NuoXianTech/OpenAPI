@@ -3,6 +3,7 @@
     "apiKeys": {
       "title": "API keys",
       "loadFailed": "Failed to load API keys",
+      "revealFailed": "Failed to reveal API key",
       "createdOne": "A new API key was generated",
       "createdMany": "{count} API keys were generated",
       "searchPlaceholder": "Search names, keys, IPs...",
@@ -15,9 +16,9 @@
       "generate": "Generate",
       "secret": {
         "title": "Save new API keys",
-        "description": "Full keys are shown only once, immediately after creation.",
-        "warningTitle": "You cannot view them again",
-        "warningDescription": "Copy them now and store them in a password manager. Lists only show masked previews.",
+        "description": "Use these keys to authenticate API requests.",
+        "warningTitle": "Keep your keys private",
+        "warningDescription": "Anyone with a key can use its permissions and quota.",
         "copyAll": "Copy all"
       },
       "filters": { "allStatuses": "All statuses", "allScopes": "All scopes" }

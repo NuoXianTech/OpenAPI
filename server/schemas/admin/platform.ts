@@ -174,3 +174,16 @@ export const adminActivateRevisionSchema = z.object({
   environmentId: z.uuid(),
   revisionId: z.uuid()
 })
+
+export const adminUpdateServiceConfigurationSchema = z.object({
+  expectedRevision: z.number().int().nonnegative(),
+  values: z.record(z.string(), z.unknown()).default({}),
+  secrets: z.record(
+    z.string(),
+    z.string().max(100_000).nullable()
+  ).default({})
+})
+
+export const adminUpdateServiceTokenSchema = z.object({
+  serviceToken: z.string().trim().min(32).max(4096)
+})

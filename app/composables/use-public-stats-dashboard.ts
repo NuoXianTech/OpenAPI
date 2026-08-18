@@ -1,10 +1,4 @@
-import { computed, type ComputedRef, type Ref } from 'vue'
-import type {
-  PublicCallStatsDashboard,
-  PublicCallStatsOverview,
-  PublicCallStatsTrendPoint
-} from '#shared/types/public-stats'
-import type { DashboardCallRankItem } from '#shared/types/dashboard'
+import type { PublicCallStatsDashboard } from '#shared/types/public-stats'
 import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import { formatCompactCount, formatCount, formatPercent } from '~/utils/number-format'
 
@@ -17,38 +11,6 @@ interface PublicStatsOverviewCard {
   tone: DashboardMetricTone
 }
 
-interface UsePublicStatsDashboardReturn {
-  data: ComputedRef<PublicCallStatsDashboard | null>
-  isPending: Ref<boolean>
-  error: Ref<unknown>
-  overview: ComputedRef<PublicCallStatsOverview | null>
-  trend7d: ComputedRef<PublicCallStatsTrendPoint[]>
-  rankingLast30d: ComputedRef<DashboardCallRankItem[]>
-  hasData: ComputedRef<boolean>
-  isInitialLoading: ComputedRef<boolean>
-  generatedAtLabel: ComputedRef<string>
-  todayDelta: ComputedRef<number>
-  todayDeltaLabel: ComputedRef<string>
-  successRateProgress: ComputedRef<number>
-  failureRate: ComputedRef<number>
-  trackedApiRatio: ComputedRef<number>
-  trackedApiRatioLabel: ComputedRef<string>
-  trendTotalCalls: ComputedRef<number>
-  trendSuccessCalls: ComputedRef<number>
-  trendFailureCalls: ComputedRef<number>
-  topApi: ComputedRef<DashboardCallRankItem | null>
-  overviewCards: ComputedRef<PublicStatsOverviewCard[]>
-  fetchStats: () => Promise<void>
-  reloadStats: () => Promise<void>
-  formatRate: (value: number) => string
-  formatCount: (value: number) => string
-  formatCompact: (value: number) => string
-}
-
-interface UsePublicStatsDashboardOptions {
-  immediate?: boolean
-}
-
 function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, value))
 }
@@ -57,21 +19,17 @@ function roundPercent(value: number): number {
   return Number(value.toFixed(2))
 }
 
-export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions = {}): UsePublicStatsDashboardReturn {
+export function usePublicStatsDashboard() {
   const { t, locale } = useI18n()
-  const immediate = options.immediate ?? true
   const {
     data: requestData,
     pending: isPending,
-    error: requestError,
+    error,
     refresh
   } = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
-    key: 'public-stats-dashboard',
-    immediate
+    key: 'public-stats-dashboard'
   })
   const data = computed<PublicCallStatsDashboard | null>(() => requestData.value ?? null)
-  const error = computed<unknown>(() => requestError.value)
-
   const overview = computed(() => data.value?.overview ?? null)
   const trend7d = computed(() => data.value?.trend7d ?? [])
   const rankingLast30d = computed(() => data.value?.rankingLast30d ?? [])
@@ -98,11 +56,14 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     return t('public.stats.comparedYesterday', { value: `${prefix}${formatCount(todayDelta.value)}` })
   })
 
-  const successRateProgress = computed(() => roundPercent(clampPercent(overview.value?.successRate ?? 0)))
-  const failureRate = computed(() => roundPercent(clampPercent(100 - successRateProgress.value)))
+  const failureRate = computed(() => roundPercent(clampPercent(
+    100 - (overview.value?.successRate ?? 0)
+  )))
   const trackedApiRatio = computed(() => {
     if (!overview.value?.trackedApiCount) return 0
-    return roundPercent(clampPercent((overview.value.enabledTrackedApiCount / overview.value.trackedApiCount) * 100))
+    return roundPercent(clampPercent(
+      (overview.value.enabledTrackedApiCount / overview.value.trackedApiCount) * 100
+    ))
   })
 
   const trackedApiRatioLabel = computed(() => {
@@ -113,7 +74,6 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
   const trendTotalCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.totalCalls, 0))
   const trendSuccessCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.successCalls, 0))
   const trendFailureCalls = computed(() => trend7d.value.reduce((sum, item) => sum + item.failureCalls, 0))
-
   const topApi = computed(() => rankingLast30d.value[0] ?? null)
 
   const overviewCards = computed<PublicStatsOverviewCard[]>(() => {
@@ -164,7 +124,9 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
         key: 'failure',
         label: t('public.stats.failureCalls'),
         value: formatCount(overview.value.failureCalls),
-        helper: overview.value.failureCalls > 0 ? t('public.stats.cards.failureAttention') : t('public.stats.cards.noFailures'),
+        helper: overview.value.failureCalls > 0
+          ? t('public.stats.cards.failureAttention')
+          : t('public.stats.cards.noFailures'),
         icon: 'i-mdi-close-circle-outline',
         tone: overview.value.failureCalls > 0 ? 'rose' : 'ink'
       },
@@ -187,39 +149,27 @@ export function usePublicStatsDashboard(options: UsePublicStatsDashboardOptions 
     ]
   })
 
-  async function fetchStats() {
-    await refresh()
-  }
-
   async function reloadStats() {
     await refresh()
   }
 
   return {
-    data,
-    isPending,
     error,
-    overview,
-    trend7d,
-    rankingLast30d,
+    formatCompact: formatCompactCount,
+    formatCount,
+    formatRate: formatPercent,
+    generatedAtLabel,
     hasData,
     isInitialLoading,
-    generatedAtLabel,
-    todayDelta,
-    todayDeltaLabel,
-    successRateProgress,
-    failureRate,
-    trackedApiRatio,
-    trackedApiRatioLabel,
-    trendTotalCalls,
-    trendSuccessCalls,
-    trendFailureCalls,
-    topApi,
+    isPending,
+    overview,
     overviewCards,
-    fetchStats,
+    rankingLast30d,
     reloadStats,
-    formatRate: formatPercent,
-    formatCount,
-    formatCompact: formatCompactCount
+    topApi,
+    trend7d,
+    trendFailureCalls,
+    trendSuccessCalls,
+    trendTotalCalls
   }
 }
