@@ -14,11 +14,10 @@
 
 ## 2. 准备数据库
 
-本地测试可以使用独立 PGlite 目录：
+本地测试不配置 PostgreSQL 时自动使用 PGlite：
 
 ```powershell
-$env:DATABASE_DRIVER = 'pglite'
-$env:PGLITE_DATA_DIR = '.data/integration-test'
+$env:DATABASE_URL = $null
 ```
 
 PostgreSQL 测试应使用独立空数据库。不要使用生产数据库执行集成测试。
@@ -42,8 +41,6 @@ Platform：
 cd D:\Project\vscode\openapi-platform
 $env:NUXT_AUTH_SECRET = 'replace-with-random-auth-secret'
 $env:NUXT_API_KEY_SECRET = 'replace-with-random-api-key-secret'
-$env:DATABASE_DRIVER = 'pglite'
-$env:PGLITE_DATA_DIR = '.data/integration-test'
 pnpm dev
 ```
 
@@ -125,14 +122,16 @@ IP 模块提供以下配置示例：
 
 如果一个 Upstream 包含多个相同契约 Target，配置必须发送到全部启用 Target。停止其中一个 Target 后重新同步，Platform 必须显示部分失败或错误。
 
+Service 发现和配置同步包含网络调用。如果后续运行快照发布失败，请求会返回错误，但已记录的 Target 状态不会伪装成“部分发布成功”；修复冲突后可以直接重试相同的发现或同步操作，相同配置 Revision 的下发是幂等的。
+
 停止全部 Service Target 后刷新接口目录或 Upstream 列表，运行状态应显示“离线”；只停止部分 Target 时应显示“部分可用”。重新启动 Target 后再次刷新，状态应恢复为“在线”。发现状态只表示契约已经保存，不能代替运行状态。
 
 ## 7. 验证发布与回滚
 
 1. 在接口目录修改 API Key、统计或积分，确认 Platform 自动生成新运行快照且流量立即使用新配置。
 2. 不修改任何配置再次保存或应用，确认 Platform 复用当前运行快照，不增加快照数量。
-3. 使用高级设置制造路径冲突，确认 Route 期望配置被保存、接口显示“待应用”，但活动流量继续使用旧运行快照。
-4. 解决冲突并点击“应用变更”，确认待处理状态消失且新配置生效。
+3. 使用高级设置制造路径冲突，确认请求失败，Route 变更与新运行快照均回滚，活动流量继续使用旧运行快照。
+4. 解决冲突后重新提交变更，确认 Route 与新运行快照同时生效。
 5. 在接口目录停用接口，确认自动生成新运行快照，公开路径返回 `404 API_NOT_FOUND`。
 6. 在运行快照中回滚到停用前的版本，Route 立即恢复。
 

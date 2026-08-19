@@ -1,4 +1,3 @@
-import { setResponseStatus } from 'h3'
 import { adminPublishServiceEndpointSchema } from '~~/server/schemas/admin'
 import { platformEndpointCatalogService } from '~~/server/services/platform-endpoint-catalog-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
@@ -8,7 +7,6 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminPublishServiceEndpointSchema)
   const result = await platformEndpointCatalogService.publish(body, admin.id)
-  if (!result.applied) setResponseStatus(event, 202)
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -19,10 +17,8 @@ export default defineAdminEventHandler(async (event, admin) => {
       upstreamServiceId: body.upstreamServiceId,
       method: body.method,
       servicePath: body.path,
-      applied: result.applied,
       revisionId: result.revision?.id ?? null,
       revisionSequence: result.revision?.sequence ?? null,
-      publicationError: result.publicationError,
       created: result.created
     }
   })

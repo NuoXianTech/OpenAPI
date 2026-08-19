@@ -4,7 +4,7 @@ import type {
   ServiceDescription,
   ServiceEndpointSummary
 } from '#shared/types/service-control'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   openapiDocuments,
   upstreamServices
@@ -110,7 +110,9 @@ export async function persistServiceOpenApi(input: {
   document: Record<string, unknown>
   reportedSha256: string | null
   sourceUrl: string
+  transaction?: DatabaseTransaction
 }) {
+  const executor = input.transaction ?? db
   const calculatedHash = createHash('sha256')
     .update(canonicalJson(input.document))
     .digest('hex')
@@ -130,7 +132,7 @@ export async function persistServiceOpenApi(input: {
     eq(openapiDocuments.upstreamServiceId, input.upstreamServiceId),
     eq(openapiDocuments.contentHash, calculatedHash)
   )
-  let existing = firstRow(await db.select().from(openapiDocuments)
+  let existing = firstRow(await executor.select().from(openapiDocuments)
     .where(provenance)
     .limit(1))
   const endpoints = extractServiceEndpoints(input.document)
@@ -140,7 +142,7 @@ export async function persistServiceOpenApi(input: {
     )).length,
     endpoints
   }
-  let document = existing ?? firstRow(await db.insert(openapiDocuments)
+  let document = existing ?? firstRow(await executor.insert(openapiDocuments)
     .values({
       workspaceId: input.workspaceId,
       upstreamServiceId: input.upstreamServiceId,
@@ -164,7 +166,7 @@ export async function persistServiceOpenApi(input: {
     })
     .returning())
   if (!document) {
-    existing = firstRow(await db.select().from(openapiDocuments)
+    existing = firstRow(await executor.select().from(openapiDocuments)
       .where(provenance)
       .limit(1))
     document = existing
@@ -172,13 +174,13 @@ export async function persistServiceOpenApi(input: {
   if (!document) throw new Error('OpenAPI document insert returned no row')
 
   if (existing) {
-    document = firstRow(await db.update(openapiDocuments).set({
+    document = firstRow(await executor.update(openapiDocuments).set({
       sourceUrl: input.sourceUrl,
       parsedSummary,
       fetchedAt: new Date()
     }).where(eq(openapiDocuments.id, existing.id)).returning()) ?? existing
   }
-  await db.update(upstreamServices).set({
+  await executor.update(upstreamServices).set({
     openapiDocumentId: document.id,
     updatedAt: new Date()
   }).where(eq(upstreamServices.id, input.upstreamServiceId))

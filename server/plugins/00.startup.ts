@@ -10,7 +10,7 @@ import { platformWorkspaceService } from '~~/server/services/platform-workspace-
 import { userService, USER_ROLES } from '~~/server/services/user-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { hashPassword } from '~~/server/utils/password'
-import { closeRedis, getRedisConfig, initializeRedis } from '~~/server/utils/redis'
+import { closeRedis, initializeRedis } from '~~/server/utils/redis'
 
 async function migrateDatabase(): Promise<void> {
   if (process.env.DB_AUTO_MIGRATE === 'false') {
@@ -50,14 +50,8 @@ async function ensureInitialAdmin(): Promise<void> {
 }
 
 async function initializeRedisService(): Promise<void> {
-  const config = getRedisConfig()
-  try {
-    const client = await initializeRedis()
-    console.info(client ? '[redis] Connection ready.' : '[redis] Not configured; memory fallback active.')
-  } catch (error) {
-    if (config.required) throw error
-    console.warn('[redis] Initial connection failed; optional memory fallback remains active')
-  }
+  const client = await initializeRedis()
+  console.info(client ? '[redis] Connection ready.' : '[redis] Not configured; memory fallback active.')
 }
 
 async function initializeDatabaseState(): Promise<void> {

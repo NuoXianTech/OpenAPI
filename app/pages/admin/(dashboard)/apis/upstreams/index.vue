@@ -2,11 +2,10 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformUpstream, PlatformUpstreamTarget, PlatformWorkspacePublicationResult } from '~/types/platform'
+import type { PlatformUpstream, PlatformUpstreamTarget } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import {
   platformStatusColor,
-  platformPublicationFeedback,
   serviceAvailabilityColor
 } from '~/utils/platform-display'
 
@@ -104,15 +103,11 @@ async function refreshUpstreams() {
 
 async function updateUpstreamStatus(upstream: PlatformUpstream) {
   try {
-    const result = await $fetch<PlatformWorkspacePublicationResult>(`/api/admin/v1/upstreams/${upstream.id}`, {
+    await $fetch(`/api/admin/v1/upstreams/${upstream.id}`, {
       method: 'PATCH',
       body: { status: upstream.status === 'active' ? 'disabled' : 'active' }
     })
-    toast.add(platformPublicationFeedback(
-      result,
-      t('common.feedback.updated'),
-      t('admin.apis.routing.feedback.savedPendingPublish')
-    ))
+    toast.add({ title: t('common.feedback.updated'), color: 'success' })
     await refreshUpstreams()
   } catch (error: unknown) {
     toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
@@ -121,15 +116,11 @@ async function updateUpstreamStatus(upstream: PlatformUpstream) {
 
 async function updateTargetStatus(target: PlatformUpstreamTarget) {
   try {
-    const result = await $fetch<PlatformWorkspacePublicationResult>(`/api/admin/v1/targets/${target.id}`, {
+    await $fetch(`/api/admin/v1/targets/${target.id}`, {
       method: 'PATCH',
       body: { enabled: !target.enabled }
     })
-    toast.add(platformPublicationFeedback(
-      result,
-      t('common.feedback.updated'),
-      t('admin.apis.routing.feedback.savedPendingPublish')
-    ))
+    toast.add({ title: t('common.feedback.updated'), color: 'success' })
     await refreshUpstreams()
   } catch (error: unknown) {
     toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
@@ -143,15 +134,11 @@ async function removeUpstream(upstream: PlatformUpstream) {
     confirmColor: 'error',
     onConfirm: async () => {
       try {
-        const result = await $fetch<PlatformWorkspacePublicationResult>(
+        await $fetch(
           `/api/admin/v1/upstreams/${upstream.id}`,
           { method: 'DELETE' }
         )
-        toast.add(platformPublicationFeedback(
-          result,
-          t('common.feedback.deleted'),
-          t('admin.apis.routing.feedback.savedPendingPublish')
-        ))
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await refreshUpstreams()
       } catch (error: unknown) {
         toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })

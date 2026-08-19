@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { and, asc, desc, eq, inArray, isNull, max, ne } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNull, max } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   apiProducts,
@@ -57,6 +57,11 @@ function validatePublishedRouteConflicts(scopes: RoutingConflictScope[]) {
   }
 }
 
+export async function invalidateRoutingPublicationCaches(): Promise<void> {
+  invalidateRoutingRuntimeCache()
+  await invalidatePublicApiCatalogCache()
+}
+
 export const routingRevisionService = {
   async list(environmentId?: string) {
     const query = db.select().from(routingRevisions)
@@ -75,8 +80,8 @@ export const routingRevisionService = {
     try {
       const publish = async (tx: DatabaseTransaction) => {
         // Every publisher locks the same ordered set before reading active
-        // snapshots. This serializes conflict validation across environments,
-        // while the partial unique index protects the per-environment invariant.
+        // snapshots. This serializes conflict validation and active-revision
+        // pointer updates across environments.
         const activeEnvironments = transaction?.activeEnvironments
           ?? await tx.select().from(environments)
             .where(eq(environments.status, 'active'))
@@ -120,7 +125,7 @@ export const routingRevisionService = {
           payload: routingRevisions.configPayload
         }).from(environments)
           .innerJoin(routingRevisions, eq(routingRevisions.id, environments.activeRevisionId))
-          .where(and(eq(environments.status, 'active'), eq(routingRevisions.status, 'published')))
+          .where(eq(environments.status, 'active'))
         validatePublishedRouteConflicts([
           {
             environmentId: environment.id,
@@ -211,10 +216,7 @@ export const routingRevisionService = {
         if (environment.activeRevisionId) {
           const activeRevision = firstRow(await tx.select()
             .from(routingRevisions)
-            .where(and(
-              eq(routingRevisions.id, environment.activeRevisionId),
-              eq(routingRevisions.status, 'published')
-            ))
+            .where(eq(routingRevisions.id, environment.activeRevisionId))
             .limit(1))
           if (
             activeRevision
@@ -237,19 +239,11 @@ export const routingRevisionService = {
           generatedAt: generatedAt.toISOString(),
         }
 
-        await tx.update(routingRevisions)
-          .set({ status: 'superseded' })
-          .where(and(
-            eq(routingRevisions.environmentId, environment.id),
-            eq(routingRevisions.status, 'published')
-          ))
-
         const created = firstRow(await tx.insert(routingRevisions).values({
           id: revisionId,
           workspaceId: environment.workspaceId,
           environmentId: environment.id,
           sequence,
-          status: 'published',
           configPayload: payload,
           checksum: revisionChecksum(payload),
           createdBy,
@@ -266,10 +260,7 @@ export const routingRevisionService = {
       const revision = transaction
         ? await publish(transaction.tx)
         : await db.transaction(publish)
-      if (!transaction) {
-        invalidateRoutingRuntimeCache()
-        await invalidatePublicApiCatalogCache()
-      }
+      if (!transaction) await invalidateRoutingPublicationCaches()
       return revision
     } catch (error) {
       if (getSqlState(error) === '23505') {
@@ -298,7 +289,7 @@ export const routingRevisionService = {
         eq(routingRevisions.id, revisionId),
         eq(routingRevisions.environmentId, environmentId)
       )).limit(1))
-      if (!target || (target.status !== 'published' && target.status !== 'superseded')) {
+      if (!target) {
         throw createApplicationError({ statusCode: 404, message: 'published routing revision not found', data: { code: 'REVISION_NOT_FOUND' } })
       }
 
@@ -308,7 +299,7 @@ export const routingRevisionService = {
         payload: routingRevisions.configPayload
       }).from(environments)
         .innerJoin(routingRevisions, eq(routingRevisions.id, environments.activeRevisionId))
-        .where(and(eq(environments.status, 'active'), eq(routingRevisions.status, 'published')))
+        .where(eq(environments.status, 'active'))
       validatePublishedRouteConflicts([
         {
           environmentId: environment.id,
@@ -324,34 +315,29 @@ export const routingRevisionService = {
           }))
       ])
 
-      if (environment.activeRevisionId === target.id && target.status === 'published') {
-        return target
-      }
-      await tx.update(routingRevisions).set({ status: 'superseded' })
-        .where(and(
-          eq(routingRevisions.environmentId, environment.id),
-          eq(routingRevisions.status, 'published'),
-          ne(routingRevisions.id, target.id)
-        ))
-      const activated = firstRow(await tx.update(routingRevisions).set({ status: 'published' })
-        .where(eq(routingRevisions.id, target.id))
-        .returning())
-      if (!activated) throw new Error('routing revision activation returned no row')
+      if (environment.activeRevisionId === target.id) return target
       await tx.update(environments).set({ activeRevisionId: target.id, updatedAt: new Date() })
         .where(eq(environments.id, environment.id))
-      return activated
+      return target
     })
-    invalidateRoutingRuntimeCache()
-    await invalidatePublicApiCatalogCache()
+    await invalidateRoutingPublicationCaches()
     return revision
   },
 
-  async publishWorkspace(workspaceId: string, createdBy: number | null) {
-    const revisions = await db.transaction(async (tx: DatabaseTransaction) => {
-      const activeEnvironments = await tx.select().from(environments)
-        .where(eq(environments.status, 'active'))
-        .orderBy(asc(environments.id))
-        .for('update')
+  async publishWorkspace(
+    workspaceId: string,
+    createdBy: number | null,
+    transaction?: {
+      tx: DatabaseTransaction
+      activeEnvironments?: Array<typeof environments.$inferSelect>
+    }
+  ) {
+    const publish = async (tx: DatabaseTransaction) => {
+      const activeEnvironments = transaction?.activeEnvironments
+        ?? await tx.select().from(environments)
+          .where(eq(environments.status, 'active'))
+          .orderBy(asc(environments.id))
+          .for('update')
       const workspaceEnvironments = activeEnvironments.filter(
         environment => environment.workspaceId === workspaceId
       )
@@ -364,9 +350,11 @@ export const routingRevisionService = {
         ))
       }
       return published
-    })
-    invalidateRoutingRuntimeCache()
-    await invalidatePublicApiCatalogCache()
+    }
+    const revisions = transaction
+      ? await publish(transaction.tx)
+      : await db.transaction(publish)
+    if (!transaction) await invalidateRoutingPublicationCaches()
     return revisions
   }
 }

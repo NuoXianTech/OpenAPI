@@ -166,10 +166,6 @@ export const adminUpdateEndpointPublicationSchema = z.object({
   sensitiveQueryParameters: z.array(z.string().trim().min(1).max(100)).max(64).optional()
 })
 
-export const adminPublishRevisionSchema = z.object({
-  environmentId: z.uuid()
-})
-
 export const adminActivateRevisionSchema = z.object({
   environmentId: z.uuid(),
   revisionId: z.uuid()

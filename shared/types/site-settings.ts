@@ -8,6 +8,7 @@ export interface SystemSettings {
   siteDescription: string
   startTime: string
   registrationMode: 'open' | 'invite' | 'closed'
+  registrationInviteCode: string
   defaultRegisterCredits: number
   registerEmailFilterMode: 'off' | 'whitelist' | 'blacklist'
   registerEmailFilterList: string
@@ -86,7 +87,7 @@ export interface PublicSiteSettings {
   policeBeian: string | null
   termsUrl: string | null
   privacyUrl: string | null
-  registrationMode: string
+  registrationMode: SystemSettings['registrationMode']
   passwordResetEnabled: boolean
   turnstile: PublicTurnstileSettings
 }

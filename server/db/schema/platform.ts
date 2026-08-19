@@ -255,20 +255,14 @@ export const routingRevisions = pgTable('routing_revisions', {
   workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   environmentId: uuid('environment_id').notNull().references(() => environments.id, { onDelete: 'cascade' }),
   sequence: integer('sequence').notNull(),
-  status: varchar('status', { length: 20 }).notNull(),
   configPayload: jsonb('config_payload').$type<RoutingRevisionPayload>().notNull(),
   checksum: varchar('checksum', { length: 64 }).notNull(),
   createdBy: integer('created_by'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  publishedAt: timestamp('published_at', { withTimezone: true }),
-  failureReason: text('failure_reason')
+  publishedAt: timestamp('published_at', { withTimezone: true }).notNull()
 }, table => [
   uniqueIndex('routing_revisions_environment_sequence_uq').on(table.environmentId, table.sequence),
-  uniqueIndex('routing_revisions_environment_published_uq')
-    .on(table.environmentId)
-    .where(sql`${table.status} = 'published'`),
   index('routing_revisions_environment_created_idx').on(table.environmentId, table.createdAt.desc()),
   index('routing_revisions_checksum_idx').on(table.checksum),
-  check('routing_revisions_sequence_chk', sql`${table.sequence} > 0`),
-  check('routing_revisions_status_chk', sql`${table.status} in ('building', 'published', 'failed', 'superseded')`)
+  check('routing_revisions_sequence_chk', sql`${table.sequence} > 0`)
 ])

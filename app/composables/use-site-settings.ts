@@ -41,11 +41,13 @@ export function useSiteSettings() {
 
   const settings = computed(() => data.value || FALLBACK_SETTINGS)
   const turnstile = computed<PublicTurnstileSettings>(() => settings.value.turnstile || EMPTY_TURNSTILE)
+  const registrationEnabled = computed(() => settings.value.registrationMode !== 'closed')
   const passwordResetEnabled = computed(() => settings.value.passwordResetEnabled !== false)
 
   return {
     settings,
     turnstile,
+    registrationEnabled,
     passwordResetEnabled,
     pending,
     error,

@@ -1,11 +1,11 @@
-import { and, count, desc, eq, gt, gte, ilike, lt, or, sql, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gt, gte, ilike, or, sql, type SQL } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import { creditTransactions, redemptionCodes, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { AdminCreditOverview } from '#shared/types/admin-credits'
 
-export type AdminCreditBalanceFilter = 'all' | 'positive' | 'zero' | 'negative'
+export type AdminCreditBalanceFilter = 'all' | 'positive' | 'zero'
 
 interface AdminCreditUserFilters {
   keyword?: string
@@ -99,7 +99,6 @@ async function listUsers(filters: AdminCreditUserFilters = {}) {
   if (filters.userId) conditions.push(eq(users.id, filters.userId))
   if (filters.balance === 'positive') conditions.push(gt(users.credits, 0))
   if (filters.balance === 'zero') conditions.push(eq(users.credits, 0))
-  if (filters.balance === 'negative') conditions.push(lt(users.credits, 0))
 
   const where = conditions.length ? and(...conditions) : undefined
   const { limit, offset } = normalizePagination(filters, { defaultLimit: 20 })

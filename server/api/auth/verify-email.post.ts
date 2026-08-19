@@ -5,6 +5,7 @@ import { userService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
+import { toAuthUser } from '~~/server/utils/user-view'
 
 export default defineEventHandler(async (event) => {
   const { userId, token } = await readZodBody(event, verifyEmailSchema)
@@ -30,6 +31,5 @@ export default defineEventHandler(async (event) => {
   }
 
   await createUserSession(event, { id: updated.id, role: 'user' })
-  const { passwordHash: _, ...safe } = updated
-  return { alreadyVerified: false, user: safe }
+  return { alreadyVerified: false, user: toAuthUser(updated) }
 })

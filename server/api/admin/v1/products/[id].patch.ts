@@ -1,6 +1,4 @@
-import { setResponseStatus } from 'h3'
 import { adminUpdateProductSchema } from '~~/server/schemas/admin'
-import { applyWorkspaceRevision } from '~~/server/services/platform-endpoint-publication-service'
 import { platformProductService } from '~~/server/services/platform-product-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readUuidRouterParam } from '~~/server/utils/router-param'
@@ -10,16 +8,18 @@ import { readZodBody } from '~~/server/utils/zod'
 export default defineAdminEventHandler(async (event, admin) => {
   const id = readUuidRouterParam(event)
   const body = await readZodBody(event, adminUpdateProductSchema)
-  const updated = await platformProductService.update(id, body)
-  const publication = await applyWorkspaceRevision(updated.workspaceId, admin.id)
-  if (!publication.applied) setResponseStatus(event, 202)
+  const result = await platformProductService.updateAndPublish(id, body, admin.id)
+  const updated = result.product
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.platform.product.update',
     resourceType: 'api-product',
     resourceId: id,
-    detail: { patch: body, applied: publication.applied, publicationError: publication.publicationError }
+    detail: { patch: body }
   })
-  return { ...updated, ...publication }
+  return {
+    ...updated,
+    revisions: result.revisions
+  }
 })

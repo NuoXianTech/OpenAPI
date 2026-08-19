@@ -92,6 +92,8 @@ describe('system settings database service', () => {
 
     const updated = await systemSettingsService.update({
       siteName: 'Updated OpenAPI',
+      registrationMode: 'invite',
+      registrationInviteCode: 'site-invite-2026',
       smtpPort: 2525,
       smtpPass: 'smtp-plaintext-secret',
       turnstileSiteKey: 'turnstile-site-key',
@@ -103,6 +105,8 @@ describe('system settings database service', () => {
     })
     expect(updated).toMatchObject({
       siteName: 'Updated OpenAPI',
+      registrationMode: 'invite',
+      registrationInviteCode: 'site-invite-2026',
       smtpPort: 2525,
       smtpPass: 'smtp-plaintext-secret',
       clientIpSource: 'x_forwarded_for',
@@ -135,6 +139,16 @@ describe('system settings database service', () => {
     expect(storedSecret?.value).toMatch(/^enc:system-setting:v1:/)
     expect(storedSecret?.value).not.toContain('smtp-plaintext-secret')
 
+    const inviteRows = await client.query<{ value: string, is_secret: boolean }>(`
+      SELECT value, is_secret
+      FROM system_settings
+      WHERE setting_key = 'registration.invite_code'
+    `)
+    const storedInvite = inviteRows.rows[0]
+    expect(storedInvite?.is_secret).toBe(true)
+    expect(storedInvite?.value).toMatch(/^enc:system-setting:v1:/)
+    expect(storedInvite?.value).not.toContain('site-invite-2026')
+
     const siteKeyRows = await client.query<{ value: string, is_secret: boolean }>(`
       SELECT value, is_secret
       FROM system_settings
@@ -155,6 +169,8 @@ describe('system settings database service', () => {
     expect(storedTurnstileSecret?.value).not.toContain('turnstile-secret-key')
 
     const safeAdminSettings = await systemSettingsService.getForAdmin()
+    expect('registrationInviteCode' in safeAdminSettings).toBe(false)
+    expect(safeAdminSettings.secrets.hasRegistrationInviteCode).toBe(true)
     expect('smtpPass' in safeAdminSettings).toBe(false)
     expect(safeAdminSettings.secrets.hasSmtpPass).toBe(true)
     expect(safeAdminSettings.secrets.hasTurnstileSecretKey).toBe(true)

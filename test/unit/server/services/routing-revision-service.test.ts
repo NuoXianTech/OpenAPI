@@ -269,6 +269,28 @@ describe('routing revision service', () => {
     })
   })
 
+  it('allows an existing disabled upstream binding but rejects a new one', async () => {
+    const disabled = await createRoutingGraph({ productSlug: 'disabled-upstream' })
+    const active = await createRoutingGraph({ productSlug: 'active-upstream' })
+    await platformUpstreamService.update(disabled.upstream.id, { status: 'disabled' })
+
+    await expect(platformRouteService.update(
+      disabled.route.id,
+      routeMutationInput(disabled.route)
+    )).resolves.toMatchObject({ upstreamServiceId: disabled.upstream.id })
+
+    await expect(platformRouteService.update(
+      active.route.id,
+      {
+        ...routeMutationInput(active.route),
+        upstreamServiceId: disabled.upstream.id
+      }
+    )).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: 'UPSTREAM_NOT_ACTIVE' }
+    })
+  })
+
   it('allows only one active environment without a default domain', async () => {
     await expect(platformWorkspaceService.create({
       slug: 'second',
@@ -294,7 +316,8 @@ describe('routing revision service', () => {
     const firstRevision = await routingRevisionService.publish(defaults.environment.id, null)
     const payload = firstRevision.configPayload
 
-    expect(firstRevision).toMatchObject({ sequence: 1, status: 'published' })
+    expect(firstRevision).toMatchObject({ sequence: 1 })
+    expect(firstRevision.publishedAt).toBeInstanceOf(Date)
     expect(firstRevision.checksum).toBe(
       createHash('sha256').update(canonicalJson(payload)).digest('hex')
     )
@@ -326,7 +349,7 @@ describe('routing revision service', () => {
     })
 
     const secondRevision = await routingRevisionService.publish(defaults.environment.id, null)
-    expect(secondRevision).toMatchObject({ sequence: 2, status: 'published' })
+    expect(secondRevision).toMatchObject({ sequence: 2 })
     await expect(routingRuntimeService.resolve(
       'GET',
       '/v1/revision-two-only',
@@ -334,15 +357,16 @@ describe('routing revision service', () => {
     )).resolves.toMatchObject({ revisionId: secondRevision.id })
 
     const activated = await routingRevisionService.activate(defaults.environment.id, firstRevision.id)
-    expect(activated.status).toBe('published')
+    expect(activated.id).toBe(firstRevision.id)
 
     const environment = (await database.select().from(schema.environments))[0]!
     const revisions = await database.select().from(schema.routingRevisions)
-    const revisionStatuses = new Map(revisions.map(revision => [revision.id, revision.status]))
 
     expect(environment.activeRevisionId).toBe(firstRevision.id)
-    expect(revisionStatuses.get(firstRevision.id)).toBe('published')
-    expect(revisionStatuses.get(secondRevision.id)).toBe('superseded')
+    expect(revisions.map(revision => revision.id)).toEqual(expect.arrayContaining([
+      firstRevision.id,
+      secondRevision.id
+    ]))
     await expect(routingRuntimeService.resolve(
       'GET',
       '/v1/revision-two-only',
@@ -444,7 +468,8 @@ describe('routing revision service', () => {
 
     expect(new Set(published.map(revision => revision.id)).size).toBe(1)
     expect(revisions).toHaveLength(1)
-    expect(revisions[0]).toMatchObject({ sequence: 1, status: 'published' })
+    expect(revisions[0]).toMatchObject({ sequence: 1 })
+    expect(revisions[0]?.publishedAt).toBeInstanceOf(Date)
     expect(environment?.activeRevisionId).toBe(revisions[0]?.id)
   })
 
@@ -635,8 +660,6 @@ describe('routing revision service', () => {
     }, null)
     expect(published).toMatchObject({
       created: true,
-      applied: true,
-      publicationError: null,
       revision: { sequence: 1 }
     })
     expect(published.route).toMatchObject({
@@ -654,7 +677,6 @@ describe('routing revision service', () => {
       null
     )
     expect(unchanged).toMatchObject({
-      applied: true,
       revision: { id: published.revision?.id, sequence: 1 }
     })
     expect(await database.select().from(schema.routingRevisions)).toHaveLength(1)
@@ -665,7 +687,6 @@ describe('routing revision service', () => {
       null
     )
     expect(statistics).toMatchObject({
-      applied: true,
       revision: { sequence: 2 },
       route: { isStatistics: false }
     })
@@ -676,7 +697,6 @@ describe('routing revision service', () => {
       null
     )
     expect(disabled).toMatchObject({
-      applied: true,
       revision: { sequence: 3 },
       route: { state: 'disabled' }
     })
@@ -993,7 +1013,7 @@ describe('routing revision service', () => {
     }
   })
 
-  it('keeps the active release while a conflicting endpoint waits to be applied', async () => {
+  it('rolls back an endpoint mutation when publication conflicts', async () => {
     const active = await createRoutingGraph({
       productSlug: 'active-conflict',
       pathPattern: '/v1/conflict/{id}',
@@ -1008,17 +1028,14 @@ describe('routing revision service', () => {
       path: '/v1/conflict/{itemId}'
     })
 
-    const pending = await platformEndpointCatalogService.publish({
+    await expect(platformEndpointCatalogService.publish({
       environmentId: defaults.environment.id,
       upstreamServiceId: service.upstream.id,
       method: 'GET',
       path: service.path
-    }, null)
-    expect(pending).toMatchObject({
-      created: true,
-      applied: false,
-      revision: null,
-      publicationError: { code: 'REVISION_ROUTE_CONFLICT' }
+    }, null)).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: 'REVISION_ROUTE_CONFLICT' }
     })
     const [environment] = await database.select().from(schema.environments)
     expect(environment?.activeRevisionId).toBe(firstRevision.id)
@@ -1029,7 +1046,7 @@ describe('routing revision service', () => {
     )
     expect(catalog.services
       .find(entry => entry.upstream.id === service.upstream.id)
-      ?.endpoints[0]).toMatchObject({ status: 'pending' })
+      ?.endpoints[0]).toMatchObject({ status: 'available', route: null })
 
     const resolved = await platformEndpointCatalogService.update(
       active.route.id,
@@ -1037,8 +1054,18 @@ describe('routing revision service', () => {
       null
     )
     expect(resolved).toMatchObject({
-      applied: true,
       revision: { sequence: 2 }
+    })
+
+    const published = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: service.upstream.id,
+      method: 'GET',
+      path: service.path
+    }, null)
+    expect(published).toMatchObject({
+      created: true,
+      revision: { sequence: 3 }
     })
 
     catalog = await platformEndpointCatalogService.list(

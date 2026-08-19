@@ -1,16 +1,19 @@
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
+import type { DatabaseTransaction } from '~~/server/db/client'
 import {
   endpointDefaultVersion,
   endpointProductDefinition
 } from '~~/server/services/platform-endpoint-product-service'
 import {
   endpointUpstreamTemplate,
-  type HttpMethod,
-  type RouteBinding,
   routeMatchesEndpoint,
-  routeMutationFromBinding,
-  type UpstreamView
+  routeMutationFromBinding
 } from '~~/server/services/platform-endpoint-publication-service'
+import type {
+  HttpMethod,
+  RouteBinding,
+  UpstreamView
+} from '~~/server/types/platform-publication'
 import { platformRouteService } from '~~/server/services/platform-route-service'
 
 function supportRouteHosts(bindings: RouteBinding[]): string[] {
@@ -36,6 +39,7 @@ export async function synchronizeEndpointSupportRoutes(input: {
   endpoint: ServiceEndpointSummary
   endpoints: ServiceEndpointSummary[]
   preferredVersionId?: string
+  transaction?: DatabaseTransaction
 }) {
   const productSlug = endpointProductDefinition(input).slug
   const versionName = endpointDefaultVersion(input.endpoint.path)
@@ -52,7 +56,9 @@ export async function synchronizeEndpointSupportRoutes(input: {
   const supportEndpoints = groupedEndpoints.filter(endpoint => endpoint.support)
   if (supportEndpoints.length === 0) return
 
-  const routes = (await platformRouteService.list(input.workspaceId)).filter(
+  const routes = (await platformRouteService.list(input.workspaceId, {
+    transaction: input.transaction
+  })).filter(
     binding => binding.route.upstreamServiceId === input.upstream.id
   )
   const publicEndpoints = groupedEndpoints.filter(endpoint => !endpoint.support)
@@ -84,7 +90,10 @@ export async function synchronizeEndpointSupportRoutes(input: {
             rateLimitPerDay: 0,
             state: 'disabled'
           }),
-          { allowServiceManaged: true }
+          {
+            allowServiceManaged: true,
+            transaction: input.transaction
+          }
         )))
       continue
     }
@@ -103,7 +112,10 @@ export async function synchronizeEndpointSupportRoutes(input: {
       .map(binding => platformRouteService.update(
         binding.route.id,
         routeMutationFromBinding(binding, { state: 'disabled' }),
-        { allowServiceManaged: true }
+        {
+          allowServiceManaged: true,
+          transaction: input.transaction
+        }
       )))
 
     const name = endpoint.summary
@@ -128,7 +140,10 @@ export async function synchronizeEndpointSupportRoutes(input: {
           rateLimitPerDay: 0,
           state: 'active'
         }),
-        { allowServiceManaged: true }
+        {
+          allowServiceManaged: true,
+          transaction: input.transaction
+        }
       )
       continue
     }
@@ -151,6 +166,10 @@ export async function synchronizeEndpointSupportRoutes(input: {
       maxRequestBytes: 1024 * 1024,
       maxResponseBytes: 10 * 1024 * 1024,
       state: 'active'
-    }, { managedBy: 'service', isSupportRoute: true })
+    }, {
+      managedBy: 'service',
+      isSupportRoute: true,
+      transaction: input.transaction
+    })
   }
 }

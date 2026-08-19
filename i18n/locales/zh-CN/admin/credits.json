@@ -51,8 +51,7 @@
           "balance": "积分余额",
           "allBalances": "全部余额",
           "positive": "有积分",
-          "zero": "零积分",
-          "negative": "负积分（异常）"
+          "zero": "零积分"
         },
         "columns": {
           "user": "用户",
@@ -140,7 +139,7 @@
       },
       "redemptionCodes": {
         "title": "兑换码",
-        "description": "生成和管理积分兑换码，控制可用状态、使用次数与有效期限",
+        "description": "生成、查看和管理积分兑换码，控制可用状态、使用次数与有效期限",
         "searchPlaceholder": "搜索兑换码 / 备注...",
         "detailsTitle": "兑换码明细",
         "empty": "暂无兑换码",
@@ -172,6 +171,8 @@
           "done": "完成",
           "enable": "启用",
           "disable": "禁用",
+          "viewCode": "查看兑换码",
+          "hideCode": "隐藏兑换码",
           "copyCode": "复制兑换码",
           "copyAll": "复制全部",
           "clickToCopy": "点击复制"
@@ -183,6 +184,7 @@
           "batchEnabled": "已启用 {count} 张兑换码",
           "batchDisabled": "已禁用 {count} 张兑换码",
           "batchDeleted": "已删除 {count} 张兑换码",
+          "revealFailed": "查看兑换码失败",
           "codeCopied": "已复制 {code}",
           "allCopied": "已复制全部兑换码到剪贴板"
         },

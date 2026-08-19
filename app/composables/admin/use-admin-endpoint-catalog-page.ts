@@ -7,7 +7,7 @@ import type {
   PlatformEndpointPublicationResult,
   PlatformProduct,
   PlatformRouteBinding
-} from '~/types/platform'
+} from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 
 function emptyCatalog(): PlatformEndpointCatalog {
@@ -157,23 +157,19 @@ export function useAdminEndpointCatalogPage() {
     result: PlatformEndpointPublicationResult,
     successKey: string
   ) {
-    if (result.applied) {
-      toast.add({
-        title: t(successKey),
-        description: t('admin.apis.routing.feedback.runtimeUpdated'),
-        color: 'success',
-        icon: 'i-lucide-circle-check'
-      })
-      return
-    }
+    const runtimeUpdated = result.route.state !== 'active'
+      || Boolean(result.revision?.configPayload.routes.some(route => (
+        route.id === result.route.id
+      )))
     toast.add({
-      title: t('admin.apis.routing.catalog.feedback.savedPending'),
-      description: t(
-        'admin.apis.routing.catalog.feedback.savedPendingDescription',
-        { reason: result.publicationError?.message ?? '—' }
-      ),
-      color: 'warning',
-      icon: 'i-lucide-triangle-alert'
+      title: t(successKey),
+      description: t(runtimeUpdated
+        ? 'admin.apis.routing.feedback.runtimeUpdated'
+        : 'admin.apis.routing.feedback.runtimePending'),
+      color: runtimeUpdated ? 'success' : 'warning',
+      icon: runtimeUpdated
+        ? 'i-lucide-circle-check'
+        : 'i-lucide-clock-3'
     })
   }
 
@@ -274,10 +270,7 @@ export function useAdminEndpointCatalogPage() {
           }
         }
       )
-      showPublicationResult(
-        result,
-        'admin.apis.routing.catalog.feedback.published'
-      )
+      showPublicationResult(result, 'admin.apis.routing.catalog.feedback.published')
       await refreshAfterMutation()
     } catch (error: unknown) {
       toast.add({

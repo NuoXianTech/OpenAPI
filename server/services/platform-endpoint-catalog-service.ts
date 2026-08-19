@@ -1,22 +1,29 @@
 import { eq } from 'drizzle-orm'
-import { db } from '~~/server/db/client'
-import { environments, routingRevisions } from '~~/server/db/schema'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
+import {
+  environments,
+  routingRevisions,
+  upstreamServiceConnections,
+  upstreamServices
+} from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import {
   platformRouteService,
   type RouteMutationInput
 } from '~~/server/services/platform-route-service'
 import {
-  applyEndpointRevision,
+  applyEnvironmentMutation,
   endpointPublicationStatus,
   endpointRoutePriority,
   endpointUpstreamTemplate,
-  type HttpMethod,
-  type PublicationStatus,
-  type RouteBinding,
   routeMutationFromBinding,
   routeMatchesEndpoint
 } from '~~/server/services/platform-endpoint-publication-service'
+import type {
+  HttpMethod,
+  PublicationStatus,
+  RouteBinding
+} from '~~/server/types/platform-publication'
 import { ensureEndpointVersion } from '~~/server/services/platform-endpoint-product-service'
 import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
@@ -50,8 +57,13 @@ interface CatalogItem {
   publishable: boolean
 }
 
-async function loadEnvironment(environmentId: string, workspaceId?: string) {
-  const environment = firstRow(await db.select().from(environments)
+async function loadEnvironment(
+  environmentId: string,
+  workspaceId?: string,
+  transaction?: DatabaseTransaction
+) {
+  const executor = transaction ?? db
+  const environment = firstRow(await executor.select().from(environments)
     .where(eq(environments.id, environmentId))
     .limit(1))
   if (!environment || (workspaceId && environment.workspaceId !== workspaceId)) {
@@ -69,6 +81,38 @@ async function activeRevision(environment: Awaited<ReturnType<typeof loadEnviron
   return firstRow(await db.select().from(routingRevisions)
     .where(eq(routingRevisions.id, environment.activeRevisionId))
     .limit(1)) ?? null
+}
+
+async function assertServiceContractCurrent(
+  tx: DatabaseTransaction,
+  expected: {
+    upstreamServiceId: string
+    openapiDocumentId: string | null
+    openapiSha256: string | null
+  }
+) {
+  const current = firstRow(await tx.select({
+    openapiDocumentId: upstreamServices.openapiDocumentId,
+    openapiSha256: upstreamServiceConnections.openapiSha256
+  }).from(upstreamServices)
+    .innerJoin(upstreamServiceConnections, eq(
+      upstreamServiceConnections.upstreamServiceId,
+      upstreamServices.id
+    ))
+    .where(eq(upstreamServices.id, expected.upstreamServiceId))
+    .limit(1)
+    .for('update'))
+  if (
+    !current
+    || current.openapiDocumentId !== expected.openapiDocumentId
+    || current.openapiSha256 !== expected.openapiSha256
+  ) {
+    throw createApplicationError({
+      statusCode: 409,
+      message: 'Service contract changed; refresh the endpoint catalog and retry',
+      data: { code: 'SERVICE_CONTRACT_CHANGED' }
+    })
+  }
 }
 
 export const platformEndpointCatalogService = {
@@ -219,73 +263,94 @@ export const platformEndpointCatalogService = {
       })
     }
 
-    const existingRoutes = await platformRouteService.list(upstream.workspaceId)
-    const existing = existingRoutes
-      .filter(binding => (
-        binding.route.upstreamServiceId === upstream.id
-        && routeMatchesEndpoint(binding, endpoint)
-      ))
-      .sort((left, right) => (
-        Number(right.route.state === 'active')
-        - Number(left.route.state === 'active')
-      ))[0]
     const upstreamView = (await platformUpstreamService.list(
       upstream.workspaceId,
       { checkAvailability: false }
     ))
       .find(item => item.id === upstream.id)
     if (!upstreamView) throw new Error('upstream view disappeared during publication')
-    const apiVersionId = await ensureEndpointVersion({
-      workspaceId: upstream.workspaceId,
-      upstream: upstreamView,
-      serviceName: view.connection.serviceName ?? upstream.name,
-      endpoint,
-      existingRoutes
-    })
-    const route = existing
-      ? await platformRouteService.update(
-          existing.route.id,
-          routeMutationFromBinding(existing, {
-            apiVersionId,
-            state: 'active'
-          }),
-          { allowServiceManaged: true }
-        )
-      : await platformRouteService.create({
-          apiVersionId,
-          name: endpoint.summary
-            ?? endpoint.operationId
-            ?? `${endpoint.method} ${endpoint.path}`,
-          hosts: [],
-          method: input.method,
-          pathPattern: endpoint.path,
+    const committed = await applyEnvironmentMutation(
+      input.environmentId,
+      createdBy,
+      async (tx) => {
+        await assertServiceContractCurrent(tx, {
           upstreamServiceId: upstream.id,
-          upstreamPathTemplate: endpointUpstreamTemplate(endpoint.path),
-          isApiKey: false,
-          isStatistics: true,
-          creditsCost: 0,
-          rateLimitPerSecond: 0,
-          rateLimitPerMinute: 0,
-          rateLimitPerHour: 0,
-          rateLimitPerDay: 0,
-          timeoutMs: 10_000,
-          maxRequestBytes: 1024 * 1024,
-          maxResponseBytes: 10 * 1024 * 1024,
-          state: 'active'
-        }, { managedBy: 'service' })
-    if (!route) throw new Error('endpoint route could not be created')
-    await synchronizeEndpointSupportRoutes({
-      workspaceId: upstream.workspaceId,
-      upstream: upstreamView,
-      serviceName: view.connection.serviceName ?? upstream.name,
-      endpoint,
-      endpoints: view.endpoints,
-      preferredVersionId: route.apiVersionId
-    })
+          openapiDocumentId: upstream.openapiDocumentId,
+          openapiSha256: view.connection.openapiSha256
+        })
+        await loadEnvironment(
+          input.environmentId,
+          upstream.workspaceId,
+          tx
+        )
+        const existingRoutes = await platformRouteService.list(
+          upstream.workspaceId,
+          { transaction: tx }
+        )
+        const existing = existingRoutes
+          .filter(binding => (
+            binding.route.upstreamServiceId === upstream.id
+            && routeMatchesEndpoint(binding, endpoint)
+          ))
+          .sort((left, right) => (
+            Number(right.route.state === 'active')
+            - Number(left.route.state === 'active')
+          ))[0]
+        const apiVersionId = await ensureEndpointVersion({
+          workspaceId: upstream.workspaceId,
+          upstream: upstreamView,
+          serviceName: view.connection.serviceName ?? upstream.name,
+          endpoint,
+          existingRoutes,
+          transaction: tx
+        })
+        const route = existing
+          ? await platformRouteService.update(
+              existing.route.id,
+              routeMutationFromBinding(existing, {
+                apiVersionId,
+                state: 'active'
+              }),
+              { allowServiceManaged: true, transaction: tx }
+            )
+          : await platformRouteService.create({
+              apiVersionId,
+              name: endpoint.summary
+                ?? endpoint.operationId
+                ?? `${endpoint.method} ${endpoint.path}`,
+              hosts: [],
+              method: input.method,
+              pathPattern: endpoint.path,
+              upstreamServiceId: upstream.id,
+              upstreamPathTemplate: endpointUpstreamTemplate(endpoint.path),
+              isApiKey: false,
+              isStatistics: true,
+              creditsCost: 0,
+              rateLimitPerSecond: 0,
+              rateLimitPerMinute: 0,
+              rateLimitPerHour: 0,
+              rateLimitPerDay: 0,
+              timeoutMs: 10_000,
+              maxRequestBytes: 1024 * 1024,
+              maxResponseBytes: 10 * 1024 * 1024,
+              state: 'active'
+            }, { managedBy: 'service', transaction: tx })
+        if (!route) throw new Error('endpoint route could not be created')
+        await synchronizeEndpointSupportRoutes({
+          workspaceId: upstream.workspaceId,
+          upstream: upstreamView,
+          serviceName: view.connection.serviceName ?? upstream.name,
+          endpoint,
+          endpoints: view.endpoints,
+          preferredVersionId: route.apiVersionId,
+          transaction: tx
+        })
+        return { route, created: !existing }
+      }
+    )
     return {
-      route,
-      created: !existing,
-      ...await applyEndpointRevision(input.environmentId, createdBy)
+      ...committed.value,
+      revision: committed.revision
     }
   },
 
@@ -312,49 +377,72 @@ export const platformEndpointCatalogService = {
         data: { code: 'SUPPORT_ROUTE_NOT_MANAGEABLE' }
       })
     }
-    const route = await platformRouteService.update(routeId, {
-      apiVersionId: binding.route.apiVersionId,
-      name: input.name ?? binding.route.name,
-      hosts: binding.route.hosts,
-      method: binding.route.method as HttpMethod,
-      pathPattern: binding.route.pathPattern,
-      upstreamServiceId: binding.route.upstreamServiceId,
-      upstreamPathTemplate: binding.route.upstreamPathTemplate,
-      isApiKey: input.isApiKey ?? binding.route.isApiKey,
-      isStatistics: input.isStatistics ?? binding.route.isStatistics,
-      creditsCost: input.creditsCost ?? binding.route.creditsCost,
-      rateLimitPerSecond:
-        input.rateLimitPerSecond ?? binding.route.rateLimitPerSecond,
-      rateLimitPerMinute:
-        input.rateLimitPerMinute ?? binding.route.rateLimitPerMinute,
-      rateLimitPerHour:
-        input.rateLimitPerHour ?? binding.route.rateLimitPerHour,
-      rateLimitPerDay:
-        input.rateLimitPerDay ?? binding.route.rateLimitPerDay,
-      timeoutMs: input.timeoutMs ?? binding.route.timeoutMs,
-      maxRequestBytes: input.maxRequestBytes ?? binding.route.maxRequestBytes,
-      maxResponseBytes: input.maxResponseBytes ?? binding.route.maxResponseBytes,
-      catalogStatus: input.catalogStatus
-        ?? binding.route.catalogStatus as RouteMutationInput['catalogStatus'],
-      sensitiveQueryParameters: input.sensitiveQueryParameters
-        ?? binding.route.sensitiveQueryParameters,
-      state: input.enabled === undefined
-        ? binding.route.state as 'draft' | 'active' | 'disabled'
-        : input.enabled ? 'active' : 'disabled'
-    }, { allowServiceManaged: true })
-    if (view && endpoint) {
-      await synchronizeEndpointSupportRoutes({
-        workspaceId: binding.product.workspaceId,
-        upstream: binding.upstream,
-        serviceName: view.connection.serviceName ?? binding.upstream.name,
-        endpoint,
-        endpoints: view.endpoints,
-        preferredVersionId: route.apiVersionId
-      })
-    }
+    const committed = await applyEnvironmentMutation(
+      input.environmentId,
+      createdBy,
+      async (tx) => {
+        const current = await platformRouteService.get(routeId, {
+          transaction: tx
+        })
+        if (view) {
+          await assertServiceContractCurrent(tx, {
+            upstreamServiceId: binding.upstream.id,
+            openapiDocumentId: binding.upstream.openapiDocumentId,
+            openapiSha256: view.connection.openapiSha256
+          })
+        }
+        await loadEnvironment(
+          input.environmentId,
+          current.product.workspaceId,
+          tx
+        )
+        const route = await platformRouteService.update(routeId, {
+          apiVersionId: current.route.apiVersionId,
+          name: input.name ?? current.route.name,
+          hosts: current.route.hosts,
+          method: current.route.method as HttpMethod,
+          pathPattern: current.route.pathPattern,
+          upstreamServiceId: current.route.upstreamServiceId,
+          upstreamPathTemplate: current.route.upstreamPathTemplate,
+          isApiKey: input.isApiKey ?? current.route.isApiKey,
+          isStatistics: input.isStatistics ?? current.route.isStatistics,
+          creditsCost: input.creditsCost ?? current.route.creditsCost,
+          rateLimitPerSecond: input.rateLimitPerSecond
+            ?? current.route.rateLimitPerSecond,
+          rateLimitPerMinute: input.rateLimitPerMinute
+            ?? current.route.rateLimitPerMinute,
+          rateLimitPerHour: input.rateLimitPerHour
+            ?? current.route.rateLimitPerHour,
+          rateLimitPerDay: input.rateLimitPerDay
+            ?? current.route.rateLimitPerDay,
+          timeoutMs: input.timeoutMs ?? current.route.timeoutMs,
+          maxRequestBytes: input.maxRequestBytes ?? current.route.maxRequestBytes,
+          maxResponseBytes: input.maxResponseBytes ?? current.route.maxResponseBytes,
+          catalogStatus: input.catalogStatus
+            ?? current.route.catalogStatus as RouteMutationInput['catalogStatus'],
+          sensitiveQueryParameters: input.sensitiveQueryParameters
+            ?? current.route.sensitiveQueryParameters,
+          state: input.enabled === undefined
+            ? current.route.state as 'draft' | 'active' | 'disabled'
+            : input.enabled ? 'active' : 'disabled'
+        }, { allowServiceManaged: true, transaction: tx })
+        if (view && endpoint) {
+          await synchronizeEndpointSupportRoutes({
+            workspaceId: current.product.workspaceId,
+            upstream: current.upstream,
+            serviceName: view.connection.serviceName ?? current.upstream.name,
+            endpoint,
+            endpoints: view.endpoints,
+            preferredVersionId: route.apiVersionId,
+            transaction: tx
+          })
+        }
+        return route
+      }
+    )
     return {
-      route,
-      ...await applyEndpointRevision(input.environmentId, createdBy)
+      route: committed.value,
+      revision: committed.revision
     }
   }
 }

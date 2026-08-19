@@ -1,6 +1,4 @@
-import { getDatabaseDriver, getDatabaseUrl } from '~~/server/db/client'
 import { getAuthSecret } from '~~/server/utils/auth-secret'
-import { getRedisConfig } from '~~/server/utils/redis'
 import { assertApiKeySecretConfigured } from '~~/server/utils/stored-secret'
 
 function readErrorMessage(error: unknown): string {
@@ -15,34 +13,11 @@ function collectValidationError(errors: string[], validate: () => void): void {
   }
 }
 
-function validateDatabaseConfiguration(errors: string[]): void {
-  let driver: ReturnType<typeof getDatabaseDriver> | undefined
-
-  collectValidationError(errors, () => {
-    driver = getDatabaseDriver()
-  })
-
-  if (driver !== 'postgres') return
-
-  collectValidationError(errors, () => {
-    getDatabaseUrl()
-  })
-}
-
-function validateRedisConfiguration(errors: string[]): void {
-  const redis = getRedisConfig()
-  if (redis.required && !redis.url) {
-    errors.push('NUXT_REDIS_URL is required when NUXT_REDIS_REQUIRED=true')
-  }
-}
-
 export function getRuntimeEnvironmentErrors(): string[] {
   const errors: string[] = []
 
   collectValidationError(errors, getAuthSecret)
   collectValidationError(errors, assertApiKeySecretConfigured)
-  validateDatabaseConfiguration(errors)
-  validateRedisConfiguration(errors)
 
   return errors
 }

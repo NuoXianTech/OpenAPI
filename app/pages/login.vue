@@ -10,7 +10,7 @@ const { t } = useI18n()
 useHead(() => ({ title: t('auth.login.title') }))
 
 const { fetchMe, user, login } = useAuth()
-const { turnstile, passwordResetEnabled, settings } = useSiteSettings()
+const { turnstile, registrationEnabled, passwordResetEnabled, settings } = useSiteSettings()
 const route = useRoute()
 
 interface LoginFormState {
@@ -111,7 +111,9 @@ const submitConfig = computed(() => ({
 }))
 
 const footerLinks = computed(() => [
-  { label: t('auth.login.createAccount'), to: '/register' },
+  ...(registrationEnabled.value
+    ? [{ label: t('auth.login.createAccount'), to: '/register' }]
+    : []),
   { label: t('common.actions.backHome'), to: '/' }
 ])
 

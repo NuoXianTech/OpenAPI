@@ -61,7 +61,7 @@ export const apiCalls = pgTable('api_calls', {
   id: bigserial('id', { mode: 'number' }).primaryKey(),
   requestId: uuid('request_id').defaultRandom().notNull(),
   routeId: uuid('route_id').notNull(),
-  routeName: varchar('target_name', { length: 160 }),
+  routeName: varchar('route_name', { length: 160 }),
   upstreamTargetId: uuid('upstream_target_id'),
   upstreamTargetUrl: text('upstream_target_url'),
   apiKeyId: integer('api_key_id'),

@@ -6,7 +6,7 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
 import { readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils/request-query'
 
-const BALANCE_FILTERS: AdminCreditBalanceFilter[] = ['all', 'positive', 'zero', 'negative']
+const BALANCE_FILTERS: AdminCreditBalanceFilter[] = ['all', 'positive', 'zero']
 
 export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })

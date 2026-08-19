@@ -5,7 +5,8 @@ import { defineAdminEventHandler } from '~~/server/utils/auth'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const id = readUuidRouterParam(event)
-  const removed = await platformUpstreamService.removeTarget(id)
+  const result = await platformUpstreamService.removeTargetAndPublish(id, admin.id)
+  const removed = result.target
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -14,5 +15,8 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: id,
     detail: { baseUrl: removed.baseUrl }
   })
-  return { id }
+  return {
+    id,
+    revisions: result.revisions
+  }
 })

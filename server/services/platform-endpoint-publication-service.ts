@@ -1,40 +1,28 @@
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
-import type {
-  platformRouteService,
-  RouteMutationInput
-} from '~~/server/services/platform-route-service'
-import type { platformUpstreamService } from '~~/server/services/platform-upstream-service'
-import { routingRevisionService } from '~~/server/services/routing-revision-service'
+import { asc, eq } from 'drizzle-orm'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
+import { environments } from '~~/server/db/schema'
+import type { RouteMutationInput } from '~~/server/services/platform-route-service'
+import {
+  invalidateRoutingPublicationCaches,
+  routingRevisionService
+} from '~~/server/services/routing-revision-service'
 import type { RoutingRevisionRoute } from '~~/server/types/routing-revision'
+import type {
+  HttpMethod,
+  PublicationStatus,
+  RouteBinding
+} from '~~/server/types/platform-publication'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { parseRoutePathPattern } from '~~/server/utils/route-pattern'
 import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
-export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-export type RouteBinding = Awaited<
-  ReturnType<typeof platformRouteService.list>
->[number]
-export type UpstreamView = Awaited<
-  ReturnType<typeof platformUpstreamService.list>
->[number]
-export type PublicationStatus
-  = | 'available'
-    | 'live'
-    | 'pending'
-    | 'retiring'
-    | 'disabled'
-
-type PublishedRevision = Awaited<
-  ReturnType<typeof routingRevisionService.publish>
->
-
-export interface PublicationApplication {
-  applied: boolean
-  revision: PublishedRevision | null
-  publicationError: {
-    code: string
-    message: string
-  } | null
+export interface WorkspacePublication {
+  revisions: Array<{
+    id: string
+    sequence: number
+    environmentId: string
+  }>
 }
 
 export function endpointPublicationStatus(
@@ -101,37 +89,15 @@ export function endpointRoutePriority(
   return 3
 }
 
-function describePublicationError(error: unknown) {
-  const message = error instanceof Error && error.message.trim()
-    ? error.message
-    : 'routing configuration could not be applied'
-  if (!error || typeof error !== 'object' || !('data' in error)) {
-    return { code: 'ROUTING_PUBLICATION_FAILED', message }
-  }
-  const data = error.data
-  const code = data && typeof data === 'object' && 'code' in data
-    && typeof data.code === 'string'
-    ? data.code
-    : 'ROUTING_PUBLICATION_FAILED'
-  return { code, message }
-}
-
-export async function applyEndpointRevision(
-  environmentId: string,
-  createdBy: number | null
-): Promise<PublicationApplication> {
-  try {
-    return {
-      applied: true,
-      revision: await routingRevisionService.publish(environmentId, createdBy),
-      publicationError: null
-    }
-  } catch (error) {
-    return {
-      applied: false,
-      revision: null,
-      publicationError: describePublicationError(error)
-    }
+function workspacePublication(
+  revisions: Awaited<ReturnType<typeof routingRevisionService.publishWorkspace>>
+): WorkspacePublication {
+  return {
+    revisions: revisions.map(revision => ({
+      id: revision.id,
+      sequence: revision.sequence,
+      environmentId: revision.environmentId
+    }))
   }
 }
 
@@ -139,26 +105,74 @@ export async function applyWorkspaceRevision(
   workspaceId: string,
   createdBy: number | null
 ) {
-  try {
-    const revisions = await routingRevisionService.publishWorkspace(
-      workspaceId,
-      createdBy
+  return workspacePublication(await routingRevisionService.publishWorkspace(
+    workspaceId,
+    createdBy
+  ))
+}
+
+async function lockEnvironmentSet(tx: DatabaseTransaction) {
+  await tx.select({ id: environments.id }).from(environments)
+    .orderBy(asc(environments.id))
+    .for('update')
+}
+
+async function readActiveEnvironments(tx: DatabaseTransaction) {
+  return tx.select().from(environments)
+    .where(eq(environments.status, 'active'))
+    .orderBy(asc(environments.id))
+}
+
+export async function applyEnvironmentMutation<T>(
+  environmentId: string,
+  createdBy: number | null,
+  mutate: (tx: DatabaseTransaction) => Promise<T>
+) {
+  const committed = await db.transaction(async (tx: DatabaseTransaction) => {
+    await lockEnvironmentSet(tx)
+    const value = await mutate(tx)
+    const activeEnvironments = await readActiveEnvironments(tx)
+    const revision = await routingRevisionService.publish(
+      environmentId,
+      createdBy,
+      { tx, activeEnvironments }
     )
-    return {
-      applied: true as const,
-      revisions: revisions.map(revision => ({
-        id: revision.id,
-        sequence: revision.sequence,
-        environmentId: revision.environmentId
-      })),
-      publicationError: null
-    }
-  } catch (error) {
-    return {
-      applied: false as const,
-      revisions: [],
-      publicationError: describePublicationError(error)
-    }
+    return { value, revision }
+  })
+  await invalidateRoutingPublicationCaches()
+  return {
+    value: committed.value,
+    revision: committed.revision
+  }
+}
+
+export async function applyWorkspaceMutation<T>(
+  createdBy: number | null,
+  mutate: (tx: DatabaseTransaction) => Promise<{
+    value: T
+    workspaceId: string
+    publishRouting?: boolean
+  }>
+) {
+  const committed = await db.transaction(async (tx: DatabaseTransaction) => {
+    await lockEnvironmentSet(tx)
+    const mutation = await mutate(tx)
+    const activeEnvironments = await readActiveEnvironments(tx)
+    const revisions = mutation.publishRouting === false
+      ? []
+      : await routingRevisionService.publishWorkspace(
+          mutation.workspaceId,
+          createdBy,
+          { tx, activeEnvironments }
+        )
+    return { ...mutation, revisions }
+  })
+  if (committed.publishRouting !== false) {
+    await invalidateRoutingPublicationCaches()
+  }
+  return {
+    value: committed.value,
+    ...workspacePublication(committed.revisions)
   }
 }
 

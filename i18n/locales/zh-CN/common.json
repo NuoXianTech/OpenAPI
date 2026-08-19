@@ -73,6 +73,7 @@
     "feedback": {
       "copied": "已复制到剪贴板",
       "copyFailed": "复制失败",
+      "loadFailed": "加载失败",
       "saveFailed": "保存失败",
       "sendFailed": "发送失败",
       "createFailed": "创建失败",

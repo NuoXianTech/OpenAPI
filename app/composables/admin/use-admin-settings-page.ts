@@ -10,6 +10,7 @@ export type AdminSettingsForm = SystemSettings
 export type AdminSettingsKey = keyof AdminSettingsForm
 
 export interface AdminSettingsSecrets {
+  hasRegistrationInviteCode: boolean
   hasSmtpPass: boolean
   hasOauthGithubClientSecret: boolean
   hasOauthQqClientSecret: boolean
@@ -62,6 +63,7 @@ interface AdminOauthSettingsUpdateBody {
 
 interface AdminUserSessionSettingsState {
   form: AdminSettingsForm
+  secrets: AdminSettingsSecrets
   saving: Ref<boolean>
   save: (keys?: readonly AdminSettingsKey[]) => void | Promise<void>
   dirty: ComputedRef<boolean>
@@ -95,9 +97,14 @@ interface AdminSettingsResponse extends Partial<AdminSettingsForm> {
   secrets?: Partial<AdminSettingsSecrets>
 }
 
-const writeOnlySecretKeys = ['smtpPass', 'turnstileSecretKey'] as const
+const writeOnlySecretKeys = [
+  'registrationInviteCode',
+  'smtpPass',
+  'turnstileSecretKey'
+] as const
 
 const EMPTY_SETTINGS_SECRETS: AdminSettingsSecrets = {
+  hasRegistrationInviteCode: false,
   hasSmtpPass: false,
   hasOauthGithubClientSecret: false,
   hasOauthQqClientSecret: false,
@@ -337,12 +344,11 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
   const oauthPolicyKeys = ['oauthForceBinding'] as const satisfies readonly AdminSettingsKey[]
   const oauthPolicySection = settings.createSection(oauthPolicyKeys)
   const isOauthSaving = ref(false)
-  const allowRegistration = computed({
-    get: () => settings.form.registrationMode !== 'closed',
-    set: (value: boolean) => {
-      settings.form.registrationMode = value ? 'open' : 'closed'
-    }
-  })
+  const registrationModeItems = computed(() => [
+    { label: t('admin.system.session.registration.mode.options.open'), value: 'open' },
+    { label: t('admin.system.session.registration.mode.options.invite'), value: 'invite' },
+    { label: t('admin.system.session.registration.mode.options.closed'), value: 'closed' }
+  ])
   const emailFilterModeItems = computed(() => [
     { label: t('admin.system.session.emailFilter.options.off'), value: 'off' },
     { label: t('admin.system.session.emailFilter.options.whitelist'), value: 'whitelist' },
@@ -406,13 +412,14 @@ export function useAdminUserSessionSettings(options: UseAdminUserSessionSettings
 
   return {
     form: settings.form,
+    secrets: settings.secrets,
     saving: settings.saving,
     save: settings.save,
     dirty: settings.dirty,
     changedKeys: settings.changedKeys,
     reset: settings.reset,
     createSection: settings.createSection,
-    allowRegistration,
+    registrationModeItems,
     emailFilterModeItems,
     loading: providerFetch.loading,
     refresh: providerFetch.refresh,

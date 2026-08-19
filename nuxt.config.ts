@@ -57,8 +57,7 @@ export default defineNuxtConfig({
     redis: {
       url: '',
       keyPrefix: 'openapi:',
-      connectTimeoutMs: 2_000,
-      required: false
+      connectTimeoutMs: 2_000
     }
   },
   routeRules: {

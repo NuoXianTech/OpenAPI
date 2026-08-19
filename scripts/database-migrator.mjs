@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { PGlite } from '@electric-sql/pglite'
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite'
 import { migrate as migratePglite } from 'drizzle-orm/pglite/migrator'
@@ -8,16 +7,19 @@ import { drizzle as drizzlePostgres } from 'drizzle-orm/postgres-js'
 import { migrate as migratePostgres } from 'drizzle-orm/postgres-js/migrator'
 import postgres from 'postgres'
 
-const moduleDirectory = path.dirname(fileURLToPath(import.meta.url))
+// Nitro may inline this module and rewrite import.meta.url to file:///_entry.js,
+// which is not a valid absolute file URL on Windows. The executable entry and
+// working directory are stable for both source and release-artifact layouts.
+const runtimeDirectory = process.argv[1]
+  ? path.dirname(path.resolve(process.argv[1]))
+  : process.cwd()
 const migrationsRelativePath = path.join('db', 'migrations', 'postgresql')
 const MIGRATION_ADVISORY_LOCK_KEY = 'openapi:database-migrations'
 const ignoredPostgresNoticeCodes = new Set(['42P06', '42P07'])
 
 /**
- * @typedef {'postgres' | 'pglite'} DatabaseDriver
  * @typedef {{
  *   databaseUrl?: string,
- *   driver?: DatabaseDriver,
  *   migrationsDir?: string,
  *   pgliteDataDir?: string,
  *   timeZone?: string
@@ -84,11 +86,11 @@ function inspectMigrationsFolder(folder) {
 function resolveReleaseVersion() {
   const sourcePackage = path.resolve(process.cwd(), 'package.json')
   const runtimePackages = [
-    path.resolve(moduleDirectory, 'package.json'),
+    path.resolve(runtimeDirectory, 'package.json'),
     path.resolve(process.cwd(), 'server/package.json'),
     path.resolve(process.cwd(), '.output/server/package.json')
   ]
-  const candidates = [...new Set(path.basename(moduleDirectory) === 'scripts'
+  const candidates = [...new Set(path.basename(runtimeDirectory) === 'scripts'
     ? [sourcePackage, ...runtimePackages]
     : [...runtimePackages, sourcePackage])]
 
@@ -119,7 +121,7 @@ function resolveMigrationsFolder(configuredDirectory) {
   }
 
   const candidates = [...new Set([
-    path.resolve(moduleDirectory, migrationsRelativePath),
+    path.resolve(runtimeDirectory, migrationsRelativePath),
     path.resolve(process.cwd(), 'server', migrationsRelativePath),
     path.resolve(process.cwd(), '.output', 'server', migrationsRelativePath)
   ])]
@@ -133,26 +135,13 @@ function resolveMigrationsFolder(configuredDirectory) {
 }
 
 function resolveDatabaseConfig(options) {
-  const configuredDriver = options.driver ?? process.env.DATABASE_DRIVER
-  if (configuredDriver && configuredDriver !== 'postgres' && configuredDriver !== 'pglite') {
-    throw new Error('DATABASE_DRIVER must be either "postgres" or "pglite".')
-  }
-
-  const databaseUrl = options.databaseUrl ?? process.env.DATABASE_URL
-  const driver = configuredDriver
-    ?? (databaseUrl ? 'postgres' : process.env.NODE_ENV === 'production' ? undefined : 'pglite')
-
-  if (!driver) {
-    throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL is required in production.')
-  }
-  if (driver === 'postgres' && !databaseUrl) {
-    throw new Error('DATABASE_URL is required when DATABASE_DRIVER=postgres.')
-  }
+  const databaseUrl = (options.databaseUrl ?? process.env.DATABASE_URL)?.trim() || undefined
+  const driver = databaseUrl ? 'postgres' : 'pglite'
 
   return {
     databaseUrl,
     driver,
-    pgliteDataDir: options.pgliteDataDir ?? process.env.PGLITE_DATA_DIR ?? '.data/pglite',
+    pgliteDataDir: options.pgliteDataDir ?? '.data/pglite',
     timeZone: options.timeZone ?? process.env.TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   }
 }

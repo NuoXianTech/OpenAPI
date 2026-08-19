@@ -75,7 +75,9 @@ Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排�
 6. 配置变化时保存不可变 Routing Revision，并激活到指定 Environment。
 7. 通知 Gateway 刷新运行时缓存。
 
-Route 行保存期望状态，活动 Revision 保存实际流量状态。自动发布成功后两者一致并立即生效；如果冲突校验或引用校验失败，Route 期望状态仍会保留，活动 Revision 和现有流量保持不变，接口目录显示“待应用”或“待下线”并允许重试。
+Route 行保存期望状态，活动 Revision 保存实际流量状态。纯数据库控制面写操作与 Revision 生成共享一个事务：自动发布成功后两者一起提交并立即生效；冲突校验或引用校验失败时，Route、Product、Version、Upstream、Target 或 Environment 变更与 Revision 一起回滚，不会产生永久分叉的待应用状态。
+
+Service 发现和配置同步包含对 Target 的网络调用，不能纳入数据库事务。它们采用显式可重试语义：网络结果先按 Target 记录，随后重新计算 Workspace Revision；任一步失败都会向调用方返回错误，管理员可安全地重新发现或同步，相同配置和相同 Revision 均保持幂等。
 
 后台将该技术概念显示为“运行快照”。运行快照页面只用于审计和回滚；管理员可以重新激活历史 Revision，而不需要恢复旧 Route 行或重启进程。
 
@@ -188,6 +190,7 @@ Platform 持有：
 - Platform 不接受管理员上传或执行任意业务代码。
 - 所有 Secret 使用分域密钥加密，日志只记录配置状态。
 - API Key 保存查询摘要、受保护密文和掩码预览；普通列表不解密回显，只有 Key 所有者可通过专用接口按需查看完整值，且每次查看都会写入操作日志。
+- API Key 可重复查看是产品契约：`keyDigest` 服务鉴权查询，`keyCiphertext` 服务所有者恢复。除非先作出明确产品决策并提供数据迁移，否则不得改成一次性展示模型。
 - `NUXT_API_KEY_SECRET` 是数据密钥根；`0.1.0` 不支持 Keyring 或在线主密钥轮换，不能在已有数据库上直接替换。
 - External Upstream 必须经过 SSRF 防护。
 - Internal Upstream 不接收调用方认证凭据。

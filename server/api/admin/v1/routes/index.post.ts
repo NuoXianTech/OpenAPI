@@ -6,7 +6,8 @@ import { readZodBody } from '~~/server/utils/zod'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminRouteSchema)
-  const created = await platformRouteService.create(body)
+  const result = await platformRouteService.createAndPublish(body, admin.id)
+  const created = result.route
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -15,5 +16,8 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: created?.id,
     detail: { method: created?.method, pathPattern: created?.pathPattern }
   })
-  return created
+  return {
+    ...created,
+    revisions: result.revisions
+  }
 })

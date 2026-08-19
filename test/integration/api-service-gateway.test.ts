@@ -25,6 +25,8 @@ import {
 import * as schema from '~~/server/db/schema'
 
 const serviceToken = 'gateway-acceptance-token-with-at-least-32-characters'
+const serviceConfigurationKey
+  = '89abcdef89abcdef89abcdef89abcdef89abcdef89abcdef89abcdef89abcdef'
 const apiKeySecret = '0123456789abcdef0123456789abcdef'
 const testContext = vi.hoisted(() => ({ database: null as unknown }))
 
@@ -129,6 +131,7 @@ beforeAll(async () => {
         ...process.env,
         LISTEN_ADDR: `127.0.0.1:${servicePort}`,
         API_SERVICE_TOKEN: serviceToken,
+        SERVICE_CONFIG_KEY: serviceConfigurationKey,
         SERVICE_DATA_DIR: serviceRuntimeDirectory,
         SERVICE_VERSION: 'gateway-acceptance',
         SERVICE_COMMIT: 'local'
@@ -535,6 +538,57 @@ describe('Platform to Node API Service acceptance', () => {
     } finally {
       release()
       descriptionSpy.mockRestore()
+    }
+  })
+
+  it('rejects a stale discovery after the Service Token changes', async () => {
+    const getOpenAPI = serviceControlClient.getOpenAPI.bind(
+      serviceControlClient
+    )
+    let release!: () => void
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let openapiFetched = false
+    const openAPISpy = vi.spyOn(
+      serviceControlClient,
+      'getOpenAPI'
+    ).mockImplementation(async (...args) => {
+      const response = await getOpenAPI(...args)
+      openapiFetched = true
+      await blocked
+      return response
+    })
+
+    try {
+      const discovery = platformServiceControlService.discover(
+        officialUpstreamId
+      )
+      await vi.waitFor(() => expect(openapiFetched).toBe(true))
+      await platformUpstreamService.updateServiceToken(
+        officialUpstreamId,
+        'rotated-service-token-with-at-least-32-characters'
+      )
+      release()
+
+      await expect(discovery).rejects.toMatchObject({
+        statusCode: 409,
+        data: { code: 'SERVICE_DISCOVERY_CONFLICT' }
+      })
+      await expect(platformServiceControlService.get(officialUpstreamId))
+        .resolves.toMatchObject({
+          connection: {
+            lastDiscoveryError:
+              'Service Token changed; run discovery to verify the connection'
+          }
+        })
+    } finally {
+      release()
+      openAPISpy.mockRestore()
+      await platformUpstreamService.updateServiceToken(
+        officialUpstreamId,
+        serviceToken
+      )
     }
   })
 

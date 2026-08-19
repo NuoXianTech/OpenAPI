@@ -32,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const { t, locale } = useI18n()
 const { user } = useAuth()
+const { registrationEnabled } = useSiteSettings()
 const { copyText } = useCopyFeedback()
 const requestUrl = useRequestURL()
 const preferredReducedMotion = usePreferredReducedMotion()
@@ -134,9 +135,14 @@ const hasResponse = ref(true)
 const responseLatency = ref(42)
 const responseTimestamp = ref(PUBLIC_API_EXAMPLE_TIMESTAMP)
 
-const primaryAction = computed(() => user.value
-  ? { label: t('public.home.userDashboard'), to: USER_OVERVIEW_PATH, icon: 'i-mdi-account-circle-outline' }
-  : { label: t('public.navigation.getStarted'), to: '/register', icon: 'i-mdi-key-outline' })
+const primaryAction = computed(() => {
+  if (user.value) {
+    return { label: t('public.home.userDashboard'), to: USER_OVERVIEW_PATH, icon: 'i-mdi-account-circle-outline' }
+  }
+  return registrationEnabled.value
+    ? { label: t('public.navigation.getStarted'), to: '/register', icon: 'i-mdi-key-outline' }
+    : { label: t('auth.login.title'), to: '/login', icon: 'i-mdi-login' }
+})
 
 const responsePreview = computed(() => formatYiyanResponseExample(
   t('public.home.standardResponseMessage'),

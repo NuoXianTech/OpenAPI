@@ -32,6 +32,7 @@ type SystemSettingInsert = typeof systemSettings.$inferInsert
 const NON_SECRET_SETTING_NAMES = SYSTEM_SETTING_NAMES.filter(name => !SYSTEM_SETTING_DEFINITIONS[name].secret)
 
 interface AdminSystemSettingsSecrets {
+  hasRegistrationInviteCode: boolean
   hasSmtpPass: boolean
   hasOauthGithubClientSecret: boolean
   hasOauthQqClientSecret: boolean
@@ -40,7 +41,11 @@ interface AdminSystemSettingsSecrets {
 
 export type AdminSystemSettings = Omit<
   SystemSettings,
-  'smtpPass' | 'oauthGithubClientSecret' | 'oauthQqClientSecret' | 'turnstileSecretKey'
+  | 'registrationInviteCode'
+  | 'smtpPass'
+  | 'oauthGithubClientSecret'
+  | 'oauthQqClientSecret'
+  | 'turnstileSecretKey'
 > & {
   secrets: AdminSystemSettingsSecrets
 }
@@ -178,6 +183,7 @@ export function toAdminSystemSettings(settings: SystemSettings): AdminSystemSett
   return {
     ...safe,
     secrets: {
+      hasRegistrationInviteCode: settings.registrationInviteCode.length > 0,
       hasSmtpPass: settings.smtpPass.length > 0,
       hasOauthGithubClientSecret: settings.oauthGithubClientSecret.length > 0,
       hasOauthQqClientSecret: settings.oauthQqClientSecret.length > 0,
@@ -264,6 +270,12 @@ export const systemSettingsService = {
 
     const next = { ...current, ...normalizedPatch }
     if (updatesClientIpSettings(normalizedPatch)) assertClientIpSettings(next)
+    if (next.registrationMode === 'invite' && !next.registrationInviteCode) {
+      throw createApplicationError({
+        statusCode: 400,
+        message: '启用邀请注册前必须先配置邀请码'
+      })
+    }
     const turnstileSceneEnabled = next.turnstileLoginEnabled
       || next.turnstileRegisterEnabled
       || next.turnstilePasswordResetEnabled

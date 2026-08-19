@@ -33,7 +33,7 @@
 
 - 未配置 Redis 时，限流器使用进程内存；计数随进程重启而清空，只适用于开发或单实例轻量部署。
 - 配置 `NUXT_REDIS_URL` 后，公开 API 与身份防刷使用共享 Redis 原子计数，多实例可获得一致的限流结果。
-- 多实例生产必须同时设置 `NUXT_REDIS_REQUIRED=true`。Redis 不可用时限流链路 fail-closed，避免实例退回各自内存后绕过限制。
+- 多实例生产必须配置 `NUXT_REDIS_URL`。配置 Redis 后不可用时限流链路 fail-closed，避免实例退回各自内存后绕过限制。
 - Route 的秒、分、时、日窗口由 `rateLimitPerSecond/Minute/Hour/Day` 控制；API Key 自身配额不等同于用户余额或 `totalCalls`。
 
 ## 人工处置

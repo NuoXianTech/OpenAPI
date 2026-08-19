@@ -1,6 +1,6 @@
 # 生产就绪清单
 
-本清单用于发布 OpenAPI 到生产环境前的最终确认。目标部署包含独立的 Node Platform 与 Node API Service。单 Platform 实例可使用 PostgreSQL 或显式配置的 PGlite；多 Platform 实例必须使用 PostgreSQL、共享 Redis 和强制 Redis 模式。API Service 不连接 Platform 数据库或 Redis。
+本清单用于发布 OpenAPI 到生产环境前的最终确认。目标部署包含独立的 Node Platform 与 Node API Service。单 Platform 实例可使用 PostgreSQL 或显式配置的 PGlite；多 Platform 实例必须使用 PostgreSQL 和共享 Redis。API Service 不连接 Platform 数据库或 Redis。
 
 ## 发布前门禁
 
@@ -31,11 +31,11 @@ pnpm build
 
 | 项目 | 检查 |
 | --- | --- |
-| 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：设置 `DATABASE_DRIVER=pglite` 并确认 `PGLITE_DATA_DIR` 是持久化目录 |
+| 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：不配置 `DATABASE_URL`，并确认 `.data/pglite` 是持久化目录 |
 | 数据库迁移 | `0.1.0` 的 `0000` 基线保持不可修改，后续版本只追加迁移；已确认 `.output/server/migrate.mjs` 与对应 SQL 同时进入产物，并准备按[数据库升级流程](./database-migrations.md)执行 |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_API_KEY_SECRET` 已独立生成并完成安全备份；每个 Internal Upstream 使用独立 Service Token，并确认数据库中只保存密文 |
 | Platform 入口 | Console、站内 API 和动态 Gateway 共用一个入口；反向代理只将预期域名转发到 Nitro，公共 Route 不占用 Platform 保留路径 |
-| Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；多实例必须设置 `NUXT_REDIS_REQUIRED=true` |
+| Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；配置后 Redis 不可用会 fail-closed，多实例必须配置 |
 | 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的资料和密码初始化 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
 | API Service | `openapi-service` 是独立 Node 进程，只连接内部网络且不映射公网业务端口；Internal Upstream 使用 `http://openapi-service:8080` 或等价私网地址 |
@@ -44,7 +44,7 @@ pnpm build
 | 主密钥边界 | 已确认 `0.1.0` 不支持 `NUXT_API_KEY_SECRET` 在线轮换；现有数据库不得直接替换该值 |
 | 部署产物 | Platform 完整发布 `.output`，API Service 发布预编译 `dist`；优先使用各自 Linux CI 生成的独立镜像，不能遗漏 `node_modules/.nitro` |
 | 时区 | `TZ=Asia/Shanghai`；启动迁移会将数据库迁移会话设置为同一时区，数据库默认时区无需额外修改 |
-| 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `PGLITE_DATA_DIR` |
+| 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `.data/pglite` |
 | 巡检 | 发布负责人已阅读 [生产运行手册](./production-runbook.md) 的回滚和异常处置 |
 
 完整变量见 [运行时配置](./runtime-config.md)。

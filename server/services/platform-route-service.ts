@@ -1,5 +1,5 @@
 import { and, asc, eq, isNull } from 'drizzle-orm'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiProducts, apiRoutes, apiVersions, upstreamServices } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import { getSqlState } from '~~/server/utils/database-error'
@@ -11,6 +11,8 @@ import {
 } from '~~/server/utils/route-pattern'
 import { firstRow } from '~~/server/utils/row'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
+import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
+import type { RouteBinding } from '~~/server/types/platform-publication'
 
 export interface RouteMutationInput {
   apiVersionId: string
@@ -39,9 +41,14 @@ interface RouteMutationOptions {
   allowServiceManaged?: boolean
   managedBy?: 'manual' | 'service'
   isSupportRoute?: boolean
+  transaction?: DatabaseTransaction
 }
 
-async function normalizeRouteMutation(input: RouteMutationInput) {
+async function normalizeRouteMutation(
+  input: RouteMutationInput,
+  transaction?: DatabaseTransaction,
+  currentUpstreamServiceId?: string
+) {
   if (input.creditsCost > 0 && (!input.isApiKey || !input.isStatistics)) {
     throw createApplicationError({
       statusCode: 400,
@@ -65,7 +72,8 @@ async function normalizeRouteMutation(input: RouteMutationInput) {
       .filter(Boolean)
   )).sort()
 
-  const binding = firstRow(await db.select({
+  const executor = transaction ?? db
+  const binding = firstRow(await executor.select({
     productWorkspaceId: apiProducts.workspaceId,
     upstreamWorkspaceId: upstreamServices.workspaceId,
     upstreamStatus: upstreamServices.status,
@@ -82,7 +90,13 @@ async function normalizeRouteMutation(input: RouteMutationInput) {
   if (binding.productWorkspaceId !== binding.upstreamWorkspaceId) {
     throw createApplicationError({ statusCode: 400, message: 'route and upstream must belong to the same workspace', data: { code: 'ROUTE_WORKSPACE_MISMATCH' } })
   }
-  if (binding.upstreamStatus !== 'active' || binding.upstreamDeletedAt) {
+  if (
+    binding.upstreamDeletedAt
+    || (
+      binding.upstreamStatus !== 'active'
+      && input.upstreamServiceId !== currentUpstreamServiceId
+    )
+  ) {
     throw createApplicationError({ statusCode: 409, message: 'upstream is not active', data: { code: 'UPSTREAM_NOT_ACTIVE' } })
   }
 
@@ -125,8 +139,12 @@ function assertMutableRoute(
 }
 
 export const platformRouteService = {
-  async list(workspaceId?: string) {
-    return db.select({
+  async list(
+    workspaceId?: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ): Promise<RouteBinding[]> {
+    const executor = options.transaction ?? db
+    return executor.select({
       route: apiRoutes,
       version: apiVersions,
       product: apiProducts,
@@ -145,9 +163,10 @@ export const platformRouteService = {
   },
 
   async create(input: RouteMutationInput, options: RouteMutationOptions = {}) {
-    const values = await normalizeRouteMutation(input)
+    const executor = options.transaction ?? db
+    const values = await normalizeRouteMutation(input, options.transaction)
     try {
-      return firstRow(await db.insert(apiRoutes).values({
+      return firstRow(await executor.insert(apiRoutes).values({
         ...values,
         managedBy: options.managedBy ?? 'manual',
         isSupportRoute: options.isSupportRoute ?? false
@@ -160,8 +179,12 @@ export const platformRouteService = {
     }
   },
 
-  async get(id: string) {
-    const binding = firstRow(await db.select({
+  async get(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ): Promise<RouteBinding> {
+    const executor = options.transaction ?? db
+    const binding = firstRow(await executor.select({
       route: apiRoutes,
       version: apiVersions,
       product: apiProducts,
@@ -188,16 +211,21 @@ export const platformRouteService = {
   },
 
   async update(id: string, input: RouteMutationInput, options: RouteMutationOptions = {}) {
-    const existing = firstRow(await db.select().from(apiRoutes)
+    const executor = options.transaction ?? db
+    const existing = firstRow(await executor.select().from(apiRoutes)
       .where(and(eq(apiRoutes.id, id), isNull(apiRoutes.deletedAt)))
       .limit(1))
     if (!existing) {
       throw createApplicationError({ statusCode: 404, message: 'route not found', data: { code: 'ROUTE_NOT_FOUND' } })
     }
     assertMutableRoute(existing, options)
-    const values = await normalizeRouteMutation(input)
+    const values = await normalizeRouteMutation(
+      input,
+      options.transaction,
+      existing.upstreamServiceId
+    )
     try {
-      const updated = firstRow(await db.update(apiRoutes)
+      const updated = firstRow(await executor.update(apiRoutes)
         .set({ ...values, updatedAt: new Date() })
         .where(and(eq(apiRoutes.id, id), isNull(apiRoutes.deletedAt)))
         .returning())
@@ -214,14 +242,15 @@ export const platformRouteService = {
   },
 
   async remove(id: string, options: RouteMutationOptions = {}) {
-    const existing = firstRow(await db.select().from(apiRoutes)
+    const executor = options.transaction ?? db
+    const existing = firstRow(await executor.select().from(apiRoutes)
       .where(and(eq(apiRoutes.id, id), isNull(apiRoutes.deletedAt)))
       .limit(1))
     if (!existing) {
       throw createApplicationError({ statusCode: 404, message: 'route not found', data: { code: 'ROUTE_NOT_FOUND' } })
     }
     assertMutableRoute(existing, options)
-    if (await routingReferenceService.hasRoute(id)) {
+    if (await routingReferenceService.hasRoute(id, options.transaction)) {
       throw createApplicationError({
         statusCode: 409,
         message: 'disable and publish the route before deleting it',
@@ -229,7 +258,7 @@ export const platformRouteService = {
       })
     }
     const now = new Date()
-    const removed = firstRow(await db.update(apiRoutes)
+    const removed = firstRow(await executor.update(apiRoutes)
       .set({ state: 'disabled', deletedAt: now, updatedAt: now })
       .where(and(eq(apiRoutes.id, id), isNull(apiRoutes.deletedAt)))
       .returning())
@@ -237,5 +266,64 @@ export const platformRouteService = {
       throw createApplicationError({ statusCode: 404, message: 'route not found', data: { code: 'ROUTE_NOT_FOUND' } })
     }
     return removed
+  },
+
+  async createAndPublish(
+    input: RouteMutationInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const route = await platformRouteService.create(input, {
+        transaction: tx
+      })
+      if (!route) throw new Error('route insert returned no row')
+      const binding = await platformRouteService.get(route.id, {
+        transaction: tx
+      })
+      return {
+        value: route,
+        workspaceId: binding.product.workspaceId
+      }
+    })
+    const { value: route, ...publication } = committed
+    return { route, ...publication }
+  },
+
+  async updateAndPublish(
+    id: string,
+    input: RouteMutationInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const route = await platformRouteService.update(id, input, {
+        transaction: tx
+      })
+      const binding = await platformRouteService.get(route.id, {
+        transaction: tx
+      })
+      return {
+        value: route,
+        workspaceId: binding.product.workspaceId
+      }
+    })
+    const { value: route, ...publication } = committed
+    return { route, ...publication }
+  },
+
+  async removeAndPublish(id: string, createdBy: number | null) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const binding = await platformRouteService.get(id, {
+        transaction: tx
+      })
+      const route = await platformRouteService.remove(id, {
+        transaction: tx
+      })
+      return {
+        value: route,
+        workspaceId: binding.product.workspaceId
+      }
+    })
+    const { value: route, ...publication } = committed
+    return { route, ...publication }
   }
 }

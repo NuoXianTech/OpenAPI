@@ -1,6 +1,7 @@
-import { rm } from 'node:fs/promises'
+import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { fetch, setup, useTestContext } from '@nuxt/test-utils/e2e'
 import { describe, expect, it } from 'vitest'
 
@@ -18,32 +19,37 @@ interface ReadinessResponse {
   }
 }
 
-const pgliteDataDir = join(tmpdir(), `openapi-integration-${process.pid}-${Date.now()}`)
+const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
+const testWorkingDirectory = await mkdtemp(join(tmpdir(), 'openapi-integration-workspace-'))
 const serverPort = 30_000 + process.pid % 10_000
 
+process.chdir(testWorkingDirectory)
+
 await setup({
-  rootDir: process.cwd(),
+  rootDir: projectRoot,
   build: false,
   browser: false,
   port: serverPort,
   nuxtConfig: {
     nitro: {
-      output: { dir: join(process.cwd(), '.output') }
+      output: { dir: join(projectRoot, '.output') }
     }
   },
   env: {
     NODE_ENV: 'production',
     NITRO_HOST: '127.0.0.1',
     NITRO_PORT: String(serverPort),
-    DATABASE_DRIVER: 'pglite',
-    PGLITE_DATA_DIR: pgliteDataDir,
+    DATABASE_URL: '',
     DB_AUTO_MIGRATE: 'true',
     NUXT_AUTH_SECRET: 'integration-auth-secret-with-32-bytes',
     NUXT_API_KEY_SECRET: '0123456789abcdef0123456789abcdef'
   }
 })
 
-useTestContext().teardown?.push(() => rm(pgliteDataDir, { recursive: true, force: true }))
+useTestContext().teardown?.push(async () => {
+  await rm(testWorkingDirectory, { recursive: true, force: true })
+  process.chdir(projectRoot)
+})
 
 async function readJson<T>(response: Response): Promise<T> {
   return await response.json() as T

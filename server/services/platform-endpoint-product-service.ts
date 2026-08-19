@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto'
 import { and, eq, sql } from 'drizzle-orm'
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiProducts, apiVersions } from '~~/server/db/schema'
 import type {
   RouteBinding,
   UpstreamView
-} from '~~/server/services/platform-endpoint-publication-service'
+} from '~~/server/types/platform-publication'
 import { firstRow } from '~~/server/utils/row'
 
 export function endpointDefaultVersion(path: string): string {
@@ -60,6 +60,7 @@ export async function ensureEndpointVersion(input: {
   serviceName: string
   endpoint: ServiceEndpointSummary
   existingRoutes: RouteBinding[]
+  transaction?: DatabaseTransaction
 }): Promise<string> {
   const definition = endpointProductDefinition(input)
   const versionName = endpointDefaultVersion(input.endpoint.path)
@@ -73,7 +74,7 @@ export async function ensureEndpointVersion(input: {
   ))
   if (reusable) return reusable.version.id
 
-  return db.transaction(async (tx) => {
+  const ensure = async (tx: DatabaseTransaction) => {
     let product = firstRow(await tx.insert(apiProducts).values({
       workspaceId: input.workspaceId,
       slug: definition.slug,
@@ -129,5 +130,8 @@ export async function ensureEndpointVersion(input: {
     }
     if (!version) throw new Error('endpoint product version could not be created')
     return version.id
-  })
+  }
+  return input.transaction
+    ? ensure(input.transaction)
+    : db.transaction(ensure)
 }

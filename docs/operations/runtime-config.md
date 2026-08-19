@@ -5,7 +5,7 @@
 ## 基本原则
 
 - `nuxt.config.ts` 中的私有配置默认值保持空字符串。
-- 生产环境使用 `NUXT_AUTH_*`、`DATABASE_URL` / `DATABASE_DRIVER`、`NITRO_*` 等变量覆盖。
+- 生产环境使用 `NUXT_AUTH_*`、`DATABASE_URL`、`NITRO_*` 等变量覆盖。
 - 不在 `nuxt.config.ts` 默认值中读取异名 `process.env`，避免构建时把密钥烤进 `.output`。
 - `.env.example` 只能放示例值；真实生产值配置在服务器面板、PM2 ecosystem、容器 secret 或 CI/CD secret 中。
 - 修改 Platform 部署配置后只重启 Node/Nitro Platform 进程。API Service 的 Token、监听地址、统一数据目录和网络配置属于 Service 仓库与部署环境；Service 声明的模块开关、Cookie、数据库授权密钥和算法列表由后台热更新，不要求重启。两个进程不能因为统一使用 Node.js 而共用环境变量命名空间。
@@ -16,7 +16,6 @@
 
 | 变量 | 生产要求 | 说明 |
 | --- | --- | --- |
-| `DATABASE_URL` 或 `DATABASE_DRIVER=pglite` | 必填其一 | PostgreSQL 连接串；或显式选择 PGlite 文件数据库 |
 | `NUXT_AUTH_SECRET` | 必填 | access JWT、邮箱验证、一次性 token 与 OAuth state 共用的 HS256/HMAC 签名密钥，缺失时鉴权应 fail-closed |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并派生 API Key/兑换码的 HMAC 查询摘要与 AES-256-GCM 加密密钥 |
 
@@ -29,14 +28,12 @@
 | `NODE_ENV` | `production` | 让 Nuxt、Vue Router 和相关依赖使用生产分支，减少开发警告和日志噪声 |
 | `TZ` | `Asia/Shanghai` | 统一日志、统计、运维时间以及数据库迁移中的自然日转换 |
 | `DATABASE_POOL_SIZE` | `10` | `postgres-js` 连接池上限，启动迁移会单独使用 `max=1` 的连接 |
-| `DATABASE_DRIVER` | 留空或 `pglite` | 留空时有 `DATABASE_URL` 使用 PostgreSQL；生产无 PostgreSQL 时必须显式设为 `pglite` |
-| `PGLITE_DATA_DIR` | `.data/pglite` | PGlite 数据目录；生产使用 PGlite 时必须纳入备份 |
+| `DATABASE_URL` | 留空 | 非空时使用 PostgreSQL；留空或未配置时自动使用固定目录 `.data/pglite` |
 | `DB_AUTO_MIGRATE` | 留空 | 默认启动时自动迁移；设置为 `false` 可临时跳过启动迁移 |
 | `MIGRATIONS_DIR` | 留空 | 仅迁移目录不在构建产物默认位置时设置；显式迁移和启动自动迁移共用该覆盖项 |
-| `NUXT_REDIS_URL` | 留空 | Redis 连接地址；配置后启用共享原子限流和公开短缓存 |
+| `NUXT_REDIS_URL` | 留空 | Redis 连接地址；配置后启用共享原子限流、公开短缓存和分布式协调，并在 Redis 不可用时 fail-closed |
 | `NUXT_REDIS_KEY_PREFIX` | `openapi:` | Redis key 命名空间；同一 Redis 服务部署多个环境时必须区分 |
 | `NUXT_REDIS_CONNECT_TIMEOUT_MS` | `2000` | Redis 首次连接超时毫秒数 |
-| `NUXT_REDIS_REQUIRED` | `false` | `true` 时限流或分布式协调所需 Redis 缺失/不可用会 fail-closed；不改变公开缓存的数据库回源策略 |
 | `NUXT_PROXY_SOURCE` | 留空 | 留空时由管理后台配置；可设 `direct`、`cloudflare`、`x_forwarded_for`。一旦设置，环境变量优先并锁定后台对应表单 |
 | `NUXT_PROXY_TRUSTED_CIDRS` | 留空 | 允许提供客户端 IP 请求头的直连代理 IP/CIDR，多个值用逗号分隔；支持 IPv4、IPv6、`0.0.0.0/0` 与 `::/0` |
 | `NUXT_PROXY_FORWARDED_HOPS` | `1` | 从 `X-Forwarded-For` 右侧计算的可信代理层数，最多 10 层 |
@@ -50,11 +47,10 @@ Platform 使用一个访问地址同时提供 Console、站内 API 和动态 Gat
 PostgreSQL 连接串使用标准 URI：
 
 ```dotenv
-DATABASE_DRIVER=postgres
 DATABASE_URL=postgresql://openapi:change-me@127.0.0.1:5432/openapi?sslmode=disable
 ```
 
-托管数据库通常要求 `sslmode=require`。用户名或密码中的 `@`、`:`、`/`、`#`、`?` 等保留字符必须进行百分号编码。`DATABASE_DRIVER=pglite` 与 `DATABASE_URL` 是两种部署选择，不应同时配置。
+托管数据库通常要求 `sslmode=require`。用户名或密码中的 `@`、`:`、`/`、`#`、`?` 等保留字符必须进行百分号编码。不配置 `DATABASE_URL` 即使用 PGlite，不需要额外的数据库类型变量。
 
 Redis 连接串同样使用 URI；有密码时建议明确写出 ACL 用户名，Redis 默认用户为 `default`：
 
@@ -66,9 +62,9 @@ NUXT_REDIS_URL=redis://default:change-me@127.0.0.1:6379/0
 
 Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，公开统计与内容短缓存，以及扣费补偿扫描的分布式互斥。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
 
-缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。扣费扫描使用带 token 校验和固定 TTL 的最小 Redis lease；可选模式故障时回退当前进程互斥，强制模式则跳过任务，避免多实例重复调度。
+缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。扣费扫描使用带 token 校验和固定 TTL 的最小 Redis lease；未配置 Redis 时回退当前进程互斥，配置 Redis 后租约故障会跳过任务，避免多实例重复调度。
 
-单 Platform 实例开发可以不配置 Redis。多个 Platform Node 实例的生产部署必须使用 PostgreSQL，并同时配置 `NUXT_REDIS_URL` 与 `NUXT_REDIS_REQUIRED=true`；PGlite 数据目录只允许一个 Platform 进程。API Service 不连接 Platform 的 PostgreSQL 或 Redis。PostgreSQL 迁移另有数据库 advisory lock，即使多个 Platform 实例同时启动也会串行执行。
+单 Platform 实例开发可以不配置 Redis。多个 Platform Node 实例的生产部署必须使用 PostgreSQL 并配置 `NUXT_REDIS_URL`；只要配置了 Redis，限流和分布式协调在 Redis 不可用时都会 fail-closed，避免回退到各自内存后绕过限制。PGlite 数据目录只允许一个 Platform 进程。API Service 不连接 Platform 的 PostgreSQL 或 Redis。PostgreSQL 迁移另有数据库 advisory lock，即使多个 Platform 实例同时启动也会串行执行。
 
 `openapi-service` 的地址不是全局环境变量，而是 Platform 数据库中的 Internal Upstream Target，例如共享 Docker 私网中的 `http://openapi-service:8080`。同一 Upstream 可保存多个相同契约 Target，并使用轮询或权重分流。
 
@@ -76,7 +72,7 @@ Platform 不读取全局 API Service Token。每个 Internal Upstream 在数据�
 
 Platform 仓库的 `.env` 和 Compose 都不包含全局 Service Token，也不负责启动任何 Service。管理员在创建 Internal Upstream 时填写目标 Service 自己的 `API_SERVICE_TOKEN`；之后 Platform 只使用数据库密文。多个 Upstream 可以使用不同 Token。
 
-Node API Service 只公开 `API_SERVICE_TOKEN`、可选 `LISTEN_ADDR` 和统一 `SERVICE_DATA_DIR`。某个业务模块需要的来源地址、Cookie、数据库授权密钥或算法开关必须由该模块的 Service Schema 声明；不能提交仓库的数据文件固定由 Service 从 `SERVICE_DATA_DIR/assets/<module-id>` 读取。它们都不进入 Platform 的 `.env.example`。API Service 不使用 `NUXT_*` 业务变量，也不读取 Platform 数据库。
+Node API Service 的部署配置包含 `API_SERVICE_TOKEN`、独立的 `SERVICE_CONFIG_KEY`、稳定的 `SERVICE_ID` / `SERVICE_NAME`，以及可选的 `LISTEN_ADDR` 和统一 `SERVICE_DATA_DIR`。`SERVICE_CONFIG_KEY` 只加密该实例的本地配置快照，不能与 Token 复用；Token 只负责请求认证。某个业务模块需要的来源地址、Cookie、数据库授权密钥或算法开关必须由该模块的 Service Schema 声明；不能提交仓库的数据文件固定由 Service 从 `SERVICE_DATA_DIR/assets/<module-id>` 读取。它们都不进入 Platform 的 `.env.example`。API Service 不使用 `NUXT_*` 业务变量，也不读取 Platform 数据库。
 
 两个仓库的构建变量与运行变量必须分离。CI 或开发机完成 Nuxt 与 TypeScript 构建后生成镜像；生产服务器只注入运行时变量并启动镜像，不执行 `pnpm install`、`pnpm build` 或 `docker build`。
 
@@ -91,8 +87,8 @@ Node API Service 只公开 `API_SERVICE_TOKEN`、可选 `LISTEN_ADDR` 和统一 
 数据库建议：
 
 - PostgreSQL 适合常规生产、远程数据库、成熟备份和未来扩展。
-- PGlite 适合单进程、低运维成本、自包含的小型部署；它不是多实例共享数据库，使用时备份 `PGLITE_DATA_DIR`。
-- 生产环境如果没有 `DATABASE_URL`，必须显式设置 `DATABASE_DRIVER=pglite`，避免漏配时静默创建新库。
+- PGlite 适合单进程、低运维成本、自包含的小型部署；它不是多实例共享数据库，固定使用 `.data/pglite`，生产时必须备份该目录。
+- 未配置 `DATABASE_URL` 时自动使用 PGlite；生产部署必须确认 `.data/pglite` 已挂载到预期的持久化存储并纳入备份。
 
 ## 密钥生成
 
@@ -102,15 +98,17 @@ Node API Service 只公开 `API_SERVICE_TOKEN`、可选 `LISTEN_ADDR` 和统一 
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-`NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Internal Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
+`NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Internal Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。每个 Service 实例还必须生成独立的 32-byte `SERVICE_CONFIG_KEY`，并与对应运行快照一起备份。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
 
-`0.1.0` 的 Service Token 是单值配置，不支持新旧 Token 并行或无停机轮换。需要更换时，应在维护窗口协调停止 Service、按 Service 运维文档处理旧配置快照、设置并启动新 Token，再在 Platform 更新 Token、重新发现并同步配置。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
+`0.1.0` 的 Service Token 是单值配置，不支持新旧 Token 并行或无停机轮换。需要更换时，应在维护窗口协调停止 Service、保持 `SERVICE_CONFIG_KEY` 不变并启动新 Token，再在 Platform 更新 Token、重新发现并同步配置。配置快照不使用 Token 加密，因此 Token 轮换不会使已有快照失效。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
 
-API Key 和兑换码没有裸明文数据库列。数据库保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；API Key 所有者可通过专用接口按需查看完整值，每次查看都会写入不含明文的操作日志。完整兑换码仅在生成响应中返回一次，普通列表、历史记录、操作日志和积分流水都只返回预览。
+API Key 和兑换码没有裸明文数据库列。数据库保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；API Key 所有者和管理员均可通过各自的专用接口按需查看完整值，每次查看都会写入不含明文的操作日志。普通列表、历史记录、操作日志和积分流水始终只返回预览。
+
+API Key 与兑换码可恢复且可重复查看是明确的产品要求，不是过渡实现。`/api/user/apikeys/reveal` 允许已认证的 Key 所有者解密自己的完整 Key；`/api/admin/redemption-codes/reveal` 允许管理员解密指定兑换码。数据库中的摘要用于鉴权或精确查询，密文用于恢复能力。后续重构不得在没有明确产品决策和数据迁移方案的情况下，把它们改成只在创建时显示一次或删除密文列。
 
 ### `NUXT_API_KEY_SECRET` 轮换边界
 
-`NUXT_API_KEY_SECRET` 是 Platform 数据密钥根，不是应定期在线轮换的短期 Token。`0.1.0` 不提供 Keyring、双主密钥读取或在线重加密流程，因此不能在已有数据库上直接替换该值；直接替换会让 API Key/兑换码密文、Internal Upstream Token 和 Service 业务 Secret 无法解密，并使现有 API Key 摘要无法匹配。
+`NUXT_API_KEY_SECRET` 是 Platform 长期数据加密根，不是应定期在线轮换的短期 Token。它必须与数据库备份一起纳入备份、恢复演练和访问控制。`0.1.0` 不提供 Keyring、双主密钥读取或在线重加密流程，因此不能在已有数据库上直接替换该值；直接替换会让 API Key/兑换码密文、Internal Upstream Token 和 Service 业务 Secret 无法解密，并使现有 API Key 摘要无法匹配。
 
 常规维护只需安全备份并保持该值稳定。只有密钥泄露或执行经过演练的数据迁移时才进行轮换：先停止 Platform 写入，备份数据库，使用专用迁移流程以旧密钥解密并以新密钥重加密/重建摘要，再原子切换应用配置。该迁移工具不属于 `0.1.0`；在工具完成前，不得把直接修改环境变量当作轮换方案。Service Token 的维护流程由 Service 仓库定义，与 Platform 主数据密钥轮换无关。
 
@@ -124,7 +122,6 @@ NODE_ENV=production \
 TZ=Asia/Shanghai \
 DATABASE_URL='postgresql://user:password@127.0.0.1:5432/openapi' \
 NUXT_REDIS_URL='redis://127.0.0.1:6379' \
-NUXT_REDIS_REQUIRED=true \
 NUXT_AUTH_SECRET='replace-with-random-hex' \
 NUXT_API_KEY_SECRET='replace-with-random-hex' \
 pm2 start server/index.mjs --name openapi-platform --update-env
@@ -138,8 +135,6 @@ NITRO_HOST=127.0.0.1 \
 NITRO_PORT=3000 \
 NODE_ENV=production \
 TZ=Asia/Shanghai \
-DATABASE_DRIVER=pglite \
-PGLITE_DATA_DIR=/var/lib/openapi/pglite \
 NUXT_AUTH_SECRET='replace-with-random-hex' \
 NUXT_API_KEY_SECRET='replace-with-random-hex' \
 pm2 start server/index.mjs --name openapi-platform --update-env
@@ -152,12 +147,12 @@ pm2 start server/index.mjs --name openapi-platform --update-env
 | 构建机 `.env` 泄露到产物 | 不在 runtimeConfig 默认值读取异名 `process.env` |
 | 多环境共用密钥 | 每个环境独立生成并独立轮换 |
 | 直接替换 `NUXT_API_KEY_SECRET` | `0.1.0` 不支持在线轮换；保持原值，或在停写、备份和专用重加密迁移下更换 |
-| Internal Upstream Token 泄露 | 按 Service 文档进入维护窗口，清理旧加密快照、替换 Service Token，再在对应 Upstream 更新加密 Token 并重新同步配置 |
+| Internal Upstream Token 泄露 | 按 Service 文档进入维护窗口，保持 `SERVICE_CONFIG_KEY` 不变，替换 Service Token，再在对应 Upstream 更新加密 Token 并重新发现、同步配置 |
 | 生产监听公网端口 | `NITRO_HOST=127.0.0.1`，由 Nginx 代理公网流量 |
-| 数据库迁移误连 | PostgreSQL 发布前确认 `DATABASE_URL` 的主机、库名和用户；PGlite 发布前确认 `PGLITE_DATA_DIR` |
+| 数据库迁移误连 | PostgreSQL 发布前确认 `DATABASE_URL` 的主机、库名和用户；PGlite 发布前确认当前工作目录下的固定 `.data/pglite` |
 | 自动迁移误执行 | 维护窗口可临时设置 `DB_AUTO_MIGRATE=false`，手动确认后再恢复默认 |
-| Redis 故障后限流失效 | 正式生产设置 `NUXT_REDIS_REQUIRED=true`，并监控 `/api/ready` |
-| Redis 故障后后台任务重复 | 多实例必须设置 `NUXT_REDIS_REQUIRED=true`；租约不可用时任务 fail-closed |
+| Redis 故障后限流失效 | 配置 `NUXT_REDIS_URL` 后应用会 fail-closed，并监控 `/api/ready` |
+| Redis 故障后后台任务重复 | 配置 `NUXT_REDIS_URL` 后租约不可用时任务 fail-closed |
 | Redis 缓存命中率下降 | 检查 Redis 延迟、内存和淘汰统计；应用会回源数据库，但数据库负载会升高 |
 | 数据库或备份泄露 API Key | 数据库字段已使用 AES-256-GCM 加密；仍需隔离应用运行密钥并限制数据库、备份和服务端权限 |
 | 伪造客户端 IP 请求头 | 优先使用后台的直连模式；启用 Cloudflare/XFF 时仅配置真实直连代理，避免使用 `0.0.0.0/0` 或 `::/0`，并阻止绕过代理直连源站 |

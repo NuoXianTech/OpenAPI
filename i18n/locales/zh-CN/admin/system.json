@@ -100,9 +100,23 @@
       "session": {
         "registration": {
           "title": "登录与注册",
-          "enabled": {
-            "label": "允许新用户注册",
-            "description": "关闭后，前台注册入口与注册接口都会被拒绝（等同注册模式「关闭」）。"
+          "mode": {
+            "label": "注册模式",
+            "description": "控制普通注册和第三方登录新建账号的准入方式。",
+            "options": {
+              "open": "开放注册",
+              "invite": "邀请码注册",
+              "closed": "关闭注册"
+            }
+          },
+          "inviteCode": {
+            "label": "站点邀请码",
+            "configuredDescription": "已配置。留空可保持不变，填写新值会立即轮换。",
+            "initialDescription": "邀请码模式必须设置至少 8 个字符的邀请码。",
+            "placeholder": "至少 8 个字符",
+            "required": "请先设置至少 8 个字符的邀请码",
+            "show": "显示邀请码",
+            "hide": "隐藏邀请码"
           },
           "passwordReset": {
             "label": "启用「忘记密码」功能",

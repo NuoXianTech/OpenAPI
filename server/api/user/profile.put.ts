@@ -5,6 +5,7 @@ import { userService } from '~~/server/services/user-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toUserProfile } from '~~/server/utils/user-view'
 
 export default defineAuthenticatedEventHandler(async (event, authUser) => {
   const { displayName } = await readZodBody(event, userUpdateProfileSchema)
@@ -25,6 +26,5 @@ export default defineAuthenticatedEventHandler(async (event, authUser) => {
     detail: { fields: ['displayName'] }
   })
 
-  const { passwordHash: _ph, ...safe } = updated
-  return safe
+  return toUserProfile(updated)
 })

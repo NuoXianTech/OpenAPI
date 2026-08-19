@@ -1,15 +1,5 @@
-import type { LoginInput, RegisterInput } from '#shared/types/auth'
+import type { AuthUser, LoginInput, RegisterInput } from '#shared/types/auth'
 import type { SupportedLocale } from '#shared/config/locale-defaults'
-
-interface AuthUser {
-  id: number
-  username: string
-  displayName?: string | null
-  email: string
-  avatarUrl: string
-  role: 'user' | 'admin'
-  locale: SupportedLocale | null
-}
 
 // 登录态新鲜期：超过这个时长后，下一次 fetchMe()（中间件导航 / 插件定时器）会重新打 /api/auth/me，
 // 用来在长会话里捕获后端封禁、踢人、session 失效等服务端状态变化。

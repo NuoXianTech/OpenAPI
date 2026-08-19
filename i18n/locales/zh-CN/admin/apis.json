@@ -219,10 +219,7 @@
         },
         "revisionStatuses": {
           "active": "当前生效",
-          "building": "生成中",
-          "published": "可回滚",
-          "failed": "生成失败",
-          "superseded": "历史快照"
+          "historical": "历史快照"
         },
         "upstreamKinds": {
           "internal": "内部服务",
@@ -322,7 +319,7 @@
         },
         "deleteRoute": {
           "title": "删除 Route {path}",
-          "description": "Route 会从草稿配置中软删除。当前运行快照不会立即改变；应用新配置后下线，旧快照仍可用于回滚。"
+          "description": "Route 与活动运行配置会在同一事务中更新；历史运行快照仍可用于回滚。"
         },
         "deleteWorkspace": {
           "title": "删除 Workspace：{name}",
@@ -364,11 +361,9 @@
           "routeCreated": "Route 已创建",
           "routeUpdated": "Route 已更新",
           "routeDeleted": "Route 已删除",
-          "publishToApply": "应用新的运行配置后流量才会改变",
-          "revisionPublished": "运行快照 #{sequence} 已生成",
           "revisionActivated": "已回滚到运行快照 #{sequence}",
           "runtimeUpdated": "Gateway 已即时加载新配置，无需重启",
-          "savedPendingPublish": "配置已保存，但自动发布失败；当前流量继续使用上一版本，可在接口目录重试应用",
+          "runtimePending": "Route 已保存；可用 Target 就绪后会进入运行快照",
           "createFailed": "创建失败",
           "updateFailed": "更新 Route 失败",
           "deleteFailed": "删除 Route 失败",
@@ -531,8 +526,6 @@
             "statisticsDisabled": "调用统计已停用",
             "apiKeyEnabled": "API Key 已启用",
             "apiKeyDisabled": "API Key 已停用",
-            "savedPending": "变更已保存，当前流量未切换",
-            "savedPendingDescription": "现有运行快照仍在正常服务。请处理配置冲突后点击“应用变更”重试：{reason}",
             "publishFailed": "接口发布失败",
             "updateFailed": "接口变更失败"
           },

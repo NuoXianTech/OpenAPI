@@ -2,12 +2,16 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ensurePgliteDataDir } from '~~/server/db/client'
+import { ensurePgliteDataDir, getDatabaseDriver } from '~~/server/db/client'
 
 const tempRoots: string[] = []
+const originalDatabaseUrl = process.env.DATABASE_URL
 
 describe('database client utilities', () => {
   afterEach(() => {
+    if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL
+    else process.env.DATABASE_URL = originalDatabaseUrl
+
     for (const root of tempRoots.splice(0)) {
       rmSync(root, { recursive: true, force: true })
     }
@@ -21,5 +25,16 @@ describe('database client utilities', () => {
     ensurePgliteDataDir(dataDir)
 
     expect(existsSync(dataDir)).toBe(true)
+  })
+
+  it('selects PostgreSQL only when DATABASE_URL is present', () => {
+    delete process.env.DATABASE_URL
+    expect(getDatabaseDriver()).toBe('pglite')
+
+    process.env.DATABASE_URL = '   '
+    expect(getDatabaseDriver()).toBe('pglite')
+
+    process.env.DATABASE_URL = 'postgresql://user:password@127.0.0.1:5432/openapi'
+    expect(getDatabaseDriver()).toBe('postgres')
   })
 })

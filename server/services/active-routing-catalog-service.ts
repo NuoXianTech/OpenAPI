@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import {
   apiProducts,
@@ -12,7 +12,7 @@ export interface ActiveCatalogRoute {
   product: typeof apiProducts.$inferSelect
   environmentId: string
   revisionId: string
-  publishedAt: Date | null
+  publishedAt: Date
 }
 
 /**
@@ -32,17 +32,14 @@ async function listActiveCatalogRoutes(): Promise<ActiveCatalogRoute[]> {
     payload: routingRevisions.configPayload
   }).from(environments)
     .innerJoin(routingRevisions, eq(routingRevisions.id, environments.activeRevisionId))
-    .where(and(
-      eq(environments.status, 'active'),
-      eq(routingRevisions.status, 'published')
-    ))
+    .where(eq(environments.status, 'active'))
     .orderBy(desc(routingRevisions.publishedAt), desc(routingRevisions.createdAt))
 
   const activeByRouteId = new Map<string, {
     route: RoutingRevisionRoute
     environmentId: string
     revisionId: string
-    publishedAt: Date | null
+    publishedAt: Date
   }>()
   for (const revision of revisionRows) {
     for (const route of revision.payload.routes) {

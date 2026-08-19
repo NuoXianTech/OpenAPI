@@ -2,9 +2,9 @@
 import type { TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformRoutingRevision } from '~/types/platform'
+import type { PlatformRoutingRevision } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
-import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
+import { formatPlatformDate } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -33,7 +33,7 @@ function revisionStatusLabel(revision: PlatformRoutingRevision): string {
   if (revision.id === context.selectedEnvironment.value?.activeRevisionId) {
     return t('admin.apis.routing.revisionStatuses.active')
   }
-  return t(`admin.apis.routing.revisionStatuses.${revision.status}`)
+  return t('admin.apis.routing.revisionStatuses.historical')
 }
 
 async function activateRevision(revision: PlatformRoutingRevision) {
@@ -166,7 +166,7 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
           <UBadge
             :color="row.original.id === context.selectedEnvironment.value?.activeRevisionId
               ? 'success'
-              : platformStatusColor(row.original.status)"
+              : 'neutral'"
             variant="subtle"
           >
             {{ revisionStatusLabel(row.original) }}
@@ -175,8 +175,7 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
         <template #actions-cell="{ row }">
           <div class="flex justify-end">
             <UButton
-              v-if="row.original.id !== context.selectedEnvironment.value?.activeRevisionId
-                && (row.original.status === 'published' || row.original.status === 'superseded')"
+              v-if="row.original.id !== context.selectedEnvironment.value?.activeRevisionId"
               color="warning"
               variant="ghost"
               size="xs"

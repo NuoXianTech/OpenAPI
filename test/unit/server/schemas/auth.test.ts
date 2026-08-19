@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { registerSchema } from '~~/server/schemas/auth'
+import { oauthRegisterSchema, registerSchema } from '~~/server/schemas/auth'
 
 describe('authentication schemas', () => {
   it('returns user-facing messages for missing registration fields', () => {
@@ -16,5 +16,17 @@ describe('authentication schemas', () => {
       email: '邮箱不能为空',
       password: '密码不能为空'
     })
+  })
+
+  it('accepts an optional invitation code in both registration flows', () => {
+    const input = {
+      email: 'user@example.com',
+      username: 'user_name',
+      password: 'password123',
+      inviteCode: 'site-invite-2026'
+    }
+
+    expect(registerSchema.parse(input).inviteCode).toBe('site-invite-2026')
+    expect(oauthRegisterSchema.parse(input).inviteCode).toBe('site-invite-2026')
   })
 })

@@ -127,12 +127,8 @@ NITRO_HOST=127.0.0.1
 NODE_ENV=production
 TZ=Asia/Shanghai
 
-# PostgreSQL 推荐配置：
+# PostgreSQL 配置；留空或删除该变量则自动使用 PGlite：
 DATABASE_URL=postgresql://user:password@127.0.0.1:5432/openapi
-
-# PGlite 轻量配置二选一：
-# DATABASE_DRIVER=pglite
-# PGLITE_DATA_DIR=/var/lib/openapi/pglite
 
 NUXT_AUTH_SECRET=change-me
 NUXT_API_KEY_SECRET=change-me
@@ -144,10 +140,9 @@ NUXT_PROXY_FORWARDED_HOPS=1
 
 # Redis 分布式限流与公开短缓存（推荐正式生产启用）
 NUXT_REDIS_URL=redis://127.0.0.1:6379
-NUXT_REDIS_REQUIRED=true
 ```
 
-生产环境没有 `DATABASE_URL` 时，必须显式设置 `DATABASE_DRIVER=pglite`。这样可以避免 PostgreSQL 连接串漏配时，服务静默创建一个新的本地数据库。使用 PGlite 时，`PGLITE_DATA_DIR` 是生产数据目录，必须纳入服务器备份。首次创建管理员时，服务端日志只会输出一次随机初始密码；应立即登录并完成资料和密码初始化。
+生产环境没有 `DATABASE_URL` 时会自动使用 PGlite。PGlite 始终使用当前工作目录下的 `.data/pglite`，该目录必须保持持久化并纳入服务器备份。首次创建管理员时，服务端日志只会输出一次随机初始密码；应立即登录并完成资料和密码初始化。
 
 IP 数据文件只属于 Service，不要挂载到 Platform 的 PM2 进程。`ip.databaseKey` 由 Platform 以 Service 业务 Secret 的形式分域加密保存。Service 统一从 `SERVICE_DATA_DIR/assets/ip` 读取数据库，并把加密配置快照固定写入 `SERVICE_DATA_DIR/runtime`。
 
@@ -157,7 +152,7 @@ IP 数据文件只属于 Service，不要挂载到 Platform 的 PM2 进程。`ip
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数、业务缓存和分布式租约均有 TTL，少量缓存版本 key 持久存在；建议使用 `maxmemory-policy noeviction` 并监控内存、命中率、淘汰数与命令延迟，避免关键限流或租约 key 被提前淘汰。Redis 未配置时应用继续使用单进程内存限流、短缓存和本地任务互斥；多实例生产必须设置 `NUXT_REDIS_REQUIRED=true`。缓存命令故障仍会安全回源数据库。
+Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数、业务缓存和分布式租约均有 TTL，少量缓存版本 key 持久存在；建议使用 `maxmemory-policy noeviction` 并监控内存、命中率、淘汰数与命令延迟，避免关键限流或租约 key 被提前淘汰。Redis 未配置时应用继续使用单进程内存限流、短缓存和本地任务互斥；配置 `NUXT_REDIS_URL` 后 Redis 故障会 fail-closed。缓存命令故障仍会安全回源数据库。
 
 ## 启动
 
@@ -193,7 +188,7 @@ pm2 restart openapi-platform --update-env
 
 建议在 Node 进程前放置 Nginx，并反向代理到 `127.0.0.1:3000`。
 
-不要让多个 Platform Node 进程访问同一个 PGlite 数据目录。Platform 需要横向扩展时必须切换 PostgreSQL，配置共享 Redis，并设置 `NUXT_REDIS_REQUIRED=true`。API Service 是另一个 Node 进程，但不访问 PGlite、PostgreSQL 或 Redis；它可以通过多个 Upstream Target 独立扩容。限流、缓存和扣费补偿扫描由 Platform 的 Redis 协调；Routing Revision 依靠数据库唯一约束与事务保持一致，PostgreSQL 迁移由 advisory lock 串行化。
+不要让多个 Platform Node 进程访问同一个 PGlite 数据目录。Platform 需要横向扩展时必须切换 PostgreSQL，并配置共享 `NUXT_REDIS_URL`。API Service 是另一个 Node 进程，但不访问 PGlite、PostgreSQL 或 Redis；它可以通过多个 Upstream Target 独立扩容。限流、缓存和扣费补偿扫描由 Platform 的 Redis 协调；Routing Revision 依靠数据库唯一约束与事务保持一致，PostgreSQL 迁移由 advisory lock 串行化。
 
 ## 发布后检查
 

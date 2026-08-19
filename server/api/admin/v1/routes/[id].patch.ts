@@ -11,7 +11,12 @@ export default defineAdminEventHandler(async (event, admin) => {
   if (!routeId.success) throw createError({ statusCode: 400, message: 'route id is invalid' })
 
   const body = await readZodBody(event, adminRouteSchema)
-  const updated = await platformRouteService.update(routeId.data, body)
+  const result = await platformRouteService.updateAndPublish(
+    routeId.data,
+    body,
+    admin.id
+  )
+  const updated = result.route
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -20,5 +25,8 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: updated.id,
     detail: { method: updated.method, pathPattern: updated.pathPattern, state: updated.state }
   })
-  return updated
+  return {
+    ...updated,
+    revisions: result.revisions
+  }
 })

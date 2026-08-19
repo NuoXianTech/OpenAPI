@@ -3,15 +3,12 @@
 import { createError } from 'h3'
 import { userService } from '~~/server/services/user-service'
 import { defineAuthenticatedEventHandler } from '~~/server/utils/auth'
+import { toUserProfile } from '~~/server/utils/user-view'
 
 export default defineAuthenticatedEventHandler(async (_event, authUser) => {
   const row = await userService.getById(authUser.id)
   if (!row) {
     throw createError({ statusCode: 404, message: '用户不存在' })
   }
-  const { passwordHash: _ph, ...safe } = row
-  return {
-    ...safe,
-    avatarUrl: authUser.avatarUrl
-  }
+  return toUserProfile(row)
 })

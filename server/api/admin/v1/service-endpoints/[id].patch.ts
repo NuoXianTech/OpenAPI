@@ -1,4 +1,4 @@
-import { createError, getRouterParam, setResponseStatus } from 'h3'
+import { createError, getRouterParam } from 'h3'
 import { z } from 'zod'
 import { adminUpdateEndpointPublicationSchema } from '~~/server/schemas/admin'
 import { platformEndpointCatalogService } from '~~/server/services/platform-endpoint-catalog-service'
@@ -20,7 +20,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     body,
     admin.id
   )
-  if (!result.applied) setResponseStatus(event, 202)
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -34,10 +33,8 @@ export default defineAdminEventHandler(async (event, admin) => {
       enabled: body.enabled,
       isApiKey: body.isApiKey,
       isStatistics: body.isStatistics,
-      applied: result.applied,
       revisionId: result.revision?.id ?? null,
-      revisionSequence: result.revision?.sequence ?? null,
-      publicationError: result.publicationError
+      revisionSequence: result.revision?.sequence ?? null
     }
   })
   return result

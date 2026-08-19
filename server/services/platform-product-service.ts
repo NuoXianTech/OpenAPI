@@ -1,8 +1,9 @@
 import { and, asc, count, eq, isNull } from 'drizzle-orm'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { apiProducts, apiRoutes, apiVersions } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
+import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { firstRow } from '~~/server/utils/row'
 
@@ -111,9 +112,14 @@ export const platformProductService = {
     }
   },
 
-  async update(id: string, input: UpdateProductInput) {
+  async update(
+    id: string,
+    input: UpdateProductInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
     try {
-      const updated = firstRow(await db.update(apiProducts).set({
+      const updated = firstRow(await executor.update(apiProducts).set({
         ...input,
         updatedAt: new Date()
       }).where(and(eq(apiProducts.id, id), isNull(apiProducts.deletedAt))).returning())
@@ -130,15 +136,19 @@ export const platformProductService = {
     }
   },
 
-  async remove(id: string) {
-    if (await routingReferenceService.hasProduct(id)) {
+  async remove(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    if (await routingReferenceService.hasProduct(id, options.transaction)) {
       throw createApplicationError({
         statusCode: 409,
         message: 'product is still referenced by an active routing revision',
         data: { code: 'PRODUCT_STILL_PUBLISHED' }
       })
     }
-    const routeCount = firstRow(await db.select({ value: count() })
+    const routeCount = firstRow(await executor.select({ value: count() })
       .from(apiRoutes)
       .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
       .where(and(eq(apiVersions.productId, id), isNull(apiRoutes.deletedAt))))
@@ -150,7 +160,7 @@ export const platformProductService = {
       })
     }
     const now = new Date()
-    const removed = firstRow(await db.update(apiProducts).set({
+    const removed = firstRow(await executor.update(apiProducts).set({
       lifecycle: 'retired',
       deletedAt: now,
       updatedAt: now
@@ -161,15 +171,19 @@ export const platformProductService = {
     return removed
   },
 
-  async createVersion(input: CreateVersionInput) {
+  async createVersion(
+    input: CreateVersionInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
     try {
-      const product = firstRow(await db.select().from(apiProducts)
+      const product = firstRow(await executor.select().from(apiProducts)
         .where(and(eq(apiProducts.id, input.productId), isNull(apiProducts.deletedAt)))
         .limit(1))
       if (!product) {
         throw createApplicationError({ statusCode: 404, message: 'product not found', data: { code: 'PRODUCT_NOT_FOUND' } })
       }
-      const version = firstRow(await db.insert(apiVersions).values({
+      const version = firstRow(await executor.insert(apiVersions).values({
         productId: input.productId,
         version: input.version,
         state: input.state,
@@ -184,8 +198,13 @@ export const platformProductService = {
     }
   },
 
-  async updateVersion(id: string, input: UpdateVersionInput) {
-    const current = firstRow(await db.select({
+  async updateVersion(
+    id: string,
+    input: UpdateVersionInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    const current = firstRow(await executor.select({
       version: apiVersions,
       workspaceId: apiProducts.workspaceId
     }).from(apiVersions)
@@ -199,7 +218,7 @@ export const platformProductService = {
       ? lifecycleDates(input.state)
       : {}
     try {
-      const version = firstRow(await db.update(apiVersions).set({
+      const version = firstRow(await executor.update(apiVersions).set({
         ...input,
         ...timestampPatch
       }).where(eq(apiVersions.id, id)).returning())
@@ -211,15 +230,19 @@ export const platformProductService = {
     }
   },
 
-  async removeVersion(id: string) {
-    if (await routingReferenceService.hasVersion(id)) {
+  async removeVersion(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    if (await routingReferenceService.hasVersion(id, options.transaction)) {
       throw createApplicationError({
         statusCode: 409,
         message: 'version is still referenced by an active routing revision',
         data: { code: 'VERSION_STILL_PUBLISHED' }
       })
     }
-    const current = firstRow(await db.select({
+    const current = firstRow(await executor.select({
       version: apiVersions,
       workspaceId: apiProducts.workspaceId
     }).from(apiVersions)
@@ -228,7 +251,7 @@ export const platformProductService = {
     if (!current) {
       throw createApplicationError({ statusCode: 404, message: 'version not found', data: { code: 'VERSION_NOT_FOUND' } })
     }
-    const routeCount = firstRow(await db.select({ value: count() })
+    const routeCount = firstRow(await executor.select({ value: count() })
       .from(apiRoutes).where(and(
         eq(apiRoutes.apiVersionId, id),
         isNull(apiRoutes.deletedAt)
@@ -240,17 +263,87 @@ export const platformProductService = {
         data: { code: 'VERSION_HAS_ROUTES' }
       })
     }
-    await db.delete(apiVersions).where(eq(apiVersions.id, id))
+    await executor.delete(apiVersions).where(eq(apiVersions.id, id))
     return { version: current.version, workspaceId: current.workspaceId }
   },
 
-  async findVersionWorkspace(apiVersionId: string) {
-    return firstRow(await db.select({
+  async findVersionWorkspace(
+    apiVersionId: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    return firstRow(await executor.select({
       version: apiVersions,
       product: apiProducts
     }).from(apiVersions)
       .innerJoin(apiProducts, and(eq(apiProducts.id, apiVersions.productId), isNull(apiProducts.deletedAt)))
       .where(eq(apiVersions.id, apiVersionId))
       .limit(1))
+  },
+
+  async updateAndPublish(
+    id: string,
+    input: UpdateProductInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const product = await platformProductService.update(id, input, {
+        transaction: tx
+      })
+      return { value: product, workspaceId: product.workspaceId }
+    })
+    const { value: product, ...publication } = committed
+    return { product, ...publication }
+  },
+
+  async removeAndPublish(id: string, createdBy: number | null) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const product = await platformProductService.remove(id, {
+        transaction: tx
+      })
+      return { value: product, workspaceId: product.workspaceId }
+    })
+    const { value: product, ...publication } = committed
+    return { product, ...publication }
+  },
+
+  async createVersionAndPublish(
+    input: CreateVersionInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const created = await platformProductService.createVersion(input, {
+        transaction: tx
+      })
+      return { value: created.version, workspaceId: created.workspaceId }
+    })
+    const { value: version, ...publication } = committed
+    return { version, ...publication }
+  },
+
+  async updateVersionAndPublish(
+    id: string,
+    input: UpdateVersionInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const updated = await platformProductService.updateVersion(id, input, {
+        transaction: tx
+      })
+      return { value: updated.version, workspaceId: updated.workspaceId }
+    })
+    const { value: version, ...publication } = committed
+    return { version, ...publication }
+  },
+
+  async removeVersionAndPublish(id: string, createdBy: number | null) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const removed = await platformProductService.removeVersion(id, {
+        transaction: tx
+      })
+      return { value: removed.version, workspaceId: removed.workspaceId }
+    })
+    const { value: version, ...publication } = committed
+    return { version, ...publication }
   }
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformWorkspace } from '~/types/platform'
+import type { PlatformWorkspace } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/form-validation'

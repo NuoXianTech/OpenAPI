@@ -100,9 +100,23 @@
       "session": {
         "registration": {
           "title": "Login and registration",
-          "enabled": {
-            "label": "Allow new registrations",
-            "description": "When disabled, the registration page and API reject new accounts."
+          "mode": {
+            "label": "Registration mode",
+            "description": "Controls account creation through regular and third-party registration.",
+            "options": {
+              "open": "Open registration",
+              "invite": "Invitation code",
+              "closed": "Registration closed"
+            }
+          },
+          "inviteCode": {
+            "label": "Site invitation code",
+            "configuredDescription": "Configured. Leave empty to keep it, or enter a new value to rotate it.",
+            "initialDescription": "Invitation mode requires a code with at least 8 characters.",
+            "placeholder": "At least 8 characters",
+            "required": "Set an invitation code with at least 8 characters",
+            "show": "Show invitation code",
+            "hide": "Hide invitation code"
           },
           "passwordReset": {
             "label": "Enable password reset",

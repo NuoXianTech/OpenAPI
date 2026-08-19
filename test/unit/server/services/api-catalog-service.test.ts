@@ -86,10 +86,9 @@ beforeAll(async () => {
     );
     CREATE TABLE routing_revisions (
       id uuid PRIMARY KEY,
-      status varchar(20) NOT NULL,
       config_payload jsonb NOT NULL,
       created_at timestamptz NOT NULL DEFAULT now(),
-      published_at timestamptz
+      published_at timestamptz NOT NULL DEFAULT now()
     );
     CREATE TABLE environments (
       id uuid PRIMARY KEY,
@@ -138,9 +137,8 @@ beforeAll(async () => {
       (id, api_version_id, upstream_service_id, name, method, path_pattern, upstream_path_template, is_statistics, state)
     VALUES
       ('00000000-0000-4000-8000-000000000037', '00000000-0000-4000-8000-000000000017', '00000000-0000-4000-8000-000000000021', 'Support', 'GET', '/v1/player/assets/{asset}', '/v1/player/assets/{path.asset}', false, 'active');
-    INSERT INTO routing_revisions (id, status, config_payload) VALUES (
+    INSERT INTO routing_revisions (id, config_payload) VALUES (
       '00000000-0000-4000-8000-000000000041',
-      'published',
       '{"routes":[
         {"id":"00000000-0000-4000-8000-000000000031","productId":"00000000-0000-4000-8000-000000000001","productSlug":"enabled","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Enabled","method":"GET","pathPattern":"/v1/enabled","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},
         {"id":"00000000-0000-4000-8000-000000000033","productId":"00000000-0000-4000-8000-000000000003","productSlug":"private","productVisibility":"private","productLifecycle":"active","versionState":"published","name":"Private","method":"GET","pathPattern":"/v1/private","isApiKey":false,"isStatistics":true,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":false},

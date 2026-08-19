@@ -51,8 +51,7 @@
           "balance": "Balance",
           "allBalances": "All balances",
           "positive": "Has credits",
-          "zero": "Zero credits",
-          "negative": "Negative credits (abnormal)"
+          "zero": "Zero credits"
         },
         "columns": {
           "user": "User",
@@ -140,7 +139,7 @@
       },
       "redemptionCodes": {
         "title": "Redemption codes",
-        "description": "Generate and manage credit redemption codes, availability, usage limits, and expiration",
+        "description": "Generate, reveal, and manage credit redemption codes, availability, usage limits, and expiration",
           "searchPlaceholder": "Search code or note...",
         "detailsTitle": "Redemption code details",
         "empty": "No redemption codes",
@@ -172,6 +171,8 @@
           "done": "Done",
           "enable": "Enable",
           "disable": "Disable",
+          "viewCode": "Reveal code",
+          "hideCode": "Hide code",
           "copyCode": "Copy code",
           "copyAll": "Copy all",
           "clickToCopy": "Click to copy"
@@ -183,6 +184,7 @@
           "batchEnabled": "Enabled {count} codes",
           "batchDisabled": "Disabled {count} codes",
           "batchDeleted": "Deleted {count} codes",
+          "revealFailed": "Failed to reveal redemption code",
           "codeCopied": "Copied {code}",
           "allCopied": "All codes copied to clipboard"
         },

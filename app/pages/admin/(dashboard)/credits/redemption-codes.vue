@@ -14,6 +14,8 @@ const {
   items,
   total,
   loading,
+  revealedCodes,
+  revealingCodeIds,
   batches,
   init,
   applyFilters,
@@ -23,7 +25,8 @@ const {
   toggleBatch,
   deleteBatch,
   copyOne,
-  copyAll
+  copyAll,
+  toggleCodeVisibility
 } = useRedemptionCodesPage()
 
 const generateOpen = ref(false)
@@ -146,9 +149,43 @@ const {
       >
         <template #codePreview-cell="{ row }">
           <div class="flex flex-col gap-0.5">
-            <span class="font-mono text-sm text-toned">
-              {{ row.original.codePreview }}
-            </span>
+            <div class="flex min-w-56 items-center gap-1">
+              <code class="min-w-0 flex-1 truncate font-mono text-sm text-toned">
+                {{ revealedCodes[row.original.id] || row.original.codePreview }}
+              </code>
+              <UTooltip
+                :text="$t(revealedCodes[row.original.id]
+                  ? 'admin.credits.redemptionCodes.actions.hideCode'
+                  : 'admin.credits.redemptionCodes.actions.viewCode')"
+              >
+                <UButton
+                  :icon="revealedCodes[row.original.id]
+                    ? 'i-mdi-eye-off-outline'
+                    : 'i-mdi-eye-outline'"
+                  :loading="revealingCodeIds.has(row.original.id)"
+                  :aria-label="$t(revealedCodes[row.original.id]
+                    ? 'admin.credits.redemptionCodes.actions.hideCode'
+                    : 'admin.credits.redemptionCodes.actions.viewCode')"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="toggleCodeVisibility(row.original)"
+                />
+              </UTooltip>
+              <UTooltip
+                v-if="revealedCodes[row.original.id]"
+                :text="$t('admin.credits.redemptionCodes.actions.copyCode')"
+              >
+                <UButton
+                  icon="i-lucide-copy"
+                  :aria-label="$t('admin.credits.redemptionCodes.actions.copyCode')"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  @click="copyOne(revealedCodes[row.original.id] || '')"
+                />
+              </UTooltip>
+            </div>
             <span
               v-if="row.original.batchId"
               class="text-[11px] text-muted font-mono"

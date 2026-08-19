@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { and, eq } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import { environments, routingRevisions } from '~~/server/db/schema'
 import type {
@@ -112,7 +112,7 @@ async function loadCompiledEnvironments(): Promise<CompiledEnvironment[]> {
     payload: routingRevisions.configPayload
   }).from(environments)
     .innerJoin(routingRevisions, eq(routingRevisions.id, environments.activeRevisionId))
-    .where(and(eq(environments.status, 'active'), eq(routingRevisions.status, 'published')))
+    .where(eq(environments.status, 'active'))
 
   const compiled = rows.map(compileEnvironment)
   const conflict = findRoutingRouteConflict(compiled.map(environment => ({

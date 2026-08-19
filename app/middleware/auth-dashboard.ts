@@ -32,7 +32,7 @@ export default defineNuxtRouteMiddleware(async function authDashboardMiddleware(
   if (!route) return
 
   const { fetchMe, user } = useAuth()
-  if (import.meta.client) await fetchMe()
+  await fetchMe()
 
   if (user.value?.role && canAccessDashboardRoute(user.value.role, route.role)) {
     return isDashboardRoot(to.path, route.basePath)

@@ -4,7 +4,7 @@ import type {
   ServiceConfigurationField,
   ServiceConfigurationValue,
   ServiceConfigurationView
-} from '~/types/platform'
+} from '#shared/types/service-control'
 
 const props = defineProps<{
   view: ServiceConfigurationView

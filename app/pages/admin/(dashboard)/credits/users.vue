@@ -8,7 +8,7 @@ import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-l
 interface CreditUserFilters extends Record<string, unknown> {
   keyword: string
   userId: number | ''
-  balance: 'all' | 'positive' | 'zero' | 'negative'
+  balance: 'all' | 'positive' | 'zero'
 }
 
 const { t, locale } = useI18n()
@@ -39,8 +39,7 @@ const {
 const balanceItems = computed(() => [
   { label: t('admin.credits.users.filters.allBalances'), value: 'all' },
   { label: t('admin.credits.users.filters.positive'), value: 'positive' },
-  { label: t('admin.credits.users.filters.zero'), value: 'zero' },
-  { label: t('admin.credits.users.filters.negative'), value: 'negative' }
+  { label: t('admin.credits.users.filters.zero'), value: 'zero' }
 ])
 
 const columns = computed<TableColumn<AdminCreditUser>[]>(() => [

@@ -4,8 +4,9 @@ import { useAdminUserSessionSettings } from '~/composables/admin/use-admin-setti
 
 const {
   form,
+  secrets,
   createSection,
-  allowRegistration,
+  registrationModeItems,
   emailFilterModeItems,
   loading,
   items,
@@ -20,6 +21,7 @@ const { t } = useI18n()
 
 const registrationKeys = [
   'registrationMode',
+  'registrationInviteCode',
   'passwordResetEnabled',
   'emailActivationEnabled',
   'registerEmailFilterMode',
@@ -36,6 +38,12 @@ const sessionKeys = [
 
 const registrationSection = createSection(registrationKeys)
 const sessionSection = createSection(sessionKeys)
+const inviteCodeVisible = ref(false)
+const inviteModeReady = computed(() => (
+  form.registrationMode !== 'invite'
+  || secrets.hasRegistrationInviteCode
+  || form.registrationInviteCode.trim().length >= 8
+))
 </script>
 
 <template>
@@ -45,11 +53,50 @@ const sessionSection = createSection(sessionKeys)
     >
       <UFormField
         name="registrationMode"
-        :label="t('admin.system.session.registration.enabled.label')"
-        :description="t('admin.system.session.registration.enabled.description')"
+        :label="t('admin.system.session.registration.mode.label')"
+        :description="t('admin.system.session.registration.mode.description')"
         class="flex max-sm:flex-col items-start justify-between gap-4"
       >
-        <USwitch v-model="allowRegistration" />
+        <USelect
+          v-model="form.registrationMode"
+          :items="registrationModeItems"
+          class="w-full sm:min-w-40"
+        />
+      </UFormField>
+      <UFormField
+        v-if="form.registrationMode === 'invite'"
+        name="registrationInviteCode"
+        :label="t('admin.system.session.registration.inviteCode.label')"
+        :description="secrets.hasRegistrationInviteCode
+          ? t('admin.system.session.registration.inviteCode.configuredDescription')
+          : t('admin.system.session.registration.inviteCode.initialDescription')"
+        class="flex max-sm:flex-col items-start justify-between gap-4"
+        :error="!inviteModeReady ? t('admin.system.session.registration.inviteCode.required') : undefined"
+      >
+        <UInput
+          v-model="form.registrationInviteCode"
+          :type="inviteCodeVisible ? 'text' : 'password'"
+          :placeholder="t('admin.system.session.registration.inviteCode.placeholder')"
+          icon="i-mdi-ticket-confirmation-outline"
+          autocomplete="new-password"
+          class="w-full sm:w-72"
+          :ui="{ trailing: 'pe-1' }"
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              color="neutral"
+              variant="ghost"
+              size="xs"
+              square
+              :icon="inviteCodeVisible ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
+              :aria-label="inviteCodeVisible
+                ? t('admin.system.session.registration.inviteCode.hide')
+                : t('admin.system.session.registration.inviteCode.show')"
+              @click="inviteCodeVisible = !inviteCodeVisible"
+            />
+          </template>
+        </UInput>
       </UFormField>
       <UFormField
         name="passwordResetEnabled"
@@ -101,7 +148,7 @@ const sessionSection = createSection(sessionKeys)
         <AdminSettingsSectionActions
           :dirty="registrationSection.dirty.value"
           :saving="registrationSection.saving.value"
-          :disabled="registrationSection.disabled.value"
+          :disabled="registrationSection.disabled.value || !inviteModeReady"
           @save="registrationSection.save"
         />
       </template>

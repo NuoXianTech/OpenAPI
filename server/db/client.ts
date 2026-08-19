@@ -20,32 +20,14 @@ function handlePostgresNotice(notice: postgres.Notice) {
 }
 
 function getOptionalDatabaseUrl() {
-  return process.env.DATABASE_URL
-}
-
-function hasDatabaseUrl() {
-  return Boolean(getOptionalDatabaseUrl())
+  return process.env.DATABASE_URL?.trim() || undefined
 }
 
 export function getDatabaseDriver(): DatabaseDriver {
-  const configuredDriver = process.env.DATABASE_DRIVER
-  if (configuredDriver === 'postgres' || configuredDriver === 'pglite') {
-    return configuredDriver
-  }
-  if (configuredDriver) {
-    throw new Error('DATABASE_DRIVER must be either "postgres" or "pglite".')
-  }
-
-  if (hasDatabaseUrl()) return 'postgres'
-
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('DATABASE_DRIVER=pglite or DATABASE_URL is required in production.')
-  }
-
-  return 'pglite'
+  return getOptionalDatabaseUrl() ? 'postgres' : 'pglite'
 }
 
-export function getDatabaseUrl() {
+function getDatabaseUrl() {
   const databaseUrl = getOptionalDatabaseUrl()
 
   if (!databaseUrl) {
@@ -67,24 +49,21 @@ function createPostgresClient(options: CreatePostgresClientOptions = {}) {
   })
 }
 
-function getPgliteDataDir() {
-  return process.env.PGLITE_DATA_DIR || '.data/pglite'
-}
+const DEFAULT_PGLITE_DATA_DIR = '.data/pglite'
 
 function isFilesystemPgliteDataDir(dataDir: string) {
   return !/^[a-z][a-z0-9+.-]*:\/\//i.test(dataDir)
 }
 
-export function ensurePgliteDataDir(dataDir = getPgliteDataDir()) {
+export function ensurePgliteDataDir(dataDir = DEFAULT_PGLITE_DATA_DIR) {
   if (!isFilesystemPgliteDataDir(dataDir)) return
 
   mkdirSync(resolve(dataDir), { recursive: true })
 }
 
 function createPgliteClient() {
-  const dataDir = getPgliteDataDir()
-  ensurePgliteDataDir(dataDir)
-  return new PGlite(dataDir)
+  ensurePgliteDataDir()
+  return new PGlite(DEFAULT_PGLITE_DATA_DIR)
 }
 
 function createDatabase(client: PostgresClient) {

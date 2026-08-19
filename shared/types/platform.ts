@@ -1,7 +1,7 @@
 import type {
   ServiceConnectionView,
   ServiceEndpointSummary
-} from '#shared/types/service-control'
+} from './service-control'
 
 export interface PlatformEnvironment {
   id: string
@@ -82,7 +82,7 @@ export interface PlatformUpstream {
   connection: ServiceConnectionView | null
 }
 
-interface PlatformRoute {
+export interface PlatformRoute {
   id: string
   apiVersionId: string
   name: string
@@ -118,7 +118,7 @@ export interface PlatformRouteBinding {
   upstream: PlatformUpstream
 }
 
-type PlatformEndpointPublicationStatus
+export type PlatformEndpointPublicationStatus
   = | 'available'
     | 'live'
     | 'pending'
@@ -157,23 +157,8 @@ export interface PlatformEndpointCatalog {
 export interface PlatformEndpointPublicationResult {
   route: PlatformRoute
   revision: PlatformRoutingRevision | null
-  applied: boolean
-  publicationError: {
-    code: string
-    message: string
-  } | null
   created?: boolean
 }
-
-export interface PlatformWorkspacePublicationResult {
-  applied: boolean
-  publicationError: {
-    code: string
-    message: string
-  } | null
-}
-
-export type PlatformWorkspaceMutationResult<T> = T & Partial<PlatformWorkspacePublicationResult>
 
 interface PlatformRoutingRevisionPayload {
   schemaVersion: 1
@@ -189,18 +174,9 @@ export interface PlatformRoutingRevision {
   workspaceId: string
   environmentId: string
   sequence: number
-  status: 'building' | 'published' | 'failed' | 'superseded'
   configPayload: PlatformRoutingRevisionPayload
   checksum: string
   createdBy: number | null
   createdAt: string
-  publishedAt: string | null
-  failureReason: string | null
+  publishedAt: string
 }
-
-export type {
-  ServiceConfigurationField,
-  ServiceConfigurationSyncResult,
-  ServiceConfigurationValue,
-  ServiceConfigurationView
-} from '#shared/types/service-control'

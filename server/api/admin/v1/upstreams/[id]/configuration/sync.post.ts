@@ -1,4 +1,4 @@
-import { createError, getRouterParam, setResponseStatus } from 'h3'
+import { createError, getRouterParam } from 'h3'
 import { z } from 'zod'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
@@ -11,7 +11,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   }
   const result = await platformServiceControlService
     .synchronizeConfiguration(upstreamId.data)
-  if (!result.applied) setResponseStatus(event, 202)
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -21,9 +20,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: {
       revision: result.revision,
       status: result.status,
-      targetCount: result.targets.length,
-      applied: result.applied,
-      publicationError: result.publicationError
+      targetCount: result.targets.length
     }
   })
   return result

@@ -2,7 +2,7 @@
 import type {
   PlatformEndpointCatalogItem,
   PlatformEndpointCatalogService
-} from '~/types/platform'
+} from '#shared/types/platform'
 import {
   platformStatusColor,
   serviceAvailabilityColor

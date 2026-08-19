@@ -8,7 +8,11 @@ export default defineAdminEventHandler(async (event, admin) => {
   const routeId = z.uuid().safeParse(getRouterParam(event, 'id'))
   if (!routeId.success) throw createError({ statusCode: 400, message: 'route id is invalid' })
 
-  const removed = await platformRouteService.remove(routeId.data)
+  const result = await platformRouteService.removeAndPublish(
+    routeId.data,
+    admin.id
+  )
+  const removed = result.route
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -17,5 +21,8 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: removed.id,
     detail: { method: removed.method, pathPattern: removed.pathPattern }
   })
-  return { id: removed.id }
+  return {
+    id: removed.id,
+    revisions: result.revisions
+  }
 })

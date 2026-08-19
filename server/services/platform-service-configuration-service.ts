@@ -204,7 +204,7 @@ async function publishRoutableConfigurationTargets(
   // serve the new configuration while failed or drifted Targets must be
   // removed from the next immutable runtime snapshot.
   if (result.status === 'failed') {
-    return { applied: true as const, revisions: [], publicationError: null }
+    return { revisions: [] }
   }
   return applyWorkspaceRevision(workspaceId, null)
 }
@@ -336,28 +336,40 @@ export async function updatePlatformServiceConfiguration(
     values
   )
   const stored = storeConfigurationValues(definition, values)
-  const updated = firstRow(await db.update(upstreamServiceConnections)
-    .set({
-      configurationValues: stored,
-      configurationRevision: revision,
-      configurationHash,
+  const updated = await db.transaction(async (tx) => {
+    const connection = firstRow(await tx.update(upstreamServiceConnections)
+      .set({
+        configurationValues: stored,
+        configurationRevision: revision,
+        configurationHash,
+        updatedAt: new Date()
+      })
+      .where(and(
+        eq(
+          upstreamServiceConnections.upstreamServiceId,
+          upstreamServiceId
+        ),
+        eq(
+          upstreamServiceConnections.configurationRevision,
+          input.expectedRevision
+        ),
+        eq(
+          upstreamServiceConnections.configurationSchemaSha256,
+          schemaSha256
+        )
+      ))
+      .returning())
+    if (!connection) return null
+
+    await tx.update(upstreamTargets).set({
+      configurationStatus: 'unknown',
       updatedAt: new Date()
-    })
-    .where(and(
-      eq(
-        upstreamServiceConnections.upstreamServiceId,
-        upstreamServiceId
-      ),
-      eq(
-        upstreamServiceConnections.configurationRevision,
-        input.expectedRevision
-      ),
-      eq(
-        upstreamServiceConnections.configurationSchemaSha256,
-        schemaSha256
-      )
+    }).where(and(
+      eq(upstreamTargets.upstreamServiceId, upstreamServiceId),
+      eq(upstreamTargets.enabled, true)
     ))
-    .returning())
+    return connection
+  })
   if (!updated) {
     throw createApplicationError({
       statusCode: 409,
@@ -365,13 +377,6 @@ export async function updatePlatformServiceConfiguration(
       data: { code: 'SERVICE_CONFIGURATION_REVISION_CONFLICT' }
     })
   }
-  await db.update(upstreamTargets).set({
-    configurationStatus: 'unknown',
-    updatedAt: new Date()
-  }).where(and(
-    eq(upstreamTargets.upstreamServiceId, upstreamServiceId),
-    eq(upstreamTargets.enabled, true)
-  ))
   const result = await pushConfiguration(
     { ...context, connection: updated },
     revision,

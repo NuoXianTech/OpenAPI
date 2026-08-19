@@ -5,6 +5,11 @@ import { readPendingOauth } from '~~/server/utils/oauth-pending'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { userService } from '~~/server/services/user-service'
 import { OAUTH_PROVIDER_PRESETS } from '~~/server/config/oauth-provider-presets'
+import {
+  normalizeRegistrationMode,
+  registrationAllowsNewAccount,
+  registrationRequiresInvite
+} from '~~/server/utils/registration'
 
 function sanitizeUsername(base: string) {
   return base.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 32) || 'user'
@@ -19,6 +24,9 @@ export default defineEventHandler(async (event) => {
 
   const settings = await systemSettingsService.getSettings()
   const preset = OAUTH_PROVIDER_PRESETS[pending.provider]
+  const registrationMode = normalizeRegistrationMode(settings.registrationMode)
+  const inviteReady = !registrationRequiresInvite(registrationMode)
+    || settings.registrationInviteCode.length > 0
 
   // 该邮箱是否已有账号：仅用于在窗口里提示「看起来你已有账号，建议绑定」
   let emailHasAccount = false
@@ -37,7 +45,10 @@ export default defineEventHandler(async (event) => {
     email: pending.email, // 新注册表单预填建议
     suggestedUsername: sanitizeUsername(pending.nickname || pending.provider),
     emailHasAccount,
-    // 强制绑定 / 注册关闭时不允许新注册，窗口隐藏「新注册」
-    allowRegister: !settings.oauthForceBinding && settings.registrationMode !== 'closed'
+    // 强制绑定、注册关闭或邀请模式未配置邀请码时隐藏「新注册」。
+    allowRegister: !settings.oauthForceBinding
+      && registrationAllowsNewAccount(registrationMode)
+      && inviteReady,
+    requiresInviteCode: registrationRequiresInvite(registrationMode)
   }
 })

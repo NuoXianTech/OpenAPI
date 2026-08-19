@@ -14,6 +14,7 @@ import { invalidateRoutingRuntimeCache } from '~~/server/services/routing-runtim
 import { getSqlState } from '~~/server/utils/database-error'
 import { normalizeRouteHost } from '~~/server/utils/route-pattern'
 import { firstRow } from '~~/server/utils/row'
+import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
 
 const DEFAULT_WORKSPACE_SLUG = 'default'
 const DEFAULT_ENVIRONMENT_SLUG = 'development'
@@ -211,11 +212,6 @@ export const platformWorkspaceService = {
             .from(environments).where(eq(environments.workspaceId, id))
           const environmentIds = environmentRows.map(item => item.id)
           if (environmentIds.length > 0) {
-            await tx.update(routingRevisions).set({ status: 'superseded' })
-              .where(and(
-                inArray(routingRevisions.environmentId, environmentIds),
-                eq(routingRevisions.status, 'published')
-              ))
             await tx.update(environments).set({
               status: 'disabled',
               activeRevisionId: null,
@@ -268,9 +264,12 @@ export const platformWorkspaceService = {
     }).finally(invalidateRuntime)
   },
 
-  async createEnvironment(input: CreateEnvironmentInput) {
+  async createEnvironment(
+    input: CreateEnvironmentInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
     try {
-      const created = await db.transaction(async (tx) => {
+      const create = async (tx: DatabaseTransaction) => {
         const lockedEnvironments = await lockEnvironments(tx)
         const workspace = firstRow(await tx.select().from(workspaces)
           .where(and(eq(workspaces.id, input.workspaceId), eq(workspaces.status, 'active')))
@@ -292,8 +291,11 @@ export const platformWorkspaceService = {
         }).returning())
         if (!environment) throw new Error('environment insert returned no row')
         return environment
-      })
-      await invalidateRuntime()
+      }
+      const created = options.transaction
+        ? await create(options.transaction)
+        : await db.transaction(create)
+      if (!options.transaction) await invalidateRuntime()
       return created
     } catch (error) {
       if (getSqlState(error) === '23505') throw conflictError('environment slug already exists in this workspace')
@@ -301,9 +303,13 @@ export const platformWorkspaceService = {
     }
   },
 
-  async updateEnvironment(id: string, input: UpdateEnvironmentInput) {
+  async updateEnvironment(
+    id: string,
+    input: UpdateEnvironmentInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
     try {
-      const updated = await db.transaction(async (tx) => {
+      const update = async (tx: DatabaseTransaction) => {
         const lockedEnvironments = await lockEnvironments(tx)
         const current = lockedEnvironments.find(item => item.id === id)
         if (!current) {
@@ -324,13 +330,6 @@ export const platformWorkspaceService = {
           defaultDomain,
           status
         })
-        if (status === 'disabled') {
-          await tx.update(routingRevisions).set({ status: 'superseded' })
-            .where(and(
-              eq(routingRevisions.environmentId, current.id),
-              eq(routingRevisions.status, 'published')
-            ))
-        }
         const row = firstRow(await tx.update(environments).set({
           ...input,
           defaultDomain,
@@ -339,8 +338,11 @@ export const platformWorkspaceService = {
         }).where(eq(environments.id, id)).returning())
         if (!row) throw new Error('environment update returned no row')
         return row
-      })
-      await invalidateRuntime()
+      }
+      const updated = options.transaction
+        ? await update(options.transaction)
+        : await db.transaction(update)
+      if (!options.transaction) await invalidateRuntime()
       return updated
     } catch (error) {
       if (getSqlState(error) === '23505') throw conflictError('environment slug already exists in this workspace')
@@ -348,8 +350,11 @@ export const platformWorkspaceService = {
     }
   },
 
-  async removeEnvironment(id: string) {
-    const removed = await db.transaction(async (tx) => {
+  async removeEnvironment(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const remove = async (tx: DatabaseTransaction) => {
       const environment = firstRow(await tx.select().from(environments)
         .where(eq(environments.id, id)).limit(1).for('update'))
       if (!environment) {
@@ -366,8 +371,67 @@ export const platformWorkspaceService = {
       }
       await tx.delete(environments).where(eq(environments.id, id))
       return environment
-    })
-    await invalidateRuntime()
+    }
+    const removed = options.transaction
+      ? await remove(options.transaction)
+      : await db.transaction(remove)
+    if (!options.transaction) await invalidateRuntime()
     return removed
+  },
+
+  async createEnvironmentAndPublish(
+    input: CreateEnvironmentInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const environment = await platformWorkspaceService.createEnvironment(
+        input,
+        { transaction: tx }
+      )
+      return {
+        value: environment,
+        workspaceId: environment.workspaceId
+      }
+    })
+    const { value: environment, ...publication } = committed
+    return { environment, ...publication }
+  },
+
+  async updateEnvironmentAndPublish(
+    id: string,
+    input: UpdateEnvironmentInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const environment = await platformWorkspaceService.updateEnvironment(
+        id,
+        input,
+        { transaction: tx }
+      )
+      return {
+        value: environment,
+        workspaceId: environment.workspaceId
+      }
+    })
+    const { value: environment, ...publication } = committed
+    return { environment, ...publication }
+  },
+
+  async removeEnvironmentAndPublish(
+    id: string,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const environment = await platformWorkspaceService.removeEnvironment(
+        id,
+        { transaction: tx }
+      )
+      return {
+        value: environment,
+        workspaceId: environment.workspaceId
+      }
+    })
+    const { value: environment, ...publication } = committed
+    return { environment, ...publication }
   }
 }

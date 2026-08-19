@@ -1,6 +1,4 @@
-import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
-import { isSupportedLocale } from '#shared/config/locale-defaults'
 import { createError, defineEventHandler, getCookie, getRequestURL, setCookie, setResponseHeader } from 'h3'
 import { assertAdminOnboardingCompleted } from '~~/server/services/admin-onboarding-service'
 import { userService } from '~~/server/services/user-service'
@@ -9,6 +7,7 @@ import { toHttpError } from '~~/server/utils/http-error'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { hostCookieName, hostCookieSecurityOptions } from '~~/server/utils/host-cookie'
+import { toAuthUser } from '~~/server/utils/user-view'
 
 interface AuthUserPayload {
   id: number
@@ -17,12 +16,6 @@ interface AuthUserPayload {
 
 // 会话完全由 JWT 承载、无服务端会话表；此 cookie 装签发的 JWT。
 const AUTH_COOKIE_NAME = hostCookieName('app_token')
-
-function getCravatarUrl(email: string | null | undefined) {
-  const normalized = (email ?? '').trim().toLowerCase()
-  const hash = createHash('md5').update(normalized).digest('hex')
-  return `https://cravatar.cn/avatar/${hash}`
-}
 
 async function getSessionMaxAgesSeconds() {
   const settings = await systemSettingsService.getSettings()
@@ -152,15 +145,7 @@ export async function getAuthUser(event: H3Event) {
 
   await maybeSlidingRenew(event, payload, user.tokenVersion, ages)
 
-  return {
-    id: user.id,
-    username: user.username,
-    displayName: user.displayName,
-    email: user.email,
-    avatarUrl: getCravatarUrl(user.email),
-    role: user.role as 'user' | 'admin',
-    locale: isSupportedLocale(user.locale) ? user.locale : null
-  }
+  return toAuthUser(user)
 }
 
 export async function requireAuth(event: H3Event) {

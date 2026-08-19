@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
-import type { PlatformEnvironment, PlatformWorkspace, PlatformWorkspacePublicationResult } from '~/types/platform'
+import type { PlatformEnvironment, PlatformWorkspace } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
-import { formatPlatformDate, platformPublicationFeedback, platformStatusColor } from '~/utils/platform-display'
+import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const context = useAdminPlatformContext()
@@ -75,15 +75,11 @@ async function removeWorkspace(workspace: PlatformWorkspace) {
 
 async function updateEnvironmentStatus(environment: PlatformEnvironment) {
   try {
-    const result = await $fetch<PlatformWorkspacePublicationResult>(`/api/admin/v1/environments/${environment.id}`, {
+    await $fetch(`/api/admin/v1/environments/${environment.id}`, {
       method: 'PATCH',
       body: { status: environment.status === 'active' ? 'disabled' : 'active' }
     })
-    toast.add(platformPublicationFeedback(
-      result,
-      t('common.feedback.updated'),
-      t('admin.apis.routing.feedback.savedPendingPublish')
-    ))
+    toast.add({ title: t('common.feedback.updated'), color: 'success' })
     await context.refresh()
   } catch (error) {
     toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
@@ -96,15 +92,11 @@ async function removeEnvironment(environment: PlatformEnvironment) {
     description: t('admin.apis.routing.deleteEnvironment.description'),
     onConfirm: async () => {
       try {
-        const result = await $fetch<PlatformWorkspacePublicationResult>(
+        await $fetch(
           `/api/admin/v1/environments/${environment.id}`,
           { method: 'DELETE' }
         )
-        toast.add(platformPublicationFeedback(
-          result,
-          t('common.feedback.deleted'),
-          t('admin.apis.routing.feedback.savedPendingPublish')
-        ))
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
         await context.refresh()
       } catch (error) {
         toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })

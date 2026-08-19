@@ -3,7 +3,6 @@ import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { creditTransactions, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { expectFirstRow, firstRow } from '~~/server/utils/row'
-import { notificationService } from './notification-service'
 import { systemSettingsService } from './system-settings-service'
 import type { SupportedLocale } from '#shared/config/locale-defaults'
 
@@ -106,7 +105,6 @@ export const userService = {
         activatedUser = { ...user, credits: balanceAfter }
       }
 
-      await notificationService.fanOutFutureMessagesTo(id, tx)
       return activatedUser
     })
     return activated

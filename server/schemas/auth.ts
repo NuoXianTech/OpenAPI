@@ -2,6 +2,7 @@ import { z } from 'zod'
 import type {
   ConfirmEmailChangeInput,
   LoginInput,
+  OauthRegisterInput,
   RegisterInput,
   RequestPasswordResetInput,
   ResetPasswordInput,
@@ -13,6 +14,7 @@ export const registerSchema = z.object({
   username: usernameSchema,
   email: emailSchema,
   password: passwordSchema,
+  inviteCode: z.string().trim().max(256).optional(),
   turnstileToken: z.string().optional()
 }) satisfies z.ZodType<RegisterInput>
 
@@ -39,8 +41,9 @@ export const oauthRegisterSchema = z.object({
   email: emailSchema,
   username: usernameSchema.optional(),
   password: passwordSchema,
+  inviteCode: z.string().trim().max(256).optional(),
   turnstileToken: z.string().optional()
-})
+}) satisfies z.ZodType<OauthRegisterInput>
 
 export const requestPasswordResetSchema = z.object({
   email: emailSchema,

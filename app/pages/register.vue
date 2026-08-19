@@ -6,6 +6,7 @@ import {
   confirmationError,
   emailError,
   passwordError,
+  requiredTextError,
   usernameError
 } from '~/utils/form-validation'
 
@@ -16,11 +17,12 @@ const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.register.title') }))
 
 const { register } = useAuth()
-const { turnstile, settings } = useSiteSettings()
+const { turnstile, registrationEnabled, settings } = useSiteSettings()
 
 interface RegisterFormState {
   username: string
   email: string
+  inviteCode: string
   password: string
   confirm: string
 }
@@ -29,6 +31,9 @@ function validateRegisterForm(state: Partial<RegisterFormState>): FormError<stri
   return compactFormErrors(
     usernameError('username', state.username, validationMessages.value.username),
     emailError('email', state.email, validationMessages.value.email),
+    inviteRequired.value
+      ? requiredTextError('inviteCode', state.inviteCode, t('auth.validation.inviteCodeRequired'))
+      : null,
     passwordError('password', state.password, validationMessages.value.password),
     confirmationError(
       'confirm',
@@ -49,6 +54,10 @@ const isSubmitting = ref(false)
 const turnstileToken = ref('')
 const turnstileWidget = ref<{ reset: () => void } | null>(null)
 const turnstileRequired = computed(() => turnstile.value.register)
+const inviteRequired = computed(() => settings.value.registrationMode === 'invite')
+const pageHeading = computed(() => registrationEnabled.value
+  ? t('auth.register.heading', { siteName: settings.value.siteName })
+  : t('auth.register.closedTitle'))
 
 // 配置了服务条款 / 隐私政策时，注册前必须勾选同意
 const consent = ref(false)
@@ -79,6 +88,19 @@ const fields = computed(() => [
     size: 'lg' as const,
     required: true
   },
+  ...(inviteRequired.value
+    ? [{
+        name: 'inviteCode',
+        type: 'text' as const,
+        label: t('auth.fields.inviteCode'),
+        placeholder: t('auth.placeholders.inviteCode'),
+        autocomplete: 'one-time-code',
+        icon: 'i-mdi-ticket-confirmation-outline',
+        defaultValue: '',
+        size: 'lg' as const,
+        required: true
+      }]
+    : []),
   {
     name: 'password',
     type: 'password' as const,
@@ -143,6 +165,7 @@ async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
       username: event.data.username,
       email: event.data.email,
       password: event.data.password,
+      inviteCode: inviteRequired.value ? event.data.inviteCode : undefined,
       turnstileToken: turnstileRequired.value ? turnstileToken.value : undefined
     })
     successMessage.value = res.verificationRequired
@@ -151,6 +174,7 @@ async function onSubmit(event: FormSubmitEvent<RegisterFormState>) {
     if (authForm.value?.state) {
       authForm.value.state.password = ''
       authForm.value.state.confirm = ''
+      authForm.value.state.inviteCode = ''
     }
     turnstileWidget.value?.reset()
   } catch (error: unknown) {
@@ -173,7 +197,7 @@ function clearTurnstileError() {
 <template>
   <CommonAppAuthShell>
     <AuthBrandHeader
-      :title="t('auth.register.heading', { siteName: settings.siteName })"
+      :title="pageHeading"
     />
 
     <UCard
@@ -181,7 +205,31 @@ function clearTurnstileError() {
       class="auth-card"
       :ui="{ body: 'p-4 sm:p-7' }"
     >
+      <div
+        v-if="!registrationEnabled"
+        class="space-y-5 text-center"
+      >
+        <div class="auth-success-illustration">
+          <UIcon
+            name="i-mdi-account-lock-outline"
+            class="size-11"
+          />
+        </div>
+        <p class="text-sm leading-6 text-muted">
+          {{ $t('auth.register.closedDescription') }}
+        </p>
+        <UButton
+          to="/login"
+          block
+          size="lg"
+          icon="i-mdi-login"
+        >
+          {{ $t('auth.register.loginDirectly') }}
+        </UButton>
+      </div>
+
       <UAuthForm
+        v-else
         ref="authForm"
         :validate="validateRegisterForm"
         :fields="fields"

@@ -1,6 +1,31 @@
+import { createHash, timingSafeEqual } from 'node:crypto'
+import type { SystemSettings } from '#shared/types/site-settings'
 import { userService } from '~~/server/services/user-service'
 
 export type EmailFilterMode = 'off' | 'whitelist' | 'blacklist'
+export type RegistrationMode = SystemSettings['registrationMode']
+
+export function normalizeRegistrationMode(value: unknown): RegistrationMode {
+  return value === 'invite' || value === 'closed' ? value : 'open'
+}
+
+export function registrationAllowsNewAccount(mode: RegistrationMode): boolean {
+  return mode !== 'closed'
+}
+
+export function registrationRequiresInvite(mode: RegistrationMode): boolean {
+  return mode === 'invite'
+}
+
+export function isRegistrationInviteValid(
+  expected: string,
+  submitted: string | null | undefined
+): boolean {
+  if (!expected || !submitted) return false
+  const expectedHash = createHash('sha256').update(expected).digest()
+  const submittedHash = createHash('sha256').update(submitted.trim()).digest()
+  return timingSafeEqual(expectedHash, submittedHash)
+}
 
 export function normalizeEmailFilterMode(value: unknown): EmailFilterMode {
   return value === 'whitelist' || value === 'blacklist' ? value : 'off'

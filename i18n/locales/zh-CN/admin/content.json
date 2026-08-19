@@ -83,7 +83,7 @@
           "options": {
             "specific": "指定用户（仅选中收件人）",
             "allCurrent": "当前所有用户（不含未来注册）",
-            "allWithFuture": "当前及未来注册用户（新用户激活时自动补发）"
+            "allWithFuture": "当前及未来注册用户（注册后自动可见）"
           }
         },
         "levelOptions": {
@@ -125,7 +125,7 @@
           "title": "发送通知",
           "description": "向指定用户、当前全员或当前及未来注册用户发送站内通知。",
           "audience": "发送范围",
-          "futureDeliveryHint": "新注册用户首次激活时将自动补发本条通知。",
+          "futureDeliveryHint": "新注册用户完成注册后会自动看到本条通知。",
           "recipients": "收件人（可多选）",
           "recipientsPlaceholder": "搜索用户名或邮箱",
           "messageTitle": "标题",

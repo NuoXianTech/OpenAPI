@@ -125,7 +125,7 @@
           "title": "Send notification",
           "description": "Send an in-app notification to selected, current, or future users.",
           "audience": "Audience",
-          "futureDeliveryHint": "This notification will be delivered when future users activate their accounts.",
+          "futureDeliveryHint": "Future users will see this notification automatically after registration.",
           "recipients": "Recipients",
           "recipientsPlaceholder": "Search username or email",
           "messageTitle": "Title",

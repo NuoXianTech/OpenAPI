@@ -99,6 +99,17 @@ export const SYSTEM_SETTING_DEFINITIONS = {
     secret: false,
     description: '用户注册模式'
   },
+  registrationInviteCode: {
+    key: 'registration.invite_code',
+    schema: z.string().trim().max(256, '邀请码最多 256 个字符').refine(
+      value => value.length === 0 || value.length >= 8,
+      '邀请码至少需要 8 个字符'
+    ),
+    default: SITE_SETTINGS_DEFAULTS.registrationInviteCode,
+    public: false,
+    secret: true,
+    description: '邀请注册模式使用的站点邀请码'
+  },
   defaultRegisterCredits: {
     key: 'registration.default_credits',
     schema: nonNegativeInt('默认注册积分'),

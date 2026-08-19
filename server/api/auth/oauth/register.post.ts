@@ -17,7 +17,9 @@ import { hashPassword } from '~~/server/utils/password'
 import { sendVerificationEmail } from '~~/server/utils/email'
 import {
   isEmailAllowedForRegistration,
+  isRegistrationInviteValid,
   normalizeEmailFilterMode,
+  normalizeRegistrationMode,
   parseEmailDomainList,
   rollbackCreatedUser
 } from '~~/server/utils/registration'
@@ -50,7 +52,8 @@ export default defineEventHandler(async (event) => {
   if (settings.oauthForceBinding) {
     throw createError({ statusCode: 403, message: '站点已设为强制绑定，请绑定已有账号' })
   }
-  if ((settings.registrationMode || 'open') === 'closed') {
+  const registrationMode = normalizeRegistrationMode(settings.registrationMode)
+  if (registrationMode === 'closed') {
     throw createError({ statusCode: 403, message: '注册功能已关闭' })
   }
 
@@ -72,6 +75,13 @@ export default defineEventHandler(async (event) => {
   if (!isEmailAllowedForRegistration(email, filterMode, domains)) {
     const msg = filterMode === 'blacklist' ? '该邮箱域名已被禁止注册' : '该邮箱域名不在允许注册的列表内'
     throw createError({ statusCode: 403, message: msg })
+  }
+
+  if (
+    registrationMode === 'invite'
+    && !isRegistrationInviteValid(settings.registrationInviteCode, body.inviteCode)
+  ) {
+    throw createError({ statusCode: 403, message: '邀请码无效' })
   }
 
   // 邮箱已注册：持有效 pending 的用户应改走「绑定已有账号」

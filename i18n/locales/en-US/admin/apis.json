@@ -219,10 +219,7 @@
         },
         "revisionStatuses": {
           "active": "Active",
-          "building": "Building",
-          "published": "Available",
-          "failed": "Generation failed",
-          "superseded": "Historical snapshot"
+          "historical": "Historical snapshot"
         },
         "upstreamKinds": {
           "internal": "Internal service",
@@ -322,7 +319,7 @@
         },
         "deleteRoute": {
           "title": "Delete Route {path}",
-          "description": "The Route is soft-deleted from the draft configuration. The active runtime snapshot remains unchanged until the new configuration is applied, and an older snapshot can still restore it."
+          "description": "The Route and the active runtime configuration are updated together. Historical runtime snapshots remain available for rollback."
         },
         "deleteWorkspace": {
           "title": "Delete Workspace: {name}",
@@ -364,11 +361,9 @@
           "routeCreated": "Route created",
           "routeUpdated": "Route updated",
           "routeDeleted": "Route deleted",
-          "publishToApply": "Apply the new runtime configuration to change traffic",
-          "revisionPublished": "Runtime snapshot #{sequence} created",
           "revisionActivated": "Rolled back to runtime snapshot #{sequence}",
           "runtimeUpdated": "The Gateway loaded the new configuration without a restart",
-          "savedPendingPublish": "The configuration was saved, but automatic publishing failed. Traffic is still using the previous version and the change can be retried from the API catalog",
+          "runtimePending": "The Route is saved and will enter the runtime snapshot when an eligible Target is available",
           "createFailed": "Creation failed",
           "updateFailed": "Failed to update Route",
           "deleteFailed": "Failed to delete Route",
@@ -531,8 +526,6 @@
             "statisticsDisabled": "Call statistics disabled",
             "apiKeyEnabled": "API Key enabled",
             "apiKeyDisabled": "API Key disabled",
-            "savedPending": "Changes saved; live traffic was not switched",
-            "savedPendingDescription": "The active runtime snapshot is still serving traffic. Resolve the configuration conflict, then retry Apply changes: {reason}",
             "publishFailed": "Endpoint publishing failed",
             "updateFailed": "Endpoint update failed"
           },

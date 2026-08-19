@@ -52,6 +52,11 @@ export interface ListFilters {
   offset?: number
 }
 
+export interface RevealedRedemptionCode {
+  id: number
+  code: string
+}
+
 interface RedeemInput {
   userId: number
   code: string
@@ -200,6 +205,20 @@ export const redemptionService = {
     }
   },
 
+  async reveal(id: number): Promise<RevealedRedemptionCode | null> {
+    const row = firstRow(await db.select({
+      id: redemptionCodes.id,
+      codeCiphertext: redemptionCodes.codeCiphertext
+    }).from(redemptionCodes).where(eq(redemptionCodes.id, id)).limit(1))
+
+    return row
+      ? {
+          id: row.id,
+          code: decryptStoredSecret(row.codeCiphertext, 'redemption-code')
+        }
+      : null
+  },
+
   /** 列出所有批次（按最新创建时间倒序） */
   async listBatches(limit: number = 50) {
     const { limit: normalizedLimit } = normalizePagination({ limit })
@@ -338,7 +357,7 @@ export const redemptionService = {
       const balanceAfter = toNumber(userUpdated[0].credits)
 
       // 写流水（兑换记录已并入 credit_transactions）：codeId 关联兑换码、ip 记录来源，
-      // meta 仅保留掩码与批次快照；完整兑换码只在生成时显示。
+      // meta 仅保留掩码与批次快照；完整兑换码只通过管理员专用接口恢复。
       // (codeId, userId) 部分唯一索引兜底重复兑换 —— 冲突即事务回滚，usedCount 与积分一并撤销。
       try {
         await tx.insert(creditTransactions).values({

@@ -4,7 +4,6 @@ interface RedisRuntimeConfig {
   url?: unknown
   keyPrefix?: unknown
   connectTimeoutMs?: unknown
-  required?: unknown
 }
 
 export interface RedisConfig {
@@ -19,10 +18,6 @@ let redisClientUrl = ''
 let redisInitialization: Promise<Redis | null> | null = null
 // Nuxt 私有 runtimeConfig 在进程生命周期内保持稳定，避免缓存与限流热路径重复规范化。
 let redisConfig: RedisConfig | null = null
-
-function normalizeBoolean(value: unknown): boolean {
-  return value === true || value === 'true' || value === '1'
-}
 
 function normalizePositiveInteger(value: unknown, fallback: number): number {
   const parsed = Number(value)
@@ -40,11 +35,12 @@ export function getRedisConfig(): RedisConfig {
   const runtimeConfig = useRuntimeConfig()
   const redis = runtimeConfig.redis as RedisRuntimeConfig
 
+  const url = String(redis?.url ?? '').trim()
   redisConfig = Object.freeze({
-    url: String(redis?.url ?? '').trim(),
+    url,
     keyPrefix: normalizeKeyPrefix(redis?.keyPrefix),
     connectTimeoutMs: normalizePositiveInteger(redis?.connectTimeoutMs, 2_000),
-    required: normalizeBoolean(redis?.required)
+    required: Boolean(url)
   })
   return redisConfig
 }
@@ -70,12 +66,7 @@ export function isRedisUnavailableError(error: unknown): error is Error & {
 
 export function getRedisClient(): Redis | null {
   const config = getRedisConfig()
-  if (!config.url) {
-    if (config.required) {
-      throw createRedisUnavailableError('NUXT_REDIS_URL is required when NUXT_REDIS_REQUIRED=true')
-    }
-    return null
-  }
+  if (!config.url) return null
 
   if (redisClient && redisClientUrl === config.url) return redisClient
 

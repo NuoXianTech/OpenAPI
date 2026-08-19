@@ -4,7 +4,9 @@ import { userService } from '~~/server/services/user-service'
 import { hashPassword } from '~~/server/utils/password'
 import {
   isEmailAllowedForRegistration,
+  isRegistrationInviteValid,
   normalizeEmailFilterMode,
+  normalizeRegistrationMode,
   parseEmailDomainList,
   rollbackCreatedUser
 } from '~~/server/utils/registration'
@@ -29,14 +31,13 @@ export default defineEventHandler(async (event) => {
   const activationRequired = settings.emailActivationEnabled !== false
   const neutralResponse = { verificationRequired: activationRequired }
 
-  // 注册模式闸门：closed 直接拒绝；invite 当前保持安全默认，不开放匿名注册。
-  const mode = settings.registrationMode || 'open'
+  const mode = normalizeRegistrationMode(settings.registrationMode)
   if (mode === 'closed') {
     throw createError({ statusCode: 403, message: '注册功能已关闭' })
   }
 
   const body = await readZodBody(event, registerSchema)
-  const { username, email, password } = body
+  const { username, email, password, inviteCode } = body
   const turnstileToken = body.turnstileToken ?? ''
 
   const ip = readClientIp(event)
@@ -63,7 +64,9 @@ export default defineEventHandler(async (event) => {
   }
 
   if (mode === 'invite') {
-    throw createError({ statusCode: 403, message: '仅邀请注册模式下未开放通道' })
+    if (!isRegistrationInviteValid(settings.registrationInviteCode, inviteCode)) {
+      throw createError({ statusCode: 403, message: '邀请码无效' })
+    }
   }
 
   // 邮箱已注册：投递"账号已存在"通知到该邮箱，外部返回中性响应。

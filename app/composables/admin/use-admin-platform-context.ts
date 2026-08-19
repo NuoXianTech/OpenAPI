@@ -1,6 +1,6 @@
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformEnvironment, PlatformWorkspace } from '~/types/platform'
+import type { PlatformEnvironment, PlatformWorkspace } from '#shared/types/platform'
 
 export interface AdminPlatformContext {
   workspaces: ComputedRef<PlatformWorkspace[]>

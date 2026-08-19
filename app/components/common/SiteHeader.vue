@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from '#shared
 
 const route = useRoute()
 const { user, logout, updateLocalePreference } = useAuth()
+const { registrationEnabled } = useSiteSettings()
 const { t, locale, locales, setLocale } = useI18n()
 const toast = useToast()
 const isChangingLocale = ref(false)
@@ -46,7 +47,9 @@ const mobileItems = computed<DropdownMenuItem[][]>(() => [
     ? [{ label: dashboardLabel.value, icon: dashboardIcon.value, to: dashboardPath.value }]
     : [
         { label: t('auth.login.title'), icon: 'i-mdi-login', to: '/login' },
-        { label: t('auth.register.title'), icon: 'i-mdi-account-plus-outline', to: '/register' }
+        ...(registrationEnabled.value
+          ? [{ label: t('auth.register.title'), icon: 'i-mdi-account-plus-outline', to: '/register' }]
+          : [])
       ]
 ])
 
@@ -156,6 +159,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
               {{ $t('auth.login.title') }}
             </UButton>
             <UButton
+              v-if="registrationEnabled"
               to="/register"
               size="sm"
               icon="i-mdi-rocket-launch-outline"
@@ -175,6 +179,7 @@ async function handleLocaleChange(nextLocale: SupportedLocale): Promise<void> {
               {{ $t('auth.login.title') }}
             </UButton>
             <UButton
+              v-if="registrationEnabled"
               to="/register"
               size="sm"
               icon="i-mdi-rocket-launch-outline"

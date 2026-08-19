@@ -15,7 +15,7 @@ export const SITE_SETTINGS_DEFAULTS = {
   sessionMaxAgeSeconds: 60 * 60 * 24,
   sessionAbsoluteMaxAgeSeconds: 60 * 60 * 24 * 7,
   sessionRememberMaxAgeSeconds: 60 * 60 * 24 * 30,
-  registrationMode: 'open', defaultRegisterCredits: 0,
+  registrationMode: 'open', registrationInviteCode: '', defaultRegisterCredits: 0,
   registerEmailFilterMode: 'off', registerEmailFilterList: '',
   emailVerifyExpiresInMinutes: 30, emailActivationEnabled: true,
   passwordResetExpiresInMinutes: 30, smtpHost: 'smtp.example.com', smtpPort: 465,

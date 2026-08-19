@@ -5,6 +5,7 @@ import { userService } from '~~/server/services/user-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { verifyVerificationToken } from '~~/server/utils/verification-token'
 import { readZodBody } from '~~/server/utils/zod'
+import { toUserProfile } from '~~/server/utils/user-view'
 
 export default defineEventHandler(async (event) => {
   const { userId, token } = await readZodBody(event, confirmEmailChangeSchema)
@@ -40,6 +41,5 @@ export default defineEventHandler(async (event) => {
     detail: { emailChanged: true }
   })
 
-  const { passwordHash: _, ...safe } = updated
-  return safe
+  return toUserProfile(updated)
 })

@@ -1,7 +1,25 @@
-import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
-import { db, type DatabaseTransaction } from '~~/server/db/client'
-import { notificationDeliveries, notificationMessages, users } from '~~/server/db/schema'
+import {
+  and,
+  count,
+  desc,
+  eq,
+  gte,
+  ilike,
+  inArray,
+  isNotNull,
+  isNull,
+  lte,
+  max,
+  or,
+  sql
+} from 'drizzle-orm'
 import type { MessageLevel } from '#shared/types/content'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
+import {
+  notificationDeliveries,
+  notificationMessages,
+  users
+} from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
@@ -15,7 +33,6 @@ interface SendNotificationInput {
   level?: NotificationLevel
   linkUrl?: string | null
   audience: NotificationAudience
-  /** audience='specific' 时必填；其他值忽略 */
   recipientUserIds?: number[]
   senderUserId?: number | null
   senderActor?: string | null
@@ -23,170 +40,220 @@ interface SendNotificationInput {
 
 const DELIVERY_BATCH_SIZE = 1000
 
-async function insertDeliveries(
+function visibleToUser(userId: number) {
+  return or(
+    and(
+      eq(notificationMessages.audience, 'specific'),
+      isNotNull(notificationDeliveries.id)
+    ),
+    eq(notificationMessages.audience, 'all_with_future'),
+    and(
+      eq(notificationMessages.audience, 'all_current'),
+      gte(notificationMessages.recipientCutoffUserId, userId)
+    )
+  )
+}
+
+function unreadForUser() {
+  return or(
+    isNull(notificationDeliveries.id),
+    eq(notificationDeliveries.isRead, false)
+  )
+}
+
+async function insertSpecificRecipients(
   tx: DatabaseTransaction,
-  values: Array<{ messageId: number, recipientUserId: number }>
+  messageId: number,
+  recipientUserIds: number[]
 ) {
-  for (let offset = 0; offset < values.length; offset += DELIVERY_BATCH_SIZE) {
+  for (let offset = 0; offset < recipientUserIds.length; offset += DELIVERY_BATCH_SIZE) {
     await tx.insert(notificationDeliveries)
-      .values(values.slice(offset, offset + DELIVERY_BATCH_SIZE))
+      .values(recipientUserIds
+        .slice(offset, offset + DELIVERY_BATCH_SIZE)
+        .map(recipientUserId => ({ messageId, recipientUserId })))
       .onConflictDoNothing({
-        target: [notificationDeliveries.messageId, notificationDeliveries.recipientUserId]
+        target: [
+          notificationDeliveries.messageId,
+          notificationDeliveries.recipientUserId
+        ]
       })
   }
 }
 
-async function fanOutFutureMessages(
+async function upsertReadReceipts(
   tx: DatabaseTransaction,
-  userId: number
+  messageIds: number[],
+  userId: number,
+  readAt: Date
 ) {
-  const messages = await tx.select({ id: notificationMessages.id }).from(notificationMessages)
-    .where(and(
-      eq(notificationMessages.audience, 'all_with_future'),
-      isNull(notificationMessages.deletedAt)
-    ))
-
-  await insertDeliveries(tx, messages.map(({ id: messageId }) => ({
-    messageId,
-    recipientUserId: userId
-  })))
-  return messages.length
+  for (let offset = 0; offset < messageIds.length; offset += DELIVERY_BATCH_SIZE) {
+    await tx.insert(notificationDeliveries)
+      .values(messageIds
+        .slice(offset, offset + DELIVERY_BATCH_SIZE)
+        .map(messageId => ({
+          messageId,
+          recipientUserId: userId,
+          isRead: true,
+          readAt
+        })))
+      .onConflictDoUpdate({
+        target: [
+          notificationDeliveries.messageId,
+          notificationDeliveries.recipientUserId
+        ],
+        set: { isRead: true, readAt }
+      })
+  }
 }
 
 export const notificationService = {
-  /**
-   * 创建一条 message + 立即投递。
-   * 'specific' 仅给传入 ids；'all_current' / 'all_with_future' 立刻 fan-out 到全部活跃用户；
-   * 'all_with_future' 还会被 userService.activateUser 在新用户激活时补发（见下面 fanOutFutureMessagesTo）。
-   */
   async send(input: SendNotificationInput) {
     return db.transaction(async (tx: DatabaseTransaction) => {
-      let recipientIds: number[]
+      let recipientIds: number[] = []
+      let recipientCount: number
+      let recipientCutoffUserId: number | null = null
+
       if (input.audience === 'specific') {
-        const ids = Array.from(new Set((input.recipientUserIds || []).map(Number).filter(n => Number.isFinite(n) && n > 0)))
-        if (ids.length === 0) throw new Error('specific audience requires recipientUserIds')
-        const valid = await tx.select({ id: users.id }).from(users)
-          .where(inArray(users.id, ids))
-        recipientIds = valid.map((row: { id: number }) => row.id)
-      } else if (input.audience === 'all_with_future') {
-        // Lock every current user in a stable order. activateUser updates its user
-        // row before reading historical messages, so either activation observes
-        // this message or this send observes the activated user.
-        const candidates = await tx.select({
-          id: users.id,
-          isActive: users.isActive,
-          isBanned: users.isBanned
-        }).from(users).orderBy(asc(users.id)).for('update')
-        recipientIds = candidates
-          .filter(user => user.isActive && !user.isBanned)
-          .map(user => user.id)
+        const ids = Array.from(new Set(
+          (input.recipientUserIds ?? [])
+            .map(Number)
+            .filter(id => Number.isFinite(id) && id > 0)
+        ))
+        if (ids.length === 0) {
+          throw new Error('specific audience requires recipientUserIds')
+        }
+        recipientIds = (await tx.select({ id: users.id }).from(users)
+          .where(inArray(users.id, ids))).map(row => row.id)
+        recipientCount = recipientIds.length
       } else {
-        const activeUsers = await tx.select({ id: users.id }).from(users)
-          .where(and(eq(users.isActive, true), eq(users.isBanned, false)))
-        recipientIds = activeUsers.map((row: { id: number }) => row.id)
+        const snapshot = firstRow(await tx.select({
+          count: count(users.id),
+          maxUserId: max(users.id)
+        }).from(users))
+        recipientCount = toNumber(snapshot?.count)
+        if (input.audience === 'all_current') {
+          recipientCutoffUserId = Number(snapshot?.maxUserId ?? 0)
+        }
       }
 
-      const inserted = await tx.insert(notificationMessages).values({
+      const message = firstRow(await tx.insert(notificationMessages).values({
         title: input.title,
         content: input.content,
-        level: input.level || 'info',
+        level: input.level ?? 'info',
         linkUrl: input.linkUrl ?? null,
         audience: input.audience,
-        recipientCount: recipientIds.length,
+        recipientCount,
+        recipientCutoffUserId,
         senderUserId: input.senderUserId ?? null,
         senderActor: input.senderActor ?? null
-      }).returning()
-      const message = inserted[0]
+      }).returning())
       if (!message) throw new Error('failed to insert notification message')
 
-      await insertDeliveries(tx, recipientIds.map(recipientUserId => ({
-        messageId: message.id,
-        recipientUserId
-      })))
-
-      return { message, deliveredCount: recipientIds.length }
+      if (recipientIds.length > 0) {
+        await insertSpecificRecipients(tx, message.id, recipientIds)
+      }
+      return { message, deliveredCount: recipientCount }
     })
   },
 
-  /**
-   * 在用户激活时补发 audience='all_with_future' 的全部历史消息。
-   * 用 ON CONFLICT DO NOTHING 保证幂等（重复激活不会重复投递）。
-   */
-  async fanOutFutureMessagesTo(
+  async listForUser(
     userId: number,
-    tx?: DatabaseTransaction
+    opts: { limit?: number, offset?: number, onlyUnread?: boolean } = {}
   ) {
-    if (tx) return fanOutFutureMessages(tx, userId)
-    return db.transaction(transaction => fanOutFutureMessages(transaction, userId))
-  },
-
-  /** 用户视角列表（join message，过滤被管理员删除的 message） */
-  async listForUser(userId: number, opts: { limit?: number, offset?: number, onlyUnread?: boolean } = {}) {
     const { limit, offset } = normalizePagination(opts)
-    const conds = [
-      eq(notificationDeliveries.recipientUserId, userId),
-      isNull(notificationMessages.deletedAt)
-    ]
-    if (opts.onlyUnread) conds.push(eq(notificationDeliveries.isRead, false))
-
     return db.select({
-      id: notificationDeliveries.id,
+      id: notificationMessages.id,
       messageId: notificationMessages.id,
       title: notificationMessages.title,
       content: notificationMessages.content,
       level: notificationMessages.level,
       linkUrl: notificationMessages.linkUrl,
       senderActor: notificationMessages.senderActor,
-      isRead: notificationDeliveries.isRead,
+      isRead: sql<boolean>`coalesce(${notificationDeliveries.isRead}, false)`,
       readAt: notificationDeliveries.readAt,
-      createdAt: notificationDeliveries.createdAt
+      createdAt: notificationMessages.createdAt
     })
-      .from(notificationDeliveries)
-      .innerJoin(notificationMessages, eq(notificationMessages.id, notificationDeliveries.messageId))
-      .where(and(...conds))
-      .orderBy(desc(notificationDeliveries.createdAt))
+      .from(notificationMessages)
+      .leftJoin(notificationDeliveries, and(
+        eq(notificationDeliveries.messageId, notificationMessages.id),
+        eq(notificationDeliveries.recipientUserId, userId)
+      ))
+      .where(and(
+        isNull(notificationMessages.deletedAt),
+        visibleToUser(userId),
+        opts.onlyUnread ? unreadForUser() : undefined
+      ))
+      .orderBy(desc(notificationMessages.createdAt))
       .limit(limit)
       .offset(offset)
   },
 
   async unreadCountForUser(userId: number) {
-    const rows = await db.select({ value: count() })
-      .from(notificationDeliveries)
-      .innerJoin(notificationMessages, eq(notificationMessages.id, notificationDeliveries.messageId))
-      .where(and(
-        eq(notificationDeliveries.recipientUserId, userId),
-        eq(notificationDeliveries.isRead, false),
-        isNull(notificationMessages.deletedAt)
+    const row = firstRow(await db.select({ value: count() })
+      .from(notificationMessages)
+      .leftJoin(notificationDeliveries, and(
+        eq(notificationDeliveries.messageId, notificationMessages.id),
+        eq(notificationDeliveries.recipientUserId, userId)
       ))
-    return toNumber(rows[0]?.value)
+      .where(and(
+        isNull(notificationMessages.deletedAt),
+        visibleToUser(userId),
+        unreadForUser()
+      )))
+    return toNumber(row?.value)
   },
 
-  async markRead(userId: number, deliveryId: number) {
-    const res = await db.update(notificationDeliveries)
-      .set({ isRead: true, readAt: new Date() })
-      .where(and(
-        eq(notificationDeliveries.id, deliveryId),
-        eq(notificationDeliveries.recipientUserId, userId),
-        eq(notificationDeliveries.isRead, false)
-      ))
-      .returning()
-    return firstRow(res)
+  async markRead(userId: number, messageId: number) {
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      const visible = firstRow(await tx.select({
+        id: notificationMessages.id,
+        isRead: notificationDeliveries.isRead
+      }).from(notificationMessages)
+        .leftJoin(notificationDeliveries, and(
+          eq(notificationDeliveries.messageId, notificationMessages.id),
+          eq(notificationDeliveries.recipientUserId, userId)
+        ))
+        .where(and(
+          eq(notificationMessages.id, messageId),
+          isNull(notificationMessages.deletedAt),
+          visibleToUser(userId)
+        ))
+        .limit(1))
+      if (!visible) return null
+      if (!visible.isRead) {
+        await upsertReadReceipts(tx, [messageId], userId, new Date())
+      }
+      return firstRow(await tx.select().from(notificationDeliveries)
+        .where(and(
+          eq(notificationDeliveries.messageId, messageId),
+          eq(notificationDeliveries.recipientUserId, userId)
+        )).limit(1)) ?? null
+    })
   },
 
   async markAllRead(userId: number) {
-    const res = await db.update(notificationDeliveries)
-      .set({ isRead: true, readAt: new Date() })
-      .where(and(
-        eq(notificationDeliveries.recipientUserId, userId),
-        eq(notificationDeliveries.isRead, false)
-      ))
-      .returning({ id: notificationDeliveries.id })
-    return res.length
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      const unread = await tx.select({ id: notificationMessages.id })
+        .from(notificationMessages)
+        .leftJoin(notificationDeliveries, and(
+          eq(notificationDeliveries.messageId, notificationMessages.id),
+          eq(notificationDeliveries.recipientUserId, userId)
+        ))
+        .where(and(
+          isNull(notificationMessages.deletedAt),
+          visibleToUser(userId),
+          unreadForUser()
+        ))
+      await upsertReadReceipts(
+        tx,
+        unread.map(message => message.id),
+        userId,
+        new Date()
+      )
+      return unread.length
+    })
   },
 
-  // ---------- Admin ----------
-
-  /** Admin 列表：每条 message + 当前已投递数 + 已读数 */
   async listMessagesForAdmin(opts: {
     limit?: number
     offset?: number
@@ -216,11 +283,14 @@ export const notificationService = {
         audience: notificationMessages.audience,
         senderActor: notificationMessages.senderActor,
         createdAt: notificationMessages.createdAt,
-        deliveredCount: count(notificationDeliveries.id),
+        deliveredCount: notificationMessages.recipientCount,
         readCount: count(sql`case when ${notificationDeliveries.isRead} = true then 1 end`)
       })
         .from(notificationMessages)
-        .leftJoin(notificationDeliveries, eq(notificationDeliveries.messageId, notificationMessages.id))
+        .leftJoin(notificationDeliveries, eq(
+          notificationDeliveries.messageId,
+          notificationMessages.id
+        ))
         .where(where)
         .groupBy(notificationMessages.id)
         .orderBy(desc(notificationMessages.createdAt))
@@ -232,43 +302,68 @@ export const notificationService = {
     return { items, total: toNumber(totalRows[0]?.value) }
   },
 
-  async getMessageDetail(messageId: number, opts: { limit?: number, offset?: number } = {}) {
+  async getMessageDetail(
+    messageId: number,
+    opts: { limit?: number, offset?: number } = {}
+  ) {
     const { limit, offset } = normalizePagination(opts)
-    const [messageRows, deliveries, totalRows] = await Promise.all([
-      db.select().from(notificationMessages)
-        .where(eq(notificationMessages.id, messageId))
-        .limit(1),
+    const message = firstRow(await db.select().from(notificationMessages)
+      .where(eq(notificationMessages.id, messageId))
+      .limit(1)) ?? null
+    if (!message) return { message: null, deliveries: [], total: 0 }
+
+    if (message.audience === 'specific') {
+      const [deliveries, totalRows] = await Promise.all([
+        db.select({
+          id: notificationDeliveries.id,
+          recipientUserId: notificationDeliveries.recipientUserId,
+          recipientUsername: users.username,
+          isRead: notificationDeliveries.isRead,
+          readAt: notificationDeliveries.readAt,
+          createdAt: notificationDeliveries.createdAt
+        })
+          .from(notificationDeliveries)
+          .leftJoin(users, eq(users.id, notificationDeliveries.recipientUserId))
+          .where(eq(notificationDeliveries.messageId, messageId))
+          .orderBy(desc(notificationDeliveries.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ value: count() }).from(notificationDeliveries)
+          .where(eq(notificationDeliveries.messageId, messageId))
+      ])
+      return { message, deliveries, total: toNumber(totalRows[0]?.value) }
+    }
+
+    const eligibility = message.audience === 'all_current'
+      ? lte(users.id, message.recipientCutoffUserId!)
+      : undefined
+    const [deliveries, totalRows] = await Promise.all([
       db.select({
-        id: notificationDeliveries.id,
-        recipientUserId: notificationDeliveries.recipientUserId,
+        id: users.id,
+        recipientUserId: users.id,
         recipientUsername: users.username,
-        isRead: notificationDeliveries.isRead,
+        isRead: sql<boolean>`coalesce(${notificationDeliveries.isRead}, false)`,
         readAt: notificationDeliveries.readAt,
-        createdAt: notificationDeliveries.createdAt
+        createdAt: users.createdAt
       })
-        .from(notificationDeliveries)
-        .leftJoin(users, eq(users.id, notificationDeliveries.recipientUserId))
-        .where(eq(notificationDeliveries.messageId, messageId))
-        .orderBy(desc(notificationDeliveries.createdAt))
+        .from(users)
+        .leftJoin(notificationDeliveries, and(
+          eq(notificationDeliveries.messageId, messageId),
+          eq(notificationDeliveries.recipientUserId, users.id)
+        ))
+        .where(eligibility)
+        .orderBy(desc(users.id))
         .limit(limit)
         .offset(offset),
-      db.select({ value: count() }).from(notificationDeliveries)
-        .where(eq(notificationDeliveries.messageId, messageId))
+      db.select({ value: count() }).from(users).where(eligibility)
     ])
-
-    return {
-      message: firstRow(messageRows) ?? null,
-      deliveries,
-      total: toNumber(totalRows[0]?.value)
-    }
+    return { message, deliveries, total: toNumber(totalRows[0]?.value) }
   },
 
-  /** Admin 软删除消息：标记 deletedAt → 用户列表自动过滤；保留发送历史可审计 */
   async softDeleteMessage(messageId: number) {
-    const res = await db.update(notificationMessages)
+    return firstRow(await db.update(notificationMessages)
       .set({ deletedAt: new Date() })
       .where(eq(notificationMessages.id, messageId))
-      .returning()
-    return firstRow(res)
+      .returning())
   }
 }

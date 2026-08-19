@@ -1,15 +1,4 @@
-import type { SupportedLocale } from '#shared/config/locale-defaults'
-
-export interface UserProfileData {
-  id: number
-  username: string
-  email: string
-  avatarUrl: string
-  displayName: string | null
-  locale: SupportedLocale | null
-  emailVerifiedAt: string | null
-  createdAt: string
-}
+export type { UserProfile as UserProfileData } from '#shared/types/auth'
 
 export interface UserOauthBinding {
   provider: string

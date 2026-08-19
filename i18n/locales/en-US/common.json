@@ -69,6 +69,7 @@
     "feedback": {
       "copied": "Copied to clipboard",
       "copyFailed": "Copy failed",
+      "loadFailed": "Failed to load",
       "saveFailed": "Save failed",
       "sendFailed": "Send failed",
       "createFailed": "Failed to create",

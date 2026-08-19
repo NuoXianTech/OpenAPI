@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformEndpointPublicationResult, PlatformProduct, PlatformRouteBinding, PlatformUpstream, PlatformWorkspace } from '~/types/platform'
+import type { PlatformProduct, PlatformRouteBinding, PlatformUpstream, PlatformWorkspace } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
+import {
+  createRouteFormState,
+  parseRouteHosts,
+  routeMutationPayload,
+  routeUpstreamOptions,
+  routeVersionOptions,
+  type HttpMethod,
+  type RouteFormState,
+  type RouteState
+} from '~/utils/platform-route-form'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
@@ -17,107 +27,23 @@ const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const { t } = useI18n()
 
-type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-type RouteState = 'draft' | 'active' | 'disabled'
-
-interface RouteFormState {
-  apiVersionId: string
-  name: string
-  method: HttpMethod
-  pathPattern: string
-  hostsText: string
-  upstreamServiceId: string
-  upstreamPathTemplate: string
-  isApiKey: boolean
-  isStatistics: boolean
-  creditsCost: number
-  rateLimitPerSecond: number
-  rateLimitPerMinute: number
-  rateLimitPerHour: number
-  rateLimitPerDay: number
-  timeoutMs: number
-  maxRequestKiB: number
-  maxResponseKiB: number
-  catalogStatus: 'automatic' | 'maintenance'
-  sensitiveQueryParameters: string[]
-  state: RouteState
-}
-
-function initialState(): RouteFormState {
-  const binding = props.routeBinding
-  if (!binding) {
-    return {
-      apiVersionId: '',
-      name: '',
-      method: 'GET',
-      pathPattern: '/v1/',
-      hostsText: '',
-      upstreamServiceId: '',
-      upstreamPathTemplate: '/',
-      isApiKey: false,
-      isStatistics: true,
-      creditsCost: 0,
-      rateLimitPerSecond: 0,
-      rateLimitPerMinute: 0,
-      rateLimitPerHour: 0,
-      rateLimitPerDay: 0,
-      timeoutMs: 10_000,
-      maxRequestKiB: 1024,
-      maxResponseKiB: 10_240,
-      catalogStatus: 'automatic',
-      sensitiveQueryParameters: [],
-      state: 'active'
-    }
-  }
-
-  const route = binding.route
-  return {
-    apiVersionId: route.apiVersionId,
-    name: route.name,
-    method: route.method,
-    pathPattern: route.pathPattern,
-    hostsText: route.hosts.join('\n'),
-    upstreamServiceId: route.upstreamServiceId,
-    upstreamPathTemplate: route.upstreamPathTemplate,
-    isApiKey: route.isApiKey,
-    isStatistics: route.isStatistics,
-    creditsCost: route.creditsCost,
-    rateLimitPerSecond: route.rateLimitPerSecond,
-    rateLimitPerMinute: route.rateLimitPerMinute,
-    rateLimitPerHour: route.rateLimitPerHour,
-    rateLimitPerDay: route.rateLimitPerDay,
-    timeoutMs: route.timeoutMs,
-    maxRequestKiB: route.maxRequestBytes / 1024,
-    maxResponseKiB: route.maxResponseBytes / 1024,
-    catalogStatus: route.catalogStatus,
-    sensitiveQueryParameters: [...route.sensitiveQueryParameters],
-    state: route.state
-  }
-}
-
-const state = reactive<RouteFormState>(initialState())
+const state = reactive<RouteFormState>(createRouteFormState(props.routeBinding))
 const loading = ref(false)
 const advancedOpen = ref(false)
 const isEditing = computed(() => Boolean(props.routeBinding))
 const isServiceManaged = computed(() => props.routeBinding?.route.managedBy === 'service')
 const hostPattern = /^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i
 
-const versionItems = computed(() => props.products
-  .filter(product => product.workspaceId === props.workspace.id && product.lifecycle === 'active')
-  .flatMap(product => product.versions
-    .filter(version => version.state === 'published' || version.state === 'deprecated')
-    .map(version => ({
-      label: `${product.name} / ${version.version}`,
-      value: version.id,
-      description: product.slug
-    }))))
-const upstreamItems = computed(() => props.upstreams
-  .filter(upstream => upstream.workspaceId === props.workspace.id && upstream.status === 'active')
-  .map(upstream => ({
-    label: upstream.name,
-    value: upstream.id,
-    description: `${upstream.kind} · ${upstream.protocol}`
-  })))
+const versionItems = computed(() => routeVersionOptions(
+  props.products,
+  props.workspace.id,
+  props.routeBinding
+))
+const upstreamItems = computed(() => routeUpstreamOptions(
+  props.upstreams,
+  props.workspace.id,
+  props.routeBinding
+))
 const methodItems: HttpMethod[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']
 const routeStateItems = computed(() => [
   { label: t('admin.apis.routing.routeStates.active'), value: 'active' },
@@ -133,17 +59,18 @@ const catalogStatusItems = computed(() => [
 
 watch(open, (isOpen) => {
   if (isOpen) {
-    Object.assign(state, initialState())
-    if (!versionItems.value.some(item => item.value === state.apiVersionId)) {
+    Object.assign(state, createRouteFormState(props.routeBinding))
+    if (!isEditing.value && !versionItems.value.some(item => item.value === state.apiVersionId)) {
       state.apiVersionId = versionItems.value[0]?.value ?? ''
     }
-    if (!upstreamItems.value.some(item => item.value === state.upstreamServiceId)) {
+    if (!isEditing.value && !upstreamItems.value.some(item => item.value === state.upstreamServiceId)) {
       state.upstreamServiceId = upstreamItems.value[0]?.value ?? ''
     }
     advancedOpen.value = isEditing.value
   }
 })
 watch([versionItems, upstreamItems], () => {
+  if (isEditing.value) return
   if (!versionItems.value.some(item => item.value === state.apiVersionId)) {
     state.apiVersionId = versionItems.value[0]?.value ?? ''
   }
@@ -158,10 +85,6 @@ watch(() => state.creditsCost, (creditsCost) => {
     state.isStatistics = true
   }
 })
-
-function parseHosts(value: string): string[] {
-  return Array.from(new Set(value.split(/[\s,]+/).map(host => host.trim()).filter(Boolean)))
-}
 
 function validateRouteForm(value: Partial<RouteFormState>): FormError<string>[] {
   const errors = compactFormErrors(
@@ -193,7 +116,7 @@ function validateRouteForm(value: Partial<RouteFormState>): FormError<string>[] 
       : null
   )
 
-  const invalidHost = parseHosts(value.hostsText ?? '').find(host => !hostPattern.test(host))
+  const invalidHost = parseRouteHosts(value.hostsText ?? '').find(host => !hostPattern.test(host))
   if (invalidHost) {
     errors.push({ name: 'hostsText', message: t('admin.apis.routing.validation.hostInvalid') })
   }
@@ -203,34 +126,14 @@ function validateRouteForm(value: Partial<RouteFormState>): FormError<string>[] 
 async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
   loading.value = true
   try {
-    const body = {
-      apiVersionId: event.data.apiVersionId,
-      name: event.data.name.trim(),
-      hosts: parseHosts(event.data.hostsText),
-      method: event.data.method,
-      pathPattern: event.data.pathPattern.trim(),
-      upstreamServiceId: event.data.upstreamServiceId,
-      upstreamPathTemplate: event.data.upstreamPathTemplate.trim(),
-      isApiKey: event.data.isApiKey,
-      isStatistics: event.data.isStatistics,
-      creditsCost: event.data.creditsCost,
-      rateLimitPerSecond: event.data.rateLimitPerSecond,
-      rateLimitPerMinute: event.data.rateLimitPerMinute,
-      rateLimitPerHour: event.data.rateLimitPerHour,
-      rateLimitPerDay: event.data.rateLimitPerDay,
-      timeoutMs: event.data.timeoutMs,
-      maxRequestBytes: event.data.maxRequestKiB * 1024,
-      maxResponseBytes: event.data.maxResponseKiB * 1024,
-      catalogStatus: event.data.catalogStatus,
-      sensitiveQueryParameters: Array.from(new Set(
-        event.data.sensitiveQueryParameters.map(item => item.trim()).filter(Boolean)
-      )),
-      state: event.data.state
-    }
+    const body = routeMutationPayload(event.data)
     const routeId = props.routeBinding?.route.id
     if (routeId && isServiceManaged.value) {
       if (!props.environmentId) throw new Error('environment is required for a Service-managed Route')
-      const result = await $fetch<PlatformEndpointPublicationResult>(`/api/admin/v1/service-endpoints/${routeId}`, {
+      const result = await $fetch<{
+        route: { id: string, state: RouteState }
+        revision: { configPayload: { routes: Array<{ id: string }> } } | null
+      }>(`/api/admin/v1/service-endpoints/${routeId}`, {
         method: 'PATCH',
         body: {
           environmentId: props.environmentId,
@@ -250,14 +153,16 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
           sensitiveQueryParameters: body.sensitiveQueryParameters
         }
       })
+      const runtimeUpdated = event.data.state !== 'active'
+        || Boolean(result.revision?.configPayload.routes.some(route => (
+          route.id === result.route.id
+        )))
       toast.add({
         title: t('admin.apis.routing.feedback.routeUpdated'),
-        description: result.applied
-          ? t('admin.apis.routing.feedback.runtimeUpdated')
-          : t('admin.apis.routing.catalog.feedback.savedPendingDescription', {
-              reason: result.publicationError?.message ?? t('admin.apis.routing.feedback.publishFailed')
-            }),
-        color: result.applied ? 'success' : 'warning'
+        description: t(runtimeUpdated
+          ? 'admin.apis.routing.feedback.runtimeUpdated'
+          : 'admin.apis.routing.feedback.runtimePending'),
+        color: runtimeUpdated ? 'success' : 'warning'
       })
       open.value = false
       emit('saved')
@@ -267,33 +172,8 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
       method: routeId ? 'PATCH' : 'POST',
       body
     })
-    if (props.environmentId) {
-      try {
-        await $fetch('/api/admin/v1/revisions/publish', {
-          method: 'POST',
-          body: { environmentId: props.environmentId }
-        })
-      } catch (error: unknown) {
-        toast.add({
-          title: t(routeId
-            ? 'admin.apis.routing.feedback.routeUpdated'
-            : 'admin.apis.routing.feedback.routeCreated'),
-          description: parseFetchError(
-            error,
-            t('admin.apis.routing.feedback.savedPendingPublish')
-          ),
-          color: 'warning'
-        })
-        open.value = false
-        emit('saved')
-        return
-      }
-    }
     toast.add({
       title: t(routeId ? 'admin.apis.routing.feedback.routeUpdated' : 'admin.apis.routing.feedback.routeCreated'),
-      description: props.environmentId
-        ? t('admin.apis.routing.feedback.runtimeUpdated')
-        : undefined,
       color: 'success'
     })
     open.value = false
@@ -597,7 +477,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
           type="submit"
           form="platform-route-form"
           :loading="loading"
-          :disabled="versionItems.length === 0 || upstreamItems.length === 0"
+          :disabled="!state.apiVersionId || !state.upstreamServiceId"
         >
           {{ $t(environmentId
             ? 'admin.apis.routing.actions.saveAndPublish'

@@ -42,7 +42,7 @@ beforeEach(async () => {
 afterAll(async () => client.close())
 
 describe('redemption code presentation', () => {
-  it('returns plaintext only for generation and previews it afterward', async () => {
+  it('keeps lists masked and reveals plaintext through an explicit operation', async () => {
     const generated = await redemptionService.generate({ amount: 25 })
     const plaintext = generated.codes[0]!.code
     const listed = await redemptionService.list()
@@ -57,6 +57,12 @@ describe('redemption code presentation', () => {
     expect(listed.items[0]).not.toHaveProperty('code')
     expect(listed.items[0]).not.toHaveProperty('codeDigest')
     expect(listed.items[0]).not.toHaveProperty('codeCiphertext')
+
+    await expect(redemptionService.reveal(stored.id)).resolves.toEqual({
+      id: stored.id,
+      code: plaintext
+    })
+    await expect(redemptionService.reveal(stored.id + 1)).resolves.toBeNull()
   })
 
   it('keeps only a preview in redemption history and credit metadata', async () => {

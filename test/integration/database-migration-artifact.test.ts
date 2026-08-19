@@ -1,27 +1,28 @@
-import { access, readFile, rm } from 'node:fs/promises'
+import { access, mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawn } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { PGlite } from '@electric-sql/pglite'
 import { afterAll, describe, expect, it } from 'vitest'
 
-const artifactRunner = resolve(process.cwd(), '.output/server/migrate.mjs')
-const migrationsDir = resolve(process.cwd(), '.output/server/db/migrations/postgresql')
-const pgliteDataDir = join(tmpdir(), `openapi-artifact-migration-${process.pid}-${Date.now()}`)
+const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
+const testWorkingDirectory = await mkdtemp(join(tmpdir(), 'openapi-artifact-migration-workspace-'))
+const artifactRunner = resolve(projectRoot, '.output/server/migrate.mjs')
+const migrationsDir = resolve(projectRoot, '.output/server/db/migrations/postgresql')
+const pgliteDataDir = join(testWorkingDirectory, '.data', 'pglite')
 
-afterAll(() => rm(pgliteDataDir, { recursive: true, force: true }))
+afterAll(() => rm(testWorkingDirectory, { recursive: true, force: true }))
 
 function runArtifactMigration() {
   return new Promise<{ stderr: string, stdout: string }>((resolveProcess, reject) => {
     const child = spawn(process.execPath, [artifactRunner], {
-      cwd: process.cwd(),
+      cwd: testWorkingDirectory,
       env: {
         ...process.env,
-        DATABASE_DRIVER: 'pglite',
         DATABASE_URL: '',
         MIGRATIONS_DIR: '',
         NODE_ENV: 'production',
-        PGLITE_DATA_DIR: pgliteDataDir,
         TZ: 'UTC'
       },
       stdio: ['ignore', 'pipe', 'pipe']

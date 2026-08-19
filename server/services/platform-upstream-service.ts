@@ -20,6 +20,8 @@ import {
 } from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
 import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
+import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
+import type { UpstreamView } from '~~/server/types/platform-publication'
 
 const BLOCKED_EXTERNAL_IPS = [
   '0.0.0.0/8',
@@ -166,7 +168,7 @@ export const platformUpstreamService = {
   async list(
     workspaceId?: string,
     options: { checkAvailability?: boolean } = {}
-  ) {
+  ): Promise<UpstreamView[]> {
     const rows = await db.select({
       service: upstreamServices,
       target: upstreamTargets,
@@ -280,15 +282,24 @@ export const platformUpstreamService = {
     }
   },
 
-  async findById(id: string) {
-    return firstRow(await db.select().from(upstreamServices)
+  async findById(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    return firstRow(await executor.select().from(upstreamServices)
       .where(eq(upstreamServices.id, id))
       .limit(1))
   },
 
-  async update(id: string, input: UpdateUpstreamInput) {
+  async update(
+    id: string,
+    input: UpdateUpstreamInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
     try {
-      const updated = firstRow(await db.update(upstreamServices).set({
+      const updated = firstRow(await executor.update(upstreamServices).set({
         ...input,
         updatedAt: new Date()
       }).where(and(eq(upstreamServices.id, id), isNull(upstreamServices.deletedAt))).returning())
@@ -304,19 +315,23 @@ export const platformUpstreamService = {
     }
   },
 
-  async remove(id: string) {
-    const service = await platformUpstreamService.findById(id)
+  async remove(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    const service = await platformUpstreamService.findById(id, options)
     if (!service || service.deletedAt) {
       throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
     }
-    if (await routingReferenceService.hasUpstream(id)) {
+    if (await routingReferenceService.hasUpstream(id, options.transaction)) {
       throw createApplicationError({
         statusCode: 409,
         message: 'upstream is still referenced by an active routing revision',
         data: { code: 'UPSTREAM_STILL_PUBLISHED' }
       })
     }
-    const routeCount = firstRow(await db.select({ value: count() }).from(apiRoutes)
+    const routeCount = firstRow(await executor.select({ value: count() }).from(apiRoutes)
       .where(and(eq(apiRoutes.upstreamServiceId, id), isNull(apiRoutes.deletedAt))))
     if (Number(routeCount?.value ?? 0) > 0) {
       throw createApplicationError({
@@ -326,17 +341,28 @@ export const platformUpstreamService = {
       })
     }
     const now = new Date()
-    const removed = firstRow(await db.update(upstreamServices).set({
+    const removed = firstRow(await executor.update(upstreamServices).set({
       status: 'disabled',
       deletedAt: now,
       updatedAt: now
     }).where(and(eq(upstreamServices.id, id), isNull(upstreamServices.deletedAt))).returning())
+    if (!removed) {
+      throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
+    }
     invalidateUpstreamServiceToken(id)
     return removed
   },
 
-  async createTarget(upstreamServiceId: string, input: CreateTargetInput) {
-    const service = await platformUpstreamService.findById(upstreamServiceId)
+  async createTarget(
+    upstreamServiceId: string,
+    input: CreateTargetInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    const executor = options.transaction ?? db
+    const service = await platformUpstreamService.findById(
+      upstreamServiceId,
+      options
+    )
     if (!service || service.deletedAt) {
       throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
     }
@@ -345,7 +371,7 @@ export const platformUpstreamService = {
       throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
     }
     try {
-      const target = firstRow(await db.insert(upstreamTargets).values({
+      const target = firstRow(await executor.insert(upstreamTargets).values({
         upstreamServiceId,
         baseUrl: url.toString(),
         weight: input.weight,
@@ -365,9 +391,13 @@ export const platformUpstreamService = {
     }
   },
 
-  async updateTarget(id: string, input: UpdateTargetInput) {
+  async updateTarget(
+    id: string,
+    input: UpdateTargetInput,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
     try {
-      return await db.transaction(async (tx: DatabaseTransaction) => {
+      const update = async (tx: DatabaseTransaction) => {
         const binding = await findTargetBindingForUpdate(tx, id)
         if (!binding) {
           throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
@@ -423,7 +453,10 @@ export const platformUpstreamService = {
             || disablingPublishedTarget
             || updatingPublishedTarget
         }
-      })
+      }
+      return options.transaction
+        ? await update(options.transaction)
+        : await db.transaction(update)
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'target URL already exists for this upstream', data: { code: 'TARGET_CONFLICT' } })
@@ -432,15 +465,18 @@ export const platformUpstreamService = {
     }
   },
 
-  async removeTarget(id: string) {
-    if (await routingReferenceService.hasTarget(id)) {
+  async removeTarget(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ) {
+    if (await routingReferenceService.hasTarget(id, options.transaction)) {
       throw createApplicationError({
         statusCode: 409,
         message: 'disable the target and publish routing before deleting it',
         data: { code: 'TARGET_STILL_PUBLISHED' }
       })
     }
-    return db.transaction(async (tx: DatabaseTransaction) => {
+    const remove = async (tx: DatabaseTransaction) => {
       const binding = await findTargetBindingForUpdate(tx, id)
       if (!binding) {
         throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
@@ -454,8 +490,14 @@ export const platformUpstreamService = {
         )
       }
       await tx.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
-      return binding.target
-    })
+      return {
+        target: binding.target,
+        workspaceId: binding.service.workspaceId
+      }
+    }
+    return options.transaction
+      ? remove(options.transaction)
+      : db.transaction(remove)
   },
 
   async updateServiceToken(id: string, serviceToken: string) {
@@ -480,5 +522,85 @@ export const platformUpstreamService = {
     }
     invalidateUpstreamServiceToken(id)
     return toServiceConnectionView(updated)
+  },
+
+  async updateAndPublish(
+    id: string,
+    input: UpdateUpstreamInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const upstream = await platformUpstreamService.update(id, input, {
+        transaction: tx
+      })
+      return { value: upstream, workspaceId: upstream.workspaceId }
+    })
+    const { value: upstream, ...publication } = committed
+    return { upstream, ...publication }
+  },
+
+  async removeAndPublish(id: string, createdBy: number | null) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const upstream = await platformUpstreamService.remove(id, {
+        transaction: tx
+      })
+      return { value: upstream, workspaceId: upstream.workspaceId }
+    })
+    const { value: upstream, ...publication } = committed
+    return { upstream, ...publication }
+  },
+
+  async createTargetAndPublish(
+    upstreamServiceId: string,
+    input: CreateTargetInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const created = await platformUpstreamService.createTarget(
+        upstreamServiceId,
+        input,
+        { transaction: tx }
+      )
+      return {
+        value: created.target,
+        workspaceId: created.workspaceId,
+        publishRouting: created.publishRouting
+      }
+    })
+    const { value: target, ...publication } = committed
+    return { target, ...publication }
+  },
+
+  async updateTargetAndPublish(
+    id: string,
+    input: UpdateTargetInput,
+    createdBy: number | null
+  ) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const updated = await platformUpstreamService.updateTarget(id, input, {
+        transaction: tx
+      })
+      return {
+        value: updated.target,
+        workspaceId: updated.workspaceId,
+        publishRouting: updated.publishRouting
+      }
+    })
+    const { value: target, ...publication } = committed
+    return { target, ...publication }
+  },
+
+  async removeTargetAndPublish(id: string, createdBy: number | null) {
+    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+      const removed = await platformUpstreamService.removeTarget(id, {
+        transaction: tx
+      })
+      return {
+        value: removed.target,
+        workspaceId: removed.workspaceId
+      }
+    })
+    const { value: target, ...publication } = committed
+    return { target, ...publication }
   }
 }

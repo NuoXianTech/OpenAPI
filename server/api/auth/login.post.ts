@@ -9,6 +9,7 @@ import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity
 import { readZodBody } from '~~/server/utils/zod'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
+import { toAuthUser } from '~~/server/utils/user-view'
 
 export default defineEventHandler(async (event) => {
   const body = await readZodBody(event, loginSchema)
@@ -100,8 +101,6 @@ export default defineEventHandler(async (event) => {
     userAgent
   })
 
-  const { passwordHash: _, ...safe } = user
-
-  return safe
+  return toAuthUser(user)
 })
 // 登录接口

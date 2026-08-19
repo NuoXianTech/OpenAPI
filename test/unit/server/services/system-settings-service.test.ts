@@ -55,6 +55,7 @@ describe('system settings', () => {
   it('redacts write-only secrets from admin responses', () => {
     const settings = {
       ...createSystemSettingsDefaults(),
+      registrationInviteCode: 'site-invite-2026',
       smtpPass: 'smtp-secret',
       oauthGithubClientId: 'github-client',
       oauthGithubClientSecret: 'github-secret',
@@ -68,12 +69,14 @@ describe('system settings', () => {
 
     const safe = toAdminSystemSettings(settings)
 
+    expect('registrationInviteCode' in safe).toBe(false)
     expect('smtpPass' in safe).toBe(false)
     expect('oauthGithubClientSecret' in safe).toBe(false)
     expect('oauthQqClientSecret' in safe).toBe(false)
     expect('turnstileSecretKey' in safe).toBe(false)
     expect(safe.turnstileSiteKey).toBe('site-key')
     expect(safe.secrets).toEqual({
+      hasRegistrationInviteCode: true,
       hasSmtpPass: true,
       hasOauthGithubClientSecret: true,
       hasOauthQqClientSecret: false,

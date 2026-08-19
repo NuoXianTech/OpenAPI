@@ -29,6 +29,7 @@ beforeAll(async () => {
       link_url varchar(1000),
       audience varchar(20) NOT NULL DEFAULT 'specific',
       recipient_count integer NOT NULL DEFAULT 0,
+      recipient_cutoff_user_id integer,
       sender_user_id integer,
       sender_actor varchar(140),
       deleted_at timestamptz,
@@ -51,14 +52,15 @@ beforeAll(async () => {
       username varchar(50) NOT NULL,
       is_active boolean NOT NULL DEFAULT true,
       is_banned boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     );
 
     INSERT INTO notification_messages
-      (title, content, audience, recipient_count, created_at)
+      (title, content, audience, recipient_count, recipient_cutoff_user_id, created_at)
     VALUES
-      ('First notification', 'First content', 'all_current', 1, '2026-01-01T00:00:00Z'),
-      ('Second notification', 'Second content', 'all_current', 1, '2026-01-02T00:00:00Z');
+      ('First notification', 'First content', 'all_current', 1, 1, '2026-01-01T00:00:00Z'),
+      ('Second notification', 'Second content', 'all_current', 1, 1, '2026-01-02T00:00:00Z');
 
     INSERT INTO notification_deliveries
       (message_id, recipient_user_id, is_read, read_at)
@@ -127,35 +129,58 @@ describe('notification service', () => {
     expect(result.total).toBe(2)
   })
 
-  it('does not miss a future notification during user activation', async () => {
-    let activationLocked!: () => void
-    let continueActivation!: () => void
-    const locked = new Promise<void>((resolve) => { activationLocked = resolve })
-    const gate = new Promise<void>((resolve) => { continueActivation = resolve })
+  it('matches future broadcasts at query time without per-user fan-out', async () => {
     const database = testContext.database as ReturnType<typeof drizzle<typeof schema>>
-
-    const activation = database.transaction(async (tx) => {
-      await tx.update(schema.users).set({ isActive: true })
-        .where(eq(schema.users.id, 2))
-      activationLocked()
-      await gate
-      await notificationService.fanOutFutureMessagesTo(2, tx)
-    })
-    await locked
-
-    const sending = notificationService.send({
+    const sent = await notificationService.send({
       title: 'Concurrent future notification',
       content: 'Must reach the activating user',
       audience: 'all_with_future'
     })
-    continueActivation()
-    const [, sent] = await Promise.all([activation, sending])
 
     const deliveries = await database.select().from(schema.notificationDeliveries)
+      .where(eq(schema.notificationDeliveries.messageId, sent.message.id))
+    expect(deliveries).toHaveLength(0)
+
+    await database.update(schema.users).set({ isActive: true })
+      .where(eq(schema.users.id, 2))
+    const visible = await notificationService.listForUser(2)
+    expect(visible.map(item => item.id)).toContain(sent.message.id)
+  })
+
+  it('uses a stable user id cutoff for all_current broadcasts', async () => {
+    const sent = await notificationService.send({
+      title: 'Current accounts only',
+      content: 'Future accounts must not see this',
+      audience: 'all_current'
+    })
+    await client.exec(`
+      INSERT INTO users (id, username, is_active, is_banned)
+      VALUES (100, 'future-user', true, false)
+    `)
+
+    expect((await notificationService.listForUser(2))
+      .map(item => item.id)).toContain(sent.message.id)
+    expect((await notificationService.listForUser(100))
+      .map(item => item.id)).not.toContain(sent.message.id)
+  })
+
+  it('creates a sparse read receipt for a broadcast', async () => {
+    const database = testContext.database as ReturnType<typeof drizzle<typeof schema>>
+    const sent = await notificationService.send({
+      title: 'Read receipt',
+      content: 'Only reading creates a user row',
+      audience: 'all_with_future'
+    })
+
+    await notificationService.markRead(2, sent.message.id)
+    const receipt = await database.select().from(schema.notificationDeliveries)
       .where(and(
         eq(schema.notificationDeliveries.messageId, sent.message.id),
         eq(schema.notificationDeliveries.recipientUserId, 2)
       ))
-    expect(deliveries).toHaveLength(1)
+    expect(receipt).toHaveLength(1)
+    expect(receipt[0]?.isRead).toBe(true)
+    expect((await notificationService.listForUser(2, { onlyUnread: true }))
+      .map(item => item.id)).not.toContain(sent.message.id)
   })
 })

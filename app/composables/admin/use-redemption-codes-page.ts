@@ -1,6 +1,6 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
-import { computed, ref, type ComputedRef, type Ref } from 'vue'
+import { computed, reactive, ref, type ComputedRef, type Ref } from 'vue'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 
 interface RedemptionCode {
@@ -14,6 +14,11 @@ interface RedemptionCode {
   expiresAt: string | null
   isEnabled: boolean
   createdAt: string
+}
+
+interface RevealedRedemptionCode {
+  id: number
+  code: string
 }
 
 export interface BatchSummary {
@@ -73,6 +78,8 @@ export function useRedemptionCodesPage() {
   })
 
   const batches = ref<BatchSummary[]>([])
+  const revealedCodes = ref<Record<number, string>>({})
+  const revealingCodeIds = reactive(new Set<number>())
 
   async function fetchBatches() {
     try {
@@ -191,6 +198,34 @@ export function useRedemptionCodesPage() {
     })
   }
 
+  async function toggleCodeVisibility(item: RedemptionCode) {
+    if (revealedCodes.value[item.id]) {
+      const { [item.id]: _hidden, ...remaining } = revealedCodes.value
+      revealedCodes.value = remaining
+      return
+    }
+    if (revealingCodeIds.has(item.id)) return
+
+    revealingCodeIds.add(item.id)
+    try {
+      const revealed = await $fetch<RevealedRedemptionCode>(
+        '/api/admin/redemption-codes/reveal',
+        { method: 'POST', body: { id: item.id } }
+      )
+      revealedCodes.value[item.id] = revealed.code
+    } catch (error) {
+      toast.add({
+        title: parseFetchError(
+          error,
+          t('admin.credits.redemptionCodes.feedback.revealFailed')
+        ),
+        color: 'error'
+      })
+    } finally {
+      revealingCodeIds.delete(item.id)
+    }
+  }
+
   async function init() {
     await Promise.all([fetchBatches(), paged.refresh()])
   }
@@ -202,6 +237,8 @@ export function useRedemptionCodesPage() {
     items: paged.items,
     total: paged.total,
     loading: paged.loading,
+    revealedCodes,
+    revealingCodeIds,
     batches,
     fetchList: paged.refresh,
     fetchBatches,
@@ -214,7 +251,8 @@ export function useRedemptionCodesPage() {
     toggleBatch,
     deleteBatch,
     copyOne,
-    copyAll
+    copyAll,
+    toggleCodeVisibility
   }
 }
 

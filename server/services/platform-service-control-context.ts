@@ -9,7 +9,7 @@ import type {
   ServiceTargetControlState,
   StoredServiceConfigurationValues
 } from '#shared/types/service-control'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   openapiDocuments,
   upstreamServiceConnections,
@@ -109,9 +109,14 @@ export function safeServiceControlError(error: unknown): string {
 }
 
 export async function loadServiceControlContext(
-  upstreamServiceId: string
+  upstreamServiceId: string,
+  options: {
+    transaction?: DatabaseTransaction
+    forUpdate?: boolean
+  } = {}
 ): Promise<PlatformServiceControlContext> {
-  const row = firstRow(await db.select({
+  const executor = options.transaction ?? db
+  const contextQuery = executor.select({
     service: upstreamServices,
     connection: upstreamServiceConnections
   }).from(upstreamServices)
@@ -123,7 +128,10 @@ export async function loadServiceControlContext(
       eq(upstreamServices.id, upstreamServiceId),
       eq(upstreamServices.kind, 'internal')
     ))
-    .limit(1))
+    .limit(1)
+  const row = firstRow(await (options.forUpdate
+    ? contextQuery.for('update')
+    : contextQuery))
   if (!row) {
     throw createApplicationError({
       statusCode: 404,
@@ -131,8 +139,11 @@ export async function loadServiceControlContext(
       data: { code: 'SERVICE_CONNECTION_NOT_FOUND' }
     })
   }
-  const targets = await db.select().from(upstreamTargets)
+  const targetsQuery = executor.select().from(upstreamTargets)
     .where(eq(upstreamTargets.upstreamServiceId, upstreamServiceId))
+  const targets = await (options.forUpdate
+    ? targetsQuery.for('update')
+    : targetsQuery)
   return { ...row, targets }
 }
 

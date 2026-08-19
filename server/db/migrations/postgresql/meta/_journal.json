@@ -8,6 +8,13 @@
       "when": 1786991924615,
       "tag": "0000_medical_killraven",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787144790772,
+      "tag": "0001_regular_luminals",
+      "breakpoints": true
     }
   ]
 }

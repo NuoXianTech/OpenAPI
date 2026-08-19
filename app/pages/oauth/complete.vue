@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import type { FormError } from '@nuxt/ui'
+import type { OauthRegisterInput } from '#shared/types/auth'
+import type { PendingOauthView } from '#shared/types/oauth'
 import { parseFetchError } from '~/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 import {
@@ -16,19 +18,6 @@ const { t } = useI18n()
 const validationMessages = useAuthValidationMessages()
 useHead(() => ({ title: t('auth.oauthComplete.title') }))
 
-interface PendingInfo {
-  pending: boolean
-  provider?: string
-  displayName?: string
-  icon?: string
-  nickname?: string | null
-  avatarUrl?: string | null
-  email?: string | null
-  suggestedUsername?: string
-  emailHasAccount?: boolean
-  allowRegister?: boolean
-}
-
 interface OauthBindFormState {
   identifier: string
   password: string
@@ -37,6 +26,7 @@ interface OauthBindFormState {
 interface OauthRegisterFormState {
   email: string
   username: string
+  inviteCode: string
   password: string
   confirmPassword: string
 }
@@ -44,12 +34,12 @@ interface OauthRegisterFormState {
 const toast = useToast()
 
 const loading = ref(true)
-const info = ref<PendingInfo | null>(null)
+const info = ref<PendingOauthView | null>(null)
 const mode = ref<'bind' | 'register'>('bind')
 const submitting = ref(false)
 
 const bindState = reactive<OauthBindFormState>({ identifier: '', password: '' })
-const registerState = reactive<OauthRegisterFormState>({ email: '', username: '', password: '', confirmPassword: '' })
+const registerState = reactive<OauthRegisterFormState>({ email: '', username: '', inviteCode: '', password: '', confirmPassword: '' })
 
 // 注册成功且需邮箱激活后，切换到「去邮箱激活」提示面板
 const emailSent = ref(false)
@@ -69,6 +59,9 @@ function validateRegisterForm(state: Partial<OauthRegisterFormState>): FormError
   return compactFormErrors(
     emailError('email', state.email, validationMessages.value.email),
     usernameError('username', state.username, validationMessages.value.username, false),
+    info.value?.requiresInviteCode
+      ? requiredTextError('inviteCode', state.inviteCode, t('auth.validation.inviteCodeRequired'))
+      : null,
     passwordError('password', state.password, validationMessages.value.password),
     confirmationError(
       'confirmPassword',
@@ -81,7 +74,7 @@ function validateRegisterForm(state: Partial<OauthRegisterFormState>): FormError
 
 onMounted(async () => {
   try {
-    const data = await $fetch<PendingInfo>('/api/auth/oauth/pending')
+    const data = await $fetch<PendingOauthView>('/api/auth/oauth/pending')
     info.value = data
     if (data.pending) {
       registerState.email = data.email || ''
@@ -117,8 +110,11 @@ async function submitRegister() {
       body: {
         email: registerState.email,
         username: registerState.username || undefined,
-        password: registerState.password
-      }
+        password: registerState.password,
+        inviteCode: info.value?.requiresInviteCode
+          ? registerState.inviteCode
+          : undefined
+      } satisfies OauthRegisterInput
     })
     if (res.verificationRequired) {
       // 账号已创建并绑定该第三方身份，待邮箱激活；激活链接由 verify-email 自动登录后进用户中心
@@ -342,6 +338,20 @@ async function submitRegister() {
               :placeholder="t('auth.oauthComplete.usernamePlaceholder')"
               icon="i-mdi-account-outline"
               size="lg"
+              class="w-full"
+            />
+          </UFormField>
+          <UFormField
+            v-if="info?.requiresInviteCode"
+            name="inviteCode"
+            :label="t('auth.fields.inviteCode')"
+          >
+            <UInput
+              v-model="registerState.inviteCode"
+              :placeholder="t('auth.placeholders.inviteCode')"
+              icon="i-mdi-ticket-confirmation-outline"
+              size="lg"
+              autocomplete="one-time-code"
               class="w-full"
             />
           </UFormField>

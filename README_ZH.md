@@ -4,22 +4,25 @@
 
 # OpenAPI Platform
 
-一个自托管的 API 发布、访问控制、调用统计、积分计费与运营管理平台。
-
-[![Nuxt](https://img.shields.io/badge/Nuxt-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://nuxt.com) [![Nuxt UI](https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=for-the-badge&logo=nuxt&logoColor=white)](https://ui.nuxt.com) [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org) [![License](https://img.shields.io/badge/License-MIT-F4D03F?style=for-the-badge)](LICENSE)
+<a href="https://github.com/NuoXianTech/openapi-platform"><img src="https://img.shields.io/github/stars/NuoXianTech/openapi-platform?style=flat-square&logo=github" alt="GitHub stars"></a>
+<a href="https://github.com/NuoXianTech/openapi-platform/tags"><img src="https://img.shields.io/github/v/tag/NuoXianTech/openapi-platform?style=flat-square&label=version" alt="Version"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-F4D03F?style=flat-square" alt="License"></a>
+<a href="https://nuxt.com"><img src="https://img.shields.io/badge/Nuxt-4.x-00DC82?style=flat-square&logo=nuxt&logoColor=white" alt="Nuxt 4"></a>
+<a href="https://ui.nuxt.com"><img src="https://img.shields.io/badge/Nuxt_UI-4.x-00DC82?style=flat-square&logo=nuxt&logoColor=white" alt="Nuxt UI 4"></a>
+<a href="https://www.postgresql.org"><img src="https://img.shields.io/badge/PostgreSQL-16%2B-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL 16+"></a>
 
 [English](README.md) · [中文](README_ZH.md) · [项目文档](docs/index.md)
 
+OpenAPI Platform 是一个自托管的 API 发布、访问控制、调用统计、积分计费与运营管理平台。
+
 </div>
 
-> [!IMPORTANT]
-> Platform 与业务 API Service 是两个独立应用。Platform 不包含具体公共接口实现；官方业务接口由 `openapi-service` 提供。首个正式公开版本以 `0.1.0` 建立版本基线，`main` 分支发布的 `latest` 在此之前属于开发版本。
+> [!CAUTION]
+> 项目目前处于开发阶段，不保证历史数据兼容。各种本地存储格式都可能直接调整，欢迎关注后续更新。
+>
+> 如果你需要稳定维护自己的分支，建议自行 fork 后独立开发。二次开发与 PR 请保留原作者信息和前端页面标识。
 
-接口管理区位于 `/admin/apis`。连接并发现 Service 后，管理员可以直接查看 Endpoint，一键发布或停用接口，并即时调整统计、API Key、积分和限流；Platform 会在后台自动创建或复用 Product、Version、Route 和不可变发布快照。
-
-Platform 不运行本地公共接口。具体业务接口位于独立 API Service 或 External HTTP Upstream；Platform 只负责发现契约、发布路由、访问治理、积分计费、统计和运营。
-
-## 主要能力
+## 核心功能
 
 - **API 管理模型**：Workspace、Product、Version、Route、Upstream、Target 与可回滚 Routing Revision。
 - **Service 控制面**：按 Internal Upstream 加密保存 Token，发现 OpenAPI 与通用配置 Schema，多 Target 轮询/权重、配置同步和漂移检测。
@@ -30,16 +33,6 @@ Platform 不运行本地公共接口。具体业务接口位于独立 API Servic
 - **运营后台**：用户、兑换码、每日奖励、公告、站内通知、友情链接、邮件、OAuth、验证码和站点设置。
 - **生产部署**：常规生产使用 PostgreSQL；单进程轻量部署可用 PGlite；Redis 提供共享限流、短缓存与后台任务协调。
 
-## 请求链路
-
-1. 动态 Gateway 从活动 Routing Revision 匹配 Host、Method 和 Path。
-2. Platform 检查 API Key、Scope、IP、限流和积分，并清理调用方认证头。
-3. Internal Route 注入 Service Token 后代理到 `openapi-service`；External Route 使用 SSRF 防护访问标准 HTTP 上游。
-4. 成功结果在响应流开始前持久化计费状态，失败结果释放预留；响应后写入 Route 调用日志与积分流水。
-5. 未命中活动 Route 时返回稳定的 `API_NOT_FOUND`，Platform 不回退到本地业务 Handler。
-
-Service 发现本身不会把接口公开到公网。管理员在接口目录明确点击发布后，Platform 才会创建公开 Route 并自动切换运行快照；发布历史只承担审计和回滚职责。
-
 ## 技术栈
 
 - Nuxt 4、Vue 3、TypeScript、Nitro、VueUse
@@ -47,34 +40,6 @@ Service 发现本身不会把接口公开到公网。管理员在接口目录明
 - Drizzle ORM、PostgreSQL 或 PGlite
 - ioredis 提供 Redis 分布式协调
 - Zod、Vitest、ESLint
-- 独立 API Service：Node.js 24、TypeScript、Hono、Zod/OpenAPI、原生 Fetch、Vitest
-
-## 快速开始
-
-### 环境要求
-
-- Node.js 24 LTS（生产镜像使用 Node 24）
-- 通过 Corepack 使用 pnpm 11
-- 标准生产环境使用 PostgreSQL 16+
-- 本地 PGlite 开发不要求外部数据库
-- Redis 在开发环境可选，在多实例生产环境必需
-
-```bash
-git clone https://github.com/NuoXianTech/openapi-platform.git
-cd openapi-platform
-corepack enable
-pnpm install
-cp .env.example .env
-pnpm dev
-```
-
-启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 所有者可按需重复查看完整值，普通列表和历史记录只显示掩码预览；兑换码仅在批量生成成功时返回一次完整值。数据库不保存裸明文列，可使用以下命令分别生成独立随机值：
-
-```bash
-node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
-```
-
-开发环境未配置数据库模式时会使用 PGlite。首次启动会自动执行迁移；如果数据库中没有管理员，服务端会生成初始管理员，并仅在日志中输出一次随机密码。请立即登录并完成不可跳过的资料和密码初始化。
 
 ## 运行时配置
 
@@ -82,81 +47,40 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 | --- | --- | --- |
 | `NUXT_AUTH_SECRET` | 必填 | JWT、邮箱验证、一次性 token 和 OAuth state 的签名密钥。 |
 | `NUXT_API_KEY_SECRET` | 必填 | 用于生成 API Key，并分域保护 API Key、兑换码、Upstream Token 与 Service 业务 Secret。 |
-| `DATABASE_URL` | 生产二选一 | PostgreSQL 连接地址。 |
-| `DATABASE_DRIVER=pglite` | 生产二选一 | 不使用 PostgreSQL 时显式选择 PGlite。 |
-| `PGLITE_DATA_DIR` | PGlite 生产必填 | 持久化数据目录，只允许一个 Node 进程访问。 |
-| `NUXT_REDIS_URL` | 可选；多实例必填 | 共享 Redis 连接地址。 |
-| `NUXT_REDIS_REQUIRED=true` | 多实例必填 | 协调关键 Redis 操作不可用时 fail-closed。 |
-| `NITRO_HOST`、`NITRO_PORT` | 部署配置 | Node 服务监听地址和端口。 |
+| `DATABASE_URL` | 可选 | PostgreSQL 连接地址。 |
+| `NITRO_HOST`、`NITRO_PORT` | 可选 | Node 服务监听地址和端口。 |
 
-生产环境必须配置 `DATABASE_URL` 或 `DATABASE_DRIVER=pglite`，不会静默回退并创建新的本地数据库。完整语义和安全边界见[运行时配置](docs/operations/runtime-config.md)。
+配置 `DATABASE_URL` 时使用 PostgreSQL；未配置或留空时自动使用 PGlite。PGlite 始终使用固定的 `.data/pglite` 目录，只允许一个 Node 进程访问，生产环境必须保证该目录持久化并纳入备份。Redis 可在 `NUXT_REDIS_URL` 留空时不启用；一旦配置 Redis，协调相关操作会在 Redis 不可用时 fail-closed。完整语义和安全边界见[运行时配置](docs/operations/runtime-config.md)。
 
-Platform 使用同一个访问地址提供 Console、站内 API 和公开 Gateway Route。`/api`、`/admin`、`/user` 等 Platform 路径前缀固定保留，其余路径交给动态 Gateway 匹配，不再需要配置 Host 角色环境变量。
+## 快速开始
 
-API Service 地址和 Token 按 Internal Upstream 保存，不使用全局 Platform 环境变量。Service 声明的来源开关与凭据、数据库授权密钥、功能允许列表等业务配置会在 `/admin/apis/upstreams/:id` 自动生成表单并热更新全部 Target。
-
-## 数据库流程
-
-修改 `server/db/schema/` 后：
+### 本地开发
 
 ```bash
-pnpm db:generate
-pnpm test:run
+git clone https://github.com/NuoXianTech/openapi-platform.git
+cd openapi-platform
+pnpm install
+cp .env.example .env
+pnpm dev
 ```
 
-`0.1.0` 建立不可修改的 `0000` 正式基线。后续 Schema 变化必须追加 `0001`、`0002` 等迁移，不能改写已经发布的迁移。`0.1.0` 之前创建的实验数据库或 Volume 不支持直接增量升级；正式 `0.1.0` 数据库则可以使用 `0.1.1` 及后续构建产物携带的迁移连续升级。详见[数据库迁移与版本升级](docs/operations/database-migrations.md)。
-
-## 质量门禁
+### Docker 运行
 
 ```bash
-pnpm lint
-pnpm typecheck
-pnpm check:dead-code
-pnpm test:unit
-pnpm build
-pnpm test:integration:built
+git clone https://github.com/NuoXianTech/openapi-platform.git
+cd openapi-platform
+cp .env.example .env
+docker network inspect openapi-network > /dev/null 2>&1 || docker network create openapi-network
+docker compose up -d
 ```
 
-任何命令失败都必须停止生产发布。这些构建检查在开发机或 CI 执行，不能放到生产服务器执行。
-
-## 生产部署
-
-### 预构建 Node Server 产物
+启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 所有者和管理兑换码的管理员均可按需重复查看完整值，普通列表和历史记录只显示掩码预览；每次查看都会记录不含明文的操作日志。数据库不保存裸明文列，可使用以下命令分别生成独立随机值：
 
 ```bash
-# 仅在开发机或 CI 构建
-pnpm build
-# 生产服务器直接使用完整 .output 迁移并启动
-NODE_ENV=production node .output/server/migrate.mjs
-NODE_ENV=production node .output/server/index.mjs
+node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-必须部署完整的预构建 `.output`。生产入口是 `.output/server/index.mjs`，不要只部署 `.output/server`，也不能遗漏其中的隐藏 Nitro 依赖。生产服务器不执行 `pnpm install`、Nuxt Build 或 Docker Build。
-
-### Docker
-
-GitHub Actions 会在推送到 `main` 或创建版本标签时构建带标签的 amd64/arm64 镜像，并发布合并后的多架构镜像到 GHCR。服务器无需克隆源码或执行 Nuxt 构建：
-
-```bash
-docker network inspect openapi-network >/dev/null 2>&1 || docker network create openapi-network
-docker pull ghcr.io/nuoxiantech/openapi-platform:latest
-docker run -d --name openapi-platform --restart unless-stopped \
-  --network openapi-network \
-  -p 3000:3000 --env-file .env \
-  -v openapi-data:/app/.data \
-  ghcr.io/nuoxiantech/openapi-platform:latest
-```
-
-也可以先创建外部 `openapi-network`，再下载仓库中的 `docker-compose.yml` 并运行 `docker compose pull && docker compose up -d`；该 Compose 只部署 Platform，API Service 使用其独立仓库的部署文件。生产环境建议使用版本号（例如 `0.1.0`）锁定部署；`main` 发布 `latest`、`latest-amd64` 和 `latest-arm64`，用于跟踪开发版本。符合 `v*.*.*` 格式的 Git 标签会生成去掉 `v` 前缀的多架构镜像标签。若 GHCR 包为私有包，先使用有 `read:packages` 权限的 PAT 执行 `docker login ghcr.io`。
-
-探针检查：
-
-```bash
-curl -fsS http://127.0.0.1:3000/api/health
-curl -fsS http://127.0.0.1:3000/api/ready
-```
-
-`/api/health` 是进程存活检查；`/api/ready` 检查数据库和当前 Redis required 策略。发布前后应执行[生产就绪清单](docs/operations/production-readiness.md)和[生产运行手册](docs/operations/production-runbook.md)。
+运行后可通过 `http://localhost:3000` 访问，Docker Compose 默认只监听本机端口 3000。
 
 ## 项目结构
 
@@ -189,8 +113,8 @@ docs/                        项目特有标准与生产流程
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request。新增官方具体 API 应在独立 `openapi-service` 中实现，Platform 只负责 Upstream、Route、治理和运营。修改数据库 schema 时必须生成迁移，并执行全部质量门禁。
+欢迎提交 Issue 和 Pull Request。
 
-## 许可证
+## 开源协议
 
-[MIT](LICENSE) © NuoXianTech
+本项目使用 [MIT License](LICENSE)。任何人都可以免费使用、复制、修改、分发、再授权和商业使用本项目，也可以用于闭源产品。

@@ -1,6 +1,6 @@
 # 生产运行手册
 
-本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。目标部署模型包含两个独立 Node.js 应用进程：Platform 使用 Nuxt/Nitro，API Service 使用轻量 Hono/TypeScript。两者分别升级和回滚；Platform 使用 PostgreSQL、共享 Redis 且启用强制 Redis 后可水平扩容，API Service 通过独立 Upstream Target 扩容。
+本手册用于 OpenAPI 上线后的日常运行、异常排查和恢复。目标部署模型包含两个独立 Node.js 应用进程：Platform 使用 Nuxt/Nitro，API Service 使用轻量 Hono/TypeScript。两者分别升级和回滚；Platform 使用 PostgreSQL 并配置共享 Redis 后可水平扩容，API Service 通过独立 Upstream Target 扩容。
 
 ## 运行边界
 
@@ -8,7 +8,7 @@
 | --- | --- |
 | 应用进程 | 默认一个 Platform Node 进程和一个 API Service Node 进程；二者不共享 V8 Heap、环境变量或故障边界 |
 | 数据库 | 仅 Platform 访问 PostgreSQL/PGlite；升级时由新 Platform 构建产物显式迁移，启动插件再幂等复查，API Service 不运行数据库迁移 |
-| 限流 | 配置 Redis 时使用共享原子计数；未配置或非强制故障时回退进程内计数 |
+| 限流 | 配置 Redis 时使用共享原子计数；未配置 Redis 时回退进程内计数，配置后 Redis 故障会 fail-closed |
 | 短缓存 | Redis 缓存公开 DTO 与 API 守卫配置；故障时回源数据库，不缓存用户私有或敏感配置 |
 | 扣费重试 | 每个实例都有定时器，但同一时刻仅 Redis lease 持有者扫描到期的 `api_credit_reservations` |
 | 代理 | 生产公网流量由 Nginx 或等价代理转发到 `127.0.0.1:<NITRO_PORT>` |
@@ -50,11 +50,11 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 | 现象 | 优先查看 |
 | --- | --- |
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
-| readiness 返回 503 | PostgreSQL 连接；强制 Redis 模式下同时检查 `NUXT_REDIS_URL`、认证和网络 |
+| readiness 返回 503 | PostgreSQL 连接；配置 Redis 时同时检查 `NUXT_REDIS_URL`、认证和网络 |
 | 只有官方具体 API 返回 502/503 | 检查 `openapi-service` 容器、`/readyz`、Service Token、Internal Upstream Target 和来源级错误；Platform 与 External Route 不应一并停止 |
 | 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
 | SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
-| 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_REQUIRED` 和 `[credit-reservations]` 日志 |
+| 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_URL` 和 `[credit-reservations]` 日志 |
 | 数据库迁移失败 | `node .output/server/migrate.mjs` 输出、`DATABASE_URL` 权限、迁移执行器和 `.output/server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_API_KEY_SECRET` 是否与加密时一致、`api_keys.key_digest` 是否存在、Key 是否被禁用、网关是否连接了预期数据库 |
@@ -73,7 +73,7 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 pg_dump "$DATABASE_URL" --format=custom --file="backup-$(date +%Y%m%d-%H%M%S).dump"
 ```
 
-PGlite 部署不使用 `pg_dump`。先停止唯一访问该目录的 Platform Node 进程，再对整个 `PGLITE_DATA_DIR` 做一致性快照或归档；恢复时同样保持 Platform 停止，并恢复到原权限与路径。API Service 不访问该目录。不要在 Platform 写入期间只复制其中单个文件。
+PGlite 部署不使用 `pg_dump`。先停止唯一访问 `.data/pglite` 的 Platform Node 进程，再对整个 `.data/pglite` 目录做一致性快照或归档；恢复时同样保持 Platform 停止，并恢复到原权限与路径。API Service 不访问该目录。不要在 Platform 写入期间只复制其中单个文件。
 
 备份文件应离开应用服务器保存，避免服务器磁盘故障时同时丢失应用和备份。Redis 只保存可重建缓存、限流计数和短期租约，不作为业务主数据备份来源。
 
