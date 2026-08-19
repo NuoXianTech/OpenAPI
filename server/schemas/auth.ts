@@ -4,7 +4,8 @@ import type {
   LoginInput,
   RegisterInput,
   RequestPasswordResetInput,
-  ResetPasswordInput
+  ResetPasswordInput,
+  VerifyEmailInput
 } from '#shared/types/auth'
 import { emailSchema, passwordSchema, positiveInt, usernameSchema } from './validation'
 
@@ -56,3 +57,8 @@ export const confirmEmailChangeSchema = z.object({
   userId: positiveInt('用户 ID'),
   token: z.string().min(1, '缺少确认令牌')
 }) satisfies z.ZodType<ConfirmEmailChangeInput>
+
+export const verifyEmailSchema = z.object({
+  userId: positiveInt('用户 ID'),
+  token: z.string().min(1, '缺少验证令牌')
+}) satisfies z.ZodType<VerifyEmailInput>

@@ -13,7 +13,7 @@ import {
   safeServiceControlError
 } from '~~/server/services/platform-service-control-context'
 import { persistServiceOpenApi } from '~~/server/services/platform-service-openapi-service'
-import { routingRevisionService } from '~~/server/services/routing-revision-service'
+import { applyWorkspaceRevision } from '~~/server/services/platform-endpoint-publication-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { firstRow } from '~~/server/utils/row'
@@ -243,19 +243,19 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
     ))
     refreshed = await loadServiceControlContext(upstreamServiceId)
   }
-  if (areEnabledInternalTargetsReady(
+  const publication = areEnabledInternalTargetsReady(
     refreshed.targets,
     refreshed.connection
-  )) {
-    await routingRevisionService.publishWorkspace(
-      refreshed.service.workspaceId,
-      null
-    )
-  }
-  return buildServiceControlView(
-    refreshed,
-    { checkAvailability: true }
   )
+    ? await applyWorkspaceRevision(refreshed.service.workspaceId, null)
+    : { applied: true as const, revisions: [], publicationError: null }
+  return {
+    ...await buildServiceControlView(
+      refreshed,
+      { checkAvailability: true }
+    ),
+    ...publication
+  }
 }
 
 async function runPlatformServiceDiscovery(upstreamServiceId: string) {

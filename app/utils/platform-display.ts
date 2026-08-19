@@ -24,3 +24,13 @@ export function formatPlatformDate(value: string | null, locale: string): string
     timeStyle: 'short'
   }).format(new Date(value))
 }
+
+export function platformPublicationFeedback(
+  result: { applied?: boolean },
+  title: string,
+  pendingDescription: string
+) {
+  return result.applied === false
+    ? { title, description: pendingDescription, color: 'warning' as const }
+    : { title, color: 'success' as const }
+}

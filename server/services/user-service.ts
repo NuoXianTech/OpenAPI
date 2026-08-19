@@ -86,32 +86,29 @@ export const userService = {
       }).where(and(eq(users.id, id), isNull(users.emailVerifiedAt))).returning()
       const user = firstRow(rows)
       if (!user) return null
-      if (grantAmount === 0) return user
+      let activatedUser = user
 
-      const updated = await tx.update(users).set({
-        credits: sql`${users.credits} + ${grantAmount}`,
-        updatedAt: new Date()
-      }).where(eq(users.id, id)).returning({ credits: users.credits })
-      const balanceAfter = toNumber(updated[0]?.credits)
-      await tx.insert(creditTransactions).values({
-        userId: id,
-        amount: grantAmount,
-        balanceAfter,
-        reason: 'signup_bonus',
-        operatorId: null,
-        operatorName: null,
-        remark: '注册赠送'
-      })
-      return { ...user, credits: balanceAfter }
-    })
-
-    if (activated) {
-      try {
-        await notificationService.fanOutFutureMessagesTo(id)
-      } catch (error) {
-        console.error('failed to fan out future notifications', { userId: id, error })
+      if (grantAmount > 0) {
+        const updated = await tx.update(users).set({
+          credits: sql`${users.credits} + ${grantAmount}`,
+          updatedAt: new Date()
+        }).where(eq(users.id, id)).returning({ credits: users.credits })
+        const balanceAfter = toNumber(updated[0]?.credits)
+        await tx.insert(creditTransactions).values({
+          userId: id,
+          amount: grantAmount,
+          balanceAfter,
+          reason: 'signup_bonus',
+          operatorId: null,
+          operatorName: null,
+          remark: '注册赠送'
+        })
+        activatedUser = { ...user, credits: balanceAfter }
       }
-    }
+
+      await notificationService.fanOutFutureMessagesTo(id, tx)
+      return activatedUser
+    })
     return activated
   },
 

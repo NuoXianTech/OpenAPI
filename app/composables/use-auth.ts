@@ -20,6 +20,8 @@ const AUTH_FRESH_FOR_MS = 5 * 60 * 1000
 // 服务端不能复用这俩变量（Node 进程内 module-scope 会跨请求串号），中间件本身串行调用一次也不需要 dedup。
 let clientInflight: Promise<AuthUser | null> | null = null
 let clientFetchedAt = 0
+let clientStateVersion = 0
+let clientFetchController: AbortController | null = null
 
 // SSR 阶段的 user 存在 event.context 上（请求级，跨请求隔离），不进 nuxt payload；
 // 客户端阶段的 user 存在 useState 里。这样 SSR 输出的 HTML 永远不含 user 字段，
@@ -82,16 +84,32 @@ export function useAuth() {
   })
 
   const runFetch = async () => {
+    const requestVersion = clientStateVersion
+    const controller = import.meta.client ? new AbortController() : null
+    if (controller) clientFetchController = controller
     loading.value = true
     try {
       // 必须用 $fetch 而不是 useAsyncData / useFetch：后者会把响应写进 nuxt payload,
       // 一旦未来开了 getCachedData / payloadExtraction，A 用户的 user 信息会跟着 HTML 投递给 B 用户。
-      const res = await $fetch<AuthUser | null>('/api/auth/me', { headers: serverCookieHeaders })
+      const res = await $fetch<AuthUser | null>('/api/auth/me', {
+        headers: serverCookieHeaders,
+        signal: controller?.signal
+      })
+      if (import.meta.client && requestVersion !== clientStateVersion) return user.value
       user.value = res ?? null
       if (import.meta.client) clientFetchedAt = Date.now()
       return user.value
+    } catch (error) {
+      if (import.meta.client && requestVersion !== clientStateVersion) return user.value
+      if (isAuthFailure(error)) {
+        user.value = null
+        if (import.meta.client) clientFetchedAt = Date.now()
+        return null
+      }
+      throw error
     } finally {
-      loading.value = false
+      if (!import.meta.client || requestVersion === clientStateVersion) loading.value = false
+      if (clientFetchController === controller) clientFetchController = null
     }
   }
 
@@ -101,17 +119,22 @@ export function useAuth() {
     const fresh = clientFetchedAt > 0 && Date.now() - clientFetchedAt < AUTH_FRESH_FOR_MS
     if (!force && fresh) return user.value
     if (clientInflight) return clientInflight
-    clientInflight = runFetch().finally(() => {
-      clientInflight = null
-    })
-    return clientInflight
+    const request = runFetch()
+    clientInflight = request
+    void request.then(
+      () => { if (clientInflight === request) clientInflight = null },
+      () => { if (clientInflight === request) clientInflight = null }
+    )
+    return request
   }
 
   const login = async (payload: LoginInput) => {
+    const requestVersion = invalidateClientFetch()
     const res = await $fetch<AuthUser>('/api/auth/login', {
       method: 'POST',
       body: payload
     })
+    if (import.meta.client && requestVersion !== clientStateVersion) return res
     user.value = res
     if (import.meta.client) clientFetchedAt = Date.now()
     return res
@@ -123,9 +146,31 @@ export function useAuth() {
   })
 
   const logout = async () => {
+    const requestVersion = invalidateClientFetch()
     await $fetch('/api/auth/logout', { method: 'POST' })
+    if (import.meta.client && requestVersion !== clientStateVersion) return
     user.value = null
     if (import.meta.client) clientFetchedAt = Date.now()
+  }
+
+  function invalidateClientFetch(): number {
+    if (import.meta.server) return clientStateVersion
+    clientStateVersion += 1
+    clientFetchedAt = 0
+    clientFetchController?.abort()
+    clientFetchController = null
+    clientInflight = null
+    loading.value = false
+    return clientStateVersion
+  }
+
+  function isAuthFailure(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false
+    const candidate = error as { status?: unknown, statusCode?: unknown }
+    return candidate.status === 401
+      || candidate.status === 403
+      || candidate.statusCode === 401
+      || candidate.statusCode === 403
   }
 
   const updateLocalePreference = async (locale: SupportedLocale) => {

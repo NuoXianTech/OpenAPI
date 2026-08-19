@@ -1,4 +1,5 @@
 import { PGlite } from '@electric-sql/pglite'
+import { and, eq } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/pglite'
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
 import * as schema from '~~/server/db/schema'
@@ -49,7 +50,8 @@ beforeAll(async () => {
       id serial PRIMARY KEY,
       username varchar(50) NOT NULL,
       is_active boolean NOT NULL DEFAULT true,
-      is_banned boolean NOT NULL DEFAULT false
+      is_banned boolean NOT NULL DEFAULT false,
+      updated_at timestamptz NOT NULL DEFAULT now()
     );
 
     INSERT INTO notification_messages
@@ -65,7 +67,10 @@ beforeAll(async () => {
       (2, 1, false, null);
 
     INSERT INTO users (id, username, is_active, is_banned)
-    VALUES (1, 'first-user', true, false), (99, 'invalid-delivery', true, false);
+    VALUES
+      (1, 'first-user', true, false),
+      (2, 'pending-user', false, false),
+      (99, 'invalid-delivery', true, true);
   `)
   testContext.database = drizzle(client, { schema })
 })
@@ -120,5 +125,37 @@ describe('notification service', () => {
 
     const result = await notificationService.listMessagesForAdmin()
     expect(result.total).toBe(2)
+  })
+
+  it('does not miss a future notification during user activation', async () => {
+    let activationLocked!: () => void
+    let continueActivation!: () => void
+    const locked = new Promise<void>((resolve) => { activationLocked = resolve })
+    const gate = new Promise<void>((resolve) => { continueActivation = resolve })
+    const database = testContext.database as ReturnType<typeof drizzle<typeof schema>>
+
+    const activation = database.transaction(async (tx) => {
+      await tx.update(schema.users).set({ isActive: true })
+        .where(eq(schema.users.id, 2))
+      activationLocked()
+      await gate
+      await notificationService.fanOutFutureMessagesTo(2, tx)
+    })
+    await locked
+
+    const sending = notificationService.send({
+      title: 'Concurrent future notification',
+      content: 'Must reach the activating user',
+      audience: 'all_with_future'
+    })
+    continueActivation()
+    const [, sent] = await Promise.all([activation, sending])
+
+    const deliveries = await database.select().from(schema.notificationDeliveries)
+      .where(and(
+        eq(schema.notificationDeliveries.messageId, sent.message.id),
+        eq(schema.notificationDeliveries.recipientUserId, 2)
+      ))
+    expect(deliveries).toHaveLength(1)
   })
 })

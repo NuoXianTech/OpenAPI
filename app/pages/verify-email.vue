@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { VerifyEmailInput } from '#shared/types/auth'
 import { parseFetchError } from '~/utils/client-error'
 import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
 
@@ -9,25 +10,33 @@ useHead(() => ({ title: t('auth.verifyEmail.title') }))
 
 const route = useRoute()
 const token = computed(() => (route.query.token || '').toString())
-const user = computed(() => (route.query.user || '').toString())
+const userId = computed(() => Number((route.query.user || '').toString()) || 0)
+const linkValid = computed(() => userId.value > 0 && token.value.length > 0)
 const { fetchMe } = useAuth()
 
-const status = ref<'pending' | 'success' | 'error'>('pending')
-const message = ref(t('auth.verifyEmail.pendingMessage'))
-const verifying = ref(false)
+const status = ref<'idle' | 'pending' | 'success' | 'error'>('idle')
+const message = ref('')
 const alreadyVerified = ref(false)
 
 const headerIcon = computed(() => {
+  if (!linkValid.value) {
+    return 'i-mdi-email-alert-outline'
+  }
   if (status.value === 'success') {
     return 'i-mdi-email-check-outline'
   }
   if (status.value === 'error') {
     return 'i-mdi-email-alert-outline'
   }
-  return 'i-mdi-email-sync-outline'
+  return status.value === 'pending'
+    ? 'i-mdi-email-sync-outline'
+    : 'i-mdi-email-check-outline'
 })
 
 const headerTitle = computed(() => {
+  if (!linkValid.value) {
+    return t('auth.verifyEmail.errorTitle')
+  }
   if (status.value === 'success') {
     return t('auth.verifyEmail.successTitle')
   }
@@ -38,34 +47,32 @@ const headerTitle = computed(() => {
 })
 
 const headerSubtitle = computed(() => {
+  if (!linkValid.value) {
+    return t('auth.verifyEmail.errorSubtitle')
+  }
   if (status.value === 'success') {
     return alreadyVerified.value ? t('auth.verifyEmail.alreadyVerified') : t('auth.verifyEmail.successSubtitle')
   }
   if (status.value === 'error') {
     return t('auth.verifyEmail.errorSubtitle')
   }
-  return t('auth.verifyEmail.pendingSubtitle')
+  return status.value === 'pending'
+    ? t('auth.verifyEmail.pendingSubtitle')
+    : t('auth.verifyEmail.idleSubtitle')
 })
 
-onMounted(async () => {
-  if (verifying.value) {
-    return
-  }
-  verifying.value = true
-
-  if (!token.value || !user.value) {
-    status.value = 'error'
-    message.value = t('auth.verifyEmail.invalidLink')
-    verifying.value = false
-    return
-  }
-
+async function verifyEmail() {
+  if (!linkValid.value || status.value === 'pending') return
   status.value = 'pending'
   message.value = t('auth.verifyEmail.pendingMessage')
 
   try {
     const result = await $fetch<{ alreadyVerified?: boolean }>('/api/auth/verify-email', {
-      query: { token: token.value, user: user.value }
+      method: 'POST',
+      body: {
+        token: token.value,
+        userId: userId.value
+      } satisfies VerifyEmailInput
     })
     status.value = 'success'
     if (result?.alreadyVerified) {
@@ -82,10 +89,8 @@ onMounted(async () => {
   } catch (error: unknown) {
     status.value = 'error'
     message.value = parseFetchError(error, t('auth.verifyEmail.failed'))
-  } finally {
-    verifying.value = false
   }
-})
+}
 </script>
 
 <template>
@@ -113,7 +118,45 @@ onMounted(async () => {
       :ui="{ body: 'p-6 sm:p-7' }"
     >
       <div
-        v-if="status === 'pending'"
+        v-if="!linkValid"
+        class="space-y-4"
+      >
+        <div class="auth-message auth-message--error">
+          <UIcon
+            name="i-mdi-link-variant-off"
+            class="auth-message__icon size-4"
+          />
+          <span>{{ $t('auth.verifyEmail.invalidLink') }}</span>
+        </div>
+        <UButton
+          to="/register"
+          block
+          size="lg"
+          icon="i-mdi-account-plus-outline"
+        >
+          {{ $t('auth.verifyEmail.registerAgain') }}
+        </UButton>
+      </div>
+
+      <div
+        v-else-if="status === 'idle'"
+        class="space-y-4"
+      >
+        <p class="text-sm text-muted">
+          {{ $t('auth.verifyEmail.description') }}
+        </p>
+        <UButton
+          block
+          size="lg"
+          icon="i-mdi-email-check-outline"
+          @click="verifyEmail"
+        >
+          {{ $t('auth.verifyEmail.submit') }}
+        </UButton>
+      </div>
+
+      <div
+        v-else-if="status === 'pending'"
         class="space-y-4"
       >
         <div class="flex items-center gap-2 text-sm text-muted">

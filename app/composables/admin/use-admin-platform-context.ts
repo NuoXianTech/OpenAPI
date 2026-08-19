@@ -49,6 +49,18 @@ export function provideAdminPlatformContext(): AdminPlatformContext {
   })))
 
   watch(
+    () => [
+      queryValue(route.query.workspaceId),
+      queryValue(route.query.environmentId)
+    ] as const,
+    ([workspaceId, environmentId]) => {
+      selectedWorkspaceId.value = workspaceId
+      selectedEnvironmentId.value = environmentId
+    },
+    { immediate: true, flush: 'sync' }
+  )
+
+  watch(
     [workspaces, resource.status, selectedWorkspaceId],
     ([items, status]) => {
       if (status === 'pending') return

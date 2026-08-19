@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { and, asc, desc, eq, inArray, isNull, max, ne } from 'drizzle-orm'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   apiProducts,
   apiRoutes,
@@ -64,16 +64,24 @@ export const routingRevisionService = {
       .orderBy(desc(routingRevisions.createdAt))
   },
 
-  async publish(environmentId: string, createdBy: number | null) {
+  async publish(
+    environmentId: string,
+    createdBy: number | null,
+    transaction?: {
+      tx: DatabaseTransaction
+      activeEnvironments: Array<typeof environments.$inferSelect>
+    }
+  ) {
     try {
-      const revision = await db.transaction(async (tx) => {
+      const publish = async (tx: DatabaseTransaction) => {
         // Every publisher locks the same ordered set before reading active
         // snapshots. This serializes conflict validation across environments,
         // while the partial unique index protects the per-environment invariant.
-        const activeEnvironments = await tx.select().from(environments)
-          .where(eq(environments.status, 'active'))
-          .orderBy(asc(environments.id))
-          .for('update')
+        const activeEnvironments = transaction?.activeEnvironments
+          ?? await tx.select().from(environments)
+            .where(eq(environments.status, 'active'))
+            .orderBy(asc(environments.id))
+            .for('update')
         const environment = activeEnvironments.find(item => item.id === environmentId)
         if (!environment) {
           throw createApplicationError({ statusCode: 404, message: 'environment not found', data: { code: 'ENVIRONMENT_NOT_FOUND' } })
@@ -254,9 +262,14 @@ export const routingRevisionService = {
           .where(eq(environments.id, environment.id))
 
         return created
-      })
-      invalidateRoutingRuntimeCache()
-      await invalidatePublicApiCatalogCache()
+      }
+      const revision = transaction
+        ? await publish(transaction.tx)
+        : await db.transaction(publish)
+      if (!transaction) {
+        invalidateRoutingRuntimeCache()
+        await invalidatePublicApiCatalogCache()
+      }
       return revision
     } catch (error) {
       if (getSqlState(error) === '23505') {
@@ -334,20 +347,26 @@ export const routingRevisionService = {
   },
 
   async publishWorkspace(workspaceId: string, createdBy: number | null) {
-    const rows = await db.select({ id: environments.id }).from(environments)
-      .where(and(
-        eq(environments.workspaceId, workspaceId),
-        eq(environments.status, 'active')
-      ))
-      .orderBy(asc(environments.id))
-    const revisions = []
-    for (const environment of rows) {
-      revisions.push(await routingRevisionService.publish(environment.id, createdBy))
-    }
-    if (rows.length === 0) {
-      invalidateRoutingRuntimeCache()
-      await invalidatePublicApiCatalogCache()
-    }
+    const revisions = await db.transaction(async (tx: DatabaseTransaction) => {
+      const activeEnvironments = await tx.select().from(environments)
+        .where(eq(environments.status, 'active'))
+        .orderBy(asc(environments.id))
+        .for('update')
+      const workspaceEnvironments = activeEnvironments.filter(
+        environment => environment.workspaceId === workspaceId
+      )
+      const published = []
+      for (const environment of workspaceEnvironments) {
+        published.push(await routingRevisionService.publish(
+          environment.id,
+          createdBy,
+          { tx, activeEnvironments }
+        ))
+      }
+      return published
+    })
+    invalidateRoutingRuntimeCache()
+    await invalidatePublicApiCatalogCache()
     return revisions
   }
 }

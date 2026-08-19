@@ -1,7 +1,7 @@
 import { isIP } from 'node:net'
 import { and, asc, count, eq, isNull, ne } from 'drizzle-orm'
 import { ipInAnyCidr } from '#shared/utils/cidr'
-import { db } from '~~/server/db/client'
+import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   upstreamServiceConnections,
   upstreamServices,
@@ -107,22 +107,27 @@ function normalizeServiceToken(value: string | undefined): string {
   return token
 }
 
-async function findTargetBinding(id: string) {
-  return firstRow(await db.select({
+async function findTargetBindingForUpdate(
+  tx: DatabaseTransaction,
+  id: string
+) {
+  return firstRow(await tx.select({
     target: upstreamTargets,
     service: upstreamServices
   }).from(upstreamTargets)
     .innerJoin(upstreamServices, eq(upstreamServices.id, upstreamTargets.upstreamServiceId))
     .where(and(eq(upstreamTargets.id, id), isNull(upstreamServices.deletedAt)))
-    .limit(1))
+    .limit(1)
+    .for('update'))
 }
 
 async function assertCanDisableLastTarget(
+  tx: DatabaseTransaction,
   serviceId: string,
   serviceKind: CreateUpstreamInput['kind'],
   excludingTargetId?: string
 ): Promise<void> {
-  const activeRoutes = firstRow(await db.select({ value: count() })
+  const activeRoutes = firstRow(await tx.select({ value: count() })
     .from(apiRoutes)
     .where(and(
       eq(apiRoutes.upstreamServiceId, serviceId),
@@ -131,7 +136,7 @@ async function assertCanDisableLastTarget(
     )))
   if (Number(activeRoutes?.value ?? 0) === 0) return
 
-  const enabledTargets = await db.select()
+  const enabledTargets = await tx.select()
     .from(upstreamTargets)
     .where(and(
       eq(upstreamTargets.upstreamServiceId, serviceId),
@@ -140,7 +145,7 @@ async function assertCanDisableLastTarget(
     ))
   if (serviceKind === 'external' && enabledTargets.length > 0) return
   if (serviceKind === 'internal') {
-    const connection = firstRow(await db.select()
+    const connection = firstRow(await tx.select()
       .from(upstreamServiceConnections)
       .where(eq(upstreamServiceConnections.upstreamServiceId, serviceId))
       .limit(1)) ?? null
@@ -361,61 +366,64 @@ export const platformUpstreamService = {
   },
 
   async updateTarget(id: string, input: UpdateTargetInput) {
-    const binding = await findTargetBinding(id)
-    if (!binding) {
-      throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
-    }
-    if (binding.target.enabled && input.enabled === false) {
-      await assertCanDisableLastTarget(
-        binding.service.id,
-        binding.service.kind as CreateUpstreamInput['kind'],
-        binding.target.id
-      )
-    }
-    const baseUrl = input.baseUrl === undefined
-      ? binding.target.baseUrl
-      : normalizeTargetUrl(
-          input.baseUrl,
-          binding.service.kind as CreateUpstreamInput['kind']
-        ).toString()
-    if (new URL(baseUrl).protocol.slice(0, -1) !== binding.service.protocol) {
-      throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
-    }
-    const resetServiceState = binding.service.kind === 'internal'
-      && (
-        baseUrl !== binding.target.baseUrl
-        || (!binding.target.enabled && input.enabled === true)
-      )
     try {
-      const target = firstRow(await db.update(upstreamTargets).set({
-        ...input,
-        baseUrl,
-        ...(resetServiceState
-          ? {
-              configurationRevision: null,
-              configurationHash: null,
-              configurationStatus: 'unknown',
-              configurationState: null,
-              lastConfigurationSyncAt: null,
-              lastError: null
-            }
-          : {}),
-        updatedAt: new Date()
-      }).where(eq(upstreamTargets.id, id)).returning())
-      if (!target) throw new Error('target update returned no row')
-      const disablingPublishedTarget = binding.target.enabled
-        && target.enabled === false
-      const updatingPublishedTarget = !resetServiceState
-        && target.enabled
-        && input.weight !== undefined
-        && input.weight !== binding.target.weight
-      return {
-        target,
-        workspaceId: binding.service.workspaceId,
-        publishRouting: binding.service.kind === 'external'
-          || disablingPublishedTarget
-          || updatingPublishedTarget
-      }
+      return await db.transaction(async (tx: DatabaseTransaction) => {
+        const binding = await findTargetBindingForUpdate(tx, id)
+        if (!binding) {
+          throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
+        }
+        if (binding.target.enabled && input.enabled === false) {
+          await assertCanDisableLastTarget(
+            tx,
+            binding.service.id,
+            binding.service.kind as CreateUpstreamInput['kind'],
+            binding.target.id
+          )
+        }
+        const baseUrl = input.baseUrl === undefined
+          ? binding.target.baseUrl
+          : normalizeTargetUrl(
+              input.baseUrl,
+              binding.service.kind as CreateUpstreamInput['kind']
+            ).toString()
+        if (new URL(baseUrl).protocol.slice(0, -1) !== binding.service.protocol) {
+          throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
+        }
+        const resetServiceState = binding.service.kind === 'internal'
+          && (
+            baseUrl !== binding.target.baseUrl
+            || (!binding.target.enabled && input.enabled === true)
+          )
+        const target = firstRow(await tx.update(upstreamTargets).set({
+          ...input,
+          baseUrl,
+          ...(resetServiceState
+            ? {
+                configurationRevision: null,
+                configurationHash: null,
+                configurationStatus: 'unknown',
+                configurationState: null,
+                lastConfigurationSyncAt: null,
+                lastError: null
+              }
+            : {}),
+          updatedAt: new Date()
+        }).where(eq(upstreamTargets.id, id)).returning())
+        if (!target) throw new Error('target update returned no row')
+        const disablingPublishedTarget = binding.target.enabled
+          && target.enabled === false
+        const updatingPublishedTarget = !resetServiceState
+          && target.enabled
+          && input.weight !== undefined
+          && input.weight !== binding.target.weight
+        return {
+          target,
+          workspaceId: binding.service.workspaceId,
+          publishRouting: binding.service.kind === 'external'
+            || disablingPublishedTarget
+            || updatingPublishedTarget
+        }
+      })
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'target URL already exists for this upstream', data: { code: 'TARGET_CONFLICT' } })
@@ -425,10 +433,6 @@ export const platformUpstreamService = {
   },
 
   async removeTarget(id: string) {
-    const binding = await findTargetBinding(id)
-    if (!binding) {
-      throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
-    }
     if (await routingReferenceService.hasTarget(id)) {
       throw createApplicationError({
         statusCode: 409,
@@ -436,15 +440,22 @@ export const platformUpstreamService = {
         data: { code: 'TARGET_STILL_PUBLISHED' }
       })
     }
-    if (binding.target.enabled) {
-      await assertCanDisableLastTarget(
-        binding.service.id,
-        binding.service.kind as CreateUpstreamInput['kind'],
-        binding.target.id
-      )
-    }
-    await db.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
-    return binding.target
+    return db.transaction(async (tx: DatabaseTransaction) => {
+      const binding = await findTargetBindingForUpdate(tx, id)
+      if (!binding) {
+        throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
+      }
+      if (binding.target.enabled) {
+        await assertCanDisableLastTarget(
+          tx,
+          binding.service.id,
+          binding.service.kind as CreateUpstreamInput['kind'],
+          binding.target.id
+        )
+      }
+      await tx.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
+      return binding.target
+    })
   },
 
   async updateServiceToken(id: string, serviceToken: string) {

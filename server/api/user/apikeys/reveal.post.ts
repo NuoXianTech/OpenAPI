@@ -20,7 +20,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
     resourceType: 'api-key',
     resourceId: revealed.id,
     detail: { keyName: revealed.name }
-  })
+  }, { required: true })
 
   return revealed
 })

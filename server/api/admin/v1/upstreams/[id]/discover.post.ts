@@ -1,4 +1,4 @@
-import { createError, getRouterParam } from 'h3'
+import { createError, getRouterParam, setResponseStatus } from 'h3'
 import { z } from 'zod'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
@@ -10,6 +10,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 400, message: 'upstream id is invalid' })
   }
   const result = await platformServiceControlService.discover(upstreamId.data)
+  if (!result.applied) setResponseStatus(event, 202)
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -21,7 +22,9 @@ export default defineAdminEventHandler(async (event, admin) => {
       openapiSha256: result.connection.openapiSha256,
       endpointCount: result.endpoints.filter(endpoint => (
         !endpoint.system && !endpoint.support
-      )).length
+      )).length,
+      applied: result.applied,
+      publicationError: result.publicationError
     }
   })
   return result

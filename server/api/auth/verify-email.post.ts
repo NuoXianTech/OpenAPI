@@ -1,18 +1,13 @@
-import { createError, getQuery } from 'h3'
-import { verifyVerificationToken } from '~~/server/utils/verification-token'
+// POST prevents mail scanners and browser prefetching from activating accounts.
+import { createError } from 'h3'
+import { verifyEmailSchema } from '~~/server/schemas/auth'
 import { userService } from '~~/server/services/user-service'
 import { createUserSession } from '~~/server/utils/auth'
-import { readQueryString, readRequiredQueryNumber } from '~~/server/utils/request-query'
+import { verifyVerificationToken } from '~~/server/utils/verification-token'
+import { readZodBody } from '~~/server/utils/zod'
 
 export default defineEventHandler(async (event) => {
-  const query = getQuery(event)
-  const userId = readRequiredQueryNumber(query, 'user', 'Invalid verification link')
-  const token = readQueryString(query.token)
-
-  if (!token) {
-    throw createError({ statusCode: 400, message: 'Invalid verification link' })
-  }
-
+  const { userId, token } = await readZodBody(event, verifyEmailSchema)
   const user = await userService.getById(userId)
   if (!user) {
     throw createError({ statusCode: 404, message: 'User not found' })
@@ -29,14 +24,12 @@ export default defineEventHandler(async (event) => {
 
   const updated = await userService.activateUser(userId)
   if (!updated) {
+    const current = await userService.getById(userId)
+    if (current?.emailVerifiedAt) return { alreadyVerified: true }
     throw createError({ statusCode: 404, message: 'User not found' })
   }
 
-  await createUserSession(event, {
-    id: updated.id,
-    role: 'user'
-  })
-
+  await createUserSession(event, { id: updated.id, role: 'user' })
   const { passwordHash: _, ...safe } = updated
   return { alreadyVerified: false, user: safe }
 })

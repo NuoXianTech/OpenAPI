@@ -1049,4 +1049,32 @@ describe('routing revision service', () => {
       .find(entry => entry.upstream.id === service.upstream.id)
       ?.endpoints[0]).toMatchObject({ status: 'live' })
   })
+
+  it('rolls back every Environment when Workspace publication conflicts', async () => {
+    await createRoutingGraph({
+      productSlug: 'workspace-publication',
+      hosts: ['shared.example.com']
+    })
+    await platformWorkspaceService.createEnvironment({
+      workspaceId: defaults.workspace.id,
+      slug: 'production',
+      name: 'Production',
+      defaultDomain: 'api.example.com'
+    })
+
+    await expect(routingRevisionService.publishWorkspace(
+      defaults.workspace.id,
+      null
+    )).rejects.toMatchObject({
+      statusCode: 409,
+      data: { code: 'REVISION_ROUTE_CONFLICT' }
+    })
+
+    const workspaceEnvironments = await database.select().from(schema.environments)
+      .where(eq(schema.environments.workspaceId, defaults.workspace.id))
+    expect(workspaceEnvironments.every(environment => (
+      environment.activeRevisionId === null
+    ))).toBe(true)
+    expect(await database.select().from(schema.routingRevisions)).toHaveLength(0)
+  })
 })

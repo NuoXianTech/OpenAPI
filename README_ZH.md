@@ -68,7 +68,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 仅在创建或重置成功时返回一次完整值，兑换码仅在批量生成成功时返回一次完整值；之后列表和历史记录只显示掩码预览。数据库不保存裸明文列，可使用以下命令分别生成独立随机值：
+启动前必须配置 `NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET`。API Key 所有者可按需重复查看完整值，普通列表和历史记录只显示掩码预览；兑换码仅在批量生成成功时返回一次完整值。数据库不保存裸明文列，可使用以下命令分别生成独立随机值：
 
 ```bash
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"

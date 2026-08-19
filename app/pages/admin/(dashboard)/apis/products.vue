@@ -2,9 +2,9 @@
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformApiVersion, PlatformProduct } from '~/types/platform'
+import type { PlatformApiVersion, PlatformProduct, PlatformWorkspacePublicationResult } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
-import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
+import { formatPlatformDate, platformPublicationFeedback, platformStatusColor } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const context = useAdminPlatformContext()
@@ -73,7 +73,15 @@ async function removeProduct(product: PlatformProduct) {
     confirmColor: 'error',
     onConfirm: async () => {
       try {
-        await $fetch(`/api/admin/v1/products/${product.id}`, { method: 'DELETE' })
+        const result = await $fetch<PlatformWorkspacePublicationResult>(
+          `/api/admin/v1/products/${product.id}`,
+          { method: 'DELETE' }
+        )
+        toast.add(platformPublicationFeedback(
+          result,
+          t('common.feedback.deleted'),
+          t('admin.apis.routing.feedback.savedPendingPublish')
+        ))
         await refreshProducts()
       } catch (error: unknown) {
         toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
@@ -90,7 +98,15 @@ async function removeVersion(product: PlatformProduct, version: PlatformApiVersi
     confirmColor: 'error',
     onConfirm: async () => {
       try {
-        await $fetch(`/api/admin/v1/versions/${version.id}`, { method: 'DELETE' })
+        const result = await $fetch<PlatformWorkspacePublicationResult>(
+          `/api/admin/v1/versions/${version.id}`,
+          { method: 'DELETE' }
+        )
+        toast.add(platformPublicationFeedback(
+          result,
+          t('common.feedback.deleted'),
+          t('admin.apis.routing.feedback.savedPendingPublish')
+        ))
         await refreshProducts()
       } catch (error: unknown) {
         toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })

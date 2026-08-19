@@ -1,4 +1,4 @@
-import { createError, getRouterParam } from 'h3'
+import { createError, getRouterParam, setResponseStatus } from 'h3'
 import { z } from 'zod'
 import { adminUpdateServiceConfigurationSchema } from '~~/server/schemas/admin'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
@@ -19,6 +19,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     upstreamId.data,
     body
   )
+  if (!result.applied) setResponseStatus(event, 202)
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
@@ -28,7 +29,9 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: {
       revision: result.revision,
       status: result.status,
-      targetCount: result.targets.length
+      targetCount: result.targets.length,
+      applied: result.applied,
+      publicationError: result.publicationError
     }
   })
   return result

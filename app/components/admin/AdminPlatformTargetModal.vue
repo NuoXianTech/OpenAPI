@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformUpstream, PlatformUpstreamTarget } from '~/types/platform'
+import type { PlatformUpstream, PlatformUpstreamTarget, PlatformWorkspaceMutationResult } from '~/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, requiredTextError } from '~/utils/form-validation'
+import { platformPublicationFeedback } from '~/utils/platform-display'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
@@ -65,7 +66,7 @@ function validate(value: Partial<TargetFormState>): FormError<string>[] {
 async function submit(event: FormSubmitEvent<TargetFormState>) {
   loading.value = true
   try {
-    const target = await $fetch<PlatformUpstreamTarget>(
+    const target = await $fetch<PlatformWorkspaceMutationResult<PlatformUpstreamTarget>>(
       isEditing.value
         ? `/api/admin/v1/targets/${props.target!.id}`
         : `/api/admin/v1/upstreams/${props.upstream.id}/targets`,
@@ -78,12 +79,13 @@ async function submit(event: FormSubmitEvent<TargetFormState>) {
         }
       }
     )
-    toast.add({
-      title: t(isEditing.value
+    toast.add(platformPublicationFeedback(
+      target,
+      t(isEditing.value
         ? 'admin.apis.routing.feedback.targetUpdated'
         : 'admin.apis.routing.feedback.targetCreated'),
-      color: 'success'
-    })
+      t('admin.apis.routing.feedback.savedPendingPublish')
+    ))
     open.value = false
     emit('saved', target)
   } catch (error: unknown) {

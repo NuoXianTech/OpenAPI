@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformEnvironment, PlatformWorkspace } from '~/types/platform'
+import type { PlatformEnvironment, PlatformWorkspace, PlatformWorkspaceMutationResult } from '~/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, requiredTextError } from '~/utils/form-validation'
+import { platformPublicationFeedback } from '~/utils/platform-display'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
@@ -45,7 +46,7 @@ function validate(value: Partial<typeof state>): FormError<string>[] {
 async function submit(event: FormSubmitEvent<typeof state>) {
   loading.value = true
   try {
-    const environment = await $fetch<PlatformEnvironment>(
+    const environment = await $fetch<PlatformWorkspaceMutationResult<PlatformEnvironment>>(
       isEditing.value ? `/api/admin/v1/environments/${props.environment!.id}` : '/api/admin/v1/environments',
       {
         method: isEditing.value ? 'PATCH' : 'POST',
@@ -57,7 +58,11 @@ async function submit(event: FormSubmitEvent<typeof state>) {
         }
       }
     )
-    toast.add({ title: t(isEditing.value ? 'admin.apis.routing.feedback.environmentUpdated' : 'admin.apis.routing.feedback.environmentCreated'), color: 'success' })
+    toast.add(platformPublicationFeedback(
+      environment,
+      t(isEditing.value ? 'admin.apis.routing.feedback.environmentUpdated' : 'admin.apis.routing.feedback.environmentCreated'),
+      t('admin.apis.routing.feedback.savedPendingPublish')
+    ))
     open.value = false
     emit('saved', environment)
   } catch (error) {

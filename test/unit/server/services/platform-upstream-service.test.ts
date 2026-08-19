@@ -161,4 +161,29 @@ describe('Platform upstream target state', () => {
       where: eq(schema.upstreamTargets.id, readyTarget.id)
     })).toMatchObject({ enabled: true })
   })
+
+  it('serializes concurrent attempts to disable the last two Targets', async () => {
+    const upstream = await platformUpstreamService.create({
+      workspaceId,
+      slug: 'concurrent-target-disable',
+      name: 'Concurrent Target Disable',
+      kind: 'external',
+      loadBalancing: 'round_robin',
+      targets: [
+        { baseUrl: 'https://one.example.com', weight: 1 },
+        { baseUrl: 'https://two.example.com', weight: 1 }
+      ]
+    })
+    await createActiveRoute(upstream.id)
+
+    const results = await Promise.allSettled(upstream.targets.map(target => (
+      platformUpstreamService.updateTarget(target.id, { enabled: false })
+    )))
+
+    expect(results.filter(result => result.status === 'fulfilled')).toHaveLength(1)
+    expect(results.filter(result => result.status === 'rejected')).toHaveLength(1)
+    const remaining = await database.select().from(schema.upstreamTargets)
+      .where(eq(schema.upstreamTargets.upstreamServiceId, upstream.id))
+    expect(remaining.filter(target => target.enabled)).toHaveLength(1)
+  })
 })

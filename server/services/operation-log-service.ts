@@ -32,6 +32,20 @@ export interface OperationLogFilters {
   endAt?: Date
 }
 
+async function insertOperationLog(input: OperationLogInput): Promise<void> {
+  await db.insert(operationLogs).values({
+    userId: input.userId ?? null,
+    actor: input.actor?.slice(0, 140) ?? null,
+    action: input.action,
+    resourceType: input.resourceType ?? null,
+    resourceId: input.resourceId !== null && input.resourceId !== undefined ? String(input.resourceId).slice(0, 120) : null,
+    ip: input.ip ?? null,
+    userAgent: input.userAgent?.slice(0, 500) ?? null,
+    detail: input.detail ?? null,
+    status: input.status || 'success'
+  })
+}
+
 interface ListOperationLogsInput extends OperationLogFilters {
   limit?: number
   offset?: number
@@ -88,21 +102,15 @@ interface OperationLogListResult {
 export const operationLogService = {
   async addLog(input: OperationLogInput) {
     try {
-      await db.insert(operationLogs).values({
-        userId: input.userId ?? null,
-        actor: input.actor?.slice(0, 140) ?? null,
-        action: input.action,
-        resourceType: input.resourceType ?? null,
-        resourceId: input.resourceId !== null && input.resourceId !== undefined ? String(input.resourceId).slice(0, 120) : null,
-        ip: input.ip ?? null,
-        userAgent: input.userAgent?.slice(0, 500) ?? null,
-        detail: input.detail ?? null,
-        status: input.status || 'success'
-      })
+      await insertOperationLog(input)
     } catch (error) {
       // 审计日志落库失败不应阻塞主业务流程，仅记录控制台。
       console.error('failed to write operation log', { input, error })
     }
+  },
+
+  async addRequiredLog(input: OperationLogInput) {
+    await insertOperationLog(input)
   },
 
   async list(filters: ListOperationLogsInput = {}): Promise<OperationLogListResult> {

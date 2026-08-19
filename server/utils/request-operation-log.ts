@@ -3,11 +3,20 @@ import { operationLogService, type OperationLogInput } from '~~/server/services/
 import { readRequestMeta } from '~~/server/utils/request-meta'
 
 /** HTTP adapter that enriches an application audit entry with request metadata. */
-export async function addRequestOperationLog(event: H3Event, input: OperationLogInput): Promise<void> {
+export async function addRequestOperationLog(
+  event: H3Event,
+  input: OperationLogInput,
+  options: { required?: boolean } = {}
+): Promise<void> {
   const requestMeta = readRequestMeta(event)
-  await operationLogService.addLog({
+  const enriched = {
     ...input,
     ip: input.ip ?? requestMeta.ip,
     userAgent: input.userAgent ?? requestMeta.userAgent
-  })
+  }
+  if (options.required) {
+    await operationLogService.addRequiredLog(enriched)
+    return
+  }
+  await operationLogService.addLog(enriched)
 }

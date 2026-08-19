@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import type { H3Event } from 'h3'
 import { isSupportedLocale } from '#shared/config/locale-defaults'
-import { createError, defineEventHandler, getCookie, getRequestURL, setCookie } from 'h3'
+import { createError, defineEventHandler, getCookie, getRequestURL, setCookie, setResponseHeader } from 'h3'
 import { assertAdminOnboardingCompleted } from '~~/server/services/admin-onboarding-service'
 import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
@@ -187,6 +187,7 @@ function defineAuthorizedEventHandler<TUser, TResult>(
   handler: AuthorizedEventHandler<TUser, TResult>
 ) {
   return defineEventHandler(async (event) => {
+    setResponseHeader(event, 'cache-control', 'private, no-store')
     try {
       return await handler(event, await authorize(event))
     } catch (error) {

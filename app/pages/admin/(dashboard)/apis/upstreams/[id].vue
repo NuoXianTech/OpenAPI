@@ -3,10 +3,11 @@ import { usePrivateResource } from '~/composables/dashboard/use-private-resource
 import type {
   ServiceConfigurationSyncResult,
   ServiceConfigurationValue,
-  ServiceConfigurationView
+  ServiceConfigurationView,
+  PlatformWorkspacePublicationResult
 } from '~/types/platform'
 import { parseFetchError } from '~/utils/client-error'
-import { serviceAvailabilityColor } from '~/utils/platform-display'
+import { platformPublicationFeedback, serviceAvailabilityColor } from '~/utils/platform-display'
 
 const route = useRoute()
 const { t } = useI18n()
@@ -102,14 +103,16 @@ function targetStatusLabel(target: ServiceConfigurationView['targets'][number]) 
 async function discover() {
   discovering.value = true
   try {
-    resource.data.value = await $fetch<ServiceConfigurationView>(
+    const result = await $fetch<ServiceConfigurationView & PlatformWorkspacePublicationResult>(
       `/api/admin/v1/upstreams/${upstreamId.value}/discover`,
       { method: 'POST' }
     )
-    toast.add({
-      title: t('admin.apis.routing.serviceControl.discoverySucceeded'),
-      color: 'success'
-    })
+    resource.data.value = result
+    toast.add(platformPublicationFeedback(
+      result,
+      t('admin.apis.routing.serviceControl.discoverySucceeded'),
+      t('admin.apis.routing.feedback.savedPendingPublish')
+    ))
   } catch (error: unknown) {
     toast.add({
       title: parseFetchError(
@@ -165,7 +168,7 @@ async function saveConfiguration(payload: {
 }) {
   saving.value = true
   try {
-    const result = await $fetch<ServiceConfigurationSyncResult>(
+    const result = await $fetch<ServiceConfigurationSyncResult & PlatformWorkspacePublicationResult>(
       `/api/admin/v1/upstreams/${upstreamId.value}/configuration`,
       { method: 'PUT', body: payload }
     )
@@ -173,11 +176,13 @@ async function saveConfiguration(payload: {
       title: result.status === 'synced'
         ? t('admin.apis.routing.serviceControl.configurationSynced')
         : t('admin.apis.routing.serviceControl.configurationDrifted'),
-      description: t(
-        'admin.apis.routing.serviceControl.configurationRevision',
-        { revision: result.revision }
-      ),
-      color: result.status === 'synced' ? 'success' : 'warning'
+      description: result.applied
+        ? t(
+            'admin.apis.routing.serviceControl.configurationRevision',
+            { revision: result.revision }
+          )
+        : t('admin.apis.routing.feedback.savedPendingPublish'),
+      color: result.status === 'synced' && result.applied ? 'success' : 'warning'
     })
     await resource.refresh()
   } catch (error: unknown) {
@@ -196,7 +201,7 @@ async function saveConfiguration(payload: {
 async function synchronizeConfiguration() {
   synchronizing.value = true
   try {
-    const result = await $fetch<ServiceConfigurationSyncResult>(
+    const result = await $fetch<ServiceConfigurationSyncResult & PlatformWorkspacePublicationResult>(
       `/api/admin/v1/upstreams/${upstreamId.value}/configuration/sync`,
       { method: 'POST' }
     )
@@ -204,7 +209,10 @@ async function synchronizeConfiguration() {
       title: result.status === 'synced'
         ? t('admin.apis.routing.serviceControl.configurationSynced')
         : t('admin.apis.routing.serviceControl.configurationDrifted'),
-      color: result.status === 'synced' ? 'success' : 'warning'
+      description: result.applied
+        ? undefined
+        : t('admin.apis.routing.feedback.savedPendingPublish'),
+      color: result.status === 'synced' && result.applied ? 'success' : 'warning'
     })
     await resource.refresh()
   } catch (error: unknown) {

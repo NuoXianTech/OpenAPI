@@ -14,7 +14,7 @@ import {
 } from '~~/server/utils/stored-secret'
 
 const MAX_BATCH_COUNT = 5
-const MAX_API_KEY_NAME_LENGTH = 100
+const MAX_API_KEY_NAME_LENGTH = 80
 const RANDOM_NAME_SUFFIX_LENGTH = 7
 
 function generateApiKey() {
@@ -127,7 +127,7 @@ export const apiKeyService = {
    * 创建一个或多个 API Key（单事务）。
    *
    * 批量模式（count > 1）：首个 key 用 input.name 原值；后续追加 -<6 位十六进制后缀>
-   * 区分。Schema 字段 `name` 最大 100，留足够空间。
+   * 区分。名称（含后缀）与 Schema 一致，最多 80 个字符。
    *
    * 注意：每条 key 各自生成 nonce，所以即使批量也必须逐行 insert（不能合并 values）。
    */

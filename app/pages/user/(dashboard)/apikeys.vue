@@ -19,7 +19,9 @@ useHead({ title: () => t('user.apiKeys.title') })
 const toast = useToast()
 const { copyText } = useCopyFeedback()
 const revealedKeys = ref<Record<number, string>>({})
-const revealingKeyId = ref<number | null>(null)
+const revealingKeyIds = reactive(new Set<number>())
+const revealControllers = new Map<number, AbortController>()
+const revealVersions = new Map<number, number>()
 const {
   getIpText,
   getQuotaText,
@@ -162,8 +164,16 @@ function openReset(row: ApiKeyItem) {
 }
 
 function forgetRevealedKey(id: number) {
+  cancelReveal(id)
   const { [id]: _forgotten, ...remaining } = revealedKeys.value
   revealedKeys.value = remaining
+}
+
+function cancelReveal(id: number) {
+  revealVersions.set(id, (revealVersions.get(id) ?? 0) + 1)
+  revealControllers.get(id)?.abort()
+  revealControllers.delete(id)
+  revealingKeyIds.delete(id)
 }
 
 async function toggleKeyVisibility(row: ApiKeyItem) {
@@ -171,26 +181,40 @@ async function toggleKeyVisibility(row: ApiKeyItem) {
     forgetRevealedKey(row.id)
     return
   }
+  if (revealingKeyIds.has(row.id)) return
 
-  revealingKeyId.value = row.id
+  const version = (revealVersions.get(row.id) ?? 0) + 1
+  revealVersions.set(row.id, version)
+  const controller = new AbortController()
+  revealControllers.set(row.id, controller)
+  revealingKeyIds.add(row.id)
   try {
     const revealed = await $fetch<CreatedApiKeyItem>(
       '/api/user/apikeys/reveal',
-      { method: 'POST', body: { id: row.id } }
+      { method: 'POST', body: { id: row.id }, signal: controller.signal }
     )
+    if (revealVersions.get(row.id) !== version) return
     revealedKeys.value = {
       ...revealedKeys.value,
       [row.id]: revealed.apiKey
     }
   } catch (err) {
+    if (controller.signal.aborted || revealVersions.get(row.id) !== version) return
     toast.add({
       title: parseFetchError(err, t('user.apiKeys.revealFailed')),
       color: 'error'
     })
   } finally {
-    revealingKeyId.value = null
+    if (revealVersions.get(row.id) === version) {
+      revealControllers.delete(row.id)
+      revealingKeyIds.delete(row.id)
+    }
   }
 }
+
+onBeforeUnmount(() => {
+  for (const id of revealControllers.keys()) cancelReveal(id)
+})
 
 async function copyRevealedKey(id: number) {
   const apiKey = revealedKeys.value[id]
@@ -416,7 +440,7 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
                 >
                   <UButton
                     :icon="revealedKeys[row.original.id] ? 'i-mdi-eye-off-outline' : 'i-mdi-eye-outline'"
-                    :loading="revealingKeyId === row.original.id"
+                    :loading="revealingKeyIds.has(row.original.id)"
                     :aria-label="$t(revealedKeys[row.original.id] ? 'common.apiKeys.actions.hide' : 'common.apiKeys.actions.view')"
                     color="neutral"
                     variant="ghost"

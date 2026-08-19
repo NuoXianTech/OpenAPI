@@ -1,4 +1,4 @@
-import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { notificationDeliveries, notificationMessages, users } from '~~/server/db/schema'
 import type { MessageLevel } from '#shared/types/content'
@@ -36,6 +36,23 @@ async function insertDeliveries(
   }
 }
 
+async function fanOutFutureMessages(
+  tx: DatabaseTransaction,
+  userId: number
+) {
+  const messages = await tx.select({ id: notificationMessages.id }).from(notificationMessages)
+    .where(and(
+      eq(notificationMessages.audience, 'all_with_future'),
+      isNull(notificationMessages.deletedAt)
+    ))
+
+  await insertDeliveries(tx, messages.map(({ id: messageId }) => ({
+    messageId,
+    recipientUserId: userId
+  })))
+  return messages.length
+}
+
 export const notificationService = {
   /**
    * 创建一条 message + 立即投递。
@@ -51,6 +68,18 @@ export const notificationService = {
         const valid = await tx.select({ id: users.id }).from(users)
           .where(inArray(users.id, ids))
         recipientIds = valid.map((row: { id: number }) => row.id)
+      } else if (input.audience === 'all_with_future') {
+        // Lock every current user in a stable order. activateUser updates its user
+        // row before reading historical messages, so either activation observes
+        // this message or this send observes the activated user.
+        const candidates = await tx.select({
+          id: users.id,
+          isActive: users.isActive,
+          isBanned: users.isBanned
+        }).from(users).orderBy(asc(users.id)).for('update')
+        recipientIds = candidates
+          .filter(user => user.isActive && !user.isBanned)
+          .map(user => user.id)
       } else {
         const activeUsers = await tx.select({ id: users.id }).from(users)
           .where(and(eq(users.isActive, true), eq(users.isBanned, false)))
@@ -83,17 +112,12 @@ export const notificationService = {
    * 在用户激活时补发 audience='all_with_future' 的全部历史消息。
    * 用 ON CONFLICT DO NOTHING 保证幂等（重复激活不会重复投递）。
    */
-  async fanOutFutureMessagesTo(userId: number) {
-    return db.transaction(async (tx: DatabaseTransaction) => {
-      const messages = await tx.select({ id: notificationMessages.id }).from(notificationMessages)
-        .where(and(
-          eq(notificationMessages.audience, 'all_with_future'),
-          isNull(notificationMessages.deletedAt)
-        ))
-
-      await insertDeliveries(tx, messages.map(({ id: messageId }) => ({ messageId, recipientUserId: userId })))
-      return messages.length
-    })
+  async fanOutFutureMessagesTo(
+    userId: number,
+    tx?: DatabaseTransaction
+  ) {
+    if (tx) return fanOutFutureMessages(tx, userId)
+    return db.transaction(transaction => fanOutFutureMessages(transaction, userId))
   },
 
   /** 用户视角列表（join message，过滤被管理员删除的 message） */

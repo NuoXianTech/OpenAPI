@@ -165,6 +165,16 @@ export interface PlatformEndpointPublicationResult {
   created?: boolean
 }
 
+export interface PlatformWorkspacePublicationResult {
+  applied: boolean
+  publicationError: {
+    code: string
+    message: string
+  } | null
+}
+
+export type PlatformWorkspaceMutationResult<T> = T & Partial<PlatformWorkspacePublicationResult>
+
 interface PlatformRoutingRevisionPayload {
   schemaVersion: 1
   revisionId: string

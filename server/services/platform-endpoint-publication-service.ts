@@ -135,6 +135,33 @@ export async function applyEndpointRevision(
   }
 }
 
+export async function applyWorkspaceRevision(
+  workspaceId: string,
+  createdBy: number | null
+) {
+  try {
+    const revisions = await routingRevisionService.publishWorkspace(
+      workspaceId,
+      createdBy
+    )
+    return {
+      applied: true as const,
+      revisions: revisions.map(revision => ({
+        id: revision.id,
+        sequence: revision.sequence,
+        environmentId: revision.environmentId
+      })),
+      publicationError: null
+    }
+  } catch (error) {
+    return {
+      applied: false as const,
+      revisions: [],
+      publicationError: describePublicationError(error)
+    }
+  }
+}
+
 export function routeMutationFromBinding(
   binding: RouteBinding,
   patch: Partial<RouteMutationInput> = {}

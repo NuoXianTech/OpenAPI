@@ -28,3 +28,8 @@ export interface ConfirmEmailChangeInput {
   userId: number
   token: string
 }
+
+export interface VerifyEmailInput {
+  userId: number
+  token: string
+}

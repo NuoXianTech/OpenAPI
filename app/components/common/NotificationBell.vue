@@ -32,6 +32,10 @@ const loadFailed = ref(false)
 const onlyUnread = ref(false)
 const expandedId = ref<number | null>(null)
 const { t, locale } = useI18n()
+let listRequestVersion = 0
+let listController: AbortController | null = null
+let unreadRequestVersion = 0
+let unreadController: AbortController | null = null
 
 const notificationLevelClasses: Record<MessageLevel, string> = {
   info: 'notification-item__level--info',
@@ -49,25 +53,54 @@ function getNotificationExcerpt(content: string): string {
 }
 
 async function fetchUnreadCount(): Promise<void> {
+  const version = ++unreadRequestVersion
+  unreadController?.abort()
+  const controller = new AbortController()
+  unreadController = controller
   try {
-    const res = await $fetch<{ count: number }>('/api/notifications/unread-count')
-    unread.value = res.count
-  } catch { /* ignore */ }
+    const res = await $fetch<{ count: number }>('/api/notifications/unread-count', {
+      signal: controller.signal
+    })
+    if (version === unreadRequestVersion) unread.value = res.count
+  } catch { /* ignore */ } finally {
+    if (unreadController === controller) unreadController = null
+  }
 }
 
 async function fetchList(): Promise<void> {
+  const version = ++listRequestVersion
+  listController?.abort()
+  const controller = new AbortController()
+  listController = controller
   loading.value = true
   loadFailed.value = false
   try {
     const res = await $fetch<Notification[]>('/api/notifications/list', {
-      query: { limit: 200, unread: onlyUnread.value ? '1' : '0' }
+      query: { limit: 200, unread: onlyUnread.value ? '1' : '0' },
+      signal: controller.signal
     })
-    items.value = res || []
+    if (version === listRequestVersion) items.value = res || []
   } catch {
-    loadFailed.value = true
+    if (version === listRequestVersion && !controller.signal.aborted) {
+      loadFailed.value = true
+    }
   } finally {
-    loading.value = false
+    if (version === listRequestVersion) loading.value = false
+    if (listController === controller) listController = null
   }
+}
+
+function cancelListRequest(): void {
+  listRequestVersion += 1
+  listController?.abort()
+  listController = null
+  loading.value = false
+}
+
+function cancelUnreadRequest(): void {
+  unreadRequestVersion += 1
+  unreadController?.abort()
+  unreadController = null
 }
 
 async function toggleNotification(n: Notification): Promise<void> {
@@ -76,6 +109,7 @@ async function toggleNotification(n: Notification): Promise<void> {
   if (!willExpand || n.isRead) return
 
   try {
+    cancelUnreadRequest()
     await $fetch('/api/notifications/mark-read', { method: 'POST', body: { id: n.id } })
     n.isRead = true
     n.readAt = new Date().toISOString()
@@ -85,6 +119,8 @@ async function toggleNotification(n: Notification): Promise<void> {
 
 async function markAllRead(): Promise<void> {
   try {
+    cancelListRequest()
+    cancelUnreadRequest()
     await $fetch('/api/notifications/mark-all-read', { method: 'POST' })
     items.value.forEach((n) => {
       if (!n.isRead) {
@@ -120,6 +156,10 @@ watch(onlyUnread, () => {
 useIntervalFn(fetchUnreadCount, 60_000)
 onMounted(() => {
   void fetchUnreadCount()
+})
+onBeforeUnmount(() => {
+  cancelListRequest()
+  cancelUnreadRequest()
 })
 </script>
 

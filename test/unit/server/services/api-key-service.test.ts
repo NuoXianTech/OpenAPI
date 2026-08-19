@@ -29,7 +29,7 @@ beforeAll(async () => {
     CREATE TABLE api_keys (
       id serial PRIMARY KEY,
       user_id integer NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      name varchar(100) NOT NULL,
+      name varchar(80) NOT NULL,
       key_digest varchar(64) NOT NULL UNIQUE,
       key_ciphertext text NOT NULL,
       key_preview varchar(32) NOT NULL,
@@ -65,8 +65,8 @@ describe('api key service', () => {
       count: 2
     })
 
-    expect(Array.from(created[0]!.name)).toHaveLength(100)
-    expect(Array.from(created[1]!.name)).toHaveLength(100)
+    expect(Array.from(created[0]!.name)).toHaveLength(80)
+    expect(Array.from(created[1]!.name)).toHaveLength(80)
     expect(created[1]!.name).toMatch(/-[a-f0-9]{6}$/)
   })
 
