@@ -44,7 +44,7 @@ Git Tag 必须：
 ## 4. 发布前门禁
 
 1. 确认 [版本与支持范围](../architecture/release-scope.md) 中适用于目标版本的要求已经完成。
-2. 审查数据库 Schema 和迁移；已经发布的 journal、SQL 和 snapshot 只能保留，新 Schema 必须追加迁移。
+2. 审查数据库 Schema 和迁移；当前破坏性重建的唯一 `0000` 要求目标环境重建数据库。新基线再次正式发布后，journal、SQL 和 snapshot 必须冻结，新 Schema 只能追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
 4. 核对运行时变量、密钥和 Service Token 维护计划；`0.1.0` 不支持双 Token 在线轮换。
 5. 确认同名 `openapi-service` Tag 已经发布。Platform 版本工作流默认检出同名 Service Tag；需要验证其他兼容版本时，将 Repository Variable `OPENAPI_SERVICE_REF` 设为不可变 Tag 或 Commit。
@@ -64,7 +64,7 @@ Git Tag 必须：
 8. 执行 [Platform 与 Service 集成测试](./service-integration-testing.md)。
 9. 按 [生产就绪清单](./production-readiness.md) 和[数据库迁移与版本升级](./database-migrations.md)完成备份、故障和回滚准备。
 
-`0.1.0` 的 `0000` 是正式迁移链起点。从正式 `0.1.0` 升级时应用当前 Release 新增的迁移；更早的实验数据库必须先完成经验证的数据导入或使用新数据库。
+当前开发线的唯一 `0000` 与旧 `0.1.0`、`0.1.1` 迁移链不兼容。Release Notes 必须明确要求重建 PostgreSQL 数据库或 PGlite 数据目录，并说明必要数据的导出/导入方案。
 
 ## 5. 准备 Release PR
 

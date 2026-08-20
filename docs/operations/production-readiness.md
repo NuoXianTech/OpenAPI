@@ -32,7 +32,7 @@ pnpm build
 | 项目 | 检查 |
 | --- | --- |
 | 数据库 | PostgreSQL：`DATABASE_URL` 指向生产库，账号权限满足迁移和运行；PGlite：不配置 `DATABASE_URL`，并确认 `.data/pglite` 是持久化目录 |
-| 数据库迁移 | `0.1.0` 的 `0000` 基线保持不可修改，后续版本只追加迁移；已确认 `.output/server/migrate.mjs` 与对应 SQL 同时进入产物，并准备按[数据库升级流程](./database-migrations.md)执行 |
+| 数据库迁移 | 当前唯一 `0000` 是破坏性重建基线；旧数据库不得原地升级。已完成备份与重建计划，并确认 `.output/server/migrate.mjs` 与对应 SQL 同时进入产物 |
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_API_KEY_SECRET` 已独立生成并完成安全备份；每个 Internal Upstream 使用独立 Service Token，并确认数据库中只保存密文 |
 | Platform 入口 | Console、站内 API 和动态 Gateway 共用一个入口；反向代理只将预期域名转发到 Nitro，公共 Route 不占用 Platform 保留路径 |
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；配置后 Redis 不可用会 fail-closed，多实例必须配置 |

@@ -15,7 +15,10 @@ const runtimeDirectory = process.argv[1]
   : process.cwd()
 const migrationsRelativePath = path.join('db', 'migrations', 'postgresql')
 const MIGRATION_ADVISORY_LOCK_KEY = 'openapi:database-migrations'
-const ignoredPostgresNoticeCodes = new Set(['42P06', '42P07'])
+const ignoredPostgresNoticeCodes = new Set([
+  '42P06', // duplicate_schema from idempotent migration setup
+  '42P07' // duplicate_table from idempotent migration setup
+])
 
 /**
  * @typedef {{
@@ -26,7 +29,7 @@ const ignoredPostgresNoticeCodes = new Set(['42P06', '42P07'])
  * }} MigrationOptions
  */
 
-function handlePostgresNotice(notice) {
+export function handlePostgresNotice(notice) {
   if (ignoredPostgresNoticeCodes.has(notice.code)) return
   console.log(notice)
 }

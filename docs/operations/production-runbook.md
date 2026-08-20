@@ -67,7 +67,7 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 
 生产数据库至少保留每日备份。发布数据库迁移前必须手动创建一次备份或快照。
 
-`0.1.0` 的 `0000` 是不可修改的正式基线，后续版本只追加迁移。正式 `0.1.0` 数据库可以连续升级；更早的实验数据库和 PGlite Volume 必须使用全新数据库，或先执行经过演练的数据导入方案。
+当前开发线的唯一 `0000` 是破坏性重建基线。旧 `0.1.0`、`0.1.1` 数据库和 PGlite Volume 不能原地升级；部署包含新基线的版本前必须保留备份并重建数据库，必要数据通过经过演练的导出/导入方案迁移。
 
 ```bash
 pg_dump "$DATABASE_URL" --format=custom --file="backup-$(date +%Y%m%d-%H%M%S).dump"

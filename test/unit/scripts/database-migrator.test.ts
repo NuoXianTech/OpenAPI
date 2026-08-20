@@ -1,9 +1,12 @@
-import { copyFile, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { PGlite } from '@electric-sql/pglite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { runDatabaseMigrations } from '../../../scripts/database-migrator.mjs'
+import {
+  handlePostgresNotice,
+  runDatabaseMigrations
+} from '../../../scripts/database-migrator.mjs'
 
 const migrationsDir = resolve(process.cwd(), 'server/db/migrations/postgresql')
 const temporaryDirectories: string[] = []
@@ -22,6 +25,42 @@ afterEach(async () => {
 })
 
 describe('database migration runner', () => {
+  it('keeps generated PostgreSQL identifiers within the 63-byte limit', async () => {
+    const journal = JSON.parse(await readFile(join(migrationsDir, 'meta/_journal.json'), 'utf8'))
+    const oversizedIdentifiers: string[] = []
+
+    for (const entry of journal.entries) {
+      const migration = await readFile(join(migrationsDir, `${entry.tag}.sql`), 'utf8')
+      for (const match of migration.matchAll(/"([^"]+)"/g)) {
+        const identifier = match[1]
+        if (identifier && Buffer.byteLength(identifier, 'utf8') > 63) {
+          oversizedIdentifiers.push(identifier)
+        }
+      }
+    }
+
+    expect(oversizedIdentifiers).toEqual([])
+  })
+
+  it('suppresses benign PostgreSQL migration notices', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+
+    handlePostgresNotice({ code: '42P06' })
+    handlePostgresNotice({ code: '42P07' })
+
+    expect(log).not.toHaveBeenCalled()
+  })
+
+  it('keeps identifier truncation notices visible', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined)
+    const notice = { code: '42622', message: 'identifier will be truncated' }
+
+    handlePostgresNotice(notice)
+
+    expect(log).toHaveBeenCalledOnce()
+    expect(log).toHaveBeenCalledWith(notice)
+  })
+
   it('applies the release migration set idempotently', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const dataDir = await createTemporaryDirectory()
@@ -50,77 +89,9 @@ describe('database migration runner', () => {
     expect(result.rows[0]?.count).toBe(journal.entries.length)
   }, 20_000)
 
-  it('upgrades a populated v0.1.0 database without losing published data', async () => {
+  it('creates the finalized baseline schema', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
     const dataDir = await createTemporaryDirectory()
-    const baselineDir = await createTemporaryDirectory()
-    const journal = JSON.parse(await readFile(join(migrationsDir, 'meta/_journal.json'), 'utf8'))
-    const baselineEntry = journal.entries[0]
-    await mkdir(join(baselineDir, 'meta'))
-    await copyFile(
-      join(migrationsDir, `${baselineEntry.tag}.sql`),
-      join(baselineDir, `${baselineEntry.tag}.sql`)
-    )
-    await writeFile(
-      join(baselineDir, 'meta/_journal.json'),
-      JSON.stringify({ ...journal, entries: [baselineEntry] }, null, 2)
-    )
-
-    await runDatabaseMigrations({
-      databaseUrl: '',
-      migrationsDir: baselineDir,
-      pgliteDataDir: dataDir,
-      timeZone: 'UTC'
-    })
-
-    const legacyClient = new PGlite(dataDir)
-    await legacyClient.waitReady
-    await legacyClient.exec(`
-      INSERT INTO users (id, username, email, password_hash, credits, is_active)
-      VALUES
-        (1, 'first', 'first@example.test', 'hash', 10, true),
-        (2, 'second', 'second@example.test', 'hash', 20, true);
-      INSERT INTO notification_messages (id, title, content, audience, recipient_count)
-      VALUES (1, 'Legacy broadcast', 'Body', 'all_current', 2);
-      INSERT INTO notification_deliveries (message_id, recipient_user_id, is_read, read_at)
-      VALUES
-        (1, 1, false, null),
-        (1, 2, true, now());
-      INSERT INTO workspaces (id, slug, name)
-      VALUES ('00000000-0000-4000-8000-000000000001', 'default', 'Default');
-      INSERT INTO environments (id, workspace_id, slug, name)
-      VALUES (
-        '00000000-0000-4000-8000-000000000002',
-        '00000000-0000-4000-8000-000000000001',
-        'development',
-        'Development'
-      );
-      INSERT INTO routing_revisions (
-        id, workspace_id, environment_id, sequence, status,
-        config_payload, checksum, published_at
-      ) VALUES (
-        '00000000-0000-4000-8000-000000000003',
-        '00000000-0000-4000-8000-000000000001',
-        '00000000-0000-4000-8000-000000000002',
-        1,
-        'published',
-        '{}',
-        'legacy-checksum',
-        null
-      );
-      UPDATE environments
-      SET active_revision_id = '00000000-0000-4000-8000-000000000003'
-      WHERE id = '00000000-0000-4000-8000-000000000002';
-      INSERT INTO api_calls (route_id, target_name, path, method, status_code)
-      VALUES (
-        '00000000-0000-4000-8000-000000000004',
-        'Legacy route',
-        '/legacy',
-        'GET',
-        200
-      );
-    `)
-    await legacyClient.close()
 
     await runDatabaseMigrations({
       databaseUrl: '',
@@ -129,30 +100,23 @@ describe('database migration runner', () => {
       timeZone: 'UTC'
     })
 
-    const upgradedClient = new PGlite(dataDir)
-    await upgradedClient.waitReady
-    const [message, revision, call] = await Promise.all([
-      upgradedClient.query<{ recipient_cutoff_user_id: number }>(
-        'select recipient_cutoff_user_id from notification_messages where id = 1'
-      ),
-      upgradedClient.query<{ published_at: Date }>(
-        'select published_at from routing_revisions where id = $1',
-        ['00000000-0000-4000-8000-000000000003']
-      ),
-      upgradedClient.query<{ route_name: string }>(
-        'select route_name from api_calls where path = $1',
-        ['/legacy']
-      )
+    const client = new PGlite(dataDir)
+    await client.waitReady
+    const foreignKeys = await client.query<{ conname: string }>(`
+      select conname
+      from pg_constraint
+      where conrelid = 'upstream_service_connections'::regclass
+        and contype = 'f'
+    `)
+
+    expect(foreignKeys.rows).toEqual([
+      { conname: 'upstream_service_connections_service_fk' }
     ])
-    expect(message.rows[0]?.recipient_cutoff_user_id).toBe(2)
-    expect(revision.rows[0]?.published_at).toBeTruthy()
-    expect(call.rows[0]?.route_name).toBe('Legacy route')
-    await expect(upgradedClient.exec(`
-      UPDATE notification_deliveries
-      SET is_read = true, read_at = null
-      WHERE message_id = 1 AND recipient_user_id = 1;
-    `)).rejects.toThrow()
-    await upgradedClient.close()
+    await expect(client.query('select route_name from api_calls limit 0')).resolves.toBeTruthy()
+    await expect(client.query('select target_name from api_calls limit 0')).rejects.toThrow()
+    await expect(client.query('select published_at from routing_revisions limit 0')).resolves.toBeTruthy()
+    await expect(client.query('select status from routing_revisions limit 0')).rejects.toThrow()
+    await client.close()
   }, 20_000)
 
   it('rejects an incomplete configured migration directory', async () => {

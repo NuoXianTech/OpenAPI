@@ -58,7 +58,9 @@ CREATE TABLE "users" (
 	"token_version" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now(),
-	CONSTRAINT "users_role_chk" CHECK ("users"."role" in ('user', 'admin'))
+	CONSTRAINT "users_role_chk" CHECK ("users"."role" in ('user', 'admin')),
+	CONSTRAINT "users_credits_chk" CHECK ("users"."credits" >= 0),
+	CONSTRAINT "users_token_version_chk" CHECK ("users"."token_version" >= 0)
 );
 --> statement-breakpoint
 CREATE TABLE "oauth_accounts" (
@@ -92,7 +94,7 @@ CREATE TABLE "api_calls" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"request_id" uuid DEFAULT gen_random_uuid() NOT NULL,
 	"route_id" uuid NOT NULL,
-	"target_name" varchar(160),
+	"route_name" varchar(160),
 	"upstream_target_id" uuid,
 	"upstream_target_url" text,
 	"api_key_id" integer,
@@ -199,7 +201,12 @@ CREATE TABLE "notification_deliveries" (
 	"recipient_user_id" integer NOT NULL,
 	"is_read" boolean DEFAULT false NOT NULL,
 	"read_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "notification_deliveries_read_state_chk" CHECK ((
+    "notification_deliveries"."is_read" = true and "notification_deliveries"."read_at" is not null
+  ) or (
+    "notification_deliveries"."is_read" = false and "notification_deliveries"."read_at" is null
+  ))
 );
 --> statement-breakpoint
 CREATE TABLE "notification_messages" (
@@ -210,13 +217,19 @@ CREATE TABLE "notification_messages" (
 	"link_url" varchar(1000),
 	"audience" varchar(20) DEFAULT 'specific' NOT NULL,
 	"recipient_count" integer DEFAULT 0 NOT NULL,
+	"recipient_cutoff_user_id" integer,
 	"sender_user_id" integer,
 	"sender_actor" varchar(140),
 	"deleted_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "notification_messages_level_chk" CHECK ("notification_messages"."level" in ('info', 'success', 'warning', 'critical')),
 	CONSTRAINT "notification_messages_audience_chk" CHECK ("notification_messages"."audience" in ('specific', 'all_current', 'all_with_future')),
-	CONSTRAINT "notification_messages_recipient_count_chk" CHECK ("notification_messages"."recipient_count" >= 0)
+	CONSTRAINT "notification_messages_recipient_count_chk" CHECK ("notification_messages"."recipient_count" >= 0),
+	CONSTRAINT "notification_messages_recipient_cutoff_chk" CHECK ((
+    "notification_messages"."audience" = 'all_current' and "notification_messages"."recipient_cutoff_user_id" >= 0
+  ) or (
+    "notification_messages"."audience" <> 'all_current' and "notification_messages"."recipient_cutoff_user_id" is null
+  ))
 );
 --> statement-breakpoint
 CREATE TABLE "operation_logs" (
@@ -365,15 +378,12 @@ CREATE TABLE "routing_revisions" (
 	"workspace_id" uuid NOT NULL,
 	"environment_id" uuid NOT NULL,
 	"sequence" integer NOT NULL,
-	"status" varchar(20) NOT NULL,
 	"config_payload" jsonb NOT NULL,
 	"checksum" varchar(64) NOT NULL,
 	"created_by" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"published_at" timestamp with time zone,
-	"failure_reason" text,
-	CONSTRAINT "routing_revisions_sequence_chk" CHECK ("routing_revisions"."sequence" > 0),
-	CONSTRAINT "routing_revisions_status_chk" CHECK ("routing_revisions"."status" in ('building', 'published', 'failed', 'superseded'))
+	"published_at" timestamp with time zone NOT NULL,
+	CONSTRAINT "routing_revisions_sequence_chk" CHECK ("routing_revisions"."sequence" > 0)
 );
 --> statement-breakpoint
 CREATE TABLE "upstream_service_connections" (
@@ -465,7 +475,7 @@ ALTER TABLE "openapi_documents" ADD CONSTRAINT "openapi_documents_workspace_id_w
 ALTER TABLE "openapi_documents" ADD CONSTRAINT "openapi_documents_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "routing_revisions" ADD CONSTRAINT "routing_revisions_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "routing_revisions" ADD CONSTRAINT "routing_revisions_environment_id_environments_id_fk" FOREIGN KEY ("environment_id") REFERENCES "public"."environments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "upstream_service_connections" ADD CONSTRAINT "upstream_service_connections_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "upstream_service_connections" ADD CONSTRAINT "upstream_service_connections_service_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_services" ADD CONSTRAINT "upstream_services_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_services" ADD CONSTRAINT "upstream_services_openapi_document_id_openapi_documents_id_fk" FOREIGN KEY ("openapi_document_id") REFERENCES "public"."openapi_documents"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_targets" ADD CONSTRAINT "upstream_targets_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -522,7 +532,6 @@ CREATE INDEX "environments_active_revision_idx" ON "environments" USING btree ("
 CREATE INDEX "openapi_documents_workspace_created_idx" ON "openapi_documents" USING btree ("workspace_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE UNIQUE INDEX "openapi_documents_upstream_hash_uq" ON "openapi_documents" USING btree ("workspace_id","upstream_service_id","content_hash") WHERE "openapi_documents"."upstream_service_id" IS NOT NULL;--> statement-breakpoint
 CREATE UNIQUE INDEX "routing_revisions_environment_sequence_uq" ON "routing_revisions" USING btree ("environment_id","sequence");--> statement-breakpoint
-CREATE UNIQUE INDEX "routing_revisions_environment_published_uq" ON "routing_revisions" USING btree ("environment_id") WHERE "routing_revisions"."status" = 'published';--> statement-breakpoint
 CREATE INDEX "routing_revisions_environment_created_idx" ON "routing_revisions" USING btree ("environment_id","created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "routing_revisions_checksum_idx" ON "routing_revisions" USING btree ("checksum");--> statement-breakpoint
 CREATE UNIQUE INDEX "upstream_services_workspace_slug_uq" ON "upstream_services" USING btree ("workspace_id","slug") WHERE "upstream_services"."deleted_at" IS NULL;--> statement-breakpoint

@@ -2,6 +2,7 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core'
 import {
   boolean,
   check,
+  foreignKey,
   index,
   integer,
   jsonb,
@@ -180,7 +181,7 @@ export const upstreamTargets = pgTable('upstream_targets', {
 ])
 
 export const upstreamServiceConnections = pgTable('upstream_service_connections', {
-  upstreamServiceId: uuid('upstream_service_id').primaryKey().references(() => upstreamServices.id, { onDelete: 'cascade' }),
+  upstreamServiceId: uuid('upstream_service_id').primaryKey(),
   serviceTokenCiphertext: text('service_token_ciphertext').notNull(),
   serviceId: varchar('service_id', { length: 120 }),
   serviceName: varchar('service_name', { length: 160 }),
@@ -200,6 +201,11 @@ export const upstreamServiceConnections = pgTable('upstream_service_connections'
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
 }, table => [
+  foreignKey({
+    name: 'upstream_service_connections_service_fk',
+    columns: [table.upstreamServiceId],
+    foreignColumns: [upstreamServices.id]
+  }).onDelete('cascade'),
   check('upstream_service_connections_revision_chk', sql`${table.configurationRevision} >= 0`)
 ])
 

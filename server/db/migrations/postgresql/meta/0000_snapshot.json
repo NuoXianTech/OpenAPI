@@ -1,5 +1,5 @@
 {
-  "id": "4e7239a7-c9fe-45af-8ba4-ef00b2b4d57b",
+  "id": "ca80738f-9119-4aa7-b939-219043274617",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -588,6 +588,14 @@
         "users_role_chk": {
           "name": "users_role_chk",
           "value": "\"users\".\"role\" in ('user', 'admin')"
+        },
+        "users_credits_chk": {
+          "name": "users_credits_chk",
+          "value": "\"users\".\"credits\" >= 0"
+        },
+        "users_token_version_chk": {
+          "name": "users_token_version_chk",
+          "value": "\"users\".\"token_version\" >= 0"
         }
       },
       "isRLSEnabled": false
@@ -849,8 +857,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "target_name": {
-          "name": "target_name",
+        "route_name": {
+          "name": "route_name",
           "type": "varchar(160)",
           "primaryKey": false,
           "notNull": false
@@ -1830,7 +1838,12 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "notification_deliveries_read_state_chk": {
+          "name": "notification_deliveries_read_state_chk",
+          "value": "(\n    \"notification_deliveries\".\"is_read\" = true and \"notification_deliveries\".\"read_at\" is not null\n  ) or (\n    \"notification_deliveries\".\"is_read\" = false and \"notification_deliveries\".\"read_at\" is null\n  )"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.notification_messages": {
@@ -1881,6 +1894,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": 0
+        },
+        "recipient_cutoff_user_id": {
+          "name": "recipient_cutoff_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "sender_user_id": {
           "name": "sender_user_id",
@@ -1956,6 +1975,10 @@
         "notification_messages_recipient_count_chk": {
           "name": "notification_messages_recipient_count_chk",
           "value": "\"notification_messages\".\"recipient_count\" >= 0"
+        },
+        "notification_messages_recipient_cutoff_chk": {
+          "name": "notification_messages_recipient_cutoff_chk",
+          "value": "(\n    \"notification_messages\".\"audience\" = 'all_current' and \"notification_messages\".\"recipient_cutoff_user_id\" >= 0\n  ) or (\n    \"notification_messages\".\"audience\" <> 'all_current' and \"notification_messages\".\"recipient_cutoff_user_id\" is null\n  )"
         }
       },
       "isRLSEnabled": false
@@ -3373,12 +3396,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "config_payload": {
           "name": "config_payload",
           "type": "jsonb",
@@ -3408,13 +3425,7 @@
           "name": "published_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
-        },
-        "failure_reason": {
-          "name": "failure_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": true
         }
       },
       "indexes": {
@@ -3435,22 +3446,6 @@
             }
           ],
           "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "routing_revisions_environment_published_uq": {
-          "name": "routing_revisions_environment_published_uq",
-          "columns": [
-            {
-              "expression": "environment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "\"routing_revisions\".\"status\" = 'published'",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -3527,10 +3522,6 @@
         "routing_revisions_sequence_chk": {
           "name": "routing_revisions_sequence_chk",
           "value": "\"routing_revisions\".\"sequence\" > 0"
-        },
-        "routing_revisions_status_chk": {
-          "name": "routing_revisions_status_chk",
-          "value": "\"routing_revisions\".\"status\" in ('building', 'published', 'failed', 'superseded')"
         }
       },
       "isRLSEnabled": false
@@ -3660,8 +3651,8 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "upstream_service_connections_upstream_service_id_upstream_services_id_fk": {
-          "name": "upstream_service_connections_upstream_service_id_upstream_services_id_fk",
+        "upstream_service_connections_service_fk": {
+          "name": "upstream_service_connections_service_fk",
           "tableFrom": "upstream_service_connections",
           "tableTo": "upstream_services",
           "columnsFrom": [

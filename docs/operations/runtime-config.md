@@ -80,9 +80,9 @@ Node API Service 的部署配置包含 `API_SERVICE_TOKEN`、独立的 `SERVICE_
 
 首次登录后，如果管理员仍使用初始用户名或邮箱，系统会显示一次初始化弹窗，用于确认用户名、邮箱并强制设置新密码。后续用户名不再作为常规资料项修改，以保证登录日志、操作日志和审计链路稳定。
 
-`0.1.0` 的 `0000` 是不可修改的正式基线，后续版本只追加增量迁移。构建产物同时包含 `.output/server/migrate.mjs` 和 `.output/server/db/migrations/postgresql`；生产机可以在启动新版本前执行 `node .output/server/migrate.mjs`，启动插件仍会幂等复查。`pnpm db:migrate` 只用于源码工作区，不能作为纯构建产物的生产入口。PGlite 使用同一套 PostgreSQL 方言迁移。
+当前开发线已破坏性重建为唯一的 `0000` 完整基线。旧 `0.1.0`、`0.1.1` 数据库或 PGlite Volume 不能原地升级到包含该基线的版本，必须重建数据库或执行经过验证的数据导出/导入。新基线正式发布后才恢复只追加增量迁移的规则。
 
-`0.1.0` 之前的实验数据库或 Volume 不能依赖该迁移链升级；正式 `0.1.0` 数据库则可以依次应用 `0.1.1` 及后续产物携带的增量迁移。完整流程见[数据库迁移与版本升级](./database-migrations.md)。
+构建产物同时包含 `.output/server/migrate.mjs` 和 `.output/server/db/migrations/postgresql`；生产机可以在启动新版本前执行 `node .output/server/migrate.mjs`，启动插件仍会幂等复查。`pnpm db:migrate` 只用于源码工作区，不能作为纯构建产物的生产入口。PGlite 使用同一套 PostgreSQL 方言迁移。完整流程见[数据库迁移与版本升级](./database-migrations.md)。
 
 数据库建议：
 
