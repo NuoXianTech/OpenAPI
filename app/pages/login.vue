@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { parseFetchError } from '~/utils/client-error'
-import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { ADMIN_OVERVIEW_PATH, USER_OVERVIEW_PATH } from '~/constants/dashboard-config'
 import { compactFormErrors, requiredTextError } from '~/utils/form-validation'
 
 definePageMeta({ layout: false })

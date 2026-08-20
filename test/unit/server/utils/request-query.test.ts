@@ -4,6 +4,8 @@ import {
   readQueryDate,
   readQueryNumber,
   readQueryOption,
+  readQueryPositiveInteger,
+  readRequiredQueryPositiveInteger,
   readQueryString,
   readQueryText,
   sanitizeQueryStringForLog
@@ -28,6 +30,15 @@ describe('request query utilities', () => {
     expect(readQueryNumber('')).toBeUndefined()
     expect(readQueryNumber('many')).toBeUndefined()
     expect(readQueryNumber(Number.POSITIVE_INFINITY)).toBeUndefined()
+  })
+
+  it('parses positive integer identifiers only', () => {
+    expect(readQueryPositiveInteger('12')).toBe(12)
+    expect(readQueryPositiveInteger('0')).toBeUndefined()
+    expect(readQueryPositiveInteger('-1')).toBeUndefined()
+    expect(readQueryPositiveInteger('1.5')).toBeUndefined()
+    expect(readRequiredQueryPositiveInteger({ userId: '7' }, 'userId')).toBe(7)
+    expect(() => readRequiredQueryPositiveInteger({ userId: '-7' }, 'userId')).toThrow('userId is required')
   })
 
   it('parses valid dates only', () => {

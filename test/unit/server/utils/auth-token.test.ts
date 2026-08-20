@@ -34,6 +34,26 @@ describe('authentication tokens', () => {
     expect(verifyAccessToken(token)).toBeNull()
   })
 
+  it('rejects malformed access-token session claims', () => {
+    const invalidVersion = signAccessToken({
+      sub: 7,
+      role: 'admin',
+      ver: -1,
+      loginAt: 1_700_000_000,
+      rmb: false
+    }, 60)
+    const invalidRememberMe = signAccessToken({
+      sub: 7,
+      role: 'admin',
+      ver: 1,
+      loginAt: 1_700_000_000,
+      rmb: 'yes' as never
+    }, 60)
+
+    expect(verifyAccessToken(invalidVersion)).toBeNull()
+    expect(verifyAccessToken(invalidRememberMe)).toBeNull()
+  })
+
   it('keeps verification tokens bound to the current user state', () => {
     const user = { id: 9, email: 'user@example.com', tokenVersion: 2 }
     const url = issueVerificationTokenUrl(user, {
@@ -50,6 +70,7 @@ describe('authentication tokens', () => {
       email: user.email,
       purpose: 'reset_password'
     })
+    expect(verifyVerificationToken(token, { ...user, id: 10 }, 'reset_password')).toBeNull()
     expect(verifyVerificationToken(token, { ...user, tokenVersion: 3 }, 'reset_password')).toBeNull()
     expect(verifyVerificationToken(token, user, 'verify')).toBeNull()
   })

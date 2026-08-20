@@ -5,7 +5,7 @@
 ## 数据模型
 
 - `users.credits` 是用户余额的唯一事实来源。
-- `api_routes.credits_cost` 保存该 Route 每次成功调用的价格；付费 Route 必须同时启用 API Key 和统计。
+- `api_routes.credits_cost` 保存 Route 每次成功调用的价格；付费 Route 必须同时启用 API Key 和统计。
 - `api_credit_reservations` 是付费调用的持久状态机：`active` 表示 Gateway 正在调用 Upstream，`pending` 表示成功响应必须结算，`dead_letter` 表示重试耗尽且积分继续冻结。可用余额为用户余额减去该用户的所有预留。
 - `credit_transactions` 记录每次余额变化，并保留 `balanceAfter` 审计快照；`creditReservationId` 是 API 扣费的持久幂等键。
 - 当前没有套餐、订阅、支付网关或月度额度系统。
@@ -26,7 +26,7 @@
 - 不要在 Service 或 External Upstream 中扣 Platform 积分。上游只表达成功或失败，扣费由 Platform Gateway 和插件统一处理。
 - 不要直接更新 `users.credits`。所有余额变化必须走 `creditService`，或走等价的单事务实现，并同时写入审计流水。
 - `credit_transactions.creditReservationId` 在非空时保持唯一，避免同一预留产生重复扣费。
-- `api_credit_reservations.status` 仅允许 `active`、`pending` 与 `dead_letter`；只有 `pending` 可进入结算。
+- `api_credit_reservations.status` 仅允许 `active`、`pending` 与 `dead_letter`；只有 `pending` 和人工确认的 `dead_letter` 可进入结算。
 - 管理员撤回积分只能消费未预留余额；重置余额低于预留总额时必须拒绝，避免后续结算把余额扣成负数。
 
 ## 限流模型
@@ -38,8 +38,11 @@
 
 ## 人工处置
 
-- `creditService.refund` 为未来流程预留，当前标准 API 计费链路不会调用。
-- 管理员在“积分 → 计费预留”查看 `active`、`pending` 和 `dead_letter`。`dead_letter` 可重试；核对上游调用、调用日志和积分流水后，可显式确认扣费或释放。三类动作都保留操作审计，禁止直接删除数据库行。
+- 管理员在“积分 → 计费预留”查看 `active`、`pending` 和 `dead_letter`。
+- `active` 代表上游仍可能执行，只允许释放；不得人工确认扣费。
+- `pending` 可确认扣费或释放。
+- `dead_letter` 可重试、确认扣费或释放。
+- 操作前应核对上游调用、调用日志和积分流水；所有动作保留操作审计，禁止直接删除数据库行。
 
 ## 注册赠送积分
 

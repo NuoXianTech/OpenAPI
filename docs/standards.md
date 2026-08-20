@@ -160,13 +160,52 @@ pnpm preview
 
 ### 后台页面
 
-后台页面以安静、高密度、可扫描为原则。新增 admin/user 页面时：
+后台页面以安静、高密度、可扫描为原则。`app/pages/admin/**` 与
+`app/pages/user/**` 共用 `dashboard` layout；导航、路径和二级分组统一维护在
+`app/constants/dashboard-config.ts`。
 
-1. 页面骨架先参考 [后台页面规范](./frontend/dashboard-pages.md)。
-2. 表格优先使用 `DashboardDataTable`，行操作使用 `DashboardRowActions`。
-3. 分组页只负责标题、二级导航和 `<NuxtPage />`。
-4. 刷新、通知、主题和账号菜单交给 `DashboardHeaderActions`。
-5. 弹窗较独立时使用 `useOverlay()` 创建 `Lazy*Modal`；与父表单强耦合时使用 `v-model:open`。
+页面分为两类：
+
+| 类型 | 约定 |
+| --- | --- |
+| 分组父级页 | 使用 `DashboardSectionShell`，只组合标题、二级导航和 `<NuxtPage />` |
+| 业务叶子页 | 使用 `UDashboardPanel`、`DashboardPageNavbar` 和 `dashboard-section-page` |
+
+页面级头部动作交给 `DashboardHeaderActions`，不要在页面里复制刷新、通知、主题或账号菜单。
+`DashboardPageNavbar` 已经组合侧边栏开关和头部动作，普通叶子页优先直接使用它。
+
+可能增长的列表使用 `usePrivatePagedList` 和服务端 `limit/offset`；确定为小型列表时才使用
+`useClientPagination`。只有排查型筛选或明确需要分享链接时，才使用
+`useDashboardListState` 把状态写入 URL。弹窗开关、行选择、未提交输入和任何明文密钥都不得写入 URL。
+
+表格统一使用 `DashboardDataTable`：
+
+```vue
+<DashboardDataTable
+  v-model:page="page"
+  v-model:page-size="pageSize"
+  :data="items"
+  :columns="columns"
+  :loading="loading"
+  :total="total"
+  :page-size-options="PAGE_SIZE_OPTIONS"
+  empty-title="暂无数据"
+/>
+```
+
+- 行操作直接使用 `UDropdownMenu`；只有出现第三处完全相同的业务交互时才提取组件。
+- 列显隐使用 `useDashboardColumnVisibility`，无需为它增加包装组件。
+- 数字字段使用 `tabular-nums`；宽表格传 `:fixed="false"`。
+- 空状态优先使用 `DashboardDataTable` 内置空态，非表格场景使用 `UEmpty`。
+
+独立详情、重置等弹窗优先用 `useOverlay()` 创建 `Lazy*Modal`；和父页面表单状态紧密耦合时，
+保留 `v-model:open` 更直接。删除、停用和批量操作统一使用 `useConfirmDialog()`。确认回调失败时必须
+在展示 toast 后重新抛出错误，使弹窗保持打开供用户重试。Overlay 位于页面组件树之外，不得依赖页面级
+`provide()`，所需数据通过 props 显式传入。
+
+目录按领域组织：`components/dashboard` 保存后台骨架和通用展示，`components/admin`、
+`components/user` 保存业务组件，`composables/dashboard` 保存列表和布局状态。新增抽象前先确认至少有三处
+稳定重复；单个页面内部的创建/编辑模式优先用一个明确的状态机解决。
 
 ### 表单与验证
 

@@ -1183,6 +1183,35 @@ describe('Platform to Node API Service acceptance', () => {
     expect(await countCalls(routeIds.yiyan)).toBe(callsBefore)
   })
 
+  it('allows declared third-party request headers but rejects credential and proxy headers', async () => {
+    const customHeaderResponse = await fetch(`${gatewayBaseURL}/v1/yiyan`, {
+      method: 'OPTIONS',
+      headers: {
+        'origin': 'https://client.example.test',
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'x-api-key, x-client-version'
+      }
+    })
+    expect(customHeaderResponse.status).toBe(204)
+    expect(customHeaderResponse.headers.get('access-control-allow-headers'))
+      .toBe('content-type, x-api-key, x-request-id, x-client-version')
+
+    const forbiddenHeaderResponse = await fetch(`${gatewayBaseURL}/v1/yiyan`, {
+      method: 'OPTIONS',
+      headers: {
+        'origin': 'https://client.example.test',
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'authorization, x-forwarded-for'
+      }
+    })
+    const forbiddenBody = await readPublicEnvelope(forbiddenHeaderResponse)
+    expect(forbiddenHeaderResponse.status).toBe(400)
+    expect(forbiddenHeaderResponse.headers.get('access-control-allow-origin')).toBe('*')
+    expect(forbiddenHeaderResponse.headers.get('access-control-allow-headers'))
+      .toBe('content-type, x-api-key, x-request-id')
+    expect(forbiddenBody.code).toBe('CORS_REQUEST_HEADER_FORBIDDEN')
+  })
+
   it('returns CORS headers for an unknown public Route', async () => {
     const response = await fetch(`${gatewayBaseURL}/v1/not-published-cors`)
     const body = await readPublicEnvelope(response)

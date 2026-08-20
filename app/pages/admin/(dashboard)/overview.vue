@@ -8,7 +8,7 @@ import type {
   AdminDashboardTrendPoint
 } from '#shared/types/admin'
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
-import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-sections'
+import { ADMIN_APIS_PATH, ADMIN_LOGS_PATH, ADMIN_USERS_PATH } from '~/constants/dashboard-config'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import { formatCount, formatPercent } from '~/utils/number-format'

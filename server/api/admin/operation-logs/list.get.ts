@@ -1,7 +1,7 @@
 import { operationLogService, type OperationLogStatus } from '~~/server/services/operation-log-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readPaginationQuery } from '~~/server/utils/pagination'
-import { readQueryDate, readQueryNumber, readQueryOption, readQueryText } from '~~/server/utils/request-query'
+import { readQueryDate, readQueryOption, readQueryPositiveInteger, readQueryText } from '~~/server/utils/request-query'
 
 const STATUSES: OperationLogStatus[] = ['success', 'failure']
 const ACTOR_KINDS = ['admin', 'user'] as const
@@ -14,7 +14,7 @@ export default defineAdminEventHandler((event) => {
 
   return operationLogService.list({
     keyword: readQueryText(query.keyword),
-    userId: readQueryNumber(query.userId),
+    userId: readQueryPositiveInteger(query.userId),
     actorKind,
     actor: readQueryText(query.actor),
     action: readQueryText(query.action),

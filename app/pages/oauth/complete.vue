@@ -3,7 +3,7 @@ import type { FormError } from '@nuxt/ui'
 import type { OauthRegisterInput } from '#shared/types/auth'
 import type { PendingOauthView } from '#shared/types/oauth'
 import { parseFetchError } from '~/utils/client-error'
-import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { USER_OVERVIEW_PATH } from '~/constants/dashboard-config'
 import {
   compactFormErrors,
   confirmationError,

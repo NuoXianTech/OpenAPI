@@ -50,4 +50,4 @@
 
 每条 `is_counted=true` 调用明细与对应 `route_id + stat_date` 聚合在同一数据库事务中写入。后台趋势、目录排行和健康状态读取同一聚合事实；`is_counted=false` 的治理拒绝只保留审计明细，不进入聚合。相关对账测试属于正式发布门禁，详见 [版本与支持范围](../architecture/release-scope.md)。
 
-扣费状态机见 [API 计费规则](../platform/billing-rules.md)。
+扣费状态机见 [API 计费规则](../architecture/billing.md)。

@@ -127,7 +127,18 @@ export const dynamicGatewayService = {
         requestUrl.hostname
       )
       if (allowedMethods.length === 0) return { matched: false }
-      setPublicApiCors(event, allowedMethods)
+      const cors = setPublicApiCors(event, allowedMethods)
+      if (cors.rejectedRequestHeaders.length > 0) {
+        return {
+          matched: true,
+          response: gatewayFail(
+            event,
+            400,
+            'CORS_REQUEST_HEADER_FORBIDDEN',
+            '预检请求包含不允许跨域使用的请求头'
+          )
+        }
+      }
       return { matched: true, response: sendNoContent(event) }
     }
 

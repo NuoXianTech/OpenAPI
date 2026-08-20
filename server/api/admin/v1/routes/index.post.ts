@@ -3,6 +3,7 @@ import { platformRouteService } from '~~/server/services/platform-route-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformRoute } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminRouteSchema)
@@ -17,7 +18,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: { method: created?.method, pathPattern: created?.pathPattern }
   })
   return {
-    ...created,
+    ...toPlatformRoute(created),
     revisions: result.revisions
   }
 })

@@ -8,11 +8,11 @@ import { createHmacSignature, decodeBase64Url, encodeBase64Url, hasValidHmacSign
 // 「用完即废」不靠数据库标记，而是把「该操作成功后必然变化的用户字段」掺进
 // 签名材料（binding）。消费时用当前用户字段重算签名：字段一旦变化，旧链接
 // 验签自然失败：
-//   - verify         binding=email；单次性由 userService.activateUser 的
+//   - verify         binding=user id + email；单次性由 userService.activateUser 的
 //                    WHERE emailVerifiedAt IS NULL 幂等保证（不重复赠分）
-//   - reset_password binding=email + tokenVersion；重置密码时同步递增 tokenVersion
+//   - reset_password binding=user id + email + tokenVersion；重置密码时同步递增 tokenVersion
 //                    令 tokenVersion 变化 → 旧链接失效
-//   - change_email   binding=当前(旧) email；确认后 updateEmail 改 email →
+//   - change_email   binding=user id + 当前(旧) email；确认后 updateEmail 改 email →
 //                    旧链接失效（payload.email 存的是「新」邮箱）
 //
 // 与 access JWT / oauthState / oauthPending 一致，用 auth.secret 做 HMAC。
@@ -28,13 +28,12 @@ interface VerificationTokenPayload {
 }
 
 interface BindingUser {
+  id: number
   email: string
   tokenVersion: number
 }
 
-interface VerificationTokenUser extends BindingUser {
-  id: number
-}
+type VerificationTokenUser = BindingUser
 
 interface IssueVerificationTokenUrlOptions {
   siteUrl: string | null | undefined
@@ -48,11 +47,11 @@ interface IssueVerificationTokenUrlOptions {
 function bindingMaterial(purpose: VerificationPurpose, user: BindingUser): string {
   switch (purpose) {
     case 'verify':
-      return `verify:${user.email}`
+      return `verify:${user.id}:${user.email}`
     case 'reset_password':
-      return `reset_password:${user.email}:${user.tokenVersion}`
+      return `reset_password:${user.id}:${user.email}:${user.tokenVersion}`
     case 'change_email':
-      return `change_email:${user.email}`
+      return `change_email:${user.id}:${user.email}`
   }
 }
 
@@ -145,7 +144,7 @@ export function verifyVerificationToken(
   if (payload.purpose !== expectedPurpose) {
     return null
   }
-  if (typeof payload.uid !== 'number' || typeof payload.email !== 'string') {
+  if (!Number.isInteger(payload.uid) || payload.uid !== user.id || typeof payload.email !== 'string') {
     return null
   }
   if (typeof payload.exp !== 'number' || payload.exp <= Math.floor(Date.now() / 1000)) {

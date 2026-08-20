@@ -7,6 +7,8 @@ import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 import { USER_ROLES, type UserRole } from './user-service'
 import type { SupportedLocale } from '#shared/config/locale-defaults'
+import type { AdminUserItem } from '#shared/types/admin'
+import { toIsoString, toNullableIsoString } from '~~/server/utils/date'
 
 interface AdminAvailabilityUser {
   role: string
@@ -92,7 +94,13 @@ export const adminUserService = {
       db.select(selection).from(users).where(where).orderBy(desc(users.createdAt)).limit(limit).offset(offset),
       db.select({ value: count() }).from(users).where(where)
     ])
-    return { items, total: toNumber(totalRows[0]?.value) }
+    const responseItems: AdminUserItem[] = items.map(item => ({
+      ...item,
+      bannedReason: item.bannedReason ?? null,
+      bannedUntil: toNullableIsoString(item.bannedUntil),
+      createdAt: toIsoString(item.createdAt)
+    }))
+    return { items: responseItems, total: toNumber(totalRows[0]?.value) }
   },
 
   async listNotificationRecipients() {

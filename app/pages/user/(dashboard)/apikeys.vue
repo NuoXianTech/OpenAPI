@@ -57,91 +57,79 @@ const {
   remove: removeKey
 } = useApiKeys({ scope: 'user', refresh })
 
-// 创建与编辑各持一份表单状态（取代原先两套并行实现）
 const {
-  form: createFormState,
-  reset: resetCreateForm,
-  ipLineErrors: createIpLineErrors,
-  error: createError,
-  buildPayload: buildCreatePayload
-} = useApiKeyForm()
-
-const {
-  form: editFormState,
+  form: formState,
+  reset: resetForm,
   loadFrom: loadEditForm,
   preselectAllScopes: preselectEditScopes,
-  ipLineErrors: editIpLineErrors,
-  error: editError,
-  buildPayload: buildEditPayload
+  ipLineErrors,
+  error: formError,
+  buildPayload
 } = useApiKeyForm()
 
-// ------------------------------------------------------------
-// 创建
-// ------------------------------------------------------------
-const createOpen = ref(false)
-const creating = ref(false)
+type ApiKeyFormMode = 'create' | 'edit'
+
+const formMode = ref<ApiKeyFormMode>('create')
+const formOpen = ref(false)
+const formTargetId = ref<number | null>(null)
+const submittingForm = ref(false)
+const isCreating = computed(() => formMode.value === 'create')
 
 async function openCreate() {
-  resetCreateForm()
-  createOpen.value = true
+  formMode.value = 'create'
+  formTargetId.value = null
+  resetForm()
+  formOpen.value = true
   await ensureScopeOptions()
   // 默认 all 模式；预选全部作为切到 pick 时的起点
-  createFormState.scopesSelected = [...allScopes.value]
+  formState.scopesSelected = [...allScopes.value]
 }
-
-async function submitCreate() {
-  if (createError.value) {
-    toast.add({ title: createError.value, color: 'warning' })
-    return
-  }
-  creating.value = true
-  try {
-    const res = await createKeys({ ...buildCreatePayload(), count: createFormState.count })
-    toast.add({
-      title: res.count > 1
-        ? t('user.apiKeys.createdMany', { count: res.count.toLocaleString(locale.value) })
-        : t('user.apiKeys.createdOne'),
-      color: 'success'
-    })
-    secretModal.open({ keys: res.keys })
-    createOpen.value = false
-  } catch (err) {
-    toast.add({ title: parseFetchError(err, t('common.feedback.createFailed')), color: 'error' })
-  } finally {
-    creating.value = false
-  }
-}
-
-// ------------------------------------------------------------
-// 编辑
-// ------------------------------------------------------------
-const editOpen = ref(false)
-const isEditing = ref(false)
-const editTargetId = ref<number | null>(null)
 
 async function openEdit(row: ApiKeyItem) {
-  editTargetId.value = row.id
+  formMode.value = 'edit'
+  formTargetId.value = row.id
   loadEditForm(row)
-  editOpen.value = true
+  formOpen.value = true
   await ensureScopeOptions()
   preselectEditScopes(allScopes.value)
 }
 
-async function submitEdit() {
-  if (!editTargetId.value) return
-  if (editError.value) {
-    toast.add({ title: editError.value, color: 'warning' })
+async function submitForm() {
+  if (formError.value) {
+    toast.add({ title: formError.value, color: 'warning' })
     return
   }
-  isEditing.value = true
+  const creating = formMode.value === 'create'
+  const targetId = formTargetId.value
+  if (!creating && targetId === null) return
+
+  submittingForm.value = true
   try {
-    await updateKey(editTargetId.value, buildEditPayload())
-    toast.add({ title: t('common.feedback.updated'), color: 'success' })
-    editOpen.value = false
+    if (creating) {
+      const result = await createKeys({ ...buildPayload(), count: formState.count })
+      toast.add({
+        title: result.count > 1
+          ? t('user.apiKeys.createdMany', { count: result.count.toLocaleString(locale.value) })
+          : t('user.apiKeys.createdOne'),
+        color: 'success'
+      })
+      secretModal.open({ keys: result.keys })
+    } else {
+      if (targetId === null) throw new Error('API Key edit target is missing')
+      await updateKey(targetId, buildPayload())
+      toast.add({ title: t('common.feedback.updated'), color: 'success' })
+    }
+    formOpen.value = false
   } catch (err) {
-    toast.add({ title: parseFetchError(err, t('common.feedback.updateFailed')), color: 'error' })
+    toast.add({
+      title: parseFetchError(
+        err,
+        creating ? t('common.feedback.createFailed') : t('common.feedback.updateFailed')
+      ),
+      color: 'error'
+    })
   } finally {
-    isEditing.value = false
+    submittingForm.value = false
   }
 }
 
@@ -564,19 +552,20 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
         </DashboardTableCard>
       </div>
 
-      <!-- 创建 Key -->
+      <!-- 创建 / 编辑 Key -->
       <UModal
-        v-model:open="createOpen"
-        :title="$t('user.apiKeys.createTitle')"
+        v-model:open="formOpen"
+        :title="$t(isCreating ? 'user.apiKeys.createTitle' : 'user.apiKeys.editTitle')"
         :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
       >
         <template #body>
           <ApiKeyFormFields
-            v-model="createFormState"
+            v-model="formState"
             :scope-select-items="scopeSelectItems"
-            :ip-line-errors="createIpLineErrors"
-            :error="createError"
-            show-count
+            :ip-line-errors="ipLineErrors"
+            :error="formError"
+            :show-count="isCreating"
+            :editing="!isCreating"
             size="sm"
           />
         </template>
@@ -586,53 +575,16 @@ function getRowItems(row: ApiKeyItem): DropdownMenuItem[] {
             <UButton
               variant="outline"
               color="neutral"
-              @click="() => { createOpen = false }"
+              @click="() => { formOpen = false }"
             >
               {{ $t('common.actions.cancel') }}
             </UButton>
             <UButton
-              :loading="creating"
-              :disabled="!!createError"
-              @click="submitCreate"
+              :loading="submittingForm"
+              :disabled="!!formError"
+              @click="submitForm"
             >
-              {{ $t('user.apiKeys.generate') }}
-            </UButton>
-          </div>
-        </template>
-      </UModal>
-
-      <!-- 编辑 Key -->
-      <UModal
-        v-model:open="editOpen"
-        :title="$t('user.apiKeys.editTitle')"
-        :ui="adminModalUi({ content: 'sm:max-w-3xl' })"
-      >
-        <template #body>
-          <ApiKeyFormFields
-            v-model="editFormState"
-            :scope-select-items="scopeSelectItems"
-            :ip-line-errors="editIpLineErrors"
-            :error="editError"
-            editing
-            size="sm"
-          />
-        </template>
-
-        <template #footer>
-          <div class="flex justify-end gap-2 w-full">
-            <UButton
-              variant="outline"
-              color="neutral"
-              @click="() => { editOpen = false }"
-            >
-              {{ $t('common.actions.cancel') }}
-            </UButton>
-            <UButton
-              :loading="isEditing"
-              :disabled="!!editError"
-              @click="submitEdit"
-            >
-              {{ $t('common.actions.save') }}
+              {{ $t(isCreating ? 'user.apiKeys.generate' : 'common.actions.save') }}
             </UButton>
           </div>
         </template>

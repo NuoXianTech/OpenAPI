@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { AdminSettingsKey } from '~/composables/admin/use-admin-settings-page'
-import { useAdminUserSessionSettings } from '~/composables/admin/use-admin-settings-page'
+import { useAdminUserSessionSettings } from '~/composables/admin/use-admin-user-session-settings'
 
 const {
   form,

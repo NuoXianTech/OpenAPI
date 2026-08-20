@@ -3,6 +3,7 @@ import { platformProductService } from '~~/server/services/platform-product-serv
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformApiVersion } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminCreateVersionSchema)
@@ -20,7 +21,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: { productId: body.productId, version: created.version }
   })
   return {
-    ...created,
+    ...toPlatformApiVersion(created),
     revisions: result.revisions
   }
 })

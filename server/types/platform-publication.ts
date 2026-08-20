@@ -9,6 +9,29 @@ import type {
 
 export type HttpMethod = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
+export interface RouteMutationInput {
+  apiVersionId: string
+  name: string
+  hosts: string[]
+  method: HttpMethod
+  pathPattern: string
+  upstreamServiceId: string
+  upstreamPathTemplate: string
+  isApiKey: boolean
+  isStatistics: boolean
+  creditsCost: number
+  rateLimitPerSecond: number
+  rateLimitPerMinute: number
+  rateLimitPerHour: number
+  rateLimitPerDay: number
+  timeoutMs: number
+  maxRequestBytes: number
+  maxResponseBytes: number
+  catalogStatus?: 'automatic' | 'maintenance'
+  sensitiveQueryParameters?: string[]
+  state: 'draft' | 'active' | 'disabled'
+}
+
 export interface RouteBinding {
   route: typeof apiRoutes.$inferSelect
   version: typeof apiVersions.$inferSelect

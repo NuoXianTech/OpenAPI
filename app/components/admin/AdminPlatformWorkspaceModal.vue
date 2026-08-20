@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformWorkspaceSummary } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
-const props = defineProps<{ workspace?: PlatformWorkspace | null }>()
-const emit = defineEmits<{ saved: [workspace: PlatformWorkspace] }>()
+const props = defineProps<{ workspace?: PlatformWorkspaceSummary | null }>()
+const emit = defineEmits<{ saved: [workspace: PlatformWorkspaceSummary] }>()
 const toast = useToast()
 const { t } = useI18n()
 
@@ -63,7 +63,7 @@ function validateWorkspaceForm(value: Partial<WorkspaceFormState>): FormError<st
 async function onSubmit(event: FormSubmitEvent<WorkspaceFormState>) {
   loading.value = true
   try {
-    const workspace = await $fetch<PlatformWorkspace>(
+    const workspace = await $fetch<PlatformWorkspaceSummary>(
       isEditing.value ? `/api/admin/v1/workspaces/${props.workspace!.id}` : '/api/admin/v1/workspaces',
       {
         method: isEditing.value ? 'PATCH' : 'POST',

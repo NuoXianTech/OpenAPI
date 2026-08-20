@@ -3,28 +3,10 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import { parseFetchError } from '~/utils/client-error'
-
-type ReservationStatus = 'active' | 'pending' | 'dead_letter'
-
-interface CreditReservationItem {
-  id: number
-  userId: number
-  username: string | null
-  apiKeyName: string | null
-  routeName: string | null
-  routePath: string | null
-  apiCallId: number | null
-  requestId: string
-  amount: number
-  status: ReservationStatus
-  attempts: number
-  lastError: string | null
-  lastAttemptAt: string | null
-  createdAt: string
-}
+import type { CreditReservationItem, CreditReservationStatus } from '#shared/types/admin-credits'
 
 interface CreditReservationFilters extends Record<string, unknown> {
-  status: ReservationStatus | 'all'
+  status: CreditReservationStatus | 'all'
 }
 
 const { t, locale } = useI18n()
@@ -69,7 +51,7 @@ const columns = computed<TableColumn<CreditReservationItem>[]>(() => [
   { id: 'actions', header: '' }
 ])
 
-function statusColor(status: ReservationStatus) {
+function statusColor(status: CreditReservationStatus) {
   if (status === 'dead_letter') return 'error' as const
   if (status === 'pending') return 'warning' as const
   return 'neutral' as const
@@ -105,11 +87,13 @@ function getRowItems(row: CreditReservationItem): DropdownMenuItem[][] {
           onSelect: () => runAction(row, 'retry')
         }]
       : []),
-    {
-      label: t('admin.credits.reservations.actions.charge'),
-      icon: 'i-lucide-badge-check',
-      onSelect: () => confirmAction(row, 'charge')
-    },
+    ...(row.status !== 'active'
+      ? [{
+          label: t('admin.credits.reservations.actions.charge'),
+          icon: 'i-lucide-badge-check',
+          onSelect: () => confirmAction(row, 'charge')
+        }]
+      : []),
     {
       label: t('admin.credits.reservations.actions.release'),
       icon: 'i-lucide-undo-2',

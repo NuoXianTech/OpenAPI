@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { TransitionPresets, usePreferredReducedMotion, useTransition } from '@vueuse/core'
 import ApiHttpMethodBadge from '~/components/api/HttpMethodBadge.vue'
-import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { USER_OVERVIEW_PATH } from '~/constants/dashboard-config'
 import { formatCompactCount } from '~/utils/number-format'
 import {
   formatYiyanResponseExample,

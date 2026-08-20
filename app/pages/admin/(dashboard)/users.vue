@@ -58,7 +58,10 @@ async function openUnban(item: AdminUserItem) {
   await confirm({
     title: t('admin.users.unban.title', { username: item.username }),
     description: t('admin.users.unban.description'),
-    onConfirm: () => unbanUser(item)
+    onConfirm: async () => {
+      const ok = await unbanUser(item)
+      if (!ok) throw new Error('unban failed')
+    }
   })
 }
 

@@ -7,13 +7,13 @@ import {
   isRegistrationInviteValid,
   normalizeEmailFilterMode,
   normalizeRegistrationMode,
-  parseEmailDomainList,
-  rollbackCreatedUser
+  parseEmailDomainList
 } from '~~/server/utils/registration'
 import { readZodBody } from '~~/server/utils/zod'
-import { issueVerificationTokenUrl, normalizeSiteUrl } from '~~/server/utils/verification-token'
-import { sendDuplicateRegistrationEmail, sendVerificationEmail } from '~~/server/utils/email'
+import { normalizeSiteUrl } from '~~/server/utils/verification-token'
+import { sendDuplicateRegistrationEmail } from '~~/server/utils/email'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
+import { registrationService } from '~~/server/services/registration-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
@@ -45,15 +45,12 @@ export default defineEventHandler(async (event) => {
   // 先校验 Turnstile：失败时直接抛错，与"邮箱/用户名是否存在"无关，不会构成枚举信号。
   await assertTurnstileForPage('register', turnstileToken, ip)
 
-  // 防刷：同一邮箱 60s 1 次、IP 维度 1 小时 10 次。超限静默拒绝（仍返回中性响应，不暴露阈值与是否存在）。
-  const canRegister = await canConsumeIdentityRateLimit({
+  // IP 限流先于邀请码校验，避免匿名请求暴力探测邀请码。
+  const canRegisterFromIp = await canConsumeIdentityRateLimit({
     namespace: 'register',
-    buckets: [
-      { name: 'email', value: email, limit: 1, window: 'minute' },
-      { name: 'ip', value: toClientIpRateLimitValue(ip), limit: 10, window: 'hour' }
-    ]
+    buckets: [{ name: 'ip', value: toClientIpRateLimitValue(ip), limit: 10, window: 'hour' }]
   })
-  if (!canRegister) return neutralResponse
+  if (!canRegisterFromIp) return neutralResponse
 
   // 邮箱域名过滤：off=不过滤；whitelist=仅允许列表内域名；blacklist=拒绝列表内域名
   const filterMode = normalizeEmailFilterMode(settings.registerEmailFilterMode)
@@ -68,6 +65,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 403, message: '邀请码无效' })
     }
   }
+
+  // 只有请求通过域名和邀请码策略后才消费邮箱限流；用户输错邀请码后可立即改正。
+  const canRegisterEmail = await canConsumeIdentityRateLimit({
+    namespace: 'register',
+    buckets: [{ name: 'email', value: email, limit: 1, window: 'minute' }]
+  })
+  if (!canRegisterEmail) return neutralResponse
 
   // 邮箱已注册：投递"账号已存在"通知到该邮箱，外部返回中性响应。
   // 发信失败仅记录日志，不抛错，保持与"邮箱未注册"分支响应一致以防 timing/状态码枚举。
@@ -103,38 +107,10 @@ export default defineEventHandler(async (event) => {
     throw error
   }
 
-  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知），不发验证邮件。
-  // activateUser 失败则回滚刚建的账号，避免邮箱/用户名被占住无法重试。
-  if (!activationRequired) {
-    try {
-      await userService.activateUser(created.id)
-    } catch (error) {
-      await rollbackCreatedUser({ userId: created.id, reason: 'auto-activation failed', error })
-      throw createError({
-        statusCode: 503,
-        message: '注册失败，请稍后重试或联系管理员'
-      })
-    }
-    return neutralResponse
-  }
-
-  const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const verifyUrl = issueVerificationTokenUrl(created, {
-    siteUrl: settings.siteUrl,
-    path: 'verify-email',
-    purpose: 'verify',
-    email: created.email,
-    expiresInMinutes
+  await registrationService.completeRegistration({
+    user: created,
+    settings,
+    reasonPrefix: 'password registration'
   })
-  try {
-    await sendVerificationEmail(email, verifyUrl)
-  } catch (error) {
-    await rollbackCreatedUser({ userId: created.id, reason: 'verification email failed', error })
-    throw createError({
-      statusCode: 503,
-      message: '验证邮件发送失败，请稍后重试或联系管理员检查邮件服务配置'
-    })
-  }
-
   return neutralResponse
 })

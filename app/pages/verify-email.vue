@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { VerifyEmailInput } from '#shared/types/auth'
 import { parseFetchError } from '~/utils/client-error'
-import { USER_OVERVIEW_PATH } from '~/constants/dashboard-sections'
+import { USER_OVERVIEW_PATH } from '~/constants/dashboard-config'
 
 definePageMeta({ layout: false })
 

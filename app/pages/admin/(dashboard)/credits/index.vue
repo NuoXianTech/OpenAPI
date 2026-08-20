@@ -11,7 +11,7 @@ import {
   ADMIN_CREDIT_TRANSACTIONS_PATH,
   ADMIN_REDEMPTION_CODES_PATH,
   ADMIN_USERS_PATH
-} from '~/constants/dashboard-sections'
+} from '~/constants/dashboard-config'
 
 const { t, locale } = useI18n()
 const { getReasonColor, getReasonLabel } = useCreditReasonMeta()

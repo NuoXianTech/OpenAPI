@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformProduct, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformProductSummary, PlatformWorkspace } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/form-validation'
@@ -8,9 +8,9 @@ import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/fo
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
   workspace: PlatformWorkspace
-  product?: PlatformProduct | null
+  product?: PlatformProductSummary | null
 }>()
-const emit = defineEmits<{ saved: [product: PlatformProduct] }>()
+const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const { t } = useI18n()
 
@@ -75,7 +75,7 @@ function validateProductForm(value: Partial<ProductFormState>): FormError<string
 async function onSubmit(event: FormSubmitEvent<ProductFormState>) {
   loading.value = true
   try {
-    const product = await $fetch<PlatformProduct>(
+    await $fetch(
       isEditing.value ? `/api/admin/v1/products/${props.product!.id}` : '/api/admin/v1/products',
       {
         method: isEditing.value ? 'PATCH' : 'POST',
@@ -97,7 +97,7 @@ async function onSubmit(event: FormSubmitEvent<ProductFormState>) {
       color: 'success'
     })
     open.value = false
-    emit('saved', product)
+    emit('saved')
   } catch (error: unknown) {
     toast.add({ title: parseFetchError(error, t('admin.apis.routing.feedback.createFailed')), color: 'error' })
   } finally {

@@ -56,17 +56,13 @@ async function initializeRedisService(): Promise<void> {
 
 async function initializeDatabaseState(): Promise<void> {
   await migrateDatabase()
-  await Promise.all([
-    ensureInitialAdmin(),
-    platformWorkspaceService.ensureDefault()
-  ])
+  await ensureInitialAdmin()
+  await platformWorkspaceService.ensureDefault()
 }
 
 async function initializeServer(): Promise<void> {
-  await Promise.all([
-    initializeRedisService(),
-    initializeDatabaseState()
-  ])
+  await initializeDatabaseState()
+  await initializeRedisService()
 }
 
 async function closeServer(): Promise<void> {
@@ -90,8 +86,13 @@ export default defineNitroPlugin((nitroApp) => {
       removeInitializationGate()
       console.info('[startup] Server initialization completed.')
     })
-    .catch((error) => {
+    .catch(async (error) => {
       console.error('[startup] Server initialization failed.', error)
+      try {
+        await closeServer()
+      } catch (closeError) {
+        console.error('[startup] Failed to close resources after initialization error.', closeError)
+      }
       process.exit(1)
     })
 

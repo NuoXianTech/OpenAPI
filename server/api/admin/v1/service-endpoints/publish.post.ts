@@ -3,6 +3,7 @@ import { platformEndpointCatalogService } from '~~/server/services/platform-endp
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformEndpointPublicationResult } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminPublishServiceEndpointSchema)
@@ -22,5 +23,5 @@ export default defineAdminEventHandler(async (event, admin) => {
       created: result.created
     }
   })
-  return result
+  return toPlatformEndpointPublicationResult(result)
 })

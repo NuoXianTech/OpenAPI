@@ -107,7 +107,7 @@ docs/                        项目特有标准与生产流程
 - [新增公共接口开发指南](docs/api/public-api-development.md)
 - [对外接口规范](docs/api/public-api-conventions.md)
 - [前端工程标准](docs/standards.md)
-- [API 计费规则](docs/platform/billing-rules.md)
+- [API 计费规则](docs/architecture/billing.md)
 - [运行时配置](docs/operations/runtime-config.md)
 - [VPS 部署指南](docs/operations/vps-deployment.md)
 

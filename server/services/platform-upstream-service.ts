@@ -14,10 +14,7 @@ import { resolveServiceAvailability } from '~~/server/services/service-availabil
 import { getSqlState } from '~~/server/utils/database-error'
 import { firstRow } from '~~/server/utils/row'
 import { encryptStoredSecret } from '~~/server/utils/stored-secret'
-import {
-  invalidateUpstreamServiceToken,
-  upstreamServiceTokenService
-} from '~~/server/services/upstream-service-token-service'
+import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
 import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
 import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
@@ -349,7 +346,6 @@ export const platformUpstreamService = {
     if (!removed) {
       throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
     }
-    invalidateUpstreamServiceToken(id)
     return removed
   },
 
@@ -520,7 +516,6 @@ export const platformUpstreamService = {
         data: { code: 'SERVICE_CONNECTION_NOT_FOUND' }
       })
     }
-    invalidateUpstreamServiceToken(id)
     return toServiceConnectionView(updated)
   },
 

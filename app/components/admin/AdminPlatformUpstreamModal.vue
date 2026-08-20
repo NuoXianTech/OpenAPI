@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformUpstream, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformUpstreamSummary, PlatformWorkspace } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
@@ -8,9 +8,9 @@ import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
   workspace: PlatformWorkspace
-  upstream?: PlatformUpstream | null
+  upstream?: PlatformUpstreamSummary | null
 }>()
-const emit = defineEmits<{ saved: [upstream: PlatformUpstream] }>()
+const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
 const { t } = useI18n()
 
@@ -138,7 +138,7 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
 async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
   loading.value = true
   try {
-    const upstream = await $fetch<PlatformUpstream>(
+    await $fetch(
       isEditing.value ? `/api/admin/v1/upstreams/${props.upstream!.id}` : '/api/admin/v1/upstreams',
       {
         method: isEditing.value ? 'PATCH' : 'POST',
@@ -171,7 +171,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
       color: 'success'
     })
     open.value = false
-    emit('saved', upstream)
+    emit('saved')
   } catch (error: unknown) {
     toast.add({ title: parseFetchError(error, t('admin.apis.routing.feedback.createFailed')), color: 'error' })
   } finally {

@@ -3,20 +3,9 @@ import { computed, toRef, type ComputedRef } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
 import { formatDateTime } from '~/utils/datetime'
+import type { AdminUserItem } from '#shared/types/admin'
 
-export interface AdminUserItem {
-  id: number
-  role: 'user' | 'admin'
-  username: string
-  email: string | null
-  displayName: string | null
-  isActive: boolean
-  isBanned: boolean
-  bannedReason?: string | null
-  bannedUntil?: string | null
-  credits: number
-  createdAt: string
-}
+export type { AdminUserItem } from '#shared/types/admin'
 
 type AdminUserRoleFilter = 'all' | AdminUserItem['role']
 type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
@@ -42,24 +31,9 @@ function normalizeUserIdFilter(value: number | '' | undefined): number | undefin
   return Number.isInteger(numericValue) && numericValue > 0 ? numericValue : undefined
 }
 
-interface ToastLike {
-  add: (notification: { title: string, color?: 'success' | 'error' | 'warning' }) => void
-}
-
-function createSilentToast(): ToastLike {
-  return { add: () => {} }
-}
-
 export function useAdminUsersPage() {
   const { t } = useI18n()
-  const toast = (() => {
-    try {
-      if (typeof useToast === 'function') return useToast()
-    } catch {
-      // Direct unit tests run without Nuxt UI injection.
-    }
-    return createSilentToast()
-  })()
+  const toast = useToast()
   const paged = usePrivatePagedList<AdminUserFilters, AdminUserItem>({
     path: '/api/admin/users/list',
     defaultFilters: {
@@ -142,7 +116,7 @@ export function useAdminUsersPage() {
     }
   }
 
-  async function unbanUser(item: AdminUserItem) {
+  async function unbanUser(item: AdminUserItem): Promise<boolean> {
     try {
       await $fetch('/api/admin/users/ban', {
         method: 'POST',
@@ -150,8 +124,10 @@ export function useAdminUsersPage() {
       })
       toast.add({ title: t('admin.users.feedback.unbanned'), color: 'success' })
       await paged.refresh()
+      return true
     } catch (err) {
       toast.add({ title: parseFetchError(err, t('admin.users.feedback.unbanFailed')), color: 'error' })
+      return false
     }
   }
 

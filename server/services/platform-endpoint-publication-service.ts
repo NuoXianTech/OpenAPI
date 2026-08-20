@@ -2,7 +2,6 @@ import type { ServiceEndpointSummary } from '#shared/types/service-control'
 import { asc, eq } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { environments } from '~~/server/db/schema'
-import type { RouteMutationInput } from '~~/server/services/platform-route-service'
 import {
   invalidateRoutingPublicationCaches,
   routingRevisionService
@@ -11,7 +10,8 @@ import type { RoutingRevisionRoute } from '~~/server/types/routing-revision'
 import type {
   HttpMethod,
   PublicationStatus,
-  RouteBinding
+  RouteBinding,
+  RouteMutationInput
 } from '~~/server/types/platform-publication'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { parseRoutePathPattern } from '~~/server/utils/route-pattern'

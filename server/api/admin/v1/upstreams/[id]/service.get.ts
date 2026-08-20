@@ -1,15 +1,11 @@
-import { createError, getRouterParam } from 'h3'
-import { z } from 'zod'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { readUuidRouterParam } from '~~/server/utils/router-param'
 
 export default defineAdminEventHandler((event) => {
-  const upstreamId = z.uuid().safeParse(getRouterParam(event, 'id'))
-  if (!upstreamId.success) {
-    throw createError({ statusCode: 400, message: 'upstream id is invalid' })
-  }
+  const upstreamId = readUuidRouterParam(event)
   return platformServiceControlService.get(
-    upstreamId.data,
+    upstreamId,
     { checkAvailability: true }
   )
 })

@@ -14,6 +14,7 @@ OpenAPI Platform 是自托管 API 管理平台，负责动态路由、访问治�
 6. [Platform 与 Service 运行时协议](./architecture/runtime-protocols.md)
 7. [部署模型](./architecture/deployment.md)
 8. [版本与支持范围](./architecture/release-scope.md)
+9. [API 计费规则](./architecture/billing.md)
 
 ## API 开发与管理
 
@@ -22,14 +23,12 @@ OpenAPI Platform 是自托管 API 管理平台，负责动态路由、访问治�
 - [对外接口规范](./api/public-api-conventions.md)
 - [RESTful 设计指南](./api/design-style.md)
 - [调用统计规范](./api/call-statistics.md)
-- [API 计费规则](./platform/billing-rules.md)
 
 官方接口的请求、响应和业务错误契约由 `openapi-service/docs/apis/` 维护。Platform 文档只描述如何发现、治理和发布这些 Endpoint。
 
 ## 前端与后台
 
-- [前端工程标准](./standards.md)
-- [后台页面规范](./frontend/dashboard-pages.md)
+- [前端与后台工程标准](./standards.md)
 
 ## 运行与发布
 

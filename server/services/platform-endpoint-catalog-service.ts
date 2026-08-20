@@ -7,10 +7,7 @@ import {
   upstreamServices
 } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
-import {
-  platformRouteService,
-  type RouteMutationInput
-} from '~~/server/services/platform-route-service'
+import { platformRouteService } from '~~/server/services/platform-route-service'
 import {
   applyEnvironmentMutation,
   endpointPublicationStatus,
@@ -22,7 +19,8 @@ import {
 import type {
   HttpMethod,
   PublicationStatus,
-  RouteBinding
+  RouteBinding,
+  RouteMutationInput
 } from '~~/server/types/platform-publication'
 import { ensureEndpointVersion } from '~~/server/services/platform-endpoint-product-service'
 import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'

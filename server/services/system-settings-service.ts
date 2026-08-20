@@ -13,6 +13,7 @@ import {
 import { db } from '~~/server/db/client'
 import { systemSettings } from '~~/server/db/schema/system'
 import { createApplicationError } from '~~/server/errors/application-error'
+import { eq } from 'drizzle-orm'
 import { deleteSharedCache, getSharedCache } from '~~/server/utils/shared-cache'
 import {
   decodeSystemSettingSecret,
@@ -21,7 +22,6 @@ import {
 
 const PUBLIC_SYSTEM_SETTINGS_CACHE_KEY = 'cache:public:settings'
 const PUBLIC_SYSTEM_SETTINGS_TTL_SECONDS = 30
-const SYSTEM_SETTINGS_CACHE_TTL_MS = 10_000
 const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000
 
 export type { PublicSiteSettings, PublicTurnstileSettings, SystemSettings, SystemSettingsPatch }
@@ -130,13 +130,6 @@ async function loadSettingsFromDatabase(): Promise<SystemSettings> {
   return values
 }
 
-let settingsCache: { value: SystemSettings, expiresAt: number } | null = null
-
-function cacheSettings(value: SystemSettings): SystemSettings {
-  settingsCache = { value, expiresAt: Date.now() + SYSTEM_SETTINGS_CACHE_TTL_MS }
-  return value
-}
-
 function assertClientIpSettings(settings: SystemSettings): void {
   if (settings.clientIpSource === 'direct') return
   if (settings.trustedProxyCidrs.trim()) return
@@ -192,34 +185,39 @@ export function toAdminSystemSettings(settings: SystemSettings): AdminSystemSett
   }
 }
 
-async function upsertSettings(patch: SystemSettingsPatch): Promise<void> {
-  const names = Object.keys(patch) as SystemSettingName[]
-  if (names.length === 0) return
+function normalizePatch(input: SystemSettingsPatch): SystemSettingsPatch {
+  const normalized: SystemSettingsPatch = {}
+  for (const name of Object.keys(input) as SystemSettingName[]) {
+    const value = input[name]
+    if (value === undefined) continue
+    normalized[name] = SYSTEM_SETTING_DEFINITIONS[name].schema.parse(value) as never
+  }
+  return normalized
+}
 
-  await db.transaction(async (tx) => {
-    for (const name of names) {
-      const value = patch[name]
-      if (value === undefined) continue
-      const row = createInsert(name, value as never)
-      await tx.insert(systemSettings).values(row).onConflictDoUpdate({
-        target: systemSettings.settingKey,
-        set: {
-          value: row.value,
-          isSecret: row.isSecret,
-          description: row.description,
-          updatedAt: new Date()
-        }
-      })
-    }
-  })
+function assertSettingsUpdate(next: SystemSettings, patch: SystemSettingsPatch): void {
+  if (updatesClientIpSettings(patch)) assertClientIpSettings(next)
+  if (next.registrationMode === 'invite' && !next.registrationInviteCode) {
+    throw createApplicationError({
+      statusCode: 400,
+      message: '启用邀请注册前必须先配置邀请码'
+    })
+  }
+  const turnstileSceneEnabled = next.turnstileLoginEnabled
+    || next.turnstileRegisterEnabled
+    || next.turnstilePasswordResetEnabled
+    || next.turnstileCheckinEnabled
+  if (turnstileSceneEnabled && (!next.turnstileSiteKey || !next.turnstileSecretKey)) {
+    throw createApplicationError({
+      statusCode: 400,
+      message: '启用 Turnstile 场景前必须同时配置 Site Key 和 Secret Key'
+    })
+  }
 }
 
 export const systemSettingsService = {
   async getSettings(): Promise<SystemSettings> {
-    if (settingsCache && settingsCache.expiresAt > Date.now()) {
-      return settingsCache.value
-    }
-    return cacheSettings(await loadSettingsFromDatabase())
+    return loadSettingsFromDatabase()
   },
 
   async get<TName extends SystemSettingName>(name: TName): Promise<SystemSettings[TName]> {
@@ -259,35 +257,39 @@ export const systemSettingsService = {
   },
 
   async update(input: SystemSettingsPatch): Promise<SystemSettings> {
-    const current = await systemSettingsService.getSettings()
-    const normalizedPatch: SystemSettingsPatch = {}
+    const normalizedPatch = normalizePatch(input)
+    const persisted = await db.transaction(async (tx) => {
+      // 配置更新很少发生，先幂等补齐注册表中的全部键，再锁定完整快照。
+      // 这样多实例并发 patch 会在同一份最新配置上合并和执行跨字段校验。
+      const defaults = createSystemSettingsDefaults()
+      await tx.insert(systemSettings)
+        .values(SYSTEM_SETTING_NAMES.map(name => createInsert(name, defaults[name] as never)))
+        .onConflictDoNothing()
 
-    for (const name of Object.keys(input) as SystemSettingName[]) {
-      const value = input[name]
-      if (value === undefined) continue
-      normalizedPatch[name] = SYSTEM_SETTING_DEFINITIONS[name].schema.parse(value) as never
-    }
+      const rows = await tx.select().from(systemSettings).for('update')
+      const rowsByKey = new Map(rows.map(row => [row.settingKey, row]))
+      const current = { ...defaults }
+      for (const name of SYSTEM_SETTING_NAMES) {
+        const row = rowsByKey.get(SYSTEM_SETTING_DEFINITIONS[name].key)
+        if (row) current[name] = decodeValue(name, row) as never
+      }
 
-    const next = { ...current, ...normalizedPatch }
-    if (updatesClientIpSettings(normalizedPatch)) assertClientIpSettings(next)
-    if (next.registrationMode === 'invite' && !next.registrationInviteCode) {
-      throw createApplicationError({
-        statusCode: 400,
-        message: '启用邀请注册前必须先配置邀请码'
-      })
-    }
-    const turnstileSceneEnabled = next.turnstileLoginEnabled
-      || next.turnstileRegisterEnabled
-      || next.turnstilePasswordResetEnabled
-      || next.turnstileCheckinEnabled
-    if (turnstileSceneEnabled && (!next.turnstileSiteKey || !next.turnstileSecretKey)) {
-      throw createApplicationError({
-        statusCode: 400,
-        message: '启用 Turnstile 场景前必须同时配置 Site Key 和 Secret Key'
-      })
-    }
-    await upsertSettings(normalizedPatch)
-    const persisted = cacheSettings(await loadSettingsFromDatabase())
+      const next = { ...current, ...normalizedPatch }
+      assertSettingsUpdate(next, normalizedPatch)
+
+      for (const name of Object.keys(normalizedPatch) as SystemSettingName[]) {
+        const value = normalizedPatch[name]
+        if (value === undefined) continue
+        const row = createInsert(name, value as never)
+        await tx.update(systemSettings).set({
+          value: row.value,
+          isSecret: row.isSecret,
+          description: row.description,
+          updatedAt: new Date()
+        }).where(eq(systemSettings.settingKey, row.settingKey))
+      }
+      return next
+    })
     await deleteSharedCache([PUBLIC_SYSTEM_SETTINGS_CACHE_KEY])
     return persisted
   },

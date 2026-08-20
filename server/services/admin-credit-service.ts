@@ -10,6 +10,8 @@ import {
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { CreditReason } from '#shared/types/credit-reason'
+import type { AdminCreditTransactionRow } from '#shared/types/admin-credits'
+import { toIsoString } from '~~/server/utils/date'
 
 interface AdminBatchAdjustInput {
   userIds: number[]
@@ -203,6 +205,10 @@ export const adminCreditService = {
         .offset(offset),
       db.select({ value: count() }).from(creditTransactions).where(where)
     ])
-    return { items, total: toNumber(totalRows[0]?.value) }
+    const responseItems: AdminCreditTransactionRow[] = items.map(item => ({
+      ...item,
+      createdAt: toIsoString(item.createdAt)
+    }))
+    return { items: responseItems, total: toNumber(totalRows[0]?.value) }
   }
 }

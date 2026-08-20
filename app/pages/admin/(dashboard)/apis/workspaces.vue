@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
-import type { PlatformEnvironment, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformEnvironment, PlatformWorkspace, PlatformWorkspaceSummary } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
 
@@ -17,7 +17,7 @@ const confirm = useConfirmDialog()
 
 useHead({ title: () => t('admin.apis.routing.sections.workspacesTitle') })
 
-async function handleSaved(workspace: PlatformWorkspace) {
+async function handleSaved(workspace: PlatformWorkspaceSummary) {
   await context.refresh()
   context.selectedWorkspaceId.value = workspace.id
 }
@@ -68,6 +68,7 @@ async function removeWorkspace(workspace: PlatformWorkspace) {
         await context.refresh()
       } catch (error) {
         toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+        throw error
       }
     }
   })
@@ -100,6 +101,7 @@ async function removeEnvironment(environment: PlatformEnvironment) {
         await context.refresh()
       } catch (error) {
         toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+        throw error
       }
     }
   })

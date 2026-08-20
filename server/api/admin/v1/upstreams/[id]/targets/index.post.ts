@@ -4,6 +4,7 @@ import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { readUuidRouterParam } from '~~/server/utils/router-param'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformUpstreamTarget } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const upstreamId = readUuidRouterParam(event)
@@ -23,7 +24,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: { upstreamId, baseUrl: created.baseUrl }
   })
   return {
-    ...created,
+    ...toPlatformUpstreamTarget(created),
     revisions: result.revisions
   }
 })

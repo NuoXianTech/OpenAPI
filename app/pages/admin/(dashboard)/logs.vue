@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createAdminLogsSection } from '~/constants/dashboard-sections'
+import { createAdminLogsSection } from '~/constants/dashboard-config'
 
 const { t } = useI18n()
 const adminLogsSection = computed(() => createAdminLogsSection({ t }))

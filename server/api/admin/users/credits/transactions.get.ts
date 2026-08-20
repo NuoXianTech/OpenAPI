@@ -16,6 +16,7 @@ import {
   readQueryDate,
   readQueryNumber,
   readQueryOption,
+  readQueryPositiveInteger,
   readQueryText
 } from '~~/server/utils/request-query'
 
@@ -34,7 +35,7 @@ const DIRECTION_OPTIONS = ['in', 'out'] as const
 export default defineAdminEventHandler((event) => {
   const { query, limit, offset } = readPaginationQuery(event, { defaultLimit: 20 })
 
-  const userId = readQueryNumber(query.userId)
+  const userId = readQueryPositiveInteger(query.userId)
   const reason = readQueryOption(query.reason, CREDIT_REASON_OPTIONS)
 
   return adminCreditService.listTransactions({

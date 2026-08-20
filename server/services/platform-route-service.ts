@@ -12,30 +12,7 @@ import {
 import { firstRow } from '~~/server/utils/row'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
 import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
-import type { RouteBinding } from '~~/server/types/platform-publication'
-
-export interface RouteMutationInput {
-  apiVersionId: string
-  name: string
-  hosts: string[]
-  method: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  pathPattern: string
-  upstreamServiceId: string
-  upstreamPathTemplate: string
-  isApiKey: boolean
-  isStatistics: boolean
-  creditsCost: number
-  rateLimitPerSecond: number
-  rateLimitPerMinute: number
-  rateLimitPerHour: number
-  rateLimitPerDay: number
-  timeoutMs: number
-  maxRequestBytes: number
-  maxResponseBytes: number
-  catalogStatus?: 'automatic' | 'maintenance'
-  sensitiveQueryParameters?: string[]
-  state: 'draft' | 'active' | 'disabled'
-}
+import type { RouteBinding, RouteMutationInput } from '~~/server/types/platform-publication'
 
 interface RouteMutationOptions {
   allowServiceManaged?: boolean

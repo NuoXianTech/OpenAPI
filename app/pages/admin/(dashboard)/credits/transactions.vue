@@ -4,6 +4,7 @@ import type { TableColumn, TabsItem } from '@nuxt/ui'
 import type { CreditReasonFilter } from '#shared/types/credit-reason'
 import { useCreditReasonMeta } from '~/composables/use-credit-reason-meta'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
+import type { AdminCreditTransactionRow } from '#shared/types/admin-credits'
 
 const { t, locale } = useI18n()
 const { getReasonColor, getReasonLabel } = useCreditReasonMeta()
@@ -33,25 +34,6 @@ function toIsoDateTime(value: string): string | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
 }
 
-interface CreditTxnRow {
-  id: number
-  userId: number
-  userName: string | null
-  userRole: 'user' | 'admin' | null
-  amount: number
-  balanceAfter: number
-  reason: string
-  routeId: string | null
-  apiCallId: number | null
-  codeId: number | null
-  operatorId: number | null
-  operatorName: string | null
-  ip: string | null
-  remark: string | null
-  meta: Record<string, unknown> | null
-  createdAt: string
-}
-
 interface CreditTxnFilters extends Record<string, unknown> {
   userId: number | ''
   reason: CreditReasonFilter
@@ -72,7 +54,7 @@ const {
   loading,
   refresh,
   applyFilters: apply
-} = usePrivatePagedList<CreditTxnFilters, CreditTxnRow>({
+} = usePrivatePagedList<CreditTxnFilters, AdminCreditTransactionRow>({
   path: '/api/admin/users/credits/transactions',
   defaultFilters: {
     userId: '',
@@ -125,7 +107,7 @@ const directionItems = computed(() => [
   { label: t('admin.credits.transactions.filters.expense'), value: 'out' }
 ])
 
-const columns = computed<TableColumn<CreditTxnRow>[]>(() => [
+const columns = computed<TableColumn<AdminCreditTransactionRow>[]>(() => [
   { accessorKey: 'createdAt', header: t('admin.credits.transactions.columns.time') },
   { accessorKey: 'userId', header: t('admin.credits.transactions.columns.user') },
   { accessorKey: 'reason', header: t('admin.credits.transactions.columns.reason') },

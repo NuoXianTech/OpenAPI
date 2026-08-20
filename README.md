@@ -108,7 +108,7 @@ docs/                        Project-specific standards and production workflows
 - [Public API development guide](docs/api/public-api-development.md)
 - [Public API conventions](docs/api/public-api-conventions.md)
 - [Frontend engineering standards](docs/standards.md)
-- [API billing rules](docs/platform/billing-rules.md)
+- [API billing rules](docs/architecture/billing.md)
 - [Runtime configuration](docs/operations/runtime-config.md)
 - [VPS deployment guide](docs/operations/vps-deployment.md)
 

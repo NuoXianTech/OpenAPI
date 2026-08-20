@@ -15,13 +15,16 @@ export interface PlatformEnvironment {
   updatedAt: string
 }
 
-export interface PlatformWorkspace {
+export interface PlatformWorkspaceSummary {
   id: string
   slug: string
   name: string
   status: 'active' | 'disabled'
   createdAt: string
   updatedAt: string
+}
+
+export interface PlatformWorkspace extends PlatformWorkspaceSummary {
   environments: PlatformEnvironment[]
 }
 
@@ -37,7 +40,7 @@ export interface PlatformApiVersion {
   retiredAt: string | null
 }
 
-export interface PlatformProduct {
+export interface PlatformProductSummary {
   id: string
   workspaceId: string
   slug: string
@@ -49,6 +52,9 @@ export interface PlatformProduct {
   lifecycle: 'active' | 'deprecated' | 'retired'
   createdAt: string
   updatedAt: string
+}
+
+export interface PlatformProduct extends PlatformProductSummary {
   versions: PlatformApiVersion[]
 }
 
@@ -67,7 +73,7 @@ export interface PlatformUpstreamTarget {
   updatedAt: string
 }
 
-export interface PlatformUpstream {
+export interface PlatformUpstreamSummary {
   id: string
   workspaceId: string
   slug: string
@@ -78,6 +84,9 @@ export interface PlatformUpstream {
   status: 'active' | 'disabled'
   createdAt: string
   updatedAt: string
+}
+
+export interface PlatformUpstream extends PlatformUpstreamSummary {
   targets: PlatformUpstreamTarget[]
   connection: ServiceConnectionView | null
 }
@@ -114,8 +123,8 @@ export interface PlatformRoute {
 export interface PlatformRouteBinding {
   route: PlatformRoute
   version: PlatformApiVersion
-  product: PlatformProduct
-  upstream: PlatformUpstream
+  product: PlatformProductSummary
+  upstream: PlatformUpstreamSummary
 }
 
 export type PlatformEndpointPublicationStatus

@@ -3,6 +3,7 @@ import { routingRevisionService } from '~~/server/services/routing-revision-serv
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformRoutingRevision } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminActivateRevisionSchema)
@@ -15,5 +16,5 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: revision.id,
     detail: { environmentId: revision.environmentId, sequence: revision.sequence }
   })
-  return revision
+  return toPlatformRoutingRevision(revision)
 })

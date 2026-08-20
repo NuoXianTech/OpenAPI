@@ -95,6 +95,8 @@ export const oauthAccountService = {
       eq(oauthAccounts.id, existing.id),
       eq(oauthAccounts.userId, input.userId)
     )).returning()
-    return firstRow(updated)
+    const account = firstRow(updated)
+    if (!account) throw new Error('oauth account update returned no row')
+    return account
   }
 }

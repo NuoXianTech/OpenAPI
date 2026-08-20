@@ -1,18 +1,17 @@
-import { createError, getRouterParam } from 'h3'
-import { z } from 'zod'
 import { adminRouteSchema } from '~~/server/schemas/admin'
 import { platformRouteService } from '~~/server/services/platform-route-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
+import { readUuidRouterParam } from '~~/server/utils/router-param'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformRoute } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
-  const routeId = z.uuid().safeParse(getRouterParam(event, 'id'))
-  if (!routeId.success) throw createError({ statusCode: 400, message: 'route id is invalid' })
+  const routeId = readUuidRouterParam(event)
 
   const body = await readZodBody(event, adminRouteSchema)
   const result = await platformRouteService.updateAndPublish(
-    routeId.data,
+    routeId,
     body,
     admin.id
   )
@@ -26,7 +25,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     detail: { method: updated.method, pathPattern: updated.pathPattern, state: updated.state }
   })
   return {
-    ...updated,
+    ...toPlatformRoute(updated),
     revisions: result.revisions
   }
 })

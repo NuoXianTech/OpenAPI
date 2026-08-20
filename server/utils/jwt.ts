@@ -70,18 +70,21 @@ export function verifyAccessToken(token: string): VerifiedToken | null {
   // 2) 常量时间比对签名
   if (!hasValidHmacSignature(`${header}.${body}`, signature, secret)) return null
 
-  // 3) 解析 claims + 严格校验 exp / role
+  // 3) 解析 claims + 严格校验全部会话字段
   let claims: JwtClaims
   try {
     claims = JSON.parse(decodeBase64Url(body).toString('utf8'))
   } catch {
     return null
   }
-  if (typeof claims.exp !== 'number' || claims.exp <= Math.floor(Date.now() / 1000)) {
-    return null
-  }
+  const now = Math.floor(Date.now() / 1000)
+  if (!Number.isInteger(claims.iat) || claims.iat <= 0 || claims.iat > now + 60) return null
+  if (!Number.isInteger(claims.exp) || claims.exp <= now || claims.exp <= claims.iat) return null
   if (!Number.isInteger(claims.sub) || claims.sub <= 0) return null
   if (claims.role !== 'user' && claims.role !== 'admin') return null
+  if (!Number.isInteger(claims.ver) || claims.ver < 0) return null
+  if (!Number.isInteger(claims.loginAt) || claims.loginAt <= 0 || claims.loginAt > claims.iat) return null
+  if (typeof claims.rmb !== 'boolean') return null
 
   return claims
 }

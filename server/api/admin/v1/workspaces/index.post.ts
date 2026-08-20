@@ -3,6 +3,7 @@ import { platformWorkspaceService } from '~~/server/services/platform-workspace-
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { defineAdminEventHandler } from '~~/server/utils/auth'
 import { readZodBody } from '~~/server/utils/zod'
+import { toPlatformWorkspace } from '~~/server/utils/platform-view'
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminCreateWorkspaceSchema)
@@ -15,5 +16,5 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: created.id,
     detail: { slug: created.slug }
   })
-  return created
+  return toPlatformWorkspace(created)
 })

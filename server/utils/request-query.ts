@@ -20,13 +20,20 @@ export function readQueryNumber(value: unknown): number | undefined {
   return Number.isFinite(numericValue) ? numericValue : undefined
 }
 
-export function readRequiredQueryNumber(
+export function readQueryPositiveInteger(value: unknown): number | undefined {
+  const numericValue = readQueryNumber(value)
+  return numericValue !== undefined && Number.isInteger(numericValue) && numericValue > 0
+    ? numericValue
+    : undefined
+}
+
+export function readRequiredQueryPositiveInteger(
   query: Record<string, unknown>,
   key: string,
   message = `${key} is required`
 ): number {
-  const value = readQueryNumber(query[key])
-  if (!value) {
+  const value = readQueryPositiveInteger(query[key])
+  if (value === undefined) {
     throw Object.assign(new Error(message), { statusCode: 400 })
   }
   return value

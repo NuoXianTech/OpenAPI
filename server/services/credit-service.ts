@@ -9,6 +9,8 @@ import { normalizePagination } from '~~/server/utils/pagination'
 import { firstRow } from '~~/server/utils/row'
 import type { CreditReason } from '#shared/types/credit-reason'
 import type { UserCreditConsumptionDailyRow, UserCreditSummary } from '#shared/types/user-credits'
+import type { CreditReservationItem } from '#shared/types/admin-credits'
+import { toIsoString, toNullableIsoString } from '~~/server/utils/date'
 
 export type { CreditReason }
 
@@ -270,7 +272,15 @@ async function listCreditReservations(filters: ListCreditReservationsFilters = {
       .offset(offset),
     where ? countQuery.where(where) : countQuery
   ])
-  return { items, total: toNumber(totalRows[0]?.value) }
+  const responseItems: CreditReservationItem[] = items.map(item => ({
+    ...item,
+    status: item.status as CreditReservationStatus,
+    lastAttemptAt: toNullableIsoString(item.lastAttemptAt),
+    nextAttemptAt: toIsoString(item.nextAttemptAt),
+    createdAt: toIsoString(item.createdAt),
+    updatedAt: toIsoString(item.updatedAt)
+  }))
+  return { items: responseItems, total: toNumber(totalRows[0]?.value) }
 }
 
 async function retryCreditReservation(id: number) {

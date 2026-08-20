@@ -1,5 +1,19 @@
 import type { DashboardCallRankItem } from './dashboard'
 
+export interface AdminUserItem {
+  id: number
+  role: 'user' | 'admin'
+  username: string
+  email: string | null
+  displayName: string | null
+  isActive: boolean
+  isBanned: boolean
+  bannedReason: string | null
+  bannedUntil: string | null
+  credits: number
+  createdAt: string
+}
+
 export interface AdminDashboardHourlyPoint {
   hour: string
   label: string

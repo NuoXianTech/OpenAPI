@@ -1,6 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
 import type { SystemSettings } from '#shared/types/site-settings'
-import { userService } from '~~/server/services/user-service'
 
 export type EmailFilterMode = 'off' | 'whitelist' | 'blacklist'
 export type RegistrationMode = SystemSettings['registrationMode']
@@ -50,20 +49,4 @@ export function isEmailAllowedForRegistration(
   if (atIndex <= 0 || atIndex === normalized.length - 1) return false
   const matched = domains.includes(normalized.slice(atIndex + 1))
   return mode === 'whitelist' ? matched : !matched
-}
-
-interface RollbackCreatedUserOptions {
-  userId: number
-  reason: string
-  error: unknown
-}
-
-export async function rollbackCreatedUser(options: RollbackCreatedUserOptions): Promise<void> {
-  const { userId, reason, error } = options
-  console.error(`[registration] ${reason}, rolling back user`, { userId, error })
-  try {
-    await userService.deletePendingUser(userId)
-  } catch (rollbackError) {
-    console.error('[registration] rollback failed', { userId, error: rollbackError })
-  }
 }

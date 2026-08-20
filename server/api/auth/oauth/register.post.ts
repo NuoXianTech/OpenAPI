@@ -8,20 +8,18 @@ import { readZodBody } from '~~/server/utils/zod'
 import { readPendingOauth, clearPendingOauth } from '~~/server/utils/oauth-pending'
 import { userService } from '~~/server/services/user-service'
 import { oauthAccountService } from '~~/server/services/oauth-account-service'
-import { issueVerificationTokenUrl } from '~~/server/utils/verification-token'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
+import { registrationService } from '~~/server/services/registration-service'
 import { loginLogService } from '~~/server/services/login-log-service'
 import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { createUserSession } from '~~/server/utils/auth'
 import { hashPassword } from '~~/server/utils/password'
-import { sendVerificationEmail } from '~~/server/utils/email'
 import {
   isEmailAllowedForRegistration,
   isRegistrationInviteValid,
   normalizeEmailFilterMode,
   normalizeRegistrationMode,
-  parseEmailDomainList,
-  rollbackCreatedUser
+  parseEmailDomainList
 } from '~~/server/utils/registration'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
@@ -103,7 +101,6 @@ export default defineEventHandler(async (event) => {
     username = await pickAvailableUsername(pending.nickname || pending.provider)
   }
 
-  const activationRequired = settings.emailActivationEnabled !== false
   const passwordHash = await hashPassword(body.password)
 
   let created: Awaited<ReturnType<typeof userService.addUser>>
@@ -135,8 +132,21 @@ export default defineEventHandler(async (event) => {
       lastLoginIp: ip
     })
   } catch (error) {
-    await rollbackCreatedUser({ userId: created.id, reason: 'oauth binding failed', error })
+    await registrationService.rollbackCreatedUser(created.id, 'oauth binding failed', error)
     throw error
+  }
+
+  const completion = await registrationService.completeRegistration({
+    user: created,
+    settings,
+    reasonPrefix: 'oauth registration'
+  })
+  clearPendingOauth(event)
+
+  if (!completion.verificationRequired) {
+    await createUserSession(event, { id: created.id, role: 'user' })
+    await userService.updateLastLogin(created.id, ip, userAgent)
+    await loginLogService.record({ userId: created.id, username: created.username, method, success: true, ip, userAgent })
   }
 
   await addRequestOperationLog(event, {
@@ -144,41 +154,8 @@ export default defineEventHandler(async (event) => {
     actor: created.username,
     action: 'user.oauth.register',
     resourceType: 'oauth-account',
-    resourceId: linkedAccount?.id ?? pending.provider,
+    resourceId: linkedAccount.id,
     detail: { provider: pending.provider }
   })
-
-  // 关闭邮件激活：注册即激活（activateUser 负责赠分 + 补发历史通知）并立即登录
-  if (!activationRequired) {
-    try {
-      await userService.activateUser(created.id)
-    } catch (error) {
-      await rollbackCreatedUser({ userId: created.id, reason: 'oauth auto-activation failed', error })
-      throw createError({ statusCode: 503, message: '注册失败，请稍后重试或联系管理员' })
-    }
-    clearPendingOauth(event)
-    await createUserSession(event, { id: created.id, role: 'user' })
-    await userService.updateLastLogin(created.id, ip, userAgent)
-    await loginLogService.record({ userId: created.id, username: created.username, method, success: true, ip, userAgent })
-    return { ok: true, verificationRequired: false }
-  }
-
-  // 开启邮件激活：发验证邮件，账号待激活；发信失败回滚（绑定随 cascade 清）
-  const expiresInMinutes = Number(settings.emailVerifyExpiresInMinutes || 30)
-  const verifyUrl = issueVerificationTokenUrl(created, {
-    siteUrl: settings.siteUrl,
-    path: 'verify-email',
-    purpose: 'verify',
-    email: created.email,
-    expiresInMinutes
-  })
-  try {
-    await sendVerificationEmail(email, verifyUrl)
-  } catch (error) {
-    await rollbackCreatedUser({ userId: created.id, reason: 'oauth verification email failed', error })
-    throw createError({ statusCode: 503, message: '验证邮件发送失败，请稍后重试或联系管理员检查邮件服务配置' })
-  }
-
-  clearPendingOauth(event)
-  return { ok: true, verificationRequired: true }
+  return { ok: true, verificationRequired: completion.verificationRequired }
 })
