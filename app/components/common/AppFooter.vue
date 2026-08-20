@@ -15,12 +15,6 @@ const yearLabel = computed(() =>
 const icpBeian = computed(() => settings.value.icpBeian || '')
 const policeBeian = computed(() => settings.value.policeBeian || '')
 const hasBeian = computed(() => Boolean(icpBeian.value || policeBeian.value))
-
-const footerLinks = [
-  { label: 'API', to: '/' },
-  { label: 'Status', to: '/stats' },
-  { label: 'Links', to: '/friend-links' }
-]
 </script>
 
 <template>
@@ -32,12 +26,6 @@ const footerLinks = [
           {{ settings.siteDescription }}
         </p>
       </div>
-
-      <nav class="site-footer__nav" aria-label="Footer">
-        <NuxtLink v-for="link in footerLinks" :key="link.to" :to="link.to">
-          {{ link.label }}
-        </NuxtLink>
-      </nav>
 
       <div class="site-footer__legal">
         <span>© {{ yearLabel }} {{ settings.siteName }}</span>
@@ -76,7 +64,7 @@ const footerLinks = [
   width: calc(100% - 2rem);
   max-width: 1180px;
   margin-inline: auto;
-  gap: 2rem;
+  gap: 1.5rem;
   padding-block: 2.5rem 1.5rem;
 }
 
@@ -95,17 +83,6 @@ const footerLinks = [
   line-height: 1.6;
 }
 
-.site-footer__nav {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.25rem;
-  font-family: var(--font-code);
-  font-size: 0.7rem;
-  color: var(--ui-text-muted);
-}
-
-.site-footer__nav a:hover,
 .site-footer__legal a:hover { color: var(--ui-primary); }
 
 .site-footer__legal {
@@ -119,10 +96,7 @@ const footerLinks = [
 }
 
 @media (width >= 768px) {
-  .site-footer__inner { grid-template-columns: 1fr auto; }
-  .site-footer__nav { justify-content: flex-end; }
   .site-footer__legal {
-    grid-column: 1 / -1;
     flex-direction: row;
     justify-content: space-between;
   }
