@@ -53,7 +53,7 @@ export interface ServiceConnectionView {
   serviceName: string | null
   serviceVersion: string | null
   serviceCommit: string | null
-  platformProtocol: string | null
+  serviceProtocol: string | null
   openapiSha256: string | null
   configurationSchemaSha256: string | null
   configurationRevision: number

@@ -87,7 +87,7 @@ function contract(serviceId: string) {
     name: 'Test Service',
     version: '0.1.0',
     commit: 'test',
-    platformProtocol: 'openapi-platform-service/v1',
+    serviceProtocol: 'openapi-service/v1',
     openapi: '/openapi.json',
     openapiSha256,
     health: '/healthz',

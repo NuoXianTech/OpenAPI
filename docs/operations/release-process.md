@@ -44,10 +44,10 @@ Git Tag 必须：
 ## 4. 发布前门禁
 
 1. 确认 [版本与支持范围](../architecture/release-scope.md) 中适用于目标版本的要求已经完成。
-2. 审查数据库 Schema 和迁移；当前破坏性重建的唯一 `0000` 要求目标环境重建数据库。新基线再次正式发布后，journal、SQL 和 snapshot 必须冻结，新 Schema 只能追加迁移。
+2. 审查数据库 Schema 和迁移；SQL、snapshot 与 journal 必须全部由 `pnpm db:generate --name descriptive_name` 生成，禁止手工编辑。审查不通过时回到 Schema 修正并重新生成。当前破坏性重建的唯一 `0000` 要求目标环境重建数据库；新基线再次正式发布后，生成产物立即冻结，新 Schema 只能追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
 4. 核对运行时变量、密钥和 Service Token 维护计划；`0.1.0` 不支持双 Token 在线轮换。
-5. 确认 `openapi-service` 当前主线与 Platform 控制协议兼容，并完成集成测试。Platform 工作流固定检出 Service `main` 作为当前兼容基线，不根据 Platform 版本推导或绑定 Service 版本。
+5. 确认 `openapi-service` 当前主线声明 Platform 支持的 `serviceProtocol`（当前为 `openapi-service/v1`），并完成集成测试。Platform 工作流固定检出 Service `main` 作为当前测试基线，不根据 Platform 版本推导或绑定 Service 版本。
 6. 完成质量门禁：
 
    ```bash

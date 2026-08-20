@@ -21,6 +21,7 @@ upstream: /v1/player/assets/{path.asset}
 - URL 中的 `v1` 是具体 API Product 的契约版本，不是 Platform 软件版本。
 - 破坏输入、输出、错误码或资源语义时创建新 API Version。
 - Service 可以先同时提供新旧 Endpoint，再由 Platform 分阶段发布、迁移和下线 Route。
+- 业务路径版本与 `serviceProtocol` 独立；新增 `/v2` Endpoint 不要求升级 `openapi-service/v1` 控制协议。
 
 ## 3. HTTP 与响应
 

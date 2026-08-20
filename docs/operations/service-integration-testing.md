@@ -9,6 +9,7 @@
 - Platform 执行 API Key、Scope、限流、积分和调用日志。
 - Service 只接收 Platform 注入的 Service Token。
 - Platform 发现 Service OpenAPI 和配置 Schema。
+- Platform 接受 `openapi-service/v1`，并明确拒绝未支持的 `serviceProtocol`；软件版本号不同不应导致失败。
 - Secret 不回显，配置可以同步到多个 Target。
 - Service Endpoint 不会因为发现而自动公开。
 
@@ -158,4 +159,4 @@ pnpm build
 
 测试数量会随功能变化，不应在文档中固定具体文件或用例数量。
 
-GitHub Actions 会把 `openapi-service` 的 `main` 检出到 Platform 工作区并先执行 Service build。Platform 的日常 `main` 和版本 Tag 都验证当前 Service 主线；两者不要求使用相同版本号，也不建立发布绑定关系。
+GitHub Actions 会把 `openapi-service` 的 `main` 检出到 Platform 工作区并先执行 Service build。Platform 的日常 `main` 和版本 Tag 都验证当前 Service 主线使用受支持的通信协议并通过真实链路；两者不要求使用相同版本号，也不建立发布绑定关系。业务 `/v1`、`/v2` 路径由 OpenAPI 发现，和控制协议版本分别验证。

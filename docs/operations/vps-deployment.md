@@ -167,7 +167,7 @@ NODE_ENV=production node .output/server/index.mjs
 
 当前开发线使用破坏性重建后的唯一 `0000` 基线。旧 `0.1.0`、`0.1.1` 数据库和 PGlite Volume 不能原地升级；部署包含新基线的版本前必须停止 Platform、完成备份并重建数据库，必要数据通过经过验证的导出/导入流程迁移。
 
-发布含账号、OAuth、通知、积分或日志 schema 变更的版本前，先生成并随版本发布数据库迁移。当前账号模型要求管理员和用户共用 `users` 表，并通过 `users.role` 区分权限。
+发布含账号、OAuth、通知、积分或日志 Schema 变更的版本前，只修改 `server/db/schema/`，再用 `pnpm db:generate --name descriptive_name` 生成并随版本发布数据库迁移；禁止手工编辑 SQL、snapshot 或 journal。当前账号模型要求管理员和用户共用 `users` 表，并通过 `users.role` 区分权限。
 
 ## 进程管理建议
 

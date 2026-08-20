@@ -69,6 +69,8 @@ PUT /.well-known/configuration.json
 
 Zod Schema 是请求校验、响应类型和 OpenAPI 的单一来源。OpenAPI 使用确定性排序并暴露 SHA-256 指纹与 ETag，便于 Platform 检测契约变化。
 
+`/.well-known/service.json` 通过 `serviceProtocol: "openapi-service/v1"` 声明控制协议。它只用于 Platform 与 Service 的兼容校验；Service 软件版本和业务路径版本独立演进。业务接口发生破坏性变化时可以新增 `/v2` 并保留 `/v1` 迁移，不需要同步修改 Platform 软件版本或控制协议。
+
 Service OpenAPI 变化不会在未经确认时创建或修改公开 Route。Platform 接口目录会展示契约差异；管理员明确发布 Endpoint 后，Platform 自动创建 Route 并通过 Routing Revision 生效。
 
 ## 6. 响应与错误

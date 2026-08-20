@@ -187,7 +187,7 @@ export const upstreamServiceConnections = pgTable('upstream_service_connections'
   serviceName: varchar('service_name', { length: 160 }),
   serviceVersion: varchar('service_version', { length: 160 }),
   serviceCommit: varchar('service_commit', { length: 160 }),
-  platformProtocol: varchar('platform_protocol', { length: 80 }),
+  serviceProtocol: varchar('service_protocol', { length: 80 }),
   serviceDescription: jsonb('service_description').$type<ServiceDescription>(),
   openapiSha256: varchar('openapi_sha256', { length: 64 }),
   configurationSchemaSha256: varchar('configuration_schema_sha256', { length: 64 }),

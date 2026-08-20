@@ -1,5 +1,5 @@
 {
-  "id": "ca80738f-9119-4aa7-b939-219043274617",
+  "id": "d7349cf0-ddbf-4527-8516-3a49bac03af9",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3566,8 +3566,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "platform_protocol": {
-          "name": "platform_protocol",
+        "service_protocol": {
+          "name": "service_protocol",
           "type": "varchar(80)",
           "primaryKey": false,
           "notNull": false

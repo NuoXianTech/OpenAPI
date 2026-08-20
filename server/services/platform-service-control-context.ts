@@ -50,7 +50,7 @@ export function toServiceConnectionView(
     serviceName: connection.serviceName,
     serviceVersion: connection.serviceVersion,
     serviceCommit: connection.serviceCommit,
-    platformProtocol: connection.platformProtocol,
+    serviceProtocol: connection.serviceProtocol,
     openapiSha256: connection.openapiSha256,
     configurationSchemaSha256: connection.configurationSchemaSha256,
     configurationRevision: connection.configurationRevision,

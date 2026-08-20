@@ -148,10 +148,12 @@ External Upstream 用于普通 HTTP API：
 管理员在 Internal Upstream 页面执行 Service 发现。Platform 会：
 
 1. 读取 Service 描述。
-2. 校验 Service ID、协议版本和契约指纹。
+2. 校验 Service ID、`serviceProtocol` 和契约指纹；当前支持 `openapi-service/v1`，不比较 Service 与 Platform 的软件版本号。
 3. 保存确定性 OpenAPI 文档及 Endpoint 摘要。
 4. 读取业务配置 Schema 和脱敏状态。
 5. 为通用字段生成管理表单。
+
+控制协议只约束发现、配置和认证等 Platform ↔ Service 通信。业务 Endpoint 的 `/v1`、`/v2` 由 OpenAPI 路径决定，可以并存；接口目录按实际路径创建和维护对应 API Version。
 
 业务配置保存后，Platform 使用乐观锁生成更高 Revision，分别向全部启用 Target 下发同一完整快照，并记录 `synced`、`drifted`、`error` 或 `unknown` 状态。部分 Target 失败不会被视为全部成功。
 

@@ -3,7 +3,7 @@
 Platform v1 不承载具体公共接口代码。新增接口只有两种方式：
 
 1. 把现有标准 HTTP API 作为 External Upstream 接入 Platform。
-2. 在 `openapi-service` 或兼容 `openapi-platform-service/v1` 的第三方 Service 中开发，再由 Platform 的接口目录发布。
+2. 在 `openapi-service` 或兼容 `openapi-service/v1` 控制协议的第三方 Service 中开发，再由 Platform 的接口目录发布。
 
 两种方式都不允许在 `openapi-platform/server/routes/v1` 或 `server/lib/<business>` 增加业务 Handler。
 

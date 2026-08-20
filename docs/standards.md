@@ -17,6 +17,8 @@
 | `server/api/` | 内部 API | 使用 Nuxt/Nitro event handler，私有接口走鉴权守卫 |
 | `server/middleware/` | Gateway 与安全入口 | 只做通用路由、Header 和安全处理，不加入具体公共接口分支 |
 | `server/services/` | 服务层 | 保持路由、Service 控制面、事务、权限、审计和跨表规则集中 |
+| `server/db/schema/` | Drizzle Schema | 数据库结构的唯一源码，约束名等数据库细节也在这里定义 |
+| `server/db/migrations/` | Drizzle 迁移产物 | 只能通过 `pnpm db:generate` 生成，禁止手工编辑 SQL、snapshot 和 journal |
 | `shared/` | 前后端共享契约 | 类型、schema、静态配置必须可在客户端安全导入 |
 
 不要把服务端密钥、数据库连接或 Node-only 依赖放入 `app/` 或客户端可导入的 `shared/` 文件。

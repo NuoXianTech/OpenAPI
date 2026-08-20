@@ -393,7 +393,7 @@ CREATE TABLE "upstream_service_connections" (
 	"service_name" varchar(160),
 	"service_version" varchar(160),
 	"service_commit" varchar(160),
-	"platform_protocol" varchar(80),
+	"service_protocol" varchar(80),
 	"service_description" jsonb,
 	"openapi_sha256" varchar(64),
 	"configuration_schema_sha256" varchar(64),

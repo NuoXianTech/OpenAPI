@@ -42,7 +42,7 @@ Authorization: Service <token>
   "name": "OpenAPI Service",
   "version": "<semver>",
   "commit": "...",
-  "platformProtocol": "openapi-platform-service/v1",
+  "serviceProtocol": "openapi-service/v1",
   "openapi": "/openapi.json",
   "openapiSha256": "...",
   "health": "/healthz",
@@ -56,7 +56,7 @@ Authorization: Service <token>
 }
 ```
 
-同一 Internal Upstream 的全部 Target 必须返回相同 `serviceId`、Service 名称、OpenAPI 指纹、配置 Schema 指纹和控制端点。
+同一 Internal Upstream 的全部 Target 必须返回相同 `serviceId`、Service 名称、`serviceProtocol`、OpenAPI 指纹、配置 Schema 指纹和控制端点。
 
 Internal Target 只有在发现校验通过后才有资格进入新的 Routing Revision。Platform 已保存期望业务配置时，Target 还必须确认相同的配置 Revision 和哈希；未验证、漂移或同步失败的 Target 不接收新增流量。
 
@@ -226,6 +226,8 @@ Platform 为每次公开请求生成或验证 Request ID，并贯穿调用明细
 
 ## 11. 协议兼容性
 
-`openapi-platform-service/v1` 是 Platform 与 Service 控制协议版本，不等同于软件版本或公开业务路径版本。
+`openapi-service/v1` 是 Platform 与 Service 的控制协议版本，不等同于任一应用的软件版本，也不等同于公开业务路径版本。Service Description 的 `version` 与 `commit` 仅用于展示、排障和审计，Platform 不比较两边的软件版本号，也不据此判断兼容性。
 
-兼容变更可以增加可选字段；破坏性变更必须发布新的协议版本，并由 Platform 在发现阶段明确拒绝不支持的版本。
+Platform 维护显式支持的控制协议集合。发现先读取稳定的 `serviceProtocol` 字段，再按对应版本校验描述正文；没有共同协议时返回 `SERVICE_PROTOCOL_UNSUPPORTED`，不会带着未知契约继续读取配置或发布 Route。兼容变更可以在同一协议版本中增加可选字段；控制面发生破坏性变化时发布 `openapi-service/v2`，并先为 Platform 增加对应适配和集成测试。
+
+公开业务 Endpoint 的 `/v1`、`/v2` 由 Service OpenAPI 声明，可以同时存在、分别发布并逐步迁移。新增业务 `/v2` 不要求把控制协议升级到 `openapi-service/v2`；只有 `/.well-known/*`、认证、配置同步或发现语义本身不兼容时，才升级控制协议。

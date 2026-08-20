@@ -1,10 +1,16 @@
 import type { z } from 'zod'
 import {
+  isSupportedServiceControlProtocol,
   openapiDocumentSchema,
   redactedServiceConfigurationStateSchema,
+  SERVICE_CONTROL_PROTOCOL_V1,
+  type ServiceDescription,
+  serviceDescriptionEnvelopeSchema,
+  serviceDescriptionV1Schema,
   serviceConfigurationDefinitionSchema,
   serviceConfigurationUpdateResponseSchema,
-  serviceDescriptionSchema
+  type SupportedServiceControlProtocol,
+  SUPPORTED_SERVICE_CONTROL_PROTOCOLS
 } from '#shared/service-control'
 import { readLimitedText } from '~~/server/utils/safe-fetch'
 
@@ -21,6 +27,17 @@ export class ServiceControlRequestError extends Error {
   ) {
     super(message)
     this.name = 'ServiceControlRequestError'
+  }
+}
+
+export class UnsupportedServiceProtocolError extends Error {
+  readonly supportedProtocols = [...SUPPORTED_SERVICE_CONTROL_PROTOCOLS]
+
+  constructor(readonly serviceProtocol: string) {
+    super(
+      `unsupported Service control protocol "${serviceProtocol}"; supported protocols: ${SUPPORTED_SERVICE_CONTROL_PROTOCOLS.join(', ')}`
+    )
+    this.name = 'UnsupportedServiceProtocolError'
   }
 }
 
@@ -80,6 +97,50 @@ async function describeErrorResponse(response: Response): Promise<string | null>
   return message
 }
 
+function parseResponseData<TSchema extends z.ZodType>(
+  data: unknown,
+  schema: TSchema,
+  status: number,
+  endpoint: string
+): z.output<TSchema> {
+  const parsed = schema.safeParse(data)
+  if (parsed.success) return parsed.data
+
+  const issues = parsed.error.issues
+    .slice(0, 5)
+    .map((issue) => {
+      const path = issue.path.length > 0
+        ? issue.path.join('.')
+        : '<root>'
+      return `${path}: ${issue.message}`
+    })
+    .join('; ')
+  throw new ServiceControlRequestError(
+    status,
+    endpoint,
+    `service control response does not match the protocol: ${issues}`
+  )
+}
+
+function parseServiceDescription(
+  data: unknown,
+  protocol: SupportedServiceControlProtocol,
+  status: number,
+  endpoint: string
+): ServiceDescription {
+  switch (protocol) {
+    case SERVICE_CONTROL_PROTOCOL_V1:
+      return parseResponseData(
+        data,
+        serviceDescriptionV1Schema,
+        status,
+        endpoint
+      )
+  }
+  const unsupportedProtocol: never = protocol
+  throw new Error(`missing parser for Service protocol ${unsupportedProtocol}`)
+}
+
 async function requestJson<TSchema extends z.ZodType>(
   baseUrl: string,
   endpoint: string,
@@ -89,6 +150,7 @@ async function requestJson<TSchema extends z.ZodType>(
 ): Promise<{
   data: z.output<TSchema>
   headers: Headers
+  status: number
   url: string
 }> {
   const url = buildServiceControlUrl(baseUrl, endpoint)
@@ -136,34 +198,36 @@ async function requestJson<TSchema extends z.ZodType>(
       'service control response is not valid JSON'
     )
   }
-  const parsed = schema.safeParse(json)
-  if (!parsed.success) {
-    const issues = parsed.error.issues
-      .slice(0, 5)
-      .map((issue) => {
-        const path = issue.path.length > 0
-          ? issue.path.join('.')
-          : '<root>'
-        return `${path}: ${issue.message}`
-      })
-      .join('; ')
-    throw new ServiceControlRequestError(
-      response.status,
-      endpoint,
-      `service control response does not match the protocol: ${issues}`
-    )
+  return {
+    data: parseResponseData(json, schema, response.status, endpoint),
+    headers: response.headers,
+    status: response.status,
+    url: url.toString()
   }
-  return { data: parsed.data, headers: response.headers, url: url.toString() }
 }
 
 export const serviceControlClient = {
-  getDescription(baseUrl: string, token: string) {
-    return requestJson(
+  async getDescription(baseUrl: string, token: string) {
+    const response = await requestJson(
       baseUrl,
       '/.well-known/service.json',
       token,
-      serviceDescriptionSchema
+      serviceDescriptionEnvelopeSchema
     )
+    if (!isSupportedServiceControlProtocol(response.data.serviceProtocol)) {
+      throw new UnsupportedServiceProtocolError(
+        response.data.serviceProtocol
+      )
+    }
+    return {
+      ...response,
+      data: parseServiceDescription(
+        response.data,
+        response.data.serviceProtocol,
+        response.status,
+        '/.well-known/service.json'
+      )
+    }
   },
 
   getConfigurationDefinition(

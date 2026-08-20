@@ -18,7 +18,7 @@ const description: ServiceDescription = {
     update: '/.well-known/configuration',
     schemaSha256: 'b'.repeat(64)
   },
-  platformProtocol: 'openapi-platform-service/v1'
+  serviceProtocol: 'openapi-service/v1'
 }
 
 afterEach(() => {

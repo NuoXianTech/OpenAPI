@@ -14,6 +14,7 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceId: upstreamId,
     detail: {
       serviceId: result.connection.serviceId,
+      serviceProtocol: result.connection.serviceProtocol,
       openapiSha256: result.connection.openapiSha256,
       endpointCount: result.endpoints.filter(endpoint => (
         !endpoint.system && !endpoint.support

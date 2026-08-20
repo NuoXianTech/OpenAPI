@@ -57,7 +57,7 @@ const { routeMutationFromBinding } = await import(
 const { platformServiceControlService } = await import(
   '~~/server/services/platform-service-control-service'
 )
-const { serviceControlClient } = await import(
+const { UnsupportedServiceProtocolError, serviceControlClient } = await import(
   '~~/server/utils/service-control-client'
 )
 const { platformUpstreamService } = await import(
@@ -349,6 +349,7 @@ describe('Platform to Node API Service acceptance', () => {
       discovered: true,
       availability: 'online',
       serviceId: 'openapi-service',
+      serviceProtocol: 'openapi-service/v1',
       configurationRevision: 0
     })
     expect(discovered.endpoints.map(endpoint => endpoint.path)).toEqual(
@@ -507,6 +508,31 @@ describe('Platform to Node API Service acceptance', () => {
       })
     } finally {
       openAPISpy.mockRestore()
+    }
+  })
+
+  it('reports an unsupported Service protocol as an incompatibility', async () => {
+    const descriptionSpy = vi.spyOn(
+      serviceControlClient,
+      'getDescription'
+    ).mockRejectedValue(
+      new UnsupportedServiceProtocolError('openapi-service/v2')
+    )
+
+    try {
+      await expect(platformServiceControlService.discover(
+        officialUpstreamId
+      )).rejects.toMatchObject({
+        statusCode: 409,
+        data: {
+          code: 'SERVICE_PROTOCOL_UNSUPPORTED',
+          serviceProtocol: 'openapi-service/v2',
+          supportedProtocols: ['openapi-service/v1']
+        }
+      })
+    } finally {
+      descriptionSpy.mockRestore()
+      await platformServiceControlService.discover(officialUpstreamId)
     }
   })
 

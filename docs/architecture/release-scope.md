@@ -6,7 +6,7 @@
 
 - **产品架构线**：v1 表示 Platform + Service 的双应用架构，不等同于 Git Tag 或容器标签。
 - **软件版本**：`openapi-platform` 与 `openapi-service` 独立遵循语义化版本；首个公开基线均从 `0.1.0` 开始。
-- **控制协议**：`openapi-platform-service/v1` 表示 Platform 与 Internal Service 的 HTTP 协议版本，不等同于任一应用的软件版本。
+- **控制协议**：`openapi-service/v1` 表示 Platform 与 Internal Service 的 HTTP 控制协议版本，不等同于任一应用的软件版本，也不等同于业务 Endpoint 的 `/v1`。
 - **开发版本**：`main` 分支构建的 `latest` 用于持续集成和开发验证；正式版本使用不可变 Git Tag、Release 与镜像 digest。
 
 ## 2. 产品边界
@@ -52,6 +52,8 @@ Platform 不运行具体业务 Handler。Service 不管理 Platform 用户、公
 
 - 同一 Internal Upstream 的全部 Target 必须返回相同 Service ID、Service 名称、OpenAPI 指纹、配置 Schema 指纹和控制协议版本。
 - 控制协议可以增加可选字段；破坏性协议变化必须发布新的协议版本。
+- Platform 与 Service 的软件版本号不参与兼容判断；发现阶段只接受 Platform 明确支持的 `serviceProtocol`，目标组合还必须通过集成测试。
+- 业务 Endpoint 可以同时提供 `/v1` 与 `/v2`。Platform 按 OpenAPI 中的实际路径创建对应 Product Version，不要求控制协议或两个应用同步升级。
 - OpenAPI 指纹变化必须由管理员审查，不能静默改变现有公开 Route。
 - Routing Revision 一经创建不可修改；日常运行时变更由接口目录自动应用，完整配置不变时复用当前 Revision，实际变化时才发布新 Revision。回滚通过重新激活历史 Revision 完成。
 - Platform 与 Service 可以独立升级，但目标版本必须满足双方声明的控制协议兼容范围。

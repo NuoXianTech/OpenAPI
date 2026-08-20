@@ -6,7 +6,7 @@ Platform v1 不包含具体公共接口实现，也不提供接口专用配置�
 
 - 公开路径、Method、API Key、Scope、限流、积分、统计和 Target 负载策略由 Platform Route/Upstream 管理。
 - 音乐平台开关/Cookie、IP 数据库授权密钥、Crypto 算法开关等业务字段由 API Service 声明。
-- Platform 通过 `openapi-platform-service/v1` 读取通用配置 Schema，自动生成表单、加密保存 Secret，并同步到同一 Upstream 的全部启用 Target。
+- Platform 通过 `openapi-service/v1` 控制协议读取通用配置 Schema，自动生成表单、加密保存 Secret，并同步到同一 Upstream 的全部启用 Target。
 
 管理员操作路径：
 

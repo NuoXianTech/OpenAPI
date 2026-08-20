@@ -969,7 +969,7 @@ describe('routing revision service', () => {
         update: '/.well-known/configuration',
         schemaSha256: '1'.repeat(64)
       },
-      platformProtocol: 'openapi-platform-service/v1'
+      serviceProtocol: 'openapi-service/v1'
     }
     await database.update(schema.upstreamServiceConnections).set({
       serviceId: description.serviceId,

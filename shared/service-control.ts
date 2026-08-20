@@ -1,5 +1,21 @@
 import { z } from 'zod'
 
+export const SERVICE_CONTROL_PROTOCOL_V1 = 'openapi-service/v1' as const
+export const SUPPORTED_SERVICE_CONTROL_PROTOCOLS = [
+  SERVICE_CONTROL_PROTOCOL_V1
+] as const
+
+export type SupportedServiceControlProtocol
+  = typeof SUPPORTED_SERVICE_CONTROL_PROTOCOLS[number]
+
+export function isSupportedServiceControlProtocol(
+  value: string
+): value is SupportedServiceControlProtocol {
+  return SUPPORTED_SERVICE_CONTROL_PROTOCOLS.some(
+    protocol => protocol === value
+  )
+}
+
 const fieldKeySchema = z.string()
   .min(1)
   .max(160)
@@ -74,7 +90,14 @@ export const serviceConfigurationDefinitionSchema = z.object({
   })).max(200)
 })
 
-export const serviceDescriptionSchema = z.object({
+export const serviceDescriptionEnvelopeSchema = z.object({
+  serviceProtocol: z.string()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9][a-z0-9.-]*\/v[1-9]\d*$/)
+}).passthrough()
+
+export const serviceDescriptionV1Schema = z.object({
   schemaVersion: z.literal(1),
   serviceId: z.string().min(1).max(120),
   name: z.string().min(1).max(160),
@@ -90,7 +113,7 @@ export const serviceDescriptionSchema = z.object({
     update: z.string().startsWith('/').max(1000),
     schemaSha256: z.string().regex(/^[0-9a-f]{64}$/)
   }),
-  platformProtocol: z.literal('openapi-platform-service/v1')
+  serviceProtocol: z.literal(SERVICE_CONTROL_PROTOCOL_V1)
 })
 
 const serviceConfigurationValueSchema = z.union([
@@ -137,6 +160,6 @@ export type ServiceConfigurationGroup
   = z.infer<typeof serviceConfigurationDefinitionSchema>['groups'][number]
 export type ServiceConfigurationDefinition
   = z.infer<typeof serviceConfigurationDefinitionSchema>
-export type ServiceDescription = z.infer<typeof serviceDescriptionSchema>
+export type ServiceDescription = z.infer<typeof serviceDescriptionV1Schema>
 export type RedactedServiceConfigurationState
   = z.infer<typeof redactedServiceConfigurationStateSchema>

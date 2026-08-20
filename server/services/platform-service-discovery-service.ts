@@ -22,7 +22,10 @@ import { applyWorkspaceRevision } from '~~/server/services/platform-endpoint-pub
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { firstRow } from '~~/server/utils/row'
-import { serviceControlClient } from '~~/server/utils/service-control-client'
+import {
+  UnsupportedServiceProtocolError,
+  serviceControlClient
+} from '~~/server/utils/service-control-client'
 import { assertServiceConfigurationDefinition } from '~~/server/utils/service-configuration-values'
 import { areEnabledInternalTargetsReady } from '~~/server/utils/internal-upstream-readiness'
 
@@ -64,6 +67,7 @@ function assertMatchingDescriptions(descriptions: ServiceDescription[]) {
     if (
       description.serviceId !== first.serviceId
       || description.name !== first.name
+      || description.serviceProtocol !== first.serviceProtocol
       || description.openapiSha256 !== first.openapiSha256
       || description.configuration.schemaSha256
       !== first.configuration.schemaSha256
@@ -205,6 +209,27 @@ async function fetchServiceSnapshot(
     const firstError = targetResults.find(
       (result): result is PromiseRejectedResult => result.status === 'rejected'
     )!.reason
+    const protocolError = targetResults.find(
+      (result): result is PromiseRejectedResult => (
+        result.status === 'rejected'
+        && result.reason instanceof UnsupportedServiceProtocolError
+      )
+    )?.reason
+    if (protocolError instanceof UnsupportedServiceProtocolError) {
+      return {
+        ok: false,
+        error: createApplicationError({
+          statusCode: 409,
+          message: protocolError.message,
+          data: {
+            code: 'SERVICE_PROTOCOL_UNSUPPORTED',
+            serviceProtocol: protocolError.serviceProtocol,
+            supportedProtocols: protocolError.supportedProtocols
+          }
+        }),
+        targetErrors
+      }
+    }
     return {
       ok: false,
       error: createApplicationError({
@@ -321,7 +346,7 @@ async function commitServiceSnapshot(
         serviceName: snapshot.description.name,
         serviceVersion: snapshot.description.version,
         serviceCommit: snapshot.description.commit,
-        platformProtocol: snapshot.description.platformProtocol,
+        serviceProtocol: snapshot.description.serviceProtocol,
         serviceDescription: snapshot.description,
         openapiSha256: snapshot.description.openapiSha256,
         configurationSchemaSha256:
