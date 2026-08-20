@@ -6,7 +6,7 @@
 
 Platform 不发布 npm 包。正式部署物包括：
 
-- GitHub Release 中的预构建 Node Server 产物。
+- GitHub Release 中可直接执行 `npm start` 的预构建 Node Server 产物。
 - GHCR 中的 amd64/arm64 容器镜像。
 
 构建必须在 Linux CI 或开发机完成。生产服务器不执行 `pnpm install`、Nuxt build 或 Docker build。
@@ -127,7 +127,7 @@ git push origin v0.1.0
 1. 检查 Tag 与 `package.json` 版本一致。
 2. 安装锁定依赖。
 3. 执行 lint、typecheck、死代码检查、测试和 build。
-4. 打包并校验完整 `.output`、数据库迁移执行器和迁移文件。
+4. 将 `.output` 内容扁平化到 Release 版本目录根部，并校验部署 `package.json`、数据库迁移执行器和迁移文件。
 5. 构建非 root amd64/arm64 镜像。
 6. 创建 GitHub Release 和校验和。
 7. 发布 GHCR 多架构镜像。
@@ -147,11 +147,15 @@ docker pull ghcr.io/nuoxiantech/openapi-platform:0.1.0
 docker compose up -d --no-deps openapi-platform
 ```
 
-或部署完整预构建 `.output`：
+或解压 GitHub Release，并直接从版本目录运行：
 
 ```bash
-NODE_ENV=production node .output/server/index.mjs
+cd openapi-platform-<version>
+NODE_ENV=production npm run migrate
+NODE_ENV=production npm start
 ```
+
+发布包仍保留版本根目录、`LICENSE`、README 和 `.env.example`，但不再包含嵌套的 `.output` 目录；`server/`、`public/` 和部署 `package.json` 均位于版本根目录。
 
 发布后验证：
 
@@ -165,7 +169,7 @@ NODE_ENV=production node .output/server/index.mjs
 
 ## 9. 回滚
 
-- Platform 代码问题：恢复上一镜像或上一 `.output`。
+- Platform 代码问题：恢复上一镜像或上一版本运行目录。
 - 路由配置问题：激活上一 Routing Revision。
 - Service 问题：只回滚 Service 镜像。
 - 数据库问题：按发布前备份和迁移说明处理。

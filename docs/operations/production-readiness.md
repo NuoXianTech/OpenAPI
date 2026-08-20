@@ -42,7 +42,7 @@ pnpm build
 | API Service 资源 | 容器空闲 RSS 不高于 128 MiB、常规业务测试峰值不高于 256 MiB、启动到 ready 不高于 2 秒；缓存和来源并发均有上限 |
 | API Key 数据 | 确认普通列表仅返回掩码预览，只有 Key 所有者可按需查看完整值且查看行为写入操作日志；`NUXT_API_KEY_SECRET` 与数据库备份分开保存，明文不进入操作日志或普通应用日志 |
 | 主密钥边界 | 已确认 `0.1.0` 不支持 `NUXT_API_KEY_SECRET` 在线轮换；现有数据库不得直接替换该值 |
-| 部署产物 | Platform 完整发布 `.output`，API Service 发布预编译 `dist`；优先使用各自 Linux CI 生成的独立镜像，不能遗漏 `node_modules/.nitro` |
+| 部署产物 | Platform 构建完整 `.output`，并将其内容扁平化到 Release 版本目录根部；根级 `package.json` 提供 `start`、`migrate`，且不能遗漏 `server/node_modules/.nitro`。API Service 独立发布预编译 `dist` |
 | 时区 | `TZ=Asia/Shanghai`；启动迁移会将数据库迁移会话设置为同一时区，数据库默认时区无需额外修改 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `.data/pglite` |
 | 巡检 | 发布负责人已阅读 [生产运行手册](./production-runbook.md) 的回滚和异常处置 |
@@ -53,7 +53,7 @@ pnpm build
 
 1. 在本地或 CI 运行对应仓库的发布前门禁，生产服务器不执行任何构建。
 2. 设置或确认运行时环境变量。
-3. 上传完整 Platform `.output`、API Service `dist`，或拉取对应的已构建镜像。
+3. 上传完整 Platform `.output`，或上传已将其内容扁平化的 GitHub Release 版本目录；API Service 使用自己的 `dist` 或镜像。
 4. Platform 发生变化时先备份数据库，再使用新产物的 `migrate.mjs` 显式应用迁移；成功后才切换应用。启动时的自动迁移保留为幂等安全检查。
 5. 只更新发生变更的服务。API Service 更新不运行 Platform 数据库迁移，也不停止 Platform。
 6. 执行健康检查和关键路径冒烟。
@@ -97,14 +97,14 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 
 ## 回滚策略
 
-- 保留上一版 `.output` 目录和对应环境变量。
+- 保留上一版完整运行目录和对应环境变量。
 - 保留两个应用各自的上一稳定镜像 digest；只回滚异常服务，不默认同时重启另一服务。
 - 数据库迁移由新产物在切流前显式执行，启动时再幂等检查；发布前先备份 PostgreSQL 或 PGlite 数据目录。如果迁移不可逆，发布说明必须写清业务回滚路径。
 - 应用层回滚优先切换 PM2 指向上一版目录，再执行健康检查。
 
 ```bash
 pm2 stop openapi-platform
-cd /path/to/previous/.output
+cd /path/to/previous/openapi-platform-runtime
 NODE_ENV=production pm2 start server/index.mjs --name openapi-platform --update-env
 pm2 save
 ```

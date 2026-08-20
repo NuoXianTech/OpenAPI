@@ -18,18 +18,25 @@ pnpm build
 pnpm test:integration:built
 ```
 
-构建命令会生成 `.output/server/index.mjs`。生产启动入口使用 Nuxt/Nitro 官方 Node server 入口，不再通过自定义 `start.mjs` 包装应用启动。
+构建命令会生成 `.output/package.json` 和 `.output/server/index.mjs`。根级 `package.json` 只提供部署所需的 `start`、`migrate` 脚本，实际入口仍是 Nuxt/Nitro 官方 Node server，不通过自定义启动器包装应用。
 
 不要在生产 VPS 上执行 Platform 的 `pnpm install`、`pnpm build` 或任何仓库的 `docker build`。Nuxt/Nitro 生产构建可能短时间占用 6～8 GB 内存；Platform 和 API Service 都应在 Linux CI 或开发机构建并发布镜像，VPS 只负责拉取和运行。
 
 ## 部署入口与目录
 
-Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工修改。它不是普通源码项目：`.output/server/package.json` 只描述运行依赖，默认没有 `scripts`。
+Nuxt 官方将完整 `.output` 定义为部署单元，生成目录不应手工修改。Nitro 生成的 `server/package.json` 只描述运行依赖；项目在 `.output/package.json` 生成独立的部署清单，不修改 Nitro 内部文件。
 
-- 面板工作目录是 `.output`：升级命令使用 `node server/migrate.mjs`，启动命令使用 `node server/index.mjs`。
-- 面板工作目录是 `.output/server`：升级命令使用 `node migrate.mjs`，启动命令使用 `node index.mjs`；不要选择“从 package.json scripts 启动”。
+本地或 CI 直接使用构建目录时：
 
-必须上传整个 `.output`，包括隐藏的 `.output/server/node_modules/.nitro`。不要只上传 `server`，也不要使用会忽略隐藏目录或破坏符号链接的压缩工具。Windows 构建产物含 Junction，跨系统上传容易出现 `Cannot find module 'entities/decode'`；生产优先在 Linux CI 或 Docker 内构建。
+```bash
+cd .output
+NODE_ENV=production npm run migrate
+NODE_ENV=production npm start
+```
+
+GitHub Release 会保留版本目录、`LICENSE`、README 和 `.env.example`，但将 `.output` 的内容直接放到版本目录根部。解压后进入该目录执行相同的 `npm run migrate`、`npm start` 即可。不要把工作目录设为 `server`，否则面板读取到的是 Nitro 内部 `package.json`。
+
+必须完整部署运行目录，包括隐藏的 `server/node_modules/.nitro`。不要只上传 `server`，也不要使用会忽略隐藏目录或破坏符号链接的压缩工具。Windows 构建产物含 Junction，跨系统上传容易出现 `Cannot find module 'entities/decode'`；生产优先在 Linux CI 或 Docker 内构建。
 
 ## Docker 部署（推荐）
 
@@ -106,16 +113,32 @@ Service Compose 会把 `./data/assets` 只读挂载到 `/app/data/assets`，并�
 echo "$GHCR_TOKEN" | docker login ghcr.io -u YOUR_GITHUB_USER --password-stdin
 ```
 
-Platform 镜像已配置直接执行 `node server/index.mjs`，不依赖生成 `package.json` 中的 scripts。目标 API Service 镜像直接运行预编译的 `dist/index.js`，不执行 TypeScript 或 Nuxt 构建。生产数据库和 Redis 地址仍只注入 Platform；使用 PGlite 时必须保留 `/app/.data` 数据卷。
+Platform 镜像直接执行 `node server/index.mjs`；它与根级 `package.json` 的 `start` 脚本使用同一个官方入口。目标 API Service 镜像直接运行预编译的 `dist/index.js`，不执行 TypeScript 或 Nuxt 构建。生产数据库和 Redis 地址仍只注入 Platform；使用 PGlite 时必须保留 `/app/.data` 数据卷。
 
 ## 上传文件
 
-将整个 `.output` 目录上传到服务器。构建产物中包含独立迁移入口和版本化 SQL，升级时先迁移，成功后再启动：
+GitHub Release 压缩包解压后的结构如下，`.output` 不再作为中间目录：
+
+```text
+openapi-platform-<version>/
+├── package.json
+├── public/
+├── server/
+├── .env.example
+├── LICENSE
+├── README.md
+└── README_ZH.md
+```
+
+进入解压目录后先迁移，成功后再启动：
 
 ```bash
-NODE_ENV=production node .output/server/migrate.mjs
-NODE_ENV=production node .output/server/index.mjs
+cd openapi-platform-<version>
+NODE_ENV=production npm run migrate
+NODE_ENV=production npm start
 ```
+
+直接上传本地构建的 `.output` 时，则把 `.output` 本身作为工作目录，命令保持相同。
 
 ## 服务器环境变量
 
@@ -159,8 +182,9 @@ Redis 应仅监听本机或私有网络，并启用认证或 TLS。限流计数�
 首次部署或升级时先使用同一份构建产物执行迁移，再启动应用进程：
 
 ```bash
-NODE_ENV=production node .output/server/migrate.mjs
-NODE_ENV=production node .output/server/index.mjs
+cd /path/to/openapi-platform-runtime
+NODE_ENV=production npm run migrate
+NODE_ENV=production npm start
 ```
 
 启动插件会在 Nitro 接受请求前使用同一执行器幂等复查。迁移执行器根据运行时配置连接 PostgreSQL 或 PGlite，并使用 Drizzle 的 `drizzle.__drizzle_migrations` 表，因此已经应用过的迁移会自动跳过。维护窗口需要临时禁止自动迁移时，可设置 `DB_AUTO_MIGRATE=false`。
@@ -174,7 +198,7 @@ NODE_ENV=production node .output/server/index.mjs
 PM2 是最简单的选择：
 
 ```bash
-cd .output
+cd /path/to/openapi-platform-runtime
 NODE_ENV=production pm2 start server/index.mjs --name openapi-platform --update-env
 pm2 save
 ```
@@ -182,7 +206,7 @@ pm2 save
 发布新版本时：
 
 ```bash
-cd .output
+cd /path/to/openapi-platform-runtime
 pm2 restart openapi-platform --update-env
 ```
 

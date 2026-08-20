@@ -82,7 +82,7 @@ Node API Service 的部署配置包含 `API_SERVICE_TOKEN`、独立的 `SERVICE_
 
 当前开发线已破坏性重建为唯一的 `0000` 完整基线。旧 `0.1.0`、`0.1.1` 数据库或 PGlite Volume 不能原地升级到包含该基线的版本，必须重建数据库或执行经过验证的数据导出/导入。新基线正式发布后才恢复只追加增量迁移的规则。
 
-构建产物同时包含 `.output/server/migrate.mjs` 和 `.output/server/db/migrations/postgresql`；生产机可以在启动新版本前执行 `node .output/server/migrate.mjs`，启动插件仍会幂等复查。`pnpm db:migrate` 只用于源码工作区，不能作为纯构建产物的生产入口。PGlite 使用同一套 PostgreSQL 方言迁移。完整流程见[数据库迁移与版本升级](./database-migrations.md)。
+构建产物同时包含 `.output/package.json`、`.output/server/migrate.mjs` 和 `.output/server/db/migrations/postgresql`。以 `.output` 或解压后的 GitHub Release 根目录作为工作目录，生产机可以在启动新版本前执行 `npm run migrate`，再用 `npm start` 启动；启动插件仍会幂等复查。`pnpm db:migrate` 只用于源码工作区，不能作为纯构建产物的生产入口。PGlite 使用同一套 PostgreSQL 方言迁移。完整流程见[数据库迁移与版本升级](./database-migrations.md)。
 
 数据库建议：
 
@@ -114,8 +114,10 @@ API Key 与兑换码可恢复且可重复查看是明确的产品要求，不是
 
 ## PM2 示例
 
+以下 `/path/to/openapi-platform-runtime` 可以是本地构建的 `.output`，也可以是 GitHub Release 解压后的版本目录。
+
 ```bash
-cd .output
+cd /path/to/openapi-platform-runtime
 NITRO_HOST=127.0.0.1 \
 NITRO_PORT=3000 \
 NODE_ENV=production \
@@ -130,7 +132,7 @@ pm2 start server/index.mjs --name openapi-platform --update-env
 PGlite 生产示例：
 
 ```bash
-cd .output
+cd /path/to/openapi-platform-runtime
 NITRO_HOST=127.0.0.1 \
 NITRO_PORT=3000 \
 NODE_ENV=production \

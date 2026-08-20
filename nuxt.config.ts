@@ -1,16 +1,29 @@
-import { copyFile, cp } from 'node:fs/promises'
+import { copyFile, cp, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { basename, resolve } from 'node:path'
 import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME } from './shared/config/locale-defaults'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const require = createRequire(import.meta.url)
-const { version: appVersion } = require('./package.json') as { version: string }
+const { name: appName, version: appVersion } = require('./package.json') as {
+  name: string
+  version: string
+}
 
 const isProduction = process.env.NODE_ENV === 'production'
 const databaseMigrationsDir = 'server/db/migrations/postgresql'
 const databaseMigrationScripts = ['scripts/migrate.mjs', 'scripts/database-migrator.mjs']
 const databaseMigratorModule = resolve('scripts/database-migrator.mjs')
+const deploymentPackage = {
+  name: appName,
+  version: appVersion,
+  private: true,
+  type: 'module',
+  scripts: {
+    start: 'node server/index.mjs',
+    migrate: 'node server/migrate.mjs'
+  }
+}
 const privatePageRouteRule = {
   headers: {
     'cache-control': 'private, no-store'
@@ -89,7 +102,7 @@ export default defineNuxtConfig({
     },
     hooks: {
       async compiled(nitro) {
-        await Promise.all([
+        const artifactTasks = [
           cp(
             resolve(databaseMigrationsDir),
             resolve(nitro.options.output.serverDir, 'db/migrations/postgresql'),
@@ -99,7 +112,17 @@ export default defineNuxtConfig({
             resolve(script),
             resolve(nitro.options.output.serverDir, basename(script))
           ))
-        ])
+        ]
+
+        if (!nitro.options.dev) {
+          artifactTasks.push(writeFile(
+            resolve(nitro.options.output.dir, 'package.json'),
+            `${JSON.stringify(deploymentPackage, null, 2)}\n`,
+            'utf8'
+          ))
+        }
+
+        await Promise.all(artifactTasks)
       }
     }
   },

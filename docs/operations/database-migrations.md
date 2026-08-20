@@ -3,11 +3,14 @@
 Platform 的数据库结构跟随 Platform 版本发布。生产服务器不需要源码、`node_modules`、pnpm 或 Nuxt 构建环境；每个预构建产物都携带与该版本代码严格配套的迁移执行器和 SQL：
 
 ```text
+.output/package.json
 .output/server/index.mjs
 .output/server/migrate.mjs
 .output/server/database-migrator.mjs
 .output/server/db/migrations/postgresql/
 ```
+
+GitHub Release 会把 `.output` 内的内容提升到版本目录根部，因此发布包中对应路径为 `package.json`、`server/migrate.mjs` 和 `server/db/migrations/postgresql/`。
 
 API Service 不连接 Platform 数据库，也不执行这些迁移。
 
@@ -72,11 +75,12 @@ pnpm test:integration:built
 
 执行器会在修改数据库前输出 Release 版本、脱敏后的目标地址和迁移集合；任何一项与预期不符都应立即终止发布。
 
-上传 `.output` 的部署方式：
+使用本地 `.output` 或解压后的 GitHub Release 运行目录：
 
 ```bash
-NODE_ENV=production node .output/server/migrate.mjs
-NODE_ENV=production node .output/server/index.mjs
+cd /path/to/openapi-platform-runtime
+NODE_ENV=production npm run migrate
+NODE_ENV=production npm start
 ```
 
 Docker Compose 部署方式：

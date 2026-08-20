@@ -52,10 +52,10 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 | 服务无法启动 | PM2 日志、`DATABASE_URL`、端口占用 |
 | readiness 返回 503 | PostgreSQL 连接；配置 Redis 时同时检查 `NUXT_REDIS_URL`、认证和网络 |
 | 只有官方具体 API 返回 502/503 | 检查 `openapi-service` 容器、`/readyz`、Service Token、Internal Upstream Target 和来源级错误；Platform 与 External Route 不应一并停止 |
-| 面板提示 package.json 无 scripts | Nitro 产物直接运行 `node server/index.mjs`，不要把 `.output/server` 当源码项目 |
-| SSR 提示缺少 `entities/decode` | 检查是否完整部署 `.output/server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
+| 面板提示 package.json 无 scripts | 将工作目录设为 `.output` 或 GitHub Release 解压根目录并执行 `npm start`；不要把 `server` 当作工作目录 |
+| SSR 提示缺少 `entities/decode` | 检查是否完整部署 `server/node_modules/.nitro`；改用 Linux CI/Docker 构建 |
 | 扣费扫描持续跳过 | Redis lease 可用性、`NUXT_REDIS_URL` 和 `[credit-reservations]` 日志 |
-| 数据库迁移失败 | `node .output/server/migrate.mjs` 输出、`DATABASE_URL` 权限、迁移执行器和 `.output/server/db/migrations/postgresql` 是否完整 |
+| 数据库迁移失败 | `npm run migrate` 输出、`DATABASE_URL` 权限、`server/migrate.mjs` 和 `server/db/migrations/postgresql` 是否完整 |
 | 管理后台无法登录 | `NUXT_AUTH_SECRET`、管理员账号状态、统一登录页、登录日志 |
 | API Key 全部失效 | `NUXT_API_KEY_SECRET` 是否与加密时一致、`api_keys.key_digest` 是否存在、Key 是否被禁用、网关是否连接了预期数据库 |
 | 邮箱验证失败 | `NUXT_AUTH_SECRET`、SMTP 配置、邮件发送日志 |
@@ -91,7 +91,7 @@ pg_restore --dbname=openapi_restore_test --clean --if-exists backup-YYYYMMDD-HHM
 ```bash
 pm2 stop openapi-platform
 DB_AUTO_MIGRATE=false pg_restore --dbname="$DATABASE_URL" --clean --if-exists backup-YYYYMMDD-HHMMSS.dump
-cd .output
+cd /path/to/openapi-platform-runtime
 pm2 restart openapi-platform --update-env
 ```
 

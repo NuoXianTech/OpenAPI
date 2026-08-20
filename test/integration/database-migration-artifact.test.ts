@@ -8,6 +8,7 @@ import { afterAll, describe, expect, it } from 'vitest'
 
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
 const testWorkingDirectory = await mkdtemp(join(tmpdir(), 'openapi-artifact-migration-workspace-'))
+const deploymentPackagePath = resolve(projectRoot, '.output/package.json')
 const artifactRunner = resolve(projectRoot, '.output/server/migrate.mjs')
 const migrationsDir = resolve(projectRoot, '.output/server/db/migrations/postgresql')
 const pgliteDataDir = join(testWorkingDirectory, '.data', 'pglite')
@@ -43,7 +44,27 @@ function runArtifactMigration() {
   })
 }
 
-describe('built database migration runner', () => {
+describe('built deployment artifact', () => {
+  it('ships a minimal Node package manifest', async () => {
+    const [sourcePackageJson, deploymentPackageJson] = await Promise.all([
+      readFile(resolve(projectRoot, 'package.json'), 'utf8'),
+      readFile(deploymentPackagePath, 'utf8')
+    ])
+    const sourcePackage = JSON.parse(sourcePackageJson)
+    const deploymentPackage = JSON.parse(deploymentPackageJson)
+
+    expect(deploymentPackage).toEqual({
+      name: sourcePackage.name,
+      version: sourcePackage.version,
+      private: true,
+      type: 'module',
+      scripts: {
+        start: 'node server/index.mjs',
+        migrate: 'node server/migrate.mjs'
+      }
+    })
+  })
+
   it('ships and applies the exact migration set from .output', async () => {
     await Promise.all([
       access(artifactRunner),
