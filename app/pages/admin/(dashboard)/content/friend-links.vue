@@ -30,6 +30,7 @@ const statusFilterOptions = computed<Array<FriendLinkFilterOption<FriendLinkStat
   { label: t('admin.content.friendLinks.statuses.inactive'), value: 'inactive' }
 ])
 const activeFilterCount = computed(() => [
+  keyword.value.trim().length > 0,
   statusFilter.value !== 'all'
 ].filter(Boolean).length)
 
@@ -57,6 +58,7 @@ function isFriendLinkVisible(item: FriendLinkItem): boolean {
 }
 
 function resetFilters() {
+  keyword.value = ''
   statusFilter.value = 'all'
 }
 
@@ -104,26 +106,25 @@ const columns = computed<TableColumn<FriendLinkItem>[]>(() => [
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-        <UInput
-          v-model="keyword"
-          icon="i-mdi-magnify"
-          :placeholder="$t('admin.content.friendLinks.searchPlaceholder')"
-          class="w-full sm:w-72"
-        />
-        <AdminFilterPopover
-          :active-count="activeFilterCount"
-          @reset="resetFilters"
-        >
-          <UFormField :label="$t('admin.content.friendLinks.filters.status')">
-            <USelect
-              v-model="statusFilter"
-              :items="statusFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-        </AdminFilterPopover>
-      </div>
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        @reset="resetFilters"
+      >
+        <UFormField :label="$t('common.filters.keyword')">
+          <UInput
+            v-model="keyword"
+            :placeholder="$t('admin.content.friendLinks.searchPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.friendLinks.filters.status')">
+          <USelect
+            v-model="statusFilter"
+            :items="statusFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
       <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
         <UButton
           icon="i-mdi-plus"

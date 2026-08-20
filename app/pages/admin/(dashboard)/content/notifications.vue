@@ -10,7 +10,6 @@ import {
 } from '~/composables/admin/use-admin-notifications-display-meta'
 import { PAGE_SIZE_OPTIONS } from '~/constants/pagination'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
-import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 
 interface AdminNotificationFilterOption<TValue extends string = string> {
   label: string
@@ -78,19 +77,17 @@ const historyLevelFilterOptions = computed<Array<AdminNotificationFilterOption<A
   ...levelOptions.value
 ])
 const activeHistoryFilterCount = computed(() => [
+  historyKeyword.value.trim().length > 0,
   historyAudienceFilter.value !== 'all',
   historyLevelFilter.value !== 'all'
 ].filter(Boolean).length)
-const historyKeywordApply = useDebouncedListKeyword(
-  () => historyKeyword.value.trim(),
-  history.applyFilters
-)
 
 async function applyHistoryFilters() {
-  await historyKeywordApply.applyNow()
+  await history.applyFilters()
 }
 
 async function resetHistoryFilters() {
+  historyKeyword.value = ''
   historyAudienceFilter.value = 'all'
   historyLevelFilter.value = 'all'
   await applyHistoryFilters()
@@ -171,35 +168,33 @@ const detailDescription = computed(() => {
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-        <UInput
-          v-model="historyKeyword"
-          icon="i-mdi-magnify"
-          :placeholder="$t('admin.content.notifications.searchPlaceholder')"
-          class="w-full sm:w-72"
-          @keyup.enter="applyHistoryFilters"
-        />
-        <AdminFilterPopover
-          :active-count="activeHistoryFilterCount"
-          @apply="applyHistoryFilters"
-          @reset="resetHistoryFilters"
-        >
-          <UFormField :label="$t('admin.content.notifications.filters.audience')">
-            <USelect
-              v-model="historyAudienceFilter"
-              :items="historyAudienceFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.content.notifications.filters.level')">
-            <USelect
-              v-model="historyLevelFilter"
-              :items="historyLevelFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-        </AdminFilterPopover>
-      </div>
+      <AdminFilterPopover
+        :active-count="activeHistoryFilterCount"
+        @apply="applyHistoryFilters"
+        @reset="resetHistoryFilters"
+      >
+        <UFormField :label="$t('common.filters.keyword')">
+          <UInput
+            v-model="historyKeyword"
+            :placeholder="$t('admin.content.notifications.searchPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.notifications.filters.audience')">
+          <USelect
+            v-model="historyAudienceFilter"
+            :items="historyAudienceFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.notifications.filters.level')">
+          <USelect
+            v-model="historyLevelFilter"
+            :items="historyLevelFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
       <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
         <UButton
           icon="i-mdi-send"

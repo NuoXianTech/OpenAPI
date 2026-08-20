@@ -29,6 +29,13 @@ const retryActions = computed(() => [{
   icon: 'i-lucide-refresh-cw',
   onClick: () => emit('retry')
 }])
+const emptyActions = computed(() => [{
+  label: t('public.home.popularEmptyAction'),
+  to: '/docs',
+  color: 'neutral' as const,
+  variant: 'outline' as const,
+  trailingIcon: 'i-mdi-arrow-right'
+}])
 </script>
 
 <template>
@@ -47,6 +54,7 @@ const retryActions = computed(() => [{
       </div>
 
       <UButton
+        v-if="props.apis.length > 0 && props.totalApiCount > 0"
         to="/docs"
         color="neutral"
         variant="outline"
@@ -77,11 +85,12 @@ const retryActions = computed(() => [{
 
     <UEmpty
       v-else-if="props.apis.length === 0"
-      icon="i-mdi-view-grid-outline"
+      icon="i-lucide-compass"
       :title="$t('public.home.popularEmptyTitle')"
       :description="$t('public.home.popularEmptyDescription')"
       variant="naked"
       size="lg"
+      :actions="emptyActions"
       class="popular-apis__state"
     />
 

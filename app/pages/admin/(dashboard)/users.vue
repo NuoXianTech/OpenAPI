@@ -16,6 +16,7 @@ const {
   roleFilter,
   activeFilter,
   banFilter,
+  creditBalanceFilter,
   activeFilterCount,
   applyFilters,
   resetFilters,
@@ -79,10 +80,32 @@ function openKeys(item: AdminUserItem) {
   keysOpen.value = true
 }
 
+const creditOpen = ref(false)
+const creditUserIds = ref<number[]>([])
+const creditSelectionLabel = ref('')
+
+function formatCreditTarget(item: AdminUserItem) {
+  return t('admin.users.selection.creditTarget', {
+    username: item.username,
+    id: item.id
+  })
+}
+
+function openCreditModal(userIds: number[], selectionLabel: string) {
+  creditUserIds.value = userIds
+  creditSelectionLabel.value = selectionLabel
+  creditOpen.value = true
+}
+
+function openCreditForUser(item: AdminUserItem) {
+  openCreditModal([item.id], formatCreditTarget(item))
+}
+
 const {
   roleFilterOptions,
   activeFilterOptions,
   banFilterOptions,
+  creditBalanceFilterOptions,
   columns,
   banTooltip,
   getRowItems
@@ -90,11 +113,47 @@ const {
   openEdit,
   openBan,
   openUnban,
+  openCredits: openCreditForUser,
   openKeys,
   openDelete
 })
 
 const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility(columns)
+columnVisibility.value = {
+  displayName: false,
+  isBanned: false,
+  createdAt: false
+}
+
+const rowSelection = ref<Record<string, boolean>>({})
+const selectedUsers = computed(() => items.value.filter(item => rowSelection.value[String(item.id)]))
+const selectedCount = computed(() => selectedUsers.value.length)
+
+function clearSelection() {
+  rowSelection.value = {}
+}
+
+function openCreditForSelection() {
+  const selected = selectedUsers.value
+  const firstSelected = selected[0]
+  if (!firstSelected) return
+
+  openCreditModal(
+    selected.map(item => item.id),
+    selected.length === 1
+      ? formatCreditTarget(firstSelected)
+      : t('admin.users.selection.selectedCount', { count: selected.length })
+  )
+}
+
+async function onCreditSaved() {
+  clearSelection()
+  await refresh()
+}
+
+watch(loading, (isLoading) => {
+  if (isLoading) clearSelection()
+})
 </script>
 
 <template>
@@ -106,19 +165,19 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
     <template #body>
       <div class="dashboard-section-page space-y-6">
         <div class="flex items-center gap-2 flex-wrap">
-          <UInput
-            v-model="keyword"
-            icon="i-mdi-magnify"
-            :placeholder="$t('admin.users.searchPlaceholder')"
-            class="w-full sm:w-64"
-            @keyup.enter="applyFilters"
-          />
           <AdminFilterPopover
             :active-count="activeFilterCount"
             :title="$t('admin.users.filterTitle')"
             @apply="applyFilters"
             @reset="resetFilters"
           >
+            <UFormField :label="$t('common.filters.keyword')">
+              <UInput
+                v-model="keyword"
+                :placeholder="$t('admin.users.searchPlaceholder')"
+                class="w-full"
+              />
+            </UFormField>
             <UFormField
               :label="$t('admin.users.filters.userId')"
               :hint="$t('admin.users.filters.exactMatch')"
@@ -153,6 +212,14 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
               <USelect
                 v-model="banFilter"
                 :items="banFilterOptions"
+                value-key="value"
+                class="w-full"
+              />
+            </UFormField>
+            <UFormField :label="$t('admin.users.filters.creditBalance')">
+              <USelect
+                v-model="creditBalanceFilter"
+                :items="creditBalanceFilterOptions"
                 value-key="value"
                 class="w-full"
               />
@@ -193,9 +260,33 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
           :title="$t('admin.users.listTitle')"
           icon="i-mdi-account-group-outline"
         >
+          <template #actions>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              <span class="text-xs text-muted tabular-nums">
+                {{ $t('admin.users.selection.selectedCount', { count: selectedCount }) }}
+              </span>
+              <UButton
+                v-if="selectedCount > 0"
+                :label="$t('admin.users.actions.batchAdjustCredits')"
+                icon="i-mdi-cash-edit"
+                size="xs"
+                @click="openCreditForSelection"
+              />
+              <UButton
+                v-if="selectedCount > 0"
+                :label="$t('admin.users.selection.clear')"
+                color="neutral"
+                variant="ghost"
+                size="xs"
+                @click="clearSelection"
+              />
+            </div>
+          </template>
+
           <DashboardDataTable
             v-model:page="page"
             v-model:page-size="pageSize"
+            v-model:row-selection="rowSelection"
             v-model:column-visibility="columnVisibility"
             :data="items"
             :columns="columns"
@@ -203,23 +294,50 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
             :total="total"
             :page-size-options="PAGE_SIZE_OPTIONS"
             :get-row-id="(row: AdminUserItem) => String(row.id)"
+            :fixed="false"
             :empty-title="$t('admin.users.empty')"
             empty-icon="i-mdi-account-off-outline"
           >
+            <template #select-header="{ table }">
+              <UCheckbox
+                :model-value="table.getIsSomePageRowsSelected() ? 'indeterminate' : table.getIsAllPageRowsSelected()"
+                :aria-label="$t('admin.users.selection.selectAll')"
+                @update:model-value="(value: boolean | 'indeterminate') => table.toggleAllPageRowsSelected(value === true)"
+              />
+            </template>
+            <template #select-cell="{ row }">
+              <UCheckbox
+                :model-value="row.getIsSelected()"
+                :aria-label="$t('admin.users.selection.selectUser', { username: row.original.username })"
+                @update:model-value="(value: boolean | 'indeterminate') => row.toggleSelected(value === true)"
+              />
+            </template>
+            <template #id-cell="{ row }">
+              <span class="font-mono tabular-nums text-toned">{{ row.original.id }}</span>
+            </template>
+            <template #email-cell="{ row }">
+              <span :class="row.original.email ? 'text-default' : 'text-muted'">
+                {{ row.original.email || '—' }}
+              </span>
+            </template>
+            <template #displayName-cell="{ row }">
+              <span :class="row.original.displayName ? 'text-default' : 'text-muted'">
+                {{ row.original.displayName || '—' }}
+              </span>
+            </template>
             <template #credits-cell="{ row }">
               <UBadge
-                :color="Number(row.original.credits ?? 0) > 0 ? 'success' : 'neutral'"
+                :color="row.original.credits > 0 ? 'success' : 'neutral'"
                 variant="subtle"
                 class="tabular-nums font-mono"
               >
-                {{ Number(row.original.credits ?? 0).toLocaleString(locale) }}
+                {{ row.original.credits.toLocaleString(locale) }}
               </UBadge>
             </template>
             <template #role-cell="{ row }">
               <UBadge
-                :color="row.original.role === 'admin' ? 'primary' : 'neutral'"
+                color="neutral"
                 variant="subtle"
-                :icon="row.original.role === 'admin' ? 'i-mdi-shield-crown-outline' : 'i-mdi-account-outline'"
               >
                 {{ row.original.role === 'admin' ? $t('common.identities.admin') : $t('common.identities.user') }}
               </UBadge>
@@ -302,6 +420,14 @@ const { columnVisibility, columnVisibilityItems } = useDashboardColumnVisibility
           v-if="keysOpen"
           v-model:open="keysOpen"
           :target="keysTarget"
+        />
+
+        <LazyAdminCreditModal
+          v-if="creditOpen"
+          v-model:open="creditOpen"
+          :user-ids="creditUserIds"
+          :selection-label="creditSelectionLabel"
+          @saved="onCreditSaved"
         />
       </div>
     </template>

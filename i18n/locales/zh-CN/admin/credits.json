@@ -11,7 +11,7 @@
         "loadFailedDescription": "请稍后刷新重试。",
         "recentTitle": "最近积分变动",
         "actions": {
-          "userCredits": "用户积分",
+          "manageUserCredits": "管理用户积分",
           "redemptionCodes": "兑换码管理",
           "viewAll": "查看全部"
         },
@@ -36,40 +36,16 @@
           "remark": "备注"
         }
       },
-      "users": {
-        "title": "用户积分",
-        "description": "查询用户余额，对单个或选中的用户发放、扣除和重置积分",
-        "searchPlaceholder": "搜索用户名、昵称或邮箱...",
-        "filterTitle": "用户积分筛选",
-        "selectedUsers": "已选择 {count} 位用户",
-        "selectedCount": "已选 {count} 位",
-        "listTitle": "用户余额",
-        "empty": "暂无符合条件的用户",
-        "filters": {
-          "userId": "用户 ID",
-          "emptyAll": "留空查询全部",
-          "balance": "积分余额",
-          "allBalances": "全部余额",
-          "positive": "有积分",
-          "zero": "零积分"
-        },
-        "columns": {
-          "user": "用户",
-          "balance": "积分余额",
-          "status": "账号状态",
-          "createdAt": "注册时间"
-        },
-        "actions": {
-          "batchAdjust": "批量调整积分",
-          "adjust": "调整"
-        }
-      },
       "transactions": {
         "title": "积分流水",
-        "description": "查看用户积分变动，并快速进入用户积分调整与兑换码管理",
+        "description": "查看积分变动记录，并处理自动结算异常",
         "filterTitle": "积分流水筛选",
         "detailsTitle": "积分明细",
         "empty": "暂无积分日志",
+        "views": {
+          "transactions": "积分流水",
+          "recovery": "异常计费"
+        },
         "filters": {
           "userId": "用户 ID",
           "emptyAll": "留空查全部",
@@ -99,9 +75,9 @@
         }
       },
       "reservations": {
-        "title": "计费待处理",
-        "description": "处理自动结算多次失败后进入死信状态的积分预留。确认上游调用结果后，可重新自动结算、人工确认扣费或释放额度。",
-        "empty": "暂无待处理计费预留",
+        "title": "异常计费处理",
+        "description": "自动结算失败的调用会进入此处。确认上游结果后，可重试结算、确认扣费或释放预留额度。",
+        "empty": "暂无异常计费",
         "filterStatus": "状态",
         "allStatuses": "全部状态",
         "columns": {
@@ -140,7 +116,7 @@
       "redemptionCodes": {
         "title": "兑换码",
         "description": "生成、查看和管理积分兑换码，控制可用状态、使用次数与有效期限",
-        "searchPlaceholder": "搜索兑换码 / 备注...",
+        "searchPlaceholder": "输入兑换码或备注",
         "detailsTitle": "兑换码明细",
         "empty": "暂无兑换码",
         "neverExpires": "永不过期",
@@ -247,9 +223,9 @@
         "remarkPlaceholder": "例如：促销发放 / 违规扣除",
         "success": "积分调整成功",
         "operations": {
-          "grant": "加积分（grant）",
-          "revoke": "减积分（revoke）",
-          "reset": "重置积分（reset）"
+          "grant": "加积分",
+          "revoke": "减积分",
+          "reset": "重置积分"
         },
         "help": {
           "grant": "将指定积分加到目标用户的积分上。",

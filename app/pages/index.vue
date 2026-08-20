@@ -8,6 +8,7 @@ import { usePublicApiCatalog } from '~/composables/api/use-public-api-catalog'
 
 const LIVE_STATS_REFRESH_INTERVAL_MS = 10_000
 const POPULAR_API_LIMIT = 6
+const { t } = useI18n()
 
 const {
   categoryMap,
@@ -22,7 +23,8 @@ const { settings } = useSiteSettings()
 const {
   data: publicStats,
   pending: publicStatsLoading,
-  error: publicStatsError
+  error: publicStatsError,
+  refresh: refreshPublicStats
 } = useFetch<PublicCallStatsDashboard>('/api/stats/public', {
   key: 'home-public-stats',
   query: {
@@ -40,6 +42,11 @@ const introSummaryLoading = computed(() =>
 const introSummaryError = computed(() =>
   Boolean(loadError.value) || (Boolean(publicStatsError.value) && !liveStats.value)
 )
+const popularApisLoading = computed(() => isLoading.value || publicStatsLoading.value)
+const popularApisLoadError = computed(() => {
+  if (loadError.value) return loadError.value
+  return publicStatsError.value ? t('public.home.popularLoadFailed') : null
+})
 
 async function refreshLiveStats(): Promise<void> {
   if (liveStatsRefreshPending || document.visibilityState !== 'visible') return
@@ -99,15 +106,12 @@ const popularApis = computed<ApiCatalogItem[]>(() => {
     if (selectedApis.length === POPULAR_API_LIMIT) return selectedApis
   }
 
-  const fallbackApis = [...allApis.value]
-    .filter(api => !selectedApiIds.has(api.id))
-    .sort((left, right) => (
-      right.totalCalls - left.totalCalls
-      || left.name.localeCompare(right.name)
-    ))
-
-  return [...selectedApis, ...fallbackApis].slice(0, POPULAR_API_LIMIT)
+  return selectedApis
 })
+
+async function refreshPopularApis(): Promise<void> {
+  await Promise.all([refreshCatalog(), refreshPublicStats()])
+}
 
 useSeoMeta({
   ogTitle: () => settings.value.siteName,
@@ -137,14 +141,14 @@ useSeoMeta({
         :apis="popularApis"
         :category-map="categoryMap"
         :total-api-count="totalApiCount"
-        :is-loading="isLoading"
-        :load-error="loadError"
-        @retry="refreshCatalog"
+        :is-loading="popularApisLoading"
+        :load-error="popularApisLoadError"
+        @retry="refreshPopularApis"
       />
       <HomeApiOnboarding />
     </main>
 
-    <CommonAppFooter />
+    <CommonAppFooter class="home-footer" />
     <Suspense>
       <LazyCommonAnnouncementPopup />
       <template #fallback>
@@ -158,5 +162,9 @@ useSeoMeta({
 .public-page {
   min-height: 100dvh;
   background: var(--ui-bg);
+}
+
+.public-page > .home-footer {
+  margin-top: 0;
 }
 </style>

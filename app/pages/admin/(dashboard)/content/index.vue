@@ -48,6 +48,7 @@ const pinnedFilterOptions = computed<Array<AnnouncementFilterOption<Announcement
   { label: t('admin.content.announcements.filters.notPinned'), value: 'normal' }
 ])
 const activeFilterCount = computed(() => [
+  keyword.value.trim().length > 0,
   levelFilter.value !== 'all',
   statusFilter.value !== 'all',
   pinnedFilter.value !== 'all'
@@ -81,6 +82,7 @@ function isAnnouncementVisible(item: Announcement): boolean {
 }
 
 function resetFilters() {
+  keyword.value = ''
   levelFilter.value = 'all'
   statusFilter.value = 'all'
   pinnedFilter.value = 'all'
@@ -146,40 +148,39 @@ const columns = computed<TableColumn<Announcement>[]>(() => [
 <template>
   <div class="space-y-6">
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-        <UInput
-          v-model="keyword"
-          icon="i-mdi-magnify"
-          :placeholder="$t('admin.content.announcements.searchPlaceholder')"
-          class="w-full sm:w-64"
-        />
-        <AdminFilterPopover
-          :active-count="activeFilterCount"
-          @reset="resetFilters"
-        >
-          <UFormField :label="$t('admin.content.announcements.filters.level')">
-            <USelect
-              v-model="levelFilter"
-              :items="levelFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.content.announcements.filters.status')">
-            <USelect
-              v-model="statusFilter"
-              :items="statusFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.content.announcements.filters.pinnedState')">
-            <USelect
-              v-model="pinnedFilter"
-              :items="pinnedFilterOptions"
-              class="w-full"
-            />
-          </UFormField>
-        </AdminFilterPopover>
-      </div>
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        @reset="resetFilters"
+      >
+        <UFormField :label="$t('common.filters.keyword')">
+          <UInput
+            v-model="keyword"
+            :placeholder="$t('admin.content.announcements.searchPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.announcements.filters.level')">
+          <USelect
+            v-model="levelFilter"
+            :items="levelFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.announcements.filters.status')">
+          <USelect
+            v-model="statusFilter"
+            :items="statusFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.content.announcements.filters.pinnedState')">
+          <USelect
+            v-model="pinnedFilter"
+            :items="pinnedFilterOptions"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
       <div class="ml-auto flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
         <UButton
           icon="i-mdi-plus"

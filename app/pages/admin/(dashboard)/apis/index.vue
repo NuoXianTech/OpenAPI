@@ -38,10 +38,6 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
   <div class="space-y-6">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div class="max-w-3xl">
-        <div class="mb-2 flex items-center gap-2 text-xs font-medium text-primary">
-          <UIcon name="i-lucide-waypoints" class="size-4" />
-          <span>{{ $t('admin.apis.routing.catalog.eyebrow') }}</span>
-        </div>
         <h1 class="text-2xl font-semibold tracking-tight text-highlighted">
           {{ $t('admin.apis.routing.catalog.title') }}
         </h1>

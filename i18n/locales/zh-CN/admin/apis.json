@@ -59,7 +59,7 @@
         "tabs": {
           "routes": "接口目录",
           "products": "接口分组",
-          "upstreams": "Service",
+          "upstreams": "上游服务",
           "revisions": "运行快照",
           "workspaces": "工作空间"
         },
@@ -149,7 +149,7 @@
           "routesDescription": "定义调用方访问的 Method、Path、Host 以及对应的 Upstream 转发规则。",
           "productsTitle": "API Products",
           "productsDescription": "用 Product 与 Version 组织可对外发布的 API 能力。",
-          "upstreamsTitle": "Upstream Services",
+          "upstreamsTitle": "上游服务",
           "upstreamsDescription": "管理 Gateway 可以访问的内部 API Service 与外部 HTTPS 服务。",
           "revisionsTitle": "运行快照",
           "revisionsDescription": "公开流量配置实际变化时，Platform 才会保存新的不可变快照；相同配置直接复用当前快照。本页仅用于审计和回滚。",
@@ -472,7 +472,6 @@
           }
         },
         "catalog": {
-          "eyebrow": "SERVICE → PUBLIC API",
           "title": "接口目录",
           "description": "发现 Service 后即可直接发布接口。发布、停用或修改治理配置时，Platform 会自动应用运行配置；仅在实际变化时保存新快照。",
           "endpointCount": "{count} 个接口",

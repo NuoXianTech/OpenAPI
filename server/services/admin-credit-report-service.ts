@@ -1,19 +1,8 @@
-import { and, count, desc, eq, gt, gte, ilike, or, sql, type SQL } from 'drizzle-orm'
+import { count, desc, eq, gte, sql } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
 import { creditTransactions, redemptionCodes, users } from '~~/server/db/schema'
 import { toNumber } from '~~/server/utils/number'
-import { normalizePagination } from '~~/server/utils/pagination'
 import type { AdminCreditOverview } from '#shared/types/admin-credits'
-
-export type AdminCreditBalanceFilter = 'all' | 'positive' | 'zero'
-
-interface AdminCreditUserFilters {
-  keyword?: string
-  userId?: number
-  balance?: AdminCreditBalanceFilter
-  limit?: number
-  offset?: number
-}
 
 async function getOverview(): Promise<AdminCreditOverview> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000)
@@ -85,50 +74,6 @@ async function getOverview(): Promise<AdminCreditOverview> {
   }
 }
 
-async function listUsers(filters: AdminCreditUserFilters = {}) {
-  const conditions: SQL[] = []
-  const keyword = filters.keyword?.trim()
-
-  if (keyword) {
-    conditions.push(or(
-      ilike(users.username, `%${keyword}%`),
-      ilike(users.email, `%${keyword}%`),
-      ilike(users.displayName, `%${keyword}%`)
-    )!)
-  }
-  if (filters.userId) conditions.push(eq(users.id, filters.userId))
-  if (filters.balance === 'positive') conditions.push(gt(users.credits, 0))
-  if (filters.balance === 'zero') conditions.push(eq(users.credits, 0))
-
-  const where = conditions.length ? and(...conditions) : undefined
-  const { limit, offset } = normalizePagination(filters, { defaultLimit: 20 })
-  const [items, totalRows] = await Promise.all([
-    db.select({
-      id: users.id,
-      username: users.username,
-      role: users.role,
-      displayName: users.displayName,
-      email: users.email,
-      credits: users.credits,
-      isActive: users.isActive,
-      isBanned: users.isBanned,
-      createdAt: users.createdAt
-    })
-      .from(users)
-      .where(where)
-      .orderBy(desc(users.credits), desc(users.createdAt))
-      .limit(limit)
-      .offset(offset),
-    db.select({ value: count() }).from(users).where(where)
-  ])
-
-  return {
-    items: items.map(item => ({ ...item, createdAt: item.createdAt.toISOString() })),
-    total: toNumber(totalRows[0]?.value)
-  }
-}
-
 export const adminCreditReportService = {
-  getOverview,
-  listUsers
+  getOverview
 }

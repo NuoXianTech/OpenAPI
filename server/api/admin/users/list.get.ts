@@ -6,6 +6,7 @@ import { readQueryNumber, readQueryOption, readQueryString } from '~~/server/uti
 
 const USER_ROLE_OPTIONS = Object.values(USER_ROLES)
 const BOOLEAN_FILTER_OPTIONS = ['true', 'false'] as const
+const CREDIT_BALANCE_FILTER_OPTIONS = ['positive', 'zero'] as const
 
 function readBooleanFilter(value: unknown): boolean | undefined {
   const option = readQueryOption(value, BOOLEAN_FILTER_OPTIONS)
@@ -27,6 +28,7 @@ export default defineAdminEventHandler((event) => {
     role: readQueryOption(query.role, USER_ROLE_OPTIONS),
     isActive: readBooleanFilter(query.isActive),
     isBanned: readBooleanFilter(query.isBanned),
+    creditBalance: readQueryOption(query.creditBalance, CREDIT_BALANCE_FILTER_OPTIONS),
     limit,
     offset
   })

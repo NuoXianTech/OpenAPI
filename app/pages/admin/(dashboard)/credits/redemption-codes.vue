@@ -31,6 +31,7 @@ const {
 
 const generateOpen = ref(false)
 const activeFilterCount = computed(() => [
+  filters.keyword.trim().length > 0,
   filters.status !== 'all',
   filters.batchId !== 'all'
 ].filter(Boolean).length)
@@ -44,6 +45,7 @@ function openGenerateModal() {
 }
 
 async function resetRedemptionFilters() {
+  filters.keyword = ''
   filters.status = 'all'
   filters.batchId = 'all'
   await applyFilters()
@@ -73,37 +75,35 @@ const {
     />
 
     <div class="flex flex-wrap items-center justify-between gap-1.5">
-      <div class="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
-        <UInput
-          v-model="filters.keyword"
-          class="w-full sm:w-80"
-          icon="i-mdi-magnify"
-          :placeholder="$t('admin.credits.redemptionCodes.searchPlaceholder')"
-          @keydown.enter="applyFilters"
-        />
-        <AdminFilterPopover
-          :active-count="activeFilterCount"
-          @apply="applyFilters"
-          @reset="resetRedemptionFilters"
-        >
-          <UFormField :label="$t('admin.credits.redemptionCodes.filters.status')">
-            <USelect
-              v-model="filters.status"
-              :items="statusItems"
-              :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-              class="w-full"
-            />
-          </UFormField>
-          <UFormField :label="$t('admin.credits.redemptionCodes.filters.batch')">
-            <USelect
-              v-model="filters.batchId"
-              :items="batchItems"
-              :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
-              class="w-full"
-            />
-          </UFormField>
-        </AdminFilterPopover>
-      </div>
+      <AdminFilterPopover
+        :active-count="activeFilterCount"
+        @apply="applyFilters"
+        @reset="resetRedemptionFilters"
+      >
+        <UFormField :label="$t('common.filters.keyword')">
+          <UInput
+            v-model="filters.keyword"
+            :placeholder="$t('admin.credits.redemptionCodes.searchPlaceholder')"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.credits.redemptionCodes.filters.status')">
+          <USelect
+            v-model="filters.status"
+            :items="statusItems"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+            class="w-full"
+          />
+        </UFormField>
+        <UFormField :label="$t('admin.credits.redemptionCodes.filters.batch')">
+          <USelect
+            v-model="filters.batchId"
+            :items="batchItems"
+            :ui="{ trailingIcon: 'group-data-[state=open]:rotate-180 transition-transform duration-200' }"
+            class="w-full"
+          />
+        </UFormField>
+      </AdminFilterPopover>
 
       <div class="flex flex-wrap items-center gap-1.5">
         <UButton

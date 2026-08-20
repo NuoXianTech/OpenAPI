@@ -2,7 +2,7 @@
   "admin": {
     "content": {
       "announcements": {
-        "searchPlaceholder": "Search titles, content, or links",
+        "searchPlaceholder": "Enter a title, content, or link",
         "listTitle": "Announcements",
         "empty": "No announcements",
         "pinnedBadge": "Pinned",
@@ -65,7 +65,7 @@
         }
       },
       "notifications": {
-        "searchPlaceholder": "Search titles or senders",
+        "searchPlaceholder": "Enter a title or sender",
         "historyTitle": "Delivery history",
         "emptyHistory": "No delivery history",
         "filters": {
@@ -139,7 +139,7 @@
         }
       },
       "friendLinks": {
-        "searchPlaceholder": "Search names, URLs, or descriptions",
+        "searchPlaceholder": "Enter a name, URL, or description",
         "listTitle": "Partner links",
         "empty": "No partner links",
         "filters": {

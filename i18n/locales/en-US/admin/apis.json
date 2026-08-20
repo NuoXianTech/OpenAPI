@@ -472,7 +472,6 @@
           }
         },
         "catalog": {
-          "eyebrow": "SERVICE → PUBLIC API",
           "title": "API catalog",
           "description": "Publish an endpoint as soon as a Service is discovered. Publishing, disabling, or governance changes automatically apply the runtime configuration; a new snapshot is saved only when it actually changes.",
           "endpointCount": "{count} endpoints",

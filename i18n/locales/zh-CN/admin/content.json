@@ -2,7 +2,7 @@
   "admin": {
     "content": {
       "announcements": {
-        "searchPlaceholder": "搜索标题、内容或链接",
+        "searchPlaceholder": "输入标题、内容或链接",
         "listTitle": "公告列表",
         "empty": "暂无公告",
         "pinnedBadge": "置顶",
@@ -65,7 +65,7 @@
         }
       },
       "notifications": {
-        "searchPlaceholder": "搜索发送历史标题或发送人",
+        "searchPlaceholder": "输入发送历史标题或发送人",
         "historyTitle": "发送历史",
         "emptyHistory": "暂无发送历史",
         "filters": {
@@ -139,7 +139,7 @@
         }
       },
       "friendLinks": {
-        "searchPlaceholder": "搜索名称、URL 或描述",
+        "searchPlaceholder": "输入名称、URL 或描述",
         "listTitle": "友链列表",
         "empty": "暂无友链",
         "filters": {

@@ -11,9 +11,7 @@ export const ADMIN_OVERVIEW_PATH = '/admin/overview'
 export const ADMIN_LOGS_PATH = '/admin/logs'
 const ADMIN_LOGIN_LOGS_PATH = `${ADMIN_LOGS_PATH}/login`
 export const ADMIN_CREDITS_PATH = '/admin/credits'
-export const ADMIN_CREDIT_USERS_PATH = `${ADMIN_CREDITS_PATH}/users`
 export const ADMIN_CREDIT_TRANSACTIONS_PATH = `${ADMIN_CREDITS_PATH}/transactions`
-const ADMIN_CREDIT_RESERVATIONS_PATH = `${ADMIN_CREDITS_PATH}/reservations`
 const ADMIN_OPERATION_LOGS_PATH = `${ADMIN_LOGS_PATH}/operations`
 export const ADMIN_REDEMPTION_CODES_PATH = `${ADMIN_CREDITS_PATH}/redemption-codes`
 export const ADMIN_CONTENT_PATH = '/admin/content'
@@ -72,9 +70,7 @@ export function createAdminCreditsSection({ t }: DashboardConfigFactoryContext):
     title: t('common.dashboard.navigation.creditManagement'),
     items: [
       { label: t('common.dashboard.navigation.overview'), icon: 'i-mdi-view-dashboard-outline', to: ADMIN_CREDITS_PATH, exact: true },
-      { label: t('common.dashboard.sections.userCredits'), icon: 'i-mdi-account-cash-outline', to: ADMIN_CREDIT_USERS_PATH },
       { label: t('common.dashboard.sections.creditTransactions'), icon: 'i-mdi-cash-multiple', to: ADMIN_CREDIT_TRANSACTIONS_PATH },
-      { label: t('common.dashboard.sections.billingReservations'), icon: 'i-lucide-shield-alert', to: ADMIN_CREDIT_RESERVATIONS_PATH },
       { label: t('common.dashboard.sections.redemptionCodes'), icon: 'i-mdi-ticket-percent-outline', to: ADMIN_REDEMPTION_CODES_PATH }
     ]
   }

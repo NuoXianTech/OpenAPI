@@ -11,7 +11,7 @@
         "loadFailedDescription": "Refresh and try again.",
         "recentTitle": "Recent credit changes",
         "actions": {
-          "userCredits": "User credits",
+          "manageUserCredits": "Manage user credits",
           "redemptionCodes": "Redemption code management",
           "viewAll": "View all"
         },
@@ -36,40 +36,16 @@
           "remark": "Note"
         }
       },
-      "users": {
-        "title": "User credits",
-        "description": "View balances and grant, deduct, or reset credits for selected users",
-        "searchPlaceholder": "Search username, display name, or email...",
-        "filterTitle": "User credit filters",
-        "selectedUsers": "{count} users selected",
-        "selectedCount": "{count} selected",
-        "listTitle": "User balances",
-        "empty": "No users match the filters",
-        "filters": {
-          "userId": "User ID",
-          "emptyAll": "Leave empty for all",
-          "balance": "Balance",
-          "allBalances": "All balances",
-          "positive": "Has credits",
-          "zero": "Zero credits"
-        },
-        "columns": {
-          "user": "User",
-          "balance": "Credit balance",
-          "status": "Account status",
-          "createdAt": "Registered"
-        },
-        "actions": {
-          "batchAdjust": "Adjust credits in batch",
-          "adjust": "Adjust"
-        }
-      },
       "transactions": {
         "title": "Credit transactions",
-        "description": "Review credit changes and open user credit or redemption code management",
+        "description": "Review credit changes and resolve settlement exceptions",
         "filterTitle": "Credit transaction filters",
         "detailsTitle": "Credit details",
         "empty": "No credit transactions",
+        "views": {
+          "transactions": "Transactions",
+          "recovery": "Billing exceptions"
+        },
         "filters": {
           "userId": "User ID",
           "emptyAll": "Leave empty for all",
@@ -99,9 +75,9 @@
         }
       },
       "reservations": {
-        "title": "Billing recovery",
-        "description": "Resolve credit reservations that exhausted automatic settlement retries. After verifying the upstream outcome, retry settlement, confirm the charge, or release the quota.",
-        "empty": "No unresolved billing reservations",
+        "title": "Billing exception handling",
+        "description": "Calls with failed automatic settlement appear here. After verifying the upstream result, retry settlement, confirm the charge, or release the reserved quota.",
+        "empty": "No billing exceptions",
         "filterStatus": "Status",
         "allStatuses": "All statuses",
         "columns": {
@@ -140,7 +116,7 @@
       "redemptionCodes": {
         "title": "Redemption codes",
         "description": "Generate, reveal, and manage credit redemption codes, availability, usage limits, and expiration",
-          "searchPlaceholder": "Search code or note...",
+        "searchPlaceholder": "Enter a code or note",
         "detailsTitle": "Redemption code details",
         "empty": "No redemption codes",
         "neverExpires": "Never expires",

@@ -2,7 +2,7 @@
   "admin": {
     "users": {
       "title": "用户管理",
-      "searchPlaceholder": "搜索用户名、邮箱或昵称",
+      "searchPlaceholder": "输入用户名、邮箱或昵称",
       "filterTitle": "用户筛选",
       "listTitle": "用户列表",
       "empty": "暂无用户",
@@ -10,26 +10,41 @@
         "userId": "用户 ID",
         "exactMatch": "精确匹配",
         "userIdPlaceholder": "输入用户 ID",
-        "role": "角色",
-        "allRoles": "全部角色",
+        "role": "用户组",
+        "allRoles": "全部用户组",
         "activeStatus": "激活状态",
         "allActiveStatuses": "全部激活状态",
         "banStatus": "封禁状态",
-        "allBanStatuses": "全部封禁状态"
+        "allBanStatuses": "全部封禁状态",
+        "creditBalance": "积分余额",
+        "allCreditBalances": "全部余额",
+        "positiveCredits": "有积分",
+        "zeroCredits": "零积分"
       },
       "columns": {
+        "id": "ID",
         "username": "用户名",
-        "role": "类型",
+        "role": "用户组",
         "email": "邮箱",
+        "displayName": "昵称",
         "credits": "积分",
-        "status": "状态",
-        "ban": "封禁",
+        "status": "激活状态",
+        "ban": "封禁状态",
         "createdAt": "注册时间"
+      },
+      "selection": {
+        "selectedCount": "已选择 {count} 位用户",
+        "creditTarget": "{username}（ID：{id}）",
+        "selectAll": "选择本页全部用户",
+        "selectUser": "选择用户 {username}",
+        "clear": "取消选择"
       },
       "actions": {
         "add": "添加用户",
         "showColumns": "显示列",
         "edit": "编辑用户",
+        "adjustCredits": "调整积分",
+        "batchAdjustCredits": "批量调整积分",
         "ban": "封禁用户",
         "unban": "解封用户",
         "apiKeys": "API 密钥"

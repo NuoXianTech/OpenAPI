@@ -35,6 +35,7 @@ const { t } = useI18n()
           <UInput
             v-model="form.username"
             icon="i-mdi-account-outline"
+            :placeholder="t('auth.placeholders.username')"
             autocomplete="username"
             autofocus
           />
@@ -48,6 +49,7 @@ const { t } = useI18n()
             v-model="form.email"
             type="email"
             icon="i-mdi-email-outline"
+            :placeholder="t('auth.placeholders.email')"
             autocomplete="email"
           />
         </UFormField>
@@ -61,6 +63,7 @@ const { t } = useI18n()
             v-model="form.password"
             type="password"
             icon="i-mdi-lock-outline"
+            :placeholder="t('auth.placeholders.newPassword')"
             autocomplete="new-password"
           />
         </UFormField>
@@ -73,6 +76,7 @@ const { t } = useI18n()
             v-model="form.confirmPassword"
             type="password"
             icon="i-mdi-lock-check-outline"
+            :placeholder="t('auth.placeholders.confirmPassword')"
             autocomplete="new-password"
           />
         </UFormField>

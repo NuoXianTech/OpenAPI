@@ -9,8 +9,8 @@ import { usePrivateResource } from '~/composables/dashboard/use-private-resource
 import type { DashboardMetricTone } from '~/types/dashboard-metric'
 import {
   ADMIN_CREDIT_TRANSACTIONS_PATH,
-  ADMIN_CREDIT_USERS_PATH,
-  ADMIN_REDEMPTION_CODES_PATH
+  ADMIN_REDEMPTION_CODES_PATH,
+  ADMIN_USERS_PATH
 } from '~/constants/dashboard-sections'
 
 const { t, locale } = useI18n()
@@ -136,12 +136,12 @@ function formatCreditUserIdentity(transaction: AdminCreditRecentTransaction): st
     >
       <template #actions>
         <UButton
-          :to="ADMIN_CREDIT_USERS_PATH"
+          :to="ADMIN_USERS_PATH"
           icon="i-mdi-account-cash-outline"
           color="neutral"
           variant="outline"
         >
-          {{ $t('admin.credits.overview.actions.userCredits') }}
+          {{ $t('admin.credits.overview.actions.manageUserCredits') }}
         </UButton>
         <UButton
           :to="ADMIN_REDEMPTION_CODES_PATH"

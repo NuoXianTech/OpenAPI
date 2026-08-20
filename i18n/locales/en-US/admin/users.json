@@ -2,7 +2,7 @@
   "admin": {
     "users": {
       "title": "User management",
-      "searchPlaceholder": "Search username, email, or display name",
+      "searchPlaceholder": "Enter username, email, or display name",
       "filterTitle": "User filters",
       "listTitle": "Users",
       "empty": "No users",
@@ -10,26 +10,41 @@
         "userId": "User ID",
         "exactMatch": "Exact match",
         "userIdPlaceholder": "Enter user ID",
-        "role": "Role",
-        "allRoles": "All roles",
+        "role": "User group",
+        "allRoles": "All user groups",
         "activeStatus": "Activation status",
         "allActiveStatuses": "All activation statuses",
         "banStatus": "Ban status",
-        "allBanStatuses": "All ban statuses"
+        "allBanStatuses": "All ban statuses",
+        "creditBalance": "Credit balance",
+        "allCreditBalances": "All balances",
+        "positiveCredits": "Has credits",
+        "zeroCredits": "Zero credits"
       },
       "columns": {
+        "id": "ID",
         "username": "Username",
-        "role": "Account type",
+        "role": "User group",
         "email": "Email",
+        "displayName": "Display name",
         "credits": "Credits",
-        "status": "Status",
-        "ban": "Ban",
+        "status": "Activation status",
+        "ban": "Ban status",
         "createdAt": "Registered"
+      },
+      "selection": {
+        "selectedCount": "{count} users selected",
+        "creditTarget": "{username} (ID: {id})",
+        "selectAll": "Select all users on this page",
+        "selectUser": "Select user {username}",
+        "clear": "Clear selection"
       },
       "actions": {
         "add": "Add user",
         "showColumns": "Show columns",
         "edit": "Edit user",
+        "adjustCredits": "Adjust credits",
+        "batchAdjustCredits": "Adjust selected credits",
         "ban": "Ban user",
         "unban": "Unban user",
         "apiKeys": "API keys"

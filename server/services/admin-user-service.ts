@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, ilike, like, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gt, ilike, like, or, sql } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
@@ -26,6 +26,7 @@ interface AdminUserListOptions {
   role?: UserRole
   isActive?: boolean
   isBanned?: boolean
+  creditBalance?: 'positive' | 'zero'
   limit?: number
   offset?: number
 }
@@ -66,7 +67,12 @@ export const adminUserService = {
       options.userId ? eq(users.id, options.userId) : undefined,
       options.role ? eq(users.role, options.role) : undefined,
       typeof options.isActive === 'boolean' ? eq(users.isActive, options.isActive) : undefined,
-      typeof options.isBanned === 'boolean' ? eq(users.isBanned, options.isBanned) : undefined
+      typeof options.isBanned === 'boolean' ? eq(users.isBanned, options.isBanned) : undefined,
+      options.creditBalance === 'positive'
+        ? gt(users.credits, 0)
+        : options.creditBalance === 'zero'
+          ? eq(users.credits, 0)
+          : undefined
     )
     const { limit, offset } = normalizePagination(options, { defaultLimit: 20 })
     const selection = {

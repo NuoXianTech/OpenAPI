@@ -29,15 +29,3 @@ export interface AdminCreditOverview {
   summary: AdminCreditOverviewSummary
   recentTransactions: AdminCreditRecentTransaction[]
 }
-
-export interface AdminCreditUser {
-  id: number
-  username: string
-  role: 'user' | 'admin'
-  displayName: string | null
-  email: string
-  credits: number
-  isActive: boolean
-  isBanned: boolean
-  createdAt: string
-}

@@ -2,7 +2,6 @@ import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
 import { computed, toRef, type ComputedRef } from 'vue'
 import { parseFetchError } from '~/utils/client-error'
 import { usePrivatePagedList } from '~/composables/dashboard/use-private-paged-list'
-import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { formatDateTime } from '~/utils/datetime'
 
 export interface AdminUserItem {
@@ -15,13 +14,14 @@ export interface AdminUserItem {
   isBanned: boolean
   bannedReason?: string | null
   bannedUntil?: string | null
-  credits?: number | string | null
+  credits: number
   createdAt: string
 }
 
 type AdminUserRoleFilter = 'all' | AdminUserItem['role']
 type AdminUserActiveFilter = 'all' | 'active' | 'inactive'
 type AdminUserBanFilter = 'all' | 'banned' | 'unbanned'
+type AdminUserCreditBalanceFilter = 'all' | 'positive' | 'zero'
 
 interface AdminUserFilters extends Record<string, unknown> {
   keyword: string
@@ -29,6 +29,7 @@ interface AdminUserFilters extends Record<string, unknown> {
   role: AdminUserRoleFilter
   active: AdminUserActiveFilter
   ban: AdminUserBanFilter
+  creditBalance: AdminUserCreditBalanceFilter
 }
 
 interface AdminUserFilterOption<TValue extends string> {
@@ -66,7 +67,8 @@ export function useAdminUsersPage() {
       userId: '',
       role: 'all',
       active: 'all',
-      ban: 'all'
+      ban: 'all',
+      creditBalance: 'all'
     },
     buildQuery: (filters, pagination) => ({
       keyword: filters.keyword.trim() || undefined,
@@ -74,6 +76,7 @@ export function useAdminUsersPage() {
       role: filters.role === 'all' ? undefined : filters.role,
       isActive: filters.active === 'all' ? undefined : filters.active === 'active',
       isBanned: filters.ban === 'all' ? undefined : filters.ban === 'banned',
+      creditBalance: filters.creditBalance === 'all' ? undefined : filters.creditBalance,
       limit: pagination.limit,
       offset: pagination.offset
     })
@@ -83,26 +86,27 @@ export function useAdminUsersPage() {
   const roleFilter = toRef(paged.filters, 'role')
   const activeFilter = toRef(paged.filters, 'active')
   const banFilter = toRef(paged.filters, 'ban')
+  const creditBalanceFilter = toRef(paged.filters, 'creditBalance')
   const activeFilterCount = computed(() => [
+    keyword.value.trim().length > 0,
     normalizeUserIdFilter(userIdFilter.value) !== undefined,
     roleFilter.value !== 'all',
     activeFilter.value !== 'all',
-    banFilter.value !== 'all'
+    banFilter.value !== 'all',
+    creditBalanceFilter.value !== 'all'
   ].filter(Boolean).length)
-  const keywordApply = useDebouncedListKeyword(
-    () => keyword.value.trim(),
-    paged.applyFilters
-  )
 
   async function applyFilters() {
-    await keywordApply.applyNow()
+    await paged.applyFilters()
   }
 
   async function resetFilters() {
+    keyword.value = ''
     userIdFilter.value = ''
     roleFilter.value = 'all'
     activeFilter.value = 'all'
     banFilter.value = 'all'
+    creditBalanceFilter.value = 'all'
     await applyFilters()
   }
 
@@ -194,6 +198,7 @@ export function useAdminUsersPage() {
     roleFilter,
     activeFilter,
     banFilter,
+    creditBalanceFilter,
     activeFilterCount,
     applyFilters,
     resetFilters,
@@ -215,6 +220,7 @@ interface UseAdminUsersDisplayMetaOptions {
   openEdit: (row: AdminUserItem) => void | Promise<void>
   openBan: (row: AdminUserItem) => void | Promise<void>
   openUnban: (row: AdminUserItem) => void | Promise<void>
+  openCredits: (row: AdminUserItem) => void | Promise<void>
   openKeys: (row: AdminUserItem) => void | Promise<void>
   openDelete: (row: AdminUserItem) => void | Promise<void>
 }
@@ -223,6 +229,7 @@ interface UseAdminUsersDisplayMetaReturn {
   roleFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserRoleFilter>>>
   activeFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserActiveFilter>>>
   banFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserBanFilter>>>
+  creditBalanceFilterOptions: ComputedRef<Array<AdminUserFilterOption<AdminUserCreditBalanceFilter>>>
   columns: ComputedRef<TableColumn<AdminUserItem>[]>
   banTooltip: (row: AdminUserItem) => string
   getRowItems: (row: AdminUserItem) => DropdownMenuItem[]
@@ -247,12 +254,20 @@ export function useAdminUsersDisplayMeta(
     { label: t('common.accounts.banned'), value: 'banned' },
     { label: t('common.accounts.unbanned'), value: 'unbanned' }
   ])
+  const creditBalanceFilterOptions = computed<Array<AdminUserFilterOption<AdminUserCreditBalanceFilter>>>(() => [
+    { label: t('admin.users.filters.allCreditBalances'), value: 'all' },
+    { label: t('admin.users.filters.positiveCredits'), value: 'positive' },
+    { label: t('admin.users.filters.zeroCredits'), value: 'zero' }
+  ])
   const columns = computed<TableColumn<AdminUserItem>[]>(() => [
+    { id: 'select', header: '' },
+    { accessorKey: 'id', header: t('admin.users.columns.id') },
     { accessorKey: 'username', header: t('admin.users.columns.username') },
+    { accessorKey: 'displayName', header: t('admin.users.columns.displayName') },
     { accessorKey: 'role', header: t('admin.users.columns.role') },
     { accessorKey: 'email', header: t('admin.users.columns.email') },
-    { accessorKey: 'credits', header: t('admin.users.columns.credits') },
     { accessorKey: 'isActive', header: t('admin.users.columns.status') },
+    { accessorKey: 'credits', header: t('admin.users.columns.credits') },
     { accessorKey: 'isBanned', header: t('admin.users.columns.ban') },
     { accessorKey: 'createdAt', header: t('admin.users.columns.createdAt') },
     { id: 'actions', header: '' }
@@ -276,6 +291,10 @@ export function useAdminUsersDisplayMeta(
       icon: 'i-mdi-pencil-outline',
       onSelect: () => options.openEdit(row)
     }, {
+      label: t('admin.users.actions.adjustCredits'),
+      icon: 'i-mdi-cash-edit',
+      onSelect: () => options.openCredits(row)
+    }, {
       label: row.isBanned ? t('admin.users.actions.unban') : t('admin.users.actions.ban'),
       icon: row.isBanned ? 'i-mdi-lock-open-outline' : 'i-mdi-lock-outline',
       onSelect: () => row.isBanned ? options.openUnban(row) : options.openBan(row)
@@ -297,6 +316,7 @@ export function useAdminUsersDisplayMeta(
     roleFilterOptions,
     activeFilterOptions,
     banFilterOptions,
+    creditBalanceFilterOptions,
     columns,
     banTooltip,
     getRowItems
