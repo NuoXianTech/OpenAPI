@@ -11,7 +11,6 @@ import { migrate } from 'drizzle-orm/pglite/migrator'
 import {
   createApp,
   eventHandler,
-  setResponseStatus,
   toNodeListener
 } from 'h3'
 import {
@@ -75,6 +74,12 @@ const { recordApiCall } = await import(
 )
 const { getAppEventContext } = await import(
   '~~/server/utils/event-context'
+)
+const { gatewayFail } = await import(
+  '~~/server/utils/gateway-response'
+)
+const { setPublicApiCors } = await import(
+  '~~/server/utils/public-api-cors'
 )
 
 let databaseClient: PGlite | undefined
@@ -307,12 +312,12 @@ beforeAll(async () => {
 
   const gateway = createApp()
   gateway.use(eventHandler(async (event) => {
+    setPublicApiCors(event)
     const result = await dynamicGatewayService.tryHandle(event)
     const tracked = getAppEventContext(event).apiStatsTracked
     if (tracked) await recordApiCall(event, tracked)
     if (result.matched) return result.response
-    setResponseStatus(event, 404)
-    return { code: 'NOT_FOUND' }
+    return gatewayFail(event, 404, 'API_NOT_FOUND', '接口不存在')
   }))
   gatewayServer = createServer(toNodeListener(gateway))
   const gatewayPort = await listen(gatewayServer)
@@ -903,6 +908,9 @@ describe('Platform to Node API Service acceptance', () => {
         { redirect: 'manual' }
       )
       expect(response.status).toBe(302)
+      expect(response.headers.get('access-control-allow-origin')).toBe('*')
+      expect(response.headers.get('access-control-expose-headers'))
+        .toContain('Location')
       expect(response.headers.get('location')).toBe('/hidden')
       expect(hiddenRequests).toBe(0)
       await response.arrayBuffer()
@@ -1166,9 +1174,22 @@ describe('Platform to Node API Service acceptance', () => {
     expect(response.status).toBe(204)
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(response.headers.get('access-control-allow-methods')).toBe('GET, HEAD, OPTIONS')
-    expect(response.headers.get('access-control-allow-headers')).toBe('content-type, x-api-key')
+    expect(response.headers.get('access-control-allow-headers'))
+      .toBe('content-type, x-api-key, x-request-id')
+    expect(response.headers.get('access-control-max-age')).toBe('600')
+    expect(response.headers.get('access-control-expose-headers'))
+      .toContain('X-OpenAPI-Error-Code')
     expect(await response.text()).toBe('')
     expect(await countCalls(routeIds.yiyan)).toBe(callsBefore)
+  })
+
+  it('returns CORS headers for an unknown public Route', async () => {
+    const response = await fetch(`${gatewayBaseURL}/v1/not-published-cors`)
+    const body = await readPublicEnvelope(response)
+
+    expect(response.status).toBe(404)
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
+    expect(body.code).toBe('API_NOT_FOUND')
   })
 
   it('returns 405 and Allow before authenticating an unsupported Route method', async () => {
@@ -1280,6 +1301,7 @@ describe('Platform to Node API Service acceptance', () => {
     const missing = await fetch(`${gatewayBaseURL}/v1/yiyan?type=a&id=a1`)
     const missingBody = await readPublicEnvelope(missing)
     expect(missing.status).toBe(401)
+    expect(missing.headers.get('access-control-allow-origin')).toBe('*')
     expect(missingBody.code).toBe('MISSING_API_KEY')
     expect(missingBody.data).toBeNull()
 
@@ -1288,6 +1310,7 @@ describe('Platform to Node API Service acceptance', () => {
     })
     const invalidBody = await readPublicEnvelope(invalid)
     expect(invalid.status).toBe(401)
+    expect(invalid.headers.get('access-control-allow-origin')).toBe('*')
     expect(invalidBody.code).toBe('INVALID_API_KEY')
     expect(invalidBody.data).toBeNull()
     expect(await countCalls(routeIds.yiyan)).toBe(before)
@@ -1303,6 +1326,7 @@ describe('Platform to Node API Service acceptance', () => {
     const body = await readPublicEnvelope<{ id: string, yiyan: string }>(response)
 
     expect(response.status).toBe(200)
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(body.code).toBe('OK')
     expect(body.message).toBe('请求成功')
     expect(body.data).toMatchObject({ id: 'a1' })
@@ -1443,6 +1467,9 @@ describe('Platform to Node API Service acceptance', () => {
     const body = await readPublicEnvelope(response)
 
     expect(response.status).toBe(503)
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
+    expect(response.headers.get('access-control-expose-headers'))
+      .toContain('X-OpenAPI-Error-Code')
     expect(body.code).toBe('IP_DATABASE_UNAVAILABLE')
     const user = await queryOne<{ credits: number }>(
       'select credits from users where id = $1',

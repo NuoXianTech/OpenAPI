@@ -13,6 +13,7 @@ vi.stubGlobal('defineEventHandler', <T>(handler: T) => handler)
 const { default: handleOpenApiRouting } = await import('~~/server/middleware/01-open-api-routing')
 
 function createMockEvent(path: string, method = 'GET'): H3Event {
+  const responseHeaders = new Map<string, unknown>()
   return {
     path,
     method,
@@ -26,9 +27,15 @@ function createMockEvent(path: string, method = 'GET'): H3Event {
       },
       res: {
         statusCode: 200,
-        setHeader() {},
-        getHeader() {},
-        removeHeader() {},
+        setHeader(name: string, value: unknown) {
+          responseHeaders.set(name.toLowerCase(), value)
+        },
+        getHeader(name: string) {
+          return responseHeaders.get(name.toLowerCase())
+        },
+        removeHeader(name: string) {
+          responseHeaders.delete(name.toLowerCase())
+        },
         writeHead() {},
         end() {}
       }
@@ -48,6 +55,7 @@ describe('dynamic API routing middleware', () => {
     const event = createMockEvent('/v1/proxy-smoke')
 
     await expect(handleOpenApiRouting(event)).resolves.toBe(response)
+    expect(event.node.res.getHeader('access-control-allow-origin')).toBe('*')
   })
 
   it('returns the public API error contract when no published Route matches', async () => {
@@ -59,6 +67,10 @@ describe('dynamic API routing middleware', () => {
       data: null
     })
     expect(event.node.res.statusCode).toBe(404)
+    expect(event.node.res.getHeader('access-control-allow-origin')).toBe('*')
+    expect(event.node.res.getHeader('access-control-allow-headers'))
+      .toBe('content-type, x-api-key, x-request-id')
+    expect(event.node.res.getHeader('access-control-max-age')).toBe(600)
     expect(dynamicGatewayMocks.tryHandle).toHaveBeenCalledOnce()
   })
 
@@ -66,6 +78,7 @@ describe('dynamic API routing middleware', () => {
     const event = createMockEvent('/api/admin/v1/routes')
 
     await expect(handleOpenApiRouting(event)).resolves.toBeUndefined()
+    expect(event.node.res.getHeader('access-control-allow-origin')).toBeUndefined()
     expect(dynamicGatewayMocks.tryHandle).not.toHaveBeenCalled()
   })
 })

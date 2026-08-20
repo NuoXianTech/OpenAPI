@@ -196,6 +196,8 @@ Platform 只使用该受信响应 Header 关联调用日志，不以它替代 HT
 
 动态 Route 的 `OPTIONS` 预检在 API Key、积分和 Upstream 调用前处理。成功预检返回 `204`，不写业务调用明细，也不消耗积分。
 
+公开 Gateway 统一为成功、错误、重定向、未发布 Route 和不存在 Route 的响应设置 `Access-Control-Allow-Origin: *`，不支持携带 Cookie 的跨域请求，也不设置 `Access-Control-Allow-Credentials`。预检允许 `content-type`、`x-api-key` 和 `x-request-id`，缓存 600 秒；浏览器可以读取 `Location`、`ETag`、`X-Request-Id`、`X-OpenAPI-Error-Code`、限流 Header 和 `Retry-After`。Internal Service 和 External Upstream 返回的 `Access-Control-*` Header 会被移除，不能覆盖 Gateway 策略。
+
 声明为支撑 Operation 的播放器资产等浏览器子资源由 Platform 自动保持匿名、
 零积分且不记录业务统计。
 
