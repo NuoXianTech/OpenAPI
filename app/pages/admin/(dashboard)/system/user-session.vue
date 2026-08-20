@@ -347,14 +347,12 @@ const inviteModeReady = computed(() => (
                     class="min-w-0 flex-1"
                   />
                   <UButton
-                    :icon="getForm(item.provider).copied ? 'i-mdi-check' : 'i-mdi-content-copy'"
-                    :color="getForm(item.provider).copied ? 'success' : 'neutral'"
+                    icon="i-mdi-content-copy"
+                    color="neutral"
                     variant="outline"
                     @click="copyCallback(item)"
                   >
-                    {{ getForm(item.provider).copied
-                      ? t('common.feedback.copied')
-                      : t('common.actions.copy') }}
+                    {{ t('common.actions.copy') }}
                   </UButton>
                 </div>
               </UFormField>

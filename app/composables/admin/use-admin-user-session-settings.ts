@@ -22,7 +22,6 @@ interface AdminOauthProviderForm {
   clientId: string
   clientSecret: string
   isEnabled: boolean
-  copied: boolean
   secretVisible: boolean
   open: boolean
 }
@@ -39,7 +38,6 @@ function createProviderForm(): AdminOauthProviderForm {
     clientId: '',
     clientSecret: '',
     isEnabled: false,
-    copied: false,
     secretVisible: false,
     open: false
   }
@@ -60,6 +58,7 @@ function buildProviderUpdate(
 export function useAdminUserSessionSettings() {
   const toast = useToast()
   const { t } = useI18n()
+  const { copyText } = useCopyFeedback()
   const settings = useAdminSettingsPage()
   const providers = usePrivateResource<AdminOauthProviderItem[]>({
     path: '/api/admin/oauth-providers/list',
@@ -133,14 +132,9 @@ export function useAdminUserSessionSettings() {
   }
 
   async function copyCallback(item: AdminOauthProviderItem): Promise<void> {
-    const form = getForm(item.provider)
-    try {
-      await navigator.clipboard.writeText(item.callbackUrl)
-      form.copied = true
-      setTimeout(() => { form.copied = false }, 1500)
-    } catch {
-      toast.add({ title: t('admin.system.session.oauth.feedback.copyFailed'), color: 'error' })
-    }
+    await copyText(item.callbackUrl, {
+      errorTitle: t('admin.system.session.oauth.feedback.copyFailed')
+    })
   }
 
   return {
