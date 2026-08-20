@@ -40,7 +40,7 @@
 
 生产如果前面有 Nginx、Caddy 或面板反向代理，应设置 `NITRO_HOST=127.0.0.1`，避免 Nitro 直接暴露到公网；容器部署可以使用镜像或 Compose 提供的监听默认值。
 
-Platform 使用一个访问地址同时提供 Console、站内 API 和动态 Gateway。`/api`、`/_nuxt`、`/admin`、`/user`、登录与公开页面等 Platform 路径固定保留，不能被公共 Route 覆盖；其他路径交给动态 Gateway 匹配。对公网允许哪些域名访问由 Nginx、Caddy 或云平台入口负责，不再通过 Platform 环境变量重复配置。
+Platform 使用一个访问地址同时提供 Console、站内 API 和动态 Gateway。`/api`、`/_nuxt`、`/_i18n`、`/admin`、`/user`、登录与公开页面等 Platform 路径固定保留，不能被公共 Route 覆盖；其中 `/_i18n` 是 Nuxt i18n 的语言包端点，必须由 Nitro 处理。其他路径交给动态 Gateway 匹配。对公网允许哪些域名访问由 Nginx、Caddy 或云平台入口负责，不再通过 Platform 环境变量重复配置。
 
 多个 Service 的地址、Token、权重与轮询策略统一保存在 Platform 数据库的 Internal Upstream/Target 中，与 Platform 的访问域名无关。
 

@@ -19,6 +19,18 @@ interface ReadinessResponse {
   }
 }
 
+interface I18nMessagesResponse {
+  'zh-CN': {
+    common: {
+      dashboard: {
+        navigation: {
+          contentManagement: string
+        }
+      }
+    }
+  }
+}
+
 const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
 const testWorkingDirectory = await mkdtemp(join(tmpdir(), 'openapi-integration-workspace-'))
 const serverPort = 30_000 + process.pid % 10_000
@@ -85,6 +97,14 @@ describe('Nitro server routes', () => {
       expect(body.timestamp).toEqual(expect.any(Number))
       expect(response.headers.get('x-request-id')).toBeTruthy()
     }
+  })
+
+  it('serves lazy-loaded locale messages outside the dynamic Gateway', async () => {
+    const response = await fetch('/_i18n/integration/zh-CN/messages.json')
+    const messages = await readJson<I18nMessagesResponse>(response)
+
+    expect(response.status).toBe(200)
+    expect(messages['zh-CN'].common.dashboard.navigation.contentManagement).toBe('内容管理')
   })
 
   it('applies production security headers without disclosing the server stack', async () => {

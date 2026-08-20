@@ -39,6 +39,7 @@ describe('route pattern utilities', () => {
 
   it('protects Platform-owned paths from dynamic routes', () => {
     expect(isReservedPlatformPath('/api/admin/v1/routes')).toBe(true)
+    expect(isReservedPlatformPath('/_i18n/hash/zh-CN/messages.json')).toBe(true)
     expect(isReservedPlatformPath('/admin')).toBe(true)
     expect(isReservedPlatformPath('/v1/music')).toBe(false)
   })

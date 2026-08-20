@@ -2,6 +2,7 @@ const PARAMETER_SEGMENT_PATTERN = /^\{([A-Za-z][A-Za-z0-9_]*)(\+)?\}$/
 const UPSTREAM_PARAMETER_PATTERN = /\{path\.([A-Za-z][A-Za-z0-9_]*)\}/g
 const RESERVED_PLATFORM_PREFIXES = [
   '/api',
+  '/_i18n',
   '/_nuxt',
   '/admin',
   '/user',
