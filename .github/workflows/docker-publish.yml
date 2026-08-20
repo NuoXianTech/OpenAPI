@@ -95,11 +95,11 @@ jobs:
       - name: Run unit tests
         run: pnpm test:unit
 
-      - name: Check out compatible API Service
+      - name: Check out API Service main
         uses: actions/checkout@v7
         with:
           repository: NuoXianTech/openapi-service
-          ref: ${{ vars.OPENAPI_SERVICE_REF || (startsWith(github.ref, 'refs/tags/') && github.ref_name) || 'main' }}
+          ref: main
           path: openapi-service
           persist-credentials: false
 
@@ -107,7 +107,7 @@ jobs:
         working-directory: openapi-service
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Build compatible API Service
+      - name: Build API Service main
         working-directory: openapi-service
         run: pnpm build
 

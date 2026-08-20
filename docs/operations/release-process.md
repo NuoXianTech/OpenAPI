@@ -1,6 +1,6 @@
 # OpenAPI Platform 发布流程
 
-本文说明 `openapi-platform` 的版本、Git Tag、GitHub Release、GHCR 镜像和生产部署流程。`openapi-service` 使用独立仓库、版本和发布流水线；日常可独立发布，首个 `0.1.0` 按同名版本协同发布。
+本文说明 `openapi-platform` 的版本、Git Tag、GitHub Release、GHCR 镜像和生产部署流程。`openapi-service` 使用独立仓库、版本和发布流水线；两者可以独立发布，版本号不建立对应关系。
 
 ## 1. 发布产物
 
@@ -47,7 +47,7 @@ Git Tag 必须：
 2. 审查数据库 Schema 和迁移；当前破坏性重建的唯一 `0000` 要求目标环境重建数据库。新基线再次正式发布后，journal、SQL 和 snapshot 必须冻结，新 Schema 只能追加迁移。
 3. 为 PostgreSQL 或 PGlite 创建可恢复备份。
 4. 核对运行时变量、密钥和 Service Token 维护计划；`0.1.0` 不支持双 Token 在线轮换。
-5. 确认同名 `openapi-service` Tag 已经发布。Platform 版本工作流默认检出同名 Service Tag；需要验证其他兼容版本时，将 Repository Variable `OPENAPI_SERVICE_REF` 设为不可变 Tag 或 Commit。
+5. 确认 `openapi-service` 当前主线与 Platform 控制协议兼容，并完成集成测试。Platform 工作流固定检出 Service `main` 作为当前兼容基线，不根据 Platform 版本推导或绑定 Service 版本。
 6. 完成质量门禁：
 
    ```bash

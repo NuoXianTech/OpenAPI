@@ -158,4 +158,4 @@ pnpm build
 
 测试数量会随功能变化，不应在文档中固定具体文件或用例数量。
 
-GitHub Actions 会把 `openapi-service` 检出到 Platform 工作区并先执行 Service build。日常 `main` 质量检查使用 Service `main`；Platform 版本 Tag 默认使用同名 Service Tag。Repository Variable `OPENAPI_SERVICE_REF` 可覆盖为其他兼容的不可变 Tag 或 Commit。
+GitHub Actions 会把 `openapi-service` 的 `main` 检出到 Platform 工作区并先执行 Service build。Platform 的日常 `main` 和版本 Tag 都验证当前 Service 主线；两者不要求使用相同版本号，也不建立发布绑定关系。
