@@ -78,7 +78,6 @@
           "versionState": "Version status",
           "changelog": "Changelog",
           "visibility": "Visibility",
-          "upstreamKind": "Upstream type",
           "loadBalancing": "Load balancing",
           "baseUrl": "Base URL",
           "weight": "Weight",
@@ -112,7 +111,7 @@
           "createUpstream": "New Upstream",
           "createRoute": "New Route",
           "saveRoute": "Save Route",
-          "saveAndPublish": "Save and publish",
+          "saveChanges": "Save changes",
           "addTarget": "Add Target",
           "removeTarget": "Remove Target",
           "publishRevision": "Apply runtime configuration",
@@ -130,7 +129,7 @@
           "itemCount": "{count} items",
           "activeCount": "{count} publishable",
           "productHint": "Define an API product and version",
-          "upstreamHint": "Connect the Node API Service or an external service",
+          "upstreamHint": "Connect a Service-managed API or a manually managed HTTP service",
           "routeHint": "Bind a public path to an upstream path",
           "environmentHint": "Select an Environment first",
           "unpublished": "Not published",
@@ -150,7 +149,7 @@
           "productsTitle": "API Products",
           "productsDescription": "Organize publishable API capabilities with Products and Versions.",
           "upstreamsTitle": "Upstream Services",
-          "upstreamsDescription": "Manage internal API Services and restricted external HTTPS services that the Gateway can reach.",
+          "upstreamsDescription": "Manage request targets reachable by the Gateway. Targets can use internal addresses, container names, HTTP, or HTTPS.",
           "revisionsTitle": "Runtime snapshots",
           "revisionsDescription": "Platform saves a new immutable snapshot only when the effective traffic configuration changes; identical configuration reuses the active snapshot. This page is for audit and rollback only.",
           "workspacesTitle": "Workspaces",
@@ -167,7 +166,6 @@
           "visibility": "Visibility",
           "lifecycle": "Lifecycle",
           "createdAt": "Created",
-          "kind": "Type",
           "targets": "Targets",
           "loadBalancing": "Load balancing",
           "revision": "Snapshot",
@@ -183,9 +181,10 @@
           "productsTitle": "No Products yet",
           "productsDescription": "Create the first API Product. Its initial Version becomes publishable immediately.",
           "upstreamsTitle": "No Upstreams yet",
-          "upstreamsDescription": "Connect the Node API Service in this Workspace or add a restricted external HTTPS service.",
+          "upstreamsDescription": "Add an Upstream and at least one Target to give the Gateway a request destination.",
+          "targetsTitle": "No Targets configured",
           "revisionsTitle": "No runtime snapshots yet",
-          "revisionsDescription": "Publish the first Service Endpoint from the endpoint catalog and Platform will save the initial runtime snapshot automatically.",
+          "revisionsDescription": "Save and apply the first Service Endpoint from the endpoint catalog to create the initial runtime snapshot.",
           "workspacesTitle": "No Workspaces yet",
           "workspacesDescription": "Create a Workspace and its default Environment to begin organizing APIs."
         },
@@ -220,12 +219,6 @@
         "revisionStatuses": {
           "active": "Active",
           "historical": "Historical snapshot"
-        },
-        "upstreamKinds": {
-          "internal": "Internal service",
-          "internalDescription": "The Platform injects the Service Token",
-          "external": "External service",
-          "externalDescription": "Only safe public HTTPS addresses are allowed"
         },
         "loadBalancing": {
           "roundRobin": "Round robin",
@@ -270,14 +263,13 @@
           "editDescription": "Update the Upstream name, slug, and load-balancing strategy. Targets and tokens are managed separately.",
           "namePlaceholder": "For example, Core API Service",
           "loadBalancingHelp": "The initial runtime supports round robin and weighted round robin. Weights apply only in weighted mode.",
-          "internalTitle": "The Platform authenticates internal Upstreams",
-          "internalDescription": "Caller credentials are removed and the Service Token stored independently for this Upstream is injected before forwarding.",
           "serviceTokenHelp": "The Token is encrypted with the Platform master key and never enters runtime snapshots, ordinary responses, or logs.",
           "serviceTokenPlaceholder": "At least 32 random characters",
-          "externalTitle": "External Upstreams use SSRF protection",
-          "externalDescription": "Only HTTPS is allowed. Localhost, private, link-local, and credential-bearing URLs are blocked.",
+          "connectionTitle": "Optional Service connection",
+          "connectionDescription": "Leave the token empty for a manually managed Upstream. Add a Service Token to enable discovery, configuration sync, and Platform-to-Service authentication.",
           "targetsTitle": "Targets",
-          "targetsDescription": "Targets must use the same protocol. Weighted mode distributes requests according to each weight.",
+          "targetPlaceholder": "http://openapi-service:8080 or https://service.example.com",
+          "targetsDescription": "Targets support private addresses, container names, HTTP, and HTTPS. Public HTTP is rejected; weighted mode distributes requests according to each weight.",
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "One Upstream can connect multiple Service instances",
           "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas."
@@ -291,7 +283,7 @@
           "createTitle": "Create dynamic Route",
           "createDescription": "Bind a public Method and Path to an Upstream in the same Workspace.",
           "editTitle": "Edit dynamic Route",
-          "editDescription": "Change the public path and governance settings. Platform publishes automatically after save; traffic stays on the previous release if validation fails.",
+          "editDescription": "Change the public path and governance settings. Saving creates a pending change; traffic stays on the previous release until it is applied.",
           "namePlaceholder": "For example, Get weather by city",
           "pathHelp": "Supports {'{'}id{'}'} single-segment parameters and {'{'}path+{'}'} trailing wildcard parameters.",
           "hostsHelp": "Optional. Enter one domain per line or separate them with commas; leave empty to use the Environment default.",
@@ -304,7 +296,7 @@
           "catalogStatusHelp": "Automatic health uses recent calls; maintenance is shown explicitly in the public catalog.",
           "sensitiveQueryHelp": "These query parameters are always redacted from call logs and referrers.",
           "sensitiveQueryPlaceholder": "For example token, then press Enter",
-          "stateHelp": "Only publishable Routes enter the automatically generated runtime snapshot.",
+          "stateHelp": "Only publishable Routes enter an applied runtime snapshot.",
           "noVersionsHelp": "This Workspace has no publishable Product Versions.",
           "noUpstreamsHelp": "This Workspace has no available Upstreams."
         },
@@ -343,7 +335,7 @@
         },
         "deleteTarget": {
           "title": "Delete Target",
-          "description": "Ensure the Target is not referenced by an active runtime snapshot and keep at least one available Target for an Upstream that is still in use."
+          "description": "The Target can be removed directly when another ready Target remains. An Upstream used by active Routes must keep at least one available Target."
         },
         "feedback": {
           "workspaceCreated": "Workspace created",
@@ -384,8 +376,6 @@
           "versionRequired": "Select or enter a Version",
           "targetRequired": "Add at least one Target",
           "targetUrlInvalid": "Enter a valid HTTP or HTTPS URL",
-          "externalRequiresHttps": "External Upstreams must use HTTPS",
-          "protocolMismatch": "Every Target in one Upstream must use the same protocol",
           "weightInvalid": "Weight must be an integer between 1 and 10000",
           "serviceTokenInvalid": "The Service Token must contain at least 32 characters",
           "pathRequired": "Path is required",
@@ -473,7 +463,7 @@
         },
         "catalog": {
           "title": "API catalog",
-          "description": "Publish an endpoint as soon as a Service is discovered. Publishing, disabling, or governance changes automatically apply the runtime configuration; a new snapshot is saved only when it actually changes.",
+          "description": "Save endpoint changes as you review them, then apply all changes to the selected Environment at once. A new runtime snapshot is saved only when the effective configuration changes.",
           "endpointCount": "{count} endpoints",
           "contractMissing": "This endpoint is no longer present in the Service contract. Review it before disabling or adjusting the Route.",
           "manualRoute": "Manually configured proxy endpoint",
@@ -506,8 +496,8 @@
             "manualRoute": "Custom endpoint",
             "publish": "Publish",
             "unpublish": "Disable",
-            "applyChanges": "Apply changes",
-            "finishUnpublish": "Finish disabling",
+            "pendingApply": "Waiting to apply",
+            "applyAllChanges": "Apply all changes ({count})",
             "statistics": "Statistics",
             "advancedSettings": "Advanced settings",
             "managePublishing": "Manage publishing",
@@ -521,6 +511,8 @@
             "published": "Endpoint published",
             "unpublished": "Endpoint disabled",
             "changesApplied": "Endpoint changes applied",
+            "changesPending": "Endpoint saved. Apply all changes to activate it.",
+            "applyFailed": "Applying endpoint changes failed",
             "statisticsEnabled": "Call statistics enabled",
             "statisticsDisabled": "Call statistics disabled",
             "apiKeyEnabled": "API Key enabled",
@@ -530,13 +522,13 @@
           },
           "empty": {
             "catalogTitle": "No manageable Services yet",
-            "catalogDescription": "Connect an Internal Service or External Upstream, then publish endpoints here.",
+            "catalogDescription": "Review Service-managed endpoints or create custom Routes for manually managed Upstreams.",
             "filterTitle": "No endpoints match these filters",
             "filterDescription": "Change the search text or status filter and try again.",
             "serviceTitle": "No business endpoints discovered",
             "serviceDescription": "Rediscover the Service to read its latest OpenAPI contract.",
-            "externalTitle": "No custom endpoints yet",
-            "externalDescription": "Create the first public Route for this External Upstream."
+            "manualTitle": "No custom endpoints yet",
+            "manualDescription": "Create the first public Route for this manually managed Upstream."
           }
         }
       },

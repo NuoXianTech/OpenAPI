@@ -130,7 +130,7 @@ export function routeUpstreamOptions(
     .map(upstream => ({
       label: upstream.name,
       value: upstream.id,
-      description: `${upstream.kind} · ${upstream.protocol}`
+      description: upstream.slug
     }))
   const currentUpstream = current?.upstream
   if (
@@ -140,7 +140,7 @@ export function routeUpstreamOptions(
     items.unshift({
       label: currentUpstream.name,
       value: currentUpstream.id,
-      description: `${currentUpstream.kind} · ${currentUpstream.protocol}`
+      description: currentUpstream.slug
     })
   }
   return items

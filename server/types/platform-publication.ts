@@ -36,12 +36,15 @@ export interface RouteBinding {
   route: typeof apiRoutes.$inferSelect
   version: typeof apiVersions.$inferSelect
   product: typeof apiProducts.$inferSelect
-  upstream: typeof upstreamServices.$inferSelect
+  upstream: typeof upstreamServices.$inferSelect & {
+    serviceManaged: boolean
+  }
 }
 
 export type UpstreamView = typeof upstreamServices.$inferSelect & {
   targets: Array<typeof upstreamTargets.$inferSelect>
   connection: ServiceConnectionView | null
+  serviceManaged: boolean
 }
 
 export type PublicationStatus

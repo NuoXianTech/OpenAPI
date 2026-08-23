@@ -1,4 +1,4 @@
-interface InternalTargetState {
+interface ServiceTargetState {
   enabled: boolean
   configurationRevision: number | null
   configurationHash: string | null
@@ -6,14 +6,14 @@ interface InternalTargetState {
   configurationState: unknown | null
 }
 
-interface InternalConnectionState {
+interface ServiceConnectionState {
   configurationRevision: number
   configurationHash: string | null
 }
 
-export function isInternalTargetReady(
-  target: InternalTargetState,
-  connection: InternalConnectionState | null
+export function isServiceTargetReady(
+  target: ServiceTargetState,
+  connection: ServiceConnectionState | null
 ): boolean {
   if (!target.enabled || !target.configurationState || !connection) {
     return false
@@ -26,14 +26,11 @@ export function isInternalTargetReady(
     && target.configurationHash === connection.configurationHash
 }
 
-export function areEnabledInternalTargetsReady(
-  targets: readonly InternalTargetState[],
-  connection: InternalConnectionState | null
+export function areEnabledServiceTargetsReady(
+  targets: readonly ServiceTargetState[],
+  connection: ServiceConnectionState | null
 ): boolean {
   const enabledTargets = targets.filter(target => target.enabled)
   return enabledTargets.length > 0
-    && enabledTargets.every(target => isInternalTargetReady(
-      target,
-      connection
-    ))
+    && enabledTargets.every(target => isServiceTargetReady(target, connection))
 }

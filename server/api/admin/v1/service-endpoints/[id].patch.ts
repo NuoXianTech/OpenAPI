@@ -15,7 +15,8 @@ export default defineAdminEventHandler(async (event, admin) => {
   const result = await platformEndpointCatalogService.update(
     routeId,
     body,
-    admin.id
+    admin.id,
+    { publishRouting: false }
   )
   await addRequestOperationLog(event, {
     userId: admin.id,

@@ -94,7 +94,7 @@ const match: ResolvedDynamicRoute = {
   },
   upstream: {
     id: '00000000-0000-4000-8000-000000000006',
-    kind: 'internal',
+    serviceManaged: true,
     loadBalancing: 'round_robin',
     targets: [{
       id: '00000000-0000-4000-8000-000000000007',

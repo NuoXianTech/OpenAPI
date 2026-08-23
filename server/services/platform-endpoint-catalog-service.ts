@@ -128,7 +128,7 @@ export const platformEndpointCatalogService = {
       typeof platformServiceControlService.get
     >>>()
     await Promise.all(upstreams
-      .filter(upstream => upstream.kind === 'internal')
+      .filter(upstream => upstream.serviceManaged)
       .map(async (upstream) => {
         try {
           serviceViews.set(
@@ -190,7 +190,7 @@ export const platformEndpointCatalogService = {
         if (usedRouteIds.has(binding.route.id)) continue
         endpoints.push({
           key: `${upstream.id}:route:${binding.route.id}`,
-          sourceKind: upstream.kind === 'external'
+          sourceKind: !upstream.serviceManaged
             ? 'manual' as const
             : 'missing' as const,
           endpoint: null,
@@ -226,12 +226,15 @@ export const platformEndpointCatalogService = {
     upstreamServiceId: string
     method: HttpMethod
     path: string
-  }, createdBy: number | null) {
+  }, createdBy: number | null, options: { publishRouting?: boolean } = {}) {
     const upstream = await platformUpstreamService.findById(input.upstreamServiceId)
-    if (!upstream || upstream.kind !== 'internal' || upstream.deletedAt) {
+    const serviceManaged = upstream
+      ? await platformUpstreamService.hasServiceConnection(upstream.id)
+      : false
+    if (!upstream || !serviceManaged || upstream.deletedAt) {
       throw createApplicationError({
         statusCode: 404,
-        message: 'internal Service upstream not found',
+        message: 'Service-managed upstream not found',
         data: { code: 'SERVICE_UPSTREAM_NOT_FOUND' }
       })
     }
@@ -344,6 +347,8 @@ export const platformEndpointCatalogService = {
           transaction: tx
         })
         return { route, created: !existing }
+      }, {
+        publishRouting: options.publishRouting !== false
       }
     )
     return {
@@ -355,11 +360,15 @@ export const platformEndpointCatalogService = {
   async update(
     routeId: string,
     input: EndpointPublicationPatch & { environmentId: string },
-    createdBy: number | null
+    createdBy: number | null,
+    options: { publishRouting?: boolean } = {}
   ) {
     const binding = await platformRouteService.get(routeId)
     await loadEnvironment(input.environmentId, binding.product.workspaceId)
-    const view = binding.upstream.kind === 'internal'
+    const serviceManaged = await platformUpstreamService.hasServiceConnection(
+      binding.upstream.id
+    )
+    const view = serviceManaged
       ? await platformServiceControlService.get(
           binding.upstream.id,
           { checkAvailability: false }
@@ -436,8 +445,9 @@ export const platformEndpointCatalogService = {
           })
         }
         return route
-      }
-    )
+      }, {
+        publishRouting: options.publishRouting !== false
+      })
     return {
       route: committed.value,
       revision: committed.revision

@@ -38,16 +38,12 @@ watch(context.selectedWorkspaceId, (workspaceId) => {
   if (workspaceId) void resource.refresh()
 }, { immediate: true })
 
-function upstreamKindLabel(upstream: PlatformUpstream): string {
-  return t(`admin.apis.routing.upstreamKinds.${upstream.kind}`)
-}
-
 function loadBalancingLabel(upstream: PlatformUpstream): string {
   return t(`admin.apis.routing.loadBalancing.${upstream.loadBalancing === 'weighted' ? 'weighted' : 'roundRobin'}`)
 }
 
 function upstreamStateColor(upstream: PlatformUpstream) {
-  if (upstream.status !== 'active' || upstream.kind === 'external') {
+  if (upstream.status !== 'active' || !upstream.serviceManaged) {
     return platformStatusColor(upstream.status)
   }
   if (!upstream.connection?.discovered) return 'warning' as const
@@ -58,7 +54,7 @@ function upstreamStateLabel(upstream: PlatformUpstream): string {
   if (upstream.status !== 'active') {
     return t(`admin.apis.routing.serviceStatuses.${upstream.status}`)
   }
-  if (upstream.kind === 'external') {
+  if (!upstream.serviceManaged) {
     return t('admin.apis.routing.serviceControl.enabled')
   }
   if (!upstream.connection?.discovered) {
@@ -71,7 +67,6 @@ function upstreamStateLabel(upstream: PlatformUpstream): string {
 
 const columns = computed<TableColumn<PlatformUpstream>[]>(() => [
   { id: 'upstream', header: t('admin.apis.routing.columns.upstream') },
-  { id: 'kind', header: t('admin.apis.routing.columns.kind') },
   { id: 'targets', header: t('admin.apis.routing.columns.targets') },
   { id: 'loadBalancing', header: t('admin.apis.routing.columns.loadBalancing') },
   { id: 'status', header: t('admin.apis.routing.serviceControl.runtimeStatus') },
@@ -278,14 +273,6 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
             </p>
           </div>
         </template>
-        <template #kind-cell="{ row }">
-          <UBadge
-            :color="row.original.kind === 'internal' ? 'info' : 'warning'"
-            variant="subtle"
-          >
-            {{ upstreamKindLabel(row.original) }}
-          </UBadge>
-        </template>
         <template #targets-cell="{ row }">
           <div class="min-w-72 space-y-1.5">
             <UDropdownMenu
@@ -323,7 +310,7 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
         <template #actions-cell="{ row }">
           <div class="flex justify-end gap-1">
             <UButton
-              v-if="row.original.kind === 'internal'"
+              v-if="row.original.serviceManaged"
               :to="{
                 path: `/admin/apis/upstreams/${row.original.id}`,
                 query: route.query

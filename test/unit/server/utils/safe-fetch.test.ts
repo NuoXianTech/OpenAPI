@@ -54,7 +54,7 @@ describe('safeFetch', () => {
   it('rejects non-HTTPS URLs before making a request', async () => {
     await expect(safeFetch('http://example.com/resource', {
       allowedHosts: ['example.com']
-    })).rejects.toThrow('upstream URL must use HTTPS')
+    })).rejects.toThrow('upstream URL must use HTTP or HTTPS')
   })
 
   it('rejects loopback and private network destinations', async () => {

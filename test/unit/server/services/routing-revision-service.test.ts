@@ -27,6 +27,7 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 const { platformProductService } = await import('~~/server/services/platform-product-service')
 const { apiCatalogService } = await import('~~/server/services/api-catalog-service')
 const { platformEndpointCatalogService } = await import('~~/server/services/platform-endpoint-catalog-service')
+const { applyEnvironmentRevision } = await import('~~/server/services/platform-endpoint-publication-service')
 const { platformRouteService } = await import('~~/server/services/platform-route-service')
 const { platformUpstreamService } = await import('~~/server/services/platform-upstream-service')
 const { platformWorkspaceService } = await import('~~/server/services/platform-workspace-service')
@@ -78,7 +79,6 @@ async function createRoutingGraph(options: {
     workspaceId,
     slug: `${productSlug}-service`,
     name: `${productSlug} service`,
-    kind: 'internal',
     serviceToken: 'revision-test-service-token-with-at-least-32-characters',
     loadBalancing: 'round_robin',
     targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
@@ -139,7 +139,6 @@ async function createDiscoveredService(options: {
     workspaceId: defaults.workspace.id,
     slug,
     name,
-    kind: 'internal',
     serviceToken: 'catalog-test-service-token-with-at-least-32-characters',
     loadBalancing: 'round_robin',
     targets: [{ baseUrl: 'http://127.0.0.1:8090', weight: 1 }]
@@ -222,7 +221,7 @@ function routeMutationInput(route: typeof schema.apiRoutes.$inferSelect) {
 }
 
 describe('routing revision service', () => {
-  it('keeps an unverified internal Target out of published routing', async () => {
+  it('keeps an unverified Service-managed Target out of published routing', async () => {
     const graph = await createRoutingGraph({ verified: false })
 
     await expect(routingRevisionService.publish(
@@ -231,7 +230,7 @@ describe('routing revision service', () => {
     )).rejects.toMatchObject({
       statusCode: 409,
       data: {
-        code: 'INTERNAL_UPSTREAM_NOT_READY',
+        code: 'SERVICE_UPSTREAM_NOT_READY',
         upstreamServiceId: graph.upstream.id
       }
     })
@@ -257,6 +256,55 @@ describe('routing revision service', () => {
       defaults.environment.id,
       null
     )).resolves.toMatchObject({ sequence: 1 })
+  })
+
+  it('keeps a manual runtime active while a Service Token upgrade awaits discovery', async () => {
+    const product = await platformProductService.create({
+      workspaceId: defaults.workspace.id,
+      slug: 'manual-upgrade',
+      name: 'Manual Upgrade',
+      visibility: 'public',
+      version: 'v1'
+    })
+    const upstream = await platformUpstreamService.create({
+      workspaceId: defaults.workspace.id,
+      slug: 'manual-upgrade-service',
+      name: 'Manual Upgrade Service',
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: 'https://manual.example.com', weight: 1 }]
+    })
+    const route = await platformRouteService.create({
+      apiVersionId: product.versions[0]!.id,
+      name: 'Manual upgrade route',
+      hosts: [],
+      method: 'GET',
+      pathPattern: '/v1/manual-upgrade',
+      upstreamServiceId: upstream.id,
+      upstreamPathTemplate: '/v1/manual-upgrade',
+      state: 'active'
+    })
+    if (!route) throw new Error('manual upgrade route was not created')
+
+    const firstRevision = await routingRevisionService.publish(
+      defaults.environment.id,
+      null
+    )
+    await platformUpstreamService.updateServiceToken(
+      upstream.id,
+      'manual-upgrade-service-token-with-at-least-32-characters'
+    )
+
+    const repeatedRevision = await applyEnvironmentRevision(
+      defaults.environment.id,
+      null
+    )
+
+    expect(repeatedRevision.id).toBe(firstRevision.id)
+    expect(repeatedRevision.configPayload.upstreams[0]).toMatchObject({
+      id: upstream.id,
+      serviceManaged: false,
+      targets: [{ baseUrl: 'https://manual.example.com/' }]
+    })
   })
 
   it('creates the default workspace and environment idempotently', async () => {
@@ -412,7 +460,7 @@ describe('routing revision service', () => {
     expect(revisions).toHaveLength(2)
   })
 
-  it('keeps the last verified Targets of an unavailable Internal Upstream', async () => {
+  it('keeps the last verified Targets of an unavailable Service-managed Upstream', async () => {
     const unavailable = await createRoutingGraph({
       productSlug: 'unavailable-service'
     })
@@ -713,6 +761,43 @@ describe('routing revision service', () => {
       route: { route: { isStatistics: false, state: 'disabled' } }
     })
     expect(catalog.totals).toMatchObject({ live: 0, disabled: 1, pending: 0 })
+  })
+
+  it('saves multiple catalog changes and applies one shared runtime snapshot', async () => {
+    const firstService = await createDiscoveredService({
+      slug: 'batch-catalog-one',
+      path: '/v1/catalog-one/{id}'
+    })
+    const secondService = await createDiscoveredService({
+      slug: 'batch-catalog-two',
+      path: '/v1/catalog-two/{id}'
+    })
+
+    const firstSaved = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: firstService.upstream.id,
+      method: 'GET',
+      path: firstService.path
+    }, null, { publishRouting: false })
+    const secondSaved = await platformEndpointCatalogService.publish({
+      environmentId: defaults.environment.id,
+      upstreamServiceId: secondService.upstream.id,
+      method: 'GET',
+      path: secondService.path
+    }, null, { publishRouting: false })
+
+    expect(firstSaved.revision).toBeNull()
+    expect(secondSaved.revision).toBeNull()
+    expect(await database.select().from(schema.routingRevisions)).toHaveLength(0)
+
+    const applied = await applyEnvironmentRevision(defaults.environment.id, null)
+    const repeated = await applyEnvironmentRevision(defaults.environment.id, null)
+    const revisions = await database.select().from(schema.routingRevisions)
+
+    expect(applied.sequence).toBe(1)
+    expect(applied.configPayload.routes).toHaveLength(2)
+    expect(repeated.id).toBe(applied.id)
+    expect(revisions).toHaveLength(1)
   })
 
   it('rejects generic edits and deletion for Service-managed routes', async () => {

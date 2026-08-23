@@ -54,7 +54,6 @@ async function createConfiguredTarget() {
     workspaceId,
     slug: 'service-target-state',
     name: 'Service Target State',
-    kind: 'internal',
     serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
     loadBalancing: 'round_robin',
     targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
@@ -103,6 +102,43 @@ async function createActiveRoute(upstreamServiceId: string) {
 }
 
 describe('Platform upstream target state', () => {
+  it('publishes manual Target changes immediately', async () => {
+    const upstream = await platformUpstreamService.create({
+      workspaceId,
+      slug: 'manual-target-publication',
+      name: 'Manual Target Publication',
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: 'https://one.example.com', weight: 1 }]
+    })
+    const updated = await platformUpstreamService.updateTarget(
+      upstream.targets[0]!.id,
+      { baseUrl: 'https://two.example.com' }
+    )
+
+    expect(updated.publishRouting).toBe(true)
+  })
+
+  it('keeps unverified Service-managed Target changes out of runtime', async () => {
+    const upstream = await platformUpstreamService.create({
+      workspaceId,
+      slug: 'service-target-publication',
+      name: 'Service Target Publication',
+      serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
+    })
+    const created = await platformUpstreamService.createTarget(
+      upstream.id,
+      {
+        baseUrl: 'http://127.0.0.1:8081',
+        weight: 1,
+        enabled: true
+      }
+    )
+
+    expect(created.publishRouting).toBe(false)
+  })
+
   it('resets Service state when a Target address changes', async () => {
     const target = await createConfiguredTarget()
     const updated = await platformUpstreamService.updateTarget(target.id, {
@@ -167,7 +203,6 @@ describe('Platform upstream target state', () => {
       workspaceId,
       slug: 'concurrent-target-disable',
       name: 'Concurrent Target Disable',
-      kind: 'external',
       loadBalancing: 'round_robin',
       targets: [
         { baseUrl: 'https://one.example.com', weight: 1 },

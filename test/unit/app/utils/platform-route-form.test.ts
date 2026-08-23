@@ -63,8 +63,7 @@ const current = {
     workspaceId: 'workspace-1',
     slug: 'old-upstream',
     name: 'Old Upstream',
-    kind: 'external',
-    protocol: 'https',
+    serviceManaged: false,
     status: 'disabled'
   }
 } as unknown as PlatformRouteBinding
@@ -83,8 +82,7 @@ describe('Platform route form', () => {
       id: 'upstream-new',
       workspaceId: 'workspace-1',
       name: 'New Upstream',
-      kind: 'external',
-      protocol: 'https',
+      serviceManaged: false,
       status: 'active'
     }] as unknown as PlatformUpstream[]
 

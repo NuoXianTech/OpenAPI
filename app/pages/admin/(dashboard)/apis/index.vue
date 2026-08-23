@@ -5,6 +5,7 @@ import { parseFetchError } from '~/utils/client-error'
 const { t } = useI18n()
 const {
   catalog,
+  applyChanges,
   clearFocusedService,
   context,
   discoverAllServices,
@@ -12,7 +13,7 @@ const {
   editingRoute,
   focusedUpstreamId,
   handlePrimaryAction,
-  internalUpstreams,
+  serviceUpstreams,
   isBusy,
   loading,
   openCreateRoute,
@@ -47,6 +48,15 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
       </div>
       <div class="flex flex-wrap gap-2">
         <UButton
+          v-if="catalog.totals.pending > 0"
+          icon="i-lucide-cloud-upload"
+          :loading="isBusy('apply:environment')"
+          :disabled="!context.selectedEnvironment.value"
+          @click="applyChanges"
+        >
+          {{ $t('admin.apis.routing.catalog.actions.applyAllChanges', { count: catalog.totals.pending }) }}
+        </UButton>
+        <UButton
           color="neutral"
           variant="outline"
           icon="i-lucide-plus"
@@ -58,7 +68,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
         <UButton
           icon="i-lucide-scan-search"
           :loading="isBusy('discover:all')"
-          :disabled="internalUpstreams.length === 0"
+          :disabled="serviceUpstreams.length === 0"
           @click="discoverAllServices"
         >
           {{ $t('admin.apis.routing.catalog.actions.syncServices') }}

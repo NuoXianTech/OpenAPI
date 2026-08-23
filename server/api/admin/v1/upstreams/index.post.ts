@@ -14,7 +14,11 @@ export default defineAdminEventHandler(async (event, admin) => {
     action: 'admin.platform.upstream.create',
     resourceType: 'upstream-service',
     resourceId: created.id,
-    detail: { slug: created.slug, kind: created.kind, targetCount: created.targets.length }
+    detail: {
+      slug: created.slug,
+      serviceManaged: Boolean(created.connection),
+      targetCount: created.targets.length
+    }
   })
   return toPlatformUpstream(created)
 })

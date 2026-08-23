@@ -414,16 +414,12 @@ CREATE TABLE "upstream_services" (
 	"workspace_id" uuid NOT NULL,
 	"slug" varchar(80) NOT NULL,
 	"name" varchar(160) NOT NULL,
-	"kind" varchar(20) NOT NULL,
-	"protocol" varchar(10) NOT NULL,
 	"openapi_document_id" uuid,
 	"load_balancing" varchar(30) DEFAULT 'round_robin' NOT NULL,
 	"status" varchar(20) DEFAULT 'active' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"deleted_at" timestamp with time zone,
-	CONSTRAINT "upstream_services_kind_chk" CHECK ("upstream_services"."kind" in ('internal', 'external')),
-	CONSTRAINT "upstream_services_protocol_chk" CHECK ("upstream_services"."protocol" in ('http', 'https')),
 	CONSTRAINT "upstream_services_load_balancing_chk" CHECK ("upstream_services"."load_balancing" in ('round_robin', 'weighted')),
 	CONSTRAINT "upstream_services_status_chk" CHECK ("upstream_services"."status" in ('active', 'disabled'))
 );

@@ -113,13 +113,14 @@ async function fetchTarget(
   targetUrl: URL,
   init: RequestInit | undefined
 ): Promise<Response> {
-  if (match.upstream.kind === 'external') {
-    return safeFetch(targetUrl, {
-      ...init,
-      allowedHosts: [targetUrl.hostname]
-    })
-  }
-  return fetch(targetUrl, init)
+  if (match.upstream.serviceManaged) return fetch(targetUrl, init)
+  return safeFetch(targetUrl, {
+    ...init,
+    allowedHosts: [targetUrl.hostname],
+    allowHttp: true,
+    allowPrivateNetworks: true,
+    allowNonDefaultPort: true
+  })
 }
 
 function isServiceTokenRejection(response: Response): boolean {
@@ -161,7 +162,7 @@ export function createGatewayProxyFetch(input: {
         else markTargetResponsive(input.match, target)
 
         if (
-          input.match.upstream.kind === 'internal'
+          input.match.upstream.serviceManaged
           && isServiceTokenRejection(response)
         ) {
           await response.body?.cancel().catch(() => undefined)

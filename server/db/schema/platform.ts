@@ -139,8 +139,6 @@ export const upstreamServices = pgTable('upstream_services', {
   workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   slug: varchar('slug', { length: 80 }).notNull(),
   name: varchar('name', { length: 160 }).notNull(),
-  kind: varchar('kind', { length: 20 }).notNull(),
-  protocol: varchar('protocol', { length: 10 }).notNull(),
   openapiDocumentId: uuid('openapi_document_id').references(() => openapiDocuments.id, { onDelete: 'set null' }),
   loadBalancing: varchar('load_balancing', { length: 30 }).notNull().default('round_robin'),
   status: varchar('status', { length: 20 }).notNull().default('active'),
@@ -152,8 +150,6 @@ export const upstreamServices = pgTable('upstream_services', {
     .on(table.workspaceId, table.slug)
     .where(sql`${table.deletedAt} IS NULL`),
   index('upstream_services_workspace_status_idx').on(table.workspaceId, table.status),
-  check('upstream_services_kind_chk', sql`${table.kind} in ('internal', 'external')`),
-  check('upstream_services_protocol_chk', sql`${table.protocol} in ('http', 'https')`),
   check('upstream_services_load_balancing_chk', sql`${table.loadBalancing} in ('round_robin', 'weighted')`),
   check('upstream_services_status_chk', sql`${table.status} in ('active', 'disabled')`)
 ])

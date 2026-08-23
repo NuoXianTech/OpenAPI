@@ -22,7 +22,7 @@ import { canonicalJson } from '~~/server/utils/canonical-json'
 import { getSqlState } from '~~/server/utils/database-error'
 import { findRoutingRouteConflict, type RoutingConflictScope } from '~~/server/utils/routing-conflict'
 import { firstRow } from '~~/server/utils/row'
-import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
+import { isServiceTargetReady } from '~~/server/utils/service-upstream-readiness'
 import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
 type RoutingRuntimeConfiguration = Pick<
@@ -96,12 +96,16 @@ export const routingRevisionService = {
           route: apiRoutes,
           product: apiProducts,
           version: apiVersions,
-          upstreamKind: upstreamServices.kind,
+          serviceManaged: upstreamServiceConnections.upstreamServiceId,
           loadBalancing: upstreamServices.loadBalancing
         }).from(apiRoutes)
           .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
           .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
           .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
+          .leftJoin(upstreamServiceConnections, eq(
+            upstreamServiceConnections.upstreamServiceId,
+            upstreamServices.id
+          ))
           .where(and(
             eq(apiProducts.workspaceId, environment.workspaceId),
             inArray(apiProducts.lifecycle, ['active', 'deprecated']),
@@ -150,7 +154,7 @@ export const routingRevisionService = {
 
         const upstreamDefinitions = new Map(routeRows.map(row => [row.route.upstreamServiceId, {
           id: row.route.upstreamServiceId,
-          kind: row.upstreamKind as RoutingRevisionUpstream['kind'],
+          serviceManaged: Boolean(row.serviceManaged),
           loadBalancing: row.loadBalancing as RoutingRevisionUpstream['loadBalancing']
         }]))
         const upstreamIds = Array.from(upstreamDefinitions.keys()).sort()
@@ -160,13 +164,13 @@ export const routingRevisionService = {
               eq(upstreamTargets.enabled, true)
             ))
           : []
-        const internalUpstreamIds = upstreamIds.filter(id => (
-          upstreamDefinitions.get(id)?.kind === 'internal'
+        const serviceManagedIds = upstreamIds.filter(id => (
+          upstreamDefinitions.get(id)?.serviceManaged === true
         ))
-        const connectionRows = internalUpstreamIds.length > 0
+        const connectionRows = serviceManagedIds.length > 0
           ? await tx.select().from(upstreamServiceConnections).where(inArray(
               upstreamServiceConnections.upstreamServiceId,
-              internalUpstreamIds
+              serviceManagedIds
             ))
           : []
         const connections = new Map(connectionRows.map(connection => [
@@ -176,35 +180,39 @@ export const routingRevisionService = {
 
         const upstreams: RoutingRevisionUpstream[] = upstreamIds.map((id) => {
           const definition = upstreamDefinitions.get(id)!
+          let serviceManaged = definition.serviceManaged
           let targets = targetRows
             .filter(target => target.upstreamServiceId === id)
-            .filter(target => definition.kind !== 'internal'
-              || isInternalTargetReady(target, connections.get(id) ?? null))
+            .filter(target => !serviceManaged
+              || isServiceTargetReady(target, connections.get(id) ?? null))
             .map(target => ({ id: target.id, baseUrl: target.baseUrl, weight: target.weight }))
             .sort((left, right) => left.id.localeCompare(right.id))
-          if (definition.kind === 'internal' && targets.length === 0) {
+          if (serviceManaged && targets.length === 0) {
             const activeUpstream = activeUpstreams.get(id)
-            if (activeUpstream?.kind === 'internal') {
-              // Keep this Upstream's last verified Targets so an unrelated
-              // Service can publish without disrupting existing traffic.
+            if (activeUpstream) {
+              // Keep the last active runtime while a newly managed Upstream
+              // is waiting for its first verified Service Target. Once
+              // discovery succeeds, the next publication switches the
+              // runtime to Service authentication and verified Targets.
+              serviceManaged = activeUpstream.serviceManaged
               targets = activeUpstream.targets.map(target => ({ ...target }))
             }
           }
           if (targets.length === 0) {
             throw createApplicationError({
               statusCode: 409,
-              message: definition.kind === 'internal'
-                ? 'active route references an internal upstream without verified targets'
+              message: definition.serviceManaged
+                ? 'active route references a Service-managed upstream without verified targets'
                 : 'active route references an upstream without enabled targets',
               data: {
-                code: definition.kind === 'internal'
-                  ? 'INTERNAL_UPSTREAM_NOT_READY'
+                code: definition.serviceManaged
+                  ? 'SERVICE_UPSTREAM_NOT_READY'
                   : 'UPSTREAM_HAS_NO_TARGETS',
                 upstreamServiceId: id
               }
             })
           }
-          return { ...definition, targets }
+          return { ...definition, serviceManaged, targets }
         })
 
         const desiredConfiguration: RoutingRuntimeConfiguration = {

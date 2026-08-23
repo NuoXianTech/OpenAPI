@@ -27,7 +27,7 @@ import {
   serviceControlClient
 } from '~~/server/utils/service-control-client'
 import { assertServiceConfigurationDefinition } from '~~/server/utils/service-configuration-values'
-import { areEnabledInternalTargetsReady } from '~~/server/utils/internal-upstream-readiness'
+import { areEnabledServiceTargetsReady } from '~~/server/utils/service-upstream-readiness'
 
 interface DiscoveredTarget {
   targetId: string
@@ -420,7 +420,7 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
   }
 
   const refreshed = await loadServiceControlContext(upstreamServiceId)
-  const publication = areEnabledInternalTargetsReady(
+  const publication = areEnabledServiceTargetsReady(
     refreshed.targets,
     refreshed.connection
   )

@@ -71,7 +71,7 @@ Zod Schema 是请求校验、响应类型和 OpenAPI 的单一来源。OpenAPI �
 
 `/.well-known/service.json` 通过 `serviceProtocol: "openapi-service/v1"` 声明控制协议。它只用于 Platform 与 Service 的兼容校验；Service 软件版本和业务路径版本独立演进。业务接口发生破坏性变化时可以新增 `/v2` 并保留 `/v1` 迁移，不需要同步修改 Platform 软件版本或控制协议。
 
-Service OpenAPI 变化不会在未经确认时创建或修改公开 Route。Platform 接口目录会展示契约差异；管理员明确发布 Endpoint 后，Platform 自动创建 Route 并通过 Routing Revision 生效。
+Service OpenAPI 变化不会在未经确认时创建或修改公开 Route。Platform 接口目录会展示契约差异；管理员保存并统一应用 Endpoint 后，Platform 自动创建 Route 并通过 Routing Revision 生效。
 
 ## 6. 响应与错误
 
@@ -153,8 +153,8 @@ Service 只执行 TypeScript 服务端编译，不包含 Nuxt、Vue 或浏览器
 2. 在 `src/app.ts` 显式注册模块。
 3. 需要热更新配置时扩展业务配置定义。
 4. 发布自己的 Service 镜像。
-5. 在自己的 Platform 中创建 Internal Upstream。
+5. 在自己的 Platform 中创建带 Service Token 的 Upstream。
 6. 执行 Service 发现，确认 OpenAPI 与配置 Schema。
-7. 在接口目录审查 Endpoint 并点击发布；Platform 自动创建 Route 和 Routing Revision。
+7. 在接口目录审查 Endpoint 并保存发布变更，确认后统一应用；Platform 自动创建 Route 并一次性生成 Routing Revision。
 
 Platform 不需要为第三方模块增加专用代码。

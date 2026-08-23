@@ -1,6 +1,4 @@
-import { isIP } from 'node:net'
 import { and, asc, count, eq, isNull, ne } from 'drizzle-orm'
-import { ipInAnyCidr } from '#shared/utils/cidr'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
   upstreamServiceConnections,
@@ -16,29 +14,15 @@ import { firstRow } from '~~/server/utils/row'
 import { encryptStoredSecret } from '~~/server/utils/stored-secret'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
-import { isInternalTargetReady } from '~~/server/utils/internal-upstream-readiness'
+import { isServiceTargetReady } from '~~/server/utils/service-upstream-readiness'
 import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
 import type { UpstreamView } from '~~/server/types/platform-publication'
-
-const BLOCKED_EXTERNAL_IPS = [
-  '0.0.0.0/8',
-  '10.0.0.0/8',
-  '100.64.0.0/10',
-  '127.0.0.0/8',
-  '169.254.0.0/16',
-  '172.16.0.0/12',
-  '192.168.0.0/16',
-  '::/128',
-  '::1/128',
-  'fc00::/7',
-  'fe80::/10'
-] as const
+import { normalizeUpstreamTargetUrl } from '~~/server/utils/upstream-target-url'
 
 interface CreateUpstreamInput {
   workspaceId: string
   slug: string
   name: string
-  kind: 'internal' | 'external'
   loadBalancing: 'round_robin' | 'weighted'
   serviceToken?: string
   targets: Array<{
@@ -66,40 +50,12 @@ interface UpdateTargetInput {
   enabled?: boolean
 }
 
-function normalizeTargetUrl(value: string, kind: CreateUpstreamInput['kind']): URL {
-  const url = new URL(value)
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    throw createApplicationError({ statusCode: 400, message: 'upstream target must use HTTP or HTTPS', data: { code: 'UPSTREAM_PROTOCOL_INVALID' } })
-  }
-  if (url.username || url.password || url.search || url.hash) {
-    throw createApplicationError({ statusCode: 400, message: 'upstream target must not contain credentials, query, or fragment', data: { code: 'UPSTREAM_URL_INVALID' } })
-  }
-  if (kind === 'external') {
-    const hostname = url.hostname
-      .toLowerCase()
-      .replace(/^\[|\]$/g, '')
-      .replace(/\.$/, '')
-    if (url.protocol !== 'https:') {
-      throw createApplicationError({ statusCode: 400, message: 'external upstream must use HTTPS', data: { code: 'EXTERNAL_UPSTREAM_REQUIRES_HTTPS' } })
-    }
-    if (hostname === 'localhost' || hostname.endsWith('.localhost') || hostname.endsWith('.local')) {
-      throw createApplicationError({ statusCode: 400, message: 'external upstream hostname is blocked', data: { code: 'EXTERNAL_UPSTREAM_HOST_BLOCKED' } })
-    }
-    if (isIP(hostname) && ipInAnyCidr(hostname, BLOCKED_EXTERNAL_IPS)) {
-      throw createApplicationError({ statusCode: 400, message: 'external upstream address is blocked', data: { code: 'EXTERNAL_UPSTREAM_ADDRESS_BLOCKED' } })
-    }
-  }
-
-  url.pathname = url.pathname === '/' ? '' : url.pathname.replace(/\/$/, '')
-  return url
-}
-
 function normalizeServiceToken(value: string | undefined): string {
   const token = value?.trim() ?? ''
   if (token.length < 32 || token.length > 4096) {
     throw createApplicationError({
       statusCode: 400,
-      message: 'internal upstream requires a Service Token with 32 to 4096 characters',
+      message: 'Service-managed upstreams require a Service Token with 32 to 4096 characters',
       data: { code: 'SERVICE_TOKEN_REQUIRED' }
     })
   }
@@ -123,7 +79,6 @@ async function findTargetBindingForUpdate(
 async function assertCanDisableLastTarget(
   tx: DatabaseTransaction,
   serviceId: string,
-  serviceKind: CreateUpstreamInput['kind'],
   excludingTargetId?: string
 ): Promise<void> {
   const activeRoutes = firstRow(await tx.select({ value: count() })
@@ -142,17 +97,12 @@ async function assertCanDisableLastTarget(
       eq(upstreamTargets.enabled, true),
       excludingTargetId ? ne(upstreamTargets.id, excludingTargetId) : undefined
     ))
-  if (serviceKind === 'external' && enabledTargets.length > 0) return
-  if (serviceKind === 'internal') {
-    const connection = firstRow(await tx.select()
-      .from(upstreamServiceConnections)
-      .where(eq(upstreamServiceConnections.upstreamServiceId, serviceId))
-      .limit(1)) ?? null
-    if (enabledTargets.some(target => isInternalTargetReady(
-      target,
-      connection
-    ))) return
-  }
+  const connection = firstRow(await tx.select()
+    .from(upstreamServiceConnections)
+    .where(eq(upstreamServiceConnections.upstreamServiceId, serviceId))
+    .limit(1)) ?? null
+  if (connection && enabledTargets.some(target => isServiceTargetReady(target, connection))) return
+  if (!connection && enabledTargets.length > 0) return
 
   throw createApplicationError({
     statusCode: 409,
@@ -162,6 +112,16 @@ async function assertCanDisableLastTarget(
 }
 
 export const platformUpstreamService = {
+  async hasServiceConnection(
+    id: string,
+    options: { transaction?: DatabaseTransaction } = {}
+  ): Promise<boolean> {
+    const executor = options.transaction ?? db
+    return Boolean(firstRow(await executor.select({ id: upstreamServiceConnections.upstreamServiceId })
+      .from(upstreamServiceConnections)
+      .where(eq(upstreamServiceConnections.upstreamServiceId, id))
+      .limit(1)))
+  },
   async list(
     workspaceId?: string,
     options: { checkAvailability?: boolean } = {}
@@ -184,12 +144,14 @@ export const platformUpstreamService = {
       .orderBy(asc(upstreamServices.name), asc(upstreamTargets.createdAt))
 
     const result = new Map<string, typeof upstreamServices.$inferSelect & {
+      serviceManaged: boolean
       targets: Array<typeof upstreamTargets.$inferSelect>
       connectionRecord: typeof upstreamServiceConnections.$inferSelect | null
     }>()
     for (const row of rows) {
       const item = result.get(row.service.id) ?? {
         ...row.service,
+        serviceManaged: Boolean(row.connection),
         targets: [],
         connectionRecord: row.connection
       }
@@ -218,30 +180,19 @@ export const platformUpstreamService = {
   },
 
   async create(input: CreateUpstreamInput) {
-    const serviceToken = input.kind === 'internal'
+    const serviceToken = input.serviceToken
       ? normalizeServiceToken(input.serviceToken)
       : null
     const normalizedTargets = input.targets.map(target => ({
       ...target,
-      url: normalizeTargetUrl(target.baseUrl, input.kind)
+      url: normalizeUpstreamTargetUrl(target.baseUrl)
     }))
-    const protocols = new Set(normalizedTargets.map(target => target.url.protocol.slice(0, -1)))
-    if (protocols.size !== 1) {
-      throw createApplicationError({
-        statusCode: 400,
-        message: 'all upstream targets must use the same protocol',
-        data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' }
-      })
-    }
-
     try {
       return await db.transaction(async (tx) => {
         const service = firstRow(await tx.insert(upstreamServices).values({
           workspaceId: input.workspaceId,
           slug: input.slug,
           name: input.name,
-          kind: input.kind,
-          protocol: Array.from(protocols)[0] as 'http' | 'https',
           loadBalancing: input.loadBalancing
         }).returning())
         if (!service) throw new Error('upstream insert returned no row')
@@ -251,7 +202,7 @@ export const platformUpstreamService = {
           baseUrl: target.url.toString(),
           weight: target.weight
         }))).returning()
-        const connection = input.kind === 'internal'
+        const connection = serviceToken
           ? firstRow(await tx.insert(upstreamServiceConnections).values({
               upstreamServiceId: service.id,
               serviceTokenCiphertext: encryptStoredSecret(
@@ -262,6 +213,7 @@ export const platformUpstreamService = {
           : null
         return {
           ...service,
+          serviceManaged: Boolean(connection),
           targets,
           connection: connection
             ? toServiceConnectionView(connection)
@@ -303,7 +255,13 @@ export const platformUpstreamService = {
       if (!updated) {
         throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
       }
-      return updated
+      return {
+        ...updated,
+        serviceManaged: await platformUpstreamService.hasServiceConnection(
+          id,
+          { transaction: options.transaction }
+        )
+      }
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'upstream slug already exists', data: { code: 'UPSTREAM_CONFLICT' } })
@@ -362,11 +320,12 @@ export const platformUpstreamService = {
     if (!service || service.deletedAt) {
       throw createApplicationError({ statusCode: 404, message: 'upstream not found', data: { code: 'UPSTREAM_NOT_FOUND' } })
     }
-    const url = normalizeTargetUrl(input.baseUrl, service.kind as CreateUpstreamInput['kind'])
-    if (url.protocol.slice(0, -1) !== service.protocol) {
-      throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
-    }
+    const url = normalizeUpstreamTargetUrl(input.baseUrl)
     try {
+      const serviceManaged = await platformUpstreamService.hasServiceConnection(
+        upstreamServiceId,
+        { transaction: options.transaction }
+      )
       const target = firstRow(await executor.insert(upstreamTargets).values({
         upstreamServiceId,
         baseUrl: url.toString(),
@@ -377,7 +336,7 @@ export const platformUpstreamService = {
       return {
         target,
         workspaceId: service.workspaceId,
-        publishRouting: service.kind === 'external' && target.enabled
+        publishRouting: !serviceManaged && target.enabled
       }
     } catch (error) {
       if (getSqlState(error) === '23505') {
@@ -402,20 +361,17 @@ export const platformUpstreamService = {
           await assertCanDisableLastTarget(
             tx,
             binding.service.id,
-            binding.service.kind as CreateUpstreamInput['kind'],
             binding.target.id
           )
         }
         const baseUrl = input.baseUrl === undefined
           ? binding.target.baseUrl
-          : normalizeTargetUrl(
-              input.baseUrl,
-              binding.service.kind as CreateUpstreamInput['kind']
-            ).toString()
-        if (new URL(baseUrl).protocol.slice(0, -1) !== binding.service.protocol) {
-          throw createApplicationError({ statusCode: 400, message: 'target protocol must match its upstream', data: { code: 'UPSTREAM_PROTOCOL_MISMATCH' } })
-        }
-        const resetServiceState = binding.service.kind === 'internal'
+          : normalizeUpstreamTargetUrl(input.baseUrl).toString()
+        const serviceManaged = await platformUpstreamService.hasServiceConnection(
+          binding.service.id,
+          { transaction: tx }
+        )
+        const resetServiceState = serviceManaged
           && (
             baseUrl !== binding.target.baseUrl
             || (!binding.target.enabled && input.enabled === true)
@@ -445,7 +401,7 @@ export const platformUpstreamService = {
         return {
           target,
           workspaceId: binding.service.workspaceId,
-          publishRouting: binding.service.kind === 'external'
+          publishRouting: !serviceManaged
             || disablingPublishedTarget
             || updatingPublishedTarget
         }
@@ -463,25 +419,28 @@ export const platformUpstreamService = {
 
   async removeTarget(
     id: string,
-    options: { transaction?: DatabaseTransaction } = {}
+    options: {
+      transaction?: DatabaseTransaction
+      allowActiveRoutingRemoval?: boolean
+    } = {}
   ) {
-    if (await routingReferenceService.hasTarget(id, options.transaction)) {
-      throw createApplicationError({
-        statusCode: 409,
-        message: 'disable the target and publish routing before deleting it',
-        data: { code: 'TARGET_STILL_PUBLISHED' }
-      })
-    }
     const remove = async (tx: DatabaseTransaction) => {
       const binding = await findTargetBindingForUpdate(tx, id)
       if (!binding) {
         throw createApplicationError({ statusCode: 404, message: 'target not found', data: { code: 'TARGET_NOT_FOUND' } })
       }
-      if (binding.target.enabled) {
+      const published = await routingReferenceService.hasTarget(id, tx)
+      if (published && !options.allowActiveRoutingRemoval) {
+        throw createApplicationError({
+          statusCode: 409,
+          message: 'disable the target and publish routing before deleting it',
+          data: { code: 'TARGET_STILL_PUBLISHED' }
+        })
+      }
+      if (binding.target.enabled || published) {
         await assertCanDisableLastTarget(
           tx,
           binding.service.id,
-          binding.service.kind as CreateUpstreamInput['kind'],
           binding.target.id
         )
       }
@@ -498,21 +457,37 @@ export const platformUpstreamService = {
 
   async updateServiceToken(id: string, serviceToken: string) {
     const normalizedToken = normalizeServiceToken(serviceToken)
-    const updated = firstRow(await db.update(upstreamServiceConnections)
-      .set({
-        serviceTokenCiphertext: encryptStoredSecret(
-          normalizedToken,
-          'service-token'
-        ),
-        lastDiscoveryError: 'Service Token changed; run discovery to verify the connection',
-        updatedAt: new Date()
+    const service = await platformUpstreamService.findById(id)
+    if (!service || service.deletedAt) {
+      throw createApplicationError({
+        statusCode: 404,
+        message: 'upstream not found',
+        data: { code: 'UPSTREAM_NOT_FOUND' }
       })
-      .where(eq(upstreamServiceConnections.upstreamServiceId, id))
+    }
+    const serviceTokenCiphertext = encryptStoredSecret(
+      normalizedToken,
+      'service-token'
+    )
+    const updated = firstRow(await db.insert(upstreamServiceConnections)
+      .values({
+        upstreamServiceId: id,
+        serviceTokenCiphertext,
+        lastDiscoveryError: 'Service Token changed; run discovery to verify the connection'
+      })
+      .onConflictDoUpdate({
+        target: upstreamServiceConnections.upstreamServiceId,
+        set: {
+          serviceTokenCiphertext,
+          lastDiscoveryError: 'Service Token changed; run discovery to verify the connection',
+          updatedAt: new Date()
+        }
+      })
       .returning())
     if (!updated) {
       throw createApplicationError({
         statusCode: 404,
-        message: 'controllable internal upstream not found',
+        message: 'upstream not found',
         data: { code: 'SERVICE_CONNECTION_NOT_FOUND' }
       })
     }
@@ -588,7 +563,8 @@ export const platformUpstreamService = {
   async removeTargetAndPublish(id: string, createdBy: number | null) {
     const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
       const removed = await platformUpstreamService.removeTarget(id, {
-        transaction: tx
+        transaction: tx,
+        allowActiveRoutingRemoval: true
       })
       return {
         value: removed.target,

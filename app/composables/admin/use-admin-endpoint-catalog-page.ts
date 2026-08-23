@@ -72,8 +72,8 @@ export function useAdminEndpointCatalogPage() {
         upstream => upstream.workspaceId === context.selectedWorkspaceId.value
       )
   ))
-  const internalUpstreams = computed(() => upstreams.value.filter(
-    upstream => upstream.kind === 'internal' && upstream.status === 'active'
+  const serviceUpstreams = computed(() => upstreams.value.filter(
+    upstream => upstream.serviceManaged && upstream.status === 'active'
   ))
   const loading = computed(() => (
     catalogResource.loading.value
@@ -157,15 +157,12 @@ export function useAdminEndpointCatalogPage() {
     result: PlatformEndpointPublicationResult,
     successKey: string
   ) {
-    const runtimeUpdated = result.route.state !== 'active'
-      || Boolean(result.revision?.configPayload.routes.some(route => (
-        route.id === result.route.id
-      )))
+    const runtimeUpdated = Boolean(result.revision)
     toast.add({
       title: t(successKey),
       description: t(runtimeUpdated
         ? 'admin.apis.routing.feedback.runtimeUpdated'
-        : 'admin.apis.routing.feedback.runtimePending'),
+        : 'admin.apis.routing.catalog.feedback.changesPending'),
       color: runtimeUpdated ? 'success' : 'warning',
       icon: runtimeUpdated
         ? 'i-lucide-circle-check'
@@ -225,12 +222,12 @@ export function useAdminEndpointCatalogPage() {
   }
 
   async function discoverAllServices() {
-    if (internalUpstreams.value.length === 0) return
+    if (serviceUpstreams.value.length === 0) return
     const key = 'discover:all'
     setBusy(key, true)
     try {
       const results = await Promise.all(
-        internalUpstreams.value.map(
+        serviceUpstreams.value.map(
           upstream => discoverService(upstream.id, true)
         )
       )
@@ -246,6 +243,36 @@ export function useAdminEndpointCatalogPage() {
       })
     } finally {
       setBusy(key, false)
+    }
+  }
+
+  async function applyChanges() {
+    const environmentId = context.selectedEnvironmentId.value
+    if (!environmentId || catalog.value.totals.pending === 0) return
+    setBusy('apply:environment', true)
+    try {
+      await $fetch('/api/admin/v1/service-endpoints/apply', {
+        method: 'POST',
+        body: { environmentId }
+      })
+      toast.add({
+        title: t('admin.apis.routing.catalog.feedback.changesApplied'),
+        description: t('admin.apis.routing.feedback.runtimeUpdated'),
+        color: 'success',
+        icon: 'i-lucide-circle-check'
+      })
+      await refreshAfterMutation()
+    } catch (error: unknown) {
+      toast.add({
+        title: parseFetchError(
+          error,
+          t('admin.apis.routing.catalog.feedback.applyFailed')
+        ),
+        color: 'error'
+      })
+      await catalogResource.refresh()
+    } finally {
+      setBusy('apply:environment', false)
     }
   }
 
@@ -329,11 +356,6 @@ export function useAdminEndpointCatalogPage() {
       return
     }
     if (item.status === 'pending' || item.status === 'retiring') {
-      await updatePublication(
-        item,
-        {},
-        'admin.apis.routing.catalog.feedback.changesApplied'
-      )
       return
     }
     const enabled = item.status !== 'live'
@@ -369,6 +391,7 @@ export function useAdminEndpointCatalogPage() {
   }
 
   return {
+    applyChanges,
     catalog,
     clearFocusedService,
     context,
@@ -377,7 +400,7 @@ export function useAdminEndpointCatalogPage() {
     editingRoute,
     focusedUpstreamId,
     handlePrimaryAction,
-    internalUpstreams,
+    serviceUpstreams,
     isBusy,
     loading,
     openCreateRoute,

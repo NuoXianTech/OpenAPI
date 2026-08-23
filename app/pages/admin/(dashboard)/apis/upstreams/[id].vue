@@ -7,15 +7,32 @@ import type {
 } from '#shared/types/service-control'
 import { parseFetchError } from '~/utils/client-error'
 import { serviceAvailabilityColor } from '~/utils/platform-display'
+import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
+import type { PlatformUpstream, PlatformUpstreamTarget } from '#shared/types/platform'
 
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
+const confirm = useConfirmDialog()
+const context = useAdminPlatformContext()
 const upstreamId = computed(() => String(route.params.id ?? ''))
 const resource = usePrivateResource<ServiceConfigurationView | null>({
   path: () => `/api/admin/v1/upstreams/${upstreamId.value}/service`,
   defaultData: () => null
 })
+const upstreamResource = usePrivateResource<PlatformUpstream[]>({
+  path: '/api/admin/v1/upstreams',
+  defaultData: () => [],
+  immediate: false,
+  query: () => context.selectedWorkspaceId.value
+    ? { workspaceId: context.selectedWorkspaceId.value }
+    : undefined
+})
+const managementUpstream = computed(() => upstreamResource.data.value.find(
+  upstream => upstream.id === upstreamId.value
+) ?? null)
+const targetModalOpen = ref(false)
+const editingTarget = ref<PlatformUpstreamTarget | null>(null)
 
 const discovering = ref(false)
 const synchronizing = ref(false)
@@ -51,7 +68,64 @@ watch(upstreamId, (id, previousId) => {
   if (!id || id === previousId) return
   resource.data.value = null
   void resource.refresh()
+  void upstreamResource.refresh()
 })
+
+watch(context.selectedWorkspaceId, (workspaceId) => {
+  if (workspaceId) void upstreamResource.refresh()
+}, { immediate: true })
+
+function openTarget(target: PlatformUpstreamTarget | null = null) {
+  editingTarget.value = target
+  targetModalOpen.value = true
+}
+
+async function refreshTargets() {
+  await Promise.all([resource.refresh(), upstreamResource.refresh()])
+}
+
+async function updateTargetStatus(target: PlatformUpstreamTarget) {
+  try {
+    await $fetch(`/api/admin/v1/targets/${target.id}`, {
+      method: 'PATCH',
+      body: { enabled: !target.enabled }
+    })
+    toast.add({ title: t('common.feedback.updated'), color: 'success' })
+    await refreshTargets()
+  } catch (error: unknown) {
+    toast.add({ title: parseFetchError(error, t('common.feedback.operationFailed')), color: 'error' })
+  }
+}
+
+async function removeTarget(target: PlatformUpstreamTarget) {
+  await confirm({
+    title: t('admin.apis.routing.deleteTarget.title'),
+    description: t('admin.apis.routing.deleteTarget.description'),
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await $fetch(`/api/admin/v1/targets/${target.id}`, { method: 'DELETE' })
+        toast.add({ title: t('common.feedback.deleted'), color: 'success' })
+        await refreshTargets()
+      } catch (error: unknown) {
+        toast.add({ title: parseFetchError(error, t('common.feedback.deleteFailed')), color: 'error' })
+        throw error
+      }
+    }
+  })
+}
+
+function targetItems(target: PlatformUpstreamTarget) {
+  return [[
+    { label: t('common.actions.edit'), icon: 'i-lucide-pencil', onSelect: () => openTarget(target) },
+    {
+      label: t(target.enabled ? 'common.actions.disable' : 'common.actions.enable'),
+      icon: target.enabled ? 'i-lucide-pause' : 'i-lucide-play',
+      onSelect: () => updateTargetStatus(target)
+    },
+    { label: t('common.actions.delete'), icon: 'i-lucide-trash-2', color: 'error' as const, onSelect: () => removeTarget(target) }
+  ]]
+}
 
 function targetStatusColor(status: string) {
   if (status === 'synced') return 'success' as const
@@ -445,13 +519,25 @@ async function synchronizeConfiguration() {
 
         <UCard variant="subtle">
           <template #header>
-            <div>
-              <h2 class="text-base font-semibold text-highlighted">
-                {{ $t('admin.apis.routing.serviceControl.targetsTitle') }}
-              </h2>
-              <p class="mt-1 text-xs leading-5 text-muted">
-                {{ $t('admin.apis.routing.serviceControl.targetsDescription') }}
-              </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 class="text-base font-semibold text-highlighted">
+                  {{ $t('admin.apis.routing.serviceControl.targetsTitle') }}
+                </h2>
+                <p class="mt-1 text-xs leading-5 text-muted">
+                  {{ $t('admin.apis.routing.serviceControl.targetsDescription') }}
+                </p>
+              </div>
+              <UButton
+                color="neutral"
+                variant="outline"
+                size="sm"
+                icon="i-lucide-plus"
+                :disabled="!managementUpstream"
+                @click="openTarget()"
+              >
+                {{ $t('admin.apis.routing.actions.addTarget') }}
+              </UButton>
             </div>
           </template>
           <div class="divide-y divide-default">
@@ -487,9 +573,26 @@ async function synchronizeConfiguration() {
                 >
                   {{ targetStatusLabel(target) }}
                 </UBadge>
+                <UDropdownMenu
+                  v-if="managementUpstream?.targets.find(item => item.id === target.id)"
+                  :items="targetItems(managementUpstream.targets.find(item => item.id === target.id)!)"
+                  :content="{ align: 'end' }"
+                >
+                  <UButton
+                    icon="i-lucide-ellipsis"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                  />
+                </UDropdownMenu>
               </div>
             </div>
           </div>
+          <UEmpty
+            v-if="resource.data.value.targets.length === 0"
+            icon="i-lucide-server-off"
+            :title="$t('admin.apis.routing.empty.targetsTitle')"
+          />
         </UCard>
 
         <UCard variant="subtle">
@@ -542,5 +645,13 @@ async function synchronizeConfiguration() {
         </UCard>
       </template>
     </template>
+
+    <AdminPlatformTargetModal
+      v-if="managementUpstream"
+      v-model:open="targetModalOpen"
+      :upstream="managementUpstream"
+      :target="editingTarget"
+      @saved="refreshTargets"
+    />
   </div>
 </template>

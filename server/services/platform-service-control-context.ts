@@ -125,8 +125,7 @@ export async function loadServiceControlContext(
       upstreamServices.id
     ))
     .where(and(
-      eq(upstreamServices.id, upstreamServiceId),
-      eq(upstreamServices.kind, 'internal')
+      eq(upstreamServices.id, upstreamServiceId)
     ))
     .limit(1)
   const row = firstRow(await (options.forUpdate
@@ -135,7 +134,7 @@ export async function loadServiceControlContext(
   if (!row) {
     throw createApplicationError({
       statusCode: 404,
-      message: 'controllable internal upstream not found',
+      message: 'Service-managed upstream not found',
       data: { code: 'SERVICE_CONNECTION_NOT_FOUND' }
     })
   }

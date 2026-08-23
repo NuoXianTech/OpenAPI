@@ -40,7 +40,7 @@ watch(open, (value) => {
 function parseTargetUrl(value: string | undefined): URL | null {
   try {
     const url = new URL(value?.trim() ?? '')
-    return url.protocol === `${props.upstream.protocol}:` ? url : null
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url : null
   } catch {
     return null
   }
@@ -50,7 +50,7 @@ function validate(value: Partial<TargetFormState>): FormError<string>[] {
   return compactFormErrors(
     requiredTextError('baseUrl', value.baseUrl, t('admin.apis.routing.validation.targetRequired')),
     value.baseUrl && !parseTargetUrl(value.baseUrl)
-      ? { name: 'baseUrl', message: t('admin.apis.routing.validation.protocolMismatch') }
+      ? { name: 'baseUrl', message: t('admin.apis.routing.validation.targetUrlInvalid') }
       : null,
     integerRangeError(
       'weight',
@@ -120,7 +120,7 @@ async function submit(event: FormSubmitEvent<TargetFormState>) {
         >
           <UInput
             v-model="state.baseUrl"
-            :placeholder="`${upstream.protocol}://service.example.com`"
+            :placeholder="$t('admin.apis.routing.upstreamForm.targetPlaceholder')"
             class="w-full font-mono"
           />
         </UFormField>

@@ -57,7 +57,6 @@ async function createUpstream(slug: string) {
     workspaceId,
     slug,
     name: slug,
-    kind: 'internal',
     serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
     loadBalancing: 'round_robin',
     targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]

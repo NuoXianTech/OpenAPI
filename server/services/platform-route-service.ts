@@ -1,6 +1,12 @@
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
-import { apiProducts, apiRoutes, apiVersions, upstreamServices } from '~~/server/db/schema'
+import {
+  apiProducts,
+  apiRoutes,
+  apiVersions,
+  upstreamServiceConnections,
+  upstreamServices
+} from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
 import { getSqlState } from '~~/server/utils/database-error'
 import {
@@ -121,15 +127,20 @@ export const platformRouteService = {
     options: { transaction?: DatabaseTransaction } = {}
   ): Promise<RouteBinding[]> {
     const executor = options.transaction ?? db
-    return executor.select({
+    const rows = await executor.select({
       route: apiRoutes,
       version: apiVersions,
       product: apiProducts,
-      upstream: upstreamServices
+      upstream: upstreamServices,
+      serviceManaged: upstreamServiceConnections.upstreamServiceId
     }).from(apiRoutes)
       .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
       .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
       .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
+      .leftJoin(upstreamServiceConnections, eq(
+        upstreamServiceConnections.upstreamServiceId,
+        upstreamServices.id
+      ))
       .where(and(
         isNull(apiRoutes.deletedAt),
         isNull(apiProducts.deletedAt),
@@ -137,6 +148,10 @@ export const platformRouteService = {
         workspaceId ? eq(apiProducts.workspaceId, workspaceId) : undefined
       ))
       .orderBy(asc(apiProducts.name), asc(apiVersions.version), asc(apiRoutes.pathPattern), asc(apiRoutes.method))
+    return rows.map(row => ({
+      ...row,
+      upstream: { ...row.upstream, serviceManaged: Boolean(row.serviceManaged) }
+    }))
   },
 
   async create(input: RouteMutationInput, options: RouteMutationOptions = {}) {
@@ -165,11 +180,16 @@ export const platformRouteService = {
       route: apiRoutes,
       version: apiVersions,
       product: apiProducts,
-      upstream: upstreamServices
+      upstream: upstreamServices,
+      serviceManaged: upstreamServiceConnections.upstreamServiceId
     }).from(apiRoutes)
       .innerJoin(apiVersions, eq(apiVersions.id, apiRoutes.apiVersionId))
       .innerJoin(apiProducts, eq(apiProducts.id, apiVersions.productId))
       .innerJoin(upstreamServices, eq(upstreamServices.id, apiRoutes.upstreamServiceId))
+      .leftJoin(upstreamServiceConnections, eq(
+        upstreamServiceConnections.upstreamServiceId,
+        upstreamServices.id
+      ))
       .where(and(
         eq(apiRoutes.id, id),
         isNull(apiRoutes.deletedAt),
@@ -184,7 +204,10 @@ export const platformRouteService = {
         data: { code: 'ROUTE_NOT_FOUND' }
       })
     }
-    return binding
+    return {
+      ...binding,
+      upstream: { ...binding.upstream, serviceManaged: Boolean(binding.serviceManaged) }
+    }
   },
 
   async update(id: string, input: RouteMutationInput, options: RouteMutationOptions = {}) {

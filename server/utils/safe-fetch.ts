@@ -32,6 +32,9 @@ type ResolvedAddress = { address: string, family: number }
 export interface SafeFetchOptions extends RequestInit {
   allowedHosts: readonly string[]
   maxRedirects?: number
+  allowHttp?: boolean
+  allowPrivateNetworks?: boolean
+  allowNonDefaultPort?: boolean
 }
 
 function normalizeHostname(hostname: string): string {
@@ -64,19 +67,29 @@ function assertPublicAddress(address: string): void {
 async function assertSafeUrl(
   input: string | URL,
   allowedHosts: readonly string[],
-  pinnedAddresses: Map<string, ResolvedAddress[]>
+  pinnedAddresses: Map<string, ResolvedAddress[]>,
+  options: Pick<SafeFetchOptions, 'allowHttp' | 'allowPrivateNetworks' | 'allowNonDefaultPort'>
 ): Promise<URL> {
   const url = input instanceof URL ? new URL(input) : new URL(input)
-  if (url.protocol !== 'https:') throw new Error('upstream URL must use HTTPS')
+  if (url.protocol !== 'https:' && !(options.allowHttp && url.protocol === 'http:')) {
+    throw new Error('upstream URL must use HTTP or HTTPS')
+  }
   if (url.username || url.password) throw new Error('upstream URL credentials are not allowed')
-  if (url.port && url.port !== '443') throw new Error('upstream URL port is not allowed')
+  if (
+    url.port
+    && !options.allowNonDefaultPort
+    && ((url.protocol === 'https:' && url.port !== '443')
+      || (url.protocol === 'http:' && url.port !== '80'))
+  ) throw new Error('upstream URL port is not allowed')
 
   assertAllowedHostname(url.hostname, allowedHosts)
 
   const hostname = normalizeHostname(url.hostname)
   const addresses = await lookup(hostname, { all: true, verbatim: true })
   if (addresses.length === 0) throw new Error('upstream hostname did not resolve')
-  for (const { address } of addresses) assertPublicAddress(address)
+  if (!options.allowPrivateNetworks) {
+    for (const { address } of addresses) assertPublicAddress(address)
+  }
   pinnedAddresses.set(hostname, addresses)
 
   return url
@@ -113,9 +126,17 @@ function redirectedRequestInit(status: number, options: RequestInit): RequestIni
 }
 
 export async function safeFetch(input: string | URL, options: SafeFetchOptions): Promise<Response> {
-  const { allowedHosts, maxRedirects = 5, ...requestOptions } = options
+  const {
+    allowedHosts,
+    maxRedirects = 5,
+    allowHttp = false,
+    allowPrivateNetworks = false,
+    allowNonDefaultPort = false,
+    ...requestOptions
+  } = options
   const pinnedAddresses = new Map<string, ResolvedAddress[]>()
-  let currentUrl = await assertSafeUrl(input, allowedHosts, pinnedAddresses)
+  const urlOptions = { allowHttp, allowPrivateNetworks, allowNonDefaultPort }
+  let currentUrl = await assertSafeUrl(input, allowedHosts, pinnedAddresses, urlOptions)
   let currentOptions: RequestInit = { ...requestOptions, redirect: 'manual' }
   const dispatcher = createPinnedDispatcher(pinnedAddresses)
 
@@ -140,7 +161,12 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
         throw new Error('upstream redirect limit exceeded')
       }
 
-      const nextUrl = await assertSafeUrl(new URL(location, currentUrl), allowedHosts, pinnedAddresses)
+      const nextUrl = await assertSafeUrl(
+        new URL(location, currentUrl),
+        allowedHosts,
+        pinnedAddresses,
+        urlOptions
+      )
       await response.body?.cancel()
       currentOptions = redirectedRequestInit(response.status, currentOptions)
       currentUrl = nextUrl

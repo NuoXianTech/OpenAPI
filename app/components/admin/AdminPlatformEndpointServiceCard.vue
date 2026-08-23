@@ -39,7 +39,7 @@ function serviceName() {
 
 function serviceStateColor() {
   const upstream = props.service.upstream
-  if (upstream.status !== 'active' || upstream.kind === 'external') {
+  if (upstream.status !== 'active' || !upstream.serviceManaged) {
     return platformStatusColor(upstream.status)
   }
   if (!upstream.connection?.discovered) return 'warning' as const
@@ -51,7 +51,7 @@ function serviceStateLabel() {
   if (upstream.status !== 'active') {
     return t(`admin.apis.routing.serviceStatuses.${upstream.status}`)
   }
-  if (upstream.kind === 'external') {
+  if (!upstream.serviceManaged) {
     return t('admin.apis.routing.serviceControl.enabled')
   }
   if (!upstream.connection?.discovered) {
@@ -104,10 +104,10 @@ function primaryActionLabel(item: PlatformEndpointCatalogItem) {
     return t('admin.apis.routing.catalog.actions.unpublish')
   }
   if (item.status === 'pending') {
-    return t('admin.apis.routing.catalog.actions.applyChanges')
+    return t('admin.apis.routing.catalog.actions.pendingApply')
   }
   if (item.status === 'retiring') {
-    return t('admin.apis.routing.catalog.actions.finishUnpublish')
+    return t('admin.apis.routing.catalog.actions.pendingApply')
   }
   return t('admin.apis.routing.catalog.actions.publish')
 }
@@ -115,7 +115,7 @@ function primaryActionLabel(item: PlatformEndpointCatalogItem) {
 function primaryActionIcon(item: PlatformEndpointCatalogItem) {
   if (item.status === 'live') return 'i-lucide-power'
   if (item.status === 'pending' || item.status === 'retiring') {
-    return 'i-lucide-refresh-cw'
+    return 'i-lucide-clock-3'
   }
   return 'i-lucide-rocket'
 }
@@ -165,7 +165,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
         <div class="flex min-w-0 items-center gap-3">
           <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <UIcon
-              :name="service.upstream.kind === 'internal' ? 'i-lucide-server' : 'i-lucide-globe-2'"
+              :name="service.upstream.serviceManaged ? 'i-lucide-server' : 'i-lucide-globe-2'"
               class="size-5"
             />
           </div>
@@ -191,7 +191,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
             {{ serviceStateLabel() }}
           </UBadge>
           <UButton
-            v-if="service.upstream.kind === 'internal'"
+            v-if="service.upstream.serviceManaged"
             :to="{ path: `/admin/apis/upstreams/${service.upstream.id}`, query: route.query }"
             color="neutral"
             variant="outline"
@@ -201,7 +201,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
             {{ $t('admin.apis.routing.catalog.actions.serviceSettings') }}
           </UButton>
           <UButton
-            v-if="service.upstream.kind === 'internal'"
+            v-if="service.upstream.serviceManaged"
             color="neutral"
             variant="soft"
             size="sm"
@@ -318,7 +318,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
             :variant="item.status === 'live' ? 'outline' : 'solid'"
             :icon="primaryActionIcon(item)"
             :loading="endpointBusy(item)"
-            :disabled="!item.publishable || !hasEnvironment"
+            :disabled="!item.publishable || !hasEnvironment || item.status === 'pending' || item.status === 'retiring'"
             @click="emit('primary', service, item)"
           >
             {{ primaryActionLabel(item) }}
@@ -329,17 +329,17 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
 
     <div v-else class="px-5 py-8">
       <UEmpty
-        :icon="service.upstream.kind === 'internal' ? 'i-lucide-file-search' : 'i-lucide-route-off'"
-        :title="service.upstream.kind === 'internal'
+        :icon="service.upstream.serviceManaged ? 'i-lucide-file-search' : 'i-lucide-route-off'"
+        :title="service.upstream.serviceManaged
           ? $t('admin.apis.routing.catalog.empty.serviceTitle')
-          : $t('admin.apis.routing.catalog.empty.externalTitle')"
-        :description="service.upstream.kind === 'internal'
+          : $t('admin.apis.routing.catalog.empty.manualTitle')"
+        :description="service.upstream.serviceManaged
           ? $t('admin.apis.routing.catalog.empty.serviceDescription')
-          : $t('admin.apis.routing.catalog.empty.externalDescription')"
+          : $t('admin.apis.routing.catalog.empty.manualDescription')"
       >
         <template #actions>
           <UButton
-            v-if="service.upstream.kind === 'internal'"
+            v-if="service.upstream.serviceManaged"
             size="sm"
             icon="i-lucide-scan-search"
             :loading="isBusy(`discover:${service.upstream.id}`)"

@@ -24,7 +24,6 @@ describe('Service control schemas', () => {
       workspaceId: 'd11cb56d-8c0b-45fb-8827-768a21472b7b',
       slug: 'schema-test-service',
       name: 'Schema Test Service',
-      kind: 'internal',
       serviceToken: `  ${token}  `,
       loadBalancing: 'round_robin',
       targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]

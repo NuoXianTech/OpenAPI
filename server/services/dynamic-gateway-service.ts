@@ -77,7 +77,7 @@ function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serv
   headers.set('x-openapi-product-slug', match.route.productSlug)
   headers.set('x-openapi-api-version', match.route.version)
 
-  if (match.upstream.kind === 'internal') {
+  if (match.upstream.serviceManaged) {
     if (!serviceToken) {
       throw new GatewayExecutionError(503, 'UPSTREAM_AUTH_UNAVAILABLE', '上游服务凭证尚未配置')
     }
@@ -172,7 +172,7 @@ export const dynamicGatewayService = {
       const access = await dynamicGatewayAccessService.authorize(event, match)
       if (!access.passed) return { matched: true, response: access.response }
 
-      const serviceToken = match.upstream.kind === 'internal'
+      const serviceToken = match.upstream.serviceManaged
         ? await upstreamServiceTokenService.get(match.upstream.id)
         : ''
       const targets = orderedGatewayTargets(match)
@@ -237,7 +237,7 @@ export const dynamicGatewayService = {
         sendStream: true,
         onResponse: async (_proxyEvent, upstreamResponse) => {
           upstreamStatus = upstreamResponse.status
-          if (match.upstream.kind === 'internal') {
+          if (match.upstream.serviceManaged) {
             captureUpstreamFailure(event, upstreamResponse)
           }
         },

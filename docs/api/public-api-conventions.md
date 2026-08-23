@@ -1,6 +1,6 @@
 # 对外接口（/v{N}/*）落地规范
 
-Platform v1 的公开 API 全部来自动态 Route。`openapi-platform` 仓库不包含 `/v1/*` 业务 Handler，具体实现位于 Internal API Service 或任意 External HTTP Upstream。
+Platform v1 的公开 API 全部来自动态 Route。`openapi-platform` 仓库不包含 `/v1/*` 业务 Handler，具体实现位于 Service-managed API Service 或任意手动管理的 HTTP Upstream。
 
 ## 1. 公开路径
 
@@ -41,11 +41,11 @@ upstream: /v1/player/assets/{path.asset}
 - `data` 保存业务数据，可以为 `null`。
 - `timestamp` 是 Unix 毫秒时间戳。
 - HTTP 状态码仍表达真实成功或失败，不因响应壳统一而全部返回 200。
-- 官方 Internal Service 的成功 JSON 使用固定 `code=OK` 和默认 `message=请求成功`；错误 JSON 保持同一四字段结构并使用稳定错误码。
+- 官方 Service 的成功 JSON 使用固定 `code=OK` 和默认 `message=请求成功`；错误 JSON 保持同一四字段结构并使用稳定错误码。
 
 HTML、图片、音频、视频、文件和流式响应按真实媒体类型返回，不套 JSON 壳。`/healthz`、`/readyz`、`/openapi.json` 和 `/.well-known/*` 是运行协议文档，也保持原始结构。
 
-Platform Gateway 对 Internal Service 默认字节保真转发，因此 Service 必须在返回前生成规范响应壳；Gateway 自己产生的鉴权、限流、计费和上游错误也使用同一结构。External Upstream 不会被强制包装。
+Platform Gateway 对 Service-managed Service 默认字节保真转发，因此 Service 必须在返回前生成规范响应壳；Gateway 自己产生的鉴权、限流、计费和上游错误也使用同一结构。手动管理的 HTTP Upstream 不会被强制包装。
 
 ## 4. 错误
 
@@ -56,9 +56,9 @@ Platform Gateway 对 Internal Service 默认字节保真转发，因此 Service 
 
 ## 5. OpenAPI
 
-- Internal Service 使用 Zod/OpenAPI 作为请求、响应和 OpenAPI 3.1 的单一来源。
+- Service-managed Service 使用 Zod/OpenAPI 作为请求、响应和 OpenAPI 3.1 的单一来源。
 - Platform 发现并保存 Endpoint 摘要，发现动作本身不会公开 Endpoint。
-- 管理员在接口目录明确点击发布后，Platform 自动创建或复用 Route 并激活 Routing Revision。
+- 管理员在接口目录明确保存发布变更后，Platform 自动创建或复用 Route；点击“应用全部变更”时才激活 Routing Revision。
 - OpenAPI 指纹变化、配置 Schema 变化和公开 Route 变化是三件独立的事。
 
 ## 6. 业务配置
@@ -68,10 +68,10 @@ Platform Gateway 对 Internal Service 默认字节保真转发，因此 Service 
 - Service 通过通用 Schema 声明字段，Platform 自动生成表单并加密保存 Secret。
 - Platform 不得增加接口专用业务字段或运行时业务模块注册机制。
 
-## 7. Internal Upstream 安全
+## 7. Service-managed Upstream 安全
 
 - Platform 清除调用方 `Authorization`、Cookie、API Key 和伪造的 `x-openapi-*` 身份头。
-- Platform 按 Internal Upstream 注入自己的 `Authorization: Service <token>`。
+- Platform 按 Service-managed Upstream 注入自己的 `Authorization: Service <token>`。
 - Query 中用于 Platform 鉴权的 `apikey` 在转发前删除。
 - API Service 默认只在私网暴露；跨不可信网络使用 TLS/mTLS。
 - 同一 Upstream 的多个 Target 必须暴露相同 Service 契约。
@@ -79,7 +79,7 @@ Platform Gateway 对 Internal Service 默认字节保真转发，因此 Service 
 ## 8. 开发与发布
 
 - 新业务逻辑只在 API Service 开发、测试和构建。
-- 公开 Route 和治理配置只在 Platform 后台修改；保存后自动发布，无需管理员手工操作 Revision。
+- 公开 Route 和治理配置只在 Platform 后台修改；保存后由管理员统一应用当前环境，无需手工编排 Revision。
 - 生产服务器不执行 Nuxt Build、TypeScript Build 或 Docker Build。
 - 删除 Service Endpoint 前先下线所有活动 Route。
 

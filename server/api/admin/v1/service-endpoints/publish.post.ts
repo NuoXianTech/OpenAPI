@@ -7,7 +7,9 @@ import { toPlatformEndpointPublicationResult } from '~~/server/utils/platform-vi
 
 export default defineAdminEventHandler(async (event, admin) => {
   const body = await readZodBody(event, adminPublishServiceEndpointSchema)
-  const result = await platformEndpointCatalogService.publish(body, admin.id)
+  const result = await platformEndpointCatalogService.publish(body, admin.id, {
+    publishRouting: false
+  })
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,

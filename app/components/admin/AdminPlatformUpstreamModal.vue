@@ -22,7 +22,6 @@ interface UpstreamTargetFormState {
 interface UpstreamFormState {
   name: string
   slug: string
-  kind: 'internal' | 'external'
   serviceToken: string
   loadBalancing: 'round_robin' | 'weighted'
   targets: UpstreamTargetFormState[]
@@ -32,7 +31,6 @@ function initialState(): UpstreamFormState {
   return {
     name: props.upstream?.name ?? '',
     slug: props.upstream?.slug ?? '',
-    kind: props.upstream?.kind ?? 'internal',
     serviceToken: '',
     loadBalancing: props.upstream?.loadBalancing ?? 'round_robin',
     targets: [{ baseUrl: 'http://openapi-service:8080', weight: 1 }]
@@ -44,18 +42,6 @@ const loading = ref(false)
 const isEditing = computed(() => Boolean(props.upstream))
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
-const kindItems = computed(() => [
-  {
-    label: t('admin.apis.routing.upstreamKinds.internal'),
-    value: 'internal',
-    description: t('admin.apis.routing.upstreamKinds.internalDescription')
-  },
-  {
-    label: t('admin.apis.routing.upstreamKinds.external'),
-    value: 'external',
-    description: t('admin.apis.routing.upstreamKinds.externalDescription')
-  }
-])
 const loadBalancingItems = computed(() => [
   { label: t('admin.apis.routing.loadBalancing.roundRobin'), value: 'round_robin' },
   { label: t('admin.apis.routing.loadBalancing.weighted'), value: 'weighted' }
@@ -93,7 +79,7 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
     maxLengthError('slug', value.slug, 80, t('admin.apis.routing.validation.slugMaxLength'))
   )
 
-  if (!isEditing.value && value.kind === 'internal' && (value.serviceToken?.length ?? 0) < 32) {
+  if (value.serviceToken && value.serviceToken.length < 32) {
     errors.push({
       name: 'serviceToken',
       message: t('admin.apis.routing.validation.serviceTokenInvalid')
@@ -108,17 +94,11 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
     return errors
   }
 
-  const protocols = new Set<string>()
   targets.forEach((target, index) => {
     const name = `targets.${index}.baseUrl`
     const url = parseTargetUrl(target.baseUrl?.trim() ?? '')
     if (!url) {
       errors.push({ name, message: t('admin.apis.routing.validation.targetUrlInvalid') })
-    } else {
-      protocols.add(url.protocol)
-      if (value.kind === 'external' && url.protocol !== 'https:') {
-        errors.push({ name, message: t('admin.apis.routing.validation.externalRequiresHttps') })
-      }
     }
     const weightError = integerRangeError(
       `targets.${index}.weight`,
@@ -129,9 +109,6 @@ function validateUpstreamForm(value: Partial<UpstreamFormState>): FormError<stri
     )
     if (weightError) errors.push(weightError)
   })
-  if (protocols.size > 1) {
-    errors.push({ name: 'targets', message: t('admin.apis.routing.validation.protocolMismatch') })
-  }
   return errors
 }
 
@@ -152,10 +129,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
               workspaceId: props.workspace.id,
               name: event.data.name.trim(),
               slug: event.data.slug.trim(),
-              kind: event.data.kind,
-              serviceToken: event.data.kind === 'internal'
-                ? event.data.serviceToken
-                : undefined,
+              serviceToken: event.data.serviceToken || undefined,
               loadBalancing: event.data.loadBalancing,
               targets: event.data.targets.map(target => ({
                 baseUrl: target.baseUrl.trim(),
@@ -164,6 +138,12 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
             }
       }
     )
+    if (isEditing.value && event.data.serviceToken.trim()) {
+      await $fetch(`/api/admin/v1/upstreams/${props.upstream!.id}/token`, {
+        method: 'PUT',
+        body: { serviceToken: event.data.serviceToken.trim() }
+      })
+    }
     toast.add({
       title: t(isEditing.value
         ? 'admin.apis.routing.feedback.upstreamUpdated'
@@ -197,18 +177,6 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
         @submit="onSubmit"
       >
         <div class="grid gap-4 sm:grid-cols-2">
-          <UFormField
-            v-if="!isEditing"
-            name="kind"
-            :label="$t('admin.apis.routing.fields.upstreamKind')"
-          >
-            <USelectMenu
-              v-model="state.kind"
-              :items="kindItems"
-              value-key="value"
-              class="w-full"
-            />
-          </UFormField>
           <UFormField
             name="name"
             :label="$t('admin.apis.routing.fields.name')"
@@ -256,11 +224,9 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
         </UFormField>
 
         <UFormField
-          v-if="!isEditing && state.kind === 'internal'"
           name="serviceToken"
           :label="$t('admin.apis.routing.fields.serviceToken')"
           :description="$t('admin.apis.routing.upstreamForm.serviceTokenHelp')"
-          required
         >
           <UInput
             v-model="state.serviceToken"
@@ -273,15 +239,11 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
 
         <UAlert
           v-if="!isEditing"
-          :color="state.kind === 'internal' ? 'info' : 'warning'"
+          color="info"
           variant="subtle"
-          :icon="state.kind === 'internal' ? 'i-lucide-shield-check' : 'i-lucide-shield-alert'"
-          :title="state.kind === 'internal'
-            ? $t('admin.apis.routing.upstreamForm.internalTitle')
-            : $t('admin.apis.routing.upstreamForm.externalTitle')"
-          :description="state.kind === 'internal'
-            ? $t('admin.apis.routing.upstreamForm.internalDescription')
-            : $t('admin.apis.routing.upstreamForm.externalDescription')"
+          icon="i-lucide-network"
+          :title="$t('admin.apis.routing.upstreamForm.connectionTitle')"
+          :description="$t('admin.apis.routing.upstreamForm.connectionDescription')"
         />
 
         <div v-if="!isEditing">
@@ -341,7 +303,7 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
                   >
                     <UInput
                       v-model="target.baseUrl"
-                      placeholder="http://openapi-service:8080"
+                      :placeholder="$t('admin.apis.routing.upstreamForm.targetPlaceholder')"
                       class="w-full font-mono"
                     />
                   </UFormField>

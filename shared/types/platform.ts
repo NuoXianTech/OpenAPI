@@ -78,8 +78,7 @@ export interface PlatformUpstreamSummary {
   workspaceId: string
   slug: string
   name: string
-  kind: 'internal' | 'external'
-  protocol: 'http' | 'https'
+  serviceManaged: boolean
   loadBalancing: 'round_robin' | 'weighted'
   status: 'active' | 'disabled'
   createdAt: string

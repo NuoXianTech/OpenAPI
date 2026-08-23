@@ -52,7 +52,7 @@ docker run -d --name openapi-platform --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi-platform:latest
 ```
 
-`docker network create` 已存在时会返回错误但不会破坏现有网络；重复部署可先用 `docker network inspect openapi-network` 检查。同机 Service 加入该网络后，Platform 数据库中的 Internal Upstream Target 可以使用 `http://openapi-service:8080`。
+`docker network create` 已存在时会返回错误但不会破坏现有网络；重复部署可先用 `docker network inspect openapi-network` 检查。同机 Service 加入该网络后，Platform 数据库中的 Service-managed Upstream Target 可以使用 `http://openapi-service:8080`。
 
 启用 IP 归属地接口时，CZDB 数据库必须由服务器单独准备并只读挂载到 `openapi-service`，不能打进任一镜像：
 
@@ -68,7 +68,7 @@ docker run -d --name openapi-service --restart unless-stopped \
   ghcr.io/nuoxiantech/openapi-service:latest
 ```
 
-将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `assets/ip`。容器内读取路径固定为 `/app/data/assets/ip`。启动后在 Platform 创建 Internal Upstream，填写与 `API_SERVICE_TOKEN` 相同的 Token，执行发现，再在通用配置表单填写 `ip.databaseKey`。Platform 与 Service 快照都只保存密文，读取接口不回显密钥。
+将 `cz88_public_v4.czdb`、`cz88_public_v6.czdb` 放入宿主机的 `assets/ip`。容器内读取路径固定为 `/app/data/assets/ip`。启动后在 Platform 创建 Upstream，填写与 `API_SERVICE_TOKEN` 相同的 Token，执行发现，再在通用配置表单填写 `ip.databaseKey`。Platform 与 Service 快照都只保存密文，读取接口不回显密钥。
 
 Platform 仓库提供只包含 Platform 的 `docker-compose.yml`：
 
@@ -85,7 +85,7 @@ docker compose up -d --no-deps openapi-service
 docker compose ps openapi-service
 ```
 
-该操作不会停止 Platform、Console、管理 API 或 External Route。单实例 API Service 切换期间，指向它的 Route 可能短暂返回 `503 Service Unavailable`；Gateway 应附带 `Retry-After`、快速结束请求且不扣费，不能让连接排队数分钟。需要近零停机时，先启动新 Target，通过 `/readyz` 后发布 Routing Revision，再排空旧 Target。
+该操作不会停止 Platform、Console、管理 API 或手动管理的 HTTP Route。单实例 API Service 切换期间，指向它的 Route 可能短暂返回 `503 Service Unavailable`；Gateway 应附带 `Retry-After`、快速结束请求且不扣费，不能让连接排队数分钟。需要近零停机时，先启动新 Target，通过 `/readyz` 后发布 Routing Revision，再排空旧 Target。
 
 仅更新 Platform 时也不重建 API Service：
 

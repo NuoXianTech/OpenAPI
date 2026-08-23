@@ -1,5 +1,5 @@
 {
-  "id": "d7349cf0-ddbf-4527-8516-3a49bac03af9",
+  "id": "fbc140b2-1438-4bd9-ab30-7260ab4cae6e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3705,18 +3705,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "protocol": {
-          "name": "protocol",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "openapi_document_id": {
           "name": "openapi_document_id",
           "type": "uuid",
@@ -3835,14 +3823,6 @@
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {
-        "upstream_services_kind_chk": {
-          "name": "upstream_services_kind_chk",
-          "value": "\"upstream_services\".\"kind\" in ('internal', 'external')"
-        },
-        "upstream_services_protocol_chk": {
-          "name": "upstream_services_protocol_chk",
-          "value": "\"upstream_services\".\"protocol\" in ('http', 'https')"
-        },
         "upstream_services_load_balancing_chk": {
           "name": "upstream_services_load_balancing_chk",
           "value": "\"upstream_services\".\"load_balancing\" in ('round_robin', 'weighted')"

@@ -46,18 +46,18 @@ OpenAPI Platform 是自托管 API 管理平台，负责动态路由、访问治�
 2. 由 Service 生成 OpenAPI。
 3. 需要热更新参数时，在 Service 声明通用业务配置 Schema。
 4. 发布 Service 镜像。
-5. 在 Platform 创建 Internal Upstream 并执行 Service 发现。
-6. 在接口目录审查 Endpoint 并点击发布；Platform 自动创建或复用 Product、Version 和 Route，同时激活新的 Routing Revision。
-7. 在接口目录或高级设置中配置 API Key、Scope、限流、积分和调用日志；每次变更都会自动应用。
+5. 在 Platform 创建 Upstream；填写 Service Token 后执行 Service 发现。
+6. 在接口目录审查 Endpoint 并保存发布变更；确认后点击“应用全部变更”，Platform 自动创建或复用 Product、Version 和 Route，并一次性激活当前 Environment 的 Routing Revision。
+7. 在接口目录或高级设置中配置 API Key、Scope、限流、积分和调用日志；接口目录的变更保存后统一应用当前环境，高级设置按原有保存流程应用。
 8. 验证公开路径、失败语义、积分、日志和回滚。
 
-External HTTP API 可以跳过 Service 发现协议，创建 External Upstream 后通过“自定义接口”保存并自动发布 Route。
+普通 HTTP API 可以跳过 Service 发现协议，创建不带 Service Token 的 Upstream 后通过“自定义接口”保存 Route。
 
 ## 核心规则
 
 - Platform 不包含具体公共接口实现。
 - 所有公开业务流量来自活动 Routing Revision。
-- Service 发现只更新契约目录；必须由管理员明确点击发布，后续 Route 与 Revision 步骤由 Platform 自动完成。
+- Service 发现只更新契约目录；必须由管理员明确保存发布变更并统一应用，后续 Route 与 Revision 步骤由 Platform 自动完成。
 - API Key、限流、积分和调用日志只由 Platform 执行。
 - Service 不连接 Platform 数据库。
 - 业务模块在 Service 源码中显式组合，不支持运行时加载任意代码。

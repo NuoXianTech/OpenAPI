@@ -153,16 +153,12 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
           sensitiveQueryParameters: body.sensitiveQueryParameters
         }
       })
-      const runtimeUpdated = event.data.state !== 'active'
-        || Boolean(result.revision?.configPayload.routes.some(route => (
-          route.id === result.route.id
-        )))
       toast.add({
         title: t('admin.apis.routing.feedback.routeUpdated'),
-        description: t(runtimeUpdated
+        description: t(result.revision
           ? 'admin.apis.routing.feedback.runtimeUpdated'
-          : 'admin.apis.routing.feedback.runtimePending'),
-        color: runtimeUpdated ? 'success' : 'warning'
+          : 'admin.apis.routing.catalog.feedback.changesPending'),
+        color: result.revision ? 'success' : 'warning'
       })
       open.value = false
       emit('saved')
@@ -480,7 +476,7 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
           :disabled="!state.apiVersionId || !state.upstreamServiceId"
         >
           {{ $t(environmentId
-            ? 'admin.apis.routing.actions.saveAndPublish'
+            ? 'admin.apis.routing.actions.saveChanges'
             : isEditing
               ? 'admin.apis.routing.actions.saveRoute'
               : 'admin.apis.routing.actions.createRoute') }}

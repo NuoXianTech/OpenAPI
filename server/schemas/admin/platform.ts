@@ -74,21 +74,12 @@ export const adminCreateUpstreamSchema = z.object({
   workspaceId: z.uuid(),
   slug: slugSchema,
   name: nameSchema,
-  kind: z.enum(['internal', 'external']),
   serviceToken: z.string().trim().min(32).max(4096).optional(),
   loadBalancing: z.enum(['round_robin', 'weighted']).default('round_robin'),
   targets: z.array(z.object({
     baseUrl: z.url().max(2000),
     weight: z.coerce.number().int().min(1).max(10_000).default(1)
   })).min(1).max(32)
-}).superRefine((value, context) => {
-  if (value.kind === 'internal' && !value.serviceToken) {
-    context.addIssue({
-      code: 'custom',
-      path: ['serviceToken'],
-      message: 'Internal Upstream 必须配置至少 32 字符的 Service Token'
-    })
-  }
 })
 
 export const adminUpdateUpstreamSchema = z.object({
@@ -164,6 +155,10 @@ export const adminUpdateEndpointPublicationSchema = z.object({
   maxResponseBytes: z.coerce.number().int().min(0).max(2_147_483_647).optional(),
   catalogStatus: z.enum(['automatic', 'maintenance']).optional(),
   sensitiveQueryParameters: z.array(z.string().trim().min(1).max(100)).max(64).optional()
+})
+
+export const adminApplyServiceEndpointChangesSchema = z.object({
+  environmentId: z.uuid()
 })
 
 export const adminActivateRevisionSchema = z.object({

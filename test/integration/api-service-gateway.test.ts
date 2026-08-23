@@ -180,7 +180,6 @@ beforeAll(async () => {
     workspaceId: defaults.workspace.id,
     slug: 'official-api-service',
     name: 'Official API Service',
-    kind: 'internal',
     serviceToken,
     loadBalancing: 'round_robin',
     targets: [
@@ -687,7 +686,6 @@ describe('Platform to Node API Service acceptance', () => {
       workspaceId: (await platformWorkspaceService.ensureDefault()).workspace.id,
       slug: 'partial-sync-service',
       name: 'Partial sync Service',
-      kind: 'internal',
       serviceToken,
       loadBalancing: 'round_robin',
       targets: [{ baseUrl: serviceBaseURL, weight: 1 }]
@@ -822,7 +820,7 @@ describe('Platform to Node API Service acceptance', () => {
     }
   })
 
-  it('publishes an Internal Route, replaces caller auth, and exposes only the first migrated APIs', async () => {
+  it('publishes a Service-managed Route, replaces caller auth, and exposes only the first migrated APIs', async () => {
     const requestId = randomUUID()
     const response = await fetch(
       `${gatewayBaseURL}/v1/api-service-contract`,
@@ -910,7 +908,6 @@ describe('Platform to Node API Service acceptance', () => {
         workspaceId: workspace.workspace.id,
         slug: 'redirect-boundary-service',
         name: 'Redirect Boundary Service',
-        kind: 'internal',
         serviceToken,
         loadBalancing: 'round_robin',
         targets: [{
@@ -970,7 +967,6 @@ describe('Platform to Node API Service acceptance', () => {
         workspaceId: workspace.workspace.id,
         slug: 'gateway-failover-service',
         name: 'Gateway Failover Service',
-        kind: 'internal',
         serviceToken,
         loadBalancing: 'round_robin',
         targets: ports.map(port => ({
@@ -1024,7 +1020,6 @@ describe('Platform to Node API Service acceptance', () => {
         workspaceId: workspace.workspace.id,
         slug: 'gateway-write-service',
         name: 'Gateway Write Service',
-        kind: 'internal',
         serviceToken,
         loadBalancing: 'round_robin',
         targets: ports.map(port => ({
@@ -1089,7 +1084,6 @@ describe('Platform to Node API Service acceptance', () => {
         workspaceId: workspace.workspace.id,
         slug: 'gateway-stream-limit-service',
         name: 'Gateway Stream Limit Service',
-        kind: 'internal',
         serviceToken,
         loadBalancing: 'round_robin',
         targets: [{

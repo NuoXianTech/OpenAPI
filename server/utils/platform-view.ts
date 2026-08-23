@@ -132,8 +132,9 @@ export function toPlatformUpstreamSummary(row: UpstreamRow): PlatformUpstreamSum
     workspaceId: row.workspaceId,
     slug: row.slug,
     name: row.name,
-    kind: row.kind as PlatformUpstreamSummary['kind'],
-    protocol: row.protocol as PlatformUpstreamSummary['protocol'],
+    serviceManaged: 'serviceManaged' in row
+      ? Boolean(row.serviceManaged)
+      : false,
     loadBalancing: row.loadBalancing as PlatformUpstreamSummary['loadBalancing'],
     status: row.status as PlatformUpstreamSummary['status'],
     createdAt: toIsoString(row.createdAt),

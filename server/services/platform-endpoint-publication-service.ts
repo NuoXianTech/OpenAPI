@@ -126,11 +126,15 @@ async function readActiveEnvironments(tx: DatabaseTransaction) {
 export async function applyEnvironmentMutation<T>(
   environmentId: string,
   createdBy: number | null,
-  mutate: (tx: DatabaseTransaction) => Promise<T>
+  mutate: (tx: DatabaseTransaction) => Promise<T>,
+  options: { publishRouting?: boolean } = {}
 ) {
   const committed = await db.transaction(async (tx: DatabaseTransaction) => {
     await lockEnvironmentSet(tx)
     const value = await mutate(tx)
+    if (options.publishRouting === false) {
+      return { value, revision: null }
+    }
     const activeEnvironments = await readActiveEnvironments(tx)
     const revision = await routingRevisionService.publish(
       environmentId,
@@ -139,11 +143,30 @@ export async function applyEnvironmentMutation<T>(
     )
     return { value, revision }
   })
-  await invalidateRoutingPublicationCaches()
+  if (options.publishRouting !== false) {
+    await invalidateRoutingPublicationCaches()
+  }
   return {
     value: committed.value,
     revision: committed.revision
   }
+}
+
+export async function applyEnvironmentRevision(
+  environmentId: string,
+  createdBy: number | null
+) {
+  const revision = await db.transaction(async (tx: DatabaseTransaction) => {
+    await lockEnvironmentSet(tx)
+    const activeEnvironments = await readActiveEnvironments(tx)
+    return routingRevisionService.publish(
+      environmentId,
+      createdBy,
+      { tx, activeEnvironments }
+    )
+  })
+  await invalidateRoutingPublicationCaches()
+  return revision
 }
 
 export async function applyWorkspaceMutation<T>(

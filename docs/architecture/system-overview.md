@@ -21,7 +21,7 @@ Administrator / API consumer
           ┌────────┴────────┐
           v                 v
 ┌───────────────────┐  ┌────────────────────┐
-│ openapi-service   │  │ External Upstream  │
+│ Service-managed   │  │ Manual Upstream    │
 │ Hono business API │  │ Standard HTTP API  │
 └───────────────────┘  └────────────────────┘
 ```
@@ -47,7 +47,7 @@ Administrator / API consumer
 
 ### 4.1 路由与治理变更
 
-公开路径、Method、Upstream、API Key、积分、限流、统计和启停属于 Platform 配置。接口目录保存变更后自动应用运行配置；只有完整配置实际变化时才生成并激活新的 Routing Revision，相同配置复用当前快照。不要求重新构建 Platform 或 Service。
+公开路径、Method、Upstream、API Key、积分、限流、统计和启停属于 Platform 配置。接口目录先保存变更，管理员统一应用当前环境后才更新运行配置；只有完整配置实际变化时才生成并激活新的 Routing Revision，相同配置复用当前快照。不要求重新构建 Platform 或 Service。
 
 ### 4.2 Service 业务配置变更
 
@@ -62,7 +62,7 @@ Administrator / API consumer
 - Platform 运行时不包含任何具体公共接口 Handler。
 - 所有公开业务流量必须命中活动 Routing Revision。
 - Service 发现本身不会公开 Endpoint；管理员必须在接口目录明确发布，Platform 随后自动完成 Route 与 Revision。
-- Internal Upstream 使用独立 Service Token，调用方凭据不会透传给 Service。
+- Service-managed Upstream 使用独立 Service Token，调用方凭据不会透传给 Service。
 - Service 模块在源码中显式组合，不支持运行时加载任意代码或远程模块。
 - Platform 与 Service 是两个独立进程、镜像和版本线。
 - 生产服务器只运行预构建产物，不执行依赖安装或构建。

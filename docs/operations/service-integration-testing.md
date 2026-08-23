@@ -4,8 +4,8 @@
 
 ## 1. 验证范围
 
-- Platform 创建 Internal Upstream，并在管理员确认 Endpoint 后自动创建 Product、Version 和 Route。
-- Route 与治理变更自动应用到 Routing Revision，并可通过运行快照回滚；相同配置不会重复生成快照。
+- Platform 创建带 Service Token 的 Upstream，并在管理员确认 Endpoint 后自动创建 Product、Version 和 Route。
+- Route 与治理变更先保存到控制面，确认后统一应用到 Routing Revision，并可通过运行快照回滚；相同配置不会重复生成快照。
 - Platform 执行 API Key、Scope、限流、积分和调用日志。
 - Service 只接收 Platform 注入的 Service Token。
 - Platform 发现 Service OpenAPI 和配置 Schema。
@@ -57,14 +57,14 @@ curl.exe -i http://127.0.0.1:3000/api/ready
 登录 `/admin/apis`，完成：
 
 1. 选择或创建 Workspace。
-2. 创建 Internal Upstream：
+2. 创建 Service-managed Upstream：
    - Service Token 与 Service 的 `API_SERVICE_TOKEN` 相同。
    - 本机 Target 使用 `http://127.0.0.1:8080`。
    - Compose Target 使用 `http://openapi-service:8080`。
 3. 打开 Upstream 的“管理”页面。
 4. 点击“发现 Service”。
 5. 确认页面显示 Service 身份、Endpoint 和业务配置表单。
-6. 返回接口目录，逐个点击发布。Platform 会自动创建 Product、Version、Route 和活动 Revision。
+6. 返回接口目录，逐个保存发布变更；确认后点击“应用全部变更”。Platform 会自动创建 Product、Version、Route，并一次性生成活动 Revision。
 
 当前官方 Service 可以使用以下 Endpoint 验证：
 
@@ -76,7 +76,7 @@ curl.exe -i http://127.0.0.1:3000/api/ready
 | `/v1/player/assets/{asset}` | `/v1/player/assets/{path.asset}` | 否 | 否 | 0 |
 | `/v1/ip` | `/v1/ip` | 是 | 是 | 3 |
 
-Service 发现只导入契约和配置 Schema，不会直接公开接口；管理员点击发布后，Route 与 Revision 由 Platform 自动完成。表中的治理建议可在接口目录快速切换，也可进入高级设置精细调整。
+Service 发现只导入契约和配置 Schema，不会直接公开接口；管理员保存发布变更并统一应用后，Route 与 Revision 由 Platform 自动完成。表中的治理建议可在接口目录快速切换，也可进入高级设置精细调整。
 
 ## 5. 验证治理
 
@@ -129,11 +129,12 @@ Service 发现和配置同步包含网络调用。如果后续运行快照发布
 
 ## 7. 验证发布与回滚
 
-1. 在接口目录修改 API Key、统计或积分，确认 Platform 自动生成新运行快照且流量立即使用新配置。
-2. 不修改任何配置再次保存或应用，确认 Platform 复用当前运行快照，不增加快照数量。
-3. 使用高级设置制造路径冲突，确认请求失败，Route 变更与新运行快照均回滚，活动流量继续使用旧运行快照。
-4. 解决冲突后重新提交变更，确认 Route 与新运行快照同时生效。
-5. 在接口目录停用接口，确认自动生成新运行快照，公开路径返回 `404 API_NOT_FOUND`。
+1. 在接口目录修改 API Key、统计或积分，确认变更先显示为待统一应用，不会立即生成运行快照。
+2. 连续保存多个接口后点击“应用全部变更”，确认 Platform 只生成一个包含全部变更的新运行快照且流量立即使用新配置。
+3. 不修改任何配置再次应用，确认 Platform 复用当前运行快照，不增加快照数量。
+4. 使用高级设置制造路径冲突，确认应用请求失败，Route 变更与新运行快照均回滚，活动流量继续使用旧运行快照。
+5. 解决冲突后重新保存并应用变更，确认 Route 与新运行快照同时生效。
+6. 在接口目录停用接口并应用全部变更，确认生成新运行快照，公开路径返回 `404 API_NOT_FOUND`。
 6. 在运行快照中回滚到停用前的版本，Route 立即恢复。
 
 以上过程都不要求重新构建或重启 Platform。

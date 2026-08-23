@@ -6,6 +6,10 @@ import {
   orderedGatewayTargets
 } from '~~/server/services/dynamic-gateway-target-service'
 
+vi.mock('~~/server/utils/safe-fetch', () => ({
+  safeFetch: (input: RequestInfo | URL, init?: RequestInit) => fetch(input, init)
+}))
+
 function match(
   id: string,
   loadBalancing: 'round_robin' | 'weighted',
@@ -14,7 +18,7 @@ function match(
   return {
     upstream: {
       id,
-      kind: 'internal',
+      serviceManaged: true,
       loadBalancing,
       targets: weights.map((weight, index) => ({
         id: `${id}-${index}`,
