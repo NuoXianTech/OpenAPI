@@ -104,7 +104,6 @@ export function readStoredServiceEndpoints(
 }
 
 export async function persistServiceOpenApi(input: {
-  workspaceId: string
   upstreamServiceId: string
   description: ServiceDescription
   document: Record<string, unknown>
@@ -128,7 +127,6 @@ export async function persistServiceOpenApi(input: {
   }
 
   const provenance = and(
-    eq(openapiDocuments.workspaceId, input.workspaceId),
     eq(openapiDocuments.upstreamServiceId, input.upstreamServiceId),
     eq(openapiDocuments.contentHash, calculatedHash)
   )
@@ -144,7 +142,6 @@ export async function persistServiceOpenApi(input: {
   }
   let document = existing ?? firstRow(await executor.insert(openapiDocuments)
     .values({
-      workspaceId: input.workspaceId,
       upstreamServiceId: input.upstreamServiceId,
       sourceType: 'url',
       sourceUrl: input.sourceUrl,
@@ -158,7 +155,6 @@ export async function persistServiceOpenApi(input: {
       fetchedAt: new Date()
     }).onConflictDoNothing({
       target: [
-        openapiDocuments.workspaceId,
         openapiDocuments.upstreamServiceId,
         openapiDocuments.contentHash
       ],

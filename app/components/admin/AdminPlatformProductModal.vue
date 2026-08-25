@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformProductSummary, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformProductSummary } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, maxLengthError, requiredTextError } from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
-  workspace: PlatformWorkspace
   product?: PlatformProductSummary | null
 }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -80,7 +79,7 @@ async function onSubmit(event: FormSubmitEvent<ProductFormState>) {
       {
         method: isEditing.value ? 'PATCH' : 'POST',
         body: {
-          ...(isEditing.value ? {} : { workspaceId: props.workspace.id, version: event.data.version.trim() }),
+          ...(isEditing.value ? {} : { version: event.data.version.trim() }),
           name: event.data.name.trim(),
           slug: event.data.slug.trim(),
           summary: event.data.summary.trim(),
@@ -128,13 +127,6 @@ async function onSubmit(event: FormSubmitEvent<ProductFormState>) {
           icon="i-lucide-badge-check"
           :title="$t('admin.apis.routing.productForm.publishedTitle')"
           :description="$t('admin.apis.routing.productForm.publishedDescription')"
-        />
-        <UAlert
-          color="neutral"
-          variant="subtle"
-          icon="i-lucide-panels-top-left"
-          :title="workspace.name"
-          :description="workspace.slug"
         />
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField

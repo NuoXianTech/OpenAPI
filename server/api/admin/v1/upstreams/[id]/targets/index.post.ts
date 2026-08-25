@@ -25,6 +25,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
   return {
     ...toPlatformUpstreamTarget(created),
-    revisions: result.revisions
+    revision: result.revision
   }
 })

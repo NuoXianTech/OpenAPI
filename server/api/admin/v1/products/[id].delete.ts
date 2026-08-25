@@ -17,6 +17,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
   return {
     id,
-    revisions: result.revisions
+    revision: result.revision
   }
 })

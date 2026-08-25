@@ -21,6 +21,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
   return {
     ...toPlatformProductSummary(updated),
-    revisions: result.revisions
+    revision: result.revision
   }
 })

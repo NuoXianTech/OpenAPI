@@ -47,7 +47,7 @@ OpenAPI Platform 是自托管 API 管理平台，负责动态路由、访问治�
 3. 需要热更新参数时，在 Service 声明通用业务配置 Schema。
 4. 发布 Service 镜像。
 5. 在 Platform 创建 Upstream；填写 Service Token 后执行 Service 发现。
-6. 在接口目录审查 Endpoint 并保存发布变更；确认后点击“应用全部变更”，Platform 自动创建或复用 Product、Version 和 Route，并一次性激活当前 Environment 的 Routing Revision。
+6. 在接口目录审查 Endpoint 并保存发布变更；确认后点击“应用全部变更”，Platform 自动创建或复用 Product、Version 和 Route，并一次性激活新的 Routing Revision。
 7. 在接口目录或高级设置中配置 API Key、Scope、限流、积分和调用日志；接口目录的变更保存后统一应用当前环境，高级设置按原有保存流程应用。
 8. 验证公开路径、失败语义、积分、日志和回滚。
 

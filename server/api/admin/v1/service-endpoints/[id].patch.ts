@@ -27,7 +27,6 @@ export default defineAdminEventHandler(async (event, admin) => {
     resourceType: 'api-route',
     resourceId: result.route.id,
     detail: {
-      environmentId: body.environmentId,
       enabled: body.enabled,
       isApiKey: body.isApiKey,
       isStatistics: body.isStatistics,

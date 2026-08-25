@@ -53,14 +53,12 @@ const current = {
   },
   product: {
     id: 'product-old',
-    workspaceId: 'workspace-1',
     slug: 'old-product',
     name: 'Old Product',
     lifecycle: 'retired'
   },
   upstream: {
     id: 'upstream-old',
-    workspaceId: 'workspace-1',
     slug: 'old-upstream',
     name: 'Old Upstream',
     serviceManaged: false,
@@ -72,7 +70,6 @@ describe('Platform route form', () => {
   it('preserves retired versions and disabled upstreams while editing', () => {
     const products = [{
       id: 'product-new',
-      workspaceId: 'workspace-1',
       slug: 'new-product',
       name: 'New Product',
       lifecycle: 'active',
@@ -80,18 +77,17 @@ describe('Platform route form', () => {
     }] as unknown as PlatformProduct[]
     const upstreams = [{
       id: 'upstream-new',
-      workspaceId: 'workspace-1',
       name: 'New Upstream',
       serviceManaged: false,
       status: 'active'
     }] as unknown as PlatformUpstream[]
 
-    expect(routeVersionOptions(products, 'workspace-1', current))
+    expect(routeVersionOptions(products, current))
       .toEqual(expect.arrayContaining([
         expect.objectContaining({ value: 'version-old' }),
         expect.objectContaining({ value: 'version-new' })
       ]))
-    expect(routeUpstreamOptions(upstreams, 'workspace-1', current))
+    expect(routeUpstreamOptions(upstreams, current))
       .toEqual(expect.arrayContaining([
         expect.objectContaining({ value: 'upstream-old' }),
         expect.objectContaining({ value: 'upstream-new' })

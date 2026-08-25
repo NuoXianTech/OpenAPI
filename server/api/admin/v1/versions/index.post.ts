@@ -22,6 +22,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
   return {
     ...toPlatformApiVersion(created),
-    revisions: result.revisions
+    revision: result.revision
   }
 })

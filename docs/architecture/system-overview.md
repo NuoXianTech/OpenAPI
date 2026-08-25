@@ -33,7 +33,7 @@ Administrator / API consumer
 | 能力 | Platform | Service |
 | --- | --- | --- |
 | 管理后台与账号 | 是 | 否 |
-| Workspace、Product、Route、Upstream | 是 | 否 |
+| Product、Route、Upstream | 是 | 否 |
 | API Key、Scope、IP、限流 | 是 | 否 |
 | 积分预留、结算与流水 | 是 | 否 |
 | Routing Revision 与回滚 | 是 | 否 |

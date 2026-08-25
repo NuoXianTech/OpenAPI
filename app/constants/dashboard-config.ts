@@ -175,8 +175,7 @@ export function createAdminApisSection({ t }: DashboardConfigFactoryContext): Da
       { label: t('admin.apis.routing.tabs.routes'), icon: 'i-lucide-route', to: ADMIN_APIS_PATH, exact: true },
       { label: t('admin.apis.routing.tabs.upstreams'), icon: 'i-lucide-server-cog', to: `${ADMIN_APIS_PATH}/upstreams` },
       { label: t('admin.apis.routing.tabs.revisions'), icon: 'i-lucide-history', to: `${ADMIN_APIS_PATH}/revisions` },
-      { label: t('admin.apis.routing.tabs.products'), icon: 'i-lucide-package-open', to: `${ADMIN_APIS_PATH}/products` },
-      { label: t('admin.apis.routing.tabs.workspaces'), icon: 'i-lucide-panels-top-left', to: `${ADMIN_APIS_PATH}/workspaces` }
+      { label: t('admin.apis.routing.tabs.products'), icon: 'i-lucide-package-open', to: `${ADMIN_APIS_PATH}/products` }
     ]
   }
 }

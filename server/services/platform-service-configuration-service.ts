@@ -32,7 +32,7 @@ import {
   encryptStoredSecret
 } from '~~/server/utils/stored-secret'
 import { firstRow } from '~~/server/utils/row'
-import { applyWorkspaceRevision } from '~~/server/services/platform-endpoint-publication-service'
+import { applyPlatformRevision } from '~~/server/services/platform-endpoint-publication-service'
 
 function redactedStateFromValues(input: {
   serviceId: string
@@ -197,16 +197,15 @@ async function pushConfiguration(
 }
 
 async function publishRoutableConfigurationTargets(
-  workspaceId: string,
   result: ServiceConfigurationSyncResult
 ) {
   // A partial sync still changes the safe Target set: synchronized Targets can
   // serve the new configuration while failed or drifted Targets must be
   // removed from the next immutable runtime snapshot.
   if (result.status === 'failed') {
-    return { revisions: [] }
+    return { revision: null }
   }
-  return applyWorkspaceRevision(workspaceId, null)
+  return applyPlatformRevision(null)
 }
 
 function reconstructConfiguration(input: {
@@ -383,10 +382,7 @@ export async function updatePlatformServiceConfiguration(
     values,
     configurationHash
   )
-  const publication = await publishRoutableConfigurationTargets(
-    context.service.workspaceId,
-    result
-  )
+  const publication = await publishRoutableConfigurationTargets(result)
   return { ...result, ...publication }
 }
 
@@ -431,9 +427,6 @@ export async function synchronizePlatformServiceConfiguration(
     values,
     configurationHash
   )
-  const publication = await publishRoutableConfigurationTargets(
-    context.service.workspaceId,
-    result
-  )
+  const publication = await publishRoutableConfigurationTargets(result)
   return { ...result, ...publication }
 }

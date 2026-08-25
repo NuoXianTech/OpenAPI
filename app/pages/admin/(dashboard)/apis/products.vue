@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { PlatformApiVersion, PlatformProduct } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
 import { formatPlatformDate, platformStatusColor } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
-const context = useAdminPlatformContext()
 const modalOpen = ref(false)
 const editingProduct = ref<PlatformProduct | null>(null)
 const versionModalOpen = ref(false)
@@ -20,19 +18,9 @@ useHead({ title: () => t('admin.apis.routing.sections.productsTitle') })
 
 const resource = usePrivateResource<PlatformProduct[]>({
   path: '/api/admin/v1/products',
-  defaultData: () => [],
-  immediate: false,
-  query: () => context.selectedWorkspaceId.value
-    ? { workspaceId: context.selectedWorkspaceId.value }
-    : undefined
+  defaultData: () => []
 })
-const products = computed(() => resource.data.value.filter(
-  product => product.workspaceId === context.selectedWorkspaceId.value
-))
-
-watch(context.selectedWorkspaceId, (workspaceId) => {
-  if (workspaceId) void resource.refresh()
-}, { immediate: true })
+const products = computed(() => resource.data.value)
 
 const columns = computed<TableColumn<PlatformProduct>[]>(() => [
   { id: 'product', header: t('admin.apis.routing.columns.product') },
@@ -146,17 +134,11 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
         >
           {{ $t('common.actions.refresh') }}
         </UButton>
-        <UButton
-          icon="i-lucide-plus"
-          :disabled="!context.selectedWorkspace.value"
-          @click="openCreateProduct"
-        >
+        <UButton icon="i-lucide-plus" @click="openCreateProduct">
           {{ $t('admin.apis.routing.actions.createProduct') }}
         </UButton>
       </div>
     </div>
-
-    <AdminPlatformContextBar :show-environment="false" />
 
     <UAlert
       v-if="resource.error.value"
@@ -250,7 +232,6 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
           <UButton
             size="sm"
             icon="i-lucide-plus"
-            :disabled="!context.selectedWorkspace.value"
             @click="openCreateProduct"
           >
             {{ $t('admin.apis.routing.actions.createProduct') }}
@@ -260,9 +241,7 @@ function versionItems(product: PlatformProduct, version: PlatformApiVersion): Dr
     </DashboardTableCard>
 
     <AdminPlatformProductModal
-      v-if="context.selectedWorkspace.value"
       v-model:open="modalOpen"
-      :workspace="context.selectedWorkspace.value"
       :product="editingProduct"
       @saved="refreshProducts"
     />

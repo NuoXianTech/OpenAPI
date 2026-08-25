@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { provideAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { createAdminApisSection } from '~/constants/dashboard-config'
 
 const { t } = useI18n()
 const adminApisSection = computed(() => createAdminApisSection({ t }))
-provideAdminPlatformContext()
 </script>
 
 <template>

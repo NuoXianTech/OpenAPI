@@ -3,29 +3,10 @@ import type {
   ServiceEndpointSummary
 } from './service-control'
 
-export interface PlatformEnvironment {
-  id: string
-  workspaceId: string
-  slug: string
-  name: string
+export interface PlatformRuntime {
   defaultDomain: string | null
   activeRevisionId: string | null
-  status: 'active' | 'disabled'
-  createdAt: string
   updatedAt: string
-}
-
-export interface PlatformWorkspaceSummary {
-  id: string
-  slug: string
-  name: string
-  status: 'active' | 'disabled'
-  createdAt: string
-  updatedAt: string
-}
-
-export interface PlatformWorkspace extends PlatformWorkspaceSummary {
-  environments: PlatformEnvironment[]
 }
 
 export interface PlatformApiVersion {
@@ -42,7 +23,6 @@ export interface PlatformApiVersion {
 
 export interface PlatformProductSummary {
   id: string
-  workspaceId: string
   slug: string
   name: string
   summary: string
@@ -75,7 +55,6 @@ export interface PlatformUpstreamTarget {
 
 export interface PlatformUpstreamSummary {
   id: string
-  workspaceId: string
   slug: string
   name: string
   serviceManaged: boolean
@@ -167,8 +146,6 @@ export interface PlatformEndpointCatalogService {
 }
 
 export interface PlatformEndpointCatalog {
-  workspaceId: string
-  environmentId: string
   activeRevisionId: string | null
   activeRevisionSequence: number | null
   services: PlatformEndpointCatalogService[]
@@ -191,7 +168,6 @@ export interface PlatformEndpointPublicationResult {
 interface PlatformRoutingRevisionPayload {
   schemaVersion: 1
   revisionId: string
-  environmentId: string
   generatedAt: string
   routes: Array<{ id: string }>
   upstreams: Array<{ id: string }>
@@ -199,8 +175,6 @@ interface PlatformRoutingRevisionPayload {
 
 export interface PlatformRoutingRevision {
   id: string
-  workspaceId: string
-  environmentId: string
   sequence: number
   configPayload: PlatformRoutingRevisionPayload
   checksum: string

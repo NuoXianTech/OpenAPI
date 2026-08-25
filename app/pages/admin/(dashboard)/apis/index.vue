@@ -7,7 +7,6 @@ const {
   catalog,
   applyChanges,
   clearFocusedService,
-  context,
   canApply,
   discoverAllServices,
   discoverService,
@@ -23,7 +22,6 @@ const {
   openEditRoute,
   products,
   refresh,
-  refreshAfterMutation,
   resetFilters,
   resourceError,
   routeModalOpen,
@@ -53,8 +51,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
         <UButton
           v-if="canApply"
           icon="i-lucide-cloud-upload"
-          :loading="isBusy('apply:environment')"
-          :disabled="!context.selectedEnvironment.value"
+          :loading="isBusy('apply:runtime')"
           @click="applyChanges"
         >
           {{ $t('admin.apis.routing.catalog.actions.applyAllChanges', { count: catalog.totals.pending }) }}
@@ -63,7 +60,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
           color="neutral"
           variant="outline"
           icon="i-lucide-plus"
-          :disabled="!context.selectedEnvironment.value || products.length === 0 || upstreams.length === 0"
+          :disabled="products.length === 0 || upstreams.length === 0"
           @click="openCreateRoute"
         >
           {{ $t('admin.apis.routing.catalog.actions.manualRoute') }}
@@ -78,17 +75,6 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
         </UButton>
       </div>
     </div>
-
-    <AdminPlatformContextBar>
-      <UButton
-        to="/admin/apis/revisions"
-        color="neutral"
-        variant="ghost"
-        icon="i-lucide-history"
-      >
-        {{ $t('admin.apis.routing.sections.revisionsTitle') }}
-      </UButton>
-    </AdminPlatformContextBar>
 
     <UAlert
       v-if="resourceError"
@@ -260,7 +246,6 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
         v-for="service in visibleServices"
         :key="service.upstream.id"
         :service="service"
-        :has-environment="Boolean(context.selectedEnvironment.value)"
         :is-busy="isBusy"
         @discover="discoverService"
         @edit="openEditRoute"
@@ -300,14 +285,11 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
     </UEmpty>
 
     <AdminPlatformRouteModal
-      v-if="context.selectedWorkspace.value"
       v-model:open="routeModalOpen"
-      :workspace="context.selectedWorkspace.value"
       :products="products"
       :upstreams="upstreams"
       :route-binding="editingRoute"
-      :environment-id="context.selectedEnvironmentId.value || undefined"
-      @saved="refreshAfterMutation"
+      @saved="refresh"
     />
   </div>
 </template>

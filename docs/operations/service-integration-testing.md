@@ -56,15 +56,14 @@ curl.exe -i http://127.0.0.1:3000/api/ready
 
 登录 `/admin/apis`，完成：
 
-1. 选择或创建 Workspace。
-2. 创建 Service-managed Upstream：
+1. 创建 Service-managed Upstream：
    - Service Token 与 Service 的 `API_SERVICE_TOKEN` 相同。
    - 本机 Target 使用 `http://127.0.0.1:8080`。
    - Compose Target 使用 `http://openapi-service:8080`。
-3. 打开 Upstream 的“管理”页面。
-4. 点击“发现 Service”。
-5. 确认页面显示 Service 身份、Endpoint 和业务配置表单。
-6. 返回接口目录，逐个保存发布变更；确认后点击“应用全部变更”。Platform 会自动创建 Product、Version、Route，并一次性生成活动 Revision。
+2. 打开 Upstream 的“管理”页面。
+3. 点击“发现 Service”。
+4. 确认页面显示 Service 身份、Endpoint 和业务配置表单。
+5. 返回接口目录，逐个保存发布变更；确认后点击“应用全部变更”。Platform 会自动创建 Product、Version、Route，并一次性生成活动 Revision。
 
 当前官方 Service 可以使用以下 Endpoint 验证：
 

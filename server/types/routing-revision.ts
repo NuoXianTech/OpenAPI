@@ -45,7 +45,6 @@ export interface RoutingRevisionRoute {
 export interface RoutingRevisionPayload {
   schemaVersion: 1
   revisionId: string
-  environmentId: string
   generatedAt: string
   routes: RoutingRevisionRoute[]
   upstreams: RoutingRevisionUpstream[]

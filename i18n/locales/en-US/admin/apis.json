@@ -53,24 +53,20 @@
         "eyebrow": "API publishing and governance",
         "title": "Discover, configure, and publish APIs",
         "description": "Read contracts from Services and directly control public access, statistics, authentication, and credits. A safe runtime snapshot is saved only when the effective configuration changes.",
-        "selectWorkspace": "Select a Workspace",
-        "selectEnvironment": "Select an Environment",
         "moreTargets": "{count} more Targets",
+        "fallbackDomain": "Any-Host fallback",
+        "published": "Published",
+        "unpublished": "Not published",
         "tabs": {
           "routes": "API catalog",
           "products": "API groups",
           "upstreams": "Services",
-          "revisions": "Runtime snapshots",
-          "workspaces": "Workspaces"
+          "revisions": "Runtime snapshots"
         },
         "fields": {
-          "workspace": "Workspace",
-          "environment": "Environment",
           "name": "Name",
           "slug": "Slug",
           "slugHelp": "Use lowercase letters, numbers, and hyphens only",
-          "environmentName": "Environment name",
-          "environmentSlug": "Environment slug",
           "defaultDomain": "Default domain",
           "summary": "Summary",
           "description": "Description",
@@ -104,14 +100,11 @@
           "routeState": "Route state"
         },
         "actions": {
-          "createWorkspace": "New Workspace",
-          "createEnvironment": "New Environment",
           "createProduct": "New Product",
           "createVersion": "New Version",
           "createUpstream": "New Upstream",
           "createRoute": "New Route",
           "saveRoute": "Save Route",
-          "saveChanges": "Save changes",
           "addTarget": "Add Target",
           "removeTarget": "Remove Target",
           "publishRevision": "Apply runtime configuration",
@@ -119,24 +112,20 @@
         },
         "pipeline": {
           "title": "Publication dependency chain",
-          "workspace": "Workspace",
           "product": "Product",
           "upstream": "Upstream",
           "route": "Route",
           "revision": "Runtime snapshot",
           "notSelected": "Not selected",
-          "createFirst": "Create a Workspace first",
           "itemCount": "{count} items",
           "activeCount": "{count} publishable",
           "productHint": "Define an API product and version",
           "upstreamHint": "Connect a Service-managed API or a manually managed HTTP service",
           "routeHint": "Bind a public path to an upstream path",
-          "environmentHint": "Select an Environment first",
           "unpublished": "Not published",
           "revisionSequence": "Snapshot #{sequence}"
         },
         "nextActions": {
-          "workspace": "Next: create a Workspace",
           "product": "Next: create a Product",
           "upstream": "Next: connect an Upstream",
           "route": "Next: create a Route",
@@ -151,9 +140,7 @@
           "upstreamsTitle": "Upstream Services",
           "upstreamsDescription": "Manage request targets reachable by the Gateway. Targets can use internal addresses, container names, HTTP, or HTTPS.",
           "revisionsTitle": "Runtime snapshots",
-          "revisionsDescription": "Platform saves a new immutable snapshot only when the effective traffic configuration changes; identical configuration reuses the active snapshot. This page is for audit and rollback only.",
-          "workspacesTitle": "Workspaces",
-          "workspacesDescription": "Isolate API Products, Upstreams, Environments, and runtime snapshots."
+          "revisionsDescription": "Platform saves a new immutable snapshot only when the effective traffic configuration changes; identical configuration reuses the active snapshot. This page is for audit and rollback only."
         },
         "columns": {
           "method": "Method",
@@ -172,8 +159,8 @@
           "routeCount": "Routes",
           "checksum": "Checksum",
           "publishedAt": "Activated",
-          "workspace": "Workspace",
-          "environments": "Environments"
+          "defaultDomain": "Default domain",
+          "activeRevision": "Runtime configuration"
         },
         "empty": {
           "routesTitle": "No dynamic Routes yet",
@@ -184,9 +171,7 @@
           "upstreamsDescription": "Add an Upstream and at least one Target to give the Gateway a request destination.",
           "targetsTitle": "No Targets configured",
           "revisionsTitle": "No runtime snapshots yet",
-          "revisionsDescription": "Save and apply the first Service Endpoint from the endpoint catalog to create the initial runtime snapshot.",
-          "workspacesTitle": "No Workspaces yet",
-          "workspacesDescription": "Create a Workspace and its default Environment to begin organizing APIs."
+          "revisionsDescription": "Save and apply the first Service Endpoint from the endpoint catalog to create the initial runtime snapshot."
         },
         "visibility": {
           "public": "Public",
@@ -224,22 +209,8 @@
           "roundRobin": "Round robin",
           "weighted": "Weighted round robin"
         },
-        "workspaceForm": {
-          "title": "Create Workspace",
-          "description": "Create an isolated API management space and initialize its first Environment.",
-          "editTitle": "Edit Workspace",
-          "editDescription": "Update the Workspace name and stable slug. Change its status from the list.",
-          "namePlaceholder": "For example, Core APIs",
-          "environmentTitle": "First Environment",
-          "environmentDescription": "Each Environment owns an independent active runtime snapshot. Start with development, then add staging and production later.",
-          "defaultDomainHelp": "Optional. Routes without their own Host use this domain. Only one Environment may leave it empty as the lowest-priority any-Host fallback.",
-          "boundaryTitle": "A Workspace is a management boundary, not another service",
-          "boundaryDescription": "It only isolates Products, Upstreams, Routes, Environments, and runtime snapshots. It does not add another process to deploy."
-        },
-        "environmentForm": {
-          "createTitle": "Create Environment",
-          "editTitle": "Edit Environment",
-          "description": "Configure an independent domain and active runtime snapshot for {workspace}."
+        "runtime": {
+          "defaultDomainHelp": "Optional. Routes without their own Host answer on this domain. Leave it empty to make them the lowest-priority any-Host fallback. Saving republishes the runtime snapshot."
         },
         "productForm": {
           "title": "Create API Product",
@@ -272,8 +243,7 @@
           "targetsDescription": "Targets support private addresses, container names, HTTP, and HTTPS. Public HTTP is rejected; weighted mode distributes requests according to each weight.",
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "One Upstream can connect multiple Service instances",
-          "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas.",
-          "workspaceContext": "Workspace"
+          "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas."
         },
         "targetForm": {
           "createTitle": "Add Target",
@@ -284,12 +254,12 @@
         },
         "routeForm": {
           "createTitle": "Create dynamic Route",
-          "createDescription": "Bind a public Method and Path to an Upstream in the same Workspace.",
+          "createDescription": "Bind a public Method and Path to an Upstream.",
           "editTitle": "Edit dynamic Route",
           "editDescription": "Change the public path and governance settings. Saving creates a pending change; traffic stays on the previous release until it is applied.",
           "namePlaceholder": "For example, Get weather by city",
           "pathHelp": "Supports {'{'}id{'}'} single-segment parameters and {'{'}path+{'}'} trailing wildcard parameters.",
-          "hostsHelp": "Optional. Enter one domain per line or separate them with commas; leave empty to use the Environment default.",
+          "hostsHelp": "Optional. Enter one domain per line or separate them with commas; leave empty to use the platform default domain.",
           "forwardingTitle": "Forwarding rule",
           "forwardingDescription": "Reference path parameters as {'{'}path.parameter{'}'} in the upstream template. Query parameters and request bodies are forwarded unchanged.",
           "upstreamPathHelp": "For example, public {'{'}city{'}'} can be referenced as {'{'}path.city{'}'}.",
@@ -300,29 +270,16 @@
           "sensitiveQueryHelp": "These query parameters are always redacted from call logs and referrers.",
           "sensitiveQueryPlaceholder": "For example token, then press Enter",
           "stateHelp": "Only publishable Routes enter an applied runtime snapshot.",
-          "noVersionsHelp": "This Workspace has no publishable Product Versions.",
-          "noUpstreamsHelp": "This Workspace has no available Upstreams."
-        },
-        "publish": {
-          "title": "Apply to {environment}",
-          "description": "Build a complete runtime snapshot from {count} publishable Routes and immediately activate it for this Environment.",
-          "descriptionSimple": "Build a complete snapshot from the Workspace's publishable Products, Routes, and Upstreams, then activate it for this Environment."
+          "noVersionsHelp": "There are no publishable Product Versions yet.",
+          "noUpstreamsHelp": "There are no available Upstreams yet."
         },
         "rollback": {
           "title": "Roll back to runtime snapshot #{sequence}",
-          "description": "This immediately switches {environment} to the historical snapshot. The current snapshot remains available and can be restored later."
+          "description": "This immediately switches the Gateway to the historical snapshot. The current snapshot remains available and can be restored later."
         },
         "deleteRoute": {
           "title": "Delete Route {path}",
           "description": "The Route and the active runtime configuration are updated together. Historical runtime snapshots remain available for rollback."
-        },
-        "deleteWorkspace": {
-          "title": "Delete Workspace: {name}",
-          "description": "Only empty Workspaces can be deleted. The default Workspace and Workspaces with Products, Upstreams, documents, or runtime history are protected."
-        },
-        "deleteEnvironment": {
-          "title": "Delete Environment: {name}",
-          "description": "Only Environments that never produced a runtime snapshot can be deleted. Disable Environments with retained history instead."
         },
         "deleteProduct": {
           "title": "Delete Product: {name}",
@@ -341,10 +298,6 @@
           "description": "The Target can be removed directly when another ready Target remains. An Upstream used by active Routes must keep at least one available Target."
         },
         "feedback": {
-          "workspaceCreated": "Workspace created",
-          "workspaceUpdated": "Workspace updated",
-          "environmentCreated": "Environment created",
-          "environmentUpdated": "Environment updated",
           "productCreated": "Product created",
           "productUpdated": "Product updated",
           "versionCreated": "Version created",
@@ -363,17 +316,16 @@
           "updateFailed": "Failed to update Route",
           "deleteFailed": "Failed to delete Route",
           "publishFailed": "Failed to apply runtime configuration",
-          "activateFailed": "Failed to roll back the runtime snapshot"
+          "activateFailed": "Failed to roll back the runtime snapshot",
+          "defaultDomainUpdated": "Default domain updated",
+          "runtimeUnchanged": "The effective traffic configuration was unchanged, so the active runtime snapshot stays in place"
         },
         "validation": {
-          "workspaceRequired": "Select a Workspace",
           "nameRequired": "Name is required",
           "nameMaxLength": "Name must be at most 160 characters",
           "slugRequired": "Slug is required",
           "slugInvalid": "Use lowercase letters, numbers, and single hyphens only",
           "slugMaxLength": "Slug must be at most 80 characters",
-          "environmentSlugRequired": "Environment slug is required",
-          "environmentNameRequired": "Environment name is required",
           "hostInvalid": "Enter a valid domain; wildcard form such as *.example.com is supported",
           "summaryMaxLength": "Summary must be at most 300 characters",
           "versionRequired": "Select or enter a Version",
@@ -466,7 +418,7 @@
         },
         "catalog": {
           "title": "API catalog",
-          "description": "Save endpoint changes as you review them, then apply all changes to the selected Environment at once. A new runtime snapshot is saved only when the effective configuration changes.",
+          "description": "Save endpoint changes as you review them, then apply all changes at once. A new runtime snapshot is saved only when the effective configuration changes.",
           "endpointCount": "{count} endpoints",
           "contractMissing": "This endpoint is no longer present in the Service contract. Review it before disabling or adjusting the Route.",
           "manualRoute": "Manually configured proxy endpoint",

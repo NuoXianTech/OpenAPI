@@ -7,14 +7,12 @@ import type {
 } from '#shared/types/service-control'
 import { parseFetchError } from '~/utils/client-error'
 import { serviceAvailabilityColor } from '~/utils/platform-display'
-import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import type { PlatformUpstream, PlatformUpstreamTarget } from '#shared/types/platform'
 
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
 const confirm = useConfirmDialog()
-const context = useAdminPlatformContext()
 const upstreamId = computed(() => String(route.params.id ?? ''))
 const resource = usePrivateResource<ServiceConfigurationView | null>({
   path: () => `/api/admin/v1/upstreams/${upstreamId.value}/service`,
@@ -22,11 +20,7 @@ const resource = usePrivateResource<ServiceConfigurationView | null>({
 })
 const upstreamResource = usePrivateResource<PlatformUpstream[]>({
   path: '/api/admin/v1/upstreams',
-  defaultData: () => [],
-  immediate: false,
-  query: () => context.selectedWorkspaceId.value
-    ? { workspaceId: context.selectedWorkspaceId.value }
-    : undefined
+  defaultData: () => []
 })
 const managementUpstream = computed(() => upstreamResource.data.value.find(
   upstream => upstream.id === upstreamId.value
@@ -70,10 +64,6 @@ watch(upstreamId, (id, previousId) => {
   void resource.refresh()
   void upstreamResource.refresh()
 })
-
-watch(context.selectedWorkspaceId, (workspaceId) => {
-  if (workspaceId) void upstreamResource.refresh()
-}, { immediate: true })
 
 function openTarget(target: PlatformUpstreamTarget | null = null) {
   editingTarget.value = target
@@ -336,8 +326,6 @@ async function synchronizeConfiguration() {
         </UButton>
       </div>
     </div>
-
-    <AdminPlatformContextBar :show-environment="false" />
 
     <div
       v-if="resource.loading.value && !resource.data.value"

@@ -14,7 +14,7 @@ Platform 管理公开路由、访问控制、积分、统计和运营数据；Se
 - [系统概览](system-overview.md)：产品定位、部署单元、职责边界与核心约束。
 - [Platform 架构](platform.md)：管理模型、动态 Gateway、Routing Revision、治理与 Service 控制面。
 - [Service 架构](service.md)：Hono 服务结构、业务模块、OpenAPI、配置与工程边界。
-- [领域模型](domain-model.md)：Workspace、Product、Route、Upstream、Revision、调用与计费数据。
+- [领域模型](domain-model.md)：Platform Runtime、Product、Route、Upstream、Revision、调用与计费数据。
 - [运行时协议](runtime-protocols.md)：公开请求、Service 发现、配置同步、Header、错误与追踪语义。
 - [部署模型](deployment.md)：构建、镜像、网络、升级、回滚与可用性边界。
 - [版本与支持范围](release-scope.md)：版本语义、受支持能力、兼容规则、正式发布门禁与非目标。

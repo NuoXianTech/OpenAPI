@@ -14,7 +14,7 @@ Platform v1 不包含具体公共接口实现，也不提供接口专用配置�
 2. 创建 Upstream，填写 Service Token 与 Target 以启用 Service 管理能力。
 3. 进入 `/admin/apis/upstreams/:id`，点击“发现 Service”。
 4. 在自动生成的配置表单中保存业务配置。
-5. 返回 `/admin/apis`，在接口目录选择需要公开的 Endpoint 并保存；确认后应用全部变更，Platform 自动创建 Route 并一次性生成当前 Environment 的 Routing Revision。
+5. 返回 `/admin/apis`，在接口目录选择需要公开的 Endpoint 并保存；确认后应用全部变更，Platform 自动创建 Route 并一次性生成新的 Routing Revision。
 
 Platform 只理解 boolean、text、textarea、secret、number、single-select 和 multi-select 等字段类型，不理解音乐、IP、Crypto 的业务语义。第三方开发者新增字段时只修改自己部署的 `openapi-service` 源码和 Schema，不需要修改 Platform。
 

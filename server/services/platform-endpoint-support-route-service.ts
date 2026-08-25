@@ -33,7 +33,6 @@ function endpointBelongsToProduct(input: {
 }
 
 export async function synchronizeEndpointSupportRoutes(input: {
-  workspaceId: string
   upstream: Pick<UpstreamView, 'id' | 'slug'>
   serviceName: string
   endpoint: ServiceEndpointSummary
@@ -56,7 +55,7 @@ export async function synchronizeEndpointSupportRoutes(input: {
   const supportEndpoints = groupedEndpoints.filter(endpoint => endpoint.support)
   if (supportEndpoints.length === 0) return
 
-  const routes = (await platformRouteService.list(input.workspaceId, {
+  const routes = (await platformRouteService.list({
     transaction: input.transaction
   })).filter(
     binding => binding.route.upstreamServiceId === input.upstream.id

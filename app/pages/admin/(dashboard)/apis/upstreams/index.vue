@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from '@nuxt/ui'
-import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type { PlatformUpstream, PlatformUpstreamTarget } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
@@ -11,7 +10,6 @@ import {
 
 const { t } = useI18n()
 const route = useRoute()
-const context = useAdminPlatformContext()
 const modalOpen = ref(false)
 const editingUpstream = ref<PlatformUpstream | null>(null)
 const targetModalOpen = ref(false)
@@ -24,19 +22,9 @@ useHead({ title: () => t('admin.apis.routing.sections.upstreamsTitle') })
 
 const resource = usePrivateResource<PlatformUpstream[]>({
   path: '/api/admin/v1/upstreams',
-  defaultData: () => [],
-  immediate: false,
-  query: () => context.selectedWorkspaceId.value
-    ? { workspaceId: context.selectedWorkspaceId.value }
-    : undefined
+  defaultData: () => []
 })
-const upstreams = computed(() => resource.data.value.filter(
-  upstream => upstream.workspaceId === context.selectedWorkspaceId.value
-))
-
-watch(context.selectedWorkspaceId, (workspaceId) => {
-  if (workspaceId) void resource.refresh()
-}, { immediate: true })
+const upstreams = computed(() => resource.data.value)
 
 function loadBalancingLabel(upstream: PlatformUpstream): string {
   return t(`admin.apis.routing.loadBalancing.${upstream.loadBalancing === 'weighted' ? 'weighted' : 'roundRobin'}`)
@@ -208,17 +196,11 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
         >
           {{ $t('common.actions.refresh') }}
         </UButton>
-        <UButton
-          icon="i-lucide-plus"
-          :disabled="!context.selectedWorkspace.value"
-          @click="openCreateUpstream"
-        >
+        <UButton icon="i-lucide-plus" @click="openCreateUpstream">
           {{ $t('admin.apis.routing.actions.createUpstream') }}
         </UButton>
       </div>
     </div>
-
-    <AdminPlatformContextBar :show-environment="false" />
 
     <UAlert
       color="info"
@@ -336,7 +318,6 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
           <UButton
             size="sm"
             icon="i-lucide-plus"
-            :disabled="!context.selectedWorkspace.value"
             @click="openCreateUpstream"
           >
             {{ $t('admin.apis.routing.actions.createUpstream') }}
@@ -346,9 +327,7 @@ function targetItems(upstream: PlatformUpstream, target: PlatformUpstreamTarget)
     </DashboardTableCard>
 
     <AdminPlatformUpstreamModal
-      v-if="context.selectedWorkspace.value"
       v-model:open="modalOpen"
-      :workspace="context.selectedWorkspace.value"
       :upstream="editingUpstream"
       @saved="refreshUpstreams"
     />

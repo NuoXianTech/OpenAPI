@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformUpstreamSummary, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformUpstreamSummary } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
-  workspace: PlatformWorkspace
   upstream?: PlatformUpstreamSummary | null
 }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -126,7 +125,6 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
               loadBalancing: event.data.loadBalancing
             }
           : {
-              workspaceId: props.workspace.id,
               name: event.data.name.trim(),
               slug: event.data.slug.trim(),
               serviceToken: event.data.serviceToken || undefined,
@@ -176,27 +174,6 @@ async function onSubmit(event: FormSubmitEvent<UpstreamFormState>) {
         class="space-y-5"
         @submit="onSubmit"
       >
-        <div class="flex items-center gap-2.5 rounded-lg border border-default bg-elevated/30 px-3 py-2.5">
-          <UIcon
-            name="i-lucide-panels-top-left"
-            class="size-4 shrink-0 text-muted"
-          />
-          <span class="text-xs text-muted">
-            {{ $t('admin.apis.routing.upstreamForm.workspaceContext') }}
-          </span>
-          <span class="ms-auto min-w-0 truncate text-xs font-medium text-highlighted">
-            {{ workspace.name }}
-          </span>
-          <UBadge
-            color="neutral"
-            variant="subtle"
-            size="sm"
-            class="shrink-0 font-mono"
-          >
-            {{ workspace.slug }}
-          </UBadge>
-        </div>
-
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField
             name="name"

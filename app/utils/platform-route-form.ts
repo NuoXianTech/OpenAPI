@@ -92,13 +92,10 @@ export function createRouteFormState(
 
 export function routeVersionOptions(
   products: PlatformProduct[],
-  workspaceId: string,
   current?: PlatformRouteBinding | null
 ): RouteBindingOption[] {
   const items = products
-    .filter(product => (
-      product.workspaceId === workspaceId && product.lifecycle === 'active'
-    ))
+    .filter(product => product.lifecycle === 'active')
     .flatMap(product => product.versions
       .filter(version => (
         version.state === 'published' || version.state === 'deprecated'
@@ -120,13 +117,10 @@ export function routeVersionOptions(
 
 export function routeUpstreamOptions(
   upstreams: PlatformUpstream[],
-  workspaceId: string,
   current?: PlatformRouteBinding | null
 ): RouteBindingOption[] {
   const items = upstreams
-    .filter(upstream => (
-      upstream.workspaceId === workspaceId && upstream.status === 'active'
-    ))
+    .filter(upstream => upstream.status === 'active')
     .map(upstream => ({
       label: upstream.name,
       value: upstream.id,

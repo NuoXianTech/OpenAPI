@@ -71,7 +71,6 @@ function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serv
   else headers.delete('x-forwarded-for')
   headers.set('x-openapi-route-id', match.route.id)
   headers.set('x-openapi-upstream-id', match.upstream.id)
-  headers.set('x-openapi-environment-id', match.environmentId)
   headers.set('x-openapi-revision-id', match.revisionId)
   headers.set('x-openapi-product-id', match.route.productId)
   headers.set('x-openapi-product-slug', match.route.productSlug)

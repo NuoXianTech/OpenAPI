@@ -6,7 +6,7 @@ import { assertRuntimeEnvironment } from '~~/server/config/runtime-env'
 import { closeDatabase } from '~~/server/db/client'
 import { runDatabaseMigrations } from '~~/server/db/migrate'
 import { adminUserService } from '~~/server/services/admin-user-service'
-import { platformWorkspaceService } from '~~/server/services/platform-workspace-service'
+import { platformRuntimeService } from '~~/server/services/platform-runtime-service'
 import { userService, USER_ROLES } from '~~/server/services/user-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { hashPassword } from '~~/server/utils/password'
@@ -57,7 +57,7 @@ async function initializeRedisService(): Promise<void> {
 async function initializeDatabaseState(): Promise<void> {
   await migrateDatabase()
   await ensureInitialAdmin()
-  await platformWorkspaceService.ensureDefault()
+  await platformRuntimeService.ensureDefault()
 }
 
 async function initializeServer(): Promise<void> {

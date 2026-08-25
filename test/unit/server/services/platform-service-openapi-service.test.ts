@@ -26,13 +26,8 @@ const { persistServiceOpenApi } = await import(
 const { platformUpstreamService } = await import(
   '~~/server/services/platform-upstream-service'
 )
-const { platformWorkspaceService } = await import(
-  '~~/server/services/platform-workspace-service'
-)
-
 let client: PGlite
 let database: ReturnType<typeof drizzle<typeof schema>>
-let workspaceId: string
 
 beforeAll(async () => {
   client = new PGlite()
@@ -46,15 +41,15 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  await client.exec('TRUNCATE TABLE workspaces CASCADE;')
-  workspaceId = (await platformWorkspaceService.ensureDefault()).workspace.id
+  await client.exec(
+    'TRUNCATE TABLE upstream_services, openapi_documents CASCADE;'
+  )
 })
 
 afterAll(async () => client.close())
 
 async function createUpstream(slug: string) {
   return platformUpstreamService.create({
-    workspaceId,
     slug,
     name: slug,
     serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
@@ -106,7 +101,6 @@ describe('Service OpenAPI persistence', () => {
     const upstream = await createUpstream('concurrent-service')
     const { description, document, openapiSha256 } = contract('concurrent-service')
     const input = {
-      workspaceId,
       upstreamServiceId: upstream.id,
       description,
       document,
@@ -139,7 +133,6 @@ describe('Service OpenAPI persistence', () => {
 
     const documents = await Promise.all([first, second].map(upstream => (
       persistServiceOpenApi({
-        workspaceId,
         upstreamServiceId: upstream.id,
         description,
         document,

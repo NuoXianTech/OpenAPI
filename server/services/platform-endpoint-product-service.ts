@@ -55,7 +55,6 @@ export function endpointProductDefinition(input: {
 }
 
 export async function ensureEndpointVersion(input: {
-  workspaceId: string
   upstream: UpstreamView
   serviceName: string
   endpoint: ServiceEndpointSummary
@@ -76,19 +75,17 @@ export async function ensureEndpointVersion(input: {
 
   const ensure = async (tx: DatabaseTransaction) => {
     let product = firstRow(await tx.insert(apiProducts).values({
-      workspaceId: input.workspaceId,
       slug: definition.slug,
       name: definition.name,
       summary: definition.summary,
       visibility: 'public',
       lifecycle: 'active'
     }).onConflictDoNothing({
-      target: [apiProducts.workspaceId, apiProducts.slug],
+      target: apiProducts.slug,
       where: sql`${apiProducts.deletedAt} IS NULL`
     }).returning())
     if (!product) {
       const existing = firstRow(await tx.select().from(apiProducts).where(and(
-        eq(apiProducts.workspaceId, input.workspaceId),
         eq(apiProducts.slug, definition.slug),
         sql`${apiProducts.deletedAt} IS NULL`
       )).limit(1))

@@ -44,37 +44,8 @@ export const apiCategories = pgTable('api_categories', {
   index('api_categories_enabled_sort_idx').on(table.isEnabled, table.sortOrder)
 ])
 
-export const workspaces = pgTable('workspaces', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  slug: varchar('slug', { length: 80 }).notNull(),
-  name: varchar('name', { length: 160 }).notNull(),
-  status: varchar('status', { length: 20 }).notNull().default('active'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('workspaces_slug_uq').on(table.slug),
-  check('workspaces_status_chk', sql`${table.status} in ('active', 'disabled')`)
-])
-
-export const environments = pgTable('environments', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-  slug: varchar('slug', { length: 80 }).notNull(),
-  name: varchar('name', { length: 160 }).notNull(),
-  defaultDomain: varchar('default_domain', { length: 253 }),
-  activeRevisionId: uuid('active_revision_id').references((): AnyPgColumn => routingRevisions.id, { onDelete: 'set null' }),
-  status: varchar('status', { length: 20 }).notNull().default('active'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
-}, table => [
-  uniqueIndex('environments_workspace_slug_uq').on(table.workspaceId, table.slug),
-  index('environments_active_revision_idx').on(table.activeRevisionId),
-  check('environments_status_chk', sql`${table.status} in ('active', 'disabled')`)
-])
-
 export const openapiDocuments = pgTable('openapi_documents', {
   id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   upstreamServiceId: uuid('upstream_service_id').references((): AnyPgColumn => upstreamServices.id, { onDelete: 'set null' }),
   sourceType: varchar('source_type', { length: 20 }).notNull(),
   sourceUrl: text('source_url'),
@@ -86,9 +57,9 @@ export const openapiDocuments = pgTable('openapi_documents', {
   fetchedAt: timestamp('fetched_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 }, table => [
-  index('openapi_documents_workspace_created_idx').on(table.workspaceId, table.createdAt.desc()),
+  index('openapi_documents_created_idx').on(table.createdAt.desc()),
   uniqueIndex('openapi_documents_upstream_hash_uq')
-    .on(table.workspaceId, table.upstreamServiceId, table.contentHash)
+    .on(table.upstreamServiceId, table.contentHash)
     .where(sql`${table.upstreamServiceId} IS NOT NULL`),
   check('openapi_documents_source_type_chk', sql`${table.sourceType} in ('upload', 'url')`),
   check('openapi_documents_format_chk', sql`${table.format} in ('json', 'yaml')`)
@@ -96,7 +67,6 @@ export const openapiDocuments = pgTable('openapi_documents', {
 
 export const apiProducts = pgTable('api_products', {
   id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   slug: varchar('slug', { length: 80 }).notNull(),
   name: varchar('name', { length: 160 }).notNull(),
   summary: varchar('summary', { length: 300 }).notNull().default(''),
@@ -108,10 +78,10 @@ export const apiProducts = pgTable('api_products', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('api_products_workspace_slug_uq')
-    .on(table.workspaceId, table.slug)
+  uniqueIndex('api_products_slug_uq')
+    .on(table.slug)
     .where(sql`${table.deletedAt} IS NULL`),
-  index('api_products_workspace_lifecycle_idx').on(table.workspaceId, table.lifecycle),
+  index('api_products_lifecycle_idx').on(table.lifecycle),
   index('api_products_category_idx').on(table.categoryId),
   check('api_products_visibility_chk', sql`${table.visibility} in ('public', 'private')`),
   check('api_products_lifecycle_chk', sql`${table.lifecycle} in ('active', 'deprecated', 'retired')`)
@@ -136,7 +106,6 @@ export const apiVersions = pgTable('api_versions', {
 
 export const upstreamServices = pgTable('upstream_services', {
   id: uuid('id').primaryKey().defaultRandom(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
   slug: varchar('slug', { length: 80 }).notNull(),
   name: varchar('name', { length: 160 }).notNull(),
   openapiDocumentId: uuid('openapi_document_id').references(() => openapiDocuments.id, { onDelete: 'set null' }),
@@ -146,10 +115,10 @@ export const upstreamServices = pgTable('upstream_services', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   deletedAt: timestamp('deleted_at', { withTimezone: true })
 }, table => [
-  uniqueIndex('upstream_services_workspace_slug_uq')
-    .on(table.workspaceId, table.slug)
+  uniqueIndex('upstream_services_slug_uq')
+    .on(table.slug)
     .where(sql`${table.deletedAt} IS NULL`),
-  index('upstream_services_workspace_status_idx').on(table.workspaceId, table.status),
+  index('upstream_services_status_idx').on(table.status),
   check('upstream_services_load_balancing_chk', sql`${table.loadBalancing} in ('round_robin', 'weighted')`),
   check('upstream_services_status_chk', sql`${table.status} in ('active', 'disabled')`)
 ])
@@ -254,8 +223,6 @@ export const apiRoutes = pgTable('api_routes', {
 
 export const routingRevisions = pgTable('routing_revisions', {
   id: uuid('id').primaryKey(),
-  workspaceId: uuid('workspace_id').notNull().references(() => workspaces.id, { onDelete: 'cascade' }),
-  environmentId: uuid('environment_id').notNull().references(() => environments.id, { onDelete: 'cascade' }),
   sequence: integer('sequence').notNull(),
   configPayload: jsonb('config_payload').$type<RoutingRevisionPayload>().notNull(),
   checksum: varchar('checksum', { length: 64 }).notNull(),
@@ -263,8 +230,21 @@ export const routingRevisions = pgTable('routing_revisions', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   publishedAt: timestamp('published_at', { withTimezone: true }).notNull()
 }, table => [
-  uniqueIndex('routing_revisions_environment_sequence_uq').on(table.environmentId, table.sequence),
-  index('routing_revisions_environment_created_idx').on(table.environmentId, table.createdAt.desc()),
+  uniqueIndex('routing_revisions_sequence_uq').on(table.sequence),
+  index('routing_revisions_created_idx').on(table.createdAt.desc()),
   index('routing_revisions_checksum_idx').on(table.checksum),
   check('routing_revisions_sequence_chk', sql`${table.sequence} > 0`)
+])
+
+/**
+ * 网关运行时的单行配置。id 恒为 1：平台只有一个运行时，
+ * 发布历史与激活指针都挂在这里。
+ */
+export const platformRuntime = pgTable('platform_runtime', {
+  id: integer('id').primaryKey().default(1),
+  defaultDomain: varchar('default_domain', { length: 253 }),
+  activeRevisionId: uuid('active_revision_id').references(() => routingRevisions.id, { onDelete: 'set null' }),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date())
+}, table => [
+  check('platform_runtime_singleton_chk', sql`${table.id} = 1`)
 ])

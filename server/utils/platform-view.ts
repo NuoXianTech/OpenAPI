@@ -2,7 +2,7 @@ import type {
   PlatformApiVersion,
   PlatformEndpointCatalog,
   PlatformEndpointPublicationResult,
-  PlatformEnvironment,
+  PlatformRuntime,
   PlatformProduct,
   PlatformProductSummary,
   PlatformRoute,
@@ -10,25 +10,21 @@ import type {
   PlatformRoutingRevision,
   PlatformUpstream,
   PlatformUpstreamSummary,
-  PlatformUpstreamTarget,
-  PlatformWorkspace,
-  PlatformWorkspaceSummary
+  PlatformUpstreamTarget
 } from '#shared/types/platform'
 import type {
   apiProducts,
   apiRoutes,
   apiVersions,
-  environments,
+  platformRuntime,
   routingRevisions,
   upstreamServices,
-  upstreamTargets,
-  workspaces
+  upstreamTargets
 } from '~~/server/db/schema'
 import type { UpstreamView } from '~~/server/types/platform-publication'
 import { toIsoString, toNullableIsoString } from '~~/server/utils/date'
 
-type WorkspaceRow = typeof workspaces.$inferSelect
-type EnvironmentRow = typeof environments.$inferSelect
+type RuntimeRow = typeof platformRuntime.$inferSelect
 type ProductRow = typeof apiProducts.$inferSelect
 type VersionRow = typeof apiVersions.$inferSelect
 type UpstreamRow = typeof upstreamServices.$inferSelect
@@ -36,36 +32,10 @@ type TargetRow = typeof upstreamTargets.$inferSelect
 type RouteRow = typeof apiRoutes.$inferSelect
 type RevisionRow = typeof routingRevisions.$inferSelect
 
-export function toPlatformEnvironment(row: EnvironmentRow): PlatformEnvironment {
+export function toPlatformRuntime(row: RuntimeRow): PlatformRuntime {
   return {
-    id: row.id,
-    workspaceId: row.workspaceId,
-    slug: row.slug,
-    name: row.name,
     defaultDomain: row.defaultDomain,
     activeRevisionId: row.activeRevisionId,
-    status: row.status as PlatformEnvironment['status'],
-    createdAt: toIsoString(row.createdAt),
-    updatedAt: toIsoString(row.updatedAt)
-  }
-}
-
-export function toPlatformWorkspace(
-  row: WorkspaceRow & { environments: EnvironmentRow[] }
-): PlatformWorkspace {
-  return {
-    ...toPlatformWorkspaceSummary(row),
-    environments: row.environments.map(toPlatformEnvironment)
-  }
-}
-
-export function toPlatformWorkspaceSummary(row: WorkspaceRow): PlatformWorkspaceSummary {
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    status: row.status as PlatformWorkspace['status'],
-    createdAt: toIsoString(row.createdAt),
     updatedAt: toIsoString(row.updatedAt)
   }
 }
@@ -87,7 +57,6 @@ export function toPlatformApiVersion(row: VersionRow): PlatformApiVersion {
 export function toPlatformProductSummary(row: ProductRow): PlatformProductSummary {
   return {
     id: row.id,
-    workspaceId: row.workspaceId,
     slug: row.slug,
     name: row.name,
     summary: row.summary,
@@ -129,7 +98,6 @@ export function toPlatformUpstreamTarget(row: TargetRow): PlatformUpstreamTarget
 export function toPlatformUpstreamSummary(row: UpstreamRow): PlatformUpstreamSummary {
   return {
     id: row.id,
-    workspaceId: row.workspaceId,
     slug: row.slug,
     name: row.name,
     serviceManaged: 'serviceManaged' in row
@@ -198,8 +166,6 @@ export function toPlatformRouteBinding(row: {
 export function toPlatformRoutingRevision(row: RevisionRow): PlatformRoutingRevision {
   return {
     id: row.id,
-    workspaceId: row.workspaceId,
-    environmentId: row.environmentId,
     sequence: row.sequence,
     configPayload: row.configPayload,
     checksum: row.checksum,

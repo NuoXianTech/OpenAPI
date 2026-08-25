@@ -20,13 +20,12 @@ vi.stubGlobal('useRuntimeConfig', () => ({
 const { platformUpstreamService } = await import(
   '~~/server/services/platform-upstream-service'
 )
-const { platformWorkspaceService } = await import(
-  '~~/server/services/platform-workspace-service'
+const { platformRuntimeService } = await import(
+  '~~/server/services/platform-runtime-service'
 )
 
 let client: PGlite
 let database: ReturnType<typeof drizzle<typeof schema>>
-let workspaceId: string
 
 beforeAll(async () => {
   client = new PGlite()
@@ -43,15 +42,16 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-  await client.exec('TRUNCATE TABLE workspaces CASCADE;')
-  workspaceId = (await platformWorkspaceService.ensureDefault()).workspace.id
+  await client.exec(
+    'TRUNCATE TABLE platform_runtime, routing_revisions, api_products, upstream_services CASCADE;'
+  )
+  await platformRuntimeService.ensureDefault()
 })
 
 afterAll(async () => client.close())
 
 async function createConfiguredTarget() {
   const upstream = await platformUpstreamService.create({
-    workspaceId,
     slug: 'service-target-state',
     name: 'Service Target State',
     serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
@@ -80,7 +80,6 @@ async function createConfiguredTarget() {
 
 async function createActiveRoute(upstreamServiceId: string) {
   const [product] = await database.insert(schema.apiProducts).values({
-    workspaceId,
     slug: 'rolling-update-test',
     name: 'Rolling Update Test'
   }).returning()
@@ -104,7 +103,6 @@ async function createActiveRoute(upstreamServiceId: string) {
 describe('Platform upstream target state', () => {
   it('publishes manual Target changes immediately', async () => {
     const upstream = await platformUpstreamService.create({
-      workspaceId,
       slug: 'manual-target-publication',
       name: 'Manual Target Publication',
       loadBalancing: 'round_robin',
@@ -120,7 +118,6 @@ describe('Platform upstream target state', () => {
 
   it('keeps unverified Service-managed Target changes out of runtime', async () => {
     const upstream = await platformUpstreamService.create({
-      workspaceId,
       slug: 'service-target-publication',
       name: 'Service Target Publication',
       serviceToken: 'openapi-test-service-token-with-at-least-32-characters',
@@ -200,7 +197,6 @@ describe('Platform upstream target state', () => {
 
   it('serializes concurrent attempts to disable the last two Targets', async () => {
     const upstream = await platformUpstreamService.create({
-      workspaceId,
       slug: 'concurrent-target-disable',
       name: 'Concurrent Target Disable',
       loadBalancing: 'round_robin',

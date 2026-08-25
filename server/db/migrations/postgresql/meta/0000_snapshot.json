@@ -1,5 +1,5 @@
 {
-  "id": "fbc140b2-1438-4bd9-ab30-7260ab4cae6e",
+  "id": "e6b1d6df-e29a-4f6c-b28e-c82026174366",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2395,12 +2395,6 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "slug": {
           "name": "slug",
           "type": "varchar(80)",
@@ -2469,15 +2463,9 @@
         }
       },
       "indexes": {
-        "api_products_workspace_slug_uq": {
-          "name": "api_products_workspace_slug_uq",
+        "api_products_slug_uq": {
+          "name": "api_products_slug_uq",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "slug",
               "isExpression": false,
@@ -2491,15 +2479,9 @@
           "method": "btree",
           "with": {}
         },
-        "api_products_workspace_lifecycle_idx": {
-          "name": "api_products_workspace_lifecycle_idx",
+        "api_products_lifecycle_idx": {
+          "name": "api_products_lifecycle_idx",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "lifecycle",
               "isExpression": false,
@@ -2529,19 +2511,6 @@
         }
       },
       "foreignKeys": {
-        "api_products_workspace_id_workspaces_id_fk": {
-          "name": "api_products_workspace_id_workspaces_id_fk",
-          "tableFrom": "api_products",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "api_products_category_id_api_categories_id_fk": {
           "name": "api_products_category_id_api_categories_id_fk",
           "tableFrom": "api_products",
@@ -3054,146 +3023,6 @@
       },
       "isRLSEnabled": false
     },
-    "public.environments": {
-      "name": "environments",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(160)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "default_domain": {
-          "name": "default_domain",
-          "type": "varchar(253)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "active_revision_id": {
-          "name": "active_revision_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "environments_workspace_slug_uq": {
-          "name": "environments_workspace_slug_uq",
-          "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "environments_active_revision_idx": {
-          "name": "environments_active_revision_idx",
-          "columns": [
-            {
-              "expression": "active_revision_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "environments_workspace_id_workspaces_id_fk": {
-          "name": "environments_workspace_id_workspaces_id_fk",
-          "tableFrom": "environments",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "environments_active_revision_id_routing_revisions_id_fk": {
-          "name": "environments_active_revision_id_routing_revisions_id_fk",
-          "tableFrom": "environments",
-          "tableTo": "routing_revisions",
-          "columnsFrom": [
-            "active_revision_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "environments_status_chk": {
-          "name": "environments_status_chk",
-          "value": "\"environments\".\"status\" in ('active', 'disabled')"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.openapi_documents": {
       "name": "openapi_documents",
       "schema": "",
@@ -3204,12 +3033,6 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
         },
         "upstream_service_id": {
           "name": "upstream_service_id",
@@ -3275,15 +3098,9 @@
         }
       },
       "indexes": {
-        "openapi_documents_workspace_created_idx": {
-          "name": "openapi_documents_workspace_created_idx",
+        "openapi_documents_created_idx": {
+          "name": "openapi_documents_created_idx",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "created_at",
               "isExpression": false,
@@ -3299,12 +3116,6 @@
         "openapi_documents_upstream_hash_uq": {
           "name": "openapi_documents_upstream_hash_uq",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "upstream_service_id",
               "isExpression": false,
@@ -3326,19 +3137,6 @@
         }
       },
       "foreignKeys": {
-        "openapi_documents_workspace_id_workspaces_id_fk": {
-          "name": "openapi_documents_workspace_id_workspaces_id_fk",
-          "tableFrom": "openapi_documents",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "openapi_documents_upstream_service_id_upstream_services_id_fk": {
           "name": "openapi_documents_upstream_service_id_upstream_services_id_fk",
           "tableFrom": "openapi_documents",
@@ -3368,6 +3166,64 @@
       },
       "isRLSEnabled": false
     },
+    "public.platform_runtime": {
+      "name": "platform_runtime",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "default_domain": {
+          "name": "default_domain",
+          "type": "varchar(253)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active_revision_id": {
+          "name": "active_revision_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "platform_runtime_active_revision_id_routing_revisions_id_fk": {
+          "name": "platform_runtime_active_revision_id_routing_revisions_id_fk",
+          "tableFrom": "platform_runtime",
+          "tableTo": "routing_revisions",
+          "columnsFrom": [
+            "active_revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "platform_runtime_singleton_chk": {
+          "name": "platform_runtime_singleton_chk",
+          "value": "\"platform_runtime\".\"id\" = 1"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.routing_revisions": {
       "name": "routing_revisions",
       "schema": "",
@@ -3376,18 +3232,6 @@
           "name": "id",
           "type": "uuid",
           "primaryKey": true,
-          "notNull": true
-        },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "environment_id": {
-          "name": "environment_id",
-          "type": "uuid",
-          "primaryKey": false,
           "notNull": true
         },
         "sequence": {
@@ -3429,15 +3273,9 @@
         }
       },
       "indexes": {
-        "routing_revisions_environment_sequence_uq": {
-          "name": "routing_revisions_environment_sequence_uq",
+        "routing_revisions_sequence_uq": {
+          "name": "routing_revisions_sequence_uq",
           "columns": [
-            {
-              "expression": "environment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "sequence",
               "isExpression": false,
@@ -3450,15 +3288,9 @@
           "method": "btree",
           "with": {}
         },
-        "routing_revisions_environment_created_idx": {
-          "name": "routing_revisions_environment_created_idx",
+        "routing_revisions_created_idx": {
+          "name": "routing_revisions_created_idx",
           "columns": [
-            {
-              "expression": "environment_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "created_at",
               "isExpression": false,
@@ -3487,34 +3319,7 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "routing_revisions_workspace_id_workspaces_id_fk": {
-          "name": "routing_revisions_workspace_id_workspaces_id_fk",
-          "tableFrom": "routing_revisions",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "routing_revisions_environment_id_environments_id_fk": {
-          "name": "routing_revisions_environment_id_environments_id_fk",
-          "tableFrom": "routing_revisions",
-          "tableTo": "environments",
-          "columnsFrom": [
-            "environment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -3687,12 +3492,6 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "workspace_id": {
-          "name": "workspace_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
         "slug": {
           "name": "slug",
           "type": "varchar(80)",
@@ -3747,15 +3546,9 @@
         }
       },
       "indexes": {
-        "upstream_services_workspace_slug_uq": {
-          "name": "upstream_services_workspace_slug_uq",
+        "upstream_services_slug_uq": {
+          "name": "upstream_services_slug_uq",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "slug",
               "isExpression": false,
@@ -3769,15 +3562,9 @@
           "method": "btree",
           "with": {}
         },
-        "upstream_services_workspace_status_idx": {
-          "name": "upstream_services_workspace_status_idx",
+        "upstream_services_status_idx": {
+          "name": "upstream_services_status_idx",
           "columns": [
-            {
-              "expression": "workspace_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
             {
               "expression": "status",
               "isExpression": false,
@@ -3792,19 +3579,6 @@
         }
       },
       "foreignKeys": {
-        "upstream_services_workspace_id_workspaces_id_fk": {
-          "name": "upstream_services_workspace_id_workspaces_id_fk",
-          "tableFrom": "upstream_services",
-          "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "upstream_services_openapi_document_id_openapi_documents_id_fk": {
           "name": "upstream_services_openapi_document_id_openapi_documents_id_fk",
           "tableFrom": "upstream_services",
@@ -3997,80 +3771,6 @@
         "upstream_targets_configuration_status_chk": {
           "name": "upstream_targets_configuration_status_chk",
           "value": "\"upstream_targets\".\"configuration_status\" in ('unknown', 'synced', 'drifted', 'error')"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.workspaces": {
-      "name": "workspaces",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(80)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(160)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "workspaces_slug_uq": {
-          "name": "workspaces_slug_uq",
-          "columns": [
-            {
-              "expression": "slug",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "workspaces_status_chk": {
-          "name": "workspaces_status_chk",
-          "value": "\"workspaces\".\"status\" in ('active', 'disabled')"
         }
       },
       "isRLSEnabled": false

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { eq } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
-import { environments, routingRevisions } from '~~/server/db/schema'
+import { platformRuntime, routingRevisions } from '~~/server/db/schema'
 import type {
   RoutingRevisionPayload,
   RoutingRevisionRoute,
@@ -26,8 +26,7 @@ interface CompiledRoute {
   hosts: string[]
 }
 
-interface CompiledEnvironment {
-  environmentId: string
+interface CompiledRuntime {
   defaultDomain: string | null
   revisionId: string
   routes: CompiledRoute[]
@@ -35,7 +34,6 @@ interface CompiledEnvironment {
 }
 
 export interface ResolvedDynamicRoute {
-  environmentId: string
   revisionId: string
   route: RoutingRevisionRoute
   upstream: RoutingRevisionUpstream
@@ -45,7 +43,7 @@ export interface ResolvedDynamicRoute {
 interface RuntimeCache {
   generation: number
   expiresAt: number
-  environments: CompiledEnvironment[]
+  runtime: CompiledRuntime | null
 }
 
 let runtimeCache: RuntimeCache | null = null
@@ -60,16 +58,15 @@ function validateChecksum(payload: RoutingRevisionPayload, checksum: string): vo
   if (actual !== checksum) throw new Error(`routing revision checksum mismatch: ${payload.revisionId}`)
 }
 
-function compileEnvironment(input: {
-  environmentId: string
+function compileRuntime(input: {
   defaultDomain: string | null
   revisionId: string
   checksum: string
   payload: RoutingRevisionPayload
-}): CompiledEnvironment {
+}): CompiledRuntime {
   const { payload } = input
   if (payload.schemaVersion !== 1) throw new Error(`unsupported routing schema: ${payload.schemaVersion}`)
-  if (payload.revisionId !== input.revisionId || payload.environmentId !== input.environmentId) {
+  if (payload.revisionId !== input.revisionId) {
     throw new Error('routing revision identity mismatch')
   }
   validateChecksum(payload, input.checksum)
@@ -95,7 +92,6 @@ function compileEnvironment(input: {
   ))
 
   return {
-    environmentId: input.environmentId,
     defaultDomain: input.defaultDomain ? normalizeRouteHost(input.defaultDomain) : null,
     revisionId: input.revisionId,
     routes,
@@ -103,55 +99,58 @@ function compileEnvironment(input: {
   }
 }
 
-async function loadCompiledEnvironments(): Promise<CompiledEnvironment[]> {
-  const rows = await db.select({
-    environmentId: environments.id,
-    defaultDomain: environments.defaultDomain,
+async function loadCompiledRuntime(): Promise<CompiledRuntime | null> {
+  const [row] = await db.select({
+    defaultDomain: platformRuntime.defaultDomain,
     revisionId: routingRevisions.id,
     checksum: routingRevisions.checksum,
     payload: routingRevisions.configPayload
-  }).from(environments)
-    .innerJoin(routingRevisions, eq(routingRevisions.id, environments.activeRevisionId))
-    .where(eq(environments.status, 'active'))
+  }).from(platformRuntime)
+    .innerJoin(routingRevisions, eq(routingRevisions.id, platformRuntime.activeRevisionId))
+    .limit(1)
+  if (!row) return null
 
-  const compiled = rows.map(compileEnvironment)
-  const conflict = findRoutingRouteConflict(compiled.map(environment => ({
-    environmentId: environment.environmentId,
-    defaultDomain: environment.defaultDomain,
-    routes: environment.routes.map(route => route.definition)
-  })))
+  const compiled = compileRuntime(row)
+  const conflict = findRoutingRouteConflict(
+    compiled.routes.map(route => route.definition),
+    compiled.defaultDomain
+  )
   if (conflict) {
-    throw new Error(`active routing revisions conflict: ${JSON.stringify(conflict)}`)
+    throw new Error(`active routing revision conflicts: ${JSON.stringify(conflict)}`)
   }
   return compiled
 }
 
-async function getCompiledEnvironments(): Promise<CompiledEnvironment[]> {
+async function getCompiledRuntime(): Promise<CompiledRuntime | null> {
   const now = Date.now()
   const generation = runtimeGeneration
   if (runtimeCache && runtimeCache.generation === generation && runtimeCache.expiresAt > now) {
-    return runtimeCache.environments
+    return runtimeCache.runtime
   }
 
   try {
-    const compiled = await loadCompiledEnvironments()
-    runtimeCache = { generation, expiresAt: now + CACHE_TTL_MS, environments: compiled }
+    const compiled = await loadCompiledRuntime()
+    runtimeCache = { generation, expiresAt: now + CACHE_TTL_MS, runtime: compiled }
     return compiled
   } catch (error) {
-    console.error('[gateway] Failed to load active routing revisions; retaining the last valid runtime.', error)
+    console.error('[gateway] Failed to load the active routing revision; retaining the last valid runtime.', error)
     if (runtimeCache) {
       runtimeCache.expiresAt = now + CACHE_TTL_MS
-      return runtimeCache.environments
+      return runtimeCache.runtime
     }
-    return []
+    return null
   }
 }
 
-function routeHostSpecificity(route: CompiledRoute, environment: CompiledEnvironment, requestHost: string): number {
+function routeHostSpecificity(
+  route: CompiledRoute,
+  defaultDomain: string | null,
+  requestHost: string
+): number {
   const hosts = route.hosts.length > 0
     ? route.hosts
-    : environment.defaultDomain
-      ? [environment.defaultDomain]
+    : defaultDomain
+      ? [defaultDomain]
       : []
   if (hosts.length === 0) return 0
 
@@ -167,7 +166,6 @@ function routeHostSpecificity(route: CompiledRoute, environment: CompiledEnviron
 }
 
 interface ResolvedCandidate {
-  environment: CompiledEnvironment
   route: CompiledRoute
   params: Record<string, string>
   hostSpecificity: number
@@ -182,56 +180,50 @@ function candidateOutranks(left: ResolvedCandidate, right: ResolvedCandidate): b
   if (left.methodSpecificity !== right.methodSpecificity) return left.methodSpecificity > right.methodSpecificity
   const pathOrder = left.route.definition.pathPattern.localeCompare(right.route.definition.pathPattern)
   if (pathOrder !== 0) return pathOrder < 0
-  const environmentOrder = left.environment.environmentId.localeCompare(right.environment.environmentId)
-  if (environmentOrder !== 0) return environmentOrder < 0
   return left.route.definition.id.localeCompare(right.route.definition.id) < 0
 }
 
 export const routingRuntimeService = {
   async resolveAllowedMethods(pathname: string, requestHost: string): Promise<string[]> {
-    const environments = await getCompiledEnvironments()
+    const runtime = await getCompiledRuntime()
+    if (!runtime) return []
     const methods = new Set<string>()
 
-    for (const environment of environments) {
-      for (const route of environment.routes) {
-        if (routeHostSpecificity(route, environment, requestHost) < 0) continue
-        if (!matchRoutePath(route.parsedPath, pathname)) continue
-        methods.add(route.definition.method)
-        if (route.definition.method === 'GET') methods.add('HEAD')
-      }
+    for (const route of runtime.routes) {
+      if (routeHostSpecificity(route, runtime.defaultDomain, requestHost) < 0) continue
+      if (!matchRoutePath(route.parsedPath, pathname)) continue
+      methods.add(route.definition.method)
+      if (route.definition.method === 'GET') methods.add('HEAD')
     }
 
     return HTTP_METHOD_ORDER.filter(method => methods.has(method))
   },
 
   async resolve(method: string, pathname: string, requestHost: string): Promise<ResolvedDynamicRoute | null> {
-    const environments = await getCompiledEnvironments()
+    const runtime = await getCompiledRuntime()
+    if (!runtime) return null
     const normalizedMethod = method.toUpperCase()
     let best: ResolvedCandidate | null = null
 
-    for (const environment of environments) {
-      for (const route of environment.routes) {
-        if (route.definition.method !== normalizedMethod && !(normalizedMethod === 'HEAD' && route.definition.method === 'GET')) continue
-        const hostSpecificity = routeHostSpecificity(route, environment, requestHost)
-        if (hostSpecificity < 0) continue
-        const match = matchRoutePath(route.parsedPath, pathname)
-        if (!match) continue
-        const candidate: ResolvedCandidate = {
-          environment,
-          route,
-          params: match.params,
-          hostSpecificity,
-          methodSpecificity: route.definition.method === normalizedMethod ? 1 : 0
-        }
-        if (!best || candidateOutranks(candidate, best)) best = candidate
+    for (const route of runtime.routes) {
+      if (route.definition.method !== normalizedMethod && !(normalizedMethod === 'HEAD' && route.definition.method === 'GET')) continue
+      const hostSpecificity = routeHostSpecificity(route, runtime.defaultDomain, requestHost)
+      if (hostSpecificity < 0) continue
+      const match = matchRoutePath(route.parsedPath, pathname)
+      if (!match) continue
+      const candidate: ResolvedCandidate = {
+        route,
+        params: match.params,
+        hostSpecificity,
+        methodSpecificity: route.definition.method === normalizedMethod ? 1 : 0
       }
+      if (!best || candidateOutranks(candidate, best)) best = candidate
     }
     if (!best) return null
     return {
-      environmentId: best.environment.environmentId,
-      revisionId: best.environment.revisionId,
+      revisionId: runtime.revisionId,
       route: best.route.definition,
-      upstream: best.environment.upstreams.get(best.route.definition.upstreamServiceId)!,
+      upstream: runtime.upstreams.get(best.route.definition.upstreamServiceId)!,
       params: best.params
     }
   }

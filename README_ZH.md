@@ -24,7 +24,7 @@ OpenAPI Platform 是一个自托管的 API 发布、访问控制、调用统计�
 
 ## 核心功能
 
-- **API 管理模型**：Workspace、Product、Version、Route、Upstream、Target 与可回滚 Routing Revision。
+- **API 管理模型**：Product、Version、Route、Upstream、Target 与可回滚 Routing Revision。
 - **Service 控制面**：按 Internal Upstream 加密保存 Token，发现 OpenAPI 与通用配置 Schema，多 Target 轮询/权重、配置同步和漂移检测。
 - **网关治理**：API Key、作用域、IP 白名单、有效期、吊销、Key 配额、API 每日配额，以及秒/分/时/日限流。
 - **积分计费**：按 HTTP 方法定价、可审计余额流水、幂等扣费和失败扣费重试。

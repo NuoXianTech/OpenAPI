@@ -59,7 +59,6 @@ const { dynamicGatewayService } = await import(
 )
 
 const match: ResolvedDynamicRoute = {
-  environmentId: '00000000-0000-4000-8000-000000000001',
   revisionId: '00000000-0000-4000-8000-000000000002',
   params: {},
   route: {

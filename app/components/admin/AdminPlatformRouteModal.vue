@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
-import type { PlatformProduct, PlatformRouteBinding, PlatformUpstream, PlatformWorkspace } from '#shared/types/platform'
+import type { PlatformProduct, PlatformRouteBinding, PlatformUpstream } from '#shared/types/platform'
 import { adminModalUi } from '~/utils/admin-modal-ui'
 import { parseFetchError } from '~/utils/client-error'
 import { compactFormErrors, integerRangeError, maxLengthError, requiredTextError } from '~/utils/form-validation'
@@ -17,11 +17,9 @@ import {
 
 const open = defineModel<boolean>('open', { default: false })
 const props = defineProps<{
-  workspace: PlatformWorkspace
   products: PlatformProduct[]
   upstreams: PlatformUpstream[]
   routeBinding?: PlatformRouteBinding | null
-  environmentId?: string
 }>()
 const emit = defineEmits<{ saved: [] }>()
 const toast = useToast()
@@ -36,12 +34,10 @@ const hostPattern = /^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-
 
 const versionItems = computed(() => routeVersionOptions(
   props.products,
-  props.workspace.id,
   props.routeBinding
 ))
 const upstreamItems = computed(() => routeUpstreamOptions(
   props.upstreams,
-  props.workspace.id,
   props.routeBinding
 ))
 const methodItems: HttpMethod[] = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE']
@@ -129,14 +125,12 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
     const body = routeMutationPayload(event.data)
     const routeId = props.routeBinding?.route.id
     if (routeId && isServiceManaged.value) {
-      if (!props.environmentId) throw new Error('environment is required for a Service-managed Route')
       const result = await $fetch<{
         route: { id: string, state: RouteState }
         revision: { configPayload: { routes: Array<{ id: string }> } } | null
       }>(`/api/admin/v1/service-endpoints/${routeId}`, {
         method: 'PATCH',
         body: {
-          environmentId: props.environmentId,
           enabled: event.data.state === 'active',
           name: body.name,
           isApiKey: body.isApiKey,
@@ -475,11 +469,9 @@ async function onSubmit(event: FormSubmitEvent<RouteFormState>) {
           :loading="loading"
           :disabled="!state.apiVersionId || !state.upstreamServiceId"
         >
-          {{ $t(environmentId
-            ? 'admin.apis.routing.actions.saveChanges'
-            : isEditing
-              ? 'admin.apis.routing.actions.saveRoute'
-              : 'admin.apis.routing.actions.createRoute') }}
+          {{ $t(isEditing
+            ? 'admin.apis.routing.actions.saveRoute'
+            : 'admin.apis.routing.actions.createRoute') }}
         </UButton>
       </div>
     </template>

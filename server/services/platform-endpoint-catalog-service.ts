@@ -1,7 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import {
-  environments,
   routingRevisions,
   upstreamServiceConnections,
   upstreamServices
@@ -9,7 +8,7 @@ import {
 import { createApplicationError } from '~~/server/errors/application-error'
 import { platformRouteService } from '~~/server/services/platform-route-service'
 import {
-  applyEnvironmentMutation,
+  applyPlatformMutation,
   endpointPublicationStatus,
   endpointRoutePriority,
   endpointUpstreamTemplate,
@@ -28,6 +27,7 @@ import { ensureEndpointVersion } from '~~/server/services/platform-endpoint-prod
 import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
 import { platformUpstreamService } from '~~/server/services/platform-upstream-service'
+import { platformRuntimeService } from '~~/server/services/platform-runtime-service'
 import { firstRow } from '~~/server/utils/row'
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
 
@@ -57,29 +57,10 @@ interface CatalogItem {
   publishable: boolean
 }
 
-async function loadEnvironment(
-  environmentId: string,
-  workspaceId?: string,
-  transaction?: DatabaseTransaction
-) {
-  const executor = transaction ?? db
-  const environment = firstRow(await executor.select().from(environments)
-    .where(eq(environments.id, environmentId))
-    .limit(1))
-  if (!environment || (workspaceId && environment.workspaceId !== workspaceId)) {
-    throw createApplicationError({
-      statusCode: 404,
-      message: 'environment not found in workspace',
-      data: { code: 'ENVIRONMENT_NOT_FOUND' }
-    })
-  }
-  return environment
-}
-
-async function activeRevision(environment: Awaited<ReturnType<typeof loadEnvironment>>) {
-  if (!environment.activeRevisionId) return null
+async function activeRevision(activeRevisionId: string | null) {
+  if (!activeRevisionId) return null
   return firstRow(await db.select().from(routingRevisions)
-    .where(eq(routingRevisions.id, environment.activeRevisionId))
+    .where(eq(routingRevisions.id, activeRevisionId))
     .limit(1)) ?? null
 }
 
@@ -116,12 +97,12 @@ async function assertServiceContractCurrent(
 }
 
 export const platformEndpointCatalogService = {
-  async list(workspaceId: string, environmentId: string) {
-    const environment = await loadEnvironment(environmentId, workspaceId)
+  async list() {
+    const runtime = await platformRuntimeService.get()
     const [upstreams, routes, revision] = await Promise.all([
-      platformUpstreamService.list(workspaceId, { checkAvailability: true }),
-      platformRouteService.list(workspaceId),
-      activeRevision(environment)
+      platformUpstreamService.list({ checkAvailability: true }),
+      platformRouteService.list(),
+      activeRevision(runtime.activeRevisionId)
     ])
     const liveRoutes = new Map(
       (revision?.configPayload.routes ?? []).map(route => [route.id, route])
@@ -218,8 +199,6 @@ export const platformEndpointCatalogService = {
 
     const items = services.flatMap(service => service.endpoints)
     return {
-      workspaceId,
-      environmentId,
       activeRevisionId: revision?.id ?? null,
       activeRevisionSequence: revision?.sequence ?? null,
       services,
@@ -240,7 +219,6 @@ export const platformEndpointCatalogService = {
   },
 
   async publish(input: {
-    environmentId: string
     upstreamServiceId: string
     method: HttpMethod
     path: string
@@ -263,7 +241,6 @@ export const platformEndpointCatalogService = {
         data: { code: 'UPSTREAM_NOT_ACTIVE' }
       })
     }
-    await loadEnvironment(input.environmentId, upstream.workspaceId)
     const view = await platformServiceControlService.get(
       upstream.id,
       { checkAvailability: false }
@@ -282,14 +259,12 @@ export const platformEndpointCatalogService = {
       })
     }
 
-    const upstreamView = (await platformUpstreamService.list(
-      upstream.workspaceId,
-      { checkAvailability: false }
-    ))
+    const upstreamView = (await platformUpstreamService.list({
+      checkAvailability: false
+    }))
       .find(item => item.id === upstream.id)
     if (!upstreamView) throw new Error('upstream view disappeared during publication')
-    const committed = await applyEnvironmentMutation(
-      input.environmentId,
+    const committed = await applyPlatformMutation(
       createdBy,
       async (tx) => {
         await assertServiceContractCurrent(tx, {
@@ -297,15 +272,9 @@ export const platformEndpointCatalogService = {
           openapiDocumentId: upstream.openapiDocumentId,
           openapiSha256: view.connection.openapiSha256
         })
-        await loadEnvironment(
-          input.environmentId,
-          upstream.workspaceId,
-          tx
-        )
-        const existingRoutes = await platformRouteService.list(
-          upstream.workspaceId,
-          { transaction: tx }
-        )
+        const existingRoutes = await platformRouteService.list({
+          transaction: tx
+        })
         const existing = existingRoutes
           .filter(binding => (
             binding.route.upstreamServiceId === upstream.id
@@ -316,7 +285,6 @@ export const platformEndpointCatalogService = {
             - Number(left.route.state === 'active')
           ))[0]
         const apiVersionId = await ensureEndpointVersion({
-          workspaceId: upstream.workspaceId,
           upstream: upstreamView,
           serviceName: view.connection.serviceName ?? upstream.name,
           endpoint,
@@ -356,7 +324,6 @@ export const platformEndpointCatalogService = {
             }, { managedBy: 'service', transaction: tx })
         if (!route) throw new Error('endpoint route could not be created')
         await synchronizeEndpointSupportRoutes({
-          workspaceId: upstream.workspaceId,
           upstream: upstreamView,
           serviceName: view.connection.serviceName ?? upstream.name,
           endpoint,
@@ -364,9 +331,10 @@ export const platformEndpointCatalogService = {
           preferredVersionId: route.apiVersionId,
           transaction: tx
         })
-        return { route, created: !existing }
-      }, {
-        publishRouting: options.publishRouting !== false
+        return {
+          value: { route, created: !existing },
+          publishRouting: options.publishRouting !== false
+        }
       }
     )
     return {
@@ -377,12 +345,11 @@ export const platformEndpointCatalogService = {
 
   async update(
     routeId: string,
-    input: EndpointPublicationPatch & { environmentId: string },
+    input: EndpointPublicationPatch,
     createdBy: number | null,
     options: { publishRouting?: boolean } = {}
   ) {
     const binding = await platformRouteService.get(routeId)
-    await loadEnvironment(input.environmentId, binding.product.workspaceId)
     const serviceManaged = await platformUpstreamService.hasServiceConnection(
       binding.upstream.id
     )
@@ -402,8 +369,7 @@ export const platformEndpointCatalogService = {
         data: { code: 'SUPPORT_ROUTE_NOT_MANAGEABLE' }
       })
     }
-    const committed = await applyEnvironmentMutation(
-      input.environmentId,
+    const committed = await applyPlatformMutation(
       createdBy,
       async (tx) => {
         const current = await platformRouteService.get(routeId, {
@@ -416,11 +382,6 @@ export const platformEndpointCatalogService = {
             openapiSha256: view.connection.openapiSha256
           })
         }
-        await loadEnvironment(
-          input.environmentId,
-          current.product.workspaceId,
-          tx
-        )
         const route = await platformRouteService.update(routeId, {
           apiVersionId: current.route.apiVersionId,
           name: input.name ?? current.route.name,
@@ -453,7 +414,6 @@ export const platformEndpointCatalogService = {
         }, { allowServiceManaged: true, transaction: tx })
         if (view && endpoint) {
           await synchronizeEndpointSupportRoutes({
-            workspaceId: current.product.workspaceId,
             upstream: current.upstream,
             serviceName: view.connection.serviceName ?? current.upstream.name,
             endpoint,
@@ -462,9 +422,10 @@ export const platformEndpointCatalogService = {
             transaction: tx
           })
         }
-        return route
-      }, {
-        publishRouting: options.publishRouting !== false
+        return {
+          value: route,
+          publishRouting: options.publishRouting !== false
+        }
       })
     return {
       route: committed.value,

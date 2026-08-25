@@ -29,8 +29,8 @@ export async function readZodBody<S extends z.ZodType>(
 
 /**
  * 用 zod schema 校验查询参数；失败抛 400。
- * 不要用 safeParse 静默回退成「不过滤」——那会让一个拼错的 workspaceId
- * 返回全平台的行，既是越权也让前端拿到无声的错误数据。
+ * 不要用 safeParse 静默回退成「不过滤」——那会让一个拼错的过滤条件
+ * 返回全部行，既是越权也让前端拿到无声的错误数据。
  */
 export function parseZodQuery<S extends z.ZodType>(
   event: H3Event,

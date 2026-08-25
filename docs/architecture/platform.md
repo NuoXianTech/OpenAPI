@@ -35,18 +35,19 @@ Console 与 Gateway 共用同一个 Nitro 应用和数据库连接，但在代�
 Platform 使用以下层级描述公开 API：
 
 ```text
-Workspace
-├── Environment
-│   └── Active Routing Revision
-├── API Product
-│   └── API Version
-│       └── Route
-└── Upstream
-    └── Target
+Platform Runtime
+└── Active Routing Revision
+
+API Product
+└── API Version
+    └── Route
+
+Upstream
+└── Target
 ```
 
-- Workspace 是管理与发布边界。
-- Environment 持有一个活动 Routing Revision。
+- Platform Runtime 是平台唯一的运行时配置行，持有活动 Routing Revision 和可选默认域名。
+- Product、Route、Upstream 全局唯一，整个平台从同一份可发布配置生成一个运行快照。
 - Product/Version 组织对外能力和版本生命周期。
 - Route 定义公开 Method、Path、Upstream 映射和治理规则。
 - Upstream 定义一个逻辑上游，Target 定义一个可请求实例。
@@ -67,17 +68,17 @@ Service-managed Service 的标准流程是：
 
 Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排的日常步骤。生成 Revision 时 Platform：
 
-1. 读取 Workspace 内可发布的完整配置。
+1. 读取全部可发布配置。
 2. 校验 Route 冲突、引用完整性和治理约束。
 3. 生成规范化 JSON payload。
 4. 计算 SHA-256 checksum。
 5. 与当前活动 Revision 比较；配置相同则直接复用，不产生重复历史。
-6. 配置变化时保存不可变 Routing Revision，并激活到指定 Environment。
+6. 配置变化时保存不可变 Routing Revision，并激活到 Platform Runtime。
 7. 通知 Gateway 刷新运行时缓存。
 
 Route 行保存期望状态，活动 Revision 保存实际流量状态。接口目录的保存与“应用全部变更”分为两个事务：前者只更新控制面，后者校验完整配置并生成/复用快照；冲突校验或引用校验失败时，应用动作回滚，活动流量继续使用旧快照。其他需要立即生效的 Platform 管理对象仍使用单事务自动发布。
 
-Service 发现和配置同步包含对 Target 的网络调用，不能纳入数据库事务。它们采用显式可重试语义：网络结果先按 Target 记录，随后重新计算 Workspace Revision；任一步失败都会向调用方返回错误，管理员可安全地重新发现或同步，相同配置和相同 Revision 均保持幂等。
+Service 发现和配置同步包含对 Target 的网络调用，不能纳入数据库事务。它们采用显式可重试语义：网络结果先按 Target 记录，随后重新计算平台 Revision；任一步失败都会向调用方返回错误，管理员可安全地重新发现或同步，相同配置和相同 Revision 均保持幂等。
 
 后台将该技术概念显示为“运行快照”。运行快照页面只用于审计和回滚；管理员可以重新激活历史 Revision，而不需要恢复旧 Route 行或重启进程。
 
@@ -156,7 +157,7 @@ Route 支持：
 
 业务配置保存后，Platform 使用乐观锁生成更高 Revision，分别向全部启用 Target 下发同一完整快照，并记录 `synced`、`drifted`、`error` 或 `unknown` 状态。部分 Target 失败不会被视为全部成功。
 
-发现成功，或配置同步至少有一个 Target 成功后，Platform 自动重新计算 Workspace 的运行配置。相同配置复用当前 Revision；只有验证通过的 Target 集合实际变化时才生成新 Revision。部分同步生成只包含成功 Target 的快照；如果某个 Upstream 的全部 Target 同步失败，则该 Upstream 在后续 Revision 中继续使用最后一个有效 Target 快照，其他 Upstream 仍可独立更新。没有历史有效快照的新 Service-managed Upstream 会保持待发布状态，直到至少一个 Target 验证成功。期望配置与实际运行状态会保持可见差异，等待管理员修复后重试。发现不会自行创建公开 Route，但可以应用管理员此前已经明确发布、因 Service-managed Target 尚未验证而等待的 Route。
+发现成功，或配置同步至少有一个 Target 成功后，Platform 自动重新计算运行配置。相同配置复用当前 Revision；只有验证通过的 Target 集合实际变化时才生成新 Revision。部分同步生成只包含成功 Target 的快照；如果某个 Upstream 的全部 Target 同步失败，则该 Upstream 在后续 Revision 中继续使用最后一个有效 Target 快照，其他 Upstream 仍可独立更新。没有历史有效快照的新 Service-managed Upstream 会保持待发布状态，直到至少一个 Target 验证成功。期望配置与实际运行状态会保持可见差异，等待管理员修复后重试。发现不会自行创建公开 Route，但可以应用管理员此前已经明确发布、因 Service-managed Target 尚未验证而等待的 Route。
 
 Secret 使用独立存储域加密。管理 API 只返回是否已配置，浏览器和普通日志永远不会收到明文。
 
@@ -179,7 +180,7 @@ Platform 持有：
 
 - 用户、管理员、Session 和 OAuth 数据。
 - API Key、Scope 和安全摘要。
-- Workspace、Product、Route、Upstream 和 Revision。
+- Platform Runtime、Product、Route、Upstream 和 Revision。
 - Service Token 与业务配置密文。
 - 调用明细、积分预留与积分流水。
 - 公告、通知、站点设置和审计日志。

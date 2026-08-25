@@ -18,7 +18,7 @@ import {
   type PlatformServiceControlContext
 } from '~~/server/services/platform-service-control-context'
 import { persistServiceOpenApi } from '~~/server/services/platform-service-openapi-service'
-import { applyWorkspaceRevision } from '~~/server/services/platform-endpoint-publication-service'
+import { applyPlatformRevision } from '~~/server/services/platform-endpoint-publication-service'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 import { firstRow } from '~~/server/utils/row'
@@ -330,7 +330,6 @@ async function commitServiceSnapshot(
       !== snapshot.description.configuration.schemaSha256
     )
     await persistServiceOpenApi({
-      workspaceId: current.service.workspaceId,
       upstreamServiceId: current.service.id,
       description: snapshot.description,
       document: snapshot.openapi.document,
@@ -424,8 +423,8 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
     refreshed.targets,
     refreshed.connection
   )
-    ? await applyWorkspaceRevision(refreshed.service.workspaceId, null)
-    : { revisions: [] }
+    ? await applyPlatformRevision(null)
+    : { revision: null }
   return {
     ...await buildServiceControlView(
       refreshed,

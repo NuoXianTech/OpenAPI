@@ -17,7 +17,7 @@ import {
 } from '~~/server/utils/route-pattern'
 import { firstRow } from '~~/server/utils/row'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
-import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
+import { applyPlatformMutation } from '~~/server/services/platform-endpoint-publication-service'
 import type { RouteBinding, RouteMutationInput } from '~~/server/types/platform-publication'
 
 interface RouteMutationOptions {
@@ -57,8 +57,6 @@ async function normalizeRouteMutation(
 
   const executor = transaction ?? db
   const binding = firstRow(await executor.select({
-    productWorkspaceId: apiProducts.workspaceId,
-    upstreamWorkspaceId: upstreamServices.workspaceId,
     upstreamStatus: upstreamServices.status,
     upstreamDeletedAt: upstreamServices.deletedAt
   }).from(apiVersions)
@@ -69,9 +67,6 @@ async function normalizeRouteMutation(
 
   if (!binding) {
     throw createApplicationError({ statusCode: 404, message: 'API version or upstream not found', data: { code: 'ROUTE_BINDING_NOT_FOUND' } })
-  }
-  if (binding.productWorkspaceId !== binding.upstreamWorkspaceId) {
-    throw createApplicationError({ statusCode: 400, message: 'route and upstream must belong to the same workspace', data: { code: 'ROUTE_WORKSPACE_MISMATCH' } })
   }
   if (
     binding.upstreamDeletedAt
@@ -123,7 +118,6 @@ function assertMutableRoute(
 
 export const platformRouteService = {
   async list(
-    workspaceId?: string,
     options: { transaction?: DatabaseTransaction } = {}
   ): Promise<RouteBinding[]> {
     const executor = options.transaction ?? db
@@ -144,8 +138,7 @@ export const platformRouteService = {
       .where(and(
         isNull(apiRoutes.deletedAt),
         isNull(apiProducts.deletedAt),
-        isNull(upstreamServices.deletedAt),
-        workspaceId ? eq(apiProducts.workspaceId, workspaceId) : undefined
+        isNull(upstreamServices.deletedAt)
       ))
       .orderBy(asc(apiProducts.name), asc(apiVersions.version), asc(apiRoutes.pathPattern), asc(apiRoutes.method))
     return rows.map(row => ({
@@ -272,18 +265,12 @@ export const platformRouteService = {
     input: RouteMutationInput,
     createdBy: number | null
   ) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+    const committed = await applyPlatformMutation(createdBy, async (tx) => {
       const route = await platformRouteService.create(input, {
         transaction: tx
       })
       if (!route) throw new Error('route insert returned no row')
-      const binding = await platformRouteService.get(route.id, {
-        transaction: tx
-      })
-      return {
-        value: route,
-        workspaceId: binding.product.workspaceId
-      }
+      return { value: route }
     })
     const { value: route, ...publication } = committed
     return { route, ...publication }
@@ -294,35 +281,17 @@ export const platformRouteService = {
     input: RouteMutationInput,
     createdBy: number | null
   ) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
-      const route = await platformRouteService.update(id, input, {
-        transaction: tx
-      })
-      const binding = await platformRouteService.get(route.id, {
-        transaction: tx
-      })
-      return {
-        value: route,
-        workspaceId: binding.product.workspaceId
-      }
-    })
+    const committed = await applyPlatformMutation(createdBy, async tx => ({
+      value: await platformRouteService.update(id, input, { transaction: tx })
+    }))
     const { value: route, ...publication } = committed
     return { route, ...publication }
   },
 
   async removeAndPublish(id: string, createdBy: number | null) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
-      const binding = await platformRouteService.get(id, {
-        transaction: tx
-      })
-      const route = await platformRouteService.remove(id, {
-        transaction: tx
-      })
-      return {
-        value: route,
-        workspaceId: binding.product.workspaceId
-      }
-    })
+    const committed = await applyPlatformMutation(createdBy, async tx => ({
+      value: await platformRouteService.remove(id, { transaction: tx })
+    }))
     const { value: route, ...publication } = committed
     return { route, ...publication }
   }

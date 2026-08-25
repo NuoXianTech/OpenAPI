@@ -15,12 +15,11 @@ import { encryptStoredSecret } from '~~/server/utils/stored-secret'
 import { upstreamServiceTokenService } from '~~/server/services/upstream-service-token-service'
 import { routingReferenceService } from '~~/server/services/routing-reference-service'
 import { isServiceTargetReady } from '~~/server/utils/service-upstream-readiness'
-import { applyWorkspaceMutation } from '~~/server/services/platform-endpoint-publication-service'
+import { applyPlatformMutation } from '~~/server/services/platform-endpoint-publication-service'
 import type { UpstreamView } from '~~/server/types/platform-publication'
 import { normalizeUpstreamTargetUrl } from '~~/server/utils/upstream-target-url'
 
 interface CreateUpstreamInput {
-  workspaceId: string
   slug: string
   name: string
   loadBalancing: 'round_robin' | 'weighted'
@@ -123,7 +122,6 @@ export const platformUpstreamService = {
       .limit(1)))
   },
   async list(
-    workspaceId?: string,
     options: { checkAvailability?: boolean } = {}
   ): Promise<UpstreamView[]> {
     const rows = await db.select({
@@ -137,10 +135,7 @@ export const platformUpstreamService = {
         upstreamServiceConnections.upstreamServiceId,
         upstreamServices.id
       ))
-      .where(and(
-        isNull(upstreamServices.deletedAt),
-        workspaceId ? eq(upstreamServices.workspaceId, workspaceId) : undefined
-      ))
+      .where(isNull(upstreamServices.deletedAt))
       .orderBy(asc(upstreamServices.name), asc(upstreamTargets.createdAt))
 
     const result = new Map<string, typeof upstreamServices.$inferSelect & {
@@ -190,7 +185,6 @@ export const platformUpstreamService = {
     try {
       return await db.transaction(async (tx) => {
         const service = firstRow(await tx.insert(upstreamServices).values({
-          workspaceId: input.workspaceId,
           slug: input.slug,
           name: input.name,
           loadBalancing: input.loadBalancing
@@ -223,9 +217,6 @@ export const platformUpstreamService = {
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'upstream slug or target already exists', data: { code: 'UPSTREAM_CONFLICT' } })
-      }
-      if (getSqlState(error) === '23503') {
-        throw createApplicationError({ statusCode: 404, message: 'workspace not found', data: { code: 'WORKSPACE_NOT_FOUND' } })
       }
       throw error
     }
@@ -335,7 +326,6 @@ export const platformUpstreamService = {
       if (!target) throw new Error('target insert returned no row')
       return {
         target,
-        workspaceId: service.workspaceId,
         publishRouting: !serviceManaged && target.enabled
       }
     } catch (error) {
@@ -400,7 +390,6 @@ export const platformUpstreamService = {
           && input.weight !== binding.target.weight
         return {
           target,
-          workspaceId: binding.service.workspaceId,
           publishRouting: !serviceManaged
             || disablingPublishedTarget
             || updatingPublishedTarget
@@ -445,10 +434,7 @@ export const platformUpstreamService = {
         )
       }
       await tx.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
-      return {
-        target: binding.target,
-        workspaceId: binding.service.workspaceId
-      }
+      return binding.target
     }
     return options.transaction
       ? remove(options.transaction)
@@ -499,23 +485,17 @@ export const platformUpstreamService = {
     input: UpdateUpstreamInput,
     createdBy: number | null
   ) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
-      const upstream = await platformUpstreamService.update(id, input, {
-        transaction: tx
-      })
-      return { value: upstream, workspaceId: upstream.workspaceId }
-    })
+    const committed = await applyPlatformMutation(createdBy, async tx => ({
+      value: await platformUpstreamService.update(id, input, { transaction: tx })
+    }))
     const { value: upstream, ...publication } = committed
     return { upstream, ...publication }
   },
 
   async removeAndPublish(id: string, createdBy: number | null) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
-      const upstream = await platformUpstreamService.remove(id, {
-        transaction: tx
-      })
-      return { value: upstream, workspaceId: upstream.workspaceId }
-    })
+    const committed = await applyPlatformMutation(createdBy, async tx => ({
+      value: await platformUpstreamService.remove(id, { transaction: tx })
+    }))
     const { value: upstream, ...publication } = committed
     return { upstream, ...publication }
   },
@@ -525,17 +505,13 @@ export const platformUpstreamService = {
     input: CreateTargetInput,
     createdBy: number | null
   ) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+    const committed = await applyPlatformMutation(createdBy, async (tx) => {
       const created = await platformUpstreamService.createTarget(
         upstreamServiceId,
         input,
         { transaction: tx }
       )
-      return {
-        value: created.target,
-        workspaceId: created.workspaceId,
-        publishRouting: created.publishRouting
-      }
+      return { value: created.target, publishRouting: created.publishRouting }
     })
     const { value: target, ...publication } = committed
     return { target, ...publication }
@@ -546,31 +522,23 @@ export const platformUpstreamService = {
     input: UpdateTargetInput,
     createdBy: number | null
   ) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
+    const committed = await applyPlatformMutation(createdBy, async (tx) => {
       const updated = await platformUpstreamService.updateTarget(id, input, {
         transaction: tx
       })
-      return {
-        value: updated.target,
-        workspaceId: updated.workspaceId,
-        publishRouting: updated.publishRouting
-      }
+      return { value: updated.target, publishRouting: updated.publishRouting }
     })
     const { value: target, ...publication } = committed
     return { target, ...publication }
   },
 
   async removeTargetAndPublish(id: string, createdBy: number | null) {
-    const committed = await applyWorkspaceMutation(createdBy, async (tx) => {
-      const removed = await platformUpstreamService.removeTarget(id, {
+    const committed = await applyPlatformMutation(createdBy, async tx => ({
+      value: await platformUpstreamService.removeTarget(id, {
         transaction: tx,
         allowActiveRoutingRemoval: true
       })
-      return {
-        value: removed.target,
-        workspaceId: removed.workspaceId
-      }
-    })
+    }))
     const { value: target, ...publication } = committed
     return { target, ...publication }
   }

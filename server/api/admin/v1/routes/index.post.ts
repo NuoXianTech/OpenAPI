@@ -19,6 +19,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   })
   return {
     ...toPlatformRoute(created),
-    revisions: result.revisions
+    revision: result.revision
   }
 })

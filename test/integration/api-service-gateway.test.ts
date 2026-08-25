@@ -63,8 +63,8 @@ const { UnsupportedServiceProtocolError, serviceControlClient } = await import(
 const { platformUpstreamService } = await import(
   '~~/server/services/platform-upstream-service'
 )
-const { platformWorkspaceService } = await import(
-  '~~/server/services/platform-workspace-service'
+const { platformRuntimeService } = await import(
+  '~~/server/services/platform-runtime-service'
 )
 const { routingRevisionService } = await import(
   '~~/server/services/routing-revision-service'
@@ -94,7 +94,6 @@ let paidApiKey = ''
 let poorApiKey = ''
 let paidUserId = 0
 let poorUserId = 0
-let environmentId = ''
 let officialVersionId = ''
 let officialUpstreamId = ''
 let officialTargetId = ''
@@ -167,17 +166,14 @@ beforeAll(async () => {
     migrationsTable: '__drizzle_migrations'
   })
 
-  const defaults = await platformWorkspaceService.ensureDefault()
-  environmentId = defaults.environment.id
+  await platformRuntimeService.ensureDefault()
   const product = await platformProductService.create({
-    workspaceId: defaults.workspace.id,
     slug: 'official-public-apis',
     name: 'Official public APIs',
     visibility: 'public',
     version: 'v1'
   })
   const upstream = await platformUpstreamService.create({
-    workspaceId: defaults.workspace.id,
     slug: 'official-api-service',
     name: 'Official API Service',
     serviceToken,
@@ -307,7 +303,7 @@ beforeAll(async () => {
     scopes: [`route:${routeIds.yiyan}`]
   }))[0]!.apiKey
 
-  initialRevisionId = (await routingRevisionService.publish(defaults.environment.id, null)).id
+  initialRevisionId = (await routingRevisionService.publish(null)).id
 
   const gateway = createApp()
   gateway.use(eventHandler(async (event) => {
@@ -683,7 +679,6 @@ describe('Platform to Node API Service acceptance', () => {
 
   it('reports a partial configuration sync when one target is unavailable', async () => {
     const upstream = await platformUpstreamService.create({
-      workspaceId: (await platformWorkspaceService.ensureDefault()).workspace.id,
       slug: 'partial-sync-service',
       name: 'Partial sync Service',
       serviceToken,
@@ -699,7 +694,7 @@ describe('Platform to Node API Service acceptance', () => {
       upstreamPathTemplate: '/v1/yiyan',
       isStatistics: false
     })
-    await routingRevisionService.publish(environmentId, null)
+    await routingRevisionService.publish(null)
     const offlinePort = await reservePort()
     await databaseClient!.query(
       `insert into upstream_targets (upstream_service_id, base_url, weight)
@@ -738,11 +733,10 @@ describe('Platform to Node API Service acceptance', () => {
       }>
     } }>(
       `select revision.config_payload
-       from environments environment
+       from platform_runtime runtime
        join routing_revisions revision
-         on revision.id = environment.active_revision_id
-       where environment.id = $1`,
-      [environmentId]
+         on revision.id = runtime.active_revision_id
+       where runtime.id = 1`
     )
     expect(
       active.config_payload.upstreams.find(item => item.id === upstream.id)
@@ -903,9 +897,7 @@ describe('Platform to Node API Service acceptance', () => {
     let routeId: string | null = null
 
     try {
-      const workspace = await platformWorkspaceService.ensureDefault()
       const upstream = await platformUpstreamService.create({
-        workspaceId: workspace.workspace.id,
         slug: 'redirect-boundary-service',
         name: 'Redirect Boundary Service',
         serviceToken,
@@ -924,7 +916,7 @@ describe('Platform to Node API Service acceptance', () => {
         upstreamPathTemplate: '/redirect',
         isStatistics: false
       })
-      await routingRevisionService.publish(environmentId, null)
+      await routingRevisionService.publish(null)
 
       const response = await fetch(
         `${gatewayBaseURL}/v1/redirect-boundary`,
@@ -938,7 +930,7 @@ describe('Platform to Node API Service acceptance', () => {
       expect(hiddenRequests).toBe(0)
       await response.arrayBuffer()
     } finally {
-      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await routingRevisionService.activate(initialRevisionId)
       if (routeId) await platformRouteService.remove(routeId)
       await closeServer(redirectServer)
     }
@@ -962,9 +954,7 @@ describe('Platform to Node API Service acceptance', () => {
     let routeId: string | null = null
 
     try {
-      const workspace = await platformWorkspaceService.ensureDefault()
       const upstream = await platformUpstreamService.create({
-        workspaceId: workspace.workspace.id,
         slug: 'gateway-failover-service',
         name: 'Gateway Failover Service',
         serviceToken,
@@ -983,7 +973,7 @@ describe('Platform to Node API Service acceptance', () => {
         upstreamPathTemplate: '/read',
         isStatistics: false
       })
-      await routingRevisionService.publish(environmentId, null)
+      await routingRevisionService.publish(null)
 
       const first = await fetch(`${gatewayBaseURL}/v1/gateway-failover`)
       expect(first.status).toBe(200)
@@ -997,7 +987,7 @@ describe('Platform to Node API Service acceptance', () => {
       expect(requestCounts[failedTarget!]).toBe(1)
       expect(requestCounts[failedTarget === 0 ? 1 : 0]).toBe(2)
     } finally {
-      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await routingRevisionService.activate(initialRevisionId)
       if (routeId) await platformRouteService.remove(routeId)
       await Promise.all(servers.map(closeServer))
     }
@@ -1015,9 +1005,7 @@ describe('Platform to Node API Service acceptance', () => {
     let routeId: string | null = null
 
     try {
-      const workspace = await platformWorkspaceService.ensureDefault()
       const upstream = await platformUpstreamService.create({
-        workspaceId: workspace.workspace.id,
         slug: 'gateway-write-service',
         name: 'Gateway Write Service',
         serviceToken,
@@ -1038,7 +1026,7 @@ describe('Platform to Node API Service acceptance', () => {
         isStatistics: false,
         maxRequestBytes: 16
       })
-      await routingRevisionService.publish(environmentId, null)
+      await routingRevisionService.publish(null)
 
       const response = await fetch(`${gatewayBaseURL}/v1/gateway-write`, {
         method: 'POST',
@@ -1049,7 +1037,7 @@ describe('Platform to Node API Service acceptance', () => {
       await response.text()
       expect(requests).toBe(1)
     } finally {
-      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await routingRevisionService.activate(initialRevisionId)
       if (routeId) await platformRouteService.remove(routeId)
       await Promise.all(servers.map(closeServer))
     }
@@ -1079,9 +1067,7 @@ describe('Platform to Node API Service acceptance', () => {
     const routeIds: string[] = []
 
     try {
-      const workspace = await platformWorkspaceService.ensureDefault()
       const upstream = await platformUpstreamService.create({
-        workspaceId: workspace.workspace.id,
         slug: 'gateway-stream-limit-service',
         name: 'Gateway Stream Limit Service',
         serviceToken,
@@ -1131,7 +1117,7 @@ describe('Platform to Node API Service acceptance', () => {
         name: 'Gateway stream limit acceptance',
         scopes: [`route:${responseRouteId}`]
       }))[0]!.apiKey
-      await routingRevisionService.publish(environmentId, null)
+      await routingRevisionService.publish(null)
 
       const encoder = new TextEncoder()
       const requestStream = new ReadableStream<Uint8Array>({
@@ -1174,7 +1160,7 @@ describe('Platform to Node API Service acceptance', () => {
         [user.id]
       )).toEqual({ count: 0 })
     } finally {
-      await routingRevisionService.activate(environmentId, initialRevisionId)
+      await routingRevisionService.activate(initialRevisionId)
       await Promise.all(routeIds.map(routeId => platformRouteService.remove(routeId)))
       await closeServer(streamServer)
     }
@@ -1307,7 +1293,7 @@ describe('Platform to Node API Service acceptance', () => {
     await beforePublishOld.arrayBuffer()
     await beforePublishNew.arrayBuffer()
 
-    const updatedRevision = await routingRevisionService.publish(environmentId, null)
+    const updatedRevision = await routingRevisionService.publish(null)
     const afterPublishOld = await fetch(`${gatewayBaseURL}${oldPath}?type=a&id=a1`)
     const afterPublishNew = await fetch(`${gatewayBaseURL}${newPath}?type=a&id=a1`)
     expect(afterPublishOld.status).toBe(404)
@@ -1328,7 +1314,7 @@ describe('Platform to Node API Service acceptance', () => {
     expect(beforeDisablePublish.status).toBe(200)
     await beforeDisablePublish.arrayBuffer()
 
-    await routingRevisionService.publish(environmentId, null)
+    await routingRevisionService.publish(null)
     const afterDisablePublish = await fetch(
       `${gatewayBaseURL}${newPath}?type=a&id=a1`
     )
@@ -1336,12 +1322,12 @@ describe('Platform to Node API Service acceptance', () => {
     await afterDisablePublish.arrayBuffer()
     await platformRouteService.remove(routeIds.lifecycle)
 
-    await routingRevisionService.activate(environmentId, updatedRevision.id)
+    await routingRevisionService.activate(updatedRevision.id)
     const rolledBack = await fetch(`${gatewayBaseURL}${newPath}?type=a&id=a1`)
     expect(rolledBack.status).toBe(200)
     await rolledBack.arrayBuffer()
 
-    await routingRevisionService.activate(environmentId, initialRevisionId)
+    await routingRevisionService.activate(initialRevisionId)
   })
 
   it('rejects missing and invalid API keys before calling a paid Service route', async () => {

@@ -1,4 +1,3 @@
-import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type {
   PlatformEndpointCatalog,
@@ -12,8 +11,6 @@ import { parseFetchError } from '~/utils/client-error'
 
 function emptyCatalog(): PlatformEndpointCatalog {
   return {
-    workspaceId: '',
-    environmentId: '',
     activeRevisionId: null,
     activeRevisionSequence: null,
     services: [],
@@ -33,28 +30,13 @@ export function useAdminEndpointCatalogPage() {
   const route = useRoute()
   const router = useRouter()
   const toast = useToast()
-  const context = useAdminPlatformContext()
   const catalogResource = usePrivateResource<PlatformEndpointCatalog>({
     path: '/api/admin/v1/service-endpoints',
-    defaultData: emptyCatalog,
-    immediate: false,
-    query: () => (
-      context.selectedWorkspaceId.value
-      && context.selectedEnvironmentId.value
-        ? {
-            workspaceId: context.selectedWorkspaceId.value,
-            environmentId: context.selectedEnvironmentId.value
-          }
-        : undefined
-    )
+    defaultData: emptyCatalog
   })
   const productsResource = usePrivateResource<PlatformProduct[]>({
     path: '/api/admin/v1/products',
-    defaultData: () => [],
-    immediate: false,
-    query: () => context.selectedWorkspaceId.value
-      ? { workspaceId: context.selectedWorkspaceId.value }
-      : undefined
+    defaultData: () => []
   })
   const search = ref('')
   const statusFilter = ref('all')
@@ -63,15 +45,9 @@ export function useAdminEndpointCatalogPage() {
   const editingRoute = ref<PlatformRouteBinding | null>(null)
 
   const catalog = computed(() => catalogResource.data.value)
-  const products = computed(() => productsResource.data.value.filter(
-    product => product.workspaceId === context.selectedWorkspaceId.value
-  ))
-  const upstreams = computed(() => (
-    catalog.value.services
-      .map(service => service.upstream)
-      .filter(
-        upstream => upstream.workspaceId === context.selectedWorkspaceId.value
-      )
+  const products = computed(() => productsResource.data.value)
+  const upstreams = computed(() => catalog.value.services.map(
+    service => service.upstream
   ))
   const serviceUpstreams = computed(() => upstreams.value.filter(
     upstream => upstream.serviceManaged && upstream.status === 'active'
@@ -148,14 +124,6 @@ export function useAdminEndpointCatalogPage() {
       ))
   })
 
-  watch(
-    [context.selectedWorkspaceId, context.selectedEnvironmentId],
-    ([workspaceId, environmentId]) => {
-      if (workspaceId && environmentId) void refresh()
-    },
-    { immediate: true }
-  )
-
   watch(routeModalOpen, (open) => {
     if (!open) editingRoute.value = null
   })
@@ -189,19 +157,7 @@ export function useAdminEndpointCatalogPage() {
   }
 
   async function refresh() {
-    if (
-      !context.selectedWorkspaceId.value
-      || !context.selectedEnvironmentId.value
-    ) return
     await Promise.all([
-      catalogResource.refresh(),
-      productsResource.refresh()
-    ])
-  }
-
-  async function refreshAfterMutation() {
-    await Promise.all([
-      context.refresh(),
       catalogResource.refresh(),
       productsResource.refresh()
     ])
@@ -265,7 +221,7 @@ export function useAdminEndpointCatalogPage() {
   }
 
   /**
-   * Publication covers the whole environment, so one unready Upstream blocks
+   * Publication covers the whole runtime, so one unready Upstream blocks
    * every other pending change. Name it instead of leaving the admin to guess.
    */
   function blockingUpstreamName(error: unknown): string | null {
@@ -282,16 +238,15 @@ export function useAdminEndpointCatalogPage() {
   }
 
   async function applyChanges() {
-    const environmentId = context.selectedEnvironmentId.value
-    if (!environmentId || !canApply.value) return
+    if (!canApply.value) return
     const previousRevisionId = catalog.value.activeRevisionId
-    setBusy('apply:environment', true)
+    setBusy('apply:runtime', true)
     try {
       // Publication is idempotent: an unchanged payload returns the active
       // revision, so only a new id means the runtime actually moved.
       const result = await $fetch(
         '/api/admin/v1/service-endpoints/apply',
-        { method: 'POST', body: { environmentId } }
+        { method: 'POST' }
       )
       const runtimeUpdated = result.revision.id !== previousRevisionId
       toast.add({
@@ -302,7 +257,7 @@ export function useAdminEndpointCatalogPage() {
         color: runtimeUpdated ? 'success' : 'warning',
         icon: runtimeUpdated ? 'i-lucide-circle-check' : 'i-lucide-info'
       })
-      await refreshAfterMutation()
+      await refresh()
     } catch (error: unknown) {
       const blockedBy = blockingUpstreamName(error)
       toast.add({
@@ -319,7 +274,7 @@ export function useAdminEndpointCatalogPage() {
       })
       await catalogResource.refresh()
     } finally {
-      setBusy('apply:environment', false)
+      setBusy('apply:runtime', false)
     }
   }
 
@@ -327,8 +282,7 @@ export function useAdminEndpointCatalogPage() {
     service: PlatformEndpointCatalogService,
     item: PlatformEndpointCatalogItem
   ) {
-    const environmentId = context.selectedEnvironmentId.value
-    if (!environmentId || !item.endpoint) return
+    if (!item.endpoint) return
     const key = `endpoint:${item.key}`
     setBusy(key, true)
     try {
@@ -337,7 +291,6 @@ export function useAdminEndpointCatalogPage() {
         {
           method: 'POST',
           body: {
-            environmentId,
             upstreamServiceId: service.upstream.id,
             method: item.endpoint.method,
             path: item.endpoint.path
@@ -345,7 +298,7 @@ export function useAdminEndpointCatalogPage() {
         }
       )
       showPublicationResult(result, 'admin.apis.routing.catalog.feedback.published')
-      await refreshAfterMutation()
+      await refresh()
     } catch (error: unknown) {
       toast.add({
         title: parseFetchError(
@@ -365,21 +318,17 @@ export function useAdminEndpointCatalogPage() {
     patch: Record<string, unknown>,
     successKey: string
   ) {
-    const environmentId = context.selectedEnvironmentId.value
     const routeId = item.route?.route.id
-    if (!environmentId || !routeId) return
+    if (!routeId) return
     const key = `endpoint:${item.key}`
     setBusy(key, true)
     try {
       const result = await $fetch<PlatformEndpointPublicationResult>(
         `/api/admin/v1/service-endpoints/${routeId}`,
-        {
-          method: 'PATCH',
-          body: { environmentId, ...patch }
-        }
+        { method: 'PATCH', body: patch }
       )
       showPublicationResult(result, successKey)
-      await refreshAfterMutation()
+      await refresh()
     } catch (error: unknown) {
       toast.add({
         title: parseFetchError(
@@ -442,7 +391,6 @@ export function useAdminEndpointCatalogPage() {
     canApply,
     catalog,
     clearFocusedService,
-    context,
     discoverAllServices,
     discoverService,
     driftedServices,
@@ -456,7 +404,6 @@ export function useAdminEndpointCatalogPage() {
     openEditRoute,
     products,
     refresh,
-    refreshAfterMutation,
     requiresDiscovery,
     resetFilters,
     resourceError,

@@ -273,7 +273,6 @@ CREATE TABLE "api_categories" (
 --> statement-breakpoint
 CREATE TABLE "api_products" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"workspace_id" uuid NOT NULL,
 	"slug" varchar(80) NOT NULL,
 	"name" varchar(160) NOT NULL,
 	"summary" varchar(300) DEFAULT '' NOT NULL,
@@ -343,22 +342,8 @@ CREATE TABLE "api_versions" (
 	CONSTRAINT "api_versions_state_chk" CHECK ("api_versions"."state" in ('draft', 'published', 'deprecated', 'retired'))
 );
 --> statement-breakpoint
-CREATE TABLE "environments" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"workspace_id" uuid NOT NULL,
-	"slug" varchar(80) NOT NULL,
-	"name" varchar(160) NOT NULL,
-	"default_domain" varchar(253),
-	"active_revision_id" uuid,
-	"status" varchar(20) DEFAULT 'active' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "environments_status_chk" CHECK ("environments"."status" in ('active', 'disabled'))
-);
---> statement-breakpoint
 CREATE TABLE "openapi_documents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"workspace_id" uuid NOT NULL,
 	"upstream_service_id" uuid,
 	"source_type" varchar(20) NOT NULL,
 	"source_url" text,
@@ -373,10 +358,16 @@ CREATE TABLE "openapi_documents" (
 	CONSTRAINT "openapi_documents_format_chk" CHECK ("openapi_documents"."format" in ('json', 'yaml'))
 );
 --> statement-breakpoint
+CREATE TABLE "platform_runtime" (
+	"id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
+	"default_domain" varchar(253),
+	"active_revision_id" uuid,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "platform_runtime_singleton_chk" CHECK ("platform_runtime"."id" = 1)
+);
+--> statement-breakpoint
 CREATE TABLE "routing_revisions" (
 	"id" uuid PRIMARY KEY NOT NULL,
-	"workspace_id" uuid NOT NULL,
-	"environment_id" uuid NOT NULL,
 	"sequence" integer NOT NULL,
 	"config_payload" jsonb NOT NULL,
 	"checksum" varchar(64) NOT NULL,
@@ -411,7 +402,6 @@ CREATE TABLE "upstream_service_connections" (
 --> statement-breakpoint
 CREATE TABLE "upstream_services" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"workspace_id" uuid NOT NULL,
 	"slug" varchar(80) NOT NULL,
 	"name" varchar(160) NOT NULL,
 	"openapi_document_id" uuid,
@@ -443,36 +433,20 @@ CREATE TABLE "upstream_targets" (
 	CONSTRAINT "upstream_targets_configuration_status_chk" CHECK ("upstream_targets"."configuration_status" in ('unknown', 'synced', 'drifted', 'error'))
 );
 --> statement-breakpoint
-CREATE TABLE "workspaces" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"slug" varchar(80) NOT NULL,
-	"name" varchar(160) NOT NULL,
-	"status" varchar(20) DEFAULT 'active' NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "workspaces_status_chk" CHECK ("workspaces"."status" in ('active', 'disabled'))
-);
---> statement-breakpoint
 ALTER TABLE "oauth_accounts" ADD CONSTRAINT "oauth_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_credit_reservations" ADD CONSTRAINT "api_credit_reservations_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_keys" ADD CONSTRAINT "api_keys_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_message_id_notification_messages_id_fk" FOREIGN KEY ("message_id") REFERENCES "public"."notification_messages"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification_deliveries" ADD CONSTRAINT "notification_deliveries_recipient_user_id_users_id_fk" FOREIGN KEY ("recipient_user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_categories" ADD CONSTRAINT "api_categories_parent_id_api_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "api_products" ADD CONSTRAINT "api_products_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_products" ADD CONSTRAINT "api_products_category_id_api_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."api_categories"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_routes" ADD CONSTRAINT "api_routes_api_version_id_api_versions_id_fk" FOREIGN KEY ("api_version_id") REFERENCES "public"."api_versions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_routes" ADD CONSTRAINT "api_routes_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_versions" ADD CONSTRAINT "api_versions_product_id_api_products_id_fk" FOREIGN KEY ("product_id") REFERENCES "public"."api_products"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "api_versions" ADD CONSTRAINT "api_versions_openapi_document_id_openapi_documents_id_fk" FOREIGN KEY ("openapi_document_id") REFERENCES "public"."openapi_documents"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "environments" ADD CONSTRAINT "environments_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "environments" ADD CONSTRAINT "environments_active_revision_id_routing_revisions_id_fk" FOREIGN KEY ("active_revision_id") REFERENCES "public"."routing_revisions"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "openapi_documents" ADD CONSTRAINT "openapi_documents_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "openapi_documents" ADD CONSTRAINT "openapi_documents_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "routing_revisions" ADD CONSTRAINT "routing_revisions_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "routing_revisions" ADD CONSTRAINT "routing_revisions_environment_id_environments_id_fk" FOREIGN KEY ("environment_id") REFERENCES "public"."environments"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "platform_runtime" ADD CONSTRAINT "platform_runtime_active_revision_id_routing_revisions_id_fk" FOREIGN KEY ("active_revision_id") REFERENCES "public"."routing_revisions"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_service_connections" ADD CONSTRAINT "upstream_service_connections_service_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "upstream_services" ADD CONSTRAINT "upstream_services_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_services" ADD CONSTRAINT "upstream_services_openapi_document_id_openapi_documents_id_fk" FOREIGN KEY ("openapi_document_id") REFERENCES "public"."openapi_documents"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "upstream_targets" ADD CONSTRAINT "upstream_targets_upstream_service_id_upstream_services_id_fk" FOREIGN KEY ("upstream_service_id") REFERENCES "public"."upstream_services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "credit_transactions_created_at_idx" ON "credit_transactions" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
@@ -515,23 +489,20 @@ CREATE INDEX "operation_logs_resource_idx" ON "operation_logs" USING btree ("res
 CREATE UNIQUE INDEX "api_categories_code_uq" ON "api_categories" USING btree ("code") WHERE "api_categories"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "api_categories_parent_sort_idx" ON "api_categories" USING btree ("parent_id","sort_order");--> statement-breakpoint
 CREATE INDEX "api_categories_enabled_sort_idx" ON "api_categories" USING btree ("is_enabled","sort_order");--> statement-breakpoint
-CREATE UNIQUE INDEX "api_products_workspace_slug_uq" ON "api_products" USING btree ("workspace_id","slug") WHERE "api_products"."deleted_at" IS NULL;--> statement-breakpoint
-CREATE INDEX "api_products_workspace_lifecycle_idx" ON "api_products" USING btree ("workspace_id","lifecycle");--> statement-breakpoint
+CREATE UNIQUE INDEX "api_products_slug_uq" ON "api_products" USING btree ("slug") WHERE "api_products"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX "api_products_lifecycle_idx" ON "api_products" USING btree ("lifecycle");--> statement-breakpoint
 CREATE INDEX "api_products_category_idx" ON "api_products" USING btree ("category_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_routes_version_method_shape_uq" ON "api_routes" USING btree ("api_version_id","method","normalized_shape") WHERE "api_routes"."deleted_at" IS NULL;--> statement-breakpoint
 CREATE INDEX "api_routes_version_state_idx" ON "api_routes" USING btree ("api_version_id","state");--> statement-breakpoint
 CREATE INDEX "api_routes_upstream_idx" ON "api_routes" USING btree ("upstream_service_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "api_versions_product_version_uq" ON "api_versions" USING btree ("product_id","version");--> statement-breakpoint
 CREATE INDEX "api_versions_product_state_idx" ON "api_versions" USING btree ("product_id","state");--> statement-breakpoint
-CREATE UNIQUE INDEX "environments_workspace_slug_uq" ON "environments" USING btree ("workspace_id","slug");--> statement-breakpoint
-CREATE INDEX "environments_active_revision_idx" ON "environments" USING btree ("active_revision_id");--> statement-breakpoint
-CREATE INDEX "openapi_documents_workspace_created_idx" ON "openapi_documents" USING btree ("workspace_id","created_at" DESC NULLS LAST);--> statement-breakpoint
-CREATE UNIQUE INDEX "openapi_documents_upstream_hash_uq" ON "openapi_documents" USING btree ("workspace_id","upstream_service_id","content_hash") WHERE "openapi_documents"."upstream_service_id" IS NOT NULL;--> statement-breakpoint
-CREATE UNIQUE INDEX "routing_revisions_environment_sequence_uq" ON "routing_revisions" USING btree ("environment_id","sequence");--> statement-breakpoint
-CREATE INDEX "routing_revisions_environment_created_idx" ON "routing_revisions" USING btree ("environment_id","created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE INDEX "openapi_documents_created_idx" ON "openapi_documents" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
+CREATE UNIQUE INDEX "openapi_documents_upstream_hash_uq" ON "openapi_documents" USING btree ("upstream_service_id","content_hash") WHERE "openapi_documents"."upstream_service_id" IS NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "routing_revisions_sequence_uq" ON "routing_revisions" USING btree ("sequence");--> statement-breakpoint
+CREATE INDEX "routing_revisions_created_idx" ON "routing_revisions" USING btree ("created_at" DESC NULLS LAST);--> statement-breakpoint
 CREATE INDEX "routing_revisions_checksum_idx" ON "routing_revisions" USING btree ("checksum");--> statement-breakpoint
-CREATE UNIQUE INDEX "upstream_services_workspace_slug_uq" ON "upstream_services" USING btree ("workspace_id","slug") WHERE "upstream_services"."deleted_at" IS NULL;--> statement-breakpoint
-CREATE INDEX "upstream_services_workspace_status_idx" ON "upstream_services" USING btree ("workspace_id","status");--> statement-breakpoint
+CREATE UNIQUE INDEX "upstream_services_slug_uq" ON "upstream_services" USING btree ("slug") WHERE "upstream_services"."deleted_at" IS NULL;--> statement-breakpoint
+CREATE INDEX "upstream_services_status_idx" ON "upstream_services" USING btree ("status");--> statement-breakpoint
 CREATE UNIQUE INDEX "upstream_targets_service_url_uq" ON "upstream_targets" USING btree ("upstream_service_id","base_url");--> statement-breakpoint
-CREATE INDEX "upstream_targets_service_enabled_idx" ON "upstream_targets" USING btree ("upstream_service_id","enabled");--> statement-breakpoint
-CREATE UNIQUE INDEX "workspaces_slug_uq" ON "workspaces" USING btree ("slug");
+CREATE INDEX "upstream_targets_service_enabled_idx" ON "upstream_targets" USING btree ("upstream_service_id","enabled");

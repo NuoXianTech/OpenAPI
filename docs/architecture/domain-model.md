@@ -8,28 +8,24 @@ Platform 数据库只保存管理、治理、计费和运营数据。Service 保
 Platform database                 Service storage
 ------------------------------    ------------------------------
 users / sessions / api_keys       local business datasets
-workspaces / products / routes    encrypted configuration snapshot
-upstreams / revisions             module caches and fixtures
+platform_runtime / products       encrypted configuration snapshot
+routes / upstreams / revisions    module caches and fixtures
 call logs / credit ledger         mounted read-only data files
 service tokens / desired config
 ```
 
-## 2. Workspace 与 Environment
+## 2. Platform Runtime
 
-### Workspace
-
-Workspace 是 API 管理边界，隔离 Product、Upstream、Route、Environment 和运行快照。它不是新的运行进程，也不等同于租户计费账号。
+Platform Runtime 是平台唯一的运行时配置行，保存当前对外生效的运行状态。它不是新的运行进程，也不等同于租户计费账号。
 
 核心属性：
 
-- 稳定 UUID。
-- 唯一 slug 和展示名称。
-- 生命周期状态。
-- 创建和更新时间。
+- 固定主键 `1`，数据库约束保证只存在一行。
+- 可选默认域名；没有自带 Host 的 Route 落在该域名上，默认域名为空时这些 Route 接受任意 Host。
+- 活动 Routing Revision 指针。
+- 更新时间。
 
-### Environment
-
-Environment 表示同一 Workspace 的独立流量环境，例如 development、staging、production。每个 Environment 持有自己的活动 Routing Revision 和可选默认 Host。
+Product、Upstream、Route 全局唯一：`(host, method, path)` 的唯一性由 HTTP 决定，域名是路由真正的隔离轴，因此平台不再按环境切分同一份配置。多套流量环境通过独立部署或不同域名实现。
 
 ## 3. Product、Version 与 Route
 
@@ -61,7 +57,7 @@ Route 使用稳定 UUID。公开路径或名称变化不会改变其审计身份
 
 Upstream 表示一个逻辑请求目标集合。它不再区分“内部”或“外部”类型；每个 Target 自己声明 `http`/`https` 地址，地址可以是公网域名、内网 IP、localhost 或容器名。是否启用 Service 发现、配置同步和 Service Token，由是否存在 Service Connection 决定。
 
-Upstream 包含名称、slug、负载均衡策略、状态和 Workspace 归属。
+Upstream 包含名称、slug、负载均衡策略和状态。
 
 ### Target
 
@@ -89,7 +85,7 @@ OpenAPI 文档是配置与审查资料，不直接决定公开流量。只有 Ro
 
 ## 7. Routing Revision
 
-Routing Revision 是某个 Environment 的完整不可变运行快照，至少包含：
+Routing Revision 是平台的完整不可变运行快照，至少包含：
 
 - 单调序号。
 - 规范化 payload。
@@ -97,7 +93,7 @@ Routing Revision 是某个 Environment 的完整不可变运行快照，至少�
 - 构建、发布、失败和被替代状态。
 - 创建者和发布时间。
 
-Environment 通过外键或等价稳定引用指向活动 Revision。旧 Revision 保留用于审计和回滚。
+Platform Runtime 通过外键指向活动 Revision。旧 Revision 保留用于审计和回滚。
 
 ## 8. API Key 与 Scope
 

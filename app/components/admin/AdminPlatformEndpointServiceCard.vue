@@ -10,7 +10,6 @@ import {
 
 const props = defineProps<{
   service: PlatformEndpointCatalogService
-  hasEnvironment: boolean
   isBusy: (key: string) => boolean
 }>()
 
@@ -318,7 +317,7 @@ function toggleApiKey(item: PlatformEndpointCatalogItem) {
             :variant="item.status === 'live' ? 'outline' : 'solid'"
             :icon="primaryActionIcon(item)"
             :loading="endpointBusy(item)"
-            :disabled="!item.publishable || !hasEnvironment || item.status === 'pending' || item.status === 'retiring'"
+            :disabled="!item.publishable || item.status === 'pending' || item.status === 'retiring'"
             @click="emit('primary', service, item)"
           >
             {{ primaryActionLabel(item) }}

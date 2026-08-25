@@ -1,61 +1,106 @@
 <script setup lang="ts">
-import type { TableColumn } from '@nuxt/ui'
-import { useAdminPlatformContext } from '~/composables/admin/use-admin-platform-context'
+import type { FormError, FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
-import type { PlatformRoutingRevision } from '#shared/types/platform'
+import type { PlatformRoutingRevision, PlatformRuntime } from '#shared/types/platform'
 import { parseFetchError } from '~/utils/client-error'
+import { compactFormErrors } from '~/utils/form-validation'
 import { formatPlatformDate } from '~/utils/platform-display'
 
 const { t, locale } = useI18n()
 const toast = useToast()
 const confirm = useConfirmDialog()
-const context = useAdminPlatformContext()
 
 useHead({ title: () => t('admin.apis.routing.sections.revisionsTitle') })
 
-const resource = usePrivateResource<PlatformRoutingRevision[]>({
-  path: '/api/admin/v1/revisions',
-  defaultData: () => [],
-  immediate: false,
-  query: () => context.selectedEnvironmentId.value
-    ? { environmentId: context.selectedEnvironmentId.value }
-    : undefined
+const hostPattern = /^(?:\*\.)?(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i
+
+const runtimeResource = usePrivateResource<PlatformRuntime>({
+  path: '/api/admin/v1/runtime',
+  defaultData: () => ({
+    defaultDomain: null,
+    activeRevisionId: null,
+    updatedAt: ''
+  })
 })
-const revisions = computed(() => resource.data.value.filter(
-  revision => revision.environmentId === context.selectedEnvironmentId.value
+const revisionsResource = usePrivateResource<PlatformRoutingRevision[]>({
+  path: '/api/admin/v1/revisions',
+  defaultData: () => []
+})
+
+const runtime = computed(() => runtimeResource.data.value)
+const revisions = computed(() => revisionsResource.data.value)
+const loading = computed(() => (
+  runtimeResource.loading.value || revisionsResource.loading.value
+))
+const resourceError = computed(() => (
+  runtimeResource.error.value || revisionsResource.error.value
+))
+const domainState = reactive({ defaultDomain: '' })
+const savingDomain = ref(false)
+const domainDirty = computed(() => (
+  domainState.defaultDomain.trim() !== (runtime.value.defaultDomain ?? '')
 ))
 
-watch(context.selectedEnvironmentId, (environmentId) => {
-  if (environmentId) void resource.refresh()
+watch(() => runtime.value.defaultDomain, (defaultDomain) => {
+  domainState.defaultDomain = defaultDomain ?? ''
 }, { immediate: true })
 
-function revisionStatusLabel(revision: PlatformRoutingRevision): string {
-  if (revision.id === context.selectedEnvironment.value?.activeRevisionId) {
-    return t('admin.apis.routing.revisionStatuses.active')
+function validateDomain(value: Partial<typeof domainState>): FormError<string>[] {
+  return compactFormErrors(
+    value.defaultDomain && !hostPattern.test(value.defaultDomain.trim())
+      ? { name: 'defaultDomain', message: t('admin.apis.routing.validation.hostInvalid') }
+      : null
+  )
+}
+
+async function refresh() {
+  await Promise.all([runtimeResource.refresh(), revisionsResource.refresh()])
+}
+
+async function saveDomain(event: FormSubmitEvent<typeof domainState>) {
+  savingDomain.value = true
+  try {
+    const result = await $fetch('/api/admin/v1/runtime', {
+      method: 'PATCH',
+      body: { defaultDomain: event.data.defaultDomain.trim() || null }
+    })
+    toast.add({
+      title: t('admin.apis.routing.feedback.defaultDomainUpdated'),
+      description: t(result.revision
+        ? 'admin.apis.routing.feedback.runtimeUpdated'
+        : 'admin.apis.routing.feedback.runtimeUnchanged'),
+      color: 'success'
+    })
+    await refresh()
+  } catch (error: unknown) {
+    toast.add({
+      title: parseFetchError(error, t('admin.apis.routing.feedback.updateFailed')),
+      color: 'error'
+    })
+  } finally {
+    savingDomain.value = false
   }
-  return t('admin.apis.routing.revisionStatuses.historical')
 }
 
 async function activateRevision(revision: PlatformRoutingRevision) {
-  const environment = context.selectedEnvironment.value
-  if (!environment || revision.id === environment.activeRevisionId) return
+  if (revision.id === runtime.value.activeRevisionId) return
 
   await confirm({
     title: t('admin.apis.routing.rollback.title', { sequence: revision.sequence }),
-    description: t('admin.apis.routing.rollback.description', { environment: environment.name }),
+    description: t('admin.apis.routing.rollback.description'),
     confirmLabel: t('admin.apis.routing.actions.activateRevision'),
     confirmColor: 'warning',
     onConfirm: async () => {
       try {
         await $fetch('/api/admin/v1/revisions/activate', {
           method: 'POST',
-          body: { environmentId: environment.id, revisionId: revision.id }
+          body: { revisionId: revision.id }
         })
         toast.add({
           title: t('admin.apis.routing.feedback.revisionActivated', { sequence: revision.sequence }),
           color: 'success'
         })
-        await Promise.all([context.refresh(), resource.refresh()])
+        await refresh()
       } catch (error: unknown) {
         toast.add({
           title: parseFetchError(error, t('admin.apis.routing.feedback.activateFailed')),
@@ -93,8 +138,8 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
           color="neutral"
           variant="outline"
           icon="i-lucide-refresh-cw"
-          :loading="resource.loading.value"
-          @click="resource.refresh"
+          :loading="loading"
+          @click="refresh"
         >
           {{ $t('common.actions.refresh') }}
         </UButton>
@@ -104,27 +149,54 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
       </div>
     </div>
 
-    <AdminPlatformContextBar />
-
     <UAlert
-      v-if="resource.error.value"
+      v-if="resourceError"
       color="error"
       variant="subtle"
       icon="i-lucide-circle-alert"
       :title="$t('common.feedback.loadFailed')"
-      :description="parseFetchError(resource.error.value, $t('common.feedback.loadFailed'))"
+      :description="parseFetchError(resourceError, $t('common.feedback.loadFailed'))"
     >
       <template #actions>
         <UButton
           color="error"
           variant="soft"
           size="xs"
-          @click="resource.refresh"
+          @click="refresh"
         >
           {{ $t('common.actions.retry') }}
         </UButton>
       </template>
     </UAlert>
+
+    <UCard variant="subtle" :ui="{ body: 'py-4 sm:py-4' }">
+      <UForm
+        :state="domainState"
+        :validate="validateDomain"
+        class="flex flex-col gap-4 lg:flex-row lg:items-end"
+        @submit="saveDomain"
+      >
+        <UFormField
+          name="defaultDomain"
+          class="flex-1"
+          :label="$t('admin.apis.routing.fields.defaultDomain')"
+          :description="$t('admin.apis.routing.runtime.defaultDomainHelp')"
+        >
+          <UInput
+            v-model="domainState.defaultDomain"
+            :placeholder="$t('admin.apis.routing.fallbackDomain')"
+            class="w-full font-mono"
+          />
+        </UFormField>
+        <UButton
+          type="submit"
+          :loading="savingDomain"
+          :disabled="!domainDirty"
+        >
+          {{ $t('common.actions.save') }}
+        </UButton>
+      </UForm>
+    </UCard>
 
     <DashboardTableCard
       :title="$t('admin.apis.routing.sections.revisionsTitle')"
@@ -135,7 +207,7 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
       <DashboardDataTable
         :data="revisions"
         :columns="columns"
-        :loading="resource.loading.value"
+        :loading="revisionsResource.loading.value"
         :fixed="false"
         :empty-title="$t('admin.apis.routing.empty.revisionsTitle')"
         :empty-description="$t('admin.apis.routing.empty.revisionsDescription')"
@@ -164,18 +236,18 @@ const columns = computed<TableColumn<PlatformRoutingRevision>[]>(() => [
         </template>
         <template #status-cell="{ row }">
           <UBadge
-            :color="row.original.id === context.selectedEnvironment.value?.activeRevisionId
-              ? 'success'
-              : 'neutral'"
+            :color="row.original.id === runtime.activeRevisionId ? 'success' : 'neutral'"
             variant="subtle"
           >
-            {{ revisionStatusLabel(row.original) }}
+            {{ $t(row.original.id === runtime.activeRevisionId
+              ? 'admin.apis.routing.revisionStatuses.active'
+              : 'admin.apis.routing.revisionStatuses.historical') }}
           </UBadge>
         </template>
         <template #actions-cell="{ row }">
           <div class="flex justify-end">
             <UButton
-              v-if="row.original.id !== context.selectedEnvironment.value?.activeRevisionId"
+              v-if="row.original.id !== runtime.activeRevisionId"
               color="warning"
               variant="ghost"
               size="xs"

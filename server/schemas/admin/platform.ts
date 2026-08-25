@@ -6,38 +6,11 @@ const hostSchema = z.string().trim().min(1).max(253)
 const pathSchema = z.string().trim().min(1).max(1000).startsWith('/')
 const httpMethodSchema = z.enum(['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'])
 
-export const adminCreateWorkspaceSchema = z.object({
-  slug: slugSchema,
-  name: nameSchema,
-  environment: z.object({
-    slug: slugSchema.default('development'),
-    name: nameSchema.default('Development'),
-    defaultDomain: hostSchema.nullable().optional()
-  }).optional()
+export const adminUpdateRuntimeSchema = z.object({
+  defaultDomain: hostSchema.nullable()
 })
-
-export const adminUpdateWorkspaceSchema = z.object({
-  slug: slugSchema.optional(),
-  name: nameSchema.optional(),
-  status: z.enum(['active', 'disabled']).optional()
-}).refine(value => Object.keys(value).length > 0, 'at least one field is required')
-
-export const adminCreateEnvironmentSchema = z.object({
-  workspaceId: z.uuid(),
-  slug: slugSchema,
-  name: nameSchema,
-  defaultDomain: hostSchema.nullable().optional()
-})
-
-export const adminUpdateEnvironmentSchema = z.object({
-  slug: slugSchema.optional(),
-  name: nameSchema.optional(),
-  defaultDomain: hostSchema.nullable().optional(),
-  status: z.enum(['active', 'disabled']).optional()
-}).refine(value => Object.keys(value).length > 0, 'at least one field is required')
 
 export const adminCreateProductSchema = z.object({
-  workspaceId: z.uuid(),
   slug: slugSchema,
   name: nameSchema,
   summary: z.string().trim().max(300).optional(),
@@ -71,7 +44,6 @@ export const adminUpdateVersionSchema = z.object({
 }).refine(value => Object.keys(value).length > 0, 'at least one field is required')
 
 export const adminCreateUpstreamSchema = z.object({
-  workspaceId: z.uuid(),
   slug: slugSchema,
   name: nameSchema,
   serviceToken: z.string().trim().min(32).max(4096).optional(),
@@ -133,14 +105,12 @@ export const adminRouteSchema = z.object({
 })
 
 export const adminPublishServiceEndpointSchema = z.object({
-  environmentId: z.uuid(),
   upstreamServiceId: z.uuid(),
   method: httpMethodSchema,
   path: pathSchema
 })
 
 export const adminUpdateEndpointPublicationSchema = z.object({
-  environmentId: z.uuid(),
   enabled: z.boolean().optional(),
   name: nameSchema.optional(),
   isApiKey: z.boolean().optional(),
@@ -157,12 +127,7 @@ export const adminUpdateEndpointPublicationSchema = z.object({
   sensitiveQueryParameters: z.array(z.string().trim().min(1).max(100)).max(64).optional()
 })
 
-export const adminApplyServiceEndpointChangesSchema = z.object({
-  environmentId: z.uuid()
-})
-
 export const adminActivateRevisionSchema = z.object({
-  environmentId: z.uuid(),
   revisionId: z.uuid()
 })
 

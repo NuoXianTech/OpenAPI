@@ -21,7 +21,6 @@ describe('Service control schemas', () => {
     }).serviceToken).toBe(token)
 
     expect(adminCreateUpstreamSchema.parse({
-      workspaceId: 'd11cb56d-8c0b-45fb-8827-768a21472b7b',
       slug: 'schema-test-service',
       name: 'Schema Test Service',
       serviceToken: `  ${token}  `,

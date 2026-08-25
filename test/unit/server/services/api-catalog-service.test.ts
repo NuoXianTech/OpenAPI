@@ -26,7 +26,6 @@ beforeAll(async () => {
   await client.exec(`
     CREATE TABLE api_products (
       id uuid PRIMARY KEY,
-      workspace_id uuid NOT NULL DEFAULT '00000000-0000-4000-8000-000000000099',
       slug varchar(80) NOT NULL,
       name varchar(160) NOT NULL,
       summary varchar(300) NOT NULL DEFAULT '',
@@ -90,10 +89,9 @@ beforeAll(async () => {
       created_at timestamptz NOT NULL DEFAULT now(),
       published_at timestamptz NOT NULL DEFAULT now()
     );
-    CREATE TABLE environments (
-      id uuid PRIMARY KEY,
-      active_revision_id uuid,
-      status varchar(20) NOT NULL
+    CREATE TABLE platform_runtime (
+      id integer PRIMARY KEY,
+      active_revision_id uuid
     );
     INSERT INTO api_products
       (id, slug, name, summary, description, visibility, lifecycle, deleted_at)
@@ -148,8 +146,8 @@ beforeAll(async () => {
         {"id":"00000000-0000-4000-8000-000000000037","productId":"00000000-0000-4000-8000-000000000007","productSlug":"support","productVisibility":"public","productLifecycle":"active","versionState":"published","name":"Support","method":"GET","pathPattern":"/v1/player/assets/{asset}","isApiKey":false,"isStatistics":false,"creditsCost":0,"catalogStatus":"automatic","isSupportRoute":true}
       ]}'::jsonb
     );
-    INSERT INTO environments (id, active_revision_id, status) VALUES
-      ('00000000-0000-4000-8000-000000000051', '00000000-0000-4000-8000-000000000041', 'active');
+    INSERT INTO platform_runtime (id, active_revision_id) VALUES
+      (1, '00000000-0000-4000-8000-000000000041');
     INSERT INTO api_calls (route_id, status_code, is_counted) VALUES
       ('00000000-0000-4000-8000-000000000031', 200, true),
       ('00000000-0000-4000-8000-000000000031', 404, true),

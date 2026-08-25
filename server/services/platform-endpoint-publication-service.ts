@@ -1,9 +1,8 @@
 import type { ServiceEndpointSummary } from '#shared/types/service-control'
-import { asc, eq } from 'drizzle-orm'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
-import { environments } from '~~/server/db/schema'
 import {
   invalidateRoutingPublicationCaches,
+  lockPlatformRuntime,
   routingRevisionService
 } from '~~/server/services/routing-revision-service'
 import type { RoutingRevisionRoute } from '~~/server/types/routing-revision'
@@ -17,12 +16,8 @@ import { canonicalJson } from '~~/server/utils/canonical-json'
 import { parseRoutePathPattern } from '~~/server/utils/route-pattern'
 import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
-export interface WorkspacePublication {
-  revisions: Array<{
-    id: string
-    sequence: number
-    environmentId: string
-  }>
+export interface PlatformPublication {
+  revision: { id: string, sequence: number }
 }
 
 export function endpointPublicationStatus(
@@ -89,113 +84,39 @@ export function endpointRoutePriority(
   return 3
 }
 
-function workspacePublication(
-  revisions: Awaited<ReturnType<typeof routingRevisionService.publishWorkspace>>
-): WorkspacePublication {
-  return {
-    revisions: revisions.map(revision => ({
-      id: revision.id,
-      sequence: revision.sequence,
-      environmentId: revision.environmentId
-    }))
-  }
-}
-
-export async function applyWorkspaceRevision(
-  workspaceId: string,
+/** 只重新发布运行快照，不改动可发布配置。 */
+export async function applyPlatformRevision(
   createdBy: number | null
-) {
-  return workspacePublication(await routingRevisionService.publishWorkspace(
-    workspaceId,
-    createdBy
-  ))
+): Promise<PlatformPublication> {
+  const revision = await routingRevisionService.publish(createdBy)
+  return { revision: { id: revision.id, sequence: revision.sequence } }
 }
 
-async function lockEnvironmentSet(tx: DatabaseTransaction) {
-  await tx.select({ id: environments.id }).from(environments)
-    .orderBy(asc(environments.id))
-    .for('update')
-}
-
-async function readActiveEnvironments(tx: DatabaseTransaction) {
-  return tx.select().from(environments)
-    .where(eq(environments.status, 'active'))
-    .orderBy(asc(environments.id))
-}
-
-export async function applyEnvironmentMutation<T>(
-  environmentId: string,
-  createdBy: number | null,
-  mutate: (tx: DatabaseTransaction) => Promise<T>,
-  options: { publishRouting?: boolean } = {}
-) {
-  const committed = await db.transaction(async (tx: DatabaseTransaction) => {
-    await lockEnvironmentSet(tx)
-    const value = await mutate(tx)
-    if (options.publishRouting === false) {
-      return { value, revision: null }
-    }
-    const activeEnvironments = await readActiveEnvironments(tx)
-    const revision = await routingRevisionService.publish(
-      environmentId,
-      createdBy,
-      { tx, activeEnvironments }
-    )
-    return { value, revision }
-  })
-  if (options.publishRouting !== false) {
-    await invalidateRoutingPublicationCaches()
-  }
-  return {
-    value: committed.value,
-    revision: committed.revision
-  }
-}
-
-export async function applyEnvironmentRevision(
-  environmentId: string,
-  createdBy: number | null
-) {
-  const revision = await db.transaction(async (tx: DatabaseTransaction) => {
-    await lockEnvironmentSet(tx)
-    const activeEnvironments = await readActiveEnvironments(tx)
-    return routingRevisionService.publish(
-      environmentId,
-      createdBy,
-      { tx, activeEnvironments }
-    )
-  })
-  await invalidateRoutingPublicationCaches()
-  return revision
-}
-
-export async function applyWorkspaceMutation<T>(
+/**
+ * 改动可发布配置后重新发布运行快照。提交与发布在同一事务里，
+ * 并通过锁住运行时单行让并发发布串行。
+ */
+export async function applyPlatformMutation<T>(
   createdBy: number | null,
   mutate: (tx: DatabaseTransaction) => Promise<{
     value: T
-    workspaceId: string
     publishRouting?: boolean
   }>
 ) {
   const committed = await db.transaction(async (tx: DatabaseTransaction) => {
-    await lockEnvironmentSet(tx)
+    await lockPlatformRuntime(tx)
     const mutation = await mutate(tx)
-    const activeEnvironments = await readActiveEnvironments(tx)
-    const revisions = mutation.publishRouting === false
-      ? []
-      : await routingRevisionService.publishWorkspace(
-          mutation.workspaceId,
-          createdBy,
-          { tx, activeEnvironments }
-        )
-    return { ...mutation, revisions }
+    const revision = mutation.publishRouting === false
+      ? null
+      : await routingRevisionService.publish(createdBy, { tx })
+    return { ...mutation, revision }
   })
   if (committed.publishRouting !== false) {
     await invalidateRoutingPublicationCaches()
   }
   return {
     value: committed.value,
-    ...workspacePublication(committed.revisions)
+    revision: committed.revision
   }
 }
 
