@@ -1,5 +1,6 @@
 import type { TableColumn } from '@nuxt/ui'
 import { computed, ref } from 'vue'
+import { auditActionMessageKey } from '#shared/config/audit-actions'
 import { useDebouncedListKeyword } from '~/composables/dashboard/use-debounced-list-keyword'
 import { usePrivatePagedList, type PrivatePagedPagination } from '~/composables/dashboard/use-private-paged-list'
 import { useAdminLogCleanup } from '~/composables/admin/use-admin-log-cleanup'
@@ -86,10 +87,6 @@ function stringifyOperationLogDetail(detail: Record<string, unknown> | null | un
   }
 }
 
-function getOperationLogActionMessageKey(action: string): string {
-  return `admin.logs.operations.actionLabels.${action.replaceAll(/[.-]/g, '_')}`
-}
-
 export function resolveOperationLogActorKind(
   action: string,
   userId: number | null,
@@ -171,7 +168,7 @@ export function useAdminOperationLogList(options: { immediate?: boolean } = {}) 
   }
 
   function resolveActionLabel(action: string): string {
-    const messageKey = getOperationLogActionMessageKey(action)
+    const messageKey = auditActionMessageKey(action)
     return te(messageKey) ? t(messageKey) : action
   }
 

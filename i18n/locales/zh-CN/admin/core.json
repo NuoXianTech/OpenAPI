@@ -6,8 +6,9 @@
     },
     "initialProfile": {
       "title": "完善管理员账号",
-      "description": "确认用户名和邮箱，并设置新的管理员密码。",
+      "description": "设置一个新的管理员密码。用户名与邮箱可以保持默认，留空即不修改。",
       "usernameHelp": "3-32 位，仅限字母、数字、下划线和短横线",
+      "emailHelp": "用于接收密码重置邮件，建议改为你能收到的地址",
       "newPassword": "新密码",
       "passwordHelp": "至少 8 位",
       "feedback": {

@@ -13,13 +13,14 @@ export default defineAdminEventHandler(async (event, admin) => {
     throw createError({ statusCode: 404, message: '兑换码不存在' })
   }
 
+  // `admin.redemption-code.reveal` 是 gate 级审计：写入失败会抛错，明文不会在无痕的情况下交付。
   await addRequestOperationLog(event, {
     userId: admin.id,
     actor: admin.username,
     action: 'admin.redemption-code.reveal',
     resourceType: 'redemption-code',
     resourceId: revealed.id
-  }, { required: true })
+  })
 
   return revealed
 })

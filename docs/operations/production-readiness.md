@@ -36,7 +36,7 @@ pnpm build
 | 运行时密钥 | `NUXT_AUTH_SECRET`、`NUXT_API_KEY_SECRET` 已独立生成并完成安全备份；每个 Service-managed Upstream 使用独立 Service Token，并确认数据库中只保存密文 |
 | Platform 入口 | Console、站内 API 和动态 Gateway 共用一个入口；反向代理只将预期域名转发到 Nitro，公共 Route 不占用 Platform 保留路径 |
 | Redis | 使用共享限流、短缓存和任务协调时配置 `NUXT_REDIS_URL`；配置后 Redis 不可用会 fail-closed，多实例必须配置 |
-| 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的资料和密码初始化 |
+| 管理员账号 | 首次启动时从受控服务端日志读取一次性随机初始密码，立即登录并完成不可跳过的密码轮换；用户名与邮箱可保留默认，但默认邮箱域名不可达，保留即意味着该账号无法接收密码重置邮件 |
 | 网络 | Nitro 监听 `127.0.0.1:<port>`，公网由 Nginx 或等价代理接入；按实际拓扑配置可信代理 CIDR 和转发层数 |
 | API Service | `openapi-service` 是独立 Node 进程，只连接内部网络且不映射公网业务端口；Service-managed Upstream 使用 `http://openapi-service:8080` 或等价私网地址 |
 | API Service 资源 | 容器空闲 RSS 不高于 128 MiB、常规业务测试峰值不高于 256 MiB、启动到 ready 不高于 2 秒；缓存和来源并发均有上限 |
@@ -45,6 +45,7 @@ pnpm build
 | 部署产物 | Platform 构建完整 `.output`，并将其内容扁平化到 Release 版本目录根部；根级 `package.json` 提供 `start`、`migrate`，且不能遗漏 `server/node_modules/.nitro`。API Service 独立发布预编译 `dist` |
 | 时区 | `TZ=Asia/Shanghai`；启动迁移会将数据库迁移会话设置为同一时区，数据库默认时区无需额外修改 |
 | 备份 | PostgreSQL 有数据库备份或可恢复快照；PGlite 已备份 `.data/pglite` |
+| 审计降级采集 | stderr 已被日志采集抓取并按备份同等周期保留，且已对 `AUDIT_FALLBACK` 标记建立告警；未配置时审计写入失败即等于记录丢失，详见 [生产运行手册](./production-runbook.md) |
 | 巡检 | 发布负责人已阅读 [生产运行手册](./production-runbook.md) 的回滚和异常处置 |
 
 完整变量见 [运行时配置](./runtime-config.md)。

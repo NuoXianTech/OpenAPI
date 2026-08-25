@@ -1,4 +1,5 @@
 import { and, asc, count, desc, eq, gt, ilike, like, or, sql } from 'drizzle-orm'
+import { LOGIN_ACTION_PREFIX } from '#shared/config/audit-actions'
 import { db, type DatabaseTransaction } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
 import { createApplicationError } from '~~/server/errors/application-error'
@@ -158,7 +159,7 @@ export const adminUserService = {
       assertAdminRemainsAvailable(current, availableAdmins.length)
       await tx.delete(operationLogs).where(and(
         eq(operationLogs.userId, id),
-        like(operationLogs.action, 'auth.login.%')
+        like(operationLogs.action, `${LOGIN_ACTION_PREFIX}%`)
       ))
       return firstRow(await tx.delete(users).where(eq(users.id, id)).returning())
     })

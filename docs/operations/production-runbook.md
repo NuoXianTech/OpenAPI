@@ -62,6 +62,25 @@ docker compose exec -T openapi-service node -e "fetch('http://127.0.0.1:8080/rea
 | 公开 API 429 增多 | API 配置、Redis/进程内限流窗口、调用方 IP 或 Key |
 | 数据库读取突增 | Redis 可用性、命令延迟、内存、淘汰数和公开缓存命中情况 |
 | 扣费异常 | `api_calls`、`credit_transactions`、`api_credit_reservations` |
+| 审计记录疑似缺失 | stderr 中的 `AUDIT_FALLBACK` 标记（见下）、`operation_logs` 写入报错 |
+
+## 审计降级采集（必配）
+
+审计事件写入 `operation_logs`。落库失败时，Platform 会把完整审计行以单行 JSON 打到 **stderr**，前缀为固定标记 `AUDIT_FALLBACK`：
+
+```text
+AUDIT_FALLBACK {"marker":"AUDIT_FALLBACK","occurredAt":"...","reason":"...","log":{...}}
+```
+
+**这条降级通道只有在日志采集侧确实抓取并保留 stderr 时才成立。** 未配置采集时，落库失败的审计记录与没有降级通道一样是丢失的——这不是应用层能自行保证的部分。
+
+上线前必须完成：
+
+- 确认 PM2 / 容器运行时的 stderr 已被采集并纳入与数据库备份同等的保留周期。
+- 在日志平台按 `AUDIT_FALLBACK` 建立告警：出现即意味着审计写入路径异常，需要立即排查数据库可用性。
+- 演练一次从采集侧按该标记还原审计行的流程，确认 `log` 字段可直接还原成 `operation_logs` 记录。
+
+安全敏感动作的失败语义按动作码分级（见 `shared/config/audit-actions.ts`）：`gate` 级（明文披露，如查看 API Key / 兑换码）写入失败会直接让请求报错，明文不会在无痕的情况下交付；`durable` 级不阻塞主流程，仅依赖上述降级通道。
 
 ## 备份策略
 

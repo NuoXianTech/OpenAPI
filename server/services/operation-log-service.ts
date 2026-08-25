@@ -1,15 +1,24 @@
 import { and, count, desc, eq, getTableColumns, gte, ilike, inArray, isNull, like, lte, notLike, or, sql, type SQL } from 'drizzle-orm'
+import { LOGIN_ACTION_PREFIX, type OperationLogAction } from '#shared/config/audit-actions'
 import { db } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
+import { recordAuditLog, type AuditLogStatus } from '~~/server/services/audit-log-writer'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 
-export type OperationLogStatus = 'success' | 'failure'
+export type OperationLogStatus = AuditLogStatus
 
 export interface OperationLogInput {
   userId?: number | null
   actor?: string | null
-  action: string
+  /**
+   * 必须是注册表中已登记的操作日志动作码。
+   *
+   * 收窄成联合类型而不是 string，是为了让「新增审计事件忘记登记」在编译期就失败，
+   * 而不是等到后台显示裸动作码时才被发现。这里刻意排除登录动作码：
+   * 登录事件走 loginLogService，它会保证 detail 里带上查询侧依赖的 method 字段。
+   */
+  action: OperationLogAction
   resourceType?: string | null
   resourceId?: string | number | null
   ip?: string | null
@@ -32,27 +41,13 @@ export interface OperationLogFilters {
   endAt?: Date
 }
 
-async function insertOperationLog(input: OperationLogInput): Promise<void> {
-  await db.insert(operationLogs).values({
-    userId: input.userId ?? null,
-    actor: input.actor?.slice(0, 140) ?? null,
-    action: input.action,
-    resourceType: input.resourceType ?? null,
-    resourceId: input.resourceId !== null && input.resourceId !== undefined ? String(input.resourceId).slice(0, 120) : null,
-    ip: input.ip ?? null,
-    userAgent: input.userAgent?.slice(0, 500) ?? null,
-    detail: input.detail ?? null,
-    status: input.status || 'success'
-  })
-}
-
 interface ListOperationLogsInput extends OperationLogFilters {
   limit?: number
   offset?: number
 }
 
 function buildConditions(filters: OperationLogFilters): SQL[] {
-  const conditions: SQL[] = [notLike(operationLogs.action, 'auth.login.%')]
+  const conditions: SQL[] = [notLike(operationLogs.action, `${LOGIN_ACTION_PREFIX}%`)]
   const keyword = filters.keyword?.trim()
   if (keyword) {
     const keywordPattern = `%${keyword}%`
@@ -100,17 +95,9 @@ interface OperationLogListResult {
 }
 
 export const operationLogService = {
+  /** 记录一条操作事件。写入语义见 recordAuditLog。 */
   async addLog(input: OperationLogInput) {
-    try {
-      await insertOperationLog(input)
-    } catch (error) {
-      // 审计日志落库失败不应阻塞主业务流程，仅记录控制台。
-      console.error('failed to write operation log', { input, error })
-    }
-  },
-
-  async addRequiredLog(input: OperationLogInput) {
-    await insertOperationLog(input)
+    await recordAuditLog(input)
   },
 
   async list(filters: ListOperationLogsInput = {}): Promise<OperationLogListResult> {

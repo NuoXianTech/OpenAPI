@@ -1,11 +1,11 @@
 import { and, count, desc, eq, gte, ilike, isNotNull, like, lte, or, sql, type SQL } from 'drizzle-orm'
+import { LOGIN_ACTION_PREFIX } from '#shared/config/audit-actions'
 import { db } from '~~/server/db/client'
 import { operationLogs, users } from '~~/server/db/schema'
+import { recordAuditLog } from '~~/server/services/audit-log-writer'
 import { toNumber } from '~~/server/utils/number'
 import { normalizePagination } from '~~/server/utils/pagination'
 import type { LoginFailureReason, LoginMethod } from '#shared/types/login-log'
-
-const LOGIN_ACTION_PREFIX = 'auth.login.'
 
 interface LoginLogRecord {
   id: number
@@ -90,26 +90,28 @@ function loginLogSelection() {
 }
 
 export const loginLogService = {
-  /** 登录日志写入统一审计表；失败不阻塞登录流程。 */
+  /**
+   * 记录一次登录尝试。
+   *
+   * 走统一写入内核，因此与操作事件共享同一套截断、重试与降级保证。
+   * `detail.method` 是查询侧（loginLogSelection / buildConditions）的依赖字段，
+   * 由这个门面负责填充，调用方无法漏写。
+   */
   async record(input: RecordLoginInput) {
-    try {
-      await db.insert(operationLogs).values({
-        userId: input.userId,
-        actor: input.username.slice(0, 140),
-        action: `${LOGIN_ACTION_PREFIX}${input.method}`,
-        resourceType: 'user',
-        resourceId: String(input.userId),
-        ip: input.ip ?? null,
-        userAgent: input.userAgent?.slice(0, 500) ?? null,
-        detail: {
-          method: input.method,
-          failureReason: input.failureReason ?? null
-        },
-        status: input.success ? 'success' : 'failure'
-      })
-    } catch (err) {
-      console.error('failed to write login log', { input, err })
-    }
+    await recordAuditLog({
+      userId: input.userId,
+      actor: input.username,
+      action: `${LOGIN_ACTION_PREFIX}${input.method}`,
+      resourceType: 'user',
+      resourceId: input.userId,
+      ip: input.ip,
+      userAgent: input.userAgent,
+      detail: {
+        method: input.method,
+        failureReason: input.failureReason ?? null
+      },
+      status: input.success ? 'success' : 'failure'
+    })
   },
 
   async list(filters: ListLoginLogsInput = {}): Promise<{ items: LoginLogRecord[], total: number }> {

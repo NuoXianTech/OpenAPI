@@ -17,6 +17,7 @@ import { registrationService } from '~~/server/services/registration-service'
 import { assertTurnstileForPage } from '~~/server/utils/turnstile'
 import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { getSqlState } from '~~/server/utils/database-error'
 
 // 注册接口对外永远返回中性响应，避免通过 HTTP 状态/文案区分"邮箱已注册 / 用户名已占用 / 注册成功"，
@@ -111,6 +112,18 @@ export default defineEventHandler(async (event) => {
     user: created,
     settings,
     reasonPrefix: 'password registration'
+  })
+
+  // 只在账号确实创建成功后写审计，与上面各分支的中性返回并不冲突：
+  // 审计表不对匿名访问者可见，不构成账号存在性信号。
+  // 与 user.oauth.register 对齐，避免密码注册成为唯一无痕的账号创建路径。
+  await addRequestOperationLog(event, {
+    userId: created.id,
+    actor: created.username,
+    action: 'user.register',
+    resourceType: 'user',
+    resourceId: created.id,
+    detail: { method: 'password', verificationRequired: activationRequired }
   })
   return neutralResponse
 })

@@ -6,8 +6,9 @@
     },
     "initialProfile": {
       "title": "Complete administrator account",
-      "description": "Confirm your username and email, then set a new administrator password.",
+      "description": "Set a new administrator password. The username and email can stay at their defaults; leave them unchanged to keep them.",
       "usernameHelp": "3–32 characters; letters, numbers, underscores, and hyphens only",
+      "emailHelp": "Used to deliver password reset emails; point it at an address you can receive",
       "newPassword": "New password",
       "passwordHelp": "At least 8 characters",
       "feedback": {

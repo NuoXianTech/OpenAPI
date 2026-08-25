@@ -29,7 +29,6 @@ const { t } = useI18n()
       >
         <UFormField
           :label="t('auth.fields.username')"
-          required
           :help="t('admin.initialProfile.usernameHelp')"
         >
           <UInput
@@ -37,13 +36,12 @@ const { t } = useI18n()
             icon="i-mdi-account-outline"
             :placeholder="t('auth.placeholders.username')"
             autocomplete="username"
-            autofocus
           />
         </UFormField>
 
         <UFormField
           :label="t('auth.fields.email')"
-          required
+          :help="t('admin.initialProfile.emailHelp')"
         >
           <UInput
             v-model="form.email"
@@ -65,6 +63,7 @@ const { t } = useI18n()
             icon="i-mdi-lock-outline"
             :placeholder="t('auth.placeholders.newPassword')"
             autocomplete="new-password"
+            autofocus
           />
         </UFormField>
 

@@ -13,6 +13,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
     throw createError({ statusCode: 404, message: 'API Key 不存在或无权访问' })
   }
 
+  // `user.api-key.reveal` 是 gate 级审计：写入失败会抛错，明文不会在无痕的情况下交付。
   await addRequestOperationLog(event, {
     userId: user.id,
     actor: user.username,
@@ -20,7 +21,7 @@ export default defineAuthenticatedEventHandler(async (event, user) => {
     resourceType: 'api-key',
     resourceId: revealed.id,
     detail: { keyName: revealed.name }
-  }, { required: true })
+  })
 
   return revealed
 })

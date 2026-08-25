@@ -1,5 +1,6 @@
 import type { H3Event } from 'h3'
 import { createError, defineEventHandler, getCookie, getRequestURL, setCookie, setResponseHeader } from 'h3'
+import type { AuthUser } from '#shared/types/auth'
 import { assertAdminOnboardingCompleted } from '~~/server/services/admin-onboarding-service'
 import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
@@ -7,6 +8,8 @@ import { toHttpError } from '~~/server/utils/http-error'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { hostCookieName, hostCookieSecurityOptions } from '~~/server/utils/host-cookie'
+import { canConsumeIdentityRateLimit } from '~~/server/utils/rate-limit/identity'
+import { addRequestOperationLog } from '~~/server/utils/request-operation-log'
 import { toAuthUser } from '~~/server/utils/user-view'
 
 interface AuthUserPayload {
@@ -91,7 +94,13 @@ async function maybeSlidingRenew(
   setAuthCookie(event, fresh, renewalTtl)
 }
 
-export async function getAuthUser(event: H3Event) {
+/**
+ * 解析会话并同时返回对外视图与数据库行。
+ *
+ * 仅限本模块内部使用：需要 tokenVersion 之类内部字段的鉴权逻辑（初始管理员引导）
+ * 从 row 取，对外的处理器只能拿到 view。
+ */
+async function resolveAuthContext(event: H3Event) {
   const token = getCookie(event, AUTH_COOKIE_NAME)
   if (!token) {
     return null
@@ -145,7 +154,17 @@ export async function getAuthUser(event: H3Event) {
 
   await maybeSlidingRenew(event, payload, user.tokenVersion, ages)
 
-  return toAuthUser(user)
+  return { view: toAuthUser(user), row: user }
+}
+
+/**
+ * 当前登录用户的对外视图。
+ *
+ * 返回 AuthUser 而不是数据库行：这个值会被 /api/auth/me 原样返回给客户端，
+ * 任何内部字段（passwordHash、tokenVersion 等）都不能从这里漏出去。
+ */
+export async function getAuthUser(event: H3Event): Promise<AuthUser | null> {
+  return (await resolveAuthContext(event))?.view ?? null
 }
 
 export async function requireAuth(event: H3Event) {
@@ -156,12 +175,53 @@ export async function requireAuth(event: H3Event) {
   return user
 }
 
+/**
+ * 记录一次越权访问管理接口的尝试。
+ *
+ * 已登录但角色不足 = 一个真实主体主动探测管理接口，这是需要追溯的安全事件。
+ * 未登录请求不记：匿名流量可被无限量制造，记录它等于把审计表变成一个由外部
+ * 随意写入的表，反而会淹没真实信号并成为存储放大面。
+ *
+ * 即便已登录，同一账号仍可循环打管理端点刷表，因此按账号限流：每分钟最多留 10 条。
+ * 追溯只需要「谁在探测、从什么时候开始」，不需要每一次尝试。
+ *
+ * 整体包 try/catch：此时授权决定已经做完，剩下的只是留痕。限流后端（Redis）在
+ * `required` 模式下不可用时会抛 503，若不拦住，一次本该干脆的 403 会变成 503
+ * 并把基础设施状态泄露给无关调用方——一个日志关注点不该改写授权拒绝的响应。
+ */
+async function recordAdminAccessDenial(event: H3Event, user: AuthUser): Promise<void> {
+  try {
+    const canRecord = await canConsumeIdentityRateLimit({
+      namespace: 'admin-access-denied',
+      buckets: [{ name: 'user', value: String(user.id), limit: 10, window: 'minute' }]
+    })
+    if (!canRecord) return
+
+    await addRequestOperationLog(event, {
+      userId: user.id,
+      actor: user.username,
+      action: 'admin.access.denied',
+      resourceType: 'endpoint',
+      resourceId: getRequestURL(event).pathname,
+      detail: {
+        method: event.method,
+        role: user.role
+      },
+      status: 'failure'
+    })
+  } catch (error) {
+    console.error('failed to record admin access denial', { userId: user.id, error })
+  }
+}
+
 export async function requireAdmin(event: H3Event) {
-  const user = await getAuthUser(event)
-  if (!user || user.role !== 'admin') {
+  const context = await resolveAuthContext(event)
+  if (!context || context.view.role !== 'admin') {
+    if (context) await recordAdminAccessDenial(event, context.view)
     throw createError({ statusCode: 403, message: 'forbidden' })
   }
-  return user
+  // tokenVersion 只交给管理端鉴权链（初始管理员引导判据），不进入对外视图。
+  return { ...context.view, tokenVersion: context.row.tokenVersion }
 }
 interface AuthorizedEventHandler<TUser, TResult> {
   (event: H3Event, user: TUser): TResult | Promise<TResult>
@@ -182,16 +242,16 @@ function defineAuthorizedEventHandler<TUser, TResult>(
 }
 
 export function defineAuthenticatedEventHandler<TResult>(
-  handler: AuthorizedEventHandler<NonNullable<Awaited<ReturnType<typeof getAuthUser>>>, TResult>
+  handler: AuthorizedEventHandler<Awaited<ReturnType<typeof requireAuth>>, TResult>
 ) {
   return defineAuthorizedEventHandler(requireAuth, handler)
 }
 
 export function defineAdminEventHandler<TResult>(
-  handler: AuthorizedEventHandler<NonNullable<Awaited<ReturnType<typeof getAuthUser>>>, TResult>
+  handler: AuthorizedEventHandler<Awaited<ReturnType<typeof requireAdmin>>, TResult>
 ) {
-  return defineAuthorizedEventHandler(requireAdmin, async (event, admin) => {
-    await assertAdminOnboardingCompleted(admin, getRequestURL(event).pathname)
+  return defineAuthorizedEventHandler(requireAdmin, (event, admin) => {
+    assertAdminOnboardingCompleted(admin, getRequestURL(event).pathname)
     return handler(event, admin)
   })
 }
