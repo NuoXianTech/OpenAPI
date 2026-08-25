@@ -60,32 +60,28 @@ export function provideAdminPlatformContext(): AdminPlatformContext {
     { immediate: true, flush: 'sync' }
   )
 
+  // 当前选中的 Environment 不属于该 Workspace 时，回落到第一个 active 环境。
+  function syncEnvironment(workspace: PlatformWorkspace | undefined): void {
+    if (workspace?.environments.some(item => item.id === selectedEnvironmentId.value)) return
+    selectedEnvironmentId.value = workspace?.environments.find(
+      item => item.status === 'active'
+    )?.id ?? workspace?.environments[0]?.id ?? ''
+  }
+
+  // 首次加载完成前不自动选中，避免覆盖 URL 带来的 workspaceId。
   watch(
     [workspaces, resource.status, selectedWorkspaceId],
     ([items, status]) => {
       if (status === 'pending') return
       const workspace = items.find(item => item.id === selectedWorkspaceId.value) ?? items[0]
       selectedWorkspaceId.value = workspace?.id ?? ''
-      if (!workspace?.environments.some(environment => environment.id === selectedEnvironmentId.value)) {
-        selectedEnvironmentId.value = workspace?.environments.find(
-          environment => environment.status === 'active'
-        )?.id ?? workspace?.environments[0]?.id ?? ''
-      }
+      syncEnvironment(workspace)
     },
     { immediate: true }
   )
 
-  watch(selectedWorkspace, (workspace) => {
-    if (!workspace) {
-      selectedEnvironmentId.value = ''
-      return
-    }
-    if (!workspace.environments.some(environment => environment.id === selectedEnvironmentId.value)) {
-      selectedEnvironmentId.value = workspace.environments.find(
-        environment => environment.status === 'active'
-      )?.id ?? workspace.environments[0]?.id ?? ''
-    }
-  })
+  // 加载期间切换 Workspace 时上面的 watcher 会提前 return，这里仍要跟随。
+  watch(selectedWorkspace, workspace => syncEnvironment(workspace ?? undefined))
 
   watch(
     [selectedWorkspaceId, selectedEnvironmentId],
