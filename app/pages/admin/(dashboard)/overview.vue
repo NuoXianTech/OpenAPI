@@ -57,8 +57,7 @@ function createEmptyDashboardData(): AdminDashboardData {
 
 function createEmptyDashboardInsightsData(): AdminDashboardInsightsData {
   return {
-    hourlyTrend24h: [],
-    ranking: []
+    hourlyTrend24h: []
   }
 }
 
@@ -82,7 +81,6 @@ const {
   loading: insightsLoading
 } = usePrivateResource<AdminDashboardInsightsData>({
   path: '/api/admin/dashboard/insights',
-  query: { ranking: 10 },
   defaultData: createEmptyDashboardInsightsData
 })
 const overview = computed(() => data.value.overview)
@@ -92,7 +90,6 @@ const chartTrend = computed(() => isUsingOverviewTrend.value ? data.value.trend 
 const chartLoading = computed(() => isUsingOverviewTrend.value ? loading.value : trendLoading.value)
 const distribution = computed(() => data.value.distribution)
 const hourlyTrend24h = computed(() => insightsData.value.hourlyTrend24h)
-const ranking = computed(() => insightsData.value.ranking)
 const recentCalls = computed(() => data.value.recentCalls)
 const generatedAt = computed(() => formatDateTime(data.value.generatedAt, '-', locale.value))
 const callsTrendValues = computed(() => getCallsTrendValues(overviewTrend.value))
@@ -348,27 +345,6 @@ function recentStatusColor(row: AdminDashboardRecentCall): HttpStatusColor {
               <div class="h-64 w-full animate-pulse rounded-lg bg-elevated/50" />
             </template>
           </ClientOnly>
-        </DashboardContentCard>
-
-        <DashboardContentCard
-          :title="$t('admin.overview.ranking.title')"
-          :description="$t('admin.overview.ranking.description', { count: ranking.length || 10 })"
-          icon="i-mdi-podium"
-        >
-          <div
-            v-if="insightsLoading && ranking.length === 0"
-            class="space-y-3"
-          >
-            <USkeleton
-              v-for="index in 5"
-              :key="index"
-              class="h-12 w-full"
-            />
-          </div>
-          <DashboardCallRanking
-            v-else
-            :ranking="ranking"
-          />
         </DashboardContentCard>
 
         <DashboardTableCard

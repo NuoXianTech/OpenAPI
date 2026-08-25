@@ -56,10 +56,6 @@
         "calls": "Calls",
         "empty": "No calls in the last 24 hours"
       },
-      "ranking": {
-        "title": "API call ranking",
-        "description": "Top {count} APIs ranked by call volume and success rate"
-      },
       "recent": {
         "title": "Latest API requests",
         "empty": "No request logs",

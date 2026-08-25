@@ -56,10 +56,6 @@
         "calls": "调用次数",
         "empty": "近 24 小时暂无调用"
       },
-      "ranking": {
-        "title": "调用次数排行",
-        "description": "Top {count} 高频调用接口及成功率"
-      },
       "recent": {
         "title": "最新 API 请求",
         "empty": "暂无请求日志",

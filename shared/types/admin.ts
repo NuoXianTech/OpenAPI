@@ -1,5 +1,3 @@
-import type { DashboardCallRankItem } from './dashboard'
-
 export interface AdminUserItem {
   id: number
   role: 'user' | 'admin'
@@ -22,7 +20,6 @@ export interface AdminDashboardHourlyPoint {
 
 export interface AdminDashboardInsightsData {
   hourlyTrend24h: AdminDashboardHourlyPoint[]
-  ranking: DashboardCallRankItem[]
 }
 
 interface AdminDashboardOverview {

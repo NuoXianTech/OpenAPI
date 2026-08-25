@@ -7,7 +7,6 @@ import type {
   AdminDashboardRecentCall,
   AdminDashboardTrendPoint
 } from '#shared/types/admin'
-import type { DashboardCallRankItem } from '#shared/types/dashboard'
 import { db } from '~~/server/db/client'
 import { apiCallStats, apiCalls, apiProducts, apiRoutes, apiVersions, users } from '~~/server/db/schema'
 import { toIsoString } from '~~/server/utils/date'
@@ -146,35 +145,18 @@ export const adminDashboardService = {
     }
   },
 
-  async getInsights(options: { rankingLimit?: number } = {}): Promise<AdminDashboardInsightsData> {
-    const rankingLimit = clampInteger(options.rankingLimit, 1, 50, 10)
+  async getInsights(): Promise<AdminDashboardInsightsData> {
     const last24hStart = new Date(Date.now() - 24 * 60 * 60 * 1000)
-    const totalExpr = sql<number>`coalesce(sum(${apiCallStats.totalCount}), 0)`
-    const successExpr = sql<number>`coalesce(sum(${apiCallStats.successCount}), 0)`
     const hourlySource = db.select({
       hour: sql<Date>`date_trunc('hour', ${apiCalls.createdAt})`.as('hour')
     }).from(apiCalls)
       .where(and(gte(apiCalls.createdAt, last24hStart), eq(apiCalls.isCounted, true)))
       .as('hourly_source')
 
-    const [hourlyRows, rankingRows] = await Promise.all([
-      db.select({ hour: hourlySource.hour, totalCalls: sql<number>`count(*)` })
-        .from(hourlySource)
-        .groupBy(hourlySource.hour)
-        .orderBy(asc(hourlySource.hour)),
-      db.select({
-        routeId: apiRoutes.id,
-        name: apiRoutes.name,
-        apiPath: apiRoutes.pathPattern,
-        totalCalls: totalExpr,
-        successCalls: successExpr
-      }).from(apiCallStats)
-        .innerJoin(apiRoutes, eq(apiRoutes.id, apiCallStats.routeId))
-        .where(isNull(apiRoutes.deletedAt))
-        .groupBy(apiRoutes.id, apiRoutes.name, apiRoutes.pathPattern)
-        .orderBy(desc(totalExpr), asc(apiRoutes.name))
-        .limit(rankingLimit)
-    ])
+    const hourlyRows = await db.select({ hour: hourlySource.hour, totalCalls: sql<number>`count(*)` })
+      .from(hourlySource)
+      .groupBy(hourlySource.hour)
+      .orderBy(asc(hourlySource.hour))
 
     const hourMap = new Map<string, number>()
     for (const row of hourlyRows) {
@@ -188,19 +170,7 @@ export const adminDashboardService = {
       const hour = date.toISOString()
       return { hour, label: HOURLY_LABEL_FORMATTER.format(date), totalCalls: hourMap.get(hour) ?? 0 }
     })
-    const ranking: DashboardCallRankItem[] = rankingRows.map((row, index) => {
-      const totalCalls = toNumber(row.totalCalls)
-      const successCalls = toNumber(row.successCalls)
-      return {
-        rank: index + 1,
-        routeId: row.routeId,
-        name: row.name,
-        apiPath: row.apiPath,
-        totalCalls,
-        successRate: totalCalls ? Number(((successCalls / totalCalls) * 100).toFixed(2)) : 0
-      }
-    })
-    return { hourlyTrend24h, ranking }
+    return { hourlyTrend24h }
   }
 }
 
