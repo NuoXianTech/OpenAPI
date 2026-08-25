@@ -110,3 +110,47 @@ describe('redemption code presentation', () => {
     expect(transaction?.meta).not.toHaveProperty('codeCiphertext')
   })
 })
+
+describe('redemption code administration', () => {
+  // The single-code and batch operations answer with the same shape, and the
+  // route turns `affected === 0` into a 404. So the count is the contract, not
+  // an incidental detail.
+  it('reports affected rows for single-code and batch operations alike', async () => {
+    const generated = await redemptionService.generate({ amount: 5, count: 3 })
+    const [first] = await database.select().from(schema.redemptionCodes)
+
+    await expect(redemptionService.toggle(first!.id, false))
+      .resolves.toEqual({ affected: 1 })
+    await expect(redemptionService.toggle(first!.id + 1000, false))
+      .resolves.toEqual({ affected: 0 })
+    await expect(redemptionService.toggleBatch(generated.batchId, false))
+      .resolves.toEqual({ affected: 3 })
+
+    await expect(redemptionService.remove(first!.id))
+      .resolves.toEqual({ affected: 1 })
+    await expect(redemptionService.remove(first!.id))
+      .resolves.toEqual({ affected: 0 })
+    await expect(redemptionService.removeBatch(generated.batchId, true))
+      .resolves.toEqual({ affected: 2 })
+  })
+
+  it('keeps used codes when a batch is deleted without includeUsed', async () => {
+    const [user] = await database.insert(schema.users).values({
+      username: 'batch-auditee',
+      email: 'batch@example.com',
+      passwordHash: 'x',
+      isActive: true
+    }).returning()
+    const generated = await redemptionService.generate({ amount: 5, count: 2 })
+    await redemptionService.redeem({
+      userId: user!.id,
+      code: generated.codes[0]!.code
+    })
+
+    await expect(redemptionService.removeBatch(generated.batchId, false))
+      .resolves.toEqual({ affected: 1 })
+    const remaining = await database.select().from(schema.redemptionCodes)
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0]?.usedCount).toBe(1)
+  })
+})

@@ -11,8 +11,10 @@ export default defineAdminEventHandler(async (event, admin) => {
   const enabled = enabledRaw !== false
 
   if (id) {
-    const updated = await redemptionService.toggle(id, enabled)
-    if (!updated) throw createError({ statusCode: 404, message: '兑换码不存在' })
+    const single = await redemptionService.toggle(id, enabled)
+    if (single.affected === 0) {
+      throw createError({ statusCode: 404, message: '兑换码不存在' })
+    }
     await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
@@ -20,10 +22,10 @@ export default defineAdminEventHandler(async (event, admin) => {
       resourceType: 'redemption-code',
       resourceId: id
     })
-    return updated
+    return single
   }
 
-  // refine 已保证 id 或 batchId 至少一个非空
+  // schema 已保证 id 与 batchId 恰好提供一个
   const res = await redemptionService.toggleBatch(batchId!, enabled)
   await addRequestOperationLog(event, {
     userId: admin.id,

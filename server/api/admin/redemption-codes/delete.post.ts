@@ -9,8 +9,10 @@ export default defineAdminEventHandler(async (event, admin) => {
   const { id, batchId, includeUsed } = await readZodBody(event, adminDeleteRedemptionCodeSchema)
 
   if (id) {
-    const removed = await redemptionService.remove(id)
-    if (!removed) throw createError({ statusCode: 404, message: '兑换码不存在' })
+    const single = await redemptionService.remove(id)
+    if (single.affected === 0) {
+      throw createError({ statusCode: 404, message: '兑换码不存在' })
+    }
     await addRequestOperationLog(event, {
       userId: admin.id,
       actor: admin.username,
@@ -18,10 +20,10 @@ export default defineAdminEventHandler(async (event, admin) => {
       resourceType: 'redemption-code',
       resourceId: id
     })
-    return removed
+    return single
   }
 
-  // refine 已保证 id 或 batchId 至少一个非空
+  // schema 已保证 id 与 batchId 恰好提供一个
   const res = await redemptionService.removeBatch(batchId!, !!includeUsed)
   await addRequestOperationLog(event, {
     userId: admin.id,

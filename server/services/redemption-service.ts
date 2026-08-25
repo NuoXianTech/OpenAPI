@@ -260,13 +260,13 @@ export const redemptionService = {
     }))
   },
 
+  /** 启用/禁用单张码。返回受影响行数，0 表示码不存在。 */
   async toggle(id: number, enabled: boolean) {
     const res = await db.update(redemptionCodes)
       .set({ isEnabled: enabled, updatedAt: new Date() })
       .where(eq(redemptionCodes.id, id))
-      .returning()
-    const row = firstRow(res)
-    return row ? presentRedemptionCodeRecord(row) : null
+      .returning({ id: redemptionCodes.id })
+    return { affected: res.length }
   },
 
   /** 批量启用/禁用整个批次 */
@@ -278,10 +278,12 @@ export const redemptionService = {
     return { affected: res.length }
   },
 
+  /** 删除单张码。返回受影响行数，0 表示码不存在。 */
   async remove(id: number) {
-    const res = await db.delete(redemptionCodes).where(eq(redemptionCodes.id, id)).returning()
-    const row = firstRow(res)
-    return row ? presentRedemptionCodeRecord(row) : null
+    const res = await db.delete(redemptionCodes)
+      .where(eq(redemptionCodes.id, id))
+      .returning({ id: redemptionCodes.id })
+    return { affected: res.length }
   },
 
   /** 删除整个批次（仅未被使用过的码会被删除，已被使用的保留以保证审计） */

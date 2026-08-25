@@ -7,7 +7,9 @@ import {
   adminCleanupApiCallLogsSchema,
   adminCleanupLoginLogsSchema,
   adminCleanupOperationLogsSchema,
+  adminDeleteRedemptionCodeSchema,
   adminInitialProfileSchema,
+  adminToggleRedemptionCodeSchema,
   adminUpdateAnnouncementSchema,
   adminUpdateFriendLinkSchema,
   adminUpdateSiteSettingsSchema,
@@ -155,5 +157,21 @@ describe('admin schemas', () => {
       confirm: true,
       userId: true
     }).success).toBe(false)
+  })
+
+  it('forces redemption code operations to address either one code or one batch', () => {
+    for (const schema of [
+      adminToggleRedemptionCodeSchema,
+      adminDeleteRedemptionCodeSchema
+    ]) {
+      expect(schema.safeParse({ id: 7 }).success).toBe(true)
+      expect(schema.safeParse({ batchId: 'batch-1' }).success).toBe(true)
+      expect(schema.safeParse({}).success).toBe(false)
+      // Accepting both would leave the request's meaning up to the order the
+      // handler happens to read the fields in.
+      expect(schema.safeParse({ id: 7, batchId: 'batch-1' }).success).toBe(false)
+      // A blank batchId must not pass as "addressed"; it selects nothing.
+      expect(schema.safeParse({ batchId: '   ' }).success).toBe(false)
+    }
   })
 })
