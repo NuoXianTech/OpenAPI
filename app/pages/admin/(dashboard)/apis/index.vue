@@ -8,10 +8,13 @@ const {
   applyChanges,
   clearFocusedService,
   context,
+  canApply,
   discoverAllServices,
   discoverService,
+  driftedServices,
   editingRoute,
   focusedUpstreamId,
+  requiresDiscovery,
   handlePrimaryAction,
   serviceUpstreams,
   isBusy,
@@ -48,7 +51,7 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
       </div>
       <div class="flex flex-wrap gap-2">
         <UButton
-          v-if="catalog.totals.pending > 0"
+          v-if="canApply"
           icon="i-lucide-cloud-upload"
           :loading="isBusy('apply:environment')"
           :disabled="!context.selectedEnvironment.value"
@@ -103,6 +106,67 @@ useHead({ title: () => t('admin.apis.routing.catalog.title') })
           @click="refresh"
         >
           {{ $t('common.actions.retry') }}
+        </UButton>
+      </template>
+    </UAlert>
+
+    <UAlert
+      v-if="driftedServices.length > 0"
+      color="warning"
+      variant="subtle"
+      icon="i-lucide-triangle-alert"
+      :title="$t('admin.apis.routing.catalog.drift.title', {
+        count: catalog.totals.driftedTargets
+      })"
+    >
+      <template #description>
+        <p>
+          {{ requiresDiscovery
+            ? $t('admin.apis.routing.catalog.drift.discoveryRequired')
+            : $t('admin.apis.routing.catalog.drift.description') }}
+        </p>
+        <ul class="mt-2 space-y-1">
+          <li
+            v-for="service in driftedServices"
+            :key="service.upstream.id"
+            class="text-xs"
+          >
+            <span class="font-medium">{{ service.upstream.name }}</span>
+            <span
+              v-for="item in service.targetDrift"
+              :key="item.targetId"
+              class="ms-2 block font-mono text-muted"
+            >
+              <template v-if="item.kind === 'address_changed'">
+                {{ $t('admin.apis.routing.catalog.drift.addressChanged', {
+                  runtime: item.runtimeBaseUrl,
+                  desired: item.desiredBaseUrl
+                }) }}
+              </template>
+              <template v-else-if="item.kind === 'unpublished'">
+                {{ $t('admin.apis.routing.catalog.drift.unpublished', {
+                  desired: item.desiredBaseUrl
+                }) }}
+              </template>
+              <template v-else>
+                {{ $t('admin.apis.routing.catalog.drift.withdrawn', {
+                  runtime: item.runtimeBaseUrl
+                }) }}
+              </template>
+            </span>
+          </li>
+        </ul>
+      </template>
+      <template #actions>
+        <UButton
+          color="warning"
+          variant="soft"
+          size="xs"
+          icon="i-lucide-scan-search"
+          :loading="isBusy('discover:all')"
+          @click="discoverAllServices"
+        >
+          {{ $t('admin.apis.routing.catalog.actions.syncServices') }}
         </UButton>
       </template>
     </UAlert>

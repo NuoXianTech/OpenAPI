@@ -142,9 +142,28 @@ export interface PlatformEndpointCatalogItem {
   publishable: boolean
 }
 
+/**
+ * Why the runtime address of a Target differs from the stored one:
+ * - `address_changed`: the runtime still serves the previous address.
+ * - `unpublished`: a verified Target is not in the runtime yet.
+ * - `withdrawn`: the runtime serves a Target that no longer exists.
+ */
+export type PlatformTargetRuntimeDriftKind
+  = | 'address_changed'
+    | 'unpublished'
+    | 'withdrawn'
+
+export interface PlatformTargetRuntimeDrift {
+  targetId: string
+  kind: PlatformTargetRuntimeDriftKind
+  runtimeBaseUrl: string | null
+  desiredBaseUrl: string | null
+}
+
 export interface PlatformEndpointCatalogService {
   upstream: PlatformUpstream
   endpoints: PlatformEndpointCatalogItem[]
+  targetDrift: PlatformTargetRuntimeDrift[]
 }
 
 export interface PlatformEndpointCatalog {
@@ -159,6 +178,7 @@ export interface PlatformEndpointCatalog {
     available: number
     pending: number
     disabled: number
+    driftedTargets: number
   }
 }
 

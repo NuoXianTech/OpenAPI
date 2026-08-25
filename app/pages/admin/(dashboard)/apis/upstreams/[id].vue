@@ -477,7 +477,89 @@ async function synchronizeConfiguration() {
         :description="$t('admin.apis.routing.serviceControl.discoverFirstDescription')"
       />
 
-      <template v-else>
+      <!--
+        Targets stay reachable before discovery succeeds: discovery itself needs
+        at least one enabled Target, so gating this card would strand the Upstream.
+      -->
+      <UCard variant="subtle">
+        <template #header>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 class="text-base font-semibold text-highlighted">
+                {{ $t('admin.apis.routing.serviceControl.targetsTitle') }}
+              </h2>
+              <p class="mt-1 text-xs leading-5 text-muted">
+                {{ $t('admin.apis.routing.serviceControl.targetsDescription') }}
+              </p>
+            </div>
+            <UButton
+              color="neutral"
+              variant="outline"
+              size="sm"
+              icon="i-lucide-plus"
+              :disabled="!managementUpstream"
+              @click="openTarget()"
+            >
+              {{ $t('admin.apis.routing.actions.addTarget') }}
+            </UButton>
+          </div>
+        </template>
+        <div class="divide-y divide-default">
+          <div
+            v-for="target in resource.data.value.targets"
+            :key="target.id"
+            class="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
+          >
+            <div class="min-w-0 flex-1">
+              <p class="truncate font-mono text-sm text-highlighted">
+                {{ target.baseUrl }}
+              </p>
+              <p v-if="target.lastError" class="mt-1 text-xs text-error">
+                {{ target.lastError }}
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <UBadge
+                :color="targetAvailabilityColor(target)"
+                variant="subtle"
+              >
+                {{ targetAvailabilityLabel(target) }}
+              </UBadge>
+              <span
+                v-if="targetRevisionLabel(target.configurationRevision)"
+                class="font-mono text-xs text-muted"
+              >
+                {{ targetRevisionLabel(target.configurationRevision) }}
+              </span>
+              <UBadge
+                :color="targetStatusColor(target.configurationStatus)"
+                variant="subtle"
+              >
+                {{ targetStatusLabel(target) }}
+              </UBadge>
+              <UDropdownMenu
+                v-if="managementUpstream?.targets.find(item => item.id === target.id)"
+                :items="targetItems(managementUpstream.targets.find(item => item.id === target.id)!)"
+                :content="{ align: 'end' }"
+              >
+                <UButton
+                  icon="i-lucide-ellipsis"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                />
+              </UDropdownMenu>
+            </div>
+          </div>
+        </div>
+        <UEmpty
+          v-if="resource.data.value.targets.length === 0"
+          icon="i-lucide-server-off"
+          :title="$t('admin.apis.routing.empty.targetsTitle')"
+        />
+      </UCard>
+
+      <template v-if="resource.data.value.connection.discovered">
         <section class="space-y-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div>
@@ -516,84 +598,6 @@ async function synchronizeConfiguration() {
             @submit="saveConfiguration"
           />
         </section>
-
-        <UCard variant="subtle">
-          <template #header>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 class="text-base font-semibold text-highlighted">
-                  {{ $t('admin.apis.routing.serviceControl.targetsTitle') }}
-                </h2>
-                <p class="mt-1 text-xs leading-5 text-muted">
-                  {{ $t('admin.apis.routing.serviceControl.targetsDescription') }}
-                </p>
-              </div>
-              <UButton
-                color="neutral"
-                variant="outline"
-                size="sm"
-                icon="i-lucide-plus"
-                :disabled="!managementUpstream"
-                @click="openTarget()"
-              >
-                {{ $t('admin.apis.routing.actions.addTarget') }}
-              </UButton>
-            </div>
-          </template>
-          <div class="divide-y divide-default">
-            <div
-              v-for="target in resource.data.value.targets"
-              :key="target.id"
-              class="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center"
-            >
-              <div class="min-w-0 flex-1">
-                <p class="truncate font-mono text-sm text-highlighted">
-                  {{ target.baseUrl }}
-                </p>
-                <p v-if="target.lastError" class="mt-1 text-xs text-error">
-                  {{ target.lastError }}
-                </p>
-              </div>
-              <div class="flex items-center gap-2">
-                <UBadge
-                  :color="targetAvailabilityColor(target)"
-                  variant="subtle"
-                >
-                  {{ targetAvailabilityLabel(target) }}
-                </UBadge>
-                <span
-                  v-if="targetRevisionLabel(target.configurationRevision)"
-                  class="font-mono text-xs text-muted"
-                >
-                  {{ targetRevisionLabel(target.configurationRevision) }}
-                </span>
-                <UBadge
-                  :color="targetStatusColor(target.configurationStatus)"
-                  variant="subtle"
-                >
-                  {{ targetStatusLabel(target) }}
-                </UBadge>
-                <UDropdownMenu
-                  v-if="managementUpstream?.targets.find(item => item.id === target.id)"
-                  :items="targetItems(managementUpstream.targets.find(item => item.id === target.id)!)"
-                  :content="{ align: 'end' }"
-                >
-                  <UButton
-                    icon="i-lucide-ellipsis"
-                    color="neutral"
-                    variant="ghost"
-                    size="xs"
-                  />
-                </UDropdownMenu>
-              </div>
-            </div>
-          </div>
-          <UEmpty
-            v-if="resource.data.value.targets.length === 0"
-            icon="i-lucide-server-off"
-            :title="$t('admin.apis.routing.empty.targetsTitle')"
-          />
-        </UCard>
 
         <UCard variant="subtle">
           <template #header>

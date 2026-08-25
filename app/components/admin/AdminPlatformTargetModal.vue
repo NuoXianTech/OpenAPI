@@ -28,6 +28,17 @@ const state = reactive<TargetFormState>({
   enabled: true
 })
 
+/**
+ * A Service-managed Target must pass discovery before it reaches the runtime,
+ * so changing the address leaves the gateway on the previous one until then.
+ */
+const warnsAboutDeferredAddress = computed(() => (
+  isEditing.value
+  && props.upstream.serviceManaged
+  && state.baseUrl.trim() !== ''
+  && state.baseUrl.trim() !== props.target?.baseUrl
+))
+
 watch(open, (value) => {
   if (!value) return
   Object.assign(state, {
@@ -124,6 +135,14 @@ async function submit(event: FormSubmitEvent<TargetFormState>) {
             class="w-full font-mono"
           />
         </UFormField>
+        <UAlert
+          v-if="warnsAboutDeferredAddress"
+          color="warning"
+          variant="subtle"
+          icon="i-lucide-triangle-alert"
+          :title="$t('admin.apis.routing.targetForm.deferredAddressTitle')"
+          :description="$t('admin.apis.routing.targetForm.deferredAddressDescription')"
+        />
         <div class="grid gap-4 sm:grid-cols-2">
           <UFormField
             name="weight"

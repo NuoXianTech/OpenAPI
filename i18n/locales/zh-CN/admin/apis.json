@@ -272,12 +272,15 @@
           "targetsDescription": "Target 支持私网地址、容器名、HTTP 与 HTTPS；公网 HTTP 会被拒绝，加权模式会按照权重分配请求。",
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "一个 Upstream 可以连接多个 Service 实例",
-          "multiServiceDescription": "Target 可以位于不同服务器。轮询适合等规格实例；加权轮询可按服务器能力分配流量。同一 Upstream 的所有 Target 必须属于同一个逻辑 Service，并保持 OpenAPI 与配置 Schema 一致。"
+          "multiServiceDescription": "Target 可以位于不同服务器。轮询适合等规格实例；加权轮询可按服务器能力分配流量。同一 Upstream 的所有 Target 必须属于同一个逻辑 Service，并保持 OpenAPI 与配置 Schema 一致。",
+          "workspaceContext": "所属工作区"
         },
         "targetForm": {
           "createTitle": "添加 Target",
           "editTitle": "编辑 Target",
-          "description": "为 {upstream} 配置服务地址、权重与流量状态。"
+          "description": "为 {upstream} 配置服务地址、权重与流量状态。",
+          "deferredAddressTitle": "新地址需要通过发现校验后才会生效",
+          "deferredAddressDescription": "保存后运行时仍会使用原地址，直到同步 Service 接口成功。请确认新地址已经可以访问。"
         },
         "routeForm": {
           "createTitle": "新建动态 Route",
@@ -518,7 +521,9 @@
             "apiKeyEnabled": "API Key 已启用",
             "apiKeyDisabled": "API Key 已停用",
             "publishFailed": "接口发布失败",
-            "updateFailed": "接口变更失败"
+            "updateFailed": "接口变更失败",
+            "applyBlockedBy": "上游 {upstream} 尚无可用 Target，请先同步该 Service",
+            "runtimeUnchanged": "运行时配置没有变化，未生成新的 Routing Revision"
           },
           "empty": {
             "catalogTitle": "还没有可管理的 Service",
@@ -529,6 +534,14 @@
             "serviceDescription": "重新发现 Service，Platform 会读取最新 OpenAPI 契约。",
             "manualTitle": "还没有自定义接口",
             "manualDescription": "为这个手动管理的 Upstream 创建第一条公开 Route。"
+          },
+          "drift": {
+            "title": "{count} 个 Target 的运行时地址与配置不一致",
+            "description": "这些 Service Target 尚未通过发现校验，运行时仍在使用旧地址。同步 Service 接口后地址才会生效。",
+            "addressChanged": "运行时 {runtime} → 已保存 {desired}",
+            "unpublished": "{desired} 已校验但尚未进入运行时",
+            "withdrawn": "运行时仍在使用已删除的 {runtime}",
+            "discoveryRequired": "这些 Target 的新地址尚未通过发现校验，运行时仍在使用旧地址。必须同步 Service 才能生效，\"应用全部变更\"不会改变这些地址。"
           }
         }
       },

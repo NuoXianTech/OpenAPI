@@ -219,7 +219,8 @@ export function toPlatformEndpointCatalog(
       endpoints: service.endpoints.map(item => ({
         ...item,
         route: item.route ? toPlatformRouteBinding(item.route) : null
-      }))
+      })),
+      targetDrift: service.targetDrift
     }))
   }
 }

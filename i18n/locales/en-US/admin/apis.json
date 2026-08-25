@@ -272,12 +272,15 @@
           "targetsDescription": "Targets support private addresses, container names, HTTP, and HTTPS. Public HTTP is rejected; weighted mode distributes requests according to each weight.",
           "targetLabel": "TARGET {number}",
           "multiServiceTitle": "One Upstream can connect multiple Service instances",
-          "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas."
+          "multiServiceDescription": "Targets may run on different servers. Round robin fits equal instances; weighted round robin allocates traffic by capacity. Every Target in one Upstream must belong to the same logical Service and expose matching OpenAPI and configuration schemas.",
+          "workspaceContext": "Workspace"
         },
         "targetForm": {
           "createTitle": "Add Target",
           "editTitle": "Edit Target",
-          "description": "Configure the service URL, weight, and traffic state for {upstream}."
+          "description": "Configure the service URL, weight, and traffic state for {upstream}.",
+          "deferredAddressTitle": "The new address activates only after discovery verifies it",
+          "deferredAddressDescription": "After saving, the runtime keeps using the previous address until the Service is synchronized. Make sure the new address is reachable."
         },
         "routeForm": {
           "createTitle": "Create dynamic Route",
@@ -518,7 +521,9 @@
             "apiKeyEnabled": "API Key enabled",
             "apiKeyDisabled": "API Key disabled",
             "publishFailed": "Endpoint publishing failed",
-            "updateFailed": "Endpoint update failed"
+            "updateFailed": "Endpoint update failed",
+            "applyBlockedBy": "Upstream {upstream} has no verified target; synchronize that Service first",
+            "runtimeUnchanged": "The runtime configuration was unchanged, so no new routing revision was created"
           },
           "empty": {
             "catalogTitle": "No manageable Services yet",
@@ -529,6 +534,14 @@
             "serviceDescription": "Rediscover the Service to read its latest OpenAPI contract.",
             "manualTitle": "No custom endpoints yet",
             "manualDescription": "Create the first public Route for this manually managed Upstream."
+          },
+          "drift": {
+            "title": "{count} target address(es) differ from the runtime",
+            "description": "These Service targets are not verified yet, so the runtime still serves the previous address. Synchronize the Service to activate the new address.",
+            "addressChanged": "runtime {runtime} → saved {desired}",
+            "unpublished": "{desired} is verified but not in the runtime yet",
+            "withdrawn": "the runtime still serves the deleted {runtime}",
+            "discoveryRequired": "The new addresses are not verified yet, so the runtime still serves the previous ones. Only synchronizing the Service activates them; applying changes will not."
           }
         }
       },

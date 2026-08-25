@@ -20,8 +20,10 @@ import type {
   HttpMethod,
   PublicationStatus,
   RouteBinding,
-  RouteMutationInput
+  RouteMutationInput,
+  TargetRuntimeDrift
 } from '~~/server/types/platform-publication'
+import { findTargetRuntimeDrift } from '~~/server/utils/target-runtime-drift'
 import { ensureEndpointVersion } from '~~/server/services/platform-endpoint-product-service'
 import { synchronizeEndpointSupportRoutes } from '~~/server/services/platform-endpoint-support-route-service'
 import { platformServiceControlService } from '~~/server/services/platform-service-control-service'
@@ -124,6 +126,12 @@ export const platformEndpointCatalogService = {
     const liveRoutes = new Map(
       (revision?.configPayload.routes ?? []).map(route => [route.id, route])
     )
+    const liveUpstreams = new Map(
+      (revision?.configPayload.upstreams ?? []).map(upstream => [
+        upstream.id,
+        upstream
+      ])
+    )
     const serviceViews = new Map<string, Awaited<ReturnType<
       typeof platformServiceControlService.get
     >>>()
@@ -199,7 +207,13 @@ export const platformEndpointCatalogService = {
           publishable: true
         })
       }
-      return { upstream, endpoints }
+      const targetDrift: TargetRuntimeDrift[] = findTargetRuntimeDrift({
+        serviceManaged: upstream.serviceManaged,
+        targets: upstream.targets,
+        connection: upstream.connection,
+        runtimeUpstream: liveUpstreams.get(upstream.id) ?? null
+      })
+      return { upstream, endpoints, targetDrift }
     })
 
     const items = services.flatMap(service => service.endpoints)
@@ -216,7 +230,11 @@ export const platformEndpointCatalogService = {
         pending: items.filter(item => (
           item.status === 'pending' || item.status === 'retiring'
         )).length,
-        disabled: items.filter(item => item.status === 'disabled').length
+        disabled: items.filter(item => item.status === 'disabled').length,
+        driftedTargets: services.reduce(
+          (total, service) => total + service.targetDrift.length,
+          0
+        )
       }
     }
   },

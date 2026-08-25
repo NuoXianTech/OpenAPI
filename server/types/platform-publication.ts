@@ -53,3 +53,15 @@ export type PublicationStatus
     | 'pending'
     | 'retiring'
     | 'disabled'
+
+/**
+ * A Service-managed Target only reaches the runtime after discovery verifies it,
+ * so the stored address can legitimately differ from the published one. Surfacing
+ * the difference keeps a silently stale runtime from looking healthy.
+ */
+export interface TargetRuntimeDrift {
+  targetId: string
+  kind: 'address_changed' | 'unpublished' | 'withdrawn'
+  runtimeBaseUrl: string | null
+  desiredBaseUrl: string | null
+}

@@ -22,7 +22,8 @@ function emptyCatalog(): PlatformEndpointCatalog {
       live: 0,
       available: 0,
       pending: 0,
-      disabled: 0
+      disabled: 0,
+      driftedTargets: 0
     }
   }
 }
@@ -74,6 +75,23 @@ export function useAdminEndpointCatalogPage() {
   ))
   const serviceUpstreams = computed(() => upstreams.value.filter(
     upstream => upstream.serviceManaged && upstream.status === 'active'
+  ))
+  const driftedServices = computed(() => catalog.value.services.filter(
+    service => service.targetDrift.length > 0
+  ))
+  const allDrift = computed(() => catalog.value.services.flatMap(
+    service => service.targetDrift
+  ))
+  // Publication only adopts Targets discovery already verified, and an
+  // `address_changed` Target is unverified by definition: publishing it
+  // reproduces the same payload and leaves the active revision untouched. So it
+  // must not enable Apply, and it needs discovery instead.
+  const requiresDiscovery = computed(() => allDrift.value.some(
+    item => item.kind === 'address_changed'
+  ))
+  const canApply = computed(() => (
+    catalog.value.totals.pending > 0
+    || allDrift.value.some(item => item.kind !== 'address_changed')
   ))
   const loading = computed(() => (
     catalogResource.loading.value
@@ -246,28 +264,57 @@ export function useAdminEndpointCatalogPage() {
     }
   }
 
+  /**
+   * Publication covers the whole environment, so one unready Upstream blocks
+   * every other pending change. Name it instead of leaving the admin to guess.
+   */
+  function blockingUpstreamName(error: unknown): string | null {
+    if (!error || typeof error !== 'object') return null
+    const data = (error as { data?: { data?: { upstreamServiceId?: unknown } } })
+      .data?.data
+    const upstreamServiceId = typeof data?.upstreamServiceId === 'string'
+      ? data.upstreamServiceId
+      : null
+    if (!upstreamServiceId) return null
+    return upstreams.value.find(
+      upstream => upstream.id === upstreamServiceId
+    )?.name ?? upstreamServiceId
+  }
+
   async function applyChanges() {
     const environmentId = context.selectedEnvironmentId.value
-    if (!environmentId || catalog.value.totals.pending === 0) return
+    if (!environmentId || !canApply.value) return
+    const previousRevisionId = catalog.value.activeRevisionId
     setBusy('apply:environment', true)
     try {
-      await $fetch('/api/admin/v1/service-endpoints/apply', {
-        method: 'POST',
-        body: { environmentId }
-      })
+      // Publication is idempotent: an unchanged payload returns the active
+      // revision, so only a new id means the runtime actually moved.
+      const result = await $fetch<{ revision: { id: string } }>(
+        '/api/admin/v1/service-endpoints/apply',
+        { method: 'POST', body: { environmentId } }
+      )
+      const runtimeUpdated = result.revision.id !== previousRevisionId
       toast.add({
         title: t('admin.apis.routing.catalog.feedback.changesApplied'),
-        description: t('admin.apis.routing.feedback.runtimeUpdated'),
-        color: 'success',
-        icon: 'i-lucide-circle-check'
+        description: t(runtimeUpdated
+          ? 'admin.apis.routing.feedback.runtimeUpdated'
+          : 'admin.apis.routing.catalog.feedback.runtimeUnchanged'),
+        color: runtimeUpdated ? 'success' : 'warning',
+        icon: runtimeUpdated ? 'i-lucide-circle-check' : 'i-lucide-info'
       })
       await refreshAfterMutation()
     } catch (error: unknown) {
+      const blockedBy = blockingUpstreamName(error)
       toast.add({
         title: parseFetchError(
           error,
           t('admin.apis.routing.catalog.feedback.applyFailed')
         ),
+        description: blockedBy
+          ? t('admin.apis.routing.catalog.feedback.applyBlockedBy', {
+              upstream: blockedBy
+            })
+          : undefined,
         color: 'error'
       })
       await catalogResource.refresh()
@@ -392,11 +439,13 @@ export function useAdminEndpointCatalogPage() {
 
   return {
     applyChanges,
+    canApply,
     catalog,
     clearFocusedService,
     context,
     discoverAllServices,
     discoverService,
+    driftedServices,
     editingRoute,
     focusedUpstreamId,
     handlePrimaryAction,
@@ -408,6 +457,7 @@ export function useAdminEndpointCatalogPage() {
     products,
     refresh,
     refreshAfterMutation,
+    requiresDiscovery,
     resetFilters,
     resourceError,
     routeModalOpen,
