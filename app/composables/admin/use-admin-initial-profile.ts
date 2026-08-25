@@ -56,7 +56,7 @@ export function useAdminInitialProfile() {
     checkedUserId.value = value.id
     checking.value = true
     try {
-      const status = await $fetch<{ shouldShow: boolean }>('/api/admin/onboarding/status')
+      const status = await $fetch('/api/admin/onboarding/status')
       open.value = status.shouldShow
     } catch {
       open.value = false

@@ -24,7 +24,7 @@ export function useUserOauthSettings() {
   async function loadOauthBindings(): Promise<void> {
     isOauthLoading.value = true
     try {
-      const response = await $fetch<{ oauthEnabled: boolean, providers: UserOauthBinding[] }>('/api/user/oauth/list')
+      const response = await $fetch('/api/user/oauth/list')
       isOauthEnabled.value = response.oauthEnabled
       oauthBindings.value = response.providers
     } catch {

@@ -33,7 +33,7 @@ async function onConfirm() {
   errorMessage.value = ''
   status.value = 'submitting'
   try {
-    const result = await $fetch<{ email: string }>('/api/auth/confirm-email-change', {
+    const result = await $fetch('/api/auth/confirm-email-change', {
       method: 'POST',
       body: {
         userId: userId.value,

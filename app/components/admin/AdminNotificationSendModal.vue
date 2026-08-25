@@ -59,7 +59,7 @@ async function submitSend(): Promise<void> {
 
   isSending.value = true
   try {
-    const response = await $fetch<{ deliveredCount?: number }>('/api/admin/notifications/send', {
+    const response = await $fetch('/api/admin/notifications/send', {
       method: 'POST',
       body: {
         audience: form.audience,

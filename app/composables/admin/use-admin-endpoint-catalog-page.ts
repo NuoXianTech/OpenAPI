@@ -289,7 +289,7 @@ export function useAdminEndpointCatalogPage() {
     try {
       // Publication is idempotent: an unchanged payload returns the active
       // revision, so only a new id means the runtime actually moved.
-      const result = await $fetch<{ revision: { id: string } }>(
+      const result = await $fetch(
         '/api/admin/v1/service-endpoints/apply',
         { method: 'POST', body: { environmentId } }
       )

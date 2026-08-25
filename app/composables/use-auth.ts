@@ -130,7 +130,7 @@ export function useAuth() {
     return res
   }
 
-  const register = (payload: RegisterInput) => $fetch<{ verificationRequired: boolean }>('/api/auth/register', {
+  const register = (payload: RegisterInput) => $fetch('/api/auth/register', {
     method: 'POST',
     body: payload
   })
@@ -164,7 +164,7 @@ export function useAuth() {
   }
 
   const updateLocalePreference = async (locale: SupportedLocale) => {
-    const result = await $fetch<{ locale: SupportedLocale }>('/api/user/preferences', {
+    const result = await $fetch('/api/user/preferences', {
       method: 'PUT',
       body: { locale }
     })

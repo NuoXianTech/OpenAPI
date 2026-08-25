@@ -47,7 +47,7 @@ export function useUserProfileSettings() {
   }
 
   async function requestEmailChange(currentPassword: string, newEmail: string): Promise<string> {
-    const response = await $fetch<{ pendingEmail: string }>('/api/user/request-email-change', {
+    const response = await $fetch('/api/user/request-email-change', {
       method: 'POST',
       body: { currentPassword, newEmail }
     })

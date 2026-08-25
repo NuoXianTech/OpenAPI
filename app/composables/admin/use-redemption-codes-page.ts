@@ -141,7 +141,7 @@ export function useRedemptionCodesPage() {
 
   async function toggleBatch(batchId: string, enabled: boolean) {
     try {
-      const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/toggle', {
+      const res = await $fetch('/api/admin/redemption-codes/toggle', {
         method: 'POST',
         body: { batchId, enabled }
       })
@@ -166,7 +166,7 @@ export function useRedemptionCodesPage() {
       description,
       onConfirm: async () => {
         try {
-          const res = await $fetch<{ affected: number }>('/api/admin/redemption-codes/delete', {
+          const res = await $fetch('/api/admin/redemption-codes/delete', {
             method: 'POST',
             body: { batchId, includeUsed }
           })

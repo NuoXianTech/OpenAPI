@@ -105,7 +105,7 @@ async function submitBind() {
 async function submitRegister() {
   submitting.value = true
   try {
-    const res = await $fetch<{ ok: boolean, verificationRequired: boolean }>('/api/auth/oauth/register', {
+    const res = await $fetch('/api/auth/oauth/register', {
       method: 'POST',
       body: {
         email: registerState.email,

@@ -58,7 +58,7 @@ async function fetchUnreadCount(): Promise<void> {
   const controller = new AbortController()
   unreadController = controller
   try {
-    const res = await $fetch<{ count: number }>('/api/notifications/unread-count', {
+    const res = await $fetch('/api/notifications/unread-count', {
       signal: controller.signal
     })
     if (version === unreadRequestVersion) unread.value = res.count

@@ -164,7 +164,7 @@ export function useUserCreditsPage() {
   }
 
   async function redeem(code: string): Promise<{ amount: number, balanceAfter: number }> {
-    const res = await $fetch<{ amount: number, balanceAfter: number }>('/api/user/credits/redeem', {
+    const res = await $fetch('/api/user/credits/redeem', {
       method: 'POST',
       body: { code }
     })

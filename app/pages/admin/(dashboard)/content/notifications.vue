@@ -109,7 +109,7 @@ async function loadDetailPage(page: number) {
   detailLoading.value = true
   detailRows.value = []
   try {
-    const res = await $fetch<{ deliveries?: typeof detailRows.value, total?: number }>('/api/admin/notifications/detail', {
+    const res = await $fetch('/api/admin/notifications/detail', {
       query: { messageId, limit: detailPageSize, offset: (page - 1) * detailPageSize }
     })
     detailRows.value = res?.deliveries || []

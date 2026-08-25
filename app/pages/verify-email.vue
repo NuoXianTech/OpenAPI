@@ -67,7 +67,7 @@ async function verifyEmail() {
   message.value = t('auth.verifyEmail.pendingMessage')
 
   try {
-    const result = await $fetch<{ alreadyVerified?: boolean }>('/api/auth/verify-email', {
+    const result = await $fetch('/api/auth/verify-email', {
       method: 'POST',
       body: {
         token: token.value,
