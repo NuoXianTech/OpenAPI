@@ -20,10 +20,9 @@ const { t } = useI18n()
 const form = reactive({
   amount: 100,
   count: 1,
-  prefix: '',
-  length: 16,
   maxUses: 1,
-  expiresInDays: 0,
+  /** `datetime-local` 字符串，空表示永不过期。 */
+  expiresAt: '',
   note: ''
 })
 
@@ -34,10 +33,8 @@ function resetForm() {
   Object.assign(form, {
     amount: 100,
     count: 1,
-    prefix: '',
-    length: 16,
     maxUses: 1,
-    expiresInDays: 0,
+    expiresAt: '',
     note: ''
   })
   result.value = null
@@ -52,19 +49,22 @@ async function submit() {
     toast.add({ title: t('admin.credits.redemptionCodes.generate.validation.positiveAmount'), color: 'warning' })
     return
   }
+  // The API silently drops a past expiry and issues a code that never expires,
+  // so reject it here instead of quietly generating the wrong thing.
+  const parsedExpiry = form.expiresAt ? new Date(form.expiresAt) : null
+  if (parsedExpiry && (Number.isNaN(parsedExpiry.getTime()) || parsedExpiry.getTime() <= Date.now())) {
+    toast.add({
+      title: t('admin.credits.redemptionCodes.generate.validation.futureExpiry'),
+      color: 'warning'
+    })
+    return
+  }
   generating.value = true
   try {
-    let expiresAt: string | null = null
-    if (form.expiresInDays > 0) {
-      const d = new Date()
-      d.setDate(d.getDate() + Math.trunc(form.expiresInDays))
-      expiresAt = d.toISOString()
-    }
+    const expiresAt = parsedExpiry ? parsedExpiry.toISOString() : null
     result.value = await props.onGenerate({
       amount: Math.trunc(form.amount),
       count: Math.trunc(form.count),
-      prefix: form.prefix.trim() || null,
-      length: Math.trunc(form.length),
       maxUses: Math.trunc(form.maxUses),
       expiresAt,
       note: form.note.trim() || null
@@ -88,21 +88,23 @@ function close() {
   <UModal
     :open="open"
     :title="$t('admin.credits.redemptionCodes.generate.title')"
+    :dismissible="!generating"
     :ui="adminModalUi({ content: 'sm:max-w-2xl' })"
     @update:open="emit('update:open', $event)"
   >
     <template #body>
       <div
         v-if="!result"
-        class="space-y-3"
+        class="space-y-5"
       >
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid gap-4 sm:grid-cols-2">
           <UFormField :label="$t('admin.credits.redemptionCodes.generate.amount')">
             <UInput
               v-model.number="form.amount"
               type="number"
               min="1"
               :placeholder="$t('admin.credits.redemptionCodes.generate.amountPlaceholder')"
+              class="w-full"
             />
           </UFormField>
           <UFormField :label="$t('admin.credits.redemptionCodes.generate.count')">
@@ -110,51 +112,37 @@ function close() {
               v-model.number="form.count"
               type="number"
               min="1"
-              max="1000"
+              max="100"
+              class="w-full"
             />
           </UFormField>
         </div>
-        <div class="grid grid-cols-2 gap-3">
-          <UFormField
-            :label="$t('admin.credits.redemptionCodes.generate.length')"
-            :hint="$t('admin.credits.redemptionCodes.generate.lengthHint')"
-          >
-            <UInput
-              v-model.number="form.length"
-              type="number"
-              min="8"
-              max="48"
-            />
-          </UFormField>
-          <UFormField
-            :label="$t('admin.credits.redemptionCodes.generate.prefix')"
-            :hint="$t('admin.credits.redemptionCodes.generate.prefixHint')"
-          >
-            <UInput
-              v-model="form.prefix"
-              placeholder=""
-            />
-          </UFormField>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
+        <!--
+          `maxUses` carries a sentence-length explanation, so it uses `help`
+          (rendered under the input) to keep both fields on the same baseline.
+        -->
+        <div class="grid gap-4 sm:grid-cols-2">
           <UFormField
             :label="$t('admin.credits.redemptionCodes.generate.maxUses')"
-            :hint="$t('admin.credits.redemptionCodes.generate.maxUsesHint')"
+            :help="$t('admin.credits.redemptionCodes.generate.maxUsesHint')"
           >
             <UInput
               v-model.number="form.maxUses"
               type="number"
               min="1"
+              class="w-full"
             />
           </UFormField>
           <UFormField
-            :label="$t('admin.credits.redemptionCodes.generate.expiresInDays')"
-            :hint="$t('admin.credits.redemptionCodes.generate.expiresInDaysHint')"
+            :label="$t('admin.credits.redemptionCodes.columns.expiresAt')"
           >
-            <UInput
-              v-model.number="form.expiresInDays"
-              type="number"
-              min="0"
+            <!--
+              An empty value means the code never expires, so the placeholder
+              states that outcome rather than prompting for a date.
+            -->
+            <CommonDateTimePicker
+              v-model="form.expiresAt"
+              :placeholder="$t('admin.credits.redemptionCodes.neverExpires')"
             />
           </UFormField>
         </div>
@@ -162,18 +150,21 @@ function close() {
           <UInput
             v-model="form.note"
             :placeholder="$t('admin.credits.redemptionCodes.generate.notePlaceholder')"
+            class="w-full"
           />
         </UFormField>
       </div>
 
       <div
         v-else
-        class="space-y-3"
+        class="space-y-4"
       >
         <UAlert
-          color="success"
+          :color="result.generated < result.requested ? 'warning' : 'success'"
           variant="subtle"
-          icon="i-mdi-check-circle-outline"
+          :icon="result.generated < result.requested
+            ? 'i-lucide-triangle-alert'
+            : 'i-mdi-check-circle-outline'"
           :title="$t('admin.credits.redemptionCodes.generate.resultTitle', { count: result.generated })"
           :description="result.generated < result.requested
             ? $t('admin.credits.redemptionCodes.generate.partialResultDescription', {
@@ -183,32 +174,43 @@ function close() {
             })
             : $t('admin.credits.redemptionCodes.generate.resultDescription', { batchId: result.batchId })"
         />
-        <div class="flex justify-end">
-          <UButton
-            size="sm"
-            variant="outline"
-            icon="i-mdi-content-copy"
-            @click="onCopyAll(result.codes)"
-          >
-            {{ $t('admin.credits.redemptionCodes.actions.copyAll') }}
-          </UButton>
-        </div>
-        <div class="rounded-lg border border-default p-3 bg-elevated/30 max-h-72 overflow-auto">
-          <div
-            v-for="c in result.codes"
-            :key="c.id"
-            class="flex items-center justify-between gap-2 py-1"
-          >
-            <span class="font-mono text-sm">
-              {{ c.code }}
+
+        <div class="overflow-hidden rounded-lg border border-default">
+          <div class="flex items-center gap-2 border-b border-default bg-elevated/30 px-3 py-2">
+            <span class="text-xs font-medium text-muted">
+              {{ $t('admin.credits.redemptionCodes.columns.code') }}
             </span>
             <UButton
+              class="ms-auto"
               size="xs"
               variant="ghost"
               color="neutral"
               icon="i-mdi-content-copy"
-              @click="onCopyOne(c.code)"
-            />
+              @click="onCopyAll(result.codes)"
+            >
+              {{ $t('admin.credits.redemptionCodes.actions.copyAll') }}
+            </UButton>
+          </div>
+          <div class="max-h-72 divide-y divide-default overflow-auto">
+            <div
+              v-for="c in result.codes"
+              :key="c.id"
+              class="flex items-center gap-2 px-3 py-2"
+            >
+              <span class="min-w-0 flex-1 truncate font-mono text-sm text-highlighted">
+                {{ c.code }}
+              </span>
+              <UButton
+                class="shrink-0"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                square
+                icon="i-mdi-content-copy"
+                :aria-label="$t('admin.credits.redemptionCodes.actions.copyCode')"
+                @click="onCopyOne(c.code)"
+              />
+            </div>
           </div>
         </div>
       </div>

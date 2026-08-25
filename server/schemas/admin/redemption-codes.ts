@@ -2,9 +2,7 @@ import { z } from 'zod'
 
 export const adminGenerateRedemptionCodeSchema = z.object({
   amount: z.coerce.number().int().positive('amount 必须 > 0'),
-  count: z.coerce.number().int().min(1).max(1000).optional(),
-  prefix: z.string().nullable().optional(),
-  length: z.coerce.number().int().min(8).max(48).optional(),
+  count: z.coerce.number().int().min(1).max(100).optional(),
   maxUses: z.coerce.number().int().min(1).optional(),
   expiresAt: z.string().nullable().optional(),
   note: z.string().nullable().optional()

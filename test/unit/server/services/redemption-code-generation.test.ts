@@ -6,22 +6,26 @@ import {
 } from '~~/server/services/redemption-code-generation'
 
 describe('normalizeRedemptionGeneration', () => {
-  it('clamps count, length, amount, max uses, prefix, and note', () => {
+  it('clamps count, amount, max uses, and note', () => {
     const result = normalizeRedemptionGeneration({
       amount: -5,
       count: 5000,
-      length: 3,
       maxUses: 0,
-      prefix: ' abc_* ',
       note: 'x'.repeat(600)
     })
 
     expect(result.amount).toBe(1)
-    expect(result.count).toBe(1000)
-    expect(result.length).toBe(8)
+    expect(result.count).toBe(100)
     expect(result.maxUses).toBe(1)
-    expect(result.prefix).toBe('ABC')
     expect(result.note).toHaveLength(500)
+  })
+
+  it('does not accept a caller-provided code length or prefix', () => {
+    // Both were removed from the admin surface: the code format is fixed.
+    const result = normalizeRedemptionGeneration({ amount: 100 })
+
+    expect(result).not.toHaveProperty('length')
+    expect(result).not.toHaveProperty('prefix')
   })
 })
 

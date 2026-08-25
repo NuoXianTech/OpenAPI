@@ -3,8 +3,6 @@ import { clampInteger, toInteger } from '~~/server/utils/number'
 interface RedemptionGenerationInput {
   amount: number
   count?: number
-  prefix?: string | null
-  length?: number
   maxUses?: number
   expiresAt?: Date | null
   note?: string | null
@@ -14,8 +12,6 @@ interface RedemptionGenerationInput {
 interface NormalizedRedemptionGeneration {
   amount: number
   count: number
-  prefix: string
-  length: number
   maxUses: number
   expiresAt: Date | null
   note: string | null
@@ -57,22 +53,10 @@ interface InsertRedemptionCodesUntilCompleteInput<TInput, TInserted> {
 }
 
 const DEFAULT_COUNT = 1
-const MAX_COUNT = 1000
-const DEFAULT_CODE_LENGTH = 16
-const MIN_CODE_LENGTH = 8
-const MAX_CODE_LENGTH = 48
+const MAX_COUNT = 100
 const DEFAULT_MAX_USES = 1
-const MAX_PREFIX_LENGTH = 16
 const MAX_NOTE_LENGTH = 500
 const DEFAULT_MAX_ATTEMPTS = 5
-
-function normalizePrefix(prefix: string | null | undefined): string {
-  return (prefix || '')
-    .trim()
-    .toUpperCase()
-    .replace(/[^A-Z0-9-]/g, '')
-    .slice(0, MAX_PREFIX_LENGTH)
-}
 
 function normalizeNote(note: string | null | undefined): string | null {
   const normalizedNote = (note || '').trim().slice(0, MAX_NOTE_LENGTH)
@@ -89,9 +73,7 @@ export function normalizeRedemptionGeneration(
   return {
     amount: Math.max(toInteger(input.amount, 1), 1),
     count: clampInteger(input.count, 1, MAX_COUNT, DEFAULT_COUNT),
-    length: clampInteger(input.length, MIN_CODE_LENGTH, MAX_CODE_LENGTH, DEFAULT_CODE_LENGTH),
     maxUses: Math.max(toInteger(input.maxUses, DEFAULT_MAX_USES), 1),
-    prefix: normalizePrefix(input.prefix),
     note: normalizeNote(input.note),
     expiresAt: normalizeDate(input.expiresAt),
     createdBy: input.createdBy ?? null

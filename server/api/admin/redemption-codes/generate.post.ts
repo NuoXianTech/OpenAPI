@@ -9,7 +9,6 @@ export default defineAdminEventHandler(async (event, admin) => {
 
   const count = body.count ?? 1
   const maxUses = body.maxUses ?? 1
-  const length = body.length ?? 16
 
   let expiresAt: Date | null = null
   if (body.expiresAt) {
@@ -20,8 +19,6 @@ export default defineAdminEventHandler(async (event, admin) => {
   const data = await redemptionService.generate({
     amount: body.amount,
     count,
-    prefix: body.prefix || null,
-    length,
     maxUses,
     expiresAt,
     note: body.note || null,

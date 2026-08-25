@@ -23,21 +23,21 @@ import {
  * 兑换码服务
  *
  * 核心约束：
- *   1. 兑换码 code 全局唯一，长度可控；批量生成保证去重。
+ *   1. 兑换码 code 全局唯一，固定 32 位小写字母加数字；批量生成保证去重。
  *   2. (codeId, userId) 唯一：同一用户对同一码只能兑换一次。
  *   3. usedCount < maxUses：用 UPDATE ... WHERE 条件原子递增防超兑。
  *   4. 兑换发生在事务里：递增 usedCount + 加用户积分 + 写流水 + 写 record。
  */
 
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // 去掉易混淆 0/O/I/1
+const CODE_ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789'
+/** 兑换码固定 32 位小写字母加数字，不可在管理端自定义。 */
+const CODE_LENGTH = 32
 
 export type RedemptionStatus = 'enabled' | 'disabled' | 'used_up' | 'expired' | 'available'
 
 interface GenerateInput {
   amount: number
-  count?: number // 一次生成多少张，默认 1，最多 1000
-  prefix?: string | null
-  length?: number // 不含 prefix 的随机部分长度，默认 16
+  count?: number // 一次生成多少张，默认 1，最多 100
   maxUses?: number // 单张最大被使用次数，默认 1
   expiresAt?: Date | null
   note?: string | null
@@ -81,17 +81,20 @@ function buildBatchId(): string {
   return `B-${yyyy}-${mm}-${dd}-${tail}`
 }
 
-function createCodeStrings(count: number, length: number, prefix: string): string[] {
+function createCodeStrings(count: number): string[] {
   const codeStrings = new Set<string>()
   while (codeStrings.size < count) {
-    const body = randomCode(length)
-    codeStrings.add(prefix ? `${prefix}-${body}` : body)
+    codeStrings.add(randomCode(CODE_LENGTH))
   }
   return Array.from(codeStrings)
 }
 
+/**
+ * 摘要按小写明文计算，所以归一化必须转小写。大小写输入都能兑换同一张码，
+ * 但 0.1.2 之前生成的大写码摘要对不上，属于本次破坏性变更的一部分。
+ */
 function normalizeCode(raw: string): string {
-  return (raw || '').trim().toUpperCase().replace(/\s+/g, '')
+  return (raw || '').trim().toLowerCase().replace(/\s+/g, '')
 }
 
 type StoredRedemptionCodeRecord = typeof redemptionCodes.$inferSelect
@@ -128,7 +131,7 @@ export const redemptionService = {
     >({
       requestedCount: normalized.count,
       createRows: count => buildRedemptionCodeRows({
-        codes: createCodeStrings(count, normalized.length, normalized.prefix).map(encodeRedemptionCode),
+        codes: createCodeStrings(count).map(encodeRedemptionCode),
         amount: normalized.amount,
         batchId,
         note: normalized.note,

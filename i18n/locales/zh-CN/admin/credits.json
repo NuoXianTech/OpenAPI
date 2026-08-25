@@ -192,14 +192,8 @@
           "amount": "单张面额（必填）",
           "amountPlaceholder": "例如 100",
           "count": "生成数量",
-          "length": "码长度",
-          "lengthHint": "不含前缀，8 - 48",
-          "prefix": "前缀（可选）",
-          "prefixHint": "如 WELCOME",
           "maxUses": "单张可被兑换次数",
           "maxUsesHint": ">1 表示同一码可被多个用户共享，每人 1 次",
-          "expiresInDays": "过期时间（天）",
-          "expiresInDaysHint": "0 = 永不过期",
           "note": "备注（可选）",
           "notePlaceholder": "例如：双十一活动",
           "failed": "生成失败",
@@ -207,7 +201,8 @@
           "resultDescription": "批次 {batchId}",
           "partialResultDescription": "批次 {batchId} · 申请 {requested} 张，因冲突实际生成 {generated} 张",
           "validation": {
-            "positiveAmount": "amount 必须 > 0"
+            "positiveAmount": "amount 必须 > 0",
+            "futureExpiry": "过期时间必须晚于当前时间；留空表示永不过期"
           }
         }
       },

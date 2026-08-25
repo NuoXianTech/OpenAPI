@@ -43,8 +43,6 @@ export interface GenerateResult {
 export interface GeneratePayload {
   amount: number
   count: number
-  prefix: string | null
-  length: number
   maxUses: number
   expiresAt: string | null
   note: string | null

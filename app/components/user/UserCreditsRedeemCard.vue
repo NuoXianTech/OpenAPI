@@ -13,7 +13,7 @@ const code = ref('')
 const redeeming = ref(false)
 
 async function submit() {
-  const value = code.value.trim().toUpperCase()
+  const value = code.value.trim().toLowerCase()
   if (!value) {
     toast.add({ title: t('user.credits.redeem.enterCode'), color: 'warning' })
     return
@@ -46,8 +46,8 @@ async function submit() {
         <UInput
           v-model="code"
           :placeholder="$t('user.credits.redeem.placeholder')"
-          class="min-w-0 flex-1 font-mono uppercase"
-          :ui="{ base: 'uppercase' }"
+          class="min-w-0 flex-1 font-mono lowercase"
+          :ui="{ base: 'lowercase' }"
           @keydown.enter="submit"
         />
         <UButton

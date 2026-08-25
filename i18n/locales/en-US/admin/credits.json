@@ -192,14 +192,8 @@
           "amount": "Value per code (required)",
           "amountPlaceholder": "For example, 100",
           "count": "Quantity",
-          "length": "Code length",
-          "lengthHint": "Excluding prefix, 8–48",
-          "prefix": "Prefix (optional)",
-          "prefixHint": "For example, WELCOME",
           "maxUses": "Uses per code",
           "maxUsesHint": "Values above 1 let multiple users share a code, with one redemption per user",
-          "expiresInDays": "Expiration (days)",
-          "expiresInDaysHint": "0 = never expires",
           "note": "Note (optional)",
           "notePlaceholder": "For example: holiday campaign",
           "failed": "Generation failed",
@@ -207,7 +201,8 @@
           "resultDescription": "Batch {batchId}",
           "partialResultDescription": "Batch {batchId} · Requested {requested}; generated {generated} due to conflicts",
           "validation": {
-            "positiveAmount": "Amount must be greater than 0"
+            "positiveAmount": "Amount must be greater than 0",
+            "futureExpiry": "The expiration must be later than now; leave it empty to never expire"
           }
         }
       },

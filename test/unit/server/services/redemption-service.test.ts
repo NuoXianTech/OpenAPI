@@ -48,7 +48,7 @@ describe('redemption code presentation', () => {
     const listed = await redemptionService.list()
     const stored = (await database.select().from(schema.redemptionCodes))[0]!
 
-    expect(plaintext).toMatch(/^[A-Z2-9-]+$/)
+    expect(plaintext).toMatch(/^[a-z0-9]{32}$/)
     expect(stored.codeCiphertext).not.toBe(plaintext)
     expect(listed.items[0]).toMatchObject({
       id: stored.id,
@@ -63,6 +63,23 @@ describe('redemption code presentation', () => {
       code: plaintext
     })
     await expect(redemptionService.reveal(stored.id + 1)).resolves.toBeNull()
+  })
+
+  it('redeems a code regardless of the case the user types', async () => {
+    const [user] = await database.insert(schema.users).values({
+      username: 'case-insensitive-redeemer',
+      email: 'case@example.com',
+      passwordHash: 'x'
+    }).returning()
+    const generated = await redemptionService.generate({ amount: 10 })
+    const plaintext = generated.codes[0]!.code
+
+    // Digests are computed from the lowercase plaintext, so an uppercased or
+    // padded entry has to normalize back to the same code.
+    await expect(redemptionService.redeem({
+      userId: user!.id,
+      code: `  ${plaintext.toUpperCase()}  `
+    })).resolves.toMatchObject({ amount: 10 })
   })
 
   it('keeps only a preview in redemption history and credit metadata', async () => {
