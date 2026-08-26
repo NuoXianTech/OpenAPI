@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { usePrivateResource } from '~/composables/dashboard/use-private-resource'
 import type {
-  ServiceConfigurationSyncResult,
+  ServiceConfigurationSyncOutcome,
   ServiceConfigurationValue,
   ServiceConfigurationView
 } from '#shared/types/service-control'
@@ -230,7 +230,7 @@ async function saveConfiguration(payload: {
 }) {
   saving.value = true
   try {
-    const result = await $fetch<ServiceConfigurationSyncResult>(
+    const result = await $fetch<ServiceConfigurationSyncOutcome>(
       `/api/admin/v1/upstreams/${upstreamId.value}/configuration`,
       { method: 'PUT', body: payload }
     )
@@ -261,7 +261,7 @@ async function saveConfiguration(payload: {
 async function synchronizeConfiguration() {
   synchronizing.value = true
   try {
-    const result = await $fetch<ServiceConfigurationSyncResult>(
+    const result = await $fetch<ServiceConfigurationSyncOutcome>(
       `/api/admin/v1/upstreams/${upstreamId.value}/configuration/sync`,
       { method: 'POST' }
     )

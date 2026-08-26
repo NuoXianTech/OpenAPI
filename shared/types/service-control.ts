@@ -74,9 +74,21 @@ export interface ServiceConfigurationView {
   endpoints: ServiceEndpointSummary[]
 }
 
+export interface RoutingRevisionRef {
+  id: string
+  sequence: number
+}
+
 export interface ServiceConfigurationSyncResult {
   status: 'synced' | 'partial' | 'failed'
+  /** Service configuration revision, not the routing snapshot sequence. */
   revision: number
   configurationHash: string
   targets: ServiceTargetControlState[]
+}
+
+export interface ServiceConfigurationSyncOutcome
+  extends ServiceConfigurationSyncResult {
+  /** Runtime snapshot published as a result of this sync, if any. */
+  routingRevision: RoutingRevisionRef | null
 }

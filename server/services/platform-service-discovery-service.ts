@@ -419,18 +419,20 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
   }
 
   const refreshed = await loadServiceControlContext(upstreamServiceId)
-  const publication = areEnabledServiceTargetsReady(
+  const published = areEnabledServiceTargetsReady(
     refreshed.targets,
     refreshed.connection
   )
-    ? await applyPlatformRevision(null)
-    : { revision: null }
+    ? (await applyPlatformRevision(null)).revision
+    : null
   return {
     ...await buildServiceControlView(
       refreshed,
       { checkAvailability: true }
     ),
-    ...publication
+    // Distinct from connection.configurationRevision: this is the routing
+    // snapshot sequence published by this discovery.
+    routingRevision: published
   }
 }
 

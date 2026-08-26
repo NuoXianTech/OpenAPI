@@ -390,6 +390,11 @@ describe('Platform to Node API Service acceptance', () => {
       revision: 1,
       targets: [{ configurationStatus: 'synced' }]
     })
+    // The Service configuration revision and the routing snapshot sequence
+    // are separate counters and must not overwrite each other.
+    expect(synchronized.routingRevision).toMatchObject({
+      sequence: expect.any(Number)
+    })
 
     const view = await platformServiceControlService.get(officialUpstreamId)
     expect(view.values['ip.databaseKey']).toEqual({ configured: true })
@@ -462,6 +467,8 @@ describe('Platform to Node API Service acceptance', () => {
       )).resolves.toMatchObject({
         status: 'failed',
         revision: 1,
+        // A failed sync must not publish a new runtime snapshot.
+        routingRevision: null,
         targets: [{
           configurationRevision: 2,
           configurationStatus: 'drifted'

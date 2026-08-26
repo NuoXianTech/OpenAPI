@@ -1,7 +1,9 @@
 import { and, eq } from 'drizzle-orm'
 import type {
   RedactedServiceConfigurationState,
+  RoutingRevisionRef,
   ServiceConfigurationDefinition,
+  ServiceConfigurationSyncOutcome,
   ServiceConfigurationSyncResult,
   ServiceConfigurationValue,
   StoredServiceConfigurationValues
@@ -198,14 +200,18 @@ async function pushConfiguration(
 
 async function publishRoutableConfigurationTargets(
   result: ServiceConfigurationSyncResult
-) {
+): Promise<{ routingRevision: RoutingRevisionRef | null }> {
   // A partial sync still changes the safe Target set: synchronized Targets can
   // serve the new configuration while failed or drifted Targets must be
   // removed from the next immutable runtime snapshot.
   if (result.status === 'failed') {
-    return { revision: null }
+    return { routingRevision: null }
   }
-  return applyPlatformRevision(null)
+  // Named apart from result.revision: that one is the Service configuration
+  // revision, this one is the routing snapshot sequence. Spreading both
+  // under one key silently dropped the configuration revision.
+  const { revision } = await applyPlatformRevision(null)
+  return { routingRevision: revision }
 }
 
 function reconstructConfiguration(input: {
@@ -289,7 +295,7 @@ export async function updatePlatformServiceConfiguration(
     values: Record<string, unknown>
     secrets: Record<string, string | null>
   }
-) {
+): Promise<ServiceConfigurationSyncOutcome> {
   const context = await loadServiceControlContext(upstreamServiceId)
   const definition = context.connection.configurationSchema
   const schemaSha256 = context.connection.configurationSchemaSha256
@@ -388,7 +394,7 @@ export async function updatePlatformServiceConfiguration(
 
 export async function synchronizePlatformServiceConfiguration(
   upstreamServiceId: string
-) {
+): Promise<ServiceConfigurationSyncOutcome> {
   const context = await loadServiceControlContext(upstreamServiceId)
   const definition = context.connection.configurationSchema
   const schemaSha256 = context.connection.configurationSchemaSha256
