@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ResolvedDynamicRoute } from '~~/server/services/routing-runtime-service'
 import {
   buildGatewayTargetUrl,
   createGatewayProxyFetch,
-  orderedGatewayTargets
+  orderedGatewayTargets,
+  resetGatewayTargetHealth
 } from '~~/server/services/dynamic-gateway-target-service'
 
 vi.mock('~~/server/utils/safe-fetch', () => ({
@@ -13,9 +14,11 @@ vi.mock('~~/server/utils/safe-fetch', () => ({
 function match(
   id: string,
   loadBalancing: 'round_robin' | 'weighted',
-  weights: number[]
+  weights: number[],
+  timeoutMs = 10_000
 ): ResolvedDynamicRoute {
   return {
+    route: { timeoutMs },
     upstream: {
       id,
       serviceManaged: true,
@@ -29,9 +32,25 @@ function match(
   } as ResolvedDynamicRoute
 }
 
+function proxyFor(route: ResolvedDynamicRoute, targets = route.upstream.targets) {
+  return createGatewayProxyFetch({
+    match: route,
+    targets,
+    upstreamPath: '/v1/yiyan',
+    search: '',
+    maximumResponseBytes: 1024,
+    onTarget: vi.fn(),
+    onResponseBytes: vi.fn()
+  })
+}
+
 describe('dynamic gateway target selection', () => {
+  beforeEach(() => {
+    resetGatewayTargetHealth()
+  })
   afterEach(() => {
     vi.unstubAllGlobals()
+    resetGatewayTargetHealth()
   })
   it('rotates round-robin targets for each request', () => {
     const route = match('round-robin-test', 'round_robin', [1, 1, 1])
@@ -98,6 +117,91 @@ describe('dynamic gateway target selection', () => {
       code: 'UPSTREAM_AUTH_FAILED',
       publicMessage: '上游服务认证失败'
     })
+  })
+
+  it('ejects a target only after repeated failures, then backs off', async () => {
+    const route = match('ejection-test', 'round_robin', [1, 1])
+    const [first, second] = route.upstream.targets
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')))
+    const proxy = proxyFor(route, [first!])
+
+    // One failure is not enough to eject: a single blip keeps the target.
+    await expect(proxy(new Request('http://gateway.invalid'))).rejects.toThrow()
+    expect(orderedGatewayTargets(route).map(target => target.id))
+      .toContain(first!.id)
+
+    // The second consecutive failure ejects it from selection.
+    await expect(proxy(new Request('http://gateway.invalid'))).rejects.toThrow()
+    expect(orderedGatewayTargets(route).map(target => target.id))
+      .toEqual([second!.id])
+  })
+
+  it('restores an ejected target once it responds again', async () => {
+    const route = match('recovery-test', 'round_robin', [1, 1])
+    const [first, second] = route.upstream.targets
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ECONNREFUSED')))
+    const failing = proxyFor(route, [first!])
+    await expect(failing(new Request('http://gateway.invalid'))).rejects.toThrow()
+    await expect(failing(new Request('http://gateway.invalid'))).rejects.toThrow()
+    expect(orderedGatewayTargets(route).map(target => target.id))
+      .toEqual([second!.id])
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('ok')))
+    await proxyFor(route, [first!])(new Request('http://gateway.invalid'))
+    expect(orderedGatewayTargets(route).map(target => target.id))
+      .toContain(first!.id)
+  })
+
+  it('fails over to a healthy target when the first attempt times out', async () => {
+    const route = match('attempt-timeout-test', 'round_robin', [1, 1], 4_000)
+    const [first, second] = route.upstream.targets
+    // The first target hangs past its attempt slice; the second answers.
+    const request = vi.fn()
+      .mockImplementationOnce((_url: unknown, init?: RequestInit) => (
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(
+            new DOMException('aborted', 'AbortError')
+          ))
+        })
+      ))
+      .mockResolvedValueOnce(new Response('recovered'))
+    vi.stubGlobal('fetch', request)
+
+    const response = await proxyFor(route)(new Request('http://gateway.invalid'))
+
+    await expect(response.text()).resolves.toBe('recovered')
+    // Two calls means failover actually happened: before this fix the shared
+    // aborted signal killed the retry, so the second target was never tried.
+    expect(request).toHaveBeenCalledTimes(2)
+    // One timeout is a single failure, below the ejection threshold, so both
+    // targets stay selectable while the hung one carries a strike.
+    expect(orderedGatewayTargets(route).map(target => target.id).toSorted())
+      .toEqual([first!.id, second!.id].toSorted())
+  })
+
+  it('does not blame a target when the caller aborts', async () => {
+    const route = match('client-abort-test', 'round_robin', [1, 1])
+    const [first] = route.upstream.targets
+    const controller = new AbortController()
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((
+      _url: unknown,
+      init?: RequestInit
+    ) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(
+        new DOMException('aborted', 'AbortError')
+      ))
+    })))
+
+    const pending = proxyFor(route, [first!])(
+      new Request('http://gateway.invalid'),
+      { signal: controller.signal }
+    )
+    controller.abort(new Error('client disconnected'))
+    await expect(pending).rejects.toThrow()
+
+    // A client hang-up is not the target's fault, so nothing is ejected.
+    expect(orderedGatewayTargets(route).map(target => target.id))
+      .toContain(first!.id)
   })
 
   it('preserves an internal business endpoint 401 response', async () => {
