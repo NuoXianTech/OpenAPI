@@ -12,7 +12,9 @@ services:
     volumes:
       - app_data:/app/.data
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      # /api/health is a liveness probe; readiness must include initialization,
+      # database and required Redis dependencies before traffic is sent here.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/ready').then(response => { if (!response.ok) process.exit(1) }).catch(() => process.exit(1))"]
       interval: 30s
       timeout: 5s
       retries: 3

@@ -62,7 +62,7 @@ NUXT_REDIS_URL=redis://default:change-me@127.0.0.1:6379/0
 
 Redis 当前用于公开 API 限流、登录/注册/密码重置/OAuth 身份防刷，公开统计与内容短缓存，以及扣费补偿扫描的分布式互斥。限流 key 使用 HMAC 摘要，不会把邮箱、账号或 IP 明文写入 Redis；站点 SMTP、OAuth、Turnstile 密钥、用户私有响应、积分与调用日志不会进入共享缓存。
 
-缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。扣费扫描使用带 token 校验和固定 TTL 的最小 Redis lease；未配置 Redis 时回退当前进程互斥，配置 Redis 后租约故障会跳过任务，避免多实例重复调度。
+缓存采用 cache-aside、TTL 抖动、进程内请求合并和 Redis 短锁；管理端写入后立即删除固定缓存或递增版本。Redis 未配置或缓存命令失败时自动回源数据库，不会让公开页面变成 503。Gateway Target 的短期失败/驱逐状态也写入带 TTL 的 Redis，并由带租约的探测任务跨实例共享；未配置 Redis 时回退当前进程状态。扣费扫描使用带 token 校验和固定 TTL 的最小 Redis lease；未配置 Redis 时回退当前进程互斥，配置 Redis 后租约故障会跳过任务，避免多实例重复调度。
 
 单 Platform 实例开发可以不配置 Redis。多个 Platform Node 实例的生产部署必须使用 PostgreSQL 并配置 `NUXT_REDIS_URL`；只要配置了 Redis，限流和分布式协调在 Redis 不可用时都会 fail-closed，避免回退到各自内存后绕过限制。PGlite 数据目录只允许一个 Platform 进程。API Service 不连接 Platform 的 PostgreSQL 或 Redis。PostgreSQL 迁移另有数据库 advisory lock，即使多个 Platform 实例同时启动也会串行执行。
 
@@ -98,9 +98,9 @@ Node API Service 的部署配置包含 `API_SERVICE_TOKEN`、独立的 `SERVICE_
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-`NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Service-managed Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。每个 Service 实例还必须生成独立的 32-byte `SERVICE_CONFIG_KEY`，并与对应运行快照一起备份。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
+`NUXT_AUTH_SECRET` 和 `NUXT_API_KEY_SECRET` 使用独立的 32 bytes 随机值；每个 Service-managed Upstream 的 Service Token 也必须单独生成，至少 32 个随机字符，不与前两者复用。每个 Service 实例还必须生成独立的 32-byte `SERVICE_CONFIG_KEY`，并与对应运行快照一起备份。Service Token 只在 Service 部署环境和对应 Platform Upstream 中分别配置。Platform 修改 Token 时先保留待验证版本，发现成功后才提升为活动凭证；验证失败时已发布流量继续使用上一个已验证版本。`NUXT_AUTH_SECRET` 泄露后应在维护窗口轮换，并预期现有登录态、验证链接与 OAuth state 失效。
 
-`0.1.0` 的 Service Token 是单值配置，不支持新旧 Token 并行或无停机轮换。需要更换时，应在维护窗口协调停止 Service、保持 `SERVICE_CONFIG_KEY` 不变并启动新 Token，再在 Platform 更新 Token、重新发现并同步配置。配置快照不使用 Token 加密，因此 Token 轮换不会使已有快照失效。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
+Service Token 更新会持久化为待验证版本；Platform 先用该版本执行发现，成功后原子提升为活动凭证，失败时保留旧凭证服务已发布流量。需要更换时保持 `SERVICE_CONFIG_KEY` 不变，在 Service 侧启动新 Token 后更新 Platform 并重新发现。配置快照不使用 Token 加密，因此 Token 轮换不会使已有快照失效。Token 不匹配时连接状态不会显示为在线，公开调用中的明确 Service 鉴权失败会由 Gateway 转换为 `502 UPSTREAM_AUTH_FAILED`。
 
 API Key 和兑换码没有裸明文数据库列。数据库保存带密钥的 HMAC 摘要、随机 IV 的 AES-256-GCM 密文和掩码预览；API Key 所有者和管理员均可通过各自的专用接口按需查看完整值，每次查看都会写入不含明文的操作日志。普通列表、历史记录、操作日志和积分流水始终只返回预览。
 
@@ -109,6 +109,8 @@ API Key 与兑换码可恢复且可重复查看是明确的产品要求，不是
 ### `NUXT_API_KEY_SECRET` 轮换边界
 
 `NUXT_API_KEY_SECRET` 是 Platform 长期数据加密根，不是应定期在线轮换的短期 Token。它必须与数据库备份一起纳入备份、恢复演练和访问控制。`0.1.0` 不提供 Keyring、双主密钥读取或在线重加密流程，因此不能在已有数据库上直接替换该值；直接替换会让 API Key/兑换码密文、Service-managed Upstream Token 和 Service 业务 Secret 无法解密，并使现有 API Key 摘要无法匹配。
+
+系统设置使用独立数据密钥格式 `enc:system-setting:v2:`；升级时不兼容旧密文，必须在迁移前备份并重新保存敏感配置。
 
 常规维护只需安全备份并保持该值稳定。只有密钥泄露或执行经过演练的数据迁移时才进行轮换：先停止 Platform 写入，备份数据库，使用专用迁移流程以旧密钥解密并以新密钥重加密/重建摘要，再原子切换应用配置。该迁移工具不属于 `0.1.0`；在工具完成前，不得把直接修改环境变量当作轮换方案。Service Token 的维护流程由 Service 仓库定义，与 Platform 主数据密钥轮换无关。
 

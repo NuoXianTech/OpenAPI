@@ -116,13 +116,6 @@ export const routingRevisionService = {
             isNull(upstreamServices.deletedAt)
           ))
 
-        const routes = routeRows.map(toRoutingRevisionRoute).sort((left, right) => (
-          left.pathPattern.localeCompare(right.pathPattern)
-          || left.method.localeCompare(right.method)
-          || left.id.localeCompare(right.id)
-        ))
-
-        validatePublishedRouteConflicts(routes, runtime.defaultDomain)
         const activeRevision = runtime.activeRevisionId
           ? firstRow(await tx.select().from(routingRevisions)
               .where(eq(routingRevisions.id, runtime.activeRevisionId))
@@ -159,7 +152,14 @@ export const routingRevisionService = {
           connection
         ]))
 
-        const upstreams: RoutingRevisionUpstream[] = upstreamIds.map((id) => {
+        // A Service-managed Upstream may be temporarily unavailable while a
+        // target is being discovered or reconfigured.  It must not prevent an
+        // unrelated manual Route from being published.  If an active snapshot
+        // already contains that Upstream, retain the last known-good runtime
+        // entry until a verified replacement is available; otherwise omit the
+        // Upstream and its Routes from this revision.
+        const skippedUpstreamIds = new Set<string>()
+        const upstreams: RoutingRevisionUpstream[] = upstreamIds.flatMap((id) => {
           const definition = upstreamDefinitions.get(id)!
           let serviceManaged = definition.serviceManaged
           let targets = targetRows
@@ -171,30 +171,40 @@ export const routingRevisionService = {
           if (serviceManaged && targets.length === 0) {
             const activeUpstream = activeUpstreams.get(id)
             if (activeUpstream) {
-              // Keep the last active runtime while a newly managed Upstream
-              // is waiting for its first verified Service Target. Once
-              // discovery succeeds, the next publication switches the
-              // runtime to Service authentication and verified Targets.
+              // Keep the last active runtime while a managed Upstream waits
+              // for a verified Target. Once discovery succeeds, the next
+              // publication switches to the new Service-authenticated entry.
               serviceManaged = activeUpstream.serviceManaged
               targets = activeUpstream.targets.map(target => ({ ...target }))
             }
           }
           if (targets.length === 0) {
+            if (definition.serviceManaged) {
+              skippedUpstreamIds.add(id)
+              return []
+            }
             throw createApplicationError({
               statusCode: 409,
-              message: definition.serviceManaged
-                ? 'active route references a Service-managed upstream without verified targets'
-                : 'active route references an upstream without enabled targets',
+              message: 'active route references an upstream without enabled targets',
               data: {
-                code: definition.serviceManaged
-                  ? 'SERVICE_UPSTREAM_NOT_READY'
-                  : 'UPSTREAM_HAS_NO_TARGETS',
+                code: 'UPSTREAM_HAS_NO_TARGETS',
                 upstreamServiceId: id
               }
             })
           }
-          return { ...definition, serviceManaged, targets }
+          return [{ ...definition, serviceManaged, targets }]
         })
+
+        const routes = routeRows
+          .filter(row => !skippedUpstreamIds.has(row.route.upstreamServiceId))
+          .map(toRoutingRevisionRoute)
+          .sort((left, right) => (
+            left.pathPattern.localeCompare(right.pathPattern)
+            || left.method.localeCompare(right.method)
+            || left.id.localeCompare(right.id)
+          ))
+
+        validatePublishedRouteConflicts(routes, runtime.defaultDomain)
 
         const desiredConfiguration: RoutingRuntimeConfiguration = {
           schemaVersion: 1,

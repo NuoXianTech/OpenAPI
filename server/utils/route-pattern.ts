@@ -37,6 +37,36 @@ export interface RoutePatternMatch {
   params: Record<string, string>
 }
 
+/**
+ * Dot path segments are meaningful to URL parsers: assigning `/a/../b` to a
+ * URL pathname normalizes it to `/b`.  Route patterns and user supplied
+ * parameters must never be allowed to smuggle such a segment into an
+ * upstream path, otherwise an upstream base path can be escaped.
+ */
+function isDotPathSegment(value: string): boolean {
+  let decoded = value
+  // Decode at most twice.  The first pass handles normal encoded route
+  // parameters (`%2e%2e`); the second catches a value that was encoded once
+  // before it reached the gateway (`%252e%252e`).
+  for (let index = 0; index < 2; index += 1) {
+    if (decoded.split(/[\\/]/).some(segment => segment === '.' || segment === '..')) {
+      return true
+    }
+    try {
+      const next = decodeURIComponent(decoded)
+      if (next === decoded) break
+      decoded = next
+    } catch {
+      break
+    }
+  }
+  return decoded.split(/[\\/]/).some(segment => segment === '.' || segment === '..')
+}
+
+export function containsDotPathSegment(value: string): boolean {
+  return value.split('/').some(isDotPathSegment)
+}
+
 function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -46,12 +76,23 @@ export function normalizeRoutePath(value: string): string {
   if (!trimmed.startsWith('/')) throw new Error('route path must start with /')
   if (trimmed.includes('?') || trimmed.includes('#')) throw new Error('route path must not contain query or fragment')
   if (/\s/.test(trimmed)) throw new Error('route path must not contain whitespace')
+  if (trimmed.split('/').some(isDotPathSegment)) {
+    throw new Error('route path must not contain dot segments')
+  }
   if (trimmed.length > 1 && trimmed.endsWith('/')) return trimmed.slice(0, -1)
   return trimmed
 }
 
 export function isReservedPlatformPath(pathname: string): boolean {
-  const normalized = normalizeRoutePath(pathname)
+  let normalized: string
+  try {
+    normalized = normalizeRoutePath(pathname)
+  } catch {
+    // Invalid/unsafe path syntax must never match a dynamic Route. Returning
+    // false lets the middleware produce its normal JSON 404 contract; route
+    // matching itself also treats the path as a non-match.
+    return false
+  }
   return RESERVED_PLATFORM_EXACT_PATHS.has(normalized)
     || RESERVED_PLATFORM_PREFIXES.some(prefix => normalized === prefix || normalized.startsWith(`${prefix}/`))
 }
@@ -113,7 +154,15 @@ export function parseRoutePathPattern(value: string): ParsedRoutePattern {
 }
 
 export function matchRoutePath(parsed: ParsedRoutePattern, pathname: string): RoutePatternMatch | null {
-  const normalizedPath = normalizeRoutePath(pathname)
+  let normalizedPath: string
+  try {
+    normalizedPath = normalizeRoutePath(pathname)
+  } catch {
+    // A malformed or unsafe incoming URL is simply not a route match.  The
+    // caller can then return the normal public 404 contract instead of
+    // turning untrusted path syntax into a server error.
+    return null
+  }
   const match = parsed.pattern.exec(normalizedPath)
   if (!match) return null
 
@@ -124,6 +173,11 @@ export function matchRoutePath(parsed: ParsedRoutePattern, pathname: string): Ro
     } catch {
       return null
     }
+    if (
+      parsed.catchAllParameter !== name
+      && params[name]!.includes('/')
+    ) return null
+    if (containsDotPathSegment(params[name]!)) return null
   }
   return { params }
 }
@@ -142,9 +196,13 @@ export function validateUpstreamPathTemplate(template: string, availableParamete
 }
 
 export function renderUpstreamPath(template: string, params: Readonly<Record<string, string>>): string {
-  return template.replace(UPSTREAM_PARAMETER_PATTERN, (_value, name: string) => {
+  const normalizedTemplate = normalizeRoutePath(template)
+  return normalizedTemplate.replace(UPSTREAM_PARAMETER_PATTERN, (_value, name: string) => {
     const raw = params[name]
     if (raw === undefined) throw new Error(`missing upstream path parameter: ${name}`)
+    if (containsDotPathSegment(raw)) {
+      throw new Error('upstream path parameter must not contain dot segments')
+    }
     return raw.split('/').map(segment => encodeURIComponent(segment)).join('/')
   })
 }

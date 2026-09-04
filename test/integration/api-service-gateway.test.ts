@@ -668,11 +668,13 @@ describe('Platform to Node API Service acceptance', () => {
       })
 
       const response = await fetch(`${gatewayBaseURL}/v1/player`)
-      expect(response.status).toBe(502)
+      // Rotation is staged: live traffic keeps using the last verified token
+      // until discovery promotes the replacement. The endpoint itself rejects
+      // this request's missing video URL, proving it reached the Service.
+      expect(response.status).toBe(400)
       expect(response.headers.get('www-authenticate')).toBeNull()
       await expect(readPublicEnvelope(response)).resolves.toMatchObject({
-        code: 'UPSTREAM_AUTH_FAILED',
-        message: '上游服务认证失败',
+        code: 'INVALID_PARAMETER',
         data: null
       })
     } finally {

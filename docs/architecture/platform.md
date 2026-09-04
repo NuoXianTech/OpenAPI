@@ -74,11 +74,11 @@ Revision 是 Gateway 的安全运行边界，不是管理员必须手工编排�
 4. 计算 SHA-256 checksum。
 5. 与当前活动 Revision 比较；配置相同则直接复用，不产生重复历史。
 6. 配置变化时保存不可变 Routing Revision，并激活到 Platform Runtime。
-7. 通知 Gateway 刷新运行时缓存。
+7. 通知 Gateway 刷新运行时缓存；数据库短暂不可用时最多使用 60 秒的上一个有效快照，超过窗口返回 `503 ROUTING_RUNTIME_UNAVAILABLE`，不伪装成 404。
 
 Route 行保存期望状态，活动 Revision 保存实际流量状态。接口目录的保存与“应用全部变更”分为两个事务：前者只更新控制面，后者校验完整配置并生成/复用快照；冲突校验或引用校验失败时，应用动作回滚，活动流量继续使用旧快照。其他需要立即生效的 Platform 管理对象仍使用单事务自动发布。
 
-Service 发现和配置同步包含对 Target 的网络调用，不能纳入数据库事务。它们采用显式可重试语义：网络结果先按 Target 记录，随后重新计算平台 Revision；任一步失败都会向调用方返回错误，管理员可安全地重新发现或同步，相同配置和相同 Revision 均保持幂等。
+Service 发现和配置同步包含对 Target 的网络调用，不能纳入数据库事务。它们采用显式可重试语义：网络结果先按 Target 记录，健康 Target 可先刷新运行快照，失败 Target 标记为 degraded/error；只有全部 Target 都失败时才向调用方返回整体错误。相同配置和相同 Revision 均保持幂等。
 
 后台将该技术概念显示为“运行快照”。运行快照页面只用于审计和回滚；管理员可以重新激活历史 Revision，而不需要恢复旧 Route 行或重启进程。
 
@@ -121,6 +121,7 @@ Route 支持：
 填写 Service Token 的 Upstream 用于受信 API Service：
 
 - Platform 为每个 Upstream 独立加密保存 Service Token。
+- 修改 Service Token 先写入待验证版本；发现成功后才提升为活动凭证，期间已发布流量继续使用上一个已验证版本。
 - 调用时注入 `Authorization: Service <token>`。
 - 删除调用方 `Authorization`、Cookie、API Key 和伪造内部头。
 - 可发现 Service 身份、OpenAPI 和业务配置 Schema。

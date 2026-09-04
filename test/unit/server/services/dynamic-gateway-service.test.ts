@@ -20,7 +20,7 @@ vi.mock('h3', async (importOriginal) => {
     getHeader: (event: H3Event, name: string) => (
       event.node.req.headers[name.toLowerCase()] as string | undefined
     ),
-    getProxyRequestHeaders: () => ({}),
+    getProxyRequestHeaders: (event: H3Event) => event.node.req.headers,
     getRequestIP: () => undefined,
     getRequestProtocol: () => 'http',
     getRequestURL: () => new URL('http://api.example.test/v1/stream'),
@@ -54,7 +54,7 @@ vi.mock('~~/server/services/upstream-service-token-service', () => ({
   upstreamServiceTokenService: { get: mocks.getServiceToken }
 }))
 
-const { dynamicGatewayService } = await import(
+const { createUpstreamHeaders, dynamicGatewayService } = await import(
   '~~/server/services/dynamic-gateway-service'
 )
 
@@ -147,6 +147,27 @@ beforeEach(() => {
 })
 
 describe('dynamic gateway streaming billing', () => {
+  it('owns forwarding metadata instead of relaying caller supplied values', () => {
+    const event = createEvent()
+    event.node.req.headers = {
+      'authorization': 'Bearer caller-token',
+      'forwarded': 'for=attacker',
+      'x-forwarded-for': '198.51.100.7',
+      'x-forwarded-host': 'attacker.example',
+      'x-real-ip': '198.51.100.8',
+      'x-business-header': 'keep-me'
+    }
+
+    const headers = createUpstreamHeaders(event, match, 'service-token')
+
+    expect(headers.get('authorization')).toBe('Service service-token')
+    expect(headers.get('forwarded')).toBeNull()
+    expect(headers.get('x-forwarded-for')).toBeNull()
+    expect(headers.get('x-forwarded-host')).toBe('api.example.test')
+    expect(headers.get('x-real-ip')).toBeNull()
+    expect(headers.get('x-business-header')).toBe('keep-me')
+  })
+
   it('does not settle a paid call before the streamed response completes', async () => {
     const event = createEvent()
     let finishProxy: (() => Promise<void>) | null = null

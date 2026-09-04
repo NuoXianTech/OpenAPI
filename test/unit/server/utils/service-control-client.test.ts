@@ -3,7 +3,25 @@ import type {
   ServiceControlRequestError,
   UnsupportedServiceProtocolError
 } from '~~/server/utils/service-control-client'
-import { serviceControlClient } from '~~/server/utils/service-control-client'
+import {
+  buildServiceControlUrl,
+  serviceControlClient
+} from '~~/server/utils/service-control-client'
+
+// Keep protocol parsing tests deterministic while the production client uses
+// the DNS-pinned safe transport.
+vi.mock('~~/server/utils/safe-fetch', () => ({
+  readLimitedText: async (response: Response, maxBytes: number) => {
+    const text = await response.text()
+    if (new TextEncoder().encode(text).byteLength > maxBytes) {
+      throw new Error('upstream response is too large')
+    }
+    return text
+  },
+  safeFetch: (input: RequestInfo | URL, init?: RequestInit) => (
+    globalThis.fetch(input, init)
+  )
+}))
 
 function description(serviceProtocol: string) {
   return {
@@ -31,6 +49,27 @@ afterEach(() => {
 })
 
 describe('Service control client', () => {
+  it('keeps control endpoints under the configured Service base path', () => {
+    expect(buildServiceControlUrl(
+      'http://service.example.test/control',
+      '/.well-known/service.json'
+    ).toString()).toBe(
+      'http://service.example.test/control/.well-known/service.json'
+    )
+    expect(() => buildServiceControlUrl(
+      'http://service.example.test/control',
+      '/../admin'
+    )).toThrow(/dot segments/)
+    expect(() => buildServiceControlUrl(
+      'http://service.example.test/control',
+      '/%2f..%2fadmin'
+    )).toThrow(/dot segments/)
+    expect(() => buildServiceControlUrl(
+      'http://service.example.test/control',
+      'https://evil.example.test/admin'
+    )).toThrow(/absolute path/)
+  })
+
   it('accepts supported protocols independently of the Service release version', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response(
       JSON.stringify(description('openapi-service/v1')),

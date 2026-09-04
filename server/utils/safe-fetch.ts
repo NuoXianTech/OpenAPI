@@ -27,6 +27,7 @@ const BLOCKED_NETWORKS = [
 ] as const
 
 const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308])
+const DNS_LOOKUP_TIMEOUT_MS = 2_000
 type ResolvedAddress = { address: string, family: number }
 
 export interface SafeFetchOptions extends RequestInit {
@@ -35,6 +36,10 @@ export interface SafeFetchOptions extends RequestInit {
   allowHttp?: boolean
   allowPrivateNetworks?: boolean
   allowNonDefaultPort?: boolean
+  /** Allow subdomains of entries in allowedHosts (default: true). */
+  allowSubdomains?: boolean
+  /** Follow validated redirects (default: true). */
+  followRedirects?: boolean
 }
 
 function normalizeHostname(hostname: string): string {
@@ -52,8 +57,17 @@ export function isHostnameWithin(hostname: string, allowedHost: string): boolean
     || normalizedHostname.endsWith(`.${normalizedAllowedHost}`)
 }
 
-function assertAllowedHostname(hostname: string, allowedHosts: readonly string[]): void {
-  if (!allowedHosts.some(allowedHost => isHostnameWithin(hostname, allowedHost))) {
+function assertAllowedHostname(
+  hostname: string,
+  allowedHosts: readonly string[],
+  allowSubdomains: boolean
+): void {
+  const normalizedHostname = normalizeHostname(hostname)
+  if (!allowedHosts.some((allowedHost) => {
+    const normalizedAllowedHost = normalizeHostname(allowedHost)
+    return normalizedHostname === normalizedAllowedHost
+      || (allowSubdomains && normalizedHostname.endsWith(`.${normalizedAllowedHost}`))
+  })) {
     throw new Error('upstream hostname is not allowed')
   }
 }
@@ -64,11 +78,28 @@ function assertPublicAddress(address: string): void {
   }
 }
 
+async function lookupAddresses(hostname: string): Promise<ResolvedAddress[]> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  try {
+    return await Promise.race([
+      lookup(hostname, { all: true, verbatim: true }),
+      new Promise<never>((_resolve, reject) => {
+        timer = setTimeout(
+          () => reject(new Error('upstream DNS lookup timed out')),
+          DNS_LOOKUP_TIMEOUT_MS
+        )
+      })
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 async function assertSafeUrl(
   input: string | URL,
   allowedHosts: readonly string[],
   pinnedAddresses: Map<string, ResolvedAddress[]>,
-  options: Pick<SafeFetchOptions, 'allowHttp' | 'allowPrivateNetworks' | 'allowNonDefaultPort'>
+  options: Pick<SafeFetchOptions, 'allowHttp' | 'allowPrivateNetworks' | 'allowNonDefaultPort' | 'allowSubdomains'>
 ): Promise<URL> {
   const url = input instanceof URL ? new URL(input) : new URL(input)
   if (url.protocol !== 'https:' && !(options.allowHttp && url.protocol === 'http:')) {
@@ -82,10 +113,10 @@ async function assertSafeUrl(
       || (url.protocol === 'http:' && url.port !== '80'))
   ) throw new Error('upstream URL port is not allowed')
 
-  assertAllowedHostname(url.hostname, allowedHosts)
+  assertAllowedHostname(url.hostname, allowedHosts, options.allowSubdomains ?? true)
 
   const hostname = normalizeHostname(url.hostname)
-  const addresses = await lookup(hostname, { all: true, verbatim: true })
+  const addresses = await lookupAddresses(hostname)
   if (addresses.length === 0) throw new Error('upstream hostname did not resolve')
   if (!options.allowPrivateNetworks) {
     for (const { address } of addresses) assertPublicAddress(address)
@@ -114,15 +145,39 @@ function createPinnedDispatcher(pinnedAddresses: Map<string, ResolvedAddress[]>)
   return new Agent({ connect: { lookup: pinnedLookup } })
 }
 
-function redirectedRequestInit(status: number, options: RequestInit): RequestInit {
+const CREDENTIAL_HEADERS = [
+  'authorization',
+  'cookie',
+  'proxy-authorization',
+  'x-api-key',
+  'api-key',
+  'x-auth-token'
+] as const
+
+function redirectedRequestInit(
+  status: number,
+  options: RequestInit,
+  previousUrl: URL,
+  nextUrl: URL
+): RequestInit {
   const method = (options.method || 'GET').toUpperCase()
+  let nextOptions = options
   if (status === 303 || ((status === 301 || status === 302) && method === 'POST')) {
     const headers = new Headers(options.headers)
     headers.delete('content-length')
     headers.delete('content-type')
-    return { ...options, method: 'GET', body: undefined, headers }
+    nextOptions = { ...options, method: 'GET', body: undefined, headers }
   }
-  return options
+
+  // A redirect can cross an origin even when both hosts are in the configured
+  // allow-list (for example `service.example.com` -> `evil.service.example.com`).
+  // Never forward caller credentials to a different origin.
+  if (previousUrl.origin !== nextUrl.origin) {
+    const headers = new Headers(nextOptions.headers)
+    for (const name of CREDENTIAL_HEADERS) headers.delete(name)
+    nextOptions = { ...nextOptions, headers }
+  }
+  return nextOptions
 }
 
 export async function safeFetch(input: string | URL, options: SafeFetchOptions): Promise<Response> {
@@ -132,10 +187,12 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
     allowHttp = false,
     allowPrivateNetworks = false,
     allowNonDefaultPort = false,
+    allowSubdomains = true,
+    followRedirects = true,
     ...requestOptions
   } = options
   const pinnedAddresses = new Map<string, ResolvedAddress[]>()
-  const urlOptions = { allowHttp, allowPrivateNetworks, allowNonDefaultPort }
+  const urlOptions = { allowHttp, allowPrivateNetworks, allowNonDefaultPort, allowSubdomains }
   let currentUrl = await assertSafeUrl(input, allowedHosts, pinnedAddresses, urlOptions)
   let currentOptions: RequestInit = { ...requestOptions, redirect: 'manual' }
   const dispatcher = createPinnedDispatcher(pinnedAddresses)
@@ -146,7 +203,7 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
         ...currentOptions,
         dispatcher
       } as unknown as UndiciRequestInit)
-      if (!REDIRECT_STATUS_CODES.has(response.status)) {
+      if (!REDIRECT_STATUS_CODES.has(response.status) || !followRedirects) {
         void dispatcher.close()
         return response as unknown as Response
       }
@@ -168,7 +225,12 @@ export async function safeFetch(input: string | URL, options: SafeFetchOptions):
         urlOptions
       )
       await response.body?.cancel()
-      currentOptions = redirectedRequestInit(response.status, currentOptions)
+      currentOptions = redirectedRequestInit(
+        response.status,
+        currentOptions,
+        currentUrl,
+        nextUrl
+      )
       currentUrl = nextUrl
     }
 

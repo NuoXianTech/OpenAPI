@@ -58,13 +58,28 @@ async function reserve(input: ReserveInput) {
   if (amount === 0) return { status: 'insufficient_credits' as const }
 
   return db.transaction(async (tx: DatabaseTransaction) => {
-    const userRows = await tx.select({ credits: users.credits })
+    const userRows = await tx.select({
+      credits: users.credits,
+      isActive: users.isActive,
+      isBanned: users.isBanned,
+      bannedUntil: users.bannedUntil
+    })
       .from(users)
       .where(eq(users.id, input.userId))
       .limit(1)
       .for('update')
     const user = userRows[0]
     if (!user) return { status: 'insufficient_credits' as const }
+    const now = new Date()
+    if (
+      !user.isActive
+      || (
+        user.isBanned
+        && (user.bannedUntil === null || user.bannedUntil > now)
+      )
+    ) {
+      return { status: 'account_unavailable' as const }
+    }
 
     const reservedRows = await tx.select({
       amount: sql<number>`coalesce(sum(${apiCreditReservations.amount}), 0)`

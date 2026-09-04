@@ -19,8 +19,8 @@ vi.mock('~~/server/db/client', () => ({
   }
 }))
 
-vi.mock('~~/server/utils/auth-secret', () => ({
-  getAuthSecret: () => 'system-settings-database-test-secret-with-32-bytes'
+vi.mock('~~/server/utils/stored-secret', () => ({
+  getApiKeySecret: () => Buffer.alloc(32, 9)
 }))
 
 vi.mock('~~/server/utils/shared-cache', () => ({
@@ -136,7 +136,7 @@ describe('system settings database service', () => {
     `)
     const storedSecret = secretRows.rows[0]
     expect(storedSecret?.is_secret).toBe(true)
-    expect(storedSecret?.value).toMatch(/^enc:system-setting:v1:/)
+    expect(storedSecret?.value).toMatch(/^enc:system-setting:v2:/)
     expect(storedSecret?.value).not.toContain('smtp-plaintext-secret')
 
     const inviteRows = await client.query<{ value: string, is_secret: boolean }>(`
@@ -146,7 +146,7 @@ describe('system settings database service', () => {
     `)
     const storedInvite = inviteRows.rows[0]
     expect(storedInvite?.is_secret).toBe(true)
-    expect(storedInvite?.value).toMatch(/^enc:system-setting:v1:/)
+    expect(storedInvite?.value).toMatch(/^enc:system-setting:v2:/)
     expect(storedInvite?.value).not.toContain('site-invite-2026')
 
     const siteKeyRows = await client.query<{ value: string, is_secret: boolean }>(`
@@ -165,7 +165,7 @@ describe('system settings database service', () => {
     `)
     const storedTurnstileSecret = turnstileSecretRows.rows[0]
     expect(storedTurnstileSecret?.is_secret).toBe(true)
-    expect(storedTurnstileSecret?.value).toMatch(/^enc:system-setting:v1:/)
+    expect(storedTurnstileSecret?.value).toMatch(/^enc:system-setting:v2:/)
     expect(storedTurnstileSecret?.value).not.toContain('turnstile-secret-key')
 
     const safeAdminSettings = await systemSettingsService.getForAdmin()

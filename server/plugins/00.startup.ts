@@ -7,6 +7,7 @@ import { closeDatabase } from '~~/server/db/client'
 import { runDatabaseMigrations } from '~~/server/db/migrate'
 import { adminUserService } from '~~/server/services/admin-user-service'
 import { platformRuntimeService } from '~~/server/services/platform-runtime-service'
+import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { userService, USER_ROLES } from '~~/server/services/user-service'
 import { getSqlState } from '~~/server/utils/database-error'
 import { hashPassword } from '~~/server/utils/password'
@@ -56,6 +57,10 @@ async function initializeRedisService(): Promise<void> {
 
 async function initializeDatabaseState(): Promise<void> {
   await migrateDatabase()
+  // Materialize and validate registered settings before accepting requests.
+  // Invalid encrypted values fail startup instead of leaving a partially
+  // broken running process.
+  await systemSettingsService.getSettings()
   await ensureInitialAdmin()
   await platformRuntimeService.ensureDefault()
 }

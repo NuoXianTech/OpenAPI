@@ -115,7 +115,6 @@ async function loadSettingsFromDatabase(): Promise<SystemSettings> {
   const rowsByKey = new Map(rows.map(row => [row.settingKey, row]))
   const values = createSystemSettingsDefaults()
   const missingRows: SystemSettingInsert[] = []
-
   for (const name of SYSTEM_SETTING_NAMES) {
     const definition = SYSTEM_SETTING_DEFINITIONS[name]
     const row = rowsByKey.get(definition.key)

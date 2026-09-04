@@ -380,6 +380,7 @@ CREATE TABLE "routing_revisions" (
 CREATE TABLE "upstream_service_connections" (
 	"upstream_service_id" uuid PRIMARY KEY NOT NULL,
 	"service_token_ciphertext" text NOT NULL,
+	"pending_service_token_ciphertext" text,
 	"service_id" varchar(120),
 	"service_name" varchar(160),
 	"service_version" varchar(160),

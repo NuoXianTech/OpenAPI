@@ -31,6 +31,9 @@ beforeAll(async () => {
     CREATE TABLE users (
       id serial PRIMARY KEY,
       credits integer NOT NULL DEFAULT 0,
+      is_active boolean NOT NULL DEFAULT true,
+      is_banned boolean NOT NULL DEFAULT false,
+      banned_until timestamptz,
       updated_at timestamptz NOT NULL DEFAULT now()
     );
     CREATE TABLE api_keys (
@@ -91,7 +94,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   await client.exec(`
     TRUNCATE credit_transactions, api_credit_reservations, api_calls, api_keys, users RESTART IDENTITY;
-    INSERT INTO users (credits) VALUES (10);
+    INSERT INTO users (credits, is_active, is_banned) VALUES (10, true, false);
     INSERT INTO api_keys (user_id, total_quota) VALUES (1, 10);
     INSERT INTO api_calls (id) VALUES (42), (43);
   `)
@@ -116,6 +119,14 @@ describe('credit service reservations', () => {
     const key = await client.query<{ used_credits: number }>('SELECT used_credits FROM api_keys WHERE id = 1')
     expect(reservations.rows[0]?.count).toBe(0)
     expect(key.rows[0]?.used_credits).toBe(0)
+  })
+
+  it('rejects reservations for inactive or currently banned users', async () => {
+    await client.query('UPDATE users SET is_active = false WHERE id = 1')
+    await expect(reserve(1)).resolves.toEqual({ status: 'account_unavailable' })
+
+    await client.query('UPDATE users SET is_active = true, is_banned = true, banned_until = now() + interval \'1 hour\' WHERE id = 1')
+    await expect(reserve(1)).resolves.toEqual({ status: 'account_unavailable' })
   })
 
   it('releases user availability and API key quota together', async () => {

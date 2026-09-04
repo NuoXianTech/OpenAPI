@@ -125,6 +125,47 @@ describe('safeFetch', () => {
     )
     expect(fetchMock).toHaveBeenCalledOnce()
   })
+
+  it('does not forward credentials across an origin-changing redirect', async () => {
+    networkMocks.lookup.mockResolvedValue([
+      { address: '93.184.216.34', family: 4 }
+    ])
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(null, {
+        status: 302,
+        headers: { location: 'https://sub.example.com/next' }
+      }))
+      .mockResolvedValueOnce(new Response('ok'))
+
+    await expect(safeFetch('https://example.com/start', {
+      allowedHosts: ['example.com'],
+      headers: {
+        authorization: 'Bearer secret',
+        cookie: 'session=secret'
+      }
+    })).resolves.toBeInstanceOf(Response)
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    const redirectedInit = fetchMock.mock.calls[1]?.[1] as RequestInit
+    const redirectedHeaders = new Headers(redirectedInit.headers)
+    expect(redirectedHeaders.has('authorization')).toBe(false)
+    expect(redirectedHeaders.has('cookie')).toBe(false)
+  })
+
+  it('can require an exact redirect host', async () => {
+    networkMocks.lookup.mockResolvedValue([
+      { address: '93.184.216.34', family: 4 }
+    ])
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(new Response(null, {
+      status: 302,
+      headers: { location: 'https://sub.example.com/next' }
+    }))
+
+    await expect(safeFetch('https://example.com/start', {
+      allowedHosts: ['example.com'],
+      allowSubdomains: false
+    })).rejects.toThrow('upstream hostname is not allowed')
+  })
 })
 
 describe('readLimitedText', () => {

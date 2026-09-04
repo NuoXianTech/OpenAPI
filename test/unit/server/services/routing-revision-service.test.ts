@@ -13,6 +13,22 @@ import { API_STATUS } from '#shared/config/api-status'
 import * as schema from '~~/server/db/schema'
 import { canonicalJson } from '~~/server/utils/canonical-json'
 
+// Availability probes use the production DNS-pinned transport.  Delegate it
+// to the test's stubbed global fetch so database/revision tests remain fully
+// in-process and deterministic.
+vi.mock('~~/server/utils/safe-fetch', () => ({
+  safeFetch: (input: RequestInfo | URL, init?: RequestInit) => (
+    globalThis.fetch(input, init)
+  ),
+  readLimitedText: async (response: Response, maxBytes: number) => {
+    const text = await response.text()
+    if (new TextEncoder().encode(text).byteLength > maxBytes) {
+      throw new Error('upstream response is too large')
+    }
+    return text
+  }
+}))
+
 const testContext = vi.hoisted(() => ({ database: null as unknown }))
 
 vi.mock('~~/server/db/client', () => ({
@@ -218,13 +234,9 @@ describe('routing revision service', () => {
   it('keeps an unverified Service-managed Target out of published routing', async () => {
     const graph = await createRoutingGraph({ verified: false })
 
-    await expect(routingRevisionService.publish(null)).rejects.toMatchObject({
-      statusCode: 409,
-      data: {
-        code: 'SERVICE_UPSTREAM_NOT_READY',
-        upstreamServiceId: graph.upstream.id
-      }
-    })
+    const skipped = await routingRevisionService.publish(null)
+    expect(skipped.configPayload.upstreams).toEqual([])
+    expect(skipped.configPayload.routes).toEqual([])
 
     await database.update(schema.upstreamTargets).set({
       configurationRevision: 0,
@@ -243,7 +255,48 @@ describe('routing revision service', () => {
       graph.upstream.id
     ))
 
-    await expect(routingRevisionService.publish(null)).resolves.toMatchObject({ sequence: 1 })
+    const published = await routingRevisionService.publish(null)
+    expect(published.sequence).toBe(2)
+    expect(published.configPayload.upstreams.map(upstream => upstream.id))
+      .toEqual([graph.upstream.id])
+  })
+
+  it('publishes unrelated manual Routes while a new Service waits for discovery', async () => {
+    await createRoutingGraph({
+      productSlug: 'waiting-service',
+      pathPattern: '/v1/waiting-service',
+      upstreamPathTemplate: '/healthz',
+      verified: false
+    })
+    const manualProduct = await platformProductService.create({
+      slug: 'independent-manual',
+      name: 'Independent Manual',
+      visibility: 'public',
+      version: 'v1'
+    })
+    const manualUpstream = await platformUpstreamService.create({
+      slug: 'independent-manual-service',
+      name: 'Independent Manual Service',
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: 'https://manual.example.com', weight: 1 }]
+    })
+    const manualRoute = await platformRouteService.create({
+      apiVersionId: manualProduct.versions[0]!.id,
+      name: 'Independent manual route',
+      hosts: [],
+      method: 'GET',
+      pathPattern: '/v1/independent-manual',
+      upstreamServiceId: manualUpstream.id,
+      upstreamPathTemplate: '/healthz',
+      state: 'active'
+    })
+    if (!manualRoute) throw new Error('manual route was not created')
+
+    const published = await routingRevisionService.publish(null)
+    expect(published.configPayload.routes.map(route => route.id))
+      .toContain(manualRoute.id)
+    expect(published.configPayload.routes.map(route => route.pathPattern))
+      .not.toContain('/v1/waiting-service')
   })
 
   it('keeps a manual runtime active while a Service Token upgrade awaits discovery', async () => {

@@ -34,3 +34,15 @@ export function areEnabledServiceTargetsReady(
   return enabledTargets.length > 0
     && enabledTargets.every(target => isServiceTargetReady(target, connection))
 }
+
+/**
+ * Routing only needs one verified enabled Target; the remaining Targets can
+ * be temporarily degraded without taking an otherwise healthy Service out of
+ * the published snapshot.
+ */
+export function hasReadyServiceTarget(
+  targets: readonly ServiceTargetState[],
+  connection: ServiceConnectionState | null
+): boolean {
+  return targets.some(target => isServiceTargetReady(target, connection))
+}

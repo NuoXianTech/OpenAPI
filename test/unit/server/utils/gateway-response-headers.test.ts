@@ -10,7 +10,16 @@ describe('sanitizeGatewayResponseHeaders', () => {
       'set-cookie': 'session=secret',
       'access-control-allow-origin': '*',
       'content-security-policy': 'default-src \'none\'',
-      'connection': 'keep-alive'
+      'connection': 'keep-alive',
+      'x-request-id': 'attacker-request-id',
+      'x-ratelimit-limit': '1',
+      'x-ratelimit-remaining': '0',
+      'x-ratelimit-reset': '1',
+      'x-ratelimit-window': 'second',
+      'retry-after': '3600',
+      'x-forwarded-for': '198.51.100.10',
+      'forwarded': 'for=198.51.100.10',
+      'x-openapi-route-id': 'forged-route'
     })
 
     const result = sanitizeGatewayResponseHeaders(source)
@@ -22,5 +31,11 @@ describe('sanitizeGatewayResponseHeaders', () => {
     expect(result.has('access-control-allow-origin')).toBe(false)
     expect(result.has('content-security-policy')).toBe(false)
     expect(result.has('connection')).toBe(false)
+    expect(result.has('x-request-id')).toBe(false)
+    expect(result.has('x-ratelimit-limit')).toBe(false)
+    expect(result.has('retry-after')).toBe(false)
+    expect(result.has('x-forwarded-for')).toBe(false)
+    expect(result.has('forwarded')).toBe(false)
+    expect(result.has('x-openapi-route-id')).toBe(false)
   })
 })

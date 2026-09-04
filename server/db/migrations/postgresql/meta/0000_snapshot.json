@@ -1,5 +1,5 @@
 {
-  "id": "e6b1d6df-e29a-4f6c-b28e-c82026174366",
+  "id": "bbd0c9bd-23b2-4c66-82ed-954830f186f2",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3346,6 +3346,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "pending_service_token_ciphertext": {
+          "name": "pending_service_token_ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "service_id": {
           "name": "service_id",

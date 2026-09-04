@@ -27,12 +27,20 @@ function resolvePublicError(status: number): { code: string, message: string } {
     : { code: 'SERVICE_UNAVAILABLE', message: '服务暂不可用，请稍后再试' }
 }
 
+function resolveKnownError(error: H3Error): { code: string, message: string } | null {
+  const code = (error as unknown as { code?: unknown }).code
+    ?? (error as unknown as { data?: { code?: unknown } }).data?.code
+  return code === 'ROUTING_RUNTIME_UNAVAILABLE'
+    ? { code, message: '网关路由暂不可用，请稍后再试' }
+    : null
+}
+
 export default defineNitroErrorHandler(function handlePublicApiRouteError(error: H3Error, event) {
   if (isReservedPlatformPath(getRequestURL(event).pathname)) return
   const status = error.statusCode >= 400 && error.statusCode <= 599
     ? error.statusCode
     : 500
-  const fallback = resolvePublicError(status)
+  const fallback = resolveKnownError(error) ?? resolvePublicError(status)
   const response = gatewayFail(event, status, fallback.code, fallback.message)
   return send(event, JSON.stringify(response), 'application/json')
 })

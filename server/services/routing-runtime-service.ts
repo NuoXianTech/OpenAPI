@@ -18,7 +18,22 @@ import {
 import { findRoutingRouteConflict } from '~~/server/utils/routing-conflict'
 
 const CACHE_TTL_MS = 1_000
+// A previously verified snapshot may continue serving traffic during a short
+// database outage, but it must not become an unbounded, silently stale
+// configuration.  Once this window elapses the Gateway fails closed with a
+// stable 503 instead of misreporting every request as a 404.
+const MAX_STALE_RUNTIME_MS = 60_000
 const HTTP_METHOD_ORDER = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] as const
+
+export class RoutingRuntimeUnavailableError extends Error {
+  readonly statusCode = 503
+  readonly code = 'ROUTING_RUNTIME_UNAVAILABLE'
+
+  constructor(cause?: unknown) {
+    super('active routing runtime is temporarily unavailable', cause === undefined ? undefined : { cause })
+    this.name = 'RoutingRuntimeUnavailableError'
+  }
+}
 
 interface CompiledRoute {
   definition: RoutingRevisionRoute
@@ -44,10 +59,13 @@ interface RuntimeCache {
   generation: number
   expiresAt: number
   runtime: CompiledRuntime | null
+  staleUntil: number
 }
 
 let runtimeCache: RuntimeCache | null = null
 let runtimeGeneration = 0
+let runtimeLoad: Promise<CompiledRuntime | null> | null = null
+let lastRuntimeFailureLogAt = 0
 
 export function invalidateRoutingRuntimeCache(): void {
   runtimeGeneration += 1
@@ -128,17 +146,45 @@ async function getCompiledRuntime(): Promise<CompiledRuntime | null> {
     return runtimeCache.runtime
   }
 
-  try {
-    const compiled = await loadCompiledRuntime()
-    runtimeCache = { generation, expiresAt: now + CACHE_TTL_MS, runtime: compiled }
-    return compiled
-  } catch (error) {
-    console.error('[gateway] Failed to load the active routing revision; retaining the last valid runtime.', error)
-    if (runtimeCache) {
-      runtimeCache.expiresAt = now + CACHE_TTL_MS
-      return runtimeCache.runtime
+  if (runtimeLoad) return runtimeLoad
+
+  const loading = (async () => {
+    try {
+      const compiled = await loadCompiledRuntime()
+      runtimeCache = {
+        generation,
+        expiresAt: now + CACHE_TTL_MS,
+        runtime: compiled,
+        staleUntil: compiled ? now + MAX_STALE_RUNTIME_MS : now
+      }
+      return compiled
+    } catch (error) {
+      const cached = runtimeCache
+      const staleRuntime = cached?.runtime
+      if (staleRuntime && cached.staleUntil > now) {
+        if (now - lastRuntimeFailureLogAt >= 10_000) {
+          lastRuntimeFailureLogAt = now
+          console.error('[gateway] Failed to load the active routing revision; serving the last valid runtime temporarily.', {
+            error: error instanceof Error ? error.message : String(error)
+          })
+        }
+        cached.expiresAt = now + CACHE_TTL_MS
+        return staleRuntime
+      }
+      if (now - lastRuntimeFailureLogAt >= 10_000) {
+        lastRuntimeFailureLogAt = now
+        console.error('[gateway] Active routing runtime is unavailable.', {
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
+      throw new RoutingRuntimeUnavailableError(error)
     }
-    return null
+  })()
+  runtimeLoad = loading
+  try {
+    return await loading
+  } finally {
+    if (runtimeLoad === loading) runtimeLoad = null
   }
 }
 

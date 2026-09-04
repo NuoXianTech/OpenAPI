@@ -12,7 +12,8 @@ import {
   type SupportedServiceControlProtocol,
   SUPPORTED_SERVICE_CONTROL_PROTOCOLS
 } from '#shared/service-control'
-import { readLimitedText } from '~~/server/utils/safe-fetch'
+import { readLimitedText, safeFetch } from '~~/server/utils/safe-fetch'
+import { containsDotPathSegment } from '~~/server/utils/route-pattern'
 
 const CONTROL_TIMEOUT_MS = 10_000
 const MAX_CONTROL_RESPONSE_BYTES = 4 * 1024 * 1024
@@ -46,7 +47,24 @@ export function buildServiceControlUrl(
   endpoint: string
 ): URL {
   const base = new URL(baseUrl)
-  const endpointUrl = new URL(endpoint, 'http://service.invalid')
+  const rawEndpoint = endpoint.trim()
+  if (!rawEndpoint.startsWith('/') || rawEndpoint.startsWith('//')) {
+    throw new Error('service control endpoint must be an absolute path')
+  }
+  const rawEndpointPath = rawEndpoint.split(/[?#]/, 1)[0]!
+  if (containsDotPathSegment(rawEndpointPath)) {
+    throw new Error('service control endpoint must not contain dot segments')
+  }
+  const endpointUrl = new URL(rawEndpoint, 'http://service.invalid')
+  if (base.username || base.password || base.hash || base.search) {
+    throw new Error('service base URL must not contain credentials, query, or fragment')
+  }
+  // Endpoints are path references from the Service description.  Ignore no
+  // authority supplied by an absolute URL: accepting it would make a remote
+  // description able to redirect control traffic to an arbitrary host.
+  if (endpointUrl.origin !== 'http://service.invalid') {
+    throw new Error('service control endpoint must be a relative path')
+  }
   const basePath = base.pathname === '/'
     ? ''
     : base.pathname.replace(/\/$/, '')
@@ -161,8 +179,18 @@ async function requestJson<TSchema extends z.ZodType>(
 
   let response: Response
   try {
-    response = await fetch(url, {
+    response = await safeFetch(url, {
       ...init,
+      allowedHosts: [url.hostname],
+      allowSubdomains: false,
+      // Service-managed Targets may intentionally live on the private Docker
+      // network and commonly use HTTP for that hop.  DNS is still resolved
+      // and pinned by safeFetch; control-plane redirects are returned
+      // manually and never followed with configuration credentials.
+      allowHttp: true,
+      allowPrivateNetworks: true,
+      allowNonDefaultPort: true,
+      followRedirects: false,
       headers,
       redirect: 'manual',
       signal: AbortSignal.timeout(CONTROL_TIMEOUT_MS)

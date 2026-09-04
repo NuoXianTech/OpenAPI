@@ -160,7 +160,7 @@ Upstream 的 Target 集合内完成，避免再引入跨 Upstream 的第二层�
 
 - Platform 和 Service 使用独立随机运行时密钥。
 - Console、站内 API 和动态 Gateway 使用同一个 Platform 入口，按保留路径划分职责；公网域名限制由反向代理或云平台入口负责。
-- `NUXT_API_KEY_SECRET` 在 `0.1.0` 不支持在线轮换，已有数据库不能直接替换该值。
+- `NUXT_API_KEY_SECRET` 是长期数据密钥根，已有数据库不能直接替换；Service Token 由 Upstream 的待验证/活动版本流程独立轮换。
 - Service Token 按 Service-managed Upstream 保存，不使用全局 Platform Token。
 - 单机或 Compose 部署使用私有网络。
 - 跨不可信网络必须使用 TLS；高安全环境可以增加 mTLS。

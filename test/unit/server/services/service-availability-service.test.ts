@@ -2,6 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ServiceDescription } from '#shared/types/service-control'
 import { resolveServiceAvailability } from '~~/server/services/service-availability-service'
 
+vi.mock('~~/server/utils/safe-fetch', () => ({
+  safeFetch: (input: RequestInfo | URL, init?: RequestInit) => (
+    globalThis.fetch(input, init)
+  )
+}))
+
 const description: ServiceDescription = {
   schemaVersion: 1,
   serviceId: 'availability-test',

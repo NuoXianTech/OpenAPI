@@ -13,8 +13,10 @@ import { verifyPassword } from '~~/server/utils/password'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
+import { assertSameOriginMutation } from '~~/server/utils/csrf'
 
 export default defineEventHandler(async (event) => {
+  assertSameOriginMutation(event)
   const pending = readPendingOauth(event)
   if (!pending) {
     throw createError({ statusCode: 410, message: '绑定会话已过期，请重新发起第三方登录' })

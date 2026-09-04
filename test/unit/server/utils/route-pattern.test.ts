@@ -43,4 +43,19 @@ describe('route pattern utilities', () => {
     expect(isReservedPlatformPath('/admin')).toBe(true)
     expect(isReservedPlatformPath('/v1/music')).toBe(false)
   })
+
+  it('rejects dot segments in route patterns and decoded parameters', () => {
+    expect(() => parseRoutePathPattern('/v1/../admin')).toThrow(/dot segments/)
+    expect(() => parseRoutePathPattern('/v1/%2e%2e/admin')).toThrow(/dot segments/)
+
+    const parsed = parseRoutePathPattern('/v1/files/{path+}')
+    expect(matchRoutePath(parsed, '/v1/files/a/%2e%2e/secret')).toBeNull()
+    expect(matchRoutePath(
+      parseRoutePathPattern('/v1/users/{id}'),
+      '/v1/users/a%2Fb'
+    )).toBeNull()
+    expect(() => renderUpstreamPath('/base/{path.path}', {
+      path: '../secret'
+    })).toThrow(/dot segments/)
+  })
 })

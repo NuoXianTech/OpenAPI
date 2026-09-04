@@ -23,6 +23,9 @@ const { platformUpstreamService } = await import(
 const { platformRuntimeService } = await import(
   '~~/server/services/platform-runtime-service'
 )
+const { upstreamServiceTokenService } = await import(
+  '~~/server/services/upstream-service-token-service'
+)
 
 let client: PGlite
 let database: ReturnType<typeof drizzle<typeof schema>>
@@ -101,6 +104,40 @@ async function createActiveRoute(upstreamServiceId: string) {
 }
 
 describe('Platform upstream target state', () => {
+  it('stages Service Token rotation and keeps the verified token on live traffic', async () => {
+    const upstream = await platformUpstreamService.create({
+      slug: 'staged-token-rotation',
+      name: 'Staged Token Rotation',
+      serviceToken: 'verified-service-token-with-at-least-32-characters',
+      loadBalancing: 'round_robin',
+      targets: [{ baseUrl: 'http://127.0.0.1:8080', weight: 1 }]
+    })
+    const before = (await database.select()
+      .from(schema.upstreamServiceConnections)
+      .where(eq(
+        schema.upstreamServiceConnections.upstreamServiceId,
+        upstream.id
+      )))[0]!
+
+    await platformUpstreamService.updateServiceToken(
+      upstream.id,
+      'replacement-service-token-with-at-least-32-characters'
+    )
+    const after = (await database.select()
+      .from(schema.upstreamServiceConnections)
+      .where(eq(
+        schema.upstreamServiceConnections.upstreamServiceId,
+        upstream.id
+      )))[0]!
+
+    expect(after.serviceTokenCiphertext).toBe(before.serviceTokenCiphertext)
+    expect(after.pendingServiceTokenCiphertext).toBeTruthy()
+    await expect(upstreamServiceTokenService.get(upstream.id))
+      .resolves.toBe('verified-service-token-with-at-least-32-characters')
+    await expect(upstreamServiceTokenService.getForControl(upstream.id))
+      .resolves.toBe('replacement-service-token-with-at-least-32-characters')
+  })
+
   it('publishes manual Target changes immediately', async () => {
     const upstream = await platformUpstreamService.create({
       slug: 'manual-target-publication',

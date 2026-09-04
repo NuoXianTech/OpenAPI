@@ -27,7 +27,7 @@ import {
   serviceControlClient
 } from '~~/server/utils/service-control-client'
 import { assertServiceConfigurationDefinition } from '~~/server/utils/service-configuration-values'
-import { areEnabledServiceTargetsReady } from '~~/server/utils/service-upstream-readiness'
+import { hasReadyServiceTarget } from '~~/server/utils/service-upstream-readiness'
 
 interface DiscoveredTarget {
   targetId: string
@@ -39,6 +39,9 @@ interface DiscoveredTarget {
 interface DiscoveryFetchSuccess {
   ok: true
   targets: DiscoveredTarget[]
+  // A healthy subset is enough to refresh the contract. Failed Targets are
+  // persisted as degraded instead of blocking the whole Service fleet.
+  targetErrors: ReadonlyMap<string, string>
   description: ServiceDescription
   openapi: {
     document: Record<string, unknown>
@@ -59,33 +62,80 @@ const activeDiscoveries = new Map<
   string,
   ReturnType<typeof performPlatformServiceDiscovery>
 >()
+const DISCOVERY_CONCURRENCY = 8
 
-function assertMatchingDescriptions(descriptions: ServiceDescription[]) {
-  const first = descriptions[0]
-  if (!first) throw new Error('service has no enabled targets')
-  for (const description of descriptions.slice(1)) {
-    if (
-      description.serviceId !== first.serviceId
-      || description.name !== first.name
-      || description.serviceProtocol !== first.serviceProtocol
-      || description.openapiSha256 !== first.openapiSha256
-      || description.configuration.schemaSha256
-      !== first.configuration.schemaSha256
-      || description.openapi !== first.openapi
-      || description.configuration.schema !== first.configuration.schema
-      || description.configuration.state !== first.configuration.state
-      || description.configuration.update !== first.configuration.update
-      || description.health !== first.health
-      || description.readiness !== first.readiness
-    ) {
-      throw createApplicationError({
-        statusCode: 409,
-        message: 'upstream targets do not expose the same Service contract',
-        data: { code: 'SERVICE_TARGET_CONTRACT_MISMATCH' }
-      })
+async function allSettledBounded<TItem, TResult>(
+  items: readonly TItem[],
+  worker: (item: TItem) => Promise<TResult>,
+  concurrency: number
+): Promise<PromiseSettledResult<TResult>[]> {
+  const results: PromiseSettledResult<TResult>[] = []
+  let nextIndex = 0
+  const runWorker = async () => {
+    while (true) {
+      const index = nextIndex++
+      const item = items[index]
+      if (item === undefined && index >= items.length) return
+      try {
+        results[index] = {
+          status: 'fulfilled',
+          value: await worker(item as TItem)
+        }
+      } catch (reason) {
+        results[index] = { status: 'rejected', reason }
+      }
     }
   }
-  return first
+  await Promise.all(Array.from({
+    length: Math.min(Math.max(concurrency, 1), items.length)
+  }, runWorker))
+  return results
+}
+
+function sameDescriptionContract(
+  left: ServiceDescription,
+  right: ServiceDescription
+): boolean {
+  return left.serviceId === right.serviceId
+    && left.name === right.name
+    && left.serviceProtocol === right.serviceProtocol
+    && left.openapiSha256 === right.openapiSha256
+    && left.configuration.schemaSha256 === right.configuration.schemaSha256
+    && left.openapi === right.openapi
+    && left.configuration.schema === right.configuration.schema
+    && left.configuration.state === right.configuration.state
+    && left.configuration.update === right.configuration.update
+    && left.health === right.health
+    && left.readiness === right.readiness
+}
+
+function selectCompatibleTargets(
+  targets: DiscoveredTarget[],
+  targetErrors: Map<string, string>
+): { description: ServiceDescription, targets: DiscoveredTarget[] } {
+  const first = targets[0]
+  if (!first) throw new Error('service has no enabled targets')
+
+  // Partial-discovery policy: use the first successful contract as the
+  // baseline and quarantine only Targets that disagree with it.  This keeps
+  // the successful subset serving while preserving an explicit per-Target error;
+  // the next discovery can promote a recovered/matching Target again.
+  const compatible = targets.filter((item) => {
+    if (sameDescriptionContract(item.description, first.description)) return true
+    targetErrors.set(
+      item.targetId,
+      'upstream Target exposes a different Service contract'
+    )
+    return false
+  })
+  if (compatible.length === 0) {
+    throw createApplicationError({
+      statusCode: 409,
+      message: 'upstream targets do not expose the same Service contract',
+      data: { code: 'SERVICE_TARGET_CONTRACT_MISMATCH' }
+    })
+  }
+  return { description: first.description, targets: compatible }
 }
 
 function discoveryContextFingerprint(
@@ -98,6 +148,8 @@ function discoveryContextFingerprint(
     },
     connection: {
       serviceTokenCiphertext: context.connection.serviceTokenCiphertext,
+      pendingServiceTokenCiphertext:
+        context.connection.pendingServiceTokenCiphertext,
       updatedAt: context.connection.updatedAt.toISOString()
     },
     targets: context.targets
@@ -142,8 +194,9 @@ async function fetchServiceSnapshot(
   token: string
 ): Promise<DiscoveryFetchResult> {
   const enabledTargets = context.targets.filter(target => target.enabled)
-  const targetResults = await Promise.allSettled(
-    enabledTargets.map(async (target): Promise<DiscoveredTarget> => {
+  const targetResults = await allSettledBounded(
+    enabledTargets,
+    async (target): Promise<DiscoveredTarget> => {
       const description = await serviceControlClient.getDescription(
         target.baseUrl,
         token
@@ -193,7 +246,8 @@ async function fetchServiceSnapshot(
         definition: definition.data,
         state: state.data
       }
-    })
+    },
+    DISCOVERY_CONCURRENCY
   )
 
   const targetErrors = new Map<string, string>()
@@ -205,7 +259,10 @@ async function fetchServiceSnapshot(
       )
     }
   })
-  if (targetErrors.size > 0) {
+  const targets = targetResults.flatMap(result => (
+    result.status === 'fulfilled' ? [result.value] : []
+  ))
+  if (targets.length === 0) {
     const firstError = targetResults.find(
       (result): result is PromiseRejectedResult => result.status === 'rejected'
     )!.reason
@@ -245,12 +302,8 @@ async function fetchServiceSnapshot(
   }
 
   try {
-    const targets = targetResults.flatMap(result => (
-      result.status === 'fulfilled' ? [result.value] : []
-    ))
-    const description = assertMatchingDescriptions(
-      targets.map(item => item.description)
-    )
+    const compatible = selectCompatibleTargets(targets, targetErrors)
+    const description = compatible.description
     if (
       context.connection.serviceId
       && context.connection.serviceId !== description.serviceId
@@ -261,7 +314,7 @@ async function fetchServiceSnapshot(
         data: { code: 'SERVICE_IDENTITY_MISMATCH' }
       })
     }
-    const first = targets[0]!
+    const first = compatible.targets[0]!
     const firstTarget = context.targets.find(
       target => target.id === first.targetId
     )!
@@ -272,7 +325,8 @@ async function fetchServiceSnapshot(
     )
     return {
       ok: true,
-      targets,
+      targets: compatible.targets,
+      targetErrors,
       description,
       openapi: {
         document: openapi.data,
@@ -339,6 +393,10 @@ async function commitServiceSnapshot(
     })
 
     const now = new Date()
+    const firstTargetError = [...snapshot.targetErrors.values()][0]
+    const discoveryError = snapshot.targetErrors.size > 0
+      ? `${snapshot.targetErrors.size} Service target(s) could not be discovered: ${firstTargetError}`.slice(0, 500)
+      : null
     const updatedConnection = firstRow(
       await tx.update(upstreamServiceConnections).set({
         serviceId: snapshot.description.serviceId,
@@ -351,9 +409,16 @@ async function commitServiceSnapshot(
         configurationSchemaSha256:
           snapshot.description.configuration.schemaSha256,
         configurationSchema: first.definition,
+        ...(current.connection.pendingServiceTokenCiphertext
+          ? {
+              serviceTokenCiphertext:
+                current.connection.pendingServiceTokenCiphertext,
+              pendingServiceTokenCiphertext: null
+            }
+          : {}),
         ...(schemaChanged ? { configurationHash: null } : {}),
         lastDiscoveredAt: now,
-        lastDiscoveryError: null,
+        lastDiscoveryError: discoveryError,
         updatedAt: now
       }).where(eq(
         upstreamServiceConnections.upstreamServiceId,
@@ -381,7 +446,16 @@ async function commitServiceSnapshot(
         updatedAt: now
       }).where(eq(upstreamTargets.id, item.targetId))
     }
+    for (const [targetId, message] of snapshot.targetErrors) {
+      await tx.update(upstreamTargets).set({
+        configurationStatus: 'error',
+        lastConfigurationSyncAt: now,
+        lastError: message,
+        updatedAt: now
+      }).where(eq(upstreamTargets.id, targetId))
+    }
   })
+  upstreamServiceTokenService.invalidate(context.service.id)
 }
 
 async function performPlatformServiceDiscovery(upstreamServiceId: string) {
@@ -393,7 +467,7 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
       data: { code: 'SERVICE_HAS_NO_TARGETS' }
     })
   }
-  const token = await upstreamServiceTokenService.get(upstreamServiceId)
+  const token = await upstreamServiceTokenService.getForControl(upstreamServiceId)
   if (!token) {
     throw createApplicationError({
       statusCode: 409,
@@ -419,7 +493,7 @@ async function performPlatformServiceDiscovery(upstreamServiceId: string) {
   }
 
   const refreshed = await loadServiceControlContext(upstreamServiceId)
-  const published = areEnabledServiceTargetsReady(
+  const published = hasReadyServiceTarget(
     refreshed.targets,
     refreshed.connection
   )

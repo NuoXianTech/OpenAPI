@@ -36,6 +36,28 @@ import {
 import { firstRow } from '~~/server/utils/row'
 import { applyPlatformRevision } from '~~/server/services/platform-endpoint-publication-service'
 
+const CONFIGURATION_SYNC_CONCURRENCY = 8
+
+async function mapBounded<TItem, TResult>(
+  items: readonly TItem[],
+  worker: (item: TItem) => Promise<TResult>,
+  concurrency: number
+): Promise<TResult[]> {
+  const results: TResult[] = []
+  let nextIndex = 0
+  const runWorker = async () => {
+    while (true) {
+      const index = nextIndex++
+      if (index >= items.length) return
+      results[index] = await worker(items[index]!)
+    }
+  }
+  await Promise.all(Array.from({
+    length: Math.min(Math.max(concurrency, 1), items.length)
+  }, runWorker))
+  return results
+}
+
 function redactedStateFromValues(input: {
   serviceId: string
   schemaSha256: string
@@ -92,7 +114,7 @@ async function pushConfiguration(
       data: { code: 'SERVICE_HAS_NO_TARGETS' }
     })
   }
-  const token = await upstreamServiceTokenService.get(context.service.id)
+  const token = await upstreamServiceTokenService.getForControl(context.service.id)
   if (!token) {
     throw createApplicationError({
       statusCode: 409,
@@ -101,7 +123,7 @@ async function pushConfiguration(
     })
   }
 
-  const results = await Promise.all(enabledTargets.map(async (target) => {
+  const results = await mapBounded(enabledTargets, async (target) => {
     try {
       const response = await serviceControlClient.updateConfiguration(
         target.baseUrl,
@@ -131,7 +153,7 @@ async function pushConfiguration(
         error: safeServiceControlError(error)
       }
     }
-  }))
+  }, CONFIGURATION_SYNC_CONCURRENCY)
 
   const successful = results.filter(result => result.ok && result.matches).length
   const status = successful === enabledTargets.length

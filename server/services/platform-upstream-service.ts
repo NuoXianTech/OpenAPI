@@ -18,6 +18,7 @@ import { isServiceTargetReady } from '~~/server/utils/service-upstream-readiness
 import { applyPlatformMutation } from '~~/server/services/platform-endpoint-publication-service'
 import type { UpstreamView } from '~~/server/types/platform-publication'
 import { normalizeUpstreamTargetUrl } from '~~/server/utils/upstream-target-url'
+import { resetGatewayTargetHealthForTarget } from '~~/server/services/dynamic-gateway-target-service'
 
 interface CreateUpstreamInput {
   slug: string
@@ -162,7 +163,7 @@ export const platformUpstreamService = {
             connectionRecord?.serviceDescription ?? null,
             upstream.targets,
             connectionRecord
-              ? await upstreamServiceTokenService.get(upstream.id)
+              ? await upstreamServiceTokenService.getForControl(upstream.id)
               : null
           )).overall
       return {
@@ -395,9 +396,19 @@ export const platformUpstreamService = {
             || updatingPublishedTarget
         }
       }
-      return options.transaction
+      const result = options.transaction
         ? await update(options.transaction)
         : await db.transaction(update)
+      if (
+        input.baseUrl !== undefined
+        || input.enabled !== undefined
+      ) {
+        resetGatewayTargetHealthForTarget(
+          result.target.upstreamServiceId,
+          result.target.id
+        )
+      }
+      return result
     } catch (error) {
       if (getSqlState(error) === '23505') {
         throw createApplicationError({ statusCode: 409, message: 'target URL already exists for this upstream', data: { code: 'TARGET_CONFLICT' } })
@@ -436,9 +447,14 @@ export const platformUpstreamService = {
       await tx.delete(upstreamTargets).where(eq(upstreamTargets.id, id))
       return binding.target
     }
-    return options.transaction
-      ? remove(options.transaction)
-      : db.transaction(remove)
+    const removed = options.transaction
+      ? await remove(options.transaction)
+      : await db.transaction(remove)
+    resetGatewayTargetHealthForTarget(
+      removed.upstreamServiceId,
+      removed.id
+    )
+    return removed
   },
 
   async updateServiceToken(id: string, serviceToken: string) {
@@ -459,12 +475,16 @@ export const platformUpstreamService = {
       .values({
         upstreamServiceId: id,
         serviceTokenCiphertext,
+        pendingServiceTokenCiphertext: serviceTokenCiphertext,
         lastDiscoveryError: 'Service Token changed; run discovery to verify the connection'
       })
       .onConflictDoUpdate({
         target: upstreamServiceConnections.upstreamServiceId,
         set: {
-          serviceTokenCiphertext,
+          // Keep the last verified credential active until discovery proves
+          // the replacement works.  Control-plane requests use the pending
+          // value; Gateway traffic continues with the active value.
+          pendingServiceTokenCiphertext: serviceTokenCiphertext,
           lastDiscoveryError: 'Service Token changed; run discovery to verify the connection',
           updatedAt: new Date()
         }
@@ -477,6 +497,7 @@ export const platformUpstreamService = {
         data: { code: 'SERVICE_CONNECTION_NOT_FOUND' }
       })
     }
+    upstreamServiceTokenService.invalidate(id)
     return toServiceConnectionView(updated)
   },
 

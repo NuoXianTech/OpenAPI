@@ -45,7 +45,10 @@ export function toServiceConnectionView(
     upstreamServiceId: connection.upstreamServiceId,
     discovered: Boolean(connection.serviceId && connection.serviceDescription),
     availability,
-    tokenConfigured: Boolean(connection.serviceTokenCiphertext),
+    tokenConfigured: Boolean(
+      connection.serviceTokenCiphertext
+      || connection.pendingServiceTokenCiphertext
+    ),
     serviceId: connection.serviceId,
     serviceName: connection.serviceName,
     serviceVersion: connection.serviceVersion,
@@ -165,7 +168,7 @@ export async function buildServiceControlView(
     ? await resolveServiceAvailability(
         context.connection.serviceDescription,
         context.targets,
-        await upstreamServiceTokenService.get(context.service.id)
+        await upstreamServiceTokenService.getForControl(context.service.id)
       )
     : { overall: 'unknown' as const, targets: new Map() }
   return {

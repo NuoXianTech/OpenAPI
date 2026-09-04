@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { getHeader, getQuery, setResponseHeaders } from 'h3'
-import { eq } from 'drizzle-orm'
+import { and, eq, lte, or } from 'drizzle-orm'
 import { db } from '~~/server/db/client'
-import { apiKeys } from '~~/server/db/schema'
+import { apiKeys, users } from '~~/server/db/schema'
 import { API_ACCESS_ERROR, type RateLimitWindow } from '~~/server/config/api-access'
 import { creditService } from '~~/server/services/credit-service'
 import type { ResolvedDynamicRoute } from '~~/server/services/routing-runtime-service'
@@ -18,7 +18,10 @@ import { firstRow } from '~~/server/utils/row'
 import { digestStoredSecret } from '~~/server/utils/stored-secret'
 import { ipInAnyCidr } from '#shared/utils/cidr'
 
-type ApiKeyRecord = typeof apiKeys.$inferSelect
+type ApiKeyRecord = Pick<
+  typeof apiKeys.$inferSelect,
+  'id' | 'userId' | 'name' | 'isActive' | 'expiresAt' | 'scopes' | 'ipWhitelist'
+>
 
 type DynamicAccessResult
   = { passed: true }
@@ -39,8 +42,24 @@ function readApiKey(event: H3Event): string {
 
 async function loadApiKey(rawKey: string): Promise<ApiKeyRecord | null> {
   if (!rawKey) return null
-  return firstRow(await db.select().from(apiKeys)
-    .where(eq(apiKeys.keyDigest, digestStoredSecret(rawKey, 'api-key')))
+  return firstRow(await db.select({
+    id: apiKeys.id,
+    userId: apiKeys.userId,
+    name: apiKeys.name,
+    isActive: apiKeys.isActive,
+    expiresAt: apiKeys.expiresAt,
+    scopes: apiKeys.scopes,
+    ipWhitelist: apiKeys.ipWhitelist
+  }).from(apiKeys)
+    .innerJoin(users, eq(users.id, apiKeys.userId))
+    .where(and(
+      eq(apiKeys.keyDigest, digestStoredSecret(rawKey, 'api-key')),
+      eq(users.isActive, true),
+      or(
+        eq(users.isBanned, false),
+        lte(users.bannedUntil, new Date())
+      )
+    ))
     .limit(1)) ?? null
 }
 
@@ -135,6 +154,13 @@ async function reserveCredits(
       requestId: ensureRequestId(event),
       amount: match.route.creditsCost
     })
+    if (result.status === 'account_unavailable') {
+      return {
+        outcome: 'disabled_api_key',
+        error: API_ACCESS_ERROR.DISABLED_API_KEY,
+        apiKey
+      }
+    }
     if (result.status === 'insufficient_credits') {
       return {
         outcome: 'insufficient_credits',

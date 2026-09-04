@@ -148,6 +148,10 @@ export const upstreamTargets = pgTable('upstream_targets', {
 export const upstreamServiceConnections = pgTable('upstream_service_connections', {
   upstreamServiceId: uuid('upstream_service_id').primaryKey(),
   serviceTokenCiphertext: text('service_token_ciphertext').notNull(),
+  // Token rotation is staged here until a discovery request verifies the new
+  // credential.  Gateway traffic keeps using the active ciphertext while a
+  // pending value is being checked.
+  pendingServiceTokenCiphertext: text('pending_service_token_ciphertext'),
   serviceId: varchar('service_id', { length: 120 }),
   serviceName: varchar('service_name', { length: 160 }),
   serviceVersion: varchar('service_version', { length: 160 }),

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('~~/server/utils/auth-secret', () => ({
-  getAuthSecret: () => 'system-settings-test-secret-with-at-least-32-bytes'
+vi.mock('~~/server/utils/stored-secret', () => ({
+  getApiKeySecret: () => Buffer.alloc(32, 7)
 }))
 
 const {

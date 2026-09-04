@@ -5,6 +5,7 @@ import { assertAdminOnboardingCompleted } from '~~/server/services/admin-onboard
 import { userService } from '~~/server/services/user-service'
 import { systemSettingsService } from '~~/server/services/system-settings-service'
 import { toHttpError } from '~~/server/utils/http-error'
+import { assertSameOriginMutation } from '~~/server/utils/csrf'
 import { signAccessToken, verifyAccessToken, type VerifiedToken } from '~~/server/utils/jwt'
 import { banMessage, isBanActive } from '~~/server/utils/ban'
 import { hostCookieName, hostCookieSecurityOptions } from '~~/server/utils/host-cookie'
@@ -234,7 +235,9 @@ function defineAuthorizedEventHandler<TUser, TResult>(
   return defineEventHandler(async (event) => {
     setResponseHeader(event, 'cache-control', 'private, no-store')
     try {
-      return await handler(event, await authorize(event))
+      const user = await authorize(event)
+      assertSameOriginMutation(event)
+      return await handler(event, user)
     } catch (error) {
       throw toHttpError(error)
     }

@@ -8,7 +8,11 @@ import {
   setResponseHeader
 } from 'h3'
 import { dynamicGatewayAccessService } from '~~/server/services/dynamic-gateway-access-service'
-import { routingRuntimeService, type ResolvedDynamicRoute } from '~~/server/services/routing-runtime-service'
+import {
+  routingRuntimeService,
+  RoutingRuntimeUnavailableError,
+  type ResolvedDynamicRoute
+} from '~~/server/services/routing-runtime-service'
 import {
   BillingPersistenceError,
   findBillingPersistenceError,
@@ -27,7 +31,7 @@ import {
 import {
   buildGatewayTargetUrl,
   createGatewayProxyFetch,
-  orderedGatewayTargets
+  orderedGatewayTargetsAsync
 } from '~~/server/services/dynamic-gateway-target-service'
 import { getAppEventContext } from '~~/server/utils/event-context'
 import { gatewayFail } from '~~/server/utils/gateway-response'
@@ -43,7 +47,26 @@ const STRIPPED_REQUEST_HEADERS = new Set([
   'x-api-key',
   'api-key',
   'x-auth-token',
-  'proxy-authorization'
+  'proxy-authorization',
+  // Forwarding metadata is owned by the Platform.  Never relay a value
+  // supplied by the caller, including less common aliases that h3 does not
+  // classify as hop-by-hop headers.
+  'forwarded',
+  'x-real-ip',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-forwarded-port',
+  'via',
+  // The request body is wrapped by the streaming size limiter. Let fetch
+  // calculate framing instead of forwarding a caller-controlled length.
+  'content-length',
+  'transfer-encoding',
+  'connection',
+  'keep-alive',
+  'upgrade',
+  'te',
+  'trailer'
 ])
 
 interface DynamicGatewayResult {
@@ -52,12 +75,17 @@ interface DynamicGatewayResult {
 }
 
 const UPSTREAM_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{0,79}$/
+const UPSTREAM_RETRY_AFTER_SECONDS = 1
 
-function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serviceToken: string): Headers {
+export function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serviceToken: string): Headers {
   const headers = new Headers(getProxyRequestHeaders(event))
   for (const name of Array.from(headers.keys())) {
     const normalized = name.toLowerCase()
-    if (STRIPPED_REQUEST_HEADERS.has(normalized) || normalized.startsWith('x-openapi-')) {
+    if (
+      STRIPPED_REQUEST_HEADERS.has(normalized)
+      || normalized.startsWith('x-forwarded-')
+      || normalized.startsWith('x-openapi-')
+    ) {
       headers.delete(name)
     }
   }
@@ -65,7 +93,12 @@ function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRoute, serv
   const requestUrl = getRequestURL(event)
   const clientIp = readClientIp(event)
   headers.set('x-request-id', ensureRequestId(event))
-  headers.set('x-forwarded-proto', getRequestProtocol(event))
+  headers.set('x-forwarded-proto', getRequestProtocol(event, {
+    // The incoming forwarding header is untrusted at this boundary. A
+    // trusted reverse-proxy deployment can normalize the connection before
+    // it reaches the Platform; callers must not be able to forge this value.
+    xForwardedProto: false
+  }))
   headers.set('x-forwarded-host', requestUrl.host)
   if (clientIp) headers.set('x-forwarded-for', clientIp)
   else headers.delete('x-forwarded-for')
@@ -102,6 +135,9 @@ function gatewayFailureResult(
   message: string,
   error: unknown
 ): DynamicGatewayResult {
+  if (code === 'UPSTREAM_UNAVAILABLE' || code === 'UPSTREAM_TIMEOUT') {
+    setResponseHeader(event, 'Retry-After', UPSTREAM_RETRY_AFTER_SECONDS)
+  }
   if (!event.node.res.headersSent) {
     return {
       matched: true,
@@ -117,14 +153,45 @@ function gatewayFailureResult(
   return { matched: true }
 }
 
+function routingRuntimeUnavailableResult(
+  event: H3Event,
+  error: unknown
+): DynamicGatewayResult | null {
+  const isUnavailable = typeof RoutingRuntimeUnavailableError === 'function'
+    && error instanceof RoutingRuntimeUnavailableError
+  const hasStableCode = error !== null
+    && typeof error === 'object'
+    && (error as { code?: unknown }).code === 'ROUTING_RUNTIME_UNAVAILABLE'
+  if (!isUnavailable && !hasStableCode) return null
+  const statusCode = isUnavailable
+    ? error.statusCode
+    : 503
+  return {
+    matched: true,
+    response: gatewayFail(
+      event,
+      statusCode,
+      'ROUTING_RUNTIME_UNAVAILABLE',
+      '网关路由暂不可用，请稍后再试'
+    )
+  }
+}
+
 export const dynamicGatewayService = {
   async tryHandle(event: H3Event): Promise<DynamicGatewayResult> {
     const requestUrl = getRequestURL(event)
     if (event.method.toUpperCase() === 'OPTIONS') {
-      const allowedMethods = await routingRuntimeService.resolveAllowedMethods(
-        requestUrl.pathname,
-        requestUrl.hostname
-      )
+      let allowedMethods: string[]
+      try {
+        allowedMethods = await routingRuntimeService.resolveAllowedMethods(
+          requestUrl.pathname,
+          requestUrl.hostname
+        )
+      } catch (error) {
+        const unavailable = routingRuntimeUnavailableResult(event, error)
+        if (unavailable) return unavailable
+        throw error
+      }
       if (allowedMethods.length === 0) return { matched: false }
       const cors = setPublicApiCors(event, allowedMethods)
       if (cors.rejectedRequestHeaders.length > 0) {
@@ -141,12 +208,30 @@ export const dynamicGatewayService = {
       return { matched: true, response: sendNoContent(event) }
     }
 
-    const match = await routingRuntimeService.resolve(event.method, requestUrl.pathname, requestUrl.hostname)
-    if (!match) {
-      const allowedMethods = await routingRuntimeService.resolveAllowedMethods(
+    let match: ResolvedDynamicRoute | null
+    try {
+      match = await routingRuntimeService.resolve(
+        event.method,
         requestUrl.pathname,
         requestUrl.hostname
       )
+    } catch (error) {
+      const unavailable = routingRuntimeUnavailableResult(event, error)
+      if (unavailable) return unavailable
+      throw error
+    }
+    if (!match) {
+      let allowedMethods: string[]
+      try {
+        allowedMethods = await routingRuntimeService.resolveAllowedMethods(
+          requestUrl.pathname,
+          requestUrl.hostname
+        )
+      } catch (error) {
+        const unavailable = routingRuntimeUnavailableResult(event, error)
+        if (unavailable) return unavailable
+        throw error
+      }
       if (allowedMethods.length === 0) return { matched: false }
       setPublicApiCors(event, allowedMethods)
       setResponseHeader(event, 'allow', allowedMethods.join(', '))
@@ -157,6 +242,10 @@ export const dynamicGatewayService = {
     }
 
     setPublicApiCors(event, [match.route.method])
+    // Keep the response correlation id platform-owned even when an upstream
+    // returns a conflicting value.  The response-header sanitizer also blocks
+    // the upstream copy when the stream is proxied below.
+    setResponseHeader(event, 'X-Request-Id', ensureRequestId(event))
     initializeGatewayStatistics(event, match)
     let abortController: AbortController | null = null
     let abortReason: 'client_disconnected' | 'timeout' | null = null
@@ -174,7 +263,7 @@ export const dynamicGatewayService = {
       const serviceToken = match.upstream.serviceManaged
         ? await upstreamServiceTokenService.get(match.upstream.id)
         : ''
-      const targets = orderedGatewayTargets(match)
+      const targets = await orderedGatewayTargetsAsync(match)
       const target = targets[0]!
       targetId = target.id
       const upstreamPath = renderUpstreamPath(match.route.upstreamPathTemplate, match.params)
@@ -236,6 +325,11 @@ export const dynamicGatewayService = {
         sendStream: true,
         onResponse: async (_proxyEvent, upstreamResponse) => {
           upstreamStatus = upstreamResponse.status
+          if ([502, 503, 504].includes(upstreamResponse.status)) {
+            // Retry guidance is a Platform-owned field; the upstream copy is
+            // stripped by the response sanitizer and cannot override it.
+            setResponseHeader(event, 'Retry-After', UPSTREAM_RETRY_AFTER_SECONDS)
+          }
           if (match.upstream.serviceManaged) {
             captureUpstreamFailure(event, upstreamResponse)
           }

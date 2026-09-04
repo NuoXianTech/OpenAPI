@@ -5,8 +5,10 @@ import type {
   ServiceTargetAvailability
 } from '#shared/types/service-control'
 import { buildServiceControlUrl } from '~~/server/utils/service-control-client'
+import { safeFetch } from '~~/server/utils/safe-fetch'
 
 const AVAILABILITY_PROBE_TIMEOUT_MS = 1_500
+const AVAILABILITY_PROBE_CONCURRENCY = 16
 
 interface AvailabilityTarget {
   id: string
@@ -28,29 +30,41 @@ async function requestTargetAvailability(
   serviceToken: string
 ): Promise<boolean> {
   try {
-    const readiness = await fetch(
-      buildServiceControlUrl(baseUrl, readinessPath),
-      {
-        headers: { accept: 'application/json' },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(AVAILABILITY_PROBE_TIMEOUT_MS)
-      }
+    const readinessUrl = buildServiceControlUrl(baseUrl, readinessPath)
+    const requestOptions = {
+      allowedHosts: [readinessUrl.hostname],
+      allowSubdomains: false,
+      allowHttp: true,
+      allowPrivateNetworks: true,
+      allowNonDefaultPort: true,
+      followRedirects: false,
+      headers: { accept: 'application/json' },
+      redirect: 'manual' as const,
+      signal: AbortSignal.timeout(AVAILABILITY_PROBE_TIMEOUT_MS)
+    }
+    const readiness = await safeFetch(
+      readinessUrl,
+      requestOptions
     )
     const ready = readiness.ok
     await readiness.body?.cancel().catch(() => undefined)
     if (!ready) return false
 
-    const control = await fetch(
-      buildServiceControlUrl(baseUrl, controlPath),
-      {
-        headers: {
-          accept: 'application/json',
-          authorization: `Service ${serviceToken}`
-        },
-        redirect: 'manual',
-        signal: AbortSignal.timeout(AVAILABILITY_PROBE_TIMEOUT_MS)
-      }
-    )
+    const controlUrl = buildServiceControlUrl(baseUrl, controlPath)
+    const control = await safeFetch(controlUrl, {
+      allowedHosts: [controlUrl.hostname],
+      allowSubdomains: false,
+      allowHttp: true,
+      allowPrivateNetworks: true,
+      allowNonDefaultPort: true,
+      followRedirects: false,
+      headers: {
+        accept: 'application/json',
+        authorization: `Service ${serviceToken}`
+      },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(AVAILABILITY_PROBE_TIMEOUT_MS)
+    })
     const authenticated = control.ok
     await control.body?.cancel().catch(() => undefined)
     return authenticated
@@ -99,15 +113,27 @@ export async function resolveServiceAvailability(
     return { overall: 'unknown', targets: targetStatuses }
   }
 
-  const availability = await Promise.all(enabledTargets.map(async target => ({
-    id: target.id,
-    online: await targetAvailability(
-      target.baseUrl,
-      description.readiness,
-      description.configuration.state,
-      serviceToken
-    )
-  })))
+  const availability: Array<{ id: string, online: boolean }> = []
+  let nextTargetIndex = 0
+  const probeWorker = async () => {
+    while (true) {
+      const index = nextTargetIndex++
+      if (index >= enabledTargets.length) return
+      const target = enabledTargets[index]!
+      availability[index] = {
+        id: target.id,
+        online: await targetAvailability(
+          target.baseUrl,
+          description.readiness,
+          description.configuration.state,
+          serviceToken
+        )
+      }
+    }
+  }
+  await Promise.all(Array.from({
+    length: Math.min(AVAILABILITY_PROBE_CONCURRENCY, enabledTargets.length)
+  }, probeWorker))
   for (const target of availability) {
     targetStatuses.set(target.id, target.online ? 'online' : 'offline')
   }

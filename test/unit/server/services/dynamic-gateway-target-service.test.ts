@@ -86,8 +86,21 @@ describe('dynamic gateway target selection', () => {
     expect(buildGatewayTargetUrl(
       'http://127.0.0.1:8080/base/',
       '/v1/player',
-      '?apikey=secret&id=42'
+      '?apikey=secret&API_KEY=second&id=42'
     ).toString()).toBe('http://127.0.0.1:8080/base/v1/player?id=42')
+  })
+
+  it('does not allow an upstream path to escape the configured base path', () => {
+    expect(() => buildGatewayTargetUrl(
+      'https://upstream.example.test/service',
+      '/%2e%2e/admin',
+      ''
+    )).toThrow(/dot segments/)
+    expect(() => buildGatewayTargetUrl(
+      'https://upstream.example.test/service',
+      '/../admin',
+      ''
+    )).toThrow(/dot segments/)
   })
 
   it('converts only explicit Service Token rejection into a gateway error', async () => {
