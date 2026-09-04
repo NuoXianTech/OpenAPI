@@ -28,7 +28,7 @@ import { toRoutingRevisionRoute } from '~~/server/utils/routing-revision-route'
 
 type RoutingRuntimeConfiguration = Pick<
   RoutingRevisionPayload,
-  'schemaVersion' | 'routes' | 'upstreams'
+  'schemaVersion' | 'routes' | 'upstreams' | 'defaultDomain'
 >
 
 function revisionChecksum(payload: RoutingRevisionPayload): string {
@@ -42,8 +42,18 @@ function hasSameRuntimeConfiguration(
   return canonicalJson({
     schemaVersion: current.schemaVersion,
     routes: current.routes,
-    upstreams: current.upstreams
+    upstreams: current.upstreams,
+    defaultDomain: current.defaultDomain
   }) === canonicalJson(desired)
+}
+
+function revisionDefaultDomain(
+  payload: RoutingRevisionPayload,
+  legacyFallback: string | null
+): string | null {
+  // Revisions created before defaultDomain became part of schemaVersion 1 do
+  // not contain the property. Preserve their historical activation behavior.
+  return payload.defaultDomain === undefined ? legacyFallback : payload.defaultDomain
 }
 
 function validatePublishedRouteConflicts(
@@ -209,7 +219,8 @@ export const routingRevisionService = {
         const desiredConfiguration: RoutingRuntimeConfiguration = {
           schemaVersion: 1,
           routes,
-          upstreams
+          upstreams,
+          defaultDomain: runtime.defaultDomain
         }
         if (
           activeRevision
@@ -275,12 +286,14 @@ export const routingRevisionService = {
       }
       if (runtime.activeRevisionId === target.id) return target
 
-      validatePublishedRouteConflicts(
-        target.configPayload.routes,
-        runtime.defaultDomain
-      )
+      const defaultDomain = revisionDefaultDomain(target.configPayload, runtime.defaultDomain)
+      validatePublishedRouteConflicts(target.configPayload.routes, defaultDomain)
       await tx.update(platformRuntime)
-        .set({ activeRevisionId: target.id, updatedAt: new Date() })
+        .set({
+          activeRevisionId: target.id,
+          defaultDomain,
+          updatedAt: new Date()
+        })
         .where(eq(platformRuntime.id, 1))
       return target
     })

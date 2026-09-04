@@ -449,6 +449,39 @@ describe('routing revision service', () => {
     )).resolves.toBeNull()
   })
 
+  it('restores the snapshotted default domain when activating a revision', async () => {
+    const graph = await createRoutingGraph({
+      productSlug: 'revision-domain',
+      pathPattern: '/v1/revision-domain',
+      upstreamPathTemplate: '/healthz'
+    })
+    const first = await platformRuntimeService.updateDefaultDomain(
+      'first.example.test',
+      null
+    )
+    const second = await platformRuntimeService.updateDefaultDomain(
+      'second.example.test',
+      null
+    )
+
+    expect(first.revision.configPayload.defaultDomain).toBe('first.example.test')
+    expect(second.revision.configPayload.defaultDomain).toBe('second.example.test')
+    await routingRevisionService.activate(first.revision.id)
+
+    const [runtime] = await database.select().from(schema.platformRuntime)
+    expect(runtime?.defaultDomain).toBe('first.example.test')
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/revision-domain',
+      'first.example.test'
+    )).resolves.toMatchObject({ route: { id: graph.route.id } })
+    await expect(routingRuntimeService.resolve(
+      'GET',
+      '/v1/revision-domain',
+      'second.example.test'
+    )).resolves.toBeNull()
+  })
+
   it('reuses the active revision when the runtime configuration is unchanged', async () => {
     await createRoutingGraph({})
 

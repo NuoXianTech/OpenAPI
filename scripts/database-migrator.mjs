@@ -137,6 +137,12 @@ function resolveMigrationsFolder(configuredDirectory) {
   throw new Error(`Cannot find bundled database migrations. Tried:\n${candidates.join('\n')}`)
 }
 
+const DEFAULT_PGLITE_DATA_DIR = '.data/pglite'
+
+export function resolvePgliteDataDir(dataDir) {
+  return dataDir?.trim() || DEFAULT_PGLITE_DATA_DIR
+}
+
 function resolveDatabaseConfig(options) {
   const databaseUrl = (options.databaseUrl ?? process.env.DATABASE_URL)?.trim() || undefined
   const driver = databaseUrl ? 'postgres' : 'pglite'
@@ -144,7 +150,7 @@ function resolveDatabaseConfig(options) {
   return {
     databaseUrl,
     driver,
-    pgliteDataDir: options.pgliteDataDir ?? '.data/pglite',
+    pgliteDataDir: resolvePgliteDataDir(options.pgliteDataDir),
     timeZone: options.timeZone ?? process.env.TZ ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   }
 }
@@ -154,8 +160,9 @@ function isFilesystemPgliteDataDir(dataDir) {
 }
 
 function ensurePgliteDataDir(dataDir) {
-  if (!isFilesystemPgliteDataDir(dataDir)) return
-  fs.mkdirSync(path.resolve(dataDir), { recursive: true })
+  const resolved = resolvePgliteDataDir(dataDir)
+  if (!isFilesystemPgliteDataDir(resolved)) return
+  fs.mkdirSync(path.resolve(resolved), { recursive: true })
 }
 
 function formatPostgresTarget(databaseUrl) {

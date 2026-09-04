@@ -48,16 +48,6 @@ const STRIPPED_REQUEST_HEADERS = new Set([
   'api-key',
   'x-auth-token',
   'proxy-authorization',
-  // Forwarding metadata is owned by the Platform.  Never relay a value
-  // supplied by the caller, including less common aliases that h3 does not
-  // classify as hop-by-hop headers.
-  'forwarded',
-  'x-real-ip',
-  'x-forwarded-for',
-  'x-forwarded-host',
-  'x-forwarded-proto',
-  'x-forwarded-port',
-  'via',
   // The request body is wrapped by the streaming size limiter. Let fetch
   // calculate framing instead of forwarding a caller-controlled length.
   'content-length',
@@ -68,6 +58,18 @@ const STRIPPED_REQUEST_HEADERS = new Set([
   'te',
   'trailer'
 ])
+
+// Forwarding headers are stripped and rebuilt by the platform.
+// Callers must not be able to forge x-forwarded-*, forwarded, x-real-ip, or via.
+const FORWARDING_HEADER_PATTERNS = [
+  'forwarded',
+  'x-forwarded-for',
+  'x-forwarded-host',
+  'x-forwarded-proto',
+  'x-forwarded-port',
+  'x-real-ip',
+  'via'
+] as const
 
 interface DynamicGatewayResult {
   matched: boolean
@@ -83,7 +85,7 @@ export function createUpstreamHeaders(event: H3Event, match: ResolvedDynamicRout
     const normalized = name.toLowerCase()
     if (
       STRIPPED_REQUEST_HEADERS.has(normalized)
-      || normalized.startsWith('x-forwarded-')
+      || FORWARDING_HEADER_PATTERNS.some(pattern => normalized === pattern || normalized.startsWith('x-forwarded-'))
       || normalized.startsWith('x-openapi-')
     ) {
       headers.delete(name)

@@ -10,7 +10,8 @@ import type { ApiCreditReservationContext, GateOutcome, RateLimitResult } from '
 import { getAppEventContext } from '~~/server/utils/event-context'
 import { gatewayFail, type GatewayResponse } from '~~/server/utils/gateway-response'
 import { getRateLimiter } from '~~/server/utils/rate-limit'
-import { isRedisUnavailableError } from '~~/server/utils/redis'
+import { consumeMultiWindowAtomic } from '~~/server/utils/rate-limit/atomic-multi-window'
+import { getRedisClient, getRedisConfig, isRedisUnavailableError } from '~~/server/utils/redis'
 import { ensureRequestId } from '~~/server/utils/request-id'
 import { readClientIp, toClientIpRateLimitValue } from '~~/server/utils/request-meta'
 import { readQueryString } from '~~/server/utils/request-query'
@@ -97,17 +98,48 @@ async function checkRateLimits(
   subject: string
 ): Promise<{ results: RateLimitResult[] } | { denied: RateLimitResult }> {
   const limits: Array<{ window: RateLimitWindow, limit: number }> = [
-    { window: 'second', limit: match.route.rateLimitPerSecond },
-    { window: 'minute', limit: match.route.rateLimitPerMinute },
-    { window: 'hour', limit: match.route.rateLimitPerHour },
-    { window: 'day', limit: match.route.rateLimitPerDay }
-  ]
+    { window: 'second' as const, limit: match.route.rateLimitPerSecond },
+    { window: 'minute' as const, limit: match.route.rateLimitPerMinute },
+    { window: 'hour' as const, limit: match.route.rateLimitPerHour },
+    { window: 'day' as const, limit: match.route.rateLimitPerDay }
+  ].filter(item => item.limit > 0)
+
+  if (limits.length === 0) {
+    return { results: [] }
+  }
+
+  const baseKey = `route:${match.route.id}:${subject}`
+  const redisClient = getRedisClient()
+  const redisConfig = getRedisConfig()
+
+  // Use atomic multi-window check if Redis is available
+  if (redisClient && limits.length > 1) {
+    try {
+      const results = await consumeMultiWindowAtomic(
+        redisClient,
+        redisConfig,
+        baseKey,
+        limits
+      )
+      const denied = results.find(result => !result.allowed)
+      if (denied) return { denied }
+      return { results }
+    } catch (error) {
+      if (redisConfig.required && isRedisUnavailableError(error)) {
+        throw error
+      }
+      // Fall through to sequential check
+      console.warn('[rate-limit] Atomic multi-window check failed; falling back to sequential', error)
+    }
+  }
+
+  // Fallback: sequential check with independent window consumption
   const limiter = getRateLimiter()
   const results: RateLimitResult[] = []
   for (const item of limits) {
-    if (item.limit <= 0) continue
+    // Use same base key structure as atomic path for consistency
     const result = await limiter.consume(
-      `route:${match.route.id}:${subject}:${item.window}`,
+      `${baseKey}:${item.window}`,
       item.limit,
       item.window
     )

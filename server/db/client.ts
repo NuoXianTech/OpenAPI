@@ -51,19 +51,25 @@ function createPostgresClient(options: CreatePostgresClientOptions = {}) {
 
 const DEFAULT_PGLITE_DATA_DIR = '.data/pglite'
 
+export function resolvePgliteDataDir(dataDir?: string): string {
+  return dataDir?.trim() || DEFAULT_PGLITE_DATA_DIR
+}
+
 function isFilesystemPgliteDataDir(dataDir: string) {
   return !/^[a-z][a-z0-9+.-]*:\/\//i.test(dataDir)
 }
 
-export function ensurePgliteDataDir(dataDir = DEFAULT_PGLITE_DATA_DIR) {
-  if (!isFilesystemPgliteDataDir(dataDir)) return
+export function ensurePgliteDataDir(dataDir?: string) {
+  const resolved = resolvePgliteDataDir(dataDir)
+  if (!isFilesystemPgliteDataDir(resolved)) return
 
-  mkdirSync(resolve(dataDir), { recursive: true })
+  mkdirSync(resolve(resolved), { recursive: true })
 }
 
 function createPgliteClient() {
-  ensurePgliteDataDir()
-  return new PGlite(DEFAULT_PGLITE_DATA_DIR)
+  const dataDir = resolvePgliteDataDir()
+  ensurePgliteDataDir(dataDir)
+  return new PGlite(dataDir)
 }
 
 function createDatabase(client: PostgresClient) {

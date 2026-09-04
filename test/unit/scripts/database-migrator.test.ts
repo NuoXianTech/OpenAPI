@@ -5,6 +5,7 @@ import { PGlite } from '@electric-sql/pglite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   handlePostgresNotice,
+  resolvePgliteDataDir,
   runDatabaseMigrations
 } from '../../../scripts/database-migrator.mjs'
 
@@ -25,6 +26,13 @@ afterEach(async () => {
 })
 
 describe('database migration runner', () => {
+  it('uses the fixed PGlite directory for blank overrides', () => {
+    expect(resolvePgliteDataDir()).toBe('.data/pglite')
+    expect(resolvePgliteDataDir('')).toBe('.data/pglite')
+    expect(resolvePgliteDataDir('   ')).toBe('.data/pglite')
+    expect(resolvePgliteDataDir(' custom/pglite ')).toBe('custom/pglite')
+  })
+
   it('keeps generated PostgreSQL identifiers within the 63-byte limit', async () => {
     const journal = JSON.parse(await readFile(join(migrationsDir, 'meta/_journal.json'), 'utf8'))
     const oversizedIdentifiers: string[] = []

@@ -57,6 +57,8 @@ async function normalizeRouteMutation(
 
   const executor = transaction ?? db
   const binding = firstRow(await executor.select({
+    productLifecycle: apiProducts.lifecycle,
+    versionState: apiVersions.state,
     upstreamStatus: upstreamServices.status,
     upstreamDeletedAt: upstreamServices.deletedAt
   }).from(apiVersions)
@@ -76,6 +78,32 @@ async function normalizeRouteMutation(
     )
   ) {
     throw createApplicationError({ statusCode: 409, message: 'upstream is not active', data: { code: 'UPSTREAM_NOT_ACTIVE' } })
+  }
+
+  // When saving an active Route, verify that its parent Product and Version are
+  // publishable. This prevents Routes from appearing active in the control plane
+  // while being silently excluded from the routing runtime at publication.
+  if (input.state === 'active') {
+    if (
+      binding.productLifecycle !== 'active'
+      && binding.productLifecycle !== 'deprecated'
+    ) {
+      throw createApplicationError({
+        statusCode: 409,
+        message: `cannot activate a Route when its Product lifecycle is ${binding.productLifecycle}`,
+        data: { code: 'PRODUCT_NOT_PUBLISHABLE', productLifecycle: binding.productLifecycle }
+      })
+    }
+    if (
+      binding.versionState !== 'published'
+      && binding.versionState !== 'deprecated'
+    ) {
+      throw createApplicationError({
+        statusCode: 409,
+        message: `cannot activate a Route when its Version state is ${binding.versionState}`,
+        data: { code: 'VERSION_NOT_PUBLISHABLE', versionState: binding.versionState }
+      })
+    }
   }
 
   return {

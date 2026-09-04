@@ -2,7 +2,11 @@ import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { ensurePgliteDataDir, getDatabaseDriver } from '~~/server/db/client'
+import {
+  ensurePgliteDataDir,
+  getDatabaseDriver,
+  resolvePgliteDataDir
+} from '~~/server/db/client'
 
 const tempRoots: string[] = []
 const originalDatabaseUrl = process.env.DATABASE_URL
@@ -25,6 +29,13 @@ describe('database client utilities', () => {
     ensurePgliteDataDir(dataDir)
 
     expect(existsSync(dataDir)).toBe(true)
+  })
+
+  it('uses the fixed PGlite directory for blank overrides', () => {
+    expect(resolvePgliteDataDir()).toBe('.data/pglite')
+    expect(resolvePgliteDataDir('')).toBe('.data/pglite')
+    expect(resolvePgliteDataDir('   ')).toBe('.data/pglite')
+    expect(resolvePgliteDataDir(' custom/pglite ')).toBe('custom/pglite')
   })
 
   it('selects PostgreSQL only when DATABASE_URL is present', () => {

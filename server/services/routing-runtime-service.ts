@@ -109,8 +109,12 @@ function compileRuntime(input: {
     || left.definition.id.localeCompare(right.definition.id)
   ))
 
+  const defaultDomain = payload.defaultDomain === undefined
+    ? input.defaultDomain
+    : payload.defaultDomain
+
   return {
-    defaultDomain: input.defaultDomain ? normalizeRouteHost(input.defaultDomain) : null,
+    defaultDomain: defaultDomain ? normalizeRouteHost(defaultDomain) : null,
     revisionId: input.revisionId,
     routes,
     upstreams

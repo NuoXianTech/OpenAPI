@@ -32,7 +32,7 @@ function initialState(): UpstreamFormState {
     slug: props.upstream?.slug ?? '',
     serviceToken: '',
     loadBalancing: props.upstream?.loadBalancing ?? 'round_robin',
-    targets: [{ baseUrl: 'http://openapi-service:8080', weight: 1 }]
+    targets: [{ baseUrl: '', weight: 1 }]
   }
 }
 

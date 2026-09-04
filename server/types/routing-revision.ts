@@ -46,6 +46,7 @@ export interface RoutingRevisionPayload {
   schemaVersion: 1
   revisionId: string
   generatedAt: string
+  defaultDomain: string | null
   routes: RoutingRevisionRoute[]
   upstreams: RoutingRevisionUpstream[]
 }
